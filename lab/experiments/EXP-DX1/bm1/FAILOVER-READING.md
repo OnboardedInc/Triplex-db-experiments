@@ -1,8 +1,33 @@
 # Two-machine failover on bench 4 and server 2, November 23
 
+## Repaired pair (`p9-pair-1123b`): lab `b03e806fd` on build `8ab832093`
+
+Server A is server 2 and server B is bench 4, both under `taskset -c 0-11` with a 150-minute cap. Role A was ready at 20:38:39 UTC and role B started at 20:38:59 UTC. The repair ([PAIR-REPAIR.md](../hasync1/PAIR-REPAIR.md)) makes both cold copies in parallel with 8 workers, attaches the standby before A's transactor, streams WAL directly on TCP 25432, and turns autovacuum off. [Predictions](PREDICTIONS.md#bench-4-2026-11-23)
+
+**Preflight.** The direct bulk probe ran at **683.2 MiB/s** (forecast 300–1,100), with an echo p50 of 0.098 ms. The overlay tunnel ran at 61.4 MiB/s and added 0.109 ms to p50.
+
+### Case `b-235`: policy B at 235 saves/s, no acknowledged save lost
+
+| Measure | Forecast | Measured |
+| --- | --- | ---: |
+| Acknowledged saves lost | 0 | **0** (`firstLoss` 0; 2,830 acknowledged before the fault, all present) |
+| First exact read after the fault | within 0.35 s | 16.5 ms |
+| Longest exact-read gap | within 1 s | 47.1 ms; 0 of 30,172 reads missed |
+| First protected (two-copy) save after the fault | 4–9 min, almost all local copy and hash | **603.4 s (10.1 min)**, above the range |
+| Catch-up of the rebuilt standby | 20–300 MB in under 10 s over `direct` | 0 bytes behind, synchronous 460 ms after attach, endpoint `direct` |
+| Writes resume within 60 s (P9 bar) | missed by design | missed (`writes60s` false) |
+| Cold copy per server, in parallel | 3–8 min | 594 s each (copy 133–139 s, hash 454–458 s) |
+| Standby attach before offers | under 16 MB lag, synchronous within 30 s | 0 lag; synchronous with zero lag 141 ms after the request |
+
+**Steps from the fault (ms):** detected 825 · sealed 876 · fenced 1,017 · prefix 1,121 · promoted 1,525 · replacement start 1,652 · replacement ready 585,515 · standby caught up 585,848 · synchronous 586,138 · broker ready 598,258 · peer ready 598,777 · routed 601,173. **97% of the 10 minutes is the replacement's local copy (131 s) and SHA-256 check of 126 GB (452 s), with 8 workers each.** Detection, fencing and promotion took 1.5 s, and the catch-up over the direct path took under 1 s. On a direct link, then, the time to the first protected save is the time to make and check a local copy. Skipping the full re-hash of an already verified staged seed would bring it to about 2.5 minutes.
+
+Offers in the case: 145,580 (fate: 126,324 refused during the hold, 14,746 subject busy, 1,106 acknowledged by the new writer, 385 late, 202 pending, 148 expired at the sender). No acknowledged save was lost, and the read path stayed within its bars.
+
 **North star P9:** no acknowledged save lost, writes resume within 60 s, a planned move within 30 s. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
-**Priority 9 remains unmeasured on servers.** No case reached its first offer. Case 1 failed on the driver's own error. Case 2 hit a harness deadline that cases 3–5 would hit too. The pair was stopped at 17:51 UTC during case 3, on the orchestrator's decision. [Evidence on the Mac](#evidence)
+## First pair (`p9-pair-1123a`): not measured
+
+**Priority 9 remained unmeasured on servers after this attempt.** No case reached its first offer. Case 1 failed on the driver's own error. Case 2 hit a harness deadline that cases 3–5 would hit too. The pair was stopped at 17:51 UTC during case 3, on the orchestrator's decision. [Evidence on the Mac](#evidence)
 
 Run: `hasync1/sunday.ts` at INT1 `8ab832093` ([SUNDAY.md](../hasync1/SUNDAY.md)), tag `p9-pair-1123a`. Server A is server 2 and server B is bench 4. Both started under `taskset -c 0-11` (see below). Seed: the fresh SCALE1 template at cut 87,002, staged on both machines with manifest digest `291bf0b0…` and system identifier `7710454239949164583`. Role A started at 16:59:45 UTC and role B at 17:00:16 UTC. [Predictions written before the run](PREDICTIONS.md#bench-4-2026-11-23)
 
