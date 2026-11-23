@@ -1,6 +1,6 @@
 // [DX-DEMO1] The inspector page: serves demo/inspector.html on 127.0.0.1 and answers its calls with the same local
 // functions the MCP tools use. Usage: node src/page.ts [PORT=28580]
-// Why: a browser view of one person (facts, a field's timeline, both time axes, the feed) next to the assistant.
+// Why: a browser view of one subject (facts, a field's timeline, both time axes, the feed) next to the assistant.
 // Rejected: a framework or the playground's bundle (it renders its own fixture, not this database).
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
@@ -17,12 +17,12 @@ type Body = Record<string, unknown>;
 const calls: Record<string, (d: Demo, b: Body) => Promise<object>> = {
   summary: (d) => d.summary(),
   accounts: (d) => d.listAccounts(),
-  people: (d, b) => d.findPeople(b["account"] as string, Number(b["from"] ?? 0), Number(b["count"] ?? 10)),
-  person: (d, b) => d.readPerson(b["account"] as string, Number(b["member"]), b["attribute"] as string | undefined),
-  at: (d, b) => d.readPersonAt(b["account"] as string, Number(b["member"]), b["at"] as string, b["attribute"] as string | undefined, (b["recordedAt"] as string) || undefined),
-  history: (d, b) => d.fieldHistory(b["account"] as string, Number(b["member"]), b["attribute"] as string, (b["kind"] as never) ?? "task"),
+  subjects: (d, b) => d.findSubjects(b["account"] as string, Number(b["from"] ?? 0), Number(b["count"] ?? 10)),
+  subject: (d, b) => d.readSubject(b["account"] as string, Number(b["subject"]), b["attribute"] as string | undefined),
+  at: (d, b) => d.readSubjectAt(b["account"] as string, Number(b["subject"]), b["at"] as string, b["attribute"] as string | undefined, (b["recordedAt"] as string) || undefined),
+  history: (d, b) => d.fieldHistory(b["account"] as string, Number(b["subject"]), b["attribute"] as string, (b["kind"] as never) ?? "task", Number(b["limit"] ?? 40)),
   feed: (d, b) => d.changeFeed(b["after"] === undefined || b["after"] === "" ? undefined : Number(b["after"]), (b["account"] as string) || undefined, Number(b["limit"] ?? 20)),
-  save: (d, b) => d.saveFacts(b["account"] as string, Number(b["member"]), (b["kind"] as never) ?? "task", b["changes"] as Record<string, string>),
+  save: (d, b) => d.saveFacts(b["account"] as string, Number(b["subject"]), (b["kind"] as never) ?? "task", b["changes"] as Record<string, string>),
 };
 
 createServer(async (req, res) => {

@@ -98,8 +98,8 @@ function store(client: DatomicClient, scope: DatabaseScope): Store {
 const compatibilityNote =
   "The bulk loader that built this database wrote one field of each save's journal (the position row) in a non-standard form; the demo reads it with a named compatibility rule (setLoaderPositionRowCompatibility), off in the product's default reader.";
 const pad8 = (n: number) => String(n).padStart(8, "0");
-export type EntityKind = "person" | "profile" | "task";
-export const entityKinds: readonly EntityKind[] = ["person", "profile", "task"];
+export type EntityKind = "root" | "profile" | "task";
+export const entityKinds: readonly EntityKind[] = ["root", "profile", "task"];
 const protectedAttribute = /^:(_|subject\/|tenant\/|triplex|f\/|db\/)/;
 const attributePattern = /^:[a-z][a-z0-9-]*\/[a-z0-9-]+$/;
 
@@ -191,23 +191,23 @@ export class Demo {
     return found;
   }
 
-  person(accountInput: string | number, member: number) {
+  subjectIds(accountInput: string | number, subjectNumber: number) {
     const account = this.account(accountInput);
-    if (!Number.isSafeInteger(member) || member < account.firstPerson || member >= account.firstPerson + account.people)
-      throw new DemoError("UnknownPerson", `${account.account} has people ${account.firstPerson} to ${account.firstPerson + account.people - 1}`);
+    if (!Number.isSafeInteger(subjectNumber) || subjectNumber < account.firstPerson || subjectNumber >= account.firstPerson + account.people)
+      throw new DemoError("UnknownSubject", `${account.account} has subjects ${account.firstPerson} to ${account.firstPerson + account.people - 1}`);
     const ns = account.namespace;
     return {
       account: account.account,
-      member,
-      root: `${ns}pl:${pad8(member)}`,
-      profile: `${ns}wk:${pad8(member)}`,
-      task: `${ns}i9:${pad8(member)}`,
+      subjectNumber,
+      root: `${ns}pl:${pad8(subjectNumber)}`,
+      profile: `${ns}wk:${pad8(subjectNumber)}`,
+      task: `${ns}i9:${pad8(subjectNumber)}`,
     };
   }
 
-  entity(accountInput: string | number, member: number, kind: EntityKind = "task") {
-    const p = this.person(accountInput, member);
-    return { ...p, kind, entity: kind === "person" ? p.root : kind === "profile" ? p.profile : p.task };
+  entity(accountInput: string | number, subjectNumber: number, kind: EntityKind = "task") {
+    const p = this.subjectIds(accountInput, subjectNumber);
+    return { ...p, kind, entity: kind === "root" ? p.root : kind === "profile" ? p.profile : p.task };
   }
 
   async head() {
@@ -222,7 +222,7 @@ export class Demo {
 
   private async world(root: string, basis: { validAt: number; recordedPosition?: number; recordedAt?: number }) {
     const world = await this.reader.readDemandWorld(this.scope, root, basis);
-    if (!world) throw new DemoError("ReadDeclined", "The read gateway declined this person read; try again");
+    if (!world) throw new DemoError("ReadDeclined", "The read gateway declined this subject read; try again");
     return world;
   }
 
@@ -247,12 +247,13 @@ export class Demo {
     return this.measure(async () => {
       const { position, t } = await this.head();
       const c = this.connection;
-      const people = c.roster.reduce((n, r) => n + r.people, 0);
+      const subjects = c.roster.reduce((n, r) => n + r.people, 0);
       return {
         kind: c.kind === "1b" ? "the sealed 1 billion record database (working copy)" : "the toy database (working copy)",
         database: c.database,
         accounts: c.roster.length,
-        people,
+        subjects,
+        subjectsAre: "worker records: in this test data each subject is one worker with a profile, placements, tasks, subtasks and files",
         recordsAtBringUp: c.recordsAtBringUp,
         recordsAtSeal: c.sealed.records,
         sealedHead: c.sealed.head,
@@ -272,69 +273,76 @@ export class Demo {
     });
   }
 
-  listAccounts() {
+  /**
+   * The accounts and their subject counts come from the sealed handoff's roster, which bring-up checked against the live
+   * database (head, record count and the AGE1 scorecard's membership rows). That costs one basis call. The optional live
+   * check reads each account's directory entity as well (at 1 billion about 220 ms cold: ten entities in ten cold segments).
+   */
+  listAccounts(checkDirectories = false) {
     return this.measure(async () => {
       const directories = this.connection.roster.map((r) => r.namespace + "directory");
       const { position } = await this.head();
-      const rows = await this.reader.rows(this.db, {
-        entityIds: directories,
-        basis: { recordedPosition: position, validAt: Date.now() },
-      });
+      const rows = checkDirectories
+        ? await this.reader.rows(this.db, { entityIds: directories, basis: { recordedPosition: position, validAt: Date.now() } })
+        : undefined;
       return {
+        source: checkDirectories
+          ? "the sealed roster, with each account's directory entity read live at this position"
+          : "the sealed roster checked at bring-up (pass checkDirectories to read each account's directory entity live)",
         accounts: this.connection.roster.map((r) => ({
           account: r.account,
           namespace: r.namespace,
-          people: r.people,
-          members: `${r.firstPerson} to ${r.firstPerson + r.people - 1}`,
-          directoryFound: rows.some((x) => x.entity_id === r.namespace + "directory" && x.value_string === r.account),
+          subjects: r.people,
+          subjectNumbers: `${r.firstPerson} to ${r.firstPerson + r.people - 1}`,
+          ...(rows ? { directoryFound: rows.some((x) => x.entity_id === r.namespace + "directory" && x.value_string === r.account) } : {}),
         })),
         position,
       };
     });
   }
 
-  /** People by member number: the person ids are derived from the account and the member number, then read live. */
-  findPeople(accountInput: string | number, from: number, count: number) {
+  /** Subjects by number: the subject ids are derived from the account and the subject number, then read live. */
+  findSubjects(accountInput: string | number, from: number, count: number) {
     return this.measure(async () => {
       const account = this.account(accountInput);
       const last = Math.min(account.firstPerson + account.people, from + count);
-      const people = [];
-      for (let m = Math.max(from, account.firstPerson); m < last; m++) people.push(this.person(account.account, m));
+      const chosen = [];
+      for (let m = Math.max(from, account.firstPerson); m < last; m++) chosen.push(this.subjectIds(account.account, m));
       const { position } = await this.head();
       const rows = await this.reader.rows(this.db, {
-        entityIds: people.map((p) => p.root),
+        entityIds: chosen.map((p) => p.root),
         basis: { recordedPosition: position, validAt: Date.now() },
       });
       return {
         account: account.account,
-        people: people.map((p) => {
+        subjects: chosen.map((p) => {
           const own = rows.filter((r) => r.entity_id === p.root);
           const one = (a: string) => own.find((r) => r.attribute === a);
           return {
-            member: p.member,
-            personId: p.root,
+            subject: p.subjectNumber,
+            subjectId: p.root,
             status: one(":placement/status")?.value_string ?? null,
             placements: own.filter((r) => r.attribute === ":person/placement").length,
             lastRecordedAt: iso(Math.max(...own.map((r) => r.recorded_at))),
           };
         }),
-        lookup: "by account and member number (the store's subject key); protected values are never looked up by value",
+        lookup: "by account and subject number (the store's subject key); protected values are never looked up by value",
         position,
       };
     });
   }
 
-  readPerson(accountInput: string | number, member: number, attribute?: string) {
+  readSubject(accountInput: string | number, subjectNumber: number, attribute?: string) {
     return this.measure(async () => {
-      const p = this.person(accountInput, member);
+      const p = this.subjectIds(accountInput, subjectNumber);
       const { position } = await this.head();
       const world = await this.world(p.root, { recordedPosition: position, validAt: Date.now() });
       const ns = this.account(accountInput).namespace;
       const facts = Demo.facts(world.triples, ns).filter((f) => !attribute || f.attribute === attribute);
       return {
         account: p.account,
-        member: p.member,
-        personId: p.root,
+        subject: p.subjectNumber,
+        subjectId: p.root,
         entities: world.entities,
         factCount: world.triples.length,
         facts,
@@ -344,11 +352,11 @@ export class Demo {
   }
 
   /** Both time axes at one instant: what is now believed true then, and what was believed then. */
-  readPersonAt(accountInput: string | number, member: number, at: string | number, attribute?: string, recordedAt?: string | number) {
+  readSubjectAt(accountInput: string | number, subjectNumber: number, at: string | number, attribute?: string, recordedAt?: string | number) {
     return this.measure(async () => {
       const when = parseInstant(at, "at");
       const known = recordedAt === undefined ? when : parseInstant(recordedAt, "recordedAt");
-      const p = this.person(accountInput, member);
+      const p = this.subjectIds(accountInput, subjectNumber);
       const ns = this.account(accountInput).namespace;
       const { position } = await this.head();
       const now = Date.now();
@@ -381,7 +389,7 @@ export class Demo {
           JSON.stringify(d.trueThenAsKnownNow) !== JSON.stringify(d.believedThen));
       return {
         account: p.account,
-        member: p.member,
+        subject: p.subjectNumber,
         at: iso(when),
         believedAsRecordedAt: iso(known),
         counts: { current: views.current.length, trueThenAsKnownNow: views.trueThenAsKnownNow.length, believedThen: views.believedThen.length },
@@ -392,10 +400,15 @@ export class Demo {
     });
   }
 
-  /** Every stored row of one field of one entity, including retired ones, with both time axes. */
-  fieldHistory(accountInput: string | number, member: number, attribute: string, kind: EntityKind = "task") {
+  /**
+   * Every stored row of one field of one entity, including retired ones, with both time axes. The gateway answers a
+   * history read from the entity's whole stored history (every attribute, every row ever written, and for each retired
+   * row the position and clock of the transaction that retired it); it filters to one attribute only afterwards. So the
+   * cost follows how often the entity was saved, not the size of the database: entityHistoryRows says how many rows it read.
+   */
+  fieldHistory(accountInput: string | number, subjectNumber: number, attribute: string, kind: EntityKind = "task", limit = 40) {
     return this.measure(async () => {
-      const e = this.entity(accountInput, member, kind);
+      const e = this.entity(accountInput, subjectNumber, kind);
       const { position } = await this.head();
       const rows = await this.reader.rows(this.db, {
         entityIds: [e.entity],
@@ -416,7 +429,18 @@ export class Demo {
           id: r.id,
         }))
         .sort((a, b) => a.recordedPosition - b.recordedPosition || (a.validFrom ?? "").localeCompare(b.validFrom ?? ""));
-      return { account: e.account, member: e.member, entity: e.entity, attribute, rows: entries, position };
+      const shown = Math.max(1, Math.min(limit, 2000));
+      return {
+        account: e.account, subject: e.subjectNumber, entity: e.entity, attribute,
+        totalRows: entries.length,
+        rowsAfterFirst: Math.max(0, entries.length - 1),
+        rowsAfterFirstNote: "one per loader save of this field; a demo save adds two (the old value closed at the save, and the new value)",
+        entityHistoryRows: rows.length,
+        rowsShown: entries.length > shown ? `the newest ${shown} of ${entries.length}` : `all ${entries.length}`,
+        rows: entries.slice(-shown),
+        ...(entries.length > shown ? { first: entries[0] } : {}),
+        position,
+      };
     });
   }
 
@@ -452,24 +476,24 @@ export class Demo {
     });
   }
 
-  /** Many people at one exact cut in one request (the read gateway's multi-root pull, at most 16). */
-  readManyPeople(accountInput: string | number, members: readonly number[]) {
+  /** Many subjects at one exact cut in one request (the read gateway's multi-root pull, at most 16). */
+  readManySubjects(accountInput: string | number, subjectNumbers: readonly number[]) {
     return this.measure(async () => {
-      if (!members.length || members.length > 16 || new Set(members).size !== members.length)
-        throw new DemoError("InvalidInput", "Give 1 to 16 different member numbers");
-      const people = members.map((m) => this.person(accountInput, m));
+      if (!subjectNumbers.length || subjectNumbers.length > 16 || new Set(subjectNumbers).size !== subjectNumbers.length)
+        throw new DemoError("InvalidInput", "Give 1 to 16 different subject numbers");
+      const chosen = subjectNumbers.map((m) => this.subjectIds(accountInput, m));
       const { position } = await this.head();
-      const found = await this.reader.readHistoricalWorlds(this.scope, people.map((p) => p.root), {
+      const found = await this.reader.readHistoricalWorlds(this.scope, chosen.map((p) => p.root), {
         recordedPosition: position,
         validAt: Date.now(),
       });
       if (!found) throw new DemoError("ReadDeclined", "The read gateway declined this batch; try again");
       return {
-        account: people[0]!.account,
+        account: chosen[0]!.account,
         cut: { position: found.position, nativeT: found.t },
-        people: found.worlds.map((w, i) => ({
-          member: people[i]!.member,
-          personId: w.root,
+        subjects: found.worlds.map((w, i) => ({
+          subject: chosen[i]!.subjectNumber,
+          subjectId: w.root,
           entities: w.entities,
           facts: w.triples.length,
           status: w.triples.find((t) => t.entityId === w.root && t.attribute === ":placement/status")?.value.value ?? null,
@@ -511,10 +535,10 @@ export class Demo {
   }
 
   /** Save new values from now on; the earlier values stay true for the time before now. */
-  saveFacts(accountInput: string | number, member: number, kind: EntityKind, changes: Record<string, string>) {
+  saveFacts(accountInput: string | number, subjectNumber: number, kind: EntityKind, changes: Record<string, string>) {
     this.requireWorkingCopy();
     return this.measure(async () => {
-      const e = this.entity(accountInput, member, kind);
+      const e = this.entity(accountInput, subjectNumber, kind);
       const entries = Object.entries(changes).sort(([a], [b]) => a.localeCompare(b));
       if (!entries.length || entries.length > 20) throw new DemoError("InvalidInput", "Give 1 to 20 changes");
       for (const [a, v] of entries) this.validateChange(a, v);
@@ -534,15 +558,15 @@ export class Demo {
       const receipt = await this.commit(e.entity, ops, live.map((r) => r.id), "save");
       const readback = await this.readBack(e.entity, entries.map(([a]) => a), receipt.position, at);
       const exact = entries.every(([a, v]) => JSON.stringify(readback[a]) === JSON.stringify([v]));
-      return { account: e.account, member: e.member, entity: e.entity, validFrom: iso(at), receipt, readback, readbackMatches: exact, position: receipt.position };
+      return { account: e.account, subject: e.subjectNumber, entity: e.entity, validFrom: iso(at), receipt, readback, readbackMatches: exact, position: receipt.position };
     });
   }
 
   /** A valid-time correction: from a past date on, the value was different. Both beliefs stay readable. */
-  correctPastValue(accountInput: string | number, member: number, kind: EntityKind, attribute: string, value: string, validFrom: string | number) {
+  correctPastValue(accountInput: string | number, subjectNumber: number, kind: EntityKind, attribute: string, value: string, validFrom: string | number) {
     this.requireWorkingCopy();
     return this.measure(async () => {
-      const e = this.entity(accountInput, member, kind);
+      const e = this.entity(accountInput, subjectNumber, kind);
       this.validateChange(attribute, value);
       const from = parseInstant(validFrom, "validFrom");
       if (from >= Date.now()) throw new DemoError("InvalidInput", "A correction starts in the past; use save_facts for now");
@@ -565,7 +589,7 @@ export class Demo {
       ]);
       const pick = (rows: typeof oldBelief) => rows.filter((r) => r.attribute === attribute).map((r) => r.value_string);
       return {
-        account: e.account, member: e.member, entity: e.entity, attribute,
+        account: e.account, subject: e.subjectNumber, entity: e.entity, attribute,
         correctedFrom: iso(from), correctedUntil: iso(end ?? null),
         receipt,
         beliefs: {
@@ -579,10 +603,10 @@ export class Demo {
   }
 
   /** Retire a fact from now on: it stops being current, the time it was true stays in history. */
-  retireFact(accountInput: string | number, member: number, kind: EntityKind, attribute: string) {
+  retireFact(accountInput: string | number, subjectNumber: number, kind: EntityKind, attribute: string) {
     this.requireWorkingCopy();
     return this.measure(async () => {
-      const e = this.entity(accountInput, member, kind);
+      const e = this.entity(accountInput, subjectNumber, kind);
       if (!attributePattern.test(attribute) || protectedAttribute.test(attribute))
         throw new DemoError("InvalidAttribute", "Use a plain attribute such as :task/field-2");
       const at = Date.now();
@@ -591,14 +615,14 @@ export class Demo {
       if (!current.length) throw new DemoError("NothingToRetire", `${attribute} has no current value on this ${kind}`);
       const ops: TransactOp[] = [];
       for (const r of current) {
-        if (r.value_type === "ref") throw new DemoError("InvalidAttribute", "The demo does not retire references (it would cut the person apart)");
+        if (r.value_type === "ref") throw new DemoError("InvalidAttribute", "The demo does not retire references (it would cut the subject apart)");
         ops.push({ op: "retract", id: TripleId.make(r.id) });
         if (r.valid_from < at) ops.push(assertSame(e.entity, attribute, r, r.valid_from, at));
       }
       const receipt = await this.commit(e.entity, ops, live.map((r) => r.id), "retire");
       const readback = await this.readBack(e.entity, [attribute], receipt.position, at);
       return {
-        account: e.account, member: e.member, entity: e.entity, attribute, retiredFrom: iso(at), receipt,
+        account: e.account, subject: e.subjectNumber, entity: e.entity, attribute, retiredFrom: iso(at), receipt,
         currentAfter: readback[attribute] ?? [],
         retiredFromCurrent: !(readback[attribute]?.length),
         position: receipt.position,
@@ -607,15 +631,15 @@ export class Demo {
   }
 
   /** Removal on request needs the scope to have been declared protected before its first save. */
-  removeOnRequest(accountInput: string | number, member: number) {
+  removeOnRequest(accountInput: string | number, subjectNumber: number) {
     this.requireWorkingCopy();
     return this.measure(async () => {
-      const p = this.person(accountInput, member);
+      const p = this.subjectIds(accountInput, subjectNumber);
       const frontier = await this.reader.erasureFrontier(this.db);
       const { position } = await this.head();
       if (!frontier.protected)
         return {
-          account: p.account, member: p.member, done: false,
+          account: p.account, subject: p.subjectNumber, done: false,
           reason:
             "This database has no protected fields. The integrated build accepts a protection declaration only before the first save into a scope " +
             "(the gateway answers 409 ProtectedScopeNeedsMigration on a populated scope), and removal on request applies only to protected values. " +

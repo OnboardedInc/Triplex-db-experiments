@@ -56,24 +56,30 @@ Node 22.18 or later runs the TypeScript directly. Run `pnpm install` and `node_m
 
 ## The tools
 
+**Subjects.** The store's unit is the subject: everything recorded about one subject hangs from its root record. In this test data each subject is a worker record (a profile, placements, tasks, subtasks and files), ten accounts of 100,000 subjects each.
+
 Every answer carries `timing.serverMs` (the gateways' own handling time, summed over the requests), `timing.roundTripMs` (wall time on the Mac, tunnel included), the requests made, and `position` (the database position read or written at).
 
 | Tool | What it shows |
 | --- | --- |
-| `database_summary` | records counted at bring-up, people, accounts, sealed head, live head, transactions added since the seal |
-| `list_accounts` | the ten accounts in the one database, checked live |
-| `find_people` | people by account and member number (the store's subject key; protected values are never looked up by value) |
-| `read_person` | every current fact of one person (root, profile, placements, tasks, subtasks, files) at one exact position, one request |
-| `read_person_at` | both time axes: what is now known to have been true on a date, and what the store believed about that date at a record time |
-| `field_history` | every stored row of one field, retired ones included, with valid and record times and positions |
+| `database_summary` | records counted at bring-up, subjects, accounts, sealed head, live head, the record-time range, transactions added since the seal |
+| `list_accounts` | the ten accounts and their subject counts, from the sealed roster that bring-up checked (one basis call); `checkDirectories` also reads each account's directory entity live (about 220 ms cold at 1 billion) |
+| `find_subjects` | subjects by account and subject number (the store's subject key; protected values are never looked up by value) |
+| `read_subject` | every current fact of one subject (root, profile, placements, tasks, subtasks, files) at one exact position, one request |
+| `read_subject_at` | both time axes: what is now known to have been true on a date, and what the store believed about that date at a record time |
+| `field_history` | every stored row of one field, retired ones included, with valid and record times and positions; reports how many rows of the entity's history the gateway read (see "History reads" below) |
 | `change_feed` | committed transactions after a position, optionally one account's changes only |
-| `read_many_people` | up to 16 people at the identical position in one request |
+| `read_many_subjects` | up to 16 subjects at the identical position in one request |
 | `save_facts` (changes) | new values from now on; receipt with durable position; readback at that position |
 | `correct_past_value` (changes) | a valid-time correction from a past date; the belief before and after |
 | `retire_fact` (changes) | a fact stops being current; its past stays in history |
 | `remove_on_request` (changes) | checks the database's removal state; on this database it explains why removal cannot be shown and changes nothing |
 
-Changing tools commit for real (durable, synchronous) and refuse unless the connection file says the target is a demo working copy. [Worked examples](EXAMPLES.md) has seventeen prompts in showing order with real outputs and times.
+Changing tools commit for real (durable, synchronous) and refuse unless the connection file says the target is a demo working copy. [Worked examples](EXAMPLES.md) has eighteen prompts in showing order with real outputs and times.
+
+## History reads
+
+A history read costs what that one entity's history costs, not what the database's size costs. The gateway reads every row the entity ever stored (all its attributes, every value ever written) and, for each retired row, the position and clock of the transaction that retired it; it filters to the asked attribute afterwards. The aging loader saved the first three fields of 20,000 subjects' first tasks (2,000 per account) about 1,411 times each, every 20,000 positions, so such a subject's task holds thousands of retired rows spread across the whole index. On the 1 billion database `field_history` for one of them (account-003, subject 0: 1,412 rows of `:task/field-0`) took 4,404.67 ms of gateway time cold and 225.21 ms warm. A subject outside that sample (subject 1) has one row per field. The worked examples show both, each labelled with its number of saves.
 
 ## Two things particular to this database
 
@@ -89,6 +95,8 @@ Changing tools commit for real (durable, synchronous) and refuse unless the conn
 
 - **Removal on request.** The integrated build accepts a protection declaration only before a scope's first save; the 1 billion database was loaded without one, so it holds no protected values to remove. The tool says so and changes nothing. On the toy aged by the same loader code, the gateway itself refused a declaration (409 ProtectedScopeNeedsMigration), which is what the tool's explanation states.
 - **Publish answers and group reads.** The read gateway's Publish path needs a release written into the scope first; the demo does not write one into the sealed database.
+- **Fast reads far back in time.** A read "as of" a position far behind the head costs about 40 ms of read-gateway CPU at 1 billion (the RD1 diagnosis, `rd1/PINNED-1B.md` on `exp/DX-RD1-readers`); `read_subject_at` measured 24 to 25 ms of gateway time in the proving slot. A fix is being built as an option; it is not in this demo.
+- **Fast history for heavily saved subjects.** See "History reads": about 4.4 s cold for a subject the loader saved about 1,411 times.
 - **Load.** Each answer is one request at a time from one client. The measured rates and tails are in the scorecard runs, not here.
 - **Live record counts.** The record count is the peer's count at bring-up; the summary reports positions added since.
 - **Times through the tunnel.** `roundTripMs` includes the Mac's network path to the machine. `serverMs` is the store's own time.

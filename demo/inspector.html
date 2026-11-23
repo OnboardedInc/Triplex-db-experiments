@@ -39,20 +39,20 @@ code { font:12px ui-monospace, monospace; }
   <div id="summary" class="muted">connecting…</div>
   <div class="row" style="margin:0">
     <label>account</label><select id="account"></select>
-    <label>member</label><input id="member" type="number" min="0" value="0" style="width:90px">
-    <button id="load">Load person</button>
+    <label>subject</label><input id="subject" type="number" min="0" value="0" style="width:90px">
+    <button id="load">Load subject</button>
   </div>
 </header>
 <main>
   <section>
-    <h2>Current facts <span class="timing" id="t-person"></span></h2>
+    <h2>Current facts <span class="timing" id="t-subject"></span></h2>
     <div class="row"><label>filter</label><input id="filter" placeholder="attribute or entity"></div>
     <div class="scroll"><table id="facts"></table></div>
   </section>
   <section>
     <h2>History of one field <span class="timing" id="t-history"></span></h2>
     <div class="row">
-      <label>entity</label><select id="h-kind"><option>task</option><option>person</option><option>profile</option></select>
+      <label>entity</label><select id="h-kind"><option>task</option><option>root</option><option>profile</option></select>
       <label>attribute</label><input id="h-attr" value=":task/field-0" style="width:160px">
       <button id="h-go">Show</button>
     </div>
@@ -81,7 +81,7 @@ code { font:12px ui-monospace, monospace; }
     <h2>Apply a save <span class="timing" id="t-save"></span></h2>
     <p class="muted" style="margin-top:0">A real, durable, synchronous commit to the working copy. Then the readback, the field's history and the feed refresh.</p>
     <div class="row">
-      <label>entity</label><select id="s-kind"><option>task</option><option>person</option><option>profile</option></select>
+      <label>entity</label><select id="s-kind"><option>task</option><option>root</option><option>profile</option></select>
       <label>attribute</label><input id="s-attr" value=":task/field-0" style="width:140px">
       <label>value</label><input id="s-val" value="reviewed in demo" style="width:160px">
       <button id="s-go">Save</button>
@@ -100,7 +100,7 @@ async function call(name, body = {}) {
   if (json.error) throw new Error(json.error.code + ": " + json.error.message);
   return json;
 }
-const who = () => ({ account: $("account").value, member: Number($("member").value) });
+const who = () => ({ account: $("account").value, subject: Number($("subject").value) });
 function fail(target, e) { $(target).innerHTML = `<tr><td class="err">${esc(e.message)}</td></tr>`; }
 
 async function loadSummary() {
@@ -110,14 +110,14 @@ async function loadSummary() {
     $("at").value = new Date((Date.parse(range.first) + Date.parse(range.lastAtBringUp)) / 2).toISOString();
     $("at").dataset.set = "1";
   }
-  $("summary").innerHTML = `<span class="big">${fmt(s.recordsAtBringUp)}</span> records at bring-up · ${fmt(s.people)} people in ${s.accounts} accounts · head <b>${fmt(s.head)}</b> (sealed ${fmt(s.sealedHead)}, +${fmt(s.transactionsSinceSeal)}) · record times ${esc((range.first ?? "").slice(0, 10))} to ${esc((range.lastAtBringUp ?? "").slice(0, 10))} · <span class="timing">${timing(s)}</span>`;
+  $("summary").innerHTML = `<span class="big">${fmt(s.recordsAtBringUp)}</span> records at bring-up · ${fmt(s.subjects)} subjects (worker records) in ${s.accounts} accounts · head <b>${fmt(s.head)}</b> (sealed ${fmt(s.sealedHead)}, +${fmt(s.transactionsSinceSeal)}) · record times ${esc((range.first ?? "").slice(0, 10))} to ${esc((range.lastAtBringUp ?? "").slice(0, 10))} · <span class="timing">${timing(s)}</span>`;
   const a = await call("accounts");
-  $("account").innerHTML = a.accounts.map((x) => `<option value="${esc(x.account)}">${esc(x.account)} (${fmt(x.people)})</option>`).join("");
+  $("account").innerHTML = a.accounts.map((x) => `<option value="${esc(x.account)}">${esc(x.account)} (${fmt(x.subjects)})</option>`).join("");
 }
-async function loadPerson() {
+async function loadSubject() {
   try {
-    const p = await call("person", who());
-    $("t-person").textContent = timing(p) + ` · ${p.factCount} facts in ${p.entities} entities`;
+    const p = await call("subject", who());
+    $("t-subject").textContent = timing(p) + ` · ${p.factCount} facts in ${p.entities} entities`;
     const f = $("filter").value.trim();
     $("facts").innerHTML = "<tr><th>entity</th><th>attribute</th><th>value</th><th>valid from</th><th>recorded</th></tr>" +
       p.facts.filter((x) => !f || x.attribute.includes(f) || x.entity.includes(f))
@@ -127,7 +127,7 @@ async function loadPerson() {
 async function loadHistory() {
   try {
     const h = await call("history", { ...who(), attribute: $("h-attr").value, kind: $("h-kind").value });
-    $("t-history").textContent = timing(h) + ` · ${h.rows.length} rows`;
+    $("t-history").textContent = timing(h) + ` · ${h.totalRows} rows of this field (${h.rowsShown} shown); the gateway read ${h.entityHistoryRows} rows of this entity's history`;
     const marks = [...new Set(h.rows.flatMap((r) => [r.recordedPosition, r.retiredPosition ?? h.position]))].sort((a, b) => a - b);
     const x = (p) => (marks.indexOf(p) / Math.max(marks.length - 1, 1)) * 92;
     $("timeline").innerHTML = '<div class="muted" style="font-size:11px">each row from the position that recorded it to the position that retired it (equal steps between changes); red = retired, blue = live</div>' +
@@ -163,11 +163,11 @@ async function save() {
     $("saved").innerHTML = `<p>Receipt <code>${esc(r.receipt.txId)}</code> at durable position <b>${fmt(r.receipt.position)}</b>, recorded ${esc(r.receipt.recordedAt)}. ` +
       `Readback at that position: <code>${esc(JSON.stringify(r.readback))}</code> <span class="${r.readbackMatches ? "ok" : "err"}">${r.readbackMatches ? "matches" : "DIFFERS"}</span></p>`;
     $("h-attr").value = $("s-attr").value; $("h-kind").value = $("s-kind").value;
-    await Promise.all([loadPerson(), loadHistory(), loadFeed(), loadSummary()]);
+    await Promise.all([loadSubject(), loadHistory(), loadFeed(), loadSummary()]);
   } catch (e) { $("saved").innerHTML = `<p class="err">${esc(e.message)}</p>`; }
 }
-$("load").onclick = () => Promise.all([loadPerson(), loadHistory(), loadFeed()]);
-$("filter").oninput = loadPerson;
+$("load").onclick = () => Promise.all([loadSubject(), loadHistory(), loadFeed()]);
+$("filter").oninput = loadSubject;
 $("h-go").onclick = loadHistory; $("at-go").onclick = loadAxes; $("f-go").onclick = loadFeed; $("s-go").onclick = save;
 loadSummary().then(() => $("load").onclick()).catch((e) => { $("summary").innerHTML = `<span class="err">${esc(e.message)} (run demo/connect.sh)</span>`; });
 </script>

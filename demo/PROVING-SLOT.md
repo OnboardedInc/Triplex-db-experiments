@@ -1,4 +1,35 @@
-# Proving slot on the 1 billion database (30 minutes)
+# Proving slots on the 1 billion database
+
+## Second slot: rerun of the proof only (about 15 minutes)
+
+The first slot (below) passed on server 2: 17 calls, 18 checks, bring-up 169 s. This rerun shows the renamed tools (subjects), the cheaper `list_accounts`, and the history pair: a subject with a short history and one the loader saved about 1,411 times, each labelled. It rewrites `demo/EXAMPLES.md` from the 1 billion database. `<COMMIT>` is the branch head named in the launch message.
+
+| Clock | Where | Command | Predicted time |
+| --- | --- | --- | --- |
+| T+0 | server, `sudo -i` | `rm -rf /var/tmp/triplex-demo-src && git clone --depth 1 --branch exp/DX-DEMO1-billion-demo https://github.com/OnboardedInc/Triplex-db-experiments.git /var/tmp/triplex-demo-src && cd /var/tmp/triplex-demo-src && [[ $(git rev-parse HEAD) == <COMMIT> ]]` | 1 min |
+| T+1 | server | `[[ -z $(docker ps -q) ]] && df -BG /var/tmp && export PATH=<the server's bootstrap build>/tools/bin:$PATH` (on server 2, the `tools/bin` the first slot used) | seconds |
+| T+1 | server | `DEMO_ORIGINAL=/mnt/triplex-scale1-held-age/calibrated-post-ladder/cluster DEMO_HANDOFF=/var/tmp/triplex-scale1/age-v01-bulk-c/rung/1000000000/aged-scorecard.json bash demo/server-up.sh 2>&1 \| tee /var/tmp/triplex-demo-up-2.log` (state stays under `/var/tmp/triplex-demo`; a working copy left there is replaced only with `--reset`, so add `--reset` if one exists) | 3 min (first slot: 169 s) |
+| T+4 | Mac | `git -C <demo checkout> pull --ff-only && bash demo/connect.sh` | 10 s |
+| T+5 | Mac | `(cd examples/demo-mcp && node src/proof.ts --json ~/Claude/Projects/triplex-db-2/demo-1b/proof-1b-2.json)` | 1 to 2 min |
+| T+7 | Mac | `bash demo/disconnect.sh` | seconds |
+| T+7 | server | `bash demo/server-down.sh --delete-work` | 20 s |
+| T+8 | Mac | `git add demo/EXAMPLES.md && git -c user.name='Triplex Lab' -c user.email=noreply@anthropic.com commit -m 'Fill the worked examples from the 1 billion database (second slot)' && git push origin exp/DX-DEMO1-billion-demo` | seconds |
+
+**Ready line:** `head=28309866 records=1000251169 t=62888918`, as in the first slot.
+
+**Predictions for the calls that change (gateway ms):**
+
+| Call | First slot | Predicted |
+| --- | ---: | --- |
+| `list_accounts` (now the checked roster plus one basis call) | 220.64 | 1 to 10 |
+| `field_history`, subject 1 (no loader saves), cold | not run | 2 to 40 |
+| `field_history`, subject 0 (about 1,411 loader saves), cold | 4,404.67 | 3,000 to 6,000 |
+| `field_history`, subject 0, after the save (warm) | 225.21 | 150 to 400 |
+| every other call | as measured | within 2 times the first slot's figure |
+
+**What would show the explanation wrong:** subject 1's history read takes over 200 ms cold (then the cost is not the entity's own history), or subject 0's cold read is under 500 ms (then the first slot's 4.4 s was something else, such as a cold peer just after start).
+
+## First slot (ran 2026-11-23 on server 2, passed)
 
 Run on the rented machine that already holds the sealed cluster, after its measurements end and before it is deleted. Nothing is fetched. The machine is used for about 25 minutes, with 5 minutes of slack. `<COMMIT>` is the demo branch commit named in the launch message; `<ADDRESS>` stays in the private brief and in `~/.triplex-demo/server` on the Mac.
 
@@ -12,7 +43,7 @@ Run on the rented machine that already holds the sealed cluster, after its measu
 | T+2 | server | `DEMO_ORIGINAL=/mnt/triplex-scale1-held-age/calibrated-post-ladder/cluster DEMO_HANDOFF=/var/tmp/triplex-scale1/age-v01-bulk-c/rung/1000000000/aged-scorecard.json bash demo/server-up.sh 2>&1 \| tee /var/tmp/triplex-demo-up.log` | 8 to 14 min: bootstrap check under 10 s; copy 3 to 8 min; start 1 to 4 min; identity 1 to 3 min |
 | T+15 | Mac | `echo <ADDRESS> > ~/.triplex-demo/server && bash demo/connect.sh` | 10 s |
 | T+16 | Mac | `mkdir -p ~/Claude/Projects/triplex-db-2/demo-1b && (cd examples/demo-mcp && node src/proof.ts --json ~/Claude/Projects/triplex-db-2/demo-1b/proof-1b.json)` | 1 to 3 min |
-| T+19 | Mac | optional: `bash demo/inspect.sh --page`, open http://127.0.0.1:28580/, load account-003 member 0, apply one save; stop it with Ctrl-C | 2 min |
+| T+19 | Mac | optional: `bash demo/inspect.sh --page`, open http://127.0.0.1:28580/, load account-003 subject 0, apply one save; stop it with Ctrl-C | 2 min |
 | T+21 | Mac | `bash demo/disconnect.sh` | seconds |
 | T+21 | server | `bash demo/server-down.sh --delete-work` (removes the 177 GB copy; the original is untouched) | 1 to 2 min |
 | T+23 | server | `scp` or `cat` `/var/tmp/triplex-demo-up.log` and `/var/tmp/triplex-demo/state/evidence/` to the Mac evidence folder `evidence/DX-DEMO1/` (compressed) | 1 min |
@@ -26,25 +57,25 @@ The Mac checkout must be the demo branch with `pnpm install` done and `@triplex-
 
 ## Predictions, written before the run
 
-Gateway time (`serverMs`, the store's own time) per tool. The first call after start is cold (PostgreSQL pages and the peer caches are empty); the rest of the run is warm for the same person. Round trip adds about two Mac-to-Dallas round trips per request (40 to 70 ms each), so it is not the store's time.
+Gateway time (`serverMs`, the store's own time) per tool. The first call after start is cold (PostgreSQL pages and the peer caches are empty); the rest of the run is warm for the same subject. Round trip adds about two Mac-to-Dallas round trips per request (40 to 70 ms each), so it is not the store's time.
 
 | Tool | Predicted gateway ms |
 | --- | --- |
 | `database_summary` | 1 to 5 |
 | `list_accounts` (10 entities) | 5 to 60 |
-| `find_people` (5 roots) | 5 to 80 |
-| `read_person`, cold (about 160 facts in about 35 entities) | 30 to 400 |
+| `find_subjects` (5 roots) | 5 to 80 |
+| `read_subject`, cold (about 160 facts in about 35 entities) | 30 to 400 |
 | `field_history` | 5 to 100 |
-| `read_person_at` (three reads at one cut) | 30 to 500 |
+| `read_subject_at` (three reads at one cut) | 30 to 500 |
 | `change_feed` (5 transactions, aged history and new saves) | 5 to 100 |
 | `save_facts` (about 6 requests; the transact alone 15 to 150) | 50 to 400; the first save after start up to 2,000 |
 | `correct_past_value`, `retire_fact` | 50 to 400 |
-| `read_many_people` (16 people, cold) | 100 to 1,500 |
-| `read_person` again, warm | 2 to 20 |
+| `read_many_subjects` (16 subjects, cold) | 100 to 1,500 |
+| `read_subject` again, warm | 2 to 20 |
 
 **What would show these wrong:**
 
-- **The store is slower than the scorecard implies:** a warm `read_person` above 200 ms, or a warm save's transact above 1 s with nothing else running. The quiet save p99 forecast at this size is 75 ms (PREP1 cache arm).
+- **The store is slower than the scorecard implies:** a warm `read_subject` above 200 ms, or a warm save's transact above 1 s with nothing else running. The quiet save p99 forecast at this size is 75 ms (PREP1 cache arm).
 - **The compatibility rule is incomplete:** the change feed across the loader's history (example 9) throws "Journal position payload must be null" or "Noncanonical row text header". The Mac toy was aged by AGE1's own code and passed, so a failure here means the server's rows differ from the toy's.
 - **Removal:** the gateway accepts the protection declaration in example 14. It refused on the toy (ProtectedScopeNeedsMigration); acceptance would mean the 1 billion scope is in a different state from the handoff's description.
 - **Any exactness check fails:** the proof stops at the first failed check and names it.
