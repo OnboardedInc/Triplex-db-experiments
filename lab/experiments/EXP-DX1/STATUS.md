@@ -4998,3 +4998,23 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Predictions, random subjects:** 900 to 2,200 reads/s (central 1,400), p50 115 to 285 ms, p99 170 to 450 ms (central 270), 1.3 to 2.3 storage loads per subject, object-cache hit share 0.78 to 0.90. **The 100 ms p99 bar is predicted not met for random subjects.**
 - **Model's sizing for the bar with random subjects:** about 3,600 reads/s needed; about 7 reader cores (5 to 10) against 3 now, so a second reader or a reader on its own machine; no affordable cache covers the working set (0.7 to 1.1 TB; 3 GiB covers under 0.5%). Refuters: 2,800 reads/s or more or 0.5 loads per subject or fewer (then a 12 to 24 GiB cache could meet it); CPU per subject under 0.8 ms; under 900 reads/s with the reader under 1.8 cores (then storage latency is the limit).
 - **Running (3):** two drivers, console builder B.
+
+### 2026-11-23 18:43 local: Publish at 100,000 subjects, small release: first release settled in 19.2 min, 20 of 20 inside 1 s at 3.5/s; stopped at a read-basis assertion under per-save credits (4 agents running)
+
+- **Second machine, INT1 `4e64e0d97`** (`origin/exp/DX-BM1-bare-metal` `751948a82`, `bm1/PUBLISH100K-READING.md`; evidence `evidence/DX-BM1/bench4/bench4-publish100k/`), 23:10:12 to 23:40:44 UTC, fresh template copy.
+
+  | Measure | Forecast | Measured |
+  | --- | --- | --- |
+  | First release: first correct answer | none | 133 ms (cold) |
+  | First release: changed values stored | 16 to 40 min | 14.5 min, 955,902 changes (about 1,095/s) |
+  | First release: notices recorded | 20 to 45 min | 19.2 min, 14,300 entries (about 12.4/s) |
+  | Whole-turn credits, 3.5 saves/s: first-correct p50 / p99 | 25 to 70 / 60 to 180 ms | 31.6 / 93.8 ms |
+  | Same: answers inside one second | 20 of 20 | 20 of 20, 0 missed |
+  | Same: Publish durability p50 / p99 | none | 17.8 / 70.4 ms |
+  | Live saves p99 during the Publish window (control) | none | 13.5 ms (13.6) |
+  | Live pinned reads p99 during the Publish window (control) | none | 6.3 ms (27.3) |
+
+- **Stopped** in the per-save-credits Publish window at 3.5/s: `actv-lazy/join/held-campaign.ts` line 417 (`verifyRead`): `assert(b.tx >= r.position && b.validTime === validTime)`. Either a read answered at a basis older than an acknowledged release (a store fault) or the probe is paired with the wrong release (a runner fault). Not yet known. The 23.5 and 39.4 windows in both modes are unjudged.
+- **Builder resumed** (the large-release builder, same runner) to prove which, due 20:15, publishing on `exp/DX-ACT3-large-release`; the assertion is to record its values and a failed window is to stop hiding later windows.
+- **Large release (20 forms, 20 policies, `a54dfca31`)** started 23:41:45 UTC on the same machine; it may stop at the same check; its first release and whole-turn window compare directly.
+- **Running (4):** two drivers, console builder B, the Publish diagnosis builder.
