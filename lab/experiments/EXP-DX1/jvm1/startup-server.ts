@@ -19,6 +19,7 @@ import { stackOptions } from "../v01/profile.ts";
 import { cleanSource, verifyBuild } from "../v01/source.ts";
 import { coldStartLog, creditModes, launchProfile, type CreditMode } from "./launch.mjs";
 import { summarizeOffers } from "./cold-windows.mjs";
+import { openColdWriter } from "./cold-open.ts";
 import { agedAdmission, agedPredecessor, type AgedAdmission } from "./startup-aged.ts";
 
 // [DX-JVM1] Why: time the first window after a restart of the three JVMs on storage that carried traffic, so the log tail
@@ -235,16 +236,13 @@ for (const arm of arms) {
     // Traffic before the restart: unmeasured, it defines the active set, as production traffic before a restart does.
     let writer = new DatomicClient(`http://${started.engines["gw-w"]!.address}:8080`, 35000);
     let reader = new DatomicClient(`http://${started.engines["gw-r"]!.address}:8080`, 35000);
-    const writeOptions = async (position: number) => {
-      const initial = await writer.begin(seed.scope.db);
-      await writer.release(seed.scope.db, initial.handle);
-      assert.equal(initial.position, position);
-      const options = await writer.request<any>("GET", "/v1/db/" + seed.scope.db + "/write-options");
-      assert.deepEqual([options.attempt, options.database, options.position, options.rowsVersion,
-        options.strictRecordClocks, options.subjectSave, options.subjectNumericOwner, options.subjectOrderedIds,
-        options.subjectPrefetch], [attempt, seed.scope.db, position, 3, true, true, true, true, false]);
-      // Same check as cold-server.ts; the subjectFunction repair on the one branch applies here as well.
-      assert.match(options.subjectFunction, /^:triplex\.subject\/v-[a-f0-9]{24}$/);
+    // [DX-INT1 ef4513658] The held copy was sealed by an older build: opening the scope installs this build's ordered
+    // per-person function (a native write at no logical position), then the unchanged write-options checks apply.
+    // Here it opens once before the traffic that precedes the restart (the install), and again after the restart in
+    // every arm, before the start-up read and before admission, so stop-to-admission counts it the same in both arms.
+    const writeOptions = async (position: number, label: string) => {
+      const { options, scopeOpen } = await openColdWriter(writer, { db: seed.scope.db, name: seed.scope.name, cut: position }, attempt);
+      jsonFile(path.join(dir, `scope-open-${label}.json`), { source, slot, attempt, ...scopeOpen });
       return options;
     };
     let pre: Awaited<ReturnType<typeof play>>;
@@ -267,7 +265,7 @@ for (const arm of arms) {
       } };
     });
     try {
-      await writeOptions(head0);
+      await writeOptions(head0, "before-traffic");
       const agedLive = aged ? await aged.checkLive(reader, tapePeople) : null;
       if (agedLive) jsonFile(path.join(dir, "aged-live.json"), agedLive);
       const preStart = now() + 200;
@@ -287,10 +285,12 @@ for (const arm of arms) {
     // The restart and, in the start-up read arms, the one-time read. Admission opens only after both.
     const restarted = await restartJvms(slot, trace, read, armDeadline - 8 * 60_000);
     const engines = restarted.engines;
-    const readReport = read ? await startupReadStep(slot, trace, seed.scope.db, attempt) : null;
-    const admittedAt = now();
     writer = new DatomicClient(`http://${engines["gw-w"]!.address}:8080`, 35000);
     reader = new DatomicClient(`http://${engines["gw-r"]!.address}:8080`, 35000);
+    const options = await writeOptions(preHead, "after-restart");
+    const openedAt = now();
+    const readReport = read ? await startupReadStep(slot, trace, seed.scope.db, attempt) : null;
+    const admittedAt = now();
     for (const s of senders) { s.client = writer; s.scope = { ...s.scope, cut: preHead }; }
     const inspectBytes = execFileSync("docker", ["inspect", ...Object.values(engines).map((e) => e.id)]);
     fs.writeFileSync(path.join(dir, "containers.json"), inspectBytes, { flag: "wx" });
@@ -307,12 +307,11 @@ for (const arm of arms) {
       const counterStamp = JSON.parse(fs.readFileSync(countersReady, "utf8"));
       assert.deepEqual([counterStamp.slot, counterStamp.source, counterStamp.attempt], [slot, source, attempt]);
       for (const [role, engine] of Object.entries(engines)) assert.equal(counterStamp.roles[role].id, engine.id);
-      const options = await writeOptions(preHead);
       const javaPids = readRoles.map((role) => javaPid(slot + "-" + role));
       assert(javaPids.every((pid) => readerThreads(pid).length === 0), "A start-up reader thread exists at admission");
       assert(!stopped && Date.now() + 6 * 60_000 < armDeadline, "Not enough time after the restart");
       const start = now() + 200;
-      jsonFile(path.join(dir, "start.json"), { source, slot, attempt, startedAt, restart: restarted.times, admittedAt, start });
+      jsonFile(path.join(dir, "start.json"), { source, slot, attempt, startedAt, restart: restarted.times, openedAt, admittedAt, start });
       const writes = await play(senders, postTape, start, attempt, true, true, creditModeSelection(creditMode), undefined, false,
         { ramp: false, stopped: () => stopped || Date.now() + 45_000 >= armDeadline });
       const readersAfter = javaPids.flatMap((pid) => readerThreads(pid));
@@ -357,7 +356,8 @@ for (const arm of arms) {
           stopSeconds: (t.stoppedAt - t.stopAt) / 1000,
           transactorReadySeconds: (t.transactorReady - t.stoppedAt) / 1000,
           gatewaysReadySeconds: (t.gatewaysReady - t.stoppedAt) / 1000,
-          startupReadSeconds: readReport ? (admittedAt - t.gatewaysReady) / 1000 : 0,
+          scopeOpenSeconds: (openedAt - t.gatewaysReady) / 1000,
+          startupReadSeconds: (admittedAt - openedAt) / 1000,
           admittedSeconds: (admittedAt - t.stoppedAt) / 1000,
           firstAcknowledgementSeconds: (firstAck - t.stoppedAt) / 1000,
         },
