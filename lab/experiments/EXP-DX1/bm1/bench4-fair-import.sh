@@ -10,9 +10,12 @@ selection=$2
 pin=$3
 mode=${4:-run}
 [[ $root == /var/tmp/triplex-bm1/bench4 && $EUID == 0 && $(systemd-detect-virt) == none ]]
-[[ $selection =~ ^fair-(yield|heap)[a-z0-9-]*$ && $pin =~ ^[a-f0-9]{40}$ ]]
+[[ $selection =~ ^fair-(yield|heap|memidx)[a-z0-9-]*$ && $pin =~ ^[a-f0-9]{40}$ ]]
 # [DX-BM1] Why: the heap arm (load1/HEAP-ARM-SERVER.md) adds a 32 GiB transactor cache and two cells to the same launch.
-if [[ $selection == fair-heap* ]]; then
+if [[ $selection == fair-memidx* ]]; then
+  # [DX-BM1] Why: the fewer-index-jobs filler (HEAP-ARM-SERVER.md at 0f12be1de): the heap arm plus a larger memory index.
+  arms=(--frame-facts 32 --import-policy yield --tx-cache 32768 --cells control,import --memory-index 512m,1536m)
+elif [[ $selection == fair-heap* ]]; then
   arms=(--frame-facts 32 --import-policy yield --tx-cache 32768 --cells control,import)
 else
   arms=(--frame-facts 32,40 --import-policy yield)
