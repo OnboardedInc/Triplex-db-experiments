@@ -1,5 +1,28 @@
 # Pinned-read probe on the 1 billion database
 
+**First answers.** (1) **A pin near the head is not slow:** 1,000 positions behind the head, a pinned read took 1.26 ms p50, against 31.86 ms at the old pin 87,002 (28.2 million positions back). The cost tracks the history after the pin. (2) **Segment loads per cold pinned read: 1 (p50; mean 1.19)**, and the repeat costs the same with 0 loads, so the cost is work the cache does not remove (candidate B), not leaf loading. The very first read of the pass loaded 77 segments. (3) **The revision short-cut returned 0 mismatches:** 584 of 600 reads were answered from the current database, 16 went the as-of route.
+
+Run on Server 2 at 20:12–20:18 UTC on 2026-11-23, with the builder's probe at `0688bd00f` (`exp/DX-RD1-readers`) against the scorecard checkout at `6770c37ba`, on a scratch copy of the sealed held cluster (copy 123 s, PostgreSQL and transactor active 21 s later). The copy was removed; the held source was not touched. **Only the `reader` pass ran.** The `bigcache` pass was refused at peer start: `:db.error/not-enough-memory (datomic.objectCacheMax + datomic.memoryIndexMax) exceeds 75% of JVM RAM`. A 12 GiB cache in a 16 GiB heap leaves no room for the memory index, so the wrapper's bigcache settings need a larger heap or a smaller cache. That is the builder's fix.
+
+## Reader pass: one core, 3 GiB heap, Datomic's default cache, pin 87,002, 600 reads per arm
+
+| Arm | Wall p50 / p99 ms | Thread CPU p50 ms | Allocation p50 MB | Segment loads per read, p50 (mean) | Route | Prediction |
+| --- | --- | ---: | ---: | --- | --- | --- |
+| `pinned`, cold | 31.86 / 88.89 | 29.26 | 72.8 | 1 (1.19); first read 77 | as-of, 600 | 38–55 ms; ≥ 8 loads under A |
+| `pinned-repeat` | 28.29 / 72.45 | 27.79 | 72.0 | 0 (0.00) | as-of | — |
+| `current` (head) | 0.20 / 4.06 | 0.20 | 0.3 | 0 (0.03) | source | 1–5 ms, under 3 MB |
+| `pinned-recent` (head − 1,000) | 1.26 / 21.27 | 0.63 | 1.0 | 1 (0.80) | as-of | within 30% of `pinned` |
+| `shortcut` | 0.21 / 51.31 | 0.21 | 0.3 | 0 (0.19) | source 584, as-of 16 | 70–90% from current; 0 mismatches |
+| `pinned-twice` (1,200 reads) | 28.61 / 76.80 | 28.03 | 72.0 | 0 (0.34) | as-of | second read under 10 ms under A |
+| `concurrent`, 16 threads, 60 s | 522.35 / 706.73 | 28.63 | 73.2 | 1 (1.87) | as-of | 18–26 reads/s |
+
+Arm totals: `concurrent` 1,819 reads in 60.24 s, **30.20 reads/s** with 60.23 s of process CPU (the core was saturated). Ten to sixteen of each arm's 600 people were edited by AGE1 after the pin. PostgreSQL during the pass: 36,353 TOAST block reads and 3,565 heap block reads.
+
+**Against the predictions.** `pinned` was faster than predicted (31.86 ms against 38–55) but still about 160 times `current`, so the falsifier (under 15 ms) did not trigger: the as-of read itself is the cost. Candidate A predicted many leaf loads and a cheap second read; neither happened (1 load, repeat as slow), so the result points to B. The recent pin was far cheaper than predicted, so the cost grows with the history after the pin, not with total history. The short-cut matched its prediction. Sixteen threads gave 30 reads/s, a little above the predicted 18–26 and well below 40, so the reader is CPU-bound, not waiting.
+
+Evidence: `evidence/DX-SCALE1/rd2-probe/rd2-out.tar.gz` in the private evidence folder (SHA-256 `119373f34013afdc7f08bed2cd77da99fe28daa128ebc1ca5a023757f03acba8`): per-read records, JFR profile, GC log, PostgreSQL counters, configuration and the wrapper log.
+
+
 Builder's probe `rd1/pinned-probe.clj` and `pinned-probe-server.sh` at `0688bd00f` (`exp/DX-RD1-readers`), run against the scorecard checkout at `6770c37ba` on a scratch copy of the sealed held cluster. Predictions below are copied from `rd1/PINNED-1B.md` at `df3cb07b4` before the launch.
 
 ## Predictions, written before the run (copied)
