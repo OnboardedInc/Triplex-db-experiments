@@ -146,7 +146,7 @@ Outputs per arm: `rolling6-yield32-{quiet,control,import}{,-raw}.json` and `roll
 
 ### The next step if the arm misses as forecast
 
-Fewer index jobs, not a different importer. Ten adoptions in five minutes cause both kinds of spell. Raising `memory-index-threshold` from 256m (with `memory-index-max` raised to match and heap headroom checked) should cut adoptions toward the control's rate of about three per five minutes. That is a transactor setting, not a change to Datomic. It needs its own arm and its own forecast, because a larger memory index lengthens each job and must not reach the maximum, where Datomic slows writers. The 48 GiB heap should be tested in the same arm, to settle whether the job-start stalls are a collector effect.
+Fewer index jobs, not a different importer. Ten adoptions in five minutes cause both kinds of burst. Section 10 forecasts and gates that arm (memory-index threshold 512m). Burst B is ZGC allocation stalls at job start (section 2). Its own lever is heap headroom, or a smaller object cache in the same heap, tested as a separate arm with its own forecast.
 
 ## 8. What the priority 8 bar means for a busy account, in numbers (for the owner)
 
@@ -159,6 +159,50 @@ The bar compares each live account's p99 under import with the same account's p9
 3. **Physical reads.** SQL counts requests to PostgreSQL, which may serve them from memory.
 4. **The quiet account's tail.** Its 11 slowest saves (of 1,050) split between the job-start stalls (5) and the first slow frames after adoptions (6). A reserved credit does not help with either, because the frame is already at the writer. So the yield rule helps the quiet account less than the busy ones.
 5. **Mac clocks.** The toy gate proves the rule and exactness only. Its clocks are diagnostic and say nothing about full-size latency.
+
+## 10. Optional third arm: fewer index jobs under import
+
+**Separate launch, separate fresh copy.** Code: `eb4e45acb`. Launch the commit that adds this section; arms 1 and 2 can run from `fcd416793` without it. One arm: rolling 6, yield, 32-fact frames, one importer credit. Only the transactor's `memory-index-threshold` and `memory-index-max` change, from 256m and 1g to **512m and 1536m**. Heap (24 GiB), object cache (16 GiB), cores, collector, durability and all other settings are unchanged. The launch refuses a threshold that is not above 256m, a maximum under twice the threshold, or more than one width. The transactor's startup log records the properties it read (`:transactor/start … :memory-index-threshold`), so the copy in `config/tx-startup.log` is the readback.
+
+```sh
+bash lab/experiments/EXP-DX1/load1/fair-server.sh \
+  "$(git rev-parse HEAD)" "$IMAGE" "$IMAGE_SHA256" "$TRANSFER_SHA256" \
+  "$PG_TEMPLATE" "$NEW_OUTPUT_3" --pg-data "$PG_COPY_3" --wal-dir "$WAL_COPY_3" \
+  --credit-mode rolling6 --import-credits 1 --frame-facts 32 --import-policy yield --memory-index 512m,1536m
+```
+
+The arm runs fifteen timed minutes (quiet, control, import), under 30 minutes in all with launch and checks; the 57-minute limit is unchanged. Outputs are `rolling6-yield32-mi512m-*`. Compare it with tonight's `rolling6-yield32` arm from the same template.
+
+**Toy gate passed at `eb4e45acb`** (Mac, `DX_LOAD2_MEMORY_INDEX=64m,128m`, two times the toy's 32m/96m, as the Mac transactor's heap is 288 MB). The one arm imported and verified 223 frames (7,136 facts) beside live saves, with 31 hold-backs and no grant beside a waiting save. It recovered the discarded durable response, acknowledged all 141 saves and 120 reads per cell, and left no containers or networks (`evidence/DX-LOAD2/load1/load-fair-be2b74d8-f893-4959-a384-c938805e0475`). This shows the setting is accepted and exactness holds. It says nothing about index-job timing, because the toy never fills its memory index.
+
+### Forecast, written before any run
+
+| What | Saturday at 256m / 1g (measured) | 512m / 1536m (this arm) | 1g / 2g (not run tonight) |
+| --- | ---: | ---: | ---: |
+| Memory-index fill with the import (Datomic's own measure) | about 9.5 MB/s (2.6 without import) | same | same |
+| Adoptions per 300 s import cell | 10 (every 26.5–29.6 s) | 5–6 (every 45–65 s); range 4–7 | 2–3 |
+| Index job length (transactor CPU above its floor) | about 16–21 s; next job starts about 7 s after an adoption | 28–40 s | 45–80 s |
+| Share of time an index job runs | about 74% | 55–75% | 40–75% |
+| Peak memory index during a job | about 0.45 GB | 0.78–0.89 GB, under the 1.5 GB maximum | 1.4–1.8 GB against a 2 GB maximum: writers slowed if a job runs past about 100 s |
+| Extra heap held by the memory index at peak | — | +0.3 to 1.3 GB | +1 to 4 GB: heap must grow, which is a second variable |
+| Burst A (after adoption) | 10 bursts, about 1.6 s of extra writer time each | 5–6 bursts, each 1.2–1.8 times as deep; total down 10–40% | 2–3 bursts, each up to 2–3 times as deep |
+| Burst B (ZGC allocation stalls of the writer thread) | 5 stalls, 698 ms in total, the longest 295 ms | 2–4 stalls, 400–1,000 ms in total, the longest 150–400 ms: about the same total, not a fix | fewer but longer; risk of an out-of-memory exit on a 24 GiB heap |
+| Worst-case log to replay at transactor start | about 200 MB (about 47 s of log at 4.3 MB/s) | about 380 MB | about 720 MB |
+| Replay time at the 7.6–47 MB/s seen in earlier logs | 4–26 s | 8–50 s | 15–95 s |
+| Busy save p99, second half | yield arm forecast about 78 ms | about 65 ms; range 40–100 | — |
+| Quiet loaded commit p99 | yield arm forecast about 45 ms | about 43 ms; range 35–52 | — |
+| Verified facts/s | yield arm forecast about 2,920 | 2,950–3,150 | — |
+
+**Why 512m and not 1g tonight.** Under import the memory index fills at about 9.5 MB/s, by Datomic's own measure. At 1g a 45 to 80 s job ends with 1.4 to 1.8 GB in memory, close to a 2 GB maximum where Datomic slows writers. That also adds 1 to 4 GB of live heap to an old generation that already reached 12 to 18 of 24 GB. Saturday's log shows ZGC already stalling allocation at job start with 27% of the heap free. So 1g needs a larger heap and container as well, two changes at once. 512m keeps the heap change small enough to leave the heap alone and test one variable.
+
+**Restart cost.** The transactor replays the log since the last adopted index before it serves (`:log/catchup` in its log). Saturday's import wrote 4.3 MB of log per second (1.0 without it). The worst case at a restart is the log written since the previous job began. Replay rates in earlier logs on this branch's evidence ranged from 7.6 to 47 MB/s (up to 39 MB in 2.2 s). The 60 s failover bar (priority 9) has room at 512m on the central rate and little at 1g. Tonight's arm measures no restart; adopt a larger threshold only after a restart test on the full-size copy.
+
+**What would show this forecast wrong.**
+
+1. Adoptions in the import cell outside 4 to 7: the fill-rate model is wrong.
+2. Second-half busy p99 not at least 10% below tonight's `rolling6-yield32` while adoptions halve: deeper bursts cancel fewer bursts, and the index-job count is not the lever.
+3. Writer-thread allocation stalls above 1,200 ms in total, or any single stall above 600 ms: a larger memory index worsens burst B on this heap. Do not go to 1g without more heap.
+4. Writers slowed by a full memory index, any refused or expired save, or an out-of-memory exit: the arm is invalid.
 
 ## Reproduce
 
