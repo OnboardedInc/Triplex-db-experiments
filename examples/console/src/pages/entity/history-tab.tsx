@@ -14,7 +14,7 @@ import { day, n, shortId, time } from "@/lib/format";
 import type { Fact, FieldHistory, HistoryRow } from "@/lib/types";
 import type { Target } from "./model";
 
-const chartConfig = { live: { label: "live", color: "var(--chart-2)" }, retracted: { label: "retracted", color: "var(--muted-foreground)" } } satisfies ChartConfig;
+const chartConfig = { live: { label: "live", color: "var(--primary)" }, retracted: { label: "retracted", color: "var(--muted-foreground)" } } satisfies ChartConfig;
 
 export function HistoryTab({
   target,

@@ -45,16 +45,18 @@ export function useEntityRead(target: Target | null, asSubject: boolean) {
   let entityType: string | undefined;
   if (viaEntity && entityQ.data) {
     const d = entityQ.data;
-    facts = asSubject && d.reach?.facts ? d.reach.facts : d.facts;
+    facts = asSubject && d.subject?.facts ? d.subject.facts : d.facts;
     entityType = d.entityType;
   } else if (subjectQ.data) {
     facts = subjectQ.data.facts;
   }
-  facts = facts.map((f) => ({ ...f, entity: full(f.entity, ns) }));
+  facts = facts.map((f) => ({ ...f, entity: full(f.entity, ns), recordedPosition: f.recordedPosition ?? f.position }));
   if (!asSubject && target) facts = facts.filter((f) => f.entity === target.entity);
+  const entities = viaEntity ? (asSubject ? entityQ.data?.subject?.entities : 1) : subjectQ.data?.entities;
   return {
     ...q,
     facts,
+    entities,
     entityType,
     via: viaEntity ? "read_entity" : viaSubject ? "read_subject" : null,
     /** The basis could not be passed to the tool, so the answer is at latest. */

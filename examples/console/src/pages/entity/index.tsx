@@ -25,7 +25,8 @@ export function EntityPage() {
   const target = targetOf(params);
   const tools = useTools();
   const { basis, reset } = useBasis();
-  const asSubject = search.get("subject") === null ? Boolean(target?.isRoot) : search.get("subject") === "1";
+  const asSubjectParam = search.get("subject") ?? search.get("asSubject");
+  const asSubject = asSubjectParam === null ? Boolean(target?.isRoot) : asSubjectParam === "1";
   const read = useEntityRead(target, asSubject);
   const tab = search.get("tab") ?? "facts";
   const selected = search.get("e") ?? target?.entity ?? "";
@@ -43,7 +44,7 @@ export function EntityPage() {
 
   if (!target) return <EmptyState title="No entity named." />;
   const ns = target.account ? `acct/${target.account}/` : "";
-  const entityCount = (read.data as { entities?: unknown } | undefined)?.entities !== undefined && typeof (read.data as { entities?: unknown }).entities === "number" && asSubject ? ((read.data as unknown as { entities: number }).entities) : new Set(read.facts.map((f) => f.entity)).size;
+  const entityCount = (asSubject ? read.entities : undefined) ?? new Set(read.facts.map((f) => f.entity)).size;
   const sub = target.subject !== undefined ? String(target.subject).padStart(8, "0") : "";
   const editable = (e: string) => tools.accepts("save_facts", "entity") || [`${ns}pl:${sub}`, `${ns}wk:${sub}`, `${ns}i9:${sub}`].includes(e);
   const title =
@@ -65,7 +66,7 @@ export function EntityPage() {
           <>
             <Mono className="text-muted-foreground">{target.entity}</Mono>
             <div className="flex items-center gap-2">
-              <Switch id="as-subject" checked={asSubject} onCheckedChange={(v) => set({ subject: v ? "1" : "0" })} />
+              <Switch id="as-subject" checked={asSubject} onCheckedChange={(v) => set({ subject: v ? "1" : "0", asSubject: undefined })} />
               <Label htmlFor="as-subject">Read as subject</Label>
             </div>
             <Button size="sm" onClick={() => setSheet({ entity: selected, attribute })} disabled={!editable(selected)} data-testid="change-fact">

@@ -14,7 +14,7 @@ export function Refused({ reason, title = "Refused", children }: { reason: React
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription>
         <div className="space-y-2">
-          <div>{reason}</div>
+          <div>{typeof reason === "string" ? reason.replace(/^Refused[.:]\s*/, "") : reason}</div>
           {children}
         </div>
       </AlertDescription>

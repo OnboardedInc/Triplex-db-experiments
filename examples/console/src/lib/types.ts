@@ -11,16 +11,21 @@ export type Fact = {
   recordedAt: string | null;
   id: string;
   recordedPosition?: number;
+  position?: number;
+  entityType?: string | null;
+  txId?: string;
 };
 export type ReadSubject = { account: string; subject: number; subjectId: string; entities: number; factCount: number; facts: Fact[] };
 export type ReadEntity = {
   entity: string;
   entityType: string;
+  kindFromId?: string;
+  note?: string;
+  number?: number;
+  factCount?: number;
   facts: Fact[];
-  reach?: { entities: number; facts: Fact[] };
+  subject?: { root: string; entities: number; factCount: number; facts: Fact[] };
   account?: string;
-  subject?: number;
-  subjectId?: string;
 };
 export type Summary = {
   kind: string;
