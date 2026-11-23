@@ -13,7 +13,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 const lab = "lab/experiments/EXP-DX1/age1";
 
 async function inner() {
-  const { startRestoreTransactor, redact } = await import("/age/" + lab + "/readback.mjs");
+  const { startRestoreTransactor, redact, listening } = await import("/age/" + lab + "/readback.mjs");
   const { PGPASS: password, PGHOST: pg } = process.env;
   const outDir = "/tmp/out";
   const result = {};
@@ -30,7 +30,8 @@ async function inner() {
   const fd = fs.openSync(txLog, "w");
   const tx = spawn("/opt/datomic/bin/transactor", ["-Xms256m", "-Xmx512m", primary], { stdio: ["ignore", fd, fd], detached: true });
   const t0 = Date.now();
-  while (!fs.readFileSync(txLog, "utf8").split("\n").some((l) => l.startsWith("System started"))) {
+  while (!fs.readFileSync(txLog, "utf8").split("\n").some((l) => l.startsWith("System started")) ||
+    !(await listening("127.0.0.1", 4334))) {
     assert(Date.now() - t0 < 180000 && tx.exitCode === null, "primary transactor did not start");
     await sleep(500);
   }

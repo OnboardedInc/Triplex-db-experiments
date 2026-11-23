@@ -9,6 +9,7 @@ import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
+import { listening } from "./readback.mjs";
 
 const [out, ageCheckout, controller, networkFrom] = process.argv.slice(2);
 const here = import.meta.dirname;
@@ -123,7 +124,11 @@ try {
   fs.closeSync(fd);
   txDone = new Promise((resolve) => tx.once("exit", resolve));
   const txStart = Date.now();
-  while (!fs.readFileSync(txLog, "utf8").split("\n").includes("System started")) {
+  // [DX-AGE1] Why: the transactor writes its storage location about ten seconds after "System started", then listens.
+  // Rejected: starting peers on the startup line, which fails with read-transactor-location-failed.
+  const txHost = /^host=(\S+)$/m.exec(properties)?.[1], txPort = Number(/^port=(\d+)$/m.exec(properties)?.[1] ?? 4334);
+  assert(txHost);
+  while (!fs.readFileSync(txLog, "utf8").split("\n").includes("System started") || !(await listening(txHost, txPort))) {
     assert(Date.now() - txStart < 180000 && tx.exitCode === null, "Measurement transactor did not start");
     await sleep(1000);
   }

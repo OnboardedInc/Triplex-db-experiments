@@ -49,7 +49,7 @@ export function restoreTransactorProperties({ template, primary, jdbc, uriTempla
   return { text, host: live.host, port: port + 1, primaryPort: port };
 }
 
-const listening = (host, port) => new Promise((resolve) => {
+export const listening = (host, port) => new Promise((resolve) => {
   const socket = net.connect({ host, port });
   socket.setTimeout(2000);
   socket.once("connect", () => { socket.destroy(); resolve(true); });
@@ -105,7 +105,12 @@ export async function startRestoreTransactor({ home, java, extClasspath, primary
       assert(Date.now() - started < 180000, "The restore transactor did not start within 180 s");
       await sleep(500);
     }
-    assert(await listening(props.host, props.port), "The restore transactor is not listening on its port");
+    // The transactor writes its location to storage before it listens, and only then can a peer connect.
+    while (!(await listening(props.host, props.port))) {
+      assert(child.exitCode === null && child.signalCode === null, "The restore transactor exited during startup");
+      assert(Date.now() - started < 180000, "The restore transactor did not listen within 180 s");
+      await sleep(500);
+    }
   } catch (error) {
     await stop().catch(() => {});
     throw error;
