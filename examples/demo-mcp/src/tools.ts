@@ -6,6 +6,7 @@
 // Rejected: per-surface wrappers (the first demo had one in mcp.ts and another in page.ts, and they drifted).
 import { statSync } from "node:fs";
 import { z } from "zod";
+import { runQuery } from "./query.ts";
 import { createEntity, listEntities, readEntity, resolveBasis, typingFor } from "./entities.ts";
 import { defineEntityType, describeEntityType, listEntityTypes, listReleases, moveLive, VALUE_TYPES } from "./releases.ts";
 import { caller, Demo, DemoError, entityKinds, stateFile, type Actor } from "./store.ts";
@@ -344,6 +345,32 @@ export const tools: Tool[] = [
     route: (a, out) => routes.entity(String(out["entity"]), { tab: "history", attribute: a.attribute }),
   }),
   tool({
+    name: "query",
+    title: "Ask a question in Triplex Datalog",
+    group: "Questions",
+    sentences: ["Which tasks of subject 50000 are not complete?"],
+    description:
+      "Run a Triplex Datalog query (the public DatalogQuery JSON: find, where, and optionally aggregate, having, orderBy, limit, offset, rules) against one subject (default; pulled in one request, then evaluated by Triplex's in-memory engine, so joins, not, or, aggregates and recursive rules work), up to 16 subjects at one identical position, or the store directly (only when every where clause names a literal entity or compares values). Questions that would read every record are refused before anything is sent, with the reason. Exact integers are evaluated as numbers inside 53 bits." +
+      ' Example: {"query": {"find": ["?task"], "where": [["?p", ":placement/task", "?task"], ["not", ["?task", ":task/status", "complete"]]]}, "from": {"subject": {"account": "account-003", "subject": 50000}}}',
+    input: {
+      query: z.record(z.string(), z.unknown()).describe("Triplex Datalog JSON, e.g. { find: [\"?v\"], where: [[\"acct/account-003/i9:00000000\", \":task/status\", \"?v\"]] }"),
+      from: z
+        .union([
+          z.literal("store"),
+          z.object({ subject: z.object({ account: account.optional(), subject: subject.optional(), root: z.string().optional() }) }),
+          z.object({ subjects: z.object({ account, subjects: z.array(z.number().int().min(0)).min(1) }) }),
+        ])
+        .describe('{ subject: { account, subject } } (or { subject: { root } }), { subjects: { account, subjects: [...] } } (at most 16), or "store"'),
+      basis,
+      pageSize: z.number().int().min(1).max(1000).default(100),
+      cursor: z.string().optional().describe("The cursor of the previous page; the next page is read at the same position"),
+      explain: z.boolean().default(false).describe("Include the plan"),
+    },
+    changes: false,
+    run: (d, a) => runQuery(d, a as never),
+    route: () => routes.query(),
+  }),
+  tool({
     name: "save_facts",
     title: "Save facts",
     group: "Changes",
@@ -486,6 +513,11 @@ export async function runTool(name: string, rawInput: unknown, actor: Actor, dem
   if (!t) throw new DemoError("UnknownTool", `No tool named ${name}`);
   const input = z.object(t.input).parse(rawInput ?? {});
   const out = (await caller.run({ actor }, () => t.run(demo, input as never))) as Record<string, unknown>;
+  // Work the console did itself is counted apart from the store's time (DESIGN.md 7.3).
+  if (typeof out["consoleMs"] === "number" && out["timing"]) {
+    out["timing"] = { ...(out["timing"] as object), consoleMs: out["consoleMs"] };
+    delete out["consoleMs"];
+  }
   return { ...out, database: databaseOf(demo), consoleUrl: consoleOrigin() + t.route(input as never, out) };
 }
 

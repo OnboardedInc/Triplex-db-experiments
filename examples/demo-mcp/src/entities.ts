@@ -34,6 +34,10 @@ export async function resolveBasis(demo: Demo, basis: Basis = {}) {
   const validAt = basis.validAt === undefined ? Date.now() : instant(basis.validAt, "validAt");
   if (basis.recordedAt !== undefined) {
     const recordedAt = instant(basis.recordedAt, "recordedAt");
+    const first = Number(demo.connection.clocks?.["seedRecordedAt"] ?? NaN);
+    const last = demo.connection.lastRecordedAtBringUp ?? Number(demo.connection.clocks?.["lastRecordedAt"] ?? NaN);
+    if (Number.isFinite(first) && recordedAt < first)
+      throw new DemoError("RecordTimeOutOfRange", `This database's record time runs from ${iso(first)} to ${iso(last)}. The loader ran its record clock about a year ahead.`);
     return { wire: { recordedAt, validAt }, words: `recorded at ${iso(recordedAt)}, valid ${basis.validAt === undefined ? "now" : iso(validAt)}`, latest: false, position: undefined as number | undefined };
   }
   const head = (await demo.head()).position;
