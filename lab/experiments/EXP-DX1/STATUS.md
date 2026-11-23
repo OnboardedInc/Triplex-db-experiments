@@ -4944,3 +4944,18 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Reading:** the cache alone gives +33% at 394 and nothing at 620; per-save credits give a further +19% at 394 and +27% at 620 and cut the quiet account's loaded p99 by half or more in every cell. Part 3's 620 cell (238.61) was below its predicted 300 to 560. Falsifier 3 (whole-turn within 5% of per-save) did not fire.
 - **Card lines not met:** P1 at 256 seats (checked field read p99 12,255 ms, 0 errors from 1 to 256 seats; reader unchanged in this card); P6 rows PARTIAL because the card wants 500 verified commits per side and the 90 s cells give fewer.
 - **Server 2 next:** tuned pinned arm (`64c70e549`), then the production-S card at 1 billion.
+
+### 2026-11-23 18:11 local: tuned pinned reader at 1 billion: 256 seats p99 72 ms near the head and 83 ms at the old pin, zero wrong values (5 agents running)
+
+- **Server 2, `origin/exp/DX-RD1-readers` `64c70e549`, done 23:10 UTC** (driver's message; publication on `origin/exp/DX-SCALE1-deep-accounts` follows). Three reader cores, 3 GiB read cache, three permits, both pinned options, client batches of up to eight subjects per exchange (mean batch 8.0 in every step), `server` profile, ladder only (no save load in the window).
+
+  | Seats | Near the head (head minus 1,000) | Old pin (87,002) | Prediction near the head |
+  | ---: | --- | --- | --- |
+  | 64 | 5,467 reads/s | 3,690 reads/s | none |
+  | 256 | 12,375.9 reads/s, p50 18.43 ms, p99 72.19 ms | 10,598.8 reads/s, p50 20.10 ms, p99 83.46 ms, 98.0% from the current database | 3,800 (2,800 to 4,800), p50 53 to 90, p99 90 to 155 |
+  | 1,024 | 1,482 reads/s, p50 668 ms | 1,213 reads/s, p50 823 ms | none |
+
+- **Zero wrong values and zero errors in all six steps.** The falsifier "over 6,000 reads/s at 256 seats near the head" fired, in the fast direction: the forecast model undercounted what batching gives (to be read from the step records).
+- **P1's 100 ms p99 at 256 readers is met in this arm at 1 billion at both pins.** Not yet shown: the same with the fixed save load running (the bar's condition), with the `server-32` profile (the tuned reader plus `server-32` is 4 GiB over the role caps), and for a whole-subject pull instead of one field.
+- **1,024 seats collapses** to below the 64-seat rate (1,482/s, p50 668 ms). Stress level, no bar; cause unknown (candidates: three permits against 1,024 queued Jetty threads, the request trace writing every slow request, client batching no longer filling).
+- **Since this afternoon at 256 seats, old pin:** 20.75 reads/s (unchanged reader, card) → 478.80 (both options, one core) → 10,598.8 (three cores, batches of eight).
