@@ -42,3 +42,22 @@ This settles the open question in `NEIGHBOURS-SERVER.md` §8.1: **the job-start 
 On the Mac: `evidence/DX-BM1/bench4/bench4-fair-yield/` holds `summary.tar.zst` (3,474,588 bytes) and `raw.tar.zst` (103,073,017 bytes, 75 files), checked member by member against `TRANSFER.json`. They include `prep1-gc-tx.log` and `tx-jvm.log` (summary), and `prep1-native.ndjson` and `tx.jsonl` (raw).
 
 Running cost of bench 4 at 13:55 EST: about USD 3.35 (USD 1.09/hour from 15:47 UTC).
+
+## Heap arm: the same import with the 32 GiB transactor cache (48 GiB heap), LOAD2 `96b16e759`
+
+**The collector stalls are gone, and every forecast held.** The run (`load1/HEAP-ARM-SERVER.md`) used yield, 32-fact frames, one importer credit, rolling 6 and `--tx-cache 32768`, with a control cell then an import cell on one fresh copy. It ran from 19:21:03 to 19:38:09 UTC. Its stack-level dry run was ADMITTED. The launcher exited 0, `importGrantsBesideLiveQueue` was 0, and the yield rule held back 11,828 times.
+
+| Measure | Forecast | Measured |
+| --- | --- | ---: |
+| Writer ZGC allocation stalls, import cell | 0–2, none over 150 ms | **0** (no thread stalled; no single-writer stall ≥ 100 ms) |
+| Writer allocation stalls, control | 0 | **0** |
+| Control busy second-half p99 | 9–14 ms | 9.7 ms |
+| Import busy second-half p99 | 30–50 ms (about 3.3× the control) | **45.1 ms** (4.6× the control; worst account 47.2 ms) |
+| Quiet loaded commit p99, whole | 25–40 ms | 39.0 ms (second half 46.2) |
+| Verified facts/s, whole (second half) | 3,150–3,500 | **3,321 (3,094)** |
+
+**Against the P8 bar.** The import clears 3,000 facts/s in both halves, and the quiet account stays under 50 ms. The busy accounts' second-half ratio is 4.90× against a clean 9.9 ms baseline, so the 1.5× bar is still missed. The worst second-half read ratio is 1.59×. Over the whole window the busy and read ratios read 0.03× and 0.10× only because the control's first half had a cold-start spell (busy p99 1,770 ms, all of it waiting for a credit).
+
+**What sets the tail now: the post-adoption spell (spell A).** 97% of the slowest 1% of second-half saves fall within 6 s of an index adoption. Those saves wait 28 ms for a credit and 23 ms in the transactor queue behind slow post-adoption frames. Settled busy saves apply in 0.65 ms with 0.04 SQL reads per save. So the bigger heap removed spell B (the collector), which today's first run showed set the 24 GiB tail. The remaining tail is index adoption itself. That is the fewer-index-jobs arm's target (11 adoptions in 300 s against 2 in the control).
+
+**Autovacuum and WAL were not captured for this run.** The sampler's file was not executable, so it never started. This was found and fixed before the next run. Evidence: `evidence/DX-BM1/bench4/bench4-fair-heap/` on the Mac, with `prep1-gc-tx.log`, `tx-jvm.log`, `prep1-native.ndjson` and `tx.jsonl`.
