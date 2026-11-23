@@ -13,6 +13,7 @@ import { stackOptions, writeDiagnostics, type Age, type JvmProfile, type Writer 
 import { cleanSource, verifyBuild } from "./source.ts";
 import { openPreparedLadder, sealedArm } from "../rd1/prepared.ts";
 import { firstOffer } from "../ha1/first-offer.ts";
+import { agedCut } from "../prep1/ceiling-seed.ts";
 
 // [DX-THIN1] Why: the realistic card replaced adopted-server.ts with its staged three-arm runner and command line.
 // This file keeps the read-study and append-retirement pair runners exactly as gated on INT1 before that merge.
@@ -46,11 +47,16 @@ const pinnedPair = process.env.DX_RD2_PINNED_PAIR === "1";
 // cache, the early filter) with client batches of eight, admitted from the held aged copy like the pinned pair.
 // Rejected: the read study's own tuned arm, which admits only the fresh seal and needs a control ladder first.
 const pinnedTuned = process.env.DX_RD2_PINNED_TUNED === "1";
-const pinnedTunedPolicy = pinnedTuned ? launchProfile("server", { ...launchOptions, readTuned: true, readCacheMiB: 3072 }) : undefined;
-if (pinnedTuned) assert(!tuned && !retirement && !pinnedPair && writer === "per-person-ordered" && age === "1B",
+// [DX-RD3] Why: P1's bar holds with the fixed save load running; the tuned pinned reader runs inside the card's 394
+// shape S cell (production-shaped tape, one commit per subject's save) and, if time remains, beside the 3.5 saves/s
+// quiet stream, on one stack admitted exactly as the tuned arm. Rejected: a new save runner (the card's checks judge
+// these saves) and a second stack per window (each window's first cut is the previous window's terminal).
+const pinnedSaves = process.env.DX_RD3_PINNED_SAVES === "1";
+const pinnedTunedPolicy = pinnedTuned || pinnedSaves ? launchProfile("server", { ...launchOptions, readTuned: true, readCacheMiB: 3072 }) : undefined;
+if (pinnedTuned || pinnedSaves) assert(!tuned && !retirement && !pinnedPair && !(pinnedTuned && pinnedSaves) && writer === "per-person-ordered" && age === "1B",
   "The tuned pinned arm uses the card's writer on the aged database");
 if (pinnedPair) assert(!tuned && !retirement && writer === "per-person-ordered", "The pinned pair uses the card's writer and server profile");
-assert(tuned || retirement || pinnedPair || pinnedTuned, "Use scorecard.mjs (adopted-server.ts) for the card; this runner is for the read study, DX_W1_RETIREMENT_PAIR=1, DX_RD2_PINNED_PAIR=1 or DX_RD2_PINNED_TUNED=1");
+assert(tuned || retirement || pinnedPair || pinnedTuned || pinnedSaves, "Use scorecard.mjs (adopted-server.ts) for the card; this runner is for the read study, DX_W1_RETIREMENT_PAIR=1, DX_RD2_PINNED_PAIR=1 or DX_RD2_PINNED_TUNED=1");
 
 const end = Number(deadlineText);
 assert(Number.isSafeInteger(end) && end > Date.now());
@@ -61,8 +67,8 @@ scaleHost.physical();
 // before the stack is refused cores 0-8 (bench 3, 18:57 and 19:43 UTC). The driver is unpinned while each stack starts
 // and pinned to 9,10 before its first read or save, so every measured window keeps the same placement.
 // Rejected: widening up.sh's check, or pinning only after the first ladder (a second arm would be refused again).
-const onlineCpus = tuned || pinnedTuned ? fs.readFileSync("/sys/devices/system/cpu/online", "utf8").trim() : "";
-assert(!(tuned || pinnedTuned) || /^[0-9,-]+$/.test(onlineCpus));
+const onlineCpus = tuned || pinnedTuned || pinnedSaves ? fs.readFileSync("/sys/devices/system/cpu/online", "utf8").trim() : "";
+assert(!(tuned || pinnedTuned || pinnedSaves) || /^[0-9,-]+$/.test(onlineCpus));
 const placeDriver = (cpus: string) => execFileSync("taskset", ["-apc", cpus, String(process.pid)], { stdio: "ignore" });
 process.env.DX_BARE_METAL = "1";
 verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
@@ -74,14 +80,14 @@ verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
 // --pgdata-source with --aged-bundle): a new physical copy per arm, the aged bundle's fresh-peer check on the stack's
 // network, and no dump. Rejected: restoring the aged dump per arm (33-42 minutes each, capped at 42).
 const preparedSource = process.env.DX_RD1_PGDATA_SOURCE ?? "";
-assert(!preparedSource || (((tuned && age === "fresh") || retirement || pinnedPair || pinnedTuned) && process.env.DX_RD1_LADDER && process.env.DX_RD1_PGDATA),
+assert(!preparedSource || (((tuned && age === "fresh") || retirement || pinnedPair || pinnedTuned || pinnedSaves) && process.env.DX_RD1_LADDER && process.env.DX_RD1_PGDATA),
   "A prepared run needs --read-study on the fresh seal or DX_W1_RETIREMENT_PAIR=1, a ladder and one --pgdata copy");
 const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin, !preparedSource);
 const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin, !preparedSource) : undefined;
-const record = { source, age, writer, policy: control, treatment: tuned || pinnedTunedPolicy || undefined, diagnostics, retirement: retirement || undefined, pinnedPair: pinnedPair || undefined, pinnedTuned: pinnedTuned || undefined, pairOption: retirement ? pairOption : undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
+const record = { source, age, writer, policy: control, treatment: tuned || pinnedTunedPolicy || undefined, diagnostics, retirement: retirement || undefined, pinnedPair: pinnedPair || undefined, pinnedTuned: pinnedTuned || undefined, pinnedSaves: pinnedSaves || undefined, pairOption: retirement ? pairOption : undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
   agedBundle: expected?.pin, agedDump: expected?.dumpPin || undefined };
 const prepared = preparedSource ? openPreparedLadder({ campaign, ladder: process.env.DX_RD1_LADDER!, source: preparedSource,
-  copy: process.env.DX_RD1_PGDATA!, wal: walDirectory || undefined, record, kind: retirement ? "retirement" : pinnedPair ? "pinned" : pinnedTuned ? "pinned-tuned" : "read" }) : undefined;
+  copy: process.env.DX_RD1_PGDATA!, wal: walDirectory || undefined, record, kind: retirement ? "retirement" : pinnedPair ? "pinned" : pinnedTuned ? "pinned-tuned" : pinnedSaves ? "pinned-saves" : "read" }) : undefined;
 if (!prepared) {
   fs.mkdirSync(campaign);
   jsonFile(path.join(campaign, "input.json"), record);
@@ -94,7 +100,7 @@ for (const loaded of [false, true]) {
   if (prepared && loaded !== prepared.loaded) continue;
   assert(!stopping && Date.now() + 10 * 60_000 < end);
   const policy = loaded && tuned ? tuned : pinnedTunedPolicy ?? control;
-  const out = path.join(campaign, retirement ? (loaded ? "append" : "reference") : pinnedPair ? (loaded ? "on" : "off") : pinnedTuned ? (loaded ? "pinned-tuned-repeat" : "pinned-tuned") : tuned ? (loaded ? "tuned" : "control") : (loaded ? "loaded" : "zero"));
+  const out = path.join(campaign, retirement ? (loaded ? "append" : "reference") : pinnedPair ? (loaded ? "on" : "off") : pinnedTuned ? (loaded ? "pinned-tuned-repeat" : "pinned-tuned") : pinnedSaves ? (loaded ? "pinned-saves-repeat" : "pinned-saves") : tuned ? (loaded ? "tuned" : "control") : (loaded ? "loaded" : "zero"));
   fs.mkdirSync(out);
   const floor = prepared ? 5 : age === "1B" ? 320 : 240;
   assert(scaleHost.available(out) >= floor * 1024 ** 3, "Insufficient free space for the disposable restore");
@@ -108,14 +114,17 @@ for (const loaded of [false, true]) {
       let systemIdentifier = "";
       const options = stackOptions(writer, attempt, diagnostics);
       prepared?.claim(slot, attempt);
-      if (tuned || pinnedTuned) placeDriver(onlineCpus);
+      if (tuned || pinnedTuned || pinnedSaves) placeDriver(onlineCpus);
       const { engines } = startScaleStack(out, slot, source, writer === "grouped", tuned ? {
         ...options, DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: loaded ? "1" : "0", ...prepared?.env,
       } : retirement ? { ...options, [treatmentKey]: loaded ? "1" : "0", ...prepared?.env }
         : pinnedPair ? { ...options, DX_PINNED_SHORTCUT: loaded ? "1" : "0", DX_PINNED_CUT_LOOKUP: loaded ? "1" : "0", ...prepared?.env }
         : pinnedTuned ? { ...options, DX_PINNED_SHORTCUT: "1", DX_PINNED_CUT_LOOKUP: "1", DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: "1", ...prepared?.env }
+        // [DX-RD3] The card's production tape setting: the write gateway reports storage reads per commit.
+        : pinnedSaves ? { ...options, DX_PINNED_SHORTCUT: "1", DX_PINNED_CUT_LOOKUP: "1", DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: "1",
+          DX_V01_COMMIT_READS: "1", ...prepared?.env }
         : options, { policy, walDirectory });
-      if (tuned || pinnedTuned) placeDriver("9,10");
+      if (tuned || pinnedTuned || pinnedSaves) placeDriver("9,10");
       const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
       const residency = async () => {
         const { write, read } = peerUrls();
@@ -125,7 +134,7 @@ for (const loaded of [false, true]) {
           containers: Object.entries(engines).map(([role, e]) => ({ id: e.id, name: `${slot}-${role}`, imageId: e.image })) });
         return observed.roles as Residency;
       };
-      const empty = tuned || retirement || pinnedPair || pinnedTuned ? undefined : await residency();
+      const empty = tuned || retirement || pinnedPair || pinnedTuned || pinnedSaves ? undefined : await residency();
       const raw = path.join(out, "engines", slot, "trace", "raw");
       if (prepared) systemIdentifier = prepared.live(out, slot, attempt, engines.pg!.id);
       else await restoreDump(expected?.dump || seed.dump, expected?.dumpPin || seed.image.sha256, slot, engines,
@@ -146,7 +155,7 @@ for (const loaded of [false, true]) {
       assert(!stopping && Date.now() + 8 * 60_000 < end);
       const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw,
         creditMode: policy.creditMode, serialApply: diagnostics.serialApply, empty, residency };
-      firstOffer((retirement ? "retirement " : pinnedPair || pinnedTuned ? "pinned " : "read-study ") + path.basename(out));
+      firstOffer((retirement ? "retirement " : pinnedPair || pinnedTuned || pinnedSaves ? "pinned " : "read-study ") + path.basename(out));
       offered = true;
       if (tuned) {
         const native = JSON.parse(fs.readFileSync(path.join(raw, "gw-r-native-settings.json"), "utf8"));
@@ -186,6 +195,12 @@ for (const loaded of [false, true]) {
         const { pinnedLadder, tunedSeats, tunedBatch } = await import("../rd1/pinned-ladder.ts");
         await pinnedLadder(out, read, seed, head, true, false, { seats: tunedSeats, batch: tunedBatch });
         if (prepared) assert(!stopping, "Prepared tuned pinned ladder was interrupted");
+      } else if (pinnedSaves) {
+        const native = JSON.parse(fs.readFileSync(path.join(raw, "gw-r-native-settings.json"), "utf8"));
+        assert.deepEqual([native.source, native.slot, native.process], [source, slot, "gw-r"]);
+        assert.equal(native.datomic["datomic.objectCacheMax"].value, 3072 * 1024 ** 2);
+        await savesArm(out, peer, head, engines, expected!);
+        if (prepared) assert(!stopping, "Prepared pinned arm with saves was interrupted");
       } else if (pinnedPair) {
         const { pinnedLadder } = await import("../rd1/pinned-ladder.ts");
         await pinnedLadder(out, read, seed, head, loaded);
@@ -247,6 +262,68 @@ if (retirement && (!prepared || prepared.ladder === "append")) {
   });
   jsonFile(path.join(campaign, "retirement-comparison.json"), { source, age, creditMode, imagePin, transferPin, arms,
     pairOption, migratedReadRatios, ownerGroupReads });
+}
+
+// [DX-RD3] The windows of the pinned arm with saves, in order. "s-" windows run the card's 394 loaded cell on the
+// production-shaped tape, shape S (about 23 commits/s plus the quiet account's 3.5 saves/s); "ref-" windows run the
+// unloaded 394 cell, the quiet account's 3.5 saves/s alone, the reference rate of the card's P1 line, and run only if
+// at least five minutes remain before the deadline. Every window is 90 s; the reads run for the whole window.
+const savesWindows = [
+  { name: "s-alone", tape: "production-S", pin: undefined },
+  { name: "s-near-head", tape: "production-S", pin: "near-head" },
+  { name: "s-seed-cut", tape: "production-S", pin: "seed-cut" },
+  { name: "s-tape", tape: "production-S", pin: "tape" },
+  { name: "ref-near-head", tape: "saturday", pin: "near-head" },
+  { name: "ref-seed-cut", tape: "saturday", pin: "seed-cut" },
+  { name: "ref-tape", tape: "saturday", pin: "tape" },
+] as const;
+
+async function savesArm(out: string, base: Parameters<typeof adoptedArm>[2], agedHead: number,
+  engines: Record<string, { id: string }>, aged: ReturnType<typeof openAged>) {
+  const { pinnedWindow, tapeCandidates, savesSeats } = await import("../rd1/pinned-ladder.ts");
+  const roles = ["gw-r", "gw-w", "tx", "pg"] as const;
+  const counters = Object.fromEntries(roles.map((role) => [role, containerCounters(engines[role]!.id)]));
+  const usage = () => Object.fromEntries(roles.map((role) => [role,
+    Number(/^usage_usec (\d+)$/m.exec(String(counters[role]!()["cpu.stat"]))?.[1])]));
+  const peer = { ...base, windowSeconds: 90 as const,
+    aged: { cut: agedCut(aged.file, aged.pin, imagePin, seed.key, seed.scope.db, seed.scope.cut, true), head: agedHead } };
+  const windows = [];
+  let terminal = agedHead;
+  for (const w of savesWindows) {
+    const optional = w.name.startsWith("ref-");
+    if (stopping || Date.now() + (optional ? 5 : 3.5) * 60_000 > end) {
+      assert(optional, `No time left for window ${w.name}`);
+      windows.push({ name: w.name, skipped: "fewer than five minutes left before the deadline" });
+      continue;
+    }
+    process.env.DX_V01_TAPE = w.tape;
+    const folder = path.join(out, w.name);
+    fs.mkdirSync(folder);
+    const cell = { rate: 394 as const, loaded: w.tape !== "saturday" };
+    const arm = await adoptedArm(folder, source, peer, seed, writer, true, false, terminal, cell, false, undefined, undefined, {
+      label: "rd3/" + w.name, run: async ({ start, seconds, startHead, tape, senders }) => {
+        await new Promise((resolve) => setTimeout(resolve, Math.max(0, start - Date.now())));
+        const before = usage(), at = Date.now();
+        const step = w.pin ? await pinnedWindow(base.read, seed as never, w.pin, { start, seconds, startHead,
+          candidates: tapeCandidates(tape, start, senders) }, { seats: savesSeats })
+          : await new Promise((resolve) => setTimeout(() => resolve(undefined), Math.max(0, start + seconds * 1000 - Date.now())));
+        const after = usage(), wall = (Date.now() - at) / 1000;
+        return { step, cpuCores: Object.fromEntries(roles.map((role) => [role, Number(((after[role]! - before[role]!) / 1e6 / wall).toFixed(3))])) };
+      } });
+    terminal = arm.terminal!;
+    const along = (arm as any).alongside.result;
+    const production = (arm as any).production;
+    windows.push({ name: w.name, tape: w.tape, pin: w.pin ?? null, firstCut: arm.firstCut, terminal,
+      reads: along.step ?? null, cpuCores: along.cpuCores,
+      saves: { offered: arm.p2.offered, receipts: arm.p2.receipts, latency: arm.p2.latency,
+        production: production ? { metrics: production.metrics, readback: production.readback, predecessors: production.predecessors } : null,
+        quiet: arm.p6 ? { offers: arm.p6.quietOffers, commit: arm.p6.commit, expired: arm.p6.expired, read: arm.p6.read } : null } });
+  }
+  jsonFile(path.join(out, "pinned-saves.json"), { source, head: agedHead, seats: savesSeats, windowSeconds: 90, windows });
+  console.log("[DX-RD3] " + JSON.stringify(windows.map((w: any) => ({ name: w.name, skipped: w.skipped,
+    reads: w.reads && { goodput: w.reads.goodput, p50: w.reads.read.p50Ms, p99: w.reads.read.p99Ms, wrong: w.reads.wrong, errors: w.reads.errors },
+    saves: w.saves && { p50: w.saves.latency.p50Ms, p99: w.saves.latency.p99Ms, receipts: w.saves.receipts, offered: w.saves.offered }, cpu: w.cpuCores }))));
+  for (const w of windows as any[]) if (w.reads) assert(w.reads.wrong === 0 && w.reads.errors === 0, `${w.name}: wrong values or read errors`);
 }
 
 // [DX-RD1] Why: process-group CPU and block I/O can distinguish a busy core from a blocked peer.

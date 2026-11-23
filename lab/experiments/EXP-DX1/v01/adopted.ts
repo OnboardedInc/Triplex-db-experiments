@@ -50,6 +50,12 @@ export function ownerGroups(senders: Sender[], seedCut: number, agedHead: number
       : rows.some((r) => r.recorded_position > agedHead) ? "earlier-window" : "seed");
   return groups;
 }
+// [DX-RD3] Why: the pinned arm with saves runs its read ladder in the same window as a card cell's saves, on the same
+// stack, and pins some reads at positions the cell's own saves have just written (each checked against the sender's
+// record of what the save wrote). Rejected: a second save runner (the card's admission, journal, identity and
+// read-back checks must judge these saves too).
+export type Alongside = { label?: string; run: (window: { start: number; seconds: number; startHead: number;
+  tape: readonly Write[]; senders: readonly Sender[]; production: boolean }) => Promise<unknown> };
 export type ReadStudy = { rate: 50 | 235; batch: number; sample: boolean; counters?: () => unknown };
 type ReadSamples = (Parameters<Parameters<DatomicClient["withReadProfile"]>[0]>[0] & { sdkDone?: number })[];
 const sampledRead = async <A>(client: DatomicClient, samples: ReadSamples, send: () => Promise<A>) => {
@@ -302,7 +308,7 @@ async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: numbe
 
 export async function adoptedArm(out: string, source: string, peer: Peer, seed: AdoptedSeed, writer: Writer,
   loaded: boolean, toy: boolean, startHead = seed.scope.cut, quietCell?: QuietCell | ServerCell, comparison = false,
-  study?: ReadStudy, retirement?: RetirementStudy) {
+  study?: ReadStudy, retirement?: RetirementStudy, alongside?: Alongside) {
   const begin = now();
   const writerClient = new DatomicClient(peer.write, 35000);
   const reader = new DatomicClient(peer.read, 35000);
@@ -358,7 +364,9 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const shape = tapeShape(parseCardTape(process.env.DX_V01_TAPE));
     const productionCell = shape !== undefined && !retirement && !study && !comparison &&
       ((rated !== undefined && rated.loaded) || (toy && quietCell === 235));
-    const production = productionCell ? (() => {
+    // [DX-RD3] A window repeated on one stack takes a label, so its saves write new values instead of the same ones.
+    const relabel = <T extends Write>(t: T[]): T[] => alongside?.label ? t.map((e) => ({ ...e, version: alongside.label + "/" + e.version })) : t;
+    const production = productionCell ? relabel((() => {
       if (rated) return fullCellTape(shape!, rated, windowSeconds);
       const quiet = quietTape(seed.image.people, 235, true).filter((e) => e.account === 0);
       // The toy folds each tape subject onto one of its few people per account, in order of first appearance.
@@ -374,8 +382,8 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       } : undefined;
       const neighbours = productionNeighbours(shape!, 235, Array(9).fill(12), seconds, "p6-235", fold);
       return sortTape([...quiet, ...neighbours]);
-    })() : undefined;
-    const tape = production ? production : retirement ? serialApplyTape(seed.image.people as Density, retirement.rate, seconds)
+    })()) : undefined;
+    const tape = production ? production : relabel(retirement ? serialApplyTape(seed.image.people as Density, retirement.rate, seconds)
       : study ? [0, 1].flatMap((block) => writeTape(seed.image.people as Density, study.rate, block)
         .map((entry) => ({ ...entry, ms: entry.ms + 90_000 * block, version: `rd1/${study.rate}/${entry.version}` })))
         .filter((entry) => entry.ms < seconds * 1000 && (!toy || entry.ordinal % 20 === 0))
@@ -383,7 +391,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         rated ? cellPath(rated) : quietCell === undefined ? "prelude" : "p6-" + quietCell, seconds,
         rated ? (rated.loaded ? rated.rate - 3.5 : 0) : quietCell === undefined ? 4.6 : quietCell === 235 ? 30 : 0))
       : rated ? ratedTape(seed.image.people, rated, windowSeconds) : quietCell === undefined
-      ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell as QuietCell, toy);
+      ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell as QuietCell, toy));
     if (retirement) assert.equal(tape.length, retirement.rate * seconds);
     const senders = await preloadFrom(writerClient, rated ? reader : writerClient, seed, startHead,
       production ? tape.filter((e) => !isProduction(e)) : tape);
@@ -430,9 +438,10 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       start: start + 2000, seconds: seconds - 2, firstCut: startHead, validAt: SEED_VALID_FROM,
       candidates: (at) => recentlyOffered(tape, start, at, 1000, ownerOf) }) : undefined;
     void migratedLoaded?.catch(() => {}); // awaited after the window; never an unhandled rejection mid-window
-    const [writes, phases, quietRead, mixedReads] = await Promise.all([
+    const [writes, phases, quietRead, mixedReads, alongsideResult] = await Promise.all([
       play(senders, tape, start, peer.attempt, false, writer === "per-person-ordered", selection),
       !retirement && quietCell === undefined && !comparison ? readWindows(reader, seed, start, loaded, toy, study, samples) : [], quiet, background,
+      alongside?.run({ start, seconds, startHead, tape, senders, production: production !== undefined }),
     ]);
     await resolveUncertain(senders, writes.unresolved);
     const head = await writerClient.begin(seed.scope.db);
@@ -515,7 +524,8 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         return { seats: phase.seats, offered: bucket.length, received: latency.count, latency: latency.summary() };
       }) },
       p1: phases, p2: { offered: tape.length, receipts: saves.length, latency: saveHistogram.summary() },
-      p3: { entries: feed.length }, p4: pulls, p6, p7, thin, ...(productionResult ? { production: productionResult } : {}) };
+      p3: { entries: feed.length }, p4: pulls, p6, p7, thin, ...(productionResult ? { production: productionResult } : {}),
+      ...(alongside ? { alongside: { label: alongside.label, result: alongsideResult } } : {}) };
     // [DX-RD1] Why: require the complete toy tape and exact read results before publishing a read-study arm.
     // Rejected: declaring success when an empty journal agrees with an empty acknowledged set.
     if (toy && study) {
