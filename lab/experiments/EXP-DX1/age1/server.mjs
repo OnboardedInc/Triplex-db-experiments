@@ -11,6 +11,7 @@ import { bulkProperties, continuationProperties, hold, ladderArms, minimumRate, 
 import { archived, recoverLadder } from "./recover-ladder.mjs";
 import { loadingLimits, readStoppedLoad, stoppedLoad } from "./extended-limits.mjs";
 import { allocatedBytes, collectedSegments, continueLoad, directoryMargin, sameStorage } from "./continuation.mjs";
+import { failedAttempt, sameRun, startRestoreTransactor } from "./readback.mjs";
 
 const here = import.meta.dirname;
 const repo = path.resolve(here, "../../../..");
@@ -68,7 +69,7 @@ function admit(config, configFile, mode) {
   assert(safeInteger(config.maxSqlBytes, 10 * GiB, 64 * 1024 * GiB));
   assert(safeInteger(config.copyHeadroomBytes, 25 * GiB, 64 * 1024 * GiB));
   assert(safeInteger(config.bytesPerAddedRecord, 50, 2048));
-  if (mode === "measure-loaded" && config.restoreMount) {
+  if (["measure-loaded", "resume-readback"].includes(mode) && config.restoreMount) {
     assert(path.isAbsolute(config.restoreMount) && path.isAbsolute(config.restorePgData));
     assert(safeInteger(config.restoreHeadroomBytes, 25 * GiB, 64 * 1024 * GiB));
     assert.equal(fs.statSync(config.restoreMount).dev, fs.statSync(config.restorePgData).dev);
@@ -201,8 +202,13 @@ function eventLogStat(config) {
   return log;
 }
 
-async function run(configFile, config, mode) {
+async function run(configFile, config, mode, failedId) {
   const bulk = mode === "ladder" || mode === "load";
+  // [DX-AGE1] Why: resume-readback finishes a measure-loaded attempt that passed backup, verify and restore.
+  // Rejected: repeating the 2 h backup, full verify and restore to rerun one readback.
+  const resuming = mode === "resume-readback";
+  const measuring = mode === "measure-loaded" || resuming;
+  assert.equal(Boolean(failedId), resuming, "resume-readback takes the failed attempt; other modes take none");
   const limits = loadingLimits(mode === "load" ? config.loadingLimits : undefined);
   const binding = admit(config, configFile, mode);
   const initial = forecast(config.fromRecords, config.target, config.ratePrior, config.reserveHours);
@@ -219,7 +225,7 @@ async function run(configFile, config, mode) {
         predictions: ladderArms } : { phase: "forecast", ...initial }));
     const result = await new Promise((resolve, reject) => {
       const child = spawn("flock", ["-F", "-n", scopeLock, process.execPath, fileURLToPath(import.meta.url),
-        ...(mode === "legacy" ? [] : [mode]), configFile, "--locked"], { stdio: "inherit" });
+        ...(mode === "legacy" ? [] : [mode]), configFile, ...(resuming ? [failedId] : []), "--locked"], { stdio: "inherit" });
       for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => child.kill(signal));
       child.once("error", reject);
       child.once("exit", (code) => resolve(code ?? 1));
@@ -227,7 +233,7 @@ async function run(configFile, config, mode) {
     process.exitCode = result;
     return;
   }
-  if (!bulk && mode !== "measure-loaded" && (initial.hours >= config.maxHours || initial.usd > config.maxUsd)) {
+  if (!bulk && !measuring && (initial.hours >= config.maxHours || initial.usd > config.maxUsd)) {
     console.log(JSON.stringify({ phase: "forecast-over-budget", calibrationMaxSaves: 100000 }));
   }
   const dir = config.output;
@@ -250,9 +256,31 @@ async function run(configFile, config, mode) {
     return;
   }
   const admitted = path.join(rung, bulk ? mode + "-admission.json" : "admission.json");
-  if (!fs.existsSync(admitted)) write(admitted, { started: Date.now(), binding });
+  if (!fs.existsSync(admitted)) {
+    assert(!resuming, "resume-readback requires the failed attempt's admission");
+    write(admitted, { started: Date.now(), binding });
+  }
   const origin = read(admitted);
-  assert.equal(origin.binding.runSpecSha, binding.runSpecSha);
+  const resumeStarted = Date.now();
+  let failed;
+  if (resuming) {
+    // [DX-AGE1] Why: the resume may change only the checkout and the renewed process IDs of the same run.
+    // Rejected: accepting a backup, restore or held cluster that the failed attempt did not record.
+    const pins = read(path.join(here, "readback-pins.json"));
+    failed = failedAttempt({ rung, attempt: failedId, pins, coldCells, target: config.target });
+    const failedConfig = path.join(path.dirname(config.output), "config.json");
+    assert.equal(fileSha(failedConfig), failed.binding.configSha, "The failed run's configuration differs");
+    sameRun(config, read(failedConfig));
+    assert.deepEqual([failed.binding.source, failed.binding.runSpecSha, failed.binding.configSha, failed.r.t, failed.r.head,
+      failed.r.records, failed.restoreDb, config.transactorPropertiesSha],
+      [pins.source, pins.runSpecSha, pins.configSha, pins.t, pins.head, pins.records, pins.restoreDb, pins.transactorPropertiesSha]);
+    assert.equal(origin.binding.runSpecSha, failed.binding.runSpecSha);
+    assert.deepEqual([failed.binding.db, failed.binding.imageSha, failed.binding.transferSha, failed.binding.datomicSha],
+      [binding.db, binding.imageSha, binding.transferSha, binding.datomicSha]);
+    assert.notEqual(binding.source, failed.binding.source, "Resume from the repaired checkout");
+  } else {
+    assert.equal(origin.binding.runSpecSha, binding.runSpecSha);
+  }
   assert.equal(origin.binding.machineHash, binding.machineHash);
   const calibrationFile = path.join(rung, "bulk-calibration.json");
   const calibration = mode === "load" ? await recoverLadder(config.ladderEvidence) : null;
@@ -269,10 +297,10 @@ async function run(configFile, config, mode) {
   }
   const resume = calibration && config.resumeEvidence ? readStoppedLoad(config.resumeEvidence, binding, calibration) : null;
   const paidMs = (calibration?.chargedMs ?? 0) + (resume?.chargedMs ?? 0);
-  const deadline = origin.started + (bulk ? (mode === "ladder" ? 3600_000 : limits.maxHours * 3600_000 - paidMs)
+  const deadline = resuming ? resumeStarted + 2 * 3600_000 : origin.started + (bulk ? (mode === "ladder" ? 3600_000 : limits.maxHours * 3600_000 - paidMs)
     : config.maxHours * 3600_000);
   const reserve = config.copyHeadroomBytes;
-  const separateCopyPolicy = mode === "measure-loaded" && config.restoreMount;
+  const separateCopyPolicy = measuring && config.restoreMount;
   let pgdataSample = 0;
   let pgdataBytes;
   const directory = () => {
@@ -404,7 +432,7 @@ async function run(configFile, config, mode) {
     const corrected = forecast(Math.min(inspected.records, config.target), config.target, config.ratePrior, config.reserveHours);
     console.log(JSON.stringify({ phase: "observed-head-forecast", ...corrected }));
     write(path.join(logDir, "observed-forecast.json"), corrected);
-    if (!bulk && mode !== "measure-loaded" && !inspected.finished && Date.now() + corrected.hours * 3_600_000 >= deadline) {
+    if (!bulk && !measuring && !inspected.finished && Date.now() + corrected.hours * 3_600_000 >= deadline) {
       const requiredRate = Math.max(0, config.target - inspected.records) /
         Math.max(1, (deadline - Date.now()) / 1000 - config.reserveHours * 3600);
       console.log(JSON.stringify({ phase: "rate-calibration-required", requiredRate, calibrationMaxSaves: 100000 }));
@@ -423,7 +451,8 @@ async function run(configFile, config, mode) {
     } else if (separateCopyPolicy) {
       const location = await peer("restore-location", "restore-location", "restore-location");
       sameStorage(config.restorePgData, location.directory, config.restorePostgresPid);
-      if (fs.statSync(config.copyMount).dev === fs.statSync(config.restoreMount).dev) {
+      if (resuming) assert.equal(location.directory, failed.location.directory, "The restored copy moved");
+      else if (fs.statSync(config.copyMount).dev === fs.statSync(config.restoreMount).dev) {
         assert(space(config.copyMount) > reserve + config.restoreHeadroomBytes + directoryMargin,
           "Backup and restore share a device without room for both");
       } else {
@@ -511,7 +540,7 @@ async function run(configFile, config, mode) {
         artifacts: fs.readdirSync(logDir).map((f) => ({ file: path.join(attempt, f), sum: fileSha(path.join(logDir, f)) })) });
       return;
     }
-    if (mode === "measure-loaded") {
+    if (measuring) {
       const loaded = read(path.join(rung, "bulk-loaded.json"));
       assert.deepEqual([loaded.source, loaded.machineHash, loaded.db, loaded.imageSha],
         [binding.source, binding.machineHash, binding.db, binding.imageSha]);
@@ -535,6 +564,10 @@ async function run(configFile, config, mode) {
       }
       assert.deepEqual(read(measurementInput), want);
     }
+    if (resuming) {
+      assert.deepEqual([inspected.t, inspected.head, inspected.nativeId, inspected.finished],
+        [failed.r.t, failed.r.head, failed.inspected.nativeId, true], "The held cluster differs from the failed attempt's cut");
+    }
     const r = await peer("rung", "rung", "rung", state, String(config.target), String(config.seconds),
       String(Math.floor(deadline)), String(Math.ceil(config.reserveHours * 3600)));
     assert.equal(r.target, config.target);
@@ -543,15 +576,20 @@ async function run(configFile, config, mode) {
     assert.equal(r.windows.busy.quiet.n, r.windows.low.quiet.n);
     assert.equal(r.windows.busy.all.n, config.seconds * 50);
     assert(r.windows["index-overlap"].overlap.n > 0, "No save overlapped index adoption");
-    const cold = {};
-    for (const label of coldCells) {
+    if (resuming) {
+      const frozen = (x) => [x.target, x.t, x.head, x.records, x.agedRecords, x.observedBy,
+        ...Object.values(x.windows).flatMap((w) => [w.wallStart, w.wallEnd, w.observedBy, w.quiet?.n, w.all?.n])];
+      assert.deepEqual(frozen(r), frozen(failed.r), "The frozen rung differs from the failed attempt's rung");
+    }
+    const cold = resuming ? failed.cold : {};
+    for (const label of resuming ? [] : coldCells) {
       cold[label] = await peer(label, "cold", "cold", state, label);
       assert.deepEqual([cold[label].cell, cold[label].t], [label, r.t]);
     }
-    const structure = await peer("structure", "structure", "structure", state);
+    const structure = resuming ? failed.structure : await peer("structure", "structure", "structure", state);
     assert(structure.indexBasisT >= r.t);
     const uri = env.DATOMIC_URI_TEMPLATE.replace("{db}", binding.db);
-    const restoreDb = "age-restore-" + attempt;
+    const restoreDb = resuming ? failed.restoreDb : "age-restore-" + attempt;
     env.AGE_RESTORE_DB = restoreDb;
     const restoreUri = env.AGE_RESTORE_URI_TEMPLATE.replace("{db}", restoreDb);
     const backupPath = path.join(config.copyMount, "age1-copy-" + sha(binding.db).slice(0, 12) + "-" + config.target);
@@ -563,17 +601,38 @@ async function run(configFile, config, mode) {
       assert(fs.statSync(path.join(logDir, tag + "-gc.log")).size > 0);
       return { ms: performance.now() - started, output: fs.readFileSync(log, "utf8") };
     };
-    const backupRun = await vendor("backup", "backup-db", uri, backup);
-    assert(backupRun.output.split("\n").includes(":succeeded"));
-    const verify = await vendor("verify", "verify-backup", backup, "true", String(r.t));
-    const ok = verify.output.split("\n").find((line) => line.includes(":event :verify-backup/complete"));
-    assert(ok && ok.includes(":missing-segments #{}") && ok.includes(":unreadable-segments ()"));
-    assert.equal(Number(/:t (\d+)[,}]/.exec(ok)?.[1]), r.t);
-    if (separateCopyPolicy) assert(space(config.restoreMount) > config.restoreHeadroomBytes + directoryMargin,
-      "Verified backup leaves insufficient allocation for the native restore");
-    const restore = await vendor("restore", "restore-db", backup, restoreUri, String(r.t));
-    assert(restore.output.split("\n").includes(":succeeded"));
-    const restored = await peer("restore-readback", "restore-readback", "restore-check", state, String(r.t));
+    let copied;
+    if (resuming) {
+      // The retained backup must still list the rung basis; its full verify already passed in the failed attempt.
+      const listed = await vendor("backup-list", "list-backups", backup);
+      assert(listed.output.split(/[^0-9]+/).includes(String(r.t)), "The retained backup does not hold the rung basis");
+      copied = { ...failed.ms, objectCount: failed.objectCount };
+    } else {
+      const backupRun = await vendor("backup", "backup-db", uri, backup);
+      assert(backupRun.output.split("\n").includes(":succeeded"));
+      const verify = await vendor("verify", "verify-backup", backup, "true", String(r.t));
+      const ok = verify.output.split("\n").find((line) => line.includes(":event :verify-backup/complete"));
+      assert(ok && ok.includes(":missing-segments #{}") && ok.includes(":unreadable-segments ()"));
+      assert.equal(Number(/:t (\d+)[,}]/.exec(ok)?.[1]), r.t);
+      if (separateCopyPolicy) assert(space(config.restoreMount) > config.restoreHeadroomBytes + directoryMargin,
+        "Verified backup leaves insufficient allocation for the native restore");
+      const restore = await vendor("restore", "restore-db", backup, restoreUri, String(r.t));
+      assert(restore.output.split("\n").includes(":succeeded"));
+      copied = { backupMs: backupRun.ms, verifyMs: verify.ms, restoreMs: restore.ms,
+        objectCount: Number(/:total-segments (\d+)/.exec(ok)?.[1]) };
+    }
+    // [DX-AGE1] Why: a peer finds its transactor through storage, and a restore carries no transactor location.
+    // Rejected: a peer read without a transactor, or a readback against the primary instead of the restored copy.
+    if (stopped) throw stopped;
+    const restoreTx = await startRestoreTransactor({ home, java, extClasspath: path.join(repo, "packages/datomic/gateway/src"),
+      primaryProperties: config.transactorProperties, jdbc: env.AGE_RESTORE_JDBC, uriTemplate: env.AGE_RESTORE_URI_TEMPLATE,
+      logFile: path.join(logDir, "restore-transactor.log") });
+    let restored;
+    try {
+      restored = await peer("restore-readback", "restore-readback", "restore-check", state, String(r.t));
+    } finally {
+      await restoreTx.stop();
+    }
     assert.deepEqual([restored.t, restored.head], [r.t, r.head]);
     const endJava = binding.java.map(({ pid }) => getProcess(pid));
     for (const [i, p] of endJava.entries()) {
@@ -585,15 +644,20 @@ async function run(configFile, config, mode) {
     const scorecardCut = await peer("scorecard-cut", "scorecard-cut", "scorecard-cut", state, binding.db,
       String(r.t), String(r.head), String(r.records), journal);
     const result = { attempt, bindingSha: binding.runSpecSha, source: binding.source, target: config.target,
-      agingEvidence: mode === "measure-loaded" ? fileSha(path.join(rung, "bulk-loaded.json")) : undefined,
+      agingEvidence: measuring ? fileSha(path.join(rung, "bulk-loaded.json")) : undefined,
       head: r.head, t: r.t, records: r.records, journal, cold, structure, endJava,
       checkpointSha: fileSha(state), seedLedgerSha: fileSha(state + ".population.edn"),
       measuredBy: r.observedBy, windowsBy: Object.fromEntries(Object.entries(r.windows)
         .map(([label, window]) => [label, { attempt: window.observedBy, from: window.wallStart, to: window.wallEnd }])),
-      copy: { backupMs: backupRun.ms, verifyMs: verify.ms, restoreMs: restore.ms, restoreDb,
-        objectCount: Number(/:total-segments (\d+)/.exec(ok)?.[1]),
+      copy: { backupMs: copied.backupMs, verifyMs: copied.verifyMs, restoreMs: copied.restoreMs, restoreDb,
+        objectCount: copied.objectCount,
         backupBytes: Number(execFileSync("du", ["-sb", backupPath], { encoding: "utf8" }).split(/\s/)[0]) },
-      hours: (Date.now() - origin.started) / 3_600_000 };
+      restoreTransactor: { port: restoreTx.port, primaryPort: restoreTx.primaryPort, startMs: restoreTx.startMs },
+      ...(resuming ? { resume: { failedAttempt: failedId, failedSource: failed.binding.source, failedHashes: failed.hashes,
+        failedEndedAt: failed.endedAt, resumedAt: resumeStarted, copyMsFrom: "vendor JVM uptime in the failed attempt's GC logs",
+        coldAndStructureFrom: failedId } } : {}),
+      hours: resuming ? (failed.endedAt - origin.started + Date.now() - resumeStarted) / 3_600_000
+        : (Date.now() - origin.started) / 3_600_000 };
     assert(result.copy.objectCount > 0);
     finishJvmLogs();
     const hashes = Object.fromEntries(fs.readdirSync(logDir).map((f) => [f, fileSha(path.join(logDir, f))]));
@@ -610,5 +674,6 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   const [input, ...args] = process.argv.slice(2);
   if (input === "forecast") console.log(JSON.stringify(forecast(...args.map(Number))));
   else if (["ladder", "load", "measure-loaded"].includes(input)) await run(path.resolve(args[0]), read(args[0]), input);
+  else if (input === "resume-readback") await run(path.resolve(args[0]), read(args[0]), input, args[1]);
   else await run(path.resolve(input), read(input), "legacy");
 }
