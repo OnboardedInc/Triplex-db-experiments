@@ -186,8 +186,18 @@ export type FairImport = {
   limit: number;
   end: number;
   ready: () => boolean;
-  send: (grant: { at: number; ticket: number; neighboursAhead?: number }) => Promise<void>;
+  send: (grant: { at: number; ticket: number; neighboursAhead?: number; liveQueued: number }) => Promise<void>;
+  // [DX-LOAD2] Why: the serial writer cannot pre-empt a frame, so a frame admitted beside waiting live saves
+  // adds its whole apply to each of them; at full size the queue behind slow post-adoption frames reached 450 ms.
+  // Rejected: an equal turn for the importer whatever the live queue holds (rolling 6 busy p99 286 ms, 22x).
+  yieldToLive?: boolean;
+  yieldedChecks?: number;
 };
+
+// [DX-LOAD2] Why: live work first; the importer takes a credit only while no live save waits for one.
+// Rejected: smaller or variable frames (they change command identities) and pauses keyed to index jobs.
+export const importMayStart = (yieldToLive: boolean | undefined, liveQueued: number) =>
+  !yieldToLive || liveQueued === 0;
 
 export async function play(
   scopes: Sender[],
@@ -406,8 +416,12 @@ export async function play(
             const index = next(a);
             return index < 0 ? [] : [{ account: a, index, due: queues[a]![index]!.row.due }];
           });
-          if (bulk && bulkActive < bulk.limit && now() >= start && importReady())
-            ready.push({ account: importingAccount, index: 0, due: bulkDue });
+          if (bulk && bulkActive < bulk.limit && now() >= start && importReady()) {
+            const liveQueued = queues.reduce((n, q) => n + q.length, 0);
+            if (importMayStart(bulk.yieldToLive, liveQueued))
+              ready.push({ account: importingAccount, index: 0, due: bulkDue });
+            else bulk.yieldedChecks = (bulk.yieldedChecks ?? 0) + 1;
+          }
           return ready;
         },
         (offer, ticket, neighboursAhead?: number) => {
@@ -419,9 +433,10 @@ export async function play(
           // Rejected: an independent bulk window or returning the credit before durable acknowledgement.
           bulkActive++;
           const at = now();
+          const liveQueued = queues.reduce((n, q) => n + q.length, 0);
           bulkDue = at;
           let known = false;
-          const send = Promise.resolve().then(() => bulk!.send({ at, ticket,
+          const send = Promise.resolve().then(() => bulk!.send({ at, ticket, liveQueued,
             ...(neighboursAhead === undefined ? {} : { neighboursAhead }) }))
             .then(() => { known = true; }, (error) => {
               bulkFailed = true;
