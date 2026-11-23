@@ -4,6 +4,24 @@ Server 2 runs three things on AGE1's 1B cut, in this order: the AGE1 seal (`meas
 
 The order puts the cache arm before the scorecard arms. The owner allowed it to run "whenever you can", and the orchestrator allowed it earlier when the machine is free. It also avoids a known hazard: each build retags the shared image names, and the sequential scorecard pins its build receipt in arm 1, so a PREP1 build between scorecard arms would make the later arms refuse.
 
+## Seal finished by the readback repair: aged bundle written
+
+**The 1B seal exists.** The builder's repair (AGE1 `bb9ec7324`, `age1/READBACK-REPAIR.md`) started a second transactor on the retained restored copy and ran the unchanged `restore-check`. It returned t 62,888,918 and head 28,309,866, equal to the seal. Backup, verify and restore were not repeated. [Repair](https://github.com/OnboardedInc/Triplex-db-experiments/blob/bb9ec7324/lab/experiments/EXP-DX1/age1/READBACK-REPAIR.md)
+
+| Item | Value |
+| --- | --- |
+| Restore readback (`restore-check` on the restored copy) | t 62,888,918, head 28,309,866 |
+| Seal cut | 1,000,251,169 records, t 62,888,918, head 28,309,866, journal `recorded-predecessor-k`, original database name |
+| `sealed.json` SHA-256 | `74b8f7de6287dd66d2967958e046a60e604268b145cdd2caadd37edb7c69de47` |
+| `aged-scorecard.json` (`AGE_HANDOFF_SHA256`) | `faab1bc5bca8e6303285101003e5a42fc82c8e99fe2eadacaf125259b575bbf2` |
+| Held cluster after the finish (stoppedInventory) | 1,642 files, 176,078,670,513 bytes, controlSha `537ac161c2d629427d79e260653586870ef349914cf185e7aa27e2a188cc062b`, treeSha `115999f1771a325d2c60cf5a34bafc2be80ff2744069a270557724e783f07efc`; `pg_controldata` "shut down" |
+| Resume run, start to seal | 17:51:57 → 17:53:47 UTC, about 2 min against a 12–40 min prediction |
+| Copy times recorded in the seal (vendor JVM uptime, failed attempt) | backup 816.2 s, verify 1,376.3 s, restore 2,031.5 s |
+
+**A second fault stopped `resume-host.mjs` after the seal.** At lines 162–163 it runs the `scorecard.mjs export` check through `call(..., { stdio: "ignore" })`. With `stdio` ignored, `execFileSync` returns `null`, and line 20's `.trim()` throws `TypeError: Cannot read properties of null (reading 'trim')`. The export child had exited 0, so the fresh-peer handoff check passed. The crash skipped four steps: `handoff.json`, the scorecard role passwords, the scripted clean stop and `aged-pgdata.json`. Its cleanup removed the containers and network. The held cluster was already stopped cleanly.
+
+With the orchestrator's approval the driver ran only those four steps, in `resume-host.mjs`'s order and with its own functions: `normalizeScorecardRoles` and `stoppedInventory` from `scale1/decision/pgdata.ts`. The wrapper is [`resume/finish-handoff.mjs`](resume/finish-handoff.mjs). It re-checks the seal against the pins, writes `handoff.json` as line 164 does, and starts the held cluster alone (no network, resume-host's PostgreSQL settings). It then sets the scorecard role passwords, stops the cluster with exit code 0 and writes `aged-pgdata.json`. Afterwards `pg_controldata` read "shut down", no `postmaster.pid` existed and both bundle digests were unchanged. The builder should fix line 162–163 (or line 20) before the next resume.
+
 ## Seal result: stopped at the restore readback, no aged bundle
 
 **`measure-loaded` failed after the native restore, so there is no `sealed.json` and no aged scorecard bundle.** The restore readback peer died with `:db.error/read-transactor-location-failed` ("Could not read transactor location from storage"). Every earlier step passed.
