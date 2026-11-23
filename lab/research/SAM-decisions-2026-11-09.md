@@ -974,3 +974,13 @@ Sam, verbatim (pasted):
 > Can you list them and see what the types are, whatever? Then there should be a clear thing of what you can ask your MCP for: build new entities or use the language of the triplex thing that we can do, and kind of show off the triplex part of it as well as the reads and things. Does that make sense?
 
 Recorded by the orchestrator: the first dashboard is rejected. Sam named a Fable agent for the design thinking in this request (an exception to the standing Opus-only rule, for this request alone). The build that follows goes to Opus.
+
+## 2026-11-23 about 17:40 local: what is one commit per subject's save, how does it interact with widening the fast writer, and what does a large policy release look like?
+
+Sam, verbatim (with a screenshot of the orchestrator's "Where the three paths stand now" table):
+
+> What is one-commit-per-subject save versus the other option and how does it interact with widening the fast writer?
+>
+> I guess my question is, going back to how this is going to be used: if you think way, way back, some of the saves are going to be really big, right? Because we might ship a bunch of policy changes all at once. Maybe we add 20 forms and add 20 policies all in one save. How would that look, I guess, given what we know about this so far?
+
+Recorded by the orchestrator: questions, answered in the session. Follow-up started: Publish at 100,000 subjects moved up on the second machine; a builder works through a release of 20 forms and 20 policies from the code and makes release size a setting of the Publish runner.
