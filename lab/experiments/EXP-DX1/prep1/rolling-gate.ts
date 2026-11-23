@@ -45,20 +45,31 @@ async function head(db: string) {
   return pin.position;
 }
 
+// [Opus W1] Why: name the removal-across-head call a gateway deadline hits (owner14-01 stopped on one, unnamed).
+// Rejected: lengthening the client deadline before knowing which call is slow.
+function step(name: string) {
+  console.log("DX-W1_OWNER_REMOVAL_STEP " + JSON.stringify({ attempt, name, at: Date.now() }));
+}
 async function checkRemovalAcrossHead() {
   const protectedScope = JSON.stringify(["triplex-scope-v1", "test", "rolling-head", nonce, 0]);
+  step("1-create");
   const { db, created } = await client.create(protectedScope, "lean", true, 35000);
   assert(created);
   const entity = task(0, 789), attribute = field(0);
+  step("2-declareProtection");
   await client.declareProtection(db, [attribute], true);
   const fact = (value: string) => ({ e: entity, a: attribute, v: { type: "string" as const, value } });
   const old = command(nonce + "-protected-legacy", [fact("before-head")], [], false);
+  step("3-transact");
   const seed = await client.transact(db, old) as { subjectOwnerHeadBytes?: number };
   assert(!seed.subjectOwnerHeadBytes);
+  step("4-begin");
   const pin = await client.begin(db);
+  step("5-rows");
   const [prior] = await client.rows(db, { entityIds: [entity], handle: pin.handle });
   assert(prior?.value_string === "before-head");
   const next = command(nonce + "-protected-head", [fact("after-head")], [prior], true, false, orderedSaveIdentity());
+  step("6-transact");
   const saved = await client.transact(db, { ...next, sourceK: pin.position }) as {
     position: { v: string }; t: { v: string }; datoms: number; subjectOwnerHeadBytes?: number;
   };
@@ -66,20 +77,25 @@ async function checkRemovalAcrossHead() {
   const nextCut = Number(saved.position.v);
   await exactRead(db, entity, nextCut, next.rows[0]!.id, "after-head");
   await exactRead(db, entity, pin.position, prior.id, "before-head");
+  step("7-erase");
   const removal = await client.erase(db, nonce + "-remove", [{ id: prior.id }, { id: next.rows[0]!.id }]);
   assert.deepEqual(removal.identities.map((x) => x.assertionId).sort(), [prior.id, next.rows[0]!.id].sort());
   for (const [cut, id] of [[pin.position, prior.id], [nextCut, next.rows[0]!.id]] as const) {
+    step("8-rows");
     const rows = await client.rows(db, { entityIds: [entity], basis: { recordedPosition: cut, validAt: SEED_VALID_FROM } });
     const erased = rows.find((r) => r.id === id);
     assert(erased?.value_type === "erased" && erased.value_string === null);
     assert.equal(JSON.parse(erased.value_json!).erasedAt, removal.erasedAt);
   }
+  step("9-rows");
   const held = await client.rows(db, { entityIds: [entity], handle: pin.handle });
   assert(held.some((r) => r.id === prior.id && r.value_type === "erased" && r.value_string === null));
+  step("10-rows");
   const journal = await client.rows(db, { entityIds: [next.claims[0]!.txId] });
   const bodies = journal.filter((r) => r.attribute === ":_tx/change").map((r) => r.value_json!);
   assert.equal(bodies.length, 2);
   assert(bodies.every((body) => !body.includes("before-head") && !body.includes("after-head")));
+  step("11-release");
   await client.release(db, pin.handle);
   console.log("DX-W1_OWNER_REMOVAL " + JSON.stringify({ attempt, mode, db, oldCut: pin.position,
     nextCut, removed: removal.identities.length, sequence: removal.seq, headBytes: saved.subjectOwnerHeadBytes,
