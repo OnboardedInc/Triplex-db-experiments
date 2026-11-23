@@ -141,6 +141,10 @@ Solo cells repeat Saturday's: quiet solo p99 about 31, 22 and 15 ms at 235, 394 
 5. **Quiet p99 above 70 ms under R at 394.** Then serial row chains crowd the quiet account more than Saturday's tape did.
 6. **Any save lost, any acknowledged row not in the journal, or any expiry.** Exactness or capacity broke; the run counts for nothing until explained.
 
+## Which writer takes the commits (found after this run was published)
+
+The gateway's per-person writer (the subject save with ordered IDs, which all of Saturday's saves used) accepts a commit only if it writes one to three facts and each replaces a current value. Every other commit takes the general writer: still exact, durable and in the journal with its submitted identity, but not the per-person path. On these tapes that is about half of shape R's rows (the rows past a person's 13 or 14 seeded fields, and every second field, on their first write; 49% of R commits at 394, 45% from 150 s) and about two thirds of shape S's commits (any save of more than three facts; 68% at 394). The aged gate saw the same split (R 384 of 840, S 52 of 88 on the per-person writer). Each loaded cell's summary now reports `writerPath` (commits per writer) and `sqlReadsPerCommit.from150sSubjectPath` and `from150sGeneralPath`, so reads and latency can be read per writer. Two consequences: shape S as built measures today's general writer for most saves, so a per-person writer for wide saves is part of what S would need; and the covering owner head (a per-person-writer change) would reach only the per-person share of these commits.
+
 ## What each shape costs, if the predictions hold
 
 | | R (each row a commit) | S (each save a commit) |
