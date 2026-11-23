@@ -118,11 +118,11 @@ if (conn.loaderPositionRows) {
   // The same page through the SDK in this process, first with the product's default reader, then with the rule.
   const local = new Demo({ ...conn, loaderPositionRows: false });
   let refused = "";
-  try { await local.changeFeed(conn.sealed.head - 5, undefined, 5); } catch (e) {
+  try { await local.changeFeed({ after: conn.sealed.head - 5, limit: 5 }); } catch (e) {
     for (let x: unknown = e; x && refused.length < 400; x = (x as { cause?: unknown }).cause) refused += " / " + String((x as Error).message ?? x);
   }
   acceptLoaderPositionRows(true);
-  const read = await local.changeFeed(conn.sealed.head - 5, undefined, 5);
+  const read = (await local.changeFeed({ after: conn.sealed.head - 5, limit: 5 })) as { transactions: unknown[] };
   local.close();
   check(s9a, /Journal position payload must be null|Noncanonical row text header/.test(refused) && read.transactions.length === 5,
     `the product's default reader refuses these loader-written rows (${refused.match(/Journal position payload must be null|Noncanonical row text header/)?.[0]}); the named rule reads them`);
