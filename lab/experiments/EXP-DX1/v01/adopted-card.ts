@@ -18,11 +18,14 @@ import { summarizeTelemetry, type Telemetry } from "./cell-telemetry.ts";
 import { checkAdmission } from "./credit-evidence.ts";
 import { p99Miss, quietVerdict } from "./card-verdict.ts";
 import { windowStats, type WindowWrite } from "./windows.ts";
+import { fullCellTape, parseCardTape, tapeShape, tapeTitle, type CardTape } from "./production-card.ts";
 
 type Card = { source: string; age: Age; writer: Writer; jvm?: JvmProfile; toy: boolean; campaign: string; out: string; forecast: string;
   realistic?: RealisticBinding;
   windowSeconds?: WindowSeconds; creditMode?: CreditMode;
-  prepared?: boolean; profile?: ServerProfile; txJvm?: JvmProfile; writeJvm?: JvmProfile; diagnostics?: ReturnType<typeof writeDiagnostics>; separateWal?: boolean; failure?: string };
+  prepared?: boolean; profile?: ServerProfile; txJvm?: JvmProfile; writeJvm?: JvmProfile; diagnostics?: ReturnType<typeof writeDiagnostics>; separateWal?: boolean; failure?: string;
+  /** The save tape: its name, or the input's binding of every loaded cell's tape report (assembled campaigns). */
+  tape?: string | { name: string } };
 type Observation = Awaited<ReturnType<typeof adoptedArm>>;
 const tag = (x: unknown) => (typeof x === "number" && Number.isFinite(x)) ? String(Number(x.toFixed(3))) : "—";
 export function writeAdoptedCard(run: Card) {
@@ -66,6 +69,12 @@ export function writeAdoptedCard(run: Card) {
   const arms = [zero, loaded, control].filter((arm) => arm !== undefined);
   const inputsFile = path.join(run.campaign, "input.json");
   const prepared = run.prepared === true;
+  // [DX-INT1] Which save tape the loaded cells used; the header names it and every production cell is checked against it.
+  const boundTape = !run.toy && fs.existsSync(inputsFile) ? JSON.parse(fs.readFileSync(inputsFile, "utf8")).tape : undefined;
+  const cardTape = parseCardTape(boundTape?.name ?? (typeof run.tape === "string" ? run.tape : run.tape?.name ?? process.env.DX_V01_TAPE));
+  if (typeof run.tape === "string" && !run.toy && fs.existsSync(inputsFile)) assert.equal(cardTape, run.tape);
+  const shape = tapeShape(cardTape);
+  const productionRows: string[] = [];
   if (!run.toy && arms.length) assert(fs.existsSync(inputsFile));
   if (!run.toy && fs.existsSync(inputsFile)) {
     const input = JSON.parse(fs.readFileSync(inputsFile, "utf8"));
@@ -249,6 +258,10 @@ export function writeAdoptedCard(run: Card) {
     };
   };
   const primaryQuiet = quietRows("", creditMode, loaded);
+  if (run.toy && shape) for (const [prefix, mode] of [["", creditMode], [barrierRoot, defaultCreditMode]] as const) {
+    const [toyCell] = readArm(prefix + "p6-235", true, mode);
+    if (toyCell?.production) productionRows.push(productionRow(`toy ${mode}`, toyCell, prefix + "p6-235"));
+  }
   const barrierQuiet = quietRows(barrierRoot, defaultCreditMode, control);
   if (primaryQuiet && barrierQuiet) assert.deepEqual(primaryQuiet.tape, barrierQuiet.tape);
   const quiet = [primaryQuiet, barrierQuiet].filter((arm) => arm !== undefined);
@@ -281,6 +294,7 @@ export function writeAdoptedCard(run: Card) {
         if (name === "headline") headlineVerdicts.push(result.status);
         const ratio = (base: number | null, loaded: number | null) => tag(base && loaded !== null ? loaded / base : null);
         const mix = armMix(busy.writes);
+        if (busy.production) productionRows.push(productionRow(`${name} ${rate}`, busy, loadPath));
         commits.push({
           reading: `${name} ${rate}/s: ${tag(b.acknowledgedInWindow / b.durationSeconds)}/s in window, ${b.totalReceipts}/${b.totalOffers} durable, ${b.expired} expired${busy.seed.realistic ? `, deep/thin/small receipts ${mix.join("/")}` : ""}, p50/p99 ${tag(busy.p2.latency.p50Ms)}/${tag(busy.p2.latency.p99Ms)} ms`,
           samples: `${name} ${rate}: ${b.totalReceipts}`, link: evidence(loadPath),
@@ -302,6 +316,18 @@ export function writeAdoptedCard(run: Card) {
       `. Each side offers ${windowSeconds * 3.5} quiet saves. The verdict scores the headline burst commit gate. Pinned-read and feed observations accompany it. Publish, import and durable-effect coverage remain open.`,
       headlineVerdicts.includes("MISSED") ? "MISSED" :
         completedRates.has("headline") && headlineVerdicts.every(v => v === "MET") ? "MET" : partial, pairs.map(c => c.samples).join(" · "), pairs.map(c => c.link).join(" · ")]);
+  }
+
+  function productionRow(label: string, arm: Observation, dir: string) {
+    const p = arm.production!, m = p.metrics, ms = (h: { p50Ms: number | null; p99Ms: number | null }) => `${tag(h.p50Ms)} / ${tag(h.p99Ms)}`;
+    const report = JSON.parse(fs.readFileSync(file(dir, "tape-report.json"), "utf8"));
+    assert.equal(report.shape, shape);
+    const pathCell = (w: typeof m.writerPath.subject) => `${tag(w.perSecond)}/s, p99 ${tag(w.latency.p99Ms)} ms, late reads ${tag(w.lateReadsPerCommit)}`;
+    return `| ${label} | ${tag(m.offered.rowsPerSecond)} rows/s · ${tag(m.offered.commitsPerSecond)} commits/s · ${m.offered.saves} saves | ` +
+      `${tag(m.stored.rowsPerSecond)} rows/s · ${tag(m.stored.commitsPerSecond)} commits/s · ${m.stored.expired} expired | ` +
+      `${ms(m.commitLatency)} · second half ${ms(m.commitLatencySecondHalf)} | ${ms(m.saveCompletion)} · second half ${ms(m.saveCompletionSecondHalf)} | ` +
+      `${tag(m.readsPerCommit.firstMinute)} / ${tag(m.readsPerCommit.late)} | ${pathCell(m.writerPath.subject)} | ${pathCell(m.writerPath.general)} | ` +
+      `${m.generalIdentityCommits} | ${p.readback.fields} fields of ${p.readback.subjects} subjects; predecessors ${p.predecessors.seedRows} seed, ${p.predecessors.agedRows} AGE1, ${p.predecessors.campaignRows} earlier-cell rows | ${evidence(dir)} · [tape report](${path.relative(run.out, file(dir, "tape-report.json"))}) |`;
   }
 
   function armMix(writes: { receipt?: unknown; account: number }[]) {
@@ -330,6 +356,16 @@ export function writeAdoptedCard(run: Card) {
       assert.deepEqual(arm.seed.realistic, run.realistic);
       assert.deepEqual(arm.tape.map(({ owner: _owner, ...offer }: any) => offer),
         realisticTape(shape, cellPath(cell), windowSeconds, cell.loaded ? cell.rate - 3.5 : 0));
+    } else if (shape && cell.loaded) {
+      assert.deepEqual(arm.tape, fullCellTape(shape, cell, windowSeconds));
+      const bound = boundTape?.cells.find((c: { cell: string }) => c.cell === cellPath(cell));
+      const reportBytes = fs.readFileSync(file(dir, "tape-report.json"));
+      const report = JSON.parse(reportBytes.toString());
+      assert(bound && arm.production);
+      assert.equal(createHash("sha256").update(reportBytes).digest("hex"), arm.production.tapeReportSha256);
+      assert.deepEqual([report.tapeSha256, createHash("sha256").update(JSON.stringify(report)).digest("hex")],
+        [bound.tapeSha256, bound.reportSha256], "the cell's tape differs from the one bound in the card's input");
+      assert.equal(report.tapeSha256, arm.tapeSha256);
     } else assert.deepEqual(arm.tape, ratedTape(100_000, cell, windowSeconds));
     assert.equal(arm.writes.length, arm.tape.length);
     for (const [i, row] of arm.writes.entries()) {
@@ -435,7 +471,7 @@ export function writeAdoptedCard(run: Card) {
     P8: "No verified fixed-pace import arm from this attempt.",
   };
   const text = base.trimEnd().split("\n").map((line) => {
-    if (line === "## Run settings") return (run.writer === "per-person-ordered"
+    if (line === "## Run settings") return `**Save tape:** ${tapeTitle(cardTape)}.` + (shape ? " P2 below counts commits; the production table gives rows and saves." : "") + "\n\n" + (run.writer === "per-person-ordered"
       ? run.toy ? "The headline toy runs the full adopted workload. Barrier6 repeats P2 and P6."
         : "The headline ordered profile runs the full workload. Barrier6 repeats P2 and P6 on the same launch profile."
       : "Grouped comparison only. This attempt covers P2 and P6.") + "\n\n" + line;
@@ -464,6 +500,10 @@ export function writeAdoptedCard(run: Card) {
       "| Cell and account scope | Window | Stored/s | Save p50 ms | Save p99 ms | Sender wait p99 ms | Offers | In-window ACKs | Verified receipts by offer | Expired by offer |",
       "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |", ...cellWindows, ""] : []),
     ...(cellTelemetry.length ? ["## Within-cell counters", "", ...cellTelemetry, ""] : []),
+    ...(productionRows.length ? ["## Production-shaped neighbour saves", "",
+      `Neighbour accounts only (the quiet account is P6). Latencies are p50 / p99 ms from the scheduled offer to the durable acknowledgement; save completion runs from a save's first row offered to its last row acknowledged. Storage reads are SQL reads per commit from each acknowledgement, in the first 60 s / from 150 s. The per-subject ordered writer takes only commits of one to three facts that each replace a value; every other commit takes the general writer. Commits over 256 assertions carry the general identity. Every field of every production subject was read back at the cell's terminal cut and matched the acknowledged writes.`, "",
+      "| Cell | Offered | Stored in window | Commit p50 / p99 ms | Save completion p50 / p99 ms | Reads per commit, first minute / late | Per-subject writer | General writer | General-identity commits | Exactness | Evidence |",
+      "| --- | --- | --- | --- | --- | --- | --- | --- | ---: | --- | --- |", ...productionRows, ""] : []),
   ]).join("\n").replaceAll("No compatible measurement from this attempt.", run.failure ?? "No compatible measurement from this attempt.");
   const settings = {
     ...selectedWriter(run.writer),

@@ -1055,6 +1055,9 @@ for role in "${gateway_roles[@]}"; do
   if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
     role_trace_java+=" -Xlog:gc*,safepoint*=debug:file=/trace/prep1-gc-gw-$role.log:time,uptimemillis,level,tags,pid,tid:filecount=0"
     if [[ $mode == w ]]; then field_policy+=(-e TX2_SUBJECT_PROFILE=1); fi
+  elif [[ $mode == w && ${DX_V01_COMMIT_READS:-0} == 1 ]]; then
+    # [DX-INT1] The card on the production-shaped tape reports storage reads per commit from each acknowledgement.
+    field_policy+=(-e TX2_SUBJECT_PROFILE=1)
   fi
   gw_startup_read=()
   if [[ $role == w && ${DX_JVM1_STARTUP_READ_HOOK:-0} == 1 ]]; then
