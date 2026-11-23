@@ -89,6 +89,9 @@ while read -r name commit expect extra; do
           p.tx.cacheMiB, p.index.threshold, p.index.max, Object.entries(p.pg.settings).map(([k,v]) => "-c "+k+"="+v).join(" "),
           p["gw-w"].major, p["gw-w"].flags.join(" "), p["gw-r"].flags.join(" "), p["gw-w"].memoryMiB, p["gw-r"].memoryMiB].join("\n"))' "$arm")
       if (( ${#profile[@]} != 16 )); then n=$((n+1)); fails=$((fails+1)); echo "FAIL $name: no launch profile for $arm at $commit"; continue; fi
+      # The lab VM has eight CPUs and the server profile places nine; keep the role split, fold it onto 0-7.
+      # The server's own twelve-core placement checks are not exercised here.
+      profile[0]=0,6,7; profile[2]=2,3,4; profile[3]=5
       case_run "$name" "$commit" "$expect" prep1 "DX_PREP1_CAMPAIGN=rolling;DX_PREP1_PGDATA=/in/prepared;DX_PREP1_SEED_SHA=$(printf 'c%.0s' {1..64});DX_PREP1_SCALE_WAL_DIR=/mnt/wal/$slot;DX_PREP1_ROLLING_WAL_DEVICE=tmpfs;DX_TX_JAVA=25;DX_GW_WRITE_JAVA=${profile[11]};DX_LAUNCH_PROFILE=server;DX_GW_WRITE_JAVA_OPTS=${profile[12]};DX_GW_READ_JAVA_OPTS=${profile[13]};DX_GW_WRITE_MEMORY=${profile[14]}m;DX_GW_READ_MEMORY=${profile[15]}m" -- \
         "$slot" --port-write 8491 --port-read 8495 --cpus-tx "${profile[0]}" --cpus-pg "${profile[1]}" --cpus-gw-write "${profile[2]}" \
         --cpus-gw-read "${profile[3]}" --tx-memory "${profile[4]}m" --pg-memory "${profile[5]}m" --tx-java-opts "${profile[6]}" \

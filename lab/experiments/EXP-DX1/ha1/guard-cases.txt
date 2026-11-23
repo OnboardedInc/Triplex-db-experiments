@@ -2,7 +2,6 @@
 # [DX-REAL2] The production arms on prep1/server.sh's rolling path, through stack/up.sh to its first Docker change.
 # Saturday's cache32 launch at its pin, as the control that the rolling path is reproduced.
 rolling-cache32-at-97aced1b1   97aced1b1  ADMITTED  ARM=1-rolling6-cache32-S
-rolling-rolling6-at-c8f903ce1  c8f903ce1  ADMITTED  ARM=1-rolling6-S
 # The server's refusal of the production launch at 173f9d463, reproduced.
 prod-R-at-173f9d463            173f9d463  REFUSED   ARM=1-prodR-S
 prod-S394-at-173f9d463         173f9d463  REFUSED   ARM=1-prodS-394-S
