@@ -17,6 +17,7 @@ import { openSequence, startSequentialArm } from "./sequential.ts";
 import { parseWindow, parseCredits } from "./server-workload.ts";
 import { realSeed, proveRealistic } from "./realistic.ts";
 import { physicalTelemetry } from "./cell-telemetry.ts";
+import { firstOffer } from "../ha1/first-offer.ts";
 
 const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, requestedWriter, jvm, agedFile, agedPin,
   agedDump, agedDumpPin, txJvm, walDirectory, armText, startedText, forecast, windowText, creditText, writeJvm, pgdataSource, ...pgdataPaths] = process.argv.slice(2);
@@ -151,6 +152,7 @@ for (const [i, stage] of stages.entries()) {
     verifiedLaunch = true;
     console.log(`[DX-V01] Verified live server startup for ${stage.name}/${loaded ? "loaded" : "zero"} before offers`);
     const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency, windowSeconds, creditMode: stage.policy.creditMode, serialApply: diagnostics.serialApply, telemetry: physicalTelemetry(out, engines) };
+    firstOffer("realistic-card " + path.basename(out));
     const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head, undefined, comparison);
     if (loaded && !stopping) {
       const quietEnd = comparison ? stageEnd : Math.min(headlineEnd - budget.P8 * minute, Date.now() + budget.P6 * minute);

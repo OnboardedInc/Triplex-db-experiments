@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # [DX-H1] Why: separate peers and durable SQL storage measure the intended topology. Rejected: dev storage (single process).
 set -euo pipefail
+# [DX-INT1] Why: name the guard that refused a launch (ha1/first-offer-dry-run.sh reads this line); output only.
+trap 'echo "DX-STACK refused at lab/experiments/EXP-DX1/stack/up.sh:$LINENO: $BASH_COMMAND" >&2' ERR
 source "$(dirname "${BASH_SOURCE[0]}")/platform.sh"
 prefix=${1:?usage: up.sh PREFIX [--cpus-tx LIST] [--cpus-pg LIST] [--cpus-gw-write LIST] [--cpus-gw-read LIST] [--gateway-src DIR] [--port-write N] [--port-read N]}
 shift
@@ -619,6 +621,18 @@ elif [[ -n ${pg_data:-} ]]; then
 elif [[ $seed_volume == bm1-pristine-* ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $seed_volume == bm1-pristine-"${DX_BM1_PRISTINE_BATCH:?}" ]] || exit 2
   python3 lab/experiments/EXP-DX1/bm1/pristine-seed.py clone "$DX_BM1_PRISTINE_BATCH" "$prefix" "$attempt"
+elif [[ -n $seed_volume && $prefix == tx2-dxthin1-lf-* ]];then
+  # [DX-INT1] Why: the Mac launch-fix proof restarts a stopped toy copy the way the server runners restart the held copy.
+  # Rejected: a measurement lease on the Mac, or running the vendor SQL against a cluster that already holds Datomic.
+  [[ ${DX_BARE_METAL:-0} == 0 && $seed_volume =~ ^tx2-dxthin1-lf-held-[a-z0-9-]+$ ]] || exit 2
+  [[ -z $(docker ps -aq --filter "volume=$seed_volume") ]] || { echo 'Held toy copy is in use' >&2; exit 2; }
+  if docker volume inspect "$prefix-pg-data" >/dev/null 2>&1;then echo 'Refusing an existing clone destination' >&2;exit 2;fi
+  docker volume create "$prefix-pg-data" >/dev/null
+  docker run --rm --pull never --name "$prefix-seed-copy" --network none --memory 256m --memory-swap 256m \
+    -v "$seed_volume:/from:ro" -v "$prefix-pg-data:/to" --entrypoint /bin/sh postgres:17-alpine -eu -c '
+      test "$(cat /from/PG_VERSION)" = 17
+      test ! -e /from/postmaster.pid
+      cp -a /from/. /to/' > "$attempt/seed-clone.log"
 elif [[ -n $seed_volume ]];then
   [[ $prefix == tx2-dxt1-* ]] || exit 2
   case $seed_volume in

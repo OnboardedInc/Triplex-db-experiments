@@ -11,6 +11,8 @@ import { nativeMetrics } from "../thin1/native-metrics.ts";
 import { openScaleSeal, hex } from "./adopt.ts";
 import { stackOptions, writeDiagnostics, type Age, type JvmProfile, type Writer } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
+import { openPreparedLadder, sealedArm } from "../rd1/prepared.ts";
+import { firstOffer } from "../ha1/first-offer.ts";
 
 // [DX-THIN1] Why: the realistic card replaced adopted-server.ts with its staged three-arm runner and command line.
 // This file keeps the read-study and append-retirement pair runners exactly as gated on INT1 before that merge.
@@ -39,34 +41,57 @@ assert(Number.isSafeInteger(end) && end > Date.now());
 const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock"), queue = fs.statSync(`/proc/${process.ppid}/fd/9`);
 assert.equal(lock.ino, queue.ino); assert.equal(lock.dev, queue.dev);
 scaleHost.physical();
-if (tuned) execFileSync("taskset", ["-apc", "9,10", String(process.pid)]);
+// [DX-INT1] Why: stack/up.sh admits only CPUs in its caller's affinity under DX_BARE_METAL, so a driver pinned to 9,10
+// before the stack is refused cores 0-8 (bench 3, 18:57 and 19:43 UTC). The driver is unpinned while each stack starts
+// and pinned to 9,10 before its first read or save, so every measured window keeps the same placement.
+// Rejected: widening up.sh's check, or pinning only after the first ladder (a second arm would be refused again).
+const onlineCpus = tuned ? fs.readFileSync("/sys/devices/system/cpu/online", "utf8").trim() : "";
+assert(!tuned || /^[0-9,-]+$/.test(onlineCpus));
+const placeDriver = (cpus: string) => execFileSync("taskset", ["-apc", cpus, String(process.pid)], { stdio: "ignore" });
 process.env.DX_BARE_METAL = "1";
 verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
-const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin);
+// [DX-RD1] Why: a prepared read study names its ladder and one private PostgreSQL copy through the environment.
+// Rejected: a dump restore on a server that holds only the stopped full-size directory.
+// [DX-INT1] The append-retirement pair uses the same prepared path: one invocation per arm (--ladder reference, then
+// append), each on a new private copy, because the server holds only the stopped directory and room for one copy.
+const preparedSource = process.env.DX_RD1_PGDATA_SOURCE ?? "";
+assert(!preparedSource || ((tuned || retirement) && age === "fresh" && process.env.DX_RD1_LADDER && process.env.DX_RD1_PGDATA),
+  "A prepared run needs --read-study or DX_W1_RETIREMENT_PAIR=1, the fresh seal, a ladder and one --pgdata copy");
+const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin, !preparedSource);
 const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin) : undefined;
-fs.mkdirSync(campaign);
-jsonFile(path.join(campaign, "input.json"), { source, age, writer, policy: control, treatment: tuned || undefined, diagnostics, retirement: retirement || undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
-  agedBundle: expected?.pin, agedDump: expected?.dumpPin });
+const record = { source, age, writer, policy: control, treatment: tuned || undefined, diagnostics, retirement: retirement || undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
+  agedBundle: expected?.pin, agedDump: expected?.dumpPin };
+const prepared = preparedSource ? openPreparedLadder({ campaign, ladder: process.env.DX_RD1_LADDER!, source: preparedSource,
+  copy: process.env.DX_RD1_PGDATA!, wal: walDirectory || undefined, record, kind: retirement ? "retirement" : "read" }) : undefined;
+if (!prepared) {
+  fs.mkdirSync(campaign);
+  jsonFile(path.join(campaign, "input.json"), record);
+}
 let stopping = false;
 const stop = () => { stopping = true; };
 process.on("SIGTERM", stop);
 process.on("SIGINT", stop);
 for (const loaded of [false, true]) {
+  if (prepared && loaded !== prepared.loaded) continue;
   assert(!stopping && Date.now() + 10 * 60_000 < end);
   const policy = loaded && tuned ? tuned : control;
   const out = path.join(campaign, retirement ? (loaded ? "append" : "reference") : tuned ? (loaded ? "tuned" : "control") : (loaded ? "loaded" : "zero"));
   fs.mkdirSync(out);
-  const floor = age === "1B" ? 320 : 240;
+  const floor = prepared ? 5 : age === "1B" ? 320 : 240;
   assert(scaleHost.available(out) >= floor * 1024 ** 3, "Insufficient free space for the disposable restore");
   const attempt = randomUUID();
   const slot = "tx2-dxscale1-v01-" + attempt.slice(0, 12);
   jsonFile(path.join(out, "attempt.json"), { source, tag: path.basename(out), slot, attempt });
   assert(Object.values(scaleHost.childrenInventory(slot)).every((x) => x.length === 0));
-  try {
+  await sealedArm(prepared, slot, attempt, async () => {
+    let systemIdentifier = "";
     const options = stackOptions(writer, attempt, diagnostics);
+    prepared?.claim(slot, attempt);
+    if (tuned) placeDriver(onlineCpus);
     const { engines } = startScaleStack(out, slot, source, writer === "grouped", tuned ? {
-      ...options, DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: loaded ? "1" : "0",
-    } : retirement ? { ...options, TX2_SUBJECT_APPEND_RETIREMENT: loaded ? "1" : "0" } : options, { policy, walDirectory });
+      ...options, DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: loaded ? "1" : "0", ...prepared?.env,
+    } : retirement ? { ...options, TX2_SUBJECT_APPEND_RETIREMENT: loaded ? "1" : "0", ...prepared?.env } : options, { policy, walDirectory });
+    if (tuned) placeDriver("9,10");
     const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
     const residency = async () => {
       const { write, read } = peerUrls();
@@ -78,7 +103,8 @@ for (const loaded of [false, true]) {
     };
     const empty = tuned || retirement ? undefined : await residency();
     const raw = path.join(out, "engines", slot, "trace", "raw");
-    await restoreDump(expected?.dump ?? seed.dump, expected?.dumpPin ?? seed.image.sha256, slot, engines,
+    if (prepared) systemIdentifier = prepared.live(out, slot, attempt, engines.pg!.id);
+    else await restoreDump(expected?.dump ?? seed.dump, expected?.dumpPin ?? seed.image.sha256, slot, engines,
       Math.min(end - 9 * 60_000, Date.now() + (tuned ? 11 : 42) * 60_000), tuned ? () => {
         // [DX-RD1] Why: the restored reader requires a new trace file for its own JVM boot.
         // Rejected: appending samples to an empty-stack JVM's observations or discarding those observations.
@@ -96,6 +122,7 @@ for (const loaded of [false, true]) {
     assert(!stopping && Date.now() + 8 * 60_000 < end);
     const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw,
       creditMode: policy.creditMode, serialApply: diagnostics.serialApply, empty, residency };
+    firstOffer((retirement ? "retirement " : "read-study ") + path.basename(out));
     if (tuned) {
       const native = JSON.parse(fs.readFileSync(path.join(raw, "gw-r-native-settings.json"), "utf8"));
       assert.deepEqual([native.source, native.slot, native.process], [source, slot, "gw-r"]);
@@ -112,9 +139,10 @@ for (const loaded of [false, true]) {
           { rate, batch: loaded ? 8 : 1, sample: true, counters });
         terminal = arm.terminal;
       }
-      continue;
-    }
-    if (retirement) {
+      // [DX-INT1] A `continue` here skipped prepared.complete, so the control ladder exited 0 without
+      // ladders/control-complete.json (bench 3, 19:43 UTC) and the tuned ladder was refused; sealedArm now seals.
+      if (prepared) assert(!stopping, "Prepared ladder was interrupted");
+    } else if (retirement) {
       let cut = head;
       const [rates, seconds] = age === "fresh" ? [[394, 620], 300] as const : [[50, 235], 120] as const;
       for (const rate of rates) {
@@ -125,18 +153,17 @@ for (const loaded of [false, true]) {
           { rate, append: loaded, seconds });
         cut = result.terminal;
       }
+      if (prepared) assert(!stopping, "Prepared arm was interrupted");
     } else {
       const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head);
       if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
     }
-  } finally {
-    scaleHost.clean(out, slot);
-  }
-  if (retirement) execFileSync("python3", ["-I", "lab/experiments/EXP-DX1/w1/serial/summarize.py",
-    out, slot, attempt, source, age, creditMode], { stdio: "inherit" });
+    return systemIdentifier;
+  }, () => scaleHost.clean(out, slot), retirement ? () => execFileSync("python3", ["-I", "lab/experiments/EXP-DX1/w1/serial/summarize.py",
+    out, slot, attempt, source, age, creditMode], { stdio: "inherit" }) : undefined);
 }
 
-if (retirement) {
+if (retirement && (!prepared || prepared.ladder === "append")) {
   const arms = ["reference", "append"].map((arm) =>
     JSON.parse(fs.readFileSync(path.join(campaign, arm, "retirement-diagnostic.json"), "utf8")));
   assert(arms.every((arm) => arm.source === source && arm.creditMode === creditMode));
