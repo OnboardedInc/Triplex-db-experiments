@@ -112,7 +112,19 @@ export const tools: Tool[] = [
       "Size and position of the connected database: records counted at bring-up, subjects, accounts, the sealed head, the live head, the record-time range and how many transactions the demo added since the seal. In this test data each subject is a worker record (profile, placements, tasks, subtasks, files).",
     input: {},
     changes: false,
-    run: (d) => d.summary(),
+    run: async (d) => {
+      const out = (await d.summary()) as Record<string, any>;
+      // The release live points to and its entity types, read by ID from the refs (no scan).
+      const types = (await listEntityTypes(d, "live")) as Record<string, any>;
+      const calls = [...out["timing"].calls, ...types["timing"].calls];
+      const known = calls.map((c: { serverMs: number | null }) => c.serverMs).filter((x): x is number => x !== null);
+      return {
+        ...out,
+        liveRelease: types["release"],
+        entityTypes: types["types"].length,
+        timing: { serverMs: Math.round(known.reduce((a, b) => a + b, 0) * 100) / 100, roundTripMs: Math.round((out["timing"].roundTripMs + types["timing"].roundTripMs) * 100) / 100, requests: calls.length, calls },
+      };
+    },
     route: () => routes.about(),
   }),
   tool({

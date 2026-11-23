@@ -14,6 +14,7 @@ import { makeDatomicQueryExecutor, makeDatomicStorageAdapter } from "@triplex-bu
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { guardCounts, GuardedClient } from "./guard.ts";
 import { Demo, loadConnection } from "./store.ts";
+import { adaptExample } from "./query.ts";
 import { runTool } from "./tools.ts";
 
 const arg = (name: string, fallback?: string) => (process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : fallback);
@@ -142,12 +143,9 @@ check("exact integers are evaluated as numbers and labelled", typeof all.value["
 const examples = JSON.parse(readFileSync(join(import.meta.dirname, "../../../demo/console/questions.json"), "utf8")) as { name: string; query: object; from: object | string; basis?: object; expect?: string }[];
 let ran = 0;
 const bad: string[] = [];
-for (const ex of examples) {
-  const from = JSON.parse(JSON.stringify(ex.from).replaceAll('"account-003"', JSON.stringify(account)).replaceAll("50000", String(subjectNo)).replaceAll(":00050000", ":" + String(subjectNo).padStart(8, "0")));
-  const query = JSON.parse(JSON.stringify(ex.query).replaceAll("account-003", account).replaceAll("00050000", String(subjectNo).padStart(8, "0")));
-  const basis = ex.basis && "position" in ex.basis ? { position: Number(conn.sealed.head) } : undefined;
-  const subjects = (from as { subjects?: { subjects: number[] } }).subjects;
-  if (subjects) subjects.subjects = subjects.subjects.map((_, i) => i).filter((i) => i < conn.roster[a]!.people);
+for (const original of examples) {
+  const ex = adaptExample(original, account, subjectNo, conn.sealed.head, conn.roster[a]!.people);
+  const { query, from, basis } = ex;
   const r = await call("query", { query, from, ...(basis ? { basis } : {}) });
   const expectRefused = ex.expect === "refused";
   if (r.ok !== !expectRefused || (expectRefused && r.value["error"].code !== "QueryRefused")) bad.push(`${ex.name}: ${JSON.stringify(r.value["error"] ?? r.value["total"])}`);

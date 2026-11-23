@@ -227,3 +227,24 @@ export function runQuery(demo: Demo, input: { query: unknown; from: From; basis?
     };
   });
 }
+
+/**
+ * An example question from demo/console/questions.json, moved to another account and subject (the examples are written
+ * for subject 50000 of account-003 on the 1 billion database; the toy has a few subjects per account). Positions in a
+ * basis become the database's sealed head; a subject list becomes the first `people` subjects from `subject`.
+ */
+export function adaptExample<T extends { query: object; from: object | string; basis?: object }>(ex: T, account: string, subject: number, sealedHead: number, people: number): T {
+  const pad = (n: number) => String(n).padStart(8, "0");
+  const text = JSON.stringify(ex)
+    .replaceAll("acct/account-003/", `acct/${account}/`)
+    .replaceAll('"account-003"', JSON.stringify(account))
+    .replaceAll(":00050000", ":" + pad(subject));
+  const out = JSON.parse(text) as T & { from: { subject?: { subject?: number }; subjects?: { subjects: number[] } }; basis?: { position?: number } };
+  if (typeof out.from === "object" && out.from.subject && out.from.subject.subject !== undefined) out.from.subject.subject = subject;
+  if (typeof out.from === "object" && out.from.subjects) {
+    const n = out.from.subjects.subjects.length;
+    out.from.subjects.subjects = [...Array(n).keys()].map((i) => subject + i).filter((x) => x < people);
+  }
+  if (out.basis?.position !== undefined) out.basis.position = sealedHead;
+  return out;
+}
