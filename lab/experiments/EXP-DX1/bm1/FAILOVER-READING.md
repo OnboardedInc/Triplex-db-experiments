@@ -1,5 +1,28 @@
 # Two-machine failover on bench 4 and server 2, November 23
 
+## Summary: priority 9's first full-size evidence (repaired pair, three required cases)
+
+**No acknowledged save was lost in any case. A failure with one-copy acceptance (policy A) resumed writes in 19.5 s, and a planned move in 14.1 s, both inside their bars.** Policy B, which rebuilds a second copy before it accepts saves, took 10.1 minutes to its first protected save. Almost all of that was the local copy and re-hash of the 126 GB seed. The run used one database with ten deep accounts at cut 87,002, on two bare-metal servers. WAL streamed directly on TCP 25432 at a probed 683 MiB/s, and autovacuum was off.
+
+| Case (235 offered saves/s) | Acknowledged saves lost | First save after the event | P9 bar | Reads (first / longest gap / missed) |
+| --- | ---: | ---: | --- | --- |
+| `b-235`, abrupt loss of A's PostgreSQL and transactor, policy B | 0 (2,830 before the fault) | 603.4 s, first protected (two-copy) save | 60 s missed by design: policy B rebuilds first | 16.5 ms / 47 ms / 0 of 30,172 |
+| `a-235`, the same loss, policy A | 0 (4,885 receipts identical on the survivor) | 19.5 s, one-copy save | **60 s met** | 21.8 ms / 37 ms / 0 of 976 |
+| `move-235`, planned move | 0 (4,146 receipts identical) | 14.1 s from the seal | **30 s met** | 11.2 ms / 28 ms / 0 of 707 |
+
+**Set-up per case.** Both servers copy and SHA-256-check the 126 GB seed in parallel with 8 workers. Each took about 594–600 s (copy 131–139 s, hash 452–458 s; forecast 3–8 min). The standby attached with zero lag and reached synchronous mode in about 141–150 ms. Policy B's replacement repeats the same copy and hash (584 s), then catches up in 0.46 s over `direct`.
+
+**Where the time goes after a failure.** Detection, sealing, fencing and promotion together took about 1.5 s. In policies A and the move, the Datomic broker's start after promotion (9–12 s) takes most of the pause. In policy B, the replacement's local copy and re-hash takes it. Skipping the full re-hash of an already-verified staged seed would bring policy B to about 2.5 minutes.
+
+**Stopped and open:**
+
+1. **`a-235`'s second-failure check stopped.** After B was also killed, the step that reads A's fenced old disk failed: `Error communicating with HOST tx2-ha1-38c47d73-active or ALT_HOST 10.231.0.1 on PORT 4334` (`failure.json` of the a-235 attempt). The old-disk read went through A's transactor, which the first fault had killed. So the forecast of 700–2,050 one-copy saves absent from A's disk is unmeasured. **For the HASYNC1 builder:** read the old disk through PostgreSQL directly, or start a peer for it.
+2. **Optional cases not run.** `b-50` was stopped one minute in, on the orchestrator's decision; `a-50` was not started. All owned containers, volumes, networks and `tun42` on bench 4 were removed and checked absent.
+
+**Not covered:** a replacement that arrives with an empty disk (a 126 GB base backup over the network instead of a local cold seed), a provider power cut, failover while the first vacuum of a bulk-loaded table runs (the run turned autovacuum off), and policy C, which needs a third machine in a separate failure domain.
+
+**Evidence on the Mac:** `evidence/DX-BM1/bench4/failover-b/p9-pair-1123b-b.tar.zst` (14,349,007 bytes; role B output for all four case directories, `host.json`, `link.json`, `pair.json` and the role log) with `SHA256SUMS`, checked on both sides. The first pair's evidence is in `evidence/DX-BM1/bench4/failover/`.
+
 ## Repaired pair (`p9-pair-1123b`): lab `b03e806fd` on build `8ab832093`
 
 Server A is server 2 and server B is bench 4, both under `taskset -c 0-11` with a 150-minute cap. Role A was ready at 20:38:39 UTC and role B started at 20:38:59 UTC. The repair ([PAIR-REPAIR.md](../hasync1/PAIR-REPAIR.md)) makes both cold copies in parallel with 8 workers, attaches the standby before A's transactor, streams WAL directly on TCP 25432, and turns autovacuum off. [Predictions](PREDICTIONS.md#bench-4-2026-11-23)
