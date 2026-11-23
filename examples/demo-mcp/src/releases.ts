@@ -151,11 +151,16 @@ function definition(a: AttributeInput): Attribute.AnyDefinition {
   }
 }
 
-/** Key-order-independent JSON, so a stored value type compares equal to the same type built here. */
-const canon = (v: unknown): string =>
+/**
+ * Key-order-independent JSON that also ignores absent fields, so a value type read back from storage (where an
+ * undefined field is simply missing) compares equal to the same type built here. A different type still differs.
+ */
+export const canon = (v: unknown): string =>
   Array.isArray(v) ? "[" + v.map(canon).join(",") + "]"
-  : v && typeof v === "object" ? "{" + Object.keys(v).sort().map((k) => JSON.stringify(k) + ":" + canon((v as Record<string, unknown>)[k])).join(",") + "}"
-  : JSON.stringify(v);
+  : v && typeof v === "object"
+    ? "{" + Object.keys(v).filter((k) => (v as Record<string, unknown>)[k] !== undefined).sort()
+        .map((k) => JSON.stringify(k) + ":" + canon((v as Record<string, unknown>)[k])).join(",") + "}"
+    : JSON.stringify(v) ?? "null";
 
 export function defineEntityType(
   demo: Demo,

@@ -170,6 +170,16 @@ if (!hasReview) await call("define_entity_type", { name: "Review", attributes: [
 let typeFixed = "";
 try { await call("define_entity_type", { name: "Other", attributes: [{ key: ":review/note", valueType: "integer" }] }); } catch (e) { typeFixed = (e as { code?: string }).code ?? ""; }
 check("an existing attribute keeps its value type", typeFixed === "AttributeTypeFixed");
+// Edit type sends every attribute again: unchanged text, date and ref attributes must re-commit (DX-CON1 fault).
+const reviewNow = await call("describe_entity_type", { name: "Review" });
+const recommit = await call("define_entity_type", { name: "Review", attributes: reviewNow["type"].attributes.map((a: any) => ({
+  key: a.key, valueType: a.valueType, required: a.required, cardinality: a.cardinality, unique: a.unique,
+  ...(a.refTarget ? { refTarget: a.refTarget } : {}), ...(a.enumValues ? { enumValues: a.enumValues } : {}) })) }).catch((e) => ({ error: e })) as Record<string, any>;
+check("re-committing Review with its unchanged text, date, ref and enum attributes succeeds", !recommit["error"] && recommit["type"] === "Review",
+  recommit["error"] ? `${recommit["error"].code}: ${recommit["error"].message}` : `release ${recommit["release"]?.label}`);
+let changedType = "";
+try { await call("define_entity_type", { name: "Review", attributes: [{ key: ":review/decided-on", valueType: "text" }] }); } catch (e) { changedType = (e as { code?: string }).code ?? ""; }
+check("changing an existing attribute's value type (date to text) is still refused", changedType === "AttributeTypeFixed");
 check("the guard refused no read during the tools (every read named its entities)", guardCounts.refused === refusedBefore);
 
 await stock.dispose();
