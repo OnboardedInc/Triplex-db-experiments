@@ -92,6 +92,12 @@ reference to `Subject`, decided-on date) on `live`. Read the exact answers from 
 DESIGN.md 4.3. `columns[]` carry `note: "exact integer, evaluated as a number"` where it applies; `cursor` pages at the
 first page's position; `timing.consoleMs` is the console's evaluation time.
 
+**Step 3 (published): `change_feed` additions.** `entity` (that entity's transactions newest first, `before` to page
+back with the returned `nextBefore`), `actor`, `summary: true` with `after` (who changed since: `subjects[]` with
+`subject`, `account`, `root`, `transactions`, `factsChanged`, `lastPosition`; `transactionsRead`, `complete`,
+`resumeAfter`), `waitMs` up to 30,000 (long poll for Live). Every transaction carries `configSnapshot` (the release that
+governed it) beside `actor` and `commandId`. `database_summary` adds `liveRelease` and `entityTypes`.
+
 **Next, in this order, with the inputs of DESIGN.md section 6.2.** Each is added to the catalogue only when it runs,
 so the Assistant page never lists a tool that does not exist. Build the screens against these shapes.
 

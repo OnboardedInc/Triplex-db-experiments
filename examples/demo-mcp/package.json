@@ -9,7 +9,12 @@
     "console": "node src/page.ts",
     "proof": "node src/proof.ts",
     "gate:catalogue": "node src/gate-catalogue.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prove": "node src/prove.ts",
+    "gate:g12": "node src/gate-g12.ts",
+    "gate:config": "node src/gate-config.ts",
+    "gate:entities": "node src/gate-entities.ts",
+    "gate:query": "node src/gate-query.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",

@@ -8,7 +8,7 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { EntityId, TripleId, Triples, type TransactOp, type TransactionMeta, type Triple } from "@triplex-build/triplex";
+import { EntityId, TripleId, Triples, type TransactOp, type TransactionMeta, type TransactionRecord, type Triple } from "@triplex-build/triplex";
 import {
   Capabilities,
   DatabaseScope,
@@ -480,35 +480,76 @@ export class Demo {
     });
   }
 
-  /** The journal after a position, filtered to one account's entities when an account is given. */
-  changeFeed(after: number | undefined, accountInput?: string | number, limit = 20) {
+  /**
+   * The journal after a position, filtered to one account's entities when an account is given. [DX-CON1] Also: one
+   * entity's transactions newest first (entity), one actor's (actor, filtered here after reading), a long poll for the
+   * Journal's Live switch (waitMs), and "who changed since" (summary): the subjects changed after a position with their
+   * counts, reading at most 10 pages of 1,000 transactions and saying so when it stops.
+   */
+  changeFeed(o: { after?: number | undefined; account?: string | number | undefined; limit?: number | undefined; entity?: string | undefined; actor?: string | undefined; summary?: boolean | undefined; waitMs?: number | undefined; before?: number | undefined }) {
     return this.measure(async () => {
+      const limit = Math.min(o.limit ?? 20, o.summary ? 1000 : 200);
       const { position } = await this.head();
-      const from = after ?? Math.max(0, position - limit);
-      const ns = accountInput === undefined ? undefined : this.account(accountInput).namespace;
-      const page = await this.run(this.readStore, Effect.flatMap(Triples, (s) => s.transactions({ after: from, limit: Math.min(limit, 200) })));
-      const transactions = page.transactions
-        .map((tx) => ({
-          position: tx.position,
-          txId: tx.txId,
-          recordedAt: iso(tx.instant),
-          commandId: tx.commandId ?? null,
-          actor: tx.actor ?? null,
-          changes: tx.changes
-            .filter((c) => !ns || c.entityId.startsWith(ns))
-            .map((c) => ({
-              op: c.op,
-              entity: c.entityId,
-              attribute: c.attribute,
-              value: c.value ? plainValue(c.value as { type: string; value: unknown }) : null,
-              validFrom: iso(c.validFrom),
-              validTo: iso(c.validTo),
-            })),
-          totalChanges: tx.changes.length,
-        }))
-        .filter((tx) => !ns || tx.changes.length > 0);
-      return { after: from, account: ns ? this.account(accountInput!).account : null, transactions, next: page.next ?? null,
-        ...(this.connection.loaderPositionRows ? { compatibility: compatibilityNote } : {}), position };
+      const ns = o.account === undefined ? undefined : this.account(o.account).namespace;
+      const fmt = (tx: TransactionRecord) => ({
+        position: tx.position,
+        txId: tx.txId,
+        recordedAt: iso(tx.instant),
+        commandId: tx.commandId ?? null,
+        actor: tx.actor ?? null,
+        configSnapshot: tx.configSnapshot ?? null,
+        changes: tx.changes
+          .filter((c) => !ns || c.entityId.startsWith(ns))
+          .map((c) => ({
+            op: c.op,
+            entity: c.entityId,
+            attribute: c.attribute,
+            value: c.value ? plainValue(c.value as { type: string; value: unknown }) : null,
+            validFrom: iso(c.validFrom),
+            validTo: iso(c.validTo),
+          })),
+        totalChanges: tx.changes.length,
+      });
+      const keep = (tx: ReturnType<typeof fmt>) => (!ns || tx.changes.length > 0) && (!o.actor || tx.actor === o.actor);
+      const compat = this.connection.loaderPositionRows ? { compatibility: compatibilityNote } : {};
+      if (o.entity !== undefined) {
+        const page = await this.run(this.readStore, Effect.flatMap(Triples, (s) => s.transactionsForEntity(EntityId.make(o.entity!), { limit, ...(o.before === undefined ? {} : { beforePosition: o.before }) })));
+        return { entity: o.entity, order: "newest first", transactions: page.transactions.map(fmt).filter(keep), snapshotPosition: page.snapshotPosition, nextBefore: page.nextBeforePosition ?? null, ...compat, position };
+      }
+      if (o.summary) {
+        if (o.after === undefined) throw new DemoError("InvalidInput", "Changed since needs after, the position to look back to");
+        let cursor = o.after, read = 0, pages = 0, complete = false;
+        const subjects = new Map<string, { subject: string; account: string | null; root: string | null; transactions: Set<number>; facts: number; lastPosition: number }>();
+        while (pages < 10) {
+          const page = await this.run(this.readStore, Effect.flatMap(Triples, (s) => s.transactions({ after: cursor, limit: 1000 })));
+          pages++;
+          read += page.transactions.length;
+          for (const tx of page.transactions.map(fmt)) {
+            if (o.actor && tx.actor !== o.actor) continue;
+            for (const c of tx.changes) {
+              const k = subjectKey(c.entity, this.connection.roster);
+              const e = subjects.get(k.subject) ?? { ...k, transactions: new Set<number>(), facts: 0, lastPosition: 0 };
+              e.transactions.add(tx.position);
+              e.facts++;
+              e.lastPosition = Math.max(e.lastPosition, tx.position);
+              subjects.set(k.subject, e);
+            }
+          }
+          if (page.transactions.length < 1000 || page.next === undefined) { complete = true; break; }
+          cursor = page.next;
+        }
+        const list = [...subjects.values()].map((e) => ({ subject: e.subject, account: e.account, root: e.root, transactions: e.transactions.size, factsChanged: e.facts, lastPosition: e.lastPosition }))
+          .sort((x, y) => y.lastPosition - x.lastPosition);
+        return {
+          after: o.after, transactionsRead: read, pages, complete,
+          ...(complete ? {} : { note: `Stopped after ${pages} pages of 1,000 transactions, at position ${cursor}; ask again with after = ${cursor}.`, resumeAfter: cursor }),
+          subjectsChanged: list.length, subjects: list, ...compat, position,
+        };
+      }
+      const from = o.after ?? Math.max(0, position - limit);
+      const page = await this.run(this.readStore, Effect.flatMap(Triples, (s) => s.transactions({ after: from, limit, ...(o.waitMs ? { waitMs: Math.min(30_000, o.waitMs) } : {}) })));
+      const transactions = page.transactions.map(fmt).filter(keep);
+      return { after: from, account: ns ? this.account(o.account!).account : null, actor: o.actor ?? null, transactions, read: page.transactions.length, next: page.next ?? null, ...compat, position };
     });
   }
 
@@ -720,6 +761,21 @@ export class Demo {
     });
     return Object.fromEntries(attributes.map((a) => [a, rows.filter((r) => r.attribute === a).map(readValue)])) as Record<string, unknown[]>;
   }
+}
+
+/** Which subject a change belongs to: a loader-built entity's subject, a console entity, configuration or counters. */
+export function subjectKey(entity: string, roster: readonly { account: string; namespace: string }[]) {
+  if (entity.startsWith("_triplex/")) return { subject: "configuration", account: null, root: null };
+  const m = /^acct\/(account-\d{3})\/(?:(console)\/|([a-z0-9-]+):(\d{8}))/.exec(entity);
+  if (!m) return { subject: entity, account: null, root: null };
+  const account = m[1]!;
+  if (m[2]) return { subject: `${account} / console counters`, account, root: null };
+  const prefix = m[3]!, n = Number(m[4]);
+  if (["pl", "wk", "i9", "sec", "doc", "page"].includes(prefix)) {
+    const ns = roster.find((r) => r.account === account)?.namespace ?? `acct/${account}/`;
+    return { subject: `${account} / ${n}`, account, root: `${ns}pl:${String(n).padStart(8, "0")}` };
+  }
+  return { subject: `${account} / ${prefix}:${m[4]}`, account, root: entity.slice(0, entity.indexOf(m[4]!) + 8) };
 }
 
 export type Target = { entity: string; account: string | null; subjectNumber: number | null; kind: EntityKind | null };

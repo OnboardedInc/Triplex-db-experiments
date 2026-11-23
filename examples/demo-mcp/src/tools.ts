@@ -112,7 +112,19 @@ export const tools: Tool[] = [
       "Size and position of the connected database: records counted at bring-up, subjects, accounts, the sealed head, the live head, the record-time range and how many transactions the demo added since the seal. In this test data each subject is a worker record (profile, placements, tasks, subtasks, files).",
     input: {},
     changes: false,
-    run: (d) => d.summary(),
+    run: async (d) => {
+      const out = (await d.summary()) as Record<string, any>;
+      // The release live points to and its entity types, read by ID from the refs (no scan).
+      const types = (await listEntityTypes(d, "live")) as Record<string, any>;
+      const calls = [...out["timing"].calls, ...types["timing"].calls];
+      const known = calls.map((c: { serverMs: number | null }) => c.serverMs).filter((x): x is number => x !== null);
+      return {
+        ...out,
+        liveRelease: types["release"],
+        entityTypes: types["types"].length,
+        timing: { serverMs: Math.round(known.reduce((a, b) => a + b, 0) * 100) / 100, roundTripMs: Math.round((out["timing"].roundTripMs + types["timing"].roundTripMs) * 100) / 100, requests: calls.length, calls },
+      };
+    },
     route: () => routes.about(),
   }),
   tool({
@@ -434,17 +446,22 @@ export const tools: Tool[] = [
     name: "change_feed",
     title: "Change feed",
     group: "The feed",
-    sentences: ["Who changed since position 28,309,866?"],
+    sentences: ["Who changed since position 28,309,866?", "Show the last changes the assistant made."],
     description:
-      "The committed transactions after a position, in order, with every change (assert or retract, entity, attribute, value, valid time). Optionally only one account's changes. Pass the returned next as after to continue.",
+      "The committed transactions after a position, in order, with every change (assert or retract, entity, attribute, value, valid time), the actor, the command ID and the configuration release that governed the write. Optionally one account's changes or one actor's. Pass the returned next as after to continue; waitMs long-polls for new transactions. With entity, that entity's transactions newest first. With summary, who changed since after: the subjects changed with transaction and fact counts and how many transactions were read (at most 10 pages of 1,000).",
     input: {
       after: z.number().int().min(0).optional().describe("Return transactions strictly after this position; default is the last few"),
       account: account.optional(),
-      limit: z.number().int().min(1).max(200).default(20),
+      limit: z.number().int().min(1).max(1000).default(20).describe("Transactions per page (at most 200; with summary, 1,000 per page read)"),
+      entity: z.string().optional().describe("Only this entity's transactions, newest first"),
+      before: z.number().int().min(0).optional().describe("With entity: transactions strictly before this position (the returned nextBefore)"),
+      actor: z.string().optional().describe('Only transactions by this actor, e.g. "assistant", "console", "triplex/config-store"'),
+      summary: z.boolean().default(false).describe("Who changed since after: subjects with counts"),
+      waitMs: z.number().int().min(0).max(30_000).optional().describe("Long poll: wait up to this long for a transaction after after"),
     },
     changes: false,
-    run: (d, a) => d.changeFeed(a.after, a.account, a.limit),
-    route: (a, out) => routes.journal({ after: out["after"] as number, account: a.account === undefined ? undefined : String(out["account"]) }),
+    run: (d, a) => d.changeFeed(a),
+    route: (a, out) => (a.entity ? routes.entity(a.entity, { tab: "journal" }) : routes.journal({ after: out["after"] as number, account: a.account === undefined ? undefined : String(out["account"]), actor: a.actor, summary: a.summary ? 1 : undefined })),
   }),
   tool({
     name: "remove_on_request",
