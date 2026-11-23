@@ -47,7 +47,7 @@ Ordered per-person writer, transactor Java 25 ZGC, gateways Java 21 G1, separate
 
 - **P2, low rates:** close to fresh, as predicted: 50/s and 235/s stored everything in-window. The 235/s all-save p99 rose from 2.39 s to 3.82 s.
 - **P2, 394 and 620: wrong in the pessimistic direction.** The prediction was flat to 15% lower than fresh. In-window delivery fell to 249/s and 239/s, 27% and 27% below fresh (343/s, 329/s), with 5,523 expiries at 394.
-- **P1 and the quiet reads: much worse than predicted.** The prediction was higher tail latency at the top of the ladder. Instead the one-core reader delivered about 18–19 pinned reads/s at every ladder step, against 600–1,560/s fresh, with p50 44.8 ms at one seat. About two thirds of the quiet account's planned reads failed in every P6 cell, solo windows included, against none fresh. The error type is not in the arm summary; the gateway logs are in the evidence. Read exactness for returned reads holds (the arm passed its checks), but the read path at 1B on one core is far from the fresh card.
+- **P1 and the quiet reads: much worse than predicted.** The prediction was higher tail latency at the top of the ladder. Instead the one-core reader delivered about 18–19 pinned reads/s at every ladder step, against 600–1,560/s fresh, with p50 44.8 ms at one seat. About two thirds of the quiet account's planned reads failed in every P6 cell, solo windows included, against none fresh. The error type is not in the arm summary; the gateway logs are in the evidence. The assembled card reports whether every returned read was exact. The read path at 1B on one core is far from the fresh card.
 - **P6 ratios:** the 1.25× bar fails at every rate, as predicted.
 - **P8:** import pace held (3,250 facts/s against 3,193 fresh).
 
