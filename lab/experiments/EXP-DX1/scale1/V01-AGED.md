@@ -4,6 +4,29 @@ Server 2 runs three things on AGE1's 1B cut, in this order: the AGE1 seal (`meas
 
 The order puts the cache arm before the scorecard arms. The owner allowed it to run "whenever you can", and the orchestrator allowed it earlier when the machine is free. It also avoids a known hazard: each build retags the shared image names, and the sequential scorecard pins its build receipt in arm 1, so a PREP1 build between scorecard arms would make the later arms refuse.
 
+## Seal result: stopped at the restore readback, no aged bundle
+
+**`measure-loaded` failed after the native restore, so there is no `sealed.json` and no aged scorecard bundle.** The restore readback peer died with `:db.error/read-transactor-location-failed` ("Could not read transactor location from storage"). Every earlier step passed.
+
+- **Cause.** `server.mjs` line 576 (AGE1 `d90b3728f`) runs the `restore-check` peer, which calls `d/connect` on `AGE_RESTORE_URI_TEMPLATE` (`age1/src/triplex/age/rung.clj` `restore-check!`). The restore lands in the separate copy PostgreSQL (`scale1/decision/age-host.ts`, `copyName` and `copyJdbc`, line 971). `age-host.ts` starts one transactor, on the primary storage. No transactor ever registered in the restore storage, so a peer cannot connect there. This path had not completed on the server before. `age-host.ts` then stopped with "AGE1 stopped before the aged measurement seal".
+- **Why the scorecard cannot start.** `age1/scorecard.mjs` `writeScorecard` requires both the `seal.log` and `restore-readback.log` events. The seal runs after the readback.
+- **Not a single-file repair.** It needs a transactor on the restore storage for the readback, or an approved derivative that writes the bundle without the readback event. Both are builder decisions.
+
+| Step | Measured | Prediction |
+| --- | --- | --- |
+| Safety copy of the exact load cut to the root NVMe | 2 min 27 s; 1,662 files, 176,380,777,495 bytes; inventory identical to the held cluster | 20–30 min, identical |
+| 120 s windows at 3.5/s quiet only | 420/420 quiet saves; receipt p50/p99 6.86 / 27.79 ms | 420 quiet saves |
+| 120 s windows, 50/s busy | 6,000 busy saves (checked count) and 420/420 quiet saves; quiet receipt p50/p99 3.04 / 196.52 ms (service p99 17.83 ms) | 6,000 busy saves offered |
+| Index overlap window | 897 saves overlapped an index job: receipt p99 1,811.66 ms; quiet receipt p99 1,451.65 ms; request to adoption 17.97 s (preflight estimate 12 s) | at least one overlapping save |
+| Cold first reads, API ms | current recent 47.86 · pinned recent 97.09 · current year-idle 41.05 · pinned year-idle 72.64 · old cut 277.80; peer connect about 2.0 s | — |
+| Native backup | 109,821,589,553 bytes, 13 min 36 s | 100–150 GB, 0.5–1.0 h |
+| Full verify | 6,018,339 segments, none missing or unreadable, t 62,888,918; 22 min 57 s | 0.3–0.6 h |
+| Native restore | completed at basis t 62,888,918; 33 min 51 s | 0.5–1.0 h |
+| Restore readback | **failed at connect** (above) | t and head equal to the seal |
+| Seal and bundle | not reached | records above 1,000,002,769 |
+
+The windows advanced the database to native t 62,888,918 and 1,000,251,169 records. The held cluster on the spare NVMe is stopped and unchanged since the failure. The exact load cut (1,000,002,769 records, t 62,876,498) is intact as the verified safety copy on the root NVMe. The native backup (110 GB on the spare NVMe) and the restored copy (111 GB on root) are retained until the orchestrator decides. [Evidence hashes](evidence/age-v01-bulk-c-measure.sha256)
+
 ## Predictions, written before the runs
 
 ### Seal (`measure-loaded`), written 2026-11-23 15:31 UTC
