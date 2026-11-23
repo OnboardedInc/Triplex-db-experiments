@@ -77,3 +77,20 @@ Build `dc34aa18d` (`exp/DX-RD1-readers`, containing the one branch at `3d4320155
 **Against the predictions.** The options remove the old-pin cost: 19.4 → 467.9 reads/s at one seat (24×), p50 41.7 → 1.37 ms, inside the predicted 400–700/s and 1.2–2.5 ms. The falsifier (on below 100/s at one seat, or any wrong value) did not trigger. At 16 and 256 seats arm `on` stayed near 479/s, just under the predicted 500–1,200/s floor; the single reader core is the limit there. Near the head with the options off, 16 and 256 seats gave 310/s and 283/s, below the predicted 400–1,000/s; one seat (409/s) was inside the range.
 
 Evidence: `evidence/DX-SCALE1/pinned-pair-1b/pinned-pair-1b.tar.gz` in the private evidence folder (SHA-256 `e7d59dc3c55081406b666d80b2c6f1fc5a336d6d5004d8140c9b32ba0e2c76b8`).
+
+## Tuned pinned-read arm (build `64c70e549`): predictions copied from `rd1/PINNED-1B.md` before launch
+
+**Predictions, written before the run.** Closed loop, no think time, so by Little's law p50 is about seats ÷ reads/s. In the pair, p99 was 1.65 to 1.7 times p50 at 256 seats. Cost model: the pair's on arm spent 1.1 to 1.8 ms of CPU per single-subject exchange, of which the read itself is about 0.2 ms (probe). With eight subjects per exchange the fixed part is shared: about 2.4 to 4.4 ms per exchange, rising 35 to 50% with many exchanges in flight, so 0.4 to 0.8 ms of CPU per subject. Three cores at 0.95 give 3,600 to 7,100 subjects/s before GC on those cores and the batches that do not fill; the ranges below allow for both.
+
+| Seats | Pin | Reads/s (subjects) | p50 | p99 | Mean batch |
+| --- | --- | --- | --- | --- | --- |
+| 64 | head − 1,000 | 2,500–4,500 | 14–26 ms | 30–70 ms | 7–8 |
+| 64 | old pin | 2,300–4,200 | 15–28 ms | 30–75 ms | 7–8 |
+| 256 | head − 1,000 | 2,800–4,800 (central 3,800) | 53–90 ms (central 67) | 90–155 ms (central 115) | 7.5–8 |
+| 256 | old pin | 2,500–4,400 | 58–100 ms | 100–170 ms | 7.5–8 |
+| 1,024 | head − 1,000 | 2,500–4,500 | 230–410 ms | 400–800 ms | 8 |
+| 1,024 | old pin | 2,300–4,200 | 245–445 ms | 420–850 ms | 8 |
+
+Old pin 5 to 15% below near head, as in the pair (479 against 535 at 256 seats), from the 1 to 2% of subjects read through the as-of view. Short-cut share at the old pin 97 to 99.5%. Wrong values and errors: 0 in every step.
+
+Falsifiers (from the launch message): near-head reads/s at 256 seats below 1,500 or above 6,000; mean batch below 6; any wrong value.
