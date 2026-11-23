@@ -55,26 +55,59 @@ if [[ $mode == cleanup ]]; then
   exit
 fi
 
-[[ $mode == run ]]
+[[ $mode == run || $mode == dry || $mode == build ]]
+if [[ $mode == build ]]; then
+  # [DX-BM1] Why: build the pinned job ahead of the data so the arm starts minutes after the copy verifies.
+  [[ ! -e $build && -z $(docker ps -q) ]]
+  mkdir -p "$job"
+  timeout -k 15s 20m env DX_JAVA=25 DX_NATIVE_BOOTSTRAP_CACHE="$root/base-build" \
+    bash "$root/prepare.sh" --prepare "$pin" "$build"
+  exit
+fi
 # The aged directory, handoff and seed metadata must have passed the receiver's byte and digest checks first.
-[[ -f $root/aged-verification.json && -z $(docker ps -q) && ! -e $out && ! -e $build ]]
+[[ -f $root/aged-verification.json && -z $(docker ps -q) && ! -e $out ]]
 handoff_sha=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["handoffSha256"])' "$root/aged-verification.json")
 [[ $handoff_sha =~ ^[a-f0-9]{64}$ && $(sha256sum "$handoff" | cut -d ' ' -f 1) == "$handoff_sha" ]]
 [[ ! -e $aged/postmaster.pid ]]
 [[ $(findmnt -nro SOURCE --mountpoint "$wal") == /dev/nvme1n1 ]]
 for policy in /sys/devices/system/cpu/cpufreq/policy*/scaling_governor; do [[ $(cat "$policy") == performance ]]; done
 awk '$1 == "MemTotal:" {exit ($2 < 89*1024*1024)}' /proc/meminfo
+images_current() {
+  # [DX-BM1] Why: reuse the dry run's build only while every tag still names the image that build made.
+  # Rejected: trusting tags after any other build (each build retags the shared names).
+  python3 - "$build/results/images.json" <<'PY'
+import json, subprocess, sys
+for image in json.load(open(sys.argv[1])):
+    for tag in image.get("RepoTags", []):
+        now = subprocess.run(["docker", "image", "inspect", "--format", "{{.Id}}", tag], capture_output=True, text=True).stdout.strip()
+        if now != image["Id"]:
+            sys.exit(1)
+PY
+}
+build_ready=0
+if [[ -e $build ]]; then
+  [[ $(cat "$build/results/bootstrap.exit") == 0 ]]
+  images_current
+  build_ready=1
+fi
 mkdir -p "$job"
-date -u +%FT%TZ > "$job/started"
-record preparing measure
-timeout -k 15s 20m env DX_JAVA=25 DX_NATIVE_BOOTSTRAP_CACHE="$root/base-build" \
-  bash "$root/prepare.sh" --prepare "$pin" "$build"
+if [[ $mode == run ]]; then date -u +%FT%TZ > "$job/started"; record preparing measure; fi
+if [[ $build_ready == 0 ]]; then
+  timeout -k 15s 20m env DX_JAVA=25 DX_NATIVE_BOOTSTRAP_CACHE="$root/base-build" \
+    bash "$root/prepare.sh" --prepare "$pin" "$build"
+fi
 [[ $(cat "$build/results/bootstrap.exit") == 0 ]]
 cd "$repo"
 [[ $(git rev-parse HEAD) == "$pin" && -z $(git status --porcelain) ]]
+launch=(bash lab/experiments/EXP-DX1/prep1/server.sh cache32-aged "$out" "$pin" "$image"
+  77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b
+  1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154
+  --pg-data "$aged" --wal-mount "$wal" --aged-bundle "$handoff" "$handoff_sha")
+if [[ $mode == dry ]]; then
+  # [DX-BM1] Why: run every input and stack guard for real up to the first container, before the timed window.
+  out=$job/dry-out
+  launch[3]=$out
+  exec bash "$root/tools/launch-dry-run.sh" "$job/dry" -- "${launch[@]}"
+fi
 record running collect
-exec node lab/bin/heavy.mjs --label "DX-PREP1-$selection" -- \
-  bash lab/experiments/EXP-DX1/prep1/server.sh cache32-aged "$out" "$pin" "$image" \
-    77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b \
-    1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154 \
-    --pg-data "$aged" --wal-mount "$wal" --aged-bundle "$handoff" "$handoff_sha"
+exec node lab/bin/heavy.mjs --label "DX-PREP1-$selection" -- "${launch[@]}"
