@@ -1,9 +1,45 @@
+// [DX-CON1] Triplex Console: routes. Every screen has a URL, so every tool answer's consoleUrl opens it.
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { createBrowserRouter, RouterProvider } from "react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "next-themes";
 import "./index.css";
+import { Shell } from "@/components/console/layout";
+import { AboutPage } from "@/pages/about";
+import { AccountPage } from "@/pages/account";
+import { EntityPage } from "@/pages/entity";
+import { HomePage } from "@/pages/home";
+import { NotFoundPage, PendingPage } from "@/pages/pending";
+
+const client = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } });
+
+const router = createBrowserRouter([
+  {
+    element: <Shell />,
+    children: [
+      { path: "/", element: <HomePage /> },
+      { path: "/about", element: <AboutPage /> },
+      { path: "/accounts/:account", element: <AccountPage /> },
+      { path: "/accounts/:account/subjects/:n", element: <EntityPage /> },
+      { path: "/entities/:entityId", element: <EntityPage /> },
+      { path: "/types", element: <PendingPage title="Entity types" /> },
+      { path: "/types/:name", element: <PendingPage title="Entity type" /> },
+      { path: "/query", element: <PendingPage title="Query" /> },
+      { path: "/journal", element: <PendingPage title="Journal" /> },
+      { path: "/configuration", element: <PendingPage title="Configuration" /> },
+      { path: "/assistant", element: <PendingPage title="Ask your assistant" /> },
+      { path: "*", element: <NotFoundPage /> },
+    ],
+  },
+]);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <div>Triplex Console</div>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <QueryClientProvider client={client}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </ThemeProvider>
   </StrictMode>,
 );
