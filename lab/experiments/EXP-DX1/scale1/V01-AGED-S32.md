@@ -4,6 +4,12 @@ Server 2 runs this card on the sealed 1B cluster from `exp/DX-INT1` at `0d9693de
 
 **Dry run of part 2, 21:45–21:53 UTC:** build `0d9693de0` (4 min 34 s), scratch copy 144 s, then `DX-DRY-RUN first offer reached: scorecard arm 2 headline/loaded lab/experiments/EXP-DX1/v01/adopted-server.ts:160`. The aged fresh-peer check passed inside the stack network with no hosts entry. The timed run of parts 1–3 and assembly started at 21:53:23 UTC in `/var/tmp/triplex-v01-1B-s32`.
 
+## Results, part by part
+
+| Part | Result | Afternoon card (`6770c37ba`, part 1) |
+| --- | --- | --- |
+| 1, headline without readers, server-32, rolling 6 | **1,260/1,260 saves stored**; p50/p90/p99 6.34 / 12.03 / 19.58 ms (max 135.00); feed 1,260 entries; cut 28,309,866 → 28,311,126; completed 22:03 UTC | 1,260/1,260; 6.40 / 11.84 / 20.10 ms |
+
 ## Predictions, copied from the builder's document before launch
 
 
