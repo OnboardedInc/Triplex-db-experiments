@@ -194,7 +194,7 @@ The tuned reader therefore runs with the `server` transactor (16 GiB cache). Com
 **Command.** Build once at the commit below, as for the pair; the environment and the copy steps are the pair's.
 
 ```bash
-COMMIT=<this commit>   # exp/DX-RD1-readers
+COMMIT=64c70e549   # exp/DX-RD1-readers; contains origin/exp/DX-INT1 at ad9eafbbe
 tuned_arm() {  # $1 = new scratch copy of AGED_PGDATA_SOURCE, $2 = new campaign directory, $3 = deadline in ms
   sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
     "AGE_JAVA=$AGE_JAVA" "AGE_DATOMIC_HOME=$AGE_DATOMIC_HOME" DX_RD2_PINNED_TUNED=1 \
