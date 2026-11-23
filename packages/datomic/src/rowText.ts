@@ -122,7 +122,11 @@ export function decodeRowTextColumns(values: unknown, version?: "1" | "2"): Trip
     }
   });
   if (modern && row["attribute"] === ":_tx/position") {
-    if (row["value_number"] !== null) throw new TypeError("Journal position payload must be null");
+    // [DX-PREP1] Why: the gateway's test fixture encoder (used by the AGE1 aging loader for 28.2 million saves) writes the
+    // position itself here. It carries no other information, so it is read as the canonical null payload.
+    // Rejected: any other non-null payload, which would disagree with the fixed-width position.
+    if (row["value_number"] !== null && row["value_number"] !== row["recorded_position"])
+      throw new TypeError("Journal position payload must be null");
     row["value_number"] = row["recorded_position"];
   }
   for (const c of ["recorded_position", "schema_version"])
@@ -144,10 +148,19 @@ export function decodeRowText(text: string): TripleRow {
   const start = 5 + length;
   const refLength = Number.parseInt(text.slice(start + 32, start + 36), 16);
   const body = start + 36 + refLength + (text[0] === "2" ? 1 : 0);
-  const row = decodeRowTextArray(JSON.parse(text.slice(body)), text[0]);
+  const values = JSON.parse(text.slice(body));
+  // The product's "P" header always carries a null payload.
+  if (text[0] === "2" && text[body - 1] === "P" && Array.isArray(values) && values[6] !== null)
+    throw new TypeError("Journal position payload must be null");
+  const row = decodeRowTextArray(values, text[0]);
   // [DX-T1-5] Why: the server assigns record time using JVM JSON spelling; headers and typed values remain exact.
   // Rejected: comparing entire JSON bytes to Node's number/escape spelling (valid server rows fail bootstrap).
-  if (encodeRowText(row, text[0]).slice(0, body) !== text.slice(0, body))
+  const header = encodeRowText(row, text[0]).slice(0, body);
+  // [DX-PREP1] The fixture encoder's position row has the ordinary "-" marker with its position payload (see above).
+  const fixturePosition =
+    text[0] === "2" && row.attribute === ":_tx/position" && Array.isArray(values) && values[6] !== null &&
+    text[body - 1] === "-" && header.slice(0, body - 1) === text.slice(0, body - 1);
+  if (header !== text.slice(0, body) && !fixturePosition)
     throw new TypeError("Noncanonical row text header");
   return row;
 }

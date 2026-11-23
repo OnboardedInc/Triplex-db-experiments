@@ -190,8 +190,21 @@ it("rejects malformed modern wire positions and non-null journal placeholders", 
   const values = JSON.parse(text.slice(text.indexOf('["')));
   for (const p of [1, "1", "000000000000000x"])
     expect(() => decodeRowTextColumns([p, ...values.slice(1)], "2")).toThrow();
-  values[6] = 1;
+  values[6] = 2;
   expect(() => decodeRowTextColumns(values, "2")).toThrow();
+});
+
+// [DX-PREP1] Why: AGE1's aging loader wrote 28.2 million journal position rows with the gateway's test fixture
+// encoder: the ordinary "-" marker and the position itself as the payload. They carry nothing else.
+// Rejected: any payload other than the position, or a "P" header with a payload.
+it("reads the fixture encoder's journal position row as the canonical row", () => {
+  const row = { ...base(), attribute: ":_tx/position", recorded_position: 28_309_866, value_number: 28_309_866 };
+  const canonical = encodeRowText(row);
+  const fixture = canonical.replace('P["', '-["').replace('"number",null,null,', '"number",null,2.8309866E7,');
+  expect(fixture).not.toBe(canonical);
+  expect(decodeRowText(fixture)).toEqual(decodeRowText(canonical));
+  expect(() => decodeRowText(fixture.replace("2.8309866E7", "2.8309867E7"))).toThrow(/payload must be null/);
+  expect(() => decodeRowText(canonical.replace('"number",null,null,', '"number",null,2.8309866E7,'))).toThrow();
 });
 
 // [DX-T1-5] Why: JVM-assigned clocks use equivalent JSON numbers; binding still checks the exact duplicated header.
