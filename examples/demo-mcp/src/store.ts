@@ -25,6 +25,8 @@ import {
   type DatomicRequestSample,
 } from "@triplex-build/triplex-datomic";
 import { Effect, Layer, ManagedRuntime, Scheduler } from "effect";
+import { DemoError } from "./errors.ts";
+import { GuardedClient } from "./guard.ts";
 
 export const stateFile = () =>
   process.env["TRIPLEX_DEMO_STATE"] ?? join(homedir(), ".triplex-demo", "connection.json");
@@ -63,13 +65,7 @@ export function loadConnection(file = stateFile()): Connection {
   return c;
 }
 
-export class DemoError extends Error {
-  readonly code: string;
-  constructor(code: string, message: string) {
-    super(message);
-    this.code = code;
-  }
-}
+export { DemoError };
 
 export type Timing = {
   /** Sum of the gateways' own handling time for every request this answer needed (x-tx2-gateway-micros). */
@@ -129,8 +125,8 @@ export function parseInstant(input: string | number, name: string): number {
 
 export class Demo {
   readonly connection: Connection;
-  readonly writer: DatomicClient;
-  readonly reader: DatomicClient;
+  readonly writer: GuardedClient;
+  readonly reader: GuardedClient;
   readonly db: string;
   readonly scope: DatabaseScope;
   private readonly writeStore: Store;
@@ -144,8 +140,9 @@ export class Demo {
     const [tag, env, tenant, database, generation] = JSON.parse(connection.scope) as [string, string, string, string, number];
     if (tag !== "triplex-scope-v1") throw new Error("Unknown scope format");
     this.scope = DatabaseScope.make({ env, tenant, database, generation });
-    this.writer = new DatomicClient(connection.writeUrl, 60_000);
-    this.reader = new DatomicClient(connection.readUrl, 60_000);
+    // [DX-CON1] Both clients go through the guard: no read without an entity ID is ever sent.
+    this.writer = new GuardedClient(connection.writeUrl, 60_000);
+    this.reader = new GuardedClient(connection.readUrl, 60_000);
     this.writer.onRequest = this.reader.onRequest = observe;
     this.writeStore = store(this.writer, this.scope);
     this.readStore = store(this.reader, this.scope);
@@ -227,7 +224,7 @@ export class Demo {
     return { position: Number(basis.position.v), t: String(basis.t.v) };
   }
 
-  private requireWorkingCopy() {
+  requireWorkingCopy() {
     if (!this.connection.workingCopy)
       throw new DemoError("NotAWorkingCopy", "This connection is not marked as a demo working copy; changes are refused");
   }

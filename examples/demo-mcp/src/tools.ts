@@ -6,6 +6,7 @@
 // Rejected: per-surface wrappers (the first demo had one in mcp.ts and another in page.ts, and they drifted).
 import { statSync } from "node:fs";
 import { z } from "zod";
+import { defineEntityType, describeEntityType, listEntityTypes, listReleases, moveLive, VALUE_TYPES } from "./releases.ts";
 import { caller, Demo, DemoError, entityKinds, stateFile, type Actor } from "./store.ts";
 
 export type Group =
@@ -100,6 +101,89 @@ export const tools: Tool[] = [
     changes: false,
     run: (d, a) => d.listAccounts(a.checkDirectories),
     route: () => routes.home(),
+  }),
+  tool({
+    name: "list_entity_types",
+    title: "List entity types",
+    group: "Types",
+    sentences: ["What entity types are there?"],
+    description:
+      "The entity types in the release a ref points to (default live): each type with its attribute count and how many entities the console created, plus the release (ID, label, sequence) and where test and live point. Read from Triplex's own configuration records by entity ID, starting from the two refs.",
+    input: { ref: z.enum(["live", "test"]).default("live").describe("Which ref's release to read") },
+    changes: false,
+    run: (d, a) => listEntityTypes(d, a.ref),
+    route: () => routes.types(),
+  }),
+  tool({
+    name: "describe_entity_type",
+    title: "Describe an entity type",
+    group: "Types",
+    sentences: ["Describe the Review type."],
+    description:
+      "One entity type as Triplex compiles it from the release (Descriptors.compile): attributes with value type, required, cardinality, unique and reference target; the constraints Triplex generated, each with whether the console checks it on this engine; and the type's revision history across releases.",
+    input: { name: z.string().describe("Entity type name, PascalCase, e.g. Review"), ref: z.enum(["live", "test"]).default("live") },
+    changes: false,
+    run: (d, a) => describeEntityType(d, a.name, a.ref),
+    route: (a) => routes.types(a.name) + "?tab=definition",
+  }),
+  tool({
+    name: "define_entity_type",
+    title: "Define an entity type",
+    group: "Types",
+    sentences: ["Define an entity type called Vehicle with a plate (text, required) and a depot (text)."],
+    description:
+      "Define (or change) an entity type and commit it as a new immutable configuration release with Triplex's ConfigStore.commit: one attribute node per attribute and one entity-schema node with its generated constraints, written as facts in one transaction. test always moves to the new release; live moves too unless moveLive is false. An existing attribute keeps its value type (in Triplex the attribute owns its type)." +
+      changeNote,
+    input: {
+      name: z.string().describe("PascalCase type name, e.g. Review"),
+      attributes: z
+        .array(
+          z.object({
+            key: z.string().describe("Global attribute keyword, e.g. :review/outcome"),
+            valueType: z.enum(VALUE_TYPES).describe("text, number, integer, int64 (exact integer), boolean, date, instant, enumOf or ref"),
+            required: z.boolean().optional(),
+            cardinality: z.enum(["one", "many"]).optional(),
+            unique: z.boolean().optional().describe("Declared in Triplex; not enforced on this engine"),
+            refTarget: z.string().optional().describe("For ref: the target entity type, e.g. Subject"),
+            enumValues: z.array(z.string()).optional().describe("For enumOf: the allowed values"),
+          }),
+        )
+        .min(1)
+        .max(40),
+      label: z.string().optional().describe("Release label; default <type>-<sequence>"),
+      moveLive: z.boolean().default(true).describe("Also move live to the new release (default true)"),
+    },
+    changes: true,
+    run: (d, a) => defineEntityType(d, a),
+    route: (a) => routes.types(a.name) + "?tab=definition",
+  }),
+  tool({
+    name: "list_releases",
+    title: "List configuration releases",
+    group: "Types",
+    sentences: ["Show the configuration releases and where live points."],
+    description:
+      "The configuration releases, newest first (ID, label, sequence, parent, object count, the types in it, which refs point to it), and where test and live point. With compare, the object-level difference between two releases (Triplex's changesBetween).",
+    input: {
+      limit: z.number().int().min(1).max(200).default(20),
+      compare: z.tuple([z.string(), z.string()]).optional().describe("Two release IDs to compare, older first"),
+    },
+    changes: false,
+    run: (d, a) => listReleases(d, a.limit, a.compare),
+    route: () => routes.configuration(),
+  }),
+  tool({
+    name: "move_live",
+    title: "Move live to a release",
+    group: "Types",
+    sentences: ["Move live back to the release before this one."],
+    description:
+      "Point the live ref at another release (Triplex's ConfigStore.setRef, a compare-and-retract on the ref fact). This is how a release is rolled back: no fact and no earlier receipt changes; new typed writes are pinned to the release live points to." +
+      changeNote,
+    input: { snapshotId: z.string().describe("Release ID (sha256-...) from list_releases") },
+    changes: true,
+    run: (d, a) => moveLive(d, a.snapshotId),
+    route: () => routes.configuration(),
   }),
   tool({
     name: "find_subjects",

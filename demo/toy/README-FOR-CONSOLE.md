@@ -73,8 +73,12 @@ The app owns these paths; `tools.ts` (`routes`) builds them. Query parameters ar
 
 ## The tools, now and next
 
-**Now (step 0): the 12 tools of the first demo**, names and inputs unchanged, plus `position` on `read_subject_at`
-(the believed view at an exact position). Read them from `/api/catalogue`.
+**Step 0: the 12 tools of the first demo**, names and inputs unchanged, plus `position` on `read_subject_at`
+(the believed view at an exact position).
+
+**Step 5 (published): `list_entity_types`, `describe_entity_type`, `define_entity_type`, `list_releases`,
+`move_live`.** The toy now holds the starter type `Subject` and the demo's `Review` (outcome enum, note text, of a
+reference to `Subject`, decided-on date) on `live`. Read the exact answers from `/api/catalogue` and by calling them.
 
 **Next, in this order, with the inputs of DESIGN.md section 6.2.** Each is added to the catalogue only when it runs,
 so the Assistant page never lists a tool that does not exist. Build the screens against these shapes.
