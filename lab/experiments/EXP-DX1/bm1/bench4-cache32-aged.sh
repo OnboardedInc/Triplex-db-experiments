@@ -14,9 +14,11 @@ case $selection in
   cache32-aged-r|cache32-aged-r2) pin=1bbaf54cdd2180ccaa2cd6ce961c05be49eefbc2 ;;
   # [DX-BM1] Why: REAL2's production-shaped tape on the fresh template (real2/PRODUCTION-TAPE.md), same environment.
   production) pin=173f9d463b8a66d2e9da5c804c3076779accc292 ;;
+  # [DX-BM1] Why: REAL2's repair of the prod slot allowlist (stack/up.sh:258, tail-pg.sh, rolling-counters.py).
+  production-r) pin=832a7e0c62afd96ba8bc2aac9fde833debcbeaed ;;
   *) exit 2 ;;
 esac
-aged_run=1; [[ $selection == production ]] && aged_run=0
+aged_run=1; [[ $selection == production* ]] && aged_run=0
 job=$root/queue/$selection
 build=$job/build
 repo=$build/repository
