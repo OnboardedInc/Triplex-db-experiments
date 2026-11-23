@@ -18,6 +18,8 @@ type CampaignInput = {
   agedBundle?: string; agedDump?: string;
   // [DX-INT1] Absent in campaigns started before server-32 existed; those ran the server profile.
   profile?: ServerProfile;
+  // [DX-INT1] Absent for Saturday's tape; otherwise every loaded cell's tape and report digests (v01/production-card.ts).
+  tape?: { name: string; paramsSha256: string; cells: { cell: string; tapeSha256: string; reportSha256: string }[] };
 };
 export type SequenceConfig = {
   input: CampaignInput;

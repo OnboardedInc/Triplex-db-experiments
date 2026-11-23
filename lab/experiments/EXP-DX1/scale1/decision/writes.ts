@@ -21,6 +21,8 @@ import {
   type Write,
 } from "./plan.ts";
 import { journalHash, now, type Scope } from "./observer.ts";
+import { commitAssertions, isProduction, orderedBlockLimit } from "../../v01/production-card.ts";
+import { slotAttribute } from "../../w1/field/production.ts";
 
 type Input = Parameters<DatomicClient["transact"]>[1];
 export type Row = Input["rows"][number];
@@ -86,6 +88,14 @@ export type Save = {
   predecessorReadMs?: number;
   pending?: number;
   queued?: number;
+  // [DX-INT1] A production-shaped commit (v01/production-card.ts): its save, form rows, facts, retired values, and
+  // whether it went out on the general identity because it carries more than 256 assertions.
+  saveKey?: string;
+  rows?: number;
+  facts?: number;
+  retired?: number;
+  assertions?: number;
+  generalIdentity?: boolean;
 };
 
 export type Sender = {
@@ -123,7 +133,28 @@ export async function preload(client: DatomicClient, scope: Scope, people: Densi
   return found;
 }
 
+// [DX-INT1] Why: a production commit writes the fields its slots name; a slot past the subject's current fields is a
+// first write (no retirement). Values are a pure function of the offer, so a recovered or resent commit is identical.
+// Rejected: replacing the first `width` predecessors in order (true only for the card's own one- or two-field saves).
+function productionSave(o: Save, e: Write & { slots: number[] }, prior: readonly Row[]) {
+  const entity = e.owner ?? task(o.account, o.subject);
+  const written = e.slots.map(slotAttribute);
+  assert.equal(new Set(written).size, written.length);
+  const old = prior.filter((r) => written.includes(r.attribute));
+  assert(old.every((r) => r.entity_id === entity) && old.length === new Set(old.map((r) => r.attribute)).size);
+  const facts: Fact[] = written.map((a, i) => ({ e: entity, a, v: { type: "string", value: sha([e.version, e.slots[i]]).slice(0, 57) } }));
+  const input = {
+    ...command(o.id, facts, old, true, false,
+      o.orderedToken === undefined ? undefined : orderedSaveIdentity(o.orderedToken)),
+    live: old.map((r) => r.id),
+    groupAccount: keyFor(o.account),
+    writeClass: "live" as const,
+  };
+  return { input, entity, written, facts: facts.length, retired: old.length };
+}
+
 export function expectedSave(o: Save, e: Write, prior: readonly Row[]) {
+  if (isProduction(e)) return productionSave(o, e, prior);
   const entity = e.owner ?? task(o.account, o.subject);
   const old = prior.slice(0, e.width);
   assert(old.length === e.width && old.every((r) => r.entity_id === entity));
@@ -139,7 +170,19 @@ export function expectedSave(o: Save, e: Write, prior: readonly Row[]) {
     groupAccount: keyFor(o.account),
     writeClass: "live" as const,
   };
-  return { input, entity };
+  return { input, entity, written: undefined as string[] | undefined, facts: facts.length, retired: old.length };
+}
+
+// Records an acknowledged or recovered commit's new rows as the sender's current predecessors for its subject.
+function settleRows(sender: Sender, candidate: ReturnType<typeof expectedSave>, width: number, p: number, clock: number) {
+  const old = sender.rows.get(candidate.entity)!;
+  if (candidate.written) {
+    const written = new Set(candidate.written);
+    sender.rows.set(candidate.entity, [...old.filter((r) => !written.has(r.attribute)),
+      ...candidate.input.rows.slice(0, candidate.facts).map((r) => ({ ...r, recorded_at: clock, recorded_position: p }))]);
+    return;
+  }
+  for (let i = 0; i < width; i++) old[i] = { ...candidate.input.rows[i]!, recorded_at: clock, recorded_position: p };
 }
 
 // [DX-SCALE1] Why: compare every logical field of the committed WFIX1 change records at the assigned clock. Rejected: proving only the retracted identity or ignoring the stored predecessor lifetime.
@@ -314,9 +357,20 @@ export async function play(
     if (neighboursAhead !== undefined) row.neighboursAhead = neighboursAhead;
     // [DX-INT1] Why: bind the identity block to this offered save through settling or recovering it.
     // Rejected: minting a new block while looking up an uncertain receipt.
-    if (orderedIds) row.orderedToken = orderedSaveIdentity().token;
     const entity = e.owner ?? task(row.account, row.subject);
     const cached = sender.rows.get(entity);
+    if (isProduction(e)) {
+      // [DX-INT1] Why: the ordered identity numbers a commit's assertions in one byte; a production commit over 256
+      // assertions takes the general identity whole, as the product does for any commit of more than three facts.
+      // Rejected: splitting a save into several commits, which the product does not do.
+      assert(cached, "A production commit needs its subject's preloaded fields");
+      const written = new Set(e.slots.map(slotAttribute));
+      row.saveKey = e.saveKey; row.rows = e.rows; row.facts = e.slots.length;
+      row.retired = cached.filter((r) => written.has(r.attribute)).length;
+      row.assertions = commitAssertions(row.facts, row.retired);
+      if (orderedIds && row.assertions > orderedBlockLimit) row.generalIdentity = true;
+    }
+    if (orderedIds && !row.generalIdentity) row.orderedToken = orderedSaveIdentity().token;
     assert(cached || sender.loadPredecessor, "Missing predecessor");
     function draft(prior: Row[]) {
       const value = expectedSave(row, e, prior);
@@ -364,14 +418,7 @@ export async function play(
         assert(row.sent !== undefined, "Acknowledged write has no matching socket sample");
         const raw = value as Ack;
         bind(row, raw, candidate);
-        const old = sender.rows.get(candidate.entity)!;
-        for (let i = 0; i < e.width; i++) {
-          old[i] = {
-            ...candidate.input.rows[i]!,
-            recorded_at: row.receipt!.clock,
-            recorded_position: row.receipt!.p,
-          };
-        }
+        settleRows(sender, candidate, e.width, row.receipt!.p, row.receipt!.clock);
         row.status = "acked";
         interleave?.committed(row);
       })
@@ -553,13 +600,6 @@ export async function resolveUncertain(
       candidate,
     );
     o.status = "recovered";
-    const old = senders[o.account]!.rows.get(candidate.entity)!;
-    for (let i = 0; i < o.width; i++) {
-      old[i] = {
-        ...candidate.input.rows[i]!,
-        recorded_at: o.receipt!.clock,
-        recorded_position: o.receipt!.p,
-      };
-    }
+    settleRows(senders[o.account]!, candidate, o.width, o.receipt!.p, o.receipt!.clock);
   }
 }

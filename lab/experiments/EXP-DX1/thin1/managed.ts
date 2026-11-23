@@ -202,6 +202,9 @@ function setup(compact: boolean) {
   const scorecardCreditMode = writeOptionsAttempt ? process.env.DX_V01_CREDIT_MODE : undefined;
   const scorecardWriter = writeOptionsAttempt ? (process.env.DX_V01_MAC_WRITER ?? "grouped") : undefined;
   assert(!writeOptionsAttempt || isWriter(scorecardWriter));
+  // [DX-INT1] The card's save tape for its toy (v01/production-card.ts); Saturday's unless the Mac command names one.
+  const scorecardTape = writeOptionsAttempt ? (process.env.DX_V01_TAPE ?? "saturday") : undefined;
+  assert(scorecardTape === undefined || ["saturday", "production-R", "production-S"].includes(scorecardTape));
   for (const [n, slot] of slots.entries()) {
     const role = n === 0 ? "write" : "read";
     assert(!fs.existsSync(ownerFile(slot)), "Exclusive slot is in use");
@@ -231,6 +234,7 @@ function setup(compact: boolean) {
   assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
   write(cred, {
     nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, scorecardWriter, scorecardCreditMode, scorecardComparison, realisticScorecard,
+    ...(scorecardTape && scorecardTape !== "saturday" ? { scorecardTape } : {}),
     crossCheck: !!writeOptionsAttempt && process.env.DX_THIN1_CROSSCHECK === "1",
     gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
     memoryPoints, nativePools,
@@ -308,6 +312,7 @@ function bind() {
       scorecardCreditMode: attempt.scorecardCreditMode,
       scorecardComparison: attempt.scorecardComparison,
       realisticScorecard: attempt.realisticScorecard,
+      ...(attempt.scorecardTape ? { scorecardTape: attempt.scorecardTape } : {}),
       crossCheck: attempt.crossCheck === true,
       compact: !!attempt.compact,
       census: attempt.census, cohort: attempt.cohort,
@@ -392,6 +397,7 @@ if (action === "--guest") {
   } else if (mode === "int1-adopted-proof") {
     process.chdir(repo);
     const { parseCredits } = await import("../v01/server-workload.ts");
+    if (stack.managed.scorecardTape) process.env.DX_V01_TAPE = stack.managed.scorecardTape;
     const { adoptedToy } = await import("../v01/adopted.ts");
     const { readResidentMappings } = await import("./heap-residency.ts");
     const readyBy = Date.now() + 45_000;

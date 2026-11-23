@@ -23,10 +23,14 @@ import { subject as realSubject } from "../real1/population.ts";
 import { defaultCreditMode } from "../jvm1/launch.mjs";
 import { collectCell, type physicalTelemetry } from "./cell-telemetry.ts";
 import { migratedReadRate, recentlyOffered, sampleMigratedReads } from "../w1/migrated-reads.ts";
+import { cardTapeReport, fullCellTape, isProduction, parseCardTape, productionCellMetrics, productionNeighbours, productionPredecessors,
+  productionReadback, sortTape, tapeShape, type AgedCut, type ProductionWrite } from "./production-card.ts";
 
 export type Residency = Record<string, { rssBytes: number; threads: number }>;
 export type Peer = { write: string; read: string; slot: string; attempt: string; gatewaySource: string; java: unknown;
   telemetry?: ReturnType<typeof physicalTelemetry>; windowSeconds?: WindowSeconds; creditMode?: CreditMode; serialApply?: boolean; realisticToySlot?: string;
+  // [DX-INT1] On the 1 billion copy: AGE1's admitted cut, so the production predecessors check AGE1's own rows exactly.
+  aged?: { cut: AgedCut; head: number };
   empty?: Residency; residency?: () => Residency | Promise<Residency> };
 export type QuietCell = "alone" | 235;
 export type RetirementStudy = { rate: SerialApplyRate; append: boolean; seconds: 120 | 300; agedHead?: number };
@@ -88,13 +92,31 @@ export function checkSavedIdentity(save: Save, row: Feed, writer: Writer, subjec
     assert(save.orderedToken === undefined && !save.stage?.subjectOrderedIds);
     return;
   }
+  // [DX-INT1] Why: a production commit over 256 assertions carries the general identity and goes to the general writer.
+  // Rejected: skipping the identity check for it (its journal row must still match its receipt, checked above).
+  if (save.generalIdentity) {
+    assert(save.orderedToken === undefined && save.assertions! > 256 && !save.stage?.subjectSave && !save.stage?.subjectOrderedIds);
+    return;
+  }
   assert(save.orderedToken);
   const block = orderedSaveIdentity(save.orderedToken);
   // [DX-INT1] Why: confirm the ordered identities in the native journal from a separate read peer.
   // Rejected: reporting an ordered save solely from configured flags or from its own acknowledgment.
+  // A production commit has one journal change per fact and per retired value (a first write retires nothing).
+  const facts = save.facts ?? save.width, retired = save.retired ?? save.width;
   assert.equal(row.tx, block.transactionId);
   assert.deepEqual(row.journalIds,
-    Array.from({ length: 4 + 2 * save.width }, (_, i) => block.assertionId(save.width + i)));
+    Array.from({ length: 4 + facts + retired }, (_, i) => block.assertionId(facts + i)));
+  if (save.saveKey !== undefined) {
+    // The per-subject writer takes only commits of one to three facts that each replace a current value; every other
+    // production commit takes the general writer with its ordered identity, and both must be exact.
+    if (save.status === "acked") {
+      const subjectPath = facts <= 3 && retired === facts;
+      assert.equal(Boolean(save.stage?.subjectSave), subjectPath, `${save.id}: writer path differs from the per-subject rule`);
+      if (subjectPath) assert.equal(save.stage?.subjectSave, subjectFunction);
+    }
+    return;
+  }
   if (save.status === "acked") {
     assert(subjectFunction);
     assert.equal(save.stage?.subjectSave, subjectFunction);
@@ -332,7 +354,28 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const windowSeconds = peer.windowSeconds ?? serverCellSeconds;
     const seconds = retirement?.seconds ?? (toy ? 8 : study ? 30 * ladder.length : rated ? windowSeconds
       : quietCell === undefined ? phaseSeconds * ladder.length : cellSeconds("alone"));
-    const tape = retirement ? serialApplyTape(seed.image.people as Density, retirement.rate, seconds)
+    // [DX-INT1] The production-shaped tape replaces the neighbour saves of the loaded cells (DX_V01_TAPE).
+    const shape = tapeShape(parseCardTape(process.env.DX_V01_TAPE));
+    const productionCell = shape !== undefined && !retirement && !study && !comparison &&
+      ((rated !== undefined && rated.loaded) || (toy && quietCell === 235));
+    const production = productionCell ? (() => {
+      if (rated) return fullCellTape(shape!, rated, windowSeconds);
+      const quiet = quietTape(seed.image.people, 235, true).filter((e) => e.account === 0);
+      // The toy folds each tape subject onto one of its few people per account, in order of first appearance.
+      const folded = new Map<string, number>(), perAccount = new Map<number, number>();
+      const fold = toy ? (account: number, person: number) => {
+        const key = account + "/" + person;
+        if (!folded.has(key)) {
+          const n = perAccount.get(account) ?? 0;
+          folded.set(key, n % seed.image.people);
+          perAccount.set(account, n + 1);
+        }
+        return folded.get(key)!;
+      } : undefined;
+      const neighbours = productionNeighbours(shape!, 235, Array(9).fill(12), seconds, "p6-235", fold);
+      return sortTape([...quiet, ...neighbours]);
+    })() : undefined;
+    const tape = production ? production : retirement ? serialApplyTape(seed.image.people as Density, retirement.rate, seconds)
       : study ? [0, 1].flatMap((block) => writeTape(seed.image.people as Density, study.rate, block)
         .map((entry) => ({ ...entry, ms: entry.ms + 90_000 * block, version: `rd1/${study.rate}/${entry.version}` })))
         .filter((entry) => entry.ms < seconds * 1000 && (!toy || entry.ordinal % 20 === 0))
@@ -342,7 +385,16 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       : rated ? ratedTape(seed.image.people, rated, windowSeconds) : quietCell === undefined
       ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell as QuietCell, toy);
     if (retirement) assert.equal(tape.length, retirement.rate * seconds);
-    const senders = await preloadFrom(writerClient, rated ? reader : writerClient, seed, startHead, tape);
+    const senders = await preloadFrom(writerClient, rated ? reader : writerClient, seed, startHead,
+      production ? tape.filter((e) => !isProduction(e)) : tape);
+    // [DX-INT1] Production subjects: every task-0 field, checked as production-card.ts productionPredecessors says.
+    const predecessors = production ? await productionPredecessors(rated ? reader : writerClient, seed.scope.db, startHead,
+      seed.scope.cut, (production.filter(isProduction) as ProductionWrite[]).map((e) => ({ account: e.account, person: e.person })),
+      peer.aged) : undefined;
+    const accountOf = new Map((production ?? []).filter(isProduction).map((e) => [e.owner, e.account]));
+    if (predecessors) for (const [entity, rows] of predecessors.fields) senders[accountOf.get(entity)!]!.rows.set(entity, rows);
+    const tapeReport = production ? cardTapeReport(production, seconds) : undefined;
+    if (tapeReport) jsonFile(path.join(out, "tape-report.json"), tapeReport);
     const groups = retirement ? ownerGroups(senders, seed.scope.cut, retirement.agedHead ?? seed.scope.cut) : undefined;
     const tapeGroups = groups && Object.fromEntries(tape.map((e) => [e.account + "/" + e.subject,
       groups.get((e as Write & { owner?: string }).owner ?? task(e.account, e.subject))!]));
@@ -416,6 +468,14 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         ["committed", row.id, r.p, r.t, r.clock]);
       assert.equal(await writerClient.claim(seed.scope.db, row.id, r.p), r.tx);
     }
+    // [DX-INT1] Every field of every production subject, read back at the terminal cut, equals the acknowledged writes.
+    const productionResult = production && predecessors && tapeReport ? {
+      tape: process.env.DX_V01_TAPE, shape, tapeReportSha256: hex(fs.readFileSync(path.join(out, "tape-report.json"))),
+      predecessors: predecessors.counts,
+      readback: await productionReadback(reader, seed.scope.db, terminal!, new Map([...predecessors.fields.keys()].map((e) =>
+        [e, senders[accountOf.get(e)!]!.rows.get(e)!]))),
+      metrics: productionCellMetrics(writes.rows, start, seconds),
+    } : undefined;
     const pulls = !retirement && loaded && !comparison && writer !== "grouped" && quietCell === undefined
       ? await currentPull(reader, seed, terminal, toy, false, study?.sample ? samples : undefined) : undefined;
     if (study) jsonFile(path.join(out, "read-wire.json"), { source, slot: peer.slot, attempt: peer.attempt,
@@ -455,7 +515,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         return { seats: phase.seats, offered: bucket.length, received: latency.count, latency: latency.summary() };
       }) },
       p1: phases, p2: { offered: tape.length, receipts: saves.length, latency: saveHistogram.summary() },
-      p3: { entries: feed.length }, p4: pulls, p6, p7, thin };
+      p3: { entries: feed.length }, p4: pulls, p6, p7, thin, ...(productionResult ? { production: productionResult } : {}) };
     // [DX-RD1] Why: require the complete toy tape and exact read results before publishing a read-study arm.
     // Rejected: declaring success when an empty journal agrees with an empty acknowledged set.
     if (toy && study) {

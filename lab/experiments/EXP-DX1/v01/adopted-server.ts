@@ -13,6 +13,8 @@ import { timeBudget, defaultWriter, physicalArms, writeDiagnostics, jvmProfiles,
 import { cleanSource, verifyBuild } from "./source.ts";
 import { claimPgdata, inspectPgdata, pgdataArgs, pgdataTarget, preflightWal, sealedPgdata } from "./pgdata.ts";
 import { openSequence, setAsideArm, startSequentialArm } from "./sequential.ts";
+import { parseCardTape, tapeBinding } from "./production-card.ts";
+import { agedCut } from "../prep1/ceiling-seed.ts";
 
 import { parseWindow, parseCredits } from "./server-workload.ts";
 import { realSeed, proveRealistic } from "./realistic.ts";
@@ -33,6 +35,9 @@ const profile = (process.env.DX_V01_PROFILE ?? defaultServerProfile) as ServerPr
 assert(serverProfiles.includes(profile), "Unknown server profile");
 const policy = launchProfile(profile, { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile, writeJvm: writeJvm as JvmProfile, creditMode });
 const diagnostics = writeDiagnostics(requestedWriter, process.env);
+// [DX-INT1] Why: run.ts passes the save tape in the environment, as it does the profile (v01/production-card.ts).
+const cardTape = parseCardTape(process.env.DX_V01_TAPE);
+assert(cardTape === "saturday" || age !== "realistic", "The realistic card keeps its own tape");
 const stages = serverStages(policy, !!walDirectory);
 assert(armText === "" || /^[1-3]$/.test(armText ?? ""), "Choose arm 1, 2 or 3");
 const sequenceArm = armText ? Number(armText) : undefined;
@@ -64,7 +69,8 @@ if (!copies.length && expected) {
 }
 const input = { source, age, writer: requestedWriter, jvm: jvm as JvmProfile, imagePin, transferPin, originalScope: seed.scope, realistic: seed.realisticBinding,
   txJvm: txJvm as JvmProfile, writeJvm: writeJvm as JvmProfile, diagnostics, separateWal: !!wal, stages, wal, windowSeconds, creditMode,
-  agedBundle: expected?.pin, agedDump: agedDumpPin || undefined, profile };
+  agedBundle: expected?.pin, agedDump: agedDumpPin || undefined, profile, tape: tapeBinding(cardTape, windowSeconds) };
+assert(cardTape === "saturday" || age !== "1B" || copies.length, "The production tape at 1 billion runs from prepared copies");
 let spent = 0, previousSystem: string | undefined;
 if (sequenceArm !== undefined) {
   assert(pgdataSource && copies.length === 1 && forecast);
@@ -116,7 +122,8 @@ for (const [i, stage] of stages.entries()) {
   let verifiedLaunch = false;
   let setAside: string | undefined;
   try {
-    const options = { ...stackOptions(writer, attempt, diagnostics), DX_V01_CELL_COUNTERS: "1" };
+    const options = { ...stackOptions(writer, attempt, diagnostics), DX_V01_CELL_COUNTERS: "1",
+      ...(cardTape === "saturday" ? {} : { DX_V01_COMMIT_READS: "1" }) };
     if (copy) claimPgdata(copy, source, slot, attempt);
     const { engines } = startScaleStack(out, slot, source, false, copy ? {
       ...options, DX_V01_PGDATA: copy.dir, DX_V01_PGDATA_CONTROL_SHA: copy.controlSha256,
@@ -156,7 +163,10 @@ for (const [i, stage] of stages.entries()) {
     assert(!stopping && Date.now() + 8 * 60_000 < stageEnd);
     verifiedLaunch = true;
     console.log(`[DX-V01] Verified live server startup for ${stage.name}/${loaded ? "loaded" : "zero"} before offers`);
-    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency, windowSeconds, creditMode: stage.policy.creditMode, serialApply: diagnostics.serialApply, telemetry: physicalTelemetry(out, engines) };
+    // [DX-INT1] On the 1 billion copy the production predecessors check AGE1's rows against its pinned replay tape.
+    const aged = expected && cardTape !== "saturday"
+      ? { cut: agedCut(expected.file, expected.pin, imagePin, seed.key, seed.scope.db, seed.scope.cut, true), head } : undefined;
+    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency, windowSeconds, creditMode: stage.policy.creditMode, serialApply: diagnostics.serialApply, telemetry: physicalTelemetry(out, engines), aged };
     firstOffer("scorecard arm " + (sequenceArm ?? i + 1) + " " + stage.name + "/" + path.basename(out));
     const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head, undefined, comparison);
     if (loaded && !stopping) {
