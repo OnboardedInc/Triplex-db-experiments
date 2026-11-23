@@ -6,6 +6,7 @@
 // Rejected: per-surface wrappers (the first demo had one in mcp.ts and another in page.ts, and they drifted).
 import { statSync } from "node:fs";
 import { z } from "zod";
+import { createEntity, listEntities, readEntity, resolveBasis, typingFor } from "./entities.ts";
 import { defineEntityType, describeEntityType, listEntityTypes, listReleases, moveLive, VALUE_TYPES } from "./releases.ts";
 import { caller, Demo, DemoError, entityKinds, stateFile, type Actor } from "./store.ts";
 
@@ -50,7 +51,30 @@ const kind = z
   .enum(entityKinds as [string, ...string[]])
   .default("task")
   .describe('Which of the subject\'s entities: "root" (the subject\'s root record), "profile" (worker profile) or "task" (first task)');
-const attribute = z.string().describe("Attribute name, e.g. :task/field-0, :placement/status, :worker/address");
+const attribute = z.string().describe("Attribute name, e.g. :task/field-0, :placement/status, :review/outcome");
+const basis = z
+  .object({
+    validAt: z.union([z.string(), z.number()]).optional().describe("Valid time: ISO date-time or epoch milliseconds; default now"),
+    recordedAt: z.union([z.string(), z.number()]).optional().describe("Record time (what the store knew then); exclusive with position"),
+    position: z.number().int().min(0).optional().describe("Exact commit position; exclusive with recordedAt"),
+  })
+  .optional()
+  .describe("When to read: { validAt?, recordedAt?, position? }; default latest and now");
+const subjectRef = {
+  account: account.optional(),
+  subject: subject.optional(),
+  root: z.string().optional().describe("Instead of account and subject: any entity ID, read as a subject"),
+};
+const entityRef = {
+  account: account.optional(),
+  subject: subject.optional(),
+  kind,
+  entity: z.string().optional().describe("Instead of account, subject and kind: the entity ID, e.g. acct/account-003/review:00000012"),
+};
+const scalar = z.union([z.string(), z.number(), z.boolean()]);
+const values = z.union([scalar, z.array(scalar).max(64)]);
+const basisParams = (b: { validAt?: string | number | undefined; recordedAt?: string | number | undefined; position?: number | undefined } | undefined) =>
+  b ? { validAt: b.validAt as string | undefined, recordedAt: b.recordedAt as string | undefined, position: b.position } : {};
 const changeNote =
   " CHANGES THE DATABASE: a real, durable, synchronous commit through the write gateway. Refused unless the connection is a demo working copy.";
 
@@ -186,6 +210,59 @@ export const tools: Tool[] = [
     route: () => routes.configuration(),
   }),
   tool({
+    name: "create_entity",
+    title: "Create an entity",
+    group: "Entities",
+    sentences: ["Add a review for subject 7 of account-003 with outcome pending."],
+    description:
+      "Create one entity of a type you defined, in one of the ten accounts. Values are checked by the type (value type, required, cardinality; uniqueness is not enforced on this engine) with Triplex's EntityCodec, references must point at existing entities, and the entity gets the next number of its type in that account (acct/<account>/<type>:<8 digits>). One transaction writes its facts with the entity type set and the type's counter replaced, pinned to the release live points to. Returns the entity, its number, the receipt and the read back." +
+      changeNote,
+    input: {
+      type: z.string().describe("Entity type name, e.g. Review"),
+      account,
+      attributes: z.record(z.string(), values).describe('Attribute to value or values, e.g. {":review/outcome": "pending", ":review/of": "acct/account-003/pl:00000007"}'),
+      validFrom: z.string().optional().describe("ISO date-time or epoch milliseconds; default now"),
+      commandId: z.string().min(1).max(200).optional().describe("Idempotency key; repeating it returns CommandAlreadyCommitted"),
+    },
+    changes: true,
+    run: (d, a) => createEntity(d, a),
+    route: (_a, out) => routes.entity(String(out["entity"])),
+  }),
+  tool({
+    name: "list_entities",
+    title: "List entities of a type",
+    group: "Entities",
+    sentences: ["List the reviews in account-003."],
+    description:
+      "The entities of one type in one account, by number (this engine has no index by entity type): one read of the type's counter, then one read of the page's entity IDs at the basis. Each entity with its attribute values.",
+    input: {
+      type: z.string().describe("Entity type name, e.g. Review"),
+      account,
+      from: z.number().int().min(0).default(0),
+      count: z.number().int().min(1).max(50).default(20),
+      basis,
+    },
+    changes: false,
+    run: (d, a) => listEntities(d, a),
+    route: (a, out) => routes.types(a.type) + q({ account: String(out["account"]), from: a.from, ...basisParams(a.basis) }),
+  }),
+  tool({
+    name: "read_entity",
+    title: "Read an entity",
+    group: "Entities",
+    sentences: ["Read review 12 of account-003."],
+    description:
+      "One entity's facts at a basis, each with its valid interval, record time and position; its entity type (loader-built entities are untyped). With asSubject, also the whole reach from it (the entity read as a subject) in one request.",
+    input: {
+      entity: z.string().describe("Entity ID, e.g. acct/account-003/review:00000012 or acct/account-003/i9:00000000"),
+      basis,
+      asSubject: z.boolean().default(false),
+    },
+    changes: false,
+    run: (d, a) => readEntity(d, a),
+    route: (a) => routes.entity(a.entity, { ...(a.asSubject ? { asSubject: 1 } : {}), ...basisParams(a.basis) }),
+  }),
+  tool({
     name: "find_subjects",
     title: "Find subjects",
     group: "Subjects",
@@ -203,15 +280,15 @@ export const tools: Tool[] = [
   }),
   tool({
     name: "read_subject",
-    title: "Read a subject now",
+    title: "Read a subject",
     group: "Subjects",
     sentences: ["Read everything about subject 0 of account-003."],
     description:
-      "Every current fact of one subject: the root and every entity reachable from it (profile, placements, tasks, subtasks, files), at one exact position, in one request to the read gateway.",
-    input: { account, subject, attribute: attribute.optional().describe("Only this attribute (optional)") },
+      "Every fact of one subject: the root and every entity reachable from it through references (profile, placements, tasks, subtasks, files, or the parts of an entity you created), at one exact position, in one request to the read gateway. Give account and subject, or root (any entity ID, read as a subject). Optional basis reads it at an earlier position, record time or valid time.",
+    input: { ...subjectRef, attribute: attribute.optional().describe("Only this attribute (optional)"), basis },
     changes: false,
-    run: (d, a) => d.readSubject(a.account, a.subject, a.attribute),
-    route: (a, out) => routes.subject(String(out["account"]), a.subject, { position: out["position"] as number }),
+    run: async (d, a) => d.readSubject(a, a.attribute, a.basis ? await resolveBasis(d, a.basis) : undefined),
+    route: (a, out) => (a.root ? routes.entity(a.root, { asSubject: 1, ...basisParams(a.basis) }) : routes.subject(String(out["account"]), a.subject!, basisParams(a.basis))),
   }),
   tool({
     name: "read_many_subjects",
@@ -231,10 +308,9 @@ export const tools: Tool[] = [
     group: "Time",
     sentences: ["What did we believe about subject 0 on 1 June 2025, and what do we know now?"],
     description:
-      "Both time axes: what we now believe was true on a date (valid time), and what the store believed about that date at a record time (default: the same date), with the facts that differ from today.",
+      "Both time axes: what we now believe was true on a date (valid time), and what the store believed about that date at a record time or an exact position (default: the same date), with the facts that differ from today. Give account and subject, or root.",
     input: {
-      account,
-      subject,
+      ...subjectRef,
       at: z.string().describe("ISO date-time or epoch milliseconds"),
       attribute: attribute.optional().describe("Only this attribute; also lists the three views in full"),
       recordedAt: z.string().optional().describe("Record time for the 'believed' view; default is the same instant as at"),
@@ -244,10 +320,12 @@ export const tools: Tool[] = [
     run: (d, a) => {
       if (a.position !== undefined && a.recordedAt !== undefined)
         throw new DemoError("InvalidInput", "Give recordedAt or position, not both");
-      return d.readSubjectAt(a.account, a.subject, a.at, a.attribute, a.recordedAt, a.position);
+      return d.readSubjectAt(a, a.at, a.attribute, a.recordedAt, a.position);
     },
-    route: (a, out) =>
-      routes.subject(String(out["account"]), a.subject, { tab: "time", at: a.at, attribute: a.attribute, recordedAt: a.recordedAt, believedPosition: a.position }),
+    route: (a, out) => {
+      const extra = { tab: "time", at: a.at, attribute: a.attribute, recordedAt: a.recordedAt, believedPosition: a.position };
+      return a.root ? routes.entity(a.root, extra) : routes.subject(String(out["account"]), a.subject!, extra);
+    },
   }),
   tool({
     name: "field_history",
@@ -255,67 +333,74 @@ export const tools: Tool[] = [
     group: "Time",
     sentences: ["Show the full history of :task/field-0 on subject 0's first task."],
     description:
-      "Every stored row of one attribute of one of the subject's entities, including retired ones: value, valid from and to, recorded at and position, retired at and position. Its cost follows how often that entity was saved: the gateway reads the entity's whole history (entityHistoryRows) and filters to the attribute afterwards.",
+      "Every stored row of one attribute of one entity, including retracted ones: value, valid from and to, recorded at and position, retracted at and position. Give account, subject and kind, or entity. Its cost follows how often that entity was saved: the gateway reads the entity's whole history (entityHistoryRows) and filters to the attribute afterwards.",
     input: {
-      account,
-      subject,
+      ...entityRef,
       attribute,
-      kind,
       limit: z.number().int().min(1).max(2000).default(40).describe("Rows to return, newest first kept; the total is always reported"),
     },
     changes: false,
-    run: (d, a) => d.fieldHistory(a.account, a.subject, a.attribute, a.kind as never, a.limit),
+    run: (d, a) => d.fieldHistory(d.target(a as never), a.attribute, a.limit),
     route: (a, out) => routes.entity(String(out["entity"]), { tab: "history", attribute: a.attribute }),
   }),
   tool({
     name: "save_facts",
     title: "Save facts",
     group: "Changes",
-    sentences: ["Set :task/field-0 on subject 7 of account-003 to reviewed."],
+    sentences: ["Set :review/outcome on review 12 of account-003 to approved.", "Set :task/field-0 on subject 7 of account-003 to reviewed."],
     description:
-      "Save new text values for one of a subject's entities from now on, guarded by the entity's exact current state. Returns the receipt (transaction, durable position, record time) and reads the values back at that position." +
+      "Save new values for one entity from now on, guarded by the entity's exact current state; the earlier values stay true for the time before now. Give account, subject and kind (a loader-built subject's entity; text values), or entity (for an entity of a type you defined, values are checked and typed by its type, and the write is pinned to the release live points to). Returns the receipt (transaction, durable position, record time) and reads the values back at that position." +
       changeNote,
     input: {
-      account,
-      subject,
-      kind,
-      changes: z.record(z.string(), z.string()).describe('Attribute to new value, e.g. {":task/field-0": "approved"}'),
+      ...entityRef,
+      changes: z.record(z.string(), values).describe('Attribute to new value (or values), e.g. {":review/outcome": "approved"}'),
     },
     changes: true,
-    run: (d, a) => d.saveFacts(a.account, a.subject, a.kind as never, a.changes),
+    run: async (d, a) => {
+      const t = d.target(a as never);
+      if (Object.keys(a.changes).length > 20) throw new DemoError("InvalidInput", "At most 20 attributes per save");
+      return d.saveFacts(t, a.changes, await typingFor(d, t.entity, a.changes as never));
+    },
     route: (_a, out) => routes.entity(String(out["entity"]), { tab: "journal" }),
   }),
   tool({
     name: "correct_past_value",
     title: "Correct a value as of a past date",
     group: "Changes",
-    sentences: ["We learned :task/field-0 on subject 7 of account-003 was approved from last Monday. Record that."],
+    sentences: ["We learned the outcome of review 12 of account-003 was approved from last Monday. Record that."],
     description:
-      "A valid-time correction: from a past date on, the attribute had a different value. Shows both beliefs about that date: as recorded before the correction and as recorded after it." +
+      "A valid-time correction: from a past date on, the attribute had a different value. One transaction retracts and asserts; nothing is erased. Shows both beliefs about that date: as recorded before the correction and as recorded after it. Give account, subject and kind, or entity (typed by its type when it has one)." +
       changeNote,
     input: {
-      account,
-      subject,
-      kind,
+      ...entityRef,
       attribute,
-      value: z.string(),
+      value: z.union([z.string(), z.number(), z.boolean()]),
       validFrom: z.string().describe("ISO date-time or epoch milliseconds in the past"),
     },
     changes: true,
-    run: (d, a) => d.correctPastValue(a.account, a.subject, a.kind as never, a.attribute, a.value, a.validFrom),
+    run: async (d, a) => {
+      const t = d.target(a as never);
+      const typed = await typingFor(d, t.entity, { [a.attribute]: a.value });
+      const value = typed?.values.get(a.attribute)?.[0];
+      return d.correctPastValue(t, a.attribute, a.value, a.validFrom, typed && value ? { value, configSnapshot: typed.configSnapshot, entityType: typed.entityType } : undefined);
+    },
     route: (a, out) => routes.entity(String(out["entity"]), { tab: "time", attribute: a.attribute, at: a.validFrom }),
   }),
   tool({
     name: "retire_fact",
     title: "Retire a fact",
     group: "Changes",
-    sentences: ["Retire :task/field-2 on subject 7 of account-003."],
+    sentences: ["Retire :review/note on review 12 of account-003."],
     description:
-      "Stop a fact being current from now on. It disappears from current reads; the time it was true stays in history and in earlier reads." +
+      "Stop a fact being current from now on: the live assertion is retracted and asserted again with its valid time ended now. It disappears from current reads; the time it was true stays in history and in earlier reads. Give account, subject and kind, or entity." +
       changeNote,
-    input: { account, subject, kind, attribute },
+    input: { ...entityRef, attribute },
     changes: true,
-    run: (d, a) => d.retireFact(a.account, a.subject, a.kind as never, a.attribute),
+    run: async (d, a) => {
+      const t = d.target(a as never);
+      const typed = await typingFor(d, t.entity, {});
+      return d.retireFact(t, a.attribute, typed?.configSnapshot);
+    },
     route: (a, out) => routes.entity(String(out["entity"]), { tab: "history", attribute: a.attribute }),
   }),
   tool({
