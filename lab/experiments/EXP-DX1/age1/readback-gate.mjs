@@ -57,7 +57,7 @@ async function inner() {
                       {:db/ident :toy/name :db/valueType :db.type/string :db/cardinality :db.cardinality/one}])
       (doseq [b (range 4)] @(d/transact c (vec (for [i (range 100)] {:toy/id (+ (* b 100) i) :toy/name (str "p" b "-" i)}))))
       @(d/transact c (vec (for [i (range 0 400 7)] [:db/add [:toy/id i] :toy/name (str "renamed-" i)])))
-      @(d/request-index c) (deref (d/sync-index c (d/basis-t (d/db c))) 60000 nil)
+      (d/request-index c) (deref (d/sync-index c (d/basis-t (d/db c))) 60000 nil)
       (let [db (d/db c)]
         (println "TOY" (pr-str {:t (d/basis-t db) :datoms (:datoms (d/db-stats db)) :names (count (d/datoms db :aevt :toy/name))
                                 :p7 (:toy/name (d/pull db [:toy/name] [:toy/id 7]))})))
