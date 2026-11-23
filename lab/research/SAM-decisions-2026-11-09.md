@@ -893,3 +893,15 @@ Orchestrator's reading:
 6. Server work first; playground work after. The playground's server builds are not scheduled now; DX-PLAY1 stays
    parked with its public smoke data set published.
 7. Continuous compliance scenarios: later.
+
+## 2026-11-23 about 10:25 local: server 2 stays for the 1 billion scorecard and the memory test, then is deleted
+
+Sam typed "continue" at about 10:13 local after the session had been silent since Saturday afternoon. Put to him as a
+question with three options (run the 1 billion scorecard; scorecard plus the 32 GB memory test; delete now), with the
+facts: spend at $223, $23 over the $200 budget, because both rented servers sat idle for about 36 hours.
+
+Sam's answer (selected option): "Scorecard plus memory test" (described to him as: also run the 32 GB memory setup on
+the 1 billion database; about 9 to 10 hours and $11 more, ending near $234, then delete).
+
+Orchestrator's reading: about ten more hours on server 2 only, for those two runs, then deletion. No other server is
+rented. The $200 budget is overspent by my failure, not raised: nothing else is to be spent without asking him.
