@@ -61,7 +61,7 @@ export function makeDatomicRuntime(options: {
 }
 export * from "./codec.js";
 export * from "./DatomicClient.js";
-export { orderedSaveIdentity, type OrderedSaveIdentity } from "./orderedSaveIdentity.js";
+export { orderedSaveIdentity, wideOrderedSaveIdentity, type OrderedSaveIdentity } from "./orderedSaveIdentity.js";
 export {
   makeDatomicStorageAdapter,
   DatomicSerializationConflict,
