@@ -28,7 +28,8 @@ DX_W1_RETIREMENT_PAIR=1 DX_W1_PAIR_OPTION=owner-head PREP1_LOOKUP_EVERY=64 \
 ```
 
 - **Prepared copies:** where the server holds only the stopped directory, run one invocation per arm with `DX_RD1_PGDATA_SOURCE`, `DX_RD1_LADDER=reference` then `DX_RD1_LADDER=append`, and a fresh `DX_RD1_PGDATA` copy each time, as for the retirement pair (`int1/V0.1-STATE.md`).
-- **Before committing hours:** pass both lines through the launch dry run (`ha1` dry-run tool) on the exact commit; the stack and runner files changed since the retirement pair was admitted.
+- **Before committing hours:** pass both lines through `ha1/launch-dry-run.sh --to-first-offer` on the exact commit; the stack and runner files changed since the retirement pair was admitted.
+- **Scope open writes records:** with the option on, opening a scope installs the owner-head schema and two functions (five entities) and reinstalls the reference function, whose text includes the fence. A launcher that counts the records a scope open writes on a held copy must include them.
 - **First touch:** the owner head migrates a person on their first eligible save. The fresh tape touches each person once or twice in 300 s, so most measured saves are first touches. The 620 window follows the 394 window on the same copy, so its people are partly migrated.
 - **Readback:** the runner refuses the treatment arm unless the write gateway reports `subjectOwnerHead` and every acknowledged save carries the root's byte count. `summarize.py` reads `DX_W1_PAIR_OPTION` and checks the same.
 
