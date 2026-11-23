@@ -1,74 +1,83 @@
-# Keep the writer's current state small as history grows
+# Owner head: the covering root as a default-off option
 
-North star P2 and P4. Count serial SQL fetches per save, then check current and pinned reads at the exact committed basis. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
+North star P2 and P4. `TX2_SUBJECT_OWNER_HEAD=1` makes the per-person writer keep a small covering root on each edited person, so a save no longer reads that person's old rows. Default off. Every number here is a Mac diagnostic at toy size. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md) · [Server command](SERVER-OWNER-HEAD.md)
 
-## Two steps
+## What it is
 
-| Component | Step 1, a lazily installed witness | Step 2, moving business rows |
-| --- | --- | --- |
-| Owner state | One narrow cardinality-one value with the accepted logical position and clock and the IDs of the latest assertions. The legacy revision remains the authority. A witness left behind by an ordinary writer is stale whenever its position differs from that revision. | Separate compact owner-head entities in one dedicated allocation range. A head binds public owner, revision, position, clock and the current page root. The only old business-state lookup on the serial path is this head. A serial comparison against the prepared head token fences all predecessor changes. |
-| New facts and retirements | Canonical rows and retirements still use today's physical layout. The optional Part 9 marker can coexist independently. | Use fresh Datomic tempids for the version entity, with the exact logical row and an owner reference. Append the explicit retirement on that transaction's fresh entity, using predecessor identity and assigned position and clock. Leave old facts untouched. Verify storage locality with EAVT/AEVT samples since allocation order and segment packing belong to Datomic. |
-| Current rows | Existing point, reach, native query, journal and history readers continue to use the current projection. They never resolve the witness. | Read the head, then immutable pages of exact live assertion pointers. Pages contain bounded chunks, for example 32 identities each. Read at most one head, the branch pages and live rows requested, with the existing row budget. Updates replace only affected pages. The head never stores decoded business values. |
-| Past cuts | Existing as-of readers are the only authority. | Before migration, read the same legacy cut. At or after migration, seek the last immutable owner-root event at or before the requested cut and follow its pages. Replay legacy assertions and version/retirement streams for history-range queries. For recorded time use the existing time-to-cut rules. Keep intra-transaction/group cut reconstruction and query budgets explicit. |
-| Stored journal and feed | Same stored journal. The native ACK can report whether the exact witness was added in its own durable report. | Keep all journal datoms and per-save receipts under their existing identities. Teach logical queries, native feed and replica bootstrap to resolve owner references for physical events. A retirement can name its old row in the ordinary journal using the existing validated predecessor bytes. |
-| Old and new people | An untouched person stores zero additional datoms. An eligible first replacement initializes the witness in the save transaction. Creation and all ordinary writers can continue without it. | First write takes the legacy live rows at a pinned peer cut and builds the initial pages from those identities, inside a bounded migration. Serial apply checks the legacy owner ID and revision and fences native removal before publishing the root. New people start with a first root and no legacy scan. Above the migration budget, stay on the existing path until a separately bounded migration can run. |
-| Global identity and removal | Keep the existing legacy/ordered historical prefix check, clock and revision checks, operation and claim uniqueness, transaction-function version and excision witness. Store no protected values in the witness. | Keep the common assertion-ID index over both layouts and never remove its identity evidence when removing a protected body. Look up old hashed identities exactly and ordered IDs by the existing interval with exact fallback. Keep the external removal sequence and native excision check. Head and pages contain only opaque IDs and never hold decrypted bodies or keys. |
-
-All reads must see one committed cut. Migration must publish only when its prepared live set is still current, then immediately support reads through a separate peer at the returned cut. Mixed physical formats can coexist in one database. For Step 2, every mutator capable of changing an owner, including bulk import and Publish, must either advance the authoritative head or compare and invalidate it atomically. The scope needs durable format admission so readers and rollback binaries unable to interpret migrated rows cannot open it for writes. Changing a public owner ID or running raw application excision can invalidate a head without advancing the legacy revision, so the Step 1 witness cannot replace either native guard. Existing clients need no routing change in Step 1, and disabling its writer option leaves all data readable.
-
-Step 2 keeps the transient root small by storing only a latest reference in the hot record. Immutable root events and pages grow in separate index ranges. The size of the hot state then follows the number of written people and the writer's locality, rather than retained history. Residency at 16 GiB is an experimental prediction. The old-row and clock checks that Datomic performs outside the authored function still need to be attributed under load.
-
-## Cost and forecast before testing
-
-Step 1 adds one assertion for initialization and an assertion plus retraction for each replacement of the witness. It adds one narrow, no-history head attribute installation per database. The witness is never the source of an as-of answer. No user read has to read it. The feature does not avoid the old-row probes in this step. An ordinary path that advances the legacy revision writes the same datoms as before and leaves the witness stale until the next eligible save.
-
-Step 2 targets one root value, one immutable root event, and new page pointers for changed pages, plus owner links for version and retirement events. A 160-row first-touch migration would write roughly five pages at 32 pointers per page plus the root, before any event or indexing overhead. As a planning range, allow 5–10 more datoms and 1–3 KiB of pre-index uncompressed data per save over the 17-datom plain case. Apply the same increment to the 22-datom protected case as a forecast. A 5–10 datom increment over 17 is 29–59% more datoms, so reaching a fixed native record count would take 23–37% less time at the same save rate. WAL, storage after maintenance and retained history amplification need measurement. The first migration cannot be amortized into per-save counts without stating the number of distinct people touched.
-
-The updated rolling6 baseline measured 1.35 SQL fetches/save at 394/s, 1.32 at 620/s and 0.61 at 235/s, reaching 454 saves/s at 620 with 2.25 of three transactor cores. That leaves CPU, queueing and commit/log costs outside the old-row hypothesis. The 8B 1.21 ms estimate is an apply-only ceiling. The Mac cache sweep could not reproduce production ratios. The model also missed the early aging loader's apply time by more than a factor of two. The measured points are from `bm1/ROLLING-READING.md` at `0e5795578`. [Part 9](RETIREMENT-READS.md)
-
-Target for the complete design, using weighted, non-overlapping per-index SQL attribution with an explicit unattributed bucket:
-
-| Records | EAVT / AEVT / AVET / other SQL fetches per save | Mean apply |
-| --- | --- | --- |
-| 430M | 0.08 / 0.08 / 0.02 / 0.02 | 1.09 ms |
-| 1B | 0.12 / 0.12 / 0.03 / 0.03 | 1.16 ms |
-| 8B | 0.15 / 0.14 / 0.04 / 0.03 | 1.21 ms |
-
-For a full 394 offered run, forecast 390–394 stored/s and quiet p99 of 35–70 ms with the completed head. At 620, forecast 520–610/s and quiet p99 of 45–100 ms. Aggregate scheduled-offer-to-ACK p99 can still reach the 30 s expiry region at 620 if sustainable capacity lies below offers. At 1B with 50 and 235 offered, forecast 49–50 and 231–235 stored/s, quiet p99 of 20–55 and 30–75 ms, and apply of 1.1–1.4 ms. Score these forecasts only after the completed layout passes the exactness and removal gates. Step 1 is an instrumentation and migration foundation and has no server arm.
-
-Proposed rolling6 windows are 300 seconds fresh at 394 and 620, and 120 seconds aged at 50 and 235, each from an independent prepared copy per writer with half-window samples every 64 native applications. The ranges below describe whole-window aggregate p99 from scheduled offer to durable ACK, including later ACKs for offers in the window. Report quiet/account tails and expiry separately. Each entry gives EAVT/AEVT/AVET/other mean SQL fetches per save, mean apply ms, durable saves/s, and aggregate p99. Other is unassigned SQL. These are hypotheses for the final three-way run.
-
-| Copy and offered | Current ordered writer | Append retirement | Completed head |
-| --- | --- | --- | --- |
-| Fresh, 394/s | .55/.67/.01/.12 · 1.7–2.1 ms · 385–394/s · 2–8 s | .53/.38/.01/.10 · 1.45–1.85 ms · 388–394/s · 0.4–6 s | .08/.08/.02/.02 · 1.0–1.3 ms · 390–394/s · 0.08–3 s |
-| Fresh, 620/s | .54/.65/.01/.12 · 1.8–2.3 ms · 425–485/s · 29–31 s | .52/.38/.01/.10 · 1.55–2.05 ms · 465–550/s · 26–31 s | .11/.11/.02/.02 · 1.05–1.4 ms · 520–610/s · 3–31 s |
-| 1B, 50/s | .60/.62/.02/.11 · 1.5–2.4 ms · 49–50/s · 0.04–0.5 s | .59/.34/.02/.11 · 1.3–2.0 ms · 49–50/s · 0.035–0.4 s | .10/.10/.03/.03 · 1.0–1.35 ms · 49–50/s · 0.02–0.2 s |
-| 1B, 235/s | .72/.82/.02/.14 · 1.9–2.65 ms · 228–235/s · 0.08–5 s | .70/.50/.02/.14 · 1.6–2.2 ms · 230–235/s · 0.07–4 s | .12/.12/.03/.03 · 1.1–1.4 ms · 231–235/s · 0.04–3 s |
-
-## Step 1 evidence
-
-| Mac diagnostic | Observed |
+| Part | Behaviour with the option on |
 | --- | --- |
-| Native parity and conflict | 909 assertions in seven tests, including same-owner races, stale cuts, historical ID reuse, business row and journal parity, and exact witness datoms. |
-| Barrier6 and rolling6 recovery | Each recorded 56 durable edits, checked the same receipts after restart and found none of the six refused offers in storage. Each recovered one withheld reply. The observer matched every receipt to its completed append with synchronous commit, fsync and full-page writes enabled. |
-| Sealed switch and removal | Both modes recovered the typed erased marker for the initial and post-switch assertions at their own cuts and through the held cut. Neither stored change body returned an original value. |
-| All 13 removal routes | Passed in both barrier6 and rolling6 using the sealed value written through the head-enabled ordered writer. The actual backup restore checked the same assertion; both stacks released their slots and removed temporary containers, volumes and network. |
-| In-process point read of 257 rows, 24 current and 24 pinned per arm | Baseline medians 8.64 ms current and 11.74 ms pinned. Two witness runs measured 6.28/7.24 ms and 6.91/5.69 ms. The control ran first in the same JVM. These measurements exercise the same logical projection and give no isolated speedup or comparison with the 1.65 ms full-size service reading. The new head adds no lookup to the product reader. |
-| Native records and bytes | Plain ordered fixture 24 on first touch and 25 thereafter, one add and then an add/retraction over the 23-record path. A sealed first replacement wrote 29 including the witness. The witness contained 54 UTF-8 bytes for the one-field ordered case, excluding log framing and index overhead. The previously reported 17/22 counts are from the compact layout. The first-stage witness runs do not use that layout. |
+| Save | An exact replacement of one to three fields goes to the covering writer. New rows go on a fresh version entity; the retired rows get markers there. The owner keeps one root value: the masked legacy row IDs and up to four live edited row texts. The writer compares the root bytes and the revision, then advances the revision as today. |
+| Fold at four texts | A save that would put a fifth text in the root first runs a separate fold transaction with no logical position: the covered rows move back onto the owner, the masked legacy rows and the root are retracted. No row, position or clock changes, so the feed skips it. The save then migrates the person again. The paged spill is gone. |
+| Other writers | Any other save on a person with a root folds that person first and then uses today's per-person or reference writer, with their usual outcomes and error codes. The reference function, compiled with the option only, refuses a payload for a person with a root and treats rows on version entities as not live. Prepared groups refuse such people. |
+| Reads | Every product read route detects the format from the installed attribute, not from a setting: current and pinned reads, reads by assertion ID, history, reach, group-cut interiors and the native feed. Rows come back in the legacy index order. |
+| Admission | A writer started without the option refuses a database that stores roots (`OwnerLayoutRequired`). With the option off nothing is installed and the gateway's function texts are unchanged apart from reader-generated symbol numbers. |
+| Removal on request | All 13 routes pass with the option on, with the witness saved by the covering writer. |
 
-The first-stage witness is bounded to at most three recent assertion IDs of at most 128 characters each and contains no application values or body keys. Counts above cover the logical native writes before index maintenance. Settled bytes and aging-rate change for the final layout are unmeasured. One no-history value per touched person caps the retained witness state while each update still writes in the durable log. [Evidence hashes](WRITE10-SHA256SUMS)
+## Gates
 
-For a fresh Mac attempt, the managed driver stages exact inputs and uses its own ordinary heavy tokens for image build and selftest. The route suite uses the removal stack already exposed by the lab engine.
+| Gate | Source | Result |
+| --- | --- | --- |
+| Layout gate on PostgreSQL: migration, races, framed root, fold at four with every cut and history equal to legacy, product routes equal to legacy (read, pinned at all 11 positions, history, by ID, reach, feed) across 3 folds, reference-writer fence, admission | `owner14-02`, `75ce37f40` | 5 tests, 160 assertions, pass |
+| Per-person writer and conflict matrix with the option on (covering writer on the product route) | `owner14-02` | 7 tests, 936 assertions, pass |
+| Same suites in memory, option on and off; gateway selftest on and off | `e2a49d9d6` merged tree | 1,096 and 782 assertions; 54,110 selftest assertions each way, pass |
+| Lost reply and refused appends through the product route, `barrier6` and `rolling6` | `owner14-02` | 56 durable saves each, 6 refused appends absent after restart, lost reply recovered |
+| Removal across the head (protected save by the covering writer, 2 identities erased, pinned before and after) | `owner14-02` | pass in both credit modes |
+| DX-CHK1 removal combination, option on: 13 routes, 24 rolling saves, backup restore | `w1-removal-head-a` | pass |
 
-```sh
-DX_W1_OWNER_HEAD=1 python3 lab/experiments/EXP-DX1/prep1/manage.py \
-  "$DX_W1_EVIDENCE/owner-head-new" rolling-recovery 10 1 1 0 1 0
+### Combined check (DX-CHK1) on the merged head
 
-for mode in barrier6 rolling6; do
-  DX_W1_OWNER_HEAD=1 DX_ERASE1_SUBJECT_WRITER=1 DX_ERASE1_ORDERED_IDS=1 \
-    node lab/bin/heavy.mjs --label "DX-W1-owner-head-routes-$mode" -- \
-    node --experimental-transform-types lab/bin/engine.mjs erase1 --holder DX-W1 \
-      --out "owner-head-new-$mode" --run ledger-authority-regression --people 12 \
-      --sealed-witness --credit-mode "$mode"
-done
-```
+Branch head `97081e286` (or `75ce37f40`, which differs only by the server document), merged with `exp/DX-INT1` `e13fcf13d`. Option off unless stated.
+
+| Combination | Result |
+| --- | --- |
+| Removal on request with append retirement, rolling6: 13 routes, 24 rolling saves, backup restore | Pass (`w1-removal-a`) |
+| The same with `TX2_SUBJECT_OWNER_HEAD=1`; the removal witness saved by the covering writer | Pass (`w1-removal-head-a`) |
+| Fair import, quiet account and Publish: 46 positions replayed | Pass |
+| Read study with saves, removal and import: 21 saves, 176 logical reads in 22 batches, 27 positions replayed | First attempt stopped on an untyped `TRIPLEX_ERASURE_FRONTIER` from an import racing the removal (the refusal family DX-CHK1 reported); the rerun passed with 31 and 24 typed refusals |
+| Cold admission ramp with lost reply and resend: 9 positions | Pass |
+| Realistic toy seed with removal: 13 routes, 24 saves, 101 positions | Pass (second attempt; the first stopped on a source-drift check because I committed during it) |
+| Realistic toy seed with fair import and Publish: 106 positions | Pass |
+| Policy B failover with append retirement | Pass |
+| Native append recovery, serial revision and sampled lookups: 56 durable, 6 refused | Pass |
+| Java 25 ZGC write gateway with removal | Not rerun (needs a separate Java 25 build receipt; the change is JVM-independent) |
+
+`owner14-01` (source `6c615c1f5`) passed the same layout and serial gates, then one call of the removal probe hit the 5 s client deadline on a loaded Mac; the probe now names each call, and `owner14-02` passed it.
+
+## Read cost
+
+| Probe | Migrated person, current | Migrated person, pinned | Untouched person in an option-on database |
+| --- | ---: | ---: | ---: |
+| SQL gate, three JVMs, arms shuffled, 192 rounds each (`owner14-02`) | +12%, +40%, +50% | −1%, +29%, +32% | −6% to +4.5% |
+| Same JVM, same data, 3,000 interleaved pairs, in memory, indexed | +1.6% to +4.5% | +2.5% to +5.4% | — |
+| Same, with the gate's single-CPU 368 MiB JVM | +4.4%, +6.3% | +2.5%, +5.4% | — |
+
+- **Untouched people pay nothing measurable.** That is the cost the option puts on everyone.
+- **A migrated person's read is within 10% of legacy in the controlled probe, not in the SQL gate.** The SQL gate compares separate databases in a loaded Mac, and its control arm (identical code) drifted 2% to 7%. The trade, stated plainly: the processing a migrated read adds is 15–25 µs per 81-row person (root decode, mask, one merge), and the range it walks is 3 datoms (1.6%) larger. A first version sorted the merged rows and cost +70% in the SQL gate; that is fixed (`e2a49d9d6`).
+- **Pinned reads walk the person's history, which now holds each old root.** After 16 saves the walked bytes grow +6% (one edited field), +35% (two) and +73% (eight, capped by the fold; +166% before it). People edited often across many fields will cross extra index leaves at full size.
+
+## Records and bytes per save
+
+| Tape (16 saves, same person) | Records per save, today → owner head | Added string bytes per save | Folds |
+| --- | --- | --- | --- |
+| One field | 23 → 25.94 (25 first touch, 26 later) | 2,284 → 2,589 (+13.4%) | none |
+| Two fields (the scorecard edits answer and note) | 23 → 25.94 | 2,279 → 2,789 (+22.4%) | none |
+| Eight fields | 23 → 25.75 + 2.81 fold records | 2,331 → 2,970 (+27%) | 3 folds of 15 records |
+
+- **The extra three records** are the root's new value and the retraction of its old one, and the version-owner reference. The row retraction becomes a marker. Advancing the revision costs the same as today's revision check, so it adds nothing over today; it is what keeps every cache and fence keyed on the revision exact.
+- **At 394 saves/s** that is about 1,180 more records per second (+13%). If records drive index jobs, the 64 s gap between jobs at 394/s becomes about 57 s; if bytes drive it, 52–56 s.
+
+## Serial storage reads (the saving)
+
+256 people × 160 facts per writer, indexed, transactor restarted before each writer and round, 64 people edited per round; per save after the first cold save.
+
+| Writer | SQL fetches per save | EAVT | AEVT | AVET |
+| --- | ---: | ---: | ---: | ---: |
+| Today's writer | 1.37–1.54 | 0.57–0.64 | 0.57–0.65 | 0.22–0.25 |
+| Append retirement | 1.48–1.78 | 0.54–0.68 | 0.68–0.75 | 0.25–0.35 |
+| Owner head | 0.35 | 0.32 | 0.00 | 0.03 |
+
+This speaks to the owner head only (16 GiB-like pressure on a toy seed). At today's full size, a 32 GiB cache already brings reads to 0.04 per save; the owner head matters for the growth case. [Server command and predictions](SERVER-OWNER-HEAD.md)
+
+## Evidence
+
+`owner14-01` and `owner14-02` in the private evidence folder `DX-W1`, with `owner14-verify.py` and `owner14-recovery.py`; the combined runs in `DX-CHK1/w1-*` and `DX-CHK1/load1`, `DX-CHK1/hasync-ack-*`.
