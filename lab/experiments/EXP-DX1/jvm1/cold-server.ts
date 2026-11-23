@@ -18,6 +18,7 @@ import { checkSavedIdentity, feeder, jsonFile } from "../v01/adopted.ts";
 import { stackOptions } from "../v01/profile.ts";
 import { cleanSource, verifyBuild } from "../v01/source.ts";
 import { coldAdmission } from "./cold-admission.mjs";
+import { openColdWriter } from "./cold-open.ts";
 import { coldStartLog, creditModes, defaultCreditMode, launchProfile, type CreditMode } from "./launch.mjs";
 import { summarizeOffers } from "./cold-windows.mjs";
 
@@ -108,14 +109,8 @@ for (const [arm, startup, ramp] of [
       assert.deepEqual([counterStamp.slot, counterStamp.source, counterStamp.attempt], [slot, source, attempt]);
       for (const [role, engine] of Object.entries(engines)) assert.equal(counterStamp.roles[role].id, engine.id);
 
-      const initial = await writer.begin(seed.scope.db);
-      await writer.release(seed.scope.db, initial.handle);
-      assert.equal(initial.position, seed.scope.cut);
-      const options = await writer.request<any>("GET", "/v1/db/" + seed.scope.db + "/write-options");
-      assert.deepEqual([options.attempt, options.database, options.position, options.rowsVersion,
-        options.strictRecordClocks, options.subjectSave, options.subjectNumericOwner, options.subjectOrderedIds,
-        options.subjectPrefetch], [attempt, seed.scope.db, seed.scope.cut, 3, true, true, true, true, false]);
-      assert.match(options.subjectFunction, /^:triplex\.subject\/v-[a-f0-9]{24}$/);
+      const { options, scopeOpen } = await openColdWriter(writer, seed.scope, attempt);
+      jsonFile(path.join(dir, "scope-open.json"), { source, slot, attempt, ready, ...scopeOpen });
       const senders: Sender[] = seed.scope.accounts.map((account) => {
         const subjects = new Map(tape.filter((e) => e.account === account).map((e) => [task(account, e.subject), e.subject]));
         return { client: writer, scope: seed.scope, rows: new Map(), loadPredecessor: async (entity) => {
