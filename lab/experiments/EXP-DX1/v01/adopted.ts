@@ -357,6 +357,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const migratedLoaded = migratedReader ? sampleMigratedReads(migratedReader, seed.scope.db, { phase: "loaded",
       start: start + 2000, seconds: seconds - 2, firstCut: startHead, validAt: SEED_VALID_FROM,
       candidates: (at) => recentlyOffered(tape, start, at, 1000, ownerOf) }) : undefined;
+    void migratedLoaded?.catch(() => {}); // awaited after the window; never an unhandled rejection mid-window
     const [writes, phases, quietRead, mixedReads] = await Promise.all([
       play(senders, tape, start, peer.attempt, false, writer === "per-person-ordered", selection),
       !retirement && quietCell === undefined && !comparison ? readWindows(reader, seed, start, loaded, toy, study, samples) : [], quiet, background,
