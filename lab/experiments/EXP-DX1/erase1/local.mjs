@@ -126,6 +126,8 @@ export async function local(opts, config, manager) {
   assert(!realistic || combined);
   const sealedWitness = opts["sealed-witness"] === true;
   const ownerHead = process.env.DX_W1_OWNER_HEAD === "1";
+  const pinnedShortcut = process.env.DX_PINNED_SHORTCUT ?? "0", pinnedLookup = process.env.DX_PINNED_CUT_LOOKUP ?? "0";
+  assert(["0", "1"].includes(pinnedShortcut) && ["0", "1"].includes(pinnedLookup));
   assert(!sealedWitness || mode === "ledger-authority-regression");
   assert(!ownerHead || (sealedWitness && orderedIds === "1" && subjectWriter === "1"));
   assert(["barrier6", "rolling6"].includes(creditMode));
@@ -500,6 +502,9 @@ export async function local(opts, config, manager) {
             ? ["-e", "TX2_SUBJECT_ORDERED_IDS=1", "-e", "TX2_SUBJECT_NUMERIC_OWNER=1"]
             : []),
           ...(ownerHead ? ["-e", "TX2_SUBJECT_OWNER_HEAD=1"] : []),
+          // [DX-THIN1] The pinned read options (RD1, default off), passed only when asked for.
+          ...(pinnedShortcut !== "0" || pinnedLookup !== "0"
+            ? ["-e", "TX2_PINNED_SHORTCUT=" + pinnedShortcut, "-e", "TX2_PINNED_CUT_LOOKUP=" + pinnedLookup] : []),
           ...(mode === "fast-authority-regression" ? ["-e", "TX2_REMOVAL_COST_READBACK=1"] : []),
           "-e",
           "DX_ERASE_TOKEN=" + token,

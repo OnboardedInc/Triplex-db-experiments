@@ -634,6 +634,9 @@ export class Stack {
             ]
           : []),
         ...(combination ? Object.entries(combination.settings).flatMap(([key, value]) => [key + "=" + value, "-e"]) : []),
+        // [DX-THIN1] Why: the combined check runs the pinned read options (RD1, default off) on both gateways.
+        // Rejected: changing the argument list when neither option is asked for.
+        ...pinnedReaderEnv().flatMap((x) => [x, "-e"]),
         "DATOMIC_URI_TEMPLATE=" + this.uri(pg, store, "{db}", site),
         "-e",
         "GATEWAY_SOURCE_SHA256=" + this.e.source.gateway,
@@ -680,4 +683,11 @@ export class Stack {
     });
     return url;
   }
+}
+
+// [DX-THIN1] TX2_PINNED_SHORTCUT and TX2_PINNED_CUT_LOOKUP from DX_PINNED_SHORTCUT and DX_PINNED_CUT_LOOKUP (stack/up.sh's names).
+export function pinnedReaderEnv(env: NodeJS.ProcessEnv = process.env) {
+  const on = (name: string) => { const v = env[name] ?? "0"; if (v !== "0" && v !== "1") throw new Error(name + " must be 0 or 1"); return v; };
+  const shortcut = on("DX_PINNED_SHORTCUT"), lookup = on("DX_PINNED_CUT_LOOKUP");
+  return shortcut === "0" && lookup === "0" ? [] : ["TX2_PINNED_SHORTCUT=" + shortcut, "TX2_PINNED_CUT_LOOKUP=" + lookup];
 }

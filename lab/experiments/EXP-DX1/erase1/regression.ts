@@ -135,12 +135,16 @@ export async function regression(
       subjectNumericOwner?: boolean;
       subjectOwnerHead?: boolean;
       subjectOwnerHeadFunction?: string;
+      options?: { pinnedShortcut?: boolean; pinnedCutLookup?: boolean };
     }>("GET", `/v1/db/${f.db}/write-options`);
     assert.equal(opts.database, f.db);
     assert.equal(Boolean(opts.subjectSave), subjectWriter === "1");
     assert.equal(Boolean(opts.subjectOrderedIds), orderedIds);
     assert.equal(Boolean(opts.subjectNumericOwner), orderedIds);
     assert.equal(Boolean(opts.subjectOwnerHead), ownerHead);
+    // [DX-THIN1] The gateway runs exactly the pinned read options the combined check asked for.
+    assert.deepEqual([Boolean(opts.options?.pinnedShortcut), Boolean(opts.options?.pinnedCutLookup)],
+      [process.env.DX_PINNED_SHORTCUT === "1", process.env.DX_PINNED_CUT_LOOKUP === "1"]);
     if (subjectWriter === "1") {
       assert.match(opts.subjectFunction ?? "", /^:triplex\.subject\/v-[0-9a-f]{24}$/);
       assert(Number(opts.subjectFunctionTx) > 0);

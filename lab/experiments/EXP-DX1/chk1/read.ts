@@ -214,7 +214,14 @@ export async function protectedReads(e: Evidence, writeUrl: string, readUrl: str
       ),
     );
     assert(sizes.every((n) => n === 8) && sizes.length === tape.length + 1);
+    // [DX-THIN1] The read gateway runs exactly the pinned read options the combined check asked for.
+    const readerOptions = (await reader.request<{ options?: { pinnedShortcut?: boolean; pinnedCutLookup?: boolean } }>(
+      "GET", `/v1/db/${db}/write-options`)).options ?? {};
+    const pinned = { shortcut: Boolean(readerOptions.pinnedShortcut), cutLookup: Boolean(readerOptions.pinnedCutLookup) };
+    assert.deepEqual([pinned.shortcut, pinned.cutLookup],
+      [process.env.DX_PINNED_SHORTCUT === "1", process.env.DX_PINNED_CUT_LOOKUP === "1"]);
     const resultRow = {
+      pinned,
       readScopes: 1,
       db,
       oldBasis: basis.recordedPosition,

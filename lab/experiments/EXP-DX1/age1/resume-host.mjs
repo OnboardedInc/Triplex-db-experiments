@@ -17,7 +17,9 @@ const lab = "lab/experiments/EXP-DX1/age1";
 const jdk = "/usr/lib/jvm/java-21-openjdk-amd64/bin";
 const read = (file) => JSON.parse(fs.readFileSync(file, "utf8"));
 const fileSha = (file) => createHash("sha256").update(fs.readFileSync(file)).digest("hex");
-const call = (cmd, args, extra = {}) => execFileSync(cmd, args, { timeout: 30000, encoding: "utf8", ...extra }).trim();
+// [DX-THIN1] Why: with stdio "ignore" execFileSync returns null; the 1 billion resume crashed here after its seal
+// (line 162, 2026-11-23). Rejected: dropping stdio "ignore" (the export's output is not wanted in the log).
+const call = (cmd, args, extra = {}) => String(execFileSync(cmd, args, { timeout: 30000, encoding: "utf8", ...extra }) ?? "").trim();
 const docker = (...args) => call("docker", args);
 const write = (file, body) => fs.writeFileSync(file, JSON.stringify(body, null, 2) + "\n", { flag: "wx", mode: 0o600 });
 const tag = "resume-" + new Date().toISOString().replace(/[:.]/g, "-");
