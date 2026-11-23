@@ -73,7 +73,7 @@ Every answer carries `timing.serverMs` (the gateways' own handling time, summed 
 | `retire_fact` (changes) | a fact stops being current; its past stays in history |
 | `remove_on_request` (changes) | checks the database's removal state; on this database it explains why removal cannot be shown and changes nothing |
 
-Changing tools commit for real (durable, synchronous) and refuse unless the connection file says the target is a demo working copy. [Worked examples](EXAMPLES.md) has fifteen prompts in showing order with real outputs and times.
+Changing tools commit for real (durable, synchronous) and refuse unless the connection file says the target is a demo working copy. [Worked examples](EXAMPLES.md) has seventeen prompts in showing order with real outputs and times.
 
 ## Two things particular to this database
 
