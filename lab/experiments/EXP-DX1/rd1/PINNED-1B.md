@@ -275,7 +275,7 @@ The model said 0.4 to 0.8 ms of reader CPU per subject (2.4 to 4.4 ms per exchan
 
 **Corrected model.** Reader CPU ≈ exchanges/s × 0.9 ms (a cache-hot exchange of eight one-field subjects, collector included) + segment loads/s × 0.6 to 0.7 ms. It reproduces 2.0 cores at 256 seats (1,548 × 0.9 + 1,067 × 0.57 = 1.39 + 0.61). At 64 seats it gives 1.6 cores (measured 1.95), and at 1,024 seats 1.7 cores (measured 2.23; collector pauses were 20% of the wall there). **What limited 256 seats is not in the records.** The reader had about 0.7 cores of headroom beyond collector pauses. The driver, which runs 256 seats and 1,548 HTTP exchanges/s in one Node event loop on cores 9 and 10, was not sampled. The new arm records the driver's CPU and event-loop delay per window.
 
-**What this means for P1.** The 12,376 reads/s at 256 seats depends on the ladder re-reading each subject about 25 times a minute. A product reader whose 256 seats each read a different, random subject among the million per account would miss the cache like the 1,024-seat step does: about 1.5 to 1.9 ms of CPU per subject, so 1,300 to 1,800 reads/s on three cores, below the 2,560 reads/s that p99 ≤ 100 ms needs with no think time. The new arm's tape-pin window reads recently saved subjects, which is the product's own pattern.
+**What this means for P1.** The 12,376 reads/s at 256 seats depends on the ladder re-reading each subject about 25 times a minute. A product reader whose 256 seats each read a different, random subject among the million per account would miss the cache like the 1,024-seat step does: about 1.5 to 1.9 ms of CPU per subject, so 1,300 to 1,800 reads/s on three cores, below the 2,560 reads/s that p99 ≤ 100 ms needs with no think time. The new arm measures this case in its random windows (predictions there, from the same model with wider ranges), and its tape-pin window reads recently saved subjects, the product's pattern after a save.
 
 ### What collapses at 1,024 seats
 
@@ -304,9 +304,14 @@ The other candidates are ruled out by the records:
 | `s-near-head` | Same tape, relabelled so it writes new values | Head − 1,000 at the window's first cut, batches of eight |
 | `s-seed-cut` | Same | The old pin 87,002, batches of eight, every value checked against the seed's |
 | `s-tape` | Same | Each seat reads a subject this window's tape offered 0.2 to 20 s earlier, pinned at the position of that subject's last acknowledged save. Every field the sender recorded must come back with the same row ID, value and position, and a production subject must return no other field. One subject per exchange |
-| `ref-near-head`, `ref-seed-cut`, `ref-tape` | The unloaded 394 cell: the quiet account's 3.5 saves/s alone, the reference rate of the card's P1 line (the same stream generator, not byte-identical to that line's tape) | As above. **Run only if five minutes remain** before the deadline |
+| `ref-random-near-head` | The unloaded 394 cell: the quiet account's 3.5 saves/s alone, the reference rate of the card's P1 line (the same stream generator, not byte-identical to that line's tape) | Each read takes an account and a subject **uniformly at random from all ten accounts × 100,000 subjects** (the whole population the reader serves), pinned at head − 1,000, batches of eight; the attribute, subject and pin bound checked as near-head reads |
+| `s-random-near-head` | Shape S, as above | As `ref-random-near-head` |
+| `ref-random-seed-cut` | Quiet stream | Random subjects at the old pin 87,002, every value checked against the seed's (the seed gives one for every subject) |
+| `ref-near-head`, `ref-seed-cut`, `ref-tape` | Quiet stream | The re-reading ladder pins as in the S windows |
 
 The S windows keep all of the card's checks on every commit: the predecessor check over every field the tape writes (AGE1's rows byte-exact against its replay tape), the journal and identity check per commit, the writer-path rule, the operation and claim check on every hundredth save, and the read-back of every written field at the terminal cut. The quiet account's own P6 reads (`readCell`, 64 seats) run in every window as in the card.
+
+**Windows after the four S windows are isolated** (added 2026-11-23 evening at the orchestrator's request). Each runs only if its time plus two minutes of cleanup remains (4.5 minutes for a quiet-stream window, 5.5 for `s-random-near-head`). A fault in one is recorded in the summary as `failed` and skips the windows after it, without failing the arm or its seal, and its wrong values are recorded and printed, not thrown. The four S windows keep their published behaviour: a fault or a wrong value there fails the arm. The random windows and the trailing `ref-` ladder windows also send a read-profile header on every 16th exchange (every 128th for the ladder windows). The reader then traces those exchanges' Datomic io-stats and handler CPU. After each window the driver reads, from the reader's trace file, the sampled exchanges' summed io-stats (storage reads, object-cache hits) and handler CPU, and the once-a-minute Datomic metrics records that overlap the window, with the seconds of overlap (storage loads, decode milliseconds, object-cache requests and hits).
 
 **Recorded per window** (`pinned-saves/pinned-saves.json`; each window's full `arm.json` and `operations.json` beside it):
 
@@ -333,11 +338,11 @@ saves_arm() {  # $1 = new scratch copy of AGED_PGDATA_SOURCE, $2 = new campaign 
 }
 OUT=/var/tmp/triplex-pinned-saves-1b; mkdir "$OUT"     # new
 # make COPY_1 (a new physical copy of the held stopped cluster, as for the tuned arm), then:
-DEADLINE=$(( $(date +%s%3N) + 30 * 60 * 1000 ))
+DEADLINE=$(( $(date +%s%3N) + 34 * 60 * 1000 ))
 saves_arm "$COPY_1" "$OUT/saves" "$DEADLINE"          # writes OUT/saves/pinned-saves/pinned-saves.json
 ```
 
-**Duration: about 20 minutes for the four S windows; ceiling 30.** Estimates:
+**Duration: 22 to 31 minutes for the four S windows and the two random near-head windows; ceiling 34 (deadline 34 minutes after launch, raised from 30 for the random windows).** Estimates:
 
 | Step | Minutes |
 | --- | ---: |
@@ -346,7 +351,7 @@ saves_arm "$COPY_1" "$OUT/saves" "$DEADLINE"          # writes OUT/saves/pinned-
 | Each S window: predecessors for 850 subjects (14 reads of 64), 90 s of saves and reads, then resolution, journal, identity, claim checks and read-back | 2.5–3.5 (×4: 10–14) |
 | Cleanup | 1–2 |
 
-That makes 17 to 25 minutes. The three reference windows (about 2 minutes each) run only while five minutes remain before the deadline, so the arm stops by the 30-minute ceiling either way. If the S windows run long, the reference windows are skipped and the summary says so. A dry run to the first offer prints `DX-DRY-RUN first offer reached: pinned pinned-saves` (about 8 minutes on its own copy). An arm stopped before its first save is set aside, and the same line can be rerun on a new copy with the same `OUT/saves`.
+That makes 17 to 25 minutes for the S windows. Then `ref-random-near-head` (about 2 minutes) and `s-random-near-head` (about 3.5), so 22 to 31 minutes. `ref-random-seed-cut` and the three re-reading `ref-` windows (about 2 minutes each) follow only while their time plus cleanup remains, so the arm stops by the 34-minute ceiling either way. If the S windows run long, the reference windows are skipped and the summary says so. A dry run to the first offer prints `DX-DRY-RUN first offer reached: pinned pinned-saves` (about 8 minutes on its own copy). An arm stopped before its first save is set aside, and the same line can be rerun on a new copy with the same `OUT/saves`.
 
 ### Predictions, written before the run
 
@@ -365,6 +370,29 @@ Corrected model above. Closed loop, no think time. Additions for the save load:
 | `ref-near-head` | 11,000–12,800 | 18–24 ms | 65–95 ms | 100% | 1.9–2.3 |
 | `ref-seed-cut` | 9,500–11,000 | 20–28 ms | 75–100 ms | 97.5–98.5% | 1.9–2.3 |
 | `ref-tape` | 1,200–2,800 (1,900) | 90–210 ms | 140–400 ms | 90–100% | 2.0–2.7 |
+
+**Random subjects (the product's cache-cold case), from the corrected model.** A read of a random subject among 1,000,000 almost never finds its leaf segments in a 3 GiB cache. That cache holds about 6,200 decoded segments (about 0.5 MB each). The working set is the leaves of a million subjects at 1.4 to 2.2 distinct segments each, so 1.4 to 2.2 million segments, about 0.7 to 1.1 TB decoded. So each subject costs its loads: 1.4 to 2.2 loads (the tuned arm measured 1.43 and 1.78 when its reuse distance exceeded the cache, and about 2.2 for a subject's first read). Each load costs 0.6 to 0.9 ms of reader CPU including its collection, plus about 0.11 ms of the exchange's fixed cost. That is **1.0 to 2.1 ms per subject (central 1.5)**, on the 2.2 to 2.4 cores left outside collector pauses (the 1,024-seat steps used 2.23 to 2.27).
+
+| Window | Reads/s (central) | p50 | p99 (central) | Storage loads per subject | Object-cache hit share (by request, branches included) | Decode CPU | Sampled storage reads per exchange of 8 | Current share |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `ref-random-near-head` | 900–2,200 (1,400) | 115–285 ms (183) | 170–450 ms (270) | 1.3–2.3 | 0.78–0.90 | 1.2–2.0 cores | 10–18 | ≥ 99.9% |
+| `s-random-near-head` | 850–2,100 (1,350) | 120–300 ms (190) | 180–480 ms (280) | 1.3–2.3 | 0.78–0.90 | 1.2–2.0 cores | 10–18 | ≥ 99.5% |
+| `ref-random-seed-cut` | 800–2,000 (1,250) | 130–320 ms (205) | 190–500 ms (300) | 1.4–2.6 | 0.76–0.90 | 1.2–2.1 cores | 11–21 | 97–98.5% |
+
+Mean batch 7.5–8; wrong values and errors 0.
+
+**The 100 ms p99 bar at 256 seats is not met for random subjects** in any of the three; the model's central p99 is 270 to 300 ms.
+
+**What the model says would meet it, so the server result can confirm or refute the sizing.**
+- **The rate needed.** With no think time and p99 about 1.4 × p50 (the cache-miss steps showed 1.36 to 1.48), p99 ≤ 100 ms needs p50 ≤ 71 ms, so **about 3,600 reads/s** at 256 seats.
+- **Cores.** At 1.5 ms per subject (1.0 to 2.1) that is 5.4 busy cores (3.6 to 7.6), so **about 7 reader cores (5 to 10)** at the 0.75 to 0.8 of a core each one gives outside collector pauses. On the 12-core machine that means a second reader with its own cores, or the reader on its own machine, beyond the three cores the tuned reader has.
+- **Cache.** **No affordable cache size meets it.** A cache covering the working set would need 0.7 to 1.1 TB. A partial cache's hit share on leaves is about its share of the working set: 3 GiB gives under 0.5%, 12 GiB under 2%, which saves almost nothing.
+- **What else would.** Fewer loads per subject (a subject's rows in fewer segments, as the covering owner head does for writes) or cheaper decoding.
+
+**What would refute this sizing:**
+1. Random reads at or above 2,800 reads/s on three cores, or storage loads per subject at or below 0.5. Then subjects share segments far more than modelled, the working set is much smaller, and a larger cache (12 to 24 GiB) could meet the bar. The next run would then be the same window with a 12 GiB reader cache.
+2. Loads per subject within the predicted range but reader CPU per subject under 0.8 ms. Then decoding is cheaper than the 0.6 to 0.9 ms per load, and fewer extra cores are needed: 3,600 × CPU per subject ÷ 0.78 cores.
+3. Reads/s well below the range (under 900) while the reader uses under 1.8 cores. Then storage latency (PostgreSQL's one core, or disk reads beyond its 8 GiB page cache) limits it, not reader CPU. The fix would then be storage-side, and the metrics minutes' `StorageGetMsec` will show it.
 
 **Tape pins are one subject per exchange, read whole:** 1.3 to 2.5 ms of reader CPU per exchange (a single-subject exchange near the head cost 1.13 ms in the pair's one-seat step), on 2 to 2.7 cores. Wrong values and errors: 0 in every window.
 
@@ -398,7 +426,15 @@ Corrected model above. Closed loop, no think time. Additions for the save load:
 
 Results:
 
-**Passed at `e4f3aedc7`** (run 02; the publish commit changes only `study-server.ts`'s per-window records and this document). The toy was seeded at cut 61, and AGE1 replayed 300 saves (head 361). Evidence: `evidence/DX-RD1/rd3-saves-gate-02.tar.gz`, SHA-256 `d3333d07a1811a283f83deea66f1005e7ed25536439c3fe4ab0943dab0cf7b98`. Run 01 (`62551ef1…6fa35`) passed the same way, at the code before candidates were limited to the last 20 s.
+**Run 03 passed at `0e5846260`, the code that publishes the random windows.** Evidence: `evidence/DX-RD1/rd3-saves-gate-03.tar.gz`, SHA-256 `079eea33a50118dc19f7c6cffca6ba3761818aefbcf93f8150b2594479b2f468`. Everything in run 02 below held again, and run 03 added three checks:
+
+- **Random pins:** in `S-pins`, beside the three ladder kinds and 37 S commits, `random-near-head` (39,072 reads) and `random-seed-cut` (38,600 reads, every value checked against the seed's) drew subjects from all 10 accounts × 50 toy subjects, in batches of 8, with 0 wrong values and 0 errors. Every 16th exchange carried a read-profile header (305 and 301 sampled).
+- **A planted wrong value in a random window:** in `S-planted`, `random-seed-cut` caught 17,496 of 17,488 timed reads, beside seed-cut 17,840 and tape pins 13,014.
+- **The reader-record parser** (`readerRecords`) on a synthetic reader trace: it summed the io-stats and handler CPU of exactly the two sampled exchanges named (storage reads 3, cache hits 10, CPU mean 3 ms), skipped the unnamed one, and gave the two overlapping metrics minutes 30 s of overlap each. The toy gateway does not write a reader trace, so the parser has not read a real trace file; on the server it reads the reader's `gw-r.jsonl`, whose record shapes are the ones the read study already parsed.
+
+The isolated-window handling in `study-server.ts` (a failed window recorded, later windows skipped, the seal kept) is bare-metal code and type-checks clean, but has not run.
+
+**Run 02 passed at `e4f3aedc7`** (before the random windows). The toy was seeded at cut 61, and AGE1 replayed 300 saves (head 361). Evidence: `evidence/DX-RD1/rd3-saves-gate-02.tar.gz`, SHA-256 `d3333d07a1811a283f83deea66f1005e7ed25536439c3fe4ab0943dab0cf7b98`. Run 01 (`62551ef1…6fa35`) passed the same way, at the code before candidates were limited to the last 20 s.
 
 1. **`S-alone`:** 37 of 37 commits durable. The predecessor check covered 242 seed rows and 69 of AGE1's rows, and the read-back matched 695 fields of 23 subjects.
 2. **`S-pins`:** the three pin kinds ran at once, 8 seats each for 25 s, beside 37 S commits (all durable; read-back 695 fields), with **0 wrong values and 0 errors**:
@@ -417,7 +453,7 @@ Results:
 
 - **The production tape at the card's other rates.** Only the 394 cell runs (shape S, the brief's load), and shape R does not run.
 - **1,024 seats with saves.** Its collapse is explained above from the tuned arm's records.
-- **A reader whose seats read random distinct subjects** (the cache-cold product case): predicted above at 1,300 to 1,800 reads/s on three cores, not measured.
+- **Random subjects with the tape's own pins or at 1,024 seats.** The random windows (if they run) measure 256 seats near the head and at the old pin only.
 - **The driver.** It runs on the same machine (cores 9 and 10) and in one event loop with the save sender; the arm records its load instead of removing it.
 - **Separate effects of the two options.** The arm does not separate the short-cut from the cut lookup.
 - **The reference windows** run only if time remains. Their stream is the card's quiet generator at 3.5/s, not byte-identical to the card's P1 line tape.
