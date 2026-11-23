@@ -165,7 +165,10 @@ const result = {
     return { label: cell.label, offers: cell.tape.length, acked: result.rows.filter((r) => r.receipt).length,
       expired: result.rows.filter((r) => r.reason === "expired").length, wallMs, shape: report.shape,
       factsPerCommit: report.neighbours.factsPerCommit,
-      orderedAcks: result.rows.filter((r) => (r as any).ack?.subjectOrderedIds).length };
+      orderedAcks: result.rows.filter((r) => (r as any).ack?.subjectOrderedIds).length,
+      // The per-person writer takes only saves of one to three facts that each replace a current value; the rest
+      // (wider saves, first writes of a field) take the general writer. Both must be exact.
+      subjectPathAcks: result.rows.filter((r) => (r as any).ack?.subjectSave).length };
   }),
 };
 writeFileSync(join(out!, "result.json"), JSON.stringify(result, null, 2) + "\n");
@@ -173,7 +176,8 @@ console.log("REAL2_AGED_GATE " + JSON.stringify(result));
 for (const c of result.cells) {
   assert(c.acked + c.expired === c.offers, `${c.label}: an offer neither acknowledged nor expired`);
   assert(c.acked >= 0.9 * c.offers, `${c.label}: ${c.acked} of ${c.offers} acknowledged`);
-  assert.equal(c.orderedAcks, c.acked, `${c.label}: ${c.orderedAcks} of ${c.acked} acknowledgements on the ordered writer`);
+  assert.equal(c.orderedAcks, c.subjectPathAcks, `${c.label}: ordered acknowledgements differ from per-person-writer ones`);
+  assert(c.subjectPathAcks > 0, `${c.label}: no save took the per-person writer`);
 }
 client.close();
 reader.close();

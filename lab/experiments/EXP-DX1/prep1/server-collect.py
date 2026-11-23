@@ -682,13 +682,20 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             # Storage reads per commit early and late, and serial apply against commit size (the S forecast).
             io = [(r["due"], len(offer[6]) if r["account"] else 1 + int(offer[5]), r["ack"]) for r, offer in zip(rows, tape, strict=True)
                   if r.get("ack") and r["ack"].get("nativeIoStats") is not None]
+            # [DX-REAL2] The per-person writer takes saves of one to three facts that each replace a current value;
+            # wider saves and first writes of a field take the general writer. Report the split and each path's reads.
+            save_metrics["writerPath"] = {
+                "subject": sum(bool(r.get("ack", {}).get("subjectSave")) for r in rows if r["account"]),
+                "general": sum(bool(r.get("ack")) and not r["ack"].get("subjectSave") for r in rows if r["account"])}
             if io:
                 sql = lambda a: a["nativeIoStats"]["reads"].get("sql", 0)
                 mean = lambda xs: sum(xs) / len(xs) if xs else None
                 save_metrics["sqlReadsPerCommit"] = {
                     "first60s": mean([sql(a) for due, _, a in io if due < 60_000]),
                     "from150s": mean([sql(a) for due, _, a in io if due >= 150_000]),
-                    "whole": mean([sql(a) for _, _, a in io])}
+                    "whole": mean([sql(a) for _, _, a in io]),
+                    "from150sSubjectPath": mean([sql(a) for due, _, a in io if due >= 150_000 and a.get("subjectSave")]),
+                    "from150sGeneralPath": mean([sql(a) for due, _, a in io if due >= 150_000 and not a.get("subjectSave")])}
                 buckets = ((1, 2), (3, 10), (11, 30), (31, 60), (61, 1000))
                 save_metrics["applyMsBySize"] = [
                     {"facts": f"{lo}-{hi}", "commits": len(xs), "meanFacts": mean([f for f, _ in xs]),
