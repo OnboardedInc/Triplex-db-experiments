@@ -59,7 +59,7 @@ async function inner() {
       @(d/transact c (vec (for [i (range 0 400 7)] [:db/add [:toy/id i] :toy/name (str "renamed-" i)])))
       (d/request-index c) (deref (d/sync-index c (d/basis-t (d/db c))) 60000 nil)
       (let [db (d/db c)]
-        (println "TOY" (pr-str {:t (d/basis-t db) :datoms (:datoms (d/db-stats db)) :names (count (d/datoms db :aevt :toy/name))
+        (println "TOY" (pr-str {:t (d/basis-t db) :datoms (:datoms (d/db-stats db)) :names (count (seq (d/datoms db :aevt :toy/name)))
                                 :p7 (:toy/name (d/pull db [:toy/name] [:toy/id 7]))})))
       (shutdown-agents) (System/exit 0))`, { TOY_URI: uri("toy", "postgres") });
   assert.equal(made.status, 0, "toy database not created");
@@ -78,7 +78,7 @@ async function inner() {
   assert(restore.split("\n").includes(":succeeded"));
   const readCode = `(require '[datomic.api :as d])
     (let [c (d/connect (System/getenv "RESTORE_URI")) db (d/db c)]
-      (println "READ" (pr-str {:t (d/basis-t db) :datoms (:datoms (d/db-stats db)) :names (count (d/datoms db :aevt :toy/name))
+      (println "READ" (pr-str {:t (d/basis-t db) :datoms (:datoms (d/db-stats db)) :names (count (seq (d/datoms db :aevt :toy/name)))
                                :p7 (:toy/name (d/pull db [:toy/name] [:toy/id 7]))}))
       (shutdown-agents) (System/exit 0))`;
   // The failed state: no transactor has registered in the restored storage.
