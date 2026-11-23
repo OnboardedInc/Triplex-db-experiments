@@ -9,6 +9,18 @@ Build `090c189a8` (`exp/DX-INT1`; the document `v01/PRODUCTION-CARD.md` is publi
 | Part | Result |
 | --- | --- |
 | 1, headline without readers (reference tape, the same as every card) | 1,260/1,260 saves stored; p50/p90/p99 6.18 / 11.71 / 21.38 ms (max 134.49); feed 1,260 entries; cut 28,309,866 → 28,311,126; completed 23:26 UTC |
+| 2, headline loaded, production-S (completed 23:54 UTC) | See below |
+
+**Part 2, the production-S save loads, 90 s cells.** Columns: stored commits/s (rows/s) · durable/offered · expired | commit p50 / p99 ms | second-half p99 ms | storage reads per commit (first minute; the late value was not computed in a 90 s cell) | writer path: per-subject / general commits · general-identity commits | quiet commit p99 solo → loaded ms | wrong quiet reads.
+
+| Offered rows/s | Stored | Commit p50 / p99 | 2nd-half p99 | Reads per commit | Writer path | Quiet p99 | Wrong | Prediction (1B, `server`: commits/s; S commit p99) |
+| ---: | --- | --- | ---: | --- | --- | --- | ---: | --- |
+| 50 | 2.86 (43.96) · 266/266 · 0 | 14.91 / 66.56 | 66.56 | 4.62 (133 sampled) | 88 / 178 · 1 | 18.94 → 12.16 | 0 | about 3; 60–400 ms |
+| 235 | 13.43 (228.43) · 1,219/1,219 · 0 | 11.65 / 43.01 | 49.92 | 3.12 (551) | 397 / 822 · 9 | 14.34 → 20.74 | 0 | about 14; 0.1–1 s |
+| 394 | **23.08 (387.19)** · 2,086/2,086 · 0 | 10.69 / 45.31 | 53.50 | 2.58 (913) | 651 / 1,435 · 11 | 13.70 → 17.54 | 0 | 20–23; 0.2–3 s |
+| 620 | **36.02 (613.02)** · 3,253/3,253 · 0 | 12.10 / 48.64 | 48.13 | 2.58 (1,405) | 1,074 / 2,179 · 19 | 32.26 → 21.25 | 0 | 25–36; 0.5–15 s |
+
+**Reading.** Every offered commit was stored at every load, with no expiries, and the commit p99 stayed under 50 ms (53.5 ms in the second half at 394). This is far better than the `server`-profile predictions (0.2–15 s), which this card did not run: it ran `server-32` with rolling credits. Against bench 4's out-of-card run at 394 (23.06 commits/s, second-half p99 40.6 ms), this card stored 23.08/s with second-half p99 53.5 ms. The writer rule held in every cell (no cell was stopped). The quiet account's loaded commit p99 stayed between 12 and 21 ms in every cell, so the P6 commit bar held at every load. The quiet account's pinned reads still missed about two thirds of their offers (2,624 errors of 3,840 at 394, 0 wrong), as on every 1B card with the unchanged one-core reader.
 
 ## Predictions and falsifiers, copied from the builder's document before launch
 
