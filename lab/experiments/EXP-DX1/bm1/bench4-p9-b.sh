@@ -7,5 +7,5 @@ set -euo pipefail
 config=${1:-/root/p9/config.json}
 [[ $EUID == 0 && -f $config ]]
 cd /var/tmp/triplex-p9-build/repository
-exec taskset -c 0-11 sh -ceu 'exec 9>/var/tmp/triplex-bm1/dx-bm1-day.lock; flock -n 9; export HA1_SUNDAY_FLOCK=1; exec timeout --kill-after=30s 239m "$1" --import tsx lab/experiments/EXP-DX1/hasync1/sunday.ts b "$2"' \
+exec taskset -c 0-11 sh -ceu 'exec 9>/var/tmp/triplex-bm1/dx-bm1-day.lock; flock -n 9; export HA1_SUNDAY_FLOCK=1; exec timeout --kill-after=30s ${P9_LIMIT:-150m} "$1" --import tsx lab/experiments/EXP-DX1/hasync1/sunday.ts b "$2"' \
   run /var/tmp/triplex-p9-build/tools/bin/node "$config"
