@@ -1,5 +1,31 @@
 # Production-shaped save tape on bench 4, November 23
 
+## One billion records, REAL2 `32ca969bb` (`production-aged`): memory carries production-shaped traffic
+
+**At one billion records, 32 GiB stored 393 form rows/s at 394 offered. Late reads were 0.054 per commit, second-half p99 430 ms and save completion 342 ms. One commit per save ran at 23 commits/s with a 41 ms second-half p99.** The earlier reading's rule ("memory carries it if R 32 GiB stores 390.5 with ≤ 0.1 reads/commit from 150 s and second-half p99 under 1 s, and S ≤ 1 read/commit with p99 under 150 ms") **is met on every term.** Even the 16 GiB R arm met the R terms. All three arms ran, from 21:24:23 to 22:16:23 UTC, each on its own copy of the verified held cluster. The stack-level dry run was ADMITTED, and the aged live-head and predecessor checks passed before the first offer. There were 0 expiries and 0 missing ACKs anywhere, and no autovacuum ran (0 of 206 samples).
+
+| At 394, per commit | R 32 GiB forecast | R 32 GiB | S 32 GiB forecast | S 32 GiB | R 16 GiB forecast | R 16 GiB |
+| --- | --- | ---: | --- | ---: | --- | ---: |
+| Stored/s (incl. 3.5/s quiet) | 390.5 (385–390.5) | 393.12 | 23.1 commits/s | 26.56 (23.06 busy) | 390.5 (330–390.5) | 393.07 |
+| Reads/commit, first 60 s | 0.10 (0.05–0.4) | 0.111 | 1.5 (0.6–8) | 1.53 | 0.10 (0.05–0.4) | 0.111 |
+| Reads/commit, from 150 s | 0.05 (0.02–0.25) | **0.054** | 0.8 (0.2–3) | **0.70** | 0.08 (0.02–0.4) | 0.055 |
+| … per-person writer / general writer | | 0.078 / 0.024 | | 0.65 / 0.73 | | 0.079 / 0.024 |
+| Whole busy p99 | 300 ms (180–2,000) | 295 ms | 80 ms (30–400) | 39.5 ms | 350 ms (200–3,000) | 502 ms |
+| Second-half busy p99 | 250 ms (160–1,500) | 430 ms | 50 ms (25–200) | 40.6 ms | 300 ms (170–2,000) | 713 ms |
+| Save completion p99 (second half) | 350 ms (240–2,000) | 312 (342) ms | 50 ms (25–200) | 40 (42) ms | 400 ms (250–2,500) | 453 (597) ms |
+| Quiet loaded / solo p99 | 30 ms (20–70) / 30 | 22.9 / 28.9 ms | 30 ms (20–60) / 30 | 25.1 / 28.0 ms | 30 ms (20–80) / 30 | 19.8 / 29.6 ms |
+| Commits by writer, per-person / general | | 59,425 / 57,725 | | 2,245 / 4,683 | | 59,425 / 57,725 |
+| General-identity commits (over 256 assertions) | | 0 | about 1.2% | 85 of 6,928 (1.2%) | | 0 |
+
+- **Falsifiers.** None of the model's falsifiers fired. R first-minute reads were 0.11 (limit 0.6), and S first-minute reads 1.53 (limit 8). R's second-half p99 was 430 ms, above the 300 ms floor line. There was no loss or expiry.
+- **The writer-change rule did not trigger.** R reads 0.054 per commit (threshold 0.3), and S reads 0.70 (threshold 3).
+- **Where the S reads sit.** S's late reads are split evenly between the per-person path (0.65) and the general path (0.73). Two thirds of S commits take the general writer, so judging the owner head on the per-person path alone would miss most of S's reads.
+- **S apply cost.** Warm apply per commit rises with size, from 0.59 ms at 1.4 facts to 2.74 ms at 18.7 facts: about 0.12 ms per fact, under the 0.15 ms falsifier.
+- **Comparison with Saturday's tape on the same cut.** This morning's `cache32-aged` arm read 0.95 per save late and had a 7.2 s second-half p99 at 394. The production tape at the same cache and cut reads 0.054 per commit (about 0.9 per form save of 17 rows) with a 430 ms p99. The difference is the tape's locality, not the store.
+- **WAL.** About 1.2 GB per R arm and 0.3 GB for S, over roughly 11 minutes each.
+
+Evidence: `evidence/DX-BM1/bench4/bench4-production-aged2/` on the Mac (all three arms, `tape-report.json`, `postgres.log`, `pg-sampler.log`).
+
 ## Repaired launch at REAL2 `832a7e0c6`: R measured, S stopped at its first loaded commit
 
 **With production locality, one commit per form row stored 393 rows/s at 394 offered, with a 163 ms whole-window p99 and a 238 ms save-completion p99.** Saturday's tape at the same rate and cache took seconds. The run began at 19:40:17 UTC and stopped at 20:16:39 UTC. Its stack-level dry run was ADMITTED, and every check before the first offer passed: `up.sh`, `tail-pg.sh` settings, the counter observer, write options, the read of every person's seeded fields (`seed-readback.json`) and the counters-ready handshake. Arm `1-prodR-S` completed all four cells with 0 expiries and 0 missing ACKs.
