@@ -4903,7 +4903,7 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
   Neither falsifier fired (under 300/s at 394; 620 stored in full). The 235 cell's p50 and p99 are far above the prediction (967 against 15 ms at p50). Pinned reads with the reader unchanged: 19.88 to 21.77 reads/s from 1 to 256 seats, as predicted. Reference tape 1,260 of 1,260 with p99 20.22 ms; current pulls p50/p99 4.42 / 46.59 ms; import 3,256.30 facts/s. Part 3 (whole-turn credits on the same profile) is running; assembly about 18:00; then the production-S card.
 - **Reading beside the production-shaped tape at 1 billion:** with Saturday's tape (nearly every save a subject not seen before) the 32 GiB cache stores every save at 394 with a 6 s median; with production locality the same load stores every save with p99 430 ms (one commit per row) or 40.6 ms (one commit per subject's save).
 
-### 2026-11-23 17:39 local: tuned pinned-read arm built and handed to server 2 (6 agents running)
+### 2026-11-23 17:39 local: tuned pinned-read arm built and handed to server 2 (4 agents running: two drivers, the designer, the large-release builder)
 
 - **Build:** `origin/exp/DX-RD1-readers` `64c70e549`, document `rd1/PINNED-1B.md` (`tuned_arm`). Three reader cores (5, 6, 11), 6 GiB reader heap, 3 GiB read cache, three read permits, both pinned options on with the early filter, batches of up to eight subjects per request; 64 / 256 / 1,024 seats at the old pin (87,002) and at head minus 1,000; 60 s per step; every old-pin read checked against the seed's value. Mac gate: 92,880 comparisons, no difference. The server path has not run before.
 - **Runs on the `server` profile:** `server-32` plus the tuned reader is 4 GiB over the role caps and is refused by the launcher.
