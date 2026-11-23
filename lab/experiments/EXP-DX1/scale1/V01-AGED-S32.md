@@ -2,6 +2,8 @@
 
 Server 2 runs this card on the sealed 1B cluster from `exp/DX-INT1` at `0d9693de03ca2cb97c8e650d313895585324741d` (`v01/AGED-SERVER-32.md`): parts 1 and 2 with rolling 6 credits, part 3 the barrier 6 control on the same profile, then `--assemble`. Dry run of part 2 to its first offer first, on a throwaway copy. The bundle is `faab1bc5…`; each part runs on a fresh scratch copy on the root NVMe with WAL on the spare NVMe. The afternoon card at `6770c37ba` is in [V01-AGED.md](V01-AGED.md).
 
+**Dry run of part 2, 21:45–21:53 UTC:** build `0d9693de0` (4 min 34 s), scratch copy 144 s, then `DX-DRY-RUN first offer reached: scorecard arm 2 headline/loaded lab/experiments/EXP-DX1/v01/adopted-server.ts:160`. The aged fresh-peer check passed inside the stack network with no hosts entry. The timed run of parts 1–3 and assembly started at 21:53:23 UTC in `/var/tmp/triplex-v01-1B-s32`.
+
 ## Predictions, copied from the builder's document before launch
 
 
