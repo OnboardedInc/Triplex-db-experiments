@@ -65,7 +65,8 @@ def sample_memory(roles):
 
 def run(out, containers, slot, source, attempt, sender):
     assert sys.platform == "linux" and __debug__
-    assert re.fullmatch(r"tx2-dxprep1-[a-f0-9]{8}-1-(barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12))-s", slot)
+    assert re.fullmatch(r"tx2-dxprep1-[a-f0-9]{8}-1-(barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12)"
+                        r"|prod(r|s)(-394)?(-cache32)?)-s", slot), "rolling-counters refused slot " + slot
     cache32 = slot.endswith("-cache32-s")
     tx5 = slot.endswith(("-tx5-s", "-tx5-cache32-s"))
     masks = {**ROLE_MASKS, "tx": {0, 4, 5, 7, 8}, "gw-w": {2, 3}} if tx5 else ROLE_MASKS

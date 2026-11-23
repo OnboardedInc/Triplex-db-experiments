@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # [DX-H1] Why: separate peers and durable SQL storage measure the intended topology. Rejected: dev storage (single process).
 set -euo pipefail
+# [DX-REAL2] Why: a refused guard printed nothing, so a server launch stopped with an empty start.log.
+trap 'echo "DX-STACK refused at lab/experiments/EXP-DX1/stack/up.sh:$LINENO: $BASH_COMMAND" >&2' ERR
 source "$(dirname "${BASH_SOURCE[0]}")/platform.sh"
 prefix=${1:?usage: up.sh PREFIX [--cpus-tx LIST] [--cpus-pg LIST] [--cpus-gw-write LIST] [--cpus-gw-read LIST] [--gateway-src DIR] [--port-write N] [--port-read N]}
 shift
@@ -254,8 +256,11 @@ fi
 prep_pgdata=${DX_PREP1_PGDATA:-}
 prep_wal=${DX_PREP1_SCALE_WAL_DIR:-}
 if [[ -n $prep_pgdata ]]; then
+  # [DX-REAL2] The production-shaped arms (prodR, prodS, prodS-394, each with or without -cache32) are prepared copies too.
+  [[ $prefix =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(ceiling|scale-(base|cache|wal-zgc)|barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12)|prod(r|s)(-394)?(-cache32)?)-s$ ]] ||
+    { echo "DX-STACK refused: $prefix is not an allowed prepared-copy slot name" >&2; exit 2; }
   [[ ${DX_BARE_METAL:-0} == 1 && ${DX_PREP1_SERVER:-0} == 1 && ${DX_PREP1_CAMPAIGN:-} =~ ^(ceiling|scale|rolling)$ &&
-     $prefix =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(ceiling|scale-(base|cache|wal-zgc)|barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12))-s$ && -d $prep_pgdata && $prep_pgdata == /* &&
+     -d $prep_pgdata && $prep_pgdata == /* &&
      $prep_pgdata != *[,\"$'\n']* && -z $seed_volume && -z ${DX_PREP1_DUMP:-} && -z ${DX_JVM1_PG_RESTORE:-} &&
      -z ${DX_BM1_WAL_MOUNT:-} && ${DX_BM1_WAL_AB:-0} == 0 ]]
   [[ ${DX_PREP1_SEED_SHA:?} =~ ^[a-f0-9]{64}$ && ${DX_WRITE_OPTIONS_ATTEMPT:?} =~ ^[a-f0-9-]{36}$ ]]

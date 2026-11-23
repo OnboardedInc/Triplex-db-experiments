@@ -109,7 +109,7 @@ clear_scale_wal() {
   if [[ -n ${scale_wal_owned:-} ]]; then
     [[ $(findmnt -nro SOURCE --mountpoint "$scale_wal_mount") == "${scale_wal_device:-/dev/nvme1n1}" &&
        $scale_wal_owned == "$scale_wal_mount/$owned" &&
-       $owned =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(scale-wal-zgc|barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12)|prod(r|s|s-394)(-cache32)?)-s$ &&
+       $owned =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(scale-wal-zgc|barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12)|prod(r|s)(-394)?(-cache32)?)-s$ &&
        ! -L $scale_wal_owned ]] || return 1
     rm -rf --one-file-system -- "$scale_wal_owned" || return 1
     unset scale_wal_owned DX_PREP1_SCALE_WAL_DIR
@@ -443,7 +443,8 @@ elif [[ $mode == arm ]]; then
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == scale ]]; then
     [[ $cell =~ ^1-scale-(base|cache|wal-zgc)-S$ && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == rolling ]]; then
-    [[ $cell =~ ^1-(barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12)|prod(R|S|S-394)(-cache32)?)-S$ && $(cat "$out/source") == "$source" ]]
+    [[ $cell =~ ^1-(barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12)|prod(R|S)(-394)?(-cache32)?)-S$ && $(cat "$out/source") == "$source" ]] ||
+      { echo "server.sh refused arm $cell (campaign rolling, source $(cat "$out/source"))" >&2; exit 2; }
     if [[ $cell == 1-prod* ]]; then [[ -n ${DX_REAL2_SET:-} ]]; else [[ -z ${DX_REAL2_SET:-} ]]; fi
     if [[ $cell == 1-rolling6-tx5-S || $cell == 1-rolling6*-cache32-S || $cell == 1-prod*-cache32-S ]]; then
       if [[ $cell == 1-prod*-cache32-S ]]; then [[ ${DX_REAL2_SET:-} == full ]]
