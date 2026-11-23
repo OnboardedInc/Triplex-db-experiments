@@ -13,12 +13,21 @@ if [[ $selection == publish-large ]]; then
   # Its base (INT1 61a794c1d) differs from the small release's, so it needs its own build.
   pin=a54dfca310796dfc53ca8efe4abbfb5592fdee5f
   export DX_ACT3_RELEASE=forms=20,policies=20,permille=1000
+elif [[ $selection == publish-r1 || $selection == publish-r2 ]]; then
+  # [DX-BM1] Why: ACT3's repaired runner (actv-lazy/PUBLISH-STOP.md, LARGE-RELEASE.md section 7), one build for both runs.
+  pin=f5f8c09ffbdb83c5be1898bb544a5e09b7b790df
+  shared_build=$root/queue/publish-f5/build
+  if [[ $selection == publish-r1 ]]; then
+    export DX_ACT3_SETTLE=0 DX_HELD_WINDOWS=barrier6/3.5/0,rolling6/3.5/0,rolling6/3.5/1,rolling6/23.5/0,rolling6/23.5/1,barrier6/23.5/0,barrier6/23.5/1,barrier6/39.4/0,barrier6/39.4/1,rolling6/39.4/0,rolling6/39.4/1
+  else
+    export DX_ACT3_RELEASE=forms=20,policies=20,permille=1000
+  fi
 else
   [[ $selection == publish100k ]]
 fi
 [[ $EUID == 0 && $(systemd-detect-virt) == none && $mode =~ ^(build|first-offer|run|cleanup)$ ]]
 job=$root/queue/$selection
-build=$job/build
+build=${shared_build:-$job/build}
 out=$job/result
 held=/mnt/triplex-scale1-pgdata/fresh-a/cluster
 image=/var/tmp/triplex-scale1/decision/attempts/arm-d7-wfix-pool-seed
