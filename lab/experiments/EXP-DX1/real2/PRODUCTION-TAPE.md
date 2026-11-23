@@ -91,18 +91,18 @@ The 16 GiB profile is the informative one: Saturday's tape needed 32 GiB to keep
 
 ```bash
 DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-REAL2-production -- \
-  bash lab/experiments/EXP-DX1/prep1/server.sh production "$REAL2_OUT" <publish commit> \
+  bash lab/experiments/EXP-DX1/prep1/server.sh production "$REAL2_OUT" "$(git rev-parse HEAD)" \
   "$SCALE1_IMAGE" 77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b \
   1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154 \
   --pg-data "$SCALE1_PGDATA" --wal-mount "$SCALE1_WAL_MOUNT"
 ```
 
-- The environment is the same as Saturday's fresh cache32 job (`queue/cache32/prepare.sh`): a clean, built checkout at the publish commit, the Java 21 and Java 25 Datomic images, the stopped fresh template as `$SCALE1_PGDATA`, the second NVMe mounted as `$SCALE1_WAL_MOUNT`, and a new absolute `$REAL2_OUT`. No containers may be running.
-- **Time.** The mode caps the whole command at 3,560 s. Arm limits: 1,740 s for `1-prodR-S` (Saturday's two-rate allowance) and 1,200 s for `1-prodS-394-S`. Expected: about 29 minutes and 17 minutes, plus about a minute of planning; about 47 to 50 minutes in all.
+- Check out the commit whose subject starts "Publish the production tape" on `exp/DX-REAL2-production-tape`; the launcher refuses any other `HEAD` or a dirty tree. The environment is the same as Saturday's fresh cache32 job (`queue/cache32/prepare.sh`): a clean, built checkout, the Java 21 and Java 25 Datomic images, the stopped fresh template as `$SCALE1_PGDATA`, the second NVMe mounted as `$SCALE1_WAL_MOUNT`, and a new absolute `$REAL2_OUT`. No containers may be running.
+- **Time.** The mode caps the whole command at 3,560 s. Arm limits: 1,740 s for `1-prodR-S` (Saturday's two-rate allowance: 20 minutes of cells and 9 of copy, start, checks and drains) and 1,500 s for `1-prodS-394-S` (10 minutes of cells and the same overhead). Expected: about 29 and 19 minutes plus about a minute of planning, about 50 minutes in all; at most 55 minutes if both arms use their whole limits.
 - **Refusals before offers** cost only the copy: a seeded field that differs from the seed formula, a person missing from the predecessor read, or a launch-profile mismatch.
 - **Collect** each arm's directory as Saturday's cache32 run was collected. Each arm's `summary.json` has, per loaded cell, the whole and half-window busy rates and p99s and the quiet p99 as before, plus three new entries: `saveCompletion` (first offer of a form save to the ACK of its last row, whole and second half), `sqlReadsPerCommit` (first 60 s, from 150 s, whole) and `applyMsBySize` (late warm serial apply by commit size, for the S forecast). Each arm keeps its `tape-report.json`, bound to the plan's tape digests.
 
-**The full set** (`server.sh production-full`, same arguments, cap 9,560 s, about 140 minutes): `1-prodR-S` and `1-prodR-cache32-S` at 235 and 394; `1-prodS-S` and `1-prodS-cache32-S` at the equivalents of 235, 394 and 620. The 32 GiB arms need at least 89 GiB `MemTotal`, as Saturday's did.
+**The full set** (`server.sh production-full`, same arguments, cap 9,900 s, about 140 minutes): `1-prodR-S` and `1-prodR-cache32-S` at 235 and 394; `1-prodS-S` and `1-prodS-cache32-S` at the equivalents of 235, 394 and 620. The 32 GiB arms need at least 89 GiB `MemTotal`, as Saturday's did.
 
 ## Predictions, written before any run
 

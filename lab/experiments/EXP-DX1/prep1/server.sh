@@ -146,7 +146,7 @@ elif [[ $mode == production || $mode == production-full ]]; then
   unset DX_REAL2_PARAMS
   limit=3560
   export DX_REAL2_SET=hour
-  if [[ $mode == production-full ]]; then export DX_REAL2_SET=full; limit=9560; fi
+  if [[ $mode == production-full ]]; then export DX_REAL2_SET=full; limit=9900; fi
   exec timeout --kill-after=40s "${limit}s" bash "$here/server.sh" rolling-timed "${@:2}"
 elif [[ $mode == cache32-aged ]]; then
   # [DX-PREP1] Why: run Saturday's three-core 32 GiB arm unchanged on AGE1's sealed one-billion cut.
@@ -287,7 +287,7 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
       limit_for_cell=$arm_limit
       if [[ -n ${DX_REAL2_SET:-} ]]; then
         # Two- and four-cell arms get Saturday's two-rate cache32 allowance; the three-rate arms its three-rate one.
-        case $cell in 1-prodS-394-S) limit_for_cell=1200 ;; 1-prodS-S|1-prodS-cache32-S) limit_for_cell=2950 ;; *) limit_for_cell=1740 ;; esac
+        case $cell in 1-prodS-394-S) limit_for_cell=1500 ;; 1-prodS-S|1-prodS-cache32-S) limit_for_cell=2950 ;; *) limit_for_cell=1740 ;; esac
       fi
       timeout --foreground --kill-after=20s "${limit_for_cell}s" bash "$here/server.sh" arm "$out" "$source" "$cell"
       clear_scale_wal
