@@ -29,6 +29,7 @@ import {
   expectedSave,
   play,
   resolveUncertain,
+  type FairImport,
   type Sender,
   type PublishInterleave,
 } from "../scale1/decision/writes.ts";
@@ -43,6 +44,12 @@ export async function campaign(stack: Stack, cell: string) {
   const cold = cell === "cold";
   const readStudy = cell === "read";
   const fair = !cold;
+  // [DX-THIN1] Why: run LOAD2's live-first importer inside the combined quiet-account and Publish case.
+  // Rejected: a separate yield-only harness that would not share the Publish, replay and row checks.
+  const importPolicy = process.env.DX_LOAD2_IMPORT_POLICY ?? "fair";
+  assert(importPolicy === "fair" || (importPolicy === "yield" && fair));
+  const yieldImport = importPolicy === "yield";
+  let importGrantsBesideLiveQueue = 0;
   const writerSettings = {
     TX2_SUBJECT_APPEND_RETIREMENT: "1",
     TX2_SUBJECT_NARROW_REVISION: "1",
@@ -298,6 +305,7 @@ export async function campaign(stack: Stack, cell: string) {
           );
         },
       };
+      let importer: FairImport | undefined;
       const activity = play(
         senders,
         tape,
@@ -309,13 +317,15 @@ export async function campaign(stack: Stack, cell: string) {
         fair ? gate : undefined,
         false,
         cold ? { ramp: true, stopped: () => false } : undefined,
-        fair
+        (importer = fair
           ? {
               limit: 2,
               end: start + 5_000,
               ready: () => sent < 8,
+              yieldToLive: yieldImport,
               async send(grant) {
                 assert(grant.neighboursAhead! < selection.credits - 1);
+                if (grant.liveQueued > 0) importGrantsBesideLiveQueue++;
                 const index = sent++;
                 const frame = importFrame(e.nonce, 8, index);
                 peak = Math.max(peak, ++importActive);
@@ -335,7 +345,7 @@ export async function campaign(stack: Stack, cell: string) {
                 }
               },
             }
-          : undefined,
+          : undefined),
       );
       void activity.catch(() => {});
       const publish =
@@ -478,6 +488,7 @@ export async function campaign(stack: Stack, cell: string) {
       if (ledger) await ledger.verifyThrough(terminal);
       assert(batchSizes.length > 0 && batchSizes.every((size) => size === 1));
       if (fair) {
+        if (yieldImport) assert.equal(importGrantsBesideLiveQueue, 0, "A yielding import was granted beside waiting live saves");
         assert.equal(imports.length, 8);
         assert.equal(peak, 2);
         assert(
@@ -529,6 +540,9 @@ export async function campaign(stack: Stack, cell: string) {
         rows: result.rows,
         receipts,
         imports: imports.length,
+        importPolicy,
+        importGrantsBesideLiveQueue,
+        yieldedChecks: importer?.yieldedChecks ?? 0,
         batches: batchSizes,
         replayCommits: commits.length,
         input: sha(tape),
@@ -539,6 +553,9 @@ export async function campaign(stack: Stack, cell: string) {
         receipts: receipts.length,
         published,
         imports: imports.length,
+        importPolicy,
+        importGrantsBesideLiveQueue,
+        yieldedChecks: importer?.yieldedChecks ?? 0,
         replayCommits: commits.length,
       };
     } finally {
