@@ -1,6 +1,6 @@
 (ns triplex.gateway.lean
   (:require [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.reach :as reach]
-            [triplex.gateway.owner-root :as owner-root]
+            [triplex.gateway.owner-root :as owner-root] [triplex.gateway.pinned :as pinned]
             [triplex.gateway.save-ledger :as ledger] [triplex.gateway.trace :as trace]))
 (set! *warn-on-reflection* false)
 ;; [DX-B5-L2] Why: only row text and native history contain lean facts; no reified fallback exists.
@@ -122,11 +122,20 @@
         view (if (and cut (not inner)) source (d/history source))
         ;; [Opus W1] Why: a covered row's datom sits on a version entity whose owner is the person read.
         owner-of (if (owner-root/installed? source) #(owner-root/owner-of view %) identity)
+        ;; [DX-RD2] Why: behind TX2_PINNED_SHORTCUT, a named subject unchanged since a plain pinned cut reads the current
+        ;; database (pinned/unchanged-since?); everyone else, and every interior, history or scan read, keeps the view.
+        ;; Rejected: substituting the current database for ID lookups or scans (their rows are not bound to one person).
+        current (when (and pinned/enabled cut (not inner) (not history?)) pinned/*current*)
+        position (second selection)
         eids (cond id (when-let [datom (by-id view id)] [(owner-of (:e datom))])
-                   entities (keep #(d/entid source [:triplex.entity/id %]) (distinct entities))
+                   entities (keep #(if-let [e (when current (pinned/current-eid current cut position %))]
+                                     [current e]
+                                     (d/entid source [:triplex.entity/id %]))
+                                  (distinct entities))
                    :else (distinct (map (comp owner-of :e) (d/datoms view :aevt :triplex.entity/row))))]
     (filter #(or (nil? id) (= id (:id %)))
-      (mapcat (fn [eid]
+      (mapcat (fn [selected]
+                (let [[source eid] (if (vector? selected) selected [source selected])]
                 (cond inner (let [slice (group-cut/entity-slice inner eid)]
                               (map decode-datom (if-let [at (:root-db slice)] (live-texts at eid nil) (:datoms slice))))
                       cut (if sampled
@@ -136,4 +145,4 @@
                                 (into [] (keep #(if attribute (decode-live attribute (:v %)) (decode (:v %)))) datoms)))
                             (let [datoms (live-texts source eid visit-text!)]
                               (if attribute (keep #(decode-live attribute (:v %)) datoms) (map #(decode (:v %)) datoms))))
-                      :else (history-entity db eid visit-text!))) eids)))))
+                      :else (history-entity db eid visit-text!)))) eids)))))

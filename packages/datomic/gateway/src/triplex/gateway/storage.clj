@@ -3,7 +3,8 @@
   (:require [triplex.gateway.replay-capture :as replay-capture] [triplex.gateway.small-row :as small-row]
             [triplex.gateway.save-ledger :as ledger] [triplex.gateway.packed-journal :as packed]
             [triplex.gateway.subject-save :as subject] [clojure.data.json :as json]
-            [triplex.gateway.owner-layout :as owner-layout] [triplex.gateway.owner-root :as owner-root])
+            [triplex.gateway.owner-layout :as owner-layout] [triplex.gateway.owner-root :as owner-root]
+            [triplex.gateway.pinned :as pinned])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -739,7 +740,10 @@
                                             [["entityId" :entity_id] ["attribute" :attribute] ["entityType" :entity_type]])))
                              ;; [DX-B5-L2] Why: an explicit imported row position cannot move its physical publication into an older snapshot.
                              ;; Rejected: filtering full head history only by row position (differs from legacy read-db).
-                             (lean/rows name (trace/read-span "read.resolve-position" "peer-call" (at-position db (get basis "recordedPosition"))) input)))}))))))
+                             ;; [DX-RD2] Why: the pinned short-cut compares each named subject with this request's own current database.
+                             ;; Rejected: a newer database (it would need a revision check against a cut the request never saw).
+                             (binding [pinned/*current* (when-not (or (get input "handle") (get input "staged")) db)]
+                               (doall (lean/rows name (trace/read-span "read.resolve-position" "peer-call" (at-position db (get basis "recordedPosition"))) input)))))}))))))
 
 ;; [EXP-DX1] Why: snapshot, claim and known by-id rows share one immutable prefetch cut.
 ;; Rejected: separate claim/read HTTP calls (R51's six-round-trip commit).

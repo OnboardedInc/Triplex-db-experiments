@@ -1,9 +1,22 @@
 (ns triplex.gateway.group-cut
   (:require [datomic.api :as d] [triplex.gateway.owner-root :as owner-root] [triplex.gateway.scope :as scope]
-            [triplex.gateway.save-ledger :as ledger]))
+            [triplex.gateway.save-ledger :as ledger] [triplex.gateway.pinned :as pinned]))
 ;; [DX-W1] Why: one physical t can contain multiple distinct strict clocks and positions.
 ;; Rejected: using the end of that physical transaction for a pull or feed page at its first receipt.
 (defn value [db e a] (:v (first (d/datoms db :eavt e a))))
+;; [DX-RD2] Why: on an as-of view, resolving a group position the view does not hold makes Datomic's filtered AVET
+;; iterator walk every :triplex.group/position datom asserted after the pin (31.86 ms and about 70 MB per pinned read at
+;; 1 billion, rd1/PINNED-1B.md). Group positions are unique and only ever asserted, so the view holds a member exactly
+;; when the current database holds it with an assertion at or before the view's t. Behind TX2_PINNED_CUT_LOOKUP.
+;; Rejected: the lookup ref on the view (the walk), and caching absence (a later group could take the position).
+(def current-lookup (= "1" (System/getenv "TX2_PINNED_CUT_LOOKUP")))
+(defn member-at [db cut]
+  (let [t (d/as-of-t db) current pinned/*current*]
+    (if (and current-lookup t current)
+      (when-let [a (d/entid current :triplex.group/position)]
+        (let [^datomic.Datom x (first (d/datoms current :avet a cut))]
+          (when (and x (= cut (.v x)) (<= (.tx x) (d/t->tx t))) (.e x))))
+      (d/entid db [:triplex.group/position cut]))))
 (defn interior [db p r]
   (when (and (or p r) (d/entid db :triplex.group/position))
     (let [boundary (when r (first (d/index-range db :triplex.tx/max-recorded-at (Math/nextUp (double r)) nil)))
@@ -16,7 +29,7 @@
                        (let [before (d/as-of db (dec (d/tx->t tx)))]
                          (scope/head-position before (scope/entity db))))))]
       (when-let [cut (if (and p time-p) (min p time-p) (or p time-p))]
-        (when-let [e (d/entid db [:triplex.group/position cut])]
+        (when-let [e (member-at db cut)]
           (let [physical (value db e :triplex.group/physical)]
             (when (not= e physical)
               (let [t (d/tx->t physical) after (d/as-of db t)]
