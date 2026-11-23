@@ -110,8 +110,6 @@ async function inner() {
   result.afterStopExit = after.status;
   assert(tx.exitCode === null, "primary transactor stopped");
   process.kill(-tx.pid, "SIGTERM");
-  fs.writeFileSync(path.join(outDir, "primary-transactor.log"), redact(fs.readFileSync(txLog, "utf8")));
-  fs.rmSync(txLog);
   fs.writeFileSync(path.join(outDir, "result.json"), JSON.stringify(result, null, 2) + "\n");
   console.log(JSON.stringify(result));
 }
@@ -165,5 +163,13 @@ async function outer(outDir) {
   }
 }
 
-if (process.argv[2] === "--inner") { fs.mkdirSync("/tmp/out", { recursive: true }); await inner(); }
+if (process.argv[2] === "--inner") {
+  fs.mkdirSync("/tmp/out", { recursive: true });
+  try { await inner(); }
+  finally {
+    const { redact } = await import("/age/" + lab + "/readback.mjs");
+    if (fs.existsSync("/tmp/primary-transactor.raw")) fs.writeFileSync("/tmp/out/primary-transactor.log",
+      redact(fs.readFileSync("/tmp/primary-transactor.raw", "utf8")));
+  }
+}
 else await outer(path.resolve(process.argv[2]));
