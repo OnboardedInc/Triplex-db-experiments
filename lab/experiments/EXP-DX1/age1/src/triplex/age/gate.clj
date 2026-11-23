@@ -272,11 +272,95 @@
         (native/emit "arm-index-census" {:setting setting :arm label :requestedT t
                                         :census (structure/measure! (d/db conn))})))))
 
+(defn bulk-fixture! [file pin clone]
+  (let [seal (adopt/read-seal! file pin true)
+        name (:name seal)
+        uri (System/getenv "AGE_CLONE_URI")
+        _ (native/check! (and uri (.startsWith ^String uri (str "datomic:sql://" clone "?")))
+                         "Expected private adopted clone" {})
+        product (adopt/scope-db name name)
+        aged {:name name :conn (d/connect uri)}
+        pop (adopt/read-population! aged seal 3 true)
+        seed (:seed-head pop)
+        resolve-bulk #(requiring-resolve (symbol "triplex.age.bulk" %))
+        resolve-rung #(requiring-resolve (symbol "triplex.age.rung" %))
+        _ ((resolve-bulk "assert-durability!"))
+        observe (requiring-resolve 'triplex.age.scorecard/observe!)
+        state-file (str (java.nio.file.Files/createTempFile "age-bulk-" ".edn"
+                         (make-array java.nio.file.attribute.FileAttribute 0)))
+        start {:population pop :manifest-sha pin :observed 0 :t (:seed-t pop) :closed-rungs {}}
+        through 124
+        prefix 12
+        batch 8
+        prefix-reply (native/age! aged pop 0 prefix 8 true)
+        prefix-state (assoc start :t (:t prefix-reply) :observed prefix)
+        _ ((resolve-rung "save-state!") state-file prefix-state true)
+        expected-schema (filterv #(not (d/entid (d/db (:conn aged)) (:db/ident %))) group/group-schema)
+        enrolling (assoc prefix-state :bulk-enrolling (mapv :db/ident expected-schema))
+        _ ((resolve-rung "save-state!") state-file enrolling true)
+        _ (when (seq expected-schema) @(d/transact (:conn aged) expected-schema))
+        enrolled ((resolve-bulk "enroll!") state-file enrolling aged)
+        view ((resolve-bulk "validate-cut!") enrolled aged)
+        pending (assoc enrolled :bulk-pending {:through (+ prefix (* 3 batch)) :size batch})
+        before (System/currentTimeMillis)
+        _ ((resolve-rung "save-state!") state-file pending true)
+        first-group ((resolve-bulk "commit-series!") aged pop view enrolled batch 3 (+ prefix (* 2 batch)) (+ before 90000))
+        ;; [DX-AGE1] Why: reopen a real nonempty pending suffix before loading the next phase.
+        ;; Rejected: testing recovery only with an empty writer queue.
+        recovered ((resolve-bulk "reconcile!") state-file pending aged)
+        _ (equal! [(:observed first-group) (:t first-group)] [(:observed recovered) (:t recovered)]
+                  "Recovered group does not match the live native receipt")
+        target (+ (get-in recovered [:bulk :base-records]) 1800)
+        [loaded summary] ((resolve-bulk "phase!") state-file recovered aged 24 1 target
+                          (+ before 90000) (+ before 120000) 1)
+        settled ((resolve-bulk "settle!") state-file loaded aged summary true)
+        n (:observed loaded)
+        finish (+ n 12)
+        command! (fn [{:keys [conn]} n]
+                   (let [command (tape/command pop n)
+                         receipt (storage/commit! name conn (d/db conn) (tape/input command))]
+                     (equal! (str (:position command)) (get-in receipt [:position "v"]) "Product position differs")
+                     (equal! (:clock command) (get-in receipt [:recordedAt "v"]) "Product clock differs")
+                     (Long/parseLong (get-in receipt [:t "v"]))))]
+
+    (native/check! (<= prefix n through) "Unexpected small fixture load size" {:n n})
+    (doseq [i (range finish)] (command! product i))
+    (let [t (reduce (fn [_ i] (command! aged i)) (:t loaded) (range n finish))]
+      ((requiring-resolve 'triplex.age.scale/index!) (:conn aged))
+      (doseq [i (range (:people pop)) cut [0 prefix (inc prefix) (+ prefix batch) (dec n) n finish nil]]
+        (equal! (person-view product pop i (some-> cut (+ seed)))
+                (person-view aged pop i (some-> cut (+ seed))) "Mixed-format current or pinned rows differ"))
+      (doseq [offset (range 0 finish 4) pin [nil (+ seed (min finish (+ offset 4)))]]
+        (equal! (feed product (+ seed offset) 7 pin) (feed aged (+ seed offset) 7 pin)
+                "Mixed-format feed differs"))
+      (let [records (+ (:indexedRecords settled) ((resolve-rung "count-records") pop n finish))
+            state (assoc loaded :observed finish :t t)
+            checked (observe state aged t (+ seed finish) records)]
+        (when-let [maintenance-file (System/getenv "AGE_GC_FIXTURE_STATE")]
+          ;; [DX-AGE1] Why: enough genuine replacement jobs to persist Datomic's batched garbage marks.
+          ;; Rejected: a tiny one-merge fixture where gc-db returns zero and never exercises DELETE.
+          (let [last-save (+ finish (* 48 32))
+                t (reduce (fn [_ batch]
+                            (let [t (reduce (fn [_ i] (command! aged i)) 0 batch)]
+                              ((requiring-resolve 'triplex.age.scale/index!) (:conn aged))
+                              t))
+                          t (partition-all 32 (range finish last-save)))
+                expected (+ records ((resolve-rung "count-records") pop finish last-save))
+                state (assoc state :population pop :observed last-save :t t)]
+            (observe state aged t (+ seed last-save) expected)
+            (adopt/persist! (str maintenance-file ".population.edn") pop false)
+            ((resolve-rung "save-state!") maintenance-file
+             (assoc state :population-sha ((resolve-rung "ledger-hash") (str maintenance-file ".population.edn"))) false)))
+        (native/emit "bulk-fixture" {:source (:source seal) :manifestSha pin :prefix prefix
+                                     :grouped (- n prefix) :soloTail 12 :census records
+                                     :readback checked :adoptedDatabases [name clone]})))))
+
 (defn -main [mode & args]
   (try
     (case mode
       "fidelity" (fidelity!)
       "adopted-fidelity" (apply adopted-fidelity! args)
+      "bulk-fixture" (apply bulk-fixture! args)
       "index-fixture" (apply index-fixture! args)
       "fidelity-arms" (apply fidelity-arms! args)
       "native-suite" (do

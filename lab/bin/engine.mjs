@@ -988,6 +988,9 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   const command = positional[0];
   const config = loadSlots();
   if (command === 'status') return status(config);
+  // [DX-AGE1] Why: bind aging to a private pool-admitted SQL stack. Rejected: writing aging data to a shared resident.
+  if (command === 'age1') return (await import('../experiments/EXP-DX1/age1/local.mjs')).local(
+    options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
   if (command === 'jvm-replay') fail('USAGE', 'Use jvm-inventory for a short Mac diagnostic and jvm1/server.ts for collector comparisons');
   if (command === 'jvm-inventory') return (await import('../experiments/EXP-DX1/jvm1/inventory.mjs')).inventory(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
   // [DX-TAIL1] Why: the split SQL replay needs one pool-admitted private reservation.

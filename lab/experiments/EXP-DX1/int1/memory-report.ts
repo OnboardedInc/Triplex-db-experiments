@@ -175,7 +175,9 @@ function verify(dir: string) {
     ),
   );
   const roster = new DatabaseSync(path.join(dir, "population.sqlite"), { readOnly: true });
-  let populations: ReturnType<typeof summary>[];
+  // [DX-AGE1] Why: the later native profile lookup needs the measured population and cut.
+  // Rejected: typing the returned checkpoints as the summary payload alone.
+  let populations: ({ people: number; position: number } & ReturnType<typeof summary>)[];
   try {
     const observed = roster.prepare("SELECT count(*) AS n FROM people WHERE born<=?");
     const ids = roster
