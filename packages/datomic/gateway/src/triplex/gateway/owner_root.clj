@@ -9,7 +9,9 @@
 
 (defn prefix-end ^long [^String text] (+ 5 (Integer/parseInt text 1 5 16)))
 (defn row-id [^String text] (subs text 5 (prefix-end text)))
-(defn id-prefix [^String id] (str "2" (format "%04x" (.length id)) id))
+(defn id-prefix [^String id]
+  (let [h (Integer/toHexString (.length id))]
+    (str "2" (subs "0000" (min 4 (count h))) h id)))
 
 (defn decode
   "Version 4 root: `4,position,clockBits,maskCount,len1,len2...\\n` then the mask IDs and row texts, length-framed."
@@ -50,41 +52,57 @@
     (or (:v (first (d/datoms db :eavt e a))) e)
     e))
 
+(defn- merge-sorted
+  "Merge the root's few inline texts into the legacy rows, which arrive in index order."
+  [^java.util.ArrayList kept texts]
+  (let [extra (sort texts) out (java.util.ArrayList. (+ (.size kept) (count texts)))]
+    (loop [i 0 extra (seq extra)]
+      (cond
+        (and (< i (.size kept)) (or (nil? extra)
+                                    (neg? (.compareTo ^String (.v ^datomic.Datom (.get kept i)) ^String (first extra)))))
+        (do (.add out (.get kept i)) (recur (inc i) extra))
+        extra (do (.add out {:v (first extra)}) (recur i (next extra)))
+        :else (vec out)))))
+
 (defn live
-  "Live row datoms of one owner at db. Inline root texts come back as {:v text} maps beside native datoms.
-  `visit!` sees every stored row, marker and inline text the read touches."
+  "Live row datoms of one owner at db. Inline root texts come back as {:v text} maps beside native datoms, in the
+  same index order as a legacy person's rows. `visit!` sees every stored row, marker and inline text the read touches."
   [db eid visit!]
   ;; [DX-W1] Why: the covering root and legacy rows share one owner range at the selected basis.
   ;; Rejected: opening a page and then the public-ID and owner indexes for each edited row.
+  ;; [Opus W1] Why: one pass, no allocation beyond the row list when the person has no root and no markers.
+  ;; Rejected: sorting the merged rows (it cost about 0.2 ms of a 0.3 ms read on the Mac) and String/format per mask ID.
   (let [root-a (d/entid db root-attr)
         row-a (d/entid db :triplex.entity/row)
         retired-a (d/entid db :triplex.entity/retired)
-        legacy (java.util.ArrayList.) retired (java.util.HashSet.) root (volatile! nil)]
+        legacy (java.util.ArrayList.)
+        retired (volatile! nil)
+        root (volatile! nil)]
     (doseq [^datomic.Datom datom (d/datoms db :eavt eid)]
       (let [a (.a datom)]
         (cond (= a row-a) (do (when visit! (visit! (.v datom))) (.add legacy datom))
               (= a root-a) (vreset! root (.v datom))
               (= a retired-a) (let [^String text (.v datom)]
                                 (when visit! (visit! text))
-                                (.add retired (subs text 0 (prefix-end text)))))))
-    (let [{:keys [mask texts]} (decode @root)
-          ;; [Opus W1] Why: at most four masked IDs, each matched as the exact length-tagged row prefix without allocating.
-          ;; Rejected: cutting an ID substring from every legacy row and probing a hash set.
-          ^"[Ljava.lang.String;" prefixes (into-array String (map id-prefix mask))
-          n (alength prefixes)
-          ^java.util.Set retired retired
-          keep? (fn [^datomic.Datom datom]
-                  (let [^String text (.v datom)]
-                    (not (or (loop [i 0]
-                               (cond (= i n) false
-                                     (.startsWith text ^String (aget prefixes i)) true
-                                     :else (recur (inc i))))
-                             (and (not (.isEmpty retired)) (.contains retired (subs text 0 (prefix-end text))))))))]
-      (when (and visit! texts) (run! visit! texts))
-      (if (seq texts)
-        ;; [Opus W1] Why: callers see the same index order of stored texts as for a legacy person.
-        (vec (sort-by :v (into (filterv keep? legacy) (map #(hash-map :v %)) texts)))
-        (filterv keep? legacy)))))
+                                (.add ^java.util.HashSet (or @retired (vreset! retired (java.util.HashSet.)))
+                                      (subs text 0 (prefix-end text)))))))
+    (if (and (nil? @root) (nil? @retired))
+      (vec legacy)
+      (let [{:keys [mask texts]} (decode @root)
+            ^"[Ljava.lang.String;" prefixes (into-array String (map id-prefix mask))
+            n (alength prefixes)
+            ^java.util.Set retired @retired
+            kept (java.util.ArrayList. (.size legacy))]
+        (dotimes [k (.size legacy)]
+          (let [^datomic.Datom datom (.get legacy k) ^String text (.v datom)]
+            (when-not (or (loop [i 0]
+                            (cond (= i n) false
+                                  (.startsWith text ^String (aget prefixes i)) true
+                                  :else (recur (inc i))))
+                          (and retired (.contains retired (subs text 0 (prefix-end text)))))
+              (.add kept datom))))
+        (when (and visit! texts) (run! visit! texts))
+        (if (seq texts) (merge-sorted kept texts) (vec kept))))))
 
 (defn version-datoms
   "Every row and retirement marker a migrated owner's version entities carry in `source` (a history or as-of view)."
