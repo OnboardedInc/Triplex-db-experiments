@@ -738,13 +738,14 @@ export async function runHeld(
                 const drained = now();
                 r = await offer(doc, peer.attempt + ":" + mode + ":" + rate + ":" + j, offered);
                 native.push({ r, ingress, waiting, pausedAt, drained });
-                // [DX-ACT3] The read gateway's basis right after the write gateway's acknowledgement.
-                const head = await reader.basis(db);
-                native.at(-1)!.readHeadAfterAck = { position: Number(head.position.v), at: now() };
               } finally {
                 gate.paused = false;
                 gate.resume!();
               }
+              // [DX-ACT3] The read gateway's basis after the write gateway's acknowledgement and before the probe
+              // (one round trip, outside the paused turn, so the gate hold is unchanged).
+              const head = await reader.basis(db);
+              native.at(-1)!.readHeadAfterAck = { position: Number(head.position.v), at: now() };
               const firstSubject = members.at(-1)!;
               const { probe, earlier } = await firstCorrect(r, firstSubject, offered);
               // [DX-ACT3] The read gateway's own head just after the answer, for the lag evidence.
