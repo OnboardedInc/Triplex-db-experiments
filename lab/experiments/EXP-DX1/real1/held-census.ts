@@ -53,8 +53,11 @@ export function installsSince(slot: string, db: string, after: number): Installe
 }
 
 // [DX-INT1] Why: the census expected 429,778,659 native records, the count of the held copy as SCALE1 sealed it, but
-// was taken after checkAdoptedPeer had opened the scope, and that open installs this build's schema and functions
-// (63 records on bench 3 at 8597e3ef7). Count the held copy before the open, then name every record the open wrote.
+// was taken after checkAdoptedPeer had opened the scope, and that open installs this build's schema and functions.
+// The 63 extra records on bench 3 at 8597e3ef7 are reproduced exactly on a toy copy sealed by the same seed gateway
+// (int1/LAUNCH-FIXES.md): four transactions that add twelve erasure, private-value and group attributes, the group
+// apply function and this build's commit function, and replace the scope's schema and commit-function hashes.
+// Count the held copy before the open, then name every record the open wrote.
 // Rejected: widening the expected count, or taking the expected count from whatever the open happens to write.
 export function checkScopeOpen(sealed: Census, opened: Census, installed: Installed[]) {
   assert.equal(opened.head, sealed.head, "Opening the scope moved the logical head");
@@ -65,6 +68,8 @@ export function checkScopeOpen(sealed: Census, opened: Census, installed: Instal
   assert.equal(installed.filter((r) => r.attribute === ":db/txInstant").length, transactions.size);
   assert(installed.every((r) => r.t > sealed.nativeT && r.t <= opened.nativeT));
   const added = installed.filter((r) => r.added).length, retracted = installed.length - added;
+  // Datomic's db-stats counts retractions as records too, so the census difference is exactly the listed records.
+  assert.equal(opened.nativeRecords - sealed.nativeRecords, installed.length, "Native records outside the listed scope open");
   return { sealed, opened, transactions: transactions.size, added, retracted, records: opened.nativeRecords - sealed.nativeRecords,
     idents: installed.flatMap((r) => r.ident && r.added ? [r.ident] : []), installed };
 }
