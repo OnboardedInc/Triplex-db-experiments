@@ -31,6 +31,11 @@ const tuned = studyJvm && launchProfile("server", { ...launchOptions, readJvm: s
 assert(!tuned || age === "fresh");
 const diagnostics = writeDiagnostics(writer, process.env);
 const retirement = process.env.DX_W1_RETIREMENT_PAIR === "1";
+// [Opus W1] Why: the covering owner root reuses the paired runner; its treatment arm keeps the directory name "append".
+// Rejected: a third runner with its own tape, windows and summary (they must match the retirement pair exactly).
+const pairOption = process.env.DX_W1_PAIR_OPTION ?? "append-retirement";
+assert(pairOption === "append-retirement" || (retirement && pairOption === "owner-head"));
+const treatmentKey = pairOption === "owner-head" ? "TX2_SUBJECT_OWNER_HEAD" : "TX2_SUBJECT_APPEND_RETIREMENT";
 if (retirement) assert(!tuned && writer === "per-person-ordered" && jvm === "j21-g1" && writeJvm === "j21-g1" &&
   txJvm === "j25-zgc" && path.isAbsolute(walDirectory) && diagnostics.lookupEvery === 64 && !diagnostics.serialApply);
 assert(tuned || retirement, "Use scorecard.mjs (adopted-server.ts) for the card; this runner is for the read study or DX_W1_RETIREMENT_PAIR=1");
@@ -58,7 +63,7 @@ assert(!preparedSource || ((tuned || retirement) && age === "fresh" && process.e
   "A prepared run needs --read-study or DX_W1_RETIREMENT_PAIR=1, the fresh seal, a ladder and one --pgdata copy");
 const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin, !preparedSource);
 const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin) : undefined;
-const record = { source, age, writer, policy: control, treatment: tuned || undefined, diagnostics, retirement: retirement || undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
+const record = { source, age, writer, policy: control, treatment: tuned || undefined, diagnostics, retirement: retirement || undefined, pairOption: retirement ? pairOption : undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
   agedBundle: expected?.pin, agedDump: expected?.dumpPin };
 const prepared = preparedSource ? openPreparedLadder({ campaign, ladder: process.env.DX_RD1_LADDER!, source: preparedSource,
   copy: process.env.DX_RD1_PGDATA!, wal: walDirectory || undefined, record, kind: retirement ? "retirement" : "read" }) : undefined;
@@ -89,7 +94,7 @@ for (const loaded of [false, true]) {
     if (tuned) placeDriver(onlineCpus);
     const { engines } = startScaleStack(out, slot, source, writer === "grouped", tuned ? {
       ...options, DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: loaded ? "1" : "0", ...prepared?.env,
-    } : retirement ? { ...options, TX2_SUBJECT_APPEND_RETIREMENT: loaded ? "1" : "0", ...prepared?.env } : options, { policy, walDirectory });
+    } : retirement ? { ...options, [treatmentKey]: loaded ? "1" : "0", ...prepared?.env } : options, { policy, walDirectory });
     if (tuned) placeDriver("9,10");
     const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
     const residency = async () => {

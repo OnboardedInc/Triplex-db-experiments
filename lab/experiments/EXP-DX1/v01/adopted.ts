@@ -60,6 +60,7 @@ export const feeder = async (client: DatomicClient, db: string, from: number, de
   return rows;
 };
 
+const ownerHeadPair = process.env.DX_W1_PAIR_OPTION === "owner-head";
 export function checkSavedIdentity(save: Save, row: Feed, writer: Writer, subjectFunction?: string) {
   const receipt = save.receipt;
   assert(receipt && (save.status === "acked" || save.status === "recovered"));
@@ -293,7 +294,8 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       [Boolean(peer.serialApply), Boolean(peer.serialApply)]);
     if (retirement) {
       assert(writer === "per-person-ordered" && !toy && loaded && quietCell === undefined);
-      assert.equal(Boolean(options.subjectAppendRetirement), retirement.append);
+      // [Opus W1] Why: DX_W1_PAIR_OPTION=owner-head pairs the covering owner root against today's writer instead.
+      assert.equal(Boolean(ownerHeadPair ? options.subjectOwnerHead : options.subjectAppendRetirement), retirement.append);
     }
     assert.deepEqual([options.options.predecessorLookup, options.options.smallRows, options.options.ledger,
       options.options.packedJournal, options.options.groupCommit, options.options.reusePrepared,
@@ -363,9 +365,9 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     for (const row of saves) {
       const r = row.receipt!, actual = byPosition.get(r.p);
       assert(actual);
-      checkSavedIdentity(row, actual, writer, options.subjectFunction);
+      checkSavedIdentity(row, actual, writer, options.subjectOwnerHeadFunction ?? options.subjectFunction);
       if (retirement && row.status === "acked")
-        assert.equal(Boolean(row.stage?.subjectAppendRetirement), retirement.append);
+        assert.equal(Boolean(ownerHeadPair ? row.stage?.subjectOwnerHeadBytes : row.stage?.subjectAppendRetirement), retirement.append);
 
       saveHistogram.recordMs(row.end! - row.due);
     }
