@@ -16,6 +16,11 @@ import { sha } from "../../w1/field/schedule.ts";
 import { scaleAccount, scaleOwner } from "../../prep1/ceiling-seed.ts";
 
 const [out, url, readerOff, readerOn, readerLookup] = process.argv.slice(2);
+// [DX-THIN1] Why: the combined check compares the pinned routes with the owner head on and off. With
+// RD2_GATE_OWNER_HEAD=0 no writer runs the owner head, so the database never stores covering roots, and the readers
+// run without the option; with 1 (the default) phase 5 writes roots and every reader runs with the option.
+// Rejected: a second gate (the writer phases and the comparison must stay the same).
+const ownerHead = process.env.RD2_GATE_OWNER_HEAD !== "0";
 const waitFor = async (file: string, seconds: number) => {
   for (let i = 0; i < seconds * 4 && !existsSync(join(out!, file)); i++) await sleep(250);
   assert(existsSync(join(out!, file)), "timed out waiting for " + file);
@@ -122,8 +127,9 @@ await Promise.all([agedOwner[2]!, untouched[5]!, untouched[6]!, untouched[7]!].m
 await enter("append-retirement", [...ordered, "TX2_SUBJECT_APPEND_RETIREMENT=1"]);
 await save("append-retirement", agedOwner[3]!, ":task/field-0", "rd2-append-a", { ordered: true });
 await save("append-retirement", untouched[8]!, ":task/field-1", "rd2-append-b", { ordered: true });
-// 5. Covering owner head, then add-only saves on covered subjects, each folded first.
-await enter("owner-head", [...ordered, "TX2_SUBJECT_OWNER_HEAD=1"]);
+// 5. Covering owner head, then add-only saves on covered subjects, each folded first. With the owner head off, the
+// same saves go to the per-subject ordered writer and the add-only saves to the reference writer.
+await enter(ownerHead ? "owner-head" : "no-owner-head", ownerHead ? [...ordered, "TX2_SUBJECT_OWNER_HEAD=1"] : ordered);
 await save("owner-head", agedOwner[4]!, ":task/field-0", "rd2-cover-a", { ordered: true });
 await save("owner-head", untouched[9]!, ":task/field-0", "rd2-cover-b", { ordered: true });
 await save("owner-head", untouched[9]!, ":task/field-1", "rd2-cover-c", { ordered: true });
@@ -163,7 +169,7 @@ const erased: any = await client.erase(db2, "rd2-erase-" + nonce, [{ entityId: s
 await save2("after-erase", subjects2[6]!, ":task/field-1", "rd2-after-erase");
 const head2 = await head2Of();
 client.close();
-writeFileSync(join(out!, "compare"), "go\n");
+writeFileSync(join(out!, "compare"), ownerHead ? "owner-head=1\n" : "owner-head=0\n");
 await waitFor("compare-ready", 300);
 
 // Comparison: both options off (the reference) against each option set, on every pinned route.
@@ -172,6 +178,8 @@ const readers = { on, lookup } as const;
 for (const c of [off, on, lookup]) for (const sc of [scope, scope2]) await c.create(sc, "lean", true, 35_000);
 const opts = async (c: DatomicClient) => { const o = (await c.request<any>("GET", "/v1/db/" + db + "/write-options")).options; return [o.pinnedShortcut, o.pinnedCutLookup]; };
 assert.deepEqual([await opts(off), await opts(on), await opts(lookup)], [[false, false], [true, true], [false, true]]);
+for (const c of [off, on, lookup])
+  assert.equal(Boolean((await c.request<any>("GET", "/v1/db/" + db + "/write-options")).subjectOwnerHead), ownerHead);
 const canon = (x: unknown) => JSON.stringify(x, (_k, v) => (Array.isArray(v) && v.length && typeof v[0] === "object" && v[0] && "id" in v[0]
   ? [...v].sort((p: any, q: any) => (p.id < q.id ? -1 : p.id > q.id ? 1 : 0)) : v));
 const differences: unknown[] = [];
@@ -208,7 +216,7 @@ async function compareScope(label: string, sc: string, d: string, subjects: stri
 const aged1 = await compareScope("aged", scope, db, everyone, tasks, head);
 const removal = await compareScope("removal", scope2, db2, subjects2, subjects2, head2);
 const stats = async (c: DatomicClient) => (await c.request<any>("GET", "/v2/admin/scan-stats")).pinnedShortcut;
-const result: Record<string, any> = { gate: "pinned-shortcut", seedCut, agedSaves: aged.saves, head, writes, aged: aged1,
+const result: Record<string, any> = { gate: "pinned-shortcut", ownerHead, seedCut, agedSaves: aged.saves, head, writes, aged: aged1,
   removal: { ...removal, pin: pin2, head: head2, erased: !!erased }, compared, rows,
   differences: differences.slice(0, 20), differenceCount: differences.length,
   off: await stats(off), on: await stats(on), lookup: await stats(lookup) };

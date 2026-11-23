@@ -61,6 +61,20 @@ open-ports-int1-p15 8805f75c9 REFUSED -
 no-copy-int1-p15 8805f75c9  REFUSED   -
 copy-on-v01-int1-p15 8805f75c9 REFUSED -
 prep1-at-int1-p15      8805f75c9  ADMITTED  -
+# [DX-THIN1] Part 16: the one branch after the RD1, REAL2 and DEMO1 merges.
+fair-int1-p16    9d62b18ff  ADMITTED  -
+publish-int1-p16 9d62b18ff  ADMITTED  -
+removal-int1-p16 9d62b18ff  ADMITTED  -
+cold-int1-p16    9d62b18ff  ADMITTED  -
+adopted-read-int1-p16 9d62b18ff ADMITTED -
+adopted-retire-int1-p16 9d62b18ff ADMITTED TX2_SUBJECT_APPEND_RETIREMENT=1;DX_W1_RETIREMENT_PAIR=1;PREP1_LOOKUP_EVERY=64
+adopted-ownerhead-int1-p16 9d62b18ff ADMITTED TX2_SUBJECT_OWNER_HEAD=1;DX_W1_RETIREMENT_PAIR=1;DX_W1_PAIR_OPTION=owner-head;PREP1_LOOKUP_EVERY=64
+adopted-pinned-int1-p16 9d62b18ff ADMITTED DX_PINNED_SHORTCUT=1;DX_PINNED_CUT_LOOKUP=1;DX_RD2_PINNED_PAIR=1
+real1-int1-p16   9d62b18ff  ADMITTED  -
+open-ports-int1-p16 9d62b18ff REFUSED -
+no-copy-int1-p16 9d62b18ff  REFUSED   -
+copy-on-v01-int1-p16 9d62b18ff REFUSED -
+prep1-at-int1-p16      9d62b18ff  ADMITTED  -
 # (rolling and prod cases put ARM=<arm> first in the extra env)
 # [DX-REAL2] The production arms on prep1/server.sh's rolling path, through stack/up.sh to its first Docker change.
 # Saturday's cache32 launch at its pin, as the control that the rolling path is reproduced.
@@ -80,3 +94,13 @@ prod-R394-32-at-3af5a617a   3af5a617a  ADMITTED  ARM=1-prodR-394-cache32-S
 prod-S394-32-at-3af5a617a   3af5a617a  ADMITTED  ARM=1-prodS-394-cache32-S
 prod-R394-16-at-3af5a617a   3af5a617a  ADMITTED  ARM=1-prodR-394-S
 prod-R-at-3af5a617a         3af5a617a  ADMITTED  ARM=1-prodR-S
+# [DX-THIN1] Part 16: every production arm on the one branch.
+prod-R-int1-p16          9d62b18ff  ADMITTED  ARM=1-prodR-S
+prod-S-int1-p16          9d62b18ff  ADMITTED  ARM=1-prodS-S
+prod-S394-int1-p16       9d62b18ff  ADMITTED  ARM=1-prodS-394-S
+prod-R32-int1-p16        9d62b18ff  ADMITTED  ARM=1-prodR-cache32-S
+prod-S32-int1-p16        9d62b18ff  ADMITTED  ARM=1-prodS-cache32-S
+prod-R394-32-int1-p16    9d62b18ff  ADMITTED  ARM=1-prodR-394-cache32-S
+prod-S394-32-int1-p16    9d62b18ff  ADMITTED  ARM=1-prodS-394-cache32-S
+prod-R394-16-int1-p16    9d62b18ff  ADMITTED  ARM=1-prodR-394-S
+rolling-cache32-int1-p16 9d62b18ff  ADMITTED  ARM=1-rolling6-cache32-S

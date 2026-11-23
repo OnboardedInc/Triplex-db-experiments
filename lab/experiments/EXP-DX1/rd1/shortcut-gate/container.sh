@@ -87,6 +87,8 @@ while :; do
   fi
 done
 reader=(TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1)
+# [DX-THIN1] The readers run with the owner head option exactly when the gate's writers did (gate.ts RD2_GATE_OWNER_HEAD).
+if grep -qx 'owner-head=1' /out/compare; then reader+=(TX2_SUBJECT_OWNER_HEAD=1); fi
 gateway 8080 "${reader[@]}" TX2_PINNED_SHORTCUT=0 TX2_PINNED_CUT_LOOKUP=0
 gateway 8081 "${reader[@]}" TX2_PINNED_SHORTCUT=1 TX2_PINNED_CUT_LOOKUP=1
 gateway 8082 "${reader[@]}" TX2_PINNED_SHORTCUT=0 TX2_PINNED_CUT_LOOKUP=1

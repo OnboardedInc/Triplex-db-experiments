@@ -13,13 +13,15 @@ mkdir -p "$out/out" "$out/age1src"
 git -C "$repo" archive 5cda4ab204b9736e32960843bee8cbc47d5ca74d -- packages/datomic/gateway/src packages/datomic/src/codec-spec.json \
   lab/experiments/EXP-DX1/age1/src | tar -x -C "$out/age1src"
 git -C "$repo" rev-parse HEAD > "$out/source"
-name=tx2-dxrd2-shortcut-gate
+# [DX-THIN1] Name and ports can be moved so two builders never remove each other's gate container.
+name=${RD2_GATE_NAME:-tx2-dxrd2-shortcut-gate} base=${RD2_GATE_PORT:-18595}
+[[ $name =~ ^tx2-dx[a-z0-9-]+$ && $base =~ ^1[0-9]{4}$ ]] || exit 2
 docker rm -f "$name" >/dev/null 2>&1
-docker run -d --name "$name" --memory 4g -p 127.0.0.1:18595:8080 -p 127.0.0.1:18596:8081 -p 127.0.0.1:18597:8082 --entrypoint /bin/bash \
+docker run -d --name "$name" --memory 4g -p 127.0.0.1:$base:8080 -p 127.0.0.1:$((base+1)):8081 -p 127.0.0.1:$((base+2)):8082 --entrypoint /bin/bash \
   -v "$repo/packages/datomic/gateway/src:/opt/gateway/src:ro" -v "$out/age1src:/age:ro" \
   -v "$repo/lab/experiments/EXP-DX1/prep1/aged-live:/aged:ro" -v "$here:/gate:ro" -v "$out/out:/out" "$image" /gate/container.sh >/dev/null
-(cd "$repo" && node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/rd1/shortcut-gate/gate.ts "$out/out" \
-  http://127.0.0.1:18595 http://127.0.0.1:18595 http://127.0.0.1:18596 http://127.0.0.1:18597) 2>&1 | tee "$out/driver.log"
+(cd "$repo" && RD2_GATE_OWNER_HEAD=${RD2_GATE_OWNER_HEAD:-1} node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/rd1/shortcut-gate/gate.ts "$out/out" \
+  http://127.0.0.1:$base http://127.0.0.1:$base http://127.0.0.1:$((base+1)) http://127.0.0.1:$((base+2))) 2>&1 | tee "$out/driver.log"
 status=${PIPESTATUS[0]}
 docker logs "$name" > "$out/out/container.log" 2>&1
 docker rm -f "$name" >/dev/null
