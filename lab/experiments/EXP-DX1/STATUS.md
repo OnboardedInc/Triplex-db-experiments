@@ -4758,3 +4758,21 @@ Source: `origin/exp/DX-SCALE1-deep-accounts` `182fb4482`, `scale1/V01-AGED.md`; 
 - **Tooling fault:** after the windows `prep1/server-collect.py` line 281 asserted the fresh head 87,002; the driver produced the summary with that line changed (diff kept).
 - **The one branch:** `origin/exp/DX-INT1` `2f534678c`, build `840be636c`: owner head, live-first import, start-up read, the readback repair, the repaired aged cache arm, the failover repair, dry-run hooks, and the loader-row reader option (off by default); 14 combinations of the combined check pass. `server-32` is a named profile (role caps 79 GiB); switching the default is one line and is not done. Requested next: the 1 billion scorecard from this build with `server-32` and per-save credits, with the three launch faults of today's card removed.
 - **Running:** the production-shaped tape on the fresh template (second machine, since 14:17, about 50 minutes); scorecard parts 3 and 4 at 1 billion (server 2). Failover follows both.
+
+### 2026-11-23 14:40 local: import under the larger memory: stalls gone, busy p99 45 ms; scorecard part 3 at 1 billion; read "errors" are missed offers (6 agents running)
+
+- **Live-first import with the 48 GiB heap and 32 GiB cache** (second machine, fresh template, `96b16e759`; `origin/exp/DX-BM1-bare-metal` `b3b519aad`): every forecast held.
+
+  | Measure | 24 GiB heap (today, 13:12) | 48 GiB heap, 32 GiB cache | Forecast |
+  | --- | ---: | ---: | --- |
+  | Writer allocation stalls, import cell | 4 (longest 246 ms) | 0 | 0 to 2 |
+  | Control busy p99, second half | 14.3 ms | 9.7 ms | 9 to 14 ms |
+  | Import busy p99, second half | 103.7 ms | 45.1 ms (4.6x the control) | 30 to 50 ms |
+  | Quiet p99 | 37.9 ms | 39.0 ms | 25 to 40 ms |
+  | Facts/s whole (second half) | 3,059 (2,752) | 3,321 (3,094) | 3,150 to 3,500 |
+
+  Priority 8: the rate is met in both halves and the quiet account is inside 50 ms; the busy 1.5 times bar is missed (4.6 to 4.9 times a baseline near 10 ms), with the busy p99 itself inside the 50 ms save bar. 97% of the slowest 1% now sit within 6 s of an index adoption. Next arm requested: the same with a 512m memory index (fewer index jobs). The autovacuum and WAL sampler did not run (script not executable; fixed).
+- **Scorecard at 1 billion, part 3** (plain `server` default, a second control): 246/s at 394 and 243/s at 620 against 297 and 305 fresh. Part 4 started 14:37.
+- **Read "errors" at 1 billion** (driver, from the evidence now on the Mac under `evidence/DX-SCALE1/score-1b-c/`): the read gateway logged no error at all and no journal-position text appears anywhere. The quiet account's errors are client-side counts of missed offers (`scale1/decision/observer.ts` line 106: the seat's previous read is still running when the next is due), which fits a quiet read p50 of about 2.5 s even solo. That is a second slow read route beside the pinned ladder's 44.8 ms. Exactness of returned reads is reported by the assembled card.
+- **Owner head pair at 1 billion cannot run as written:** its runner takes a logical dump (`AGED_DUMP`), which does not exist, and restores it per arm under a 42-minute cap. A prepared-copy path like the scorecard's is requested (due about 18:15). The 1 billion scorecard with `server-32` and per-save credits is launchable (`origin/exp/DX-INT1` `0d9693de0`, `v01/AGED-SERVER-32.md`).
+- **Order:** the repaired production tape (`832a7e0c6`) started on the second machine at about 14:40; server 2 runs the demo proving slot after assembling its card; failover follows on both at about 15:35.
