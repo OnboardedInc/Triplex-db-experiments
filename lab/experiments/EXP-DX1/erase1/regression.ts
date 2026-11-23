@@ -133,6 +133,7 @@ export async function regression(
       subjectOrderedIds?: boolean;
       subjectNumericOwner?: boolean;
       subjectOwnerHead?: boolean;
+      subjectOwnerHeadFunction?: string;
     }>("GET", `/v1/db/${f.db}/write-options`);
     assert.equal(opts.database, f.db);
     assert.equal(Boolean(opts.subjectSave), subjectWriter === "1");
@@ -142,7 +143,10 @@ export async function regression(
     if (subjectWriter === "1") {
       assert.match(opts.subjectFunction ?? "", /^:triplex\.subject\/v-[0-9a-f]{24}$/);
       assert(Number(opts.subjectFunctionTx) > 0);
-      subjectFunction = opts.subjectFunction;
+      // [Opus W1] Why: with the option on, an exact protected replacement goes to the covering writer.
+      // Rejected: accepting either function (the receipt must name the writer the option selects).
+      if (ownerHead) assert.match(opts.subjectOwnerHeadFunction ?? "", /^:triplex\.owner\/v-[0-9a-f]{24}$/);
+      subjectFunction = ownerHead ? opts.subjectOwnerHeadFunction : opts.subjectFunction;
     } else {
       assert.equal(opts.subjectFunction, undefined);
       assert.equal(opts.subjectFunctionTx, undefined);

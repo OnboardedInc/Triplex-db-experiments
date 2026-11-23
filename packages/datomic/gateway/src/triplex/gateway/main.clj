@@ -141,6 +141,8 @@
                              :subjectReusePredecessor subject/reuse-predecessor?
                              :subjectAppendRetirement subject/append-retirement?
                              :subjectOwnerHead (boolean (and owner-layout/enabled (owner-layout/installed? db)))
+                             :subjectOwnerHeadFunction (when (and owner-layout/enabled (owner-layout/installed? db))
+                                                         (str owner-layout/ident))
                              :subjectPrefetch (boolean (and subject/prefetch? (d/entid db subject/prefetch-ident)))
                              :subjectFunctionTx (some-> subject-t str)))))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"}
