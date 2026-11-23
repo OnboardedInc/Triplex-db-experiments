@@ -79,10 +79,10 @@ The short-cut answers from the current database only when (a) the revision is at
 
 **What runs.** `v01/study-server.ts` with `DX_RD2_PINNED_PAIR=1`: the same prepared aged arms as the retirement and owner-head pairs (a new physical copy of the held stopped cluster per arm, no dump, the aged bundle's fresh-peer check on the stack's own network, the `server` profile with one reader core and Datomic's default reader cache). Arm `off` runs both options off; arm `on` runs both on (`DX_PINNED_SHORTCUT` and `DX_PINNED_CUT_LOOKUP`, which `stack/up.sh` passes to both gateways as `TX2_PINNED_SHORTCUT` and `TX2_PINNED_CUT_LOOKUP`). Each arm runs `rd1/pinned-ladder.ts`: the card's own read (`client.rows`, one subject's field 0, one exchange per read) at the old pin 87,002 and at the head minus 1,000, with 1, 16 and 256 seats, 60 s per step. Every old-pin read is checked against the seed's value; the ladder refuses a reader that does not run the requested options. After arm `on`, `campaign/pinned-comparison.json` puts both arms side by side. The off arm's old-pin rows reproduce the card's ladder; together the two arms give the three cases asked for (near the head; old pin, options off; old pin, options on), plus the near-head pin with the options on.
 
-**Build once (about 5 minutes)** at the commit that publishes this section, as for the owner-head pair:
+**Build once (about 5 minutes)** at `dc34aa18d`, as for the owner-head pair:
 
 ```bash
-COMMIT=<the commit that publishes this section>
+COMMIT=dc34aa18d   # exp/DX-RD1-readers; contains origin/exp/DX-INT1 at 3d4320155
 BUILD=/var/tmp/triplex-pinned-1b-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
 cd "$BUILD/repository"
