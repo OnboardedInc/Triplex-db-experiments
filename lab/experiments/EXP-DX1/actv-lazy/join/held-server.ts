@@ -11,7 +11,7 @@ import { stackOptions } from "../../v01/profile.ts";
 import { cleanSource, verifyBuild } from "../../v01/source.ts";
 import { runHeld } from "./held-campaign.ts";
 
-const [source, image, imagePin, transferPin, templateDir, preparedDir, walDir, output, fair, rolling, width, credits, policy] =
+const [source, image, imagePin, transferPin, templateDir, preparedDir, walDir, output, fair, rolling, width, credits, importPolicy] =
   process.argv.slice(2);
 assert(process.platform === "linux" && process.env.DX_BARE_METAL === "1" && output);
 assert(source && image && imagePin && transferPin && templateDir && preparedDir && walDir);
@@ -21,9 +21,10 @@ if (fair) {
   // [DX-LOAD2] Why: a yield launch may compare two frame widths on one copy; the fair launch keeps its old shape.
   assert.match(width ?? "", /^(?:[89]|[1-5][0-9]|6[0-4])(?:,(?:[89]|[1-5][0-9]|6[0-4]))*$/);
   assert.match(credits ?? "", /^[1-5]$/);
-  assert(policy === undefined || policy === "fair" || policy === "yield");
-  assert(policy === "yield" || !width!.includes(","));
-  assert.equal(process.argv.length, policy === undefined ? 14 : 15);
+  // [DX-LOAD2] Why: the argument must not shadow the launch profile named policy below (a SyntaxError at 760fc0145).
+  assert(importPolicy === undefined || importPolicy === "fair" || importPolicy === "yield");
+  assert(importPolicy === "yield" || !width!.includes(","));
+  assert.equal(process.argv.length, importPolicy === undefined ? 14 : 15);
 }
 const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock");
 const queue = fs.statSync("/proc/self/fd/9");
@@ -193,7 +194,7 @@ try {
   if (fair) {
     const { runFair } = await import("../../load1/fair-campaign.ts");
     await runFair(out, source, peer, seed, rolling as CreditMode, width!.split(",").map(Number), Number(credits),
-      false, (policy ?? "fair") as "fair" | "yield");
+      false, (importPolicy ?? "fair") as "fair" | "yield");
   } else await runHeld(out, source, peer, seed);
   assert.deepEqual(
     [fs.statSync(template).dev, fs.statSync(template).ino, control(template)],
