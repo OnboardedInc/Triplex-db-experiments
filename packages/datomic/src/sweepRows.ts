@@ -6,6 +6,7 @@ import {
 } from "@triplex-build/triplex/runtime";
 import { DatomicClient } from "./DatomicClient.js";
 import { decodeRowText } from "./rowText.js";
+import { loaderPositionRowCompatibility } from "./loaderCompat.js";
 import type { ReachWire } from "./reach.js";
 import type { ResolvedTemporalBasis, ReadValue } from "@triplex-build/triplex";
 
@@ -152,7 +153,8 @@ export function decodeSweepRows(
         recordedAt = values[10] === "-0" ? -0 : values[10];
         from = values[11] === "-0" ? -0 : values[11];
         to = values[12] === "-0" ? -0 : values[12];
-        if (attribute === ":_tx/position" && values[6] !== null)
+        // [DX-PREP1] Same rule as rowText.ts: the fixture encoder writes the position itself.
+        if (attribute === ":_tx/position" && values[6] !== null && (!loaderPositionRowCompatibility() || values[6] !== position))
           throw new TypeError("Journal position payload must be null");
         const type = values[4],
           domain = storedValueDomain(ValueDomains.datomic, attribute);
@@ -171,12 +173,12 @@ export function decodeSweepRows(
         else if (type === "number") {
           let n = values[6] === "-0" ? -0 : values[6];
           if (attribute === ":_tx/position") {
-            if (n !== null) throw new TypeError("Journal position payload must be null");
+            if (n !== null && (!loaderPositionRowCompatibility() || n !== position)) throw new TypeError("Journal position payload must be null");
             n = position;
           }
           value = decodedPrimitiveValue(type, n, domain);
         } else {
-          if (attribute === ":_tx/position" && values[6] !== null)
+          if (attribute === ":_tx/position" && values[6] !== null && (!loaderPositionRowCompatibility() || values[6] !== position))
             throw new TypeError("Journal position payload must be null");
           columns.value_type = type;
           columns.value_string = values[5];

@@ -1,0 +1,26 @@
+{
+  "name": "triplex-demo-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local MCP server and inspector page for showing a remote Triplex database through SSH port forwards.",
+  "scripts": {
+    "mcp": "node src/mcp.ts",
+    "inspector": "node src/page.ts",
+    "proof": "node src/proof.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@triplex-build/triplex": "workspace:^",
+    "@triplex-build/triplex-datomic": "workspace:^",
+    "effect": "catalog:",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}

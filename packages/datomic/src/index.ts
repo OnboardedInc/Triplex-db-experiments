@@ -85,3 +85,4 @@ export {
   type ErasureReceipt,
   type ErasureSelector,
 } from "./erasure.js";
+export { setLoaderPositionRowCompatibility, loaderPositionRowCompatibility } from "./loaderCompat.js";

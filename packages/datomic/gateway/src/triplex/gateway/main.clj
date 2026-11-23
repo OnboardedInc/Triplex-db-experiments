@@ -214,11 +214,11 @@
       (and (= :post request-method) (= "/v1/db/delete" uri))
       (response 200 (delete-scope! uri-template (get (request-json body) "scope")))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/basis" uri))
-      (response 200 (basis uri-template (nth (clojure.string/split uri #"/") 3)))
+      (timed (System/nanoTime) (response 200 (basis uri-template (nth (clojure.string/split uri #"/") 3))))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/write-options" uri))
       (response 200 (write-options (nth (clojure.string/split uri #"/") 3)))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/log" uri))
-      (let [name (nth (clojure.string/split uri #"/") 3)
+      (let [name (nth (clojure.string/split uri #"/") 3) start (System/nanoTime)
             params (into {} (map (fn [part] (let [[k v] (clojure.string/split part #"=" 2)]
                                              (let [^String encoded (or v "")] [k (java.net.URLDecoder/decode encoded "UTF-8")])))
                                   (remove empty? (clojure.string/split (or query-string "") #"&"))))]
@@ -227,11 +227,12 @@
           ;; [DX-THIN1] Why: protected log requests must use the verified current erasure sequence even at an earlier native t.
           ;; Rejected: choosing the unprotected projector when the native log option is also enabled.
           (when (and lean? (not protected?) (not lean-feed/enabled)) (lean/unsupported! "log"))
-          (response 200 (assoc (feed/log-page conn params (cond protected? feed/project-protected
+          ;; [DX-DEMO1] Why: report the gateway's own time on the feed, as on journal pages. Rejected: client wall time through a tunnel.
+          (timed start (response 200 (assoc (feed/log-page conn params (cond protected? feed/project-protected
                                                               lean? lean-feed/project
                                                               lean-feed/enabled feed/project-application
                                                               :else feed/project)
-                                             (when (and lean? (not protected?)) lean-feed/assert-unprotected!)) :database name))))
+                                             (when (and lean? (not protected?)) lean-feed/assert-unprotected!)) :database name)))))
       (and (= :post request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/transact" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (or privacy-input (request-json body)) start (System/nanoTime) db-uri (db-uri name)]
         (try (timed start (response 200 (trace/span "storage/commit!" "gateway" (storage/commit! name (connection db-uri) (trace/span "d/db" "peer-call" (d/db (connection db-uri))) input))))
@@ -256,7 +257,7 @@
         (timed start {:status 200 :headers {"Content-Type" "application/json; charset=utf-8" "x-tx2-waited" (str (boolean waited))}
          :body (trace/span "reach/response" "gateway" (reach/response name db (if (.endsWith ^String uri "reach-many") input (assoc input "roots" [(get input "root")])) (:generation view) (:recent view)))}))
       (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
-      (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (db-uri name)
+      (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (db-uri name) start (System/nanoTime)
             input (when (= request-method :post) (trace/read-span "gateway.request-decode" "gateway" (request-json body)))
             conn (when (and (not= action "release") (or (= action "transact") (not (get input "handle")))) (connection db-uri))
             ;; [EXP-DA01] Why: held queries need no transactor sync and must never substitute a new db between requests (Q89d). Rejected: unconditional per-request sync.
@@ -268,7 +269,9 @@
                                      (trace/span "d/sync" "peer-wait" (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout))
                                      (trace/span "d/db" "peer-call" (d/db conn)))) conn)))
             db (when conn (trace/span "storage/await-record-time" "gateway" (storage/await-record-time name conn db input)))]
-        (response 200
+        ;; [DX-DEMO1] Why: every read route reports the gateway's own time beside the reply.
+        ;; Rejected: inferring server time from the client's round trip.
+        (timed start (response 200
           (case action
             "snapshot" (storage/begin! name db)
             "release" (storage/release! name (get input "handle"))
@@ -291,7 +294,7 @@
                           tx-id (when visible (ledger/claim-tx-id cut claim))]
                       (cond-> {:txId tx-id}
                         (and visible (true? (get input "receipt"))) (assoc :commandId id
-                          :receipt (storage/operation cut (storage/value cut tx :triplex.tx/operation-id))))))))
+                          :receipt (storage/operation cut (storage/value cut tx :triplex.tx/operation-id)))))))))
       :else (response 404 {:code "NotFound"}))
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
