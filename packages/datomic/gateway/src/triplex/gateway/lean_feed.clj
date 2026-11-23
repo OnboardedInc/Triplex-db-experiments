@@ -1,5 +1,5 @@
 (ns triplex.gateway.lean-feed
-  (:require [datomic.api :as d] [triplex.gateway.feed :as feed] [triplex.gateway.lean :as lean]
+  (:require [datomic.api :as d] [triplex.gateway.feed :as feed] [triplex.gateway.lean :as lean] [triplex.gateway.owner-root :as owner-root]
             [triplex.gateway.save-ledger :as ledger]))
 
 (def enabled (= "1" (System/getenv "TX2_LEAN_NATIVE_LOG")))
@@ -36,7 +36,9 @@
                       (keep (fn [[id [marker r]]]
                               (let [row (or (in-tx id)
                                             (when-let [x (lean/by-id (d/history cut) id)]
-                                              (when (= (:e marker) (:e x)) (lean/decode (:v x)))))]
+                                              ;; [Opus W1] Why: a covering save's marker sits on its new version, the row on the owner or an older version.
+                                              (when (= (owner-root/owner-of cut (:e marker)) (owner-root/owner-of cut (:e x)))
+                                                (lean/decode (:v x)))))]
                                 (application (feed/required row) "retract" (:retracted_position r)))) markers))
             ordered (vec (sort-by (juxt #(Long/parseLong ^String (:position %)) :assertionId :op) (distinct changes)))
             journals (ledger/journals cut tx)

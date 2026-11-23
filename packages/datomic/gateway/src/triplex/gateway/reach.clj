@@ -1,5 +1,5 @@
 (ns triplex.gateway.reach
-  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.trace :as trace] [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission] [triplex.gateway.save-ledger :as ledger])
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.trace :as trace] [triplex.gateway.group-cut :as group-cut] [triplex.gateway.owner-root :as owner-root] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission] [triplex.gateway.save-ledger :as ledger])
   (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap] [java.util.concurrent.atomic AtomicInteger LongAdder]))
 (set! *warn-on-reflection* false)
 
@@ -156,17 +156,17 @@
               (.put lru session m) m))))))
 (defn parse-entity [db cfg eid revision row-limit]
   (let [texts (ArrayList.) refs (ArrayList.) out (StringBuilder.)
-        retired (if (:slice cfg) #{} (set (map (fn [datom] (let [^String text (:v datom)] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16)))))
-                          (d/datoms db :eavt eid :triplex.entity/retired))))
+        ;; [Opus W1] Why: a covering root masks superseded legacy rows and carries the newer rows inline.
+        ;; Rejected: declining migrated people to the slower route (their reads would pay for the writer's saving).
+        cover (when-not (:slice cfg) (owner-root/root db eid))
+        retired (if (:slice cfg) #{}
+                  (into (set (map (fn [datom] (let [^String text (:v datom)] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16)))))
+                                  (d/datoms db :eavt eid :triplex.entity/retired)))
+                        (map owner-root/id-prefix) (:mask cover)))
         row-a (long (:row cfg)) overflow-a (long (:overflow cfg))
-        it (.iterator ^Iterable (or (get-in cfg [:slice :datoms]) (d/datoms db :eavt eid)))]
-    (.append out \[)
-    (while (.hasNext it)
-      (let [^datomic.Datom datom (.next it) a (.a datom)]
-        (cond
-          (= a overflow-a) (when (.v datom) (decline! "row-overflow"))
-          (= a row-a)
-          (let [^String text (.v datom) start (+ 5 (Integer/parseInt text 1 5 16))]
+        it (.iterator ^Iterable (or (get-in cfg [:slice :datoms]) (d/datoms db :eavt eid)))
+        on-row (fn [^String text]
+          (let [start (+ 5 (Integer/parseInt text 1 5 16))]
             (when-not (retired (subs text 0 start))
               (let [ref-start (+ start 36) ref-size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)]
                 (when-not (.isEmpty texts) (.append out \,))
@@ -182,11 +182,28 @@
                 (let [ref-start (+ start 36) size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)
                       from (bits text start) end (+ start 16)
                       to (if (= \- (.charAt text (int end))) Double/POSITIVE_INFINITY (bits text end))]
-                  (.add refs [(.substring text (int ref-start) (int (+ ref-start size))) from to])))))))))
+                  (.add refs [(.substring text (int ref-start) (int (+ ref-start size))) from to])))))))]
+    (.append out \[)
+    (if cover
+      ;; [Opus W1] Why: keep the legacy row order (index order of the stored texts) for migrated people too.
+      (let [all (ArrayList.)]
+        (while (.hasNext it)
+          (let [^datomic.Datom datom (.next it) a (.a datom)]
+            (cond
+              (= a overflow-a) (when (.v datom) (decline! "row-overflow"))
+              (= a row-a) (.add all (.v datom)))))
+        (.addAll all ^java.util.Collection (:texts cover))
+        (java.util.Collections/sort all)
+        (run! on-row all))
+      (while (.hasNext it)
+        (let [^datomic.Datom datom (.next it) a (.a datom)]
+          (cond
+            (= a overflow-a) (when (.v datom) (decline! "row-overflow"))
+            (= a row-a) (on-row (.v datom))))))
     (when (and (pos? (.size texts)) (zero? revision)) (decline! "missing-revision"))
     (.append out \])
     (let [json (.toString out) texts (vec texts) refs (vec refs)]
-      {:rev (if (empty? texts) 0 revision) :texts texts :refs refs :json json :recent-safe (empty? retired)
+      {:rev (if (empty? texts) 0 revision) :texts texts :refs refs :json json :recent-safe (and (empty? retired) (nil? cover))
        :bytes (+ 560 (* 2 (.length ^String json))
                  (reduce + 0 (map #(+ 48 (* 2 (.length ^String %))) texts))
                  (reduce + 0 (map #(+ 96 (* 2 (.length ^String (first %)))) refs)))})))
@@ -238,7 +255,9 @@
 (defn read-entity [name db cfg id valid counts]
   (if-let [cut (:group-cut cfg)]
     (let [eid (d/entid db [:triplex.entity/id id]) slice (when eid (group-cut/entity-slice cut eid))
-          value (when eid (parse-entity db (assoc cfg :slice slice) eid (:rev slice) (- 100000 (aget ^longs counts 0))))
+          value (when eid (if-let [at (:root-db slice)]
+                            (parse-entity at cfg eid (:rev slice) (- 100000 (aget ^longs counts 0)))
+                            (parse-entity db (assoc cfg :slice slice) eid (:rev slice) (- 100000 (aget ^longs counts 0)))))
           refs (ArrayList. ^java.util.Collection (vec (for [[ref from to] (:refs value) :when (<= from valid) :when (< valid to)] ref)))]
       (aset ^longs counts 0 (+ (aget ^longs counts 0) (count (:texts value))))
       [eid (or (:rev value) 0) (or (:texts value) []) refs (or (:json value) "[]")])
