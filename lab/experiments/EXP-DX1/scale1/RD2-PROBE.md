@@ -113,3 +113,71 @@ Build `64c70e549`, `DX_RD2_PINNED_TUNED=1`, `DX_RD1_LADDER=pinned-tuned`, one ne
 **Against the predictions.** At 256 seats the arm delivered about 2.5–3 times the predicted rate, with p99 under 100 ms at both pins (72.19 and 83.46 ms). The falsifier "near-head reads/s at 256 seats above 6,000" triggered: the cost model overstated the per-subject cost. At 1,024 seats throughput fell to 1,482 and 1,213 reads/s, below the 64-seat step and below the predicted 2,300–4,500. That drop is not explained by this run's records. Mean batch was 8.0 everywhere, so the batch falsifier did not trigger.
 
 Evidence: `evidence/DX-SCALE1/pinned-tuned-1b/pinned-tuned-1b.tar.gz` in the private evidence folder (SHA-256 `8beca2bc6033d1997659ae97c8eb2995a894fbca30448397068604e905301ac0`).
+
+## Pinned readers with saves (DX-RD3, build `9376ece9c`): predictions and falsifiers copied from `rd1/PINNED-1B.md` before launch
+
+### Predictions, written before the run
+
+Corrected model above. Closed loop, no think time. Additions for the save load:
+
+- The reader ingests about 27 commits/s of novelty and serves the quiet account's P6 reads.
+- PostgreSQL's one core serves both peers' segment reads.
+- The driver's event loop carries the save sender beside the 256 seats.
+- The transactor indexes at 256 MB of novelty, so at most one index adoption is likely across the S windows.
+
+| Window | Reads/s (central) | Read p50 | Read p99 (central) | Current share | Reader CPU |
+| --- | --- | --- | --- | --- | --- |
+| `s-near-head` | 9,500–12,500 (11,000) | 19–27 ms | 70–120 ms (88) | ≥ 99.5% | 1.9–2.6 |
+| `s-seed-cut` | 8,000–10,800 (9,500) | 22–32 ms | 80–130 ms (98) | 97–98.5% | 1.9–2.6 |
+| `s-tape` | 800–2,600 (1,500) | 100–320 ms (170) | 160–600 ms (300) | 85–98% (a read goes to the as-of view when the subject's next save commits between the pin's choice and the read; 990 of the 2,086 commits re-save a subject within 20 s, and commits take tens of ms to seconds at 1 billion) | 2.0–2.7 |
+| `ref-near-head` | 11,000–12,800 | 18–24 ms | 65–95 ms | 100% | 1.9–2.3 |
+| `ref-seed-cut` | 9,500–11,000 | 20–28 ms | 75–100 ms | 97.5–98.5% | 1.9–2.3 |
+| `ref-tape` | 1,200–2,800 (1,900) | 90–210 ms | 140–400 ms | 90–100% | 2.0–2.7 |
+
+**Random subjects (the product's cache-cold case), from the corrected model.** A read of a random subject among 1,000,000 almost never finds its leaf segments in a 3 GiB cache. That cache holds about 6,200 decoded segments (about 0.5 MB each). The working set is the leaves of a million subjects at 1.4 to 2.2 distinct segments each, so 1.4 to 2.2 million segments, about 0.7 to 1.1 TB decoded. So each subject costs its loads: 1.4 to 2.2 loads (the tuned arm measured 1.43 and 1.78 when its reuse distance exceeded the cache, and about 2.2 for a subject's first read). Each load costs 0.6 to 0.9 ms of reader CPU including its collection, plus about 0.11 ms of the exchange's fixed cost. That is **1.0 to 2.1 ms per subject (central 1.5)**, on the 2.2 to 2.4 cores left outside collector pauses (the 1,024-seat steps used 2.23 to 2.27).
+
+| Window | Reads/s (central) | p50 | p99 (central) | Storage loads per subject | Object-cache hit share (by request, branches included) | Decode CPU | Sampled storage reads per exchange of 8 | Current share |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `ref-random-near-head` | 900–2,200 (1,400) | 115–285 ms (183) | 170–450 ms (270) | 1.3–2.3 | 0.78–0.90 | 1.2–2.0 cores | 10–18 | ≥ 99.9% |
+| `s-random-near-head` | 850–2,100 (1,350) | 120–300 ms (190) | 180–480 ms (280) | 1.3–2.3 | 0.78–0.90 | 1.2–2.0 cores | 10–18 | ≥ 99.5% |
+| `ref-random-seed-cut` | 800–2,000 (1,250) | 130–320 ms (205) | 190–500 ms (300) | 1.4–2.6 | 0.76–0.90 | 1.2–2.1 cores | 11–21 | 97–98.5% |
+
+Mean batch 7.5–8; wrong values and errors 0.
+
+**The 100 ms p99 bar at 256 seats is not met for random subjects** in any of the three; the model's central p99 is 270 to 300 ms.
+
+**What the model says would meet it, so the server result can confirm or refute the sizing.**
+- **The rate needed.** With no think time and p99 about 1.4 × p50 (the cache-miss steps showed 1.36 to 1.48), p99 ≤ 100 ms needs p50 ≤ 71 ms, so **about 3,600 reads/s** at 256 seats.
+- **Cores.** At 1.5 ms per subject (1.0 to 2.1) that is 5.4 busy cores (3.6 to 7.6), so **about 7 reader cores (5 to 10)** at the 0.75 to 0.8 of a core each one gives outside collector pauses. On the 12-core machine that means a second reader with its own cores, or the reader on its own machine, beyond the three cores the tuned reader has.
+- **Cache.** **No affordable cache size meets it.** A cache covering the working set would need 0.7 to 1.1 TB. A partial cache's hit share on leaves is about its share of the working set: 3 GiB gives under 0.5%, 12 GiB under 2%, which saves almost nothing.
+- **What else would.** Fewer loads per subject (a subject's rows in fewer segments, as the covering owner head does for writes) or cheaper decoding.
+
+**What would refute this sizing:**
+1. Random reads at or above 2,800 reads/s on three cores, or storage loads per subject at or below 0.5. Then subjects share segments far more than modelled, the working set is much smaller, and a larger cache (12 to 24 GiB) could meet the bar. The next run would then be the same window with a 12 GiB reader cache.
+2. Loads per subject within the predicted range but reader CPU per subject under 0.8 ms. Then decoding is cheaper than the 0.6 to 0.9 ms per load, and fewer extra cores are needed: 3,600 × CPU per subject ÷ 0.78 cores.
+3. Reads/s well below the range (under 900) while the reader uses under 1.8 cores. Then storage latency (PostgreSQL's one core, or disk reads beyond its 8 GiB page cache) limits it, not reader CPU. The fix would then be storage-side, and the metrics minutes' `StorageGetMsec` will show it.
+
+**Tape pins are one subject per exchange, read whole:** 1.3 to 2.5 ms of reader CPU per exchange (a single-subject exchange near the head cost 1.13 ms in the pair's one-seat step), on 2 to 2.7 cores. Wrong values and errors: 0 in every window.
+
+**Saves.** Commit latency is measured from the scheduled offer to the acknowledgement in the driver.
+
+| Window | Stored commits/s (offered 26.7: 23.2 S + 3.5 quiet) | Expired | S commit p50 | S commit p99 | Quiet commit p50 / p99 | Reads per commit |
+| --- | --- | --- | --- | --- | --- | --- |
+| `s-alone` | 25.5–26.7 | 0–100 | 25–120 ms | 0.25–3 s | 6–12 / 20–60 ms | 0.5–5 |
+| `s-near-head`, `s-seed-cut`, `s-tape` | 25–26.7 | 0–150 | +0–25% over `s-alone` | +0–40% over `s-alone` | +0–30% over `s-alone` | Same as `s-alone` |
+| `ref-*` (3.5/s quiet only) | 3.5 | 0 | — | — | 5–10 / 15–45 ms | — |
+
+**P2's bar** (save p50 ≤ 10 ms, p99 ≤ 50 ms with 256 readers): **missed by the S commits**, whose median is a 6-fact save and two thirds of which take the general writer; **for the quiet account's 3.5/s, p50 ≤ 10 ms is likely met in every window (6–12 ms predicted), and p99 ≤ 50 ms is likely met in the `ref-` windows (15–45 ms) and borderline in the S windows (20–60 ms, plus up to 30% with readers).** For the reference tape alone, the current `server-32` card's part 1 at 1 billion (no readers) measured 6.18 / 21.38 ms.
+
+**P1's bar** (read p99 ≤ 100 ms at 256 seats with saves): **met for the ladder's batched pins near the head and at the old pin** (central 88 and 98 ms; the old pin is the one at risk); **missed for pins at the tape's own positions** (central p99 300 ms), because those reads cannot share an exchange.
+
+### What would show each prediction wrong
+
+1. **Saves cost the reader capacity:** `s-near-head` below 9,000 reads/s or p99 above 130 ms while `ref-near-head` (or the tuned arm's 12,376 / 72 ms) holds. Then log ingestion, an index adoption, or PostgreSQL contention costs reads. Look at reader CPU and GC per window, the reader's `StorageGet` counts in `gw-r.jsonl`, and PostgreSQL's CPU.
+2. **Readers cost the saves:** the S commit p99 in a read window above 1.5 × `s-alone`'s, or stored commits/s more than 5% below it. Check the driver's event-loop delay first. If its p99 is above 10 ms, the extra save time is at least partly the driver's, not the store's.
+3. **The tape-pin model is wrong:** `s-tape` above 4,000 reads/s means a whole-subject single exchange costs well under 0.6 ms. Below 500 means something other than reader CPU limits it: reads pinned ahead of the reader waiting for publication (`BasisNotAvailable` in the failures), or the driver.
+4. **The corrected model is wrong:** reader CPU per exchange in `ref-near-head` outside 1.0 to 1.6 ms, or the reader below 1.7 cores with the driver below 1.5 cores at 256 seats.
+5. **Exactness:** any wrong value or error in any window. In particular, a tape pin that disagrees with the sender's record means a pinned read under concurrent saves on one subject is not exact (the Mac gates never covered concurrent saves on one subject). Then the options must not merge.
+
+
+Random-subject windows (from the launch message): 900–2,200 reads/s (central 1,400), p50 115–285 ms, p99 170–450 ms, 1.3–2.3 storage loads per subject, cache hit share 0.78–0.90, 0 wrong values. Refuters: 2,800 reads/s or more, or 0.5 loads per subject or fewer; reader CPU per subject under 0.8 ms; under 900 reads/s with the reader under 1.8 cores.
