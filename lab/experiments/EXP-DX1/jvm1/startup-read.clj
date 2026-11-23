@@ -64,7 +64,9 @@
             (vswap! scanned inc)
             (doseq [datom data]
               (let [e (:e datom)]
-                (when (and (not= e tx) (contains? attrs (:a datom)))
+                ;; An existing owner that was saved retracts its old revision or row. A new journal entity only
+                ;; asserts, and has nothing stored to read.
+                (when (and (not= e tx) (not (:added datom)) (contains? attrs (:a datom)))
                   ;; keep the latest touch last
                   (.remove order e)
                   (.add order e))))
@@ -72,14 +74,16 @@
     {:newestTxInstantMs newest :windowStartMs (.getTime start) :transactions @scanned :scanStopped @stopped
      :owners (vec (take max-owners (reverse (vec order))))}))
 
+(defn- realize [iterable] (reduce (fn [n _] (inc n)) 0 (seq iterable)))
+
 (defn- read-owner [db e reads-spec]
   (let [datoms (api "datoms")]
     (reduce (fn [n [index attr]]
               (+ n (case index
-                     :eavt (count (datoms db :eavt e))
-                     :aevt (count (datoms db :aevt attr e))
+                     :eavt (realize (datoms db :eavt e))
+                     :aevt (realize (datoms db :aevt attr e))
                      ;; the owner's public ID in AVET, as the write peer resolves it
-                     :avet (reduce + 0 (map #(count (datoms db :avet attr (:v %))) (datoms db :eavt e attr))))))
+                     :avet (reduce + 0 (map #(realize (datoms db :avet attr (:v %))) (seq (datoms db :eavt e attr)))))))
             0 reads-spec)))
 
 (defn- run [request started]
@@ -105,6 +109,7 @@
         totals (atom {})
         datoms (atom 0)
         done (AtomicInteger. 0)
+        failures (atom [])
         counter (AtomicInteger. 0)
         pool (Executors/newFixedThreadPool
                (int threads)
@@ -119,11 +124,15 @@
                              (when-not (.get stop)
                                (if (>= (System/currentTimeMillis) deadline)
                                  (stop! "time-limit")
-                                 (let [[n reads] (measured #(read-owner db e reads-spec))
-                                       merged (swap! totals #(merge-with + % (select-keys reads (filter (comp number? reads) (keys reads)))))]
-                                   (swap! datoms + n)
-                                   (.incrementAndGet done)
-                                   (when (>= (loads merged) (long maxSegments)) (stop! "segment-budget")))))))))
+                                 (try
+                                   (let [[n reads] (measured #(read-owner db e reads-spec))
+                                         merged (swap! totals #(merge-with + % (select-keys reads (filter (comp number? reads) (keys reads)))))]
+                                     (swap! datoms + n)
+                                     (.incrementAndGet done)
+                                     (when (>= (loads merged) (long maxSegments)) (stop! "segment-budget")))
+                                   (catch Throwable failure
+                                     (swap! failures (fn [xs] (if (< (count xs) 5) (conj xs (str failure)) xs)))
+                                     (stop! "error")))))))))
     (.shutdown pool)
     (when-not (.awaitTermination pool (max 1 (- deadline (System/currentTimeMillis))) TimeUnit/MILLISECONDS)
       (stop! "time-limit")
@@ -141,7 +150,7 @@
        :owners {:selected (count owners) :read (.get done)}
        :datoms @datoms :reads @totals :segmentLoads (loads @totals)
        :indexes (mapv (fn [[i a]] [(name i) a]) reads-spec)
-       :poolTerminated (.isTerminated pool)})))
+       :failures @failures :poolTerminated (.isTerminated pool)})))
 
 (defn- main []
   (let [deadline (+ (System/currentTimeMillis) wait-for-request-ms)]

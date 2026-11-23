@@ -37,7 +37,7 @@ Source: the two Saturday 32 GiB cache runs at 430 million records (`evidence/DX-
 
 1. **Loaded only in its arms.** The launcher adds `-i /dxh1/startup-read.clj` to the transactor and the write gateway only when `DX_JVM1_STARTUP_READ_HOOK=1`. A thread starts only on a boot the runner marked with `startup-read-<role>.enabled` before starting the JVM, so the first boot, which carries traffic, has no reader.
 2. **Runs once, after the transactor and gateways are up and before admission.** The runner writes the request after both gateways answer `/health`. The thread takes the request once, reads, writes `startup-read-<role>.report.json` and exits. Its fixed pool is shut down and joined. The runner opens admission only after both reports exist and `/proc/<java pid>/task/*/comm` shows no `tx2-sread` thread in either JVM; it checks again during and after the window.
-3. **Reads through Datomic's public API.** `d/connect`, `d/log`, `d/tx-range` (from the newest transaction's instant minus the window), then per owner `d/datoms :eavt owner`, and in the transactor `d/datoms :aevt :triplex.entity/row owner` and `:triplex.entity/rev`; in the write peer the owner's `:triplex.entity/id` in AVET, through its own serving connection, which it keeps. The transactor releases its connection. Datomic is not modified and no decompiled code is used. Storage gets are counted with the same `datomic.measure.io-stats/with-io-stats` call the gateway already uses.
+3. **Reads through Datomic's public API.** `d/connect`, `d/log`, `d/tx-range` (from the newest transaction's instant minus the window; an owner is an entity whose revision or row the transaction retracted), then per owner `d/datoms :eavt owner`, and in the transactor `d/datoms :aevt :triplex.entity/row owner` and `:triplex.entity/rev`; in the write peer the owner's `:triplex.entity/id` in AVET, through its own serving connection, which it keeps. The transactor releases its connection. Datomic is not modified and no decompiled code is used. Storage gets are counted with the same `datomic.measure.io-stats/with-io-stats` call the gateway already uses.
 4. **Bounded.** A wall-clock limit (30 s on the server), a cap on scanned transactions (200,000) and owners (40,000), and a segment budget (150,000 segment loads, about 2.9 GB stored). The report gives the stop reason (`complete`, `segment-budget`, `time-limit`), owners selected and read, datoms, storage gets and segment loads by index, and the connect, select and read times.
 5. **Leaves nothing running.** No PostgreSQL prewarm: it cannot select the active set's blocks inside a 100 to 176 GB relation, and the transactor's reads warm exactly those blocks on the way.
 
@@ -47,7 +47,23 @@ Time added to a restart counts against priority 9 (writes resume within 60 s). T
 
 One managed container: PostgreSQL, a transactor and an ordered numeric-owner subject writer. 500 people with 160 fields each, indexed into stored segments, 128 MiB transactor cache. Each arm saves 250 people (the active set), restarts the transactor and writer on the same storage, then saves the same 250 people and 50 never-touched people. Timings are diagnostic.
 
-GATE_RESULT
+**Passed on the sixth attempt** (`evidence/DX-JVM1/startup-read-06`, one ordinary heavy token, `selftest-1.log` SHA-256 `c775bcfd34010a1b6fb5e142b078bafe42d83e544cafa4f52820976663407d77`, `summary.json` `b6924f1b55c24a2dd526c73d3edbd164695ac787f5ae97b9c88de51b8d5cd488`). The staged reader, entry script and driver are byte-identical to this commit; only the summary check in `startup-mac.py` changed afterwards, as described below.
+
+| After the restart, 250 saved people again plus 50 never-touched | No read | One-time read |
+| --- | ---: | ---: |
+| Storage gets per save, saved people | 0.936 | 0.024 |
+| EAVT / AEVT segment loads per save, saved people | 0.452 / 0.456 | 0 / 0 |
+| Storage gets per save, never-touched people | 1.22 | 0 |
+| Exact reads at each receipt | 300 of 300 | 300 of 300 |
+| Owners selected from the 20-second log window, transactor / write peer | — | 250 / 250 |
+| Segment loads by the read, transactor / write peer | — | 226 / 141 |
+| Reader threads at the report, at admission, after the window | — | none, none, none |
+| Restart to ready / ready to admission (diagnostic) | 30.9 s / 0 s | 28.9 s / 2.5 s |
+
+- **The read lands where the save reads.** A peer connection opened inside the transactor JVM fills the object cache the transaction function reads: storage gets on the saved people fell 39-fold.
+- **The selection is exact.** Both readers named exactly the 250 owners saved before the restart and not the seed, which was outside the window. The first attempt at this named 500, because each save's new journal entity also carries owner attributes; the step now selects an entity only when the transaction retracted its revision or row, which only an existing owner does.
+- **The never-touched people warmed too.** They sit next to saved people in the same index leaves (500 people of 160 fields fill a few hundred leaves). My first summary required them to stay cold; that check was wrong for this layout and was replaced by the exact-selection check. At full size, with about one leaf per person, the forecast below assumes neighbours share little.
+- **Earlier attempts** (all retained): 01 the bundle ran a launcher entry point; 02 stopped for a code change; 03 seed commands of 2,560 facts timed out on the one-CPU container; 04 and 05 found that `d/datoms` returns an iterable without `count` and that pool tasks swallowed the error; both are fixed and the report now lists task failures.
 
 ## Server runs
 

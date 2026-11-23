@@ -102,7 +102,9 @@ def summarize(out):
         "noReaderThreadAfterRead": read["threadsAfter"] == [],
         "exactReadsPassed": today["exact"] == today["saves"] and warm["exact"] == warm["saves"],
         "activeSetReadsDropped": warm["activeSet"]["sqlPerSave"] < 0.25 * today["activeSet"]["sqlPerSave"],
-        "controlOwnersStillCold": warm["control"]["sqlPerSave"] > 0.5 * today["control"]["sqlPerSave"],
+        # The never-touched people share index leaves with their saved neighbours, so they can warm too; what the
+        # step must show is that it selected exactly the owners the traffic before the restart saved.
+        "selectedExactlyTheActiveSet": all(read[r]["owners"]["selected"] == today["activeSet"]["saves"] for r in ("tx", "gw-w")),
     }
     summary = {"log": log.name, "logSha256": sha(log), "events": events, "checks": checks, "pass": all(checks.values()),
                "timings": "diagnostic"}

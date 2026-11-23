@@ -32,3 +32,9 @@ cca6666050ab36529db64a0bf81ba871fd75fa1f88cb1f164180c0104f3bde16  part4/type-gat
 aa600378f1fe1667cfcb39e5eda4b0c8d7c082581298f8757b283d03759f3e75  ../DX-BM1/bench3/checkpoints/barrier6/checkpoint.tar
 5c31f5a9512634d92144baff84edd2c3aad8300a06bd281ca9cba8231c00b4ad  ../DX-SCALE1/score-v01-fresh-tuned/full/result.tar.gz
 9213dac97803c0f62c40acdb2ed352a00facaa5059c94fc22e11a72d4b7b02b5  ../DX-PREP1/p13-scorecard-reading/analysis-4/headline-excess-ledger.ndjson.gz
+b6924f1b55c24a2dd526c73d3edbd164695ac787f5ae97b9c88de51b8d5cd488  startup-read-06/summary.json
+c775bcfd34010a1b6fb5e142b078bafe42d83e544cafa4f52820976663407d77  startup-read-06/selftest-1.log
+5b35c5c86dcfa173fb0dbc9938e9534e49b61960c13f8ed13c2f83c534c8b596  startup-read-06/inputs.json
+423853395c46459c1f69cbe562d91418b8ac4244b07344f871da5683896dd7f9  startup-read-06/stage.tar.gz
+ef39aab61fa59b00037746c587b8ce2f810baab111f2dd0e342132acf13eb226  startup-read-06/terminal.json
+11101bbaffa0c251e2f9f7d73486c9e4c35186b5959c18a18e76ec9c58baae2a  startup-read-06/image.json

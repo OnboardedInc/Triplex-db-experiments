@@ -48,8 +48,8 @@ async function seed() {
   const rows = new Map<string, Row[]>();
   let cut = 0;
   const all = owners(0, perAccount);
-  for (let i = 0; i < all.length; i += 16) {
-    const batch = all.slice(i, i + 16);
+  for (let i = 0; i < all.length; i += 2) {
+    const batch = all.slice(i, i + 2);
     const facts = batch.flatMap((o) => Array.from({ length: fields }, (_, n) => ({ e: task(o.account, o.subject), a: field(n),
       v: { type: "string" as const, value: sha(["seed", o.account, o.subject, n]).slice(0, 40) } })));
     const change = command(`${nonce}-seed-${i}`, facts, [], false);
@@ -110,6 +110,8 @@ async function startupRead() {
   }
   const waitedMs = Date.now() - started;
   // [DX-JVM1] Why: admission opens only once both readers have finished and no reader thread remains in either JVM.
+  console.log("JVM1_STARTUP_REPORTS " + JSON.stringify(Object.fromEntries(roles.map((r) =>
+    [r, { ...reports[r], request: { ...reports[r].request, uri: "<redacted>" } }]))));
   const remaining: Record<string, string[]> = {};
   for (const role of roles) {
     for (let i = 0; i < 100 && readerThreads(pids[role]).length; i++) await sleep(20);
