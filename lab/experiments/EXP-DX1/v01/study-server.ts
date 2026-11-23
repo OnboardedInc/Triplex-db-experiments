@@ -201,7 +201,7 @@ for (const loaded of [false, true]) {
         const native = JSON.parse(fs.readFileSync(path.join(raw, "gw-r-native-settings.json"), "utf8"));
         assert.deepEqual([native.source, native.slot, native.process], [source, slot, "gw-r"]);
         assert.equal(native.datomic["datomic.objectCacheMax"].value, 3072 * 1024 ** 2);
-        await savesArm(out, peer, head, engines, expected!);
+        await savesArm(out, peer, head, engines, expected!, raw);
         if (prepared) assert(!stopping, "Prepared pinned arm with saves was interrupted");
       } else if (pinnedPair) {
         const { pinnedLadder } = await import("../rd1/pinned-ladder.ts");
@@ -270,47 +270,60 @@ if (retirement && (!prepared || prepared.ladder === "append")) {
 // production-shaped tape, shape S (about 23 commits/s plus the quiet account's 3.5 saves/s); "ref-" windows run the
 // unloaded 394 cell, the quiet account's 3.5 saves/s alone, the reference rate of the card's P1 line, and run only if
 // at least five minutes remain before the deadline. Every window is 90 s; the reads run for the whole window.
-const savesWindows = [
-  { name: "s-alone", tape: "production-S", pin: undefined },
-  { name: "s-near-head", tape: "production-S", pin: "near-head" },
-  { name: "s-seed-cut", tape: "production-S", pin: "seed-cut" },
-  { name: "s-tape", tape: "production-S", pin: "tape" },
-  { name: "ref-near-head", tape: "saturday", pin: "near-head" },
-  { name: "ref-seed-cut", tape: "saturday", pin: "seed-cut" },
-  { name: "ref-tape", tape: "saturday", pin: "tape" },
-] as const;
+// [DX-RD3] Why: the four S windows are the published arm; every later window is isolated. It runs only if its time
+// (plus two minutes for cleanup) remains, a fault in it is recorded and skips the rest without failing the arm or its
+// seal, and its wrong values are recorded, not thrown. The random windows read subjects drawn uniformly from all ten
+// accounts, the product's cache-cold case, and sample every n-th exchange's io-stats and handler CPU from the reader.
+// Rejected: placing the random windows first (a fault in new code would cost the published windows).
+type SavesWindow = { name: string; tape: "production-S" | "saturday"; pin?: "near-head" | "seed-cut" | "tape" | "random-near-head" | "random-seed-cut";
+  isolated: boolean; minutes: number; profileEvery?: number };
+const savesWindows: SavesWindow[] = [
+  { name: "s-alone", tape: "production-S", isolated: false, minutes: 3.5 },
+  { name: "s-near-head", tape: "production-S", pin: "near-head", isolated: false, minutes: 3.5 },
+  { name: "s-seed-cut", tape: "production-S", pin: "seed-cut", isolated: false, minutes: 3.5 },
+  { name: "s-tape", tape: "production-S", pin: "tape", isolated: false, minutes: 3.5 },
+  { name: "ref-random-near-head", tape: "saturday", pin: "random-near-head", isolated: true, minutes: 4.5, profileEvery: 16 },
+  { name: "s-random-near-head", tape: "production-S", pin: "random-near-head", isolated: true, minutes: 5.5, profileEvery: 16 },
+  { name: "ref-random-seed-cut", tape: "saturday", pin: "random-seed-cut", isolated: true, minutes: 4.5, profileEvery: 16 },
+  { name: "ref-near-head", tape: "saturday", pin: "near-head", isolated: true, minutes: 4.5, profileEvery: 128 },
+  { name: "ref-seed-cut", tape: "saturday", pin: "seed-cut", isolated: true, minutes: 4.5, profileEvery: 128 },
+  { name: "ref-tape", tape: "saturday", pin: "tape", isolated: true, minutes: 4.5 },
+];
 
 async function savesArm(out: string, base: Parameters<typeof adoptedArm>[2], agedHead: number,
-  engines: Record<string, { id: string }>, aged: ReturnType<typeof openAged>) {
-  const { pinnedWindow, tapeCandidates, savesSeats } = await import("../rd1/pinned-ladder.ts");
+  engines: Record<string, { id: string }>, aged: ReturnType<typeof openAged>, raw: string) {
+  const { pinnedWindow, tapeCandidates, savesSeats, readerRecords } = await import("../rd1/pinned-ladder.ts");
   const roles = ["gw-r", "gw-w", "tx", "pg"] as const;
   const counters = Object.fromEntries(roles.map((role) => [role, containerCounters(engines[role]!.id)]));
   const usage = () => Object.fromEntries(roles.map((role) => [role,
     Number(/^usage_usec (\d+)$/m.exec(String(counters[role]!()["cpu.stat"]))?.[1])]));
   const peer = { ...base, windowSeconds: 90 as const,
     aged: { cut: agedCut(aged.file, aged.pin, imagePin, seed.key, seed.scope.db, seed.scope.cut, true), head: agedHead } };
-  const windows = [];
-  let terminal = agedHead;
+  const windows: any[] = [];
+  let terminal = agedHead, halted: string | undefined;
+  const traceFile = path.join(raw, "gw-r.jsonl");
   for (const w of savesWindows) {
-    const optional = w.name.startsWith("ref-");
-    if (stopping || Date.now() + (optional ? 5 : 3.5) * 60_000 > end) {
-      assert(optional, `No time left for window ${w.name}`);
-      windows.push({ name: w.name, skipped: "fewer than five minutes left before the deadline" });
+    if (halted) { windows.push({ name: w.name, skipped: halted }); continue; }
+    if (stopping || Date.now() + w.minutes * 60_000 > end) {
+      assert(w.isolated, `No time left for window ${w.name}`);
+      windows.push({ name: w.name, skipped: `fewer than ${w.minutes} minutes left before the deadline` });
       continue;
     }
+    try {
     process.env.DX_V01_TAPE = w.tape;
     const folder = path.join(out, w.name);
     fs.mkdirSync(folder);
     const cell = { rate: 394 as const, loaded: w.tape !== "saturday" };
     const arm = await adoptedArm(folder, source, peer, seed, writer, true, false, terminal, cell, false, undefined, undefined, {
       label: "rd3/" + w.name, run: async ({ start, seconds, startHead, tape, senders }) => {
+        const offset = fs.existsSync(traceFile) ? fs.statSync(traceFile).size : 0;
         await new Promise((resolve) => setTimeout(resolve, Math.max(0, start - now())));
         // The driver runs the saves' sender and the 256 reader seats in one event loop on cores 9 and 10: its CPU and
         // event-loop delay say how much of a save's or a read's time is the driver's own.
         const before = usage(), at = now(), driverCpu = process.cpuUsage(), loop = monitorEventLoopDelay({ resolution: 10 });
         loop.enable();
         const step = w.pin ? await pinnedWindow(base.read, seed as never, w.pin, { start, seconds, startHead,
-          candidates: tapeCandidates(tape, start, senders) }, { seats: savesSeats })
+          candidates: tapeCandidates(tape, start, senders) }, { seats: savesSeats, profileEvery: w.profileEvery })
           : await new Promise((resolve) => setTimeout(() => resolve(undefined), Math.max(0, start + seconds * 1000 - now())));
         const after = usage(), wall = (now() - at) / 1000, driverUsed = process.cpuUsage(driverCpu);
         loop.disable();
@@ -318,22 +331,39 @@ async function savesArm(out: string, base: Parameters<typeof adoptedArm>[2], age
           eventLoopDelayMs: { p50: loop.percentile(50) / 1e6, p99: loop.percentile(99) / 1e6, max: loop.max / 1e6 } };
         // Each role's cgroup memory at the window's end, for the memory caps of a scorecard setting.
         const memoryMiB = Object.fromEntries(roles.map((role) => [role, Math.round(Number(String(counters[role]!()["memory.current"]).trim()) / 2 ** 20)]));
-        return { step, memoryMiB, driver, cpuCores: Object.fromEntries(roles.map((role) => [role, Number(((after[role]! - before[role]!) / 1e6 / wall).toFixed(3))])) };
+        // Wait for the reader's buffered trace, then take this window's io-stats samples and metrics minutes.
+        let reader;
+        if (w.profileEvery && fs.existsSync(traceFile)) {
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+          try { reader = readerRecords(traceFile, offset, start, start + seconds * 1000, (step as any)?.profiled?.ids ?? []); }
+          catch (error) { reader = { error: String(error) }; }
+        }
+        return { step, memoryMiB, driver, reader, cpuCores: Object.fromEntries(roles.map((role) => [role, Number(((after[role]! - before[role]!) / 1e6 / wall).toFixed(3))])) };
       } });
     terminal = arm.terminal!;
     const along = (arm as any).alongside.result;
     const production = (arm as any).production;
     windows.push({ name: w.name, tape: w.tape, pin: w.pin ?? null, firstCut: arm.firstCut, terminal,
-      reads: along.step ?? null, cpuCores: along.cpuCores, memoryMiB: along.memoryMiB, driver: along.driver,
+      reads: along.step ?? null, reader: along.reader ?? null, cpuCores: along.cpuCores, memoryMiB: along.memoryMiB, driver: along.driver,
       saves: { offered: arm.p2.offered, receipts: arm.p2.receipts, latency: arm.p2.latency,
         production: production ? { metrics: production.metrics, readback: production.readback, predecessors: production.predecessors } : null,
         quiet: arm.p6 ? { offers: arm.p6.quietOffers, commit: arm.p6.commit, expired: arm.p6.expired, read: arm.p6.read } : null } });
+    } catch (error) {
+      if (!w.isolated) throw error;
+      // A fault in an isolated window is its own: record it and skip the rest (the stack's state after it is unknown).
+      console.error(`[DX-RD3] window ${w.name} failed: ${error instanceof Error ? error.stack : String(error)}`);
+      windows.push({ name: w.name, failed: error instanceof Error ? error.message : String(error) });
+      halted = `window ${w.name} failed before it`;
+    }
   }
   jsonFile(path.join(out, "pinned-saves.json"), { source, head: agedHead, seats: savesSeats, windowSeconds: 90, windows });
   console.log("[DX-RD3] " + JSON.stringify(windows.map((w: any) => ({ name: w.name, skipped: w.skipped,
     reads: w.reads && { goodput: w.reads.goodput, p50: w.reads.read.p50Ms, p99: w.reads.read.p99Ms, wrong: w.reads.wrong, errors: w.reads.errors },
     saves: w.saves && { p50: w.saves.latency.p50Ms, p99: w.saves.latency.p99Ms, receipts: w.saves.receipts, offered: w.saves.offered }, cpu: w.cpuCores, driver: w.driver }))));
-  for (const w of windows as any[]) if (w.reads) assert(w.reads.wrong === 0 && w.reads.errors === 0, `${w.name}: wrong values or read errors`);
+  for (const w of windows) if (w.reads && (w.reads.wrong || w.reads.errors))
+    console.error(`[DX-RD3] WINDOW ${w.name}: ${w.reads.wrong} WRONG VALUES, ${w.reads.errors} READ ERRORS`);
+  const published = new Set(savesWindows.filter((w) => !w.isolated).map((w) => w.name));
+  for (const w of windows) if (published.has(w.name) && w.reads) assert(w.reads.wrong === 0 && w.reads.errors === 0, `${w.name}: wrong values or read errors`);
 }
 
 // [DX-RD1] Why: process-group CPU and block I/O can distinguish a busy core from a blocked peer.

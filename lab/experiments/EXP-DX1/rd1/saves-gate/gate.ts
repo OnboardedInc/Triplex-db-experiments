@@ -23,7 +23,7 @@ import { checkSavedIdentity, feeder } from "../../v01/adopted.ts";
 import { writerAdmission } from "../../v01/server-workload.ts";
 import { productionCellMetrics, productionNeighbours, productionPredecessors, productionReadback,
   sortTape, type AgedCut, type ProductionWrite } from "../../v01/production-card.ts";
-import { pinnedWindow, tapeCandidates, type PinKind } from "../pinned-ladder.ts";
+import { pinnedWindow, readerRecords, tapeCandidates, type PinKind } from "../pinned-ladder.ts";
 import type { AdoptedSeed } from "../../v01/adopt.ts";
 
 const [out, url] = process.argv.slice(2);
@@ -109,10 +109,12 @@ for (const label of ["S-alone", "S-pins", "S-planted"] as const) {
   let terminal: number | undefined;
   const feeding = feeder(journal, db, head, start + seconds * 1000 + 120_000, () => terminal, true);
   const window = { start, seconds: label === "S-planted" ? 10 : 25, startHead, candidates: tapeCandidates(tape, start, senders) };
-  const kinds: PinKind[] = label === "S-alone" ? [] : label === "S-pins" ? ["seed-cut", "near-head", "tape"] : ["seed-cut", "tape"];
+  const kinds: PinKind[] = label === "S-alone" ? [] : label === "S-pins" ? ["seed-cut", "near-head", "tape", "random-near-head", "random-seed-cut"]
+    : ["seed-cut", "tape", "random-seed-cut"];
   const [writes, ...steps] = await Promise.all([
     play(senders, tape, start, nonce + "-" + label, false, true, writerAdmission("rolling6")),
-    ...kinds.map((kind) => pinnedWindow(url!, seed, kind, window, { seats: 8, distance: 5, plant: label === "S-planted" ? plant : undefined })),
+    ...kinds.map((kind) => pinnedWindow(url!, seed, kind, window, { seats: 8, distance: 5, plant: label === "S-planted" ? plant : undefined,
+      profileEvery: kind.startsWith("random") ? 16 : undefined })),
   ]);
   await resolveUncertain(senders, writes.unresolved);
   const at = await client.begin(db);
@@ -132,6 +134,8 @@ for (const label of ["S-alone", "S-pins", "S-planted"] as const) {
     if (label === "S-planted") assert(step.wrong > 0 && step.wrong >= step.read.count, `${label} ${step.pin}: a planted wrong value was not caught`);
     else assert.equal(step.wrong, 0, `${label} ${step.pin}: wrong values`);
     if (step.pin === "tape") assert(step.tape!.checkedRows > 0 && step.tape!.subjects > 0 && step.meanBatch === 1);
+    else if (step.pin.startsWith("random")) assert(step.population?.accounts === 10 && step.population.subjectsPerAccount === people
+      && (step.profiled?.ids.length ?? 0) > 0, `${step.pin}: population or profiled exchanges missing`);
     else if (label === "S-pins") assert(step.meanBatch > 1, `${label} ${step.pin}: batches did not form`);
   }
   if (label === "S-pins") {
@@ -143,7 +147,22 @@ for (const label of ["S-alone", "S-pins", "S-planted"] as const) {
     saves: { stored: metrics.stored, commitLatency: metrics.commitLatency }, steps });
   head = terminal;
 }
-const result = { gate: "rd3-pinned-saves", seedCut, agedHead, agingSaves: aged.saves, finalHead: head, timings: "diagnostic",
+// readerRecords on a synthetic reader trace: two sampled exchanges (one outside the set), and metrics minutes overlapping
+// the window by 30 s and 60 s; the sums, CPU and overlaps must come out exactly.
+const synthetic = join(out!, "synthetic-gw-r.jsonl"), t0 = 1_000_000;
+writeFileSync(synthetic, "partial line from before the offset\n" + [
+  { type: "metrics", process: "gw-r", at: t0 - 30_000, metrics: { StorageGetMsec: { count: 1 }, DeserializeMsec: { sum: 1 }, ObjectCache: { count: 1, sum: 1 } } },
+  { type: "metrics", process: "gw-r", at: t0 + 30_000, metrics: { StorageGetMsec: { count: 10 }, DeserializeMsec: { sum: 5.5 }, ObjectCache: { count: 100, sum: 90 } } },
+  { type: "request", readProfileId: "a".repeat(32), attributes: { handlerCpuNs: 2e6, peerIoStats: { reads: { sql: 2, ocache: 7 } } } },
+  { type: "request", readProfileId: "b".repeat(32), attributes: { handlerCpuNs: 4e6, peerIoStats: { reads: { sql: 1, ocache: 3 } } } },
+  { type: "request", readProfileId: "c".repeat(32), attributes: { handlerCpuNs: 9e6, peerIoStats: { reads: { sql: 50 } } } },
+  { type: "metrics", process: "gw-r", at: t0 + 90_000, metrics: { StorageGetMsec: { count: 20 } } },
+].map((x) => JSON.stringify(x)).join("\n") + "\nnot json\n");
+const records = readerRecords(synthetic, 0, t0, t0 + 60_000, ["a".repeat(32), "b".repeat(32)]);
+assert.deepEqual([records.found, records.ioStatsSums["reads.sql"], records.ioStatsSums["reads.ocache"], records.handlerCpuMs?.mean],
+  [2, 3, 10, 3], "readerRecords sums differ");
+assert.deepEqual(records.metricsMinutes.map((m) => [m.overlapSeconds, m.storageGets]), [[30, 10], [30, 20]], "readerRecords overlaps differ");
+const result = { gate: "rd3-pinned-saves", readerRecords: records, seedCut, agedHead, agingSaves: aged.saves, finalHead: head, timings: "diagnostic",
   plantedCaught: true, cells };
 writeFileSync(join(out!, "result.json"), JSON.stringify(result, null, 2) + "\n");
 console.log("RD3_SAVES_GATE " + JSON.stringify(result));

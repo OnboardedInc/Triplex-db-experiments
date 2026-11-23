@@ -94,7 +94,10 @@ export async function pinnedLadder(out: string, read: string, seed: AdoptedSeed,
 // Rejected: batching the tape pins (each seat has its own pin, so an exchange carries one subject, as in the product),
 // and checking the tape pins against a later read (the sender's record at acknowledgement is the oracle).
 export const savesSeats = 256;
-export type PinKind = "seed-cut" | "near-head" | "tape";
+// [DX-RD3] The random kinds: each read takes an account and a subject uniformly at random from the whole population
+// the seed holds (ten accounts × seed.image.people subjects), so reads do not repeat the ladder's re-read pattern.
+export type PinKind = "seed-cut" | "near-head" | "tape" | "random-near-head" | "random-seed-cut";
+type ReadProfileSample = { id: string } & Record<string, unknown>;
 type Candidate = { owner: string; at: number; rows: () => readonly Row[] | undefined; production: boolean };
 type Row = Awaited<ReturnType<DatomicClient["rows"]>>[number];
 const fieldAttribute = (attribute: string) => /^:task\/field-\d+$/.test(attribute);
@@ -102,17 +105,26 @@ const rowKey = (r: Pick<Row, "attribute" | "id" | "value_string" | "recorded_pos
   [r.attribute, r.id, r.value_string, r.recorded_position].join("\u0000");
 
 export async function pinnedWindow(read: string, seed: AdoptedSeed, kind: PinKind, window: { start: number; seconds: number;
-  startHead: number; candidates: Candidate[] }, opts: { seats?: number; batch?: number; distance?: number; plant?: (rows: Row[]) => Row[] } = {}) {
+  startHead: number; candidates: Candidate[] }, opts: { seats?: number; batch?: number; distance?: number; plant?: (rows: Row[]) => Row[];
+  /** Every n-th exchange carries a read-profile header, so the reader traces its io-stats and handler CPU. */
+  profileEvery?: number } = {}) {
   const seats = opts.seats ?? savesSeats, batch = kind === "tape" ? 1 : (opts.batch ?? tunedBatch);
   const client = new DatomicClient(read, 35_000);
   const options = await client.request<any>("GET", "/v1/db/" + seed.scope.db + "/write-options");
   assert.deepEqual([options.options.pinnedShortcut, options.options.pinnedCutLookup], [true, true],
     "the read gateway does not run both pinned options");
   const stats = async () => (await client.request<any>("GET", "/v2/admin/scan-stats")).pinnedShortcut;
-  const position = kind === "seed-cut" ? seed.scope.cut : kind === "near-head" ? Math.max(seed.scope.cut, window.startHead - (opts.distance ?? recentDistance)) : undefined;
+  const random = kind === "random-near-head" || kind === "random-seed-cut";
+  const seedPin = kind === "seed-cut" || kind === "random-seed-cut";
+  const position = seedPin ? seed.scope.cut : kind === "near-head" || kind === "random-near-head" ? Math.max(seed.scope.cut, window.startHead - (opts.distance ?? recentDistance)) : undefined;
   const basis = position === undefined ? undefined : { recordedPosition: position, validAt: SEED_VALID_FROM };
   let exchanges = 0, batched = 0;
-  const fetch = basis && pinnedFields(client, seed.scope.db, field(0), basis, batch, (send, size) => { exchanges++; batched += size; return send(); });
+  const profiles: ReadProfileSample[] = [];
+  const fetch = basis && pinnedFields(client, seed.scope.db, field(0), basis, batch, (send, size) => {
+    exchanges++; batched += size;
+    return opts.profileEvery && exchanges % opts.profileEvery === 0
+      ? client.withReadProfile((sample) => profiles.push(sample as unknown as ReadProfileSample), send) : send();
+  });
   const delay = new Histogram(), failures: Record<string, number> = {};
   let errors = 0, wrong = 0, notYetSaved = 0, idle = 0, checkedRows = 0;
   const lag = new Histogram(), tapeSubjects = new Set<string>();
@@ -131,7 +143,8 @@ export async function pinnedWindow(read: string, seed: AdoptedSeed, kind: PinKin
     let k = seat;
     while (now() < end) {
       if (kind !== "tape") {
-        const subject = (7919 * ++k) % seed.image.people, a = seat % accounts.length, entity = task(a, subject);
+        const subject = random ? Math.floor(Math.random() * seed.image.people) : (7919 * ++k) % seed.image.people;
+        const a = random ? Math.floor(Math.random() * accounts.length) : seat % accounts.length, entity = task(a, subject);
         const issued = now();
         try {
           const rows = await fetch!(entity);
@@ -139,7 +152,7 @@ export async function pinnedWindow(read: string, seed: AdoptedSeed, kind: PinKin
           assert.deepEqual([rows[0]!.entity_id, rows[0]!.attribute], [entity, field(0)]);
           assert(rows[0]!.recorded_position <= position!);
           const value = opts.plant ? opts.plant([...rows])[0]!.value_string : rows[0]!.value_string;
-          if (kind === "seed-cut" && value !== fieldValue(subject, 0, 0, 0).value) wrong++;
+          if (seedPin && value !== fieldValue(subject, 0, 0, 0).value) wrong++;
           if (now() <= end) delay.recordMs(now() - issued);
         } catch (error) {
           errors++;
@@ -185,6 +198,8 @@ export async function pinnedWindow(read: string, seed: AdoptedSeed, kind: PinKin
     errors, failures, wrong, read: delay.summary(),
     shortcut: { current: after.currentAnswers - before.currentAnswers, asOf: after.asOfAnswers - before.asOfAnswers },
     batch, exchanges, meanBatch: exchanges ? batched / exchanges : 0,
+    ...(random ? { population: { accounts: accounts.length, subjectsPerAccount: seed.image.people } } : {}),
+    ...(opts.profileEvery ? { profiled: { every: opts.profileEvery, ids: profiles.map((p) => p.id) } } : {}),
     ...(kind === "tape" ? { tape: { subjects: tapeSubjects.size, checkedRows, notYetSaved, idle, sinceOffer: lag.summary() } } : {}) };
   console.log("[DX-RD3] " + JSON.stringify(step));
   return step;
@@ -196,4 +211,42 @@ export function tapeCandidates(tape: readonly Write[], start: number, senders: r
     const owner = (e as Write & { owner?: string }).owner ?? task(e.account, e.subject);
     return { owner, at: start + e.ms, production: isProduction(e), rows: () => senders[e.account]?.rows.get(owner) };
   });
+}
+
+// [DX-RD3] The reader's own records for one window: request records of the window's sampled exchanges (Datomic
+// io-stats and handler CPU per exchange) and the once-a-minute Datomic metrics records overlapping the window.
+export function readerRecords(file: string, offset: number, start: number, end: number, ids: readonly string[]) {
+  const wanted = new Set(ids), size = fs.statSync(file).size;
+  const fd = fs.openSync(file, "r");
+  const text = Buffer.alloc(size - offset);
+  try { fs.readSync(fd, text, 0, text.length, offset); } finally { fs.closeSync(fd); }
+  const sums: Record<string, number> = {}, cpu: number[] = [];
+  const minutes: { at: number; overlapSeconds: number; storageGets: number | null; deserializeMs: number | null;
+    cacheRequests: number | null; cacheHits: number | null }[] = [];
+  let found = 0, previousAt: number | undefined;
+  const add = (prefix: string, value: unknown) => {
+    if (typeof value === "number" && Number.isFinite(value)) sums[prefix] = (sums[prefix] ?? 0) + value;
+    else if (value && typeof value === "object") for (const [k, v] of Object.entries(value)) add(prefix ? prefix + "." + k : k, v);
+  };
+  for (const line of text.toString("utf8").split("\n")) {
+    if (!line.startsWith("{")) continue;
+    let row: any;
+    try { row = JSON.parse(line); } catch { continue; }
+    if (row.type === "request" && wanted.has(row.readProfileId)) {
+      found++;
+      add("", row.attributes?.peerIoStats);
+      if (typeof row.attributes?.handlerCpuNs === "number") cpu.push(row.attributes.handlerCpuNs / 1e6);
+    } else if (row.type === "metrics" && row.process === "gw-r") {
+      const at = Number(row.at), from = previousAt ?? at - 60_000;
+      previousAt = at;
+      const overlap = Math.max(0, Math.min(at, end) - Math.max(from, start)) / 1000;
+      if (overlap > 0) minutes.push({ at, overlapSeconds: Number(overlap.toFixed(1)),
+        storageGets: row.metrics?.StorageGetMsec?.count ?? null, deserializeMs: row.metrics?.DeserializeMsec?.sum ?? null,
+        cacheRequests: row.metrics?.ObjectCache?.count ?? null, cacheHits: row.metrics?.ObjectCache?.sum ?? null });
+    }
+  }
+  cpu.sort((a, b) => a - b);
+  return { sampled: ids.length, found, ioStatsSums: sums,
+    handlerCpuMs: cpu.length ? { mean: cpu.reduce((a, b) => a + b, 0) / cpu.length, p50: cpu[cpu.length >> 1], p99: cpu[Math.floor(cpu.length * 0.99)] } : null,
+    metricsMinutes: minutes };
 }
