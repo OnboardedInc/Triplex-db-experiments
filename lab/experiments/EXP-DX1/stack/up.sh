@@ -170,6 +170,7 @@ fi
 # Rejected: replacing defaults globally (would change other agents' measurements).
 # [orchestrator merge] Flags (DX-S3) win; DX_* environment variables (DX-H3) are the fallback; then the old defaults.
 pg_mem=${DX_PG_MEMORY:-512m} tx_mem=${DX_TX_MEMORY:-3g} gw_mem=1500m tx_java="-Xms256m -Xmx${DX_TX_HEAP:-2g}" gw_java=''
+pgdata=${DX_V01_PGDATA:-}
 # [DX-M2] Why: opt-in JVM arms preserve concurrent experiments' defaults. Rejected: changing the control globally.
 tx_java=${DX_TX_JAVA_OPTS:-$tx_java}
 index_threshold=${DX_INDEX_THRESHOLD:-128m} index_max=${DX_INDEX_MAX:-512m} object_cache=${DX_TX_OBJECT_CACHE:-${DX_OBJECT_CACHE:-128m}} pg_settings='' pg_data=''
@@ -352,15 +353,22 @@ if [[ -n $wal_dir ]]; then
   # [DX-INT1] Why: verify the empty owned bind and the actual Docker data filesystem before creating a service.
   # Rejected: inferring WAL separation from the directory name or from the host root filesystem.
   [[ ${DX_BARE_METAL:-0} == 1 && -z $seed_volume ]] || exit 2
-  docker_root=$(docker info --format '{{.DockerRootDir}}') || exit 2
+  if [[ -n $pgdata ]]; then
+    data_location=$pgdata
+  elif [[ -n $prepared_pg ]]; then
+    data_location=$prepared_pg
+  else
+    docker_root=$(docker info --format '{{.DockerRootDir}}') || exit 2
+    data_location=$docker_root/volumes
+  fi
   wal_real=$(realpath -e "$wal_dir") || exit 2
   wal_device=$(stat -c %d "$wal_real") || exit 2
-  data_device=$(stat -c %d "${prepared_pg:-$docker_root/volumes}") || exit 2
+  data_device=$(stat -c %d "$data_location") || exit 2
   wal_entries=$(find "$wal_real" -mindepth 1 -maxdepth 1 -print -quit) || exit 2
   if [[ $wal_dir != "$wal_real" || $wal_dir == *[,\"$'\n']* || ! -d $wal_dir ||
         ( -z $prepared_pg && -n $wal_entries ) || ( -n $prepared_pg && -z $wal_entries ) ||
         ! $wal_device =~ ^[0-9]+$ || ! $data_device =~ ^[0-9]+$ || $wal_device == "$data_device" ]]; then
-    echo 'WAL needs an empty directory on a filesystem distinct from the Docker volumes' >&2
+    echo 'WAL needs an empty directory on a filesystem distinct from PostgreSQL data' >&2
     exit 2
   fi
   wal_mount=(-e POSTGRES_INITDB_WALDIR=/wal --mount "type=bind,source=$wal_dir,target=/wal")
@@ -493,7 +501,14 @@ if [[ $quiet_loggers == 1 ]]; then
   # [DX-T1-6] Why: the binary native appender detaches file appenders itself; quiet logging must remain on in a native profile.
   # Rejected: restoring synchronous vendor file logging while measuring the transactor's counters.
   [[ $TRIPLEX_TRACE_NATIVE_LOGS == 0 ]] || { echo 'Quiet logging conflicts with native file capture' >&2; exit 2; }
-  trace_tx_java+=' -Dlogback.configurationFile=/dxh1/quiet-logback.xml'
+  if [[ ${DX_V01_CELL_COUNTERS:-0} == 1 ]]; then
+    # [DX-V01] Why: keep the first native index-job boundary and alarms without restoring per-transaction DEBUG.
+    # Rejected: deriving index-job starts from a later adoption or enabling all native logger categories.
+    sed 's/name="datomic.update" level="WARN"/name="datomic.update" level="INFO"/' "$attempt/config/quiet-logback.xml" > "$attempt/config/scorecard-tx-logback.xml"
+    trace_tx_java+=' -Dlogback.configurationFile=/dxh1/scorecard-tx-logback.xml -Duser.timezone=UTC'
+  else
+    trace_tx_java+=' -Dlogback.configurationFile=/dxh1/quiet-logback.xml'
+  fi
   trace_gw_java+=' -Dlogback.configurationFile=/dxh1/quiet-logback.xml'
 fi
 if [[ $native_readback == 1 && $TRIPLEX_TRACE_TX_JFR == 0 && $TRIPLEX_TRACE_NATIVE_LOGS == 0 && $TRIPLEX_TRACE_GATEWAY == 0 ]]; then
@@ -530,10 +545,38 @@ if [[ ${DX_TRACE_TEST_GATEWAY:-0} == 1 ]]; then
     -e TRIPLEX_TRACE_LEVEL=off -e "DATOMIC_JAVA_OPTS=$(probe_options "-Xms128m -Xmx512m -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0$spec_java")" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e TRIPLEX_TRACE_DIR=/test-trace -e TRIPLEX_TRACE_TEST_JFR=1 -v "$attempt/trace/preflight:/test-trace" -v "$src:/opt/gateway:ro" ${spec_mount[@]+"${spec_mount[@]}"} \
     --entrypoint /opt/datomic/bin/run "$datomic_image" -m triplex.gateway.trace-test > "$attempt/gateway-trace-tests.log" 2>&1
 fi
+if [[ -n $pgdata ]]; then
+  [[ ${DX_BARE_METAL:-0} == 1 && ${DX_V01_ADOPTED_STACK:-0} == 1 &&
+     $prefix == tx2-dxscale1-v01-* && $publish == false &&
+     -z $seed_volume && -z ${DX_BM1_WAL_MOUNT:-} && -z ${DX_JVM1_PG_RESTORE:-} && -z ${DX_PREP1_DUMP:-} &&
+     -z $cold_pgdata && -z $pg_data && -z $prepared_pg && -z $restored_pgdata ]]
+  [[ $pgdata == /* && -d $pgdata && ${DX_V01_PGDATA_FILE_ID:-} =~ ^[0-9]+:[0-9]+$ &&
+     ${DX_V01_PGDATA_CONTROL_SHA:-} =~ ^[a-f0-9]{64}$ ]]
+fi
 docker network create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-net" >/dev/null
+pg_target=/var/lib/postgresql/data
+pg_args=(--pull never --name "$prefix-pg" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net"
+  ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem"
+  -e POSTGRES_PASSWORD=datomic)
 # [DX-T1-14] Why: activation uses a byte-verified fresh clone under the holder's lease; a sealed source is never writable.
 # Rejected: S5's old first-use/reuse fallback, incomplete copies, or attaching a transactor directly to a sealed seed.
-if [[ -n $cold_pgdata ]]; then
+if [[ -n $pgdata ]]; then
+  # [DX-V01] Why: inspect the exact private bind mount before starting PostgreSQL.
+  # Rejected: writing to the sealed source or populating a newly created volume.
+  pg_entry="$repo/lab/experiments/EXP-DX1/v01/pgdata-entrypoint.sh"
+  docker create "${pg_args[@]}" --mount "type=bind,source=$pgdata,target=$pg_target" \
+    --mount "type=bind,source=$pg_entry,target=/scorecard-pgdata-entrypoint.sh,readonly" \
+    ${wal_mount[@]+"${wal_mount[@]}"} \
+    -e "DX_V01_PGDATA_FILE_ID=$DX_V01_PGDATA_FILE_ID" -e "DX_V01_PGDATA_CONTROL_SHA=$DX_V01_PGDATA_CONTROL_SHA" \
+    --entrypoint /bin/sh postgres:17-alpine /scorecard-pgdata-entrypoint.sh postgres $pg_settings >/dev/null
+  mount=$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/var/lib/postgresql/data"}}{{.Type}}|{{.Source}}|{{.RW}}{{end}}{{end}}' "$prefix-pg")
+  [[ $mount == "bind|$pgdata|true" ]]
+  if [[ -n $wal_dir ]]; then
+    wal_bind=$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/wal"}}{{.Type}}|{{.Source}}|{{.RW}}{{end}}{{end}}' "$prefix-pg")
+    [[ $wal_bind == "bind|$wal_dir|true" ]]
+  fi
+  docker start "$prefix-pg" >/dev/null
+elif [[ -n $cold_pgdata ]]; then
   # [DX-JVM1] Why: copy only the stopped, read-only physical seed into a fresh owned volume.
   # Rejected: a logical restore that scans all pages just before the cold-start clock.
   docker volume create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-pg-data" >/dev/null
@@ -624,13 +667,20 @@ fi
 if [[ -n $restored_pgdata ]]; then
   pg_mount=(--mount "type=bind,source=$restored_pgdata,target=/var/lib/postgresql/data")
 fi
-docker run -d --pull never --name "$prefix-pg" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem" \
-  -e POSTGRES_PASSWORD=datomic "${pg_mount[@]}" ${wal_mount[@]+"${wal_mount[@]}"} postgres:17-alpine postgres $pg_settings >/dev/null
+# [DX-THIN1] Why: the scorecard's private copy already created and started its own container above.
+# Rejected: a second PostgreSQL launch path with different resource flags.
+if [[ -z $pgdata ]]; then
+  docker run -d "${pg_args[@]}" "${pg_mount[@]}" ${wal_mount[@]+"${wal_mount[@]}"} postgres:17-alpine postgres $pg_settings >/dev/null
+fi
 # [DX-B2-N4] Why: initdb's temporary socket server stops before the final TCP server starts.
 # Rejected: socket-only pg_isready (n4b raced that shutdown during vendor SQL setup).
 ready=false
 for ((i=0;i<90;i++)); do
   if docker exec "$prefix-pg" pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1; then ready=true; break; fi
+  if [[ -n $pgdata && $(docker inspect --format '{{.State.Running}}' "$prefix-pg") != true ]]; then
+    docker logs --tail 20 "$prefix-pg" >&2
+    exit 1
+  fi
   sleep 1
 done
 [[ $ready == true ]] || { echo "Postgres TCP startup timed out" >&2; exit 1; }
@@ -652,7 +702,7 @@ if [[ -n $wal_dir || ${DX_BM1_WAL_AB:-0} == 1 ]]; then
   ' sh "${wal_dir:+ssd}" "${cold_pgdata:+cold}" > "$attempt/wal-placement.txt"
 fi
 # Vendor scripts use their own database/connect statements; keep their order and bytes.
-if [[ -z $seed_volume && -z $prepared_pg && -z $pg_data && -z $restored_pgdata && -z $cold_pgdata ]];then
+if [[ -z $seed_volume && -z $prepared_pg && -z $pg_data && -z $restored_pgdata && -z $cold_pgdata && -z $pgdata ]];then
 for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   db=postgres
   [[ "$file" != postgres-table.sql ]] || db=datomic
@@ -804,6 +854,9 @@ for role in "${gateway_roles[@]}"; do
   if [[ $mode == w && ${DX_INT1_NATIVE_WRITE_READBACK:-0} == 1 ]]; then
     [[ ${DX_PREDECESSOR_LOOKUP:-0} =~ ^[01]$ ]] || exit 2
     field_policy+=(-e "TX2_INT1_WRITE_READBACK=1" -e "TX2_PREDECESSOR_LOOKUP=${DX_PREDECESSOR_LOOKUP:-0}")
+  fi
+  if [[ $role == w && ${DX_V01_IMPORT_TIMING:-0} == 1 ]]; then
+    field_policy+=(-e "TX2_LOAD1_PRIORITY=${DX_GROUP_COMMIT:-0}" -e TX2_LOAD2_TIMING=1)
   fi
   if [[ $mode == r && ${DX_V01_ADOPTED_STACK:-0} == 1 && ${DX_W1_JOURNAL_QUERY:-0} == 1 ]]; then
     # [DX-V01] Why: the scorecard independently checks the layout K journal through the read peer.

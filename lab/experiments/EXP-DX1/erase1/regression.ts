@@ -115,6 +115,7 @@ export async function regression(
   ledger: boolean,
   sealedWitness = false,
   sealedK = false,
+  overlap?: (erase: () => Promise<Cut>) => Promise<Cut>,
 ) {
   if (sealedK) await sealedKInventory(f.name, diag, output);
   const client = new DatomicClient(process.env.DATOMIC_URL!, 35_000);
@@ -334,7 +335,8 @@ export async function regression(
       output("regression-backup-start", { bytes: archive.length, sha256: sha(archive) });
       beforeArchive = !archive.startsWith("Error:");
     }
-    const erased = await publishErase(f.scope, entityId, w.assertionId);
+    const erase = () => publishErase(f.scope, entityId, w.assertionId);
+    const erased = await (overlap ? overlap(erase) : erase());
     assert(
       erased.assertionId === w.assertionId &&
         Number.isSafeInteger(erased.erasedAt) &&
@@ -415,7 +417,16 @@ export async function regression(
       const page = await client.log(f.db, erased.t, 1);
       const resumedClient = new DatomicClient(process.env.DATOMIC_URL!);
       try {
-        const resumed = await resumedClient.log(f.db, page.nextT, 4);
+        const resumed = [await resumedClient.log(f.db, page.nextT, 4)];
+        // [DX-CHK1] Why: a combined run can place rolling saves between the erase and the feed control.
+        // Rejected: widening a single fetch or skipping intervening pages and their marker checks.
+        while (overlap && BigInt(resumed.at(-1)!.nextT) <= BigInt((await client.basis(f.db)).t.v)) {
+          const cursor = resumed.at(-1)!.nextT;
+          const more = await resumedClient.log(f.db, cursor, 4);
+          assert.equal(more.fromT, cursor);
+          assert(BigInt(more.nextT) > BigInt(cursor));
+          resumed.push(more);
+        }
         const event = page.rows.find(
           (r) =>
             r.t === erased.t &&
@@ -427,7 +438,7 @@ export async function regression(
                 c.erasureSeq === String(erased.seq),
             ),
         );
-        const follow = resumed.rows.some(
+        const follow = resumed.flatMap((batch) => batch.rows).some(
           (r) =>
             r.kind === "commit" &&
             r.transaction.txIds.includes(next.value.txId) &&
@@ -437,7 +448,7 @@ export async function regression(
         );
         verify(
           "feed-resume",
-          !!event && follow && !contains([page, resumed], w.value) && resumed.fromT === page.nextT,
+          !!event && follow && !contains([page, resumed], w.value) && resumed[0]!.fromT === page.nextT,
           { event: !!event, follow, next: page.nextT },
         );
       } finally {

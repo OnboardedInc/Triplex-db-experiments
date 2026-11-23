@@ -58,9 +58,45 @@
     (is (nil? (get (reference/claim name (get-in input ["claims" 0 "commandId"])) "receipt")))
     (is (not-any? #(= (get-in input ["claims" 0 "txId"]) (first %)) (reference/feed name 2 10)))))
 
+(defn mixed-format-chain []
+  (reference/in-scope
+    (fn [name conn]
+      (let [[a] (seed name)
+            next-token "01J000000000000000000002"
+            id (str gate/ordered-token "04")
+            first-save (gate/ordered-frame a gate/ordered-token)
+            second-save (gate/ordered-frame (from (reference/edit-frame "next" "new" "final" 3.0 nil id) 3) next-token)]
+        ;; [DX-PREP1] Why: the exact old row is a predecessor, outside the new-ID history range.
+        ;; Rejected: converting or rechecking the old IDs as if every save were a new assertion of them.
+        (doseq [[input predecessor token] [[first-save "old" gate/ordered-token] [second-save id next-token]]]
+          (let [db (d/db conn)
+                ;; [Opus W1] Why: with the covering root on, the product route plans through the covering writer,
+                ;; which records the predecessor's retirement on the new version instead of retracting it.
+                covering (when layout/enabled (layout/prepare db (storage/tx-data db input) input))
+                plan (or covering (prepared db input))
+                text (:v (lean/by-id db predecessor))
+                live? (fn [view] (let [owner (d/entid view [:triplex.entity/id fixture/root])]
+                                   (some #(= predecessor (:id (lean/decode (:v %)))) (lean/live-texts view owner))))
+                reply (reference/send name input)]
+            (is (string? text))
+            (is (live? db))
+            (is (= (str "2001a" token "00") (first (:ordered-bounds plan))))
+            (is (not-any? #{(lean/prefix predecessor)} (:prefixes plan)))
+            (if covering
+              (is (= #{predecessor} (:retired-ids plan)))
+              (is (some #(= [:db/retract (:owner plan) :triplex.entity/row text] %) (:ops plan))))
+            (is (= [200 nil] (reference/outcome reply)))
+            (is (true? (get-in reply [:body "subjectOrderedIds"])))
+            (let [committed (d/db conn)]
+              (is (not (live? committed)))
+              (when-not covering (is (nil? (lean/by-id committed predecessor))))
+              (is (some? (lean/by-id (d/history committed) predecessor))))))
+        (is (= 4 (storage/head-position (d/db conn))))))))
+
 (deftest ordered-block-collision-keeps-old-ids-reserved
   (when subject/ordered-ids?
     (with-redefs [subject/enabled true group/enabled false policy/priority? false policy/field-only? false policy/budget-us nil]
+      (mixed-format-chain)
       (reference/in-scope
         (fn [name conn]
           (let [[a] (seed name)

@@ -34,7 +34,9 @@ The closed loop issues one call per seat and replenishes it after checking the a
 
 The [server command and per-level predictions](lab/experiments/EXP-DX1/rd1/FULLSIZE-SERVER.md) compare G1 control with the combined three-core, larger-cache, batched and selective-decoder arm. A single user-visible pin still names both recorded position and valid time. These estimates are forecasts. Bare-metal validation is pending.
 
-Mac correctness. The compact subject and grouped writers each ran single and batched pinned reads at toy size. The four arms checked 11,915, 21,091, 21,178 and 16,262 completed reads with zero errors, with 29 of 29 saves in the journal and all ten current pulls present in each arm. The running reader used the early filter. Both owned volumes were removed. The first two startup attempts exposed a private-image entrypoint mismatch and were retained with the successful retry. Mac counts serve only as correctness denominators.
+Mac correctness at `638864206`. The compact subject and grouped writers each ran single and batched pinned reads. Their four arms checked 24,106, 31,080, 24,350 and 36,262 reads with zero errors. Each arm checked all 29 saves against the journal and all ten current pulls. The native gateway suite ran 28 tests and 54,110 assertions with zero failures. The scoped package build and strict runner typecheck succeeded. Mac counts are correctness denominators.
+
+Both final owned volumes and slot reservations were removed. The engine refused removal of the final compact image because a container still references it. Its private pinned configuration remains available for a later managed removal. The first two startup attempts exposed a private-image entrypoint mismatch. Their logs and the successful retry are retained.
 
 Evidence is under `evidence/DX-RD1/fullsize/`. The original SCALE1 archive SHA-256 is `5c31f5a9512634d92144baff84edd2c3aad8300a06bd281ca9cba8231c00b4ad` and its source is `92f8e6c30db1084b3c00a93d57fed0e8f612e67e`. This change is based on `f8057d113`. The selective archive extraction was deleted. [Evidence manifest](lab/experiments/EXP-DX1/rd1/FULLSIZE-SHA256SUMS)
 

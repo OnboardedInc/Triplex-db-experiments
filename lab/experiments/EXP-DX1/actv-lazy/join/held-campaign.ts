@@ -160,7 +160,25 @@ type PairSample = {
   savesOnly?: number | null;
 };
 type History = Map<number, { position: number; version: string; width: number }[]>;
-async function seedPositions(client: DatomicClient, seed: AdoptedSeed) {
+// [DX-INT1] Why: SCALE1 packs consecutive people into one loader frame, and the pooled loader keeps two frames in
+// flight, so a later frame can commit first. Positions then fall in member order only within each frame. What the
+// positions must show is that each person's original facts came from one loader frame and each frame holds one
+// contiguous run of people: a position never returns after a different one, and no two runs share a position.
+// Rejected: requiring positions to rise with member index (true only for a loader with one frame in flight; the held
+// 100,000-person copy has layout pooled), or dropping the check.
+export function checkSeedFrames(detected: number[], cut: number) {
+  const finished = new Set<number>();
+  detected.forEach((p, i) => {
+    assert(Number.isSafeInteger(p) && p > 1 && p <= cut);
+    if (i > 0 && p !== detected[i - 1]) {
+      finished.add(detected[i - 1]!);
+      assert(!finished.has(p), "A loader frame's people are not contiguous");
+    }
+  });
+  return { people: detected.length, frames: new Set(detected).size,
+    reordered: detected.filter((p, i) => i > 0 && p < detected[i - 1]!).length };
+}
+export async function seedPositions(client: DatomicClient, seed: AdoptedSeed) {
   const detected: number[] = [];
   const width = 128;
   for (let start = 0; start < seed.image.people; start += 4 * width) {
@@ -193,7 +211,7 @@ async function seedPositions(client: DatomicClient, seed: AdoptedSeed) {
     );
     detected.push(...windows.flat());
   }
-  assert(detected.every((p, i) => i === 0 || p >= detected[i - 1]!));
+  checkSeedFrames(detected, seed.scope.cut);
   return detected;
 }
 

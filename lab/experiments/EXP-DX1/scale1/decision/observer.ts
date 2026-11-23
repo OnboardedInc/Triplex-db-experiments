@@ -44,6 +44,7 @@ export type Begin = {
   withReaders: boolean;
   isolation?: boolean;
   scopes: Scope[];
+  readerWindow?: ReturnType<typeof readWindow>;
 };
 export type Finish = { kind: "finish"; key: string; cuts: Record<string, number> };
 export const now = () => performance.timeOrigin + performance.now();
@@ -89,10 +90,10 @@ export async function readCell(client: DatomicClient, role: number, m: Begin, di
   const account = quietFor(m.repeat, m.isolation);
   const scope = m.scopes.find((s) => s.accounts.includes(account))!;
   assert(scope);
-  const planned = readTape(m.people, m.repeat, m.cell, m.withReaders, m.isolation).filter(
+  const planned = readTape(m.people, m.repeat, m.cell, m.withReaders, m.isolation, m.readerWindow).filter(
     (x) => x.seat % 2 === role,
   );
-  const window = diagnostic ? { from: 0, duration: 8000 } : readWindow(m.cell, m.isolation);
+  const window = diagnostic ? { from: 0, duration: 8000 } : m.readerWindow ?? readWindow(m.cell, m.isolation);
   // [DX-V01] Why: use the same pinned read and verifier on a compact toy stack.
   // Rejected: running the full sixty-second sample at the Mac's shared capacity.
   const ops = diagnostic ? planned.slice(0, 24).map((op, i) => ({ ...op, ms: i * 240 })) : planned;

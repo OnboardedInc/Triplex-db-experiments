@@ -64,7 +64,9 @@ export class SyncPair {
     readonly base?: { path: string; checkpoint?: Checkpoint; ownerUid?: number; ownerGid?: number },
     readonly powerFence?: PowerFence,
     readonly sunday?: SundayPair,
+    readonly combined = false,
   ) {
+    assert(!combined || (["DX-CHK1", "DX-THIN1"].includes(s.holder) && s.a === s.b && !sunday));
     this.latch = s.e.prefix + "-fence";
     this.primaryData = s.e.prefix + "-pgdata";
   }
@@ -324,7 +326,7 @@ export class SyncPair {
         : undefined;
     });
     this.reader = await this.gateway("read", s.b, "target", grouped);
-    this.route = await ingress(this.writer, Boolean(this.sunday));
+    this.route = await ingress(this.writer, Boolean(this.sunday) || this.combined);
     this.account!.changeEndpoint(this.route.url, this.reader);
     await this.auditCheckpoint("before");
   }
@@ -487,15 +489,17 @@ export class SyncPair {
           "&connectTimeout=1&hostRecheckSeconds=1",
         "-e",
         "GATEWAY_SOURCE_SHA256=" + s.e.source.gateway,
-        "-e",
-        ...(this.sunday
+        ...(this.sunday || this.combined
           ? [
               "HA1_FLEET_HTTP=1",
-              ...Object.entries(selectedWriter("subject"))
-                .filter(([key]) => key.startsWith("TX2_"))
+              ...(this.combined ? ["TX2_SUBJECT_APPEND_RETIREMENT=1", "TX2_WRITE_OPTIONS_ATTEMPT=" + s.e.nonce] : []),
+              // [DX-THIN1] Why: the card added two import-timing keys to the writer settings; keep the Sunday gateway unchanged.
+              // Rejected: forwarding scorecard-only import instrumentation to the failover gateway.
+              ...Object.entries(selectedWriter("per-person-ordered"))
+                .filter(([key]) => key.startsWith("TX2_") && key !== "TX2_LOAD1_PRIORITY" && key !== "TX2_LOAD2_TIMING")
                 .map(([key, value]) => key + "=" + value),
             ].flatMap((setting) => ["-e", setting])
-          : ["TX2_GROUP_COMMIT=" + Number(grouped)]),
+          : ["-e", "TX2_GROUP_COMMIT=" + Number(grouped)]),
         "-e",
         "DATOMIC_JAVA_OPTS=" +
           (this.sunday
@@ -884,12 +888,16 @@ export class SyncPair {
       replay: await this.sql("pg", "select pg_last_wal_replay_lsn()"),
     };
   }
-  async verifyReplacement(copy: Awaited<ReturnType<SyncPair["startReplacement"]>>) {
+  async verifyReplacement(copy: Awaited<ReturnType<SyncPair["startReplacement"]>>,
+    combinedReceipt?: Awaited<ReturnType<Account["send"]>>) {
+    // [DX-CHK1] Why: use the already pinned, ordered receipt on the strict rolling fixture.
+    // Rejected: adding a legacy recovery-probe write with its own authored clock.
+    assert(!combinedReceipt || this.combined);
     const s = this.s;
     const ac = this.account!;
     assert.equal(s.members.get("pg")!.id, copy.new);
-    const receipt = await ac.send(ac.intent("first-reprotected", 3));
-    await ac.pinned(receipt);
+    const receipt = combinedReceipt ?? await ac.send(ac.intent("first-reprotected", 3));
+    if (!combinedReceipt) await ac.pinned(receipt);
     const cut = await this.sql("target", "select pg_current_wal_flush_lsn()");
     const flush = await wait(
       "the protected save is durable on the fresh standby",

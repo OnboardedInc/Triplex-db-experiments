@@ -1,0 +1,40 @@
+# name                 commit     expect    (extra env for fair/publish/adopted cases, ;-separated, - for none)
+# The server's refusal at 12:18 and the Publish pin queued for tonight, reproduced, then the same input on INT1.
+fair-at-refused-pin    52ad22640  REFUSED   -
+fair-at-int1           666b625e5  ADMITTED  -
+publish-at-queued-pin  bfef77d34  REFUSED   -
+publish-at-int1        666b625e5  ADMITTED  -
+# What the guard still refuses on INT1.
+open-ports-int1        666b625e5  REFUSED   -
+no-copy-int1           666b625e5  REFUSED   -
+copy-on-v01-int1       666b625e5  REFUSED   -
+fair-two-writers-int1  666b625e5  REFUSED   DX_PREP1_WRITERS=2
+fair-not-adopted-int1  666b625e5  REFUSED   DX_V01_ADOPTED_STACK=0
+# Tonight's other launchers that go through stack/up.sh, at their queued pin and on INT1.
+removal-at-pin         3669bee41  ADMITTED  -
+removal-int1           666b625e5  ADMITTED  -
+cold-int1              666b625e5  ADMITTED  -
+adopted-read-int1      666b625e5  ADMITTED  -
+adopted-retire-int1    666b625e5  ADMITTED  TX2_SUBJECT_APPEND_RETIREMENT=1;DX_W1_RETIREMENT_PAIR=1;PREP1_LOOKUP_EVERY=64
+adopted-card-pin       a36c88e6c  ADMITTED  -
+real1-at-pin           8597e3ef7  ADMITTED  -
+real1-int1             666b625e5  ADMITTED  -
+prep1-at-97aced1b1     97aced1b1  ADMITTED  -
+prep1-at-73afad665     73afad665  ADMITTED  -
+prep1-at-891ab9139     891ab9139  ADMITTED  -
+prep1-int1             666b625e5  ADMITTED  -
+# DX-THIN1 part 13: the failover/cold/import/Publish build and the realistic card merge head on INT1.
+fair-int1-8ab          8ab832093  ADMITTED  -
+publish-int1-8ab       8ab832093  ADMITTED  -
+removal-int1-8ab       8ab832093  ADMITTED  -
+cold-int1-8ab          8ab832093  ADMITTED  -
+fair-int1-head         54d644fd6  ADMITTED  -
+publish-int1-head      54d644fd6  ADMITTED  -
+removal-int1-head      54d644fd6  ADMITTED  -
+cold-int1-head         54d644fd6  ADMITTED  -
+adopted-read-int1-head 54d644fd6  ADMITTED  -
+adopted-retire-int1-head 54d644fd6 ADMITTED TX2_SUBJECT_APPEND_RETIREMENT=1;DX_W1_RETIREMENT_PAIR=1;PREP1_LOOKUP_EVERY=64
+adopted-card-int1-head 54d644fd6  ADMITTED  -
+open-ports-int1-head   54d644fd6  REFUSED   -
+no-copy-int1-head      54d644fd6  REFUSED   -
+copy-on-v01-int1-head  54d644fd6  REFUSED   -

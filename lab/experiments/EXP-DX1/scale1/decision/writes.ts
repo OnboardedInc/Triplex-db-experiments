@@ -124,7 +124,7 @@ export async function preload(client: DatomicClient, scope: Scope, people: Densi
 }
 
 export function expectedSave(o: Save, e: Write, prior: readonly Row[]) {
-  const entity = task(o.account, o.subject);
+  const entity = e.owner ?? task(o.account, o.subject);
   const old = prior.slice(0, e.width);
   assert(old.length === e.width && old.every((r) => r.entity_id === entity));
   const facts: Fact[] = old.map((row, i) => ({
@@ -302,7 +302,7 @@ export async function play(
     // [DX-INT1] Why: bind the identity block to this offered save through settling or recovering it.
     // Rejected: minting a new block while looking up an uncertain receipt.
     if (orderedIds) row.orderedToken = orderedSaveIdentity().token;
-    const entity = task(row.account, row.subject);
+    const entity = e.owner ?? task(row.account, row.subject);
     const cached = sender.rows.get(entity);
     assert(cached || sender.loadPredecessor, "Missing predecessor");
     function draft(prior: Row[]) {

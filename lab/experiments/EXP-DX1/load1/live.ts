@@ -32,7 +32,7 @@ import { pipelineDuration, pipelineHz, pipelineLimit, PipelineCredits } from "./
 
 // [DX-LOAD2] Why: bracket the guest clock with both host timestamps; compare guest-native clocks directly.
 // Rejected: assuming wall time on a VM is the same as the client's clock, or hiding uncertain overlaps.
-async function sampleClock() {
+async function sampleClock(run = process.env.TRIPLEX_TRACE_RUN) {
   const samples = [];
   for (let i = 0; i < 12; i++) {
     const send = performance.now(),
@@ -43,7 +43,7 @@ async function sampleClock() {
     };
     const recv = performance.now();
     assert(guest?.bootId && Number.isFinite(guest.monoMs));
-    assert.equal(guest.run, process.env.TRIPLEX_TRACE_RUN);
+    assert.equal(guest.run, run);
     samples.push({ send, recv, ...guest });
   }
   return samples;
@@ -71,6 +71,7 @@ export async function live(
   arm: string,
   server: boolean,
   mode = "load-live",
+  held?: { after: number; maxGroup: number; clockRun: string; referenceImport?: boolean },
 ) {
   const traceTail = mode === "load-tail",
     frontier = mode.startsWith("load-frontier-");
@@ -95,6 +96,12 @@ export async function live(
           ? [50, 100]
           : [50, 235, 390];
   assert(rates.includes(rate));
+  if (held) {
+    assert(paced && arm === "pace-32-fixed");
+    assert(Number.isSafeInteger(held.after) && held.after > 0);
+    assert(Number.isSafeInteger(held.maxGroup) && held.maxGroup > 0);
+    assert.equal(await comp.currentPosition(), held.after);
+  }
   const cell = alone ? "0" : arm.split("-")[1],
     width = frontier && cell !== "0" ? maxBulkFacts : Number(cell),
     duration = volume
@@ -190,9 +197,17 @@ export async function live(
     try {
       assert.equal(input.operationId, reply.operationId);
       const bulk = command.startsWith("load1/");
-      assert(reply.bulkGrant && reply.bulkGrant.bulk === bulk);
-      if (bulk) assert(!reply.bulkGrant["runnable-live"] && reply.groupSize === 1);
-      assert(Number.isSafeInteger(reply.groupSize) && reply.groupSize >= 1 && reply.groupSize <= 8);
+      // [DX-V01] Why: the per-person profile dispatches imports through the reference writer.
+      // Rejected: crediting that path with the grouped admission guarantees.
+      if (held?.referenceImport) {
+        assert(reply.bulkGrant == null && reply.serialHold == null);
+        assert(reply.groupSize === undefined || reply.groupSize === 1);
+      }
+      else {
+        assert(reply.bulkGrant && reply.bulkGrant.bulk === bulk);
+        if (bulk) assert(!reply.bulkGrant["runnable-live"] && reply.groupSize === 1);
+        assert(Number.isSafeInteger(reply.groupSize) && reply.groupSize >= 1 && reply.groupSize <= (held?.maxGroup ?? 8));
+      }
       retain({
         command,
         op: reply.operationId,
@@ -309,7 +324,7 @@ export async function live(
       assert(url && url !== process.env.DATOMIC_URL);
       other = await isolatedImport(url, scope + "-import", dir, arm, subjects, width);
     }
-    const clockBefore = traceTail || micro ? await sampleClock() : undefined;
+    const clockBefore = traceTail || micro ? await sampleClock(held?.clockRun) : undefined;
     const start = performance.now(),
       bridge = sharedMono(),
       end = start + duration;
@@ -569,7 +584,7 @@ export async function live(
         const recoveredWithoutTiming =
           (diagnosticVolume || (paced && !server)) && byCommand.get(entry.command)?.recovered;
         const service =
-          (budget || micro) && !recoveredWithoutTiming ? measure(entry.command) : undefined;
+          (budget || micro) && !recoveredWithoutTiming && !held?.referenceImport ? measure(entry.command) : undefined;
         if (micro) lastFrame = { frame: f, position: entry.position, ids: entry.ids };
         if (service && budget) budget.observe(entry.facts, service.ms);
         ordered.push({
@@ -616,7 +631,7 @@ export async function live(
     }
     await Promise.all([...pending, bulk, observeMarkers]);
     const drained = performance.now() - start;
-    const clockAfter = traceTail || micro ? await sampleClock() : undefined;
+    const clockAfter = traceTail || micro ? await sampleClock(held?.clockRun) : undefined;
     fs.writeFileSync(
       path.join(dir, arm + ".offers.json"),
       JSON.stringify({
@@ -625,6 +640,7 @@ export async function live(
         slot: process.env.TRIPLEX_TRACE_SLOT,
         scope,
         expectedDb,
+        ...(held ? { after: held.after, referenceImport: held.referenceImport } : {}),
         start,
         duration,
         clockBefore,
@@ -710,7 +726,7 @@ export async function live(
         assert.deepEqual(record(frame, meta, r), expected);
         seen.add(r.commandId);
       },
-      { pageSize: micro ? 64 : allReads ? 24 : 8, readDepth: micro ? 4 : 1, assertionSweep: micro },
+      { pageSize: micro ? 64 : allReads ? 24 : 8, readDepth: micro ? 4 : 1, assertionSweep: micro, after: held?.after },
     );
     assert.equal(seen.size, checks.size + temporalSeen.size);
     if (micro && width) {
@@ -730,9 +746,12 @@ export async function live(
     }
     const observations = [...native.values()],
       published = new Map(observations.map((n) => [n.command, n.position]));
-    assert.equal(observations.length, proof.cut);
-    assert.equal(new Set(observations.map((n) => n.position)).size, proof.cut);
-    assert.equal(published.size, proof.cut);
+    const after = held?.after ?? 0;
+    const added = proof.cut - after;
+    assert.equal(observations.length, added);
+    assert.equal(new Set(observations.map((n) => n.position)).size, added);
+    assert.equal(published.size, added);
+    assert(observations.every((n) => n.position > after && n.position <= proof.cut));
     for (const [command, receipt] of checks) assert.equal(published.get(command), receipt.position);
     for (const f of ordered) assert.equal(published.get(f.command), f.position);
     const neighbors = Object.fromEntries(

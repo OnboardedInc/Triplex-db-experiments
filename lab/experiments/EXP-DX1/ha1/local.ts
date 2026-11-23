@@ -145,7 +145,14 @@ export async function localDrill(opts: any, config: any, manager: any) {
   assert(!pooled || ["hasync-ack", "hasync-move", "hasync-restart"].includes(mode));
   // [DX-INT1] Why: recheck the merged loader and recovery with this builder's diagnostic slot.
   // Rejected: borrowing another builder's live reservation.
-  assert(holder === owner || (holder === "DX-THIN1" && diagnostic));
+  const combined = opts.combined;
+  const cells = mode === "load-fair" ? ["fair", "read", "cold", "real-fair"] : ["failover"];
+  const ownedCombination = ["DX-CHK1", "DX-THIN1"].includes(holder) && diagnostic && cells.includes(combined) &&
+    (mode === "load-fair" || mode === "hasync-ack");
+  const scorecard = holder === "DX-V01" && opts.diagnostic === true && pooled &&
+    ["hasync-ack", "hasync-move"].includes(mode) && opts.people === "10";
+  assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard);
+  assert(combined === undefined || ownedCombination);
   if (mode === "load-fair") {
     const { cleanSource } = await import("../v01/source.ts");
     cleanSource(head());
@@ -259,7 +266,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
       // [DX-HASYNC1] Why: a queued exclusive lab window needs this process's heavy token to drain. Rejected: holding the token while waiting for that same window to finish.
       if (diagnostic) manager.assertMeasureAdmission(opts.holder);
       const disk = fs.statfsSync(root);
-      const floorBytes = (holder === "DX-THIN1" || mode === "load-fair" ? 10 : 5) * 2 ** 30;
+      const floorBytes = (holder === "DX-THIN1" || mode === "load-fair" || scorecard ? 10 : 5) * 2 ** 30;
       if (disk.bavail * disk.bsize < floorBytes) {
         e = declare(opts.slot);
         e.write("admission-refused", {
@@ -485,6 +492,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
         scopes,
         capacity: diagnostic ? "local-diagnostic" : "local",
         ...(pooled ? { pooled: true as const } : {}),
+        ...(combined ? { combined } : {}),
         ...(diagnostic ? { timing: "diagnostic" as const } : {}),
       },
       () => {

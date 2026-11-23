@@ -17,7 +17,10 @@ type Image = {
   layout: string; verification: string; scopes: Scope[]; bytes: number; sha256: string;
   proofs: { cursor: number; facts: number; cut: number; observed: number; sourceSeal: string }[];
 };
-export type AdoptedSeed = ReturnType<typeof openScaleSeal>;
+export type AdoptedSeed = ReturnType<typeof openScaleSeal> & {
+  realistic?: import("../real1/seal.ts").Image;
+  realisticBinding?: import("./realistic.ts").RealisticBinding;
+};
 export const scopeKey = (name: string) => JSON.stringify(["triplex-scope-v1", "test", "test", name, 0]);
 
 export function readScaleSeal(file: string, pin: string, toy = false, transferPin?: string) {
@@ -59,13 +62,16 @@ export function readScaleSeal(file: string, pin: string, toy = false, transferPi
     assert.equal(path.basename(path.dirname(file)), transfer.tag);
     assert.match(image.sha256, digest);
     assert(Number.isSafeInteger(image.bytes) && image.bytes > 0);
+
   }
   return { image, scope, proof, key, pin, dump, transferPin };
 }
 
-export function openScaleSeal(file: string, pin: string, toy = false, transferPin?: string) {
+// [DX-THIN1] Why: the realistic card opens the parent seal without its dump, as readScaleSeal does.
+// Rejected: two seal readers whose identity checks could drift apart.
+export function openScaleSeal(file: string, pin: string, toy = false, transferPin?: string, requireDump = true) {
   const seed = readScaleSeal(file, pin, toy, transferPin);
-  if (!toy) assert.equal(fs.statSync(seed.dump).size, seed.image.bytes);
+  if (!toy && requireDump) assert.equal(fs.statSync(seed.dump).size, seed.image.bytes);
   return seed;
 }
 

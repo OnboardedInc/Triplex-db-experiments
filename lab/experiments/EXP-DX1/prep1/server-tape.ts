@@ -3,6 +3,7 @@ import { offers, sha, type Offer } from "../w1/field/schedule.ts";
 
 export const seconds = 144;
 export const fairSeconds = 60;
+export const ceilingSeconds = 90;
 export const rates = [50, 235, 394, 620] as const;
 export const widths = [1, 2, 4] as const;
 export type Arm = {
@@ -69,6 +70,14 @@ export const storageArms: Arm[] = [
   },
   storageOrderedArm,
 ];
+export const ceilingArm: Arm = { ...storageOrderedArm, id: "1-ceiling-S" };
+const ceilingVariants = [
+  [620, 0],
+  [620, 6],
+  [900, 6],
+  [900, 0],
+] as const;
+export const widePeople = 1900;
 const shortened = (arm: Arm) => arm.credits !== undefined || arm.numericOwner !== undefined;
 export const operation = (label: string, ordinal: number) => `${label}-${ordinal}`;
 
@@ -93,7 +102,46 @@ function newCells(arm: Arm, duration: number) {
     .map((cell) => ({ ...cell, tapeSha: sha(cell.tape) }));
 }
 
-export function cells(arm: Arm, duration = shortened(arm) ? fairSeconds : seconds) {
+export function cells(
+  arm: Arm,
+  duration = arm.id === ceilingArm.id ? ceilingSeconds : shortened(arm) ? fairSeconds : seconds,
+): {
+  label: string;
+  rate: number;
+  tape: Offer[];
+  duration: number;
+  tapeSha: string;
+  credits?: 0 | 6;
+}[] {
+  if (arm.id === ceilingArm.id)
+    return ceilingVariants.flatMap(([rate, credits], band) => {
+      // [DX-PREP1] Why: visit the account's working set broadly and give each treatment its own person band.
+      // Rejected: replaying one hot tape onto both sides or claiming to reproduce a day in 90 seconds.
+      const choose = (stream: Offer[]) =>
+        stream.map((o, i) => ({
+          ...o,
+          person: ((band * widePeople + (i % widePeople)) * 7919 + o.account * 1291) % 100_000,
+          ordinal: (Math.floor(i / widePeople) + o.ordinal) % 415,
+        }));
+      const quiet = choose(offers(3.5, duration, [0]));
+      const remaining = rate * duration - quiet.length;
+      const neighbors = Array.from({ length: 9 }, (_, n) => {
+        const count = Math.floor(remaining / 9) + Number(n < remaining % 9);
+        return choose(offers(count / duration, duration, [n + 1]));
+      }).flat();
+      const loaded = [...quiet, ...neighbors].sort(
+        (a, b) => a.ms - b.ms || a.account - b.account || a.person - b.person,
+      );
+      assert.equal(loaded.length, rate * duration);
+      return [quiet, loaded].map((tape, i) => ({
+        label: `r${rate}-${credits ? "on" : "off"}-${i ? "loaded" : "alone"}`,
+        rate,
+        tape,
+        duration,
+        tapeSha: sha(tape),
+        credits,
+      }));
+    });
   if (!shortened(arm)) return newCells(arm, duration);
   return newCells(arm, seconds)
     .filter(({ rate }) => rate === 235 || rate === 394)

@@ -10,7 +10,7 @@ repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 here=lab/experiments/EXP-DX1/prep1
 stack=lab/experiments/EXP-DX1/stack
-mode=${1:?expected run, storage, storage-ordered, owner, fair or arm}
+mode=${1:?expected run, storage, storage-ordered, ceiling, owner, fair or arm}
 out=${2:?provide an absolute new output directory}
 source=${3:?provide the pinned Git commit}
 [[ "$out" == /* && "$source" =~ ^[a-f0-9]{40}$ && $(git rev-parse HEAD) == "$source" && -z $(git status --porcelain) ]]
@@ -27,7 +27,7 @@ export DX_GW_WRITE_ENTITY_CACHE_BYTES=268435456 DX_GW_READ_ENTITY_CACHE_BYTES=26
 producer=(node --import tsx "$here/server-produce.ts")
 tx_memory=10g tx_cache=2g
 tx_java='-Xms1g -Xmx6g -XX:+UseG1GC -XX:MaxGCPauseMillis=50'
-if [[ $mode == arm && ${DX_PREP1_CAMPAIGN:-comparison} =~ ^storage(-ordered)?$ ]]; then
+if [[ $mode == arm && ${DX_PREP1_CAMPAIGN:-comparison} =~ ^(storage(-ordered)?|ceiling)$ ]]; then
   # [DX-PREP1] Why: reserve the same JVM and container budget for every cache comparison.
   # Rejected: changing the heap or CPU as well as the object cache between the two S arms.
   tx_memory=30g
@@ -56,7 +56,31 @@ clean() {
 on_exit() { ret=$?; trap - EXIT; clean; exit "$ret"; }
 trap on_exit EXIT
 trap 'exit 143' TERM INT
-if [[ $mode == fair || $mode == owner || $mode == storage || $mode == storage-ordered ]]; then
+if [[ $mode == ceiling ]]; then
+  [[ $# == 6 ]]
+  exec timeout --kill-after=40s 3560s bash "$here/server.sh" ceiling-timed "$out" "$source" "$4" "$5" "$6"
+elif [[ $mode == ceiling-timed ]]; then
+  [[ $# == 6 && $4 == /* && ! -e $out && -z $(docker ps -q) ]]
+  parent=$(realpath -e "$4")
+  [[ -f $parent/seed.pgdump && $(head -c 5 "$parent/seed.pgdump") == PGDMP ]]
+  mkdir "$out" "$DX_STACK_EVIDENCE"
+  export DX_PREP1_CAMPAIGN=ceiling DX_PREP1_FAIR_CREDITS=0
+  "${producer[@]}" adopt-scale "$parent" "$5" "$6" > "$seed"
+  ln -s "$parent/seed.pgdump" "$dump"
+  "${producer[@]}" plan > "$out/plan.json"
+  dump_pin=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1])).dumpSha256' "$seed")
+  [[ $dump_pin =~ ^[a-f0-9]{64}$ ]]
+  (cd "$out"; sha256sum seed.json; printf '%s  seed.pgdump\n' "$dump_pin"; sha256sum plan.json) > "$out/SEAL.sha256"
+  tag=$(nonce); tag=${tag%%-*}
+  printf '%s\n' "$tag" > "$prefix_file"
+  printf '%s\n' "$source" > "$out/source"
+  chmod a-w "$out"/{SEAL.sha256,source,seed.json,plan.json,prefix}
+  # [DX-PREP1] Why: restore the full seed once and use disjoint cohorts in one time-bounded run.
+  # Rejected: counting two unbounded restores against the one-hour experiment.
+  owned="tx2-dxprep1-$tag-1-ceiling-s"
+  bash "$here/server.sh" arm "$out" "$source" 1-ceiling-S
+  unset owned
+elif [[ $mode == fair || $mode == owner || $mode == storage || $mode == storage-ordered ]]; then
   [[ $# == 4 ]]
   # [DX-PREP1] Why: cap time from seed verification through the last cleanup.
   # Rejected: four independent timeouts that let restore and teardown exceed the hour.
@@ -156,20 +180,27 @@ elif [[ $mode == arm ]]; then
     [[ $cell =~ ^1-(group-K|old-S|fixed-S|prefetch-S|cache-S|ordered-S)$ && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == storage-ordered ]]; then
     [[ $cell == 1-ordered-S && $(cat "$out/source") == "$source" ]]
+  elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == ceiling ]]; then
+    [[ $cell == 1-ceiling-S && $(cat "$out/source") == "$source" ]]
   else
     [[ $cell =~ ^(1|2|4)-(0-K|1-S|2-S|3-K)$ ]]
   fi
   tag=$(cat "$prefix_file")
   [[ $tag =~ ^[0-9a-f]{8}$ && -z $(docker ps -q) ]]
-  (cd "$out"; sha256sum --strict -c SEAL.sha256 > /dev/null)
+  if [[ ${DX_PREP1_CAMPAIGN:-comparison} == ceiling ]]; then
+    # The stack rehashes the dump before pg_restore. Check the other sealed files here.
+    (cd "$out"; sed -n '1p;3p' SEAL.sha256 | sha256sum --strict -c > /dev/null)
+  else
+    (cd "$out"; sha256sum --strict -c SEAL.sha256 > /dev/null)
+  fi
   export DX_PREP1_DUMP="$dump" DX_PREP1_DUMP_SHA=$(awk '$2=="seed.pgdump" {print $1}' "$out/SEAL.sha256")
   export DX_PREP1_WRITERS=${cell%%-*}
   export DX_PREP1_SUBJECT=0 DX_GROUP_COMMIT=1 DX_LIVE_PRIORITY=1
   export TX2_SUBJECT_NUMERIC_OWNER=0 TX2_SUBJECT_PREFETCH=0 TX2_SUBJECT_ORDERED_IDS=0
   if [[ $cell == *-S ]]; then export DX_PREP1_SUBJECT=1 DX_GROUP_COMMIT=0 DX_LIVE_PRIORITY=0; fi
-  if [[ $cell == 1-fixed-S || $cell == 1-prefetch-S || $cell == 1-ordered-S ]]; then export TX2_SUBJECT_NUMERIC_OWNER=1; fi
+  if [[ $cell == 1-fixed-S || $cell == 1-prefetch-S || $cell == 1-ordered-S || $cell == 1-ceiling-S ]]; then export TX2_SUBJECT_NUMERIC_OWNER=1; fi
   if [[ $cell == 1-prefetch-S ]]; then export TX2_SUBJECT_PREFETCH=1; fi
-  if [[ $cell == 1-ordered-S ]]; then export TX2_SUBJECT_ORDERED_IDS=1; fi
+  if [[ $cell == 1-ordered-S || $cell == 1-ceiling-S ]]; then export TX2_SUBJECT_ORDERED_IDS=1; fi
   export DX_WRITE_OPTIONS_ATTEMPT=$(nonce)
   # Hold total configured writer heap and the writer CPU mask fixed across peer counts.
   export DX_GW_WRITE_JAVA_OPTS="-Xms$((512/DX_PREP1_WRITERS))m -Xmx$((4096/DX_PREP1_WRITERS))m -XX:+UseG1GC"

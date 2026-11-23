@@ -4,159 +4,206 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { readScaleJvms, scaleHost, startScaleStack } from "../scale1/bench.ts";
-import { defaultCreditMode, launchProfile, type CreditMode } from "../jvm1/launch.mjs";
+import { launchProfile } from "../jvm1/launch.mjs";
 import { restoreDump } from "../scale1/seed-image.ts";
-import { adoptedArm, jsonFile, quietPair, type Residency } from "./adopted.ts";
+import { adoptedArm, jsonFile, quietPair, recordMixedIds, type Residency } from "./adopted.ts";
 import { nativeMetrics } from "../thin1/native-metrics.ts";
-import { openScaleSeal, hex } from "./adopt.ts";
-import { stackOptions, writeDiagnostics, type Age, type JvmProfile, type Writer } from "./profile.ts";
+import { openScaleSeal, hex, type AdoptedSeed } from "./adopt.ts";
+import { timeBudget, defaultWriter, physicalArms, writeDiagnostics, jvmProfiles, serverStages, stackOptions, type JvmProfile } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
+import { claimPgdata, inspectPgdata, pgdataArgs, pgdataTarget, preflightWal, sealedPgdata } from "./pgdata.ts";
+import { openSequence, startSequentialArm } from "./sequential.ts";
 
-const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, writer, jvm, agedFile, agedPin, agedDump, agedDumpPin,
-  txJvm = jvm, walDirectory = "", writeJvm = jvm, creditMode = defaultCreditMode, studyJvm = "", readCache = ""] = process.argv.slice(2);
+import { parseWindow, parseCredits } from "./server-workload.ts";
+import { realSeed, proveRealistic } from "./realistic.ts";
+import { physicalTelemetry } from "./cell-telemetry.ts";
+
+const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, requestedWriter, jvm, agedFile, agedPin,
+  agedDump, agedDumpPin, txJvm, walDirectory, armText, startedText, forecast, windowText, creditText, writeJvm, pgdataSource, ...pgdataPaths] = process.argv.slice(2);
 assert(source && campaign && seedDir && imagePin && transferPin);
-assert(age === "fresh" || age === "1B");
-assert(writer === "grouped" || writer === "subject");
-const launchOptions = { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile,
-  writeJvm: writeJvm as JvmProfile, creditMode: creditMode as CreditMode,
-  readCacheMiB: readCache ? Number(readCache) as 32 | 1536 | 3072 : undefined };
-const control = launchProfile("server", launchOptions);
-const tuned = studyJvm && launchProfile("server", { ...launchOptions, readJvm: studyJvm as JvmProfile, readTuned: true });
-assert(!tuned || age === "fresh");
-const diagnostics = writeDiagnostics(writer);
-const retirement = process.env.DX_W1_RETIREMENT_PAIR === "1";
-if (retirement) assert(!tuned && writer === "subject" && jvm === "j21-g1" && writeJvm === "j21-g1" &&
-  txJvm === "j25-zgc" && path.isAbsolute(walDirectory) && diagnostics.lookupEvery === 64 && !diagnostics.serialApply);
-
+assert(age === "fresh" || age === "1B" || age === "realistic");
+assert(requestedWriter === defaultWriter);
+assert(jvmProfiles.includes(jvm as JvmProfile) && jvmProfiles.includes(txJvm as JvmProfile));
+const windowSeconds = parseWindow(windowText), creditMode = parseCredits(creditText);
+const { budget, comparisonMinutes } = timeBudget(windowSeconds, age === "realistic");
+const policy = launchProfile("server", { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile, writeJvm: writeJvm as JvmProfile, creditMode });
+const diagnostics = writeDiagnostics(requestedWriter, process.env);
+const stages = serverStages(policy, !!walDirectory);
+assert(armText === "" || /^[1-3]$/.test(armText ?? ""), "Choose arm 1, 2 or 3");
+const sequenceArm = armText ? Number(armText) : undefined;
 const end = Number(deadlineText);
 assert(Number.isSafeInteger(end) && end > Date.now());
 const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock"), queue = fs.statSync(`/proc/${process.ppid}/fd/9`);
 assert.equal(lock.ino, queue.ino); assert.equal(lock.dev, queue.dev);
 scaleHost.physical();
-if (tuned) execFileSync("taskset", ["-apc", "9,10", String(process.pid)]);
 process.env.DX_BARE_METAL = "1";
 verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
-const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin);
-const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin) : undefined;
-fs.mkdirSync(campaign);
-jsonFile(path.join(campaign, "input.json"), { source, age, writer, policy: control, treatment: tuned || undefined, diagnostics, retirement: retirement || undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
-  agedBundle: expected?.pin, agedDump: expected?.dumpPin });
+pgdataArgs(pgdataPaths, pgdataSource, sequenceArm);
+const copies = pgdataSource ? inspectPgdata(pgdataSource, pgdataPaths, fs.realpathSync(path.dirname(campaign))) : [];
+let wal: ReturnType<typeof preflightWal> | undefined;
+if (walDirectory) {
+  try {
+    assert(copies.length === (sequenceArm === undefined ? physicalArms : 1), "Separate WAL needs prepared scorecard copies");
+    wal = preflightWal(walDirectory, copies.map(copy => copy.dir));
+  } catch (error) {
+    launchFailure(error);
+  }
+}
+if (age === "realistic") assert(sequenceArm && copies.length === 1 && pgdataSource && windowSeconds === 300);
+const seed: AdoptedSeed = age === "realistic"
+  ? await realSeed(fs.realpathSync(seedDir), imagePin, transferPin, fs.realpathSync(pgdataSource!), copies.map(copy => copy.dir))
+  : openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin, !copies.length);
+const expected = age === "1B" ? openAged(agedFile, agedPin) : undefined;
+if (!copies.length && expected) {
+  assert(agedDump && agedDumpPin && /^[a-f0-9]{64}$/.test(agedDumpPin));
+}
+const input = { source, age, writer: requestedWriter, jvm: jvm as JvmProfile, imagePin, transferPin, originalScope: seed.scope, realistic: seed.realisticBinding,
+  txJvm: txJvm as JvmProfile, writeJvm: writeJvm as JvmProfile, diagnostics, separateWal: !!wal, stages, wal, windowSeconds, creditMode,
+  agedBundle: expected?.pin, agedDump: agedDumpPin || undefined };
+let spent = 0, previousSystem: string | undefined;
+if (sequenceArm !== undefined) {
+  assert(pgdataSource && copies.length === 1 && forecast);
+  const sequence = openSequence(campaign, { input, sealed: sealedPgdata(pgdataSource),
+    cut: expected?.bundle.logicalHead ?? seed.realistic?.proof.cut ?? seed.scope.cut,
+    buildSha256: hex(fs.readFileSync(process.env.DX_V01_BUILD_RECEIPT!)), forecast });
+  const progress = startSequentialArm(campaign, sequence, sequenceArm, copies[0]!, Number(startedText));
+  spent = progress.elapsed;
+  previousSystem = progress.previous.at(-1)?.systemIdentifier;
+} else {
+  fs.mkdirSync(campaign);
+  jsonFile(path.join(campaign, "input.json"), { ...input, pgdata: copies.length ? copies : undefined });
+}
+if (seed.realistic) {
+  const destination = path.join(campaign, "realistic-image.json");
+  const bytes = fs.readFileSync(path.join(seedDir, "image.json"));
+  assert.equal(hex(bytes), imagePin);
+  if (fs.existsSync(destination)) assert.equal(hex(fs.readFileSync(destination)), imagePin);
+  else fs.writeFileSync(destination, bytes, { flag: "wx", mode: 0o600 });
+}
 let stopping = false;
 const stop = () => { stopping = true; };
 process.on("SIGTERM", stop);
 process.on("SIGINT", stop);
-for (const loaded of [false, true]) {
-  assert(!stopping && Date.now() + 10 * 60_000 < end);
-  const policy = loaded && tuned ? tuned : control;
-  const out = path.join(campaign, retirement ? (loaded ? "append" : "reference") : tuned ? (loaded ? "tuned" : "control") : (loaded ? "loaded" : "zero"));
+const minute = 60_000;
+const pairedEnd = Math.min(end - budget.comparison * minute, Date.now() - spent + budget.adoptionAndP1to4 * minute);
+const headlineEnd = Math.min(end - budget.comparison * minute,
+  Date.now() - spent + (budget.adoptionAndP1to4 + budget.P6 + budget.P7 + budget.P8) * minute);
+let systemIdentifier = previousSystem;
+for (const [i, stage] of stages.entries()) {
+  if (sequenceArm !== undefined && i + 1 !== sequenceArm) continue;
+  const { loaded, comparison } = stage;
+  const writer = defaultWriter;
+  const stageEnd = comparison ? Math.min(end, Date.now() + comparisonMinutes * minute)
+    : loaded ? Math.min(headlineEnd, pairedEnd + budget.P7 * minute) : pairedEnd;
+  assert(!stopping && Date.now() + 10 * minute < stageEnd, "Insufficient time to start the next scorecard arm");
+  const root = path.join(campaign, stage.root);
+  fs.mkdirSync(root, { recursive: true });
+  const out = path.join(root, loaded ? "loaded" : "zero");
   fs.mkdirSync(out);
-  const floor = age === "1B" ? 320 : 240;
-  assert(scaleHost.available(out) >= floor * 1024 ** 3, "Insufficient free space for the disposable restore");
+  const copy = copies[sequenceArm === undefined ? i : 0];
+  const floor = copy ? 5 : age === "1B" ? 320 : 240;
+  assert(scaleHost.available(out) >= floor * 1024 ** 3, "Insufficient free space for the scorecard arm");
+  const emptyReference = copy && loaded && !comparison && !seed.realistic
+    ? await emptyResidency(path.join(out, "p7-empty"), stage.policy) : undefined;
   const attempt = randomUUID();
   const slot = "tx2-dxscale1-v01-" + attempt.slice(0, 12);
-  jsonFile(path.join(out, "attempt.json"), { source, tag: path.basename(out), slot, attempt });
-  assert(Object.values(scaleHost.childrenInventory(slot)).every((x) => x.length === 0));
+  beginStack(out, slot, attempt);
+  let verifiedLaunch = false;
   try {
-    const options = stackOptions(writer, attempt, diagnostics);
-    const { engines } = startScaleStack(out, slot, source, writer === "grouped", tuned ? {
-      ...options, DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: loaded ? "1" : "0",
-    } : retirement ? { ...options, TX2_SUBJECT_APPEND_RETIREMENT: loaded ? "1" : "0" } : options, { policy, walDirectory });
-    const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
-    const residency = async () => {
-      const { write, read } = peerUrls();
-      const health = await (await fetch(new URL("/health", write), { signal: AbortSignal.timeout(2000) })).json() as any;
-      assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
-      const observed = await nativeMetrics({ prefix: slot, writeUrl: write, readUrl: read, gatewaySourceSha256: health.gatewaySourceHash,
-        containers: Object.entries(engines).map(([role, e]) => ({ id: e.id, name: `${slot}-${role}`, imageId: e.image })) });
-      return observed.roles as Residency;
-    };
-    const empty = tuned || retirement ? undefined : await residency();
-    const raw = path.join(out, "engines", slot, "trace", "raw");
-    await restoreDump(expected?.dump ?? seed.dump, expected?.dumpPin ?? seed.image.sha256, slot, engines,
-      Math.min(end - 9 * 60_000, Date.now() + (tuned ? 11 : 42) * 60_000), tuned ? () => {
-        // [DX-RD1] Why: the restored reader requires a new trace file for its own JVM boot.
-        // Rejected: appending samples to an empty-stack JVM's observations or discarding those observations.
-        for (const file of ["gw-r.jsonl", "rd1-gc.log", "gw-r-native-settings.json"]) {
-          const from = path.join(raw, file);
-          if (fs.existsSync(from)) fs.renameSync(from, from + ".before-restore");
-        }
-      } : undefined);
+    const options = { ...stackOptions(writer, attempt, diagnostics), DX_V01_CELL_COUNTERS: "1" };
+    if (copy) claimPgdata(copy, source, slot, attempt);
+    const { engines } = startScaleStack(out, slot, source, false, copy ? {
+      ...options, DX_V01_PGDATA: copy.dir, DX_V01_PGDATA_CONTROL_SHA: copy.controlSha256,
+      DX_V01_PGDATA_FILE_ID: copy.device + ":" + copy.inode,
+    } : options, { policy: stage.policy, walDirectory: stage.separateWal ? wal!.wal : undefined });
+    const java = checkLaunch(out, slot, attempt, engines, stage);
+    const residency = () => stackResidency(slot, engines);
+    let empty = emptyReference;
+    if (copy) {
+      const container = engines.pg!.id;
+      const liveFileId = execFileSync("docker", ["exec", container, "stat", "-c", "%d:%i", pgdataTarget],
+        { encoding: "utf8", timeout: 10000 }).trim();
+      assert.equal(liveFileId, copy.device + ":" + copy.inode);
+      const liveCluster = execFileSync("docker", ["exec", container, "psql", "-XAtq", "-v", "ON_ERROR_STOP=1", "-U", "postgres",
+        "-d", "datomic", "-c", "SELECT current_setting('data_directory'), system_identifier FROM pg_control_system()"],
+        { encoding: "utf8", timeout: 10000 }).trim().split("|");
+      assert.equal(liveCluster[0], pgdataTarget);
+      assert.match(liveCluster[1] ?? "", /^[1-9][0-9]*$/);
+      systemIdentifier ??= liveCluster[1];
+      assert.equal(liveCluster[1], systemIdentifier, "Prepared arms must share the sealed PostgreSQL system identifier");
+      jsonFile(path.join(out, "pgdata.json"), { source, slot, attempt, at: Date.now(), container, copy, liveFileId, systemIdentifier });
+    } else {
+      if (!comparison) empty = await residency();
+      await restoreDump(expected ? agedDump! : seed.dump, expected ? agedDumpPin! : seed.image.sha256, slot, engines,
+        Math.min(stageEnd - 10 * 60_000, Date.now() + 42 * 60_000));
+    }
     const write = `http://${engines["gw-w"]!.address}:8080`;
     const read = `http://${engines["gw-r"]!.address}:8080`;
-    const jw = readScaleJvms(path.join(out, "restored-jvm"), engines, policy);
+    const jw = copy ? java : readScaleJvms(path.join(out, "restored-jvm"), engines, stage.policy);
     const health = await (await fetch(new URL("/health", write), { signal: AbortSignal.timeout(2000) })).json() as any;
     assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
-    const head = expected ? await verifyAged(expected, out, engines.pg!.address) : seed.scope.cut;
-    assert(!stopping && Date.now() + 8 * 60_000 < end);
-    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw,
-      creditMode: policy.creditMode, serialApply: diagnostics.serialApply, empty, residency };
-    if (tuned) {
-      const native = JSON.parse(fs.readFileSync(path.join(raw, "gw-r-native-settings.json"), "utf8"));
-      assert.deepEqual([native.source, native.slot, native.process], [source, slot, "gw-r"]);
-      if (policy["gw-r"].cacheMiB !== null) assert.equal(native.datomic["datomic.objectCacheMax"].value, policy["gw-r"].cacheMiB * 1024 ** 2);
-      const readPeerCounters = containerCounters(engines["gw-r"].id);
-      const postgresCounters = containerCounters(engines.pg.id);
-      const counters = () => ({ readPeer: readPeerCounters(), postgres: postgresCounters() });
-      let terminal = head;
-      for (const rate of [50, 235] as const) {
-        assert(!stopping && Date.now() + 4 * 60_000 < end);
-        const folder = path.join(out, String(rate));
-        fs.mkdirSync(folder);
-        const arm = await adoptedArm(folder, source, peer, seed, writer, true, false, terminal, undefined,
-          { rate, batch: loaded ? 8 : 1, sample: true, counters });
-        terminal = arm.terminal;
-      }
-      continue;
+    if (seed.realistic) {
+      const native = await proveRealistic(write, seed.realistic, engines["gw-w"]!.id);
+      jsonFile(path.join(out, "realistic-live.json"), { at: Date.now(), source, slot, attempt, native, host: hex(fs.readFileSync("/etc/machine-id")), seal: seed.realisticBinding });
     }
-    if (retirement) {
-      let cut = head;
-      const [rates, seconds] = age === "fresh" ? [[394, 620], 300] as const : [[50, 235], 120] as const;
-      for (const rate of rates) {
-        assert(!stopping && Date.now() + (seconds + 120) * 1000 < end);
-        const window = path.join(out, String(rate));
-        fs.mkdirSync(window);
-        const result = await adoptedArm(window, source, peer, seed, writer, true, false, cut, undefined, undefined,
-          { rate, append: loaded, seconds });
-        cut = result.terminal;
+    const head = expected ? await verifyAged(expected, out, slot, attempt, engines.pg!.address) : seed.realistic?.proof.cut ?? seed.scope.cut;
+    assert(!stopping && Date.now() + 8 * 60_000 < stageEnd);
+    verifiedLaunch = true;
+    console.log(`[DX-V01] Verified live server startup for ${stage.name}/${loaded ? "loaded" : "zero"} before offers`);
+    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency, windowSeconds, creditMode: stage.policy.creditMode, serialApply: diagnostics.serialApply, telemetry: physicalTelemetry(out, engines) };
+    const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head, undefined, comparison);
+    if (loaded && !stopping) {
+      const quietEnd = comparison ? stageEnd : Math.min(headlineEnd - budget.P8 * minute, Date.now() + budget.P6 * minute);
+      const cut = await quietPair(root, source, peer, seed, writer, false, arm.terminal, quietEnd);
+      let after = cut;
+      if (!stopping && !comparison) {
+        const { runImport } = await import("./import-arm.ts");
+        after = runImport(root, source, peer, seed, writer, false, cut);
       }
-    } else {
-      const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head);
-      if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
+      if (!stopping && !comparison) await recordMixedIds(root, source, peer, seed, writer, after);
     }
+  } catch (error) {
+    if (!verifiedLaunch) launchFailure(error);
+    throw error;
   } finally {
     scaleHost.clean(out, slot);
   }
-  if (retirement) execFileSync("python3", ["-I", "lab/experiments/EXP-DX1/w1/serial/summarize.py",
-    out, slot, attempt, source, age, creditMode], { stdio: "inherit" });
+  if (sequenceArm !== undefined) assert(!stopping, "Sequential arm was interrupted");
 }
 
-if (retirement) {
-  const arms = ["reference", "append"].map((arm) =>
-    JSON.parse(fs.readFileSync(path.join(campaign, arm, "retirement-diagnostic.json"), "utf8")));
-  assert(arms.every((arm) => arm.source === source && arm.creditMode === creditMode));
-  assert.notEqual(arms[0].attempt, arms[1].attempt);
-  assert.notEqual(arms[0].slot, arms[1].slot);
-  assert.deepEqual(arms[0].windows.map((x: { tapeSha256: string }) => x.tapeSha256),
-    arms[1].windows.map((x: { tapeSha256: string }) => x.tapeSha256));
-  assert.equal(arms[0].windows[0].firstCut, arms[1].windows[0].firstCut);
-  jsonFile(path.join(campaign, "retirement-comparison.json"), { source, age, creditMode, imagePin, transferPin, arms });
+function beginStack(out: string, slot: string, attempt: string) {
+  assert(Object.values(scaleHost.childrenInventory(slot)).every((x) => x.length === 0));
+  jsonFile(path.join(out, "attempt.json"), { source, slot, nonce: attempt, tag: path.basename(out) });
 }
 
-// [DX-RD1] Why: process-group CPU and block I/O can distinguish a busy core from a blocked peer.
-// Rejected: treating wall time in a Datomic call as CPU or a PostgreSQL page-cache hit as physical I/O.
-function containerCounters(container: string) {
-  const pid = execFileSync("docker", ["inspect", "--format", "{{.State.Pid}}", container], { encoding: "utf8" }).trim();
-  assert(/^[1-9]\d*$/.test(pid));
-  const group = fs.readFileSync(`/proc/${pid}/cgroup`, "utf8").match(/^0::(\/.+)$/m)?.[1];
-  assert(group, "Reader study needs cgroup v2 per-container counters");
-  return () => Object.fromEntries(["cpu.stat", "cpu.pressure", "io.stat", "io.pressure", "memory.current"].map((file) => {
-    const name = path.join("/sys/fs/cgroup", group, file);
-    return [file, fs.existsSync(name) ? fs.readFileSync(name, "utf8") : null];
-  }));
+async function stackResidency(slot: string, engines: ReturnType<typeof startScaleStack>["engines"]) {
+  const writeUrl = `http://${engines["gw-w"]!.address}:8080`;
+  const readUrl = `http://${engines["gw-r"]!.address}:8080`;
+  const health = await (await fetch(new URL("/health", writeUrl), { signal: AbortSignal.timeout(2000) })).json() as any;
+  assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
+  const observed = await nativeMetrics({ prefix: slot, writeUrl, readUrl, gatewaySourceSha256: health.gatewaySourceHash,
+    containers: Object.entries(engines).map(([role, e]) => ({ id: e.id, name: `${slot}-${role}`, imageId: e.image })) });
+  return observed.roles as Residency;
 }
 
-function openAged(label: Age, file?: string, pin?: string, dump?: string, dumpPin?: string) {
-  assert(label === "1B" && file && pin && dump && dumpPin && /^[a-f0-9]{64}$/.test(dumpPin));
+async function emptyResidency(out: string, policy: ReturnType<typeof launchProfile>) {
+  fs.mkdirSync(out);
+  const attempt = randomUUID();
+  const slot = "tx2-dxscale1-v01-" + attempt.slice(0, 12);
+  beginStack(out, slot, attempt);
+  try {
+    const { engines } = startScaleStack(out, slot, source, false, stackOptions("per-person-ordered", attempt), { policy });
+    const java = readScaleJvms(path.join(out, "live-jvm"), engines, policy);
+    const roles = await stackResidency(slot, engines);
+    jsonFile(path.join(out, "residency.json"), { source, attempt, slot, at: Date.now(), java, roles });
+    return roles;
+  } finally {
+    scaleHost.clean(out, slot);
+  }
+}
+
+function openAged(file?: string, pin?: string) {
+  assert(file && pin);
   const bytes = fs.readFileSync(file);
   assert.equal(hex(bytes), pin);
   const bundle = JSON.parse(bytes.toString());
@@ -165,10 +212,10 @@ function openAged(label: Age, file?: string, pin?: string, dump?: string, dumpPi
   assert.equal(bundle.scope, seed.key);
   assert(Number.isSafeInteger(bundle.logicalHead) && bundle.logicalHead > seed.scope.cut);
   assert(bundle.records >= 1_000_000_000);
-  return { file, pin, dump, dumpPin, bundle };
+  return { file, pin, bundle };
 }
 
-async function verifyAged(expected: ReturnType<typeof openAged>, out: string, postgres: string) {
+async function verifyAged(expected: ReturnType<typeof openAged>, out: string, slot: string, attempt: string, postgres: string) {
   assert(process.env.AGE_JAVA && process.env.AGE_DATOMIC_HOME);
   // [DX-V01] Why: check the fresh peer against the exact aged replay bundle before touching the restored arm.
   // Rejected: treating the 1B label or the dump size as proof of age.
@@ -181,10 +228,44 @@ async function verifyAged(expected: ReturnType<typeof openAged>, out: string, po
   try {
     const result = checkScorecard(expected.file, expected.pin);
     assert.equal(result.logicalHead, expected.bundle.logicalHead);
-    jsonFile(path.join(out, "aged-live-check.json"), result);
+    jsonFile(path.join(out, "aged-live-check.json"), { ...result, source, slot, attempt });
     return result.logicalHead;
   } finally {
     if (original === undefined) delete process.env.DATOMIC_URI_TEMPLATE;
     else process.env.DATOMIC_URI_TEMPLATE = original;
   }
+}
+
+function launchFailure(error: unknown): never {
+  const detail = error instanceof Error ? error.message.split("\n")[0] : String(error);
+  console.error("[DX-V01] Early launch check stopped before offers. " + detail);
+  throw error;
+}
+
+function checkLaunch(out: string, slot: string, attempt: string, engines: ReturnType<typeof startScaleStack>["engines"],
+  stage: ReturnType<typeof serverStages>[number]) {
+  const java = readScaleJvms(path.join(out, "live-jvm"), engines, stage.policy);
+  for (const { role, container, process } of java) {
+    const expected = stage.policy[role];
+    assert(process.split("\n").includes("memory.max=" + expected.memoryMiB * 2 ** 20), "Live JVM memory limit differs for " + role);
+    const cpuSet = (list: string) => list.split(",").flatMap((interval) => {
+      assert(/^\d+(?:-\d+)?$/.test(interval));
+      const [lo, hi = lo] = interval.split("-").map(Number);
+      return Array.from({ length: hi! - lo! + 1 }, (_, i) => lo! + i);
+    });
+    const effective = /^cpuset.cpus.effective=(.+)$/m.exec(process)?.[1];
+    assert(effective);
+    assert.deepEqual(cpuSet(effective), cpuSet(expected.cpus!), "Live JVM core placement differs for " + role);
+    if (expected.cacheMiB !== null) {
+      const pid = /^pid=(\d+)$/m.exec(process)?.[1];
+      assert(pid);
+      execFileSync("docker", ["exec", container, "sh", "-ceu",
+        'tr "\\000" "\\n" < "/proc/$1/cmdline" | grep -Fxq -- "$2"', "sh", pid, "-Ddatomic.objectCacheMax=" + expected.cacheMiB + "m"],
+        { timeout: 10000 });
+    }
+  }
+  jsonFile(path.join(out, "launch-check.json"), { source, slot, attempt, at: Date.now(),
+    policy: stage.policy, diagnostics, separateWal: stage.separateWal, postgres: engines.pg!.id,
+    java: java.map(({ role, container }) => ({ role, container })) });
+  return java;
 }

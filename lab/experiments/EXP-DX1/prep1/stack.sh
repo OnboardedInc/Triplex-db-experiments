@@ -7,6 +7,7 @@ export PREP1_ATTEMPT=$(cat /config/attempt)
 export TX2_SUBJECT_NUMERIC_OWNER=$(cat /config/subject-owner)
 export TX2_SUBJECT_PREFETCH=$(cat /config/subject-prefetch)
 export TX2_SUBJECT_ORDERED_IDS=$(cat /config/subject-ordered)
+export DX_CHK1_APPEND_GATE=$(cat /config/chk1-replay 2>/dev/null || printf 0)
 export TX2_SUBJECT_APPEND_RETIREMENT=$(cat /config/subject-retirement 2>/dev/null || printf 0)
 export TX2_SUBJECT_NARROW_REVISION=$(cat /config/subject-serial 2>/dev/null || printf 0)
 export TX2_SUBJECT_REUSE_PREDECESSOR=$TX2_SUBJECT_NARROW_REVISION

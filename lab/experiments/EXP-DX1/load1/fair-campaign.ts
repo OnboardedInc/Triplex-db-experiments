@@ -348,7 +348,7 @@ async function arm(
     const byPosition = new Map(feed.map((r) => [r.position, r]));
     for (const row of writes.rows) {
       if (!row.receipt) continue;
-      checkSavedIdentity(row, byPosition.get(row.receipt.p)!, "subject", options.subjectFunction);
+      checkSavedIdentity(row, byPosition.get(row.receipt.p)!, "per-person-ordered", options.subjectFunction);
       assert(byPosition.delete(row.receipt.p));
     }
     let previousImport = head;

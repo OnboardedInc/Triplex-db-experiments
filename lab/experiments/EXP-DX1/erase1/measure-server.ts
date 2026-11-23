@@ -645,7 +645,7 @@ async function measure(writer: DatomicClient, reader: DatomicClient, writeAddres
         checkSavedIdentity(
           save,
           decodeFeed(db, entry, now(), true),
-          "subject",
+          "per-person-ordered",
           opts.subjectFunction,
         );
         pending.delete(cursor);
@@ -711,7 +711,7 @@ try {
     source,
     false,
     {
-      ...stackOptions("subject", attempt),
+      ...stackOptions("per-person-ordered", attempt),
       DX_ERASE2_SCOPE: seed.key,
       DX_ERASE2_FIELD: marked,
       DX_ERASE_TOKEN: token,

@@ -46,6 +46,14 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     owner_head = os.environ.get("DX_W1_OWNER_HEAD", "0")
     if owner_head not in ("0", "1") or (owner_head == "1" and (mode, ordered, numeric_owner) != ("rolling-recovery", "1", "1")):
         raise SystemExit("The owner head gate requires the ordered rolling-recovery fixture")
+    combined = os.environ.get("DX_CHK1_APPEND_GATE") == "1"
+    if combined and (mode, ordered, serial) != ("rolling-recovery", "1", "1"):
+        raise SystemExit("DX-CHK1 runs the ordered serial rolling6 append fixture")
+    if combined and owner_head == "1":
+        raise SystemExit("Run the owner head gate and the DX-CHK1 append gate as separate attempts")
+    holder = (os.environ.get("DX_CHK1_HOLDER", "DX-CHK1") if combined
+              else "DX-W1" if owner_head == "1" else "DX-PREP1")
+    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
     # [DX-W1] Why: match both saves per owner-layout arm to their transactor read counters.
     # Rejected: treating empty peer I/O metadata as zero native storage reads.
     lookup_every = 1 if owner_head == "1" else 3 if serial == "1" and mode == "rolling-recovery" else 0
@@ -71,6 +79,9 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     (config / "subject-ordered").write_text(ordered + "\n")
     (config / "subject-serial").write_text(serial + "\n")
     (config / "subject-head").write_text(owner_head + "\n")
+    if combined:
+        (config / "subject-retirement").write_text("1\n")
+        (config / "chk1-replay").write_text("1\n")
     (config / "lookup-every").write_text(str(lookup_every) + "\n")
     if mode == "live":
         if not 1 <= int(seconds) <= 60:
@@ -92,10 +103,13 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     # Rejected: copying PostgreSQL and Node layers onto the shared VM for a native-only gate.
     if mode != "subject-native-suite":
         recipe = config / "Dockerfile"
-        before, main, rest = recipe.read_text().partition("FROM ${DATOMIC_BASE}")
-        assert main and "\nARG DATOMIC_BASE=" in before
-        recipe.write_text(before + "FROM postgres:17-alpine AS prep_pg\nFROM node:22.23.2-bookworm-slim AS prep_node\n"
-                          + main + rest + """
+        original = recipe.read_text()
+        first_from = original.index("FROM ")
+        # [DX-CHK1] Why: preserve the global base ARG for every stage.
+        # Rejected: prepending stages before the pinned Java declaration.
+        recipe.write_text(original[:first_from]
+                          + "FROM postgres:17-alpine AS prep_pg\nFROM node:22.23.2-bookworm-slim AS prep_node\n"
+                          + original[first_from:] + """
 COPY --from=prep_pg / /opt/thin-pg/
 COPY --from=prep_node /usr/local/bin/node /usr/local/bin/node
 RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
@@ -118,8 +132,10 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     if os.environ.get("DOCKER_HOST") != profile["dockerHost"]:
         raise SystemExit("Lab Docker endpoint does not match the configured endpoint")
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
-    tag = f"dx-w1-head-{out.name}-{head[:8]}" if owner_head == "1" else f"dx-prep1-{mode}"
-    profile["lanes"]["datomic"]["image"] = f"tx2-datomic:{tag}"
+    profile["lanes"]["datomic"]["image"] = (f"tx2-datomic:dx-w1-head-{out.name}-{head[:8]}" if owner_head == "1"
+                                            else (f"tx2-dxthin-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}"
+                                                  if holder == "DX-THIN1" else f"tx2-datomic:dx-chk1-rolling-{attempt[:8]}")
+                                            if combined else f"tx2-datomic:dx-prep1-{mode}")
     slots.write_text(json.dumps(profile, indent=2) + "\n")
     source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
     if clojure_inputs:
@@ -136,6 +152,8 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     inputs = {
         "attempt": attempt,
         "mode": mode,
+        "holder": holder,
+        "appendRetirement": combined,
         "timings": "diagnostic",
         "subject": subject == "1",
         "numericOwner": numeric_owner == "1",
@@ -157,10 +175,12 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
 def run_stage(out, inputs):
     stage = out / "stage"
     slots = stage / "lab/config/slots.json"
-    holder = "DX-W1" if inputs.get("ownerHead") else "DX-PREP1"
     engine_state = out / "engine-state" if inputs.get("ownerHead") else REPO / "runs/engines/prep1"
     env = dict(os.environ, TX2_CONFIG_DIR=str(stage), TX2_SLOTS_FILE=str(slots), TX2_ENGINE_DIR=str(engine_state))
     attempt = inputs["attempt"]
+    holder = inputs.get("holder", "DX-PREP1")
+    if holder in ("DX-CHK1", "DX-THIN1") and shutil.disk_usage(REPO).free < 10 * GIB:
+        raise SystemExit("DX-CHK1 host free disk below 10 GiB")
     if any(sha(stage / path) != digest for path, digest in inputs["stage"].items()):
         raise SystemExit("Staged source bytes changed")
     # [DX-PREP1] Why: retain each refusal and let the existing manager decide whether the shared slot fits.

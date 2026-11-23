@@ -163,20 +163,22 @@ export async function nativeMetrics(stack: Stack) {
       assert(info.Config.Env.includes("TX2_REACH_SESSION_ENTRIES=4096"));
       assert(info.Config.Env.some((s: string) => s.startsWith("DATOMIC_JAVA_OPTS=") && s.split(/\s+/).includes("-Ddatomic.objectCacheMax=32m")));
     }
-    const rss = docker(["top", c.id, "-eo", "rss"]).split("\n").slice(1).map(Number);
-    assert(rss.length && rss.every((x) => Number.isFinite(x) && x > 0));
+    // [DX-SCALE1] Why: Docker filters host ps rows by PID before returning the requested counters.
+    // Rejected: omitting PID or treating an unavailable process list as zero memory.
+    const [columns, ...processes] = docker(["top", c.id, "-eo", "pid,rss,nlwp"]).split("\n");
+    assert.deepEqual(columns?.trim().split(/\s+/), ["PID", "RSS", "NLWP"]);
+    const rows = processes.map((line) => line.trim().split(/\s+/).map(Number));
+    assert(rows.length && rows.every((row) =>
+      row.length === 3 && row.every((n) => Number.isSafeInteger(n) && n > 0)));
+    assert.equal(new Set(rows.map(([pid]) => pid)).size, rows.length);
     const bytes = (file: string) => Number(docker(["exec", c.id, "cat", "/sys/fs/cgroup/" + file]));
     const cgroupBytes = bytes("memory.current"),
       peakBytes = bytes("memory.peak");
     assert(cgroupBytes > 0 && peakBytes >= cgroupBytes);
     roles[role] = {
       container: c.id,
-      threads: docker(["top", c.id, "-eo", "nlwp"])
-        .split("\n")
-        .slice(1)
-        .map(Number)
-        .reduce((a, b) => a + b, 0),
-      rssBytes: rss.reduce((sum, value) => sum + value, 0) * 1024,
+      threads: rows.reduce((sum, row) => sum + row[2]!, 0),
+      rssBytes: rows.reduce((sum, row) => sum + row[1]!, 0) * 1024,
       cgroupBytes,
       peakBytes,
     };

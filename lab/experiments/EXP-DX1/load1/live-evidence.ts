@@ -19,6 +19,8 @@ export interface OfferTape {
   source: string;
   slot: string;
   scope: string;
+  after?: number;
+  referenceImport?: boolean;
   start: number;
   duration: number;
   samples: Offer[];
@@ -110,6 +112,7 @@ export function replayLive(
     duration: number;
     rate: number;
     neighbors: Record<string, { save: Measure; read: Measure }>;
+    held?: { scope: string; after: number; referenceImport?: boolean };
     facts: number;
     fps: number;
     aboveBudget?: number;
@@ -149,7 +152,7 @@ export function replayLive(
       attempt.nonce,
       attempt.source.git,
       attempt.slot,
-      prefix + "-" + arm.arm,
+      arm.held?.scope ?? prefix + "-" + arm.arm,
       attempt.mode === "load-volume"
         ? volumeWindow(arm.arm, mac)
         : pipeline || paced
@@ -158,6 +161,9 @@ export function replayLive(
     ],
   );
   assert.equal(arm.scope, tape.scope);
+  assert.equal(arm.held?.after, tape.after);
+  assert.equal(arm.held?.referenceImport, tape.referenceImport);
+  if (tape.referenceImport) assert(paced && arm.arm === "pace-32-fixed");
   assert.equal(arm.duration, tape.duration);
   assert(Number.isFinite(tape.start));
   const diagnosticVolume = mac && (pipeline || paced || attempt.mode === "load-volume");
@@ -327,7 +333,10 @@ export function replayLive(
       first = row.end;
       lastAck = row.ack;
       const n = recorded.get(row.command)!;
-      if (diagnosticVolume && n.recovered) assert.equal(row.service, undefined);
+      if (tape.referenceImport) {
+        assert(n.grant == null && n.serialHold == null);
+        assert.equal(row.service, undefined);
+      } else if (diagnosticVolume && n.recovered) assert.equal(row.service, undefined);
       else {
         assert(n.grant?.bulk && !n.grant["runnable-live"] && n.serialHold);
         assert.equal(row.service?.ms, n.serialHold.end - n.serialHold.start);

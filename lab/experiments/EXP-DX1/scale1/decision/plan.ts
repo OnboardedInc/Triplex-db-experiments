@@ -52,9 +52,7 @@ export const quietFor = (repeat: number, isolation = false) =>
   isolation ? Math.floor(repeat / rates.length) % accounts.length : quiet;
 export const field = (i: number) => ":task/field-" + i;
 export const sha = (x: unknown) => createHash("sha256").update(JSON.stringify(x)).digest("hex");
-// [DX-SCALE1] Why: recovery must resolve the exact operation ID through the gateway's path segment. Rejected: sending a slash-delimited tape key through an encoded path.
-export const operationId = (nonce: string, version: string) =>
-  nonce + "-" + version.replaceAll("/", "-");
+export { operationId } from "./operation-id.ts";
 export const keyFor = (a: number) => "account-" + String(a + 1).padStart(3, "0");
 const namespace = (a: number) => "acct/" + keyFor(a) + "/";
 export const root = (a: number, i: number) => namespace(a) + ids.placement(i);
@@ -181,6 +179,7 @@ export type Write = {
   ms: number;
   width: number;
   version: string;
+  owner?: string;
 };
 const preferred = new Map<Density, number[][]>();
 export function activeSubjects(people: Density) {
@@ -259,6 +258,7 @@ export function readTape(
   cell?: Cell,
   enabled = true,
   isolation = false,
+  window = readWindow(cell, isolation),
 ): Read[] {
   if (!enabled) return [];
   const rng = new Rng(
@@ -270,7 +270,7 @@ export function readTape(
         people,
     ),
   );
-  const { from, duration } = readWindow(cell, isolation);
+  const { from, duration } = window;
   return Array.from({ length: (readers * duration) / 1000 }, (_, ordinal) => ({
     seat: ordinal % readers,
     ordinal,
