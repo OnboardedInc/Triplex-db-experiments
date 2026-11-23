@@ -58,3 +58,22 @@ Short-cut share in arm `on` at the old pin: 95–99% of reads answered from the 
 
 **Falsifier.** Arm `on` at the old pin below 100 reads/s at one seat means the walk is not the whole cost or the option did not act (check `shortcut` counts in the step records and `pinnedCutLookup` in the write options). Any wrong value, or a gate difference, means an option is not exact and must not merge. Arm `off` near the head below 150/s at one seat would mean the HTTP route pays a cost the probe did not see.
 
+
+## Pinned-read fix pair: result (21:24–21:45 UTC on 2026-11-23)
+
+Build `dc34aa18d` (`exp/DX-RD1-readers`, containing the one branch at `3d4320155`), `v01/study-server.ts` with `DX_RD2_PINNED_PAIR=1`, one arm per new physical copy of the sealed held cluster, aged fresh-peer check on the stack network, `server` profile, one reader core, 1.5 GiB reader cache. Arm `off` ran 21:24–21:35 (including the 5-minute build), arm `on` 21:35–21:45. Both exited 0 and removed their copies; `pinned-comparison.json` written.
+
+| Pin | Seats | Off: reads/s · p50 / p99 ms | On: reads/s · p50 / p99 ms · read from current | Prediction (off; on) |
+| --- | ---: | --- | --- | --- |
+| Old pin 87,002 | 1 | 19.37 · 41.73 / 103.94 | **467.92** · 1.37 / 14.34 · 98.0% | 17–23/s, 40–55 ms; 400–700/s, 1.2–2.5 ms |
+| Old pin 87,002 | 16 | 19.50 · 782.34 / 1,171.46 | **478.92** · 27.14 / 101.38 · 98.1% | 17–23/s; 500–1,200/s |
+| Old pin 87,002 | 256 | 20.20 · 12,582.91 / 13,500.42 | **478.80** · 516.10 / 880.64 · 99.5% | 17–22/s, 11–15 s; 500–1,200/s |
+| Head − 1,000 | 1 | 409.00 · 1.53 / 13.57 | 770.67 · 1.06 / 3.82 | 300–600/s, 1.5–3 ms; 400–700/s |
+| Head − 1,000 | 16 | 310.00 · 42.24 / 118.78 | 612.97 · 23.42 / 79.87 | 400–900/s; 500–1,200/s |
+| Head − 1,000 | 256 | 283.25 · 851.97 / 1,236.99 | 534.72 · 464.90 / 786.43 | 400–1,000/s; 500–1,200/s |
+
+**Zero wrong values and zero errors in all twelve steps.** Every old-pin read was checked against the seed's value.
+
+**Against the predictions.** The options remove the old-pin cost: 19.4 → 467.9 reads/s at one seat (24×), p50 41.7 → 1.37 ms, inside the predicted 400–700/s and 1.2–2.5 ms. The falsifier (on below 100/s at one seat, or any wrong value) did not trigger. At 16 and 256 seats arm `on` stayed near 479/s, just under the predicted 500–1,200/s floor; the single reader core is the limit there. Near the head with the options off, 16 and 256 seats gave 310/s and 283/s, below the predicted 400–1,000/s; one seat (409/s) was inside the range.
+
+Evidence: `evidence/DX-SCALE1/pinned-pair-1b/pinned-pair-1b.tar.gz` in the private evidence folder (SHA-256 `e7d59dc3c55081406b666d80b2c6f1fc5a336d6d5004d8140c9b32ba0e2c76b8`).
