@@ -22,6 +22,8 @@ ITEMS = {
     # [DX-BM1] Why: bench 4's aged arm; its pin's checkpoint reader and latency module equal ANALYSER's byte for byte.
     **{name: ("cdc72d4d5bd6cc1adecaaf9267a351173763d134", ("rolling6-cache32",))
        for name in ("cache32-aged", "cache32-aged-b", "cache32-aged-c")},
+    **{name: ("1bbaf54cdd2180ccaa2cd6ce961c05be49eefbc2", ("rolling6-cache32",))
+       for name in ("cache32-aged-r", "cache32-aged-r2")},
     "fresh": ("891ab9139eb4fa6defe2c5484ada332b84090e6f", ("rolling6", "fresh6", "fresh-zgc6")),
 }
 BUILDER = "lab/experiments/EXP-DX1/prep1"

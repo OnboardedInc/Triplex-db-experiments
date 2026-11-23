@@ -10,8 +10,13 @@ mode=${3:-run}
 [[ $root == /var/tmp/triplex-bm1/bench4 && $EUID == 0 && $(systemd-detect-virt) == none ]]
 case $selection in
   cache32-aged|cache32-aged-b|cache32-aged-c) pin=cdc72d4d5bd6cc1adecaaf9267a351173763d134 ;;
+  # [DX-BM1] Why: PREP1's repaired live-head check (AGED-CACHE.md at fb751f994); cdc72d4d5 refused AGE1's journal rows.
+  cache32-aged-r|cache32-aged-r2) pin=1bbaf54cdd2180ccaa2cd6ce961c05be49eefbc2 ;;
+  # [DX-BM1] Why: REAL2's production-shaped tape on the fresh template (real2/PRODUCTION-TAPE.md), same environment.
+  production) pin=173f9d463b8a66d2e9da5c804c3076779accc292 ;;
   *) exit 2 ;;
 esac
+aged_run=1; [[ $selection == production ]] && aged_run=0
 job=$root/queue/$selection
 build=$job/build
 repo=$build/repository
@@ -41,15 +46,18 @@ if [[ $mode == cleanup ]]; then
     tag=$(cat "$out/prefix")
     [[ $tag =~ ^[a-f0-9]{8}$ && $(cat "$out/source") == "$pin" ]]
     cd "$repo"
-    owned=tx2-dxprep1-$tag-1-rolling6-cache32-s
-    if [[ -n $(inventory "$owned") ]]; then
-      timeout 60 bash lab/experiments/EXP-DX1/stack/down.sh "$owned" --volumes
-    fi
-    [[ -z $(inventory "$owned") ]]
-    if [[ -d $wal/$owned ]]; then
-      [[ ! -L $wal/$owned && $(findmnt -nro SOURCE --mountpoint "$wal") == /dev/nvme1n1 ]]
-      rm -r --one-file-system -- "$wal/$owned"
-    fi
+    for arm in "$out"/1-*-S; do
+      [[ -d $arm ]] || continue
+      name=$(basename "$arm"); owned=tx2-dxprep1-$tag-${name,,}
+      if [[ -n $(inventory "$owned") ]]; then
+        timeout 60 bash lab/experiments/EXP-DX1/stack/down.sh "$owned" --volumes
+      fi
+      [[ -z $(inventory "$owned") ]]
+      if [[ -d $wal/$owned ]]; then
+        [[ ! -L $wal/$owned && $(findmnt -nro SOURCE --mountpoint "$wal") == /dev/nvme1n1 ]]
+        rm -r --one-file-system -- "$wal/$owned"
+      fi
+    done
   fi
   record terminal collect
   exit
@@ -65,10 +73,15 @@ if [[ $mode == build ]]; then
   exit
 fi
 # The aged directory, handoff and seed metadata must have passed the receiver's byte and digest checks first.
-[[ -f $root/aged-verification.json && -z $(docker ps -q) && ! -e $out ]]
-handoff_sha=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["handoffSha256"])' "$root/aged-verification.json")
-[[ $handoff_sha =~ ^[a-f0-9]{64}$ && $(sha256sum "$handoff" | cut -d ' ' -f 1) == "$handoff_sha" ]]
-[[ ! -e $aged/postmaster.pid ]]
+[[ -z $(docker ps -q) && ! -e $out ]]
+if [[ $aged_run == 1 ]]; then
+  [[ -f $root/aged-verification.json ]]
+  handoff_sha=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["handoffSha256"])' "$root/aged-verification.json")
+  [[ $handoff_sha =~ ^[a-f0-9]{64}$ && $(sha256sum "$handoff" | cut -d ' ' -f 1) == "$handoff_sha" ]]
+  [[ ! -e $aged/postmaster.pid ]]
+else
+  [[ -f $root/fresh-verification.json && ! -e /mnt/triplex-scale1-pgdata/fresh-a/cluster/postmaster.pid ]]
+fi
 [[ $(findmnt -nro SOURCE --mountpoint "$wal") == /dev/nvme1n1 ]]
 for policy in /sys/devices/system/cpu/cpufreq/policy*/scaling_governor; do [[ $(cat "$policy") == performance ]]; done
 awk '$1 == "MemTotal:" {exit ($2 < 89*1024*1024)}' /proc/meminfo
@@ -99,10 +112,17 @@ fi
 [[ $(cat "$build/results/bootstrap.exit") == 0 ]]
 cd "$repo"
 [[ $(git rev-parse HEAD) == "$pin" && -z $(git status --porcelain) ]]
-launch=(bash lab/experiments/EXP-DX1/prep1/server.sh cache32-aged "$out" "$pin" "$image"
-  77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b
-  1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154
-  --pg-data "$aged" --wal-mount "$wal" --aged-bundle "$handoff" "$handoff_sha")
+if [[ $aged_run == 1 ]]; then
+  launch=(bash lab/experiments/EXP-DX1/prep1/server.sh cache32-aged "$out" "$pin" "$image"
+    77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b
+    1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154
+    --pg-data "$aged" --wal-mount "$wal" --aged-bundle "$handoff" "$handoff_sha")
+else
+  launch=(bash lab/experiments/EXP-DX1/prep1/server.sh production "$out" "$pin" "$image"
+    77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b
+    1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154
+    --pg-data /mnt/triplex-scale1-pgdata/fresh-a/cluster --wal-mount "$wal")
+fi
 if [[ $mode == dry ]]; then
   # [DX-BM1] Why: run every input and stack guard for real up to the first container, before the timed window.
   out=$job/dry-out
