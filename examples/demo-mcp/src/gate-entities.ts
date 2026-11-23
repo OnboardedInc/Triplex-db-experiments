@@ -26,6 +26,7 @@ const servers = [port, port + 1].map((p) => {
   const child = spawn(process.execPath, [join(import.meta.dirname, "page.ts"), String(p)], { env: { ...process.env, TRIPLEX_DEMO_STATE: stateFile() }, stdio: ["ignore", "pipe", "inherit"] });
   return { child, ready: new Promise<void>((ok) => child.stdout!.on("data", (b: Buffer) => b.toString().includes("Triplex Console server") && ok())) };
 });
+process.on("exit", () => servers.forEach((s) => s.child.kill()));
 await Promise.all(servers.map((s) => s.ready));
 
 const checks: { check: string; ok: boolean; detail?: string }[] = [];

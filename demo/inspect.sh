@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# [DX-DEMO1] On the Mac, after demo/connect.sh:
+# [DX-DEMO1, DX-CON1] On the Mac, after demo/connect.sh:
 #   demo/inspect.sh          the standard MCP Inspector (pinned) in the browser against the local demo MCP server
-#   demo/inspect.sh --page   the one-page inspector (demo/inspector.html) on http://127.0.0.1:28580/
+#   demo/inspect.sh --page   the Triplex Console server (examples/console/dist and its API) on http://127.0.0.1:28580/
 # Both listen on 127.0.0.1 only and read the endpoints from ~/.triplex-demo/connection.json.
 set -euo pipefail
 repo=$(cd "$(dirname "$0")/.." && pwd)

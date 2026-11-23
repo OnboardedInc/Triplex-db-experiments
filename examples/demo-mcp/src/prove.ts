@@ -63,9 +63,15 @@ const check = (name: string, passed: unknown, detail?: string) => {
   checks.push({ check: name, ok, ...(detail ? { detail } : {}) });
   console.log(`${ok ? "PASS" : "FAIL"} ${name}${detail ? " -- " + detail : ""}`);
 };
+const recordedExamples = new Map<string, { input: object; output: unknown; at: string }>();
+const trim = (v: unknown, depth = 0): unknown =>
+  Array.isArray(v) ? [...v.slice(0, 5).map((x) => trim(x, depth + 1)), ...(v.length > 5 ? [`... ${v.length - 5} more`] : [])]
+  : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).filter(([k]) => !(k === "calls" && depth > 0)).map(([k, x]) => [k, depth > 6 ? "..." : trim(x, depth + 1)]))
+  : typeof v === "string" && v.length > 300 ? v.slice(0, 300) + "..." : v;
 async function tool(step: string, name: string, input: object): Promise<Record<string, any>> {
   try {
     const out = (await runTool(name, input, "proof", demo)) as Record<string, any>;
+    if (!recordedExamples.has(name)) recordedExamples.set(name, { input, output: trim(out), at: new Date().toISOString() });
     const t = out["timing"] as Timing;
     calls.push({ step, tool: name, input, ok: true, serverMs: t?.serverMs ?? null, roundTripMs: t?.roundTripMs ?? null, requests: t?.requests ?? null, ...(t?.consoleMs !== undefined ? { consoleMs: t.consoleMs } : {}) });
     console.log(`  ${step}: ${name} store ${t?.serverMs} ms, wall ${t?.roundTripMs} ms, ${t?.requests} requests${t?.consoleMs !== undefined ? `, console ${t.consoleMs} ms` : ""}`);
@@ -185,8 +191,11 @@ row("An entity's journal, newest 20", "20 to 300 ms; unknown on a heavily saved 
 check("G13: transactionsForEntity answers on the heavily saved entity", g13.heavy.transactions > 0, JSON.stringify(g13.heavy));
 
 // ---- 8. changes with read back (demo step 6), history, both time axes ------------------------------------------------
+const liveBefore = (await tool("8 live release", "list_entity_types", {}))["release"]?.id;
 const saved = await tool("8 typed save", "save_facts", { entity: review["entity"], changes: { ":review/outcome": "approved" } });
-check("typed save_facts: read back matches, pinned to the live release", saved["readbackMatches"] === true && saved["receipt"]?.configSnapshot === second["release"]?.id, saved["error"] ?? saved["receipt"]?.configSnapshot);
+const liveAfter = (await tool("8 live release", "list_entity_types", {}))["release"]?.id;
+// On the 1 billion run nothing else moves live; on the toy another builder may, so either side of the save counts.
+check("typed save_facts: read back matches, pinned to the live release", saved["readbackMatches"] === true && [liveBefore, liveAfter].includes(saved["receipt"]?.configSnapshot), saved["error"] ?? saved["receipt"]?.configSnapshot);
 const savedSdk = saved["position"] ? await sdkValues(review["entity"], ":review/outcome", saved["position"], Date.now() + 1000) : [];
 check("independent read back of the save", JSON.stringify(savedSdk) === '["approved"]', JSON.stringify(savedSdk));
 const corrected = await tool("8 correction", "correct_past_value", { entity: review["entity"], attribute: ":review/outcome", value: "rejected", validFrom: "2026-11-16T00:00:00Z" });
@@ -225,13 +234,31 @@ check("the review read as a subject reaches the worker record it points to", asS
 // ---- 10. the remaining tools ----------------------------------------------------------------------------------------
 await tool("10", "list_accounts", {});
 await tool("10", "find_subjects", { account, from: subject, count: 5 });
-await tool("10", "read_many_subjects", { account, subjects: [...Array(16).keys()].map((i) => subject + i) });
+await tool("10", "read_many_subjects", { account, subjects: [...Array(16).keys()].map((i) => subject + i).filter((n) => n < people) });
 await tool("10", "read_subject_at", { account, subject: heavySubject, at: "2025-06-01T00:00:00Z" });
 const feed = await tool("10", "change_feed", { after: Number(summary["head"]), limit: 50 });
 check("the change feed after the head at the start shows the proof's changes with actor proof", feed["transactions"]?.some((t: any) => t.actor === "proof") === true, `${feed["transactions"]?.length} transactions`);
 await tool("10", "change_feed", { after: Math.max(0, conn.sealed.head - 5), limit: 5 });
 const removal = await tool("10", "remove_on_request", { account, subject: 0 });
 check("removal on request explains and changes nothing", removal["done"] === false, removal["error"]);
+
+// ---- 10b. the feed by entity and who changed since; a derivation with reconcile (the eleventh minute) -----------------
+const byEntity = await tool("10b entity journal", "change_feed", { entity: review["entity"] ?? ids.task, limit: 20 });
+check("change_feed by entity lists the review's transactions newest first", byEntity["transactions"]?.length >= 4 && byEntity["transactions"].every((t: any, i: number, a: any[]) => i === 0 || a[i - 1].position > t.position), `${byEntity["transactions"]?.length} transactions`);
+const since = await tool("10b who changed since", "change_feed", { after: Number(summary["head"]), summary: true });
+check("who changed since the start names the subjects the proof changed", since["subjects"]?.some((x: any) => x.subject === `${account} / ${subject}`) === true, `${since["subjectsChanged"]} subjects in ${since["transactionsRead"]} transactions`);
+const openTasks = { name: "open-tasks", query: { find: ["?task", "?progress"], where: [["?placement", ":placement/task", "?task"], ["?task", ":task/progress", "?progress"], ["not", ["?task", ":task/status", "complete"]]] }, identity: ["?task"] };
+// The first subject from the demo's on that still has an open task (a rehearsal completes one per run).
+let derivedSubject = subject;
+let derived = await tool("10b derivation", "evaluate_derivation", { derivation: openTasks, account, subject });
+while (!derived["candidates"]?.length && derivedSubject + 1 < people && derivedSubject < subject + 16)
+  derived = await tool("10b derivation", "evaluate_derivation", { derivation: openTasks, account, subject: ++derivedSubject });
+const firstOpen = derived["candidates"]?.[0]?.identity?.["?task"] as string | undefined;
+if (firstOpen) {
+  await tool("10b complete one task", "save_facts", { entity: firstOpen, changes: { ":task/status": "complete" } });
+  const rec = await tool("10b derivation reconcile", "evaluate_derivation", { derivation: openTasks, account, subject: derivedSubject, compareToPosition: derived["position"] });
+  check("derivation reconcile: the completed task is removed, the rest unchanged", rec["reconcile"]?.counts?.removed === 1 && rec["reconcile"].removed[0].identity["?task"] === firstOpen && rec["reconcile"].counts.unchanged === derived["candidates"].length - 1, JSON.stringify(rec["reconcile"]?.counts));
+} else check("the subject has an open task to derive", false, JSON.stringify(derived["error"] ?? derived["candidates"]));
 
 // ---- 11. the guard ----------------------------------------------------------------------------------------------------
 const sentBefore = guardCounts.sent;
@@ -297,6 +324,17 @@ const md = [
   "",
 ].join("\n");
 writeFileSync(join(outDir, "console-proof.md"), md);
+// The recorded examples the Assistant page shows: the first answer of every tool, trimmed, with its date and database.
+const recorded = { version: "triplex-console-examples/1", database: conn.kind === "1b" ? "the 1 billion record database" : "the small database on the Mac", commit, recordedAt: started.toISOString(),
+  tools: Object.fromEntries([...recordedExamples].map(([name, e]) => [name, e])) };
+writeFileSync(join(outDir, "examples.json"), JSON.stringify(recorded, (_k, v) => (typeof v === "bigint" ? String(v) : v), 2) + "\n");
+writeFileSync(join(outDir, "EXAMPLES.md"), [
+  `# Recorded examples (${recorded.database})`,
+  "",
+  `Recorded ${started.toISOString()} at commit \`${commit}\` by \`examples/demo-mcp/src/prove.ts\`, one per tool: the call and its answer, arrays cut to five entries. The same file in JSON is \`demo/console/examples.json\`, which the console's Assistant page shows with the badge "Recorded".`,
+  "",
+  ...[...recordedExamples].flatMap(([name, e]) => [`## \`${name}\``, "", "```json", JSON.stringify(e.input, null, 2), "```", "", "```json", JSON.stringify(e.output, (_k, v) => (typeof v === "bigint" ? String(v) : v), 2), "```", ""]),
+].join("\n"));
 console.log(`CONSOLE PROOF ${result.failed ? "FAILED" : "PASSED"}: ${result.passed} of ${checks.length} checks, ${result.seconds} s; results in ${outDir}/console-proof.{json,md}`);
 plain.close();
 demo.close();

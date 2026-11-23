@@ -98,6 +98,16 @@ back with the returned `nextBefore`), `actor`, `summary: true` with `after` (who
 `resumeAfter`), `waitMs` up to 30,000 (long poll for Live). Every transaction carries `configSnapshot` (the release that
 governed it) beside `actor` and `commandId`. `database_summary` adds `liveRelease` and `entityTypes`.
 
+**Step 8 (published): `evaluate_derivation`.** Input `derivation { name, query, identity }`, the subject (`account` and
+`subject`, or `root`), `basis?`, `compareToPosition?`. Answer: `derivation` (id, pinnedTo release, dependencies),
+`candidates[]` (`identity`, `result`, `sources[]` with `factId`, `entity`, `attribute`, `transaction`, `position`,
+`validFrom`, `validTo`; `nextTemporalBoundary`), and with `compareToPosition` a `reconcile` (`added`, `removed`,
+`changed`, `unchanged`, `counts`). All 22 tools now exist.
+
+**Recorded examples.** `demo/console/examples.json` (`tools.<name> = { input, output, at }`, `database`, `recordedAt`)
+holds one answer per tool. It is from the toy rehearsal now (its `database` says so); the proving run on the
+1 billion database replaces it. `demo/inspector.html` is deleted; `page.ts` no longer serves it.
+
 **Next, in this order, with the inputs of DESIGN.md section 6.2.** Each is added to the catalogue only when it runs,
 so the Assistant page never lists a tool that does not exist. Build the screens against these shapes.
 

@@ -6,6 +6,7 @@
 // Rejected: per-surface wrappers (the first demo had one in mcp.ts and another in page.ts, and they drifted).
 import { statSync } from "node:fs";
 import { z } from "zod";
+import { evaluateDerivation } from "./derive.ts";
 import { runQuery } from "./query.ts";
 import { createEntity, listEntities, readEntity, resolveBasis, typingFor } from "./entities.ts";
 import { defineEntityType, describeEntityType, listEntityTypes, listReleases, moveLive, VALUE_TYPES } from "./releases.ts";
@@ -462,6 +463,28 @@ export const tools: Tool[] = [
     changes: false,
     run: (d, a) => d.changeFeed(a),
     route: (a, out) => (a.entity ? routes.entity(a.entity, { tab: "journal" }) : routes.journal({ after: out["after"] as number, account: a.account === undefined ? undefined : String(out["account"]), actor: a.actor, summary: a.summary ? 1 : undefined })),
+  }),
+  tool({
+    name: "evaluate_derivation",
+    title: "Evaluate a derivation on one subject",
+    group: "Derivations",
+    sentences: ["Which tasks does subject 50000 still owe, and why?"],
+    description:
+      "Evaluate a Triplex derivation (a name, a Datalog query of patterns, comparisons and not, and the identity variables) for one subject with Triplex's Derivation.evaluate: each candidate with its identity, its result, its source facts (fact ID, attribute, transaction, position) and its next valid-time boundary. With compareToPosition, evaluate again at that position and reconcile: added, removed, changed, unchanged. The derivation pins the release live points to. Nothing is materialized." +
+      ' Example: {"derivation": {"name": "open-tasks", "query": {"find": ["?task", "?progress"], "where": [["?placement", ":placement/task", "?task"], ["?task", ":task/progress", "?progress"], ["not", ["?task", ":task/status", "complete"]]]}, "identity": ["?task"]}, "account": "account-003", "subject": 50000}',
+    input: {
+      derivation: z.object({
+        name: z.string().min(1).max(100),
+        query: z.record(z.string(), z.unknown()).describe("Triplex Datalog: find and where (patterns, comparisons, not)"),
+        identity: z.array(z.string()).min(1).describe("Variables that identify a candidate, e.g. [\"?task\"]"),
+      }),
+      ...subjectRef,
+      basis,
+      compareToPosition: z.number().int().min(0).optional().describe("Reconcile against the evaluation at this earlier position"),
+    },
+    changes: false,
+    run: (d, a) => evaluateDerivation(d, a),
+    route: (a, out) => routes.entity(String((out["subject"] as { root: string }).root), { tab: "derivations", ...(a.compareToPosition !== undefined ? { compare: a.compareToPosition } : {}) }),
   }),
   tool({
     name: "remove_on_request",
