@@ -28,7 +28,9 @@ export function useSlow(active: boolean, after = 1000) {
 
 /** Drop undefined fields so the call shown is the call sent. */
 export function clean(input: Record<string, unknown>) {
-  return Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined && v !== "")) as Record<string, unknown>;
+  return Object.fromEntries(
+    Object.entries(input).filter(([, v]) => v !== undefined && v !== ""),
+  ) as Record<string, unknown>;
 }
 
 export function useTool<T = Record<string, unknown>>(

@@ -15,7 +15,12 @@ export type Timing = {
   consoleMs?: number;
 };
 export type DatabaseRef = { id: string; kind: "toy" | "1b"; label: string; workingCopy: boolean };
-export type Envelope = { position: number; timing: Timing; database?: DatabaseRef; consoleUrl?: string };
+export type Envelope = {
+  position: number;
+  timing: Timing;
+  database?: DatabaseRef;
+  consoleUrl?: string;
+};
 export type Answer<T = Record<string, unknown>> = T & Envelope;
 
 /** One basis on every reading tool: recordedAt and position are exclusive. */
@@ -51,9 +56,21 @@ export type CatalogueTool = {
   annotations?: Record<string, boolean>;
   inputSchema: JsonSchema;
   /** A recorded example, when the catalogue carries one. */
-  example?: { date?: string; database?: string; source?: string; input?: unknown; output?: unknown };
+  example?: {
+    date?: string;
+    database?: string;
+    source?: string;
+    input?: unknown;
+    output?: unknown;
+  };
 };
-export type Catalogue = { version: string; server: string; groups: string[]; tools: CatalogueTool[]; register?: string };
+export type Catalogue = {
+  version: string;
+  server: string;
+  groups: string[];
+  tools: CatalogueTool[];
+  register?: string;
+};
 
 export type Connection = {
   kind: "toy" | "1b";
@@ -79,7 +96,13 @@ export class ToolError extends Error {
   readonly status: number;
   readonly tool: string;
   readonly detail: Record<string, unknown>;
-  constructor(tool: string, status: number, code: string, message: string, detail: Record<string, unknown> = {}) {
+  constructor(
+    tool: string,
+    status: number,
+    code: string,
+    message: string,
+    detail: Record<string, unknown> = {},
+  ) {
     super(message);
     this.tool = tool;
     this.status = status;
@@ -114,7 +137,11 @@ async function readJson(res: Response) {
   }
 }
 
-export async function callTool<T = Record<string, unknown>>(name: string, input: unknown = {}, signal?: AbortSignal): Promise<Answer<T>> {
+export async function callTool<T = Record<string, unknown>>(
+  name: string,
+  input: unknown = {},
+  signal?: AbortSignal,
+): Promise<Answer<T>> {
   const res = await fetch(`/api/tools/${encodeURIComponent(name)}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -124,7 +151,13 @@ export async function callTool<T = Record<string, unknown>>(name: string, input:
   const body = await readJson(res);
   if (!res.ok || (body && typeof body === "object" && "error" in body && body.error)) {
     const e = (body?.error ?? {}) as { code?: string; message?: string };
-    throw new ToolError(name, res.status, e.code ?? `HTTP${res.status}`, e.message ?? res.statusText, body?.error ?? {});
+    throw new ToolError(
+      name,
+      res.status,
+      e.code ?? `HTTP${res.status}`,
+      e.message ?? res.statusText,
+      body?.error ?? {},
+    );
   }
   return body as Answer<T>;
 }
@@ -132,7 +165,13 @@ export async function callTool<T = Record<string, unknown>>(name: string, input:
 export async function getCatalogue(): Promise<Catalogue> {
   const res = await fetch("/api/catalogue");
   const body = await readJson(res);
-  if (!res.ok) throw new ToolError("catalogue", res.status, body?.error?.code ?? `HTTP${res.status}`, body?.error?.message ?? "The catalogue could not be read");
+  if (!res.ok)
+    throw new ToolError(
+      "catalogue",
+      res.status,
+      body?.error?.code ?? `HTTP${res.status}`,
+      body?.error?.message ?? "The catalogue could not be read",
+    );
   return body as Catalogue;
 }
 
@@ -140,6 +179,12 @@ export async function getConnection(): Promise<Connection> {
   const res = await fetch("/api/connection");
   const body = await readJson(res);
   if (!res.ok)
-    throw new ToolError("connection", res.status, body?.error?.code ?? `HTTP${res.status}`, body?.error?.message ?? "Not connected", body?.error ?? {});
+    throw new ToolError(
+      "connection",
+      res.status,
+      body?.error?.code ?? `HTTP${res.status}`,
+      body?.error?.message ?? "Not connected",
+      body?.error ?? {},
+    );
   return body as Connection;
 }

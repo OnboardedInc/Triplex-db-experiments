@@ -8,7 +8,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AnswerLine } from "@/components/console/answer-line";
 import { Mono } from "@/components/console/data-table";
 import { PageTitle } from "@/components/console/layout";
-import { EmptyState, ErrorAlert, NotInCatalogue, Slow, TableSkeleton } from "@/components/console/states";
+import {
+  EmptyState,
+  ErrorAlert,
+  NotInCatalogue,
+  Slow,
+  TableSkeleton,
+} from "@/components/console/states";
 import { recordedWords, useBasis, validWords } from "@/lib/basis";
 import { useTools } from "@/lib/catalogue";
 import { n, plural, shortId } from "@/lib/format";
@@ -45,9 +51,12 @@ export function EntityPage() {
 
   if (!target) return <EmptyState title="No entity named." />;
   const ns = target.account ? `acct/${target.account}/` : "";
-  const entityCount = (asSubject ? read.entities : undefined) ?? new Set(read.facts.map((f) => f.entity)).size;
+  const entityCount =
+    (asSubject ? read.entities : undefined) ?? new Set(read.facts.map((f) => f.entity)).size;
   const sub = target.subject !== undefined ? String(target.subject).padStart(8, "0") : "";
-  const editable = (e: string) => tools.accepts("save_facts", "entity") || [`${ns}pl:${sub}`, `${ns}wk:${sub}`, `${ns}i9:${sub}`].includes(e);
+  const editable = (e: string) =>
+    tools.accepts("save_facts", "entity") ||
+    [`${ns}pl:${sub}`, `${ns}wk:${sub}`, `${ns}i9:${sub}`].includes(e);
   const title =
     target.isRoot && target.subject !== undefined ? (
       <>
@@ -57,7 +66,8 @@ export function EntityPage() {
       <Mono className="text-lg">{shortId(target.entity)}</Mono>
     );
 
-  if (!read.via && read.ready) return <NotInCatalogue tool="read_entity" what="Reading this entity" />;
+  if (!read.via && read.ready)
+    return <NotInCatalogue tool="read_entity" what="Reading this entity" />;
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
@@ -67,10 +77,19 @@ export function EntityPage() {
           <>
             <Mono className="text-muted-foreground">{target.entity}</Mono>
             <div className="flex items-center gap-2">
-              <Switch id="as-subject" checked={asSubject} onCheckedChange={(v) => set({ subject: v ? "1" : "0", asSubject: undefined })} />
+              <Switch
+                id="as-subject"
+                checked={asSubject}
+                onCheckedChange={(v) => set({ subject: v ? "1" : "0", asSubject: undefined })}
+              />
               <Label htmlFor="as-subject">Read as subject</Label>
             </div>
-            <Button size="sm" onClick={() => setSheet({ entity: selected, attribute })} disabled={!editable(selected)} data-testid="change-fact">
+            <Button
+              size="sm"
+              onClick={() => setSheet({ entity: selected, attribute })}
+              disabled={!editable(selected)}
+              data-testid="change-fact"
+            >
               Change a fact
             </Button>
           </>
@@ -79,13 +98,18 @@ export function EntityPage() {
         {target.subject !== undefined && !target.isRoot && (
           <>
             Part of{" "}
-            <Link className="underline underline-offset-4" to={`/accounts/${target.account}/subjects/${target.subject}`}>
+            <Link
+              className="underline underline-offset-4"
+              to={`/accounts/${target.account}/subjects/${target.subject}`}
+            >
               subject {target.subject} of {target.account}
             </Link>
             .{" "}
           </>
         )}
-        {read.entityType && read.entityType !== "untyped" ? `Entity type ${read.entityType}.` : "Untyped: loader-built facts carry no entity type; the kind is read from the ID."}
+        {read.entityType && read.entityType !== "untyped"
+          ? `Entity type ${read.entityType}.`
+          : "Untyped: loader-built facts carry no entity type; the kind is read from the ID."}
       </PageTitle>
       <Tabs value={tab} onValueChange={(t) => set({ tab: t })}>
         <TabsList>
@@ -105,14 +129,21 @@ export function EntityPage() {
             <TableSkeleton rows={10} columns={5} />
           ) : (
             <>
-              <AnswerLine answer={read.data} call={read.call} recorded={read.basisIgnored ? "Recorded latest" : recordedWords(basis)} valid={read.basisIgnored ? "Valid now" : validWords(basis)} />
+              <AnswerLine
+                answer={read.data}
+                call={read.call}
+                recorded={read.basisIgnored ? "Recorded latest" : recordedWords(basis)}
+                valid={read.basisIgnored ? "Valid now" : validWords(basis)}
+              />
               {read.basisIgnored && (
                 <p className="text-muted-foreground text-xs">
-                  The basis in the header is not applied here yet: the server's {read.via} reads at the latest position until it takes a basis.
+                  The basis in the header is not applied here yet: the server's {read.via} reads at
+                  the latest position until it takes a basis.
                 </p>
               )}
               <p className="text-sm">
-                {plural(read.facts.length, "fact")} in {plural(entityCount, "entity", "entities")}, {plural(read.data?.timing.requests ?? 0, "request")}, one position
+                {plural(read.facts.length, "fact")} in {plural(entityCount, "entity", "entities")},{" "}
+                {plural(read.data?.timing.requests ?? 0, "request")}, one position
               </p>
               {read.facts.length === 0 ? (
                 <EmptyState title="This entity has no facts at this basis.">
@@ -125,7 +156,9 @@ export function EntityPage() {
                   facts={read.facts}
                   root={target.entity}
                   ns={ns}
-                  selected={read.facts.some((f) => f.entity === selected) ? selected : target.entity}
+                  selected={
+                    read.facts.some((f) => f.entity === selected) ? selected : target.entity
+                  }
                   onSelect={(e) => set({ e })}
                   entityType={read.entityType}
                   canEdit={editable}
@@ -138,7 +171,13 @@ export function EntityPage() {
         </TabsContent>
         <TabsContent value="history" className="mt-4">
           {read.facts.length ? (
-            <HistoryTab target={target} facts={read.facts} entity={selected} attribute={attribute} onChange={(e, a) => set({ e, attribute: a || undefined })} />
+            <HistoryTab
+              target={target}
+              facts={read.facts}
+              entity={selected}
+              attribute={attribute}
+              onChange={(e, a) => set({ e, attribute: a || undefined })}
+            />
           ) : (
             <TableSkeleton />
           )}
@@ -159,7 +198,10 @@ export function EntityPage() {
           )}
         </TabsContent>
         <TabsContent value="journal" className="mt-4">
-          <JournalTab entity={selected} entities={asSubject ? [...new Set(read.facts.map((f) => f.entity))] : [selected]} />
+          <JournalTab
+            entity={selected}
+            entities={asSubject ? [...new Set(read.facts.map((f) => f.entity))] : [selected]}
+          />
         </TabsContent>
         <TabsContent value="derivations" className="mt-4">
           {tools.has("evaluate_derivation") ? (
@@ -170,7 +212,14 @@ export function EntityPage() {
         </TabsContent>
       </Tabs>
       {sheet && (
-        <ChangeFactSheet open={Boolean(sheet)} onOpenChange={(v) => !v && setSheet(null)} target={target} entity={sheet.entity} attribute={sheet.attribute} facts={read.facts} />
+        <ChangeFactSheet
+          open={Boolean(sheet)}
+          onOpenChange={(v) => !v && setSheet(null)}
+          target={target}
+          entity={sheet.entity}
+          attribute={sheet.attribute}
+          facts={read.facts}
+        />
       )}
     </div>
   );

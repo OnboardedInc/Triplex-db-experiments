@@ -33,11 +33,18 @@ const note = (step, text) => {
   console.log(line);
 };
 const browser = await chromium.launch();
-const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: dark ? "dark" : "light" });
+const context = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+  colorScheme: dark ? "dark" : "light",
+});
 const page = await context.newPage();
 const problems = [];
 page.on("pageerror", (e) => problems.push(`pageerror ${e}`));
-page.on("console", (m) => m.type() === "error" && !/status of 400/.test(m.text()) && problems.push(`console ${m.text()}`));
+page.on(
+  "console",
+  (m) =>
+    m.type() === "error" && !/status of 400/.test(m.text()) && problems.push(`console ${m.text()}`),
+);
 let shot = 0;
 const snap = async (name, full = false) => {
   await page.waitForTimeout(400); // let dialogs and sheets finish their opening animation
@@ -45,20 +52,27 @@ const snap = async (name, full = false) => {
   await page.screenshot({ path: file, fullPage: full });
   note("shot", file.split("/").pop());
 };
-const answerLine = async () => (await page.getByTestId("answer-line").first().innerText()).replace(/\s+/g, " ");
+const answerLine = async () =>
+  (await page.getByTestId("answer-line").first().innerText()).replace(/\s+/g, " ");
 const pick = async (trigger, option) => {
   await trigger.click();
   await page.getByRole("option", { name: option, exact: true }).click();
 };
 const tool = async (name, input) => {
-  const r = await fetch(`${base}/api/tools/${name}`, { method: "POST", headers: { "content-type": "application/json", origin: base }, body: JSON.stringify(input) });
+  const r = await fetch(`${base}/api/tools/${name}`, {
+    method: "POST",
+    headers: { "content-type": "application/json", origin: base },
+    body: JSON.stringify(input),
+  });
   return r.json();
 };
 
 /** One MCP tools/call over stdio, so the change carries actor "assistant" exactly as Claude Code's would. */
 async function assistantCall(name, args) {
   if (!mcpRoot) return null;
-  const child = spawn(process.execPath, [join(mcpRoot, "examples/demo-mcp/src/mcp.ts")], { stdio: ["pipe", "pipe", "inherit"] });
+  const child = spawn(process.execPath, [join(mcpRoot, "examples/demo-mcp/src/mcp.ts")], {
+    stdio: ["pipe", "pipe", "inherit"],
+  });
   let buffer = "";
   const waiters = new Map();
   child.stdout.on("data", (d) => {
@@ -73,8 +87,15 @@ async function assistantCall(name, args) {
     }
   });
   const send = (msg) => child.stdin.write(JSON.stringify(msg) + "\n");
-  const request = (id, method, params) => new Promise((resolve) => (waiters.set(id, resolve), send({ jsonrpc: "2.0", id, method, params })));
-  await request(1, "initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "console-demo-pass", version: "0" } });
+  const request = (id, method, params) =>
+    new Promise(
+      (resolve) => (waiters.set(id, resolve), send({ jsonrpc: "2.0", id, method, params })),
+    );
+  await request(1, "initialize", {
+    protocolVersion: "2025-06-18",
+    capabilities: {},
+    clientInfo: { name: "console-demo-pass", version: "0" },
+  });
   send({ jsonrpc: "2.0", method: "notifications/initialized" });
   const res = await request(2, "tools/call", { name, arguments: args });
   child.kill();
@@ -103,7 +124,13 @@ try {
   await page.getByText("Tasks that are not complete").click();
   await page.getByTestId("run-query").click();
   await page.waitForSelector("[data-testid=answer-line]");
-  note("2", await page.getByTestId("query-result").innerText().then((t) => t.split("\n").slice(0, 9).join(" | ")));
+  note(
+    "2",
+    await page
+      .getByTestId("query-result")
+      .innerText()
+      .then((t) => t.split("\n").slice(0, 9).join(" | ")),
+  );
   await snap("query-not-complete");
   await page.getByText("Subtasks per task").click();
   await page.getByTestId("run-query").click();
@@ -115,14 +142,24 @@ try {
   await page.getByText("The same question at the sealed head").click();
   await page.getByTestId("run-query").click();
   await page.waitForSelector("[data-testid=answer-line]");
-  note("3", "historical: " + (await answerLine()) + " badge " + (await page.getByTestId("basis-badge").innerText()));
+  note(
+    "3",
+    "historical: " +
+      (await answerLine()) +
+      " badge " +
+      (await page.getByTestId("basis-badge").innerText()),
+  );
   await snap("query-sealed-head");
   await page.getByTestId("basis-control").click();
   await page.getByRole("button", { name: "Back to latest" }).click();
   await page.getByText("Every complete task in the database").click();
   await page.getByTestId("run-query").click();
   await page.waitForSelector("[data-testid=refused]");
-  note("3", "refusal: " + (await page.getByTestId("refused").innerText()).replace(/\s+/g, " ").slice(0, 160));
+  note(
+    "3",
+    "refusal: " +
+      (await page.getByTestId("refused").innerText()).replace(/\s+/g, " ").slice(0, 160),
+  );
   await snap("query-refused");
 
   // Step 4: define a type and commit a release.
@@ -143,14 +180,19 @@ try {
     await page.getByTestId(`attr-key-${i}`).fill(key);
     await pick(page.getByTestId(`attr-type-${i}`), type);
     if (required) await page.getByRole("checkbox", { name: "required" }).nth(i).click();
-    if (type === "enum") await page.getByTestId(`attr-enum-${i}`).fill("pending, approved, rejected");
+    if (type === "enum")
+      await page.getByTestId(`attr-enum-${i}`).fill("pending, approved, rejected");
     if (type === "ref") await pick(page.getByTestId(`attr-target-${i}`), "Subject");
   }
   await snap("new-type-sheet");
   await page.getByTestId("commit-release").click();
   await page.waitForURL(new RegExp(`/types/${typeName}`), { timeout: 30_000 });
   await page.waitForSelector("[data-testid=answer-line]");
-  note("4", "after commit: " + (await page.locator("#screen").innerText()).split("\n").slice(0, 3).join(" | "));
+  note(
+    "4",
+    "after commit: " +
+      (await page.locator("#screen").innerText()).split("\n").slice(0, 3).join(" | "),
+  );
   await snap("type-definition");
 
   // Step 5: a new entity from the generated form, its Transaction tab, the commit, then read it as a subject.
@@ -176,7 +218,10 @@ try {
   // Step 6: correct the outcome from 16 November, then Both time axes on 17 November and the History tab.
   await page.goto(entityUrl, { waitUntil: "networkidle" });
   await page.getByTestId("change-fact").click();
-  await pick(page.getByRole("combobox").filter({ hasText: /:/ }).first(), `:${prefix}/outcome`).catch(() => {});
+  await pick(
+    page.getByRole("combobox").filter({ hasText: /:/ }).first(),
+    `:${prefix}/outcome`,
+  ).catch(() => {});
   await page.getByTestId("new-value").fill("approved");
   await page.getByLabel("a past date (a correction)").click();
   await page.locator('input[type="date"]').last().fill("2026-11-16");
@@ -185,11 +230,21 @@ try {
   await page.getByTestId("commit-change").click();
   await page.waitForTimeout(2500);
   await snap("change-receipt");
-  await page.goto(`${entityUrl}?tab=time&attribute=${encodeURIComponent(`:${prefix}/outcome`)}&at=2026-11-17`, { waitUntil: "networkidle" });
+  await page.goto(
+    `${entityUrl}?tab=time&attribute=${encodeURIComponent(`:${prefix}/outcome`)}&at=2026-11-17`,
+    { waitUntil: "networkidle" },
+  );
   await page.waitForSelector("[data-testid=time-table]", { timeout: 30_000 });
-  note("6", "both axes: " + (await page.getByTestId("time-table").innerText()).replace(/\s+/g, " ").slice(0, 260));
+  note(
+    "6",
+    "both axes: " +
+      (await page.getByTestId("time-table").innerText()).replace(/\s+/g, " ").slice(0, 260),
+  );
   await snap("both-time-axes");
-  await page.goto(`${entityUrl}?tab=history&attribute=${encodeURIComponent(`:${prefix}/outcome`)}`, { waitUntil: "networkidle" });
+  await page.goto(
+    `${entityUrl}?tab=history&attribute=${encodeURIComponent(`:${prefix}/outcome`)}`,
+    { waitUntil: "networkidle" },
+  );
   await page.waitForSelector("[data-testid=answer-line]");
   await snap("history");
 
@@ -200,9 +255,17 @@ try {
   const viaAssistant = await assistantCall("create_entity", {
     type: typeName,
     account: ACCOUNT,
-    attributes: { [`:${prefix}/outcome`]: "pending", [`:${prefix}/of`]: `acct/${ACCOUNT}/pl:${String(ASSISTANT_SUBJECT).padStart(8, "0")}` },
+    attributes: {
+      [`:${prefix}/outcome`]: "pending",
+      [`:${prefix}/of`]: `acct/${ACCOUNT}/pl:${String(ASSISTANT_SUBJECT).padStart(8, "0")}`,
+    },
   });
-  note("7", viaAssistant ? `assistant created ${viaAssistant.entity ?? JSON.stringify(viaAssistant).slice(0, 200)}` : "no --mcp given: skipped the assistant's call");
+  note(
+    "7",
+    viaAssistant
+      ? `assistant created ${viaAssistant.entity ?? JSON.stringify(viaAssistant).slice(0, 200)}`
+      : "no --mcp given: skipped the assistant's call",
+  );
   await page.waitForTimeout(6500);
   await snap("journal-live");
   await page.getByLabel("After position").fill(String(head - 5));
@@ -215,7 +278,10 @@ try {
   // Step 8: move live back to the release it pointed to before step 4. The type leaves the list; its facts still read.
   await page.goto(`${base}/configuration`, { waitUntil: "networkidle" });
   await snap("configuration");
-  const row = page.getByRole("row").filter({ hasText: liveBefore.id.slice(0, 15) }).first();
+  const row = page
+    .getByRole("row")
+    .filter({ hasText: liveBefore.id.slice(0, 15) })
+    .first();
   await row.getByTestId("move-live").click();
   await page.getByTestId("confirm-move").click();
   await page.waitForSelector("[data-testid=moved]", { timeout: 30_000 });
@@ -223,16 +289,28 @@ try {
   await snap("moved-live");
   await page.goto(entityUrl, { waitUntil: "networkidle" });
   await page.waitForSelector("[data-testid=answer-line]");
-  note("8", "entity after the move: " + (await page.locator("#screen").innerText()).split("\n").slice(0, 4).join(" | "));
+  note(
+    "8",
+    "entity after the move: " +
+      (await page.locator("#screen").innerText()).split("\n").slice(0, 4).join(" | "),
+  );
   await snap("entity-after-move");
 
   // The eleventh minute: a derivation on the subject, reconciled against the sealed head.
-  await page.goto(`${base}/accounts/${ACCOUNT}/subjects/${SUBJECT}?tab=derivations`, { waitUntil: "networkidle" });
+  await page.goto(`${base}/accounts/${ACCOUNT}/subjects/${SUBJECT}?tab=derivations`, {
+    waitUntil: "networkidle",
+  });
   if (await page.getByTestId("evaluate").count()) {
     await page.getByRole("button", { name: "Evaluate and reconcile" }).click();
     await page.waitForSelector("[data-testid=candidates]", { timeout: 30_000 });
     await page.getByTestId("candidates").getByRole("row").nth(1).click();
-    note("9", (await page.locator("#screen").innerText()).split("\n").filter((l) => /candidates from|Compared with/.test(l)).join(" | "));
+    note(
+      "9",
+      (await page.locator("#screen").innerText())
+        .split("\n")
+        .filter((l) => /candidates from|Compared with/.test(l))
+        .join(" | "),
+    );
     await snap("derivations");
   } else note("9", "evaluate_derivation is not in the catalogue: Derivations tab skipped");
 
@@ -244,7 +322,10 @@ try {
   await page.goto(`${base}/assistant#read_subject_at`, { waitUntil: "networkidle" });
   await page.getByTestId("try-read_subject_at").click();
   await page.getByTestId("try-run").click();
-  await page.waitForSelector("[data-testid=try-answer], [data-testid=error], [data-testid=refused]", { timeout: 30_000 });
+  await page.waitForSelector(
+    "[data-testid=try-answer], [data-testid=error], [data-testid=refused]",
+    { timeout: 30_000 },
+  );
   await snap("assistant-try-it");
   await page.keyboard.press("Escape");
   await page.keyboard.press("Meta+k");
@@ -254,7 +335,10 @@ try {
   problems.push(`step failed: ${error.message.split("\n")[0]}`);
   await snap("failure").catch(() => {});
 } finally {
-  writeFileSync(join(out, `demo-pass${dark ? "-dark" : ""}.log`), [...log, "", "problems:", ...problems].join("\n") + "\n");
+  writeFileSync(
+    join(out, `demo-pass${dark ? "-dark" : ""}.log`),
+    [...log, "", "problems:", ...problems].join("\n") + "\n",
+  );
   console.log(problems.length ? "PROBLEMS\n" + problems.join("\n") : "no problems");
   await browser.close();
 }

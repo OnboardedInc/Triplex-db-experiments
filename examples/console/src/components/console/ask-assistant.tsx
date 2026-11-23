@@ -44,7 +44,9 @@ export function AskAssistant({ call, sentence }: { call: ToolCall; sentence?: st
           <div>
             <div className="text-muted-foreground mb-1 text-xs font-medium">It calls</div>
             <div className="bg-muted max-h-56 overflow-auto rounded-md">
-              <pre className="p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap">{text}</pre>
+              <pre className="p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap">
+                {text}
+              </pre>
             </div>
           </div>
           <div className="flex justify-end gap-2">

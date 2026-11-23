@@ -6,24 +6,53 @@ import { kindOf, parseLoaderId } from "@/lib/format";
 import type { Fact, ReadEntity, ReadSubject } from "@/lib/types";
 
 export const pad8 = (x: number) => String(x).padStart(8, "0");
-export type Target = { entity: string; account?: string; subject?: number; isRoot: boolean; loaderKind?: "root" | "profile" | "task" };
+export type Target = {
+  entity: string;
+  account?: string;
+  subject?: number;
+  isRoot: boolean;
+  loaderKind?: "root" | "profile" | "task";
+};
 
-export function targetOf(params: { account?: string; n?: string; entityId?: string }): Target | null {
+export function targetOf(params: {
+  account?: string;
+  n?: string;
+  entityId?: string;
+}): Target | null {
   if (params.account && params.n !== undefined && /^\d+$/.test(params.n)) {
     const subject = Number(params.n);
-    return { entity: `acct/${params.account}/pl:${pad8(subject)}`, account: params.account, subject, isRoot: true, loaderKind: "root" };
+    return {
+      entity: `acct/${params.account}/pl:${pad8(subject)}`,
+      account: params.account,
+      subject,
+      isRoot: true,
+      loaderKind: "root",
+    };
   }
   if (params.entityId) {
     const entity = decodeURIComponent(params.entityId);
     const p = parseLoaderId(entity);
     if (!p) return { entity, isRoot: false };
-    const loaderKind = /^pl:\d{8}$/.test(p.local) ? "root" : /^wk:\d{8}$/.test(p.local) ? "profile" : /^i9:\d{8}$/.test(p.local) ? "task" : undefined;
-    return { entity, account: p.account, subject: p.subject, isRoot: loaderKind === "root", loaderKind };
+    const loaderKind = /^pl:\d{8}$/.test(p.local)
+      ? "root"
+      : /^wk:\d{8}$/.test(p.local)
+        ? "profile"
+        : /^i9:\d{8}$/.test(p.local)
+          ? "task"
+          : undefined;
+    return {
+      entity,
+      account: p.account,
+      subject: p.subject,
+      isRoot: loaderKind === "root",
+      loaderKind,
+    };
   }
   return null;
 }
 
-const full = (id: string, ns: string) => (id.startsWith("acct/") || id.startsWith("_") || id.includes("/") ? id : ns + id);
+const full = (id: string, ns: string) =>
+  id.startsWith("acct/") || id.startsWith("_") || id.includes("/") ? id : ns + id;
 
 /** Read the entity, or its whole reach as a subject, through read_entity when the server has it, else read_subject. */
 export function useEntityRead(target: Target | null, asSubject: boolean) {
@@ -33,7 +62,11 @@ export function useEntityRead(target: Target | null, asSubject: boolean) {
   const viaEntity = tools.has("read_entity");
   const viaSubject = !viaEntity && target?.account !== undefined && target.subject !== undefined;
   const subjectBasis = tools.accepts("read_subject", "basis");
-  const entityQ = useTool<ReadEntity>("read_entity", { entity: target?.entity, basis: b, asSubject: asSubject || undefined }, { enabled: Boolean(target) && viaEntity, keepPrevious: true });
+  const entityQ = useTool<ReadEntity>(
+    "read_entity",
+    { entity: target?.entity, basis: b, asSubject: asSubject || undefined },
+    { enabled: Boolean(target) && viaEntity, keepPrevious: true },
+  );
   const subjectQ = useTool<ReadSubject>(
     "read_subject",
     { account: target?.account, subject: target?.subject, basis: subjectBasis ? b : undefined },
@@ -50,9 +83,17 @@ export function useEntityRead(target: Target | null, asSubject: boolean) {
   } else if (subjectQ.data) {
     facts = subjectQ.data.facts;
   }
-  facts = facts.map((f) => ({ ...f, entity: full(f.entity, ns), recordedPosition: f.recordedPosition ?? f.position }));
+  facts = facts.map((f) => ({
+    ...f,
+    entity: full(f.entity, ns),
+    recordedPosition: f.recordedPosition ?? f.position,
+  }));
   if (!asSubject && target) facts = facts.filter((f) => f.entity === target.entity);
-  const entities = viaEntity ? (asSubject ? entityQ.data?.subject?.entities : 1) : subjectQ.data?.entities;
+  const entities = viaEntity
+    ? asSubject
+      ? entityQ.data?.subject?.entities
+      : 1
+    : subjectQ.data?.entities;
   return {
     ...q,
     facts,
@@ -75,7 +116,13 @@ export function buildTree(facts: Fact[], rootId: string): Node[] {
     seen.add(id);
     const own = byEntity.get(id) ?? [];
     const kids = own
-      .filter((f) => f.type === "ref" && typeof f.value === "string" && byEntity.has(f.value as string) && !seen.has(f.value as string))
+      .filter(
+        (f) =>
+          f.type === "ref" &&
+          typeof f.value === "string" &&
+          byEntity.has(f.value as string) &&
+          !seen.has(f.value as string),
+      )
       .map((f) => f.value as string);
     const children: Node[] = [];
     for (const k of [...new Set(kids)]) if (!seen.has(k)) children.push(visit(k, depth + 1));

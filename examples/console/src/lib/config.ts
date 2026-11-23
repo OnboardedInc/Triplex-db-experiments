@@ -22,7 +22,17 @@ export function useDescribedTypes(names: string[], enabled = true) {
   }) as { data?: Answer<DescribeType>; isPending: boolean; isError: boolean; error: unknown }[];
 }
 
-export const VALUE_TYPES = ["text", "number", "integer", "int64", "boolean", "date", "instant", "enumOf", "ref"] as const;
+export const VALUE_TYPES = [
+  "text",
+  "number",
+  "integer",
+  "int64",
+  "boolean",
+  "date",
+  "instant",
+  "enumOf",
+  "ref",
+] as const;
 export const valueTypeWords: Record<string, string> = {
   text: "text",
   number: "number",
@@ -41,6 +51,10 @@ export const kebab = (name: string) => name.replace(/([a-z0-9])([A-Z])/g, "$1-$2
 /** Release ID to label, for journal rows that name the release a write was pinned to. */
 export function useReleaseLabels() {
   const tools = useTools();
-  const q = useTool<ListReleases>("list_releases", { limit: 50 }, { enabled: tools.has("list_releases") });
+  const q = useTool<ListReleases>(
+    "list_releases",
+    { limit: 50 },
+    { enabled: tools.has("list_releases") },
+  );
   return new Map((q.data?.releases ?? []).map((r) => [r.id, r.label]));
 }

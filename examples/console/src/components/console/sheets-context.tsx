@@ -3,8 +3,18 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import type { AttributeDef } from "@/lib/types";
 
-export type NewTypeInit = { name?: string; attributes?: AttributeDef[]; label?: string; edit?: boolean };
-export type EntityFormInit = { type: string; account?: string; entity?: string; values?: Record<string, unknown> };
+export type NewTypeInit = {
+  name?: string;
+  attributes?: AttributeDef[];
+  label?: string;
+  edit?: boolean;
+};
+export type EntityFormInit = {
+  type: string;
+  account?: string;
+  entity?: string;
+  values?: Record<string, unknown>;
+};
 
 type Ctx = {
   newType: NewTypeInit | null;
@@ -13,7 +23,13 @@ type Ctx = {
   openEntityForm: (init: EntityFormInit) => void;
   close: () => void;
 };
-const SheetsContext = createContext<Ctx>({ newType: null, entityForm: null, openNewType: () => {}, openEntityForm: () => {}, close: () => {} });
+const SheetsContext = createContext<Ctx>({
+  newType: null,
+  entityForm: null,
+  openNewType: () => {},
+  openEntityForm: () => {},
+  close: () => {},
+});
 
 export function SheetsProvider({ children }: { children: ReactNode }) {
   const [newType, setNewType] = useState<NewTypeInit | null>(null);

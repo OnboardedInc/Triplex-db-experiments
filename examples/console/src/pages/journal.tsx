@@ -4,10 +4,22 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { AnswerLine } from "@/components/console/answer-line";
@@ -28,10 +40,20 @@ const ALL = "all";
 function subjectLink(root: string | null) {
   if (!root) return null;
   const p = parseLoaderId(root);
-  return p && /^pl:\d{8}$/.test(p.local) ? `/accounts/${p.account}/subjects/${p.subject}` : `/entities/${encodeURIComponent(root)}`;
+  return p && /^pl:\d{8}$/.test(p.local)
+    ? `/accounts/${p.account}/subjects/${p.subject}`
+    : `/entities/${encodeURIComponent(root)}`;
 }
 
-function ChangedSince({ open, onOpenChange, after }: { open: boolean; onOpenChange: (v: boolean) => void; after: number }) {
+function ChangedSince({
+  open,
+  onOpenChange,
+  after,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  after: number;
+}) {
   const tools = useTools();
   const [state, setState] = useState<Answer<FeedSummary> | null>(null);
   const [running, setRunning] = useState(false);
@@ -58,7 +80,10 @@ function ChangedSince({ open, onOpenChange, after }: { open: boolean; onOpenChan
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Changed since position {n(after)}</DialogTitle>
-          <DialogDescription>Which subjects to look at again: the one whole-database question this engine answers, from the ordered journal.</DialogDescription>
+          <DialogDescription>
+            Which subjects to look at again: the one whole-database question this engine answers,
+            from the ordered journal.
+          </DialogDescription>
         </DialogHeader>
         {!supported ? (
           <NotInCatalogue tool="change_feed with summary" what="Changed since" />
@@ -70,10 +95,17 @@ function ChangedSince({ open, onOpenChange, after }: { open: boolean; onOpenChan
           <ErrorAlert error={error} onRetry={run} />
         ) : state ? (
           <div className="space-y-2">
-            <AnswerLine answer={state} call={{ name: "change_feed", input: { after, summary: true } }} label="Head" sentence={`Who changed since position ${n(after)}?`} />
+            <AnswerLine
+              answer={state}
+              call={{ name: "change_feed", input: { after, summary: true } }}
+              label="Head"
+              sentence={`Who changed since position ${n(after)}?`}
+            />
             <p className="text-sm" data-testid="changed-since">
-              {n(state.transactionsRead)} transactions read in {plural(state.pages, "page")}, {plural(state.subjectsChanged, "subject")} changed.
-              {!state.complete && " Stopped after the page limit; ask again from the last position shown."}
+              {n(state.transactionsRead)} transactions read in {plural(state.pages, "page")},{" "}
+              {plural(state.subjectsChanged, "subject")} changed.
+              {!state.complete &&
+                " Stopped after the page limit; ask again from the last position shown."}
             </p>
             <DataTable
               dense
@@ -95,9 +127,27 @@ function ChangedSince({ open, onOpenChange, after }: { open: boolean; onOpenChan
                     );
                   },
                 },
-                { accessorKey: "transactions", header: "Transactions", cell: (c) => <span className="tabular-nums">{n(c.row.original.transactions)}</span> },
-                { accessorKey: "factsChanged", header: "Facts changed", cell: (c) => <span className="tabular-nums">{n(c.row.original.factsChanged)}</span> },
-                { accessorKey: "lastPosition", header: "Last position", cell: (c) => <span className="tabular-nums">{n(c.row.original.lastPosition)}</span> },
+                {
+                  accessorKey: "transactions",
+                  header: "Transactions",
+                  cell: (c) => (
+                    <span className="tabular-nums">{n(c.row.original.transactions)}</span>
+                  ),
+                },
+                {
+                  accessorKey: "factsChanged",
+                  header: "Facts changed",
+                  cell: (c) => (
+                    <span className="tabular-nums">{n(c.row.original.factsChanged)}</span>
+                  ),
+                },
+                {
+                  accessorKey: "lastPosition",
+                  header: "Last position",
+                  cell: (c) => (
+                    <span className="tabular-nums">{n(c.row.original.lastPosition)}</span>
+                  ),
+                },
               ]}
             />
           </div>
@@ -110,7 +160,10 @@ function ChangedSince({ open, onOpenChange, after }: { open: boolean; onOpenChan
 export function JournalPage() {
   const [params, setParams] = useSearchParams();
   const connection = useConnection().data;
-  const after = params.get("after") && /^\d+$/.test(params.get("after")!) ? Number(params.get("after")) : undefined;
+  const after =
+    params.get("after") && /^\d+$/.test(params.get("after")!)
+      ? Number(params.get("after"))
+      : undefined;
   const account = params.get("account") ?? ALL;
   const actor = params.get("actor") ?? ALL;
   const [live, setLive] = useState(true);
@@ -122,8 +175,16 @@ export function JournalPage() {
   const isLive = live && after === undefined;
   const q = useTool<Feed>(
     "change_feed",
-    { after, account: account === ALL ? undefined : account, actor: serverActor && actor !== ALL ? actor : undefined, limit: 20 },
-    { refetchInterval: isLive && !longPoll && tools.isSuccess ? LIVE_MS : false, keepPrevious: true },
+    {
+      after,
+      account: account === ALL ? undefined : account,
+      actor: serverActor && actor !== ALL ? actor : undefined,
+      limit: 20,
+    },
+    {
+      refetchInterval: isLive && !longPoll && tools.isSuccess ? LIVE_MS : false,
+      keepPrevious: true,
+    },
   );
   const head = q.data?.position;
   // Live: a long poll on the journal route (waitMs), restarted whenever a transaction arrives.
@@ -134,7 +195,11 @@ export function JournalPage() {
     void (async () => {
       while (!stopped) {
         try {
-          const a = await callTool<Feed>("change_feed", { after: head, waitMs: 25_000, limit: 1 }, ctrl.signal);
+          const a = await callTool<Feed>(
+            "change_feed",
+            { after: head, waitMs: 25_000, limit: 1 },
+            ctrl.signal,
+          );
           if (a.transactions.length) {
             if (!stopped) void q.refetch();
             return;
@@ -153,7 +218,8 @@ export function JournalPage() {
   const set = (p: Record<string, string | undefined>) =>
     setParams((prev) => {
       const next = new URLSearchParams(prev);
-      for (const [k, v] of Object.entries(p)) v === undefined || v === ALL ? next.delete(k) : next.set(k, v);
+      for (const [k, v] of Object.entries(p))
+        v === undefined || v === ALL ? next.delete(k) : next.set(k, v);
       return next;
     });
   const labels = useReleaseLabels();
@@ -169,7 +235,13 @@ export function JournalPage() {
         actions={
           <>
             <div className="flex items-center gap-2">
-              <Switch id="live" checked={live && after === undefined} disabled={after !== undefined} onCheckedChange={setLive} data-testid="live" />
+              <Switch
+                id="live"
+                checked={live && after === undefined}
+                disabled={after !== undefined}
+                onCheckedChange={setLive}
+                data-testid="live"
+              />
               <Label htmlFor="live">Live: {live && after === undefined ? "on" : "off"}</Label>
             </div>
             <form
@@ -182,7 +254,13 @@ export function JournalPage() {
               <Label htmlFor="after" className="text-sm whitespace-nowrap">
                 After position
               </Label>
-              <Input id="after" className="h-8 w-32 tabular-nums" value={afterDraft} onChange={(e) => setAfterDraft(e.target.value.replace(/[^\d]/g, ""))} placeholder={String(sinceDefault)} />
+              <Input
+                id="after"
+                className="h-8 w-32 tabular-nums"
+                value={afterDraft}
+                onChange={(e) => setAfterDraft(e.target.value.replace(/[^\d]/g, ""))}
+                placeholder={String(sinceDefault)}
+              />
               <Button size="sm" variant="outline" type="submit">
                 Go
               </Button>
@@ -225,13 +303,19 @@ export function JournalPage() {
           </SelectContent>
         </Select>
         {after !== undefined && (
-          <Button variant="ghost" size="sm" onClick={() => (setAfterDraft(""), set({ after: undefined }))}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => (setAfterDraft(""), set({ after: undefined }))}
+          >
             Back to the newest
           </Button>
         )}
         {isLive && (
           <Badge variant="outline" className="font-normal">
-            {longPoll ? "waits for the next transaction (long poll, 25 s at a time)" : `reads the head every ${LIVE_MS / 1000} s`}
+            {longPoll
+              ? "waits for the next transaction (long poll, 25 s at a time)"
+              : `reads the head every ${LIVE_MS / 1000} s`}
           </Badge>
         )}
       </div>
@@ -245,25 +329,55 @@ export function JournalPage() {
             answer={q.data}
             call={q.call}
             label="Head"
-            extra={<span className="text-muted-foreground">{n(q.data?.transactions.length ?? 0)} transactions read</span>}
+            extra={
+              <span className="text-muted-foreground">
+                {n(q.data?.transactions.length ?? 0)} transactions read
+              </span>
+            }
           />
-          {account !== ALL && <p className="text-muted-foreground text-xs">The account filter keeps the transactions that changed {account}'s entities, and only those changes.</p>}
+          {account !== ALL && (
+            <p className="text-muted-foreground text-xs">
+              The account filter keeps the transactions that changed {account}'s entities, and only
+              those changes.
+            </p>
+          )}
           {shown.length === 0 ? (
-            <EmptyState title={after !== undefined ? `No transactions after position ${n(after)}.` : "No transactions."} />
+            <EmptyState
+              title={
+                after !== undefined
+                  ? `No transactions after position ${n(after)}.`
+                  : "No transactions."
+              }
+            />
           ) : (
             <JournalTable transactions={shown} labels={labels} />
           )}
           {after !== undefined && q.data?.next && q.data.next > after && (
             <div className="flex justify-end">
-              <Button variant="outline" size="sm" onClick={() => (setAfterDraft(String(q.data!.next)), set({ after: String(q.data!.next) }))}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => (
+                  setAfterDraft(String(q.data!.next)), set({ after: String(q.data!.next) })
+                )}
+              >
                 Next page after {n(q.data.next)}
               </Button>
             </div>
           )}
-          {q.data?.compatibility && <p className="text-muted-foreground text-xs">Positions up to {n(connection?.sealed.head)} were written by the bulk loader. {q.data.compatibility}</p>}
+          {q.data?.compatibility && (
+            <p className="text-muted-foreground text-xs">
+              Positions up to {n(connection?.sealed.head)} were written by the bulk loader.{" "}
+              {q.data.compatibility}
+            </p>
+          )}
         </>
       )}
-      <ChangedSince open={changed} onOpenChange={setChanged} after={after ?? Number(afterDraft || sinceDefault)} />
+      <ChangedSince
+        open={changed}
+        onOpenChange={setChanged}
+        after={after ?? Number(afterDraft || sinceDefault)}
+      />
     </div>
   );
 }

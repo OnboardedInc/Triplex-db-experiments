@@ -9,10 +9,21 @@ export function formatDatalog(value: unknown, indent = ""): string {
     if (flat(value)) return "[" + value.map((x) => JSON.stringify(x)).join(", ") + "]";
     const oneLine = "[" + value.map((x) => formatDatalog(x, next)).join(", ") + "]";
     if (oneLine.length <= 72 && !oneLine.includes("\n")) return oneLine;
-    return "[\n" + value.map((x) => next + formatDatalog(x, next)).join(",\n") + "\n" + indent + "]";
+    return (
+      "[\n" + value.map((x) => next + formatDatalog(x, next)).join(",\n") + "\n" + indent + "]"
+    );
   }
   const entries = Object.entries(value as Record<string, unknown>);
-  const oneLine = "{ " + entries.map(([k, v]) => `${JSON.stringify(k)}: ${formatDatalog(v, next)}`).join(", ") + " }";
+  const oneLine =
+    "{ " +
+    entries.map(([k, v]) => `${JSON.stringify(k)}: ${formatDatalog(v, next)}`).join(", ") +
+    " }";
   if (indent && oneLine.length <= 72 && !oneLine.includes("\n")) return oneLine;
-  return "{\n" + entries.map(([k, v]) => `${next}${JSON.stringify(k)}: ${formatDatalog(v, next)}`).join(",\n") + "\n" + indent + "}";
+  return (
+    "{\n" +
+    entries.map(([k, v]) => `${next}${JSON.stringify(k)}: ${formatDatalog(v, next)}`).join(",\n") +
+    "\n" +
+    indent +
+    "}"
+  );
 }

@@ -7,7 +7,12 @@ export function useCatalogue() {
   return useQuery({ queryKey: ["catalogue"], queryFn: getCatalogue, staleTime: 30_000, retry: 1 });
 }
 export function useConnection() {
-  return useQuery({ queryKey: ["connection"], queryFn: getConnection, staleTime: 30_000, retry: 0 });
+  return useQuery({
+    queryKey: ["connection"],
+    queryFn: getConnection,
+    staleTime: 30_000,
+    retry: 0,
+  });
 }
 
 export function useTools() {
@@ -18,7 +23,8 @@ export function useTools() {
     byName,
     has: (name: string) => byName.has(name),
     /** Whether a tool's input schema has a property, for parameters that arrive in later steps (basis, entity). */
-    accepts: (name: string, property: string) => Boolean(byName.get(name)?.inputSchema?.properties?.[property]),
+    accepts: (name: string, property: string) =>
+      Boolean(byName.get(name)?.inputSchema?.properties?.[property]),
   };
 }
 

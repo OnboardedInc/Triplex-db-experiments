@@ -4,8 +4,21 @@ import { Fragment, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { AnswerLine } from "@/components/console/answer-line";
 import { CodeEditor } from "@/components/console/code";
 import { Mono } from "@/components/console/data-table";
@@ -20,11 +33,38 @@ import { beforeLastChange } from "@/lib/session";
 import examples from "@/data/derivations.json";
 import type { Target } from "./model";
 
-type Source = { factId: string; entity: string; attribute: string; transaction: string; position: number; validFrom: string | null; validTo: string | null };
-type Candidate = { id: string; identity: Record<string, unknown>; result: Record<string, unknown>; sources: Source[]; nextTemporalBoundary: string | number | null };
-type Reconcile = { comparedWithPosition: number; added: unknown[]; removed: unknown[]; changed: unknown[]; unchanged: number; counts: Record<string, number> };
+type Source = {
+  factId: string;
+  entity: string;
+  attribute: string;
+  transaction: string;
+  position: number;
+  validFrom: string | null;
+  validTo: string | null;
+};
+type Candidate = {
+  id: string;
+  identity: Record<string, unknown>;
+  result: Record<string, unknown>;
+  sources: Source[];
+  nextTemporalBoundary: string | number | null;
+};
+type Reconcile = {
+  comparedWithPosition: number;
+  added: unknown[];
+  removed: unknown[];
+  changed: unknown[];
+  unchanged: number;
+  counts: Record<string, number>;
+};
 type Evaluation = {
-  derivation: { id: string; name: string; identity: string[]; output: string[]; pinnedTo: { id: string; label: string } | null };
+  derivation: {
+    id: string;
+    name: string;
+    identity: string[];
+    output: string[];
+    pinnedTo: { id: string; label: string } | null;
+  };
   subject: { root: string; facts: number; entities: number };
   candidates: Candidate[];
   reconcile?: Reconcile;
@@ -32,8 +72,18 @@ type Evaluation = {
 };
 
 const keyOf = (x: unknown): string =>
-  typeof x === "string" ? x : x && typeof x === "object" ? (((x as { id?: string }).id ?? JSON.stringify((x as { identity?: unknown }).identity ?? x)) as string) : String(x);
-const valueText = (v: unknown) => (typeof v === "string" && v.startsWith("acct/") ? shortId(v) : typeof v === "object" ? JSON.stringify(v) : String(v));
+  typeof x === "string"
+    ? x
+    : x && typeof x === "object"
+      ? (((x as { id?: string }).id ??
+          JSON.stringify((x as { identity?: unknown }).identity ?? x)) as string)
+      : String(x);
+const valueText = (v: unknown) =>
+  typeof v === "string" && v.startsWith("acct/")
+    ? shortId(v)
+    : typeof v === "object"
+      ? JSON.stringify(v)
+      : String(v);
 
 export function DerivationsTab({ target }: { target: Target }) {
   const { basis } = useBasis();
@@ -42,7 +92,9 @@ export function DerivationsTab({ target }: { target: Target }) {
   const ex = examples.derivations.find((d) => d.name === chosen) ?? examples.derivations[0]!;
   const [text, setText] = useState(formatDatalog(ex.query));
   const [identity, setIdentity] = useState(ex.identity.join(", "));
-  const [compare, setCompare] = useState(String(beforeLastChange() ?? connection?.sealed?.head ?? ""));
+  const [compare, setCompare] = useState(
+    String(beforeLastChange() ?? connection?.sealed?.head ?? ""),
+  );
   const [answer, setAnswer] = useState<Answer<Evaluation> | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [running, setRunning] = useState(false);
@@ -59,8 +111,17 @@ export function DerivationsTab({ target }: { target: Target }) {
       return;
     }
     const input: Record<string, unknown> = {
-      derivation: { name: chosen, query, identity: identity.split(",").map((x) => x.trim()).filter(Boolean) },
-      ...(target.isRoot && target.account ? { account: target.account, subject: target.subject } : { root: target.entity }),
+      derivation: {
+        name: chosen,
+        query,
+        identity: identity
+          .split(",")
+          .map((x) => x.trim())
+          .filter(Boolean),
+      },
+      ...(target.isRoot && target.account
+        ? { account: target.account, subject: target.subject }
+        : { root: target.entity }),
       ...(toBasis(basis) ? { basis: toBasis(basis) } : {}),
       ...(withCompare && /^\d+$/.test(compare) ? { compareToPosition: Number(compare) } : {}),
     };
@@ -82,7 +143,13 @@ export function DerivationsTab({ target }: { target: Target }) {
     if (!r) return null;
     const k = c.id;
     const id = JSON.stringify(c.identity);
-    const has = (list: unknown[]) => list.some((x) => keyOf(x) === k || keyOf(x) === id || JSON.stringify((x as { identity?: unknown })?.identity) === id);
+    const has = (list: unknown[]) =>
+      list.some(
+        (x) =>
+          keyOf(x) === k ||
+          keyOf(x) === id ||
+          JSON.stringify((x as { identity?: unknown })?.identity) === id,
+      );
     return has(r.added) ? "added" : has(r.changed) ? "changed" : "unchanged";
   };
   const outputs = answer?.derivation.output ?? [];
@@ -113,21 +180,32 @@ export function DerivationsTab({ target }: { target: Target }) {
           </SelectContent>
         </Select>
         <span className="text-sm">identity</span>
-        <Input className="h-8 w-40 font-mono text-xs" value={identity} onChange={(e) => setIdentity(e.target.value)} />
+        <Input
+          className="h-8 w-40 font-mono text-xs"
+          value={identity}
+          onChange={(e) => setIdentity(e.target.value)}
+        />
         {answer?.derivation.pinnedTo && (
           <span className="text-muted-foreground text-xs">
             pinned to release <span className="font-mono">{answer.derivation.pinnedTo.label}</span>
           </span>
         )}
       </div>
-      <p className="text-muted-foreground text-xs">{ex.note} Patterns, comparisons and not only: Triplex's provenance rejects rules, or and aggregates.</p>
+      <p className="text-muted-foreground text-xs">
+        {ex.note} Patterns, comparisons and not only: Triplex's provenance rejects rules, or and
+        aggregates.
+      </p>
       <CodeEditor value={text} onChange={setText} onRun={() => run(false)} minHeight="6rem" />
       <div className="flex flex-wrap items-center gap-2">
         <Button onClick={() => run(false)} disabled={running} data-testid="evaluate">
           Evaluate
         </Button>
         <span className="text-sm">Compare with position</span>
-        <Input className="h-8 w-32 tabular-nums" value={compare} onChange={(e) => setCompare(e.target.value.replace(/[^\d]/g, ""))} />
+        <Input
+          className="h-8 w-32 tabular-nums"
+          value={compare}
+          onChange={(e) => setCompare(e.target.value.replace(/[^\d]/g, ""))}
+        />
         <Button variant="outline" onClick={() => run(true)} disabled={running || !compare}>
           Evaluate and reconcile
         </Button>
@@ -143,8 +221,10 @@ export function DerivationsTab({ target }: { target: Target }) {
         <>
           <AnswerLine answer={answer} call={call ?? undefined} />
           <p className="text-sm">
-            {n(answer.candidates.length)} candidates from {n(answer.subject.facts)} facts in {n(answer.subject.entities)} entities.
-            {r && ` Compared with position ${n(r.comparedWithPosition)}: added ${r.counts["added"] ?? r.added.length}, removed ${r.counts["removed"] ?? r.removed.length}, changed ${r.counts["changed"] ?? r.changed.length}, unchanged ${r.counts["unchanged"] ?? r.unchanged}.`}
+            {n(answer.candidates.length)} candidates from {n(answer.subject.facts)} facts in{" "}
+            {n(answer.subject.entities)} entities.
+            {r &&
+              ` Compared with position ${n(r.comparedWithPosition)}: added ${r.counts["added"] ?? r.added.length}, removed ${r.counts["removed"] ?? r.removed.length}, changed ${r.counts["changed"] ?? r.changed.length}, unchanged ${r.counts["unchanged"] ?? r.unchanged}.`}
           </p>
           <div className="overflow-hidden rounded-md border" data-testid="candidates">
             <Table>
@@ -159,7 +239,10 @@ export function DerivationsTab({ target }: { target: Target }) {
               <TableBody>
                 {answer.candidates.map((c) => (
                   <Fragment key={c.id}>
-                    <TableRow className="cursor-pointer" onClick={() => setOpen((o) => ({ ...o, [c.id]: !o[c.id] }))}>
+                    <TableRow
+                      className="cursor-pointer"
+                      onClick={() => setOpen((o) => ({ ...o, [c.id]: !o[c.id] }))}
+                    >
                       <TableCell>
                         <Mono>{Object.values(c.identity).map(valueText).join(", ")}</Mono>
                       </TableCell>
@@ -182,13 +265,18 @@ export function DerivationsTab({ target }: { target: Target }) {
                       <TableRow className="hover:bg-transparent">
                         <TableCell colSpan={4} className="bg-muted/40 whitespace-normal">
                           <div className="space-y-0.5 py-1 text-xs">
-                            <div className="text-muted-foreground">Sources of {Object.values(c.identity).map(valueText).join(", ")}</div>
+                            <div className="text-muted-foreground">
+                              Sources of {Object.values(c.identity).map(valueText).join(", ")}
+                            </div>
                             {c.sources.map((s) => (
                               <div key={s.factId} className="font-mono">
-                                {s.factId} {s.attribute} on {shortId(s.entity)} in transaction {s.transaction} at position {n(s.position)}
+                                {s.factId} {s.attribute} on {shortId(s.entity)} in transaction{" "}
+                                {s.transaction} at position {n(s.position)}
                               </div>
                             ))}
-                            <div className="text-muted-foreground">Next valid-time boundary: {c.nextTemporalBoundary ?? "none"}</div>
+                            <div className="text-muted-foreground">
+                              Next valid-time boundary: {c.nextTemporalBoundary ?? "none"}
+                            </div>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -198,7 +286,15 @@ export function DerivationsTab({ target }: { target: Target }) {
                 {r?.removed.map((x) => (
                   <TableRow key={keyOf(x)}>
                     <TableCell colSpan={3}>
-                      <Mono>{valueText((x as { identity?: Record<string, unknown> })?.identity ? Object.values((x as { identity: Record<string, unknown> }).identity)[0] : x)}</Mono>
+                      <Mono>
+                        {valueText(
+                          (x as { identity?: Record<string, unknown> })?.identity
+                            ? Object.values(
+                                (x as { identity: Record<string, unknown> }).identity,
+                              )[0]
+                            : x,
+                        )}
+                      </Mono>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">removed</Badge>
@@ -211,7 +307,9 @@ export function DerivationsTab({ target }: { target: Target }) {
           {answer.note && <p className="text-muted-foreground text-xs">{answer.note}</p>}
         </>
       ) : (
-        <p className="text-muted-foreground text-sm">Choose a derivation and Evaluate. Select a candidate for its source facts.</p>
+        <p className="text-muted-foreground text-sm">
+          Choose a derivation and Evaluate. Select a candidate for its source facts.
+        </p>
       )}
     </div>
   );

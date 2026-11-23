@@ -32,11 +32,20 @@ export function JournalTab({ entity, entities }: { entity: string; entities: str
           <AnswerLine answer={q.data} call={q.call} label="Head" />
           {!byEntity && (
             <p className="text-muted-foreground text-xs">
-              Of the newest 200 transactions in the journal, the ones that changed {entities.length > 1 ? "this subject's entities" : "this entity"}. The
-              entity's full journal arrives when the server's change_feed takes an entity.
+              Of the newest 200 transactions in the journal, the ones that changed{" "}
+              {entities.length > 1 ? "this subject's entities" : "this entity"}. The entity's full
+              journal arrives when the server's change_feed takes an entity.
             </p>
           )}
-          <JournalTable labels={labels} transactions={txs} empty={byEntity ? "No transaction changed this entity." : "None of the newest 200 transactions changed it."} />
+          <JournalTable
+            labels={labels}
+            transactions={txs}
+            empty={
+              byEntity
+                ? "No transaction changed this entity."
+                : "None of the newest 200 transactions changed it."
+            }
+          />
         </>
       )}
     </div>

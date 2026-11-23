@@ -3,12 +3,26 @@
 import type { ReactNode } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { ToolError } from "@/lib/api";
 
-export function Refused({ reason, title = "Refused", children }: { reason: ReactNode; title?: string; children?: ReactNode }) {
+export function Refused({
+  reason,
+  title = "Refused",
+  children,
+}: {
+  reason: ReactNode;
+  title?: string;
+  children?: ReactNode;
+}) {
   return (
     <Alert data-testid="refused">
       <AlertTitle>{title}</AlertTitle>
@@ -22,16 +36,32 @@ export function Refused({ reason, title = "Refused", children }: { reason: React
   );
 }
 
-export function ErrorAlert({ error, onRetry, hint }: { error: unknown; onRetry?: () => void; hint?: ReactNode }) {
+export function ErrorAlert({
+  error,
+  onRetry,
+  hint,
+}: {
+  error: unknown;
+  onRetry?: () => void;
+  hint?: ReactNode;
+}) {
   const e = error instanceof ToolError ? error : null;
-  if (e?.refused) return <Refused reason={e.message}>{onRetry && <RetryButton onRetry={onRetry} />}</Refused>;
+  if (e?.refused)
+    return <Refused reason={e.message}>{onRetry && <RetryButton onRetry={onRetry} />}</Refused>;
   return (
     <Alert variant="destructive" data-testid="error">
       <AlertTitle>{e ? e.code : "Error"}</AlertTitle>
       <AlertDescription>
         <div className="space-y-2">
-          <div className="break-words">{error instanceof Error ? error.message : String(error)}</div>
-          {e && <div className="text-xs opacity-80">from {e.tool}{e.status ? `, HTTP ${e.status}` : ""}</div>}
+          <div className="break-words">
+            {error instanceof Error ? error.message : String(error)}
+          </div>
+          {e && (
+            <div className="text-xs opacity-80">
+              from {e.tool}
+              {e.status ? `, HTTP ${e.status}` : ""}
+            </div>
+          )}
           {hint}
           {onRetry && <RetryButton onRetry={onRetry} />}
         </div>
@@ -49,14 +79,24 @@ function RetryButton({ onRetry }: { onRetry: () => void }) {
 }
 
 /** Shown once a call has run over one second, with the reason when one is known. */
-export function Slow({ show, elapsed, children }: { show: boolean; elapsed?: number; children?: ReactNode }) {
+export function Slow({
+  show,
+  elapsed,
+  children,
+}: {
+  show: boolean;
+  elapsed?: number;
+  children?: ReactNode;
+}) {
   if (!show) return null;
   return (
     <div className="text-muted-foreground flex items-center gap-2 text-sm" data-testid="slow">
       <Spinner />
       <span>
         {children ?? "Still reading."}
-        {elapsed !== undefined && <span className="ml-1 tabular-nums">{(elapsed / 1000).toFixed(1)} s</span>}
+        {elapsed !== undefined && (
+          <span className="ml-1 tabular-nums">{(elapsed / 1000).toFixed(1)} s</span>
+        )}
       </span>
     </div>
   );
@@ -76,7 +116,15 @@ export function TableSkeleton({ rows = 6, columns = 5 }: { rows?: number; column
   );
 }
 
-export function EmptyState({ title, description, children }: { title: string; description?: ReactNode; children?: ReactNode }) {
+export function EmptyState({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: ReactNode;
+  children?: ReactNode;
+}) {
   return (
     <Empty className="border" data-testid="empty">
       <EmptyHeader>
@@ -95,7 +143,8 @@ export function NotInCatalogue({ tool, what }: { tool: string; what: string }) {
       title={`${what} is not available yet`}
       description={
         <>
-          The server's catalogue has no <code className="font-mono">{tool}</code> tool yet. This screen calls it as soon as the server offers it.
+          The server's catalogue has no <code className="font-mono">{tool}</code> tool yet. This
+          screen calls it as soon as the server offers it.
         </>
       }
     />

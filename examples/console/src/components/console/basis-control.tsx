@@ -9,16 +9,27 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { isLatest, LATEST, recordedWords, useBasis, validWords, type BasisState } from "@/lib/basis";
+import {
+  isLatest,
+  LATEST,
+  recordedWords,
+  useBasis,
+  validWords,
+  type BasisState,
+} from "@/lib/basis";
 import { useConnection } from "@/lib/catalogue";
 import { n, time } from "@/lib/format";
 import { beforeLastChange } from "@/lib/session";
 
 export function BasisBadge({ basis }: { basis: BasisState }) {
   return isLatest(basis) ? (
-    <Badge variant="secondary" data-testid="basis-badge">LATEST</Badge>
+    <Badge variant="secondary" data-testid="basis-badge">
+      LATEST
+    </Badge>
   ) : (
-    <Badge variant="default" data-testid="basis-badge">HISTORICAL</Badge>
+    <Badge variant="default" data-testid="basis-badge">
+      HISTORICAL
+    </Badge>
   );
 }
 
@@ -42,7 +53,8 @@ export function BasisControl({ current = false }: { current?: boolean }) {
   if (current)
     return (
       <div className="text-muted-foreground flex items-center gap-2 text-xs">
-        <Badge variant="secondary">LATEST</Badge> This screen always reads the current journal and configuration.
+        <Badge variant="secondary">LATEST</Badge> This screen always reads the current journal and
+        configuration.
       </div>
     );
 
@@ -62,7 +74,8 @@ export function BasisControl({ current = false }: { current?: boolean }) {
           : draft.recorded.mode === "recordedAt" && recordedAt
             ? { mode: "recordedAt", at: new Date(recordedAt + "Z").toISOString() }
             : { mode: "latest" },
-      valid: draft.valid.mode === "date" && validOn ? { mode: "date", date: validOn } : { mode: "now" },
+      valid:
+        draft.valid.mode === "date" && validOn ? { mode: "date", date: validOn } : { mode: "now" },
     };
     setBasis(next);
     setOpen(false);
@@ -106,7 +119,9 @@ export function BasisControl({ current = false }: { current?: boolean }) {
                 </div>
                 <div className="flex items-center gap-2">
                   <RadioGroupItem value="position" id="r-position" />
-                  <Label htmlFor="r-position" className="w-28">At position</Label>
+                  <Label htmlFor="r-position" className="w-28">
+                    At position
+                  </Label>
                   <Input
                     className="h-7 w-36 tabular-nums"
                     inputMode="numeric"
@@ -114,42 +129,70 @@ export function BasisControl({ current = false }: { current?: boolean }) {
                     placeholder={sealed ? String(sealed) : "position"}
                     onChange={(e) => {
                       setPosition(e.target.value.replace(/[^\d]/g, ""));
-                      setDraft((d) => ({ ...d, recorded: { mode: "position", position: Number(e.target.value.replace(/[^\d]/g, "")) } }));
+                      setDraft((d) => ({
+                        ...d,
+                        recorded: {
+                          mode: "position",
+                          position: Number(e.target.value.replace(/[^\d]/g, "")),
+                        },
+                      }));
                     }}
                   />
                 </div>
                 <div className="flex flex-wrap gap-1.5 pl-6">
                   {sealed !== undefined && (
-                    <Button size="sm" variant="secondary" className="h-6 text-xs" onClick={() => pick(sealed)}>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-6 text-xs"
+                      onClick={() => pick(sealed)}
+                    >
                       Sealed head {n(sealed)}
                     </Button>
                   )}
-                  <Button size="sm" variant="secondary" className="h-6 text-xs" disabled={before === null} onClick={() => before !== null && pick(before)}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-6 text-xs"
+                    disabled={before === null}
+                    onClick={() => before !== null && pick(before)}
+                  >
                     Before my last change{before !== null ? ` ${n(before)}` : ""}
                   </Button>
                   {seed !== undefined && (
-                    <Button size="sm" variant="secondary" className="h-6 text-xs" onClick={() => pick(seed)}>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-6 text-xs"
+                      onClick={() => pick(seed)}
+                    >
                       Seed {n(seed)}
                     </Button>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
                   <RadioGroupItem value="recordedAt" id="r-at" />
-                  <Label htmlFor="r-at" className="w-28">At record time</Label>
+                  <Label htmlFor="r-at" className="w-28">
+                    At record time
+                  </Label>
                   <Input
                     type="datetime-local"
                     className="h-7 w-52"
                     value={recordedAt}
                     onChange={(e) => {
                       setRecordedAt(e.target.value);
-                      setDraft((d) => ({ ...d, recorded: { mode: "recordedAt", at: e.target.value } }));
+                      setDraft((d) => ({
+                        ...d,
+                        recorded: { mode: "recordedAt", at: e.target.value },
+                      }));
                     }}
                   />
                 </div>
                 {range?.first && (
                   <p className="text-muted-foreground pl-6 text-xs">
-                    Record time (UTC) runs from {time(range.first, false)} to {time(range.lastAtBringUp, false)} and later saves. This database's record
-                    time runs about a year ahead of wall time.
+                    Record time (UTC) runs from {time(range.first, false)} to{" "}
+                    {time(range.lastAtBringUp, false)} and later saves. This database's record time
+                    runs about a year ahead of wall time.
                   </p>
                 )}
               </RadioGroup>
@@ -159,7 +202,12 @@ export function BasisControl({ current = false }: { current?: boolean }) {
               <div className="font-medium">Valid: what was true</div>
               <RadioGroup
                 value={draft.valid.mode}
-                onValueChange={(m) => setDraft((d) => ({ ...d, valid: m === "date" ? { mode: "date", date: validOn } : { mode: "now" } }))}
+                onValueChange={(m) =>
+                  setDraft((d) => ({
+                    ...d,
+                    valid: m === "date" ? { mode: "date", date: validOn } : { mode: "now" },
+                  }))
+                }
               >
                 <div className="flex items-center gap-2">
                   <RadioGroupItem value="now" id="v-now" />
@@ -167,7 +215,9 @@ export function BasisControl({ current = false }: { current?: boolean }) {
                 </div>
                 <div className="flex items-center gap-2">
                   <RadioGroupItem value="date" id="v-date" />
-                  <Label htmlFor="v-date" className="w-28">On date</Label>
+                  <Label htmlFor="v-date" className="w-28">
+                    On date
+                  </Label>
                   <Input
                     type="date"
                     className="h-7 w-40"
@@ -182,7 +232,8 @@ export function BasisControl({ current = false }: { current?: boolean }) {
             </div>
             {connection?.pinnedReads && (
               <p className="text-muted-foreground text-xs">
-                Pinned-read options on the server: {connection.pinnedReads.shortcut && connection.pinnedReads.cutLookup ? "on" : "off"}
+                Pinned-read options on the server:{" "}
+                {connection.pinnedReads.shortcut && connection.pinnedReads.cutLookup ? "on" : "off"}
               </p>
             )}
             <div className="flex justify-between">

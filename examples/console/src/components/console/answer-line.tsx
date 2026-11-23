@@ -52,7 +52,11 @@ export function AnswerLine({
       <Part tip="The gateways' own handling time, summed over the requests this answer needed (x-tx2-gateway-micros).">
         Store {ms(t?.serverMs)}
       </Part>
-      {t?.consoleMs !== undefined && <Part tip="Time the console's local functions spent evaluating, separate from the store.">Console {ms(t.consoleMs)}</Part>}
+      {t?.consoleMs !== undefined && (
+        <Part tip="Time the console's local functions spent evaluating, separate from the store.">
+          Console {ms(t.consoleMs)}
+        </Part>
+      )}
       <Part tip="Wall time on the machine running the console server, the tunnel to the database included. Diagnostic on the Mac.">
         Round trip {ms(t?.roundTripMs)}
       </Part>

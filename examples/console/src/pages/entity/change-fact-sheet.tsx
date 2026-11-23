@@ -12,8 +12,21 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/c
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,19 +42,36 @@ import type { Target } from "./model";
 const schema = z
   .object({
     action: z.enum(["change", "retire"]),
-    attribute: z.string().regex(/^:[a-z][a-z0-9-]*\/[a-z0-9-]+$/, "An attribute looks like :task/field-0"),
+    attribute: z
+      .string()
+      .regex(/^:[a-z][a-z0-9-]*\/[a-z0-9-]+$/, "An attribute looks like :task/field-0"),
     value: z.string().max(500, "At most 500 characters"),
     when: z.enum(["now", "past"]),
     validFrom: z.string(),
   })
   .superRefine((v, ctx) => {
     if (/^:(_|subject\/|tenant\/|triplex|f\/|db\/|console\/)/.test(v.attribute))
-      ctx.addIssue({ code: "custom", path: ["attribute"], message: "This attribute name is reserved; it cannot be changed here." });
-    if (v.action === "change" && !v.value.length) ctx.addIssue({ code: "custom", path: ["value"], message: "Give the new value" });
+      ctx.addIssue({
+        code: "custom",
+        path: ["attribute"],
+        message: "This attribute name is reserved; it cannot be changed here.",
+      });
+    if (v.action === "change" && !v.value.length)
+      ctx.addIssue({ code: "custom", path: ["value"], message: "Give the new value" });
     if (v.action === "change" && v.when === "past") {
       const t = Date.parse(v.validFrom);
-      if (!v.validFrom || Number.isNaN(t)) ctx.addIssue({ code: "custom", path: ["validFrom"], message: "Give the date the value became true" });
-      else if (t >= Date.now()) ctx.addIssue({ code: "custom", path: ["validFrom"], message: "A correction starts in the past; choose now for a change from today" });
+      if (!v.validFrom || Number.isNaN(t))
+        ctx.addIssue({
+          code: "custom",
+          path: ["validFrom"],
+          message: "Give the date the value became true",
+        });
+      else if (t >= Date.now())
+        ctx.addIssue({
+          code: "custom",
+          path: ["validFrom"],
+          message: "A correction starts in the past; choose now for a change from today",
+        });
     }
   });
 type Values = z.infer<typeof schema>;
@@ -67,44 +97,91 @@ export function ChangeFactSheet({
   const byEntity = tools.accepts("save_facts", "entity");
   const sub = target.subject !== undefined ? String(target.subject).padStart(8, "0") : "";
   const ns = target.account ? `acct/${target.account}/` : "";
-  const kind = entity === `${ns}pl:${sub}` ? "root" : entity === `${ns}wk:${sub}` ? "profile" : entity === `${ns}i9:${sub}` ? "task" : undefined;
+  const kind =
+    entity === `${ns}pl:${sub}`
+      ? "root"
+      : entity === `${ns}wk:${sub}`
+        ? "profile"
+        : entity === `${ns}i9:${sub}`
+          ? "task"
+          : undefined;
   const own = facts.filter((f) => f.entity === entity);
-  const textAttributes = [...new Set(own.filter((f) => f.type === "string").map((f) => f.attribute))].sort();
+  const textAttributes = [
+    ...new Set(own.filter((f) => f.type === "string").map((f) => f.attribute)),
+  ].sort();
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { action: "change", attribute: attribute ?? textAttributes[0] ?? "", value: "", when: "now", validFrom: "" },
+    defaultValues: {
+      action: "change",
+      attribute: attribute ?? textAttributes[0] ?? "",
+      value: "",
+      when: "now",
+      validFrom: "",
+    },
   });
   useEffect(() => {
-    if (open) form.reset({ action: "change", attribute: attribute ?? textAttributes[0] ?? "", value: "", when: "now", validFrom: "" });
+    if (open)
+      form.reset({
+        action: "change",
+        attribute: attribute ?? textAttributes[0] ?? "",
+        value: "",
+        when: "now",
+        validFrom: "",
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, attribute, entity]);
   const v = form.watch();
   const [tab, setTab] = useState("form");
-  const toolName = v.action === "retire" ? "retire_fact" : v.when === "past" ? "correct_past_value" : "save_facts";
+  const toolName =
+    v.action === "retire" ? "retire_fact" : v.when === "past" ? "correct_past_value" : "save_facts";
   const save = useToolMutation(toolName);
   const who = byEntity ? { entity } : { account: target.account, subject: target.subject, kind };
   const input: Record<string, unknown> =
     toolName === "save_facts"
       ? { ...who, changes: { [v.attribute]: v.value } }
       : toolName === "correct_past_value"
-        ? { ...who, attribute: v.attribute, value: v.value, validFrom: v.validFrom ? new Date(v.validFrom + "T00:00:00Z").toISOString() : "" }
+        ? {
+            ...who,
+            attribute: v.attribute,
+            value: v.value,
+            validFrom: v.validFrom ? new Date(v.validFrom + "T00:00:00Z").toISOString() : "",
+          }
         : { ...who, attribute: v.attribute };
 
   // The operations, computed here from the facts on screen; the tool computes them again from the entity's exact
   // current state and commits them in one transaction guarded by that state.
   const ops = useMemo(() => {
-    const at = v.when === "past" && v.validFrom ? Date.parse(v.validFrom + "T00:00:00Z") : Date.now();
+    const at =
+      v.when === "past" && v.validFrom ? Date.parse(v.validFrom + "T00:00:00Z") : Date.now();
     const live = own.filter((f) => f.attribute === v.attribute);
     const out: Record<string, unknown>[] = [];
     for (const f of live) {
       out.push({ op: "retract", id: f.id });
       if (f.validFrom && Date.parse(f.validFrom) < at)
-        out.push({ op: "assert", entityId: entity, attribute: f.attribute, value: { type: f.type, value: f.value }, validFrom: f.validFrom, validTo: new Date(at).toISOString() });
+        out.push({
+          op: "assert",
+          entityId: entity,
+          attribute: f.attribute,
+          value: { type: f.type, value: f.value },
+          validFrom: f.validFrom,
+          validTo: new Date(at).toISOString(),
+        });
     }
-    if (v.action === "change") out.push({ op: "assert", entityId: entity, attribute: v.attribute, value: { type: "string", value: v.value }, validFrom: new Date(at).toISOString() });
+    if (v.action === "change")
+      out.push({
+        op: "assert",
+        entityId: entity,
+        attribute: v.attribute,
+        value: { type: "string", value: v.value },
+        validFrom: new Date(at).toISOString(),
+      });
     return {
       operations: out,
-      meta: { actor: "console", commandId: `demo:${v.action === "retire" ? "retire" : v.when === "past" ? "correct" : "save"}:<generated at commit>`, preconditions: [{ _tag: "EntityState", entityId: entity, tripleIds: own.map((f) => f.id) }] },
+      meta: {
+        actor: "console",
+        commandId: `demo:${v.action === "retire" ? "retire" : v.when === "past" ? "correct" : "save"}:<generated at commit>`,
+        preconditions: [{ _tag: "EntityState", entityId: entity, tripleIds: own.map((f) => f.id) }],
+      },
     };
   }, [v.action, v.attribute, v.value, v.when, v.validFrom, own, entity]);
 
@@ -113,7 +190,11 @@ export function ChangeFactSheet({
     () =>
       save.mutate(input, {
         onSuccess: (answer) => {
-          receiptToast(answer as never, v.action === "retire" ? "Retired" : v.when === "past" ? "Corrected" : "Changed", () => navigate("/journal"));
+          receiptToast(
+            answer as never,
+            v.action === "retire" ? "Retired" : v.when === "past" ? "Corrected" : "Changed",
+            () => navigate("/journal"),
+          );
           onOpenChange(false);
         },
       }),
@@ -148,7 +229,11 @@ export function ChangeFactSheet({
                     render={({ field }) => (
                       <Field>
                         <FieldLabel>Action</FieldLabel>
-                        <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-6">
+                        <RadioGroup
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          className="flex gap-6"
+                        >
                           <div className="flex items-center gap-2">
                             <RadioGroupItem value="change" id="a-change" />
                             <Label htmlFor="a-change">Change the value</Label>
@@ -184,7 +269,13 @@ export function ChangeFactSheet({
                           <Input {...field} className="font-mono" />
                         )}
                         <FieldDescription>
-                          Current: <span className="font-mono">{own.filter((f) => f.attribute === field.value).map((f) => String(f.value)).join(", ") || "no value"}</span>
+                          Current:{" "}
+                          <span className="font-mono">
+                            {own
+                              .filter((f) => f.attribute === field.value)
+                              .map((f) => String(f.value))
+                              .join(", ") || "no value"}
+                          </span>
                         </FieldDescription>
                         <FieldError errors={[fieldState.error]} />
                       </Field>
@@ -198,7 +289,11 @@ export function ChangeFactSheet({
                         render={({ field, fieldState }) => (
                           <Field data-invalid={fieldState.invalid}>
                             <FieldLabel>New value (text)</FieldLabel>
-                            {field.value.length > 80 ? <Textarea {...field} className="font-mono" /> : <Input {...field} className="font-mono" data-testid="new-value" />}
+                            {field.value.length > 80 ? (
+                              <Textarea {...field} className="font-mono" />
+                            ) : (
+                              <Input {...field} className="font-mono" data-testid="new-value" />
+                            )}
                             <FieldError errors={[fieldState.error]} />
                           </Field>
                         )}
@@ -221,7 +316,14 @@ export function ChangeFactSheet({
                                   control={form.control}
                                   name="validFrom"
                                   render={({ field: f2 }) => (
-                                    <Input type="date" className="h-8 w-40" value={f2.value} onChange={(e) => (f2.onChange(e.target.value), form.setValue("when", "past"))} />
+                                    <Input
+                                      type="date"
+                                      className="h-8 w-40"
+                                      value={f2.value}
+                                      onChange={(e) => (
+                                        f2.onChange(e.target.value), form.setValue("when", "past")
+                                      )}
+                                    />
                                   )}
                                 />
                               </div>
@@ -245,19 +347,28 @@ export function ChangeFactSheet({
             </TabsContent>
             <TabsContent value="transaction" className="mt-4 space-y-3">
               <div>
-                <div className="text-muted-foreground mb-1 text-xs font-medium">The tool call the console sends</div>
+                <div className="text-muted-foreground mb-1 text-xs font-medium">
+                  The tool call the console sends
+                </div>
                 <div className="bg-muted max-h-48 overflow-auto rounded-md">
-                  <pre className="p-3 font-mono text-xs whitespace-pre-wrap">{formatDatalog({ tool: toolName, arguments: input })}</pre>
+                  <pre className="p-3 font-mono text-xs whitespace-pre-wrap">
+                    {formatDatalog({ tool: toolName, arguments: input })}
+                  </pre>
                 </div>
               </div>
               <div>
-                <div className="text-muted-foreground mb-1 text-xs font-medium">The operations it commits, in one transact</div>
+                <div className="text-muted-foreground mb-1 text-xs font-medium">
+                  The operations it commits, in one transact
+                </div>
                 <div className="bg-muted max-h-80 overflow-auto rounded-md">
-                  <pre className="p-3 font-mono text-xs whitespace-pre-wrap">{formatDatalog(ops)}</pre>
+                  <pre className="p-3 font-mono text-xs whitespace-pre-wrap">
+                    {formatDatalog(ops)}
+                  </pre>
                 </div>
                 <p className="text-muted-foreground mt-1 text-xs">
-                  Computed in the console from the facts on screen. The tool computes the same operations from the entity's exact current state and refuses if
-                  another change reached the entity first.
+                  Computed in the console from the facts on screen. The tool computes the same
+                  operations from the entity's exact current state and refuses if another change
+                  reached the entity first.
                 </p>
               </div>
             </TabsContent>
@@ -269,7 +380,9 @@ export function ChangeFactSheet({
             ) : err && /Conflict|Precondition/.test(err.code) ? (
               <Alert variant="destructive">
                 <AlertTitle>{err.code}</AlertTitle>
-                <AlertDescription>Another change reached this entity first. Reload and try again.</AlertDescription>
+                <AlertDescription>
+                  Another change reached this entity first. Reload and try again.
+                </AlertDescription>
               </Alert>
             ) : save.error ? (
               <ErrorAlert error={save.error} />
@@ -280,7 +393,11 @@ export function ChangeFactSheet({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={() => void submit()} disabled={save.isPending || !supported} data-testid="commit-change">
+          <Button
+            onClick={() => void submit()}
+            disabled={save.isPending || !supported}
+            data-testid="commit-change"
+          >
             {save.isPending && <Spinner />}
             Commit
           </Button>

@@ -15,7 +15,14 @@ export type Fact = {
   entityType?: string | null;
   txId?: string;
 };
-export type ReadSubject = { account: string; subject: number; subjectId: string; entities: number; factCount: number; facts: Fact[] };
+export type ReadSubject = {
+  account: string;
+  subject: number;
+  subjectId: string;
+  entities: number;
+  factCount: number;
+  facts: Fact[];
+};
 export type ReadEntity = {
   entity: string;
   entityType: string;
@@ -47,9 +54,22 @@ export type Summary = {
   live?: unknown;
   entityTypes?: number;
 };
-export type SubjectRow = { subject: number; subjectId: string; status: string | null; placements: number; lastRecordedAt: string | null };
+export type SubjectRow = {
+  subject: number;
+  subjectId: string;
+  status: string | null;
+  placements: number;
+  lastRecordedAt: string | null;
+};
 export type FindSubjects = { account: string; subjects: SubjectRow[]; lookup: string };
-export type Change = { op: "assert" | "retract"; entity: string; attribute: string; value: unknown; validFrom: string | null; validTo: string | null };
+export type Change = {
+  op: "assert" | "retract";
+  entity: string;
+  attribute: string;
+  value: unknown;
+  validFrom: string | null;
+  validTo: string | null;
+};
 export type Transaction = {
   position: number;
   txId: string;
@@ -75,7 +95,14 @@ export type FeedSummary = {
   pages: number;
   complete: boolean;
   subjectsChanged: number;
-  subjects: { subject: string; account: string | null; root: string | null; transactions: number; factsChanged: number; lastPosition: number }[];
+  subjects: {
+    subject: string;
+    account: string | null;
+    root: string | null;
+    transactions: number;
+    factsChanged: number;
+    lastPosition: number;
+  }[];
 };
 export type HistoryRow = {
   value: unknown;
@@ -97,18 +124,35 @@ export type FieldHistory = {
   rows: HistoryRow[];
   savesOfThisField?: number;
 };
-export type AtView = { entity: string; attribute: string; value: unknown; validFrom: string | null; validTo: string | null; recordedAt: string | null };
+export type AtView = {
+  entity: string;
+  attribute: string;
+  value: unknown;
+  validFrom: string | null;
+  validTo: string | null;
+  recordedAt: string | null;
+};
 export type ReadAt = {
   at: string;
   believedAsRecordedAt: string | null;
   believedAtPosition?: number;
   counts: { current: number; trueThenAsKnownNow: number; believedThen: number };
-  differences: { fact: string; current: unknown[] | null; trueThenAsKnownNow: unknown[] | null; believedThen: unknown[] | null }[];
+  differences: {
+    fact: string;
+    current: unknown[] | null;
+    trueThenAsKnownNow: unknown[] | null;
+    believedThen: unknown[] | null;
+  }[];
   current?: AtView[];
   trueThenAsKnownNow?: AtView[];
   believedThen?: AtView[];
 };
-export type Receipt = { commandId: string; txId: string; position: number; recordedAt: string | null };
+export type Receipt = {
+  commandId: string;
+  txId: string;
+  position: number;
+  recordedAt: string | null;
+};
 
 export type AttributeDef = {
   key: string;
@@ -120,8 +164,21 @@ export type AttributeDef = {
   enumValues?: string[];
 };
 export type ReleaseRef = { id: string; label: string; sequence: number; parent?: string | null };
-export type TypeSummary = { name: string; attributes: number; created?: number | null; createdByAccount?: Record<string, number> | null; note?: string };
-export type ListTypes = { ref: string; release: ReleaseRef | null; refs: { test: ReleaseRef | null; live: ReleaseRef | null }; types: TypeSummary[]; note?: string; configurationReads?: number };
+export type TypeSummary = {
+  name: string;
+  attributes: number;
+  created?: number | null;
+  createdByAccount?: Record<string, number> | null;
+  note?: string;
+};
+export type ListTypes = {
+  ref: string;
+  release: ReleaseRef | null;
+  refs: { test: ReleaseRef | null; live: ReleaseRef | null };
+  types: TypeSummary[];
+  note?: string;
+  configurationReads?: number;
+};
 export type DescribeType = {
   ref?: string;
   note?: string;
@@ -134,7 +191,16 @@ export type DescribeType = {
   };
   release?: ReleaseRef;
 };
-export type Release = { id: string; label: string; sequence: number; parent: string | null; objects: number; types?: string[]; refs: string[]; position?: number };
+export type Release = {
+  id: string;
+  label: string;
+  sequence: number;
+  parent: string | null;
+  objects: number;
+  types?: string[];
+  refs: string[];
+  position?: number;
+};
 export type ListReleases = {
   refs: { test: ReleaseRef | null; live: ReleaseRef | null };
   releases: Release[];
@@ -152,5 +218,22 @@ export type DefineType = {
   liveReceipt: (Receipt & { actor?: string }) | null;
   note: string;
 };
-export type MoveLive = { receipt: Receipt; before: ReleaseRef | null; after: ReleaseRef; typesBefore: string[]; typesAfter: string[]; note: string };
-export type ListEntities = { type: string; account: string; created: number; entities: { number: number; entity: string; attributes: Record<string, unknown>; recordedAt?: string | null }[] };
+export type MoveLive = {
+  receipt: Receipt;
+  before: ReleaseRef | null;
+  after: ReleaseRef;
+  typesBefore: string[];
+  typesAfter: string[];
+  note: string;
+};
+export type ListEntities = {
+  type: string;
+  account: string;
+  created: number;
+  entities: {
+    number: number;
+    entity: string;
+    attributes: Record<string, unknown>;
+    recordedAt?: string | null;
+  }[];
+};

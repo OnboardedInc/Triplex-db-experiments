@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/console/states";
 import { PageTitle } from "@/components/console/layout";
 
-
 export function NotFoundPage() {
   return (
     <div className="mx-auto max-w-5xl">

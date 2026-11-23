@@ -5,7 +5,10 @@
       "name": "Everything recorded about this subject",
       "source": "subject",
       "note": "The whole pull as bindings: entity, attribute, value.",
-      "query": { "find": ["?entity", "?attribute", "?value"], "where": [["?entity", "?attribute", "?value"]] }
+      "query": {
+        "find": ["?entity", "?attribute", "?value"],
+        "where": [["?entity", "?attribute", "?value"]]
+      }
     },
     {
       "name": "This subject's tasks and their progress",
@@ -52,7 +55,13 @@
         "where": [["reach", "{{task}}", "?step"]],
         "rules": [
           { "name": "reach", "body": [["?x", ":task/subtask", "?y"]] },
-          { "name": "reach", "body": [["?x", ":task/subtask", "?z"], ["reach", "?z", "?y"]] }
+          {
+            "name": "reach",
+            "body": [
+              ["?x", ":task/subtask", "?z"],
+              ["reach", "?z", "?y"]
+            ]
+          }
         ]
       }
     },

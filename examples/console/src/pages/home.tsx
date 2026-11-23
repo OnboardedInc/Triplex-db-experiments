@@ -3,7 +3,14 @@ import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { AnswerLine } from "@/components/console/answer-line";
 import { useNewType } from "@/components/console/sheets-context";
 import { EmptyState, ErrorAlert } from "@/components/console/states";
@@ -17,9 +24,20 @@ export function changesWords(tx: Feed["transactions"][number]) {
   const retracts = tx.changes.filter((c) => c.op === "retract").length;
   const asserts = tx.changes.filter((c) => c.op === "assert").length;
   const entities = [...new Set(tx.changes.map((c) => c.entity))];
-  const parts = [retracts && `${retracts} ${retracts === 1 ? "retract" : "retracts"}`, asserts && `${asserts} ${asserts === 1 ? "assert" : "asserts"}`].filter(Boolean);
-  const on = entities.length === 1 ? shortId(entities[0]!) : entities.length > 1 ? `${entities.length} entities` : "";
-  const hidden = tx.totalChanges > tx.changes.length ? ` (${tx.changes.length} of ${tx.totalChanges} shown)` : "";
+  const parts = [
+    retracts && `${retracts} ${retracts === 1 ? "retract" : "retracts"}`,
+    asserts && `${asserts} ${asserts === 1 ? "assert" : "asserts"}`,
+  ].filter(Boolean);
+  const on =
+    entities.length === 1
+      ? shortId(entities[0]!)
+      : entities.length > 1
+        ? `${entities.length} entities`
+        : "";
+  const hidden =
+    tx.totalChanges > tx.changes.length
+      ? ` (${tx.changes.length} of ${tx.totalChanges} shown)`
+      : "";
   return { counts: parts.join(", ") || "no changes", on, hidden };
 }
 
@@ -27,7 +45,11 @@ export function HomePage() {
   const connection = useConnection();
   const tools = useTools();
   const summary = useTool<Summary>("database_summary", {});
-  const types = useTool<ListTypes>("list_entity_types", {}, { enabled: tools.has("list_entity_types") });
+  const types = useTool<ListTypes>(
+    "list_entity_types",
+    {},
+    { enabled: tools.has("list_entity_types") },
+  );
   const feed = useTool<Feed>("change_feed", { limit: 5 });
   const openNewType = useNewType();
   const firstAccount = connection.data?.roster[2]?.account ?? connection.data?.roster[0]?.account;
@@ -50,7 +72,10 @@ export function HomePage() {
             error={connection.error}
             hint={
               (connection.error as { detail?: { file?: string } }).detail?.file && (
-                <div className="font-mono text-xs">Connection file: {(connection.error as { detail?: { file?: string } }).detail?.file}</div>
+                <div className="font-mono text-xs">
+                  Connection file:{" "}
+                  {(connection.error as { detail?: { file?: string } }).detail?.file}
+                </div>
               )
             }
           />
@@ -59,20 +84,37 @@ export function HomePage() {
     );
 
   const figures: [string, string | undefined, string | undefined][] = [
-    ["Records", s && n(s.recordsAtBringUp), s && `counted at bring-up${s.serverReadyAt ? " " + time(s.serverReadyAt, false).slice(11) : ""}, not live`],
+    [
+      "Records",
+      s && n(s.recordsAtBringUp),
+      s &&
+        `counted at bring-up${s.serverReadyAt ? " " + time(s.serverReadyAt, false).slice(11) : ""}, not live`,
+    ],
     ["Subjects", s && n(s.subjects), undefined],
     ["Accounts", s && n(s.accounts), undefined],
     ["Head position", s && n(s.head), s && `${n(s.transactionsSinceSeal)} since the seal`],
     [
       "Entity types",
-      !tools.has("list_entity_types") ? "not yet" : types.data ? String(types.data.types.length) : undefined,
-      types.data?.release ? `in release ${types.data.release.label}` : tools.has("list_entity_types") ? (types.data ? "no release yet" : undefined) : "configuration tools pending",
+      !tools.has("list_entity_types")
+        ? "not yet"
+        : types.data
+          ? String(types.data.types.length)
+          : undefined,
+      types.data?.release
+        ? `in release ${types.data.release.label}`
+        : tools.has("list_entity_types")
+          ? types.data
+            ? "no release yet"
+            : undefined
+          : "configuration tools pending",
     ],
   ];
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
-      <PageTitle title="Triplex Console">One Triplex database on Datomic with PostgreSQL storage. {connection.data?.label}.</PageTitle>
+      <PageTitle title="Triplex Console">
+        One Triplex database on Datomic with PostgreSQL storage. {connection.data?.label}.
+      </PageTitle>
 
       <section className="space-y-2">
         {summary.isError ? (
@@ -125,20 +167,26 @@ export function HomePage() {
             <CardHeader>
               <CardTitle>Browse the data</CardTitle>
               <CardDescription>
-                {s ? `${s.accounts} accounts of ${n(Math.round(s.subjects / Math.max(1, s.accounts)))} subjects` : "The accounts and their subjects"}, and the types you
-                define.
+                {s
+                  ? `${s.accounts} accounts of ${n(Math.round(s.subjects / Math.max(1, s.accounts)))} subjects`
+                  : "The accounts and their subjects"}
+                , and the types you define.
               </CardDescription>
             </CardHeader>
             <CardFooter className="mt-auto">
               <Button asChild variant="outline" disabled={!firstAccount}>
-                <Link to={`/accounts/${firstAccount ?? ""}`}>Open {firstAccount ?? "an account"}</Link>
+                <Link to={`/accounts/${firstAccount ?? ""}`}>
+                  Open {firstAccount ?? "an account"}
+                </Link>
               </Button>
             </CardFooter>
           </Card>
           <Card className="flex flex-col">
             <CardHeader>
               <CardTitle>Define an entity type</CardTitle>
-              <CardDescription>Name it, add attributes, commit a release, then add entities from a form.</CardDescription>
+              <CardDescription>
+                Name it, add attributes, commit a release, then add entities from a form.
+              </CardDescription>
             </CardHeader>
             <CardFooter className="mt-auto">
               <Button variant="outline" onClick={() => openNewType()}>
@@ -152,7 +200,9 @@ export function HomePage() {
       <section className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-4">
         <div>
           <h2 className="text-sm font-medium">Ask your assistant the same things</h2>
-          <p className="text-muted-foreground mt-1 text-sm">"What did we believe about subject 0 of {firstAccount ?? "account-003"} on 1 June 2025?"</p>
+          <p className="text-muted-foreground mt-1 text-sm">
+            "What did we believe about subject 0 of {firstAccount ?? "account-003"} on 1 June 2025?"
+          </p>
         </div>
         <Button asChild variant="outline">
           <Link to="/assistant">See what to ask</Link>
@@ -198,7 +248,14 @@ export function HomePage() {
                           <TableCell className="tabular-nums">{time(tx.recordedAt)}</TableCell>
                           <TableCell>{tx.actor ?? "loader"}</TableCell>
                           <TableCell>
-                            <span className={/^\d+ entities$/.test(w.on) ? "text-xs" : "font-mono text-xs"}>{w.on}</span> <span className="text-muted-foreground ml-2 text-xs">{w.counts}</span>
+                            <span
+                              className={
+                                /^\d+ entities$/.test(w.on) ? "text-xs" : "font-mono text-xs"
+                              }
+                            >
+                              {w.on}
+                            </span>{" "}
+                            <span className="text-muted-foreground ml-2 text-xs">{w.counts}</span>
                           </TableCell>
                         </TableRow>
                       );

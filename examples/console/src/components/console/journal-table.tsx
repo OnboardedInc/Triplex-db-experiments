@@ -10,15 +10,38 @@ import { DataTable, Mono } from "./data-table";
 
 function releaseOf(tx: Transaction, labels?: Map<string, string>) {
   if (tx.release) return tx.release.label ?? tx.release.id.slice(0, 14);
-  if (tx.configSnapshot) return labels?.get(tx.configSnapshot) ?? tx.configSnapshot.slice(0, 14) + "...";
+  if (tx.configSnapshot)
+    return labels?.get(tx.configSnapshot) ?? tx.configSnapshot.slice(0, 14) + "...";
   return null;
 }
 
-export function JournalTable({ transactions, empty, labels }: { transactions: Transaction[]; empty?: string; labels?: Map<string, string> }) {
+export function JournalTable({
+  transactions,
+  empty,
+  labels,
+}: {
+  transactions: Transaction[];
+  empty?: string;
+  labels?: Map<string, string>;
+}) {
   const columns: ColumnDef<Transaction, unknown>[] = [
-    { accessorKey: "position", header: "Position", cell: (c) => <span className="tabular-nums">{n(c.row.original.position)}</span> },
-    { accessorKey: "recordedAt", header: "Record time", cell: (c) => <span className="tabular-nums whitespace-nowrap">{time(c.row.original.recordedAt)}</span> },
-    { accessorKey: "actor", header: "Actor", cell: (c) => c.row.original.actor ?? <span className="text-muted-foreground">loader</span> },
+    {
+      accessorKey: "position",
+      header: "Position",
+      cell: (c) => <span className="tabular-nums">{n(c.row.original.position)}</span>,
+    },
+    {
+      accessorKey: "recordedAt",
+      header: "Record time",
+      cell: (c) => (
+        <span className="tabular-nums whitespace-nowrap">{time(c.row.original.recordedAt)}</span>
+      ),
+    },
+    {
+      accessorKey: "actor",
+      header: "Actor",
+      cell: (c) => c.row.original.actor ?? <span className="text-muted-foreground">loader</span>,
+    },
     {
       accessorKey: "commandId",
       header: "Command",
@@ -31,7 +54,11 @@ export function JournalTable({ transactions, empty, labels }: { transactions: Tr
         const r = releaseOf(c.row.original, labels);
         if (!("configSnapshot" in c.row.original) && !("release" in c.row.original)) return null;
         return r ? (
-          <Link to="/configuration" className="font-mono text-xs underline-offset-4 hover:underline" onClick={(e) => e.stopPropagation()}>
+          <Link
+            to="/configuration"
+            className="font-mono text-xs underline-offset-4 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
             {r}
           </Link>
         ) : (
@@ -71,20 +98,31 @@ export function JournalTable({ transactions, empty, labels }: { transactions: Tr
                     <Badge variant={ch.op === "retract" ? "outline" : "secondary"}>{ch.op}</Badge>
                   </td>
                   <td className="py-1 pr-3">
-                    <Link className="font-mono hover:underline" to={`/entities/${encodeURIComponent(ch.entity)}`}>
+                    <Link
+                      className="font-mono hover:underline"
+                      to={`/entities/${encodeURIComponent(ch.entity)}`}
+                    >
                       {shortId(ch.entity)}
                     </Link>
                   </td>
                   <td className="py-1 pr-3 font-mono">{ch.attribute}</td>
-                  <td className="max-w-80 truncate py-1 pr-3 font-mono">{ch.value === null ? "" : String(ch.value)}</td>
+                  <td className="max-w-80 truncate py-1 pr-3 font-mono">
+                    {ch.value === null ? "" : String(ch.value)}
+                  </td>
                   <td className="text-muted-foreground py-1 tabular-nums whitespace-nowrap">
-                    {ch.validFrom || ch.validTo ? `valid ${day(ch.validFrom)} to ${ch.validTo ? day(ch.validTo) : "open"}` : ""}
+                    {ch.validFrom || ch.validTo
+                      ? `valid ${day(ch.validFrom)} to ${ch.validTo ? day(ch.validTo) : "open"}`
+                      : ""}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {tx.changes.length > 200 && <div className="text-muted-foreground text-xs">First 200 of {n(tx.changes.length)} changes shown.</div>}
+          {tx.changes.length > 200 && (
+            <div className="text-muted-foreground text-xs">
+              First 200 of {n(tx.changes.length)} changes shown.
+            </div>
+          )}
         </div>
       )}
     />

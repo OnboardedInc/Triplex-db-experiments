@@ -5,7 +5,11 @@ import { rememberCommit } from "./session";
 import type { Answer } from "./api";
 import type { Receipt } from "./types";
 
-export function receiptToast(answer: Answer<{ receipt?: Receipt; readbackMatches?: boolean; position: number }>, what: string, open?: () => void) {
+export function receiptToast(
+  answer: Answer<{ receipt?: Receipt; readbackMatches?: boolean; position: number }>,
+  what: string,
+  open?: () => void,
+) {
   const r = answer.receipt;
   const position = r?.position ?? answer.position;
   rememberCommit(position);
@@ -18,7 +22,11 @@ export function receiptToast(answer: Answer<{ receipt?: Receipt; readbackMatches
           Store {ms(answer.timing?.serverMs)}, round trip {ms(answer.timing?.roundTripMs)}
         </div>
         {answer.readbackMatches !== undefined && (
-          <div>{answer.readbackMatches ? `Read back at position ${n(position)} matches.` : `Read back at position ${n(position)} does not match.`}</div>
+          <div>
+            {answer.readbackMatches
+              ? `Read back at position ${n(position)} matches.`
+              : `Read back at position ${n(position)} does not match.`}
+          </div>
         )}
       </div>
     ),

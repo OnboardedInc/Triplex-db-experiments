@@ -20,7 +20,14 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 export function DataTable<T>({
@@ -61,7 +68,12 @@ export function DataTable<T>({
     onColumnVisibilityChange: setVisibility,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    ...(pageSize ? { getPaginationRowModel: getPaginationRowModel(), initialState: { pagination: { pageSize, pageIndex: 0 } } } : {}),
+    ...(pageSize
+      ? {
+          getPaginationRowModel: getPaginationRowModel(),
+          initialState: { pagination: { pageSize, pageIndex: 0 } },
+        }
+      : {}),
     getRowId: rowKey ? (r, i) => rowKey(r, i) : undefined,
   });
   const rows = table.getRowModel().rows;
@@ -83,7 +95,11 @@ export function DataTable<T>({
                   .getAllLeafColumns()
                   .filter((c) => c.getCanHide())
                   .map((c) => (
-                    <DropdownMenuCheckboxItem key={c.id} checked={c.getIsVisible()} onCheckedChange={(v) => c.toggleVisibility(!!v)}>
+                    <DropdownMenuCheckboxItem
+                      key={c.id}
+                      checked={c.getIsVisible()}
+                      onCheckedChange={(v) => c.toggleVisibility(!!v)}
+                    >
                       {typeof c.columnDef.header === "string" ? c.columnDef.header : c.id}
                     </DropdownMenuCheckboxItem>
                   ))}
@@ -102,9 +118,16 @@ export function DataTable<T>({
                   return (
                     <TableHead key={h.id} className={cn("whitespace-nowrap", dense && "h-8")}>
                       {h.isPlaceholder ? null : h.column.getCanSort() ? (
-                        <button className="inline-flex items-center gap-1 hover:underline" onClick={h.column.getToggleSortingHandler()}>
+                        <button
+                          className="inline-flex items-center gap-1 hover:underline"
+                          onClick={h.column.getToggleSortingHandler()}
+                        >
                           {flexRender(h.column.columnDef.header, h.getContext())}
-                          {sorted === "asc" ? <ArrowUpIcon className="size-3" /> : sorted === "desc" ? <ArrowDownIcon className="size-3" /> : null}
+                          {sorted === "asc" ? (
+                            <ArrowUpIcon className="size-3" />
+                          ) : sorted === "desc" ? (
+                            <ArrowDownIcon className="size-3" />
+                          ) : null}
                         </button>
                       ) : (
                         flexRender(h.column.columnDef.header, h.getContext())
@@ -128,7 +151,10 @@ export function DataTable<T>({
                     }}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className={cn("align-top whitespace-normal", dense && "py-1.5")}>
+                      <TableCell
+                        key={cell.id}
+                        className={cn("align-top whitespace-normal", dense && "py-1.5")}
+                      >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     ))}
@@ -144,7 +170,10 @@ export function DataTable<T>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-muted-foreground h-20 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-muted-foreground h-20 text-center"
+                >
                   {empty}
                 </TableCell>
               </TableRow>
@@ -156,13 +185,24 @@ export function DataTable<T>({
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground tabular-nums">
             {table.getState().pagination.pageIndex * pageSize + 1} to{" "}
-            {Math.min((table.getState().pagination.pageIndex + 1) * pageSize, data.length)} of {data.length.toLocaleString("en-US")}
+            {Math.min((table.getState().pagination.pageIndex + 1) * pageSize, data.length)} of{" "}
+            {data.length.toLocaleString("en-US")}
           </span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
               Previous
             </Button>
-            <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
               Next
             </Button>
           </div>

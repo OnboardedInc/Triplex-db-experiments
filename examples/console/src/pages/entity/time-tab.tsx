@@ -3,8 +3,21 @@
 import { useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { AnswerLine } from "@/components/console/answer-line";
 import { AskAssistant } from "@/components/console/ask-assistant";
 import { Mono } from "@/components/console/data-table";
@@ -69,12 +82,17 @@ function Controls({
         onBlur={() => onChange({ believed: believedDraft || undefined })}
         onKeyDown={(e) => e.key === "Enter" && onChange({ believed: believedDraft || undefined })}
       />
-      <span className="text-muted-foreground text-xs">a position, or a record time inside the database's range</span>
+      <span className="text-muted-foreground text-xs">
+        a position, or a record time inside the database's range
+      </span>
     </div>
   );
 }
 
-const valuesOf = (facts: { attribute: string; value: unknown }[] | undefined, attribute?: string) => {
+const valuesOf = (
+  facts: { attribute: string; value: unknown }[] | undefined,
+  attribute?: string,
+) => {
   const list = (facts ?? []).filter((f) => f.attribute === attribute).map((f) => String(f.value));
   return list.length ? list.join(", ") : "no value";
 };
@@ -90,25 +108,60 @@ export function TimeTab(props: {
 }) {
   const tools = useTools();
   if (tools.has("read_entity")) return <ByEntity {...props} />;
-  if (props.target.subject === undefined) return <NotInCatalogue tool="read_entity" what="Both time axes for this entity" />;
+  if (props.target.subject === undefined)
+    return <NotInCatalogue tool="read_entity" what="Both time axes for this entity" />;
   return <BySubject {...props} />;
 }
 
-function useDefaults(facts: Fact[], entity: string, attribute?: string, at?: string, believed?: string) {
+function useDefaults(
+  facts: Fact[],
+  entity: string,
+  attribute?: string,
+  at?: string,
+  believed?: string,
+) {
   const connection = useConnection().data;
-  const attributes = [...new Set(facts.filter((f) => f.entity === entity).map((f) => f.attribute))].sort();
+  const attributes = [
+    ...new Set(facts.filter((f) => f.entity === entity).map((f) => f.attribute)),
+  ].sort();
   const chosen = attribute && attributes.includes(attribute) ? attribute : attributes[0];
   const fallback = beforeLastChange() ?? connection?.sealed?.head;
   const believedText = believed ?? (fallback !== undefined ? String(fallback) : "");
   const date = at?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
   const position = /^\d+$/.test(believedText) ? Number(believedText) : undefined;
-  const recordedAt = position === undefined && believedText && !Number.isNaN(Date.parse(believedText)) ? new Date(believedText).toISOString() : undefined;
-  return { connection, attributes, chosen, believedText, date, position, recordedAt, validAt: new Date(date + "T12:00:00Z").toISOString() };
+  const recordedAt =
+    position === undefined && believedText && !Number.isNaN(Date.parse(believedText))
+      ? new Date(believedText).toISOString()
+      : undefined;
+  return {
+    connection,
+    attributes,
+    chosen,
+    believedText,
+    date,
+    position,
+    recordedAt,
+    validAt: new Date(date + "T12:00:00Z").toISOString(),
+  };
 }
 
-function ByEntity({ facts, entity, attribute, at, believed, onChange }: Parameters<typeof TimeTab>[0]) {
+function ByEntity({
+  facts,
+  entity,
+  attribute,
+  at,
+  believed,
+  onChange,
+}: Parameters<typeof TimeTab>[0]) {
   const d = useDefaults(facts, entity, attribute, at, believed);
-  const believedBasis = { validAt: d.validAt, ...(d.position !== undefined ? { position: d.position } : d.recordedAt ? { recordedAt: d.recordedAt } : {}) };
+  const believedBasis = {
+    validAt: d.validAt,
+    ...(d.position !== undefined
+      ? { position: d.position }
+      : d.recordedAt
+        ? { recordedAt: d.recordedAt }
+        : {}),
+  };
   const calls = [
     { name: "read_entity", input: { entity } },
     { name: "read_entity", input: { entity, basis: { validAt: d.validAt } } },
@@ -120,16 +173,40 @@ function ByEntity({ facts, entity, attribute, at, believed, onChange }: Paramete
       queryFn: () => callTool<ReadEntity>(c.name, c.input),
       retry: false,
     })),
-  }) as { data?: Answer<ReadEntity>; isPending: boolean; isError: boolean; error: unknown; refetch: () => void }[];
-  const dayWords = new Date(d.date + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+  }) as {
+    data?: Answer<ReadEntity>;
+    isPending: boolean;
+    isError: boolean;
+    error: unknown;
+    refetch: () => void;
+  }[];
+  const dayWords = new Date(d.date + "T12:00:00Z").toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
   const failed = results.find((r) => r.isError);
   const all = results.every((r) => r.data);
-  const attrs = [...new Set(results.flatMap((r) => r.data?.facts.map((f) => f.attribute) ?? []))].sort();
-  const differs = attrs.filter((a) => new Set(results.map((r) => valuesOf(r.data?.facts, a))).size > 1);
-  const headers = ["Now", `True on ${dayWords}, as known now`, `Believed at ${d.position !== undefined ? `position ${n(d.position)}` : d.recordedAt?.slice(0, 16).replace("T", " ")} about ${dayWords}`];
+  const attrs = [
+    ...new Set(results.flatMap((r) => r.data?.facts.map((f) => f.attribute) ?? [])),
+  ].sort();
+  const differs = attrs.filter(
+    (a) => new Set(results.map((r) => valuesOf(r.data?.facts, a))).size > 1,
+  );
+  const headers = [
+    "Now",
+    `True on ${dayWords}, as known now`,
+    `Believed at ${d.position !== undefined ? `position ${n(d.position)}` : d.recordedAt?.slice(0, 16).replace("T", " ")} about ${dayWords}`,
+  ];
   return (
     <div className="space-y-3">
-      <Controls attributes={d.attributes} attribute={d.chosen} date={d.date} believed={d.believedText} onChange={onChange} />
+      <Controls
+        attributes={d.attributes}
+        attribute={d.chosen}
+        date={d.date}
+        believed={d.believedText}
+        onChange={onChange}
+      />
       {failed ? (
         <ErrorAlert error={failed.error} onRetry={() => results.forEach((r) => r.refetch())} />
       ) : !all ? (
@@ -156,7 +233,13 @@ function ByEntity({ facts, entity, attribute, at, believed, onChange }: Paramete
                   {results.map((r, i) => (
                     <TableCell
                       key={i}
-                      className={cn("w-1/4 text-base whitespace-normal break-all", i === 2 && valuesOf(r.data?.facts, d.chosen) !== valuesOf(results[1]!.data?.facts, d.chosen) && "font-semibold")}
+                      className={cn(
+                        "w-1/4 text-base whitespace-normal break-all",
+                        i === 2 &&
+                          valuesOf(r.data?.facts, d.chosen) !==
+                            valuesOf(results[1]!.data?.facts, d.chosen) &&
+                          "font-semibold",
+                      )}
                     >
                       <Mono className="text-sm">{valuesOf(r.data?.facts, d.chosen)}</Mono>
                     </TableCell>
@@ -198,13 +281,16 @@ function ByEntity({ facts, entity, attribute, at, believed, onChange }: Paramete
             </Table>
           </div>
           <p className="text-sm" data-testid="time-summary">
-            {n(differs.length)} of {n(attrs.length)} {attrs.length === 1 ? "attribute differs" : "attributes differ"} between the three views
+            {n(differs.length)} of {n(attrs.length)}{" "}
+            {attrs.length === 1 ? "attribute differs" : "attributes differ"} between the three views
             {differs.length ? `: ${differs.join(", ")}` : ""}.
           </p>
           {results[2]!.data!.facts.length === 0 && (
             <p className="text-muted-foreground text-xs">
-              Nothing was recorded about this entity at that position or record time. Record time on this database runs from{" "}
-              {d.connection?.recordTimeRange?.first?.slice(0, 16).replace("T", " ")} and runs about a year ahead of wall time.
+              Nothing was recorded about this entity at that position or record time. Record time on
+              this database runs from{" "}
+              {d.connection?.recordTimeRange?.first?.slice(0, 16).replace("T", " ")} and runs about
+              a year ahead of wall time.
             </p>
           )}
         </>
@@ -213,7 +299,15 @@ function ByEntity({ facts, entity, attribute, at, believed, onChange }: Paramete
   );
 }
 
-function BySubject({ target, facts, entity, attribute, at, believed, onChange }: Parameters<typeof TimeTab>[0]) {
+function BySubject({
+  target,
+  facts,
+  entity,
+  attribute,
+  at,
+  believed,
+  onChange,
+}: Parameters<typeof TimeTab>[0]) {
   const tools = useTools();
   const d = useDefaults(facts, entity, attribute, at, believed);
   const ns = target.account ? `acct/${target.account}/` : "";
@@ -226,12 +320,25 @@ function BySubject({ target, facts, entity, attribute, at, believed, onChange }:
     recordedAt: d.recordedAt,
   };
   const q = useTool<ReadAt>("read_subject_at", input, { enabled: Boolean(d.chosen) });
-  const pick = (list: AtView[] | undefined) => (list ?? []).filter((f) => f.entity === shortId(entity, ns) || f.entity === entity);
-  const v = q.data ? [pick(q.data.current), pick(q.data.trueThenAsKnownNow), pick(q.data.believedThen)] : undefined;
-  const dayWords = new Date(d.date + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+  const pick = (list: AtView[] | undefined) =>
+    (list ?? []).filter((f) => f.entity === shortId(entity, ns) || f.entity === entity);
+  const v = q.data
+    ? [pick(q.data.current), pick(q.data.trueThenAsKnownNow), pick(q.data.believedThen)]
+    : undefined;
+  const dayWords = new Date(d.date + "T12:00:00Z").toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
   return (
     <div className="space-y-3">
-      <Controls attributes={d.attributes} attribute={d.chosen} date={d.date} believed={d.believedText} onChange={onChange} />
+      <Controls
+        attributes={d.attributes}
+        attribute={d.chosen}
+        date={d.date}
+        believed={d.believedText}
+        onChange={onChange}
+      />
       {q.isError ? (
         <ErrorAlert error={q.error} onRetry={() => q.refetch()} />
       ) : q.isPending ? (
@@ -248,7 +355,13 @@ function BySubject({ target, facts, entity, attribute, at, believed, onChange }:
                   <TableHead className="w-48" />
                   <TableHead>Now</TableHead>
                   <TableHead>True on {dayWords}, as known now</TableHead>
-                  <TableHead>Believed at {d.position !== undefined ? `position ${n(d.position)}` : day(q.data?.believedAsRecordedAt)} about {dayWords}</TableHead>
+                  <TableHead>
+                    Believed at{" "}
+                    {d.position !== undefined
+                      ? `position ${n(d.position)}`
+                      : day(q.data?.believedAsRecordedAt)}{" "}
+                    about {dayWords}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -266,8 +379,9 @@ function BySubject({ target, facts, entity, attribute, at, believed, onChange }:
             </Table>
           </div>
           <p className="text-sm">
-            Across the subject's <Mono>{d.chosen}</Mono> facts, {n(q.data!.differences.length)} differ between the three views. The three reads ran in one tool
-            call; its store time is their sum.
+            Across the subject's <Mono>{d.chosen}</Mono> facts, {n(q.data!.differences.length)}{" "}
+            differ between the three views. The three reads ran in one tool call; its store time is
+            their sum.
           </p>
         </>
       )}

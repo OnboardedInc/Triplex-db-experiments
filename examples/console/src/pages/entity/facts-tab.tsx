@@ -14,7 +14,17 @@ import type { Fact } from "@/lib/types";
 import { buildTree, type Node } from "./model";
 import { cn } from "@/lib/utils";
 
-function TreeNode({ node, selected, onSelect, ns }: { node: Node; selected: string; onSelect: (id: string) => void; ns: string }) {
+function TreeNode({
+  node,
+  selected,
+  onSelect,
+  ns,
+}: {
+  node: Node;
+  selected: string;
+  onSelect: (id: string) => void;
+  ns: string;
+}) {
   const [open, setOpen] = useState(node.depth < 3);
   return (
     <div>
@@ -35,16 +45,25 @@ function TreeNode({ node, selected, onSelect, ns }: { node: Node; selected: stri
             }}
             aria-label={open ? "Collapse" : "Expand"}
           >
-            {open ? <ChevronDownIcon className="size-3" /> : <ChevronRightIcon className="size-3" />}
+            {open ? (
+              <ChevronDownIcon className="size-3" />
+            ) : (
+              <ChevronRightIcon className="size-3" />
+            )}
           </button>
         ) : (
           <span className="w-3" />
         )}
         <span className="truncate font-mono">{shortId(node.id, ns)}</span>
-        <span className="text-muted-foreground ml-auto pl-2">{node.depth === 0 && node.kind === "root" ? "root" : node.kind}</span>
+        <span className="text-muted-foreground ml-auto pl-2">
+          {node.depth === 0 && node.kind === "root" ? "root" : node.kind}
+        </span>
         <span className="text-muted-foreground w-6 text-right tabular-nums">{node.facts}</span>
       </div>
-      {open && node.children.map((c) => <TreeNode key={c.id} node={c} selected={selected} onSelect={onSelect} ns={ns} />)}
+      {open &&
+        node.children.map((c) => (
+          <TreeNode key={c.id} node={c} selected={selected} onSelect={onSelect} ns={ns} />
+        ))}
     </div>
   );
 }
@@ -52,13 +71,25 @@ function TreeNode({ node, selected, onSelect, ns }: { node: Node; selected: stri
 export function valueCell(f: Pick<Fact, "value" | "type">, ns?: string) {
   if (f.type === "ref" && typeof f.value === "string")
     return (
-      <Link to={`/entities/${encodeURIComponent(f.value)}`} className="font-mono text-xs underline-offset-4 hover:underline">
+      <Link
+        to={`/entities/${encodeURIComponent(f.value)}`}
+        className="font-mono text-xs underline-offset-4 hover:underline"
+      >
         {"-> "}
         {shortId(f.value, ns)}
       </Link>
     );
-  const text = f.value === null || f.value === undefined ? "" : typeof f.value === "object" ? JSON.stringify(f.value) : String(f.value);
-  return <Mono className={cn(text.length > 40 && "line-clamp-2")}>{f.type === "datetime" && /^\d+$/.test(text) ? time(Number(text)) : text}</Mono>;
+  const text =
+    f.value === null || f.value === undefined
+      ? ""
+      : typeof f.value === "object"
+        ? JSON.stringify(f.value)
+        : String(f.value);
+  return (
+    <Mono className={cn(text.length > 40 && "line-clamp-2")}>
+      {f.type === "datetime" && /^\d+$/.test(text) ? time(Number(text)) : text}
+    </Mono>
+  );
 }
 
 export function FactsTab({
@@ -86,17 +117,51 @@ export function FactsTab({
   const tree = useMemo(() => buildTree(facts, root), [facts, root]);
   const own = facts.filter((f) => f.entity === selected);
   const shown = own.filter(
-    (f) => !filter || f.attribute.toLowerCase().includes(filter.toLowerCase()) || String(f.value).toLowerCase().includes(filter.toLowerCase()),
+    (f) =>
+      !filter ||
+      f.attribute.toLowerCase().includes(filter.toLowerCase()) ||
+      String(f.value).toLowerCase().includes(filter.toLowerCase()),
   );
   const hasPosition = own.some((f) => f.recordedPosition !== undefined);
   const columns: ColumnDef<Fact, unknown>[] = [
-    { accessorKey: "attribute", header: "Attribute", cell: (c) => <Mono>{c.row.original.attribute}</Mono> },
-    { id: "value", header: "Value", accessorFn: (f) => String(f.value), cell: (c) => valueCell(c.row.original, ns) },
-    { accessorKey: "validFrom", header: "Valid from", cell: (c) => <span className="tabular-nums">{day(c.row.original.validFrom)}</span> },
-    { accessorKey: "validTo", header: "Valid to", cell: (c) => <span className="tabular-nums">{c.row.original.validTo ? day(c.row.original.validTo) : "open"}</span> },
-    { accessorKey: "recordedAt", header: "Recorded at", cell: (c) => <span className="tabular-nums">{time(c.row.original.recordedAt, false)}</span> },
+    {
+      accessorKey: "attribute",
+      header: "Attribute",
+      cell: (c) => <Mono>{c.row.original.attribute}</Mono>,
+    },
+    {
+      id: "value",
+      header: "Value",
+      accessorFn: (f) => String(f.value),
+      cell: (c) => valueCell(c.row.original, ns),
+    },
+    {
+      accessorKey: "validFrom",
+      header: "Valid from",
+      cell: (c) => <span className="tabular-nums">{day(c.row.original.validFrom)}</span>,
+    },
+    {
+      accessorKey: "validTo",
+      header: "Valid to",
+      cell: (c) => (
+        <span className="tabular-nums">
+          {c.row.original.validTo ? day(c.row.original.validTo) : "open"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "recordedAt",
+      header: "Recorded at",
+      cell: (c) => <span className="tabular-nums">{time(c.row.original.recordedAt, false)}</span>,
+    },
     ...(hasPosition
-      ? [{ accessorKey: "recordedPosition", header: "Position", cell: (c) => <span className="tabular-nums">{n(c.row.original.recordedPosition)}</span> } as ColumnDef<Fact, unknown>]
+      ? [
+          {
+            accessorKey: "recordedPosition",
+            header: "Position",
+            cell: (c) => <span className="tabular-nums">{n(c.row.original.recordedPosition)}</span>,
+          } as ColumnDef<Fact, unknown>,
+        ]
       : []),
     {
       id: "actions",
@@ -123,7 +188,10 @@ export function FactsTab({
       <ResizablePanel defaultSize="30%" minSize="18%">
         <div className="flex h-full flex-col">
           <div className="text-muted-foreground border-b px-3 py-2 text-xs font-medium">
-            Entity tree <span className="tabular-nums">({n(new Set(facts.map((f) => f.entity)).size)} with facts at this basis)</span>
+            Entity tree{" "}
+            <span className="tabular-nums">
+              ({n(new Set(facts.map((f) => f.entity)).size)} with facts at this basis)
+            </span>
           </div>
           <ScrollArea className="h-[30rem] p-1">
             {tree.map((t) => (
@@ -137,7 +205,10 @@ export function FactsTab({
         <div className="space-y-2 p-3">
           <div className="flex flex-wrap items-center gap-2">
             <Mono className="text-sm">{selected}</Mono>
-            <span className="text-muted-foreground text-xs">kind: {kindOf(selected)}{entityType && entityType !== "untyped" ? "" : ", read from the ID"}</span>
+            <span className="text-muted-foreground text-xs">
+              kind: {kindOf(selected)}
+              {entityType && entityType !== "untyped" ? "" : ", read from the ID"}
+            </span>
             <Badge variant="outline" className="ml-auto">
               {entityType && entityType !== "untyped" && selected === root ? entityType : "Untyped"}
             </Badge>
@@ -149,9 +220,18 @@ export function FactsTab({
             rowKey={(f) => f.id}
             onRowClick={(f) => onHistory(f.entity, f.attribute)}
             empty="This entity has no facts at this basis."
-            toolbar={<Input className="h-8 w-64" placeholder="Filter attribute or value" value={filter} onChange={(e) => setFilter(e.target.value)} />}
+            toolbar={
+              <Input
+                className="h-8 w-64"
+                placeholder="Filter attribute or value"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+              />
+            }
           />
-          <p className="text-muted-foreground text-xs">Each row opens that attribute's history. Record times are the store's clock, in UTC.</p>
+          <p className="text-muted-foreground text-xs">
+            Each row opens that attribute's history. Record times are the store's clock, in UTC.
+          </p>
         </div>
       </ResizablePanel>
     </ResizablePanelGroup>

@@ -30,12 +30,26 @@ function useCrumbs(): Crumb[] {
   const p = useParams();
   if (pathname === "/") return [{ label: "Home" }];
   if (pathname.startsWith("/accounts/")) {
-    const c: Crumb[] = [{ label: "Data" }, { label: "Accounts" }, { label: p["account"] ?? "", to: `/accounts/${p["account"]}` }];
+    const c: Crumb[] = [
+      { label: "Data" },
+      { label: "Accounts" },
+      { label: p["account"] ?? "", to: `/accounts/${p["account"]}` },
+    ];
     if (p["n"] !== undefined) c.push({ label: `Subject ${p["n"]}` });
     return c;
   }
-  if (pathname.startsWith("/entities/")) return [{ label: "Data" }, { label: "Entity" }, { label: shortId(decodeURIComponent(p["entityId"] ?? "")) }];
-  if (pathname.startsWith("/types")) return [{ label: "Data" }, { label: "Entity types" }, ...(p["name"] ? [{ label: p["name"] }] : [])];
+  if (pathname.startsWith("/entities/"))
+    return [
+      { label: "Data" },
+      { label: "Entity" },
+      { label: shortId(decodeURIComponent(p["entityId"] ?? "")) },
+    ];
+  if (pathname.startsWith("/types"))
+    return [
+      { label: "Data" },
+      { label: "Entity types" },
+      ...(p["name"] ? [{ label: p["name"] }] : []),
+    ];
   const screens: Record<string, string> = {
     "/query": "Query",
     "/journal": "Journal",
@@ -63,7 +77,9 @@ function Header({ onSearch }: { onSearch: () => void }) {
                 {i > 0 && <BreadcrumbSeparator />}
                 <BreadcrumbItem>
                   {i === crumbs.length - 1 ? (
-                    <BreadcrumbPage className="font-mono text-xs sm:font-sans sm:text-sm">{c.label}</BreadcrumbPage>
+                    <BreadcrumbPage className="font-mono text-xs sm:font-sans sm:text-sm">
+                      {c.label}
+                    </BreadcrumbPage>
                   ) : c.to ? (
                     <BreadcrumbLink asChild>
                       <Link to={c.to}>{c.label}</Link>
@@ -76,7 +92,13 @@ function Header({ onSearch }: { onSearch: () => void }) {
             ))}
           </BreadcrumbList>
         </Breadcrumb>
-        <Button variant="outline" size="sm" className="text-muted-foreground ml-auto w-44 justify-between" onClick={onSearch} data-testid="search">
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-muted-foreground ml-auto w-44 justify-between"
+          onClick={onSearch}
+          data-testid="search"
+        >
           Search <Kbd>⌘K</Kbd>
         </Button>
       </div>
@@ -113,7 +135,15 @@ export function Shell() {
   );
 }
 
-export function PageTitle({ title, children, actions }: { title: ReactNode; children?: ReactNode; actions?: ReactNode }) {
+export function PageTitle({
+  title,
+  children,
+  actions,
+}: {
+  title: ReactNode;
+  children?: ReactNode;
+  actions?: ReactNode;
+}) {
   return (
     <div className="mb-4 flex flex-wrap items-start gap-3">
       <div className="min-w-0 flex-1">

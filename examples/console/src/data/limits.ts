@@ -1,6 +1,15 @@
 // [DX-CON1] The Limits tab (DESIGN.md 8.13 and 10.5). Every number here is recorded, not live: each carries where and
 // when it was measured. The gap texts are the design's own.
-export type Limit = { what: string; here: string; recorded?: string; where?: string; gap: string; blocks: string; lift: string; kind: string };
+export type Limit = {
+  what: string;
+  here: string;
+  recorded?: string;
+  where?: string;
+  gap: string;
+  blocks: string;
+  lift: string;
+  kind: string;
+};
 
 export const limits: Limit[] = [
   {

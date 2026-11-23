@@ -20,7 +20,14 @@ import { AnswerLine } from "@/components/console/answer-line";
 import { DataTable, Mono } from "@/components/console/data-table";
 import { PageTitle } from "@/components/console/layout";
 import { useSheets } from "@/components/console/sheets-context";
-import { EmptyState, ErrorAlert, NotInCatalogue, Refused, Slow, TableSkeleton } from "@/components/console/states";
+import {
+  EmptyState,
+  ErrorAlert,
+  NotInCatalogue,
+  Refused,
+  Slow,
+  TableSkeleton,
+} from "@/components/console/states";
 import { useTool, useToolMutation } from "@/hooks/use-tool";
 import { useTools } from "@/lib/catalogue";
 import { useDescribedTypes } from "@/lib/config";
@@ -53,9 +60,16 @@ function Objects({ types }: { types: string[] }) {
             kind: "entity-schema",
             key: d.data.type.name,
             revision: d.data.type.revisions.at(-1)?.revision ?? "",
-            history: d.data.type.revisions.map((r) => `${r.sequence} ${r.release} ${r.change}`).join("; "),
+            history: d.data.type.revisions
+              .map((r) => `${r.sequence} ${r.release} ${r.change}`)
+              .join("; "),
           },
-          ...d.data.type.attributes.map((a) => ({ kind: "attribute", key: a.key, revision: "", history: `used by ${d.data!.type.name}` })),
+          ...d.data.type.attributes.map((a) => ({
+            kind: "attribute",
+            key: a.key,
+            revision: "",
+            history: `used by ${d.data!.type.name}`,
+          })),
         ]
       : [],
   );
@@ -67,13 +81,28 @@ function Objects({ types }: { types: string[] }) {
         rowKey={(r) => r.kind + r.key + r.history}
         data={rows}
         columns={[
-          { accessorKey: "kind", header: "Kind", cell: (c) => <Badge variant="outline">{c.row.original.kind}</Badge> },
+          {
+            accessorKey: "kind",
+            header: "Kind",
+            cell: (c) => <Badge variant="outline">{c.row.original.kind}</Badge>,
+          },
           { accessorKey: "key", header: "Key", cell: (c) => <Mono>{c.row.original.key}</Mono> },
-          { accessorKey: "revision", header: "Current revision", cell: (c) => <Mono>{c.row.original.revision ? c.row.original.revision.slice(0, 18) + "..." : ""}</Mono> },
+          {
+            accessorKey: "revision",
+            header: "Current revision",
+            cell: (c) => (
+              <Mono>
+                {c.row.original.revision ? c.row.original.revision.slice(0, 18) + "..." : ""}
+              </Mono>
+            ),
+          },
           { accessorKey: "history", header: "Revision history" },
         ]}
       />
-      <p className="text-muted-foreground text-xs">The logical objects of the release live points to, read through describe_entity_type for each type.</p>
+      <p className="text-muted-foreground text-xs">
+        The logical objects of the release live points to, read through describe_entity_type for
+        each type.
+      </p>
     </div>
   );
 }
@@ -85,18 +114,43 @@ export function ConfigurationPage() {
   const [params, setParams] = useSearchParams();
   const tab = params.get("tab") ?? "releases";
   const compare = params.get("compare")?.split(",") as [string, string] | undefined;
-  const q = useTool<ListReleases>("list_releases", { limit: 20, compare }, { enabled: tools.has("list_releases"), keepPrevious: true });
+  const q = useTool<ListReleases>(
+    "list_releases",
+    { limit: 20, compare },
+    { enabled: tools.has("list_releases"), keepPrevious: true },
+  );
   const move = useToolMutation<MoveLive>("move_live");
   const [confirm, setConfirm] = useState<Release | null>(null);
   const [moved, setMoved] = useState<MoveLive | null>(null);
-  if (tools.isSuccess && !tools.has("list_releases")) return <NotInCatalogue tool="list_releases" what="Configuration" />;
+  if (tools.isSuccess && !tools.has("list_releases"))
+    return <NotInCatalogue tool="list_releases" what="Configuration" />;
   const live = q.data?.refs.live;
   const columns: ColumnDef<Release, unknown>[] = [
-    { accessorKey: "sequence", header: "Sequence", cell: (c) => <span className="tabular-nums">{c.row.original.sequence}</span> },
-    { accessorKey: "label", header: "Label", cell: (c) => <span className="font-medium">{c.row.original.label}</span> },
-    { accessorKey: "id", header: "Release ID", cell: (c) => <Mono>{short(c.row.original.id)}</Mono> },
-    { accessorKey: "parent", header: "Parent", cell: (c) => <Mono>{short(c.row.original.parent)}</Mono> },
-    { accessorKey: "objects", header: "Objects", cell: (c) => <span className="tabular-nums">{c.row.original.objects}</span> },
+    {
+      accessorKey: "sequence",
+      header: "Sequence",
+      cell: (c) => <span className="tabular-nums">{c.row.original.sequence}</span>,
+    },
+    {
+      accessorKey: "label",
+      header: "Label",
+      cell: (c) => <span className="font-medium">{c.row.original.label}</span>,
+    },
+    {
+      accessorKey: "id",
+      header: "Release ID",
+      cell: (c) => <Mono>{short(c.row.original.id)}</Mono>,
+    },
+    {
+      accessorKey: "parent",
+      header: "Parent",
+      cell: (c) => <Mono>{short(c.row.original.parent)}</Mono>,
+    },
+    {
+      accessorKey: "objects",
+      header: "Objects",
+      cell: (c) => <span className="tabular-nums">{c.row.original.objects}</span>,
+    },
     { id: "types", header: "Types", cell: (c) => c.row.original.types?.join(", ") },
     {
       id: "refs",
@@ -117,12 +171,24 @@ export function ConfigurationPage() {
       cell: (c) => (
         <span className="flex justify-end gap-1">
           {live && c.row.original.id !== live.id && (
-            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setParams({ compare: `${c.row.original.id},${live.id}` })}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setParams({ compare: `${c.row.original.id},${live.id}` })}
+            >
               Compare
             </Button>
           )}
           {!c.row.original.refs.includes("live") && (
-            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setConfirm(c.row.original)} disabled={!tools.has("move_live")} data-testid="move-live">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setConfirm(c.row.original)}
+              disabled={!tools.has("move_live")}
+              data-testid="move-live"
+            >
               Move live here
             </Button>
           )}
@@ -135,8 +201,12 @@ export function ConfigurationPage() {
   const diff = q.data?.difference;
   return (
     <div className="mx-auto max-w-7xl space-y-4">
-      <PageTitle title="Configuration" actions={<Button onClick={() => sheets.openNewType()}>New entity type</Button>}>
-        Releases of the whole configuration, immutable and content-addressed; test and live are refs.
+      <PageTitle
+        title="Configuration"
+        actions={<Button onClick={() => sheets.openNewType()}>New entity type</Button>}
+      >
+        Releases of the whole configuration, immutable and content-addressed; test and live are
+        refs.
       </PageTitle>
       <Tabs value={tab} onValueChange={(t) => setParams({ tab: t })}>
         <TabsList>
@@ -175,7 +245,8 @@ export function ConfigurationPage() {
                     live moved from {moved.before?.label ?? "none"} to {moved.after.label}
                   </div>
                   <div>
-                    Types before: {moved.typesBefore.join(", ") || "none"}. Types after: {moved.typesAfter.join(", ") || "none"}.
+                    Types before: {moved.typesBefore.join(", ") || "none"}. Types after:{" "}
+                    {moved.typesAfter.join(", ") || "none"}.
                   </div>
                   <div className="text-muted-foreground">{moved.note}</div>
                 </div>
@@ -210,20 +281,28 @@ export function ConfigurationPage() {
                 </div>
               )}
               <p className="text-muted-foreground text-xs">
-                Moving live changes the release that new writes are pinned to. It changes no fact and no earlier receipt.
+                Moving live changes the release that new writes are pinned to. It changes no fact
+                and no earlier receipt.
               </p>
             </>
           )}
           {move.error && (move.error as { code?: string }).code === "AlreadyLive" ? (
             <Refused reason={(move.error as Error).message} />
           ) : move.error && /Conflict/.test((move.error as { code?: string }).code ?? "") ? (
-            <ErrorAlert error={new Error("live moved while you were looking. Reload.")} onRetry={() => q.refetch()} />
+            <ErrorAlert
+              error={new Error("live moved while you were looking. Reload.")}
+              onRetry={() => q.refetch()}
+            />
           ) : move.error ? (
             <ErrorAlert error={move.error} />
           ) : null}
         </TabsContent>
         <TabsContent value="objects" className="mt-4">
-          {q.data ? <Objects types={q.data.releases.find((r) => r.refs.includes("live"))?.types ?? []} /> : <TableSkeleton />}
+          {q.data ? (
+            <Objects types={q.data.releases.find((r) => r.refs.includes("live"))?.types ?? []} />
+          ) : (
+            <TableSkeleton />
+          )}
         </TabsContent>
       </Tabs>
       <AlertDialog open={Boolean(confirm)} onOpenChange={(o) => !o && setConfirm(null)}>
@@ -231,8 +310,9 @@ export function ConfigurationPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Move live to {confirm?.label}?</AlertDialogTitle>
             <AlertDialogDescription>
-              live points to {live?.label}. After the move, new typed writes are pinned to {confirm?.label}, whose types are {confirm?.types?.join(", ") || "none"}.
-              No fact and no earlier receipt changes.
+              live points to {live?.label}. After the move, new typed writes are pinned to{" "}
+              {confirm?.label}, whose types are {confirm?.types?.join(", ") || "none"}. No fact and
+              no earlier receipt changes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -246,7 +326,9 @@ export function ConfigurationPage() {
                   {
                     onSuccess: (answer) => {
                       setMoved(answer);
-                      receiptToast(answer as never, `live moved to ${answer.after.label}`, () => navigate("/journal"));
+                      receiptToast(answer as never, `live moved to ${answer.after.label}`, () =>
+                        navigate("/journal"),
+                      );
                     },
                   },
                 )

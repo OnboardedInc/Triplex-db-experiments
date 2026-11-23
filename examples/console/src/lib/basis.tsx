@@ -5,7 +5,10 @@ import { createContext, useCallback, useContext, useMemo, type ReactNode } from 
 import { useSearchParams } from "react-router";
 import type { Basis } from "./api";
 
-export type Recorded = { mode: "latest" } | { mode: "position"; position: number } | { mode: "recordedAt"; at: string };
+export type Recorded =
+  | { mode: "latest" }
+  | { mode: "position"; position: number }
+  | { mode: "recordedAt"; at: string };
 export type Valid = { mode: "now" } | { mode: "date"; date: string };
 export type BasisState = { recorded: Recorded; valid: Valid };
 
@@ -15,8 +18,13 @@ export function parseBasis(params: URLSearchParams): BasisState {
   const r = params.get("recorded");
   const v = params.get("valid");
   const recorded: Recorded =
-    r && /^\d+$/.test(r) ? { mode: "position", position: Number(r) } : r && !Number.isNaN(Date.parse(r)) ? { mode: "recordedAt", at: r } : { mode: "latest" };
-  const valid: Valid = v && !Number.isNaN(Date.parse(v)) ? { mode: "date", date: v } : { mode: "now" };
+    r && /^\d+$/.test(r)
+      ? { mode: "position", position: Number(r) }
+      : r && !Number.isNaN(Date.parse(r))
+        ? { mode: "recordedAt", at: r }
+        : { mode: "latest" };
+  const valid: Valid =
+    v && !Number.isNaN(Date.parse(v)) ? { mode: "date", date: v } : { mode: "now" };
   return { recorded, valid };
 }
 
@@ -46,7 +54,8 @@ export function recordedWords(b: BasisState) {
       ? `Recorded at position ${b.recorded.position.toLocaleString("en-US")}`
       : `Recorded at ${b.recorded.at.replace("T", " ").slice(0, 16)}`;
 }
-export const validWords = (b: BasisState) => (b.valid.mode === "now" ? "Valid now" : `Valid on ${b.valid.date.slice(0, 10)}`);
+export const validWords = (b: BasisState) =>
+  b.valid.mode === "now" ? "Valid now" : `Valid on ${b.valid.date.slice(0, 10)}`;
 
 type Ctx = { basis: BasisState; setBasis: (b: BasisState) => void; reset: () => void };
 const BasisContext = createContext<Ctx>({ basis: LATEST, setBasis: () => {}, reset: () => {} });
@@ -69,7 +78,9 @@ export function BasisProvider({ children }: { children: ReactNode }) {
     [setParams],
   );
   const reset = useCallback(() => setBasis(LATEST), [setBasis]);
-  return <BasisContext.Provider value={{ basis, setBasis, reset }}>{children}</BasisContext.Provider>;
+  return (
+    <BasisContext.Provider value={{ basis, setBasis, reset }}>{children}</BasisContext.Provider>
+  );
 }
 
 export const useBasis = () => useContext(BasisContext);

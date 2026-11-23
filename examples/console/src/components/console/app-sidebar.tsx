@@ -48,7 +48,11 @@ export function AppSidebar() {
   const connection = useConnection();
   const tools = useTools();
   const summary = useTool<Summary>("database_summary", {}, { refetchInterval: 30_000 });
-  const types = useTool<ListTypes>("list_entity_types", {}, { enabled: tools.has("list_entity_types") });
+  const types = useTool<ListTypes>(
+    "list_entity_types",
+    {},
+    { enabled: tools.has("list_entity_types") },
+  );
   const { pathname } = useLocation();
   const [allAccounts, setAllAccounts] = useState(false);
   const openNewType = useNewType();
@@ -64,9 +68,7 @@ export function AppSidebar() {
         {c ? (
           <div className="text-muted-foreground text-xs leading-relaxed">
             {c.kind === "toy" ? (
-              <>
-                Small database on this Mac, {n(records)} records
-              </>
+              <>Small database on this Mac, {n(records)} records</>
             ) : (
               <>{n(records)} records</>
             )}
@@ -103,7 +105,9 @@ export function AppSidebar() {
                     <SidebarMenuSub>
                       {!tools.has("list_entity_types") ? (
                         <SidebarMenuSubItem>
-                          <span className="text-muted-foreground px-2 py-1 text-xs">Types arrive with the configuration tools.</span>
+                          <span className="text-muted-foreground px-2 py-1 text-xs">
+                            Types arrive with the configuration tools.
+                          </span>
                         </SidebarMenuSubItem>
                       ) : types.isPending ? (
                         <>
@@ -112,29 +116,46 @@ export function AppSidebar() {
                         </>
                       ) : types.isError ? (
                         <SidebarMenuSubItem>
-                          <span className="text-destructive px-2 py-1 text-xs">The configuration could not be read: {(types.error as Error).message}</span>
+                          <span className="text-destructive px-2 py-1 text-xs">
+                            The configuration could not be read: {(types.error as Error).message}
+                          </span>
                         </SidebarMenuSubItem>
                       ) : types.data && !types.data.types.length ? (
                         <SidebarMenuSubItem>
-                          <span className="text-muted-foreground px-2 py-1 text-xs">No release yet. Define the first entity type.</span>
+                          <span className="text-muted-foreground px-2 py-1 text-xs">
+                            No release yet. Define the first entity type.
+                          </span>
                         </SidebarMenuSubItem>
                       ) : (
                         types.data?.types.map((t) => (
                           <SidebarMenuSubItem key={t.name}>
-                            <SidebarMenuSubButton asChild isActive={pathname === `/types/${t.name}`}>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={pathname === `/types/${t.name}`}
+                            >
                               <NavLink to={`/types/${encodeURIComponent(t.name)}`}>
                                 <span>{t.name}</span>
                                 {typeCreated(t.created) !== undefined && (
-                                  <span className="text-muted-foreground ml-auto text-xs tabular-nums">{n(typeCreated(t.created))}</span>
+                                  <span className="text-muted-foreground ml-auto text-xs tabular-nums">
+                                    {n(typeCreated(t.created))}
+                                  </span>
                                 )}
                               </NavLink>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                         ))
                       )}
-                      {types.slow && <span className="text-muted-foreground px-2 text-xs">Reading the configuration from the refs.</span>}
+                      {types.slow && (
+                        <span className="text-muted-foreground px-2 text-xs">
+                          Reading the configuration from the refs.
+                        </span>
+                      )}
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton onClick={() => openNewType()} className="cursor-pointer" aria-disabled={!tools.has("define_entity_type")}>
+                        <SidebarMenuSubButton
+                          onClick={() => openNewType()}
+                          className="cursor-pointer"
+                          aria-disabled={!tools.has("define_entity_type")}
+                        >
                           + New entity type
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
@@ -154,17 +175,25 @@ export function AppSidebar() {
                     <SidebarMenuSub>
                       {shown.map((r) => (
                         <SidebarMenuSubItem key={r.account}>
-                          <SidebarMenuSubButton asChild isActive={pathname.startsWith(`/accounts/${r.account}`)}>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={pathname.startsWith(`/accounts/${r.account}`)}
+                          >
                             <NavLink to={`/accounts/${r.account}`}>
                               <span>{r.account}</span>
-                              <span className="text-muted-foreground ml-auto text-xs tabular-nums">{n(r.people)}</span>
+                              <span className="text-muted-foreground ml-auto text-xs tabular-nums">
+                                {n(r.people)}
+                              </span>
                             </NavLink>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                       ))}
                       {roster.length > 3 && (
                         <SidebarMenuSubItem>
-                          <SidebarMenuSubButton className="text-muted-foreground cursor-pointer" onClick={() => setAllAccounts((v) => !v)}>
+                          <SidebarMenuSubButton
+                            className="text-muted-foreground cursor-pointer"
+                            onClick={() => setAllAccounts((v) => !v)}
+                          >
                             {allAccounts ? "Fewer" : `... ${roster.length - 3} more`}
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
@@ -192,7 +221,11 @@ export function AppSidebar() {
             <SidebarMenuButton asChild isActive={pathname === "/about"}>
               <NavLink to="/about">About this database</NavLink>
             </SidebarMenuButton>
-            {summary.data && <SidebarMenuBadge className="tabular-nums">Head {n(summary.data.head)}</SidebarMenuBadge>}
+            {summary.data && (
+              <SidebarMenuBadge className="tabular-nums">
+                Head {n(summary.data.head)}
+              </SidebarMenuBadge>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

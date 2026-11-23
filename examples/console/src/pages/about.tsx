@@ -19,10 +19,21 @@ import type { Summary } from "@/lib/types";
 type Measured = {
   version: string;
   note?: string;
-  rows: { group: string; measure: string; value: string; bar?: string; verdict?: string; date?: string; source?: { branch?: string; commit?: string; file?: string }; note?: string }[];
+  rows: {
+    group: string;
+    measure: string;
+    value: string;
+    bar?: string;
+    verdict?: string;
+    date?: string;
+    source?: { branch?: string; commit?: string; file?: string };
+    note?: string;
+  }[];
 };
 // demo/measured.json belongs to the functions side; it is read at build time when it exists.
-const measuredFiles = import.meta.glob<{ default: Measured }>("../../../../demo/measured.json", { eager: true });
+const measuredFiles = import.meta.glob<{ default: Measured }>("../../../../demo/measured.json", {
+  eager: true,
+});
 const measured: Measured | undefined = Object.values(measuredFiles)[0]?.default;
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -41,7 +52,9 @@ function Identity() {
   const s = summary.data;
   if (connection.isError) return <ErrorAlert error={connection.error} />;
   if (!c) return <Skeleton className="h-64" />;
-  const mem = (s?.memory ?? (c["memory"] as Record<string, unknown> | undefined)) as Record<string, Record<string, unknown>> | undefined;
+  const mem = (s?.memory ?? (c["memory"] as Record<string, unknown> | undefined)) as
+    | Record<string, Record<string, unknown>>
+    | undefined;
   return (
     <div className="space-y-3">
       <div className="overflow-hidden rounded-md border">
@@ -52,15 +65,17 @@ function Identity() {
               <Mono>{c.database}</Mono>
             </Row>
             <Row label="Records">
-              <span className="tabular-nums">{n(c.recordsAtBringUp)}</span>, counted by a fresh peer at bring-up
-              {c["readyAt"] ? ` (${time(c["readyAt"] as string, false)})` : ""}, plus {s ? n(s.transactionsSinceSeal) : "..."} transactions since the seal.{" "}
-              {s?.note}
+              <span className="tabular-nums">{n(c.recordsAtBringUp)}</span>, counted by a fresh peer
+              at bring-up
+              {c["readyAt"] ? ` (${time(c["readyAt"] as string, false)})` : ""}, plus{" "}
+              {s ? n(s.transactionsSinceSeal) : "..."} transactions since the seal. {s?.note}
             </Row>
             <Row label="Records at the seal">
               <span className="tabular-nums">{n(c.sealed.records)}</span>
             </Row>
             <Row label="Subjects and accounts">
-              {n(c.subjects ?? c.roster.reduce((a, r) => a + r.people, 0))} subjects in {c.roster.length} accounts
+              {n(c.subjects ?? c.roster.reduce((a, r) => a + r.people, 0))} subjects in{" "}
+              {c.roster.length} accounts
             </Row>
             <Row label="Sealed head">
               <span className="tabular-nums">{n(c.sealed.head)}</span>
@@ -68,20 +83,34 @@ function Identity() {
             <Row label="Head at bring-up">
               <span className="tabular-nums">{n(c.headAtBringUp)}</span>
             </Row>
-            <Row label="Live head">{s ? <span className="tabular-nums">{n(s.head)}</span> : <Skeleton className="h-5 w-20" />}</Row>
+            <Row label="Live head">
+              {s ? (
+                <span className="tabular-nums">{n(s.head)}</span>
+              ) : (
+                <Skeleton className="h-5 w-20" />
+              )}
+            </Row>
             <Row label="Record-time range">
-              {time(c.recordTimeRange?.first)} to {time(c.recordTimeRange?.lastAtBringUp)} at bring-up (UTC).{" "}
+              {time(c.recordTimeRange?.first)} to {time(c.recordTimeRange?.lastAtBringUp)} at
+              bring-up (UTC).{" "}
               <span className="text-muted-foreground">{s?.recordTimeRange?.note}</span>
             </Row>
             <Row label="Working copy">
-              {c.workingCopy ? "Yes: changes are real commits on a byte copy; the original is never started." : "No: changes are refused."}
+              {c.workingCopy
+                ? "Yes: changes are real commits on a byte copy; the original is never started."
+                : "No: changes are refused."}
               {c["workingCopyMadeAt"] ? ` Made ${time(c["workingCopyMadeAt"] as string)}.` : ""}
             </Row>
             <Row label="Pinned-read options">
-              {c.pinnedReads ? `shortcut ${c.pinnedReads.shortcut ? "on" : "off"}, cut lookup ${c.pinnedReads.cutLookup ? "on" : "off"}` : "not recorded"}
+              {c.pinnedReads
+                ? `shortcut ${c.pinnedReads.shortcut ? "on" : "off"}, cut lookup ${c.pinnedReads.cutLookup ? "on" : "off"}`
+                : "not recorded"}
             </Row>
             {c.loaderPositionRows && (
-              <Row label="Loader compatibility">{s?.compatibility ?? "The loader's journal position rows are read with a named compatibility option."}</Row>
+              <Row label="Loader compatibility">
+                {s?.compatibility ??
+                  "The loader's journal position rows are read with a named compatibility option."}
+              </Row>
             )}
             {mem && (
               <Row label="Server memory settings">
@@ -92,11 +121,16 @@ function Identity() {
                       <div key={k}>
                         <span className="font-medium">{k}</span>:{" "}
                         {Object.entries(v)
-                          .map(([a, b]) => `${a} ${typeof b === "object" ? JSON.stringify(b) : String(b)}`)
+                          .map(
+                            ([a, b]) =>
+                              `${a} ${typeof b === "object" ? JSON.stringify(b) : String(b)}`,
+                          )
                           .join(", ")}
                       </div>
                     ))}
-                  {typeof mem["profile"] === "string" && <div>profile: {String(mem["profile"])}</div>}
+                  {typeof mem["profile"] === "string" && (
+                    <div>profile: {String(mem["profile"])}</div>
+                  )}
                 </div>
               </Row>
             )}
@@ -106,13 +140,21 @@ function Identity() {
           </TableBody>
         </Table>
       </div>
-      {summary.isError ? <ErrorAlert error={summary.error} /> : <AnswerLine answer={s} call={summary.call} />}
+      {summary.isError ? (
+        <ErrorAlert error={summary.error} />
+      ) : (
+        <AnswerLine answer={s} call={summary.call} />
+      )}
     </div>
   );
 }
 
 const limitColumns: ColumnDef<Limit, unknown>[] = [
-  { accessorKey: "what", header: "What", cell: (c) => <span className="font-medium">{c.row.original.what}</span> },
+  {
+    accessorKey: "what",
+    header: "What",
+    cell: (c) => <span className="font-medium">{c.row.original.what}</span>,
+  },
   { accessorKey: "here", header: "Here" },
   {
     id: "recorded",
@@ -127,7 +169,11 @@ const limitColumns: ColumnDef<Limit, unknown>[] = [
         </div>
       ) : null,
   },
-  { accessorKey: "gap", header: "Gap", cell: (c) => <Badge variant="secondary">{c.row.original.gap}</Badge> },
+  {
+    accessorKey: "gap",
+    header: "Gap",
+    cell: (c) => <Badge variant="secondary">{c.row.original.gap}</Badge>,
+  },
 ];
 
 function Limits() {
@@ -148,19 +194,34 @@ function Limits() {
           </div>
         )}
       />
-      <p className="text-muted-foreground text-xs">Select a row for what the gap blocks and the smallest change that would lift it.</p>
+      <p className="text-muted-foreground text-xs">
+        Select a row for what the gap blocks and the smallest change that would lift it.
+      </p>
     </div>
   );
 }
 
 const measuredColumns: ColumnDef<Measured["rows"][number], unknown>[] = [
-  { accessorKey: "measure", header: "Measure", cell: (c) => <span className="font-medium">{c.row.original.measure}</span> },
-  { accessorKey: "value", header: "Value", cell: (c) => <span className="tabular-nums">{c.row.original.value}</span> },
+  {
+    accessorKey: "measure",
+    header: "Measure",
+    cell: (c) => <span className="font-medium">{c.row.original.measure}</span>,
+  },
+  {
+    accessorKey: "value",
+    header: "Value",
+    cell: (c) => <span className="tabular-nums">{c.row.original.value}</span>,
+  },
   { accessorKey: "bar", header: "Bar" },
   {
     accessorKey: "verdict",
     header: "Bar met",
-    cell: (c) => (c.row.original.verdict ? <Badge variant={c.row.original.verdict === "met" ? "secondary" : "outline"}>{c.row.original.verdict}</Badge> : null),
+    cell: (c) =>
+      c.row.original.verdict ? (
+        <Badge variant={c.row.original.verdict === "met" ? "secondary" : "outline"}>
+          {c.row.original.verdict}
+        </Badge>
+      ) : null,
   },
   {
     id: "source",
@@ -181,7 +242,13 @@ const measuredColumns: ColumnDef<Measured["rows"][number], unknown>[] = [
 ];
 
 function MeasuredResults() {
-  if (!measured) return <EmptyState title="measured.json could not be read." description="The recorded results file (demo/measured.json) is not in this build." />;
+  if (!measured)
+    return (
+      <EmptyState
+        title="measured.json could not be read."
+        description="The recorded results file (demo/measured.json) is not in this build."
+      />
+    );
   const groups = [...new Set(measured.rows.map((r) => r.group))];
   return (
     <div className="space-y-6">
@@ -192,7 +259,13 @@ function MeasuredResults() {
           <DataTable
             columns={measuredColumns}
             data={measured.rows.filter((r) => r.group === g)}
-            renderExpanded={(r) => (r.note ? <div className="p-3 text-sm">{r.note}</div> : <div className="text-muted-foreground p-3 text-sm">No note.</div>)}
+            renderExpanded={(r) =>
+              r.note ? (
+                <div className="p-3 text-sm">{r.note}</div>
+              ) : (
+                <div className="text-muted-foreground p-3 text-sm">No note.</div>
+              )
+            }
           />
         </div>
       ))}
@@ -205,7 +278,9 @@ export function AboutPage() {
   const tab = params.get("tab") ?? "identity";
   return (
     <div className="mx-auto max-w-6xl">
-      <PageTitle title="About this database">What you are connected to, what is refused or slow, and what was measured.</PageTitle>
+      <PageTitle title="About this database">
+        What you are connected to, what is refused or slow, and what was measured.
+      </PageTitle>
       <Tabs value={tab} onValueChange={(t) => setParams({ tab: t })}>
         <TabsList>
           <TabsTrigger value="identity">Identity</TabsTrigger>
