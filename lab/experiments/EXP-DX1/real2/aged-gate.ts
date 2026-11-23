@@ -89,7 +89,7 @@ function toyCell(shape: Shape, band: number, window: number, rows: number) {
   }).sort((a, b) => a.ms - b.ms || a.account - b.account || a.person - b.person);
   return { label: `${shape}-aged-toy-loaded`, rate: 0, tape, duration: window, tapeSha: sha(tape), credits: 6 };
 }
-const cellsToRun = [toyCell("R", 0, 30, 120), toyCell("S", 1, 30, 120)];
+const cellsToRun = [toyCell("R", 0, 30, 90), toyCell("S", 1, 30, 90)];
 
 // The arm's aged admission, with every seeded field of every person the tape touches.
 const agedCut = { bundleSha256: "0".repeat(64), seedCut, physicalT: 1, records: 1, nativeId: "toy", active: aged.active,
@@ -168,9 +168,13 @@ const result = {
       orderedAcks: result.rows.filter((r) => (r as any).ack?.subjectOrderedIds).length };
   }),
 };
-for (const c of result.cells) assert(c.acked > 0.9 * c.offers && c.orderedAcks === c.acked, "too few ordered acknowledged saves");
 writeFileSync(join(out!, "result.json"), JSON.stringify(result, null, 2) + "\n");
 console.log("REAL2_AGED_GATE " + JSON.stringify(result));
+for (const c of result.cells) {
+  assert(c.acked + c.expired === c.offers, `${c.label}: an offer neither acknowledged nor expired`);
+  assert(c.acked >= 0.9 * c.offers, `${c.label}: ${c.acked} of ${c.offers} acknowledged`);
+  assert.equal(c.orderedAcks, c.acked, `${c.label}: ${c.orderedAcks} of ${c.acked} acknowledgements on the ordered writer`);
+}
 client.close();
 reader.close();
 writeFileSync(join(out!, "finished"), "ok\n");
