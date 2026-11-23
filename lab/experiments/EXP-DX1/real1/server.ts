@@ -9,6 +9,7 @@ import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import { checkAdoptedPeer, hex, readScaleSeal } from "../v01/adopt.ts";
 import { cleanSource, verifyBuild } from "../v01/source.ts";
 import { checkRealisticPeer, load } from "./load.ts";
+import { census, checkScopeOpen, installsSince } from "./held-census.ts";
 import { roster, type Profile } from "./population.ts";
 import {
   fileHash,
@@ -128,38 +129,6 @@ function durability(slot: string) {
     pg(slot, "show fsync; show synchronous_commit; show full_page_writes", "datomic"),
     "on\non\non",
   );
-}
-function census(slot: string, db: string, index = false): Census {
-  assert.match(db, /^s2-[a-zA-Z0-9_-]+$/);
-  const program = `(require '[datomic.api :as d] '[triplex.gateway.main :as g] '[triplex.gateway.storage :as s])
-(let [conn (d/connect (g/db-uri "${db}"))
-      t (d/basis-t (d/db conn))]
-  ${index ? "(d/request-index conn) (assert (deref (d/sync-index conn t) 900000 nil))" : ""}
-  (let [view (d/db conn)]
-    (println "DX_REAL1_CENSUS" (s/head-position view) (d/basis-t view) (:datoms (d/db-stats view)))))
-(shutdown-agents)
-(System/exit 0)`;
-  const raw = run(
-    "docker",
-    [
-      "exec",
-      "-i",
-      "-e",
-      "DATOMIC_JAVA_OPTS=-Xms128m -Xmx512m -XX:+UseSerialGC",
-      slot + "-gw-w",
-      "/opt/datomic/bin/run",
-      "/dev/stdin",
-    ],
-    program,
-  );
-  const m = /^DX_REAL1_CENSUS (\d+) (\d+) (\d+)$/m.exec(raw);
-  assert(m, "Missing native Datomic census");
-  return {
-    head: Number(m[1]),
-    nativeT: Number(m[2]),
-    nativeRecords: Number(m[3]),
-    sqlBytes: Number(pg(slot, "select pg_database_size(current_database())")),
-  };
 }
 function publish(dir: string, image: Image) {
   // [DX-REAL1] Why: validate the exact candidate before publishing any success transfer.
@@ -401,6 +370,9 @@ async function main() {
       mount: mounted.filter((m) => m.Destination === "/var/lib/postgresql/data"),
     });
     if (original) {
+      const sealedCensus = census(slot, original.scope.db);
+      assert.equal(sealedCensus.head, original.scope.cut);
+      assert.equal(sealedCensus.nativeRecords, 429_778_659);
       const reader = new DatomicClient(readUrl, 35_000);
       try {
         await checkAdoptedPeer(reader, original, original.scope.cut);
@@ -408,9 +380,9 @@ async function main() {
         reader.close();
       }
       const before = census(slot, original.scope.db);
-      assert.equal(before.head, original.scope.cut);
-      assert.equal(before.nativeRecords, 429_778_659);
+      const scopeOpen = checkScopeOpen(sealedCensus, before, installsSince(slot, original.scope.db, sealedCensus.nativeT));
       write(path.join(out, "native-before.json"), before);
+      write(path.join(out, "native-scope-open.json"), scopeOpen);
       const parent: Parent = {
         tag: path.basename(seed),
         imageSha: imagePin,
