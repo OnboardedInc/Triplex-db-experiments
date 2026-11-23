@@ -26,7 +26,7 @@ async function inner() {
     "object-cache-max": "64m" };
   fs.writeFileSync(primary, template.split("\n").filter((l) => !(l.split("=")[0].trim() in applied)).join("\n") + "\n" +
     Object.entries(applied).map(([k, v]) => k + "=" + v).join("\n") + "\n", { mode: 0o600 });
-  const txLog = path.join(outDir, "primary-transactor.raw");
+  const txLog = "/tmp/primary-transactor.raw";
   const fd = fs.openSync(txLog, "w");
   const tx = spawn("/opt/datomic/bin/transactor", ["-Xms256m", "-Xmx512m", primary], { stdio: ["ignore", fd, fd], detached: true });
   const t0 = Date.now();
@@ -35,7 +35,9 @@ async function inner() {
     await sleep(500);
   }
   const clj = (label, code, env = {}) => {
-    const r = spawnSync("/opt/datomic/bin/run", ["-e", code], { encoding: "utf8", env: { ...process.env, ...env },
+    const script = "/tmp/" + label + ".clj";
+    fs.writeFileSync(script, code);
+    const r = spawnSync("/opt/datomic/bin/run", [script], { encoding: "utf8", env: { ...process.env, DATOMIC_JAVA_OPTS: "-Xms256m -Xmx512m", ...env },
       timeout: 240000 });
     fs.writeFileSync(path.join(outDir, label + ".log"), redact((r.stdout ?? "") + (r.stderr ?? "")));
     return r;
