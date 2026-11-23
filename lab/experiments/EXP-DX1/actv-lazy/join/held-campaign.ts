@@ -32,6 +32,7 @@ import { authoredSeed, authoredWrite, expectedPolicy } from "./deep-reference.ts
 import { HeldLedger } from "./held-ledger.ts";
 import { Settlement } from "./settlement.ts";
 import { BulkQueue } from "./bulk.ts";
+import { firstOffer } from "../../ha1/first-offer.ts";
 
 const validTime = W0.POPULATION_VALID_TIME;
 export const rates = [3.5, 23.5, 39.4] as const;
@@ -425,6 +426,7 @@ export async function runHeld(
       });
       assert.equal(probe.result.json, JSON.parse(text)[0].json);
     }
+    firstOffer("held-publish");
     const initialAt = now();
     const initial = await offer(W0.R1.doc, peer.attempt + ":baseline", initialAt);
     const initialRead = await demand.read(W0.placementId(people - 1), { validTime });

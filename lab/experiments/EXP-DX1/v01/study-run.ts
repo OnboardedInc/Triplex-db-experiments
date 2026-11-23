@@ -92,7 +92,7 @@ const child = spawn("timeout", ["--kill-after=90s", String(minutes) + "m", "bash
   ...aged.map((v) => v ?? ""), txJvm, values["wal-directory"] ? path.resolve(values["wal-directory"]) : "", writeJvm, creditMode,
   study ? readJvm : "", readCache ?? ""], {
   stdio: ["ignore", fd, fd],
-  env: Object.fromEntries(["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT", "AGE_JAVA", "AGE_DATOMIC_HOME", "DX_W1_SERIAL_APPLY", "PREP1_LOOKUP_EVERY"]
+  env: Object.fromEntries(["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT", "AGE_JAVA", "AGE_DATOMIC_HOME", "DX_W1_SERIAL_APPLY", "PREP1_LOOKUP_EVERY", "DX_DRY_RUN_FIRST_OFFER"]
     .flatMap((name) => process.env[name] ? [[name, process.env[name]]] : []).concat(Object.entries(prepared))),
 });
 fs.closeSync(fd);

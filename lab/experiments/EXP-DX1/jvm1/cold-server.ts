@@ -19,6 +19,7 @@ import { stackOptions } from "../v01/profile.ts";
 import { cleanSource, verifyBuild } from "../v01/source.ts";
 import { coldAdmission } from "./cold-admission.mjs";
 import { openColdWriter } from "./cold-open.ts";
+import { firstOffer } from "../ha1/first-offer.ts";
 import { coldStartLog, creditModes, defaultCreditMode, launchProfile, type CreditMode } from "./launch.mjs";
 import { summarizeOffers } from "./cold-windows.mjs";
 
@@ -128,6 +129,7 @@ for (const [arm, startup, ramp] of [
         } };
       });
       assert(!stopped && Date.now() + 6 * 60_000 < armDeadline, "Not enough time after start");
+      firstOffer("cold-start " + arm);
       const start = now() + 200;
       jsonFile(path.join(dir, "start.json"), { source, slot, attempt, startedAt, ready, start });
       const writes = await play(senders, tape, start, attempt, true, true, creditModeSelection(creditMode), undefined, false,
