@@ -10,7 +10,7 @@ repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 here=lab/experiments/EXP-DX1/prep1
 stack=lab/experiments/EXP-DX1/stack
-mode=${1:?expected run, storage, storage-ordered, ceiling, scale, rolling, cache32, cache32-aged, production, production-full, production-aged, fresh, tail, tail-combined, owner, fair or arm}
+mode=${1:?expected run, storage, storage-ordered, ceiling, scale, rolling, cache32, cache32-aged, production, production-full, production-s, production-aged, fresh, tail, tail-combined, owner, fair or arm}
 out=${2:?provide an absolute new output directory}
 source=${3:?provide the pinned Git commit}
 [[ "$out" == /* && "$source" =~ ^[a-f0-9]{40}$ && $(git rev-parse HEAD) == "$source" && -z $(git status --porcelain) ]]
@@ -138,7 +138,7 @@ elif [[ $mode == cache32 ]]; then
   [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount && -z ${DX_PREP1_FRESH_CREDITS:-}${DX_PREP1_ROLLING_ARM:-}${DX_PREP1_AGED:-} ]]
   export DX_PREP1_CACHE32=1
   exec timeout --kill-after=40s 3560s bash "$here/server.sh" rolling-timed "${@:2}"
-elif [[ $mode == production || $mode == production-full ]]; then
+elif [[ $mode == production || $mode == production-full || $mode == production-s ]]; then
   # [DX-REAL2] Why: replay the production-shaped neighbour tape on Saturday's rolling-6 arms and fresh cut.
   # Rejected: mixing it with another rolling choice or the aged cut (its seed fields differ).
   [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount &&
@@ -147,6 +147,8 @@ elif [[ $mode == production || $mode == production-full ]]; then
   limit=3560
   export DX_REAL2_SET=hour
   if [[ $mode == production-full ]]; then export DX_REAL2_SET=full; limit=9900; fi
+  # [DX-REAL2] The fresh S arm alone (its first run stopped at the ordered identity's 256-assertion limit).
+  if [[ $mode == production-s ]]; then export DX_REAL2_SET=s394; limit=1600; fi
   exec timeout --kill-after=40s "${limit}s" bash "$here/server.sh" rolling-timed "${@:2}"
 elif [[ $mode == production-aged ]]; then
   # [DX-REAL2] Why: the production-shaped tape on AGE1's sealed one-billion cut, admitted as cache32-aged is.
@@ -270,6 +272,7 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
       if [[ -n ${DX_REAL2_SET:-} ]]; then
         # [DX-REAL2] Why: the hour set fits one rented hour; the full set is four separate stacks.
         if [[ $DX_REAL2_SET == hour ]]; then selected=(1-prodR-S 1-prodS-394-S)
+        elif [[ $DX_REAL2_SET == s394 ]]; then selected=(1-prodS-394-S)
         elif [[ $DX_REAL2_SET == aged ]]; then
           [[ ${DX_PREP1_AGED:-} == 1 && ${DX_REAL2_DEADLINE:-} =~ ^[0-9]+$ ]]
           selected=(1-prodR-394-cache32-S 1-prodS-394-cache32-S 1-prodR-394-S)

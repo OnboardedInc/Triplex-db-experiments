@@ -176,8 +176,9 @@ const productionForecasts: Record<string, Record<number, Record<string, Range>>>
   S16: {
     235: { stored: [13.4, 13.4, 13.4], wholeP99: [40, 20, 150], secondP99: [30, 15, 100], saveCompletionP99: [30, 15, 100],
       quietP99: [32, 22, 50], readsFirstMinute: [1.0, 0.5, 6], readsLate: [0.3, 0.05, 2.5], txCores: [0.3, 0.1, 0.8] },
+    // Revised after the fresh R run: about 17 rows' reads land on one commit (R read 0.034 per row late, 0.066 early).
     394: { stored: [23.1, 23.1, 23.1], wholeP99: [50, 25, 200], secondP99: [40, 20, 120], saveCompletionP99: [40, 20, 120],
-      quietP99: [35, 25, 60], readsFirstMinute: [1.0, 0.5, 6], readsLate: [0.4, 0.05, 2.5], txCores: [0.4, 0.15, 0.9] },
+      quietP99: [25, 18, 45], readsFirstMinute: [1.1, 0.5, 6], readsLate: [0.6, 0.15, 2.5], txCores: [0.4, 0.15, 0.9] },
     620: { stored: [35.3, 35.3, 35.3], wholeP99: [60, 30, 250], secondP99: [45, 25, 150], saveCompletionP99: [45, 25, 150],
       quietP99: [38, 25, 65], readsFirstMinute: [1.0, 0.5, 6], readsLate: [0.5, 0.05, 3], txCores: [0.6, 0.2, 1.3] },
   },
@@ -199,15 +200,17 @@ export const productionApplyForecast = { intercept: [0.3, 0.15, 1.0], slopePerFa
  * second-half p99 7.2 s, quiet 72 ms. Reads and stored/s are per commit, as in the fresh table.
  */
 const agedForecasts: Record<string, Record<string, Range>> = {
-  "1-prodR-394-cache32-S": { stored: [390.5, 385, 390.5], wholeP99: [800, 450, 3000], secondP99: [650, 400, 2000],
-    saveCompletionP99: [650, 400, 2000], quietP99: [50, 35, 90], readsFirstMinute: [0.12, 0.05, 0.6],
-    readsLate: [0.05, 0.01, 0.3], txCores: [1.1, 0.6, 2.0] },
+  // Revised 2026-11-23 after the fresh R run (16 GiB, 394): 393.13 stored, busy p99 163 / 157 ms, save completion p99
+  // 237 ms, 0.034 late and 0.066 first-minute reads per commit. A row commit takes about 2.5 ms, not 5 to 6.
+  "1-prodR-394-cache32-S": { stored: [390.5, 385, 390.5], wholeP99: [300, 180, 2000], secondP99: [250, 160, 1500],
+    saveCompletionP99: [350, 240, 2000], quietP99: [30, 20, 70], readsFirstMinute: [0.1, 0.05, 0.4],
+    readsLate: [0.05, 0.02, 0.25], txCores: [1.0, 0.5, 2.0] },
   "1-prodS-394-cache32-S": { stored: [23.1, 23.1, 23.1], wholeP99: [80, 30, 400], secondP99: [50, 25, 200],
-    saveCompletionP99: [50, 25, 200], quietP99: [40, 25, 70], readsFirstMinute: [1.3, 0.6, 8],
-    readsLate: [0.5, 0.1, 3], txCores: [0.45, 0.15, 1.0] },
-  "1-prodR-394-S": { stored: [390.5, 330, 390.5], wholeP99: [1000, 500, 5000], secondP99: [800, 400, 3000],
-    saveCompletionP99: [800, 400, 3000], quietP99: [55, 35, 100], readsFirstMinute: [0.12, 0.05, 0.6],
-    readsLate: [0.1, 0.02, 0.6], txCores: [1.2, 0.6, 2.2] },
+    saveCompletionP99: [50, 25, 200], quietP99: [30, 20, 60], readsFirstMinute: [1.5, 0.6, 8],
+    readsLate: [0.8, 0.2, 3], txCores: [0.45, 0.15, 1.0] },
+  "1-prodR-394-S": { stored: [390.5, 330, 390.5], wholeP99: [350, 200, 3000], secondP99: [300, 170, 2000],
+    saveCompletionP99: [400, 250, 2500], quietP99: [30, 20, 80], readsFirstMinute: [0.1, 0.05, 0.4],
+    readsLate: [0.08, 0.02, 0.4], txCores: [1.1, 0.5, 2.2] },
 };
 
 export function productionPrediction(arm: Arm, rate: number, alone: boolean) {
