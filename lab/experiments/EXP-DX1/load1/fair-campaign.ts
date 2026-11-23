@@ -27,6 +27,7 @@ import {
 import { checkAdoptedPeer, type AdoptedSeed } from "../v01/adopt.ts";
 import { checkSavedIdentity, feeder, jsonFile, preload, type Peer } from "../v01/adopted.ts";
 import { command } from "../w1/group/workload.ts";
+import { firstOffer } from "../ha1/first-offer.ts";
 
 const deepFacts = 16_000_000;
 type Cell = "quiet" | "control" | "import";
@@ -377,6 +378,9 @@ async function arm(
         }
       },
     };
+    // [DX-THIN1] Why: the import launcher joins the launch dry run; the quiet cell of the first arm is its first offer.
+    // Rejected: stopping after the cells start, which would need real offers.
+    firstOffer("fair-import " + spec.label + " " + cell);
     const [writes, reads] = await Promise.all([
       play(
         senders,

@@ -21,6 +21,7 @@ import { coldStartLog, creditModes, launchProfile, type CreditMode } from "./lau
 import { summarizeOffers } from "./cold-windows.mjs";
 import { openColdWriter } from "./cold-open.ts";
 import { agedAdmission, agedPredecessor, type AgedAdmission } from "./startup-aged.ts";
+import { firstOffer } from "../ha1/first-offer.ts";
 
 // [DX-JVM1] Why: time the first window after a restart of the three JVMs on storage that carried traffic, so the log tail
 // names the active set as it would in production, and compare no read with the owner-approved one-time start-up read.
@@ -268,6 +269,9 @@ for (const arm of arms) {
       await writeOptions(head0, "before-traffic");
       const agedLive = aged ? await aged.checkLive(reader, tapePeople) : null;
       if (agedLive) jsonFile(path.join(dir, "aged-live.json"), agedLive);
+      // [DX-THIN1] Why: the restart campaign joins the launch dry run; its first offer is the traffic before the restart.
+      // Rejected: stopping after the restart, which would need the pre-restart offers.
+      firstOffer("startup-read " + arm);
       const preStart = now() + 200;
       pre = await play(senders, preTape, preStart, attempt + "-pre", true, true, creditModeSelection(creditMode), undefined, false,
         { ramp: false, stopped: () => stopped || Date.now() + 10 * 60_000 >= armDeadline });
