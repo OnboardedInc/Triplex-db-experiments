@@ -54,7 +54,7 @@ Java 25 AOT builds use a training run and `-XX:AOTCacheOutput`, then consume a b
 
 ## B. Advance reads or exercise for the owner's decision
 
-These forecasts are conditional on the named cause. None of these mechanisms is implemented.
+These forecasts are conditional on the named cause. On 2026-11-23 the owner allowed a one-time read before admission (the first row; the second is covered by the reads it makes). It is built as an off-by-default step with its own restart trial in [STARTUP-READ.md](STARTUP-READ.md). Replaying saves and synthetic saves (rows three and four) remain out.
 
 | One-time startup mechanism | Prediction |
 | --- | --- |

@@ -52,3 +52,7 @@ All arms get the same 70,500 offers over 300 seconds. The first offer follows ga
 All-offer p99 orders unacknowledged offers after acknowledged offers. The ramp alone is expected to decline about 3,600 offers plus any additional age-budget refusals. `observed.json` shows both denominators, ACKs in each wall window, rate and age refusals, expiries, recovery counts, quiet-account ACK p99, prefixes and all 20 fifteen-second bins. A bin only contributes to settled time when it and every later bin are under 50 ms. Keep the baseline and tuned policy arms if the admission treatment buys a better tail at unacceptable served throughput.
 
 Use the per-offer clocks and native `prep1-native.ndjson` for stage time, the same-boot JVM logs for GC, safepoints and compiler activity, Linux per-role counters for device reads and CPU pressure, PostgreSQL counters and timestamped logs for checkpoints, and Datomic build and adoption events for index time. Only temporal overlap and matched interventions support causal estimates. Missing raw data or unexpected terminal states fail the collection and retain partial evidence for diagnosis.
+
+## Restart with and without the one-time start-up read
+
+The restart campaign plays the tape's first 120 s, restarts the three JVMs on the same storage, optionally runs the owner-approved one-time read before admission, and times the next 300 s. Commands for the fresh copy and the one-billion aged database, with predictions: [STARTUP-READ.md](STARTUP-READ.md#server-runs).

@@ -302,7 +302,7 @@ async function selftestDatomic(config, opts) {
 // Rejected: a forced removal or pruning the lab VM's shared image cache.
 async function removeThinImage(config, opts) {
   const scorecard = opts.holder === 'DX-V01';
-  if ((!scorecard && !['DX-THIN1', 'DX-PREP1', 'DX-REAL1', 'DX-RD1', 'DX-CHK1'].includes(opts.holder)) || !opts['image-id'])
+  if ((!scorecard && !['DX-THIN1', 'DX-PREP1', 'DX-REAL1', 'DX-RD1', 'DX-CHK1', 'DX-JVM1'].includes(opts.holder)) || !opts['image-id'])
     fail('USAGE', 'Image removal needs the assigned holder and exact image id');
   if (scorecard) {
     // [DX-V01] Why: retire only the scorecard's exact staged builds while rotating its two-image budget.
@@ -326,6 +326,8 @@ async function removeThinImage(config, opts) {
     'DX-V01': /^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/,
     'DX-PREP1': /^tx2-datomic:dx-prep1-(?:lookup-profile|subject-recovery|subject-native-suite)$/,
     'DX-RD1': /^(?:tx2-datomic:dx-rd1-fresh-reads|tx2-dxthin-rd1:[a-f0-9]{16})$/,
+    // [DX-JVM1] Why: the start-up read gate retires its one staged image after the slot exits.
+    'DX-JVM1': /^tx2-datomic:dx-jvm1-startup-read$/,
   }[opts.holder];
   if (!ownedTag.test(tag)) fail('REFUSED', 'Only the holder’s staged image tags may be removed');
   if (info.laneConf.imageId !== opts['image-id']) fail('REFUSED', 'The staged configuration is pinned to a different image');
