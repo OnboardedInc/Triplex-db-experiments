@@ -1,7 +1,7 @@
 // @ts-nocheck -- [DX-ERASE1] Engine reservation dictionaries, Docker inspect JSON and child IPC are checked when read.
 import assert from "node:assert/strict";
 import { fork, execFileSync, spawnSync } from "node:child_process";
-import { randomBytes, randomUUID } from "node:crypto";
+import { generateKeyPairSync, randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -125,7 +125,9 @@ export async function local(opts, config, manager) {
   const realistic = opts.realistic === true;
   assert(!realistic || combined);
   const sealedWitness = opts["sealed-witness"] === true;
+  const ownerHead = process.env.DX_W1_OWNER_HEAD === "1";
   assert(!sealedWitness || mode === "ledger-authority-regression");
+  assert(!ownerHead || (sealedWitness && orderedIds === "1" && subjectWriter === "1"));
   assert(["barrier6", "rolling6"].includes(creditMode));
   assert(subjectWriter === undefined || subjectWriter === "0" || subjectWriter === "1");
   assert(orderedIds === undefined || (orderedIds === "1" && subjectWriter === "1"));
@@ -137,6 +139,7 @@ export async function local(opts, config, manager) {
       "overlap",
       "regression",
       "ledger-regression",
+      "sealed-k-regression",
       "ledger-authority-regression",
       "ledger-authority-parallel",
       "fast-authority-regression",
@@ -171,6 +174,8 @@ export async function local(opts, config, manager) {
   const roles = Object.keys(caps);
   const names = Object.fromEntries(roles.map((r) => [r, prefix + "-" + r]));
   const regression = mode.endsWith("regression");
+  const sealedK = mode === "sealed-k-regression";
+  const transportKeys = sealedK ? generateKeyPairSync("rsa", { modulusLength: 2048 }) : undefined;
   const sharedAuthority = mode.includes("-authority-");
   // [DX-ERASE1] Why: stage evidence must join the peer and SDK from the same fresh attempt.
   // Rejected: comparing an aggregate HTTP span from an earlier run.
@@ -464,11 +469,14 @@ export async function local(opts, config, manager) {
                 "TRIPLEX_ERASURE_WRAPPING_KEY=" + wrap,
               ]
             : mode.startsWith("ledger-") ||
-                mode.startsWith("fast") ||
+                mode.startsWith("fast") || sealedK ||
                 mode === "guard-prepared-smoke"
               ? ["-v", "/dx-authority", "-e", "TRIPLEX_ERASURE_DIRECTORY=/dx-authority"]
               : []),
           ...(mode.startsWith("fast") ? ["-e", "TRIPLEX_ERASURE_SHRED_GRACE_MS=0"] : []),
+          ...(transportKeys ? ["-e", "TX2_SAVE_LEDGER=1", "-e", "TX2_SMALL_ROWS=1",
+            "-e", "TX2_LEAN_NATIVE_LOG=1", "-e", "TX2_LEAN_NATIVE_QUERY=1", "-e",
+            "TRIPLEX_GATEWAY_WRITE_PRIVATE_KEY=" + transportKeys.privateKey.export({ type: "pkcs8", format: "der" }).toString("base64")] : []),
           // [DX-CHK1] Why: read back the actual append switch on the private removal gateway.
           // Rejected: setting it only in the host environment.
           ...(combined ? ["-e", "TX2_SUBJECT_APPEND_RETIREMENT=1"] : []),
@@ -491,6 +499,7 @@ export async function local(opts, config, manager) {
           ...(orderedIds
             ? ["-e", "TX2_SUBJECT_ORDERED_IDS=1", "-e", "TX2_SUBJECT_NUMERIC_OWNER=1"]
             : []),
+          ...(ownerHead ? ["-e", "TX2_SUBJECT_OWNER_HEAD=1"] : []),
           ...(mode === "fast-authority-regression" ? ["-e", "TX2_REMOVAL_COST_READBACK=1"] : []),
           "-e",
           "DX_ERASE_TOKEN=" + token,
@@ -571,6 +580,7 @@ export async function local(opts, config, manager) {
       mode,
       creditMode,
       sealedWitness,
+      ownerHead,
       people,
       caps,
       slot: info.slot,
@@ -596,6 +606,7 @@ export async function local(opts, config, manager) {
         ...process.env,
         DATOMIC_URL: endpoint,
         TRIPLEX_DATOMIC_LAYOUT: "lean",
+        ...(transportKeys ? { TRIPLEX_DATOMIC_WRITE_PUBLIC_KEY: transportKeys.publicKey.export({ type: "spki", format: "pem" }) } : {}),
         TX2_W0_POINT_JOURNAL: "1",
         DX_ERASE_TOKEN: token,
         DX_V01_CREDIT_MODE: creditMode,

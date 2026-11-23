@@ -39,6 +39,7 @@ async function withScope<T>(
   url: string,
   key: string,
   layout: Layout,
+  clock: number | null,
   run: (
     t: typeof Triples.Service,
     rt: ReturnType<typeof runtime>,
@@ -48,7 +49,7 @@ async function withScope<T>(
 ): Promise<T> {
   const client = new DatomicClient(url, 30000);
   const scope = DatabaseScope.test(key);
-  const rt = runtime(client, scope, layout);
+  const rt = runtime(client, scope, layout, clock);
   try {
     const created = await client.create(scope, layout, true);
     assert.equal(created.created, true);
@@ -65,7 +66,7 @@ function runtime(
   client: DatomicClient,
   scope: ReturnType<typeof DatabaseScope.test>,
   layout: Layout,
-  clock = 100,
+  clock: number | null,
 ) {
   return ManagedRuntime.make(
     Runtime.define({
@@ -82,7 +83,7 @@ function runtime(
     }).layer({
       scope,
       capabilities: Capabilities.none,
-      deterministic: { startTime: clock, seed: `query6-${clock}` },
+      ...(clock === null ? {} : { deterministic: { startTime: clock, seed: `query6-${clock}` } }),
     }),
   );
 }
@@ -98,7 +99,7 @@ const results = <T>(value: { results: readonly T[] }) => value.results;
 // [DX-W1] Why: keep the documented R-JNL-5 operations and record the exact bytes from the public SDK.
 // Rejected: comparing only the gateway status or counting synthetic journal rows as retained triples.
 export function queryProof(url: string, nonce: string, layout: Layout) {
-  return withScope(url, nonce + "-" + layout, layout, async (t, rt, client, db) => {
+  return withScope(url, nonce + "-" + layout, layout, 100, async (t, rt, client, db) => {
     const run = rt.runPromise;
     // [DX-W1] Why: use the real K writer while the reader's business clock stays at 100.
     // Rejected: disabling server-assigned record time, which bypasses the K save ledger.
@@ -325,20 +326,21 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
       }),
     );
     assert.equal(older.transactions[0]?.txId, first.txId);
-    const exact = results(
-      await run(
-        t.query(
-          {
-            find: ["?int", "?num"],
-            where: [
-              ["n:1", ":n/i", "?int"],
-              ["n:1", ":n/value", "?num"],
-            ],
-          },
-          { basis: cut },
-        ),
-      ),
-    );
+    const numerics: DatalogQuery = {
+      find: ["?int", "?num"],
+      where: [
+        ["n:1", ":n/i", "?int"],
+        ["n:1", ":n/value", "?num"],
+      ],
+    };
+    // [DX-W1] Why: a page must include the acknowledged clock-102 save with the reader still at 100.
+    // Rejected: letting the deterministic reader's old wall time stand in for the write's recorded time.
+    const implicit = await run(t.query(numerics, { basis: cut, includeBasis: true }));
+    assert.equal(implicit.basis?.recordedPosition, next.position);
+    const latest = { ...cut, recordedAt: next.instant };
+    const exact = results(await run(t.query(numerics, { basis: latest })));
+    assert.equal(implicit.basis?.recordedAt, undefined);
+    assert.deepEqual(implicit.results, exact);
     assert.equal(
       exact[0]?.["?int"] && JSON.stringify(exact[0]["?int"]),
       JSON.stringify(integer("9007199254740993")),
@@ -361,7 +363,7 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
               },
             ],
           }),
-          { basis: cut },
+          { basis: latest },
         ),
       ),
     );
@@ -414,6 +416,7 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
         number: exact[0]?.["?num"],
         negativeZeroRejected: true,
       },
+      implicitNumericPage: { recordedPosition: implicit.basis?.recordedPosition, results: implicit.results },
       recursive,
       explainBackend: explain.map((plan) => plan.queryPlan?.backend),
       log: commits.map((row) => row.transaction),
@@ -424,11 +427,34 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
 
 // [DX-W1] Why: use identical saves and verify every recorded result outside each latency sample.
 // Rejected: attributing differences in row count or an unverified acknowledgement to query coverage.
-export function queryCost(url: string, nonce: string, layout: Layout, covered: boolean) {
-  return withScope(url, nonce, layout, async (t, rt, client) => {
+export function queryCost(url: string, nonce: string) {
+  return withScope(url, nonce, "lean", null, async (t, rt, client, db) => {
     const run = rt.runPromise;
+    const writer = await client.request<{
+      database: string;
+      ledger: boolean;
+      packedJournal: boolean;
+      packedJournalCount: number;
+      leanNativeQuery: boolean;
+      installedDefinitionMatches: boolean;
+      selectedDefinitionSha256: string;
+      selectedFunction: string;
+      predecessorSelected: boolean;
+    }>("GET", `/v2/db/${db}/write-options`);
+    assert.equal(writer.database, db);
+    assert.equal(writer.ledger, true);
+    assert.equal(writer.packedJournal, false);
+    assert.equal(writer.packedJournalCount, 0);
+    assert.equal(writer.installedDefinitionMatches, true, JSON.stringify(writer));
+    assert.match(writer.selectedDefinitionSha256, /^[a-f0-9]{64}$/);
+    assert.match(writer.selectedFunction, /^:triplex\.write\/v-[a-f0-9]{24}$/);
+    assert.equal(writer.predecessorSelected, true);
+    assert.equal(writer.leanNativeQuery, true);
+    const attribute = ":price/field";
+    const query: DatalogQuery = { find: ["?v"], where: [["e:0", attribute, "?v"]] };
+    const pattern = { entityId: owner("e:0"), attribute: Attribute.make(attribute) };
     const seed = await run(
-      t.transact(Array.from({ length: 48 }, (_, i) => a("e:" + i, ":field", "seed"))),
+      t.transact(Array.from({ length: 48 }, (_, i) => a("e:" + i, attribute, "seed"))),
     );
     let last = seed.triples[0]!;
     const samples = [];
@@ -439,55 +465,63 @@ export function queryCost(url: string, nonce: string, layout: Layout, covered: b
       requests = [];
       const start = performance.now();
       const committed = await run(
-        t.transact([{ op: "retract", id: last.id }, a("e:0", ":field", expected)], {
+        t.transact([{ op: "retract", id: last.id }, a("e:0", attribute, expected)], {
           commandId: "save:" + n,
         }),
       );
       const saved = performance.now() - start;
       const write = requests.find((entry) => entry.path.endsWith("/transact"));
-      assert(write && write.status === 200);
+      assert(write && write.status === 200 && write.position === committed.position);
+      assert(write.datoms !== undefined && write.datoms > 0);
       assert.equal(committed.position, seed.position + n + 1);
       assert.equal(committed.retracted, 1);
       last = committed.triples[0]!;
       const stored = await run(t.get(last.id));
       assert.deepEqual(stored, last);
       assert.deepEqual(last.value, { type: "string", value: expected });
-      const read = performance.now();
       const basis = { ...cut, recordedAt: committed.instant };
-      requests = [];
-      const answers = covered
-        ? results(
-            await run(
-              t.query(
-                {
-                  find: ["?v"],
-                  where: [["e:0", ":field", "?v"]],
-                },
-                { basis },
-              ),
-            ),
-          )
-        : (
-            await run(
-              t.match({ entityId: owner("e:0"), attribute: Attribute.make(":field") }, basis),
-            )
-          ).map((row) => ({ "?v": row.value.value }));
-      const readMs = performance.now() - read;
-      assert.deepEqual(answers, [{ "?v": expected }]);
-      const response = requests.find((entry) => entry.path.endsWith(covered ? "/q" : "/read"));
-      assert(response && response.status === 200);
+      const reads = [];
+      // [DX-W1] Why: pair the routes at the same durable cut and alternate the first read.
+      // Rejected: comparing two gateway lifecycles, which can differ in cache state and CPU share.
+      const routes = ["match", "datalog", "point"] as const;
+      for (let i = 0; i < routes.length; i++) {
+        const route = routes[(n + i) % routes.length]!;
+        requests = [];
+        process.env.TRIPLEX_DATOMIC_POINT_QUERY = route === "point" ? "1" : "0";
+        const read = performance.now();
+        let answers;
+        if (route === "match") answers = (await run(t.match(pattern, basis))).map((row) => ({ "?v": row.value.value }));
+        else {
+          const answer = await run(t.query(query, { basis, includeBasis: true }));
+          assert.equal(answer.basis?.recordedPosition, committed.position);
+          answers = answer.results;
+        }
+        const readMs = performance.now() - read;
+        assert.deepEqual(answers, [{ "?v": expected }]);
+        const endpoint = route === "match" ? "/read" : "/q";
+        const response = requests.find((entry) => entry.path.endsWith(endpoint));
+        assert(response && response.status === 200);
+        reads.push({
+          route,
+          readMs,
+          value: answers[0]?.["?v"],
+          calls: requests.map((entry) => entry.path.split("/").at(-1)),
+          callMs: requests.map((entry) => entry.finished - entry.started),
+          requestBytes: requests.reduce((sum, entry) => sum + entry.requestBytes, 0),
+          responseBytes: requests.reduce((sum, entry) => sum + entry.responseBytes, 0),
+        });
+      }
       samples.push({
         n,
         command: "save:" + n,
         position: committed.position,
         id: last.id,
         saved,
-        readMs,
         expected,
         write: [write.requestBytes, write.responseBytes, write.datoms],
-        read: [response.requestBytes, response.responseBytes],
+        reads,
       });
     }
-    return { nonce, covered, layout, samples };
+    return { db, nonce, layout: "lean", writer, samples };
   });
 }

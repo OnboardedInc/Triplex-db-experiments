@@ -29,10 +29,10 @@
     {:stamp (str (long clock)) :stampStatus "decided"}
     {:stamp nil :stampStatus "pending-RT01"}))
 (defn project-protected [db {:keys [t]}]
-  (let [cut (d/as-of db t) tx (d/entity cut (d/t->tx t)) p (:triplex.tx/position tx)]
+  (let [cut (d/as-of db t) tx-id (d/t->tx t) tx (d/entity cut tx-id) p (:triplex.tx/position tx)]
     (if (nil? p)
       {:t (str t) :kind "skipped" :reason "non-triplex"}
-      (let [journals (ledger/journals cut (d/t->tx t))
+      (let [journals (ledger/journals cut tx-id)
             rows (mapcat (fn [[e _]]
                            (map (comp privacy/packed-row slim/row-text)
                                 (concat (map :v (d/datoms cut :eavt e :triplex.entity/row))
@@ -40,7 +40,7 @@
                          journals)
             records (group-by :attribute rows)
             positions (or (seq (sort-by bigint (distinct (map :recorded_position (records ":_tx/position"))))) [p])
-            txids (or (seq (distinct (map :entity_id (records ":_tx/position")))) [(:triplex.tx/id tx)])
+            txids (or (seq (distinct (map :entity_id (records ":_tx/position")))) [(required (ledger/tx-id cut tx-id))])
             changes (mapv (fn [r]
                             (let [c (json/read-str (:value_json r))]
                               (cond-> {:op (required (get c "op")) :entity (required (get c "entityId"))
@@ -49,7 +49,9 @@
                                        :position (str (bigint (:recorded_position r)))}
                                 (= "erase" (get c "op")) (assoc :erasureSeq (str (get c "erasureSeq"))))))
                           (records ":_tx/change"))
-            clock (required (:triplex.tx/recorded-at tx))]
+            ;; [DX-W1] Why: K stores only the immutable high-water clock for a solo commit.
+            ;; Rejected: requiring the removed duplicate field when delivering a protected save.
+            clock (required (ledger/clock cut tx-id))]
         {:t (str t) :kind "commit"
          :transaction (merge {:positions (mapv #(str (bigint %)) positions)
                               :txIds (vec txids) :operationId (required (:triplex.tx/operation-id tx))

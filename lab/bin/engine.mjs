@@ -298,11 +298,11 @@ async function selftestDatomic(config, opts) {
   }
 }
 
-// [DX-THIN1] Why: release only staged images that this experiment built and whose slots have closed.
+// [DX-W1] Why: release only a staged image in the calling experiment's namespace after its slots close.
 // Rejected: a forced removal or pruning the lab VM's shared image cache.
 async function removeThinImage(config, opts) {
   const scorecard = opts.holder === 'DX-V01';
-  if ((!scorecard && !['DX-THIN1', 'DX-PREP1', 'DX-REAL1', 'DX-RD1', 'DX-CHK1'].includes(opts.holder)) || !opts['image-id'])
+  if ((!scorecard && !['DX-THIN1', 'DX-PREP1', 'DX-REAL1', 'DX-RD1', 'DX-CHK1', 'DX-W1'].includes(opts.holder)) || !opts['image-id'])
     fail('USAGE', 'Image removal needs the assigned holder and exact image id');
   if (scorecard) {
     // [DX-V01] Why: retire only the scorecard's exact staged builds while rotating its two-image budget.
@@ -326,6 +326,7 @@ async function removeThinImage(config, opts) {
     'DX-V01': /^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/,
     'DX-PREP1': /^tx2-datomic:dx-prep1-(?:lookup-profile|subject-recovery|subject-native-suite)$/,
     'DX-RD1': /^(?:tx2-datomic:dx-rd1-fresh-reads|tx2-dxthin-rd1:[a-f0-9]{16})$/,
+     'DX-W1': /^tx2-datomic:dx-w1-[a-z0-9-]+-[a-f0-9]{8}$/,
   }[opts.holder];
   if (!ownedTag.test(tag)) fail('REFUSED', 'Only the holder’s staged image tags may be removed');
   if (info.laneConf.imageId !== opts['image-id']) fail('REFUSED', 'The staged configuration is pinned to a different image');

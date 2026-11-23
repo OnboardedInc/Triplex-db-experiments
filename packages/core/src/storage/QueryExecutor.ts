@@ -113,6 +113,16 @@ export interface WrappedQueryResult {
  *   Execute Datalog directly using hexastore index scans + nested loop joins
  */
 export interface QueryExecutorService {
+  /** A backend may execute an initial page and select its exact committed position together. */
+  readonly executePageAtHead?: (
+    query: WrappedQuery,
+    debug: boolean,
+    basis: ResolvedTemporalBasis,
+  ) => Effect.Effect<
+    { readonly position: number; readonly result: WrappedQueryResult } | undefined,
+    ReadError | DatalogQueryError
+  >;
+
   /**
    * Execute a Datalog query, returning variable bindings.
    *

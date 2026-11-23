@@ -85,7 +85,7 @@
 (defn managed? [name db]
   (or (enabled? db) (if sql/url (some? (record-text name "head.json")) (and root (exists? (path name "head.json"))))))
 
-(defn register! [name attributes sealed?]
+(defn register! [name attributes sealed? install!]
   (when-not (and (vector? attributes) (seq attributes) (= (count attributes) (count (set attributes)))
                  (every? #(and (string? %) (seq %) (not (.startsWith ^String % ":_tx/"))) attributes))
     (failure! 400 "InvalidProtectedAttributes" "Expected distinct declared protected attributes"))
@@ -95,12 +95,16 @@
       (sync-directory! (.getParent parent))))
   (guard name
     (fn []
-      (if-let [wire (record-text name "head.json")]
-        (let [prior (json/read-str wire)]
-          (when-not (and (= attributes (get prior "attributes")) (= (boolean sealed?) (get prior "sealed")))
-            (failure! 409 "ProtectionPolicyMismatch" "The protected attribute policy is immutable")))
-        (save-record! name "head.json" (json/write-str {"database" name "seq" 0 "seal" zeros
-                                                         "attributes" attributes "sealed" (boolean sealed?)}))))))
+      (let [prior (some-> (record-text name "head.json") json/read-str)]
+        (when (and prior (not (and (= attributes (get prior "attributes"))
+                                   (= (boolean sealed?) (get prior "sealed")))))
+          (failure! 409 "ProtectionPolicyMismatch" "The protected attribute policy is immutable"))
+        ;; [DX-W1] Why: only publish authority after the serialized native check.
+        ;; Rejected: publishing a new policy before an occupied scope is refused.
+        (install!)
+        (when-not prior
+          (save-record! name "head.json" (json/write-str {"database" name "seq" 0 "seal" zeros
+                                                         "attributes" attributes "sealed" (boolean sealed?)})))))))
 
 (defn- entry-record [seq] (str "erase-" seq ".json"))
 

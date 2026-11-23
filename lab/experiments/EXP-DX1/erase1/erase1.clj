@@ -10,6 +10,7 @@
             [triplex.gateway.reach :as reach]
             [triplex.gateway.main :as main]
             [triplex.gateway.schema :as schema]
+            [triplex.gateway.slim :as slim]
             [triplex.gateway.scope :as scope])
   (:import [java.nio.file Files]
            [java.security MessageDigest]
@@ -151,6 +152,10 @@
                (let [part (first (d/tx-range (d/log conn) basis (inc basis)))]
                  (check! (= basis (:t part)) "Wrong native log slice") (:data part)))
         append (pull t) retract (pull retired-t)
+        plain (when-let [p (get input "plainPosition")]
+                (let [tx (d/entid db [:triplex.tx/position p])]
+                  (check! (and tx (< tx asserted)) "Missing plain control position")
+                  (pull (d/tx->t tx))))
         logs (keep (fn [x] (when (string? (:v x)) (:v x))) (concat append retract))
         envelope-id (d/entid db [:triplex.private/id id])
         body (scope/value db envelope-id :triplex.private/body)
@@ -166,12 +171,20 @@
                                          (let [c (json/read-str (:value_json r))]
                                            (and (= id (get c "tripleId"))
                                                 (= token (get-in c ["value" "value"]))))))))
-                         count)))]
+                         count)))
+        string-bytes (fn [datoms] (reduce + (keep (fn [x] (when (string? (:v x)) (alength (envelope/utf8 (:v x))))) datoms)))]
     {:id id :nativeT (str t) :retirementT (str retired-t)
+     :retirementDatoms (count (seq retract))
+     :retirementTextBytes (string-bytes retract)
+     :plainDatoms (when plain (count (seq plain))) :plainTextBytes (when plain (string-bytes plain))
      :body (boolean (and (string? body) (seq body)))
      :keyBytes (Files/size (envelope/key-file name id))
      :references (references append) :retirementReferences (references retract) :unsealed (= canary value)
-     :plaintext (boolean (some #(str/includes? % canary) (conj (vec logs) (:v target))))}))
+     :plaintext (boolean (some #(str/includes? % canary)
+                                (concat logs [(str parsed)]
+                                        (when (true? (get input "scanRetained"))
+                                          (map #(slim/row-text (:v %))
+                                               (d/datoms (d/history db) :avet :triplex.entity/row))))))}))
 
 (defn ciphertext-cleanup! [conn input]
   (let [name (scope-name! input) ids (get input "ids")

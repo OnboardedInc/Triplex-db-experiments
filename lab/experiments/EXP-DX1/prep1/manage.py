@@ -43,12 +43,20 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
         raise SystemExit("Ordered IDs require the prepared writer without hints")
     if serial not in ("0", "1") or (serial == "1" and (ordered != "1" or numeric_owner != "1")):
         raise SystemExit("Serial apply requires ordered IDs and a numeric owner")
+    owner_head = os.environ.get("DX_W1_OWNER_HEAD", "0")
+    if owner_head not in ("0", "1") or (owner_head == "1" and (mode, ordered, numeric_owner) != ("rolling-recovery", "1", "1")):
+        raise SystemExit("The owner head gate requires the ordered rolling-recovery fixture")
     combined = os.environ.get("DX_CHK1_APPEND_GATE") == "1"
     if combined and (mode, ordered, serial) != ("rolling-recovery", "1", "1"):
         raise SystemExit("DX-CHK1 runs the ordered serial rolling6 append fixture")
-    holder = os.environ.get("DX_CHK1_HOLDER", "DX-CHK1") if combined else "DX-PREP1"
-    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1") and (not combined or holder != "DX-PREP1")
-    lookup_every = 3 if serial == "1" and mode == "rolling-recovery" else 0
+    if combined and owner_head == "1":
+        raise SystemExit("Run the owner head gate and the DX-CHK1 append gate as separate attempts")
+    holder = (os.environ.get("DX_CHK1_HOLDER", "DX-CHK1") if combined
+              else "DX-W1" if owner_head == "1" else "DX-PREP1")
+    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
+    # [DX-W1] Why: match both saves per owner-layout arm to their transactor read counters.
+    # Rejected: treating empty peer I/O metadata as zero native storage reads.
+    lookup_every = 1 if owner_head == "1" else 3 if serial == "1" and mode == "rolling-recovery" else 0
     out.mkdir()
     attempt = str(uuid.uuid4())
     stage = out / "stage"
@@ -70,6 +78,7 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     (config / "subject-prefetch").write_text(prefetch + "\n")
     (config / "subject-ordered").write_text(ordered + "\n")
     (config / "subject-serial").write_text(serial + "\n")
+    (config / "subject-head").write_text(owner_head + "\n")
     if combined:
         (config / "subject-retirement").write_text("1\n")
         (config / "chk1-replay").write_text("1\n")
@@ -122,15 +131,24 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     profile = json.loads(slots.read_text())
     if os.environ.get("DOCKER_HOST") != profile["dockerHost"]:
         raise SystemExit("Lab Docker endpoint does not match the configured endpoint")
-    profile["lanes"]["datomic"]["image"] = ((f"tx2-dxthin-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}"
-                                               if holder == "DX-THIN1" else f"tx2-datomic:dx-chk1-rolling-{attempt[:8]}")
-                                              if combined else f"tx2-datomic:dx-prep1-{mode}")
+    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
+    profile["lanes"]["datomic"]["image"] = (f"tx2-datomic:dx-w1-head-{out.name}-{head[:8]}" if owner_head == "1"
+                                            else (f"tx2-dxthin-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}"
+                                                  if holder == "DX-THIN1" else f"tx2-datomic:dx-chk1-rolling-{attempt[:8]}")
+                                            if combined else f"tx2-datomic:dx-prep1-{mode}")
     slots.write_text(json.dumps(profile, indent=2) + "\n")
     source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
     if clojure_inputs:
         source_paths.extend(clojure_inputs)
     elif mode != "subject-native-suite":
         source_paths.extend(REPO / p for p in json.loads(metafile.read_text())["inputs"])
+    if owner_head == "1":
+        for name, source in [("serial-gate.clj", EXPERIMENT.parent / "w1/serial/gate.clj"),
+                             ("regression.clj", EXPERIMENT.parent / "wfix1/regression.clj"),
+                             *((name, EXPERIMENT / name) for name in ("subject_gate.clj", "subject_conflicts.clj", "owner_layout_gate.clj"))]:
+            shutil.copyfile(source, config / name)
+            source_paths.append(source)
+        (config / "source").write_text(head + "\n")
     inputs = {
         "attempt": attempt,
         "mode": mode,
@@ -143,8 +161,9 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "orderedIds": ordered == "1",
         "serialApply": serial == "1",
         "lookupEvery": lookup_every,
+        "ownerHead": owner_head == "1",
         "explicitProbes": mode == "lookup-profile" and prefetch == "1",
-        "head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip(),
+        "head": head,
         "stage": {str(p.relative_to(stage)): sha(p) for p in sorted(stage.rglob("*"))
                   if p.is_file() and p != slots},
         "runner": {str(p.relative_to(REPO)): sha(p) for p in sorted(set(source_paths))},
@@ -156,8 +175,8 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
 def run_stage(out, inputs):
     stage = out / "stage"
     slots = stage / "lab/config/slots.json"
-    env = dict(os.environ, TX2_CONFIG_DIR=str(stage), TX2_SLOTS_FILE=str(slots),
-               TX2_ENGINE_DIR=str(REPO / "runs/engines/prep1"))
+    engine_state = out / "engine-state" if inputs.get("ownerHead") else REPO / "runs/engines/prep1"
+    env = dict(os.environ, TX2_CONFIG_DIR=str(stage), TX2_SLOTS_FILE=str(slots), TX2_ENGINE_DIR=str(engine_state))
     attempt = inputs["attempt"]
     holder = inputs.get("holder", "DX-PREP1")
     if holder in ("DX-CHK1", "DX-THIN1") and shutil.disk_usage(REPO).free < 10 * GIB:

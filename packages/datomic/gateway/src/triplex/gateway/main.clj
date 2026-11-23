@@ -2,9 +2,10 @@
   (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase] [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
             [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed]
+            [triplex.gateway.write-wire :as write-wire]
             [triplex.gateway.lean-feed :as lean-feed] [triplex.gateway.lean-query :as lean-query]
             [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy]
-            [triplex.gateway.subject-save :as subject])
+            [triplex.gateway.subject-save :as subject] [triplex.gateway.owner-layout :as owner-layout])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -82,7 +83,8 @@
                        (do
                          (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema))
                          (:db-after (trace/span "d/transact" "peer-wait" @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}])))))
-        current (subject/install! conn (group/install! conn (commit/install! conn scope schema-ready)))]
+        current (subject/install! conn (group/install! conn (commit/install! conn scope schema-ready)))
+        current (owner-layout/install! conn current)]
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
       (lean/enabled? current) (assoc :layout "lean" :orderedRowTexts true :journalCuts true)))))
@@ -138,6 +140,9 @@
                              :subjectNarrowRevision subject/narrow-revision?
                              :subjectReusePredecessor subject/reuse-predecessor?
                              :subjectAppendRetirement subject/append-retirement?
+                             :subjectOwnerHead (boolean (and owner-layout/enabled (owner-layout/installed? db)))
+                             :subjectOwnerHeadFunction (when (and owner-layout/enabled (owner-layout/installed? db))
+                                                         (str owner-layout/ident))
                              :subjectPrefetch (boolean (and subject/prefetch? (d/entid db subject/prefetch-ident)))
                              :subjectFunctionTx (some-> subject-t str)))))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"}
@@ -165,17 +170,22 @@
     (when (> (alength bytes) 4194304) (codec/invalid "Request too large"))
     (let [start (System/nanoTime) input (trace/span "gateway.request-parse" "gateway" (json/read-str (String. bytes "UTF-8")))]
       (.set request-parse-micros (quot (- (System/nanoTime) start) 1000)) (if (map? input) (with-meta input {:wire-bytes (alength bytes)}) input))))
+(defn writer-definition [function]
+  ;; [DX-W1] Why: the stored function exposes the normalized source fields as data.
+  ;; Rejected: Object.toString on a compiled function (its display can depend on the instance).
+  (pr-str (mapv #(get function %) [:lang :imports :requires :params :code])))
 (defn write-layout-options [db database]
   (let [selected (commit/entry db {} (lean/enabled? db))
         [variant body] (commit/variants [true false])
         actual (:db/fn (d/entity db selected))
+        source (when actual (writer-definition actual))
         expected (d/function {:lang :clojure :params '[db payload]
                                :requires '[[datomic.api :as d] [clojure.data.json :as json]]
                                :code (if (= selected variant) body commit/code)})]
     {:database database :scope (stored-scope db) :basis (str (d/basis-t db))
      :predecessorRequested (boolean pred/enabled) :predecessorSelected (= selected variant)
-     :selectedFunction (str selected) :selectedDefinitionSha256 (schema/sha256 (str actual))
-     :installedDefinitionMatches (and actual (= (str actual) (str expected)))
+     :selectedFunction (str selected) :selectedDefinitionSha256 (when source (schema/sha256 source))
+     :installedDefinitionMatches (and (some? source) (= source (writer-definition expected)))
      :ledger (boolean (or ledger/enabled packed/enabled)) :packedJournal (boolean packed/enabled)
      :packedJournalCount (if (d/entid db :triplex.journal/packed)
                            (reduce (fn [n _] (inc n)) 0 (d/datoms db :aevt :triplex.journal/packed)) 0)
@@ -276,10 +286,10 @@
                          (finally (when (get input "release") (storage/release! name (get input "handle")))))
             "read" (trace/span "storage/read-rows" "gateway" (storage/read-rows name db input))
             "q" (trace/span "query/run" "gateway"
-                  (do (when privacy/*cut*
+                  (do (when (and privacy/*cut* (not (lean/enabled? (or db (storage/held-db name (get input "handle"))))))
                         (throw (ex-info "Lean queries need current erasure-aware value semantics"
                                         {:status 409 :code "ErasureQueryUnsupported" :route "q"})))
-                      (when (and lean-query/enabled (lean/enabled? (or db (storage/held-db name (get input "handle")))))
+                      (when (and (nil? privacy/*cut*) lean-query/enabled (lean/enabled? (or db (storage/held-db name (get input "handle")))))
                         (lean-query/assert-unprotected! (or db (d/db (connection db-uri)))))
                       (query/run name db input)))
             "operation" (storage/operation db id)
@@ -314,7 +324,8 @@
           (and (= :post request-method) (= action "restore-erasure"))
           (response 200 (erase/replay-after-restore! name conn))
           :else
-          (let [input (when (and (= :post request-method) (= action "transact")) (request-json body))
+          (let [[protected-wire input] (when (and (= :post request-method) (= action "transact"))
+                                        (write-wire/open name (request-json body)))
                 managed-write? (and input (trace/span "privacy/write-policy" "gateway" (privacy/managed? name db)))
                 source (get input "erasureSourceDatabase")
                 _ (when (and source (not (and (string? source) (re-matches #"s2-[A-Za-z0-9_-]+" source))))
@@ -347,6 +358,8 @@
                   (let [[current next] (trace/span "privacy/write-frontier" "gateway"
                                          (let [current (d/db conn)] [current (privacy/cut name current)]))]
                     (when (and managed-write? (nil? next)) (privacy/unavailable!))
+                    (when (and (:sealed next) (write-wire/required?) (not protected-wire))
+                      (privacy/failure! 400 "ProtectedWriteRequired" "Use the configured protected save transport"))
                     (trace/span "privacy/verify-write" "gateway" (privacy/verify-data! next current))
                     (when (or source (contains? input "erasureSeq"))
                       (if source

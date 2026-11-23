@@ -2,7 +2,8 @@
   (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [clojure.edn] [triplex.gateway.group :as group] [triplex.gateway.commit :as commit] [triplex.gateway.predecessor :as pred] [triplex.gateway.write-policy :as policy] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:require [triplex.gateway.replay-capture :as replay-capture] [triplex.gateway.small-row :as small-row]
             [triplex.gateway.save-ledger :as ledger] [triplex.gateway.packed-journal :as packed]
-            [triplex.gateway.subject-save :as subject] [clojure.data.json :as json])
+            [triplex.gateway.subject-save :as subject] [clojure.data.json :as json]
+            [triplex.gateway.owner-layout :as owner-layout] [triplex.gateway.owner-root :as owner-root])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -409,7 +410,7 @@
                    (try (trace/span "subject.lookup-hints" "peer-call" (subject/lookup-hints (d/db conn) subject-plan))
                         (catch Exception _ nil)
                         (finally (swap! timeline assoc :subjectHintsFinished (System/nanoTime)))))
-           native-data (group/instrument [[subject/ident subject-plan]])
+           native-data (group/instrument [[(first (:function subject-plan)) subject-plan]])
            options (concat (when hints [:hints hints])
                            (when (or group/stage-clock trace/enabled (= "1" (System/getenv "TX2_REMOVAL_COST_READBACK"))) [:io-context :triplex.gateway/subject]))
            _ (swap! timeline assoc :predecessorReady (System/nanoTime))
@@ -431,10 +432,16 @@
                  (cond
                    (identical? timeout db) timeout
                    (not (subject/retry-safe? db subject-plan)) (throw (ex-info "TRIPLEX_CONFLICT" {}))
-                   :else (let [retry (deref (submit-reference! conn (tx-data db input) input timeline) (remaining) timeout)]
+                   :else (let [_ (when (:owner-layout subject-plan)
+                                   ;; [Opus W1] Why: the reference writer refuses a person with a covering root.
+                                   ;; Rejected: refusing the retry (an identity conflict must keep its legacy outcome).
+                                   (owner-layout/fold! conn db (:owner subject-plan)))
+                               retry (deref (submit-reference! conn (tx-data db input) input timeline) (remaining) timeout)]
                            (if (identical? timeout retry) timeout (assoc retry :subject-replan true)))))
                (identical? timeout result) timeout
-               :else (cond-> (subject/verify-report result subject-plan)
+               :else (cond-> (if (:owner-layout subject-plan)
+                               (owner-layout/verify-report result subject-plan)
+                               (subject/verify-report result subject-plan))
                        hints (assoc :subject-hints-attached true))))))))))
 ;; [DX-B10] Why: a definitive preflight rejection resolves its sequence without a database write.
 ;; Rejected: skipping that turn (strands all later valid commands behind a permanent gap).
@@ -448,8 +455,30 @@
 (defn clock-conflict-message [message]
   (str message " Record-clock policy: replay-safe writes, and every gateway commit in strictRecordClocks scopes, must advance the scope maximum."
        " Use a greater commit time. To preserve old history times, use a fresh non-strict scope, or load a strict scope in increasing commit times, one clock per commit."))
+;; [Opus W1] Why: one place decides between the covering root, a fold, and the existing writers.
+;; Rejected: letting the plain subject or reference writer act on a migrated person (they read legacy rows only).
+(defn- touched-roots [db data]
+  (when (owner-root/installed? db)
+    (into [] (keep (fn [id] (when-let [e (d/entid db [:triplex.entity/id id])] (when (owner-root/raw db e) e))))
+          (distinct (:owners (second (first data)))))))
+(defn- fold-touched! [conn _ data]
+  ;; [Opus W1] Why: fold against the newest view this peer holds; a fold it already made must not run twice.
+  (let [db (d/db conn)]
+    (reduce (fn [db e] (owner-layout/fold! conn db e)) db (touched-roots db data))))
+(defn- subject-prepare [conn db data input expected]
+  (if-not owner-layout/enabled
+    (if (some? expected) (subject/plan db data input expected) (subject/plan db data input))
+    (let [plan (owner-layout/prepare db data input expected)]
+      (if (and plan (not (:fold plan)))
+        plan
+        (let [db (fold-touched! conn db data)]
+          (or (owner-layout/prepare db data input expected)
+              (subject/plan db data input expected)))))))
 (defn commit! [name conn db input]
   (when trace/tx-jfr-enabled (trace/attribute! :databaseHash (schema/sha256 name)))
+  (when (and (not owner-layout/enabled) (owner-root/installed? db))
+    (throw (ex-info "This database stores covering owner roots; start the writer with TX2_SUBJECT_OWNER_HEAD=1"
+                    {:status 409 :code "OwnerLayoutRequired"})))
   (when group/load-timing (trace/attribute! :operationId (get input "operationId")))
   (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
     (reject-ordered! conn input (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
@@ -467,9 +496,9 @@
                                   (or (not (:sealed privacy/*cut*)) (envelope/shared?))
                                   (not (or policy/priority? policy/field-only? policy/budget-us replay-capture/enabled)))
                          (trace/span "subject.prepare" "gateway"
-                           (if privacy/*cut*
-                             (subject/plan db data input (:seq privacy/*cut*))
-                             (subject/plan db data input))))
+                           (subject-prepare conn db data input (when privacy/*cut* (:seq privacy/*cut*)))))
+          ;; [Opus W1] Why: a save the covering writer cannot take must not reach legacy rows under a root.
+          _ (when (and owner-layout/enabled (nil? subject-plan)) (fold-touched! conn db data))
           start (System/nanoTime)
           ready-ms (when group/queue-clock (System/currentTimeMillis))
           timeline (atom (cond-> {:requestParsed parsed :payloadPrepared start}
@@ -508,6 +537,7 @@
         (:subject-save report) (assoc :subjectSave (:subject-save report))
         (:subject-ordered-ids report) (assoc :subjectOrderedIds true)
         (:subject-append-retirement report) (assoc :subjectAppendRetirement true)
+        (:subject-owner-head-bytes report) (assoc :subjectOwnerHeadBytes (:subject-owner-head-bytes report))
         (:subject-hints-attached report) (assoc :subjectHintsAttached true)
         (:subject-replan report) (assoc :subjectReplan true)
         (and load-timing (not (:subject-save report))) (assoc :loadProfile {:rowNs @load-timing :applyMs (get-in report [:io-stats :api-ms])
@@ -529,9 +559,10 @@
         ;; Rejected: treating every codec InvalidValue as a policy error before checking the transaction result.
         (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasedAssertionIdentity" "ProtectedTypeUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
-                       {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
+                       {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_ERASURE_FRONTIER|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
-                        :code (cond (re-find #"TRIPLEX_OPERATION_DUPLICATE" text) "OperationDuplicate"
+                        :code (cond (re-find #"TRIPLEX_ERASURE_FRONTIER" text) "ErasureFrontierChanged"
+                                    (re-find #"TRIPLEX_OPERATION_DUPLICATE" text) "OperationDuplicate"
                                     (re-find #"TRIPLEX_COMMAND_DUPLICATE" text) "CommandConflict"
                                     (re-find #"TRIPLEX_IMPORT_PREDECESSOR" text) "ImportPredecessorMissing"
                                     (re-find #"TRIPLEX_CLOCK_EXHAUSTED" text) "ClockExhausted"

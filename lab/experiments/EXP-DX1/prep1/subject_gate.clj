@@ -1,5 +1,6 @@
 (ns subject-gate
-  (:require [clojure.data.json :as json]
+  (:require [clojure.edn :as edn]
+            [clojure.data.json :as json]
             [clojure.test :refer [deftest is testing]]
             [clojure.walk :as walk]
             [datomic.api :as d]
@@ -13,6 +14,8 @@
             [triplex.gateway.small-row :as small-row]
             [triplex.gateway.storage :as storage]
             [triplex.gateway.subject-save :as subject]
+            [triplex.gateway.owner-layout :as layout]
+            [triplex.gateway.owner-root :as owner-root]
             [triplex.gateway.write-policy :as policy]
             [wfix1-regression :as reference]))
 
@@ -60,6 +63,8 @@
         (let [[seed a b] (reference/edits)
               seed-result (reference/send name (deep-seed seed))
               options (main/write-options name)
+              seeded (d/db conn)
+              seed-owner (d/entid seeded [:triplex.entity/id fixture/root])
               handle (get-in (reference/route name "v1" "snapshot" {}) [:body "handle"])
               native d/transact-async
               submitted (atom [])
@@ -69,15 +74,19 @@
                                       (apply native c tx opts))
                                     d/with (fn [& _] (throw (AssertionError. "A replacement speculatively ran a transaction")))]
                         [(send-edit a 1) (send-edit b 2)])
+              edited (d/db conn)
               actual (reference/replay-observations name)
               receipt (get-in results [0 :body])
               native-t (get-in receipt ["t" "v"])
               found (reference/expect-receipt name "edit-a" "_tx/edit-a" "edit-a" 2 1001.0)]
           (is (= [200 nil] (reference/outcome seed-result)))
+          (is (nil? (owner-root/raw seeded seed-owner)))
           (is (= [[200 nil] [200 nil]] (mapv reference/outcome results)) (pr-str results))
           (is (= native-t (get-in found ["t" "v"])))
-          (is (= (vec (repeat 2 (if enabled subject/ident :triplex/commit))) @submitted))
-          (is (= (if enabled (str subject/ident) nil) (:subjectFunction options)
+          ;; [Opus W1] Why: with the option on, the product route sends both one-field replacements to the covering writer.
+          (is (= (vec (repeat 2 (if enabled (if layout/enabled layout/ident subject/ident) :triplex/commit))) @submitted))
+          (is (= (if enabled (str subject/ident) nil) (:subjectFunction options)))
+          (is (= (if enabled (str (if layout/enabled layout/ident subject/ident)) nil)
                  (get receipt "subjectSave") (get-in results [1 :body "subjectSave"])))
           (is (= [409 "OperationDuplicate"] (reference/outcome (send-edit a 1))))
           (is (= [409 "CommandConflict"] (reference/outcome (send-edit (assoc a "operationId" "new-operation") 1))))
@@ -87,13 +96,26 @@
           (let [db (d/db conn)
                 eid (d/entid db [:triplex.entity/id fixture/root])
                 markers (mapv (comp lean/retirement :v) (d/datoms db :eavt eid :triplex.entity/retired))]
-            (is (= (if append? [["old" 2 1001.0 "_tx/edit-a"] ["middle" 3 1002.0 "_tx/edit-b"]] [])
+            (when (and enabled layout/enabled)
+              ;; [Opus W1] Why: the durable root names the masked legacy row and carries the newest row inline.
+              ;; A later stale resend folds the person before the reference writer refuses it.
+              (let [root (owner-root/root edited eid)
+                    counts (mapv #(get-in % [:body "datoms"]) results)]
+                (is (true? (:subjectOwnerHead options)))
+                (is (= [3 ["old"] ["new"]] [(:position root) (:mask root) (mapv owner-root/row-id (:texts root))]))
+                (is (= 3 (scope/value edited eid :triplex.entity/rev)))
+                (is (every? pos? (mapv #(get-in % [:body "subjectOwnerHeadBytes"]) results)))
+                (println "DX-W1_OWNER_BYTES" (json/write-str {:attempt (System/getenv "PREP1_ATTEMPT")
+                    :append append? :datoms counts :layout "covering-root"
+                    :headBytes (mapv #(get-in % [:body "subjectOwnerHeadBytes"]) results)}))))
+            (is (= (if (and append? (not (and enabled layout/enabled)))
+                     [["old" 2 1001.0 "_tx/edit-a"] ["middle" 3 1002.0 "_tx/edit-b"]] [])
                    (->> markers (sort-by :retracted_position)
                         (mapv (juxt :id :retracted_position :retracted_at :retract_tx_id)))))
-            (is (= (if append? [true true] [nil nil])
+            (is (= (if (and append? (not (and enabled layout/enabled))) [true true] [nil nil])
                    (mapv #(get-in % [:body "subjectAppendRetirement"]) results)))
-            (is (= (if append? 0 2)
-                   (count (remove :added (d/datoms (d/history db) :eavt eid :triplex.entity/row))))))
+            (is (= (if (or (and append? (not (and enabled layout/enabled))) (and enabled layout/enabled)) 0 2)
+                   (count (remove :added (d/datoms (d/history edited) :eavt eid :triplex.entity/row))))))
           (is (= "intermediate value" (get-in actual [:feed 2 2 "retract" "value" "value"])))
           (is (= 1001.0 (get-in actual [:feed 2 2 "retract" "recordedAt"])))
           (is (= 1002.0 (get-in actual [:feed 2 2 "retract" "retractedAt"])))
@@ -106,12 +128,29 @@
             (is (= ["old"] (read {"handle" handle})))
             (is (= ["new"] (read {})))
             (is (= [200 nil] (reference/outcome (reference/route name "v1" "release" {"handle" handle})))))
+          (when (and layout/enabled (not append?))
+            (let [sample (fn [cut expected]
+                           (let [basis (cond-> {"validAt" 5.0} cut (assoc "recordedPosition" cut))
+                                 input {"entityIds" [fixture/root] "basis" basis}
+                                 start (System/nanoTime)
+                                 response (reference/route name "v1" "read" input)
+                                 elapsed (- (System/nanoTime) start)
+                                 result (get-in response [:body "rows"])]
+                             (is (= [200 257 expected] [(:status response) (count result)
+                                                         (some #(when (= ":v" (get-in % ["attribute" "v"])) (get-in % ["id" "v"])) result)]))
+                             elapsed))
+                  times (mapv (fn [_] [(sample nil "new") (sample 1 "old")]) (range 24))]
+              (println "DX-W1_OWNER_READ" (json/write-str {:attempt (System/getenv "PREP1_ATTEMPT")
+                        :ownerHead enabled :rows 257 :timesNs times :timings "diagnostic-in-process"}))))
           {:nativeRows (native-rows (d/db conn))
            :observations (-> actual (update :receipts #(mapv (fn [r] (update r "receipt" dissoc "t")) %))
                                     (update :operations #(mapv (fn [r] (dissoc r "t")) %)))})))))
 
 (deftest one-field-replacement
-  (is (= (run-replacement false false) (run-replacement true false))))
+  ;; [Opus W1] Why: the covering writer stores rows on version entities; the logical observations must still match.
+  (if layout/enabled
+    (is (= (:observations (run-replacement false false)) (:observations (run-replacement true false))))
+    (is (= (run-replacement false false) (run-replacement true false)))))
 
 (deftest append-retirement-retains-logical-bytes
   (when subject/numeric-owner?
@@ -158,7 +197,7 @@
               ack (mapv :body results)]
           (is (= 96 (count results)))
           (is (every? #(= [200 nil] (reference/outcome %)) results))
-          (is (= #{(str subject/ident)} (into #{} (map #(get % "subjectSave")) ack)))
+          (is (= #{(str (if layout/enabled layout/ident subject/ident))} (into #{} (map #(get % "subjectSave")) ack)))
           (is (not-any? #(get % "subjectReplan") ack))
           (is (= (set (range 2 98)) (into #{} (map #(parse-long (get-in % ["position" "v"]))) ack)))
           (is (= 97 (storage/head-position (d/db conn))))

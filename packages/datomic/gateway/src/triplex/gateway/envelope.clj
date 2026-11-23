@@ -121,9 +121,11 @@
       {:db/id (str "protected:" id) :triplex.private/id id
        :triplex.private/entity entity_id :triplex.private/attribute attribute
        :triplex.private/validity interval
-       :triplex.private/body (str (when handle (str "sql/" handle "/")) (.encodeToString encoder nonce) "."
+       ;; [DX-W1] Why: JSON escapes preserve every UTF-16 code unit in a protected string.
+       ;; Rejected: using Java UTF-8 replacement for an unmatched surrogate in an application value.
+       :triplex.private/body (str (when handle (str "sql/" handle "/")) "s1." (.encodeToString encoder nonce) "."
                                  (.encodeToString encoder (crypto Cipher/ENCRYPT_MODE key nonce
-                                             (aad name id entity_id attribute interval) (utf8 value_string))))}
+                                             (aad name id entity_id attribute interval) (utf8 (json/write-str value_string)))))}
       (finally (Arrays/fill ^bytes key (byte 0))))))
 
 (defn assertion-identity [db e]
@@ -144,7 +146,9 @@
           ciphertext (scope/value db eid :triplex.private/body)
           interval (scope/value db eid :triplex.private/validity)
           handle (body-key-handle ciphertext)
-          [nonce body] (str/split (if handle (nth (str/split ciphertext #"/" 3) 2) ciphertext) #"\." 2)
+          payload (if handle (nth (str/split ciphertext #"/" 3) 2) ciphertext)
+          encoded? (str/starts-with? payload "s1.")
+          [nonce body] (str/split (if encoded? (subs payload 3) payload) #"\." 2)
           decoder (Base64/getDecoder)
           key (if sql/url
                 (if handle (open-key name handle) (privacy/unavailable!))
@@ -152,7 +156,8 @@
       (try
         (let [clear (crypto Cipher/DECRYPT_MODE key (.decode decoder ^String nonce)
                             (aad name id entity attribute interval) (.decode decoder ^String body))]
-          (try (String. ^bytes clear StandardCharsets/UTF_8)
+          (try (let [value (String. ^bytes clear StandardCharsets/UTF_8)]
+                 (if encoded? (json/read-str value) value))
                (finally (Arrays/fill ^bytes clear (byte 0)))))
         (finally (Arrays/fill ^bytes key (byte 0)))))
     (catch Exception _ (privacy/unavailable!))))

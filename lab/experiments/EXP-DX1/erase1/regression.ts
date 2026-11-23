@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { createServer } from "node:http";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   DatomicClient,
@@ -113,11 +114,14 @@ export async function regression(
   output: (name: string, value: unknown) => void,
   ledger: boolean,
   sealedWitness = false,
+  sealedK = false,
   overlap?: (erase: () => Promise<Cut>) => Promise<Cut>,
 ) {
+  if (sealedK) await sealedKInventory(f.name, diag, output);
   const client = new DatomicClient(process.env.DATOMIC_URL!, 35_000);
   const subjectWriter = process.env.DX_ERASE1_SUBJECT_WRITER;
   const orderedIds = process.env.DX_ERASE1_ORDERED_IDS === "1";
+  const ownerHead = process.env.DX_W1_OWNER_HEAD === "1";
   let subjectFunction: string | undefined;
   if (subjectWriter !== undefined) {
     // [DX-PREP1] Why: prove which writer setting actually reached the protected regression gateway.
@@ -129,15 +133,21 @@ export async function regression(
       subjectFunctionTx?: string;
       subjectOrderedIds?: boolean;
       subjectNumericOwner?: boolean;
+      subjectOwnerHead?: boolean;
+      subjectOwnerHeadFunction?: string;
     }>("GET", `/v1/db/${f.db}/write-options`);
     assert.equal(opts.database, f.db);
     assert.equal(Boolean(opts.subjectSave), subjectWriter === "1");
     assert.equal(Boolean(opts.subjectOrderedIds), orderedIds);
     assert.equal(Boolean(opts.subjectNumericOwner), orderedIds);
+    assert.equal(Boolean(opts.subjectOwnerHead), ownerHead);
     if (subjectWriter === "1") {
       assert.match(opts.subjectFunction ?? "", /^:triplex\.subject\/v-[0-9a-f]{24}$/);
       assert(Number(opts.subjectFunctionTx) > 0);
-      subjectFunction = opts.subjectFunction;
+      // [Opus W1] Why: with the option on, an exact protected replacement goes to the covering writer.
+      // Rejected: accepting either function (the receipt must name the writer the option selects).
+      if (ownerHead) assert.match(opts.subjectOwnerHeadFunction ?? "", /^:triplex\.owner\/v-[0-9a-f]{24}$/);
+      subjectFunction = ownerHead ? opts.subjectOwnerHeadFunction : opts.subjectFunction;
     } else {
       assert.equal(opts.subjectFunction, undefined);
       assert.equal(opts.subjectFunctionTx, undefined);
@@ -220,6 +230,7 @@ export async function regression(
       position: { v: string };
       subjectSave?: string;
       subjectOrderedIds?: boolean;
+      subjectOwnerHeadBytes?: number;
       writePath?: { scheduling: boolean };
     };
     assert.equal(ack.operationId, input.operationId);
@@ -230,6 +241,7 @@ export async function regression(
       [subjectFunction, orderedIds],
     );
     assert.equal(ack.writePath?.scheduling, subjectWriter === "0");
+    assert.equal(Boolean(ack.subjectOwnerHeadBytes), ownerHead);
     assert.deepEqual(await client.erasureFrontier(f.db), frontier);
     assert.equal(Number(ack.position.v), witnessCut + 1);
     witnessCut = Number(ack.position.v);
@@ -249,6 +261,7 @@ export async function regression(
       assertionId: before.id,
       transactionId: before.tx_id,
       generation: frontier.seq,
+      ownerHeadBytes: ack.subjectOwnerHeadBytes,
     });
   }
   const w: Witness = {
@@ -578,6 +591,109 @@ export async function regression(
         .join(", "),
   );
 }
+
+// [DX-W1] Why: inspect the actual SDK bytes and durable assertion and retraction at the same named cuts.
+// Rejected: searching only JSON reconstructed after an ordinary read, which legitimately returns the live value.
+async function sealedKInventory(name: string, diag: Call, output: (name: string, data: unknown) => void) {
+  const target = process.env.DATOMIC_URL!;
+  const writes: string[] = [];
+  const proxy = createServer(async (req, res) => {
+    try {
+      const chunks: Buffer[] = [];
+      for await (const data of req) chunks.push(data);
+      const body = Buffer.concat(chunks).toString("utf8");
+      assert(req.url?.startsWith("/v") || req.url === "/health");
+      if (req.url.endsWith("/transact")) writes.push(body);
+      const response = await fetch(target + req.url, req.method === "POST" ? {
+        method: "POST", headers: { "content-type": "application/json" }, body,
+      } : {});
+      res.writeHead(response.status, Object.fromEntries([...response.headers].filter(([k]) =>
+        k !== "content-length" && k !== "transfer-encoding" && k !== "connection")));
+      res.end(Buffer.from(await response.arrayBuffer()));
+    } catch {
+      res.writeHead(500).end();
+    }
+  });
+  await new Promise<void>((resolve, reject) => proxy.once("error", reject).listen(0, proxyHost(target), resolve));
+  const address = proxy.address();
+  assert(address && typeof address !== "string");
+  const owner = "sealed-k-probe", attribute = ":protected/field";
+  const canary = "synthetic-sealed-k-" + sha(name).slice(0, 24);
+  const scopeName = name + "-wire", scope = String(runtimeApi.DatabaseScope.test(scopeName));
+  const db = databaseFor(scope);
+  const native = new DatomicClient(target);
+  let comp: CompositionHandle | undefined;
+  try {
+    process.env.DATOMIC_URL = `http://${proxyHost(target)}:${address.port}`;
+    try { comp = await openComposition("reach", "datomic", scopeName); }
+    finally { process.env.DATOMIC_URL = target; }
+    await native.declareProtection(db, [attribute], true);
+    const save = (attr: string, value: string, commandId: string, prior?: string) => comp!.transact([
+      ...(prior ? [{ op: "retract" as const, id: prior }] : []),
+      { op: "assert", entityId: owner, attribute: attr, value: { type: "string", value }, validFrom: 0 },
+    ], { commandId, actor: "wire-regression" });
+    const clear = await save(":control/field", "control-first", "plain-assert");
+    assert(clear.ok);
+    const plain = await save(":control/field", "control-later", "plain-replace", clear.value.triples[0]!.id);
+    const initial = await save(attribute, canary, "sealed-assert");
+    assert(plain.ok && initial.ok);
+    const id = initial.value.triples[0]!.id;
+    assert.equal((await native.rows(db, { id }))[0]?.value_string, canary);
+    const next = await save(attribute, "replacement-protected-value", "sealed-replace", id);
+    assert(next.ok);
+    const inventory = await diag("ciphertext-inventory", {
+      scope, id, canary, assertionPosition: initial.value.position, retractionPosition: next.value.position,
+      plainPosition: plain.value.position, scanRetained: true,
+    });
+    assert.equal(inventory.id, id);
+    assert(inventory.body && inventory.keyBytes === 32 && inventory.references >= 2 && inventory.retirementReferences >= 1);
+    assert(inventory.unsealed && !inventory.plaintext);
+    for (const t of [inventory.nativeT, inventory.retirementT]) {
+      const page = await native.log(db, t, 1);
+      assert.equal(page.rows.length, 1);
+      assert(page.rows[0]?.kind === "commit" && page.rows[0]?.t === t);
+      assert(!contains(page, canary));
+    }
+    assert.equal(writes.length, 4);
+    for (const body of writes) {
+      assert(!body.includes(canary));
+      assert.deepEqual(Object.keys(JSON.parse(body)).sort(), ["attemptId", "operationId", "protectedWrite"]);
+    }
+    assert.equal((await native.rows(db, { id, history: true }))[0]?.value_string, canary);
+    const rawWrite = await fetch(target + `/v1/db/${db}/transact`, {
+      method: "POST", headers: { "content-type": "application/json" }, body: '{"operationId":"clear-control"}',
+    });
+    assert.equal(rawWrite.status, 400);
+    assert.equal((await rawWrite.json()).code, "ProtectedWriteRequired");
+    const oldName = name + "-legacy-plaintext";
+    const oldDb = databaseFor(String(runtimeApi.DatabaseScope.test(oldName)));
+    const old = await openComposition("reach", "datomic", oldName);
+    try {
+      const saved = await old.transact([
+        { op: "assert", entityId: owner, attribute, value: { type: "string", value: canary }, validFrom: 0 },
+      ], { commandId: "old-clear-assert", actor: "wire-regression" });
+      assert(saved.ok);
+      const id = saved.value.triples[0]!.id;
+      await assert.rejects(native.declareProtection(oldDb, [attribute], true),
+        (error) => taggedError(error, "ProtectedScopeNeedsMigration"));
+      assert.equal((await native.rows(oldDb, { id }))[0]?.value_string, canary);
+    } finally {
+      await old.close();
+    }
+    output("sealed-k-inventory", {
+      inventory,
+      wireBytes: writes.map((b) => Buffer.byteLength(b)),
+      wireHashes: writes.map(sha),
+      occupiedScopeRefusedAndUnchanged: true,
+    });
+  } finally {
+    native.close();
+    await comp?.close();
+    proxy.close();
+  }
+}
+
+const proxyHost = (endpoint: string) => new URL(endpoint).hostname;
 
 async function recipientRegression(
   source: Fixture,

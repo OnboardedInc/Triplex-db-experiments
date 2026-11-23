@@ -3,6 +3,7 @@
 import hashlib
 import json
 import math
+import os
 import statistics
 import sys
 from collections import defaultdict
@@ -57,7 +58,10 @@ def summarize(root, slot, attempt, source, age, credit_mode):
         assert (header["slot"], header["attempt"], header["source"]) == (slot, attempt, source)
         assert header["retirement"] == {"rate": rate, "append": root.name == "append", "seconds": seconds}
         assert header["settings"]["creditMode"] == credit_mode
-        assert header["settings"]["observed"]["subjectAppendRetirement"] == header["retirement"]["append"]
+        # [Opus W1] Why: the same summary serves the covering owner root pair (DX_W1_PAIR_OPTION=owner-head).
+        treatment = "subjectOwnerHead" if os.environ.get("DX_W1_PAIR_OPTION") == "owner-head" else "subjectAppendRetirement"
+        receipt_flag = "subjectOwnerHeadBytes" if treatment == "subjectOwnerHead" else "subjectAppendRetirement"
+        assert bool(header["settings"]["observed"].get(treatment)) == header["retirement"]["append"]
         raw = (window / "operations.json").read_bytes()
         assert hashlib.sha256(raw).hexdigest() == header["observationsSha256"]
         ops = json.loads(raw)
@@ -89,7 +93,7 @@ def summarize(root, slot, attempt, source, age, credit_mode):
             if row["status"] == "acked":
                 observed = anchor["wall"] + (at - mid) / 1_000_000
                 assert row["sent"] - 2 <= observed <= row["end"] + 2
-                assert bool(row["stage"].get("subjectAppendRetirement")) == header["retirement"]["append"]
+                assert bool(row["stage"].get(receipt_flag)) == header["retirement"]["append"]
         halves = []
         for half in range(2):
             lo = header["start"] + half * half_seconds * 1000
@@ -129,6 +133,13 @@ def summarize(root, slot, attempt, source, age, credit_mode):
                        "firstCut": header["firstCut"], "terminal": header["terminal"],
                        "refusedOrExpired": len(ops["writes"]) - len(saved),
                        "pinnedRead": (ops.get("p6") or {}).get("read"),
+                       # [Opus W1] Why: reads of people this window's tape saved (migrated in the owner-head arm).
+                       "migratedReads": {phase: {kind: {k: (header["migratedReads"][phase][kind] or {}).get(k)
+                                                        for k in ("count", "p50Ms", "p99Ms")}
+                                                 for kind in ("current", "pinned")}
+                                         | {"attempted": header["migratedReads"][phase]["attempted"],
+                                            "errors": len(header["migratedReads"][phase]["errors"])}
+                                         for phase in ("loaded", "settled")} if header.get("migratedReads") else None,
                        "function": header["settings"]["observed"]["subjectFunction"]})
 
     assert len(wanted_databases) == 1

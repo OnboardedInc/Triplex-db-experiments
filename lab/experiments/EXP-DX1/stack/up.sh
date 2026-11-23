@@ -249,6 +249,8 @@ subject_numeric_owner=${TX2_SUBJECT_NUMERIC_OWNER:-0}
 subject_prefetch=${TX2_SUBJECT_PREFETCH:-0}
 subject_ordered_ids=${TX2_SUBJECT_ORDERED_IDS:-0}
 append_retirement=${TX2_SUBJECT_APPEND_RETIREMENT:-0}
+subject_owner_head=${TX2_SUBJECT_OWNER_HEAD:-0}
+[[ $subject_owner_head =~ ^[01]$ ]] || exit 2
 subject_narrow_revision=${TX2_SUBJECT_NARROW_REVISION:-0}
 subject_reuse_predecessor=${TX2_SUBJECT_REUSE_PREDECESSOR:-0}
 lookup_every=${PREP1_LOOKUP_EVERY:-0}
@@ -828,6 +830,7 @@ for role in "${gateway_roles[@]}"; do
   if [[ $mode == w ]]; then
     field_policy+=(-e "TX2_SUBJECT_SAVE=$subject_save" -e "TX2_SUBJECT_NUMERIC_OWNER=$subject_numeric_owner"
       -e "TX2_SUBJECT_PREFETCH=$subject_prefetch" -e "TX2_SUBJECT_ORDERED_IDS=$subject_ordered_ids"
+      -e "TX2_SUBJECT_OWNER_HEAD=$subject_owner_head"
       -e "TX2_SUBJECT_NARROW_REVISION=$subject_narrow_revision" -e "TX2_SUBJECT_REUSE_PREDECESSOR=$subject_reuse_predecessor")
   fi
   if [[ $mode == w && $append_retirement == 1 ]]; then

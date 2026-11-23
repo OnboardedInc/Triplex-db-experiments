@@ -421,6 +421,7 @@ try {
   } else if (fieldStudy === "erase6") {
     await observeErasure();
   } else if (fieldStudy === "query6") {
+    process.env.TRIPLEX_DATOMIC_POINT_QUERY = "1";
     const proof = await gateway(false, {
       TX2_SAVE_LEDGER: "1",
       TX2_SMALL_ROWS: "1",
@@ -430,16 +431,16 @@ try {
     for (const layout of ["legacy", "lean"] as const)
       emit("query-proof", { layout, ...(await queryProof(url, nonce, layout)) });
     await stop(proof);
-    for (const [i, covered] of [false, true, true, false].entries()) {
-      const g = await gateway(false, {
-        TX2_SAVE_LEDGER: "1",
-        TX2_SMALL_ROWS: "1",
-        TX2_LEAN_NATIVE_QUERY: covered ? "1" : "0",
-      });
-      emit("query-cost", await queryCost(url, nonce + "-cost-" + i, "lean", covered));
-      await stop(g);
-    }
-    await observeErasure();
+  } else if (fieldStudy === "query6-cost") {
+    const g = await gateway(false, {
+      TX2_SAVE_LEDGER: "1",
+      TX2_PACKED_JOURNAL: "0",
+      TX2_PREDECESSOR_LOOKUP: "1",
+      TX2_SMALL_ROWS: "1",
+      TX2_LEAN_NATIVE_QUERY: "1",
+    });
+    emit("query-cost-paired", await queryCost(url, nonce + "-cost"));
+    await stop(g);
   } else if (fieldStudy === "queue") {
     for (const [i, priority] of [false, true, true, false].entries()) {
       const gw = await gateway(true, { TX2_LIVE_PRIORITY: priority ? "1" : "0" });

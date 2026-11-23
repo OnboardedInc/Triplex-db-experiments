@@ -17,6 +17,9 @@
 (def narrow-revision? (and numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_NARROW_REVISION"))))
 (def reuse-predecessor? (= "1" (System/getenv "TX2_SUBJECT_REUSE_PREDECESSOR")))
 (def append-retirement? (and numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_APPEND_RETIREMENT"))))
+(def owner-head? (and enabled numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_OWNER_HEAD"))))
+;; [Opus W1] Why: the covering writer reads the plain plan's retractions; it writes its own markers on the version.
+(def ^:dynamic *covering* false)
 (def erase-generation :triplex.scope/erasure-seq)
 (def mutable-flags #{:triplex.scope/feed-irregular :triplex.scope/position-regular
                      :triplex.scope/irregular :triplex.scope/packed-journals})
@@ -109,11 +112,10 @@
        (when (> final 9007199254740991) (throw (ex-info "Invalid commit span" {})))
        (when-not (Double/isFinite clock) (throw (ex-info "TRIPLEX_CLOCK_EXHAUSTED" {})))
        (let [stamp (stamp-rows true clock #{} (dec provisional) provisional final false nil)]
-         (into [revision-update
-                [:db/add "datomic.tx" :triplex.tx/max-recorded-at clock]]
+         (into head-update
                (map stamp) ops)))))
 
-(def code
+(defn compile-code [layout-update]
   (walk/postwalk
     (fn [node]
       (if (and (seq? node) (= 'changes-application-rows? (first node)))
@@ -134,7 +136,13 @@
                           ;; Rejected: trusting the peer's lookup alone (an ID change can leave its revision intact).
                           'owner-witness-check (when numeric-owner?
                                                  '(not= (:owner-key plan) (value owner :triplex.entity/id)))}
-                         body)))
+                         (walk/postwalk-replace
+                           ;; [Opus W1] Why: TX2_SUBJECT_OWNER_HEAD=1 now selects the covering root writer (owner-layout).
+                           ;; Rejected: keeping the step 1 witness beside it (it saved no reads and cost a record per save).
+                           {'head-update (or layout-update
+                                           '[revision-update [:db/add "datomic.tx" :triplex.tx/max-recorded-at clock]])}
+                           body))))
+(def code (compile-code nil))
 (def source-hash (schema/sha256 (pr-str code)))
 (def ident (keyword "triplex.subject" (str "v-" (subs source-hash 0 24))))
 
@@ -243,7 +251,7 @@
          (= (str "protected:" id) (:db/id op))
          (some? (envelope/body-key-handle (:triplex.private/body op))))))
 
-(defn- plan-with-erasure [db [[commit-ident p]] input expected-erasure]
+(defn- plan-with-erasure [db [[commit-ident p]] input expected-erasure predecessor revision-at]
   (let [{:keys [scope source entities live new-ids times record-clocks journal-entities provisional]} p
         redundant-fence [:db/cas scope erase-generation expected-erasure expected-erasure]
         matching (when (some? expected-erasure) (filter #{redundant-fence} (:ops p)))
@@ -267,7 +275,7 @@
             (trace/span "subject.plan-witnesses" "gateway"
               (let [fn-tx (installed db) flags (when fn-tx (scope-witness db scope))
                     owner (d/entid db [:triplex.entity/id subject])]
-                [fn-tx flags owner (when owner (scope/value db owner :triplex.entity/rev))]))
+                [fn-tx flags owner (when owner (revision-at db owner))]))
             f (into {} flags)
             asserted (filterv #(and (vector? %) (= :triplex/assert (first %))) ops)
             retired (filterv #(and (vector? %) (= :triplex/retract (first %))) ops)
@@ -299,7 +307,7 @@
                    (every? #(= 5 (count (nth % 3))) asserted)
                    (seq clocks) (every? #(and (number? %) (Double/isFinite (double %))) clocks))
           (let [prior (trace/span "subject.plan-predecessors" "gateway"
-                        (into {} (keep (fn [id] (when-let [text (retirement db owner id)] [id text]))) live))
+                        (into {} (keep (fn [id] (when-let [text (predecessor db owner id)] [id text]))) live))
                 ;; [DX-W1] Why: the journal already needs exact typed predecessor values.
                 ;; Rejected: decoding the same physical text again to validate the field.
                 decoded (when reuse-predecessor?
@@ -320,7 +328,7 @@
                              (and (= (count envelopes) (count (set (map :triplex.private/id envelopes))))
                                   (every? #(envelope-for? subject by-id %) envelopes)))))
               (let [prefixes (vec (sort (map lean/prefix new-ids)))
-                    mark? (and append-retirement? (nil? expected-erasure) (empty? envelopes)
+                    mark? (and append-retirement? (not *covering*) (nil? expected-erasure) (empty? envelopes)
                                (not-any? #(and (vector? %) (= :triplex.entity/retired (nth % 2 nil))) ops))]
                 (cond-> {:scope scope :flags flags :function [ident fn-tx] :owner owner :revision revision
                          :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
@@ -335,8 +343,12 @@
                   ordered-ids? (assoc :ordered-bounds (ordered-bounds journal prefixes)))))))))))
 
 (defn plan
-  ([db data input] (plan-with-erasure db data input nil))
-  ([db data input expected-erasure] (plan-with-erasure db data input expected-erasure)))
+  ([db data input]
+   (plan-with-erasure db data input nil retirement #(scope/value %1 %2 :triplex.entity/rev)))
+  ([db data input expected-erasure]
+   (plan-with-erasure db data input expected-erasure retirement #(scope/value %1 %2 :triplex.entity/rev)))
+  ([db data input expected-erasure predecessor revision-at]
+   (plan-with-erasure db data input expected-erasure predecessor revision-at)))
 
 (defn replan? [failure]
   (some (fn [cause]
@@ -346,10 +358,11 @@
 (defn retry-safe? [db plan]
   (let [durable-flags #(remove (comp mutable-flags first) %)]
     (and (= (durable-flags (:flags plan)) (durable-flags (scope-witness db (:scope plan))))
-         (= (second (:function plan)) (installed db))
+         (= (second (:function plan))
+            (when-let [eid (d/entid db (first (:function plan)))] (:tx (first (d/datoms db :eavt eid :db/fn)))))
          (not (changes-application-rows? db)))))
 
-(defn verify-report [report {:keys [operation command journal owner ordered-bounds retirement-prefixes]}]
+(defn verify-report-at [report {:keys [operation command journal owner ordered-bounds retirement-prefixes]} revision-at]
   (let [db (:db-after report) t (d/basis-t db) tx (d/t->tx t)
         cmd (d/entid db [:triplex.claim/command-id command])
         journal-eid (d/entid db [:triplex.entity/id journal])
@@ -359,7 +372,7 @@
     ;; Rejected: publishing the peer's draft, or resolving the receipt on a newer database value.
     (when-not (and (= operation (scope/value db tx :triplex.tx/operation-id))
                    (= journal (scope/value db tx :triplex.tx/id))
-                   (integer? position) (= position (scope/value db owner :triplex.entity/rev))
+                   (integer? position) (= position (revision-at db owner))
                    (some? clock)
                    cmd (= tx (scope/value db cmd :triplex.claim/tx))
                    (= journal (scope/value db cmd :triplex.claim/tx-id))
@@ -378,3 +391,6 @@
     (cond-> (assoc report :subject-save (str ident))
       ordered-bounds (assoc :subject-ordered-ids true)
       retirement-prefixes (assoc :subject-append-retirement true))))
+
+(defn verify-report [report plan]
+  (verify-report-at report plan #(scope/value %1 %2 :triplex.entity/rev)))

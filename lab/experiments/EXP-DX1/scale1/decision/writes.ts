@@ -42,6 +42,7 @@ type Ack = {
   subjectSave?: string;
   subjectOrderedIds?: boolean;
   subjectAppendRetirement?: boolean;
+  subjectOwnerHeadBytes?: number;
 };
 export type Save = {
   id: string;

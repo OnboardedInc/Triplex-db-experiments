@@ -26,6 +26,7 @@ type Layout =
   | "overlap"
   | "regression"
   | "ledger-regression"
+  | "sealed-k-regression"
   | "ledger-authority-regression"
   | "ledger-authority-parallel"
   | "fast-authority-regression"
@@ -893,14 +894,15 @@ async function scale() {
       await derivedRegression(run.binding, output);
       return;
     }
+    const sealedK = run.mode === "sealed-k-regression";
     const parallel = run.mode.endsWith("-parallel");
     const sealed =
       run.mode.startsWith("fast") ||
       run.guardComparison ||
       run.mode === "ledger-authority-parallel" ||
-      run.sealedWitness === true;
+      run.sealedWitness === true || sealedK;
     if (
-      parallel ||
+      sealedK || parallel ||
       ["ledger-regression", "ledger-authority-regression", "ledger-reuse"].includes(run.mode) ||
       (sealed && action !== "check" && !run.seedRole)
     ) {
@@ -908,7 +910,7 @@ async function scale() {
       try {
         await authority.declareProtection(
           f.db,
-          parallel ? [":v"] : sealed && !run.sealedWitness ? [":privacy/field"] : [field(0)],
+          parallel ? [":v"] : sealed && !run.sealedWitness && !sealedK ? [":privacy/field"] : [field(0)],
           sealed,
         );
       } finally {
@@ -1007,8 +1009,9 @@ async function scale() {
         diag,
         getParent,
         output,
-        run.mode.startsWith("ledger-"),
+        run.mode.startsWith("ledger-") || sealedK,
         run.sealedWitness,
+        sealedK,
         combined ? (erase) => combined.duringRemoval(process.env.DATOMIC_URL!, f.db, nonce!, erase, output) : undefined,
       );
       return;

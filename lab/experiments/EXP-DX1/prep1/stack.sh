@@ -11,6 +11,8 @@ export DX_CHK1_APPEND_GATE=$(cat /config/chk1-replay 2>/dev/null || printf 0)
 export TX2_SUBJECT_APPEND_RETIREMENT=$(cat /config/subject-retirement 2>/dev/null || printf 0)
 export TX2_SUBJECT_NARROW_REVISION=$(cat /config/subject-serial 2>/dev/null || printf 0)
 export TX2_SUBJECT_REUSE_PREDECESSOR=$TX2_SUBJECT_NARROW_REVISION
+export TX2_SUBJECT_APPEND_RETIREMENT=$(cat /config/subject-retirement 2>/dev/null || printf 0)
+export TX2_SUBJECT_OWNER_HEAD=$(cat /config/subject-head 2>/dev/null || printf 0)
 export PREP1_LOOKUP_EVERY=$(cat /config/lookup-every 2>/dev/null || printf 0)
 if [[ "$PREP1_MODE" == subject-native-suite ]]; then
   # [DX-PREP1] Why: exercise the stock native suite with the real process setting on fresh memory scopes.
@@ -292,6 +294,84 @@ case "$PREP1_MODE" in
     credit_modes=(barrier6 rolling6 rolling12)
     if [[ $TX2_SUBJECT_APPEND_RETIREMENT == 1 ]]; then credit_modes=(barrier6 rolling6); fi
     if [[ $TX2_SUBJECT_NARROW_REVISION == 1 ]]; then credit_modes=(rolling6); fi
+    if [[ $TX2_SUBJECT_OWNER_HEAD == 1 ]]; then
+      credit_modes=(barrier6 rolling6)
+      export TRIPLEX_ERASURE_DIRECTORY="$work/privacy"
+      if [[ -f /config/owner_layout_gate.clj ]]; then
+        TX2_SUBJECT_SAVE=1 WFIX1_URI="$DATOMIC_URI_TEMPLATE" java_role -i /config/regression.clj \
+          -i /config/owner_layout_gate.clj -e '
+            (let [r (clojure.test/run-tests (quote owner-layout-gate))]
+              (println "DX-W1_OWNER_LAYOUT_GATE" (clojure.data.json/write-str
+                (assoc r :attempt (System/getenv "PREP1_ATTEMPT") :source (.trim (slurp "/config/source")))))
+              (shutdown-agents)
+              (System/exit (if (zero? (+ (:fail r) (:error r))) 0 1)))' &
+        children[2]=$!
+        wait "${children[2]}"
+        unset 'children[2]'
+        # [DX-W1] Why: pin identical truth in both arms and reboot the reading JVM for each one.
+        # Rejected: comparing a warmed treatment with a control that shares its JVM and object cache.
+        TX2_SUBJECT_SAVE=1 TX2_SUBJECT_OWNER_HEAD=0 DX_W1_LAYOUT_FILE="$work/layout-reads" \
+          java_role -i /config/regression.clj -i /config/owner_layout_gate.clj \
+          -e '(do (owner-layout-gate/staged-reads! (System/getenv "DX_W1_LAYOUT_FILE")) (System/exit 0))' &
+        children[2]=$!
+        wait "${children[2]}"
+        unset 'children[2]'
+        for layout_arm in covered untouched append legacy; do
+          TX2_SUBJECT_SAVE=1 TX2_SUBJECT_OWNER_HEAD=0 DX_W1_LAYOUT_FILE="$work/layout-reads" DX_W1_LAYOUT_ARM="$layout_arm" \
+            java_role -i /config/regression.clj -i /config/owner_layout_gate.clj \
+            -e '(do (owner-layout-gate/sample-reads! (System/getenv "DX_W1_LAYOUT_FILE") (System/getenv "DX_W1_LAYOUT_ARM")) (System/exit 0))' &
+          children[2]=$!
+          wait "${children[2]}"
+          unset 'children[2]'
+        done
+        # [Opus W1] Why: compare arms inside each JVM in shuffled order, three fresh JVMs in all.
+        # Rejected: ranking arms from one JVM each (identical read code differed by 20% between JVMs).
+        for layout_round in 1 2 3; do
+          TX2_SUBJECT_SAVE=1 TX2_SUBJECT_OWNER_HEAD=0 DX_W1_LAYOUT_FILE="$work/layout-reads" DX_W1_LAYOUT_ROUND="$layout_round" \
+            java_role -i /config/regression.clj -i /config/owner_layout_gate.clj \
+            -e '(do (owner-layout-gate/paired-reads! (System/getenv "DX_W1_LAYOUT_FILE") (parse-long (System/getenv "DX_W1_LAYOUT_ROUND"))) (System/exit 0))' &
+          children[2]=$!
+          wait "${children[2]}"
+          unset 'children[2]'
+        done
+        TX2_SUBJECT_SAVE=1 TX2_SUBJECT_OWNER_HEAD=0 \
+          java_role -i /config/regression.clj -i /config/owner_layout_gate.clj \
+          -e '(do (owner-layout-gate/shape-report!) (System/exit 0))' &
+        children[2]=$!
+        wait "${children[2]}"
+        unset 'children[2]'
+        # [Opus W1] Why: count serial storage reads by index for the three writers on indexed seeds, each from a cold transactor.
+        # Rejected: the resident two-save fixture (zero fetches for every arm).
+        TX2_SUBJECT_SAVE=1 TX2_SUBJECT_OWNER_HEAD=0 DX_W1_SERIAL_FILE="$work/serial" \
+          java_role -i /config/regression.clj -i /config/owner_layout_gate.clj \
+          -e '(do (owner-layout-gate/serial-seed! (System/getenv "DX_W1_SERIAL_FILE")) (System/exit 0))' &
+        children[2]=$!
+        wait "${children[2]}"
+        unset 'children[2]'
+        for serial_round in 1 2; do
+          for serial_arm in legacy append covered; do
+            kill "${children[1]}"
+            wait "${children[1]}" || true
+            start_transactor
+            TX2_SUBJECT_SAVE=1 TX2_SUBJECT_OWNER_HEAD=0 DX_W1_SERIAL_FILE="$work/serial" DX_W1_SERIAL_ARM="$serial_arm" \
+              DX_W1_SERIAL_ROUND="$serial_round" java_role -i /config/regression.clj -i /config/owner_layout_gate.clj \
+              -e '(do (owner-layout-gate/serial-edits! (System/getenv "DX_W1_SERIAL_FILE") (System/getenv "DX_W1_SERIAL_ARM") (parse-long (System/getenv "DX_W1_SERIAL_ROUND"))) (System/exit 0))' &
+            children[2]=$!
+            wait "${children[2]}"
+            unset 'children[2]'
+          done
+        done
+      fi
+      TX2_SUBJECT_SAVE=1 java_role /config/serial-gate.clj &
+      children[2]=$!
+      wait "${children[2]}"
+      unset 'children[2]'
+      # [DX-W1] Why: use the merged shared authority for a genuinely sealed subject save.
+      # Rejected: inferring protected-write coverage from a save that never used a body key.
+      sql -d postgres -c 'CREATE DATABASE removal_authority OWNER datomic'
+      export TRIPLEX_ERASURE_JDBC="jdbc:postgresql://$addr:5432/removal_authority?user=datomic&password=$secret"
+      export TRIPLEX_ERASURE_WRAPPING_KEY=$(node -p "require('node:crypto').randomBytes(32).toString('base64')")
+    fi
     for credit_mode in "${credit_modes[@]}"; do
       subject_workers 1 "$TX2_SUBJECT_ORDERED_IDS"
       rolling_probe before "$credit_mode" "$work/$credit_mode.json"
@@ -308,6 +388,39 @@ case "$PREP1_MODE" in
       subject_workers 1 "$TX2_SUBJECT_ORDERED_IDS"
       rolling_probe after "$credit_mode" "$work/$credit_mode.json"
       stop_subject_workers 1
+    done
+    ;;
+  cache-retirement)
+    # [DX-W1] Why: reset the native cache against the same indexed SQL bytes for every treatment.
+    # Rejected: changing entity density or comparing a hot cache with an already-mutated seed.
+    seed="$work/cache-seed.json"
+    export TX2_LEAN_NATIVE_QUERY=1 TX2_LEAN_NATIVE_LOG=1
+    subject_workers 1 1
+    db=$(node /config/cache.mjs seed "$seed")
+    stop_subject_workers 1
+    java_role /config/cache_index.clj "$db" &
+    children[2]=$!
+    wait "${children[2]}"
+    unset 'children[2]'
+    kill "${children[1]}"
+    wait "${children[1]}" || true
+    pg_run pg_dump -h "$work/socket" -U postgres -d datomic -Fc > "$work/cache.pgdump"
+    export DX_W1_CACHE_SEED=$(sha256sum "$work/cache.pgdump" | cut -d ' ' -f 1)
+    original=$PREP1_ATTEMPT
+    for pair in 128m:0 128m:1 64m:1 64m:0 32m:0 32m:1; do
+      cap=${pair%:*}
+      marker=${pair#*:}
+      export PREP1_ATTEMPT="$original-$pair" TX2_SUBJECT_APPEND_RETIREMENT="$marker"
+      test "$(sha256sum "$work/cache.pgdump" | cut -d ' ' -f 1)" = "$DX_W1_CACHE_SEED"
+      pg_run pg_restore -h "$work/socket" -U postgres -d datomic --clean --if-exists --exit-on-error < "$work/cache.pgdump"
+      sed -i "s/^object-cache-max=.*/object-cache-max=$cap/" "$work/transactor.properties"
+      grep -Fx "object-cache-max=$cap" "$work/transactor.properties"
+      PREP1_MODE=lookup-profile start_transactor
+      subject_workers 1 1
+      node /config/cache.mjs measure "$seed" "$cap" "$marker"
+      stop_subject_workers 1
+      kill "${children[1]}"
+      wait "${children[1]}" || true
     done
     ;;
   subject-query)
