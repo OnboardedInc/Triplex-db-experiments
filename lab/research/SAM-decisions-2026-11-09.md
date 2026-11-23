@@ -954,3 +954,11 @@ Sam, verbatim:
 > For the $1 billion scorecard can you break these down for me? What are we at? What is working and what's not working? Can you explain to me? Do we have plans to figure out how to fix these? Also is this possible: that we could run Datomic Pro eventually on a hosted Postgres? Is that how that works, like on Neon or on Supabase, or no?
 
 Recorded by the orchestrator: from now on the unit is called a subject in messages and new documents. The other two are questions, answered in the session.
+
+## 2026-11-23 about 16:45 local: option A on the roadmap for a future version; option B stays for 0.1; is there a dashboard?
+
+Sam, verbatim:
+
+> Lets put Option A for failover for a future version on the roadmap, and keep Option B for 0.1 for now. ALso Is there a dashboard to demo this stuff yet?
+
+Recorded by the orchestrator: `lab/V0.1.md` updated on `main` (option B stays for 0.1 with today's measurement; option A added under what is deferred past 0.1; option C stays the plan for 1.0). The dashboard question is answered in the session: a one-page inspector exists, a dashboard does not yet; one is being built on the demo branch.
