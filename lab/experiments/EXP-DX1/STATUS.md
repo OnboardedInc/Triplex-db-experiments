@@ -4719,3 +4719,25 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Not shown:** removal on request on an aged person (the gateway answers 409 `ProtectedScopeNeedsMigration`; the tool explains and changes nothing); Publish answers and groups.
 - **Not proven:** anything on Linux or at 1 billion (bring-up scripts, the in-container scorecard check, the object storage fetch, timings). A 25 to 30 minute proving slot is assigned to server 2 right after failover; it rewrites the examples with real outputs and times.
 - **Registered** on the Mac with `claude mcp add --scope local triplex-demo` (private to this project's local configuration).
+
+### 2026-11-23 14:13 local: SCORECARD PART 2 AT 1 BILLION: saves at peak 27% below fresh, pinned reads about forty times slower; diagnosis started (5 agents running)
+
+Source: `origin/exp/DX-SCALE1-deep-accounts` `182fb4482`, `scale1/V01-AGED.md`; scorecard at `6770c37ba`; the `server` profile (16 GiB transactor cache, one-core reader), six fair-turn credits as in the fresh card; completed 14:11.
+
+| Measure | 1 billion | Fresh (430 million) |
+| --- | --- | --- |
+| Reference tape, 3.5/s | 1,260/1,260, p50/p99 5.86 / 20.35 ms | 5.60 / 22.53 ms |
+| 50 offered | 50.00/s, p50/p99 12.80 / 60.67 ms | 50.00/s, 9.73 / 118.78 ms |
+| 235 offered | 235.00/s, 712.70 / 3,817.47 ms | 234.98/s, 47.10 / 2,392.06 ms |
+| 394 offered | **249.41/s**, 5,523 expired | 342.90/s, 0 expired |
+| 620 offered | **239.32/s**, 26,565 expired | 329.42/s, 16,246 expired |
+| Quiet commit p99, solo to loaded at 50 / 235 / 394 / 620 | 2.38x / 6.69x / 4.47x / 3.20x | 2.34x / 4.38x / 5.08x / 4.05x |
+| Pinned reads, 1 seat | **18.12/s, p50/p99 44.80 / 114.18 ms** | 606.43/s, 1.18 / 5.95 ms |
+| Pinned reads, 256 seats | **18.63/s, 13,042 / 13,566 ms** | 893.18/s, 198.66 / 860.16 ms |
+| Quiet account's reads in the save cells | about one third returned, two thirds errors, solo included | all returned |
+| Current pulls | p50/p99 4.22 / 47.10 ms, max 33,179 ms | 4.54 / 50.18 ms, max 85 ms |
+| Paced import | 3,250 facts/s | 3,193 facts/s |
+
+- **Against the predictions:** low rates close to fresh, as predicted. At 394 and 620 the prediction (flat to 15% lower) was wrong on the pessimistic side: 27% lower. Pinned reads were predicted to have a higher tail at the top of the ladder; instead capacity fell to about 18 reads/s at every step. The error type of the failed reads is not in the summary.
+- **Diagnosis started (builder, RD1):** what a pinned read touches against a current pull (which did not slow down), where 45 ms goes at one seat (storage loads against compute, the reader's cache size), whether it is a property of the store or of this bulk-loaded database, fixes, and one run for tonight.
+- **Demo:** built and proven at toy size (see the previous entry); its proving slot at 1 billion is on server 2 after failover. The import under the larger memory (`96b16e759`, 20 minutes) is queued on the second machine.
