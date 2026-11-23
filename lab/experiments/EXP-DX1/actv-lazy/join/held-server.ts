@@ -11,16 +11,19 @@ import { stackOptions } from "../../v01/profile.ts";
 import { cleanSource, verifyBuild } from "../../v01/source.ts";
 import { runHeld } from "./held-campaign.ts";
 
-const [source, image, imagePin, transferPin, templateDir, preparedDir, walDir, output, fair, rolling, width, credits] =
+const [source, image, imagePin, transferPin, templateDir, preparedDir, walDir, output, fair, rolling, width, credits, policy] =
   process.argv.slice(2);
 assert(process.platform === "linux" && process.env.DX_BARE_METAL === "1" && output);
 assert(source && image && imagePin && transferPin && templateDir && preparedDir && walDir);
 if (fair) {
   assert.equal(fair, "--fair-import");
   assert.match(rolling ?? "", /^rolling(?:6|8|12|16)$/);
-  assert.match(width ?? "", /^(?:[89]|[1-5][0-9]|6[0-4])$/);
+  // [DX-LOAD2] Why: a yield launch may compare two frame widths on one copy; the fair launch keeps its old shape.
+  assert.match(width ?? "", /^(?:[89]|[1-5][0-9]|6[0-4])(?:,(?:[89]|[1-5][0-9]|6[0-4]))*$/);
   assert.match(credits ?? "", /^[1-5]$/);
-  assert.equal(process.argv.length, 14);
+  assert(policy === undefined || policy === "fair" || policy === "yield");
+  assert(policy === "yield" || !width!.includes(","));
+  assert.equal(process.argv.length, policy === undefined ? 14 : 15);
 }
 const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock");
 const queue = fs.statSync("/proc/self/fd/9");
@@ -189,7 +192,8 @@ try {
   const peer = { write, read, java, slot, attempt, gatewaySource: left.gatewaySourceHash };
   if (fair) {
     const { runFair } = await import("../../load1/fair-campaign.ts");
-    await runFair(out, source, peer, seed, rolling as CreditMode, Number(width), Number(credits));
+    await runFair(out, source, peer, seed, rolling as CreditMode, width!.split(",").map(Number), Number(credits),
+      false, (policy ?? "fair") as "fair" | "yield");
   } else await runHeld(out, source, peer, seed);
   assert.deepEqual(
     [fs.statSync(template).dev, fs.statSync(template).ino, control(template)],

@@ -30,6 +30,24 @@ import { command } from "../w1/group/workload.ts";
 
 const deepFacts = 16_000_000;
 type Cell = "quiet" | "control" | "import";
+export type ImportPolicy = "fair" | "yield";
+type Arm = { mode: CreditMode; width: number; label: string; yieldToLive: boolean };
+
+// [DX-LOAD2] Why: the yield arms keep one matched quiet/control/import triple per frame width on one copy.
+// Rejected: comparing a yield arm against another arm's baseline taken earlier on a smaller database.
+export function fairArms(rolling: CreditMode, widths: readonly number[], policy: ImportPolicy): Arm[] {
+  assert(widths.length >= 1 && new Set(widths).size === widths.length);
+  for (const width of widths) importFrame("validation", width, 0);
+  if (policy === "fair") {
+    assert.equal(widths.length, 1);
+    return [rolling, "barrier6" as const].map((mode) => ({
+      mode, width: widths[0]!, label: mode, yieldToLive: false,
+    }));
+  }
+  return widths.map((width) => ({
+    mode: rolling, width, label: rolling + "-yield" + width, yieldToLive: true,
+  }));
+}
 type Receipt = Awaited<ReturnType<DatomicClient["transactCommand"]>>;
 type ImportFrame = {
   index: number;
@@ -68,7 +86,7 @@ export function importFrame(stream: string, width: number, index: number): Impor
   };
 }
 
-function tapeFor(people: Density, seconds: number, toy: boolean) {
+function tapeFor(people: Density, seconds: number, toy: boolean, toyBusy = 9) {
   const quietPeriod = cellSeconds(3.5);
   const quiet = Array.from({ length: Math.ceil(seconds / quietPeriod) }, (_, i) =>
     writeTape(people, 3.5, i).map((write) => ({ ...write, ms: write.ms + i * quietPeriod * 1000 })),
@@ -76,7 +94,7 @@ function tapeFor(people: Density, seconds: number, toy: boolean) {
     .flat()
     .filter((write) => write.ms < seconds * 1000);
   const live = Array.from({ length: Math.ceil(seconds / 90) }, (_, i) => writeTape(people, 394, i));
-  const busyCount = (toy ? 9 : 235) * seconds;
+  const busyCount = (toy ? toyBusy : 235) * seconds;
   return [
     ...quiet.map((write) => ({ ...write, version: "q/" + write.version })),
     ...accounts.slice(1).flatMap((account) => {
@@ -221,13 +239,13 @@ async function arm(
   source: string,
   peer: Peer,
   seed: AdoptedSeed,
-  mode: CreditMode,
+  { mode, width, label, yieldToLive }: Arm,
   cell: Cell,
   head: number,
   seconds: number,
-  width: number,
   limit: number,
   toy: boolean,
+  toyBusy: number,
 ) {
   const write = new DatomicClient(peer.write, 35_000);
   const bulk = new DatomicClient(peer.write, 35_000);
@@ -235,8 +253,12 @@ async function arm(
   const journal = new DatomicClient(peer.read, 35_000);
   const db = seed.scope.db;
   const admission = creditModeSelection(mode);
-  const stream = sha([source, seed.pin, db, peer.attempt, mode, cell, width]).slice(0, 32);
-  const tape = tapeFor(seed.image.people as Density, seconds, toy).filter(
+  const stream = sha(
+    yieldToLive
+      ? [source, seed.pin, db, peer.attempt, mode, cell, width, label]
+      : [source, seed.pin, db, peer.attempt, mode, cell, width],
+  ).slice(0, 32);
+  const tape = tapeFor(seed.image.people as Density, seconds, toy, toyBusy).filter(
     (row) => cell !== "quiet" || !row.account,
   );
   let terminal: number | undefined;
@@ -245,7 +267,7 @@ async function arm(
   let peak = 0;
   let discarded = false;
   const imported: Imported[] = [];
-  const file = path.join(out, mode + "-" + cell);
+  const file = path.join(out, label + "-" + cell);
   jsonFile(file + "-input.json", {
     source,
     slot: peer.slot,
@@ -259,6 +281,8 @@ async function arm(
     width,
     limit,
     mode,
+    label,
+    yieldToLive,
     cell,
     tape: sha(tape),
     timing: toy ? "diagnostic" : "bare-metal",
@@ -311,6 +335,7 @@ async function arm(
     const producer: FairImport = {
       limit,
       end,
+      yieldToLive,
       ready: () => cell === "import" && (cursor + 1) * width <= deepFacts,
       async send(grant) {
         const frame = importFrame(stream, width, cursor++);
@@ -377,6 +402,8 @@ async function arm(
       previousImport = receipt.position;
       if (admission.mode === "rolling") assert(neighboursAhead! < admission.credits - 1);
     }
+    // [DX-LOAD2] Why: prove from the grants themselves that no frame was admitted beside a waiting live save.
+    if (yieldToLive) assert(imported.every((f) => f.liveQueued === 0), "Import admitted beside waiting live saves");
     assert.equal(writes.rows.length, tape.length);
     assert.equal(byPosition.size, 0, "Unattributed commits in the measured suffix");
     assert.equal(imported.length, cursor);
@@ -426,6 +453,11 @@ async function arm(
     });
     const result = {
       mode,
+      label,
+      width,
+      yieldToLive,
+      yieldedChecks: producer.yieldedChecks ?? 0,
+      importGrantsBesideLiveQueue: imported.filter((f) => f.liveQueued > 0).length,
       cell,
       start,
       end,
@@ -459,13 +491,16 @@ export async function runFair(
   peer: Peer,
   seed: AdoptedSeed,
   rolling: CreditMode,
-  width: number,
+  widths: number | readonly number[],
   limit: number,
   toy = false,
+  policy: ImportPolicy = "fair",
+  toyBusy = 9,
 ) {
   assert(/^rolling(?:6|8|12|16)$/.test(rolling));
   assert(Number.isInteger(limit) && limit >= 1 && limit <= 5);
-  importFrame("validation", width, 0);
+  assert(Number.isInteger(toyBusy) && toyBusy >= 9 && toyBusy <= 235 && (toy || toyBusy === 9));
+  const arms = fairArms(rolling, typeof widths === "number" ? [widths] : widths, policy);
   const client = new DatomicClient(peer.read, 35_000);
   try {
     await checkAdoptedPeer(client, seed, seed.scope.cut);
@@ -473,47 +508,11 @@ export async function runFair(
     client.close();
   }
   let head = seed.scope.cut;
-  for (const mode of [rolling, "barrier6"] as const) {
+  for (const spec of arms) {
     const seconds = toy ? 6 : 300;
-    const alone = await arm(
-      out,
-      source,
-      peer,
-      seed,
-      mode,
-      "quiet",
-      head,
-      seconds,
-      width,
-      limit,
-      toy,
-    );
-    const control = await arm(
-      out,
-      source,
-      peer,
-      seed,
-      mode,
-      "control",
-      alone.terminal,
-      seconds,
-      width,
-      limit,
-      toy,
-    );
-    const loaded = await arm(
-      out,
-      source,
-      peer,
-      seed,
-      mode,
-      "import",
-      control.terminal,
-      seconds,
-      width,
-      limit,
-      toy,
-    );
+    const alone = await arm(out, source, peer, seed, spec, "quiet", head, seconds, limit, toy, toyBusy);
+    const control = await arm(out, source, peer, seed, spec, "control", alone.terminal, seconds, limit, toy, toyBusy);
+    const loaded = await arm(out, source, peer, seed, spec, "import", control.terminal, seconds, limit, toy, toyBusy);
     head = loaded.terminal;
     const summary = loaded.windows.map((window, i) => ({
       from: window.from,
@@ -535,17 +534,22 @@ export async function runFair(
         };
       }),
     }));
-    jsonFile(path.join(out, mode + "-comparison.json"), {
+    jsonFile(path.join(out, spec.label + "-comparison.json"), {
       source,
       slot: peer.slot,
       attempt: peer.attempt,
       db: seed.scope.db,
       seed: seed.pin,
-      mode,
-      width,
+      mode: spec.mode,
+      label: spec.label,
+      policy,
+      yieldToLive: spec.yieldToLive,
+      width: spec.width,
       limit,
       head,
       timing: toy ? "diagnostic" : "bare-metal",
+      yieldedChecks: loaded.yieldedChecks,
+      importGrantsBesideLiveQueue: loaded.importGrantsBesideLiveQueue,
       summary,
     });
     if (toy) {
@@ -557,5 +561,14 @@ export async function runFair(
           }
     }
   }
-  return { database: seed.scope.db, head, seed: seed.pin, width, limit, rolling };
+  return {
+    database: seed.scope.db,
+    head,
+    seed: seed.pin,
+    widths: arms.map((a) => a.width),
+    limit,
+    rolling,
+    policy,
+    arms: arms.map((a) => a.label),
+  };
 }

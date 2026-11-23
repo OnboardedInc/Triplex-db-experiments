@@ -151,7 +151,9 @@ export async function localDrill(opts: any, config: any, manager: any) {
     (mode === "load-fair" || mode === "hasync-ack");
   const scorecard = holder === "DX-V01" && opts.diagnostic === true && pooled &&
     ["hasync-ack", "hasync-move"].includes(mode) && opts.people === "10";
-  assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard);
+  // [DX-LOAD2] Why: the import-neighbours builder gates its importer change on its own diagnostic slot.
+  const importNeighbours = holder === "DX-LOAD2" && diagnostic && mode === "load-fair" && combined === undefined;
+  assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours);
   assert(combined === undefined || ownedCombination);
   if (mode === "load-fair") {
     const { cleanSource } = await import("../v01/source.ts");
