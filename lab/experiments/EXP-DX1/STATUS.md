@@ -4967,3 +4967,10 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Server 2:** production-S card at 1 billion started 23:16:37 UTC (build `090c189a8`, dry run reached its first offer), end forecast 00:25 to 00:45 UTC; then the fixed owner head pair (`85fc3a4bd`, about 35 minutes), the pinned reader with saves (builder due 20:30), the console proof (due 21:00).
 - **Console:** A published the catalogue (`229a08a87`, 17:56), step 5 with G12 passing (`76ae52dcc`: a stock `ConfigStore.commit` works on the lean layout) and step 6 (`a4f865f06`); B has the type, configuration and entity form screens (`1e070205f`) with A merged.
 - **Running (5):** two drivers, console builders A and B, the pinned-with-saves builder.
+
+### 2026-11-23 18:27 local: console proving run published (`258418c92`) and placed first after the production-S card; card part 1 done (5 agents running)
+
+- **Production-S card at 1 billion, part 1** (`origin/exp/DX-SCALE1-deep-accounts` `3ac250a22`, `scale1/V01-AGED-PROD-S.md`): reference tape 1,260 of 1,260, p50/p90/p99 6.18 / 11.71 / 21.38 ms. Parts 2 and 3 running.
+- **Console proving run** (`origin/exp/DX-CON1-functions` `258418c92`, `demo/PROVE-CONSOLE.md`, `demo/prove-console.sh`): headless on the machine, fresh working copy, both pinned options required, about 100 tool calls, one row per line of the design's table 10.4, G13 measured, every changed value read back, MCP and HTTP answers compared; 8 to 22 minutes predicted, ceiling 40.
+- **Console functions since 17:50:** catalogue (`229a08a87`), configuration with G12 passing (`76ae52dcc`), entities (`a4f865f06`), query with three sources and the guard proven to send nothing for a scan (`e022a75a5`), change feed additions (`23d66c0eb`). **App:** Query screen with ten examples (`1179b1f00`), Ask your assistant and Journal (`34d6ca97e`), type and configuration screens (`1e070205f`).
+- **Server 2 order:** card, console proof, pinned readers with saves (if published), fixed owner head pair. Delete by 23:30.
