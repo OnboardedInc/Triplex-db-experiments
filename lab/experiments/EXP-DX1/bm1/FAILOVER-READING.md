@@ -25,6 +25,19 @@ Offers in the case: 145,580 (fate: 126,324 refused during the hold, 14,746 subje
 
 **North star P9:** no acknowledged save lost, writes resume within 60 s, a planned move within 30 s. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
+### Case `move-235`: planned move at 235 saves/s, writes back in 14.1 s
+
+**The planned move met the 30 s bar: the first save on the new route came 14.1 s after ingress sealed, with no acknowledged save lost.** The forecast was 20–65 s, with the 30 s bar likely missed.
+
+| Measure | Forecast | Measured |
+| --- | --- | ---: |
+| Acknowledged saves lost | 0 | **0**: 4,146 receipts byte-identical on the survivor; 2,846 acknowledged before the move, 1,300 by the new writer |
+| Write pause (seal → first save on the new route) | 20–65 s | **14.1 s**, inside the **30 s P9 bar** (`move30s` true) |
+| First read / longest read gap | within 0.35 s / 1 s | 11.2 ms / 27.6 ms; 0 of 707 reads missed |
+| Rewind and rejoin | small with vacuum off | rejoined 2.2 s after the seal |
+
+**Steps from the seal (ms):** fenced 950 · prefix 1,041 · promoted 1,455 · rejoined 2,200 · broker ready 10,872 · peer ready 11,883 · routed 11,910 · first save 14,125. As in `a-235`, the transactor broker's start (about 9 s after promotion) is most of the pause. Offers: 7,117 (2,797 refused during the hold, 384 late, 137 expired at the sender).
+
 ### Case `a-235`: policy A at 235 saves/s; first failure measured, second-failure check stopped
 
 **First failure: no acknowledged save lost, and writes resumed in 19.5 s.** The fault was the SIGKILL of A's PostgreSQL and transactor at 645.8 s into the case.
