@@ -962,3 +962,15 @@ Sam, verbatim:
 > Lets put Option A for failover for a future version on the roadmap, and keep Option B for 0.1 for now. ALso Is there a dashboard to demo this stuff yet?
 
 Recorded by the orchestrator: `lab/V0.1.md` updated on `main` (option B stays for 0.1 with today's measurement; option A added under what is deferred past 0.1; option C stays the plan for 1.0). The dashboard question is answered in the session: a one-page inspector exists, a dashboard does not yet; one is being built on the demo branch.
+
+## 2026-11-23 about 17:10 local: the dashboard "makes no sense"; redesign it as a Metabase-meets-Firebase app on shadcn, thought through by a Fable agent
+
+Sam, verbatim (pasted):
+
+> This dashboard makes no sense. Can you use shadcn as the design system and have a Fable agent think about what this should actually be?
+>
+> This should feel a lot more like I'm opening up, like MetaBase, right, and I can query it. It's like MetaBase mixed with Firebase by Google because you can make entities and stuff and I can make your own subjects or entities or whatever. I want to highlight the triplex stuff and being able to build your own entities and things as well.
+>
+> Can you list them and see what the types are, whatever? Then there should be a clear thing of what you can ask your MCP for: build new entities or use the language of the triplex thing that we can do, and kind of show off the triplex part of it as well as the reads and things. Does that make sense?
+
+Recorded by the orchestrator: the first dashboard is rejected. Sam named a Fable agent for the design thinking in this request (an exception to the standing Opus-only rule, for this request alone). The build that follows goes to Opus.
