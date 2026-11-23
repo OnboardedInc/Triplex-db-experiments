@@ -103,11 +103,16 @@ export const productionArms: Arm[] = [
   { ...rolling6Arm, id: "1-prodS-394-S", production: "S", rates: [394] },
   { ...rolling6Arm, id: "1-prodR-cache32-S", cacheGiB: 32, production: "R", rates: [235, 394] },
   { ...rolling6Arm, id: "1-prodS-cache32-S", cacheGiB: 32, production: "S", rates: [235, 394, 620] },
+  // [DX-REAL2] The one-billion aged cut: 394 only, 32 GiB R and S first, then R on 16 GiB if time allows.
+  { ...rolling6Arm, id: "1-prodR-394-cache32-S", cacheGiB: 32, production: "R", rates: [394] },
+  { ...rolling6Arm, id: "1-prodS-394-cache32-S", cacheGiB: 32, production: "S", rates: [394] },
+  { ...rolling6Arm, id: "1-prodR-394-S", production: "R", rates: [394] },
 ];
 /** Arm sets a server command can name: the one-hour set and the full set. */
 export const productionSets: Record<string, string[]> = {
   hour: ["1-prodR-S", "1-prodS-394-S"],
   full: ["1-prodR-S", "1-prodS-S", "1-prodR-cache32-S", "1-prodS-cache32-S"],
+  aged: ["1-prodR-394-cache32-S", "1-prodS-394-cache32-S", "1-prodR-394-S"],
 };
 let productionLoaded: { params: ProductionParams; sha256: string; file: string } | undefined;
 export function productionParams(file = process.env.DX_REAL2_PARAMS ?? productionDefaultParams) {
@@ -186,8 +191,27 @@ const productionForecasts: Record<string, Record<number, Record<string, Range>>>
 /** Shape S: warm apply ms per commit = intercept + slope x facts; a cold commit adds about 1 ms per storage read. */
 export const productionApplyForecast = { intercept: [0.3, 0.15, 1.0], slopePerFact: [0.06, 0.02, 0.15] } as const;
 
+/**
+ * [DX-REAL2] Forecasts on the one-billion aged cut (real2/PRODUCTION-AGED.md), written before any run.
+ * Reference at 1B with Saturday's tape, 32 GiB: 0.95 late reads per save, 1.95 in the first 60 s, 384.5 stored/s,
+ * second-half p99 7.2 s, quiet 72 ms. Reads and stored/s are per commit, as in the fresh table.
+ */
+const agedForecasts: Record<string, Record<string, Range>> = {
+  "1-prodR-394-cache32-S": { stored: [390.5, 385, 390.5], wholeP99: [800, 450, 3000], secondP99: [650, 400, 2000],
+    saveCompletionP99: [650, 400, 2000], quietP99: [50, 35, 90], readsFirstMinute: [0.12, 0.05, 0.6],
+    readsLate: [0.05, 0.01, 0.3], txCores: [1.1, 0.6, 2.0] },
+  "1-prodS-394-cache32-S": { stored: [23.1, 23.1, 23.1], wholeP99: [80, 30, 400], secondP99: [50, 25, 200],
+    saveCompletionP99: [50, 25, 200], quietP99: [40, 25, 70], readsFirstMinute: [1.3, 0.6, 8],
+    readsLate: [0.5, 0.1, 3], txCores: [0.45, 0.15, 1.0] },
+  "1-prodR-394-S": { stored: [390.5, 330, 390.5], wholeP99: [1000, 500, 5000], secondP99: [800, 400, 3000],
+    saveCompletionP99: [800, 400, 3000], quietP99: [55, 35, 100], readsFirstMinute: [0.12, 0.05, 0.6],
+    readsLate: [0.1, 0.02, 0.6], txCores: [1.2, 0.6, 2.2] },
+};
+
 export function productionPrediction(arm: Arm, rate: number, alone: boolean) {
   assert(arm.production && arm.rates!.includes(rate));
+  if (agedForecasts[arm.id]) return alone ? { serving: 3.5, quietP99: [30, 20, 45] }
+    : { ...agedForecasts[arm.id], ...(arm.production === "S" ? { apply: productionApplyForecast } : {}) };
   // Solo cells are Saturday's quiet cells byte for byte: forecast Saturday's measured solo p99 at that band.
   if (alone) return { serving: 3.5, quietP99: { 235: [31, 14, 43], 394: [22, 12, 35], 620: [15, 12, 31] }[rate] };
   const key = arm.production + (arm.cacheGiB === 32 ? "32" : "16");

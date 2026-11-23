@@ -50,14 +50,17 @@ def checked_checkpoint(root, label, manifest, raw_root=None, cache=False):
         assert {name: digest(raw(name)) for name in ("plan.json", "seed.json")} == expected
         assert raw("source").decode().strip() == SOURCE
         plan, seed = j("plan.json"), j("seed.json")
-        assert (seed["head"], seed["facts"], seed["imageSha256"], plan["seconds"]) == (87002, 162456470, IMAGE, 300)
+        # [DX-REAL2] An aged run's head is its seed cut plus AGE1's replayed saves, not the fresh 87,002.
+        head = 87002 + (seed["aged"]["tapeSaves"] if seed.get("aged") else 0)
+        assert not seed.get("aged") or seed["aged"]["seedCut"] == 87002
+        assert (seed["head"], seed["facts"], seed["imageSha256"], plan["seconds"]) == (head, 162456470, IMAGE, 300)
         header, complete, summary = (j(f"{arm}/{f}.json") for f in ("header", "complete", "summary"))
         assert not summary["fixture"]
         assert summary["source"] == header["commit"] == complete["commit"] == SOURCE
         assert header["slot"] == complete["slot"] == summary["slot"]
         assert header["nonce"] == complete["nonce"] == summary["nonce"]
         assert (header["head"], header["seedSha"], summary["seedSha"], summary["planSha"]) == (
-            87002, expected["seed.json"], expected["seed.json"], expected["plan.json"])
+            head, expected["seed.json"], expected["seed.json"], expected["plan.json"])
         for file in ("header.json", "complete.json"):
             assert digest(raw(f"{arm}/{file}")) == summary["rawSha256"][file]
         expected_arm, = [a for a in plan["arms"] if a["id"] == arm]

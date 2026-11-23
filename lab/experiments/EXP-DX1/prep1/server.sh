@@ -10,7 +10,7 @@ repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 here=lab/experiments/EXP-DX1/prep1
 stack=lab/experiments/EXP-DX1/stack
-mode=${1:?expected run, storage, storage-ordered, ceiling, scale, rolling, cache32, cache32-aged, production, production-full, fresh, tail, tail-combined, owner, fair or arm}
+mode=${1:?expected run, storage, storage-ordered, ceiling, scale, rolling, cache32, cache32-aged, production, production-full, production-aged, fresh, tail, tail-combined, owner, fair or arm}
 out=${2:?provide an absolute new output directory}
 source=${3:?provide the pinned Git commit}
 [[ "$out" == /* && "$source" =~ ^[a-f0-9]{40}$ && $(git rev-parse HEAD) == "$source" && -z $(git status --porcelain) ]]
@@ -148,6 +148,18 @@ elif [[ $mode == production || $mode == production-full ]]; then
   export DX_REAL2_SET=hour
   if [[ $mode == production-full ]]; then export DX_REAL2_SET=full; limit=9900; fi
   exec timeout --kill-after=40s "${limit}s" bash "$here/server.sh" rolling-timed "${@:2}"
+elif [[ $mode == production-aged ]]; then
+  # [DX-REAL2] Why: the production-shaped tape on AGE1's sealed one-billion cut, admitted as cache32-aged is.
+  # Rejected: a separate admission path, or running the 16 GiB arm when it cannot finish inside the hour.
+  [[ $# == 13 && $7 == --pg-data && $9 == --wal-mount && ${11} == --aged-bundle && ${12} == /* && ${13} =~ ^[a-f0-9]{64}$ &&
+     -z ${DX_PREP1_FRESH_CREDITS:-}${DX_PREP1_ROLLING_ARM:-}${DX_PREP1_CACHE32:-}${DX_PREP1_AGED:-}${DX_REAL2_SET:-} ]] ||
+    { echo "server.sh production-aged: expected out source image imagePin transferPin --pg-data DIR --wal-mount DIR --aged-bundle FILE SHA, and no other arm settings" >&2; exit 2; }
+  bundle=$(realpath -e "${12}")
+  [[ -f $bundle && $(sha256sum "$bundle" | cut -d ' ' -f 1) == "${13}" ]] || { echo "server.sh production-aged: bundle digest differs" >&2; exit 2; }
+  unset DX_REAL2_PARAMS
+  export DX_REAL2_SET=aged DX_PREP1_AGED=1 DX_PREP1_AGED_BUNDLE=$bundle DX_PREP1_AGED_SHA=${13}
+  export DX_REAL2_DEADLINE=$(( $(date +%s) + 3560 - 60 ))
+  exec timeout --kill-after=40s 3560s bash "$here/server.sh" rolling-timed "${@:2:9}"
 elif [[ $mode == cache32-aged ]]; then
   # [DX-PREP1] Why: run Saturday's three-core 32 GiB arm unchanged on AGE1's sealed one-billion cut.
   # Rejected: a second arm (five cores) or a 16 GiB control inside the 75-minute server cap.
@@ -179,7 +191,7 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
       wal_disk=$(disk_of "$scale_wal_device")
       [[ $data_disk =~ ^nvme[0-9]+n[0-9]+$ && $wal_disk =~ ^nvme[0-9]+n[0-9]+$ && $data_disk != "$wal_disk" ]]
       export DX_PREP1_ROLLING_WAL_DEVICE=$scale_wal_device
-      if [[ ${DX_PREP1_CACHE32:-} == 1 || ${DX_REAL2_SET:-} == full ]]; then
+      if [[ ${DX_PREP1_CACHE32:-} == 1 || ${DX_REAL2_SET:-} =~ ^(full|aged)$ ]]; then
         # [DX-PREP1] Why: preserve at least 10 GiB outside the 79 GiB of role caps (:GiB, not advertised GB).
         # Rejected: treating the server SKU size as MemTotal or budgeting only Java heap.
         host_kib=$(awk '$1 == "MemTotal:" && $3 == "kB" {print $2}' /proc/meminfo)
@@ -227,7 +239,7 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
   export DX_PREP1_CAMPAIGN=${mode%-timed} DX_PREP1_FAIR_CREDITS=0
   aged_mode=()
   if [[ ${DX_PREP1_AGED:-} == 1 ]]; then
-    [[ $mode == rolling-timed && ${DX_PREP1_CACHE32:-} == 1 && ${#seed_mode[@]} == 1 ]]
+    [[ $mode == rolling-timed && ( ${DX_PREP1_CACHE32:-} == 1 || ${DX_REAL2_SET:-} == aged ) && ${#seed_mode[@]} == 1 ]]
     [[ $(sha256sum "$DX_PREP1_AGED_BUNDLE" | cut -d ' ' -f 1) == "$DX_PREP1_AGED_SHA" ]]
     aged_mode=(--aged-bundle "$DX_PREP1_AGED_BUNDLE" "$DX_PREP1_AGED_SHA")
   else
@@ -258,6 +270,9 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
       if [[ -n ${DX_REAL2_SET:-} ]]; then
         # [DX-REAL2] Why: the hour set fits one rented hour; the full set is four separate stacks.
         if [[ $DX_REAL2_SET == hour ]]; then selected=(1-prodR-S 1-prodS-394-S)
+        elif [[ $DX_REAL2_SET == aged ]]; then
+          [[ ${DX_PREP1_AGED:-} == 1 && ${DX_REAL2_DEADLINE:-} =~ ^[0-9]+$ ]]
+          selected=(1-prodR-394-cache32-S 1-prodS-394-cache32-S 1-prodR-394-S)
         else selected=(1-prodR-S 1-prodS-S 1-prodR-cache32-S 1-prodS-cache32-S); fi
       elif [[ ${DX_PREP1_CACHE32:-} == 1 && ${DX_PREP1_AGED:-} == 1 ]]; then
         # [DX-PREP1] Why: the 176 GB copy happens inside the arm; allow about seven minutes for it.
@@ -278,6 +293,14 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
       fi
     fi
     for cell in "${selected[@]}"; do
+      if [[ ${DX_REAL2_SET:-} == aged ]]; then
+        left=$(( DX_REAL2_DEADLINE - $(date +%s) ))
+        if [[ $cell == 1-prodR-394-S ]] && (( left < 1260 )); then
+          printf '{"arm":"%s","skipped":"%s s left of the hour, 1260 needed"}\n' "$cell" "$left" > "$out/$cell.skipped.json"
+          echo "server.sh: skipped $cell, $left s left" >&2
+          continue
+        fi
+      fi
       owned="tx2-dxprep1-$tag-${cell,,}"
       if [[ $cell == 1-scale-wal-zgc-S || $mode == rolling-timed ]]; then
         mkdir -m 0700 "$scale_wal_mount/$owned"
@@ -288,6 +311,12 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
       if [[ -n ${DX_REAL2_SET:-} ]]; then
         # Two- and four-cell arms get Saturday's two-rate cache32 allowance; the three-rate arms its three-rate one.
         case $cell in 1-prodS-394-S) limit_for_cell=1500 ;; 1-prodS-S|1-prodS-cache32-S) limit_for_cell=2950 ;; *) limit_for_cell=1740 ;; esac
+        if [[ $DX_REAL2_SET == aged ]]; then
+          # One rate per arm, with a 176 GB copy inside each arm (about 20 minutes in all). The third arm runs only if
+          # it can finish before the hour's deadline; otherwise it is recorded as skipped.
+          limit_for_cell=1380
+          if [[ $cell == 1-prodR-394-S ]]; then limit_for_cell=$(( left - 60 < 1380 ? left - 60 : 1380 )); fi
+        fi
       fi
       timeout --foreground --kill-after=20s "${limit_for_cell}s" bash "$here/server.sh" arm "$out" "$source" "$cell"
       clear_scale_wal
@@ -447,7 +476,7 @@ elif [[ $mode == arm ]]; then
       { echo "server.sh refused arm $cell (campaign rolling, source $(cat "$out/source"))" >&2; exit 2; }
     if [[ $cell == 1-prod* ]]; then [[ -n ${DX_REAL2_SET:-} ]]; else [[ -z ${DX_REAL2_SET:-} ]]; fi
     if [[ $cell == 1-rolling6-tx5-S || $cell == 1-rolling6*-cache32-S || $cell == 1-prod*-cache32-S ]]; then
-      if [[ $cell == 1-prod*-cache32-S ]]; then [[ ${DX_REAL2_SET:-} == full ]]
+      if [[ $cell == 1-prod*-cache32-S ]]; then [[ ${DX_REAL2_SET:-} =~ ^(full|aged)$ ]]
       elif [[ $cell == *-cache32-S ]]; then [[ ${DX_PREP1_CACHE32:-} == 1 ]]
       else [[ ${DX_PREP1_ROLLING_ARM:-} == rolling6-tx5 ]]; fi
       export DX_JVM1_TX_PROPERTIES='{"index-parallelism":1}'

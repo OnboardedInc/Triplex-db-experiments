@@ -11,13 +11,24 @@ from pathlib import Path
 from rolling_latency import PhaseLatency, safepoints
 
 
+def seed_head(seed):
+    """[DX-REAL2] The fresh cut's head, or the aged cut's (its seed cut plus AGE1's replayed saves)."""
+    aged = seed.get("aged")
+    if aged is None:
+        return 87002
+    assert aged["seedCut"] == 87002 and isinstance(aged["tapeSaves"], int) and aged["tapeSaves"] > 0
+    return aged["seedCut"] + aged["tapeSaves"]
+
+
 PRODUCTION_ARMS = {
     "1-prodR-S": ("R", [235, 394], 16), "1-prodS-S": ("S", [235, 394, 620], 16),
     "1-prodS-394-S": ("S", [394], 16), "1-prodR-cache32-S": ("R", [235, 394], 32),
-    "1-prodS-cache32-S": ("S", [235, 394, 620], 32),
+    "1-prodS-cache32-S": ("S", [235, 394, 620], 32), "1-prodR-394-cache32-S": ("R", [394], 32),
+    "1-prodS-394-cache32-S": ("S", [394], 32), "1-prodR-394-S": ("R", [394], 16),
 }
 PRODUCTION_SETS = {"hour": ["1-prodR-S", "1-prodS-394-S"],
-                   "full": ["1-prodR-S", "1-prodS-S", "1-prodR-cache32-S", "1-prodS-cache32-S"]}
+                   "full": ["1-prodR-S", "1-prodS-S", "1-prodR-cache32-S", "1-prodS-cache32-S"],
+                   "aged": ["1-prodR-394-cache32-S", "1-prodS-394-cache32-S", "1-prodR-394-S"]}
 
 
 def read(path):
@@ -309,7 +320,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             pg_data = seed.get("storage") == "pg-data"
             assert not (scale or rolling) or pg_data
             assert (seed["facts"], seed["head"], seed["db"], seed["scope"]) == (
-                162_456_470, 87002, header["db"], header["scope"]) and header["head"] == seed["head"]
+                162_456_470, seed_head(seed), header["db"], header["scope"]) and header["head"] == seed["head"]
             if not pg_data:
                 assert seed["dumpSha256"] == header["dumpSha"]
             for key in ("imageSha256", "transferSha256"):

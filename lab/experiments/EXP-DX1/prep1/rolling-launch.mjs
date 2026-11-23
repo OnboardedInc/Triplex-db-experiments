@@ -7,8 +7,8 @@ export const tx5ArmId = "1-rolling6-tx5-S";
 export const cache32ArmIds = ["1-rolling6-cache32-S", "1-rolling6-tx5-cache32-S"];
 
 // [DX-REAL2] Production-shaped arms run Saturday's rolling 6 profile, or its three-core 32 GiB cache variant.
-export const productionCache32ArmIds = ["1-prodR-cache32-S", "1-prodS-cache32-S"];
-export const productionArmIds = ["1-prodR-S", "1-prodS-S", "1-prodS-394-S", ...productionCache32ArmIds];
+export const productionCache32ArmIds = ["1-prodR-cache32-S", "1-prodS-cache32-S", "1-prodR-394-cache32-S", "1-prodS-394-cache32-S"];
+export const productionArmIds = ["1-prodR-S", "1-prodS-S", "1-prodS-394-S", "1-prodR-394-S", ...productionCache32ArmIds];
 
 export function rollingLaunchProfile(arm) {
   if (productionArmIds.includes(arm))

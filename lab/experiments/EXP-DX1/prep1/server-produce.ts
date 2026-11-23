@@ -107,7 +107,8 @@ assert(cache32 === undefined || (cache32 === "1" && campaign === "rolling" && !r
 // [DX-REAL2] Why: a production-shaped campaign names its arm set; every other rolling choice stays unset.
 const productionSet = process.env.DX_REAL2_SET;
 assert(productionSet === undefined || (campaign === "rolling" && productionSet in productionSets &&
-  cache32 === undefined && rollingArm === undefined && freshCredits === undefined && process.env.DX_PREP1_AGED === undefined));
+  cache32 === undefined && rollingArm === undefined && freshCredits === undefined &&
+  (process.env.DX_PREP1_AGED === "1") === (productionSet === "aged")));
 const tx5 = rollingArm === "rolling6-tx5";
 assert(rollingArm === undefined || (campaign === "rolling" && (tx5 || rollingArms.some((a) => a.id === `1-${rollingArm}-S`))));
 assert(freshCredits === undefined || (campaign === "rolling" && rollingArm === undefined));
@@ -553,7 +554,11 @@ async function armRun(
     if (!pgData) assert.equal(adopted.dumpSha256, process.env.DX_PREP1_DUMP_SHA);
     // [DX-PREP1] Why: an aged seed runs only under the aged launcher, and the aged launcher only with an aged seed.
     assert.equal(Boolean(adopted.aged), process.env.DX_PREP1_AGED === "1");
-    if (adopted.aged) assert.deepEqual([arm.id, adopted.head], ["1-rolling6-cache32-S", adopted.aged.seedCut + adopted.aged.tapeSaves]);
+    if (adopted.aged) {
+      // [DX-REAL2] The aged cut admits Saturday's aged cache arm or the aged production set, nothing else.
+      assert(productionSet === "aged" ? productionSets.aged!.includes(arm.id) : arm.id === "1-rolling6-cache32-S");
+      assert.equal(adopted.head, adopted.aged.seedCut + adopted.aged.tapeSaves);
+    } else assert(productionSet !== "aged", "the aged production set runs only on the aged cut");
   } else {
     assert.equal(baseline.roster, pooledDigest);
     assert.equal(baseline.facts, 16_245_050);
@@ -843,7 +848,7 @@ if (action === "library") {
 } else if (action === "seed") await seed(args[0]!, args[1]!, args[2]!);
 else if (action === "adopt-scale") {
   assert(wide && (args.length === 3 || (args.length === 4 && args[3] === "--pg-data") ||
-    (args.length === 7 && args[3] === "--pg-data" && args[4] === "--aged-bundle" && cache32)));
+    (args.length === 7 && args[3] === "--pg-data" && args[4] === "--aged-bundle" && (cache32 || productionSet === "aged"))));
   console.log(JSON.stringify(scaleSeed(args[0]!, args[1]!, args[2]!, args[3] === "--pg-data", args[5], args[6])));
 } else if (action === "arm") {
   const [id, file, out, slot, commit, nonce, stack, reader, ...urls] = args;
