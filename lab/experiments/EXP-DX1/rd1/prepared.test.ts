@@ -66,7 +66,7 @@ test("prepared reader ladders run control then tuned on fresh copies of one seal
 
 // [DX-INT1] The runner's own arm wrapper, driven as study-server.ts drives it: the control ladder's body returns, its
 // cleanup writes the inventory, and the seal follows, so the tuned ladder is admitted. Bench 3 stopped here.
-test("sealedArm seals each prepared ladder after cleanup for the read study", async (t) => {
+test("sealedArm seals each prepared ladder after cleanup, for the read study and the retirement pair", async (t) => {
   const { sealedArm } = await import("./prepared.ts");
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "dx-int1-sealed-")));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -76,8 +76,8 @@ test("sealedArm seals each prepared ladder after cleanup for the read study", as
   fs.writeFileSync(path.join(sealed, "global", "pg_control"), Buffer.alloc(8192, 3));
   const copy = (name: string) => { fs.cpSync(sealed, path.join(root, name), { recursive: true }); return path.join(root, name); };
   const record = { source: "a".repeat(40), imagePin: "b".repeat(64) };
-  const arm = async (campaign: string, ladder: string, rates: string[], n: number, fail = false) => {
-    const p = openPreparedLadder({ campaign, ladder, source: sealed, copy: copy(ladder + n), record });
+  const arm = async (campaign: string, kind: "read" | "retirement", ladder: string, rates: string[], n: number, fail = false) => {
+    const p = openPreparedLadder({ campaign, ladder, source: sealed, copy: copy(kind + ladder + n), record, kind });
     const slot = "tx2-dxscale1-v01-" + String(n).repeat(12), attempt = slot + "-attempt";
     const dir = path.join(campaign, ladder);
     fs.mkdirSync(dir);
@@ -94,12 +94,24 @@ test("sealedArm seals each prepared ladder after cleanup for the read study", as
     }, () => {
       fs.mkdirSync(path.join(dir, "cleanup"));
       fs.writeFileSync(path.join(dir, "cleanup", "inventory.json"), "[]");
-    });
+    }, kind === "retirement" ? () => fs.writeFileSync(path.join(dir, "retirement-diagnostic.json"), "{}") : undefined);
     return run;
   };
   const read = path.join(root, "read", "campaign");
   fs.mkdirSync(path.dirname(read));
-  await arm(read, "control", ["50", "235"], 1);
-  await arm(read, "tuned", ["50", "235"], 2);
+  await arm(read, "read", "control", ["50", "235"], 1);
+  await arm(read, "read", "tuned", ["50", "235"], 2);
   assert.equal(checkPreparedStudy(read).tuned.end.systemIdentifier, "7311");
+  const retire = path.join(root, "retire", "campaign");
+  fs.mkdirSync(path.dirname(retire));
+  await assert.rejects(arm(retire, "retirement", "reference", ["394", "620"], 3, true), /arm failed/);
+  assert(!fs.existsSync(path.join(path.dirname(retire), "ladders", "reference-complete.json")), "A failed arm is never sealed");
+  assert.throws(() => openPreparedLadder({ campaign: retire, ladder: "append", source: sealed, copy: copy("early"), record, kind: "retirement" }),
+    /has not completed/);
+  const retire2 = path.join(root, "retire2", "campaign");
+  fs.mkdirSync(path.dirname(retire2));
+  await arm(retire2, "retirement", "reference", ["394", "620"], 4);
+  await arm(retire2, "retirement", "append", ["394", "620"], 5);
+  assert.equal(checkPreparedStudy(retire2, "retirement").control.end.slot, "tx2-dxscale1-v01-444444444444");
+  assert.throws(() => openPreparedLadder({ campaign: read, ladder: "append", source: sealed, copy: copy("mixed"), record }), /--ladder control or --ladder tuned/);
 });

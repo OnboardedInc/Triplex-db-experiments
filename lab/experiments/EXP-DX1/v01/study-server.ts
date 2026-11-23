@@ -51,15 +51,17 @@ process.env.DX_BARE_METAL = "1";
 verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
 // [DX-RD1] Why: a prepared read study names its ladder and one private PostgreSQL copy through the environment.
 // Rejected: a dump restore on a server that holds only the stopped full-size directory.
+// [DX-INT1] The append-retirement pair uses the same prepared path: one invocation per arm (--ladder reference, then
+// append), each on a new private copy, because the server holds only the stopped directory and room for one copy.
 const preparedSource = process.env.DX_RD1_PGDATA_SOURCE ?? "";
-assert(!preparedSource || (tuned && age === "fresh" && process.env.DX_RD1_LADDER && process.env.DX_RD1_PGDATA),
-  "A prepared read study needs --read-study, the fresh seal, --ladder and one --pgdata copy");
+assert(!preparedSource || ((tuned || retirement) && age === "fresh" && process.env.DX_RD1_LADDER && process.env.DX_RD1_PGDATA),
+  "A prepared run needs --read-study or DX_W1_RETIREMENT_PAIR=1, the fresh seal, a ladder and one --pgdata copy");
 const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin, !preparedSource);
 const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin) : undefined;
 const record = { source, age, writer, policy: control, treatment: tuned || undefined, diagnostics, retirement: retirement || undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
   agedBundle: expected?.pin, agedDump: expected?.dumpPin };
 const prepared = preparedSource ? openPreparedLadder({ campaign, ladder: process.env.DX_RD1_LADDER!, source: preparedSource,
-  copy: process.env.DX_RD1_PGDATA!, wal: walDirectory || undefined, record }) : undefined;
+  copy: process.env.DX_RD1_PGDATA!, wal: walDirectory || undefined, record, kind: retirement ? "retirement" : "read" }) : undefined;
 if (!prepared) {
   fs.mkdirSync(campaign);
   jsonFile(path.join(campaign, "input.json"), record);
@@ -87,7 +89,7 @@ for (const loaded of [false, true]) {
     if (tuned) placeDriver(onlineCpus);
     const { engines } = startScaleStack(out, slot, source, writer === "grouped", tuned ? {
       ...options, DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: loaded ? "1" : "0", ...prepared?.env,
-    } : retirement ? { ...options, TX2_SUBJECT_APPEND_RETIREMENT: loaded ? "1" : "0" } : options, { policy, walDirectory });
+    } : retirement ? { ...options, TX2_SUBJECT_APPEND_RETIREMENT: loaded ? "1" : "0", ...prepared?.env } : options, { policy, walDirectory });
     if (tuned) placeDriver("9,10");
     const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
     const residency = async () => {
@@ -149,6 +151,7 @@ for (const loaded of [false, true]) {
           { rate, append: loaded, seconds });
         cut = result.terminal;
       }
+      if (prepared) assert(!stopping, "Prepared arm was interrupted");
     } else {
       const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head);
       if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
@@ -158,7 +161,7 @@ for (const loaded of [false, true]) {
     out, slot, attempt, source, age, creditMode], { stdio: "inherit" }) : undefined);
 }
 
-if (retirement) {
+if (retirement && (!prepared || prepared.ladder === "append")) {
   const arms = ["reference", "append"].map((arm) =>
     JSON.parse(fs.readFileSync(path.join(campaign, arm, "retirement-diagnostic.json"), "utf8")));
   assert(arms.every((arm) => arm.source === source && arm.creditMode === creditMode));
