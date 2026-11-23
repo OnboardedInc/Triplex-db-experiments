@@ -10,6 +10,7 @@
             [triplex.gateway.scope :as scope]
             [triplex.gateway.storage :as storage]
             [triplex.gateway.subject-save :as subject]
+            [triplex.gateway.owner-layout :as layout]
             [triplex.gateway.write-policy :as policy]
             [wfix1-regression :as reference]))
 
@@ -36,17 +37,19 @@
 (defn race-before-submit
   "Publish a real competing transaction after certification, before sending the candidate."
   [name conn input competing expected]
-  (let [prepare subject/plan native d/transact-async submitted (atom 0) id (input "operationId")]
+  ;; [Opus W1] Why: with the covering root on, the product route certifies through the same plain plan and submits either writer.
+  ;; Rejected: a three-argument redefinition (the covering writer calls the plan with its own predecessor and revision).
+  (let [prepare subject/plan native d/transact-async submitted (atom 0) fired (atom false) id (input "operationId")]
     (with-redefs [subject/plan
-                  (fn [db data request]
-                    (let [plan (prepare db data request)]
-                      (when (= id (request "operationId"))
+                  (fn [db data request & more]
+                    (let [plan (apply prepare db data request more)]
+                      (when (and (= id (request "operationId")) (compare-and-set! fired false true))
                         (is (some? plan))
                         (competing))
                       plan))
                   d/transact-async
                   (fn [c tx & opts]
-                    (when (= subject/ident (ffirst tx)) (swap! submitted inc))
+                    (when (#{subject/ident layout/ident} (ffirst tx)) (swap! submitted inc))
                     (apply native c tx opts))]
       (let [reply (reference/send name input)]
         (is (= expected (reference/outcome reply)) (pr-str reply))))
@@ -158,13 +161,13 @@
       (reference/in-scope
         (fn [name conn]
           (let [[a] (seed name) prepare subject/plan]
-            (with-redefs [subject/plan (fn [db data input]
-                                         (let [plan (prepare db data input)]
+            (with-redefs [subject/plan (fn [db data input & more]
+                                         (let [plan (apply prepare db data input more)]
                                            (ref-write name (on other (reference/edit-frame "fresh-peer" "peer" "peer" 1.0 nil "other-old")))
                                            plan))]
               (let [reply (reference/send name a)]
                 (is (= [200 nil] (reference/outcome reply)))
-                (is (= (str subject/ident) (get-in reply [:body "subjectSave"])))
+                (is (= (str (if layout/enabled layout/ident subject/ident)) (get-in reply [:body "subjectSave"])))
                 (is (= "4" (get-in reply [:body "position" "v"])))
                 (is (= 1003.0 (get-in reply [:body "recordedAt" "v"])))))))))
     (testing "A global ID already retired under another owner is still reserved"

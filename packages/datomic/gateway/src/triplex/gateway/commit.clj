@@ -340,6 +340,30 @@
         (list 'try operation
               '(finally (when triplex-trace-event
                           (try (.commit triplex-trace-event) (catch Throwable _ nil)))))))
+;; [Opus W1] Why: with the covering root on, the reference writer must never act on a migrated person's legacy rows.
+;; Rejected: changing the default function text (its hash pins existing scopes) or trusting the gateway's fold alone.
+(def owner-root-guard?
+  (every? #(= "1" (System/getenv %)) ["TX2_SUBJECT_SAVE" "TX2_SUBJECT_NUMERIC_OWNER" "TX2_SUBJECT_OWNER_HEAD"]))
+(def owner-root-fence
+  '(when-let [root-a (d/entid db :triplex.owner/root)]
+     (doseq [o (:owners payload)]
+       (when-let [e (d/entid db [:triplex.entity/id o])]
+         (when (first (d/datoms db :eavt e root-a))
+           (throw (ex-info "TRIPLEX_CONFLICT" {:triplex.owner/root true})))))))
+(defn guard-owner-roots [form]
+  (if-not owner-root-guard?
+    form
+    (walk/postwalk
+      (fn [x]
+        (cond (and (seq? x) (= 'when (first x)) (= 'source (second x))) (list 'do x owner-root-fence)
+              ;; A row on a version entity is either covered (its owner has a root, fenced above) or retired.
+              (and (seq? x) (= 'read-at (first x)) (= :w1/old-live (second x)))
+              (list 'let ['found x]
+                    '(when-not (and found (when-let [va (d/entid db :triplex.owner/version-owner)]
+                                            (first (d/datoms db :eavt (:e found) va))))
+                       found))
+              :else x))
+      form)))
 ;; [DX-T1-8] Why: embed the exact codec in the installed function hash; the transactor needs no gateway namespace.
 ;; Rejected: an unversioned remote helper or compressing before server clock assignment.
 (defn expand-code
@@ -351,7 +375,7 @@
                                           'packed-identity-code packed/identity-code
                                           'packed-encode-code packed/compiled-encode
                                           'recorded-row-code compiled-recorded-row
-                                          'record-range-result observe} operation-code)
+                                          'record-range-result observe} (guard-owner-roots operation-code))
          op (if optimized? (list pred/normalization expanded) expanded)]
      (pred/expand (list 'read-at :w1/function op) optimized? measured?))))
 (def observe-range
