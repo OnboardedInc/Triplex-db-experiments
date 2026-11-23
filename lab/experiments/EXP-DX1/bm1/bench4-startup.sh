@@ -8,6 +8,11 @@ root=$1 selection=$2 mode=$3
 [[ $root == /var/tmp/triplex-bm1/bench4 && $EUID == 0 && $(systemd-detect-virt) == none && $mode =~ ^(dry|run)$ ]]
 commit=54d4647a184126f647dff5f307b389165c53b7a0
 build=/var/tmp/triplex-jvm1-startup-build
+if [[ $selection == startup-aged ]]; then
+  # [DX-BM1] Why: the aged arm uses JVM1's patched startup-aged.ts (968285954) with its own build and receipt.
+  commit=96828595467078bede89843511a3078bef93d4f8
+  build=/var/tmp/triplex-jvm1-startup-aged-build
+fi
 job=$root/queue/$selection
 seed=/var/tmp/triplex-scale1/decision/attempts/arm-d7-wfix-pool-seed
 wal=/mnt/triplex-bench4-wal
@@ -29,6 +34,7 @@ control=$(sha256sum "$pgdata/global/pg_control" | cut -d ' ' -f 1)
 cd "$build/repository"
 [[ $(git rev-parse HEAD) == "$commit" ]]
 export PATH="$build/tools/bin:$PATH" DX_V01_BUILD_RECEIPT="$build/BUILD-v0.1.json" DOCKER_HOST=unix:///var/run/docker.sock
+python3 "$root/bench4-retag.py" "$build/BUILD-v0.1.json"
 mkdir -p "$job"
 launch() {
   cmd=(bash lab/experiments/EXP-DX1/jvm1/startup-server.sh "$commit" "$1" "$seed"
