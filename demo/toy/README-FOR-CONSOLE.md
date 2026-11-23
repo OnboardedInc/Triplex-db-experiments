@@ -86,6 +86,12 @@ reference to `Subject`, decided-on date) on `live`. Read the exact answers from 
 `account`/`subject` on `read_subject` and `read_subject_at`; `basis` on `read_subject`, `list_entities`, `read_entity`.
 `account-003` on the toy holds Review entities made by the gates; make yours in `account-010`.
 
+**Step 2 (published): `query`.** The ten example questions are in `demo/console/questions.json` (`name`, `note`,
+`from`, `query`, optional `basis`, `explain`, `expect: "refused"`), written for subject 50000 of account-003 on the
+1 billion database; on the toy use subjects 0 to 11. A refusal is a 400 with code `QueryRefused` and the exact text of
+DESIGN.md 4.3. `columns[]` carry `note: "exact integer, evaluated as a number"` where it applies; `cursor` pages at the
+first page's position; `timing.consoleMs` is the console's evaluation time.
+
 **Next, in this order, with the inputs of DESIGN.md section 6.2.** Each is added to the catalogue only when it runs,
 so the Assistant page never lists a tool that does not exist. Build the screens against these shapes.
 
