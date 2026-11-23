@@ -16,9 +16,12 @@ case $selection in
   production) pin=173f9d463b8a66d2e9da5c804c3076779accc292 ;;
   # [DX-BM1] Why: REAL2's repair of the prod slot allowlist (stack/up.sh:258, tail-pg.sh, rolling-counters.py).
   production-r) pin=832a7e0c62afd96ba8bc2aac9fde833debcbeaed ;;
+  # [DX-BM1] Why: REAL2's production tape on the aged cut (real2/PRODUCTION-AGED.md), cache32-aged's inputs.
+  production-aged) pin=e1711fda0e487bec870517dd38902f982ba26624 ;;
   *) exit 2 ;;
 esac
-aged_run=1; [[ $selection == production* ]] && aged_run=0
+aged_run=1; launch_mode=cache32-aged
+case $selection in production-aged) launch_mode=production-aged ;; production*) aged_run=0 ;; esac
 job=$root/queue/$selection
 build=$job/build
 repo=$build/repository
@@ -115,7 +118,7 @@ fi
 cd "$repo"
 [[ $(git rev-parse HEAD) == "$pin" && -z $(git status --porcelain) ]]
 if [[ $aged_run == 1 ]]; then
-  launch=(bash lab/experiments/EXP-DX1/prep1/server.sh cache32-aged "$out" "$pin" "$image"
+  launch=(bash lab/experiments/EXP-DX1/prep1/server.sh "$launch_mode" "$out" "$pin" "$image"
     77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b
     1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154
     --pg-data "$aged" --wal-mount "$wal" --aged-bundle "$handoff" "$handoff_sha")
