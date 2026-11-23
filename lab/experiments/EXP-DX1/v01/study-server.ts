@@ -42,8 +42,15 @@ if (retirement) assert(!tuned && writer === "per-person-ordered" && jvm === "j21
 // [DX-RD2] Why: the pinned short-cut pair (TX2_PINNED_SHORTCUT off, then on) reuses this runner's prepared aged arms.
 // Rejected: a separate launcher with its own copy admission and aged fresh-peer check.
 const pinnedPair = process.env.DX_RD2_PINNED_PAIR === "1";
+// [DX-RD2] Why: the tuned pinned arm runs both pinned options on the read study's tuned reader (three cores, 3 GiB
+// cache, the early filter) with client batches of eight, admitted from the held aged copy like the pinned pair.
+// Rejected: the read study's own tuned arm, which admits only the fresh seal and needs a control ladder first.
+const pinnedTuned = process.env.DX_RD2_PINNED_TUNED === "1";
+const pinnedTunedPolicy = pinnedTuned ? launchProfile("server", { ...launchOptions, readTuned: true, readCacheMiB: 3072 }) : undefined;
+if (pinnedTuned) assert(!tuned && !retirement && !pinnedPair && writer === "per-person-ordered" && age === "1B",
+  "The tuned pinned arm uses the card's writer on the aged database");
 if (pinnedPair) assert(!tuned && !retirement && writer === "per-person-ordered", "The pinned pair uses the card's writer and server profile");
-assert(tuned || retirement || pinnedPair, "Use scorecard.mjs (adopted-server.ts) for the card; this runner is for the read study, DX_W1_RETIREMENT_PAIR=1 or DX_RD2_PINNED_PAIR=1");
+assert(tuned || retirement || pinnedPair || pinnedTuned, "Use scorecard.mjs (adopted-server.ts) for the card; this runner is for the read study, DX_W1_RETIREMENT_PAIR=1, DX_RD2_PINNED_PAIR=1 or DX_RD2_PINNED_TUNED=1");
 
 const end = Number(deadlineText);
 assert(Number.isSafeInteger(end) && end > Date.now());
@@ -54,8 +61,8 @@ scaleHost.physical();
 // before the stack is refused cores 0-8 (bench 3, 18:57 and 19:43 UTC). The driver is unpinned while each stack starts
 // and pinned to 9,10 before its first read or save, so every measured window keeps the same placement.
 // Rejected: widening up.sh's check, or pinning only after the first ladder (a second arm would be refused again).
-const onlineCpus = tuned ? fs.readFileSync("/sys/devices/system/cpu/online", "utf8").trim() : "";
-assert(!tuned || /^[0-9,-]+$/.test(onlineCpus));
+const onlineCpus = tuned || pinnedTuned ? fs.readFileSync("/sys/devices/system/cpu/online", "utf8").trim() : "";
+assert(!(tuned || pinnedTuned) || /^[0-9,-]+$/.test(onlineCpus));
 const placeDriver = (cpus: string) => execFileSync("taskset", ["-apc", cpus, String(process.pid)], { stdio: "ignore" });
 process.env.DX_BARE_METAL = "1";
 verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
@@ -67,14 +74,14 @@ verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
 // --pgdata-source with --aged-bundle): a new physical copy per arm, the aged bundle's fresh-peer check on the stack's
 // network, and no dump. Rejected: restoring the aged dump per arm (33-42 minutes each, capped at 42).
 const preparedSource = process.env.DX_RD1_PGDATA_SOURCE ?? "";
-assert(!preparedSource || (((tuned && age === "fresh") || retirement || pinnedPair) && process.env.DX_RD1_LADDER && process.env.DX_RD1_PGDATA),
+assert(!preparedSource || (((tuned && age === "fresh") || retirement || pinnedPair || pinnedTuned) && process.env.DX_RD1_LADDER && process.env.DX_RD1_PGDATA),
   "A prepared run needs --read-study on the fresh seal or DX_W1_RETIREMENT_PAIR=1, a ladder and one --pgdata copy");
 const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin, !preparedSource);
 const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin, !preparedSource) : undefined;
-const record = { source, age, writer, policy: control, treatment: tuned || undefined, diagnostics, retirement: retirement || undefined, pinnedPair: pinnedPair || undefined, pairOption: retirement ? pairOption : undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
+const record = { source, age, writer, policy: control, treatment: tuned || pinnedTunedPolicy || undefined, diagnostics, retirement: retirement || undefined, pinnedPair: pinnedPair || undefined, pinnedTuned: pinnedTuned || undefined, pairOption: retirement ? pairOption : undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
   agedBundle: expected?.pin, agedDump: expected?.dumpPin || undefined };
 const prepared = preparedSource ? openPreparedLadder({ campaign, ladder: process.env.DX_RD1_LADDER!, source: preparedSource,
-  copy: process.env.DX_RD1_PGDATA!, wal: walDirectory || undefined, record, kind: retirement ? "retirement" : pinnedPair ? "pinned" : "read" }) : undefined;
+  copy: process.env.DX_RD1_PGDATA!, wal: walDirectory || undefined, record, kind: retirement ? "retirement" : pinnedPair ? "pinned" : pinnedTuned ? "pinned-tuned" : "read" }) : undefined;
 if (!prepared) {
   fs.mkdirSync(campaign);
   jsonFile(path.join(campaign, "input.json"), record);
@@ -86,8 +93,8 @@ process.on("SIGINT", stop);
 for (const loaded of [false, true]) {
   if (prepared && loaded !== prepared.loaded) continue;
   assert(!stopping && Date.now() + 10 * 60_000 < end);
-  const policy = loaded && tuned ? tuned : control;
-  const out = path.join(campaign, retirement ? (loaded ? "append" : "reference") : pinnedPair ? (loaded ? "on" : "off") : tuned ? (loaded ? "tuned" : "control") : (loaded ? "loaded" : "zero"));
+  const policy = loaded && tuned ? tuned : pinnedTunedPolicy ?? control;
+  const out = path.join(campaign, retirement ? (loaded ? "append" : "reference") : pinnedPair ? (loaded ? "on" : "off") : pinnedTuned ? (loaded ? "pinned-tuned-repeat" : "pinned-tuned") : tuned ? (loaded ? "tuned" : "control") : (loaded ? "loaded" : "zero"));
   fs.mkdirSync(out);
   const floor = prepared ? 5 : age === "1B" ? 320 : 240;
   assert(scaleHost.available(out) >= floor * 1024 ** 3, "Insufficient free space for the disposable restore");
@@ -101,12 +108,14 @@ for (const loaded of [false, true]) {
       let systemIdentifier = "";
       const options = stackOptions(writer, attempt, diagnostics);
       prepared?.claim(slot, attempt);
-      if (tuned) placeDriver(onlineCpus);
+      if (tuned || pinnedTuned) placeDriver(onlineCpus);
       const { engines } = startScaleStack(out, slot, source, writer === "grouped", tuned ? {
         ...options, DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: loaded ? "1" : "0", ...prepared?.env,
       } : retirement ? { ...options, [treatmentKey]: loaded ? "1" : "0", ...prepared?.env }
-        : pinnedPair ? { ...options, DX_PINNED_SHORTCUT: loaded ? "1" : "0", DX_PINNED_CUT_LOOKUP: loaded ? "1" : "0", ...prepared?.env } : options, { policy, walDirectory });
-      if (tuned) placeDriver("9,10");
+        : pinnedPair ? { ...options, DX_PINNED_SHORTCUT: loaded ? "1" : "0", DX_PINNED_CUT_LOOKUP: loaded ? "1" : "0", ...prepared?.env }
+        : pinnedTuned ? { ...options, DX_PINNED_SHORTCUT: "1", DX_PINNED_CUT_LOOKUP: "1", DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: "1", ...prepared?.env }
+        : options, { policy, walDirectory });
+      if (tuned || pinnedTuned) placeDriver("9,10");
       const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
       const residency = async () => {
         const { write, read } = peerUrls();
@@ -116,7 +125,7 @@ for (const loaded of [false, true]) {
           containers: Object.entries(engines).map(([role, e]) => ({ id: e.id, name: `${slot}-${role}`, imageId: e.image })) });
         return observed.roles as Residency;
       };
-      const empty = tuned || retirement || pinnedPair ? undefined : await residency();
+      const empty = tuned || retirement || pinnedPair || pinnedTuned ? undefined : await residency();
       const raw = path.join(out, "engines", slot, "trace", "raw");
       if (prepared) systemIdentifier = prepared.live(out, slot, attempt, engines.pg!.id);
       else await restoreDump(expected?.dump || seed.dump, expected?.dumpPin || seed.image.sha256, slot, engines,
@@ -137,7 +146,7 @@ for (const loaded of [false, true]) {
       assert(!stopping && Date.now() + 8 * 60_000 < end);
       const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw,
         creditMode: policy.creditMode, serialApply: diagnostics.serialApply, empty, residency };
-      firstOffer((retirement ? "retirement " : pinnedPair ? "pinned " : "read-study ") + path.basename(out));
+      firstOffer((retirement ? "retirement " : pinnedPair || pinnedTuned ? "pinned " : "read-study ") + path.basename(out));
       offered = true;
       if (tuned) {
         const native = JSON.parse(fs.readFileSync(path.join(raw, "gw-r-native-settings.json"), "utf8"));
@@ -170,6 +179,13 @@ for (const loaded of [false, true]) {
           cut = result.terminal;
         }
         if (prepared) assert(!stopping, "Prepared arm was interrupted");
+      } else if (pinnedTuned) {
+        const native = JSON.parse(fs.readFileSync(path.join(raw, "gw-r-native-settings.json"), "utf8"));
+        assert.deepEqual([native.source, native.slot, native.process], [source, slot, "gw-r"]);
+        assert.equal(native.datomic["datomic.objectCacheMax"].value, 3072 * 1024 ** 2);
+        const { pinnedLadder, tunedSeats, tunedBatch } = await import("../rd1/pinned-ladder.ts");
+        await pinnedLadder(out, read, seed, head, true, false, { seats: tunedSeats, batch: tunedBatch });
+        if (prepared) assert(!stopping, "Prepared tuned pinned ladder was interrupted");
       } else if (pinnedPair) {
         const { pinnedLadder } = await import("../rd1/pinned-ladder.ts");
         await pinnedLadder(out, read, seed, head, loaded);

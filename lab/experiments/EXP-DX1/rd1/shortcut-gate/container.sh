@@ -90,7 +90,22 @@ reader=(TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1
 # [DX-THIN1] The readers run with the owner head option exactly when the gate's writers did (gate.ts RD2_GATE_OWNER_HEAD).
 if grep -qx 'owner-head=1' /out/compare; then reader+=(TX2_SUBJECT_OWNER_HEAD=1); fi
 gateway 8080 "${reader[@]}" TX2_PINNED_SHORTCUT=0 TX2_PINNED_CUT_LOOKUP=0
+reader_pids+=($gw_pid)
 gateway 8081 "${reader[@]}" TX2_PINNED_SHORTCUT=1 TX2_PINNED_CUT_LOOKUP=1
+reader_pids+=($gw_pid)
 gateway 8082 "${reader[@]}" TX2_PINNED_SHORTCUT=0 TX2_PINNED_CUT_LOOKUP=1
+reader_pids+=($gw_pid)
+# [DX-RD2] The tuned pinned reader: both options, the early filter and read profile, three read permits.
+gateway 8083 "${reader[@]}" TX2_PINNED_SHORTCUT=1 TX2_PINNED_CUT_LOOKUP=1 TX2_READ_FILTER_EARLY=1 TX2_READ_PROFILE=1 TX2_READ_PERMITS=3
+reader_pids+=($gw_pid)
 echo ready > /out/compare-ready
+# [DX-RD2] Record a reader or the transactor exiting during the comparison (a JVM killed for memory logs nothing itself),
+# and the container's memory every 5 s.
+(while [[ ! -f /out/finished ]]; do
+  for p in $tx_pid "${reader_pids[@]}"; do
+    if ! kill -0 "$p" 2>/dev/null && ! grep -qx "$p" /out/exited 2>/dev/null; then echo "$p" >> /out/exited; echo "$(date -u +%T) process $p exited" >> /out/watch.log; fi
+  done
+  echo "$(date -u +%T) $(cat /sys/fs/cgroup/memory.current 2>/dev/null || cat /sys/fs/cgroup/memory/memory.usage_in_bytes 2>/dev/null) $(grep -s oom_kill /sys/fs/cgroup/memory.events)" >> /out/memory.log
+  sleep 5
+done) &
 wait_file /out/finished
