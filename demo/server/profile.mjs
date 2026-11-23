@@ -27,6 +27,11 @@ const env = {
   DX_GW_READ_MEMORY: policy["gw-r"].memoryMiB + "m",
   DX_GW_WRITE_JAVA_OPTS: policy["gw-w"].flags.join(" "),
   DX_GW_READ_JAVA_OPTS: policy["gw-r"].flags.join(" "),
+  // [DX-CON1] G7: the two pinned-read options of the read gateway (TX2_PINNED_SHORTCUT, TX2_PINNED_CUT_LOOKUP), on in
+  // every demo stack. Why: at 1 billion a read 28.2 million positions behind the head took 41.73 ms at the median with
+  // them off and 1.37 ms with them on, with zero wrong values. Rejected: leaving them to the stack's default (off).
+  DX_PINNED_SHORTCUT: "1",
+  DX_PINNED_CUT_LOOKUP: "1",
 };
 const args = [
   ...(policy.tx.cpus ? ["--cpus-tx", policy.tx.cpus, "--cpus-pg", policy.pg.cpus,
@@ -36,6 +41,19 @@ const args = [
   "--memory-index-threshold", policy.index.threshold, "--memory-index-max", policy.index.max,
   "--pg-settings", Object.entries(policy.pg.settings).map(([k, v]) => "-c " + k + "=" + v).join(" "),
 ];
+if (process.argv[3] === "--summary") {
+  const flag = (flags, name) => flags.find((f) => f.startsWith(name))?.slice(name.length) ?? null;
+  console.log(JSON.stringify({
+    profile: kind === "server" ? "server, 32 GiB transactor cache arm" : "laptop (toy)",
+    transactor: { containerMiB: policy.tx.memoryMiB, heap: flag(policy.tx.flags, "-Xmx"), objectCacheMiB: policy.tx.cacheMiB, java: policy.tx.major, collector: policy.tx.collector },
+    writeGateway: { containerMiB: policy["gw-w"].memoryMiB, heap: flag(policy["gw-w"].flags, "-Xmx") },
+    readGateway: { containerMiB: policy["gw-r"].memoryMiB, heap: flag(policy["gw-r"].flags, "-Xmx"), objectCacheMiB: policy["gw-r"].cacheMiB },
+    postgres: { containerMiB: policy.pg.memoryMiB, sharedBuffers: policy.pg.settings.shared_buffers ?? "128MB (default)" },
+    memoryIndex: policy.index,
+    pinnedReads: { shortcut: env.DX_PINNED_SHORTCUT === "1", cutLookup: env.DX_PINNED_CUT_LOOKUP === "1" },
+  }));
+  process.exit(0);
+}
 for (const [k, v] of Object.entries(env)) { assert(!/[\n\0]/.test(String(v))); console.log(k + "=" + v); }
 console.log("--");
 for (const a of args) { assert(!/[\n\0]/.test(a)); console.log(a); }

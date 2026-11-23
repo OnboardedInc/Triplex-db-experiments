@@ -133,6 +133,7 @@ if [[ $toy == 1 ]]; then
     docker run --rm --pull never --network none -v "$original:/from:ro" -v "$work:/to" --entrypoint /bin/sh \
       postgres:17-alpine -euc 'test "$(cat /from/PG_VERSION)" = 17; test ! -e /from/postmaster.pid; cp -a /from/. /to/'
     fresh=1
+    node -e 'require("fs").writeFileSync(process.argv[1], JSON.stringify({ madeAt: new Date().toISOString(), from: "toy original volume" }) + "\n")' "$root/work-copy.json"
     done_step
   fi
 else
@@ -143,6 +144,7 @@ else
     cp -a -- "$original" "$work.partial"
     mv "$work.partial" "$work"
     fresh=1
+    node -e 'require("fs").writeFileSync(process.argv[1], JSON.stringify({ madeAt: new Date().toISOString(), from: "the sealed original cluster" }) + "\n")' "$root/work-copy.json"
     done_step
   fi
   [[ ! -e $work/postmaster.pid ]] || { echo 'The working copy was not shut down cleanly; use --reset' >&2; exit 2; }
@@ -216,20 +218,29 @@ opened=$(curl -fsS --max-time 60 -H 'content-type: application/json' "http://127
 node -e 'const o = JSON.parse(process.argv[1]); if (o.created !== false || o.db !== process.argv[2]) throw Error("Scope open did not find the existing database: " + process.argv[1])' "$opened" "$database"
 done_step
 
+# [DX-CON1] G7: record the pinned-read options the running read gateway was started with, read from the container
+# itself, so the ready file states what is on rather than what was asked for.
+pinned=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$prefix-gw-r" |
+  node -e 'const e = require("fs").readFileSync(0, "utf8").split("\n"); const on = (k) => e.includes(k + "=1");
+    console.log(JSON.stringify({ shortcut: on("TX2_PINNED_SHORTCUT"), cutLookup: on("TX2_PINNED_CUT_LOOKUP") }))')
+[[ $pinned == '{"shortcut":true,"cutLookup":true}' ]] || { echo "The read gateway's pinned-read options are not both on: $pinned" >&2; exit 1; }
+
 # 7. The ready file the Mac's connect.sh reads over SSH. No address, credential or personal detail is in it.
 node -e '
   const fs = require("fs");
-  const [file, handoff, kind, prefix, database, head, t, records, scorecard, fresh, timings, pw, pr, identity] = process.argv.slice(1);
+  const [file, handoff, kind, prefix, database, head, t, records, scorecard, fresh, timings, pw, pr, identity, memory, copy, pinned] = process.argv.slice(1);
   const b = JSON.parse(fs.readFileSync(handoff, "utf8"));
   const ready = { version: "triplex-demo-ready/1", kind, prefix, database, scope: b.scope,
     writePort: Number(pw), readPort: Number(pr), workingCopy: true,
     head: Number(head), physicalT: Number(t), recordsAtBringUp: Number(records),
     sealed: { head: b.logicalHead, physicalT: b.physicalT, records: b.records },
     roster: b.roster, clocks: b.clocks ?? null, lastRecordedAt: JSON.parse(identity).lastRecordedAt,
-    loaderPositionRows: kind === "1b" || b.loaderPositionRows === true, freshCopy: fresh === "1", scorecardCheck: scorecard === "skipped" || scorecard === "toy-handoff" ? scorecard : JSON.parse(scorecard),
+    loaderPositionRows: kind === "1b" || b.loaderPositionRows === true,
+    memory: JSON.parse(memory), pinnedReads: JSON.parse(pinned), workingCopyMadeAt: copy ? JSON.parse(copy).madeAt : null, freshCopy: fresh === "1", scorecardCheck: scorecard === "skipped" || scorecard === "toy-handoff" ? scorecard : JSON.parse(scorecard),
     startedAt: new Date().toISOString(),
     stepSeconds: Object.fromEntries(timings.trim().split(" ").filter(Boolean).map((x) => { const [k, v] = x.split("="); return [k, Number(v)]; })) };
   fs.writeFileSync(file, JSON.stringify(ready, null, 2) + "\n", { mode: 0o644 });' \
-  "$root/ready.json" "$handoff" "$kind" "$prefix" "$database" "$head" "$physical_t" "$records" "$scorecard" "$fresh" "$timings" "$port_w" "$port_r" "$identity"
+  "$root/ready.json" "$handoff" "$kind" "$prefix" "$database" "$head" "$physical_t" "$records" "$scorecard" "$fresh" "$timings" "$port_w" "$port_r" "$identity" \
+  "$(node "$here/server/profile.mjs" "$([[ $toy == 1 ]] && echo toy || echo server)" --summary)" "$(cat "$root/work-copy.json" 2>/dev/null || true)" "$pinned"
 printf 'DEMO READY head=%s records=%s t=%s database-prefix=%s write=127.0.0.1:%s read=127.0.0.1:%s total=%ds\n' \
   "$head" "$records" "$physical_t" "${database:0:12}" "$port_w" "$port_r" "$((SECONDS - t0))"

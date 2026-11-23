@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Local MCP server and inspector page for showing a remote Triplex database through SSH port forwards.",
+  "description": "Triplex Console's local functions: the tool catalogue, the MCP server and the console's HTTP server, for one Triplex database reached through SSH port forwards.",
   "scripts": {
     "mcp": "node src/mcp.ts",
-    "inspector": "node src/page.ts",
+    "console": "node src/page.ts",
     "proof": "node src/proof.ts",
+    "gate:catalogue": "node src/gate-catalogue.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
