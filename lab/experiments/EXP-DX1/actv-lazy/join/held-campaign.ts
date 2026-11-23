@@ -279,7 +279,24 @@ export async function runHeld(
   // the hour of server time goes to the one-second path.
   // Rejected: changing the default release or the default settlement.
   const shape = process.env.DX_ACT3_RELEASE ? parseShape(process.env.DX_ACT3_RELEASE) : undefined;
-  const settleInitial = !shape || process.env.DX_ACT3_SETTLE === "1";
+  // [DX-ACT3] DX_ACT3_SETTLE=0 also skips it for the small release (its first settlement is measured already).
+  assert([undefined, "0", "1"].includes(process.env.DX_ACT3_SETTLE));
+  const settleInitial = process.env.DX_ACT3_SETTLE ? process.env.DX_ACT3_SETTLE === "1" : !shape;
+  // [DX-ACT3] Why: rerun only the windows a stopped run left unjudged. DX_HELD_WINDOWS lists mode/rate/publish
+  // triples (for example rolling6/3.5/1,barrier6/23.5/0); unset, all twelve run in the original order.
+  // Rejected: a second runner with its own window order.
+  const selected = process.env.DX_HELD_WINDOWS?.split(",").map((w) => {
+    const [m, r, p] = w.split("/");
+    assert(creditModes.includes(m as Mode) && rates.includes(Number(r) as Rate) && (p === "0" || p === "1"),
+      "DX_HELD_WINDOWS entries are mode/rate/publish");
+    return [m, Number(r), p === "1"].join("/");
+  });
+  const wanted = (mode: Mode, rate: Rate, publish: boolean) =>
+    !selected || selected.includes([mode, rate, publish].join("/"));
+  // [DX-ACT3] Why: a read check that fails records both halves of its values and stops only its own window; the run
+  // still fails at the end. Rejected: letting one window's stop hide the later windows' evidence.
+  const readFailures: unknown[] = [];
+  class ReadCheckFailed extends Error {}
   const large = shape ? largeRelease(W0.R3.doc, shape) : undefined;
   const writer = new DatomicClient(peer.write, 35000),
     reader = new DatomicClient(peer.read, 35000);
@@ -431,26 +448,78 @@ export async function runHeld(
       releases.push(r);
       return r;
     };
-    async function verifyRead(probe: Read, r: Release, i: number) {
-      assert.equal(probe.result.subject, W0.placementId(i));
+    async function verifyRead(probe: Read, r: Release, i: number, where = "read") {
       const b = probe.result.basis;
-      assert(b.tx >= r.position && b.validTime === validTime);
       const effective = releases.findLast((x) => x.position <= b.tx);
-      assert(effective && effective.position === r.position);
-      const text = await oracles.children[0]!.call("check", {
-        document: r.doc,
-        old: null,
-        basis: b,
-        worlds: [expected(i, b.tx, history, positions)],
-        fold: false,
-      });
-      assert.equal(probe.result.json, JSON.parse(text)[0].json);
+      const values = {
+        where,
+        subject: probe.result.subject,
+        expectedSubject: W0.placementId(i),
+        route: probe.result.route,
+        basisTx: b.tx,
+        basisValidTime: b.validTime,
+        expectedValidTime: validTime,
+        releasePosition: r.position,
+        releaseSeq: r.seq,
+        releaseAck: r.durableAt,
+        releaseReceived: r.received,
+        effectivePosition: effective?.position ?? null,
+        readStarted: probe.started,
+        readEnded: probe.ended,
+        txHalf: b.tx >= r.position,
+        validTimeHalf: b.validTime === validTime,
+        subjectMatches: probe.result.subject === W0.placementId(i),
+        effectiveMatches: effective?.position === r.position,
+        exact: null as boolean | null,
+      };
+      if (values.txHalf && values.validTimeHalf && values.subjectMatches && values.effectiveMatches) {
+        const text = await oracles.children[0]!.call("check", {
+          document: r.doc,
+          old: null,
+          basis: b,
+          worlds: [expected(i, b.tx, history, positions)],
+          fold: false,
+        });
+        values.exact = probe.result.json === JSON.parse(text)[0].json;
+        if (values.exact) return;
+      }
+      readFailures.push(values);
+      throw new ReadCheckFailed("Held read check failed: " + JSON.stringify(values));
+    }
+    // [DX-ACT3] Why: the read gateway answers at its own peer's latest basis (the basis route takes d/db without
+    // d/sync), and the store does not promise that basis has reached a Publish acknowledged through the write
+    // gateway a moment earlier. The first correct answer is the first answer at or after the Publish; every answer
+    // before it is still checked exactly against the release in force at its own basis and kept.
+    // Rejected: asserting that the first answer after the acknowledgement is already at the Publish (the bench 4
+    // stop), and pinning the probe to the Publish position (the reader then refuses a position past its head).
+    async function firstCorrect(r: Release, i: number, offered: number) {
+      const earlier: (Seen["basis"] & { started: number; ended: number; route: string })[] = [];
+      for (;;) {
+        const probe = await demand.read(W0.placementId(i), { validTime });
+        const b = probe.result.basis;
+        if (b.tx >= r.position) {
+          await verifyRead(probe, r, i, "first-correct");
+          return { probe, earlier };
+        }
+        const effective = releases.findLast((x) => x.position <= b.tx);
+        if (!effective) {
+          readFailures.push({ where: "first-correct", basisTx: b.tx, releasePosition: r.position, effectivePosition: null });
+          throw new ReadCheckFailed("Probe basis before every release");
+        }
+        await verifyRead(probe, effective, i, "before-publish-visible");
+        earlier.push({ ...b, started: probe.started, ended: probe.ended, route: probe.result.route });
+        if (now() > offered + 100_000) {
+          readFailures.push({ where: "first-correct", reason: "no answer at the Publish within 100 s",
+            releasePosition: r.position, lastBasisTx: b.tx, attempts: earlier.length });
+          throw new ReadCheckFailed("No answer at the Publish within 100 s");
+        }
+        await sleep(2);
+      }
     }
     firstOffer("held-publish");
     const initialAt = now();
     const initial = await offer(W0.R1.doc, peer.attempt + ":baseline", initialAt);
-    const initialRead = await demand.read(W0.placementId(people - 1), { validTime });
-    await verifyRead(initialRead, initial, people - 1);
+    const { probe: initialRead } = await firstCorrect(initial, people - 1, initialAt);
     let changes = 0,
       entries = 0,
       settlement: Awaited<ReturnType<Settlement["settle"]>> | undefined;
@@ -557,6 +626,7 @@ export async function runHeld(
       const order = rate === 23.5 ? [...creditModes].reverse() : creditModes;
       for (const mode of order)
         for (const publish of [false, true]) {
+          if (!wanted(mode, rate, publish)) continue;
           const from = await s.head();
           const senders = await preload(writer, seed, from, tape);
           const begins = now() + 400,
@@ -583,6 +653,8 @@ export async function runHeld(
               waiting: number[];
               pausedAt: number;
               drained: number;
+              firstCorrect?: unknown;
+              readHeadAfterAck?: { position: number; at: number };
             }[] = [];
           let within1000 = 0,
             within100000 = 0,
@@ -621,8 +693,11 @@ export async function runHeld(
           ]);
           const publication = (async () => {
             if (!publish) return;
-            for (let j = 0; j < (diagnostic ? 2 : 20); j++) {
-              const offered = begins + j * (diagnostic ? 3000 : 5000);
+            // [DX-ACT3] DX_ACT3_TOY_PUBLISHES (diagnostic only, 2 to 6) packs more Publishes into a toy window.
+            const toy = Number(process.env.DX_ACT3_TOY_PUBLISHES ?? 2);
+            assert(Number.isInteger(toy) && toy >= 2 && toy <= 6 && (diagnostic || toy === 2));
+            for (let j = 0; j < (diagnostic ? toy : 20); j++) {
+              const offered = begins + j * (diagnostic ? (toy === 2 ? 3000 : 1200) : 5000);
               await wait(offered);
               const ingress = now(),
                 doc = releases.at(-1)!.doc.name === "R2" ? (large ?? W0.R3.doc) : W0.R2.doc;
@@ -644,13 +719,18 @@ export async function runHeld(
                 const drained = now();
                 r = await offer(doc, peer.attempt + ":" + mode + ":" + rate + ":" + j, offered);
                 native.push({ r, ingress, waiting, pausedAt, drained });
+                // [DX-ACT3] The read gateway's basis right after the write gateway's acknowledgement.
+                const head = await reader.basis(db);
+                native.at(-1)!.readHeadAfterAck = { position: Number(head.position.v), at: now() };
               } finally {
                 gate.paused = false;
                 gate.resume!();
               }
               const firstSubject = members.at(-1)!;
-              const probe = await demand.read(W0.placementId(firstSubject), { validTime });
-              await verifyRead(probe, r, firstSubject);
+              const { probe, earlier } = await firstCorrect(r, firstSubject, offered);
+              // [DX-ACT3] The read gateway's own head just after the answer, for the lag evidence.
+              native.at(-1)!.firstCorrect = { earlier, basisTx: probe.result.basis.tx, route: probe.result.route,
+                started: probe.started, ended: probe.ended };
               first.push(probe.ended - offered);
               const d = await cutoff;
               const timely =
@@ -660,7 +740,7 @@ export async function runHeld(
               for (const [index, read] of d.reads.entries()) {
                 const effective = releases.findLast((x) => x.position <= read.result.basis.tx);
                 assert(effective);
-                await verifyRead(read, effective, members[index]!);
+                await verifyRead(read, effective, members[index]!, "deadline");
                 if (effective.position !== r.position) all = false;
               }
               deadline.push({
@@ -677,9 +757,17 @@ export async function runHeld(
               );
             }
           })();
-          let result, sides;
+          let result, sides, windowFailure: string | undefined;
           try {
-            [result, sides] = await Promise.all([writes, pinReads, publication]);
+            const settled = await Promise.allSettled([writes, pinReads, publication]);
+            const [w, p, q] = settled;
+            if (w.status === "rejected") throw w.reason;
+            if (p.status === "rejected") throw p.reason;
+            if (q.status === "rejected") {
+              if (!(q.reason instanceof ReadCheckFailed)) throw q.reason;
+              windowFailure = q.reason.message;
+            }
+            [result, sides] = [w.value, p.value];
           } finally {
             done = true;
             await ticking;
@@ -712,6 +800,9 @@ export async function runHeld(
             reads: reads.summary(),
             readOffered,
             readMissing: readOffered - reads.count,
+            readCheckFailure: windowFailure ?? null,
+            probesBeforePublishVisible: native.map((x) => (x.firstCorrect as { earlier: unknown[] } | undefined)?.earlier.length ?? null),
+            readHeadLagAfterAck: native.map((x) => x.readHeadAfterAck ? x.r.position - x.readHeadAfterAck.position : null),
           };
           windows.push(evidence);
           jsonFile(path.join(out, "held-" + mode + "-" + rate + "-" + Number(publish) + ".json"), {
@@ -732,19 +823,20 @@ export async function runHeld(
         }
     }
     const report = windows.map((r) => {
-      const quiet = windows.find((x) => x.mode === r.mode && x.rate === 3.5 && !x.publish)!;
-      const control = windows.find((x) => x.mode === r.mode && x.rate === r.rate && !x.publish)!;
+      // A window subset (DX_HELD_WINDOWS) may leave out a control; its ratios are then null.
+      const quiet = windows.find((x) => x.mode === r.mode && x.rate === 3.5 && !x.publish);
+      const control = windows.find((x) => x.mode === r.mode && x.rate === r.rate && !x.publish);
       return {
         ...r,
         firstP50Ms: pct(r.first, 0.5),
         firstP99Ms: p99(r.first),
         againstQuiet: {
-          read: ratio(r.reads.p99Ms, quiet.reads.p99Ms),
-          commit: ratio(r.writes.account.p99Ms, quiet.writes.account.p99Ms),
+          read: ratio(r.reads.p99Ms, quiet?.reads.p99Ms),
+          commit: ratio(r.writes.account.p99Ms, quiet?.writes.account.p99Ms),
         },
         againstMatchedControl: {
-          read: ratio(r.reads.p99Ms, control.reads.p99Ms),
-          commit: ratio(r.writes.account.p99Ms, control.writes.account.p99Ms),
+          read: ratio(r.reads.p99Ms, control?.reads.p99Ms),
+          commit: ratio(r.writes.account.p99Ms, control?.writes.account.p99Ms),
         },
       };
     });
@@ -781,8 +873,12 @@ export async function runHeld(
         : "skipped",
       release: shape ? { shape, name: shapeName(shape) } : null,
       windows: report,
+      selectedWindows: selected ?? null,
+      readFailures,
       durationMs: now() - start,
     });
+    // [DX-ACT3] A read check that failed in any window fails the run, after every window has recorded itself.
+    assert.equal(readFailures.length, 0, "Held read checks failed: " + JSON.stringify(readFailures));
   } finally {
     await worker?.close();
     await connected?.close();
