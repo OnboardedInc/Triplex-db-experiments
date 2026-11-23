@@ -4,6 +4,12 @@ Build `090c189a8` (`exp/DX-INT1`; the document `v01/PRODUCTION-CARD.md` is publi
 
 **Dry run of part 2, 23:11–23:16 UTC:** build `090c189a8` (2 min 56 s), scratch copy 133 s, then `DX-DRY-RUN first offer reached: scorecard arm 2 headline/loaded lab/experiments/EXP-DX1/v01/adopted-server.ts:170`. The timed card (parts 1–3 and assembly, `/var/tmp/v01-1b-prodS-s32`) started at 23:16:37 UTC.
 
+## Results, part by part
+
+| Part | Result |
+| --- | --- |
+| 1, headline without readers (reference tape, the same as every card) | 1,260/1,260 saves stored; p50/p90/p99 6.18 / 11.71 / 21.38 ms (max 134.49); feed 1,260 entries; cut 28,309,866 → 28,311,126; completed 23:26 UTC |
+
 ## Predictions and falsifiers, copied from the builder's document before launch
 
 
