@@ -296,7 +296,16 @@ export async function runHeld(
   // [DX-ACT3] Why: a read check that fails records both halves of its values and stops only its own window; the run
   // still fails at the end. Rejected: letting one window's stop hide the later windows' evidence.
   const readFailures: unknown[] = [];
+  // A probe sent after the Publish's acknowledgement that answers at an earlier basis: kept apart from exactness
+  // failures, it still fails the run at the end (the store gives no read-after-acknowledgement promise across
+  // gateways, and whether it must is the owner's decision, not the runner's).
+  const visibilityFailures: unknown[] = [];
   class ReadCheckFailed extends Error {}
+  // [DX-ACT3] Diagnostic gate only: "stale" makes the first probe of the first Publish window read at the previous
+  // release (an earlier basis, as on bench 4); "mismatch" checks one deadline read against the wrong subject.
+  const inject = process.env.DX_ACT3_INJECT;
+  assert(inject === undefined || (diagnostic && (inject === "stale" || inject === "mismatch")));
+  let injected = false;
   const large = shape ? largeRelease(W0.R3.doc, shape) : undefined;
   const writer = new DatomicClient(peer.write, 35000),
     reader = new DatomicClient(peer.read, 35000);
@@ -487,21 +496,31 @@ export async function runHeld(
       throw new ReadCheckFailed("Held read check failed: " + JSON.stringify(values));
     }
     // [DX-ACT3] Why: the read gateway answers at its own peer's latest basis (the basis route takes d/db without
-    // d/sync), and the store does not promise that basis has reached a Publish acknowledged through the write
-    // gateway a moment earlier. The first correct answer is the first answer at or after the Publish; every answer
-    // before it is still checked exactly against the release in force at its own basis and kept.
-    // Rejected: asserting that the first answer after the acknowledgement is already at the Publish (the bench 4
-    // stop), and pinning the probe to the Publish position (the reader then refuses a position past its head).
+    // d/sync), so a probe sent just after a Publish acknowledged through the write gateway can answer at an earlier
+    // basis (the bench 4 stop). That answer is recorded as a visibility failure with all its values, checked exactly
+    // against the release in force at its basis, and the probe reads again until it reaches the Publish, so the
+    // window's other measurements survive. The run still fails at the end.
+    // Rejected: stopping the run at the first such answer (it hid ten windows), dropping the check, and pinning the
+    // probe to the Publish position (the reader refuses a position past its own head).
     async function firstCorrect(r: Release, i: number, offered: number) {
       const earlier: (Seen["basis"] & { started: number; ended: number; route: string })[] = [];
       for (;;) {
-        const probe = await demand.read(W0.placementId(i), { validTime });
+        const previous = releases.at(-2);
+        const stale = inject === "stale" && !injected && previous !== undefined && releases.length > 1;
+        if (stale) injected = true;
+        const probe = await demand.read(W0.placementId(i),
+          stale ? { position: previous.position, validTime } : { validTime });
         const b = probe.result.basis;
         if (b.tx >= r.position) {
           await verifyRead(probe, r, i, "first-correct");
           return { probe, earlier };
         }
         const effective = releases.findLast((x) => x.position <= b.tx);
+        visibilityFailures.push({ where: "probe-after-ack", subject: probe.result.subject, route: probe.result.route,
+          basisTx: b.tx, basisValidTime: b.validTime, releasePosition: r.position, releaseSeq: r.seq,
+          releaseAck: r.durableAt, releaseReceived: r.received, effectivePosition: effective?.position ?? null,
+          readStarted: probe.started, readEnded: probe.ended, txHalf: false, validTimeHalf: b.validTime === validTime,
+          attempt: earlier.length });
         if (!effective) {
           readFailures.push({ where: "first-correct", basisTx: b.tx, releasePosition: r.position, effectivePosition: null });
           throw new ReadCheckFailed("Probe basis before every release");
@@ -740,7 +759,9 @@ export async function runHeld(
               for (const [index, read] of d.reads.entries()) {
                 const effective = releases.findLast((x) => x.position <= read.result.basis.tx);
                 assert(effective);
-                await verifyRead(read, effective, members[index]!, "deadline");
+                const wrong = inject === "mismatch" && !injected;
+                if (wrong) injected = true;
+                await verifyRead(read, effective, wrong ? (members[index]! + 1) % people : members[index]!, "deadline");
                 if (effective.position !== r.position) all = false;
               }
               deadline.push({
@@ -801,6 +822,7 @@ export async function runHeld(
             readOffered,
             readMissing: readOffered - reads.count,
             readCheckFailure: windowFailure ?? null,
+            visibilityFailures: visibilityFailures.length,
             probesBeforePublishVisible: native.map((x) => (x.firstCorrect as { earlier: unknown[] } | undefined)?.earlier.length ?? null),
             readHeadLagAfterAck: native.map((x) => x.readHeadAfterAck ? x.r.position - x.readHeadAfterAck.position : null),
           };
@@ -875,10 +897,13 @@ export async function runHeld(
       windows: report,
       selectedWindows: selected ?? null,
       readFailures,
+      visibilityFailures,
       durationMs: now() - start,
     });
     // [DX-ACT3] A read check that failed in any window fails the run, after every window has recorded itself.
     assert.equal(readFailures.length, 0, "Held read checks failed: " + JSON.stringify(readFailures));
+    assert.equal(visibilityFailures.length, 0,
+      "Probes answered before the acknowledged Publish was visible: " + JSON.stringify(visibilityFailures));
   } finally {
     await worker?.close();
     await connected?.close();
