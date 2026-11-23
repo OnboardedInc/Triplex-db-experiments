@@ -10,9 +10,11 @@ import { AboutPage } from "@/pages/about";
 import { AccountPage } from "@/pages/account";
 import { EntityPage } from "@/pages/entity";
 import { HomePage } from "@/pages/home";
-import { NotFoundPage, PendingPage } from "@/pages/pending";
+import { NotFoundPage } from "@/pages/pending";
 import { ConfigurationPage } from "@/pages/configuration";
 import { QueryPage } from "@/pages/query";
+import { AssistantPage } from "@/pages/assistant";
+import { JournalPage } from "@/pages/journal";
 import { TypePage, TypesPage } from "@/pages/types/type-page";
 
 const client = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } });
@@ -29,9 +31,9 @@ const router = createBrowserRouter([
       { path: "/types", element: <TypesPage /> },
       { path: "/types/:name", element: <TypePage /> },
       { path: "/query", element: <QueryPage /> },
-      { path: "/journal", element: <PendingPage title="Journal" /> },
+      { path: "/journal", element: <JournalPage /> },
       { path: "/configuration", element: <ConfigurationPage /> },
-      { path: "/assistant", element: <PendingPage title="Ask your assistant" /> },
+      { path: "/assistant", element: <AssistantPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },

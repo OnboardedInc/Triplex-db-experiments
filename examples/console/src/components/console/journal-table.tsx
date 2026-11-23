@@ -29,6 +29,7 @@ export function JournalTable({ transactions, empty }: { transactions: Transactio
       header: "Release",
       cell: (c) => {
         const r = releaseOf(c.row.original);
+        if (!("configSnapshot" in c.row.original) && !("release" in c.row.original)) return null;
         return r ? (
           <Link to="/configuration" className="font-mono text-xs underline-offset-4 hover:underline" onClick={(e) => e.stopPropagation()}>
             {r}
@@ -45,7 +46,7 @@ export function JournalTable({ transactions, empty }: { transactions: Transactio
         const w = changesWords(c.row.original);
         return (
           <span className="text-xs">
-            {w.counts} {w.on && <>on <Mono>{w.on}</Mono></>}
+            {w.counts} {w.on && <>on {/^\d+ entities$/.test(w.on) ? w.on : <Mono>{w.on}</Mono>}</>}
             <span className="text-muted-foreground">{w.hidden}</span>
           </span>
         );

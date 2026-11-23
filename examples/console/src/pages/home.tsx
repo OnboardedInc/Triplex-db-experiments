@@ -198,7 +198,7 @@ export function HomePage() {
                           <TableCell className="tabular-nums">{time(tx.recordedAt)}</TableCell>
                           <TableCell>{tx.actor ?? "loader"}</TableCell>
                           <TableCell>
-                            <span className="font-mono text-xs">{w.on}</span> <span className="text-muted-foreground ml-2 text-xs">{w.counts}</span>
+                            <span className={/^\d+ entities$/.test(w.on) ? "text-xs" : "font-mono text-xs"}>{w.on}</span> <span className="text-muted-foreground ml-2 text-xs">{w.counts}</span>
                           </TableCell>
                         </TableRow>
                       );
