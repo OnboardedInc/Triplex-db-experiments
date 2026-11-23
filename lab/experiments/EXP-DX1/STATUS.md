@@ -4888,3 +4888,17 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
   For the same facts, a whole form save completes in about 43 ms as one commit and in 237 to 342 ms as a chain of rows; shape S is the same at 1 billion as at 430 million and is inside the 50 ms p99 bar at both.
 - **Scorecard on the production tape** (`origin/exp/DX-INT1` `090c189a8`, `v01/PRODUCTION-CARD.md`): `--tape saturday|production-R|production-S`; per-commit and per-row rates, save completion, storage reads per commit, the per-writer split, the tape report bound into the card's input, and exact read-back of every field of every subject the tape wrote. Toy cards passed for both shapes, also on a loader-aged toy. Server 2 runs the 1 billion card with shape S and `server-32` after its current card.
 - **Order changes after Sam's question about large releases:** Publish at 100,000 subjects moved up on the second machine (after the owner head pair, before the start-up reads); a builder works a release of 20 forms and 20 policies through the code and makes release size a setting of the Publish runner (`OPUS-ACT3-large-release.md`).
+
+### 2026-11-23 17:36 local: `server-32` card part 2 at 1 billion (Saturday's tape): every save stored at 394, seconds-long latency (6 agents running)
+
+- **Server 2, `origin/exp/DX-INT1` `0d9693de0`, per-save credits, 32 GiB cache; `origin/exp/DX-SCALE1-deep-accounts` `cbfe13f5c`.** Each cell: in-window durable/s, expired, all-save p50 / p99 ms, quiet commit p99 solo to loaded.
+
+  | Offered/s | `server-32`, per-save credits | Afternoon, 16 GiB, whole-turn credits | Prediction |
+  | --- | --- | --- | --- |
+  | 50 | 50.00, 0 expired, 11.07 / 57.34, 18.18 to 43.52 ms | 50.00, 0, 12.80 / 60.67, 21.12 to 50.17 | 10 / 60, quiet 35 |
+  | 235 | 235.00, 0, 966.65 / 4,587.52, 21.38 to 57.09 ms | 235.00, 0, 712.70 / 3,817.47, 24.32 to 162.81 | 15 / 900, quiet 55 |
+  | 394 | 394.00, 0 expired (35,460 of 35,460), 6,029 / 11,010, 42.24 to 34.81 ms | 249.41, 5,523 expired, quiet 87.55 | 375 (300 to 394), 2,000 / 15,000, quiet 70 |
+  | 620 | 302.61, 16,721 expired, quiet 30.98 to 47.62 ms | 239.32, 26,565 expired, quiet 106.50 | 480 (380 to 620), quiet 85 |
+
+  Neither falsifier fired (under 300/s at 394; 620 stored in full). The 235 cell's p50 and p99 are far above the prediction (967 against 15 ms at p50). Pinned reads with the reader unchanged: 19.88 to 21.77 reads/s from 1 to 256 seats, as predicted. Reference tape 1,260 of 1,260 with p99 20.22 ms; current pulls p50/p99 4.42 / 46.59 ms; import 3,256.30 facts/s. Part 3 (whole-turn credits on the same profile) is running; assembly about 18:00; then the production-S card.
+- **Reading beside the production-shaped tape at 1 billion:** with Saturday's tape (nearly every save a subject not seen before) the 32 GiB cache stores every save at 394 with a 6 s median; with production locality the same load stores every save with p99 430 ms (one commit per row) or 40.6 ms (one commit per subject's save).
