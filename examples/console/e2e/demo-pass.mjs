@@ -281,6 +281,8 @@ try {
   const row = page
     .getByRole("row")
     .filter({ hasText: liveBefore.id.slice(0, 15) })
+    .filter({ hasText: liveBefore.label })
+    .filter({ has: page.getByTestId("move-live") })
     .first();
   await row.getByTestId("move-live").click();
   await page.getByTestId("confirm-move").click();

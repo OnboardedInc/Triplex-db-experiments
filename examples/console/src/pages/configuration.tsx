@@ -139,12 +139,16 @@ export function ConfigurationPage() {
     {
       accessorKey: "id",
       header: "Release ID",
-      cell: (c) => <Mono>{short(c.row.original.id)}</Mono>,
+      cell: (c) => (
+        <Mono className="break-normal whitespace-nowrap">{short(c.row.original.id)}</Mono>
+      ),
     },
     {
       accessorKey: "parent",
       header: "Parent",
-      cell: (c) => <Mono>{short(c.row.original.parent)}</Mono>,
+      cell: (c) => (
+        <Mono className="break-normal whitespace-nowrap">{short(c.row.original.parent)}</Mono>
+      ),
     },
     {
       accessorKey: "objects",
