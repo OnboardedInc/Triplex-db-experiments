@@ -916,3 +916,11 @@ Recorded by the orchestrator:
 - **Decided:** a one-time read of index data at start-up is allowed. It is not a keep-warm mechanism. A recurring or periodic warm-up is still not allowed.
 - **Decided:** the 32 GiB cache test at 1 billion records runs as soon as it can.
 - **Open (a question, not yet an approval of spend):** using two machines at once. Server 1 (bench-3) was deleted at 10:15 the same day, so a second machine means ordering one again.
+
+## 2026-11-23 about 10:45 local: two machines until 23:30
+
+The orchestrator asked: "Server 1 was deleted at 10:15 today, so running two machines means renting it again at $1.09 per hour. Spend is $223 now and ends near $234 on the current plan (server 2 only, deleted 20:30). Which do you want?" with three options (two machines to 23:30, about +$17, ending near $251; one machine to 23:30, about +$3; keep the current plan).
+
+Sam chose: **"Two machines to 23:30 (Recommended)"**.
+
+Recorded by the orchestrator: this approves one more machine and three more hours on server 2, both deleted by 23:30 on 2026-11-23, forecast total $251.19. It approves nothing after 23:30.
