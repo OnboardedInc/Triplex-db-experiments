@@ -33,3 +33,34 @@ Run on Server 2 on 2026-11-23 between the aged scorecard and failover, from `exp
 **Outside the predictions:** `field_history` took 4.4 s the first time and 225 ms the second, and `list_accounts` took 221 ms; all three were predicted under 100 ms. The warm read (1.84 ms) and the first save (448 ms, within the first-save allowance) were inside the ranges. `field_history` reads a field's history across the loader's 28 million positions, which fits the pinned-read diagnosis in `rd1/PINNED-1B.md`; that is an inference, not measured here.
 
 Evidence: `evidence/DX-DEMO1/demo-1b-server-2026-11-23.tar.gz` in the private evidence folder (SHA-256 `3424b06bf574f81c91555208d25e552aaebed7942a44b6e38dd1877a6e98e788`), with `proof-1b.json` and `proof-1b.log` beside it.
+
+## Second slot: predictions copied from `demo/PROVING-SLOT.md` at `99539fdb9` before the run
+
+**Predictions for the calls that change (gateway ms):**
+
+| Call | First slot | Predicted |
+| --- | ---: | --- |
+| `list_accounts` (now the checked roster plus one basis call) | 220.64 | 1 to 10 |
+| `field_history`, subject 1 (no loader saves), cold | not run | 2 to 40 |
+| `field_history`, subject 0 (about 1,411 loader saves), cold | 4,404.67 | 3,000 to 6,000 |
+| `field_history`, subject 0, after the save (warm) | 225.21 | 150 to 400 |
+| every other call | as measured | within 2 times the first slot's figure |
+
+**The load press (bounds and predictions).** Bounds: 20 saves/s and 200 reads/s offered for at most 60 s across 300 subjects (subjects 2 and up of each account, `:task/field-4`), from the Mac through the tunnel; at most 40 saves and 256 reads in flight. Predicted:
+
+| Measure | Predicted |
+| --- | --- |
+| Saves acknowledged | 1,150 to 1,200 (20/s for 60 s; a few still in flight at the end); head advances by the same |
+| Reads returned | 11,000 to 12,000 (200/s; the tunnel's 60 to 80 ms round trip needs about 16 in flight, under the 256 cap) |
+| Commit alone, gateway p50 / p99 | 10 to 40 ms / 50 to 300 ms (the scorecard's 50/s cell: 12.80 / 60.67 ms; the first seconds are cold) |
+| Whole save, gateway p50 / p99 (its reads, commit, readback) | 30 to 120 ms / 150 to 800 ms |
+| Current reads, gateway p50 / p99 | 1 to 10 ms / 20 to 120 ms (cold subjects first) |
+| Pinned reads about 1,000 behind the head, gateway p50 / p99 | 1 to 10 ms / 20 to 150 ms (the probe: p50 1.26 ms at head minus 1,000) |
+| Round trip | gateway time plus about 60 to 80 ms per request |
+| Errors | 0 |
+| Load check | every acknowledged save present at its position; every read exact |
+
+What would show this wrong: any error or a failed check; pinned reads near the head above 30 ms at p50 (they would then share the old-pin cost of about 40 ms of reader CPU); the commit's p99 above 1 s at 20 saves/s.
+
+**What would show the explanation wrong:** subject 1's history read takes over 200 ms cold (then the cost is not the entity's own history), or subject 0's cold read is under 500 ms (then the first slot's 4.4 s was something else, such as a cold peer just after start).
+
