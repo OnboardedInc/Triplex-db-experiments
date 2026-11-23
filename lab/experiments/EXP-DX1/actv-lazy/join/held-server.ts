@@ -66,7 +66,8 @@ assert(process.env.DX_LOAD2_TX_CACHE === undefined || txCache32);
 const quietCell = process.env.DX_LOAD2_CELLS !== "control,import";
 assert(process.env.DX_LOAD2_CELLS === undefined || !quietCell);
 if (txCache32) {
-  assert(fair && importPolicy === "yield" && !width!.includes(",") && !process.env.DX_LOAD2_MEMORY_INDEX);
+  // [DX-LOAD2] Why: the fewer-index-jobs arm runs on this memory too (post-adoption spell after the stalls were gone).
+  assert(fair && importPolicy === "yield" && !width!.includes(","));
   const total = Number(/^MemTotal:\s+(\d+) kB$/m.exec(fs.readFileSync("/proc/meminfo", "utf8"))?.[1]);
   assert(total >= 89 * 1024 * 1024, "The 32 GiB cache needs 79 GiB of role caps plus 10 GiB of host headroom");
 }
@@ -81,7 +82,7 @@ if (memoryIndex) {
   assert(/^[0-9]+[mg]$/.test(threshold ?? "") && /^[0-9]+[mg]$/.test(max ?? ""));
   assert(bytes(threshold!) > bytes(baseProfile.index.threshold) && bytes(max!) >= 2 * bytes(threshold!));
   assert(fair && importPolicy === "yield" && !width!.includes(","), "The memory-index arm runs one yield width");
-  indexSuffix = "-mi" + threshold;
+  indexSuffix += "-mi" + threshold;
 }
 const policy = memoryIndex
   ? { ...baseProfile, index: { threshold: memoryIndex.split(",")[0]!, max: memoryIndex.split(",")[1]! } }

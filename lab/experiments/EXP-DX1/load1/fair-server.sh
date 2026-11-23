@@ -34,7 +34,7 @@ fi
 # [DX-LOAD2] Why: the heap arm runs PREP1's cache32 transactor memory; a short slot runs one control and one import cell.
 limit=57m
 if [[ -n $tx_cache ]]; then
-  [[ $tx_cache == 32768 && $policy == yield && $width != *,* && -z $memory_index ]]
+  [[ $tx_cache == 32768 && $policy == yield && $width != *,* ]]
   export DX_LOAD2_TX_CACHE=$tx_cache
 fi
 if [[ -n $cells ]]; then

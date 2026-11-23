@@ -36,7 +36,7 @@ type Arm = { mode: CreditMode; width: number; label: string; yieldToLive: boolea
 // [DX-LOAD2] Why: the yield arms keep one matched quiet/control/import triple per frame width on one copy.
 // Rejected: comparing a yield arm against another arm's baseline taken earlier on a smaller database.
 export function fairArms(rolling: CreditMode, widths: readonly number[], policy: ImportPolicy, suffix = ""): Arm[] {
-  assert(/^(?:-mi[0-9]+[mg]|-c32)?$/.test(suffix) && (suffix === "" || policy === "yield"));
+  assert(/^(?:-c32)?(?:-mi[0-9]+[mg])?$/.test(suffix) && (suffix === "" || policy === "yield"));
   assert(widths.length >= 1 && new Set(widths).size === widths.length);
   for (const width of widths) importFrame("validation", width, 0);
   if (policy === "fair") {
