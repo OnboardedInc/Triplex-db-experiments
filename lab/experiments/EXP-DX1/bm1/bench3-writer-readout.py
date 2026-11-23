@@ -19,6 +19,9 @@ ITEMS = {
     "cache32c": ("97aced1b1128ca54da2a72003299f38d805f1abc", ("rolling6-cache32", "rolling6-tx5-cache32")),
     "rolling6s": ("c8f903ce1142772751328b88d972cc527ca46dfc", ("rolling6",)),
     "tx5": ("73afad665ac2ccecea62161b8dfb6a3a48287057", ("rolling6-tx5",)),
+    # [DX-BM1] Why: bench 4's aged arm; its pin's checkpoint reader and latency module equal ANALYSER's byte for byte.
+    **{name: ("cdc72d4d5bd6cc1adecaaf9267a351173763d134", ("rolling6-cache32",))
+       for name in ("cache32-aged", "cache32-aged-b", "cache32-aged-c")},
     "fresh": ("891ab9139eb4fa6defe2c5484ada332b84090e6f", ("rolling6", "fresh6", "fresh-zgc6")),
 }
 BUILDER = "lab/experiments/EXP-DX1/prep1"
@@ -93,8 +96,9 @@ def late_index_bins(cell):
 def inspect(evidence, item, output):
     source, labels = ITEMS[item]
     transfer = read(evidence / "TRANSFER.json")
-    assert transfer["item"] == "bench3-" + item and transfer["producer"] == source
-    assert list(transfer["serviceStates"]) == ["triplex-bench3-" + item + ".service"]
+    bench = "bench4" if item.startswith("cache32-aged") else "bench3"
+    assert transfer["item"] == bench + "-" + item and transfer["producer"] == source
+    assert list(transfer["serviceStates"]) == ["triplex-" + bench + "-" + item + ".service"]
     assert next(iter(transfer["serviceStates"].values()))["ActiveState"] in ("inactive", "failed")
     archive_files(evidence, "summary", transfer, output)
     archive_files(evidence, "raw", transfer, output)
