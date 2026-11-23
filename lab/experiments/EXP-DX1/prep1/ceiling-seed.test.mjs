@@ -6,7 +6,8 @@ import { basename, join } from "node:path";
 import test from "node:test";
 import { encodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import { fieldValue } from "../../../bench/lib/deep-world.ts";
-import { scaleOwner, scalePredecessors, scaleSeed } from "./ceiling-seed.ts";
+import { agedCut, scaleOwner, scalePredecessors, scaleSeed } from "./ceiling-seed.ts";
+import { gzipSync } from "node:zlib";
 import { sha } from "../w1/field/schedule.ts";
 
 const cut = 87002;
@@ -77,4 +78,109 @@ test("copied cut reads exact account membership, loader claim and selected field
   assert.equal(fields.get(scaleOwner(2, 7)).length, 2);
   for (const mismatch of [{ head: cut - 1 }, { badClaim: true }, { badMembership: true }, { badField: true }])
     await assert.rejects(scalePredecessors(peer(mismatch), seed, targets));
+});
+
+// [DX-PREP1] Aged one-billion handoff: AGE1's scorecard bundle pins the aged cut; rows follow AGE1's replay tape.
+const pad25 = (n) => String(n).padStart(25, "0");
+const hex = (b) => createHash("sha256").update(b).digest("hex");
+const perAccount = 20_000, active = 10 * perAccount, tapeSaves = 400_000, agedHead = cut + tapeSaves;
+const lastClock = 1_800_000_000_000;
+function bundleBytes(imagePin, edit = (b) => b) {
+  const checkpoint = Buffer.from("{:observed 400000}\n"), population = Buffer.from("{:active 200000}\n");
+  const roster = accounts.map((i) => {
+    const account = "account-" + String(i + 1).padStart(3, "0");
+    return { account, namespace: "acct/" + account + "/", firstPerson: 0, people: 100_000 };
+  });
+  const bundle = edit({ version: "triplex-age1-scorecard/1", database: db, nativeId: "native-1", scope,
+    physicalT: 62_876_498, logicalHead: agedHead, records: 1_000_002_769, layout: "lean-v3-strict-solo-k",
+    journal: "recorded-predecessor-k",
+    sourceSeed: { source: "c".repeat(40), "source-seal": loaderSeal, "manifest-sha": imagePin, facts },
+    roster, clocks: { seedHead: cut, seedT: 1000, seedRecordedAt: 1_700_000_000_000, roundMs: 28_800_000, active,
+      tapeSaves, lastRecordedAt: lastClock, lastOperation: "age-save-" + (tapeSaves - 1),
+      lastTransaction: "_tx/T" + pad25(tapeSaves - 1) },
+    producer: "d".repeat(40), agingAttempt: nonce, sealSha: "e".repeat(64), datomicSha: "f".repeat(64),
+    checkpointSha: hex(checkpoint), populationSha: hex(population),
+    replayLedgerGzip: gzipSync(JSON.stringify([checkpoint.toString("base64"), population.toString("base64")])).toString("base64") });
+  return Buffer.from(JSON.stringify(bundle, null, 2) + "\n");
+}
+
+test("aged handoff is admitted only with its pin and a matching seed, cut and count", () => {
+  const directory = mkdtempSync(join(tmpdir(), "prep1-aged-meta-"));
+  try {
+    const imagePin = "a".repeat(64);
+    const file = join(directory, "aged-scorecard.json");
+    const write = (bytes) => { writeFileSync(file, bytes); return hex(bytes); };
+    const pin = write(bundleBytes(imagePin));
+    const aged = agedCut(file, pin, imagePin, scope, db, cut, true);
+    assert.deepEqual([aged.seedCut, aged.tapeSaves, aged.active, aged.records], [cut, tapeSaves, active, 1_000_002_769]);
+    assert.throws(() => agedCut(file, pin, imagePin, scope, db, cut, false), /stopped PostgreSQL/);
+    assert.throws(() => agedCut(file, "0".repeat(64), imagePin, scope, db, cut, true), /digest differs/);
+    // One changed byte under the original pin.
+    const bytes = bundleBytes(imagePin);
+    bytes[bytes.indexOf("62876498")] = "7".charCodeAt(0);
+    writeFileSync(file, bytes);
+    assert.throws(() => agedCut(file, pin, imagePin, scope, db, cut, true), /digest differs/);
+    // Re-pinned edits that a driver could make by mistake.
+    for (const edit of [
+      (b) => ({ ...b, logicalHead: b.logicalHead + 1 }),
+      (b) => ({ ...b, records: 999_999_999 }),
+      (b) => ({ ...b, scope: b.scope.replace("test", "prod") }),
+      (b) => ({ ...b, sourceSeed: { ...b.sourceSeed, "manifest-sha": "b".repeat(64) } }),
+      (b) => ({ ...b, clocks: { ...b.clocks, seedHead: cut + 1 } }),
+      (b) => ({ ...b, clocks: { ...b.clocks, lastOperation: "age-save-1" } }),
+      (b) => ({ ...b, checkpointSha: "0".repeat(64) }),
+      (b) => ({ ...b, version: "triplex-age1-scorecard/0" }),
+    ]) {
+      const tampered = write(bundleBytes(imagePin, edit));
+      assert.throws(() => agedCut(file, tampered, imagePin, scope, db, cut, true));
+    }
+  } finally {
+    rmSync(directory, { recursive: true });
+  }
+});
+
+// AGE1 ledger: active index i = j*10 + account at local floor(j*99998/perAccount); probes follow at active + account.
+const agedValue = (i, n, j) => hex(`edit-${i}-${n}-${j}`).slice(0, 57);
+const agedOwners = [
+  { account: 2, person: 14, i: 32, n: 32 + active },          // j = 3, edited at offsets 32 and 200,032
+  { account: 4, person: 99_998, i: active + 4, n: 399_000 },  // probe person, edited at a probe offset
+];
+function agedPeer({ badValue, badId, notNewest, badLast, staleHead } = {}) {
+  const last = encodeRowText({ ...row("last", "_tx/T" + pad25(tapeSaves - 1), ":_tx/command-id",
+    badLast ? "age-save-1" : "age-save-" + (tapeSaves - 1)), recorded_position: agedHead, recorded_at: lastClock });
+  return {
+    request: async (_m, _p, { after }) => after === cut - 1 ? { transactions: [[tx, cut, [journal]]] }
+      : { transactions: [["_tx/T" + pad25(tapeSaves - 1), staleHead ? agedHead - 1 : agedHead, [last]],
+        ...(notNewest ? [["_tx/later", agedHead + 1, [last]]] : [])] },
+    claim: async (_db, command) => command === "age-save-" + (tapeSaves - 1) ? "_tx/T" + pad25(tapeSaves - 1) : tx,
+    rows: async (_db, { entityIds, pattern: { attribute }, basis }) => entityIds.map((entity) => {
+      if (attribute === ":subject/account") {
+        assert.equal(basis.recordedPosition, cut);
+        return row(entity, entity, attribute, entity.split("/")[1]);
+      }
+      assert.equal(basis.recordedPosition, agedHead);
+      const field = Number(attribute.at(-1));
+      const owner = agedOwners.find((o) => scaleOwner(o.account, o.person) === entity);
+      if (!owner || field === 1 && owner.person === 14)  // field 1 of person 14 kept its seed value
+        return row(`${entity}-${field}`, entity, attribute, fieldValue(owner?.person ?? 7, 0, field, 0).value);
+      return { ...row("B" + pad25(owner.n * 16 + field + (badId ? 1 : 0)), entity, attribute,
+        badValue ? agedValue(owner.i + 1, owner.n, field) : agedValue(owner.i, owner.n, field)),
+        recorded_position: cut + owner.n + 1, tx_id: "_tx/T" + pad25(owner.n) };
+    }),
+  };
+}
+
+test("aged cut reads the sealed loader claim, AGE1's last save and exact replayed field rows", async () => {
+  const aged = { bundleSha256: "9".repeat(64), seedCut: cut, physicalT: 62_876_498, records: 1_000_002_769,
+    nativeId: "native-1", active, people: 100_000, tapeSaves, lastOperation: "age-save-" + (tapeSaves - 1),
+    lastTransaction: "_tx/T" + pad25(tapeSaves - 1), lastRecordedAt: lastClock };
+  const agedSeed = { ...seed, head: agedHead, aged };
+  const targets = [{ account: 2, person: 7 }, ...agedOwners.map(({ account, person }) => ({ account, person }))];
+  const { fields, proof } = await scalePredecessors(agedPeer(), agedSeed, targets);
+  assert.deepEqual([proof.members, proof.position, proof.aged.position, proof.aged.rows], [40, cut, agedHead, 3]);
+  assert.equal(fields.size, 3);
+  for (const mismatch of [{ badValue: true }, { badId: true }, { notNewest: true }, { badLast: true }, { staleHead: true }])
+    await assert.rejects(scalePredecessors(agedPeer(mismatch), agedSeed, targets));
+  // The fresh seed's checks still refuse a row written after cut 87,002.
+  await assert.rejects(scalePredecessors(agedPeer(), { ...seed, head: agedHead }, targets));
 });

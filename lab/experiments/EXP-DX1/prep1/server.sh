@@ -10,7 +10,7 @@ repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 here=lab/experiments/EXP-DX1/prep1
 stack=lab/experiments/EXP-DX1/stack
-mode=${1:?expected run, storage, storage-ordered, ceiling, scale, rolling, cache32, fresh, tail, tail-combined, owner, fair or arm}
+mode=${1:?expected run, storage, storage-ordered, ceiling, scale, rolling, cache32, cache32-aged, fresh, tail, tail-combined, owner, fair or arm}
 out=${2:?provide an absolute new output directory}
 source=${3:?provide the pinned Git commit}
 [[ "$out" == /* && "$source" =~ ^[a-f0-9]{40}$ && $(git rev-parse HEAD) == "$source" && -z $(git status --porcelain) ]]
@@ -130,17 +130,26 @@ if [[ $mode == ceiling ]]; then
   [[ $# == 6 || ($# == 8 && $7 == --pg-data) ]]
   exec timeout --kill-after=40s 3560s bash "$here/server.sh" ceiling-timed "${@:2}"
 elif [[ $mode == rolling ]]; then
-  [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount && -z ${DX_PREP1_FRESH_CREDITS:-}${DX_PREP1_CACHE32:-} ]]
+  [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount && -z ${DX_PREP1_FRESH_CREDITS:-}${DX_PREP1_CACHE32:-}${DX_PREP1_AGED:-} ]]
   limit=8960
   if [[ ${DX_PREP1_ROLLING_ARM:-} == rolling6-tx5 ]]; then limit=2060; fi
   exec timeout --kill-after=40s "${limit}s" bash "$here/server.sh" rolling-timed "${@:2}"
 elif [[ $mode == cache32 ]]; then
-  [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount && -z ${DX_PREP1_FRESH_CREDITS:-}${DX_PREP1_ROLLING_ARM:-} ]]
+  [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount && -z ${DX_PREP1_FRESH_CREDITS:-}${DX_PREP1_ROLLING_ARM:-}${DX_PREP1_AGED:-} ]]
   export DX_PREP1_CACHE32=1
   exec timeout --kill-after=40s 3560s bash "$here/server.sh" rolling-timed "${@:2}"
+elif [[ $mode == cache32-aged ]]; then
+  # [DX-PREP1] Why: run Saturday's three-core 32 GiB arm unchanged on AGE1's sealed one-billion cut.
+  # Rejected: a second arm (five cores) or a 16 GiB control inside the 75-minute server cap.
+  [[ $# == 13 && $7 == --pg-data && $9 == --wal-mount && ${11} == --aged-bundle && ${12} == /* && ${13} =~ ^[a-f0-9]{64}$ &&
+     -z ${DX_PREP1_FRESH_CREDITS:-}${DX_PREP1_ROLLING_ARM:-}${DX_PREP1_CACHE32:-}${DX_PREP1_AGED:-} ]]
+  bundle=$(realpath -e "${12}")
+  [[ -f $bundle && $(sha256sum "$bundle" | cut -d ' ' -f 1) == "${13}" ]]
+  export DX_PREP1_CACHE32=1 DX_PREP1_AGED=1 DX_PREP1_AGED_BUNDLE=$bundle DX_PREP1_AGED_SHA=${13}
+  exec timeout --kill-after=40s 2700s bash "$here/server.sh" rolling-timed "${@:2:9}"
 elif [[ $mode == fresh ]]; then
   [[ $# == 12 && $7 == --pg-data && $9 == --wal-mount &&
-     ${11} == --write-jvm && ${12} == j25-zgc && -z ${DX_PREP1_ROLLING_ARM:-}${DX_PREP1_CACHE32:-} ]]
+     ${11} == --write-jvm && ${12} == j25-zgc && -z ${DX_PREP1_ROLLING_ARM:-}${DX_PREP1_CACHE32:-}${DX_PREP1_AGED:-} ]]
   export DX_PREP1_FRESH_CREDITS=${DX_PREP1_FRESH_CREDITS:-6}
   [[ $DX_PREP1_FRESH_CREDITS =~ ^(6|12)$ ]]
   exec timeout --kill-after=40s 7160s bash "$here/server.sh" rolling-timed "${@:2:9}"
@@ -206,7 +215,15 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
   fi
   mkdir "$out" "$DX_STACK_EVIDENCE"
   export DX_PREP1_CAMPAIGN=${mode%-timed} DX_PREP1_FAIR_CREDITS=0
-  "${producer[@]}" adopt-scale "$parent" "$5" "$6" "${seed_mode[@]}" > "$seed"
+  aged_mode=()
+  if [[ ${DX_PREP1_AGED:-} == 1 ]]; then
+    [[ $mode == rolling-timed && ${DX_PREP1_CACHE32:-} == 1 && ${#seed_mode[@]} == 1 ]]
+    [[ $(sha256sum "$DX_PREP1_AGED_BUNDLE" | cut -d ' ' -f 1) == "$DX_PREP1_AGED_SHA" ]]
+    aged_mode=(--aged-bundle "$DX_PREP1_AGED_BUNDLE" "$DX_PREP1_AGED_SHA")
+  else
+    unset DX_PREP1_AGED_BUNDLE DX_PREP1_AGED_SHA
+  fi
+  "${producer[@]}" adopt-scale "$parent" "$5" "$6" "${seed_mode[@]}" "${aged_mode[@]}" > "$seed"
   "${producer[@]}" plan > "$out/plan.json"
   if [[ -n ${DX_PREP1_PGDATA:-} ]]; then
     (cd "$out"; sha256sum seed.json plan.json) > "$out/SEAL.sha256"
@@ -228,7 +245,11 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
     arm_limit=850
     if [[ $mode == rolling-timed ]]; then
       arm_limit=2950
-      if [[ ${DX_PREP1_CACHE32:-} == 1 ]]; then
+      if [[ ${DX_PREP1_CACHE32:-} == 1 && ${DX_PREP1_AGED:-} == 1 ]]; then
+        # [DX-PREP1] Why: the 176 GB copy happens inside the arm; allow about seven minutes for it.
+        arm_limit=2400
+        selected=(1-rolling6-cache32-S)
+      elif [[ ${DX_PREP1_CACHE32:-} == 1 ]]; then
         arm_limit=1740
         selected=(1-rolling6-cache32-S 1-rolling6-tx5-cache32-S)
       elif [[ -n ${DX_PREP1_FRESH_CREDITS:-} ]]; then

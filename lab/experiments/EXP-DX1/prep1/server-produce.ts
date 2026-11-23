@@ -527,6 +527,9 @@ async function armRun(
     assert.equal(adopted.facts, 162_456_470);
     assert.equal(pgData, Boolean(process.env.DX_PREP1_PGDATA));
     if (!pgData) assert.equal(adopted.dumpSha256, process.env.DX_PREP1_DUMP_SHA);
+    // [DX-PREP1] Why: an aged seed runs only under the aged launcher, and the aged launcher only with an aged seed.
+    assert.equal(Boolean(adopted.aged), process.env.DX_PREP1_AGED === "1");
+    if (adopted.aged) assert.deepEqual([arm.id, adopted.head], ["1-rolling6-cache32-S", adopted.aged.seedCut + adopted.aged.tapeSaves]);
   } else {
     assert.equal(baseline.roster, pooledDigest);
     assert.equal(baseline.facts, 16_245_050);
@@ -641,6 +644,7 @@ async function armRun(
         ? { imageSha256: adopted.imageSha256, transferSha256: adopted.transferSha256 }
         : {}),
       ...(pgData ? { pgDataCopySha, seedReadbackSha } : {}),
+      ...(adopted?.aged ? { aged: adopted.aged } : {}),
     });
     if (rolling) {
       const ready = out + "/counters-ready.json";
@@ -807,8 +811,9 @@ async function preflight(out: string, arm: Arm) {
 const [action, ...args] = process.argv.slice(2);
 if (action === "seed") await seed(args[0]!, args[1]!, args[2]!);
 else if (action === "adopt-scale") {
-  assert(wide && (args.length === 3 || (args.length === 4 && args[3] === "--pg-data")));
-  console.log(JSON.stringify(scaleSeed(args[0]!, args[1]!, args[2]!, args[3] === "--pg-data")));
+  assert(wide && (args.length === 3 || (args.length === 4 && args[3] === "--pg-data") ||
+    (args.length === 7 && args[3] === "--pg-data" && args[4] === "--aged-bundle" && cache32)));
+  console.log(JSON.stringify(scaleSeed(args[0]!, args[1]!, args[2]!, args[3] === "--pg-data", args[5], args[6])));
 } else if (action === "arm") {
   const [id, file, out, slot, commit, nonce, stack, reader, ...urls] = args;
   const arm = campaignArms.find((a) => a.id === id);
