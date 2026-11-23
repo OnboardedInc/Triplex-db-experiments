@@ -49,3 +49,15 @@ real1-int1-launchfix   99808c500  ADMITTED  -
 open-ports-int1-launchfix 99808c500 REFUSED -
 no-copy-int1-launchfix 99808c500  REFUSED   -
 copy-on-v01-int1-launchfix 99808c500 REFUSED -
+# [DX-THIN1] Part 15: the same launches at the merged head (W1, LOAD2, JVM1, AGE1, PREP1 and server-32 on stack/up.sh).
+fair-int1-p15    8805f75c9  ADMITTED  -
+publish-int1-p15 8805f75c9  ADMITTED  -
+removal-int1-p15 8805f75c9  ADMITTED  -
+cold-int1-p15    8805f75c9  ADMITTED  -
+adopted-read-int1-p15 8805f75c9 ADMITTED -
+adopted-retire-int1-p15 8805f75c9 ADMITTED TX2_SUBJECT_APPEND_RETIREMENT=1;DX_W1_RETIREMENT_PAIR=1;PREP1_LOOKUP_EVERY=64
+real1-int1-p15   8805f75c9  ADMITTED  -
+open-ports-int1-p15 8805f75c9 REFUSED -
+no-copy-int1-p15 8805f75c9  REFUSED   -
+copy-on-v01-int1-p15 8805f75c9 REFUSED -
+prep1-at-int1-p15      8805f75c9  ADMITTED  -
