@@ -4,6 +4,18 @@ Server 2 runs three things on AGE1's 1B cut, in this order: the AGE1 seal (`meas
 
 The order puts the cache arm before the scorecard arms. The owner allowed it to run "whenever you can", and the orchestrator allowed it earlier when the machine is free. It also avoids a known hazard: each build retags the shared image names, and the sequential scorecard pins its build receipt in arm 1, so a PREP1 build between scorecard arms would make the later arms refuse.
 
+## Aged scorecard, part by part
+
+The four parts run at `8cc32d380` in the tool's enforced order, in campaign directory `score-v01-1b-tuned-b`, each on a fresh scratch copy of the sealed held cluster on the root NVMe, with WAL on the spare NVMe. Build `8cc32d380` was made on the server just before part 1. Bundle `faab1bc5…`; the aged live check read t 62,888,918, head 28,309,866 and 1,000,251,169 records under the original database name.
+
+**The first campaign directory (`score-v01-1b-tuned`) was consumed by a launch fault, before any offer.** The aged admission's fresh-peer check (`v01/adopted-server.ts` line 211 `verifyAged`, through `age1/scorecard.mjs` lines 128 and 65) runs a Datomic peer on the host. The peer reads the transactor's endpoint from storage, which names the transactor's container, for example `tx2-dxscale1-v01-acf8c4b2-c83-tx`, and the host cannot resolve that name: `ActiveMQNotConnectedException AMQ219007`. The fresh card never ran this check. Part 1 had already written its start record, so the retry needed a new directory. The builder should run the peer inside the stack network or have the transactor advertise a resolvable host.
+
+**Environment repair, approved by the orchestrator, no check changed:** a host watcher (`triplex-scorecard-hosts-watch`) adds one `/etc/hosts` line per running `tx2-dxscale1-v01-*-tx` container while it runs, in the form `<bridge IPv4> <container name> # triplex-scorecard-tx`, and deletes every line with that marker when the container stops and when the watcher exits. The rest of `/etc/hosts` is unchanged.
+
+| Part | Writer, JVMs | Result | Fresh card, same part |
+| --- | --- | --- | --- |
+| 1, headline without P1 readers | Ordered per-person; transactor Java 25 ZGC, gateways Java 21 G1; separate WAL | **1,260/1,260 saves stored** at the 3.5/s reference tape; save p50/p90/p99 6.40 / 11.52 / 20.61 ms (max 150.00); feed 1,260 entries; cut 28,309,866 → 28,311,126; 6 min 5 s of offers, completed 18:25:04 UTC | 1,260/1,260; 5.57 / 10.50 / 24.58 ms; 1,260 entries |
+
 ## Seal finished by the readback repair: aged bundle written
 
 **The 1B seal exists.** The builder's repair (AGE1 `bb9ec7324`, `age1/READBACK-REPAIR.md`) started a second transactor on the retained restored copy and ran the unchanged `restore-check`. It returned t 62,888,918 and head 28,309,866, equal to the seal. Backup, verify and restore were not repeated. [Repair](https://github.com/OnboardedInc/Triplex-db-experiments/blob/bb9ec7324/lab/experiments/EXP-DX1/age1/READBACK-REPAIR.md)
