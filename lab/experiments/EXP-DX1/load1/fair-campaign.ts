@@ -404,6 +404,9 @@ async function arm(
     }
     // [DX-LOAD2] Why: prove from the grants themselves that no frame was admitted beside a waiting live save.
     if (yieldToLive) assert(imported.every((f) => f.liveQueued === 0), "Import admitted beside waiting live saves");
+    // [DX-LOAD2] Why: a toy gate passes only if it exercised both the yield and the grant path.
+    if (toy && yieldToLive && cell === "import")
+      assert((producer.yieldedChecks ?? 0) > 0, "The toy live tape never made the importer yield");
     assert.equal(writes.rows.length, tape.length);
     assert.equal(byPosition.size, 0, "Unattributed commits in the measured suffix");
     assert.equal(imported.length, cursor);

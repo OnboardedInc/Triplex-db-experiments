@@ -11,10 +11,11 @@ import { runFair } from "./fair-campaign.ts";
 export async function fairLocal(stack: Stack) {
   const { e, a, b } = stack;
   // [DX-LOAD2] Why: the yield gate needs live saves that actually wait for a credit beside the import.
-  // Rejected: the 9 saves/s toy tape, where the live queue is almost never non-empty.
+  // Rejected: the 9 saves/s toy tape, where the live queue is almost never non-empty, and 120/s, which
+  // saturated the Mac stack so the importer yielded nearly always (3 frames in 6 s).
   const policy = process.env.DX_LOAD2_IMPORT_POLICY ?? "fair";
   assert(policy === "fair" || policy === "yield");
-  const toyBusy = Number(process.env.DX_LOAD2_TOY_BUSY ?? (policy === "yield" ? "120" : "9"));
+  const toyBusy = Number(process.env.DX_LOAD2_TOY_BUSY ?? (policy === "yield" ? "20" : "9"));
   assert(process.platform === "darwin" && a === b);
   assert.equal(process.env.TRIPLEX_DATOMIC_FAST_PATHS, "save-wire");
   await stack.tool();
