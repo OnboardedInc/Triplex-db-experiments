@@ -226,6 +226,16 @@ try {
   note("8", "entity after the move: " + (await page.locator("#screen").innerText()).split("\n").slice(0, 4).join(" | "));
   await snap("entity-after-move");
 
+  // The eleventh minute: a derivation on the subject, reconciled against the sealed head.
+  await page.goto(`${base}/accounts/${ACCOUNT}/subjects/${SUBJECT}?tab=derivations`, { waitUntil: "networkidle" });
+  if (await page.getByTestId("evaluate").count()) {
+    await page.getByRole("button", { name: "Evaluate and reconcile" }).click();
+    await page.waitForSelector("[data-testid=candidates]", { timeout: 30_000 });
+    await page.getByTestId("candidates").getByRole("row").nth(1).click();
+    note("9", (await page.locator("#screen").innerText()).split("\n").filter((l) => /candidates from|Compared with/.test(l)).join(" | "));
+    await snap("derivations");
+  } else note("9", "evaluate_derivation is not in the catalogue: Derivations tab skipped");
+
   // Extra screens: About, the assistant page with Try it here, the palette.
   await page.goto(`${base}/about?tab=limits`, { waitUntil: "networkidle" });
   await snap("about-limits");

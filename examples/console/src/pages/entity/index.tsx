@@ -18,6 +18,7 @@ import { HistoryTab } from "./history-tab";
 import { JournalTab } from "./journal-tab";
 import { targetOf, useEntityRead } from "./model";
 import { TimeTab } from "./time-tab";
+import { DerivationsTab } from "./derivations-tab";
 
 export function EntityPage() {
   const params = useParams();
@@ -162,7 +163,7 @@ export function EntityPage() {
         </TabsContent>
         <TabsContent value="derivations" className="mt-4">
           {tools.has("evaluate_derivation") ? (
-            <EmptyState title="Derivations" description="Choose a derivation to evaluate for this subject." />
+            <DerivationsTab target={target} />
           ) : (
             <NotInCatalogue tool="evaluate_derivation" what="Derivations" />
           )}
