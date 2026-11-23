@@ -17,6 +17,40 @@ The four parts run at `8cc32d380` in the tool's enforced order, in campaign dire
 | 1 in `score-v01-1b-tuned-c` (fix `6770c37ba`), headline without P1 readers | Same | **1,260/1,260 saves stored**; save p50/p90/p99 6.40 / 11.84 / 20.10 ms (max 139.31); feed 1,260 entries; cut 28,309,866 → 28,311,126; 6 min 5 s; completed 18:40:30 UTC | 1,260/1,260; 5.57 / 10.50 / 24.58 ms; 1,260 entries |
 | 1 in `score-v01-1b-tuned-b` (`8cc32d380`, second reading), headline without P1 readers | Ordered per-person; transactor Java 25 ZGC, gateways Java 21 G1; separate WAL | **1,260/1,260 saves stored** at the 3.5/s reference tape; save p50/p90/p99 6.40 / 11.52 / 20.61 ms (max 150.00); feed 1,260 entries; cut 28,309,866 → 28,311,126; 6 min 5 s of offers, completed 18:25:04 UTC | 1,260/1,260; 5.57 / 10.50 / 24.58 ms; 1,260 entries |
 
+### Part 2 at `6770c37ba`: headline, loaded (completed 19:11:14 UTC)
+
+Ordered per-person writer, transactor Java 25 ZGC, gateways Java 21 G1, separate WAL; 16 GiB transactor object cache, one-core reader. Fresh values are the fresh card at `92f8e6c30`, recomputed from its arm files.
+
+**P2 and P6, matched 90 s windows, six fair-turn credits.** Each cell: in-window durable/s · total durable/offered · expired / durable after window · all-save p50/p99 ms · quiet commit p99 solo → loaded (ratio) · quiet read p99 ratio · quiet feed p99 ratio · quiet reads checked.
+
+| Offered/s | 1B | Fresh |
+| ---: | --- | --- |
+| 50 | 50.00 · 4,500/4,500 · 0 / 0 · 12.80 / 60.67 · 21.12 → 50.17 ms (2.38×) · 1.13× · 1.11× · **1,216 of 3,840 reads returned, 2,624 errors** (solo 1,306, 2,534 errors) | 50.00 · 4,500/4,500 · 0 / 0 · 9.73 / 118.78 · 22.91 → 53.50 ms (2.34×) · 1.00× · 0.76× · 3,840/3,840 |
+| 235 | 235.00 · 21,150/21,150 · 0 / 0 · 712.70 / 3,817.47 · 24.32 → 162.81 ms (6.69×) · 1.35× · 1.50× · 1,041 returned, 2,799 errors (solo 1,289, 2,551) | 234.98 · 21,150/21,150 · 0 / 2 · 47.10 / 2,392.06 · 20.09 → 88.06 ms (4.38×) · 1.67× · 1.46× · 3,840/3,840 |
+| 394 | **249.41** · 29,937/35,460 · 5,523 / 1,967 · 23,330.81 / 30,054.53 · 19.58 → 87.55 ms (4.47×) · 1.18× · 1.00× · 1,021 returned, 2,819 errors (solo 1,239, 2,601) | 342.90 · 35,460/35,460 · 0 / 4,599 · 9,895.93 / 12,517.38 · 13.70 → 69.63 ms (5.08×) · 1.69× · 1.33× · 3,840/3,840 |
+| 620 | **239.32** · 29,235/55,800 · 26,565 / 7,696 · 29,884.42 / 30,146.56 · 33.28 → 106.50 ms (3.20×) · 1.38× · 1.72× · 1,001 returned, 2,839 errors (solo 1,252, 2,588) | 329.42 · 39,554/55,800 · 16,246 / 9,906 · 29,753.34 / 30,130.83 · 18.94 → 76.80 ms (4.05×) · 2.10× · 1.62× · 3,840/3,840 |
+
+**P1 pinned-read ladder (120 s per step).** Seats: 1B goodput reads/s, p50/p99 ms | fresh.
+
+| Seats | 1B | Fresh |
+| ---: | --- | --- |
+| 1 | 18.12/s, 44.80 / 114.18 ms | 606.43/s, 1.18 / 5.95 ms |
+| 4 | 17.83/s, 192.51 / 401.41 ms | 624.48/s, 4.67 / 56.32 ms |
+| 16 | 18.85/s, 761.86 / 1,146.88 ms | 618.87/s, 20.35 / 93.70 ms |
+| 64 | 19.12/s, 3,244.03 / 3,751.94 ms | 1,560.80/s, 32.64 / 146.43 ms |
+| 256 | 18.63/s, 13,041.66 / 13,565.95 ms | 893.18/s, 198.66 / 860.16 ms |
+| 1,024 | 11.17/s, 18,219.01 / 34,603.01 ms, **1,611 errors** | 509.43/s, 2,031.62 / 2,375.68 ms, 0 errors |
+
+**Other rows.** P2/P3 reference tape: 1,260/1,260 saves, p50/p99 5.86 / 20.35 ms, 1,260 feed entries (fresh 5.60 / 22.53 ms). P4 current pulls: 1,000 observed, p50/p99 4.22 / 47.10 ms, max 33,179 ms (fresh 4.54 / 50.18 ms, max 85 ms). P8 paced import: 351,040 facts in 108 s, 3,250.37 facts/s, 10,971 of 11,880 frames committed (fresh 3,192.89/s, 10,776 frames).
+
+**Reading against the predictions.**
+
+- **P2, low rates:** close to fresh, as predicted: 50/s and 235/s stored everything in-window. The 235/s all-save p99 rose from 2.39 s to 3.82 s.
+- **P2, 394 and 620: wrong in the pessimistic direction.** The prediction was flat to 15% lower than fresh. In-window delivery fell to 249/s and 239/s, 27% and 27% below fresh (343/s, 329/s), with 5,523 expiries at 394.
+- **P1 and the quiet reads: much worse than predicted.** The prediction was higher tail latency at the top of the ladder. Instead the one-core reader delivered about 18–19 pinned reads/s at every ladder step, against 600–1,560/s fresh, with p50 44.8 ms at one seat. About two thirds of the quiet account's planned reads failed in every P6 cell, solo windows included, against none fresh. The error type is not in the arm summary; the gateway logs are in the evidence. Read exactness for returned reads holds (the arm passed its checks), but the read path at 1B on one core is far from the fresh card.
+- **P6 ratios:** the 1.25× bar fails at every rate, as predicted.
+- **P8:** import pace held (3,250 facts/s against 3,193 fresh).
+
 **Part 2 in `score-v01-1b-tuned-b` was refused after its claim, so that campaign was consumed too.** At the P7 empty census, `thin1/native-metrics.ts` line 166 at `8cc32d380` runs `docker top <id> -eo rss`, and Docker 29.1.3 answers "Couldn't find PID field in ps output". The fresh card ran at `92f8e6c30`, which already fixed this ("Keep Docker PID in the bare-metal residency process listing"); `8cc32d380` does not contain that commit. The orchestrator published `6770c37ba` on `exp/DX-V01-scorecard-1b-fix`: `8cc32d380` plus a clean cherry-pick of `92f8e6c30`'s one-file hunk (`docker top -eo pid,rss,nlwp`). `git diff 8cc32d380 6770c37ba --stat` shows only that file. No runner file pins `8cc32d380` by hash, so no pin changed; the runner takes the commit from `--commit`. A new campaign `score-v01-1b-tuned-c` started at 18:30 UTC with all four parts at `6770c37ba`, and part 1 reruns. The part 1 above stays as a second reading.
 
 ## Seal finished by the readback repair: aged bundle written
