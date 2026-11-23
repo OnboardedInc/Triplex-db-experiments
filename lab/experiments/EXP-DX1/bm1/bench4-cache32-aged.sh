@@ -18,10 +18,17 @@ case $selection in
   production-r) pin=832a7e0c62afd96ba8bc2aac9fde833debcbeaed ;;
   # [DX-BM1] Why: REAL2's production tape on the aged cut (real2/PRODUCTION-AGED.md), cache32-aged's inputs.
   production-aged) pin=e1711fda0e487bec870517dd38902f982ba26624 ;;
+  # [DX-BM1] Why: REAL2's repair of the S arm's identity limit (commits over 256 assertions take the general identity).
+  production-aged2) pin=32ca969bbb52ddba6a5b7142a0ee48ece3c2e3ac ;;
+  production-s) pin=092a76916b9ef6cea379aa9d635e91fa27c69da2 ;;
   *) exit 2 ;;
 esac
 aged_run=1; launch_mode=cache32-aged
-case $selection in production-aged) launch_mode=production-aged ;; production*) aged_run=0 ;; esac
+case $selection in
+  production-aged*) launch_mode=production-aged ;;
+  production-s) aged_run=0 fresh_mode=production-s ;;
+  production*) aged_run=0 ;;
+esac
 job=$root/queue/$selection
 build=$job/build
 repo=$build/repository
@@ -123,7 +130,7 @@ if [[ $aged_run == 1 ]]; then
     1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154
     --pg-data "$aged" --wal-mount "$wal" --aged-bundle "$handoff" "$handoff_sha")
 else
-  launch=(bash lab/experiments/EXP-DX1/prep1/server.sh production "$out" "$pin" "$image"
+  launch=(bash lab/experiments/EXP-DX1/prep1/server.sh "${fresh_mode:-production}" "$out" "$pin" "$image"
     77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b
     1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154
     --pg-data /mnt/triplex-scale1-pgdata/fresh-a/cluster --wal-mount "$wal")
