@@ -1,6 +1,6 @@
 // [DX-CON1] Journal (DESIGN.md 8.10): the ordered change feed, Live, "After position N", and "Changed since" (which
 // subjects to look at again). The journal always reads current.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,104 +11,58 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { AnswerLine } from "@/components/console/answer-line";
-import { AskAssistant } from "@/components/console/ask-assistant";
 import { DataTable } from "@/components/console/data-table";
 import { JournalTable } from "@/components/console/journal-table";
 import { PageTitle } from "@/components/console/layout";
-import { EmptyState, ErrorAlert, TableSkeleton } from "@/components/console/states";
+import { EmptyState, ErrorAlert, NotInCatalogue, TableSkeleton } from "@/components/console/states";
 import { useTool } from "@/hooks/use-tool";
-import { callTool } from "@/lib/api";
+import { useReleaseLabels } from "@/lib/config";
+import { callTool, type Answer } from "@/lib/api";
 import { useConnection, useTools } from "@/lib/catalogue";
-import { n, parseLoaderId, shortId } from "@/lib/format";
-import type { Feed } from "@/lib/types";
+import { n, parseLoaderId, plural } from "@/lib/format";
+import type { Feed, FeedSummary } from "@/lib/types";
 
 const LIVE_MS = 5000;
 const ALL = "all";
 
-type ChangedRow = { key: string; account: string; subject: number | null; entity: string; transactions: number; facts: number; lastPosition: number };
+function subjectLink(root: string | null) {
+  if (!root) return null;
+  const p = parseLoaderId(root);
+  return p && /^pl:\d{8}$/.test(p.local) ? `/accounts/${p.account}/subjects/${p.subject}` : `/entities/${encodeURIComponent(root)}`;
+}
 
 function ChangedSince({ open, onOpenChange, after }: { open: boolean; onOpenChange: (v: boolean) => void; after: number }) {
   const tools = useTools();
-  const [state, setState] = useState<{ rows: ChangedRow[]; read: number; pages: number; stopped: boolean; serverMs: number; position: number } | null>(null);
+  const [state, setState] = useState<Answer<FeedSummary> | null>(null);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const bySummary = tools.accepts("change_feed", "summary");
+  const supported = tools.accepts("change_feed", "summary");
   const run = async () => {
     setRunning(true);
     setError(null);
     setState(null);
     try {
-      if (bySummary) {
-        const a = await callTool<Feed>("change_feed", { after, summary: true, limit: 200 });
-        const s = a.summary!;
-        setState({
-          rows: s.subjects.map((x) => ({ key: `${x.account}/${x.subject}`, account: x.account, subject: x.subject, entity: "", transactions: x.transactions, facts: x.facts, lastPosition: x.lastPosition })),
-          read: s.transactionsRead,
-          pages: 0,
-          stopped: Boolean(s.stoppedEarly),
-          serverMs: a.timing.serverMs ?? 0,
-          position: a.position,
-        });
-      } else {
-        // The summary computed here from the feed's own pages: at most 10 pages of 200 transactions.
-        const map = new Map<string, ChangedRow>();
-        let cursor = after;
-        let read = 0;
-        let pages = 0;
-        let serverMs = 0;
-        let position = 0;
-        let stopped = false;
-        for (;;) {
-          const a = await callTool<Feed>("change_feed", { after: cursor, limit: 200 });
-          pages++;
-          serverMs += a.timing.serverMs ?? 0;
-          position = a.position;
-          read += a.transactions.length;
-          for (const tx of a.transactions) {
-            const seen = new Set<string>();
-            for (const c of tx.changes) {
-              const p = parseLoaderId(c.entity);
-              const key = p ? `${p.account}/${p.subject}` : c.entity;
-              const row = map.get(key) ?? { key, account: p?.account ?? "", subject: p?.subject ?? null, entity: p ? "" : c.entity, transactions: 0, facts: 0, lastPosition: 0 };
-              row.facts++;
-              if (!seen.has(key)) row.transactions++;
-              seen.add(key);
-              row.lastPosition = Math.max(row.lastPosition, tx.position);
-              map.set(key, row);
-            }
-          }
-          if (!a.next || a.transactions.length === 0 || a.next <= cursor) break;
-          if (pages >= 10) {
-            stopped = true;
-            break;
-          }
-          cursor = a.next;
-        }
-        setState({ rows: [...map.values()].sort((x, y) => y.lastPosition - x.lastPosition), read, pages, stopped, serverMs, position });
-      }
+      setState(await callTool<FeedSummary>("change_feed", { after, summary: true }));
     } catch (e) {
       setError(e);
     } finally {
       setRunning(false);
     }
   };
+  useEffect(() => {
+    if (open && supported) void run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, after, supported]);
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        onOpenChange(o);
-        if (o) void run();
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Changed since position {n(after)}</DialogTitle>
-          <DialogDescription>Which subjects and entities to look at again: the one whole-database question this engine answers.</DialogDescription>
+          <DialogDescription>Which subjects to look at again: the one whole-database question this engine answers, from the ordered journal.</DialogDescription>
         </DialogHeader>
-        <div className="flex justify-end">
-          <AskAssistant call={{ name: "change_feed", input: bySummary ? { after, summary: true } : { after, limit: 200 } }} sentence={`Who changed since position ${n(after)}?`} />
-        </div>
-        {running ? (
+        {!supported ? (
+          <NotInCatalogue tool="change_feed with summary" what="Changed since" />
+        ) : running ? (
           <div className="flex items-center gap-2 text-sm">
             <Spinner /> Reading the journal after position {n(after)}.
           </div>
@@ -116,34 +70,33 @@ function ChangedSince({ open, onOpenChange, after }: { open: boolean; onOpenChan
           <ErrorAlert error={error} onRetry={run} />
         ) : state ? (
           <div className="space-y-2">
+            <AnswerLine answer={state} call={{ name: "change_feed", input: { after, summary: true } }} label="Head" sentence={`Who changed since position ${n(after)}?`} />
             <p className="text-sm" data-testid="changed-since">
-              {n(state.read)} transactions read{state.pages ? ` in ${state.pages} ${state.pages === 1 ? "page" : "pages"}` : ""}, {n(state.rows.filter((r) => r.subject !== null).length)} subjects and{" "}
-              {n(state.rows.filter((r) => r.subject === null).length)} other entities changed. Head {n(state.position)}. Store {state.serverMs.toFixed(2)} ms in total.
-              {state.stopped && " Stopped after 10 pages; ask again from the last position shown."}
+              {n(state.transactionsRead)} transactions read in {plural(state.pages, "page")}, {plural(state.subjectsChanged, "subject")} changed.
+              {!state.complete && " Stopped after the page limit; ask again from the last position shown."}
             </p>
             <DataTable
               dense
-              rowKey={(r) => r.key}
-              data={state.rows}
+              rowKey={(r) => r.subject}
+              data={state.subjects}
               empty={`No transactions after position ${n(after)}.`}
               columns={[
                 {
-                  id: "subject",
-                  header: "Subject or entity",
-                  accessorFn: (r) => r.key,
-                  cell: (c) =>
-                    c.row.original.subject !== null ? (
-                      <Link className="hover:underline" to={`/accounts/${c.row.original.account}/subjects/${c.row.original.subject}`} onClick={() => onOpenChange(false)}>
-                        {c.row.original.account} / {c.row.original.subject}
+                  accessorKey: "subject",
+                  header: "Subject",
+                  cell: (c) => {
+                    const to = subjectLink(c.row.original.root);
+                    return to ? (
+                      <Link className="hover:underline" to={to} onClick={() => onOpenChange(false)}>
+                        {c.row.original.subject}
                       </Link>
                     ) : (
-                      <Link className="font-mono text-xs hover:underline" to={`/entities/${encodeURIComponent(c.row.original.entity)}`} onClick={() => onOpenChange(false)}>
-                        {shortId(c.row.original.entity)}
-                      </Link>
-                    ),
+                      <span>{c.row.original.subject}</span>
+                    );
+                  },
                 },
                 { accessorKey: "transactions", header: "Transactions", cell: (c) => <span className="tabular-nums">{n(c.row.original.transactions)}</span> },
-                { accessorKey: "facts", header: "Facts changed", cell: (c) => <span className="tabular-nums">{n(c.row.original.facts)}</span> },
+                { accessorKey: "factsChanged", header: "Facts changed", cell: (c) => <span className="tabular-nums">{n(c.row.original.factsChanged)}</span> },
                 { accessorKey: "lastPosition", header: "Last position", cell: (c) => <span className="tabular-nums">{n(c.row.original.lastPosition)}</span> },
               ]}
             />
@@ -163,17 +116,47 @@ export function JournalPage() {
   const [live, setLive] = useState(true);
   const [afterDraft, setAfterDraft] = useState(after !== undefined ? String(after) : "");
   const [changed, setChanged] = useState(false);
+  const tools = useTools();
+  const longPoll = tools.accepts("change_feed", "waitMs");
+  const serverActor = tools.accepts("change_feed", "actor");
+  const isLive = live && after === undefined;
   const q = useTool<Feed>(
     "change_feed",
-    { after, account: account === ALL ? undefined : account, limit: 20 },
-    { refetchInterval: live && after === undefined ? LIVE_MS : false, keepPrevious: true },
+    { after, account: account === ALL ? undefined : account, actor: serverActor && actor !== ALL ? actor : undefined, limit: 20 },
+    { refetchInterval: isLive && !longPoll && tools.isSuccess ? LIVE_MS : false, keepPrevious: true },
   );
+  const head = q.data?.position;
+  // Live: a long poll on the journal route (waitMs), restarted whenever a transaction arrives.
+  useEffect(() => {
+    if (!isLive || !longPoll || head === undefined) return;
+    const ctrl = new AbortController();
+    let stopped = false;
+    void (async () => {
+      while (!stopped) {
+        try {
+          const a = await callTool<Feed>("change_feed", { after: head, waitMs: 25_000, limit: 1 }, ctrl.signal);
+          if (a.transactions.length) {
+            if (!stopped) void q.refetch();
+            return;
+          }
+        } catch {
+          if (!stopped) await new Promise((r) => setTimeout(r, LIVE_MS));
+        }
+      }
+    })();
+    return () => {
+      stopped = true;
+      ctrl.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLive, longPoll, head]);
   const set = (p: Record<string, string | undefined>) =>
     setParams((prev) => {
       const next = new URLSearchParams(prev);
       for (const [k, v] of Object.entries(p)) v === undefined || v === ALL ? next.delete(k) : next.set(k, v);
       return next;
     });
+  const labels = useReleaseLabels();
   const all = q.data?.transactions ?? [];
   const actors = [...new Set(all.map((t) => t.actor ?? "loader"))].sort();
   const txs = all.filter((t) => actor === ALL || (t.actor ?? "loader") === actor);
@@ -246,9 +229,9 @@ export function JournalPage() {
             Back to the newest
           </Button>
         )}
-        {live && after === undefined && (
+        {isLive && (
           <Badge variant="outline" className="font-normal">
-            reads the head every {LIVE_MS / 1000} s
+            {longPoll ? "waits for the next transaction (long poll, 25 s at a time)" : `reads the head every ${LIVE_MS / 1000} s`}
           </Badge>
         )}
       </div>
@@ -268,7 +251,7 @@ export function JournalPage() {
           {shown.length === 0 ? (
             <EmptyState title={after !== undefined ? `No transactions after position ${n(after)}.` : "No transactions."} />
           ) : (
-            <JournalTable transactions={shown} />
+            <JournalTable transactions={shown} labels={labels} />
           )}
           {after !== undefined && q.data?.next && q.data.next > after && (
             <div className="flex justify-end">

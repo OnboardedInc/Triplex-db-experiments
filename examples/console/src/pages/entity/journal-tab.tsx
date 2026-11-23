@@ -5,11 +5,13 @@ import { JournalTable } from "@/components/console/journal-table";
 import { ErrorAlert, Slow, TableSkeleton } from "@/components/console/states";
 import { useTool } from "@/hooks/use-tool";
 import { useTools } from "@/lib/catalogue";
+import { useReleaseLabels } from "@/lib/config";
 import type { Feed } from "@/lib/types";
 
 export function JournalTab({ entity, entities }: { entity: string; entities: string[] }) {
   const tools = useTools();
   const byEntity = tools.accepts("change_feed", "entity");
+  const labels = useReleaseLabels();
   const q = useTool<Feed>("change_feed", byEntity ? { entity, limit: 20 } : { limit: 200 });
   const wanted = new Set(entities);
   const txs = (q.data?.transactions ?? [])
@@ -34,7 +36,7 @@ export function JournalTab({ entity, entities }: { entity: string; entities: str
               entity's full journal arrives when the server's change_feed takes an entity.
             </p>
           )}
-          <JournalTable transactions={txs} empty={byEntity ? "No transaction changed this entity." : "None of the newest 200 transactions changed it."} />
+          <JournalTable labels={labels} transactions={txs} empty={byEntity ? "No transaction changed this entity." : "None of the newest 200 transactions changed it."} />
         </>
       )}
     </div>

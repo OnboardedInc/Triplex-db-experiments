@@ -3,9 +3,8 @@ import { useState } from "react";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type { ToolCall } from "@/hooks/use-tool";
-import { json } from "@/lib/format";
+import { formatDatalog } from "@/lib/datalog-format";
 import { sentenceFor } from "@/lib/sentences";
 
 export function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
@@ -28,7 +27,7 @@ export function CopyButton({ text, label = "Copy" }: { text: string; label?: str
 
 export function AskAssistant({ call, sentence }: { call: ToolCall; sentence?: string }) {
   const said = sentence ?? sentenceFor(call);
-  const text = json({ tool: call.name, arguments: call.input });
+  const text = formatDatalog({ tool: call.name, arguments: call.input });
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -44,9 +43,9 @@ export function AskAssistant({ call, sentence }: { call: ToolCall; sentence?: st
           </div>
           <div>
             <div className="text-muted-foreground mb-1 text-xs font-medium">It calls</div>
-            <ScrollArea className="bg-muted max-h-56 rounded-md">
+            <div className="bg-muted max-h-56 overflow-auto rounded-md">
               <pre className="p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap">{text}</pre>
-            </ScrollArea>
+            </div>
           </div>
           <div className="flex justify-end gap-2">
             <CopyButton text={said} label="Copy sentence" />

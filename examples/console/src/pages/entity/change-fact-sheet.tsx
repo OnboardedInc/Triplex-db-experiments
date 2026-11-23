@@ -1,5 +1,6 @@
 // [DX-CON1] The Change a fact sheet (DESIGN.md 5.5, 8.8): change from now, correct from a past date, or retire; the
 // Transaction tab shows the exact tool call and the operations it commits before anything is sent.
+import { formatDatalog } from "@/lib/datalog-format";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { Controller, useForm } from "react-hook-form";
@@ -11,7 +12,6 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/c
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
@@ -79,9 +79,9 @@ export function ChangeFactSheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, attribute, entity]);
   const v = form.watch();
+  const [tab, setTab] = useState("form");
   const toolName = v.action === "retire" ? "retire_fact" : v.when === "past" ? "correct_past_value" : "save_facts";
   const save = useToolMutation(toolName);
-  const [tab, setTab] = useState("form");
   const who = byEntity ? { entity } : { account: target.account, subject: target.subject, kind };
   const input: Record<string, unknown> =
     toolName === "save_facts"
@@ -109,20 +109,21 @@ export function ChangeFactSheet({
   }, [v.action, v.attribute, v.value, v.when, v.validFrom, own, entity]);
 
   const supported = byEntity || Boolean(kind);
-  const submit = form.handleSubmit((values) => {
-    void values;
-    save.mutate(input, {
-      onSuccess: (answer) => {
-        receiptToast(answer as never, v.action === "retire" ? "Retired" : v.when === "past" ? "Corrected" : "Changed", () => navigate("/journal"));
-        onOpenChange(false);
-      },
-    });
-  });
+  const submit = form.handleSubmit(
+    () =>
+      save.mutate(input, {
+        onSuccess: (answer) => {
+          receiptToast(answer as never, v.action === "retire" ? "Retired" : v.when === "past" ? "Corrected" : "Changed", () => navigate("/journal"));
+          onOpenChange(false);
+        },
+      }),
+    () => setTab("form"),
+  );
   const err = save.error instanceof ToolError ? save.error : null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+      <SheetContent className="w-full overflow-y-auto data-[side=right]:sm:max-w-xl">
         <SheetHeader>
           <SheetTitle>Change a fact</SheetTitle>
           <SheetDescription className="font-mono text-xs">{shortId(entity)}</SheetDescription>
@@ -245,15 +246,15 @@ export function ChangeFactSheet({
             <TabsContent value="transaction" className="mt-4 space-y-3">
               <div>
                 <div className="text-muted-foreground mb-1 text-xs font-medium">The tool call the console sends</div>
-                <ScrollArea className="bg-muted max-h-48 rounded-md">
-                  <pre className="p-3 font-mono text-xs whitespace-pre-wrap">{json({ tool: toolName, arguments: input })}</pre>
-                </ScrollArea>
+                <div className="bg-muted max-h-48 overflow-auto rounded-md">
+                  <pre className="p-3 font-mono text-xs whitespace-pre-wrap">{formatDatalog({ tool: toolName, arguments: input })}</pre>
+                </div>
               </div>
               <div>
                 <div className="text-muted-foreground mb-1 text-xs font-medium">The operations it commits, in one transact</div>
-                <ScrollArea className="bg-muted max-h-80 rounded-md">
-                  <pre className="p-3 font-mono text-xs whitespace-pre-wrap">{json(ops)}</pre>
-                </ScrollArea>
+                <div className="bg-muted max-h-80 overflow-auto rounded-md">
+                  <pre className="p-3 font-mono text-xs whitespace-pre-wrap">{formatDatalog(ops)}</pre>
+                </div>
                 <p className="text-muted-foreground mt-1 text-xs">
                   Computed in the console from the facts on screen. The tool computes the same operations from the entity's exact current state and refuses if
                   another change reached the entity first.
@@ -279,7 +280,7 @@ export function ChangeFactSheet({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="submit" form="change-fact" disabled={save.isPending || !supported} data-testid="commit-change">
+          <Button onClick={() => void submit()} disabled={save.isPending || !supported} data-testid="commit-change">
             {save.isPending && <Spinner />}
             Commit
           </Button>

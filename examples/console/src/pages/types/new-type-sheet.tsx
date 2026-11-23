@@ -1,5 +1,6 @@
 // [DX-CON1] New entity type (DESIGN.md 8.5): define a type and commit a release, seeing what the release will contain
 // first. Edit type opens the same sheet filled in. The console never says "Publish".
+import { formatDatalog } from "@/lib/datalog-format";
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
@@ -131,7 +132,7 @@ export function NewTypeSheet({ init, onClose }: { init: NewTypeInit | null; onCl
 
   return (
     <Sheet open={Boolean(init)} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
+      <SheetContent className="w-full overflow-y-auto data-[side=right]:sm:max-w-2xl">
         <SheetHeader>
           <SheetTitle>{init?.edit ? `Edit ${init.name}` : "New entity type"}</SheetTitle>
           <SheetDescription>Define a type and commit it as a new immutable configuration release.</SheetDescription>
@@ -292,7 +293,7 @@ export function NewTypeSheet({ init, onClose }: { init: NewTypeInit | null; onCl
             </div>
             <details className="text-xs">
               <summary className="text-muted-foreground cursor-pointer">The tool call</summary>
-              <pre className="bg-muted mt-2 overflow-x-auto rounded-md p-3 font-mono">{json({ tool: "define_entity_type", arguments: input })}</pre>
+              <pre className="bg-muted mt-2 overflow-x-auto rounded-md p-3 font-mono">{formatDatalog({ tool: "define_entity_type", arguments: input })}</pre>
             </details>
             {define.slow && <p className="text-muted-foreground text-sm">Committing on the general writer.</p>}
             {err && /AttributeTypeFixed|Reserved|UnknownType|InvalidInput|Refused/.test(err.code) ? (

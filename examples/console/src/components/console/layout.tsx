@@ -99,13 +99,13 @@ export function Shell() {
             <AppSidebar />
             <SidebarInset className="min-w-0">
               <Header onSearch={() => setPalette(true)} />
-              <main className="min-w-0 flex-1 p-4 md:p-6">
+              <div id="screen" className="min-w-0 flex-1 p-4 md:p-6">
                 <Outlet />
-              </main>
+              </div>
             </SidebarInset>
             <CommandPalette open={palette} onOpenChange={setPalette} />
             <GlobalSheets />
-            <Toaster richColors={false} closeButton />
+            <Toaster position="top-center" closeButton />
           </SidebarProvider>
         </TooltipProvider>
       </SheetsProvider>

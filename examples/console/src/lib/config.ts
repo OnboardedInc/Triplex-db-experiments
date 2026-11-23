@@ -3,7 +3,7 @@ import { useQueries } from "@tanstack/react-query";
 import { callTool, type Answer } from "./api";
 import { useTool } from "@/hooks/use-tool";
 import { useTools } from "./catalogue";
-import type { DescribeType, ListTypes } from "./types";
+import type { DescribeType, ListReleases, ListTypes } from "./types";
 
 export function useTypes() {
   const tools = useTools();
@@ -37,3 +37,10 @@ export const valueTypeWords: Record<string, string> = {
 export const RESERVED_ATTRIBUTE = /^:(_|subject\/|tenant\/|triplex|f\/|db\/|console\/)/;
 export const LOADER_PREFIXES = ["pl", "wk", "i9", "sec", "doc", "page", "directory"];
 export const kebab = (name: string) => name.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+
+/** Release ID to label, for journal rows that name the release a write was pinned to. */
+export function useReleaseLabels() {
+  const tools = useTools();
+  const q = useTool<ListReleases>("list_releases", { limit: 50 }, { enabled: tools.has("list_releases") });
+  return new Map((q.data?.releases ?? []).map((r) => [r.id, r.label]));
+}

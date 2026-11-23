@@ -8,13 +8,13 @@ import { day, n, shortId, time } from "@/lib/format";
 import type { Transaction } from "@/lib/types";
 import { DataTable, Mono } from "./data-table";
 
-function releaseOf(tx: Transaction) {
+function releaseOf(tx: Transaction, labels?: Map<string, string>) {
   if (tx.release) return tx.release.label ?? tx.release.id.slice(0, 14);
-  if (tx.configSnapshot) return tx.configSnapshot.slice(0, 14);
+  if (tx.configSnapshot) return labels?.get(tx.configSnapshot) ?? tx.configSnapshot.slice(0, 14) + "...";
   return null;
 }
 
-export function JournalTable({ transactions, empty }: { transactions: Transaction[]; empty?: string }) {
+export function JournalTable({ transactions, empty, labels }: { transactions: Transaction[]; empty?: string; labels?: Map<string, string> }) {
   const columns: ColumnDef<Transaction, unknown>[] = [
     { accessorKey: "position", header: "Position", cell: (c) => <span className="tabular-nums">{n(c.row.original.position)}</span> },
     { accessorKey: "recordedAt", header: "Record time", cell: (c) => <span className="tabular-nums whitespace-nowrap">{time(c.row.original.recordedAt)}</span> },
@@ -28,7 +28,7 @@ export function JournalTable({ transactions, empty }: { transactions: Transactio
       id: "release",
       header: "Release",
       cell: (c) => {
-        const r = releaseOf(c.row.original);
+        const r = releaseOf(c.row.original, labels);
         if (!("configSnapshot" in c.row.original) && !("release" in c.row.original)) return null;
         return r ? (
           <Link to="/configuration" className="font-mono text-xs underline-offset-4 hover:underline" onClick={(e) => e.stopPropagation()}>

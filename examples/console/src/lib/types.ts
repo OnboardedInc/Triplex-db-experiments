@@ -67,7 +67,15 @@ export type Feed = {
   transactions: Transaction[];
   next: number | null;
   compatibility?: string;
-  summary?: { subjects: { account: string; subject: number; transactions: number; facts: number; lastPosition: number }[]; transactionsRead: number; stoppedEarly?: boolean };
+  nextBefore?: number | null;
+};
+export type FeedSummary = {
+  after: number;
+  transactionsRead: number;
+  pages: number;
+  complete: boolean;
+  subjectsChanged: number;
+  subjects: { subject: string; account: string | null; root: string | null; transactions: number; factsChanged: number; lastPosition: number }[];
 };
 export type HistoryRow = {
   value: unknown;

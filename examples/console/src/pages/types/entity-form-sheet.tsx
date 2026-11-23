@@ -1,5 +1,6 @@
 // [DX-CON1] The Entity form (DESIGN.md 5.5, 8.8): generated from the type's description, one control per value type,
 // the reference combobox, and a Transaction tab with the exact request before it is sent (create_entity).
+import { formatDatalog } from "@/lib/datalog-format";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { CheckIcon, ChevronsUpDownIcon, PlusIcon, XIcon } from "lucide-react";
@@ -11,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
@@ -237,7 +237,7 @@ export function EntityFormSheet({ init, onClose }: { init: EntityFormInit | null
 
   return (
     <Sheet open={Boolean(init)} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+      <SheetContent className="w-full overflow-y-auto data-[side=right]:sm:max-w-xl">
         <SheetHeader>
           <SheetTitle>
             New {init?.type} in {account}
@@ -334,15 +334,15 @@ export function EntityFormSheet({ init, onClose }: { init: EntityFormInit | null
             <TabsContent value="transaction" className="mt-4 space-y-3">
               <div>
                 <div className="text-muted-foreground mb-1 text-xs font-medium">The tool call the console sends</div>
-                <ScrollArea className="bg-muted max-h-56 rounded-md">
-                  <pre className="p-3 font-mono text-xs whitespace-pre-wrap">{json({ tool: "create_entity", arguments: input })}</pre>
-                </ScrollArea>
+                <div className="bg-muted max-h-56 overflow-auto rounded-md">
+                  <pre className="p-3 font-mono text-xs whitespace-pre-wrap">{formatDatalog({ tool: "create_entity", arguments: input })}</pre>
+                </div>
               </div>
               <div>
                 <div className="text-muted-foreground mb-1 text-xs font-medium">The transaction it commits</div>
-                <ScrollArea className="bg-muted max-h-96 rounded-md">
-                  <pre className="p-3 font-mono text-xs whitespace-pre-wrap">{json(ops)}</pre>
-                </ScrollArea>
+                <div className="bg-muted max-h-96 overflow-auto rounded-md">
+                  <pre className="p-3 font-mono text-xs whitespace-pre-wrap">{formatDatalog(ops)}</pre>
+                </div>
                 <p className="text-muted-foreground mt-1 text-xs">
                   Computed in the console from the type. The server writes the facts with their entity type and replaces the type's counter in one transaction,
                   pinned to the release live points to; the counter's observed state is the precondition, so two creates at once cannot take one number.
