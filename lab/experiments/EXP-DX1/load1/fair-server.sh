@@ -5,7 +5,7 @@ set -euo pipefail
 [[ $(uname -s) == Linux && $# -ge 11 && -r ${DX_V01_BUILD_RECEIPT:?} ]]
 source_commit=$1 image=$2 image_pin=$3 transfer_pin=$4 template=$5 output=$6
 shift 6
-prepared= wal= rolling= width=32 credits=1 policy=fair memory_index=
+prepared= wal= rolling= width=32 credits=1 policy=fair memory_index= tx_cache= cells=
 while (( $# )); do
   [[ $# -ge 2 ]]
   case $1 in
@@ -16,6 +16,8 @@ while (( $# )); do
     --import-credits) credits=$2 ;;
     --import-policy) policy=$2 ;;
     --memory-index) memory_index=$2 ;;
+    --tx-cache) tx_cache=$2 ;;
+    --cells) cells=$2 ;;
     *) exit 2 ;;
   esac
   shift 2
@@ -29,12 +31,23 @@ if [[ -n $memory_index ]]; then
   [[ $memory_index =~ ^[0-9]+[mg],[0-9]+[mg]$ && $policy == yield && $width != *,* ]]
   export DX_LOAD2_MEMORY_INDEX=$memory_index
 fi
+# [DX-LOAD2] Why: the heap arm runs PREP1's cache32 transactor memory; a short slot runs one control and one import cell.
+limit=57m
+if [[ -n $tx_cache ]]; then
+  [[ $tx_cache == 32768 && $policy == yield && $width != *,* && -z $memory_index ]]
+  export DX_LOAD2_TX_CACHE=$tx_cache
+fi
+if [[ -n $cells ]]; then
+  [[ $cells == control,import && $policy == yield && $width != *,* ]]
+  export DX_LOAD2_CELLS=$cells
+  limit=38m
+fi
 [[ -f /var/tmp/triplex-bm1/dx-bm1-day.lock ]]
 exec 9<>/var/tmp/triplex-bm1/dx-bm1-day.lock
 flock -xn 9
 export DX_BARE_METAL=1 TRIPLEX_DATOMIC_LAYOUT=lean TRIPLEX_DATOMIC_FAST_PATHS=save-wire
 export TX2_SWEEP_STRICT=1 TX2_W0_POINT_JOURNAL=1 TX2_W0_RESTORE_INDEXED_JOURNAL=1
 export DX_SERVER_RECORD_TIME=1 DX_STRICT_RECORD_CLOCKS=1
-timeout --signal=TERM --kill-after=60s 57m node --max-old-space-size=8192 --experimental-transform-types \
+timeout --signal=TERM --kill-after=60s "$limit" node --max-old-space-size=8192 --experimental-transform-types \
   lab/experiments/EXP-DX1/actv-lazy/join/held-server.ts "$source_commit" "$image" "$image_pin" "$transfer_pin" \
   "$template" "$prepared" "$wal" "$output" --fair-import "$rolling" "$width" "$credits" ${extra[@]+"${extra[@]}"}

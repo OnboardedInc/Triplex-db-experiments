@@ -36,7 +36,7 @@ type Arm = { mode: CreditMode; width: number; label: string; yieldToLive: boolea
 // [DX-LOAD2] Why: the yield arms keep one matched quiet/control/import triple per frame width on one copy.
 // Rejected: comparing a yield arm against another arm's baseline taken earlier on a smaller database.
 export function fairArms(rolling: CreditMode, widths: readonly number[], policy: ImportPolicy, suffix = ""): Arm[] {
-  assert(/^(?:-mi[0-9]+[mg])?$/.test(suffix) && (suffix === "" || policy === "yield"));
+  assert(/^(?:-mi[0-9]+[mg]|-c32)?$/.test(suffix) && (suffix === "" || policy === "yield"));
   assert(widths.length >= 1 && new Set(widths).size === widths.length);
   for (const width of widths) importFrame("validation", width, 0);
   if (policy === "fair") {
@@ -528,6 +528,7 @@ export async function runFair(
   policy: ImportPolicy = "fair",
   toyBusy = 9,
   suffix = "",
+  quietCell = true,
 ) {
   assert(/^rolling(?:6|8|12|16)$/.test(rolling));
   assert(Number.isInteger(limit) && limit >= 1 && limit <= 5);
@@ -542,8 +543,12 @@ export async function runFair(
   let head = seed.scope.cut;
   for (const spec of arms) {
     const seconds = toy ? 6 : 300;
-    const alone = await arm(out, source, peer, seed, spec, "quiet", head, seconds, limit, toy, toyBusy);
-    const control = await arm(out, source, peer, seed, spec, "control", alone.terminal, seconds, limit, toy, toyBusy);
+    // [DX-LOAD2] Why: a 40-minute slot fits one control and one import cell; the quiet account's bar uses its control.
+    // Rejected: dropping the matched control (every ratio needs a baseline on the same copy and memory).
+    const alone = quietCell
+      ? await arm(out, source, peer, seed, spec, "quiet", head, seconds, limit, toy, toyBusy)
+      : undefined;
+    const control = await arm(out, source, peer, seed, spec, "control", alone?.terminal ?? head, seconds, limit, toy, toyBusy);
     const loaded = await arm(out, source, peer, seed, spec, "import", control.terminal, seconds, limit, toy, toyBusy);
     head = loaded.terminal;
     const summary = loaded.windows.map((window, i) => ({
@@ -551,7 +556,7 @@ export async function runFair(
       until: window.until,
       queryableFacts: window.queryable,
       factsPerSecond: window.factsPerSecond,
-      quietAlone: alone.windows[i]!.accounts[0],
+      quietAlone: alone?.windows[i]!.accounts[0] ?? null,
       accounts: window.accounts.map((account, a) => {
         const baseline = control.windows[i]!.accounts[a]!;
         assert.equal(account.account, baseline.account);
@@ -585,7 +590,7 @@ export async function runFair(
       summary,
     });
     if (toy) {
-      for (const cell of [alone, control, loaded])
+      for (const cell of [alone, control, loaded].filter((c) => c !== undefined))
         for (const window of cell.windows)
           for (const account of window.accounts) {
             assert.equal(account.save.count, account.offeredSaves);

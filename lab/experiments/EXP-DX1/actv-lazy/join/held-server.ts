@@ -58,10 +58,23 @@ const slot = "tx2-dxscale1-publish-" + randomUUID().slice(0, 12).replace("-", ""
 // [DX-LOAD2] Why: the fewer-index-jobs arm raises only the memory-index threshold and its maximum, nothing else.
 // Rejected: changing heap, object cache or cores in the same arm (one variable per arm).
 const memoryIndex = process.env.DX_LOAD2_MEMORY_INDEX;
+// [DX-LOAD2] Why: tonight's yield-32 tail was ZGC allocation stalls on the 24 GiB heap, in the control as well;
+// this option runs PREP1's cache32 memory (48 GiB heap, 32 GiB cache, 8 GiB direct, 60 GiB container), nothing else.
+// Rejected: a heap-only change (the cache32 shape is the one measured with no stalls in 12 cells).
+const txCache32 = process.env.DX_LOAD2_TX_CACHE === "32768";
+assert(process.env.DX_LOAD2_TX_CACHE === undefined || txCache32);
+const quietCell = process.env.DX_LOAD2_CELLS !== "control,import";
+assert(process.env.DX_LOAD2_CELLS === undefined || !quietCell);
+if (txCache32) {
+  assert(fair && importPolicy === "yield" && !width!.includes(",") && !process.env.DX_LOAD2_MEMORY_INDEX);
+  const total = Number(/^MemTotal:\s+(\d+) kB$/m.exec(fs.readFileSync("/proc/meminfo", "utf8"))?.[1]);
+  assert(total >= 89 * 1024 * 1024, "The 32 GiB cache needs 79 GiB of role caps plus 10 GiB of host headroom");
+}
 const baseProfile = launchProfile("server", {
   jvm: "j21-g1", txJvm: "j25-zgc", ...(fair ? { writeJvm: "j25-zgc" as const } : {}),
+  ...(txCache32 ? { txCacheMiB: 32768 as const } : {}),
 });
-let indexSuffix = "";
+let indexSuffix = txCache32 ? "-c32" : "";
 if (memoryIndex) {
   const [threshold, max] = memoryIndex.split(",");
   const bytes = (v: string) => Number(v.slice(0, -1)) * (v.endsWith("g") ? 1024 : 1);
@@ -209,7 +222,7 @@ try {
   if (fair) {
     const { runFair } = await import("../../load1/fair-campaign.ts");
     await runFair(out, source, peer, seed, rolling as CreditMode, width!.split(",").map(Number), Number(credits),
-      false, (importPolicy ?? "fair") as "fair" | "yield", 9, indexSuffix);
+      false, (importPolicy ?? "fair") as "fair" | "yield", 9, indexSuffix, quietCell);
   } else await runHeld(out, source, peer, seed);
   assert.deepEqual(
     [fs.statSync(template).dev, fs.statSync(template).ino, control(template)],

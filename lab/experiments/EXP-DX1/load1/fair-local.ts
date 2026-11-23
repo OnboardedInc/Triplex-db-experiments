@@ -50,11 +50,12 @@ export async function fairLocal(stack: Stack) {
     },
     seed,
     "rolling6",
-    memoryIndex ? [32] : policy === "yield" ? [32, 40] : 32,
+    memoryIndex || process.env.DX_LOAD2_CELLS ? [32] : policy === "yield" ? [32, 40] : 32,
     2,
     true,
     policy,
     toyBusy,
     memoryIndex ? "-mi" + memoryIndex.split(",")[0] : "",
+    process.env.DX_LOAD2_CELLS !== "control,import",
   );
 }
