@@ -4813,3 +4813,19 @@ Source: `origin/exp/DX-SCALE1-deep-accounts` `182fb4482`, `scale1/V01-AGED.md`; 
 - **Production tape, repair:** a commit over 256 assertions now takes the general identity whole, as today's product does for any commit of more than three facts (`origin/exp/DX-REAL2-production-tape` `092a76916` for shape S on fresh, `32ca969bb` for 1 billion). On the tape, facts per save are 6 at the median, 72 to 75 at p90, 103 at p99; 1.2 to 1.5% of saves exceed 256 assertions.
 - **Failover, repaired pair** (`b03e806fd`): role A ready 15:38:39 (after one 3-second refusal on a stale `tun42` from the morning), role B started 15:38:59; preflight passed; the direct bulk probe ran at 683.2 MiB/s (the tunnel 61.4 MiB/s); case b-235 started about 15:39.
 - **Filler:** the import arm with fewer index jobs (`0f12be1de`) ran on the second machine 15:17 to 15:38; reading to follow.
+
+### 2026-11-23 16:01 local: FIRST FULL-SIZE FAILOVER MEASUREMENT (policy B at 235/s): zero acknowledged saves lost; import with fewer index jobs (4 agents running)
+
+- **Failover case b-235** (two machines, fresh full-size seed, repaired pair `b03e806fd`; `origin/exp/DX-BM1-bare-metal` `0b5f5096e`, `bm1/FAILOVER-READING.md`):
+
+  | Measure | Result | Bar or forecast |
+  | --- | --- | --- |
+  | Acknowledged saves lost | 0 (2,830 acknowledged before the fault, all present) | zero |
+  | First read after the fault | 16.5 ms | within 0.35 s |
+  | Longest read gap | 47 ms; 0 of 30,172 reads missed | within 1 s |
+  | Detect, fence, promote | 1.5 s | |
+  | First protected save after the fault | 603.4 s | forecast 4 to 9 min; the 60 s bar is missed by design under policy B |
+
+  The 603 s is the replacement's local copy of the 126 GB seed (131 s) plus its SHA-256 check (452 s); catch-up over the direct path took 460 ms to reach synchronous mode. Without re-hashing an already verified staged seed it would be about 2.5 minutes. Set-up: both cold copies in parallel, each side about 594 s (copy 133 to 139 s, hash 454 to 458 s) against a 3 to 8 minute forecast; the standby synchronous with zero lag 141 ms after asking; autovacuum off. Case a-235 started about 16:00.
+- **Import with fewer index jobs** (second machine, fresh template, `0f12be1de`: live-first, 32-fact frames, 48 GiB heap, 32 GiB cache, memory index 512m; `origin/exp/DX-BM1-bare-metal` `5e53ce5de`): 6 index adoptions per 300 s (11 before), no allocation stall on any thread, busy second-half p99 36.4 ms (forecast 35 to 55; 45.1 ms with 256m), quiet 32.5 ms, 3,671 facts/s whole and 3,454 in the second half (above the 3,300 to 3,550 forecast), worst second-half read ratio 1.46 times. Priority 8: rate, quiet account and reads met; busy saves 3.05 times a 12.9 ms baseline, so the strict 1.5 times bar is still missed while the value is inside the 50 ms save bar. The larger memory index lengthens the log to replay at a restart (forecast about 370 MB against 200 MB): not measured.
+- **Builders started:** widening the per-subject writer to real saves as a default-off option, with a toy comparison against the general writer first (`OPUS-W2-wide-saves.md`); merging the pinned-read options, the production tape and the demo onto the one branch.
