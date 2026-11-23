@@ -4843,3 +4843,18 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Not measured:** policy A's second-failure check (how many one-copy saves are absent if the survivor is also lost; forecast 700 to 2,050) stopped because the step that reads the fenced old disk tried to reach the transactor the first fault had killed. A replacement arriving with an empty disk (a base backup of 126 GB over the network; the direct path measured 683.2 MiB/s). Policy C. Failover during a first vacuum pass. Policies at 50/s (the optional cases were stopped by the orchestrator to return both machines to the 1 billion runs).
 - **Set-up finding:** each side's cold copy plus hash took about 594 s in parallel (copy 133 to 139 s, hash 454 to 458 s). Policy B's 603 s is the same copy and hash repeated for the replacement; without re-hashing an already verified seed it would be about 2.5 minutes.
 - **Next:** server 2 runs the pinned-read fix pair at 1 billion (`dc34aa18d`), then the `server-32` card, the owner head pair and a rerun of the demo proof; the second machine runs the production-shaped tape at 1 billion (`32ca969bb`), shape S on fresh, the owner head pair on fresh and the start-up read.
+
+### 2026-11-23 16:46 local: PINNED-READ FIX CONFIRMED AT 1 BILLION: 19 to 468 reads/s at the old pin, zero wrong values; option A on the roadmap (6 agents running)
+
+- **Pinned pair at 1 billion** (server 2, `dc34aa18d`, one reader core, 60 s per step, old-pin reads checked against the seed's value; 16:24 to 16:45):
+
+  | Pin | Options | 1 seat | 16 seats | 256 seats |
+  | --- | --- | --- | --- | --- |
+  | 87,002 (28.2 million positions behind the head) | off | 19.37/s, p50 41.73 ms | 19.50/s, p50 782 ms | 20.20/s, p50 12.58 s |
+  | 87,002 | both on | 467.92/s, p50 1.37 ms | 478.92/s, p50 27.14 ms | 478.80/s, p50 516.10 ms |
+  | head minus 1,000 | off | 409/s, p50 1.53 ms | 310/s | 283/s |
+  | head minus 1,000 | both on | 770.67/s, p50 1.06 ms | 612.97/s | 534.72/s |
+
+  Zero wrong values and zero errors in all 12 steps; with the options on 98.0 to 99.5% of old-pin reads took the current route. The forecast (400 to 700/s at one seat with the options on) held. What remains for priority 1 (256 readers, p99 at or under 100 ms) is reader capacity: one core gives about 480 to 770 reads/s, so 256 seats wait about half a second. A tuned-reader arm (three cores, batching, both options) is requested for one more slot.
+- **Sam, about 16:45:** failover option B stays for version 0.1; option A goes on the roadmap for a future version; option C stays the plan for 1.0 (`lab/V0.1.md` on `main`, `4f003612b`). He asked whether a dashboard exists: a one-page subject inspector does, a dashboard does not; one is being built on the demo branch (summary, a bounded live load with the gateway's own timings, the live feed, one subject, and a table of recorded results).
+- **Running:** the production-shaped tape at 1 billion on the second machine (since 16:24); server 2 goes on to the `server-32` card.
