@@ -47,7 +47,9 @@ Time added to a restart counts against priority 9 (writes resume within 60 s). T
 
 One managed container: PostgreSQL, a transactor and an ordered numeric-owner subject writer. 500 people with 160 fields each, indexed into stored segments, 128 MiB transactor cache. Each arm saves 250 people (the active set), restarts the transactor and writer on the same storage, then saves the same 250 people and 50 never-touched people. Timings are diagnostic.
 
-**Passed on the sixth attempt** (`evidence/DX-JVM1/startup-read-06`, one ordinary heavy token, `selftest-1.log` SHA-256 `c775bcfd34010a1b6fb5e142b078bafe42d83e544cafa4f52820976663407d77`, `summary.json` `b6924f1b55c24a2dd526c73d3edbd164695ac787f5ae97b9c88de51b8d5cd488`). The staged reader, entry script and driver are byte-identical to this commit; only the summary check in `startup-mac.py` changed afterwards, as described below.
+**Passed again on the merged commit** `d2e888d4b` (one branch at `88d76e4f4` plus the repaired scope open; `evidence/DX-JVM1/startup-read-07`, clean tree, passing log `selftest-48.log` SHA-256 `51cc046d46c5f648a91bfbb4e0b7c2a59f584867aa4002eaeb91b1e7913e36f1`, `summary.json` `3fcff783396a34bd144f9c0ad25c21c285e01a94eb1ee082eee44270613b5e8b`; logs 1 to 47 are refusals while another builder held the slot). Same counts as below: storage gets per save on the saved people 0.936 without the read and 0.024 with it, 300 of 300 exact reads in each arm, both readers selected exactly 250 owners (transactor 254 segment loads in 8.6 s, write peer 144 in 4.6 s, diagnostic), no reader thread at or after admission, ready to admission 9.1 s.
+
+**First passed on the sixth attempt** (`evidence/DX-JVM1/startup-read-06`, one ordinary heavy token, `selftest-1.log` SHA-256 `c775bcfd34010a1b6fb5e142b078bafe42d83e544cafa4f52820976663407d77`, `summary.json` `b6924f1b55c24a2dd526c73d3edbd164695ac787f5ae97b9c88de51b8d5cd488`). The staged reader, entry script and driver are byte-identical to this commit; only the summary check in `startup-mac.py` changed afterwards, as described below.
 
 | After the restart, 250 saved people again plus 50 never-touched | No read | One-time read |
 | --- | ---: | ---: |
@@ -69,15 +71,27 @@ One managed container: PostgreSQL, a transactor and an ordered numeric-owner sub
 
 `startup-server.sh` is the cold-start runner's restart campaign. It uses the same lock, sender core, physical copy, build receipt, seed pins, write-options checks (including the `subjectFunction` check, see below), journal verification and cleanup as `cold-server.sh`. Each arm: copy the stopped directory, start the stack, play the tape's first 120 s at 394/s unmeasured, stop the three JVMs (PostgreSQL keeps running), start them, run the read in its arms, then time 300 s of the same tape. The tape is `writeTape(100_000, 394, 0, false, 420)`: 47,280 offers before the restart (9,402 people) and 118,200 after (14,207 people). Arms: `today`, `today-cache32`, `startup-read`, `startup-read-cache32`; the commands run the matched 32 GiB pair. The 32 GiB profile is PREP1's: 48 GiB ZGC heap, 8 GiB direct, 60 GiB container, index parallelism 1; PostgreSQL 8 GiB, writer 6 GiB, reader 5 GiB. About 18 minutes per arm at 430 million records and 22 at one billion (the 176 GB copy takes about 7).
 
-**Depends on the `subjectFunction` repair.** The write-options check is the same as `cold-server.ts` line 118, which stopped the Saturday cold trial before its first offer (`subjectFunction` null). The runner stops at the same place until that repair is on the one branch; carry it into `startup-server.ts` too.
+**Scope open, as repaired on the one branch** (`ef4513658`, [launch fixes](../int1/LAUNCH-FIXES.md)). The held copies were sealed by an older build and hold no ordered per-person function under this build's name, which stopped the Saturday cold trial at the write-options check. The runner uses the same `openColdWriter` as `cold-server.ts`: it opens the scope once before the traffic that precedes the restart (that open installs the function, at no logical position), and again after the restart in every arm, after the gateways answer and before the start-up read. Both opens are outside the timed 300-second window and inside stop-to-admission, the same in both arms; `observed.json` reports the second as `scopeOpenSeconds`, and `scope-open-*.json` records the function before and after.
+
+### Build once
+
+Build the published commit (the commit whose subject starts "Publish" on `exp/DX-JVM1-settings`) during staging, then run both commands from the build's checkout. The runner refuses a source or image that differs from the receipt.
+
+```sh
+COMMIT=<publish commit>
+BUILD=/var/tmp/triplex-jvm1-startup-build
+sudo "$(command -v node)" --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
+cd "$BUILD/repository"
+```
 
 ### Fresh copy, 430 million records
 
-Same inputs as the [cold-start command](SERVER.md#cold-first-full-load-window-at-235s), with a clean-build receipt for this commit.
+Same inputs as the [cold-start command](SERVER.md#cold-first-full-load-window-at-235s): the SCALE1 metadata directory and pins, the stopped full-size directory and its `global/pg_control` SHA-256, and the separate WAL mount. Two arms, about 18 minutes each; the runner's work cap is 46 minutes.
 
 ```sh
-DX_V01_BUILD_RECEIPT="$BUILD_RECEIPT" bash lab/experiments/EXP-DX1/jvm1/startup-server.sh \
-  "$(git rev-parse HEAD)" "$OUT" "$SEED_DIR" "$IMAGE_SHA256" "$TRANSFER_SHA256" \
+sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
+  bash lab/experiments/EXP-DX1/jvm1/startup-server.sh \
+  "$COMMIT" "$OUT" "$SEED_DIR" "$IMAGE_SHA256" "$TRANSFER_SHA256" \
   "$STOPPED_PGDATA" "$PG_CONTROL_SHA256" "$WAL_MOUNT" --credit-mode rolling6 --arms today-cache32,startup-read-cache32
 ```
 
@@ -85,13 +99,29 @@ DX_V01_BUILD_RECEIPT="$BUILD_RECEIPT" bash lab/experiments/EXP-DX1/jvm1/startup-
 
 The aged handoff is admitted exactly as DX-PREP1's `cache32-aged` mode at `cdc72d4d5` ([AGED-CACHE.md](https://github.com/OnboardedInc/Triplex-db-experiments/blob/d6e62fbe7/lab/experiments/EXP-DX1/prep1/AGED-CACHE.md)): the same `AGE_HANDOFF_JSON` and `AGE_HANDOFF_SHA256`, the same content checks, the live head must be AGE1's last save with its clock and claim, and every person the tape replaces has fields 0 to 2 checked at the aged head against the seed value or AGE1's replay bytes ([`startup-aged.ts`](startup-aged.ts), copied from `prep1/ceiling-seed.ts`). The source is the same held, stopped one-billion directory (`AGED_PGDATA_SOURCE`, never started; the harness copies it), with the database's original name. Same memory as `cache32-aged`. Needs about 200 GB free for the copy, 16 GiB on the WAL mount and at least 89 GiB `MemTotal`.
 
+Two arms, about 22 to 25 minutes each (the 176 GB copy takes about 7, and the predecessor check reads fields 0 to 2 of the tape's 15,838 people); the runner's work cap is 54 minutes.
+
 ```sh
-DX_V01_BUILD_RECEIPT="$BUILD_RECEIPT" bash lab/experiments/EXP-DX1/jvm1/startup-server.sh \
-  "$(git rev-parse HEAD)" "$OUT_1B" "$SEED_DIR" "$IMAGE_SHA256" "$TRANSFER_SHA256" \
-  "$AGED_PGDATA_SOURCE" "$(sha256sum < "$AGED_PGDATA_SOURCE/global/pg_control" | cut -d ' ' -f 1)" "$WAL_MOUNT" \
+sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
+  bash lab/experiments/EXP-DX1/jvm1/startup-server.sh \
+  "$COMMIT" "$OUT_1B" "$SEED_DIR" "$IMAGE_SHA256" "$TRANSFER_SHA256" \
+  "$AGED_PGDATA_SOURCE" "$(sudo sha256sum "$AGED_PGDATA_SOURCE/global/pg_control" | cut -d ' ' -f 1)" "$WAL_MOUNT" \
   --credit-mode rolling6 --arms today-cache32,startup-read-cache32 \
   --aged-bundle "$AGE_HANDOFF_JSON" --aged-sha256 "$AGE_HANDOFF_SHA256"
 ```
+
+### Why the no-read arm is so far below Saturday, and what the arm proves
+
+The restart campaign forecasts 0.37 storage gets per save in the no-read arm's first minute; Saturday's cold runs measured 1.15 to 1.24. Almost all of that gap is the tape, not the restart:
+
+- **Saturday's tape cycled through new people.** Its first 60 seconds held 17,309 distinct people in about 20,000 saves, with no repeat before second 33, so nearly every save was a first touch.
+- **This campaign's tape repeats a hot set.** `writeTape(100_000, 394, …)` gives 6,232 distinct people in the 23,640 offers of its first minute even from a cold start: 0.264 first touches per offer, which at 1.35 gets per first touch is the same 0.36 as the no-read arm's 0.37. Run cold from a copy, this tape's first minute would read about as little as the restart arm does.
+- **The restart itself does not lower the count.** After the restart both object caches are empty, so the no-read arm pays one storage read set per person on that person's first save, exactly as from a copy. Keeping PostgreSQL running and the 120 s of traffic before the restart make each of those reads cheaper (the blocks are in shared buffers or the page cache rather than on disk), not fewer.
+- **How much the log tail covers.** In the 120 s before the restart the tape saves 9,402 people, about five saves each. Of the 14,207 people saved in the timed 300 s, 7,771 (55%) were among them, and those people receive 89.3% of the timed window's saves (89.4% in the first minute, 89.3% afterwards; 89.5% for the nine busy accounts). The other 10.7% of saves go to 6,436 people the log tail does not name; they stay cold in both arms.
+
+**What the arm proves.** That a restart in the middle of traffic whose saves mostly continue with the same people (here 89%) gets its first minute back to near the fifth minute's read rate, at a stated read time inside or outside the 60-second restart bar. That covers the cases where traffic after a restart is the traffic before it: retries and queued saves after an outage (the webhook storm of scenario 3), forms in progress, the fixed workload's active set (half of reads go to people written in the previous 60 s).
+
+**What it does not prove.** It says nothing about a restart followed by traffic for people who were not active just before it: a new import, a different account waking up, a batch that starts after the restart. Those people are first touches in both arms, and the step does nothing for them; on Saturday's tape every first-minute save was such a person. How much of real post-restart traffic goes to people saved in the preceding minutes is a property of Onboarded's workload that this trial does not measure; the step's benefit is that share of the restart's extra reads, and no more.
 
 ### Predictions, written before any run
 
