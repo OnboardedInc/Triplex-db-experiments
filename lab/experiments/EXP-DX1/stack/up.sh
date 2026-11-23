@@ -277,6 +277,22 @@ fi
 [[ $subject_ordered_ids =~ ^[01]$ && ( $subject_ordered_ids == 0 || ( $subject_save == 1 && $subject_prefetch == 0 ) ) ]]
 [[ $subject_narrow_revision =~ ^[01]$ && $subject_reuse_predecessor =~ ^[01]$ ]] || exit 2
 [[ ( $subject_narrow_revision == 0 && $subject_reuse_predecessor == 0 ) || ( $subject_ordered_ids == 1 && $subject_numeric_owner == 1 ) ]] || exit 2
+prep_pgdata=${DX_PREP1_PGDATA:-}
+prep_wal=${DX_PREP1_SCALE_WAL_DIR:-}
+if [[ -n $prep_pgdata ]]; then
+  [[ ${DX_BARE_METAL:-0} == 1 && ${DX_PREP1_SERVER:-0} == 1 && ${DX_PREP1_CAMPAIGN:-} =~ ^(ceiling|scale|rolling)$ &&
+     $prefix =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(ceiling|scale-(base|cache|wal-zgc)|barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12))-s$ && -d $prep_pgdata && $prep_pgdata == /* &&
+     $prep_pgdata != *[,\"$'\n']* && -z $seed_volume && -z ${DX_PREP1_DUMP:-} && -z ${DX_JVM1_PG_RESTORE:-} &&
+     -z ${DX_BM1_WAL_MOUNT:-} && ${DX_BM1_WAL_AB:-0} == 0 ]]
+  [[ ${DX_PREP1_SEED_SHA:?} =~ ^[a-f0-9]{64}$ && ${DX_WRITE_OPTIONS_ATTEMPT:?} =~ ^[a-f0-9-]{36}$ ]]
+fi
+if [[ ( ${DX_PREP1_CAMPAIGN:-} == scale && $prefix == *-scale-wal-zgc-s ) || ${DX_PREP1_CAMPAIGN:-} == rolling ]]; then
+  [[ -n $prep_pgdata && $prep_wal == /* && $prep_wal != *[,\"$'\n']* && ${prep_wal##*/} == "$prefix" &&
+     -d $prep_wal && ! -L $prep_wal &&
+     $(findmnt -nro SOURCE --mountpoint "$(dirname "$prep_wal")") == "${DX_PREP1_ROLLING_WAL_DEVICE:-/dev/nvme1n1}" ]]
+else
+  [[ -z $prep_wal ]]
+fi
 stack_labels=()
 tx_java=$(node "$jvm_tool" tx "$tx" "$tx_java")
 gw_w_java=$(node "$jvm_tool" gw-w "$gw_w" "$gw_w_java")
@@ -284,6 +300,11 @@ gw_r_java=$(node "$jvm_tool" gw-r "$gw_r" "$gw_r_java")
 peer_major=$(node "$runtime_tool" major)
 tx_major=${DX_TX_JAVA:-$peer_major}
 write_major=${DX_GW_WRITE_JAVA:-$peer_major}
+if [[ ${DX_PREP1_TAIL_TX_ZGC:-0} == 1 ]]; then
+  [[ ${DX_BARE_METAL:-0} == 1 && $peer_major == 21 && ${DX_PREP1_SERVER:-0} == 1 &&
+     ( $prefix =~ -tail-(zgc|combined)-s$ || ($prefix == *-scale-wal-zgc-s && -n $prep_wal) ) ]]
+  tx_major=25
+fi
 peer_image=$(node "$runtime_tool" image)
 role_image() {
   if [[ $1 == "$peer_major" ]]; then
@@ -344,6 +365,12 @@ if [[ -n $prepared_pg ]]; then
       ! -e $prepared_pg/postmaster.pid && $(readlink "$prepared_pg/pg_wal") == /wal ]]
   pg_mount=(--mount "type=bind,source=$prepared_pg,target=/var/lib/postgresql/data")
 fi
+# [DX-PREP1] Why: PREP1's stopped-copy campaigns bind their own owned WAL directory.
+# Rejected: combining it with the launcher's --wal-dir or BM1's WAL mount in one stack.
+if [[ -n $prep_wal ]]; then
+  [[ -z $wal_dir && -z $prepared_pg ]] || exit 2
+  wal_mount=(--mount "type=bind,source=$prep_wal,target=/wal")
+fi
 if [[ -n ${DX_BM1_WAL_MOUNT:-} ]]; then
   [[ -z $wal_dir ]]
   [[ ${DX_BARE_METAL:-0} == 1 && $prefix =~ ^tx2-dxt1-bm1-[a-z0-9]+-wal-ssd$ && $publish == false && -z $seed_volume ]]
@@ -375,6 +402,18 @@ if [[ -n $wal_dir ]]; then
   fi
   wal_mount=(-e POSTGRES_INITDB_WALDIR=/wal --mount "type=bind,source=$wal_dir,target=/wal")
 fi
+if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then
+  [[ ${DX_BARE_METAL:-0} == 1 && $prefix =~ ^tx2-dxprep1-[a-f0-9]{8}-1-tail-(control|wal|zgc|fair|combined)-s$ && -z $seed_volume && ${DX_PREP1_SERVER:-0} == 1 ]]
+  [[ -z ${DX_BM1_WAL_MOUNT:-} && ${DX_BM1_WAL_AB:-0} == 0 ]]
+  if [[ $prefix =~ -tail-(wal|combined)-s$ ]]; then
+    [[ $(findmnt -nro SOURCE --mountpoint "${DX_PREP1_TAIL_WAL_MOUNT:?}") == /dev/nvme1n1 ]]
+    wal_dir=$DX_PREP1_TAIL_WAL_MOUNT/$prefix
+    [[ -d $wal_dir && ! -L $wal_dir && -z $(ls -A "$wal_dir") ]]
+    wal_mount=(-e POSTGRES_INITDB_WALDIR=/wal --mount "type=bind,source=$wal_dir,target=/wal")
+  else
+    [[ -z ${DX_PREP1_TAIL_WAL_MOUNT:-} ]]
+  fi
+fi
 for role in pg tx gw-w gw-r extract; do
   if docker container inspect "$prefix-$role" >/dev/null 2>&1; then echo "container already exists: $prefix-$role" >&2; exit 2; fi
 done
@@ -405,6 +444,7 @@ pin_role() {
 }
 tx_image=$(pin_role "$tx_major" "$tx_image" "$attempt/config/tx-java-image.txt")
 write_image=$(pin_role "$write_major" "$write_image" "$attempt/config/gw-w-java-image.txt")
+if [[ ${DX_PREP1_TAIL_TX_ZGC:-0} == 1 ]]; then cp "$attempt/config/tx-java-image.txt" "$attempt/config/tail-tx-image.txt"; fi
 if [[ -n ${DX_LAUNCH_PROFILE:-} ]]; then
   printf 'Profile=%s WAL=%s\nPostgreSQL cores=%s memory=%s settings=%s\nDatomic object-cache=%s memory-index=%s/%s\nTransactor Java=%s image=%s cores=%s memory=%s flags=%s\nWrite gateway Java=%s image=%s cores=%s memory=%s flags=%s\nRead gateway Java=%s image=%s cores=%s memory=%s flags=%s\n' \
     "$DX_LAUNCH_PROFILE" "${wal_dir:-PGDATA}" "$pg" "$pg_mem" "$pg_settings" "$object_cache" "$index_threshold" "$index_max" \
@@ -676,15 +716,62 @@ CLONE_MOUNTS
   docker rm "$prefix-seed-copy" >/dev/null
   trap - EXIT
 elif [[ -z $prepared_pg && -z $restored_pgdata ]]; then
+  if [[ -n $prep_pgdata ]]; then
+    ! docker volume inspect "$prefix-pg-data" >/dev/null 2>&1 || exit 2
+  fi
   docker volume create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-pg-data" >/dev/null
 fi
 if [[ -n $restored_pgdata ]]; then
   pg_mount=(--mount "type=bind,source=$restored_pgdata,target=/var/lib/postgresql/data")
 fi
+pg_image=postgres:17-alpine
+if [[ -n $prep_pgdata ]]; then
+  # [DX-PREP1] Why: copy the stopped SCALE1 directory once, read-only, into the owned PG volume.
+  # Rejected: replaying the large SQL dump or putting the held directory under a live postmaster.
+  pg_image=$(docker image inspect --format '{{.Id}}' "$pg_image")
+  copy_helper="$repo/lab/experiments/EXP-DX1/prep1/copy-pgdata.sh"
+  copy_wal=() wal_target=()
+  if [[ -n $prep_wal ]]; then
+    copy_wal=("${wal_mount[@]}" --tmpfs /tmp:size=4m)
+    wal_target=(/wal)
+  fi
+  docker create --pull never --name "$prefix-seed-copy" --read-only --network none --memory 256m --memory-swap 256m \
+    --mount "type=bind,src=$prep_pgdata,dst=/from,readonly" --mount "type=volume,src=$prefix-pg-data,dst=/to" \
+    --mount "type=bind,src=$copy_helper,dst=/copy-pgdata.sh,readonly" \
+    "${copy_wal[@]}" --entrypoint /bin/sh "$pg_image" /copy-pgdata.sh /from /to "${wal_target[@]}" >/dev/null
+  docker start -a "$prefix-seed-copy" > "$attempt/pgdata.control.sha256"
+  docker inspect "$prefix-seed-copy" > "$attempt/pgdata-copy-container.json"
+  python3 - "$attempt" "$prefix" "$prep_pgdata" "$DX_PREP1_SEED_SHA" "$DX_WRITE_OPTIONS_ATTEMPT" \
+    "$(git -C "$repo" rev-parse HEAD)" "$pg_image" "$copy_helper" "$prep_wal" <<'PGDATA_COPY'
+import hashlib, json, pathlib, re, sys
+directory, slot, source_dir, seed, attempt, source, image, helper, wal_dir = sys.argv[1:]
+root = pathlib.Path(directory)
+container, = json.loads((root/'pgdata-copy-container.json').read_text())
+assert not container['State']['Running'] and container['State']['ExitCode'] == 0
+assert container['Name'] == '/'+slot+'-seed-copy' and container['Image'] == image
+mounts = {m['Destination']: m for m in container['Mounts']}
+assert (mounts['/from']['Type'], mounts['/from']['Source'], mounts['/from']['RW']) == ('bind', source_dir, False)
+assert (mounts['/to']['Type'], mounts['/to']['Name'], mounts['/to']['RW']) == ('volume', slot+'-pg-data', True)
+assert (mounts['/copy-pgdata.sh']['Source'], mounts['/copy-pgdata.sh']['RW']) == (helper, False)
+control, *wal_digest = (root/'pgdata.control.sha256').read_text().splitlines()
+assert all(re.fullmatch(r'[a-f0-9]{64}', value) for value in [control, *wal_digest])
+if wal_dir:
+    assert (mounts['/wal']['Type'], mounts['/wal']['Source'], mounts['/wal']['RW']) == ('bind', wal_dir, True)
+    assert len(wal_digest) == 1
+else:
+    assert '/wal' not in mounts and not wal_digest
+with (root/'pgdata-copy.json').open('x') as f:
+    json.dump(dict(source=source, slot=slot, nonce=attempt, seedSha=seed, image=image, volume=slot+'-pg-data',
+                   pgVersion=17, sourceControlSha=control, helperSha=hashlib.sha256(pathlib.Path(helper).read_bytes()).hexdigest(),
+                   inspectSha=hashlib.sha256((root/'pgdata-copy-container.json').read_bytes()).hexdigest(),
+                   **(dict(walDirectory=wal_dir, walFilesSha=wal_digest[0]) if wal_dir else {})), f)
+PGDATA_COPY
+  docker rm "$prefix-seed-copy" >/dev/null
+fi
 # [DX-THIN1] Why: the scorecard's private copy already created and started its own container above.
 # Rejected: a second PostgreSQL launch path with different resource flags.
 if [[ -z $pgdata ]]; then
-  docker run -d "${pg_args[@]}" "${pg_mount[@]}" ${wal_mount[@]+"${wal_mount[@]}"} postgres:17-alpine postgres $pg_settings >/dev/null
+  docker run -d "${pg_args[@]}" "${pg_mount[@]}" ${wal_mount[@]+"${wal_mount[@]}"} "$pg_image" postgres $pg_settings >/dev/null
 fi
 # [DX-B2-N4] Why: initdb's temporary socket server stops before the final TCP server starts.
 # Rejected: socket-only pg_isready (n4b raced that shutdown during vendor SQL setup).
@@ -716,7 +803,7 @@ if [[ -n $wal_dir || ${DX_BM1_WAL_AB:-0} == 1 ]]; then
   ' sh "${wal_dir:+ssd}" "${cold_pgdata:+cold}" > "$attempt/wal-placement.txt"
 fi
 # Vendor scripts use their own database/connect statements; keep their order and bytes.
-if [[ -z $seed_volume && -z $prepared_pg && -z $pg_data && -z $restored_pgdata && -z $cold_pgdata && -z $pgdata ]];then
+if [[ -z $seed_volume && -z $prepared_pg && -z $pg_data && -z $restored_pgdata && -z $cold_pgdata && -z $pgdata && -z $prep_pgdata ]];then
 for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   db=postgres
   [[ "$file" != postgres-table.sql ]] || db=datomic
@@ -725,19 +812,27 @@ done
 fi
 # [DX-JVM1] Why: restore one sealed seed into a fresh PostgreSQL volume before any measured JVM starts.
 # Rejected: running the large import during the timed arm or attaching a writable original.
-if [[ -n ${DX_JVM1_PG_RESTORE:-} ]]; then
-  [[ ${DX_BARE_METAL:-0} == 1 && $prefix == tx2-dxt1-jvm1-* && -z $seed_volume && -f $DX_JVM1_PG_RESTORE ]]
+if [[ -n ${DX_JVM1_PG_RESTORE:-} || ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then
+  restore_flags=()
+  if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then
+    [[ -z ${DX_JVM1_PG_RESTORE:-} && ${DX_BARE_METAL:-0} == 1 && -z $seed_volume && -f ${DX_PREP1_DUMP:?} ]]
+    restore_dump=$DX_PREP1_DUMP restore_sha=${DX_PREP1_DUMP_SHA:?}
+    restore_flags+=(--single-transaction)
+  else
+    [[ ${DX_BARE_METAL:-0} == 1 && $prefix == tx2-dxt1-jvm1-* && -z $seed_volume && -f $DX_JVM1_PG_RESTORE ]]
+    restore_dump=$DX_JVM1_PG_RESTORE restore_sha=$DX_JVM1_PG_RESTORE_SHA256
+  fi
   # [DX-JVM1] Why: verify the actual stream given to pg_restore.
   # Rejected: checksumming a separate open of a dump that can change while restoring.
-  python3 - "$prefix-pg" "$DX_JVM1_PG_RESTORE" "$DX_JVM1_PG_RESTORE_SHA256" \
+  python3 - "$prefix-pg" "$restore_dump" "$restore_sha" "${restore_flags[@]}" \
     > "$attempt/restore.sha256" 2> "$attempt/restore.log" <<'PG_RESTORE'
 import hashlib, subprocess, sys
-container, dump, expected = sys.argv[1:]
+container, dump, expected, *flags = sys.argv[1:]
 digest = hashlib.sha256()
 with open(dump, 'rb') as source:
     assert source.peek(5)[:5] == b'PGDMP', 'Expected a custom PostgreSQL dump'
     with subprocess.Popen(['docker', 'exec', '-i', container, 'pg_restore', '-U', 'postgres',
-                           '--clean', '--if-exists', '--exit-on-error', '-d', 'datomic'],
+                           '--clean', '--if-exists', '--exit-on-error', *flags, '-d', 'datomic'],
                           stdin=subprocess.PIPE, stdout=sys.stderr) as restore:
         with restore.stdin:
             while (block := source.read(1024 * 1024)):
@@ -751,7 +846,7 @@ fi
 tx_start=(--entrypoint /opt/datomic/bin/transactor "$tx_image" /dxh1/sql.properties)
 prep_tx=()
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
-  if [[ -n ${DX_PREP1_DUMP:-} ]]; then
+  if [[ -n ${DX_PREP1_DUMP:-} && ! ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then
     [[ -z ${DX_JVM1_PG_RESTORE:-} ]]
     # [DX-PREP1] Why: restore the same sealed bytes before any peer or transactor opens the arm.
     # Rejected: clearing rows in a warm database or measuring an incremental restore.
@@ -759,6 +854,27 @@ if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   fi
   cp "$repo/lab/experiments/EXP-DX1/prep1/observe.clj" "$attempt/config/prep1-observe.clj"
   prep_tx=(-e "PREP1_ATTEMPT=${DX_WRITE_OPTIONS_ATTEMPT:?}" -e PREP1_MODE=subject-server -e "PREP1_LOOKUP_EVERY=$lookup_every")
+  if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then prep_tx+=(-e PREP1_TAIL_SQL=1); fi
+  if [[ ${DX_PREP1_CAMPAIGN:-} == rolling ]]; then
+    python3 - "$attempt/config" <<'ROLLING_LOGBACK'
+from pathlib import Path
+import sys
+root = Path(sys.argv[1])
+base = (root / 'quiet-logback.xml').read_text()
+assert base.count('</configuration>') == 1
+extra = """<appender name="PREP1_INDEX" class="ch.qos.logback.core.FileAppender">
+  <file>/trace/prep1-index-jobs.log</file><append>false</append>
+  <encoder><pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSS,UTC} %-5level %logger - %msg%n</pattern></encoder>
+</appender>
+<logger name="datomic.update" level="INFO" additivity="false"><appender-ref ref="PREP1_INDEX"/></logger>"""
+(root / 'rolling-index-logback.xml').write_text(base.replace('</configuration>', extra + '</configuration>'))
+ROLLING_LOGBACK
+    # [DX-PREP1] Why: collect Datomic index and pressure events without enabling per-transaction logging.
+    # Rejected: turning every transaction into a synchronous vendor log event.
+    prep_tx+=(-e PREP1_ROLLING_INDEX=1)
+    if [[ $prefix == *-cache32-s ]]; then prep_tx+=(-e PREP1_CACHE_METRICS=1); fi
+    trace_tx_java+=' -Ddatomic.metricsCallback=triplex.prep1.observe/rolling-metrics -Dlogback.configurationFile=/dxh1/rolling-index-logback.xml'
+  fi
   trace_tx_java+=' -Xlog:gc*,safepoint*=debug:file=/trace/prep1-gc-tx.log:time,uptimemillis,level,tags,pid,tid:filecount=0'
   tx_start=(--entrypoint /bin/bash "$tx_image" -c
     'exec java -server $JAVA_OPTS -cp "$(bin/classpath)" clojure.main -i /dxh1/prep1-observe.clj -m datomic.launcher /dxh1/sql.properties')
@@ -1008,6 +1124,11 @@ import json,pathlib,sys,datetime
 root=pathlib.Path(sys.argv[1]); rows=json.loads((root/'containers.json').read_text())
 durability=dict(zip(['fsync','synchronous_commit','full_page_writes','wal_sync_method'],(root/'durability.txt').read_text().splitlines()))
 assert all(durability[k]=='on' for k in ['fsync','synchronous_commit','full_page_writes'])
+if (root/'pgdata-copy.json').exists():
+    clone=json.loads((root/'pgdata-copy.json').read_text())
+    pg,=[r for r in rows if r['Name']=='/'+sys.argv[2]+'-pg']
+    mount,=[m for m in pg['Mounts'] if m['Destination']=='/var/lib/postgresql/data']
+    assert pg['Image']==clone['image'] and (mount['Type'],mount['Name'],mount['RW'])==('volume',clone['volume'],True)
 for role in ['w','r']:
     assert json.loads((root/('health-'+role+'.json')).read_text())['gatewaySourceHash']==sys.argv[3]
 out={'createdAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'prefix':sys.argv[2],'gatewaySourceSha256':sys.argv[3],

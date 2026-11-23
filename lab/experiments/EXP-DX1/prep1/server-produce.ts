@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { performance } from "node:perf_hooks";
 import { setTimeout as sleep } from "node:timers/promises";
 import {
@@ -11,6 +12,8 @@ import {
 import { decodeRowText, encodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import { ids, type Fact } from "../../../bench/lib/world.ts";
 import { FairTurns } from "./fair-turns.ts";
+import { admission, type CreditScheduler } from "./rolling-credits.ts";
+import { DeadlineOrder } from "./deadline-order.ts";
 import {
   scaleAccount,
   scaleFields,
@@ -29,14 +32,26 @@ import {
   fairArms,
   fairPrediction,
   fairSeconds,
+  freshArms,
   operation,
   ownerArms,
   ownerPrediction,
   prediction,
+  rollingArms,
+  rollingCache32Arms,
+  rollingTx5Arm,
+  rollingPrediction,
+  rollingSeconds,
+  scaleArms,
+  scalePrediction,
   seconds,
   storageArms,
   storageOrderedArm,
   storagePrediction,
+  tailArms,
+  tailCombinedArm,
+  tailPrediction,
+  tailSeconds,
   type Arm,
 } from "./server-tape.ts";
 
@@ -75,8 +90,16 @@ assert(
     campaign === "owner" ||
     campaign === "storage" ||
     campaign === "storage-ordered" ||
-    campaign === "ceiling",
+    campaign === "ceiling" || campaign === "scale" || campaign === "rolling" ||
+    campaign === "tail" || campaign === "tail-combined",
 );
+const rollingArm = process.env.DX_PREP1_ROLLING_ARM;
+const freshCredits = process.env.DX_PREP1_FRESH_CREDITS;
+const cache32 = process.env.DX_PREP1_CACHE32;
+assert(cache32 === undefined || (cache32 === "1" && campaign === "rolling" && !rollingArm && freshCredits === undefined));
+const tx5 = rollingArm === "rolling6-tx5";
+assert(rollingArm === undefined || (campaign === "rolling" && (tx5 || rollingArms.some((a) => a.id === `1-${rollingArm}-S`))));
+assert(freshCredits === undefined || (campaign === "rolling" && rollingArm === undefined));
 const campaignArms = {
   comparison: arms,
   fair: fairArms,
@@ -84,11 +107,28 @@ const campaignArms = {
   storage: storageArms,
   "storage-ordered": [storageOrderedArm],
   ceiling: [ceilingArm],
+  scale: scaleArms,
+  rolling: cache32 ? rollingCache32Arms : tx5 ? [rollingTx5Arm] : freshCredits === undefined
+    ? rollingArms.filter((a) => rollingArm === undefined ? [6, 12].includes(a.admission!.credits) : a.id === `1-${rollingArm}-S`)
+    : freshArms(Number(freshCredits)),
+  tail: tailArms,
+  "tail-combined": [tailCombinedArm],
 }[campaign];
-const wide = campaign === "ceiling";
-const campaignSeconds = wide ? ceilingSeconds : campaign === "comparison" ? seconds : fairSeconds;
+const rolling = campaign === "rolling";
+const wide = rolling || campaign === "ceiling" || campaign === "scale";
+const campaignSeconds = rolling ? rollingSeconds : wide
+  ? ceilingSeconds
+  : campaign === "comparison"
+    ? seconds
+    : campaign === "tail" || campaign === "tail-combined"
+      ? tailSeconds
+      : fairSeconds;
 const [answer, note] = wide ? scaleFields : ([":field/answer-prep1", ":field/note"] as const);
-const creditsFor = (arm: Arm) => (arm.writer === "S" ? (arm.credits ?? requestedCredits) : 0);
+const creditsFor = (arm: Arm) => (arm.writer === "S" ? (arm.admission?.credits ?? arm.credits ?? requestedCredits) : 0);
+function schedulerFor(arm: Arm, fallback: FairTurns | undefined, credits?: number) {
+  if (arm.admission) return admission(accounts.length, arm.admission);
+  return credits === undefined ? fallback : credits ? new FairTurns(accounts.length, credits) : undefined;
+}
 const root = wide ? scaleOwner : (a: number, p: number) => ids.placement(accounts[a]!.first + p);
 const fact = (e: string, a: string, value: string): Fact => ({
   e,
@@ -96,6 +136,31 @@ const fact = (e: string, a: string, value: string): Fact => ({
   v: { type: "string", value },
 });
 const digest = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
+type CpuSample = { container: string; pid: number; monoNs: string; usageUsec: number };
+
+function transactorCpu(stackPath: string, slot: string): () => CpuSample {
+  const containers = load<{ Name: string; Id: string; State: { Pid: number } }[]>(
+    join(dirname(stackPath), "containers.json"),
+  );
+  const tx = containers.find((c) => c.Name === `/${slot}-tx`);
+  assert(tx && /^[0-9a-f]{64}$/.test(tx.Id) && Number.isSafeInteger(tx.State.Pid) && tx.State.Pid > 1);
+  const pid = tx.State.Pid;
+  const membership = `/proc/${pid}/cgroup`;
+  const anchored = readFileSync(membership, "utf8");
+  const groups = /^0::(\/[a-zA-Z0-9._/-]+)\n$/.exec(anchored);
+  assert(groups && (groups[1]!.endsWith(`/${tx.Id}`) || groups[1]!.endsWith(`/docker-${tx.Id}.scope`)));
+  const cpuStat = `/sys/fs/cgroup${groups[1]}/cpu.stat`;
+  // [DX-PREP1] Why: price CPU use from the exact live container at both ends of the offered cell.
+  // Rejected: inferring CPU saturation from wall time that includes SQL reads or a pinned core count.
+  return () => {
+    assert.equal(readFileSync(membership, "utf8"), anchored);
+    const match = /^usage_usec (\d+)$/m.exec(readFileSync(cpuStat, "utf8"));
+    const usageUsec = Number(match?.[1]);
+    assert(Number.isSafeInteger(usageUsec) && usageUsec > 0);
+    return { container: tx.Id, pid, monoNs: process.hrtime.bigint().toString(), usageUsec };
+  };
+}
+
 function load<T>(file: string): T {
   return JSON.parse(readFileSync(file, "utf8"));
 }
@@ -170,8 +235,10 @@ async function phase(
   frozen: Set<string>,
   cell: ReturnType<typeof cells>[number],
   orderedIds: boolean,
-  fair?: FairTurns,
+  fair?: CreditScheduler,
   legacyIds?: ReadonlySet<string>,
+  sampleCpu?: () => CpuSample,
+  freshFirst = false,
 ) {
   const inputs = new Map<string, Input>();
   const rows: {
@@ -183,6 +250,10 @@ async function phase(
     end: number;
     peer?: number;
     fairTurn?: number;
+    creditGranted?: number;
+    neighboursAhead?: number;
+    creditReleased?: number;
+    overdueAtGrant?: boolean;
     sent?: number;
     reason?: string;
     orderedToken?: string;
@@ -193,30 +264,44 @@ async function phase(
   const pending = new Set<Promise<void>>();
   const busy = new Set<string>(),
     queues = accounts.map(() => [] as number[]);
+  const deadlines = freshFirst
+    ? new DeadlineOrder<number, number>((n) => cell.tape[n]!.account * 100_000 + cell.tape[n]!.person)
+    : undefined;
+  const cpuBefore = sampleCpu?.();
   const started = performance.now(),
     elapsed = () => performance.now() - started;
   const phaseStartNs = process.hrtime.bigint().toString();
   const phaseWallMs = Date.now();
   let turn = 0,
     nextPeer = 0;
-  const deadline = cell.duration * 1000 + 1000;
-  const pick = (account: number) => {
-    const index = queues[account]!.findIndex((n) => {
-      const o = cell.tape[n]!;
-      const e = root(o.account, o.person);
-      return !busy.has(e) && !frozen.has(e);
-    });
-    if (index >= 0) return { account, index, due: cell.tape[queues[account]![index]!]!.ms };
+  const deadline = cell.duration * 1000 + (rolling ? 30_000 : 1000);
+  const expired = new Set<number>();
+  const allowed = (n: number) => {
+    const o = cell.tape[n]!;
+    const e = root(o.account, o.person);
+    return !busy.has(e) && !frozen.has(e);
+  };
+  const ready = (account: number) => {
+    const queue = queues[account]!;
+    const readyAt = rolling ? elapsed() : undefined;
+    if (readyAt !== undefined)
+      while (queue.length && readyAt >= cell.tape[queue[0]!]!.ms + 30_000) {
+        const ordinal = queue.shift()!;
+        deadlines?.remove(ordinal);
+        expired.add(ordinal);
+      }
+    const due = (ordinal: number) => cell.tape[ordinal]!.ms;
+    if (deadlines && account !== 0)
+      return deadlines.ready(queue, readyAt!, due, allowed)
+        .map((candidate) => ({ ...candidate, account, due: due(queue[candidate.index]!), readyAt }));
+    const index = queue.findIndex(allowed);
+    return index < 0 ? [] : [{ account, index, due: due(queue[index]!), readyAt, overdue: false }];
   };
   function dispatch() {
     if (elapsed() > deadline) return;
     if (fair) {
       fair.dispatch(
-        () =>
-          accounts.flatMap(({ index }) => {
-            const ready = pick(index);
-            return ready ? [ready] : [];
-          }),
+        () => accounts.flatMap(({ index }) => ready(index)),
         grant,
       );
       return;
@@ -224,7 +309,7 @@ async function phase(
     while (pending.size < 96 && elapsed() <= deadline) {
       let granted = false;
       for (let i = 0; i < queues.length; i++) {
-        const candidate = pick((turn + i) % queues.length);
+        const [candidate] = ready((turn + i) % queues.length);
         if (!candidate) continue;
         turn = (candidate.account + 1) % queues.length;
         grant(candidate);
@@ -234,8 +319,9 @@ async function phase(
       if (!granted) break;
     }
   }
-  function grant({ account, index }: NonNullable<ReturnType<typeof pick>>, fairTurn?: number) {
+  function grant({ account, index, readyAt, overdue }: ReturnType<typeof ready>[number], fairTurn?: number, neighboursAhead?: number) {
     const ordinal = queues[account]!.splice(index, 1)[0]!;
+    deadlines?.remove(ordinal);
     const n = ordinal,
       o = cell.tape[n]!,
       e = root(o.account, o.person),
@@ -261,11 +347,15 @@ async function phase(
       due: o.ms,
       peer,
       fairTurn,
+      ...(readyAt === undefined ? {} : { creditGranted: readyAt }),
+      ...(neighboursAhead === undefined ? {} : { neighboursAhead }),
+      ...(deadlines && account !== 0 ? { overdueAtGrant: overdue } : {}),
       sent,
       orderedToken: identity?.token,
       legacyPredecessors: legacyIds ? old.filter((row) => legacyIds.has(row.id)).length : undefined,
     };
     let known = false;
+    let settled: (typeof rows)[number] | undefined;
     const work = (async () => {
       let ack: Ack;
       try {
@@ -276,11 +366,12 @@ async function phase(
         known =
           err instanceof DatomicHttpError && err.status < 500 && err.code !== "OperationDuplicate";
         frozen.add(e);
-        rows.push({
+        settled = {
           ...record,
           end: elapsed(),
           reason: err instanceof DatomicHttpError ? err.code : "transport",
-        });
+        };
+        rows.push(settled);
         return;
       }
       const end = elapsed();
@@ -293,12 +384,14 @@ async function phase(
           .slice(0, facts.length)
           .map((r) => assigned(r, Number(ack.position.v), ack.recordedAt.v)),
       ]);
-      rows.push({ ...record, end, ack });
+      settled = { ...record, end, ack };
+      rows.push(settled);
       known = true;
     })().finally(() => {
       pending.delete(work);
       busy.delete(e);
-      fair?.resolved(known);
+      if (rolling && settled) settled.creditReleased = elapsed();
+      fair?.resolved(known, fairTurn);
       dispatch();
     });
     pending.add(work);
@@ -306,11 +399,13 @@ async function phase(
   for (const [n, o] of cell.tape.entries()) {
     while (elapsed() < o.ms) await sleep(Math.ceil(o.ms - elapsed()));
     queues[o.account]!.push(n);
+    deadlines?.add(n);
     dispatch();
   }
   while (pending.size) await Promise.all([...pending]);
   const drained = elapsed();
-  for (const n of queues.flat()) {
+  const cpuAfter = sampleCpu?.();
+  for (const n of [...expired, ...queues.flat()]) {
     const o = cell.tape[n]!;
     rows.push({
       id: operation(cell.label, n),
@@ -405,6 +500,7 @@ async function phase(
     phaseStartNs,
     phaseWallMs,
     drained,
+    ...(cpuBefore && cpuAfter ? { transactorCpu: { before: cpuBefore, after: cpuAfter } } : {}),
     head,
     after,
     rows,
@@ -426,9 +522,14 @@ async function armRun(
     baseline: Seed = JSON.parse(bytes.toString());
   const schedule = cells(arm);
   const adopted = wide ? (JSON.parse(bytes.toString()) as ReturnType<typeof scaleSeed>) : undefined;
+  const pgData = adopted?.storage === "pg-data";
   if (adopted) {
     assert.equal(adopted.facts, 162_456_470);
-    assert.equal(adopted.dumpSha256, process.env.DX_PREP1_DUMP_SHA);
+    assert.equal(pgData, Boolean(process.env.DX_PREP1_PGDATA));
+    if (!pgData) assert.equal(adopted.dumpSha256, process.env.DX_PREP1_DUMP_SHA);
+    // [DX-PREP1] Why: an aged seed runs only under the aged launcher, and the aged launcher only with an aged seed.
+    assert.equal(Boolean(adopted.aged), process.env.DX_PREP1_AGED === "1");
+    if (adopted.aged) assert.deepEqual([arm.id, adopted.head], ["1-rolling6-cache32-S", adopted.aged.seedCut + adopted.aged.tapeSaves]);
   } else {
     assert.equal(baseline.roster, pooledDigest);
     assert.equal(baseline.facts, 16_245_050);
@@ -439,6 +540,15 @@ async function armRun(
   }
   const stack = load<{ gatewaySourceSha256: string; prefix: string }>(stackPath);
   assert.equal(stack.prefix, slot);
+  const seedSha = digest(bytes);
+  let pgDataCopySha: string | undefined;
+  if (pgData) {
+    const copyBytes = readFileSync(join(dirname(stackPath), "pgdata-copy.json"));
+    const copy = JSON.parse(copyBytes.toString());
+    assert.deepEqual([copy.source, copy.slot, copy.nonce, copy.seedSha, copy.volume, copy.pgVersion],
+      [commit, slot, nonce, seedSha, slot + "-pg-data", 17]);
+    pgDataCopySha = digest(copyBytes);
+  }
   assert.equal(urls.length, arm.writers);
   assert.equal(new Set([...urls, readerUrl]).size, arm.writers + 1);
   const clients = urls.map((url) => new DatomicClient(url, 8000));
@@ -488,13 +598,14 @@ async function armRun(
     const opened = await reader.create(baseline.scope, "lean", true, 35_000);
     assert(!opened.created && opened.db === baseline.db);
     assert.equal(await basis(reader, baseline.db), baseline.head);
-    const fields = adopted
+    const scale = adopted
       ? await scalePredecessors(
           reader,
           adopted,
           schedule.flatMap(({ tape }) => tape),
         )
-      : new Map(baseline.fields);
+      : undefined;
+    const fields = scale?.fields ?? new Map(baseline.fields);
     if (campaign !== "comparison")
       for (const { tape } of schedule)
         for (const offer of tape)
@@ -505,6 +616,16 @@ async function armRun(
     const fairCredits = creditsFor(arm);
     const fair = fairCredits ? new FairTurns(accounts.length, fairCredits) : undefined;
     const { scope, db, head } = baseline;
+    let seedReadbackSha: string | undefined;
+    if (pgData) {
+      assert(scale && adopted && scale.proof.members === 40);
+      // [DX-PREP1] Why: bind the live logical-cut checks to the disposable physical copy before offers.
+      // Rejected: accepting the archived metadata or the control-file digest by itself.
+      const witness = out + "/seed-readback.json";
+      save(witness, { source: commit, slot, nonce, db, seedSha, pgDataCopySha, facts: adopted.facts,
+        ...scale.proof, owners: fields.size, predecessorSha: digest(Buffer.from(JSON.stringify([...fields]))) });
+      seedReadbackSha = digest(readFileSync(witness));
+    }
     save(out + "/header.json", {
       arm,
       slot,
@@ -513,7 +634,7 @@ async function armRun(
       scope,
       db,
       head,
-      seedSha: digest(bytes),
+      seedSha,
       dumpSha: process.env.DX_PREP1_DUMP_SHA,
       options,
       fairCredits,
@@ -522,8 +643,19 @@ async function armRun(
       ...(adopted
         ? { imageSha256: adopted.imageSha256, transferSha256: adopted.transferSha256 }
         : {}),
+      ...(pgData ? { pgDataCopySha, seedReadbackSha } : {}),
+      ...(adopted?.aged ? { aged: adopted.aged } : {}),
     });
+    if (rolling) {
+      const ready = out + "/counters-ready.json";
+      const deadline = performance.now() + 5000;
+      while (!existsSync(ready) && performance.now() < deadline) await sleep(25);
+      const witness = load<{ slot: string; source: string; attempt: string; sender: number }>(ready);
+      assert.deepEqual([witness.slot, witness.source, witness.attempt, witness.sender],
+        [slot, commit, nonce, process.pid]);
+    }
     const frozen = new Set<string>();
+    const sampleCpu = arm.scale ? transactorCpu(stackPath, slot) : undefined;
     let cut = head;
     for (const cell of schedule) {
       const result = await phase(
@@ -535,15 +667,15 @@ async function armRun(
         frozen,
         cell,
         !!arm.orderedIds,
-        cell.credits === undefined
-          ? fair
-          : cell.credits
-            ? new FairTurns(accounts.length, cell.credits)
-            : undefined,
+        schedulerFor(arm, fair, cell.credits),
         legacyIds,
+        sampleCpu,
+        !!arm.admission?.freshFirst,
       );
       cut = result.after;
       save(`${out}/${cell.label}.json`, result);
+      if (rolling) assert(result.rows.every((row) => !row.reason || row.reason === "expired"),
+        "Rolling experiment stopped after a non-expiry outcome; retain the partial cell and recovery witness");
       if (wide && cell === schedule[0])
         assert(
           result.rows.some((row) => row.ack?.subjectOrderedIds),
@@ -663,12 +795,10 @@ async function preflight(out: string, arm: Arm) {
         new Set(),
         cell,
         !!arm.orderedIds,
-        cell.credits === undefined
-          ? fair
-          : cell.credits
-            ? new FairTurns(accounts.length, cell.credits)
-            : undefined,
+        schedulerFor(arm, fair, cell.credits),
         legacyIds,
+        undefined,
+        !!arm.admission?.freshFirst,
       ),
     );
   save(out + "/complete.json", { nonce, slot: header.slot, commit: header.commit, cut: p });
@@ -681,8 +811,9 @@ async function preflight(out: string, arm: Arm) {
 const [action, ...args] = process.argv.slice(2);
 if (action === "seed") await seed(args[0]!, args[1]!, args[2]!);
 else if (action === "adopt-scale") {
-  assert(wide && args.length === 3);
-  console.log(JSON.stringify(scaleSeed(args[0]!, args[1]!, args[2]!)));
+  assert(wide && (args.length === 3 || (args.length === 4 && args[3] === "--pg-data") ||
+    (args.length === 7 && args[3] === "--pg-data" && args[4] === "--aged-bundle" && cache32)));
+  console.log(JSON.stringify(scaleSeed(args[0]!, args[1]!, args[2]!, args[3] === "--pg-data", args[5], args[6])));
 } else if (action === "arm") {
   const [id, file, out, slot, commit, nonce, stack, reader, ...urls] = args;
   const arm = campaignArms.find((a) => a.id === id);
@@ -712,6 +843,7 @@ else if (action === "adopt-scale") {
       seconds: duration,
       fairCredits: requestedCredits,
       ...(campaign !== "comparison" ? { campaign } : {}),
+      ...(freshCredits === undefined ? {} : { freshCredits: Number(freshCredits) }),
       tapes,
       arms: campaignArms.map((arm) => ({
         ...arm,
@@ -721,7 +853,11 @@ else if (action === "adopt-scale") {
           tapeSha,
           offered: tape.length,
           ...(credits !== undefined ? { fairCredits: credits } : {}),
-          predicted: wide
+          predicted: arm.admission
+            ? rollingPrediction(arm, rate, label.endsWith("-alone"), freshCredits !== undefined)
+            : arm.scale
+            ? scalePrediction(arm, rate, label.endsWith("-alone"))
+            : wide
             ? {
                 serving: label.endsWith("-alone")
                   ? 3.5
@@ -734,13 +870,15 @@ else if (action === "adopt-scale") {
                       : 520,
                 maximumAwaitingReceipt: credits || 96,
               }
-            : campaign === "owner"
-              ? ownerPrediction(arm, rate, label.endsWith("-alone"))
-              : campaign === "storage" || campaign === "storage-ordered"
-                ? storagePrediction(arm, rate, label.endsWith("-alone"))
-                : campaign === "fair"
-                  ? fairPrediction(arm, rate, label.endsWith("-alone"))
-                  : prediction(arm.writers, arm.writer, rate, label.endsWith("-alone")),
+            : arm.tail
+              ? tailPrediction(arm, rate, label.endsWith("-alone"))
+              : campaign === "owner"
+                ? ownerPrediction(arm, rate, label.endsWith("-alone"))
+                : campaign === "storage" || campaign === "storage-ordered"
+                  ? storagePrediction(arm, rate, label.endsWith("-alone"))
+                  : campaign === "fair"
+                    ? fairPrediction(arm, rate, label.endsWith("-alone"))
+                    : prediction(arm.writers, arm.writer, rate, label.endsWith("-alone")),
         })),
       })),
     }),

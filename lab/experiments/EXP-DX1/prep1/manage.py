@@ -51,9 +51,12 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
         raise SystemExit("DX-CHK1 runs the ordered serial rolling6 append fixture")
     if combined and owner_head == "1":
         raise SystemExit("Run the owner head gate and the DX-CHK1 append gate as separate attempts")
+    # [DX-THIN1] Why: the integration builder reruns the owner-head recovery gate under its own holder.
+    # Rejected: borrowing the W1 holder's reservation and image tag.
     holder = (os.environ.get("DX_CHK1_HOLDER", "DX-CHK1") if combined
-              else "DX-W1" if owner_head == "1" else "DX-PREP1")
+              else os.environ.get("DX_CHK1_HOLDER", "DX-W1") if owner_head == "1" else "DX-PREP1")
     assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
+    assert owner_head != "1" or holder in ("DX-W1", "DX-THIN1")
     # [DX-W1] Why: match both saves per owner-layout arm to their transactor read counters.
     # Rejected: treating empty peer I/O metadata as zero native storage reads.
     lookup_every = 1 if owner_head == "1" else 3 if serial == "1" and mode == "rolling-recovery" else 0
@@ -83,6 +86,28 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
         (config / "subject-retirement").write_text("1\n")
         (config / "chk1-replay").write_text("1\n")
     (config / "lookup-every").write_text(str(lookup_every) + "\n")
+    fresh_first = os.environ.get("DX_PREP1_TEST_FRESH_FIRST") == "1"
+    if fresh_first:
+        # [DX-THIN1] Why: the one branch keeps INT1's rolling gate, which has no fresh-first arm (PREP1 dropped it).
+        # Rejected: staging a marker the merged gate would ignore.
+        raise SystemExit("The fresh-first fixture runs only on exp/DX-PREP1-parallel-prepare")
+    if fresh_first:
+        if mode != "rolling-recovery":
+            raise SystemExit("Fresh-first fixture requires rolling recovery")
+        (config / "fresh-first").touch()
+    tail_sql = os.environ.get("DX_PREP1_TEST_TAIL_SQL") == "1"
+    if tail_sql:
+        if mode != "subject-recovery" or ordered != "1":
+            raise SystemExit("Tail SQL fixture requires ordered subject recovery")
+        (config / "tail-sql").write_text("1\n")
+    pgdata_mode = os.environ.get("DX_PREP1_TEST_PGDATA", "")
+    pgdata_copy = pgdata_mode in ("1", "wal")
+    if pgdata_copy:
+        if mode != "subject-recovery":
+            raise SystemExit("PGDATA copy fixture requires subject recovery")
+        shutil.copyfile(EXPERIMENT / "copy-pgdata.sh", config / "copy-pgdata.sh")
+        if pgdata_mode == "wal":
+            (config / "pgdata-wal").touch()
     if mode == "live":
         if not 1 <= int(seconds) <= 60:
             raise SystemExit("Live window must be 1 to 60 seconds")
@@ -131,11 +156,14 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     profile = json.loads(slots.read_text())
     if os.environ.get("DOCKER_HOST") != profile["dockerHost"]:
         raise SystemExit("Lab Docker endpoint does not match the configured endpoint")
+    tag_mode = "subject-recovery" if mode == "rolling-recovery" else mode
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
-    profile["lanes"]["datomic"]["image"] = (f"tx2-datomic:dx-w1-head-{out.name}-{head[:8]}" if owner_head == "1"
+    profile["lanes"]["datomic"]["image"] = (f"tx2-datomic:dx-w1-head-{out.name}-{head[:8]}" if owner_head == "1" and holder == "DX-W1"
+                                            else f"tx2-dxthin-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}"
+                                            if owner_head == "1"
                                             else (f"tx2-dxthin-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}"
                                                   if holder == "DX-THIN1" else f"tx2-datomic:dx-chk1-rolling-{attempt[:8]}")
-                                            if combined else f"tx2-datomic:dx-prep1-{mode}")
+                                            if combined else f"tx2-datomic:dx-prep1-{tag_mode}")
     slots.write_text(json.dumps(profile, indent=2) + "\n")
     source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
     if clojure_inputs:
@@ -162,6 +190,10 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "serialApply": serial == "1",
         "lookupEvery": lookup_every,
         "ownerHead": owner_head == "1",
+        "freshFirst": fresh_first,
+        "tailSql": tail_sql,
+        "pgDataCopy": pgdata_copy,
+        "pgDataWal": pgdata_mode == "wal",
         "explicitProbes": mode == "lookup-profile" and prefetch == "1",
         "head": head,
         "stage": {str(p.relative_to(stage)): sha(p) for p in sorted(stage.rglob("*"))

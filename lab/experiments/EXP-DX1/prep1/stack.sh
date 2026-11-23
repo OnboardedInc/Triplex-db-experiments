@@ -14,6 +14,7 @@ export TX2_SUBJECT_REUSE_PREDECESSOR=$TX2_SUBJECT_NARROW_REVISION
 export TX2_SUBJECT_APPEND_RETIREMENT=$(cat /config/subject-retirement 2>/dev/null || printf 0)
 export TX2_SUBJECT_OWNER_HEAD=$(cat /config/subject-head 2>/dev/null || printf 0)
 export PREP1_LOOKUP_EVERY=$(cat /config/lookup-every 2>/dev/null || printf 0)
+if [[ -f /config/tail-sql ]]; then export PREP1_TAIL_SQL=$(cat /config/tail-sql); fi
 if [[ "$PREP1_MODE" == subject-native-suite ]]; then
   # [DX-PREP1] Why: exercise the stock native suite with the real process setting on fresh memory scopes.
   # Rejected: adding PostgreSQL and a transactor for tests written to run in one JVM.
@@ -64,7 +65,7 @@ wait_tcp() {
 }
 sql() { pg_run psql -XAtq -v ON_ERROR_STOP=1 -h "$work/socket" -U postgres "$@"; }
 start_postgres() {
-  setpriv --reuid=65534 --regid=65534 --clear-groups "$pg/postgres" -D "$work/data" -h "$addr" -k "$work/socket" -c shared_buffers=24MB -c track_wal_io_timing=on &
+  setpriv --reuid=65534 --regid=65534 --clear-groups "$pg/postgres" -D "${1:-$work/data}" -h "$addr" -k "$work/socket" -c shared_buffers=24MB -c track_wal_io_timing=on &
   children[0]=$!
   wait_tcp "$!" 5432
 }
@@ -285,6 +286,7 @@ case "$PREP1_MODE" in
     done
     ;;
   rolling-recovery)
+    if [[ -f /config/fresh-first ]]; then export PREP1_FRESH_FIRST=1; fi
     # [DX-PREP1] Why: the bundle imports the SCALE1 observer helpers as a library.
     # Rejected: identifying the bundle itself as the observer's standalone IPC entry point.
     rolling_probe() { node --input-type=module -e '
@@ -469,7 +471,31 @@ case "$PREP1_MODE" in
     fi
     kill -INT "${children[0]}"
     wait "${children[0]}"
-    start_postgres
+    if [[ -f /config/copy-pgdata.sh ]]; then
+      # [DX-PREP1] Why: reopen the measured SQL receipt on the exact cold-copy helper used on the server.
+      # Rejected: exercising a mock PostgreSQL layout or continuing to use the old live data path.
+      mkdir "$work/clone"
+      wal_target=()
+      if [[ -f /config/pgdata-wal ]]; then
+        # A separate tmpfs exercises cross-device moves without claiming physical durability on the Mac.
+        wal_target=("$(mktemp -d /dev/shm/prep1-wal.XXXXXX)")
+      fi
+      copy_proof=$(PATH="$pg:$PATH" sh /config/copy-pgdata.sh "$work/data" "$work/clone" "${wal_target[@]}")
+      control=$(head -n 1 <<< "$copy_proof")
+      if ((${#wal_target[@]})); then
+        wal_sha=$(sed -n '2p' <<< "$copy_proof")
+        [[ $wal_sha =~ ^[a-f0-9]{64}$ && $(readlink -f "$work/clone/pg_wal") == "${wal_target[0]}/pg_wal" && ! -L $work/data/pg_wal ]]
+        printf 'PREP1_PGDATA_WAL {"attempt":"%s","walFilesSha":"%s"}\n' "$PREP1_ATTEMPT" "$wal_sha"
+      fi
+      start_postgres "$work/clone"
+      [[ $(sql -d datomic -c 'SHOW data_directory') == "$work/clone" ]]
+      held=$(sha256sum "$work/data/global/pg_control" | cut -d ' ' -f 1)
+      [[ $control == "$held" ]]
+      printf 'PREP1_PGDATA {"attempt":"%s","control":"%s","heldControl":"%s","reopenedCopy":true}\n' \
+        "$PREP1_ATTEMPT" "$control" "$held"
+    else
+      start_postgres
+    fi
     durability
     if [[ "$PREP1_MODE" == "subject-recovery" ]]; then start_standby; fi
     start_transactor

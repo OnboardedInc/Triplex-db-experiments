@@ -213,6 +213,9 @@ export async function play(
   bulk?: FairImport,
 ) {
   assert(!interleave || selection);
+  // [DX-THIN1] Why: PREP1's fresh-first order (dropped after its server arm) lives only in its own producer.
+  // Rejected: silently ignoring the option on the one branch's live sender.
+  assert(!selection?.freshFirst, "Fresh-first admission is not available on this sender");
   const importingAccount = scopes.length;
   if (bulk) {
     assert(selection && Number.isInteger(bulk.limit) && bulk.limit > 0 && bulk.limit < selection.credits);
