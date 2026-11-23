@@ -35,7 +35,8 @@ type Arm = { mode: CreditMode; width: number; label: string; yieldToLive: boolea
 
 // [DX-LOAD2] Why: the yield arms keep one matched quiet/control/import triple per frame width on one copy.
 // Rejected: comparing a yield arm against another arm's baseline taken earlier on a smaller database.
-export function fairArms(rolling: CreditMode, widths: readonly number[], policy: ImportPolicy): Arm[] {
+export function fairArms(rolling: CreditMode, widths: readonly number[], policy: ImportPolicy, suffix = ""): Arm[] {
+  assert(/^(?:-mi[0-9]+[mg])?$/.test(suffix) && (suffix === "" || policy === "yield"));
   assert(widths.length >= 1 && new Set(widths).size === widths.length);
   for (const width of widths) importFrame("validation", width, 0);
   if (policy === "fair") {
@@ -45,7 +46,7 @@ export function fairArms(rolling: CreditMode, widths: readonly number[], policy:
     }));
   }
   return widths.map((width) => ({
-    mode: rolling, width, label: rolling + "-yield" + width, yieldToLive: true,
+    mode: rolling, width, label: rolling + "-yield" + width + suffix, yieldToLive: true,
   }));
 }
 type Receipt = Awaited<ReturnType<DatomicClient["transactCommand"]>>;
@@ -526,11 +527,12 @@ export async function runFair(
   toy = false,
   policy: ImportPolicy = "fair",
   toyBusy = 9,
+  suffix = "",
 ) {
   assert(/^rolling(?:6|8|12|16)$/.test(rolling));
   assert(Number.isInteger(limit) && limit >= 1 && limit <= 5);
   assert(Number.isInteger(toyBusy) && toyBusy >= 9 && toyBusy <= 235 && (toy || toyBusy === 9));
-  const arms = fairArms(rolling, typeof widths === "number" ? [widths] : widths, policy);
+  const arms = fairArms(rolling, typeof widths === "number" ? [widths] : widths, policy, suffix);
   const client = new DatomicClient(peer.read, 35_000);
   try {
     await checkAdoptedPeer(client, seed, seed.scope.cut);

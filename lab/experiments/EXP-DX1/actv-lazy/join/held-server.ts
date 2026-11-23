@@ -55,9 +55,24 @@ const out = path.resolve(output),
   );
 const slot = "tx2-dxscale1-publish-" + randomUUID().slice(0, 12).replace("-", ""),
   attempt = randomUUID();
-const policy = launchProfile("server", {
+// [DX-LOAD2] Why: the fewer-index-jobs arm raises only the memory-index threshold and its maximum, nothing else.
+// Rejected: changing heap, object cache or cores in the same arm (one variable per arm).
+const memoryIndex = process.env.DX_LOAD2_MEMORY_INDEX;
+const baseProfile = launchProfile("server", {
   jvm: "j21-g1", txJvm: "j25-zgc", ...(fair ? { writeJvm: "j25-zgc" as const } : {}),
 });
+let indexSuffix = "";
+if (memoryIndex) {
+  const [threshold, max] = memoryIndex.split(",");
+  const bytes = (v: string) => Number(v.slice(0, -1)) * (v.endsWith("g") ? 1024 : 1);
+  assert(/^[0-9]+[mg]$/.test(threshold ?? "") && /^[0-9]+[mg]$/.test(max ?? ""));
+  assert(bytes(threshold!) > bytes(baseProfile.index.threshold) && bytes(max!) >= 2 * bytes(threshold!));
+  assert(fair && importPolicy === "yield" && !width!.includes(","), "The memory-index arm runs one yield width");
+  indexSuffix = "-mi" + threshold;
+}
+const policy = memoryIndex
+  ? { ...baseProfile, index: { threshold: memoryIndex.split(",")[0]!, max: memoryIndex.split(",")[1]! } }
+  : baseProfile;
 
 function control(dir: string) {
   assert.equal(fs.readFileSync(path.join(dir, "PG_VERSION"), "utf8").trim(), "17");
@@ -194,7 +209,7 @@ try {
   if (fair) {
     const { runFair } = await import("../../load1/fair-campaign.ts");
     await runFair(out, source, peer, seed, rolling as CreditMode, width!.split(",").map(Number), Number(credits),
-      false, (importPolicy ?? "fair") as "fair" | "yield");
+      false, (importPolicy ?? "fair") as "fair" | "yield", 9, indexSuffix);
   } else await runHeld(out, source, peer, seed);
   assert.deepEqual(
     [fs.statSync(template).dev, fs.statSync(template).ino, control(template)],

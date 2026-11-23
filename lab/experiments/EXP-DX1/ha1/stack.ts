@@ -507,8 +507,9 @@ export class Stack {
       "sql-driver-class=org.postgresql.Driver",
       "sql-user=" + store,
       "sql-password=" + this.secret,
-      "memory-index-threshold=32m",
-      "memory-index-max=96m",
+      // [DX-LOAD2] Why: the toy gate of the fewer-index-jobs arm raises only these two properties.
+      "memory-index-threshold=" + (process.env.DX_LOAD2_MEMORY_INDEX?.split(",")[0] ?? "32m"),
+      "memory-index-max=" + (process.env.DX_LOAD2_MEMORY_INDEX?.split(",")[1] ?? "96m"),
       "object-cache-max=64m",
     ];
     // [DX-HA1] Why: the vendor launcher accepts heap bounds as arguments and advertises its own broker. Rejected: a shared advertised address that can silently reconnect to the old active.

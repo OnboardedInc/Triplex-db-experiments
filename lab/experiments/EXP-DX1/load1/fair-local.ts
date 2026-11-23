@@ -16,6 +16,8 @@ export async function fairLocal(stack: Stack) {
   const policy = process.env.DX_LOAD2_IMPORT_POLICY ?? "fair";
   assert(policy === "fair" || policy === "yield");
   const toyBusy = Number(process.env.DX_LOAD2_TOY_BUSY ?? (policy === "yield" ? "20" : "9"));
+  const memoryIndex = process.env.DX_LOAD2_MEMORY_INDEX;
+  assert(memoryIndex === undefined || (policy === "yield" && /^[0-9]+m,[0-9]+m$/.test(memoryIndex)));
   assert(process.platform === "darwin" && a === b);
   assert.equal(process.env.TRIPLEX_DATOMIC_FAST_PATHS, "save-wire");
   await stack.tool();
@@ -48,10 +50,11 @@ export async function fairLocal(stack: Stack) {
     },
     seed,
     "rolling6",
-    policy === "yield" ? [32, 40] : 32,
+    memoryIndex ? [32] : policy === "yield" ? [32, 40] : 32,
     2,
     true,
     policy,
     toyBusy,
+    memoryIndex ? "-mi" + memoryIndex.split(",")[0] : "",
   );
 }
