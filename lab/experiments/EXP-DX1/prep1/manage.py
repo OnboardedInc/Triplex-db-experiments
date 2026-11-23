@@ -43,7 +43,23 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
         raise SystemExit("Ordered IDs require the prepared writer without hints")
     if serial not in ("0", "1") or (serial == "1" and (ordered != "1" or numeric_owner != "1")):
         raise SystemExit("Serial apply requires ordered IDs and a numeric owner")
-    lookup_every = 3 if serial == "1" and mode == "rolling-recovery" else 0
+    owner_head = os.environ.get("DX_W1_OWNER_HEAD", "0")
+    if owner_head not in ("0", "1") or (owner_head == "1" and (mode, ordered, numeric_owner) != ("rolling-recovery", "1", "1")):
+        raise SystemExit("The owner head gate requires the ordered rolling-recovery fixture")
+    combined = os.environ.get("DX_CHK1_APPEND_GATE") == "1"
+    if combined and (mode, ordered, serial) != ("rolling-recovery", "1", "1"):
+        raise SystemExit("DX-CHK1 runs the ordered serial rolling6 append fixture")
+    if combined and owner_head == "1":
+        raise SystemExit("Run the owner head gate and the DX-CHK1 append gate as separate attempts")
+    # [DX-THIN1] Why: the integration builder reruns the owner-head recovery gate under its own holder.
+    # Rejected: borrowing the W1 holder's reservation and image tag.
+    holder = (os.environ.get("DX_CHK1_HOLDER", "DX-CHK1") if combined
+              else os.environ.get("DX_CHK1_HOLDER", "DX-W1") if owner_head == "1" else "DX-PREP1")
+    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
+    assert owner_head != "1" or holder in ("DX-W1", "DX-THIN1")
+    # [DX-W1] Why: match both saves per owner-layout arm to their transactor read counters.
+    # Rejected: treating empty peer I/O metadata as zero native storage reads.
+    lookup_every = 1 if owner_head == "1" else 3 if serial == "1" and mode == "rolling-recovery" else 0
     out.mkdir()
     attempt = str(uuid.uuid4())
     stage = out / "stage"
@@ -65,7 +81,33 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     (config / "subject-prefetch").write_text(prefetch + "\n")
     (config / "subject-ordered").write_text(ordered + "\n")
     (config / "subject-serial").write_text(serial + "\n")
+    (config / "subject-head").write_text(owner_head + "\n")
+    if combined:
+        (config / "subject-retirement").write_text("1\n")
+        (config / "chk1-replay").write_text("1\n")
     (config / "lookup-every").write_text(str(lookup_every) + "\n")
+    fresh_first = os.environ.get("DX_PREP1_TEST_FRESH_FIRST") == "1"
+    if fresh_first:
+        # [DX-THIN1] Why: the one branch keeps INT1's rolling gate, which has no fresh-first arm (PREP1 dropped it).
+        # Rejected: staging a marker the merged gate would ignore.
+        raise SystemExit("The fresh-first fixture runs only on exp/DX-PREP1-parallel-prepare")
+    if fresh_first:
+        if mode != "rolling-recovery":
+            raise SystemExit("Fresh-first fixture requires rolling recovery")
+        (config / "fresh-first").touch()
+    tail_sql = os.environ.get("DX_PREP1_TEST_TAIL_SQL") == "1"
+    if tail_sql:
+        if mode != "subject-recovery" or ordered != "1":
+            raise SystemExit("Tail SQL fixture requires ordered subject recovery")
+        (config / "tail-sql").write_text("1\n")
+    pgdata_mode = os.environ.get("DX_PREP1_TEST_PGDATA", "")
+    pgdata_copy = pgdata_mode in ("1", "wal")
+    if pgdata_copy:
+        if mode != "subject-recovery":
+            raise SystemExit("PGDATA copy fixture requires subject recovery")
+        shutil.copyfile(EXPERIMENT / "copy-pgdata.sh", config / "copy-pgdata.sh")
+        if pgdata_mode == "wal":
+            (config / "pgdata-wal").touch()
     if mode == "live":
         if not 1 <= int(seconds) <= 60:
             raise SystemExit("Live window must be 1 to 60 seconds")
@@ -86,8 +128,13 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     # Rejected: copying PostgreSQL and Node layers onto the shared VM for a native-only gate.
     if mode != "subject-native-suite":
         recipe = config / "Dockerfile"
-        recipe.write_text("FROM postgres:17-alpine AS prep_pg\nFROM node:22.23.2-bookworm-slim AS prep_node\n"
-                          + recipe.read_text() + """
+        original = recipe.read_text()
+        first_from = original.index("FROM ")
+        # [DX-CHK1] Why: preserve the global base ARG for every stage.
+        # Rejected: prepending stages before the pinned Java declaration.
+        recipe.write_text(original[:first_from]
+                          + "FROM postgres:17-alpine AS prep_pg\nFROM node:22.23.2-bookworm-slim AS prep_node\n"
+                          + original[first_from:] + """
 COPY --from=prep_pg / /opt/thin-pg/
 COPY --from=prep_node /usr/local/bin/node /usr/local/bin/node
 RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
@@ -109,16 +156,32 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     profile = json.loads(slots.read_text())
     if os.environ.get("DOCKER_HOST") != profile["dockerHost"]:
         raise SystemExit("Lab Docker endpoint does not match the configured endpoint")
-    profile["lanes"]["datomic"]["image"] = f"tx2-datomic:dx-prep1-{mode}"
+    tag_mode = "subject-recovery" if mode == "rolling-recovery" else mode
+    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
+    profile["lanes"]["datomic"]["image"] = (f"tx2-datomic:dx-w1-head-{out.name}-{head[:8]}" if owner_head == "1" and holder == "DX-W1"
+                                            else f"tx2-dxthin-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}"
+                                            if owner_head == "1"
+                                            else (f"tx2-dxthin-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}"
+                                                  if holder == "DX-THIN1" else f"tx2-datomic:dx-chk1-rolling-{attempt[:8]}")
+                                            if combined else f"tx2-datomic:dx-prep1-{tag_mode}")
     slots.write_text(json.dumps(profile, indent=2) + "\n")
     source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
     if clojure_inputs:
         source_paths.extend(clojure_inputs)
     elif mode != "subject-native-suite":
         source_paths.extend(REPO / p for p in json.loads(metafile.read_text())["inputs"])
+    if owner_head == "1":
+        for name, source in [("serial-gate.clj", EXPERIMENT.parent / "w1/serial/gate.clj"),
+                             ("regression.clj", EXPERIMENT.parent / "wfix1/regression.clj"),
+                             *((name, EXPERIMENT / name) for name in ("subject_gate.clj", "subject_conflicts.clj", "owner_layout_gate.clj"))]:
+            shutil.copyfile(source, config / name)
+            source_paths.append(source)
+        (config / "source").write_text(head + "\n")
     inputs = {
         "attempt": attempt,
         "mode": mode,
+        "holder": holder,
+        "appendRetirement": combined,
         "timings": "diagnostic",
         "subject": subject == "1",
         "numericOwner": numeric_owner == "1",
@@ -126,8 +189,13 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "orderedIds": ordered == "1",
         "serialApply": serial == "1",
         "lookupEvery": lookup_every,
+        "ownerHead": owner_head == "1",
+        "freshFirst": fresh_first,
+        "tailSql": tail_sql,
+        "pgDataCopy": pgdata_copy,
+        "pgDataWal": pgdata_mode == "wal",
         "explicitProbes": mode == "lookup-profile" and prefetch == "1",
-        "head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip(),
+        "head": head,
         "stage": {str(p.relative_to(stage)): sha(p) for p in sorted(stage.rglob("*"))
                   if p.is_file() and p != slots},
         "runner": {str(p.relative_to(REPO)): sha(p) for p in sorted(set(source_paths))},
@@ -139,9 +207,12 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
 def run_stage(out, inputs):
     stage = out / "stage"
     slots = stage / "lab/config/slots.json"
-    env = dict(os.environ, TX2_CONFIG_DIR=str(stage), TX2_SLOTS_FILE=str(slots),
-               TX2_ENGINE_DIR=str(REPO / "runs/engines/prep1"))
+    engine_state = out / "engine-state" if inputs.get("ownerHead") else REPO / "runs/engines/prep1"
+    env = dict(os.environ, TX2_CONFIG_DIR=str(stage), TX2_SLOTS_FILE=str(slots), TX2_ENGINE_DIR=str(engine_state))
     attempt = inputs["attempt"]
+    holder = inputs.get("holder", "DX-PREP1")
+    if holder in ("DX-CHK1", "DX-THIN1") and shutil.disk_usage(REPO).free < 10 * GIB:
+        raise SystemExit("DX-CHK1 host free disk below 10 GiB")
     if any(sha(stage / path) != digest for path, digest in inputs["stage"].items()):
         raise SystemExit("Staged source bytes changed")
     # [DX-PREP1] Why: retain each refusal and let the existing manager decide whether the shared slot fits.
@@ -154,8 +225,8 @@ def run_stage(out, inputs):
                 break
             if path.exists():
                 continue
-            args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"DX-PREP1-{out.name}-{action}", "--"]
-            args += ["node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", "DX-PREP1"]
+            args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"{holder}-{out.name}-{action}", "--"]
+            args += ["node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", holder]
             if action == "selftest":
                 args += ["--scratch-gib", "1"]
             with path.open("x") as log:
@@ -168,7 +239,7 @@ def run_stage(out, inputs):
                 else:
                     image = json.loads(slots.read_text())["lanes"]["datomic"]["imageId"]
                     record(out / "terminal.json", {"attempt": attempt, "exit": code, "image": image,
-                                                  "holder": "DX-PREP1", "slot": "tx2-datomic-selftest",
+                                                  "holder": holder, "slot": "tx2-datomic-selftest",
                                                   "log": path.name, "sha256": sha(path),
                                                   "timings": "diagnostic"})
                 print(f"{action} finished", flush=True)

@@ -1,7 +1,7 @@
 (ns triplex.gateway.lean-query
   (:require [datomic.api :as d] [triplex.gateway.canonical :as canonical]
             [triplex.gateway.codec :as codec] [triplex.gateway.lean :as lean]
-            [triplex.gateway.storage :as storage]))
+            [triplex.gateway.storage :as storage] [triplex.gateway.privacy :as privacy]))
 
 (def enabled (= "1" (System/getenv "TX2_LEAN_NATIVE_QUERY")))
 (def identifiers #{:f/id :triplex.entity/id :triplex.attr/key})
@@ -23,6 +23,18 @@
 (defn join-key? [x] (or (canonical/variable? x) (logical-id? x)))
 (defn data-pattern [form] (if (= '$ (first form)) (subvec form 1) form))
 (defn rule-pattern? [form] (= '$rules (first form)))
+
+(defn assert-guarded-query! [query]
+  ;; [DX-W1] Why: a managed scope may query proven public facts and the currently masked journal.
+  ;; Rejected: deleting protected rows from an unconstrained relation (negation and counts would change silently).
+  (let [where (:where query)
+        patterns (when (and (every? vector? where) (not-any? rule-pattern? where)) (mapv data-pattern where))
+        attributes (into {} (keep (fn [[e a v]] (when (and (= :triplex.attr/key a) (join-key? e) (string? v)) [e v]))) patterns)
+        keys (into {} (keep (fn [[e a v]] (when (= :f/attr a) (when-let [key (attributes v)] [e key])))) patterns)
+        facts (set (keep (fn [[e a]] (when (or (fact-attributes a) (#{::row ::scalar ::transaction} a)) e)) patterns))]
+    (when-not (and (seq facts) (every? #(when-let [key (keys %)] (not ((:attrs privacy/*cut*) key))) facts))
+      (throw (ex-info "Query must name public attributes or use Match for protected values"
+                      {:status 409 :code "ErasureQueryUnsupported" :route "q"})))))
 
 (defn visible-row [row valid recorded position]
   (storage/visible? row {"validAt" valid "recordedAt" recorded "recordedPosition" position} false))
@@ -142,22 +154,53 @@
 
 (defn input-budget! []
   (throw (ex-info "Lean query exceeded the row source budget" {:status 422 :code "QueryInputBudgetExceeded" :route "q"})))
-(defn relation [name db query basis deadline]
-  (let [point (point-demands (:where query)) p (select-keys basis ["recordedPosition"])
-        n (volatile! 0) text (volatile! 0)
-        ;; [DX-W1] Why: check the budget as the index is consumed, before grouping one owner's history.
-        ;; Rejected: counting the decoded results after a single large history could exhaust the peer.
-        visit! (fn [^String value]
-                 (when (or (> (vswap! n inc) 100000)
-                           (> (vswap! text + (.length value)) (* 16 1024 1024))
-                           (>= (System/nanoTime) deadline)) (input-budget!)))
+(defn row-budget [deadline]
+  ;; [DX-W1] Why: count while consuming the index, including a single owner's history.
+  ;; Rejected: counting decoded results after the peer has already materialized them.
+  (let [n (volatile! 0) text (volatile! 0)]
+    (fn [^String value]
+      (when (or (> (vswap! n inc) 100000)
+                (> (vswap! text + (.length value)) (* 16 1024 1024))
+                (>= (System/nanoTime) deadline)) (input-budget!)))))
+
+(defn simple-projection [query basis]
+  ;; [DX-W1] Why: the exact compiler form has one visible scalar and one assertion witness from the same row.
+  ;; Rejected: treating a named owner alone as proof that arbitrary clauses, joins or projections can be skipped.
+  (when (= 7 (count (:where query)))
+    (let [[[s _ owner] [f] [_ _ a] [_ _ attr] [_ _ id] _ [_ result]] (:where query)
+          names [s f a id result]
+          coords (map (fn [k] (when-let [v (get basis k)] (double v)))
+                      ["validAt" "recordedAt" "recordedPosition"])]
+      (when (and (every? canonical/variable? names) (= 5 (count (set names)))
+                 (string? owner) (not (.startsWith ^String owner "?")) (string? attr)
+                 (= [result id] (:find query)) (not (:with query))
+                 (= (:where query)
+                    [[s :triplex.entity/id owner] [f :f/subject s] [f :f/attr a] [a :triplex.attr/key attr]
+                     [f :f/id id] [(list* 'triplex.gateway.query/visible '$ f coords)]
+                     [(list 'triplex.gateway.query/scalar '$ f) result]]))
+        [owner attr]))))
+
+(defn point-projection [name db [owner attr] basis deadline]
+  (let [p (get basis "recordedPosition")
+        ;; [DX-W1] Why: an interior grouped cut needs history with the same bounded visitor.
+        ;; Rejected: constructing a grouped slice before enforcing the query input budget.
+        interior? (and (some? p) (pos? p) (not (d/entid db [:triplex.tx/position p])))]
+    (into [] (comp (filter #(and (= attr (:attribute %)) (storage/visible? % basis false)))
+                  (map (fn [row] [(scalar-value (privacy/masked row)) (:id row)])))
+          (lean/rows name db {"entityIds" [owner] "basis" basis "history" (boolean interior?)} (row-budget deadline)))))
+
+(defn relation [name db point basis deadline]
+  (let [p (select-keys basis ["recordedPosition"])
+        visit! (row-budget deadline)
         all-rows (if point
                    ;; [DX-W1] Why: the shared reader receives a vector of entity IDs, as it does on the wire.
                    ;; Rejected: a hash set, which the pinned Clojure distinct implementation cannot destructure.
                    (concat (lean/rows name db {"history" true "entityIds" (vec (:subjects point))} visit!)
                            (mapcat #(lean/rows name db {"history" true "id" %} visit!) (:ids point)))
                    (lean/rows name db {"history" true} visit!))
-        rows (keep #(when (storage/visible? % p true) (storage/mask-retirement % p)) all-rows)
+        rows (keep #(when (and (storage/visible? % p true)
+                               (or (nil? privacy/*cut*) (not ((:attrs privacy/*cut*) (:attribute %)))))
+                      (privacy/masked (storage/mask-retirement % p))) all-rows)
         ;; Entity stubs created by reference upserts are application identities even when they have no facts.
         identities (when-not point
                      (map (fn [x]

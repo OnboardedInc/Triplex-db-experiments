@@ -6,19 +6,25 @@
             [datomic.io :as dio]
             [datomic.log :as log]
             [datomic.measure.io-stats :as io]
+            [datomic.sql :as sql]
             [datomic.transaction :as tx])
   (:import [datomic Datom]
            [java.io FileInputStream]
-           [java.lang.management ManagementFactory ThreadMXBean]
+           [java.lang.management BufferPoolMXBean ManagementFactory ThreadMXBean]
            [java.nio.charset StandardCharsets]
+           [java.sql Connection SQLException]
            [java.util.concurrent ArrayBlockingQueue]
-           [java.util.concurrent.atomic AtomicLong]))
+           [java.util.concurrent.atomic AtomicLong]
+           [org.postgresql PGConnection]))
 
 ;; [DX-PREP1] Why: the pinned writer calls append and then reports the same block's transaction metadata.
 ;; Rejected: attributing all non-apply peer time or cluster-wide WAL time to the log write.
 (def pending (ArrayBlockingQueue. 16384))
 (def dropped (AtomicLong. 0))
 (def appended (ThreadLocal.))
+(def tail-sql? (= "1" (System/getenv "PREP1_TAIL_SQL")))
+(def ^:dynamic *append-sql* nil)
+(def ^:dynamic *borrowed-pid* nil)
 (def attempt (System/getenv "PREP1_ATTEMPT"))
 (def mode (System/getenv "PREP1_MODE"))
 (def streaming? (= mode "subject-server"))
@@ -36,6 +42,53 @@
 (defn retain! [prefix event]
   (when-not (.offer diagnostic-events [prefix (assoc event :attempt attempt)])
     (.incrementAndGet dropped)))
+
+(def rolling-index? (= "1" (System/getenv "PREP1_ROLLING_INDEX")))
+(def cache-metrics? (= "1" (System/getenv "PREP1_CACHE_METRICS")))
+(def rolling-fixture (when (= mode "rolling-recovery") (file/file (System/getenv "PREP1_ROLLING_FAIL_PATH"))))
+(defn rolling-metrics [metrics]
+  ((requiring-resolve 'triplex.gateway.native-settings/metrics) metrics)
+  (when rolling-index?
+    (retain! "metrics"
+             (cond-> {:type "metrics" :monoNs (str (System/nanoTime)) :wallMs (System/currentTimeMillis)
+                      :gauges (select-keys metrics [:MemoryIndexMB :AlarmBackPressure :CreateEntireIndexMsec])}
+               ;; [DX-PREP1] Why: retain the vendor interval and observe direct use against the smaller cap.
+               ;; Rejected: treating heap RSS as object-cache occupancy or assigning callback totals to single saves.
+               cache-metrics?
+               (assoc :cacheGauges (select-keys metrics [:ObjectCache :ObjectCacheCount :JvmFreeMb
+                                                        :StorageGetBytes :StorageGetMsec])
+                      :heapUsedBytes (.getUsed (.getHeapMemoryUsage (ManagementFactory/getMemoryMXBean)))
+                      :directPoolBytes
+                      (some (fn [^BufferPoolMXBean pool]
+                              (when (= "direct" (.getName pool)) (.getMemoryUsed pool)))
+                            (ManagementFactory/getPlatformMXBeans BufferPoolMXBean)))))))
+
+(when rolling-index?
+  ;; [DX-PREP1] Why: timestamp actual adoption separately from the vendor's index build start/end.
+  ;; Rejected: inferring adoption from creation of an index job.
+  (let [install! (requiring-resolve 'triplex.gateway.native-counters/install!)
+        drain! (requiring-resolve 'triplex.gateway.native-counters/drain!)
+        status (requiring-resolve 'triplex.gateway.native-counters/status)
+        done (atom false)
+        clock #(double (/ (System/nanoTime) 1000000.0))
+        thread (Thread.
+                 (fn []
+                   (with-open [out (file/writer "/trace/prep1-index.ndjson")]
+                     (let [emit (fn [row] (.write out (str (json/write-str (assoc row :attempt attempt)) "\n")))]
+                       (loop []
+                         (let [state (install! clock)]
+                           (emit {:type "sample" :monoNs (str (System/nanoTime)) :wallMs (System/currentTimeMillis)
+                                  :observer state}))
+                         (drain! emit)
+                         (loop []
+                           (when-let [[_ row] (.poll diagnostic-events)] (emit row) (recur)))
+                         (.flush out)
+                         (when-not @done (Thread/sleep 1000) (recur)))
+                       (emit {:type "end" :dropped (+ (.get dropped) (:dropped (status)))})))))]
+    (.setDaemon thread true)
+    (.start thread)
+    (.addShutdownHook (Runtime/getRuntime)
+      (Thread. (fn [] (reset! done true) (.join thread 2500))))))
 
 (defn portion! [profile read? check member f]
   (let [start (System/nanoTime) before (cpu)
@@ -281,24 +334,59 @@
                 (portion! *profile* (= "reads" (:mode @*profile*)) check member #(validate datom))
                 (validate datom)))))))))
 
+(when tail-sql?
+  ;; [DX-PREP1] Why: a span carries the actual borrowed backend PID and is attached to its own append.
+  ;; Rejected: assigning an unrelated PostgreSQL write to the append because their clocks overlap.
+  (alter-var-root #'sql/connect
+    (fn [connect]
+      (fn [spec]
+        (let [^Connection conn (connect spec)]
+          (when *borrowed-pid*
+            (let [pid (try (.getBackendPID ^PGConnection (.unwrap conn PGConnection))
+                          (catch SQLException _ nil)
+                          (catch AbstractMethodError _ nil))]
+              (reset! *borrowed-pid* pid)))
+          conn))))
+  (doseq [[k v] [["insert" #'sql/insert] ["update" #'sql/update]]]
+    (alter-var-root v
+      (fn [f]
+        (fn [& args]
+          (if-not *append-sql*
+            (apply f args)
+            (let [backend (atom nil) start (System/nanoTime)]
+              (binding [*borrowed-pid* backend]
+                (try (apply f args)
+                     (finally (swap! *append-sql* conj {:op k :pid @backend :start start :end (System/nanoTime)})))))))))))
+
 (alter-var-root #'log/append
   (fn [append]
     (fn [log cluster block]
       (let [sizes (mapv #(dio/remaining (:fressianed-tx %)) block)
-            start (System/nanoTime)
-            ;; [DX-PREP1] Why: deny the real append before storage for this fresh fixture scope.
-            ;; Rejected: manufacturing a transport error after storage may have committed the transaction.
-            _ (when (and rolling-fixture (.isFile rolling-fixture)
-                         (= (writer-database) (slurp rolling-fixture)))
-                (let [marker (file/file (str rolling-fixture ".observed"))]
-                  (when-not (.isFile marker)
-                    (spit marker (str (writer-database) "\n"))
-                    (println "PREP1_ROLLING_DENIED" (json/write-str {:attempt attempt :db (writer-database)}))))
-                (throw (java.io.IOException. "PREP1 rolling fixture denied durable append")))
-            result (append log cluster block)
-            end (System/nanoTime)]
-        (.set appended {:bytes sizes :start start :end end})
-        result))))
+            spans (when tail-sql? (atom []))
+            start (System/nanoTime)]
+        (try
+          (when (and rolling-fixture (.isFile rolling-fixture)
+                     (= (writer-database) (slurp rolling-fixture)))
+            ;; [DX-PREP1] Why: the fixture denies the real append before storage for the chosen fresh scope.
+            ;; Rejected: synthesizing an error after the command might already be durable.
+            (let [marker (file/file (str rolling-fixture ".observed"))]
+              (when-not (.isFile marker)
+                (spit marker (str (writer-database) "\n"))
+                (println "PREP1_ROLLING_DENIED" (json/write-str {:attempt attempt :db (writer-database)}))))
+            (throw (java.io.IOException. "PREP1 rolling fixture denied durable append")))
+          (let [result (if spans (binding [*append-sql* spans] (append log cluster block)) (append log cluster block))
+                timing {:bytes sizes :start start :end (System/nanoTime)}]
+            (.set appended timing)
+            (when (and spans (not (.offer pending (assoc timing :attempt attempt :db (writer-database)
+                                                         :tailAppend true :sql @spans))))
+              (.incrementAndGet dropped))
+            result)
+          (catch Throwable failure
+            (.remove appended)
+            (when (and spans (not (.offer pending {:attempt attempt :db (writer-database) :tailAppend true
+                                                   :failed true :start start :end (System/nanoTime) :sql @spans})))
+              (.incrementAndGet dropped))
+            (throw failure)))))))
 
 (alter-var-root #'tx/transactions-completed!
   (fn [complete]

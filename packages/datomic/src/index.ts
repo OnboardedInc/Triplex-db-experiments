@@ -72,6 +72,7 @@ export { makeDatomicQueryExecutor } from "./DatomicQueryExecutor.js";
 export { DatomicBasisNotAvailable, DatomicLayoutUnsupported } from "./readErrors.js";
 
 export { sweepRows, decodeSweepRows, type SweepRow } from "./sweepRows.js";
+export { acceptLoaderPositionRows, loaderPositionRowsAccepted } from "./loaderPositionRows.js";
 export * from "./replica/index.js";
 
 export { resumeCommitOrder } from "./CommitOrder.js";

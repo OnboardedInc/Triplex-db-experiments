@@ -3,9 +3,7 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
-// [DX-RD1] Why: the read-study branch has no lean scorecard profile; keep the same three-arm constant.
-// Rejected: adding a second physicalArms export to profile.ts that would collide when next-card merges.
-const physicalArms = 3;
+import { physicalArms } from "./profile.ts";
 
 export const pgdataTarget = "/var/lib/postgresql/data";
 export const pgdataGrowthGiB = 16;

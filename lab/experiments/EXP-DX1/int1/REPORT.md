@@ -1,34 +1,36 @@
-The next scorecards should pin `5f62059b1fc03e8fffca0441f14ff4ddd4d7e734`.
-The billion-record scorecard keeps the earlier `57580241d` pin.
-The default allows up to six saves in a turn. Rolling mode returns each credit when its own reply is validated.
-Rolling mode reserves one opportunity for the quiet account even while neighbours are busy.
-Either launch profile can select rolling credits. The write gateway can select Java 25 ZGC on its own.
-The sampled lookup trace and serial revision option both start off.
-The Mac checked exact saved replies, immediate reads and PostgreSQL recovery in both writer modes.
-The fresh full-size comparison is still running. Its throughput and quiet-account numbers are forecasts.
+Build `78867bd8d874818a9627deea75c271d4fcea4a49` for the pinned-read comparison.
+Priority 7 measures how much memory each untouched person adds as population grows.
+A full, bounded cache is a fixed cost. A cache still filling can affect the measured slope.
+The server keeps the 1,536 MiB read cache and the laptop keeps 32 MiB.
+The faster read candidate uses 3,072 MiB, three read cores and a 6 GiB heap.
+The queued realistic card uses the prior native cache of about 1.5 GiB.
+The four server builds passed their local correctness gates.
+The full-size read comparison and the two-rung memory slope are still open.
 
-## Integration
+## Part 12
 
-Took PREP1 `b0ffdd2ab` at `2fa0a5e37`. The shared sender validates the original operation and advances the person's predecessor before releasing its credit. An uncertain outcome freezes admission as the outstanding requests settle. Account 0 has a reserved credit at each rolling width. Select `--credit-mode barrier6|rolling6|rolling8|rolling12|rolling16` or `DX_V01_CREDIT_MODE`. Select `--write-jvm j25-zgc` for the write gateway alone. The JVM plan and startup evidence name each role.
+RD1 at `638864206` merged with INT1’s holder restrictions, compact census and realistic toy entry preserved. The read-only diagnostic is opt-in. Native checks passed 54,110 assertions and the SDK passed 439 tests. TypeScript passed after building the two referenced adapters. The read toy matched 72,179 pinned answers, 58 save receipts and 20 current pulls. The standard card matched all 211 receipts, 96 quiet reads and 20 cold pulls. Both private volumes and both staged images were removed.
 
-Took W1's sampled lookup observer and the ordered writer's narrow native revision check with predecessor decode reuse from `ff4346209`. Select `PREP1_LOOKUP_EVERY=64` to sample and `DX_W1_SERIAL_APPLY=1` for the candidate. W1's separate server driver and unrelated query and protected-K commits stayed on W1. The next-card five-minute window and counters work is on DX-V01.
+The read toy uses fresh scopes and tapes and checks each logical read against the independent model. Its operation hashes, exact save receipts and journal cut bind observations to the live image, slot and build. The native test compares exact old and current rows with filtering off and on. The retrospective reader joins verify original archive hashes, source, slot, tape and request identities, status and response size. They classify archival samples. Mac clocks are diagnostic.
 
-## Mac correctness gates
+The frozen trace, 521 acceptance pins and three queued card commits remain unchanged. [Settings and the nine full-size rows](V0.1-STATE.md) · [Cache decision](READ-CACHE.md) · [Gate archives](V0.1-SHA256SUMS)
 
-| Gate | Grouped K | Ordered per-person |
-| --- | --- | --- |
-| Barrier 6 | 56 exact reopened receipts, 50 immediate reads, 6 absent after denial | Same counts |
-| Rolling 6 | 56 exact reopened receipts, 50 immediate reads, 6 absent after denial | Same counts |
-| Rolling 12 | 62 exact reopened receipts, 50 immediate reads, 12 absent after denial | Same counts |
-| Scorecard toy | Barrier 6, 211 receipts, 96 quiet reads, 20 cold pulls | Rolling 12, same counts, 211 ordered journal ID blocks |
-| SDK | 439 passed, 53 skipped | 439 passed, 53 skipped |
+Cold startup binds the stopped template control bytes, the read-only source mount, the fresh WAL copy and the live seed head to the run. The controller verifies installed flags, collectors, image identities and exact ordered receipts from its own matched tape. Pre-dispatch refusals carry no dispatch, receipt or journal entry. TAIL1's upgraded recorder hashes the closed files and only the captured prefix of each live log. Neither records a physical timing result on the Mac.
 
-All six SQL arms recovered the lost reply and checked both resend forms. The barrier made one failed submission and left five queued offers absent. Rolling made six or twelve failed submissions. The first barrier fixture expected a full turn. The corrected fixture checks which offers actually reached the gateway. All 19 scheduler tests and 18 focused tests passed.
+Build `7deb47622f1d888c5664fc2552daa14d396e910f` for `jvm1/cold-server.sh`. Resolved the launcher to keep resident defaults and existing PostgreSQL copy modes. Combined cold predecessor lookup with the existing removal retry semantics under the same subject lock. All six reduced HotSpot startup cases and 44 focused tests passed, along with strict TypeScript and syntax checks. Cold settings and the ramp are off on ordinary launches.
 
-W1 serial apply passed nine tests and 760 assertions, including the same-person race, retired IDs, exact restart recovery and two synchronous standby flushes. Its rolling 6 SQL sample covered 19 matched revision lookups and 56 exact reopened receipts. The image dry check confirmed that a writer-only Java 25 launch selects the pinned writer image and leaves Java 21 on the other two roles. Streaming lookup files and live mixed Java remain to be verified on Linux.
+The fair-import gate binds source, attempt, owned slot, writer settings and starting seal to each completed cell. It verifies exact ordered save receipts and the full native suffix, queries imported rows against the frame generator and checks the lost response returns its original receipt. The physical collector checks the same live tape and per-cell window counts before reporting a paired observation.
 
-The original 394-offer full-size scorecard stored 342.90 saves/s in-window. PREP1 forecasts 351, 381 and 394 for barrier 6, rolling 6 and rolling 12 at 394, with rolling quiet p99 of 36–43 ms. The Mac runs were correctness diagnostics. Live write-gateway Java 25 ZGC and full-size rolling efficacy still need Linux evidence.
+Build `b21ff7a17e233cf6afcbc3d5da19919a9e16955c` for `load1/fair-server.sh`. Kept cold and removal options in the shared sender and gave import its own optional producer. The two-credit SQL toy matched all 1,124 native suffix records over six windows, including 25,024 imported facts and both lost replies. TypeScript and 29 tests passed. The private stack was removed.
 
-## Evidence audit
+Append retirement ACKs compare the actual transaction datoms to the expected owner, predecessor markers, logical position, durable clock, journal and native transaction. The prepare path excludes protected and irregular saves. Parity compares exact historical rows, current values and journal bytes on fresh scopes. Rolling replays bind the installed option, attempt and native append to exact receipts and recover the original lost reply. The hosted reducer joins those same input and output hashes, mode, clock and tape to the two restored arms.
 
-The sender checks the operation and records predecessor values before releasing a settled credit. The SQL fixture checks the selected writer and scoped operation settings, compares immediate pinned fields, then independently checks reopened journal bytes, operation receipts, both resend outcomes and absent operations after native append denial. The recount binds the stage files, actual image, fresh slot and nonce. It joins each durable receipt to its own native append before the caller's observed response. The lookup recount joins exact transaction and the containing native apply clocks to bind unnamed apply-thread events to the right database. The scorecard checks its exact saved bytes and actual JVM role settings. All 521 pins and the frozen inputs matched. [Archives and checksums](V0.1-SHA256SUMS)
+Build `1f64480bb26e7395f1a4ace848b5da646f3ae593` for `DX_W1_RETIREMENT_PAIR=1` with `v01/adopted-server.sh`. Took the feature, gates and paired server driver from W1 `ad2e188a9`. Kept the protected envelope and account frontier guards. The other W1 wire, query and local cache-pricing changes stay on W1’s branch.
+
+The exact-query replay and 813 native parity and conflict assertions passed. Restart kept the original receipt through both resend forms and two synchronous standby flushes. Append mode verified 112 durable saves and 12 refusals across barrier6 and rolling6, including both lost replies. Scoped TypeScript, 28 focused tests and the reducer success and tamper controls passed. The Mac clocks are diagnostic. The studied server variants still need their bare-metal runs.
+
+## Part 13 audit
+
+Combined recovery checks bind the real receipts, typed refusals, old cut and replacement flush to the fresh attempt and owned roles. Fresh-reader replay from zero checks contiguous positions and joins each selected receipt to its exact persisted operation and journal. Removal follows every cursor through the control cut and checks each page for the erased value, including after restore. Publish matches its recorded cut and independent answer. The native recovery reducer binds holder, attempt-specific image, staged bytes, source, native append and reply clocks. Cold plans record the selected credits in their bound inputs and use the same selection in the sender.
+
+Build `8ab8320936b646eb5f18fa893966137ad768fc40` for the Sunday failover, the cold-start arms (`--credit-mode rolling6`), the fair import and Publish at 100,000. Build `55278014a4cc07eed7b8bd376b457739d756e6a4` for tonight's realistic card. The card's plan matches `a36c88e6c` except for an explicit 1,536 MiB read cache that equals the previous default. The toy combination ran all three arms on the rolling sender with the realistic mix. DX-CHK1's fresh-reader replay and an independent position recount matched every receipt. [State and evidence](V0.1-STATE.md)

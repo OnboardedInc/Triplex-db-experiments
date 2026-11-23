@@ -9,6 +9,7 @@ export class Satellite {
     readonly images: string[],
     readonly seedDir?: string,
     readonly fleet = false,
+    readonly coldDir?: string,
   ) {}
   async call(args: string[], invoke: (args: string[]) => Promise<string>) {
     const [verb, what] = args;
@@ -39,6 +40,7 @@ export class Satellite {
           "standby",
           "active",
           "write",
+          ...(this.coldDir ? ["write-b"] : []),
           "read",
           "tool",
           ...(this.seedDir ? ["pg"] : []),
@@ -60,6 +62,7 @@ export class Satellite {
         "--memory",
         "--memory-swap",
         "--cpus",
+        ...(this.coldDir ? ["--cpuset-cpus"] : []),
         "--network",
         "-p",
         "-v",
@@ -85,6 +88,9 @@ export class Satellite {
             [
               bind,
               bind + ",readonly",
+              ...(this.coldDir
+                ? ["type=bind,source=" + this.coldDir + ",target=/cold,readonly"]
+                : []),
               "type=volume,source=" + ownedVolumes[0] + ",target=/ha-fence",
               "type=volume,source=" + ownedVolumes[0] + ",target=/ha-fence,readonly",
               "type=volume,source=" + ownedVolumes[1] + ",target=/var/lib/postgresql/data",
@@ -146,7 +152,12 @@ export class Satellite {
         };
         const extra: Partial<Record<string, string[][]>> = {
           inspect: [["inspect", id, "--format", "{{.State.Running}}"]],
-          logs: ["2", "35"].map((n) => ["logs", "--tail", n, id]),
+          logs: ["2", "35", ...(this.coldDir ? ["1400"] : [])].map((n) => [
+            "logs",
+            "--tail",
+            n,
+            id,
+          ]),
           kill: [["kill", id, "--signal=KILL"]],
           stop: [["stop", id, "--time=2"]],
           rm: [["rm", id]],

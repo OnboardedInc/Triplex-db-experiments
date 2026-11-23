@@ -36,3 +36,10 @@ The command uses the pinned stack and five-field commands from the correctness f
 ## Local correctness proof
 
 `part3-events/events-f2` used source `b9f4af923`, a signed Java 21 Datomic image, and an ordinary heavy token. The fixture matched all 192 SDK acknowledgements to the gateway and native database/t records and verified 960 assertion IDs at readback. Writer, reader and transactor exports contained 11,022, 5,938 and 17,403 events. PostgreSQL mapped 2,305 duration records to the guest clock and preserved 15 wall-only records. Its WAL samples spanned 523 syncs on the same statistics epoch. Each owned container and the SQL volume were released. The first attempt reached the native joins and exposed discarded PostgreSQL stderr. Its evidence remains indexed. [Evidence hashes](SHA256SUMS)
+
+## Shared-database campaign audit
+
+- The integrated physical launcher reserves a separate physical core for the writer and removes it from the driver's placement. It reads the JVM process flags before the barrier and binds collector and heap evidence to the same container IDs and process starts as the recorder. The collector checks the same source, slot, nonce, actual JVM flags, recorder bytes, qualified SQL records and WAL samples after the attempt and verifies cleanup. The existing independent receipt, live readback and matched input checks still bind the campaign.
+- The receipt shortcut remains opt-in through `receiptPredecessorAttributes`. Eligibility comes from the exact returned row identities and native receipt binding. Known retirement invalidates its cache. The transactor still validates live IDs at the serial point and a conflict can retry through the existing snapshot path. The native suite reads back the asserted rows and verifies intervening writer, retirement, erasure and exact-cut cases.
+
+The JVM1 merge still needs to preserve its explicit Java 21/25 policies and restore hook alongside this branch's gateway, SQL and JFR setup. The local gate and option checks exercise TAIL1 on the current integration base. The fresh and 1B scorecards require the separately maintained scorecard wrapper and the merged project gates.

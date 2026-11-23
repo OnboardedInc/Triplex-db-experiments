@@ -1,7 +1,8 @@
 (ns triplex.gateway.query
   (:require [datomic.api :as d] [triplex.gateway.canonical :as canonical] [triplex.gateway.codec :as codec]
             [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean]
-            [triplex.gateway.lean-query :as lean-query] [triplex.gateway.storage :as storage]))
+            [triplex.gateway.lean-query :as lean-query] [triplex.gateway.storage :as storage]
+            [triplex.gateway.privacy :as privacy]))
 
 ;; [EXP-DA01] Why: scalar channels preserve Triplex families without numeric text coercion. Rejected: native recursive rules and unrestricted classpath functions.
 (defn scalar [db eid]
@@ -42,13 +43,20 @@
 (defn encode [v]
   (codec/encode-value (cond (integer? v) "long" (number? v) "double" (boolean? v) "bool" :else "string") v))
 (defn lean-run [name db query input timeout]
-  (let [rewritten (lean-query/prepare query) deadline (+ (System/nanoTime) (* timeout 1000000))]
+  (let [rewritten (lean-query/prepare query) point (lean-query/point-demands (:where rewritten))
+        single? (true? (get input "singleRequest"))
+        _ (when (and single? (nil? point)) (lean-query/unsupported! "a named subject or assertion in every fact pattern"))
+        _ (when privacy/*cut* (lean-query/assert-guarded-query! rewritten))
+        basis (get input "basis") projection (when single? (lean-query/simple-projection query basis))
+        deadline (+ (System/nanoTime) (* timeout 1000000))]
     (admission/execute admission/reads
       (fn []
-        (let [source (lean-query/relation name db rewritten (get input "basis") deadline)
-              remaining (quot (- deadline (System/nanoTime)) 1000000)]
-          (when-not (pos? remaining) (lean-query/input-budget!))
-          (d/query {:query rewritten :args [source (get input "relations" [])] :timeout remaining}))))))
+        (if projection
+          (lean-query/point-projection name db projection basis deadline)
+          (let [source (lean-query/relation name db point basis deadline)
+                remaining (quot (- deadline (System/nanoTime)) 1000000)]
+            (when-not (pos? remaining) (lean-query/input-budget!))
+            (d/query {:query rewritten :args [source (get input "relations" [])] :timeout remaining})))))))
 (defn run [name current input]
   (when (and (not lean-query/enabled) (lean/enabled? (or current (storage/held-db name (get input "handle")))))
     (lean/unsupported! "q"))
@@ -65,4 +73,6 @@
     (when (> (count result) 100000) (codec/invalid "Query row budget exceeded"))
     (when (and lean? (some lean-query/logical-id? (mapcat identity result)))
       (lean-query/unsupported! "a stable Triplex identity projection instead of a physical Datomic entity number"))
-    {:route (if (= route :f/live) "live" "history") :rows (mapv #(mapv encode %) result)}))
+    (cond-> {:route (if (= route :f/live) "live" "history") :rows (mapv #(mapv encode %) result)}
+      (true? (get input "singleRequest"))
+      (assoc :database name :recordedPosition (or (get-in input ["basis" "recordedPosition"]) (storage/head-position name db))))))

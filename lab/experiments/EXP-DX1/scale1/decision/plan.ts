@@ -52,9 +52,7 @@ export const quietFor = (repeat: number, isolation = false) =>
   isolation ? Math.floor(repeat / rates.length) % accounts.length : quiet;
 export const field = (i: number) => ":task/field-" + i;
 export const sha = (x: unknown) => createHash("sha256").update(JSON.stringify(x)).digest("hex");
-// [DX-SCALE1] Why: recovery must resolve the exact operation ID through the gateway's path segment. Rejected: sending a slash-delimited tape key through an encoded path.
-export const operationId = (nonce: string, version: string) =>
-  nonce + "-" + version.replaceAll("/", "-");
+export { operationId } from "./operation-id.ts";
 export const keyFor = (a: number) => "account-" + String(a + 1).padStart(3, "0");
 const namespace = (a: number) => "acct/" + keyFor(a) + "/";
 export const root = (a: number, i: number) => namespace(a) + ids.placement(i);
@@ -181,6 +179,7 @@ export type Write = {
   ms: number;
   width: number;
   version: string;
+  owner?: string;
 };
 const preferred = new Map<Density, number[][]>();
 export function activeSubjects(people: Density) {
@@ -192,9 +191,8 @@ export function activeSubjects(people: Density) {
   return preferred.get(people)!;
 }
 
-function count(cell: Cell, account: number, repeat: number, isolation: boolean) {
-  const duration = cellSeconds(cell, isolation);
-  if (solo(cell)) return account === 0 ? Math.round(cell * cellSeconds(cell)) : 0;
+function count(cell: Cell, account: number, repeat: number, isolation: boolean, duration: number) {
+  if (solo(cell)) return account === 0 ? Math.round(cell * duration) : 0;
   const sentinel = quietFor(repeat, isolation);
   if (account === sentinel) return quietRate * duration;
   if (cell === "alone") return 0;
@@ -204,12 +202,13 @@ function count(cell: Cell, account: number, repeat: number, isolation: boolean) 
 }
 
 // [DX-SCALE1] Why: fixed per-account offers and jitter are independent of completions. The quiet account replays identical offsets, subjects and widths in each repeat. Rejected: changing its dose when the queue grows.
-export function writeTape(people: Density, cell: Cell, repeat: number, isolation = false): Write[] {
+function offerTape(people: Density, cell: Cell, repeat: number, isolation: boolean,
+  duration: number, countFor: (account: number) => number, tag: string | number = cell): Write[] {
   const subjects = activeSubjects(people),
     choose = zipf(people / 50);
   return (solo(cell) ? [0] : accounts)
     .flatMap((account) => {
-      const n = count(cell, account, repeat, isolation);
+      const n = countFor(account);
       const rng = new Rng(
         seedOf(
           profileFor(solo(cell) ? "single" : "pooled", isolation) +
@@ -227,13 +226,29 @@ export function writeTape(people: Density, cell: Cell, repeat: number, isolation
           account,
           ordinal,
           subject: subjects[account]![index]!,
-          ms: (1000 * cellSeconds(cell, isolation) * (ordinal + rng.next())) / n,
+          ms: (1000 * duration * (ordinal + rng.next())) / n,
           width: w < 0.8 ? 1 : w < 0.95 ? 2 : 3,
-          version: repeat + "/" + cell + "/" + account + "/" + ordinal,
+          version: repeat + "/" + tag + "/" + account + "/" + ordinal,
         };
       });
     })
     .sort((a, b) => a.ms - b.ms);
+}
+
+export function writeTape(people: Density, cell: Cell, repeat: number, isolation = false,
+  duration = cellSeconds(cell, isolation)): Write[] {
+  return offerTape(people, cell, repeat, isolation, duration,
+    (account) => count(cell, account, repeat, isolation, duration));
+}
+
+export type SerialApplyRate = 50 | 235 | 394 | 620;
+export const serialApplySeconds = 300;
+// [DX-W1] Why: keep the same quiet dose and subject/width distribution at both diagnostic rates.
+// Rejected: changing the frozen scorecard's rates or offering extra saves only when the candidate completes one.
+export function serialApplyTape(people: Density, rate: SerialApplyRate, duration = serialApplySeconds) {
+  return offerTape(people, 394, 0, true, duration, (account) => account === quiet
+    ? quietRate * duration
+    : Math.floor(((rate - quietRate) * duration + 9 - account) / 9), "serial-" + rate);
 }
 
 export type Read = { seat: number; ordinal: number; subject: number; ms: number };
@@ -243,6 +258,7 @@ export function readTape(
   cell?: Cell,
   enabled = true,
   isolation = false,
+  window = readWindow(cell, isolation),
 ): Read[] {
   if (!enabled) return [];
   const rng = new Rng(
@@ -254,7 +270,7 @@ export function readTape(
         people,
     ),
   );
-  const { from, duration } = readWindow(cell, isolation);
+  const { from, duration } = window;
   return Array.from({ length: (readers * duration) / 1000 }, (_, ordinal) => ({
     seat: ordinal % readers,
     ordinal,

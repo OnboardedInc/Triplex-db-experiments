@@ -1,7 +1,7 @@
 // @ts-nocheck -- [DX-ERASE1] Engine reservation dictionaries, Docker inspect JSON and child IPC are checked when read.
 import assert from "node:assert/strict";
 import { fork, execFileSync, spawnSync } from "node:child_process";
-import { randomBytes, randomUUID } from "node:crypto";
+import { generateKeyPairSync, randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -23,6 +23,9 @@ import {
   vmDisk,
   withPool,
 } from "../../../bin/lib.mjs";
+
+import { javaCompatibility, readVariantReceipt } from "../../../config/datomic/runtime.mjs";
+import { checkProfileFlags, launchOptions, startupFlags } from "../jvm1/launch.mjs";
 
 const MiB = 2 ** 20;
 const GiB = 2 ** 30;
@@ -59,7 +62,7 @@ function localImage(config) {
   throw Error("No locally present recorded Datomic image");
 }
 
-function bindingInputs(manager) {
+function bindingInputs(manager, combined) {
   const git = (...args) => execFileSync("git", args, { cwd: REPO, encoding: "utf8" }).trim();
   const builtPackages = ["core", "datomic", "qualification", "w0"];
   const files = git(
@@ -69,6 +72,7 @@ function bindingInputs(manager) {
     "--exclude-standard",
     "--",
     code,
+    ...(combined ? ["lab/experiments/EXP-DX1/chk1"] : []),
     "lab/bench/lib",
     "lab/bin",
     "lab/config/datomic",
@@ -110,8 +114,21 @@ export async function local(opts, config, manager) {
   assert(typeof holder === "string" && /^DX-[A-Z0-9-]{1,26}$/.test(holder));
   const people = Number(opts.people);
   const mode = String(opts.run ?? "scale");
-  const subjectWriter = mode === "ledger-parallel" ? "1" : process.env.DX_ERASE1_SUBJECT_WRITER;
+  const subjectWriter = mode.endsWith("-parallel") ? "1" : process.env.DX_ERASE1_SUBJECT_WRITER;
   const orderedIds = process.env.DX_ERASE1_ORDERED_IDS;
+  const creditMode = opts["credit-mode"] ?? "barrier6";
+  const combined = opts.combined === true;
+  assert(!combined || (["DX-CHK1", "DX-THIN1"].includes(holder) && mode === "ledger-authority-regression" &&
+    subjectWriter === "1" && orderedIds === "1" && creditMode === "rolling6"));
+  const variant = opts["write-java25-receipt"];
+  assert(!variant || (combined && typeof variant === "string"));
+  const realistic = opts.realistic === true;
+  assert(!realistic || combined);
+  const sealedWitness = opts["sealed-witness"] === true;
+  const ownerHead = process.env.DX_W1_OWNER_HEAD === "1";
+  assert(!sealedWitness || mode === "ledger-authority-regression");
+  assert(!ownerHead || (sealedWitness && orderedIds === "1" && subjectWriter === "1"));
+  assert(["barrier6", "rolling6"].includes(creditMode));
   assert(subjectWriter === undefined || subjectWriter === "0" || subjectWriter === "1");
   assert(orderedIds === undefined || (orderedIds === "1" && subjectWriter === "1"));
   assert(
@@ -122,6 +139,10 @@ export async function local(opts, config, manager) {
       "overlap",
       "regression",
       "ledger-regression",
+      "sealed-k-regression",
+      "ledger-authority-regression",
+      "ledger-authority-parallel",
+      "fast-authority-regression",
       "ledger-overhead",
       "ledger-profile",
       "ledger-match",
@@ -131,6 +152,8 @@ export async function local(opts, config, manager) {
       "guard-prepared-smoke",
       "fast-smoke",
       "fast-neighbours-smoke",
+      "fast-cleanup-separate",
+      "fast-cleanup-folded",
       "fast",
     ].includes(mode),
   );
@@ -144,13 +167,16 @@ export async function local(opts, config, manager) {
     fs.writeFileSync(path.join(dir, name + ".json"), JSON.stringify(value, null, 2) + "\n", {
       flag: "wx",
     });
-  const inputs = bindingInputs(manager);
+  const inputs = bindingInputs(manager, combined);
   const nonce = randomUUID();
   const prefix = "tx2-dxerase-" + nonce.slice(0, 12);
   const token = randomBytes(24).toString("hex");
   const roles = Object.keys(caps);
   const names = Object.fromEntries(roles.map((r) => [r, prefix + "-" + r]));
   const regression = mode.endsWith("regression");
+  const sealedK = mode === "sealed-k-regression";
+  const transportKeys = sealedK ? generateKeyPairSync("rsa", { modulusLength: 2048 }) : undefined;
+  const sharedAuthority = mode.includes("-authority-");
   // [DX-ERASE1] Why: stage evidence must join the peer and SDK from the same fresh attempt.
   // Rejected: comparing an aggregate HTTP span from an earlier run.
   const profile = mode === "ledger-profile";
@@ -180,7 +206,7 @@ export async function local(opts, config, manager) {
   let info, network, run, child;
   function diskFloor() {
     const s = fs.statfsSync(REPO);
-    const minimum = holder === "DX-THIN1" ? 10 : 5;
+    const minimum = ["DX-THIN1", "DX-ERASE2"].includes(holder) ? 10 : 5;
     assert(s.bavail * s.bsize >= minimum * GiB, "Host disk below " + minimum + " GiB");
     return s.bavail * s.bsize;
   }
@@ -242,6 +268,20 @@ export async function local(opts, config, manager) {
       }
     }
     const image = localImage(config);
+    const writerVariant = variant ? readVariantReceipt(variant, undefined) : undefined;
+    if (writerVariant) {
+      assert.equal(writerVariant.holder, holder);
+      assert.equal(writerVariant.runtime.major, "25");
+      assert.equal(writerVariant.sourceInputsSha256, manager.datomicSources(REPO).sha256);
+      const check = JSON.parse(docker(["image", "inspect", writerVariant.imageId]))[0];
+      assert.equal(check.Id, writerVariant.imageId);
+      assert.equal(check.Config.Labels["tx2.lab-holder"], holder);
+      assert.equal(check.Config.Labels["tx2.build-inputs-sha256"], writerVariant.buildInputsSha256);
+      assert.equal(check.Config.Labels["tx2.java-base"], writerVariant.runtime.base);
+      assert.equal(check.Config.Labels["tx2.java-major"], "25");
+    }
+    const writerFlags = writerVariant ? launchOptions("gw-w", 2,
+      "-Xms192m -Xmx736m -Ddatomic.objectCacheMax=96m -XX:+UseZGC -XX:ConcGCThreads=1 -XX:ParallelGCThreads=1") : undefined;
     const pgImage = docker(["image", "inspect", "postgres:17-alpine", "--format", "{{.Id}}"]);
     assert.match(pgImage, /^sha256:[a-f0-9]{64}$/);
     assert.match(image, /^sha256:[a-f0-9]{64}$/);
@@ -388,60 +428,93 @@ export async function local(opts, config, manager) {
         { allowFail: true },
       ) === "ready";
     await ready("tx", txReady);
-    start(
-      "gw",
-      image,
-      [
-        "-v",
-        path.join(REPO, "packages/datomic/gateway/src") + ":/opt/gateway/src:ro",
-        "-v",
-        path.join(REPO, "packages/datomic/src/codec-spec.json") +
-          ":/opt/gateway/codec-spec.json:ro",
-        "-v",
-        import.meta.dirname + ":/erase1:ro",
-        ...(mode === "ledger-parallel"
-          ? ["-v", path.resolve(import.meta.dirname, "../wfix1") + ":/erase1-writer-check:ro"]
-          : []),
-        ...(archiveDir ? ["-v", archiveDir + ":/dx-archive"] : []),
-        ...(profile
-          ? [
-              "-v",
-              traceDir + ":/dx-trace",
-              "-e",
-              "TRIPLEX_TRACE_DIR=/dx-trace",
-              ...Object.entries({
-                ...traceEnv,
-                TRIPLEX_TRACE_SLOT: info.slot,
-                TRIPLEX_TRACE_PROCESS: "gateway",
-              }).flatMap(([k, v]) => ["-e", k + "=" + v]),
-            ]
-          : []),
-        ...(mode.startsWith("ledger-") || mode.startsWith("fast") || mode === "guard-prepared-smoke"
-          ? ["-v", "/dx-authority", "-e", "TRIPLEX_ERASURE_DIRECTORY=/dx-authority"]
-          : []),
-        ...(mode.startsWith("fast") ? ["-e", "TRIPLEX_ERASURE_SHRED_GRACE_MS=0"] : []),
-        "-p",
-        new URL(endpoint).hostname + ":" + info.port + ":8080",
-        "-e",
-        "DATOMIC_URI_TEMPLATE=" + uri,
-        "-e",
-        "GATEWAY_SOURCE_SHA256=" + gateway,
-        ...(subjectWriter !== undefined
-          ? ["-e", "TX2_SUBJECT_SAVE=" + subjectWriter, "-e", "TX2_INT1_WRITE_READBACK=1"]
-          : []),
-        ...(orderedIds ? ["-e", "TX2_SUBJECT_ORDERED_IDS=1", "-e", "TX2_SUBJECT_NUMERIC_OWNER=1"] : []),
-        "-e",
-        "DX_ERASE_TOKEN=" + token,
-        "-e",
-        "DX_ERASE_NONCE=" + nonce,
-        "-e",
-        "DATOMIC_EXT_CLASSPATH=/opt/gateway/src:/erase1",
-        "-e",
-        "DATOMIC_JAVA_OPTS=-Xms192m -Xmx736m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=96m",
-      ],
-      "/opt/datomic/bin/run",
-      ["-m", "erase1", "gateway"],
-    );
+    const wrap = sharedAuthority ? randomBytes(32).toString("base64") : undefined;
+    const authorityUri =
+      "jdbc:postgresql://" + names.pg + "/removal_authority?user=postgres&password=" + password;
+    if (sharedAuthority) sql("CREATE DATABASE removal_authority");
+    const startGateway = () =>
+      start(
+        "gw",
+        writerVariant?.imageId ?? image,
+        [
+          "-v",
+          path.join(REPO, "packages/datomic/gateway/src") + ":/opt/gateway/src:ro",
+          "-v",
+          path.join(REPO, "packages/datomic/src/codec-spec.json") +
+            ":/opt/gateway/codec-spec.json:ro",
+          "-v",
+          import.meta.dirname + ":/erase1:ro",
+          ...(mode.endsWith("-parallel")
+            ? ["-v", path.resolve(import.meta.dirname, "../wfix1") + ":/erase1-writer-check:ro"]
+            : []),
+          ...(archiveDir ? ["-v", archiveDir + ":/dx-archive"] : []),
+          ...(profile
+            ? [
+                "-v",
+                traceDir + ":/dx-trace",
+                "-e",
+                "TRIPLEX_TRACE_DIR=/dx-trace",
+                ...Object.entries({
+                  ...traceEnv,
+                  TRIPLEX_TRACE_SLOT: info.slot,
+                  TRIPLEX_TRACE_PROCESS: "gateway",
+                }).flatMap(([k, v]) => ["-e", k + "=" + v]),
+              ]
+            : []),
+          ...(sharedAuthority
+            ? [
+                "-e",
+                "TRIPLEX_ERASURE_JDBC=" + authorityUri,
+                "-e",
+                "TRIPLEX_ERASURE_WRAPPING_KEY=" + wrap,
+              ]
+            : mode.startsWith("ledger-") ||
+                mode.startsWith("fast") || sealedK ||
+                mode === "guard-prepared-smoke"
+              ? ["-v", "/dx-authority", "-e", "TRIPLEX_ERASURE_DIRECTORY=/dx-authority"]
+              : []),
+          ...(mode.startsWith("fast") ? ["-e", "TRIPLEX_ERASURE_SHRED_GRACE_MS=0"] : []),
+          ...(transportKeys ? ["-e", "TX2_SAVE_LEDGER=1", "-e", "TX2_SMALL_ROWS=1",
+            "-e", "TX2_LEAN_NATIVE_LOG=1", "-e", "TX2_LEAN_NATIVE_QUERY=1", "-e",
+            "TRIPLEX_GATEWAY_WRITE_PRIVATE_KEY=" + transportKeys.privateKey.export({ type: "pkcs8", format: "der" }).toString("base64")] : []),
+          // [DX-CHK1] Why: read back the actual append switch on the private removal gateway.
+          // Rejected: setting it only in the host environment.
+          ...(combined ? ["-e", "TX2_SUBJECT_APPEND_RETIREMENT=1"] : []),
+          "-p",
+          new URL(endpoint).hostname + ":" + info.port + ":8080",
+          "-e",
+          "DATOMIC_URI_TEMPLATE=" + uri,
+          "-e",
+          "GATEWAY_SOURCE_SHA256=" + gateway,
+          ...(subjectWriter !== undefined
+            ? [
+                "-e",
+                "TX2_SUBJECT_SAVE=" + subjectWriter,
+                "-e",
+                "TX2_GROUP_COMMIT=" + (subjectWriter === "0" ? "1" : "0"),
+                "-e",
+                "TX2_INT1_WRITE_READBACK=1",
+              ]
+            : []),
+          ...(orderedIds
+            ? ["-e", "TX2_SUBJECT_ORDERED_IDS=1", "-e", "TX2_SUBJECT_NUMERIC_OWNER=1"]
+            : []),
+          ...(ownerHead ? ["-e", "TX2_SUBJECT_OWNER_HEAD=1"] : []),
+          ...(mode === "fast-authority-regression" ? ["-e", "TX2_REMOVAL_COST_READBACK=1"] : []),
+          "-e",
+          "DX_ERASE_TOKEN=" + token,
+          "-e",
+          "DX_ERASE_NONCE=" + nonce,
+          "-e",
+          "DATOMIC_EXT_CLASSPATH=/opt/gateway/src:/erase1",
+          "-e",
+          "DATOMIC_JAVA_OPTS=" + (writerFlags ? [...javaCompatibility("25"), writerFlags, ...startupFlags].join(" ")
+            : "-Xms192m -Xmx736m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=96m"),
+        ],
+        "/opt/datomic/bin/run",
+        ["-m", "erase1", "gateway"],
+      );
+    startGateway();
     const gatewayReady = async () => {
       const r = await fetch(endpoint + "/health", { signal: AbortSignal.timeout(2000) }).catch(
         () => null,
@@ -491,9 +564,23 @@ export async function local(opts, config, manager) {
       ),
       "on|on|17",
     );
+    if (writerVariant) {
+      const id = owned.get("gw");
+      const view = inspect(id);
+      assert.equal(view.Image, writerVariant.imageId);
+      checkProfileFlags({ major: "25", flags: writerFlags.split(" ") }, docker(["logs", id]));
+      assert.equal(inspect(id).State.StartedAt, view.State.StartedAt);
+      write("write-jvm", { nonce, id, image: writerVariant.imageId, inputs: writerVariant.buildInputsSha256, major: "25", collector: "ZGC", flags: writerFlags.split(" ") });
+    }
+    const cleanupStudy = mode.startsWith("fast-cleanup-")
+      ? mode.slice("fast-cleanup-".length)
+      : undefined;
     run = {
       nonce,
       mode,
+      creditMode,
+      sealedWitness,
+      ownerHead,
       people,
       caps,
       slot: info.slot,
@@ -506,8 +593,10 @@ export async function local(opts, config, manager) {
       sourceHash: sha256(JSON.stringify(inputs)),
       freeBytes: diskFloor(),
       host: "mac-vm",
-      timing: "diagnostic",
+      timings: "diagnostic",
       guardComparison: mode === "guard-prepared-smoke",
+      neighbourCheck: mode === "fast-neighbours-smoke" || cleanupStudy !== undefined,
+      cleanupStudy,
     };
     run.binding = sha256(JSON.stringify(run));
     write("native", run);
@@ -517,8 +606,12 @@ export async function local(opts, config, manager) {
         ...process.env,
         DATOMIC_URL: endpoint,
         TRIPLEX_DATOMIC_LAYOUT: "lean",
+        ...(transportKeys ? { TRIPLEX_DATOMIC_WRITE_PUBLIC_KEY: transportKeys.publicKey.export({ type: "spki", format: "pem" }) } : {}),
         TX2_W0_POINT_JOURNAL: "1",
         DX_ERASE_TOKEN: token,
+        DX_V01_CREDIT_MODE: creditMode,
+        DX_CHK1_REMOVAL: combined ? nonce : "",
+        DX_CHK1_REALISTIC: realistic ? "1" : "0",
         ...(profile
           ? {
               ...traceEnv,
@@ -558,7 +651,32 @@ export async function local(opts, config, manager) {
             ],
             { input: JSON.stringify(msg.plan) },
           );
-        else if (msg.op === "archive") {
+        else if (msg.op === "replace-gateway") {
+          assert(sharedAuthority);
+          assert.equal(
+            msg.scope,
+            JSON.stringify(["triplex-scope-v1", "test", "test", `erase1-${nonce}`, 0]),
+          );
+          // [DX-ERASE1] Why: losing the process and its writable filesystem must not lose either key or removal.
+          // Rejected: restarting the existing container and accidentally retaining local state.
+          const before = owned.get("gw");
+          const old = inspect(before);
+          assert(
+            old.Config.Labels[label] === nonce && !old.Mounts.some((m) => m.Type === "volume"),
+          );
+          fs.writeFileSync(
+            path.join(dir, "gateway-before-replacement.log"),
+            docker(["logs", before]),
+          );
+          docker(["rm", "-f", before]);
+          assert(!inspect(before));
+          owned.delete("gw");
+          startGateway();
+          await ready("gw", gatewayReady);
+          const after = owned.get("gw");
+          assert.notEqual(after, before);
+          result = { before, after };
+        } else if (msg.op === "archive") {
           // [DX-ERASE1] Why: preserve a real pre-erasure data backup inside the owned stack.
           // Rejected: constructing a replacement assertion as a stand-in for restore (it loses original history and IDs).
           assert.equal(
@@ -634,7 +752,7 @@ export async function local(opts, config, manager) {
       child.once("exit", (code, signal) => ok({ code, signal }));
     });
     write("driver-exit", exit);
-    assert.deepEqual(bindingInputs(manager), inputs, "Measured source drifted");
+    assert.deepEqual(bindingInputs(manager, combined), inputs, "Measured source drifted");
     assert.deepEqual(exit, { code: 0, signal: null });
   } finally {
     const cleanup = {

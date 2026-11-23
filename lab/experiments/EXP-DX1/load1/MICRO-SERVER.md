@@ -6,7 +6,7 @@ The [new bare-metal attribution](MICRO-ATTRIBUTION.md) supports one 32-fact fram
 HA1_BENCH_HOURS=1 node --import tsx lab/experiments/EXP-DX1/ha1/control.ts load-paced load-paced-001 one-host
 ```
 
-A live-only control leads. The first two import arms are live-latency feedback and a fixed 110 tokens/s cap, each with 32 facts per frame. The same leading baseline, ten neighbours at 50 saves/s combined, quiet account at 5 saves/s, 55 reads/s and one Datomic database apply to both. The trailing live-only control prices drift. The two import arms compare rate feedback with a fixed cap. Neither opens another Datomic database inside the arm or adds a peer.
+A live-only control leads. The first two import arms are live-latency feedback and a fixed 110 tokens/s cap, each with 32 facts per frame. The same leading baseline, ten neighbours at 50 saves/s combined, quiet account at 5 saves/s, 55 reads/s and one Datomic database apply to both. The trailing live-only control prices drift. Both import arms use the same topology with one Datomic database, gateway, transactor and PostgreSQL.
 
 Expect 2,000–2,880 queryable facts/s and 14–24/7–11 ms quiet save/read p99 with feedback, and 3,200–3,450 and 22–33/9–13 ms at fixed pacing. Publish every account's p99 against each bookend, plus all missed offers, the measured hold tail and the independent queryable marker. The archived save target left just 3.42 ms of spare p99 against the faster control. See the [preregistered falsifiers](MICRO-ATTRIBUTION.md#preregistered-server-comparison).
 

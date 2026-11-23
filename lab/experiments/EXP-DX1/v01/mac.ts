@@ -2,24 +2,29 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { defaultCreditMode } from "../jvm1/launch.mjs";
+import { parseCredits } from "./server-workload.ts";
+import { barrierRoot, isWriter } from "./profile.ts";
 import { cleanSource, packageBytes } from "./source.ts";
-import { defaultCreditMode, launchProfile, type CreditMode } from "../jvm1/launch.mjs";
-import { defaultWriter } from "./profile.ts";
 
-const [action, commit, argument] = process.argv.slice(2);
+const [action, commit, argument, writerArg, creditArg, ageArg] = process.argv.slice(2);
 assert(process.platform === "darwin" && commit && argument && path.isAbsolute(argument));
-assert(["--packages", "--image", "--fixture", "--publish-fixture"].includes(action ?? ""));
+assert(["--packages", "--image", "--fixture", "--read-study-fixture", "--publish-fixture", "--held-publish-fixture"].includes(action ?? ""));
+const writer = writerArg ?? (action === "--publish-fixture" ? "grouped" : "per-person-ordered");
+assert(isWriter(writer));
+assert(ageArg === undefined || ageArg === "realistic");
+const age = ageArg === "realistic" ? ageArg : "fresh";
+const creditMode = parseCredits(creditArg ?? process.env.DX_V01_CREDIT_MODE);
 const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 cleanSource(head);
 assert.match(commit, /^[a-f0-9]{40}$/);
 execFileSync("git", ["merge-base", "--is-ancestor", commit, head]);
+// [DX-THIN1] Why: the integration builder runs the card's toy under its own engine holder, as before the card merge.
+// Rejected: borrowing the scorecard builder's reservations and image tags.
 const holder = process.env.DX_V01_MAC_HOLDER ?? "DX-V01";
 assert(holder === "DX-V01" || holder === "DX-THIN1");
-const writer = process.env.DX_V01_MAC_WRITER ?? defaultWriter;
-assert(writer === "grouped" || writer === "subject");
-const policy = launchProfile("laptop", { creditMode: (process.env.DX_V01_CREDIT_MODE ?? defaultCreditMode) as CreditMode });
 const disk = fs.statfsSync(".");
-assert(disk.bavail * disk.bsize >= (holder === "DX-THIN1" ? 10 : 5) * 1024 ** 3);
+assert(disk.bavail * disk.bsize >= 10 * 1024 ** 3);
 const staging = path.resolve("runs/DX-V01");
 fs.mkdirSync(staging, { recursive: true });
 const checkout = action === "--packages" ? fs.mkdtempSync(path.join(staging, "mac-")) : fs.realpathSync(argument);
@@ -32,10 +37,11 @@ const env = {
   )),
   DX_V01_MAC_FIXTURE: "1",
   DX_V01_MAC_HOLDER: holder,
-  DX_V01_MAC_WRITER: writer,
-  DX_V01_CREDIT_MODE: policy.creditMode,
+  ...(process.env.DX_THIN1_CROSSCHECK === "1" ? { DX_THIN1_CROSSCHECK: "1" } : {}),
+  ...(action === "--read-study-fixture" ? { DX_V01_MAC_READ_STUDY: "1" } : {}),
   TURBO_TELEMETRY_DISABLED: "1",
   ...(action === "--publish-fixture" ? { DX_V01_MAC_PUBLISH: "1" } : {}),
+  ...(action === "--held-publish-fixture" ? { DX_V01_MAC_HELD_PUBLISH: "1" } : {}),
   DX_V01_LAB_RUNTIME: runtime,
   DX_INT1_GATEWAYS: "demand",
   DX_TOUCHED_READ_MODE: "following",
@@ -78,15 +84,23 @@ if (action === "--packages") {
     console.log("Mac evidence staging " + fixture);
     const campaign = path.join(fixture, "campaign");
     fs.mkdirSync(campaign);
-    try {
-      managed(["--arm-compact", build, "int1-adopted-proof", "80", fixture]);
-    } catch (error) {
-      console.error(error);
-      process.exitCode = 1;
+    const fixtures = [{ mode: creditMode, output: fixture, comparison: false }];
+    if (action === "--fixture" && writer === "per-person-ordered")
+      fixtures.push({ mode: defaultCreditMode, output: path.dirname(path.join(campaign, barrierRoot)), comparison: true });
+    for (const { mode, output, comparison } of fixtures) {
+      if (output !== fixture) fs.mkdirSync(path.join(output, "campaign"), { recursive: true });
+      try {
+        execFileSync(process.execPath, ["--no-warnings", "--experimental-transform-types",
+          "lab/experiments/EXP-DX1/thin1/managed.ts", "--arm-compact", build, "int1-adopted-proof", "80", output],
+        { env: { ...env, DX_V01_MAC_WRITER: writer, DX_V01_CREDIT_MODE: mode, DX_V01_MAC_AGE: age, DX_V01_MAC_COMPARISON: comparison ? "1" : "0" }, stdio: "inherit" });
+      } catch (error) {
+        console.error(error);
+        process.exitCode = 1;
+      }
     }
     if (action === "--fixture") {
       const { writeAdoptedCard } = await import("./adopted-card.ts");
-      writeAdoptedCard({ source: commit, age: "fresh", writer, toy: true, campaign,
+      writeAdoptedCard({ source: commit, age, writer, creditMode, toy: true, campaign,
         out: fixture, forecast: "Mac diagnostics from the SCALE1 loader fixture." });
     }
   }

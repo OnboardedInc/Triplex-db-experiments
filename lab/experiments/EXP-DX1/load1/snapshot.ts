@@ -343,15 +343,25 @@ export class Snapshot {
   async verify(
     complete = true,
     extra?: (r: any) => void,
-    { pageSize = extra ? 8 : 1, readDepth = 1, assertionSweep = false } = {},
+    { pageSize = extra ? 8 : 1, readDepth = 1, assertionSweep = false, after = 0, exclusiveSuffixAfter, feedOnly = false }: {
+      pageSize?: number; readDepth?: number; assertionSweep?: boolean; after?: number;
+      exclusiveSuffixAfter?: number; feedOnly?: boolean;
+    } = {},
   ) {
     const cut = await this.comp.currentPosition(),
       byPosition = this.ledger.prepare("SELECT * FROM frames WHERE position=?");
-    const perSubject = typeof this.shape !== "string" && !assertionSweep;
+    assert(!feedOnly || (exclusiveSuffixAfter !== undefined && !assertionSweep));
+    if (exclusiveSuffixAfter !== undefined) {
+      assert(after === 0 && Number.isSafeInteger(exclusiveSuffixAfter) && exclusiveSuffixAfter >= 0 && exclusiveSuffixAfter < cut);
+    }
+    const perSubject = typeof this.shape !== "string" && !assertionSweep && !feedOnly;
     const last = !perSubject ? undefined : (await this.comp.feedPage(cut - 1, 1)).transactions[0];
     if (perSubject) assert(last?.position === cut && Number.isFinite(last.instant));
     const lastInstant = last?.instant as number;
-    let pos = 0,
+    // [DX-V01] Why: verify the contiguous suffix of a caller-verified held cut.
+    // Rejected: interpreting the loader’s existing rows as part of the current import.
+    assert(Number.isSafeInteger(after) && after >= 0 && after <= cut);
+    let pos = exclusiveSuffixAfter ?? after,
       observed = 0,
       facts = 0,
       marker = 0;
@@ -418,11 +428,15 @@ export class Snapshot {
         if (r.commandId === this.manifest) {
           assert.equal(r.correlationId, this.binding);
           assert.equal(r.changes.length, 0);
+          if (exclusiveSuffixAfter !== undefined) assert.equal(pos, exclusiveSuffixAfter + 1);
           marker++;
           continue;
         }
         const row = byPosition.get(pos);
         if (!row) {
+          // [DX-REAL1] Why: a sealed exclusive extension must explain every position after its parent cut.
+          // Rejected: ignoring foreign commands and sealing a database with an unknown suffix.
+          assert.equal(exclusiveSuffixAfter, undefined, "Unexpected command in exclusive suffix");
           assert(
             !r.changes.some((c: any) => c.entityId.startsWith(this.namespace)),
             "Unaccounted change in imported namespace",
@@ -447,6 +461,8 @@ export class Snapshot {
             );
           }
           if (sweepIds.size >= 512) await flushSweep(this.comp);
+        } else if (feedOnly) {
+          // Every claim and full feed payload already matched. The extension checks pinned member probes separately.
         } else if (typeof this.shape !== "string") {
           const expected = new Map<string, string>(),
             observed = new Map<string, string>();

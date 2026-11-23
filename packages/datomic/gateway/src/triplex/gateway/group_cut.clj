@@ -1,5 +1,6 @@
 (ns triplex.gateway.group-cut
-  (:require [datomic.api :as d] [triplex.gateway.scope :as scope] [triplex.gateway.save-ledger :as ledger]))
+  (:require [datomic.api :as d] [triplex.gateway.owner-root :as owner-root] [triplex.gateway.scope :as scope]
+            [triplex.gateway.save-ledger :as ledger]))
 ;; [DX-W1] Why: one physical t can contain multiple distinct strict clocks and positions.
 ;; Rejected: using the end of that physical transaction for a pull or feed page at its first receipt.
 (defn value [db e a] (:v (first (d/datoms db :eavt e a))))
@@ -23,8 +24,15 @@
                  :members (for [link (d/datoms after :eavt physical :triplex.group/members)
                                 :let [m (:v link) pos (value after m :triplex.group/position)] :when (<= pos cut)]
                             [m pos])}))))))))
+(declare legacy-slice)
 (defn prefix-end [^String text] (+ 5 (Integer/parseInt text 1 5 16)))
-(defn entity-slice [{:keys [position before after members]} eid]
+(defn entity-slice [{:keys [position before after members] :as cut} eid]
+  ;; [Opus W1] Why: no grouped save can touch a person with a covering root, so the group's interior equals its end.
+  ;; Rejected: slicing a migrated owner's legacy rows (they omit the covered rows and keep the masked ones).
+  (if (owner-root/raw before eid)
+    {:rev (or (value before eid :triplex.entity/rev) 0) :root-db after}
+    (legacy-slice cut eid)))
+(defn legacy-slice [{:keys [position before after members]} eid]
   (let [revision (reduce (fn [rev [m p]] (if (first (d/datoms after :eavt m :triplex.group/touched eid)) (max rev p) rev))
                          (or (value before eid :triplex.entity/rev) (ledger/implicit-position before eid) 0) members)
         retired (into #{} (keep (fn [x] (let [^String marker (:v x) i (prefix-end marker)]

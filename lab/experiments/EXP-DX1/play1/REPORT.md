@@ -1,20 +1,20 @@
-The playground can start from the Git fixture or a prepared database snapshot.
-Snapshot startup checks files and compares generated people at three points in time.
-The small fixture and all three larger snapshots restored correctly on the Mac.
-The 5 GB option is forecast at 246 deep people and 9,840 wide people.
-The full population choices exceed 5 GB in the sizing model.
-The clean-clone workflow runs only when started by hand.
+The public R2 snapshot starts a playground with 2,968 invented people.
+Storage collection reduced the three compressed snapshots by 51 to 68 percent.
+The demo forecast is 2.49 GB for 2,861 deep and 114,440 wide people.
+The full forecast is 87 GB for 100,000 deep and 4 million wide people.
+Both larger tiers keep five weeks of history and a single database.
+The server build commands are ready. The smoke snapshot is the tier hosted today.
 Erasure stays unavailable because the integration branch refuses protected native queries.
 Continuous compliance scenarios remain reserved for the owner.
 
 ## Start and explore
 
 ```sh
-pnpm playground start
-pnpm playground stop
+pnpm playground start --tier r2-smoke \
+  --data 'https://pub-ce341b872a624227b638159be9f32a71.r2.dev/v0.1/r2-smoke/b5445da57dbbafc1/'
 ```
 
-For a prepared tier, use `pnpm playground start --tier NAME --data SOURCE`. Supply a local snapshot directory or an HTTPS object base containing its manifest. The Git fixture retains its replay path. The older compact history bundle remains available with `--tier full --replay`.
+Use `pnpm playground stop` in a second terminal. Run `pnpm playground start` to use the small Git fixture. For another prepared tier, use `pnpm playground start --tier NAME --data SOURCE`. Supply a local snapshot directory or an HTTPS object base containing its manifest. The Git fixture retains its replay path. The older compact history bundle remains available with `--tier full --replay`.
 
 Open the printed loopback address. Pick an account and a person to compare the current graph with an earlier cut. Try a save, duplicate receipt and stale conflict. The live feed resumes at its native cursor. Publish shows the first answer and reports materialization progress. The right panel shows returned records, available timing spans, and JSON request and reply. The dashboard and both MCP transports call the same action service. [Agent guide](../../../../AGENTS-PLAYGROUND.md) · [Data model](DATA-MODEL.md) · [Full-tier size and upload](SIZE.md)
 
@@ -28,7 +28,28 @@ node lab/bin/heavy.mjs --label DX-PLAY1-live -- node lab/bin/engine.mjs play1 \
   --out "$PLAYGROUND_EVIDENCE_DIR"
 ```
 
+## Hosted smoke snapshot
+
+The HTTPS archive has 27,058 initial facts and 840 retained saves. It is a collected PostgreSQL 17 snapshot of the Datomic storage. The fresh restore verifies people in all five accounts at positions 79, 493 and 933 before exposing the dashboard. The 72-person deep account and 2,880-person thin account share the database with three other accounts. [Exact run commands](../../../../AGENTS-PLAYGROUND.md)
+
+The bucket is `triplex-playground-data`. The immutable prefix is `v0.1/r2-smoke/b5445da57dbbafc1/`. Wrangler uploaded the verified dump part before the manifest. The uploader fetched both public objects back and compared their lengths and SHA-256.
+
+| Object under the prefix | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `postgres-00000.dump-part` | 18,276,071 | `b8916eaae483614e245d843c97b3008cbc587f7f6c0d87b45c9bb445d9eb17ad` |
+| `manifest.json` | 521 | `b5445da57dbbafc14d2a7cc4f8f10cec6e99e47e1953f31e41e9f7d0bcbf4bc7` |
+
+The clean-clone gate at pushed source `7ca4c444b` started with no installed packages, build output, runtime directory or data cache. The real `pnpm playground start --tier r2-smoke --data …` installed its frozen inputs, built all four packages, downloaded both public objects and reached verified readiness after 77 seconds on the shared Mac. All 13 API actions, both MCP transports and Chromium passed. Erasure returned the expected unavailable response. The real stop command removed the owned containers, volume, network, image and runtime directory. The gate then checked that the listener was closed and removed the temporary clone. This is a Mac correctness run with a lab reservation. The separate plain-Docker GitHub workflow remains manual.
+
+This supersedes the earlier sizing estimate for the 5 GB tier. The 2–5 GB demo is the recommended next build, with the full shape as the separate 87 GB planning estimate. Both server builds are pending. The Mac work used ordinary heavy tokens, and laptop timings are diagnostic. The release branch has the server commands and exact archive acceptance bounds. [Corrected sizing](SIZE.md) · [Evidence checksums](SHA256SUMS)
+
 ## Evidence and limits
+
+The collected sizing ladder is preserved in `part3-72-12-06.tar.gz`, `part3-144-12-02.tar.gz` and `part3-72-24-02.tar.gz`. The fitted rows are in `part3-collected-fit.tar.gz`. The public readback receipt is in `part3-upload-01.tar.gz`. Use `part3-roundtrip-01.tar.gz` for the source, exclusive slot, public checksum, three cut positions, action outcomes, Chromium log and shutdown output. The sealed published input is in `part3-r2-smoke-bundle.tar.gz`. All are under `evidence/DX-PLAY1`. [Evidence checksums](SHA256SUMS)
+
+The early collection attempts failed at the disk floor, then at peer launch. The successful run uses the vendor file entry point with explicit cache and memory-index sizes for the collector JVM. TypeScript, lint and seven focused tests passed, including exact minute-budget checks for the proportional generator and a resumed download that rejects corrupt bytes. [Evidence checksums](SHA256SUMS)
+
+The Git fixture regression ran all 13 actions, both MCP transports and Chromium after a fresh local restore. The proportional-history regression exported and restored a second fresh database with 2,450 scaled saves, then checked the same three cuts. Both released their owned resources. See `part3-small-final.tar.gz` and `part3-scaled-final.tar.gz`. [Evidence checksums](SHA256SUMS)
 
 The deterministic Git fixture, action discovery and loopback transport checks passed. Stdio discovery returned all 13 tools in two JSON-RPC frames. The pinned lockfile validated offline in lockfile-only mode. Raw output and its source binding are in `evidence/DX-PLAY1/lightweight.txt` and `evidence/DX-PLAY1/lightweight-source.json`.
 
@@ -40,7 +61,7 @@ Earlier attempts are retained. A live dump produced a different row digest while
 
 The full-population artifacts, replay and restore remain unmeasured. The `live-12` lab gate exercised the portable launcher and teardown through `engine.mjs`. The manual workflow covers a separate clean clone on plain Docker once dispatched. [Size and startup paths](SIZE.md)
 
-The part 2 small snapshot restored and ran all 13 actions on the source used for the sizing ladder, `734890a2c`. The three individual-save samples measured 19,278, 34,862 and 66,010 initial facts. The first 96-person attempt failed with a Datomic read error. Subsequent runs passed after the playground bounded config reads to committed subject IDs and rebuilt against the integration ref. The fit selects 246 deep people and 9,840 wide people at the 5 GB sensitivity ceiling. Its upper build forecast is 2.21 hours, so I retained the one-command server recipe and did not build the selected tier on the Mac. No bucket or upload was created. [Sizing table and command](SIZE.md)
+The part 2 small snapshot restored and ran all 13 actions on the source used for the sizing ladder, `734890a2c`. The three individual-save samples measured 19,278, 34,862 and 66,010 initial facts. The first 96-person attempt failed with a Datomic read error. Subsequent runs passed after the playground bounded config reads to committed subject IDs and rebuilt against the integration ref. The fit selects 246 deep people and 9,840 wide people at the 5 GB sensitivity ceiling. Its upper build forecast is 2.21 hours, so I retained the one-command server recipe and did not build the selected tier on the Mac. That part 2 run ended before the owner supplied the R2 bucket. [Earlier sizing](SIZE.md#earlier-replay-and-uncollected-snapshots)
 
 On integration revision `990badf25`, playground commit `3b40fd516` passed the build, typecheck, six fixture tests, all 13 restored API actions, both MCP transports and Chromium against the restored database. The snapshot gate checked all three time cuts and verified that no owned runtime resources remained. The evidence archive is `part2-final-01.tar.gz`. [Evidence checksums](SHA256SUMS)
 
@@ -74,3 +95,13 @@ The orchestrator confirmed that the superseded plan commit used the generic lab 
 ## Manual clean-clone workflow
 
 Once the workflow file is on the repository's default branch, open Actions, choose **Playground clean clone**, select the branch to test and click **Run workflow**. The CLI equivalent is `gh workflow run playground-clean-clone.yml --ref exp/DX-INT1` after the playground is merged there. This implementation did not dispatch the workflow. [GitHub manual workflow documentation](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)
+
+## Storage collection audit
+
+The collector runs only inside the generated transactor against the indexed scope of the current build. Both owned gateways are stopped before the recent cutoff is requested. The receipt requires a lower PostgreSQL live row count, a lower live value byte count and a stable observation window while the transactor remains alive. The resulting archive must reopen all three generated cuts in a fresh stack. The byte bounds are checked against the produced manifest and chunks before a successful bundle is retained. [Datomic storage collection guidance](https://docs.datomic.com/operation/capacity.html)
+
+## Hosted snapshot observation audit
+
+- The collector runs the pinned Datomic peer in this attempt's labeled transactor. The offline database name comes from the gateway index receipt for this exact commit cut. The copy used for publication has a fresh restore with byte and generated-record checks at all three cuts.
+- The uploader compares the local manifest with the restore record, checks every local object's length and SHA-256, and checks the public bytes at their versioned keys. It publishes the exact manifest only after the chunks read back correctly.
+- The R2 round-trip gate requires a fresh clone at the committed source and an active reservation for all four roles. It compares the manifest checksum with the published value, checks observed records against the generator, runs Chromium against the same endpoint and checks the owned inventory and endpoint after shutdown.

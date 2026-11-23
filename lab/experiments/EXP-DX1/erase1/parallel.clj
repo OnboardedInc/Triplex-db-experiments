@@ -3,7 +3,8 @@
             [triplex.gateway.group :as group] [triplex.gateway.group-test :as fixture]
             [triplex.gateway.lean :as lean] [triplex.gateway.storage :as storage]
             [triplex.gateway.subject-save :as subject] [triplex.gateway.write-policy :as policy]
-            [triplex.gateway.erase :as erase] [wfix1-regression :as offers]))
+            [triplex.gateway.erase :as erase]
+            [triplex.gateway.envelope :as envelope] [wfix1-regression :as offers]))
 
 (defn check! [ok message] (when-not ok (throw (ex-info message {}))))
 (defn frame [name owner value prior position]
@@ -18,9 +19,14 @@
       plan)))
 (defn accepted! [name conn id expected]
   (let [receipt (offers/operation name id)
-        row (some-> (lean/by-id (d/db conn) id) :v lean/decode)]
+        raw (some-> (lean/by-id (d/db conn) id) :v lean/decode)
+        view (offers/route name "v1" "read" {"id" id})
+        row (some-> (first (get-in view [:body "rows"])) storage/decode-row)]
     (check! (= "committed" (get receipt "status")) "Save did not acquire a durable receipt")
-    (check! (= expected (:value_string row)) "Save did not write the exact offered value")
+    (check! (= [200 nil] (offers/outcome view)) "Application read failed")
+    (check! (= [id expected] [(:id row) (:value_string row)]) "Save did not write the exact offered value")
+    (when (envelope/shared?)
+      (check! (= (envelope/token id) (:value_string raw)) "Native row contains a clear protected value"))
     receipt))
 
 (defn run! [name conn]

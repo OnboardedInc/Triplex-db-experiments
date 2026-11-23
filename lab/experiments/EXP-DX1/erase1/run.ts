@@ -26,6 +26,10 @@ type Layout =
   | "overlap"
   | "regression"
   | "ledger-regression"
+  | "sealed-k-regression"
+  | "ledger-authority-regression"
+  | "ledger-authority-parallel"
+  | "fast-authority-regression"
   | "ledger-overhead"
   | "ledger-profile"
   | "ledger-match"
@@ -35,6 +39,8 @@ type Layout =
   | "guard-prepared-smoke"
   | "fast"
   | "fast-neighbours-smoke"
+  | "fast-cleanup-separate"
+  | "fast-cleanup-folded"
   | "fast-smoke";
 type Attempt = {
   binding: string;
@@ -43,12 +49,16 @@ type Attempt = {
   mode: Layout;
   slot: string;
   source?: string;
+  sourceHash?: string;
   stageSha256?: string;
   stagedSource?: string;
   controlSha256?: string;
   seedRole?: "control";
   guardComparison?: boolean;
   neighbourCheck?: boolean;
+  cleanupStudy?: "separate" | "folded";
+  authorityCost?: boolean;
+  sealedWitness?: boolean;
 };
 type Row = Receipt["triples"][number];
 type Fact = ReturnType<typeof deepOwnFacts>[number];
@@ -281,6 +291,12 @@ class Fixture {
       validAt: SEED_VALID_FROM,
       recordedAt: this.head.instant,
     };
+  }
+  acceptSeedHead(position: number, txId: string) {
+    assert(this.head && position > this.head.position);
+    // [DX-CHK1] Why: rejoin the real loader's verified logical position before adding the rolling traffic sentinels.
+    // Rejected: resetting the erase fixture to a zero basis after mixed population load.
+    this.head = { ...this.head, position, txId, triples: [] };
   }
   acceptErasure(command: { position: number; erasedAt: number; txId: string }) {
     assert.equal(command.position, this.position + 1);
@@ -878,24 +894,36 @@ async function scale() {
       await derivedRegression(run.binding, output);
       return;
     }
-    const sealed = run.mode.startsWith("fast") || run.guardComparison;
+    const sealedK = run.mode === "sealed-k-regression";
+    const parallel = run.mode.endsWith("-parallel");
+    const sealed =
+      run.mode.startsWith("fast") ||
+      run.guardComparison ||
+      run.mode === "ledger-authority-parallel" ||
+      run.sealedWitness === true || sealedK;
     if (
-      ["ledger-regression", "ledger-reuse", "ledger-parallel"].includes(run.mode) ||
+      sealedK || parallel ||
+      ["ledger-regression", "ledger-authority-regression", "ledger-reuse"].includes(run.mode) ||
       (sealed && action !== "check" && !run.seedRole)
     ) {
       const authority = new DatomicClient(process.env.DATOMIC_URL!);
       try {
         await authority.declareProtection(
           f.db,
-          sealed ? [":privacy/field"] : [run.mode === "ledger-parallel" ? ":v" : field(0)],
+          parallel ? [":v"] : sealed && !run.sealedWitness && !sealedK ? [":privacy/field"] : [field(0)],
           sealed,
         );
       } finally {
         authority.close();
       }
     }
-    if (run.mode === "ledger-parallel") {
+    if (parallel) {
       output("parallel-writer", await diag("parallel-writer", { scope: f.scope }));
+      return;
+    }
+    if (run.mode === "fast-authority-regression") {
+      const { checkSharedAuthority } = await import("./authority.ts");
+      await checkSharedAuthority(f, run.nonce, getParent, diag, output);
       return;
     }
     let groups: Acc[];
@@ -933,7 +961,12 @@ async function scale() {
     }
     if (run.neighbourCheck) {
       const { quietNeighbours } = await import("./quiet.ts");
-      await quietNeighbours(f, run.nonce, diag, output, action === "check");
+      await quietNeighbours(f, run.nonce, diag, output, action === "check", run.cleanupStudy);
+      return;
+    }
+    if (run.authorityCost) {
+      const { compareSharedAuthoritySaves } = await import("./authority.ts");
+      await compareSharedAuthoritySaves(f, run.nonce, diag, output, 500);
       return;
     }
     if (run.mode === "ledger-reuse") {
@@ -948,6 +981,26 @@ async function scale() {
     }
     if (run.mode.endsWith("regression")) {
       const { regression } = await import("./regression.ts");
+      const nonce = process.env.DX_CHK1_REMOVAL;
+      const combined = nonce ? await import("../chk1/removal.ts") : undefined;
+      if (combined) {
+        assert.equal(nonce, run.nonce);
+        if (process.env.DX_CHK1_REALISTIC === "1") {
+          const { load } = await import("../real1/load.ts");
+          const { roster } = await import("../real1/population.ts");
+          const seed = await load({ scope: f.name, db: f.db, tag: "toy-parent", imageSha: digest(f.scope),
+            pgdataSha: digest("toy"), transferSha: digest(nonce), cut: f.position, facts: 0, people: 500 },
+          "toy", run.sourceHash!, process.env.DATOMIC_URL!, dir, () => {
+            const free = fs.statfsSync(dir);
+            assert(free.bavail * free.bsize >= 10 * 2 ** 30);
+          });
+          const rows = await comp.feedPage(seed.cut - 1, 1);
+          const terminal = rows.transactions[0]!;
+          assert.deepEqual([terminal.position, terminal.txId], [seed.cut, seed.terminalTx]);
+          f.acceptSeedHead(seed.cut, seed.terminalTx);
+          output("combined-realistic-seed", { seed, accounts: roster("toy") });
+        } else await f.write(combined.trafficSeed, [], "combined-rolling-seed");
+      }
       await regression(
         f,
         groups[1]!.people[0]!,
@@ -956,7 +1009,10 @@ async function scale() {
         diag,
         getParent,
         output,
-        run.mode === "ledger-regression",
+        run.mode.startsWith("ledger-") || sealedK,
+        run.sealedWitness,
+        sealedK,
+        combined ? (erase) => combined.duringRemoval(process.env.DATOMIC_URL!, f.db, nonce!, erase, output) : undefined,
       );
       return;
     }

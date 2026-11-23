@@ -1,0 +1,71 @@
+// [DX-PREP1] Why: include the durable commit inside extended-protocol Sync and separate its WAL sync.
+// Rejected: dividing pg_stat_wal over appends or attributing JDBC execute duration to COMMIT.
+BEGIN { printf("START\t%llu\n", nsecs(monotonic)); }
+END { printf("STOP\t%llu\n", nsecs(monotonic)); }
+
+uprobe:@PG@:CommitTransactionCommand /cgroup == cgroupid("@CG@")/ {
+  @commit[tid] = nsecs(monotonic);
+  @dirty[tid] = (uint64)0;
+}
+uretprobe:@PG@:CommitTransactionCommand /@commit[tid]/ {
+  if (@dirty[tid]) {
+    @emitted = count();
+    printf("C\t%d\t%llu\t%llu\t%llu\n", pid, @commit[tid], nsecs(monotonic), @dirty[tid]);
+  }
+  delete(@commit[tid]);
+  delete(@dirty[tid]);
+}
+
+uprobe:@PG@:XLogFlush /cgroup == cgroupid("@CG@")/ {
+  @flush[tid] = nsecs(monotonic);
+  @lsn[tid] = arg0;
+  if (@commit[tid]) { @dirty[tid] = arg0; }
+}
+uretprobe:@PG@:XLogFlush /@flush[tid]/ {
+  @emitted = count();
+  printf("F\t%d\t%llu\t%llu\t%llu\n", pid, @flush[tid], nsecs(monotonic), @lsn[tid]);
+  delete(@flush[tid]);
+  delete(@lsn[tid]);
+}
+
+// [DX-PREP1] Why: count successful fdatasync on the same backend inside XLogFlush (DX-BM1 witnessed it).
+// Rejected: the separate issue_xlog_fsync entry that the measured PostgreSQL build did not call.
+tracepoint:syscalls:sys_enter_fdatasync /@flush[tid]/ {
+  @wal[tid] = nsecs(monotonic);
+  @walfd[tid] = (uint64)args.fd;
+}
+tracepoint:syscalls:sys_exit_fdatasync /@wal[tid]/ {
+  if (args.ret == 0) {
+    @emitted = count();
+    printf("W\t%d\t%llu\t%llu\t%llu\n", pid, @wal[tid], nsecs(monotonic), @walfd[tid]);
+  }
+  delete(@wal[tid]);
+  delete(@walfd[tid]);
+}
+
+uprobe:@PG@:CreateCheckPoint /cgroup == cgroupid("@CG@")/ {
+  $start = nsecs(monotonic);
+  @checkpoint[tid] = $start;
+  @emitted = count();
+  printf("B\t%d\t%llu\t%llu\t0\n", pid, $start, $start);
+}
+uretprobe:@PG@:CreateCheckPoint /@checkpoint[tid]/ {
+  @emitted = count();
+  printf("K\t%d\t%llu\t%llu\t0\n", pid, @checkpoint[tid], nsecs(monotonic));
+  delete(@checkpoint[tid]);
+}
+
+// Capture checkpoint I/O calls, excluding the deliberate pacing sleeps in CreateCheckPoint.
+tracepoint:syscalls:sys_enter_pwrite*,tracepoint:syscalls:sys_enter_fsync,
+tracepoint:syscalls:sys_enter_fdatasync,tracepoint:syscalls:sys_enter_sync_file_range
+/@checkpoint[tid] && !@wal[tid]/ { @io[tid] = nsecs(monotonic); }
+tracepoint:syscalls:sys_exit_pwrite*,tracepoint:syscalls:sys_exit_fsync,
+tracepoint:syscalls:sys_exit_fdatasync,tracepoint:syscalls:sys_exit_sync_file_range
+/@io[tid]/ {
+  $end = nsecs(monotonic);
+  if ($end - @io[tid] >= 1000000) {
+    @emitted = count();
+    printf("I\t%d\t%llu\t%llu\t0\n", pid, @io[tid], $end);
+  }
+  delete(@io[tid]);
+}

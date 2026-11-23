@@ -3,12 +3,18 @@ import { promisify } from "node:util";
 import { randomUUID } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { DatabaseScope } from "@triplex-build/triplex/runtime";
 import { DatomicClient } from "../src/DatomicClient.js";
 import { makeDatomicStorageAdapter } from "../src/DatomicStorageAdapter.js";
 const exec = promisify(execFile);
+// [DX-JVM1] Why: both the package and root runners must start the same worker.
+// Rejected: making the distributed-clock fixture depend on Vitest's current directory.
+const clockWorker = fileURLToPath(
+  new URL("../../../lab/experiments/EXP-DX1/b5/clock-worker.mts", import.meta.url),
+);
 // [DX-B5-L0] Why: require native fast-path acceptance and exact fallback content at every receipt time.
 // Rejected: trusting only a missing irregular flag or a successful ACK.
 describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("distributed clock order", () => {
@@ -24,12 +30,7 @@ describe.skipIf(process.env.DATOMIC_INTEGRATION !== "1")("distributed clock orde
         Array.from({ length: 4 }, (_, worker) =>
           exec(
             process.execPath,
-            [
-              "--experimental-strip-types",
-              "lab/experiments/EXP-DX1/b5/clock-worker.mts",
-              scope,
-              String(worker),
-            ],
+            ["--experimental-strip-types", clockWorker, scope, String(worker)],
             { env: process.env, maxBuffer: 8 * 1024 ** 2 },
           ).then((r) => {
             // [DX-T1-5] Why: permanent tracing can share stdout; bind one complete worker result and preserve the raw stream.

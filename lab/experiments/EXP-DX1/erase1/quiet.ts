@@ -43,6 +43,7 @@ export async function quietNeighbours(
   diag: (action: string, input: object) => Promise<any>,
   output: (name: string, value: unknown) => void,
   reportTiming: boolean,
+  cleanupStudy?: "separate" | "folded",
 ) {
   const saves = reportTiming ? 500 : 8;
   const peer = new DatomicClient(process.env.DATOMIC_URL!, 35_000);
@@ -100,9 +101,13 @@ export async function quietNeighbours(
       const end = at();
       return { start, end, ms: end - start };
     };
-    const block = async (name: string, interfere?: () => Promise<unknown>) => {
+    const block = async (
+      name: string,
+      interfere?: (ordinaryWindow: Promise<void>) => Promise<unknown>,
+    ) => {
       let active = true;
       const started = Promise.withResolvers<void>();
+      const ordinaryWindow = Promise.withResolvers<void>();
       const reads: ReturnType<typeof sample>[] = [],
         feed: ReturnType<typeof sample>[] = [],
         writes: ReturnType<typeof sample>[] = [];
@@ -147,7 +152,7 @@ export async function quietNeighbours(
       const competing = started.promise.then(async () => {
         if (!interfere) return;
         const start = at();
-        const observed = await interfere();
+        const observed = await interfere(ordinaryWindow.promise);
         return { ...sample(start), observed };
       });
       // A failed neighbouring task is returned by the attempted block before another arm starts.
@@ -186,9 +191,11 @@ export async function quietNeighbours(
           head = receipt.position;
           prior.set(owner, row.id);
           acks.set(head, receipt.txId);
+          if (i + 1 === Math.floor(saves / 2)) ordinaryWindow.resolve();
         }
       } finally {
         started.resolve();
+        ordinaryWindow.resolve();
         active = false;
         await Promise.all(readers);
       }
@@ -238,13 +245,56 @@ export async function quietNeighbours(
       return removed;
     });
     const middle = await block("middle");
-    const cleaning = await block("cleanup", async () => {
+    const cleaning = await block("cleanup", async (ordinaryWindow) => {
       const selected = assertionIds.slice(0, 100);
-      const job = await diag("ciphertext-cleanup", { scope: f.scope, ids: selected });
-      assert.deepEqual(job.ids, selected);
-      assert.equal(job.matched, selected.length);
-      assert(job.matched <= 2000 && job.requestedIndex !== undefined);
-      return job;
+      const folded = cleanupStudy === "folded";
+      const scheduled = await diag("ciphertext-cleanup", {
+        scope: f.scope,
+        ids: selected,
+        ...(folded ? { foldWithOrdinaryIndex: true } : {}),
+      });
+      assert.deepEqual(scheduled.ids, selected);
+      assert.equal(scheduled.matched, selected.length);
+      assert(scheduled.matched <= 2000 && typeof scheduled.t === "string");
+      assert.equal(scheduled.requestedIndex === undefined, folded);
+      if (!cleanupStudy) return scheduled;
+      await ordinaryWindow;
+      // [DX-ERASE1] Why: both arms perform the same planned ordinary index maintenance.
+      // Rejected: comparing two jobs in one window against a window where ordinary work never ran.
+      const ordinaryFacts = Array.from({ length: 32 }, (_, n) =>
+        business(`acct/b/index-maintenance-${n}`, quietField, `ordinary-${n}`),
+      );
+      const ordinaryWrite = await write(ordinaryFacts, "index-maintenance");
+      assert.equal(ordinaryWrite.receipt.triples.length, ordinaryFacts.length);
+      for (const row of ordinaryWrite.receipt.triples) {
+        const expected = ordinaryFacts.find((fact) => fact.entityId === row.entityId);
+        assert(
+          expected &&
+            row.attribute === expected.attribute &&
+            row.value.type === "string" &&
+            row.value.value === expected.value.value,
+        );
+      }
+      const ordinary = await diag("index", { scope: f.scope });
+      assert(
+        BigInt(ordinary.basis) >= BigInt(ordinary.t) && BigInt(ordinary.t) >= BigInt(scheduled.t),
+      );
+      const barrier = await diag("cleanup-barrier", {
+        scope: f.scope,
+        ids: selected,
+        t: scheduled.t,
+      });
+      assert.equal(barrier.t, scheduled.t);
+      assert.deepEqual(barrier.ids, selected);
+      const result = {
+        mode: cleanupStudy,
+        scheduled,
+        ordinary,
+        barrier,
+        ordinaryReceipt: ordinaryWrite.receipt.txId,
+      };
+      output("cleanup-study", result);
+      return result;
     });
     const last = await block("after");
     const ratio = (arm: typeof erasing, control: typeof first) => {

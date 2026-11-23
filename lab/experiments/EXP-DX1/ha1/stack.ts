@@ -23,6 +23,8 @@ export interface Site {
   datomicId: string;
   postgresImage?: string;
   privateAddress?: string;
+  // [DX-HASYNC2] Why: bulk WAL between the two servers bypasses the SSH overlay. Rejected: the ssh -w tunnel, measured at 49 MiB/s.
+  replicationAddress?: string;
   docker: (args: string[], opts?: { timeout?: number }) => Promise<string>;
 }
 type Member = { site: Site; id: string; image: string; role: Role; volumes: string[] };
@@ -37,6 +39,7 @@ export class Stack {
   readonly pgIds = new Map<Site, string>();
   readonly secret: string;
   readonly admin: string;
+  readonly redactions = new Set<string>();
   readonly e: Evidence;
   readonly a: Site;
   readonly b: Site;
@@ -48,6 +51,7 @@ export class Stack {
     b: Site,
     credentials?: { secret: string; admin: string },
     readonly caps?: ReadonlyMap<Role, number>,
+    readonly placement?: ReadonlyMap<Role, string>,
   ) {
     this.e = e;
     this.a = a;
@@ -94,8 +98,10 @@ export class Stack {
     argv: string[],
     port?: number,
     externalPort?: number,
+    cpuCount?: number,
   ) {
     assert(!this.members.has(role));
+    assert(cpuCount === undefined || (["DX-CHK1", "DX-THIN1"].includes(this.holder) && cpuCount === 3));
     const image = postgresRole(role) ? this.pgIds.get(site)! : site.datomicId;
     const cross = this.a !== this.b;
     const server = process.platform === "linux";
@@ -153,8 +159,9 @@ export class Stack {
       mb + "m",
       "--memory-swap",
       mb + "m",
-      "--cpus",
-      server ? "3" : "1.5",
+      ...(this.placement?.has(role)
+        ? ["--cpuset-cpus", this.placement.get(role)!]
+        : ["--cpus", cpuCount?.toString() ?? (server ? "3" : "1.5")]),
       "--network",
       this.networks.get(site)!,
       ...published,
@@ -287,7 +294,8 @@ export class Stack {
     }
   }
   redact(s: string) {
-    return s.replaceAll(this.secret, "[redacted]").replaceAll(this.admin, "[redacted]");
+    for (const secret of [this.secret, this.admin, ...this.redactions]) s = s.replaceAll(secret, "[redacted]");
+    return s;
   }
   private loadTraceArgs(process: string) {
     if (microLoad(this.e.mode) && process === "tx")
@@ -501,8 +509,9 @@ export class Stack {
       "sql-driver-class=org.postgresql.Driver",
       "sql-user=" + store,
       "sql-password=" + this.secret,
-      "memory-index-threshold=32m",
-      "memory-index-max=96m",
+      // [DX-LOAD2] Why: the toy gate of the fewer-index-jobs arm raises only these two properties.
+      "memory-index-threshold=" + (process.env.DX_LOAD2_MEMORY_INDEX?.split(",")[0] ?? "32m"),
+      "memory-index-max=" + (process.env.DX_LOAD2_MEMORY_INDEX?.split(",")[1] ?? "96m"),
       "object-cache-max=64m",
     ];
     // [DX-HA1] Why: the vendor launcher accepts heap bounds as arguments and advertises its own broker. Rejected: a shared advertised address that can silently reconnect to the old active.
@@ -552,9 +561,12 @@ export class Stack {
   sharedDb(role: "write" | "read") {
     return "s2-" + Buffer.from(this.sharedScope(role)).toString("base64url");
   }
-  async gateway(role: "write" | "read", site: Site, pg: "pg" | "target", store: string) {
+  async gateway(role: "write" | "read", site: Site, pg: "pg" | "target", store: string,
+    combination?: { settings: Record<string, string>; java: string; cores: number }) {
+    assert(!combination || ["DX-CHK1", "DX-THIN1"].includes(this.holder));
     const size = process.platform === "linux" ? "1600" : "320";
-    const frontier = this.e.mode.startsWith("load-frontier-") || microLoad(this.e.mode);
+    const fair = this.e.mode === "load-fair";
+    const frontier = this.e.mode.startsWith("load-frontier-") || (microLoad(this.e.mode) && !fair);
     const split = splitLoad(this.e.mode);
     const priority = this.e.mode === "load-live" || this.e.mode === "load-tail" || frontier;
     const grouping = priority || (split && role === "write");
@@ -600,6 +612,19 @@ export class Stack {
               "-e",
             ]
           : []),
+        // [DX-HA1] Why: the compact gate serves the same ordered writer through an owned SQL stack.
+        // Rejected: checking mixed credits against the old grouped gateway or an unbound service.
+        ...(fair ? [
+          "TX2_PREDECESSOR_LOOKUP=1", "-e",
+          "TX2_SUBJECT_SAVE=1", "-e",
+          "TX2_SUBJECT_NUMERIC_OWNER=1", "-e",
+          "TX2_SUBJECT_ORDERED_IDS=1", "-e",
+          "TX2_GROUP_FAST_REPLY=1", "-e",
+          "TX2_GROUP_STAGE_CLOCK=1", "-e",
+          "TX2_LEAN_NATIVE_QUERY=1", "-e",
+          "TX2_LEAN_NATIVE_LOG=1", "-e",
+          "TX2_WRITE_OPTIONS_ATTEMPT=" + this.e.nonce, "-e",
+        ] : []),
         ...(this.e.mode === "one-account"
           ? [
               "HA1_SHARED_SCOPE=" + this.sharedScope(role),
@@ -608,17 +633,15 @@ export class Stack {
               "-e",
             ]
           : []),
+        ...(combination ? Object.entries(combination.settings).flatMap(([key, value]) => [key + "=" + value, "-e"]) : []),
         "DATOMIC_URI_TEMPLATE=" + this.uri(pg, store, "{db}", site),
         "-e",
         "GATEWAY_SOURCE_SHA256=" + this.e.source.gateway,
         "-e",
-        "DATOMIC_JAVA_OPTS=-Xms96m -Xmx" +
-          size +
-          "m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=64m" +
-          (this.e.mode === "load-tail" ? javaRecording : "") +
-          (microLoad(this.e.mode)
-            ? " -Xlog:gc*:file=/tmp/load5-gc.log:time,uptimemillis,level,tags"
-            : ""),
+        "DATOMIC_JAVA_OPTS=" + (combination?.java ??
+          ("-Xms96m -Xmx" + size + "m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=64m" +
+            (this.e.mode === "load-tail" ? javaRecording : "") +
+            (microLoad(this.e.mode) ? " -Xlog:gc*:file=/tmp/load5-gc.log:time,uptimemillis,level,tags" : ""))),
       ],
       "/opt/datomic/bin/run",
       [
@@ -630,15 +653,17 @@ export class Stack {
             : "triplex.gateway.main",
       ],
       8080,
+      undefined,
+      combination?.cores === 3 ? 3 : undefined,
     );
     return this.endpoint(role);
   }
-  async endpoint(role: "write" | "read") {
+  async endpoint(role: "write" | "read" | "write-b") {
     const m = this.members.get(role)!,
       port = (await this.view(role)).NetworkSettings.Ports["8080/tcp"][0].HostPort;
     return "http://" + (m.site.privateAddress ?? loopback) + ":" + port;
   }
-  async ready(role: "write" | "read") {
+  async ready(role: "write" | "read" | "write-b") {
     const url = await this.endpoint(role);
     await until("gateway " + role, async () => {
       const r = await fetch(url + "/health", { signal: AbortSignal.timeout(2500) }).catch(

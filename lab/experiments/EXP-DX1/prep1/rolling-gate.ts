@@ -7,12 +7,17 @@ import { expiryMs, field, operationId, sha, task, type Write } from "../scale1/d
 import { creditModeSelection } from "./rolling-credits.ts";
 import type { CreditMode } from "../jvm1/launch.mjs";
 import { command } from "../w1/group/workload.ts";
+import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
+import { replay } from "../chk1/replay.ts";
+import { sampleMigratedReads } from "../w1/migrated-reads.ts";
 
 const [phase, mode, witnessPath] = process.argv.slice(2);
 const selection = creditModeSelection(mode as CreditMode);
 const credits = selection.credits;
 const ordered = process.env.TX2_SUBJECT_ORDERED_IDS === "1";
 const serial = process.env.TX2_SUBJECT_NARROW_REVISION === "1";
+const appendRetirement = process.env.TX2_SUBJECT_APPEND_RETIREMENT === "1";
+const ownerHead = process.env.TX2_SUBJECT_OWNER_HEAD === "1";
 assert(phase === "before" || phase === "after");
 assert(witnessPath && mode);
 const attempt = process.env.PREP1_ATTEMPT!;
@@ -30,7 +35,7 @@ function tape(n: number, label: string, samePerson = false): Write[] {
 }
 
 async function exactRead(db: string, entity: string, position: number, id: string, value: string) {
-  const got = await client.rows(db, { entityIds: [entity], basis: { recordedPosition: position, validAt: 1 } });
+  const got = await client.rows(db, { entityIds: [entity], basis: { recordedPosition: position, validAt: SEED_VALID_FROM } });
   const visible = got.filter((r) => r.attribute === field(0));
   assert.deepEqual(visible.map((r) => [r.id, r.value_string]), [[id, value]]);
 }
@@ -41,11 +46,69 @@ async function head(db: string) {
   return pin.position;
 }
 
+// [Opus W1] Why: name the removal-across-head call a gateway deadline hits (owner14-01 stopped on one, unnamed).
+// Rejected: lengthening the client deadline before knowing which call is slow.
+function step(name: string) {
+  console.log("DX-W1_OWNER_REMOVAL_STEP " + JSON.stringify({ attempt, name, at: Date.now() }));
+}
+async function checkRemovalAcrossHead() {
+  const protectedScope = JSON.stringify(["triplex-scope-v1", "test", "rolling-head", nonce, 0]);
+  step("1-create");
+  const { db, created } = await client.create(protectedScope, "lean", true, 35000);
+  assert(created);
+  const entity = task(0, 789), attribute = field(0);
+  step("2-declareProtection");
+  await client.declareProtection(db, [attribute], true);
+  const fact = (value: string) => ({ e: entity, a: attribute, v: { type: "string" as const, value } });
+  const old = command(nonce + "-protected-legacy", [fact("before-head")], [], false);
+  step("3-transact");
+  const seed = await client.transact(db, old) as { subjectOwnerHeadBytes?: number };
+  assert(!seed.subjectOwnerHeadBytes);
+  step("4-begin");
+  const pin = await client.begin(db);
+  step("5-rows");
+  const [prior] = await client.rows(db, { entityIds: [entity], handle: pin.handle });
+  assert(prior?.value_string === "before-head");
+  const next = command(nonce + "-protected-head", [fact("after-head")], [prior], true, false, orderedSaveIdentity());
+  step("6-transact");
+  const saved = await client.transact(db, { ...next, sourceK: pin.position }) as {
+    position: { v: string }; t: { v: string }; datoms: number; subjectOwnerHeadBytes?: number;
+  };
+  assert(saved.subjectOwnerHeadBytes);
+  const nextCut = Number(saved.position.v);
+  await exactRead(db, entity, nextCut, next.rows[0]!.id, "after-head");
+  await exactRead(db, entity, pin.position, prior.id, "before-head");
+  step("7-erase");
+  const removal = await client.erase(db, nonce + "-remove", [{ id: prior.id }, { id: next.rows[0]!.id }]);
+  assert.deepEqual(removal.identities.map((x) => x.assertionId).sort(), [prior.id, next.rows[0]!.id].sort());
+  for (const [cut, id] of [[pin.position, prior.id], [nextCut, next.rows[0]!.id]] as const) {
+    step("8-rows");
+    const rows = await client.rows(db, { entityIds: [entity], basis: { recordedPosition: cut, validAt: SEED_VALID_FROM } });
+    const erased = rows.find((r) => r.id === id);
+    assert(erased?.value_type === "erased" && erased.value_string === null);
+    assert.equal(JSON.parse(erased.value_json!).erasedAt, removal.erasedAt);
+  }
+  step("9-rows");
+  const held = await client.rows(db, { entityIds: [entity], handle: pin.handle });
+  assert(held.some((r) => r.id === prior.id && r.value_type === "erased" && r.value_string === null));
+  step("10-rows");
+  const journal = await client.rows(db, { entityIds: [next.claims[0]!.txId] });
+  const bodies = journal.filter((r) => r.attribute === ":_tx/change").map((r) => r.value_json!);
+  assert.equal(bodies.length, 2);
+  assert(bodies.every((body) => !body.includes("before-head") && !body.includes("after-head")));
+  step("11-release");
+  await client.release(db, pin.handle);
+  console.log("DX-W1_OWNER_REMOVAL " + JSON.stringify({ attempt, mode, db, oldCut: pin.position,
+    nextCut, removed: removal.identities.length, sequence: removal.seq, headBytes: saved.subjectOwnerHeadBytes,
+    savedT: saved.t.v, removalT: removal.t, saveDatoms: saved.datoms }));
+}
+
 type Receipt = { id: string; p: number; t: string; clock: number; tx: string; digest: string; replyNs: string; orderedToken?: string };
-type Witness = { attempt: string; mode: string; ordered: boolean; serial: boolean; db: string; head: number;
-  lost: Receipt; acked: Receipt[]; missing: string[]; immediate: number; submitted: number };
+type Witness = { attempt: string; mode: string; ordered: boolean; serial: boolean; appendRetirement: boolean; db: string; head: number;
+  ownerHead: boolean; lost: Receipt; acked: Receipt[]; missing: string[]; immediate: number; submitted: number };
 
 async function before(witness: string) {
+  if (ownerHead) await checkRemovalAcrossHead();
   const { db, created } = await client.create(scope, "lean", true, 35000);
   assert(created);
   const seedSet = [...tape(credits, "seed"), ...tape(50, "repeat", true)];
@@ -59,12 +122,16 @@ async function before(witness: string) {
   const options = await client.request<{
     attempt: string; database: string; position: number;
     subjectSave?: boolean; subjectOrderedIds?: boolean; subjectNarrowRevision?: boolean; subjectReusePredecessor?: boolean;
+    subjectAppendRetirement?: boolean;
+    subjectOwnerHead?: boolean;
     options: { groupCommit: boolean; ledger: boolean };
   }>("GET", "/v1/db/" + db + "/write-options");
   assert.deepEqual([options.attempt, options.database, options.position], [attempt, db, cut]);
   assert.deepEqual([Boolean(options.subjectSave), Boolean(options.subjectOrderedIds), options.options.groupCommit,
     options.options.ledger, Boolean(options.subjectNarrowRevision), Boolean(options.subjectReusePredecessor)],
     [ordered, ordered, !ordered, !ordered, serial, serial]);
+  assert.equal(Boolean(options.subjectAppendRetirement), appendRetirement);
+  assert.equal(Boolean(options.subjectOwnerHead), ownerHead);
   const rowsByOwner = new Map([...templates].map(([e], i) => [e, change.rows.slice(i * 4, i * 4 + 4)
     .map((r) => ({ ...r, recorded_position: cut, recorded_at: seed.recordedAt.v }))]));
   const senders: Sender[] = Array.from({ length: 10 }, () => ({
@@ -92,12 +159,29 @@ async function before(witness: string) {
   for (const e of okTape) {
     const saved = ok.rows[e.ordinal]!;
     assert(saved.status === "acked" && Boolean(saved.stage?.subjectOrderedIds) === ordered && saved.receipt);
+    assert.equal(Boolean(saved.stage?.subjectAppendRetirement), appendRetirement);
+    assert.equal(Boolean(saved.stage?.subjectOwnerHeadBytes), ownerHead);
     const exact = expectedSave(saved, e, rowsByOwner.get(task(e.account, e.subject))!);
     await exactRead(db, exact.entity, saved.receipt.p, exact.input.rows[0]!.id, sha([e.version, 0]).slice(0, 57));
     const sequence = ok.rows.filter((s) => s.account === e.account && s.subject === e.subject);
     assert(sequence.every((s, i) => i === 0 || sequence[i-1]!.receipt!.p < s.receipt!.p));
   }
   assert.equal(await head(db), cut + okTape.length);
+  if (ownerHead) {
+    // [Opus W1] Why: gate the owner-head pair's migrated-person read sampler on people this tape just saved.
+    // Rejected: trusting the full-size runner to be the first place its request shapes and cut checks execute.
+    const sampler = new DatomicClient(url, 5000);
+    const people = [...new Set(okTape.map((e) => task(e.account, e.subject)))];
+    const sampled = await sampleMigratedReads(sampler, db, { phase: "settled", start: Date.now() + 200, seconds: 3,
+      firstCut: cut, validAt: SEED_VALID_FROM, candidates: () => people });
+    sampler.close();
+    assert.equal(sampled.errors.length, 0, sampled.errors.join("\n"));
+    assert(sampled.attempted >= 10 && sampled.notYetSaved === 0 && sampled.pinnedSkipped === 0);
+    assert(sampled.current.count === sampled.attempted && sampled.pinned.count === sampled.attempted);
+    console.log("DX-W1_MIGRATED_READS " + JSON.stringify({ attempt, mode, db, rate: sampled.ratePerSecond,
+      attempted: sampled.attempted, current: { p50: sampled.current.p50Ms, p99: sampled.current.p99Ms },
+      pinned: { p50: sampled.pinned.p50Ms, p99: sampled.pinned.p99Ms }, rows: sampled.currentRows, clock: "diagnostic" }));
+  }
 
   const lostTape = tape(credits, "lost");
   const lostId = operationId(nonce, lostTape[credits-1]!.version);
@@ -117,7 +201,8 @@ async function before(witness: string) {
   assert(unresolved && lostResult.unresolved.size === 1 && unresolved[0].id === lostId && withheld);
   await resolveUncertain(senders, lostResult.unresolved);
   const recovered = unresolved[0];
-  const initial = withheld as { position: { v: string }; t: { v: string }; recordedAt: { v: number } };
+  const initial = withheld as { position: { v: string }; t: { v: string }; recordedAt: { v: number }; subjectOwnerHeadBytes?: number };
+  assert.equal(Boolean(initial.subjectOwnerHeadBytes), ownerHead);
   assert(recovered.status === "recovered" && recovered.receipt);
   assert.deepEqual([recovered.receipt.p, recovered.receipt.t, recovered.receipt.clock],
     [Number(initial.position.v), initial.t.v, initial.recordedAt.v]);
@@ -126,6 +211,27 @@ async function before(witness: string) {
     { code: "CommandConflict" });
   const beforeFailure = await head(db);
   assert.equal(beforeFailure, cut + okTape.length + lostTape.length);
+  if (process.env.DX_CHK1_APPEND_GATE === "1") {
+    // [DX-CHK1] Why: prove neither identity representation can be reused after retirement.
+    // Rejected: a duplicate command ID that can fail before testing assertion uniqueness.
+    const sample = ok.rows[0]!;
+    assert(sample.orderedToken);
+    const retired = [change.rows[0]!.id, orderedSaveIdentity(sample.orderedToken).assertionId(0)];
+    for (const [i, id] of retired.entries()) {
+      const attemptId = nonce + "-retired-reuse-" + i;
+      const draft = command(attemptId, [{ e: "reuse-control-" + i, a: field(0),
+        v: { type: "string", value: "unexpected" } }], [], false);
+      draft.rows[0] = { ...draft.rows[0]!, id };
+      draft.newIds[0] = id;
+      await assert.rejects(() => real(db, draft), { code: "IdentityConflict" });
+      assert.equal((await client.operation(db, attemptId)).status, "absent");
+    }
+    await assert.rejects(() => client.rows(db, {
+      entityIds: [task(0, 0)], basis: { recordedPosition: beforeFailure + 1, validAt: 1 }, basisWaitMs: 1,
+    }), { code: "BasisNotAvailable" });
+    assert.equal(await head(db), beforeFailure);
+    console.log("DX_CHK1_REUSE " + JSON.stringify({ attempt, db, legacy: retired[0], ordered: retired[1], futureCut: beforeFailure + 1 }));
+  }
 
   // [DX-PREP1] Why: let the real transactor reject its next append while requests hold rolling credits.
   // Rejected: a timer-based stop or treating a fabricated failed HTTP response as a refused storage write.
@@ -145,7 +251,7 @@ async function before(witness: string) {
   assert.equal(submitted, granted);
   assert(failed.rows.every((r, i) => r.status === (i < granted ? "uncertain" : "expired-before-dispatch") &&
     r.receipt === undefined && (r.dispatched !== undefined) === (i < granted)));
-  const proof: Witness = { attempt, mode: mode!, ordered, serial, immediate, submitted, db, head: beforeFailure,
+  const proof: Witness = { attempt, mode: mode!, ordered, serial, appendRetirement, ownerHead, immediate, submitted, db, head: beforeFailure,
     lost: { id: lostId, ...recovered.receipt, replyNs: replyClocks.get(lostId)! },
     acked: [...ok.rows, ...lostResult.rows].map((r) => {
       assert(r.receipt);
@@ -158,6 +264,8 @@ async function before(witness: string) {
 async function after(witness: string) {
   const proof = JSON.parse(readFileSync(witness, "utf8")) as Witness;
   assert.deepEqual([proof.attempt, proof.mode, proof.ordered, proof.serial], [attempt, mode, ordered, serial]);
+  assert.equal(proof.appendRetirement, appendRetirement);
+  assert.equal(proof.ownerHead, ownerHead);
   const opened = await client.create(scope, "lean", true, 35000);
   assert.equal(opened.created, false);
   assert.equal(opened.db, proof.db);
@@ -188,12 +296,17 @@ async function after(witness: string) {
       [r.id, r.p, r.t, r.clock]);
   }
   for (const id of proof.missing) assert.equal((await client.operation(db, id)).status, "absent");
+  if (process.env.DX_CHK1_APPEND_GATE === "1") {
+    const full = await replay(url, db, proof.head, proof.acked);
+    assert.equal(full.length, proof.head);
+    console.log("DX_CHK1_FULL_REPLAY " + JSON.stringify({ attempt, db, positions: full.length, recovered: proof.acked.length }));
+  }
   const recoveredId = operationId(nonce, tape(credits, "lost")[credits-1]!.version);
   const original = await client.operation(db, recoveredId);
   assert.deepEqual([Number(original.position?.v), original.t?.v, original.recordedAt?.v],
     [proof.lost.p, proof.lost.t, proof.lost.clock]);
   console.log("PREP1_ROLLING " + JSON.stringify({ attempt, credits, db, head: proof.head,
-    mode, ordered, serial, immediate: proof.immediate, submitted: proof.submitted, durable: journal.length, refused: proof.missing.length, lost: proof.lost, checked: proof.acked }));
+    mode, ordered, serial, appendRetirement, ownerHead, immediate: proof.immediate, submitted: proof.submitted, durable: journal.length, refused: proof.missing.length, lost: proof.lost, checked: proof.acked }));
 }
 try {
   if (phase === "before") await before(witnessPath);

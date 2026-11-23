@@ -19,6 +19,26 @@ const encoded = (value: unknown): string =>
   Base64Url.encode(new TextEncoder().encode(JSON.stringify(value)));
 
 describe("paged query cursor contract", () => {
+  it("includes an acknowledged save at clock 102 when the reader clock is 100", () => {
+    const save = { position: 4, instant: 102 };
+    const page = preparePagination({
+      query,
+      now: 100,
+      recordedPosition: save.position,
+      scope: "test",
+    });
+    expect(page.basis.recordedPosition).toBe(save.position);
+    expect(page.basis.recordedAt).toBeUndefined();
+    const atTime = preparePagination({
+      query,
+      basis: { recordedAt: 100 },
+      now: 100,
+      recordedPosition: save.position,
+      scope: "test",
+    });
+    expect(atTime.basis.recordedAt).toBeLessThan(save.instant);
+  });
+
   it("defaults to a bounded page and reuses omitted temporal fields from the cursor", () => {
     const request = { inner: query.inner };
     const first = preparePagination({
@@ -32,7 +52,7 @@ describe("paged query cursor contract", () => {
     const page = finishPagination(first, {
       results: Array.from({ length: 101 }, (_, i) => ({ "?entity": String(i), "?name": "A" })),
     });
-    for (const basis of [{}, { recordedAt: 100 }, { validAt: 100 }]) {
+    for (const basis of [{}, { validAt: 100 }]) {
       const next = preparePagination({
         query: { ...request, cursor: page.nextCursor! },
         basis,
@@ -65,7 +85,7 @@ describe("paged query cursor contract", () => {
       recordedPosition: 4,
       scope: "database:one",
     });
-    expect(first.basis).toEqual({ recordedAt: 100, recordedPosition: 4, validAt: 100 });
+    expect(first.basis).toEqual({ recordedPosition: 4, validAt: 100 });
     expect(first.orderBy).toEqual([
       { variable: "?name", direction: "asc" },
       { variable: "?entity", direction: "asc" },
@@ -89,7 +109,7 @@ describe("paged query cursor contract", () => {
       recordedPosition: 9,
       scope: "database:one",
     });
-    expect(next.basis).toEqual({ recordedAt: 100, recordedPosition: 4, validAt: 100 });
+    expect(next.basis).toEqual({ recordedPosition: 4, validAt: 100 });
     expect(next.cursorValues).toEqual(["Alex", "person:2"]);
   });
 
@@ -126,7 +146,7 @@ describe("paged query cursor contract", () => {
 
   it("rejects unsupported versions", () => {
     const cursor = encoded({
-      version: 2,
+      version: 3,
       queryFingerprint: "x",
       scopeFingerprint: "y",
       basis: { recordedAt: 100, recordedPosition: 4, validAt: 100 },
@@ -143,6 +163,31 @@ describe("paged query cursor contract", () => {
     } catch (error) {
       expect(error).toMatchObject({ _tag: "PaginationCursorError", reason: "unsupported_version" });
     }
+  });
+
+  it("continues a version 1 cursor with its original time and position", () => {
+    const first = preparePagination({
+      query,
+      basis: { recordedAt: 99 },
+      now: 100,
+      recordedPosition: 4,
+      scope: "test",
+    });
+    const cursor = finishPagination(first, {
+      results: [
+        { "?entity": "1", "?name": "A" },
+        { "?entity": "2", "?name": "B" },
+        { "?entity": "3", "?name": "C" },
+      ],
+    }).nextCursor!;
+    expect(
+      preparePagination({
+        query: { ...query, cursor },
+        now: 200,
+        recordedPosition: 9,
+        scope: "test",
+      }).basis,
+    ).toEqual({ recordedAt: 99, recordedPosition: 4, validAt: 100 });
   });
 
   it("rejects non-finite cursor values and invalid commit positions", () => {

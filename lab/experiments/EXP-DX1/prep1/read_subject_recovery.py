@@ -44,6 +44,17 @@ def inspect(root):
         reads = [next(i for i, line in enumerate(lines) if line.startswith("PREP1_SUBJECT_RECOVERY ") and label in line)
                  for label in ("blocked-before-reply", "reopened")]
         assert reads[0] < stop < boots[0] < reads[1] < boots[1]
+        if inputs.get("pgDataCopy"):
+            copy, = events("PREP1_PGDATA ")
+            assert copy["attempt"] == attempt and copy["reopenedCopy"] is True
+            assert re.fullmatch(r"[0-9a-f]{64}", copy["control"]) and copy["heldControl"] == copy["control"]
+            reopened = next(i for i, line in enumerate(lines) if line.startswith("PREP1_PGDATA "))
+            assert boots[0] < reopened < reads[1]
+            result["pgDataCopy"] = copy
+            if inputs.get("pgDataWal"):
+                wal, = events("PREP1_PGDATA_WAL ")
+                assert wal["attempt"] == attempt and re.fullmatch(r"[a-f0-9]{64}", wal["walFilesSha"])
+                result["pgDataWal"] = wal
         assert after["originalOperation"] == [409, "OperationDuplicate"]
         assert after["newOperation"] == [409, "CommandConflict"]
         result.update(nativeTests=tests, replicaFlushes=flushes)
@@ -78,9 +89,19 @@ def inspect(root):
             for r in after["nativeLog"]["transaction"]["changes"]} == {
                 ("retract", "old", ":v"), ("assert", assertion, ":v"),
             }
-    committed = [member for block in events("PREP1_NATIVE ") if block["db"] == db
-                 for member in block["members"] if str(member["t"]) == before["nativeT"]]
+    blocks = events("PREP1_NATIVE ")
+    committed = [block for block in blocks if block["db"] == db
+                 for member in block.get("members", []) if str(member["t"]) == before["nativeT"]]
     assert len(committed) == 1
+    if inputs.get("tailSql"):
+        measured, = [block for block in blocks if block.get("tailAppend") and block["db"] == db
+                     and (block["start"], block["end"], block["bytes"]) ==
+                         (committed[0]["start"], committed[0]["end"], committed[0]["bytes"])]
+        assert {call["op"] for call in measured["sql"]} >= {"insert", "update"}
+        assert all(isinstance(call["pid"], int) and call["pid"] > 0 and
+                   measured["start"] <= call["start"] < call["end"] <= measured["end"]
+                   for call in measured["sql"])
+        result["appendSql"] = measured
     return dict(result, held=before, observed=after)
 
 

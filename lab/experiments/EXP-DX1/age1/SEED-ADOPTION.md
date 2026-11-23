@@ -1,0 +1,19 @@
+# Adopting the pooled SCALE1 seed
+
+The server input is the verified `image.json` from the SCALE1 decision loader, its independently verified transfer digest, and an exclusively held database containing that seed. Admit only after the transfer's restored-data checks, or from the original quiesced seed after sealing. AGE1 checks the pinned image manifest bytes, database scope, exact seed cut, LOAD1 manifest and final command, layout, logical clock and the stored membership, row bytes and revision of every selected subject at that cut. The independent transfer binds the original dump checksum to restored storage. Repeat adoption from the same cut on resume and retain the same roster.
+
+| Property | SCALE1 pooled seed | AGE1 part 1 synthetic seed |
+| --- | --- | --- |
+| People and accounts | 1M people, 10 deep accounts | 10 deep and 4 thin accounts, parameterized |
+| Physical seed | Lean v3, strict clocks, native rows for real deep graph including refs and membership, verified bulk-import journal, claim and scope metadata | Lean v3, strict clocks, plain synthetic field rows, minimal frame metadata |
+| Editable subject | First task of each sampled person, fields 0–2, 57-character values | Flat synthetic person, first three fields, shorter values |
+| Seed lookups | Indexed task ID and archived field texts at the sealed cut. Lookup distinctness and owner revision come from native storage. | IDs, predecessor bytes and revision derived from synthetic tape |
+| At and beyond the cut | Solo K saves, matched by physical record bytes after normalizing native transaction IDs and instants | Solo K saves with the same per-save record categories |
+
+Use the observed Datomic history count for the absolute target. The seed's 162,456,470 facts are the business fact count. A source census sampled 100 people per account at local indexes `(997*s + 5477*account + 79) mod 100000`. It counted 167,571 facts and 35,438 fact owners. The lean bulk path writes one business and one journal-change record per fact, three records for each new owner (identity, revision and changed-owner journal row), and about 19 records of transaction metadata per roughly 1,900 facts. This estimates 2.644 records/fact and about 430M records in the full seed. Frame boundaries, duplicate assertions, schema and runtime options can change the result. The native count reported by the runner decides the cost.
+
+At 430M records, a further 570M records takes 6.60 hours and $7.19 at 24,000/s before measurement. At 820M, a further 180M takes 2.50 hours and $2.73 at 20,000/s. Restarting the SCALE1 seed was forecast at 18 hours ($19.62) before aging or measurements. A fresh 0.25B synthetic start would add 750M records and cost $11.30–$38.65 at the original Mac rates plus the new seed and measurements. Adoption preserves the previously paid work and exposes the actual graph and bulk-import records to the index and cold-read tests.
+
+The local fixture executes the SCALE1 `Snapshot` loader and `source()` fixture from `04e864ae07af65b952d015cb9907a35bc66ecf09` through the public SDK. It loads five frames with eight people per account and uses the staged AGE1 gateway with the same lean v3 and strict-clock settings. Native backup/restore gives the product and generator the same seed IDs and timestamps. The gate compares both against an independently evaluated tape and each other at current and pinned cuts.
+
+The successful Mac gate adopted a 26,385-record fixture and matched all 120 K saves against the gateway save path. Its native-log comparison checked 2,400 added records including retractions, and its read comparison covered all 50 sampled tasks at six pinned cuts and at head. Both paths used the original raw predecessor bytes. The read oracle used the gateway's typed wire conversion for integral seed times. [Evidence manifest](P2-SHA256SUMS)

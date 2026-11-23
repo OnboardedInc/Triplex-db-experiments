@@ -4,6 +4,40 @@ Run `pnpm playground start` from the repository root using Node 22.18+, pnpm 10.
 
 Start a prepared snapshot with `pnpm playground start --tier NAME --data SOURCE`. `SOURCE` is the directory or HTTPS base containing its `manifest.json`. `PLAYGROUND_DATA_URL` can supply the source instead. Startup verifies the archive and compares generated records at two historical cuts and the current cut before enabling the actions. Use `pnpm playground start --tier full --replay --data SOURCE` for the compact history bundle.
 
+## Public R2 smoke snapshot
+
+This versioned snapshot contains 2,968 invented people, 27,058 initial facts and 840 saves across five simulated weeks. Its two objects total 18,276,592 bytes. Anyone can download it over HTTPS without a Cloudflare account.
+
+From a clean checkout, run the foreground launcher.
+
+```sh
+export PLAYGROUND_DATA_URL='https://pub-ce341b872a624227b638159be9f32a71.r2.dev/v0.1/r2-smoke/b5445da57dbbafc1/'
+pnpm playground start --tier r2-smoke --data "$PLAYGROUND_DATA_URL"
+```
+
+In another terminal, run these gates on the fresh database. The API gate changes the synthetic data. Restart before repeating the two gates. Use the printed loopback address if you changed the API port.
+
+```sh
+export PLAYGROUND_DATA_URL='https://pub-ce341b872a624227b638159be9f32a71.r2.dev/v0.1/r2-smoke/b5445da57dbbafc1/'
+node examples/playground/live-gate.ts http://127.0.0.1:4186 r2-smoke "$PLAYGROUND_DATA_URL" \
+  b5445da57dbbafc14d2a7cc4f8f10cec6e99e47e1953f31e41e9f7d0bcbf4bc7
+pnpm exec playwright install chromium
+PLAYGROUND_TEST_URL=http://127.0.0.1:4186 pnpm exec playwright test --config=playwright.playground.config.ts
+pnpm playground stop
+```
+
+On the Mac lab use the reserved clone gate. Run it from the committed playground checkout with `LAB_PNPM_STORE` set to the lab's pnpm store and `PLAYGROUND_RUN_DIR` set to a fresh output path. It passes the actual CLI through an exclusive engine reservation and checks teardown.
+
+```sh
+node lab/bin/heavy.mjs --label DX-PLAY1-r2-roundtrip -- node lab/bin/engine.mjs play1 \
+  --holder DX-PLAY1 --portable --browser --roundtrip r2-smoke \
+  --data 'https://pub-ce341b872a624227b638159be9f32a71.r2.dev/v0.1/r2-smoke/b5445da57dbbafc1/' \
+  --sha256 b5445da57dbbafc14d2a7cc4f8f10cec6e99e47e1953f31e41e9f7d0bcbf4bc7 \
+  --store "$LAB_PNPM_STORE" --out "$PLAYGROUND_RUN_DIR"
+```
+
+To publish a generated snapshot, run `node examples/playground/r2.ts "$SNAPSHOT_DIR/bundle" "$TIER"` on the authenticated Wrangler machine. Use `--commands` to print the exact Wrangler argument arrays without contacting R2. The parent of `bundle` must contain the successful `snapshot.json` from the builder. Publication verifies each versioned object's bytes, publishes the manifest last and prints the public base plus exact object keys, sizes and digests. [Server build commands](lab/experiments/EXP-DX1/play1/SIZE.md) · [Cloudflare R2 object uploads](https://developers.cloudflare.com/r2/objects/upload-objects/)
+
 ## HTTP and MCP
 
 - Fetch `/openapi.json` for action names and input schemas. Send JSON objects to `POST /api/{action}` with `Content-Type: application/json`.

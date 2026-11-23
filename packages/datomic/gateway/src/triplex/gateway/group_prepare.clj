@@ -1,5 +1,5 @@
 (ns triplex.gateway.group-prepare
-  (:require [clojure.walk :as walk]
+  (:require [triplex.gateway.owner-root :as owner-root] [clojure.walk :as walk]
             [datomic.api :as d]
             [triplex.gateway.commit :as commit]
             [triplex.gateway.lean :as lean]
@@ -144,7 +144,8 @@
             retired (filterv #(and (vector? %) (= :triplex/retract (first %))) ops)
             asserted (filter #(and (vector? %) (= :triplex/assert (first %))) ops)
             clocks (concat times record-clocks)]
-        (when (and (some? (:triplex.scope/key by-flag)) owner
+        ;; [Opus W1] Why: a prepared group reads legacy rows; a person with a covering root goes through the fold first.
+        (when (and (some? (:triplex.scope/key by-flag)) owner (nil? (owner-root/raw db owner))
                    (= commit/source-hash (:triplex.scope/commit-fn-hash by-flag))
                    (= 3 (:triplex.scope/rows-version by-flag)) (= 2 (:triplex.scope/head-version by-flag))
                    (= true (:triplex.scope/strict-record-clocks by-flag)) (= true (:triplex.scope/position-regular by-flag))

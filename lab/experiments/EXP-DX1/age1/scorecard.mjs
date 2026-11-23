@@ -62,8 +62,28 @@ function live(file, database, result, datomicSha) {
     "-Dtriplex.codec.spec=" + path.join(repo, "packages/datomic/src/codec-spec.json"),
     "-cp", cp, "clojure.main", "-m", "triplex.age.scorecard", file, database, ...cut(result).map(String),
     journalPolicy(result)];
-  const out = execFileSync(java, args, { env: { ...process.env, AGE_ATTEMPT: attempt }, encoding: "utf8", timeout: 180000 });
+  const [command, argv] = peerCommand(java, args, file, attempt);
+  const out = execFileSync(command, argv, { env: { ...process.env, AGE_ATTEMPT: attempt }, encoding: "utf8", timeout: 180000 });
   return stable(singleEvent(out, "scorecard-cut", attempt), attempt);
+}
+
+// [DX-INT1] Why: the fresh peer finds the transactor through the endpoint stored by the transactor, which is its container
+// name; on the scorecard host that name resolves only inside the stack's network (AMQ219007 on 2026-11-23).
+// With AGE_PEER_DOCKER_NETWORK and AGE_PEER_DOCKER_IMAGE the same java command, jar, classpath, state and URI run in a
+// throwaway container on that network. Every mounted path keeps its host path and is read-only; nothing else changes.
+// Rejected: an /etc/hosts entry on the host, or a transactor that advertises another host than the one it serves.
+export function peerCommand(java, args, stateFile, attempt, env = process.env) {
+  const network = env.AGE_PEER_DOCKER_NETWORK, image = env.AGE_PEER_DOCKER_IMAGE;
+  assert(Boolean(network) === Boolean(image), "Set both AGE_PEER_DOCKER_NETWORK and AGE_PEER_DOCKER_IMAGE or neither");
+  if (!network) return [java, args];
+  assert(/^tx2-[a-z0-9-]+-net$/.test(network) && /^sha256:[a-f0-9]{64}$/.test(image));
+  const home = env.AGE_DATOMIC_HOME;
+  const mounts = [home, path.join(repo, "packages/datomic/gateway/src"), here,
+    path.join(repo, "packages/datomic/src/codec-spec.json"), path.dirname(stateFile)];
+  return ["docker", ["run", "--rm", "--pull", "never", "--network", network, "--read-only", "--tmpfs", "/tmp",
+    "--user", "0:0", "--memory", "2g", "--memory-swap", "2g", ...mounts.flatMap((m) => ["--mount", `type=bind,source=${m},target=${m},readonly`]),
+    "-e", "DATOMIC_URI_TEMPLATE=" + env.DATOMIC_URI_TEMPLATE, "-e", "AGE_ATTEMPT=" + attempt,
+    "--entrypoint", "java", image, ...args]];
 }
 
 export function writeScorecard(sealedFile, sealSha, state, output, observation) {

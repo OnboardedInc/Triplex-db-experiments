@@ -21,7 +21,9 @@
     (throw e)))
 (defn recorded-only! [db input]
   (let [requested (true? (get input "recordedOnly"))]
-    (when (and requested (lean/erasure-protected? db))
+    ;; [DX-W1] Why: a recorded-only journal still uses the current verified frontier for every body.
+    ;; Rejected: treating a historical recorded cut as a historical erasure sequence.
+    (when (and requested (nil? privacy/*cut*) (lean/erasure-protected? db))
       (throw (ex-info "Recorded journal needs current erasure-aware values"
                       {:status 409 :code "ErasureQueryUnsupported"})))
     requested))

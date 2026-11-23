@@ -12,11 +12,14 @@ export class FairTurns {
   private readonly recent: number[] = [];
   private readonly served: number[];
 
-  constructor(
-    private readonly accountCount: number,
-    private readonly credits: number,
-  ) {
+  private readonly accountCount: number;
+  private readonly credits: number;
+  private readonly quietAccount: number | undefined;
+  constructor(accountCount: number, credits: number, quietAccount?: number) {
+    this.accountCount = accountCount;
+    this.credits = credits;
     this.served = Array<number>(accountCount).fill(0);
+    this.quietAccount = quietAccount;
   }
 
   dispatch<T extends ReadySave>(
@@ -24,9 +27,17 @@ export class FairTurns {
     submit: (save: T, turn: number) => void,
   ) {
     if (this.active || this.uncertain) return;
+    let neighbours = 0;
     for (let i = 0; i < this.credits; i++) {
       let next: T | undefined;
       for (const save of ready()) {
+        // [DX-HA1] Why: offer the reserved credit only to the quiet account in a guarded turn.
+        // Rejected: counting an import grant against a credit reserved for a quiet arrival.
+        if (save.account === this.quietAccount) {
+          next = save;
+          break;
+        }
+        if (this.quietAccount !== undefined && neighbours >= this.credits - 1) continue;
         const priority = this.served[save.account]!;
         if (
           !next ||
@@ -43,6 +54,7 @@ export class FairTurns {
       this.served[next.account]!++;
       if (this.recent.length > this.accountCount) this.served[this.recent.shift()!]!--;
       this.active++;
+      if (next.account !== this.quietAccount) neighbours++;
       submit(next, this.turn);
     }
   }

@@ -161,16 +161,10 @@ export async function receiptProof(a: Account, dir: string) {
     log = await spill.finish();
   }
   assert.equal(log.length, 1);
+  // [DX-AGE1] Why: the independent digest uses the expected triples.
+  // Rejected: adding transport counters to the narrowed observer input.
   const row = [...log][0]!,
-    expected = observe({
-      triples: a.expected(a.first, p, V_W0),
-      entities: 0,
-      roundTrips: 0,
-      depth: 0,
-      route: "intent",
-      language: "original rows",
-      waitedMs: 0,
-    });
+    expected = observe({ triples: a.expected(a.first, p, V_W0) });
   assert.equal(row[R.error], null);
   assert.equal(row[R.subject], a.first);
   assert.equal(row[R.basisPosition], p);

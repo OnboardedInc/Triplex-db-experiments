@@ -5,10 +5,12 @@
             [ring.adapter.jetty :as jetty]
             [triplex.gateway.lean :as lean]
             [triplex.gateway.envelope :as envelope]
+            [triplex.gateway.erase :as erase]
             [triplex.gateway.privacy :as privacy]
             [triplex.gateway.reach :as reach]
             [triplex.gateway.main :as main]
             [triplex.gateway.schema :as schema]
+            [triplex.gateway.slim :as slim]
             [triplex.gateway.scope :as scope])
   (:import [java.nio.file Files]
            [java.security MessageDigest]
@@ -18,6 +20,8 @@
 (def token (System/getenv "DX_ERASE_TOKEN"))
 (def nonce (System/getenv "DX_ERASE_NONCE"))
 (def plans (atom nil))
+(def server-scope (System/getenv "DX_ERASE2_SCOPE"))
+(def server-field (System/getenv "DX_ERASE2_FIELD"))
 (defn check! [ok message] (when-not ok (throw (ex-info message {}))))
 (defn until [x] (let [v (deref x 480000 ::timeout)] (check! (not= ::timeout v) "Native operation timed out") v))
 (defn wall-ms [] (let [t (Instant/now)] (+ (* 1000.0 (.getEpochSecond t)) (/ (.getNano t) 1e6))))
@@ -25,7 +29,9 @@
 (defn scope-name! [input]
   (let [s (get input "scope") [_ org project db generation] (json/read-str (scope/validate! s))]
     (check! (and (= org "test") (= project "test") (= generation 0)
-                 (re-matches (re-pattern (str "erase1-" nonce "(?:-[a-z]+)?")) db)) "Unexpected attempt scope")
+                 (if server-scope
+                   (= s server-scope)
+                   (re-matches (re-pattern (str "erase1-" nonce "(?:-[a-z]+)?")) db))) "Unexpected attempt scope")
     (scope/name-for s)))
 (defn connect! [input open]
   (let [name (scope-name! input) conn (open (main/db-uri name)) db (until (d/sync conn))]
@@ -146,6 +152,10 @@
                (let [part (first (d/tx-range (d/log conn) basis (inc basis)))]
                  (check! (= basis (:t part)) "Wrong native log slice") (:data part)))
         append (pull t) retract (pull retired-t)
+        plain (when-let [p (get input "plainPosition")]
+                (let [tx (d/entid db [:triplex.tx/position p])]
+                  (check! (and tx (< tx asserted)) "Missing plain control position")
+                  (pull (d/tx->t tx))))
         logs (keep (fn [x] (when (string? (:v x)) (:v x))) (concat append retract))
         envelope-id (d/entid db [:triplex.private/id id])
         body (scope/value db envelope-id :triplex.private/body)
@@ -161,12 +171,20 @@
                                          (let [c (json/read-str (:value_json r))]
                                            (and (= id (get c "tripleId"))
                                                 (= token (get-in c ["value" "value"]))))))))
-                         count)))]
+                         count)))
+        string-bytes (fn [datoms] (reduce + (keep (fn [x] (when (string? (:v x)) (alength (envelope/utf8 (:v x))))) datoms)))]
     {:id id :nativeT (str t) :retirementT (str retired-t)
+     :retirementDatoms (count (seq retract))
+     :retirementTextBytes (string-bytes retract)
+     :plainDatoms (when plain (count (seq plain))) :plainTextBytes (when plain (string-bytes plain))
      :body (boolean (and (string? body) (seq body)))
      :keyBytes (Files/size (envelope/key-file name id))
      :references (references append) :retirementReferences (references retract) :unsealed (= canary value)
-     :plaintext (boolean (some #(str/includes? % canary) (conj (vec logs) (:v target))))}))
+     :plaintext (boolean (some #(str/includes? % canary)
+                                (concat logs [(str parsed)]
+                                        (when (true? (get input "scanRetained"))
+                                          (map #(slim/row-text (:v %))
+                                               (d/datoms (d/history db) :avet :triplex.entity/row))))))}))
 
 (defn ciphertext-cleanup! [conn input]
   (let [name (scope-name! input) ids (get input "ids")
@@ -182,9 +200,11 @@
         _ (check! (<= matched 2000) "Cleanup would exceed 2,000 matched datoms")
         selected (filter (fn [[_ e]] (pos? (history-count history e))) candidates)
         started (wall-ms)
-        _ (envelope/erase-keys! name (mapv (fn [id] {"assertionId" id}) ids))
+        keys (select-keys (into {} (for [entry (vals (:commands state)) r (get entry "identities")]
+                                    [(get r "assertionId") (get r "keyHandle")])) ids)
+        _ (envelope/erase-keys! name (mapv (fn [id] {"assertionId" id "keyHandle" (keys id)}) ids))
         shred (wall-ms)
-        _ (check! (not-any? #(privacy/exists? (envelope/key-file name %)) ids) "Key files survive their shred")
+        _ (check! (not-any? #(envelope/key-present? name % (keys %)) ids) "Keys survive their shred")
         _ (doseq [[_ e] selected]
             (check! (= 1 (history-count history e)) "Assertion has multiple envelope bodies"))]
     (if (seq selected)
@@ -192,27 +212,59 @@
                       {:db/id (d/tempid :db.part/user) :db/excise e :db.excise/attrs [:triplex.private/body]})
                     selected)))
             t (d/basis-t (:db-after report))
-            asked (wall-ms)
-            requested (d/request-index conn)
-            after (until (d/sync-excise conn t))
-            finished (wall-ms)
-            _ (check! (and (>= (d/basis-t after) t)
-                           (every? #(zero? (history-count (d/history after) (second %))) selected))
-                      "Cleanup did not reach exact absence for the scheduled ciphertext")]
-        {:ids ids :matched matched :keysAbsent (count ids) :requestedIndex requested
-         :startedAt started :shreddedAt shred :indexAskedAt asked :finishedAt finished
-         :t (str t) :seq (:seq state)})
+            submitted {:ids ids :matched matched :keysAbsent (count ids) :startedAt started
+                       :shreddedAt shred :t (str t) :seq (:seq state)}]
+        (if (true? (get input "foldWithOrdinaryIndex"))
+          submitted
+          (let [asked (wall-ms) requested (d/request-index conn)
+                after (until (d/sync-excise conn t))
+                finished (wall-ms)]
+            (check! (and (>= (d/basis-t after) t)
+                         (every? #(zero? (history-count (d/history after) (second %))) selected))
+                    "Cleanup did not reach exact absence for the scheduled ciphertext")
+            (assoc submitted :requestedIndex requested :indexAskedAt asked :finishedAt finished))))
       {:ids ids :matched matched :keysAbsent (count ids)
        :startedAt started :shreddedAt shred :finishedAt (wall-ms) :seq (:seq state)})))
+
+(defn cleanup-barrier! [conn input]
+  (let [name (scope-name! input) ids (get input "ids")
+        before (d/db conn) state (privacy/cut name before)
+        t (parse-long (get input "t"))
+        _ (privacy/verify-data! state before)
+        _ (check! (and t (vector? ids) (<= 1 (count ids) 2000)
+                       (= (count ids) (count (set ids))) (every? (:erased state) ids))
+                  "Cleanup barrier requires its exact published identities")
+        entities (set (map #(d/entid before [:triplex.private/id %]) ids))
+        ;; [DX-ERASE1] Why: the barrier must name the exact body-only excision in this run.
+        ;; Rejected: accepting a recent index cut as evidence of this batch.
+        ops (vec (mapcat :data (d/tx-range (d/log conn) t (inc t))))
+        excises (filter #(= (:a %) (d/entid before :db/excise)) ops)
+        bodies (filter #(= (:a %) (d/entid before :db.excise/attrs)) ops)
+        body (d/entid before :triplex.private/body)
+        _ (check! (and (not (contains? entities nil))
+                       (= entities (set (map :v excises)))
+                       (= (set (map :e excises)) (set (map :e bodies)))
+                       (= (count entities) (count excises) (count bodies))
+                       (every? #(= body (:v %)) bodies))
+                  "Native cleanup transaction differs from its published body set")
+        after (until (d/sync-excise conn t))
+        history (d/history after)]
+    (check! (and (>= (d/basis-t after) t)
+                 (every? #(empty? (d/datoms history :eavt % :triplex.private/body)) entities))
+            "Ordinary index did not remove the exact scheduled bodies")
+    {:ids ids :t (str t) :finishedAt (wall-ms)}))
 
 (defn key-state! [conn input]
   (let [name (scope-name! input) id (get input "id")
         db (d/db conn) state (privacy/cut name db)
         _ (privacy/verify-data! state db)
         _ (check! (and (:sealed state) (contains? (:erased state) id)) "Key state requires a published identity")
-        e (d/entid db [:triplex.private/id id])]
+        e (d/entid db [:triplex.private/id id])
+        handle (some (fn [entry] (some #(when (= id (get % "assertionId")) (get % "keyHandle"))
+                                        (get entry "identities"))) (vals (:commands state)))
+        _ (check! (or (not (envelope/shared?)) (string? handle)) "Removal did not retain the exact key handle")]
     {:id id :seq (:seq state) :now (wall-ms)
-     :keyPresent (privacy/exists? (envelope/key-file name id))
+     :keyPresent (envelope/key-present? name id handle)
      :bodyPresent (boolean (and e (scope/value db e :triplex.private/body)))}))
 
 (defn reach-parity! [conn input]
@@ -252,6 +304,14 @@
            (if (= op "clock") {:now (wall-ms)}
              (let [conn (connect! input main/connection)]
                (case op
+                 "server-protection" (let [position (get input "position")
+                                            db (erase/sync! conn)]
+                                        (check! (and server-scope server-field (integer? position) (pos? position)
+                                                     (envelope/shared?)
+                                                     (not (privacy/enabled? db)))
+                                                "Expected an unopened sealed seed with shared removal storage")
+                                        (erase/declare! (scope-name! input) conn db
+                                                        {"attributes" [server-field] "sealed" true} position))
                  "parallel-writer" (do
                                      (load-file "/erase1-writer-check/regression.clj")
                                      (load-file "/erase1/parallel.clj")
@@ -259,9 +319,17 @@
                  "prepare" (prepare! conn input)
                  "erase" (erase! conn input)
                  "regression-excise" (regression-excise! conn input)
+                 "sealed-assertion" (let [id (get input "id") db (d/db conn)
+                                          record (lean/by-id db id)
+                                          detached (d/entid db [:triplex.private/id id])
+                                          body (when detached (scope/value db detached :triplex.private/body))]
+                                      {:id id :bodyPresent (boolean (envelope/body-key-handle body))
+                                       :pointer (boolean (and record (= (envelope/token id) (:value_string (lean/decode (:v record))))))})
                  "ciphertext-inventory" (ciphertext-inventory! conn input)
                  "ciphertext-cleanup" (ciphertext-cleanup! conn input)
+                 "cleanup-barrier" (cleanup-barrier! conn input)
                  "key-state" (key-state! conn input)
+                 "authority-kind" {:database (scope-name! input) :shared (envelope/shared?)}
                  "reach-parity" (reach-parity! conn input)
                  "observe" (observe! conn input)
                  "drop-pin" (do (check! (= conn (:conn @plans)) "Wrong pin owner") (reset! plans nil) {:released true})
@@ -279,14 +347,15 @@
 
 (defn -main [mode]
   (case mode
-    "gateway" (do
+    "gateway" (if server-scope (main/serve! handle 8080)
+              (do
                 (envelope/start!)
                 (d/create-database (main/db-uri "tx2-health"))
                 ;; [DX-ERASE1] Why: bare-metal diagnostics bind to the prepared loopback interface.
                 ;; Rejected: exposing native fixture controls on the server's public interfaces.
                 (jetty/run-jetty handle (cond-> {:port 8080 :join? true :min-threads 8 :max-threads 48}
                                          (System/getenv "DX_ERASE_BIND_HOST")
-                                         (assoc :host (System/getenv "DX_ERASE_BIND_HOST")))))
+                                         (assoc :host (System/getenv "DX_ERASE_BIND_HOST"))))))
     "fresh" (let [input (json/read-str (slurp *in*)) conn (connect! input d/connect)
                   t (get input "t") plan (into {} (map (fn [[k v]] [(keyword k) v])) (get input "plan"))
                   db (until (d/sync-excise conn t))]

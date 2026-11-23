@@ -12,7 +12,7 @@ Prepare the unguarded control outside the timed window using the same scratch st
 timeout --kill-after=15s 55m node lab/experiments/EXP-DX1/erase1/server.mjs check-guarded erase1-guarded-check erase1-fast-stage/staged.json erase1-control-stage/staged.json
 ```
 
-The comparison runs unguarded, guarded, unguarded, guarded, unguarded. Each block offers the same 500 saves under four pinned readers. The driver verifies the receipt for every save and the returned rows for every read. It erases a separate sealed assertion between the two guarded blocks, and checks the marker at its original pin and the retained detached body. Report each guarded ratio against both surrounding controls. The targets apply to both phases and both operations.
+For the shared-authority candidate, stage both arms with the same PostgreSQL authority configuration used for the protected-save check, and keep a copy of each stage. The comparison runs unguarded, guarded, unguarded, guarded, unguarded. Each block offers the same 500 saves under four pinned readers. The driver verifies the receipt for every save and the returned rows for every read. It erases a separate sealed assertion between the two guarded blocks, and checks the marker at its original pin and the retained detached body. Report each guarded ratio against both surrounding controls. The targets apply to both phases and both operations.
 
 | Guarded / unguarded | Predicted p50 | Predicted p99 | Required p50 / p99 |
 | --- | ---: | ---: | ---: |
@@ -33,7 +33,17 @@ Restore an unchanged copy of the sealed fixture and use the same manifest hash a
 timeout --kill-after=15s 55m node lab/experiments/EXP-DX1/erase1/server.mjs check-neighbours erase1-neighbours-check erase1-fast-stage/staged.json
 ```
 
-The Mac smoke runs the correctness checks with eight saves per block and emits counts. Dedicated-server estimates remain conditional on the shared transactor's indexing work. [Writer checks](WRITER-PART3.md)
+The Mac smoke runs the correctness checks with eight saves per block and emits counts. For planning, allow 1.00–1.30× quiet p99 during removal while the current sequence is briefly unavailable and 1.15–1.70× for saves inside forced cleanup. Read and feed tails could remain within 1.25× if the shared transactor avoids an I/O burst. These ranges span the target and need a dedicated run. [Writer checks](WRITER-PART3.md)
+
+## Prepared protected-save comparison
+
+Use a fresh copy of the sealed 100,000-person deep seed staged with the PostgreSQL removal authority enabled. Keep the authority separate from the Datomic data backup. Enable the per-person writer on the gateway with `TX2_SUBJECT_SAVE=1` and `TX2_INT1_WRITE_READBACK=1`. Set the independent stage hash as for the guarded comparison. An older file-key seed needs a fresh staging run for this arm. The diagnostic checks the gateway's authority before offering any saves.
+
+```sh
+timeout --kill-after=15s 55m node lab/experiments/EXP-DX1/erase1/server.mjs check-authority-cost erase1-authority-check erase1-sql-authority-stage/staged.json
+```
+
+The comparison offers 500 verified one-field replacements in each of three blocks. The protected block uses preissued keys and sits between two plain controls on the same scope. The probe checks every receipt's owner, attribute, assertion identity and value against a native readback. Budget 2–8 minutes. Plan for roughly 0.1–0.8 ms median addition from sealing and the detached native updates, against a 0.3 ms bar. That range is a forecast. The small Mac controls drifted. [Shared authority and recovery](AUTHORITY-PART3.md)
 
 ## Prepared detached-erasure check
 

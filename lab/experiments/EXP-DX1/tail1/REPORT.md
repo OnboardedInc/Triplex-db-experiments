@@ -1,50 +1,41 @@
 # DX-TAIL1 part 3
-The event recorder at `b9f4af923` joined all 192 saves on a fresh Mac stack to their native transaction IDs.
-All three Java recordings were sealed, and 2,305 PostgreSQL durations mapped to the guest clock.
-Fifteen PostgreSQL durations lacked a usable clock bracket and retain wall time only.
-The Mac used one ordinary heavy token. Its timing is diagnostic.
-The two-percent recorder cost still needs the quiet bare-metal comparison.
-The earlier physical deep tail was dominated by waiting on native replies. Per-save queue entry and WAL sync remain unresolved.
-The integration merge and renewed receipt gates follow the cache forecasts. [Recording and audit](RECORDING.md)
+The candidate is `b6b8859f34`, based on the integration branch at `fa0e3c6fc`.
+The scorecard launcher keeps all accounts in one Datomic database and enables recording for all three Java processes.
+The writer defaults to two cores with G1. The reader and transactor specify their heaps and G1.
+Receipt reuse stays optional. All 16 native receipt tests, erasure and the five-cut replay passed.
+Deep saves averaged 12.61 SQL segment reads, compared with 0.55 for thin saves on the server.
+SQL accounts for 2.18 ms of the 8.26 ms increase in mean transaction evaluation. The other tail causes are still open.
+The bare-metal checks remain open. The cache test needs JVM1's restore launcher, images and sealed seed. [Forecasts and command](PREDICTIONS-PART3.md)
 
-North star P2 scheduled offer to durable ACK, including the 10 ms p50 and 50 ms p99 bars at the rated reader load, and P6 quiet-account p99 / alone p99 ≤1.25. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
+Scope covers P2, scheduled offer to durable ACK, and P6, a quiet account's p99 beside busy accounts relative to alone. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md) · [Version 0.1](https://github.com/OnboardedInc/Triplex-db-experiments/blob/fcfa01b9a4e0b01ab3659f693cff1321692cc529/lab/V0.1.md)
 
-## Archived run
+## Tracing and verification
 
-The archive and its ledger match their published hashes. All 58,138 scheduled events, including 1,633 resends, match the frozen generator. A fresh database assigns new assertion IDs to the same logical predecessors. The replay retains the original valid times.
+On the Mac, the merged recorder at `8d45ae5943` joined all 192 SDK saves by native t and confirmed 960 assertion IDs. It sealed all three JVM recordings, mapped 2,209 PostgreSQL durations and kept 14 with wall time only. WAL samples spanned 452 syncs in one statistics epoch. The stack shut down and released its reservation.
 
-| JVM | Whole-process pauses | Young / mixed / full / other | Humongous triggers | p50 / p99 / max ms |
-| --- | ---: | ---: | ---: | ---: |
-| Write gateway | 1,464 | 1,424 / 0 / 40 / 0 | 0 | 5.55 / 104.51 / 454.27 |
-| Read gateway | 198 | 82 / 42 / 0 / 74 | 16 | 25.23 / 131.77 / 169.25 |
-| Transactor | 1,397 | 560 / 275 / 0 / 562 | 181 | 12.90 / 107.97 / 251.10 |
+Both integrated Mac gates used ordinary heavy tokens, and their times are diagnostic. A quiet bare-metal comparison is still needed to check the 2% save p50 cost bar. The pre-run estimate is 0.5–4% for the small fixture. The four-arm cost command and the companion cache test remain unrun.
 
-The writer clock fit puts 237 pauses outside known overlays, including eight full collections with a 449.37 ms maximum. The five history windows contain 27 pauses, including two full collections and a 454.27 ms maximum. Seven young pauses overlap other explicit index requests. The full collections report allocation failure. The archived reader and transactor totals span startup through shutdown.
-The writer heap grew about 21.36 MiB/s between Serial pauses, or 2.21 MiB per primary offer across 55,795 covered offers. This estimate uses rounded heap occupancy and includes feed and maintenance traffic. Archived maximum heaps were 3.87/4/5 GiB for writer/reader/transactor in 6 GiB containers.
-Archived ACK p50/p99/p99.9/max was 5.10/86.74/447.17/602.04 ms by exact rank, and 4.62/39.43/152.68/191.82 ms in the first 240 seconds. That prefix contains 58 writer pauses, including two full collections, and tops out at 154.05 ms. The analyst found `/begin` on 21,130 of 56,505 primary saves (37.4%).
+The gateway measures receive, submit and response. SDK ACK and native database hash/t join the exact save to Datomic's transaction, apply and I/O statistics. Each JVM records pauses and safepoints, wall and uptime clocks, effective collector, heap, processors and CPU throttling. PostgreSQL durations and WAL counter deltas use the guest clock where anchors qualify them. Per-save enqueue, WAL sync and closed-engine handoffs remain unresolved. [Intervals and audit](RECORDING.md)
 
-## Collector arms
+## What the archive supports
 
-Serial is the archived write collector. Tuned G1 has a 25 ms target, 2 MiB regions, a 1 MiB humongous-object threshold and a 5–25% adaptive young generation. The Java 21 ZGC peer arm is diagnostic. Datomic documents ZGC support on Java 25 and recommends G1 at 50 ms for the transactor. Every arm uses that same transactor, SQL durability and role caps. [G1](https://docs.oracle.com/en/java/javase/21/gctuning/garbage-first-garbage-collector-tuning.html) · [Datomic defaults](https://docs.datomic.com/operation/transactor.html#running-the-transactor) · [Datomic ZGC support](https://docs.datomic.com/changes/pro.html#1-0-7705)
+The 6,776 post-start writes are joined by input, trace ID and native t. The ACK p99 was 177.38 ms deep and 18.97 ms thin. Mean native evaluation was 1.43 ms thin and 9.69 ms deep. Outside reported SQL it was 1.29 ms thin and 7.37 ms deep. Forty-nine of the fifty slowest deep saves spent most of their time awaiting a Datomic reply. One other save spent 151 ms on SQL reads. No per-event native storage logs or pause clocks survived that run. [Original rankings](OVERNIGHT.md) · [Archived reanalysis](SHA256SUMS)
 
-The allocation arm keeps Serial and cuts measured row preparation from 1.16 to 1.09 MiB/save. Two-core G1 holds tuning fixed. Mac Serial was explicit. Both BM1 peers started on one core without a collector flag, so Serial is the expected choice even for the reader expanded after launch. The BM1 transactor specified G1. [Collector evidence and readback](COLLECTORS.md)
+The two new server windows vary only the transactor object cache. JVM1 supplies the threshold and collector comparisons. The new command budgets 40 minutes including cleanup. No physical command ran in this worktree. [Predictions and falsifiers](PREDICTIONS-PART3.md)
 
-All five collector arms verified 5,110 saves each. Writer pause p99 was 146–175 ms for Serial, 121 ms with lower allocation, 63–70 ms for one-core G1 controls, 31 ms for two-core G1 and 0.062 ms for ZGC. Serial client p99 varied from 4.54 to 20.85 seconds. Recorded queue and lock time was 7 hours 15 minutes. [Mac observations](MAC.md)
+## Integration and gates
 
-## Receipt reuse
+Core, Datomic and W0 built. On the integrated code, 39 Node cases and three Vitest retention cases passed. The native suite at `d7a6e0083` passed all 16 cases, the erasure route and all five O-REPLAY cuts. The standard root formatter still overflows on the inherited 2,000-level W0 array fixture. The full JavaScript check reports inherited ACTV and trace-test errors, uncovered files and missing XTDB/QLever build outputs. The first test attempt used stale packages and the first retention run used the wrong runner. Both were rerun with their correct prerequisites.
 
-The TypeScript write adapter already skips `/begin` when every hinted live row is cached. The new opt-in keeps the deep fields eligible for that path only after a bound receipt settles. Known retirement evicts their cache entries. Datomic rechecks the exact live IDs at the serial point, and unsupported reads and conflicts use the existing snapshot path.
+The campaign binds current JVM flags, role and boot IDs, recorder seals and output bytes to the same source, slot and attempt. The cache replay verifies its exact restored dump, schedule, native ACKs and readback. Receipt reuse still validates the live predecessors in Datomic and falls back on conflicts. [Content, freshness and binding audit](RECORDING.md) · [Cache replay audit](PREDICTIONS-PART3.md)
 
-Sixteen native tests and the erasure fixture passed. A different writer's commit allowed one request. An intervening retirement forced `/begin` and returned a typed conflict. Five pinned reads matched O-REPLAY. The final Mac pair cut snapshots from 996 to 406 across 3,638 shared saves. Pre-dispatch queues and expiries confound the Mac latency comparison. [Receipt results](MAC.md)
+## Evidence and fingerprints
 
-## Measurement audit
+Raw evidence in `evidence/DX-TAIL1` is indexed by SHA-256. The integration base supplies the acceptance contract bytes. [Manifest](SHA256SUMS) · [Previously measured collectors](MAC.md) · [Prior physical predictions](PREDICTIONS.md)
 
-- The archive extractor checks compressed SHA-256, ledger identity and each primary ACK. The replay checks the frozen seed and offer spacing. The receipt comparison joins matching offers and request roots to each run's timestamps, source and slot.
-- The replay binds both Mac locks, reports and offers to source, slot and nonce. It checks JVM startup, durable SQL, exact receipts and independent oracle reads. Allocation profiles check the recording hash, captured interval and source. Recovery records its own decoder and reservation with the original attempt.
-- The receipt oracle compares actual assertion IDs and values at five fresh pinned cuts against its hashed case, along with the observed conflict and receipt order. Captures are created in the newly allocated attempt directory.
-- The archive results are historical. The replay is a diagnostic, and the acceptance contract is unchanged.
-Image source pin changes under `packages/datomic/gateway/src/triplex/gateway/`, SHA-256 before → after.
-- `lean.clj` `bafa5d00aaaf87321396674f16d6ffc03faa664100a75ce0024de7287ce58ca2` → `115812796134acf278ec30d71eabd9710fb121e7759475b28df97a43ed815fee`.
-- `storage.clj` `341f45cf51ea1f785292b72eca34951d7fe10c9ace55e69af8fbe9df71234b60` → `144e4ecd3742f1323669e67ddaa14dfd3bd69e22b9366ac5d02bcad1bb2bff66`.
-- `jfr.clj` `a703ed7772ab7fcdd62effde8135bc62f6b4325046a0f893a1165c8c08474d94` → `0c435b193a369f6dee40059452a41b9719046bac15bceaf06ac36e514e40994b`.
-The two-core bare-metal forecast for the aged workload is 24–34 ms thin and 49–58 ms deep. The command offers the same four minutes with a 29-minute runner budget. Physical timing remains unverified. [Forecasts and command](PREDICTIONS.md)
+Native fingerprint changes relative to the integration base, old SHA-256 followed by new.
+- `packages/datomic/gateway/src/triplex/gateway/jfr.clj` `a703ed7772ab7fcdd62effde8135bc62f6b4325046a0f893a1165c8c08474d94` → `bf715c11eb92aeb755f6bc16a4b65fbda1c1664c2d3144c37739aca80f76a606`
+- `packages/datomic/gateway/src/triplex/gateway/lean.clj` `b44bd37b4140c3c750b35f562be2947ef1c8532567cf2e52c1e64e33937c074f` → `2cc36d6ffbd13eaed5100b3d245beed98cbc7b324f0ff0e5c0a8860ed5380ed6`
+- `packages/datomic/gateway/src/triplex/gateway/storage.clj` `a0acbd386371896ae069b8ec7d2f2b9b20344ab2acb3a01dabe239410a23709a` → `3b40fd2447e06489fb4ddade382826ebe1d3f447853ac5cb1dd57d6e12e0381e`
+- `packages/datomic/gateway/src/triplex/gateway/trace.clj` `e25df1a17a622f53122c98f1512bf57b99ced7d4d5b433d1c66453a7aceb3a7e` → `b5fdae904ee60f5b5f3a45ee9d65208ca36f3b825db7675dcf1998af75c5e3f1`
+- `packages/datomic/gateway/trace.jfc` `d8708de41c683ceca27a11a115d637622c129c93ba8340678c2b450ae2c340cb` → `0d192b3498b827b1730ccf22660ad63e4900c98e6cf0cf2e2e2429edd4756405`

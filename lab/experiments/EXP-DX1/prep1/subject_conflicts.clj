@@ -10,6 +10,7 @@
             [triplex.gateway.scope :as scope]
             [triplex.gateway.storage :as storage]
             [triplex.gateway.subject-save :as subject]
+            [triplex.gateway.owner-layout :as layout]
             [triplex.gateway.write-policy :as policy]
             [wfix1-regression :as reference]))
 
@@ -36,17 +37,19 @@
 (defn race-before-submit
   "Publish a real competing transaction after certification, before sending the candidate."
   [name conn input competing expected]
-  (let [prepare subject/plan native d/transact-async submitted (atom 0) id (input "operationId")]
+  ;; [Opus W1] Why: with the covering root on, the product route certifies through the same plain plan and submits either writer.
+  ;; Rejected: a three-argument redefinition (the covering writer calls the plan with its own predecessor and revision).
+  (let [prepare subject/plan native d/transact-async submitted (atom 0) fired (atom false) id (input "operationId")]
     (with-redefs [subject/plan
-                  (fn [db data request]
-                    (let [plan (prepare db data request)]
-                      (when (= id (request "operationId"))
+                  (fn [db data request & more]
+                    (let [plan (apply prepare db data request more)]
+                      (when (and (= id (request "operationId")) (compare-and-set! fired false true))
                         (is (some? plan))
                         (competing))
                       plan))
                   d/transact-async
                   (fn [c tx & opts]
-                    (when (= subject/ident (ffirst tx)) (swap! submitted inc))
+                    (when (#{subject/ident layout/ident} (ffirst tx)) (swap! submitted inc))
                     (apply native c tx opts))]
       (let [reply (reference/send name input)]
         (is (= expected (reference/outcome reply)) (pr-str reply))))
@@ -55,9 +58,45 @@
     (is (nil? (get (reference/claim name (get-in input ["claims" 0 "commandId"])) "receipt")))
     (is (not-any? #(= (get-in input ["claims" 0 "txId"]) (first %)) (reference/feed name 2 10)))))
 
+(defn mixed-format-chain []
+  (reference/in-scope
+    (fn [name conn]
+      (let [[a] (seed name)
+            next-token "01J000000000000000000002"
+            id (str gate/ordered-token "04")
+            first-save (gate/ordered-frame a gate/ordered-token)
+            second-save (gate/ordered-frame (from (reference/edit-frame "next" "new" "final" 3.0 nil id) 3) next-token)]
+        ;; [DX-PREP1] Why: the exact old row is a predecessor, outside the new-ID history range.
+        ;; Rejected: converting or rechecking the old IDs as if every save were a new assertion of them.
+        (doseq [[input predecessor token] [[first-save "old" gate/ordered-token] [second-save id next-token]]]
+          (let [db (d/db conn)
+                ;; [Opus W1] Why: with the covering root on, the product route plans through the covering writer,
+                ;; which records the predecessor's retirement on the new version instead of retracting it.
+                covering (when layout/enabled (layout/prepare db (storage/tx-data db input) input))
+                plan (or covering (prepared db input))
+                text (:v (lean/by-id db predecessor))
+                live? (fn [view] (let [owner (d/entid view [:triplex.entity/id fixture/root])]
+                                   (some #(= predecessor (:id (lean/decode (:v %)))) (lean/live-texts view owner))))
+                reply (reference/send name input)]
+            (is (string? text))
+            (is (live? db))
+            (is (= (str "2001a" token "00") (first (:ordered-bounds plan))))
+            (is (not-any? #{(lean/prefix predecessor)} (:prefixes plan)))
+            (if covering
+              (is (= #{predecessor} (:retired-ids plan)))
+              (is (some #(= [:db/retract (:owner plan) :triplex.entity/row text] %) (:ops plan))))
+            (is (= [200 nil] (reference/outcome reply)))
+            (is (true? (get-in reply [:body "subjectOrderedIds"])))
+            (let [committed (d/db conn)]
+              (is (not (live? committed)))
+              (when-not covering (is (nil? (lean/by-id committed predecessor))))
+              (is (some? (lean/by-id (d/history committed) predecessor))))))
+        (is (= 4 (storage/head-position (d/db conn))))))))
+
 (deftest ordered-block-collision-keeps-old-ids-reserved
   (when subject/ordered-ids?
     (with-redefs [subject/enabled true group/enabled false policy/priority? false policy/field-only? false policy/budget-us nil]
+      (mixed-format-chain)
       (reference/in-scope
         (fn [name conn]
           (let [[a] (seed name)
@@ -158,13 +197,13 @@
       (reference/in-scope
         (fn [name conn]
           (let [[a] (seed name) prepare subject/plan]
-            (with-redefs [subject/plan (fn [db data input]
-                                         (let [plan (prepare db data input)]
+            (with-redefs [subject/plan (fn [db data input & more]
+                                         (let [plan (apply prepare db data input more)]
                                            (ref-write name (on other (reference/edit-frame "fresh-peer" "peer" "peer" 1.0 nil "other-old")))
                                            plan))]
               (let [reply (reference/send name a)]
                 (is (= [200 nil] (reference/outcome reply)))
-                (is (= (str subject/ident) (get-in reply [:body "subjectSave"])))
+                (is (= (str (if layout/enabled layout/ident subject/ident)) (get-in reply [:body "subjectSave"])))
                 (is (= "4" (get-in reply [:body "position" "v"])))
                 (is (= 1003.0 (get-in reply [:body "recordedAt" "v"])))))))))
     (testing "A global ID already retired under another owner is still reserved"

@@ -1,0 +1,14 @@
+# Fair import predictions
+
+One database, 235 offered neighbour saves/s plus the quiet account, one importer. Use the server profile and Java 25 ZGC on the write gateway and transactor. Freeze 32 facts per frame and one import credit for the first comparison. At 3,000 facts/s that is 93.75 durable frames/s, or 10.67 ms per completed frame. Two credits would allow a mean hold of 21.33 ms only if the scheduler grants both and they overlap.
+
+At 1.5 ms native apply per import frame the target consumes 141 ms of serial work per second. At 1.86 ms per live save, 235 saves/s consume 437 ms before the quiet account, log writes and index work. The remaining apply capacity still depends on log writes, scheduling and index work. In a six-credit turn, one import grant per turn needs a mean turn of 10.67 ms or less. In rolling mode the configured one-credit importer occupies one of the five to fifteen neighbour credits. The quiet seat stays free for a quiet arrival. If all nine busy accounts in the prepared copy and the importer stay eligible, equal sharing gives the importer roughly 1/10 of those grants. Sustaining 94 import frames/s under that condition would need about 940 neighbour-or-import grants/s, beyond a serial apply budget near 1.8 ms per grant.
+
+| Mode | Queryable facts/s | Quiet commit p99 | Quiet read p99 vs matched control |
+| --- | ---: | ---: | ---: |
+| Six-credit barrier | 1,400–2,400 | 48–78 ms | 1.2–1.8× |
+| Winning rolling mode | 2,400–3,350 | 35–52 ms | 1.10–1.55× |
+
+These are forecasts for five-minute windows. A rolling arm reaching 3,000 with quiet commits at or below 50 ms could still miss if other accounts exceed 1.5×, or if quiet reads exceed 1.5×. The second half matters because indexing and memory pressure can lag the initial import. Neighbour saturation with a low import grant rate would support the fairness limit. Adequate grants and low import apply time alongside inflated read tails would point to shared gateway, peer or storage interference. A six-credit barrier above 3,000 in both halves, or rolling below 2,400 with spare credits and holds under 10.67 ms, would contradict the throughput prediction.
+
+If rolling lacks grants, test a capped import share only when live backlog is clear. The minimum useful cap is 94 frames/s at width 32. At 1.5 ms apply this costs 14.1% of one serial writer. At 2.63 ms measured median peer hold it consumes about 24.7% of equivalent wall time. A 15% cap measured in peer-hold time would give about 57 frames/s or 1,825 facts/s. If grants suffice and read or receipt tails still grow, try a CPU-limited import gateway with the same admission budget and a common transactor. That separates request CPU and allocation pressure while leaving native apply, storage and indexing shared. Backoff that regularly pushes the grant rate below 94 frames/s cannot meet the rate bar at this width.

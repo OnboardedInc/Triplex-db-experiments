@@ -25,3 +25,34 @@ env DOCKER_HOST=unix:///var/run/docker.sock node lab/bin/heavy.mjs --label DX-JV
 ```
 
 The command runs present, candidate, candidate with the threshold returned to 128 MiB and candidate with compiler scaling returned to 1. The ten W1 60-second offer windows are unchanged. Each arm starts fresh PostgreSQL storage, restores the exact seed, starts the three JVMs and captures their final HotSpot flags before offers. It checks receipts, the ordered journal and field values, matched source and container identities, then removes that arm's resources. Setup and workload share a 26-minute deadline with a separate cleanup window. An incomplete arm stops the campaign and preserves its own evidence. One full physical rehearsal is still required to verify the time budget. The primary summaries are solo35, solo235, solo394, ten35, nine235 and nine394 under results, with scheduled offer denominators and the quiet p99 ratio. The test prices save latency and the quiet-account effect; a rated pinned-reader and bulk-import comparison requires its own workload. [Forecasts](PREDICTIONS.md)
+
+## Cold first full-load window at 235/s
+
+Use [the commit named in REPORT.md](REPORT.md) with its [INT1 clean-build receipt](../v01/SERVER.md#build-ahead-of-the-allocation) and both pinned Java images. Supply the stopped physical template used by the rolling comparison, its reviewed `global/pg_control` SHA-256, the SCALE1 image and transfer pins, a fresh absolute output path, and the existing separate WAL mount. The physical digest is a cluster-control witness. The read-only stopped template, exact starting cut and post-window member and journal readback bind the experiment to the prepared population. A matching control-file digest alone is insufficient to certify all template files.
+
+```sh
+DX_V01_BUILD_RECEIPT="$BUILD_RECEIPT" bash lab/experiments/EXP-DX1/jvm1/cold-server.sh \
+  "$(git rev-parse HEAD)" "$OUT" "$SEED_DIR" "$IMAGE_SHA256" "$TRANSFER_SHA256" \
+  "$STOPPED_PGDATA" "$PG_CONTROL_SHA256" "$WAL_MOUNT" --credit-mode rolling6
+```
+
+Omitting `--credit-mode` selects `barrier6`. The selected mode applies to all three arms and is recorded with the input.
+
+Three disposable copies run sequentially under the existing physical queue. Arms use today, startup tuning, and tuning plus bounded admission. Each is budgeted 18 minutes including copy and verification. The campaign uses a 55-minute work budget and a 59-minute outer deadline with a 15-second kill grace. The PostgreSQL copy must fit alongside 20 GiB headroom, with 16 GiB free on the WAL device. The driver records scoped page-cache eviction advice for a newly synced clone by applying `POSIX_FADV_DONTNEED` only to its files. The kernel may retain some pages. Ordinary process readiness, catalog checks and the one logical-head witness still occur before the first offer.
+
+All arms get the same 70,500 offers over 300 seconds. The first offer follows gateway/writer verification, without a quiet-only lead-in or a prefetch of offered subjects. The first actual save for each subject pays any necessary lookup of its predecessor at the seed cut. Subsequent saves carry their prior receipt. This is a new matched tape with cold-on-demand predecessors, so its latency is not directly comparable to the earlier matrix. It retains the same ten-account population, rate, quiet account, width mix, ordered writer and credit barrier. Journal verification happens after the window.
+
+| Before-run forecast | First 30 s p99 | First 60 s p99 | First 120 s p99 | First 15 s bin starting the sustained run below 50 ms |
+| --- | ---: | ---: | ---: | ---: |
+| Today | 5–12 s | 4–10 s | 3–8 s | 90–180 s |
+| Startup tuning | 4–11 s | 3–9 s | 2.5–7 s | 75–165 s |
+| Tuning plus bounded admission, ACK only | 80–350 ms | 65–230 ms | 55–150 ms | 60–120 s |
+| Tuning plus bounded admission, all offered | unserved p99 | unserved p99 | unserved p99 | 60–150 s if the refusal rate drops below 1% |
+
+All-offer p99 orders unacknowledged offers after acknowledged offers. The ramp alone is expected to decline about 3,600 offers plus any additional age-budget refusals. `observed.json` shows both denominators, ACKs in each wall window, rate and age refusals, expiries, recovery counts, quiet-account ACK p99, prefixes and all 20 fifteen-second bins. A bin only contributes to settled time when it and every later bin are under 50 ms. Keep the baseline and tuned policy arms if the admission treatment buys a better tail at unacceptable served throughput.
+
+Use the per-offer clocks and native `prep1-native.ndjson` for stage time, the same-boot JVM logs for GC, safepoints and compiler activity, Linux per-role counters for device reads and CPU pressure, PostgreSQL counters and timestamped logs for checkpoints, and Datomic build and adoption events for index time. Only temporal overlap and matched interventions support causal estimates. Missing raw data or unexpected terminal states fail the collection and retain partial evidence for diagnosis.
+
+## Restart with and without the one-time start-up read
+
+The restart campaign plays the tape's first 120 s, restarts the three JVMs on the same storage, optionally runs the owner-approved one-time read before admission, and times the next 300 s. Commands for the fresh copy and the one-billion aged database, with predictions: [STARTUP-READ.md](STARTUP-READ.md#server-runs).

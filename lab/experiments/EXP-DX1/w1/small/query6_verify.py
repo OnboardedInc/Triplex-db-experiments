@@ -48,7 +48,11 @@ for file, digest in inputs["stage"].items():
     if file != "lab/config/slots.json":
         assert sha(stage / file) == digest, file
 for file, digest in inputs["bundle"].items():
-    assert sha(Path(file)) == digest, file
+    if not Path(file).is_file() or sha(Path(file)) != digest:
+        # [DX-W1] Why: compare a queued run to the revision that staged its inputs.
+        # Rejected: rerunning the engine because a runner file advanced while the slot was busy.
+        staged_source = subprocess.check_output(["git", "show", f"{inputs['head']}:{file}"])
+        assert hashlib.sha256(staged_source).hexdigest() == digest, file
 slot = json.loads((stage / "lab/config/slots.json").read_text())["lanes"]["datomic"]
 build = json.loads((out / "build-1.log").read_text().split("Successfully tagged")[-1].split("\n", 1)[1])
 assert slot["imageId"] == build["imageId"] == terminal["image"]
@@ -64,7 +68,7 @@ lines = raw.read_text().splitlines()
 events = [json.loads(line[8:]) for line in lines if line.startswith("W1_DATA ")]
 assert all(e["nonce"] == nonce for e in events) and events[-1]["v"] == {"nonce": nonce}
 assert events[0]["v"] == [[k, "on"] for k in ("fsync", "synchronous_commit", "full_page_writes")]
-binding = {"slot": terminal["slot"], "image": slot["imageId"], "attempt": nonce,
+binding = {"source": inputs["head"], "slot": terminal["slot"], "image": slot["imageId"], "attempt": nonce,
            "inputs": sha(out / "inputs.json"), "raw": sha(raw), "verifier": sha(Path(__file__))}
 
 def erasure_observation():
@@ -80,6 +84,11 @@ def erasure_observation():
     return record
 
 
+def quantiles(values):
+    values = sorted(values)
+    return [values[math.ceil(q*len(values))-1] for q in (.5, .99)]
+
+
 if study == "erase6":
     assert [e["k"] for e in events] == ["sql", "finished"]
     with (out / ("observation-" + str(uuid.uuid4()) + ".json")).open("x") as f:
@@ -87,8 +96,53 @@ if study == "erase6":
         print(f.name)
     sys.exit(0)
 
+if study == "query6-cost":
+    assert [e["k"] for e in events] == ["sql", "query-cost-paired", "finished"]
+    arm = events[1]["v"]
+    assert arm["nonce"] == f"{nonce}-cost" and arm["layout"] == "lean"
+    key = arm["db"][3:]
+    assert json.loads(base64.urlsafe_b64decode(key + "=" * (-len(key) % 4)))[3] == arm["nonce"]
+    writer = arm["writer"]
+    assert writer["database"] == arm["db"] and writer["installedDefinitionMatches"] is True
+    assert writer["ledger"] is True and writer["packedJournal"] is False and writer["leanNativeQuery"] is True
+    assert writer["packedJournalCount"] == 0 and len(writer["selectedDefinitionSha256"]) == 64
+    assert writer["predecessorSelected"] is True and writer["selectedFunction"].startswith(":triplex.write/v-")
+    samples = arm["samples"]
+    assert len(samples) == len({r["id"] for r in samples}) == 64
+    routes = ["match", "datalog", "point"] if len(samples[0]["reads"]) == 3 else ["match", "datalog"]
+    read_samples = {route: [] for route in routes}
+    calls = {"match": ["read"], "point": ["q"], "datalog": ["basis", "snapshot", "q", "release"]}
+    for n, sample in enumerate(samples):
+        value = f"value:{n}"
+        assert [sample["n"], sample["command"], sample["position"], sample["expected"]] == [n, f"save:{n}", n + 2, value]
+        assert sample["saved"] > 0 and all(x > 0 for x in sample["write"])
+        assert [r["route"] for r in sample["reads"]] == [routes[(n + i) % len(routes)] for i in range(len(routes))]
+        for read in sample["reads"]:
+            assert read["value"] == value
+            assert read["calls"] == calls[read["route"]]
+            if "point" in routes:
+                assert len(read["callMs"]) == len(read["calls"]) and all(n > 0 for n in read["callMs"])
+            assert all(read[k] > 0 for k in ("readMs", "requestBytes", "responseBytes"))
+            read_samples[read["route"]].append(read)
+    result = {**binding, "samples": len(samples), "writer": writer,
+              "saveMs": quantiles([r["saved"] for r in samples]),
+              "requestBytes": quantiles([r["write"][0] for r in samples]),
+              "ackBytes": quantiles([r["write"][1] for r in samples]),
+              "datoms": sorted({r["write"][2] for r in samples}),
+              "reads": {route: {k: quantiles([r[k] for r in rows]) for k in ("readMs", "requestBytes", "responseBytes")}
+                        for route, rows in read_samples.items()}}
+    if "point" in routes:
+        for route, rows in read_samples.items():
+            result["reads"][route]["stageMs"] = {op: quantiles([r["callMs"][i] for r in rows])
+                                                  for i, op in enumerate(calls[route])}
+        result["pointToMatchP50"] = result["reads"]["point"]["readMs"][0] / result["reads"]["match"]["readMs"][0]
+    with (out / ("verified-" + str(uuid.uuid4()) + ".json")).open("x") as f:
+        json.dump(result, f, indent=2)
+        print(f.name)
+    sys.exit(0)
+
 assert study == "query6"
-assert [e["k"] for e in events] == ["sql", "query-proof", "query-proof", *["query-cost"] * 4, "finished"]
+assert [e["k"] for e in events] == ["sql", "query-proof", "query-proof", "finished"]
 
 legacy, lean = (e["v"] for e in events[1:3])
 for layout, arm in zip(("legacy", "lean"), (legacy, lean), strict=True):
@@ -179,7 +233,7 @@ def bag(rows):
     return sorted(canonical(numbers(row)) for row in rows)
 
 
-def fact(row, journal):
+def fact(row, journal, oracle=False):
     keys = ("entityId", "attribute", "value", "validFrom", "validTo", "recordedAt", "entityType", "txId")
     if not journal:
         keys = ("id",) + keys
@@ -188,6 +242,11 @@ def fact(row, journal):
         v = row.get(key)
         if isinstance(v, dict) and v.get("_id") == "Option":
             v = v.get("value")
+        if oracle and key == "value" and v.get("type") == "json":
+            # [DX-W1] Why: the oracle separately exports a canonical-text witness for its JSON value.
+            # Rejected: dropping the witness without checking that it describes the same complete value.
+            compare(json.loads(v["canonical"]), v["value"])
+            v = {k: item for k, item in v.items() if k != "canonical"}
         out[key] = v
     return out
 
@@ -195,7 +254,7 @@ def fact(row, journal):
 for k, actual in lean["matched"].items():
     journal = k in ("changes", "entities")
     compare(bag(fact(row, journal) for row in actual),
-            bag(fact(row, journal) for row in expected[k]["snapshot"]))
+            bag(fact(row, journal, oracle=True) for row in expected[k]["snapshot"]))
     if journal:
         vals = [v["value"]["value"] for v in expected[k]["snapshot"]]
         compare(bag(json.loads(x["?v"]) if k == "changes" else x["?v"] for x in lean["datalog"][k]), bag(vals))
@@ -220,28 +279,7 @@ for row, record in zip(lean["log"][:2], expected["feed"]["transactions"], strict
                c["position"] == str(record["position"]) for c in row["changes"])
 
 
-def quantiles(values):
-    values = sorted(values)
-    return [values[math.ceil(q*len(values))-1] for q in (.5, .99)]
-
-
-costs = []
-for i, (event, covered) in enumerate(zip(events[3:7], (False, True, True, False), strict=True)):
-    arm = event["v"]
-    assert arm["nonce"] == f"{nonce}-cost-{i}" and arm["layout"] == "lean" and arm["covered"] is covered
-    samples = arm["samples"]
-    assert len(samples) == len({r["id"] for r in samples}) == 64
-    for n, sample in enumerate(samples):
-        assert [sample["n"], sample["command"], sample["position"], sample["expected"]] == [
-            n, f"save:{n}", n + 2, f"value:{n}"]
-        assert sample["saved"] > 0 and sample["readMs"] > 0 and all(x > 0 for x in sample["read"])
-        assert all(x > 0 for x in sample["write"])
-    costs.append({"covered": covered, "saveMs": quantiles([r["saved"] for r in samples]),
-                  "readMs": quantiles([r["readMs"] for r in samples]),
-                  "requestBytes": quantiles([r["write"][0] for r in samples]),
-                  "ackBytes": quantiles([r["write"][1] for r in samples]),
-                  "datoms": sorted({r["write"][2] or 0 for r in samples})})
-proof = {**binding, "oracle": revision, "case": sha(queries), "expected": sha(answer), "costs": costs,
-         "erasure": erasure_observation()}
+proof = {**binding, "oracle": revision, "case": sha(queries), "expected": sha(answer),
+         "implicitNumericPage": lean["implicitNumericPage"]}
 (attempt / "verified.json").write_text(json.dumps(proof, indent=2) + "\n")
 print(attempt / "verified.json")

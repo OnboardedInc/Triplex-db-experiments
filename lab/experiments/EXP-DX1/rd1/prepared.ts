@@ -9,7 +9,16 @@ import { claimPgdata, inspectPgdata, pgdataTarget, preflightWal, sealedPgdata, t
 // for one scratch copy beside it, so each reader ladder runs in its own invocation on its own private copy.
 // Rejected: restoring the dump (over 76 minutes), copying inside the timed run, or two copies at once.
 export const ladders = ["control", "tuned"] as const;
-export type Ladder = typeof ladders[number];
+// [DX-INT1] The append-retirement pair runs its reference and append arms as the same two prepared invocations.
+export const retirementLadders = ["reference", "append"] as const;
+export type Ladder = typeof ladders[number] | typeof retirementLadders[number];
+type Kind = "read" | "retirement";
+const kinds = { read: { names: ladders }, retirement: { names: retirementLadders } } as const;
+// [DX-INT1] Why: the retirement pair runs 394 and 620 on the fresh copy and 50 and 235 on the 1 billion copy.
+// Rejected: one fixed rate list (the 1 billion arm's evidence would never seal).
+const ratesOf = (kind: Kind, age: unknown) => kind === "read" || age === "1B" ? ["50", "235"] : ["394", "620"];
+const dryRun = () => process.env.DX_DRY_RUN_FIRST_OFFER === "1";
+const kindOf = (ladder: Ladder): Kind => (retirementLadders as readonly string[]).includes(ladder) ? "retirement" : "read";
 export const ladderMinutes = 28;
 
 const sha = (bytes: Buffer | string) => createHash("sha256").update(bytes).digest("hex");
@@ -27,7 +36,7 @@ type Start = { inputSha256: string; ladder: Ladder; startedAt: number; sealed: D
 type Complete = { startSha256: string; completedAt: number; slot: string; attempt: string; systemIdentifier: string;
   files: Record<string, string> };
 
-function completed(campaign: string, ladder: Ladder) {
+export function completed(campaign: string, ladder: Ladder) {
   const loc = ladderPaths(campaign, ladder);
   assert(fs.existsSync(loc.end), `The ${ladder} ladder has not completed`);
   const startBytes = fs.readFileSync(loc.start), start: Start = JSON.parse(startBytes.toString());
@@ -44,9 +53,11 @@ function completed(campaign: string, ladder: Ladder) {
 
 // Opens one ladder of a prepared read study: control first, then tuned, each on a new private copy of one seal.
 export function openPreparedLadder(input: { campaign: string; ladder: string; source: string; copy: string; wal?: string;
-  record: Record<string, unknown> }) {
+  record: Record<string, unknown>; kind?: Kind }) {
   const { campaign, source } = input;
-  assert((ladders as readonly string[]).includes(input.ladder), "Choose --ladder control or --ladder tuned");
+  const kind = input.kind ?? "read";
+  const [first, second] = kinds[kind].names;
+  assert((kinds[kind].names as readonly string[]).includes(input.ladder), `Choose --ladder ${first} or --ladder ${second}`);
   const ladder = input.ladder as Ladder;
   const evidence = fs.realpathSync(path.dirname(campaign));
   const [copy] = inspectPgdata(source, [input.copy], evidence) as [Directory];
@@ -55,8 +66,11 @@ export function openPreparedLadder(input: { campaign: string; ladder: string; so
   const record = JSON.parse(JSON.stringify({ ...input.record, pgdataSource: sealed, wal }));
   const loc = ladderPaths(campaign, ladder);
   let previous: ReturnType<typeof completed> | undefined;
-  if (ladder === "control") {
-    assert(!fs.existsSync(campaign) && !fs.existsSync(loc.folder), "Use a new output directory for the control ladder");
+  // [DX-INT1] Why: a first-offer dry run of the second arm must run every check of that arm before any run exists.
+  // A dry run never offers or seals, so the second arm opens its own new campaign without the first arm's seal.
+  // Rejected: dry-running only the first arm (the treatment arm's start-up and admission would first run for real).
+  if (ladder === first || (dryRun() && !fs.existsSync(campaign))) {
+    assert(!fs.existsSync(campaign) && !fs.existsSync(loc.folder), `Use a new output directory for the ${first} ladder`);
     fs.mkdirSync(campaign);
     fs.mkdirSync(loc.folder, { mode: 0o700 });
     write(loc.input, record);
@@ -64,14 +78,14 @@ export function openPreparedLadder(input: { campaign: string; ladder: string; so
     // [DX-RD1] Why: the treatment must read the same seal, cut, source and launch settings as its control.
     // Rejected: accepting a tuned ladder whose control used a different copy, configuration or PostgreSQL cluster.
     assert.deepEqual(read(loc.input), record, "Read study source, seal, pins or launch configuration changed");
-    previous = completed(campaign, "control");
-    assert(!fs.existsSync(loc.start) && !fs.existsSync(loc.end), "The tuned ladder already started");
+    previous = completed(campaign, first);
+    assert(!fs.existsSync(loc.start) && !fs.existsSync(loc.end), `The ${second} ladder already started`);
   }
   assert.equal(copy.controlSha256, sealed.controlSha256);
   const startedAt = Date.now();
   if (previous) assert(startedAt >= previous.end.completedAt, "Ladders overlap");
   write(loc.start, { inputSha256: sha(fs.readFileSync(loc.input)), ladder, startedAt, sealed, copy } satisfies Start);
-  return { ladder, loaded: ladder === "tuned", copy, sealed, previous, source,
+  return { ladder, loaded: ladder === second, copy, sealed, previous, source,
     env: { DX_V01_PGDATA: copy.dir, DX_V01_PGDATA_CONTROL_SHA: copy.controlSha256, DX_V01_PGDATA_FILE_ID: copy.device + ":" + copy.inode },
     claim(slot: string, attempt: string) {
       if (previous) assert(slot !== previous.end.slot && attempt !== previous.end.attempt, "Ladder slot or attempt reused");
@@ -92,6 +106,22 @@ export function openPreparedLadder(input: { campaign: string; ladder: string; so
         container, copy, sealed, liveFileId, systemIdentifier }, null, 2) + "\n", { flag: "wx", mode: 0o600 });
       return systemIdentifier!;
     },
+    // [DX-INT1] Why: an arm refused before its first save (or stopped by a first-offer dry run) has measured nothing,
+    // so its records move aside and the same arm runs again on a new copy. The scorecard does the same (v01/sequential.ts).
+    // Rejected: a new campaign for every refusal (a refused treatment arm would repeat the sealed reference arm).
+    setAside(attempt: string) {
+      assert(!fs.existsSync(loc.end), "A sealed arm cannot be set aside");
+      const target = path.join(path.dirname(campaign), "set-aside", `${ladder}-${attempt}`);
+      fs.mkdirSync(target, { recursive: true });
+      if (!previous) {
+        fs.renameSync(campaign, path.join(target, "campaign"));
+        fs.renameSync(loc.folder, path.join(target, "ladders"));
+      } else {
+        fs.renameSync(loc.start, path.join(target, path.basename(loc.start)));
+        if (fs.existsSync(loc.arm)) fs.renameSync(loc.arm, path.join(target, ladder));
+      }
+      return target;
+    },
     complete(slot: string, attempt: string, systemIdentifier: string) {
       const files = Object.fromEntries(evidenceFiles(campaign, ladder).map((file) => [file, sha(fs.readFileSync(path.join(campaign, file)))]));
       write(loc.end, { startSha256: sha(fs.readFileSync(loc.start)), completedAt: Date.now(), slot, attempt, systemIdentifier, files } satisfies Complete);
@@ -100,16 +130,35 @@ export function openPreparedLadder(input: { campaign: string; ladder: string; so
   };
 }
 
+// [DX-INT1] Why: one arm of a prepared invocation is sealed only after its body returns and its cleanup has written
+// the inventory, on every path out of the body. The body is a function, so a `continue` cannot skip the seal: at RD1
+// ca93f5165 the reader branch ended in `continue` and no ladder was ever sealed.
+// Rejected: sealing inside the body (cleanup evidence does not exist yet) or sealing after a failed body.
+export async function sealedArm(prepared: PreparedLadder | undefined, slot: string, attempt: string,
+  body: () => Promise<string>, cleanup: () => void, after?: () => void) {
+  let systemIdentifier: string;
+  try {
+    systemIdentifier = await body();
+  } finally {
+    cleanup();
+  }
+  after?.();
+  prepared?.complete(slot, attempt, systemIdentifier);
+}
+export type PreparedLadder = ReturnType<typeof openPreparedLadder>;
+
 function evidenceFiles(campaign: string, ladder: Ladder) {
+  const kind = kindOf(ladder);
   const files = ["input.json", `${ladder}/attempt.json`, `${ladder}/pgdata.json`, `${ladder}/cleanup/inventory.json`];
-  for (const rate of ["50", "235"]) for (const name of ["arm.json", "operations.json"]) files.push(`${ladder}/${rate}/${name}`);
+  if (kind === "retirement") files.push(`${ladder}/retirement-diagnostic.json`);
+  for (const rate of ratesOf(kind, read<{ age?: string }>(path.join(campaign, "input.json")).age)) for (const name of ["arm.json", "operations.json"]) files.push(`${ladder}/${rate}/${name}`);
   for (const file of files) assert(fs.existsSync(path.join(campaign, file)), `Missing ladder evidence ${file}`);
   return files;
 }
 
 // Both ladders of one prepared read study, checked together after the second invocation.
-export function checkPreparedStudy(campaign: string) {
-  const [control, tuned] = ladders.map((ladder) => completed(campaign, ladder)) as [ReturnType<typeof completed>, ReturnType<typeof completed>];
+export function checkPreparedStudy(campaign: string, kind: Kind = "read") {
+  const [control, tuned] = kinds[kind].names.map((ladder) => completed(campaign, ladder)) as [ReturnType<typeof completed>, ReturnType<typeof completed>];
   assert.equal(control.end.systemIdentifier, tuned.end.systemIdentifier);
   assert.deepEqual(control.start.sealed, tuned.start.sealed);
   assert.equal(control.start.copy.controlSha256, tuned.start.copy.controlSha256);

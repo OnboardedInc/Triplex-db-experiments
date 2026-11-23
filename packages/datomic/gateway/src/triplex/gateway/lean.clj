@@ -1,5 +1,6 @@
 (ns triplex.gateway.lean
   (:require [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.reach :as reach]
+            [triplex.gateway.owner-root :as owner-root]
             [triplex.gateway.save-ledger :as ledger] [triplex.gateway.trace :as trace]))
 (set! *warn-on-reflection* false)
 ;; [DX-B5-L2] Why: only row text and native history contain lean facts; no reified fallback exists.
@@ -12,8 +13,7 @@
 (defn enabled? [db]
   (contains? #{3 4} (value db (:e (first (d/datoms db :aevt :triplex.scope/key))) :triplex.scope/rows-version)))
 (defn erasure-protected? [db]
-  (or (System/getenv "TRIPLEX_ERASURE_DIRECTORY")
-      (and (d/entid db :db/excise) (seq (d/datoms db :aevt :db/excise)))
+  (or (and (d/entid db :db/excise) (seq (d/datoms db :aevt :db/excise)))
       (and (d/entid db :triplex.scope/erasure-ledger)
            (some :v (d/datoms db :aevt :triplex.scope/erasure-ledger)))))
 (defn unsupported! [route]
@@ -59,8 +59,12 @@
   ([db eid] (history-entity db eid nil))
   ([db eid visit-text!]
   (let [history (d/history db)
+        ;; [Opus W1] Why: a migrated owner's versions hold its newer rows and their retirement markers.
+        ;; Rejected: reading only the owner entity (a covered person's history would lose every save since migration).
+        versions? (owner-root/installed? db)
         scan (fn [source a]
-               (let [datoms (d/datoms source :eavt eid a)]
+               (let [datoms (cond-> (d/datoms source :eavt eid a)
+                              versions? (concat (owner-root/version-datoms source eid a)))]
                  (if visit-text!
                    (map (fn [datom] (visit-text! (:v datom)) datom) datoms)
                    datoms)))
@@ -69,7 +73,12 @@
                                  [(subs text 0 end) text])) (scan db :triplex.entity/retired)))
         grouped (group-by :v (scan history :triplex.entity/row))]
     (map (fn [[text datoms]]
-           (let [row (decode text) retired (first (filter #(not (:added %)) datoms))
+           ;; [Opus W1] Why: a fold moves a live row from its version to the owner (one retraction, two assertions).
+           ;; Rejected: treating the first retraction as the row's end (a moved row would read as retracted).
+           (let [row (decode text)
+                 retracts (filter #(not (:added %)) datoms)
+                 retired (when (and (seq retracts) (>= (count retracts) (- (count datoms) (count retracts))))
+                           (apply max-key :tx retracts))
                  ^String marker (get markers (prefix (:id row)))]
              (cond
                marker (merge row (retirement marker))
@@ -78,11 +87,22 @@
                                     :retracted_position (value db tx :triplex.tx/position)
                                     :retract_tx_id (ledger/tx-id db tx)))
                :else row))) grouped))))
-(defn live-texts [db eid]
-  (let [retired (set (map (fn [datom] (let [^String text (:v datom)] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16)))))
-                          (d/datoms db :eavt eid :triplex.entity/retired)))]
-    (remove (fn [datom] (let [^String text (:v datom)] (retired (subs text 0 (+ 5 (Integer/parseInt text 1 5 16))))))
-            (d/datoms db :eavt eid :triplex.entity/row))))
+(declare legacy-live-texts)
+(defn live-texts
+  ([db eid] (live-texts db eid nil))
+  ([db eid visit-text!]
+   (if (owner-root/installed? db)
+     (owner-root/live db eid visit-text!)
+     (legacy-live-texts db eid visit-text!))))
+(defn legacy-live-texts
+  ([db eid] (legacy-live-texts db eid nil))
+  ([db eid visit-text!]
+   (let [key-for (fn [datom]
+                   (let [^String text (:v datom)]
+                     (when visit-text! (visit-text! text))
+                     (subs text 0 (+ 5 (Integer/parseInt text 1 5 16)))))
+         retired (set (map key-for (d/datoms db :eavt eid :triplex.entity/retired)))]
+     (remove (comp retired key-for) (d/datoms db :eavt eid :triplex.entity/row)))))
 (defn rows
   ([name db input] (rows name db input nil))
   ([name db input visit-text!]
@@ -98,17 +118,22 @@
         entities (or (get input "entityIds")
                      (when-let [entity (get pattern "entityId")]
                        (when-not (.startsWith ^String entity "?") [entity])))
-        eids (cond id (when-let [datom (by-id (if (and cut (not inner)) source (d/history source)) id)] [(:e datom)])
+        decode-datom (fn [x] (when visit-text! (visit-text! (:v x))) (decode (:v x)))
+        view (if (and cut (not inner)) source (d/history source))
+        ;; [Opus W1] Why: a covered row's datom sits on a version entity whose owner is the person read.
+        owner-of (if (owner-root/installed? source) #(owner-root/owner-of view %) identity)
+        eids (cond id (when-let [datom (by-id view id)] [(owner-of (:e datom))])
                    entities (keep #(d/entid source [:triplex.entity/id %]) (distinct entities))
-                   :else (distinct (map :e (d/datoms (if (and cut (not inner)) source (d/history source)) :aevt :triplex.entity/row))))]
+                   :else (distinct (map (comp owner-of :e) (d/datoms view :aevt :triplex.entity/row))))]
     (filter #(or (nil? id) (= id (:id %)))
       (mapcat (fn [eid]
-                (cond inner (map #(decode (:v %)) (:datoms (group-cut/entity-slice inner eid)))
+                (cond inner (let [slice (group-cut/entity-slice inner eid)]
+                              (map decode-datom (if-let [at (:root-db slice)] (live-texts at eid nil) (:datoms slice))))
                       cut (if sampled
-                            (let [datoms (trace/span "read.peer-entity" "peer-call" (vec (live-texts source eid)))]
+                            (let [datoms (trace/span "read.peer-entity" "peer-call" (vec (live-texts source eid visit-text!)))]
                               (trace/span "read.row-decode" "gateway"
                                 (trace/counter! :rowTexts (count datoms))
                                 (into [] (keep #(if attribute (decode-live attribute (:v %)) (decode (:v %)))) datoms)))
-                            (let [datoms (live-texts source eid)]
+                            (let [datoms (live-texts source eid visit-text!)]
                               (if attribute (keep #(decode-live attribute (:v %)) datoms) (map #(decode (:v %)) datoms))))
                       :else (history-entity db eid visit-text!))) eids)))))

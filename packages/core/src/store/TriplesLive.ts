@@ -24,7 +24,7 @@ import {
 import { createReadConstructor, exactReadService } from "../storage/ReadSurface.js";
 import { StorageAdapter } from "../storage/StorageAdapter.js";
 import { reachBy } from "./reach.js";
-import { QueryExecutor } from "../storage/QueryExecutor.js";
+import { QueryExecutor, type WrappedQueryResult } from "../storage/QueryExecutor.js";
 import type {
   Triple,
   TripleInput,
@@ -825,8 +825,7 @@ const makeTriplesServices = Effect.gen(function* () {
     Effect.gen(function* () {
       const query = yield* validateWrappedQuery(q);
       const currentTime = yield* now;
-      const recordedPosition = yield* adapter.currentCommitPosition();
-      const prepared = yield* Effect.try({
+      const prepare = (recordedPosition: number) => Effect.try({
         try: () =>
           preparePagination({
             query,
@@ -844,16 +843,21 @@ const makeTriplesServices = Effect.gen(function* () {
                 cause,
               }),
       });
-      const result = yield* executor.executePage(
-        prepared.query,
-        options?.debug ?? false,
-        prepared.basis,
-        prepared.cursorValues,
-      );
-      const answer = finishPagination(prepared, result);
-      return options?.includeBasis
-        ? { ...answer, basis: { ...prepared.basis, scope: runtime.scope } }
-        : answer;
+      const finish = (prepared: ReturnType<typeof preparePagination>, result: WrappedQueryResult) => {
+        const answer = finishPagination(prepared, result);
+        return options?.includeBasis ? { ...answer, basis: { ...prepared.basis, scope: runtime.scope } } : answer;
+      };
+      const debug = options?.debug ?? false;
+      if (query.cursor === undefined && executor.executePageAtHead) {
+        // [DX-W1] Why: normalize the page shape, then seal the cursor at the cut actually used by the backend.
+        // Rejected: racing an independent head request or publishing a planning placeholder as the cursor basis.
+        const shape = yield* prepare(0);
+        const { recordedPosition: _planningPosition, ...requested } = shape.basis;
+        const selected = yield* executor.executePageAtHead(shape.query, debug, requested);
+        if (selected !== undefined) return finish(yield* prepare(selected.position), selected.result);
+      }
+      const prepared = yield* prepare(query.cursor === undefined ? yield* adapter.currentCommitPosition() : 0);
+      return finish(prepared, yield* executor.executePage(prepared.query, debug, prepared.basis, prepared.cursorValues));
     }).pipe(Effect.withSpan("triples.queryPage"));
 
   const query = (q: DatalogQuery, options?: PagedQueryOptions) =>
