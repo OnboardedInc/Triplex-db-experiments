@@ -25,6 +25,21 @@ Offers in the case: 145,580 (fate: 126,324 refused during the hold, 14,746 subje
 
 **North star P9:** no acknowledged save lost, writes resume within 60 s, a planned move within 30 s. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
+### Case `a-235`: policy A at 235 saves/s; first failure measured, second-failure check stopped
+
+**First failure: no acknowledged save lost, and writes resumed in 19.5 s.** The fault was the SIGKILL of A's PostgreSQL and transactor at 645.8 s into the case.
+
+| Measure | Forecast | Measured |
+| --- | --- | ---: |
+| Acknowledged saves lost on the first failure | 0 | **0**: all 4,885 acknowledged receipts read back byte-identical (operation, position, `t`, record clock) from the survivor |
+| First new (one-copy) save after the fault | 18–60 s | **19.5 s**, inside the **60 s P9 bar** |
+| First exact read / longest read gap | within 0.35 s / 1 s | 21.8 ms / 37.4 ms; 0 of 976 reads missed |
+| Cold copies in parallel | 3–8 min | about 600 s each |
+
+**Steps from the fault (s):** detected 0.8 (3 missed probes) · sealed 0.9 · fenced 1.0 · prefix 1.1 · promoted 1.5 · durability alarm (1 copy) · broker ready 13.3 · peer ready 14.1 · routed 16.7 (`single-copy-after-fence`) · first new save 19.5. The broker start (about 12 s after promotion) takes most of the time to the first save.
+
+**Second failure: the check stopped.** B's target and standby were killed at 673.6 s. The step that opens A's fenced old disk to read which one-copy saves it lacks then failed: `Error communicating with HOST tx2-ha1-38c47d73-active or ALT_HOST 10.231.0.1 on PORT 4334`. It tried to reach A's transactor, which the first fault had killed. The "roughly 700–2,050 one-copy saves absent from A's disk" forecast is therefore unmeasured. The case's own cleanup ran, and the run went on to `move-235`. **The HASYNC1 builder must make the old-disk check read PostgreSQL directly, or start its own peer, rather than reach the killed transactor.**
+
 ## First pair (`p9-pair-1123a`): not measured
 
 **Priority 9 remained unmeasured on servers after this attempt.** No case reached its first offer. Case 1 failed on the driver's own error. Case 2 hit a harness deadline that cases 3–5 would hit too. The pair was stopped at 17:51 UTC during case 3, on the orchestrator's decision. [Evidence on the Mac](#evidence)
