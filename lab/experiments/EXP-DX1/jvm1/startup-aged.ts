@@ -32,7 +32,7 @@ function journalColumns(text: string) {
   const row = Object.fromEntries(rowTextColumns.map((c: string, i: number) => [c, values[i]])) as Record<string, any>;
   assert.equal(row.id, id);
   assert.match(row.recorded_position, /^\d{16}$/);
-  return { marker, row: { ...row, recorded_position: Number(row.recorded_position) } };
+  return { marker, row: { ...row, recorded_position: Number(row.recorded_position) } as Record<string, any> };
 }
 function agedJournal(texts: string[], aged: { lastTransaction: string; lastOperation: string; lastRecordedAt: number },
   head: number) {
