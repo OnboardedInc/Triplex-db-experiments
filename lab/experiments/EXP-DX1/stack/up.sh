@@ -782,8 +782,15 @@ appender = """<appender name="COLD_INDEX" class="ch.qos.logback.core.FileAppende
 (root / 'cold-logback.xml').write_text(base.replace('</configuration>', appender + '\n</configuration>'))
 COLD_INDEX_LOG
     trace_tx_java+=' -Ddatomic.metricsCallback=triplex.cold-index/metrics -Dlogback.configurationFile=/dxh1/cold-logback.xml'
+    startup_read=
+    if [[ ${DX_JVM1_STARTUP_READ_HOOK:-0} == 1 ]]; then
+      # [DX-JVM1] Why: load the one-time start-up reader only in its arms; it starts a thread only on a marked boot.
+      # Rejected: loading it in every cold arm, or any reader that runs after the runner opens admission.
+      cp "$repo/lab/experiments/EXP-DX1/jvm1/startup-read.clj" "$attempt/config/startup-read.clj"
+      startup_read=' -i /dxh1/startup-read.clj'
+    fi
     tx_start=(--entrypoint /bin/bash "$tx_image" -c
-      'exec java -server $JAVA_OPTS -cp "$(bin/classpath)" clojure.main -i /dxh1/prep1-observe.clj -i /dxh1/cold-index.clj -m datomic.launcher /dxh1/sql.properties')
+      'exec java -server $JAVA_OPTS -cp "$(bin/classpath)" clojure.main -i /dxh1/prep1-observe.clj -i /dxh1/cold-index.clj'"$startup_read"' -m datomic.launcher /dxh1/sql.properties')
   fi
 fi
 docker run -d --pull never --name "$prefix-tx" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
@@ -898,6 +905,13 @@ for role in "${gateway_roles[@]}"; do
     role_trace_java+=" -Xlog:gc*,safepoint*=debug:file=/trace/prep1-gc-gw-$role.log:time,uptimemillis,level,tags,pid,tid:filecount=0"
     if [[ $mode == w ]]; then field_policy+=(-e TX2_SUBJECT_PROFILE=1); fi
   fi
+  gw_startup_read=()
+  if [[ $role == w && ${DX_JVM1_STARTUP_READ_HOOK:-0} == 1 ]]; then
+    # [DX-JVM1] Why: the write peer resolves owners in its own cache; it loads the same one-time reader, marked per boot.
+    [[ -n ${DX_JVM1_COLD_PGDATA:-} && -f $attempt/config/startup-read.clj ]]
+    gw_startup_read=(-i /dxh1/startup-read.clj)
+    field_policy+=(-e TRIPLEX_STARTUP_READ_ROLE=gw-w)
+  fi
   role_jfr=$TRIPLEX_TRACE_GW_JFR
   if [[ $role == w && -n ${DX_TAIL1_ATTEMPT:-} && ${DX_TAIL1_EVENT_TRACE:-0} != 1 ]]; then
     # [DX-TAIL1] Why: dump the allocation recording from the owning live JVM.
@@ -925,7 +939,7 @@ for role in "${gateway_roles[@]}"; do
     -e "TX2_REACH_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-1000000}" \
     -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} \
     ${erase_env[@]+"${erase_env[@]}"} ${erase_mount[@]+"${erase_mount[@]}"} \
-    --entrypoint /opt/datomic/bin/run "$image" -m "$gateway_main" ${pg_data:+gateway} >/dev/null
+    --entrypoint /opt/datomic/bin/run "$image" ${gw_startup_read[@]+"${gw_startup_read[@]}"} -m "$gateway_main" ${pg_data:+gateway} >/dev/null
   ok=false
   health_deadline=$((SECONDS + 180))
   while (( SECONDS < health_deadline )); do

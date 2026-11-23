@@ -177,9 +177,9 @@ export const laptopCaps = Object.freeze({ pg: 256, tx: laptop.tx.memory, write: 
 // [DX-INT1] Why: keep the portable limits and the full-size treatment in one launch policy.
 // Rejected: scaling all roles together or interpreting the reduced startup as physical placement evidence.
 /** @param {"laptop" | "server"} profile
- * @param {{ jvm?: JvmProfile, txJvm?: JvmProfile, writeJvm?: JvmProfile, readJvm?: JvmProfile, readTuned?: boolean, readCacheMiB?: 32 | 1536 | 3072, creditMode?: CreditMode, reduced?: boolean, scale?: number, startup?: "today" | "tuned" }} [options] */
+ * @param {{ jvm?: JvmProfile, txJvm?: JvmProfile, writeJvm?: JvmProfile, readJvm?: JvmProfile, readTuned?: boolean, readCacheMiB?: 32 | 1536 | 3072, txCacheMiB?: 32768, creditMode?: CreditMode, reduced?: boolean, scale?: number, startup?: "today" | "tuned" }} [options] */
 export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, writeJvm = jvm,
-  readJvm = jvm, readTuned = false, readCacheMiB, creditMode = defaultCreditMode, reduced = false, scale = 1, startup = "today" } = {}) {
+  readJvm = jvm, readTuned = false, readCacheMiB, txCacheMiB, creditMode = defaultCreditMode, reduced = false, scale = 1, startup = "today" } = {}) {
   assert(profile === "laptop" || profile === "server");
   assert([jvm, txJvm, writeJvm, readJvm].every((v) => jvmProfiles.includes(v)));
   assert(creditModes.includes(creditMode), "Unknown credit mode");
@@ -191,6 +191,9 @@ export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, writeJvm
   assert(!portable || readCacheMiB === undefined || readCacheMiB === 32);
   // [DX-INT1] Why: give a selected 3 GiB cache the measured heap headroom.
   // Rejected: making cache capacity alter core placement or making the tuned treatment implicit.
+  // [DX-JVM1] Why: the start-up read arms reuse PREP1's measured 32 GiB transactor cache: 48 GiB heap, 8 GiB direct, 60 GiB cap.
+  // Rejected: a larger cache, which does not fit beside the other role caps on a 96 GB host.
+  assert(txCacheMiB === undefined || (txCacheMiB === 32768 && profile === "server" && !reduced && !readTuned));
   const largeRead = readTuned || readCacheMiB === 3072;
   const readMemory = largeRead ? { memory: 9216, heap: 6144, direct: 1024 } : {};
   // [DX-RD1] Why: leave two client cores available and give the read peer three physical cores.
@@ -198,7 +201,8 @@ export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, writeJvm
   const placementServer = readTuned ? { ...server,
     "gw-w": { ...server["gw-w"], cpus: "2,3,4", cores: 3 },
     "gw-r": { ...server["gw-r"], cpus: "5,6,11", cores: 3, ...readMemory, cache: 3072 },
-  } : { ...server, "gw-r": { ...server["gw-r"], ...readMemory } };
+  } : { ...server, "gw-r": { ...server["gw-r"], ...readMemory },
+    ...(txCacheMiB ? { tx: { ...server.tx, memory: 61440, heap: 49152, direct: 8192, cache: txCacheMiB } } : {}) };
   /** @param {Role} role */
   const settings = (role) => {
     const placement = profile === "laptop" ? laptop[role] : placementServer[role];
