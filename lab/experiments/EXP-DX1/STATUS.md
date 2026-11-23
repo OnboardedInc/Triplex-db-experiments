@@ -4741,3 +4741,20 @@ Source: `origin/exp/DX-SCALE1-deep-accounts` `182fb4482`, `scale1/V01-AGED.md`; 
 - **Against the predictions:** low rates close to fresh, as predicted. At 394 and 620 the prediction (flat to 15% lower) was wrong on the pessimistic side: 27% lower. Pinned reads were predicted to have a higher tail at the top of the ladder; instead capacity fell to about 18 reads/s at every step. The error type of the failed reads is not in the summary.
 - **Diagnosis started (builder, RD1):** what a pinned read touches against a current pull (which did not slow down), where 45 ms goes at one seat (storage loads against compute, the reader's cache size), whether it is a property of the store or of this bulk-loaded database, fixes, and one run for tonight.
 - **Demo:** built and proven at toy size (see the previous entry); its proving slot at 1 billion is on server 2 after failover. The import under the larger memory (`96b16e759`, 20 minutes) is queued on the second machine.
+
+### 2026-11-23 14:20 local: 32 GIB CACHE ARM AT 1 BILLION RAN: memory alone does not carry Saturday's tape at this size; the one branch is merged (5 agents running)
+
+- **Cache arm at 1 billion** (second machine, `1bbaf54cd`, rolling 6, three transactor cores, 48 GiB heap, 32 GiB object cache; `origin/exp/DX-BM1-bare-metal` `6fce0af28`, `bm1/AGED-CACHE-READING.md`):
+
+  | Measure | 394 offered | 620 offered | Forecast | Same arm at 430 million (Saturday) |
+  | --- | --- | --- | --- | --- |
+  | Stored/s whole (second half) | 384.5 (374.9), 0 expired | 380.8 (411.1), 57,563 expired | 393 and 540 | 394.00 and 620.00, none expired |
+  | Late SQL reads per save outside index jobs | 0.95 | 1.71 | 0.45 (0.20 to 0.90) and 0.55 | 0.043 |
+  | Late reads inside index jobs | 0.51 | 0.96 | 0.80 and 0.95 | 0.0006 |
+  | Busy p99 | whole 22.2 s, second half 7.2 s | | 1.5 s (0.3 to 6) | 269 to 521 ms |
+  | Quiet p99 loaded (solo) | 72.0 (29.2) ms | 58.6 (20.7) ms | 75 ms | 48 to 62 ms |
+
+  The "model too optimistic" falsifier fired at 620 (reads at or above 1.0 per save) and sits at its edge at 394. Transactor memory peaked at 53.1 of 60 GiB. No autovacuum ran in the window; WAL about 4.5 MB/s. Against this afternoon's 16 GiB card with whole-turn credits (249/s at 394, 239/s at 620), the larger cache with per-save credits raises the ceiling to about 380 to 410/s, far short of the 620/s it stored at 430 million. So at 1 billion a 32 GiB cache does not hold the working set of a tape that sends nearly every save to a new person, and the reads per save are back near 1. By the rule written this morning, the writer change (covering owner head) becomes the main line for that case. Open: whether production-shaped traffic, which returns to the same people, stays in a 32 GiB cache at 1 billion; a `production-aged` launch is requested for this evening.
+- **Tooling fault:** after the windows `prep1/server-collect.py` line 281 asserted the fresh head 87,002; the driver produced the summary with that line changed (diff kept).
+- **The one branch:** `origin/exp/DX-INT1` `2f534678c`, build `840be636c`: owner head, live-first import, start-up read, the readback repair, the repaired aged cache arm, the failover repair, dry-run hooks, and the loader-row reader option (off by default); 14 combinations of the combined check pass. `server-32` is a named profile (role caps 79 GiB); switching the default is one line and is not done. Requested next: the 1 billion scorecard from this build with `server-32` and per-save credits, with the three launch faults of today's card removed.
+- **Running:** the production-shaped tape on the fresh template (second machine, since 14:17, about 50 minutes); scorecard parts 3 and 4 at 1 billion (server 2). Failover follows both.
