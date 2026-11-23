@@ -42,7 +42,7 @@ import { ErrorAlert, NotInCatalogue, Refused } from "@/components/console/states
 import type { EntityFormInit } from "@/components/console/sheets-context";
 import { useTool, useToolMutation } from "@/hooks/use-tool";
 import { ToolError } from "@/lib/api";
-import { useConnection, useTools } from "@/lib/catalogue";
+import { useConnection, useDefaults, useTools } from "@/lib/catalogue";
 import { kebab, useTypes } from "@/lib/config";
 import { json, shortId } from "@/lib/format";
 import { receiptToast } from "@/lib/receipt";
@@ -275,7 +275,8 @@ export function EntityFormSheet({
   const connection = useConnection().data;
   const types = useTypes();
   const roster = connection?.roster ?? [];
-  const [account, setAccount] = useState(init?.account ?? "account-010");
+  const defaults = useDefaults();
+  const [account, setAccount] = useState(init?.account ?? defaults.account ?? "");
   const [values, setValues] = useState<Record<string, Value>>({});
   const [when, setWhen] = useState<"now" | "past">("now");
   const [validFrom, setValidFrom] = useState("");
@@ -290,7 +291,7 @@ export function EntityFormSheet({
   );
   useEffect(() => {
     if (init) {
-      setAccount(init.account ?? "account-010");
+      setAccount(init.account ?? defaults.account ?? "");
       setValues((init.values as Record<string, Value>) ?? {});
       setWhen("now");
       setValidFrom("");

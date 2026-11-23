@@ -193,7 +193,8 @@ async function defineOnce(
     const base = snapshotFor(store, "test") ?? store.snapshots[store.snapshots.length - 1];
     const live = snapshotFor(store, "live");
     const existing = topObjects(base);
-    const known = new Set([...typeNamesOf(base), name]);
+    // Subject is always known: the first release adds the starter type (below) when the store has none yet.
+    const known = new Set([...typeNamesOf(base), name, "Subject"]);
     const keys = new Set<string>();
     const uses: Record<string, Attribute.Use<Attribute.AnyDefinition, boolean, "one" | "many">> = {};
     for (const a of input.attributes) {

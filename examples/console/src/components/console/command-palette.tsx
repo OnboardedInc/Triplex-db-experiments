@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/command";
 import { useTool } from "@/hooks/use-tool";
 import { LATEST, useBasis } from "@/lib/basis";
-import { REGISTER_COMMAND, useConnection, useTools } from "@/lib/catalogue";
+import { REGISTER_COMMAND, useConnection, useDefaults, useTools } from "@/lib/catalogue";
 import { n } from "@/lib/format";
 import { beforeLastChange, loadLocal } from "@/lib/session";
 import type { ListTypes } from "@/lib/types";
@@ -34,6 +34,7 @@ export function CommandPalette({
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const connection = useConnection().data;
+  const defaults = useDefaults();
   const tools = useTools();
   const types = useTool<ListTypes>(
     "list_entity_types",
@@ -86,12 +87,15 @@ export function CommandPalette({
     >
       <Command>
         <CommandInput
-          placeholder='Type "account-003 5", an entity ID, a type or a screen'
+          placeholder={`Type "${defaults.account ?? "account-003"} ${defaults.subject ?? 5}", an entity ID, a type or a screen`}
           value={search}
           onValueChange={setSearch}
         />
         <CommandList>
-          <CommandEmpty>Nothing matches. Try "account-003 5" or an entity ID.</CommandEmpty>
+          <CommandEmpty>
+            Nothing matches. Try "{defaults.account ?? "account-003"} {defaults.subject ?? 5}" or an
+            entity ID.
+          </CommandEmpty>
           {subjectTarget && m && (
             <CommandGroup heading="Subject">
               <CommandItem

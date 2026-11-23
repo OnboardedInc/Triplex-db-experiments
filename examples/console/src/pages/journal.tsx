@@ -26,7 +26,13 @@ import { AnswerLine } from "@/components/console/answer-line";
 import { DataTable } from "@/components/console/data-table";
 import { JournalTable } from "@/components/console/journal-table";
 import { PageTitle } from "@/components/console/layout";
-import { EmptyState, ErrorAlert, NotInCatalogue, TableSkeleton } from "@/components/console/states";
+import {
+  EmptyState,
+  ErrorAlert,
+  NotInCatalogue,
+  RecordClockNote,
+  TableSkeleton,
+} from "@/components/console/states";
 import { useTool } from "@/hooks/use-tool";
 import { useReleaseLabels } from "@/lib/config";
 import { callTool, type Answer } from "@/lib/api";
@@ -365,6 +371,10 @@ export function JournalPage() {
               </Button>
             </div>
           )}
+          <RecordClockNote
+            first={connection?.recordTimeRange?.first}
+            last={connection?.recordTimeRange?.lastAtBringUp}
+          />
           {q.data?.compatibility && (
             <p className="text-muted-foreground text-xs">
               Positions up to {n(connection?.sealed.head)} were written by the bulk loader.{" "}

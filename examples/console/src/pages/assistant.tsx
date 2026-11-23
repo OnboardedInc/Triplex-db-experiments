@@ -40,7 +40,7 @@ import { CodeEditor, JsonView } from "@/components/console/code";
 import { PageTitle } from "@/components/console/layout";
 import { ErrorAlert, Refused } from "@/components/console/states";
 import { callTool, ToolError, type Answer, type CatalogueTool, type JsonSchema } from "@/lib/api";
-import { REGISTER_COMMAND, useCatalogue } from "@/lib/catalogue";
+import { REGISTER_COMMAND, useCatalogue, useDefaults } from "@/lib/catalogue";
 import { cn } from "@/lib/utils";
 
 type Recorded = {
@@ -90,11 +90,15 @@ function typeWords(s: JsonSchema): string {
   return t;
 }
 
-/** Safe starting values for Try it here: changes go to account-010, the console's own account on the toy. */
-function initialValue(key: string, s: JsonSchema): unknown {
+/** Starting values for Try it here: the connected database's default account and subject (from list_accounts). */
+function initialValue(
+  key: string,
+  s: JsonSchema,
+  d: { account?: string; subject?: number },
+): unknown {
   if (s.default !== undefined) return s.default;
-  if (key === "account") return "account-010";
-  if (key === "subject") return 0;
+  if (key === "account") return d.account;
+  if (key === "subject") return d.subject;
   if (key === "attribute") return ":task/field-0";
   if (key === "at") return new Date().toISOString().slice(0, 10);
   return undefined;
@@ -110,6 +114,7 @@ function TryIt({
   onOpenChange: (v: boolean) => void;
 }) {
   const props = tool.inputSchema.properties ?? {};
+  const defaults = useDefaults();
   const required = new Set(tool.inputSchema.required ?? []);
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [texts, setTexts] = useState<Record<string, string>>({});
@@ -121,7 +126,7 @@ function TryIt({
     const v: Record<string, unknown> = {};
     const t: Record<string, string> = {};
     for (const [k, s] of Object.entries(props)) {
-      const init = initialValue(k, s);
+      const init = initialValue(k, s, defaults);
       v[k] = init;
       const c = controlOf(s);
       t[k] =

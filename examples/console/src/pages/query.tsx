@@ -1,6 +1,6 @@
 // [DX-CON1] Query (DESIGN.md 4, 8.9): Triplex Datalog as Triplex documents it, against one subject, up to 16 subjects at
 // one position, or the store. Refusals are shown with their reason; the basis control applies; Pin this position.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -34,15 +34,14 @@ import { ErrorAlert, NotInCatalogue, Refused, Slow } from "@/components/console/
 import { useSlow } from "@/hooks/use-tool";
 import { callTool, ToolError, type Answer } from "@/lib/api";
 import { recordedWords, toBasis, useBasis, validWords } from "@/lib/basis";
-import { useConnection, useTools } from "@/lib/catalogue";
+import { useConnection, useDefaults, useTools } from "@/lib/catalogue";
 import { n, plural, shortId } from "@/lib/format";
 import { loadLocal, saveLocal } from "@/lib/session";
-import questions from "@/data/questions.json";
+import { adaptExample, examples, type Example } from "@/lib/examples";
 import { cn } from "@/lib/utils";
 import { formatDatalog } from "@/lib/datalog-format";
 
 type SourceKind = "subject" | "subjects" | "store";
-type Example = (typeof questions.questions)[number];
 type QueryAnswer = {
   columns?: (string | { name: string; note?: string })[];
   summary?: string;
@@ -61,7 +60,6 @@ type QueryAnswer = {
   note?: string;
   refused?: { reason: string };
 };
-const pad8 = (x: number) => String(x).padStart(8, "0");
 
 function parseSubjects(text: string) {
   const out: number[] = [];
@@ -84,10 +82,11 @@ export function QueryPage() {
   const { basis, setBasis } = useBasis();
   const [params, setParams] = useSearchParams();
   const [source, setSource] = useState<SourceKind>("subject");
-  const [account, setAccount] = useState("account-010");
-  const [subject, setSubject] = useState("0");
+  const defaults = useDefaults();
+  const [account, setAccount] = useState("");
+  const [subject, setSubject] = useState("");
   const [entity, setEntity] = useState("");
-  const [subjectsText, setSubjectsText] = useState("0-11");
+  const [subjectsText, setSubjectsText] = useState("");
   const [text, setText] = useState("");
   const [note, setNote] = useState<string>("");
   const [selected, setSelected] = useState<string>("");
@@ -105,27 +104,52 @@ export function QueryPage() {
   const { slow, elapsed } = useSlow(running, 1000);
   const run1 = useSlow(running, 0);
 
-  const ids = useMemo(
-    () => ({
-      root: `acct/${account}/pl:${pad8(Number(subject) || 0)}`,
-      task: `acct/${account}/i9:${pad8(Number(subject) || 0)}`,
-    }),
-    [account, subject],
-  );
-  const fill = (q: unknown) =>
-    formatDatalog(q).replaceAll("{{task}}", ids.task).replaceAll("{{root}}", ids.root);
-
-  const load = (ex: Example) => {
+  const sourceOf = (ex: Example): SourceKind =>
+    ex.from === "store"
+      ? "store"
+      : typeof ex.from === "object" && ex.from.subjects
+        ? "subjects"
+        : "subject";
+  const adapt = (ex: Example, a = account, n = subject) => {
+    const info = defaults.of(a);
+    return adaptExample(
+      ex,
+      a,
+      Number(n) || 0,
+      connection?.sealed?.head,
+      info?.last ?? Number(n) + 15,
+    );
+  };
+  const load = (ex: Example, a = account, n = subject) => {
+    const moved = adapt(ex, a, n);
     setSelected(ex.name);
-    setText(fill(ex.query));
-    setSource(ex.source as SourceKind);
-    setNote(ex.note);
+    setText(formatDatalog(moved.query));
+    setSource(sourceOf(ex));
+    setNote(moved.note);
     setAnswer(null);
     setError(null);
-    if ((ex as { atSealedHead?: boolean }).atSealedHead && connection)
-      setBasis({ ...basis, recorded: { mode: "position", position: connection.sealed.head } });
+    if (typeof moved.from === "object" && moved.from.subjects) {
+      const list = moved.from.subjects.subjects;
+      setSubjectsText(`${list[0]}-${list.at(-1)}`);
+    }
+    if (moved.basis?.position !== undefined)
+      setBasis({ ...basis, recorded: { mode: "position", position: moved.basis.position } });
   };
+  /** Moving the source to another account or subject moves the chosen example with it. */
+  const reloadExample = (a: string, n: string) => {
+    const ex = examples.find((x) => x.name === selected);
+    if (ex) load(ex, a, n);
+  };
+  // Start on the connected database's default subject (from list_accounts), then the default example.
   useEffect(() => {
+    if (!defaults.ready || account) return;
+    const a = defaults.account!;
+    const n = String(defaults.subject!);
+    setAccount(a);
+    setSubject(n);
+    const info = defaults.of(a)!;
+    const first = Math.max(info.first, Math.min(Number(n), info.last - 15));
+    setSubjectsText(`${first}-${Math.min(info.last, first + 15)}`);
     const s = params.get("saved");
     if (s !== null && saved[Number(s)]) {
       const q = saved[Number(s)]!;
@@ -135,9 +159,9 @@ export function QueryPage() {
       if (typeof q.source === "object" && q.source && "kind" in q.source)
         setSource((q.source as { kind: SourceKind }).kind);
       setParams({}, { replace: true });
-    } else if (!text) load(questions.questions[2]!);
+    } else if (!text) load(examples[2]!, a, n);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params]);
+  }, [defaults.ready, params]);
 
   const from = (): Record<string, unknown> | string =>
     source === "store"
@@ -283,7 +307,7 @@ export function QueryPage() {
               </div>
               <div>
                 <div className="text-muted-foreground mb-1 text-xs">Examples</div>
-                {questions.questions.map((q) => (
+                {examples.map((q) => (
                   <button
                     key={q.name}
                     className={cn(
@@ -292,9 +316,9 @@ export function QueryPage() {
                     )}
                     onClick={() => load(q)}
                   >
-                    {q.name}
+                    {account ? adapt(q).name : q.name}
                     <span className="text-muted-foreground ml-1 text-xs">
-                      {q.source === "store" ? "store" : q.source === "subjects" ? "16" : ""}
+                      {sourceOf(q) === "store" ? "store" : sourceOf(q) === "subjects" ? "16" : ""}
                     </span>
                   </button>
                 ))}
@@ -352,7 +376,19 @@ export function QueryPage() {
                     </SelectContent>
                   </Select>
                   {source !== "store" && (
-                    <Select value={account} onValueChange={setAccount}>
+                    <Select
+                      value={account}
+                      onValueChange={(a) => {
+                        const info = defaults.of(a);
+                        const n =
+                          info && (Number(subject) < info.first || Number(subject) > info.last)
+                            ? String(info.first + Math.floor(info.people / 2))
+                            : subject;
+                        setAccount(a);
+                        setSubject(n);
+                        reloadExample(a, n);
+                      }}
+                    >
                       <SelectTrigger className="h-8 w-36">
                         <SelectValue />
                       </SelectTrigger>
@@ -370,9 +406,12 @@ export function QueryPage() {
                       <Input
                         className="h-8 w-24 tabular-nums"
                         value={subject}
-                        onChange={(e) => (
-                          setSubject(e.target.value.replace(/[^\d]/g, "")), setEntity("")
-                        )}
+                        onChange={(e) => {
+                          const n = e.target.value.replace(/[^\d]/g, "");
+                          setSubject(n);
+                          setEntity("");
+                          if (n) reloadExample(account, n);
+                        }}
                         placeholder="subject"
                       />
                       <span className="text-muted-foreground text-xs">or entity</span>
@@ -380,7 +419,7 @@ export function QueryPage() {
                         className="h-8 w-64 font-mono text-xs"
                         value={entity}
                         onChange={(e) => setEntity(e.target.value.trim())}
-                        placeholder="acct/account-010/review:00000000"
+                        placeholder={`acct/${account || "account"}/review:00000000`}
                       />
                     </>
                   )}

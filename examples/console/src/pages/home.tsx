@@ -13,10 +13,10 @@ import {
 } from "@/components/ui/table";
 import { AnswerLine } from "@/components/console/answer-line";
 import { useNewType } from "@/components/console/sheets-context";
-import { EmptyState, ErrorAlert } from "@/components/console/states";
+import { EmptyState, ErrorAlert, RecordClockNote } from "@/components/console/states";
 import { PageTitle } from "@/components/console/layout";
 import { useTool } from "@/hooks/use-tool";
-import { useConnection, useTools } from "@/lib/catalogue";
+import { useConnection, useDefaults, useTools } from "@/lib/catalogue";
 import { n, shortId, time } from "@/lib/format";
 import type { Feed, ListTypes, Summary } from "@/lib/types";
 
@@ -52,7 +52,8 @@ export function HomePage() {
   );
   const feed = useTool<Feed>("change_feed", { limit: 5 });
   const openNewType = useNewType();
-  const firstAccount = connection.data?.roster[2]?.account ?? connection.data?.roster[0]?.account;
+  const defaults = useDefaults();
+  const firstAccount = defaults.account;
   const s = summary.data;
 
   if (connection.isError)
@@ -201,7 +202,8 @@ export function HomePage() {
         <div>
           <h2 className="text-sm font-medium">Ask your assistant the same things</h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            "What did we believe about subject 0 of {firstAccount ?? "account-003"} on 1 June 2025?"
+            "What did we believe about subject {defaults.subject ?? 0} of{" "}
+            {firstAccount ?? "an account"} on 1 June 2025?"
           </p>
         </div>
         <Button asChild variant="outline">
@@ -264,6 +266,10 @@ export function HomePage() {
             </Table>
           </div>
         )}
+        <RecordClockNote
+          first={s?.recordTimeRange?.first}
+          last={s?.recordTimeRange?.lastAtBringUp}
+        />
         <AnswerLine answer={feed.data} call={feed.call} label="Head" />
       </section>
     </div>

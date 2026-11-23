@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # [DX-CON1] Every console gate in one run against the toy (build step 7), each writing its JSON into DIR. Gates write
 # only into account-003 (and read the other accounts); account-010 belongs to the console builder. Times are diagnostic.
-#   bash demo/toy/gates.sh DIR
+#   bash demo/toy/gates.sh DIR [--fresh-after]
+# The gates leave test types (GateCheck, Vehicle...) and entities on the toy. --fresh-after brings the toy down and up
+# again with --reset afterwards, so the owner's console shows only Subject and the prepared Review.
 set -euo pipefail
 repo=$(cd "$(dirname "$0")/../.." && pwd)
 out=${1:?give an output directory}
@@ -16,4 +18,7 @@ for gate in g12 config entities query journal derive catalogue; do
 done
 node src/prove.ts --out "$out/prove" > "$out/prove.log" 2>&1 && status=PASSED || { status=FAILED; fail=1; }
 printf '%-10s %s  %s\n' prove "$status" "$(tail -n 1 "$out/prove.log")"
+if [[ " $* " == *" --fresh-after "* ]]; then
+  cd "$repo" && bash demo/toy/down.sh >/dev/null && bash demo/toy/up.sh --reset | tail -n 3
+fi
 exit $fail

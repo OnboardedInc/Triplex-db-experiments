@@ -25,7 +25,7 @@ import {
 import { useTool } from "@/hooks/use-tool";
 import { ToolError } from "@/lib/api";
 import { recordedWords, toBasis, useBasis, validWords } from "@/lib/basis";
-import { useConnection, useTools } from "@/lib/catalogue";
+import { useConnection, useDefaults, useTools } from "@/lib/catalogue";
 import { useTypes, valueTypeWords } from "@/lib/config";
 import { n, shortId, time } from "@/lib/format";
 import type { AttributeDef, DescribeType, ListEntities } from "@/lib/types";
@@ -42,7 +42,8 @@ function Entities({ name, attrs }: { name: string; attrs: AttributeDef[] }) {
   const summary = types.data?.types.find((t) => t.name === name);
   const byAccount = summary?.createdByAccount ?? {};
   const best = Object.entries(byAccount).sort((a, b) => b[1] - a[1])[0]?.[0];
-  const account = params.get("account") ?? best ?? "account-010";
+  const defaults = useDefaults();
+  const account = params.get("account") ?? best ?? defaults.account ?? "";
   const from = Number(params.get("from") ?? 0) || 0;
   const q = useTool<ListEntities>(
     "list_entities",
@@ -293,6 +294,7 @@ function Definition({ d }: { d: DescribeType }) {
 
 export function TypePage() {
   const { name = "" } = useParams();
+  const defaults = useDefaults();
   const [params, setParams] = useSearchParams();
   const tab = params.get("tab") ?? "entities";
   const tools = useTools();
@@ -361,7 +363,9 @@ export function TypePage() {
                 description="Loader-built subjects carry no entity type, so the console finds them by account and number, not by type."
               >
                 <Button asChild variant="outline">
-                  <Link to="/accounts/account-010">Open account-010</Link>
+                  <Link to={`/accounts/${defaults.account ?? ""}`}>
+                    Open {defaults.account ?? "an account"}
+                  </Link>
                 </Button>
               </EmptyState>
             ) : d.data ? (

@@ -33,7 +33,7 @@ import { Switch } from "@/components/ui/switch";
 import { ErrorAlert, NotInCatalogue, Refused } from "@/components/console/states";
 import { useToolMutation } from "@/hooks/use-tool";
 import { ToolError } from "@/lib/api";
-import { useTools } from "@/lib/catalogue";
+import { useDefaults, useTools } from "@/lib/catalogue";
 import {
   kebab,
   LOADER_PREFIXES,
@@ -90,6 +90,7 @@ function toRows(list?: AttributeDef[]) {
 export function NewTypeSheet({ init, onClose }: { init: NewTypeInit | null; onClose: () => void }) {
   const navigate = useNavigate();
   const tools = useTools();
+  const defaults = useDefaults();
   const types = useTypes();
   const names = (types.data?.types ?? []).map((t) => t.name);
   const described = useDescribedTypes(names, Boolean(init));
@@ -231,7 +232,7 @@ export function NewTypeSheet({ init, onClose }: { init: NewTypeInit | null; onCl
                       className="max-w-xs"
                     />
                     <FieldDescription>
-                      PascalCase. Entities get IDs such as acct/account-010/
+                      PascalCase. Entities get IDs such as acct/{defaults.account ?? "account-003"}/
                       {v.name ? kebab(v.name) : "review"}:00000000.
                     </FieldDescription>
                     {issues["name"] && <FieldError>{issues["name"]}</FieldError>}

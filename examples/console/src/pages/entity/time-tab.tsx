@@ -125,7 +125,12 @@ function useDefaults(
     ...new Set(facts.filter((f) => f.entity === entity).map((f) => f.attribute)),
   ].sort();
   const chosen = attribute && attributes.includes(attribute) ? attribute : attributes[0];
-  const fallback = beforeLastChange() ?? connection?.sealed?.head;
+  // Default "believed at": just before the entity's latest change, so a correction shows the earlier belief.
+  const positions = facts
+    .filter((f) => f.entity === entity)
+    .map((f) => f.recordedPosition ?? f.position ?? 0);
+  const latest = positions.length ? Math.max(...positions) : 0;
+  const fallback = latest > 0 ? latest - 1 : (beforeLastChange() ?? connection?.sealed?.head);
   const believedText = believed ?? (fallback !== undefined ? String(fallback) : "");
   const date = at?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
   const position = /^\d+$/.test(believedText) ? Number(believedText) : undefined;
