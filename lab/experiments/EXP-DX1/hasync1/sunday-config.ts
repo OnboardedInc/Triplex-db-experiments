@@ -22,6 +22,10 @@ export type SundayConfig = {
   a: SiteConfig;
   b: SiteConfig;
   ssh: { user: string; target: string; identityFile: string; knownHosts: string };
+  // [DX-HASYNC2] Optional: the launch commit when only lab TypeScript changed after the staged build `commit`.
+  lab?: string;
+  // [DX-HASYNC2] Optional: each server's own routable address for direct WAL streaming on TCP 25432 (and the bulk probe).
+  direct?: { a: string; b: string };
 };
 
 // [DX-HASYNC1] Why: require the same private manifest on both roles and validate every shell and mount input before startup. Rejected: interpolating driver environment into remote commands.
@@ -48,5 +52,10 @@ export function readConfig(raw: string): SundayConfig {
   assert.match(c.ssh.user, /^[a-z_][a-z0-9_-]{0,30}$/);
   assert.match(c.ssh.target, /^[A-Za-z0-9][A-Za-z0-9.-]{0,252}$/);
   assert(absolute(c.ssh.identityFile) && absolute(c.ssh.knownHosts));
+  if (c.lab !== undefined) assert(/^[0-9a-f]{40}$/.test(c.lab) && c.lab !== c.commit);
+  if (c.direct !== undefined) {
+    assert(isIPv4(c.direct.a) && isIPv4(c.direct.b) && c.direct.a !== c.direct.b);
+    for (const v of [c.direct.a, c.direct.b]) assert(![c.a.address, c.b.address].includes(v));
+  }
   return c;
 }

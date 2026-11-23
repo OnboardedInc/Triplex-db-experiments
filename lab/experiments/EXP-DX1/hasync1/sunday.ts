@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { once } from "node:events";
 import fs from "node:fs";
 import path from "node:path";
@@ -58,7 +58,10 @@ const owner = path.join(lockDirectory, "dx-p9-sunday.active");
 const tun = "tun" + c.tunnel;
 const local = c[role];
 const other = c[role === "a" ? "b" : "a"];
-const stopAt = performance.now() + 230 * minute;
+// [DX-HASYNC2] Why: the shortened run fits 150 minutes. Server B starts no case that cannot finish by 136 minutes and
+// server A waits for B's release until 146 minutes; both launch under a 150-minute outer limit.
+const stopAt = performance.now() + (role === "a" ? 146 : 136) * minute;
+const labPaths = ["lab/experiments/EXP-DX1/hasync1/", "lab/experiments/EXP-DX1/ha1/"];
 const seed = { sha256: c.seedSha256, cluster: c.cluster };
 process.umask(0o077);
 const origin = readScaleSeal(
@@ -71,8 +74,21 @@ assert.equal(origin.scope.name, c.scope);
 
 async function checkLocal() {
   assert(absolute(process.cwd()));
-  cleanSource(c.commit);
+  cleanSource(c.lab ?? c.commit);
   verifyBuild(c.commit, c.buildReceipt);
+  if (c.lab) {
+    // [DX-HASYNC2] Why: keep the staged images and package build of `commit` and allow only lab TypeScript to differ.
+    // Rejected: a clean rebuild, whose image IDs would not match between the two servers.
+    const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8" }).trim();
+    git("merge-base", "--is-ancestor", c.commit, c.lab);
+    const changed = git("diff", "--name-only", c.commit, c.lab).split("\n").filter(Boolean);
+    assert(changed.length > 0);
+    for (const file of changed)
+      assert(
+        labPaths.some((prefix) => file.startsWith(prefix)) && /\.(ts|md)$/.test(file),
+        "Launch commit changes more than lab TypeScript: " + file,
+      );
+  }
   const limits = read("/proc/self/status").match(/^Cpus_allowed_list:\s*(\S+)$/m)?.[1];
   assert(limits === "0-11", "The server profile needs cores 0 through 11");
   assert.equal(await docker(["ps", "-q"]), "", "Another campaign is running");
@@ -97,6 +113,8 @@ async function checkLocal() {
     tag: c.tag,
     cfg,
     source: c.commit,
+    lab: c.lab ?? null,
+    direct: c.direct ?? null,
     seed,
     machine,
     repo: process.cwd(),
@@ -162,6 +180,7 @@ async function configureTunnel(work: () => Promise<void>) {
 
 async function serverA(proof: Ready) {
   const close = await echo(c.a.address);
+  const closeDirect = c.direct ? await echo(c.direct.a) : async () => {};
   try {
     write(path.join(hostRun, "ready.json"), proof);
     console.log("Server A is ready for server B.");
@@ -178,6 +197,7 @@ async function serverA(proof: Ready) {
       return true;
     });
   } finally {
+    await closeDirect();
     await close();
   }
 }
@@ -211,6 +231,8 @@ async function serverB(proof: Ready) {
       a.tag,
       a.cfg,
       a.source,
+      a.lab,
+      a.direct,
       a.seed,
       a.files,
       a.facts,
@@ -224,6 +246,8 @@ async function serverB(proof: Ready) {
       c.tag,
       cfg,
       c.commit,
+      c.lab ?? null,
+      c.direct ?? null,
       seed,
       proof.files,
       proof.facts,
@@ -280,11 +304,14 @@ async function serverB(proof: Ready) {
     try {
       const local = await roundTrips("127.0.0.1");
       const overlay = await roundTrips(c.a.address);
+      // [DX-HASYNC2] Why: measure the path the WAL will use; an unreachable direct address fails here, before any case.
+      const direct = c.direct ? await roundTrips(c.direct.a) : null;
       write(path.join(hostRun, "link.json"), {
         cfg,
         seed,
         local,
         overlay,
+        direct,
         p50ExtraMs: overlay.p50Ms - local.p50Ms,
         p95ExtraMs: overlay.p95Ms - local.p95Ms,
       });
@@ -292,9 +319,9 @@ async function serverB(proof: Ready) {
       await loopback();
     }
     for (const cell of sundayCases) {
-      if (performance.now() + (cell.budget + 10) * minute > stopAt) {
+      if (performance.now() + cell.budget * minute > stopAt) {
         report.push({ cell: cell.name, skipped: "remaining budget" });
-        if (cell.name !== "fence-50") failures++;
+        if (!cell.optional) failures++;
         continue;
       }
       assert(!linkDead, "SSH tunnel lost before the next case");
@@ -332,6 +359,7 @@ async function serverB(proof: Ready) {
               datomicId: images[1]!,
               postgresImage: images[0]!,
               privateAddress: c.a.address,
+              ...(c.direct ? { replicationAddress: c.direct.a } : {}),
               docker: (args, opts) => remoteDocker(args, opts?.timeout),
             };
             const siteB: Site = {
@@ -340,6 +368,7 @@ async function serverB(proof: Ready) {
               datomicId: images[1]!,
               postgresImage: images[0]!,
               privateAddress: c.b.address,
+              ...(c.direct ? { replicationAddress: c.direct.b } : {}),
               docker: (args, opts) => docker(args, opts?.timeout),
             };
             return { a: siteA, b: siteB };

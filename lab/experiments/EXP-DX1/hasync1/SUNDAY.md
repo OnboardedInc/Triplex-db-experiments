@@ -1,5 +1,7 @@
 # Sunday paired failover run
 
+**Superseded on November 23 by the [pair repair](PAIR-REPAIR.md):** parallel cold copies, a standby synchronous before the transactor, measured catch-up, direct WAL streaming and a 150-minute run. The role commands below are the old ones.
+
 Start at 05:00 local on November 22 if both machines are released. Use the fresh one-database checkpoint, with ten 100,000-person accounts, 162,456,470 current facts and logical cut 87,002. The run uses the ordered field writer, Java 21 G1 and the INT1 `server` launch settings. It exercises abrupt database and transactor process loss while the host can still be fenced over SSH. A provider power cut is outside this drill.
 
 ## Before the window

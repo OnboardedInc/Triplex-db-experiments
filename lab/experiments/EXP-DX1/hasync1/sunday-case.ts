@@ -17,13 +17,15 @@ import {
   windows,
 } from "./sunday-traffic.ts";
 
+// [DX-HASYNC2] Why: the shortened run for November 23 puts the owner's version 0.1 policy first and fits 150 minutes on both
+// machines. Budgets are the reservation each case needs to start; the 50 saves/s cases run only if that much time remains.
+// Rejected: the 234-minute Sunday order, which no longer fits the machines' window.
 export const sundayCases = [
-  { name: "b-50", rate: 50, policy: "B", kind: "fault", budget: 42 },
-  { name: "b-235", rate: 235, policy: "B", kind: "fault", budget: 42 },
-  { name: "a-50", rate: 50, policy: "A", kind: "fault", budget: 35 },
-  { name: "a-235", rate: 235, policy: "A", kind: "fault", budget: 35 },
-  { name: "move-235", rate: 235, policy: "B", kind: "planned", budget: 32 },
-  { name: "fence-50", rate: 50, policy: "B", kind: "fault", budget: 28 },
+  { name: "b-235", rate: 235, policy: "B", kind: "fault", budget: 34, optional: false },
+  { name: "a-235", rate: 235, policy: "A", kind: "fault", budget: 26, optional: false },
+  { name: "move-235", rate: 235, policy: "B", kind: "planned", budget: 24, optional: false },
+  { name: "b-50", rate: 50, policy: "B", kind: "fault", budget: 34, optional: true },
+  { name: "a-50", rate: 50, policy: "A", kind: "fault", budget: 26, optional: true },
 ] as const;
 type Cell = (typeof sundayCases)[number];
 
@@ -98,10 +100,16 @@ export async function sundayCase(
       );
     if (cell.kind === "planned") pair.nextWriter = await pair.gateway("write-b", b, "target");
     let returning: unknown;
-    if (cell.name === "fence-50")
+    if ((cell.name as string) === "fence-50")
       pair.beforeReplacement = async () => {
         returning = { processes: await checkOldRestart(pair), disk: await pair.probeOldDiskBoot() };
       };
+    // [DX-HASYNC2] Why: prove the standby is synchronous with zero lag immediately before the first offer, and keep the WAL
+    // rate of the set-up beside it. Rejected: inferring readiness from the synchronous setting alone.
+    const beforeOffers = await pair.zeroLag("pg", "target", "sync_b");
+    await pair.walSample("before-offers");
+    await pair.recordWalSource("before-offers");
+    e.write("sunday-before-offers", { ...bindings, beforeOffers, walSamples: pair.walSamples });
     traffic = await sundayTraffic(e, pair.route!, reader, seed.scope, cell.rate);
     const flow = traffic;
     assert.equal(flow.db, ac.db);
@@ -179,7 +187,14 @@ export async function sundayCase(
     }
     let loss: { previouslyProtected: number; oneCopy: number; exposed: number } | undefined;
     let copy:
-      | { copyMs?: number; toProtectedReceiptMs: number; remoteFlush: string; required: string }
+      | {
+          copyMs?: number;
+          phases?: unknown;
+          transfer?: unknown;
+          toProtectedReceiptMs: number;
+          remoteFlush: string;
+          required: string;
+        }
       | undefined;
     if (cell.policy === "A") {
       assert.equal(
@@ -236,7 +251,13 @@ export async function sundayCase(
       assert.equal(await pair.sql("pg", "select pg_is_in_recovery()"), "t");
       assert(summary.firstWriteMs !== null);
       copy = {
-        ...(pair.replacement ? { copyMs: pair.replacement.copiedMs } : {}),
+        ...(pair.replacement
+          ? {
+              copyMs: pair.replacement.copiedMs,
+              phases: pair.replacement.phases,
+              transfer: pair.replacement.transfer,
+            }
+          : {}),
         toProtectedReceiptMs: summary.firstWriteMs,
         remoteFlush,
         required,
@@ -255,6 +276,10 @@ export async function sundayCase(
       },
       primaryReadyMs,
       initialStandby,
+      beforeOffers,
+      walSamples: pair.walSamples,
+      // Each step from the failure (first kill, or the seal for a planned move) to the route change, in ms.
+      steps: pair.transitions.map((x) => ({ stage: x.stage, ms: x.at - faultAt })),
       startupMs: flow.start - start,
       firstLoss: survivor.filter((entry) => !entry.observed).length,
       bars: {
