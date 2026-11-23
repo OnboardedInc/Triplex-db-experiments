@@ -10,7 +10,13 @@ selection=$2
 pin=$3
 mode=${4:-run}
 [[ $root == /var/tmp/triplex-bm1/bench4 && $EUID == 0 && $(systemd-detect-virt) == none ]]
-[[ $selection =~ ^fair-yield[a-z0-9-]*$ && $pin =~ ^[a-f0-9]{40}$ ]]
+[[ $selection =~ ^fair-(yield|heap)[a-z0-9-]*$ && $pin =~ ^[a-f0-9]{40}$ ]]
+# [DX-BM1] Why: the heap arm (load1/HEAP-ARM-SERVER.md) adds a 32 GiB transactor cache and two cells to the same launch.
+if [[ $selection == fair-heap* ]]; then
+  arms=(--frame-facts 32 --import-policy yield --tx-cache 32768 --cells control,import)
+else
+  arms=(--frame-facts 32,40 --import-policy yield)
+fi
 job=$root/queue/$selection
 build=$job/build
 out=$job/result
@@ -28,7 +34,7 @@ launch() {
     77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b
     1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154
     "$held/cluster" "$1" --pg-data "$prepared/cluster" --wal-dir "$wal"
-    --credit-mode rolling6 --import-credits 1 --frame-facts 32,40 --import-policy yield)
+    --credit-mode rolling6 --import-credits 1 "${arms[@]}")
 }
 
 if [[ $mode == cleanup ]]; then

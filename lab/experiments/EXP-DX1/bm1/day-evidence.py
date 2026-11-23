@@ -104,8 +104,9 @@ for selection in ("cache32", "cache32b", "cache32c", "tx5", "fresh", "rolling6r"
     SLOTS["bench3-"+selection] = ("bench3/queue/"+selection, ("result", "started", "unit.log",
         "build/results/IMAGE-INPUTS.SHA256SUMS", "build/results/images.json", "build/results/bootstrap.exit"))
 # [DX-BM1] Why: bench 4 (2026-11-23) runs the aged 32 GiB cache arm with the same job layout as bench 3's add-ons.
-SLOTS["bench4-fair-yield"] = ("bench4/queue/fair-yield", ("result", "unit.log", "prepared/inventory.json",
-    "prepared/ready.txt", "build/BUILD-v0.1.json", "dry-run"))
+for selection in ("fair-yield", "fair-heap"):
+    SLOTS["bench4-"+selection] = ("bench4/queue/"+selection, ("result", "unit.log", "prepared/inventory.json",
+        "prepared/ready.txt", "build/BUILD-v0.1.json", "dry-run", "pg-sampler.log"))
 for selection in ("cache32-aged", "cache32-aged-b", "cache32-aged-c", "cache32-aged-r", "cache32-aged-r2", "production"):
     SLOTS["bench4-"+selection] = ("bench4/queue/"+selection, ("result", "started", "unit.log",
         "build/results/IMAGE-INPUTS.SHA256SUMS", "build/results/images.json", "build/results/bootstrap.exit"))
