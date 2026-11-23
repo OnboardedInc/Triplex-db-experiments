@@ -147,7 +147,7 @@ async function outer(outDir) {
     psql("postgres", ddl);
     psql("postgres", "CREATE DATABASE age_restore;");
     psql("age_restore", ddl);
-    made.push(docker("create", "--name", prefix + "-dx", "--network", prefix, "--memory", "3g", "--cpus", "2",
+    made.push(docker("create", "--name", prefix + "-dx", "--network", prefix, "--memory", "4g", "--cpus", "2",
       "--label", "tx2.holder=DX-AGE1", "-v", staged + ":/age:ro", "-e", "PGPASS=" + password, "-e", "PGHOST=" + prefix + "-pg",
       "--entrypoint", "node", imageId, "/age/" + lab + "/readback-gate.mjs", "--inner"));
     const started = Date.now();

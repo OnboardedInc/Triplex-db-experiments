@@ -14,8 +14,8 @@ const fileSha = (file) => sha(fs.readFileSync(file));
 // [DX-AGE1] Why: the restored copy has no transactor location until a transactor registers in that storage.
 // Rejected: copying the primary's location row, which would point the peer at the primary transactor.
 export const restoreProfile = {
-  heap: ["-Xms256m", "-Xmx768m"],
-  properties: { "memory-index-threshold": "32m", "memory-index-max": "128m", "object-cache-max": "128m",
+  heap: ["-Xms512m", "-Xmx2g"],
+  properties: { "memory-index-threshold": "32m", "memory-index-max": "256m", "object-cache-max": "256m",
     "index-parallelism": "1" },
 };
 

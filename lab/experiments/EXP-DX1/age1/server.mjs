@@ -543,7 +543,7 @@ async function run(configFile, config, mode, failedId) {
     if (measuring) {
       const loaded = read(path.join(rung, "bulk-loaded.json"));
       assert.deepEqual([loaded.source, loaded.machineHash, loaded.db, loaded.imageSha],
-        [binding.source, binding.machineHash, binding.db, binding.imageSha]);
+        [resuming ? failed.binding.source : binding.source, binding.machineHash, binding.db, binding.imageSha]);
       for (const { file, sum } of loaded.artifacts) assert.equal(fileSha(path.join(rung, file)), sum);
       if (loaded.cyclesSha) {
         const cyclesFile = path.join(rung, "load-cycles.json");

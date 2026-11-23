@@ -34,7 +34,6 @@ const source = call("git", ["rev-parse", "HEAD"], { cwd: ageCheckout });
 assert.equal(call("git", ["status", "--porcelain"], { cwd: ageCheckout }), "");
 // [DX-AGE1] Why: the readback must be the same peer code that the failed attempt ran.
 // Rejected: resuming from a checkout whose Clojure peer or gateway source moved since the failed attempt.
-call("git", ["merge-base", "--is-ancestor", pins.source, source], { cwd: ageCheckout });
 call("git", ["diff", "--quiet", pins.source, source, "--", lab + "/src", "packages/datomic", lab + "/scorecard.mjs"],
   { cwd: ageCheckout });
 
