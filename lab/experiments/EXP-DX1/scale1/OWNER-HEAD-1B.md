@@ -1,6 +1,6 @@
 # Owner head pair on the 1 billion database
 
-Build `3d4320155` (`exp/DX-INT1`), `w1/SERVER-OWNER-HEAD.md` section "The 1 billion pair (line 2)": reference arm (today's writer) then append arm (`TX2_SUBJECT_OWNER_HEAD=1`), each on a new physical copy of the sealed held cluster, 50 then 235 offered, 120 s each, 16 GiB transactor cache. Dry run of both arms to the first offer first. Runs after the server-32 card's assembly.
+Build `85fc3a4bd` (`exp/DX-W1-ownerhead-fix`, based on INT1 `61a794c1d`; replaces `3d4320155`, whose summarizer refused the reference arm on the other machine), `w1/SERVER-OWNER-HEAD.md` section "The 1 billion pair (line 2)": reference arm (today's writer) then append arm (`TX2_SUBJECT_OWNER_HEAD=1`), each on a new physical copy of the sealed held cluster, 50 then 235 offered, 120 s each, 16 GiB transactor cache. Dry run of both arms to the first offer first. Runs after the server-32 card's assembly.
 
 ## Predictions and falsifiers, copied from the builder's document before launch
 
@@ -33,3 +33,10 @@ Late means the second 60 s of each 120 s window. Reference is today's writer; tr
 4. **The cache already covers the set:** reference late reads per save under 0.3 at 50; then 16 GiB is not standing in for a larger database at this tape, and the pair cannot separate the writers.
 5. **The launch path fails:** either arm refused before its first save at the copy admission, the aged fresh-peer check or the treatment arm's seal check.
 
+
+### Added with the fix commit, before launch
+
+- The summarizer skips and counts other event kinds in the lookups file (`otherLookupFileEvents`). The read sampler pins its read at the saved position the same reader just returned and records subject and positions for any error.
+- **Prediction:** 0 sampler errors in every window of both arms. Settled pinned p50 above the other machine's 0.76 ms is expected (these are now true pinned reads).
+- **Falsifier:** any sampler error is a store defect, reported from `errorSamples` with the subject and positions.
+- Layout: OUT is `/var/tmp/triplex-owner-head-1b/run/pair`; copies are under `/var/tmp/triplex-scale1/pgdata/`; the held source is on the spare NVMe. None contains another (`v01/pgdata.ts:83`). No dry run, by the orchestrator's choice of time.
