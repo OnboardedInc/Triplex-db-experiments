@@ -5,6 +5,17 @@ Server 2 accrued about USD 49.51 through 2026-11-21 15:55 UTC, at USD 1.09/hour 
 <!-- state -->
 Opus driver took over Server 2 on 2026-11-23 at 15:15 UTC. **The 1B load finished by itself at 2026-11-22 03:18 UTC: 1,000,002,769 indexed records, native t 62,876,498, 27 cycles, PGDATA 176,382,197,760 bytes.** The server then sat idle for about 36 hours. Server 2 has accrued about USD 101.3 (92.9 h at USD 1.09/hour); the project is about USD 23 over its USD 200 budget. The owner kept the server until 01:30 UTC on 2026-11-24 for the aged scorecard and then the 32 GiB cache arm; the driver deletes it. [Final load table](AGE1-LOAD.md#extended-continuation-progress)
 
+**Failover (P9) runs first, from 16:59 UTC on 2026-11-23: Server 2 is role A, bench 4 is role B (INT1 `8ab832093`, about 206 min).** The orchestrator ruled that failover runs while a builder repairs the AGE1 restore readback on the Mac. After failover, the driver runs the repaired readback on the retained restored copy, writes the seal and bundle, and runs the four scorecard arms. Nothing else runs on Server 2 while role A runs.
+
+Copies to bench 4 before failover, each checked by per-file SHA-256, mode and owner lists on both sides:
+
+| Copy | Files | Bytes | stoppedInventory treeSha | Transfer |
+| --- | ---: | ---: | --- | ---: |
+| Held 1B cluster at t 62,888,918 (1,000,251,169 records) | 1,644 | 176,078,992,377 | `723f693f566891f9941d858b09fef21c6080d0b32165a99cda3559871cd07770` | 166 s |
+| Fresh SCALE1 template, cut 87,002, with `sealed-pgdata.json` | 1,452 | 125,923,989,950 | `fc501b6a14066d711222dbe202febbc9d911d3b4121c862f550fac0d92a7b24a` | 107 s |
+
+Role A staging: bench 4's INT1 images loaded (4 of 4 IDs match), build extracted, seed staged from the untouched fresh template (seedSha256 `291bf0b02ae4171c9033ea3d27a95d52cb976e74c6e4480269a72dfa17a8fc6f`, equal to bench 4's). The exact load-cut safety copy and about 170 GiB of old builds and arm seeds were deleted for space, with approval. The two server-only compressed item 1 originals were first copied to the Mac evidence folder (SHA-256 `816e5a59810ab9b9a8fcd8c26a16d22aa0e74bc68ce1a734d2bdf513bf822629` and `7311a451481990a8aa5b303b4ed3953af29b3a19cdfecdaa3c1ec92f41a4d454`).
+
 **Blocked at 16:44 UTC on 2026-11-23: `measure-loaded` failed at the restore readback, so no aged bundle exists and the aged scorecard cannot start.** The readback peer cannot connect to the restored database because no transactor runs on the separate restore storage. Backup (110 GB, 13 min 36 s), full verify (6,018,339 segments, none missing) and restore (33 min 51 s) all passed. [Fault, measurements and options](V01-AGED.md#seal-result-stopped-at-the-restore-readback-no-aged-bundle)
 
 Server 2 cost about USD 102.8 by 16:50 UTC (94.3 h at USD 1.09/hour); the project total is about USD 224.6. The driver deletes the server by 04:30 UTC on 2026-11-24 at the latest. A second server (bench 4) now runs the 32 GiB cache arm and the failover run with this one. Server 2 has pushed the fresh template to bench 4 and fetched bench 4's failover build and images (not loaded).
