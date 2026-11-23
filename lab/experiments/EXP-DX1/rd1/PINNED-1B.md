@@ -1,6 +1,6 @@
 # Pinned reads at 1 billion records: why they are forty times slower
 
-**Status: first answer with the 1 billion evidence, 2026-11-23.** Sources: the code at the scorecard commit `6770c37ba`, the fresh card's evidence and the 1 billion part 1 and 2 evidence (`score-1b-c-part1-2.tar.gz`, SHA-256 `e31c4adc…6056b`: the reader's request trace `gw-r.jsonl` with one cgroup CPU sample per second, its GC log and its JVM flags). Times from the Mac are diagnostic only. Sections marked *open* wait for tonight's run.
+**Status: answer with the 1 billion evidence and tonight's run, 2026-11-23.** Sources: the code at the scorecard commit `6770c37ba`, the fresh card's evidence and the 1 billion part 1 and 2 evidence (`score-1b-c-part1-2.tar.gz`, SHA-256 `e31c4adc…6056b`: the reader's request trace `gw-r.jsonl` with one cgroup CPU sample per second, its GC log and its JVM flags). Times from the Mac are diagnostic only. Sections marked *open* wait for tonight's run.
 
 Measurement: aged scorecard part 2 at `6770c37ba` ([V01-AGED.md](https://github.com/OnboardedInc/Triplex-db-experiments/blob/182fb4482/lab/experiments/EXP-DX1/scale1/V01-AGED.md)). One-core read gateway, `server` profile. Pinned ladder at one seat: 18.12 reads/s, p50 44.80 ms at 1 billion; 606.43 reads/s, p50 1.18 ms fresh.
 
@@ -24,7 +24,7 @@ Measurement: aged scorecard part 2 at `6770c37ba` ([V01-AGED.md](https://github.
 | 12 GiB object cache | Large gain if the working set then fits | No change |
 | Datomic io-stats per read | Many `*-load` and `deserialize` per read | Few loads, but long `api-ms` |
 
-**Decided:** compute-bound, about 37 to 45 ms per read, for every person. **Not decided:** A or B. Tonight's run measures both directly (per-read Datomic io-stats, a repeat arm, a 12 GiB cache arm and a CPU and allocation profile).
+**Decided:** compute-bound, about 37 to 45 ms per read, for every person. **Not decided:** A or B. **Lean: A, about 60%**, because on the Mac (toy 2 below) none of the lookups on the pinned path walks the history after the pin, while each history leaf decoded costs about 3 MB of allocation. Tonight's run measures both directly (per-read Datomic io-stats, a repeat arm, a 12 GiB cache arm and a CPU and allocation profile).
 
 ## The read errors and the quiet account's 2.5 s
 
@@ -58,9 +58,9 @@ Measurement: aged scorecard part 2 at `6770c37ba` ([V01-AGED.md](https://github.
 2. **Code: answer unchanged people from the current database (recommended).** Every save that changes a person's rows sets their `:triplex.entity/rev` to the save's position in the same transaction. Read the revision from the **current** database first; if it is at or below the pinned position, nothing about that person changed after the pin, so the current rows are exactly the rows at the pin; answer through the current route, which at 1 billion costs what P4 and the fresh card cost (a few ms). Only people changed after the pin take the as-of route. Cost per save: none (the revision is already stored). Exactness: unchanged, provided every writer bumps the revision with every row change; this must be checked for all writers, including grouped saves and removal on request, before it ships. Checked so far: on the Mac gate the short-cut answered 48 of 60 people from the current database with 0 differences from the as-of route. Expected at 1 billion for this ladder, if about 20% of read people changed after the pin: 0.8 × about 2 ms + 0.2 × about 45 ms ≈ 11 ms per read, about 90 reads/s on one core instead of 18; close to the fresh card for pins near the head, where almost nobody changed. Tonight's probe measures this route on the real database.
 3. **Code, larger: keep each person's row lifetimes in the current index.** Retire rows with a marker carrying the retiring position instead of retracting them, so a pinned read of an edited person reads only the current index. Records per save stay about the same (one marker replaces one retraction); current reads of heavily edited people slow down because they skip retired rows. Only worth it if tonight shows edited people dominate the remaining cost.
 
-## Mac toy (diagnostic, not results)
+## Mac toys (diagnostic, not results)
 
-Datomic 1.0.7745, dev storage, 100,000 owners with 10 rows each, 20,000 of them edited 15 times after the pin (300,000 saves), indexed, a fresh peer with a 32 MB object cache, Datomic io-stats per read:
+**Toy 1.** Datomic 1.0.7745, dev storage, 100,000 owners with 10 rows each, 20,000 of them edited 15 times after the pin (300,000 saves), indexed, a fresh peer with a 32 MB object cache, Datomic io-stats per read:
 
 | Read | ms per read | EAVT / AVET probes | EAVT leaf loads | Segments deserialized |
 | --- | ---: | ---: | ---: | ---: |
@@ -69,8 +69,67 @@ Datomic 1.0.7745, dev storage, 100,000 owners with 10 rows each, 20,000 of them 
 | As-of near the head, unedited | 7.78 | 4 / 3 | 1.87 | 2.11 |
 | As-of seed cut, edited | 7.29 | 4 / 3 | 1.85 | 2.05 |
 
-An as-of read probes the current and the history trees and loads one more leaf per read, for edited and unedited people alike and for an old and a recent pin alike. The toy does not reproduce a 37 ms floor; the 1 billion database does something the toy does not, which tonight's run has to show.
+An as-of read probes the current and the history trees and loads one more leaf per read, for edited and unedited people alike and for an old and a recent pin alike.
 
-## Tonight's run
+**Toy 2.** 50,000 owners, then 400,000 transactions after the pin, one save each (a position on the transaction, a new revision, one row replaced), indexed, 256 MB cache. Every point-lookup shape the gateway uses on the pinned path (identity lookup, the owner's rows and revision, a scope value, the pin transaction's position, a position lookup, a reverse AEVT seek from the pin) cost under 0.1 ms on the as-of view, apart from history leaf loads: the owner's rows and revision each cost about 3 ms and 1.9 MB when their history leaf was not cached (0.6 loads per probe, about 3 MB allocated per leaf decoded). So none of these lookups walks the transactions after the pin.
 
-*Being finalized: command, predictions and falsifier below in the next commit.* It is not launchable with settings only. It is one new probe (`rd1/pinned-probe.clj`, gated on the Mac against the gateway's own `storage/read-rows`) and a server wrapper (`rd1/pinned-probe-server.sh`) that starts PostgreSQL and a transactor on a scratch copy of the sealed cluster and runs the probe in a peer JVM shaped like the reader.
+**Gateway route on the Mac.** `storage/read-rows` itself (the probe below, against a scope written through the SDK) makes 18 EAVT, 12 AEVT and 1 AVET index probes per current read and 26, 12 and 3 per as-of read.
+
+Neither toy reproduces a 36 ms floor. If candidate A holds, the 1 billion read decodes about 20 leaves of toy-2 size per read; tonight's io-stats count them.
+
+## Tonight's run (45 minutes on the rented server with the sealed 1 billion cluster)
+
+**Not launchable with settings only.** The scorecard's arms cannot change the reader (see the settings fix) and do not attribute a read. The run uses two new files at `0688bd00f` on `exp/DX-RD1-readers`: `pinned-probe.clj` calls the gateway's own `storage/read-rows` (from the scorecard checkout, so the code under test is `6770c37ba`'s) in a peer JVM, with Datomic's io-stats, thread CPU and allocation per read; `pinned-probe-server.sh` copies the sealed cluster, starts PostgreSQL (`postgres:17-alpine`, the scorecard's pinned digest, 8 GiB, `shared_buffers=2GB`, core 1) and one transactor (cores 0, 7, 8) on the copy, waits until the transactor is active, runs the probe twice, removes the containers, network and copy. Nothing touches the sealed source. **Gated on the Mac:** the probe against a lean scope written through the SDK (shortcut 48 of 60 from the current database, 0 mismatches); the wrapper end to end in the lab VM on a stopped PG17 cluster with Datomic's SQL storage (copy, start, transactor takeover, both passes, JFR, PostgreSQL counters, cleanup).
+
+**Arms**, each on new people in the one-seat ladder's order (account 0, person `7919 n mod 100000`):
+
+1. `pinned`: 600 reads at position 87,002, cold.
+2. `pinned-repeat`: the same 600 again.
+3. `current`: 600 reads at the head.
+4. `pinned-recent`: 600 reads 1,000 positions behind the head.
+5. `shortcut`: 600 reads by the revision short-cut, each checked against the as-of route.
+6. `pinned-twice`: 600 people, each read twice in a row.
+7. `concurrent`: 16 threads for 60 s on the same one core.
+
+Pass `reader`: one core (`--cpuset-cpus 6`, `-XX:ActiveProcessorCount=1`), 3 GiB heap, Datomic's default 1.5 GiB cache, as the scorecard's reader. Pass `bigcache`: the same core, 16 GiB heap, 12 GiB cache, new people. Each pass records a JFR CPU and allocation profile, a GC log, and PostgreSQL block reads and cgroup CPU before and after.
+
+**Command** (as the server driver, from the scorecard build checkout; paths in angle brackets are the driver's):
+
+```bash
+cd "$BUILD/repository"                       # checkout at 6770c37ba, the code under test
+git fetch origin exp/DX-RD1-readers
+mkdir -p <RD2_DIR>                           # new private directory outside the evidence folder
+for f in pinned-probe.clj pinned-probe-server.sh; do
+  git show 0688bd00f:lab/experiments/EXP-DX1/rd1/$f > <RD2_DIR>/$f
+done
+sudo env "PATH=$BUILD/tools/bin:$PATH" NODE="$BUILD/tools/bin/node" RD2_REPO="$PWD" \
+  RD2_PGDATA_SOURCE=<the held, stopped 1 billion cluster the scorecard copies from> \
+  RD2_PGDATA_COPY=<a new path on the root NVMe> RD2_OUT=<a new evidence directory> \
+  RD2_PROBE=<RD2_DIR>/pinned-probe.clj bash <RD2_DIR>/pinned-probe-server.sh
+```
+
+Defaults: database name of the SCALE1 scope (`RD2_DB`), pin 87,002 (`RD2_PIN`), 600 reads per arm (`RD2_ARM`), Datomic image `tx2-datomic:1.0.7745-da00` (Java 21, the reader's). Expected time: copy about 3 min (176 GB at the measured 1.2 GB/s), PostgreSQL and transactor takeover 1 to 3 min, reader pass about 6 min, bigcache pass about 6 min, copy removal about 1 min: **about 17 to 25 min**, cap 40. Peak extra disk: one 176 GB copy. Send back `RD2_OUT` as one archive.
+
+**Predictions, written before the run.**
+
+| Measure (pass `reader` unless named) | Prediction | What it would mean if wrong |
+| --- | --- | --- |
+| `pinned` p50, thread CPU, allocation | 38 to 55 ms; thread CPU at least 80% of wall; 45 to 80 MB per read; route `as-of` for all | Under 15 ms: the scorecard's slowness came from its stack (writer load, peer novelty, GC competition), not from the read itself |
+| `current` p50 | 1 to 5 ms, under 3 MB per read | Over 20 ms: the cost is the 1 billion database at any cut, not the as-of view |
+| `pinned-twice`, second read | **A:** under 10 ms. My lean is A at about 60%, from toy 2 (no point lookup walks the history; the cost is leaf decoding) | Second read as slow as the first: candidate B, work the cache cannot remove |
+| io-stats on a cold `pinned` read | **A:** at least 8 leaf loads (`*-load`) and `deserialize` per read, `sql` at least 5 | Under 3 loads with 40 ms of CPU: B |
+| `pinned-recent` p50 | Within 30% of `pinned` (cost tracks total history, as on toy 1) | Under half of `pinned`: the cost grows with the history after the pin, so recent pins are cheap |
+| `shortcut` | Answered from the current database for 70 to 90% of people; 0 mismatches; mean 5 to 15 ms | Any mismatch: the revision rule is not exact on this database and the fix must not ship as designed |
+| `concurrent`, 16 threads on one core | 18 to 26 reads/s | Over 40/s: waiting, not CPU, dominates, and more read permits would help |
+| `bigcache` `pinned` p50 | Within 25% of `reader` if each person's segments are distinct; under 20 ms if reads share segments | — |
+| PostgreSQL block reads during `pinned` | TOAST reads well above zero per read only under A | — |
+
+**Falsifier of the main claim** (the as-of route costs about 40 ms of CPU per read at 1 billion): `pinned` p50 under 15 ms on one core with `current` similar. Then the scorecard's number came from its environment, and the next step is the scorecard's reader under load, not the read path.
+
+## What is not established
+
+- Whether the 40 ms is leaf decoding (A) or a walk the cache cannot remove (B), and which index it is in.
+- Whether the cost tracks total history or history after the pin, so whether recent pins at 1 billion are slow too.
+- Which share of the ladder's people AGE1 edited after the pin (the probe tags every read).
+- That every writer bumps `:triplex.entity/rev` with every row change, including grouped saves and removal on request (needed before the short-cut ships).
+- Whether an organically grown 1 billion database behaves the same as AGE1's bulk-aged one.
