@@ -33,6 +33,7 @@ import { HeldLedger } from "./held-ledger.ts";
 import { Settlement } from "./settlement.ts";
 import { BulkQueue } from "./bulk.ts";
 import { firstOffer } from "../../ha1/first-offer.ts";
+import { largeRelease, parseShape, shapeName } from "./large-release.ts";
 
 const validTime = W0.POPULATION_VALID_TIME;
 export const rates = [3.5, 23.5, 39.4] as const;
@@ -136,6 +137,8 @@ const samples = (n: number, turn: number) => [
   ...new Set([0, n - 1, Math.floor(n / 2), (turn * 7919 + 47) % n]),
 ];
 type Release = {
+  recordBytes: number;
+  recordChanges: number;
   offer: number;
   received: number;
   durableAt: number;
@@ -269,6 +272,15 @@ export async function runHeld(
 ) {
   const start = now(),
     input = path.join(out, "held-input.json");
+  // [DX-ACT3] Why: the release-size setting. Unset, every Publish alternates W0's R2 and R3 as before. Set (for example
+  // forms=20,policies=20,permille=1000), the R3 turns carry that many synthetic forms and policies, so every Publish in a
+  // window adds or removes them for the chosen share of subjects. The first release's full settlement is skipped unless
+  // DX_ACT3_SETTLE=1: a settlement frame of a large release exceeds the background writer's bound (LARGE-RELEASE.md), and
+  // the hour of server time goes to the one-second path.
+  // Rejected: changing the default release or the default settlement.
+  const shape = process.env.DX_ACT3_RELEASE ? parseShape(process.env.DX_ACT3_RELEASE) : undefined;
+  const settleInitial = !shape || process.env.DX_ACT3_SETTLE === "1";
+  const large = shape ? largeRelease(W0.R3.doc, shape) : undefined;
   const writer = new DatomicClient(peer.write, 35000),
     reader = new DatomicClient(peer.read, 35000);
   const releases: Release[] = [],
@@ -350,6 +362,10 @@ export async function runHeld(
       rates,
       at: start,
       creditModes,
+      release: shape
+        ? { shape, name: shapeName(shape), hash: W0.compileRelease(large!).hash,
+            documentBytes: Buffer.byteLength(canonical(large)), settleInitial }
+        : null,
     });
     // Enrolment's census transactions are checked by JoinedAccount before setting this frontier.
     let ledger: HeldLedger | undefined;
@@ -379,7 +395,9 @@ export async function runHeld(
     const offer = async (doc: W0.ReleaseDoc, id: string, offered: number) => {
       const published = await a.publish(id, doc, validTime, "owed");
       const received = now(),
-        ack = s.counters.lastReceipt;
+        ack = s.counters.lastReceipt,
+        record = s.counters.lastOps;
+      assert.equal(record.id, "joined:" + id);
       assert(
         ack &&
           ack.position === published.position &&
@@ -399,6 +417,8 @@ export async function runHeld(
       assert.deepEqual(marker.marker.document, doc);
       assert.equal(a.stats.worlds, 0);
       const r = {
+        recordBytes: record.bytes,
+        recordChanges: record.changes,
         offer: offered,
         received,
         durableAt,
@@ -431,6 +451,10 @@ export async function runHeld(
     const initial = await offer(W0.R1.doc, peer.attempt + ":baseline", initialAt);
     const initialRead = await demand.read(W0.placementId(people - 1), { validTime });
     await verifyRead(initialRead, initial, people - 1);
+    let changes = 0,
+      entries = 0,
+      settlement: Awaited<ReturnType<Settlement["settle"]>> | undefined;
+    if (settleInitial) {
     worker = await Settlement.open(a, new BulkQueue(1));
     jsonFile(path.join(out, "held-initial.json"), {
       source,
@@ -440,7 +464,7 @@ export async function runHeld(
       firstCorrectMs: initialRead.ended - initialAt,
       initialRead,
     });
-    const settlement = await worker.settle(initial.seq, initialAt - performance.timeOrigin);
+    settlement = await worker.settle(initial.seq, initialAt - performance.timeOrigin);
     const [stored, packets] = await Promise.all([
       worker.archive.stored(initial.seq),
       worker.recorder.packets(settlement.notices.position),
@@ -449,8 +473,6 @@ export async function runHeld(
     const archive = new Map(stored.output.map((x) => [x.subject, x]));
     assert.equal(stored.output.length, archive.size, "Duplicate settled subject");
     const notices = packets.flatMap((p) => p.deliveries.map(toWire));
-    let changes = 0,
-      entries = 0;
     for (let i = 0; i < people; i += 32 * oracles.children.length) {
       await Promise.all(
         oracles.children.map(async (oracle, workerIndex) => {
@@ -497,7 +519,7 @@ export async function runHeld(
     }
     assert.deepEqual(
       [archive.size, changes, entries],
-      [0, settlement.values.state.changes, notices.length],
+      [0, settlement!.values.state.changes, notices.length],
     );
     const archived = await worker.archive
       .reader()
@@ -523,6 +545,11 @@ export async function runHeld(
     });
     await worker.close();
     worker = undefined;
+    } else
+      jsonFile(path.join(out, "held-setup.json"), {
+        preparedMs: prepared - start, installed, meta, initial, coldFirstMs: initialRead.ended - initialAt,
+        settlement: "skipped: DX_ACT3_RELEASE set without DX_ACT3_SETTLE=1",
+      });
     const windows: PairSample[] = [];
     for (const rate of diagnostic ? ([3.5, 23.5] as const) : rates) {
       const seconds = diagnostic ? 8 : 100;
@@ -598,7 +625,7 @@ export async function runHeld(
               const offered = begins + j * (diagnostic ? 3000 : 5000);
               await wait(offered);
               const ingress = now(),
-                doc = releases.at(-1)!.doc.name === "R2" ? W0.R3.doc : W0.R2.doc;
+                doc = releases.at(-1)!.doc.name === "R2" ? (large ?? W0.R3.doc) : W0.R2.doc;
               const members = samples(people, j);
               const cutoff = (async () => {
                 await wait(offered + 1000);
@@ -678,6 +705,8 @@ export async function runHeld(
             ),
             durabilityP99Ms: p99(native.map((x) => x.r.durableAt - x.r.offer)),
             gateHoldP99Ms: p99(native.map((x) => x.r.received - x.pausedAt)),
+            recordBytesMax: native.length ? Math.max(...native.map((x) => x.r.recordBytes)) : null,
+            recordChangesMax: native.length ? Math.max(...native.map((x) => x.r.recordChanges)) : null,
             activeWaitP99Ms: p99(native.map((x) => x.drained - x.pausedAt)),
             writes: writeSummary(result.rows, begins, ends),
             reads: reads.summary(),
@@ -747,7 +776,10 @@ export async function runHeld(
       physicalScope: db,
       checkedChanges: changes,
       checkedEntries: entries,
-      settlement: { valuesMs: settlement.values.ms, noticesMs: settlement.notices.ms },
+      settlement: settlement
+        ? { valuesMs: settlement.values.ms, noticesMs: settlement.notices.ms }
+        : "skipped",
+      release: shape ? { shape, name: shapeName(shape) } : null,
       windows: report,
       durationMs: now() - start,
     });

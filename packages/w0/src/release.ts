@@ -43,10 +43,29 @@ export interface RuleEntryDoc<R extends RuleId = RuleId> {
   readonly scope?: { readonly jurisdictions: readonly string[]; readonly params: RuleParams[R] };
 }
 
+/**
+ * [DX-ACT3] A synthetic release-size extension, absent from R1, R2 and R3 (their canonical JSON and hashes are unchanged).
+ * A form is a definition a subject may owe; a policy decides which subjects owe one form. It exists so a release of a
+ * given number of forms and policies can be measured end to end; it is not part of SPEC 5.1.
+ */
+export interface FormDoc {
+  readonly id: string;
+  readonly dueBusinessDays: number;
+  readonly fields: readonly string[];
+}
+export interface PolicyDoc {
+  readonly id: string;
+  readonly form: string;
+  /** subjects owe the form when their bucket (0 to 999, from SHA-256 of subject and policy id) is below this */
+  readonly permille: number;
+  readonly notice: boolean;
+}
 export interface ReleaseDoc {
   readonly name: "R1" | "R2" | "R3";
   readonly rules: readonly RuleEntryDoc[];
   readonly world: "W0";
+  readonly forms?: readonly FormDoc[];
+  readonly policies?: readonly PolicyDoc[];
 }
 
 /** A rule entry ready for evaluation: SPEC 5.1 scoped entries apply `scope.params` inside the scope and `params` elsewhere. */
@@ -63,6 +82,10 @@ export interface CompiledRelease {
   readonly entries: { readonly [R in RuleId]: CompiledEntry<RuleParams[R]> };
   /** canonical JSON of each rule entry, for the SPEC 5.3 diff */
   readonly entryJson: { readonly [R in RuleId]: string };
+  /** [DX-ACT3] policies in id order with their form; empty for R1, R2 and R3 */
+  readonly policies: readonly { readonly policy: PolicyDoc; readonly form: FormDoc }[];
+  /** [DX-ACT3] canonical JSON of the forms and policies, "" when absent */
+  readonly extensionJson: string;
 }
 
 export class ReleaseError extends Error {}
@@ -132,10 +155,66 @@ function checkParams(id: RuleId, p: unknown): boolean {
   }
 }
 
+const FORM_ID = /^form:[a-z0-9-]{1,32}$/;
+const POLICY_ID = /^pol:[a-z0-9-]{1,32}$/;
+const FIELD_ID = /^[a-z0-9-]{1,32}$/;
+const ascending = (xs: readonly string[]): boolean => xs.every((x, k) => k === 0 || xs[k - 1]! < x);
+
+/** [DX-ACT3] Checks the optional forms and policies; returns the policies paired with their forms. */
+function compileExtension(d: Record<string, unknown>): CompiledRelease["policies"] {
+  const forms = d["forms"],
+    policies = d["policies"];
+  if (!Array.isArray(forms) || !Array.isArray(policies) || forms.length < 1 || forms.length > 512)
+    throw new ReleaseError("release forms");
+  if (policies.length > 512) throw new ReleaseError("release policies");
+  const byId = new Map<string, FormDoc>();
+  for (const f of forms) {
+    if (
+      !isObj(f) ||
+      !hasExactKeys(f, ["dueBusinessDays", "fields", "id"]) ||
+      typeof f["id"] !== "string" ||
+      !FORM_ID.test(f["id"]) ||
+      !isIntIn(f["dueBusinessDays"], 1, 30) ||
+      !Array.isArray(f["fields"]) ||
+      f["fields"].length < 1 ||
+      f["fields"].length > 64 ||
+      !f["fields"].every((x) => typeof x === "string" && FIELD_ID.test(x)) ||
+      !ascending(f["fields"] as string[])
+    )
+      throw new ReleaseError("release form");
+    byId.set(f["id"], f as unknown as FormDoc);
+  }
+  if (!ascending(forms.map((f) => (f as FormDoc).id))) throw new ReleaseError("release form order");
+  const used = new Set<string>();
+  const out: { policy: PolicyDoc; form: FormDoc }[] = [];
+  for (const p of policies) {
+    if (
+      !isObj(p) ||
+      !hasExactKeys(p, ["form", "id", "notice", "permille"]) ||
+      typeof p["id"] !== "string" ||
+      !POLICY_ID.test(p["id"]) ||
+      typeof p["form"] !== "string" ||
+      !byId.has(p["form"]) ||
+      used.has(p["form"]) ||
+      !isIntIn(p["permille"], 0, 1000) ||
+      typeof p["notice"] !== "boolean"
+    )
+      throw new ReleaseError("release policy");
+    used.add(p["form"]);
+    out.push({ policy: p as unknown as PolicyDoc, form: byId.get(p["form"])! });
+  }
+  if (!ascending(out.map((x) => x.policy.id))) throw new ReleaseError("release policy order");
+  return out;
+}
+
 /** Validates a release document against SPEC 5.1 and compiles it; throws ReleaseError on any departure. */
 export function compileRelease(doc: ReleaseDoc): CompiledRelease {
   const d: unknown = doc;
-  if (!isObj(d) || !hasExactKeys(d, ["name", "rules", "world"]))
+  const extended = isObj(d) && ("forms" in d || "policies" in d);
+  if (
+    !isObj(d) ||
+    !hasExactKeys(d, extended ? ["forms", "name", "policies", "rules", "world"] : ["name", "rules", "world"])
+  )
     throw new ReleaseError("release keys");
   if (d["world"] !== "W0") throw new ReleaseError("release world");
   if (d["name"] !== "R1" && d["name"] !== "R2" && d["name"] !== "R3")
@@ -176,18 +255,26 @@ export function compileRelease(doc: ReleaseDoc): CompiledRelease {
     entryJson[id] = canonicalPlain(e);
   });
   const canonical = canonicalPlain(doc);
+  const policies = extended ? compileExtension(d) : [];
   return {
     name: doc.name,
     hash: "sha256:" + sha256hex(canonical),
     doc,
     entries: entries as unknown as CompiledRelease["entries"],
     entryJson: entryJson as unknown as CompiledRelease["entryJson"],
+    policies,
+    extensionJson: extended ? canonicalPlain([d["forms"], d["policies"]] as never) : "",
   };
 }
 
 /** SPEC 5.3: the rule ids, in release order, whose entries have different canonical JSON in A and B. */
 export function diff(a: CompiledRelease, b: CompiledRelease): RuleId[] {
   return RULE_ORDER.filter((id) => a.entryJson[id] !== b.entryJson[id]);
+}
+
+/** [DX-ACT3] Whether the forms and policies differ; SPEC 5.3's diff covers only the eleven rules. */
+export function extensionDiffers(a: CompiledRelease, b: CompiledRelease): boolean {
+  return a.extensionJson !== b.extensionJson;
 }
 
 const p = <R extends RuleId>(id: R, params: RuleParams[R]): RuleEntryDoc<R> => ({ id, params });

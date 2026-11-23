@@ -755,6 +755,37 @@ export function evaluateIndexed(idx: WorldIndex, rel: CompiledRelease, basis: Ba
     }
   }
 
+  // ---- [DX-ACT3] synthetic forms and policies, after the eleven rules, in policy id order ----
+  // A policy reads S.startDate. Without it: row 0. A subject whose bucket is at or above the permille: row 1. Otherwise
+  // row 2: the subject owes the form, due at the end of startDate plus the form's business days, keyed by form id, and a
+  // policy with notice set adds one work item keyed the same way. The bucket is the first eight hex digits of
+  // SHA-256(subject + "\n" + policy id) modulo 1000, so it depends on no fact and is the same in every release.
+  for (const { policy, form } of rel.policies) {
+    const rule = policy.id as RuleId;
+    dep(S, "startDate");
+    const inputs = pushTx([], startF);
+    if (startF === undefined) {
+      trace.push({ inputs, key: form.id, row: 0, rule });
+      continue;
+    }
+    const bucket = parseInt(sha256hex(S + "\n" + policy.id).slice(0, 8), 16) % 1000;
+    if (bucket >= policy.permille) {
+      trace.push({ inputs, key: form.id, row: 1, rule });
+      continue;
+    }
+    const due = endOfDay(addBusinessDays(startDay, form.dueBusinessDays));
+    addTask(rule, "form.owed", form.id, due);
+    trace.push({ inputs, key: form.id, row: 2, rule });
+    if (policy.notice)
+      addWork(
+        rule,
+        "notify.form-owed",
+        form.id,
+        '{"dueAt":' + quote(due) + ',"form":' + quote(form.id) + "}",
+        inputs,
+      );
+  }
+
   // ---- SPEC 8 assembly ----
   // 8.2 overdue at v >= dueAt; 8.3 a due obligation for every task with dueAt and v < dueAt (14 row 7).
   const outTasks: Task[] = tasks.map((t) => ({

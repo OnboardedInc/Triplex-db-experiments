@@ -113,6 +113,8 @@ export async function openStore(
     subjectRoots: 0,
     rosterRoots: 0,
     ackObserved: 0,
+    // [DX-ACT3] Why: report the size of the permanent record each Publish writes. Rejected: estimating it from the document.
+    lastOps: { id: "", changes: 0, bytes: 0 },
     lastReceipt: undefined as
       | {
           commandId: string;
@@ -186,6 +188,7 @@ export async function openStore(
     };
     const old = await lookup(id);
     if (old) return check(old);
+    counters.lastOps = { id, changes: ops.length, bytes: Buffer.byteLength(canonical(ops)) };
     const exit = await h.runExit(
       h.storage.withTransaction(
         Effect.gen(function* () {

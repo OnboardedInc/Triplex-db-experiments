@@ -257,7 +257,10 @@ export function projection(output: W0.Output) {
           ? "key" in item
             ? item.key
             : (id.replace(/@due$/, "").split("#")[2] ?? "")
-          : "";
+          : // [DX-ACT3] A keyed work item of a synthetic policy keeps its key, as the Python projection does.
+            "version" in item
+            ? item.key
+            : "";
       const value =
         "version" in item
           ? { rule: item.rule, kind: item.kind, key: item.key, payload: JSON.parse(item.payload) }
