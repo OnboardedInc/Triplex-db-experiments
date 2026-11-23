@@ -5,7 +5,7 @@
             [triplex.gateway.write-wire :as write-wire]
             [triplex.gateway.lean-feed :as lean-feed] [triplex.gateway.lean-query :as lean-query]
             [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy]
-            [triplex.gateway.subject-save :as subject])
+            [triplex.gateway.subject-save :as subject] [triplex.gateway.owner-layout :as owner-layout])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -83,7 +83,8 @@
                        (do
                          (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema))
                          (:db-after (trace/span "d/transact" "peer-wait" @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}])))))
-        current (subject/install! conn (group/install! conn (commit/install! conn scope schema-ready)))]
+        current (subject/install! conn (group/install! conn (commit/install! conn scope schema-ready)))
+        current (owner-layout/install! conn current)]
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
       (lean/enabled? current) (assoc :layout "lean" :orderedRowTexts true :journalCuts true)))))
@@ -139,7 +140,7 @@
                              :subjectNarrowRevision subject/narrow-revision?
                              :subjectReusePredecessor subject/reuse-predecessor?
                              :subjectAppendRetirement subject/append-retirement?
-                             :subjectOwnerHead (boolean (and subject/owner-head? (d/entid db subject/owner-head-attr)))
+                             :subjectOwnerHead (boolean (and owner-layout/enabled (owner-layout/installed? db)))
                              :subjectPrefetch (boolean (and subject/prefetch? (d/entid db subject/prefetch-ident)))
                              :subjectFunctionTx (some-> subject-t str)))))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"}

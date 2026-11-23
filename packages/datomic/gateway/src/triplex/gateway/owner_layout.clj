@@ -1,93 +1,19 @@
 (ns triplex.gateway.owner-layout
-  (:require [clojure.edn :as edn]
-            [clojure.walk :as walk]
+  (:require [clojure.walk :as walk]
             [datomic.api :as d] [triplex.gateway.commit :as commit]
             [triplex.gateway.lean :as lean]
+            [triplex.gateway.owner-root :as root]
             [triplex.gateway.scope :as scope]
             [triplex.gateway.schema :as schema]
             [triplex.gateway.subject-save :as subject]))
 
-(def page-size 32)
-(def page-limit 8)
-(def cover-limit 8)
-(def root-attr :triplex.owner/root)
-(def owner-attr :triplex.owner/version-owner)
-(def page-key-attr :triplex.owner/page-key)
-(def page-attr :triplex.owner/page-ids)
+;; [Opus W1] Why: the covering root is the product option behind TX2_SUBJECT_OWNER_HEAD=1; default off.
+;; Rejected: the paged spill (30-48% slower reads, 26 records) and the step 1 witness (saved no reads).
+(def enabled subject/owner-head?)
+(def root-attr root/root-attr)
+(def owner-attr root/owner-attr)
+(def cover-limit root/text-limit)
 (def version "owner-layout-version")
-
-(defn root-text [position clock pages] (pr-str [1 position clock pages]))
-(def ^:private cover-root-code
-  ;; [Opus W1] Why: every part is length-framed after one comma header, so a point read never runs the EDN reader.
-  ;; Rejected: the version 3 EDN header (about 10 us of a 0.23 ms read on the Mac for the reader and escaped IDs).
-  '(fn [position clock mask rows]
-     (let [parts (concat mask rows)]
-       (str "4," position "," (Double/doubleToRawLongBits (double clock)) "," (count mask) ","
-            (apply str (interpose "," (map count parts))) "\n" (apply str parts)))))
-
-(defmacro ^:private coverage-encoder [] cover-root-code)
-(def ^:private cover-root (coverage-encoder))
-
-(defn- inline-texts [^String raw start widths]
-  (when (and (vector? widths) (<= (count widths) cover-limit)
-             (every? #(and (integer? %) (pos? %) (<= % (.length raw))) widths))
-    (let [cuts (reductions + start widths)]
-      (when (= (last cuts) (.length raw))
-        (mapv (fn [from to] (subs raw from to)) cuts (rest cuts))))))
-
-(defn- decode-framed [^String raw]
-  (let [split (.indexOf raw "\n")
-        ^"[Ljava.lang.String;" head (when (pos? split) (.split (subs raw 0 split) ","))
-        n (when head (- (alength head) 4))
-        masked (when head (Long/parseLong (aget head 3)))
-        widths (when head (mapv #(Long/parseLong (aget head (+ 4 %))) (range n)))]
-    (when-not (and head (pos? n) (<= 0 masked n) (<= masked cover-limit) (<= 1 (- n masked) cover-limit)
-                   (every? pos? widths) (= (- (.length raw) split 1) (reduce + widths)))
-      (throw (ex-info "Invalid owner projection root" {})))
-    (let [cuts (vec (reductions + (inc split) widths))
-          parts (mapv (fn [i] (subs raw (cuts i) (cuts (inc i)))) (range n))]
-      {:raw raw :position (Long/parseLong (aget head 1))
-       :clock (Double/longBitsToDouble (Long/parseLong (aget head 2)))
-       :mask (subvec parts 0 masked) :texts (subvec parts masked)})))
-
-(defn- decode-root [^String raw]
-  (when raw
-    (if (.startsWith raw "4,")
-      (decode-framed raw)
-    (let [split (.indexOf raw "\n")
-          [version position clock a b] (edn/read-string (if (neg? split) raw (subs raw 0 split)))
-          texts (case version
-                  2 (when (and (vector? b) (every? string? b)) b)
-                  3 (when-not (neg? split) (inline-texts raw (inc split) b))
-                  nil)]
-      (when-not (and (integer? position) (number? clock) (vector? a) (every? string? a)
-                     (case version
-                       1 (<= (count a) page-limit)
-                       (2 3) (and (<= (count a) cover-limit) (some? texts) (<= (count texts) cover-limit))
-                       false))
-        (throw (ex-info "Invalid owner projection root" {})))
-      (cond-> {:raw raw :position position :clock clock}
-        (= 1 version) (assoc :keys a)
-        texts (assoc :mask a :texts texts))))))
-
-(defn- read-root [db owner] (decode-root (scope/value db owner root-attr)))
-
-(defn- page [db key]
-  (let [eid (d/entid db [page-key-attr key])
-        raw (when eid (scope/value db eid page-attr))
-        ids (when raw (edn/read-string raw))]
-    (when-not (and (vector? ids) (<= 1 (count ids) page-size) (every? string? ids))
-      (throw (ex-info "Invalid owner projection page" {:key key})))
-    ids))
-
-(defn- owned-row [db owner id]
-  (let [datom (lean/by-id db id)]
-    (when (and datom (or (= owner (:e datom)) (= owner (scope/value db (:e datom) owner-attr))))
-      datom)))
-
-(defn- row-id [datom]
-  (let [^String text (:v datom)]
-    (subs text 5 (+ 5 (Integer/parseInt text 1 5 16)))))
 
 (def ^:dynamic *read-stages* nil)
 (defmacro read-stage [phase & body]
@@ -97,125 +23,116 @@
        value#)
      (do ~@body)))
 
-(defn covered-live-datoms [db owner]
-  ;; [DX-W1] Why: the covering root and legacy rows share one owner range at the selected basis.
-  ;; Rejected: opening a page and then the public-ID and owner indexes for each edited row.
-  (let [root-a (d/entid db root-attr)
-        row-a (d/entid db :triplex.entity/row)
-        retired-a (d/entid db :triplex.entity/retired)
-        {:keys [raw legacy retired]}
-        (read-stage :owner-range
-          (let [legacy (java.util.ArrayList.) retired (java.util.HashSet.) root (volatile! nil)]
-            (doseq [^datomic.Datom datom (d/datoms db :eavt owner)]
-              (let [a (.a datom)]
-                (cond (= a row-a) (.add legacy datom)
-                      (= a root-a) (vreset! root (.v datom))
-                      (= a retired-a) (.add retired (row-id datom)))))
-            {:legacy legacy :retired retired :raw @root}))
-        root (read-stage :root-decode (decode-root raw))]
-    (when (or (nil? root) (:texts root))
-      (read-stage :mask
-        ;; [Opus W1] Why: at most eight masked IDs, each matched as the exact length-tagged row prefix without allocating.
-        ;; Rejected: cutting an ID substring from every legacy row and probing a hash set.
-        (let [^"[Ljava.lang.String;" prefixes (into-array String (map lean/prefix (:mask root)))
-              n (alength prefixes)
-              masked? (fn [^String text]
-                        (loop [i 0]
-                          (cond (= i n) false
-                                (.startsWith text ^String (aget prefixes i)) true
-                                :else (recur (inc i)))))
-              ^java.util.Set retired retired
-              keep? (if (.isEmpty retired)
-                      (fn [^datomic.Datom datom] (not (masked? (.v datom))))
-                      (fn [^datomic.Datom datom]
-                        (not (or (masked? (.v datom)) (.contains retired (row-id datom))))))]
-          (into (filterv keep? legacy) (map #(hash-map :v %)) (:texts root)))))))
+(defn live-datoms [db owner] (read-stage :owner-range (root/live db owner nil)))
+(def covered-live-datoms live-datoms)
 
-(defn live-datoms [db owner]
-  ;; [DX-W1] Why: the selected durable basis defines the root and every referenced row together.
-  ;; Rejected: reading the latest root for a historical cut or scanning the owner's growing version log.
-  (if-let [{:keys [keys texts]} (read-stage :root (read-root db owner))]
-    (if texts
-      (covered-live-datoms db owner)
-      (let [legacy (read-stage :legacy-range
-                     (into {} (map (juxt row-id identity)) (d/datoms db :eavt owner :triplex.entity/row)))
-            ids (read-stage :pages (into [] (mapcat #(page db %)) keys))]
-        (read-stage :resolve
-          (mapv (fn [id] (or (legacy id) (owned-row db owner id)
-                             (throw (ex-info "Missing projected assertion" {:id id})))) ids))))
-    (read-stage :legacy-range (vec (lean/live-texts db owner)))))
-
-(defn revision [db owner]
-  (or (:position (read-root db owner)) (scope/value db owner :triplex.entity/rev)))
+(defn revision [db owner] (scope/value db owner :triplex.entity/rev))
 
 (defn- predecessor [db owner id]
-  (if-let [{:keys [keys mask texts]} (read-root db owner)]
-    (if texts
-      (or (some #(let [row {:v %}] (when (= id (row-id row)) %)) texts)
-          (when-not (some #{id} mask) (subject/retirement db owner id)))
-      (when (some #(some #{id} (page db %)) keys)
-        (:v (owned-row db owner id))))
+  (if-let [{:keys [mask texts]} (root/root db owner)]
+    (or (some #(when (= id (root/row-id %)) %) texts)
+        (when-not (some #{id} mask) (subject/retirement db owner id)))
     (subject/retirement db owner id)))
 
 (def ^:private update-code
   ;; [DX-W1] Why: two preparations at the same basis compete on one exact root, including a first-touch migration.
   ;; Rejected: comparing a cached peer's root or writing new versions after a legacy save won the migration race.
-  '(let [{:keys [before-root pages cover]} (:owner-layout plan)
-         actual-root (value owner :triplex.owner/root)]
-     (when (or (not= before-root actual-root)
-               (and (nil? actual-root) (not= revision (value owner :triplex.entity/rev))))
+  ;; [Opus W1] Why: the revision still advances, so every reader cache, group cut and other writer keyed on it stays exact.
+  ;; Rejected: leaving the revision behind the root (reach sessions and the other writers' fences would read a stale person).
+  '(let [{:keys [before-root cover]} (:owner-layout plan)]
+     (when (or (not= before-root (value owner :triplex.owner/root))
+               (not= revision (value owner :triplex.entity/rev)))
        (throw (ex-info "TRIPLEX_CONFLICT" {})))
-     [[:db/add owner :triplex.owner/root
-       (if cover
-         (let [[mask retained] cover
-               fresh (keep (fn [op]
-                             (when (and (= :db/add (first op)) (= "owner-layout-version" (second op))
-                                        (= :triplex.entity/row (nth op 2 nil)))
-                               (nth (stamp op) 3))) (filter #(instance? java.util.List %) ops))]
-           ;; [DX-W1] Why: Datomic supplies the wire collections as Java lists.
-           ;; Rejected: appending to the native list (it is not a persistent collection).
-           (cover-root-encoder final clock mask (into (vec retained) fresh)))
-         (pr-str [1 final clock pages]))]
-      [:db/add "datomic.tx" :triplex.tx/max-recorded-at clock]]))
+     (let [[mask retained] cover
+           fresh (keep (fn [op]
+                         (when (and (= :db/add (first op)) (= "owner-layout-version" (second op))
+                                    (= :triplex.entity/row (nth op 2 nil)))
+                           (nth (stamp op) 3))) (filter #(instance? java.util.List %) ops))]
+       ;; [DX-W1] Why: Datomic supplies the wire collections as Java lists.
+       ;; Rejected: appending to the native list (it is not a persistent collection).
+       [[:db/add owner :triplex.owner/root (cover-root-encoder final clock mask (into (vec retained) fresh))]
+        [:db/add owner :triplex.entity/rev final]
+        [:db/add "datomic.tx" :triplex.tx/max-recorded-at clock]])))
 
-(def code (subject/compile-code (walk/postwalk-replace {'cover-root-encoder cover-root-code} update-code)))
+(def code (subject/compile-code (walk/postwalk-replace {'cover-root-encoder root/encode-code} update-code)))
 (def ident (keyword "triplex.owner" (str "v-" (subs (schema/sha256 (pr-str code)) 0 24))))
 
-(defn install-fixture! [conn]
-  ;; [DX-W1] Why: limit authoritative writes to the gate until all other mutators fence this layout.
-  ;; Rejected: activating a format that existing application routes can still misread or overwrite.
-  (let [db (d/db conn)
-        definitions [(schema/attr root-attr :db.type/string)
-                     (schema/attr owner-attr :db.type/ref)
-                     (schema/attr page-key-attr :db.type/string :db.unique/value)
-                     (schema/attr page-attr :db.type/string)
-                     {:db/ident ident :db/fn (d/function
-                       {:lang :clojure :params '[db plan]
-                        :requires '[[datomic.api :as d] [clojure.data.json :as json]]
-                        :code code})}]
-        missing (remove #(d/entid db (:db/ident %)) definitions)]
-    (if (seq missing) (:db-after @(d/transact conn missing)) db)))
+;; [Opus W1] Why: a fold returns a person to plain rows without changing any logical row, position or clock.
+;; Rejected: a fold inside a save (the feed would see moved rows as changes) and spilling into pages.
+(def fold-code
+  '(let [{:keys [owner before-root revision moves masked]} plan
+         value (fn [e a] (:v (first (d/datoms db :eavt e a))))]
+     (when (or (nil? before-root) (not= before-root (value owner :triplex.owner/root))
+               (not= revision (value owner :triplex.entity/rev)))
+       (throw (ex-info "TRIPLEX_CONFLICT" {})))
+     (into [[:db/retract owner :triplex.owner/root before-root]
+            [:db/add "datomic.tx" :triplex.owner/folded owner]]
+           (concat (mapcat (fn [[v text]] [[:db/retract v :triplex.entity/row text]
+                                          [:db/add owner :triplex.entity/row text]]) moves)
+                   (map (fn [text] [:db/retract owner :triplex.entity/row text]) masked)))))
+(def fold-ident (keyword "triplex.owner" (str "fold-" (subs (schema/sha256 (pr-str fold-code)) 0 24))))
 
-(defn- pages-after [db owner page-keys existing replacements journal]
-  (let [pages (if (some? page-keys)
-                (mapv #(page db %) page-keys)
-                (let [limit (* page-size page-limit)
-                      native (take (inc limit) (d/datoms db :eavt owner :triplex.entity/row))]
-                  (when (> (count native) limit)
-                    (throw (ex-info "Owner migration exceeds page budget" {})))
-                  (mapv vec (partition-all page-size (or existing (map row-id (lean/live-texts db owner)))))))
-        wanted (set (mapcat identity pages))]
-    (when-not (every? wanted (keys replacements))
-      (throw (ex-info "Owner predecessor is absent from the selected pages" {})))
-    (reduce-kv
-      (fn [result i ids]
-        (let [after (mapv #(get replacements % %) ids)
-              prior-key (get page-keys i)
-              key (if (and prior-key (= after ids)) prior-key (str journal "/owner-page/" i))]
-          (cond-> (update result :keys conj key)
-            (not= key prior-key)
-            (update :writes conj {:db/id (str "owner-page-" i) page-key-attr key page-attr (pr-str after)}))))
-      {:keys [] :writes []} pages)))
+(defn installed? [db] (and (d/entid db ident) (d/entid db fold-ident)))
+
+(defn install! [conn db]
+  ;; [Opus W1] Why: only a writer started with the option installs the format; readers detect it from the attribute.
+  ;; Rejected: installing the attributes in every scope (each reader would then scan for roots it can never find).
+  (if (or (not enabled) (installed? db))
+    db
+    (let [definitions [(schema/attr root-attr :db.type/string)
+                       (schema/attr owner-attr :db.type/ref)
+                       (schema/attr :triplex.owner/folded :db.type/ref)
+                       {:db/ident ident :db/fn (d/function
+                         {:lang :clojure :params '[db plan]
+                          :requires '[[datomic.api :as d] [clojure.data.json :as json]]
+                          :code code})}
+                       {:db/ident fold-ident :db/fn (d/function
+                         {:lang :clojure :params '[db plan] :requires '[[datomic.api :as d]] :code fold-code})}]
+          missing (remove #(d/entid db (:db/ident %)) definitions)]
+      (if (seq missing) (:db-after @(d/transact conn missing)) db))))
+
+(defn install-fixture! [conn]
+  (with-redefs [enabled true] (install! conn (d/db conn))))
+
+(defn fold-plan [db owner]
+  (when-let [{:keys [raw mask texts]} (root/root db owner)]
+    (let [row-a (d/entid db :triplex.entity/row)
+          moves (mapv (fn [text]
+                        (let [holders (into [] (comp (map :e) (filter #(= owner (root/owner-of db %))))
+                                            (d/datoms db :avet row-a text))]
+                          (when-not (= 1 (count holders))
+                            (throw (ex-info "Covered row has no single version" {:status 503 :code "OutcomeUnknown"})))
+                          [(first holders) text]))
+                      texts)
+          masked (into [] (keep (fn [id]
+                                  (let [p (root/id-prefix id) x (first (d/seek-datoms db :eavt owner row-a p))]
+                                    (when (and x (= owner (:e x)) (= row-a (:a x)) (.startsWith ^String (:v x) p))
+                                      (:v x)))))
+                       mask)]
+      {:owner owner :before-root raw :revision (revision db owner) :moves moves :masked masked})))
+
+(defn fold! [conn db owner]
+  ;; [Opus W1] Why: the fold's own durable report must show the root gone, every move and every masked row retired.
+  ;; Rejected: trusting the transaction to have applied the planned moves.
+  (if-let [plan (fold-plan db owner)]
+    (let [report (try (deref (d/transact-async conn [[fold-ident plan]]) 5000 ::timeout)
+                      (catch Exception e
+                        ;; [Opus W1] Why: another gateway may have folded the same person first; that is the goal.
+                        ;; Rejected: failing the caller's save on a fold someone else already published.
+                        (let [synced (deref (d/sync conn) 5000 ::timeout)]
+                          (if (and (not= ::timeout synced) (nil? (root/raw synced owner)))
+                            {:db-after synced ::already true}
+                            (throw e)))))
+          _ (when (= ::timeout report) (throw (ex-info "Owner fold outcome unknown" {:status 503 :code "OutcomeUnknown"})))
+          after (:db-after report)]
+      (when-not (or (::already report) (and (nil? (root/raw after owner))
+                     (= (revision after owner) (:revision plan))
+                     (every? (fn [[v text]] (and (d/datoms after :eavt owner (d/entid after :triplex.entity/row) text)
+                                                 (empty? (d/datoms after :eavt v (d/entid after :triplex.entity/row) text))))
+                             (:moves plan))))
+        (throw (ex-info "Owner fold durable report unavailable" {:status 503 :code "OutcomeUnknown"})))
+      after)
+    db))
 
 (defn- version-ops [owner journal provisional ops]
   (into [[:db/add version owner-attr owner]]
@@ -232,21 +149,24 @@
         ops))
 
 (defn- cover-after [root old-ids width]
-  (let [prior (group-by #(contains? old-ids (row-id {:v %})) (:texts root))
-        replaced (into #{} (map #(row-id {:v %})) (prior true))
+  (let [prior (group-by #(contains? old-ids (root/row-id %)) (:texts root))
+        replaced (into #{} (map root/row-id) (prior true))
         mask (into (set (:mask root)) (remove replaced old-ids))
         retained (vec (prior false))]
-    (when (and (<= (count mask) cover-limit) (<= (+ (count retained) width) cover-limit))
+    (when (and (<= (count mask) cover-limit) (<= 1 (+ (count retained) width) cover-limit))
       [(vec (sort mask)) retained])))
 
 (defn prepare
-  ([db data input] (prepare db data input false))
-  ([db [[_ payload] :as data] input cover?]
+  "A covering-root plan, {:fold owner} when the cover is full, or nil when the save does not qualify."
+  ([db data input] (prepare db data input nil))
+  ([db [[_ payload] :as data] input expected-erasure]
   ;; [DX-W1] Why: the legacy compiler proves command shape, retractions and exact journal bytes.
   ;; Rejected: a second parser for ordinary and ordered IDs, or treating a customer's packed payload as a page.
   (when-let [{:keys [owner journal provisional ops] :as plan}
-             (subject/plan db data input nil predecessor revision)]
-    (let [root (read-root db owner)
+             (when (d/entid db ident)
+               (binding [subject/*covering* true]
+                 (subject/plan db data input expected-erasure predecessor revision)))]
+    (let [root (root/root db owner)
           row-entry (fn [text] (let [row (lean/decode text)] [(:attribute row) (:id row)]))
           old (into {} (keep (fn [[kind eid attr text :as op]]
                               (when (and (vector? op) (= :db/retract kind) (= owner eid) (= :triplex.entity/row attr))
@@ -254,22 +174,18 @@
           fresh (into {} (keep (fn [[kind eid attr row]]
                                 (when (and (= :triplex/assert kind) (= (str "e:" (:owner-key plan)) eid)
                                            (= :triplex.entity/row attr))
-                                  (row-entry (second row))))) (filter vector? (:ops payload)))
-          _ (when-not (= (set (keys old)) (set (keys fresh)))
-              (throw (ex-info "Owner layout requires exact field replacements" {})))
-          replacement (into {} (map (fn [[attribute id]] [id (fresh attribute)])) old)
-          old-ids (set (vals old))
-          cover (when (and cover? (nil? (:keys root))) (cover-after root old-ids (count fresh)))
-          existing (when (and (not cover) (:texts root)) (mapv row-id (covered-live-datoms db owner)))
-          pages (when-not cover (pages-after db owner (:keys root) existing replacement journal))
-          tx (d/entid db ident)]
-      (when-not tx (throw (ex-info "Owner layout function missing" {})))
-      (assoc (dissoc plan :head-ids :retirement-prefixes)
-             :function [ident (:tx (first (d/datoms db :eavt tx :db/fn)))]
-             :owner-layout {:before-root (:raw root) :pages (:keys pages) :cover cover}
-             :ops (into (version-ops owner journal provisional ops) (:writes pages))
-             :written-pages (:writes pages)
-             :retired-ids old-ids)))))
+                                  (row-entry (second row))))) (filter vector? (:ops payload)))]
+      ;; [Opus W1] Why: only exact field replacements keep the root's masked and covered sets one to one.
+      ;; Rejected: throwing (the save is valid; the plain subject writer or the reference writer takes it).
+      (when (and (seq old) (= (set (keys old)) (set (keys fresh))) (:owner-key plan))
+        (if-let [cover (cover-after root (set (vals old)) (count fresh))]
+          (let [tx (d/entid db ident)]
+            (assoc (dissoc plan :head-ids :retirement-prefixes)
+                   :function [ident (:tx (first (d/datoms db :eavt tx :db/fn)))]
+                   :owner-layout {:before-root (:raw root) :cover cover}
+                   :ops (version-ops owner journal provisional ops)
+                   :retired-ids (set (vals old))))
+          (when root {:fold owner})))))))
 
 (defn verify-report [report {:keys [owner journal retired-ids ops provisional] :as plan}]
   (let [db (:db-after report)
@@ -283,28 +199,21 @@
         added (filter #(and (:added %) (= tx (:tx %))) (:tx-data report))
         [version-datom :as versions] (filter #(and (= version-a (:a %)) (= owner (:v %))) added)
         data (filter #(= (:e version-datom) (:e %)) added)
-        page-a (d/entid db page-attr)
-        page-key-a (d/entid db page-key-attr)
         stamp (commit/stamp true clock #{} (dec provisional) provisional position false nil)
         expected-rows (into [] (keep (fn [op]
                                        (when (and (vector? op) (= :db/add (first op))
                                                   (= version (second op)) (= :triplex.entity/row (nth op 2 nil)))
                                          (peek (stamp op)))))
                             ops)
-        target-root (if-let [[mask retained] (get-in plan [:owner-layout :cover])]
-                      (cover-root position clock mask (into retained expected-rows))
-                      (root-text position clock (get-in plan [:owner-layout :pages])))
-        written (into {} (keep (fn [x]
-                                (when (= page-key-a (:a x))
-                                  [(:v x) (:v (some #(when (and (= (:e x) (:e %)) (= page-a (:a %))) %) added))])))
-                      added)]
-    (let [checks {:owner (= 1 (count versions))
-                  :root (boolean (some #(and (= owner (:e %)) (= root-a (:a %)) (= target-root (:v %))) added))
-                  :pages (= written (into {} (map (juxt page-key-attr page-attr)) (:written-pages plan)))
-                  :rows (= (set expected-rows) (into #{} (comp (filter #(= row-a (:a %))) (map :v)) data))
-                  :retirements (= (set (map #(subject/retirement-text (lean/prefix %) position clock journal) retired-ids))
-                                  (into #{} (comp (filter #(= retired-a (:a %))) (map :v)) data))}]
-      (when-not (every? true? (vals checks))
-        (throw (ex-info (str "Owner layout durable report unavailable " (pr-str checks))
-                        {:status 503 :code "OutcomeUnknown"}))))
-    (assoc (subject/verify-report-at report plan revision) :subject-save (str ident))))
+        [mask retained] (get-in plan [:owner-layout :cover])
+        target-root (root/encode position clock mask (into retained expected-rows))
+        checks {:owner (= 1 (count versions))
+                :root (boolean (some #(and (= owner (:e %)) (= root-a (:a %)) (= target-root (:v %))) added))
+                :rows (= (set expected-rows) (into #{} (comp (filter #(= row-a (:a %))) (map :v)) data))
+                :retirements (= (set (map #(subject/retirement-text (lean/prefix %) position clock journal) retired-ids))
+                                (into #{} (comp (filter #(= retired-a (:a %))) (map :v)) data))}]
+    (when-not (every? true? (vals checks))
+      (throw (ex-info (str "Owner layout durable report unavailable " (pr-str checks))
+                      {:status 503 :code "OutcomeUnknown"})))
+    (assoc (subject/verify-report-at report plan revision)
+           :subject-save (str ident) :subject-owner-head-bytes (alength (.getBytes ^String target-root "UTF-8")))))
