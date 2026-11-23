@@ -932,3 +932,15 @@ The orchestrator asked: "Deleting both servers at 23:30 also deletes the two tes
 Sam chose: **"Keep in Latitude storage (Recommended)"**.
 
 Recorded by the orchestrator: a recurring cost of about $2.60 per month until Sam says to delete the bucket.
+
+## 2026-11-23 about 13:05 local: a local demo against the 1 billion database for Ben; Codex is out, use Opus 5.5 at high
+
+Sam, verbatim (three messages):
+
+> why are they going to run tongith again? And not right now?
+
+> also could you build out just on my local, some way to connect to the latitude.sh server that will hold the 1 billion facts and have examples of what we can query and changes we can apply with an MCP? And then there is an inspector? Also FYI codex has run out of usage so switch to claude for stuff. Opus 5.5 on high is good
+
+> I want to be able to show to ben how this works at the 1 billion facts scale
+
+Recorded by the orchestrator: a demo is to be built (tunnel from the Mac, a local MCP server with example queries and changes, an inspector) to show Ben the store at 1 billion records. "Inspector" is read as both the standard MCP Inspector and a small page to look at a person's facts, history and feed (the orchestrator's reading). When the demo happens is not yet stated.
