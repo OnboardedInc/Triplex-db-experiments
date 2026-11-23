@@ -107,7 +107,7 @@ const child = spawn("timeout", ["--kill-after=" + budget.cleanup + "m", String(a
   path.resolve(values.seed), values["image-sha256"], values["transfer-sha256"], values.age, values.writer, jvm,
   ...aged.map((v) => v ?? ""), txJvm, wal, values.arm ?? "", String(startedAt), forecast, String(windowSeconds), creditMode, writeJvm, ...pgdata], {
   stdio: ["ignore", fd, fd],
-  env: Object.fromEntries(["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT", "AGE_JAVA", "AGE_DATOMIC_HOME", "DX_W1_SERIAL_APPLY", "PREP1_LOOKUP_EVERY"]
+  env: Object.fromEntries(["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT", "AGE_JAVA", "AGE_DATOMIC_HOME", "DX_W1_SERIAL_APPLY", "PREP1_LOOKUP_EVERY", "DX_DRY_RUN_FIRST_OFFER"]
     .flatMap((name) => process.env[name] ? [[name, process.env[name]]] : [])),
 });
 fs.closeSync(fd);

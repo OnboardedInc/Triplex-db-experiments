@@ -10,6 +10,7 @@ import { checkAdoptedPeer, hex, readScaleSeal } from "../v01/adopt.ts";
 import { cleanSource, verifyBuild } from "../v01/source.ts";
 import { checkRealisticPeer, load } from "./load.ts";
 import { census, checkScopeOpen, installsSince } from "./held-census.ts";
+import { firstOffer } from "../ha1/first-offer.ts";
 import { roster, type Profile } from "./population.ts";
 import {
   fileHash,
@@ -411,6 +412,7 @@ async function main() {
       const checkSpace = () => {
         assert(free(data) >= 16 * GiB && free(out) >= 5 * GiB);
       };
+      firstOffer("realistic-extend");
       const proof = await load(parent, profile, revision, writeUrl, out, checkSpace);
       checkSpace();
       const indexed = census(slot, parent.db, true);
@@ -439,6 +441,7 @@ async function main() {
         [opened.head, opened.nativeT, opened.nativeRecords],
         [sealed!.census.head, sealed!.census.nativeT, sealed!.census.nativeRecords],
       );
+      firstOffer("realistic-measure");
       await measure(sealed!, readUrl, false, () => residency(slot));
     }
   } finally {

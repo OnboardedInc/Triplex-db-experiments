@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # [DX-H1] Why: separate peers and durable SQL storage measure the intended topology. Rejected: dev storage (single process).
 set -euo pipefail
+# [DX-INT1] Why: name the guard that refused a launch (ha1/first-offer-dry-run.sh reads this line); output only.
+trap 'echo "DX-STACK refused at lab/experiments/EXP-DX1/stack/up.sh:$LINENO: $BASH_COMMAND" >&2' ERR
 source "$(dirname "${BASH_SOURCE[0]}")/platform.sh"
 prefix=${1:?usage: up.sh PREFIX [--cpus-tx LIST] [--cpus-pg LIST] [--cpus-gw-write LIST] [--cpus-gw-read LIST] [--gateway-src DIR] [--port-write N] [--port-read N]}
 shift

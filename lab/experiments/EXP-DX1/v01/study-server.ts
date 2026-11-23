@@ -12,6 +12,7 @@ import { openScaleSeal, hex } from "./adopt.ts";
 import { stackOptions, writeDiagnostics, type Age, type JvmProfile, type Writer } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
 import { openPreparedLadder, sealedArm } from "../rd1/prepared.ts";
+import { firstOffer } from "../ha1/first-offer.ts";
 
 // [DX-THIN1] Why: the realistic card replaced adopted-server.ts with its staged three-arm runner and command line.
 // This file keeps the read-study and append-retirement pair runners exactly as gated on INT1 before that merge.
@@ -121,6 +122,7 @@ for (const loaded of [false, true]) {
     assert(!stopping && Date.now() + 8 * 60_000 < end);
     const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw,
       creditMode: policy.creditMode, serialApply: diagnostics.serialApply, empty, residency };
+    firstOffer((retirement ? "retirement " : "read-study ") + path.basename(out));
     if (tuned) {
       const native = JSON.parse(fs.readFileSync(path.join(raw, "gw-r-native-settings.json"), "utf8"));
       assert.deepEqual([native.source, native.slot, native.process], [source, slot, "gw-r"]);

@@ -7,6 +7,10 @@
 # REFUSED (exit 1): the launcher exited before any stack container; the log shows which check.
 # REVIEW (exit 3): the stand-in stopped some other Docker change first; nothing was started; read the log.
 set -uo pipefail
+# [DX-INT1] The guard check above stops at the first stack container. To run every queued launcher through all of its
+# checks, including those after the stack starts, against one held copy:
+#   launch-dry-run.sh --to-first-offer QUEUE_FILE HELD_PGDATA NEW_LOG_DIRECTORY   (see first-offer-dry-run.sh)
+if [[ ${1:-} == --to-first-offer ]]; then exec bash "$(dirname "${BASH_SOURCE[0]}")/first-offer-dry-run.sh" "${@:2}"; fi
 [[ $# -ge 3 && $2 == -- ]] || { echo 'usage: launch-dry-run.sh LOG_DIRECTORY -- LAUNCHER [ARGUMENTS...]' >&2; exit 2; }
 out=$1; shift 2
 mkdir "$out" || exit 2
