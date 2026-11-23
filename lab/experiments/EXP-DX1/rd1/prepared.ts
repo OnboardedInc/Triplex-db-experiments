@@ -13,7 +13,11 @@ export const ladders = ["control", "tuned"] as const;
 export const retirementLadders = ["reference", "append"] as const;
 export type Ladder = typeof ladders[number] | typeof retirementLadders[number];
 type Kind = "read" | "retirement";
-const kinds = { read: { names: ladders, rates: ["50", "235"] }, retirement: { names: retirementLadders, rates: ["394", "620"] } } as const;
+const kinds = { read: { names: ladders }, retirement: { names: retirementLadders } } as const;
+// [DX-INT1] Why: the retirement pair runs 394 and 620 on the fresh copy and 50 and 235 on the 1 billion copy.
+// Rejected: one fixed rate list (the 1 billion arm's evidence would never seal).
+const ratesOf = (kind: Kind, age: unknown) => kind === "read" || age === "1B" ? ["50", "235"] : ["394", "620"];
+const dryRun = () => process.env.DX_DRY_RUN_FIRST_OFFER === "1";
 const kindOf = (ladder: Ladder): Kind => (retirementLadders as readonly string[]).includes(ladder) ? "retirement" : "read";
 export const ladderMinutes = 28;
 
@@ -62,7 +66,10 @@ export function openPreparedLadder(input: { campaign: string; ladder: string; so
   const record = JSON.parse(JSON.stringify({ ...input.record, pgdataSource: sealed, wal }));
   const loc = ladderPaths(campaign, ladder);
   let previous: ReturnType<typeof completed> | undefined;
-  if (ladder === first) {
+  // [DX-INT1] Why: a first-offer dry run of the second arm must run every check of that arm before any run exists.
+  // A dry run never offers or seals, so the second arm opens its own new campaign without the first arm's seal.
+  // Rejected: dry-running only the first arm (the treatment arm's start-up and admission would first run for real).
+  if (ladder === first || (dryRun() && !fs.existsSync(campaign))) {
     assert(!fs.existsSync(campaign) && !fs.existsSync(loc.folder), `Use a new output directory for the ${first} ladder`);
     fs.mkdirSync(campaign);
     fs.mkdirSync(loc.folder, { mode: 0o700 });
@@ -99,6 +106,22 @@ export function openPreparedLadder(input: { campaign: string; ladder: string; so
         container, copy, sealed, liveFileId, systemIdentifier }, null, 2) + "\n", { flag: "wx", mode: 0o600 });
       return systemIdentifier!;
     },
+    // [DX-INT1] Why: an arm refused before its first save (or stopped by a first-offer dry run) has measured nothing,
+    // so its records move aside and the same arm runs again on a new copy. The scorecard does the same (v01/sequential.ts).
+    // Rejected: a new campaign for every refusal (a refused treatment arm would repeat the sealed reference arm).
+    setAside(attempt: string) {
+      assert(!fs.existsSync(loc.end), "A sealed arm cannot be set aside");
+      const target = path.join(path.dirname(campaign), "set-aside", `${ladder}-${attempt}`);
+      fs.mkdirSync(target, { recursive: true });
+      if (!previous) {
+        fs.renameSync(campaign, path.join(target, "campaign"));
+        fs.renameSync(loc.folder, path.join(target, "ladders"));
+      } else {
+        fs.renameSync(loc.start, path.join(target, path.basename(loc.start)));
+        if (fs.existsSync(loc.arm)) fs.renameSync(loc.arm, path.join(target, ladder));
+      }
+      return target;
+    },
     complete(slot: string, attempt: string, systemIdentifier: string) {
       const files = Object.fromEntries(evidenceFiles(campaign, ladder).map((file) => [file, sha(fs.readFileSync(path.join(campaign, file)))]));
       write(loc.end, { startSha256: sha(fs.readFileSync(loc.start)), completedAt: Date.now(), slot, attempt, systemIdentifier, files } satisfies Complete);
@@ -128,7 +151,7 @@ function evidenceFiles(campaign: string, ladder: Ladder) {
   const kind = kindOf(ladder);
   const files = ["input.json", `${ladder}/attempt.json`, `${ladder}/pgdata.json`, `${ladder}/cleanup/inventory.json`];
   if (kind === "retirement") files.push(`${ladder}/retirement-diagnostic.json`);
-  for (const rate of kinds[kind].rates) for (const name of ["arm.json", "operations.json"]) files.push(`${ladder}/${rate}/${name}`);
+  for (const rate of ratesOf(kind, read<{ age?: string }>(path.join(campaign, "input.json")).age)) for (const name of ["arm.json", "operations.json"]) files.push(`${ladder}/${rate}/${name}`);
   for (const file of files) assert(fs.existsSync(path.join(campaign, file)), `Missing ladder evidence ${file}`);
   return files;
 }

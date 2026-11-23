@@ -59,13 +59,16 @@ verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
 // Rejected: a dump restore on a server that holds only the stopped full-size directory.
 // [DX-INT1] The append-retirement pair uses the same prepared path: one invocation per arm (--ladder reference, then
 // append), each on a new private copy, because the server holds only the stopped directory and room for one copy.
+// [DX-INT1] Why: the 1 billion pair runs from the held stopped aged cluster as the scorecard does (adopted-server.ts
+// --pgdata-source with --aged-bundle): a new physical copy per arm, the aged bundle's fresh-peer check on the stack's
+// network, and no dump. Rejected: restoring the aged dump per arm (33-42 minutes each, capped at 42).
 const preparedSource = process.env.DX_RD1_PGDATA_SOURCE ?? "";
-assert(!preparedSource || ((tuned || retirement) && age === "fresh" && process.env.DX_RD1_LADDER && process.env.DX_RD1_PGDATA),
-  "A prepared run needs --read-study or DX_W1_RETIREMENT_PAIR=1, the fresh seal, a ladder and one --pgdata copy");
+assert(!preparedSource || (((tuned && age === "fresh") || retirement) && process.env.DX_RD1_LADDER && process.env.DX_RD1_PGDATA),
+  "A prepared run needs --read-study on the fresh seal or DX_W1_RETIREMENT_PAIR=1, a ladder and one --pgdata copy");
 const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin, !preparedSource);
-const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin) : undefined;
+const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin, !preparedSource) : undefined;
 const record = { source, age, writer, policy: control, treatment: tuned || undefined, diagnostics, retirement: retirement || undefined, pairOption: retirement ? pairOption : undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
-  agedBundle: expected?.pin, agedDump: expected?.dumpPin };
+  agedBundle: expected?.pin, agedDump: expected?.dumpPin || undefined };
 const prepared = preparedSource ? openPreparedLadder({ campaign, ladder: process.env.DX_RD1_LADDER!, source: preparedSource,
   copy: process.env.DX_RD1_PGDATA!, wal: walDirectory || undefined, record, kind: retirement ? "retirement" : "read" }) : undefined;
 if (!prepared) {
@@ -88,84 +91,95 @@ for (const loaded of [false, true]) {
   const slot = "tx2-dxscale1-v01-" + attempt.slice(0, 12);
   jsonFile(path.join(out, "attempt.json"), { source, tag: path.basename(out), slot, attempt });
   assert(Object.values(scaleHost.childrenInventory(slot)).every((x) => x.length === 0));
-  await sealedArm(prepared, slot, attempt, async () => {
-    let systemIdentifier = "";
-    const options = stackOptions(writer, attempt, diagnostics);
-    prepared?.claim(slot, attempt);
-    if (tuned) placeDriver(onlineCpus);
-    const { engines } = startScaleStack(out, slot, source, writer === "grouped", tuned ? {
-      ...options, DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: loaded ? "1" : "0", ...prepared?.env,
-    } : retirement ? { ...options, [treatmentKey]: loaded ? "1" : "0", ...prepared?.env } : options, { policy, walDirectory });
-    if (tuned) placeDriver("9,10");
-    const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
-    const residency = async () => {
-      const { write, read } = peerUrls();
+  let offered = false;
+  try {
+    await sealedArm(prepared, slot, attempt, async () => {
+      let systemIdentifier = "";
+      const options = stackOptions(writer, attempt, diagnostics);
+      prepared?.claim(slot, attempt);
+      if (tuned) placeDriver(onlineCpus);
+      const { engines } = startScaleStack(out, slot, source, writer === "grouped", tuned ? {
+        ...options, DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: loaded ? "1" : "0", ...prepared?.env,
+      } : retirement ? { ...options, [treatmentKey]: loaded ? "1" : "0", ...prepared?.env } : options, { policy, walDirectory });
+      if (tuned) placeDriver("9,10");
+      const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
+      const residency = async () => {
+        const { write, read } = peerUrls();
+        const health = await (await fetch(new URL("/health", write), { signal: AbortSignal.timeout(2000) })).json() as any;
+        assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
+        const observed = await nativeMetrics({ prefix: slot, writeUrl: write, readUrl: read, gatewaySourceSha256: health.gatewaySourceHash,
+          containers: Object.entries(engines).map(([role, e]) => ({ id: e.id, name: `${slot}-${role}`, imageId: e.image })) });
+        return observed.roles as Residency;
+      };
+      const empty = tuned || retirement ? undefined : await residency();
+      const raw = path.join(out, "engines", slot, "trace", "raw");
+      if (prepared) systemIdentifier = prepared.live(out, slot, attempt, engines.pg!.id);
+      else await restoreDump(expected?.dump || seed.dump, expected?.dumpPin || seed.image.sha256, slot, engines,
+        Math.min(end - 9 * 60_000, Date.now() + (tuned ? 11 : 42) * 60_000), tuned ? () => {
+          // [DX-RD1] Why: the restored reader requires a new trace file for its own JVM boot.
+          // Rejected: appending samples to an empty-stack JVM's observations or discarding those observations.
+          for (const file of ["gw-r.jsonl", "rd1-gc.log", "gw-r-native-settings.json"]) {
+            const from = path.join(raw, file);
+            if (fs.existsSync(from)) fs.renameSync(from, from + ".before-restore");
+          }
+        } : undefined);
+      const write = `http://${engines["gw-w"]!.address}:8080`;
+      const read = `http://${engines["gw-r"]!.address}:8080`;
+      const jw = readScaleJvms(path.join(out, "restored-jvm"), engines, policy);
       const health = await (await fetch(new URL("/health", write), { signal: AbortSignal.timeout(2000) })).json() as any;
       assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
-      const observed = await nativeMetrics({ prefix: slot, writeUrl: write, readUrl: read, gatewaySourceSha256: health.gatewaySourceHash,
-        containers: Object.entries(engines).map(([role, e]) => ({ id: e.id, name: `${slot}-${role}`, imageId: e.image })) });
-      return observed.roles as Residency;
-    };
-    const empty = tuned || retirement ? undefined : await residency();
-    const raw = path.join(out, "engines", slot, "trace", "raw");
-    if (prepared) systemIdentifier = prepared.live(out, slot, attempt, engines.pg!.id);
-    else await restoreDump(expected?.dump ?? seed.dump, expected?.dumpPin ?? seed.image.sha256, slot, engines,
-      Math.min(end - 9 * 60_000, Date.now() + (tuned ? 11 : 42) * 60_000), tuned ? () => {
-        // [DX-RD1] Why: the restored reader requires a new trace file for its own JVM boot.
-        // Rejected: appending samples to an empty-stack JVM's observations or discarding those observations.
-        for (const file of ["gw-r.jsonl", "rd1-gc.log", "gw-r-native-settings.json"]) {
-          const from = path.join(raw, file);
-          if (fs.existsSync(from)) fs.renameSync(from, from + ".before-restore");
+      const head = expected ? await verifyAged(expected, out, engines.pg!.address, slot, attempt, engines["gw-r"]!.image) : seed.scope.cut;
+      assert(!stopping && Date.now() + 8 * 60_000 < end);
+      const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw,
+        creditMode: policy.creditMode, serialApply: diagnostics.serialApply, empty, residency };
+      firstOffer((retirement ? "retirement " : "read-study ") + path.basename(out));
+      offered = true;
+      if (tuned) {
+        const native = JSON.parse(fs.readFileSync(path.join(raw, "gw-r-native-settings.json"), "utf8"));
+        assert.deepEqual([native.source, native.slot, native.process], [source, slot, "gw-r"]);
+        if (policy["gw-r"].cacheMiB !== null) assert.equal(native.datomic["datomic.objectCacheMax"].value, policy["gw-r"].cacheMiB * 1024 ** 2);
+        const readPeerCounters = containerCounters(engines["gw-r"].id);
+        const postgresCounters = containerCounters(engines.pg.id);
+        const counters = () => ({ readPeer: readPeerCounters(), postgres: postgresCounters() });
+        let terminal = head;
+        for (const rate of [50, 235] as const) {
+          assert(!stopping && Date.now() + 4 * 60_000 < end);
+          const folder = path.join(out, String(rate));
+          fs.mkdirSync(folder);
+          const arm = await adoptedArm(folder, source, peer, seed, writer, true, false, terminal, undefined, false,
+            { rate, batch: loaded ? 8 : 1, sample: true, counters });
+          terminal = arm.terminal;
         }
-      } : undefined);
-    const write = `http://${engines["gw-w"]!.address}:8080`;
-    const read = `http://${engines["gw-r"]!.address}:8080`;
-    const jw = readScaleJvms(path.join(out, "restored-jvm"), engines, policy);
-    const health = await (await fetch(new URL("/health", write), { signal: AbortSignal.timeout(2000) })).json() as any;
-    assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
-    const head = expected ? await verifyAged(expected, out, engines.pg!.address, slot, engines["gw-r"]!.image) : seed.scope.cut;
-    assert(!stopping && Date.now() + 8 * 60_000 < end);
-    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw,
-      creditMode: policy.creditMode, serialApply: diagnostics.serialApply, empty, residency };
-    firstOffer((retirement ? "retirement " : "read-study ") + path.basename(out));
-    if (tuned) {
-      const native = JSON.parse(fs.readFileSync(path.join(raw, "gw-r-native-settings.json"), "utf8"));
-      assert.deepEqual([native.source, native.slot, native.process], [source, slot, "gw-r"]);
-      if (policy["gw-r"].cacheMiB !== null) assert.equal(native.datomic["datomic.objectCacheMax"].value, policy["gw-r"].cacheMiB * 1024 ** 2);
-      const readPeerCounters = containerCounters(engines["gw-r"].id);
-      const postgresCounters = containerCounters(engines.pg.id);
-      const counters = () => ({ readPeer: readPeerCounters(), postgres: postgresCounters() });
-      let terminal = head;
-      for (const rate of [50, 235] as const) {
-        assert(!stopping && Date.now() + 4 * 60_000 < end);
-        const folder = path.join(out, String(rate));
-        fs.mkdirSync(folder);
-        const arm = await adoptedArm(folder, source, peer, seed, writer, true, false, terminal, undefined, false,
-          { rate, batch: loaded ? 8 : 1, sample: true, counters });
-        terminal = arm.terminal;
+        // [DX-INT1] A `continue` here skipped prepared.complete, so the control ladder exited 0 without
+        // ladders/control-complete.json (bench 3, 19:43 UTC) and the tuned ladder was refused; sealedArm now seals.
+        if (prepared) assert(!stopping, "Prepared ladder was interrupted");
+      } else if (retirement) {
+        let cut = head;
+        const [rates, seconds] = age === "fresh" ? [[394, 620], 300] as const : [[50, 235], 120] as const;
+        for (const rate of rates) {
+          assert(!stopping && Date.now() + (seconds + 120) * 1000 < end);
+          const window = path.join(out, String(rate));
+          fs.mkdirSync(window);
+          const result = await adoptedArm(window, source, peer, seed, writer, true, false, cut, undefined, false, undefined,
+            { rate, append: loaded, seconds, agedHead: head });
+          cut = result.terminal;
+        }
+        if (prepared) assert(!stopping, "Prepared arm was interrupted");
+      } else {
+        const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head);
+        if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
       }
-      // [DX-INT1] A `continue` here skipped prepared.complete, so the control ladder exited 0 without
-      // ladders/control-complete.json (bench 3, 19:43 UTC) and the tuned ladder was refused; sealedArm now seals.
-      if (prepared) assert(!stopping, "Prepared ladder was interrupted");
-    } else if (retirement) {
-      let cut = head;
-      const [rates, seconds] = age === "fresh" ? [[394, 620], 300] as const : [[50, 235], 120] as const;
-      for (const rate of rates) {
-        assert(!stopping && Date.now() + (seconds + 120) * 1000 < end);
-        const window = path.join(out, String(rate));
-        fs.mkdirSync(window);
-        const result = await adoptedArm(window, source, peer, seed, writer, true, false, cut, undefined, false, undefined,
-          { rate, append: loaded, seconds });
-        cut = result.terminal;
-      }
-      if (prepared) assert(!stopping, "Prepared arm was interrupted");
-    } else {
-      const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head);
-      if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
+      return systemIdentifier;
+    }, () => scaleHost.clean(out, slot), retirement ? () => execFileSync("python3", ["-I", "lab/experiments/EXP-DX1/w1/serial/summarize.py",
+      out, slot, attempt, source, age, creditMode], { stdio: "inherit" }) : undefined);
+  } catch (error) {
+    if (prepared && !offered) {
+      const target = prepared.setAside(attempt);
+      console.error(`The ${prepared.ladder} arm stopped before its first save; its records are in ${target}. ` +
+        `Run the same arm again with the same campaign on a new copy of the held cluster.`);
     }
-    return systemIdentifier;
-  }, () => scaleHost.clean(out, slot), retirement ? () => execFileSync("python3", ["-I", "lab/experiments/EXP-DX1/w1/serial/summarize.py",
-    out, slot, attempt, source, age, creditMode], { stdio: "inherit" }) : undefined);
+    throw error;
+  }
 }
 
 if (retirement && (!prepared || prepared.ladder === "append")) {
@@ -186,8 +200,16 @@ if (retirement && (!prepared || prepared.ladder === "append")) {
       ["current", "pinned"].map((kind) => [kind, { p50: ratio(trt[phase][kind].p50Ms, ref[phase][kind].p50Ms),
         p99: ratio(trt[phase][kind].p99Ms, ref[phase][kind].p99Ms) }]))])) };
   });
+  // [DX-INT1] Why: late SQL reads per save for loader-edited and untouched people, reference then treatment, per window.
+  const ownerGroupReads = arms[1].windows.map((w: any, i: number) => {
+    const late = (arm: any) => arm.halves[1].byOwnerGroup ?? {};
+    const ref = late(arms[0].windows[i]), trt = late(w);
+    return { rate: w.rate, ...Object.fromEntries([...new Set([...Object.keys(ref), ...Object.keys(trt)])].sort().map((g) => [g, {
+      saves: [ref[g]?.saves ?? 0, trt[g]?.saves ?? 0],
+      sqlReadsPerSave: [ref[g]?.sqlReadsPerSave.mean ?? null, trt[g]?.sqlReadsPerSave.mean ?? null] }])) };
+  });
   jsonFile(path.join(campaign, "retirement-comparison.json"), { source, age, creditMode, imagePin, transferPin, arms,
-    pairOption, migratedReadRatios });
+    pairOption, migratedReadRatios, ownerGroupReads });
 }
 
 // [DX-RD1] Why: process-group CPU and block I/O can distinguish a busy core from a blocked peer.
@@ -203,8 +225,11 @@ function containerCounters(container: string) {
   }));
 }
 
-function openAged(label: Age, file?: string, pin?: string, dump?: string, dumpPin?: string) {
-  assert(label === "1B" && file && pin && dump && dumpPin && /^[a-f0-9]{64}$/.test(dumpPin));
+function openAged(label: Age, file?: string, pin?: string, dump?: string, dumpPin?: string, restore = true) {
+  assert(label === "1B" && file && pin);
+  // A prepared copy is the held aged cluster itself; naming a dump as well would leave two sources for one arm.
+  if (restore) assert(dump && dumpPin && /^[a-f0-9]{64}$/.test(dumpPin));
+  else assert(!dump && !dumpPin, "A prepared 1B arm takes --aged-bundle only; pass empty dump arguments");
   const bytes = fs.readFileSync(file);
   assert.equal(hex(bytes), pin);
   const bundle = JSON.parse(bytes.toString());
@@ -216,7 +241,7 @@ function openAged(label: Age, file?: string, pin?: string, dump?: string, dumpPi
   return { file, pin, dump, dumpPin, bundle };
 }
 
-async function verifyAged(expected: ReturnType<typeof openAged>, out: string, postgres: string, slot: string, peerImage: string) {
+async function verifyAged(expected: ReturnType<typeof openAged>, out: string, postgres: string, slot: string, attempt: string, peerImage: string) {
   assert(process.env.AGE_JAVA && process.env.AGE_DATOMIC_HOME);
   // [DX-V01] Why: check the fresh peer against the exact aged replay bundle before touching the restored arm.
   // Rejected: treating the 1B label or the dump size as proof of age.
@@ -232,7 +257,7 @@ async function verifyAged(expected: ReturnType<typeof openAged>, out: string, po
   try {
     const result = checkScorecard(expected.file, expected.pin);
     assert.equal(result.logicalHead, expected.bundle.logicalHead);
-    jsonFile(path.join(out, "aged-live-check.json"), result);
+    jsonFile(path.join(out, "aged-live-check.json"), { ...result, source, slot, attempt, peer: { network: slot + "-net", image: peerImage } });
     return result.logicalHead;
   } finally {
     delete process.env.AGE_PEER_DOCKER_NETWORK;

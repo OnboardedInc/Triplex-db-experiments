@@ -29,7 +29,23 @@ export type Peer = { write: string; read: string; slot: string; attempt: string;
   telemetry?: ReturnType<typeof physicalTelemetry>; windowSeconds?: WindowSeconds; creditMode?: CreditMode; serialApply?: boolean; realisticToySlot?: string;
   empty?: Residency; residency?: () => Residency | Promise<Residency> };
 export type QuietCell = "alone" | 235;
-export type RetirementStudy = { rate: SerialApplyRate; append: boolean; seconds: 120 | 300 };
+export type RetirementStudy = { rate: SerialApplyRate; append: boolean; seconds: 120 | 300; agedHead?: number };
+
+// [DX-INT1] Why: on the 1 billion copy the pair must say whether the owner head behaves the same on people the aging
+// loader edited (AGE1 row IDs, revisions at the loader's positions) as on people it never touched. Each tape person is
+// put in one group from the predecessor rows the window read at its first cut: "loader" when any of them was written
+// after the seed cut and at or before the aged head, "earlier-window" when none was but one was written by this run's
+// previous window, and "seed" when all of them are the seed's own rows.
+// Rejected: grouping by AGE1's ledger formula (it would restate the loader's plan, not what the database holds).
+export type OwnerGroup = "loader" | "earlier-window" | "seed";
+export function ownerGroups(senders: Sender[], seedCut: number, agedHead: number) {
+  assert(Number.isSafeInteger(agedHead) && agedHead >= seedCut);
+  const groups = new Map<string, OwnerGroup>();
+  for (const sender of senders) for (const [owner, rows] of sender.rows)
+    groups.set(owner, rows.some((r) => r.recorded_position > seedCut && r.recorded_position <= agedHead) ? "loader"
+      : rows.some((r) => r.recorded_position > agedHead) ? "earlier-window" : "seed");
+  return groups;
+}
 export type ReadStudy = { rate: 50 | 235; batch: number; sample: boolean; counters?: () => unknown };
 type ReadSamples = (Parameters<Parameters<DatomicClient["withReadProfile"]>[0]>[0] & { sdkDone?: number })[];
 const sampledRead = async <A>(client: DatomicClient, samples: ReadSamples, send: () => Promise<A>) => {
@@ -327,6 +343,10 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell as QuietCell, toy);
     if (retirement) assert.equal(tape.length, retirement.rate * seconds);
     const senders = await preloadFrom(writerClient, rated ? reader : writerClient, seed, startHead, tape);
+    const groups = retirement ? ownerGroups(senders, seed.scope.cut, retirement.agedHead ?? seed.scope.cut) : undefined;
+    const tapeGroups = groups && Object.fromEntries(tape.map((e) => [e.account + "/" + e.subject,
+      groups.get((e as Write & { owner?: string }).owner ?? task(e.account, e.subject))!]));
+    if (tapeGroups) assert(Object.values(tapeGroups).every((g) => g !== undefined));
     const before = retirement ? process.hrtime.bigint() : undefined;
     const wall = now();
     const after = retirement ? process.hrtime.bigint() : undefined;
@@ -422,9 +442,11 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       telemetrySha256 = hex(fs.readFileSync(name));
     }
     const evidence = path.join(out, "operations.json");
-    jsonFile(evidence, { writes: writes.rows, journal: feed, tape, fairCredits: credits, selection, p1: phases, p4: pulls, p6, p7, thin });
+    jsonFile(evidence, { writes: writes.rows, journal: feed, tape, fairCredits: credits, selection, p1: phases, p4: pulls, p6, p7, thin,
+      ...(tapeGroups ? { ownerGroups: tapeGroups } : {}) });
     const result = { source, writer, telemetrySha256, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
-      loaded, retirement, migratedReads, serialAnchor, firstCut: startHead, terminal, seed: { ...adopted, realistic: seed.realisticBinding }, tapeSha256: hex(JSON.stringify(tape)),
+      loaded, retirement, migratedReads, serialAnchor, ownerGroupPeople: tapeGroups && Object.fromEntries(
+        (["loader", "earlier-window", "seed"] as const).map((g) => [g, Object.values(tapeGroups).filter((x) => x === g).length])), firstCut: startHead, terminal, seed: { ...adopted, realistic: seed.realisticBinding }, tapeSha256: hex(JSON.stringify(tape)),
       observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java, creditMode: mode, selection, fairCredits: credits },
       study: study && { rate: study.rate, batch: study.batch, savesByLevel: phases.map((phase, i) => {
         const bucket = writes.rows.filter((row) => row.due >= start + i * 30_000 && row.due < start + (i + 1) * 30_000);

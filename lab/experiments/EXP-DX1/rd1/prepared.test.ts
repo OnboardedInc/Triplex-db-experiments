@@ -115,3 +115,73 @@ test("sealedArm seals each prepared ladder after cleanup, for the read study and
   assert.equal(checkPreparedStudy(retire2, "retirement").control.end.slot, "tx2-dxscale1-v01-444444444444");
   assert.throws(() => openPreparedLadder({ campaign: read, ladder: "append", source: sealed, copy: copy("mixed"), record }), /--ladder control or --ladder tuned/);
 });
+
+// [DX-INT1] The 1 billion pair seals at 50 and 235 offered; a first-offer dry run admits the treatment arm alone.
+test("retirement pair on the 1 billion copy seals its own rates, and a dry run opens the treatment arm by itself", async (t) => {
+  const { sealedArm } = await import("./prepared.ts");
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "dx-int1-aged-pair-")));
+  t.after(() => { fs.rmSync(root, { recursive: true, force: true }); delete process.env.DX_DRY_RUN_FIRST_OFFER; });
+  const sealed = path.join(root, "sealed");
+  fs.mkdirSync(path.join(sealed, "global"), { recursive: true });
+  fs.writeFileSync(path.join(sealed, "PG_VERSION"), "17\n");
+  fs.writeFileSync(path.join(sealed, "global", "pg_control"), Buffer.alloc(8192, 5));
+  const copy = (name: string) => { fs.cpSync(sealed, path.join(root, name), { recursive: true }); return path.join(root, name); };
+  const record = { source: "a".repeat(40), age: "1B", agedBundle: "c".repeat(64) };
+  const arm = (campaign: string, ladder: string, rates: string[], n: number) => {
+    const p = openPreparedLadder({ campaign, ladder, source: sealed, copy: copy("c" + n), record, kind: "retirement" });
+    const slot = "tx2-dxscale1-v01-" + String(n).repeat(12), attempt = slot + "-attempt", dir = path.join(campaign, ladder);
+    fs.mkdirSync(dir);
+    fs.writeFileSync(path.join(dir, "attempt.json"), "{}");
+    return sealedArm(p, slot, attempt, async () => {
+      p.claim(slot, attempt);
+      fs.writeFileSync(path.join(dir, "pgdata.json"), JSON.stringify({ slot, attempt, copy: p.copy, systemIdentifier: "9" }));
+      for (const rate of rates) {
+        fs.mkdirSync(path.join(dir, rate));
+        for (const file of ["arm.json", "operations.json"]) fs.writeFileSync(path.join(dir, rate, file), "{}");
+      }
+      return "9";
+    }, () => { fs.mkdirSync(path.join(dir, "cleanup")); fs.writeFileSync(path.join(dir, "cleanup", "inventory.json"), "[]"); },
+    () => fs.writeFileSync(path.join(dir, "retirement-diagnostic.json"), "{}"));
+  };
+  const wrong = path.join(root, "wrong", "campaign");
+  fs.mkdirSync(path.dirname(wrong));
+  await assert.rejects(arm(wrong, "reference", ["394", "620"], 1), /Missing ladder evidence reference\/50\/arm.json/);
+  const aged = path.join(root, "aged", "campaign");
+  fs.mkdirSync(path.dirname(aged));
+  await arm(aged, "reference", ["50", "235"], 2);
+  await arm(aged, "append", ["50", "235"], 3);
+  assert.equal(checkPreparedStudy(aged, "retirement").tuned.end.slot, "tx2-dxscale1-v01-333333333333");
+  // Without the dry-run variable the treatment arm still needs the reference arm's seal.
+  const alone = path.join(root, "alone", "campaign");
+  fs.mkdirSync(path.dirname(alone));
+  assert.throws(() => openPreparedLadder({ campaign: alone, ladder: "append", source: sealed, copy: copy("c4"), record, kind: "retirement" }),
+    /ENOENT|has not completed/);
+  process.env.DX_DRY_RUN_FIRST_OFFER = "1";
+  const dry = path.join(root, "dry", "campaign");
+  fs.mkdirSync(path.dirname(dry));
+  const p = openPreparedLadder({ campaign: dry, ladder: "append", source: sealed, copy: copy("c5"), record, kind: "retirement" });
+  assert.deepEqual([p.ladder, p.loaded, p.previous], ["append", true, undefined]);
+  // An arm stopped before its first save moves aside; the same arm then runs again in the same campaign.
+  const pairDir = path.join(root, "pair", "campaign");
+  fs.mkdirSync(path.dirname(pairDir));
+  delete process.env.DX_DRY_RUN_FIRST_OFFER;
+  const refusedRef = openPreparedLadder({ campaign: pairDir, ladder: "reference", source: sealed, copy: copy("c7"), record, kind: "retirement" });
+  fs.mkdirSync(path.join(pairDir, "reference"));
+  assert.match(refusedRef.setAside("r1"), /set-aside\/reference-r1$/);
+  assert(!fs.existsSync(pairDir) && fs.existsSync(path.join(root, "pair", "set-aside", "reference-r1", "ladders", "reference-start.json")));
+  await arm(pairDir, "reference", ["50", "235"], 8);
+  const refusedTrt = openPreparedLadder({ campaign: pairDir, ladder: "append", source: sealed, copy: copy("c9"), record, kind: "retirement" });
+  fs.mkdirSync(path.join(pairDir, "append"));
+  refusedTrt.setAside("t1");
+  assert(fs.existsSync(path.join(root, "pair", "ladders", "reference-complete.json")), "the sealed reference arm stays");
+  assert(!fs.existsSync(path.join(pairDir, "append")));
+  await arm(pairDir, "append", ["50", "235"], 7);
+  assert.equal(checkPreparedStudy(pairDir, "retirement").control.end.slot, "tx2-dxscale1-v01-888888888888");
+  const sealedRef = openPreparedLadder({ campaign: path.join(root, "pair2", "campaign"), ladder: "reference", source: sealed,
+    copy: (fs.mkdirSync(path.join(root, "pair2")), copy("c10")), record, kind: "retirement" });
+  assert.ok(sealedRef);
+  process.env.DX_DRY_RUN_FIRST_OFFER = "1";
+  // A dry run cannot slip a treatment arm into a campaign that already exists.
+  assert.throws(() => openPreparedLadder({ campaign: aged, ladder: "append", source: sealed, copy: copy("c6"), record, kind: "retirement" }),
+    /already started/);
+});

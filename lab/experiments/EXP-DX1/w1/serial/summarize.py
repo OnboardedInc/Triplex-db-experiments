@@ -56,7 +56,11 @@ def summarize(root, slot, attempt, source, age, credit_mode):
         window = root / str(rate)
         header = read(window / "arm.json")
         assert (header["slot"], header["attempt"], header["source"]) == (slot, attempt, source)
-        assert header["retirement"] == {"rate": rate, "append": root.name == "append", "seconds": seconds}
+        # [DX-INT1] agedHead is the aged bundle's head on the 1 billion copy and the seed cut on the fresh copy.
+        aged_head = header["retirement"].get("agedHead", header["firstCut"])
+        assert header["retirement"] == {"rate": rate, "append": root.name == "append", "seconds": seconds,
+                                        **({"agedHead": aged_head} if "agedHead" in header["retirement"] else {})}
+        assert isinstance(aged_head, int) and aged_head <= header["firstCut"]
         assert header["settings"]["creditMode"] == credit_mode
         # [Opus W1] Why: the same summary serves the covering owner root pair (DX_W1_PAIR_OPTION=owner-head).
         treatment = "subjectOwnerHead" if os.environ.get("DX_W1_PAIR_OPTION") == "owner-head" else "subjectAppendRetirement"
@@ -65,6 +69,8 @@ def summarize(root, slot, attempt, source, age, credit_mode):
         raw = (window / "operations.json").read_bytes()
         assert hashlib.sha256(raw).hexdigest() == header["observationsSha256"]
         ops = json.loads(raw)
+        groups = ops.get("ownerGroups") or {}
+        assert not groups or all(f'{e["account"]}/{e["subject"]}' in groups for e in ops["tape"])
         # [DX-W1] Why: exact tape and journal identities bind each measured ACK to this copy and window.
         # Rejected: timing native background transactions or passing empty producer output.
         assert len(ops["tape"]) == len(ops["writes"]) == rate * seconds
@@ -106,6 +112,7 @@ def summarize(root, slot, attempt, source, age, credit_mode):
             edge = (after - before) // 2 + 1000
             ambiguous = sum(min(abs(at - native_lo), abs(at - native_hi)) <= edge for at, _ in durable)
             apply, io, validate, plan = [], [], [], []
+            by_group = defaultdict(list)
             for row in ready:
                 ack = row["receipt"]
                 key = (row["db"], ack["t"])
@@ -117,6 +124,8 @@ def summarize(root, slot, attempt, source, age, credit_mode):
                     stage = row["stage"]
                     assert stage["subjectSave"] == header["settings"]["observed"]["subjectFunction"]
                     io.append(stage["nativeIoStats"]["reads"])
+                    if groups:
+                        by_group[groups[f'{row["account"]}/{row["subject"]}']].append(stage["nativeIoStats"]["reads"])
                     clocks = stage["timeline"]
                     assert 0 <= clocks["payloadValidated"] <= clocks["payloadPrepared"]
                     validate.append(clocks["payloadValidated"] / 1000)
@@ -128,10 +137,16 @@ def summarize(root, slot, attempt, source, age, credit_mode):
                            "indexLoadsPerSave": {index: dist(row.get(index + "-load", 0) for row in io)
                                                  for index in ("eavt", "aevt", "avet", "vaet")},
                            "validateMs": dist(validate), "planMs": dist(plan),
-                           "quietAckMs": dist(row["end"] - row["due"] for row in ready if row["account"] == 0)})
+                           "quietAckMs": dist(row["end"] - row["due"] for row in ready if row["account"] == 0),
+                           # [DX-INT1] Reads per acknowledged save for people the aging loader edited and people it did not.
+                           "byOwnerGroup": {group: {"saves": len(rows), "sqlReadsPerSave": dist(r.get("sql", 0) for r in rows),
+                                                    "aevtLoadsPerSave": dist(r.get("aevt-load", 0) for r in rows),
+                                                    "eavtLoadsPerSave": dist(r.get("eavt-load", 0) for r in rows)}
+                                            for group, rows in sorted(by_group.items())} if groups else None})
         output.append({"rate": rate, "halves": halves, "tapeSha256": header["tapeSha256"],
                        "firstCut": header["firstCut"], "terminal": header["terminal"],
-                       "refusedOrExpired": len(ops["writes"]) - len(saved),
+                       "refusedOrExpired": len(ops["writes"]) - len(saved), "agedHead": aged_head,
+                       "ownerGroupPeople": header.get("ownerGroupPeople"),
                        "pinnedRead": (ops.get("p6") or {}).get("read"),
                        # [Opus W1] Why: reads of people this window's tape saved (migrated in the owner-head arm).
                        "migratedReads": {phase: {kind: {k: (header["migratedReads"][phase][kind] or {}).get(k)
