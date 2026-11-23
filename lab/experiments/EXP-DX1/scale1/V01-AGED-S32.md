@@ -9,6 +9,20 @@ Server 2 runs this card on the sealed 1B cluster from `exp/DX-INT1` at `0d9693de
 | Part | Result | Afternoon card (`6770c37ba`, part 1) |
 | --- | --- | --- |
 | 1, headline without readers, server-32, rolling 6 | **1,260/1,260 saves stored**; p50/p90/p99 6.34 / 12.03 / 19.58 ms (max 135.00); feed 1,260 entries; cut 28,309,866 → 28,311,126; completed 22:03 UTC | 1,260/1,260; 6.40 / 11.84 / 20.10 ms |
+| 2, headline loaded, server-32, rolling 6 (completed 22:33 UTC) | See below | 16 GiB, fair turns |
+
+**Part 2, P2 and P6** (in-window durable/s · total durable/offered · expired / durable after window · all-save p50/p99 ms · quiet commit p99 solo → loaded · quiet read and feed p99 ratios):
+
+| Offered/s | 1B, server-32, rolling 6 | 1B afternoon, 16 GiB, fair turns | Prediction |
+| ---: | --- | --- | --- |
+| 50 | 50.00 · 4,500/4,500 · 0 / 0 · 11.07 / 57.34 · 18.18 → 43.52 ms (2.39×) · 1.12× · 1.30× | 50.00 · 0 · 12.80 / 60.67 · 21.12 → 50.17 (2.38×) | 50.0 · 0 · 10 / 60 · 22 → 35 ms |
+| 235 | 235.00 · 21,150/21,150 · 0 / 0 · 966.65 / 4,587.52 · 21.38 → 57.09 ms (2.67×) · 1.46× · 1.40× | 235.00 · 0 · 712.70 / 3,817.47 · 24.32 → 162.81 (6.69×) | 235.0 · 0 · 15 / 900 · 24 → 55 ms |
+| 394 | **394.00** · 35,460/35,460 · **0 / 0** · 6,029.31 / 11,010.05 · 42.24 → 34.81 ms (0.82×) · 1.48× · 0.76× | 249.41 · 5,523 · 23,330.81 / 30,054.53 · 19.58 → 87.55 (4.47×) | 375 (300–394) · 1,000 · 2,000 / 15,000 · 20 → 70 ms |
+| 620 | **302.61** · 39,079/55,800 · 16,721 / 11,844 · 29,753.34 / 30,054.73 · 30.98 → 47.62 ms (1.54×) · 1.49× · 1.58× | 239.32 · 26,565 · 29,884.42 / 30,146.56 · 33.28 → 106.50 (3.20×) | 480 (380–620) · 12,000 · 25,000 / 30,000 · 33 → 85 ms |
+
+P1 pinned reads (unchanged reader, as predicted): 19.88 / 20.33 / 21.25 / 21.77 / 20.75 / 12.35 reads/s at 1 / 4 / 16 / 64 / 256 / 1,024 seats, p50 39.68 ms at one seat, 1,587 errors at 1,024. Reference tape 1,260/1,260, p99 20.22 ms. P4 p50/p99 4.42 / 46.59 ms (max 22.5 s). P8 351,680 facts at 3,256.30 facts/s, 10,991 of 11,880 frames.
+
+**Reading.** At 394 offered the server-32 profile with rolling credits stored every save in the window (394.00/s, no expiries), against 249/s this afternoon; the first falsifier (under 300/s at 394) did not trigger. At 620 it stored 302.61/s, below the predicted 380–620, with 16,721 expiries; the second falsifier (620 in full) did not trigger either. The 394 all-save p99 was 11.0 s, inside the predicted 2–30 s. At 394 the quiet account's loaded commit p99 (34.81 ms) was below its solo p99, so the P6 bar held there through its 50 ms clause; at 50 (43.52 ms) too.
 
 ## Predictions, copied from the builder's document before launch
 
