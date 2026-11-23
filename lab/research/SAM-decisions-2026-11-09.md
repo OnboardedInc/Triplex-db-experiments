@@ -924,3 +924,11 @@ The orchestrator asked: "Server 1 was deleted at 10:15 today, so running two mac
 Sam chose: **"Two machines to 23:30 (Recommended)"**.
 
 Recorded by the orchestrator: this approves one more machine and three more hours on server 2, both deleted by 23:30 on 2026-11-23, forecast total $251.19. It approves nothing after 23:30.
+
+## 2026-11-23 about 11:48 local: keep both test databases in Latitude object storage
+
+The orchestrator asked: "Deleting both servers at 23:30 also deletes the two test databases on them: the 1 billion record database (176 GB, took 26 hours and about $28 of server time to build) and the fresh full-size database (126 GB, several hours to build). Any later server test would have to rebuild them first. Keep copies?" with three options (Latitude object storage at about $2.60 per month; Sam's Cloudflare R2 at about $4.60 per month; do not keep them).
+
+Sam chose: **"Keep in Latitude storage (Recommended)"**.
+
+Recorded by the orchestrator: a recurring cost of about $2.60 per month until Sam says to delete the bucket.
