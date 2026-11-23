@@ -64,6 +64,21 @@ Ordered per-person writer, Java 21 G1 on all roles, WAL on the data NVMe; P2 and
 
 **Reading.** The default profile at 1B reaches the same ceiling as the headline profile, about 240–250 saves/s at 394 and 620 offered. Fresh, it reached 297/s and 305/s. That is 17% and 20% lower, beyond the predicted 0–15%. The headline profile's fresh advantage (343/s against 297/s at 394) is gone at 1B. The quiet-read sampler again returned about a third of its planned reads; the errors are counted by `scale1/decision/observer.ts` lines 106 ("reader missed its offer") and 133 (an exception), and the arm files keep only the count.
 
+### Part 4 at `6770c37ba`: grouped writer (completed 20:03 UTC), and the assembled card
+
+Grouped writer, Java 21 G1 on all roles. Same columns as part 2.
+
+| Offered/s | 1B | Fresh |
+| ---: | --- | --- |
+| 50 | 50.00 · 4,500/4,500 · 0 / 0 · 9.02 / 360.45 · 20.09 → 374.78 ms (18.65×) · 1.48× · 2.72× · 827 of 3,840 reads returned | 50.00 · 4,500/4,500 · 0 / 0 · 7.36 / 528.38 · 40.96 → 569.34 ms (13.90×) · 0.70× · 2.43× · 3,840/3,840 |
+| 235 | 151.26 · 19,384/21,150 · 1,766 / 4,005 · 25,165.82 / 30,114.28 · 50.17 → 217.09 ms (4.33×) · 1.05× · 1.62× · 884 returned | 167.78 · 21,150/21,150 · 0 / 6,050 · 19,136.51 / 29,491.20 · 36.09 → 201.73 ms (5.59×) · 7.87× · 1.80× · 3,840/3,840 |
+| 394 | 129.67 · 16,217/35,460 · 19,243 / 4,547 · 30,015.49 / 30,146.56 · 22.91 → 409.60 ms (17.88×) · 1.22× · 2.56× · 832 returned | 158.56 · 20,401/35,460 · 15,059 / 6,131 · 30,015.49 / 30,146.56 · 48.38 → 548.86 ms (11.34×) · 1.78× · 2.61× · 3,840/3,840 |
+| 620 | 158.39 · 18,686/55,800 · 37,114 / 4,431 · 30,015.49 / 30,131.22 · 13.31 → 180.22 ms (13.54×) · 1.14× · 2.36× · 889 returned | 174.02 · 22,063/55,800 · 33,737 / 6,401 · 30,015.49 / 30,146.56 · 43.26 → 214.01 ms (4.95×) · 1.69× · 2.29× · 3,840/3,840 |
+
+Grouped stays at its earlier ceiling, 130–158/s at 1B against 159–174/s fresh, as predicted.
+
+**Assembled at 20:04 UTC** (`scorecard.mjs --assemble`, exit 0); the card is `SCORECARD-v0.1.md` in the campaign directory and on the Mac. Its read-exactness lines: P1 "Exact seed-cut field probes", 0 errors at 1–256 seats and 1,611 at 1,024; P6 "5,017–5,427 read errors or misses" per rate (the card does not separate missed offers from wrong values); mixed assertion identities PASS; journal and receipts checked on 1,260 saves (DIAGNOSTIC). Every P1–P9 row reads NOT MEASURED against its bar, as on the fresh card. The builder's diagnosis of the pinned reads (`rd1/PINNED-1B.md` on `exp/DX-RD1-readers`): both cards pin reads at position 87,002, which at 1B is 28.2 million positions behind the head, so every pinned read pays for Datomic's as-of view over the loader's history, about 40 ms of CPU on the reader's one core.
+
 **Part 2 in `score-v01-1b-tuned-b` was refused after its claim, so that campaign was consumed too.** At the P7 empty census, `thin1/native-metrics.ts` line 166 at `8cc32d380` runs `docker top <id> -eo rss`, and Docker 29.1.3 answers "Couldn't find PID field in ps output". The fresh card ran at `92f8e6c30`, which already fixed this ("Keep Docker PID in the bare-metal residency process listing"); `8cc32d380` does not contain that commit. The orchestrator published `6770c37ba` on `exp/DX-V01-scorecard-1b-fix`: `8cc32d380` plus a clean cherry-pick of `92f8e6c30`'s one-file hunk (`docker top -eo pid,rss,nlwp`). `git diff 8cc32d380 6770c37ba --stat` shows only that file. No runner file pins `8cc32d380` by hash, so no pin changed; the runner takes the commit from `--commit`. A new campaign `score-v01-1b-tuned-c` started at 18:30 UTC with all four parts at `6770c37ba`, and part 1 reruns. The part 1 above stays as a second reading.
 
 ## Seal finished by the readback repair: aged bundle written
