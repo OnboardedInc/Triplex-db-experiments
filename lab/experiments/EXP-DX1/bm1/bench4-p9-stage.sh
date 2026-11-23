@@ -2,14 +2,21 @@
 set -euo pipefail
 # [DX-BM1] Why: stage the failover seed (hasync1/SUNDAY.md step 2-3) from a verified stopped template without touching it.
 # Rejected: pointing the run at the template itself (the brief keeps it as the untouched source) or hard links (shared inodes).
-# Usage: bench4-p9-stage.sh TEMPLATE_CLUSTER IMAGE_DIR ORIGIN_TAG SEED_DIRECTORY
-template=$1 image=$2 tag=$3 seed=$4
+# Usage: bench4-p9-stage.sh TEMPLATE_CLUSTER IMAGE_DIR ORIGIN_TAG SEED_DIRECTORY [--copy-only]
+# --copy-only makes the data copy first (the long part) while the seed metadata is still on its way.
+template=$1 image=$2 tag=$3 seed=$4 only=${5:-}
 [[ $EUID == 0 && $template == /* && $image == /* && $seed == /* && ! -e $seed ]]
-[[ $tag =~ ^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$ && -f $image/image.json && -f $image/transfer.json ]]
 [[ ! -e $template/postmaster.pid && $(cat "$template/PG_VERSION") == 17 && ! -L $template/pg_wal ]]
 [[ -z $(find "$template" ! -type f ! -type d -print -quit) ]]
-mkdir -m 0700 "$seed.partial"
-cp -a "$template" "$seed.partial/PGDATA"
+if [[ ! -e $seed.partial/copied ]]; then
+  [[ ! -e $seed.partial ]]
+  mkdir -m 0700 "$seed.partial"
+  cp -a "$template" "$seed.partial/PGDATA"
+  touch "$seed.partial/copied"
+fi
+[[ $only != --copy-only ]] || exit 0
+[[ $tag =~ ^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$ && -f $image/image.json && -f $image/transfer.json ]]
+rm "$seed.partial/copied"
 mkdir -p "$seed.partial/origin/$tag"
 cp -p "$image/image.json" "$image/transfer.json" "$seed.partial/origin/$tag/"
 (cd "$seed.partial/PGDATA" && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > ../SHA256SUMS)
