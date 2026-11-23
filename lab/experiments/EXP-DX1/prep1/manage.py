@@ -31,7 +31,7 @@ def disk_floor():
 
 
 def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefetch="0", ordered="0", serial="0"):
-    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "census", "recovery", "subject-recovery", "subject-query", "subject-native-suite", "subject-profile", "lookup-profile", "rolling-recovery"):
+    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "census", "recovery", "subject-recovery", "subject-query", "subject-native-suite", "subject-profile", "lookup-profile", "rolling-recovery", "production"):
         raise SystemExit("Unknown managed probe mode")
     if subject not in ("0", "1"):
         raise SystemExit("Subject writer setting must be 0 or 1")
@@ -54,8 +54,10 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     # [DX-THIN1] Why: the integration builder reruns the owner-head recovery gate under its own holder.
     # Rejected: borrowing the W1 holder's reservation and image tag.
     holder = (os.environ.get("DX_CHK1_HOLDER", "DX-CHK1") if combined
-              else os.environ.get("DX_CHK1_HOLDER", "DX-W1") if owner_head == "1" else "DX-PREP1")
-    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
+              else os.environ.get("DX_CHK1_HOLDER", "DX-W1") if owner_head == "1"
+              else os.environ.get("DX_CHK1_HOLDER", "DX-REAL2") if mode == "production" else "DX-PREP1")
+    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1", "DX-REAL2") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
+    assert mode != "production" or holder in ("DX-REAL2", "DX-THIN1")
     assert owner_head != "1" or holder in ("DX-W1", "DX-THIN1")
     # [DX-W1] Why: match both saves per owner-layout arm to their transactor read counters.
     # Rejected: treating empty peer I/O metadata as zero native storage reads.
@@ -108,6 +110,11 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
         shutil.copyfile(EXPERIMENT / "copy-pgdata.sh", config / "copy-pgdata.sh")
         if pgdata_mode == "wal":
             (config / "pgdata-wal").touch()
+    if mode == "production":
+        # [DX-REAL2] Why: the gate reads the committed shape parameters, never a copy edited in the stage.
+        if (subject, numeric_owner, prefetch, ordered) != ("1", "1", "0", "1"):
+            raise SystemExit("The production gate runs the server writer: subject, numeric owner and ordered IDs")
+        shutil.copyfile(EXPERIMENT.parent / "real2/production-shape.json", config / "production-shape.json")
     if mode == "live":
         if not 1 <= int(seconds) <= 60:
             raise SystemExit("Live window must be 1 to 60 seconds")
@@ -144,7 +151,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     disk_floor()
     esbuild = REPO / "node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/bin/esbuild"
     metafile = out / "bundle.json"
-    driver = {"live": "live.ts", "rolling-recovery": "rolling-gate.ts"}.get(mode, "probe.ts")
+    driver = {"live": "live.ts", "rolling-recovery": "rolling-gate.ts", "production": "production-gate.ts"}.get(mode, "probe.ts")
     if not clojure_inputs and mode != "subject-native-suite":
         subprocess.run([
             esbuild, str(EXPERIMENT.relative_to(REPO) / driver), "--bundle", "--platform=node",
@@ -158,12 +165,14 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         raise SystemExit("Lab Docker endpoint does not match the configured endpoint")
     tag_mode = "subject-recovery" if mode == "rolling-recovery" else mode
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
+    # [DX-THIN1] Why: REAL2's production gate keeps its own tag; under the integration holder it takes a private one.
     profile["lanes"]["datomic"]["image"] = (f"tx2-datomic:dx-w1-head-{out.name}-{head[:8]}" if owner_head == "1" and holder == "DX-W1"
                                             else f"tx2-dxthin-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}"
-                                            if owner_head == "1"
+                                            if owner_head == "1" or (mode == "production" and holder == "DX-THIN1")
                                             else (f"tx2-dxthin-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}"
                                                   if holder == "DX-THIN1" else f"tx2-datomic:dx-chk1-rolling-{attempt[:8]}")
-                                            if combined else f"tx2-datomic:dx-prep1-{tag_mode}")
+                                            if combined else f"tx2-datomic:dx-real2-{tag_mode}" if mode == "production"
+                                            else f"tx2-datomic:dx-prep1-{tag_mode}")
     slots.write_text(json.dumps(profile, indent=2) + "\n")
     source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
     if clojure_inputs:

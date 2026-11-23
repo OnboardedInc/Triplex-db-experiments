@@ -5,7 +5,7 @@ import { gunzipSync } from "node:zlib";
 import path from "node:path";
 import type { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import { decodeRowText, rowTextColumns } from "../../../../packages/datomic/dist/rowText.js";
-import { fieldValue, taskId } from "../../../bench/lib/deep-world.ts";
+import { fieldCount, fieldValue, taskId, taskSerial } from "../../../bench/lib/deep-world.ts";
 import { ids, SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { sha } from "../w1/field/schedule.ts";
 
@@ -227,10 +227,16 @@ export function agedFieldRow(aged: AgedCut, account: number, person: number, fie
   assert.equal(row.tx_id, "_tx/T" + pad25(saves));
 }
 
+// [DX-REAL2] Why: a production-shaped save edits up to all of task 0's seeded fields, so read every one of them.
+// Rejected: reading only the two fields Saturday's tape edits and asserting new rows over seeded values.
+export const productionSeedFields = Array.from({ length: 14 }, (_, n) => `:task/field-${n}`);
+export const seededFieldCount = (person: number) => fieldCount(taskSerial(person, 0));
+
 export async function scalePredecessors(
   reader: DatomicClient,
   seed: ScaleSeed,
   targets: readonly { account: number; person: number }[],
+  attributes: readonly string[] = scaleFields,
 ) {
   const seedCut = seed.aged?.seedCut ?? seed.head;
   const result = await reader.request<{ transactions: [string, number, string[]][] }>(
@@ -293,7 +299,7 @@ export async function scalePredecessors(
   for (let i = 0; i < owners.length; i += 96) {
     const batch = owners.slice(i, i + 96);
     const byEntity = new Map<string, Row[]>();
-    for (const attribute of scaleFields) {
+    for (const attribute of attributes) {
       const rows = await reader.rows(seed.db, {
         entityIds: batch.map(([e]) => e),
         pattern: { attribute },
@@ -307,8 +313,9 @@ export async function scalePredecessors(
     }
     for (const [e, [account, person]] of batch) {
       const prior = byEntity.get(e);
-      assert(prior && prior.length === scaleFields.length);
-      for (const [n, a] of scaleFields.entries()) {
+      const expected = attributes === scaleFields ? scaleFields.length : seededFieldCount(person);
+      assert(prior && prior.length === expected);
+      for (const [n, a] of attributes.slice(0, expected).entries()) {
         const row: Row = prior[n]!;
         assert.equal(row.attribute, a);
         assert(row.id && row.recorded_position > 0 && row.recorded_position <= seed.head);

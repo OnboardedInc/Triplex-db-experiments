@@ -425,6 +425,14 @@ case "$PREP1_MODE" in
       wait "${children[1]}" || true
     done
     ;;
+  production)
+    # [DX-REAL2] Why: drive the server producer's phase() on a toy scope with the subject writer and ordered IDs.
+    export DX_PREP1_LIBRARY=1 DX_PREP1_CAMPAIGN=rolling DX_REAL2_SET=hour DX_REAL2_PARAMS=/config/production-shape.json
+    subject_workers 1 1
+    # The bundle carries launch helpers with their own entry checks; never present it as the entry point.
+    node --input-type=module -e 'process.argv.splice(1, 0, "production-gate"); await import("/config/probe.mjs");'
+    stop_subject_workers 1
+    ;;
   subject-query)
     export WFIX1_URI="$DATOMIC_URI_TEMPLATE" TX2_LEAN_NATIVE_QUERY=1 TX2_LEAN_NATIVE_LOG=1
     export TX2_SUBJECT_SAVE="$(cat /config/subject)"

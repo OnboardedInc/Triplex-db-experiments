@@ -61,3 +61,22 @@ open-ports-int1-p15 8805f75c9 REFUSED -
 no-copy-int1-p15 8805f75c9  REFUSED   -
 copy-on-v01-int1-p15 8805f75c9 REFUSED -
 prep1-at-int1-p15      8805f75c9  ADMITTED  -
+# (rolling and prod cases put ARM=<arm> first in the extra env)
+# [DX-REAL2] The production arms on prep1/server.sh's rolling path, through stack/up.sh to its first Docker change.
+# Saturday's cache32 launch at its pin, as the control that the rolling path is reproduced.
+rolling-cache32-at-97aced1b1   97aced1b1  ADMITTED  ARM=1-rolling6-cache32-S
+# The server's refusal of the production launch at 173f9d463, reproduced.
+prod-R-at-173f9d463            173f9d463  REFUSED   ARM=1-prodR-S
+prod-S394-at-173f9d463         173f9d463  REFUSED   ARM=1-prodS-394-S
+# Every production arm at the repair.
+prod-R-at-4ee421c87            4ee421c87  ADMITTED  ARM=1-prodR-S
+prod-S394-at-4ee421c87         4ee421c87  ADMITTED  ARM=1-prodS-394-S
+prod-S-at-4ee421c87            4ee421c87  ADMITTED  ARM=1-prodS-S
+prod-R32-at-4ee421c87          4ee421c87  ADMITTED  ARM=1-prodR-cache32-S
+prod-S32-at-4ee421c87          4ee421c87  ADMITTED  ARM=1-prodS-cache32-S
+rolling-cache32-at-4ee421c87   4ee421c87  ADMITTED  ARM=1-rolling6-cache32-S
+# The aged production set at its commit.
+prod-R394-32-at-3af5a617a   3af5a617a  ADMITTED  ARM=1-prodR-394-cache32-S
+prod-S394-32-at-3af5a617a   3af5a617a  ADMITTED  ARM=1-prodS-394-cache32-S
+prod-R394-16-at-3af5a617a   3af5a617a  ADMITTED  ARM=1-prodR-394-S
+prod-R-at-3af5a617a         3af5a617a  ADMITTED  ARM=1-prodR-S

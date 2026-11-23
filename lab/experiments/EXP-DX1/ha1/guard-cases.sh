@@ -77,6 +77,25 @@ while read -r name commit expect extra; do
     prep1-*) case_run "$name" "$commit" "$expect" prep1 - -- tx2-dxprep1-0a1b2c3d-1-ordered-s --port-write 8491 --port-read 8495 \
       --cpus-tx 0 --cpus-pg 1 --cpus-gw-write 2-5 --cpus-gw-read 6 --pg-memory 8g --tx-memory 30g --tx-java-opts '-Xms1g -Xmx24g -XX:+UseG1GC' \
       --object-cache-max 16g --memory-index-threshold 256m --memory-index-max 1g --pg-settings '-c shared_buffers=2GB' ;;
+    rolling-*|prod-*)
+      # [DX-REAL2] prep1/server.sh's rolling arm: its exports, the arm's launch profile and a prepared copy with its WAL directory.
+      arm=${extra#ARM=}; arm=${arm%%;*}
+      slot=tx2-dxprep1-0a1b2c3d-$(tr A-Z a-z <<< "$arm")
+      mkdir -p "/mnt/wal/$slot"
+      mapfile -t profile < <(cd "/w/trees/$commit" && node --input-type=module -e '
+        import {rollingLaunchProfile} from "./lab/experiments/EXP-DX1/prep1/rolling-launch.mjs";
+        const p = rollingLaunchProfile(process.argv[1]);
+        console.log([p.tx.cpus, p.pg.cpus, p["gw-w"].cpus, p["gw-r"].cpus, p.tx.memoryMiB, p.pg.memoryMiB, p.tx.flags.join(" "),
+          p.tx.cacheMiB, p.index.threshold, p.index.max, Object.entries(p.pg.settings).map(([k,v]) => "-c "+k+"="+v).join(" "),
+          p["gw-w"].major, p["gw-w"].flags.join(" "), p["gw-r"].flags.join(" "), p["gw-w"].memoryMiB, p["gw-r"].memoryMiB].join("\n"))' "$arm")
+      if (( ${#profile[@]} != 16 )); then n=$((n+1)); fails=$((fails+1)); echo "FAIL $name: no launch profile for $arm at $commit"; continue; fi
+      # The lab VM has eight CPUs and the server profile places nine; keep the role split, fold it onto 0-7.
+      # The server's own twelve-core placement checks are not exercised here.
+      profile[0]=0,6,7; profile[2]=2,3,4; profile[3]=5
+      case_run "$name" "$commit" "$expect" prep1 "DX_PREP1_CAMPAIGN=rolling;DX_PREP1_PGDATA=/in/prepared;DX_PREP1_SEED_SHA=$(printf 'c%.0s' {1..64});DX_PREP1_SCALE_WAL_DIR=/mnt/wal/$slot;DX_PREP1_ROLLING_WAL_DEVICE=tmpfs;DX_TX_JAVA=25;DX_GW_WRITE_JAVA=${profile[11]};DX_LAUNCH_PROFILE=server;DX_GW_WRITE_JAVA_OPTS=${profile[12]};DX_GW_READ_JAVA_OPTS=${profile[13]};DX_GW_WRITE_MEMORY=${profile[14]}m;DX_GW_READ_MEMORY=${profile[15]}m" -- \
+        "$slot" --port-write 8491 --port-read 8495 --cpus-tx "${profile[0]}" --cpus-pg "${profile[1]}" --cpus-gw-write "${profile[2]}" \
+        --cpus-gw-read "${profile[3]}" --tx-memory "${profile[4]}m" --pg-memory "${profile[5]}m" --tx-java-opts "${profile[6]}" \
+        --object-cache-max "${profile[7]}m" --memory-index-threshold "${profile[8]}" --memory-index-max "${profile[9]}" --pg-settings "${profile[10]}" ;;
     *) echo "unknown case $name"; fails=$((fails+1)) ;;
   esac
 done < /w/cases.txt
@@ -111,6 +130,7 @@ wrapper_case() {
     "$name" "${commit:0:9}" "$expect" "$got" "$code" "$(sed -n 2p "/tmp/wrap-$name/verdict.txt" 2>/dev/null | cut -c1-110)"
   [[ $got == "$expect" ]] || tail -8 "/tmp/wrap-$name.out" | sed 's/^/     | /'
 }
+# [DX-THIN1] The one branch carries the scorecard launcher, so its wrapper cases always run here.
 wrapper_case wrapper-fair-int1 666b625e5 ADMITTED
 wrapper_case wrapper-fair-refused-pin 52ad22640 REFUSED
 echo "cases=$n mismatches=$fails"

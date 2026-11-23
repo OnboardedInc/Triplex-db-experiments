@@ -6,7 +6,13 @@ import { checkProfileFlags, launchProfile } from "../jvm1/launch.mjs";
 export const tx5ArmId = "1-rolling6-tx5-S";
 export const cache32ArmIds = ["1-rolling6-cache32-S", "1-rolling6-tx5-cache32-S"];
 
+// [DX-REAL2] Production-shaped arms run Saturday's rolling 6 profile, or its three-core 32 GiB cache variant.
+export const productionCache32ArmIds = ["1-prodR-cache32-S", "1-prodS-cache32-S", "1-prodR-394-cache32-S", "1-prodS-394-cache32-S"];
+export const productionArmIds = ["1-prodR-S", "1-prodS-S", "1-prodS-394-S", "1-prodR-394-S", ...productionCache32ArmIds];
+
 export function rollingLaunchProfile(arm) {
+  if (productionArmIds.includes(arm))
+    return rollingLaunchProfile(productionCache32ArmIds.includes(arm) ? cache32ArmIds[0] : "1-rolling6-S");
   const cache32 = cache32ArmIds.includes(arm);
   const tx5 = arm === tx5ArmId || arm === cache32ArmIds[1];
   const depth = tx5 || cache32 ? "6" : arm.match(/(6|8|12|16)-S$/)?.[1];
@@ -43,7 +49,7 @@ export function rollingLaunchProfile(arm) {
 }
 
 export function verifyPlacement(profile, txLog, writeLog, properties, arm = tx5ArmId) {
-  assert(arm === tx5ArmId || cache32ArmIds.includes(arm));
+  assert(arm === tx5ArmId || cache32ArmIds.includes(arm) || productionCache32ArmIds.includes(arm));
   assert.deepEqual(profile, rollingLaunchProfile(arm));
   checkProfileFlags(profile.tx, txLog);
   checkProfileFlags(profile["gw-w"], writeLog);
