@@ -94,3 +94,22 @@ Evidence: `evidence/DX-SCALE1/pinned-pair-1b/pinned-pair-1b.tar.gz` in the priva
 Old pin 5 to 15% below near head, as in the pair (479 against 535 at 256 seats), from the 1 to 2% of subjects read through the as-of view. Short-cut share at the old pin 97 to 99.5%. Wrong values and errors: 0 in every step.
 
 Falsifiers (from the launch message): near-head reads/s at 256 seats below 1,500 or above 6,000; mean batch below 6; any wrong value.
+
+## Tuned pinned-read arm: result (22:59–23:10 UTC on 2026-11-23)
+
+Build `64c70e549`, `DX_RD2_PINNED_TUNED=1`, `DX_RD1_LADDER=pinned-tuned`, one new physical copy of the sealed held cluster: three reader cores, 3 GiB read cache, three read permits, both pinned options on, batches of up to eight subjects. Exited 0 and removed its copy.
+
+| Pin | Seats | Reads/s | p50 / p99 ms | Mean batch | From current | Prediction (reads/s; p50; p99) |
+| --- | ---: | ---: | --- | ---: | --- | --- |
+| Head − 1,000 | 64 | 5,466.7 | 9.60 / 63.23 | 8 | all | 2,500–4,500; 14–26; 30–70 |
+| Head − 1,000 | 256 | **12,375.9** | **18.43 / 72.19** | 8 | all | 2,800–4,800; 53–90; 90–155 |
+| Head − 1,000 | 1,024 | 1,482.0 | 667.65 / 987.14 | 8 | all | 2,500–4,500; 230–410; 400–800 |
+| Old pin 87,002 | 64 | 3,689.9 | 13.25 / 73.22 | 8 | 97.9% | 2,300–4,200; 15–28; 30–75 |
+| Old pin 87,002 | 256 | **10,598.8** | **20.10 / 83.46** | 8 | 98.0% | 2,500–4,400; 58–100; 100–170 |
+| Old pin 87,002 | 1,024 | 1,213.1 | 823.30 / 1,122.30 | 8 | 97.7% | 2,300–4,200; 245–445; 420–850 |
+
+**Zero wrong values and zero errors in all six steps.**
+
+**Against the predictions.** At 256 seats the arm delivered about 2.5–3 times the predicted rate, with p99 under 100 ms at both pins (72.19 and 83.46 ms). The falsifier "near-head reads/s at 256 seats above 6,000" triggered: the cost model overstated the per-subject cost. At 1,024 seats throughput fell to 1,482 and 1,213 reads/s, below the 64-seat step and below the predicted 2,300–4,500. That drop is not explained by this run's records. Mean batch was 8.0 everywhere, so the batch falsifier did not trigger.
+
+Evidence: `evidence/DX-SCALE1/pinned-tuned-1b/pinned-tuned-1b.tar.gz` in the private evidence folder (SHA-256 `8beca2bc6033d1997659ae97c8eb2995a894fbca30448397068604e905301ac0`).
