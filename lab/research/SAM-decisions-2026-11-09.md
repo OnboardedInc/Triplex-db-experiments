@@ -905,3 +905,14 @@ the 1 billion database; about 9 to 10 hours and $11 more, ending near $234, then
 
 Orchestrator's reading: about ten more hours on server 2 only, for those two runs, then deletion. No other server is
 rented. The $200 budget is overspent by my failure, not raised: nothing else is to be spent without asking him.
+
+## 2026-11-23 about 10:35 local: one-time start-up read allowed; run the 1 billion test whenever possible; asks about using two machines at once
+
+Sam, verbatim (quoting the orchestrator's report first):
+
+> "- The remaining latency miss is the first minute after a start. This makes your open decision more important: whether a one-time read of index data at start-up counts as "keep-warm". I recommend allowing it, since it runs once and stops." Yeah you can add the one-time read. That's fine with me. And you can run the test at 1 billion records whenever you can. Can you just run the two machines at once? Would that help to do it both at the same time? We don't need to do them sequentially if we don't have to, right? Can we use server 1 for anything? Is there more to test while we have the server up?
+
+Recorded by the orchestrator:
+- **Decided:** a one-time read of index data at start-up is allowed. It is not a keep-warm mechanism. A recurring or periodic warm-up is still not allowed.
+- **Decided:** the 32 GiB cache test at 1 billion records runs as soon as it can.
+- **Open (a question, not yet an approval of spend):** using two machines at once. Server 1 (bench-3) was deleted at 10:15 the same day, so a second machine means ordering one again.
