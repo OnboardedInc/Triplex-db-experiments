@@ -8,7 +8,7 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { EntityId, TripleId, Triples, type TransactOp, type Triple } from "@triplex-build/triplex";
+import { EntityId, TripleId, Triples, type TransactOp, type TransactionMeta, type Triple } from "@triplex-build/triplex";
 import {
   Capabilities,
   DatabaseScope,
@@ -160,8 +160,13 @@ export class Demo {
   }
 
   /** A plain transaction through the write gateway (used by the toy loader only). */
-  transact(ops: TransactOp[], meta: { commandId: string; actor: string }) {
+  transact(ops: TransactOp[], meta: TransactionMeta) {
     return this.run(this.writeStore, Effect.flatMap(Triples, (s) => s.transact(ops, meta)));
+  }
+
+  /** [DX-CON1] Any Triples operation through the read gateway (journal pages, entity transactions). */
+  read<A, E>(effect: Effect.Effect<A, E, Triples>) {
+    return this.run(this.readStore, effect);
   }
 
   /** Run one tool's work and attach its timing. */
@@ -345,12 +350,28 @@ export class Demo {
     });
   }
 
-  readSubject(accountInput: string | number, subjectNumber: number, attribute?: string) {
+  /** [DX-CON1] A subject by account and number, or by its root entity ID (any entity can be read as a subject). */
+  subjectOf(input: { account?: string | number | undefined; subject?: number | undefined; root?: string | undefined }) {
+    if (input.root !== undefined) {
+      if (input.subject !== undefined) throw new DemoError("InvalidInput", "Give root, or account and subject, not both");
+      const root = input.root.trim();
+      if (!root || root.length > 300) throw new DemoError("InvalidInput", "Give a root entity ID");
+      const m = /^acct\/(account-\d{3})\//.exec(root);
+      const r = m ? this.connection.roster.find((x) => x.account === m[1]) : undefined;
+      const n = /\/pl:(\d{8})$/.exec(root);
+      return { root, account: r?.account ?? null, subjectNumber: n && r ? Number(n[1]) : null, ns: r?.namespace ?? "" };
+    }
+    if (input.account === undefined || input.subject === undefined) throw new DemoError("InvalidInput", "Give account and subject, or root");
+    const p = this.subjectIds(input.account, input.subject);
+    return { root: p.root, account: p.account, subjectNumber: p.subjectNumber, ns: this.account(input.account).namespace };
+  }
+
+  readSubject(input: { account?: string | number | undefined; subject?: number | undefined; root?: string | undefined }, attribute?: string, basis?: { wire: { recordedPosition?: number; recordedAt?: number; validAt: number }; words: string; position?: number | undefined }) {
     return this.measure(async () => {
-      const p = this.subjectIds(accountInput, subjectNumber);
-      const { position } = await this.head();
-      const world = await this.world(p.root, { recordedPosition: position, validAt: Date.now() });
-      const ns = this.account(accountInput).namespace;
+      const p = this.subjectOf(input);
+      const position = basis?.position ?? (basis?.wire.recordedAt !== undefined ? undefined : (await this.head()).position);
+      const world = await this.world(p.root, basis?.wire ?? { recordedPosition: position!, validAt: Date.now() });
+      const ns = p.ns;
       const facts = Demo.facts(world.triples, ns).filter((f) => !attribute || f.attribute === attribute);
       return {
         account: p.account,
@@ -359,18 +380,19 @@ export class Demo {
         entities: world.entities,
         factCount: world.triples.length,
         facts,
-        position,
+        ...(basis ? { basis: basis.words } : {}),
+        position: position ?? (await this.head()).position,
       };
     });
   }
 
   /** Both time axes at one instant: what is now believed true then, and what was believed then. */
-  readSubjectAt(accountInput: string | number, subjectNumber: number, at: string | number, attribute?: string, recordedAt?: string | number, believedPosition?: number) {
+  readSubjectAt(input: { account?: string | number | undefined; subject?: number | undefined; root?: string | undefined }, at: string | number, attribute?: string, recordedAt?: string | number, believedPosition?: number) {
     return this.measure(async () => {
       const when = parseInstant(at, "at");
       const known = recordedAt === undefined ? when : parseInstant(recordedAt, "recordedAt");
-      const p = this.subjectIds(accountInput, subjectNumber);
-      const ns = this.account(accountInput).namespace;
+      const p = this.subjectOf(input);
+      const ns = p.ns;
       const { position } = await this.head();
       const now = Date.now();
       const [current, trueThen, believedThen] = await Promise.all([
@@ -419,9 +441,9 @@ export class Demo {
    * row the position and clock of the transaction that retired it); it filters to one attribute only afterwards. So the
    * cost follows how often the entity was saved, not the size of the database: entityHistoryRows says how many rows it read.
    */
-  fieldHistory(accountInput: string | number, subjectNumber: number, attribute: string, kind: EntityKind = "task", limit = 40) {
+  fieldHistory(t: Target, attribute: string, limit = 40) {
     return this.measure(async () => {
-      const e = this.entity(accountInput, subjectNumber, kind);
+      const e = { entity: t.entity, account: t.account, subjectNumber: t.subjectNumber };
       const { position } = await this.head();
       const rows = await this.reader.rows(this.db, {
         entityIds: [e.entity],
@@ -519,6 +541,24 @@ export class Demo {
   }
 
   // ---- changing (refused unless the connection is a demo working copy) ---------------------------------------------
+  // [DX-CON1] Every change names its entity: a loader-built subject's root, profile or first task (account, subject,
+  // kind), or any entity by ID. Values are typed: text for untyped entities, the type's own value types for entities
+  // of a console type (entities.ts decodes them with Triplex's EntityCodec). Re-asserted old values keep their own
+  // value type and entity type. Typed writes pin the release live points to (configSnapshot).
+
+  /** The entity a change or a read is about. */
+  target(input: { entity?: string | undefined; account?: string | number | undefined; subject?: number | undefined; kind?: EntityKind | undefined }): Target {
+    if (input.entity !== undefined) {
+      const entity = input.entity.trim();
+      if (!entity || entity.length > 300) throw new DemoError("InvalidInput", "Give an entity ID");
+      if (input.account !== undefined || input.subject !== undefined) throw new DemoError("InvalidInput", "Give entity, or account and subject, not both");
+      const m = /^acct\/(account-\d{3})\//.exec(entity);
+      return { entity, account: m?.[1] ?? null, subjectNumber: null, kind: null };
+    }
+    if (input.account === undefined || input.subject === undefined) throw new DemoError("InvalidInput", "Give entity, or account and subject");
+    const e = this.entity(input.account, input.subject, input.kind ?? "task");
+    return { entity: e.entity, account: e.account, subjectNumber: e.subjectNumber, kind: e.kind };
+  }
 
   private async liveRows(entity: string) {
     const { position } = await this.head();
@@ -526,7 +566,7 @@ export class Demo {
     return { position, live };
   }
 
-  private async commit(entity: string, ops: TransactOp[], liveIds: string[], label: string) {
+  private async commit(entity: string, ops: TransactOp[], liveIds: string[], label: string, configSnapshot?: string) {
     const commandId = `demo:${label}:${randomUUID()}`;
     const result = await this.run(
       this.writeStore,
@@ -534,109 +574,116 @@ export class Demo {
         s.transact(ops, {
           commandId,
           actor: currentActor(),
+          ...(configSnapshot ? { configSnapshot } : {}),
           preconditions: [{ _tag: "EntityState", entityId: EntityId.make(entity), tripleIds: liveIds.map((id) => TripleId.make(id)) }],
         }),
       ),
     );
-    return { commandId, txId: result.txId, position: result.position, recordedAt: iso(result.instant) };
+    return { commandId, txId: result.txId, position: result.position, recordedAt: iso(result.instant), actor: currentActor(), ...(configSnapshot ? { configSnapshot } : {}) };
   }
 
-  private validateChange(attribute: string, value: string) {
-    if (!attributePattern.test(attribute) || protectedAttribute.test(attribute))
-      throw new DemoError("InvalidAttribute", "Use a plain attribute such as :task/field-0 or :placement/status");
-    if (typeof value !== "string" || !value.length || value.length > 500)
-      throw new DemoError("InvalidValue", "Values are text of 1 to 500 characters");
+  private validateTarget(t: Target, attribute: string) {
+    if (!attributePattern.test(attribute) || protectedAttribute.test(attribute) || attribute.startsWith(":console/"))
+      throw new DemoError("InvalidAttribute", "Use a plain attribute such as :task/field-0 or :review/outcome");
+    if (t.entity.startsWith("_triplex/") || t.entity.startsWith("_tx/") || /\/console\//.test(t.entity))
+      throw new DemoError("Reserved", `${t.entity} is a reserved entity`);
+  }
+  private static text(value: unknown): TripleValueLike[] {
+    if (typeof value !== "string" || !value.length || value.length > 500) throw new DemoError("InvalidValue", "Values are text of 1 to 500 characters");
+    return [{ type: "string", value }];
+  }
+  private where(t: Target) {
+    return t.subjectNumber === null ? { entity: t.entity } : { account: t.account, subject: t.subjectNumber, entity: t.entity, kind: t.kind };
   }
 
-  /** Save new values from now on; the earlier values stay true for the time before now. */
-  saveFacts(accountInput: string | number, subjectNumber: number, kind: EntityKind, changes: Record<string, string>) {
+  /**
+   * Save new values from now on; the earlier values stay true for the time before now. `typed` gives the values
+   * already decoded for the entity's type; otherwise each value is text.
+   */
+  saveFacts(t: Target, changes: Record<string, unknown>, typed?: { values: ReadonlyMap<string, readonly TripleValueLike[]>; configSnapshot: string; entityType: string }) {
     this.requireWorkingCopy();
     return this.measure(async () => {
-      const e = this.entity(accountInput, subjectNumber, kind);
-      const entries = Object.entries(changes).sort(([a], [b]) => a.localeCompare(b));
+      const entries = Object.keys(changes).sort().map((a) => [a, typed ? typed.values.get(a) ?? [] : Demo.text(changes[a])] as const);
       if (!entries.length || entries.length > 20) throw new DemoError("InvalidInput", "Give 1 to 20 changes");
-      for (const [a, v] of entries) this.validateChange(a, v);
+      for (const [a] of entries) this.validateTarget(t, a);
       const at = Date.now();
-      const { live } = await this.liveRows(e.entity);
+      const { live } = await this.liveRows(t.entity);
       const ops: TransactOp[] = [];
-      for (const [attribute, value] of entries) {
+      for (const [attribute, values] of entries) {
         const prior = live.filter((r) => r.attribute === attribute && r.valid_from <= at && (r.valid_to === null || r.valid_to > at));
         for (const r of prior) {
-          if (r.value_type !== "string") throw new DemoError("InvalidAttribute", `${attribute} holds ${r.value_type} values; the demo saves text only`);
+          if (!typed && r.value_type !== "string") throw new DemoError("InvalidAttribute", `${attribute} holds ${r.value_type} values; an untyped entity's save takes text only`);
           ops.push({ op: "retract", id: TripleId.make(r.id) });
-          if (r.valid_from < at)
-            ops.push(assertText(e.entity, attribute, r.value_string!, r.valid_from, at));
+          if (r.valid_from < at) ops.push(assertSame(t.entity, attribute, r, r.valid_from, at));
         }
-        ops.push(assertText(e.entity, attribute, value, at, prior[0]?.valid_to ?? undefined));
+        for (const v of values) ops.push(assertValue(t.entity, attribute, v, at, prior[0]?.valid_to ?? undefined, typed?.entityType ?? live.find((r) => r.entity_type)?.entity_type ?? undefined));
       }
-      const receipt = await this.commit(e.entity, ops, live.map((r) => r.id), "save");
-      const readback = await this.readBack(e.entity, entries.map(([a]) => a), receipt.position, at);
-      const exact = entries.every(([a, v]) => JSON.stringify(readback[a]) === JSON.stringify([v]));
-      return { account: e.account, subject: e.subjectNumber, entity: e.entity, validFrom: iso(at), receipt, readback, readbackMatches: exact, position: receipt.position };
+      const receipt = await this.commit(t.entity, ops, live.map((r) => r.id), "save", typed?.configSnapshot);
+      const readback = await this.readBack(t.entity, entries.map(([a]) => a), receipt.position, at);
+      const exact = entries.every(([a, vs]) => JSON.stringify(readback[a]) === JSON.stringify(vs.map(plainWritten)));
+      return { ...this.where(t), validFrom: iso(at), receipt, readback, readbackMatches: exact, position: receipt.position };
     });
   }
 
   /** A valid-time correction: from a past date on, the value was different. Both beliefs stay readable. */
-  correctPastValue(accountInput: string | number, subjectNumber: number, kind: EntityKind, attribute: string, value: string, validFrom: string | number) {
+  correctPastValue(t: Target, attribute: string, value: unknown, validFrom: string | number, typed?: { value: TripleValueLike; configSnapshot: string; entityType: string }) {
     this.requireWorkingCopy();
     return this.measure(async () => {
-      const e = this.entity(accountInput, subjectNumber, kind);
-      this.validateChange(attribute, value);
+      this.validateTarget(t, attribute);
+      const next = typed?.value ?? Demo.text(value)[0]!;
       const from = parseInstant(validFrom, "validFrom");
       if (from >= Date.now()) throw new DemoError("InvalidInput", "A correction starts in the past; use save_facts for now");
-      const { position: before, live } = await this.liveRows(e.entity);
+      const { position: before, live } = await this.liveRows(t.entity);
       const prior = live.filter((r) => r.attribute === attribute && r.valid_from <= from && (r.valid_to === null || r.valid_to > from));
-      if (!prior.length) throw new DemoError("NothingToCorrect", `${attribute} had no value on ${iso(from)} for this ${kind}`);
+      if (!prior.length) throw new DemoError("NothingToCorrect", `${attribute} had no value on ${iso(from)} for ${t.entity}`);
       const ops: TransactOp[] = [];
       for (const r of prior) {
-        if (r.value_type !== "string") throw new DemoError("InvalidAttribute", `${attribute} holds ${r.value_type} values; the demo corrects text only`);
+        if (!typed && r.value_type !== "string") throw new DemoError("InvalidAttribute", `${attribute} holds ${r.value_type} values; an untyped entity's correction takes text only`);
         ops.push({ op: "retract", id: TripleId.make(r.id) });
-        if (r.valid_from < from) ops.push(assertText(e.entity, attribute, r.value_string!, r.valid_from, from));
+        if (r.valid_from < from) ops.push(assertSame(t.entity, attribute, r, r.valid_from, from));
       }
       const end = prior[0]!.valid_to ?? undefined;
-      ops.push(assertText(e.entity, attribute, value, from, end));
-      const receipt = await this.commit(e.entity, ops, live.map((r) => r.id), "correct");
+      ops.push(assertValue(t.entity, attribute, next, from, end, typed?.entityType ?? prior[0]!.entity_type ?? undefined));
+      const receipt = await this.commit(t.entity, ops, live.map((r) => r.id), "correct", typed?.configSnapshot);
       const probe = from + 1;
       const [oldBelief, newBelief] = await Promise.all([
-        this.reader.rows(this.db, { entityIds: [e.entity], basis: { recordedPosition: before, validAt: probe } }),
-        this.reader.rows(this.db, { entityIds: [e.entity], basis: { recordedPosition: receipt.position, validAt: probe }, basisWaitMs: 2000 }),
+        this.reader.rows(this.db, { entityIds: [t.entity], basis: { recordedPosition: before, validAt: probe } }),
+        this.reader.rows(this.db, { entityIds: [t.entity], basis: { recordedPosition: receipt.position, validAt: probe }, basisWaitMs: 2000 }),
       ]);
-      const pick = (rows: typeof oldBelief) => rows.filter((r) => r.attribute === attribute).map((r) => r.value_string);
+      const pick = (rows: typeof oldBelief) => rows.filter((r) => r.attribute === attribute).map(readValue);
       return {
-        account: e.account, subject: e.subjectNumber, entity: e.entity, attribute,
+        ...this.where(t), attribute,
         correctedFrom: iso(from), correctedUntil: iso(end ?? null),
         receipt,
         beliefs: {
           [`as recorded before the correction (position ${before}), value on ${iso(probe)}`]: pick(oldBelief),
           [`as recorded after the correction (position ${receipt.position}), value on ${iso(probe)}`]: pick(newBelief),
         },
-        readbackMatches: JSON.stringify(pick(newBelief)) === JSON.stringify([value]),
+        readbackMatches: JSON.stringify(pick(newBelief)) === JSON.stringify([plainWritten(next)]),
         position: receipt.position,
       };
     });
   }
 
   /** Retire a fact from now on: it stops being current, the time it was true stays in history. */
-  retireFact(accountInput: string | number, subjectNumber: number, kind: EntityKind, attribute: string) {
+  retireFact(t: Target, attribute: string, configSnapshot?: string) {
     this.requireWorkingCopy();
     return this.measure(async () => {
-      const e = this.entity(accountInput, subjectNumber, kind);
-      if (!attributePattern.test(attribute) || protectedAttribute.test(attribute))
-        throw new DemoError("InvalidAttribute", "Use a plain attribute such as :task/field-2");
+      this.validateTarget(t, attribute);
       const at = Date.now();
-      const { live } = await this.liveRows(e.entity);
+      const { live } = await this.liveRows(t.entity);
       const current = live.filter((r) => r.attribute === attribute && r.valid_from <= at && (r.valid_to === null || r.valid_to > at));
-      if (!current.length) throw new DemoError("NothingToRetire", `${attribute} has no current value on this ${kind}`);
+      if (!current.length) throw new DemoError("NothingToRetire", `${attribute} has no current value on ${t.entity}`);
       const ops: TransactOp[] = [];
       for (const r of current) {
-        if (r.value_type === "ref") throw new DemoError("InvalidAttribute", "The demo does not retire references (it would cut the subject apart)");
+        if (r.value_type === "ref" && !r.entity_type) throw new DemoError("InvalidAttribute", "The console does not retire a reference of a loader-built subject (it would cut the subject apart)");
         ops.push({ op: "retract", id: TripleId.make(r.id) });
-        if (r.valid_from < at) ops.push(assertSame(e.entity, attribute, r, r.valid_from, at));
+        if (r.valid_from < at) ops.push(assertSame(t.entity, attribute, r, r.valid_from, at));
       }
-      const receipt = await this.commit(e.entity, ops, live.map((r) => r.id), "retire");
-      const readback = await this.readBack(e.entity, [attribute], receipt.position, at);
+      const receipt = await this.commit(t.entity, ops, live.map((r) => r.id), "retire", configSnapshot);
+      const readback = await this.readBack(t.entity, [attribute], receipt.position, at);
       return {
-        account: e.account, subject: e.subjectNumber, entity: e.entity, attribute, retiredFrom: iso(at), receipt,
+        ...this.where(t), attribute, retiredFrom: iso(at), receipt,
         currentAfter: readback[attribute] ?? [],
         retiredFromCurrent: !(readback[attribute]?.length),
         position: receipt.position,
@@ -671,32 +718,53 @@ export class Demo {
       basis: { recordedPosition: position, validAt: validAt + 1 },
       basisWaitMs: 2000,
     });
-    return Object.fromEntries(
-      attributes.map((a) => [a, rows.filter((r) => r.attribute === a).map((r) => r.value_string ?? r.value_number ?? r.value_json)]),
-    ) as Record<string, unknown[]>;
+    return Object.fromEntries(attributes.map((a) => [a, rows.filter((r) => r.attribute === a).map(readValue)])) as Record<string, unknown[]>;
   }
 }
 
-function assertText(entity: string, attribute: string, value: string, validFrom: number, validTo?: number): TransactOp {
+export type Target = { entity: string; account: string | null; subjectNumber: number | null; kind: EntityKind | null };
+export type TripleValueLike = { type: string; value: unknown };
+type Row = { value_type: string; value_string: string | null; value_number: number | null; value_boolean: number | null; value_datetime: number | null; value_json: string | null; entity_type?: string | null };
+
+/** A stored row's value as the tools print it (exact integers as decimal text, instants as epoch milliseconds). */
+function readValue(r: Row): unknown {
+  switch (r.value_type) {
+    case "integer": return r.value_string ?? (r.value_number === null ? null : String(r.value_number));
+    case "boolean": return r.value_boolean === null ? null : r.value_boolean === 1;
+    case "datetime": return r.value_datetime;
+    case "json": return r.value_json === null ? null : JSON.parse(r.value_json);
+    case "number": return r.value_number;
+    default: return r.value_string;
+  }
+}
+/** A written value in the same form as readValue. */
+function plainWritten(v: TripleValueLike): unknown {
+  return typeof v.value === "bigint" ? String(v.value) : v.value instanceof Date ? v.value.getTime() : v.value;
+}
+
+function assertValue(entity: string, attribute: string, value: TripleValueLike, validFrom: number, validTo?: number, entityType?: string): TransactOp {
   return {
     op: "assert",
     entityId: EntityId.make(entity),
     attribute,
-    value: { type: "string", value },
+    value: (value.type === "ref" ? { type: "ref", value: EntityId.make(String(value.value)) } : value) as never,
     validFrom,
     ...(validTo === undefined ? {} : { validTo }),
+    ...(entityType ? { entityType } : {}),
   };
 }
-function assertSame(entity: string, attribute: string, r: { value_type: string; value_string: string | null; value_number: number | null; value_boolean: number | null; value_datetime: number | null; value_json: string | null }, validFrom: number, validTo: number): TransactOp {
+function assertSame(entity: string, attribute: string, r: Row, validFrom: number, validTo: number): TransactOp {
   const value =
     r.value_type === "string" ? { type: "string" as const, value: r.value_string! }
-    : r.value_type === "integer" ? { type: "integer" as const, value: String(r.value_number) }
+    : r.value_type === "ref" ? { type: "ref" as const, value: r.value_string! }
+    : r.value_type === "integer" ? { type: "integer" as const, value: String(readValue(r)) }
     : r.value_type === "number" ? { type: "number" as const, value: r.value_number! }
     : r.value_type === "boolean" ? { type: "boolean" as const, value: r.value_boolean === 1 }
     : r.value_type === "datetime" ? { type: "datetime" as const, value: r.value_datetime! }
+    : r.value_type === "json" ? { type: "json" as const, value: JSON.parse(r.value_json!) }
     : null;
-  if (!value) throw new DemoError("InvalidAttribute", `The demo does not retire ${r.value_type} values`);
-  return { op: "assert", entityId: EntityId.make(entity), attribute, value: value as never, validFrom, validTo };
+  if (!value) throw new DemoError("InvalidAttribute", `The console does not re-assert ${r.value_type} values`);
+  return assertValue(entity, attribute, value, validFrom, validTo, r.entity_type ?? undefined);
 }
 
 export { SEED_VALID_FROM };

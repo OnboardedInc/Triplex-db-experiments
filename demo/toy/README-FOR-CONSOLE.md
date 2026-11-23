@@ -80,6 +80,12 @@ The app owns these paths; `tools.ts` (`routes`) builds them. Query parameters ar
 `move_live`.** The toy now holds the starter type `Subject` and the demo's `Review` (outcome enum, note text, of a
 reference to `Subject`, decided-on date) on `live`. Read the exact answers from `/api/catalogue` and by calling them.
 
+**Step 6 (published): `create_entity`, `list_entities`, `read_entity`**, and on the existing tools (step 1):
+`entity` instead of `account`/`subject`/`kind` on `save_facts`, `correct_past_value`, `retire_fact` and
+`field_history` (values typed by the entity's type, writes pinned to the live release); `root` instead of
+`account`/`subject` on `read_subject` and `read_subject_at`; `basis` on `read_subject`, `list_entities`, `read_entity`.
+`account-003` on the toy holds Review entities made by the gates; make yours in `account-010`.
+
 **Next, in this order, with the inputs of DESIGN.md section 6.2.** Each is added to the catalogue only when it runs,
 so the Assistant page never lists a tool that does not exist. Build the screens against these shapes.
 
