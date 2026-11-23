@@ -91,10 +91,16 @@
                     (when-not (= (value-of got) (value-of (read pin e))) (.incrementAndGet mismatches)))))
     (emit {:kind "shortcut-check" :reads (count (slice 3)) :answeredFromCurrent (.get shortcut) :mismatches (.get mismatches)
            :emptyAnswers (.get empty)}))
-  ;; 6. Concurrency on the same one core: `threads` readers, as TX2_READ_PERMITS would allow, new people.
+  ;; 6. Each new person read twice in a row: a second read that is fast means the first read's cost was loading
+  ;;    and decoding what it needed; a second read as slow as the first means work the cache cannot remove.
+  (arm! "pinned-twice" (slice 4)
+        (fn [s] (let [e (get s "entity") ed (edited? e)]
+                  (measured "pinned-twice" #(read pin e) e (assoc ed :second false))
+                  (measured "pinned-twice" #(read pin e) e (assoc ed :second true)))))
+  ;; 7. Concurrency on the same one core: `threads` readers, as TX2_READ_PERMITS would allow, new people.
   (let [n (long (get config "threads" 16)) seconds (long (get config "concurrentSeconds" 60))
         pool (Executors/newFixedThreadPool n)
-        people (subvec subjects (min (count subjects) (* 4 arm-size)) (min (count subjects) (+ (* 4 arm-size) 25000)))
+        people (subvec subjects (min (count subjects) (* 5 arm-size)) (min (count subjects) (+ (* 5 arm-size) 25000)))
         next (AtomicInteger. 0) done (AtomicInteger. 0) deadline (+ (System/nanoTime) (* seconds 1000000000))
         cpu0 (process-cpu) gc0 (gc-ms) t0 (System/nanoTime)]
     (dotimes [_ n]

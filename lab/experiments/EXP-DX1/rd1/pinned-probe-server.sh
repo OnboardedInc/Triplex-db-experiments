@@ -13,7 +13,7 @@ set -euo pipefail
 datomic_image=${RD2_DATOMIC_IMAGE:-tx2-datomic:1.0.7745-da00}
 pg_image=postgres:17-alpine@sha256:526f86d93c6ea08fd3f1fe5605650cacc781b2c6013169a0ad8f42c7d3d84f32
 NODE=${NODE:-node}
-repo=$(git rev-parse --show-toplevel)
+repo=${RD2_REPO:-$(git -c safe.directory='*' rev-parse --show-toplevel)}
 db=${RD2_DB:-s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi1hNjlkZjQ1Yi04YWI2LTQzNzctYjg2OC04NTJlMjhkOTY5MzQtMCIsMF0}
 pin=${RD2_PIN:-87002} arm=${RD2_ARM:-600} seconds=${RD2_CONCURRENT_SECONDS:-60} peer_memory=${RD2_PEER_MEMORY:-20g} cpus_pg=${RD2_CPUS_PG:-1} cpus_tx=${RD2_CPUS_TX:-0,7,8} cpu_peer=${RD2_CPU_PEER:-6}
 p=rd2-probe
@@ -31,7 +31,7 @@ cleanup() {
 }
 trap cleanup EXIT
 docker rm -f "$p-peer" "$p-tx" "$p-pg" >/dev/null 2>&1 || true
-git -C "$repo" rev-parse HEAD > "$RD2_OUT/source"; sha256sum "$RD2_PROBE" > "$RD2_OUT/probe.sha256"
+git -c safe.directory='*' -C "$repo" rev-parse HEAD > "$RD2_OUT/source"; sha256sum "$RD2_PROBE" > "$RD2_OUT/probe.sha256"
 log "copy start"; cp -a --reflink=never "$RD2_PGDATA_SOURCE" "$RD2_PGDATA_COPY"; touch "$RD2_PGDATA_COPY/.rd2-scratch-copy"; log "copy done"
 # Subjects: the one-seat ladder's own order (account 0, subject 7919 n mod 100000, n = 1, 2, ...), then onward.
 if [[ -n ${RD2_SUBJECTS:-} ]]; then cp "$RD2_SUBJECTS" "$RD2_OUT/subjects.json"; else  # the Mac gate passes its own people
@@ -67,7 +67,12 @@ docker run -d --name "$p-tx" --network "$p-net" --cpuset-cpus "$cpus_tx" --memor
   -v "$RD2_OUT/tx.properties:/rd2/tx.properties:ro" --entrypoint /bin/bash "$datomic_image" \
   -c 'cd /opt/datomic && exec bin/transactor -Xms1g -Xmx8g /rd2/tx.properties' >/dev/null
 for i in $(seq 1 300); do docker logs "$p-tx" 2>&1 | grep -q "System started" && break; sleep 1; done
-docker logs "$p-tx" 2>&1 | grep -q "System started"; log "transactor ready"
+docker logs "$p-tx" 2>&1 | grep -q "System started"; log "transactor started"
+# [DX-RD2] Why: a new transactor starts as standby and takes over only after the copy's old heartbeat expires.
+# Rejected: connecting at "System started" (the peer then reads the previous transactor's location).
+active() { docker exec "$p-pg" psql -XAtq -U postgres -d datomic -c "SELECT map FROM datomic_kvs WHERE id = 'pod-coord'" | grep -qF "\"$p-tx"; }
+for i in $(seq 1 300); do active && break; sleep 1; done
+active; log "transactor active"
 uri="datomic:sql://{db}?jdbc:postgresql://$p-pg:5432/datomic?user=datomic&password=datomic"
 pgstat() {  # PostgreSQL block reads for Datomic's table and its TOAST, and the cgroup CPU of PostgreSQL
   docker exec "$p-pg" psql -XAtq -U postgres -d datomic -c "SELECT json_build_object('at', now(), 'heapRead', heap_blks_read, 'heapHit', heap_blks_hit, 'toastRead', toast_blks_read, 'toastHit', toast_blks_hit, 'idxRead', idx_blks_read, 'idxHit', idx_blks_hit) FROM pg_statio_user_tables WHERE relname = 'datomic_kvs'"
@@ -75,9 +80,10 @@ pgstat() {  # PostgreSQL block reads for Datomic's table and its TOAST, and the 
 }
 probe() {  # $1 pass name, $2 subject offset (arms), $3 java heap/cache flags
   local pass=$1 offset=$2 flags=$3
-  "$NODE" -e 'const c = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")); const o = Number(process.argv[3]) * c.arm;
-    console.log(JSON.stringify({ ...c, uriTemplate: process.argv[2], subjects: c.subjects.slice(o), threads: 16, concurrentSeconds: Number(process.argv[4]), recentBack: 1000 }))' \
-    "$RD2_OUT/subjects.json" "$uri" "$offset" "$seconds" > "$RD2_OUT/$pass-config.json"
+  python3 -c 'import json, sys
+c = json.load(open(sys.argv[1])); o = int(sys.argv[3]) * c["arm"]
+c.update(uriTemplate=sys.argv[2], subjects=c["subjects"][o:], threads=16, concurrentSeconds=int(sys.argv[4]), recentBack=1000)
+print(json.dumps(c))' "$RD2_OUT/subjects.json" "$uri" "$offset" "$seconds" > "$RD2_OUT/$pass-config.json"
   { echo "$pass before"; pgstat; } >> "$RD2_OUT/pg-stats.txt"
   log "probe $pass start"
   docker run --rm --name "$p-peer" --network "$p-net" --cpuset-cpus "$cpu_peer" --memory "$peer_memory" --memory-swap "$peer_memory" \

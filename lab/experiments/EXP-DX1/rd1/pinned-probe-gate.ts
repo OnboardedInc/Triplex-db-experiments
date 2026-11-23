@@ -17,13 +17,20 @@ const attribute = ":placement/rd2-value";
 
 // [DX-RD2] Why: an own container from the existing Datomic base image, with no image build and no shared slot.
 // Rejected: the lab slot (its image must be rebuilt first, which retags shared image names).
+const external = process.env.RD2_GATE_EXTERNAL;  // e.g. http://127.0.0.1:18633 from pinned-probe-server-gate.sh
 const container = "rd2-pinned-gate", port = 18631;
 const repo = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
-execFileSync("docker", ["rm", "-f", container], { stdio: "ignore" });
-execFileSync("docker", ["run", "-d", "--name", container, "--memory", "3g", "--cpus", "2", "-p", `127.0.0.1:${port}:8080`,
+if (!external) execFileSync("docker", ["rm", "-f", container], { stdio: "ignore" });
+if (!external) execFileSync("docker", ["run", "-d", "--name", container, "--memory", "3g", "--cpus", "2", "-p", `127.0.0.1:${port}:8080`,
   "-v", `${repo}/packages/datomic/gateway/src:/opt/gateway/src:ro`, "-v", `${import.meta.dirname}:/rd1:ro`,
   "--entrypoint", "/bin/bash", process.env.RD2_GATE_IMAGE ?? "tx2-datomic:1.0.7745-da00", "/rd1/pinned-probe-gate.sh"]);
 const inContainer = async <T,>(slotName: string, work: (slot: string) => Promise<T>) => {
+  if (external) {
+    process.env.DATOMIC_URL = external;
+    process.env.DATOMIC_READ_URLS = external;
+    process.env.TRIPLEX_DATOMIC_LAYOUT = "lean";
+    return await work(slotName);
+  }
   try {
     const deadline = Date.now() + 180_000;
     for (;;) {
@@ -63,6 +70,13 @@ const result = await inContainer(slot, async (slotName) => {
     const pin = position;
     for (let k = 0; k < rounds; k++) for (let i = 0; i < people; i += 5) await put(entities[i]!, `edit-${i}-${k}`);
     const head = position;
+    if (external) {
+      // [DX-RD2] Why: hand pinned-probe-server.sh the same people in its own subjects format.
+      // Rejected: the server's generated SCALE1 IDs, which do not exist in this small scope.
+      const subjects = Array.from({ length: 4000 }, (_, i) => ({ entity: entities[(i * 7) % people]!, subject: (i * 7) % people, account: 0 }));
+      fs.writeFileSync(path.join(out, "subjects.json"), JSON.stringify({ dbContains: scope, pin, validAt: 1, attribute, subjects, arm: 60 }));
+      return { slot: slotName, scope, pin, head, people, rounds };
+    }
     const template = "datomic:dev://localhost:4334/{db}";
     // Probe order: each arm takes the next `arm` subjects; repeat the list so every arm has people.
     const subjects = Array.from({ length: 6 * 60 }, (_, i) => ({ entity: entities[(i * 7) % people]!, subject: (i * 7) % people, account: 0 }));
@@ -80,6 +94,7 @@ const result = await inContainer(slot, async (slotName) => {
     return { slot: slotName, scope, pin, head, people, rounds };
   } finally { await runtime.close(); }
 });
+if (external) { console.log(JSON.stringify(result)); process.exit(0); }
 const lines = fs.readFileSync(path.join(out, "out.ndjson"), "utf8").trim().split("\n").map((l) => JSON.parse(l));
 const start = lines.find((l) => l.kind === "start"), check = lines.find((l) => l.kind === "shortcut-check");
 assert.equal(start.pin, result.pin);
