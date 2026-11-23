@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import type { DatomicClient } from "../../../../packages/datomic/dist/index.js";
-import { decodeRowText } from "../../../../packages/datomic/dist/rowText.js";
+import { decodeRowText, rowTextColumns } from "../../../../packages/datomic/dist/rowText.js";
 import { fieldValue } from "../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { field, keyFor, sha, task } from "../scale1/decision/plan.ts";
@@ -16,6 +16,50 @@ import { checkAdoptedPeer, type readScaleSeal } from "../v01/adopt.ts";
 type Seed = ReturnType<typeof readScaleSeal>;
 type Row = Awaited<ReturnType<DatomicClient["rows"]>>[number];
 const pad25 = (n: number) => String(n).padStart(25, "0");
+
+// [DX-PREP1 4bd2d5413] AGE1's loader wrote every journal position row with the gateway test fixture encoder: a "-" header
+// marker and the position in value_number, where the product writes "P" and null, so the SDK decoder refuses it.
+// Parse the last save's journal column by column and check every row, including the position row.
+function journalColumns(text: string) {
+  assert.equal(text[0], "2", "aged journal row is not a version 2 row text");
+  const idLength = Number.parseInt(text.slice(1, 5), 16);
+  const id = text.slice(5, 5 + idLength);
+  const start = 5 + idLength;
+  const refLength = Number.parseInt(text.slice(start + 32, start + 36), 16);
+  const marker = text[start + 36 + refLength]!;
+  const values = JSON.parse(text.slice(start + 37 + refLength));
+  assert(Array.isArray(values) && values.length === rowTextColumns.length);
+  const row = Object.fromEntries(rowTextColumns.map((c: string, i: number) => [c, values[i]])) as Record<string, any>;
+  assert.equal(row.id, id);
+  assert.match(row.recorded_position, /^\d{16}$/);
+  return { marker, row: { ...row, recorded_position: Number(row.recorded_position) } };
+}
+function agedJournal(texts: string[], aged: { lastTransaction: string; lastOperation: string; lastRecordedAt: number },
+  head: number) {
+  const rows = texts.map(journalColumns);
+  const of = (attribute: string) => rows.filter(({ row }) => row.attribute === attribute);
+  for (const { row } of rows)
+    assert.deepEqual([row.entity_id, row.tx_id, row.entity_type, row.recorded_position, row.recorded_at],
+      [aged.lastTransaction, aged.lastTransaction, "_Transaction", head, aged.lastRecordedAt],
+      "aged journal row is not part of AGE1's last save");
+  const [position, ...extraPosition] = of(":_tx/position");
+  assert(position && !extraPosition.length && position.row.value_type === "number");
+  assert(position.marker === "-" ? position.row.value_number === head
+    : position.marker === "P" && position.row.value_number === null, "aged journal position payload differs");
+  const [command, ...extraCommand] = of(":_tx/command-id");
+  assert(command && !extraCommand.length);
+  assert.equal(command.row.value_string, aged.lastOperation);
+  const [instant, ...extraInstant] = of(":_tx/instant");
+  assert(instant && !extraInstant.length);
+  assert.equal(instant.row.value_datetime, aged.lastRecordedAt);
+  for (const [i, { row }] of rows.entries()) {
+    if (row.attribute === ":_tx/position") continue;
+    const decoded = decodeRowText(texts[i]!) as unknown as Record<string, unknown>;
+    for (const c of ["id", "entity_id", "attribute", "value_type", "value_string", "recorded_position", "recorded_at", "tx_id"])
+      assert.deepEqual(decoded[c], row[c]);
+  }
+  return rows.length;
+}
 
 export type AgedAdmission = Awaited<ReturnType<typeof agedAdmission>>;
 
@@ -64,8 +108,7 @@ export function agedAdmission(file: string, pin: string, seed: Seed, pgdata: str
     if (newest) assert.equal(last.transactions.length, 1, "aged head is not the newest transaction");
     const [lastId, lastPosition, lastText] = last.transactions[0]!;
     assert.deepEqual([lastId, lastPosition], [cut.lastTransaction, head]);
-    const row = lastText.map(decodeRowText).find((r) => r.attribute === ":_tx/command-id");
-    assert.deepEqual([row?.value_string, row?.recorded_at], [cut.lastOperation, cut.lastRecordedAt]);
+    agedJournal(lastText, cut, head);
     assert.equal(await reader.claim(db, cut.lastOperation, head), lastId);
     return { position: lastPosition, command: cut.lastOperation, claim: lastId, journalSha: sha(lastText) };
   }
