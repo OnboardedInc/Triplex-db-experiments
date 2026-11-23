@@ -11,6 +11,15 @@ from pathlib import Path
 from rolling_latency import PhaseLatency, safepoints
 
 
+PRODUCTION_ARMS = {
+    "1-prodR-S": ("R", [235, 394], 16), "1-prodS-S": ("S", [235, 394, 620], 16),
+    "1-prodS-394-S": ("S", [394], 16), "1-prodR-cache32-S": ("R", [235, 394], 32),
+    "1-prodS-cache32-S": ("S", [235, 394, 620], 32),
+}
+PRODUCTION_SETS = {"hour": ["1-prodR-S", "1-prodS-394-S"],
+                   "full": ["1-prodR-S", "1-prodS-S", "1-prodR-cache32-S", "1-prodS-cache32-S"]}
+
+
 def read(path):
     return json.loads(path.read_bytes())
 
@@ -170,7 +179,10 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     scale = campaign == "scale"
     rolling = campaign == "rolling"
     cache32_ids = ("1-rolling6-cache32-S", "1-rolling6-tx5-cache32-S")
-    cache32 = arm["id"] in cache32_ids
+    # [DX-REAL2] Production-shaped arms reuse rolling 6 with Saturday's 16 GiB or 32 GiB profile.
+    production = plan.get("production")
+    assert production is None or (rolling and production["set"] in PRODUCTION_SETS)
+    cache32 = arm["id"] in cache32_ids or bool(production and arm.get("cacheGiB") == 32)
     tx5 = arm["id"] in ("1-rolling6-tx5-S", cache32_ids[1])
     fresh_credits = plan.get("freshCredits")
     assert fresh_credits is None or (rolling and fresh_credits in (6, 12))
@@ -204,6 +216,14 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         assert all(a["writer"] == "S" and a["writers"] == 1 and a["numericOwner"]
                    and a["orderedIds"] and not a["reverse"] and not a["prefetch"] and a["cacheGiB"] == 2
                    for a in plan["arms"])
+    elif production:
+        assert [a["id"] for a in plan["arms"]] == PRODUCTION_SETS[production["set"]] and fresh_credits is None
+        for a in plan["arms"]:
+            shape, rates, size = PRODUCTION_ARMS[a["id"]]
+            assert (a["production"], a["rates"], a["cacheGiB"], a["admission"]) == (
+                shape, rates, size, {"mode": "rolling", "credits": 6})
+            assert a["writers"] == 1 and a["writer"] == "S" and a["numericOwner"] and a["orderedIds"]
+            assert not a["reverse"] and not a["prefetch"] and "writeJvm" not in a
     elif rolling:
         observed = [(a["id"], a["admission"]) for a in plan["arms"]]
         choices = [
@@ -246,7 +266,17 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         assert [(a["id"], a["writers"], a["writer"], a["reverse"], a["numericOwner"], a["prefetch"],
                  a["cacheGiB"], a.get("orderedIds", False)) for a in plan["arms"]] == expected_arms
         assert fair_credits == 0
-    if rolling:
+    if production:
+        shape = arm["production"]
+        assert [(c["label"], c["rate"], c["offered"], c["fairCredits"]) for c in arm["cells"]] == [
+            (f"{shape}-r{rate}-{mode}", rate, len(plan["tapes"][f"{shape}-r{rate}-{mode}"]), fair_credits)
+            for rate in arm["rates"] for mode in ("alone", "loaded")]
+        for c in arm["cells"]:
+            if c["label"].endswith("-alone"):
+                assert c["offered"] == round(3.5 * plan["seconds"])
+            elif shape == "R":
+                assert c["offered"] == c["rate"] * plan["seconds"]
+    elif rolling:
         assert [(c["label"], c["rate"], c["offered"], c["fairCredits"]) for c in arm["cells"]] == [
             (f"r{rate}-{mode}", rate, round((3.5 if mode == "alone" else rate) * plan["seconds"]), fair_credits)
             for rate in ((394, 620) if tx5 or cache32 else (235, 394, 620)) for mode in ("alone", "loaded")]
@@ -306,7 +336,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 "volume", copied["volume"], True)
             assert proof["pgDataCopySha"] == header["pgDataCopySha"] and proof["db"] == seed["db"]
             assert (proof["position"], proof["facts"], proof["members"]) == (87002, 162_456_470, 40)
-            assert proof["owners"] == len({(o[1], o[2]) for tape in plan["tapes"].values() for o in tape})
+            own_tapes = [plan["tapes"][c["label"]] for c in arm["cells"]] if production else plan["tapes"].values()
+            assert proof["owners"] == len({(o[1], o[2]) for tape in own_tapes for o in tape})
             for key in ("journalSha", "predecessorSha"):
                 assert re.fullmatch(r"[0-9a-f]{64}", proof[key])
             claim_key = json.dumps([json.loads(seed["scope"])[3], seed["loaderSeal"], 2000], separators=(",", ":"))
@@ -518,7 +549,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 if cell_credits:
                     turns[r["fairTurn"]].append(r)
                 if wide:
-                    assert r["legacyPredecessors"] in (0, 1, 2)
+                    written = len(offer[6]) if len(offer) > 6 else 2
+                    assert 0 <= r["legacyPredecessors"] <= written
             ack, receipt = r.get("ack"), r.get("receipt")
             token = r.get("orderedToken")
             assert bool(token) == (ordered_ids and "sent" in r)
@@ -591,7 +623,10 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             assert len({p[2] for p in tape if p[1] == 0}) == round(result["seconds"] * 3.5)
             if label.endswith("-loaded"):
                 assert [p for p in tape if p[1] == 0] == plan["tapes"][label.removesuffix("-loaded") + "-alone"]
-                assert all(len({p[2] for p in tape if p[1] == a}) == 1900 for a in range(1, 10))
+                if production:
+                    assert all(len(p) == 9 and p[6] for p in tape if p[1] != 0)
+                else:
+                    assert all(len({p[2] for p in tape if p[1] == a}) == 1900 for a in range(1, 10))
             elif not metrics:
                 assert prepared > 0
         assert used_native.isdisjoint(joined)
@@ -617,7 +652,24 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         if followup and not wide and not tail and cell_credits:
             assert all(len(blocks) == 1 for blocks in turn_appends.values())
         pair = {a: p99(times[a]) if counts[a] == len(times[a]) else None for a in counts}
+        save_metrics = {}
+        if production and label.endswith("-loaded"):
+            # [DX-REAL2] Why: a form save is done when its last row is durable; in shape R that is many commits.
+            # Rejected: reading the per-commit p99 as the save's latency, which hides the row chain.
+            saves = collections.defaultdict(list)
+            for r, offer in zip(rows, tape, strict=True):
+                if r["account"] != 0:
+                    saves[(r["account"], offer[7])].append(r)
+            done = [(min(r["due"] for r in v), max(r["end"] for r in v) - min(r["due"] for r in v))
+                    for v in saves.values() if all(r.get("ack") for r in v)]
+            half = result["seconds"] * 500
+            save_metrics = {"saveCompletion": {
+                "saves": len(saves), "complete": len(done),
+                "p50Ms": percentile([d for _, d in done], .5), "p99Ms": p99([d for _, d in done]),
+                "secondHalfP99Ms": p99([d for t, d in done if t >= half]),
+                "rowsPerSave": sum(map(len, saves.values())) / max(1, len(saves))}}
         metrics.append({"cell": label, "offered": len(rows), "durable": len(positions), "inWindow": in_window,
+                        **save_metrics,
                         **({"delayLedger": delay.finished()} if delay else {}),
                         **(rolling_metrics(result, rows, arm["admission"]) if rolling else {}),
                         **(cpu if rolling else {}),
@@ -652,6 +704,13 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             m["quietP99Ratio"] = loaded / alone if loaded is not None and alone else None
 
     kept = [directory / "header.json", directory / "complete.json", native_path]
+    if production:
+        # [DX-REAL2] Why: every production run keeps the tape report it wrote before its first offer.
+        report_path = directory / "tape-report.json"
+        report = read(report_path)
+        assert report["arm"] == arm["id"] and report["paramsSha256"] == production["paramsSha256"]
+        assert [(c["label"], c["tapeSha"]) for c in report["cells"]] == [(c["label"], c["tapeSha"]) for c in arm["cells"]]
+        kept.append(report_path)
     kept.extend(pg_data_evidence)
     kept.extend(directory / (m["cell"] + ".json") for m in metrics)
     if not fixture:

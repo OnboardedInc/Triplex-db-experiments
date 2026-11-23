@@ -31,7 +31,7 @@ def disk_floor():
 
 
 def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefetch="0", ordered="0"):
-    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "census", "recovery", "subject-recovery", "subject-query", "subject-native-suite", "subject-profile", "lookup-profile", "rolling-recovery"):
+    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "census", "recovery", "subject-recovery", "subject-query", "subject-native-suite", "subject-profile", "lookup-profile", "rolling-recovery", "production"):
         raise SystemExit("Unknown managed probe mode")
     if subject not in ("0", "1"):
         raise SystemExit("Subject writer setting must be 0 or 1")
@@ -79,6 +79,11 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
         shutil.copyfile(EXPERIMENT / "copy-pgdata.sh", config / "copy-pgdata.sh")
         if pgdata_mode == "wal":
             (config / "pgdata-wal").touch()
+    if mode == "production":
+        # [DX-REAL2] Why: the gate reads the committed shape parameters, never a copy edited in the stage.
+        if (subject, numeric_owner, prefetch, ordered) != ("1", "1", "0", "1"):
+            raise SystemExit("The production gate runs the server writer: subject, numeric owner and ordered IDs")
+        shutil.copyfile(EXPERIMENT.parent / "real2/production-shape.json", config / "production-shape.json")
     if mode == "live":
         if not 1 <= int(seconds) <= 60:
             raise SystemExit("Live window must be 1 to 60 seconds")
@@ -113,7 +118,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     disk_floor()
     esbuild = REPO / "node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/bin/esbuild"
     metafile = out / "bundle.json"
-    driver = {"live": "live.ts", "rolling-recovery": "rolling-gate.ts"}.get(mode, "probe.ts")
+    driver = {"live": "live.ts", "rolling-recovery": "rolling-gate.ts", "production": "production-gate.ts"}.get(mode, "probe.ts")
     if not clojure_inputs and mode != "subject-native-suite":
         subprocess.run([
             esbuild, str(EXPERIMENT.relative_to(REPO) / driver), "--bundle", "--platform=node",
@@ -126,7 +131,8 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     if os.environ.get("DOCKER_HOST") != profile["dockerHost"]:
         raise SystemExit("Lab Docker endpoint does not match the configured endpoint")
     tag_mode = "subject-recovery" if mode == "rolling-recovery" else mode
-    profile["lanes"]["datomic"]["image"] = f"tx2-datomic:dx-prep1-{tag_mode}"
+    profile["lanes"]["datomic"]["image"] = (f"tx2-datomic:dx-real2-{tag_mode}" if mode == "production"
+                                            else f"tx2-datomic:dx-prep1-{tag_mode}")
     slots.write_text(json.dumps(profile, indent=2) + "\n")
     source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
     if clojure_inputs:
@@ -174,7 +180,8 @@ def run_stage(out, inputs):
             if path.exists():
                 continue
             args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"DX-PREP1-{out.name}-{action}", "--"]
-            args += ["node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", "DX-PREP1"]
+            holder = "DX-REAL2" if inputs["mode"] == "production" else "DX-PREP1"
+            args += ["node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", holder]
             if action == "selftest":
                 args += ["--scratch-gib", "1"]
             with path.open("x") as log:
@@ -187,7 +194,7 @@ def run_stage(out, inputs):
                 else:
                     image = json.loads(slots.read_text())["lanes"]["datomic"]["imageId"]
                     record(out / "terminal.json", {"attempt": attempt, "exit": code, "image": image,
-                                                  "holder": "DX-PREP1", "slot": "tx2-datomic-selftest",
+                                                  "holder": holder, "slot": "tx2-datomic-selftest",
                                                   "log": path.name, "sha256": sha(path),
                                                   "timings": "diagnostic"})
                 print(f"{action} finished", flush=True)

@@ -15,6 +15,7 @@ import { FairTurns } from "./fair-turns.ts";
 import { admission, type CreditScheduler } from "./rolling-credits.ts";
 import { DeadlineOrder } from "./deadline-order.ts";
 import {
+  productionSeedFields,
   scaleAccount,
   scaleFields,
   scaleOwner,
@@ -22,6 +23,8 @@ import {
   scaleSeed,
 } from "./ceiling-seed.ts";
 import { checkJournal } from "../w1/field/journal.ts";
+import { slotAttribute, tapeReport, type ProductionOffer } from "../w1/field/production.ts";
+import { fieldCount, taskSerial } from "../../../bench/lib/deep-world.ts";
 import { accounts, pooledDigest } from "../w1/group/population.ts";
 import { command, seedPooled } from "../w1/group/workload.ts";
 import {
@@ -34,6 +37,10 @@ import {
   fairSeconds,
   freshArms,
   operation,
+  productionArms,
+  productionParams,
+  productionPrediction,
+  productionSets,
   ownerArms,
   ownerPrediction,
   prediction,
@@ -97,6 +104,10 @@ const rollingArm = process.env.DX_PREP1_ROLLING_ARM;
 const freshCredits = process.env.DX_PREP1_FRESH_CREDITS;
 const cache32 = process.env.DX_PREP1_CACHE32;
 assert(cache32 === undefined || (cache32 === "1" && campaign === "rolling" && !rollingArm && freshCredits === undefined));
+// [DX-REAL2] Why: a production-shaped campaign names its arm set; every other rolling choice stays unset.
+const productionSet = process.env.DX_REAL2_SET;
+assert(productionSet === undefined || (campaign === "rolling" && productionSet in productionSets &&
+  cache32 === undefined && rollingArm === undefined && freshCredits === undefined && process.env.DX_PREP1_AGED === undefined));
 const tx5 = rollingArm === "rolling6-tx5";
 assert(rollingArm === undefined || (campaign === "rolling" && (tx5 || rollingArms.some((a) => a.id === `1-${rollingArm}-S`))));
 assert(freshCredits === undefined || (campaign === "rolling" && rollingArm === undefined));
@@ -108,7 +119,8 @@ const campaignArms = {
   "storage-ordered": [storageOrderedArm],
   ceiling: [ceilingArm],
   scale: scaleArms,
-  rolling: cache32 ? rollingCache32Arms : tx5 ? [rollingTx5Arm] : freshCredits === undefined
+  rolling: productionSet ? productionSets[productionSet]!.map((id) => productionArms.find((a) => a.id === id)!)
+    : cache32 ? rollingCache32Arms : tx5 ? [rollingTx5Arm] : freshCredits === undefined
     ? rollingArms.filter((a) => rollingArm === undefined ? [6, 12].includes(a.admission!.credits) : a.id === `1-${rollingArm}-S`)
     : freshArms(Number(freshCredits)),
   tail: tailArms,
@@ -226,7 +238,7 @@ async function seed(url: string, file: string, nonce: string) {
   }
 }
 
-async function phase(
+export async function phase(
   clients: DatomicClient[],
   reader: DatomicClient,
   db: string,
@@ -326,10 +338,15 @@ async function phase(
       o = cell.tape[n]!,
       e = root(o.account, o.person),
       id = operation(cell.label, n);
-    const facts = [fact(e, answer, `${o.subtask}/${o.ordinal}`)];
-    if (o.extra) facts.push(fact(e, note, id));
+    const slots = (o as Partial<ProductionOffer>).slots;
+    const facts = slots ? slots.map((slot) => fact(e, slotAttribute(slot), `${id}/${slot}`))
+      : [fact(e, answer, `${o.subtask}/${o.ordinal}`)];
+    if (!slots && o.extra) facts.push(fact(e, note, id));
     const previous = fields.get(e)!;
-    const old = previous.filter((r) => r.attribute === answer || o.extra);
+    // [DX-REAL2] Why: production owners carry every seeded field; retire exactly the attributes this commit writes.
+    // Rejected: the old "answer, plus note when extra" filter, which assumed an owner held only those two rows.
+    const written = new Set(facts.map((f) => f.a));
+    const old = previous.filter((r) => written.has(r.attribute));
     const identity = orderedIds ? orderedSaveIdentity() : undefined;
     const input = command(id, facts, old, true, false, identity);
     input.sourceK = Math.max(head, ...previous.map((r) => r.recorded_position));
@@ -507,6 +524,13 @@ async function phase(
   };
 }
 
+// [DX-REAL2] Why: let a reader check every run's tape against the production study without the plan.
+function writeTapeReport(out: string, arm: Arm, schedule: ReturnType<typeof cells>) {
+  const { params, sha256 } = productionParams();
+  save(out + "/tape-report.json", { arm: arm.id, paramsSha256: sha256,
+    cells: schedule.map((cell) => ({ label: cell.label, tapeSha: cell.tapeSha, ...tapeReport(cell.tape, cell.duration, params) })) });
+}
+
 async function armRun(
   arm: Arm,
   file: string,
@@ -603,6 +627,7 @@ async function armRun(
           reader,
           adopted,
           schedule.flatMap(({ tape }) => tape),
+          arm.production ? productionSeedFields : scaleFields,
         )
       : undefined;
     const fields = scale?.fields ?? new Map(baseline.fields);
@@ -626,6 +651,7 @@ async function armRun(
         ...scale.proof, owners: fields.size, predecessorSha: digest(Buffer.from(JSON.stringify([...fields]))) });
       seedReadbackSha = digest(readFileSync(witness));
     }
+    if (arm.production) writeTapeReport(out, arm, schedule);
     save(out + "/header.json", {
       arm,
       slot,
@@ -780,6 +806,7 @@ async function preflight(out: string, arm: Arm) {
     fixture: true,
   };
   save(out + "/header.json", header);
+  if (arm.production) writeTapeReport(out, arm, allCells);
   const legacyIds = wide
     ? new Set([...fields.values()].flatMap((rows) => rows.map((r) => r.id)))
     : undefined;
@@ -808,8 +835,12 @@ async function preflight(out: string, arm: Arm) {
   });
 }
 
-const [action, ...args] = process.argv.slice(2);
-if (action === "seed") await seed(args[0]!, args[1]!, args[2]!);
+// [DX-REAL2] Why: the Mac exactness gate drives this very phase() against a toy stack.
+// Rejected: copying the sender into the gate, which would test a different sender.
+const [action, ...args] = process.env.DX_PREP1_LIBRARY === "1" ? ["library"] : process.argv.slice(2);
+if (action === "library") {
+  // Imported as a library: no command.
+} else if (action === "seed") await seed(args[0]!, args[1]!, args[2]!);
 else if (action === "adopt-scale") {
   assert(wide && (args.length === 3 || (args.length === 4 && args[3] === "--pg-data") ||
     (args.length === 7 && args[3] === "--pg-data" && args[4] === "--aged-bundle" && cache32)));
@@ -826,16 +857,17 @@ else if (action === "adopt-scale") {
 } else if (action === "plan") {
   const duration = args[0] ? Number(args[0]) : campaignSeconds;
   const tapes = Object.fromEntries(
-    cells(campaignArms[0]!, duration).map(({ label, tape }) => [
+    // [DX-REAL2] Production arms carry their own labelled tapes; every other campaign shares the first arm's.
+    (productionSet ? campaignArms.flatMap((arm) => cells(arm, duration)) : cells(campaignArms[0]!, duration)).map(({ label, tape }) => [
       label,
-      tape.map(({ ms, account, person, subtask, ordinal, extra }) => [
-        ms,
-        account,
-        person,
-        subtask,
-        ordinal,
-        extra,
-      ]),
+      tape.map((o) => {
+        const { ms, account, person, subtask, ordinal, extra } = o;
+        const row: unknown[] = [ms, account, person, subtask, ordinal, extra];
+        // [DX-REAL2] Production rows add the written slots, the save index and the declared return gap.
+        const prod = o as Partial<ProductionOffer>;
+        if (prod.slots) row.push(prod.slots, prod.save, prod.gap);
+        return row;
+      }),
     ]),
   );
   console.log(
@@ -844,6 +876,7 @@ else if (action === "adopt-scale") {
       fairCredits: requestedCredits,
       ...(campaign !== "comparison" ? { campaign } : {}),
       ...(freshCredits === undefined ? {} : { freshCredits: Number(freshCredits) }),
+      ...(productionSet ? { production: { set: productionSet, paramsSha256: productionParams().sha256, params: productionParams().params } } : {}),
       tapes,
       arms: campaignArms.map((arm) => ({
         ...arm,
@@ -853,7 +886,9 @@ else if (action === "adopt-scale") {
           tapeSha,
           offered: tape.length,
           ...(credits !== undefined ? { fairCredits: credits } : {}),
-          predicted: arm.admission
+          predicted: arm.production
+            ? productionPrediction(arm, rate, label.endsWith("-alone"))
+            : arm.admission
             ? rollingPrediction(arm, rate, label.endsWith("-alone"), freshCredits !== undefined)
             : arm.scale
             ? scalePrediction(arm, rate, label.endsWith("-alone"))

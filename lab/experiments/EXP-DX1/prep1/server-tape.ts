@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { rollingWidths, type Admission } from "./rolling-credits.ts";
 import { cache32ArmIds, tx5ArmId } from "./rolling-launch.mjs";
 import { offers, sha, type Offer } from "../w1/field/schedule.ts";
+import { loadParams, productionOffers, type ProductionParams, type Shape } from "../w1/field/production.ts";
 
 export const seconds = 144;
 export const fairSeconds = 60;
@@ -26,6 +27,8 @@ export type Arm = {
   scale?: "base" | "cache" | "wal-zgc";
   admission?: Admission;
   writeJvm?: "j25-zgc";
+  production?: Shape;
+  rates?: number[];
 };
 export const arms: Arm[] = widths.flatMap((writers) =>
   (["K", "S", "S", "K"] as const).map((writer, repeat) => ({
@@ -89,6 +92,107 @@ export const rollingArms: Arm[] = [
 ];
 export const rollingTx5Arm: Arm = { ...rollingArms.find((arm) => arm.id === "1-rolling6-S")!, id: tx5ArmId };
 export const rollingCache32Arms: Arm[] = cache32ArmIds.map((id) => ({ ...rollingTx5Arm, id, cacheGiB: 32 }));
+
+// [DX-REAL2] Why: replay the production write pattern on Saturday's rolling-6 arms, changing only the neighbour tape.
+// Rejected: a new runner, a new quiet stream or new launch profiles, which would break the comparison with Saturday.
+export const productionDefaultParams = new URL("../real2/production-shape.json", import.meta.url).pathname;
+const rolling6Arm = rollingArms.find((arm) => arm.id === "1-rolling6-S")!;
+export const productionArms: Arm[] = [
+  { ...rolling6Arm, id: "1-prodR-S", production: "R", rates: [235, 394] },
+  { ...rolling6Arm, id: "1-prodS-S", production: "S", rates: [235, 394, 620] },
+  { ...rolling6Arm, id: "1-prodS-394-S", production: "S", rates: [394] },
+  { ...rolling6Arm, id: "1-prodR-cache32-S", cacheGiB: 32, production: "R", rates: [235, 394] },
+  { ...rolling6Arm, id: "1-prodS-cache32-S", cacheGiB: 32, production: "S", rates: [235, 394, 620] },
+];
+/** Arm sets a server command can name: the one-hour set and the full set. */
+export const productionSets: Record<string, string[]> = {
+  hour: ["1-prodR-S", "1-prodS-394-S"],
+  full: ["1-prodR-S", "1-prodS-S", "1-prodR-cache32-S", "1-prodS-cache32-S"],
+};
+let productionLoaded: { params: ProductionParams; sha256: string; file: string } | undefined;
+export function productionParams(file = process.env.DX_REAL2_PARAMS ?? productionDefaultParams) {
+  if (productionLoaded?.file !== file) productionLoaded = { ...loadParams(file), file };
+  return productionLoaded;
+}
+export const wideChoose = (stream: Offer[], band: number) =>
+  stream.map((o, i) => ({
+    ...o,
+    person: ((band * widePeople + (i % widePeople)) * 7919 + o.account * 1291) % 100_000,
+    ordinal: (Math.floor(i / widePeople) + o.ordinal) % 415,
+  }));
+
+function productionCells(arm: Arm, duration: number) {
+  const { params } = productionParams();
+  return arm.rates!.flatMap((rate) => {
+    // The band follows Saturday's rolling arms, so each quiet cell is byte-identical to Saturday's at that rate.
+    const band = [235, 394, 620].indexOf(rate);
+    assert(band >= 0);
+    const quiet = wideChoose(offers(3.5, duration, [0]), band);
+    const remaining = rate * duration - quiet.length;
+    const targets = Array.from({ length: 9 }, (_, n) => Math.floor(remaining / 9) + Number(n < remaining % 9));
+    const neighbours = productionOffers(params, arm.production!, band, targets, duration);
+    const loaded = [...quiet, ...neighbours].sort(
+      (a, b) => a.ms - b.ms || a.account - b.account || a.person - b.person,
+    );
+    if (arm.production === "R") assert.equal(loaded.length, rate * duration);
+    return [quiet, loaded].map((tape, i) => ({
+      label: `${arm.production}-r${rate}-${i ? "loaded" : "alone"}`,
+      rate,
+      tape: tape as Offer[],
+      duration,
+      tapeSha: sha(tape),
+      credits: arm.admission!.credits,
+    }));
+  });
+}
+
+/**
+ * Forecasts for the production-shaped arms, written before any run (real2/PRODUCTION-TAPE.md gives the reasoning).
+ * Each value is [central, low, high]. Stored/s counts commits: rows for R, saves for S (neighbours, quiet excluded).
+ * Busy p99s are per commit, offer to durable ACK; saveCompletion is a form save's first offer to its last row's ACK.
+ * Reads are PostgreSQL segment reads per commit, in the loaded window's first 60 s and after 150 s.
+ */
+type Range = readonly [number, number, number];
+const productionForecasts: Record<string, Record<number, Record<string, Range>>> = {
+  R16: {
+    235: { stored: [231.5, 231.5, 231.5], wholeP99: [500, 300, 1500], secondP99: [450, 300, 900], saveCompletionP99: [450, 300, 1000],
+      quietP99: [38, 25, 55], readsFirstMinute: [0.08, 0.03, 0.4], readsLate: [0.03, 0, 0.15], txCores: [0.6, 0.3, 1.2] },
+    394: { stored: [390.5, 390.5, 390.5], wholeP99: [700, 400, 3000], secondP99: [600, 350, 2000], saveCompletionP99: [600, 350, 2000],
+      quietP99: [45, 30, 70], readsFirstMinute: [0.08, 0.03, 0.4], readsLate: [0.05, 0.005, 0.3], txCores: [1.0, 0.5, 1.9] },
+  },
+  R32: {
+    235: { stored: [231.5, 231.5, 231.5], wholeP99: [450, 300, 1200], secondP99: [420, 300, 800], saveCompletionP99: [420, 300, 900],
+      quietP99: [35, 25, 50], readsFirstMinute: [0.08, 0.03, 0.4], readsLate: [0.01, 0, 0.05], txCores: [0.5, 0.25, 1.0] },
+    394: { stored: [390.5, 390.5, 390.5], wholeP99: [600, 350, 2000], secondP99: [500, 300, 1200], saveCompletionP99: [500, 300, 1200],
+      quietP99: [45, 30, 65], readsFirstMinute: [0.08, 0.03, 0.4], readsLate: [0.01, 0, 0.05], txCores: [0.8, 0.4, 1.5] },
+  },
+  S16: {
+    235: { stored: [13.4, 13.4, 13.4], wholeP99: [40, 20, 150], secondP99: [30, 15, 100], saveCompletionP99: [30, 15, 100],
+      quietP99: [32, 22, 50], readsFirstMinute: [1.0, 0.5, 6], readsLate: [0.3, 0.05, 2.5], txCores: [0.3, 0.1, 0.8] },
+    394: { stored: [23.1, 23.1, 23.1], wholeP99: [50, 25, 200], secondP99: [40, 20, 120], saveCompletionP99: [40, 20, 120],
+      quietP99: [35, 25, 60], readsFirstMinute: [1.0, 0.5, 6], readsLate: [0.4, 0.05, 2.5], txCores: [0.4, 0.15, 0.9] },
+    620: { stored: [35.3, 35.3, 35.3], wholeP99: [60, 30, 250], secondP99: [45, 25, 150], saveCompletionP99: [45, 25, 150],
+      quietP99: [38, 25, 65], readsFirstMinute: [1.0, 0.5, 6], readsLate: [0.5, 0.05, 3], txCores: [0.6, 0.2, 1.3] },
+  },
+  S32: {
+    235: { stored: [13.4, 13.4, 13.4], wholeP99: [35, 18, 120], secondP99: [28, 15, 80], saveCompletionP99: [28, 15, 80],
+      quietP99: [32, 22, 50], readsFirstMinute: [1.0, 0.5, 6], readsLate: [0.05, 0, 0.5], txCores: [0.25, 0.1, 0.7] },
+    394: { stored: [23.1, 23.1, 23.1], wholeP99: [45, 22, 150], secondP99: [35, 18, 100], saveCompletionP99: [35, 18, 100],
+      quietP99: [34, 24, 55], readsFirstMinute: [1.0, 0.5, 6], readsLate: [0.05, 0, 0.5], txCores: [0.35, 0.12, 0.8] },
+    620: { stored: [35.3, 35.3, 35.3], wholeP99: [55, 28, 200], secondP99: [40, 22, 120], saveCompletionP99: [40, 22, 120],
+      quietP99: [36, 25, 60], readsFirstMinute: [1.0, 0.5, 6], readsLate: [0.06, 0, 0.6], txCores: [0.5, 0.2, 1.1] },
+  },
+};
+/** Shape S: warm apply ms per commit = intercept + slope x facts; a cold commit adds about 1 ms per storage read. */
+export const productionApplyForecast = { intercept: [0.3, 0.15, 1.0], slopePerFact: [0.06, 0.02, 0.15] } as const;
+
+export function productionPrediction(arm: Arm, rate: number, alone: boolean) {
+  assert(arm.production && arm.rates!.includes(rate));
+  // Solo cells are Saturday's quiet cells byte for byte: forecast Saturday's measured solo p99 at that band.
+  if (alone) return { serving: 3.5, quietP99: { 235: [31, 14, 43], 394: [22, 12, 35], 620: [15, 12, 31] }[rate] };
+  const key = arm.production + (arm.cacheGiB === 32 ? "32" : "16");
+  return { ...productionForecasts[key]![rate]!, ...(arm.production === "S" ? { apply: productionApplyForecast } : {}) };
+}
 
 export function freshArms(credits: number): Arm[] {
   assert(credits === 6 || credits === 12);
@@ -271,6 +375,7 @@ export function cells(
   tapeSha: string;
   credits?: number;
 }[] {
+  if (arm.production) return productionCells(arm, duration);
   if (arm.id === ceilingArm.id || arm.scale || arm.admission) {
     const variants = arm.admission
       ? [235, 394, 620].map((rate) => [rate, arm.admission!.credits] as const)

@@ -10,7 +10,7 @@ repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 here=lab/experiments/EXP-DX1/prep1
 stack=lab/experiments/EXP-DX1/stack
-mode=${1:?expected run, storage, storage-ordered, ceiling, scale, rolling, cache32, cache32-aged, fresh, tail, tail-combined, owner, fair or arm}
+mode=${1:?expected run, storage, storage-ordered, ceiling, scale, rolling, cache32, cache32-aged, production, production-full, fresh, tail, tail-combined, owner, fair or arm}
 out=${2:?provide an absolute new output directory}
 source=${3:?provide the pinned Git commit}
 [[ "$out" == /* && "$source" =~ ^[a-f0-9]{40}$ && $(git rev-parse HEAD) == "$source" && -z $(git status --porcelain) ]]
@@ -109,7 +109,7 @@ clear_scale_wal() {
   if [[ -n ${scale_wal_owned:-} ]]; then
     [[ $(findmnt -nro SOURCE --mountpoint "$scale_wal_mount") == "${scale_wal_device:-/dev/nvme1n1}" &&
        $scale_wal_owned == "$scale_wal_mount/$owned" &&
-       $owned =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(scale-wal-zgc|barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12))-s$ &&
+       $owned =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(scale-wal-zgc|barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12)|prod(r|s|s-394)(-cache32)?)-s$ &&
        ! -L $scale_wal_owned ]] || return 1
     rm -rf --one-file-system -- "$scale_wal_owned" || return 1
     unset scale_wal_owned DX_PREP1_SCALE_WAL_DIR
@@ -138,6 +138,16 @@ elif [[ $mode == cache32 ]]; then
   [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount && -z ${DX_PREP1_FRESH_CREDITS:-}${DX_PREP1_ROLLING_ARM:-}${DX_PREP1_AGED:-} ]]
   export DX_PREP1_CACHE32=1
   exec timeout --kill-after=40s 3560s bash "$here/server.sh" rolling-timed "${@:2}"
+elif [[ $mode == production || $mode == production-full ]]; then
+  # [DX-REAL2] Why: replay the production-shaped neighbour tape on Saturday's rolling-6 arms and fresh cut.
+  # Rejected: mixing it with another rolling choice or the aged cut (its seed fields differ).
+  [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount &&
+     -z ${DX_PREP1_FRESH_CREDITS:-}${DX_PREP1_ROLLING_ARM:-}${DX_PREP1_CACHE32:-}${DX_PREP1_AGED:-}${DX_REAL2_SET:-} ]]
+  unset DX_REAL2_PARAMS
+  limit=3560
+  export DX_REAL2_SET=hour
+  if [[ $mode == production-full ]]; then export DX_REAL2_SET=full; limit=9560; fi
+  exec timeout --kill-after=40s "${limit}s" bash "$here/server.sh" rolling-timed "${@:2}"
 elif [[ $mode == cache32-aged ]]; then
   # [DX-PREP1] Why: run Saturday's three-core 32 GiB arm unchanged on AGE1's sealed one-billion cut.
   # Rejected: a second arm (five cores) or a 16 GiB control inside the 75-minute server cap.
@@ -169,7 +179,7 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
       wal_disk=$(disk_of "$scale_wal_device")
       [[ $data_disk =~ ^nvme[0-9]+n[0-9]+$ && $wal_disk =~ ^nvme[0-9]+n[0-9]+$ && $data_disk != "$wal_disk" ]]
       export DX_PREP1_ROLLING_WAL_DEVICE=$scale_wal_device
-      if [[ ${DX_PREP1_CACHE32:-} == 1 ]]; then
+      if [[ ${DX_PREP1_CACHE32:-} == 1 || ${DX_REAL2_SET:-} == full ]]; then
         # [DX-PREP1] Why: preserve at least 10 GiB outside the 79 GiB of role caps (:GiB, not advertised GB).
         # Rejected: treating the server SKU size as MemTotal or budgeting only Java heap.
         host_kib=$(awk '$1 == "MemTotal:" && $3 == "kB" {print $2}' /proc/meminfo)
@@ -245,7 +255,11 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
     arm_limit=850
     if [[ $mode == rolling-timed ]]; then
       arm_limit=2950
-      if [[ ${DX_PREP1_CACHE32:-} == 1 && ${DX_PREP1_AGED:-} == 1 ]]; then
+      if [[ -n ${DX_REAL2_SET:-} ]]; then
+        # [DX-REAL2] Why: the hour set fits one rented hour; the full set is four separate stacks.
+        if [[ $DX_REAL2_SET == hour ]]; then selected=(1-prodR-S 1-prodS-394-S)
+        else selected=(1-prodR-S 1-prodS-S 1-prodR-cache32-S 1-prodS-cache32-S); fi
+      elif [[ ${DX_PREP1_CACHE32:-} == 1 && ${DX_PREP1_AGED:-} == 1 ]]; then
         # [DX-PREP1] Why: the 176 GB copy happens inside the arm; allow about seven minutes for it.
         arm_limit=2400
         selected=(1-rolling6-cache32-S)
@@ -270,7 +284,12 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
         scale_wal_owned=$scale_wal_mount/$owned
         export DX_PREP1_SCALE_WAL_DIR=$scale_wal_owned
       fi
-      timeout --foreground --kill-after=20s "${arm_limit}s" bash "$here/server.sh" arm "$out" "$source" "$cell"
+      limit_for_cell=$arm_limit
+      if [[ -n ${DX_REAL2_SET:-} ]]; then
+        # Two- and four-cell arms get Saturday's two-rate cache32 allowance; the three-rate arms its three-rate one.
+        case $cell in 1-prodS-394-S) limit_for_cell=1200 ;; 1-prodS-S|1-prodS-cache32-S) limit_for_cell=2950 ;; *) limit_for_cell=1740 ;; esac
+      fi
+      timeout --foreground --kill-after=20s "${limit_for_cell}s" bash "$here/server.sh" arm "$out" "$source" "$cell"
       clear_scale_wal
       unset owned
       mv "$out/$cell/summary.tmp" "$out/$cell/summary.json"
@@ -424,9 +443,11 @@ elif [[ $mode == arm ]]; then
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == scale ]]; then
     [[ $cell =~ ^1-scale-(base|cache|wal-zgc)-S$ && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == rolling ]]; then
-    [[ $cell =~ ^1-(barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12))-S$ && $(cat "$out/source") == "$source" ]]
-    if [[ $cell == 1-rolling6-tx5-S || $cell == 1-rolling6*-cache32-S ]]; then
-      if [[ $cell == *-cache32-S ]]; then [[ ${DX_PREP1_CACHE32:-} == 1 ]]
+    [[ $cell =~ ^1-(barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12)|prod(R|S|S-394)(-cache32)?)-S$ && $(cat "$out/source") == "$source" ]]
+    if [[ $cell == 1-prod* ]]; then [[ -n ${DX_REAL2_SET:-} ]]; else [[ -z ${DX_REAL2_SET:-} ]]; fi
+    if [[ $cell == 1-rolling6-tx5-S || $cell == 1-rolling6*-cache32-S || $cell == 1-prod*-cache32-S ]]; then
+      if [[ $cell == 1-prod*-cache32-S ]]; then [[ ${DX_REAL2_SET:-} == full ]]
+      elif [[ $cell == *-cache32-S ]]; then [[ ${DX_PREP1_CACHE32:-} == 1 ]]
       else [[ ${DX_PREP1_ROLLING_ARM:-} == rolling6-tx5 ]]; fi
       export DX_JVM1_TX_PROPERTIES='{"index-parallelism":1}'
     fi
@@ -507,7 +528,7 @@ elif [[ $mode == arm ]]; then
     "$DX_STACK_EVIDENCE/$owned/stack.json" http://127.0.0.1:8495 "${urls[@]}")
   if [[ ${DX_PREP1_CAMPAIGN:-} == rolling ]]; then
     printf '%s\n' "${profile[0]}" > "$dir/launch-profile.json"
-    if [[ $cell == 1-rolling6-tx5-S || $cell == 1-rolling6*-cache32-S ]]; then
+    if [[ $cell == 1-rolling6-tx5-S || $cell == 1-rolling6*-cache32-S || $cell == 1-prod*-cache32-S ]]; then
       attempt="$DX_STACK_EVIDENCE/$owned"
       docker logs "$owned-gw-w" > "$dir/gw-w-placement.log" 2>&1
       node "$here/rolling-launch.mjs" "$cell" "$dir/launch-profile.json" "$attempt/tx-startup-wait.log" \
