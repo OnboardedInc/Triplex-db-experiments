@@ -5037,3 +5037,19 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Open decision for Sam:** whether an unpinned read through the read gateway must see a write the instant the write gateway acknowledges it, or whether readers that hold a receipt pass its position (as P2's pull at the returned tx does) and other readers see it after the peer's lag.
 - **Second machine order:** finish the large release at `a54dfca31`; run 1 (small release, eleven windows, about 28 min) and run 2 (large release, about 30 min) at `f5f8c09ff`, reporting the lag in ms for every visibility failure; start-up read at 1 billion last if it fits.
 - **Running (3):** two drivers, console builder B.
+
+### 2026-11-23 18:58 local: production-S card at 1 billion, part 2: every commit stored at all four loads, commit p99 43 to 67 ms, p50 10.7 to 14.9 ms (3 agents running)
+
+- **Server 2, INT1 `090c189a8`, `server-32`, per-save credits, tape `production-S`** (`origin/exp/DX-SCALE1-deep-accounts` `d2d8b7961`, `scale1/V01-AGED-PROD-S.md`), 90 s cells, completed 23:54 UTC.
+
+  | Offered rows/s | Stored commits/s (rows/s), expired | Commit p50 / p99 ms | Second-half p99 | Storage reads per commit | Per-subject / general commits | Quiet commit p99 solo to loaded |
+  | ---: | --- | --- | ---: | ---: | --- | --- |
+  | 50 | 2.86 (43.96), 266 of 266, 0 | 14.91 / 66.56 | 66.56 | 4.62 | 88 / 178 | 18.94 to 12.16 ms |
+  | 235 | 13.43 (228.43), 1,219 of 1,219, 0 | 11.65 / 43.01 | 49.92 | 3.12 | 397 / 822 | 14.34 to 20.74 ms |
+  | 394 | 23.08 (387.19), 2,086 of 2,086, 0 | 10.69 / 45.31 | 53.50 | 2.58 | 651 / 1,435 | 13.70 to 17.54 ms |
+  | 620 | 36.02 (613.02), 3,253 of 3,253, 0 | 12.10 / 48.64 | 48.13 | 2.58 | 1,074 / 2,179 | 32.26 to 21.25 ms |
+
+- **Against P2 (p50 at or under 10 ms, p99 at or under 50 ms):** p99 inside at 235, 394 and 620 and outside at 50 (66.56 ms, 266 commits in the cell, the first cell after the P1 to P4 pair); p50 outside at every load by 0.7 to 4.9 ms. **Against P6:** the quiet account's loaded commit p99 is 12 to 21 ms at every load, inside the bar. Zero wrong quiet reads.
+- **Storage reads per commit 2.6 to 4.6** in these 90 s cells (first-minute values); the second machine's 300 s window at 394 gave 1.44 in the first minute and 0.40 late.
+- **The published predictions were for the `server` profile** (0.2 to 15 s at 394 and 620) and the card ran `server-32`; they are not a test of this run.
+- **P1 line unchanged:** the quiet account's pinned reads missed about two thirds of their offers (2,624 of 3,840 at 394, 0 wrong) with the one-core reader. Part 3 and assembly follow.
