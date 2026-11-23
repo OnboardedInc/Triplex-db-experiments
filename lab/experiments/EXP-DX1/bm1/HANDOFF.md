@@ -1,5 +1,14 @@
 # DX-BM1 bench handoff, November 19
 
+## Bench 4, November 23
+
+**Ready to receive data at 10:52 EST, 5 minutes after billing began (USD 1.09/hour from 15:47 UTC; about USD 0.15 so far).** Same hardware as bench 3 (12 cores, 96 GB, two 960 GB NVMe), freshly installed Ubuntu 24.04. The rental ends at 23:30 EST at the latest, when this driver deletes it.
+
+- **Bootstrap:** `t1/bare-metal.sh` at PREP1 `cdc72d4d5` with `DX_JAVA=25`, into `bench4/base-build`, exit 0 at about 10:53 EST. It built both Datomic images (Java 21 `tx2-datomic:1.0.7745-da00`, Java 25 `-jre25`) and pulled pinned Node and PostgreSQL 17. Each job rebuilds from this cache right before its run, as on bench 3.
+- **Disks:** root `nvme0n1p2` holds Docker volumes and the received databases (893 GB free). The second NVMe is ext4 at `/mnt/triplex-bench4-wal` for the PostgreSQL write log. All 24 CPU policies read `performance`; SMT is on.
+- **Received data, same paths as server 2:** the held one-billion cluster under `/mnt/triplex-scale1-held-age/calibrated-post-ladder/cluster`, the aged handoff and its seal under `/var/tmp/triplex-scale1/age-v01-bulk-c/rung/1000000000/`, the SCALE1 seed metadata under `/var/tmp/triplex-scale1/decision/attempts/arm-d7-wfix-pool-seed/`, and the fresh template (failover only) under `/mnt/triplex-scale1-pgdata/fresh-a/`. Each is checked with `bench4-inventory.py`, SCALE1's own stopped-inventory algorithm, before use.
+- **Queue:** the 32 GiB cache arm on the aged cut (`bench4-cache32-aged.sh`, [predictions](PREDICTIONS.md#bench-4-2026-11-23)), its repeat, then the arms the orchestrator sends, then the two-machine failover with server 2.
+
 ## Driver takeover at 12:45 EST on November 21
 
 A new driver took over bench 3 at 12:45 EST after the previous driver stopped at about 12:38. The rental had cost about USD 3.85 at 17:45 UTC, at USD 1.09/hour from 14:13 UTC.

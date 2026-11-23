@@ -103,6 +103,10 @@ for selection, arms in ROLLING_ARMS.items():
 for selection in ("cache32", "cache32b", "cache32c", "tx5", "fresh", "rolling6r", "rolling6s"):
     SLOTS["bench3-"+selection] = ("bench3/queue/"+selection, ("result", "started", "unit.log",
         "build/results/IMAGE-INPUTS.SHA256SUMS", "build/results/images.json", "build/results/bootstrap.exit"))
+# [DX-BM1] Why: bench 4 (2026-11-23) runs the aged 32 GiB cache arm with the same job layout as bench 3's add-ons.
+for selection in ("cache32-aged", "cache32-aged-b", "cache32-aged-c"):
+    SLOTS["bench4-"+selection] = ("bench4/queue/"+selection, ("result", "started", "unit.log",
+        "build/results/IMAGE-INPUTS.SHA256SUMS", "build/results/images.json", "build/results/bootstrap.exit"))
 
 
 def load(filename):
@@ -134,7 +138,7 @@ def archive(name, revision):
         units = ["triplex-bench3-bootstrap.service", "triplex-bench3-java25.service",
                  "triplex-bench3-seed-verify.service", "triplex-bench3-tuned-control.service",
                  "triplex-bench3-tuned-retry.service"]
-    if name.startswith("bench3-") and name != "bench3-control":
+    if name.startswith(("bench3-", "bench4-")) and name != "bench3-control":
         units = ["triplex-"+name+".service"]
     if name == "bench3-removal":
         # [DX-BM1] Why: the first removal unit was refused at stack start; the measured run is the repaired unit.
@@ -236,7 +240,7 @@ def collect(name, revision, control, mode="trees"):
     ticket = json.loads(ticket_bytes)
     assert ticket["item"] == name and ticket["producer"] == revision
     assert ticket["summary"]["bytes"] + (ticket["raw"] or {"bytes":0})["bytes"] < 1024**3
-    day = "bench3" if name.startswith("bench3-") else ("day-n21" if name == "publish-priority" else "day-n20")
+    day = name[:6] if name.startswith(("bench3-", "bench4-")) else ("day-n21" if name == "publish-priority" else "day-n20")
     out = MAC/"DX-BM1"/day/name
     out.mkdir(parents=True, exist_ok=True)
     arrival_bytes = ticket["summary"]["bytes"] + (ticket["raw"] or {"bytes":0})["bytes"]
@@ -267,7 +271,7 @@ def collect(name, revision, control, mode="trees"):
     transfer = out/"TRANSFER.json"
     transfer.write_bytes(ticket_bytes)
     index = MAC/"TRACE-INDEX.md"
-    key = f"bm1-saturday-{name}" if day != "day-n20" else f"bm1-friday-{name}"
+    key = {"day-n20": f"bm1-friday-{name}", "bench4": f"bm1-monday-{name}"}.get(day, f"bm1-saturday-{name}")
     if f"| {key} |" not in index.read_text():
         stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         with index.open("a") as stream:
