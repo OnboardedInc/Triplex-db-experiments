@@ -43,6 +43,19 @@ import { callTool, ToolError, type Answer, type CatalogueTool, type JsonSchema }
 import { REGISTER_COMMAND, useCatalogue } from "@/lib/catalogue";
 import { cn } from "@/lib/utils";
 
+type Recorded = {
+  database?: string;
+  commit?: string;
+  recordedAt?: string;
+  tools: Record<string, { input?: unknown; output?: unknown }>;
+};
+// demo/console/examples.json belongs to the functions side: the recorded output of each tool. Read at build time.
+const recordedFiles = import.meta.glob<{ default: Recorded }>(
+  "../../../../demo/console/examples.json",
+  { eager: true },
+);
+const recorded: Recorded | undefined = Object.values(recordedFiles)[0]?.default;
+
 /** The kind of control a schema property gets in Try it here. */
 function controlOf(s: JsonSchema): "text" | "number" | "boolean" | "enum" | "list" | "json" {
   if (s.enum) return "enum";
@@ -371,7 +384,21 @@ function ToolRow({
                 </Button>
                 <CopyButton text={tool.sentences[0] ?? tool.name} label="Copy sentence" />
               </div>
-              {tool.example ? (
+              {!tool.example && recorded?.tools[tool.name] ? (
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <Badge variant="outline">Recorded</Badge>
+                    {recorded.database}, {recorded.recordedAt?.slice(0, 10)}, commit{" "}
+                    {recorded.commit?.slice(0, 9)}
+                  </div>
+                  <div className="text-muted-foreground font-mono text-xs break-all">
+                    input {JSON.stringify(recorded.tools[tool.name]!.input ?? {})}
+                  </div>
+                  <div className="max-h-80 overflow-auto">
+                    <JsonView value={recorded.tools[tool.name]!.output} />
+                  </div>
+                </div>
+              ) : tool.example ? (
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-xs">
                     <Badge variant="outline">Recorded</Badge>
