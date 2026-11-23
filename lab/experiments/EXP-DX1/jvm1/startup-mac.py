@@ -13,6 +13,12 @@ import uuid
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[3]
 TAG = "tx2-datomic:dx-jvm1-startup-read"
+# [DX-THIN1] Why: the integration builder reruns this gate under its own holder and image tag, optionally with the owner head.
+# Rejected: borrowing the JVM1 holder's slot reservation or image tag.
+HOLDER = os.environ.get("DX_JVM1_GATE_HOLDER", "DX-JVM1")
+OWNER_HEAD = os.environ.get("DX_W1_OWNER_HEAD", "0")
+if HOLDER not in ("DX-JVM1", "DX-THIN1") or OWNER_HEAD not in ("0", "1"):
+    raise SystemExit("The start-up read gate runs as DX-JVM1 or DX-THIN1, with DX_W1_OWNER_HEAD 0 or 1")
 
 
 def sha(path):
@@ -42,6 +48,8 @@ def stage(out):
             shutil.copy2(source, target)
     config = root / files[1]
     (config / "attempt").write_text(attempt + "\n")
+    (config / "subject-head").write_text(OWNER_HEAD + "\n")
+    tag = TAG if HOLDER == "DX-JVM1" else "tx2-dxthin-managed:" + attempt.replace("-", "")[:16]
     shutil.copyfile(HERE / "startup-stack.sh", config / "entrypoint.sh")
     shutil.copyfile(HERE / "startup-read.clj", config / "startup-read.clj")
     recipe = config / "Dockerfile"
@@ -67,12 +75,13 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \\
     profile = json.loads(slots.read_text())
     if os.environ.get("DOCKER_HOST") != profile["dockerHost"]:
         raise SystemExit("Lab Docker endpoint does not match the configured endpoint")
-    profile["lanes"]["datomic"]["image"] = TAG
+    profile["lanes"]["datomic"]["image"] = tag
     slots.write_text(json.dumps(profile, indent=2) + "\n")
     runner = [HERE / n for n in ("startup-mac.py", "startup-stack.sh", "startup-read.clj", "startup-gate.ts")]
     runner += [REPO / p for p in json.loads(metafile.read_text())["inputs"]]
     inputs = {
-        "attempt": attempt, "mode": "jvm1-startup-read", "holder": "DX-JVM1", "timings": "diagnostic",
+        "attempt": attempt, "mode": "jvm1-startup-read", "holder": HOLDER, "timings": "diagnostic",
+        "subjectOwnerHead": OWNER_HEAD == "1", "imageTag": tag,
         "head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip(),
         "dirty": subprocess.check_output(["git", "status", "--porcelain"], cwd=REPO, text=True).splitlines(),
         "stage": {str(p.relative_to(root)): sha(p) for p in sorted(root.rglob("*")) if p.is_file() and p != slots},
@@ -106,6 +115,11 @@ def summarize(out):
         # step must show is that it selected exactly the owners the traffic before the restart saved.
         "selectedExactlyTheActiveSet": all(read[r]["owners"]["selected"] == today["activeSet"]["saves"] for r in ("tx", "gw-w")),
     }
+    inputs = json.loads((out / "inputs.json").read_text())
+    if inputs.get("subjectOwnerHead"):
+        checks["coveringWriterSavedEveryPostSave"] = all(arm["ownerHeadSaves"] == arm["saves"] for arm in (today, warm))
+    elif "ownerHeadSaves" in today:
+        checks["noCoveringWriterSave"] = today["ownerHeadSaves"] == warm["ownerHeadSaves"] == 0
     summary = {"log": log.name, "logSha256": sha(log), "events": events, "checks": checks, "pass": all(checks.values()),
                "timings": "diagnostic"}
     with (out / "summary.json").open("x") as file:

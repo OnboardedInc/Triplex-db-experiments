@@ -164,6 +164,9 @@ async function post() {
   console.log("JVM1_STARTUP_POST " + JSON.stringify({ attempt, arm, db: w.db, saves: out.rows.length, exact,
     activeSet: group(true), control: group(false),
     firstWindowSqlPerSave: firstWindow.reduce((a, b) => a + b, 0) / firstWindow.length,
+    // [DX-THIN1] Why: the combined check runs this gate with the covering owner head and must see the covering writer save.
+    // Rejected: trusting the requested setting without a per-save witness.
+    ownerHeadSaves: out.rows.filter((r) => (r.stage as { subjectOwnerHeadBytes?: number })?.subjectOwnerHeadBytes).length,
     timings: "diagnostic" }));
 }
 

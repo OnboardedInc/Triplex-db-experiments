@@ -8,6 +8,10 @@ cd /opt/datomic
 export PREP1_ATTEMPT=$(cat /config/attempt)
 export TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_PREFETCH=0 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_NARROW_REVISION=0
 export TX2_SUBJECT_REUSE_PREDECESSOR=0 TX2_SUBJECT_APPEND_RETIREMENT=0 PREP1_LOOKUP_EVERY=0
+# [DX-THIN1] Why: the combined check runs the same restart with the covering owner head on; default off.
+# Rejected: a second entry script for the combination.
+export TX2_SUBJECT_OWNER_HEAD=$(cat /config/subject-head 2>/dev/null || printf 0)
+[[ $TX2_SUBJECT_OWNER_HEAD == 0 || $TX2_SUBJECT_OWNER_HEAD == 1 ]]
 export TX2_WRITE_OPTIONS_ATTEMPT="$PREP1_ATTEMPT" TX2_LEAN_NATIVE_QUERY=1 TX2_LEAN_NATIVE_LOG=1 TX2_SAVE_LEDGER=0 TX2_SMALL_ROWS=0
 work=$(mktemp -d)
 chmod 755 "$work"
