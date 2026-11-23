@@ -855,7 +855,7 @@ def evaluate_indexed(w, rel, basis_tx, v):
         if sd is None:
             entry(pid, fid, 0, txs)
             continue
-        bucket = int(hashlib.sha256((S + '\n' + pid).encode('utf-8')).hexdigest()[:8], 16) % 1000
+        bucket = int(hashlib.sha256(S.encode('utf-8')).hexdigest()[:8], 16) % 1000
         if bucket >= permille:
             entry(pid, fid, 1, txs)
             continue

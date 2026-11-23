@@ -31,7 +31,11 @@ export const shapeName = (s: ReleaseShape) =>
   "f" + s.forms + "-p" + s.policies + "-m" + s.permille + "-x" + s.fields;
 
 const pad = (n: number) => String(n).padStart(3, "0");
-/** The base document plus `forms` forms and `policies` policies; policy k makes subjects owe form k and sends a notice. */
+/**
+ * The base document plus `forms` forms and `policies` policies; policy k makes a subject owe form k and sends a notice
+ * when the subject's bucket is below `permille`. Buckets depend on the subject only, so `permille` is the share of
+ * subjects affected and each affected subject owes all `policies` forms.
+ */
 export function largeRelease(base: W0.ReleaseDoc, shape: ReleaseShape): W0.ReleaseDoc {
   assert(!base.forms && !base.policies);
   const forms = Array.from({ length: shape.forms }, (_, k) => ({

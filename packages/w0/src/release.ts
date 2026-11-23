@@ -56,7 +56,7 @@ export interface FormDoc {
 export interface PolicyDoc {
   readonly id: string;
   readonly form: string;
-  /** subjects owe the form when their bucket (0 to 999, from SHA-256 of subject and policy id) is below this */
+  /** subjects owe the form when their bucket (0 to 999, from SHA-256 of the subject id) is below this */
   readonly permille: number;
   readonly notice: boolean;
 }
