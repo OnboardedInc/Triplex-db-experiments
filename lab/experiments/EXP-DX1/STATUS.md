@@ -4927,3 +4927,20 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Fix builder** (`OPUS-W1-ownerhead-summary-fix.md`, branch `exp/DX-W1-ownerhead-fix` from INT1, due 19:45): summarizer skips and counts other event kinds; the three sampler errors explained from the evidence and reclassified only if the evidence proves a sampler defect.
 - **Orders:** server 2 holds its 1 billion owner head pair for the fixed commit; its old demo rerun (`99539fdb9`) is cancelled and replaced by the console proving run when published. The second machine goes on to Publish at 100,000 (small release up to 87 minutes, then the 20 forms and 20 policies release, about 40), then the start-up read at 1 billion if the clock allows; the start-up read on the fresh database is dropped for time.
 - **Running (5):** two drivers, console builders A and B, the owner head fix builder.
+
+### 2026-11-23 18:06 local: `server-32` card at 1 billion assembled (Saturday's tape): cache lifts 394 from 249 to 331 saves/s, per-save credits lift it to 394 (5 agents running)
+
+- **Server 2, `origin/exp/DX-INT1` `0d9693de0`; `origin/exp/DX-SCALE1-deep-accounts` `1b89eb4cd` (`scale1/V01-AGED-S32.md`); assembled 22:58:41 UTC; evidence `evidence/DX-SCALE1/s32-card/s32-card.tar.gz`.**
+- **Part 1 (reference tape, no readers):** 1,260 of 1,260; p50/p90/p99 6.34 / 12.03 / 19.58 ms.
+- **Stored saves/s in the window at 1 billion, Saturday's tape, 90 s cells:**
+
+  | Offered/s | 16 GiB, whole-turn credits (afternoon) | 32 GiB, whole-turn credits (part 3) | 32 GiB, per-save credits (part 2) |
+  | ---: | --- | --- | --- |
+  | 50 | 50.00, p99 60.67 ms, quiet 50.17 ms | 50.00, p99 87.04 ms, quiet 56.32 ms | 50.00, p99 57.34 ms, quiet 43.52 ms |
+  | 235 | 235.00, p99 3,817 ms, quiet 162.81 ms | 235.00, p99 8,782 ms, quiet 102.40 ms | 235.00, p99 4,588 ms, quiet 57.09 ms |
+  | 394 | 249.41, 5,523 expired, quiet 87.55 ms | 331.03, 0 expired in window (5,667 stored after), quiet 71.17 ms | 394.00, 0 expired, p99 11,010 ms, quiet 34.81 ms |
+  | 620 | 239.32, 26,565 expired, quiet 106.50 ms | 238.61, 23,607 expired, quiet 94.21 ms | 302.61, 16,721 expired, quiet 47.62 ms |
+
+- **Reading:** the cache alone gives +33% at 394 and nothing at 620; per-save credits give a further +19% at 394 and +27% at 620 and cut the quiet account's loaded p99 by half or more in every cell. Part 3's 620 cell (238.61) was below its predicted 300 to 560. Falsifier 3 (whole-turn within 5% of per-save) did not fire.
+- **Card lines not met:** P1 at 256 seats (checked field read p99 12,255 ms, 0 errors from 1 to 256 seats; reader unchanged in this card); P6 rows PARTIAL because the card wants 500 verified commits per side and the 90 s cells give fewer.
+- **Server 2 next:** tuned pinned arm (`64c70e549`), then the production-S card at 1 billion.
