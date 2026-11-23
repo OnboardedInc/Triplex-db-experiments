@@ -26,6 +26,31 @@
 
 Evidence: `evidence/DX-BM1/bench4/bench4-production-aged2/` on the Mac (all three arms, `tape-report.json`, `postgres.log`, `pg-sampler.log`).
 
+## Fresh template, shape S alone, REAL2 `092a76916` (`production-s`): one commit per save is the cheap shape
+
+**One commit per form save, 23.1 commits/s carrying the same facts as 394 rows/s, held a 41.5 ms second-half p99 at 0.40 late reads per commit.** Every falsifier for S stayed clear. The run went from 22:16:29 to 22:32:28 UTC on one 16 GiB stack, rolling 6. The dry run was ADMITTED, with 0 expiries and 0 missing ACKs.
+
+| S at 394 (fresh, 16 GiB) | Forecast | Measured |
+| --- | --- | ---: |
+| Commits/s | 23.1, no expiries | 23.06 busy (26.56 with quiet), 0 expired |
+| Whole / second-half busy p99 | 50 ms (25–200) / 40 (20–120) | 42.0 / 41.5 ms |
+| Save completion p99 | 40 ms (20–120) | 42.8 ms |
+| Quiet loaded / solo p99 | 35 ms (25–60) | 24.0 / 32.3 ms |
+| Reads/commit first 60 s / from 150 s | 1.0 (0.5–6) / 0.4 (0.05–2.5) | 1.44 / 0.40 (per-person 0.27, general 0.48) |
+| Apply slope per fact | under 0.15 ms | about 0.060 ms (0.39 ms at 1.3 facts → 5.32 ms at 83.5) |
+| Commits by writer, per-person / general | | 2,245 / 4,683; 85 general-identity (1.2%) |
+
+**R against S on the fresh copy:**
+
+| Shape | Commits/s | Second-half p99 | Save completion p99 | Late reads |
+| --- | ---: | ---: | ---: | --- |
+| R | 393 | 157 ms | 237 ms | 0.034/commit, about 0.58 per save |
+| S | 23 | 41.5 ms | 42.8 ms | 0.40 per save |
+
+One commit per save finishes a form save about 5.5× sooner at the p99, for the same facts.
+
+**Autovacuum ran here too:** 63 of 67 samples, with 294 MB of WAL in 11 minutes, on this copy's first vacuum of `datomic_kvs`. Evidence: `evidence/DX-BM1/bench4/bench4-production-s/` on the Mac.
+
 ## Repaired launch at REAL2 `832a7e0c6`: R measured, S stopped at its first loaded commit
 
 **With production locality, one commit per form row stored 393 rows/s at 394 offered, with a 163 ms whole-window p99 and a 238 ms save-completion p99.** Saturday's tape at the same rate and cache took seconds. The run began at 19:40:17 UTC and stopped at 20:16:39 UTC. Its stack-level dry run was ADMITTED, and every check before the first offer passed: `up.sh`, `tail-pg.sh` settings, the counter observer, write options, the read of every person's seeded fields (`seed-readback.json`) and the counters-ready handshake. Arm `1-prodR-S` completed all four cells with 0 expiries and 0 missing ACKs.
