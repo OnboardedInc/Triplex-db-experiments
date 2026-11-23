@@ -2,7 +2,8 @@
 ;; Rejected: a hand-written copy of AGE1's row rules as the only oracle.
 (ns aged-gate
   (:require [clojure.data.json :as json]
-            [triplex.age.tape :as tape])
+            [triplex.age.tape :as tape]
+            [triplex.gateway.selftest :as fixture])
   (:import [java.security MessageDigest]
            [java.util HexFormat]))
 
@@ -40,5 +41,10 @@
                    {:account (:account s) :person (:local s)
                     :rows (mapv #(select-keys % [:id :entity_id :attribute :value_string :recorded_position :tx_id])
                                 (tape/expected-adopted pop i saves))}))]
-    (spit out (json/write-str {:people people :active active :seedHead seed-head :saves saves :owners owners}))
+    ;; The journal texts of the last save, encoded by the same fixture encoder AGE1's loader used for every save.
+    (let [last-command (tape/command pop (dec saves))]
+      (spit out (json/write-str {:people people :active active :seedHead seed-head :saves saves :owners owners
+                                 :lastJournal {:tx (:tx last-command) :operation (:operation last-command)
+                                               :position (:position last-command) :clock (:clock last-command)
+                                               :texts (mapv fixture/row-text (:journal last-command))}})))
     (println "aged-gate rows" (count owners))))

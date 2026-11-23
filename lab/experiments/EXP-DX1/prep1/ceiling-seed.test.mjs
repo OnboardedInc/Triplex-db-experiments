@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import test from "node:test";
-import { encodeRowText } from "../../../../packages/datomic/dist/rowText.js";
+import { decodeRowText, encodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import { fieldValue } from "../../../bench/lib/deep-world.ts";
 import { agedCut, scaleOwner, scalePredecessors, scaleSeed } from "./ceiling-seed.ts";
 import { gzipSync } from "node:zlib";
@@ -145,13 +145,24 @@ const agedOwners = [
   { account: 2, person: 14, i: 32, n: 32 + active },          // j = 3, edited at offsets 32 and 200,032
   { account: 4, person: 99_998, i: active + 4, n: 399_000 },  // probe person, edited at a probe offset
 ];
-function agedPeer({ badValue, badId, notNewest, badLast, staleHead } = {}) {
-  const last = encodeRowText({ ...row("last", "_tx/T" + pad25(tapeSaves - 1), ":_tx/command-id",
-    badLast ? "age-save-1" : "age-save-" + (tapeSaves - 1)), recorded_position: agedHead, recorded_at: lastClock });
+const lastTx = "_tx/T" + pad25(tapeSaves - 1);
+function lastJournal({ badLast, canonical, badPayload, foreignRow } = {}) {
+  const j = (n, attribute, value, extra = {}) => ({ ...row("B" + pad25((tapeSaves - 1) * 16 + n), lastTx, attribute, value),
+    recorded_position: agedHead, recorded_at: lastClock, tx_id: foreignRow && n === 6 ? "_tx/other" : lastTx, ...extra });
+  const position = encodeRowText(j(3, ":_tx/position", null, { value_type: "number", value_string: null, value_number: agedHead }));
+  // AGE1's fixture encoder: "-" marker and the position as a number (JVM spelling), where the product writes "P" and null.
+  const aged = position.replace('P["', '-["')
+    .replace('"number",null,null,', `"number",null,${badPayload ? agedHead + 1 : agedHead + ".0"},`);
+  return [canonical ? position : aged,
+    encodeRowText(j(4, ":_tx/instant", null, { value_type: "datetime", value_string: null, value_datetime: lastClock })),
+    encodeRowText(j(6, ":_tx/command-id", badLast ? "age-save-1" : "age-save-" + (tapeSaves - 1)))];
+}
+function agedPeer({ badValue, badId, notNewest, badLast, staleHead, canonical, badPayload, foreignRow } = {}) {
+  const last = lastJournal({ badLast, canonical, badPayload, foreignRow });
   return {
     request: async (_m, _p, { after }) => after === cut - 1 ? { transactions: [[tx, cut, [journal]]] }
-      : { transactions: [["_tx/T" + pad25(tapeSaves - 1), staleHead ? agedHead - 1 : agedHead, [last]],
-        ...(notNewest ? [["_tx/later", agedHead + 1, [last]]] : [])] },
+      : { transactions: [["_tx/T" + pad25(tapeSaves - 1), staleHead ? agedHead - 1 : agedHead, last],
+        ...(notNewest ? [["_tx/later", agedHead + 1, last]] : [])] },
     claim: async (_db, command) => command === "age-save-" + (tapeSaves - 1) ? "_tx/T" + pad25(tapeSaves - 1) : tx,
     rows: async (_db, { entityIds, pattern: { attribute }, basis }) => entityIds.map((entity) => {
       if (attribute === ":subject/account") {
@@ -179,7 +190,11 @@ test("aged cut reads the sealed loader claim, AGE1's last save and exact replaye
   const { fields, proof } = await scalePredecessors(agedPeer(), agedSeed, targets);
   assert.deepEqual([proof.members, proof.position, proof.aged.position, proof.aged.rows], [40, cut, agedHead, 3]);
   assert.equal(fields.size, 3);
-  for (const mismatch of [{ badValue: true }, { badId: true }, { notNewest: true }, { badLast: true }, { staleHead: true }])
+  // The SDK decoder refuses AGE1's position row; this is the refusal seen on the server.
+  assert.throws(() => decodeRowText(lastJournal()[0]), /Journal position payload must be null/);
+  await scalePredecessors(agedPeer({ canonical: true }), agedSeed, targets);
+  for (const mismatch of [{ badValue: true }, { badId: true }, { notNewest: true }, { badLast: true }, { staleHead: true },
+    { badPayload: true }, { foreignRow: true }])
     await assert.rejects(scalePredecessors(agedPeer(mismatch), agedSeed, targets));
   // The fresh seed's checks still refuse a row written after cut 87,002.
   await assert.rejects(scalePredecessors(agedPeer(), { ...seed, head: agedHead }, targets));
