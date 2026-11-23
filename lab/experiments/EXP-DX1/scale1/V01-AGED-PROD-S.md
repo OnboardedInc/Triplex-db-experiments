@@ -2,6 +2,8 @@
 
 Build `090c189a8` (`exp/DX-INT1`; the document `v01/PRODUCTION-CARD.md` is published at `61a794c1d`, which changes only documents). `scorecard.mjs --tape production-S --age 1B --profile server-32 --credit-mode rolling6 --window-seconds 90` with the aged bundle `faab1bc5…`, three parts plus assembly, each part on its own scratch copy. Dry run of part 2 to its first offer first.
 
+**Dry run of part 2, 23:11–23:16 UTC:** build `090c189a8` (2 min 56 s), scratch copy 133 s, then `DX-DRY-RUN first offer reached: scorecard arm 2 headline/loaded lab/experiments/EXP-DX1/v01/adopted-server.ts:170`. The timed card (parts 1–3 and assembly, `/var/tmp/v01-1b-prodS-s32`) started at 23:16:37 UTC.
+
 ## Predictions and falsifiers, copied from the builder's document before launch
 
 
