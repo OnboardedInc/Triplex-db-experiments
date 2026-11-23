@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { checkScorecard, writeScorecard } from "./scorecard.mjs";
+import { checkScorecard, peerCommand, writeScorecard } from "./scorecard.mjs";
 
 const sha = (x) => createHash("sha256").update(x).digest("hex");
 
@@ -44,4 +44,21 @@ test("the handoff binds the exact seal, restore, attempt and two replay ledgers"
   fs.writeFileSync(state + ".population.edn", "population");
   fs.writeFileSync(path.join(directory, "restore-readback.log"), event({ event: "restore-readback", t: t - 1, head }));
   assert.throws(call, /digest differs/);
+});
+
+// [DX-INT1] Why: the fresh peer must resolve the transactor's container name, so it runs on the stack's network.
+test("the fresh peer runs the same java command on the stack network, read-only, or on the host when unset", () => {
+  const args = ["-Xmx1g", "-cp", "x", "clojure.main", "-m", "triplex.age.scorecard"];
+  assert.deepEqual(peerCommand("/jdk/bin/java", args, "/tmp/s/state.edn", "a", {}), ["/jdk/bin/java", args]);
+  const env = { AGE_PEER_DOCKER_NETWORK: "tx2-dxscale1-v01-0123456789ab-net", AGE_PEER_DOCKER_IMAGE: "sha256:" + "a".repeat(64),
+    AGE_DATOMIC_HOME: "/opt/datomic-pro", DATOMIC_URI_TEMPLATE: "datomic:sql://{db}?jdbc:postgresql://10.0.0.2:5432/datomic" };
+  const [command, argv] = peerCommand("/jdk/bin/java", args, "/tmp/s/state.edn", "a", env);
+  assert.equal(command, "docker");
+  assert.deepEqual(argv.slice(argv.indexOf("--entrypoint")), ["--entrypoint", "java", env.AGE_PEER_DOCKER_IMAGE, ...args]);
+  assert(argv.includes("--network") && argv[argv.indexOf("--network") + 1] === env.AGE_PEER_DOCKER_NETWORK);
+  const mounts = argv.filter((a, i) => argv[i - 1] === "--mount");
+  assert(mounts.length === 5 && mounts.every((m) => m.endsWith(",readonly")));
+  assert(mounts.includes("type=bind,source=/tmp/s,target=/tmp/s,readonly"));
+  assert(argv.includes("DATOMIC_URI_TEMPLATE=" + env.DATOMIC_URI_TEMPLATE) && argv.includes("AGE_ATTEMPT=a"));
+  assert.throws(() => peerCommand("j", args, "/tmp/s/x", "a", { AGE_PEER_DOCKER_NETWORK: "n" }), /or neither/);
 });

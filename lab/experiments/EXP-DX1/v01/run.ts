@@ -93,8 +93,9 @@ if (arm !== undefined) {
   const sequence = existingSequence(campaign);
   if (sequence) assert.equal(sequence.input.source, source, "Sequential campaign source changed");
   spent = sequenceProgress(campaign, sequence, arm).elapsed;
-  if (arm === 1 && !sequence) {
-    if (fs.existsSync(out)) assert(fs.readdirSync(out).every(name => /^arm-1-[a-f0-9-]{36}\.log$/.test(name)),
+  // [DX-INT1] A dry run may start any part in its own new output directory (sequential.ts sequenceProgress).
+  if ((arm === 1 || process.env.DX_DRY_RUN_FIRST_OFFER === "1") && !sequence) {
+    if (fs.existsSync(out)) assert(fs.readdirSync(out).every(name => new RegExp(`^arm-${arm}-[a-f0-9-]{36}\\.log$`).test(name)),
       "Use a new output directory for sequential staging");
     else fs.mkdirSync(out, { mode: 0o700 });
   }
@@ -125,6 +126,8 @@ const exit = await new Promise<string>((done) => {
 process.removeListener("SIGINT", stop); process.removeListener("SIGTERM", stop);
 if (arm !== undefined) {
   if (exit) {
+    // [DX-INT1] The first-offer dry run reads the launcher's own output; the arm writes it to its log.
+    if (process.env.DX_DRY_RUN_FIRST_OFFER === "1") process.stdout.write(fs.readFileSync(log));
     console.error(`Arm ${arm} stopped. See ${log}`);
     process.exit(1);
   }

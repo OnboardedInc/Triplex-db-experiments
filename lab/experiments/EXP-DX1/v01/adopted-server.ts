@@ -12,12 +12,12 @@ import { openScaleSeal, hex, type AdoptedSeed } from "./adopt.ts";
 import { timeBudget, defaultWriter, physicalArms, writeDiagnostics, jvmProfiles, serverStages, stackOptions, type JvmProfile } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
 import { claimPgdata, inspectPgdata, pgdataArgs, pgdataTarget, preflightWal, sealedPgdata } from "./pgdata.ts";
-import { openSequence, startSequentialArm } from "./sequential.ts";
+import { openSequence, setAsideArm, startSequentialArm } from "./sequential.ts";
 
 import { parseWindow, parseCredits } from "./server-workload.ts";
 import { realSeed, proveRealistic } from "./realistic.ts";
 import { physicalTelemetry } from "./cell-telemetry.ts";
-import { firstOffer } from "../ha1/first-offer.ts";
+import { firstOffer, FirstOfferReached } from "../ha1/first-offer.ts";
 
 const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, requestedWriter, jvm, agedFile, agedPin,
   agedDump, agedDumpPin, txJvm, walDirectory, armText, startedText, forecast, windowText, creditText, writeJvm, pgdataSource, ...pgdataPaths] = process.argv.slice(2);
@@ -114,6 +114,7 @@ for (const [i, stage] of stages.entries()) {
   const slot = "tx2-dxscale1-v01-" + attempt.slice(0, 12);
   beginStack(out, slot, attempt);
   let verifiedLaunch = false;
+  let setAside: string | undefined;
   try {
     const options = { ...stackOptions(writer, attempt, diagnostics), DX_V01_CELL_COUNTERS: "1" };
     if (copy) claimPgdata(copy, source, slot, attempt);
@@ -151,12 +152,12 @@ for (const [i, stage] of stages.entries()) {
       const native = await proveRealistic(write, seed.realistic, engines["gw-w"]!.id);
       jsonFile(path.join(out, "realistic-live.json"), { at: Date.now(), source, slot, attempt, native, host: hex(fs.readFileSync("/etc/machine-id")), seal: seed.realisticBinding });
     }
-    const head = expected ? await verifyAged(expected, out, slot, attempt, engines.pg!.address) : seed.realistic?.proof.cut ?? seed.scope.cut;
+    const head = expected ? await verifyAged(expected, out, slot, attempt, engines.pg!.address, engines["gw-r"]!.image) : seed.realistic?.proof.cut ?? seed.scope.cut;
     assert(!stopping && Date.now() + 8 * 60_000 < stageEnd);
     verifiedLaunch = true;
     console.log(`[DX-V01] Verified live server startup for ${stage.name}/${loaded ? "loaded" : "zero"} before offers`);
     const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency, windowSeconds, creditMode: stage.policy.creditMode, serialApply: diagnostics.serialApply, telemetry: physicalTelemetry(out, engines) };
-    firstOffer("realistic-card " + path.basename(out));
+    firstOffer("scorecard arm " + (sequenceArm ?? i + 1) + " " + stage.name + "/" + path.basename(out));
     const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head, undefined, comparison);
     if (loaded && !stopping) {
       const quietEnd = comparison ? stageEnd : Math.min(headlineEnd - budget.P8 * minute, Date.now() + budget.P6 * minute);
@@ -169,10 +170,16 @@ for (const [i, stage] of stages.entries()) {
       if (!stopping && !comparison) await recordMixedIds(root, source, peer, seed, writer, after);
     }
   } catch (error) {
+    if (sequenceArm !== undefined && (!verifiedLaunch || error instanceof FirstOfferReached))
+      setAside = error instanceof FirstOfferReached ? "dry run stopped before the first offer" : "refused before the first offer";
     if (!verifiedLaunch) launchFailure(error);
     throw error;
   } finally {
     scaleHost.clean(out, slot);
+    if (setAside) {
+      const where = setAsideArm(campaign, sequenceArm!, out, attempt, setAside);
+      console.error(`[DX-V01] Arm ${sequenceArm} ${setAside}; its records are in ${where}. Rerun arm ${sequenceArm} on a fresh scratch copy.`);
+    }
   }
   if (sequenceArm !== undefined) assert(!stopping, "Sequential arm was interrupted");
 }
@@ -221,7 +228,7 @@ function openAged(file?: string, pin?: string) {
   return { file, pin, bundle };
 }
 
-async function verifyAged(expected: ReturnType<typeof openAged>, out: string, slot: string, attempt: string, postgres: string) {
+async function verifyAged(expected: ReturnType<typeof openAged>, out: string, slot: string, attempt: string, postgres: string, peerImage: string) {
   assert(process.env.AGE_JAVA && process.env.AGE_DATOMIC_HOME);
   // [DX-V01] Why: check the fresh peer against the exact aged replay bundle before touching the restored arm.
   // Rejected: treating the 1B label or the dump size as proof of age.
@@ -231,12 +238,17 @@ async function verifyAged(expected: ReturnType<typeof openAged>, out: string, sl
   sql.searchParams.set("user", "datomic");
   sql.searchParams.set("password", "datomic");
   process.env.DATOMIC_URI_TEMPLATE = "datomic:sql://{db}?jdbc:postgresql:" + sql.href.slice("postgresql:".length);
+  // [DX-INT1] The fresh peer runs on the stack's own network, from the read gateway's Java 21 image (age1/scorecard.mjs).
+  process.env.AGE_PEER_DOCKER_NETWORK = slot + "-net";
+  process.env.AGE_PEER_DOCKER_IMAGE = peerImage;
   try {
     const result = checkScorecard(expected.file, expected.pin);
     assert.equal(result.logicalHead, expected.bundle.logicalHead);
-    jsonFile(path.join(out, "aged-live-check.json"), { ...result, source, slot, attempt });
+    jsonFile(path.join(out, "aged-live-check.json"), { ...result, source, slot, attempt, peer: { network: slot + "-net", image: peerImage } });
     return result.logicalHead;
   } finally {
+    delete process.env.AGE_PEER_DOCKER_NETWORK;
+    delete process.env.AGE_PEER_DOCKER_IMAGE;
     if (original === undefined) delete process.env.DATOMIC_URI_TEMPLATE;
     else process.env.DATOMIC_URI_TEMPLATE = original;
   }

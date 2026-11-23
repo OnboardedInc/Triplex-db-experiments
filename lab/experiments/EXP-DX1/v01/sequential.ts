@@ -140,10 +140,15 @@ function readCompleted(campaign: string, sequence: Sequence, arm: number, verify
   return { ...invocation, ...completed };
 }
 
+// [DX-INT1] Why: the driver passes every part through its admission before the timed run, each in its own throwaway
+// campaign, so a dry run of part 2 or 3 does not need the earlier parts to have run.
+// Rejected: letting a dry run add to, or skip parts in, a real campaign (its records are set aside, see setAsideArm).
+const dryRun = () => process.env.DX_DRY_RUN_FIRST_OFFER === "1";
+
 export function sequenceProgress(campaign: string, sequence: Sequence | undefined, next?: number) {
   if (next !== undefined) armPaths(campaign, next);
-  assert(sequence || next === 1, "Start the sequential campaign with arm 1");
-  const previous = Array.from({ length: next === undefined ? physicalArms : next - 1 }, (_, i) =>
+  assert(sequence || next === 1 || (dryRun() && next !== undefined), "Start the sequential campaign with arm 1");
+  const previous = dryRun() && next !== undefined ? [] : Array.from({ length: next === undefined ? physicalArms : next - 1 }, (_, i) =>
     readCompleted(campaign, sequence!, i + 1, next === undefined));
   assert.equal(new Set(previous.map(record => record.attempt)).size, previous.length, "Arm attempt was reused");
   assert.equal(new Set(previous.map(record => record.slot)).size, previous.length, "Arm slot was reused");
@@ -168,6 +173,23 @@ export function startSequentialArm(campaign: string, sequence: Sequence, arm: nu
   write(armPaths(campaign, arm).start,
     { sequenceSha256: sha(fs.readFileSync(seqFile(campaign))), arm, startedAt, copy } satisfies Invocation);
   return progress;
+}
+
+// [DX-INT1] Why: a part refused before its first offer (or stopped there by a dry run) must not consume the campaign.
+// Its start record and its arm directory move to set-aside/ beside the campaign, so the same part can be claimed again
+// on a fresh scratch copy; completed parts are untouched. A part stopped after an offer keeps its records and is not
+// re-runnable in the same campaign.
+// Rejected: deleting the refused records, or re-running completed parts.
+export function setAsideArm(campaign: string, arm: number, armDirectory: string, attempt: string, reason: string) {
+  const loc = armPaths(campaign, arm);
+  assert(!fs.existsSync(loc.end), `Arm ${arm} already completed`);
+  assert(path.resolve(armDirectory).startsWith(path.resolve(campaign) + path.sep));
+  const destination = path.join(path.dirname(campaign), "set-aside", `arm-${arm}-${attempt}`);
+  fs.mkdirSync(destination, { recursive: true, mode: 0o700 });
+  if (fs.existsSync(loc.start)) fs.renameSync(loc.start, path.join(destination, path.basename(loc.start)));
+  if (fs.existsSync(armDirectory)) fs.renameSync(armDirectory, path.join(destination, "arm"));
+  write(path.join(destination, "set-aside.json"), { arm, attempt, reason, at: Date.now() });
+  return destination;
 }
 
 export function completeSequentialArm(campaign: string, sequence: Sequence, arm: number) {

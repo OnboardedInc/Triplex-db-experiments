@@ -6,7 +6,7 @@ import { test, type TestContext } from "node:test";
 import { launchProfile } from "../jvm1/launch.mjs";
 import { serverStages } from "./profile.ts";
 import { cellPath, serverCells } from "./server-workload.ts";
-import { assembleSequential, completeSequentialArm, openSequence, sequenceProgress, startSequentialArm, type SequenceConfig } from "./sequential.ts";
+import { assembleSequential, completeSequentialArm, openSequence, sequenceProgress, setAsideArm, startSequentialArm, type SequenceConfig } from "./sequential.ts";
 
 function fixture(t: TestContext) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "dx-v01-sequential-"));
@@ -103,4 +103,32 @@ test("expired budgets and reused attempts cannot become a complete campaign", (t
   const over = fixture(t);
   over.begin(1, 100);
   assert.throws(() => over.finish(1, { elapsed: 224 * 60_000 + 1 }), /active time budget/);
+});
+
+// [DX-INT1] Why: on 2026-11-23 a part refused after its claim consumed two 1B campaign directories.
+test("a part refused before its first offer is set aside and runs again without rerunning completed parts", (t) => {
+  const f = fixture(t);
+  f.begin(1, 100);
+  f.finish(1);
+  f.begin(2, 1_000);
+  const armDirectory = path.join(f.campaign, "loaded");
+  f.write("loaded/launch-check.json");
+  const where = setAsideArm(f.campaign, 2, armDirectory, "attempt-refused", "refused before the first offer");
+  assert(fs.existsSync(path.join(where, "arm", "launch-check.json")) && fs.existsSync(path.join(where, "arm-2-start.json")));
+  assert(!fs.existsSync(armDirectory));
+  assert.equal(f.begin(2, 2_000).elapsed, 10);
+  f.finish(2);
+  f.begin(3, 3_000);
+  f.finish(3);
+  assembleSequential(f.campaign, f.source);
+  assert.throws(() => setAsideArm(f.campaign, 1, path.join(f.campaign, "zero"), "x", "late"), /already completed/);
+});
+
+test("a dry run may start a later part in its own campaign, and only in a dry run", (t) => {
+  const f = fixture(t);
+  assert.throws(() => sequenceProgress(f.campaign, undefined, 3), /Start the sequential campaign with arm 1/);
+  process.env.DX_DRY_RUN_FIRST_OFFER = "1";
+  t.after(() => { delete process.env.DX_DRY_RUN_FIRST_OFFER; });
+  assert.deepEqual(sequenceProgress(f.campaign, undefined, 3), { previous: [], elapsed: 0 });
+  assert.equal(f.begin(3, 100).elapsed, 0);
 });

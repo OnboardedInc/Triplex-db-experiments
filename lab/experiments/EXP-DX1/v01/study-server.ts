@@ -123,7 +123,7 @@ for (const loaded of [false, true]) {
     const jw = readScaleJvms(path.join(out, "restored-jvm"), engines, policy);
     const health = await (await fetch(new URL("/health", write), { signal: AbortSignal.timeout(2000) })).json() as any;
     assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
-    const head = expected ? await verifyAged(expected, out, engines.pg!.address) : seed.scope.cut;
+    const head = expected ? await verifyAged(expected, out, engines.pg!.address, slot, engines["gw-r"]!.image) : seed.scope.cut;
     assert(!stopping && Date.now() + 8 * 60_000 < end);
     const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw,
       creditMode: policy.creditMode, serialApply: diagnostics.serialApply, empty, residency };
@@ -216,7 +216,7 @@ function openAged(label: Age, file?: string, pin?: string, dump?: string, dumpPi
   return { file, pin, dump, dumpPin, bundle };
 }
 
-async function verifyAged(expected: ReturnType<typeof openAged>, out: string, postgres: string) {
+async function verifyAged(expected: ReturnType<typeof openAged>, out: string, postgres: string, slot: string, peerImage: string) {
   assert(process.env.AGE_JAVA && process.env.AGE_DATOMIC_HOME);
   // [DX-V01] Why: check the fresh peer against the exact aged replay bundle before touching the restored arm.
   // Rejected: treating the 1B label or the dump size as proof of age.
@@ -226,12 +226,17 @@ async function verifyAged(expected: ReturnType<typeof openAged>, out: string, po
   sql.searchParams.set("user", "datomic");
   sql.searchParams.set("password", "datomic");
   process.env.DATOMIC_URI_TEMPLATE = "datomic:sql://{db}?jdbc:postgresql:" + sql.href.slice("postgresql:".length);
+  // [DX-INT1] The fresh peer runs on the stack's own network (age1/scorecard.mjs peerCommand).
+  process.env.AGE_PEER_DOCKER_NETWORK = slot + "-net";
+  process.env.AGE_PEER_DOCKER_IMAGE = peerImage;
   try {
     const result = checkScorecard(expected.file, expected.pin);
     assert.equal(result.logicalHead, expected.bundle.logicalHead);
     jsonFile(path.join(out, "aged-live-check.json"), result);
     return result.logicalHead;
   } finally {
+    delete process.env.AGE_PEER_DOCKER_NETWORK;
+    delete process.env.AGE_PEER_DOCKER_IMAGE;
     if (original === undefined) delete process.env.DATOMIC_URI_TEMPLATE;
     else process.env.DATOMIC_URI_TEMPLATE = original;
   }
