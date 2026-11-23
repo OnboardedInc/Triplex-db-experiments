@@ -55,7 +55,15 @@ type ImportFrame = {
   facts: Fact[];
   input: ReturnType<typeof command>;
 };
+type FrameStage = {
+  transactMicros?: number;
+  nativeComputeMs?: number;
+  nativeIoStats?: unknown;
+  timeline?: Record<string, number>;
+  datoms?: number;
+};
 type Imported = Parameters<FairImport["send"]>[0] & {
+  stage?: FrameStage;
   index: number;
   receipt: Receipt;
   holdMs: number;
@@ -321,6 +329,21 @@ async function arm(
     const end = start + seconds * 1000;
     const following = feeder(journal, db, head, end + 120_000, () => terminal, true);
     void following.catch(() => {});
+    // [DX-LOAD2] Why: keep each frame's own gateway and native timings (apply, I/O counters) beside its receipt,
+    // so a frame's apply can be read against the time since the last index adoption.
+    // Rejected: a second request per frame, or deriving frame reads from timing alone as on 2026-11-21.
+    const stages = new Map<string, FrameStage>();
+    {
+      const transact = bulk.transact.bind(bulk);
+      bulk.transact = async (...args) => {
+        const ack = (await transact(...args)) as FrameStage & { operationId?: string };
+        if (typeof ack?.operationId === "string") {
+          const { transactMicros, nativeComputeMs, nativeIoStats, timeline, datoms } = ack;
+          stages.set(ack.operationId, { transactMicros, nativeComputeMs, nativeIoStats, timeline, datoms });
+        }
+        return ack as Awaited<ReturnType<typeof transact>>;
+      };
+    }
     if (toy && cell === "import") {
       const transact = bulk.transact.bind(bulk);
       bulk.transact = async (...args) => {
@@ -345,7 +368,9 @@ async function arm(
           assert.equal(receipt.operationId, frame.input.operationId);
           assert.equal(receipt.txId, frame.input.claims[0]!.txId);
           assert(receipt.position > head);
-          imported.push({ ...grant, index: frame.index, receipt, holdMs: now() - grant.at });
+          const stage = stages.get(frame.input.operationId);
+          stages.delete(frame.input.operationId);
+          imported.push({ ...grant, index: frame.index, receipt, holdMs: now() - grant.at, ...(stage ? { stage } : {}) });
         } finally {
           active--;
         }
@@ -404,6 +429,7 @@ async function arm(
     }
     // [DX-LOAD2] Why: prove from the grants themselves that no frame was admitted beside a waiting live save.
     if (yieldToLive) assert(imported.every((f) => f.liveQueued === 0), "Import admitted beside waiting live saves");
+    const framesWithStage = imported.filter((f) => f.stage?.transactMicros !== undefined).length;
     // [DX-LOAD2] Why: a toy gate passes only if it exercised both the yield and the grant path.
     if (toy && yieldToLive && cell === "import")
       assert((producer.yieldedChecks ?? 0) > 0, "The toy live tape never made the importer yield");
@@ -461,6 +487,7 @@ async function arm(
       yieldToLive,
       yieldedChecks: producer.yieldedChecks ?? 0,
       importGrantsBesideLiveQueue: imported.filter((f) => f.liveQueued > 0).length,
+      framesWithStage,
       cell,
       start,
       end,

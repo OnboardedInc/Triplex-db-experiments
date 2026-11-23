@@ -2,11 +2,13 @@
 
 Usage: python3 -I neighbours_reading.py SUMMARY_DIR RAW_DIR [MODE ...]
 SUMMARY_DIR and RAW_DIR are the extracted summary.tar.zst and raw.tar.zst of a fair-import run
-(each holds result/). Prints the four tables used in NEIGHBOURS-SERVER.md. Standard library only.
+(each holds result/). Prints the tables used in NEIGHBOURS-SERVER.md, the transactor's ZGC allocation stalls and safepoints when
+prep1-gc-tx.log is present, and frames' own SQL reads when the run recorded frame stages. Standard library only.
 """
 import bisect
-import collections
+import datetime
 import glob
+import re
 import json
 import os
 import statistics
@@ -59,14 +61,43 @@ def cell(summary, raw, mode, name):
     with open(os.path.join(raw, f"result/{mode}-{name}-raw.json")) as f:
         data = json.load(f)
     with open(os.path.join(summary, f"result/{mode}-{name}.json")) as f:
-        start = json.load(f)["start"]
-    return data, start
+        meta = json.load(f)
+    data["width"] = meta.get("width", 32)
+    return data, meta["start"]
+
+
+def pauses(summary, raw):
+    """[DX-LOAD2] Transactor ZGC allocation stalls and safepoints from the stack's own -Xlog file.
+
+    The server stack already writes gc*,safepoint*=debug to prep1-gc-tx.log; the 2026-11-21 reading missed it."""
+    found = glob.glob(os.path.join(summary, "result/engines/*/trace/raw/prep1-gc-tx.log")) + \
+        glob.glob(os.path.join(raw, "result/engines/*/trace/raw/prep1-gc-tx.log"))
+    if not found:
+        return None
+    stalls, safepoints = [], []
+    with open(found[0]) as f:
+        for line in f:
+            m = re.match(r"\[(\d{4}-\d\d-\d\dT[\d:.]+)\+0000\]", line)
+            if not m:
+                continue
+            at = datetime.datetime.fromisoformat(m.group(1)).replace(tzinfo=datetime.timezone.utc).timestamp() * 1000
+            a = re.search(r"Allocation Stall \(([^)]*)\) ([\d.]+)ms", line)
+            if a:
+                thread = a.group(1)
+                kind = ("writer" if thread.startswith("processor-") else "log" if thread.startswith("log-")
+                        else "indexer" if thread.startswith("indexer") else "other")
+                stalls.append((at, kind, float(a.group(2))))
+            t = re.search(r'Safepoint "(\w+)".*Total: (\d+) ns', line)
+            if t:
+                safepoints.append((at, t.group(1), int(t.group(2)) / 1e6))
+    return stalls, safepoints
 
 
 def main():
     summary, raw = sys.argv[1], sys.argv[2]
     modes = sys.argv[3:] or ["rolling6", "barrier6"]
     adoptions, cpu, native = load(summary, raw)
+    gc = pauses(summary, raw)
 
     def since(t):
         i = bisect.bisect_right(adoptions, t) - 1
@@ -111,7 +142,7 @@ def main():
                 frames = [f for f in data["imported"] if s0 <= f["at"] < s1]
                 if frames:
                     n = [native[int(f["receipt"]["t"])] for f in frames]
-                    print(f"  frames {len(frames)} ({len(frames) * 32 / 150:.0f} facts/s at 32): hold mean "
+                    print(f"  frames {len(frames)} ({len(frames) * data['width'] / 150:.0f} facts/s at {data['width']}): hold mean "
                           f"{mean([f['holdMs'] for f in frames]):.2f} ms, apply mean {mean([x['applied'] - x['start'] for x in n]):.2f} "
                           f"p99 {pct([x['applied'] - x['start'] for x in n], .99):.2f} ms, datoms {mean([x['datoms'] for x in n]):.0f}")
             print("  apply by time since the last index adoption (whole window):")
@@ -141,8 +172,32 @@ def main():
                         continue
                     a, lg = x["applied"] - x["start"], x["logEnd"] - x["logStart"]
                     if a >= 100 or lg >= 100:
+                        overlap = ""
+                        if gc:
+                            near = [(k, ms) for at, k, ms in gc[0]
+                                    if x["start"] - 50 <= at <= max(x["applied"], x["logEnd"]) + 50 and ms >= 20]
+                            overlap = " | allocation stalls ending inside: " + (
+                                ", ".join(f"{k} {ms:.0f} ms" for k, ms in near) if near else "none")
                         print(f"    {(x['start'] - start) / 1000:7.2f} s {kind.get(t, '?'):5s} apply {a:6.1f} log {lg:6.1f} "
-                              f"after adoption {since(x['start']) / 1000:5.2f} s")
+                              f"after adoption {since(x['start']) / 1000:5.2f} s{overlap}")
+            if gc:
+                s0, s1 = start, start + 300_000
+                cs = [(at, k, ms) for at, k, ms in gc[0] if s0 <= at < s1]
+                sp = [ms for at, _, ms in gc[1] if s0 <= at < s1]
+                w = [ms for _, k, ms in cs if k == "writer"]
+                print(f"  transactor ZGC allocation stalls: writer thread {len(w)} (total {sum(w):.0f} ms, max "
+                      f"{max(w or [0]):.0f}), any thread {len(cs)}; safepoints {len(sp)}, max {max(sp or [0]):.2f} ms")
+                for at, k, ms in cs:
+                    if k == "writer" and ms >= 20:
+                        print(f"    writer stall {ms:6.1f} ms ending at {(at - s0) / 1000:7.2f} s, {since(at) / 1000:5.2f} s after adoption")
+            frames = [f for f in data["imported"] if f.get("stage", {}).get("nativeIoStats")]
+            if frames:
+                print("  frames' own SQL reads by time since adoption:")
+                for lo, hi in [(0, 1), (1, 2), (2, 4), (4, 8), (8, 15), (15, None)]:
+                    g = [f for f in frames if lo * 1000 <= since(native[int(f["receipt"]["t"])]["start"])
+                         and (hi is None or since(native[int(f["receipt"]["t"])]["start"]) < hi * 1000)]
+                    reads = [f["stage"]["nativeIoStats"].get("reads", {}).get("sql", 0) for f in g]
+                    print(f"    {lo:>2}-{hi if hi else 'end':<3} s: frames {len(g):6d} SQL reads/frame {mean(reads):.2f}")
 
 
 if __name__ == "__main__":
