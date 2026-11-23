@@ -50,6 +50,7 @@ function initialValue(key: string, s: JsonSchema): unknown {
   if (key === "account") return "account-010";
   if (key === "subject") return 0;
   if (key === "attribute") return ":task/field-0";
+  if (key === "at") return new Date().toISOString().slice(0, 10);
   return undefined;
 }
 

@@ -10,7 +10,7 @@ import { DataTable, Mono } from "@/components/console/data-table";
 import { EmptyState, ErrorAlert, Slow, TableSkeleton } from "@/components/console/states";
 import { useTool } from "@/hooks/use-tool";
 import { useTools } from "@/lib/catalogue";
-import { day, n, shortId, time } from "@/lib/format";
+import { day, n, plural, shortId, time } from "@/lib/format";
 import type { Fact, FieldHistory, HistoryRow } from "@/lib/types";
 import type { Target } from "./model";
 
@@ -141,7 +141,7 @@ export function HistoryTab({
           />
           <p className="text-sm">
             {n(history.data.totalRows)} rows of <Mono>{history.data.attribute}</Mono>
-            {history.data.savesOfThisField !== undefined ? `, from ${n(history.data.savesOfThisField)} saves` : ""}. Showing {history.data.rowsShown}.
+            {history.data.savesOfThisField !== undefined ? `, from ${plural(history.data.savesOfThisField, "save")}` : ""}. Showing {history.data.rowsShown}.
           </p>
           {data.length > 0 && (
             <div className="rounded-md border p-3">
@@ -149,7 +149,7 @@ export function HistoryTab({
               <ChartContainer config={chartConfig} className="aspect-auto w-full" style={{ height: Math.min(360, 40 + data.length * 18) }}>
                 <BarChart data={data} layout="vertical" margin={{ left: 0, right: 16, top: 4, bottom: 4 }} barCategoryGap={2}>
                   <CartesianGrid horizontal={false} />
-                  <XAxis type="number" domain={[min, now]} scale="time" tickFormatter={(v) => day(v).slice(0, 7)} tickLine={false} fontSize={11} />
+                  <XAxis type="number" domain={[min, now]} scale="time" tickFormatter={(v) => (now - min < 200 * 86_400_000 ? day(v) : day(v).slice(0, 7))} tickLine={false} fontSize={11} />
                   <YAxis type="category" dataKey="i" hide />
                   <ChartTooltip
                     cursor={false}

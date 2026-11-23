@@ -40,6 +40,7 @@ page.on("pageerror", (e) => problems.push(`pageerror ${e}`));
 page.on("console", (m) => m.type() === "error" && !/status of 400/.test(m.text()) && problems.push(`console ${m.text()}`));
 let shot = 0;
 const snap = async (name, full = false) => {
+  await page.waitForTimeout(400); // let dialogs and sheets finish their opening animation
   const file = join(out, `${String(++shot).padStart(2, "0")}-${name}${dark ? "-dark" : ""}.png`);
   await page.screenshot({ path: file, fullPage: full });
   note("shot", file.split("/").pop());
@@ -193,7 +194,8 @@ try {
   await snap("history");
 
   // Step 7: the Journal open with Live on while the assistant adds an entity through MCP; then Changed since.
-  await page.goto(`${base}/journal`, { waitUntil: "networkidle" });
+  await page.goto(`${base}/journal`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector("[data-testid=answer-line]");
   const head = (await tool("database_summary", {})).head;
   const viaAssistant = await assistantCall("create_entity", {
     type: typeName,
@@ -213,7 +215,7 @@ try {
   // Step 8: move live back to the release it pointed to before step 4. The type leaves the list; its facts still read.
   await page.goto(`${base}/configuration`, { waitUntil: "networkidle" });
   await snap("configuration");
-  const row = page.getByRole("row").filter({ hasText: liveBefore.label });
+  const row = page.getByRole("row").filter({ hasText: liveBefore.id.slice(0, 15) }).first();
   await row.getByTestId("move-live").click();
   await page.getByTestId("confirm-move").click();
   await page.waitForSelector("[data-testid=moved]", { timeout: 30_000 });

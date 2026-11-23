@@ -123,7 +123,7 @@ export function FactsTab({
       <ResizablePanel defaultSize="30%" minSize="18%">
         <div className="flex h-full flex-col">
           <div className="text-muted-foreground border-b px-3 py-2 text-xs font-medium">
-            Entities <span className="tabular-nums">({tree.length ? n(facts.length ? new Set(facts.map((f) => f.entity)).size : 0) : 0})</span>
+            Entity tree <span className="tabular-nums">({n(new Set(facts.map((f) => f.entity)).size)} with facts at this basis)</span>
           </div>
           <ScrollArea className="h-[30rem] p-1">
             {tree.map((t) => (

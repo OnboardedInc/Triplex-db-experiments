@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import {
+  Command,
   CommandDialog,
   CommandEmpty,
   CommandGroup,
@@ -64,6 +65,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange} title="Search" description="Go to a subject, an entity, a type or a screen">
+      <Command>
       <CommandInput placeholder='Type "account-003 5", an entity ID, a type or a screen' value={search} onValueChange={setSearch} />
       <CommandList>
         <CommandEmpty>Nothing matches. Try "account-003 5" or an entity ID.</CommandEmpty>
@@ -161,6 +163,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
           </CommandItem>
         </CommandGroup>
       </CommandList>
+      </Command>
     </CommandDialog>
   );
 }
