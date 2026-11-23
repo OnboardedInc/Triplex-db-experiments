@@ -1,0 +1,230 @@
+{
+  "version": "triplex-demo-measured/1",
+  "note": "Recorded results, copied from the orchestrator's status entries of 2026-11-23 (origin/lane/d-native c6539d036, lab/experiments/EXP-DX1/STATUS.md). Not live. Bars from lab/TARGETS.md.",
+  "rows": [
+    {
+      "group": "1 billion scorecard (server profile, 16 GiB cache)",
+      "measure": "Saves at 3.5 offered (reference tape)",
+      "value": "1,260 of 1,260 stored; p50 5.86 ms, p99 20.35 ms",
+      "bar": "P2: p50 ≤ 10 ms, p99 ≤ 50 ms",
+      "verdict": "met",
+      "date": "2026-11-23",
+      "source": {
+        "branch": "origin/exp/DX-SCALE1-deep-accounts",
+        "commit": "182fb4482",
+        "file": "lab/experiments/EXP-DX1/scale1/V01-AGED.md"
+      },
+      "note": "Fresh database: 5.60 / 22.53 ms. Not run with P2's 256 readers."
+    },
+    {
+      "group": "1 billion scorecard (server profile, 16 GiB cache)",
+      "measure": "Saves at 50 offered",
+      "value": "50.00/s stored; p50 12.80 ms, p99 60.67 ms",
+      "bar": "P2: p50 ≤ 10 ms, p99 ≤ 50 ms",
+      "verdict": "not met",
+      "date": "2026-11-23",
+      "source": {
+        "branch": "origin/exp/DX-SCALE1-deep-accounts",
+        "commit": "182fb4482",
+        "file": "lab/experiments/EXP-DX1/scale1/V01-AGED.md"
+      },
+      "note": "Fresh: 9.73 / 118.78 ms."
+    },
+    {
+      "group": "1 billion scorecard (server profile, 16 GiB cache)",
+      "measure": "Saves at 235 offered",
+      "value": "235.00/s stored; p50 712.70 ms, p99 3,817.47 ms",
+      "bar": "P2: p50 ≤ 10 ms, p99 ≤ 50 ms",
+      "verdict": "not met",
+      "date": "2026-11-23",
+      "source": {
+        "branch": "origin/exp/DX-SCALE1-deep-accounts",
+        "commit": "182fb4482",
+        "file": "lab/experiments/EXP-DX1/scale1/V01-AGED.md"
+      },
+      "note": "Fresh: 47.10 / 2,392.06 ms."
+    },
+    {
+      "group": "1 billion scorecard (server profile, 16 GiB cache)",
+      "measure": "Saves at 394 offered",
+      "value": "249.41/s stored, 5,523 offers expired",
+      "bar": "store the offered 394/s",
+      "verdict": "not met",
+      "date": "2026-11-23",
+      "source": {
+        "branch": "origin/exp/DX-SCALE1-deep-accounts",
+        "commit": "182fb4482",
+        "file": "lab/experiments/EXP-DX1/scale1/V01-AGED.md"
+      },
+      "note": "Fresh: 342.90/s, 0 expired. 27% below fresh at peak."
+    },
+    {
+      "group": "1 billion scorecard (server profile, 16 GiB cache)",
+      "measure": "Current reads (subject pulls)",
+      "value": "p50 4.22 ms, p99 47.10 ms, max 33,179 ms",
+      "bar": "P4: p50 ≤ 5 ms, p99 ≤ 25 ms",
+      "verdict": "not met",
+      "date": "2026-11-23",
+      "source": {
+        "branch": "origin/exp/DX-SCALE1-deep-accounts",
+        "commit": "182fb4482",
+        "file": "lab/experiments/EXP-DX1/scale1/V01-AGED.md"
+      },
+      "note": "p50 met, p99 and the maximum not. Fresh: 4.54 / 50.18 ms, max 85 ms."
+    },
+    {
+      "group": "1 billion scorecard (server profile, 16 GiB cache)",
+      "measure": "Pinned reads at the old pin (position 87,002, 28.2 million behind the head), 1 seat",
+      "value": "18.12 reads/s; p50 44.80 ms, p99 114.18 ms",
+      "bar": "P1: p99 ≤ 100 ms (judged at 256 readers)",
+      "verdict": "not met",
+      "date": "2026-11-23",
+      "source": {
+        "branch": "origin/exp/DX-SCALE1-deep-accounts",
+        "commit": "182fb4482",
+        "file": "lab/experiments/EXP-DX1/scale1/V01-AGED.md"
+      },
+      "note": "Fresh: 606.43/s, 1.18 / 5.95 ms. Cause: the as-of view over the loader's history (rd1/PINNED-1B.md); a fix is being built as an option."
+    },
+    {
+      "group": "1 billion scorecard (server profile, 16 GiB cache)",
+      "measure": "Pinned reads at the old pin, 256 seats",
+      "value": "18.63 reads/s; p50 13,042 ms, p99 13,566 ms",
+      "bar": "P1: read p99 ≤ 100 ms at 256 readers",
+      "verdict": "not met",
+      "date": "2026-11-23",
+      "source": {
+        "branch": "origin/exp/DX-SCALE1-deep-accounts",
+        "commit": "182fb4482",
+        "file": "lab/experiments/EXP-DX1/scale1/V01-AGED.md"
+      },
+      "note": "Fresh: 893.18/s, 198.66 / 860.16 ms."
+    },
+    {
+      "group": "1 billion scorecard (server profile, 16 GiB cache)",
+      "measure": "Pinned read near the head (head minus 1,000), probe",
+      "value": "p50 1.26 ms (pin 87,002: 31.86 ms; current read 0.20 ms)",
+      "bar": "P1 is judged at 256 readers",
+      "verdict": "not measured",
+      "date": "2026-11-23",
+      "source": {
+        "branch": "origin/exp/DX-SCALE1-deep-accounts",
+        "commit": "f5503c4a7",
+        "file": "lab/experiments/EXP-DX1/scale1/RD2-PROBE.md"
+      },
+      "note": "A single-seat probe, p50 only; no p99 and no 256-reader run near the head."
+    },
+    {
+      "group": "1 billion scorecard (server profile, 16 GiB cache)",
+      "measure": "Paced import",
+      "value": "3,250 facts/s",
+      "bar": "no bar yet (secondary measurement)",
+      "verdict": "no bar",
+      "date": "2026-11-23",
+      "source": {
+        "branch": "origin/exp/DX-SCALE1-deep-accounts",
+        "commit": "182fb4482",
+        "file": "lab/experiments/EXP-DX1/scale1/V01-AGED.md"
+      },
+      "note": "Fresh: 3,193 facts/s."
+    },
+    {
+      "group": "Failover (two machines, fresh full-size seed, 235 saves/s)",
+      "measure": "Policy B (hold saves until a second copy exists), machine killed",
+      "value": "0 of 2,830 acknowledged saves lost; first protected save after 603.4 s; reads continued (0 of 30,172 missed)",
+      "bar": "P9: zero lost; saves resume within 60 s",
+      "verdict": "zero lost met; 60 s not met (by design under policy B)",
+      "date": "2026-11-23",
+      "source": {
+        "branch": "origin/exp/DX-BM1-bare-metal",
+        "commit": "0b5f5096e, 47961cebb, 0652c9148",
+        "file": "lab/experiments/EXP-DX1/bm1/FAILOVER-READING.md"
+      },
+      "note": "603 s = local copy of the 126 GB seed (131 s) + its SHA-256 check (452 s); without re-hashing a verified seed about 2.5 minutes."
+    },
+    {
+      "group": "Failover (two machines, fresh full-size seed, 235 saves/s)",
+      "measure": "Policy A (accept saves on one copy), machine killed",
+      "value": "0 of 4,885 lost; first new save after 19.5 s; reads continued",
+      "bar": "P9: zero lost; saves resume within 60 s",
+      "verdict": "met",
+      "date": "2026-11-23",
+      "source": {
+        "branch": "origin/exp/DX-BM1-bare-metal",
+        "commit": "0b5f5096e, 47961cebb, 0652c9148",
+        "file": "lab/experiments/EXP-DX1/bm1/FAILOVER-READING.md"
+      },
+      "note": "Policy A's second-failure check was not measured."
+    },
+    {
+      "group": "Failover (two machines, fresh full-size seed, 235 saves/s)",
+      "measure": "Planned move",
+      "value": "0 of 4,146 lost; 14.1 s from seal to first save on the new route",
+      "bar": "P9: zero lost; within 30 s",
+      "verdict": "met",
+      "date": "2026-11-23",
+      "source": {
+        "branch": "origin/exp/DX-BM1-bare-metal",
+        "commit": "0b5f5096e, 47961cebb, 0652c9148",
+        "file": "lab/experiments/EXP-DX1/bm1/FAILOVER-READING.md"
+      },
+      "note": ""
+    },
+    {
+      "group": "Production-shaped tape (fresh database, 430 million records, 16 GiB profile)",
+      "measure": "394 rows/s offered (one commit per form row)",
+      "value": "393.13/s stored, 0 expired; busy p99 157 ms (second half), 163 ms whole; 0.034 storage reads per commit late",
+      "bar": "P2: p99 ≤ 50 ms",
+      "verdict": "not met",
+      "date": "2026-11-23",
+      "source": {
+        "branch": "origin/exp/DX-BM1-bare-metal",
+        "commit": "aa6d7c0ef",
+        "file": "lab/experiments/EXP-DX1/bm1 (production tape reading, run 832a7e0c6)"
+      },
+      "note": "Rate met. Quiet account p99 22 ms. Saturday's tape at the same settings: second-half p99 2,824 to 5,067 ms."
+    },
+    {
+      "group": "Backup and restore (1 billion database)",
+      "measure": "Native backup",
+      "value": "115 GB written in about 14 minutes; full verify read 6,018,339 segments, none missing, in about 23 minutes",
+      "bar": "no bar",
+      "verdict": "no bar",
+      "date": "2026-11-23",
+      "source": {
+        "branch": "origin/exp/DX-SCALE1-deep-accounts",
+        "commit": "eeddbf6bf",
+        "file": "measure-loaded (STATUS 2026-11-23 11:51)"
+      },
+      "note": ""
+    },
+    {
+      "group": "Backup and restore (1 billion database)",
+      "measure": "Restore",
+      "value": "completed in about 33 minutes",
+      "bar": "no bar",
+      "verdict": "no bar",
+      "date": "2026-11-23",
+      "source": {
+        "branch": "origin/exp/DX-SCALE1-deep-accounts",
+        "commit": "eeddbf6bf",
+        "file": "measure-loaded (STATUS 2026-11-23 11:51)"
+      },
+      "note": "Its readback needed a repair (bb9ec7324) and then passed."
+    },
+    {
+      "group": "This demo",
+      "measure": "Bring-up on the 1 billion database",
+      "value": "169 s (copy 122, stack start 33, identity checks 14)",
+      "bar": "no bar",
+      "verdict": "no bar",
+      "date": "2026-11-23",
+      "source": {
+        "branch": "origin/exp/DX-SCALE1-deep-accounts",
+        "commit": "c283c2df2",
+        "file": "lab/experiments/EXP-DX1/scale1/DEMO-1B.md"
+      },
+      "note": "Predicted 8 to 14 minutes."
+    }
+  ]
+}
