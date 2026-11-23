@@ -668,6 +668,23 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 "p50Ms": percentile([d for _, d in done], .5), "p99Ms": p99([d for _, d in done]),
                 "secondHalfP99Ms": p99([d for t, d in done if t >= half]),
                 "rowsPerSave": sum(map(len, saves.values())) / max(1, len(saves))}}
+            # Storage reads per commit early and late, and serial apply against commit size (the S forecast).
+            io = [(r["due"], len(offer[6]) if r["account"] else 1 + int(offer[5]), r["ack"]) for r, offer in zip(rows, tape, strict=True)
+                  if r.get("ack") and r["ack"].get("nativeIoStats") is not None]
+            if io:
+                sql = lambda a: a["nativeIoStats"]["reads"].get("sql", 0)
+                mean = lambda xs: sum(xs) / len(xs) if xs else None
+                save_metrics["sqlReadsPerCommit"] = {
+                    "first60s": mean([sql(a) for due, _, a in io if due < 60_000]),
+                    "from150s": mean([sql(a) for due, _, a in io if due >= 150_000]),
+                    "whole": mean([sql(a) for _, _, a in io])}
+                buckets = ((1, 2), (3, 10), (11, 30), (31, 60), (61, 1000))
+                save_metrics["applyMsBySize"] = [
+                    {"facts": f"{lo}-{hi}", "commits": len(xs), "meanFacts": mean([f for f, _ in xs]),
+                     "warmMeanApplyMs": mean([m for _, m in xs])}
+                    for lo, hi in buckets
+                    for xs in [[(f, a["nativeComputeMs"]) for due, f, a in io if due >= 150_000 and lo <= f <= hi
+                                and sql(a) == 0 and a.get("nativeComputeMs") is not None]]]
         metrics.append({"cell": label, "offered": len(rows), "durable": len(positions), "inWindow": in_window,
                         **save_metrics,
                         **({"delayLedger": delay.finished()} if delay else {}),
