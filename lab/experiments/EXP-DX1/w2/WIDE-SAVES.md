@@ -35,3 +35,45 @@ Both writers store the same records: the business rows, one journal change per f
 | Per new assertion (2F + R + 4 of them) | one historical AVET seek per ID, or one range probe when the client sends `historyIdentityBounds` for a contiguous block | one range probe over the ordered block (at most 128 datoms inspected), else one historical seek per ID |
 | Stamping | parses and rewrites each row's JSON to insert the clock and position | inserts the clock and position into fragments split in the gateway |
 | Journal rows | written | written, identical |
+
+## 2. What a widened per-subject writer saves, at toy size (Mac, diagnostic)
+
+**Method** (`w2/wide_gate.clj` `measure-*`, run by `w2/sql-run.sh`). PostgreSQL storage with `fsync`, `synchronous_commit` and `full_page_writes` on; 32 MiB object cache and memory index as in the owner-head probe. Three scopes get the same indexed seed (192 subjects × 160 fields). Each arm then applies the same saves, in the same order, to the same subjects: one transactor restart and one fresh gateway JVM per arm and round, two rounds of 96 subjects. Each subject gets one save of a given shape on a cold transactor ("cold"), then a save that replaces every field the first one wrote ("warm"). Shapes: 6, 20, 75 and 120 facts; all replacements, all first writes, and mixed (half replacements, two fifths first writes, the rest retirements). All arms use the same wide ordered IDs, so they write the same records. Arms:
+
+- **general**: today's general writer, as the production tape's wide commits reach it (no `historyIdentityBounds`, predecessor lookup on).
+- **general-bounds**: the same with the client's `historyIdentityBounds`, which replaces one history seek per new ID with one range probe.
+- **subject-wide**: the per-subject writer with `TX2_SUBJECT_WIDE=1`.
+
+Serial apply is Datomic's own transaction apply time (`io-stats :api-ms`); SQL fetches are the transaction's storage reads (`io-stats :reads :sql`) and, separately, the gateway's reads while planning. 16 commits per cell. Every commit's subject was read back exact after its commit (current values equal to the model).
+
+### Serial apply per commit, two runs pooled (32 commits per cell, kinds pooled: 96 per row)
+
+| Phase | Facts | General, p50 ms | General with bounds, p50 ms | Per-subject wide, p50 ms | General ÷ per-subject | With bounds ÷ per-subject | Datoms per commit (all arms) | Added text per commit (all arms) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| cold | 6 | 2.35 | 1.95 | 1.89 | 1.25 | 1.03 | 37 | 8.0 kB |
+| cold | 20 | 4.80 | 2.99 | 2.53 | 1.90 | 1.18 | 79 | 23.9 kB |
+| cold | 75 | 9.91 | 8.70 | 3.82 | 2.60 | 2.28 | 244 | 86.3 kB |
+| cold | 120 | 14.46 | 10.80 | 5.21 | 2.78 | 2.07 | 379 | 137.6 kB |
+| warm | 6 | 2.00 | 1.90 | 1.11 | 1.81 | 1.71 | 42 | 9.7 kB |
+| warm | 20 | 3.61 | 3.17 | 1.61 | 2.24 | 1.97 | 96 | 30.0 kB |
+| warm | 75 | 10.19 | 8.30 | 3.25 | 3.13 | 2.55 | 308 | 109.2 kB |
+| warm | 120 | 15.75 | 12.73 | 4.49 | 3.50 | 2.83 | 483 | 174.6 kB |
+
+- **The general writer is not within 20% of the widened per-subject writer for wide saves.** Its serial apply is 1.25 to 3.5 times longer, and the gap grows with size. Fitted on the warm medians: general 1.28 ms + 0.121 ms per fact, general with bounds 1.33 + 0.095, per-subject 0.93 + 0.030. At 120 facts the ratio is 3.3 (all replacements), 2.1 to 3.2 (all first writes) and 2.8 to 3.5 (mixed). Total serial apply over all 1,152 commits of both runs: general 10.5 s, general with bounds 11.8 s, per-subject 5.2 s.
+- **Why.** Per fact, the general writer parses and rewrites each row's JSON and each journal change's JSON inside the transaction to insert the clock and position, and looks up each retired value and each new ID. The per-subject writer does that work in the gateway before the serial turn: rows arrive split around the clock and position slots, and the predecessors arrive with the plan. The client's bounds remove the per-ID history seeks (about 20% of the gap), not the JSON work.
+- **The gateway pays instead.** Gateway wall time per save (plan, submit, durable reply, readback) was similar in all arms: median 34.0 ms per-subject against 31.9 ms general (Mac, loaded). Gateways scale out; the serial point does not.
+- **Records and bytes per save are identical** in every one of the 384 save cells: the same datoms and the same added text bytes in all three arms.
+- **Exact readback on every read route.** After both rounds, all three databases answered identically (compared by digest) on current reads of all 192 subjects (35,296 rows), full history of all 192 (51,200 rows), 172 pinned reads at positions across the rounds, 1,472 reads by assertion ID (current and history), reach for 24 subjects, and the whole feed with every journal change (576 transactions). Every save's subject was also read back equal to the model right after it committed.
+
+## 3. What is built: `TX2_SUBJECT_WIDE=1`, default off
+
+| Part | With the option on | With it off |
+| --- | --- | --- |
+| Eligibility (`subject_save.clj` `plan-with-erasure`) | Up to **128 facts and 128 retired values** per commit, at most 1,024 ops; any mix of replacements, first writes of a field and retirements; distinct plain fields on each side (no references, no `:_` attributes). Every other rule stays: one existing subject, one journal, one claim, regular frame, scope flags, protected envelopes only for this subject's rows. Ordered import frames (`import-predecessor`) stay on the general writer, which alone checks the predecessor claim. | Today's rule (one to three replacements), byte for byte. |
+| Native function | **Unchanged** (same text, same ident `:triplex.subject/v-9c735b07…`): the function never depended on the save's size or shape, only the plan's eligibility did. No schema change, no new attribute, no new storage format. | Same. |
+| Ordered identity (`orderedSaveIdentity.ts`) | `wideOrderedSaveIdentity()`: a 23-character token and a three-hex-digit ordinal, 4,096 assertions per block. IDs stay 26 characters (the core `TripleId` brand rejects any other length, which is why a 27-character form was not used). The journal ID is `_tx/<token>W00`. Blocks stay ordered (hex digits sort in ASCII), and `orderedSaveIdentity(token)` rebuilds either form from the retained token, so resends and recovery need nothing new. A process never issues a one-byte token inside a wide block's 23-character prefix or the reverse. | The gateway does not recognise a wide block: a one-to-three-fact save in one takes the per-subject writer with one history check per ID, and anything wider takes the general writer. |
+| Gateway recognition (`ordered-bounds`) | A wide block is recognised from its journal ID and its exact contiguous IDs. It cannot be confused with a one-byte block: the 24th ID character is a hex digit and the journal's is `W`. The serial history guard proves the whole interval was never used, by any owner, live or retired, exactly as today; a crowded interval falls back to one check per ID. | Unchanged. |
+| Why 128 facts | Every production-shaped save fits (maximum 119 to 121 facts; 2F + R + 4 is at most 388 assertions). The serial apply of a 120-fact save measured 4.5 ms on the Mac against 1.1 ms for 6 facts, so the bound caps how long one save can hold the serial point; a larger import still takes the general writer. 128 replacements make 388 assertions and about 520 ops, inside both other bounds. | |
+| Covering owner head (`TX2_SUBJECT_OWNER_HEAD=1`) | Narrow replacements keep the covering writer. A wider save, a first write or a retirement folds the subject (as today) and then takes the plain per-subject writer instead of the general writer. The covering root is not widened: it is rewritten on every save, so it must stay at four texts. **So the covering head still applies only to one-to-three-field replacements.** | Unchanged. |
+| Append retirement, removal on request, fair import, both credit modes | Unchanged mechanisms; covered by the gates below. | |
+| Write options | `subjectWide: true, subjectWideFacts: 128` in `/write-options`, so launchers can read the switch back. | No new keys. |

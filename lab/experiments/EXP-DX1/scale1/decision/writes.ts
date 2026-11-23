@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { setTimeout as sleep } from "node:timers/promises";
 import {
-  DatomicClient, DatomicHttpError, orderedSaveIdentity,
+  DatomicClient, DatomicHttpError, orderedSaveIdentity, wideOrderedSaveIdentity,
 } from "../../../../../packages/datomic/dist/index.js";
 import { fieldValue } from "../../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM, type Fact } from "../../../../bench/lib/world.ts";
@@ -314,7 +314,8 @@ export async function play(
     if (neighboursAhead !== undefined) row.neighboursAhead = neighboursAhead;
     // [DX-INT1] Why: bind the identity block to this offered save through settling or recovering it.
     // Rejected: minting a new block while looking up an uncertain receipt.
-    if (orderedIds) row.orderedToken = orderedSaveIdentity().token;
+    // [Opus W2] Why: with wide saves on, the block numbers up to 4,096 assertions; its token rebuilds it on resend.
+    if (orderedIds) row.orderedToken = (process.env.TX2_SUBJECT_WIDE === "1" ? wideOrderedSaveIdentity() : orderedSaveIdentity()).token;
     const entity = e.owner ?? task(row.account, row.subject);
     const cached = sender.rows.get(entity);
     assert(cached || sender.loadPredecessor, "Missing predecessor");

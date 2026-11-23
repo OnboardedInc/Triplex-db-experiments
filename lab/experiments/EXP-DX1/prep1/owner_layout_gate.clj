@@ -238,7 +238,10 @@
                       positions (range 1 (inc (head control)))]
                   (is (= (str layout/ident) (second (trail 1))))
                   ;; Root texts after each save: the fifth field folds; each reference-writer save folds first.
-                  (is (= [1 1 2 3 4 1 nil 1 nil 1] (mapv (fn [[_ save n]] (when save n)) (rest trail))) (pr-str trail))
+                  ;; [Opus W2] With wide saves on, the first write and the retirement take the plain per-subject writer
+                  ;; after the fold (0 texts) instead of the reference writer (nil).
+                  (is (= (if subject/wide? [1 1 2 3 4 1 0 1 0 1] [1 1 2 3 4 1 nil 1 nil 1])
+                         (mapv (fn [[_ save n]] (when save n)) (rest trail))) (pr-str trail))
                   (is (nil? (d/entid (d/db control) layout/root-attr)))
                   (let [expected (product-reads legacy control positions)
                         actual (product-reads covered candidate positions)]

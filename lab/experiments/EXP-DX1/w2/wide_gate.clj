@@ -335,3 +335,162 @@
                   (is (= (str layout/ident) (first (by-label "narrow-5"))) "the next replacement migrates again")
                   (let [shape (compare-routes control-name control candidate-name candidate state)]
                     (println "DX-W2_WIDE_HEAD" (json/write-str (assoc shape :trail trail)))))))))))))
+
+;; ---------------------------------------------------------------- the paired toy measurement (SQL storage)
+
+(def m-people 192)
+(def m-width 160)
+(def m-round-people 96)
+(def m-arms ["general" "general-bounds" "subject-wide"])
+(def m-shapes (vec (for [kind kinds size sizes] [kind size])))
+(defn m-subject [i] (str "acct/test/wide-" i))
+(defn m-fields [] (mapv #(str ":seed/f" %) (range m-width)))
+(defn m-seed-state [i]
+  (into {} (map (fn [j f] [f {:id (str "w" i "-" j "-0") :value (str "seed-" i "-" j)}]) (range) (m-fields))))
+(defn- m-order [round] (mapv #(+ (* (dec round) m-round-people) (mod (* % 37) m-round-people)) (range m-round-people)))
+
+(defn- seed-subject-frame [i]
+  (let [subject (m-subject i) command (str "seed-" i) tx (str "_tx/" command) state (m-seed-state i)
+        business (mapv (fn [f] (row (:id (state f)) subject nil f (:value (state f)) tx)) (m-fields))
+        journal [(assoc (row (str command "/p") tx "_Transaction" ":_tx/position" nil tx) :value_type "number" :value_number 1.0)
+                 (assoc (row (str command "/t") tx "_Transaction" ":_tx/instant" nil tx) :value_type "datetime" :value_datetime 1000.0)
+                 (row (str command "/e") tx "_Transaction" ":_tx/changed-entity" subject tx)
+                 (row (str command "/c") tx "_Transaction" ":_tx/command-id" command tx)]
+        fresh (into business journal)]
+    (rows/row-input {"span" 1 "position" 1 "scopeWide" false "entities" [subject] "operationId" command
+                     "rows" (mapv storage/wire-row fresh) "newIds" (mapv :id fresh)
+                     "claims" [{"commandId" command "txId" tx "timestamp" 1000.0}]})))
+
+(defn measure-seed!
+  "One identical indexed seed per arm, each in its own scope."
+  [path]
+  (let [attempt (System/getenv "PREP1_ATTEMPT")
+        scopes (into {} (for [arm m-arms]
+                          (let [wire (json/write-str ["triplex-scope-v1" "test" "wide-saves" (str attempt "-" arm) 0])
+                                {:keys [db created]} (main/create-scope! nil wire "lean" true true)
+                                conn (main/connection (main/db-uri db))]
+                            (assert created)
+                            (subject/install! conn (d/db conn))
+                            (with-writer false
+                              #(doseq [i (range m-people)]
+                                 (let [reply (reference/send db (seed-subject-frame i))]
+                                   (assert (= [200 nil] (reference/outcome reply)) (pr-str (:body reply))))))
+                            (let [t (d/basis-t (d/db conn))]
+                              (d/request-index conn)
+                              @(d/sync-index conn t)
+                              [arm {:db db :seedT t :position (head conn)}]))))]
+    (spit path (pr-str {:attempt attempt :scopes scopes}))
+    (println "DX-W2_SEED" (json/write-str {:attempt attempt :people m-people :width m-width :scopes scopes}))))
+
+(defn- text-bytes [report]
+  (reduce + (map #(if (and (:added %) (string? (:v %))) (alength (.getBytes ^String (:v %) java.nio.charset.StandardCharsets/UTF_8)) 0)
+                 (:tx-data report))))
+(defn- reads [stats] (select-keys (:reads stats) [:sql :eavt-load :aevt-load :avet-load :vaet-load :ocache :dev]))
+
+(defn- m-commit! [arm conn input]
+  (let [db (d/db conn)
+        started (System/nanoTime)
+        prepared (io/throw-if-ex!
+                   (io/with-io-stats
+                     #(let [data (storage/tx-data db input)]
+                        (if (= arm "subject-wide")
+                          (let [plan (subject/plan db data input)]
+                            (assert plan (str "the widened writer refused " (get input "operationId")))
+                            [[subject/ident plan] plan])
+                          [data nil]))
+                     {:io-context :w2/prepare :api :lookup}))
+        [tx-data plan] (:ret prepared)
+        report @(d/transact-async conn (if plan [tx-data] tx-data) :io-context (keyword "w2" arm))
+        report (if plan (subject/verify-report report plan) report)]
+    {:report report :wallMs (/ (- (System/nanoTime) started) 1e6)
+     :peer (reads (:io-stats prepared)) :tx (reads (:io-stats report)) :applyMs (get-in report [:io-stats :api-ms])}))
+
+(defn measure-round!
+  "The same saves, in the same order, on the same subjects, for one arm after a transactor restart."
+  [path arm round]
+  (let [{:keys [attempt scopes]} (edn/read-string (slurp path))
+        {:keys [db]} (get scopes arm)
+        conn (main/connection (main/db-uri db))
+        fields (m-fields)
+        out (with-writer (= arm "subject-wide")
+              #(vec (for [[k i] (map-indexed vector (m-order round))]
+                      (let [[kind size] (m-shapes (mod k (count m-shapes)))
+                            subject (m-subject i)
+                            tag (str "r" round "-" i)
+                            seed (m-seed-state i)
+                            a (shape-facts seed kind size (str tag "a") fields)
+                            a-input (frame {:subject subject :command (str tag "a") :block (identity-block :wide (+ (* round 100000) (* 2 i)))
+                                            :facts (:facts a) :retires (:retires a) :source (head conn) :bounds? (= arm "general-bounds")})
+                            a-ids (vec (take (count (:facts a)) (get a-input "newIds")))
+                            after-a (apply-model seed a a-ids)
+                            b-facts (mapv (fn [{:keys [field]}] {:field field :value (str tag "b|" field) :pred (after-a field)}) (:facts a))
+                            b {:facts b-facts :retires []}
+                            b-input (frame {:subject subject :command (str tag "b") :block (identity-block :wide (+ (* round 100000) (* 2 i) 1))
+                                            :facts b-facts :retires [] :source nil :bounds? (= arm "general-bounds")})
+                            run (fn [phase input save model]
+                                  (let [input (assoc input "sourceK" (head conn))
+                                        {:keys [report] :as m} (m-commit! arm conn input)
+                                        after (:db-after report)
+                                        owner (d/entid after [:triplex.entity/id subject])
+                                        current (into {} (map (comp (juxt :attribute :value_string) lean/decode :v)) (lean/live-texts after owner))]
+                                    (assert (= current (into {} (map (fn [[f {:keys [value]}]] [f value])) model))
+                                            (str "exact current readback after " (get input "operationId")))
+                                    (merge (dissoc m :report)
+                                           {:arm arm :round round :subject i :kind kind :size size :phase phase
+                                            :facts (count (:facts save)) :retired (+ (count (keep :pred (:facts save))) (count (:retires save)))
+                                            :assertions (count (get input "newIds")) :position (scope/value after (d/t->tx (d/basis-t after)) :triplex.tx/position)
+                                            :datoms (count (:tx-data report)) :addedTextBytes (text-bytes report)
+                                            :writer (or (:subject-save report) "general")})))]
+                        [(run "cold" a-input a after-a)
+                         (run "warm" b-input b (apply-model after-a b (vec (take (count b-facts) (get b-input "newIds")))))]))))]
+    (assert (= attempt (System/getenv "PREP1_ATTEMPT")))
+    (doseq [[a b] out] (println "DX-W2_COMMIT" (json/write-str a)) (println "DX-W2_COMMIT" (json/write-str b)))
+    ;; [Opus W2] Why: start every arm's next round from an indexed database, so reads count cold segments, not an index job.
+    (when (= "1" (System/getenv "DX_W2_INDEX_BETWEEN"))
+      (let [t (d/basis-t (d/db conn))] (d/request-index conn) @(d/sync-index conn t)))))
+
+(defn- digest [x] (triplex.gateway.schema/sha256 (pr-str x)))
+
+(defn measure-verify!
+  "Every read route, for every subject the rounds touched, answers the same in all three arms (compared by digest)."
+  [path]
+  (let [{:keys [attempt scopes]} (edn/read-string (slurp path))
+        conns (into {} (for [[arm {:keys [db]}] scopes] [arm [db (main/connection (main/db-uri db))]]))
+        heads (into {} (for [[arm [_ conn]] conns] [arm (head conn)]))
+        _ (assert (apply = (vals heads)) (pr-str heads))
+        subjects (mapv m-subject (range m-people))
+        seed-position (get-in scopes ["general" :position])
+        positions (vec (range seed-position (inc (heads "general"))))
+        route (fn [db input] (let [r (reference/route db "v1" "read" input)] (assert (= 200 (:status r)) (pr-str r)) (get-in r [:body "rows"])))
+        sorted #(sort-by (fn [r] (get-in r ["id" "v"])) %)
+        summary (fn [arm]
+                  (let [[db conn] (conns arm) started (System/nanoTime) counts (volatile! {})
+                        count! (fn [k n] (vswap! counts update k (fnil + 0) n))
+                        per-subject (fn [k f] (digest (mapv (fn [s] (let [rows (f s)] (count! k (count rows)) (digest (sorted rows)))) subjects)))
+                        current (per-subject :current #(route db {"entityIds" [%] "basis" {"validAt" 5.0}}))
+                        history-ids (volatile! [])
+                        history (per-subject :history #(let [rows (route db {"entityIds" [%] "history" true})]
+                                                         (vswap! history-ids into (take-nth 37 (map (fn [r] (get-in r ["id" "v"])) rows)))
+                                                         rows))
+                        pinned (digest (vec (for [p (take-nth 9 positions) s (take 4 (drop (mod p 188) subjects))]
+                                              (do (count! :pinned 1) (digest (sorted (route db {"entityIds" [s] "basis" {"validAt" 5.0 "recordedPosition" p}})))))))
+                        by-id (digest (vec (for [id (sort @history-ids)]
+                                             (do (count! :byId 1)
+                                                 [(digest (route db {"id" id "basis" {"validAt" 5.0}})) (digest (route db {"id" id "history" true}))]))))
+                        reach (digest (vec (for [s (take-nth 8 subjects)]
+                                             (do (count! :reach 1)
+                                                 (digest (dissoc (json/read-str (reach/response db (d/db conn) {"roots" [s] "basis" {"validAt" 5.0} "full" true})) "t" "basisT"))))))
+                        feed (loop [after 0 out []]
+                               (let [page (reference/feed db after 100)]
+                                 (if (empty? page) (digest out)
+                                   (do (count! :feed (count page))
+                                       (recur (second (peek page)) (conj out (digest (mapv (fn [tx] [(vec (take 2 tx)) (feed-changes tx)]) page))))))))]
+                    (println "DX-W2_VERIFY_ARM" arm (format "%.1f s" (/ (- (System/nanoTime) started) 1e9)) (pr-str @counts))
+                    {:digests {:current current :history history :pinned pinned :byId by-id :reach reach :feed feed} :counts @counts}))
+        results (into {} (for [arm (keys conns)] [arm (summary arm)]))
+        base (results "general")]
+    (doseq [[arm r] results k (keys (:digests base))]
+      (assert (= (get-in base [:digests k]) (get-in r [:digests k])) (str arm " differs from the general writer on read route " k)))
+    (assert (apply = (map :counts (vals results))))
+    (println "DX-W2_VERIFY" (json/write-str {:attempt attempt :arms (keys results) :head (heads "general")
+                                             :counts (:counts base) :equal true}))))

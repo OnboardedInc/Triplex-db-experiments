@@ -500,6 +500,7 @@ export async function local(opts, config, manager) {
             ? ["-e", "TX2_SUBJECT_ORDERED_IDS=1", "-e", "TX2_SUBJECT_NUMERIC_OWNER=1"]
             : []),
           ...(ownerHead ? ["-e", "TX2_SUBJECT_OWNER_HEAD=1"] : []),
+          ...(process.env.TX2_SUBJECT_WIDE === "1" ? ["-e", "TX2_SUBJECT_WIDE=1"] : []),
           ...(mode === "fast-authority-regression" ? ["-e", "TX2_REMOVAL_COST_READBACK=1"] : []),
           "-e",
           "DX_ERASE_TOKEN=" + token,
