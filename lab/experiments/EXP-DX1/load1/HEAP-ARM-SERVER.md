@@ -56,3 +56,55 @@ The reasoning: the 48 GiB heap with the 32 GiB cache had no allocation stall in 
 ## Mac gate at toy size
 
 **Passed at `f7a51f9d5`** (`DX_LOAD2_CELLS=control,import`, yield, toy). It ran one control and one import cell with no quiet cell. 390 frames (12,480 facts) were imported and verified, with 3 hold-backs and no grant beside a waiting save. The discarded durable response was recovered, and all 141 saves and 120 reads per cell were acknowledged. The comparison holds `quietAlone: null`. No containers or networks were left (`evidence/DX-LOAD2/load1/load-fair-a8f42c5e-a5cc-4d4f-8bf0-530a8d41d8d8`). The Mac stack uses the laptop profile, so the 48 GiB memory itself cannot run there. Instead the launch profile was checked directly: `launchProfile("server", {txJvm: "j25-zgc", writeJvm: "j25-zgc", txCacheMiB: 32768})` gives `-Xmx49152m -XX:MaxDirectMemorySize=8192m -Ddatomic.objectCacheMax=32768m`, a 61,440 MiB container, and unchanged writer, reader, PostgreSQL and memory-index settings. These are the same flags as Saturday's cache32 arms. `held-server.ts` loads to its Linux check on the Mac, and its option checks typecheck.
+
+## Next arm: the same memory with fewer index jobs (memory index 512m / 1536m)
+
+**The heap arm ran and every forecast held** (`bm1/IMPORT-YIELD-READING.md` at `b3b519aad`). No writer allocation stall in either cell; control busy second-half p99 9.7 ms; import 45.1 ms (4.6×); quiet 39.0 ms; 3,321 facts/s (3,094 in the second half). 97% of the slowest 1% fall within 6 s of an index adoption (11 adoptions in the import cell).
+
+**A code change was needed.** At `96b16e759` the two options refused each other: `fair-server.sh` required no `--memory-index` with `--tx-cache`, `held-server.ts` asserted the same, and the arm-label check had no combined form. `b65c2cc2f` removes those two refusals and labels the arm `rolling6-yield32-c32-mi512m`. Nothing else changes. Both cells run on one stack, so **the control cell runs under the same memory-index setting** as the import. The combined launch profile checks out:
+
+- transactor `-Xmx49152m -XX:MaxDirectMemorySize=8192m -Ddatomic.objectCacheMax=32768m`, container 61,440 MiB;
+- memory index `{threshold: 512m, max: 1536m}`, passed to `stack/up.sh` as `--memory-index-threshold 512m --memory-index-max 1536m`;
+- write gateway, read gateway, PostgreSQL and credit mode identical to the heap arm.
+
+**Mac gate passed at `b65c2cc2f`** (`DX_LOAD2_MEMORY_INDEX=64m,128m DX_LOAD2_CELLS=control,import`, yield, toy). The Mac stack cannot run the 48 GiB memory, so the toy combines the memory-index option with the two-cell set only. The import cell verified 244 frames (7,808 facts), with 8 hold-backs and no grant beside a waiting save. The discarded durable response was recovered, all saves and reads were acknowledged, and nothing was left running (`evidence/DX-LOAD2/load1/load-fair-0affbaae-8fe9-44d8-bdda-4d556fb2858b`).
+
+```sh
+bash lab/experiments/EXP-DX1/load1/fair-server.sh \
+  "$(git rev-parse HEAD)" "$IMAGE" "$IMAGE_SHA256" "$TRANSFER_SHA256" \
+  "$PG_TEMPLATE" "$NEW_OUTPUT" --pg-data "$PG_COPY" --wal-dir "$WAL_COPY" \
+  --credit-mode rolling6 --import-credits 1 --frame-facts 32 --import-policy yield \
+  --tx-cache 32768 --memory-index 512m,1536m --cells control,import
+```
+
+Duration: about 17 minutes (the heap arm took 17 min 6 s), with a 38-minute launcher limit.
+
+### Predictions, written before any run
+
+| Measure | Heap arm (256m / 1g), measured | This arm (512m / 1536m), forecast |
+| --- | ---: | ---: |
+| Index adoptions in the 300 s import cell | 11 (every 23–27 s) | 5–7 (every 42–62 s) |
+| Index adoptions in the control cell | 2 | 1 |
+| Writer allocation stalls, either cell | 0 | 0–1, none over 150 ms |
+| Heap free at collection start, import cell, lowest / median | 15% / 19% | 12–15% / 15–19% |
+| Control busy p99, second half | 9.7 ms | 8–12 ms |
+| Import busy p99, second half | 45.1 ms | 35–55 ms (central 42) |
+| Ratio to the control, second half | 4.6× | 3.5–5.5× (central 4.3×) |
+| Slowest 1% within 6 s of an adoption, second half | 97% | 80–97% |
+| Quiet loaded commit p99, whole | 39.0 ms | 30–45 ms |
+| Verified facts/s, whole (second half) | 3,321 (3,094) | 3,300–3,550 (3,100–3,400) |
+| Worst-case log to replay at a transactor restart | about 200 MB (4–26 s) | about 370 MB (8–50 s); not measured by this arm |
+
+**The reasoning.** Under import the memory index fills at about 10 MB/s by Datomic's own measure, so twice the threshold halves the adoptions. Each job then rewrites more segments, so each post-adoption spell runs 1.2 to 1.8 times as deep. The tail stays in the spells, which now cover about 12% of saves instead of 24%. The p99 moves down only a little, because it is set by the depth of the worst spells, not by how many there are. The extra memory index adds 0.3 to 1.3 GB of live heap. The 48 GiB heap had 15% free at its lowest under import, and Saturday's cache32 save runs went to 9–12% with no stall. So the heap should still clear.
+
+**What would show it wrong.**
+
+1. Adoptions outside 4 to 8: the fill-rate model is wrong.
+2. Two or more writer allocation stalls, or any over 150 ms: the larger memory index does not fit this heap's headroom under import.
+3. Second-half busy p99 above 60 ms: fewer but deeper spells make the tail worse. Raising the threshold is then the wrong direction.
+4. Second-half busy p99 under 25 ms: the spell count matters more than forecast, and a larger threshold should be tried next.
+5. Any memory-index back-pressure warning in the transactor log, any refused or expired save, or any grant beside a waiting live save: the arm is invalid.
+
+### Can any setting meet the strict 1.5× bar?
+
+**No setting I know of in this design.** The strict bar needs busy second-half p99 at most 1.5 × 9.7 = 14.6 ms. In the heap arm the busy p99 was still 18.1 ms for saves due 10 s or more after an adoption, and 19.9 ms for saves due 6 s or more after. That is a floor with no spell at all. At 3,000 facts/s the import keeps about 45 to 58% of the serial writer busy (97 frames/s at about 3 ms each), and a live save that arrives behind a frame waits for it. Fewer index jobs can bring the p99 down toward that floor, about 20 ms, but not below 14.6 ms. Getting there would take the import off the live writer's path, for example a separate transactor or database for the import. That would break the single-database rule. Or it would take fewer facts per second, which breaks the 3,000 target. **So the strict 1.5× bar for busy accounts needs the absolute clause** the quiet account already has: within 1.5× of baseline, or inside the measure's own 50 ms save bar. The heap arm already meets that clause, with busy 45.1 ms and quiet 39.0 ms in the second half, as this arm is forecast to.
