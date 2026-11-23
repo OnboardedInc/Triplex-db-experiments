@@ -3,8 +3,8 @@
 # gateway; AGE1's own code at its load pin ages the toy), driven by real2/aged-gate.ts. One ordinary heavy token:
 #   node lab/bin/heavy.mjs --label DX-REAL2-aged-live -- bash lab/experiments/EXP-DX1/real2/aged-gate.sh OUT
 set -uo pipefail
-out=${1:?absolute new output directory}
-[[ $out == /* && ! -e $out ]] || { echo "aged-gate.sh: give a new absolute output directory" >&2; exit 2; }
+out=${1:?absolute new output directory under /Users (the lab VM shares only that tree)}
+[[ $out == /Users/* && ! -e $out ]] || { echo "aged-gate.sh: give a new absolute output directory under /Users" >&2; exit 2; }
 export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
 repo=$(git rev-parse --show-toplevel)
 image=${DX_REAL2_GATE_IMAGE:-tx2-datomic:dx-real2-production}

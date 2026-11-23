@@ -12,3 +12,8 @@ prod-S-at-4ee421c87            4ee421c87  ADMITTED  ARM=1-prodS-S
 prod-R32-at-4ee421c87          4ee421c87  ADMITTED  ARM=1-prodR-cache32-S
 prod-S32-at-4ee421c87          4ee421c87  ADMITTED  ARM=1-prodS-cache32-S
 rolling-cache32-at-4ee421c87   4ee421c87  ADMITTED  ARM=1-rolling6-cache32-S
+# The aged production set at its commit.
+prod-R394-32-at-3af5a617a   3af5a617a  ADMITTED  ARM=1-prodR-394-cache32-S
+prod-S394-32-at-3af5a617a   3af5a617a  ADMITTED  ARM=1-prodS-394-cache32-S
+prod-R394-16-at-3af5a617a   3af5a617a  ADMITTED  ARM=1-prodR-394-S
+prod-R-at-3af5a617a         3af5a617a  ADMITTED  ARM=1-prodR-S

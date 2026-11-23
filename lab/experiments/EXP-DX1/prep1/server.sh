@@ -295,8 +295,8 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
     for cell in "${selected[@]}"; do
       if [[ ${DX_REAL2_SET:-} == aged ]]; then
         left=$(( DX_REAL2_DEADLINE - $(date +%s) ))
-        if [[ $cell == 1-prodR-394-S ]] && (( left < 1260 )); then
-          printf '{"arm":"%s","skipped":"%s s left of the hour, 1260 needed"}\n' "$cell" "$left" > "$out/$cell.skipped.json"
+        if [[ $cell == 1-prodR-394-S ]] && (( left < 1230 )); then
+          printf '{"arm":"%s","skipped":"%s s left of the hour, 1230 needed"}\n' "$cell" "$left" > "$out/$cell.skipped.json"
           echo "server.sh: skipped $cell, $left s left" >&2
           continue
         fi
