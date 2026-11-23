@@ -104,7 +104,7 @@ for selection in ("cache32", "cache32b", "cache32c", "tx5", "fresh", "rolling6r"
     SLOTS["bench3-"+selection] = ("bench3/queue/"+selection, ("result", "started", "unit.log",
         "build/results/IMAGE-INPUTS.SHA256SUMS", "build/results/images.json", "build/results/bootstrap.exit"))
 # [DX-BM1] Why: bench 4 (2026-11-23) runs the aged 32 GiB cache arm with the same job layout as bench 3's add-ons.
-SLOTS["bench4-owner-head"] = ("bench4/queue/owner-head", ("result", "unit.log", "first-offer-2", "pg-sampler.log",
+SLOTS["bench4-owner-head"] = ("bench4/queue/owner-head", ("run", "unit.log", "first-offer-2", "pg-sampler.log",
     "build/BUILD-v0.1.json"))
 SLOTS["bench4-publish100k"] = ("bench4/queue/publish100k", ("result", "unit.log", "prepared/inventory.json",
     "prepared/ready.txt", "build/BUILD-v0.1.json", "first-offer", "pg-sampler.log"))

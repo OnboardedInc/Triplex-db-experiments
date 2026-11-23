@@ -25,8 +25,9 @@ if [[ $mode == first-offer ]]; then
   rm -rf --one-file-system "$job/first-offer-2"
   exec bash lab/experiments/EXP-DX1/ha1/first-offer-dry-run.sh "$queue" "$held" "$job/first-offer-2"
 fi
-out=$job/result
-[[ ! -e $out ]]
+out=$job/run/result
+mkdir -p "$job/run"
+[[ ! -e $out ]]  # out sits in run/ so its parent never contains the copy (v01/pgdata.ts:83)
 deadline=$(( $(date +%s%3N) + 75*60000 ))
 trap 'rm -rf --one-file-system "$copy"' EXIT
 printf 'item=bench4-owner-head state=running since=%s next=collect\n' "$(date -u +%FT%TZ)" > "$status"
