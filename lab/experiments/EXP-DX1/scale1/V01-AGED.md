@@ -51,6 +51,19 @@ Ordered per-person writer, transactor Java 25 ZGC, gateways Java 21 G1, separate
 - **P6 ratios:** the 1.25× bar fails at every rate, as predicted.
 - **P8:** import pace held (3,250 facts/s against 3,193 fresh).
 
+### Part 3 at `6770c37ba`: default server comparison (completed 19:36:39 UTC)
+
+Ordered per-person writer, Java 21 G1 on all roles, WAL on the data NVMe; P2 and P6 after the field-write prelude, no P1 ladder. Same columns as part 2.
+
+| Offered/s | 1B | Fresh |
+| ---: | --- | --- |
+| 50 | 50.00 · 4,500/4,500 · 0 / 0 · 10.56 / 72.70 · 30.21 → 59.65 ms (1.97×) · 0.97× · 1.05× · 1,314 of 3,840 reads returned (solo 1,248) | 50.00 · 4,500/4,500 · 0 / 0 · 8.83 / 204.80 · 26.75 → 151.55 ms (5.67×) · 1.28× · 1.22× · 3,840/3,840 |
+| 235 | 235.00 · 21,150/21,150 · 0 / 0 · 272.38 / 2,572.29 · 40.19 → 117.76 ms (2.93×) · 1.23× · 1.38× · 1,216 returned (solo 1,447) | 232.59 · 21,150/21,150 · 0 / 217 · 82.43 / 1,105.92 · 43.52 → 113.66 ms (2.61×) · 2.13× · 1.83× · 3,840/3,840 |
+| 394 | **246.30** · 30,971/35,460 · 4,489 / 4,315 · 27,000.83 / 30,125.37 · 33.53 → 128.51 ms (3.83×) · 1.15× · 1.98× · 1,205 returned (solo 1,378) | 296.59 · 35,460/35,460 · 0 / 8,767 · 15,138.82 / 23,192.14 · 67.07 → 115.71 ms (1.73×) · 1.59× · 1.87× · 3,840/3,840 |
+| 620 | **242.69** · 30,271/55,800 · 25,529 / 8,429 · 29,884.42 / 30,146.56 · 35.07 → 144.38 ms (4.12×) · 1.25× · 1.87× · 1,163 returned (solo 1,408) | 305.24 · 37,144/55,800 · 18,656 / 9,672 · 29,753.34 / 30,146.56 · 41.22 → 115.71 ms (2.81×) · 2.28× · 1.66× · 3,840/3,840 |
+
+**Reading.** The default profile at 1B reaches the same ceiling as the headline profile, about 240–250 saves/s at 394 and 620 offered. Fresh, it reached 297/s and 305/s. That is 17% and 20% lower, beyond the predicted 0–15%. The headline profile's fresh advantage (343/s against 297/s at 394) is gone at 1B. The quiet-read sampler again returned about a third of its planned reads; the errors are counted by `scale1/decision/observer.ts` lines 106 ("reader missed its offer") and 133 (an exception), and the arm files keep only the count.
+
 **Part 2 in `score-v01-1b-tuned-b` was refused after its claim, so that campaign was consumed too.** At the P7 empty census, `thin1/native-metrics.ts` line 166 at `8cc32d380` runs `docker top <id> -eo rss`, and Docker 29.1.3 answers "Couldn't find PID field in ps output". The fresh card ran at `92f8e6c30`, which already fixed this ("Keep Docker PID in the bare-metal residency process listing"); `8cc32d380` does not contain that commit. The orchestrator published `6770c37ba` on `exp/DX-V01-scorecard-1b-fix`: `8cc32d380` plus a clean cherry-pick of `92f8e6c30`'s one-file hunk (`docker top -eo pid,rss,nlwp`). `git diff 8cc32d380 6770c37ba --stat` shows only that file. No runner file pins `8cc32d380` by hash, so no pin changed; the runner takes the commit from `--commit`. A new campaign `score-v01-1b-tuned-c` started at 18:30 UTC with all four parts at `6770c37ba`, and part 1 reruns. The part 1 above stays as a second reading.
 
 ## Seal finished by the readback repair: aged bundle written
