@@ -21,6 +21,17 @@ export function seedFiles(raw: string, expected: string) {
   return files.size;
 }
 
+// [DX-HASYNC2] Why: the serial copy and single-stream hash of 126 GB took 712 s against a 720 s limit on server A. Eight
+// workers copy and hash disjoint file lists; the same manifest still checks every byte and the file count. Rejected: skipping the
+// per-case hash, which would let a damaged working copy start.
+export const coldWorkers = 8;
+
+export function coldPhases(logs: string) {
+  const m = /^cold-phases copy-ms=(\d+) hash-ms=(\d+) kib=(\d+) workers=(\d+)$/m.exec(logs);
+  assert(m, "Cold copy did not report its phases");
+  return { copyMs: Number(m[1]), hashMs: Number(m[2]), bytes: Number(m[3]) * 1024, workers: Number(m[4]) };
+}
+
 // [DX-HASYNC1] Why: copy and verify local bytes before PostgreSQL can modify them. Rejected: a live directory or a network base backup for the first standby.
 export const coldCopy = `
   test "$(cat /cold/PGDATA/PG_VERSION)" = 17
@@ -35,9 +46,28 @@ export const coldCopy = `
   control=$(LC_ALL=C pg_controldata .)
   printf '%s\\n' "$control" | grep -Eq 'Database cluster state:[[:space:]]+shut down$'
   printf '%s\\n' "$control" | grep -Eq "Database system identifier:[[:space:]]+$COLD_CLUSTER\$"
-  cp -a ./. "$PGDATA/"
+  ms() { awk '{ printf "%d", $1 * 1000 }' /proc/uptime; }
+  begin=$(ms)
+  find . -type d | while IFS= read -r d; do mkdir -p "$PGDATA/$d"; done
+  awk -v n="$COLD_WORKERS" '{ print substr($0, 67) > ("/tmp/cold-files." (NR % n)) }' /cold/SHA256SUMS
+  awk -v n="$COLD_WORKERS" '{ print > ("/tmp/cold-sums." (NR % n)) }' /cold/SHA256SUMS
+  pids=
+  for list in /tmp/cold-files.*; do
+    ( while IFS= read -r f; do cp -p "$f" "$PGDATA/$f"; done < "$list" ) &
+    pids="$pids $!"
+  done
+  for pid in $pids; do wait "$pid"; done
+  copied=$(ms)
   cd "$PGDATA"
-  sha256sum -c /cold/SHA256SUMS >/dev/null
+  pids=
+  for list in /tmp/cold-sums.*; do
+    sha256sum -c "$list" >/dev/null &
+    pids="$pids $!"
+  done
+  for pid in $pids; do wait "$pid"; done
+  hashed=$(ms)
+  test "$(find . -type f | wc -l)" -eq "$(wc -l < /cold/SHA256SUMS)"
+  printf 'cold-phases copy-ms=%s hash-ms=%s kib=%s workers=%s\\n' "$((copied - begin))" "$((hashed - copied))" "$(du -sk . | cut -f1)" "$COLD_WORKERS"
   chown -R postgres:postgres "$PGDATA"
   chmod 700 "$PGDATA"
   printf '\\nhost replication ha1stream all scram-sha-256\\n' >> pg_hba.conf
@@ -61,5 +91,7 @@ export function coldMount(seed: ColdSeed, app = "", conn = "") {
     "COLD_SYNC=" + app,
     "-e",
     "COLD_CONN=" + conn,
+    "-e",
+    "COLD_WORKERS=" + coldWorkers,
   ];
 }

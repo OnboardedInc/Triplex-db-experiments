@@ -23,6 +23,8 @@ export interface Site {
   datomicId: string;
   postgresImage?: string;
   privateAddress?: string;
+  // [DX-HASYNC2] Why: bulk WAL between the two servers bypasses the SSH overlay. Rejected: the ssh -w tunnel, measured at 49 MiB/s.
+  replicationAddress?: string;
   docker: (args: string[], opts?: { timeout?: number }) => Promise<string>;
 }
 type Member = { site: Site; id: string; image: string; role: Role; volumes: string[] };

@@ -7,7 +7,8 @@ import { DatomicClient } from "../../../../packages/datomic/test/ha1-account.ts"
 import { ingress } from "./ingress.ts";
 import type { Checkpoint } from "./seed.ts";
 import type { PowerFence } from "./power-fence.ts";
-import { coldCopy, coldMount, type ColdSeed } from "./sunday-seed.ts";
+import { coldCopy, coldMount, coldPhases, type ColdSeed } from "./sunday-seed.ts";
+import { catchUp, type CatchUp } from "./catch-up.ts";
 import { checkProfileFlags, launchProfile, startupFlags } from "../jvm1/launch.mjs";
 import { selectedWriter } from "../v01/profile.ts";
 import {
@@ -43,6 +44,8 @@ const pgArgs = [
   "wal_keep_size=512MB",
 ];
 type SqlRole = "pg" | "target";
+export const replicationPort = 25432;
+const coldBudgetMs = 20 * 60000;
 export const sundayProfile = launchProfile("server");
 export type SundayPair = { primary: ColdSeed; standby: ColdSeed; scope: string };
 export class SyncPair {
@@ -59,6 +62,8 @@ export class SyncPair {
   reader = "";
   nextWriter = "";
   initialFlush = "";
+  initialStandby?: { copyMs: number; received: Awaited<ReturnType<SyncPair["candidate"]>>; attach: unknown };
+  readonly walSamples: { label: string; at: number; lsn: string }[] = [];
   constructor(
     readonly s: Stack,
     readonly base?: { path: string; checkpoint?: Checkpoint; ownerUid?: number; ownerGid?: number },
@@ -82,6 +87,12 @@ export class SyncPair {
           "wal_keep_size=32GB",
           "-c",
           "listen_addresses=*",
+          // [DX-HASYNC2] Why: the staged seed was never vacuumed, so the first start of every copy ran a vacuum pass that wrote
+          // about 29 MB/s of WAL with no saves (November 23). A database in service has had that pass once; a 30-minute case
+          // at 235 saves/s does not reach the insert threshold that would start another. Rejected: measuring failover while
+          // the standby absorbs a one-off maintenance stream that the next start of the same copy would repeat.
+          "-c",
+          "autovacuum=off",
         ]
       : pgArgs;
   }
@@ -132,6 +143,25 @@ export class SyncPair {
     );
     s.sharedVolumes.add(name);
   }
+  // [DX-HASYNC2] Why: a standby on the other server streams over the direct replication address when the run has one.
+  // Rejected: carrying base-backup and catch-up WAL through the SSH overlay, which bounds a rebuild at about 49 MiB/s.
+  replicationEndpoint(role: SqlRole, from: Site) {
+    const m = this.s.members.get(role)!;
+    if (this.sunday && m.site !== from && m.site.replicationAddress)
+      return { host: m.site.replicationAddress, port: replicationPort };
+    return { host: this.s.storageHost(role, from), port: 5432 };
+  }
+  replicationPublish(site: Site) {
+    return this.sunday && this.s.a !== this.s.b && site.replicationAddress
+      ? ["-p", site.replicationAddress + ":" + replicationPort + ":5432"]
+      : [];
+  }
+  async walSample(label: string, role: SqlRole = "pg") {
+    const value = await this.sql(role, "select pg_current_wal_flush_lsn() where not pg_is_in_recovery()");
+    lsn(value);
+    this.walSamples.push({ label, at: performance.now(), lsn: value });
+    return value;
+  }
   dataMount() {
     return [
       "--mount",
@@ -171,6 +201,7 @@ export class SyncPair {
           : []),
         ...(cp ? ["-e", "BASE_LAYOUT=" + cp.layout, "-e", "BASE_MANIFEST=" + cp.manifest] : []),
         ...(s.a === s.b ? ["-p", loopback + "::5432"] : []),
+        ...this.replicationPublish(s.a),
       ],
       "/bin/sh",
       [
@@ -186,7 +217,17 @@ export class SyncPair {
       ],
       s.a === s.b ? undefined : 5432,
     );
-    await this.pgReady("pg", false, this.sunday ? 720000 : cp ? 360000 : timeouts.setup);
+    let standbyStart = 0;
+    if (this.sunday) {
+      // [DX-HASYNC2] Why: each server copies and checks only its own disks, so both copies run at once, and the standby is
+      // attached before any Datomic process starts. Rejected: the serial order that left the standby 21 GB behind.
+      standbyStart = performance.now();
+      await this.startStandby();
+      await Promise.all([
+        this.pgReady("pg", false, coldBudgetMs),
+        this.pgReady("target", true, coldBudgetMs),
+      ]);
+    } else await this.pgReady("pg", false, cp ? 360000 : timeouts.setup);
     if (this.sunday) {
       assert.match(s.secret, /^[a-f0-9]{36}$/);
       assert.match(s.admin, /^[a-f0-9]{36}$/);
@@ -208,12 +249,33 @@ export class SyncPair {
           s.secret +
           "'; END IF; END $$",
       );
+      await this.walSample("primary-ready");
+      await this.recordWalSource("primary-ready");
+      assert.match(
+        (this.cluster = await this.sql("pg", "select system_identifier from pg_control_system()")),
+        /^\d+$/,
+      );
+      this.timeline = parseInt(
+        await this.sql("pg", "select left(pg_walfile_name(pg_current_wal_insert_lsn()),8)"),
+        16,
+      );
+      await this.checkCold("pg", this.sunday.primary);
+      await this.checkCold("target", this.sunday.standby);
+      const received = await wait("initial WAL receiver", timeouts.setup, () =>
+        this.candidate().catch(() => undefined),
+      );
+      assert.equal(received.cluster, this.cluster);
+      assert.equal(received.timeline, this.timeline);
+      const attach = await this.attachSync("pg", "target", standbyName);
+      this.initialStandby = { copyMs: performance.now() - standbyStart, received, attach };
+      await this.walSample("standby-synchronous");
     } else if (!cp) {
       await s.database("pg", "moving");
       await replicationRole(s);
     }
     await this.tx("active", s.a);
     await this.waitBroker("active", timeouts.setup);
+    if (this.sunday) await this.walSample("transactor-serving");
     this.writer = await this.gateway("write", s.a, "pg", options.grouped);
     const ac = new Account(
       s.e.prefix + "-sync",
@@ -245,11 +307,121 @@ export class SyncPair {
     if (cp) assert.equal(this.cluster, cp.cluster);
     if (this.sunday) {
       assert.equal(this.cluster, this.sunday.primary.cluster);
-      await this.checkCold("pg", this.sunday.primary);
     }
     return { ac, setup };
   }
   async clone(replicationHost?: string, replicationPort = 5432) {
+    if (this.sunday) {
+      assert(this.initialStandby && replicationHost === undefined, "Sunday standby attaches in open()");
+      return this.initialStandby;
+    }
+    return this.cloneLive(replicationHost, replicationPort);
+  }
+  async startStandby() {
+    assert(this.sunday);
+    const s = this.s;
+    const up = this.replicationEndpoint("pg", s.b);
+    const conn =
+      "host=" +
+      up.host +
+      " port=" +
+      up.port +
+      " user=ha1stream password=" +
+      s.secret +
+      " application_name=" +
+      standbyName +
+      " connect_timeout=2";
+    await s.start(
+      "target",
+      s.b,
+      [...coldMount(this.sunday.standby, "FIRST 1 (sync_a)", conn), ...this.replicationPublish(s.b)],
+      "/bin/sh",
+      ["-ceu", coldCopy + 'exec docker-entrypoint.sh postgres "$@"', "standby", ...this.postgresArgs],
+      5432,
+    );
+  }
+  // [DX-HASYNC2] Why: reach synchronous acknowledgement only after a measured catch-up to zero lag, and record it.
+  // Rejected: switching to synchronous mode while the standby is still behind and timing out on a fixed budget.
+  async attachSync(primary: SqlRole, standby: SqlRole, app: string, capMs = coldBudgetMs) {
+    const start = performance.now();
+    // The catch-up rate is measured only once the standby streams, so connection set-up cannot read as zero progress.
+    await wait("WAL receiver streaming for " + app, timeouts.setup, async () =>
+      (await this.sql(standby, "select status from pg_stat_wal_receiver").catch(() => "")) === "streaming"
+        ? true
+        : undefined,
+    );
+    const caught: CatchUp = await catchUp(
+      "standby " + app + " catching up before synchronous mode",
+      () => this.sql(primary, "select pg_current_wal_flush_lsn()"),
+      () => this.sql(standby, "select pg_last_wal_replay_lsn()"),
+      { capMs },
+    );
+    this.mark("standby-caught-up", { app, ...caught });
+    const setting = "FIRST 1 (" + app + ")";
+    await this.sql(primary, "ALTER SYSTEM SET synchronous_standby_names='" + setting + "'");
+    assert.equal(await this.sql(primary, "SELECT pg_reload_conf()"), "t");
+    const synced = await wait("synchronous mode for " + app, timeouts.setup, async () => {
+      const row = await this.sql(
+        primary,
+        "select current_setting('fsync'),current_setting('synchronous_commit'),current_setting('synchronous_standby_names')," +
+          "state,sync_state from pg_stat_replication where application_name='" +
+          app +
+          "'",
+      );
+      return row === "on|on|" + setting + "|streaming|sync" ? row : undefined;
+    });
+    const zero = await this.zeroLag(primary, standby, app);
+    const result = { caught, synced, zero, ms: performance.now() - start };
+    this.mark("standby-synchronous", { app, ...zero });
+    return result;
+  }
+  // Primary flush position first, then the standby's flush and replay through the primary's own view.
+  async zeroLag(primary: SqlRole, standby: SqlRole, app: string, budget = 10000) {
+    const start = performance.now();
+    const required = await this.sql(primary, "select pg_current_wal_flush_lsn()");
+    const row = await wait("zero replication lag for " + app, budget, async () => {
+      const [flush, replay, sync] = (
+        await this.sql(
+          primary,
+          "select flush_lsn, replay_lsn, sync_state from pg_stat_replication where application_name='" + app + "'",
+        )
+      ).split("|");
+      return flush && replay && sync === "sync" && lsn(flush) >= lsn(required) && lsn(replay) >= lsn(required)
+        ? { flush, replay }
+        : undefined;
+    });
+    const standbyReplay = await this.sql(standby, "select pg_last_wal_replay_lsn()");
+    assert(lsn(standbyReplay) >= lsn(required), "Standby replay is behind the primary flush");
+    return { required, ...row, standbyReplay, waitedMs: performance.now() - start };
+  }
+  async recordWalSource(label: string) {
+    // [DX-HASYNC2] Why: keep the evidence for the vacuum cause with every case: seed vacuum state, freeze age and WAL counters.
+    // Rejected: failing a case because a diagnostic query failed.
+    try {
+      await this.#walSource(label);
+    } catch (error) {
+      this.s.e.log("wal-source", { label, error: this.s.redact?.(String(error)) ?? "query failed" });
+    }
+  }
+  async #walSource(label: string) {
+    const tables = await this.sql(
+      "pg",
+      "select coalesce(string_agg(t.relname||':'||n_live_tup||':'||n_dead_tup||':'||n_ins_since_vacuum||':'||" +
+        "coalesce(last_vacuum::text,'-')||':'||coalesce(last_autovacuum::text,'-')||':'||age(c.relfrozenxid)||':'||c.relpages, ';' order by c.relpages desc),'') " +
+        "from pg_stat_user_tables t join pg_class c on c.oid=t.relid",
+      this.storage,
+    );
+    const database = await this.sql(
+      "pg",
+      "select age(datfrozenxid)||'|'||current_setting('autovacuum')||'|'||current_setting('autovacuum_freeze_max_age')||'|'||" +
+        "(select count(*) from pg_stat_activity where backend_type='autovacuum worker')||'|'||" +
+        "(select wal_records||':'||wal_fpi||':'||wal_bytes from pg_stat_wal) from pg_database where datname='" +
+        this.storage +
+        "'",
+    );
+    this.s.e.log("wal-source", { label, tables, database, samples: this.walSamples });
+  }
+  async cloneLive(replicationHost?: string, replicationPort = 5432) {
     const s = this.s;
     const remote = replicationHost ?? s.storageHost("pg", s.b);
     const conn =
@@ -306,9 +478,11 @@ export class SyncPair {
           x.Source === seed.directory && x.Destination === "/cold" && !x.RW,
       ),
     );
-    const logs = await m.site.docker(["logs", "--tail", "35", m.id]);
+    const logs = await m.site.docker(["logs", "--tail", this.sunday ? "1400" : "35", m.id]);
     assert(logs.split("\n").includes("verified-cold-copy " + seed.sha256));
-    this.mark("cold-copy", { role, id: m.id, sha256: seed.sha256, cluster: seed.cluster });
+    const phases = coldPhases(logs);
+    this.mark("cold-copy", { role, id: m.id, sha256: seed.sha256, cluster: seed.cluster, ...phases });
+    return phases;
   }
   async service(grouped = false) {
     const s = this.s;
@@ -631,23 +805,34 @@ export class SyncPair {
     // [DX-HASYNC1] Why: only a new container that first rewinds the fenced disk and verifies recovery may serve A again. Rejected: clearing the old startup interlock.
     await this.docker("pg", "rm");
     s.members.delete("pg");
-    const oldHost = s.storageHost("target", s.a);
+    const up = this.replicationEndpoint("target", s.a);
     const source =
       "host=" +
-      oldHost +
-      " port=5432 user=postgres password=" +
+      up.host +
+      " port=" +
+      up.port +
+      " user=postgres password=" +
       s.admin +
       " application_name=sync_a connect_timeout=2 target_session_attrs=read-write";
     const stream =
       "host=" +
-      oldHost +
-      " port=5432 user=ha1stream password=" +
+      up.host +
+      " port=" +
+      up.port +
+      " user=ha1stream password=" +
       s.secret +
       " application_name=sync_a connect_timeout=2";
     await s.start(
       "pg",
       s.a,
-      ["-e", "REJOIN_SOURCE=" + source, "-e", "REJOIN_STREAM=" + stream, ...this.dataMount()],
+      [
+        "-e",
+        "REJOIN_SOURCE=" + source,
+        "-e",
+        "REJOIN_STREAM=" + stream,
+        ...this.dataMount(),
+        ...this.replicationPublish(s.a),
+      ],
       "/bin/sh",
       [
         "-ceu",
@@ -781,18 +966,23 @@ export class SyncPair {
     assert(!old.State.Running && (await this.sql("target", "select pg_is_in_recovery()")) === "f");
     assert(old.Mounts.some((m: { Name: string }) => m.Name === this.primaryData));
     await s.remove("pg");
-    const from = s.storageHost("target", s.a);
+    const from = this.replicationEndpoint("target", s.a);
     const conn =
       "host=" +
-      from +
-      " port=5432 user=ha1stream password=" +
+      from.host +
+      " port=" +
+      from.port +
+      " user=ha1stream password=" +
       s.secret +
       " application_name=sync_a connect_timeout=2 target_session_attrs=read-write";
     const start = performance.now();
+    this.mark("replacement-start", { endpoint: from.port === replicationPort ? "direct" : "overlay" });
     await s.start(
       "pg",
       s.a,
-      this.sunday ? coldMount(this.sunday.primary, "", conn) : ["-e", "REPLACEMENT=" + conn],
+      this.sunday
+        ? [...coldMount(this.sunday.primary, "", conn), ...this.replicationPublish(s.a)]
+        : ["-e", "REPLACEMENT=" + conn],
       "/bin/sh",
       [
         "-ceu",
@@ -812,40 +1002,57 @@ export class SyncPair {
     await this.pgReady(
       "pg",
       true,
-      this.sunday ? 720000 : this.base?.checkpoint ? 360000 : timeouts.setup,
+      this.sunday ? coldBudgetMs : this.base?.checkpoint ? 360000 : timeouts.setup,
     );
     const copiedMs = performance.now() - start;
+    this.mark("replacement-ready", { copiedMs });
     assert.equal(
       await this.sql("pg", "select system_identifier from pg_control_system()"),
       this.cluster,
     );
     const expected = await this.sql("target", "select pg_current_wal_flush_lsn()");
-    await wait(
-      "replacement catches the survivor release prefix",
-      this.sunday ? 120000 : timeouts.replay,
-      async () => {
+    let transfer: unknown;
+    if (this.sunday) {
+      // [DX-HASYNC2] Why: record the WAL bytes and time of the rebuild's catch-up separately from the local copy.
+      const replayStart = await this.sql("pg", "select pg_last_wal_replay_lsn()").catch(() => "");
+      transfer = {
+        replayStart,
+        ...(await this.attachSync("target", "pg", "sync_a")),
+        endpoint: from.port === replicationPort ? "direct" : "overlay",
+      };
+      this.mark("replacement-synchronous", transfer);
+    } else {
+      await wait("replacement catches the survivor release prefix", timeouts.replay, async () => {
         const v = await this.sql("pg", "select pg_last_wal_replay_lsn()").catch(() => "");
         return v && lsn(v) >= lsn(expected) ? v : undefined;
-      },
-    );
-    await this.sql("target", "ALTER SYSTEM SET synchronous_standby_names='FIRST 1 (sync_a)'");
-    assert.equal(await this.sql("target", "select pg_reload_conf()"), "t");
-    await wait("replacement required for commits", timeouts.replay, async () => {
-      const row = await this.sql(
-        "target",
-        "select current_setting('fsync'),current_setting('synchronous_commit')," +
-          "current_setting('synchronous_standby_names'),state,sync_state from pg_stat_replication where application_name='sync_a'",
-      );
-      return row === "on|on|FIRST 1 (sync_a)|streaming|sync" ? row : undefined;
-    });
+      });
+      await this.sql("target", "ALTER SYSTEM SET synchronous_standby_names='FIRST 1 (sync_a)'");
+      assert.equal(await this.sql("target", "select pg_reload_conf()"), "t");
+      await wait("replacement required for commits", timeouts.replay, async () => {
+        const row = await this.sql(
+          "target",
+          "select current_setting('fsync'),current_setting('synchronous_commit')," +
+            "current_setting('synchronous_standby_names'),state,sync_state from pg_stat_replication where application_name='sync_a'",
+        );
+        return row === "on|on|FIRST 1 (sync_a)|streaming|sync" ? row : undefined;
+      });
+    }
     const mbr = s.members.get("pg")!;
     assert(mbr.id !== old.Id && !mbr.volumes.includes(this.primaryData));
-    const log = await mbr.site.docker(["logs", "--tail", "35", mbr.id]);
+    const log = await mbr.site.docker(["logs", "--tail", this.sunday ? "1400" : "35", mbr.id]);
     const m = /^backup-kib (\d+)\s/m.exec(log);
     assert(m);
-    if (this.sunday) await this.checkCold("pg", this.sunday.primary);
-    else assert(log.includes("backup successfully verified"));
-    return { old: old.Id, new: mbr.id, copiedMs, bytes: Number(m[1]) * 1024, expected, start };
+    const phases = this.sunday ? await this.checkCold("pg", this.sunday.primary) : undefined;
+    if (!this.sunday) assert(log.includes("backup successfully verified"));
+    return {
+      old: old.Id,
+      new: mbr.id,
+      copiedMs,
+      bytes: Number(m[1]) * 1024,
+      expected,
+      start,
+      ...(phases ? { phases, transfer } : {}),
+    };
   }
   async inspectFirstDisk() {
     assert(this.sunday);
