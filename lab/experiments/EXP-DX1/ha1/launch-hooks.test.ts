@@ -17,5 +17,5 @@ test("wrappers that clear the environment pass every dry-run variable through wh
 
 test("the restart campaign and the import launcher stop at their first offer in a dry run", () => {
   assert.match(read("jvm1/startup-server.ts"), /firstOffer\("startup-read " \+ arm\);\n\s+const preStart = now\(\)/);
-  assert.match(read("load1/fair-campaign.ts"), /firstOffer\("fair-import " \+ spec\.label \+ " " \+ cell\);\n\s+const \[writes, reads\] = await Promise\.all\(\[\n\s+play\(/);
+  assert.match(read("load1/fair-campaign.ts"), /firstOffer\("fair-import " \+ label \+ " " \+ cell\);\n\s+const \[writes, reads\] = await Promise\.all\(\[\n\s+play\(/);
 });

@@ -380,7 +380,7 @@ async function arm(
     };
     // [DX-THIN1] Why: the import launcher joins the launch dry run; the quiet cell of the first arm is its first offer.
     // Rejected: stopping after the cells start, which would need real offers.
-    firstOffer("fair-import " + spec.label + " " + cell);
+    firstOffer("fair-import " + label + " " + cell);
     const [writes, reads] = await Promise.all([
       play(
         senders,
