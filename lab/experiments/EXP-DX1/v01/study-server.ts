@@ -39,7 +39,11 @@ assert(pairOption === "append-retirement" || (retirement && pairOption === "owne
 const treatmentKey = pairOption === "owner-head" ? "TX2_SUBJECT_OWNER_HEAD" : "TX2_SUBJECT_APPEND_RETIREMENT";
 if (retirement) assert(!tuned && writer === "per-person-ordered" && jvm === "j21-g1" && writeJvm === "j21-g1" &&
   txJvm === "j25-zgc" && path.isAbsolute(walDirectory) && diagnostics.lookupEvery === 64 && !diagnostics.serialApply);
-assert(tuned || retirement, "Use scorecard.mjs (adopted-server.ts) for the card; this runner is for the read study or DX_W1_RETIREMENT_PAIR=1");
+// [DX-RD2] Why: the pinned short-cut pair (TX2_PINNED_SHORTCUT off, then on) reuses this runner's prepared aged arms.
+// Rejected: a separate launcher with its own copy admission and aged fresh-peer check.
+const pinnedPair = process.env.DX_RD2_PINNED_PAIR === "1";
+if (pinnedPair) assert(!tuned && !retirement && writer === "per-person-ordered", "The pinned pair uses the card's writer and server profile");
+assert(tuned || retirement || pinnedPair, "Use scorecard.mjs (adopted-server.ts) for the card; this runner is for the read study, DX_W1_RETIREMENT_PAIR=1 or DX_RD2_PINNED_PAIR=1");
 
 const end = Number(deadlineText);
 assert(Number.isSafeInteger(end) && end > Date.now());
@@ -63,14 +67,14 @@ verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
 // --pgdata-source with --aged-bundle): a new physical copy per arm, the aged bundle's fresh-peer check on the stack's
 // network, and no dump. Rejected: restoring the aged dump per arm (33-42 minutes each, capped at 42).
 const preparedSource = process.env.DX_RD1_PGDATA_SOURCE ?? "";
-assert(!preparedSource || (((tuned && age === "fresh") || retirement) && process.env.DX_RD1_LADDER && process.env.DX_RD1_PGDATA),
+assert(!preparedSource || (((tuned && age === "fresh") || retirement || pinnedPair) && process.env.DX_RD1_LADDER && process.env.DX_RD1_PGDATA),
   "A prepared run needs --read-study on the fresh seal or DX_W1_RETIREMENT_PAIR=1, a ladder and one --pgdata copy");
 const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin, !preparedSource);
 const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin, !preparedSource) : undefined;
-const record = { source, age, writer, policy: control, treatment: tuned || undefined, diagnostics, retirement: retirement || undefined, pairOption: retirement ? pairOption : undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
+const record = { source, age, writer, policy: control, treatment: tuned || undefined, diagnostics, retirement: retirement || undefined, pinnedPair: pinnedPair || undefined, pairOption: retirement ? pairOption : undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
   agedBundle: expected?.pin, agedDump: expected?.dumpPin || undefined };
 const prepared = preparedSource ? openPreparedLadder({ campaign, ladder: process.env.DX_RD1_LADDER!, source: preparedSource,
-  copy: process.env.DX_RD1_PGDATA!, wal: walDirectory || undefined, record, kind: retirement ? "retirement" : "read" }) : undefined;
+  copy: process.env.DX_RD1_PGDATA!, wal: walDirectory || undefined, record, kind: retirement ? "retirement" : pinnedPair ? "pinned" : "read" }) : undefined;
 if (!prepared) {
   fs.mkdirSync(campaign);
   jsonFile(path.join(campaign, "input.json"), record);
@@ -83,7 +87,7 @@ for (const loaded of [false, true]) {
   if (prepared && loaded !== prepared.loaded) continue;
   assert(!stopping && Date.now() + 10 * 60_000 < end);
   const policy = loaded && tuned ? tuned : control;
-  const out = path.join(campaign, retirement ? (loaded ? "append" : "reference") : tuned ? (loaded ? "tuned" : "control") : (loaded ? "loaded" : "zero"));
+  const out = path.join(campaign, retirement ? (loaded ? "append" : "reference") : pinnedPair ? (loaded ? "on" : "off") : tuned ? (loaded ? "tuned" : "control") : (loaded ? "loaded" : "zero"));
   fs.mkdirSync(out);
   const floor = prepared ? 5 : age === "1B" ? 320 : 240;
   assert(scaleHost.available(out) >= floor * 1024 ** 3, "Insufficient free space for the disposable restore");
@@ -100,7 +104,8 @@ for (const loaded of [false, true]) {
       if (tuned) placeDriver(onlineCpus);
       const { engines } = startScaleStack(out, slot, source, writer === "grouped", tuned ? {
         ...options, DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: loaded ? "1" : "0", ...prepared?.env,
-      } : retirement ? { ...options, [treatmentKey]: loaded ? "1" : "0", ...prepared?.env } : options, { policy, walDirectory });
+      } : retirement ? { ...options, [treatmentKey]: loaded ? "1" : "0", ...prepared?.env }
+        : pinnedPair ? { ...options, DX_PINNED_SHORTCUT: loaded ? "1" : "0", DX_PINNED_CUT_LOOKUP: loaded ? "1" : "0", ...prepared?.env } : options, { policy, walDirectory });
       if (tuned) placeDriver("9,10");
       const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
       const residency = async () => {
@@ -111,7 +116,7 @@ for (const loaded of [false, true]) {
           containers: Object.entries(engines).map(([role, e]) => ({ id: e.id, name: `${slot}-${role}`, imageId: e.image })) });
         return observed.roles as Residency;
       };
-      const empty = tuned || retirement ? undefined : await residency();
+      const empty = tuned || retirement || pinnedPair ? undefined : await residency();
       const raw = path.join(out, "engines", slot, "trace", "raw");
       if (prepared) systemIdentifier = prepared.live(out, slot, attempt, engines.pg!.id);
       else await restoreDump(expected?.dump || seed.dump, expected?.dumpPin || seed.image.sha256, slot, engines,
@@ -132,7 +137,7 @@ for (const loaded of [false, true]) {
       assert(!stopping && Date.now() + 8 * 60_000 < end);
       const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw,
         creditMode: policy.creditMode, serialApply: diagnostics.serialApply, empty, residency };
-      firstOffer((retirement ? "retirement " : "read-study ") + path.basename(out));
+      firstOffer((retirement ? "retirement " : pinnedPair ? "pinned " : "read-study ") + path.basename(out));
       offered = true;
       if (tuned) {
         const native = JSON.parse(fs.readFileSync(path.join(raw, "gw-r-native-settings.json"), "utf8"));
@@ -165,6 +170,10 @@ for (const loaded of [false, true]) {
           cut = result.terminal;
         }
         if (prepared) assert(!stopping, "Prepared arm was interrupted");
+      } else if (pinnedPair) {
+        const { pinnedLadder } = await import("../rd1/pinned-ladder.ts");
+        await pinnedLadder(out, read, seed, head, loaded);
+        if (prepared) assert(!stopping, "Prepared pinned ladder was interrupted");
       } else {
         const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head);
         if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
@@ -182,6 +191,18 @@ for (const loaded of [false, true]) {
   }
 }
 
+if (pinnedPair && (!prepared || prepared.ladder === "on")) {
+  const [off, on] = ["off", "on"].map((arm) => JSON.parse(fs.readFileSync(path.join(campaign, arm, "pinned-ladder.json"), "utf8")));
+  assert(off.shortcut === false && on.shortcut === true && off.head === on.head);
+  const steps = off.steps.map((a: any, i: number) => {
+    const b = on.steps[i];
+    assert.deepEqual([a.pin, a.position, a.seats], [b.pin, b.position, b.seats]);
+    return { pin: a.pin, position: a.position, seats: a.seats, goodput: [a.goodput, b.goodput], p50Ms: [a.read.p50Ms, b.read.p50Ms],
+      p99Ms: [a.read.p99Ms, b.read.p99Ms], errors: [a.errors, b.errors], currentShare: b.shortcut.current / Math.max(1, b.shortcut.current + b.shortcut.asOf) };
+  });
+  jsonFile(path.join(campaign, "pinned-comparison.json"), { source, age, head: on.head, steps });
+  console.log("[DX-RD2] " + JSON.stringify(steps));
+}
 if (retirement && (!prepared || prepared.ladder === "append")) {
   const arms = ["reference", "append"].map((arm) =>
     JSON.parse(fs.readFileSync(path.join(campaign, arm, "retirement-diagnostic.json"), "utf8")));

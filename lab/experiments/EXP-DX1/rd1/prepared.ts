@@ -11,14 +11,17 @@ import { claimPgdata, inspectPgdata, pgdataTarget, preflightWal, sealedPgdata, t
 export const ladders = ["control", "tuned"] as const;
 // [DX-INT1] The append-retirement pair runs its reference and append arms as the same two prepared invocations.
 export const retirementLadders = ["reference", "append"] as const;
-export type Ladder = typeof ladders[number] | typeof retirementLadders[number];
-type Kind = "read" | "retirement";
-const kinds = { read: { names: ladders }, retirement: { names: retirementLadders } } as const;
+// [DX-RD2] The pinned short-cut pair runs the option off, then on, as the same two prepared invocations.
+export const pinnedLadders = ["off", "on"] as const;
+export type Ladder = typeof ladders[number] | typeof retirementLadders[number] | typeof pinnedLadders[number];
+type Kind = "read" | "retirement" | "pinned";
+const kinds = { read: { names: ladders }, retirement: { names: retirementLadders }, pinned: { names: pinnedLadders } } as const;
 // [DX-INT1] Why: the retirement pair runs 394 and 620 on the fresh copy and 50 and 235 on the 1 billion copy.
 // Rejected: one fixed rate list (the 1 billion arm's evidence would never seal).
 const ratesOf = (kind: Kind, age: unknown) => kind === "read" || age === "1B" ? ["50", "235"] : ["394", "620"];
 const dryRun = () => process.env.DX_DRY_RUN_FIRST_OFFER === "1";
-const kindOf = (ladder: Ladder): Kind => (retirementLadders as readonly string[]).includes(ladder) ? "retirement" : "read";
+const kindOf = (ladder: Ladder): Kind => (retirementLadders as readonly string[]).includes(ladder) ? "retirement"
+  : (pinnedLadders as readonly string[]).includes(ladder) ? "pinned" : "read";
 export const ladderMinutes = 28;
 
 const sha = (bytes: Buffer | string) => createHash("sha256").update(bytes).digest("hex");
@@ -151,7 +154,8 @@ function evidenceFiles(campaign: string, ladder: Ladder) {
   const kind = kindOf(ladder);
   const files = ["input.json", `${ladder}/attempt.json`, `${ladder}/pgdata.json`, `${ladder}/cleanup/inventory.json`];
   if (kind === "retirement") files.push(`${ladder}/retirement-diagnostic.json`);
-  for (const rate of ratesOf(kind, read<{ age?: string }>(path.join(campaign, "input.json")).age)) for (const name of ["arm.json", "operations.json"]) files.push(`${ladder}/${rate}/${name}`);
+  if (kind === "pinned") files.push(`${ladder}/pinned-ladder.json`);
+  else for (const rate of ratesOf(kind, read<{ age?: string }>(path.join(campaign, "input.json")).age)) for (const name of ["arm.json", "operations.json"]) files.push(`${ladder}/${rate}/${name}`);
   for (const file of files) assert(fs.existsSync(path.join(campaign, file)), `Missing ladder evidence ${file}`);
   return files;
 }

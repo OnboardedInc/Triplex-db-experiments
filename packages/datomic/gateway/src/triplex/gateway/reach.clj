@@ -1,5 +1,5 @@
 (ns triplex.gateway.reach
-  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.trace :as trace] [triplex.gateway.group-cut :as group-cut] [triplex.gateway.owner-root :as owner-root] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission] [triplex.gateway.save-ledger :as ledger])
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.trace :as trace] [triplex.gateway.group-cut :as group-cut] [triplex.gateway.owner-root :as owner-root] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission] [triplex.gateway.save-ledger :as ledger] [triplex.gateway.pinned :as pinned])
   (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap] [java.util.concurrent.atomic AtomicInteger LongAdder]))
 (set! *warn-on-reflection* false)
 
@@ -261,8 +261,13 @@
           refs (ArrayList. ^java.util.Collection (vec (for [[ref from to] (:refs value) :when (<= from valid) :when (< valid to)] ref)))]
       (aset ^longs counts 0 (+ (aget ^longs counts 0) (count (:texts value))))
       [eid (or (:rev value) 0) (or (:texts value) []) refs (or (:json value) "[]")])
-    (if (:recent-state cfg) (read-entity-recent name db cfg id valid counts)
-    (read-entity-legacy name db cfg id valid counts))))
+    ;; [DX-RD2] Why: behind TX2_PINNED_SHORTCUT, a subject unchanged since a plain pinned cut is read from the request's
+    ;; current database; its revision, rows and references are then exactly those at the cut (pinned/unchanged-since?).
+    ;; Rejected: the recent-cut witness for those people (it is keyed to the pinned basis, not to the current database).
+    (if (when (and pinned/enabled (:identity-db cfg)) (pinned/current-eid (:identity-db cfg) db (:selected-position cfg) id))
+      (read-entity-legacy name (:identity-db cfg) cfg id valid counts)
+      (if (:recent-state cfg) (read-entity-recent name db cfg id valid counts)
+      (read-entity-legacy name db cfg id valid counts)))))
 (defn append-strings! [^StringBuilder out ^Iterable values]
   (.append out \[)
   (let [it (.iterator values) n (long-array 1)]
@@ -291,7 +296,7 @@
   (try
     (let [[db position t recent-eligible group-cut] (trace/read-span "reach.select-db" "peer-call" (select-db name current (get input "basis") epoch))
           base-cfg (config name current epoch)
-          cfg (assoc base-cfg :group-cut group-cut :identity-db current :connection-generation epoch :selected-t t :recent-state recent-state :recent-eligible recent-eligible
+          cfg (assoc base-cfg :group-cut group-cut :identity-db current :connection-generation epoch :selected-t t :selected-position position :recent-state recent-state :recent-eligible recent-eligible
                 :revision-view (cache/revision-view [name epoch (:cache-generation base-cfg) t])) valid (double (get-in input ["basis" "validAt"]))
           ;; [DX-R2] Why: inline journals replace changed rows; only newly introduced reference roots need graph expansion.
           ;; Rejected: repeating every unchanged form/answer entity after a scalar replacement.

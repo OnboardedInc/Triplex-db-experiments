@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # [DX-RD2] One bare-metal run on a scratch copy of the sealed 1 billion record cluster: PostgreSQL (postgres:17-alpine,
 # the scorecard's server settings), one transactor, and pinned-probe.clj in a peer JVM shaped like the scorecard's
-# reader (one core, 3 GiB heap, Datomic's default 1.5 GiB object cache), then the same probe with a 12 GiB cache.
+# reader (one core, 3 GiB heap, Datomic's default 1.5 GiB object cache), then the same probe with a 10 GiB cache
+# (Datomic refuses a cache plus memory index above 75% of the heap: 12 GiB in 16 GiB was refused on the server).
 # Nothing is written to the sealed source. Usage (as root, from the scorecard build's repository checkout):
 #   RD2_PGDATA_SOURCE=... RD2_PGDATA_COPY=... RD2_OUT=... RD2_PROBE=.../pinned-probe.clj \
 #   NODE=.../node bash pinned-probe-server.sh
@@ -100,5 +101,5 @@ print(json.dumps(c))' "$RD2_OUT/subjects.json" "$uri" "$offset" "$seconds" > "$R
 # Pass 1: the scorecard reader's shape (one core, 3 GiB heap, Datomic's default object cache of half the heap).
 probe reader 0 "-Xms256m -Xmx3072m"
 # Pass 2: the same core with a 12 GiB object cache, new people.
-probe bigcache 50 "${RD2_BIG_FLAGS:--Xms1g -Xmx16g -Ddatomic.objectCacheMax=12g}"
+probe bigcache 50 "${RD2_BIG_FLAGS:--Xms1g -Xmx16g -Ddatomic.objectCacheMax=10g}"
 log "complete"

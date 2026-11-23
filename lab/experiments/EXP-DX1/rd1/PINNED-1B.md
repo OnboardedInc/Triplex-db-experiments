@@ -1,30 +1,19 @@
 # Pinned reads at 1 billion records: why they are forty times slower
 
-**Status: answer with the 1 billion evidence and tonight's run, 2026-11-23.** Sources: the code at the scorecard commit `6770c37ba`, the fresh card's evidence and the 1 billion part 1 and 2 evidence (`score-1b-c-part1-2.tar.gz`, SHA-256 `e31c4adc…6056b`: the reader's request trace `gw-r.jsonl` with one cgroup CPU sample per second, its GC log and its JVM flags). Times from the Mac are diagnostic only. Sections marked *open* wait for tonight's run.
+**Status, 2026-11-23 evening: cause located by the 1 billion probe; two default-off options built and gated on the Mac; launcher published for the 1 billion pair.** Sources: the code at the scorecard commit `6770c37ba`, the fresh card's evidence and the 1 billion part 1 and 2 evidence (`score-1b-c-part1-2.tar.gz`, SHA-256 `e31c4adc…6056b`: the reader's request trace `gw-r.jsonl` with one cgroup CPU sample per second, its GC log and its JVM flags). Times from the Mac are diagnostic only. Sections marked *open* wait for tonight's run.
 
 Measurement: aged scorecard part 2 at `6770c37ba` ([V01-AGED.md](https://github.com/OnboardedInc/Triplex-db-experiments/blob/182fb4482/lab/experiments/EXP-DX1/scale1/V01-AGED.md)). One-core read gateway, `server` profile. Pinned ladder at one seat: 18.12 reads/s, p50 44.80 ms at 1 billion; 606.43 reads/s, p50 1.18 ms fresh.
 
-## The answer so far
+## The answer (after the probe on the 1 billion database)
 
-1. **The two cards did not run the same read.** Both pin the ladder and the quiet account's reads at the SCALE1 seed cut, logical position 87,002 (`v01/adopted.ts` `readWindows` uses `seed.scope.cut`; `scale1/decision/observer.ts` `readCell` uses `scope.seedCut`). On the fresh card the seed cut is the head (arm `firstCut` 87,002), so the gateway answers from the current database, or from an as-of view at most 1,260 positions behind as the 3.5/s writer advances, over a database with almost no history. On the 1 billion card the head is 28,309,866 (arm `firstCut`), so every pinned read runs `d/as-of` at a point 28,222,864 positions behind the head, over a history index holding AGE1's 56 to 113 million retractions (each solo save retracts its 1 to 3 predecessor rows and the owner's previous `:triplex.entity/rev`).
-2. **At 1 billion each pinned read costs about 37 to 45 ms of CPU on the reader's one core, whoever is read.** From the reader trace: during every read window the reader cgroup used 0.97 to 0.99 of its one core (97.4% user, 1.0% system, never throttled), and the time inside the read permit (`gateway.admitted-work`) summed to 0.95 to 1.0 of wall time. The **fastest** of 17,749 pinned reads took 36.4 ms inside the permit; p10 38 to 41 ms, p50 40 to 45 ms, p90 83 to 90 ms, in every minute of the ladder and of the quiet-account cells. No read was ever cheap, including people the ladder had already read in an earlier step. So the reader is **compute-bound, not waiting on storage**, and the cost is a floor paid by every as-of read, not a cost of the person's own edits.
-3. **Each pinned read allocates about 65 MB at 1 billion against about 1 MB fresh.** From the GC logs: 1.14 to 1.39 GB/s of allocation at 18 to 21 reads/s (61 to 69 MB per read) at 1 billion, against 0.9 to 1.1 GB/s at 600 to 1,560 reads/s fresh (0.6 to 1.5 MB per read). At 1 billion the old generation stays at about 1.2 GB after every young collection (the 1.5 GiB object cache, full), with 652 mixed collections and 624 concurrent cycles in 25 minutes: long-lived objects (most likely cache entries) are replaced continuously. GC pauses took only 3 to 5% of wall time, so GC is a symptom, not the cause.
-4. **The reader then serves reads one at a time.** The gateway admits reads through a semaphore with `TX2_READ_PERMITS` permits, default `availableProcessors`, which is 1 on the reader (`-XX:ActiveProcessorCount=1`, `cpuset.cpus.effective=6`). 1 ÷ 50 ms ≈ 20 reads/s is the ladder's flat 17.8 to 19.1/s from 1 to 256 seats. Because the reader is compute-bound, more permits on the same core would **not** help.
+1. **The two cards did not run the same read.** Both pin the ladder and the quiet account's reads at the SCALE1 seed cut, position 87,002. On the fresh card that is the head; on the 1 billion card it is 28,222,864 positions behind the head, so every pinned read runs on an as-of view.
+2. **Nearly all of the cost is one lookup in our own read route, not the subject read.** `storage/read-rows` builds the as-of view first (`at-position`) and then calls `lean/rows`, whose `reach/select-db` calls `group-cut/interior`, which resolves the lookup ref `[:triplex.group/position 87002]` **on the as-of view** (`group_cut.clj` line 18 at `6770c37ba`). In the probe's CPU profile on the 1 billion database, 9,306 of 9,721 samples (95.7%; 98.9% of the samples inside `read-rows`) sit under that one `d/entid` call, in Datomic's index merge and filter iterators.
+3. **Why it is slow: the view does not hold that position, and proving absence walks everything added after the pin.** `:triplex.group/position` is unique and only ever asserted, one value per grouped-save member. The pin 87,002 is a solo save, so the view has no member there. Datomic seeks the attribute's AVET range at 87,002 and filters each datom by the view's t; every following group position was asserted after the pin, so the filter rejects them one by one until the range ends. **The cost scales with the number of `:triplex.group/position` values above the pinned position that were asserted after the pin**: not with transactions in general, not with the subject's own retractions, and not with all retractions in a range. A pin near the head has few such values after it, which is why it is cheap (1.26 ms against 31.86 ms in the probe).
+4. **Reproduced on the Mac (diagnostic):** a lookup ref for an absent position on an as-of view took 0.004, 0.48, 1.12 and 3.25 ms with 0, 10,000, 100,000 and 300,000 group positions asserted after the pin; the fixed lookup took 0.003 to 0.011 ms throughout. At about 30 ns per filtered datom on the server, 28 ms suggests roughly a million group positions after the pin in the aged database; that count has not been taken.
+5. **This explains the rest of the evidence:** the same cost for every subject, edited or not, and for a repeat read (0 segment loads, 72 MB of short-lived allocation, all CPU); the reader CPU-bound at 0.97 to 0.99 of its core; and current reads and the reach route (P4), which run `select-db` on the current database, never paying it.
+6. **The single read permit then serializes it.** `TX2_READ_PERMITS` defaults to the processor count, 1 on the reader, so 1 ÷ about 50 ms per read inside the permit gives the ladder's flat 18 to 19 reads/s.
 
-**The cause in one line:** at 1 billion, Datomic's as-of view of the 1 billion database makes every pinned read do about 40 ms and 65 MB of work on the reader's single core, independent of the person; the fresh card never paid this because its pin was its head.
-
-## What exactly the 40 ms is: two candidates, and what separates them
-
-| | **A. Segment churn: every read decodes index segments that do not stay cached** | **B. A walk inside the as-of view that grows with the database, not the person** |
-| --- | --- | --- |
-| Mechanism | An as-of read probes the history tree as well as the current tree (on the Mac toy below: 4 EAVT and 3 AVET probes against 2 and 1, and one extra leaf load per read once history exceeds the cache). If the segments an as-of read touches at 1 billion are large and many, and the 1.5 GiB cache cannot hold them, every read decodes them again. | Some probe in the read (scope, pin transaction, identity or row lookup) iterates many datoms on the as-of view, for example one that has to filter out entries added after the pin. Its cost would be the same for every person and grow with the history after the pin or in total. |
-| Supporting | Continuous old-generation turnover (cache replacement) and 65 MB allocated per read. | The 36 ms floor for every person, including repeats; system CPU at 1% (little storage traffic for 19 reads/s). |
-| Against | A floor that never drops for people read twice; on the toy an as-of read costs about two leaf decodes, not tens. | Nothing in the gateway's code walks a range: every lookup on the pinned path is a point lookup (`at-position`, `reach/select-db`, `scope/head-position`, `group-cut/interior`, `lean/live-texts`). |
-| Same person read twice | Fast if the cache holds what the first read loaded | Still about 40 ms |
-| 12 GiB object cache | Large gain if the working set then fits | No change |
-| Datomic io-stats per read | Many `*-load` and `deserialize` per read | Few loads, but long `api-ms` |
-
-**Decided:** compute-bound, about 37 to 45 ms per read, for every person. **Not decided:** A or B. **Lean: A, about 60%**, because on the Mac (toy 2 below) none of the lookups on the pinned path walks the history after the pin, while each history leaf decoded costs about 3 MB of allocation. Tonight's run measures both directly (per-read Datomic io-stats, a repeat arm, a 12 GiB cache arm and a CPU and allocation profile).
+**Correction:** earlier versions of this file leaned towards cold segment decoding (candidate A), then left A and B open. The probe settled it as B, compute that the cache cannot remove, and its profile located the compute in the cut lookup.
 
 ## The read errors and the quiet account's 2.5 s
 
@@ -33,30 +22,116 @@ Measurement: aged scorecard part 2 at `6770c37ba` ([V01-AGED.md](https://github.
 - **The ladder's 1,611 errors at 1,024 seats** are caught exceptions whose text is not kept (`adopted.ts` line 135). The ladder client times out at 35,000 ms (`new DatomicClient(peer.read, 35000)`), and in the trace the wait for the permit reached a p50 of 25.4 s with 1,024 seats queued, so these are almost certainly client timeouts. The gateway keeps serving requests whose clients have gone, so goodput fell to 11.17/s.
 - **P4's 33,179 ms maximum.** Current pulls take the same read semaphore (`reach.clj` line 384); the first pull after the ladder most likely queued behind abandoned 1,024-seat requests. Its p50 and p99 (4.22 / 47.10 ms) match fresh, and current pulls read at the head, so they never pay the as-of cost.
 
-## Why the fresh database does not show it
+## Why the fresh database does not show it, and store or aged database
 
-| Candidate | Verdict |
-| --- | --- |
-| Size of the history index | **Main cause, together with the pin being behind the head.** Fresh has almost no history; 1 billion has AGE1's 28.2 million solo saves with retractions. |
-| The 28 million loader transactions | Part of the same thing: they are the history. Whether the per-read cost scales with transactions after the pin or with total history is *open* (tonight's recent-pin arm). |
-| The loader's non-standard `:_tx/position` rows | **Not on this path.** They are journal rows on transaction entities; the pinned read decodes only the person's rows, and position lookups use `:triplex.tx/position`. |
-| The people the loader edited being the ones read | **Not the main cause.** AGE1 edited 20,000 of each account's 100,000 people. The 36 ms floor holds for every read, so unedited people pay it too. Edited people may explain the slower mode (p90 about 85 ms, twice the floor); tonight's probe tags each read with whether the person changed after the pin. |
-| The pin position (28.2 million behind the head) | The pin makes the read an as-of read at all. Whether a pin one save behind the head costs the same is *open*. On the Mac toy (history 10 times the cache) a pin near the head cost the same as an old pin. |
+- **The fresh database has no group positions after its pin**, because its pin is its head, so the lookup finds nothing to filter.
+- **The aged database's cost comes from grouped-save positions written after the pin.** Any database where grouped saves (the grouped writer, `group.clj` `materialize`; AGE1's `native/grouped-render`) record many member positions after a pin shows it for that pin, whatever its size. It is a property of our read route on Datomic's as-of view, not of the 1 billion size, of the loader's non-standard `:_tx/position` rows, or of the subjects the loader edited.
+- **Not established:** how many group positions the aged database holds after 87,002 (estimated at about a million from the time per filtered datom), and how many a product database would accumulate. Every grouped save adds one per member.
 
-## Is it a property of the store or of this aged database?
+## The fix: two options, both off by default
 
-**Most likely of the store with our read path: Datomic's as-of view over a large history, read on one core.** AGE1's saves have the product's datom shape (new rows, retracted predecessors, a new revision, one transaction per save; `age1/src/triplex/age/native.clj` `render`), so a database that reached 1 billion records through product saves would have a history index of the same kind and size. **Cannot yet conclude:** whether AGE1's high-rate loading (about 1,100 index jobs, 27 vacuum cycles) left the indexes in a shape that makes as-of reads costlier than slow organic growth would, and whether the cost tracks total history or history after the pin. If the cost tracks total history, every pinned read at 1 billion pays it, including pins near the head.
+| Option | What it does | Cost per save | Why it is exact | Expected effect at 1 billion |
+| --- | --- | --- | --- | --- |
+| **`TX2_PINNED_CUT_LOOKUP=1`** (`group-cut/member-at`) | When the pinned route has its request's current database (`pinned/*current*`, bound by `storage/read-rows`), resolve the group member at the pinned position on the current database and accept it only if its `:triplex.group/position` datom was asserted at or before the view's t. Otherwise the old lookup. | None | Group positions are unique and only ever asserted, each on a new member entity; no writer retracts or changes one (`group.clj`, `group_prepare.clj`, AGE1 `native.clj`). So the view holds a member at that position exactly when the current database holds it with an assertion at or before t. Unit test: equal to the view's own lookup for every position from 0 to 1,299 with 1,194 positions added after the pin. | Removes the walk: the probe's 31.86 ms per old-pin read should fall to about its near-head cost (1.26 ms) at any pin. |
+| **`TX2_PINNED_SHORTCUT=1`** (`pinned/current-eid`, used by `lean/rows` and `reach/read-entity`) | A named subject is read from the current database when its `:triplex.entity/rev` is at or below the pinned position **and** none of its datoms in the current database was asserted after the view's t; every other subject keeps the as-of view. | None (the revision is already stored) | The second condition makes exactness independent of whether a writer remembered the revision: any assertion on the subject after the pin sends it to as-of. The only gap would be a transaction that changes a subject's logical rows with retractions alone; the audit below finds one such transaction, a fold without moves, and it changes no logical row. | After the cut lookup, an unchanged subject costs a current read (0.20 to 0.21 ms in the probe) instead of an as-of read (about 1 ms); 584 of 600 subjects qualified at the old pin in the probe. |
 
-## Fixes, ranked
+**Routes.** Both options apply to `/v1/db/{db}/read` pinned by `recordedPosition` or `recordedAt`, with one or many `entityIds`. The short-cut also applies to `/v2/db/{db}/reach` and `reach-many` (historical worlds), whose `select-db` already runs on the current database and never paid the walk. Unchanged and still exact: reads by row ID, scans without `entityIds`, history reads, held or staged handles, interior cuts of a group (they keep the group-cut slice), `/q` (Datalog across subjects), the journal and feed routes (transaction entities), and the legacy layout. Write options report `pinnedShortcut` and `pinnedCutLookup`; `/v2/admin/scan-stats` reports the short-cut's current and as-of answers.
 
-1. **Settings (existing code).**
-   - `TX2_READ_PERMITS` above 1 on the one-core reader: **no gain expected** (compute-bound). It would only spread the queue.
-   - Three reader cores (the read study's treatment, which also gives three permits): about three times, 50 to 60 reads/s, under either candidate. No cost per save.
-   - Larger reader object cache: large gain only under candidate A. Tonight's 12 GiB arm measures it.
-   - The read study's batches of eight and early filter: they cut exchanges and decode per row, not the as-of work, so little gain here.
-   - Note that none of these is settable for the scorecard's aged arm without a code change: `stack/up.sh` does not pass `TX2_READ_PERMITS` into the gateway container, the server profile fixes the reader at one core, and the read study refuses any database other than the fresh seed.
-2. **Code: answer unchanged people from the current database (recommended).** Every save that changes a person's rows sets their `:triplex.entity/rev` to the save's position in the same transaction. Read the revision from the **current** database first; if it is at or below the pinned position, nothing about that person changed after the pin, so the current rows are exactly the rows at the pin; answer through the current route, which at 1 billion costs what P4 and the fresh card cost (a few ms). Only people changed after the pin take the as-of route. Cost per save: none (the revision is already stored). Exactness: unchanged, provided every writer bumps the revision with every row change; this must be checked for all writers, including grouped saves and removal on request, before it ships. Checked so far: on the Mac gate the short-cut answered 48 of 60 people from the current database with 0 differences from the as-of route. Expected at 1 billion for this ladder, if about 20% of read people changed after the pin: 0.8 × about 2 ms + 0.2 × about 45 ms ≈ 11 ms per read, about 90 reads/s on one core instead of 18; close to the fresh card for pins near the head, where almost nobody changed. Tonight's probe measures this route on the real database.
-3. **Code, larger: keep each person's row lifetimes in the current index.** Retire rows with a marker carrying the retiring position instead of retracting them, so a pinned read of an edited person reads only the current index. Records per save stay about the same (one marker replaces one retraction); current reads of heavily edited people slow down because they skip retired rows. Only worth it if tonight shows edited people dominate the remaining cost.
+**Both time axes.** A pin on record time (`recordedPosition`, or `recordedAt`, which `select-db` turns into a t and a position) is where both options act. A valid-time read with no record-time pin is already a current read, so there is nothing to do. A read pinned on record time and filtered on valid time receives exactly the subject's stored rows at the pin from either database, and the same `visible?` filter then applies the valid time, so the answer is the same. A valid-time correction is a recorded save, so a correction after the pin sends the subject to as-of. The short-cut is a record-time device and reaches valid-time reads only through their record-time pin.
+
+## Audit: what each writer does to a subject between a pin and the head
+
+The short-cut answers from the current database only when (a) the revision is at or below the pin and (b) no datom of the subject was asserted after the pin's t. A writer can therefore make it inexact only by changing a subject's logical rows **without asserting any datom on the subject**.
+
+| Writer | File and function | Asserts on the subject? | Advances `:triplex.entity/rev`? | Short-cut |
+| --- | --- | --- | --- | --- |
+| Per-person ordered writer | `subject_save.clj` `compile-code` (`revision-update`: `[:db/cas owner :triplex.entity/rev revision final]`, or `[:db/add …]` with the narrow check), `render-ops` (new rows; `[:db/retract owner :triplex.entity/row …]` for predecessors) | Yes: rows and revision | Yes, to the save's position, same transaction | Falls back to as-of. Gated |
+| General writer | `storage.clj` `tx-data` (`[:db/add "e:<entity>" :triplex.entity/rev (marker position)]` for every entity with a row in the save; `:triplex/assert`, `:triplex/retract`, born-retired markers), expanded by `commit.clj` `operation-code` | Yes | Yes, for every subject in the save | Falls back. Gated |
+| Grouped saves | `group.clj` `materialize` (members' `tx-data`, plus `:triplex.entity/retired` markers on each retired row's subject); `group_prepare.clj` (`:triplex/retract` becomes a retraction plus a retirement marker; revision ops kept) | Yes: markers and revision | Yes, per member | Falls back; a pin inside a group uses the interior slice, not the short-cut. Gated |
+| Native append and its recovery | `commit.clj` `operation-code` (append-only decision at the serial point); recovery finds the stored operation by `:triplex.tx/operation-id` | The append is a general or ordered save; a resend writes nothing | — | Exact. Gated: the resend was refused as already committed and the head did not move |
+| Append-retirement option | `subject_save.clj` `render-ops` with `append-retirement?` (`[:db/add owner :triplex.entity/retired …]` instead of the retraction) | Yes: marker and revision | Yes | Falls back. Gated |
+| Covering owner head | `owner_layout.clj` `update-code` (`[:db/add owner :triplex.owner/root …]`, `[:db/add owner :triplex.entity/rev final]`) | Yes | Yes | Falls back. Gated |
+| Fold of a covered subject (owner head, merged at `3d4320155`) | `owner_layout.clj` `fold-code` and `fold!` (called before the reference writer acts on a covered subject, `storage.clj` `fold-touched!`, and on the subject writer's retry): retracts the root, moves each covered text from its version entity onto the subject (`[:db/add owner :triplex.entity/row text]`), retracts masked texts; `:triplex.owner/folded` goes on the transaction | Yes when the root held texts (the moves); **no** when it held none | **No**: the fold has no logical position and leaves the revision unchanged | With moves: falls back, exact. Without moves: answers from current and stays exact, because the fold changes no logical row (the masked texts were already excluded by the root's mask at the pin, and an empty root added nothing). **A fold after the pin cannot make the short-cut wrong.** Gated (add-only saves on covered subjects, which fold first) |
+| Fair import frames | `write_policy.clj` (`writeClass` "import" schedules frames); frames are general or ordered saves | Yes | Yes | Falls back. Gated (one frame across two subjects) |
+| Removal on request | `erase.clj` `apply-native!` writes only a transaction journal entity (with its own revision) and the claim; nothing on the subject. Values are masked at read time by `privacy/masked` against the erasure cut | No | No | Exact: the subject's stored rows do not change, and the same masking applies to rows from either database. Gated (second scope, see below) |
+| Removal body cleanup | `envelope.clj` `erase-keys!`, `shred-published!`: key files for sealed bodies, outside the database | No database change | — | Exact. Sealed protection not gated |
+| Valid-time corrections | An ordinary ordered or general save with new valid-time bounds | Yes | Yes | Falls back. Gated (a row moved from valid-from 0 to the seed valid time) |
+| Aging loader | AGE1 `native.clj` `render` (`[:db/add owner-ref :triplex.entity/rev position]`, row adds and retractions), `grouped-render` (adds retirement markers, retracts the prior revision) | Yes | Yes | Falls back. Gated (the toy is aged by this code at its load pin `5cda4ab20`) |
+| Excision | Not used by any product writer here (only a feed test) | — | — | Would remove datoms from every view alike |
+
+**No writer needed a fix.** Every save asserts on each subject it changes; the one transaction that only retracts, a fold without moves, leaves logical rows unchanged.
+
+## Gates (Mac, timings diagnostic)
+
+**Unit tests** (`gateway/pinned_test.clj`, 4 tests, 14 assertions, all pass): an unchanged subject is answered from the current database; a subject saved after the pin, a revision above the pin, a row added without a revision, and a subject without a revision all fall back; the option off and a current view never short-cut; `group-cut/member-at` equals the as-of view's own lookup for every position from 0 to 1,299 with 1,194 group positions added after the pin.
+
+**Live gate on a loader-aged toy** (`rd1/shortcut-gate/`: `gate.sh`, `container.sh`, `gate.ts`; one heavy token, one lab container, about 12 minutes; evidence `evidence/DX-RD1/rd2-shortcut-gate-07.tar.gz`, SHA-256 `0d5dff52c9087d3703af53e7ec573cfc685d816772d3b8c20e86a4161cad42fa`):
+
+1. **Seed and age.** PREP1's SCALE1-shaped toy (ten accounts, 50 subjects, three first-task fields, loader command at cut 61) through this branch's gateway, then 300 saves by AGE1's own code at its load pin `5cda4ab20` (`prep1/aged-live/aged_live.clj`, unchanged).
+2. **Every writer in turn,** each phase restarting the gateway with that writer's options, 17 saves (18 subject writes) at positions 362 to 378: per-person ordered (an AGE1-edited and an untouched subject), a resend of a committed save (refused as already committed; the head did not move), a valid-time correction (a row moved from valid-from 0 to the seed valid time), the general writer, an import frame across two subjects, four concurrent saves with grouped commit on, append retirement, the covering owner head on three saves, add-only saves on two covered subjects (folded first by the reference writer), and one more ordered save.
+3. **Removal on request in a second scope.** AGE1's code at its load pin refuses to save into a scope with declared protection (`TRIPLEX_ERASURE_FRONTIER`), and protection must be declared before a scope's first save, so the removal ran in a second scope on the same server: 24 seed saves, two protected values, the pin at 26, an ordered save, the removal of one protected value, and one more save (head 29).
+4. **Three readers side by side:** both options off (the reference), both on, and the cut lookup alone. **For every logical position from 1 to the head (378 and 29), every subject (1,021 in the aged scope: 500 tasks, 520 roots and the loader marker; 12 in the removal scope), both valid times (1 and the seed valid time plus 1), and every distinct record clock of any subject's row (378 and 28), the `/read` answers were compared, plus historical worlds (reach) for every task subject in batches of 16 at every fifth position: 7,088 reference answers, each compared with both treatment readers (14,176 comparisons, 10,653,258 rows): 0 differences.** The on reader answered 1,369,411 subject reads from the current database and 201,481 through as-of; the off reader none.
+5. **The launcher's ladder module** in its toy size against the off and on readers: 0 wrong values and 0 errors at the seed cut and near the head; it refused a reader whose options differ from the arm's.
+
+**Not covered by the gates:** concurrent saves on one subject; sealed protection; whether the four concurrent saves formed one physical group (the comparison covered every position either way); a native count of the folds; the 1 billion database.
+
+## Launcher: the short pinned ladder on the 1 billion database
+
+**What runs.** `v01/study-server.ts` with `DX_RD2_PINNED_PAIR=1`: the same prepared aged arms as the retirement and owner-head pairs (a new physical copy of the held stopped cluster per arm, no dump, the aged bundle's fresh-peer check on the stack's own network, the `server` profile with one reader core and Datomic's default reader cache). Arm `off` runs both options off; arm `on` runs both on (`DX_PINNED_SHORTCUT` and `DX_PINNED_CUT_LOOKUP`, which `stack/up.sh` passes to both gateways as `TX2_PINNED_SHORTCUT` and `TX2_PINNED_CUT_LOOKUP`). Each arm runs `rd1/pinned-ladder.ts`: the card's own read (`client.rows`, one subject's field 0, one exchange per read) at the old pin 87,002 and at the head minus 1,000, with 1, 16 and 256 seats, 60 s per step. Every old-pin read is checked against the seed's value; the ladder refuses a reader that does not run the requested options. After arm `on`, `campaign/pinned-comparison.json` puts both arms side by side. The off arm's old-pin rows reproduce the card's ladder; together the two arms give the three cases asked for (near the head; old pin, options off; old pin, options on), plus the near-head pin with the options on.
+
+**Build once (about 5 minutes)** at the commit that publishes this section, as for the owner-head pair:
+
+```bash
+COMMIT=<the commit that publishes this section>
+BUILD=/var/tmp/triplex-pinned-1b-build
+sudo "$(command -v node)" --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
+cd "$BUILD/repository"
+```
+
+**Environment.** The same values as the scorecard and the owner-head pair (`v01/AGED-SERVER-32.md`, `w1/SERVER-OWNER-HEAD.md`).
+
+```bash
+export AGE_HANDOFF_JSON=<aged-scorecard.json>   AGE_HANDOFF_SHA256=faab1bc5bca8e6303285101003e5a42fc82c8e99fe2eadacaf125259b575bbf2
+export AGED_PGDATA_SOURCE=<the stopped held 1B cluster>   AGE_JAVA=<java 21>   AGE_DATOMIC_HOME=<datomic-pro-1.0.7745>
+export SCALE1_IMAGE=<metadata directory>   SCALE1_IMAGE_SHA256=<...>   SCALE1_TRANSFER_SHA256=<...>
+export WAL_DIR=<on the other NVMe>
+pinned_arm() {  # $1 = off or on, $2 = new scratch copy of AGED_PGDATA_SOURCE, $3 = campaign directory, $4 = deadline in ms
+  sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
+    "AGE_JAVA=$AGE_JAVA" "AGE_DATOMIC_HOME=$AGE_DATOMIC_HOME" DX_RD2_PINNED_PAIR=1 \
+    "DX_RD1_PGDATA_SOURCE=$AGED_PGDATA_SOURCE" "DX_RD1_LADDER=$1" "DX_RD1_PGDATA=$2" \
+    ${DX_DRY_RUN_FIRST_OFFER:+DX_DRY_RUN_FIRST_OFFER=1} \
+    bash lab/experiments/EXP-DX1/v01/study-server.sh "$COMMIT" "$3" "$4" "$SCALE1_IMAGE" "$SCALE1_IMAGE_SHA256" \
+    "$SCALE1_TRANSFER_SHA256" 1B per-person-ordered j21-g1 "$AGE_HANDOFF_JSON" "$AGE_HANDOFF_SHA256" "" "" \
+    j25-zgc "$WAL_DIR" j21-g1 rolling6
+}
+```
+
+**Timed run (28 to 33 minutes; ceiling 45).**
+
+```bash
+OUT=/var/tmp/triplex-pinned-1b; mkdir "$OUT"     # new
+DEADLINE=$(( $(date +%s%3N) + 50 * 60 * 1000 ))
+pinned_arm off "$COPY_1" "$OUT/pair" "$DEADLINE"   # 11–14 min
+# remove COPY_1, make COPY_2 (about 2–3 min)
+pinned_arm on "$COPY_2" "$OUT/pair" "$DEADLINE"    # 11–14 min; writes OUT/pair/pinned-comparison.json
+```
+
+Per arm: stack start on the copy and the aged fresh-peer check 4–6 min (as for the scorecard parts); six 60 s steps 6 min; cleanup 1–2 min. A dry run to the first offer works as for the owner-head pair (`DX_DRY_RUN_FIRST_OFFER=1`, one arm on its own new copy, about 8 minutes); it prints `DX-DRY-RUN first offer reached: pinned off` (or `on`). If an arm stops before its first read, its records are set aside and the same `pinned_arm` line can be run again on a new copy with the same `OUT/pair`.
+
+**Predictions, written before the run.** Reads/s and p50 per step, one reader core. Sources: the card's ladder (old pin, 18.12/s and 44.80 ms at one seat), the probe (old pin 31.86 ms, near head 1.26 ms, current 0.20 ms inside the peer), the fresh card's head-pinned ladder (606/s and 1.18 ms at one seat over HTTP).
+
+| Pin, options | 1 seat | 16 seats | 256 seats |
+| --- | --- | --- | --- |
+| Old pin 87,002, off | 17–23/s, p50 40–55 ms | 17–23/s, p50 0.7–0.95 s | 17–22/s, p50 11–15 s, no errors |
+| Head − 1,000, off | 300–600/s, p50 1.5–3 ms | 400–900/s | 400–1,000/s |
+| Old pin 87,002, on | 400–700/s, p50 1.2–2.5 ms | 500–1,200/s | 500–1,200/s |
+| Head − 1,000, on | 400–700/s, p50 1.2–2.5 ms | 500–1,200/s | 500–1,200/s |
+
+Short-cut share in arm `on` at the old pin: 95–99% of reads answered from the current database (584 of 600 in the probe). Wrong values and errors: 0 in every step.
+
+**Falsifier.** Arm `on` at the old pin below 100 reads/s at one seat means the walk is not the whole cost or the option did not act (check `shortcut` counts in the step records and `pinnedCutLookup` in the write options). Any wrong value, or a gate difference, means an option is not exact and must not merge. Arm `off` near the head below 150/s at one seat would mean the HTTP route pays a cost the probe did not see.
+
+**Gated on the Mac, not on a server.** `rd1/pinned-ladder.ts` ran in its toy size against live readers with both options off and on, and refused a reader with the wrong options (`shortcut-gate/gate.ts`). The `study-server.ts` pinned-pair path itself (stack start from a prepared copy, aged admission, sealed ladder evidence) needs bare metal and has not run; the dry run to the first offer is its admission check.
 
 ## Mac toys (diagnostic, not results)
 
@@ -77,7 +152,7 @@ An as-of read probes the current and the history trees and loads one more leaf p
 
 Neither toy reproduces a 36 ms floor. If candidate A holds, the 1 billion read decodes about 20 leaves of toy-2 size per read; tonight's io-stats count them.
 
-## Tonight's run (45 minutes on the rented server with the sealed 1 billion cluster)
+## The probe run on the 1 billion database (ran 20:12 UTC; results in the answer above)
 
 **Not launchable with settings only.** The scorecard's arms cannot change the reader (see the settings fix) and do not attribute a read. The run uses two new files at `0688bd00f` on `exp/DX-RD1-readers`: `pinned-probe.clj` calls the gateway's own `storage/read-rows` (from the scorecard checkout, so the code under test is `6770c37ba`'s) in a peer JVM, with Datomic's io-stats, thread CPU and allocation per read; `pinned-probe-server.sh` copies the sealed cluster, starts PostgreSQL (`postgres:17-alpine`, the scorecard's pinned digest, 8 GiB, `shared_buffers=2GB`, core 1) and one transactor (cores 0, 7, 8) on the copy, waits until the transactor is active, runs the probe twice, removes the containers, network and copy. Nothing touches the sealed source. **Gated on the Mac:** the probe against a lean scope written through the SDK (shortcut 48 of 60 from the current database, 0 mismatches); the wrapper end to end in the lab VM on a stopped PG17 cluster with Datomic's SQL storage (copy, start, transactor takeover, both passes, JFR, PostgreSQL counters, cleanup).
 
@@ -128,8 +203,9 @@ Defaults: database name of the SCALE1 scope (`RD2_DB`), pin 87,002 (`RD2_PIN`), 
 
 ## What is not established
 
-- Whether the 40 ms is leaf decoding (A) or a walk the cache cannot remove (B), and which index it is in.
-- Whether the cost tracks total history or history after the pin, so whether recent pins at 1 billion are slow too.
-- Which share of the ladder's people AGE1 edited after the pin (the probe tags every read).
-- That every writer bumps `:triplex.entity/rev` with every row change, including grouped saves and removal on request (needed before the short-cut ships).
-- Whether an organically grown 1 billion database behaves the same as AGE1's bulk-aged one.
+- **The options' effect at 1 billion.** The cut lookup's gain is inferred from the probe's profile and the near-head pin; the short-cut's from the probe's short-cut arm, which read at the head and so never paid the walk. The launcher measures both together in arm `on`; it does not separate them (two arms fit the 30-minute slot, three do not). The Mac gate separates them for exactness only.
+- **How many group positions the aged database holds after the pin** (about a million is an estimate), and how many a product database accumulates; the walk returns for any route that resolves an absent group position on an as-of view without the current database (none found besides `read-rows`; `storage.clj` `assert-subject-route!` does it only for the position-retired route).
+- **The launcher's own path** (`study-server.ts` with `DX_RD2_PINNED_PAIR=1`): syntax-checked and built from the gated pieces, but bare-metal only; its first execution will be the server dry run.
+- **Sealed protection** (envelopes and key shredding) and concurrent saves on one subject were not part of the gate.
+- **The fold census.** The gate runs add-only saves on covered subjects, which the owner-head gate showed are folded first; this gate does not count the folds natively.
+- Whether an organically grown 1 billion database behaves like AGE1's bulk-aged one (the cause now depends on grouped-save positions, which the scorecard's per-person ordered writer does not create).

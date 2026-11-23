@@ -1053,6 +1053,7 @@ for role in "${gateway_roles[@]}"; do
     -e "TRIPLEX_LAYOUT_REPLAY=$([[ $role == w ]] && echo ${DX_LAYOUT_REPLAY:-0} || echo 0)" -e "TX2_SLIM_ROWS=${DX_SLIM_ROWS:-0}" -e "TX2_REV_AEVT=${DX_REV_AEVT:-0}" -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template&ApplicationName=triplex-gw-$role" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -e "TX2_ENTITY_CACHE_BYTES=$entity_cache_bytes" -e "TX2_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-2097152}" -e "TX2_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-536870912}" \
     -e "TX2_REACH_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-1000000}" \
+    -e "TX2_PINNED_SHORTCUT=${DX_PINNED_SHORTCUT:-0}" -e "TX2_PINNED_CUT_LOOKUP=${DX_PINNED_CUT_LOOKUP:-0}" \
     -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} \
     ${erase_env[@]+"${erase_env[@]}"} ${erase_mount[@]+"${erase_mount[@]}"} \
     --entrypoint /opt/datomic/bin/run "$image" ${gw_startup_read[@]+"${gw_startup_read[@]}"} -m "$gateway_main" ${pg_data:+gateway} >/dev/null
