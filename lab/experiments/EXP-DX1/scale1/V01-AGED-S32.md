@@ -24,6 +24,19 @@ P1 pinned reads (unchanged reader, as predicted): 19.88 / 20.33 / 21.25 / 21.77 
 
 **Reading.** At 394 offered the server-32 profile with rolling credits stored every save in the window (394.00/s, no expiries), against 249/s this afternoon; the first falsifier (under 300/s at 394) did not trigger. At 620 it stored 302.61/s, below the predicted 380–620, with 16,721 expiries; the second falsifier (620 in full) did not trigger either. The 394 all-save p99 was 11.0 s, inside the predicted 2–30 s. At 394 the quiet account's loaded commit p99 (34.81 ms) was below its solo p99, so the P6 bar held there through its 50 ms clause; at 50 (43.52 ms) too.
 
+**Part 3, barrier 6 at server-32 (completed 22:58 UTC; only the cache differs from the afternoon's part 2):**
+
+| Offered/s | 1B, server-32, barrier 6 | Prediction |
+| ---: | --- | --- |
+| 50 | 50.00 · 4,500/4,500 · 0 / 0 · 12.22 / 87.04 · 19.84 → 56.32 ms (2.84×) · 1.01× · 1.03× | — |
+| 235 | 235.00 · 21,150/21,150 · 0 / 0 · 5,079.04 / 8,781.82 · 16.13 → 102.40 ms (6.35×) · 1.31× · 0.94× | 235 (220–235) · 0; quiet loaded p99 90 ms |
+| 394 | **331.03** · 35,460/35,460 · 0 / 5,667 · 15,859.71 / 22,675.46 · 19.20 → 71.17 ms (3.71×) · 1.25× · 1.16× | 340 (270–394) · 3,000; 80 ms |
+| 620 | **238.61** · 32,193/55,800 · 23,607 / 10,718 · 29,884.42 / 30,081.47 · 22.78 → 94.21 ms (4.13×) · 1.34× · 1.14× | 400 (300–560) · 20,000; 95 ms |
+
+**Assembled at 22:58:41 UTC.** The card's read-exactness lines: P1 "L256 checked field-read p99 12,255 ms exceeds the 100 ms bar", 0 errors from 1 to 256 seats; mixed assertion identities MET; P6 quiet rows PARTIAL on the commit gate (the card wants 500 verified commits per side).
+
+**Reading across the three parts.** Against the afternoon card, the 32 GiB cache alone (part 3, still barrier 6) lifts 394 from 249 to 331 saves/s; adding rolling credits (part 2) lifts it to 394, the full offer. At 620 the cache alone does not help (239 against 239), and rolling credits give 303. The third falsifier (barrier within 5% of rolling) did not trigger: rolling stored 19% more at 394 and 27% more at 620. At 620, part 3 stored less than the predicted 300–560. Evidence: `evidence/DX-SCALE1/s32-card/s32-card.tar.gz` in the private evidence folder (SHA-256 `fdaad7db1bb3b2b06d9bf449da24d8f2c7ef87884cf3ed0ad91440f15c20dec7`), card included.
+
 ## Predictions, copied from the builder's document before launch
 
 
