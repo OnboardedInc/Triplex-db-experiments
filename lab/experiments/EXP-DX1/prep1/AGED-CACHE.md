@@ -2,11 +2,28 @@
 
 **North star P2.** Saturday's best writer arm, run once more on AGE1's sealed one-billion-record cut. This tests whether saves slow as the database grows, on real aged data. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
+## The first launch was refused, and why
+
+The first launch, at `cdc72d4d5` on bench 4 on November 23, stopped before any offer at the live-head check (step 3 below). The SDK row decoder threw `Journal position payload must be null` on the journal of AGE1's last save, at position 28,309,866. [Driver's reading](https://github.com/OnboardedInc/Triplex-db-experiments/blob/25e147673/lab/experiments/EXP-DX1/bm1/AGED-CACHE-READING.md)
+
+**The aged data is non-canonical, and the check was right to fail on it.** No product writer produces this row shape. The SDK (`rowText.ts`) and the gateway's own journal writer (`privacy.clj`) both write a version 2 `:_tx/position` row with a `P` header marker and a null `value_number`. AGE1's loader encoded every row with the gateway's test fixture encoder, `selftest/row-text`. That encoder writes the ordinary `-` marker and the position itself as `value_number`. All three of AGE1's write paths use it: product saves through `tape/input`, native single saves through `native/render` and grouped saves through `native/grouped-render`. So every AGE1 save carries one such row: positions 87,003 to 28,309,866, which is 28,222,864 rows. The SCALE1 seed's positions 1 to 87,002 were written through the SDK and are canonical. The gateway's Clojure reader ignores the stored payload and decodes these rows. The TypeScript SDK refuses them.
+
+| Product read through the SDK | Touches AGE1's position rows? | Result on the 1 billion database |
+| --- | --- | --- |
+| Change feed (`getTransactionsAfter`, `/v2/db/…/transactions`) from any position before 28,309,866 | Yes, one per save | Throws |
+| A transaction's journal (`/v2/db/…/journal`, `getTransactionRowsAtPosition`), for example a change's provenance | Yes, for any AGE1 transaction | Throws |
+| Row sweeps (`decodeSweepRows`) that cover AGE1 journal entities | Yes | Throws (same check in `sweepRows.ts`) |
+| A person's current rows, pinned (as-of) rows and history rows; by-id reads of business rows | No: business rows use the ordinary encoding | Decode. The live gate read 140 of them at the aged head through this branch's reader. |
+| Feed from the aged head onward, and new saves | No: new rows are written by the product | Decode. The live gate made an ordered save after aging. |
+| Removal on request | It rewrites journals in the gateway, which reads them in Clojure. The SDK side was not traced. | Not verified |
+
+The database is valid for measuring saves and current and pinned reads of people. It is not valid for a feed or journal read that crosses AGE1's history, until the SDK accepts that shape. A safe decoder change exists, and it is published separately for the integration builder; see "SDK decoder change" below. The arm does not depend on it.
+
 ## What runs
 
 | Setting | Value |
 | --- | --- |
-| Pin | `cdc72d4d5bd6cc1adecaaf9267a351173763d134` |
+| Pin | `1bbaf54cdd2180ccaa2cd6ce961c05be49eefbc2` |
 | Arm | `1-rolling6-cache32-S` only: rolling 6 credits, 32 GiB object cache, three transactor cores |
 | Transactor | Java 25 ZGC, `-Xmx49152m`, `-XX:MaxDirectMemorySize=8192m`, 60 GiB container, `index-parallelism=1` |
 | Other roles | PostgreSQL 8 GiB, writer 6 GiB, reader 5 GiB, same cores as Saturday |
@@ -26,7 +43,16 @@ The fresh seed checks all stay. Seed cut 87,002 is still checked against the SCA
 
 1. **The handoff file.** `cache32-aged` takes the same `AGE_HANDOFF_JSON` and `AGE_HANDOFF_SHA256` pair the scorecard uses. The digest must match, in `server.sh` and again in the producer.
 2. **The handoff's content.** The version is `triplex-age1-scorecard/1`. The source seed's manifest digest equals the SCALE1 image pin. Scope, database name and layout equal the seed's. The seed head is 87,002. The logical head equals 87,002 plus the replayed saves. The record count is at least one billion. The last operation and transaction IDs follow from the save count. The two embedded replay ledgers match their recorded digests.
-3. **The live head.** The gateways must open the copy at exactly the handoff's logical head. The newest transaction must be AGE1's last save: its ID, position, command and record clock must match, and its claim must resolve to it.
+3. **The live head.** The gateways must open the copy at exactly the handoff's logical head. The newest transaction must be AGE1's last save, checked field by field:
+   - The transaction ID and position from the feed must equal the handoff's last transaction and head.
+   - Every journal row must have that transaction as its entity and `tx_id`, entity type `_Transaction`, the head as its position and the handoff's last record clock.
+   - There must be exactly one position row, typed `number`. Its payload is either AGE1's shape (`-` marker, value equal to the head) or the product's (`P` marker, null). Anything else is refused.
+   - There must be exactly one command row, equal to the handoff's last operation.
+   - There must be exactly one instant row, whose time equals the last record clock.
+   - Every row other than the position row must also pass the SDK decoder, which must agree on ID, entity, attribute, type, string value, position, record clock and `tx_id`.
+   - The claim on the last operation must resolve to that transaction.
+
+   The journal rows are parsed column by column (`agedJournal` in `ceiling-seed.ts`). The proof is stronger than before: it now covers the position and instant rows and every row's binding, where the first version checked only the command row.
 4. **Every predecessor the tape will replace.** Each person's field 0 and field 1 are read at the aged head. A row at or before 87,002 must still hold the seed's revision 0 value. A newer row must be byte-exact to AGE1's replay tape. Its position gives the save offset. The offset and the person give AGE1's ledger index (active sample or probe). The value, row ID and transaction ID must then match what AGE1's tape writes for that save.
 5. **One arm, one database.** The producer refuses an aged seed outside `cache32-aged`, and `cache32-aged` without one.
 
@@ -35,16 +61,31 @@ The fresh seed checks all stay. Seed cut 87,002 is still checked against the SCA
 - **Which people AGE1 changed.** AGE1 edited the first task's fields 0–2 of a fixed sample in each account, at local index `floor(j × 99,998 / per-account)`, plus one probe person (99,998). About one in five of this tape's people falls in that sample. Their latest rows carry AGE1's values. The predecessor check above reads those rows at the aged head, so the tape retracts the actual current rows.
 - **Revision and position.** AGE1 sets each owner's revision to its last save's position, which is at or below the aged head. The ordered writer requires `revision ≤ sourceK ≤ head`. The tape sends `sourceK = max(head, predecessor positions)`, which is the aged head.
 - **Ordered identity.** AGE1's row IDs are `A…` and `B…` followed by digits. Its journal IDs are `_tx/T…`. The tape's new IDs are time-ordered ULIDs beginning `01`. The ordered identity check compares exact IDs inside the submitted interval, and AGE1's IDs fall outside it.
-- **Unverified on a live gateway.** No live aged database was opened on this base's gateway. It installs its own commit function and schema on open, as it did on the SCALE1 seed. If a scope flag left by AGE1 blocks the ordered path, the run stops after the first five-minute cell. The message will say "The restored scope did not exercise the ordered writer".
+- **Verified on a live gateway.** The live gate below opened an AGE1-aged toy database on this branch's gateway. One ordered save on an AGE1-edited owner went through the ordered writer (`subjectOrderedIds`, subject function path) at the next position.
+- **Record time after aging.** AGE1's record clocks run about a year ahead of wall time. The gateway gives a new save the previous clock plus 1 ms: 1,831,708,224,061 after AGE1's 1,831,708,224,060 in the gate. On the 1 billion database, new saves will carry record times after AGE1's last clock, not wall time.
 
-## Mac gate
+## Live Mac gate (November 23, after the refusal)
+
+One ordinary heavy token, one container, about seven minutes. Evidence is in `evidence/DX-PREP1/aged-live-2026-11-23.tar.gz`, SHA-256 `476276aa32da14ebb430f1b36c6ba2423156578557dcde8d471890bd360660dc`. Scripts are in `prep1/aged-live/`.
+
+1. **Seed.** PostgreSQL, a transactor and this branch's write gateway, with the server writer's subject-save switches, took a SCALE1-shaped toy through the SDK. It has ten accounts, 50 people each with membership rows and three first-task fields, and a final loader command at cut 61.
+2. **Age with AGE1's own code.** The gateway and transactor were stopped. A transactor with AGE1's gateway source at its load pin `5cda4ab20` was started. A separate JVM ran AGE1's `adopt/subject!` for 70 people and 300 saves of `tape/command` through AGE1's `storage/commit!`, with one probe save. Every receipt matched.
+3. **Reopen.** A fresh transactor and gateway from this branch reopened the database, as the server does. Write options reported head 361 with the ordered writer on.
+4. **Reproduce.** Decoding the last save's journal with the SDK threw `Journal position payload must be null`.
+5. **Accept.** The arm's `scalePredecessors` passed through the live reader. It checked the loader claim at the seed cut, the 40 membership rows, the last-save journal proof and 140 field rows, 102 of them AGE1 edits.
+6. **Refuse.** The same check refused seven tampered inputs: a changed value, a changed row ID, a shifted position, a changed seed value, a changed journal position payload, a changed journal command and a wrong handoff clock.
+7. **Save.** One ordered save on an AGE1-edited owner was acknowledged at position 362 through the subject function, with `subjectOrderedIds`.
+
+The archive also holds the offline gate repeated at the load pin. It used AGE1's fixture encoder for the last save's six journal rows: the refusal was reproduced, the rows were accepted, and four tampered versions were refused.
+
+## First Mac gate (before the server launch)
 
 One ordinary heavy token. Evidence is in `evidence/DX-PREP1/aged-gate-2026-11-23.tar.gz`, SHA-256 `17a97865396f9d28f167c7cb2a0e481d3ddcaa8c3b4c4a8d953f42a8869ae743`.
 
 - **Accepts AGE1's own rows.** AGE1's replay tape, from `origin/exp/DX-AGE1-aged-database` `a0eee1ea1`, where `tape.clj` and `adopt.clj` are unchanged since the load pin `5cda4ab20`, computed the current rows of a toy adopted population: 70 people, 300 saves, three probe saves. It used `triplex.age.tape/expected-adopted` in the Datomic image (`aged_gate.clj`). The aged predecessor check accepted all 140 field rows: 103 AGE1 edits and 37 untouched seed rows.
 - **Refuses tampered rows.** It refused a changed value, a changed row ID, a shifted position and a changed seed value (`aged-gate.mjs`).
 - **Refuses a tampered handoff.** Unit tests cover a wrong pin and one changed byte under the original pin. They also cover re-pinned bundles with a moved head, a count under one billion, another scope, another seed manifest, a moved seed head, a wrong last operation, a wrong ledger digest and a wrong version. The fresh checks still refuse a row written after 87,002 (`ceiling-seed.test.mjs`, 4 of 4). The launch-profile and tape tests also pass, 8 of 8.
-- **Not covered.** The gate did not open a live toy database built by AGE1's bulk loader on this base's gateway, and it did not run `server.sh`, which is Linux-only. The live checks in step 3 run only on the server.
+- **Not covered then:** it did not open a live gateway. That is the gap the server refusal exposed and the live gate above closes. `server.sh` itself is Linux-only and still runs only on the server.
 
 ## Predictions, written before the run
 
@@ -82,7 +123,7 @@ Run after the scorecard, on the same server. Use a clean checkout of `exp/DX-PRE
 
 ```bash
 DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-cache32-aged -- \
-  bash lab/experiments/EXP-DX1/prep1/server.sh cache32-aged "$CACHE32_AGED_OUT" cdc72d4d5bd6cc1adecaaf9267a351173763d134 \
+  bash lab/experiments/EXP-DX1/prep1/server.sh cache32-aged "$CACHE32_AGED_OUT" 1bbaf54cdd2180ccaa2cd6ce961c05be49eefbc2 \
   "$SCALE1_IMAGE" 77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b \
   1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154 \
   --pg-data "$AGED_PGDATA_SOURCE" --wal-mount "$SCALE1_WAL_MOUNT" \
@@ -98,3 +139,13 @@ DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-cache32-aged -- \
 - **Collect** the output directory as Saturday's cache32 run was collected, with `day-evidence.py collect` and the pinned readout at this pin. The seed readback in the cell directory includes the aged proof: last save, claim and number of aged rows checked.
 
 Expected duration is about 33 minutes: copy 6–7, start 2, offers 20, drains and collection 4. A refusal before offers costs only the copy.
+
+## Other aged admissions
+
+- **DX-JVM1 start-up read** (`origin/exp/DX-JVM1-settings` `54d4647a1`, `jvm1/startup-aged.ts`). It copies the first version's live-head proof, `lastText.map(decodeRowText)` at line 67, so it will stop the same way. The fix is in `prep1/aged-live/jvm1-startup-aged.patch`. It copies `journalColumns` and `agedJournal` and replaces the two lines. It applies cleanly with `git apply` at `54d4647a1`.
+- **DX-W1 owner head pair, 1 billion line** (`origin/exp/DX-W1-commit-tail-reads` `db616801b`, `v01/study-server.sh`). Not affected. It admits the aged cut with AGE1's Clojure checker (`checkScorecard`), which decodes in Clojure. It decodes with the SDK only the SCALE1 loader's transaction at 87,002, which is canonical. Its feed starts at the aged head.
+- **v0.1 scorecard** (`origin/exp/DX-V01-scorecard` `8cc32d380`). Not affected, for the same reasons: `checkScorecard`, an SDK decode only at 87,002, and the feeder starting at the aged head. A scorecard step that reads the feed or a journal from before the aged head would throw.
+
+## SDK decoder change (separate commit, for the integration builder)
+
+The commit after the handoff changes `packages/datomic/src/rowText.ts` and `sweepRows.ts`. A version 2 `:_tx/position` row may carry a non-null payload only if it equals its fixed-width position, and the row text header may then use the `-` marker. That is exactly the fixture shape. The row decodes to the same row as the canonical text. Any other payload is still refused, and the encoder is unchanged, so the product still writes only `P` and null. The arm's pin does not include it.
