@@ -5,7 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { timeBudget, defaultJvm, defaultWriter, isWriter, jvmProfiles, pairSeconds, physicalArms, serverStages, writeDiagnostics, type JvmProfile } from "./profile.ts";
-import { launchProfile } from "../jvm1/launch.mjs";
+import { defaultServerProfile, launchProfile, roleMemoryMiB, serverProfiles, type ServerProfile } from "../jvm1/launch.mjs";
 import { cleanSource, verifyBuild } from "./source.ts";
 import { pgdataArgs } from "./pgdata.ts";
 import { parseCredits, parseWindow, serverRates, writerAdmission } from "./server-workload.ts";
@@ -23,10 +23,11 @@ const { values } = parseArgs({
     "window-seconds": { type: "string" }, "credit-mode": { type: "string" },
     arm: { type: "string" }, assemble: { type: "boolean" },
     "hourly-usd": { type: "string", default: "1.09" }, help: { type: "boolean" }, plan: { type: "boolean" },
+    profile: { type: "string", default: defaultServerProfile },
   },
 });
 if (values.help) {
-  console.log("scorecard.mjs --age fresh|1B|realistic --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer per-person-ordered] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm j21-g1|j25-g1|j25-zgc] [--write-jvm j21-g1|j25-g1|j25-zgc] [--wal-directory DIR] [--window-seconds 90|300] [--credit-mode barrier6|rolling6|rolling8|rolling12|rolling16]\nFor prepared PostgreSQL use --pgdata-source SEALED_PGDATA with --pgdata COPY once per arm (headline zero, headline loaded, barrier6).\nFor 1B also provide --aged-bundle FILE --aged-bundle-sha256 SHA. Without prepared directories, also provide --aged-dump FILE --aged-dump-sha256 SHA for 1B.\nscorecard.mjs --plan");
+  console.log("scorecard.mjs --age fresh|1B|realistic --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer per-person-ordered] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm j21-g1|j25-g1|j25-zgc] [--write-jvm j21-g1|j25-g1|j25-zgc] [--wal-directory DIR] [--window-seconds 90|300] [--credit-mode barrier6|rolling6|rolling8|rolling12|rolling16] [--profile server|server-32]\nFor prepared PostgreSQL use --pgdata-source SEALED_PGDATA with --pgdata COPY once per arm (headline zero, headline loaded, barrier6).\nFor 1B also provide --aged-bundle FILE --aged-bundle-sha256 SHA. Without prepared directories, also provide --aged-dump FILE --aged-dump-sha256 SHA for 1B.\nscorecard.mjs --plan");
   console.log("For sequential staging, run --arm 1 through --arm 3 in order with one --pgdata per invocation and the same --out. Then run --assemble --commit COMMIT --out DIRECTORY.");
   process.exit(0);
 }
@@ -51,17 +52,21 @@ const txJvm = (values["tx-jvm"] ?? "j25-zgc") as JvmProfile;
 const writeJvm = (values["write-jvm"] ?? jvm) as JvmProfile;
 const windowSeconds = parseWindow(values["window-seconds"]);
 const creditMode = parseCredits(values["credit-mode"] ?? process.env.DX_V01_CREDIT_MODE);
-const headline = launchProfile("server", { jvm, txJvm, writeJvm, creditMode });
+assert(serverProfiles.includes(values.profile as ServerProfile), "Choose --profile server or server-32");
+const profile = values.profile as ServerProfile;
+const headline = launchProfile(profile, { jvm, txJvm, writeJvm, creditMode });
 const diagnostics = writeDiagnostics(values.writer, process.env);
 const pgdata = pgdataArgs(values.pgdata ?? [], values["pgdata-source"], arm).map((dir) => path.resolve(dir));
 const wal = values["wal-directory"] ? path.resolve(values["wal-directory"]) : "";
+// [DX-INT1] Why: every measured 32 GiB arm kept the write log on the second NVMe, as the headline does.
+assert(profile !== "server-32" || wal || values.plan, "server-32 runs with the write log on the second NVMe: pass --wal-directory");
 assert(!wal || arm !== undefined || pgdata.length === physicalArms + 1, "Separate WAL needs prepared scorecard copies");
 const { budget, ceiling: minutes } = timeBudget(windowSeconds, values.age === "realistic");
 const mix = values.age === "realistic" ? " Busy mix 80% deep, 15% thin, 5% small plus the quiet deep account." : "";
 const plan = `Headline zero/readers use ${creditMode}. Barrier6 repeats P2 and P6 on the identical stack. The P1–P4 pair uses ${pairSeconds / 60} minutes of matched offers.`;
 const storage = values.age === "realistic" ? "One sealed and hashed prepared copy per arm." : pgdata.length ? "Starts from prepared PGDATA copies. File-level preparation, build and AGE1 provisioning are separate."
   : "Without prepared PGDATA, this command uses logical dumps. Build and AGE1 provisioning are separate.";
-const forecast = `Budget ${minutes} minutes including cleanup, up to USD ${(minutes / 60 * price).toFixed(2)} per age. ${plan} Server profile with read gateway JVM ${jvm}, write gateway JVM ${writeJvm}, headline transactor ${txJvm}, and ${wal ? "separate WAL" : "WAL on PGDATA"}. P2 and P6 offered rates ${serverRates.join(", ")} saves/s for ${windowSeconds} seconds per cell. Credit selection ${creditMode}. ${storage}${mix}`;
+const forecast = `Budget ${minutes} minutes including cleanup, up to USD ${(minutes / 60 * price).toFixed(2)} per age. ${plan} ${profile === "server" ? "Server profile" : `Profile ${profile} (transactor ${headline.tx.memoryMiB / 1024} GiB cap, ${headline.tx.cacheMiB! / 1024} GiB object cache; role caps ${roleMemoryMiB(headline) / 1024} GiB)`} with read gateway JVM ${jvm}, write gateway JVM ${writeJvm}, headline transactor ${txJvm}, and ${wal ? "separate WAL" : "WAL on PGDATA"}. P2 and P6 offered rates ${serverRates.join(", ")} saves/s for ${windowSeconds} seconds per cell. Credit selection ${creditMode}. ${storage}${mix}`;
 if (values.plan) {
   console.log(forecast);
   console.log("Writer admission and diagnostics " + JSON.stringify({ admission: writerAdmission(creditMode), diagnostics }));
@@ -107,8 +112,8 @@ const child = spawn("timeout", ["--kill-after=" + budget.cleanup + "m", String(a
   path.resolve(values.seed), values["image-sha256"], values["transfer-sha256"], values.age, values.writer, jvm,
   ...aged.map((v) => v ?? ""), txJvm, wal, values.arm ?? "", String(startedAt), forecast, String(windowSeconds), creditMode, writeJvm, ...pgdata], {
   stdio: ["ignore", fd, fd],
-  env: Object.fromEntries(["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT", "AGE_JAVA", "AGE_DATOMIC_HOME", "DX_W1_SERIAL_APPLY", "PREP1_LOOKUP_EVERY", "DX_DRY_RUN_FIRST_OFFER"]
-    .flatMap((name) => process.env[name] ? [[name, process.env[name]]] : [])),
+  env: Object.fromEntries([...["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT", "AGE_JAVA", "AGE_DATOMIC_HOME", "DX_W1_SERIAL_APPLY", "PREP1_LOOKUP_EVERY", "DX_DRY_RUN_FIRST_OFFER"]
+    .flatMap((name) => process.env[name] ? [[name, process.env[name]]] : []), ["DX_V01_PROFILE", profile]]),
 });
 fs.closeSync(fd);
 const stop = () => child.kill("SIGTERM");
@@ -130,7 +135,7 @@ if (arm !== undefined) {
   process.exit(0);
 }
 const { writeAdoptedCard } = await import("./adopted-card.ts");
-writeAdoptedCard({ source, age: values.age, writer: values.writer, jvm, txJvm, writeJvm, diagnostics, separateWal: !!wal, toy: false, out, campaign, forecast, windowSeconds, creditMode, prepared: pgdata.length > 0,
+writeAdoptedCard({ source, age: values.age, writer: values.writer, profile, jvm, txJvm, writeJvm, diagnostics, separateWal: !!wal, toy: false, out, campaign, forecast, windowSeconds, creditMode, prepared: pgdata.length > 0,
   failure: exit ? "The adopted campaign stopped. See [campaign.log](campaign.log)." : undefined });
 console.log(path.join(out, "SCORECARD-v0.1.md"));
 if (exit) {

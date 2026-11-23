@@ -7,6 +7,7 @@ import { type Directory, type preflightWal } from "./pgdata.ts";
 import { cellPath, replaySeconds, serverCells, type WindowSeconds, type CreditMode } from "./server-workload.ts";
 
 import type { RealisticBinding } from "./realistic.ts";
+import type { ServerProfile } from "../jvm1/launch.mjs";
 
 type CampaignInput = {
   source: string; age: Age; writer: Writer; jvm: JvmProfile; txJvm: JvmProfile; writeJvm: JvmProfile; diagnostics: ReturnType<typeof writeDiagnostics>;
@@ -15,6 +16,8 @@ type CampaignInput = {
   windowSeconds?: WindowSeconds; creditMode?: CreditMode;
   realistic?: RealisticBinding;
   agedBundle?: string; agedDump?: string;
+  // [DX-INT1] Absent in campaigns started before server-32 existed; those ran the server profile.
+  profile?: ServerProfile;
 };
 export type SequenceConfig = {
   input: CampaignInput;

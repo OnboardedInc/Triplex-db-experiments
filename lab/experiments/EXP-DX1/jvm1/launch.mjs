@@ -173,19 +173,37 @@ const startupTuning = {
 // Rejected: a boot script that submits transactions or trains profiles before traffic.
 export const coldStartLog = "-Xlog:gc*,safepoint,jit+compilation=debug,codecache=debug:file=/trace/%p-startup.log:utctime,uptimemillis,level,tags:filecount=4,filesize=32m";
 export const laptopCaps = Object.freeze({ pg: 256, tx: laptop.tx.memory, write: laptop["gw-w"].memory, read: laptop["gw-r"].memory });
+// [DX-INT1] Why: name PREP1's measured 32 GiB transactor cache arm as a server profile beside today's server profile.
+// Rejected: changing the server profile before the owner decides, or a free-form cache size on the scorecard.
+export const serverProfiles = /** @type {const} */ (["server", "server-32"]);
+/** @typedef {(typeof serverProfiles)[number]} ServerProfile */
+// Switching the scorecard and server runners to the larger profile is this one line.
+export const defaultServerProfile = /** @type {ServerProfile} */ ("server");
+// [DX-INT1] Why: the same guard as PREP1's cache32 arm: role caps plus 10 GiB for the host within 89 GiB MemTotal.
+// Rejected: treating the advertised 96 GB as usable memory or budgeting only the Java heaps.
+export const hostHeadroomMiB = 10 * 1024;
+export const server32HostMiB = 89 * 1024;
+/** @param {{ tx: { memoryMiB: number }, "gw-w": { memoryMiB: number }, "gw-r": { memoryMiB: number }, pg: { memoryMiB: number } }} policy */
+export const roleMemoryMiB = (policy) => policy.tx.memoryMiB + policy["gw-w"].memoryMiB + policy["gw-r"].memoryMiB + policy.pg.memoryMiB;
 
 // [DX-INT1] Why: keep the portable limits and the full-size treatment in one launch policy.
 // Rejected: scaling all roles together or interpreting the reduced startup as physical placement evidence.
-/** @param {"laptop" | "server"} profile
+/** @param {"laptop" | ServerProfile} profile
  * @param {{ jvm?: JvmProfile, txJvm?: JvmProfile, writeJvm?: JvmProfile, readJvm?: JvmProfile, readTuned?: boolean, readCacheMiB?: 32 | 1536 | 3072, txCacheMiB?: 32768, creditMode?: CreditMode, reduced?: boolean, scale?: number, startup?: "today" | "tuned" }} [options] */
 export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, writeJvm = jvm,
   readJvm = jvm, readTuned = false, readCacheMiB, txCacheMiB, creditMode = defaultCreditMode, reduced = false, scale = 1, startup = "today" } = {}) {
-  assert(profile === "laptop" || profile === "server");
+  assert(profile === "laptop" || serverProfiles.includes(profile));
   assert([jvm, txJvm, writeJvm, readJvm].every((v) => jvmProfiles.includes(v)));
+  // [DX-INT1] Why: server-32 is exactly PREP1's cache32 transactor: 48 GiB Java 25 ZGC heap, 32 GiB cache, 8 GiB direct, 60 GiB cap.
+  // Rejected: a G1 transactor with this heap, which no full-size run has measured.
+  const server32 = profile === "server-32";
+  assert(!server32 || (txJvm === "j25-zgc" && (txCacheMiB === undefined || txCacheMiB === 32768)),
+    "server-32 runs the transactor on Java 25 ZGC with its own 32 GiB cache");
+  if (server32) txCacheMiB = 32768;
   assert(creditModes.includes(creditMode), "Unknown credit mode");
-  assert(profile === "server" ? scale === 1 : !reduced && [1, 2, 4].includes(scale));
+  assert(profile !== "laptop" ? scale === 1 : !reduced && [1, 2, 4].includes(scale));
   const portable = profile === "laptop" || reduced;
-  assert(startup === "today" || (startup === "tuned" && profile === "server"));
+  assert(startup === "today" || (startup === "tuned" && profile !== "laptop"));
   assert(!readTuned || !portable);
   assert(readCacheMiB === undefined || [32, 1536, 3072].includes(readCacheMiB));
   assert(!portable || readCacheMiB === undefined || readCacheMiB === 32);
@@ -193,7 +211,7 @@ export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, writeJvm
   // Rejected: making cache capacity alter core placement or making the tuned treatment implicit.
   // [DX-JVM1] Why: the start-up read arms reuse PREP1's measured 32 GiB transactor cache: 48 GiB heap, 8 GiB direct, 60 GiB cap.
   // Rejected: a larger cache, which does not fit beside the other role caps on a 96 GB host.
-  assert(txCacheMiB === undefined || (txCacheMiB === 32768 && profile === "server" && !reduced && !readTuned));
+  assert(txCacheMiB === undefined || (txCacheMiB === 32768 && profile !== "laptop" && !reduced && !readTuned));
   const largeRead = readTuned || readCacheMiB === 3072;
   const readMemory = largeRead ? { memory: 9216, heap: 6144, direct: 1024 } : {};
   // [DX-RD1] Why: leave two client cores available and give the read peer three physical cores.
@@ -249,12 +267,15 @@ export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, writeJvm
       track_io_timing: "on", track_wal_io_timing: "on",
     } : {}),
   };
-  return {
+  const policy = {
     profile, reduced, creditMode, tx: settings("tx"), "gw-w": settings("gw-w"), "gw-r": settings("gw-r"),
     pg: { memoryMiB: portable ? laptopCaps.pg * scale : 8192, cpus: "1", settings: pgSettings },
     index: { threshold: portable ? "8m" : "256m", max: portable ? "32m" : "1g" },
     clients: { senders: "9", readers: readTuned ? "10" : "10,11" },
   };
+  assert(!server32 || roleMemoryMiB(policy) + hostHeadroomMiB <= server32HostMiB,
+    "server-32 role caps and host headroom exceed a 96 GB machine");
+  return policy;
 }
 
 // [DX-JVM1] Why: hold cores, durability and Datomic parameters fixed during the Java comparison.

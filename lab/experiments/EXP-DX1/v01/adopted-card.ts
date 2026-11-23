@@ -6,7 +6,7 @@ import { Histogram } from "../../../bench/lib/hist.ts";
 import { render as emptyCard } from "./render.ts";
 import type { MixedIds } from "./mixed-ids.ts";
 import type { adoptedArm } from "./adopted.ts";
-import { defaultCreditMode, launchProfile } from "../jvm1/launch.mjs";
+import { defaultCreditMode, launchProfile, type ServerProfile } from "../jvm1/launch.mjs";
 import { barrierRoot, launchIntegration, selectedWriter, writeDiagnostics, serverStages, writerIntegration, type JvmProfile, type Age, type Writer } from "./profile.ts";
 import { cellPath, lastServerCell, ratedTape, serverCellSeconds, serverRates, writerAdmission, type CreditMode, type WindowSeconds } from "./server-workload.ts";
 
@@ -22,7 +22,7 @@ import { windowStats, type WindowWrite } from "./windows.ts";
 type Card = { source: string; age: Age; writer: Writer; jvm?: JvmProfile; toy: boolean; campaign: string; out: string; forecast: string;
   realistic?: RealisticBinding;
   windowSeconds?: WindowSeconds; creditMode?: CreditMode;
-  prepared?: boolean; txJvm?: JvmProfile; writeJvm?: JvmProfile; diagnostics?: ReturnType<typeof writeDiagnostics>; separateWal?: boolean; failure?: string };
+  prepared?: boolean; profile?: ServerProfile; txJvm?: JvmProfile; writeJvm?: JvmProfile; diagnostics?: ReturnType<typeof writeDiagnostics>; separateWal?: boolean; failure?: string };
 type Observation = Awaited<ReturnType<typeof adoptedArm>>;
 const tag = (x: unknown) => (typeof x === "number" && Number.isFinite(x)) ? String(Number(x.toFixed(3))) : "—";
 export function writeAdoptedCard(run: Card) {
@@ -30,7 +30,8 @@ export function writeAdoptedCard(run: Card) {
   const admission = writerAdmission(creditMode);
   const file = (arm: string, name: string) => path.join(run.campaign, arm, name);
   const diagnostics = run.diagnostics ?? writeDiagnostics(run.writer);
-  const policy = launchProfile("server", { jvm: run.jvm, txJvm: run.txJvm, writeJvm: run.writeJvm, creditMode });
+  const profile = run.profile ?? "server";
+  const policy = launchProfile(profile, { jvm: run.jvm, txJvm: run.txJvm, writeJvm: run.writeJvm, creditMode });
   const stages = serverStages(policy, !!run.separateWal);
   const readArm = (arm: string, load: boolean, mode = creditMode) => {
     if (!fs.existsSync(file(arm, "arm.json"))) return [];
@@ -71,6 +72,7 @@ export function writeAdoptedCard(run: Card) {
     assert.deepEqual([input.source, input.age, input.writer, input.jvm, input.txJvm, input.writeJvm, input.diagnostics, input.separateWal, input.stages, input.windowSeconds, input.creditMode],
       [run.source, run.age, run.writer, run.jvm, run.txJvm, run.writeJvm, diagnostics, !!run.separateWal, stages, windowSeconds, creditMode]);
     assert.deepEqual(input.realistic, run.realistic);
+    assert.equal(input.profile ?? "server", profile);
     assert.equal(Boolean(input.pgdata), prepared);
     if (prepared) assert.equal(input.pgdata.length, stages.length);
     let systemIdentifier: string | undefined;

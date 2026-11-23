@@ -36,7 +36,7 @@ import {
   summaryFiles,
 } from "./source.ts";
 import { releaseDeepStart, type DeepIdentity } from "../../../bench/lib/deep-profile.ts";
-import { checkProfileFlags, launchProfile, roles as jvmRoles } from "../jvm1/launch.mjs";
+import { checkProfileFlags, hostHeadroomMiB, launchProfile, roleMemoryMiB, roles as jvmRoles, serverProfiles } from "../jvm1/launch.mjs";
 import { datomicRuntime } from "../../../config/datomic/runtime.mjs";
 
 type ServerLaunch = { policy: ReturnType<typeof launchProfile>; walDirectory?: string;
@@ -422,7 +422,14 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
   options: NodeJS.ProcessEnv = {}, launch?: ServerLaunch) {
   const policy = launch?.policy;
   const cold = launch?.coldSeed;
-  assert(!policy || (policy.profile === "server" && !policy.reduced));
+  assert(!policy || ((serverProfiles as readonly string[]).includes(policy.profile) && !policy.reduced));
+  if (policy?.profile === "server-32" && process.platform === "linux") {
+    // [DX-INT1] Why: PREP1's cache32 guard, applied wherever the larger profile starts a stack.
+    // Rejected: trusting the server's advertised size; 96 GB is about 89.4 GiB of MemTotal.
+    const kib = Number(/^MemTotal:\s+(\d+) kB$/m.exec(fs.readFileSync("/proc/meminfo", "utf8"))?.[1]);
+    assert(Number.isSafeInteger(kib) && kib / 1024 >= roleMemoryMiB(policy) + hostHeadroomMiB,
+      `server-32 needs ${roleMemoryMiB(policy) + hostHeadroomMiB} MiB MemTotal; the host has ${Math.floor(kib / 1024)} MiB`);
+  }
   assert(!launch?.prepared || !launch.walDirectory);
   assert(!launch?.pgData || (!launch.prepared && !launch.walDirectory));
   assert(!cold || (launch?.walDirectory && !launch.prepared && !launch.pgData));

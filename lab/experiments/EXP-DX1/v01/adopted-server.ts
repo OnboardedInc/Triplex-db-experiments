@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { readScaleJvms, scaleHost, startScaleStack } from "../scale1/bench.ts";
-import { launchProfile } from "../jvm1/launch.mjs";
+import { defaultServerProfile, launchProfile, serverProfiles, type ServerProfile } from "../jvm1/launch.mjs";
 import { restoreDump } from "../scale1/seed-image.ts";
 import { adoptedArm, jsonFile, quietPair, recordMixedIds, type Residency } from "./adopted.ts";
 import { nativeMetrics } from "../thin1/native-metrics.ts";
@@ -27,7 +27,11 @@ assert(requestedWriter === defaultWriter);
 assert(jvmProfiles.includes(jvm as JvmProfile) && jvmProfiles.includes(txJvm as JvmProfile));
 const windowSeconds = parseWindow(windowText), creditMode = parseCredits(creditText);
 const { budget, comparisonMinutes } = timeBudget(windowSeconds, age === "realistic");
-const policy = launchProfile("server", { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile, writeJvm: writeJvm as JvmProfile, creditMode });
+// [DX-INT1] Why: run.ts passes the named server profile in the environment so the positional command line is unchanged.
+// Rejected: a new positional argument, which would move every pinned queue line.
+const profile = (process.env.DX_V01_PROFILE ?? defaultServerProfile) as ServerProfile;
+assert(serverProfiles.includes(profile), "Unknown server profile");
+const policy = launchProfile(profile, { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile, writeJvm: writeJvm as JvmProfile, creditMode });
 const diagnostics = writeDiagnostics(requestedWriter, process.env);
 const stages = serverStages(policy, !!walDirectory);
 assert(armText === "" || /^[1-3]$/.test(armText ?? ""), "Choose arm 1, 2 or 3");
@@ -60,7 +64,7 @@ if (!copies.length && expected) {
 }
 const input = { source, age, writer: requestedWriter, jvm: jvm as JvmProfile, imagePin, transferPin, originalScope: seed.scope, realistic: seed.realisticBinding,
   txJvm: txJvm as JvmProfile, writeJvm: writeJvm as JvmProfile, diagnostics, separateWal: !!wal, stages, wal, windowSeconds, creditMode,
-  agedBundle: expected?.pin, agedDump: agedDumpPin || undefined };
+  agedBundle: expected?.pin, agedDump: agedDumpPin || undefined, profile };
 let spent = 0, previousSystem: string | undefined;
 if (sequenceArm !== undefined) {
   assert(pgdataSource && copies.length === 1 && forecast);
