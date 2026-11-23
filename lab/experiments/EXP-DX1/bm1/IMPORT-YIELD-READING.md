@@ -61,3 +61,21 @@ Running cost of bench 4 at 13:55 EST: about USD 3.35 (USD 1.09/hour from 15:47 U
 **What sets the tail now: the post-adoption spell (spell A).** 97% of the slowest 1% of second-half saves fall within 6 s of an index adoption. Those saves wait 28 ms for a credit and 23 ms in the transactor queue behind slow post-adoption frames. Settled busy saves apply in 0.65 ms with 0.04 SQL reads per save. So the bigger heap removed spell B (the collector), which today's first run showed set the 24 GiB tail. The remaining tail is index adoption itself. That is the fewer-index-jobs arm's target (11 adoptions in 300 s against 2 in the control).
 
 **Autovacuum and WAL were not captured for this run.** The sampler's file was not executable, so it never started. This was found and fixed before the next run. Evidence: `evidence/DX-BM1/bench4/bench4-fair-heap/` on the Mac, with `prep1-gc-tx.log`, `tx-jvm.log`, `prep1-native.ndjson` and `tx.jsonl`.
+
+## Filler: the heap arm with fewer index jobs (`--memory-index 512m,1536m`), LOAD2 `0f12be1de`
+
+**Fewer adoptions cut the busy tail again, and the import ran faster than forecast.** The run went from 20:19:26 to 20:37:39 UTC, on one fresh copy with control then import cells. The dry run was ADMITTED, the launcher exited 0, `importGrantsBesideLiveQueue` was 0, and the yield rule held back 7,815 times.
+
+| Measure | Forecast | Measured |
+| --- | --- | ---: |
+| Index adoptions per 300 s import cell | 5–7 | 6 (control: 1) |
+| Writer allocation stalls | 0–1 | 0 (no thread) |
+| Busy second-half p99 | 35–55 ms (heap arm 45.1) | **36.4 ms** (worst account 38.2) |
+| Quiet loaded p99, whole | 30–45 ms | 32.5 ms |
+| Verified facts/s, whole (second half) | 3,300–3,550 | **3,671 (3,454)**, above range |
+
+**Against the P8 bar.** The import clears 3,000 facts/s in both halves, the quiet account stays under 50 ms, and the worst second-half read ratio is 1.46×. The busy accounts' second-half ratio is 3.05× against a 12.9 ms baseline, so the 1.5× bar is still missed. 99% of the slowest 1% fall within 6 s of an adoption, so what remains is the post-adoption spell. The control's first half again had a cold-start spell (busy p99 1,828 ms).
+
+**Autovacuum ran through the measured cells:** 72 of 76 samples had a worker, and WAL grew 3,219 MB in 12.6 minutes (about 4.3 MB/s). Like the production tape and the heap arm, this run measured the never-vacuumed fresh copy during its first vacuum.
+
+Evidence: `evidence/DX-BM1/bench4/bench4-fair-memidx/` on the Mac, with the collector log, traces and `pg-sampler.log`.
