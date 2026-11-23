@@ -14,6 +14,8 @@ import { cleanSource, verifyBuild } from "./source.ts";
 import { openPreparedLadder, sealedArm } from "../rd1/prepared.ts";
 import { firstOffer } from "../ha1/first-offer.ts";
 import { agedCut } from "../prep1/ceiling-seed.ts";
+import { now } from "../scale1/decision/observer.ts";
+import { monitorEventLoopDelay } from "node:perf_hooks";
 
 // [DX-THIN1] Why: the realistic card replaced adopted-server.ts with its staged three-arm runner and command line.
 // This file keeps the read-study and append-retirement pair runners exactly as gated on INT1 before that merge.
@@ -302,19 +304,27 @@ async function savesArm(out: string, base: Parameters<typeof adoptedArm>[2], age
     const cell = { rate: 394 as const, loaded: w.tape !== "saturday" };
     const arm = await adoptedArm(folder, source, peer, seed, writer, true, false, terminal, cell, false, undefined, undefined, {
       label: "rd3/" + w.name, run: async ({ start, seconds, startHead, tape, senders }) => {
-        await new Promise((resolve) => setTimeout(resolve, Math.max(0, start - Date.now())));
-        const before = usage(), at = Date.now();
+        await new Promise((resolve) => setTimeout(resolve, Math.max(0, start - now())));
+        // The driver runs the saves' sender and the 256 reader seats in one event loop on cores 9 and 10: its CPU and
+        // event-loop delay say how much of a save's or a read's time is the driver's own.
+        const before = usage(), at = now(), driverCpu = process.cpuUsage(), loop = monitorEventLoopDelay({ resolution: 10 });
+        loop.enable();
         const step = w.pin ? await pinnedWindow(base.read, seed as never, w.pin, { start, seconds, startHead,
           candidates: tapeCandidates(tape, start, senders) }, { seats: savesSeats })
-          : await new Promise((resolve) => setTimeout(() => resolve(undefined), Math.max(0, start + seconds * 1000 - Date.now())));
-        const after = usage(), wall = (Date.now() - at) / 1000;
-        return { step, cpuCores: Object.fromEntries(roles.map((role) => [role, Number(((after[role]! - before[role]!) / 1e6 / wall).toFixed(3))])) };
+          : await new Promise((resolve) => setTimeout(() => resolve(undefined), Math.max(0, start + seconds * 1000 - now())));
+        const after = usage(), wall = (now() - at) / 1000, driverUsed = process.cpuUsage(driverCpu);
+        loop.disable();
+        const driver = { cores: Number(((driverUsed.user + driverUsed.system) / 1e6 / wall).toFixed(3)),
+          eventLoopDelayMs: { p50: loop.percentile(50) / 1e6, p99: loop.percentile(99) / 1e6, max: loop.max / 1e6 } };
+        // Each role's cgroup memory at the window's end, for the memory caps of a scorecard setting.
+        const memoryMiB = Object.fromEntries(roles.map((role) => [role, Math.round(Number(String(counters[role]!()["memory.current"]).trim()) / 2 ** 20)]));
+        return { step, memoryMiB, driver, cpuCores: Object.fromEntries(roles.map((role) => [role, Number(((after[role]! - before[role]!) / 1e6 / wall).toFixed(3))])) };
       } });
     terminal = arm.terminal!;
     const along = (arm as any).alongside.result;
     const production = (arm as any).production;
     windows.push({ name: w.name, tape: w.tape, pin: w.pin ?? null, firstCut: arm.firstCut, terminal,
-      reads: along.step ?? null, cpuCores: along.cpuCores,
+      reads: along.step ?? null, cpuCores: along.cpuCores, memoryMiB: along.memoryMiB, driver: along.driver,
       saves: { offered: arm.p2.offered, receipts: arm.p2.receipts, latency: arm.p2.latency,
         production: production ? { metrics: production.metrics, readback: production.readback, predecessors: production.predecessors } : null,
         quiet: arm.p6 ? { offers: arm.p6.quietOffers, commit: arm.p6.commit, expired: arm.p6.expired, read: arm.p6.read } : null } });
@@ -322,7 +332,7 @@ async function savesArm(out: string, base: Parameters<typeof adoptedArm>[2], age
   jsonFile(path.join(out, "pinned-saves.json"), { source, head: agedHead, seats: savesSeats, windowSeconds: 90, windows });
   console.log("[DX-RD3] " + JSON.stringify(windows.map((w: any) => ({ name: w.name, skipped: w.skipped,
     reads: w.reads && { goodput: w.reads.goodput, p50: w.reads.read.p50Ms, p99: w.reads.read.p99Ms, wrong: w.reads.wrong, errors: w.reads.errors },
-    saves: w.saves && { p50: w.saves.latency.p50Ms, p99: w.saves.latency.p99Ms, receipts: w.saves.receipts, offered: w.saves.offered }, cpu: w.cpuCores }))));
+    saves: w.saves && { p50: w.saves.latency.p50Ms, p99: w.saves.latency.p99Ms, receipts: w.saves.receipts, offered: w.saves.offered }, cpu: w.cpuCores, driver: w.driver }))));
   for (const w of windows as any[]) if (w.reads) assert(w.reads.wrong === 0 && w.reads.errors === 0, `${w.name}: wrong values or read errors`);
 }
 

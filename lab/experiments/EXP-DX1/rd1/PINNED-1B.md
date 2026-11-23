@@ -1,6 +1,6 @@
 # Pinned reads at 1 billion records: why they are forty times slower
 
-**Status, 2026-11-23 evening: cause located by the 1 billion probe; two default-off options built and gated on the Mac; the 1 billion pair ran and fixed the old pin (19.4 → 468–479 reads/s, 0 wrong values); a tuned-reader arm (three reader cores, batches of eight, both options) is published for the P1 capacity question.** Sources: the code at the scorecard commit `6770c37ba`, the fresh card's evidence and the 1 billion part 1 and 2 evidence (`score-1b-c-part1-2.tar.gz`, SHA-256 `e31c4adc…6056b`: the reader's request trace `gw-r.jsonl` with one cgroup CPU sample per second, its GC log and its JVM flags). Times from the Mac are diagnostic only. Sections marked *open* wait for tonight's run.
+**Status, 2026-11-23 evening: cause located by the 1 billion probe; two default-off options built and gated on the Mac; the 1 billion pair ran and fixed the old pin (19.4 → 468–479 reads/s, 0 wrong values); the tuned-reader arm (three reader cores, batches of eight, both options) ran at 12,376 reads/s and p99 72 ms at 256 seats near the head with no saves, explained below from its step records; an arm with the fixed save load running (DX-RD3) is published with its predictions.** Sources: the code at the scorecard commit `6770c37ba`, the fresh card's evidence and the 1 billion part 1 and 2 evidence (`score-1b-c-part1-2.tar.gz`, SHA-256 `e31c4adc…6056b`: the reader's request trace `gw-r.jsonl` with one cgroup CPU sample per second, its GC log and its JVM flags). Times from the Mac are diagnostic only. Sections marked *open* wait for tonight's run.
 
 Measurement: aged scorecard part 2 at `6770c37ba` ([V01-AGED.md](https://github.com/OnboardedInc/Triplex-db-experiments/blob/182fb4482/lab/experiments/EXP-DX1/scale1/V01-AGED.md)). One-core read gateway, `server` profile. Pinned ladder at one seat: 18.12 reads/s, p50 44.80 ms at 1 billion; 606.43 reads/s, p50 1.18 ms fresh.
 
@@ -250,6 +250,192 @@ The transactor keeps its three cores in every row. On the 12-core machine every 
 - **Something other than reader CPU limits the arm** if the reader cgroup stays below 2.0 cores at 256 seats while goodput is below 2,800/s. Look at the driver (cores 9 and 10) and the permit waits in `gw-r.jsonl`.
 - **An option is not exact** if any read returns a wrong value or the gate below shows a difference; then it must not merge.
 
+## The tuned arm's result, read from its step records
+
+The tuned arm ran at 23:03–23:10 UTC on 2026-11-23 (`64c70e549`; evidence `evidence/DX-SCALE1/pinned-tuned-1b/pinned-tuned-1b.tar.gz`, SHA-256 `8beca2bc…301ac0`). Zero wrong values and zero errors in all six steps; mean batch 8.0 in every step.
+
+| Step | Reads/s | p50 / p99 ms | Exchanges/s | Reader CPU (cores) | CPU per exchange | CPU per subject | Allocation per subject | GC pause share | Segment loads per subject | Object cache hit rate |
+| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Old pin, 64 | 3,690 | 13.25 / 73.22 | 461 | 1.83 | 3.98 ms | 0.50 ms | 0.49 MB | 12.8% | 0.31 | 0.897 |
+| Old pin, 256 | 10,599 | 20.10 / 83.46 | 1,325 | 2.01 | 1.52 ms | 0.19 ms | 0.23 MB | 9.7% | 0.10 | 0.957 |
+| Old pin, 1,024 | 1,213 | 823 / 1,122 | 154 | 2.27 | 14.8 ms | 1.87 ms | 1.98 MB | 20.6% | 1.78 | 0.867 |
+| Near head, 64 | 5,467 | 9.60 / 63.23 | 683 | 1.95 | 2.85 ms | 0.36 ms | 0.40 MB | 14.4% | 0.33 | 0.906 |
+| Near head, 256 | **12,376** | **18.43 / 72.19** | 1,548 | **1.99** | **1.29 ms** | **0.16 ms** | 0.21 MB | 9.5% | 0.086 | 0.964 |
+| Near head, 1,024 | 1,482 | 668 / 987 | 187 | 2.23 | 11.9 ms | 1.51 ms | 1.62 MB | 19.7% | 1.43 | 0.884 |
+
+Sources: the ladder record (`pinned-ladder.json`); the reader's cgroup CPU, one sample per second (`gw-r.jsonl`, 388 runtime samples); its GC log (`gw-r-gc.log`, pauses and MB freed per 60 s step); Datomic's metrics callback, one record per minute (`StorageGetMsec`, `DeserializeMsec`, `ObjectCache`, `ObjectCacheCount`). The metrics minutes start about 10 s before each step, so the last two columns are within about 15% of the step's own values; the near-head 64-seat minute includes about 10 s of the old-pin 1,024-seat step.
+
+### Why 256 seats gave 12,376 reads/s when the model said 3,800
+
+The model said 0.4 to 0.8 ms of reader CPU per subject (2.4 to 4.4 ms per exchange of eight, rising 35 to 50% with many exchanges in flight) on three busy cores. Measured: **1.29 ms per exchange of eight, 0.16 ms per subject, on 2.0 of the 3 cores.** The model was wrong in three places, and the reader never became the limit:
+
+1. **The base it scaled from carried one overloaded core's costs.** The model started from the pair's 1.1 to 1.8 ms per single-subject exchange. At 256 seats on one core and one permit, that figure included a full request-trace record for every request (every request was slower than 50 ms), 256 requests queued on one core, and young collections at 0.05 to 0.06 ms per MB. In the tuned arm the read profile (`DX_RD1_READ_PROFILE=1`) switches the ordinary request trace off for `/read`: `trace/handler` traces a profiled route only when the request carries a sample header, and the ladder sends none. The reader's trace holds 0 request records in all six steps (388 runtime samples and 7 metrics records only). Young collections cost about 0.037 ms per MB freed at 256 seats, and the queue was 32 exchanges against three permits, not 256 requests against one.
+2. **Cost per exchange falls with more seats instead of rising.** Near the head it went from 2.85 ms at 64 seats to 1.29 ms at 256. The cause is the ladder's subject sequence, not concurrency: seat *s* reads subject `7919 k mod 100,000` in account `s mod 10` with *k* rising by one per round, so each round brings exactly ten new (account, subject) pairs and every other read repeats a pair that the seat ten places later read ten rounds earlier. New subjects per second are therefore 10 × reads/s ÷ seats: 854/s at 64 seats, 483/s at 256. Each new subject costs about 2.2 segment loads (1,790 loads/s against 854 new subjects/s at 64; 1,067 against 483 at 256), and each load costs 0.57 to 0.72 ms of deserialization (`DeserializeMsec` ÷ loads). At 64 seats deserialization alone used about one core.
+3. **It priced every subject at a cold read.** The probe's 0.2 ms per current read was for subjects read once. At 256 seats the ladder reads each of about 29,000 (account, subject) pairs about 25 times in the 60 s step, so 96.4% of object-cache requests hit and the marginal subject in a batch costs about 0.1 ms.
+
+**Corrected model.** Reader CPU ≈ exchanges/s × 0.9 ms (a cache-hot exchange of eight one-field subjects, collector included) + segment loads/s × 0.6 to 0.7 ms. It reproduces 2.0 cores at 256 seats (1,548 × 0.9 + 1,067 × 0.57 = 1.39 + 0.61). At 64 seats it gives 1.6 cores (measured 1.95), and at 1,024 seats 1.7 cores (measured 2.23; collector pauses were 20% of the wall there). **What limited 256 seats is not in the records.** The reader had about 0.7 cores of headroom beyond collector pauses. The driver, which runs 256 seats and 1,548 HTTP exchanges/s in one Node event loop on cores 9 and 10, was not sampled. The new arm records the driver's CPU and event-loop delay per window.
+
+**What this means for P1.** The 12,376 reads/s at 256 seats depends on the ladder re-reading each subject about 25 times a minute. A product reader whose 256 seats each read a different, random subject among the million per account would miss the cache like the 1,024-seat step does: about 1.5 to 1.9 ms of CPU per subject, so 1,300 to 1,800 reads/s on three cores, below the 2,560 reads/s that p99 ≤ 100 ms needs with no think time. The new arm's tape-pin window reads recently saved subjects, which is the product's own pattern.
+
+### What collapses at 1,024 seats
+
+**The object cache, through the ladder's reuse distance.** A pair is re-read ten rounds after its first read. That is 2,560 reads later at 256 seats (about 5,600 segments at 2.2 per subject) and 10,240 reads later at 1,024 seats (about 22,500 segments). The reader's 3 GiB cache held 6,100 to 6,400 segments all through (`ObjectCacheCount`; 3 GiB over about 0.5 MB per decoded segment). So at 1,024 seats nearly every read reloads its segments: 1.43 to 1.78 loads per subject against 0.086 to 0.10 at 256. Deserialization rose to 1.5 to 1.6 cores of the 2.2 used, allocation to 1.6 to 2.0 MB per subject, and collector pauses to 20% of the wall. CPU per subject rose about tenfold, and reads/s fell about eightfold.
+
+The other candidates are ruled out by the records:
+
+| Candidate | Evidence | Verdict |
+| --- | --- | --- |
+| Permits against queued threads | 1,024 seats ÷ 8 = 128 exchanges in flight, under Jetty's 512 threads. Three permits busy: 2.2 to 2.3 cores used against about 2.4 available outside pauses | The permits are full because each exchange costs 12 to 15 ms, not because waiting threads cost CPU |
+| The request trace writing every slow request | 0 request records in `gw-r.jsonl` | Off in this arm |
+| Batches no longer filling | Mean batch 8.0 at 1,024 | No |
+| Client timeouts | 0 errors; p99 1.0 to 1.1 s against the 35 s client timeout | No |
+
+**What the new arm can show of it:** nothing directly. It runs 256 seats only. Its tape-pin window reads a small hot set of recently saved subjects, the opposite case.
+
+## The pinned arm with saves (DX-RD3): 256 seats with the fixed save load running
+
+**Why.** P1's bar is 256 pinned readers at read p99 ≤ 100 ms with zero wrong values **with the fixed save load running**, and P2's is save p50 ≤ 10 ms and p99 ≤ 50 ms with those 256 readers running. The tuned arm had no saves in its windows.
+
+**What runs.** `v01/study-server.ts` with `DX_RD3_PINNED_SAVES=1` and ladder `pinned-saves`. The admission is the tuned arm's: the held aged copy, no dump, the aged bundle's fresh-peer check on the stack's own network, the `server` profile, and the tuned reader exactly as measured (cores 5, 6 and 11; 3 GiB cache; three permits; both pinned options; the early filter; the read profile; batches of eight). The write gateway also reports storage reads per commit (`DX_V01_COMMIT_READS=1`, as the card sets for a production tape). There is one stack. Each window's first cut is the previous window's terminal, and every window is 90 s:
+
+| Window | Saves (the card's own cell code, `adoptedArm`) | Reads (256 seats, `rd1/pinned-ladder.ts` `pinnedWindow`) |
+| --- | --- | --- |
+| `s-alone` | The card's 394 loaded cell on the production-shaped tape, shape S: 2,086 neighbour commits (23.2/s, one per subject's save, 850 subjects, 6 facts median, up to 115), plus the quiet account's 315 saves (3.5/s) | None |
+| `s-near-head` | Same tape, relabelled so it writes new values | Head − 1,000 at the window's first cut, batches of eight |
+| `s-seed-cut` | Same | The old pin 87,002, batches of eight, every value checked against the seed's |
+| `s-tape` | Same | Each seat reads a subject this window's tape offered 0.2 to 20 s earlier, pinned at the position of that subject's last acknowledged save. Every field the sender recorded must come back with the same row ID, value and position, and a production subject must return no other field. One subject per exchange |
+| `ref-near-head`, `ref-seed-cut`, `ref-tape` | The unloaded 394 cell: the quiet account's 3.5 saves/s alone, the reference rate of the card's P1 line (the same stream generator, not byte-identical to that line's tape) | As above. **Run only if five minutes remain** before the deadline |
+
+The S windows keep all of the card's checks on every commit: the predecessor check over every field the tape writes (AGE1's rows byte-exact against its replay tape), the journal and identity check per commit, the writer-path rule, the operation and claim check on every hundredth save, and the read-back of every written field at the terminal cut. The quiet account's own P6 reads (`readCell`, 64 seats) run in every window as in the card.
+
+**Recorded per window** (`pinned-saves/pinned-saves.json`; each window's full `arm.json` and `operations.json` beside it):
+
+- **Reads:** reads/s; p50 and p99; mean batch; the short-cut's current and as-of answers (the counter is process-wide); wrong values; errors.
+- **Saves:** offered, receipts and latency (all commits); for S, the card's production metrics: stored against offered per commit and per row, expired, commit p50/p99 whole and second half, save completion, reads per commit, per-writer split; the quiet commits' p50/p99 and P6 reads.
+- **Resources:** cgroup CPU in cores and memory at the window's end for the reader, writer, transactor and PostgreSQL; the driver's CPU and event-loop delay.
+- **Tape pins:** subjects read, rows checked, skips for subjects not yet saved, and time from offer to read.
+
+### Command (as the server driver; environment and copy steps exactly as the tuned arm)
+
+```bash
+COMMIT=<the commit that publishes this section>   # exp/DX-RD1-readers; contains origin/exp/DX-INT1 at 61a794c1d
+BUILD=/var/tmp/triplex-pinned-saves-1b-build
+sudo "$(command -v node)" --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
+cd "$BUILD/repository"
+saves_arm() {  # $1 = new scratch copy of AGED_PGDATA_SOURCE, $2 = new campaign directory, $3 = deadline in ms
+  sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
+    "AGE_JAVA=$AGE_JAVA" "AGE_DATOMIC_HOME=$AGE_DATOMIC_HOME" DX_RD3_PINNED_SAVES=1 DX_W1_SERIAL_APPLY=0 PREP1_LOOKUP_EVERY=0 \
+    "DX_RD1_PGDATA_SOURCE=$AGED_PGDATA_SOURCE" DX_RD1_LADDER=pinned-saves "DX_RD1_PGDATA=$1" \
+    ${DX_DRY_RUN_FIRST_OFFER:+DX_DRY_RUN_FIRST_OFFER=1} \
+    bash lab/experiments/EXP-DX1/v01/study-server.sh "$COMMIT" "$2" "$3" "$SCALE1_IMAGE" "$SCALE1_IMAGE_SHA256" \
+    "$SCALE1_TRANSFER_SHA256" 1B per-person-ordered j21-g1 "$AGE_HANDOFF_JSON" "$AGE_HANDOFF_SHA256" "" "" \
+    j25-zgc "$WAL_DIR" j21-g1 rolling6
+}
+OUT=/var/tmp/triplex-pinned-saves-1b; mkdir "$OUT"     # new
+# make COPY_1 (a new physical copy of the held stopped cluster, as for the tuned arm), then:
+DEADLINE=$(( $(date +%s%3N) + 30 * 60 * 1000 ))
+saves_arm "$COPY_1" "$OUT/saves" "$DEADLINE"          # writes OUT/saves/pinned-saves/pinned-saves.json
+```
+
+**Duration: about 20 minutes for the four S windows; ceiling 30.** Estimates:
+
+| Step | Minutes |
+| --- | ---: |
+| Copy | 2–3 |
+| Stack start and aged check | 4–6 |
+| Each S window: predecessors for 850 subjects (14 reads of 64), 90 s of saves and reads, then resolution, journal, identity, claim checks and read-back | 2.5–3.5 (×4: 10–14) |
+| Cleanup | 1–2 |
+
+That makes 17 to 25 minutes. The three reference windows (about 2 minutes each) run only while five minutes remain before the deadline, so the arm stops by the 30-minute ceiling either way. If the S windows run long, the reference windows are skipped and the summary says so. A dry run to the first offer prints `DX-DRY-RUN first offer reached: pinned pinned-saves` (about 8 minutes on its own copy). An arm stopped before its first save is set aside, and the same line can be rerun on a new copy with the same `OUT/saves`.
+
+### Predictions, written before the run
+
+Corrected model above. Closed loop, no think time. Additions for the save load:
+
+- The reader ingests about 27 commits/s of novelty and serves the quiet account's P6 reads.
+- PostgreSQL's one core serves both peers' segment reads.
+- The driver's event loop carries the save sender beside the 256 seats.
+- The transactor indexes at 256 MB of novelty, so at most one index adoption is likely across the S windows.
+
+| Window | Reads/s (central) | Read p50 | Read p99 (central) | Current share | Reader CPU |
+| --- | --- | --- | --- | --- | --- |
+| `s-near-head` | 9,500–12,500 (11,000) | 19–27 ms | 70–120 ms (88) | ≥ 99.5% | 1.9–2.6 |
+| `s-seed-cut` | 8,000–10,800 (9,500) | 22–32 ms | 80–130 ms (98) | 97–98.5% | 1.9–2.6 |
+| `s-tape` | 800–2,600 (1,500) | 100–320 ms (170) | 160–600 ms (300) | 85–98% (a read goes to the as-of view when the subject's next save commits between the pin's choice and the read; 990 of the 2,086 commits re-save a subject within 20 s, and commits take tens of ms to seconds at 1 billion) | 2.0–2.7 |
+| `ref-near-head` | 11,000–12,800 | 18–24 ms | 65–95 ms | 100% | 1.9–2.3 |
+| `ref-seed-cut` | 9,500–11,000 | 20–28 ms | 75–100 ms | 97.5–98.5% | 1.9–2.3 |
+| `ref-tape` | 1,200–2,800 (1,900) | 90–210 ms | 140–400 ms | 90–100% | 2.0–2.7 |
+
+**Tape pins are one subject per exchange, read whole:** 1.3 to 2.5 ms of reader CPU per exchange (a single-subject exchange near the head cost 1.13 ms in the pair's one-seat step), on 2 to 2.7 cores. Wrong values and errors: 0 in every window.
+
+**Saves.** Commit latency is measured from the scheduled offer to the acknowledgement in the driver.
+
+| Window | Stored commits/s (offered 26.7: 23.2 S + 3.5 quiet) | Expired | S commit p50 | S commit p99 | Quiet commit p50 / p99 | Reads per commit |
+| --- | --- | --- | --- | --- | --- | --- |
+| `s-alone` | 25.5–26.7 | 0–100 | 25–120 ms | 0.25–3 s | 6–12 / 20–60 ms | 0.5–5 |
+| `s-near-head`, `s-seed-cut`, `s-tape` | 25–26.7 | 0–150 | +0–25% over `s-alone` | +0–40% over `s-alone` | +0–30% over `s-alone` | Same as `s-alone` |
+| `ref-*` (3.5/s quiet only) | 3.5 | 0 | — | — | 5–10 / 15–45 ms | — |
+
+**P2's bar** (save p50 ≤ 10 ms, p99 ≤ 50 ms with 256 readers): **missed by the S commits**, whose median is a 6-fact save and two thirds of which take the general writer; **for the quiet account's 3.5/s, p50 ≤ 10 ms is likely met in every window (6–12 ms predicted), and p99 ≤ 50 ms is likely met in the `ref-` windows (15–45 ms) and borderline in the S windows (20–60 ms, plus up to 30% with readers).** For the reference tape alone, the current `server-32` card's part 1 at 1 billion (no readers) measured 6.18 / 21.38 ms.
+
+**P1's bar** (read p99 ≤ 100 ms at 256 seats with saves): **met for the ladder's batched pins near the head and at the old pin** (central 88 and 98 ms; the old pin is the one at risk); **missed for pins at the tape's own positions** (central p99 300 ms), because those reads cannot share an exchange.
+
+### What would show each prediction wrong
+
+1. **Saves cost the reader capacity:** `s-near-head` below 9,000 reads/s or p99 above 130 ms while `ref-near-head` (or the tuned arm's 12,376 / 72 ms) holds. Then log ingestion, an index adoption, or PostgreSQL contention costs reads. Look at reader CPU and GC per window, the reader's `StorageGet` counts in `gw-r.jsonl`, and PostgreSQL's CPU.
+2. **Readers cost the saves:** the S commit p99 in a read window above 1.5 × `s-alone`'s, or stored commits/s more than 5% below it. Check the driver's event-loop delay first. If its p99 is above 10 ms, the extra save time is at least partly the driver's, not the store's.
+3. **The tape-pin model is wrong:** `s-tape` above 4,000 reads/s means a whole-subject single exchange costs well under 0.6 ms. Below 500 means something other than reader CPU limits it: reads pinned ahead of the reader waiting for publication (`BasisNotAvailable` in the failures), or the driver.
+4. **The corrected model is wrong:** reader CPU per exchange in `ref-near-head` outside 1.0 to 1.6 ms, or the reader below 1.7 cores with the driver below 1.5 cores at 256 seats.
+5. **Exactness:** any wrong value or error in any window. In particular, a tape pin that disagrees with the sender's record means a pinned read under concurrent saves on one subject is not exact (the Mac gates never covered concurrent saves on one subject). Then the options must not merge.
+
+### Mac gate (toy size, timings diagnostic)
+
+`rd1/saves-gate/` (`gate.sh`, `gate.ts`; one ordinary heavy token, one lab container, about 3 minutes):
+
+- **The toy and its gateway.** It reuses the production aged toy (v01/production-aged-toy.ts): PREP1's aged-live container, 50 subjects per account with every task-0 field, aged by AGE1's own code at its load pin `5cda4ab20`. The gateway runs both pinned options, three read permits and the early filter.
+- **The cells.** The driver runs three shape S production cells through the card's own production code (predecessor check, sender with rolling 6 credits, journal and identity checks, read-back), with `pinnedWindow` running beside them through the same window contract and `tapeCandidates` the server arm uses.
+- **What the gate does not cover.** It does not run `adoptedArm`'s new `Alongside` parameter or `study-server.ts` `savesArm`. Both are bare-metal only and type-check clean, and their first execution will be the server run (the dry run stops before the windows).
+
+Results:
+
+**Passed at `e4f3aedc7`** (run 02; the publish commit changes only `study-server.ts`'s per-window records and this document). The toy was seeded at cut 61, and AGE1 replayed 300 saves (head 361). Evidence: `evidence/DX-RD1/rd3-saves-gate-02.tar.gz`, SHA-256 `d3333d07a1811a283f83deea66f1005e7ed25536439c3fe4ab0943dab0cf7b98`. Run 01 (`62551ef1…6fa35`) passed the same way, at the code before candidates were limited to the last 20 s.
+
+1. **`S-alone`:** 37 of 37 commits durable. The predecessor check covered 242 seed rows and 69 of AGE1's rows, and the read-back matched 695 fields of 23 subjects.
+2. **`S-pins`:** the three pin kinds ran at once, 8 seats each for 25 s, beside 37 S commits (all durable; read-back 695 fields), with **0 wrong values and 0 errors**:
+   - old seed cut 61: 38,728 reads, batch 8, every value checked against the seed's;
+   - near the head (393): 38,752 reads, batch 8;
+   - tape pins: 31,581 reads of 15 subjects at their own save positions, 995,109 rows checked against the sender's records, one subject per exchange.
+
+   The tape pins read subjects whose next save was in flight, so **pinned reads under concurrent saves on one subject were checked for the first time**. The short-cut answered 95.3% from the current database (one counter for all three).
+3. **`S-planted`:** the same reads with one field value changed in each response. Every one was caught:
+   - seed cut: 19,480 wrong of 19,472 timed reads (the count includes reads that finished after the window);
+   - tape pins: 14,257 wrong of 14,249.
+
+   The near-head pin is not value-checked, as in the tuned arm (AGE1 may have changed field 0 there); it checks the attribute, the subject and that the row is at or before the pin.
+
+### What is left out
+
+- **The production tape at the card's other rates.** Only the 394 cell runs (shape S, the brief's load), and shape R does not run.
+- **1,024 seats with saves.** Its collapse is explained above from the tuned arm's records.
+- **A reader whose seats read random distinct subjects** (the cache-cold product case): predicted above at 1,300 to 1,800 reads/s on three cores, not measured.
+- **The driver.** It runs on the same machine (cores 9 and 10) and in one event loop with the save sender; the arm records its load instead of removing it.
+- **Separate effects of the two options.** The arm does not separate the short-cut from the cut lookup.
+- **The reference windows** run only if time remains. Their stream is the card's quiet generator at 3.5/s, not byte-identical to the card's P1 line tape.
+
+### Making the tuned reader a setting of the version 0.1 scorecard (not done now)
+
+The scorecard is `lab/bin/scorecard.mjs` → `v01/run.ts` → `v01/adopted-server.ts`. What it would take:
+
+1. **A card option** `--reader tuned` in `run.ts`, recorded in the card input and header, passed to `adopted-server.ts`. There it selects `launchProfile(profile, { readTuned: true, readCacheMiB: 3072 })`, which gives cores 5, 6 and 11, three permits, and a 9 GiB container with a 6 GiB heap and a 3 GiB cache, and adds `DX_PINNED_SHORTCUT=1`, `DX_PINNED_CUT_LOOKUP=1` and `DX_RD1_READ_FILTER=1` to the stack options. The writer moves to cores 2, 3 and 4. The driver loses core 11, keeping 9 and 10 (`clients.readers` becomes `"10"`).
+2. **Client batching in the card's P1 ladder.** `readWindows` would need batches of eight (`pinnedFields`, as the read study's `study.batch` does), named in the card as a client setting. Without it, the card's P1 reads are one subject per exchange.
+3. **The read profile.** Leave `DX_RD1_READ_PROFILE` off on the card: it switches the ordinary request trace off for `/read`. The card's slow-request trace would then return, and the pair showed it costs CPU at 256 seats. Either accept that cost (and predict it) or raise the trace's threshold for `/read` on the card only.
+4. **Memory with `server-32`.**
+   - **The conflict.** The transactor is 60 GiB, the writer 6, the reader 9 and PostgreSQL 8: 83 GiB of role caps plus 10 GiB for the host is 93 GiB, against the 89 GiB guard (`server32HostMiB`), so 4 GiB over. `launchProfile` also refuses `txCacheMiB` together with `readTuned` outright, so that assertion must change as well as the caps.
+   - **What I would change, in this order:** cut the transactor's container from 60 to 57 GiB, keeping its 48 GiB ZGC heap, 32 GiB cache and 8 GiB direct, and cut the reader's container from 9 to 8 GiB, keeping its 6 GiB heap and 3 GiB cache.
+   - **Why these and not the others.** The transactor's cache sets P2 at 1 billion, the reader's cache sets reads past 256 seats, and PostgreSQL's 8 GiB holds the page cache that its storage reads hit.
+   - **The condition.** Both cuts need the measured peak memory of each role first. The new arm records every role's cgroup memory at each window's end, and the `server-32` card's records hold the transactor's. If the transactor's peak is over 57 GiB, take the 4 GiB from the 10 GiB host reserve instead, which needs the host's own peak.
+5. **Gates and run.** The card's Mac toy with `--reader tuned`, the exactness gate (`shortcut-gate`), and a dry run of each part to its first offer. Then the card on bare metal.
+
 ## Mac toys (diagnostic, not results)
 
 **Toy 1.** Datomic 1.0.7745, dev storage, 100,000 owners with 10 rows each, 20,000 of them edited 15 times after the pin (300,000 saves), indexed, a fresh peer with a 32 MB object cache, Datomic io-stats per read:
@@ -326,7 +512,9 @@ Defaults: database name of the SCALE1 scope (`RD2_DB`), pin 87,002 (`RD2_PIN`), 
 - **Sealed protection** (envelopes and key shredding) and concurrent saves on one subject were not part of the gate.
 - **The fold census.** The gate runs add-only saves on covered subjects, which the owner-head gate showed are folded first; this gate does not count the folds natively.
 - Whether an organically grown 1 billion database behaves like AGE1's bulk-aged one (the cause now depends on grouped-save positions, which the scorecard's per-person ordered writer does not create).
-- **The tuned arm's own path** (`study-server.ts` with `DX_RD2_PINNED_TUNED=1`): syntax-checked and built from gated pieces, but bare-metal only; its dry run to the first offer is its admission check. Its read path (both options, the early filter, three permits, batches of eight) is gated on the Mac in the tuned-arm section.
+- ~~The tuned arm's own path~~: ran on the 1 billion database at 23:03–23:10 UTC (results above).
 - **How the per-read growth with seats splits** between the trace's slow-request records, Jetty scheduling and the allocation that rises with requests in flight; and which objects make the as-of view's young collections four times as expensive per MB.
 - **Why gate run 08 hung up once** (above); run 09 passed with the same code and a larger container.
-- **Whether 256 readers at p99 ≤100 ms is reachable** on this machine: the prediction says narrowly not with three reader cores and batches of eight; the tuned arm measures it.
+- **Whether 256 readers at p99 ≤100 ms holds with the save load running**, and for pins at the tape's own positions: the DX-RD3 arm measures it. Without saves the tuned arm reached it (72.19 and 83.46 ms), on a ladder whose subjects stay in the object cache.
+- **The DX-RD3 arm's own path** (`study-server.ts` `savesArm` and `adoptedArm`'s `Alongside` parameter): type-checked, bare-metal only; its read windows and checks are gated on the Mac beside the card's production cells.
+- **What limited the tuned arm at 256 seats**: the reader used 2.0 of its 3 cores and the driver was not sampled.
