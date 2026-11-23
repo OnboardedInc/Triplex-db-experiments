@@ -11,6 +11,8 @@ import { AccountPage } from "@/pages/account";
 import { EntityPage } from "@/pages/entity";
 import { HomePage } from "@/pages/home";
 import { NotFoundPage, PendingPage } from "@/pages/pending";
+import { ConfigurationPage } from "@/pages/configuration";
+import { TypePage, TypesPage } from "@/pages/types/type-page";
 
 const client = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } });
 
@@ -23,11 +25,11 @@ const router = createBrowserRouter([
       { path: "/accounts/:account", element: <AccountPage /> },
       { path: "/accounts/:account/subjects/:n", element: <EntityPage /> },
       { path: "/entities/:entityId", element: <EntityPage /> },
-      { path: "/types", element: <PendingPage title="Entity types" /> },
-      { path: "/types/:name", element: <PendingPage title="Entity type" /> },
+      { path: "/types", element: <TypesPage /> },
+      { path: "/types/:name", element: <TypePage /> },
       { path: "/query", element: <PendingPage title="Query" /> },
       { path: "/journal", element: <PendingPage title="Journal" /> },
-      { path: "/configuration", element: <PendingPage title="Configuration" /> },
+      { path: "/configuration", element: <ConfigurationPage /> },
       { path: "/assistant", element: <PendingPage title="Ask your assistant" /> },
       { path: "*", element: <NotFoundPage /> },
     ],

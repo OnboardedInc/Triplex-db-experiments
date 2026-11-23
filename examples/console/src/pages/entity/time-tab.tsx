@@ -128,7 +128,7 @@ export function TimeTab({
                     <Mono>{input.attribute}</Mono>
                   </TableCell>
                   {[views.now, views.then, views.believed].map((v, i) => (
-                    <TableCell key={i} className={cn("text-base", differs && i === 2 && values(v) !== values(views.then) && "font-semibold")}>
+                    <TableCell key={i} className={cn("w-1/4 text-base whitespace-normal break-all", differs && i === 2 && values(v) !== values(views.then) && "font-semibold")}>
                       <Mono className="text-sm">{values(v)}</Mono>
                     </TableCell>
                   ))}
@@ -140,7 +140,7 @@ export function TimeTab({
                   <TableCell className="tabular-nums">{position !== undefined ? n(position) : (d?.believedAsRecordedAt ?? "")}</TableCell>
                 </TableRow>
                 <TableRow className="hover:bg-transparent">
-                  <TableCell className="text-muted-foreground">Facts in each view (whole subject)</TableCell>
+                  <TableCell className="text-muted-foreground">Facts of this attribute in the subject</TableCell>
                   <TableCell className="tabular-nums">{n(d!.counts.current)}</TableCell>
                   <TableCell className="tabular-nums">{n(d!.counts.trueThenAsKnownNow)}</TableCell>
                   <TableCell className="tabular-nums">{n(d!.counts.believedThen)}</TableCell>
@@ -149,9 +149,10 @@ export function TimeTab({
             </Table>
           </div>
           <p className="text-sm">
-            {differs ? "The views differ for this attribute." : "The three views agree for this attribute."} Across the subject,{" "}
-            {n(d!.differences.length)} of {n(Math.max(d!.counts.current, d!.counts.trueThenAsKnownNow, d!.counts.believedThen))} facts differ between the
-            three views. The three reads ran in one tool call; its store time is the sum.
+            {differs ? "The views differ for this entity." : "The three views agree for this entity."} Across the subject's{" "}
+            <Mono>{input.attribute}</Mono> facts, {n(d!.differences.length)} of{" "}
+            {n(Math.max(d!.counts.current, d!.counts.trueThenAsKnownNow, d!.counts.believedThen))} differ between the three views. The three reads ran in one
+            tool call; its store time is their sum.
           </p>
           {d!.counts.believedThen === 0 && (
             <p className="text-muted-foreground text-xs">
