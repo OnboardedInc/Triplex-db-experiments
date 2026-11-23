@@ -1,7 +1,8 @@
-// [DX-DEMO1] The local functions behind every MCP tool and the inspector page. Each one talks to the remote gateways
+// [DX-DEMO1, DX-CON1] The local functions behind every tool of the catalogue (tools.ts), which the MCP server and the
+// console's server both run. Each one talks to the remote gateways
 // through the SSH forwards that demo/connect.sh opened, and returns its answer with the time the gateway itself took,
 // the round trip from this machine, and the database position it read or wrote at.
-// Why: one implementation for the assistant, the inspector page and the scripted proof, so all three show the same numbers.
+// Why: one implementation for the assistant, the console and the scripted proofs, so all of them show the same numbers.
 // Rejected: a second HTTP API (the gateways are the API) and the playground service (bound to its own fixture and stack).
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";

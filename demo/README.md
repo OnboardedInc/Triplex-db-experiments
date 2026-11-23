@@ -1,102 +1,120 @@
-# Demo: the 1 billion record database from a Mac
+# Triplex Console: one Triplex database, a web app and an MCP server
 
-Show an engineer, live, what the store does at one billion records: questions answered with the time each took, changes committed and read back, and what the store keeps (history, both time axes, the change feed).
+Triplex Console is a local web app with a matching MCP server for one Triplex database on this project's Datomic engine. A visitor can browse accounts, subjects and entity types, ask Triplex Datalog questions, define entity types as configuration releases, create entities from a form generated from their type, and read every change as facts, history and journal entries. Every answer shows the position it was read at and the store's own time. The design is the private `demo-design/DESIGN.md`; this page says how to run it.
 
-The database lives on a rented machine. Its gateways listen only on that machine's loopback interface. The Mac reaches them through SSH port forwards. An assistant reaches them through a local MCP server. A browser reaches them through the MCP Inspector or a one-page inspector.
-
-```
- Mac                                                     rented machine (12 cores, 96 GB, 2 NVMe)
- +----------------------------+                         +---------------------------------------------+
- | assistant (Claude Code or  |                         |  read gateway  127.0.0.1:18495 --+          |
- | the desktop app)           |                         |  write gateway 127.0.0.1:18491 --+          |
- |   | stdio                  |      SSH (TCP 22)       |                     |    transactor (32 GiB    |
- | examples/demo-mcp (MCP) ---+-- 127.0.0.1:2849x ------+---------------------+    object cache)         |
- | inspector page :28580 -----+   (demo/connect.sh)     |                     |         |                |
- | MCP Inspector (browser) ---+                         |               PostgreSQL 17 on               |
- +----------------------------+                         |               work/cluster (a byte copy)     |
-                                                        |               original cluster: never started|
-                                                        +---------------------------------------------+
-```
-
-## The three commands
-
-| Step | Where | Command | Time |
-| --- | --- | --- | --- |
-| 1. Bring the server up | rented machine, as root, in a checkout of this branch | `DEMO_ORIGINAL=<stopped cluster> DEMO_HANDOFF=<aged-scorecard.json> bash demo/server-up.sh` | about 10 minutes with the cluster on the machine (copy 3 to 8, start 1 to 4, identity checks 1 to 3); add about 25 to 40 minutes for `--fetch` from object storage; add 10 to 15 minutes on a freshly installed machine (bootstrap) |
-| 2. Connect | Mac | `bash demo/connect.sh` | under 10 seconds |
-| 3. Use it | Mac | an assistant with the MCP server registered (below), or `bash demo/inspect.sh` (MCP Inspector), or `bash demo/inspect.sh --page` (one-page inspector) | seconds |
-
-**Step 1 in detail.** `server-up.sh` bootstraps what is missing (Docker, Node, the two Datomic images, through `lab/experiments/EXP-DX1/t1/bare-metal.sh --prepare`), fetches the cluster when it is not on the machine, copies it to `/var/tmp/triplex-demo/work/cluster`, starts PostgreSQL, the transactor and both gateways on the copy with the 32 GiB cache settings, runs the identity checks, and prints one line:
+**The app and the assistant call the same functions.** One catalogue, `examples/demo-mcp/src/tools.ts`, defines every tool. The MCP server registers that list. The console's local server exposes the same list at `POST /api/tools/:name`. The web app (`examples/console`) calls only those endpoints. So a change the assistant makes appears in the open app.
 
 ```
-DEMO READY head=28309866 records=1000251169 t=62888918 ...
+ Mac                                                          the database (the toy in the lab VM, or a rented machine)
+ +------------------------------------------------+          +-------------------------------------------------+
+ | browser: Triplex Console (examples/console)    |          |  read gateway  (pinned-read options on) --+     |
+ |    | HTTP, 127.0.0.1:28580, own Origin only    |          |  write gateway ---------------------------+     |
+ | page.ts  --+                                   |   SSH    |                    transactor, PostgreSQL 17     |
+ |            +-- tools.ts (one catalogue) -------+--------->+  on a working copy; the original is never started|
+ | mcp.ts   --+    guard.ts: no read without      | forwards |                                                 |
+ |   | stdio        an entity ID is ever sent     |          +-------------------------------------------------+
+ | assistant (Claude Code: triplex-demo)          |
+ +------------------------------------------------+
 ```
 
-- **Identity checks:** the handoff file's SHA-256; the live head from the write gateway and from a fresh Datomic peer; the native t and the stored record count (Datomic datoms) from that peer; and, on a fresh copy, the AGE1 scorecard check that the V01 card runs (`lab/experiments/EXP-DX1/age1/scorecard.mjs check`: head, t, records, last receipt, original membership rows, feed page).
-- **Fetch from object storage:** `--fetch` with the four storage values in the environment for that command only (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_ENDPOINT`, `S3_BUCKET`; take them from the private `cloud/object-storage.env`, never from this repository). It downloads `aged-1b/cluster.tar.zst` and its JSON files, checks the archive and handoff digests, extracts with owners and modes, and checks the tree digest (1,642 files, 176,078,670,513 bytes). It needs 520 GB free.
-- **On the Mac (toy):** `bash demo/toy/build-toy.sh` once, then `bash demo/server-up.sh --toy`.
+## Run it on the Mac against the toy
 
-**Step 2 in detail.** Put the server's address in `~/.triplex-demo/server` (one line; it stays on the Mac, outside the repository). `connect.sh` opens the two forwards on free local ports (never 15442, 17019, 5432, 6379, 4222, 4566 or 16686), checks both gateways answer, prints the head and record count, and writes `~/.triplex-demo/connection.json` (mode 0600), which the MCP server and the inspector page read. `bash demo/disconnect.sh` closes the forwards.
+| Step | Command | Time |
+| --- | --- | --- |
+| Build the toy once | `bash demo/toy/build-toy.sh` | about 10 minutes |
+| Start everything | `bash demo/toy/up.sh` (`--reset` starts from the untouched toy) | about 40 s |
+| Open the console | http://127.0.0.1:28580/ (the API is `/api/catalogue`, `/api/connection`, `POST /api/tools/:name`) | |
+| Restart only the console server after a code change | `bash demo/toy/restart-console.sh` | 1 s |
+| Stop everything | `bash demo/toy/down.sh` | about 12 s |
+
+**What `up.sh` runs.** It brings the stack up in the lab VM through `DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock` under one heavy token, with both pinned-read options on. It then opens the SSH forwards (`demo/connect.sh --toy`) and starts the console server. The connection file is `~/.triplex-demo/connection.json` (mode 0600). It holds the local forward ports and stays outside the repository.
+
+**Setting up a checkout.** A checkout needs `pnpm install --store-dir <main checkout>/.pnpm-store --frozen-lockfile` and `node_modules/.bin/turbo run build --filter=@triplex-build/triplex-datomic` once. Node 22.18 or later runs the TypeScript directly. A second console server from another worktree is `node examples/demo-mcp/src/page.ts 28582` (see `demo/toy/README-FOR-CONSOLE.md`).
+
+## Run it against the 1 billion database
+
+| Step | Where | Command |
+| --- | --- | --- |
+| Bring the server up | rented machine, root | `DEMO_ORIGINAL=<stopped cluster> DEMO_HANDOFF=<aged-scorecard.json> bash demo/server-up.sh` (prints `DEMO READY head=28309866 records=1000251169 t=62888918` on a fresh copy) |
+| Connect | Mac | `bash demo/connect.sh` (the address stays in `~/.triplex-demo/server`) |
+| Open | Mac | `node examples/demo-mcp/src/page.ts 28580`, then http://127.0.0.1:28580/ |
+| Prove it, headless on the server | rented machine, root | `bash demo/prove-console.sh --tools <bootstrap build>`; see [PROVE-CONSOLE.md](PROVE-CONSOLE.md) |
+| Shut down | both | `bash demo/disconnect.sh` on the Mac; `bash demo/server-down.sh [--delete-work]` on the server |
 
 ## Register the MCP server
-
-**Claude Code, local scope** (stays out of the repository; run from the repository root):
 
 ```sh
 claude mcp add --scope local triplex-demo -- node "$PWD/examples/demo-mcp/src/mcp.ts"
 ```
 
-**Claude desktop app:** Settings, Developer, Edit Config, then add to `mcpServers` and restart the app:
-
-```json
-"triplex-demo": { "command": "node", "args": ["<absolute path to this checkout>/examples/demo-mcp/src/mcp.ts"] }
-```
-
-Node 22.18 or later runs the TypeScript directly. Run `pnpm install` and `node_modules/.bin/turbo run build --filter=@triplex-build/triplex-datomic` once in the checkout first.
+Run it from the checkout's root. In the Claude desktop app, add `"triplex-demo": { "command": "node", "args": ["<checkout>/examples/demo-mcp/src/mcp.ts"] }` to `mcpServers`.
 
 ## The tools
 
-**Subjects.** The store's unit is the subject: everything recorded about one subject hangs from its root record. In this test data each subject is a worker record (a profile, placements, tasks, subtasks and files), ten accounts of 100,000 subjects each.
+**There are 22 tools in ten groups.** The catalogue (`GET /api/catalogue`) gives each tool's sentences, description, input schema and whether it changes data. The console's "Ask your assistant" page is generated from it.
 
-Every answer carries `timing.serverMs` (the gateways' own handling time, summed over the requests), `timing.roundTripMs` (wall time on the Mac, tunnel included), the requests made, and `position` (the database position read or written at).
-
-| Tool | What it shows |
+| Group | Tools |
 | --- | --- |
-| `database_summary` | records counted at bring-up, subjects, accounts, sealed head, live head, the record-time range, transactions added since the seal |
-| `list_accounts` | the ten accounts and their subject counts, from the sealed roster that bring-up checked (one basis call); `checkDirectories` also reads each account's directory entity live (about 220 ms cold at 1 billion) |
-| `find_subjects` | subjects by account and subject number (the store's subject key; protected values are never looked up by value) |
-| `read_subject` | every current fact of one subject (root, profile, placements, tasks, subtasks, files) at one exact position, one request |
-| `read_subject_at` | both time axes: what is now known to have been true on a date, and what the store believed about that date at a record time |
-| `field_history` | every stored row of one field, retired ones included, with valid and record times and positions; reports how many rows of the entity's history the gateway read (see "History reads" below) |
-| `change_feed` | committed transactions after a position, optionally one account's changes only |
-| `read_many_subjects` | up to 16 subjects at the identical position in one request |
-| `save_facts` (changes) | new values from now on; receipt with durable position; readback at that position |
-| `correct_past_value` (changes) | a valid-time correction from a past date; the belief before and after |
-| `retire_fact` (changes) | a fact stops being current; its past stays in history |
-| `remove_on_request` (changes) | checks the database's removal state; on this database it explains why removal cannot be shown and changes nothing |
+| The database | `database_summary`, `list_accounts` |
+| Types | `list_entity_types`, `describe_entity_type`, `define_entity_type`, `list_releases`, `move_live` |
+| Entities | `create_entity`, `list_entities`, `read_entity` |
+| Subjects | `find_subjects`, `read_subject`, `read_many_subjects` |
+| Time | `read_subject_at`, `field_history` |
+| Questions | `query` |
+| Changes | `save_facts`, `correct_past_value`, `retire_fact` |
+| The feed | `change_feed` |
+| Derivations | `evaluate_derivation` |
+| Removal | `remove_on_request` |
 
-Changing tools commit for real (durable, synchronous) and refuse unless the connection file says the target is a demo working copy. [Worked examples](EXAMPLES.md) has eighteen prompts in showing order with real outputs and times.
+**Every answer carries five things.**
 
-## History reads
+- `position`: the commit position it was read or written at.
+- `timing.serverMs`: the gateways' own time, summed over the requests.
+- `timing.roundTripMs`: wall time on this machine.
+- `timing.consoleMs`: work the console did itself, such as evaluating a question.
+- `database` and `consoleUrl`: which database answered, and the console page that shows the same thing.
 
-A history read costs what that one entity's history costs, not what the database's size costs. The gateway reads every row the entity ever stored (all its attributes, every value ever written) and, for each retired row, the position and clock of the transaction that retired it; it filters to the asked attribute afterwards. The aging loader saved the first three fields of 20,000 subjects' first tasks (2,000 per account) about 1,411 times each, every 20,000 positions, so such a subject's task holds thousands of retired rows spread across the whole index. On the 1 billion database `field_history` for one of them (account-003, subject 0: 1,412 rows of `:task/field-0`) took 4,404.67 ms of gateway time cold and 225.21 ms warm. A subject outside that sample (subject 1) has one row per field. The worked examples show both, each labelled with its number of saves.
+Changes are real commits on the working copy. Each one is attributed: the actor is `assistant` over MCP and `console` from the app. Each has a command ID and a precondition on the entity's observed state. Typed writes are pinned to the release `live` points to. A changing tool refuses unless the connection file marks a working copy.
 
-## Two things particular to this database
+## How the console works on this engine
 
-- **A compatibility rule for the loader's journal rows.** The bulk loader that built this database (AGE1's aging loader) wrote one field of each save's journal in a non-standard form: the position row of all 28,222,864 aged saves (positions 87,003 to 28,309,866) carries the position as a payload under the ordinary marker, where product writers write a null payload under the "P" marker. The product's reader refuses those rows, so the change feed and journal reads across the aged history would fail. The demo reads them with a named compatibility rule, `acceptLoaderPositionRows(true)` in `@triplex-build/triplex-datomic`: it accepts exactly that form (the payload must equal the row's own position, under the ordinary marker) and nothing else. It is off in the product's default reader and on only when the connection file says the database was built by that loader. `database_summary` and `change_feed` say when it is on.
-- **Record time runs about a year ahead.** The aging loader's record clock starts a year after the seed's and advances in simulated days, so record times on this database fall about a year ahead of wall time, and every new save is recorded after the last aged save. `database_summary` prints the database's own record-time range. A "what did the store believe on this date" question must use a record time inside that range; valid times (what was true when) are ordinary dates.
+| Topic | What the console does | Where |
+| --- | --- | --- |
+| No scans | A guarded client refuses any row read without an entity ID before it is sent. The five configuration reads are the exception: they are given IDs found from the refs. The store's Datalog route is sent only after the query tool's checks. | `guard.ts` |
+| Configuration | Triplex's stock `ConfigStore` runs unchanged. Its by-type reads are bounded to IDs found by walking from `test` and `live`. Every commit moves `test`; only `live` is moved by hand. | `config.ts`, `releases.ts` |
+| Entities of a type | They are numbered per type and account, `acct/<account>/<type>:<8 digits>`, with one counter entity per type and account. Values are checked with Triplex's `EntityCodec`. Uniqueness is not enforced (gap G4). | `entities.ts` |
+| Questions | A question runs over one subject (pulled in one request, then evaluated by Triplex's in-memory Datalog), up to 16 subjects at one position, or the store when every pattern names its entity. Whole-database questions are refused with the reason. | `query.ts`, `demo/console/questions.json` |
+| Derivations | Triplex's `Derivation.evaluate` and `reconcile` run per subject with a reader over the pulled facts. Nothing is materialized. | `derive.ts` |
+| The feed | Pages, one entity's journal, one actor's transactions, who changed since a position, and a long poll for Live. | `store.ts` (`changeFeed`) |
 
-## Reset and shut down
+## Gates (the toy; times diagnostic)
 
-- **Reset to the sealed state:** `sudo bash demo/server-down.sh`, then `sudo bash demo/server-up.sh --reset` (with the same `DEMO_ORIGINAL` and `DEMO_HANDOFF`). The copy is replaced from the untouched original (3 to 8 minutes).
-- **Shut down:** `bash demo/disconnect.sh` on the Mac, then `sudo bash demo/server-down.sh` on the server (under a minute; PostgreSQL stops cleanly, so the next bring-up can reuse the copy with its changes). Add `--delete-work` to remove the 177 GB copy.
+| Gate | Command (in `examples/demo-mcp`) | What it proves |
+| --- | --- | --- |
+| Catalogue | `node src/gate-catalogue.ts` | MCP and HTTP return the same JSON for every tool; the Host and Origin rules hold |
+| G12 | `node src/gate-g12.ts` | A stock `ConfigStore.commit` works on the lean-layout toy |
+| Configuration | `node src/gate-config.ts` | The bounded load equals the stock load; a restart loses nothing; two processes commit in turn; the five tools work |
+| Entities | `node src/gate-entities.ts` | Eight creates at once get eight numbers; read backs match; journal entries carry the release |
+| Query | `node src/gate-query.ts` | A scan makes zero requests; the subject source equals the store source; counts equal the generator's arithmetic |
+| Journal | `node src/gate-journal.ts` | Pages equal `Triples.transactions`; who changed since equals a direct count |
+| Derivations | `node src/gate-derive.ts` | Candidates equal `Derivation.evaluate` over level-by-level reads; reconcile matches a hand-built case |
+| Every tool | `node src/prove.ts --out DIR` | The proving run: every tool, table 10.4, read backs (also the rehearsal of the 1 billion run) |
 
-## What the demo does not show
+## Particular to this database
 
-- **Removal on request.** The integrated build accepts a protection declaration only before a scope's first save; the 1 billion database was loaded without one, so it holds no protected values to remove. The tool says so and changes nothing. On the toy aged by the same loader code, the gateway itself refused a declaration (409 ProtectedScopeNeedsMigration), which is what the tool's explanation states.
-- **Publish answers and group reads.** The read gateway's Publish path needs a release written into the scope first; the demo does not write one into the sealed database.
-- **Fast reads far back in time.** A read "as of" a position far behind the head costs about 40 ms of read-gateway CPU at 1 billion (the RD1 diagnosis, `rd1/PINNED-1B.md` on `exp/DX-RD1-readers`); `read_subject_at` measured 24 to 25 ms of gateway time in the proving slot. A fix is being built as an option; it is not in this demo.
-- **Fast history for heavily saved subjects.** See "History reads": about 4.4 s cold for a subject the loader saved about 1,411 times.
-- **Load.** Each answer is one request at a time from one client. The measured rates and tails are in the scorecard runs, not here.
-- **Live record counts.** The record count is the peer's count at bring-up; the summary reports positions added since.
-- **Times through the tunnel.** `roundTripMs` includes the Mac's network path to the machine. `serverMs` is the store's own time.
+- **The loader's journal rows.** The bulk loader wrote the position row of its 28,222,864 saves in a non-standard form. The console reads them with the named rule `acceptLoaderPositionRows(true)`. The rule is on only when the connection file says the loader built the database.
+- **Record time runs about a year ahead.** The aging loader's record clock was ahead of wall time. A record time before the database's first is refused, with the range.
+- **Loader-built facts carry no entity type.** The ten accounts are browsed by account and subject number. Their entities are "untyped". The starter type `Subject` exists so a new type can reference a real subject.
+
+## What is refused or slow, and why
+
+| What | Here | Gap |
+| --- | --- | --- |
+| A question with no entity named, `not`, `or` or rules sent to the store | Refused before sending | G3 |
+| Listing entities by type | By entity number only | G2 |
+| Uniqueness | Declared, not enforced | G4 |
+| History of a heavily saved entity | 4.4 s cold, 225 ms warm at 1 billion (recorded) | G8 |
+| Removal on request | Refused: no protected values, and a declaration is refused on a populated scope | G9 |
+| Saves wider than three replacing facts | Taken by the general writer | G10 |
+
+[EXAMPLES.md](EXAMPLES.md) holds the recorded examples. `demo/console/examples.json` is the same set in JSON for the Assistant page. The proving run on the 1 billion database rewrites both. Until then they come from the first demo, or from the toy rehearsal (`demo/console/examples.json` says which database recorded it).

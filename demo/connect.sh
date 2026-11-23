@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # [DX-DEMO1] On the Mac: open SSH port forwards to the rented machine's two gateways (which listen on its loopback
 # only), check both answer, print the head position and record count, and write the private state file the local
-# MCP server and inspector read (~/.triplex-demo/connection.json, mode 0600).
+# MCP server and the console server read (~/.triplex-demo/connection.json, mode 0600).
 #
 #   demo/connect.sh            server address from $DEMO_SERVER or the private file ~/.triplex-demo/server
 #   demo/connect.sh --toy      the Mac lab VM (after demo/server-up.sh --toy)

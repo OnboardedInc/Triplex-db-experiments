@@ -27,7 +27,7 @@ This page is for the server driver. It needs nothing from the builder. One scrip
 | T+1 | server | `DEMO_ORIGINAL=/mnt/triplex-scale1-held-age/calibrated-post-ladder/cluster DEMO_HANDOFF=/var/tmp/triplex-scale1/age-v01-bulk-c/rung/1000000000/aged-scorecard.json bash demo/prove-console.sh --tools <BUILD> --reset --port 28590` | 8 to 22 min |
 | T+23 | server | `bash demo/server-down.sh --delete-work` (removes the 177 GB copy; the original is untouched) | 1 to 2 min |
 | T+25 | Mac | Copy `<out>.tar.zst` and its `.sha256` into `~/Claude/Projects/triplex-db-2/evidence/DX-CON1/`. The script prints the `<out>` path on its `results:` line; the default is `/var/tmp/triplex-console-proof/<UTC time>`. | 1 min |
-| T+26 | Mac | In a checkout of the branch: copy `console-proof.md` to `demo/CONSOLE-PROOF-1B.md`, then `git add demo/CONSOLE-PROOF-1B.md && git -c user.name='Triplex Lab' -c user.email=noreply@anthropic.com commit -m 'Console proving run on the 1 billion database' && git push origin exp/DX-CON1-functions` | seconds |
+| T+26 | Mac | In a checkout of the branch, copy three files from the archive: `console-proof.md` to `demo/CONSOLE-PROOF-1B.md`, `examples.json` to `demo/console/examples.json`, and `EXAMPLES.md` to `demo/EXAMPLES.md`. Then `git add demo/CONSOLE-PROOF-1B.md demo/console/examples.json demo/EXAMPLES.md && git -c user.name='Triplex Lab' -c user.email=noreply@anthropic.com commit -m 'Console proving run on the 1 billion database: results and recorded examples' && git push origin exp/DX-CON1-functions` | seconds |
 
 **Options.**
 
@@ -94,8 +94,9 @@ These were written before the run, as the project's rule requires. Recorded valu
   - every check, and the guard's counters;
   - every call with its store time, console time, wall time and number of requests.
 - **`console-proof.md`** holds the same as tables.
+- **`examples.json` and `EXAMPLES.md`** hold the first answer of every tool, trimmed, with the date. These are the recorded examples the Assistant page shows.
 - **Each row gets one of these verdicts:** `within prediction`, `faster than predicted`, `slower than predicted, under the action line`, or `ACTION: <the design's If it fails text>`. The no-entity-ID row gets `holds` or `DEFECT`.
 
 ## Rehearsal on the Mac
 
-The same `prove.ts` ran on the toy on 2026-11-23 and passed 34 of 34 checks in 5 s, followed by the catalogue gate (68 of 68). It ran from a simulated `prove-console.sh` with `--no-bring-up`, against a ready file with the forwarded ports. Its times are diagnostic only.
+The same `prove.ts` ran on the toy on 2026-11-23 and passed every check (37 of 37 at the last rehearsal, 7 s), followed by the catalogue gate (68 of 68). It ran from a simulated `prove-console.sh` with `--no-bring-up`, against a ready file with the forwarded ports. Its times are diagnostic only.

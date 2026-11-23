@@ -28,6 +28,7 @@ const page = spawn(process.execPath, [join(import.meta.dirname, "page.ts"), Stri
   env: { ...process.env, TRIPLEX_DEMO_STATE: stateFile(), TRIPLEX_CONSOLE_URL: "http://127.0.0.1:28580" },
   stdio: ["ignore", "pipe", "inherit"],
 });
+process.on("exit", () => page.kill());
 await new Promise<void>((ok, fail) => {
   page.stdout!.on("data", (b: Buffer) => b.toString().includes("Triplex Console server") && ok());
   page.on("exit", (c) => fail(new Error("page server exited " + c)));

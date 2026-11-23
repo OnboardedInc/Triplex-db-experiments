@@ -70,14 +70,46 @@ const def = Runtime.define({
 });
 const triplex = def.layer({ scope: demo.scope, capabilities: Capabilities.none });
 const stock = ManagedRuntime.make(Layer.merge(triplex, ConfigStore.layer.pipe(Layer.provide(triplex))));
-const stockLoad = async () => digest(await stock.runPromise(Effect.flatMap(ConfigStore.ConfigStore, (s) => s.load())));
+/**
+ * The stock store restricted to what the console can reach: the releases test and live point to and their parents,
+ * their revisions and revision parents, the objects under their roots and revisions, those objects' types, and the
+ * two refs. A release committed under any other ref (a stray G12 run did that once on the toy) is not reachable, by
+ * the console's rule that every commit moves test.
+ */
+function reachable(s: Store): Store {
+  const snaps = new Map(s.snapshots.map((x) => [x.id, x]));
+  const keepSnaps = new Set<string>();
+  for (const r of ["test", "live"]) for (let id = s.refs.get(r) as string | null | undefined; id && !keepSnaps.has(id); id = snaps.get(id as never)?.parentId) keepSnaps.add(id);
+  const revs = new Map(s.revisions.map((r) => [r.id, r]));
+  const keepRevs = new Set<string>();
+  for (const id of keepSnaps) for (let r = snaps.get(id as never)!.revisionIds as readonly string[], i = 0; i < r.length; i++) for (let x: string | null | undefined = r[i]; x && !keepRevs.has(x); x = revs.get(x as never)?.parentId) keepRevs.add(x);
+  const keepObjects = new Set<string>();
+  const visit = (cid: string) => {
+    if (keepObjects.has(cid)) return;
+    keepObjects.add(cid);
+    for (const c of ((s.objects.get(cid as never)?.body as { children?: { cid: string }[] } | undefined)?.children ?? [])) visit(c.cid);
+  };
+  for (const id of keepSnaps) visit(snaps.get(id as never)!.rootCid);
+  for (const id of keepRevs) visit(revs.get(id as never)!.cid);
+  const objects = new Map([...s.objects].filter(([cid]) => keepObjects.has(cid)));
+  const types = new Set([...objects.values()].flatMap((o) => o.validUnder as readonly string[]));
+  return {
+    ...s,
+    objects,
+    schemas: new Map([...s.schemas].filter(([cid]) => types.has(cid))),
+    revisions: s.revisions.filter((r) => keepRevs.has(r.id)),
+    snapshots: s.snapshots.filter((x) => keepSnaps.has(x.id)),
+    refs: new Map([...s.refs].filter(([r]) => r === "test" || r === "live")),
+  };
+}
+const stockLoad = async () => digest(reachable(await stock.runPromise(Effect.flatMap(ConfigStore.ConfigStore, (s) => s.load()))));
 
 // 1. bounded equals stock
 const c1 = fresh();
 const before = { ...guardCounts };
 const bounded = await c1.load();
 const reference = await stockLoad();
-check("bounded load equals stock load (objects, types, revisions, releases, refs)", JSON.stringify(digest(bounded.store)) === JSON.stringify(reference),
+check("bounded load equals stock load, restricted to what test and live reach (objects, types, revisions, releases, refs)", JSON.stringify(digest(bounded.store)) === JSON.stringify(reference),
   `${reference.objects.length} objects, ${reference.schemas.length} types, ${reference.revisions.length} revisions, ${reference.snapshots.length} releases; walk ${bounded.discovery.reads} batched reads`);
 check("the stock loader's five by-type reads were rewritten to IDs, none refused", guardCounts.configRewrites - before.configRewrites === 5 && guardCounts.refused === before.refused,
   `rewrites ${guardCounts.configRewrites - before.configRewrites}, refused ${guardCounts.refused - before.refused}`);
@@ -103,40 +135,38 @@ check("two processes committing in turn all succeed, parents chained", !!b && b.
 const afterCommits = await fresh().load();
 check("after the commits, bounded load still equals stock load", JSON.stringify(digest(afterCommits.store)) === JSON.stringify(await stockLoad()));
 
-// 4. the tools, as the assistant calls them
+// 4. the tools, as the assistant calls them. GateCheck flips whether its one attribute is required on every run, so
+// each run commits a real change without adding a new type to the toy each time.
 const call = (name: string, input: object) => runTool(name, input, "proof", demo) as Promise<Record<string, any>>;
 const refusedBefore = guardCounts.refused;
-const review = await call("define_entity_type", {
-  name: "Review",
-  attributes: [
-    { key: ":review/outcome", valueType: "enumOf", enumValues: ["approved", "rejected", "pending"], required: true },
-    { key: ":review/note", valueType: "text" },
-    { key: ":review/of", valueType: "ref", refTarget: "Subject", required: true },
-    { key: ":review/decided-on", valueType: "date" },
-  ],
-  label: `reviews-${stamp}`,
-});
-check("define_entity_type commits a release and moves test and live", review["refs"].test.id === review["release"].id && review["refs"].live.id === review["release"].id,
-  `release ${review["release"].label}, added ${review["objects"].added.length}, position ${review["receipt"].position}`);
+const prior = await call("describe_entity_type", { name: "GateCheck" }).catch(() => undefined);
+const wasRequired = prior?.["type"]?.attributes?.[0]?.required === true;
+const defined = await call("define_entity_type", { name: "GateCheck", attributes: [{ key: ":gate-check/note", valueType: "text", required: !wasRequired }], label: `gate-check-${stamp}` });
+check("define_entity_type commits a release and moves test and live", typeof defined["release"]?.id === "string" && defined["refs"].test.id === defined["release"].id && defined["refs"].live.id === defined["release"].id,
+  `release ${defined["release"]?.label}, objects ${JSON.stringify(defined["objects"])}, position ${defined["receipt"]?.position}`);
 const types = await call("list_entity_types", {});
-check("list_entity_types lists Subject and Review from live", JSON.stringify(types["types"].map((t: { name: string }) => t.name)) === '["Subject","Review"]');
-const described = await call("describe_entity_type", { name: "Review" });
-const t = described["type"];
-check("describe_entity_type: four attributes, the enum, the reference target, generated constraints",
-  t.attributes.length === 4 && t.attributes.find((x: any) => x.key === ":review/outcome").enumValues.join() === "approved,pending,rejected" &&
-  t.attributes.find((x: any) => x.key === ":review/of").refTarget === "Subject" && t.constraints.some((x: any) => x.kind === "ReferenceTarget" && /Not checked/.test(x.status)),
-  `${t.constraints.length} constraints`);
-const releases = await call("list_releases", { limit: 5, compare: [review["basedOn"].id, review["release"].id] });
-check("list_releases compares two releases at object level", releases["difference"].some((d: any) => d.change === "added" && d.key === "Review"),
+const names = types["types"].map((t: { name: string }) => t.name);
+check("list_entity_types lists Subject first and GateCheck, from live", names[0] === "Subject" && names.includes("GateCheck"), names.join(", "));
+const described = await call("describe_entity_type", { name: "GateCheck" });
+check("describe_entity_type shows the new requiredness and the generated constraints", described["type"].attributes[0].required === !wasRequired &&
+  described["type"].constraints.some((x: any) => x.kind === "Cardinality") && described["type"].constraints.some((x: any) => x.kind === "Required") === !wasRequired,
+  `${described["type"].constraints.length} constraints, ${described["type"].revisions.length} revisions`);
+const releases = await call("list_releases", { limit: 5, compare: [defined["basedOn"].id, defined["release"].id] });
+check("list_releases compares two releases at object level", releases["difference"].some((d: any) => d.key === "GateCheck"),
   JSON.stringify(releases["difference"].map((d: any) => `${d.change} ${d.kind} ${d.key}`)));
-const back = await call("move_live", { snapshotId: review["basedOn"].id });
-const typesBack = await call("list_entity_types", {});
-check("move_live back: Review leaves the type list", !typesBack["types"].some((x: any) => x.name === "Review") && back["after"].id === review["basedOn"].id);
-const forward = await call("move_live", { snapshotId: review["release"].id });
-check("move_live forward again", forward["after"].id === review["release"].id);
+const back = await call("move_live", { snapshotId: defined["basedOn"].id });
+const describedBack: Record<string, any> = await call("describe_entity_type", { name: "GateCheck" }).catch((e) => ({ error: e }));
+check("move_live back: live's GateCheck is the earlier definition again", back["after"].id === defined["basedOn"].id &&
+  (prior ? describedBack["type"]?.attributes[0].required === wasRequired : describedBack["error"] !== undefined));
+const forward = await call("move_live", { snapshotId: defined["release"].id });
+check("move_live forward again", forward["after"].id === defined["release"].id);
 let refusedRepeat = "";
-try { await call("move_live", { snapshotId: review["release"].id }); } catch (e) { refusedRepeat = (e as { code?: string }).code ?? ""; }
+try { await call("move_live", { snapshotId: defined["release"].id }); } catch (e) { refusedRepeat = (e as { code?: string }).code ?? ""; }
 check("move_live to the release live already points to is refused", refusedRepeat === "AlreadyLive");
+const hasReview = names.includes("Review");
+if (!hasReview) await call("define_entity_type", { name: "Review", attributes: [
+  { key: ":review/outcome", valueType: "enumOf", enumValues: ["approved", "rejected", "pending"], required: true },
+  { key: ":review/note", valueType: "text" }, { key: ":review/of", valueType: "ref", refTarget: "Subject", required: true }, { key: ":review/decided-on", valueType: "date" }], label: "reviews-1" });
 let typeFixed = "";
 try { await call("define_entity_type", { name: "Other", attributes: [{ key: ":review/note", valueType: "integer" }] }); } catch (e) { typeFixed = (e as { code?: string }).code ?? ""; }
 check("an existing attribute keeps its value type", typeFixed === "AttributeTypeFixed");

@@ -20,7 +20,6 @@ if (!Number.isSafeInteger(port) || port < 1024 || [15442, 17019, 5432, 6379, 422
 process.env["TRIPLEX_CONSOLE_URL"] ??= `http://127.0.0.1:${port}`;
 
 const dist = normalize(join(import.meta.dirname, "../../console/dist"));
-const legacyPage = join(import.meta.dirname, "../../../demo/inspector.html");
 const loopback = new Set(["127.0.0.1", "localhost", "[::1]"]);
 // The console's own origin, plus the Vite dev server (28581), which proxies /api here.
 const devPorts = (process.env["TRIPLEX_CONSOLE_DEV_PORTS"] ?? "28581").split(",").map((p) => p.trim()).filter(Boolean);
@@ -96,11 +95,6 @@ function serveStatic(req: IncomingMessage, res: ServerResponse) {
       "cache-control": chosen.includes("/assets/") ? "public, max-age=31536000, immutable" : "no-store",
     });
     res.end(readFileSync(chosen));
-    return;
-  }
-  if (path === "/inspector.html" && existsSync(legacyPage)) {
-    res.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
-    res.end(readFileSync(legacyPage));
     return;
   }
   res.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });

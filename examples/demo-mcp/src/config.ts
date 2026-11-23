@@ -72,6 +72,18 @@ export class Config {
     void this.rt.dispose();
   }
 
+  /**
+   * One configuration operation at a time per process. Why: a discovery fills the shared ID cache level by level, and a
+   * concurrent load could otherwise run with a snapshot whose objects are not yet in the bound (seen on the toy as
+   * CorruptConfigStoreError "snapshot references a missing node" under concurrent creates). Rejected: a per-call cache.
+   */
+  private queue: Promise<unknown> = Promise.resolve();
+  private exclusive<T>(work: () => Promise<T>): Promise<T> {
+    const run = this.queue.then(work, work);
+    this.queue = run.catch(() => undefined);
+    return run;
+  }
+
   run<A, E>(effect: Effect.Effect<A, E, Triples | ConfigStore.ConfigStore>) {
     return this.rt.runPromise(effect, { scheduler: traceScheduler(new Scheduler.MixedScheduler()) });
   }
@@ -82,7 +94,10 @@ export class Config {
   }
 
   /** The refs' targets, then (only when one moved) the walk. Every read names its entity IDs. */
-  async discover(force = false): Promise<Discovery> {
+  discover(force = false): Promise<Discovery> {
+    return this.exclusive(() => this.discoverNow(force));
+  }
+  private async discoverNow(force = false): Promise<Discovery> {
     const refRows = await this.read(REFS.map((r) => id.ref(r)));
     const refs: Discovery["refs"] = {};
     for (const r of REFS) {
@@ -163,19 +178,28 @@ export class Config {
   }
 
   /** Triplex's stock load(), its five by-type reads bounded to the discovered IDs. */
-  async load(): Promise<{ store: Store; discovery: Discovery }> {
-    const discovery = await this.discover();
-    const store = await this.run(Effect.flatMap(ConfigStore.ConfigStore, (s) => s.load()));
-    return { store, discovery };
+  load(): Promise<{ store: Store; discovery: Discovery }> {
+    return this.exclusive(async () => {
+      const discovery = await this.discoverNow();
+      const store = await this.run(Effect.flatMap(ConfigStore.ConfigStore, (s) => s.load()));
+      return { store, discovery };
+    });
   }
 
   /** Record a release with Triplex's stock commit; it always moves `test`. Retries once after another process's commit. */
-  async commit(label: string, objects: readonly ConfigNode.ConfigNode[]) {
+  commit(label: string, objects: readonly ConfigNode.ConfigNode[], basedOn?: string | null) {
+    return this.exclusive(() => this.commitNow(label, objects, basedOn));
+  }
+  private async commitNow(label: string, objects: readonly ConfigNode.ConfigNode[], basedOn?: string | null) {
     for (let attempt = 0; ; attempt++) {
-      await this.discover(attempt > 0);
+      const d = await this.discoverNow(attempt > 0);
+      // The object set was built from the release test pointed to; if another process committed since, that set would
+      // drop its objects, so the caller rebuilds instead.
+      if (basedOn !== undefined && (d.refs.test ?? null) !== (basedOn === null ? null : id.snapshot(basedOn)))
+        throw new DemoError("ConfigurationMoved", "Another release was committed while this one was prepared. Read the types again and retry.");
       try {
         const result = await this.run(Effect.flatMap(ConfigStore.ConfigStore, (s) => s.commit({ label, objects, ref: "test" })));
-        await this.discover();
+        await this.discoverNow();
         return result;
       } catch (error) {
         const tag = tagOf(error);
@@ -186,12 +210,15 @@ export class Config {
   }
 
   /** Move `live` (compare-and-retract on the ref fact, Triplex's setRef). */
-  async moveLive(snapshotId: string) {
+  moveLive(snapshotId: string) {
+    return this.exclusive(() => this.moveLiveNow(snapshotId));
+  }
+  private async moveLiveNow(snapshotId: string) {
     for (let attempt = 0; ; attempt++) {
-      await this.discover(attempt > 0);
+      await this.discoverNow(attempt > 0);
       try {
         const snapshot = await this.run(Effect.flatMap(ConfigStore.ConfigStore, (s) => s.setRef("live", snapshotId as never)));
-        await this.discover();
+        await this.discoverNow();
         // setRef returns the snapshot only; the receipt is read back from the ref's own target fact.
         const row = one(await this.read([id.ref("live")]), id.ref("live"), S.attribute.target)!;
         return { snapshot, receipt: { txId: row.tx_id, position: row.recorded_position, recordedAt: new Date(row.recorded_at).toISOString(), actor: "triplex/config-store" } };

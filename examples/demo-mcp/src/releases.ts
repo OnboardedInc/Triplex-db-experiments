@@ -162,7 +162,22 @@ export function defineEntityType(
   input: { name: string; attributes: AttributeInput[]; label?: string | undefined; moveLive?: boolean | undefined },
 ) {
   demo.requireWorkingCopy();
-  return demo.measure(async (): Promise<Record<string, unknown> & { position: number }> => {
+  return demo.measure(async () => {
+    // Built on the release test points to; rebuilt once if another process commits in between.
+    try {
+      return await defineOnce(demo, input);
+    } catch (error) {
+      if ((error as { code?: string }).code !== "ConfigurationMoved") throw error;
+      return await defineOnce(demo, input);
+    }
+  });
+}
+
+async function defineOnce(
+  demo: Demo,
+  input: { name: string; attributes: AttributeInput[]; label?: string | undefined; moveLive?: boolean | undefined },
+): Promise<Record<string, unknown> & { position: number }> {
+  {
     const { name } = input;
     if (!/^[A-Z][A-Za-z0-9]*$/.test(name) || name.length > 64) throw new DemoError("InvalidInput", "An entity type name is PascalCase, such as Review or VehicleCheck");
     if (name === "Subject") throw new DemoError("Reserved", "Subject is the starter type; its definition follows the loader's data");
@@ -170,7 +185,7 @@ export function defineEntityType(
     if (!input.attributes.length || input.attributes.length > 40) throw new DemoError("InvalidInput", "A type has 1 to 40 attributes");
     const config = configOf(demo);
     const { store } = await config.load();
-    const base = store.snapshots[store.snapshots.length - 1];
+    const base = snapshotFor(store, "test") ?? store.snapshots[store.snapshots.length - 1];
     const live = snapshotFor(store, "live");
     const existing = topObjects(base);
     const known = new Set([...typeNamesOf(base), name]);
@@ -197,7 +212,7 @@ export function defineEntityType(
     const objects = [...existing.filter((n) => !replacing.has(slot(n))), ...subject, ...nodes];
     const label = input.label?.trim() || `${kebab(name)}-${(base?.seq ?? 0) + 1}`;
     if (label.length > 80) throw new DemoError("InvalidInput", "A release label has at most 80 characters");
-    const committed = await config.commit(label, objects);
+    const committed = await config.commit(label, objects, snapshotFor(store, "test")?.id ?? null);
     const after = committed.store;
     const changes = base ? InMemoryConfigStore.changesBetween(after, base, committed.snapshot) : [];
     const objectsSummary = base
@@ -223,7 +238,7 @@ export function defineEntityType(
       note: "One transaction recorded the release and moved test. " + (liveReceipt ? "A second moved live to it." : "live did not move."),
       position: liveReceipt?.position ?? receipt.position,
     };
-  });
+  }
 }
 
 export function listReleases(demo: Demo, limit = 20, compare?: [string, string]) {
