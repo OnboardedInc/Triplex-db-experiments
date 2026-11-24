@@ -5087,3 +5087,23 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Fix builder** (`OPUS-CARD1-prodS-assemble-fix.md`, branch `exp/DX-CARD1-prodS-assemble`, due 20:45): find the row and cause from the archive, fix by a stated rule (never a silent drop), assemble from the archive on the Mac if possible, else a re-assembly command for the driver.
 - **Console proving run** (`ebe31628f`) started 00:17 UTC on server 2; the stack stays up afterwards for the browser pass from the Mac.
 - **Running (3):** two drivers, the card assembly builder.
+
+### 2026-11-23 19:32 local: console on the 1 billion database: server proof 13 of 16, browser pass from the Mac six of eight steps; journal fails with a read error (4 agents running)
+
+- **Server proof** (server 2, `ebe31628f`; `origin/exp/DX-SCALE1-deep-accounts` `e5017a06c`; archive `evidence/DX-CON1/20261124T001745Z.tar.zst`): bring-up 171 s, ready line head 28,309,866, records 1,000,251,169. 13 PASS, 3 FAIL, 474 s. All three failures follow from one fault already fixed on the console branch (`333db33db`): the first release on an empty store could not reference `Subject` (`UnknownType: :review/of`), so the five creates and their read back did not run. No row for the entity journal (G13) or the guard count.
+
+  | Row of the design's table 10.4 | Predicted | Measured at 1 billion |
+  | --- | --- | --- |
+  | Read at position 87,002, options on | 1 to 3 ms | 1.28 ms p50 of 20 (first 14 ms, max 4.85) |
+  | Commit a release with one new type (warm, `Vehicle`) | 30 to 120 ms | 343.58 ms for the commit and live-move transactions; whole tool 395.91 ms over 27 requests |
+  | Configuration check | 1 to 5 ms | 0.4 ms p50 (max 0.64) |
+  | First full configuration walk | 60 to 300 ms | 8.63 ms store, 25.24 ms wall, 6 batched reads |
+  | A question on one subject | under 10 ms in the console | 14.98 ms console p50; pull 0.96 ms store |
+  | Store-source question, ordinary entity | 5 to 40 ms | 12.88 ms p50 (first 155.67), 4 requests |
+  | Store-source question, heavily saved entity | 0.2 to 5 s | 3,929.52 ms first, then 426.71, 387.34, 254.44 |
+  | Create an entity | 20 to 80 ms | not run |
+
+- **Two predictions missed:** the release commit (343.58 ms against 30 to 120) and the console's evaluation of a one-subject question (14.98 ms against under 10).
+- **Browser pass from the Mac through the tunnel** (`exp/DX-CON1-console` `2fa24d78a`, tunnel round trip 68.6 ms; screenshots in the private `demo-design/screenshots-1b/`): steps 1 to 6 passed: subject 50000 of account-003 read at 21.97 ms then 5.25 ms store; question 1.60 ms store and 40.89 ms console (121 facts, 30 entities); sealed head 25.35 ms; position 87,002 2.69 ms; whole-database question refused; type `Inspection` committed and re-committed (release at position 28,309,877); entity created; correction; Both time axes approved / approved / pending at 1.06 / 0.38 / 13.14 ms store.
+- **Step 7 failed:** every `change_feed` call on this database returns `ReadError: Datomic read failed` (HTTP 400); the Journal screen stays on its loading rows. Builder B resumed to fix it through the live tunnel (first suspects: the loader position-row compatibility flag missing from the connection file; reads starting below the sealed head). Server 2 holds the stack until 01:15 UTC.
+- **Card assembly builder** still working. **Running (4):** two drivers, console builder B, the card builder.
