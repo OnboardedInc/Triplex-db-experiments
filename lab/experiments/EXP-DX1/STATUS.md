@@ -5915,3 +5915,24 @@ Source: connection builder, branch `exp/DX-XQ10-questions-connected` `a1327de00`
 - Console (not switched for Sam): a route badge, a route choice, "Compare both routes" side by side with costs, an "Indexed attributes" card; agent tool `indexed_attributes`.
 - Server list for questions across subjects: shortest session (setup, backfill, save pair, agreement at 1 billion) 4.2 to 7.7 hours, USD 4.61 to 8.41; whole list 6.1 to 11.0 hours.
 - Not traced at its report, builder resumed on these: why the exactness gate's question counts changed (2,718 against 2,448; 64 against 77); 28 entity reads on index-only first pages where the index branch counted 0; one fairness failure in the question reader (1 arm of 8); why the hint fix hurts.
+
+## 2026-11-24 17:34 EST: a Publish now commits beside saves with nobody paused (toy)
+
+Source: Publish builder, branch `exp/DX-ACT8-publish-beside-saves` `2e7ae66c4` (based on the many-accounts branch with the release-limits branch merged; not merged onto the one branch), page `lab/experiments/EXP-DX1/actv-lazy/PUBLISH-BESIDE-SAVES.md`. Options default off. Every counted run started the image built from this branch, by ID.
+
+- **Meaning.** Before: a Publish read the whole database at position p and had to land at p + 1. Now: it reads its own account's state at p and lands at q > p with other commits between. It is refused only if its own account's state changed in between (its notice tail, its calendar, the entities the record writes), or a removal ticket fails. The release takes effect at q; settlement works at q - 1. No answer changes; only stored identity fields carry p. A negative control (settling at p instead) was caught: one subject got 58 stored changes where the oracle has 40.
+- **A same-account save racing a Publish** is never refused or delayed: it lands wholly before or wholly after, and its receipt position says which release applies. 126 racing saves: 110 before, 16 after, none refused, 126 pinned reads exact.
+- Gate: 16 of 16 Publishes landed at the first try with 1 to 158 commits between read and record; 18,628 saves, none refused; every stored change, notice, ledger and pinned read equal to the oracle (544 positions, 4,352 reads; 6,602 notices in order). Old rule under the same load: 2 of 2 and 4 of 4 refused.
+- Adversarial: 20 of 20 saves of a subject between read and commit for 10 kinds of fact the rules read, each settled exact; an enrolment of two other accounts inside the window; kills after the read, inside the transaction and after the acknowledgement: exactly one record each time; a removal on request in the window: the Publish is refused and the republish lands at its first try.
+- Many accounts: 50 of 50 Publishes offered at the same moment landed at one try; 10 of 10 late enrolments; 29,820 changes and 10,605 notices settled exact.
+- Options off: every count equals the published ones.
+- Cost per Publish: 32 bytes more in the record, same 35 datoms, about 6 µs more writer estimate, one more HTTP call.
+- **Found:** one removal on request anywhere stops every account's recorded notices (settlement refuses with "Recorded notices belong to an earlier removal sequence", and reading the recorded notices of an uninvolved account is refused too). From the database-wide removal sequence; not fixed here.
+- **Image audit by this builder:** the harness's newest-build rule had put all 15 of its earlier runs on five foreign images; none is counted. It built a private image and a default-off option `DX_DATOMIC_IMAGE_RECEIPT` that starts the image by ID and refuses if the checkout's sources differ.
+- What earlier paused Publish results still support: exactness, record sizes, writer cost, the read and settlement paths. Not supported: that a Publish lands while saves run, any Publish timing at 23.5 or 39.4 saves/s, neighbours' save p99 in Publish windows.
+- Server run written: 2.2 to 3.3 h.
+- Not verified: anything at full size; a removal while settlement frames are in flight; deadlines and schedules beside saves (they keep the head rule).
+
+**Consequence for today's results:** any stack-based gate run through the shared harness before a builder pinned its image may have run on another builder's image. Counted as verified: results whose builders checked image IDs (the removal builder, the real-mix builder, the connection builder, this builder, the import builder's closing runs) and results from in-process or paired comparisons. Everything else is to be rerun with a pinned image on the merged head.
+
+**Started:** Publish, enrolment, settlement and recorded notices carrying their account in the removal check (task file `OPUS-ACT9-account-scoped-tickets.md`).
