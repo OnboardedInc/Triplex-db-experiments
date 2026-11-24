@@ -3,6 +3,7 @@ import { Archive } from "./archive.ts";
 import { RecordedNotices } from "./recorded.ts";
 import type { JoinedAccount } from "./account.ts";
 import type { BulkQueue } from "./bulk.ts";
+import { frameMode, type FrameMode } from "./frames.ts";
 
 export class Settlement {
   readonly archive: Archive;
@@ -15,10 +16,15 @@ export class Settlement {
     this.archive = values;
     this.recorder = new RecordedNotices(notices);
   }
-  static async open(a: JoinedAccount, queue: BulkQueue, automatic = false) {
-    const values = await Archive.open(a, queue);
+  static async open(
+    a: JoinedAccount,
+    queue: BulkQueue,
+    automatic = false,
+    frames: FrameMode = frameMode(),
+  ) {
+    const values = await Archive.open(a, queue, "values", frames);
     try {
-      const worker = new Settlement(values, await Archive.open(a, queue, "notices"));
+      const worker = new Settlement(values, await Archive.open(a, queue, "notices", frames));
       if (automatic) {
         worker.unsubscribe = a.onNotice(() => worker.wake());
         worker.wake();

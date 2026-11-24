@@ -156,8 +156,11 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // [DX-ACT3] Why: the large-release builder runs the held Publish campaign on the same toy stack, in its own slot.
   const heldPublish = holder === "DX-ACT3" && diagnostic && mode === "load-fair" && combined === undefined &&
     process.env.DX_ACT3_HELD === "1";
+  // [DX-ACT4] Why: the settlement-frames builder runs its toy gate (and the held Publish campaign) on the same stack.
+  const settleFrames = holder === "DX-ACT4" && diagnostic && mode === "load-fair" && combined === undefined &&
+    (process.env.DX_ACT4_GATE === "1" || process.env.DX_ACT3_HELD === "1");
   assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours ||
-    heldPublish);
+    heldPublish || settleFrames);
   assert(combined === undefined || ownedCombination);
   if (mode === "load-fair") {
     const { cleanSource } = await import("../v01/source.ts");

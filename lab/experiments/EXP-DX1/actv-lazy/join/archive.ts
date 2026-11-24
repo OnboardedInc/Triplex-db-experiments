@@ -6,7 +6,7 @@ import {
 import assert from "node:assert/strict";
 import { W0, canonical } from "../../../../bench/lib/w0-world.ts";
 import { memberPage, width } from "../../notify1/census.ts";
-import { Documents, hash, pack, unpack, type Op } from "../../notify1/store.ts";
+import { Documents, hash, pack, unpack, type Op, type Row } from "../../notify1/store.ts";
 import type { Store } from "../store.ts";
 import { Conflict, openStore } from "../store.ts";
 import { worldsAt, winner } from "../decision.ts";
@@ -14,7 +14,8 @@ import { LazyReader } from "../read.ts";
 import { JoinedAccount, type Marker } from "./account.ts";
 import { address } from "./index.ts";
 import { evaluateRows } from "./material.ts";
-import { BulkQueue, bulkClaim, bulkWireLimit, bulkUs, type BulkClass } from "./bulk.ts";
+import { BulkQueue, bulkClaim, type BulkClass } from "./bulk.ts";
+import { fillFrame, frameEstimate, frameMode, windowOf, type Candidate, type FrameMode, type Piece } from "./frames.ts";
 
 const step = 16;
 assert(width % step === 0);
@@ -22,13 +23,30 @@ const progressKey = (sequence: number) => "values:" + sequence;
 const pageKey = (sequence: number, from: number) => "answer:" + sequence + ":" + from;
 type Answer = { subject: string; changes: [string, string | null][]; json: string };
 type Page = { identity: string; start: number; through: number; previous: string; bytes: string };
-type Progress = {
+export type Progress = {
   identity: string;
   through: number;
   status: "pending" | "stored" | "superseded";
   hash: string;
   changes: number;
+} & Partial<ByteFrames>;
+// [DX-ACT4] Byte-sized frames (TX2_SETTLE_FRAMES=bytes): the release's progress names its framing, so a restart resumes a
+// release in the framing it started with; pages are numbered by frame, and a frame ends at subject `through`, unit
+// `part` (part > 0 only after a split subject).
+type ByteFrames = { frames: "bytes"; frame: number; part: number };
+type FramePage = {
+  identity: string;
+  frame: number;
+  start: number;
+  part: number;
+  through: number;
+  tail: number;
+  previous: string;
+  bytes: string;
 };
+/** A changed subject's values without its full answer; `part` is the offset of the first change when split. */
+export type Changes = { subject: string; changes: [string, string | null][]; part?: number };
+const framePageKey = (sequence: number, frame: number) => "answer:" + sequence + ":f" + frame;
 export const identityOf = (scope: string, marker: Marker, position: number) =>
   hash([
     scope,
@@ -43,21 +61,93 @@ export const identityOf = (scope: string, marker: Marker, position: number) =>
     marker.compiler,
   ]);
 
+/**
+ * [DX-ACT4] The next byte-sized values frame from the release's progress `current` and the candidates read ahead (in
+ * census order from `current.through`): the ops exactly as written and the next progress. Pure, so the database-free
+ * check (frames-check.ts) prices the frames the writer will write.
+ */
+export function valuesFrame(
+  db: Documents,
+  key: string,
+  prior: Row<Progress> | undefined,
+  current: Progress,
+  pageKey: string,
+  candidates: Candidate<[string, string | null]>[],
+  count: number,
+) {
+  const start = current.through,
+    part = current.part!,
+    frame = current.frame! + 1,
+    identity = current.identity;
+  if (part) assert(part < candidates[0]!.units.length, "A split subject's changes moved");
+  const build = (pieces: readonly Piece[]) => {
+    const last = pieces.at(-1)!,
+      whole = last.to === candidates[last.index]!.units.length;
+    const through = start + last.index + Number(whole),
+      tail = whole ? 0 : last.to;
+    const entries: Changes[] = pieces
+      .filter((p) => p.to > p.from)
+      .map((p) => ({
+        subject: candidates[p.index]!.subject,
+        changes: candidates[p.index]!.units.slice(p.from, p.to),
+        ...(p.from ? { part: p.from } : {}),
+      }));
+    const page: FramePage = { identity, frame, start, part, through, tail, previous: current.hash, bytes: pack(entries) };
+    const next: Progress = {
+      identity,
+      through,
+      status: through === count && !tail ? "stored" : "pending",
+      hash: hash(page),
+      changes: current.changes + entries.reduce((n, row) => n + row.changes.length, 0),
+      frames: "bytes",
+      frame,
+      part: tail,
+    };
+    return { next, ops: [...db.change(key, prior, next), db.put(pageKey, page)], entries };
+  };
+  const filled = fillFrame(candidates, part, (pieces) => frameEstimate(build(pieces).ops).fits);
+  return { ...build(filled.pieces), filled };
+}
+export const valuesProgress = (identity: string): Progress => ({
+  identity,
+  through: 0,
+  status: "pending",
+  hash: identity,
+  changes: 0,
+  frames: "bytes",
+  frame: 0,
+  part: 0,
+});
+export { framePageKey, progressKey };
+
 export class Archive {
   readonly db: Documents;
   readonly source: JoinedAccount;
   readonly store: Store;
   readonly queue: BulkQueue;
-  private constructor(source: JoinedAccount, store: Store, queue: BulkQueue, channel: string) {
+  /** The framing new work starts with (a release already started keeps its own). */
+  readonly frames: FrameMode;
+  /** The frames this process admitted: count and largest rows, wire estimate and estimated service, and the sum of
+   * estimated service (bounded evidence, not one entry per frame). */
+  readonly admitted = { frames: 0, rowsMax: 0, wireMax: 0, usMax: 0, usSum: 0 };
+  private constructor(
+    source: JoinedAccount,
+    store: Store,
+    queue: BulkQueue,
+    channel: string,
+    frames: FrameMode,
+  ) {
     this.source = source;
     this.store = store;
     this.queue = queue;
+    this.frames = frames;
     this.db = new Documents(store.comp, source.s.held ? "settlement-" + channel : "settlement");
   }
   static async open(
     source: JoinedAccount,
     queue: BulkQueue,
     channel: "values" | "notices" = "values",
+    frames: FrameMode = frameMode(),
   ) {
     const s = source.s;
     // [DX-ACT1] Why: the held scorecard includes archive writes and indexes in the same physical database.
@@ -65,7 +155,7 @@ export class Archive {
     const store = s.held
       ? await openStore(s.scope, s.profile, "write", s.held)
       : await openStore("lazy-settlement-" + hash([s.scope, channel]).slice(0, 40));
-    return new Archive(source, store, queue, channel);
+    return new Archive(source, store, queue, channel, frames);
   }
   close() {
     return this.store.close();
@@ -79,11 +169,16 @@ export class Archive {
     authority: Awaited<ReturnType<typeof readErasure>>,
   ) {
     // [DX-ACT1] Why: constrain native preparation and durable turns independently of page count. Rejected: a multi-megabyte atomic frame or assuming a timeout can preempt a durable native transaction.
-    const estimatedWire = 4096 + 3 * Buffer.byteLength(canonical(ops));
-    assert(
-      estimatedWire < bulkWireLimit && bulkUs(ops.length * 5 + 16, estimatedWire) <= 8000,
-      "Bulk batch exceeds W1 service estimate",
-    );
+    const estimate = frameEstimate(ops);
+    assert(estimate.fits, "Bulk batch exceeds W1 service estimate");
+    const n = this.admitted;
+    if (n) {
+      n.frames++;
+      n.rowsMax = Math.max(n.rowsMax, estimate.rows);
+      n.wireMax = Math.max(n.wireMax, estimate.wire);
+      n.usMax = Math.max(n.usMax, estimate.us);
+      n.usSum += estimate.us;
+    }
     if (authority) verifySameErasureAuthority(this.source.s.comp, this.store.comp);
     // [DX-ERASE1] Why: admission can wait after a page was derived, so the same ticket belongs on the destination commit.
     // Rejected: a source read immediately before enqueueing (removal can publish while the batch waits).
@@ -115,13 +210,16 @@ export class Archive {
     const identity = identityOf(s.scope, m, e.at),
       key = progressKey(sequence),
       prior = await this.db.row<Progress>(key, at);
-    const current: Progress = prior?.value ?? {
-      identity,
-      through: 0,
-      status: "pending",
-      hash: identity,
-      changes: 0,
-    };
+    const current: Progress = prior?.value ??
+      (this.frames === "bytes"
+        ? valuesProgress(identity)
+        : {
+            identity,
+            through: 0,
+            status: "pending",
+            hash: identity,
+            changes: 0,
+          });
     assert(current.identity === identity && current.through <= census.count);
     if (current.status !== "pending") return current;
     const latest = await s.controls(sourceAt);
@@ -146,6 +244,7 @@ export class Archive {
     };
     if (displaced) return finish({ ...current, status: "superseded" });
     if (current.through === census.count) return finish({ ...current, status: "stored" });
+    if (current.frames === "bytes") return this.byteFrame(sequence, r, current, prior, at, authority);
     assert(current.through % step === 0);
     const start = current.through,
       page = Math.floor(start / width) * width;
@@ -188,6 +287,60 @@ export class Archive {
       next,
     );
   }
+  // [DX-ACT4] One byte-sized frame of changed values (frames.ts has the rule). Its candidates are the rest of the
+  // current census page, evaluated at the record's cut once per page (kept in `window` for the page's later frames);
+  // it writes the subjects that fit, each as its changes only. A subject whose changes alone exceed the bound is split
+  // by change: its first changes here, the rest in the next frames.
+  private window?: { key: string; changes: Map<string, [string, string | null][]> };
+  private async byteFrame(
+    sequence: number,
+    r: Awaited<ReturnType<JoinedAccount["receipt"]>>,
+    current: Progress,
+    prior: Row<Progress> | undefined,
+    at: number,
+    authority: Awaited<ReturnType<typeof readErasure>>,
+  ) {
+    const a = this.source,
+      s = a.s;
+    const { marker: m, event: e, census } = r;
+    const identity = current.identity,
+      start = current.through,
+      { begin, end } = windowOf(start, census.count, width);
+    const ids = (await memberPage(a.db, census, begin, m.cut)).slice(start - begin, end - begin);
+    assert(ids.length === end - start && ids.length >= 1);
+    const key = canonical([identity, authority?.seq ?? null, begin]);
+    if (this.window?.key !== key) this.window = { key, changes: new Map() };
+    const known = this.window.changes,
+      missing = ids.filter((id) => !known.has(id));
+    if (missing.length) {
+      const basis = { tx: e.at, validTime: m.at };
+      const worlds = await worldsAt(s, s.profile, missing, { tx: m.cut, validTime: m.at });
+      assert.deepEqual(
+        worlds.map((w) => w.subject),
+        missing,
+      );
+      const values = evaluateRows(
+        { worlds, basis },
+        m.old ? W0.compileRelease(m.old) : undefined,
+        W0.compileRelease(m.document),
+        false,
+      );
+      for (const id of missing) known.set(id, []);
+      for (const row of values.rows) known.set(row.subject, row.rows.map(([k, , value]) => [k, value]));
+    }
+    const candidates = ids.map((subject) => ({ subject, units: known.get(subject)!, closing: false }));
+    const { next, ops } = valuesFrame(this.db, progressKey(sequence), prior, current,
+      framePageKey(sequence, current.frame! + 1), candidates, census.count);
+    await this.write(
+      "activation",
+      "settled-values:" + hash([identity, current.through, current.part, next]),
+      ops,
+      at,
+      next,
+      authority,
+    );
+    return next;
+  }
   async runValues(sequence: number, onFrame?: () => Promise<void>) {
     for (;;) {
       try {
@@ -206,6 +359,11 @@ export class Archive {
     const frontier = (await this.db.get<Progress>(progressKey(sequence), at)).value;
     assert(frontier.identity === identity && frontier.through <= census.count);
     assert(frontier.status !== "stored" || frontier.through === census.count);
+    if (frontier.frames === "bytes") {
+      const output = await this.storedFrames(sequence, frontier, identity, at);
+      await recheckErasure(this.source.s.comp, marker.erasureSeq);
+      return { frontier, output, frames: "bytes" as FrameMode };
+    }
     let previous = identity;
     const output: Answer[] = [];
     for (let j = 0; j < frontier.through; j += step * 32) {
@@ -234,11 +392,62 @@ export class Archive {
         frontier.changes === output.reduce((n, row) => n + row.changes.length, 0),
     );
     await recheckErasure(this.source.s.comp, marker.erasureSeq);
-    return { frontier, output };
+    return { frontier, output: output as (Answer | Changes)[], frames: "count" as FrameMode };
+  }
+  // [DX-ACT4] Reads every frame page of a byte-framed release in order and joins split subjects: each page must start
+  // where the previous one ended, chain to its hash, and a piece with `part` must continue the same subject at exactly
+  // the number of changes already joined. Returns each changed subject once, with its changes only.
+  private async storedFrames(sequence: number, frontier: Progress, identity: string, at: number) {
+    let previous = identity,
+      through = 0,
+      tail = 0;
+    const output: Changes[] = [];
+    for (let first = 1; first <= frontier.frame!; first += 32) {
+      const keys = Array.from({ length: Math.min(32, frontier.frame! - first + 1) }, (_, i) =>
+        framePageKey(sequence, first + i),
+      );
+      const rows = await this.db.rows<FramePage>(keys, at);
+      for (const [i, k] of keys.entries()) {
+        const p = rows.get(k)?.value;
+        assert(
+          p?.identity === identity &&
+            p.frame === first + i &&
+            p.start === through &&
+            p.part === tail &&
+            p.previous === previous &&
+            (p.through > p.start || p.tail > p.part),
+          "Frame page out of order",
+        );
+        for (const piece of unpack<Changes[]>(p.bytes)) {
+          assert(piece.changes.length > 0);
+          const last = output.at(-1);
+          if (piece.part) {
+            assert(last?.subject === piece.subject && last.changes.length === piece.part, "Split subject out of order");
+            last.changes.push(...piece.changes);
+          } else {
+            assert(last?.subject !== piece.subject, "Duplicate settled subject");
+            output.push({ subject: piece.subject, changes: [...piece.changes] });
+          }
+        }
+        previous = hash(p);
+        through = p.through;
+        tail = p.tail;
+      }
+    }
+    assert(
+      previous === frontier.hash &&
+        through === frontier.through &&
+        tail === frontier.part &&
+        frontier.changes === output.reduce((n, row) => n + row.changes.length, 0),
+    );
+    return output;
   }
   reader() {
     const source = this.source,
       s = source.s;
+    // [DX-ACT4] Byte-framed pages hold changes only, so a read at the release's own basis is worked out from the record,
+    // as every read before settlement is (the gates check it equals the answer the archive used to return).
+    if (this.frames === "bytes") return new LazyReader(s, s.profile, 2 << 20, undefined, "shared-cut");
     return new LazyReader(
       s,
       s.profile,
