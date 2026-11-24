@@ -8,7 +8,7 @@ import { W0, canonical } from "../../../../bench/lib/w0-world.ts";
 import { memberPage, width } from "../../notify1/census.ts";
 import { Documents, hash, pack, unpack, type Op, type Row } from "../../notify1/store.ts";
 import type { Store } from "../store.ts";
-import { Conflict, openStore, type EntityGuard } from "../store.ts";
+import { Conflict, namesOf, openStore, type EntityGuard } from "../store.ts";
 import { worldsAt, winner } from "../decision.ts";
 import { LazyReader } from "../read.ts";
 import { JoinedAccount, type Marker } from "./account.ts";
@@ -162,7 +162,7 @@ export class Archive {
     this.queue = queue;
     this.frames = frames;
     this.precondition = precondition;
-    this.db = new Documents(store.comp, source.s.held ? "settlement-" + channel + source.s.names.documents : "settlement");
+    this.db = new Documents(store.comp, source.s.held ? "settlement-" + channel + namesOf(source.s).documents : "settlement");
   }
   static async open(
     source: JoinedAccount,

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { setTimeout as sleep } from "node:timers/promises";
 import { Documents, hash } from "../../notify1/store.ts";
-import { Conflict, type Store } from "../store.ts";
+import { Conflict, namesOf, type Store } from "../store.ts";
 import type { BulkQueue } from "./bulk.ts";
 import type { Settlement } from "./settlement.ts";
 import type { Progress } from "./archive.ts";
@@ -17,7 +17,7 @@ import type { Cursor } from "./recorded.ts";
 // restart).
 export type Control = { paused: boolean; paceMs: number | null; by: string; version: number };
 const KEY = "control";
-const documents = (store: Store) => new Documents(store.comp, "settlement-control" + store.names.documents);
+const documents = (store: Store) => new Documents(store.comp, "settlement-control" + namesOf(store).documents);
 
 export async function readControl(store: Store, at?: number) {
   const db = documents(store);

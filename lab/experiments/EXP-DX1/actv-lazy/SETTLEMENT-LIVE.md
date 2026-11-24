@@ -3,7 +3,34 @@
 Builder DX-ACT5, 2026-11-24, branch `exp/DX-ACT5-settlement-live` from `exp/DX-ACT4-settlement-frames` (`b623914a4`).
 Mac work is correctness at toy size; every Mac time here is diagnostic, every count exact. Nothing here ran on a server.
 
-SECTION-SHORT
+## Short answer
+
+1. **The risk is real and wider than named.** Every settlement frame required the whole database's head to be
+   unchanged, and one database holds every account, so a save in *any* account refused it. At toy size, with the
+   account saving 39.4/s, 316 of 325 frames were refused and **none committed while the saves ran** (20 refusals per
+   second per writer); with only the nine *other* accounts saving (211.5/s), 242 of 251 refused and none committed
+   while they ran. Even with no saves the values and notice writers refused each other (2 of 11). At full size a large
+   release would not settle at all while the database takes saves.
+2. **What the rule protected:** only one thing a frame reads can change in a way that alters what it must write: its
+   writer's own progress row (the values progress of the release, or the account's notice cursor). Subject data is read
+   at the release's own position, so no save after it can change a frame; the release marker is never changed; a newer
+   release only ends the older one's values early; removal is guarded separately by the removal-sequence ticket.
+3. **Built: `TX2_SETTLE_PRECONDITION=progress`** (default off): a frame commits only if its writer's progress row holds
+   exactly the facts the frame followed, checked inside the transaction and again at the transactor's serial cut. With
+   it, in every case above: **0 frames refused, 9 of 9 committed, settled while saving**, every stored value and notice
+   equal to the oracle and to the independent form rule, every ledger and every pinned read exact, through three kills,
+   a second release mid-settlement, a rival writer process, and a pause, restart and pace.
+4. **Live saves:** none was refused in any case, with either rule; each process keeps one frame in flight (at most
+   7,953 µs of estimated service admitted), so a save waits behind at most one frame in the writer; the optional
+   admission lane starts a frame only while no save waits for a credit.
+5. **Several accounts at once (owner's addition): built and toy-tested.** Accounts get their own names in the one
+   database (`HeldSource.namespace`, default off), take frame turns round-robin through one queue, and never refuse each
+   other under the guard. Per-account pause, resume, pace and a status read (`TX2_SETTLE_CONTROL=1`) survive a restart.
+   **At full size the limit is the writer, not the turns:** ten accounts each owing 20 forms on 100,000 subjects need
+   about 1.2 million frames and about 2.5 hours of writer time at one frame at a time (section 9.2).
+6. **Server runs are written** (section 9): one account at 100,000 subjects, runnable as written; several accounts at
+   1 billion records, which first needs the held runner to adopt the aged database and an oracle that knows the aged
+   subjects' history.
 
 ## 2. What the head precondition protects, from the code
 

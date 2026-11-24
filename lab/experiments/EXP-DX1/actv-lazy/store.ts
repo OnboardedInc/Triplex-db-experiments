@@ -30,6 +30,10 @@ export const fact = (entityId: string, attribute: string, data: unknown) => ({
 });
 export const value = (row: WorldRow) => JSON.parse(row.value.value);
 export class Conflict extends Error {}
+/** [DX-ACT5] An account's metadata names (the defaults unless the held account is namespaced); test doubles of a
+ * store without `names` get the defaults. */
+export const defaultNames = { RELEASE, ORIGIN, CLOCK, MASK, CURSOR, documents: "" };
+export const namesOf = (s: { names?: typeof defaultNames }) => s.names ?? defaultNames;
 /** [DX-ACT5] An entity whose complete live fact set must still be `tripleIds` when a commit lands. */
 export type EntityGuard = { entityId: string; tripleIds: readonly string[] };
 
