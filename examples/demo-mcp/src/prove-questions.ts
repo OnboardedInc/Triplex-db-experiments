@@ -90,19 +90,68 @@ function holds(c: any, rows: Row[]) {
     case "eq": return mine.some((r) => family(r) === t && cmp(valOf(r), conv(c.value, t)) === 0);
     case "in": return mine.some((r) => family(r) === t && c.values.some((v: any) => cmp(valOf(r), conv(v, t)) === 0));
     case "prefix": return mine.some((r) => family(r) === "string" && String(r.value_string).startsWith(String(c.value)));
+    // [DX-XQ9] is not: no value equals it (no value counts as not); contains: text, optionally lower-cased.
+    case "ne": return !mine.some((r) => family(r) === t && cmp(valOf(r), conv(c.value, t)) === 0);
+    case "contains": {
+      const needle = c.caseInsensitive ? String(c.value).toLowerCase() : String(c.value);
+      return mine.some((r) => family(r) === "string" && (c.caseInsensitive ? String(r.value_string).toLowerCase() : String(r.value_string)).includes(needle));
+    }
     case "range": return mine.some((r) => family(r) === t &&
       (c.from === undefined || (c.fromExclusive ? cmp(valOf(r), conv(c.from, t)) > 0 : cmp(valOf(r), conv(c.from, t)) >= 0)) &&
       (c.to === undefined || (c.toExclusive ? cmp(valOf(r), conv(c.to, t)) < 0 : cmp(valOf(r), conv(c.to, t)) <= 0)));
   }
   throw new Error("op " + c.op);
 }
+/** [DX-XQ9] The related entities of one entity, as the store ties them: by the number after the kind, or a reference. */
+function relatedOf(all: Map<string, Row[]>, base: string, id: string, rel: any): string[] {
+  const kindStart = base + rel.prefix, re = shapeRe(rel.shape);
+  const inKind = (x: string) => x.startsWith(kindStart) && (!re || re.test(x.slice(base.length)));
+  if ((rel.link ?? "key") === "key") {
+    const local = id.slice(base.length), i = local.indexOf(":");
+    if (i <= 0) return [];
+    const more = local.slice(i + 1), j = more.indexOf(":"), k = j < 0 ? more : more.slice(0, j);
+    if (!k) return [];
+    const start = kindStart + k;
+    return [...all.keys()].filter((x) => inKind(x) && x.startsWith(start) && (x.length === start.length || x[start.length] === ":"));
+  }
+  return [...new Set((all.get(id) ?? []).filter((r) => r.attribute === rel.link.ref && r.value_type === "ref").map((r) => String(r.value_string)))]
+    .filter((x) => inKind(x) && all.has(x));
+}
+function condHolds(all: Map<string, Row[]>, base: string, id: string, c: any): boolean {
+  if (c.op !== "has") return holds(c, all.get(id)!);
+  const n = relatedOf(all, base, id, c.related).filter((r) => (c.where ?? []).every((x: any) => holds(x, all.get(r)!))).length;
+  const qf = c.quantifier ?? "some";
+  return qf === "some" ? n > 0 : qf === "none" ? n === 0 : ({ gte: n >= qf.value, gt: n > qf.value, lte: n <= qf.value, lt: n < qf.value, eq: n === qf.value } as any)[qf.op];
+}
 async function brute(client: DatomicClient, db: string, q: any, p: number, v: number) {
   const base = `acct/${q.account}/`, start = base + q.kind.prefix, re = shapeRe(q.kind.shape);
-  const by = new Map<string, Row[]>();
-  for (const r of await historyAt(client, db, p))
-    if (r.entity_id.startsWith(start) && (!re || re.test(r.entity_id.slice(base.length))) && visible(r, p, v))
+  const by = new Map<string, Row[]>(), all = new Map<string, Row[]>();
+  for (const r of await historyAt(client, db, p)) {
+    if (!(r.entity_id.startsWith(base) && visible(r, p, v))) continue;
+    all.set(r.entity_id, [...(all.get(r.entity_id) ?? []), r]);
+    if (r.entity_id.startsWith(start) && (!re || re.test(r.entity_id.slice(base.length))))
       by.set(r.entity_id, [...(by.get(r.entity_id) ?? []), r]);
-  const ids = [...by.keys()].sort().filter((id) => (q.where ?? []).every((c: any) => holds(c, by.get(id)!)));
+  }
+  const ids = [...by.keys()].sort().filter((id) => (q.where ?? []).every((c: any) => condHolds(all, base, id, c)) &&
+    (!q.anyOf || q.anyOf.some((g: any[]) => g.every((c) => condHolds(all, base, id, c)))));
+  let top: string[] | undefined;
+  if (q.result === "top") {
+    const t = ({ text: "string", date: "datetime" } as Record<string, string>)[q.order.type] ?? q.order.type, desc = q.order.direction === "desc";
+    const valOf = (r: Row): any => t === "integer" ? BigInt(String(r.value_string)) : t === "datetime" ? Number(r.value_datetime) : t === "number" ? Number(r.value_number) : r.value_string;
+    const ov = (id: string) => {
+      const xs = by.get(id)!.filter((r) => r.attribute === q.order.by && r.value_type === t).map(valOf);
+      return xs.length ? xs.reduce((m, x) => (desc ? (cmp(x, m) > 0 ? x : m) : (cmp(x, m) < 0 ? x : m))) : null;
+    };
+    top = ids.map((id) => [id, ov(id)] as [string, any]).sort(([ia, va], [ib, vb]) =>
+      va === null && vb === null ? cmp(ia, ib) : va === null ? 1 : vb === null ? -1 : (desc ? -cmp(va, vb) : cmp(va, vb)) || cmp(ia, ib))
+      .slice(0, q.limit ?? 50).map(([id]) => id);
+  }
+  let sum: { sum: string; valuesAdded: number } | undefined;
+  if (q.result === "sum") {
+    let total = 0n, n = 0;
+    for (const id of ids) for (const r of by.get(id)!) if (r.attribute === q.of && r.value_type === "integer") { total += BigInt(String(r.value_string)); n++; }
+    sum = { sum: String(total), valuesAdded: n };
+  }
   const columns = ids.map((id) => Object.fromEntries((q.columns ?? []).map((a: string) => [a, by.get(id)!.filter((r) => r.attribute === a).map(plain).map(String).sort()])));
   const groups = new Map<string, number>();
   if (q.result === "countByValue")
@@ -110,7 +159,7 @@ async function brute(client: DatomicClient, db: string, q: any, p: number, v: nu
       const vs = [...new Set(by.get(id)!.filter((r) => r.attribute === q.of).map((r) => JSON.stringify(plain(r))))];
       for (const k of vs.length ? vs : ["null"]) groups.set(k, (groups.get(k) ?? 0) + 1);
     }
-  return { ids, columns, groups, subjects: by.size };
+  return { ids, columns, groups, subjects: by.size, top, sum };
 }
 /** IDs with a fact recorded at or before p (what an ID list means), under acct/<account>/<prefix>, matching the shape. */
 async function bruteIds(client: DatomicClient, db: string, account: string, prefix: string, shape: string | undefined, p: number) {
@@ -127,7 +176,7 @@ async function allPages(q: any, opts: { limit?: number; pageSubjects?: number; b
   let cursor: string | null = null;
   for (let n = 0; n < 5000; n++) {
     const { basis, ...rest } = q;
-    const a = await tool("ask_across_subjects", { ...rest, mode: "page", ...(opts.limit ? { limit: opts.limit } : {}), ...(opts.pageSubjects ? { pageSubjects: opts.pageSubjects } : {}), ...(cursor ? { cursor } : basis ? { basis } : {}) }, d);
+    const a = await tool("ask_across_subjects", { ...rest, mode: "page", ...(opts.limit && rest.result !== "top" ? { limit: opts.limit } : {}), ...(opts.pageSubjects ? { pageSubjects: opts.pageSubjects } : {}), ...(cursor ? { cursor } : basis ? { basis } : {}) }, d);
     pages.push(a);
     if (!a.next) return pages;
     await opts.between?.(n);
@@ -148,6 +197,13 @@ function compare(label: string, q: any, pages: any[], expected: Awaited<ReturnTy
       check(`${label}: columns equal the independent answer`, JSON.stringify(cols) === JSON.stringify(expected.columns), { got: cols.slice(0, 2), expected: expected.columns.slice(0, 2) });
     }
     bump("ids compared", got.length);
+  } else if (q.result === "top") {
+    const got = last.rows.map((r: any) => r.id);
+    check(`${label}: top N equals the independent answer (order, ties by ID, no value last)`, JSON.stringify(got) === JSON.stringify(expected.top), { got: got.slice(0, 5), expected: expected.top?.slice(0, 5) });
+    check(`${label}: only the complete page names the top`, pages.slice(0, -1).every((x) => x.rows.length === 0));
+    bump("top entities compared", got.length);
+  } else if (q.result === "sum") {
+    check(`${label}: sum equals the independent answer`, last.sum.sum === expected.sum!.sum && last.sum.valuesAdded === expected.sum!.valuesAdded && last.sum.countComplete === true, { got: last.sum, expected: expected.sum });
   } else if (q.result === "count") {
     check(`${label}: count equals the independent answer`, last.count === expected.ids.length && last.countComplete === true, { got: last.count, expected: expected.ids.length });
     bump("subjects counted", last.count);
@@ -243,6 +299,17 @@ const questions = (account: string): any[] => [
   { name: "pay at least 1,400, exclusive 2,000 (S5)", kind: { prefix: "wk:" }, where: [{ attribute: ":person/custom-pay-cents", op: "range", type: "integer", from: "1400", to: "2000", toExclusive: true }], result: "list", columns: [":person/custom-pay-cents"] },
   { name: "start text prefix (S8)", kind: { prefix: "wk:" }, where: [{ attribute: ":person/custom-start", op: "prefix", value: "2026-11" }], result: "count" },
   { name: "every subject, total (S11)", kind: { prefix: "pl:", shape: "pl:{8 digits}" }, result: "count" },
+  // [DX-XQ9] The shapes added on exp/DX-XQ9-question-shapes (TX2_SWEEP_SHAPES=all in the demo profile).
+  { name: "subjects with a pending task (S10)", kind: { prefix: "pl:", shape: "pl:{8 digits}" }, where: [{ op: "has", related: { prefix: "i9:", link: "key" }, where: [{ attribute: ":i9/status", op: "eq", type: "text", value: "pending" }] }], result: "list", columns: [":placement/status"] },
+  { name: "subjects with 2 or more tasks not complete (S10)", kind: { prefix: "pl:", shape: "pl:{8 digits}" }, where: [{ op: "has", related: { prefix: "i9:", link: "key" }, quantifier: { op: "gte", value: 2 }, where: [{ attribute: ":task/status", op: "ne", type: "text", value: "complete" }] }], result: "count" },
+  { name: "subjects with no paused placement, by reference (S10)", kind: { prefix: "pl:", shape: "pl:{8 digits}" }, where: [{ op: "has", related: { prefix: "pl:", shape: "pl:{8 digits}:p{digits}", link: { ref: ":person/placement" } }, quantifier: "none", where: [{ attribute: ":placement/status", op: "eq", type: "text", value: "paused" }] }], result: "count" },
+  { name: "tasks whose subject is active (S7, S10)", kind: { prefix: "i9:" }, where: [{ op: "has", related: { prefix: "pl:", shape: "pl:{8 digits}", link: "key" }, where: [{ attribute: ":placement/status", op: "eq", type: "text", value: "active" }] }], result: "count" },
+  { name: "top 10 profiles by pay, highest first (S9)", kind: { prefix: "wk:" }, result: "top", order: { by: ":person/custom-pay-cents", type: "integer", direction: "desc" }, limit: 10 },
+  { name: "top 5 tasks by progress, lowest first (S9)", kind: { prefix: "i9:" }, result: "top", order: { by: ":task/progress", type: "integer", direction: "asc" }, limit: 5 },
+  { name: "address contains main st, any case (S8)", kind: { prefix: "wk:" }, where: [{ attribute: ":worker/address", op: "contains", value: "MAIN ST", caseInsensitive: true }], result: "count" },
+  { name: "status is not pending (S3)", kind: { prefix: "i9:" }, where: [{ attribute: ":i9/status", op: "ne", type: "text", value: "pending" }], result: "count" },
+  { name: "not pending, or progress under 10 (S3, S4)", kind: { prefix: "i9:" }, anyOf: [[{ attribute: ":i9/status", op: "ne", type: "text", value: "pending" }], [{ attribute: ":task/progress", op: "range", type: "integer", to: "10", toExclusive: true }]], result: "list", columns: [":i9/status"] },
+  { name: "total pay of the profiles (S13)", kind: { prefix: "wk:" }, result: "sum", of: ":person/custom-pay-cents" },
 ];
 const signatures = new Map<string, Set<string>>();
 let qi = 0;
@@ -256,7 +323,7 @@ for (const account of [A, B])
       const expected = await brute(plainClient, db, q, p, v);
       compare(`${account} ${name} at ${p}, valid ${iso(v).slice(0, 10)}`, q, pages, expected, p, v);
       const sig = `${account} ${name}`;
-      signatures.set(sig, (signatures.get(sig) ?? new Set()).add(JSON.stringify([expected.ids, [...expected.groups].sort()])));
+      signatures.set(sig, (signatures.get(sig) ?? new Set()).add(JSON.stringify([expected.ids, [...expected.groups].sort(), expected.top, expected.sum])));
     }
 const varying = [...signatures].filter(([, s]) => s.size > 1).map(([k]) => k);
 check("non-vacuous: some questions have different true answers across the cuts", varying.length >= 3, varying);
@@ -376,6 +443,14 @@ for (const [label, input] of [
   ["has a value", { where: [{ attribute: PROT, op: "exists" }] }],
   ["as a column", { columns: [PROT] }],
   ["count per value", { result: "countByValue", of: PROT }],
+  // [DX-XQ9] Every position the new shapes add.
+  ["is not", { where: [{ attribute: PROT, op: "ne", value: "IDN-9003" }] }],
+  ["contains, any case", { where: [{ attribute: PROT, op: "contains", value: "idn", caseInsensitive: true }] }],
+  ["in an any-of group", { anyOf: [[{ attribute: ":person/status", op: "exists" }], [{ attribute: PROT, op: "exists" }]] }],
+  ["in a related entity's condition", { where: [{ op: "has", related: { prefix: "pl:", link: "key" }, where: [{ attribute: PROT, op: "exists" }] }] }],
+  ["as the reference that ties related entities", { where: [{ op: "has", related: { prefix: "pl:", link: { ref: PROT } } }] }],
+  ["as the order of a top N", { result: "top", order: { by: PROT, type: "text" }, limit: 3 }],
+  ["summed", { result: "sum", of: PROT }],
 ] as const) {
   const r = await refusal("ask_across_subjects", { account: "account-003", kind: { prefix: "pl:", shape: "pl:{8 digits}" }, ...input }, pdemo);
   check(`protected attribute ${label}: refused ProtectedValueLookup with a plain sentence`, r.code === "ProtectedValueLookup" && r.refused === true && /never filters, groups or lists/.test(r.explanation) && r.storeCode === "ProtectedValueLookup", r);
@@ -424,6 +499,13 @@ section = "agent tools (MCP)";
   check("ask_across_subjects: MCP equals the console", JSON.stringify([m.rows, m.holdsFor.position, m.holdsFor.validAt, m.complete]) === JSON.stringify([c.rows, c.holdsFor.position, c.holdsFor.validAt, c.complete]));
   const [m2, c2] = [await viaMcp("list_ids", { account: A, prefix: "i9:", result: "count", basis: { position: P0 } }), await tool("list_ids", { account: A, prefix: "i9:", result: "count", basis: { position: P0 } })];
   check("list_ids: MCP equals the console", m2.count === c2.count && m2.holdsFor.position === c2.holdsFor.position);
+  // [DX-XQ9] A question over related entities and a top N, over MCP and in the console.
+  const qh = { account: A, kind: { prefix: "pl:", shape: "pl:{8 digits}" }, where: [{ op: "has", related: { prefix: "i9:", link: "key" }, where: [{ attribute: ":i9/status", op: "eq", value: "pending" }] }], result: "count", basis: { position: P1, validAt: iso(V_NOW) } };
+  const [mh, ch] = [await viaMcp("ask_across_subjects", qh), await tool("ask_across_subjects", qh)];
+  check("has related (S10): MCP equals the console", mh.count === ch.count && mh.complete && ch.complete && mh.holdsFor.position === ch.holdsFor.position, { mcp: mh.count, console: ch.count });
+  const qt = { account: A, kind: { prefix: "wk:" }, result: "top", order: { by: ":person/custom-pay-cents", type: "integer", direction: "desc" }, limit: 5, mode: "toEnd", basis: { position: P1, validAt: iso(V_NOW) } };
+  const [mt, ct] = [await viaMcp("ask_across_subjects", qt), await tool("ask_across_subjects", qt)];
+  check("top N (S9): MCP equals the console", JSON.stringify(mt.rows) === JSON.stringify(ct.rows) && mt.complete && mt.rows.length > 0, { mcp: mt.rows?.length, console: ct.rows?.length });
   const m3 = await viaMcp("ask_across_subjects", { ...q, cursor: "x.y", basis: undefined });
   check("a refusal over MCP carries the store's code and the plain sentence", m3.error?.code === "CursorMismatch" && /page marker/.test(m3.error?.explanation ?? ""), m3);
   await client.close();

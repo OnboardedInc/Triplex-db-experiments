@@ -61,6 +61,38 @@ async function pass(scheme) {
   check((await page.locator('[data-testid="condition"]').count()) === 2, `${scheme}: two conditions in the builder`);
   await shot("04-two-conditions");
 
+  // [DX-XQ9] The shapes added on exp/DX-XQ9-question-shapes, each from its example (S10, S9, S8, S3/S4, S13).
+  const examplesText = await page.locator('[data-testid="examples"]').innerText();
+  check(/S10/.test(examplesText) && /S9/.test(examplesText) && !/has no "contains"|not answered/i.test(examplesText), `${scheme}: S9 and S10 examples offered, no "not answered" notes`);
+  await page.click('[data-testid="example-has-pending"]');
+  await settled(60_000);
+  check(await page.locator('[data-testid="has-condition"]').isVisible(), `${scheme}: a "has related entities where" group in the builder`);
+  const hasStatus = await page.locator('[data-testid="question-status"]').innerText();
+  check(/Complete/.test(hasStatus) && !/Not complete/.test(hasStatus), `${scheme}: subjects with a pending task answered completely`, hasStatus.replace(/\n/g, " | "));
+  check(/Related entities read/.test(await page.locator('[data-testid="how-answered"]').innerText()), `${scheme}: related entities read are reported`);
+  await shot("04b-has-pending-task");
+  await page.click('[data-testid="example-has-open"]');
+  await settled(60_000);
+  check(await page.locator('[data-testid="count-answer"]').isVisible() && (await page.locator('[data-testid="has-count"]').inputValue()) === "3", `${scheme}: "3 or more open tasks" counted, with the count in the builder`);
+  await shot("04c-three-open-tasks");
+  await page.click('[data-testid="example-top-pay"]');
+  await settled(60_000);
+  const topRows = await page.locator('[data-testid="row-link"]').count();
+  check(await page.locator('[data-testid="top-answer"]').isVisible() && topRows === 10, `${scheme}: top 10 by pay listed after the whole kind was read`, topRows);
+  await shot("04d-top-pay");
+  await page.click('[data-testid="example-not-pending-or"]');
+  await settled(60_000);
+  check(await page.locator('[data-testid="groups"]').isVisible() && (await page.locator('[data-testid="group"]').count()) === 2 && await page.locator('[data-testid="count-answer"]').isVisible(), `${scheme}: "is not" and two "any of" groups answered`);
+  await shot("04e-not-pending-or");
+  await page.click('[data-testid="example-contains"]');
+  await settled(60_000);
+  check(await page.locator('[data-testid="count-answer"]').isVisible() && await page.locator('[data-testid="condition-any-case"]').isChecked(), `${scheme}: "contains", any case, counted`);
+  await page.click('[data-testid="example-sum-pay"]');
+  await settled(60_000);
+  const sumText = await page.locator('[data-testid="sum-answer"]').innerText();
+  check(/Exact sum/.test(sumText) && /Average/.test(sumText), `${scheme}: an exact sum and average shown`, sumText.replace(/\n/g, " | "));
+  await shot("04f-sum-pay");
+
   if (scheme === "light") {
     // Progress page by page and Stop: 4 subjects per store page over every subtask of the account.
     await page.click('[data-testid="example-total"]');

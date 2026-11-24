@@ -54,7 +54,7 @@ case $arm in
     kill "$proxy_pid"; wait "$proxy_pid" 2>/dev/null; proxy_pid=
     grep '"kind":"final"' "$out/twin.jsonl" | tail -1
     ;;
-  shapes|load)
+  shapes|load|dryrun)
     (cd "$repo" && node --no-warnings --experimental-transform-types "lab/experiments/EXP-DX1/xq9/$arm.ts" "$out" http://127.0.0.1:18981 "$read_url" "$prefix") > "$out/driver.log" 2>&1
     status=$?
     ;;
