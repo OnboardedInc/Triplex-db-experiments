@@ -28,6 +28,7 @@ import {
 } from "./micro.ts";
 import { pacedHz, TailPacer, type Baseline } from "./pacing.ts";
 import type { Frame } from "./source.ts";
+import { installSnapshotImportClass } from "./import-class.ts";
 import { pipelineDuration, pipelineHz, pipelineLimit, PipelineCredits } from "./pipeline.ts";
 
 // [DX-LOAD2] Why: bracket the guest clock with both host timestamps; compare guest-native clocks directly.
@@ -73,6 +74,8 @@ export async function live(
   mode = "load-live",
   held?: { after: number; maxGroup: number; clockRun: string; referenceImport?: boolean },
 ) {
+  // [DX-IMP2] With the whole-subject import bound on, the snapshot frames here are import-class commits.
+  installSnapshotImportClass();
   const traceTail = mode === "load-tail",
     frontier = mode.startsWith("load-frontier-");
   const split = splitLoad(mode),

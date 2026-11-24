@@ -154,6 +154,8 @@
       general-prefetch/enabled (assoc-in [:options :generalPrefetch] (general-prefetch/installed? db))
       ;; [DX-W4] Why: report the option only when it is on, so default readbacks stay byte-identical.
       subject-hints/enabled (assoc-in [:options :subjectHints] (subject-hints/installed? db))
+      ;; [DX-IMP2] Why: report the option only when it is on, so default readbacks stay byte-identical.
+      policy/import-whole? (update :options assoc :importWholeSubject true :importCommitMicros policy/import-commit-us)
       subject/enabled (assoc :subjectSave true :subjectFunction (when subject-t (str subject/ident))
                              :subjectNumericOwner subject/numeric-owner?
                              :subjectOrderedIds subject/ordered-ids?
@@ -407,7 +409,8 @@
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
                                   (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e)))
-                                  (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e))))))))
+                                  (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e)))
+                                  (:estimatedMicros (ex-data e)) (assoc :estimatedMicros (:estimatedMicros (ex-data e))))))))
 (defn- with-privacy-guards [scopes work]
   (if-let [[scope & more] (seq scopes)]
     (privacy/guard scope #(with-privacy-guards more work))
@@ -454,7 +457,9 @@
                                        (response 200 (cond-> {:database name :protected (boolean cut)
                                                               :seq (or (:seq cut) 0) :erased (or (:erased cut) {})}
                                                        (:per-account cut)
-                                                       (merge (removal-scope/frontier-fields cut query-string))))
+                                                       (merge (removal-scope/frontier-fields cut query-string))
+                                                       ;; [DX-IMP2] The removed families an importer must leave out.
+                                                       policy/import-whole? (assoc :families (vec (sort (:families cut))))))
                                        (route-handler-base request))]
                           (cond-> answer cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))))))]
             (cond

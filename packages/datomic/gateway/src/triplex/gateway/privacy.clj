@@ -123,7 +123,9 @@
                                       (assoc m id {"type" "erased" "valueType" (get identity "valueType")
                                                    "erasedAt" (get entry "erasedAt") "erasureTxId" (get entry "txId")}))))
                                 before (get entry "identities"))))
-      (update :families into (map (juxt #(get % "entity") #(get % "attribute")) (get entry "identities")))
+      ;; [DX-IMP2] An entry may also name the families a removal asked for before any row existed (import bound on).
+      (update :families into (concat (map (juxt #(get % "entity") #(get % "attribute")) (get entry "identities"))
+                                     (get entry "families")))
       ;; [DX-ERA2] Each account's removal sequence, derived from the one ordered log (only with the option on).
       (cond-> removal-scope/enabled (removal-scope/add-entry entry))))
 
