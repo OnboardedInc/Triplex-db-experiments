@@ -141,7 +141,7 @@ export function makePorts(db: string, validAt: number, writer: DatomicClient, sa
           : !step.from!.attribute ? (byKey.get(step.from!.step)?.ids ?? []) : refsOf(byKey.get(step.from!.step)?.rows ?? [], step.from!.attribute);
         r.batch.push({ step, entry: entries[k], answer: a, position: answer.position, asked });
         if (step.page) { r.pages.set(step.key, a); r.reads++; }
-        else if (step.reach) r.reads += asked.length;
+        else if (step.reach) r.reads += Array.isArray(a?.entities) ? a.entities.length : asked.length;  // every entity of the worlds
         else { r.rows += a.rows.length; r.reads += asked.length; }
       });
       return answer;

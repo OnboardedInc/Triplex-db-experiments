@@ -113,6 +113,9 @@ export interface CallReadsOptions {
   readonly basisWaitMs?: number;
 }
 
+// Rows reads coalesced into one entry, at most this many subjects: a batch's byte bound stops between entries, so an
+// entry must stay well under it (128 deep-subject entities answer about 1 MB).
+const ENTRY_SUBJECTS = 128;
 type Pending = { entry: BatchEntry; key: string; resolve: (value: unknown) => void; reject: (error: unknown) => void };
 export type ReachWorld = { position: number; t: string; entities: unknown[]; closures: unknown[] } & Record<string, unknown>;
 
@@ -194,7 +197,7 @@ export class CallReads {
           entries.push(group);
         }
         const ids = (group.entry as unknown as { entityIds: string[] }).entityIds;
-        if (ids.length >= 512) {
+        if (ids.length >= ENTRY_SUBJECTS) {
           group = { entry: { op: "rows", entityIds: [], ...(p.entry.pattern ? { pattern: p.entry.pattern } : {}) }, items: [] };
           groups.set(g, group);
           entries.push(group);

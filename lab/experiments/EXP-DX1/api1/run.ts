@@ -79,7 +79,14 @@ const validAt = Date.now();
 const rowsOf = async (c: DatomicClient, e: string, basis?: object) =>
   (await c.rows(db, { entityIds: [e], ...(basis ? { basis } : {}) })) as any[];
 // One commit per subject's save: the given facts replace the entities' current values of those attributes.
-const save = async (c: DatomicClient, id: string, change: F[]) => {
+const save = async (c: DatomicClient, id: string, change: F[]): Promise<number> => {
+  // Two calls may save the same subject at once (the warm set is small): a conflicting save reads again and retries.
+  for (let attempt = 0; ; attempt++) {
+    try { return await saveOnce(c, id + (attempt ? "-r" + attempt : ""), change); }
+    catch (e: any) { if (e?.code !== "CasConflict" || attempt >= 8) throw e; }
+  }
+};
+const saveOnce = async (c: DatomicClient, id: string, change: F[]) => {
   const head = await headOf(c);
   const old: any[] = [];
   for (const e of [...new Set(change.map((f) => f.e))]) {
@@ -301,9 +308,10 @@ async function cell(port: Port, shape: Shape, reader: "warm" | "cold", callers: 
   if (profile) {
     if (port === "today" || port === "pinned") {
       await sleep(1500); readTrace(reader === "warm" ? "r-warm" : "r-cold");
-      loads = ids.reduce((n, id) => n + (traceLoads.get(id) ?? 0), 0) / per.length;
-      const found = ids.filter((id) => traceLoads.has(id)).length;
-      if (found < ids.length) log("trace records missing", ids.length - found, "of", ids.length);
+      // Loads per request over the requests whose trace record was written, times requests per call.
+      const found = ids.filter((id) => traceLoads.has(id));
+      loads = found.length ? (found.reduce((n, id) => n + traceLoads.get(id)!, 0) / found.length) * (ids.length / per.length) : null;
+      if (found.length < ids.length) log("trace records missing", ids.length - found.length, "of", ids.length);
     } else loads = per.reduce((n, x) => n + x.loads, 0) / per.length;
   }
   const mean = (f: (x: (typeof per)[number]) => number) => per.reduce((n, x) => n + f(x), 0) / per.length;
@@ -334,33 +342,52 @@ if (phases.has("counts")) {
           const r = await cell(port, shape, reader, callers, big(shape) ? callers : callers * 3, false);
           rows.push(r); log(JSON.stringify(r));
         }
-  // Calibration: the 1 billion arm's own exchange (eight subjects' field 0 in one pinned /read), so a Mac CPU figure
-  // can be scaled by the same request measured on the server (1.53 ms re-read, 1.71 ms per random subject).
-  for (const reader of countReaders) {
-    const c = reader === "warm" ? warm : cold, portNo = reader === "warm" ? 8081 : 8082, n = reader === "warm" ? 200 : 100;
-    const idsSeen: string[] = [];
-    const P = await headOf(c);
-    const cpu0 = cpuMs(portNo);
-    const wall: number[] = [];
-    for (let k = 0; k < n; k++) {
-      const subjects = Array.from({ length: 8 }, (_, j) => reader === "warm" ? prefix(j % accounts) + taskId(1 + ((k + j * 5) % 40), 0)
-        : prefix(j % accounts) + taskId(41 + Math.floor(Math.random() * (people - 93)), 0));
-      const t = performance.now();
-      await c.withReadProfile((x: any) => idsSeen.push(x.id), () => c.request<any>("POST", "/v1/db/" + db + "/read",
-        { entityIds: subjects, pattern: { attribute: ":task/field-0" }, basis: { recordedPosition: P, validAt } }));
-      wall.push(performance.now() - t);
-    }
-    const cpu = cpuMs(portNo) - cpu0;
-    await sleep(1500); readTrace(reader === "warm" ? "r-warm" : "r-cold");
-    const loads = idsSeen.reduce((m, id) => m + (traceLoads.get(id) ?? 0), 0) / n;
-    const row = { shape: "exchange-of-8", port: "single", reader, callers: 1, calls: n, reads: 8, trips: 1, loads, cpuMsPerCall: cpu / n,
-      wallMsP50: pct(wall, 0.5), wallMsP99: pct(wall, 0.99) };
-    rows.push(row); log(JSON.stringify(row));
-  }
   results.counts = rows;
   writeFileSync(join(out!, "counts.json"), JSON.stringify(rows, null, 2) + "\n");
 }
 
+// ---- Calibration: the 1 billion arm's own exchange (eight subjects' field 0 in one pinned /read), so a Mac CPU figure
+// can be scaled by the same request measured on the server (1.53 ms per exchange re-read at 256 seats; 1.71 ms per random
+// subject). One caller with the read profile (loads per exchange), then 16 callers without it (CPU per exchange under
+// load, as the server's figure was taken).
+if (phases.has("calibrate")) {
+  const rows: unknown[] = [];
+  for (const reader of ["warm", "cold"] as const) {
+    const c = reader === "warm" ? warm : cold, portNo = reader === "warm" ? 8081 : 8082;
+    const P = await headOf(c);
+    const subjectsFor = (k: number) => Array.from({ length: 8 }, (_, j) => reader === "warm" ? prefix(j % accounts) + taskId(1 + ((k + j * 5) % 40), 0)
+      : prefix(j % accounts) + taskId(41 + Math.floor(Math.random() * (people - 93)), 0));
+    const exchange = (k: number) => c.request<any>("POST", "/v1/db/" + db + "/read",
+      { entityIds: subjectsFor(k), pattern: { attribute: ":task/field-0" }, basis: { recordedPosition: P, validAt } });
+    for (let k = 0; k < 40; k++) await exchange(k);  // warm-up (JIT, and the warm reader's subjects)
+    for (const callers of [1, 16]) {
+      const n = callers === 1 ? (reader === "warm" ? 200 : 100) : (reader === "warm" ? 3000 : 800);
+      const idsSeen: string[] = [];
+      const wall: number[] = [];
+      const cpu0 = cpuMs(portNo), w0 = performance.now();
+      let k = 0;
+      await Promise.all(Array.from({ length: callers }, async () => {
+        while (k < n) {
+          const t = performance.now(), kk = k++;
+          if (callers === 1) await c.withReadProfile((x: any) => idsSeen.push(x.id), () => exchange(kk)); else await exchange(kk);
+          wall.push(performance.now() - t);
+        }
+      }));
+      const cpu = cpuMs(portNo) - cpu0, seconds = (performance.now() - w0) / 1000;
+      let loads: number | null = null;
+      if (callers === 1) {
+        await sleep(1500); readTrace(reader === "warm" ? "r-warm" : "r-cold");
+        const found = idsSeen.filter((id) => traceLoads.has(id));
+        loads = found.length ? found.reduce((m, id) => m + traceLoads.get(id)!, 0) / found.length : null;
+      }
+      const row = { shape: "exchange-of-8", port: "single", reader, callers, calls: n, reads: 8, trips: 1, loads, cpuMsPerCall: cpu / n,
+        wallMsP50: pct(wall, 0.5), wallMsP99: pct(wall, 0.99), callsPerSecond: n / seconds, readerCores: cpu / 1000 / seconds };
+      rows.push(row); log(JSON.stringify(row));
+    }
+  }
+  results.calibration = rows;
+  writeFileSync(join(out!, "calibration.json"), JSON.stringify(rows, null, 2) + "\n");
+}
 // ---- Straddle: unpinned calls of the subject page under saves that change a subject's root and its first task in one
 // commit (the same value on both); a call whose two values differ read two positions.
 if (phases.has("straddle")) {
