@@ -5699,3 +5699,23 @@ Source: step 1 builder, branch `exp/DX-XQ4-commit-index` `061da6cb5` (contains t
 - Not verified: anything on a server; the exactness gate was NOT rerun after the last ordering fix; SDK typecheck inconclusive; hints with the index; the heavy production gates with the index on; sealed removal check.
 
 **Resumed** the same builder to close those gaps (rerun exactness on the final head, typecheck, the time clause, frame bounds, hints with the index, production gates with the index on, string against tuple, a rule refusing release-written attributes).
+
+## 2026-11-24 13:02 EST: release size limits: both built; the real ceiling with full documents is about 0.5 MiB, not 1.3
+
+Source: release-limits builder, branch `exp/DX-ACT6-release-limits` `b0529e87d` (based on the settlement-live branch with the one branch and the settlement-preparation branch merged; not merged onto the one branch), page `lab/experiments/EXP-DX1/actv-lazy/RELEASE-LIMITS.md`. Three options, default off. Its report arrived while a last background check was still running; treat as near-final.
+
+**Limit 1, a subject owing 200 forms or more** (`TX2_NOTICE_LEDGER=parts`): a ledger over 10,240 packed characters is written as numbered parts inside the existing frames; a small head names the parts and their hashes, and only the head switches the ledger, so a subject's ledger changes in exactly one commit. Cap about 1,680 owed notice items per subject under the default estimate (refused clearly above).
+- Database-free check, 72 subjects: pass at 200, 500 and 1,000 forms; after every frame every subject's ledger was exactly its old or its new one (659, 1,399, 2,531 reads); notices 14,400, 36,000, 72,000 equal to the kernel's; every frame at or under 8,000 µs; writing the ledger whole is refused at all three sizes.
+- Toy gate: pass at 200 (72 subjects), 500 (24) and 1,000 (16) under the progress precondition, default and calibrated estimates; killed after every frame through the first subject; a second release mid-settlement; pause held; notices delivered once.
+- Frames per subject (value / notice): 20 forms 0.203 / 0.898; 200 forms 2 / 4; 500 forms 5 / 8.28; 1,000 forms 9 / 16.
+
+**Limit 2, definitions near the ceiling** (`TX2_RELEASE_DOCS=ref`): definitions stored once by content in parts of at most 8 KiB, written ahead of the Publish; the Publish stays one atomic record and carries a reference.
+- **Finding: with full documents the ceiling is well below 1.3 MiB.** The request sends every new value twice (over 2.4 times the operations): a first set was accepted at 0.50 MiB and refused at 0.70 MiB. And one fact value is limited to 1 MiB while the marker holds the new and the old document, so a release following a set of its own size is limited to about 0.5 MiB. Publish now refuses both with the limit and sizes.
+- By reference: the Publish record is 3.5 KB at any size (619 KB and 1.23 MB with full documents at 0.25 and 0.5 MiB); writer estimate 6.1 ms against 132 and 258 ms. Next limit about 11 MiB of definitions, and before that the kernel's cap of 8,192 forms (raised from 512; 174 kernel tests pass).
+- Exactness: at 0.25, 0.5, 1.0 and 1.25 MiB every answer equalled the oracle's; along a 50-release chain 400 answers identical between full documents and references.
+- What binds at 1.25 MiB is the read: each read evaluates 5,000 policies and returns 308 KB.
+- Not built, with reasons: the ledger change as one operation (the store has only assert and retract); a subject's notices as one compact record (cost would grow with the number of releases); a subject-to-policy index (saves under 1 ms per read).
+- Server runs written: 200 owed forms settled to the end at 100,000 subjects (run A, one subject in ten owes, about an hour; run B, every subject owes, 5 to 8 h); a near-ceiling release beside the nine neighbours in three arms of about 25 minutes.
+- Not verified: anything at full size; definitions written ahead beside live saves; two Publishes racing to write the same definitions; the exact wire factor.
+
+**Started** in the freed slot: import a subject whole (task file `OPUS-IMP2-import-whole-subject.md`): today a subject of more than about 46 facts is split across import frames and a reader can see it half imported.
