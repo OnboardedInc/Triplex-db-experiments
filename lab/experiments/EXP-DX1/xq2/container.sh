@@ -66,9 +66,15 @@ phase() { echo "XQ2_PHASE $1 $(date -u +%FT%TZ)"; }
 want() { [[ " ${XQ2_PHASES:-cost gate edge} " == *" $1 "* ]]; }
 done_() { echo '(shutdown-agents) (System/exit 0)'; }
 list_for() {
+  if [[ ${XQ2_LONG_IDS:-0} == 1 ]]; then
+    local n=0; case $1 in n0) echo ""; return;; n1) echo ":task/field-12"; return;; n3) echo ":task/field-0,:task/field-1,:task/field-12"; return;;
+      n5|a5|t5) n=4;; n20|a20|t20) n=20;; esac
+    local l=""; for i in $(seq 0 $((n-1))); do l="$l,:task/field-$i"; done
+    [[ $n == 4 ]] && l="$l,:task/field-12"; echo "${l#,}"; return
+  fi
   case $1 in
     n0) echo "";;
-    n1) echo ":f12";;
+    n1|t1) echo ":f12";;
     n3) echo ":f0,:f1,:f12";;
     n5|a5|t5) echo ":f0,:f1,:f2,:f3,:f12";;
     n20|a20|t20) echo ":f0,:f1,:f2,:f3,:f4,:f5,:f6,:f7,:f8,:f9,:f10,:f11,:f12,:f13,:f14,:f15,:f16,:f17,:f18,:f19";;
@@ -90,6 +96,11 @@ if want gate; then
   phase gate-check; code=0; gate "$GATE_LIST" "(xq2-gate/gate-check!)" || code=$?; echo "XQ2_GATE_EXIT $code"
   restart_transactor
   phase query-cost; gate "$GATE_LIST" "(xq2-gate/query-cost!) $(done_)"
+fi
+if want asof; then
+  phase asof-seed; gate ":status,:name" "(xq2-gate/asof-seed!) $(done_)"
+  restart_transactor
+  phase asof-query; gate ":status,:name" "(xq2-gate/asof-query!) $(done_)"
 fi
 if want edge; then
   list=":common,:unique"; for i in $(seq 0 99); do list="$list,:g$i"; done

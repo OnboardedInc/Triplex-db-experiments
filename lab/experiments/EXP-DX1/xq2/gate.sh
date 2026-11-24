@@ -19,8 +19,8 @@ name=tx2-dxxq2-gate
 docker rm -f "$name" >/dev/null 2>&1
 docker run --name "$name" --memory 4g --cpus 2 --entrypoint /bin/bash \
   -e "XQ2_PHASES=${XQ2_PHASES:-cost gate edge}" -e "XQ2_ARMS=${XQ2_ARMS:-n0 n1 n5 n20}" -e "XQ2_RUN=$(basename "$out")" \
-  -e "XQ2_COST_SUBJECTS=${XQ2_COST_SUBJECTS:-2000}" -e "XQ2_FIELDS=${XQ2_FIELDS:-160}" -e "XQ2_COST_EACH=${XQ2_COST_EACH:-300}" \
-  -e "XQ2_GATE_SUBJECTS=${XQ2_GATE_SUBJECTS:-20000}" -e "XQ2_EDGE_SUBJECTS=${XQ2_EDGE_SUBJECTS:-100000}" \
+  -e "XQ2_COST_SUBJECTS=${XQ2_COST_SUBJECTS:-2000}" -e "XQ2_FIELDS=${XQ2_FIELDS:-160}" -e "XQ2_LONG_IDS=${XQ2_LONG_IDS:-0}" -e "XQ2_FORMS=${XQ2_FORMS:-1}" -e "XQ2_HOT_ROUNDS=${XQ2_HOT_ROUNDS:-20}" -e "XQ2_COST_EACH=${XQ2_COST_EACH:-250}" \
+  -e "XQ2_GATE_SUBJECTS=${XQ2_GATE_SUBJECTS:-20000}" -e "XQ2_EDGE_SUBJECTS=${XQ2_EDGE_SUBJECTS:-100000}" -e "XQ2_ASOF_SUBJECTS=${XQ2_ASOF_SUBJECTS:-20000}" -e "XQ2_ASOF_CHANGES=${XQ2_ASOF_CHANGES:-30000}" \
   -v "$out/stage/gateway/src:/opt/gateway/src:ro" -v "$out/stage/xq2:/xq2:ro" \
   -v "$out/out:/out" "$image" /xq2/xq2/container.sh > "$out/container.log" 2>&1
 status=$?

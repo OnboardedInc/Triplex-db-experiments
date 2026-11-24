@@ -21,7 +21,9 @@
     {:status status :body (json/read-str (if (string? body) body (String. ^bytes body StandardCharsets/UTF_8)))}))
 (defn commit! [name input]
   (let [reply (route name "v1" "transact" input)]
-    (when-not (= 200 (:status reply)) (throw (ex-info "XQ2 commit refused" {:reply reply :op (get input "operationId")})))
+    (when-not (= 200 (:status reply))
+      (println "XQ2_REFUSED" (get input "operationId") (json/write-str (:body reply)))
+      (throw (ex-info "XQ2 commit refused" {:reply reply :op (get input "operationId")})))
     (:body reply)))
 (defn head [name conn] (storage/head-position name (d/db conn)))
 (defn scope-key [label] (json/write-str ["triplex-scope-v1" "test" "xq2-attribute-index" label 0]))
@@ -110,9 +112,15 @@
 
 ;; ================= cost arms (N indexed attributes: 0, 1, 5, 20) =================
 (def fields (env-long "XQ2_FIELDS" 160))
-(defn fattr [i] (str ":f" i))
-(defn cost-subject [n] (format "acct/xq/subject/%05d" n))
-(defn cost-cell [n i v] [(str "c-" n "-f" i "-v" v) (cost-subject n) (fattr i) ["string" (str "value-" n "-" i "-" v)]])
+(defn fattr [i] (if (= "1" (System/getenv "XQ2_LONG_IDS")) (str ":task/field-" i) (str ":f" i)))
+;; XQ2_LONG_IDS=1: production-length identifiers (an account name, a 26-character subject ID and 26-character fact IDs)
+;; and a 12-character value, so bytes per entry are measured on a key of the design's length (about 130 characters).
+(def long-ids? (= "1" (System/getenv "XQ2_LONG_IDS")))
+(defn cost-subject [n] (if long-ids? (format "acct/account-03/person/01KQ%022d" n) (format "acct/xq/subject/%05d" n)))
+(defn cost-cell [n i v]
+  (if long-ids?
+    [(format "01KS%06d%03d%013d" n i v) (cost-subject n) (str ":task/field-" i) ["string" (format "val-%03d-%04d" (mod (* n 7) 997) (+ i v))]]
+    [(str "c-" n "-f" i "-v" v) (cost-subject n) (fattr i) ["string" (str "value-" n "-" i "-" v)]]))
 (def cost-subjects (env-long "XQ2_COST_SUBJECTS" 5000))
 (def per-batch 40)
 (defn cost-seed! [label]
@@ -155,28 +163,38 @@
         _ (main/sync-db (main/db-uri name))
         each (env-long "XQ2_COST_EACH" 300)
         order (vec (distinct (map #(mod (* 7919 %) cost-subjects) (range cost-subjects))))
-        [a a2 b b2 r1 r2] (map #(subvec order (* % each) (* (inc %) each)) (range 6))
-        r1 (subvec r1 0 (min 200 each)) r2 (subvec r2 0 (min 200 each))
+        forms? (not= "0" (System/getenv "XQ2_FORMS"))
+        sets (if forms? 6 2)
+        [a a2 b b2] (map #(subvec order (* % each) (* (inc %) each)) (range sets))
+        rest-order (subvec order (* sets each))
+        r1 (subvec rest-order 0 200) r2 (subvec rest-order 200 400)
         h (head name conn)
         read-pass (fn [subjects f]
                     (pg-reset!)
                     (let [t0 (System/nanoTime) statuses (frequencies (map f subjects)) ms (/ (- (System/nanoTime) t0) 1e6)]
                       {:subjects (count subjects) :statuses statuses :msPerSubject (/ ms (max 1 (count subjects)))
                        :peerReadsPerSubject (double (/ (get (pg-reads) "datomic" 0) (max 1 (count subjects))))}))
-        reach! (fn [n] (let [r (route name "v2" "reach" {"root" (cost-subject n) "basis" {"recordedPosition" h}})]
-                         (:status r)))
+        reach! (fn [n] (let [r (route name "v2" "reach" {"root" (cost-subject n) "basis" {"recordedPosition" h}
+                                                          "session" "xq2-reads" "full" true "erasureRefs" true})]
+                         [(:status r) (or (get-in r [:body "code"]) (get-in r [:body "declined"]))
+                          (when-not (= 200 (:status r)) (subs (str (get-in r [:body "message"])) 0 (min 120 (count (str (get-in r [:body "message"]))))))]))
         read! (fn [n] (let [r (route name "v1" "read" {"entityIds" [(cost-subject n)] "basis" {"recordedPosition" h}})]
                         [(:status r) (count (get-in r [:body "rows"]))]))
         ;; Uncached subject reads first: this JVM's peer is new and the transactor was restarted.
-        subject-reads {:reachCold (read-pass r1 reach!) :readRouteCold (read-pass r2 read!) :reachWarm (read-pass r1 reach!)
-                       :readRouteWarm (read-pass r2 read!)}
+        ;; The whole EAVT range of the subject, as reach/parse-entity iterates it (the reach route itself refused these toy
+        ;; rows with a null-number error, not investigated); index datoms on the entity are in this range.
+        rdb (d/db conn) id-a (d/entid rdb :triplex.entity/id)
+        eavt! (fn [n] (let [e (:e (first (d/datoms rdb :avet id-a (cost-subject n))))] [200 (count (seq (d/datoms rdb :eavt e)))]))
+        reach-status (frequencies (map reach! (take 3 r1)))
+        subject-reads {:entityRangeCold (read-pass r1 eavt!) :readRouteCold (read-pass r2 read!) :entityRangeWarm (read-pass r1 eavt!)
+                       :readRouteWarm (read-pass r2 read!) :reachRouteStatus reach-status}
         _ (pg-reset!)
         ids (atom {})
         hd #(head name conn)
         one (fn [n field seq v prior] (let [{:keys [input] fresh :ids} (touch n field seq (hd) v prior)]
                                         (swap! ids assoc [n field] (first fresh)) (commit! name input)))
         ;; Warm-up outside the measure: the first use of each writer function in this process.
-        warm (subvec order (* 6 each) (+ (* 6 each) 4))
+        warm (subvec rest-order 400 404)
         _ (do (one (warm 0) 12 900001 "w" (first (cost-cell (warm 0) 12 0))) (one (warm 1) 30 900002 "w" (first (cost-cell (warm 1) 30 0))))
         ft (interleave-measured (map (fn [x y] [#(one x 12 (+ 1000000 x) "first" (first (cost-cell x 12 0)))
                                                 #(one y 30 (+ 1000000 y) "first" (first (cost-cell y 30 0)))]) a a2))
@@ -192,15 +210,27 @@
                  (commit! name input)))
         seeded (fn [n i] (first (cost-cell n i 0))) latest (fn [n i] (@ids [n i]))
         _ (do (form (warm 2) (range 20) 900003 1 seeded) (form (warm 3) (range 40 60) 900004 1 seeded))
-        g1 (interleave-measured (map (fn [x y] [#(form x (range 20) (+ 3000000 x) 1 seeded) #(form y (range 40 60) (+ 3000000 y) 1 seeded)]) b b2))
-        g2 (interleave-measured (map (fn [x y] [#(form x (range 20) (+ 4000000 x) 2 latest) #(form y (range 40 60) (+ 4000000 y) 2 latest)]) b b2))
+        g1 (when forms? (interleave-measured (map (fn [x y] [#(form x (range 20) (+ 3000000 x) 1 seeded) #(form y (range 40 60) (+ 3000000 y) 1 seeded)]) b b2)))
+        g2 (when forms? (interleave-measured (map (fn [x y] [#(form x (range 20) (+ 4000000 x) 2 latest) #(form y (range 40 60) (+ 4000000 y) 2 latest)]) b b2)))
+        ;; Writer time without storage reads: the same 40 + 40 subjects saved again and again (all segments cached),
+        ;; one field (indexed f12 against f30) and a 20-field form (f0..f19 against f40..f59), alternating.
+        hot-n (env-long "XQ2_HOT_ROUNDS" 20)
+        ha (subvec a 0 40) ha2 (subvec a2 0 40)
+        hot1 (interleave-measured (for [r (range hot-n) [x y] (map vector ha ha2)]
+                                    [#(one x 12 (+ 6000000 (* r 10000) x) (str "hot" r) (@ids [x 12]))
+                                     #(one y 30 (+ 6000000 (* r 10000) y) (str "hot" r) (@ids [y 30]))]))
+        hb (subvec rest-order 404 424) hb2 (subvec rest-order 424 444)
+        _ (doseq [[x y] (map vector hb hb2)] (form x (range 20) (+ 7000000 x) 0 seeded) (form y (range 40 60) (+ 7000000 y) 0 seeded))
+        hot20 (interleave-measured (for [r (range hot-n) [x y] (map vector hb hb2)]
+                                     [#(form x (range 20) (+ 8000000 (* r 10000) x) (+ 10 r) latest)
+                                      #(form y (range 40 60) (+ 8000000 (* r 10000) y) (+ 10 r) latest)]))
         per-import (max 1 (quot 2400 fields))
         imp (measured #(vec (for [k (range 5)]
                               (commit! name (batch-input (str "import-" k)
                                               (for [n (range (+ 100000 (* k per-import)) (+ 100000 (* (inc k) per-import))) i (range fields)]
                                                 (cost-cell n i 0)))))))
         result {:label label :list (vec xq/listed) :holder (System/getenv "TX2_ATTRIBUTE_INDEX_HOLDER") :each each
-                :subjectReads subject-reads :firstTouch ft :secondSave ss :formFirst g1 :formSecond g2
+                :subjectReads subject-reads :firstTouch ft :secondSave ss :formFirst g1 :formSecond g2 :hotOneField hot1 :hotForm20 hot20
                 :importRowsPerCommit (* per-import fields) :import imp
                 :pgReadsByRole (pg-reads) :xqDatoms (xq-datoms (d/db conn))}]
     (emit! (str "cost-measure-" label ".json") result)
@@ -526,3 +556,52 @@
                             :eqShort [(:status long-eq) (count (get-in long-eq [:body "rows"]))]}}]
     (emit! "edge.json" result)
     (println "XQ2_EDGE" (json/write-str result))))
+
+;; ================= as-of far behind the head (design item 6) =================
+;; Run with TX2_ATTRIBUTE_INDEX=":status,:name". :status changes in almost every later commit; :name never changes.
+(def asof-subjects (env-long "XQ2_ASOF_SUBJECTS" 20000))
+(defn asof-subject [n] (format "acct/asof/subject/%05d" n))
+(defn asof-seed! []
+  (let [[name conn] (open! (str "asof-" (System/getenv "XQ2_RUN")))
+        cur (atom {})
+        _ (doseq [ns (partition-all 500 (range asof-subjects))]
+            (commit! name (batch-input (str "seed-" (first ns))
+                            (mapcat (fn [n] [[(str "s-" n "-status") (asof-subject n) ":status" ["string" (nth statuses (mod n 5))]]
+                                             [(str "s-" n "-name") (asof-subject n) ":name" ["string" (format "name-%05d" n)]]]) ns))))
+        _ (index-now! conn)
+        pin (head name conn)
+        changes (env-long "XQ2_ASOF_CHANGES" 30000)
+        t0 (System/nanoTime)]
+    (doseq [k (range changes)]
+      (let [n (mod (* k 7919) asof-subjects) e (asof-subject n)
+            {:keys [input ids]} (save-input {:seq (+ 20000000 k) :source (head name conn)
+                                             :adds [[e ":status" ["string" (nth statuses (mod (+ n k 1) 5))]]]
+                                             :retires [[(get @cur n (str "s-" n "-status")) e ":status"]]})]
+        (commit! name input)
+        (swap! cur assoc n (first ids))))
+    (let [result {:db name :pin pin :head (head name conn) :changes changes :saveSeconds (/ (- (System/nanoTime) t0) 1e9)}]
+      (emit! "asof-seed.json" result)
+      (println "XQ2_ASOF_SEED" (json/write-str result)))))
+(defn asof-query! []
+  (let [seed (slurp-json "asof-seed.json") name (get seed "db") conn (main/connection (main/db-uri name))
+        _ (main/sync-db (main/db-uri name))
+        pin (get seed "pin") db (d/db conn)
+        shapes [["count status=active (churned)" {"shape" "count" "attribute" ":status" "value" {"type" "string" "value" "active"}}
+                 :triplex.xq/s ["asof" ":status" "active"] ["asof" ":status" "active\u0000"]]
+                ["range name 5,000 entries (never changed)" {"shape" "count" "op" "range" "attribute" ":name"
+                                                              "lower" {"type" "string" "value" "name-05000"} "upper" {"type" "string" "value" "name-10000"}}
+                 :triplex.xq/s ["asof" ":name" "name-05000"] ["asof" ":name" "name-10000"]]]
+        run (fn [q basis]
+              (pg-reset!)
+              (let [t0 (System/nanoTime)
+                    b (xq! name (cond-> (merge {"account" "asof" "validAt" 1.0 "maxExamined" 10000000} q) basis (assoc "basis" basis)))]
+                {:ms (/ (- (System/nanoTime) t0) 1e6) :count (get b "count") :examined (get b "examined")
+                 :peerReads (get (pg-reads) "datomic" 0)}))
+        result (vec (for [[label q fam start end] shapes]
+                      {:shape label
+                       :headCold (run q nil) :headWarm (run q nil)
+                       :asOfCold (run q {"recordedPosition" pin}) :asOfWarm (run q {"recordedPosition" pin})
+                       :currentDatoms (count (seq (d/index-range db fam start end)))
+                       :historyDatoms (count (seq (d/index-range (d/history db) fam start end)))}))]
+    (emit! "asof-query.json" result)
+    (doseq [r result] (println "XQ2_ASOF" (json/write-str r)))))
