@@ -1127,6 +1127,42 @@ export class DatomicClient {
       for (const row of rows) for (const observe of this.rowObservers) observe(db, row);
     return rows;
   }
+  /**
+   * [DX-JRN1] One page of one field's history of one entity, newest first by (recorded position, row ID): the gateway
+   * decodes only that attribute's rows and returns `limit` of them below the `before` cursor, with `next` for the
+   * following page (null on the last). Lean layout only. The rows are the same as an unbounded history read of the
+   * entity filtered to the attribute and sorted the same way.
+   */
+  async historyPage(
+    db: string,
+    input: {
+      readonly entityId: string;
+      readonly attribute: string;
+      readonly limit: number;
+      readonly before?: { readonly position: number; readonly id: string } | null;
+      readonly basis?: Record<string, unknown>;
+    },
+  ): Promise<{ rows: readonly TripleRow[]; next: { position: number; id: string } | null }> {
+    return tracedRequest("read", "client.history-page", {}, async () => {
+      const response = await this.request<{
+        rows: WireRow[];
+        historyNext?: { position: number; id: string } | null;
+      }>("POST", `/v1/db/${db}/read`, {
+        pattern: { entityId: input.entityId },
+        history: true,
+        historyPage: {
+          attribute: input.attribute,
+          limit: input.limit,
+          ...(input.before ? { before: input.before } : {}),
+        },
+        ...(input.basis ? { basis: input.basis } : {}),
+      });
+      if (!("historyNext" in response)) throw new TypeError("History page answer without a cursor");
+      const rows = traceSync("client.rows-decode", () => response.rows.map(decodeRow));
+      for (const row of rows) for (const observe of this.rowObservers) observe(db, row);
+      return { rows, next: response.historyNext ?? null };
+    });
+  }
   async transact(
     db: string,
     input: {
