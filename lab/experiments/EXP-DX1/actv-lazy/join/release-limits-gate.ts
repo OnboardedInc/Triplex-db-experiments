@@ -274,8 +274,8 @@ async function definitionsPart(sql?: (q: string) => Promise<string>) {
       }
       const i = row.inline as any,
         r = row.ref as any;
-      assert.equal(i.first.json, r.first.json, "first release: answers differ between full documents and references");
-      if (!i.follow.refused) assert.equal(i.follow.json, r.follow.json);
+      assert.equal(sameAnswer(i.first.json), sameAnswer(r.first.json), "first release: answers differ between full documents and references");
+      if (!i.follow.refused) assert.equal(sameAnswer(i.follow.json), sameAnswer(r.follow.json));
       delete i.first.json, delete r.first.json, delete i.follow.json, delete r.follow.json;
       table.push(row);
       console.log(JSON.stringify(row));
@@ -293,7 +293,7 @@ async function definitionsPart(sql?: (q: string) => Promise<string>) {
         const reader = side.account.reader();
         jsons.push(await Promise.all(side.f.roster.map(async (s) => (await reader.readAt(s, point(p.position))).json)));
       }
-      assert.deepEqual(jsons[0], jsons[1], "chain release " + k + ": answers differ");
+      assert.deepEqual(jsons[0]!.map(sameAnswer), jsons[1]!.map(sameAnswer), "chain release " + k + ": answers differ");
       compared += jsons[0]!.length;
       const forms = cur.forms!.map((x, j) => ((j + k) % 9 === 0 ? { ...x, dueBusinessDays: (x.dueBusinessDays % 30) + 1 } : x));
       const id = "form:y" + String(k).padStart(3, "0");
@@ -312,5 +312,12 @@ async function definitionsPart(sql?: (q: string) => Promise<string>) {
   }
 }
 const strip = (x: any) => (x && typeof x === "object" ? { ...x } : x);
+/** The two stores hold the same releases at different positions (the reference store also has its definitions
+ * writes), so an answer is compared without its `basis` (each store's answers are checked against the oracle at their
+ * own basis by Reference.check). */
+const sameAnswer = (json: string) => {
+  const { basis: _basis, ...rest } = JSON.parse(json);
+  return canonical(rest);
+};
 
 if (import.meta.url === "file://" + process.argv[1]) await releaseLimitsGate(process.argv[2]!);
