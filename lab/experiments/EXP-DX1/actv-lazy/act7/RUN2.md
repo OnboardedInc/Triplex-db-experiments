@@ -91,7 +91,8 @@ rows check), so a wrong regeneration fails loudly; it cannot hide a store fault.
 
 ## 3. The miniature (Mac, diagnostic times; evidence `evidence/DX-ACT7/mini/`)
 
-`act7/miniature.sh` under one heavy token: a fresh stack in the lab VM (laptop profile, the held toy's write-gateway
+Final runs: `unadopted`, `plain`, `ten` and the two regressions at `9aaf0f3eb`; `three` at `a01f8e59c`;
+`three-control` at `32c017ac8` (the pause check counting offered frames). `act7/miniature.sh` under one heavy token: a fresh stack in the lab VM (laptop profile, the held toy's write-gateway
 switches), the SCALE1 toy fixture (8 subjects in each of ten accounts), AGE1's own code at its load pin `5cda4ab20` in
 its own transactor and peer JVM (`act7/aged_toy.clj`: adoption of 3 subjects per account plus probe and idle subjects,
 4 probe saves at offsets 5 to 8, 40 single native saves then 360 grouped saves in groups of 8; aged head 406), then this
@@ -105,22 +106,26 @@ the progress precondition, `DX_ACT7_TAPE=production-S:394`, bounded ledger pages
 | `plain` | aged seal, `DX_ACT7_PLAIN_ORACLE=1`, stream, 3 accounts | **Fails**: "the store's facts differ from the oracle's world: pl:s00000000 at release 1" (the aged answer at position 398 against the seed's) |
 | `three` | aged seal, stream, kill, 3 accounts, control case 8 s then the several-accounts case 8 s | **Pass** (counts below) |
 | `ten` | the same with 10 accounts, case window 20 s | **Pass** (counts below) |
+| `three-control` | `three` without the kill, `DX_ACT7_CONTROL=1:0.5:2:300:3` (account 1 paused 2 s, then paced 300 ms for 3 s), window 12 s | **Pass**: while paused account 1 offered 0 frames and took 0 turns while accounts 0 and 2 took 8 each; paced, 5 turns at least 302.0 ms apart; it finished at 4.4 s against 1.9 and 2.0 s for the others; all three exact (474 changes, 168 notices each, 0 refused) |
 | `regress-default` | fresh toy, nothing set (the held campaign's windows) | **Pass**: 86 changes and 8 notices equal to the oracle, 8 Publish windows 2 of 2 inside 1 s, 0 read and 0 visibility failures |
 | `regress-act5` | fresh toy, ACT5's cases `own23` and `multi-p` with the held tape, no ACT7 option | **Pass**: 474 changes, 160 notices, independent rule 8 of 8 per account, 0 refused |
 
-| Counts | Three accounts | Ten accounts |
+| Counts (final runs) | Three accounts (`final2-three`, `a01f8e59c`) | Ten accounts (`final-ten`, `9aaf0f3eb`) |
 | --- | --- | --- |
 | Aged adoption | 50 adopted subjects checked at the aged head: 33 aged, 96 aged rows and 54 seed rows equal to the tape | same |
-| Changes, notices (R1 then the release), ledgers per account | 474; 8 + 160 in order; 8 | 474; 8 + 160; 8 |
+| Changes; notices (R1 then the release) in order; ledgers, per account | 474; 8 + 160; 8 | 474; 8 + 160; 8 |
 | Reads and fact sets equal to the oracle, per account | 16 and 16 (8 subjects × 2 releases) | 16 and 16 |
 | Independent form rule | 8 of 8 owing, 474 changes, 160 notices, per account | same, 80 subjects in all |
 | Frames refused | 0 | 0 |
-| Kill and resume | 3 children killed (SIGKILL) inside settlement; the runner finished the rest | 10 children at once: 6 killed inside settlement, 4 finished first; the runner resumed and committed 14 frames |
-| Saves (production-S, all ten accounts) | 222 in the control case, 222 in the case: all acknowledged | 476 in the publishing accounts: all acknowledged |
-| Settled | 12.3 to 12.5 s after the window opened (8 s window; the children ran one after another then) | 5.6 to 8.6 s into the 20 s window, while saving; the admission lane granted 14 frames and declined 39 grant checks while saves waited |
-| Ledger journal pages | 172 bounded pages of at most 3 entries, 0 skipped | 308, 0 skipped |
+| Kill and resume (children all at once, killed 1.2 to 2.1 s after start) | 1 child killed inside settlement, 2 finished first; the runner resumed and committed 2 frames | 5 killed inside settlement, 5 finished first; the runner resumed and committed 11 frames |
+| Saves (production-S, all ten accounts) | control case 222, the case 222: all acknowledged | 476 in the ten accounts: all acknowledged |
+| Settled | 3.7 to 4.3 s into the 8 s window, while saving; the admission lane granted 2 frames, declined 24 checks | 4.9 to 7.3 s into the 20 s window, while saving; granted 11, declined 28 |
+| Ledger journal pages | 173 bounded pages of at most 3 entries, 0 skipped | 305, 0 skipped |
 
-The final runs on the pushed head are listed in section 8 with their archives.
+An earlier three-account run (`m8`, children killed one after another at 210 to 382 ms) killed all three inside
+settlement and passed with the same counts. Pause and pace: `final3-three-control` (section 6.4's mechanism at toy
+size; result below).
+
 
 ## 4. Why so many frames (database-free counts, `act7/frames-account.ts`)
 
@@ -305,5 +310,7 @@ All four: about 11 h 15 min to 16 h 30 min, USD 12.30 to 18.
 
 ## 8. Evidence (private, `evidence/DX-ACT7/`)
 
-`mini.tar.gz`: every miniature run (logs, toy handoffs, the replay cross-check, each case's counts, frame counters);
-`frames-account-*.json`: section 4's counts. The runs on the pushed head are named `final-*` inside the archive.
+`mini.tar.gz` (SHA-256 `01d83620f5bd…`): every miniature run (`m1` to `m9` while building, `final-*`, `final2-*`,
+`final3-*`; logs, the toy handoffs, the replay cross-checks, each case's counts, frame counters, the phase files);
+`frames-account-*.json`: section 4's counts (R1 base at 512 subjects; R2 base at 256; today's and calibrated
+coefficients).
