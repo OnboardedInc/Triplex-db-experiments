@@ -20,7 +20,9 @@
 
 (def enabled (= "1" (System/getenv "TX2_INDEX_HINTS")))
 ;; [DX-XQ10] Lab knob for finding which touch costs (TX2_INDEX_HINTS_PARTS, default every part): range (the owner's
-;; entry range), keys (each entry key, EAVT on its owner and AVET by value), decl (the declaration's sequence datom).
+;; entry range), keys (each entry key, EAVT on its owner and AVET by value), decl (the declaration's sequence datom),
+;; aevt (the AEVT neighbourhood of each entry: Datomic's own lookup for an entry assertion or retraction, which the
+;; apply's io-stats show as the excess; not in the default).
 ;; Each subset is its own code and so its own ident, installed only with TX2_INDEX_HINTS=1.
 (def parts (set (map keyword (re-seq #"[a-z]+" (or (not-empty (System/getenv "TX2_INDEX_HINTS_PARTS")) "range,keys,decl")))))
 
@@ -47,6 +49,10 @@
                                         (doseq [k (:ix-keys payload)]
                                           (when owner (first (d/seek-datoms db :eavt owner ix k)))
                                           (first (d/seek-datoms db :avet ix k)))))
+                 (parts :aevt) (conj '(when-let [ix (d/entid db :triplex.ix/entry)]
+                                        (when owner
+                                          (first (d/seek-datoms db :aevt ix owner))
+                                          (doseq [k (:ix-keys payload)] (first (d/seek-datoms db :aevt ix owner k))))))
                  (parts :decl) (into declaration-touches))))
 (def subject-ident (keyword "triplex.subject" (str "hints-" (subs (schema/sha256 (pr-str subject-code)) 0 24))))
 
@@ -66,6 +72,11 @@
                                                 e (cond (number? x) x (string? x) (owner (public x)))]
                                             (when (and e (string? k)) (first (d/seek-datoms db :eavt e ix k)))
                                             (when (string? k) (first (d/seek-datoms db :avet ix k)))))))
+                 (parts :aevt) (conj '(when-let [ix (d/entid db :triplex.ix/entry)]
+                                        (doseq [op ops :when (and (list? op) (= :triplex.ix/entry (nth op 2 nil)))]
+                                          (let [x (second op) k (nth op 3 nil)
+                                                e (cond (number? x) x (string? x) (owner (public x)))]
+                                            (when (and e (string? k)) (first (d/seek-datoms db :aevt ix e k)))))))
                  (parts :decl) (into declaration-touches))))
 (def general-ident (keyword "triplex.write" (str "prefetch-" (subs (schema/sha256 (pr-str general-code)) 0 24))))
 
