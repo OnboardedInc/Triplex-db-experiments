@@ -120,10 +120,11 @@ type SaveOperation = Parameters<NonNullable<StorageAdapterService["saveIdentity"
 export function orderedSaveShape(
   operations: readonly SaveOperation[],
   meta: { readonly commandId?: string; readonly enforce?: unknown; readonly actor?: string } | undefined,
-): { readonly block: "one-byte" | "wide"; readonly reason: string } | { readonly block?: undefined; readonly reason: string } {
+  maxOwners = 1,
+): { readonly block: "one-byte" | "wide"; readonly reason: string; readonly owners?: number } | { readonly block?: undefined; readonly reason: string } {
   if (meta?.commandId === undefined) return { reason: "no-command-id" };
   if (meta.enforce !== undefined) return { reason: "constraints" };
-  let entity: string | undefined;
+  const entities = new Set<string>();
   let facts = 0,
     retired = 0;
   for (const op of operations) {
@@ -132,24 +133,41 @@ export function orderedSaveShape(
       continue;
     }
     if (op.op !== "assert") return { reason: "pattern-retraction" };
-    if (entity !== undefined && op.entityId !== entity) return { reason: "several-entities" };
-    entity = op.entityId;
+    entities.add(op.entityId);
+    // [DX-S3] With several owners (maxOwners > 1), up to maxOwners entities of one account; otherwise exactly one.
+    if (entities.size > maxOwners) return { reason: maxOwners === 1 ? "several-entities" : "over-owner-bound" };
     if (op.entityId.startsWith("_")) return { reason: "system-entity" };
     if (op.attribute.startsWith(":_")) return { reason: "system-attribute" };
     if (op.value.type === "ref") return { reason: "reference-value" };
     facts++;
   }
   if (facts + retired === 0) return { reason: "empty" };
+  if (entities.size > 1 && !oneAccount([...entities])) return { reason: "several-accounts" };
   if (facts > SUBJECT_SAVE_FACTS || retired > SUBJECT_SAVE_FACTS) return { reason: "over-subject-bound" };
   // Journal rows: position, instant, the optional actor, command, correlation, causation and configuration rows, one
-  // changed-entity row per entity (at most one plus the retracted facts' owners), and one change per fact and retirement.
+  // changed-entity row per entity (at most the asserted entities plus the retracted facts' owners), and one change per
+  // fact and retirement.
   const m = meta as Record<string, unknown>;
   const journal =
     3 +
     ["actor", "correlationId", "causationId", "configSnapshot"].filter((k) => m[k]).length +
-    (1 + retired) +
+    (Math.max(1, entities.size) + retired) +
     (facts + retired);
-  return { block: facts + journal <= 256 ? "one-byte" : "wide", reason: "ordered" };
+  return {
+    block: facts + journal <= 256 ? "one-byte" : "wide",
+    reason: "ordered",
+    ...(entities.size > 1 ? { owners: entities.size } : {}),
+  };
+}
+
+/** [DX-S3] The per-subject writer's bound with `TX2_SUBJECT_SEVERAL_OWNERS=1`: owners written by one save. */
+export const SUBJECT_SAVE_OWNERS = 4;
+// [DX-S3] Why: an account is a subject's namespace (acct/<account>/...), as the gateway reads it (group/classify); one
+// subject's save stays inside one account. Rejected: reading a stored account attribute (a request per owner).
+const accountOf = (id: string) => /^acct\/([A-Za-z0-9_-]{1,64})\/./.exec(id)?.[1];
+function oneAccount(ids: readonly string[]) {
+  const accounts = ids.map(accountOf);
+  return accounts.every((a) => a === undefined) || (accounts.every((a) => a !== undefined) && new Set(accounts).size === 1);
 }
 
 export const makeDatomicStorageAdapter = (
@@ -187,6 +205,14 @@ export const makeDatomicStorageAdapter = (
      * with TRIPLEX_DATOMIC_SAVE_SIZE_RULE=1.
      */
     readonly saveSizeRule?: boolean;
+    /**
+     * [DX-S3] With `orderedSaves`, a save that writes two to four owners of one account (a form page that also updates
+     * the subject's profile) gets one ordered block spanning every owner, so the gateway's several-owners writer
+     * (`TX2_SUBJECT_SEVERAL_OWNERS=1`) can admit it. Each answer's writer is counted in `client.saveRoutes`
+     * (`writer:per-subject`, or `general:<reason>` with the gateway's typed reason). Default off; also on with
+     * TRIPLEX_DATOMIC_SEVERAL_OWNERS=1.
+     */
+    readonly severalOwners?: boolean;
   } = {},
 ): StorageAdapterService => {
   // [DX-T1] Why: Effect scopes include staging/validation and always close on typed failure or interruption.
@@ -205,6 +231,9 @@ export const makeDatomicStorageAdapter = (
     options.orderedSaves ?? process.env["TRIPLEX_DATOMIC_ORDERED_SAVES"] === "1";
   const saveSizeRule =
     options.saveSizeRule ?? process.env["TRIPLEX_DATOMIC_SAVE_SIZE_RULE"] === "1";
+  const severalOwners =
+    orderedSaves && (options.severalOwners ?? process.env["TRIPLEX_DATOMIC_SEVERAL_OWNERS"] === "1");
+  const count = (reason: string) => client.saveRoutes.set(reason, (client.saveRoutes.get(reason) ?? 0) + 1);
   const route = (state: TransactionState | undefined, reason: string) => {
     client.saveRoutes.set(reason, (client.saveRoutes.get(reason) ?? 0) + 1);
     if (state?.diagnostic) state.diagnostic.saveRoute = reason;
@@ -556,6 +585,18 @@ export const makeDatomicStorageAdapter = (
             Number.isSafeInteger(ack.datoms) &&
             Number(ack.datoms) >= 0
           ) {
+            // [DX-S3] Why: the gateway's typed reason for a save of several owners it sent to the general writer is on
+            // the answer; count it beside the SDK's own reasons. Rejected: a second request to ask.
+            if (severalOwners && state.orderedSave) {
+              const answer = ack as Record<string, unknown>;
+              count(
+                typeof answer["subjectSave"] === "string"
+                  ? "writer:per-subject"
+                  : typeof answer["subjectDeclined"] === "string"
+                    ? `general:${answer["subjectDeclined"]}`
+                    : "writer:general",
+              );
+            }
             const p = validateTagged(ack.position),
               t = validateTagged(ack.t);
             if (
@@ -1010,8 +1051,9 @@ export const makeDatomicStorageAdapter = (
                     ? { reason: "not-lean" }
                     : !state.serverRecordTime
                       ? { reason: "client-record-time" }
-                      : orderedSaveShape(operations, meta);
+                      : orderedSaveShape(operations, meta, severalOwners ? SUBJECT_SAVE_OWNERS : 1);
               route(state, shape.block === undefined ? `runtime:${shape.reason}` : `ordered:${shape.block}`);
+              if ("owners" in shape && shape.owners !== undefined) count(`owners:${shape.owners}`);
               if (shape.block === undefined) return undefined;
               const identity = shape.block === "one-byte" ? orderedSaveIdentity() : wideOrderedSaveIdentity();
               state.orderedSave = identity.token;

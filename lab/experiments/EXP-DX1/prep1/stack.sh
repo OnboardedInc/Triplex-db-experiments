@@ -24,6 +24,10 @@ if [[ -f /config/subject-hints ]]; then export TX2_SUBJECT_HINTS=$(cat /config/s
 if [[ -f /config/tail-sql ]]; then export PREP1_TAIL_SQL=$(cat /config/tail-sql); fi
 # [DX-S2] Present only for the DX-S2 production gate: every save through the product's path, orderedSaves 0 or 1.
 if [[ -f /config/s2-product ]]; then export DX_S2_PRODUCT=$(cat /config/s2-product); fi
+# [DX-S3] Present only for the DX-S3 production gate: the several-owners option in the gateway and the SDK (0 or 1).
+if [[ -f /config/subject-owners ]]; then
+  export TX2_SUBJECT_SEVERAL_OWNERS=$(cat /config/subject-owners) DX_S3_OWNERS=$(cat /config/subject-owners)
+fi
 if [[ "$PREP1_MODE" == subject-native-suite ]]; then
   # [DX-PREP1] Why: exercise the stock native suite with the real process setting on fresh memory scopes.
   # Rejected: adding PostgreSQL and a transactor for tests written to run in one JVM.

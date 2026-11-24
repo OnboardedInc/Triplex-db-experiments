@@ -36,6 +36,8 @@ export function makeDatomicRuntime(options: {
   readonly orderedSaves?: boolean;
   /** [DX-S2] The save-size rule (see the adapter option). Default off. */
   readonly saveSizeRule?: boolean;
+  /** [DX-S3] With orderedSaves, one ordered block for a save of two to four owners (see the adapter option). Default off. */
+  readonly severalOwners?: boolean;
 }): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> {
   const connection = Layer.effect(
     Connection,
@@ -77,6 +79,7 @@ export {
   SaveRequestTooLarge,
   SAVE_LIMIT_FACTS,
   SUBJECT_SAVE_FACTS,
+  SUBJECT_SAVE_OWNERS,
   orderedSaveShape,
 } from "./DatomicStorageAdapter.js";
 export { makeDatomicQueryExecutor } from "./DatomicQueryExecutor.js";

@@ -53,8 +53,12 @@ const db = init.db;
 const productMode = process.env.DX_S2_PRODUCT;
 assert(productMode === undefined || productMode === "0" || productMode === "1", "DX_S2_PRODUCT is 0 or 1");
 const { productSaver } = await import("../s2/product.ts");
+// [DX-S3] With DX_S3_OWNERS set (only with DX_S2_PRODUCT=1), the SDK's severalOwners option off ("0") or on ("1").
+const severalOwners = process.env.DX_S3_OWNERS;
+assert(severalOwners === undefined || ((severalOwners === "0" || severalOwners === "1") && productMode === "1"), "DX_S3_OWNERS is 0 or 1, with DX_S2_PRODUCT=1");
 const product = productMode === undefined ? undefined
-  : await productSaver([url], scope, productMode === "1" ? { orderedSaves: true, saveSizeRule: true } : {});
+  : await productSaver([url], scope, productMode === "1"
+    ? { orderedSaves: true, saveSizeRule: true, ...(severalOwners === undefined ? {} : { severalOwners: severalOwners === "1" }) } : {});
 const owners = new Map<string, [number, number]>();
 for (const cell of cellsToRun) for (const o of cell.tape) owners.set(scaleOwner(o.account, o.person), [o.account, o.person]);
 const fields = new Map<string, Row[]>();
@@ -169,7 +173,40 @@ const formWork = product ? await (async () => {
       datoms: median(xs.map((r) => r.datoms)), walBytesMedian: median(xs.map((r) => r.walBytes)),
       applyMsMedianDiagnostic: median(xs.map((r) => r.applyMs).filter((x) => typeof x === "number")) };
   };
-  return { form: "20 fields replaced, one subject", first: by("first after seed"), second: by("second"), records };
+  const one = { form: "20 fields replaced, one subject", first: by("first after seed"), second: by("second"), records };
+  if (severalOwners === undefined) return one;
+  // [DX-S3] The same form with two fields mapped to the subject's profile: 20 task fields and 2 profile fields
+  // replaced in one save (two owners of one account), 12 subjects, two saves each.
+  const twoRecords: Record<string, unknown>[] = [];
+  for (let i = 0; i < 12; i++) {
+    const e = scaleOwner(5, 90_100 + i), p = scaleOwner(5, 90_200 + i);
+    const facts = (tag: string) => [
+      ...Array.from({ length: 20 }, (_, f) => ({ e, a: slotAttribute(f), v: { type: "string" as const, value: sha([tag, e, f]).slice(0, 57) } })),
+      ...Array.from({ length: 2 }, (_, f) => ({ e: p, a: `:employee/field-${f}`, v: { type: "string" as const, value: sha([tag, p, f]).slice(0, 57) } })),
+    ];
+    const seeded = (await product.seed(facts("seed"), `${attempt}-form2-seed-${i}`, SEED_VALID_FROM)).input;
+    let rows = [...business(seeded, e), ...business(seeded, p)];
+    for (const save of ["first after seed", "second"]) {
+      const before = wal();
+      const sent = await product.save(0, e, facts(save), rows, `${attempt}-form2-${i}-${save}`);
+      const after = wal();
+      const ack: any = sent.ack;
+      twoRecords.push({ save, writer: ack.subjectSave ? "per-subject" : "general", orderedIds: ack.subjectOrderedIds === true,
+        owners: ack.subjectOwners ?? null, declined: ack.subjectDeclined ?? null,
+        readsInsideApply: ack.nativeIoStats?.reads ?? null, datoms: ack.datoms, walBytes: after - before,
+        newIds: sent.input.newIds.length, applyMs: ack.nativeComputeMs ?? null });
+      rows = [...business(sent.input, e), ...business(sent.input, p)];
+    }
+  }
+  const by2 = (save: string) => {
+    const xs = twoRecords.filter((r) => r.save === save) as any[];
+    return { saves: xs.length, writers: Object.fromEntries(["per-subject", "general"].map((w) => [w, xs.filter((r) => r.writer === w).length])),
+      orderedIds: xs.filter((r) => r.orderedIds).length,
+      sqlReadsInsideApply: { total: xs.reduce((n, r) => n + (r.readsInsideApply?.sql ?? 0), 0), max: Math.max(...xs.map((r) => r.readsInsideApply?.sql ?? 0)) },
+      datoms: median(xs.map((r) => r.datoms)), walBytesMedian: median(xs.map((r) => r.walBytes)),
+      applyMsMedianDiagnostic: median(xs.map((r) => r.applyMs).filter((x) => typeof x === "number")) };
+  };
+  return { ...one, twoOwners: { form: "20 task fields and 2 profile fields replaced, two owners", first: by2("first after seed"), second: by2("second"), records: twoRecords } };
 })() : undefined;
 
 const summary = {
@@ -200,7 +237,8 @@ const gatewayStats = await reader.request<{ generalHints?: Record<string, number
 const writeOptions = await reader.request<{ options?: { generalPrefetch?: boolean; subjectHints?: unknown } }>(
   "GET", `/v1/db/${db}/write-options`).catch(() => undefined);
 console.log("REAL2_GATE " + JSON.stringify({ ...summary, wideSaves,
-  productPath: productMode ?? null, saveRoutes: product?.routes() ?? null, formWork: formWork ?? null, wideOption: (writeOptions as any)?.subjectWide ?? null, generalHints: gatewayStats.generalHints ?? null,
+  productPath: productMode ?? null, saveRoutes: product?.routes() ?? null,
+  ...(severalOwners === undefined ? {} : { severalOwners, severalOwnersOption: (writeOptions as any)?.subjectSeveralOwners ?? null }), formWork: formWork ?? null, wideOption: (writeOptions as any)?.subjectWide ?? null, generalHints: gatewayStats.generalHints ?? null,
   generalPrefetchOption: writeOptions?.options?.generalPrefetch ?? null,
   subjectHints: gatewayStats.subjectHints ?? null, subjectHintsOption: writeOptions?.options?.subjectHints ?? null }));
 await product?.close();
