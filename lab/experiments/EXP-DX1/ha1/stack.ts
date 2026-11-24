@@ -101,7 +101,7 @@ export class Stack {
     cpuCount?: number,
   ) {
     assert(!this.members.has(role));
-    assert(cpuCount === undefined || (["DX-CHK1", "DX-THIN1"].includes(this.holder) && cpuCount === 3));
+    assert(cpuCount === undefined || (["DX-CHK1", "DX-THIN1", "DX-IMP2"].includes(this.holder) && cpuCount === 3));
     const image = postgresRole(role) ? this.pgIds.get(site)! : site.datomicId;
     const cross = this.a !== this.b;
     const server = process.platform === "linux";
@@ -563,7 +563,7 @@ export class Stack {
   }
   async gateway(role: "write" | "read", site: Site, pg: "pg" | "target", store: string,
     combination?: { settings: Record<string, string>; java: string; cores: number }) {
-    assert(!combination || ["DX-CHK1", "DX-THIN1"].includes(this.holder));
+    assert(!combination || ["DX-CHK1", "DX-THIN1", "DX-IMP2"].includes(this.holder));
     const size = process.platform === "linux" ? "1600" : "320";
     const fair = this.e.mode === "load-fair";
     const frontier = this.e.mode.startsWith("load-frontier-") || (microLoad(this.e.mode) && !fair);

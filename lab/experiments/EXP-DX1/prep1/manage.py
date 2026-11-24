@@ -104,6 +104,13 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
         raise SystemExit("Wide saves need the ordered rolling-recovery fixture, or the production gate under DX-S1")
     if wide == "1":
         (config / "subject-wide").write_text("1\n")
+    # [DX-IMP2] Why: rerun the production exactness gate with the whole-subject import bound on (DX_IMP2_WHOLE=1).
+    # Rejected: passing the setting when unset (the default gate stays as it was).
+    import_whole = os.environ.get("DX_IMP2_WHOLE", "0")
+    if import_whole not in ("0", "1") or (import_whole == "1" and (mode, holder) != ("production", "DX-IMP2")):
+        raise SystemExit("The whole-subject import bound runs on the production gate under DX-IMP2")
+    if import_whole == "1":
+        (config / "import-whole").write_text("1\n")
     if combined:
         (config / "subject-retirement").write_text("1\n")
         (config / "chk1-replay").write_text("1\n")
