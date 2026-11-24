@@ -127,3 +127,89 @@ so the Assistant page never lists a tool that does not exist. Build the screens 
 `basis` is `{ validAt?, recordedAt?, position? }` on every reading tool, with `recordedAt` and `position` exclusive;
 times are ISO text or epoch milliseconds. `entity` and `root` parameters arrive on the existing subject tools in step 1;
 `change_feed` gains `entity?`, `actor?`, `summary?` in step 3.
+
+## Questions across subjects (DX-XQ8)
+
+**Four more tools** (group "Across subjects"), on the read gateway's two question routes from `exp/DX-XQ6-exact-sweep`
+(`TX2_ID_LISTS` and `TX2_SWEEP`, now on in every demo stack through `demo/server/profile.mjs`; `server-up.sh` refuses
+to finish unless the read gateway has both, and writes `questionRoutes` into the ready file):
+
+| Tool | What it answers |
+| --- | --- |
+| `list_kinds` | The kinds of entity in one account (ID prefixes after `acct/<account>/`), each with its ID count from the ID list; a "roots only" shape where one applies (`pl:{8 digits}`). |
+| `describe_kind` | The attributes seen on the first entities of a kind (default 24, in ID order), with value types and examples; protected attributes marked not filterable, their values never returned. |
+| `list_ids` | The IDs of one kind, or their exact count, at the head, a position or a record time. No valid-time axis. |
+| `ask_across_subjects` | Up to 8 conditions (all required) on one kind of one account, answered on the slow exact route at one position and one valid time: a list with columns, a count, or a count per value. Modes `fill` (default), `toEnd`, `page`; the store's cursor. |
+
+Every answer states the position and valid time it holds for (`holdsFor`), whether it is complete, the subjects
+examined and that it reads stored facts. Every typed refusal of the store comes back as `{ code, message, explanation,
+storeCode, storeMessage, refused: true }`; busy answers (`SweepBusy`, `IndexBusy`) carry `busy: true` and
+`retryAfterMs`, and the page retries them, showing "Busy, retrying".
+
+**One place sends the question calls**: `questionClient()` in `examples/demo-mcp/src/questions.ts`. Unset, it is the
+connection's read gateway. `TRIPLEX_QUESTION_READER_URL=http://127.0.0.1:<port>` (or `questionReaderUrl` in the
+connection file) sends the ID list and sweep requests to a separate question reader (`exp/DX-XQ7-question-reader`)
+serving the same database; nothing else moves.
+
+**The fast answer from the index** has one marked place: `fastIndex()` in `questions.ts` (the tools) and
+`FastIndexSlot` in `examples/console/src/pages/questions.tsx` (the page). Both say it is not built yet.
+
+**The page** is `/questions` ("Ask across subjects" in the sidebar). `?ask=<question JSON>` opens it filled in; every
+`ask_across_subjects` answer's `consoleUrl` uses it.
+
+**Proofs** (on a second toy, never this one):
+
+```
+TRIPLEX_DEMO_STATE=~/.triplex-demo/connection-<name>.json node examples/demo-mcp/src/prove-questions.ts --out DIR [--keep]
+node examples/console/e2e/questions-pass.mjs --url http://127.0.0.1:<its console port> --out DIR [--protected-url URL]
+```
+
+`prove-questions.ts` needs the second toy started with `DX_XQ3_ERASURE_DIRECTORY=1` (its protected scope removes values
+on request); `--keep` leaves that scope and writes `connection-xq8prot.json` for a page server on it.
+
+## Switch the owner's console to the questions build (keeps the toy's data)
+
+Run in the worktree of `exp/DX-XQ8-console-questions`. The toy's working copy (`tx2-dxdemo1-toy-work`) is kept: no
+`--reset` anywhere below.
+
+1. Build once (dependencies, the SDK, the web app):
+
+   ```
+   pnpm install --store-dir "$(git rev-parse --path-format=absolute --git-common-dir)/../.pnpm-store" --frozen-lockfile --offline
+   node_modules/.bin/turbo run build --filter=@triplex-build/triplex-datomic
+   (cd examples/console && pnpm run build)
+   ```
+
+2. Stop the console server, the forwards and the stack. PostgreSQL shuts down cleanly and the working copy stays:
+
+   ```
+   bash demo/toy/down.sh
+   ```
+
+   It must end with `DEMO DOWN in N s; working copy: shut down`.
+
+3. Start it again from this worktree, with both question routes on (they are in the profile now) and the console server
+   on 127.0.0.1:28580:
+
+   ```
+   bash demo/toy/up.sh
+   ```
+
+   It must print `DEMO READY head=<the same head as before>` and the line `Console: http://127.0.0.1:28580/`. A head
+   lower than before, or `DEMO READY` missing, means stop and look at the output; nothing was deleted.
+
+4. Point the assistant's MCP server at this worktree (from the main checkout, where it is registered), then start a new
+   Claude session:
+
+   ```
+   claude mcp remove triplex-demo
+   claude mcp add triplex-demo -- node <this worktree>/examples/demo-mcp/src/mcp.ts
+   ```
+
+5. Reload the console tab. "Ask across subjects" is in the sidebar.
+
+**What changes:** the stack's containers are new (new prefix), both gateways have `TX2_ID_LISTS=1`, `TX2_SWEEP=1` and a
+fresh cursor key; the console and the MCP server run this branch's code. **What is lost:** about a minute of console
+time, any open question's cursor, and the old console server's log (`demo-toy/logs/console.log` is rewritten). No data.
+**To go back:** `bash demo/toy/down.sh`, then `bash demo/toy/up.sh` in the previous worktree (again without
+`--reset`), and register the MCP server there.

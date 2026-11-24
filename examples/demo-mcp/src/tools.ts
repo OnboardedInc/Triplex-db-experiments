@@ -9,6 +9,7 @@ import { z } from "zod";
 import { evaluateDerivation } from "./derive.ts";
 import { runQuery } from "./query.ts";
 import { createEntity, listEntities, readEntity, resolveBasis, typingFor } from "./entities.ts";
+import { askAcross, describeKind, listIds, listKinds, type AskInput } from "./questions.ts";
 import { defineEntityType, describeEntityType, listEntityTypes, listReleases, moveLive, VALUE_TYPES } from "./releases.ts";
 import { caller, Demo, DemoError, entityKinds, stateFile, type Actor } from "./store.ts";
 
@@ -19,12 +20,13 @@ export type Group =
   | "Subjects"
   | "Time"
   | "Questions"
+  | "Across subjects"
   | "Changes"
   | "The feed"
   | "Derivations"
   | "Removal";
 export const groups: readonly Group[] = [
-  "The database", "Types", "Entities", "Subjects", "Time", "Questions", "Changes", "The feed", "Derivations", "Removal",
+  "The database", "Types", "Entities", "Subjects", "Time", "Questions", "Across subjects", "Changes", "The feed", "Derivations", "Removal",
 ];
 
 export type Shape = z.ZodRawShape;
@@ -75,6 +77,12 @@ const entityRef = {
 };
 const scalar = z.union([z.string(), z.number(), z.boolean()]);
 const values = z.union([scalar, z.array(scalar).max(64)]);
+const questionValue = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.object({ type: z.string(), value: z.union([z.string(), z.number(), z.boolean()]) }),
+]);
 const basisParams = (b: { validAt?: string | number | undefined; recordedAt?: string | number | undefined; position?: number | undefined } | undefined) =>
   b ? { validAt: b.validAt as string | undefined, recordedAt: b.recordedAt as string | undefined, position: b.position } : {};
 const changeNote =
@@ -99,7 +107,20 @@ export const routes = {
   configuration: () => "/configuration",
   query: () => "/query",
   assistant: (toolName?: string) => `/assistant${toolName ? "#" + toolName : ""}`,
+  // [DX-XQ8] The "Ask across subjects" page; ask carries the question so the link opens it filled in.
+  questions: (ask?: object) => `/questions${ask ? "?ask=" + encodeURIComponent(JSON.stringify(ask)) : ""}`,
 };
+
+/**
+ * [DX-XQ8] Where one answer row opens: a subject's root on its Subject page, any other entity on its Entity page, both
+ * at the position and valid time the answer holds for (the console's basis parameters).
+ */
+export function rowRoute(d: Demo, id: string, position: number, validAt: string | null) {
+  const at = { recorded: position, valid: validAt ?? undefined };
+  const m = /^acct\/([^/]+)\/pl:(\d{8})$/.exec(id);
+  const known = m && d.connection.roster.some((r) => r.account === m[1]);
+  return known ? routes.subject(m![1]!, Number(m![2]), at) : routes.entity(id, at);
+}
 
 // ---- the catalogue ----------------------------------------------------------------------------------------------
 
@@ -498,6 +519,118 @@ export const tools: Tool[] = [
     run: (d, a) => d.removeOnRequest(a.account, a.subject),
     route: () => routes.about() + "?tab=limits",
   }),
+  // ---- [DX-XQ8] questions across subjects (the read gateway's ID list and slow exact routes) ------------------------
+  tool({
+    name: "list_kinds",
+    title: "Kinds of entity in an account",
+    group: "Across subjects",
+    sentences: ["What kinds of entity does account-003 hold, and how many of each?"],
+    description:
+      "The kinds of entity one account holds (the ID prefixes after acct/<account>/, such as pl: for subjects, i9: for tasks, review: for reviews), each with its count of IDs from the store's ID list, at the head, a past position or a past record time. A kind whose first ID is a prefix and a number also gets a 'roots only' shape (pl:{8 digits} keeps the subjects' root records and drops their placements). Counts are IDs with a fact recorded at or before the position the answer states (holdsFor.position); an ID list has no valid-time axis. Reads stored facts; one read per kind plus the counts, each count stopped at a ceiling and marked countExact false if it stops.",
+    input: {
+      account,
+      basis: basis.describe("When to read: { position?, recordedAt? } (validAt is ignored: an ID list has no valid-time axis); default the latest position"),
+      ceilingMs: z.number().int().min(100).max(20_000).optional().describe("Longest time to spend counting one kind (default 3,000 ms)"),
+    },
+    changes: false,
+    run: (d, a) => listKinds(d, a),
+    route: (a) => routes.questions({ account: a.account }),
+  }),
+  tool({
+    name: "describe_kind",
+    title: "Attributes of a kind",
+    group: "Across subjects",
+    sentences: ["What attributes do the tasks of account-003 have?"],
+    description:
+      "The attributes seen on the first entities of one kind in one account (in ID order, default 24), at one position and valid time: each attribute's value types, how many of the sampled entities have it, and a few example values. When the database declares protected attributes, each one is marked protected and not filterable, with the reason, and its values are never returned (the store's own refusal of a question naming it is how it is found). An attribute seen only on later entities is not listed; any attribute name can still be asked. Reads stored facts; holdsFor states the position and valid time.",
+    input: {
+      account,
+      prefix: z.string().max(512).describe("The kind: the text the IDs start with after acct/<account>/, e.g. i9: (tasks), pl: (subjects), review:"),
+      shape: z.string().max(512).optional().describe('Optional ID shape after acct/<account>/, e.g. "pl:{8 digits}" keeps subject roots only; tokens {N digits}, {digits}, {segment}'),
+      basis,
+      sample: z.number().int().min(1).max(200).default(24).describe("How many entities to sample, in ID order"),
+    },
+    changes: false,
+    run: (d, a) => describeKind(d, a),
+    route: (a) => routes.questions({ account: a.account, kind: { prefix: a.prefix, shape: a.shape } }),
+  }),
+  tool({
+    name: "list_ids",
+    title: "List the IDs of one kind",
+    group: "Across subjects",
+    sentences: ["How many tasks does account-003 have?", "List the first 100 subject IDs of account-003 at position 200."],
+    description:
+      "The IDs of one kind in one account in ID order, from the store's ID list route (one ordered range read, nothing read per entity), or their exact count (pages followed to the end or to the ceiling). At the head (default), a past position (basis.position) or a past record time (basis.recordedAt); the answer states the position it holds for (holdsFor.position) and that it has no valid-time axis: an ID is listed when its entity had a fact recorded at or before that position, live or retired. Pages of 1 to 1,000 with the store's cursor (pass next as cursor; it keeps the first page's position). Reads stored facts. Refusals come back with the store's code and one plain sentence (e.g. CursorMismatch for an edited cursor, InteriorPosition, BasisNotAvailable).",
+    input: {
+      account,
+      prefix: z.string().max(512).default("").describe("The kind: the text the IDs start with after acct/<account>/, e.g. i9: or pl:; empty lists every ID of the account"),
+      shape: z.string().max(512).optional().describe('Optional ID shape after acct/<account>/, e.g. "pl:{8 digits}" (subject roots only)'),
+      basis: basis.describe("When: { position?, recordedAt? }; default the latest position. validAt is ignored here"),
+      result: z.enum(["ids", "count"]).default("ids").describe("ids: one page of IDs; count: the exact count of the kind"),
+      limit: z.number().int().min(1).max(1000).default(100).describe("IDs per page"),
+      order: z.enum(["asc", "desc"]).default("asc"),
+      cursor: z.string().max(8192).optional().describe("The previous answer's next; the page continues at the same position"),
+      ceilingMs: z.number().int().min(100).max(60_000).default(10_000).describe("For count: stop after this long and say so"),
+    },
+    changes: false,
+    run: (d, a) => listIds(d, a),
+    route: (a) => routes.questions({ account: a.account, kind: { prefix: a.prefix, shape: a.shape } }),
+  }),
+  tool({
+    name: "ask_across_subjects",
+    title: "Ask a question across subjects",
+    group: "Across subjects",
+    sentences: [
+      "Which tasks in account-003 are pending?",
+      "How many subjects in account-003 are active?",
+      "Count account-003's tasks per status.",
+      "Which reviews in account-003 are about subject 7?",
+    ],
+    description:
+      "A question across every entity of one kind in one account, answered exactly on the store's slow exact route: the store lists the kind's IDs in order, reads each one's facts at ONE position and ONE valid time with the pinned read's own code, and tests up to 8 conditions, all required. Result: a list of matching IDs with chosen columns (their values), a count, or a count of subjects per value of one attribute. The answer states the position and valid time it holds for (holdsFor), whether it is complete, how many subjects were examined, and that it reads stored facts (a value a release has not written yet is not seen). Conditions: eq (is), in (is one of, 1 to 64 values), range (from and/or to, inclusive unless fromExclusive/toExclusive; text, integer, number or date), prefix (text starts with), exists (has a value), missing (has no value). Values are plain (true/false, numbers, text; an entity ID is taken as a reference) or { type, value } with type text, reference, integer, number, date or boolean; give type when it is not obvious (an integer attribute does not match a number condition). Protected attributes are never filtered, grouped or listed: such a question is refused (ProtectedValueLookup). mode: fill (default: pages until limit rows, the end, or ceilingMs, default 5 s), toEnd (to the end or ceilingMs, default 60 s; at most 5,000 rows returned), or page (one store page, for callers that page themselves). Pass next as cursor to continue at the same position and valid time; an edited cursor is refused (CursorMismatch). It is slow on a deep account (about 1 to 2 ms per subject at 1 billion records): count a sample first. Every refusal comes back with the store's code and one plain sentence. Example: {\"account\": \"account-003\", \"kind\": {\"prefix\": \"i9:\"}, \"where\": [{\"attribute\": \":i9/status\", \"op\": \"eq\", \"value\": \"pending\"}], \"columns\": [\":task/progress\"]}",
+    input: {
+      account,
+      kind: z
+        .object({
+          prefix: z.string().max(512).describe("The text the IDs start with after acct/<account>/, e.g. i9: (tasks), pl: (subjects), review:"),
+          shape: z.string().max(512).optional().describe('Optional ID shape, e.g. "pl:{8 digits}" for subject roots only'),
+        })
+        .describe("Which entities: one kind of one account (list_kinds lists them)"),
+      where: z
+        .array(
+          z.object({
+            attribute: z.string().min(1).max(512).describe("Attribute, e.g. :i9/status"),
+            op: z.enum(["eq", "in", "range", "prefix", "exists", "missing"]).describe("eq is, in is one of, range between, prefix starts with, exists has a value, missing has no value"),
+            value: questionValue.optional().describe("For eq and prefix"),
+            values: z.array(questionValue).min(1).max(64).optional().describe("For in"),
+            from: questionValue.optional().describe("For range: lower end (inclusive unless fromExclusive)"),
+            to: questionValue.optional().describe("For range: upper end (inclusive unless toExclusive)"),
+            fromExclusive: z.boolean().optional(),
+            toExclusive: z.boolean().optional(),
+            type: z.enum(["text", "string", "reference", "ref", "integer", "number", "date", "datetime", "boolean"]).optional().describe("The values' type when it is not obvious"),
+          }),
+        )
+        .max(8)
+        .default([])
+        .describe("Up to 8 conditions, all required (AND); none asks about every entity of the kind"),
+      result: z.enum(["list", "count", "countByValue"]).default("list").describe("list: matching IDs with columns; count; countByValue: subjects per value of `of`"),
+      columns: z.array(z.string().min(1).max(512)).max(8).optional().describe("For list: up to 8 attributes whose values come back with each ID"),
+      of: z.string().min(1).max(512).optional().describe("For countByValue: the attribute to count by"),
+      basis: basis.describe("When: { position?, recordedAt?, validAt? }; default the latest position and now. The answer states both"),
+      limit: z.number().int().min(1).max(1000).default(50).describe("For list: rows to return in this call"),
+      cursor: z.string().max(65_536).optional().describe("The previous answer's next: continue the same question at the same position and valid time"),
+      mode: z.enum(["fill", "toEnd", "page"]).default("fill"),
+      ceilingMs: z.number().int().min(100).max(300_000).optional().describe("Longest time for this call (default 5,000 ms; 60,000 with toEnd); the answer says when it stopped there"),
+      pageSubjects: z.number().int().min(1).max(10_000).optional().describe("Subjects the store reads per page (default 256)"),
+    },
+    changes: false,
+    run: async (d, a) => {
+      const out = await askAcross(d, a as AskInput);
+      const at = out.holdsFor;
+      return out.rows ? { ...out, rows: out.rows.map((r) => ({ ...r, consoleLink: consoleOrigin() + rowRoute(d, r.id, at.position, at.validAt) })) } : out;
+    },
+    route: (a) => routes.questions({ account: a.account, kind: a.kind, where: a.where, result: a.result, columns: a.columns, of: a.of, basis: a.basis }),
+  }),
 ];
 
 export const byName = new Map(tools.map((t) => [t.name, t]));
@@ -555,6 +688,8 @@ export const errorOf = (error: unknown): ToolError => {
       message: causes.length ? `${message}: ${causes.join("; ")}` : message,
       ...(causes.length ? { causes } : {}),
       ...(deadline ? { hint: "The gateway did not answer within its deadline. On this engine a journal read that walks the bulk loader's saves can take that long; the console bounds every journal page so it should not happen." } : {}),
+      // [DX-XQ8] A store refusal's plain sentence and the store's own code and message (questions.ts storeError).
+      ...(error instanceof DemoError && error.detail ? error.detail : {}),
     },
   };
 };

@@ -32,6 +32,12 @@ const env = {
   // them off and 1.37 ms with them on, with zero wrong values. Rejected: leaving them to the stack's default (off).
   DX_PINNED_SHORTCUT: "1",
   DX_PINNED_CUT_LOOKUP: "1",
+  // [DX-XQ8] The two question routes (exp/DX-XQ6-exact-sweep): the ID list (TX2_ID_LISTS) and the slow exact route
+  // (TX2_SWEEP), which the console's "Ask across subjects" page and its agent tools call. Each only adds a route and its
+  // own permit pool; every other route answers as before (XQ3 and XQ6 gate 2k). Rejected: leaving them off by default
+  // (the page and tools would answer RouteOff on every demo stack).
+  DX_ID_LISTS: "1",
+  DX_SWEEP: "1",
 };
 const args = [
   ...(policy.tx.cpus ? ["--cpus-tx", policy.tx.cpus, "--cpus-pg", policy.pg.cpus,
@@ -51,6 +57,7 @@ if (process.argv[3] === "--summary") {
     postgres: { containerMiB: policy.pg.memoryMiB, sharedBuffers: policy.pg.settings.shared_buffers ?? "128MB (default)" },
     memoryIndex: policy.index,
     pinnedReads: { shortcut: env.DX_PINNED_SHORTCUT === "1", cutLookup: env.DX_PINNED_CUT_LOOKUP === "1" },
+    questionRoutes: { idLists: env.DX_ID_LISTS === "1", sweep: env.DX_SWEEP === "1" },
   }));
   process.exit(0);
 }
