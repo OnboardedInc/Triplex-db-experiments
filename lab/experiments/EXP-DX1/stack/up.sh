@@ -279,6 +279,13 @@ read_wait_limit=${DX_READ_WAIT_LIMIT:-}
 [[ -z $read_wait_limit || $read_wait_limit =~ ^[1-9][0-9]{0,3}$ ]] || exit 2
 thread_counters=${DX_THREAD_COUNTERS:-0}
 [[ $thread_counters =~ ^[01]$ ]] || exit 2
+# [DX-W4] Why: default-off hints for the per-subject writer that work with ordered IDs (and their early variant).
+# Rejected: lifting the TX2_SUBJECT_PREFETCH guard below (that option keeps its meaning); passing them when unset.
+subject_hints=${TX2_SUBJECT_HINTS:-0}
+subject_hints_early=${TX2_SUBJECT_HINTS_EARLY:-0}
+[[ $subject_hints =~ ^[01]$ && $subject_hints_early =~ ^[01]$ ]] || exit 2
+[[ $subject_hints_early == 0 || $subject_hints == 1 ]] || { echo "TX2_SUBJECT_HINTS_EARLY needs TX2_SUBJECT_HINTS=1" >&2; exit 2; }
+[[ $subject_hints == 0 || $subject_prefetch == 0 ]] || { echo "TX2_SUBJECT_HINTS replaces TX2_SUBJECT_PREFETCH; set one" >&2; exit 2; }
 [[ $lookup_every =~ ^(0|[1-9][0-9]{0,3})$ ]] && (( lookup_every <= 4096 )) || exit 2
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prepw =~ ^(1|2|4)$ ]]
@@ -300,6 +307,7 @@ fi
 [[ $append_retirement =~ ^[01]$ && ( $append_retirement == 0 || $subject_numeric_owner == 1 ) ]] || exit 2
 [[ $subject_prefetch =~ ^[01]$ && ( $subject_prefetch == 0 || $subject_save == 1 ) ]]
 [[ $subject_ordered_ids =~ ^[01]$ && ( $subject_ordered_ids == 0 || ( $subject_save == 1 && $subject_prefetch == 0 ) ) ]]
+[[ $subject_hints == 0 || $subject_save == 1 ]] || { echo "TX2_SUBJECT_HINTS needs the per-subject writer" >&2; exit 2; }
 [[ $subject_narrow_revision =~ ^[01]$ && $subject_reuse_predecessor =~ ^[01]$ ]] || exit 2
 [[ ( $subject_narrow_revision == 0 && $subject_reuse_predecessor == 0 ) || ( $subject_ordered_ids == 1 && $subject_numeric_owner == 1 ) ]] || exit 2
 prep_pgdata=${DX_PREP1_PGDATA:-}
@@ -998,6 +1006,9 @@ for role in "${gateway_roles[@]}"; do
   fi
   if [[ $mode == w && $general_prefetch == 1 ]]; then
     field_policy+=(-e "TX2_GENERAL_PREFETCH=1")
+  fi
+  if [[ $mode == w && $subject_hints == 1 ]]; then
+    field_policy+=(-e "TX2_SUBJECT_HINTS=1" -e "TX2_SUBJECT_HINTS_EARLY=$subject_hints_early")
   fi
   if [[ -n $read_wait_limit ]]; then field_policy+=(-e "TX2_READ_WAIT_LIMIT=$read_wait_limit"); fi
   if [[ $thread_counters == 1 ]]; then field_policy+=(-e "TX2_THREAD_COUNTERS=1"); fi
