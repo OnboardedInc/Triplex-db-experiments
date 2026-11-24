@@ -5226,3 +5226,24 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **The read itself:** transactor 18.4 s (connect 2.9, select 0.9, read 14.6), 36,453 segment loads (forecast 13,000 to 20,000: above); write peer 5.5 s, 18,344 loads; 9,402 owners each (cap 40,000); both ended `complete`, `poolTerminated` true, no `tx2-sread` thread at the report or at admission. No falsifier fired. No autovacuum worker seen.
 - **Reading:** the restart tail under Saturday's tape at 1 billion is the first minute's cold owners; the one-time read removes it (19 times lower p99 in the first 30 s) for 19.6 s more before admission. The 430 million arm was not run.
 - **Second machine now:** owner head pair on fresh (`85fc3a4bd`) since 01:55 UTC; its append arm's summary will refuse at the known check and is summarised on the Mac. **Server 2:** pinned arm with saves (`e02bf4edf`) timed run since 01:55:47 UTC, ends by 02:33.
+
+### 2026-11-23 21:18 local: pinned readers with saves at 1 billion: fixed pins about 100 ms p99 with saves running; random subjects 1,217 reads/s and p99 324 ms; saves unaffected (3 agents running)
+
+- **Server 2, `e02bf4edf`, finished 02:16 UTC, all 10 windows, 0 wrong values and 0 read errors** (evidence `evidence/DX-SCALE1/pinned-saves-1b-e02/`). 256 seats, 90 s windows, three reader cores, 3 GiB read cache, `server` profile, shape S save load (23 commits/s) or the quiet 3.5/s stream.
+
+  | Window | Reads/s | Read p50 / p99 ms | Stored commits/s | S commit p50 / p99 ms | Quiet commit p50 / p99 ms | Reader cores | Loads per subject | Cache hits |
+  | --- | ---: | --- | ---: | --- | --- | ---: | ---: | ---: |
+  | Saves alone | none | none | 23.08 | 11.52 / 55.55 | 10.62 / 48.90 | 0.18 | none | none |
+  | Near head, with saves | 8,960 | 23.81 / 112.13 | 23.08 | 8.06 / 64.77 | 4.77 / 35.07 | 1.90 | not recorded | not recorded |
+  | Old pin, with saves | 8,879 | 22.91 / 99.33 | 23.07 | 7.46 / 52.48 | 5.50 / 29.18 | 2.03 | not recorded | not recorded |
+  | Near head, quiet stream | 10,419.7 | 21.38 / 77.82 | none | none | 3.90 / 6.27 | 1.99 | 0.45 | 96.7% |
+  | Old pin, quiet stream | 8,368.4 | 23.81 / 107.52 | none | none | 4.22 / 6.33 | 2.06 | 0.69 | 96.0% |
+  | Random subjects near head, quiet stream | 1,219.6 | 207.87 / 333.82 | none | none | 5.63 / 9.41 | 2.09 | 14.10 | 78.4% |
+  | Random subjects near head, with saves | 1,216.6 | 207.87 / 323.58 | 23.07 | 7.90 / 55.81 | 4.19 / 22.53 | 2.14 | 13.51 | 80.3% |
+  | Random subjects, old pin, quiet stream | 1,085.5 | 231.42 / 342.01 | none | none | 5.98 / 20.73 | 2.14 | 14.82 | 77.7% |
+
+- **Two windows are driver-bound and say nothing about the store:** pins at the tape's own positions with saves (driver loop p99 169.87 ms; only 285 of about 2,086 commits offered; 1,434.5 reads/s, p99 303.10 ms) and the same with the quiet stream (89.65 ms; 3,445.7 reads/s, p99 137.22 ms). The falsifier for the driver fired in both.
+- **Against P1 (256 readers, p99 at or under 100 ms, saves running):** re-read subjects: 99.33 ms at the old pin (inside) and 112.13 ms near the head (outside by 12 ms). Random subjects: 324 to 342 ms (outside, as predicted: p50 183 predicted against 208 measured, reads/s 1,400 against 1,217).
+- **Saves beside 256 readers:** stored commits unchanged (23.07 to 23.08/s, 0 expired); S commit p99 52 to 65 ms against 55.55 alone; quiet commit p99 22 to 35 ms.
+- **Model check:** reads/s and cache share for random subjects held; storage loads per subject were 13.5 to 14.8 against the predicted 1.3 to 2.3, and the reader used 2.1 of 3 cores at 1,217 reads/s, so the reader is not plainly CPU-bound on random reads. Builder asked to say which from the evidence.
+- **One more arm ordered (due 21:45):** the three random windows with a larger reader (cores and permits, then cache). Server 2's deletion waits for it until 02:50 UTC at the latest; collection from 04:00 UTC, deleted by 04:30 UTC.
