@@ -2,14 +2,15 @@
 # [DX-ERA2] The fault measurement on the Mac, under one ordinary heavy token:
 #   DOCKER_HOST=unix://<lab VM socket> node lab/bin/heavy.mjs --label DX-ERA2-fault -- \
 #     bash lab/experiments/EXP-DX1/era2/fault.sh NEW_OUT_DIR OPTION CELL...
-# OPTION is 0 (TX2_REMOVAL_PER_ACCOUNT off) or 1 (on); each CELL is ACCOUNTS:REMOVALS_PER_S[:sealed] and runs era2/fault.ts
+# OPTION is 0 (TX2_REMOVAL_PER_ACCOUNT off), 1 (on) or 2 (on, with TX2_REMOVAL_SUBJECT_CHECK=1); each CELL is
+# ACCOUNTS:REMOVALS_PER_S[:sealed|three|restart|fast] (fast: DX_ERA2_FAST_RATE saves per second, default 150) and runs era2/fault.ts
 # on a fresh database of one stack (production write switches: per-subject writer with ordered IDs; the PostgreSQL removal
 # authority shared by both gateways). The stack and its volumes are removed at the end. Counts are results; every time
 # is diagnostic. Ports 18951/18955 (DX_ERA2_PORT_WRITE / _READ).
 set -euo pipefail
 out=${1:?new output directory}; option=${2:?0 or 1}; shift 2
 [[ $out == /* && ! -e $out ]] || { echo "give a new absolute output directory" >&2; exit 2; }
-[[ $option =~ ^[01]$ && $# -ge 1 ]] || { echo "OPTION must be 0 or 1, then at least one cell" >&2; exit 2; }
+[[ $option =~ ^[012]$ && $# -ge 1 ]] || { echo "OPTION must be 0, 1 or 2, then at least one cell" >&2; exit 2; }
 : "${DOCKER_HOST:?set DOCKER_HOST to the lab VM docker socket}"
 export DOCKER_HOST
 here=$(cd "$(dirname "$0")" && pwd)
@@ -37,6 +38,7 @@ gateway=(TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=
   DX_W1_FAST_REPLY=1 DX_W1_JOURNAL_QUERY=1 DX_GROUP_COMMIT=0 DX_PINNED_SHORTCUT=0 DX_PINNED_CUT_LOOKUP=0
   DX_ERASURE_SQL=1 DX_INT1_NATIVE_WRITE_READBACK=1)
 [[ $option == 0 ]] || gateway+=(DX_REMOVAL_PER_ACCOUNT=1)
+[[ $option == 2 ]] && gateway+=(DX_REMOVAL_SUBJECT_CHECK=1)
 # DX_ERA2_GATEWAY_REF=<commit>: run the gateway of that commit (the base, for the "before" counts) instead of this
 # checkout's; the driver and the stack scripts stay this checkout's.
 srcargs=()
@@ -58,6 +60,16 @@ for attempt in 1 2 3 4 5 6; do
   sleep 60
 done
 [[ $started == 1 ]] || exit 1
+# [DX-ERA2] Every container must run the image the stack pinned by ID (shared tags can be retagged by other builders).
+pinned=$(cut -d'|' -f1 "$out/evidence/$prefix/config/java-image.txt")
+pg_pinned=$(docker image inspect --format '{{.Id}}' postgres:17-alpine)
+for role in tx gw-w gw-r pg; do
+  ran=$(docker inspect --format '{{.Image}}' "$prefix-$role")
+  echo "$prefix-$role $ran" >> "$out/images-ran"
+  want=$pinned; [[ $role == pg ]] && want=$pg_pinned
+  [[ $ran == "$want" ]] || { echo "container $prefix-$role runs $ran, not the pinned $want" >&2; exit 1; }
+done
+echo "pinned $pinned pg $pg_pinned" >> "$out/images-ran"
 status=0
 for cell in "$@"; do
   IFS=: read -r accounts rate kind <<< "$cell"
@@ -65,8 +77,9 @@ for cell in "$@"; do
   label="o${option}-a${accounts}-r${rate}${kind:+-$kind}"
   restart=(); [[ ${kind:-} == restart ]] && restart=(ERA2_RESTART_AT_MS=8000 ERA2_TX_CONTAINER="$prefix-tx")
   removal3=(); [[ ${kind:-} == three ]] && removal3=(ERA2_REMOVAL_ACCOUNTS=3)
+  [[ ${kind:-} == fast ]] && removal3=(ERA2_SAVE_RATE="${DX_ERA2_FAST_RATE:-150}" ERA2_INFLIGHT="${DX_ERA2_FAST_INFLIGHT:-24}")
   env ERA2_ACCOUNTS="$accounts" ERA2_REMOVAL_RATE="$rate" ERA2_SEALED=$([[ ${kind:-} == sealed ]] && echo 1 || echo 0) \
-    ERA2_PER_ACCOUNT="$option" ERA2_LABEL="$label" ${restart[@]+"${restart[@]}"} ${removal3[@]+"${removal3[@]}"} \
+    ERA2_PER_ACCOUNT=$([[ $option == 0 ]] && echo 0 || echo 1) ERA2_LABEL="$label" ${restart[@]+"${restart[@]}"} ${removal3[@]+"${removal3[@]}"} \
     node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/era2/fault.ts "$out" \
     "http://127.0.0.1:$port_w" "http://127.0.0.1:$port_r" > "$out/$label.log" 2>&1 || status=$?
   grep -E '"kind":"(PASS|FAIL|result|seeded|scope)"' "$out/$label.log" | cut -c1-900 || tail -20 "$out/$label.log"

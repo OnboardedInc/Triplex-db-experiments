@@ -11,10 +11,14 @@
             [triplex.gateway.removal-scope :as rs] [triplex.gateway.storage :as storage]
             [triplex.gateway.subject-save :as subject] [triplex.gateway.group :as group]
             [triplex.gateway.write-policy :as policy] [triplex.gateway.selftest :as selftest]
-            [triplex.gateway.main :as main] [wfix1-regression :as offers])
+            [triplex.gateway.main :as main] [triplex.gateway.removal-commit :as rc] [wfix1-regression :as offers])
   (:import [java.util UUID]))
 
 (def per-account? rs/enabled)
+;; TX2_REMOVAL_SUBJECT_CHECK=1 with the per-account option: the removal checks its selection per subject and takes its
+;; position at commit (removal_commit.clj).
+(def subject? (and per-account? (= "1" (System/getenv "TX2_REMOVAL_SUBJECT_CHECK"))))
+(def mode (cond subject? "subject-check" per-account? "per-account" :else "database-wide"))
 (def ^:dynamic sealed-run? false)
 (def results (atom []))
 (defn check! [scenario ok message & [detail]]
@@ -69,10 +73,15 @@
       plan)))
 
 (defn with-held
-  "Send `held` (prepared under the current cut), run `during` while it is paused after preparation, then let it commit."
+  "Send `held` (prepared under the current cut), run `during` while it is paused after preparation (just before it is
+  submitted to Datomic, on either writer), then let it commit."
   [name held during]
-  (let [entered (promise) release (promise) build subject/plan]
-    (with-redefs [subject/plan (held-plan (get held "operationId") entered release build)]
+  (let [entered (promise) release (promise) submit storage/submit! op (get held "operationId")]
+    (with-redefs [storage/submit! (fn [& args]
+                                    (when (= op (get (nth args 2) "operationId"))
+                                      (deliver entered true)
+                                      (when-not (deref release 15000 false) (throw (ex-info "barrier not released" {}))))
+                                    (apply submit args))]
       (let [leader (future (offers/send name held))]
         (try
           (loop [k 0]
@@ -272,18 +281,33 @@
 (defn stopped-removal
   "A removal stopped after each of its steps (before the native commit, after it, at publication), then resumed."
   [sealed?]
-  (doseq [step [:before-native :after-native :at-publish]]
+  (doseq [step (cond-> [:before-native :after-native :at-publish] subject? (conj :after-guard))]
     (fresh-scope sealed?
       (fn [name conn]
         (let [scenario (str "stopped/" (clojure.core/name step))
               seeds (seed! name [a1 a2 b1]) value (:value (seeds a1)) pin (head conn)
               before (raw-occurrences conn value)
-              apply-native erase/apply-native! publish privacy/publish!
+              apply-native erase/apply-native! publish privacy/publish! commit rc/commit! hold rc/hold!
+              first-try (atom true)
               stopped (with-redefs [erase/apply-native! (fn [c v e]
                                                           (when (= step :before-native) (throw (ex-info "stop before native" {})))
                                                           (let [t (apply-native c v e)]
                                                             (when (= step :after-native) (throw (ex-info "stop after native" {})))
                                                             t))
+                                    ;; the same steps on the subject-check path, and its guard: one try refused as if
+                                    ;; the subject had moved, the guard taken, then the gateway stops
+                                    rc/narrow-tries (if (= step :after-guard) 1 rc/narrow-tries)
+                                    rc/commit! (fn [c v cur e h]
+                                                 (when (= step :before-native) (throw (ex-info "stop before native" {})))
+                                                 (when (and (= step :after-guard) (compare-and-set! first-try true false))
+                                                   (throw (ex-info rc/moved {})))
+                                                 (let [r (commit c v cur e h)]
+                                                   (when (= step :after-native) (throw (ex-info "stop after native" {})))
+                                                   r))
+                                    rc/hold! (fn [c es s]
+                                               (let [r (hold c es s)]
+                                                 (when (= step :after-guard) (throw (ex-info "stop after guard" {})))
+                                                 r))
                                     privacy/publish! (fn [& args]
                                                        (if (= step :at-publish) (throw (ex-info "stop at publish" {}))
                                                          (apply publish args)))]
@@ -340,6 +364,220 @@
                   "account a's and a1's sequences restored from the log")
           (check! "migrate" (marked? name a1 pin) "a1 still marked per account"))))))
 
+;; ---- the subject-check path (TX2_REMOVAL_SUBJECT_CHECK=1) ------------------------------------------------------
+(defn frame*
+  "save-frame with options: :actor (a journal actor row, e.g. \"bulk-import\" for an import frame) and :retire-only
+  (retire `prior` without a new value)."
+  [command owner attr value prior position {:keys [actor retire-only]}]
+  (let [tx (str "_tx/" command)
+        fact (when-not retire-only (row* command owner attr value tx))
+        retired (when prior (assoc (row* prior owner attr "client estimate" "earlier")
+                                   :retracted_at 1000.0 :retracted_position 1 :retract_tx_id tx))
+        j (fn [suffix a] (row* (str command "/" suffix) tx a nil tx "_Transaction"))
+        change (fn [op r] (json/write-str (cond-> {"op" op "tripleId" (:id r) "entityId" owner "attribute" attr
+                                                   "value" {"type" "string" "value" (:value_string r)} "validFrom" 0.0
+                                                   "recordedAt" 1000.0 "assertionTxId" (:tx_id r)}
+                                            (= op "retract") (assoc "retractedAt" 1000.0 "retractionTxId" tx))))
+        journal (cond-> [(assoc (j "p" ":_tx/position") :value_type "number" :value_number 1.0)
+                         (assoc (j "t" ":_tx/instant") :value_type "datetime" :value_datetime 1000.0)
+                         (assoc (j "owner" ":_tx/changed-entity") :value_string owner)
+                         (assoc (j "cmd" ":_tx/command-id") :value_string command)]
+                  actor (conj (assoc (j "actor" ":_tx/actor") :value_string actor))
+                  fact (conj (assoc (j "assert" ":_tx/change") :value_type "json" :value_json (change "assert" fact)))
+                  retired (conj (assoc (j "retract" ":_tx/change") :value_type "json" :value_json (change "retract" retired))))
+        fresh (cond-> journal fact (conj fact))]
+    (selftest/row-input
+      (cond-> {"span" 1 "position" 1 "scopeWide" false "entities" [owner] "operationId" command
+               "rows" (mapv storage/wire-row (cond-> fresh retired (conj retired)))
+               "newIds" (mapv :id fresh) "live" (if prior [prior] [])
+               "claims" [{"commandId" command "txId" tx "timestamp" 1000.0}]}
+        position (assoc "sourceK" position)))))
+
+(def secret-pattern #"SECRET-[A-Za-z0-9_\-]+")
+(defn foreign-copies
+  "One pass over every native datom: the given values found on an entity other than their own subjects and journals."
+  [conn owners-of]
+  (let [current (d/db conn) db (d/history current) out (volatile! [])]
+    (doseq [x (d/datoms db :eavt) :when (string? (:v x))
+            v (re-seq secret-pattern (:v x)) :when (owners-of v)]
+      (let [e (or (:triplex.entity/id (d/entity current (:e x))) (str (:e x)))]
+        (when-not (or ((owners-of v) e) (str/starts-with? e "_tx/")) (vswap! out conj [v e (d/ident current (:a x))]))))
+    @out))
+
+(defn absent-from-routes!
+  "No route answers any of `values`: current and history reads of `owners`, a pinned read and a pinned Reach session
+  (cached before the removal) at `pin`, the journal pages after `pin` and the feed from `t0`."
+  [scenario name owners pin t0 values]
+  (let [replies (concat
+                  (for [o owners q [{"entityIds" [o]} {"entityIds" [o] "history" true}
+                                    {"entityIds" [o] "basis" {"recordedPosition" pin "validAt" 1.0e12}}]]
+                    (offers/route name "v1" "read" q))
+                  [(offers/route name "v2" "reach" {"root" (first owners) "basis" {"recordedPosition" pin "validAt" 1.0e12}
+                                                    "session" (str "era2-" (first owners)) "erasureRefs" true})
+                   (offers/route name "v2" "transactions" {"after" (max 0 (dec pin)) "limit" 200})
+                   (main/route-handler {:request-method :get :uri (str "/v1/db/" name "/log") :query-string (str "fromT=" t0 "&limit=200")})])
+        texts (mapv (fn [r] [(:status r) (text (:body r))]) replies)]
+    (check! scenario (every? (fn [[st _]] (= 200 st)) texts) "every route answers" (mapv first texts))
+    (check! scenario (not-any? (fn [[_ body]] (some (fn [v] (str/includes? body v)) values)) texts)
+            "no route answers a removed or racing value")))
+
+(defn race-loop
+  "Randomized races: a save of the subject prepared before its removal (a new fact of the subject, the creation of an
+  entity the removal names before it exists, an import frame creating that entity, a retirement of the removed value),
+  paused after preparation and released at a random moment while the removal runs, with random delays after the
+  removal's intent is written. Every racing save that commits must have committed before the removal's serial point
+  and been removed by it; none may commit after it."
+  [n]
+  (when subject?
+    (fresh-scope false
+      (fn [name conn]
+        (let [kinds [:fact :creation :import :retire]
+              owners (atom {}) counts (atom {})
+              bump (fn [k] (swap! counts update k (fnil inc 0)))
+              submit storage/submit! prepare privacy/prepare!
+              imported (offers/send name (frame* "import-probe" "acct/r/probe" ":v" (secret "acct/r/probe" "p") nil nil {:actor "bulk-import"}))]
+          (check! "race-loop" (= [200 nil] (offers/outcome imported)) "an import frame commits outside any race" (offers/outcome imported))
+          (doseq [i (range n)]
+            (let [kind (kinds (mod i (count kinds)))
+                  x (str "acct/r/s" i) child (str x "-new") v0 (secret x "seed") v1 (secret x "race")
+                  seed (offers/send name (frame (str "rs-" i) x v0 nil nil))
+                  pin (head conn) t0 (d/basis-t (d/db conn))
+                  op (str "race-" i)
+                  input (case kind
+                          :fact (frame op x v1 (str "rs-" i) pin)
+                          :creation (frame op child v1 nil nil)
+                          :import (frame* op child ":v" v1 nil nil {:actor "bulk-import"})
+                          :retire (frame* op x ":v" nil (str "rs-" i) pin {:retire-only true}))
+                  _ (offers/route name "v2" "reach" {"root" x "basis" {"recordedPosition" pin "validAt" 1.0e12}
+                                                     "session" (str "era2-" x) "erasureRefs" true})
+                  entered (promise) release (promise)
+                  [saved removed]
+                  (with-redefs [storage/submit! (fn [& args]
+                                                  (when (= op (get (nth args 2) "operationId"))
+                                                    (deliver entered true) (deref release 15000 nil))
+                                                  (apply submit args))
+                                privacy/prepare! (fn [nm e] (prepare nm e) (Thread/sleep (long (rand-int 3))))]
+                    (let [saver (future (offers/send name input))]
+                      (deref entered 3000 nil)
+                      (let [remover (future (offers/route name "v2" "erase"
+                                                          {"commandId" (str "rr-" i)
+                                                           "selectors" [{"entityId" x "attribute" ":v"} {"entityId" child "attribute" ":v"}]}))]
+                        (Thread/sleep (long (rand-int 8)))
+                        (deliver release true)
+                        [(deref saver 20000 {:status 0}) (deref remover 20000 {:status 0})])))
+                  ids (set (map (fn [r] (get r "assertionId")) (get-in removed [:body "identities"])))
+                  label (str "race-loop/" (clojure.core/name kind))]
+              (check! label (= [200 nil] (offers/outcome seed)) "seed" (offers/outcome seed))
+              (check! label (= [200 nil] (offers/outcome removed)) "the removal answers" (offers/outcome removed))
+              (if (= 200 (:status saved))
+                (do (bump [kind :committed-before])
+                    ;; it committed, so it must have committed before the removal's serial point and been removed
+                    (check! label (or (= kind :retire) (contains? ids op)) "a committed racing value was removed with the subject"
+                            {:op op :ids ids}))
+                (do (bump [kind (offers/outcome saved)])
+                    (check! label (contains? #{[409 "CasConflict"] [409 "ErasureReplayDeclined"] [503 "ErasureFrontierUnavailable"]}
+                                             (offers/outcome saved))
+                            "a racing save that did not commit was refused" (offers/outcome saved))))
+              (check! label (contains? ids (str "rs-" i)) "the seed value was removed" ids)
+              ;; the installed function's rewrite equals the gateway's own encoding at the final position and stamp
+              (let [db (d/db conn)
+                    tx (d/entid db [:triplex.tx/operation-id (str "privacy-" (privacy/sha256 (str "rr-" i)))])
+                    native (json/read-str (:v (first (d/datoms db :eavt tx :triplex.tx/erasure-record))))
+                    journal (d/entid db [:triplex.entity/id (get native "txId")])]
+                (check! label (= (set (map :v (d/datoms db :eavt journal :triplex.entity/row))) (set (@#'erase/journal-rows native)))
+                        "the stored journal rows are the gateway's encoding at the committed position and stamp")
+                (check! label (= [(get native "position") (get native "position")]
+                                 [(:v (first (d/datoms db :eavt tx :triplex.tx/position))) (get-in removed [:body "position"])])
+                        "the entry, the transaction and the reply carry the same position"))
+              (swap! owners assoc v0 #{x} v1 #{x child})
+              (absent-from-routes! label name [x child] pin t0 [v0 v1])))
+          ;; the log stays dense and ordered, and record time never goes back
+          (let [db (d/db conn)
+                txs (sort-by first (map (fn [x] [(:v x) (:e x)]) (d/datoms db :aevt :triplex.tx/position)))
+                clock (fn [e] (:v (first (d/datoms db :eavt e :triplex.tx/max-recorded-at))))
+                removal? (fn [e] (some? (first (d/datoms db :eavt e :triplex.tx/erasure-record))))
+                ;; each removal's stamp is at least the newest record time before it (taken at its serial point)
+                backwards (keep (fn [[[_ a] [_ b]]] (when (and (removal? b) (clock a) (< (clock b) (clock a))) [a b]))
+                                (partition 2 1 txs))]
+            (check! "race-loop" (= (map first txs) (range 1 (inc (count txs)))) "positions are 1..N with no gap or repeat"
+                    (take 5 (remove (fn [[a b]] (= a b)) (map vector (map first txs) (range 1 (inc (count txs)))))))
+            (check! "race-loop" (empty? backwards) "no removal's record time is before the commit before it" (take 3 backwards)))
+          (let [foreign (foreign-copies conn @owners)]
+            (check! "race-loop" (empty? foreign) "no native copy of any removed or racing value outside its subjects and journals"
+                    (take 5 foreign)))
+          (println "ERA2_RACE" (pr-str {:iterations n :outcomes @counts})))))))
+
+(defn named-absent
+  "A removal naming an entity that has no row yet: a creation save and an import frame of it prepared before the
+  removal are refused after it (its counter moved); a creation sent after the removal is new data."
+  []
+  (when per-account?
+    (fresh-scope false
+      (fn [name conn]
+        (let [x "acct/n/new" v (secret x "early") vi (secret x "import") vl (secret x "late")
+              pin (head conn) t0 (d/basis-t (d/db conn))
+              remove-x #(offers/route name "v2" "erase" {"commandId" % "selectors" [{"entityId" x "attribute" ":v"}]})
+              r1 (with-held name (frame "early" x v nil (head conn)) #(expect "named-absent" (remove-x "rm-n1") [200 nil]))]
+          (expect "named-absent: a creation prepared before the removal, sent after it" r1 [409 "CasConflict"])
+          (check! "named-absent" (= 1 (rs/native-entity-seq (d/db conn) x)) "the named entity's sequence moved with no row")
+          (let [r2 (with-held name (frame* "import-early" x ":v" vi nil (head conn) {:actor "bulk-import"})
+                     #(expect "named-absent" (remove-x "rm-n2") [200 nil]))]
+            (expect "named-absent: an import frame prepared before a removal, sent after it" r2 [409 "CasConflict"]))
+          (absent-from-routes! "named-absent" name [x] pin t0 [v vi])
+          (let [late (offers/send name (frame "late" x vl nil (head conn)))]
+            (expect "named-absent: a creation sent after the removal (new data)" late [200 nil])))))))
+
+(defn same-subject-twice
+  "Two removals of the same subject at once."
+  [sealed?]
+  (when per-account?
+    (fresh-scope sealed?
+      (fn [name conn]
+        (let [seeds (seed! name [a1 b1]) value (:value (seeds a1)) pin (head conn) before (raw-occurrences conn value)
+              r1 (future (remove! name "twice-1" a1)) r2 (future (remove! name "twice-2" a1))]
+          (expect "same-subject-twice" @r1 [200 nil]) (expect "same-subject-twice" @r2 [200 nil])
+          (check! "same-subject-twice" (= #{1 2} (set [(get-in @r1 [:body "seq"]) (get-in @r2 [:body "seq"])])) "two sequences")
+          (check! "same-subject-twice" (= 1 (count (filter seq [(get-in @r1 [:body "identities"]) (get-in @r2 [:body "identities"])])))
+                  "the value is removed by exactly one of them")
+          (removed-everywhere! "same-subject-twice" name conn a1 value before pin))))))
+
+(defn subject-mid-import
+  "A subject being imported (import frames, each replacing the last) while it is removed."
+  [frames]
+  (when per-account?
+    (fresh-scope false
+      (fn [name conn]
+        (let [y "acct/m/imported" seed (secret y "seed")
+              _ (expect "mid-import" (offers/send name (frame* "imp-0" y ":v" seed nil nil {:actor "bulk-import"})) [200 nil])
+              pin (head conn) t0 (d/basis-t (d/db conn))
+              values (atom {"imp-0" seed}) results (atom [])
+              importer (future
+                         (loop [k 1 prior "imp-0"]
+                           (when (<= k frames)
+                             (let [id (str "imp-" k) v (secret y (str "i" k))
+                                   r (offers/send name (frame* id y ":v" v prior (head conn) {:actor "bulk-import"}))]
+                               (swap! values assoc id v) (swap! results conj [id (offers/outcome r)])
+                               (Thread/sleep (long (rand-int 3)))
+                               (recur (inc k) (if (= 200 (:status r)) id prior))))))
+              _ (Thread/sleep 15)
+              removed (offers/route name "v2" "erase" {"commandId" "rm-mid" "selectors" [{"entityId" y "attribute" ":v"}]})
+              _ (deref importer 60000 nil)
+              ids (set (map (fn [r] (get r "assertionId")) (get-in removed [:body "identities"])))
+              committed (set (map first (filter (fn [[_ o]] (= [200 nil] o)) @results)))
+              after (offers/route name "v2" "erase" {"commandId" "rm-mid-2" "selectors" [{"entityId" y "attribute" ":v"}]})
+              ids2 (set (map (fn [r] (get r "assertionId")) (get-in after [:body "identities"])))]
+          (expect "mid-import" removed [200 nil])
+          (check! "mid-import" (contains? ids "imp-0") "the first imported value was removed")
+          ;; every frame that committed did so before the removal's serial point (removed by it), or after it under a
+          ;; cut that already held the removal, which the removed family refuses; a second removal finds nothing new
+          (check! "mid-import" (every? ids committed) "every committed import frame was removed by the removal"
+                  {:committed committed :ids ids :results @results})
+          (check! "mid-import" (empty? ids2) "a second removal finds no imported value left" ids2)
+          (check! "mid-import" (every? (fn [[_ o]] (contains? #{[200 nil] [409 "CasConflict"] [409 "ErasureReplayDeclined"]} o)) @results)
+                  "import frames either committed or were refused" (frequencies (map second @results)))
+          (println "ERA2_MID_IMPORT" (pr-str (frequencies (map second @results))))
+          (absent-from-routes! "mid-import" name [y] pin t0 (vals @values)))))))
+
 (defn- scenario [label f]
   (try (f) (catch Throwable e (check! label false (str "scenario stopped: " (.getMessage e))))))
 (defn main []
@@ -351,8 +589,12 @@
     (scenario (str "race " sealed?) #(racing-removals sealed?))
     (scenario (str "stopped " sealed?) #(stopped-removal sealed?)))
   (scenario "migrate" migrate-back-and-forth)
+  (scenario "named-absent" named-absent)
+  (doseq [sealed? [false true]] (scenario (str "same-subject-twice " sealed?) #(same-subject-twice sealed?)))
+  (scenario "mid-import" #(subject-mid-import 40))
+  (scenario "race-loop" #(race-loop (Long/parseLong (or (System/getenv "ERA2_RACES") "1000"))))
   (let [failed (remove :ok @results)]
-    (println "ERA2_GATE" (if per-account? "per-account" "database-wide")
+    (println "ERA2_GATE" mode
              (pr-str {:checks (count @results) :failed (count failed)}))
     (doseq [f failed] (println "FAILED" (pr-str f)))
     (shutdown-agents)

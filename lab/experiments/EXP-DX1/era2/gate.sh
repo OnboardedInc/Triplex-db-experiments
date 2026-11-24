@@ -5,10 +5,12 @@
 #     bash lab/experiments/EXP-DX1/era2/gate.sh NEW_ABSOLUTE_DIR [BASE_COMMIT]
 # 1. paired log: era2/paired.clj on the base gateway (BASE_COMMIT, default this branch's base), on this gateway with
 #    TX2_REMOVAL_PER_ACCOUNT unset, and with it on but the database never moved: one SHA-256 of the native log each;
-# 2. interleavings: era2/gate.clj with the option unset (database-wide) and on (database moved per account);
-# 3. the gateway's Clojure suites with the option unset and on.
+# 2. interleavings: era2/gate.clj with the option unset (database-wide), on (database moved per account), and on with
+#    TX2_REMOVAL_SUBJECT_CHECK=1 (the removal checks its selection per subject and takes its position at commit);
+# 3. the gateway's Clojure suites with the options unset and on.
+# Every container runs the pinned runtime image by ID (DX_ERA2_IMAGE_ID); the ID is recorded in OUT/image.
 set -uo pipefail
-out=${1:?absolute new output directory}; base=${2:-3e3e652b9cd486f9ae16b90f22fd1c045d5230b3}
+out=${1:?absolute new output directory}; base=${2:-272a1bd66}
 [[ $out == /* && ! -e $out ]] || { echo "gate.sh: give a new absolute output directory" >&2; exit 2; }
 : "${DOCKER_HOST:?set DOCKER_HOST to the lab VM docker socket}"
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
@@ -23,7 +25,10 @@ git -C "$repo" archive "$base" packages/datomic/gateway/src packages/datomic/src
 mv "$out/base/packages/datomic/gateway/src" "$out/base/src"; cp "$out/base/packages/datomic/src/codec-spec.json" "$out/base/codec-spec.json"
 rm -rf "$out/base/packages"; echo "$base" > "$out/base/commit"
 cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era2/paired.clj" "$out/lab/"
-image=${DX_ERA2_IMAGE:-tx2-datomic:1.0.7745-da00}
+image=${DX_ERA2_IMAGE_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
+[[ $image =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "gate.sh: DX_ERA2_IMAGE_ID must be an image ID" >&2; exit 2; }
+[[ $(docker image inspect --format '{{.Id}}' "$image") == "$image" ]] || { echo "gate.sh: image $image not present" >&2; exit 2; }
+echo "$image" > "$out/image"
 status=0
 run() { # NAME SOURCE OPTION CLOJURE-FORM
   local name=$1 source=$2 option=$3 form=$4
@@ -31,25 +36,30 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
   env=(-e TX2_SUBJECT_SAVE=1 -e TX2_SUBJECT_NUMERIC_OWNER=1 -e TX2_SUBJECT_ORDERED_IDS=1
        -e TRIPLEX_ERASURE_DIRECTORY=/tmp/era2-authority -e DATOMIC_URI_TEMPLATE='datomic:mem://{db}'
        -e DF01_RECORDED_PAGE=/tmp/recorded-page.json)
-  [[ $option == on ]] && env+=(-e TX2_REMOVAL_PER_ACCOUNT=1)
+  [[ $option == on || $option == subject ]] && env+=(-e TX2_REMOVAL_PER_ACCOUNT=1)
+  [[ $option == subject ]] && env+=(-e TX2_REMOVAL_SUBJECT_CHECK=1 -e TX2_REMOVAL_TRIES_LOG=1 -e "ERA2_RACES=${ERA2_RACES:-1000}")
   mkdir -p "$out/$name.out"
   docker run --rm --pull never --name "tx2-dxera2-gate-$$-$name" --memory 3g --cpus 2 -v "$out/$name.out:/out" \
     -v "$out/$source/src:/opt/gateway/src:ro" -v "$out/$source/codec-spec.json:/opt/spec/codec-spec.json:ro" \
     -v "$out/lab:/lab:ro" -v "$out/$name.clj:/opt/run.clj:ro" "${env[@]}" --entrypoint /bin/bash "$image" -c \
     'cd /opt/datomic && java -Xmx2g -Ddatomic.objectCacheMax=256m -Ddatomic.memoryIndexMax=256m -Dtriplex.codec.spec=/opt/spec/codec-spec.json -cp "$(DATOMIC_EXT_CLASSPATH=/opt/gateway/src bin/classpath)" clojure.main /opt/run.clj' \
     > "$out/$name.log" 2>&1 || status=1
+  echo "$name $image" >> "$out/images-ran"
   grep -E "ERA2_|SUITES|FAIL|ERROR in|Exception" "$out/$name.log" | cut -c1-2000 | head -40
 }
 phases=${ERA2_GATE_PHASES:-paired gate suites}
 paired='(load-file "/lab/regression.clj") (load-file "/lab/paired.clj") (era2-paired/main)'
 if [[ $phases == *paired* ]]; then
   run paired-base base off "$paired"; run paired-base2 base off "$paired"
-  run paired-off this off "$paired"; run paired-on this on "$paired"
+  run paired-off this off "$paired"; run paired-on this subject "$paired"
 fi
 gate='(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (era2-gate/main)'
-if [[ $phases == *gate* ]]; then run gate-off this off "$gate"; run gate-on this on "$gate"; fi
+if [[ $phases == *gate* ]]; then
+  [[ $phases == *gate-subject-only* ]] || { run gate-off this off "$gate"; run gate-on this on "$gate"; }
+  run gate-subject this subject "$gate"
+fi
 suites="triplex.gateway.selftest triplex.gateway.group-test triplex.gateway.ids-test triplex.gateway.feed-test triplex.gateway.pinned-test triplex.gateway.recent-test triplex.gateway.cache-key-test triplex.gateway.commit-order-test triplex.gateway.sweep-gates-test triplex.gateway.trace-test"
-for arm in base:off this:off this:on; do
+for arm in base:off this:off this:subject; do
   [[ $phases == *suites* ]] || continue
   source=${arm%%:*} option=${arm##*:}
   run "suites-$source-$option" "$source" "$option" "(require 'clojure.test) (def nss (quote [$suites])) (apply require nss)

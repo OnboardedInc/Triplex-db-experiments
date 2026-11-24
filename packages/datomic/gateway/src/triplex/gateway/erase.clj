@@ -224,8 +224,14 @@
 ;; "head has not moved since my selection" check (database-wide, P9) retries more often; this measures how often.
 ;; One JSON line per removal on standard output when TX2_REMOVAL_TRIES_LOG=1 (unset: nothing printed).
 (def ^:private tries-log (= "1" (System/getenv "TX2_REMOVAL_TRIES_LOG")))
+;; [DX-ERA2] TX2_REMOVAL_SUBJECT_CHECK=1 (default off; only on a database guarded per account): the removal checks its
+;; selection per subject and takes its log position at its own commit (removal_commit.clj, loaded on first use only, so
+;; this file and every installed function text stay as they are without the option).
+(def ^:private subject-check (= "1" (System/getenv "TX2_REMOVAL_SUBJECT_CHECK")))
 
 (defn erase! [name conn input]
+  (if (and subject-check (removal-scope/per-account? (d/db conn)))
+    ((requiring-resolve 'triplex.gateway.removal-commit/erase!) name conn input)
   (let [selectors (selectors! input)
         started (System/nanoTime)
         command (get input "commandId")
@@ -270,7 +276,7 @@
                           (println (json/write-str {"schema" "triplex.removal-tries.v1" "seq" (get entry "seq")
                                                     "tries" tries "perAccount" (boolean buckets)
                                                     "ms" (/ (- (System/nanoTime) started) 1.0e6)})))
-                        (response (d/db conn) entry))))))))))))))
+                        (response (d/db conn) entry)))))))))))))))
 
 (defn replay-after-restore! [name conn]
   ;; [DX-ERASE1] Why: data rollback must replay the external prefix before any route becomes eligible.

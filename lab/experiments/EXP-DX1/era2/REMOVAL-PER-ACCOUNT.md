@@ -452,3 +452,108 @@ Evidence (private, compressed, under the lab's evidence folder `DX-ERA2/`): `F2-
 "after" run, one read refused), `F3-on` (Table 2), `F4-o0` and `F4-o1` (tries), `G7` (paired log, interleavings and
 suites on the final code), `reg-subject`, `reg-general`, `reg-sealed` (the existing removal regression), and the earlier
 `F0`, `F1-base`, `G1` to `G6` runs that shaped the driver and the gates.
+
+## 13. The removal's own selection check, per subject (`TX2_REMOVAL_SUBJECT_CHECK=1`, 2026-11-24)
+
+Second pass of DX-ERA2, from `272a1bd66`. Its own option, default off, effective only with `TX2_REMOVAL_PER_ACCOUNT=1`
+on a moved database. A removal that cannot finish under load is a privacy fault (the value stays readable), so this
+section treats its time to finish as part of exactness.
+
+### 13.1 The law of the database-wide check (from the code and the F4 counts)
+
+A try is: sync (the selection's basis `t_b`), select, write the intent (`pending.json`), commit. The installed
+`:triplex.erase/check-position-v1` refuses the commit unless the head position at Datomic's serial point is the one
+the selection saw, so a try fails when **any** position-bearing commit of **any** account lands between `t_b` and the
+serial point (the window `w`). With commits of the whole database arriving at rate `C` (Poisson), a try succeeds with
+probability `e^(-C x w)`; the number of tries is geometric: mean `e^(C x w)`, P(more than n tries) `= (1 - e^(-C x w))^n`.
+The loop in `erase!` has no upper limit.
+
+Fitted on the Mac from F4 with the option on (commit rate measured per cell from acknowledged saves and frames): 40.9,
+36.4 and 35.5 commits per second gave mean tries 1.66, 5.20 and 2.36, so `C x w` = 0.51, 1.65, 0.86 and `w` = 12, 45
+and 24 ms (diagnostic). The tails are heavier than geometric (p99 17 at mean 2.36, where a fixed window gives 9),
+because `w` varies with load on the Mac.
+
+Mean tries exceed 10, 100 and 1,000 above `C` = 2.30/w, 4.61/w and 6.91/w commits per second:
+
+| Window w | Mean tries over 10 above | over 100 above | over 1,000 above |
+| --- | --- | --- | --- |
+| 5 ms (server, predicted) | 461 per s | 921 per s | 1,382 per s |
+| 10 ms | 230 per s | 461 per s | 691 per s |
+| 24 ms (Mac fit) | 96 per s | 192 per s | 288 per s |
+
+Against the production-shaped card's load steps for shape S (50, 235, 394 and 620 rows per second, taken as commits
+per second), mean tries `e^(C x w)`:
+
+| Commits per second | w = 5 ms | w = 10 ms | w = 24 ms |
+| --- | --- | --- | --- |
+| 50 | 1.3 | 1.6 | 3.3 |
+| 235 | 3.2 | 10.5 | 281 |
+| 394 | 7.2 | 51 | 12,785 |
+| 620 | 22 | 493 | 2.9 million |
+
+At 394 commits per second with a 10 ms window the removal takes about 50 tries on average; at 620 per second it
+practically never finishes. With the option off (database-wide rule) every other save pauses once the intent is
+written, so only the selection-to-intent part of the window is exposed: at most 3 tries measured; the cost there is
+the other accounts' refusals (section 0).
+
+### 13.2 The narrow check, and what the head check protected
+
+The selection of an entity selector reads only that subject's own datoms: its entity's rows (history) and retirement
+markers, the version entities of a migrated owner (`:triplex.owner/version-owner`), and its sealed records
+(`:triplex.private/entity`). So the removal's installed function `:triplex.removal/commit-v1` refuses a try when, since
+`t_b`, any datom was added or retracted on the subject's entity, on a version link to it or a version entity of it, or
+on a sealed record of it (or such a record was added); `d/history` of `d/since t_b`, at the serial point. If none
+changed, the selection made at `t_b` is the selection at the serial point. An assertion selector names one identity,
+which no later write can add to, so it needs no check. Every other commit of the database is irrelevant to the
+selection and no longer fails the try.
+
+The head check also gave the removal its log position. The removal now takes it at its serial point: the gateway
+renders its journal rows and its entry at a provisional position and stamp, and the installed function sets the next
+position (head + 1, as the save commit function does) and the stamp `max(selection stamp, newest commit's record time
++ 1 ms)`, rewriting `recorded_position` and `recorded_at` in each row, the `:_tx/instant` value, the stored entry's
+`position` and `erasedAt`, and `:triplex.tx/position`, `:triplex.journal/position`, `:triplex.entity/rev`. Positions
+stay dense and ordered and record time does not go back at the removal. The published entry is the stored one, read
+back after the commit.
+
+| What the head check protected | How the per-subject form catches it |
+| --- | --- |
+| A fact of the subject written between selection and commit (a new value, a replacement, a retirement) | it adds datoms to the subject's entity after `t_b`: the try is refused, the next selection includes it. After the commit, a save prepared before is refused by the subject's fence (its counter moved) |
+| A new entity the removal names, created in that window (plain creation save, import frame) | the entity exists at the serial point with datoms after `t_b`: refused and re-selected. Created after the commit by a write prepared before: refused by the named entity's fence, because **a removal now moves the counter of every entity a selector names, with or without a row** (both natively and in the counters derived from the log) |
+| Such an entity created after publication by a new request | a plain save is new data after the removal. An import frame is refused by DX-IMP2's families (its own option, `origin/exp/DX-IMP2-import-whole-subject`, which records the named (entity, attribute) pairs). On this branch alone the resent frame commits, exactly as with today's defaults (IMP2's finding). The named counters keep IMP2's fix closed under the per-account rule: without them, an import frame prepared before the removal passed both the families check (old cut) and the fence (counter unmoved) |
+| A version entity or sealed record of the subject added or changed in the window | checked the same way (version links and versions; records and their datoms) |
+| A reference to the subject from another entity | carries an entity ID; protected fields take strings only (`ProtectedTypeUnsupported`). The head check never selected it either |
+| A settlement frame materializing a value in that window | cannot commit in the window: the removal holds the database's lock and the lock of every account its selectors reach for its whole run, and ticketed writes take those locks (a ticket naming no account takes the database's). A frame writing the subject itself carries the subject's fence. Unchanged |
+| Another removal | serialised on the database's lock |
+| The removal's own log position | taken at the serial point (above) |
+
+**The journal entry's form does not change**: the same rows, the same fields, the same stored record. Only where the
+position and stamp are decided moves. Old entries stay readable as they are. On resume, a prepared intent is matched to
+a native commit without its position and stamp, so an intent written by the old path (exact position) is still
+recognised.
+
+### 13.3 The bound: a guard on the removed subjects only
+
+After `narrow-tries` (2) refused tries, the removal takes a guard: one native transaction sets the removal counter of
+every subject it names to `-(its pending sequence)`. No save's fence can expect a negative value, so every save of
+those subjects fails at Datomic's serial point (409 CasConflict, which the SDK replays; it lands after publication).
+Other subjects of the account and other accounts are untouched. The removal's commit sets the counters to its sequence
+in the same transaction. Under the guard, a try can fail only by a write to the subject that carries no fence: an
+owner-root fold (once per subject, ever). So:
+
+- **at most 4 tries** (2 narrow, then at most 2 under the guard), one guard commit;
+- a hard stop at 5 tries answers 503 and leaves the removal pending, its subjects guarded, resumable with the same
+  command (a resumed removal finds its guard by the negative counters);
+- **worst-case time to remove**, under any save rate: the wait for earlier removals on the database's lock, plus at
+  most 5 tries and 1 guard commit, each bounded by the gateway's own timeouts (sync 2 s, commit 5 s): at most
+  5 x 7 s + 5 s = 40 s before it answers (done, or 503 and resumable).
+
+A guard taken and then stopped (gateway killed) keeps the subject's saves refused until the removal is resumed, as a
+removal stopped after its native commit does today.
+
+### 13.4 Proof that no removed value survives or reappears
+
+Sections 4.1 to 4.10 hold unchanged except item 9's selection (P9), which becomes: R's identities are those of its
+named subjects at R's serial point, because no datom any selector reads changed between R's selection and its serial
+point (the installed check), and other datoms cannot enter the selection. After R's commit, every entity R names (with
+or without a row) has a moved counter, so no write prepared before R can write it (fence); after R's publication every
+route masks R's identities. Under the guard, no fenced write of R's subjects commits until R does.

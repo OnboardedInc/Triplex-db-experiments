@@ -44,6 +44,8 @@
     (string? v) (-> v
                     (str/replace name "DB")
                     (str/replace #"_tx/erase-[0-9a-f-]{36}" "_tx/erase-ID")
+                    ;; random IDs also appear JSON-escaped (_tx\/erase-...) inside stored entries
+                    (str/replace #"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}" "UUID")
                     (str/replace #"[0-9a-f]{64}" "HASH")
                     (str/replace #"1\.\d+E1[23]" "CLOCK")
                     (str/replace #"\b1[6-9]\d{11}(\.\d+)?\b" "CLOCK")

@@ -56,7 +56,14 @@
 (defn bucket-seq [state b] (get (:buckets state) b 0))
 (defn entity-seq [state e] (get (:entities state) e 0))
 
-(defn entry-entities [entry] (into (sorted-set) (map #(get % "entity")) (get entry "identities")))
+(defn entry-entities
+  "The entities whose removal sequence a removal moves: every entity that lost a value, and every entity a selector
+  names by entity ID even when it has no row yet, so a save or import frame of that entity prepared before the removal
+  is refused at the serial point instead of creating it after the removal (DX-IMP2's case)."
+  ;; No function literal is added here: generated names in installed function texts stay as they are.
+  [entry]
+  (-> (into (sorted-set) (map #(get % "entity")) (get entry "identities"))
+      (into (remove nil? (map get (get entry "selectors") (repeat "entityId"))))))
 (defn entry-buckets [entry] (into (sorted-set) (map bucket) (entry-entities entry)))
 
 (defn add-entry

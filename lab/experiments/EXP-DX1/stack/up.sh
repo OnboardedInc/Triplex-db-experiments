@@ -1110,6 +1110,8 @@ for role in "${gateway_roles[@]}"; do
   fi
   # [DX-ERA2] One line per removal with its number of tries (unset: nothing printed).
   if [[ ${DX_REMOVAL_TRIES_LOG:-0} == 1 ]]; then field_policy+=(-e "TX2_REMOVAL_TRIES_LOG=1"); fi
+  # [DX-ERA2] The removal checks its selection per subject and takes its position at commit (unset: unchanged).
+  if [[ ${DX_REMOVAL_SUBJECT_CHECK:-0} == 1 ]]; then field_policy+=(-e "TX2_REMOVAL_SUBJECT_CHECK=1"); fi
   # [DX-SCALE2] The sweep's per-account gates evicted when an account's last sweep ends (unset: environment unchanged).
   if [[ -n ${DX_SWEEP_GATE_EVICT:-} ]]; then
     [[ $DX_SWEEP_GATE_EVICT =~ ^[01]$ ]] || { echo "up.sh: DX_SWEEP_GATE_EVICT must be 0 or 1" >&2; exit 2; }

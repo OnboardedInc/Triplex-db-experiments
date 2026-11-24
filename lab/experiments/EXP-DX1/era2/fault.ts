@@ -231,7 +231,16 @@ async function contestLoop(rate: number) {
     const s = subjects.get(target(Math.min(removals - 3, nextRemoval + Math.floor(rnd() * 3))))!;
     if (s.busy || s.unresolved) continue;
     s.busy = true; s.contested = true;
-    inflight.push(save(s, [FIELDS[0]!], "contest/" + saveSeq++).catch(() => { s.unresolved = true; }).finally(() => { s.busy = false; }));
+    // [DX-ERA2] A racing save's value, assertion and position, and a Reach session on the read gateway pinned at that
+    // position (it caches the value) for the final check.
+    inflight.push(save(s, [FIELDS[0]!], "contest/" + saveSeq++)
+      .then(async () => {
+        const row = s.rows.get(FIELDS[0]!);
+        if (!row) return;
+        racing.push({ subject: s.id, id: row.id, value: s.values.get(FIELDS[0]!)!, pos: s.pos });
+        await reader.reachEntities(db, [s.id], { recordedPosition: s.pos, validAt: VALID_AT }).catch(() => undefined);
+      })
+      .catch(() => { s.unresolved = true; }).finally(() => { s.busy = false; }));
   }
   await Promise.all(inflight);
 }
@@ -254,6 +263,8 @@ async function stream(rate: number, from: Subject[], label: string) {
   await Promise.all(inflight);
 }
 let nextRemoval = 0;
+const racing: { subject: string; id: string; value: string; pos: number }[] = [];
+const removalOf = new Map<string, { position: number; ids: Set<string> }>();
 const removalLatency: number[] = [];
 const removalCodes = new Map<string, number>();
 let removed = 0;
@@ -270,7 +281,8 @@ async function removalsLoop() {
       // Retried with the same command until it answers (a stopped transactor included), as a caller would.
       for (let attempt = 0; now() - t0 < 180_000; attempt++) {
         try {
-          await writer.erase(db, "era2-erase-" + RUN + "-" + i, [{ entityId: target(i), attribute: SSN }]);
+          const receipt: any = await writer.erase(db, "era2-erase-" + RUN + "-" + i, [{ entityId: target(i), attribute: SSN }]);
+          removalOf.set(target(i), { position: Number(receipt.position), ids: new Set((receipt.identities ?? []).map((x: any) => x.assertionId)) });
           removalLatency.push(now() - t0);
           removed++;
           removedSet.add(target(i));
@@ -398,7 +410,20 @@ for (const part of chunk([...removedSet], 50)) {
 }
 // The removed values through the second (read) gateway: at the old pin (rows and a Reach session that cached the
 // subject before the removals), the feed and the journal pages answer none of them.
-const removedValues = [...removedSet].map((id) => subjects.get(id)!.values.get(SSN)!);
+// [DX-ERA2] A racing save (of a subject being removed) that committed before its removal's position must have been
+// removed with it; one after it is new data, and must not be a save prepared before the removal (that is refused).
+const raceCheck = { committed: racing.length, removedWithSubject: 0, afterRemoval: 0, notRemoved: 0, reachLeaks: 0 };
+const racingValues: string[] = [];
+for (const r of racing) {
+  const rm = removalOf.get(r.subject);
+  if (!rm) continue;
+  if (rm.ids.has(r.id)) { raceCheck.removedWithSubject++; racingValues.push(r.value); }
+  else if (r.pos > rm.position) raceCheck.afterRemoval++;
+  else { raceCheck.notRemoved++; log("race-not-removed", { ...r, removal: rm.position }); }
+}
+// A removed subject's last value is checked when the removal took it (a value saved after the removal is new data).
+const finalRemoved = [...removedSet].filter((id) => { const row = subjects.get(id)!.rows.get(SSN); return !row || removalOf.get(id)?.ids.has(row.id) !== false; });
+const removedValues = [...new Set([...finalRemoved.map((id) => subjects.get(id)!.values.get(SSN)!), ...racingValues])];
 const leaks: Record<string, number> = { pinnedRows: 0, reach: 0, feed: 0, journal: 0 };
 const leaked = (text: string) => removedValues.filter((v) => text.includes(v)).length;
 for (const part of chunk([...removedSet], 50)) {
@@ -407,6 +432,10 @@ for (const part of chunk([...removedSet], 50)) {
     leaks.reach! += leaked(JSON.stringify(await reader.reachEntities(db, [id], { recordedPosition: seedHead, validAt: VALID_AT }),
       (_k, v) => (v instanceof Map ? [...v] : v)));
 }
+for (const r of racing.filter((x) => removalOf.get(x.subject)?.ids.has(x.id)).slice(0, 200))
+  raceCheck.reachLeaks += leaked(JSON.stringify(await reader.reachEntities(db, [r.subject], { recordedPosition: r.pos, validAt: VALID_AT }),
+    (_k, v) => (v instanceof Map ? [...v] : v)));
+leaks.reach! += raceCheck.reachLeaks;
 for (let from = "0", pages = 0; pages < 200; pages++) {
   const page = await reader.log(db, from, 1000);
   leaks.feed! += leaked(JSON.stringify(page));
@@ -440,7 +469,7 @@ const result = {
   otherAccounts: totals(others_), removalAccount: totals(same_), contested,
   perAccount: Object.fromEntries(counts),
   reach: reachDelta, codes: Object.fromEntries(codes),
-  checks: { checked, wrong, removedMarked, removed, unresolvedSubjects, leaks }, resolutions,
+  checks: { checked, wrong, removedMarked, removed, unresolvedSubjects, leaks, race: raceCheck }, resolutions,
   gateway: { write: diff(statsBefore.w, statsAfter.w), read: diff(statsBefore.r, statsAfter.r) },
 };
 function diff(a: any, b: any) {
@@ -451,5 +480,5 @@ fs.writeFileSync(path.join(out, "result-" + LABEL + ".json"), JSON.stringify(res
 log("result", { ...result, perAccount: undefined, gateway: undefined });
 writer.close(); framer.close(); reader.close();
 const leakCount = Object.values(leaks).reduce((a, b) => a + b, 0);
-if (wrong || removedMarked !== removed || leakCount) { log("FAIL", { wrong, removedMarked, removed, leaks }); process.exit(1); }
+if (wrong || removedMarked !== removed || leakCount || raceCheck.notRemoved) { log("FAIL", { wrong, removedMarked, removed, leaks, race: raceCheck }); process.exit(1); }
 log("PASS", { checked, removed });
