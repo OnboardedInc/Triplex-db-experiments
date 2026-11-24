@@ -3,9 +3,9 @@
 Server 2 accrued about USD 49.51 through 2026-11-21 15:55 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-**State at 02:25 UTC on 2026-11-24 (Server 2's last evening).** Server 2 has cost about USD 113.3 (103.9 h at USD 1.09/hour since 2026-11-19 18:30 UTC). It must be deleted by 04:30 UTC, with evidence collection starting by 04:00 UTC. One more arm may run first: the random-subject windows with a larger reader, from `exp/DX-RD1-readers` once its commit arrives. If it does not arrive by 02:50 UTC, the server is deleted then.
+**State at 02:55 UTC on 2026-11-24 (Server 2's last evening).** Server 2 has cost about USD 113.8 (104.4 h at USD 1.09/hour since 2026-11-19 18:30 UTC). It must be deleted by 04:30 UTC, with evidence collection starting by 04:00 UTC. The last arm (random subjects with 6 and 12 read permits) finished at 02:51 UTC. The queue is empty and the server is being deleted.
 
-Runs finished tonight, each published with its predictions and its evidence on the Mac (checked by SHA-256 on both sides):
+Runs finished tonight (seven), each published with its predictions and its evidence on the Mac (checked by SHA-256 on both sides):
 
 | Run | Build | Result | Page |
 | --- | --- | --- | --- |
@@ -15,6 +15,7 @@ Runs finished tonight, each published with its predictions and its evidence on t
 | Console proof | `ebe31628f` | 3 checks failed | [CONSOLE-1B.md](CONSOLE-1B.md) |
 | Fixed owner head pair | `85fc3a4bd` | Both arms stored every save; the treatment summary refused at `summarize.py:125` | [OWNER-HEAD-1B.md](OWNER-HEAD-1B.md) |
 | Pinned readers with saves | `e02bf4edf` | 10 windows, 0 wrong values, 23.08 commits/s beside 256 readers; random subjects at 1.5 to 2.0 loads per subject, inside the model; both tape windows limited by the driver | [RD2-PROBE.md](RD2-PROBE.md) |
+| Random arm, 6 then 12 read permits | `d94dff145` | `p6` 1,477 to 1,586 reads/s; `p12` 6 to 13% more; no sizing falsifier fired; 0 wrong values; p99 258 to 305 ms, over the 100 ms bar; `p12` ran under its own parent directory because the published command shares `ladders/` | [RD2-PROBE.md](RD2-PROBE.md) |
 
 **What survives the deletion.** The 1B sealed cluster and the fresh full-size template are in Latitude object storage (bucket `triplex-bench-databases`, `aged-1b/` and `fresh-a/`, verified by SHA-256). Every run's compact evidence is in the private evidence folder under `DX-SCALE1/`, `DX-DEMO1/` and `DX-CON1/`. The two server-only item 1 originals were copied to the Mac earlier.
 
