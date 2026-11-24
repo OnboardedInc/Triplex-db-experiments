@@ -479,7 +479,7 @@ export function AssistantPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-8" />
-                <TableHead>Say this</TableHead>
+                <TableHead>Say this, for example</TableHead>
                 <TableHead>It calls</TableHead>
                 <TableHead>Changes data</TableHead>
               </TableRow>

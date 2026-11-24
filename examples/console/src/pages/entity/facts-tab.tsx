@@ -210,7 +210,7 @@ export function FactsTab({
               {entityType && entityType !== "untyped" ? "" : ", read from the ID"}
             </span>
             <Badge variant="outline" className="ml-auto">
-              {entityType && entityType !== "untyped" && selected === root ? entityType : "Untyped"}
+              {entityType && entityType !== "untyped" && selected === root ? entityType : "No type"}
             </Badge>
           </div>
           <DataTable

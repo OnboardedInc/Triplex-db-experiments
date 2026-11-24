@@ -81,7 +81,7 @@ async function describeTypes(store: Store, s: Snapshot) {
 }
 
 const subjectNote =
-  "Loader-built facts carry no entity type, so membership of Subject cannot be checked; it exists so a type can hold a reference to a real subject. The console does not create entities of type Subject.";
+  "Subjects came from the bulk import, which did not tag them with a type, so they are listed by account and number. Subject exists so a new type can point at a real subject; the console does not create entities of type Subject.";
 
 /** Per type, how many entities the console created (filled in by entities.ts once it exists). */
 export let createdCounts: (demo: Demo, types: string[]) => Promise<Record<string, Record<string, number>>> = async () => ({});

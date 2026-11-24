@@ -62,7 +62,7 @@ export const limits: Limit[] = [
   },
   {
     what: "Removal on request",
-    here: "Refused on loader-built subjects",
+    here: "Refused on imported subjects",
     recorded: "409 ProtectedScopeNeedsMigration",
     where: "small database",
     gap: "G9",
@@ -79,14 +79,15 @@ export const limits: Limit[] = [
     kind: "Engine option",
   },
   {
-    what: "The loader's journal rows",
-    here: "Read with a named option",
+    what: "Changes made by the bulk import",
+    here: "Not listed in the Journal; changes since the import are",
     recorded: "28,222,864 saves",
     where: "1 billion database",
     gap: "G11",
-    blocks: "Reading the feed across the loader's history with the default reader.",
-    lift: "The loader writes canonical rows before it is used again.",
-    kind: "Loader",
+    blocks:
+      "Listing the import's own changes in the Journal: the import wrote its change records in its own form, and reading them pages through every one.",
+    lift: "The bulk import writes its change records in the standard form before it is used again.",
+    kind: "Bulk import tool",
   },
   {
     what: "Atomic enforcement (meta.enforce), materialized derivations",

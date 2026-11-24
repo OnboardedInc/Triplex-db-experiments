@@ -152,7 +152,7 @@ async function checkReferences(demo: Demo, _descriptor: Descriptors.EntityDescri
     if (!own.length) throw new DemoError("UnknownReference", `${t.attribute}: ${t.entity} has no current facts`);
     if (t.type !== "Subject" && !own.some((r) => r.entity_type === t.type))
       throw new DemoError("ReferenceTargetMismatch", `${t.attribute}: ${t.entity} is not a current ${t.type}`);
-    return { ...t, checked: t.type === "Subject" ? "exists (membership of Subject cannot be checked: loader-built facts carry no entity type)" : `holds current ${t.type} facts` };
+    return { ...t, checked: t.type === "Subject" ? "exists (it came from the bulk import, which did not tag it with a type, so that it is a Subject is not checked)" : `holds current ${t.type} facts` };
   });
 }
 
@@ -281,7 +281,7 @@ export function readEntity(demo: Demo, input: { entity: string; basis?: Basis | 
     return {
       entity,
       entityType: type ?? "untyped",
-      ...(type ? {} : { kindFromId: parsed?.prefix ?? null, note: "Loader-built facts carry no entity type; the kind is read from the entity ID." }),
+      ...(type ? {} : { kindFromId: parsed?.prefix ?? null, note: "This record came from the bulk import, which did not tag records with a type; its kind (task, profile, file) is read from its ID." }),
       account: parsed?.account ?? null,
       number: parsed?.number ?? null,
       factCount: rows.length,

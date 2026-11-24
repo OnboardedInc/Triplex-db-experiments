@@ -1,6 +1,14 @@
 // [DX-CON1] Home (DESIGN.md 8.3): what this database is, three ways in, the assistant, and the latest changes.
+import { useState } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -17,7 +25,7 @@ import { EmptyState, ErrorAlert, RecordClockNote, Slow } from "@/components/cons
 import { PageTitle } from "@/components/console/layout";
 import { useTool } from "@/hooks/use-tool";
 import { useConnection, useDefaults, useTools } from "@/lib/catalogue";
-import { n, shortId, time } from "@/lib/format";
+import { n, shortId, time, timeMs } from "@/lib/format";
 import type { Feed, ListTypes, Summary } from "@/lib/types";
 
 export function changesWords(tx: Feed["transactions"][number]) {
@@ -54,6 +62,8 @@ export function HomePage() {
   const openNewType = useNewType();
   const defaults = useDefaults();
   const firstAccount = defaults.account;
+  const [picked, setChosenAccount] = useState<string | undefined>();
+  const chosenAccount = picked ?? firstAccount;
   const s = summary.data;
 
   if (connection.isError)
@@ -175,11 +185,23 @@ export function HomePage() {
               </CardDescription>
             </CardHeader>
             <CardFooter className="mt-auto">
-              <Button asChild variant="outline" disabled={!firstAccount}>
-                <Link to={`/accounts/${firstAccount ?? ""}`}>
-                  Open {firstAccount ?? "an account"}
-                </Link>
-              </Button>
+              <div className="flex w-full items-center gap-2">
+                <Select value={chosenAccount} onValueChange={setChosenAccount}>
+                  <SelectTrigger className="h-9 flex-1" data-testid="home-account">
+                    <SelectValue placeholder="Choose an account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {defaults.accounts.map((a) => (
+                      <SelectItem key={a.account} value={a.account}>
+                        {a.account} ({n(a.people)} subjects)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button asChild variant="outline" disabled={!chosenAccount}>
+                  <Link to={`/accounts/${chosenAccount ?? ""}`}>Open</Link>
+                </Button>
+              </div>
             </CardFooter>
           </Card>
           <Card className="flex flex-col">
@@ -202,7 +224,7 @@ export function HomePage() {
         <div>
           <h2 className="text-sm font-medium">Ask your assistant the same things</h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            "What did we believe about subject {defaults.subject ?? 0} of{" "}
+            For example: "What did we believe about subject {defaults.subject ?? 0} of{" "}
             {firstAccount ?? "an account"} on 1 June 2025?"
           </p>
         </div>
@@ -250,8 +272,8 @@ export function HomePage() {
                       return (
                         <TableRow key={tx.position}>
                           <TableCell className="tabular-nums">{n(tx.position)}</TableCell>
-                          <TableCell className="tabular-nums">{time(tx.recordedAt)}</TableCell>
-                          <TableCell>{tx.actor ?? "loader"}</TableCell>
+                          <TableCell className="tabular-nums">{timeMs(tx.recordedAt)}</TableCell>
+                          <TableCell>{tx.actor ?? "bulk import"}</TableCell>
                           <TableCell>
                             <span
                               className={

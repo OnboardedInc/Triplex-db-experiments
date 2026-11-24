@@ -1,4 +1,5 @@
-// [DX-CON1] Account page (DESIGN.md 8.6): find a loader-built subject by its number.
+// [DX-CON1] Account page (DESIGN.md 8.6): find a subject by its number. SubjectsList is also the Subject type's
+// Entities tab, so subjects are listed the same way wherever they are listed.
 import { useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -19,12 +20,51 @@ const PAGE = 50;
 export function AccountPage() {
   const { account = "" } = useParams();
   const [params, setParams] = useSearchParams();
+  const connection = useConnection();
+  const r = connection.data?.roster.find((x) => x.account === account);
+  if (connection.data && !r)
+    return (
+      <Refused
+        reason={`There is no account named ${account}. Choose one of ${connection.data.roster.map((x) => x.account).join(", ")}.`}
+      />
+    );
+  return (
+    <div className="mx-auto max-w-6xl space-y-4">
+      <PageTitle
+        title={account}
+        actions={
+          r && (
+            <span className="text-muted-foreground text-sm tabular-nums">
+              {n(r.people)} subjects, numbers {r.firstPerson} to {n(r.firstPerson + r.people - 1)}
+            </span>
+          )
+        }
+      />
+      <SubjectsList
+        account={account}
+        from={params.get("from")}
+        setFrom={(f) => setParams((p) => (p.set("from", String(f)), p))}
+      />
+    </div>
+  );
+}
+
+/** The subjects of one account by number, 50 a page, with a "go to subject" box; each row opens the subject. */
+export function SubjectsList({
+  account,
+  from: fromParam,
+  setFrom,
+}: {
+  account: string;
+  from: string | null;
+  setFrom: (from: number) => void;
+}) {
   const navigate = useNavigate();
   const connection = useConnection();
   const r = connection.data?.roster.find((x) => x.account === account);
   const first = r?.firstPerson ?? 0;
   const last = r ? r.firstPerson + r.people - 1 : 0;
-  const from = Math.max(first, Number(params.get("from") ?? first) || first);
+  const from = Math.max(first, Number(fromParam ?? first) || first);
   const [go, setGo] = useState("");
   const [refusal, setRefusal] = useState<string | null>(null);
   const count = r ? Math.min(PAGE, last - from + 1) : PAGE;
@@ -87,25 +127,8 @@ export function AccountPage() {
     navigate(`/accounts/${account}/subjects/${num}`);
   };
 
-  if (connection.data && !r)
-    return (
-      <Refused
-        reason={`There is no account named ${account}. Choose one of ${connection.data.roster.map((x) => x.account).join(", ")}.`}
-      />
-    );
-
   return (
-    <div className="mx-auto max-w-6xl space-y-4">
-      <PageTitle
-        title={account}
-        actions={
-          r && (
-            <span className="text-muted-foreground text-sm tabular-nums">
-              {n(r.people)} subjects, numbers {first} to {n(last)}
-            </span>
-          )
-        }
-      />
+    <div className="space-y-4">
       <form
         className="flex items-center gap-2"
         onSubmit={(e) => {
@@ -156,7 +179,7 @@ export function AccountPage() {
                 variant="outline"
                 size="sm"
                 disabled={from <= first}
-                onClick={() => setParams({ from: String(Math.max(first, from - PAGE)) })}
+                onClick={() => setFrom(Math.max(first, from - PAGE))}
               >
                 Previous
               </Button>
@@ -164,15 +187,15 @@ export function AccountPage() {
                 variant="outline"
                 size="sm"
                 disabled={from + PAGE > last}
-                onClick={() => setParams({ from: String(from + PAGE) })}
+                onClick={() => setFrom(from + PAGE)}
               >
                 Next
               </Button>
             </div>
           </div>
           <p className="text-muted-foreground text-xs">
-            Subjects are found by account and number. A protected value is never looked up by its
-            value. This list always reads at the latest position.
+            Subjects are listed by account and number. A protected value is never looked up by its
+            value. This list always reads the latest data.
           </p>
         </>
       )}

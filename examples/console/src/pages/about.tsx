@@ -107,9 +107,10 @@ function Identity() {
                 : "not recorded"}
             </Row>
             {c.loaderPositionRows && (
-              <Row label="Loader compatibility">
-                {s?.compatibility ??
-                  "The loader's journal position rows are read with a named compatibility option."}
+              <Row label="The bulk import's changes">
+                The bulk import that built this database wrote its change records in its own form.
+                The console reads them with a named compatibility option, and its Journal lists the
+                changes made after the import (from position {n(c.sealed.head)} on).
               </Row>
             )}
             {mem && (

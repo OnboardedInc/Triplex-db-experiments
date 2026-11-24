@@ -23,6 +23,7 @@ import {
   TableSkeleton,
 } from "@/components/console/states";
 import { useTool } from "@/hooks/use-tool";
+import { SubjectsList } from "@/pages/account";
 import { ToolError } from "@/lib/api";
 import { recordedWords, toBasis, useBasis, validWords } from "@/lib/basis";
 import { useConnection, useDefaults, useTools } from "@/lib/catalogue";
@@ -292,6 +293,45 @@ function Definition({ d }: { d: DescribeType }) {
   );
 }
 
+/** The Subject type's entities: the subjects of one account, chosen from every account, by number. */
+function SubjectEntities() {
+  const [params, setParams] = useSearchParams();
+  const defaults = useDefaults();
+  const account = params.get("account") ?? defaults.account ?? "";
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm">Account</span>
+        <Select
+          value={account}
+          onValueChange={(a) => setParams((p) => (p.set("account", a), p.delete("from"), p))}
+        >
+          <SelectTrigger className="h-8 w-56" data-testid="subject-account">
+            <SelectValue placeholder="Choose an account" />
+          </SelectTrigger>
+          <SelectContent>
+            {defaults.accounts.map((a) => (
+              <SelectItem key={a.account} value={a.account}>
+                {a.account} ({n(a.people)} subjects)
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <span className="text-muted-foreground text-sm">
+          {defaults.accounts.length} accounts. Choose one to list its subjects by number.
+        </span>
+      </div>
+      {account && (
+        <SubjectsList
+          account={account}
+          from={params.get("from")}
+          setFrom={(f) => setParams((p) => (p.set("from", String(f)), p))}
+        />
+      )}
+    </div>
+  );
+}
+
 export function TypePage() {
   const { name = "" } = useParams();
   const defaults = useDefaults();
@@ -358,16 +398,7 @@ export function TypePage() {
           </TabsList>
           <TabsContent value="entities" className="mt-4">
             {name === "Subject" ? (
-              <EmptyState
-                title="Subjects are listed by account"
-                description="Loader-built subjects carry no entity type, so the console finds them by account and number, not by type."
-              >
-                <Button asChild variant="outline">
-                  <Link to={`/accounts/${defaults.account ?? ""}`}>
-                    Open {defaults.account ?? "an account"}
-                  </Link>
-                </Button>
-              </EmptyState>
+              <SubjectEntities />
             ) : d.data ? (
               <Entities name={name} attrs={d.data.type.attributes} />
             ) : d.isError ? (

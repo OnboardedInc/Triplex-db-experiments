@@ -66,3 +66,10 @@ export function parseLoaderId(
 
 export const json = (value: unknown) =>
   JSON.stringify(value, (_k, v) => (typeof v === "bigint" ? v.toString() : v), 2);
+
+/** Record time to the millisecond, so commits in the same second still show their order. */
+export function timeMs(iso: string | number | null | undefined) {
+  if (iso === null || iso === undefined || iso === "") return "";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? String(iso) : d.toISOString().replace("T", " ").slice(0, 23);
+}

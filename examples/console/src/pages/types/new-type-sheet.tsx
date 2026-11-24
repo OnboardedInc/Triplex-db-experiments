@@ -125,7 +125,7 @@ export function NewTypeSheet({ init, onClose }: { init: NewTypeInit | null; onCl
       out["name"] = "A type name is PascalCase, for example Review.";
     else if (v.name && LOADER_PREFIXES.includes(kebab(v.name)))
       out["name"] =
-        `"${kebab(v.name)}" is one of the loader's entity prefixes; choose another name.`;
+        `"${kebab(v.name)}" is already used in the IDs of the imported records; choose another name.`;
     else if (v.name === "Subject")
       out["name"] = "Subject is the starter type; the console does not change it.";
     const seen = new Set<string>();

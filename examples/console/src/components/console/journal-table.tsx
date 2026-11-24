@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { changesWords } from "@/pages/home";
-import { day, n, shortId, time } from "@/lib/format";
+import { day, n, shortId, time, timeMs } from "@/lib/format";
 import type { Transaction } from "@/lib/types";
 import { DataTable, Mono } from "./data-table";
 
@@ -34,13 +34,14 @@ export function JournalTable({
       accessorKey: "recordedAt",
       header: "Record time",
       cell: (c) => (
-        <span className="tabular-nums whitespace-nowrap">{time(c.row.original.recordedAt)}</span>
+        <span className="tabular-nums whitespace-nowrap">{timeMs(c.row.original.recordedAt)}</span>
       ),
     },
     {
       accessorKey: "actor",
       header: "Actor",
-      cell: (c) => c.row.original.actor ?? <span className="text-muted-foreground">loader</span>,
+      cell: (c) =>
+        c.row.original.actor ?? <span className="text-muted-foreground">bulk import</span>,
     },
     {
       accessorKey: "commandId",

@@ -164,14 +164,14 @@ export function RecordedBadgeText({ date, source }: { date?: string; source?: st
 }
 
 /**
- * Record time is the database's own clock, not the Mac's. The loader that built this database ran that clock about a
+ * Record time is the database's own clock, not the Mac's. The bulk import that built this database ran that clock about a
  * year ahead of wall time, and the store never moves it backwards, so new commits are stamped just after its last time.
  */
 export function RecordClockNote({ first, last }: { first?: string | null; last?: string | null }) {
   return (
     <p className="text-muted-foreground text-xs" data-testid="record-clock-note">
-      Record time is the database's own clock, in UTC, not this computer's. The loader that built
-      this database ran it about a year ahead of wall time
+      Record time is the database's own clock, in UTC, not this computer's. The bulk import that
+      built this database ran it about a year ahead of wall time
       {first && last ? ` (${first.slice(0, 10)} to ${last.slice(0, 10)})` : ""}, and the store never
       moves it backwards, so new commits are stamped just after its last time. It is not a fault.
     </p>

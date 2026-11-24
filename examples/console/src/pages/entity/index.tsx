@@ -109,7 +109,7 @@ export function EntityPage() {
         )}
         {read.entityType && read.entityType !== "untyped"
           ? `Entity type ${read.entityType}.`
-          : "Untyped: loader-built facts carry no entity type; the kind is read from the ID."}
+          : "No entity type: this record came from the bulk import, which did not tag records with a type. Its kind (task, profile, file) is read from its ID."}
       </PageTitle>
       <Tabs value={tab} onValueChange={(t) => set({ tab: t })}>
         <TabsList>

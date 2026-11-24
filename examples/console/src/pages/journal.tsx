@@ -231,8 +231,8 @@ export function JournalPage() {
     });
   const labels = useReleaseLabels();
   const all = q.data?.transactions ?? [];
-  const actors = [...new Set(all.map((t) => t.actor ?? "loader"))].sort();
-  const txs = all.filter((t) => actor === ALL || (t.actor ?? "loader") === actor);
+  const actors = [...new Set(all.map((t) => t.actor ?? "bulk import"))].sort();
+  const txs = all.filter((t) => actor === ALL || (t.actor ?? "bulk import") === actor);
   const shown = after === undefined ? [...txs].sort((a, b) => b.position - a.position) : txs;
   const sinceDefault = after ?? connection?.sealed?.head ?? 0;
   return (
@@ -381,8 +381,9 @@ export function JournalPage() {
           />
           {q.data?.compatibility && (
             <p className="text-muted-foreground text-xs">
-              Positions up to {n(connection?.sealed.head)} were written by the bulk loader.{" "}
-              {q.data.compatibility}
+              Positions up to {n(connection?.sealed.head)} are the bulk import that built this
+              database. The Journal lists the changes made after it; the import wrote its own change
+              records in a form that would mean paging through every one of them.
             </p>
           )}
         </>

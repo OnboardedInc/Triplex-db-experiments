@@ -222,7 +222,10 @@ export function AppSidebar() {
               <NavLink to="/about">About this database</NavLink>
             </SidebarMenuButton>
             {summary.data && (
-              <div className="text-muted-foreground px-2 pt-1 text-xs tabular-nums" data-testid="sidebar-head">
+              <div
+                className="text-muted-foreground px-2 pt-1 text-xs tabular-nums"
+                data-testid="sidebar-head"
+              >
                 Head {n(summary.data.head)}
               </div>
             )}
