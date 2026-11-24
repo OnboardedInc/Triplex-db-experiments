@@ -58,6 +58,18 @@ const q = (xs: number[], p: number) => {
 };
 const docker = (...args: string[]) => execFileSync("docker", args, { encoding: "utf8", maxBuffer: 64 << 20 });
 
+// Resident memory of this stack's containers (docker stats), for the idle cost of accounts (diagnostic on the Mac).
+function containerMemory() {
+  try {
+    const text = docker("stats", "--no-stream", "--format", "{{.Name}} {{.MemUsage}}");
+    return Object.fromEntries(text.split("\n").filter((l) => l.startsWith(prefix + "-")).map((l) => {
+      const [n, use] = l.split(" ");
+      const m = /^([0-9.]+)([KMG]i?B)/.exec(use ?? "");
+      const scale: Record<string, number> = { KiB: 1 / 1024, MiB: 1, GiB: 1024, kB: 1 / 1000, MB: 1, GB: 1000 };
+      return [n!.slice(prefix!.length + 1), m ? Math.round(Number(m[1]) * (scale[m[2]!] ?? 1)) : null];
+    }));
+  } catch (e) { return { error: String((e as Error).message).slice(0, 120) }; }
+}
 // The read gateway's sweep gates (accounts holding one), from its scan statistics (the image has no jcmd).
 async function gates() {
   try { return ((await (await fetch(readUrl + "/v2/admin/scan-stats")).json()) as any).sweepGates ?? null; } catch { return null; }
@@ -101,8 +113,8 @@ const rowKey = (r: any) => r.entity_id + "|" + r.attribute + "|" + norm(assertio
 // runner is the only writer during the run, so that state holds at every later position until its own first save).
 const ADOPT = process.env.DX_SCALE2_ADOPT;
 const ready = ADOPT ? JSON.parse(fs.readFileSync(ADOPT, "utf8")) : undefined;
-const accounts = roster({ seed: SEED, deep: DEEP, deepPeople: ready ? 100_000 : DEEP_PEOPLE, publish: PUBLISH, publishMax: PUBLISH_MAX,
-  thin: THIN });
+const accounts = roster({ seed: SEED, deep: DEEP, deepPeople: ready ? env("DX_SCALE2_ADOPT_DEEP_PEOPLE", 100_000) : DEEP_PEOPLE,
+  publish: PUBLISH, publishMax: PUBLISH_MAX, thin: THIN, offset: env("DX_SCALE2_INDEX_OFFSET", 0) });
 const busy = accounts[0]!; // the busy deep account
 const quiet = accounts.find((a) => a.kind === "thin")!; // the quiet thin account
 log("roster", { seed: SEED, ...summary(accounts), busy: busy.key, quiet: quiet.key, quietPeople: quiet.people });
@@ -131,10 +143,21 @@ async function transactSure(input: any): Promise<number> {
         (e.code === "OutcomeUnknown" || /DUPLICATE|AlreadyCommitted/i.test(String(e.code) + String(e.message))));
       if (!uncertain || attempt >= 6) throw e;
       resolutions.unknown++;
+      // The commit's first new row, if it is in the store, carries the commit's position (a load commit has no claim
+      // for the operation lookup to find).
+      const first = input.rows?.[0];
+      const landed = async () => {
+        if (!first) return undefined;
+        const rows = await writer.rows(db, { entityIds: [first.entity_id] }).catch(() => [] as any[]);
+        const r = rows.find((x: any) => x.id === first.id);
+        return r ? Number(r.recorded_position) : undefined;
+      };
       for (let k = 0; k < 40; k++) {
         await sleep(500);
         const o = await writer.operation(db, input.operationId).catch(() => undefined);
         if (o?.status === "committed") { resolutions.committed++; return Number(o.position!.v); }
+        const p = await landed();
+        if (p !== undefined) { resolutions.committed++; return p; }
         if (o?.status === "absent" && k >= 6) break;
       }
       resolutions.resent++;
@@ -158,6 +181,7 @@ async function pool<T>(items: T[], depth: number, f: (x: T) => Promise<void>) {
   let i = 0;
   await Promise.all(Array.from({ length: depth }, async () => { while (i < items.length) await f(items[i++]!); }));
 }
+const memoryBeforeLoad = containerMemory();
 const loadStarted = now();
 const chunks: { a: Account; first: number; end: number }[] = [];
 for (const a of accounts) {
@@ -175,7 +199,6 @@ await pool(chunks, env("DX_SCALE2_LOAD_DEPTH", 4), async ({ a, first, end }) => 
   const id = "scale2/load/" + a.key + "/" + first;
   const input = { ...command(id, rows as never, [], false), groupAccount: a.key };
   const p = await transactSure(input);
-  seedOracle(rows, p);
   const pos = seedPos.get(a.key) ?? Array<number>(a.people).fill(0);
   for (let i = first; i < end; i++) pos[i] = p;
   seedPos.set(a.key, pos);
@@ -185,10 +208,16 @@ await pool(chunks, env("DX_SCALE2_LOAD_DEPTH", 4), async ({ a, first, end }) => 
 const loadedHead = await head();
 // [adopt] A deep subject of the sealed database, learnt once at the run's start position (see ADOPT above).
 const learning = new Map<string, Promise<void>>();
+// Every other subject's oracle is regenerated from the generator at its load position the first time it is needed,
+// so the runner holds only the subjects it touched (the 100,000-account rung would not fit otherwise).
+const touched = new Set<string>();
 function ensureOracle(a: Account, i: number) {
-  if (!ready || a.kind !== "deep") return Promise.resolve();
   const root = subjectId(a, i);
   if (oracle.has(root)) return Promise.resolve();
+  if (!ready || a.kind !== "deep") {
+    seedOracle(facts(a, i), seedPos.get(a.key)![i]!);
+    return Promise.resolve();
+  }
   let p = learning.get(root);
   if (!p) {
     p = (async () => {
@@ -209,7 +238,8 @@ function ensureOracle(a: Account, i: number) {
 }
 const THIN_SHARE = process.env.DX_SCALE2_THIN_SHARE === undefined ? undefined : Number(process.env.DX_SCALE2_THIN_SHARE);
 await writer.request("POST", `/v2/db/${db}/request-index`, { waitMs: 600_000 });
-log("load", { commits: chunks.length, facts: [...counts.values()].reduce((n, c) => n + c.loadFacts, 0), head: loadedHead,
+const memoryAfterLoad = containerMemory();
+log("load", { memoryBeforeLoad, memoryAfterLoad, commits: chunks.length, facts: [...counts.values()].reduce((n, c) => n + c.loadFacts, 0), head: loadedHead,
   ms: Math.round(now() - loadStarted) });
 
 // ---- 2. Publishing accounts ---------------------------------------------------------------------------------------
@@ -220,11 +250,15 @@ const allPublishers = accounts.filter((a) => a.kind === "publish");
 const LATE = env("DX_SCALE2_LATE", 0);
 const lateAccounts = new Set(allPublishers.slice(allPublishers.length - LATE).map((a) => a.key));
 const publishers = allPublishers.filter((a) => !lateAccounts.has(a.key));
+// DX_SCALE2_LIVE_PUBLISH=N: the last N enrolled publishing accounts publish their large release DURING the window,
+// beside every other account's saves and settlement (they take no saves themselves), instead of before it.
+const LIVE_PUBLISH = env("DX_SCALE2_LIVE_PUBLISH", 0);
+const livePublishers = new Set(publishers.slice(publishers.length - LIVE_PUBLISH).map((a) => a.key));
 const doPublish = publishers.length > 0 && process.env.DX_SCALE2_PUBLISH_PHASE !== "0";
 type Pub = { a: Account; store: any; joined: any; roster: string[]; releases: any[]; target?: number; enrolMs: number;
   enrolCommits: number; enrolBytes: number; publishBytes: number; publishMs: number };
 const pubs: Pub[] = [];
-let enrolAccount: (a: Account) => Promise<Pub>;
+let enrolAccount!: (a: Account) => Promise<Pub>;
 let W0: any, settleModule: any, BulkQueueCls: any, worldAt: any, streamCheck: any, largeRelease: any, parseShape: any, canonical: any,
   sha256: any;
 if (doPublish) {
@@ -273,6 +307,7 @@ if (doPublish) {
     socketsBefore, socketsAfter: sockets(), sharedAgent: process.env.TRIPLEX_DATOMIC_SHARED_AGENT === "1" });
   const shape = parseShape("forms=20,policies=20,permille=1000");
   for (const x of pubs) {
+    if (livePublishers.has(x.a.key)) continue;
     const doc = largeRelease(W0.R1.doc, shape);
     const started = now();
     const p = await x.joined.publish("scale2:" + SEED + ":" + x.a.key + ":large", doc, validTime, "owed");
@@ -331,6 +366,7 @@ function pickAccount(rnd: () => number) {
 async function doSave(s: Save) {
   const key = s.a.key + "/" + s.i;
   await ensureOracle(s.a, s.i);
+  touched.add(subjectId(s.a, s.i));
   await withSubject(key, async () => {
     const root = subjectId(s.a, s.i), form = formId(s.a, s.i);
     const prior = await writer.rows(db, { entityIds: [root, form] });
@@ -389,7 +425,7 @@ function plan(seconds: number, label: string, opts: { spread: boolean; busy: boo
     // subject of any account, accounts weighted by their size.
     if (recent.length && rnd() < 0.4) return recent[Math.floor(rnd() * recent.length)]!;
     let a = pickAccount(rnd);
-    while (lateAccounts.has(a.key)) a = pickAccount(rnd);
+    while (lateAccounts.has(a.key) || livePublishers.has(a.key)) a = pickAccount(rnd);
     const x = { a, i: Math.floor(rnd() * a.people) };
     recent.push(x);
     if (recent.length > 50) recent.shift();
@@ -473,7 +509,7 @@ async function feedLoop(from: number) {
       assert.equal(position, after + 1, "feed gap at " + (after + 1));
       after = position;
       const rows = encoded.map(decodeRowText);
-      if (!feedSeen.has(position)) feedSeen.set(position, { at: now(), command: rows.find((r: any) => r.attribute === ":_tx/command-id")?.value_string,
+      if (!feedSeen.has(position)) feedSeen.set(position, { at: now(), command: rows.find((r: any) => r.attribute === ":_tx/command-id")?.value_string ?? undefined,
         entities: rows.filter((r: any) => r.attribute === ":_tx/changed-entity").map((r: any) => r.value_string ?? r.value_ref) });
     }
   }
@@ -496,13 +532,14 @@ const settling = doPublish ? (async () => {
   queue = new BulkQueueCls(1);
   const heapBefore = (globalThis.gc?.(), process.memoryUsage().heapUsed);
   const socketsBefore = sockets();
-  const workers = await Promise.all(pubs.map((x) => settleModule.Settlement.open(x.joined, queue, false, "bytes", "progress")));
+  const settlingPubs = pubs.filter((x) => x.target !== undefined);
+  const workers = await Promise.all(settlingPubs.map((x) => settleModule.Settlement.open(x.joined, queue, false, "bytes", "progress")));
   const heapAfter = (globalThis.gc?.(), process.memoryUsage().heapUsed);
   log("settlement-open", { accounts: workers.length, heapBytesPerAccount: Math.round((heapAfter - heapBefore) / workers.length),
     socketsBefore, socketsAfter: sockets() });
   await Promise.all(workers.map(async (w: any, j: number) => {
-    await w.settle(pubs[j]!.target);
-    settled.push({ key: pubs[j]!.a.key, ms: now() - windowBegun });
+    await w.settle(settlingPubs[j]!.target);
+    settled.push({ key: settlingPubs[j]!.a.key, ms: now() - windowBegun });
   }));
   return workers;
 })() : Promise.resolve([] as any[]);
@@ -515,8 +552,28 @@ const lateTask = doPublish && LATE ? (async () => {
     catch (e) { late.push({ account: a.key, ok: false, error: String((e as Error).message).slice(0, 300) }); }
   }
 })() : Promise.resolve();
+// Publish beside the saves (DX_SCALE2_LIVE_PUBLISH): each attempt and its outcome.
+const livePublish: { account: string; ok: boolean; ms: number; error?: string }[] = [];
+const livePublishTask = doPublish && LIVE_PUBLISH ? (async () => {
+  await sleep(3000);
+  for (const x of pubs.filter((p) => livePublishers.has(p.a.key))) {
+    const started = now();
+    try {
+      const doc = largeRelease(W0.R1.doc, parseShape("forms=20,policies=20,permille=1000"));
+      const p = await x.joined.publish("scale2:" + SEED + ":" + x.a.key + ":live", doc, W0.POPULATION_VALID_TIME, "owed");
+      const seq = await sequenceAt(x.joined, p.position);
+      x.releases.push({ seq, position: p.position, doc, old: W0.R1.doc });
+      x.target = seq;
+      livePublish.push({ account: x.a.key, ok: true, ms: Math.round(now() - started) });
+    } catch (e) {
+      livePublish.push({ account: x.a.key, ok: false, ms: Math.round(now() - started), error: String((e as Error).message).slice(0, 200) });
+    }
+  }
+})() : Promise.resolve();
 await play(tape);
 await lateTask;
+await livePublishTask;
+log("live-publish", { accounts: livePublish });
 log("late-enrolment", { option: process.env.TX2_ENROL_BESIDE_SAVES === "1", accounts: late.map(({ account, ok, error, pub }) =>
   ({ account, ok, error, enrolCommits: pub?.enrolCommits, enrolMs: pub ? Math.round(pub.enrolMs) : undefined })) });
 const workers = await settling;
@@ -532,6 +589,13 @@ log("window", { saves: saves.length, acked: saves.filter((s) => s.status === "ac
     last: settled.length ? Math.round(Math.max(...settled.map((x) => x.ms))) : null }, feedPages });
 assert.equal(saves.filter((s) => s.status !== "acked").length, 0, "a save was not acknowledged");
 
+// Accounts whose Publish landed during the window settle now (quietly), so section 4d checks them as the others.
+const liveWorkers: any[] = [];
+for (const x of pubs.filter((p) => livePublishers.has(p.a.key) && p.target !== undefined)) {
+  const w = await settleModule.Settlement.open(x.joined, new BulkQueueCls(1), false, "bytes", "progress");
+  await w.settle(x.target);
+  liveWorkers.push({ x, w });
+}
 // ---- 4. Checks, one account at a time -------------------------------------------------------------------------------
 // 4a. Every subject's root and form at the final head (pinned), against the oracle.
 const checkStarted = now();
@@ -542,10 +606,17 @@ for (const a of accounts) {
     : Array.from({ length: a.people }, (_, i) => i)).flatMap((i) => [subjectId(a, i), formId(a, i)]);
   for (let k = 0; k < ents.length; k += 128) {
     const part = ents.slice(k, k + 128);
+    for (let j = 0; j < part.length; j += 2) {
+      const i = Number(part[j]!.split(":").at(-1));
+      await ensureOracle(a, i);
+    }
     const rows = await reader.rows(db, { entityIds: part, basis: { recordedPosition: finalHead, validAt: VALID_AT } });
     const got = rows.map(rowKey).sort(), want = part.flatMap((e) => oracleAt(e, finalHead)).sort();
     assert.deepEqual(got, want, "final read differs in " + a.key);
     C(a).finalRows += got.length;
+    // Untouched subjects leave the oracle again (it is regenerated if needed).
+    if (!(ready && a.kind === "deep"))
+      for (let j = 0; j < part.length; j += 2) if (!touched.has(part[j]!)) { for (const e of facts(a, Number(part[j]!.split(":").at(-1))).map((f) => f.e)) oracle.delete(e); }
   }
 }
 log("final-reads", { accounts: accounts.length, rows: [...counts.values()].reduce((n, c) => n + c.finalRows, 0),
@@ -608,11 +679,12 @@ for (const a of sampled) {
   let cursor: string | null = null, count = 0, sweepPages = 0, sexamined = 0, cpu = 0;
   do {
     const page: any = await sweepPageWaiting(reader, db, cursor ? { account: a.key, from: { prefix: "pl:", shape: "pl:{8 digits}" }, where,
-      result: "count", bounds: { subjects: 64, ms: 2000 }, cursor }
+      result: "count", bounds: { subjects: 64, ms: 2000 }, cursor } as never
       : { account: a.key, from: { prefix: "pl:", shape: "pl:{8 digits}" }, where, result: "count", bounds: { subjects: 64, ms: 2000 },
         basis: { recordedPosition: finalHead, validAt: VALID_AT } } as never);
     sweepPages++; sexamined += page.examined; cpu += page.cpuMicros ?? 0; count = page.count; cursor = page.next;
   } while (cursor);
+  if (a.kind === "thin") for (let i = 0; i < a.people; i++) await ensureOracle(a, i);
   const wantCount = a.kind === "thin"
     ? Array.from({ length: a.people }, (_, i) => oracleAt(subjectId(a, i), finalHead).some((k) => k.includes("|:person/status|string:pending|"))).filter(Boolean).length
     : a.people;
@@ -626,17 +698,17 @@ log("ids-and-sweeps", { sampled: sampled.length, beforeSweeps, afterSweeps, ids:
 const settlement: object[] = [];
 if (doPublish) {
   const validTime = W0.POPULATION_VALID_TIME;
-  for (const [j, w] of workers.entries()) {
-    const x = pubs[j]!;
+  const checkList: { x: Pub; w: any }[] = [...workers.map((w: any, j: number) => ({ x: (pubs.filter((p) => p.target !== undefined && !livePublishers.has(p.a.key)))[j]!, w })), ...liveWorkers];
+  for (const { x, w } of checkList) {
     const positions = seedPos.get(x.a.key)!;
     const checked = await streamCheck({ worker: w, roster: x.roster, releases: x.releases, target: x.target,
       world: (at: number) => (i: number) => worldAt(i, at, new Map(), positions), workers: 1, validTime, reads: () => true });
     assert(checked.independent, "the release under test adds forms");
     settlement.push({ account: x.a.key, people: x.a.people, values: w.archive.contest.summary(), notices: w.recorder.archive.contest.summary(),
-      turns: queue.turnsByKey.get(w.archive.turnKey()) ?? null, checked: { ...checked, noticesByRelease: undefined },
+      turns: queue?.turnsByKey.get(w.archive.turnKey()) ?? null, live: livePublishers.has(x.a.key), checked: { ...checked, noticesByRelease: undefined },
       enrolCommits: x.enrolCommits, publishBytes: x.publishBytes, publishMs: Math.round(x.publishMs), enrolMs: Math.round(x.enrolMs) });
   }
-  for (const w of workers) await w.close();
+  for (const { w } of checkList) await w.close();
   for (const l of late) {
     if (!l.pub) continue;
     const x = l.pub;
@@ -659,11 +731,11 @@ const quietAlone = saves.filter((s) => s.alone).map((s) => s.acked! - s.sent!);
 const quietLoaded = saves.filter((s) => s.quiet && !s.alone).map((s) => s.acked! - s.sent!);
 const busyLoaded = saves.filter((s) => s.busy).map((s) => s.acked! - s.sent!);
 const spread = saves.filter((s) => !s.busy && !s.quiet).map((s) => s.acked! - s.sent!);
-const touched = new Set(saves.filter((s) => !s.alone).map((s) => s.a.key));
+const touchedAccounts = new Set(saves.filter((s) => !s.alone).map((s) => s.a.key));
 const result = {
-  seed: SEED, db, roster: summary(accounts), loadedHead, finalHead,
-  resolutions,
-  saves: { total: saves.length, accountsTouched: touched.size, spreadMs: { p50: q(spread, 0.5), p99: q(spread, 0.99) },
+  seed: SEED, db, name, scopeKey, prefix, roster: summary(accounts), loadedHead, finalHead,
+  resolutions, memory: { beforeLoad: memoryBeforeLoad, afterLoad: memoryAfterLoad, afterWindow: containerMemory() },
+  saves: { total: saves.length, accountsTouched: touchedAccounts.size, spreadMs: { p50: q(spread, 0.5), p99: q(spread, 0.99) },
     busyMs: { n: busyLoaded.length, p50: q(busyLoaded, 0.5), p99: q(busyLoaded, 0.99) },
     quietAloneMs: { n: quietAlone.length, p50: q(quietAlone, 0.5), p99: q(quietAlone, 0.99) },
     quietLoadedMs: { n: quietLoaded.length, p50: q(quietLoaded, 0.5), p99: q(quietLoaded, 0.99) } },
@@ -672,13 +744,14 @@ const result = {
     currentMs: { p50: q(readStats.currentMs, 0.5), p99: q(readStats.currentMs, 0.99) } },
   feed: { checked: feedChecked, lagMs: { p50: q(lags, 0.5), p99: q(lags, 0.99) } },
   ids: idRows, sweeps: sweepRows, settlement,
+  livePublish,
   late: late.map(({ account, ok, error, pub }) => ({ account, ok, error, enrolCommits: pub?.enrolCommits })),
   sweepGates: { beforeSweeps, afterSweeps, sweptAccounts: sweepRows.length },
   routes: { write: await scanStats(writeUrl), read: await scanStats(readUrl) }, feedPages,
   perAccount: Object.fromEntries(counts),
 };
 fs.writeFileSync(path.join(out, "result.json"), JSON.stringify(result, null, 1) + "\n");
-log("PASS", { accounts: accounts.length, saves: saves.length, touched: touched.size });
+log("PASS", { accounts: accounts.length, saves: saves.length, touched: touchedAccounts.size });
 writer.close();
 reader.close();
 process.exit(0);

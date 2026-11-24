@@ -52,4 +52,14 @@ env "${client_env[@]}" node --no-warnings --expose-gc --experimental-transform-t
   lab/experiments/EXP-DX1/scale2/mini.ts "$out" "http://127.0.0.1:$port_w" "http://127.0.0.1:$port_r" "$prefix" \
   > "$out/mini.log" 2>&1 || status=$?
 grep -E '"kind":"(PASS|roster|load|enrolled|published|window|final-reads|feed|settlement)"' "$out/mini.log" | cut -c1-400 || tail -30 "$out/mini.log"
+# DX_SCALE2_ADOPT_DRYRUN=1: the server test's adoption mode on this toy: the first run's database is adopted as the
+# server adopts the sealed one (its ten deep accounts known only by reading them), and new small accounts are added.
+if [[ $status == 0 && ${DX_SCALE2_ADOPT_DRYRUN:-0} == 1 ]]; then
+  node -e 'const fs=require("fs"); const r=JSON.parse(fs.readFileSync(process.argv[1]+"/result.json","utf8"));
+    fs.writeFileSync(process.argv[1]+"/ready.json", JSON.stringify({ version: "triplex-demo-ready/1", database: r.db,
+      scope: r.scopeKey, prefix: r.prefix, writePort: Number(process.argv[2]), readPort: Number(process.argv[3]) }) + "\n");'     "$out" "$port_w" "$port_r"
+  offset=$(node -p 'const r=JSON.parse(require("fs").readFileSync(process.argv[1]+"/result.json","utf8")); r.roster.publish.accounts + r.roster.thin.accounts' "$out")
+  env "${client_env[@]}" DX_SCALE2_ADOPT="$out/ready.json" DX_SCALE2_ADOPT_DEEP_PEOPLE="${DX_SCALE2_DEEP_PEOPLE:-8}"     DX_SCALE2_INDEX_OFFSET="$offset" DX_SCALE2_SEED=adopt-dryrun DX_SCALE2_THIN="${DX_SCALE2_ADOPT_THIN:-100}"     DX_SCALE2_PUBLISH="${DX_SCALE2_ADOPT_PUBLISH:-6}" DX_SCALE2_LATE="${DX_SCALE2_ADOPT_LATE:-2}" DX_SCALE2_THIN_SHARE=0.35     node --no-warnings --expose-gc --experimental-transform-types --max-old-space-size=4096     lab/experiments/EXP-DX1/scale2/mini.ts "$out/adopt" "http://127.0.0.1:$port_w" "http://127.0.0.1:$port_r" "$prefix"     > "$out/adopt.log" 2>&1 || status=$?
+  grep -E '"kind":"(PASS|late-enrolment|settlement)"' "$out/adopt.log" | cut -c1-400 || tail -30 "$out/adopt.log"
+fi
 exit "$status"

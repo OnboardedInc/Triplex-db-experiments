@@ -51,16 +51,18 @@ export function sizeOf(r: Seeded, min = 5, max = 200) {
  * The roster: `deep` accounts 0..deep-1 with `deepPeople` subjects each, then `publish` accounts (deep-shaped
  * subjects, sizes skewed in [5, publishMax]), then `thin` accounts (thin subjects, sizes skewed in [5, 200]).
  */
-export function roster(o: { seed: string; deep: number; deepPeople: number; publish: number; publishMax: number; thin: number }) {
+export function roster(o: { seed: string; deep: number; deepPeople: number; publish: number; publishMax: number; thin: number;
+  /** Small accounts' indexes start this far after the deep ones (to add accounts to a database that has some). */
+  offset?: number }) {
   const r = new Seeded("scale2/roster/" + o.seed);
   const out: Account[] = [];
   for (let a = 0; a < o.deep; a++) out.push({ index: a, key: keyFor(a), kind: "deep", people: o.deepPeople });
   for (let k = 0; k < o.publish; k++) {
-    const index = o.deep + k;
+    const index = o.deep + (o.offset ?? 0) + k;
     out.push({ index, key: keyFor(index), kind: "publish", people: sizeOf(r, 5, o.publishMax) });
   }
   for (let k = 0; k < o.thin; k++) {
-    const index = o.deep + o.publish + k;
+    const index = o.deep + (o.offset ?? 0) + o.publish + k;
     out.push({ index, key: keyFor(index), kind: "thin", people: sizeOf(r) });
   }
   const keys = new Set(out.map((a) => a.key));
