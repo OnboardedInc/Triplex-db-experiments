@@ -1,0 +1,1923 @@
+{
+  "version": "triplex-console-examples/1",
+  "database": "the small database on the Mac",
+  "commit": "23d66c0eb6db045a38bf5d67dbbb41cffac6d4d6",
+  "recordedAt": "2026-11-23T23:35:35.451Z",
+  "tools": {
+    "database_summary": {
+      "input": {},
+      "output": {
+        "kind": "the toy database (working copy)",
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "accounts": 10,
+        "subjects": 120,
+        "subjectsAre": "worker records: in this test data each subject is one worker with a profile, placements, tasks, subtasks and files",
+        "recordsAtBringUp": 48144,
+        "recordsAtSeal": 44428,
+        "sealedHead": 270,
+        "headAtBringUp": 413,
+        "head": 730,
+        "nativeT": "6587",
+        "transactionsSinceSeal": 460,
+        "recordTimeRange": {
+          "first": "2026-11-23T18:40:17.962Z",
+          "lastAtBringUp": "2027-11-25T10:24:17.321Z",
+          "note": "Record time is the store's own clock. The aging loader ran it about a year ahead of wall time; dates for the 'believed then' view must fall inside this range. New saves are recorded after the last one."
+        },
+        "compatibility": "The bulk loader that built this database wrote one field of each save's journal (the position row) in a non-standard form; the demo reads it with a named compatibility rule (acceptLoaderPositionRows), off in the product's default reader.",
+        "workingCopy": true,
+        "workingCopyMadeAt": "2026-11-23T22:02:22.350Z",
+        "serverReadyAt": "2026-11-23T22:54:21.551Z",
+        "memory": {
+          "profile": "laptop (toy)",
+          "transactor": {
+            "containerMiB": 1280,
+            "heap": "640m",
+            "objectCacheMiB": 64,
+            "java": "21",
+            "collector": "Serial"
+          },
+          "writeGateway": {
+            "containerMiB": 640,
+            "heap": "352m"
+          },
+          "readGateway": {
+            "containerMiB": 640,
+            "heap": "352m",
+            "objectCacheMiB": 32
+          },
+          "postgres": {
+            "containerMiB": 256,
+            "sharedBuffers": "128MB (default)"
+          },
+          "memoryIndex": {
+            "threshold": "8m",
+            "max": "32m"
+          },
+          "pinnedReads": {
+            "shortcut": true,
+            "cutLookup": true
+          }
+        },
+        "note": "Records are Datomic datoms counted by a fresh peer at bring-up (db-stats). Each save after that adds a few dozen.",
+        "position": 730,
+        "timing": {
+          "serverMs": 170.92,
+          "roundTripMs": 472.47,
+          "requests": 56
+        },
+        "liveRelease": {
+          "id": "sha256-02e1b6064e8b38594e1e7195f0fc202337fd7ee8490180c2ca5a11b8cc9aac99",
+          "label": "vehicles-1",
+          "sequence": 117,
+          "parent": "sha256-6005b8d5370453a2e8f3fb036af6e94947797617ca0600251214cba6fccea674"
+        },
+        "entityTypes": 20,
+        "consoleUrl": "http://127.0.0.1:28580/about"
+      },
+      "at": "2026-11-23T23:35:35.926Z"
+    },
+    "read_subject": {
+      "input": {
+        "account": "account-003",
+        "subject": 5
+      },
+      "output": {
+        "account": "account-003",
+        "subject": 5,
+        "subjectId": "acct/account-003/pl:00000005",
+        "entities": 30,
+        "factCount": 114,
+        "facts": [
+          {
+            "entity": "doc:00000005:0:0",
+            "attribute": ":file/expiresOn",
+            "value": "2027-03-01",
+            "type": "string",
+            "validFrom": "2023-11-14T22:13:20.000Z",
+            "validTo": null,
+            "recordedAt": "2026-11-23T18:40:09.101Z",
+            "id": "01M84VANWD68PC7084EQQ6Z97A"
+          },
+          {
+            "entity": "i9:00000005",
+            "attribute": ":i9/status",
+            "value": "pending",
+            "type": "string",
+            "validFrom": "2023-11-14T22:13:20.000Z",
+            "validTo": null,
+            "recordedAt": "2026-11-23T18:40:09.101Z",
+            "id": "01M84VANWD68PC7084EQQ6Z971"
+          },
+          {
+            "entity": "i9:00000005",
+            "attribute": ":task/field-0",
+            "value": "reviewed by the proof",
+            "type": "string",
+            "validFrom": "2026-11-23T23:35:16.328Z",
+            "validTo": null,
+            "recordedAt": "2027-11-25T10:24:17.635Z",
+            "id": "01M85C724FY38APDSW2F56KSSZ"
+          },
+          {
+            "entity": "i9:00000005",
+            "attribute": ":task/field-1",
+            "value": "9dbace04e94dec9a3157d7700ce473904c37dabc06fd4b82ac73622fa",
+            "type": "string",
+            "validFrom": "2023-11-14T22:13:20.000Z",
+            "validTo": null,
+            "recordedAt": "2026-11-23T18:40:09.101Z",
+            "id": "01M84VANWD68PC7084EQQ6Z97E"
+          },
+          {
+            "entity": "i9:00000005",
+            "attribute": ":task/field-10",
+            "value": "6f329da141fba14cced20d4f6274e1f08b545d010495ad13daf93dddb",
+            "type": "string",
+            "validFrom": "2023-11-14T22:13:20.000Z",
+            "validTo": null,
+            "recordedAt": "2026-11-23T18:40:09.101Z",
+            "id": "01M84VANWD68PC7084EQQ6Z97Q"
+          },
+          "... 109 more"
+        ],
+        "position": 730,
+        "timing": {
+          "serverMs": 0.55,
+          "roundTripMs": 11.24,
+          "requests": 2
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/accounts/account-003/subjects/5"
+      },
+      "at": "2026-11-23T23:35:35.940Z"
+    },
+    "list_entity_types": {
+      "input": {},
+      "output": {
+        "ref": "live",
+        "release": {
+          "id": "sha256-02e1b6064e8b38594e1e7195f0fc202337fd7ee8490180c2ca5a11b8cc9aac99",
+          "label": "vehicles-1",
+          "sequence": 117,
+          "parent": "sha256-6005b8d5370453a2e8f3fb036af6e94947797617ca0600251214cba6fccea674"
+        },
+        "refs": {
+          "test": {
+            "id": "sha256-02e1b6064e8b38594e1e7195f0fc202337fd7ee8490180c2ca5a11b8cc9aac99",
+            "label": "vehicles-1",
+            "sequence": 117,
+            "parent": "sha256-6005b8d5370453a2e8f3fb036af6e94947797617ca0600251214cba6fccea674"
+          },
+          "live": {
+            "id": "sha256-02e1b6064e8b38594e1e7195f0fc202337fd7ee8490180c2ca5a11b8cc9aac99",
+            "label": "vehicles-1",
+            "sequence": 117,
+            "parent": "sha256-6005b8d5370453a2e8f3fb036af6e94947797617ca0600251214cba6fccea674"
+          }
+        },
+        "types": [
+          {
+            "name": "Subject",
+            "attributes": 3,
+            "created": null,
+            "createdByAccount": null,
+            "note": "Loader-built facts carry no entity type, so membership of Subject cannot be checked; it exists so a type can hold a reference to a real subject. The console does not create entities of type Subject."
+          },
+          {
+            "name": "Appraisal",
+            "attributes": 4,
+            "created": 2,
+            "createdByAccount": {
+              "account-010": 2
+            }
+          },
+          {
+            "name": "Assessment",
+            "attributes": 4,
+            "created": 0,
+            "createdByAccount": {}
+          },
+          {
+            "name": "Audit",
+            "attributes": 4,
+            "created": 0,
+            "createdByAccount": {}
+          },
+          {
+            "name": "Checkup",
+            "attributes": 4,
+            "created": 2,
+            "createdByAccount": {
+              "account-010": 2
+            }
+          },
+          "... 15 more"
+        ],
+        "configurationReads": 1,
+        "position": 730,
+        "timing": {
+          "serverMs": 46.25,
+          "roundTripMs": 147.16,
+          "requests": 9
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/types"
+      },
+      "at": "2026-11-23T23:35:36.162Z"
+    },
+    "define_entity_type": {
+      "input": {
+        "name": "Review",
+        "attributes": [
+          {
+            "key": ":review/outcome",
+            "valueType": "enumOf",
+            "enumValues": [
+              "approved",
+              "rejected",
+              "pending"
+            ],
+            "required": true
+          },
+          {
+            "key": ":review/note",
+            "valueType": "text"
+          },
+          {
+            "key": ":review/of",
+            "valueType": "ref",
+            "refTarget": "Subject",
+            "required": true
+          },
+          {
+            "key": ":review/decided-on",
+            "valueType": "date"
+          }
+        ],
+        "label": "reviews-1"
+      },
+      "output": {
+        "type": "Review",
+        "release": {
+          "id": "sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54",
+          "label": "reviews-1",
+          "sequence": 118,
+          "parent": "sha256-02e1b6064e8b38594e1e7195f0fc202337fd7ee8490180c2ca5a11b8cc9aac99"
+        },
+        "basedOn": {
+          "id": "sha256-02e1b6064e8b38594e1e7195f0fc202337fd7ee8490180c2ca5a11b8cc9aac99",
+          "label": "vehicles-1",
+          "sequence": 117,
+          "parent": "sha256-6005b8d5370453a2e8f3fb036af6e94947797617ca0600251214cba6fccea674"
+        },
+        "objects": {
+          "added": [],
+          "changed": [],
+          "removed": [],
+          "unchanged": 66
+        },
+        "refs": {
+          "test": {
+            "id": "sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54",
+            "label": "reviews-1",
+            "sequence": 118,
+            "parent": "sha256-02e1b6064e8b38594e1e7195f0fc202337fd7ee8490180c2ca5a11b8cc9aac99"
+          },
+          "live": {
+            "id": "sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54",
+            "label": "reviews-1",
+            "sequence": 118,
+            "parent": "sha256-02e1b6064e8b38594e1e7195f0fc202337fd7ee8490180c2ca5a11b8cc9aac99"
+          },
+          "liveBefore": {
+            "id": "sha256-02e1b6064e8b38594e1e7195f0fc202337fd7ee8490180c2ca5a11b8cc9aac99",
+            "label": "vehicles-1",
+            "sequence": 117,
+            "parent": "sha256-6005b8d5370453a2e8f3fb036af6e94947797617ca0600251214cba6fccea674"
+          }
+        },
+        "receipt": {
+          "txId": "_tx/01M85C7NVEXMMNTF03X88V3QTJ",
+          "position": 731,
+          "recordedAt": "2027-11-25T10:24:17.639Z",
+          "actor": "triplex/config-store"
+        },
+        "liveReceipt": {
+          "txId": "_tx/01M85C7P45JCJ1C8NDZFEPADYT",
+          "position": 732,
+          "recordedAt": "2027-11-25T10:24:17.640Z",
+          "actor": "triplex/config-store"
+        },
+        "note": "One transaction recorded the release and moved test. A second moved live to it.",
+        "position": 732,
+        "timing": {
+          "serverMs": 360.97,
+          "roundTripMs": 867.77,
+          "requests": 34
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/types/Review?tab=definition"
+      },
+      "at": "2026-11-23T23:35:37.031Z"
+    },
+    "create_entity": {
+      "input": {
+        "type": "Review",
+        "account": "account-003",
+        "attributes": {
+          ":review/outcome": "pending",
+          ":review/of": "acct/account-003/pl:00000005",
+          ":review/note": "proof 0"
+        },
+        "validFrom": "2026-11-09T00:00:00Z"
+      },
+      "output": {
+        "type": "Review",
+        "account": "account-003",
+        "entity": "acct/account-003/review:00000100",
+        "number": 100,
+        "release": {
+          "id": "sha256-a7ac4ab1026bbef9b11d4026f4457c7acdd901cde386a6140f1ff34b493f9960",
+          "label": "vehicles-1"
+        },
+        "facts": [
+          {
+            "entity": "acct/account-003/review:00000100",
+            "attribute": ":review/note",
+            "value": "proof 0",
+            "type": "string",
+            "validFrom": "2026-11-09T00:00:00.000Z",
+            "validTo": null,
+            "recordedAt": "2027-11-25T10:24:17.643Z",
+            "position": 735,
+            "entityType": "Review",
+            "id": "01M85C7QYPC84XXPX0Q72NSETC",
+            "txId": "_tx/01M85C7QYGDTBM6P1ZV91BSJV4"
+          },
+          {
+            "entity": "acct/account-003/review:00000100",
+            "attribute": ":review/of",
+            "value": "acct/account-003/pl:00000005",
+            "type": "ref",
+            "validFrom": "2026-11-09T00:00:00.000Z",
+            "validTo": null,
+            "recordedAt": "2027-11-25T10:24:17.643Z",
+            "position": 735,
+            "entityType": "Review",
+            "id": "01M85C7QYPC84XXPX0Q72NSETD",
+            "txId": "_tx/01M85C7QYGDTBM6P1ZV91BSJV4"
+          },
+          {
+            "entity": "acct/account-003/review:00000100",
+            "attribute": ":review/outcome",
+            "value": "pending",
+            "type": "string",
+            "validFrom": "2026-11-09T00:00:00.000Z",
+            "validTo": null,
+            "recordedAt": "2027-11-25T10:24:17.643Z",
+            "position": 735,
+            "entityType": "Review",
+            "id": "01M85C7QYPC84XXPX0Q72NSETE",
+            "txId": "_tx/01M85C7QYGDTBM6P1ZV91BSJV4"
+          }
+        ],
+        "references": [
+          {
+            "attribute": ":review/of",
+            "entity": "acct/account-003/pl:00000005",
+            "type": "Subject",
+            "checked": "exists (membership of Subject cannot be checked: loader-built facts carry no entity type)"
+          }
+        ],
+        "receipt": {
+          "commandId": "console:create:74ad4bc2-e850-49af-98d9-ad8ef181d2a0",
+          "txId": "_tx/01M85C7QYGDTBM6P1ZV91BSJV4",
+          "position": 735,
+          "recordedAt": "2027-11-25T10:24:17.643Z",
+          "actor": "proof",
+          "attempts": 1
+        },
+        "readbackMatches": true,
+        "uniqueness": "not checked on this engine (gap G4)",
+        "position": 735,
+        "timing": {
+          "serverMs": 57.57,
+          "roundTripMs": 168.86,
+          "requests": 14
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/entities/acct%2Faccount-003%2Freview%3A00000100"
+      },
+      "at": "2026-11-23T23:35:38.722Z"
+    },
+    "query": {
+      "input": {
+        "query": {
+          "find": [
+            "?task"
+          ],
+          "where": [
+            [
+              "?placement",
+              ":placement/task",
+              "?task"
+            ],
+            [
+              "not",
+              [
+                "?task",
+                ":task/status",
+                "complete"
+              ]
+            ]
+          ]
+        },
+        "from": {
+          "subject": {
+            "account": "account-003",
+            "subject": 5
+          }
+        }
+      },
+      "output": {
+        "source": "one subject",
+        "route": "pulled in one request, then evaluated in the console by Triplex's in-memory Datalog (KvTriples)",
+        "pulled": {
+          "subjects": 1,
+          "root": "acct/account-003/pl:00000005",
+          "account": "account-003",
+          "subject": 5,
+          "facts": 114,
+          "entities": 30
+        },
+        "summary": "114 facts in 30 entities pulled at position 739. Evaluated in the console in 30.67 ms.",
+        "columns": [
+          {
+            "name": "?task"
+          }
+        ],
+        "bindings": [],
+        "total": 0,
+        "page": {
+          "offset": 0,
+          "size": 0
+        },
+        "exactIntegers": "Attributes :person/custom-local-floor, :person/custom-pay-cents, :person/custom-state-floor, :person/custom-weekly-minutes, :placement/stamp, :task/progress hold exact integers; they were evaluated as numbers (all within 53 bits, so nothing was lost; gap G6).",
+        "basis": "recorded latest, valid now",
+        "consoleDetail": {
+          "seedMs": 27.74,
+          "queryMs": 1.76
+        },
+        "position": 739,
+        "timing": {
+          "serverMs": 0.3,
+          "roundTripMs": 37.47,
+          "requests": 2,
+          "consoleMs": 30.67
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/query"
+      },
+      "at": "2026-11-23T23:35:39.343Z"
+    },
+    "save_facts": {
+      "input": {
+        "entity": "acct/account-003/review:00000100",
+        "changes": {
+          ":review/outcome": "approved"
+        }
+      },
+      "output": {
+        "entity": "acct/account-003/review:00000100",
+        "validFrom": "2026-11-23T23:35:41.433Z",
+        "receipt": {
+          "commandId": "demo:save:9c8deee7-1394-495d-ac80-2e703eab2755",
+          "txId": "_tx/01M85C7TM00G3NZ5J7EPPZC4T4",
+          "position": 740,
+          "recordedAt": "2027-11-25T10:24:17.648Z",
+          "actor": "proof",
+          "configSnapshot": "sha256-a7ac4ab1026bbef9b11d4026f4457c7acdd901cde386a6140f1ff34b493f9960"
+        },
+        "readback": {
+          ":review/outcome": [
+            "approved"
+          ]
+        },
+        "readbackMatches": true,
+        "position": 740,
+        "timing": {
+          "serverMs": 13.29,
+          "roundTripMs": 25.65,
+          "requests": 6
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/entities/acct%2Faccount-003%2Freview%3A00000100?tab=journal"
+      },
+      "at": "2026-11-23T23:35:41.459Z"
+    },
+    "correct_past_value": {
+      "input": {
+        "entity": "acct/account-003/review:00000100",
+        "attribute": ":review/outcome",
+        "value": "rejected",
+        "validFrom": "2026-11-16T00:00:00Z"
+      },
+      "output": {
+        "entity": "acct/account-003/review:00000100",
+        "attribute": ":review/outcome",
+        "correctedFrom": "2026-11-16T00:00:00.000Z",
+        "correctedUntil": "2026-11-23T23:35:41.433Z",
+        "receipt": {
+          "commandId": "demo:correct:a8a1feb6-902d-4ac5-ac4a-ab644786ae06",
+          "txId": "_tx/01M85C7TWF2R5DA6Z8D2FZ6KQ4",
+          "position": 741,
+          "recordedAt": "2027-11-25T10:24:17.649Z",
+          "actor": "proof",
+          "configSnapshot": "sha256-a7ac4ab1026bbef9b11d4026f4457c7acdd901cde386a6140f1ff34b493f9960"
+        },
+        "beliefs": {
+          "as recorded before the correction (position 740), value on 2026-11-16T00:00:00.001Z": [
+            "pending"
+          ],
+          "as recorded after the correction (position 741), value on 2026-11-16T00:00:00.001Z": [
+            "rejected"
+          ]
+        },
+        "readbackMatches": true,
+        "position": 741,
+        "timing": {
+          "serverMs": 13.98,
+          "roundTripMs": 25.53,
+          "requests": 7
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/entities/acct%2Faccount-003%2Freview%3A00000100?tab=time&attribute=%3Areview%2Foutcome&at=2026-11-16T00%3A00%3A00Z"
+      },
+      "at": "2026-11-23T23:35:41.731Z"
+    },
+    "retire_fact": {
+      "input": {
+        "entity": "acct/account-003/review:00000100",
+        "attribute": ":review/note"
+      },
+      "output": {
+        "entity": "acct/account-003/review:00000100",
+        "attribute": ":review/note",
+        "retiredFrom": "2026-11-23T23:35:41.859Z",
+        "receipt": {
+          "commandId": "demo:retire:6c73e899-80af-42d6-8376-42eb991f0a96",
+          "txId": "_tx/01M85C7V17PS3Q81C6HJ2N9HCF",
+          "position": 742,
+          "recordedAt": "2027-11-25T10:24:17.650Z",
+          "actor": "proof",
+          "configSnapshot": "sha256-a7ac4ab1026bbef9b11d4026f4457c7acdd901cde386a6140f1ff34b493f9960"
+        },
+        "currentAfter": [],
+        "retiredFromCurrent": true,
+        "position": 742,
+        "timing": {
+          "serverMs": 16.66,
+          "roundTripMs": 25.91,
+          "requests": 6
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/entities/acct%2Faccount-003%2Freview%3A00000100?tab=history&attribute=%3Areview%2Fnote"
+      },
+      "at": "2026-11-23T23:35:41.885Z"
+    },
+    "field_history": {
+      "input": {
+        "entity": "acct/account-003/review:00000100",
+        "attribute": ":review/outcome"
+      },
+      "output": {
+        "account": "account-003",
+        "subject": null,
+        "entity": "acct/account-003/review:00000100",
+        "attribute": ":review/outcome",
+        "totalRows": 5,
+        "rowsAfterFirst": 4,
+        "savesOfThisField": 2,
+        "rowsAfterFirstNote": "one per loader save of this field; a demo save adds two (the old value closed at the save, and the new value)",
+        "entityHistoryRows": 8,
+        "rowsShown": "all 5",
+        "rows": [
+          {
+            "value": "pending",
+            "validFrom": "2026-11-09T00:00:00.000Z",
+            "validTo": null,
+            "recordedAt": "2027-11-25T10:24:17.643Z",
+            "recordedPosition": 735,
+            "retiredAt": "2027-11-25T10:24:17.648Z",
+            "retiredPosition": 740,
+            "live": false,
+            "id": "01M85C7QYPC84XXPX0Q72NSETE"
+          },
+          {
+            "value": "pending",
+            "validFrom": "2026-11-09T00:00:00.000Z",
+            "validTo": "2026-11-23T23:35:41.433Z",
+            "recordedAt": "2027-11-25T10:24:17.648Z",
+            "recordedPosition": 740,
+            "retiredAt": "2027-11-25T10:24:17.649Z",
+            "retiredPosition": 741,
+            "live": false,
+            "id": "01M85C7TM2E5N5F2FC29XBYDQG"
+          },
+          {
+            "value": "approved",
+            "validFrom": "2026-11-23T23:35:41.433Z",
+            "validTo": null,
+            "recordedAt": "2027-11-25T10:24:17.648Z",
+            "recordedPosition": 740,
+            "retiredAt": null,
+            "retiredPosition": null,
+            "live": true,
+            "id": "01M85C7TM2E5N5F2FC29XBYDQH"
+          },
+          {
+            "value": "pending",
+            "validFrom": "2026-11-09T00:00:00.000Z",
+            "validTo": "2026-11-16T00:00:00.000Z",
+            "recordedAt": "2027-11-25T10:24:17.649Z",
+            "recordedPosition": 741,
+            "retiredAt": null,
+            "retiredPosition": null,
+            "live": true,
+            "id": "01M85C7TWJHVGF918H07DWDV9G"
+          },
+          {
+            "value": "rejected",
+            "validFrom": "2026-11-16T00:00:00.000Z",
+            "validTo": "2026-11-23T23:35:41.433Z",
+            "recordedAt": "2027-11-25T10:24:17.649Z",
+            "recordedPosition": 741,
+            "retiredAt": null,
+            "retiredPosition": null,
+            "live": true,
+            "id": "01M85C7TWJHVGF918H07DWDV9H"
+          }
+        ],
+        "position": 742,
+        "timing": {
+          "serverMs": 0.28,
+          "roundTripMs": 2.6,
+          "requests": 2
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/entities/acct%2Faccount-003%2Freview%3A00000100?tab=history&attribute=%3Areview%2Foutcome"
+      },
+      "at": "2026-11-23T23:35:41.889Z"
+    },
+    "read_subject_at": {
+      "input": {
+        "root": "acct/account-003/review:00000100",
+        "at": "2026-11-17T00:00:00Z",
+        "attribute": ":review/outcome",
+        "position": 740
+      },
+      "output": {
+        "account": "account-003",
+        "subject": null,
+        "at": "2026-11-17T00:00:00.000Z",
+        "believedAsRecordedAt": "position 740",
+        "counts": {
+          "current": 1,
+          "trueThenAsKnownNow": 1,
+          "believedThen": 1
+        },
+        "differences": [
+          {
+            "fact": "review:00000100 :review/outcome",
+            "current": [
+              "approved"
+            ],
+            "trueThenAsKnownNow": [
+              "rejected"
+            ],
+            "believedThen": [
+              "pending"
+            ]
+          }
+        ],
+        "current": [
+          {
+            "entity": "review:00000100",
+            "attribute": ":review/outcome",
+            "value": "approved",
+            "type": "string",
+            "validFrom": "2026-11-23T23:35:41.433Z",
+            "validTo": null,
+            "recordedAt": "2027-11-25T10:24:17.648Z",
+            "id": "01M85C7TM2E5N5F2FC29XBYDQH"
+          }
+        ],
+        "trueThenAsKnownNow": [
+          {
+            "entity": "review:00000100",
+            "attribute": ":review/outcome",
+            "value": "rejected",
+            "type": "string",
+            "validFrom": "2026-11-16T00:00:00.000Z",
+            "validTo": "2026-11-23T23:35:41.433Z",
+            "recordedAt": "2027-11-25T10:24:17.649Z",
+            "id": "01M85C7TWJHVGF918H07DWDV9H"
+          }
+        ],
+        "believedThen": [
+          {
+            "entity": "review:00000100",
+            "attribute": ":review/outcome",
+            "value": "pending",
+            "type": "string",
+            "validFrom": "2026-11-09T00:00:00.000Z",
+            "validTo": "2026-11-23T23:35:41.433Z",
+            "recordedAt": "2027-11-25T10:24:17.648Z",
+            "id": "01M85C7TM2E5N5F2FC29XBYDQG"
+          }
+        ],
+        "position": 743,
+        "timing": {
+          "serverMs": 0.94,
+          "roundTripMs": 6.92,
+          "requests": 4
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/entities/acct%2Faccount-003%2Freview%3A00000100?tab=time&at=2026-11-17T00%3A00%3A00Z&attribute=%3Areview%2Foutcome&believedPosition=740"
+      },
+      "at": "2026-11-23T23:35:41.931Z"
+    },
+    "list_releases": {
+      "input": {
+        "compare": [
+          "sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54",
+          "sha256-a7ac4ab1026bbef9b11d4026f4457c7acdd901cde386a6140f1ff34b493f9960"
+        ]
+      },
+      "output": {
+        "refs": {
+          "test": {
+            "id": "sha256-a7ac4ab1026bbef9b11d4026f4457c7acdd901cde386a6140f1ff34b493f9960",
+            "label": "vehicles-1",
+            "sequence": 120,
+            "parent": "sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54"
+          },
+          "live": {
+            "id": "sha256-a7ac4ab1026bbef9b11d4026f4457c7acdd901cde386a6140f1ff34b493f9960",
+            "label": "vehicles-1",
+            "sequence": 120,
+            "parent": "sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54"
+          }
+        },
+        "releases": [
+          {
+            "id": "sha256-a7ac4ab1026bbef9b11d4026f4457c7acdd901cde386a6140f1ff34b493f9960",
+            "label": "vehicles-1",
+            "sequence": 120,
+            "parent": "sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54",
+            "objects": 67,
+            "types": [
+              "Appraisal",
+              "Assessment",
+              "Audit",
+              "Checkup",
+              "GateCheck",
+              "... 16 more"
+            ],
+            "refs": [
+              "test",
+              "live"
+            ]
+          },
+          {
+            "id": "sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54",
+            "label": "reviews-1",
+            "sequence": 118,
+            "parent": "sha256-02e1b6064e8b38594e1e7195f0fc202337fd7ee8490180c2ca5a11b8cc9aac99",
+            "objects": 66,
+            "types": [
+              "Appraisal",
+              "Assessment",
+              "Audit",
+              "Checkup",
+              "GateCheck",
+              "... 15 more"
+            ],
+            "refs": []
+          },
+          {
+            "id": "sha256-02e1b6064e8b38594e1e7195f0fc202337fd7ee8490180c2ca5a11b8cc9aac99",
+            "label": "vehicles-1",
+            "sequence": 117,
+            "parent": "sha256-6005b8d5370453a2e8f3fb036af6e94947797617ca0600251214cba6fccea674",
+            "objects": 66,
+            "types": [
+              "Appraisal",
+              "Assessment",
+              "Audit",
+              "Checkup",
+              "GateCheck",
+              "... 15 more"
+            ],
+            "refs": []
+          },
+          {
+            "id": "sha256-6005b8d5370453a2e8f3fb036af6e94947797617ca0600251214cba6fccea674",
+            "label": "reviews-1",
+            "sequence": 115,
+            "parent": "sha256-29b55990d52f669bc912dcd1f61969b617796cb6ed10f9f73afad401c4ca3657",
+            "objects": 65,
+            "types": [
+              "Appraisal",
+              "Assessment",
+              "Audit",
+              "Checkup",
+              "GateCheck",
+              "... 14 more"
+            ],
+            "refs": []
+          },
+          {
+            "id": "sha256-29b55990d52f669bc912dcd1f61969b617796cb6ed10f9f73afad401c4ca3657",
+            "label": "gate-check-1795476883304",
+            "sequence": 114,
+            "parent": "sha256-d2e8b5b41e2775b35c833daca9b75cc4f413212ae20177d98fb532e2026d1949",
+            "objects": 65,
+            "types": [
+              "Appraisal",
+              "Assessment",
+              "Audit",
+              "Checkup",
+              "GateCheck",
+              "... 14 more"
+            ],
+            "refs": []
+          },
+          "... 15 more"
+        ],
+        "total": 43,
+        "compared": [
+          "sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54",
+          "sha256-a7ac4ab1026bbef9b11d4026f4457c7acdd901cde386a6140f1ff34b493f9960"
+        ],
+        "difference": [
+          {
+            "change": "added",
+            "kind": "entity-schema",
+            "key": "Vehicle37031"
+          }
+        ],
+        "position": 743,
+        "timing": {
+          "serverMs": 34.64,
+          "roundTripMs": 111.19,
+          "requests": 7
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/configuration"
+      },
+      "at": "2026-11-23T23:35:42.048Z"
+    },
+    "move_live": {
+      "input": {
+        "snapshotId": "sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54"
+      },
+      "output": {
+        "receipt": {
+          "txId": "_tx/01M85C7VFCPWYFRJZH8QHB2K9T",
+          "position": 744,
+          "recordedAt": "2027-11-25T10:24:17.652Z",
+          "actor": "triplex/config-store"
+        },
+        "before": {
+          "id": "sha256-a7ac4ab1026bbef9b11d4026f4457c7acdd901cde386a6140f1ff34b493f9960",
+          "label": "vehicles-1",
+          "sequence": 120,
+          "parent": "sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54"
+        },
+        "after": {
+          "id": "sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54",
+          "label": "reviews-1",
+          "sequence": 118,
+          "parent": "sha256-02e1b6064e8b38594e1e7195f0fc202337fd7ee8490180c2ca5a11b8cc9aac99"
+        },
+        "typesBefore": [
+          "Appraisal",
+          "Assessment",
+          "Audit",
+          "Checkup",
+          "GateCheck",
+          "... 16 more"
+        ],
+        "typesAfter": [
+          "Appraisal",
+          "Assessment",
+          "Audit",
+          "Checkup",
+          "GateCheck",
+          "... 15 more"
+        ],
+        "note": "No fact and no earlier receipt changed. Moving live changes the release that new writes are pinned to.",
+        "position": 744,
+        "timing": {
+          "serverMs": 125.73,
+          "roundTripMs": 344.43,
+          "requests": 17
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/configuration"
+      },
+      "at": "2026-11-23T23:35:42.393Z"
+    },
+    "read_entity": {
+      "input": {
+        "entity": "acct/account-003/review:00000100"
+      },
+      "output": {
+        "entity": "acct/account-003/review:00000100",
+        "entityType": "Review",
+        "account": "account-003",
+        "number": 100,
+        "factCount": 2,
+        "facts": [
+          {
+            "entity": "acct/account-003/review:00000100",
+            "attribute": ":review/of",
+            "value": "acct/account-003/pl:00000005",
+            "type": "ref",
+            "validFrom": "2026-11-09T00:00:00.000Z",
+            "validTo": null,
+            "recordedAt": "2027-11-25T10:24:17.643Z",
+            "position": 735,
+            "entityType": "Review",
+            "id": "01M85C7QYPC84XXPX0Q72NSETD",
+            "txId": "_tx/01M85C7QYGDTBM6P1ZV91BSJV4"
+          },
+          {
+            "entity": "acct/account-003/review:00000100",
+            "attribute": ":review/outcome",
+            "value": "approved",
+            "type": "string",
+            "validFrom": "2026-11-23T23:35:41.433Z",
+            "validTo": null,
+            "recordedAt": "2027-11-25T10:24:17.648Z",
+            "position": 740,
+            "entityType": "Review",
+            "id": "01M85C7TM2E5N5F2FC29XBYDQH",
+            "txId": "_tx/01M85C7TM00G3NZ5J7EPPZC4T4"
+          }
+        ],
+        "basis": "recorded latest, valid now",
+        "position": 744,
+        "timing": {
+          "serverMs": 0.23,
+          "roundTripMs": 2.22,
+          "requests": 2
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/entities/acct%2Faccount-003%2Freview%3A00000100"
+      },
+      "at": "2026-11-23T23:35:42.516Z"
+    },
+    "describe_entity_type": {
+      "input": {
+        "name": "Review"
+      },
+      "output": {
+        "ref": "live",
+        "release": {
+          "id": "sha256-a7ac4ab1026bbef9b11d4026f4457c7acdd901cde386a6140f1ff34b493f9960",
+          "label": "vehicles-1",
+          "sequence": 120,
+          "parent": "sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54"
+        },
+        "type": {
+          "name": "Review",
+          "attributes": [
+            {
+              "key": ":review/decided-on",
+              "valueType": "date",
+              "required": false,
+              "cardinality": "one",
+              "unique": false,
+              "storedAs": "string"
+            },
+            {
+              "key": ":review/note",
+              "valueType": "text",
+              "required": false,
+              "cardinality": "one",
+              "unique": false,
+              "storedAs": "string"
+            },
+            {
+              "key": ":review/of",
+              "valueType": "ref",
+              "required": true,
+              "cardinality": "one",
+              "unique": false,
+              "refTarget": "Subject",
+              "storedAs": "ref"
+            },
+            {
+              "key": ":review/outcome",
+              "valueType": "enumOf",
+              "required": true,
+              "cardinality": "one",
+              "unique": false,
+              "enumValues": [
+                "approved",
+                "pending",
+                "rejected"
+              ],
+              "storedAs": "string"
+            }
+          ],
+          "constraints": [
+            {
+              "id": "Review::review/decided-on:cardinality-1",
+              "kind": "Cardinality",
+              "attribute": ":review/decided-on",
+              "status": "Checked before each write"
+            },
+            {
+              "id": "Review::review/note:cardinality-1",
+              "kind": "Cardinality",
+              "attribute": ":review/note",
+              "status": "Checked before each write"
+            },
+            {
+              "id": "Review::review/of:cardinality-1",
+              "kind": "Cardinality",
+              "attribute": ":review/of",
+              "status": "Checked before each write"
+            },
+            {
+              "id": "Review::review/of:reference-target-Subject",
+              "kind": "ReferenceTarget",
+              "attribute": ":review/of",
+              "status": "Not checked: loader-built subjects carry no entity type"
+            },
+            {
+              "id": "Review::review/of:required",
+              "kind": "Required",
+              "attribute": ":review/of",
+              "status": "Checked before each write"
+            },
+            "... 2 more"
+          ],
+          "revisions": [
+            {
+              "sequence": 13,
+              "revision": "sha256-0d4ebbc2f4a4df95d6a824994646ebb254fb0883e935e94bc4e986c1296aa021",
+              "release": "reviews-1795475097041",
+              "change": "added"
+            }
+          ]
+        },
+        "uniqueness": "Uniqueness is declared in Triplex but not enforced on this engine: it needs an index by type, attribute and value (gap G4).",
+        "position": 745,
+        "timing": {
+          "serverMs": 52.31,
+          "roundTripMs": 125.75,
+          "requests": 7
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/types/Review?tab=definition"
+      },
+      "at": "2026-11-23T23:35:42.946Z"
+    },
+    "list_entities": {
+      "input": {
+        "type": "Review",
+        "account": "account-003"
+      },
+      "output": {
+        "type": "Review",
+        "account": "account-003",
+        "created": 105,
+        "columns": [
+          ":review/decided-on",
+          ":review/note",
+          ":review/of",
+          ":review/outcome"
+        ],
+        "entities": [
+          {
+            "number": 0,
+            "entity": "acct/account-003/review:00000000",
+            "attributes": {
+              ":review/note": [
+                "first"
+              ],
+              ":review/of": [
+                "acct/account-003/pl:00000007"
+              ],
+              ":review/outcome": [
+                "pending"
+              ]
+            },
+            "recordedAt": "2027-11-25T10:24:17.347Z",
+            "present": true
+          },
+          {
+            "number": 1,
+            "entity": "acct/account-003/review:00000001",
+            "attributes": {
+              ":review/decided-on": [
+                "2026-11-09"
+              ],
+              ":review/note": [
+                "gate 2"
+              ],
+              ":review/of": [
+                "acct/account-003/pl:00000002"
+              ],
+              ":review/outcome": [
+                "pending"
+              ]
+            },
+            "recordedAt": "2027-11-25T10:24:17.348Z",
+            "present": true
+          },
+          {
+            "number": 2,
+            "entity": "acct/account-003/review:00000002",
+            "attributes": {
+              ":review/decided-on": [
+                "2026-11-09"
+              ],
+              ":review/note": [
+                "gate 0"
+              ],
+              ":review/of": [
+                "acct/account-003/pl:00000000"
+              ],
+              ":review/outcome": [
+                "approved"
+              ]
+            },
+            "recordedAt": "2027-11-25T10:24:17.360Z",
+            "present": true
+          },
+          {
+            "number": 3,
+            "entity": "acct/account-003/review:00000003",
+            "attributes": {
+              ":review/decided-on": [
+                "2026-11-09"
+              ],
+              ":review/note": [
+                "gate 1"
+              ],
+              ":review/of": [
+                "acct/account-003/pl:00000001"
+              ],
+              ":review/outcome": [
+                "pending"
+              ]
+            },
+            "recordedAt": "2027-11-25T10:24:17.350Z",
+            "present": true
+          },
+          {
+            "number": 4,
+            "entity": "acct/account-003/review:00000004",
+            "attributes": {
+              ":review/decided-on": [
+                "2026-11-09"
+              ],
+              ":review/note": [
+                "gate 5"
+              ],
+              ":review/of": [
+                "acct/account-003/pl:00000005"
+              ],
+              ":review/outcome": [
+                "pending"
+              ]
+            },
+            "recordedAt": "2027-11-25T10:24:17.351Z",
+            "present": true
+          },
+          "... 15 more"
+        ],
+        "page": {
+          "from": 0,
+          "count": 20,
+          "of": 105
+        },
+        "basis": "recorded latest, valid now",
+        "note": "Listed by entity number. This engine has no index by entity type (gap G2).",
+        "position": 745,
+        "timing": {
+          "serverMs": 37.69,
+          "roundTripMs": 114.64,
+          "requests": 9
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/types/Review?account=account-003&from=0"
+      },
+      "at": "2026-11-23T23:35:43.061Z"
+    },
+    "list_accounts": {
+      "input": {},
+      "output": {
+        "source": "the sealed roster checked at bring-up (pass checkDirectories to read each account's directory entity live)",
+        "accounts": [
+          {
+            "account": "account-001",
+            "namespace": "acct/account-001/",
+            "subjects": 12,
+            "subjectNumbers": "0 to 11"
+          },
+          {
+            "account": "account-002",
+            "namespace": "acct/account-002/",
+            "subjects": 12,
+            "subjectNumbers": "0 to 11"
+          },
+          {
+            "account": "account-003",
+            "namespace": "acct/account-003/",
+            "subjects": 12,
+            "subjectNumbers": "0 to 11"
+          },
+          {
+            "account": "account-004",
+            "namespace": "acct/account-004/",
+            "subjects": 12,
+            "subjectNumbers": "0 to 11"
+          },
+          {
+            "account": "account-005",
+            "namespace": "acct/account-005/",
+            "subjects": 12,
+            "subjectNumbers": "0 to 11"
+          },
+          "... 5 more"
+        ],
+        "position": 745,
+        "timing": {
+          "serverMs": 0.04,
+          "roundTripMs": 1.13,
+          "requests": 1
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/"
+      },
+      "at": "2026-11-23T23:35:43.068Z"
+    },
+    "find_subjects": {
+      "input": {
+        "account": "account-003",
+        "from": 5,
+        "count": 5
+      },
+      "output": {
+        "account": "account-003",
+        "subjects": [
+          {
+            "subject": 5,
+            "subjectId": "acct/account-003/pl:00000005",
+            "status": "active",
+            "placements": 1,
+            "lastRecordedAt": "2026-11-23T18:40:09.101Z"
+          },
+          {
+            "subject": 6,
+            "subjectId": "acct/account-003/pl:00000006",
+            "status": "active",
+            "placements": 2,
+            "lastRecordedAt": "2026-11-23T18:40:09.202Z"
+          },
+          {
+            "subject": 7,
+            "subjectId": "acct/account-003/pl:00000007",
+            "status": "active",
+            "placements": 2,
+            "lastRecordedAt": "2026-11-23T18:40:09.292Z"
+          },
+          {
+            "subject": 8,
+            "subjectId": "acct/account-003/pl:00000008",
+            "status": "active",
+            "placements": 2,
+            "lastRecordedAt": "2026-11-23T18:40:09.433Z"
+          },
+          {
+            "subject": 9,
+            "subjectId": "acct/account-003/pl:00000009",
+            "status": "active",
+            "placements": 2,
+            "lastRecordedAt": "2026-11-23T18:40:09.535Z"
+          }
+        ],
+        "lookup": "by account and subject number (the store's subject key); protected values are never looked up by value",
+        "position": 745,
+        "timing": {
+          "serverMs": 0.76,
+          "roundTripMs": 3.35,
+          "requests": 2
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/accounts/account-003?from=5"
+      },
+      "at": "2026-11-23T23:35:43.071Z"
+    },
+    "read_many_subjects": {
+      "input": {
+        "account": "account-003",
+        "subjects": [
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ]
+      },
+      "output": {
+        "account": "account-003",
+        "cut": {
+          "position": 745,
+          "nativeT": "6640"
+        },
+        "subjects": [
+          {
+            "subject": 5,
+            "subjectId": "acct/account-003/pl:00000005",
+            "entities": 30,
+            "facts": 114,
+            "status": "active"
+          },
+          {
+            "subject": 6,
+            "subjectId": "acct/account-003/pl:00000006",
+            "entities": 31,
+            "facts": 125,
+            "status": "active"
+          },
+          {
+            "subject": 7,
+            "subjectId": "acct/account-003/pl:00000007",
+            "entities": 32,
+            "facts": 120,
+            "status": "active"
+          },
+          {
+            "subject": 8,
+            "subjectId": "acct/account-003/pl:00000008",
+            "entities": 31,
+            "facts": 116,
+            "status": "active"
+          },
+          {
+            "subject": 9,
+            "subjectId": "acct/account-003/pl:00000009",
+            "entities": 32,
+            "facts": 128,
+            "status": "active"
+          },
+          "... 2 more"
+        ],
+        "totalFacts": 827,
+        "position": 745,
+        "timing": {
+          "serverMs": 0.39,
+          "roundTripMs": 5.1,
+          "requests": 2
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/accounts/account-003?subjects=5%2C6%2C7%2C8%2C9%2C10%2C11&position=745"
+      },
+      "at": "2026-11-23T23:35:43.077Z"
+    },
+    "change_feed": {
+      "input": {
+        "after": 730,
+        "limit": 50
+      },
+      "output": {
+        "after": 730,
+        "account": null,
+        "actor": null,
+        "transactions": [
+          {
+            "position": 731,
+            "txId": "_tx/01M85C7NVEXMMNTF03X88V3QTJ",
+            "recordedAt": "2027-11-25T10:24:17.639Z",
+            "commandId": null,
+            "actor": "triplex/config-store",
+            "configSnapshot": "sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54",
+            "changes": [
+              {
+                "op": "assert",
+                "entity": "_triplex/config/snapshot/sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54",
+                "attribute": ":triplex/config-data",
+                "value": {
+                  "id": "sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54",
+                  "label": "reviews-1",
+                  "parentId": "sha256-02e1b6064e8b38594e1e7195f0fc202337fd7ee8490180c2ca5a11b8cc9aac99",
+                  "revisionIds": [
+                    "sha256-5173fa9abfbb5dd43fc4f24feb751b29d950208b91ef822689235111ce0b3d80",
+                    "sha256-0522ceb4b510663b6e09fe4fedd105815a21c28d4de1342e90d393bfe214b455",
+                    "sha256-d059669098e7960c35c207b7498467dad2f1914965497da93f980a7dae0c8ed8",
+                    "sha256-a4d34098d170f4dd9c4df184996b7c203bc25983a4a1213477fa025a03467fd1",
+                    "sha256-9e8d6720fd0aa1a24d61c13950cc5cca422f50ce37b6b7ed7c26c3fdc50c888d",
+                    "... 61 more"
+                  ],
+                  "rootCid": "sha256-9a42d6a49b49b32141b5f0ce5d8933e93c047c2b3eede2bdc698592040444951",
+                  "seq": 118
+                },
+                "validFrom": "2026-11-23T23:35:36.559Z",
+                "validTo": null
+              },
+              {
+                "op": "retract",
+                "entity": "_triplex/config/ref/test",
+                "attribute": ":triplex/ref-target",
+                "value": "_triplex/config/snapshot/sha256-02e1b6064e8b38594e1e7195f0fc202337fd7ee8490180c2ca5a11b8cc9aac99",
+                "validFrom": "2026-11-23T23:35:10.618Z",
+                "validTo": null
+              },
+              {
+                "op": "assert",
+                "entity": "_triplex/config/ref/test",
+                "attribute": ":triplex/config-key",
+                "value": "test",
+                "validFrom": "2026-11-23T23:35:36.559Z",
+                "validTo": null
+              },
+              {
+                "op": "assert",
+                "entity": "_triplex/config/ref/test",
+                "attribute": ":triplex/ref-target",
+                "value": "_triplex/config/snapshot/sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54",
+                "validFrom": "2026-11-23T23:35:36.559Z",
+                "validTo": null
+              }
+            ],
+            "totalChanges": 4
+          },
+          {
+            "position": 732,
+            "txId": "_tx/01M85C7P45JCJ1C8NDZFEPADYT",
+            "recordedAt": "2027-11-25T10:24:17.640Z",
+            "commandId": null,
+            "actor": "triplex/config-store",
+            "configSnapshot": "sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54",
+            "changes": [
+              {
+                "op": "retract",
+                "entity": "_triplex/config/ref/live",
+                "attribute": ":triplex/ref-target",
+                "value": "_triplex/config/snapshot/sha256-02e1b6064e8b38594e1e7195f0fc202337fd7ee8490180c2ca5a11b8cc9aac99",
+                "validFrom": "2026-11-23T23:35:17.241Z",
+                "validTo": null
+              },
+              {
+                "op": "assert",
+                "entity": "_triplex/config/ref/live",
+                "attribute": ":triplex/config-key",
+                "value": "live",
+                "validFrom": "2026-11-23T23:35:36.837Z",
+                "validTo": null
+              },
+              {
+                "op": "assert",
+                "entity": "_triplex/config/ref/live",
+                "attribute": ":triplex/ref-target",
+                "value": "_triplex/config/snapshot/sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54",
+                "validFrom": "2026-11-23T23:35:36.837Z",
+                "validTo": null
+              }
+            ],
+            "totalChanges": 3
+          },
+          {
+            "position": 733,
+            "txId": "_tx/01M85C7PKB8GT1XMSP06A1TG5A",
+            "recordedAt": "2027-11-25T10:24:17.641Z",
+            "commandId": null,
+            "actor": "triplex/config-store",
+            "configSnapshot": "sha256-a7ac4ab1026bbef9b11d4026f4457c7acdd901cde386a6140f1ff34b493f9960",
+            "changes": [
+              {
+                "op": "assert",
+                "entity": "_triplex/config/object/sha256-7519e0f63a0bc9ca1825a2f03459a0d72af87c854b65824cb241d7209da0b348",
+                "attribute": ":triplex/content-id",
+                "value": "sha256-7519e0f63a0bc9ca1825a2f03459a0d72af87c854b65824cb241d7209da0b348",
+                "validFrom": "2026-11-23T23:35:37.324Z",
+                "validTo": null
+              },
+              {
+                "op": "assert",
+                "entity": "_triplex/config/object/sha256-7519e0f63a0bc9ca1825a2f03459a0d72af87c854b65824cb241d7209da0b348",
+                "attribute": ":triplex/config-kind",
+                "value": "entity-schema",
+                "validFrom": "2026-11-23T23:35:37.324Z",
+                "validTo": null
+              },
+              {
+                "op": "assert",
+                "entity": "_triplex/config/object/sha256-7519e0f63a0bc9ca1825a2f03459a0d72af87c854b65824cb241d7209da0b348",
+                "attribute": ":triplex/config-data",
+                "value": {
+                  "attrs": {
+                    "attributes": {
+                      "a1_vehicle_plate": "...",
+                      "a2_vehicle_depot": "..."
+                    },
+                    "entityType": "Vehicle37031",
+                    "type": {
+                      "_tag": "...",
+                      "fields": "...",
+                      "v": "..."
+                    }
+                  },
+                  "children": [
+                    {
+                      "cid": "...",
+                      "rel": "..."
+                    },
+                    {
+                      "cid": "...",
+                      "rel": "..."
+                    },
+                    {
+                      "cid": "...",
+                      "rel": "..."
+                    }
+                  ],
+                  "key": "Vehicle37031",
+                  "kind": "entity-schema",
+                  "refs": [
+                    {
+                      "key": "...",
+                      "kind": "...",
+                      "rel": "..."
+                    },
+                    {
+                      "key": "...",
+                      "kind": "...",
+                      "rel": "..."
+                    }
+                  ],
+                  "v": 1
+                },
+                "validFrom": "2026-11-23T23:35:37.324Z",
+                "validTo": null
+              },
+              {
+                "op": "assert",
+                "entity": "_triplex/config/object/sha256-7519e0f63a0bc9ca1825a2f03459a0d72af87c854b65824cb241d7209da0b348",
+                "attribute": ":triplex/valid-under",
+                "value": "sha256-fbc9598e66830080becd38d348b221b728e477a82d87524d2fee127c5213db17",
+                "validFrom": "2026-11-23T23:35:37.324Z",
+                "validTo": null
+              },
+              {
+                "op": "assert",
+                "entity": "_triplex/config/object/sha256-589898512bd4877e33573f71764e98a4227813bcb6dc90b84682acc4a32f65a3",
+                "attribute": ":triplex/content-id",
+                "value": "sha256-589898512bd4877e33573f71764e98a4227813bcb6dc90b84682acc4a32f65a3",
+                "validFrom": "2026-11-23T23:35:37.324Z",
+                "validTo": null
+              },
+              "... 24 more"
+            ],
+            "totalChanges": 29
+          },
+          {
+            "position": 734,
+            "txId": "_tx/01M85C7PVX9NR4R1CV33P9XRCN",
+            "recordedAt": "2027-11-25T10:24:17.642Z",
+            "commandId": null,
+            "actor": "triplex/config-store",
+            "configSnapshot": "sha256-a7ac4ab1026bbef9b11d4026f4457c7acdd901cde386a6140f1ff34b493f9960",
+            "changes": [
+              {
+                "op": "retract",
+                "entity": "_triplex/config/ref/live",
+                "attribute": ":triplex/ref-target",
+                "value": "_triplex/config/snapshot/sha256-885e162be0990b44ec196d752ab20fe4051bf5c6516142ba633b4f8bccce3f54",
+                "validFrom": "2026-11-23T23:35:36.837Z",
+                "validTo": null
+              },
+              {
+                "op": "assert",
+                "entity": "_triplex/config/ref/live",
+                "attribute": ":triplex/config-key",
+                "value": "live",
+                "validFrom": "2026-11-23T23:35:37.597Z",
+                "validTo": null
+              },
+              {
+                "op": "assert",
+                "entity": "_triplex/config/ref/live",
+                "attribute": ":triplex/ref-target",
+                "value": "_triplex/config/snapshot/sha256-a7ac4ab1026bbef9b11d4026f4457c7acdd901cde386a6140f1ff34b493f9960",
+                "validFrom": "2026-11-23T23:35:37.597Z",
+                "validTo": null
+              }
+            ],
+            "totalChanges": 3
+          },
+          {
+            "position": 735,
+            "txId": "_tx/01M85C7QYGDTBM6P1ZV91BSJV4",
+            "recordedAt": "2027-11-25T10:24:17.643Z",
+            "commandId": "console:create:74ad4bc2-e850-49af-98d9-ad8ef181d2a0",
+            "actor": "proof",
+            "configSnapshot": "sha256-a7ac4ab1026bbef9b11d4026f4457c7acdd901cde386a6140f1ff34b493f9960",
+            "changes": [
+              {
+                "op": "assert",
+                "entity": "acct/account-003/review:00000100",
+                "attribute": ":review/note",
+                "value": "proof 0",
+                "validFrom": "2026-11-09T00:00:00.000Z",
+                "validTo": null
+              },
+              {
+                "op": "assert",
+                "entity": "acct/account-003/review:00000100",
+                "attribute": ":review/of",
+                "value": "acct/account-003/pl:00000005",
+                "validFrom": "2026-11-09T00:00:00.000Z",
+                "validTo": null
+              },
+              {
+                "op": "assert",
+                "entity": "acct/account-003/review:00000100",
+                "attribute": ":review/outcome",
+                "value": "pending",
+                "validFrom": "2026-11-09T00:00:00.000Z",
+                "validTo": null
+              },
+              {
+                "op": "retract",
+                "entity": "acct/account-003/console/type/Review",
+                "attribute": ":console/next",
+                "value": "100",
+                "validFrom": "2026-11-23T23:35:13.299Z",
+                "validTo": null
+              },
+              {
+                "op": "assert",
+                "entity": "acct/account-003/console/type/Review",
+                "attribute": ":console/next",
+                "value": "101",
+                "validFrom": "2026-11-23T23:35:38.704Z",
+                "validTo": null
+              }
+            ],
+            "totalChanges": 5
+          },
+          "... 10 more"
+        ],
+        "read": 15,
+        "next": 745,
+        "compatibility": "The bulk loader that built this database wrote one field of each save's journal (the position row) in a non-standard form; the demo reads it with a named compatibility rule (acceptLoaderPositionRows), off in the product's default reader.",
+        "position": 745,
+        "timing": {
+          "serverMs": 0.52,
+          "roundTripMs": 21.19,
+          "requests": 2
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/journal?after=730"
+      },
+      "at": "2026-11-23T23:35:43.108Z"
+    },
+    "remove_on_request": {
+      "input": {
+        "account": "account-003",
+        "subject": 0
+      },
+      "output": {
+        "account": "account-003",
+        "subject": 0,
+        "done": false,
+        "reason": "This database has no protected fields. The integrated build accepts a protection declaration only before the first save into a scope (the gateway answers 409 ProtectedScopeNeedsMigration on a populated scope), and removal on request applies only to protected values. The 1 billion database was loaded...",
+        "erasureFrontier": {
+          "database": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "protected": false,
+          "seq": 0,
+          "erased": {}
+        },
+        "position": 745,
+        "timing": {
+          "serverMs": 0.15,
+          "roundTripMs": 2.28,
+          "requests": 2
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/about?tab=limits"
+      },
+      "at": "2026-11-23T23:35:43.118Z"
+    },
+    "evaluate_derivation": {
+      "input": {
+        "derivation": {
+          "name": "open-tasks",
+          "query": {
+            "find": [
+              "?task",
+              "?progress"
+            ],
+            "where": [
+              [
+                "?placement",
+                ":placement/task",
+                "?task"
+              ],
+              [
+                "?task",
+                ":task/progress",
+                "?progress"
+              ],
+              [
+                "not",
+                [
+                  "?task",
+                  ":task/status",
+                  "complete"
+                ]
+              ]
+            ]
+          },
+          "identity": [
+            "?task"
+          ]
+        },
+        "account": "account-003",
+        "subject": 5
+      },
+      "output": {
+        "derivation": {
+          "id": "sha256-df542e448b5be65d0c6c619c6b28ddefb4830907875595edeb75f6e98230df24",
+          "name": "open-tasks",
+          "identity": [
+            "?task"
+          ],
+          "output": [
+            "?task",
+            "?progress"
+          ],
+          "pinnedTo": {
+            "id": "sha256-a7ac4ab1026bbef9b11d4026f4457c7acdd901cde386a6140f1ff34b493f9960",
+            "label": "vehicles-1"
+          },
+          "dependencies": {
+            "attributes": [
+              ":placement/task",
+              ":task/progress",
+              ":task/status"
+            ],
+            "entityTypes": [
+              "placement",
+              "task"
+            ],
+            "boundEntityIds": [],
+            "hasDynamicAttributes": false
+          }
+        },
+        "subject": {
+          "root": "acct/account-003/pl:00000005",
+          "account": "account-003",
+          "subject": 5,
+          "facts": 114,
+          "entities": 30
+        },
+        "candidates": [],
+        "nextTemporalBoundary": null,
+        "basis": "recorded latest, valid now",
+        "note": "Evaluated in the console with Triplex's Derivation.evaluate over this subject's facts; nothing is materialized (Materialization and dependencyState scan on this engine).",
+        "position": 745,
+        "timing": {
+          "serverMs": 42.13,
+          "roundTripMs": 130.71,
+          "requests": 9,
+          "consoleMs": 17.36
+        },
+        "database": {
+          "id": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkeC1zY2FsZS1kZWNpc2lvbi01MDc4ODg1My0xZTZiLTRmMjQtYTI1Yi1jMzEyMTdjMGQzNzQtMCIsMF0",
+          "kind": "toy",
+          "label": "Small database on this Mac (working copy)",
+          "workingCopy": true
+        },
+        "consoleUrl": "http://127.0.0.1:28580/entities/acct%2Faccount-003%2Fpl%3A00000005?tab=derivations"
+      },
+      "at": "2026-11-23T23:35:43.471Z"
+    }
+  }
+}

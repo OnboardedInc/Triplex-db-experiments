@@ -1,0 +1,39 @@
+{
+  "note": "Example derivations for the Derivations tab: a name, a query of patterns, comparisons and not, and the identity variables.",
+  "derivations": [
+    {
+      "name": "open-tasks",
+      "note": "Tasks that are not complete, with their progress.",
+      "query": {
+        "find": ["?task", "?progress"],
+        "where": [
+          ["?placement", ":placement/task", "?task"],
+          ["?task", ":task/progress", "?progress"],
+          ["not", ["?task", ":task/status", "complete"]]
+        ]
+      },
+      "identity": ["?task"]
+    },
+    {
+      "name": "tasks-with-progress",
+      "note": "Every task and its progress, so a save shows as changed.",
+      "query": {
+        "find": ["?task", "?progress"],
+        "where": [["?task", ":task/progress", "?progress"]]
+      },
+      "identity": ["?task"]
+    },
+    {
+      "name": "advanced-tasks",
+      "note": "Tasks with progress of 10 or more: a comparison.",
+      "query": {
+        "find": ["?task", "?progress"],
+        "where": [
+          ["?task", ":task/progress", "?progress"],
+          [">=", "?progress", 10]
+        ]
+      },
+      "identity": ["?task"]
+    }
+  ]
+}

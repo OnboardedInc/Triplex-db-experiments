@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # [DX-DEMO1] On the Mac: open SSH port forwards to the rented machine's two gateways (which listen on its loopback
 # only), check both answer, print the head position and record count, and write the private state file the local
-# MCP server and inspector read (~/.triplex-demo/connection.json, mode 0600).
+# MCP server and the console server read (~/.triplex-demo/connection.json, mode 0600).
 #
 #   demo/connect.sh            server address from $DEMO_SERVER or the private file ~/.triplex-demo/server
 #   demo/connect.sh --toy      the Mac lab VM (after demo/server-up.sh --toy)
+#   TRIPLEX_DEMO_STATE=~/.triplex-demo/connection-1b.json demo/connect.sh
+#                              a second connection beside the toy's: its own state file and its own tunnel, so the toy
+#                              console on 28580 keeps running (start a second console server with the same variable)
 #
 # The address is never written into the repository; keep it in ~/.triplex-demo/server (one line, the IP or host name).
 set -euo pipefail
@@ -25,7 +28,9 @@ else
   target=ubuntu@$server
   ready_cmd='sudo -n cat /var/tmp/triplex-demo/ready.json'
 fi
-control=$dir/tunnel.sock
+state=${TRIPLEX_DEMO_STATE:-$dir/connection.json}
+# One tunnel per state file: the default keeps its historical socket name; another file gets its own.
+if [[ $state == "$dir/connection.json" ]]; then control=$dir/tunnel.sock; else control=$dir/tunnel-$(basename "$state" .json).sock; fi
 if [[ -S $control ]]; then "${ssh_base[@]}" -S "$control" -O exit "$target" >/dev/null 2>&1 || true; rm -f "$control"; fi
 
 ready=$("${ssh_base[@]}" -o ConnectTimeout=15 "$target" "$ready_cmd")
@@ -43,7 +48,7 @@ read -r local_w local_r < <(node -e '
 "${ssh_base[@]}" -M -S "$control" -f -N -o ExitOnForwardFailure=yes \
   -L "127.0.0.1:$local_w:127.0.0.1:$remote_w" -L "127.0.0.1:$local_r:127.0.0.1:$remote_r" "$target"
 
-node - "$ready" "$local_w" "$local_r" "$dir/connection.json" <<'NODE'
+node - "$ready" "$local_w" "$local_r" "$state" <<'NODE'
 const fs = require("fs");
 const [ready, w, r, file] = process.argv.slice(2);
 const x = JSON.parse(ready);
@@ -57,11 +62,12 @@ const writeUrl = `http://127.0.0.1:${w}`, readUrl = `http://127.0.0.1:${r}`;
   const connection = { version: "triplex-demo-connection/1", kind: x.kind, database: x.database, scope: x.scope,
     writeUrl, readUrl, workingCopy: x.workingCopy === true, recordsAtBringUp: x.recordsAtBringUp, headAtBringUp: x.head,
     physicalTAtBringUp: x.physicalT, sealed: x.sealed, roster: x.roster, clocks: x.clocks ?? null,
-    lastRecordedAtBringUp: x.lastRecordedAt ?? null, loaderPositionRows: x.loaderPositionRows === true, connectedAt: new Date().toISOString() };
+    lastRecordedAtBringUp: x.lastRecordedAt ?? null, loaderPositionRows: x.loaderPositionRows === true,
+    memory: x.memory ?? null, pinnedReads: x.pinnedReads ?? null, workingCopyMadeAt: x.workingCopyMadeAt ?? null, readyAt: x.startedAt ?? null, connectedAt: new Date().toISOString() };
   fs.writeFileSync(file + ".tmp", JSON.stringify(connection, null, 2) + "\n", { mode: 0o600 });
   fs.renameSync(file + ".tmp", file);
   console.log(`CONNECTED ${x.kind === "1b" ? "1 billion database" : "toy database"}: head ${wb.body.position.v} (read gateway ${rb.body.position.v}), ` +
     `records at bring-up ${x.recordsAtBringUp.toLocaleString("en-US")}, write ${writeUrl}, read ${readUrl}, tunnel round trip ${wb.ms.toFixed(1)} ms`);
 })().catch((e) => { console.error(e.message); process.exit(1); });
 NODE
-printf 'State file %s; connect took %d s. Close with demo/disconnect.sh%s\n' "$dir/connection.json" "$((SECONDS - started))" "$([[ $toy == 1 ]] && echo ' --toy')"
+printf 'State file %s; connect took %d s. Close with demo/disconnect.sh%s\n' "$state" "$((SECONDS - started))" "$([[ $toy == 1 ]] && echo ' --toy')"

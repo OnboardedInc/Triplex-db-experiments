@@ -1,3 +1,6 @@
+> **[DX-CON1] This is the first demo's file, recorded on the 1 billion database for its 12 tools.** The console's
+> proving run (`demo/PROVE-CONSOLE.md`) rewrites it for all 22 tools, with `demo/console/examples.json` beside it.
+
 # Worked examples
 
 > **Recorded before the rename, kept as run.** These outputs are the first proving slot's (commit `5f9c3050f`), with the tools' names at that time. The tools are now `find_subjects` (was `find_people`), `read_subject` (`read_person`), `read_subject_at` (`read_person_at`) and `read_many_subjects` (`read_many_people`); the argument `member` is now `subject`, kind `person` is now `root`, and outputs say `subject`/`subjectId` where these say `member`/`personId`. `list_accounts` now answers from the checked roster (one basis call) instead of reading ten directory entities (220.64 ms here). The history examples below use subject 0, which the aging loader saved about 1,411 times (1,412 rows of `:task/field-0`), hence 4,404.67 ms cold and 225.21 ms warm; the README's "History reads" explains why. The second slot (`PROVING-SLOT.md`) regenerates this file with the new names and adds a subject with a short history beside it, each labelled with its saves.
