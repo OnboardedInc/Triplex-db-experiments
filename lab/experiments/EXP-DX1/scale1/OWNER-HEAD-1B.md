@@ -40,3 +40,18 @@ Late means the second 60 s of each 120 s window. Reference is today's writer; tr
 - **Prediction:** 0 sampler errors in every window of both arms. Settled pinned p50 above the other machine's 0.76 ms is expected (these are now true pinned reads).
 - **Falsifier:** any sampler error is a store defect, reported from `errorSamples` with the subject and positions.
 - Layout: OUT is `/var/tmp/triplex-owner-head-1b/run/pair`; copies are under `/var/tmp/triplex-scale1/pgdata/`; the held source is on the spare NVMe. None contains another (`v01/pgdata.ts:83`). No dry run, by the orchestrator's choice of time.
+
+## Result (01:29–01:49 UTC on 2026-11-24): both arms ran, the treatment arm's summary refused
+
+Build `85fc3a4bd` (4 min), no dry run. The reference arm ran 01:29–01:39 and its summary passed. The append arm (`TX2_SUBJECT_OWNER_HEAD=1`) ran its 50 and 235 windows 01:39–01:49. Then `w1/serial/summarize.py` line 125 (`summarize`, from line 203) raised `AssertionError` on `assert stage["subjectSave"] == header["settings"]["observed"]["subjectFunction"]`. The call came through `v01/study-server.ts:182` and `rd1/prepared.ts:148`, so `retirement-comparison.json` was not written. The owner-head arm's saves likely report the covering writer's function where the header records the reference subject function; the builder must teach the summarizer the treatment arm's writer.
+
+Raw window results from the arm files (all offered saves acknowledged):
+
+| Arm | Offered/s | Saves | All-save p50 / p90 / p99 ms |
+| --- | ---: | --- | --- |
+| Reference (today's writer) | 50 | 6,000/6,000 | 5.15 / 12.16 / 27.39 |
+| Owner head | 50 | 6,000/6,000 | 4.99 / 9.60 / 19.46 |
+| Reference | 235 | 28,200/28,200 | 4.54 / 10.56 / 30.08 |
+| Owner head | 235 | 28,200/28,200 | 4.64 / 9.02 / 31.10 |
+
+The per-group reads per save, the sampler errors and the pass verdict come from the summary that refused, so they are not reported here. Evidence: `evidence/DX-SCALE1/owner-head-1b/oh-pair-1b.tar.gz` in the private evidence folder (SHA-256 `e3f9702f7707b461d8c9bbca5cb9b987b76eef70e263fffa2fc66e31c64af1db`), both arms' directories and logs.
