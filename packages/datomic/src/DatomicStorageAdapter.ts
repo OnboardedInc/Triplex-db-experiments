@@ -30,7 +30,14 @@ import {
   MigrationError,
   TransactionOutcomeUnknown,
 } from "@triplex-build/triplex/runtime";
-import { DatomicClient, DatomicHttpError, atLeastBody } from "./DatomicClient.js";
+import {
+  DatomicClient,
+  DatomicHttpError,
+  DatomicRequestTooLarge,
+  DATOMIC_REQUEST_LIMIT_BYTES,
+  atLeastBody,
+} from "./DatomicClient.js";
+import { orderedSaveIdentity, wideOrderedSaveIdentity } from "./orderedSaveIdentity.js";
 import { matchesPattern, packValue, packValueOnce, createPackedRow, visibleAt } from "./rows.js";
 import { fastPathEnabled } from "./fastPaths.js";
 import { stagedInput } from "./protocol.js";
@@ -62,6 +69,89 @@ export class DatomicCommitOrderError extends WriteError {
   }
 }
 
+/** [DX-S2] The per-subject writer's bound with `TX2_SUBJECT_WIDE=1`: facts asserted, and values retired, per save. */
+export const SUBJECT_SAVE_FACTS = 128;
+/**
+ * [DX-S2] The save-size rule's limit: a save of more facts is refused before sending. One save of 1,000 facts holds
+ * the single serial point for about 120 ms at 1 billion records (0.12 ms per fact on the general writer), so every
+ * other save in the database waits that long behind it (`v01/SAVE-SHAPE.md` section 4.4).
+ */
+export const SAVE_LIMIT_FACTS = 1000;
+
+/**
+ * [DX-S2] A save over the save-size rule's limit, refused before anything was sent. `facts` is the larger of the
+ * facts the save asserts and the values it retires (a replacement counts once); `bytes` is the request body it would
+ * have sent. A load of this size belongs in the import class (`DatomicClient.transactBulkFrames`).
+ */
+export class SaveTooLarge extends WriteError {
+  readonly reason = "save-too-large" as const;
+  constructor(
+    readonly facts: number,
+    readonly bytes: number,
+    readonly limitFacts: number = SAVE_LIMIT_FACTS,
+  ) {
+    super({
+      message: `A save of ${facts} facts (${bytes} bytes) is over the limit of ${limitFacts} facts; send it through the import class`,
+    });
+  }
+}
+/** [DX-S2] A save whose request body is over the 4 MiB cap the SDK and the gateway share, refused before sending. */
+export class SaveRequestTooLarge extends WriteError {
+  readonly reason = "save-request-too-large" as const;
+  constructor(
+    readonly facts: number,
+    readonly bytes: number,
+    readonly limitBytes: number = DATOMIC_REQUEST_LIMIT_BYTES,
+  ) {
+    super({
+      message: `A save of ${facts} facts is ${bytes} bytes, over the request limit of ${limitBytes} bytes; send it through the import class`,
+    });
+  }
+}
+
+type SaveOperation = Parameters<NonNullable<StorageAdapterService["saveIdentity"]>>[0][number];
+/**
+ * [DX-S2] Which ordered block, if any, a save gets, from what is known before staging: the operations and the meta.
+ * The gateway's own admission rules (`subject_save.clj` `plan-with-erasure`) decide the writer; this mirrors the parts
+ * of them that the operations show. A save these rules pass but the gateway refuses (a retraction of another entity's
+ * fact, a read that makes the commit scope-wide) carries its block to the general writer, which takes any IDs.
+ * Rejected: deciding after staging (the IDs are already in the receipts and journal changes by then).
+ */
+export function orderedSaveShape(
+  operations: readonly SaveOperation[],
+  meta: { readonly commandId?: string; readonly enforce?: unknown; readonly actor?: string } | undefined,
+): { readonly block: "one-byte" | "wide"; readonly reason: string } | { readonly block?: undefined; readonly reason: string } {
+  if (meta?.commandId === undefined) return { reason: "no-command-id" };
+  if (meta.enforce !== undefined) return { reason: "constraints" };
+  let entity: string | undefined;
+  let facts = 0,
+    retired = 0;
+  for (const op of operations) {
+    if (op.op === "retract") {
+      retired++;
+      continue;
+    }
+    if (op.op !== "assert") return { reason: "pattern-retraction" };
+    if (entity !== undefined && op.entityId !== entity) return { reason: "several-entities" };
+    entity = op.entityId;
+    if (op.entityId.startsWith("_")) return { reason: "system-entity" };
+    if (op.attribute.startsWith(":_")) return { reason: "system-attribute" };
+    if (op.value.type === "ref") return { reason: "reference-value" };
+    facts++;
+  }
+  if (facts + retired === 0) return { reason: "empty" };
+  if (facts > SUBJECT_SAVE_FACTS || retired > SUBJECT_SAVE_FACTS) return { reason: "over-subject-bound" };
+  // Journal rows: position, instant, the optional actor, command, correlation, causation and configuration rows, one
+  // changed-entity row per entity (at most one plus the retracted facts' owners), and one change per fact and retirement.
+  const m = meta as Record<string, unknown>;
+  const journal =
+    3 +
+    ["actor", "correlationId", "causationId", "configSnapshot"].filter((k) => m[k]).length +
+    (1 + retired) +
+    (facts + retired);
+  return { block: facts + journal <= 256 ? "one-byte" : "wide", reason: "ordered" };
+}
+
 export const makeDatomicStorageAdapter = (
   client: DatomicClient,
   scopeKey: string,
@@ -82,6 +172,21 @@ export const makeDatomicStorageAdapter = (
     readonly boundedJournalPages?: boolean;
     /** [DX-RD4] Every unpinned read (the head it resolves) is at or after this floor's position. */
     readonly readAtLeast?: ReadAtLeast;
+    /**
+     * [DX-S2] One commit per subject's save on the fast writer: a save that writes facts of one subject (see
+     * `orderedSaveShape`) gets one ordered block of identities for the whole save, so the gateway's per-subject writer
+     * (narrow, or wide with `TX2_SUBJECT_WIDE=1`) can admit it; such a save also names only the entities it reads and
+     * writes (not its own new journal) and states its source cut when it skipped the snapshot. Needs a lean scope with
+     * strict record clocks. Default off; also on with TRIPLEX_DATOMIC_ORDERED_SAVES=1.
+     */
+    readonly orderedSaves?: boolean;
+    /**
+     * [DX-S2] The save-size rule (`v01/SAVE-SHAPE.md` section 4.4): a save over `SAVE_LIMIT_FACTS` facts is refused
+     * before sending (`SaveTooLarge`); a save over the 4 MiB request cap is refused as `SaveRequestTooLarge` instead of
+     * `InvalidValue`; a save over the per-subject bound is counted as sent to the general writer. Default off; also on
+     * with TRIPLEX_DATOMIC_SAVE_SIZE_RULE=1.
+     */
+    readonly saveSizeRule?: boolean;
   } = {},
 ): StorageAdapterService => {
   // [DX-T1] Why: Effect scopes include staging/validation and always close on typed failure or interruption.
@@ -96,6 +201,14 @@ export const makeDatomicStorageAdapter = (
   const boundedJournal =
     options.boundedJournalPages ?? process.env["TRIPLEX_DATOMIC_BOUNDED_JOURNAL"] === "1";
   const maxRetries = options.maxRetries ?? 12;
+  const orderedSaves =
+    options.orderedSaves ?? process.env["TRIPLEX_DATOMIC_ORDERED_SAVES"] === "1";
+  const saveSizeRule =
+    options.saveSizeRule ?? process.env["TRIPLEX_DATOMIC_SAVE_SIZE_RULE"] === "1";
+  const route = (state: TransactionState | undefined, reason: string) => {
+    client.saveRoutes.set(reason, (client.saveRoutes.get(reason) ?? 0) + 1);
+    if (state?.diagnostic) state.diagnostic.saveRoute = reason;
+  };
   const resolutionTimeoutMs = options.resolutionTimeoutMs ?? 45_000;
   let lastSeenPosition = 0;
   let strictRecordClocks = false;
@@ -344,6 +457,58 @@ export const makeDatomicStorageAdapter = (
             if (timer !== undefined) clearTimeout(timer);
           }
         };
+        // [DX-S2] Why: the per-subject writer admits exactly one entity (the subject) and a stated source cut; this
+        // save's own new journal is not something it read, and a skipped snapshot still has the cut it assumed.
+        // Rejected: changing either for saves without an ordered block (their requests stay byte for byte).
+        const ownJournals = state.orderedSave
+          ? new Set(
+              [...state.rows.values()]
+                .filter((row) => row.entity_type === "_Transaction" && state.newIds.has(row.id))
+                .map((row) => row.entity_id),
+            )
+          : undefined;
+        if (saveSizeRule) {
+          const business = [...state.rows.values()].filter((row) => row.entity_type !== "_Transaction");
+          const asserted = business.filter((row) => state.newIds.has(row.id)).length;
+          const retired = business.filter((row) => !state.newIds.has(row.id) && row.retracted_at !== null).length;
+          const facts = Math.max(asserted, retired);
+          if (facts > SAVE_LIMIT_FACTS) {
+            route(state, "refused:over-save-limit");
+            const bytes = await client.transactRequestBytes(db, wire());
+            throw new SaveTooLarge(facts, bytes);
+          }
+          if (facts > SUBJECT_SAVE_FACTS) route(state, "general:over-subject-bound");
+        }
+        function wire(sendSequence?: number, sent?: (published?: boolean) => void) {
+          return {
+              ...(sent ? { onSent: sent } : {}),
+              ...(sendSequence === undefined
+                ? {}
+                : { clientId: commitClientIdFor(client), sendSequence }),
+              assignRecordTime: state.serverRecordTime === true,
+              // [DX-B5-L0] Why: public journals take their timestamp from the replayed runtime clock.
+              // Rejected: clock-replaying raw SPI callbacks with fixed import timestamps (cannot advance).
+              replaySafe:
+                state.replaySafe === true &&
+                state.importInstant === undefined &&
+                [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
+              sourceK: state.optimistic && !state.orderedSave ? null : state.sourceK,
+              position: state.position,
+              span: state.position - state.sourceK,
+              entities: ownJournals
+                ? [...state.entities].filter((entity) => !ownJournals.has(entity))
+                : [...state.entities],
+              live: [...state.live],
+              scopeWide: state.scopeWide,
+              operationId,
+              attemptId,
+              rows: [...state.rows.values()],
+              newIds: [...state.newIds],
+              claims: [...state.claims.values()],
+              ...(state.optimistic ? {} : { handle: state.handle }),
+              release: true,
+          };
+        }
         let submitError: unknown;
         try {
           state.submitted = true;
@@ -372,32 +537,7 @@ export const makeDatomicStorageAdapter = (
             }
             if (state.diagnostic) state.diagnostic.released = performance.now();
             return client.observeRequests(state.diagnostic, () =>
-              client.transact(db, {
-                ...(sent ? { onSent: sent } : {}),
-                ...(sendSequence === undefined
-                  ? {}
-                  : { clientId: commitClientIdFor(client), sendSequence }),
-                assignRecordTime: state.serverRecordTime === true,
-                // [DX-B5-L0] Why: public journals take their timestamp from the replayed runtime clock.
-                // Rejected: clock-replaying raw SPI callbacks with fixed import timestamps (cannot advance).
-                replaySafe:
-                  state.replaySafe === true &&
-                  state.importInstant === undefined &&
-                  [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
-                sourceK: state.optimistic ? null : state.sourceK,
-                position: state.position,
-                span: state.position - state.sourceK,
-                entities: [...state.entities],
-                live: [...state.live],
-                scopeWide: state.scopeWide,
-                operationId,
-                attemptId,
-                rows: [...state.rows.values()],
-                newIds: [...state.newIds],
-                claims: [...state.claims.values()],
-                ...(state.optimistic ? {} : { handle: state.handle }),
-                release: true,
-              }),
+              client.transact(db, wire(sendSequence, sent)),
             );
           };
           const ack = await bounded(
@@ -435,6 +575,18 @@ export const makeDatomicStorageAdapter = (
             }
           }
         } catch (error) {
+          if (error instanceof SaveTooLarge) throw error;
+          if (saveSizeRule && error instanceof DatomicRequestTooLarge) {
+            route(state, "refused:over-request-limit");
+            const business = [...state.rows.values()].filter((row) => row.entity_type !== "_Transaction");
+            throw new SaveRequestTooLarge(
+              Math.max(
+                business.filter((row) => state.newIds.has(row.id)).length,
+                business.filter((row) => !state.newIds.has(row.id) && row.retracted_at !== null).length,
+              ),
+              error.bytes ?? DATOMIC_REQUEST_LIMIT_BYTES + 1,
+            );
+          }
           if (
             error instanceof DatomicHttpError &&
             error.status >= 400 &&
@@ -844,6 +996,30 @@ export const makeDatomicStorageAdapter = (
       "blob",
     ],
     withTransaction,
+    ...(orderedSaves
+      ? {
+          saveIdentity: (operations: readonly SaveOperation[], meta: Parameters<NonNullable<StorageAdapterService["saveIdentity"]>>[1]) =>
+            Effect.map(current, (state) => {
+              // [DX-S2] Why: only the first logical save of a physical commit, on a lean scope whose record clocks the
+              // server assigns, can be one per-subject commit. Rejected: a block for a nested second save (two journals).
+              if (state === undefined) return undefined;
+              const shape =
+                state.rows.size !== 0 || state.claims.size !== 0 || state.position !== state.sourceK
+                  ? { reason: "nested" }
+                  : !client.isLean(db)
+                    ? { reason: "not-lean" }
+                    : !state.serverRecordTime
+                      ? { reason: "client-record-time" }
+                      : orderedSaveShape(operations, meta);
+              route(state, shape.block === undefined ? `runtime:${shape.reason}` : `ordered:${shape.block}`);
+              if (shape.block === undefined) return undefined;
+              const identity = shape.block === "one-byte" ? orderedSaveIdentity() : wideOrderedSaveIdentity();
+              state.orderedSave = identity.token;
+              let ordinal = 0;
+              return { txId: identity.transactionId, tripleId: () => identity.assertionId(ordinal++) };
+            }),
+        }
+      : {}),
     atomicReach: true,
     // [DX-B4-T1] Why: staged reads retain the portable snapshot overlay. Rejected: exposing committed head inside a transaction.
     getTransactionsAfter: (after, limit, waitMs = 0) =>

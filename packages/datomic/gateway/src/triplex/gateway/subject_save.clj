@@ -346,9 +346,14 @@
                          (into #{} (map (comp field lean/decode)) (vals prior)))
                 after (into #{} (map (comp field lean/decode second #(nth % 3))) business)]
             (when (and (if wide?
-                         ;; [Opus W2] Why: distinct plain fields on each side; a field may be replaced, first written
-                         ;; or retired. Rejected: references and system attributes (they widen the read set).
-                         (and (= (count live) (count prior) (count before)) (= (count business) (count after))
+                         ;; [Opus W2] Why: plain fields on each side; a field may be replaced, first written or retired.
+                         ;; Rejected: references and system attributes (they widen the read set).
+                         ;; [DX-S2] Why: a save "from now on" keeps the old value true until now as a bounded row, so it
+                         ;; asserts two rows of one field (the bounded old value and the new one); every predecessor
+                         ;; is still read here and covered by the revision compare-and-set, and nothing below or in
+                         ;; the native function is keyed by field. Rejected: W2's distinct-field count on each side,
+                         ;; which sent every such product save to the general writer.
+                         (and (= (count live) (count prior))
                               (not (contains? after nil)))
                          (and (= (count live) (count prior) (count before) (count after)) (= before after)))
                        (not (contains? before nil))

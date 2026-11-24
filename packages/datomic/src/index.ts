@@ -32,6 +32,10 @@ export function makeDatomicRuntime(options: {
   readonly resolutionTimeoutMs?: number;
   /** [DX-RD4] A reader built from a receipt: every unpinned read answers at or after its position. */
   readonly readAtLeast?: import("./readAtLeast.js").ReadAtLeast;
+  /** [DX-S2] One ordered block of identities per subject's save (see the adapter option). Default off. */
+  readonly orderedSaves?: boolean;
+  /** [DX-S2] The save-size rule (see the adapter option). Default off. */
+  readonly saveSizeRule?: boolean;
 }): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> {
   const connection = Layer.effect(
     Connection,
@@ -69,6 +73,11 @@ export {
   makeDatomicStorageAdapter,
   DatomicSerializationConflict,
   DatomicCommitOrderError,
+  SaveTooLarge,
+  SaveRequestTooLarge,
+  SAVE_LIMIT_FACTS,
+  SUBJECT_SAVE_FACTS,
+  orderedSaveShape,
 } from "./DatomicStorageAdapter.js";
 export { makeDatomicQueryExecutor } from "./DatomicQueryExecutor.js";
 

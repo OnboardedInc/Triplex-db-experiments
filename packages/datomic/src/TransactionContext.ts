@@ -36,6 +36,8 @@ export interface TransactionState {
   rows: Map<string, TripleRow>;
   claims: Map<string, DatomicClaim>;
   newIds: Set<string>;
+  /** [DX-S2] The token of the ordered block this save's identities come from (`orderedSaves`). */
+  orderedSave?: string;
 }
 export const CurrentTransactions = Context.Reference<ReadonlyMap<symbol, TransactionState>>(
   "triplex/datomic/transactions",
