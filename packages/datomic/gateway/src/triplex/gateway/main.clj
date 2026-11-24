@@ -6,7 +6,8 @@
             [triplex.gateway.lean-feed :as lean-feed] [triplex.gateway.lean-query :as lean-query]
             [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy]
             [triplex.gateway.subject-save :as subject] [triplex.gateway.owner-layout :as owner-layout]
-            [triplex.gateway.general-prefetch :as general-prefetch] [triplex.gateway.admission :as admission])
+            [triplex.gateway.general-prefetch :as general-prefetch] [triplex.gateway.admission :as admission]
+            [triplex.gateway.subject-hints :as subject-hints])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -87,7 +88,9 @@
         current (subject/install! conn (group/install! conn (commit/install! conn scope schema-ready)))
         current (owner-layout/install! conn current)
         ;; [DX-W3] Why: the lookup-only hint function is installed only when its option is on (default off).
-        current (general-prefetch/install! conn current)]
+        current (general-prefetch/install! conn current)
+        ;; [DX-W4] Why: the per-subject writer's lookup-only hint function, installed only when its option is on.
+        current (subject-hints/install! conn current)]
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
       (lean/enabled? current) (assoc :layout "lean" :orderedRowTexts true :journalCuts true)))))
@@ -140,6 +143,8 @@
                        :pinnedShortcut pinned/enabled :pinnedCutLookup group-cut/current-lookup}}
       ;; [DX-W3] Why: report the option only when it is on, so default readbacks stay byte-identical.
       general-prefetch/enabled (assoc-in [:options :generalPrefetch] (general-prefetch/installed? db))
+      ;; [DX-W4] Why: report the option only when it is on, so default readbacks stay byte-identical.
+      subject-hints/enabled (assoc-in [:options :subjectHints] (subject-hints/installed? db))
       subject/enabled (assoc :subjectSave true :subjectFunction (when subject-t (str subject/ident))
                              :subjectNumericOwner subject/numeric-owner?
                              :subjectOrderedIds subject/ordered-ids?
