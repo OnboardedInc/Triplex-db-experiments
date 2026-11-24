@@ -685,7 +685,7 @@ export async function runHeld(
       });
     // [DX-ACT5] Settlement beside live saves (diagnostic toy only): DX_ACT5_LIVE runs its cases instead of the windows.
     if (process.env.DX_ACT5_LIVE) {
-      assert(diagnostic, "DX_ACT5_LIVE is a toy diagnostic");
+      assert(diagnostic || process.env.DX_ACT5_SERVER === "1", "DX_ACT5_LIVE is a toy diagnostic unless DX_ACT5_SERVER=1");
       const { livePhase } = await import("./settle-live.ts");
       await livePhase({
         out, s, a, offer, verifyRead: verifyRead as never, demand: demand as never, writer, seed, people, history, positions,

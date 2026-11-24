@@ -21,6 +21,7 @@ import { expected as worldAt, heldTape } from "./held-campaign.ts";
 import type { HeldLedger } from "./held-ledger.ts";
 import { largeRelease, parseShape } from "./large-release.ts";
 import { Settlement } from "./settlement.ts";
+import { readSettlement, setSettlementControl } from "./settlement-control.ts";
 
 // [DX-ACT5] Why: settlement had never run beside live saves in the account (or the database) that publishes. This
 // phase of the held toy runner (DX_ACT5_LIVE=1, diagnostic only) runs cases, each a Publish followed by settlement while
@@ -59,8 +60,10 @@ type Case = {
   release: "large" | "small" | "none";
   own: 0 | 3.5 | 23.5 | 39.4;
   others: boolean;
-  extra?: "kill" | "second" | "multi" | "rival";
+  extra?: "kill" | "second" | "multi" | "rival" | "pause";
   turns?: "admission";
+  /** This case's save window in seconds (default DX_ACT5_SECONDS). */
+  seconds?: number;
 };
 const validTime = W0.POPULATION_VALID_TIME;
 const ADOPT = /^settled-(values|notice):/;
@@ -68,10 +71,11 @@ const shape = parseShape("forms=20,policies=20,permille=1000");
 
 export function parseCases(text: string): Case[] {
   return text.split(",").map((entry) => {
-    const [name, precondition, frames, release, own, others, extra, turns] = entry.split(":");
+    const [name, precondition, frames, release, own, others, extra, turns, secs] = entry.split(":");
+    assert(secs === undefined || secs === "" || (Number.isInteger(Number(secs)) && Number(secs) >= 2 && Number(secs) <= 3600));
     assert(name && ["head", "progress"].includes(precondition!) && ["count", "bytes"].includes(frames!));
     assert(["large", "small", "none"].includes(release!) && ["0", "3.5", "23.5", "39.4"].includes(own!));
-    assert(["0", "1"].includes(others!) && [undefined, "", "kill", "second", "multi", "rival"].includes(extra));
+    assert(["0", "1"].includes(others!) && [undefined, "", "kill", "second", "multi", "rival", "pause"].includes(extra));
     assert([undefined, "", "admission"].includes(turns));
     return {
       name,
@@ -82,6 +86,7 @@ export function parseCases(text: string): Case[] {
       others: others === "1",
       ...(extra ? { extra: extra as Case["extra"] } : {}),
       ...(turns ? { turns: "admission" as const } : {}),
+      ...(secs ? { seconds: Number(secs) } : {}),
     };
   });
 }
@@ -95,10 +100,21 @@ function saveSide(rows: Save[], turns: [number, number][]) {
   for (const r of rows) statuses[r.status] = (statuses[r.status] ?? 0) + 1;
   const done = rows.filter((r) => r.status === "acked");
   const overlaps: Record<string, number> = {};
+  const sorted = turns.toSorted((x, y) => x[0] - y[0]),
+    longest = Math.max(0, ...sorted.map(([b, e]) => e - b));
   for (const r of done) {
     const from = r.dispatched!,
       to = r.end!;
-    const k = turns.filter(([b, e]) => b < to && e > from).length;
+    // Turns that began before the save ended and ended after it was sent (binary search, then back by the longest).
+    let lo = 0,
+      hi = sorted.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (sorted[mid]![0] < to) lo = mid + 1;
+      else hi = mid;
+    }
+    let k = 0;
+    for (let i = lo - 1; i >= 0 && sorted[i]![0] > from - longest - 1; i--) if (sorted[i]![1] > from) k++;
     overlaps[k] = (overlaps[k] ?? 0) + 1;
   }
   return {
@@ -116,9 +132,11 @@ export async function livePhase(c: LiveContext) {
     process.env.DX_ACT5_CASES ??
       "control:head:bytes:none:23.5:0,quiet:head:bytes:large:0:0,own3:head:bytes:large:3.5:0,own23:head:bytes:large:23.5:0",
   );
-  const seconds = Number(process.env.DX_ACT5_SECONDS ?? 8);
-  assert(seconds >= 2 && seconds <= 30);
-  const ref = new Reference();
+  const defaultSeconds = Number(process.env.DX_ACT5_SECONDS ?? 8);
+  // Toy windows stay short; the server mode (DX_ACT5_SERVER=1) allows up to an hour per case.
+  const limit = process.env.DX_ACT5_SERVER === "1" ? 3600 : 30;
+  assert(defaultSeconds >= 2 && defaultSeconds <= limit && cases.every((k) => (k.seconds ?? 0) <= limit));
+  const ref = new Reference(process.env.DX_ACT5_SERVER === "1" ? 4 : 1);
   const roster = Array.from({ length: c.people }, (_, i) => W0.placementId(i));
   const world = (at: number) => (i: number) => worldAt(i, at, c.history, c.positions);
   let current = c.releases.at(-1)!;
@@ -138,20 +156,23 @@ export async function livePhase(c: LiveContext) {
     return { r, old };
   };
   /** The oracle's changed values of a release pair at the release's own position. */
-  const oracleChanges = async (doc: W0.ReleaseDoc, old: W0.ReleaseDoc, at: number) =>
-    (
-      JSON.parse(
+  const oracleChanges = async (doc: W0.ReleaseDoc, old: W0.ReleaseDoc, at: number) => {
+    const out: { subject: string; changes: [string, string | null][] }[] = [];
+    for (let i = 0; i < roster.length; i += 32) {
+      const rows = JSON.parse(
         await ref.oracle.call("check", {
           document: doc,
           old,
           basis: { tx: at, validTime },
-          worlds: roster.map((_, i) => world(at)(i)),
+          worlds: roster.slice(i, i + 32).map((_, j) => world(at)(i + j)),
           fold: false,
         }),
-      ) as { subject: string; rows: [string, string | null, string | null][] }[]
-    )
-      .filter((x) => x.rows.length)
-      .map((x) => ({ subject: x.subject, changes: x.rows.map(([k, , v]) => [k, v]) }));
+      ) as { subject: string; rows: [string, string | null, string | null][] }[];
+      for (const x of rows)
+        if (x.rows.length) out.push({ subject: x.subject, changes: x.rows.map(([k, , v]) => [k, v]) });
+    }
+    return out;
+  };
   /** Reads pinned at the ledger's verified position, checked exactly against the release in force there. */
   const pinnedRead = async (i: number, where: string) => {
     await c.ledger.verifyThrough(c.ledger.pending(), true, ADOPT);
@@ -167,6 +188,7 @@ export async function livePhase(c: LiveContext) {
   const extras: Extra[] = [];
   try {
     for (const k of cases) {
+      const seconds = k.seconds ?? defaultSeconds;
       if (k.extra === "multi") {
         results.push(await multiCase(c, k, seconds, extras, { ref, roster, current: () => current, publish }));
         continue;
@@ -178,7 +200,7 @@ export async function livePhase(c: LiveContext) {
           : k.release === "small"
             ? base.name === "R1" ? W0.R2.doc : W0.R1.doc
             : undefined;
-      assert(k.release !== "large" || !base.name.includes("+"), "a large case needs a form-free predecessor");
+
       const published = doc ? await publish(doc) : undefined;
       // Saves: the held tape at the own rate (account 0) and/or the nine others at their usual load (the 23.5 tape).
       const tape = heldTape(c.people as never, k.own || 23.5, seconds).filter((x) =>
@@ -187,9 +209,16 @@ export async function livePhase(c: LiveContext) {
       const from = await c.s.head();
       const senders = await preload(c.writer, c.seed, from, tape);
       const queue = new BulkQueue(1);
-      const worker = published
+      // The pause case: the account's settlement is paused before it starts (TX2_SETTLE_CONTROL on for this worker).
+      const controlled = k.extra === "pause" ? process.env.TX2_SETTLE_CONTROL : undefined;
+      if (k.extra === "pause") {
+        process.env.TX2_SETTLE_CONTROL = "1";
+        await setSettlementControl(c.s, { paused: true, by: "act5-gate" });
+      }
+      let worker = published
         ? await Settlement.open(c.a, queue, false, k.frames, k.precondition)
         : undefined;
+      const sight: unknown[] = [];
       // A rival writer of the same release in the same process, with the other framing and its own queue (a restart
       // that overlaps the old process, or a second host): exactly one of two frames that follow one progress row lands.
       const rival =
@@ -233,7 +262,30 @@ export async function livePhase(c: LiveContext) {
           // Settle in a child process killed at a random moment (inside or between frames), three times, then here.
           for (let j = 0; j < 3; j++) kills.push(await killedChild(c, published.r.seq, k, 150 + Math.floor(Math.random() * 900)));
         }
-        if (k.extra === "second") {
+        if (k.extra === "pause") {
+          // Paused: nothing is written for 2 s; a restart (a new worker) is still paused for 1 s; then paced at 300 ms
+          // between frames and resumed.
+          const run = worker.settle(published.r.seq);
+          await sleep(2000);
+          sight.push({ at: "paused", status: await readSettlement(worker) });
+          assert.equal(worker.archive.contest.offered + worker.recorder.archive.contest.offered, 0, "a paused account wrote");
+          const restarted = await Settlement.open(c.a, queue, false, k.frames, k.precondition);
+          const run2 = restarted.settle(published.r.seq);
+          await sleep(1000);
+          assert.equal(restarted.archive.contest.offered + restarted.recorder.archive.contest.offered, 0, "paused after restart");
+          await setSettlementControl(c.s, { paused: false, paceMs: 300, by: "act5-gate" });
+          await Promise.all([run, run2]);
+          sight.push({ at: "done", status: await readSettlement(restarted) });
+          const t = [...worker.archive.contest.turns, ...worker.recorder.archive.contest.turns,
+            ...restarted.archive.contest.turns, ...restarted.recorder.archive.contest.turns].map(([b]) => b).sort((x, y) => x - y);
+          const gaps = t.slice(1).map((x, i) => x - t[i]!);
+          sight.push({ at: "pace", frames: t.length, minGapMs: gaps.length ? Math.min(...gaps) : null });
+          assert(gaps.every((g) => g >= 295), "pace not kept: " + Math.min(...gaps));
+          await restarted.close();
+          await setSettlementControl(c.s, { paused: false, paceMs: null, by: "act5-gate" });
+          if (controlled === undefined) delete process.env.TX2_SETTLE_CONTROL;
+          else process.env.TX2_SETTLE_CONTROL = controlled;
+        } else if (k.extra === "second") {
           // A second release while the first is being settled: pause saves and frames, Publish, resume.
           await sleep(Math.min(1500, (seconds * 1000) / 4));
           gate.paused = true;
@@ -295,7 +347,7 @@ export async function livePhase(c: LiveContext) {
           const packets = await worker.recorder.packets(await worker.recorder.archive.store.head());
           const deliveries = packets.filter((x) => x.event === seq).flatMap((x) => x.deliveries.map(toWire));
           let independent: unknown = null;
-          if (r.doc.name.includes("+") && !old.name.includes("+")) {
+          if (r.doc.forms?.length && !old.forms?.length) {
             const by = new Map(got.map((x) => [x.subject, x.changes]));
             const t = { owing: 0, changes: 0, notices: 0 };
             for (const [i, s] of roster.entries()) {
@@ -323,10 +375,14 @@ export async function livePhase(c: LiveContext) {
         );
         assert.deepEqual(all, ref.owed, "notices differ from the oracle: " + k.name);
         const ldb = worker.recorder.archive.db,
-          lrows = await ldb.rows<string>(roster.map((s) => "recorded-ledger:" + s), await ldb.head());
-        for (const s of roster) {
-          const v = lrows.get("recorded-ledger:" + s);
-          assert.deepEqual(v ? unpack<any[]>(v.value).map(toWire) : [], ref.items.get(s) ?? [], "ledger of " + s);
+          lat = await ldb.head();
+        for (let i = 0; i < roster.length; i += 256) {
+          const part = roster.slice(i, i + 256),
+            lrows = await ldb.rows<string>(part.map((s) => "recorded-ledger:" + s), lat);
+          for (const s of part) {
+            const v = lrows.get("recorded-ledger:" + s);
+            assert.deepEqual(v ? unpack<any[]>(v.value).map(toWire) : [], ref.items.get(s) ?? [], "ledger of " + s);
+          }
         }
         exact.noticesInOrder = all.length;
         exact.ledgers = roster.length;
@@ -344,6 +400,7 @@ export async function livePhase(c: LiveContext) {
           ? Math.max(worker.archive.admitted.usMax, worker.recorder.archive.admitted.usMax)
           : null,
         kills,
+        sight,
         superseded: superseded ?? null,
         lane: lane ? lane.stats() : null,
         rival: rival
