@@ -5660,3 +5660,16 @@ Source: question-reader builder, branch `exp/DX-XQ7-question-reader` `a5631af24`
 - Not verified: anything at 1 billion; the second-machine path; fairness with 10 listing accounts.
 
 **Started** in the freed slot: the product's save path using one commit per subject's save end to end (the SDK mints one ordered block per save so a subject's save reaches the fast per-subject writer; the save-size rule), task file `OPUS-S2-save-shape-sdk.md`.
+
+## 2026-11-24 12:42 EST: questions across subjects in the console and the agent tools
+
+Source: console-questions builder, branch `exp/DX-XQ8-console-questions` `5faf8b80e` (based on the sweep branch; not merged onto the one branch). Built and proven on a second toy, since removed. Sam's console on 28580 not touched and NOT switched over (steps written in `demo/toy/README-FOR-CONSOLE.md`, not run; they need Sam's word because they restart his console).
+
+- Console page "Ask across subjects": account picker (all accounts), kind picker with counts from the ID list, up to 8 conditions, answer as list, count or count per value, "as of" and "valid at", a status line (position, valid time, subjects examined, complete or not, time), progress with Stop and Continue, ten one-click examples from the product's own question list, a "How this was answered" panel, protected attributes listed as not filterable.
+- Agent tools (26 in all, four new): `list_kinds`, `describe_kind`, `list_ids`, `ask_across_subjects`.
+- Proof: new script 815 of 815 against an independent answer (82 questions, 289 store pages; two positions, three valid times, a past record time, an edited cursor, a refused protected filter, removal on request between pages, two accounts whose names prefix each other); page pass 25 of 25 in light and dark; the existing proof 37 of 37; catalogue 78 of 78. Switch rehearsed on its own toy: head 360 before and after, no data lost.
+- Screenshots: private folder `demo-design/screenshots-questions/` (16 images); two sent to Sam.
+- Not built: fast answer from the index (one marked place, waiting for step 1); questions over a subject's children (S10); sorting by an attribute (S9); "contains" text search.
+- Note for the merge: `demo/server/profile.mjs` on this branch turns the ID list and sweep options on for the 1 billion demo stack; that bring-up was not run.
+
+**Started** in the freed slot: the question shapes still refused (children, not-equal and OR, top N by an attribute, contains), task file `OPUS-XQ9-remaining-question-shapes.md`.
