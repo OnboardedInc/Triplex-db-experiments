@@ -998,3 +998,9 @@ Verbatim, first: "Computer crash. Continue." Then, while the orchestrator was ch
 
 - **Reading (orchestrator's):** no diagnosis of the crash is wanted; restore what it stopped and carry on with the work.
 - **State found at 06:20:** Mac up 7 minutes; both colima VMs stopped; console on 127.0.0.1:28580 down; every commit of 2026-11-23 already pushed; no servers rented; no agent had been running.
+
+### 2026-11-24 06:26 local: Sam asks for a full readout
+
+Verbatim: "Can you give me a full readout on where we're at overall with our scaling, and what's slow, what's fast, etc., etc.? Using tables and things, then give me your recommended next steps, what the biggest gaps are, etc."
+
+- **Action (orchestrator):** readout given in the session from the readiness page (`origin/exp/DX-INT1` `9e02cf1d2`, `v01/READINESS.md`) and the STATUS entries of 2026-11-23. No decision of Sam's in this message.
