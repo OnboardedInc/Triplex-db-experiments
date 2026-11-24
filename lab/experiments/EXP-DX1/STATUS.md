@@ -5622,3 +5622,26 @@ Source: recovery-time builder, branch `exp/DX-HA2-recovery-time` `13fe78536` (ba
 - Not verified: every full-size time; direct reads on the servers' volume filesystem; an empty-disk replacement; a power cut; option C.
 
 **Started** in the freed slot: questions across subjects in the Triplex Console and agent tools (task file `OPUS-XQ8-console-questions.md`), built and proven on a second toy; Sam's console untouched.
+
+## 2026-11-24 12:16 EST: settlement at 1 billion is now runnable; frames can be halved by calibrating the estimate
+
+Source: settlement-preparation builder, branch `exp/DX-ACT7-settlement-1b-prep` `82ba1ca38` (merges the one branch `23b7df344`; not merged onto it), page `lab/experiments/EXP-DX1/actv-lazy/act7/RUN2.md`. Every option default off. Nothing run at full size.
+
+- All six missing pieces built: aged adoption (checks the aged head, the last aged save and every adopted subject's rows before anything is written); an oracle that regenerates aged fields from the bundle's replay ledgers; journal bounds (merged); a streamed exactness check one account at a time; the production-S tape in all ten accounts; a prepared copy of the 1 billion database.
+- Miniature (toy aged by the aging tool's own code, adopted from a bundle shaped like the 1 billion one): refused without adoption; fails with the old oracle at the first aged subject; passes with the pieces. 3 accounts: 474 changes and 168 notices per account, 0 frames refused, 1 kill resumed. 10 accounts: 4,740 changes, 1,680 notices, 0 frames refused, 5 kills resumed, 476 saves acknowledged meanwhile. Pause: 0 frames offered while paused; pace 300 ms gave 302 ms minimum gap.
+- Why so many frames: each frame closes when the next whole subject would push ESTIMATED service over 8 ms. A value frame holds 5 subjects and 292 changes; a notice frame 1 to 2 subjects and 35 notices. The estimate's fixed 3.5 ms and its byte term are padding: real transactor work is about 30 to 45% of the 8 ms (derived from the save-shape server numbers, not measured for frames).
+- Built: `TX2_SETTLE_COST` recalibrates the estimate's coefficients, keeping the 8 ms bound. Calibrated at 2.5 ms fixed or less: 2 times fewer frames.
+
+| Accounts settling | Today | Calibrated |
+|---|---|---|
+| 1 (fresh database) | 84,500 frames, 46 to 76 min | 42,500 frames, 26 to 42 min |
+| 3 (1 billion) | 240,000 frames, 65 to 100 min | 114,000 frames, 35 to 50 min |
+| 10 (1 billion) | 786,000 frames, 3.4 to 5.5 h | 366,000 frames, 1.6 to 2.5 h |
+
+- Written, not built (file owned by the release-limits builder): the notice ledger change as one operation (about 15% fewer frames); a subject's notices as one compact record (about 45% fewer). Forwarded to that builder.
+- Server runs: (a) 1 account fresh with frame counters, 2 h 15 to 2 h 30; (C) calibration check 1 h 35 to 1 h 50; (b) 3 accounts at 1 billion 2 h 35 to 3 h; (c) 10 accounts at 1 billion 6 h 20 to 9 h 10 today or 4 h 50 to 6 h 10 calibrated. Together 11 h 15 to 16 h 30, about USD 12 to 18.
+- Faults fixed: the held runner refused run lengths over 180 minutes without a message (the earlier published settlement runs would have exited at once); the earlier forecast of 85,000 to 100,000 notice frames used the wrong base release (about 64,000); the several-accounts oracle kept only one account's saves.
+- Correction to the brief: no current rule reads a task's answer, so the old oracle would not have failed a settlement check at 1 billion; a facts check against the oracle's world was added, which is what tests the read path over aged saves.
+- Not verified: anything at full size; the real 1 billion bundle's ledgers were never read; real work per frame is derived.
+
+**Started** in the freed slot: many small accounts in the one database (task file `OPUS-SCALE2-wide-thin-accounts.md`). The merge builder was told to take the recovery-time and settlement-preparation branches in a second push.
