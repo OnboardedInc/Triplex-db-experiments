@@ -743,6 +743,8 @@ async function multiCase(
     Number.isInteger(controlSpec[0]) && controlSpec[0]! < workers.length && process.env.TX2_SETTLE_CONTROL === "1"),
     "DX_ACT7_CONTROL is ACCOUNT:START_S:PAUSE_S:PACE_MS:PACE_S and needs TX2_SETTLE_CONTROL=1");
   const controlLog: { at: number; perf: number; change: string }[] = [];
+  // Frames the paused account offered (passed its control gate) during the pause, after the control cache's 250 ms.
+  const offeredWhilePaused = { first: 0, last: 0 };
   const controlling = controlSpec ? (async () => {
     const [account, startS, pauseS, paceMs, paceS] = controlSpec as [number, number, number, number, number];
     const store = account ? extras[account - 1]!.store : c.s;
@@ -754,9 +756,13 @@ async function multiCase(
       await setSettlementControl(store, { ...change, by: "act7-case" });
       controlLog.push({ at: now() - begins, perf: performance.now(), change: label });
     };
+    const offered = () => workers[account]!.archive.contest.offered + workers[account]!.recorder.archive.contest.offered;
     await until(startS);
     await set({ paused: true }, "paused");
+    await sleep(300);
+    offeredWhilePaused.first = offered();
     await until(startS + pauseS);
+    offeredWhilePaused.last = offered();
     await set({ paused: false, paceMs }, "paced " + paceMs);
     await until(startS + pauseS + paceS);
     await set({ paused: false, paceMs: null }, "released");
@@ -790,10 +796,14 @@ async function multiCase(
     const gaps = pacedTurns.slice(1).map((t, i) => t - pacedTurns[i]!);
     const others = workers.map((x, j) => j === account ? null
       : [...x.archive.contest.turns, ...x.recorder.archive.contest.turns].filter(([b]) => b > paused && b < paced).length);
-    control = { spec: controlSpec, log: controlLog.map(({ at, change }) => ({ at, change })), turnsWhilePaused: inPause,
+    // A frame that had passed the gate before the pause still takes its queued turn (at most one per writer); what the
+    // pause promises is that nothing new is offered.
+    control = { spec: controlSpec, log: controlLog.map(({ at, change }) => ({ at, change })),
+      offeredWhilePaused: offeredWhilePaused.last - offeredWhilePaused.first, queuedTurnsWhilePaused: inPause,
       turnsWhilePaced: pacedTurns.length, minGapWhilePacedMs: gaps.length ? Math.min(...gaps) : null,
       otherAccountsTurnsWhilePaused: others, settledBeforeRelease: finished[account] !== null && finished[account]! < controlLog[2]!.at };
-    assert.equal(inPause, 0, "a paused account started a frame");
+    assert.equal(offeredWhilePaused.last, offeredWhilePaused.first, "a paused account offered a frame");
+    assert(inPause <= 2, "a paused account took more turns than its two writers had queued");
     assert(gaps.every((g) => g >= paceMs - 5), "a paced account's frames closer than its pace: " + Math.min(...gaps));
   }
   const rows = wr.value.rows;

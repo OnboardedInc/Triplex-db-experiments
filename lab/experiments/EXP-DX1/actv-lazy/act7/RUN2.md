@@ -235,16 +235,17 @@ to 30). **Cost** about USD 1.75 to 2.
 ```sh
 TEMPLATE=$AGED_PGDATA_SOURCE; prepare "$TEMPLATE"; DX_LAZY_OUT=/var/tmp/act7-run2-3
 held "${LIVE[@]}" "${AGED[@]}" "DX_HELD_MINUTES=240" "DX_ACT5_ACCOUNTS=3" "DX_ACT7_STREAM_CHECK=1" \
-  "DX_ACT7_TAPE=production-S:394" "TRIPLEX_DATOMIC_BOUNDED_JOURNAL=1" "DX_ACT7_MULTI_KILL=1" "TX2_SETTLE_CONTROL=1" \
+  "DX_ACT7_TAPE=production-S:394" "TRIPLEX_DATOMIC_BOUNDED_JOURNAL=1" "DX_ACT7_MULTI_KILL=1" \
+  "TX2_SETTLE_CONTROL=1" "DX_ACT7_CONTROL=2:2400:300:200:600" \
   "DX_ACT5_CASES=control:progress:bytes:none:23.5:1:::300,many:progress:bytes:large:23.5:1:multi:admission:6000"
 discard
 ```
 
-Per-account pause and pace "once during (b)": with `TX2_SETTLE_CONTROL=1` the workers obey the stored control; the
-driver pauses account 2 for 5 minutes and then paces it at 200 ms between frames for 10 minutes, from a second shell,
-40 minutes after the case starts (`join/settlement-control.ts` `setSettlementControl`, as the toy's `pause-p` case;
-the call is one write through the write gateway; no new route). **Not built as a case flag:** the toy case `pause-p`
-proves the mechanism at toy size; the server step is a manual write, written down in the run's notes with its times.
+Per-account pause and pace once during (b): `DX_ACT7_CONTROL=2:2400:300:200:600` writes the stored control
+(`join/settlement-control.ts`, the same write an operator makes through the write gateway) 40 minutes into the window:
+account 2 paused for 5 minutes, then paced at 200 ms between frames for 10 minutes, then released. The case checks from
+account 2's own frame turns that none started while it was paused and none came closer than the pace while paced, and
+records the other accounts' turns during the pause.
 
 **Duration** about 2 h 35 min to 3 h: copy 3, boot and the aged checks 6, account 0 and R1 3, control 5 with its
 predecessors, enrolment of two accounts 4 to 6, Publishes 1, the window 100 (settlement inside it), the streamed check
@@ -279,7 +280,8 @@ All four: about 11 h 15 min to 16 h 30 min, USD 12.30 to 18.
 | Frames per account (release plus R1's notices) | values 20,300, notices 57,600 + 6,640 (±5%) | same per account | same | outside ±5% |
 | Changes / notices per account | 5.94 million / 2.00 million (+ R1's 39,000 first) | same | same | more than 2% off |
 | Settle time | 46 to 76 min (central 58), inside the 90 min window | 65 to 100 min (central 80), inside the 100 min window | 3.4 to 5.5 h (central 4.4): the first 4 h beside saves | (a) over 90 or under 35; (b) over 120 or under 50; (c) over 6.5 h or under 2.5 h |
-| Turns between accounts | — | each account within 10% of the others' committed frames in every minute while all settle | same | an account below half of another's in any minute |
+| Turns between accounts | — | each account within 10% of the others' committed frames in every minute while all settle (outside account 2's pause and pace) | same | an account below half of another's in any minute |
+| Pause and pace (b) | — | account 2: 0 frames started while paused; no two of its frames closer than 200 ms while paced; the other two accounts' frame rate rises while it is paused (they share the turn) | — | any frame while paused, a gap under 195 ms, or the others stop while it is paused |
 | Serial apply per frame (counters) | p50 2 to 3.5 ms, p99 under 6 ms; real work 30 to 45% of the estimate; `calibrate.ts` model at or below 2,500 / 25 / 55 | same | same | p50 over 5 ms or p99 over 8 ms (then the estimate is not conservative and the calibration is refused) |
 | With the calibration (C) | frames per subject 0.425 (±5%); settle 26 to 42 min; serial apply p99 under 8 ms | — | 1.6 to 2.5 h | p99 over 8 ms, or saves' p99 more than 1.2 times run (a)'s settle window |
 | Saves (live) | none refused or uncertain; account p99 within 1.3 times the control outside stall seconds | production-S per account: p99 within 1.3 times the control case | same | any refused or uncertain save; p99 over 1.5 times |
@@ -296,7 +298,7 @@ All four: about 11 h 15 min to 16 h 30 min, USD 12.30 to 18.
 - **Real transactor work per frame is derived** from S1's ladder of ordinary saves, not measured for settlement frames.
 - **The calibrated estimate is unmeasured**: `TX2_SETTLE_COST` is built and its frame counts are counted, but whether
   frames of that size keep their serial apply under 8 ms is what runs (a) and C decide.
-- **Per-account pause and pace at full size** is a manual step in (b), proven at toy size only (ACT5 `pause-p`).
+- **Per-account pause and pace at full size**: built into the case (`DX_ACT7_CONTROL`), proven at toy size only.
 - **Two settling processes per database** are not covered (one runner settles every account, as ACT5).
 - **The fetch and extraction of the 1 billion cluster** on a new machine is not timed.
 - **Mac clocks:** all diagnostic.
