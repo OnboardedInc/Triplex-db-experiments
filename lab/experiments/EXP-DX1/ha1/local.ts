@@ -444,7 +444,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
         const { checkoutInputs, chooseDatomicImage } = await import("./image-choice.ts");
         const { verifiedTree } = await import("../../../bin/datomic-context.mjs");
         const { sha256File } = await import("../../../bin/lib.mjs");
-        const expected = checkoutInputs(root, "/Users/sam/Claude/Projects/triplex-db-2/downloads/datomic-pro-1.0.7745/extracted/datomic-pro-1.0.7745",
+        const expected = checkoutInputs(root, path.join(os.homedir(), "Claude/Projects/triplex-db-2/downloads/datomic-pro-1.0.7745/extracted/datomic-pro-1.0.7745"),
           verifiedTree, sha256File);
         let receipt;
         if (process.env.DX_HA1_DATOMIC_RECEIPT) {

@@ -7,8 +7,10 @@ out=${1:?absolute new output directory under /Users (the lab VM shares only that
 [[ $out == /Users/* && ! -e $out ]] || { echo "aged-gate.sh: give a new absolute output directory under /Users" >&2; exit 2; }
 export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
 repo=$(git rev-parse --show-toplevel)
-image=${DX_REAL2_GATE_IMAGE:-tx2-datomic:dx-real2-production}
 mkdir -p "$out/out" "$out/age1src"
+# [DX-INT4] Start from one image ID, never a fixed shared tag another builder can retag (lab/bin/gate-image.sh).
+. "$repo/lab/bin/gate-image.sh"
+image=$(gate_image "${DX_REAL2_GATE_IMAGE:-tx2-datomic:dx-real2-production}" "$out/image.json") || exit 2
 # AGE1 at its load pin: its transactor functions, codec spec and aging code, nothing from this branch.
 git -C "$repo" archive 5cda4ab204b9736e32960843bee8cbc47d5ca74d -- packages/datomic/gateway/src packages/datomic/src/codec-spec.json \
   lab/experiments/EXP-DX1/age1/src | tar -x -C "$out/age1src"
@@ -35,6 +37,7 @@ fi
 docker run -d --name "$name" --memory 3g -p 127.0.0.1:18592:8080 ${w3[@]+"${w3[@]}"} --entrypoint /bin/bash \
   -v "$repo/packages/datomic/gateway/src:/opt/gateway/src:ro" -v "$out/age1src:/age:ro" \
   -v "$repo/lab/experiments/EXP-DX1/prep1/aged-live:/gate:ro" -v "$out/out:/out" "$image" /gate/container.sh >/dev/null
+gate_image_ran "$name" "$image" "$out/image.json" || { docker rm -f "$name" >/dev/null; exit 2; }
 (cd "$repo" && DX_PREP1_LIBRARY=1 DX_PREP1_CAMPAIGN=rolling DX_REAL2_SET=aged DX_PREP1_AGED=1 \
   node --import tsx lab/experiments/EXP-DX1/real2/aged-gate.ts "$out/out" http://127.0.0.1:18592) 2>&1 | tee "$out/driver.log"
 status=${PIPESTATUS[0]}
