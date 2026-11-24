@@ -3,6 +3,30 @@
 Server 2 accrued about USD 49.51 through 2026-11-21 15:55 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
+**State at 02:25 UTC on 2026-11-24 (Server 2's last evening).** Server 2 has cost about USD 113.3 (103.9 h at USD 1.09/hour since 2026-11-19 18:30 UTC). It must be deleted by 04:30 UTC, with evidence collection starting by 04:00 UTC. One more arm may run first: the random-subject windows with a larger reader, from `exp/DX-RD1-readers` once its commit arrives. If it does not arrive by 02:50 UTC, the server is deleted then.
+
+Runs finished tonight, each published with its predictions and its evidence on the Mac (checked by SHA-256 on both sides):
+
+| Run | Build | Result | Page |
+| --- | --- | --- | --- |
+| Server-32 card at 1B | `0d9693de0` | 394 offered: 394.00/s stored, 0 expired; 620 offered: 302.61/s | [V01-AGED-S32.md](V01-AGED-S32.md) |
+| Pinned-read fix pair and tuned arm | `dc34aa18d`, `64c70e549` | See the page | [RD2-PROBE.md](RD2-PROBE.md) |
+| Production-S card at 1B | renderer `6c4f9e4fe` | 2.86 / 13.43 / 23.08 / 36.02 commits/s, 0 expired, p99 under 50 ms; exact re-assembly matched | [V01-AGED-PROD-S.md](V01-AGED-PROD-S.md) |
+| Console proof | `ebe31628f` | 3 checks failed | [CONSOLE-1B.md](CONSOLE-1B.md) |
+| Fixed owner head pair | `85fc3a4bd` | Both arms stored every save; the treatment summary refused at `summarize.py:125` | [OWNER-HEAD-1B.md](OWNER-HEAD-1B.md) |
+| Pinned readers with saves | `e02bf4edf` | 10 windows, 0 wrong values, 23.08 commits/s beside 256 readers; random subjects at 1.5 to 2.0 loads per subject, inside the model; both tape windows limited by the driver | [RD2-PROBE.md](RD2-PROBE.md) |
+
+**What survives the deletion.** The 1B sealed cluster and the fresh full-size template are in Latitude object storage (bucket `triplex-bench-databases`, `aged-1b/` and `fresh-a/`, verified by SHA-256). Every run's compact evidence is in the private evidence folder under `DX-SCALE1/`, `DX-DEMO1/` and `DX-CON1/`. The two server-only item 1 originals were copied to the Mac earlier.
+
+**What is lost with the deletion, and was never copied anywhere:**
+- The 1B native backup (110 GB).
+- The restored copy of the 1B database (111 GB).
+- The original seed `seed.pgdump` (131.8 GB). The fresh template in object storage regenerates its physical input.
+- The raw window files of each arm (operations logs, GC logs). Only the compact archives came back.
+- The images and builds.
+
+The temporary key that let Server 2 copy to bench 4 was removed from bench 4 at 02:20 UTC; bench 4 now refuses it. The key was then deleted on Server 2.
+
 **State at 20:25 UTC on 2026-11-23.** Done on Server 2 today: the 1B seal (readback repaired, bundle `faab1bc5…`), both databases uploaded to object storage (`aged-1b/`, `fresh-a/`), the aged scorecard at `6770c37ba` with all four parts assembled, the demo proving slot (17 calls, 18 checks passed) and the pinned-read probe. Next: failover as role A, the server-32 card at `0d9693de0`, the owner head pair at `3d4320155`, the demo proof rerun. Server 2 has accrued about USD 106.7 (97.9 h at USD 1.09/hour); it is deleted by 04:30 UTC on 2026-11-24 at the latest. [Aged card](V01-AGED.md) · [Demo](DEMO-1B.md) · [Probe](RD2-PROBE.md)
 
 Opus driver took over Server 2 on 2026-11-23 at 15:15 UTC. **The 1B load finished by itself at 2026-11-22 03:18 UTC: 1,000,002,769 indexed records, native t 62,876,498, 27 cycles, PGDATA 176,382,197,760 bytes.** The server then sat idle for about 36 hours. Server 2 has accrued about USD 101.3 (92.9 h at USD 1.09/hour); the project is about USD 23 over its USD 200 budget. The owner kept the server until 01:30 UTC on 2026-11-24 for the aged scorecard and then the 32 GiB cache arm; the driver deletes it. [Final load table](AGE1-LOAD.md#extended-continuation-progress)
