@@ -54,6 +54,9 @@ export class DatomicHttpError extends Error {
     readonly maximum?: number,
     readonly route?: string,
     readonly retryAfterMs?: number,
+    // [DX-XQ4] On a refusal of `find`: "sweep" when the exact sweep (XQ6, TX2_SWEEP=1) answers the same question
+    // unchanged, "none" when it does not. Absent on every other route.
+    readonly fallback?: "sweep" | "none",
   ) {
     super(message);
   }
@@ -745,6 +748,7 @@ export class DatomicClient {
                     typeof data["maximum"] === "number" ? data["maximum"] : undefined,
                     typeof data["route"] === "string" ? data["route"] : undefined,
                     typeof data["retryAfterMs"] === "number" ? data["retryAfterMs"] : undefined,
+                    data["fallback"] === "sweep" || data["fallback"] === "none" ? data["fallback"] : undefined,
                   ),
                 );
               else {

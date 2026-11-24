@@ -12,6 +12,7 @@
 (def out (or (System/getenv "XQ4_OUT") "/out"))
 ;; The index namespaces are resolved at call time, so G8's log hash also runs on the base gateway (which lacks them).
 (defn xcall [sym & args] (apply (requiring-resolve (symbol "triplex.gateway.cross-index" (name sym))) args))
+(defn xcall-find [sym & args] (apply (requiring-resolve (symbol "triplex.gateway.cross-find" (name sym))) args))
 (def clock 1000.0)
 (defn emit! [file value] (spit (io/file out file) (str (json/write-str value) "\n")))
 (defn slurp-json [file] (json/read-str (slurp (io/file out file))))
@@ -414,7 +415,8 @@
         (ok! "declaration" (route name "v2" "index-declaration" deep6))
         ;; G7: no epoch yet, so every question is refused.
         (let [r (route name "v2" "find" {"account" "acc-a" "where" [{"attribute" ":task/status" "op" "exists"}] "result" "count"})]
-          (say "XQ4_G7_BEFORE_BACKFILL" {:status (:status r) :code (get-in r [:body "code"]) :pass (= "IndexNotAvailableAtPosition" (get-in r [:body "code"]))}))))
+          (say "XQ4_G7_BEFORE_BACKFILL" {:status (:status r) :code (get-in r [:body "code"]) :fallback (get-in r [:body "fallback"])
+                                         :pass (and (= "IndexNotAvailableAtPosition" (get-in r [:body "code"])) (= "sweep" (get-in r [:body "fallback"])))}))))
     ;; Second half: the writers now emit entries (behind the fence) when the index is declared.
     (doseq [acct accounts ns (partition-all 40 (range half subjects-per-account))]
       (let [facts (mapcat #(seed-facts acct %) ns) op (str "seed-" acct "-" (first ns))]
@@ -620,6 +622,69 @@
                                        [:body "code"] "answered")))]
       (say "XQ4_INTERIOR" {:tried (min 40 (count grouped)) :codes codes}))))
 
+;; ---- Two independent paths: find against the exact sweep (XQ6), on the same toy, positions and valid times. Runs only
+;; on a gateway source that carries the sweep (xq4/sweep-src.sh) with XQ4_SWEEP=1; the sweep's files are not edited.
+(defn run-sweep [name q]
+  (loop [cursor nil ids [] pages 0]
+    (let [r (route name "v2" "sweep" (cond-> (assoc q "limit" 1000 "bounds" {"subjects" 10000 "ms" 2000}) cursor (assoc "cursor" cursor)))]
+      (when-not (= 200 (:status r)) (throw (ex-info "sweep refused" {:reply (:body r)})))
+      (let [b (:body r) ids (into ids (get b "ids" []))]
+        (if (and (get b "next") (< pages 100000))
+          (recur (get b "next") ids (inc pages))
+          {:ids ids :last b :pages (inc pages)})))))
+(defn sweep-shaped [q]
+  ;; The question as the sweep takes it: find's order, bounds and cursor removed (ID order is the sweep's).
+  (when (= "sweep" (xcall-find 'sweep-fallback q)) (dissoc q "order")))
+(defn phase-sweep! [label]
+  (let [name (db-name label) conn (reopen name)
+        marks (map json/read-str (str/split-lines (slurp (io/file out (positions-file label)))))
+        by-tag (into {} (map (juxt #(get % "tag") #(get % "position")) marks))
+        epoch (get by-tag "backfilled")
+        all (vec (sort (distinct (filter #(and % (>= % epoch)) (concat (map #(get % "position") marks) [(head name conn)])))))
+        positions (distinct [(first all) (nth all (quot (count all) 2)) (peek all)])
+        valid [1.79e12 (+ v0 (* day 150)) (- v0 (* day 10))]
+        rnd (Random. (+ 7 (env-long "XQ4_QUESTION_SEED" 20261124)))
+        per (env-long "XQ4_SWEEP_QUESTIONS" 8)
+        fixed [{"account" "acc-a" "where" [{"attribute" ":person/custom-background" "op" "eq" "value" {"type" "string" "value" long-a}}] "result" "ids"}
+               {"account" "acc-a" "where" [{"attribute" ":person/custom-background" "op" "prefix" "value" (subs long-a 0 210)}] "result" "count"}
+               {"account" "acc-a" "where" [{"attribute" ":person/custom-background" "op" "in" "values" [{"type" "string" "value" "x\u0001y"} {"type" "string" "value" "\u0000zero"} {"type" "string" "value" "\u0002esc"}]}] "result" "ids"}
+               {"account" "acc-b" "where" [{"attribute" ":task/status" "op" "exists"}] "result" "countByValue" "of" ":task/status"}
+               {"account" "acc-c" "from" {"prefix" "pl:"} "where" [{"attribute" ":placement/task" "op" "missing"}] "result" "ids"}]
+        norm-groups (fn [gs] (into {} (keep (fn [g] (when-let [v (get g "value")] [(tv v) (get g "count")]))) gs))
+        results (atom [])]
+    (doseq [p positions v valid
+            q (concat fixed (repeatedly per #(random-question rnd false)))
+            :let [sq (sweep-shaped q)] :when sq]
+      (let [q (assoc q "basis" {"recordedPosition" p "validAt" v}) sq (assoc sq "basis" {"recordedPosition" p "validAt" v})
+            r (try
+                (let [f (run-find name q 1000 {"entries" 1000000 "ms" 1000 "segments" 4096})
+                      w (run-sweep name sq)
+                      fb (:last f) wb (:last w)
+                      same (case (get q "result" "ids")
+                             "ids" (and (= (count (:ids w)) (count (set (:ids w)))) (= (set (:ids f)) (set (:ids w))))
+                             "count" (and (get fb "countExact") (get wb "countComplete") (= (get fb "count") (get wb "count")))
+                             "countByValue" (and (get fb "countExact") (get wb "countComplete")
+                                                 (= (into {} (map (fn [c] [(tv (get c "value")) (get c "count")]) (get fb "counts")))
+                                                    (norm-groups (get wb "groups")))))]
+                  {:same (boolean same) :result (get q "result" "ids") :n (or (get fb "count") (count (:ids f)))
+                   :detail (when-not same {:q q :find (select-keys fb ["count" "counts"]) :findIds (take 10 (sort (:ids f)))
+                                           :sweep (select-keys wb ["count" "groups"]) :sweepIds (take 10 (sort (:ids w)))
+                                           :onlyFind (take 5 (remove (set (:ids w)) (:ids f))) :onlySweep (take 5 (remove (set (:ids f)) (:ids w)))})})
+                (catch Exception e
+                  (let [reply (:reply (ex-data e))]
+                    ;; find refusing a shape (missing alone) is not a difference; anything else is.
+                    (if (and (= 400 (:status reply)) (= "UnsupportedOperation" (get-in reply [:body "code"])))
+                      {:same true :skipped true}
+                      {:same false :detail {:q q :error (str e) :data (ex-data e)}}))))]
+        (swap! results conj r)
+        (when-not (:same r) (say "XQ4_SWEEP_DIFF" (:detail r)))))
+    (let [rs (remove :skipped @results)]
+      (say "XQ4_SWEEP_AGREE" {:compared (count rs) :differences (count (remove :same rs))
+                              :skippedFindRefused (count (filter :skipped @results))
+                              :byResult (frequencies (map :result rs)) :nonEmpty (count (filter #(pos? (or (:n %) 0)) rs))
+                              :positions positions :validTimes valid
+                              :pass (and (seq rs) (every? :same rs))}))))
+
 (defn phase-g4! [label]
   ;; Accounts a and b hold the same local IDs and values up to the epoch position: identical answers by local part.
   (let [name (db-name label) conn (reopen name)
@@ -705,6 +770,18 @@
       (commit! odd-name (batch-input "odd-seed" [["odd-1" "plain/0001" ":person/name" ["string" "x"]]]))
       (let [r (route odd-name "v2" "index-declaration" {"version" 1 "attributes" [{"attribute" ":person/name" "code" "n1" "family" "string"}]})]
         (say "XQ4_B5" {:status (:status r) :code (get-in r [:body "code"]) :pass (= "AccountNotInEntityId" (get-in r [:body "code"]))})))
+    ;; The coordinator's item: each refusal says whether the exact sweep (XQ6) answers the same question unchanged.
+    (let [ask (fn [q] (let [r (route name "v2" "find" (merge {"account" "acc-p"} q))]
+                        [(:status r) (get-in r [:body "code"]) (get-in r [:body "fallback"])]))
+          cases [["undeclared attribute, count" {"where" [{"attribute" ":person/email" "op" "exists"}] "result" "count"} [409 "AttributeNotIndexed" "sweep"]]
+                 ["undeclared attribute, countDistinct" {"where" [{"attribute" ":person/name" "op" "exists"}] "result" "countDistinct" "of" ":person/email"} [409 "AttributeNotIndexed" "none"]]
+                 ["undeclared type" {"from" {"type" "Review"} "result" "count"} [409 "AttributeNotIndexed" "none"]]
+                 ["five conditions" {"where" (vec (repeat 5 {"attribute" ":person/name" "op" "exists"})) "result" "count"} [400 "UnsupportedOperation" "sweep"]]
+                 ["missing alone" {"where" [{"attribute" ":person/name" "op" "missing"}] "result" "count"} [400 "UnsupportedOperation" "sweep"]]
+                 ["nine conditions" {"where" (vec (repeat 9 {"attribute" ":person/name" "op" "exists"})) "result" "count"} [400 "UnsupportedOperation" "none"]]
+                 ["protected attribute" {"where" [{"attribute" ":person/ssn" "op" "exists"}] "result" "count"} [409 "ProtectedValueLookup" nil]]]
+          got (mapv (fn [[label q want]] {:case label :got (ask q) :want want}) cases)]
+      (say "XQ4_FALLBACK" {:cases got :pass (every? #(= (:got %) (:want %)) got)}))
     (say "XQ4_G3" {:protection (:status prot) :declareProtected [(:status bad) (get-in bad [:body "code"])]
                    :declareOther (:status good) :save (:status saved) :saveCode (get-in saved [:body "code"])
                    :protectDeclared [(:status protect-declared) (get-in protect-declared [:body "code"])]

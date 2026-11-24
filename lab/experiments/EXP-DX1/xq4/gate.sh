@@ -3,7 +3,7 @@
 #   node lab/bin/heavy.mjs --label DX-XQ4-gate -- bash lab/experiments/EXP-DX1/xq4/gate.sh NEW_ABSOLUTE_DIR "world replay"
 # Uses REAL2's production image (PostgreSQL, Node, Datomic) with a gateway source mounted read-only:
 # this branch's by default, or XQ4_SRC (for G8's log hash on the base gateway).
-# Phases: g8log g8logon g3 g6 world replay. XQ4_SUBJECTS (per account), XQ4_MIXED, XQ4_QUESTIONS size it.
+# Phases: g8log g8logon g3 pinned g6 g7 world replay. XQ4_SUBJECTS (per account), XQ4_MIXED, XQ4_QUESTIONS size it.
 set -uo pipefail
 out=${1:?absolute new output directory under /Users (the lab VM shares only that tree)}
 phases=${2:-"g3 g6 world replay"}
@@ -25,6 +25,7 @@ docker run --name "$name" --memory 4g --cpus 2 --entrypoint /bin/bash \
   -e "XQ4_SUBJECTS=${XQ4_SUBJECTS:-6667}" -e "XQ4_MIXED=${XQ4_MIXED:-3000}" -e "XQ4_QUESTIONS=${XQ4_QUESTIONS:-25}" \
   -e "XQ4_G6_SUBJECTS=${XQ4_G6_SUBJECTS:-1500}" -e "XQ4_COST_PER=${XQ4_COST_PER:-100}" -e "XQ4_G3_SEALED=${XQ4_G3_SEALED:-0}" \
   -e "XQ4_QUESTION_SEED=${XQ4_QUESTION_SEED:-20261124}" \
+  -e "XQ4_SWEEP=${XQ4_SWEEP:-0}" -e "XQ4_SWEEP_QUESTIONS=${XQ4_SWEEP_QUESTIONS:-8}" \
   -v "$out/stage/gateway/src:/opt/gateway/src:ro" -v "$out/stage/xq4:/xq4:ro" \
   -v "$out/out:/out" "$image" /xq4/xq4/container.sh > "$out/container.log" 2>&1
 status=$?

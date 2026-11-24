@@ -56,6 +56,7 @@ gate() {  # $1 = TX2_CROSS_INDEX (0/1), $2 = TX2_GROUP_COMMIT (0/1), $3.. = cloj
   TX2_CROSS_INDEX=$index TX2_GROUP_COMMIT=$grouping TX2_SUBJECT_SAVE=1 \
     TX2_LIVE_PRIORITY=0 TX2_PREDECESSOR_LOOKUP=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_PREFETCH=0 \
     TX2_SUBJECT_APPEND_RETIREMENT=${XQ4_MARKERS:-0} TX2_PINNED_SHORTCUT=${XQ4_PINNED:-0} \
+    TX2_SWEEP=${XQ4_SWEEP:-0} \
     TX2_GROUP_REUSE_PREPARED=1 TX2_GROUP_FAST_REPLY=1 TX2_GROUP_STAGE_CLOCK=1 TX2_SUBJECT_PROFILE=1 TX2_LEAN_NATIVE_QUERY=1 \
     TX2_LEAN_NATIVE_LOG=1 TX2_GROUP_MAX_MEMBERS=8 TRIPLEX_TRACE_LEVEL=off \
     TRIPLEX_ERASURE_DIRECTORY="$work/erasure" XQ4_RUN="${XQ4_RUN:-r}" \
@@ -76,6 +77,8 @@ if want g6; then
   restart_transactor
   run g6-measure 1 0 "(xq4-gate/phase-g6-measure!) $(done_)"
 fi
+# G7 alone (the seed phase, which asks before and after the backfill): size it with XQ4_SUBJECTS.
+if want g7; then run seed-a 1 0 "(xq4-gate/phase-seed! \"a\" true) $(done_)"; fi
 if want world; then
   # Run A: the index declared mid-seed and built by writers and backfill; run B: the same saves with the option off.
   run seed-a 1 0 "(xq4-gate/phase-seed! \"a\" true) $(done_)"
@@ -96,5 +99,6 @@ if want world; then
   run g4 1 0 "(xq4-gate/phase-g4! \"a\") $(done_)"
   run g5 1 0 "(xq4-gate/phase-g5! \"a\") $(done_)"
   run e1 1 0 "(xq4-gate/phase-e1! \"a\") $(done_)"
+  if [[ ${XQ4_SWEEP:-0} == 1 ]]; then run sweep-a 1 0 "(xq4-gate/phase-sweep! \"a\") $(done_)"; fi
 fi
 phase done

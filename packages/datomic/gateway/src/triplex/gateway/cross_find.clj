@@ -580,7 +580,7 @@
       (refuse! 409 "CursorMismatch" "The cursor was not issued by this gateway or was changed"))
     (decode-cursor (subs text 0 i))))
 
-(defn find! [name conn protected input]
+(defn- find-page! [name conn protected input]
   (when-not x/enabled (off!))
   (when-not (map? input) (codec/invalid "Expected a JSON object"))
   (doseq [k (keys input)] (when-not (find-keys k) (codec/invalid (str "Unknown field " k))))
@@ -714,10 +714,11 @@
                              (or (nil? driver-c)
                                  (and (let [p (x/parse-key k)] (or (not (:long? p)) (confirm driver-c p)))
                                       (.add seen local)
-                                      ;; A value-ordered scan lists an entity once: at its first matching key in scan order.
+                                      ;; A value-ordered scan lists an entity once: at its first matching key in scan order. Keys
+                                      ;; up to and including the cursor's were read by earlier pages (the cursor's own key too).
                                       (or (nil? after)
                                           (not (some #(and (driver-key? %)
-                                                           (let [c (compare (:key %) after)] (if scan-desc? (pos? c) (neg? c))))
+                                                           (let [c (compare (:key %) after)] (if scan-desc? (not (neg? c)) (not (pos? c)))))
                                                      es))))))
                     (when-not (.startsWith id ^String id-base)
                       (throw (ex-info "ID outside the account" {:status 500 :code "AccountLeak"})))
@@ -791,3 +792,43 @@
               (= result "countByValue") (assoc :counts (mapv (fn [[f n]] {:value (decode-field f) :count n}) (sort-by key counts))
                                                :count n-count :countExact (not more?))
               (= result "countDistinct") (assoc :count (count dset) :matched n-count :countExact (not more?))))))))))
+
+;; [DX-XQ4] Why: the exact sweep (XQ6, `POST /v2/db/{db}/sweep`, TX2_SWEEP=1) takes the same condition language and
+;; answers what this index refuses for want of an entry: an attribute or type not declared, a position before the
+;; index's epoch, more conditions or projections than four, `missing` alone, a page too small for one candidate. A
+;; refusal says, machine-readably, whether that same question (account, from, where, project, result, of, limit,
+;; basis; find's own order, bounds and cursor removed) is answered by the sweep, so the SDK can fall back. It
+;; describes the question's shape only; whether TX2_SWEEP is on is the deployment's.
+;; Rejected: calling the sweep from here (another permit pool and a far slower page under this route's bounds).
+(defn sweep-fallback
+  "\"sweep\" when the sweep's grammar takes this question with find's order, bounds and cursor removed (from absent
+  or {prefix, shape?}; up to 8 conditions of its six ops with no json or blob value; result ids, count or countByValue; up to 8 projections; ID order
+  ascending), else \"none\"."
+  [input]
+  (let [from (get input "from") where (get input "where" []) order (get input "order") project (get input "project")
+        value-ok? (fn [v] (not (and (map? v) (#{"json" "blob"} (get v "type")))))]
+    (if (and (map? input) (string? (get input "account"))
+             (or (nil? from) (and (map? from) (string? (get from "prefix")) (not (contains? from "type"))))
+             (sequential? where) (<= (count where) 8)
+             (every? #(and (map? %) (#{"eq" "in" "range" "prefix" "exists" "missing"} (get % "op"))
+                           (value-ok? (get % "value"))
+                           (or (nil? (get % "values")) (and (sequential? (get % "values")) (every? value-ok? (get % "values")))))
+                     where)
+             (#{"ids" "count" "countByValue"} (get input "result" "ids"))
+             (or (nil? project) (and (sequential? project) (<= (count project) 8)))
+             (or (nil? order) (and (map? order) (= "entity" (get order "by" "entity")) (not= "desc" (get order "direction")))))
+      "sweep" "none")))
+
+(def ^:private index-refusals
+  "Refusals that come from what the index holds, not from the question: the sweep may answer them."
+  #{"AttributeNotIndexed" "IndexNotAvailableAtPosition" "UnsupportedOperation" "BoundTooSmall" "IndexOff"})
+
+(defn find! [name conn protected input]
+  (try (find-page! name conn protected input)
+       (catch clojure.lang.ExceptionInfo e
+         (let [{:keys [code]} (ex-data e)]
+           (cond (contains? index-refusals code)
+                 (throw (ex-info (.getMessage e) (assoc (ex-data e) :fallback (sweep-fallback input)) e))
+                 ;; The sweep keeps the ID list route's rule for interior positions: it refuses them too.
+                 (= "InteriorPosition" code) (throw (ex-info (.getMessage e) (assoc (ex-data e) :fallback "none") e))
+                 :else (throw e))))))

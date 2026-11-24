@@ -1,7 +1,7 @@
 # XQ4: questions across subjects, step 1 (the commit-time index)
 
-Branch `exp/DX-XQ4-commit-index`, from `exp/DX-INT1` `9e02cf1d2` with step 0 (`exp/DX-XQ3-id-lists` `1308d44d8`)
-merged. Design: the private `research/2026-11-24-cross-subject-questions/DESIGN.md` (sections 7, 8, 10 to 13). Every
+Branch `exp/DX-XQ4-commit-index`, from `exp/DX-INT1` `9e02cf1d2` with step 0 merged twice
+(`exp/DX-XQ3-id-lists` `1308d44d8`, then `f1f0908df`, step 0 on the one branch `23b7df344`). Design: the private `research/2026-11-24-cross-subject-questions/DESIGN.md` (sections 7, 8, 10 to 13). Every
 time on this page is from the Mac lab VM and is diagnostic; counts, differences and refusals are the result.
 
 Everything is behind **`TX2_CROSS_INDEX=1`** (default off). With the option off no new function is reached, the new
@@ -16,8 +16,8 @@ routes answer 409 `IndexOff`, and the paired log of a deterministic workload is 
 | Peer catch-up | `storage/commit!` | When the write gateway's peer does not yet hold a retired fact's text (`IndexPeerBehind`), it syncs once and prepares again (2 s bound). |
 | Group commits | unchanged code | The reference group path (`group/evaluate`, `materialize`) already nets an add and a retract of the same datom in one physical transaction; the gate proves it for an entry. The prepared PREP1 path (`TX2_PARALLEL_PREPARE`) declines saves carrying entry ops (its `small-op?` is unchanged), so they take the reference path. |
 | Backfill and epoch | `cross_find.clj` `backfill!`, `POST /v2/db/{db}/index-backfill`; SDK `backfillIndex` | An offline reconciliation of every entity's entries with its live rows (adds missing, retracts extra; type entries only added), in batches of `batchDatoms` (default 4,000) each fenced by the declaration seq and each entity's revision; the head is checked before every batch and at the end (409 `BackfillRaced` if a save was admitted; nothing sealed). Restartable and idempotent. When sealed it writes `:triplex.ix/epoch` "code position" for every code (and `T:<type>`) that had none. `dryRun: true` reports the reconciliation without writing (G2). |
-| Find | `cross_find.clj` `find!`, `POST /v2/db/{db}/find`; SDK `find` | The contract of design section 7.5: `from` a type (entries or ID pattern) or an ID prefix (with step 0's shape grammar), up to four ANDed conditions (`eq`, `in`, `range`, `prefix`, `exists`, `missing`), `project` up to four declared references, `result` `ids`, `count`, `countByValue`, `countDistinct` (`of` names the attribute), order by entity (asc or desc) or by the range attribute, limit 1 to 1,000, bounds (100,000 entries, 100 ms, 512 segment loads by default; caps 1,000,000, 1,000, 4,096) with a cursor and `stopped`, never an error on a bound. Bases: head, `atLeastPosition`, a recorded position (a commit boundary), a record time; any `validAt`. Every answer has `position`, `t`, `validAt`, `head`, `indexEpoch`, `trailingBy: 0`. One question per account at a time on **step 0's permit pool** (`ids/permits`, `ids/running`, `TX2_INDEX_QUERY_PERMITS`, default 1): 503 `IndexBusy` with `retryAfterMs`. |
-| Removal guard | `erase.clj` `declare!` | Protecting an attribute that is declared is refused (409 `ProtectedValueLookup`). |
+| Find | `cross_find.clj` `find!`, `POST /v2/db/{db}/find`; SDK `find` | The contract of design section 7.5: `from` a type (entries or ID pattern) or an ID prefix (with step 0's shape grammar), up to four ANDed conditions (`eq`, `in`, `range`, `prefix`, `exists`, `missing`), `project` up to four declared references, `result` `ids`, `count`, `countByValue`, `countDistinct` (`of` names the attribute), order by entity (asc or desc) or by the range attribute, limit 1 to 1,000, bounds (100,000 entries, 100 ms, 512 segment loads by default; caps 1,000,000, 1,000, 4,096) with a cursor and `stopped`, never an error on a bound. Bases: head, `atLeastPosition`, a recorded position (a commit boundary), a record time; any `validAt`. Every answer has `position`, `t`, `validAt`, `head`, `indexEpoch`, `trailingBy: 0`. Admission is shared with step 0's ID route (`ids/admitted`): a fair queue of one running question per account, then one of step 0's permits (`TX2_INDEX_QUERY_PERMITS`, default 1), taken fairly; 503 `IndexBusy` with `retryAfterMs` only after waiting the request's own time bound. A page that cannot pass one candidate inside `bounds.entries` is refused (413 `BoundTooSmall`) rather than handed back its own cursor. |
+| Removal guard | `main.clj` protection route calls `cross_find.clj` `refuse-protecting-declared!` before `erase/declare!` (kept out of `erase.clj`, see stored-function identity) | Protecting an attribute that is declared is refused (409 `ProtectedValueLookup`). |
 | Aging loader guard | `age1/src/triplex/age/native.clj`, `bulk.clj` | The loader refuses a database that declares the index (it writes rows directly and no entries). |
 | Launchers | `stack/up.sh` (`DX_CROSS_INDEX`, passed to both gateways only when set), `v01/run.ts` (`--cross-index off|<declaration.json>`) | The S-2 card pair. |
 | Server runners | `xq1/server.ts` `backfill`, `bench`, `verify`, `declare`; `xq1/declarations/deep-6.json`, `fields-k3.json`, `fields-k20.json` | S-1 and S-3, S-2's preflight, and a declaration without a backfill for the XQ2-shaped write pair. Not run (no server). |
@@ -54,10 +54,10 @@ step 0); an entity without an account prefix gets no entry.
 | --- | --- | --- | --- |
 | E1 / A4 | Every candidate's entity read, even for one filter | **Confirmed and fixed** | `find!` now answers from the index alone when the conditions allow: every `eq` and `in` and `from` (prefix, shape, ID pattern) are entity-ordered streams intersected by a merge; the entity number comes from the index datom (no lookup by ID); a single `range`, `prefix` or `exists` is answered from its scan with an in-request set (one entity read per candidate only on later pages of a value-ordered scan). Each answer states `indexOnly` and `entityReads`. Gate `XQ4_E1`: E1_COUNTS |
 | E2 | "Not deleted" as a per-entity `missing` check | **Confirmed; answered by declaration, no code** | A `missing` condition needs the entity's own entries (stated). A declared positive flag (for example `:x/live` = true, boolean) is an `eq` and merges with no entity read (`XQ4_E1` "count two eq merged"). |
-| B3 | Unbounded closed part for a past valid time | **Confirmed and fixed (bounded, not cached)** | The closed part is read lazily under the entry and time bounds (every index datom is counted where it is read). A page whose closed part alone exceeds the bounds stops with its cursor unchanged; raise the bounds (caps 1,000,000 entries, 1,000 ms) or ask nearer now. |
+| B3 | Unbounded closed part for a past valid time | **Confirmed and fixed (bounded, not cached)** | The closed part is read lazily under the entry and time bounds (every index datom is counted where it is read). A page whose closed part alone exceeds the entry bound is refused (413 `BoundTooSmall`); raise the bounds (caps 1,000,000 entries, 1,000 ms) or ask nearer now. |
 | E4 | Descending value order refused | **Confirmed and fixed** | `order: {by: <range attribute>, direction: "desc"}` scans with `rseek-datoms`. Gate: paged descending answer equal to brute force (`XQ4_E1`). |
 | D5 | Regular-expression key split | **Confirmed and fixed** | Hand-written split on U+0001; the key tests pass (`cross-index-test`). Per-entry time not re-measured. |
-| D6 / D7 / C4 | One question per account, 503 when busy; one permit for all accounts | **Confirmed and fixed (queue); the permit default stated** | Each account has a fair queue of one running question; the permits (`TX2_INDEX_QUERY_PERMITS`, default 1, shared with step 0's ID route) are taken fairly; 503 `IndexBusy` only after waiting the request's own time bound. With the default of 1 every account's index questions share one reader core: an option to raise. Step 0's route keeps its own per-account refusal (its `running` set); a find and an ID list of one account can now overlap, each holding a permit. |
+| D6 / D7 / C4 | One question per account, 503 when busy; one permit for all accounts | **Confirmed and fixed (queue); the permit default stated** | Each account has a fair queue of one running question; the permits (`TX2_INDEX_QUERY_PERMITS`, default 1, shared with step 0's ID route) are taken fairly; 503 `IndexBusy` only after waiting the request's own time bound. Since the merge of `f1f0908df` the queue lives in step 0's shared admission code (`ids/admitted`), so the ID route and `find` share it: one question per account across both routes. Defaults: one running question per account (fixed), permits `TX2_INDEX_QUERY_PERMITS` default 1, queue wait = the request's `bounds.ms` (default 100, cap 1,000). With 1 permit every account's index questions share one reader core: an option to raise. |
 | D1 | The backfill sends every pinned read of an indexed subject to as-of | **Confirmed and fixed** | `XQ4_D1`: after a backfill that added 2,393 entries, the original check keeps 0 of 200 subjects on the fast route; with the fix 200 of 200 before and after, rows identical. The check is installed from the index namespace (see "stored-function identity" below). |
 | B2 | No fence before the first declaration | **Confirmed and fixed** | With the option on, the declaration entity with sequence 0 is installed when a scope is opened and before a save is prepared; every save carries the fence. Remaining gap: two gateways' very first saves before either installed it. |
 | D3 | Entries invisible to frame bounds and the write budget | **Half confirmed: the budget sees them; frame bounds do not** | The entry ops are in `:ops`, which `write-policy/variable-us` prices: `XQ4_BUDGET` +12 ops, +540 µs estimated for 6 replaced values, rows unchanged. `group/bound-frame!` and the 96-row bulk cap count rows and bytes only: a 96-row frame can carry up to 96 value and 96 type entries. Not changed (it changes import frame sizes). |
@@ -73,6 +73,7 @@ step 0); an entity without an account prefix gets no entry.
 | A5 | Backfill at 1 billion under-predicted | **Confirmed in part and changed** | The backfill now walks business and system entities through the ID index (no journal entities), decodes only rows of declared attributes or listed types, and has no per-entity revision CAS (head checked before every batch and at the end). The indexing jobs that absorb the entries are unchanged. New prediction below (S-1). |
 | A1 | The 0.6 to 1.0 ms conversion used whole-commit latency | **Accepted as stated by the coordinator** | Corrected 0.36 to 0.69 ms for three values on the general writer; S-2 is judged against the owner's bars (below). |
 | F4 | A slow exact route for refused positions | **Next step, not built** | Positions before the epoch and inside grouped commits are refused here; an ID list then each subject's exact read would answer them. |
+| (found by G1, not by the review) | A page could return its own cursor | **Found and fixed** | Run `world2`: one of the random questions (`from: {type: Subject}` intersected with an `in` on `:task/status`: subject and task local parts never coincide) read the whole entry bound without emitting a candidate, so every page stopped on `entries` with the same cursor and the harness's 100,000-page guard reported a difference (count 0, not exact). Now every stream emits each local part (or key) it reads with an accepted flag, the merge emits every local part it passes, the intersection ends when one stream ends, and a page that passes nothing inside its entry bound is refused (413). Rerun in `world3`. |
 | String key against the spike's tuple on the real transactor | | **Not measured** | Not run on the spike's harness; the toy numbers here (XQ4_COST) are for the string form only. |
 
 ### Stored-function identity: a hazard this build found in the base
@@ -86,6 +87,40 @@ have installed new function versions on every existing database. Fixed by keepin
 before those two (the erase check moved to `main.clj`, the per-subject writer resolves the index late, the pinned
 check is installed from the index namespace). G8's paired log is now identical. **Any branch that edits a namespace
 compiled before `commit.clj` or `subject_save.clj` has the same hazard;** the paired log hash is the test for it.
+
+## What `find` refuses, and whether the exact sweep answers it
+
+The exact sweep (`exp/DX-XQ6-exact-sweep` `909309c63`, `POST /v2/db/{db}/sweep`, `TX2_SWEEP=1`, not merged here)
+takes the same condition language. Every refusal of `find` that comes from what the index holds carries a
+machine-readable **`fallback`**: `"sweep"` when the sweep's grammar takes the same question (account, `from`,
+`where`, `project`, `result`, `of`, `limit`, `basis`; the client drops `find`'s own `order`, `bounds` and `cursor`,
+which the sweep does not take) (from absent or
+`{prefix, shape?}`; up to 8 conditions of the six ops, no json or blob value; result `ids`, `count` or `countByValue`;
+up to 8 projections; ID order ascending), else `"none"` (`cross_find.clj` `sweep-fallback`; SDK
+`DatomicHttpError.fallback`). It describes the question only; whether `TX2_SWEEP` is on is the deployment's. Gate
+`XQ4_FALLBACK` (7 cases) and `XQ4_G7_BEFORE_BACKFILL`.
+
+| What `find` refuses | Its answer | Does the sweep answer it? |
+| --- | --- | --- |
+| An attribute not declared, in `where`, `project` or `of` | 409 `AttributeNotIndexed`, `fallback` computed | **Yes** for `ids`, `count`, `countByValue` with `from` absent or a prefix; no for `countDistinct` (the sweep has none) |
+| An entity type not declared (`from: {type}`) | 409 `AttributeNotIndexed`, `fallback: "none"` | Not unchanged: the sweep has no type kind; ask it with `from: {prefix, shape}` |
+| A position before the index's epoch (before the backfill sealed, or a code declared later) | 409 `IndexNotAvailableAtPosition` with `maximum`, `fallback` computed | **Yes**, at any commit boundary |
+| A position inside a group commit or a multi-position transaction | 409 `InteriorPosition`, `fallback: "none"` | **No**: the sweep keeps the ID list route's rule and refuses it too |
+| A long text value (over 200 characters) | Not refused: keyed by its first 200 characters and confirmed against the row | Yes (it reads rows) |
+| A value a release writes | Not refused in code (the gateway does not know which attributes releases write); the rule is not to declare them (B1) | Stored values only (`facts: "stored"`); neither answers a value not yet stored |
+| 5 to 8 conditions; more than 4 projections or a non-reference projection; `missing` with no `from` and no other condition | 400 `UnsupportedOperation`, `fallback: "sweep"` | **Yes** |
+| More than 8 conditions; `countDistinct`; descending order; order by a range attribute | 400 `UnsupportedOperation` or answered by `find`, `fallback: "none"` when refused | **No** |
+| Order by entity with only a value-ordered condition and `result: "ids"` | 400 `UnsupportedOperation`, `fallback: "sweep"` when ascending | **Yes** (the sweep returns ID order) |
+| A page whose entry bound cannot pass one candidate | 413 `BoundTooSmall`, `fallback` computed | Yes (slowly); or raise `bounds.entries` |
+| The option off on this gateway | 409 `IndexOff`, `fallback` computed | Yes, where `TX2_SWEEP=1` |
+| A protected attribute; a json or blob value; a malformed question | 409 `ProtectedValueLookup`, 400 | No (the sweep refuses them too); no `fallback` field |
+
+**A separate reader process (`exp/DX-XQ7-question-reader`).** `find` assumes no shared process or cache with pinned
+reads: it opens its own database value from the connection, counts its own segment loads per request
+(`io-stats`), and takes step 0's admission pools in its own process. Two things a separate process must carry: the
+same `TX2_INDEX_CURSOR_SECRET` on every process that answers `find` (else a cursor is refused after a hop), and the
+pinned short-cut's entry-blind check (`pinned/unchanged-since?` replaced when `cross_index.clj` loads), which goes with
+`storage.clj` into any process that serves pinned reads, not with `find`.
 
 ## Gates (toy, Mac, one ordinary heavy token per run, no lease)
 
@@ -247,16 +282,18 @@ writer and no measurable change on the per-subject writer.
 ## What is not verified
 
 - **Nothing on a server.** S-1, S-2 and S-3 were written, not run; every time on this page is the Mac's.
-- **The hint options were not combined with the index.** `TX2_GENERAL_PREFETCH` (W3) and `TX2_SUBJECT_HINTS` (W4) are
-  not on `exp/DX-INT1` or this branch. By reading their code: the index adds, inside apply, Datomic's redundancy check
+- **The hint options were not combined with the index.** `TX2_GENERAL_PREFETCH` (W3, `general_prefetch.clj`) and
+  `TX2_SUBJECT_HINTS` (W4, `subject_hints.clj`) arrived with the step 0 merge and are unchanged here (changing their
+  stored lookup functions changes those functions' identities). By reading their code: the index adds, inside apply, Datomic's redundancy check
   of `[owner :triplex.ix/entry key]` (EAVT of the owner, the entity whose rows the commit already reads) and the
   declaration's CAS (one datom every save reads, always cached); nothing reads AVET inside a transaction for a
   non-unique attribute. W4's lookup function names the owner's row and revision datoms but not the owner's
   `:triplex.ix/entry` range; W3's names the commit function's reads. So the entries cost nothing inside apply when the
   owner's entries share a segment with its rows (the toy: reads inside apply unchanged), and are **not hinted** when
   they do not. The fix, for whoever merges W3 or W4 with this: one more touch per owner in each lookup function,
-  `(touch (d/datoms db :eavt owner (a :triplex.ix/entry)))`, and one of the declaration entity. Not built here (neither
-  function is on this branch).
+  `(touch (d/datoms db :eavt owner (a :triplex.ix/entry)))`, and one of the declaration entity. Not built here: it changes
+  W3's and W4's function identities, which is their owners' call; no toy run with the hints on (the toy's cache holds
+  every segment, so it could not show the difference).
 - **The existing heavy gates with the index on.** The production exactness gate and the loader-aged production gate
   build or reuse shared image tags and fixed ports and create their own scopes; they were not run with a declaration in
   their scope (the aging loader now refuses an indexed database by design). The option-off evidence for them is the
