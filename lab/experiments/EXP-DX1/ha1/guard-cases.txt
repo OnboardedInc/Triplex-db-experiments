@@ -127,3 +127,10 @@ adopted-rd5-prefetch-bad-int4  1d6072615 REFUSED  DX_READ_PREFETCH=yes
 adopted-rd5-readahead-bad-int4 1d6072615 REFUSED  DX_READ_AHEAD_OFF=2
 adopted-rd5-remote-int4        1d6072615 ADMITTED DX_REMOTE_READER_HOST=10.0.0.5
 adopted-rd5-remote-bad-int4    1d6072615 REFUSED  DX_REMOTE_READER_HOST=0.0.0.0
+# [DX-INT4] XQ6's sweep options after its merge: admitted, and each wrong value refused at its own test (b0d88c9ae).
+adopted-card-xq6-int4          b0d88c9ae ADMITTED -
+adopted-xq6-sweep-int4         b0d88c9ae ADMITTED DX_SWEEP=1;DX_SWEEP_PERMITS=16;DX_SWEEP_PER_ACCOUNT=16;DX_SWEEP_QUEUE_MS=5000;DX_SWEEP_CURSOR_SECRET=abcdefghijklmnop
+adopted-xq6-sweep-bad-int4     b0d88c9ae REFUSED  DX_SWEEP=2
+adopted-xq6-permits-bad-int4   b0d88c9ae REFUSED  DX_SWEEP=1;DX_SWEEP_PERMITS=17
+adopted-xq6-queue-bad-int4     b0d88c9ae REFUSED  DX_SWEEP=1;DX_SWEEP_QUEUE_MS=5001
+adopted-xq6-secret-bad-int4    b0d88c9ae REFUSED  DX_SWEEP=1;DX_SWEEP_CURSOR_SECRET=short
