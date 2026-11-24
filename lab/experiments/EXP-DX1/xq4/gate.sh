@@ -23,7 +23,7 @@ docker rm -f "$name" >/dev/null 2>&1
 docker run --name "$name" --memory "${XQ4_CONTAINER_MEMORY:-4g}" --cpus 2 --entrypoint /bin/bash \
   -e "XQ4_PHASES=$phases" -e "XQ4_RUN=$(basename "$out")" \
   -e "XQ4_SUBJECTS=${XQ4_SUBJECTS:-6667}" -e "XQ4_MIXED=${XQ4_MIXED:-3000}" -e "XQ4_QUESTIONS=${XQ4_QUESTIONS:-25}" \
-  -e "XQ4_G6_SUBJECTS=${XQ4_G6_SUBJECTS:-1500}" -e "XQ4_COST_PER=${XQ4_COST_PER:-100}" -e "XQ4_G3_SEALED=${XQ4_G3_SEALED:-0}" \
+  -e "XQ4_G6_SUBJECTS=${XQ4_G6_SUBJECTS:-1500}" -e "XQ4_G6_PAD=${XQ4_G6_PAD:-0}" -e "XQ4_COST_PER=${XQ4_COST_PER:-100}" -e "XQ4_G3_SEALED=${XQ4_G3_SEALED:-0}" \
   -e "XQ4_QUESTION_SEED=${XQ4_QUESTION_SEED:-20261124}" \
   -e "XQ4_HINTS=${XQ4_HINTS:-0}" -e "XQ4_TX_CACHE=${XQ4_TX_CACHE:-128m}" -e "XQ4_GATE_JAVA_OPTS=${XQ4_GATE_JAVA_OPTS:-}" -e "XQ4_SWEEP=${XQ4_SWEEP:-0}" -e "XQ4_SWEEP_QUESTIONS=${XQ4_SWEEP_QUESTIONS:-8}" \
   -v "$out/stage/gateway/src:/opt/gateway/src:ro" -v "$out/stage/xq4:/xq4:ro" \

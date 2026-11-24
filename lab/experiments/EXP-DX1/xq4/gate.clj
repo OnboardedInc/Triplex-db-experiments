@@ -869,15 +869,20 @@
 
 ;; ---- G6 and the cost table: twin scopes, the same saves, one declared and one not.
 (def g6-subjects (env-long "XQ4_G6_SUBJECTS" 1500))
+(def g6-pad (env-long "XQ4_G6_PAD" 0))
 (defn g6-facts [n]
-  (let [t (format "acct/acc-g/pl:%08d:t0" n) vf (vf-of n)]
+  (let [t (format "acct/acc-g/pl:%08d:t0" n) vf (vf-of n)
+        base
     [[(str "g-" n "-st") t ":task/status" ["string" "pending"] {:from vf :etype "Review"}]
      [(str "g-" n "-pr") t ":task/progress" ["integer" n] {:from vf :etype "Review"}]
      [(str "g-" n "-sc") t ":task/score" ["number" 0.5] {:from vf :etype "Review"}]
      [(str "g-" n "-du") t ":task/due" ["datetime" vf] {:from vf :etype "Review"}]
      [(str "g-" n "-fl") t ":task/flag" ["boolean" false] {:from vf :etype "Review"}]
      [(str "g-" n "-od") t ":odd/\u0001key\u0002" ["string" "odd"] {:from vf :etype "Review"}]
-     [(str "g-" n "-no") t ":task/note" ["string" "undeclared"] {:from vf :etype "Review"}]]))
+     [(str "g-" n "-no") t ":task/note" ["string" "undeclared"] {:from vf :etype "Review"}]]]
+    ;; XQ4_G6_PAD undeclared facts of 200 characters each, so the toy outgrows a small cache (item 5's measure).
+    (into [] (concat base (for [i (range g6-pad)]
+                            [(str "g-" n "-pad" i) t (str ":task/pad-" i) ["string" (apply str (repeat 25 (format "%08d" (+ n i))))] {:from vf :etype "Review"}])))))
 (defn big-entity [b] (format "acct/acc-g/big:%04d" b))
 (defn big-facts [b] (for [i (range 100)] [(format "big-%d-%03d" b i) (big-entity b) ":task/status" ["string" (str "b" i)] {:from v0 :etype "Review"}]))
 (def g6-attrs [":task/status" ":task/progress" ":task/score" ":task/due" ":task/flag" ":odd/\u0001key\u0002"])
@@ -893,11 +898,15 @@
       (when (= side "on")
         (ok! "declaration" (route name "v2" "index-declaration" declaration-2))
         (backfill! name))
-      (doseq [ns (partition-all 40 (range g6-subjects))]
+      (doseq [ns (partition-all (max 1 (quot 40 (inc (quot g6-pad 7)))) (range g6-subjects))]
         (commit! name (batch-input (str "g6-" (first ns)) (mapcat g6-facts ns))))
       ;; Fifteen entities with 100 facts of one declared attribute each (very large saves, k = 20, 50, 100).
       (doseq [b (range 15)]
-        (commit! name (batch-input (str "g6-big-" b) (big-facts b)))))
+        (commit! name (batch-input (str "g6-big-" b) (big-facts b))))
+      ;; An indexing job after the seed, so the measure reads segments from storage, not the memory index.
+      (let [t (d/basis-t (d/db conn))]
+        (d/request-index conn)
+        (when (= ::timeout (deref (d/sync-index conn t) 900000 ::timeout)) (throw (ex-info "index did not finish" {})))))
     (reset! ledger (into {} (concat (for [n (range g6-subjects) [id e a] (g6-facts n)] [[e a] id])
                                     (for [b (range 15) [id e a v] (big-facts b)] [[e (str a "#" (second v))] id]))))
     (save-ledger! "g6")
