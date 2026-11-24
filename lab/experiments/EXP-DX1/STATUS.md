@@ -5053,3 +5053,12 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Storage reads per commit 2.6 to 4.6** in these 90 s cells (first-minute values); the second machine's 300 s window at 394 gave 1.44 in the first minute and 0.40 late.
 - **The published predictions were for the `server` profile** (0.2 to 15 s at 394 and 620) and the card ran `server-32`; they are not a test of this run.
 - **P1 line unchanged:** the quiet account's pinned reads missed about two thirds of their offers (2,624 of 3,840 at 394, 0 wrong) with the one-core reader. Part 3 and assembly follow.
+
+### 2026-11-23 19:04 local: Triplex Console served on 127.0.0.1:28580 from `exp/DX-CON1-console` `2fa24d78a`; MCP registration switched (2 agents running)
+
+- **`origin/exp/DX-CON1-console` `2fa24d78a`** (worktree `dx-con1-app`): `AttributeTypeFixed` fixed (`a0d0eba35`; `canon` ignores key order and fields storage leaves out; two checks added); clean toy seeded by `up.sh --reset` with `Subject` and `Review` (release `reviews-1`, six reviews, one corrected from 16 November) and a fault fixed where the first release on an empty store could not reference `Subject` (`333db33db`); one question file (`demo/console/questions.json`), defaults taken from `list_accounts`; `TRIPLEX_DEMO_STATE` selects the connection file for `connect.sh`, the page server and the MCP server, and `e2e/demo-pass.mjs --database 1b --api … --state …` (`3e4b97dd6`); "Create new" in the reference combobox. All gates through `demo/toy/gates.sh` twice: configuration 16 of 16, entities 19 of 19, query 24 of 24, journal 7 of 7, derivations 4 of 4, catalogue 70 of 70, proof rehearsal 37 of 37.
+- **Checked by the orchestrator:** the port serves the built app; `/api/catalogue` and `database_summary` answer (toy: 44,428 records at bring-up, head 279, 120 subjects).
+- **Record times a year ahead** on the toy are the bulk loader's clock, not a fault; Home and Journal say so.
+- **MCP registration** `triplex-demo` (local scope) now points at `dx-con1-app/examples/demo-mcp/src/mcp.ts`; connected.
+- **Not yet run on 1 billion:** the proof and the browser pass wait for server 2's card to assemble.
+- **Running (2):** the two drivers.
