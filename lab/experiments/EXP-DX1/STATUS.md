@@ -5747,3 +5747,21 @@ Source: question-shapes builder, branch `exp/DX-XQ9-question-shapes` `2ef4cb3c4`
 - Not verified: anything on a server; whether tasks sit beside their subject at 1 billion.
 
 **Started** in the freed slot (thinker effort, design first): removal on request in one account must not refuse saves in other accounts (task file `OPUS-ERA2-removal-per-account.md`); the many-accounts inventory found one removal sequence and one lock for the whole database.
+
+## 2026-11-24 13:44 EST: the product's save path now reaches the fast per-subject writer (one commit per subject's save)
+
+Source: product-save-path builder, branch `exp/DX-S2-save-shape-sdk` `4d619a516` (based on `23b7df344`; not merged), page `lab/experiments/EXP-DX1/s2/PRODUCT-SAVES.md`. Options default off. Mac toy only.
+
+- **Before:** 0 of the product's 11 save shapes reached the per-subject writer (production gate on the product path: 840 R and 88 S saves, all on the general writer). The scorecard's shape-S numbers came from the lab producer, which sends ordered blocks the product never sent.
+- **Cause, found on the toy (not the random IDs alone):** every product save listed its own new journal among the entities it touched (the writer accepts one entity); a save that skipped the snapshot sent no source position; with the wide writer, a "kept true until now" save writes two rows of one field and the distinct-field rule refused it.
+- **Built:** SDK option `orderedSaves` (one ordered block per save, only the entities really read and written, the source position stated, the reason for every routing in `client.saveRoutes`); the wide rule allows repeated plain fields (native function unchanged); core `StorageAdapter.saveIdentity`.
+- **After, with `orderedSaves` and the wide writer on:** 6 of 11 shapes qualify (20-row form page in both client forms, status change, check result, writeback to the subject's other form, past-dated correction); 2 of 11 with the wide writer off. Production gate through the product path: 840 of 840 R and 88 of 88 S on the per-subject writer, 2,836 fields exact.
+- **Behaviour change with the option on:** two saves of different fields of one subject sent at once now conflict and the SDK replays the second (this is the contract; before, both committed).
+- **Save-size rule** (`saveSizeRule`): up to 128 facts per-subject writer; 129 to 1,000 general writer; over 1,000 refused before sending with `SaveTooLarge`; over 4,194,304 bytes `SaveRequestTooLarge` instead of `InvalidValue`. A 1,000-fact save holds the serial point about 120 ms at 1 billion (forecast).
+- **Several owners in one save** (a form page that also writes the subject's profile): real; stays on the general writer; extension designed, not built; costs about 1.9 to 2.4 ms more serial time per such save at 1 billion (forecast).
+- Gates: options off, 40 requests and 212,809 bytes identical to the base; every save shape against a control database, 96 of 96 receipts and 33,918 reads equal, wide on and off; two saves at once, one refused and replayed, exact; lost reply, nothing sent twice; console on a second toy 37 of 37; SDK 461 passed, core 863 of 863.
+- Counted work for a 20-field form save, option off / on: general x24 / per-subject x24; 99 datoms both; apply 1.58 / 0.76 ms (diagnostic).
+- Server pair written (three arms, 3 h 35 to 4 h 15, about USD 4 to 5): share of S saves on the per-subject writer 0% / 25 to 40% / 95 to 100%; mean serial apply 1.8 to 2.8 / 1.5 to 2.5 / 0.6 to 1.2 ms. It says the session list's step 3 measured saves the product never sends and should be replaced by these arms.
+- Not verified: anything on a server; the product path's own extra cost; a wide save carrying protected values.
+
+**Started** in the freed slot: saves that write two to four owners taking the per-subject writer (task file `OPUS-S3-several-owners.md`).
