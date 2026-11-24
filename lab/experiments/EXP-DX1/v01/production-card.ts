@@ -37,6 +37,17 @@ export const defaultCardTape: CardTape = "production-S-noburst";
 // writer hints (W4). run.ts passes them to the arm, adopted-server.ts records the ones set, adopted.ts checks the
 // writer's readback, and the card names them. Rejected: passing the whole environment (unrecorded settings).
 export const writerOptionNames = ["TX2_SUBJECT_WIDE", "TX2_GENERAL_PREFETCH", "TX2_SUBJECT_HINTS"] as const;
+// [DX-INT3] Default-off read gateway options a card arm may run with (W3): the bound on reads waiting for a permit and
+// the web-thread counters. stack/up.sh passes them to the gateways only when set. run.ts passes them to the arm and
+// adopted-server.ts records the ones set. Why: before this run.ts dropped them, so W3's published "bound on" arm would
+// have run with the bound off. Rejected: passing the whole environment (unrecorded settings).
+export const readQueueOptionNames = ["DX_READ_WAIT_LIMIT", "DX_THREAD_COUNTERS"] as const;
+export const readQueueOptionsSet = (env: NodeJS.ProcessEnv) => {
+  const limit = env.DX_READ_WAIT_LIMIT, counters = env.DX_THREAD_COUNTERS;
+  assert(limit === undefined || limit === "" || (/^[1-9][0-9]{0,3}$/.test(limit) && Number(limit) <= 4096), "DX_READ_WAIT_LIMIT is 1..4096");
+  assert(counters === undefined || /^[01]$/.test(counters), "DX_THREAD_COUNTERS is 0 or 1");
+  return { ...(limit ? { DX_READ_WAIT_LIMIT: limit } : {}), ...(counters === "1" ? { DX_THREAD_COUNTERS: "1" } : {}) } as Record<string, string>;
+};
 export const writerOptionsSet = (env: NodeJS.ProcessEnv) => {
   for (const name of writerOptionNames) assert(env[name] === undefined || /^[01]$/.test(env[name]!), name + " is 0 or 1");
   return Object.fromEntries(writerOptionNames.flatMap((name) => env[name] === "1" ? [[name, "1"]] : [])) as Record<string, "1">;

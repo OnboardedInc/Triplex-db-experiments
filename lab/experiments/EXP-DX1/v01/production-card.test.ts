@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { cells, productionArms } from "../prep1/server-tape.ts";
-import { cardTapeReport, commitAssertions, defaultCardTape, fullCellTape, isProduction, ladderFacts, newRunTape, parseCardTape, productionCellMetrics, tapeBinding, writerOptionsSet } from "./production-card.ts";
+import { cardTapeReport, commitAssertions, defaultCardTape, readQueueOptionsSet, fullCellTape, isProduction, ladderFacts, newRunTape, parseCardTape, productionCellMetrics, tapeBinding, writerOptionsSet } from "./production-card.ts";
 import { ratedTape } from "./server-workload.ts";
 
 // [DX-INT1] The card's production cells: the card's quiet stream plus exactly REAL2's measured neighbour offers.
@@ -76,4 +76,14 @@ test("the save-size ladder rewrites every neighbour save of a shape S cell to N 
   assert.equal(ladderFacts({}), undefined);
   assert.throws(() => ladderFacts({ DX_S1_LADDER_FACTS: "0" }), /1 to 4000/);
   assert.throws(() => ladderFacts({ DX_S1_LADDER_FACTS: "5000" }), /1 to 4000/);
+});
+
+// [DX-INT3] The read gateway's bound and counters reach the card only when set, and only valid values.
+test("the card records the read gateway's waiting-read bound and thread counters when set", () => {
+  assert.deepEqual(readQueueOptionsSet({}), {});
+  assert.deepEqual(readQueueOptionsSet({ DX_READ_WAIT_LIMIT: "128", DX_THREAD_COUNTERS: "1" }), { DX_READ_WAIT_LIMIT: "128", DX_THREAD_COUNTERS: "1" });
+  assert.deepEqual(readQueueOptionsSet({ DX_THREAD_COUNTERS: "0" }), {});
+  assert.throws(() => readQueueOptionsSet({ DX_READ_WAIT_LIMIT: "0" }));
+  assert.throws(() => readQueueOptionsSet({ DX_READ_WAIT_LIMIT: "5000" }));
+  assert.throws(() => readQueueOptionsSet({ DX_THREAD_COUNTERS: "yes" }));
 });

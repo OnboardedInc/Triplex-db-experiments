@@ -10,7 +10,7 @@ import { cleanSource, verifyBuild } from "./source.ts";
 import { pgdataArgs } from "./pgdata.ts";
 import { parseCredits, parseWindow, serverRates, writerAdmission } from "./server-workload.ts";
 import { assembleSequential, completeSequentialArm, existingSequence, sequenceProgress } from "./sequential.ts";
-import { newRunTape, tapeShape, tapeTitle, writerOptionNames } from "./production-card.ts";
+import { newRunTape, readQueueOptionNames, readQueueOptionsSet, tapeShape, tapeTitle, writerOptionNames } from "./production-card.ts";
 import { rendererDiff } from "./renderer.ts";
 import { parseReader, randomLineMinutes, readerEnvironment, readerLaunch, readerTitle } from "./card-reader.ts";
 
@@ -72,6 +72,7 @@ const profile = values.profile as ServerProfile;
 // [DX-INT1] The save tape of the loaded cells (v01/production-card.ts).
 // [DX-S1] Default: shape S, one commit per subject's save (the owner's decision); the realistic card keeps its own tape.
 const cardTape = newRunTape(values.tape, values.age);
+readQueueOptionsSet(process.env);
 assert(cardTape === "saturday" || values.age !== "realistic", "The realistic card keeps its own tape");
 const reader = parseReader(values.reader, values["read-permits"]);
 assert(!reader || values.age !== "realistic", "The tuned reader's random-subject line reads the SCALE1 deep population");
@@ -137,7 +138,9 @@ const child = spawn("timeout", ["--kill-after=" + budget.cleanup + "m", String(a
   env: Object.fromEntries([...["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT", "AGE_JAVA", "AGE_DATOMIC_HOME", "DX_W1_SERIAL_APPLY", "PREP1_LOOKUP_EVERY", "DX_DRY_RUN_FIRST_OFFER",
     // [DX-S1] Writer options (default off) for the card's server arms; before this they were dropped here, so a card
     // launched with them set ran without them. The card records them and checks the writers' readback.
-    ...writerOptionNames]
+    ...writerOptionNames,
+    // [DX-INT3] The read gateway's waiting-read bound and thread counters (W3), recorded by the arm like the writer options.
+    ...readQueueOptionNames]
     .flatMap((name) => process.env[name] ? [[name, process.env[name]]] : []), ["DX_V01_PROFILE", profile], ["DX_V01_TAPE", cardTape],
     ...readerEnvironment(reader)]),
 });
