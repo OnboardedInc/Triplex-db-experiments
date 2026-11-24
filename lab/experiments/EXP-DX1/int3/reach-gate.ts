@@ -100,10 +100,18 @@ for (const [n, req] of requests.entries()) {
     ...(same ? {} : { head: answers.head.body, base: answers.base.body, bound: answers.bound.body }),
     ...(n === 0 ? { headKeys: isObject ? Object.keys(answers.head.body as object) : null, control: answers.control.body } : {}) });
 }
+// [DX-INT4] Why: every option of a merge must stay off by default; the write-options report of this source and of the
+// baseline's, from read gateways with the same environment and nothing set, must be byte-identical (REACH_WRITE_OPTIONS_SAME=1
+// makes it part of the verdict; otherwise it is recorded only, since an older baseline may report fewer keys).
+const writeOptions = await Promise.all([read, base].map((u) => fetch(`${u}/v1/db/${db}/write-options`).then(async (r) => `${r.status} ${await r.text()}`)));
+const writeOptionsSame = writeOptions[0] === writeOptions[1];
+fs.writeFileSync(path.join(out, "write-options.json"), JSON.stringify({ head: writeOptions[0], base: writeOptions[1], same: writeOptionsSame }, null, 2) + "\n");
 const threads = await fetch(bound + "/v2/admin/threads").then((r) => r.json()).catch(() => null) as any;
 const summary = { scope, db, cuts: cuts.length, pins, requests: requests.length, equal, headObjects: objects, controlDiffers,
   boundGateway: threads && { readWaitLimit: threads.readWaitLimit, readsRefusedBusy: threads.readsRefusedBusy, readsAdmitted: threads.readsAdmitted },
-  passed: equal === requests.length && objects === requests.length && controlDiffers === requests.length && threads?.readWaitLimit === 4 };
+  writeOptionsSame,
+  passed: equal === requests.length && objects === requests.length && controlDiffers === requests.length && threads?.readWaitLimit === 4 &&
+    (process.env.REACH_WRITE_OPTIONS_SAME !== "1" || writeOptionsSame) };
 fs.writeFileSync(path.join(out, "reach-gate.json"), JSON.stringify({ summary, results }, null, 2) + "\n");
 console.log("INT3_REACH_GATE " + JSON.stringify(summary));
 client.close();
