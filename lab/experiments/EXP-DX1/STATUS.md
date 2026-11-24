@@ -5267,3 +5267,24 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **What holds the reader's third core idle (builder, from 859 sampled exchanges of `ref-random-near-head`):** each of the three permits holds an exchange of eight for 19.6 ms of wall time (3 ÷ 152.8 exchanges/s): handler CPU 8.29 ms, 14.1 storage round trips of about 0.51 ms each (7.21 ms, one after another inside the permit), decode 9.76 ms partly on read-ahead threads; reader CPU from its cgroup 13.7 ms per exchange. About 37% of each permit's time is blocked on PostgreSQL, which leaves 0.8 to 0.9 of 3 cores idle. Not the driver (loop p99 10.94 ms), not PostgreSQL's core (0.31 cores).
 - **Why not more cores or cache tonight:** all 12 cores are assigned (transactor 0, 7, 8; PostgreSQL 1; writer 2, 3, 4; reader 5, 6, 11; driver 9, 10); 3 GiB is the launcher's largest read cache on the `server` profile.
 - **The arm** (`origin/exp/DX-RD1-readers` `d94dff145`): `DX_RD3_WINDOWS=random`, `DX_RD3_READ_PERMITS=6` then 12 (`TX2_READ_PERMITS` through `stack/up.sh`, checked on the reader container before the window driver), three random windows each, ceiling 40 minutes. Predictions for 6 permits: near head 1,450 to 1,700 reads/s, p99 240 to 290 ms, reader 2.6 to 2.9 cores; 12 permits 0 to 10% above; the 100 ms bar not met in either; it needs about 3,600 reads/s = 6.2 busy cores, about 7 physical cores with permits about twice the cores. Wrong if: 6 permits reach 2,000 reads/s; under 1,350 with the reader under 2.4 cores; 12 permits at 1.15 times 6 or more; cache share above 0.9 or loads per subject under 1.0.
+
+### 2026-11-23 21:52 local: random-subject pinned reads with 6 and 12 read permits at 1 billion: +25 to 44% over 3 permits, bar still missed, model held; server 2's queue is empty (2 agents running)
+
+- **Server 2, `d94dff145`** (evidence `evidence/DX-SCALE1/random-1b-d94/`), 256 seats, 90 s, three reader cores, 3 GiB read cache; 0 wrong values and 0 errors in all six windows; saves 23.08 commits/s stored in both with-saves windows.
+
+  | Window | 3 permits (`e02bf4edf`) | 6 permits | 12 permits |
+  | --- | --- | --- | --- |
+  | Random near head, quiet stream: reads/s, p50 / p99 ms | 1,219.6, 207.87 / 333.82 | 1,522.2, 161.79 / 305.15 | 1,719.8, 145.41 / 288.77 |
+  | Random near head, with saves | 1,216.6, 207.87 / 323.58 | 1,585.8, 158.72 / 266.24 | 1,747.2, 145.41 / 258.05 |
+  | Random, old pin, quiet stream | 1,085.5, 231.42 / 342.01 | 1,477.1, 171.01 / 288.77 | 1,563.6, 159.74 / 292.86 |
+  | Reader cores | 2.09 to 2.14 | 2.65 to 2.69 | 2.81 to 2.83 |
+  | Loads per subject | 1.69 to 1.85 | 1.59 to 1.76 | 1.54 to 1.69 |
+  | Cache share | 77.7 to 80.3% | 79.0 to 82.2% | 79.2 to 82.5% |
+  | SQL ms per exchange | 7.21 (one window) | 9.26 to 10.55 | 13.13 to 14.47 |
+  | S commit p99 beside readers | 55.81 ms | 55.55 ms | 62.98 ms |
+
+- **Against the predictions:** 6 permits inside every range except one p99 (305.15 against 240 to 290) and SQL ms per exchange (9.3 to 10.6 against 7 to 9). 12 over 6: +13.0%, +10.2%, +5.9% (predicted 0 to 10%; under the 1.15 refuter). No sizing falsifier fired: the claim "about 3,600 reads/s for the bar = about 7 reader cores with permits about twice the cores, no affordable cache" stands untested at 7 cores and unrefuted at 3.
+- **Quiet commit p99 in the quiet-stream random near-head window:** 52.22 ms (6 permits) and 59.13 ms (12), over the 50 ms clause; 24 to 26 ms with saves and 8 to 9 ms at the old pin. Cause unknown; it appears only in that window in both configurations.
+- **Launch fault, worked around by the driver:** `ladderPaths` puts `ladders/` in the parent of the campaign directory, so two configurations under one parent collide (`rd1/prepared.ts:85`); the second was rerun under its own parent. The document's command block needs that fix.
+- **Second machine:** owner head pair on fresh (`85fc3a4bd`): both arms ran 394 and 620; the append arm refused at the known `summarize.py:125` check at 02:28 UTC; the driver's monitor had expired a minute earlier, so the machine sat idle 22 minutes (02:28 to 02:50 UTC) until the orchestrator's check woke it. Evidence copy under way (campaign `queue/owner-head2/run/result`), then deletion.
+- **Server 2:** publishes, then deletes at about 03:00 UTC (queue empty).
