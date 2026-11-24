@@ -5552,3 +5552,18 @@ Source: merge builder. `origin/exp/DX-INT1` now carries settlement frames by byt
 - Not yet on the one branch: settlement beside saves (`c1579ee50`), ID lists (`cccaa2e0c`), commit-time index, release size limits, index cost spike.
 
 **Started** (six agents running): slow exact route for questions across subjects (task file `OPUS-XQ6-exact-sweep.md`, branch `exp/DX-XQ6-exact-sweep`); uncached pinned-read cost builder resumed.
+
+## 2026-11-24 11:12 EST: step 0 of questions across subjects is built (ID lists)
+
+Source: step 0 builder, branch `exp/DX-XQ3-id-lists` `f1f0908df` (already merged with the one branch `23b7df344`; not merged onto it), page `lab/experiments/EXP-DX1/xq3/ID-LISTS.md`. Every option default off. Not run on a server.
+
+- Route `POST /v2/db/{db}/ids` behind `TX2_ID_LISTS=1`: IDs or an exact count of one kind of entity in one account, at the head or a pinned position or record time, in pages of up to 1,000 with a bound cursor. Own permit pool (default 1), one running request per account. Writes nothing; no cost per save; needs no backfill.
+- Triplex with the SDK option `idLists`: `entityPage` and `match` on a listed type use the list (same pages and cursors as the scan); `ConfigStore.load` reads five bounded lists; other reads that name no entity can be refused.
+- Gates (Mac toy): gateway test 16,460 assertions against a brute-force pass; through the store 1,654 checks (750 page sequences, 34,500 IDs equal to the store's own history read); 72 `entityPage` chains byte-equal to the scan; removal on request leaves the ID list identical and returns no protected value; isolation cases all inside the account or refused; a burst of 8 counts on one account ran 1 and refused 7 as busy.
+- Counts on a toy account of 400,000 IDs: a cold page of 1,000 costs 2 storage reads at the head and 6 at an old pin; a full cold count costs 62 to 67 storage reads (about 6,400 IDs per read), 0.84 to 1.10 s on the Mac; warm 0 to 1 reads.
+- Server prediction for one deep account at 1 billion: exactly 100,000 subjects in 100 pages; warm 0.1 to 0.35 s in total; cold 0.3 to 1.0 s; the old pin 1.0 to 2.5 times the head. Wrong if any count differs from 100,000, warm cost exceeds 3 µs per entry, or a cold walk exceeds 3 s.
+- Not built: the Publish census through the list (changes the census's hash check); the console (its gates reset Sam's toy).
+- Not verified: anything on a server; why Datomic's io-stats reports no reads for the walk; the time bound cold (overrun by one storage read on the toy); several read gateways behind one URL.
+- Public-repository slip: pushed commit `1308d44d8` contains the docker socket path in one runner; removed in the next commit but still in that branch's history. The same path is already in the tracked `CLAUDE.md` on `main`, so nothing new is exposed. Reported to Sam.
+
+**Started** in the freed slot: recovery time after a machine loss (task file `OPUS-HA2-recovery-time.md`). Six agents running: step 1, slow exact route, release size limits, settlement at 1 billion, uncached pinned-read cost, recovery time.
