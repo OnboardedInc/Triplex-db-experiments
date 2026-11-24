@@ -115,6 +115,16 @@ describe("one call for questions across subjects", () => {
     } finally { g.close(); }
   });
 
+  it("a list's later page may ask for fewer rows (the limit is a page size, not part of the question)", async () => {
+    const g = await gateway({ find: [{ body: findPage({ next: "FIND-CURSOR", stopped: "limit" }) }, { body: findPage() }], sweep: [] });
+    try {
+      const first = await askPage(g.client, "s2-x", { ...q, limit: 5 });
+      const second = await askPage(g.client, "s2-x", { ...q, limit: 4, cursor: first.next! });
+      expect(second.route).toBe("index");
+      expect(g.seen.map((x) => x.body["limit"])).toEqual([5, 4]);
+    } finally { g.close(); }
+  });
+
   it("a later index page refused with fallback sweep restarts the question on the sweep at the pinned position", async () => {
     const g = await gateway({
       find: [{ body: findPage({ next: "FIND-CURSOR", stopped: "entries", position: 42, validAt: 777 }) }, refusal(413, "BoundTooSmall", "sweep")],

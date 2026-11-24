@@ -129,11 +129,14 @@ function questionOf(r: AskQuestion): AskQuestion {
   const { account, from, where, anyOf, result, of, order, project, limit } = r;
   return { account, from, where, anyOf, result, of, order, project, limit } as AskQuestion;
 }
+// The question a cursor keeps. A list's limit is a page size (each route leaves it out of its own cursor binding, and a
+// caller filling up to N rows asks each later page for fewer); a top N's limit is part of the question.
+const keptOf = (q: AskQuestion): AskQuestion => { if (q.result === "top") return q; const { limit: _l, ...rest } = q; return rest; };
 const canonical = (v: unknown): unknown =>
   Array.isArray(v) ? v.map(canonical)
   : v && typeof v === "object" ? Object.fromEntries(Object.keys(v).sort().filter((k) => (v as Record<string, unknown>)[k] !== undefined).map((k) => [k, canonical((v as Record<string, unknown>)[k])]))
   : v;
-const questionHash = (q: AskQuestion) => createHash("sha256").update(JSON.stringify(canonical(questionOf(q)))).digest("base64url").slice(0, 22);
+const questionHash = (q: AskQuestion) => createHash("sha256").update(JSON.stringify(canonical(keptOf(questionOf(q))))).digest("base64url").slice(0, 22);
 
 interface AskCursor { v: 1; route: AskRoute; cursor: string; position: number; validAt: number; q: string; forced: boolean; ir?: AskRefusal; matched?: number; fb?: Basis }
 const b64 = (s: string) => Buffer.from(s, "utf8").toString("base64url");
