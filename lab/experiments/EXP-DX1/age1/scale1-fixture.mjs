@@ -30,14 +30,6 @@ const { digest: population, factsPerAccount } = populationPins(people, "pooled")
 const name = "dx-scale-decision-" + nonce + "-0";
 const input = fixture(people, accounts, population);
 const client = new DatomicClient(url, 35000);
-// [DX-ACT8] DX_ACT8_PROTECT=<attribute> (default unset): the database is declared protected for that attribute before
-// anything is saved into it, so a gate can run a removal on request on the held toy. Unset: as before.
-if (process.env.DX_ACT8_PROTECT) {
-  const made = await client.create(runtimeApi.DatabaseScope.test(name), "lean", true, 35000);
-  assert(made.created && made.strictRecordClocks);
-  await client.declareProtection(made.db, [process.env.DX_ACT8_PROTECT], false);
-  assert((await client.erasureFrontier(made.db)).protected);
-}
 const comp = await openComposition("reach", "datomic", name);
 try {
   // [DX-AGE1] Why: use SCALE1's pinned source generator and Snapshot loader unchanged.

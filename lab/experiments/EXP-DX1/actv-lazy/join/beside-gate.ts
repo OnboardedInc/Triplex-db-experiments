@@ -43,8 +43,8 @@ import type { Write } from "../../scale1/decision/plan.ts";
 //               frames mid-settlement.
 //   enrol       nine accounts enrolled beside saves (one first without the option: refused), each publishing beside
 //               saves, all settling at once through one queue, each checked against its own oracle.
-//   removal     (last) a removal on request between the Publish's read and its commit, in a database given a removal
-//               policy for an attribute no rule reads.
+// A removal on request in a Publish's window runs in the miniature (scale2/mini.ts, DX_SCALE2_REMOVAL=1): this toy
+// stack gives its two gateways no shared removal directory, so a protected database cannot be loaded here.
 // Clocks are diagnostic; counts are exact. Every check failing stops the run.
 
 type Read = { started: number; ended: number; result: { subject: string; route: string; json: string; basis: { tx: number; validTime: string } } };
@@ -402,8 +402,7 @@ const toggleSmall = (doc: W0.ReleaseDoc) => (doc.name === "R1" ? W0.R2.doc : W0.
 
 export async function besideGate(c: GateContext) {
   const parts = (process.env.DX_ACT8_PARTS ?? "cost,beside,adversarial,kill,live,enrol").split(",");
-  assert(parts.every((p) => ["cost", "beside", "adversarial", "kill", "live", "enrol", "removal"].includes(p)));
-  assert(!parts.includes("removal") || parts.at(-1) === "removal", "removal is the last part");
+  assert(parts.every((p) => ["cost", "beside", "adversarial", "kill", "live", "enrol"].includes(p)));
   assert.equal(process.env.TX2_SETTLE_FRAMES, "bytes", "the gate settles with byte frames");
   assert([undefined, "read-cut"].includes(process.env.DX_ACT8_INJECT), "DX_ACT8_INJECT is unset or read-cut");
   captureCommits();
@@ -444,7 +443,6 @@ export async function besideGate(c: GateContext) {
     }
     evidence.between = g.between;
     evidence.racing = g.racing;
-    if (parts.includes("removal")) evidence.removal = await removalPart(g, base, set);
     evidence.besideStats = c.a.beside;
     evidence.finishedAt = new Date().toISOString();
     jsonFile(path.join(c.out, "act8-gate.json"), evidence);
@@ -936,48 +934,6 @@ async function enrolPart(g: Gate, set: Setter) {
     }
   }
   console.log("[act8] enrol " + JSON.stringify(out).slice(0, 1500));
-  return out;
-}
-
-// ------------------------------------------------------------------------------------------------ removal
-async function removalPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
-  const c = g.c;
-  set("TX2_PUBLISH_BESIDE", "1");
-  const attribute = ":worker/address";
-  // The database was declared protected for this attribute before its first save (DX_ACT8_PROTECT, scale1-fixture.mjs).
-  assert.equal(process.env.DX_ACT8_PROTECT, attribute, "the removal part needs DX_ACT8_PROTECT=" + attribute);
-  const before = await c.writer.erasureFrontier(c.db);
-  assert(before.protected, "the held toy's database is not protected");
-  const out: Record<string, unknown> = { attribute, seqBefore: before.seq };
-  const rows = await g.window("removal", 0, true, 10, async () => {
-    await sleep(500);
-    const i = 2 % c.people;
-    let erased: unknown;
-    const doc = nextLarge(g.current.doc, base());
-    const id = c.attempt + ":act8:removal";
-    let first = "";
-    try {
-      await c.offer(doc, id, now(), {
-        afterRead: async () => {
-          erased = await c.writer.erase(c.db, c.attempt + "-act8-erase", [{ entityId: c.descriptor.prefix + ids.worker(i), attribute }]);
-        },
-      });
-    } catch (e) {
-      first = String((e as Error)?.name) + ": " + String((e as Error)?.message).slice(0, 200);
-    }
-    assert(first, "a Publish whose removal ticket changed in its window was not refused");
-    const r = await c.offer(doc, id, now());
-    const old = g.current.doc;
-    await g.fold(r, old);
-    const settled = await g.settle(r, old);
-    await g.checkBetween(r);
-    out.first = first;
-    out.erased = erased;
-    out.seqAfter = (await c.writer.erasureFrontier(c.db)).seq;
-    out.second = { position: r.position, read: r.read, tries: r.tries, settled };
-  });
-  out.saves = saveSide(rows, []);
-  console.log("[act8] removal " + JSON.stringify(out).slice(0, 1200));
   return out;
 }
 
