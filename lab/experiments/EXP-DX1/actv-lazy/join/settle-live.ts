@@ -219,11 +219,11 @@ export async function livePhase(c: LiveContext) {
         ? await Settlement.open(c.a, queue, false, k.frames, k.precondition)
         : undefined;
       const sight: unknown[] = [];
-      // A rival writer of the same release in the same process, with the other framing and its own queue (a restart
+      // A rival writer of the same release in the same process, with its own queue (a restart
       // that overlaps the old process, or a second host): exactly one of two frames that follow one progress row lands.
       const rival =
         k.extra === "rival" && published
-          ? await Settlement.open(c.a, new BulkQueue(1), false, k.frames === "bytes" ? "count" : "bytes", k.precondition)
+          ? await Settlement.open(c.a, new BulkQueue(1), false, k.frames, k.precondition)
           : undefined;
       const begins = now() + 400,
         ends = begins + seconds * 1000;
@@ -412,7 +412,8 @@ export async function livePhase(c: LiveContext) {
         },
         exact,
       };
-      console.log("[act5] " + JSON.stringify({ ...result, saves: undefined }));
+      console.log("[act5] " + JSON.stringify(result));
+      jsonFile(path.join(c.out, "act5-case-" + k.name + ".json"), result);
       results.push(result);
       await worker?.close();
       await rival?.close();
@@ -682,7 +683,8 @@ async function multiCase(
     perAccount,
     otherSaves: saveSide(rows.filter((r) => r.account >= workers.length), turns),
   };
-  console.log("[act5] " + JSON.stringify({ ...result, perAccount: perAccount.map((p) => ({ ...p, saves: undefined })) }));
+  console.log("[act5] " + JSON.stringify(result));
+  jsonFile(path.join(c.out, "act5-case-" + k.name + ".json"), result);
   for (const w of workers) await w.close();
   // Back to form-free releases, settled quietly and checked.
   const back = await zero.publish(bases[0]!);
