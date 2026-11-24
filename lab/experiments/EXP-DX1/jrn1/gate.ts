@@ -298,6 +298,16 @@ for (const entity of [heavyOwner, quietOwner]) {
 }
 results.sdk = sdkCases;
 
+// 7. The server probe itself, on this toy (so the published command is known to run): sealed head = the aged head.
+{
+  const { execFileSync } = await import("node:child_process");
+  const probe = execFileSync(process.execPath, ["--import", "tsx", new URL("probe.ts", import.meta.url).pathname, url, db,
+    String(agedHead), quietOwner, heavyOwner, "--far", String(seedCut), "--entity-pages", "5", "--feed-pages", "3"], { encoding: "utf8" });
+  writeFileSync(join(out, "probe.jsonl"), probe);
+  const lines = probe.trim().split("\n").map((l) => JSON.parse(l));
+  assert(lines.at(-1).probe === "summary" && lines.filter((l) => l.probe === "field-history-page").every((l) => l.rows <= 40));
+  results.probe = lines;
+}
 writeFileSync(join(out, "result.json"), JSON.stringify(results, null, 2) + "\n");
 console.log(JSON.stringify(results, null, 2));
 client.close();
