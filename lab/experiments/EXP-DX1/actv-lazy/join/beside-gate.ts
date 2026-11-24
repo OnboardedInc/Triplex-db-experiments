@@ -567,6 +567,15 @@ const KINDS: Kind[] = [
   { name: "answerValue", pick: (r) => r.attribute === ":task/field-0", change: (v) => "act8-" + sha256(String(v.value)).slice(0, 12) },
   { name: "revision", pick: (r, i, p) => r.entityId === p + ids.placement(i) && r.attribute === ":placement/stamp", change: (v) => num(v, 1) },
 ];
+/** A hook that runs once however many tries the Publish takes (a retry plans again and would call it again). */
+const once = (f: () => Promise<void>) => {
+  let fired = false;
+  return async () => {
+    if (fired) return;
+    fired = true;
+    await f();
+  };
+};
 /** Commits a write of subject `i`'s fact of `kind` now (a raw commit guarded only by its own retraction), and adds it to
  * the oracle's history. */
 async function adversaryWrite(g: Gate, kind: Kind, i: number, tag: string) {
@@ -622,9 +631,9 @@ async function adversarialPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) 
         const i = (k++ * 3 + 1) % c.people;
         const doc = nextLarge(g.current.doc, base());
         let landed: Awaited<ReturnType<typeof adversaryWrite>> | undefined;
-        const hook = async () => {
+        const hook = once(async () => {
           landed = await adversaryWrite(g, kind, i, kind.name + where + k);
-        };
+        });
         const res = await g.publish(doc, "adv-" + kind.name + "-" + where, {
           options: where === "afterRead" ? { afterRead: hook } : { inside: hook },
         });
@@ -643,10 +652,10 @@ async function adversarialPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) 
     const extras = process.env.DX_ACT8_ADV_EXTRAS !== "0";
     for (const where of extras ? windows : []) {
       let inner: Release | undefined;
-      const hook = async () => {
+      const hook = once(async () => {
         inner = await c.offer(toggleSmall(g.current.doc.forms?.length ? base() : g.current.doc), c.attempt + ":act8:inner:" + where,
           now());
-      };
+      });
       const outerDoc = largeRelease(toggleSmall(g.current.doc.forms?.length ? base() : g.current.doc), shape20);
       const res = await g.publish(outerDoc, "adv-second-" + where, {
         options: where === "afterRead" ? { afterRead: hook } : { inside: hook }, inner: () => inner,
@@ -666,12 +675,12 @@ async function adversarialPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) 
     for (const where of extras ? windows : []) {
       const index = where === "afterRead" ? 8 : 9;
       let enrolled: { commits: number } | undefined;
-      const hook = async () => {
+      const hook = once(async () => {
         const before = await c.s.head();
         const x = await enrolStore(g, index);
         enrolled = { commits: (await c.s.head()) - before };
         await x.store.close();
-      };
+      });
       const res = await g.publish(nextLarge(g.current.doc, base()), "adv-enrol-" + where, {
         options: where === "afterRead" ? { afterRead: hook } : { inside: hook },
       });
