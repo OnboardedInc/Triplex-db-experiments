@@ -61,8 +61,18 @@ old page walk; the walk happens over position entries that yield no journal, or 
 | 6. SDK adapter with and without `boundedJournalPages` (loader rows accepted): `getTransactionsAfter` at six (after, limit) pairs, `getTransactionPositionsByEntity` on two entities | Equal in all 8; at the default bound each bounded call took one request |
 | Fake-gateway unit test (`packages/datomic/test/journal-bounds.test.ts`) | 2 of 2: the SDK's cursor loop gives the unbounded answer at bounds 1, 7 and 1000 over a 400-entry index with 5 journals (more than 300 requests at bound 1), only the first page waits |
 
-The SDK's live suite against this branch's gateway, plain and with every adapter bounded against a gateway whose
-bound is 2 entries: see the commit that adds `SUITE.md` lines below (`jrn1/suite.sh`).
+| 7. The server probe (`probe.ts`) on the same toy (sealed head = aged head 1,261, `--far` 61) | Runs: newest 20 old 20 entries, bounded 20; from below the aged head the first bounded page returned 1,000 journals after 300 entries (`limit`, 4.3 MB, 59 ms diagnostic), the second the remaining 201 (`end`); entity journal of the most-saved owner 20 found in 1 to 2 pages, an idle owner's 1 journal in 2 pages (3,387 entries, at most 101 ms a page); field history page 25 rows, 20,701 bytes against 42,016 for the unbounded read |
+
+The run repeated with the final code (`runs/g2`) and gave the same counts.
+
+**The SDK's live suite** (`jrn1/suite.sh`, `DATOMIC_INTEGRATION=1`, packages/datomic, this branch's gateway with its
+defaults in one lab container):
+
+| Arm | Result |
+| --- | --- |
+| Plain, whole suite (files in parallel) | 482 passed, 9 failed, 1 skipped. Every failure is the environment: `strict-order` needs a gateway on 8526; `layout-differential` (300 scenarios) and `reach` (200) lost the toy transactor ("Transactor not available") while running in parallel; `history-grouping` needs lab packages and gateway settings this container lacks and fails the same way on the baseline gateway `9e02cf1d2` (seed command rejected); `route-equivalence` needed the testkit build. `journal-fast` (100 scopes of random feed pages and commands deep-equal to the original implementation) passed |
+| Plain, sequential reruns | `route-equivalence` passed; `layout-differential` at 60 scenarios passed (18,996 comparisons) |
+| Bounded: every adapter with `TRIPLEX_DATOMIC_BOUNDED_JOURNAL=1`, gateway `TX2_JOURNAL_EXAMINE_ENTRIES=2` | `journal-fast`, `route-equivalence`, `adapter`, `read-pins`, `layout-unsupported`, `concurrent-commits`, `journal-bounds`, `feed`: 32 tests passed (8 files once the testkit was built); `layout-differential` 60 scenarios passed. The gateway counted 1,732 and 602 bounded feed requests in the two runs, at most 2 entries each, so the cursors were followed constantly |
 
 ## Entity-to-transaction index: decision and cost
 
