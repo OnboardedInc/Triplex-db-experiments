@@ -1,4 +1,4 @@
-// [DX-XQ3] Server run for the ID list route on the sealed 1 billion database (see ID-LISTS.md section 6 for the
+// [DX-XQ3] Server run for the ID list route on the sealed 1 billion database (see ID-LISTS.md section 5 for the
 // command, its duration and the predictions written before any run). It reads a demo stack brought up with the route on
 // (`DX_ID_LISTS=1` through demo/server-up.sh) and never writes.
 //   node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/xq3/server.ts READY_FILE OUT [ACCOUNT]
