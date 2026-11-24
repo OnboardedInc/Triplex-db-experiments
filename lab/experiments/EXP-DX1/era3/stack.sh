@@ -106,10 +106,14 @@ for i in $(seq 1 150); do
   curl -sS -m 10 -o "$out/replies/journal-poll.json" -H 'Content-Type: application/json' -X POST "$R/v2/db/$db/transactions" \
     --data-binary '{"after":0,"limit":100}' > /dev/null || true
   if [[ $n == 1 ]] && grep -q 'privacy-erasure' "$out/replies/journal-poll.json"; then committed=1; break; fi
+  # Database-wide (OPTION 0) every read is refused while a removal is pending, so the journal cannot show it: an intent
+  # pending while the removal's request is still blocked 3 s later means it is inside its publication (its native
+  # commit answers or times out within 5 s, and only the publication waits on the held row).
+  if [[ $n == 1 && $i -ge 15 ]] && kill -0 "$rm_pid" 2>/dev/null; then committed=2; break; fi
   sleep 0.2
 done
-step "intent pending and native commit visible: $committed"
-[[ $committed == 1 ]] || { echo "the removal never reached its publication" >&2; exit 1; }
+step "intent pending and native commit visible: $committed (1: in the journal; 2: inferred, the request still blocked in publication)"
+[[ $committed != 0 ]] || { echo "the removal never reached its publication" >&2; exit 1; }
 step "kill the write gateway inside the removal's publication"
 docker kill "$prefix-gw-w" > /dev/null
 wait "$rm_pid" || true
@@ -124,6 +128,7 @@ post "$R/v1/db/$db/transact" "$bodies/own-save.json" own-save-while-pending
 post "$R/v1/db/$db/transact" "$bodies/frame-any.json" frame-any-while-pending
 post "$R/v1/db/$db/transact" "$bodies/frame-acct.json" frame-acct-while-pending
 post "$R/v2/db/$db/erase" "$remove" removal-resumed
+post "$R/v1/db/$db/transact" "$bodies/frame-any.json" frame-any-resent-after-ack
 post "$R/v1/db/$db/read" '{"entityIds":["notice:v1:era3-any"]}' read-doc-after-ack
 post "$R/v1/db/$db/read" '{"entityIds":["acct/a/one"]}' read-a1-after-ack
 post "$R/v2/db/$db/transactions" '{"after":0,"limit":100}' journal-after-ack
@@ -139,6 +144,7 @@ const verdict = {
   frameNoAccountsWhilePending: [r("frame-any-while-pending").status, (r("frame-any-while-pending").body.match(/"code":"([^"]+)"/) || [])[1]],
   frameNamingAccountWhilePending: [r("frame-acct-while-pending").status, (r("frame-acct-while-pending").body.match(/"code":"([^"]+)"/) || [])[1]],
   removalResumed: [r("removal-resumed").status, removal.seq, removal.position],
+  frameNoAccountsResentAfterAck: [r("frame-any-resent-after-ack").status, (r("frame-any-resent-after-ack").body.match(/"code":"([^"]+)"/) || [])[1]],
   frameNoAccountsPosition: (() => { try { return JSON.parse(r("frame-any-while-pending").body).position; } catch { return null; } })(),
   derivedCopyReadableAfterAck: r("read-doc-after-ack").body.includes(va),
   a1ReadableAfterAck: r("read-a1-after-ack").body.includes(va),

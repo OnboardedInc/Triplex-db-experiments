@@ -132,6 +132,9 @@
             seen (frontier name)
             w-any (offers/send name (copy-frame "d1-any" "notice:v1:era3-any" value ticket nil))
             w-acct (offers/send name (copy-frame "d1-acct" "notice:v1:era3-acct" value ticket ["a"]))
+            ;; a frame of ANOTHER account (b) under a ticket read before the removal: per account it must commit
+            w-other (offers/send name (assoc (g/save-frame "d1-other" "notice:v1:era3-b" ":notice/body" (g/secret g/b1 "n") nil nil)
+                                             "erasureSeq" ticket "erasureAccounts" ["b"]))
             done (remove-attr! name "rm-d1" g/a1)
             p-removal (get-in done [:body "position"])
             p-any (position-of conn "d1-any") p-acct (position-of conn "d1-acct")
@@ -140,11 +143,14 @@
             detail {:stopped (offers/outcome stopped) :natively-committed-while-stopped committed-natively
                     :frontier-while-stopped (select-keys seen ["seq" "perAccount" "unscopedSeq"]) :ticket ticket
                     :database-wide-ticket-frame (offers/outcome w-any) :account-ticket-frame (offers/outcome w-acct)
+                    :other-account-frame (offers/outcome w-other)
                     :resumed (offers/outcome done) :removal-position p-removal
                     :database-wide-frame-position p-any :account-frame-position p-acct
                     :copy-readable-after-ack {:database-wide visible-any :account visible-acct}}]
         (observe! lbl :detail detail)
         (oracle! lbl (= [200 nil] (offers/outcome done)) "the resumed removal completes" detail)
+        (when per-account?
+          (oracle! lbl (= [200 nil] (offers/outcome w-other)) "a frame of another account commits while the removal is pending" detail))
         (oracle! lbl (not visible-any)
                  "a derived copy whose ticket was read before the removal is not readable after the removal is acknowledged (database-wide ticket)"
                  detail)
@@ -459,7 +465,8 @@
         (when (and (< p-race p-r) (not= kind :retire))
           (oracle! label (contains? ids rid) "a racing value committed before the removal was removed with it" {:ids ids :rid rid})))
       ;; an unrelated racing save (another subject, another account) is never refused
-      (when (#{:other-subject :other-account} kind)
+      ;; (not when the request sent during the stop was itself a removal of that other subject)
+      (when (and (#{:other-subject :other-account} kind) (not (and (= kind :other-subject) (= during :other-removal))))
         (oracle! label (= [200 nil] (offers/outcome @race-reply)) "an unrelated save prepared before the removal commits"
                  (offers/outcome @race-reply)))
       ;; writes sent while the removal was stopped carry a cut that lacks it
@@ -602,6 +609,8 @@
 ;; ---- main -------------------------------------------------------------------------------------------------------
 (defn- guarded [label f] (try (f) (catch Throwable e (reset! plan nil) (oracle! label false (str "case stopped: " (.getMessage e)) (pr-str e)))))
 (defn main []
+  ;; ERA3_PHASES=builder: the builder's own gate (era2/gate.clj), e.g. on the patched copy; it exits by itself
+  (when (= "builder" (System/getenv "ERA3_PHASES")) (era2-gate/main))
   (install-hooks!)
   (let [phases (set (str/split (or (System/getenv "ERA3_PHASES") "d1 d2 d3 d4 d5 d6 fuzz") #" "))]
     (when (phases "d1")

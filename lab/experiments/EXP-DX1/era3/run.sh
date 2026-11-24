@@ -19,6 +19,9 @@ git -C "$repo" rev-parse HEAD > "$out/tests"
 git -C "$source_repo" status --porcelain -- packages/datomic/gateway > "$out/dirty"
 cp -R "$source_repo/packages/datomic/gateway/src/." "$out/src/"
 cp "$source_repo/packages/datomic/src/codec-spec.json" "$out/codec-spec.json"
+# ERA3_PATCH=1: apply the review's proposed fix (era3/fix-proposal.py) to this private copy only.
+if [[ ${ERA3_PATCH:-0} == 1 ]]; then python3 "$x/era3/fix-proposal.py" "$out/src" > "$out/patch.log" || exit 2; fi
+echo "patch=${ERA3_PATCH:-0}" > "$out/patched"
 cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era3/attack.clj" "$out/lab/"
 image=${DX_ERA3_IMAGE_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
 [[ $image =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "run.sh: DX_ERA3_IMAGE_ID must be an image ID" >&2; exit 2; }
