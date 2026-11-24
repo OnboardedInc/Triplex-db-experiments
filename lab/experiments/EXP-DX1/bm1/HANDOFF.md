@@ -2,6 +2,13 @@
 
 ## Bench 4, November 23
 
+**Final state (24 November, about 02:55 UTC): the queue is empty and the server is being deleted.** These runs ended after the notes below were written:
+- Publish run 1 (ACT3 `f5f8c09ff`, [reading](PUBLISH100K-READING.md)): 100 of 100 within 1 s, 0 visibility failures.
+- Start-up read at 1 billion (JVM1 `968285954`, [reading](STARTUP-AGED-READING.md)): first-30 s save p99 fell from 7.26 s to 0.385 s.
+- Owner head pair, fixed (W1 `85fc3a4bd`, [reading](OWNER-HEAD-READING.md)): the append summary refused at the known `summarize.py:125` and was made on the Mac at `6cae9ba1b`. At 620/s the owner head stored 540/s with 8,801 refused or expired, against the reference's 612/s.
+
+All evidence is under `evidence/DX-BM1/bench4/` on the Mac, with SHA-256 checked on both sides. Small logs from the refused production launch and the start-up fresh dry run are in `misc-logs/`. Not run on bench 4: Publish run 2 (skipped by the orchestrator), the start-up read at 430M, and a second cache32-aged repeat.
+
 **Ready to receive data at 10:52 EST, 5 minutes after billing began (USD 1.09/hour from 15:47 UTC; about USD 0.15 so far).** Same hardware as bench 3 (12 cores, 96 GB, two 960 GB NVMe), freshly installed Ubuntu 24.04. The rental ends at 23:30 EST at the latest, when this driver deletes it.
 
 - **Bootstrap:** `t1/bare-metal.sh` at PREP1 `cdc72d4d5` with `DX_JAVA=25`, into `bench4/base-build`, exit 0 at about 10:53 EST. It built both Datomic images (Java 21 `tx2-datomic:1.0.7745-da00`, Java 25 `-jre25`) and pulled pinned Node and PostgreSQL 17. Each job rebuilds from this cache right before its run, as on bench 3.
