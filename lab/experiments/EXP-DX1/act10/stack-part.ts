@@ -11,7 +11,7 @@
 import { writeFileSync } from "node:fs";
 import path from "node:path";
 import { W0, canonical, sha256 } from "../../../bench/lib/w0-world.ts";
-import { keyFor } from "../v01/adopt.ts";
+import { keyFor } from "../scale1/decision/plan.ts";
 import { openStore, type HeldSource, type Store } from "../actv-lazy/store.ts";
 import { JoinedAccount } from "../actv-lazy/join/account.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
