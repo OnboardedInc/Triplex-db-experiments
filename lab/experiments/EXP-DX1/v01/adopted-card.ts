@@ -19,11 +19,14 @@ import { checkAdmission } from "./credit-evidence.ts";
 import { p99Miss, quietVerdict } from "./card-verdict.ts";
 import { windowStats, type WindowWrite } from "./windows.ts";
 import { fullCellTape, parseCardTape, tapeShape, tapeTitle, type CardTape } from "./production-card.ts";
+import { randomLine, readerLaunch, readerTitle, type CardReader } from "./card-reader.ts";
 
 type Card = { source: string; age: Age; writer: Writer; jvm?: JvmProfile; toy: boolean; campaign: string; out: string; forecast: string;
   realistic?: RealisticBinding;
   windowSeconds?: WindowSeconds; creditMode?: CreditMode;
-  prepared?: boolean; profile?: ServerProfile; txJvm?: JvmProfile; writeJvm?: JvmProfile; diagnostics?: ReturnType<typeof writeDiagnostics>; separateWal?: boolean; failure?: string;
+  prepared?: boolean; profile?: ServerProfile; txJvm?: JvmProfile;
+  /** [DX-CARD2] The tuned reader (run.ts --reader tuned); absent for the default reader. */
+  reader?: CardReader; writeJvm?: JvmProfile; diagnostics?: ReturnType<typeof writeDiagnostics>; separateWal?: boolean; failure?: string;
   /** The save tape: its name, or the input's binding of every loaded cell's tape report (assembled campaigns). */
   tape?: string | { name: string };
   /** [DX-CARD1] A campaign assembled by a later renderer commit than the one that ran it (run.ts --renderer). */
@@ -44,7 +47,7 @@ export function writeAdoptedCard(run: Card) {
   const file = (arm: string, name: string) => path.join(run.campaign, arm, name);
   const diagnostics = run.diagnostics ?? writeDiagnostics(run.writer);
   const profile = run.profile ?? "server";
-  const policy = launchProfile(profile, { jvm: run.jvm, txJvm: run.txJvm, writeJvm: run.writeJvm, creditMode });
+  const policy = launchProfile(profile, { jvm: run.jvm, txJvm: run.txJvm, writeJvm: run.writeJvm, creditMode, ...readerLaunch(run.reader) });
   const stages = serverStages(policy, !!run.separateWal);
   const readArm = (arm: string, load: boolean, mode = creditMode) => {
     if (!fs.existsSync(file(arm, "arm.json"))) return [];
@@ -56,6 +59,7 @@ export function writeAdoptedCard(run: Card) {
     const raw = JSON.parse(bytes.toString());
     assert.deepEqual([raw.p1, raw.p4, raw.p6, raw.p7, raw.thin, raw.selection, raw.fairCredits],
       [x.p1, x.p4, x.p6, x.p7, x.thin, x.settings.selection, x.settings.fairCredits]);
+    assert.deepEqual(raw.p1Random, x.p1Random);
     assert.equal(x.settings.creditMode, mode);
     const admission = writerAdmission(mode);
     if (x.p6 || !run.toy || admission.mode === "rolling") {
@@ -92,6 +96,7 @@ export function writeAdoptedCard(run: Card) {
       [run.source, run.age, run.writer, run.jvm, run.txJvm, run.writeJvm, diagnostics, !!run.separateWal, stages, windowSeconds, creditMode]);
     assert.deepEqual(input.realistic, run.realistic);
     assert.equal(input.profile ?? "server", profile);
+    assert.deepEqual(input.reader, run.reader, "the campaign ran another reader setting");
     assert.equal(Boolean(input.pgdata), prepared);
     if (prepared) assert.equal(input.pgdata.length, stages.length);
     let systemIdentifier: string | undefined;
@@ -159,6 +164,7 @@ export function writeAdoptedCard(run: Card) {
     return "[adopted arm](" + rel + ")";
   };
   const rows = new Map<string, string[]>();
+  let rowsRandom: string[] | undefined;
   const cellWindows: string[] = [], cellTelemetry: string[] = [], edgeRows: string[] = [];
   const regenerated: { cell: string; ms: number; gap: number; maxMs: number; maxGap: number }[] = [];
   const partial = "PARTIAL";
@@ -175,8 +181,28 @@ export function writeAdoptedCard(run: Card) {
     const baseline = zero?.p2.latency.p99Ms;
     const ratio = baseline && loaded.p2.latency.p99Ms !== null ? loaded.p2.latency.p99Ms / baseline : null;
     const miss = zero && p99Miss(run.toy, loaded.p1.find(p => p.seats === 256)?.read, 100, "L256 checked field-read p99");
-    if (loaded.p1.some(p => p.read.count || p.errors)) rows.set("P1", [`${miss ? miss + ". " : ""}${phases}. Whole-tape writer p99 ratio ${tag(ratio)}. Exact seed-cut field probes; full-world and recovery coverage remain open.`, miss ? "MISSED" : partial,
+    // [DX-CARD2] With the tuned reader the P1 verdict names its case: this row judges re-read subjects (the ladder's
+    // seats re-read a fixed sequence of subjects, so most reads find them in the reader's cache), and the next row
+    // judges the random-subject line on its own, since the two cases differ by about a factor of seven.
+    const judged = run.reader ? "Judges re-read subjects (seat s reads subject 7919·k mod 100,000 of account s mod 10; each subject returns about ten rounds later); random subjects are judged in the next row. " : "";
+    const batches = run.reader ? ` Client batches of up to ${loaded.p1[0]?.batch?.size ?? "—"}: mean ${loaded.p1.map(p => `L${p.seats} ${tag(p.batch?.meanBatch)}`).join(", ")}.` : "";
+    if (loaded.p1.some(p => p.read.count || p.errors)) rows.set("P1", [`${judged}${miss ? miss + ". " : ""}${phases}.${batches} Whole-tape writer p99 ratio ${tag(ratio)}. Exact seed-cut field probes; full-world and recovery coverage remain open.`, miss ? "MISSED" : partial,
       String(loaded.p1.reduce((a, p) => a + p.read.count, 0)), evidence("loaded")]);
+    const line = loaded.p1Random;
+    if (run.reader) {
+      assert(run.toy || line, "the tuned reader's card has no random-subject line");
+      if (line) {
+        const l = line.loads;
+        const randomMiss = p99Miss(run.toy, line.read, 100, `L${line.seats} random-subject read p99`);
+        const bad = line.wrong || line.errors ? `${line.wrong} wrong values and ${line.errors} errors; both bars are zero. ` : "";
+        rowsRandom = [`${bad}${randomMiss ? randomMiss + ". " : ""}L${line.seats} random ${tag(line.goodput)}/s, p50 ${tag(line.read.p50Ms)} ms, p99 ${tag(line.read.p99Ms)} ms, ${line.wrong} wrong, ${line.errors} errors; mean batch ${tag(line.meanBatch)}; ` +
+          `${line.population?.accounts ?? "—"} accounts × ${line.population?.subjectsPerAccount ?? "—"} subjects, pinned at the seed cut ${line.position}, every value checked against the seed's. ` +
+          (l ? `Storage loads per subject ${tag(l.loadsPerSubjectSampled)} (${l.sampledExchanges} sampled exchanges, ${tag(l.storageReadsPerExchange)} per exchange) and ${tag(l.loadsPerSubjectMetrics)} (reader metrics, ${tag(l.metricsSeconds)} s); object-cache share ${tag(l.cacheShare)}; handler CPU ${tag(l.handlerCpuMsPerExchange)} ms per exchange. `
+            : "Storage loads and cache share not recorded (no reader trace). ") +
+          `Answered from the current database ${line.shortcut.current} of ${line.shortcut.current + line.shortcut.asOf}.`,
+          run.toy ? partial : line.wrong || line.errors || randomMiss ? "MISSED" : "MET", String(line.read.count), evidence("loaded")];
+      }
+    }
     if (loaded.p3.entries) rows.set("P3", [`${loaded.p3.entries} ordered exact changes${loaded.seed.realistic ? ` (busy deep/thin/small ${armMix(loaded.writes).join("/")})` : ""}; dispatch-to-observation p99 ${tag(loaded.dispatchToFeed.p99Ms)} ms across ${loaded.dispatchToFeed.count} observations. Durable effects and crash resume are open.`, partial,
       String(loaded.p3.entries), evidence("loaded")]);
     if (loaded.p4?.observed.count) {
@@ -327,6 +353,35 @@ export function writeAdoptedCard(run: Card) {
       `. Each side offers ${windowSeconds * 3.5} quiet saves. The verdict scores the headline burst commit gate. Pinned-read and feed observations accompany it. Publish, import and durable-effect coverage remain open.`,
       headlineVerdicts.includes("MISSED") ? "MISSED" :
         completedRates.has("headline") && headlineVerdicts.every(v => v === "MET") ? "MET" : partial, pairs.map(c => c.samples).join(" · "), pairs.map(c => c.link).join(" · ")]);
+  }
+
+  // [DX-CARD2] The tuned reader's settings, its checks before the first read, and each role's cgroup memory peak per
+  // stage against its cap (the caps of server-32 with the tuned reader were set from the 2026-11-23 peaks).
+  function tunedReaderSection() {
+    const out = ["## Tuned reader", "", readerTitle(run.reader).trim(), ""];
+    const stagesDirs = [["zero", "P1 zero readers"], ["loaded", "P1 readers, P6, P7, P8"], [barrierRoot + "loaded", "barrier6 control"]] as const;
+    const caps = { tx: policy.tx.memoryMiB, "gw-w": policy["gw-w"].memoryMiB, "gw-r": policy["gw-r"].memoryMiB, pg: policy.pg.memoryMiB } as Record<string, number>;
+    const gib = (bytes: number) => (bytes / 2 ** 30).toFixed(2);
+    const memory: string[] = [];
+    for (const [dir, title] of stagesDirs) {
+      const check = file(dir, "reader-check.json"), peaks = file(dir, "role-memory.json");
+      if (fs.existsSync(check)) {
+        const c = JSON.parse(fs.readFileSync(check, "utf8"));
+        assert.equal(c.source, run.source);
+        out.push(`- ${title}: reader checked before the first offer: pinned short-cut ${c.pinned?.pinnedShortcut}, cut lookup ${c.pinned?.pinnedCutLookup}, permits ${c.permits.length ? c.permits.join(" ") : "one per core"}.`);
+      }
+      if (fs.existsSync(peaks)) {
+        const m = JSON.parse(fs.readFileSync(peaks, "utf8"));
+        assert.equal(m.source, run.source);
+        memory.push(`| ${title} | ` + ["tx", "gw-w", "gw-r", "pg"].map((role) => {
+          const r = m.roles[role];
+          return r ? `${gib(r.peakBytes)} of ${(caps[role]! / 1024).toFixed(0)}` : "—";
+        }).join(" | ") + " |");
+      }
+    }
+    if (memory.length) out.push("", "Peak cgroup memory per role and stage, GiB of the role's cap (`memory.peak`, page cache included):", "",
+      "| Stage | Transactor | Writer | Reader | PostgreSQL |", "| --- | ---: | ---: | ---: | ---: |", ...memory);
+    return [...out, ""];
   }
 
   function productionRow(label: string, arm: Observation, dir: string) {
@@ -503,6 +558,7 @@ export function writeAdoptedCard(run: Card) {
     "Fresh commands refused both retired IDs. Four pinned reads matched the original seed, pre-witness and two saved values.",
     run.toy ? partial : "MET", "2 refusals and 4 checked snapshots", "[identity witness](campaign/mixed-ids.json)"]);
   const field = ["P5", "P6", "P7", "P8", "P9"];
+  const randomBar = `${randomLine.seats} readers, each read a random subject of the whole population at the seed cut: read p99 ≤ 100 ms and zero wrong reads (the P1 read bar for subjects not in the reader's memory).`;
   const gaps: Record<string, string> = {
     P5: "The held SCALE1 roster has no Publish window in this run. [Server 1 measured Publish under load](https://github.com/OnboardedInc/Triplex-db-experiments/blob/530b88a6e9f7c9ca0593628bdbd7689707c87408/lab/experiments/EXP-DX1/bm1/HANDOFF.md#joined-publish-at-100000).",
     P6: "No verified matched quiet-account pair from this attempt.",
@@ -532,7 +588,8 @@ export function writeAdoptedCard(run: Card) {
     const bar = key === "P6"
       ? "Quiet loaded commit p99 ≤ 50 ms or ≤ 1.25× alone, zero wrong quiet reads or expired quiet commands."
       : match[3]!.trim();
-    return values ? `| ${match[1]!.trim()} | ${bar} | ${values.join(" | ")} |` : line.replace("| NOT MEASURED |", "| NOT RUN |");
+    const randomRow = key === "P1" && rowsRandom ? `\n| P1 random subjects | ${randomBar} | ${rowsRandom.join(" | ")} |` : "";
+    return values ? `| ${match[1]!.trim()} | ${bar} | ${values.join(" | ")} |${randomRow}` : line.replace("| NOT MEASURED |", "| NOT RUN |");
   }).concat([
     "| Mixed assertion identities | Retired old-format and ordered IDs are refused and four pinned reads match their expected values. | " +
     (rows.get("Mixed assertion identities") ?? ["The mixed-ID witness is unavailable in this attempt.", "NOT RUN", "0", "—"]).join(" | ") + " |",
@@ -543,6 +600,7 @@ export function writeAdoptedCard(run: Card) {
       "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |", ...cellWindows, "",
       ...(edgeRows.length ? ["Rows are placed in a cell and a half by their scheduled tape offset. Rows scheduled within half a floating-point step of their cell's end have a due time equal to the end on the epoch clock; they are counted in the cell and the second half they were offered in. Such rows per scope: " + edgeRows.join(" · ") + ".", ""] : [])] : []),
     ...(cellTelemetry.length ? ["## Within-cell counters", "", ...cellTelemetry, ""] : []),
+    ...(run.reader ? tunedReaderSection() : []),
     ...(productionRows.length ? ["## Production-shaped neighbour saves", "",
       `Neighbour accounts only (the quiet account is P6). Latencies are p50 / p99 ms from the scheduled offer to the durable acknowledgement; save completion runs from a save's first row offered to its last row acknowledged. Storage reads are SQL reads per commit from each acknowledgement, in the first 60 s / from 150 s. The per-subject ordered writer takes only commits of one to three facts that each replace a value; every other commit takes the general writer. Commits over 256 assertions carry the general identity. Every field of every production subject was read back at the cell's terminal cut and matched the acknowledged writes.`, "",
       "| Cell | Offered | Stored in window | Commit p50 / p99 ms | Save completion p50 / p99 ms | Reads per commit, first minute / late | Per-subject writer | General writer | General-identity commits | Exactness | Evidence |",
@@ -555,6 +613,7 @@ export function writeAdoptedCard(run: Card) {
     creditMode, admission: run.toy && admission.mode === "barrier" ? { ...admission, scope: "quiet cells" } : admission,
     ...(run.toy ? {} : { launchIntegration, stages, offeredRates: serverRates, windowSeconds, postgresStartup: prepared ? "prepared PGDATA" : "logical dump" }),
     diagnostics, comparison: defaultCreditMode,
+    ...(run.reader ? { reader: run.reader } : {}),
     armReadbacks: arms.map((a) => a.settings),
   };
   fs.writeFileSync(path.join(run.out, "SCORECARD-v0.1.md"),

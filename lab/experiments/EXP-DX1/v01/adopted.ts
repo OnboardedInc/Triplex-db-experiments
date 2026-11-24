@@ -25,12 +25,15 @@ import { collectCell, type physicalTelemetry } from "./cell-telemetry.ts";
 import { migratedReadRate, recentlyOffered, sampleMigratedReads } from "../w1/migrated-reads.ts";
 import { cardTapeReport, fullCellTape, isProduction, parseCardTape, productionCellMetrics, productionNeighbours, productionPredecessors,
   productionReadback, sortTape, tapeShape, type AgedCut, type ProductionWrite } from "./production-card.ts";
+import { randomLine, randomLineLoads, type P1Reader, type ReaderRecords } from "./card-reader.ts";
 
 export type Residency = Record<string, { rssBytes: number; threads: number }>;
 export type Peer = { write: string; read: string; slot: string; attempt: string; gatewaySource: string; java: unknown;
   telemetry?: ReturnType<typeof physicalTelemetry>; windowSeconds?: WindowSeconds; creditMode?: CreditMode; serialApply?: boolean; realisticToySlot?: string;
   // [DX-INT1] On the 1 billion copy: AGE1's admitted cut, so the production predecessors check AGE1's own rows exactly.
   aged?: { cut: AgedCut; head: number };
+  // [DX-CARD2] The tuned reader's P1 ladder: client batches and the random-subject line (v01/card-reader.ts).
+  p1?: P1Reader;
   empty?: Residency; residency?: () => Residency | Promise<Residency> };
 export type QuietCell = "alone" | 235;
 export type RetirementStudy = { rate: SerialApplyRate; append: boolean; seconds: 120 | 300; agedHead?: number };
@@ -148,7 +151,8 @@ async function quietReads(client: DatomicClient, seed: AdoptedSeed, start: numbe
   const message: Begin = { kind: "begin", key: "p6-" + cell, repeat: 0, people: seed.image.people as Density,
     cell, start, scopes: [seed.scope], withReaders: true, ...(isolation ? { isolation } : {}),
     // [DX-V01] Why: observe both halves on the same pinned read tape. Rejected: placing all quiet reads in the cold half.
-    readerWindow: windowSeconds === 300 ? { from: 15000, duration: 270000 } : undefined };
+    // [DX-CARD2] Cells of other lengths than 90 s read over the cell as the 300 s cells do: from 15 s to 15 s before the end.
+    readerWindow: windowSeconds !== undefined && windowSeconds !== 90 ? { from: 15000, duration: (windowSeconds - 30) * 1000 } : undefined };
   const sides = await Promise.all([readCell(client, 0, message, toy), readCell(client, 1, message, toy)]);
   const h = new Histogram();
   for (const side of sides) h.merge(Histogram.fromJSON(side.latency));
@@ -186,7 +190,8 @@ async function preloadFrom(client: DatomicClient, reader: DatomicClient, seed: A
 }
 
 async function readWindows(client: DatomicClient, seed: AdoptedSeed, start: number, loaded: boolean, toy: boolean,
-  study?: ReadStudy, samples: ReadSamples = []) {
+  study?: ReadStudy, samples: ReadSamples = [], p1?: P1Reader, read?: string, line: { random?: RandomLine } = {}) {
+  assert(!(study && p1), "The read study keeps its own batching");
   const intervals = toy ? [1, 4] : ladder;
   const duration = toy ? 4 : study ? 30 : phaseSeconds;
   const phases = [];
@@ -203,8 +208,12 @@ async function readWindows(client: DatomicClient, seed: AdoptedSeed, start: numb
     const mix = { deep: 0, thin: 0, small: 0 };
     // [DX-THIN1] Why: without a read study this sends one exact client.rows call per read, as the card does.
     // Rejected: a second read path for the scorecard's unbatched ladder.
-    const send = pinnedFields(client, seed.scope.db, field(0), requested, study?.batch ?? 1, (send, size) => {
-      if (!study) return send();
+    // [DX-CARD2] With the tuned reader the card's ladder sends queued reads together, up to p1.batch per exchange.
+    const send = pinnedFields(client, seed.scope.db, field(0), requested, study?.batch ?? p1?.batch ?? 1, (send, size) => {
+      if (!study) {
+        if (p1) { exchanges++; groupTotal += size; }
+        return send();
+      }
       groupTotal += size;
       return ++exchanges % 128 === 0 && study.sample ? sampledRead(client, samples, send) : send();
     });
@@ -246,11 +255,33 @@ async function readWindows(client: DatomicClient, seed: AdoptedSeed, start: numb
     }));
     if (poll) clearInterval(poll);
     phases.push({ seats: loaded ? seats : 0, goodput: delay.count / duration, errors, read: delay.summary(), mix: seed.realistic ? mix : undefined,
+      ...(p1 ? { batch: { size: p1.batch, exchanges, meanBatch: exchanges ? groupTotal / exchanges : 0 } } : {}),
       diagnostic: study ? { startedAt, deadline: end, drainedAt: now(), unique, perSeat: Array.from(perSeat || []), exchanges,
         groupTotal, peakQueued, peakSockets, cpu: process.cpuUsage(cpu || undefined),
         eventLoop: performance.eventLoopUtilization(elu || undefined), gateway: { begin, end: study.counters?.() } } : undefined });
   }
+  if (p1?.random && loaded) line.random = await randomSubjects(read!, seed, start + intervals.length * duration * 1000, duration, p1);
   return phases;
+}
+
+// [DX-CARD2] The random-subject line after the re-read ladder: 256 seats for one step, each read a random subject of
+// the whole population at the seed cut, checked against the seed's value (rd1/pinned-ladder.ts pinnedWindow, the
+// measured random windows' own read), then the reader's io-stats for the sampled exchanges and its metrics minutes.
+export type RandomLine = Awaited<ReturnType<typeof randomSubjects>>;
+async function randomSubjects(read: string, seed: AdoptedSeed, start: number, seconds: number, p1: P1Reader) {
+  assert(p1.random && !seed.realistic, "The random-subject line reads the SCALE1 deep population");
+  const { pinnedWindow, readerRecords } = await import("../rd1/pinned-ladder.ts");
+  const trace = p1.random.trace, offset = trace && fs.existsSync(trace) ? fs.statSync(trace).size : 0;
+  const step = await pinnedWindow(read, seed, randomLine.pin, { start, seconds, startHead: seed.scope.cut, candidates: [] },
+    { seats: p1.random.seats, batch: p1.batch, profileEvery: p1.random.profileEvery });
+  let reader: ReaderRecords | { error: string } | undefined;
+  if (trace && fs.existsSync(trace)) {
+    // The reader buffers its trace; wait before taking this line's sampled exchanges and metrics minutes.
+    await sleep(3000);
+    try { reader = readerRecords(trace, offset, start, start + seconds * 1000, step.profiled?.ids ?? []); }
+    catch (error) { reader = { error: String(error) }; }
+  }
+  return { ...step, reader, loads: reader && !("error" in reader) ? randomLineLoads(reader, step.goodput, step.meanBatch) ?? null : null };
 }
 
 async function realisticBackground(client: DatomicClient, seed: AdoptedSeed, start: number, seconds: number, toy: boolean) {
@@ -358,8 +389,10 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     } : undefined;
     const rated = typeof quietCell === "object" ? quietCell : undefined;
     const windowSeconds = peer.windowSeconds ?? serverCellSeconds;
-    const seconds = retirement?.seconds ?? (toy ? 8 : study ? 30 * ladder.length : rated ? windowSeconds
-      : quietCell === undefined ? phaseSeconds * ladder.length : cellSeconds("alone"));
+    // [DX-CARD2] The random-subject line adds one ladder step to the P1-P4 pair, in both arms, so their tapes still match.
+    const randomStep = peer.p1?.random && quietCell === undefined && !study && !retirement ? (toy ? 4 : phaseSeconds) : 0;
+    const seconds = retirement?.seconds ?? (toy ? 8 + randomStep : study ? 30 * ladder.length : rated ? windowSeconds
+      : quietCell === undefined ? phaseSeconds * ladder.length + randomStep : cellSeconds("alone"));
     // [DX-INT1] The production-shaped tape replaces the neighbour saves of the loaded cells (DX_V01_TAPE).
     const shape = tapeShape(parseCardTape(process.env.DX_V01_TAPE));
     const productionCell = shape !== undefined && !retirement && !study && !comparison &&
@@ -438,9 +471,11 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       start: start + 2000, seconds: seconds - 2, firstCut: startHead, validAt: SEED_VALID_FROM,
       candidates: (at) => recentlyOffered(tape, start, at, 1000, ownerOf) }) : undefined;
     void migratedLoaded?.catch(() => {}); // awaited after the window; never an unhandled rejection mid-window
+    const line: { random?: RandomLine } = {};
     const [writes, phases, quietRead, mixedReads, alongsideResult] = await Promise.all([
       play(senders, tape, start, peer.attempt, false, writer === "per-person-ordered", selection),
-      !retirement && quietCell === undefined && !comparison ? readWindows(reader, seed, start, loaded, toy, study, samples) : [], quiet, background,
+      !retirement && quietCell === undefined && !comparison ? readWindows(reader, seed, start, loaded, toy, study, samples,
+        peer.p1, peer.read, line) : [], quiet, background,
       alongside?.run({ start, seconds, startHead, tape, senders, production: production !== undefined }),
     ]);
     await resolveUncertain(senders, writes.unresolved);
@@ -511,19 +546,21 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       telemetrySha256 = hex(fs.readFileSync(name));
     }
     const evidence = path.join(out, "operations.json");
-    jsonFile(evidence, { writes: writes.rows, journal: feed, tape, fairCredits: credits, selection, p1: phases, p4: pulls, p6, p7, thin,
+    const p1Random = line.random === undefined ? {} : { p1Random: line.random };
+    jsonFile(evidence, { writes: writes.rows, journal: feed, tape, fairCredits: credits, selection, p1: phases, ...p1Random, p4: pulls, p6, p7, thin,
       ...(tapeGroups ? { ownerGroups: tapeGroups } : {}) });
     const result = { source, writer, telemetrySha256, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
       loaded, retirement, migratedReads, serialAnchor, ownerGroupPeople: tapeGroups && Object.fromEntries(
         (["loader", "earlier-window", "seed"] as const).map((g) => [g, Object.values(tapeGroups).filter((x) => x === g).length])), firstCut: startHead, terminal, seed: { ...adopted, realistic: seed.realisticBinding }, tapeSha256: hex(JSON.stringify(tape)),
-      observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java, creditMode: mode, selection, fairCredits: credits },
+      observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java, creditMode: mode, selection, fairCredits: credits,
+        ...(peer.p1 ? { p1Reader: { batch: peer.p1.batch, randomSeats: peer.p1.random?.seats ?? null, profileEvery: peer.p1.random?.profileEvery ?? null } } : {}) },
       study: study && { rate: study.rate, batch: study.batch, savesByLevel: phases.map((phase, i) => {
         const bucket = writes.rows.filter((row) => row.due >= start + i * 30_000 && row.due < start + (i + 1) * 30_000);
         const latency = new Histogram();
         for (const row of bucket) if (row.receipt) latency.recordMs(row.end! - row.due);
         return { seats: phase.seats, offered: bucket.length, received: latency.count, latency: latency.summary() };
       }) },
-      p1: phases, p2: { offered: tape.length, receipts: saves.length, latency: saveHistogram.summary() },
+      p1: phases, ...p1Random, p2: { offered: tape.length, receipts: saves.length, latency: saveHistogram.summary() },
       p3: { entries: feed.length }, p4: pulls, p6, p7, thin, ...(productionResult ? { production: productionResult } : {}),
       ...(alongside ? { alongside: { label: alongside.label, result: alongsideResult } } : {}) };
     // [DX-RD1] Why: require the complete toy tape and exact read results before publishing a read-study arm.

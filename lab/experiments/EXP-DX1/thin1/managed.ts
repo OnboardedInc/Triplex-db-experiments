@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { memoryPlan } from "../int1/memory-plan.ts";
 import { nodeImage, pgImage } from "../v01/source.ts";
 import { isWriter } from "../v01/profile.ts";
+import { parseReader } from "../v01/card-reader.ts";
 
 const [action, supplied, mode, rung, out, guestNode] = process.argv.slice(2);
 const scorecard = process.env.DX_V01_MAC_FIXTURE === "1";
@@ -204,6 +205,8 @@ function setup(compact: boolean) {
   assert(!writeOptionsAttempt || isWriter(scorecardWriter));
   // [DX-INT1] The card's save tape for its toy (v01/production-card.ts); Saturday's unless the Mac command names one.
   const scorecardTape = writeOptionsAttempt ? (process.env.DX_V01_TAPE ?? "saturday") : undefined;
+  // [DX-CARD2] The card's reader setting for its toy (v01/card-reader.ts); recorded for the guest as the tape is.
+  const scorecardReader = writeOptionsAttempt ? parseReader(process.env.DX_V01_READER, process.env.DX_V01_READ_PERMITS) : undefined;
   assert(scorecardTape === undefined || ["saturday", "production-R", "production-S"].includes(scorecardTape));
   for (const [n, slot] of slots.entries()) {
     const role = n === 0 ? "write" : "read";
@@ -218,6 +221,8 @@ function setup(compact: boolean) {
       (mode === "int1-campaign-proof" ? " -Ddxthin.campaign=yes" : "") +
       (writeOptionsAttempt ? " -Ddxthin.adopted=" + writeOptionsAttempt + " -Ddxthin.scorecardWriter=" + scorecardWriter : "") +
       (readStudy ? " -Ddxthin.readStudy=yes" : "") +
+      // [DX-CARD2] The card's tuned reader on the toy: both pinned options, the early filter and the read permits.
+      (scorecardReader ? " -Ddxthin.cardReader=tuned" + (scorecardReader.readPermits ? " -Ddxthin.readPermits=" + scorecardReader.readPermits : "") : "") +
       (nativePools ? " -Ddxthin.nativePools=yes -XX:NativeMemoryTracking=summary" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
       nonce +
       " -Ddxthin.secret=" +
@@ -235,6 +240,7 @@ function setup(compact: boolean) {
   write(cred, {
     nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, scorecardWriter, scorecardCreditMode, scorecardComparison, realisticScorecard,
     ...(scorecardTape && scorecardTape !== "saturday" ? { scorecardTape } : {}),
+    ...(scorecardReader ? { scorecardReader } : {}),
     crossCheck: !!writeOptionsAttempt && process.env.DX_THIN1_CROSSCHECK === "1",
     gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
     memoryPoints, nativePools,
@@ -313,6 +319,7 @@ function bind() {
       scorecardComparison: attempt.scorecardComparison,
       realisticScorecard: attempt.realisticScorecard,
       ...(attempt.scorecardTape ? { scorecardTape: attempt.scorecardTape } : {}),
+      ...(attempt.scorecardReader ? { scorecardReader: attempt.scorecardReader } : {}),
       crossCheck: attempt.crossCheck === true,
       compact: !!attempt.compact,
       census: attempt.census, cohort: attempt.cohort,
@@ -462,10 +469,12 @@ if (action === "--guest") {
       const { preparedFixture } = await import("../rd1/prepared-fixture.ts");
       await preparedFixture(out, process.env.DX_V01_FIXTURE_SOURCE!, stack.prefix, stack.managed.writeOptionsAttempt);
     }
+    const cardReader = await import("../v01/card-reader.ts");
     await adoptedToy(out, process.env.DX_V01_FIXTURE_SOURCE!, { write: stack.writeUrl, read: stack.readUrl,
       slot: stack.prefix, attempt: stack.managed.writeOptionsAttempt, gatewaySource: stack.gatewaySourceSha256,
       java: { placement: "owned Mac compact stack", commands }, residency,
       creditMode: parseCredits(stack.managed.scorecardCreditMode),
+      p1: cardReader.p1Reader(stack.managed.scorecardReader, true),
       realisticToySlot: stack.managed.realisticScorecard ? stack.containers[0].name : undefined }, stack.managed.scorecardWriter,
       stack.managed.scorecardComparison, readStudy);
     if (stack.managed.crossCheck) {

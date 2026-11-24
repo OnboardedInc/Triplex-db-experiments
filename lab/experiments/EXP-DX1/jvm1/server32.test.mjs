@@ -29,8 +29,26 @@ test("server-32 role caps fit a 96 GB machine with the host headroom guard", () 
   assert.equal(roleMemoryMiB(launchProfile("server", headline)), 49 * 1024);
   assert(roleMemoryMiB(named) + hostHeadroomMiB <= server32HostMiB);
   assert.throws(() => launchProfile("server-32", { ...headline, readCacheMiB: 3072 }), /96 GB/);
-  assert.throws(() => launchProfile("server-32", { ...headline, readTuned: true }));
   assert.throws(() => launchProfile("server-32", { ...headline, txJvm: "j21-g1" }), /ZGC/);
+});
+
+// [DX-CARD2] The 32 GiB transactor with the tuned reader: containers cut to the measured peaks (launch.mjs), every
+// heap, cache, direct limit and core unchanged, and the sum exactly at the guard.
+test("server-32 with the tuned reader fits the guard with 57 and 8 GiB containers", () => {
+  const both = launchProfile("server-32", { ...headline, readTuned: true, readCacheMiB: 3072 });
+  const alone = launchProfile("server-32", headline), tuned = launchProfile("server", { ...headline, readTuned: true, readCacheMiB: 3072 });
+  assert.deepEqual([both.tx.memoryMiB, both["gw-r"].memoryMiB, both["gw-w"].memoryMiB, both.pg.memoryMiB], [57 * 1024, 8 * 1024, 6 * 1024, 8 * 1024]);
+  assert.equal(roleMemoryMiB(both) + hostHeadroomMiB, server32HostMiB);
+  assert.deepEqual(both.tx.flags, alone.tx.flags);
+  assert.deepEqual([both.tx.cpus, both.tx.cacheMiB], [alone.tx.cpus, 32768]);
+  assert.deepEqual(both["gw-r"].flags, tuned["gw-r"].flags);
+  assert.deepEqual([both["gw-r"].cpus, both["gw-r"].cores, both["gw-r"].cacheMiB], ["5,6,11", 3, 3072]);
+  for (const flag of ["-Xmx6144m", "-XX:MaxDirectMemorySize=1024m", "-Ddatomic.objectCacheMax=3072m", "-XX:ActiveProcessorCount=3"])
+    assert(both["gw-r"].flags.includes(flag), flag);
+  assert.deepEqual(both["gw-w"], tuned["gw-w"]);
+  assert.deepEqual([both.clients, both.pg], [tuned.clients, tuned.pg]);
+  // The reader arms' own launch (server profile) keeps its measured 9 GiB reader and 30 GiB transactor.
+  assert.deepEqual([tuned.tx.memoryMiB, tuned["gw-r"].memoryMiB], [30 * 1024, 9 * 1024]);
 });
 
 test("the server profile stays the default until the owner switches it", () => {

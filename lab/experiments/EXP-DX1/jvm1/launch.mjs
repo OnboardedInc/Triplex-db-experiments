@@ -211,16 +211,25 @@ export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, writeJvm
   // Rejected: making cache capacity alter core placement or making the tuned treatment implicit.
   // [DX-JVM1] Why: the start-up read arms reuse PREP1's measured 32 GiB transactor cache: 48 GiB heap, 8 GiB direct, 60 GiB cap.
   // Rejected: a larger cache, which does not fit beside the other role caps on a 96 GB host.
-  assert(txCacheMiB === undefined || (txCacheMiB === 32768 && profile !== "laptop" && !reduced && !readTuned));
+  assert(txCacheMiB === undefined || (txCacheMiB === 32768 && profile !== "laptop" && !reduced));
   const largeRead = readTuned || readCacheMiB === 3072;
-  const readMemory = largeRead ? { memory: 9216, heap: 6144, direct: 1024 } : {};
+  // [DX-CARD2] Why: the 32 GiB transactor and the tuned reader together need 4 GiB less in role caps than their two
+  // separate measured launches. Measured peaks: the transactor's cgroup reached 53.11 GiB (48.07 GiB ZGC heap, 4.83 GiB
+  // other) of 60 in PREP1's cache32 arm at 1 billion (1,380 one-second samples, worst-case tape at 394 and 620 saves/s);
+  // the tuned reader reached 6.70 GiB (6 GiB heap fully committed) of 9 at its windows' ends in the three 1 billion
+  // reader arms. So the transactor's container is cut from 60 to 57 GiB and the reader's from 9 to 8 GiB, heaps,
+  // caches and direct limits unchanged, only when both are selected. Rejected: a smaller transactor heap (it holds the
+  // 32 GiB cache that sets P2 at 1 billion), cutting the writer (4.35 GiB peak of 6) or PostgreSQL (its page cache
+  // fills its 8 GiB and serves the random reads), and the 10 GiB host reserve (the driver's peak is not measured).
+  const combined = readTuned && txCacheMiB !== undefined;
+  const readMemory = largeRead ? { memory: combined ? 8192 : 9216, heap: 6144, direct: 1024 } : {};
+  const bigTx = txCacheMiB ? { tx: { ...server.tx, memory: combined ? 58368 : 61440, heap: 49152, direct: 8192, cache: txCacheMiB } } : {};
   // [DX-RD1] Why: leave two client cores available and give the read peer three physical cores.
   // Rejected: sharing the new read cores with the transmitter or verifier.
   const placementServer = readTuned ? { ...server,
     "gw-w": { ...server["gw-w"], cpus: "2,3,4", cores: 3 },
-    "gw-r": { ...server["gw-r"], cpus: "5,6,11", cores: 3, ...readMemory, cache: 3072 },
-  } : { ...server, "gw-r": { ...server["gw-r"], ...readMemory },
-    ...(txCacheMiB ? { tx: { ...server.tx, memory: 61440, heap: 49152, direct: 8192, cache: txCacheMiB } } : {}) };
+    "gw-r": { ...server["gw-r"], cpus: "5,6,11", cores: 3, ...readMemory, cache: 3072 }, ...bigTx,
+  } : { ...server, "gw-r": { ...server["gw-r"], ...readMemory }, ...bigTx };
   /** @param {Role} role */
   const settings = (role) => {
     const placement = profile === "laptop" ? laptop[role] : placementServer[role];

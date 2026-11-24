@@ -7,6 +7,7 @@ import { parseCredits } from "./server-workload.ts";
 import { barrierRoot, isWriter } from "./profile.ts";
 import { cleanSource, packageBytes } from "./source.ts";
 import { parseCardTape } from "./production-card.ts";
+import { readerFromEnvironment } from "./card-reader.ts";
 
 const [action, commit, argument, writerArg, creditArg, ageArg] = process.argv.slice(2);
 assert(process.platform === "darwin" && commit && argument && path.isAbsolute(argument));
@@ -48,7 +49,10 @@ const env = {
   DX_TOUCHED_READ_MODE: "following",
   // [DX-INT1] The card's save tape (v01/production-card.ts), passed to the toy stack.
   ...(process.env.DX_V01_TAPE ? { DX_V01_TAPE: process.env.DX_V01_TAPE } : {}),
+  // [DX-CARD2] The tuned reader setting (v01/card-reader.ts), passed to the toy stack and the toy card.
+  ...Object.fromEntries((["DX_V01_READER", "DX_V01_READ_PERMITS"] as const).flatMap((name) => process.env[name] ? [[name, process.env[name]]] : [])),
 };
+const reader = readerFromEnvironment(process.env);
 const command = (bin: string, args: string[]) => execFileSync(bin, args, { env, stdio: "inherit" });
 if (action === "--packages") {
   console.log("Mac checkout " + checkout);
@@ -103,7 +107,7 @@ if (action === "--packages") {
     }
     if (action === "--fixture") {
       const { writeAdoptedCard } = await import("./adopted-card.ts");
-      writeAdoptedCard({ source: commit, age, writer, creditMode, toy: true, campaign, tape: parseCardTape(process.env.DX_V01_TAPE),
+      writeAdoptedCard({ source: commit, age, writer, creditMode, toy: true, campaign, tape: parseCardTape(process.env.DX_V01_TAPE), reader,
         out: fixture, forecast: "Mac diagnostics from the SCALE1 loader fixture." });
     }
   }
