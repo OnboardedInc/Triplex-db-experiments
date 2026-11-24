@@ -157,6 +157,9 @@ async function ledgerCase(forms: number, precondition: Precondition) {
       await ref.oracle.call("check", { document: moved, old: big, basis: point(p3.position), worlds: f.roster.map((_, i) => f.world(i)), fold: false }),
     ).filter((x: any) => x.rows.length).map((x: any) => ({ subject: x.subject, changes: x.rows.map(([k, , v]: any) => [k, v]) }));
     assert.deepEqual(s3.output, want3, "stored changes of release 3 differ from the oracle");
+    // Release 2's values writer, run again, marks its half-written copy superseded (its notices are all recorded).
+    const sup = await worker.archive.runValues(2);
+    assert.equal(sup.status, "superseded");
     const superseded = await worker.archive.values(2);
     const recipient = await openStore("lazy-limits-recipient-" + randomUUID());
     let once: number[];
