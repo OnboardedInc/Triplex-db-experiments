@@ -138,7 +138,7 @@ for (const pair of pairs) {
         canonical(r.state.items) !== canonical(before)
           ? db.change("recorded-ledger:" + subject, before.length ? row("x", "", 0) : undefined, pack(r.state.items))
           : [];
-      return { subject, units: r.deliveries, closing: ledger.length > 0, ledger };
+      return { subject, units: r.deliveries, deliveries: r.deliveries.length, closing: ledger.length > 0, ledger };
     });
     const f = noticeFrame(db, cursorRow, cursor, candidates, {
       account: "notice:v1:" + sha + ":",

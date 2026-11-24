@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
-import { RELEASE, fact } from "../store.ts";
+import { fact, namesOf, type EntityGuard } from "../store.ts";
 import { frameEstimate } from "./frames.ts";
 
 // [DX-ACT6] Why: every Publish carried the whole definition set in force three times (the new document twice, in the
@@ -30,13 +30,15 @@ export function docsMode(value = process.env.TX2_RELEASE_DOCS): DocsMode {
 /** What the marker and the notice event carry in place of a document. */
 export type DocRef = { release: string; root: string; bytes: number };
 export const definitionsActor = "lazy/definitions";
-const definitionPrefix = RELEASE + "/definitions/";
 export const definitionAttribute = "lazy/definition";
-export const definitionEntity = (h: string) => definitionPrefix + h;
-/** A transaction that only stores definitions (the joined source's suffix check accepts it between Publishes). */
-export const definitionsOnly = (changes: readonly { entityId: string; attribute?: string }[]) =>
+type Named = { names?: Parameters<typeof namesOf>[0]["names"] };
+/** Definitions live under the account's own release entity name (per account in the one database). */
+const prefixOf = (s: Named) => namesOf(s).RELEASE + "/definitions/";
+export const definitionEntity = (s: Named, h: string) => prefixOf(s) + h;
+/** A transaction that only stores this account's definitions (the joined source's suffix check accepts it). */
+export const definitionsOnly = (s: Named, changes: readonly { entityId: string }[]) =>
   changes.length > 0 &&
-  changes.every((c) => /^[a-f0-9]{64}$/.test(c.entityId.slice(definitionPrefix.length)) && c.entityId.startsWith(definitionPrefix));
+  changes.every((c) => c.entityId.startsWith(prefixOf(s)) && /^[a-f0-9]{64}$/.test(c.entityId.slice(prefixOf(s).length)));
 type Head = Pick<W0.ReleaseDoc, "name" | "rules" | "world">;
 type Part = { kind: "forms" | "policies"; entries: unknown[] };
 type Page = { kind: "page"; parts: string[] };
@@ -154,13 +156,13 @@ export function rememberRelease(compiled: W0.CompiledRelease, claimed: string) {
 }
 /** Reads of definitions this process made (roots joined, rows and bytes read): bounded evidence for the cost table. */
 export const loaded = { roots: 0, rows: 0, bytes: 0 };
-type Rows = { rows: (ids: string[], position: number) => Promise<{ entityId: string; value: { value: string } }[]> };
+type Rows = Named & { rows: (ids: string[], position: number) => Promise<readonly { entityId: string; value: { value: string } }[]> };
 async function nodesAt(s: Rows, keys: string[], at: number) {
   const out = new Map<string, Node>();
   for (let i = 0; i < keys.length; i += 64) {
-    const rows = await s.rows(keys.slice(i, i + 64).map(definitionEntity), at);
+    const rows = await s.rows(keys.slice(i, i + 64).map((k) => definitionEntity(s, k)), at);
     for (const r of rows) {
-      const k = r.entityId.slice(definitionPrefix.length);
+      const k = r.entityId.slice(prefixOf(s).length);
       assert(!out.has(k), "Two rows for one definitions node");
       loaded.rows++;
       loaded.bytes += Buffer.byteLength(r.value.value);
@@ -186,8 +188,7 @@ export async function rootStored(s: Rows, ref: DocRef, at: number) {
   return (await nodesAt(s, [ref.root], at)).has(ref.root);
 }
 
-type Committer = {
-  rows: Rows["rows"];
+type Committer = Rows & {
   head: () => Promise<number>;
   commit: (
     id: string,
@@ -197,7 +198,7 @@ type Committer = {
     context?: unknown,
     afterFence?: undefined,
     onAck?: undefined,
-    absent?: readonly string[],
+    guards?: readonly EntityGuard[],
   ) => Promise<unknown>;
 };
 /**
@@ -213,7 +214,7 @@ export async function stageDocument(s: Committer, doc: W0.ReleaseDoc) {
   const keys = [...nodes.keys()].filter((k) => k !== ref.root);
   const batches: string[][] = [];
   let cur: string[] = [];
-  const op = (k: string) => fact(definitionEntity(k), definitionAttribute, nodes.get(k));
+  const op = (k: string) => fact(definitionEntity(s, k), definitionAttribute, nodes.get(k));
   for (const k of keys) {
     assert(frameEstimate([op(k)]).fits, "One definitions node exceeds the writer's bound");
     if (cur.length && !frameEstimate([...cur, k].map(op)).fits) {
@@ -231,7 +232,10 @@ export async function stageDocument(s: Committer, doc: W0.ReleaseDoc) {
       if (!todo.length) break;
       const ops = todo.map(op);
       try {
-        await s.commit("definitions:" + sha256(canonical(todo)), definitionsActor, ops, -1, { nodes: todo.length }, undefined, undefined, todo.map(definitionEntity));
+        // Entity guards (no live fact yet) replace the head fence: unfenced beside every account's saves.
+        const p = await s.head();
+        await s.commit("definitions:" + sha256(canonical(todo)), definitionsActor, ops, p, { nodes: todo.length }, undefined, undefined,
+          todo.map((k) => ({ entityId: definitionEntity(s, k), tripleIds: [] })));
         stats.writes++;
         stats.rows += ops.length;
         stats.bytes += Buffer.byteLength(canonical(ops));

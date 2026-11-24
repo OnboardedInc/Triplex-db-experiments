@@ -14,6 +14,7 @@ import {
   kernel,
   maskVersion,
   winner,
+  prefetchWinner,
   type Format,
 } from "./decision.ts";
 import { millis, value, type Controls, type Store } from "./store.ts";
@@ -223,6 +224,7 @@ export class LazyReader {
         ? worldOf(subject, r.snapshot.world(subject))
         : (await worldsAt(s, this.format, [subject], b))[0]!;
       stage?.("kernel");
+      await prefetchWinner(s, c, b); // [DX-ACT6] definitions by reference: loaded once per release, by hash
       const { json } = (shared ? render : evaluate)(s, this.format, world, b, c, latest);
       const route = eligible ? "pinned-replica" : "authoritative-source";
       if (afterPull) {
@@ -256,6 +258,7 @@ export class LazyReader {
       const sequence = this.protectedScope ? (await readErasure(s.comp))?.seq : undefined;
       const current = await s.controls(await s.head()),
         worlds = await worldsAt(s, this.format, subjects, b);
+      await prefetchWinner(s, c, b); // [DX-ACT6]
       const rows = worlds.map((w) => evaluate(s, this.format, w, b, c, current).json);
       if (
         maskVersion(current) === maskVersion(await s.controls(await s.head())) &&

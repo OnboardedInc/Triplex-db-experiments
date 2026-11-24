@@ -46,6 +46,7 @@ import {
   definitionsActor,
   definitionsOnly,
   docsMode,
+  documentOf,
   loadRelease,
   rootStored,
   splitDocument,
@@ -151,6 +152,7 @@ export class JoinedAccount {
       roster: async (c) => this.roster((await this.meta(c.position)).census, c.position),
       worlds: async (ids, c) =>
         worldsAt(s, s.profile, ids, { tx: c.position, validTime: c.validTime }),
+      release: (ref, at) => loadRelease(s, ref, at),
       ownedCommand: async (event, owner) => {
         const tx = (await s.comp.feedPage(event.at - 1, 1)).transactions[0];
         if (
@@ -221,7 +223,7 @@ export class JoinedAccount {
           allowed ||
             (t.actor === stageActor && stageChanges(this.db.prefix, t.changes)) ||
             // [DX-ACT6] Content-addressed release definitions written ahead of a Publish (unreachable until it).
-            (t.actor === definitionsActor && definitionsOnly(t.changes)) ||
+            (t.actor === definitionsActor && definitionsOnly(this.s, t.changes)) ||
             (setup &&
               t.actor === "lazy/join-index" &&
               t.changes.every((v: any) => v.entityId.startsWith(this.db.prefix + "join-"))),
@@ -976,7 +978,7 @@ export class JoinedAccount {
           const doc = W0.compileRelease(scheduled.document);
           assert(scheduled.joined === meta.epoch && doc.hash === scheduled.release);
           const prior = tail.value.custom
-            ? (await this.notices.event(tail.value.custom.definition, k)).value.document
+            ? await documentOf(this.s, (await this.notices.event(tail.value.custom.definition, k)).value, k)
             : tail.value.release
               ? W0[tail.value.release].doc
               : null;
