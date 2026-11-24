@@ -122,12 +122,15 @@ async function ledgerCase(forms: number, precondition: Precondition) {
     kill(2, "notices", 1);
     const p3 = await account.publish("moved", moved, valid, "owed");
     await ref.check(account, f.roster, f.world, moved, point(p3.position), big, 3);
-    await setSettlementControl(store, { paused: true, by: "gate" });
+    // The control is read from the values store (settlement.ts), where the SDK call writes it.
+    await setSettlementControl(worker.archive.store, { paused: true, by: "gate" });
     const held = await cursor();
     const pending = worker.settle(3);
+    pending.catch(() => undefined);
     await sleep(2500);
-    assert.deepEqual(await cursor(), held, "a paused account wrote a frame");
-    await setSettlementControl(store, { paused: false, by: "gate" });
+    const whilePaused = await cursor();
+    await setSettlementControl(worker.archive.store, { paused: false, by: "gate" });
+    assert.deepEqual(whilePaused, held, "a paused account wrote a frame");
     const t3 = await pending;
     assert.equal(t3.values.state.status, "stored");
     // Everything against the oracle and the independent rule.
