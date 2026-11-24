@@ -143,7 +143,12 @@
     (native-record db eid pending)))
 
 (defn publish!
+  "Publish the committed entry. Its position and stamp were given at the commit, so the intent is first rewritten to
+  the committed entry: the PostgreSQL authority publishes only an entry equal to the stored intent (it deletes the
+  intent by its exact payload in the same transaction). A crash between the two leaves either form, and both are
+  matched to the native commit on resume."
   [name conn current entry tries held started]
+  (privacy/prepare! name entry)
   (privacy/publish! name current entry)
   (when tries-log
     (println (json/write-str {"schema" "triplex.removal-tries.v1" "seq" (get entry "seq") "tries" tries

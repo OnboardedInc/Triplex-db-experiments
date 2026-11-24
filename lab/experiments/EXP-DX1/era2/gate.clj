@@ -581,6 +581,14 @@
 (defn- scenario [label f]
   (try (f) (catch Throwable e (check! label false (str "scenario stopped: " (.getMessage e))))))
 (defn main []
+  ;; The file authority publishes whatever it is given; the PostgreSQL authority publishes only an entry equal to the
+  ;; stored intent. Every run here holds the file authority to that rule as well.
+  (let [publish privacy/publish!]
+    (alter-var-root #'privacy/publish!
+      (fn [_] (fn [name current item]
+                (when-not (= (privacy/pending name) item)
+                  (throw (ex-info "Removal intent missing before publication" {:pending (privacy/pending name) :item item})))
+                (publish name current item)))))
   (doseq [sealed? [false true]]
     (when-not sealed? (scenario "held" #(held-across-removal false)))
     (scenario (str "derived " sealed?) #(derived-writes sealed?))
