@@ -5606,3 +5606,19 @@ Source: sweep builder, branch `exp/DX-XQ6-exact-sweep` `909309c63` (based on the
 - Server command written: 25 to 45 minutes.
 
 **Started** in the freed slot: a separate reader for questions across subjects (task file `OPUS-XQ7-question-reader.md`). The afternoon merge builder was told to add the sweep branch to its list.
+
+## 2026-11-24 12:15 EST: recovery time after a machine loss (failover option B): cause found, forecast 80 to 170 s
+
+Source: recovery-time builder, branch `exp/DX-HA2-recovery-time` `13fe78536` (based on `23b7df344`; not merged), page `lab/experiments/EXP-DX1/hasync1/RECOVERY-TIME.md`. Forecast derived from the 2026-11-23 evidence; nothing measured at full size today.
+
+- Breakdown of the measured 603.4 s: copying the 126 GB seed 131.4 s; SHA-256 check of the copy 452.0 s (together 96.8%); transactor takeover 12.1 s; new writer gateway and first commit 4.7 s; detect, fence, promote, start 1.7 s; PostgreSQL start and catch-up 1.2 s.
+- Cause: the copy script runs inside the PostgreSQL container, which the server profile pins to one core, so all 8 hash workers shared one core (279 MB/s). The three causes named on the day were not on this path.
+- The check is needed: it is the only thing that stops a damaged copy from becoming option B's second copy (no page checksums, no filesystem data checksums).
+- Built, default off: copy and check on 12 cores with PostgreSQL returned to its core afterwards (`TX2_HA2_COLD_CORES`); each file checked right after it is copied, read back from disk (`TX2_HA2_COLD_PIPELINE`); run only named cases (`TX2_HA2_CASES`).
+- Forecast with both on: first protected save 80 to 170 s (central 115 s). The 60 s bar cannot be met by two machines at full size (about 19.6 s is fixed, leaving 40 s to copy and check 126 GB); it needs a third machine already streaming, which is option C (first protected save about 20 to 25 s).
+- Second-failure check repaired (it read through the killed transactor). Toy drill: under A, a second loss erases all 12 one-copy saves and nothing earlier; under B, nothing acknowledged is lost (saves were held; the offered save was refused).
+- Mac gates: 0 acknowledged inserts lost in three runs; a flipped byte in the seed stopped the copy before PostgreSQL started.
+- Server runs written: run 1 (both options, three cases, 25 to 40 minutes, two machines), run 2 optional (15 to 20 minutes).
+- Not verified: every full-size time; direct reads on the servers' volume filesystem; an empty-disk replacement; a power cut; option C.
+
+**Started** in the freed slot: questions across subjects in the Triplex Console and agent tools (task file `OPUS-XQ8-console-questions.md`), built and proven on a second toy; Sam's console untouched.
