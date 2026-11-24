@@ -15,7 +15,9 @@ mkdir -p "$out/out"
 git -C "$repo" rev-parse HEAD > "$out/source"
 git -C "$repo" status --porcelain -- packages/datomic/gateway/src lab/experiments/EXP-DX1/rd5 > "$out/source-dirty"
 docker rm -f "$name" >/dev/null 2>&1
-docker run -d --name "$name" --memory 6g --cpus 4 -p 127.0.0.1:$base:8080 -p 127.0.0.1:$((base+1)):8081 -p 127.0.0.1:$((base+2)):8082 \
+# [DX-INT4] RD5_TREATMENT_ENV: more gateway settings for the two treatment readers (8082, 8083), for example the
+# waiting-read bound; empty (the default) leaves them as before.
+docker run -d --name "$name" --memory 6g --cpus 4 -e "RD5_TREATMENT_ENV=${RD5_TREATMENT_ENV:-}" -p 127.0.0.1:$base:8080 -p 127.0.0.1:$((base+1)):8081 -p 127.0.0.1:$((base+2)):8082 \
   -p 127.0.0.1:$((base+3)):8083 --entrypoint /bin/bash \
   -v "$repo/packages/datomic/gateway/src:/opt/gateway/src:ro" -v "$here:/gate:ro" -v "$out/out:/out" "$image" /gate/container.sh >/dev/null
 (cd "$repo" && node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/rd5/gate.ts "$out/out" \

@@ -84,8 +84,9 @@ const saveOne = async (c: DatomicClient, k: number) => {
   const attrs = k % 3 === 0 ? [":task/field-0", ":task/field-1"] : [":task/field-0"];
   const old = before.filter((r) => attrs.includes(r.attribute));
   const change = attrs.map((attr) => ({ e, a: attr, v: { type: "string" as const, value: fieldValue(i, 0, Number(attr.slice(-1)), k + 1).value } }));
-  await c.transact(db, command(`rd5-age-${nonce}-${k}`, change, old) as any);
+  const ack: any = await c.transact(db, command(`rd5-age-${nonce}-${k}`, change, old) as any);
   saved++;
+  return { e, value: change[0]!.v.value, position: Number(ack?.position?.v) };
 };
 for (let k = 0; k < agingSaves; k++) await saveOne(client, k);
 const agedHead = await headOf(client);
@@ -116,6 +117,9 @@ const chunks = <T,>(xs: T[], n: number) => Array.from({ length: Math.ceil(xs.len
 const read = (basis: object, entities: string[], extra: object = {}) => (c: DatomicClient) =>
   c.request<any>("POST", "/v1/db/" + db + "/read", { entityIds: entities, basis, ...extra }).then((r) => { rows += r.rows.length; return r.rows; });
 const shuffled = [...subjects].sort(() => Math.random() - 0.5);
+// [DX-INT4] RD5_POOL: comparisons in flight (default 4); more makes reads wait for the treatment readers' permits, which
+// is what the waiting-read bound acts on.
+const width = Number(process.env.RD5_POOL ?? 4);
 const pool = async <T,>(items: T[], n: number, f: (x: T) => Promise<void>) => {
   let k = 0;
   await Promise.all(Array.from({ length: n }, async () => { while (k < items.length) await f(items[k++]!); }));
@@ -126,11 +130,11 @@ const positions = [...new Set([
   ...Array.from({ length: 8 }, (_, k) => Math.max(1, Math.floor((seedCut * (k + 1)) / 9))),
   ...Array.from({ length: 40 }, (_, k) => seedCut + Math.floor(((agedHead - seedCut) * k) / 39))])];
 const tasks1 = positions.flatMap((p) => chunks(shuffled, 8).map((part) => ({ p, part })));
-await pool(tasks1, 4, ({ p, part }) => check("field0", read({ recordedPosition: p, validAt }, part, { pattern: { attribute: ":task/field-0" } }), { p }));
+await pool(tasks1, width, ({ p, part }) => check("field0", read({ recordedPosition: p, validAt }, part, { pattern: { attribute: ":task/field-0" } }), { p }));
 console.error(new Date().toISOString(), "field-0 compared", compared);
 // 2. Whole subjects (no pattern) at 6 positions, both valid times.
 const tasks2 = positions.filter((_, k) => k % 8 === 7).flatMap((p) => [1, validAt].flatMap((v) => chunks(shuffled, 8).map((part) => ({ p, v, part }))));
-await pool(tasks2, 4, ({ p, v, part }) => check("whole", read({ recordedPosition: p, validAt: v }, part), { p, v }));
+await pool(tasks2, width, ({ p, v, part }) => check("whole", read({ recordedPosition: p, validAt: v }, part), { p, v }));
 // 3. History reads of the aged subjects, and historical worlds for 64 subjects at 6 positions.
 await pool(chunks(shuffled.slice(0, 400), 8), 4, (part) => check("history", read({ recordedPosition: agedHead }, part, { history: true }), {}));
 for (const p of positions.filter((_, k) => k % 8 === 3))
@@ -139,9 +143,29 @@ for (const p of positions.filter((_, k) => k % 8 === 3))
 console.error(new Date().toISOString(), "before live phase compared", compared);
 // 4. While saves run: pinned field reads at fixed positions up to the aged head, and near the moving head.
 let running = true;
-const saver = (async () => { let k = agingSaves; while (running) await saveOne(client, k++); })();
+// [DX-INT4] Pair (b): with RD5_AT_LEAST=1, after each live save both treatment readers are asked for the saved subject's
+// field 0 at least at the save's receipt (an unpinned read); the answer must echo the receipt and hold the saved value.
+const atLeast = { reads: 0, early: 0, wrongEcho: 0, examples: [] as unknown[] };
+const saver = (async () => {
+  let k = agingSaves;
+  while (running) {
+    const r = await saveOne(client, k++);
+    if (process.env.RD5_AT_LEAST !== "1") continue;
+    for (const [label, c] of [["both", both], ["prefetch", pre]] as const) {
+      const answer = await c.request<any>("POST", "/v1/db/" + db + "/read",
+        { entityIds: [r.e], pattern: { attribute: ":task/field-0" }, atLeastPosition: r.position, basisWaitMs: 2000 });
+      atLeast.reads++;
+      const values = answer.rows.map((x: any) => x.value_string);
+      if (answer.atLeast !== r.position) atLeast.wrongEcho++;
+      if (values.length !== 1 || values[0] !== r.value) {
+        atLeast.early++;
+        if (atLeast.examples.length < 5) atLeast.examples.push({ reader: label, receipt: r.position, want: r.value, got: values });
+      }
+    }
+  }
+})();
 const live = shuffled.slice(0, 800);
-await pool(chunks(live, 8), 4, async (part) => {
+await pool(chunks(live, 8), width, async (part) => {
   await check("live-fixed", read({ recordedPosition: agedHead, validAt }, part, { pattern: { attribute: ":task/field-0" } }), {});
   const p = await headOf(ref);
   await check("live-near-head", read({ recordedPosition: p - 1, validAt }, part, { pattern: { attribute: ":task/field-0" } }), { p });
@@ -165,7 +189,14 @@ if (accounts === 10) {
 }
 const stats = async (c: DatomicClient) => (await c.request<any>("GET", "/v2/admin/scan-stats"));
 const s0 = await stats(ref), s1 = await stats(both), s2 = await stats(pre);
-const result = { gate: "rd5-uncached-read", seedCut, agedHead, finalHead, accounts, people, facts, agingSaves: saved, windows,
+const threads = async (c: DatomicClient) => c.request<any>("GET", "/v2/admin/threads").catch(() => null);
+const [t1, t2] = [await threads(both), await threads(pre)];
+const pair = { atLeast: process.env.RD5_AT_LEAST === "1" ? { ...atLeast, gateway: { both: s1.atLeast ?? null, prefetch: s2.atLeast ?? null } } : null,
+  treatmentEnv: process.env.RD5_TREATMENT_ENV ?? "",
+  bound: { both: t1 && { readWaitLimit: t1.readWaitLimit, readsRefusedBusy: t1.readsRefusedBusy, readsAdmitted: t1.readsAdmitted },
+    prefetch: t2 && { readWaitLimit: t2.readWaitLimit, readsRefusedBusy: t2.readsRefusedBusy, readsAdmitted: t2.readsAdmitted } },
+  sdkBusyRetries: { both: both.readBusyRetries, prefetch: pre.readBusyRetries }, pool: width };
+const result = { gate: "rd5-uncached-read", seedCut, agedHead, finalHead, accounts, people, facts, agingSaves: saved, windows, pair,
   positions: positions.length, compared, rows, differenceCount: differences.length, differences: differences.slice(0, 20),
   shortcut: { ref: s0.pinnedShortcut, both: s1.pinnedShortcut, prefetch: s2.pinnedShortcut },
   prefetch: { ref: s0.readPrefetch, both: s1.readPrefetch, prefetch: s2.readPrefetch } };
@@ -179,5 +210,6 @@ writeFileSync(join(out!, "probe-request.json"), JSON.stringify({
   threads: 16, seconds: Number(process.env.RD5_SECONDS ?? 20), layout: true, seed: 7, pgUrl: "" }) + "\n");
 writeFileSync(join(out!, "compare-done"), "ok\n");
 assert.equal(differences.length, 0, "an option changed a pinned answer");
+if (process.env.RD5_AT_LEAST === "1") assert(atLeast.reads > 0 && atLeast.early === 0 && atLeast.wrongEcho === 0, "an at-least read answered before its receipt");
 assert(s1.readPrefetch.batches > 0 && s2.readPrefetch.batches > 0, "the prefetch must have run");
 assert.equal(s0.readPrefetch.batches, 0);

@@ -78,9 +78,11 @@ sql -d datomic -c "select count(*), sum(octet_length(val)), round(avg(octet_leng
 tuned=(TX2_PINNED_SHORTCUT=1 TX2_PINNED_CUT_LOOKUP=1 TX2_READ_FILTER_EARLY=1 TX2_READ_PERMITS=3)
 gateway 8081 "-Ddatomic.objectCacheMax=32m" "${tuned[@]}"
 r0=$gw_pid
-gateway 8082 "-Ddatomic.objectCacheMax=32m -Ddatomic.readAheadPool=0" "${tuned[@]}" TX2_READ_PREFETCH=1
+# [DX-INT4] RD5_TREATMENT_ENV (from gate.sh; empty by default) adds settings to both treatment readers.
+read -r -a treatment <<< "${RD5_TREATMENT_ENV:-}"
+gateway 8082 "-Ddatomic.objectCacheMax=32m -Ddatomic.readAheadPool=0" "${tuned[@]}" TX2_READ_PREFETCH=1 ${treatment[@]+"${treatment[@]}"}
 r1=$gw_pid
-gateway 8083 "-Ddatomic.objectCacheMax=32m" "${tuned[@]}" TX2_READ_PREFETCH=1
+gateway 8083 "-Ddatomic.objectCacheMax=32m" "${tuned[@]}" TX2_READ_PREFETCH=1 ${treatment[@]+"${treatment[@]}"}
 r2=$gw_pid
 echo ready > /out/compare-ready
 wait_file /out/compare-done
