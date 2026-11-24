@@ -27,6 +27,41 @@
 (def ^Semaphore permits (Semaphore. permit-count true))
 (def ^ConcurrentHashMap running (ConcurrentHashMap.))
 
+;; [DX-XQ7] Why: a list screen asks for a page, a total and several counts of one account at once (review finding D7);
+;; refusing the second at once makes the screen retry. With TX2_ID_LIST_QUEUE_MS set, a request waits in a fair queue
+;; for its account's turn (TX2_ID_LIST_PER_ACCOUNT running at once, default 1), then in the pool's fair queue, at most
+;; that many ms in all, then 503 IndexBusy with retryAfterMs. Each account holds at most PER_ACCOUNT places in the pool's
+;; FIFO queue, so a page waits behind at most that many pages of each other account: accounts take turns. The answer
+;; then carries `queue` {micros, ahead}: its wait and how many pages of any account were admitted while it waited.
+;; Unset (the default): refused at once when the account is busy, exactly as before.
+;; Rejected: one pool for lists and sweeps (a sweep page holds its permit up to 2 s; a list page up to 1 s).
+(def list-queue-ms
+  (when-let [text (not-empty (System/getenv "TX2_ID_LIST_QUEUE_MS"))]
+    (let [n (Long/parseLong text)] (when-not (<= 1 n 5000) (throw (IllegalArgumentException. "TX2_ID_LIST_QUEUE_MS must be 1..5000"))) n)))
+(def list-per-account
+  (let [n (Integer/parseInt (or (not-empty (System/getenv "TX2_ID_LIST_PER_ACCOUNT")) "1"))]
+    (when-not (<= 1 n 16) (throw (IllegalArgumentException. "TX2_ID_LIST_PER_ACCOUNT must be 1..16"))) n))
+(def ^ConcurrentHashMap account-gates (ConcurrentHashMap.))
+(def ^java.util.concurrent.atomic.AtomicLong admitted (java.util.concurrent.atomic.AtomicLong.))
+(defn- queued-admit!
+  "Wait (fair, at most list-queue-ms) for the account's turn and a pool permit; return {:queue ... :release f}."
+  [account retry-ms]
+  (let [started (System/nanoTime) ticket (.get admitted)
+        ^Semaphore gate (.computeIfAbsent account-gates account
+                          (reify java.util.function.Function (apply [_ _] (Semaphore. (int list-per-account) true))))]
+    (when-not (.tryAcquire gate (long list-queue-ms) TimeUnit/MILLISECONDS)
+      (stats/bump! [:idLists :busy] 1)
+      (throw (ex-info "Another ID list of this account is running" {:status 503 :code "IndexBusy" :ids-refusal true :retryAfterMs retry-ms})))
+    (let [left (max 0 (- list-queue-ms (quot (- (System/nanoTime) started) 1000000)))]
+      (when-not (.tryAcquire permits left TimeUnit/MILLISECONDS)
+        (.release gate)
+        (stats/bump! [:idLists :busy] 1)
+        (throw (ex-info "Every ID list permit is in use" {:status 503 :code "IndexBusy" :ids-refusal true :retryAfterMs retry-ms}))))
+    (let [ahead (- (.getAndIncrement admitted) ticket)]
+      (stats/bump! [:idLists :queued] 1)
+      {:queue {:micros (quot (- (System/nanoTime) started) 1000) :ahead ahead}
+       :release (fn [] (.release permits) (.release gate))})))
+
 (def bound-defaults {"entries" 100000 "ms" 100 "segments" 512})
 (def bound-caps {"entries" 1000000 "ms" 1000 "segments" 4096})
 (def chunk-size 64)
@@ -281,13 +316,19 @@
             (refuse! 409 "CursorMismatch" "The cursor's key is outside this request's range"))
         prior (if cursor (get cursor "count") 0)]
     ;; Admission after the basis is resolved, so a wait for a position never holds a permit.
-    (when (some? (.putIfAbsent running account true))
-      (stats/bump! [:idLists :busy] 1)
-      (refuse! 503 "IndexBusy" "Another ID list of this account is running" {:retryAfterMs (get limits "ms")}))
-    (try
-      (when-not (.tryAcquire permits (get limits "ms") TimeUnit/MILLISECONDS)
-        (stats/bump! [:idLists :busy] 1)
-        (refuse! 503 "IndexBusy" "Every ID list permit is in use" {:retryAfterMs (get limits "ms")}))
+    (let [{:keys [queue release]}
+          (if list-queue-ms
+            (queued-admit! account (get limits "ms"))
+            (do
+              (when (some? (.putIfAbsent running account true))
+                (stats/bump! [:idLists :busy] 1)
+                (refuse! 503 "IndexBusy" "Another ID list of this account is running" {:retryAfterMs (get limits "ms")}))
+              (when-not (try (.tryAcquire permits (get limits "ms") TimeUnit/MILLISECONDS)
+                             (catch Throwable e (.remove running account) (throw e)))
+                (.remove running account)
+                (stats/bump! [:idLists :busy] 1)
+                (refuse! 503 "IndexBusy" "Every ID list permit is in use" {:retryAfterMs (get limits "ms")}))
+              {:release (fn [] (.release permits) (.remove running account))}))]
       (try
         (let [started (System/nanoTime)
               work (trace/span "ids/scan" "gateway" (scan! view base start last-key (some? last-key) order shape-re result limit limits))
@@ -307,6 +348,6 @@
                            (encode-cursor {"v" 1 "db" name "account" account "req" req "t" t "position" position
                                            "validAt" valid-at "last" (or last last-key) "count" total}))}
             (= result "ids") (assoc :ids ids)
-            (= result "count") (assoc :count total :countExact (not more?))))
-        (finally (.release permits)))
-      (finally (.remove running account)))))
+            (= result "count") (assoc :count total :countExact (not more?))
+            queue (assoc :queue queue)))
+        (finally (release))))))

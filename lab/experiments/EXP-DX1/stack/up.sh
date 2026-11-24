@@ -234,10 +234,26 @@ peer_java() {
 }
 gw_w_java=$(peer_java "${DX_GW_WRITE_HEAP:-}" "${DX_GW_WRITE_JAVA_OPTS:-}")
 gw_r_java=$(peer_java "${DX_GW_READ_HEAP:-}" "${DX_GW_READ_JAVA_OPTS:-}")
+# [DX-XQ7] Why: a second read gateway, the question reader, with its own peer, object cache, cores and permit pools,
+# serves only questions across subjects (ID lists, sweeps, find); the other gateways refuse those routes and name it.
+# Unset (the default): no question reader, and no gateway's environment changes (xq7/QUESTION-READER.md).
+# Rejected: a role name starting with w (the writer roles' checks would apply to it).
+question_reader=${DX_QUESTION_READER:-0} question_cpus='' question_port='' question_url=''
+[[ $question_reader =~ ^[01]$ ]] || { echo "up.sh: DX_QUESTION_READER must be 0 or 1" >&2; exit 2; }
+if [[ $question_reader == 1 ]]; then
+  question_cpus=${DX_QUESTION_CPUS:?DX_QUESTION_CPUS must name the question reader cores}
+  question_port=${DX_QUESTION_PORT:-$((port_r + 10))}
+  [[ ${DX_QUESTION_MAIN_REFUSES:-1} =~ ^[01]$ ]] || { echo "up.sh: DX_QUESTION_MAIN_REFUSES must be 0 or 1" >&2; exit 2; }
+  gw_q_java=$(peer_java "${DX_QUESTION_HEAP:-${DX_GW_READ_HEAP:-}}" "${DX_QUESTION_JAVA_OPTS:-${DX_GW_READ_JAVA_OPTS:-}}")
+  if [[ -n ${DX_QUESTION_CACHE:-} ]]; then
+    [[ $DX_QUESTION_CACHE =~ ^[1-9][0-9]{0,5}[mg]$ ]] || { echo "up.sh: DX_QUESTION_CACHE is a size such as 512m or 1g" >&2; exit 2; }
+    gw_q_java+=" -Ddatomic.objectCacheMax=$DX_QUESTION_CACHE"
+  fi
+fi
 if [[ ${DX_BARE_METAL:-0} == 1 ]]; then
   # [DX-BM1] Why: the native read gateway spans cores 4 and 8. Check each requested CPU against this host's actual allocation.
   # Rejected: carrying the eight-CPU Mac VM limit onto the 12-core bench, or allowing unavailable native CPUs.
-  python3 - "$tx" "$pg" "$gw_w" "$gw_r" <<'NATIVE_CPUS'
+  python3 - "$tx" "$pg" "$gw_w" "$gw_r" ${question_cpus:+"$question_cpus"} <<'NATIVE_CPUS'
 import os,re,sys
 allowed=os.sched_getaffinity(0)
 for group in sys.argv[1:]:
@@ -252,11 +268,11 @@ for group in sys.argv[1:]:
         cpus.update(members)
 NATIVE_CPUS
 else
-  for cpus in "$tx" "$pg" "$gw_w" "$gw_r"; do
+  for cpus in "$tx" "$pg" "$gw_w" "$gw_r" ${question_cpus:+"$question_cpus"}; do
     [[ "$cpus" =~ ^[0-7](,[0-7])*$ || "$cpus" =~ ^[0-7]-[0-7]$ ]] || { echo "only VM CPUs 0 through 7 are allowed" >&2; exit 2; }
   done
 fi
-for port in "$port_w" "$port_r"; do
+for port in "$port_w" "$port_r" ${question_port:+"$question_port"}; do
   [[ "$port" =~ ^[0-9]+$ && "$port" -ge 1024 && "$port" -le 65535 && "$port" != 15442 && "$port" != 17019 ]] || exit 2
 done
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
@@ -539,6 +555,9 @@ settings={'protocol':'sql','host':prefix+'-tx','alt-host':prefix+'-tx',
 'sql-url':'jdbc:postgresql://'+prefix+'-pg:5432/datomic?ApplicationName=triplex-tx','sql-user':'datomic','sql-password':'datomic',
 'write-concurrency':'4','read-concurrency':'8','index-parallelism':'1','heartbeat-interval-msec':'5000',
 'memory-index-threshold':sys.argv[3],'memory-index-max':sys.argv[4],'object-cache-max':sys.argv[5],'encrypt-channel':sys.argv[6]}
+# [DX-RD5] Why: a read gateway on a second machine finds the transactor by its alternative address (rd5/second-reader.sh).
+# Rejected: changing the primary host (this machine's peers keep resolving the container by name).
+if os.environ.get('DX_REMOTE_READER_HOST'): settings['alt-host']=os.environ['DX_REMOTE_READER_HOST']
 # [DX-JVM1] Why: tune only approved non-durability properties in this experiment.
 # Rejected: accepting arbitrary properties from an inherited environment.
 extra=json.loads(os.environ.get('DX_JVM1_TX_PROPERTIES', '{}'))
@@ -636,9 +655,17 @@ if [[ -n $pgdata ]]; then
 fi
 docker network create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-net" >/dev/null
 pg_target=/var/lib/postgresql/data
+# [DX-RD5] Why: a second machine's read gateway needs PostgreSQL (segments) and the transactor (novelty) on this
+# machine's private address; nothing is published unless DX_REMOTE_READER_HOST names that address.
+remote_pg=() remote_tx=()
+if [[ -n ${DX_REMOTE_READER_HOST:-} ]]; then
+  [[ $DX_REMOTE_READER_HOST =~ ^(10|172|192)\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] ||
+    { echo "up.sh: DX_REMOTE_READER_HOST must be this machine's private IPv4 address" >&2; exit 2; }
+  remote_pg=(-p "$DX_REMOTE_READER_HOST:5432:5432") remote_tx=(-p "$DX_REMOTE_READER_HOST:4334:4334")
+fi
 pg_args=(--pull never --name "$prefix-pg" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net"
   ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem"
-  -e POSTGRES_PASSWORD=datomic)
+  ${remote_pg[@]+"${remote_pg[@]}"} -e POSTGRES_PASSWORD=datomic)
 # [DX-T1-14] Why: activation uses a byte-verified fresh clone under the holder's lease; a sealed source is never writable.
 # Rejected: S5's old first-use/reuse fallback, incomplete copies, or attaching a transactor directly to a sealed seed.
 if [[ -n $pgdata ]]; then
@@ -960,7 +987,7 @@ COLD_INDEX_LOG
       'exec java -server $JAVA_OPTS -cp "$(bin/classpath)" clojure.main -i /dxh1/prep1-observe.clj -i /dxh1/cold-index.clj'"$startup_read"' -m datomic.launcher /dxh1/sql.properties')
   fi
 fi
-docker run -d --pull never --name "$prefix-tx" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
+docker run -d --pull never --name "$prefix-tx" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} ${remote_tx[@]+"${remote_tx[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
   -e "JAVA_OPTS=$tx_java$spec_java$trace_tx_java$final_flags" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" ${prep_tx[@]+"${prep_tx[@]}"} -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} "${tx_start[@]}" >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
 erase_env=()
@@ -994,6 +1021,10 @@ fi
 gateway_roles=(w r)
 if [[ $prepw -ge 2 ]]; then gateway_roles+=(w2); fi
 if [[ $prepw == 4 ]]; then gateway_roles+=(w3 w4); fi
+if [[ $question_reader == 1 ]]; then
+  gateway_roles+=(q)
+  if [[ $publish == false ]]; then question_url=http://$prefix-gw-q:8080; else question_url=http://127.0.0.1:$question_port; fi
+fi
 for role in "${gateway_roles[@]}"; do
   mode=$role; if [[ $role == w* ]]; then mode=w; fi
   # [DX-W1] Why: bootstrap is finished on the other peer before the single authoritative writer admits live traffic.
@@ -1067,31 +1098,49 @@ for role in "${gateway_roles[@]}"; do
   fi
   # [DX-XQ3] Why: the ID list route (questions across subjects, step 0) and its permit pool, on every gateway that
   # serves reads; unset leaves both gateways' environment exactly as before.
-  if [[ -n ${DX_ID_LISTS:-} ]]; then
-    [[ $DX_ID_LISTS =~ ^[01]$ ]] || { echo "up.sh: DX_ID_LISTS must be 0 or 1" >&2; exit 2; }
-    field_policy+=(-e "TX2_ID_LISTS=$DX_ID_LISTS")
+  # [DX-XQ7] The question reader always serves both routes; its pools come from DX_QUESTION_*, else the same settings.
+  id_lists=${DX_ID_LISTS:-} index_permits=${DX_INDEX_QUERY_PERMITS:-} sweep_on=${DX_SWEEP:-} sweep_permits=${DX_SWEEP_PERMITS:-}
+  sweep_per_account=${DX_SWEEP_PER_ACCOUNT:-} sweep_queue=${DX_SWEEP_QUEUE_MS:-}
+  list_queue=${DX_ID_LIST_QUEUE_MS:-} list_per_account=${DX_ID_LIST_PER_ACCOUNT:-}
+  if [[ $role == q ]]; then
+    id_lists=1 sweep_on=1 index_permits=${DX_QUESTION_INDEX_QUERY_PERMITS:-$index_permits}
+    sweep_permits=${DX_QUESTION_SWEEP_PERMITS:-$sweep_permits} sweep_per_account=${DX_QUESTION_SWEEP_PER_ACCOUNT:-$sweep_per_account}
+    sweep_queue=${DX_QUESTION_SWEEP_QUEUE_MS:-$sweep_queue} list_queue=${DX_QUESTION_ID_LIST_QUEUE_MS:-$list_queue}
+    list_per_account=${DX_QUESTION_ID_LIST_PER_ACCOUNT:-$list_per_account}
   fi
-  if [[ -n ${DX_INDEX_QUERY_PERMITS:-} ]]; then
-    [[ $DX_INDEX_QUERY_PERMITS =~ ^[1-9][0-9]?$ ]] || { echo "up.sh: DX_INDEX_QUERY_PERMITS must be 1..64" >&2; exit 2; }
-    field_policy+=(-e "TX2_INDEX_QUERY_PERMITS=$DX_INDEX_QUERY_PERMITS")
+  if [[ -n $id_lists ]]; then
+    [[ $id_lists =~ ^[01]$ ]] || { echo "up.sh: DX_ID_LISTS must be 0 or 1" >&2; exit 2; }
+    field_policy+=(-e "TX2_ID_LISTS=$id_lists")
+  fi
+  if [[ -n $index_permits ]]; then
+    [[ $index_permits =~ ^[1-9][0-9]?$ ]] || { echo "up.sh: DX_INDEX_QUERY_PERMITS must be 1..64" >&2; exit 2; }
+    field_policy+=(-e "TX2_INDEX_QUERY_PERMITS=$index_permits")
+  fi
+  if [[ -n $list_queue ]]; then
+    [[ $list_queue =~ ^[1-9][0-9]{0,3}$ && $list_queue -le 5000 ]] || { echo "up.sh: DX_ID_LIST_QUEUE_MS must be 1..5000" >&2; exit 2; }
+    field_policy+=(-e "TX2_ID_LIST_QUEUE_MS=$list_queue")
+  fi
+  if [[ -n $list_per_account ]]; then
+    [[ $list_per_account =~ ^([1-9]|1[0-6])$ ]] || { echo "up.sh: DX_ID_LIST_PER_ACCOUNT must be 1..16" >&2; exit 2; }
+    field_policy+=(-e "TX2_ID_LIST_PER_ACCOUNT=$list_per_account")
   fi
   # [DX-XQ6] Why: the exact sweep route, its permit pool and its cursor key (one secret for both gateways, so a cursor
   # survives a gateway restart); unset leaves both gateways' environment exactly as before.
-  if [[ -n ${DX_SWEEP:-} ]]; then
-    [[ $DX_SWEEP =~ ^[01]$ ]] || { echo "up.sh: DX_SWEEP must be 0 or 1" >&2; exit 2; }
-    field_policy+=(-e "TX2_SWEEP=$DX_SWEEP")
+  if [[ -n $sweep_on ]]; then
+    [[ $sweep_on =~ ^[01]$ ]] || { echo "up.sh: DX_SWEEP must be 0 or 1" >&2; exit 2; }
+    field_policy+=(-e "TX2_SWEEP=$sweep_on")
   fi
-  if [[ -n ${DX_SWEEP_PERMITS:-} ]]; then
-    [[ $DX_SWEEP_PERMITS =~ ^([1-9]|1[0-6])$ ]] || { echo "up.sh: DX_SWEEP_PERMITS must be 1..16" >&2; exit 2; }
-    field_policy+=(-e "TX2_SWEEP_PERMITS=$DX_SWEEP_PERMITS")
+  if [[ -n $sweep_permits ]]; then
+    [[ $sweep_permits =~ ^([1-9]|1[0-6])$ ]] || { echo "up.sh: DX_SWEEP_PERMITS must be 1..16" >&2; exit 2; }
+    field_policy+=(-e "TX2_SWEEP_PERMITS=$sweep_permits")
   fi
-  if [[ -n ${DX_SWEEP_PER_ACCOUNT:-} ]]; then
-    [[ $DX_SWEEP_PER_ACCOUNT =~ ^([1-9]|1[0-6])$ ]] || { echo "up.sh: DX_SWEEP_PER_ACCOUNT must be 1..16" >&2; exit 2; }
-    field_policy+=(-e "TX2_SWEEP_PER_ACCOUNT=$DX_SWEEP_PER_ACCOUNT")
+  if [[ -n $sweep_per_account ]]; then
+    [[ $sweep_per_account =~ ^([1-9]|1[0-6])$ ]] || { echo "up.sh: DX_SWEEP_PER_ACCOUNT must be 1..16" >&2; exit 2; }
+    field_policy+=(-e "TX2_SWEEP_PER_ACCOUNT=$sweep_per_account")
   fi
-  if [[ -n ${DX_SWEEP_QUEUE_MS:-} ]]; then
-    [[ $DX_SWEEP_QUEUE_MS =~ ^[1-9][0-9]{0,3}$ && $DX_SWEEP_QUEUE_MS -le 5000 ]] || { echo "up.sh: DX_SWEEP_QUEUE_MS must be 1..5000" >&2; exit 2; }
-    field_policy+=(-e "TX2_SWEEP_QUEUE_MS=$DX_SWEEP_QUEUE_MS")
+  if [[ -n $sweep_queue ]]; then
+    [[ $sweep_queue =~ ^[1-9][0-9]{0,3}$ && $sweep_queue -le 5000 ]] || { echo "up.sh: DX_SWEEP_QUEUE_MS must be 1..5000" >&2; exit 2; }
+    field_policy+=(-e "TX2_SWEEP_QUEUE_MS=$sweep_queue")
   fi
   if [[ -n ${DX_SWEEP_CURSOR_SECRET:-} ]]; then
     [[ $DX_SWEEP_CURSOR_SECRET =~ ^[A-Za-z0-9]{16,128}$ ]] || { echo "up.sh: DX_SWEEP_CURSOR_SECRET must be 16..128 letters or digits" >&2; exit 2; }
@@ -1103,6 +1152,24 @@ for role in "${gateway_roles[@]}"; do
     [[ $DX_SWEEP_SHAPES =~ ^(all|(related|ne|or|top|contains|sum)(,(related|ne|or|top|contains|sum))*)$ ]] || { echo "up.sh: DX_SWEEP_SHAPES must be all or a comma list of related,ne,or,top,contains,sum" >&2; exit 2; }
     field_policy+=(-e "TX2_SWEEP_SHAPES=$DX_SWEEP_SHAPES")
   fi
+  if [[ $question_reader == 1 ]]; then
+    if [[ $role == q ]]; then
+      field_policy+=(-e TX2_QUESTION_READER=1)
+      if [[ -n ${DX_QUESTION_ROUTES:-} ]]; then
+        [[ $DX_QUESTION_ROUTES =~ ^[a-z][a-z0-9-]{0,31}(,[a-z][a-z0-9-]{0,31})*$ ]] || { echo "up.sh: DX_QUESTION_ROUTES is a list of route names" >&2; exit 2; }
+        field_policy+=(-e "TX2_QUESTION_ROUTES=$DX_QUESTION_ROUTES")
+      fi
+    elif [[ ${DX_QUESTION_MAIN_REFUSES:-1} == 1 ]]; then
+      field_policy+=(-e "TX2_QUESTIONS_AT=$question_url")
+    fi
+  elif [[ -n ${DX_QUESTIONS_AT:-} ]]; then
+    # [DX-XQ7] A question reader on another machine (rd5/second-reader.sh with RD5_ROLE=question): every gateway here
+    # refuses questions and names it.
+    [[ $DX_QUESTIONS_AT =~ ^http://[A-Za-z0-9._-]+(:[0-9]{1,5})?$ ]] || { echo "up.sh: DX_QUESTIONS_AT is http://host:port" >&2; exit 2; }
+    field_policy+=(-e "TX2_QUESTIONS_AT=$DX_QUESTIONS_AT")
+  fi
+  # [DX-XQ7] Per-read io-stats counters on the read gateways (gates count the main reader's object cache hits and loads).
+  if [[ ${DX_READ_IO_COUNTERS:-0} == 1 && $mode != w ]]; then field_policy+=(-e TX2_READ_IO_COUNTERS=1); fi
   # [DX-XQ3] Why: the ID list gate removes a subject's protected values on request; both gateways share one erasure
   # directory (an owned volume, removed by down.sh --volumes). Rejected: the erase1 stack (it replaces the gateway main).
   xq3_mount=()
@@ -1113,10 +1180,14 @@ for role in "${gateway_roles[@]}"; do
   if [[ $mode == w ]]; then
     cpu=$gw_w port=$port_w
     if [[ $role != w ]]; then port=$((port_w + ${role#w} - 1)); fi
+  elif [[ $role == q ]]; then cpu=$question_cpus port=$question_port
   else cpu=$gw_r port=$port_r; fi
   ports=(); [[ $publish == false ]] || ports=(-p "127.0.0.1:$port:8080")
   if [[ $mode == w ]]; then
     mem=${DX_GW_WRITE_MEMORY:-$gw_mem}; role_java=$gw_w_java; image=$write_image
+  elif [[ $role == q ]]; then
+    mem=${DX_QUESTION_MEMORY:-${DX_GW_READ_MEMORY:-$gw_mem}}; role_java=$gw_q_java; image=$datomic_image
+    [[ $mem =~ ^[1-9][0-9]{0,5}[mg]$ ]] || { echo "up.sh: DX_QUESTION_MEMORY is a size such as 1500m" >&2; exit 2; }
   else
     mem=${DX_GW_READ_MEMORY:-$gw_mem}; role_java=$gw_r_java; image=$datomic_image
     field_policy+=(-e "TX2_READ_PROFILE=${DX_RD1_READ_PROFILE:-0}" -e "TX2_READ_FILTER_EARLY=${DX_RD1_READ_FILTER:-0}")
@@ -1126,6 +1197,12 @@ for role in "${gateway_roles[@]}"; do
       [[ $DX_READ_PERMITS =~ ^[1-9][0-9]?$ ]] || { echo "up.sh: DX_READ_PERMITS must be 1..99" >&2; exit 2; }
       field_policy+=(-e "TX2_READ_PERMITS=$DX_READ_PERMITS")
     fi
+    # [DX-RD5] Why: an uncached pinned read of eight subjects made its storage round trips one after another inside the
+    # permit, and Datomic's index read-ahead loaded leaves no point read uses (rd5/UNCACHED-READ.md). Both default off.
+    [[ ${DX_READ_PREFETCH:-0} =~ ^[01]$ && ${DX_READ_AHEAD_OFF:-0} =~ ^[01]$ ]] ||
+      { echo "up.sh: DX_READ_PREFETCH and DX_READ_AHEAD_OFF are 0 or 1" >&2; exit 2; }
+    if [[ ${DX_READ_PREFETCH:-0} == 1 ]]; then field_policy+=(-e TX2_READ_PREFETCH=1); fi
+    if [[ ${DX_READ_AHEAD_OFF:-0} == 1 ]]; then role_java+=" -Ddatomic.readAheadPool=0"; fi
   fi
   entity_cache_bytes=${DX_GW_READ_ENTITY_CACHE_BYTES:-268435456}
   [[ $mode != w ]] || entity_cache_bytes=${DX_GW_WRITE_ENTITY_CACHE_BYTES:-268435456}
@@ -1254,7 +1331,7 @@ if [[ ${DX_IDLE_SENTINEL:-0} == 1 ]]; then
   docker exec "$prefix-idle-sentinel" sh -c 'df -k /probe; findmnt -T /probe -o SOURCE,FSTYPE,TARGET' > "$attempt/idle-sentinel-mount.txt"
 fi
 docker exec "$prefix-pg" psql -U postgres -d datomic -Atc "SHOW fsync; SHOW synchronous_commit; SHOW full_page_writes; SHOW wal_sync_method;" > "$attempt/durability.txt"
-python3 - "$attempt" "$prefix" "$gateway_hash" "$port_w" "$port_r" "$publish" <<'PY'
+python3 - "$attempt" "$prefix" "$gateway_hash" "$port_w" "$port_r" "$publish" ${question_url:+"$question_url"} <<'PY'
 import json,pathlib,sys,datetime
 root=pathlib.Path(sys.argv[1]); rows=json.loads((root/'containers.json').read_text())
 durability=dict(zip(['fsync','synchronous_commit','full_page_writes','wal_sync_method'],(root/'durability.txt').read_text().splitlines()))
@@ -1269,6 +1346,7 @@ for role in ['w','r']:
 out={'createdAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'prefix':sys.argv[2],'gatewaySourceSha256':sys.argv[3],
 'containers':[{'name':r['Name'].lstrip('/'),'id':r['Id'],'imageId':r['Image'],'cpuset':r['HostConfig']['CpusetCpus'],'memory':r['HostConfig']['Memory']} for r in rows],
 'durability':durability,'writeUrl':('http://'+sys.argv[2]+'-gw-w:8080') if sys.argv[6]=='false' else 'http://127.0.0.1:'+sys.argv[4],'readUrl':('http://'+sys.argv[2]+'-gw-r:8080') if sys.argv[6]=='false' else 'http://127.0.0.1:'+sys.argv[5]}
+if len(sys.argv)>7: out['questionReaderUrl']=sys.argv[7]
 (root/'stack.json').write_text(json.dumps(out,indent=2)+'\n')
 PY
 if [[ $publish == false ]]; then
@@ -1276,3 +1354,4 @@ if [[ $publish == false ]]; then
 else
   printf 'DATOMIC_URL=http://127.0.0.1:%s\nDATOMIC_READ_URLS=http://127.0.0.1:%s\nEvidence: %s/stack.json\n' "$port_w" "$port_r" "$attempt"
 fi
+if [[ -n $question_url ]]; then printf 'QUESTION_READER_URL=%s\n' "$question_url"; fi

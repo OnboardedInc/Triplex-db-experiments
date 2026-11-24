@@ -1,5 +1,5 @@
 (ns triplex.gateway.main
-  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase] [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger] [triplex.gateway.pinned :as pinned] [triplex.gateway.group-cut :as group-cut]
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase] [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger] [triplex.gateway.pinned :as pinned] [triplex.gateway.uncached :as uncached] [triplex.gateway.group-cut :as group-cut]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
             [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed]
             [triplex.gateway.write-wire :as write-wire]
@@ -9,7 +9,8 @@
             [triplex.gateway.at-least :as at-least]
             [triplex.gateway.general-prefetch :as general-prefetch] [triplex.gateway.admission :as admission]
             [triplex.gateway.subject-hints :as subject-hints]
-            [triplex.gateway.ids :as ids] [triplex.gateway.sweep :as sweep])
+            [triplex.gateway.ids :as ids] [triplex.gateway.sweep :as sweep]
+            [triplex.gateway.question-reader :as qr])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -153,6 +154,9 @@
       general-prefetch/enabled (assoc-in [:options :generalPrefetch] (general-prefetch/installed? db))
       ;; [DX-W4] Why: report the option only when it is on, so default readbacks stay byte-identical.
       subject-hints/enabled (assoc-in [:options :subjectHints] (subject-hints/installed? db))
+      ;; [DX-RD5] Why: the uncached-read options, reported only when on, as the two above.
+      uncached/prefetch? (assoc-in [:options :readPrefetch] true)
+      (System/getProperty "datomic.readAheadPool") (assoc-in [:options :readAheadPool] (System/getProperty "datomic.readAheadPool"))
       subject/enabled (assoc :subjectSave true :subjectFunction (when subject-t (str subject/ident))
                              :subjectNumericOwner subject/numeric-owner?
                              :subjectOrderedIds subject/ordered-ids?
@@ -257,8 +261,11 @@
       ;; [DX-W3] Why: say whether reads, the web thread pool or the permit queue hold a request back.
       (and (= :get request-method) (= uri "/v2/admin/threads")) (response 200 (thread-stats))
       (and (= :post request-method) (= uri "/v2/admin/threads/reset")) (do (reset-thread-peaks!) (response 200 (thread-stats)))
-      (= uri "/v2/admin/scan-stats") (response 200 (assoc @stats/counts :idMemo (reach/id-memo-stats) :pinnedShortcut (pinned/stats) :entityCache (let [base (entity-cache/stats) extra (recent/stats)] (assoc (merge base extra) :bytes (+ (:bytes base) (:recentBytes extra))))))
-      (and (= :post request-method) (= uri "/v2/admin/scan-stats/reset")) (do (reset! stats/counts {}) (response 200 {}))
+      (= uri "/v2/admin/scan-stats") (response 200 (cond-> (assoc @stats/counts :idMemo (reach/id-memo-stats) :pinnedShortcut (pinned/stats) :readPrefetch (uncached/stats) :entityCache (let [base (entity-cache/stats) extra (recent/stats)] (assoc (merge base extra) :bytes (+ (:bytes base) (:recentBytes extra)))))
+                                                     ;; [DX-XQ7] Present only with their options on (default off: the answer is as before).
+                                                     qr/enabled (assoc :questionReader (qr/stats))
+                                                     qr/read-io-enabled (assoc :readIo @qr/read-io)))
+      (and (= :post request-method) (= uri "/v2/admin/scan-stats/reset")) (do (reset! stats/counts {}) (when qr/read-io-enabled (qr/reset-read-io!)) (response 200 {}))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(transactions|command|journal|entity-transactions)" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
             conn (connection (db-uri name))]
@@ -357,7 +364,11 @@
             "release" (storage/release! name (get input "handle"))
             "transact" (try (trace/span "storage/commit!" "gateway" (storage/commit! name conn db input))
                          (finally (when (get input "release") (storage/release! name (get input "handle")))))
-            "read" (trace/span "storage/read-rows" "gateway" (storage/read-rows name db input))
+            "read" (trace/span "storage/read-rows" "gateway"
+                     ;; [DX-XQ7] With TX2_READ_IO_COUNTERS=1 each read's io-stats are summed (question_reader.clj).
+                     (if (and qr/read-io-enabled (not (trace/read-sample?)))
+                       (qr/count-read-io #(storage/read-rows name db input))
+                       (storage/read-rows name db input)))
             "q" (trace/span "query/run" "gateway"
                   (do (when (and privacy/*cut* (not (lean/enabled? (or db (storage/held-db name (get input "handle"))))))
                         (throw (ex-info "Lean queries need current erasure-aware value semantics"
@@ -410,7 +421,7 @@
     (privacy/guard scope #(with-privacy-guards more work))
     (work)))
 
-(defn route-handler [{:keys [uri request-method body] :as request}]
+(defn route-handler-routed [{:keys [uri request-method body] :as request}]
   (if-let [[_ name action] (re-matches #"/v[12]/db/(s2-[A-Za-z0-9_-]+)/(.+)" uri)]
     (try
       (let [[conn db] (trace/span "privacy/current-data" "gateway"
@@ -481,6 +492,9 @@
           (response (or (:status info) 400) {:code (or (:code info) "GatewayError") :message (.getMessage e)}))))
     (route-handler-base request)))
 
+;; [DX-XQ7] Why: a question reader serves only questions across subjects, and a gateway beside one refuses them, before
+;; any privacy or database work (question_reader.clj). With both options unset `qr/guard` is nil for every request.
+(defn route-handler [request] (or (qr/guard request) (route-handler-routed request)))
 (defn handler [request] (trace/handler route-handler request))
 (defn serve! [serve-handler port]
   (envelope/start!)

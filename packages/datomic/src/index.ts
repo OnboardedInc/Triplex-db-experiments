@@ -33,6 +33,8 @@ export function makeDatomicRuntime(options: {
   readonly idLists?: import("./idLists.js").IdListOptions;
   /** [DX-RD4] A reader built from a receipt: every unpinned read answers at or after its position. */
   readonly readAtLeast?: import("./readAtLeast.js").ReadAtLeast;
+  /** [DX-XQ7] The question reader's URL: ID lists, sweeps and find go there; everything else to `url` as before. */
+  readonly questionReaderUrl?: string;
 }): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> {
   const connection = Layer.effect(
     Connection,
