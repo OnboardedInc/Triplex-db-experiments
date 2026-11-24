@@ -12,7 +12,7 @@ set -euo pipefail
 out=${1:?new absolute output directory}; arm=${2:?before or after}; rate=${3:?removals per second}; shape=${4:-ten}
 [[ $arm == before || $arm == after ]] || exit 2
 [[ $shape == ten || $shape == many ]] || exit 2
-: "${DOCKER_HOST:?}" "${DX_DATOMIC_IMAGE_RECEIPT:?start the stack from this branch's image by ID}"
+: "${DOCKER_HOST:?}" "${DX_DATOMIC_IMAGE_RECEIPT:?start the stack from the image of this branch, by ID}"
 here=$(cd "$(dirname "$0")" && pwd)
 repo=$(cd "$here/../../../.." && pwd)
 gw="DX_SWEEP_GATE_EVICT=1 DX_XQ3_ERASURE_DIRECTORY=1 DX_REMOVAL_PER_ACCOUNT=1"

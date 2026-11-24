@@ -63,8 +63,10 @@
                        :cmd (str "kw-" tag "-" acct "-" (name kind))}))
         replies (atom {}) reached (atom #{})
         send! (fn [w] (offers/send (if (= :delivery (:kind w)) rcp src) (body src w t)))
-        fire! (fn [p] (swap! reached conj p)
-                (doseq [w writes :when (= p (:at w))] (swap! replies assoc (:cmd w) (future (send! w)))))
+        ;; a point fires once (a removal that retries reaches its intent and commit points again)
+        fire! (fn [p] (when-not (@reached p)
+                        (swap! reached conj p)
+                        (doseq [w writes :when (= p (:at w))] (swap! replies assoc (:cmd w) (future (send! w))))))
         wait! (fn [p] (doseq [w writes :when (= p (:at w))] (deref (get @replies (:cmd w)) 30000 nil)))
         _ (do (fire! :before) (wait! :before))
         cmd (str "kr-" tag) selectors [{"entityId" sx "attribute" ":v"}]
@@ -144,9 +146,9 @@
                                           nil))))
                     gone (apply merge-with into {} (keep :gone results))
                     derived (apply merge-with into {} (keep :derived results))
-                    txs (apply into #{} (keep :derived-txs results))]
+                    txs (reduce into #{} (keep :derived-txs results))]
                 (x/block-checks! src conn (str "K block " k) gone derived txs)
-                (recipient-checks! rcp rconn (str "K block " k " recipient") gone (apply into #{} (keep :delivered results)))
+                (recipient-checks! rcp rconn (str "K block " k " recipient") gone (reduce into #{} (keep :delivered results)))
                 (bump! :pre-removal-derived-copies (reduce + 0 (map count (vals derived))))
                 (println "ACT9_PROGRESS" arm (pr-str {:block k :schedules (get @tally [:schedules]) :violations (count @x/violations)}))))))))))
 
