@@ -76,6 +76,18 @@ export { makeDatomicQueryExecutor } from "./DatomicQueryExecutor.js";
 export { DatomicBasisNotAvailable, DatomicLayoutUnsupported, DatomicAtLeastTimeout } from "./readErrors.js";
 export { ReadAtLeast, type ReadAtLeastRequest } from "./readAtLeast.js";
 export {
+  CallReads,
+  readBatch,
+  type BatchAnswer,
+  type BatchEntry,
+  type BatchPattern,
+  type BatchReference,
+  type BatchRequest,
+  type BatchStats,
+  type CallReadsOptions,
+  type ReachWorld,
+} from "./callReads.js";
+export {
   configStoreIdLists,
   DatomicMatchNeedsPaging,
   listIdsPage,

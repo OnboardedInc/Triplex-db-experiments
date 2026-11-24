@@ -61,7 +61,8 @@ export class DatomicHttpError extends Error {
 // [DX-W3] Why: a gateway started with TX2_READ_WAIT_LIMIT answers a read beyond its permit queue with 503 "ReadBusy"
 // at once instead of holding a web thread. Reads are idempotent, so the client waits the suggested delay and asks
 // again within the same deadline. Rejected: retrying writes (a write's outcome must stay single) and retrying any 503.
-const busyRetryRoute = /\/(?:reach|reach-many|read|q)$/;
+// [DX-API1] The batched read (one read permit, refusable like a pinned read) retries ReadBusy as the single reads do.
+const busyRetryRoute = /\/(?:reach|reach-many|read|q|batch)$/;
 const sleepMs = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 class DatomicRequestTooLarge extends DatomicHttpError {
   constructor() {

@@ -6,10 +6,16 @@ import { launchProfile } from "../../lab/experiments/EXP-DX1/jvm1/launch.mjs";
 
 const kind = process.argv[2];
 assert(kind === "server" || kind === "toy", "Use server or toy");
+// [DX-API1] DEMO_READER=tuned: the card's tuned reader (three cores, 3 GiB cache in a 9 GiB heap, CARD2's
+// `readHeapThird`) beside the same 32 GiB transactor, for the API-call run at 1 billion. Unset: the profile as before.
+const tunedReader = kind === "server" && process.env.DEMO_READER === "tuned";
+assert(process.env.DEMO_READER === undefined || process.env.DEMO_READER === "" || tunedReader, "DEMO_READER is tuned (server only) or unset");
 const policy = kind === "server"
-  ? launchProfile("server", { txJvm: "j25-zgc", writeJvm: "j21-g1", creditMode: "rolling6" })
+  ? tunedReader
+    ? launchProfile("server", { txJvm: "j25-zgc", writeJvm: "j21-g1", creditMode: "rolling6", readTuned: true, readCacheMiB: 3072, readHeapThird: true, txCacheMiB: 32768 })
+    : launchProfile("server", { txJvm: "j25-zgc", writeJvm: "j21-g1", creditMode: "rolling6" })
   : launchProfile("laptop");
-if (kind === "server") {
+if (kind === "server" && !tunedReader) {
   // The 32 GiB transactor cache arm (PREP1 `1-rolling6-cache32-S`, run on the 1 billion cut at cdc72d4d5).
   policy.tx.cacheMiB = 32768;
   policy.tx.memoryMiB = 61440;
@@ -32,6 +38,7 @@ const env = {
   // them off and 1.37 ms with them on, with zero wrong values. Rejected: leaving them to the stack's default (off).
   DX_PINNED_SHORTCUT: "1",
   DX_PINNED_CUT_LOOKUP: "1",
+  ...(tunedReader ? { DX_RD1_READ_FILTER: "1" } : {}),
 };
 const args = [
   ...(policy.tx.cpus ? ["--cpus-tx", policy.tx.cpus, "--cpus-pg", policy.pg.cpus,

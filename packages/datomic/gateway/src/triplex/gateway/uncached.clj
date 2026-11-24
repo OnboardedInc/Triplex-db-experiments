@@ -39,6 +39,20 @@
     ;; d/datoms is an Iterable without count; walking it realizes every leaf the subject's rows sit in.
     (reduce (fn [n _] (inc n)) 0 (d/datoms db :eavt e))))
 
+(defn touch-all!
+  "Touch each subject of `ids` at `db` concurrently on the prefetch pool (the calling thread takes the first) and wait for
+  all, whatever TX2_READ_PREFETCH says. Returns nil; never throws. Loads keep the caller's io-stats bindings.
+  [DX-API1] Why: the batched read (batch.clj) prefetches a whole batch's subjects with the same pool and touch.
+  Rejected: a second pool (two pools would let one batch take twice the overlap)."
+  [db ids]
+  (when (and db (seq ids))
+    (let [task (fn [id] (bound-fn* (fn [] (try (touch! db id) (catch Throwable t (.increment failures) (reset! last-failure (str t)) nil)))))
+          futures (mapv #(.submit ^ExecutorService @pool ^Callable (task %)) (rest ids))]
+      ((task (first ids)))
+      (doseq [^Future f futures]
+        (try (.get f) (catch Throwable _ (.increment failures))))
+      nil)))
+
 (defn prefetch!
   "With TX2_READ_PREFETCH=1 and more than one subject, touch each subject of `ids` at `db` concurrently (the calling
   thread takes the first) and wait for all. Returns nil; never throws. Loads keep the caller's io-stats bindings, so a
@@ -47,9 +61,4 @@
   (when (and prefetch? db (next ids))
     (.increment batches)
     (.add subjects (count ids))
-    (let [task (fn [id] (bound-fn* (fn [] (try (touch! db id) (catch Throwable t (.increment failures) (reset! last-failure (str t)) nil)))))
-          futures (mapv #(.submit ^ExecutorService @pool ^Callable (task %)) (rest ids))]
-      ((task (first ids)))
-      (doseq [^Future f futures]
-        (try (.get f) (catch Throwable _ (.increment failures))))
-      nil)))
+    (touch-all! db ids)))

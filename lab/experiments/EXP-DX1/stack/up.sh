@@ -297,6 +297,8 @@ subject_wide=${TX2_SUBJECT_WIDE:-0}
   { echo "up.sh: DX_INDEX_QUERY_PERMITS must be 1..64" >&2; exit 2; }
 [[ ${DX_READ_PREFETCH:-0} =~ ^[01]$ && ${DX_READ_AHEAD_OFF:-0} =~ ^[01]$ ]] ||
   { echo "up.sh: DX_READ_PREFETCH and DX_READ_AHEAD_OFF are 0 or 1" >&2; exit 2; }
+# [DX-API1] The batched read route (one API call's reads at one position, api1/API-CALL-READS.md); default off.
+[[ ${DX_READ_BATCH:-0} =~ ^[01]$ ]] || { echo "up.sh: DX_READ_BATCH is 0 or 1" >&2; exit 2; }
 [[ -z ${DX_REMOTE_READER_HOST:-} || $DX_REMOTE_READER_HOST =~ ^(10|172|192)\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] ||
   { echo "up.sh: DX_REMOTE_READER_HOST must be this machine's private IPv4 address" >&2; exit 2; }
 # [DX-INT4] XQ6's sweep options, refused here for the same reason (the uses stay in the gateway loop).
@@ -1157,6 +1159,8 @@ for role in "${gateway_roles[@]}"; do
       { echo "up.sh: DX_READ_PREFETCH and DX_READ_AHEAD_OFF are 0 or 1" >&2; exit 2; }
     if [[ ${DX_READ_PREFETCH:-0} == 1 ]]; then field_policy+=(-e TX2_READ_PREFETCH=1); fi
     if [[ ${DX_READ_AHEAD_OFF:-0} == 1 ]]; then role_java+=" -Ddatomic.readAheadPool=0"; fi
+    # [DX-API1] Why: the batched read route on the read gateway only; unset leaves its environment as before.
+    if [[ ${DX_READ_BATCH:-0} == 1 ]]; then field_policy+=(-e TX2_READ_BATCH=1); fi
   fi
   entity_cache_bytes=${DX_GW_READ_ENTITY_CACHE_BYTES:-268435456}
   [[ $mode != w ]] || entity_cache_bytes=${DX_GW_WRITE_ENTITY_CACHE_BYTES:-268435456}

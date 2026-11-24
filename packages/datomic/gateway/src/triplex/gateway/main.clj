@@ -9,7 +9,8 @@
             [triplex.gateway.at-least :as at-least]
             [triplex.gateway.general-prefetch :as general-prefetch] [triplex.gateway.admission :as admission]
             [triplex.gateway.subject-hints :as subject-hints]
-            [triplex.gateway.ids :as ids] [triplex.gateway.sweep :as sweep])
+            [triplex.gateway.ids :as ids] [triplex.gateway.sweep :as sweep]
+            [triplex.gateway.batch :as batch])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -155,6 +156,8 @@
       subject-hints/enabled (assoc-in [:options :subjectHints] (subject-hints/installed? db))
       ;; [DX-RD5] Why: the uncached-read options, reported only when on, as the two above.
       uncached/prefetch? (assoc-in [:options :readPrefetch] true)
+      ;; [DX-API1] Why: the batched read route, reported only when on, as the two above.
+      batch/enabled (assoc-in [:options :readBatch] true)
       (System/getProperty "datomic.readAheadPool") (assoc-in [:options :readAheadPool] (System/getProperty "datomic.readAheadPool"))
       subject/enabled (assoc :subjectSave true :subjectFunction (when subject-t (str subject/ident))
                              :subjectNumericOwner subject/numeric-owner?
@@ -260,7 +263,7 @@
       ;; [DX-W3] Why: say whether reads, the web thread pool or the permit queue hold a request back.
       (and (= :get request-method) (= uri "/v2/admin/threads")) (response 200 (thread-stats))
       (and (= :post request-method) (= uri "/v2/admin/threads/reset")) (do (reset-thread-peaks!) (response 200 (thread-stats)))
-      (= uri "/v2/admin/scan-stats") (response 200 (assoc @stats/counts :idMemo (reach/id-memo-stats) :pinnedShortcut (pinned/stats) :readPrefetch (uncached/stats) :entityCache (let [base (entity-cache/stats) extra (recent/stats)] (assoc (merge base extra) :bytes (+ (:bytes base) (:recentBytes extra))))))
+      (= uri "/v2/admin/scan-stats") (response 200 (cond-> (assoc @stats/counts :idMemo (reach/id-memo-stats) :pinnedShortcut (pinned/stats) :readPrefetch (uncached/stats) :entityCache (let [base (entity-cache/stats) extra (recent/stats)] (assoc (merge base extra) :bytes (+ (:bytes base) (:recentBytes extra))))) batch/enabled (assoc :readBatch (batch/stats-now))))
       (and (= :post request-method) (= uri "/v2/admin/scan-stats/reset")) (do (reset! stats/counts {}) (response 200 {}))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(transactions|command|journal|entity-transactions)" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
@@ -391,6 +394,12 @@
                                                    (some? maximum) (assoc :maximum maximum)
                                                    (some? retryAfterMs) (assoc :retryAfterMs retryAfterMs))))
                    (throw e))))))
+      ;; [DX-API1] One API call's reads at one position in one request (batch.clj); absent unless TX2_READ_BATCH=1.
+      (and batch/enabled (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/batch" uri))
+      (let [name (nth (clojure.string/split uri #"/") 3) input (trace/read-span "gateway.request-decode" "gateway" (request-json body))
+            start (System/nanoTime) view (connection-view (db-uri name))]
+        (timed start {:status 200 :headers {"Content-Type" "application/json; charset=utf-8"}
+                      :body (trace/span "batch/run" "gateway" (batch/run name view input))}))
       ;; [DX-XQ6] The exact sweep (questions across subjects, read subject by subject); absent unless TX2_SWEEP=1.
       (and sweep/enabled (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/sweep" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
