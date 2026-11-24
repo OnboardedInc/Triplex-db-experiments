@@ -1,0 +1,11 @@
+== 1. Retract an entry that was never asserted (datoms in the transaction; 1 = only the transaction instant)
+    [[#inst "2026-11-24T14:27:35.539-00:00" true]]
+== 2. A transaction function retracts the entity's entry whose key ends with the fact ID
+    [[#inst "2026-11-24T14:27:35.561-00:00" true] ["a3|y|v2|e1|f2" false]]
+== 3. Remaining entries
+    ["a3|x|v1|e1|f1"]
+== 4. Assert and retract the same entry in one transaction
+    THREW java.util.concurrent.ExecutionException java.lang.IllegalArgumentException: :db.error/datoms-conflict Two datoms in the same transaction conflict
+{:d1 [17592186045418 :t/ix "a3|z|v|e1|f5" 13194139534319 true],
+ :d2 [17592186045418 :t/ix "a3|z|v|e1|f5" 13194139534319 false]}
+

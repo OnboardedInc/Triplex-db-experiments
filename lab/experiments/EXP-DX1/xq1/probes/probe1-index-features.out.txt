@@ -1,0 +1,43 @@
+14:17:34.533 [main] INFO datomic.process-monitor -- {:event :metrics/initializing, :metricsCallback clojure.core/identity, :phase :begin, :pid 7, :tid 1}
+14:17:34.534 [main] INFO datomic.process-monitor -- {:event :metrics/initializing, :metricsCallback clojure.core/identity, :msec 0.077, :phase :end, :pid 7, :tid 1}
+14:17:34.534 [main] INFO datomic.process-monitor -- {:metrics/started clojure.core/identity, :pid 7, :tid 1}
+14:17:34.535 [clojure-agent-send-off-pool-0] INFO datomic.domain -- {:event :cache/create, :cache-bytes 536870912, :pid 7, :tid 35}
+14:17:34.539 [clojure-agent-send-off-pool-0] INFO datomic.process-monitor -- {:DbAddFulltextMsec {:lo 0, :hi 39, :sum 51, :count 16}, :AvailableMB 961.0, :ObjectCacheCount 0, :event :metrics, :pid 7, :tid 35}
+== 1. AVET datoms on a non-indexed attribute
+    THREW datomic.impl.Exceptions$IllegalArgumentExceptionInfo :db.error/attribute-not-indexed attribute: :t/plain is not indexed
+== 2. AVET datoms on an indexed string, account a3 and attribute :bg (prefix via index-range)
+    ["a3:bgclearacct/a3/wk:2f3" "a3:bgpendingacct/a3/wk:1f1"]
+== 3. Range on :start within a3 between 2026-11-04 and 2026-11-08
+    ["a3:start2026-11-05acct/a3/wk:1f2"]
+== 4. Heterogeneous tuple, cardinality many, indexed: datoms by prefix [a3 :bg pending]
+    []
+== 4b. Tuple index-range with trailing nil lower bound
+    [["a3" ":bg" "clear" "acct/a3/wk:2"] ["a3" ":bg" "pending" "acct/a3/wk:1"]]
+== 4c. A tuple string over 256 characters
+    THREW java.util.concurrent.ExecutionException java.lang.IllegalArgumentException: :db.error/invalid-tuple-value Invalid tuple value
+== 5. index-pull on AVET from [:t/ix prefix]
+    [#:t{:id "acct/a3/wk:2"} #:t{:id "acct/a3/wk:1"} #:t{:id "acct/a3/wk:1"}]
+== 6. Re-asserting an existing datom adds nothing (datom count of the transaction)
+    1
+== 7. Head: a3 :bg entries after the change
+    ["a3:bgclearacct/a3/wk:1f6" "a3:bgclearacct/a3/wk:2f3"]
+== 8. As-of the first commit's t: a3 :bg entries (exact past position)
+    ["a3:bgclearacct/a3/wk:2f3" "a3:bgpendingacct/a3/wk:1f1"]
+== 9. History view of the same range (assertions and retractions with :added)
+    [["a3:bgclearacct/a3/wk:1f6" true 13194139534318] ["a3:bgclearacct/a3/wk:2f3" true 13194139534313] ["a3:bgpendingacct/a3/wk:1f1" false 13194139534318] ["a3:bgpendingacct/a3/wk:1f1" true 13194139534313]]
+== 10. noHistory attribute as-of the first t (memory database; history not guaranteed in storage)
+    ["a3:bgclearacct/a3/wk:2" "a3:bgpendingacct/a3/wk:1"]
+== 11. Isolation by prefix: a range for a3 never returns a4 rows
+    true
+== 12. Adding :db/index to an existing non-indexed attribute, then reading its AVET
+    ["x"]
+== 13. seek-datoms AVET from a prefix, first 2
+    ["a3:start2026-11-05acct/a3/wk:1f2" "a3:start2026-11-09acct/a3/wk:2f4"]
+== 14. rseek-datoms AVET (reverse, newest values first) from the end of a3 :start
+    ["a3:start2026-11-09acct/a3/wk:2f4" "a3:start2026-11-05acct/a3/wk:1f2"]
+== 15. Datalog with a variable entity over the indexed attribute (native query, not the gateway)
+    #{["acct/a3/wk:1"] ["acct/a3/wk:2"]}
+== 16. String datom value length 4000 on an indexed attribute
+    2
+== 17. Unique value with cardinality many
+    datomic.db.Db@cd77699c

@@ -1,0 +1,13 @@
+== A. count account-003 IDs by prefix acct/account-003/wk: (unique identity AVET): result 100000, 14.97 ms (diagnostic, warm, memory database)
+== B. first page of 50 IDs, account-003: result ["acct/account-003/wk:00000000" "acct/account-003/wk:00000001"], 0.01 ms (diagnostic, warm, memory database)
+== C. count background=pending in account-003 (one fifth of n): result 20000, 1.12 ms (diagnostic, warm, memory database)
+== D. count start in 2026-03 in account-003 (range): result 8334, 0.53 ms (diagnostic, warm, memory database)
+== E. merge-intersect background=pending AND start in 2026-03 (sorted by entity within each list for eq; range list sorted in memory): result 1666, 14.87 ms (diagnostic, warm, memory database)
+== F. as-of the head t: same count as C: result 20000, 3.40 ms (diagnostic, warm, memory database)
+== G. isolation: entries of account-004 seen by an account-003 range: result 0, 56.06 ms (diagnostic, warm, memory database)
+== H. 1000 point seeks (seek-datoms to an entity's entry), galloping-intersection building block: result 1000, 7.79 ms (diagnostic, warm, memory database)
+Execution error (UnsupportedOperationException) at user/eval9566 (datomic_scan_probe.clj:49).
+count not supported on this type: iter$iterable$reify__9666
+
+Full report at:
+/tmp/clojure-144408716839027054.edn
