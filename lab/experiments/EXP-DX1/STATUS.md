@@ -5673,3 +5673,29 @@ Source: console-questions builder, branch `exp/DX-XQ8-console-questions` `5faf8b
 - Note for the merge: `demo/server/profile.mjs` on this branch turns the ID list and sweep options on for the 1 billion demo stack; that bring-up was not run.
 
 **Started** in the freed slot: the question shapes still refused (children, not-equal and OR, top N by an attribute, contains), task file `OPUS-XQ9-remaining-question-shapes.md`.
+
+## 2026-11-24 12:43 EST: step 1 of questions across subjects is built (commit-time index and the `find` route)
+
+Source: step 1 builder, branch `exp/DX-XQ4-commit-index` `061da6cb5` (contains the ID lists branch; not merged onto the one branch), page `lab/experiments/EXP-DX1/xq4/COMMIT-INDEX.md`. Behind `TX2_CROSS_INDEX=1`, default off. Not run on a server.
+
+| Gate | Result |
+|---|---|
+| Exactness against brute force (independent Clojure path) | 2,448 questions, 0 differences; 6 positions x 9 valid times; 151,250 pages; 249,572 entries, 0 misplaced |
+| `find` against the slow exact route (two independent paths) | 77 questions at 3 positions x 3 valid times, 0 differences |
+| Writers against a backfill | 189,476 value entries and 60,096 type entries match; dry run finds 0 to add, 0 to retract |
+| Removal on request | 0 occurrences of the removed value in entries, their history or the log (unsealed only) |
+| Account isolation | 40 questions, 0 IDs outside the account; foreign cursors refused |
+| Bounded work | Entry bounds hold on 53 pages; **time clause FAILS**: 75.7 to 89.7 ms against a 60 ms line for a 50 ms bound; attributed to GC pauses in the gate JVM from the log, not proven |
+| Cost per save | Exact: +2 datoms per replaced value; 20, 50, 100 replaced values add +40, +100, +200 datoms with 0 reads inside apply; the write budget counts entries |
+| Option off | Log identical to the base (33,609 datoms, same hash) |
+| Index-only answers | 8 of 9 shapes answered with 0 entity reads (review finding E1 fixed) |
+| Pinned fast route after a backfill | 200 of 200 pinned reads keep the fast route (review finding D1 fixed) |
+
+- Two real bugs found by the exactness gate and fixed: a page that returned its own cursor forever; a value-ordered page that listed an entity twice across a page boundary.
+- One difference of meaning found by comparing with the slow exact route and fixed: a prefix question now counts an ID only when the entity has a visible fact at the position.
+- Review findings: 10 confirmed and fixed; D3 half (budget sees entries, frame bounds do not); B1 not built (release-written values); string key against tuple not measured; 17 departures from the design listed on the page.
+- Every index refusal carries `fallback: "sweep" | "none"`.
+- Server runs written: backfill of the 1 billion database predicted 90 to 240 min (17.9 M entries); the save pair judged against the 10 ms / 50 ms bars on repeated 600 s cells; a question bench.
+- Not verified: anything on a server; the exactness gate was NOT rerun after the last ordering fix; SDK typecheck inconclusive; hints with the index; the heavy production gates with the index on; sealed removal check.
+
+**Resumed** the same builder to close those gaps (rerun exactness on the final head, typecheck, the time clause, frame bounds, hints with the index, production gates with the index on, string against tuple, a rule refusing release-written attributes).
