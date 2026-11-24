@@ -44,7 +44,13 @@ for arm in ${XQ10_ARMS:-unset index routes queue}; do
   (println "XQ10_SUITES $arm" (pr-str (select-keys r [:test :pass :fail :error])))
   (println "XQ10_ROUTES $arm ids" (pr-str (routes 0)) "sweep" (pr-str (routes 1)) "find" (pr-str (routes 2)))
   (println "XQ10_GUARD $arm refusals" guarded "queue" triplex.gateway.ids/list-queue-ms "findPermits" (some? triplex.gateway.ids/find-permits))
-  (shutdown-agents) (System/exit (if (zero? (+ (:fail r) (:error r))) 0 1)))
+  ;; what each arm's options mean for the three routes (status, and find's code): off means 404 and IndexOff
+  (let [want ({"unset" [404 404 "IndexOff"] "index" [404 404 :on] "routes" [200 200 "IndexOff"] "queue" [200 404 "IndexOff"]} "$arm")
+        code (fn [[_ b]] (get (try (clojure.data.json/read-str b) (catch Exception _ {})) "code"))
+        ok (and (= (first want) (first (routes 0))) (= (second want) (first (routes 1)))
+                (if (= :on (nth want 2)) (not= "IndexOff" (code (routes 2))) (= (nth want 2) (code (routes 2)))))]
+    (println "XQ10_ROUTES_CHECK $arm" (if ok "pass" "FAIL"))
+    (shutdown-agents) (System/exit (if (and ok (zero? (+ (:fail r) (:error r)))) 0 1))))
 CLJ
   name="tx2-dxxq10-suites-$arm-$$"
   docker run --pull never --name "$name" --memory 3g --cpus 2 \
