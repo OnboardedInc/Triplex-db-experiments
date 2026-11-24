@@ -251,3 +251,47 @@ This arm reruns the three random windows: `ref-random-near-head`, `s-random-near
 4. **Cache share by request above 0.9, or loads per subject under 1.0.** The working set is smaller than modelled and a cache test is worth building.
 
 Loads per subject here are the sampled storage reads per exchange ÷ 8. The cache share is weighted by each metrics minute's overlap with the window.
+
+## Random arm (build `d94dff145`): result (02:30–02:52 UTC on 2026-11-24)
+
+The `p6` dry run passed. The reader started on cores 5, 6 and 11 with a 3 GiB cache. The read-permits check at `study-server.ts:213` passed; it runs before the window driver and is silent when it passes. The driver then printed `[DX-RD3] windows resolved` with exactly the three random windows and stopped at `saves-arm.ts:74`. `p6` ran from 02:30:55 to 02:39:39 UTC and exited 0.
+
+**The published command's second invocation is refused, and `p12` ran under a different parent directory.** The first `p12` launch stopped before any offer at `rd1/prepared.ts:85`: `Use a new output directory for the pinned-saves ladder`. `ladderPaths` puts `ladders/` in the parent of the campaign directory. `$OUT/p6` and `$OUT/p12` therefore share `$OUT/ladders`, which already held `p6`'s `pinned-saves-complete.json`. `p12` was rerun as `/var/tmp/triplex-pinned-random-1b-p12/p12` with the same ceiling (T0 + 40 minutes, 03:10:55 UTC). It ran from 02:43:02 to 02:51:46 UTC and exited 0.
+
+| Config | Window | Reads/s | p50 / p99 ms | Wrong | Errors | Reader cores | Loads per subject | Cache share | Stored commits/s | S commit p99 ms | Quiet p50 / p99 ms | `sql-ms` per exchange | Handler CPU per exchange ms | PostgreSQL cores | Driver loop p99 ms |
+| --- | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| `p6` | `ref-random-near-head` | 1,522.2 | 161.79 / 305.15 | 0 | 0 | 2.65 | 1.68 | 80.2% | — | — | 17.79 / 52.22 | 10.55 | 8.20 | 0.40 | 10.95 |
+| `p6` | `s-random-near-head` | 1,585.8 | 158.72 / 266.24 | 0 | 0 | 2.67 | 1.59 | 82.2% | 23.08 | 55.55 | 5.21 / 25.73 | 9.26 | 7.57 | 0.41 | 13.37 |
+| `p6` | `ref-random-seed-cut` | 1,477.1 | 171.01 / 288.77 | 0 | 0 | 2.69 | 1.76 | 79.0% | — | — | 4.89 / 7.97 | 10.49 | 8.45 | 0.41 | 10.91 |
+| `p12` | `ref-random-near-head` | 1,719.8 | 145.41 / 288.77 | 0 | 0 | 2.81 | 1.60 | 80.7% | — | — | 19.07 / 59.13 | 13.84 | 7.77 | 0.43 | 10.96 |
+| `p12` | `s-random-near-head` | 1,747.2 | 145.41 / 258.05 | 0 | 0 | 2.83 | 1.54 | 82.5% | 23.08 | 62.98 | 5.66 / 24.06 | 13.13 | 7.39 | 0.44 | 13.48 |
+| `p12` | `ref-random-seed-cut` | 1,563.6 | 159.74 / 292.86 | 0 | 0 | 2.83 | 1.69 | 79.2% | — | — | 5.73 / 9.15 | 14.47 | 8.08 | 0.43 | 10.96 |
+
+Loads per subject are the sampled storage reads per exchange ÷ the mean batch of 8. Cache share is weighted by each metrics minute's overlap with the window.
+
+**Against the predictions:**
+1. **`p6` landed inside the predicted ranges on rate, p50, reader cores, loads, cache share, PostgreSQL cores and saves.**
+   - Over the saves arm's 3 permits, reads/s rose 25%, 30% and 36%.
+   - Two numbers were outside: `ref-random-near-head`'s p99 of 305 ms (predicted 240 to 290) and `sql-ms` per exchange of 9.3 to 10.6 (predicted 7 to 9).
+2. **`p12` added 13.0%, 10.2% and 5.9% over `p6`.**
+   - The prediction was 0 to 10%, so one window was over it and one at its edge.
+   - Reader cores rose to 2.81 to 2.83.
+   - `sql-ms` per exchange rose to 13.1 to 14.5 ms, because the extra permits queue on PostgreSQL round trips.
+3. **None of the four sizing falsifiers fired.**
+   - 1: `p6` was under 2,000 reads/s.
+   - 2: `p6` was not under 1,350 reads/s with the reader under 2.4 cores.
+   - 3: `p12` was under 1.15 × `p6` in every window. The largest ratio was 1.130.
+   - 4: cache share stayed under 0.9 and loads per subject over 1.0.
+   - So the claim stands as published: about 7 reader cores, permits about twice the cores, and no affordable cache for random subjects.
+4. **The 100 ms p99 bar was missed in every window, as predicted (258 to 305 ms).**
+5. **The quiet account's p99 was over 50 ms in `ref-random-near-head` in both configurations (52.22 and 59.13 ms).** It was 7.97 to 25.73 ms in the other windows. The saves ran at 23.08/s in both `s-random-near-head` windows, with S commit p99 55.55 and 62.98 ms.
+6. **Wrong values and errors: 0 in all six windows.**
+
+Evidence: `evidence/DX-SCALE1/random-1b-d94/` in the private evidence folder, checked by SHA-256 on the server and on the Mac:
+
+| File | Contents | SHA-256 |
+| --- | --- | --- |
+| `random-1b-p6.tar.zst` | `p6` campaign, launchers, dry-run and run logs | `73c5baf0a196726bbdd439a2f0ecd19efc3c4399898fa3ce6604908ae8eb4f55` |
+| `random-1b-p12.tar.zst` | `p12` campaign and run log | `8934b8707d8f901d4b307eea1afab53a3fb81f96165f57bea81b72f7f47c13a6` |
+| `p6-pinned-saves.json` | `p6` summary | `ec9be9b29275afee012d6d02fab34d94189639c25e4c3086e18d1722e754df10` |
+| `p12-pinned-saves.json` | `p12` summary | `0e0333f568c4fec126b36eb475a44adb365abeaed8af534fa0d0827231963d2d` |
