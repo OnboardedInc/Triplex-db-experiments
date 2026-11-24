@@ -184,7 +184,7 @@ out, and why it holds only while the protected attribute set is right.
 ## 4. Tenant isolation: row-level security on shared tables
 
 **Decision: every row carries its account; the tables have row-level security; each reporting login is mapped to one
-account in `rpt.grants`; views are `security_invoker`, so the policy applies to the person querying.** The policy is
+account in `rpt.grants`; views are `security_invoker`, so the policy applies to the login querying.** The policy is
 `account = rpt.my_account()`, a `STABLE SECURITY DEFINER` function reading `rpt.grants` for `current_user`, which the
 planner evaluates once and uses as the leading index key. A login cannot change its own account: it is not a member of
 any other login, and `rpt.grants` is not writable by it.
@@ -238,9 +238,9 @@ entries behind p99 under 50 and time behind p99 under 500 ms; (g) 0 differences.
 
 | What | Measured (run `full2`, defaults) |
 | --- | --- |
-| Bytes per fact, `rpt.facts` | **409 B** (heap 170 B, indexes 234 B, TOAST about 0) over 7,457 facts |
-| Bytes per fact, every table of the copy | **542 B** (`rpt.entities` 59 B, `rpt.commits` 33 B, catalogue tables the rest) |
-| Projector CPU | 131 ms per 1,000 changes (one process replaying 930 positions, 7,547 changes) |
+| Bytes per fact, `rpt.facts` | **409 B** (heap 170 B, indexes 234 B, TOAST about 0) over 7,457 facts; 425 B in `final` (4,760 facts, more of them retired replacements) |
+| Bytes per fact, every table of the copy | **542 B** (`rpt.entities` 59 B, `rpt.commits` 33 B, catalogue tables the rest); 601 B in `final` |
+| Projector CPU | 131 ms per 1,000 changes (one process replaying 930 positions, 7,547 changes); 164 ms in `final` (933 positions, 5,304 changes) |
 | Feed read per replay | 5 journal page requests of up to 200 journals; the read gateway examined 930 position entries in 8 bounded pages (1 per position, no walk) |
 | Rebuild of one account (344 entities, 2,475 to 2,629 facts) | read and stage 186 to 259 ms; the swap under the lock 44 to 148 ms |
 | Apply per page while following 25 saves/s | p50 11.5 ms, p99 36.6 ms |
@@ -313,20 +313,20 @@ Publish code path (settlement frames are written as a release's writes, as XQ6's
 
 ## 9. Results (2026-11-24, 18:03 EST)
 
-**Every gate passed on the toy: 606 checks, 0 failures, in the default run and in a sealed-value run; the same in a run
-with the per-subject writer's switches on.** Branch head before this page: `524371be8` plus the files listed in
-section 10. Runs, each on a fresh stack of this checkout's gateway (source hash `c1bd5993…` in `full2`), every container
+**Every gate passed on the toy: 606 checks, 0 failures, on the committed head, and the same in a sealed-value run and
+in a run with the per-subject writer's switches on.** Runs, each on a fresh stack of this checkout's gateway (source hash `c1bd5993…` in `full2`), every container
 checked against the image ID recorded at the start (Datomic `sha256:21a67288…`, PostgreSQL `sha256:526f86d9…`; 0
 mismatches in every run):
 
 | Run | Setting | Checks passed | Failures |
 | --- | --- | --- | --- |
-| `full2` | defaults (general writer, unsealed protection) | 606 | 0 |
+| **`final`** | **defaults, on the committed head `5d18bc0ad` (gateway source `81219dd6…`), with the one-subject replacement saves** | **606** | **0** |
+| `full2` | defaults (general writer, unsealed protection), before the replacement saves and the last refusal were added | 606 | 0 |
 | `variant1` | sealed protected values, `TX2_SUBJECT_SAVE=1` | 606 | 0 |
 | `variant2` | unsealed, `TX2_SUBJECT_SAVE=1`, `TX2_SUBJECT_NUMERIC_OWNER=1`, `TX2_SUBJECT_HINTS=1`, one-subject replacement saves added | 606 | 0 |
 | `full1` | the first full run | 602 | 2: the request-count window included the save phase (a harness error), and the kill run's last view regeneration had not run (fixed: one start without a fault after the last kill, as after any crash) |
 
-Gate by gate (`full2`):
+Gate by gate (`full2`; the `final` run's counts follow the table):
 
 | Gate | Result |
 | --- | --- |
@@ -337,6 +337,13 @@ Gate by gate (`full2`):
 | (e) isolation | One login per account (`account-003`, `account-0031`, `account-009`, names prefixing each other and one empty), 15 tables and views each: 1,599 / 1,111 / 1 own rows, **0 rows of another account**; reading another account's subject by ID: 0 rows; setting `rpt.account` changes nothing; `rpt.rebuild_facts` refused (no grant). |
 | (f) lag (diagnostic) | 25 saves/s (creations of 2 to 12 values) for 30 s: 737 pages, 750 journals; journals waiting when a page was read p50 1, p99 1, max 5; **time behind p50 108 ms, p99 140 ms, max 168 ms** (most of it the read gateway's delivery on the loaded lab VM; apply p50 11.5 ms, p99 36.6 ms). `variant2`, half the saves one-value replacements: p50 167 ms, p99 227 ms, journals waiting p99 3. |
 | (g) rebuild during saves | Two rebuilds of `account-003` while 895 saves ran (0 errors): one read at P = 785 while the projector moved to 797, caught up 23 changes inside the swap; one read at 849 while the projector was paused at 798, fence 849, the projector then skipped that account's journals up to 849. At the end (position 930): 7,457 facts equal to the store, 0 missing, 0 extra; views equal. |
+
+The `final` run: 1,216 facts at the head, 1,087 at P_A, 1,140 at P_B, 0 missing or extra; 36 view comparisons; 459
+sweep comparisons, 2,199 IDs; 45 killed processes (15 at each point), equal to the clean copy; two projectors 12 pages
+applied, 4 discarded, equal; isolation 1,599 / 1,131 / 1 own rows, 0 of another account; two rebuilds during 888 saves,
+4,760 facts equal at position 933; lag (half the saves one-value replacements) time behind p50 69 ms, p99 104 ms, max
+144 ms, apply p50 8.9 ms, p99 34.1 ms; 0 protected occurrences in 2,362 files (120.1 MB) and four `pg_dump`s, the
+control found 11 times in table files and WAL.
 
 Gateway suites (`rpt1/suites.sh`, image `sha256:21a67288…`): 76 tests, 71,176 assertions, 0 failures, 1 error:
 `feed-test/http-route`, which errors on the base too (READINESS contradiction 8). The 4 new tests in
@@ -373,4 +380,4 @@ function throws if called); unbound or with no protection declared, nothing chan
 | `lab/experiments/EXP-DX1/rpt1/gate.sh`, `gate.ts` | The gates (a) to (g) and the cost run |
 | `lab/experiments/EXP-DX1/rpt1/suites.sh` | The gateway suites from one image ID |
 
-Evidence (private, compressed): `evidence/DX-RPT1/{full2,variant1-sealed-subject,variant2-subject-writer,full1,suites}-*.tar.gz`.
+Evidence (private, compressed): `evidence/DX-RPT1/{final-5d18bc0ad,full2,variant1-sealed-subject,variant2-subject-writer,full1,suites,smoke1,smoke2,smoke3}-*.tar.gz`.
