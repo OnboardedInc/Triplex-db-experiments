@@ -8,6 +8,7 @@ import {
   DatomicClient,
   DatomicHttpError,
   orderedSaveIdentity,
+  wideOrderedSaveIdentity,
 } from "../../../../packages/datomic/dist/index.js";
 import { decodeRowText, encodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import { ids, type Fact } from "../../../bench/lib/world.ts";
@@ -90,6 +91,9 @@ type Seed = {
 };
 const requestedCredits = Number(process.env.DX_PREP1_FAIR_CREDITS ?? 0);
 export const orderedBlockLimit = 256;
+// [Opus W2, DX-S1] The launcher's wide-save switch (TX2_SUBJECT_WIDE, default off), read back from every writer's
+// /write-options before the first offer.
+const wideSaves = process.env.TX2_SUBJECT_WIDE === "1";
 assert([0, 1, 2, 6].includes(requestedCredits));
 const campaign = process.env.DX_PREP1_CAMPAIGN ?? "comparison";
 assert(
@@ -356,7 +360,10 @@ export async function phase(
     // over 256 assertions takes the general identity, as the product would, and stays one atomic commit.
     // Rejected: splitting the save into several commits, which the product does not do.
     const assertions = 2 * facts.length + old.length + 4;
-    const identity = orderedIds && assertions <= orderedBlockLimit ? orderedSaveIdentity() : undefined;
+    // [Opus W2, DX-S1] Why: with TX2_SUBJECT_WIDE=1 the per-subject writer takes up to 128 facts, so a commit over 256
+    // assertions takes a wide ordered block (4,096) instead of the general identity; one commit per save either way.
+    const identity = orderedIds && assertions <= orderedBlockLimit ? orderedSaveIdentity()
+      : orderedIds && wideSaves && assertions <= 4096 ? wideOrderedSaveIdentity() : undefined;
     const input = command(id, facts, old, true, false, identity);
     input.sourceK = Math.max(head, ...previous.map((r) => r.recorded_position));
     input.groupAccount = wide ? scaleAccount(o.account) : accounts[o.account]!.key;
@@ -625,6 +632,7 @@ async function armRun(
       assert.equal(Boolean(got.subjectNumericOwner), Boolean(arm.numericOwner));
       assert.equal(Boolean(got.subjectPrefetch), Boolean(arm.prefetch));
       assert.equal(Boolean(got.subjectOrderedIds), Boolean(arm.orderedIds));
+      assert.equal(Boolean(got.subjectWide), wideSaves);
       // [DX-PREP1] Why: match the fresh, source-bound installed function and verify it again on every ACK.
       // Rejected: copying a function identifier from a JVM with different generated Clojure symbols.
       if (b) {

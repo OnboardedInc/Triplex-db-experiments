@@ -13,13 +13,14 @@ import { timeBudget, defaultWriter, physicalArms, writeDiagnostics, jvmProfiles,
 import { cleanSource, verifyBuild } from "./source.ts";
 import { claimPgdata, inspectPgdata, pgdataArgs, pgdataTarget, preflightWal, sealedPgdata } from "./pgdata.ts";
 import { openSequence, setAsideArm, startSequentialArm } from "./sequential.ts";
-import { parseCardTape, tapeBinding } from "./production-card.ts";
+import { parseCardTape, readQueueOptionsSet, tapeBinding, writerOptionsSet } from "./production-card.ts";
 import { agedCut } from "../prep1/ceiling-seed.ts";
 
 import { parseWindow, parseCredits } from "./server-workload.ts";
 import { realSeed, proveRealistic } from "./realistic.ts";
 import { physicalTelemetry } from "./cell-telemetry.ts";
 import { firstOffer, FirstOfferReached } from "../ha1/first-offer.ts";
+import { p1Reader, randomLineMinutes, readerFromEnvironment, readerLaunch, readerStackOptions } from "./card-reader.ts";
 
 const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, requestedWriter, jvm, agedFile, agedPin,
   agedDump, agedDumpPin, txJvm, walDirectory, armText, startedText, forecast, windowText, creditText, writeJvm, pgdataSource, ...pgdataPaths] = process.argv.slice(2);
@@ -28,15 +29,20 @@ assert(age === "fresh" || age === "1B" || age === "realistic");
 assert(requestedWriter === defaultWriter);
 assert(jvmProfiles.includes(jvm as JvmProfile) && jvmProfiles.includes(txJvm as JvmProfile));
 const windowSeconds = parseWindow(windowText), creditMode = parseCredits(creditText);
-const { budget, comparisonMinutes } = timeBudget(windowSeconds, age === "realistic");
+// [DX-CARD2] run.ts passes the reader setting in the environment, as it does the profile and the tape.
+const reader = readerFromEnvironment(process.env);
+assert(!reader || age !== "realistic", "The tuned reader's random-subject line reads the SCALE1 deep population");
+const { budget, comparisonMinutes } = timeBudget(windowSeconds, age === "realistic", randomLineMinutes(reader));
 // [DX-INT1] Why: run.ts passes the named server profile in the environment so the positional command line is unchanged.
 // Rejected: a new positional argument, which would move every pinned queue line.
 const profile = (process.env.DX_V01_PROFILE ?? defaultServerProfile) as ServerProfile;
 assert(serverProfiles.includes(profile), "Unknown server profile");
-const policy = launchProfile(profile, { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile, writeJvm: writeJvm as JvmProfile, creditMode });
+const policy = launchProfile(profile, { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile, writeJvm: writeJvm as JvmProfile, creditMode, ...readerLaunch(reader) });
 const diagnostics = writeDiagnostics(requestedWriter, process.env);
 // [DX-INT1] Why: run.ts passes the save tape in the environment, as it does the profile (v01/production-card.ts).
 const cardTape = parseCardTape(process.env.DX_V01_TAPE);
+const writerOptions = writerOptionsSet(process.env);
+const readQueue = readQueueOptionsSet(process.env);
 assert(cardTape === "saturday" || age !== "realistic", "The realistic card keeps its own tape");
 const stages = serverStages(policy, !!walDirectory);
 assert(armText === "" || /^[1-3]$/.test(armText ?? ""), "Choose arm 1, 2 or 3");
@@ -47,6 +53,12 @@ const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock"), queue = fs.sta
 assert.equal(lock.ino, queue.ino); assert.equal(lock.dev, queue.dev);
 scaleHost.physical();
 process.env.DX_BARE_METAL = "1";
+// [DX-CARD2] Why: the tuned arms pinned the driver to cores 9 and 10 (the only cores no role holds once the reader takes
+// 5, 6 and 11), unpinned while each stack starts, because stack/up.sh admits only CPUs in its caller's affinity.
+// Rejected: leaving the card's driver unpinned with the tuned reader (it would share the reader's cores).
+const onlineCpus = reader ? fs.readFileSync("/sys/devices/system/cpu/online", "utf8").trim() : "";
+assert(!reader || /^[0-9,-]+$/.test(onlineCpus));
+const placeDriver = (cpus: string) => { if (reader) execFileSync("taskset", ["-apc", cpus, String(process.pid)], { stdio: "ignore" }); };
 verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
 pgdataArgs(pgdataPaths, pgdataSource, sequenceArm);
 const copies = pgdataSource ? inspectPgdata(pgdataSource, pgdataPaths, fs.realpathSync(path.dirname(campaign))) : [];
@@ -69,7 +81,11 @@ if (!copies.length && expected) {
 }
 const input = { source, age, writer: requestedWriter, jvm: jvm as JvmProfile, imagePin, transferPin, originalScope: seed.scope, realistic: seed.realisticBinding,
   txJvm: txJvm as JvmProfile, writeJvm: writeJvm as JvmProfile, diagnostics, separateWal: !!wal, stages, wal, windowSeconds, creditMode,
-  agedBundle: expected?.pin, agedDump: agedDumpPin || undefined, profile, tape: tapeBinding(cardTape, windowSeconds) };
+  agedBundle: expected?.pin, agedDump: agedDumpPin || undefined, profile, tape: tapeBinding(cardTape, windowSeconds), ...(reader ? { reader } : {}),
+  // [DX-S1] Recorded only when one is set, so a default campaign's input stays as it was.
+  ...(Object.keys(writerOptions).length ? { writerOptions } : {}),
+  // [DX-INT3] The read gateway's waiting-read bound and thread counters, recorded only when set.
+  ...(Object.keys(readQueue).length ? { readQueue } : {}) };
 assert(cardTape === "saturday" || age !== "1B" || copies.length, "The production tape at 1 billion runs from prepared copies");
 let spent = 0, previousSystem: string | undefined;
 if (sequenceArm !== undefined) {
@@ -121,14 +137,18 @@ for (const [i, stage] of stages.entries()) {
   beginStack(out, slot, attempt);
   let verifiedLaunch = false;
   let setAside: string | undefined;
+  let started: ReturnType<typeof startScaleStack>["engines"] | undefined;
   try {
     const options = { ...stackOptions(writer, attempt, diagnostics), DX_V01_CELL_COUNTERS: "1",
-      ...(cardTape === "saturday" ? {} : { DX_V01_COMMIT_READS: "1" }) };
+      ...(cardTape === "saturday" ? {} : { DX_V01_COMMIT_READS: "1" }), ...readerStackOptions(reader) };
     if (copy) claimPgdata(copy, source, slot, attempt);
+    placeDriver(onlineCpus);
     const { engines } = startScaleStack(out, slot, source, false, copy ? {
       ...options, DX_V01_PGDATA: copy.dir, DX_V01_PGDATA_CONTROL_SHA: copy.controlSha256,
       DX_V01_PGDATA_FILE_ID: copy.device + ":" + copy.inode,
     } : options, { policy: stage.policy, walDirectory: stage.separateWal ? wal!.wal : undefined });
+    started = engines;
+    placeDriver("9,10");
     const java = checkLaunch(out, slot, attempt, engines, stage);
     const residency = () => stackResidency(slot, engines);
     let empty = emptyReference;
@@ -160,13 +180,15 @@ for (const [i, stage] of stages.entries()) {
       jsonFile(path.join(out, "realistic-live.json"), { at: Date.now(), source, slot, attempt, native, host: hex(fs.readFileSync("/etc/machine-id")), seal: seed.realisticBinding });
     }
     const head = expected ? await verifyAged(expected, out, slot, attempt, engines.pg!.address, engines["gw-r"]!.image) : seed.realistic?.proof.cut ?? seed.scope.cut;
+    if (reader) await checkReader(read, engines["gw-r"]!.id, out);
     assert(!stopping && Date.now() + 8 * 60_000 < stageEnd);
     verifiedLaunch = true;
     console.log(`[DX-V01] Verified live server startup for ${stage.name}/${loaded ? "loaded" : "zero"} before offers`);
     // [DX-INT1] On the 1 billion copy the production predecessors check AGE1's rows against its pinned replay tape.
     const aged = expected && cardTape !== "saturday"
       ? { cut: agedCut(expected.file, expected.pin, imagePin, seed.key, seed.scope.db, seed.scope.cut, true), head } : undefined;
-    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency, windowSeconds, creditMode: stage.policy.creditMode, serialApply: diagnostics.serialApply, telemetry: physicalTelemetry(out, engines), aged };
+    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency, windowSeconds, creditMode: stage.policy.creditMode, serialApply: diagnostics.serialApply, telemetry: physicalTelemetry(out, engines), aged,
+      p1: p1Reader(reader, false, path.join(out, "engines", slot, "trace", "raw", "gw-r.jsonl")) };
     firstOffer("scorecard arm " + (sequenceArm ?? i + 1) + " " + stage.name + "/" + path.basename(out));
     const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head, undefined, comparison);
     if (loaded && !stopping) {
@@ -185,6 +207,9 @@ for (const [i, stage] of stages.entries()) {
     if (!verifiedLaunch) launchFailure(error);
     throw error;
   } finally {
+    // [DX-CARD2] Each role's cgroup memory peak over the whole stage, for the caps of the tuned reader with server-32.
+    if (reader && started) try { jsonFile(path.join(out, "role-memory.json"), roleMemory(started)); }
+    catch (error) { console.error("[DX-CARD2] role memory unreadable: " + String(error)); }
     scaleHost.clean(out, slot);
     if (setAside) {
       const where = setAsideArm(campaign, sequenceArm!, out, attempt, setAside);
@@ -214,6 +239,7 @@ async function emptyResidency(out: string, policy: ReturnType<typeof launchProfi
   const attempt = randomUUID();
   const slot = "tx2-dxscale1-v01-" + attempt.slice(0, 12);
   beginStack(out, slot, attempt);
+  placeDriver(onlineCpus);
   try {
     const { engines } = startScaleStack(out, slot, source, false, stackOptions("per-person-ordered", attempt), { policy });
     const java = readScaleJvms(path.join(out, "live-jvm"), engines, policy);
@@ -262,6 +288,31 @@ async function verifyAged(expected: ReturnType<typeof openAged>, out: string, sl
     if (original === undefined) delete process.env.DATOMIC_URI_TEMPLATE;
     else process.env.DATOMIC_URI_TEMPLATE = original;
   }
+}
+
+// [DX-CARD2] The tuned reader as the tuned arms checked it before their first read: both pinned options on (the
+// reader's own write options), and exactly the requested read permits in its container (none: one per core).
+async function checkReader(read: string, container: string, out: string) {
+  const options = await (await fetch(new URL("/v1/db/" + seed.scope.db + "/write-options", read), { signal: AbortSignal.timeout(5000) })).json() as any;
+  assert.deepEqual([options.options?.pinnedShortcut, options.options?.pinnedCutLookup], [true, true], "the reader does not run both pinned options");
+  const env = JSON.parse(execFileSync("docker", ["inspect", "--format", "{{json .Config.Env}}", container], { encoding: "utf8" })) as string[];
+  const permits = env.filter((e) => e.startsWith("TX2_READ_PERMITS="));
+  assert.deepEqual(permits, reader!.readPermits ? ["TX2_READ_PERMITS=" + reader!.readPermits] : [], "the reader does not carry the requested read permits");
+  for (const want of ["TX2_PINNED_SHORTCUT=1", "TX2_PINNED_CUT_LOOKUP=1", "TX2_READ_FILTER_EARLY=1", "TX2_READ_PROFILE=1"])
+    assert(env.includes(want), "the reader lacks " + want);
+  jsonFile(path.join(out, "reader-check.json"), { source, at: Date.now(), reader, pinned: options.options, permits });
+}
+
+function roleMemory(engines: NonNullable<ReturnType<typeof startScaleStack>["engines"]>) {
+  return { source, at: Date.now(), roles: Object.fromEntries(Object.entries(engines).map(([role, e]) => {
+    const pid = execFileSync("docker", ["inspect", "--format", "{{.State.Pid}}", e!.id], { encoding: "utf8" }).trim();
+    assert(/^[1-9]\d*$/.test(pid));
+    const group = fs.readFileSync(`/proc/${pid}/cgroup`, "utf8").match(/^0::(\/.+)$/m)?.[1];
+    assert(group, "cgroup v2 per-container counters");
+    const read = (name: string) => { const file = path.join("/sys/fs/cgroup", group, name); return fs.existsSync(file) ? fs.readFileSync(file, "utf8").trim() : null; };
+    const stat = Object.fromEntries((read("memory.stat") ?? "").split("\n").map((l) => l.split(" ")).filter(([k]) => k === "anon" || k === "file" || k === "shmem").map(([k, v]) => [k, Number(v)]));
+    return [role, { peakBytes: Number(read("memory.peak")), currentBytes: Number(read("memory.current")), maxBytes: read("memory.max"), stat, events: read("memory.events") }];
+  })) };
 }
 
 function launchFailure(error: unknown): never {

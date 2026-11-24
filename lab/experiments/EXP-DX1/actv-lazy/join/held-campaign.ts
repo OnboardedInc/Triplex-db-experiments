@@ -34,6 +34,7 @@ import { Settlement } from "./settlement.ts";
 import { BulkQueue } from "./bulk.ts";
 import { firstOffer } from "../../ha1/first-offer.ts";
 import { largeRelease, parseShape, shapeName } from "./large-release.ts";
+import { checkForms, expectForms } from "./form-expect.ts";
 
 const validTime = W0.POPULATION_VALID_TIME;
 export const rates = [3.5, 23.5, 39.4] as const;
@@ -93,9 +94,10 @@ async function readerPeer(
   peer: Peer,
   scope: string,
   descriptor: Pick<HeldSource, "account" | "prefix" | "people" | "cut" | "seal">,
+  atLeast = false,
 ) {
   const worker = new Worker(new URL("./held-reader.ts", import.meta.url), {
-    workerData: { scope, held: descriptor },
+    workerData: { scope, held: descriptor, atLeast },
     env: { ...process.env, DATOMIC_URL: peer.read, DATOMIC_READ_URLS: peer.read },
   });
   const ready = new Promise<void>((resolve, reject) => {
@@ -106,13 +108,13 @@ async function readerPeer(
     worker.once("exit", (code) => reject(Error("Reader exited before startup: " + code)));
   });
   let next = 0;
-  const requests = new Map<number, { resolve: (r: Read) => void; reject: (e: Error) => void }>();
+  const requests = new Map<number, { resolve: (r: any) => void; reject: (e: Error) => void }>();
   worker.on("message", (m) => {
     if (m === "ready") return;
     const request = requests.get(m.n);
     assert(request, "Unexpected held read response");
     requests.delete(m.n);
-    if (m.error) request.reject(Error(m.error));
+    if (m.error) request.reject(Object.assign(Error(m.error), m.code ? { code: m.code, head: m.head, started: m.started, ended: m.ended } : {}));
     else request.resolve(m);
   });
   const fail = (e: Error) => {
@@ -128,6 +130,13 @@ async function readerPeer(
         const n = next++;
         requests.set(n, { resolve, reject });
         worker.postMessage({ n, subject, pin });
+      }),
+    // [DX-RD4] Hand the reader a Publish receipt: its later unpinned reads are at or after this position.
+    receipt: (position: number) =>
+      new Promise<{ floor: number }>((resolve, reject) => {
+        const n = next++;
+        requests.set(n, { resolve, reject });
+        worker.postMessage({ n, receipt: position });
       }),
     close: () => worker.terminate(),
   };
@@ -263,6 +272,17 @@ function writeSummary(rows: Save[], start: number, end: number) {
   };
 }
 
+const frameSummary = (x: { frames: number; usMax: number; usSum: number; wireMax: number }) => ({
+  frames: x.frames,
+  usMax: x.usMax,
+  usMean: x.frames ? x.usSum / x.frames : 0,
+  wireMax: x.wireMax,
+});
+function summarizeMs(xs: number[]) {
+  const s = xs.toSorted((a, b) => a - b),
+    q = (p: number) => (s.length ? s[Math.min(s.length - 1, Math.ceil(s.length * p) - 1)]! : null);
+  return { n: s.length, p50: q(0.5), p99: q(0.99), max: s.at(-1) ?? null };
+}
 export async function runHeld(
   out: string,
   source: string,
@@ -282,6 +302,14 @@ export async function runHeld(
   // [DX-ACT3] DX_ACT3_SETTLE=0 also skips it for the small release (its first settlement is measured already).
   assert([undefined, "0", "1"].includes(process.env.DX_ACT3_SETTLE));
   const settleInitial = process.env.DX_ACT3_SETTLE ? process.env.DX_ACT3_SETTLE === "1" : !shape;
+  // [DX-ACT4] Why: settle a large release at full size. DX_ACT4_INITIAL=large makes the first Publish R1 plus the
+  // DX_ACT3_RELEASE forms and policies (from nothing), so the first settlement is a large release's; it needs
+  // DX_ACT3_SETTLE=1 and is meant with TX2_SETTLE_FRAMES=bytes (the old frames refuse it). The settled values and
+  // notices are then also checked against the independent statement of the form rule. Unset, R1 as before.
+  // Rejected: a second Publish before the windows (its notices would wait behind the first release's in one stream).
+  assert([undefined, "large"].includes(process.env.DX_ACT4_INITIAL));
+  const initialLarge = process.env.DX_ACT4_INITIAL === "large";
+  assert(!initialLarge || (shape && settleInitial), "DX_ACT4_INITIAL=large needs DX_ACT3_RELEASE and DX_ACT3_SETTLE=1");
   // [DX-ACT3] Why: rerun only the windows a stopped run left unjudged. DX_HELD_WINDOWS lists mode/rate/publish
   // triples (for example rolling6/3.5/1,barrier6/23.5/0); unset, all twelve run in the original order.
   // Rejected: a second runner with its own window order.
@@ -300,6 +328,13 @@ export async function runHeld(
   // failures, it still fails the run at the end (the store gives no read-after-acknowledgement promise across
   // gateways, and whether it must is the owner's decision, not the runner's).
   const visibilityFailures: unknown[] = [];
+  // [DX-RD4] Why: with DX_ACT3_AT_LEAST=1 the probe's reader is built from each Publish receipt (the SDK's at-least read),
+  // so the runner reads as a product reader holding the receipt would. An answer from before the receipt it was given is
+  // then a store defect, recorded with every value and failing the run at the end. Unset, the probe reads as before.
+  // Rejected: dropping the earlier-answer record (it is the evidence) or a reader that asks the read gateway to sync.
+  const probeAtLeast = process.env.DX_ACT3_AT_LEAST === "1";
+  assert([undefined, "0", "1"].includes(process.env.DX_ACT3_AT_LEAST), "DX_ACT3_AT_LEAST is 0 or 1");
+  const atLeastDefects: unknown[] = [];
   class ReadCheckFailed extends Error {}
   // [DX-ACT3] Diagnostic gate only: "stale" makes the first probe of the first Publish window read at the previous
   // release (an earlier basis, as on bench 4); "mismatch" checks one deadline read against the wrong subject.
@@ -414,8 +449,20 @@ export async function runHeld(
       installed,
       ordered ? options.subjectFunction : undefined,
     ));
-    connected = await readerPeer(peer, name, descriptor);
+    if (probeAtLeast) {
+      // The read gateway must confirm at-least reads (a gateway before them would answer early without saying so).
+      const check = await reader.basis(db, { position: 0, waitMs: 1 });
+      assert.equal(check.atLeast, 0, "The read gateway does not support at-least reads");
+    }
+    connected = await readerPeer(peer, name, descriptor, probeAtLeast);
     const demand = connected;
+    const atLeastCounters = async () => {
+      const c = (await reader.request<{ atLeast?: Record<string, number> }>("GET", "/v2/admin/scan-stats")).atLeast ?? {};
+      return { requests: c.requests ?? 0, waited: c.waited ?? 0, waitMicros: c.waitMicros ?? 0, timeouts: c.timeouts ?? 0 };
+    };
+    const handReceipt = async (r: Release) => {
+      if (probeAtLeast) assert((await demand.receipt(r.position)).floor >= r.position);
+    };
     // [DX-ACT1] Why: keep early ACK clocks and pinned bytes from the connected SDK reader, then check them independently.
     // Rejected: timing a process launch or selecting a favourable probe after observing its response.
     const offer = async (doc: W0.ReleaseDoc, id: string, offered: number) => {
@@ -509,18 +556,27 @@ export async function runHeld(
         const stale = inject === "stale" && !injected && previous !== undefined && releases.length > 1;
         if (stale) injected = true;
         const probe = await demand.read(W0.placementId(i),
-          stale ? { position: previous.position, validTime } : { validTime });
+          stale ? { position: previous.position, validTime } : { validTime }).catch((e) => {
+          // [DX-RD4] The read gateway refused: its peer did not reach the receipt within the reader's 2 s wait. Recorded with
+          // its values; it stops only this window and fails the run at the end.
+          if (e?.code !== "AtLeastTimeout") throw e;
+          readFailures.push({ where: "probe-at-least-timeout", subject: W0.placementId(i), releasePosition: r.position,
+            gatewayHead: e.head, releaseAck: r.durableAt, readStarted: e.started, readEnded: e.ended });
+          throw new ReadCheckFailed("The read gateway did not reach the Publish within the at-least wait");
+        });
         const b = probe.result.basis;
         if (b.tx >= r.position) {
           await verifyRead(probe, r, i, "first-correct");
           return { probe, earlier };
         }
         const effective = releases.findLast((x) => x.position <= b.tx);
-        visibilityFailures.push({ where: "probe-after-ack", subject: probe.result.subject, route: probe.result.route,
+        const failure = { where: "probe-after-ack", subject: probe.result.subject, route: probe.result.route,
           basisTx: b.tx, basisValidTime: b.validTime, releasePosition: r.position, releaseSeq: r.seq,
           releaseAck: r.durableAt, releaseReceived: r.received, effectivePosition: effective?.position ?? null,
           readStarted: probe.started, readEnded: probe.ended, txHalf: false, validTimeHalf: b.validTime === validTime,
-          attempt: earlier.length });
+          attempt: earlier.length, atLeastAsked: probeAtLeast ? r.position : null, injected: stale };
+        visibilityFailures.push(failure);
+        if (probeAtLeast) atLeastDefects.push(failure);
         if (!effective) {
           readFailures.push({ where: "first-correct", basisTx: b.tx, releasePosition: r.position, effectivePosition: null });
           throw new ReadCheckFailed("Probe basis before every release");
@@ -537,13 +593,16 @@ export async function runHeld(
     }
     firstOffer("held-publish");
     const initialAt = now();
-    const initial = await offer(W0.R1.doc, peer.attempt + ":baseline", initialAt);
+    const initialDoc = initialLarge ? largeRelease(W0.R1.doc, shape!) : W0.R1.doc;
+    const initial = await offer(initialDoc, peer.attempt + ":baseline", initialAt);
+    await handReceipt(initial);
     const { probe: initialRead } = await firstCorrect(initial, people - 1, initialAt);
     let changes = 0,
       entries = 0,
       settlement: Awaited<ReturnType<Settlement["settle"]>> | undefined;
     if (settleInitial) {
-    worker = await Settlement.open(a, new BulkQueue(1));
+    const holds: number[] = [];
+    worker = await Settlement.open(a, new BulkQueue(1, (ms) => holds.push(ms)));
     jsonFile(path.join(out, "held-initial.json"), {
       source,
       attempt: peer.attempt,
@@ -558,6 +617,9 @@ export async function runHeld(
       worker.recorder.packets(settlement.notices.position),
     ]);
     assert.equal(stored.frontier.status, "stored");
+    // [DX-ACT4] Byte-framed pages hold each subject's changes without its full answer.
+    const bytes = stored.frames === "bytes";
+    const independent = { subjects: 0, owing: 0, changes: 0, notices: 0 };
     const archive = new Map(stored.output.map((x) => [x.subject, x]));
     assert.equal(stored.output.length, archive.size, "Duplicate settled subject");
     const notices = packets.flatMap((p) => p.deliveries.map(toWire));
@@ -591,7 +653,7 @@ export async function runHeld(
             if (row.rows.length) {
               assert.deepEqual(saved, {
                 subject: row.subject,
-                json: row.json,
+                ...(bytes ? {} : { json: row.json }),
                 changes: row.rows.map(([k, , v]) => [k, v]),
               });
               archive.delete(row.subject);
@@ -601,6 +663,16 @@ export async function runHeld(
               notices.slice(entries, entries + row.deliveries.length),
               row.deliveries,
             );
+            if (initialLarge) {
+              const i = Number(row.subject.slice(4)),
+                e = expectForms(expected(i, initial.position, history, positions), initialDoc, validTime);
+              const got = checkForms(e, row.subject, saved?.changes ?? [],
+                notices.slice(entries, entries + row.deliveries.length) as never, true);
+              independent.subjects++;
+              if (e.changes.size) independent.owing++;
+              independent.changes += got.changes;
+              independent.notices += got.notices;
+            }
             entries += row.deliveries.length;
           }
       });
@@ -616,7 +688,7 @@ export async function runHeld(
       position: initial.position,
       validTime,
     });
-    assert.equal(archived.route, "receipt-archive");
+    assert.equal(archived.route, bytes ? "authoritative-source" : "receipt-archive");
     assert.equal(archived.json, derived.result.json);
     await activeLedger.verifyThrough(await s.head());
     jsonFile(path.join(out, "held-setup.json"), {
@@ -630,6 +702,16 @@ export async function runHeld(
       settlement,
       checkedChanges: changes,
       checkedEntries: entries,
+      // [DX-ACT4] The framing, the frames each writer wrote, the largest estimated hold of the writer, and each bulk
+      // turn's client-side duration (queue entry to reply).
+      frames: {
+        mode: stored.frames,
+        initial: initialLarge ? shapeName(shape!) : "R1",
+        values: frameSummary(worker.archive.admitted),
+        notices: frameSummary(worker.recorder.archive.admitted),
+        turnMs: summarizeMs(holds),
+        independent: initialLarge ? independent : null,
+      },
     });
     await worker.close();
     worker = undefined;
@@ -686,6 +768,8 @@ export async function runHeld(
             }
           })();
           void ticking.catch(() => {});
+          // [DX-RD4] The read gateway's at-least counters over the window (requests, waits, wait time, refusals).
+          const atLeastBefore = probeAtLeast ? await atLeastCounters() : undefined;
           const writes = play(
             senders,
             tape,
@@ -742,6 +826,7 @@ export async function runHeld(
                 gate.paused = false;
                 gate.resume!();
               }
+              await handReceipt(r);
               // [DX-ACT3] The read gateway's basis after the write gateway's acknowledgement and before the probe
               // (one round trip, outside the paused turn, so the gate hold is unchanged).
               const head = await reader.basis(db);
@@ -794,6 +879,7 @@ export async function runHeld(
             done = true;
             await ticking;
           }
+          const atLeastAfter = probeAtLeast ? await atLeastCounters() : undefined;
           const terminal = await s.head();
           await activeLedger.verifyThrough(terminal);
           assert.equal(result.unresolved.size, 0, "Uncertain writer or foreign cut");
@@ -824,6 +910,10 @@ export async function runHeld(
             readMissing: readOffered - reads.count,
             readCheckFailure: windowFailure ?? null,
             visibilityFailures: visibilityFailures.length,
+            probeAtLeast,
+            atLeastDefects: atLeastDefects.length,
+            readGatewayAtLeast: atLeastBefore && atLeastAfter ? Object.fromEntries(
+              (["requests", "waited", "waitMicros", "timeouts"] as const).map((k) => [k, atLeastAfter[k] - atLeastBefore[k]])) : null,
             probesBeforePublishVisible: native.map((x) => (x.firstCorrect as { earlier: unknown[] } | undefined)?.earlier.length ?? null),
             readHeadLagAfterAck: native.map((x) => x.readHeadAfterAck ? x.r.position - x.readHeadAfterAck.position : null),
           };
@@ -899,10 +989,14 @@ export async function runHeld(
       selectedWindows: selected ?? null,
       readFailures,
       visibilityFailures,
+      probeAtLeast,
+      atLeastDefects,
       durationMs: now() - start,
     });
     // [DX-ACT3] A read check that failed in any window fails the run, after every window has recorded itself.
     assert.equal(readFailures.length, 0, "Held read checks failed: " + JSON.stringify(readFailures));
+    assert.equal(atLeastDefects.length, 0,
+      "Store defect: probes answered before the receipt position they were given: " + JSON.stringify(atLeastDefects));
     assert.equal(visibilityFailures.length, 0,
       "Probes answered before the acknowledged Publish was visible: " + JSON.stringify(visibilityFailures));
   } finally {

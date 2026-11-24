@@ -163,7 +163,15 @@
   ;; [DX-W1] Why: the legacy compiler proves command shape, retractions and exact journal bytes.
   ;; Rejected: a second parser for ordinary and ordered IDs, or treating a customer's packed payload as a page.
   (when-let [{:keys [owner journal provisional ops] :as plan}
-             (when (d/entid db ident)
+             (when (and (d/entid db ident)
+                        ;; [Opus W2] Why: a save wider than the root's cover can only fold and leave; skip planning it twice.
+                        ;; Rejected: widening the root (it is rewritten on every save, so it must stay small).
+                        (not (and subject/wide?
+                                  (< cover-limit (count (filter #(and (vector? %) (= :triplex/assert (first %))
+                                                                      (= :triplex.entity/row (nth % 2 nil))
+                                                                      (not (contains? (set (map (fn [j] (str "e:" j)) (:journal-entities payload)))
+                                                                                      (second %))))
+                                                                (:ops payload)))))))
                (binding [subject/*covering* true]
                  (subject/plan db data input expected-erasure predecessor revision)))]
     (let [root (root/root db owner)

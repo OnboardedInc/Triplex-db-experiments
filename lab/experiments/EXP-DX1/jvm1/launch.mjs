@@ -189,9 +189,9 @@ export const roleMemoryMiB = (policy) => policy.tx.memoryMiB + policy["gw-w"].me
 // [DX-INT1] Why: keep the portable limits and the full-size treatment in one launch policy.
 // Rejected: scaling all roles together or interpreting the reduced startup as physical placement evidence.
 /** @param {"laptop" | ServerProfile} profile
- * @param {{ jvm?: JvmProfile, txJvm?: JvmProfile, writeJvm?: JvmProfile, readJvm?: JvmProfile, readTuned?: boolean, readCacheMiB?: 32 | 1536 | 3072, txCacheMiB?: 32768, creditMode?: CreditMode, reduced?: boolean, scale?: number, startup?: "today" | "tuned" }} [options] */
+ * @param {{ jvm?: JvmProfile, txJvm?: JvmProfile, writeJvm?: JvmProfile, readJvm?: JvmProfile, readTuned?: boolean, readCacheMiB?: 32 | 1536 | 3072, readHeapThird?: boolean, txCacheMiB?: 32768, creditMode?: CreditMode, reduced?: boolean, scale?: number, startup?: "today" | "tuned" }} [options] */
 export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, writeJvm = jvm,
-  readJvm = jvm, readTuned = false, readCacheMiB, txCacheMiB, creditMode = defaultCreditMode, reduced = false, scale = 1, startup = "today" } = {}) {
+  readJvm = jvm, readTuned = false, readCacheMiB, readHeapThird = false, txCacheMiB, creditMode = defaultCreditMode, reduced = false, scale = 1, startup = "today" } = {}) {
   assert(profile === "laptop" || serverProfiles.includes(profile));
   assert([jvm, txJvm, writeJvm, readJvm].every((v) => jvmProfiles.includes(v)));
   // [DX-INT1] Why: server-32 is exactly PREP1's cache32 transactor: 48 GiB Java 25 ZGC heap, 32 GiB cache, 8 GiB direct, 60 GiB cap.
@@ -211,16 +211,31 @@ export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, writeJvm
   // Rejected: making cache capacity alter core placement or making the tuned treatment implicit.
   // [DX-JVM1] Why: the start-up read arms reuse PREP1's measured 32 GiB transactor cache: 48 GiB heap, 8 GiB direct, 60 GiB cap.
   // Rejected: a larger cache, which does not fit beside the other role caps on a 96 GB host.
-  assert(txCacheMiB === undefined || (txCacheMiB === 32768 && profile !== "laptop" && !reduced && !readTuned));
+  assert(txCacheMiB === undefined || (txCacheMiB === 32768 && profile !== "laptop" && !reduced));
   const largeRead = readTuned || readCacheMiB === 3072;
-  const readMemory = largeRead ? { memory: 9216, heap: 6144, direct: 1024 } : {};
+  // [DX-CARD2] Why: the 32 GiB transactor beside the tuned reader. Measured peaks at 1 billion: the transactor's cgroup
+  // reached 53.11 GiB (48.07 GiB ZGC heap, 4.83 GiB other) of 60 in PREP1's cache32 arm (1,380 one-second samples, the
+  // worst-case tape at 394 and 620 saves/s), so its container is cut to 57 GiB, heap, cache and direct limit unchanged.
+  // The reader arms' tuned reader (6 GiB heap, 9 GiB container) then still exceeds the guard by 1 GiB and is refused;
+  // the card's tuned reader below fits. Rejected: a smaller transactor heap (it holds the 32 GiB cache that sets P2 at
+  // 1 billion), cutting the writer (4.35 GiB peak of 6), and the 10 GiB host reserve (the driver's peak is not measured).
+  // [DX-CARD2] Why (the card's tuned reader, `readHeapThird`): the one-core reader spent 8 to 9% of the pull window in
+  // collector pauses of 18 to 142 ms with one collector thread and half its heap as cache. The card's tuned reader keeps
+  // the measured 3 GiB cache in a 9 GiB heap (a third), with three parallel collector threads (one per core, as
+  // launchOptions sets), in an 11 GiB container. With the 32 GiB transactor that needs 3 GiB more than the reader arms'
+  // 8 GiB container, taken from PostgreSQL (8 to 5 GiB: its anonymous use was 0.05 GiB at 1 billion; the rest was page
+  // cache at its cap, of which 3 GiB besides the 2 GiB shared buffers remain). Rejected: a smaller cache (the re-read
+  // ladder's reuse distance, about 5,600 segments, needs about 3 GiB) and a 55 GiB transactor (1.9 GiB over its peak).
+  assert(!readHeapThird || (readTuned && readCacheMiB === 3072), "readHeapThird applies to the tuned reader's 3 GiB cache");
+  const combined = readTuned && txCacheMiB !== undefined;
+  const readMemory = largeRead ? readHeapThird ? { memory: 11264, heap: 9216, direct: 1024 } : { memory: 9216, heap: 6144, direct: 1024 } : {};
+  const bigTx = txCacheMiB ? { tx: { ...server.tx, memory: combined ? 58368 : 61440, heap: 49152, direct: 8192, cache: txCacheMiB } } : {};
   // [DX-RD1] Why: leave two client cores available and give the read peer three physical cores.
   // Rejected: sharing the new read cores with the transmitter or verifier.
   const placementServer = readTuned ? { ...server,
     "gw-w": { ...server["gw-w"], cpus: "2,3,4", cores: 3 },
-    "gw-r": { ...server["gw-r"], cpus: "5,6,11", cores: 3, ...readMemory, cache: 3072 },
-  } : { ...server, "gw-r": { ...server["gw-r"], ...readMemory },
-    ...(txCacheMiB ? { tx: { ...server.tx, memory: 61440, heap: 49152, direct: 8192, cache: txCacheMiB } } : {}) };
+    "gw-r": { ...server["gw-r"], cpus: "5,6,11", cores: 3, ...readMemory, cache: 3072 }, ...bigTx,
+  } : { ...server, "gw-r": { ...server["gw-r"], ...readMemory }, ...bigTx };
   /** @param {Role} role */
   const settings = (role) => {
     const placement = profile === "laptop" ? laptop[role] : placementServer[role];
@@ -269,7 +284,7 @@ export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, writeJvm
   };
   const policy = {
     profile, reduced, creditMode, tx: settings("tx"), "gw-w": settings("gw-w"), "gw-r": settings("gw-r"),
-    pg: { memoryMiB: portable ? laptopCaps.pg * scale : 8192, cpus: "1", settings: pgSettings },
+    pg: { memoryMiB: portable ? laptopCaps.pg * scale : combined && readHeapThird ? 5120 : 8192, cpus: "1", settings: pgSettings },
     index: { threshold: portable ? "8m" : "256m", max: portable ? "32m" : "1g" },
     clients: { senders: "9", readers: readTuned ? "10" : "10,11" },
   };

@@ -1,7 +1,8 @@
 (ns triplex.gateway.selftest
   (:require [clojure.test :refer :all] [triplex.gateway.transaction-shape :as tx-shape] [clojure.data.json :as json] [datomic.api :as d]
             [ring.core.protocols :as protocols] [triplex.gateway.trace :as trace]
-            [triplex.gateway.jfr :as jfr] [triplex.gateway.slim :as slim] [triplex.gateway.admission :as admission] [triplex.gateway.reach :as reach] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.canonical :as canonical] [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema] [triplex.gateway.layout-replay :as replay]))
+            [triplex.gateway.jfr :as jfr] [triplex.gateway.slim :as slim] [triplex.gateway.admission :as admission] [triplex.gateway.reach :as reach] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.canonical :as canonical] [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema] [triplex.gateway.layout-replay :as replay]
+            [triplex.gateway.at-least :as at-least]))
 
  ;; [DX-B7] Why: old selftests predate mandatory row texts and the explicit layout/name parameters.
 ;; Rejected: bypassing the current commit API or removing the existing signed-zero/speculative assertions.
@@ -817,6 +818,90 @@
         (is (every? (set (map #(get % "name") (get sample "spans")))
                     ["read.resolve-position" "gateway.admission-wait" "read.row-decode" "gateway.response-write"])))
       (finally (gateway/delete-scope! base scope)))))
+
+;; [DX-RD4] Why: an unpinned read that names "at least" a position never answers before it: it answers at once when the
+;; peer has it, waits on the peer's own wakeups when it does not, and refuses with the peer's head at its deadline.
+;; Without the parameter every route answers exactly as before. Rejected: checking only the parser (the wait is the point).
+(deftest at-least-unpinned-reads
+  (let [base "datomic:mem://" scope "[\"triplex-scope-v1\",\"test\",\"test\",\"rd4-at-least\",0]"
+        name (:db (gateway/create-scope! base scope "legacy")) uri (str base name) conn (gateway/connection uri)
+        commit! (fn [k] (storage/commit! name conn (gateway/sync-db uri)
+                                         {"sourceK" k "position" (inc k) "operationId" (str "rd4-" k) "rows" [] "newIds" [] "claims" []}))
+        call (fn [method path & [body query]]
+               (let [r (gateway/route-handler-base
+                         (cond-> {:request-method method :uri path :query-string query}
+                           body (assoc :body (java.io.ByteArrayInputStream. (.getBytes ^String (json/write-str body) "UTF-8")))))]
+                 [(:status r) (json/read-str (let [b (:body r)] (if (string? b) b (String. ^bytes b "UTF-8"))))
+                  (get-in r [:headers "x-tx2-at-least-wait-micros"])]))
+        refused (fn [f] (try (f) :accepted (catch clojure.lang.ExceptionInfo e (:code (ex-data e)))))]
+    (try
+      (commit! 0) (commit! 1)
+      (is (= 2 (storage/head-position name (gateway/sync-db uri))))
+      (testing "parameters"
+        (is (nil? (at-least/from-query nil)))
+        (is (nil? (at-least/from-query "")))
+        (is (= {:position 3 :waitMs 40} (at-least/from-query "atLeast=3&waitMs=40")))
+        (is (= {:position 0 :waitMs 500} (at-least/from-query "atLeast=0")))
+        (doseq [q ["waitMs=40" "atLeast=" "atLeast" "atLeast=-1" "atLeast=01" "atLeast=x" "atLeast=3&waitMs=0"
+                   "atLeast=3&waitMs=2001" "atLeast=9007199254740992"]]
+          (is (= "InvalidValue" (refused #(at-least/from-query q))) q))
+        (is (nil? (at-least/from-body {"basis" {"validAt" 1.0}})))
+        (is (= {:position 1 :waitMs 500} (at-least/from-body {"atLeastPosition" 1 "basis" {"validAt" 1.0}})))
+        (is (= {:position 1 :waitMs 30} (at-least/from-body {"atLeastPosition" 1 "basisWaitMs" 30})))
+        (doseq [input [{"atLeastPosition" 1 "basis" {"validAt" 1.0 "recordedPosition" 1}}
+                       {"atLeastPosition" 1 "basis" {"validAt" 1.0 "recordedAt" 1.0}}
+                       {"atLeastPosition" 1 "handle" "h"} {"atLeastPosition" -1} {"atLeastPosition" 1.5}
+                       {"atLeastPosition" 1 "basisWaitMs" 0}]]
+          (is (= "InvalidValue" (refused #(at-least/from-body input))) (pr-str input))))
+      (testing "the basis route without the parameter is unchanged"
+        (let [b (gateway/basis base name)]
+          (is (= (codec/encode-value "long" 2) (:position b)))
+          (is (not (contains? b :atLeast)))
+          (is (= b (gateway/basis base name nil)))))
+      (testing "the peer already has the position: no wait, answered at its head"
+        (let [b (gateway/basis base name {:position 1 :waitMs 500})]
+          (is (= (codec/encode-value "long" 2) (:position b)))
+          (is (= [1 0] [(:atLeast b) (:atLeastWaitMicros b)]))))
+      (testing "a position the peer does not have yet: it waits, then answers at or after it"
+        (let [waiting (future (gateway/basis base name {:position 3 :waitMs 2000}))]
+          (Thread/sleep 150)
+          (is (not (realized? waiting)))
+          (commit! 2)
+          (let [b (deref waiting 2000 nil)]
+            (is (= (codec/encode-value "long" 3) (:position b)))
+            (is (= 3 (:atLeast b)))
+            (is (<= 100000 (:atLeastWaitMicros b) 2000000)))))
+      (testing "the deadline: a clear refusal with the peer's head"
+        (let [start (System/nanoTime)]
+          (try (gateway/basis base name {:position 9 :waitMs 60}) (is false "A position past the head must refuse")
+               (catch clojure.lang.ExceptionInfo e
+                 (is (= [409 "AtLeastTimeout" 3] ((juxt :status :code :maximum) (ex-data e))))
+                 (is (re-find #"did not reach position 9 within 60 ms \(its head is 3\)" (.getMessage e)))))
+          (is (<= 50000000 (- (System/nanoTime) start) 1500000000))))
+      (testing "routes"
+        (let [db-path (str "/v1/db/" name)]
+          (let [[status body micros] (call :get (str db-path "/basis"))]
+            (is (= 200 status)) (is (not (contains? body "atLeast"))) (is (nil? micros)))
+          (let [[status body] (call :get (str db-path "/basis") nil "atLeast=3&waitMs=100")]
+            (is (= [200 3 "3"] [status (get body "atLeast") (get-in body ["position" "v"])])))
+          (let [[status body] (call :get (str db-path "/basis") nil "atLeast=4&waitMs=30")]
+            (is (= [409 "AtLeastTimeout" 3] [status (get body "code") (get body "maximum")])))
+          (let [[status body] (call :get (str db-path "/basis") nil "waitMs=30")]
+            (is (= [400 "InvalidValue"] [status (get body "code")])))
+          (let [[status body micros] (call :post (str db-path "/read") {"entityIds" [] "basis" {"validAt" 30.0} "atLeastPosition" 3})]
+            (is (= [200 3 "0"] [status (get body "atLeast") micros])))
+          (let [[status body micros] (call :post (str db-path "/read") {"entityIds" [] "basis" {"validAt" 30.0}})]
+            (is (= 200 status)) (is (not (contains? body "atLeast"))) (is (nil? micros)))
+          (let [[status body] (call :post (str db-path "/snapshot") {"basis" {"validAt" 30.0} "atLeastPosition" 3})]
+            (is (= [200 3 "3"] [status (get body "atLeast") (get-in body ["position" "v"])]))
+            (storage/release! name (get body "handle")))
+          (let [[status body] (call :post (str db-path "/read") {"entityIds" [] "basis" {"validAt" 30.0 "recordedPosition" 2} "atLeastPosition" 3})]
+            (is (= [400 "InvalidValue"] [status (get body "code")])))
+          (let [[status body] (call :post (str db-path "/claim") {"atLeastPosition" 3 "commandId" "c" "position" 3})]
+            (is (= [400 "InvalidValue"] [status (get body "code")])))
+          (let [[status body] (call :post (str db-path "/read") {"entityIds" [] "basis" {"validAt" 30.0} "atLeastPosition" 7 "basisWaitMs" 20})]
+            (is (= [409 "AtLeastTimeout" 3] [status (get body "code") (get body "maximum")])))))
+      (finally (is (:deleted (gateway/delete-scope! base scope)))))))
 
 (defn -main [& _]
   (let [{:keys [fail error] :as result} (with-redefs [gateway/uri-template "datomic:mem://{db}"] (run-tests 'triplex.gateway.selftest))]
