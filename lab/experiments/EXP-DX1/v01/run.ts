@@ -10,7 +10,7 @@ import { cleanSource, verifyBuild } from "./source.ts";
 import { pgdataArgs } from "./pgdata.ts";
 import { parseCredits, parseWindow, serverRates, writerAdmission } from "./server-workload.ts";
 import { assembleSequential, completeSequentialArm, existingSequence, sequenceProgress } from "./sequential.ts";
-import { parseCardTape, tapeShape, tapeTitle } from "./production-card.ts";
+import { newRunTape, tapeShape, tapeTitle, writerOptionNames } from "./production-card.ts";
 import { rendererDiff } from "./renderer.ts";
 import { parseReader, randomLineMinutes, readerEnvironment, readerLaunch, readerTitle } from "./card-reader.ts";
 
@@ -27,13 +27,13 @@ const { values } = parseArgs({
     arm: { type: "string" }, assemble: { type: "boolean" }, renderer: { type: "string" }, "platform-tape": { type: "boolean" },
     "hourly-usd": { type: "string", default: "1.09" }, help: { type: "boolean" }, plan: { type: "boolean" },
     profile: { type: "string", default: defaultServerProfile },
-    tape: { type: "string", default: "saturday" },
+    tape: { type: "string" },
     // [DX-CARD2] The tuned pinned reader as a card setting (v01/card-reader.ts); absent means the default reader.
     reader: { type: "string" }, "read-permits": { type: "string" },
   },
 });
 if (values.help) {
-  console.log("scorecard.mjs --age fresh|1B|realistic --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer per-person-ordered] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm j21-g1|j25-g1|j25-zgc] [--write-jvm j21-g1|j25-g1|j25-zgc] [--wal-directory DIR] [--window-seconds 90|300] [--credit-mode barrier6|rolling6|rolling8|rolling12|rolling16] [--profile server|server-32] [--tape saturday|production-R|production-S|production-R-noburst|production-S-noburst] [--reader default|tuned [--read-permits 1..99]]\n--window-seconds also takes any multiple of 30 from 90 to 600; 150 is the shortest whose quiet account offers the P6 gate's 500 commits per side.\nFor prepared PostgreSQL use --pgdata-source SEALED_PGDATA with --pgdata COPY once per arm (headline zero, headline loaded, barrier6).\nFor 1B also provide --aged-bundle FILE --aged-bundle-sha256 SHA. Without prepared directories, also provide --aged-dump FILE --aged-dump-sha256 SHA for 1B.\nscorecard.mjs --plan");
+  console.log("scorecard.mjs --age fresh|1B|realistic --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer per-person-ordered] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm j21-g1|j25-g1|j25-zgc] [--write-jvm j21-g1|j25-g1|j25-zgc] [--wal-directory DIR] [--window-seconds 90|300] [--credit-mode barrier6|rolling6|rolling8|rolling12|rolling16] [--profile server|server-32] [--tape production-S-noburst|production-S|production-R|production-R-noburst|saturday (default production-S-noburst; realistic: saturday)] [--reader default|tuned [--read-permits 1..99]]\n--window-seconds also takes any multiple of 30 from 90 to 600; 150 is the shortest whose quiet account offers the P6 gate's 500 commits per side.\nFor prepared PostgreSQL use --pgdata-source SEALED_PGDATA with --pgdata COPY once per arm (headline zero, headline loaded, barrier6).\nFor 1B also provide --aged-bundle FILE --aged-bundle-sha256 SHA. Without prepared directories, also provide --aged-dump FILE --aged-dump-sha256 SHA for 1B.\nscorecard.mjs --plan");
   console.log("For sequential staging, run --arm 1 through --arm 3 in order with one --pgdata per invocation and the same --out. Then run --assemble --commit COMMIT --out DIRECTORY.");
   console.log("To assemble with a later renderer: --assemble --commit CAMPAIGN_COMMIT --renderer CHECKED_OUT_COMMIT --out DIRECTORY (the renderer must descend from the campaign commit and differ only in assembly files; the card names both). Add --platform-tape when assembling on another platform than the campaign's (the tape must hash to its pre-launch binding; floating-point offsets may differ by at most 1e-6 ms).");
   process.exit(0);
@@ -69,8 +69,9 @@ const windowSeconds = parseWindow(values["window-seconds"]);
 const creditMode = parseCredits(values["credit-mode"] ?? process.env.DX_V01_CREDIT_MODE);
 assert(serverProfiles.includes(values.profile as ServerProfile), "Choose --profile server or server-32");
 const profile = values.profile as ServerProfile;
-// [DX-INT1] The save tape of the loaded cells (v01/production-card.ts); Saturday's stays the default.
-const cardTape = parseCardTape(values.tape);
+// [DX-INT1] The save tape of the loaded cells (v01/production-card.ts).
+// [DX-S1] Default: shape S, one commit per subject's save (the owner's decision); the realistic card keeps its own tape.
+const cardTape = newRunTape(values.tape, values.age);
 assert(cardTape === "saturday" || values.age !== "realistic", "The realistic card keeps its own tape");
 const reader = parseReader(values.reader, values["read-permits"]);
 assert(!reader || values.age !== "realistic", "The tuned reader's random-subject line reads the SCALE1 deep population");
@@ -133,7 +134,10 @@ const child = spawn("timeout", ["--kill-after=" + budget.cleanup + "m", String(a
   path.resolve(values.seed), values["image-sha256"], values["transfer-sha256"], values.age, values.writer, jvm,
   ...aged.map((v) => v ?? ""), txJvm, wal, values.arm ?? "", String(startedAt), forecast, String(windowSeconds), creditMode, writeJvm, ...pgdata], {
   stdio: ["ignore", fd, fd],
-  env: Object.fromEntries([...["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT", "AGE_JAVA", "AGE_DATOMIC_HOME", "DX_W1_SERIAL_APPLY", "PREP1_LOOKUP_EVERY", "DX_DRY_RUN_FIRST_OFFER"]
+  env: Object.fromEntries([...["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT", "AGE_JAVA", "AGE_DATOMIC_HOME", "DX_W1_SERIAL_APPLY", "PREP1_LOOKUP_EVERY", "DX_DRY_RUN_FIRST_OFFER",
+    // [DX-S1] Writer options (default off) for the card's server arms; before this they were dropped here, so a card
+    // launched with them set ran without them. The card records them and checks the writers' readback.
+    ...writerOptionNames]
     .flatMap((name) => process.env[name] ? [[name, process.env[name]]] : []), ["DX_V01_PROFILE", profile], ["DX_V01_TAPE", cardTape],
     ...readerEnvironment(reader)]),
 });

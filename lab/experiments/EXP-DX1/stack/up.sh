@@ -284,6 +284,10 @@ thread_counters=${DX_THREAD_COUNTERS:-0}
 subject_hints=${TX2_SUBJECT_HINTS:-0}
 [[ $subject_hints =~ ^[01]$ ]] || exit 2
 [[ $subject_hints == 0 || $subject_prefetch == 0 ]] || { echo "TX2_SUBJECT_HINTS replaces TX2_SUBJECT_PREFETCH; set one" >&2; exit 2; }
+# [DX-S1] Why: default-off wide saves on the per-subject writer (W2), for one commit per subject's save.
+# Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
+subject_wide=${TX2_SUBJECT_WIDE:-0}
+[[ $subject_wide =~ ^[01]$ ]] || exit 2
 [[ $lookup_every =~ ^(0|[1-9][0-9]{0,3})$ ]] && (( lookup_every <= 4096 )) || exit 2
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prepw =~ ^(1|2|4)$ ]]
@@ -306,6 +310,7 @@ fi
 [[ $subject_prefetch =~ ^[01]$ && ( $subject_prefetch == 0 || $subject_save == 1 ) ]]
 [[ $subject_ordered_ids =~ ^[01]$ && ( $subject_ordered_ids == 0 || ( $subject_save == 1 && $subject_prefetch == 0 ) ) ]]
 [[ $subject_hints == 0 || $subject_save == 1 ]] || { echo "TX2_SUBJECT_HINTS needs the per-subject writer" >&2; exit 2; }
+[[ $subject_wide == 0 || $subject_save == 1 ]] || { echo "TX2_SUBJECT_WIDE needs the per-subject writer" >&2; exit 2; }
 [[ $subject_narrow_revision =~ ^[01]$ && $subject_reuse_predecessor =~ ^[01]$ ]] || exit 2
 [[ ( $subject_narrow_revision == 0 && $subject_reuse_predecessor == 0 ) || ( $subject_ordered_ids == 1 && $subject_numeric_owner == 1 ) ]] || exit 2
 prep_pgdata=${DX_PREP1_PGDATA:-}
@@ -1007,6 +1012,9 @@ for role in "${gateway_roles[@]}"; do
   fi
   if [[ $mode == w && $subject_hints == 1 ]]; then
     field_policy+=(-e "TX2_SUBJECT_HINTS=1")
+  fi
+  if [[ $mode == w && $subject_wide == 1 ]]; then
+    field_policy+=(-e "TX2_SUBJECT_WIDE=1")
   fi
   if [[ -n $read_wait_limit ]]; then field_policy+=(-e "TX2_READ_WAIT_LIMIT=$read_wait_limit"); fi
   if [[ $thread_counters == 1 ]]; then field_policy+=(-e "TX2_THREAD_COUNTERS=1"); fi

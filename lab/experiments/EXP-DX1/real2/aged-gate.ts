@@ -73,6 +73,8 @@ assert(!opened.created && opened.db === db);
 const options = await client.request<any>("GET", "/v1/db/" + db + "/write-options");
 assert.equal(options.position, head);
 assert(options.subjectSave && options.subjectOrderedIds && options.subjectNumericOwner);
+// [DX-S1] The gateway runs the wide-save switch the driver was given (default off).
+assert.equal(Boolean(options.subjectWide), process.env.TX2_SUBJECT_WIDE === "1");
 
 // The production tape's people, folded onto the toy's 50 per account: AGE1's edited people first (its active sample
 // at floor(j × 48 / 5) and its probe, 48), so every shape writes over AGE1's rows.
@@ -159,7 +161,7 @@ for (let i = 0; i < owners.length; i += 50) {
 const result = {
   gate: "real2-aged-live", paramsSha256: sha256, seedCut, head, agingSaves: aged.saves, active: aged.active,
   owners: owners.length, agedRowsAdmitted: agedRows.length, tamperedAgedRowRefused: true, writesOverAgedRows: overAged,
-  fieldsChecked, finalCut: cut, timings: "diagnostic",
+  fieldsChecked, finalCut: cut, timings: "diagnostic", wideSaves: process.env.TX2_SUBJECT_WIDE === "1",
   cells: results.map(({ cell, result, wallMs }) => {
     const report = tapeReport(cell.tape, cell.duration, params);
     return { label: cell.label, offers: cell.tape.length, acked: result.rows.filter((r) => r.receipt).length,
@@ -172,7 +174,9 @@ const result = {
       // [DX-W3] General-writer saves that carried hints (0 unless TX2_GENERAL_PREFETCH=1).
       generalHintsAcks: result.rows.filter((r) => (r as any).ack?.generalHintsAttached).length,
       // [DX-W4] Per-subject saves that carried hints (0 unless TX2_SUBJECT_HINTS=1).
-      subjectHintsAcks: result.rows.filter((r) => (r as any).ack?.subjectHintsAttached).length };
+      subjectHintsAcks: result.rows.filter((r) => (r as any).ack?.subjectHintsAttached).length,
+      // [DX-S1] Commits that carried a wide ordered block (0 unless TX2_SUBJECT_WIDE=1).
+      wideIdentityAcks: result.rows.filter((r) => r.receipt && r.orderedToken?.length === 23).length };
   }),
 };
 writeFileSync(join(out!, "result.json"), JSON.stringify(result, null, 2) + "\n");

@@ -162,7 +162,9 @@
                              :subjectOwnerHeadFunction (when (and owner-layout/enabled (owner-layout/installed? db))
                                                          (str owner-layout/ident))
                              :subjectPrefetch (boolean (and subject/prefetch? (d/entid db subject/prefetch-ident)))
-                             :subjectFunctionTx (some-> subject-t str)))))
+                             :subjectFunctionTx (some-> subject-t str))
+      ;; [Opus W2] Why: launchers read back the actual wide-save switch; the reply is unchanged with the option off.
+      subject/wide? (assoc :subjectWide true :subjectWideFacts subject/wide-facts))))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"}
                              :body (trace/read-span "gateway.json-encode" "gateway" (json/write-str data))})
 ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.

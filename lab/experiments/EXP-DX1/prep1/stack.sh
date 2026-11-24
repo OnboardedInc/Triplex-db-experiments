@@ -13,6 +13,7 @@ export TX2_SUBJECT_NARROW_REVISION=$(cat /config/subject-serial 2>/dev/null || p
 export TX2_SUBJECT_REUSE_PREDECESSOR=$TX2_SUBJECT_NARROW_REVISION
 export TX2_SUBJECT_APPEND_RETIREMENT=$(cat /config/subject-retirement 2>/dev/null || printf 0)
 export TX2_SUBJECT_OWNER_HEAD=$(cat /config/subject-head 2>/dev/null || printf 0)
+export TX2_SUBJECT_WIDE=$(cat /config/subject-wide 2>/dev/null || printf 0)
 export PREP1_LOOKUP_EVERY=$(cat /config/lookup-every 2>/dev/null || printf 0)
 # [DX-W3] Present only for the DX-W3 production gate: hints for the general writer (0 or 1), with Datomic prefetch on
 # in both arms, as the server launch has it.

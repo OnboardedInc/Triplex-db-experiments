@@ -13,7 +13,7 @@ import { timeBudget, defaultWriter, physicalArms, writeDiagnostics, jvmProfiles,
 import { cleanSource, verifyBuild } from "./source.ts";
 import { claimPgdata, inspectPgdata, pgdataArgs, pgdataTarget, preflightWal, sealedPgdata } from "./pgdata.ts";
 import { openSequence, setAsideArm, startSequentialArm } from "./sequential.ts";
-import { parseCardTape, tapeBinding } from "./production-card.ts";
+import { parseCardTape, tapeBinding, writerOptionsSet } from "./production-card.ts";
 import { agedCut } from "../prep1/ceiling-seed.ts";
 
 import { parseWindow, parseCredits } from "./server-workload.ts";
@@ -41,6 +41,7 @@ const policy = launchProfile(profile, { jvm: jvm as JvmProfile, txJvm: txJvm as 
 const diagnostics = writeDiagnostics(requestedWriter, process.env);
 // [DX-INT1] Why: run.ts passes the save tape in the environment, as it does the profile (v01/production-card.ts).
 const cardTape = parseCardTape(process.env.DX_V01_TAPE);
+const writerOptions = writerOptionsSet(process.env);
 assert(cardTape === "saturday" || age !== "realistic", "The realistic card keeps its own tape");
 const stages = serverStages(policy, !!walDirectory);
 assert(armText === "" || /^[1-3]$/.test(armText ?? ""), "Choose arm 1, 2 or 3");
@@ -79,7 +80,9 @@ if (!copies.length && expected) {
 }
 const input = { source, age, writer: requestedWriter, jvm: jvm as JvmProfile, imagePin, transferPin, originalScope: seed.scope, realistic: seed.realisticBinding,
   txJvm: txJvm as JvmProfile, writeJvm: writeJvm as JvmProfile, diagnostics, separateWal: !!wal, stages, wal, windowSeconds, creditMode,
-  agedBundle: expected?.pin, agedDump: agedDumpPin || undefined, profile, tape: tapeBinding(cardTape, windowSeconds), ...(reader ? { reader } : {}) };
+  agedBundle: expected?.pin, agedDump: agedDumpPin || undefined, profile, tape: tapeBinding(cardTape, windowSeconds), ...(reader ? { reader } : {}),
+  // [DX-S1] Recorded only when one is set, so a default campaign's input stays as it was.
+  ...(Object.keys(writerOptions).length ? { writerOptions } : {}) };
 assert(cardTape === "saturday" || age !== "1B" || copies.length, "The production tape at 1 billion runs from prepared copies");
 let spent = 0, previousSystem: string | undefined;
 if (sequenceArm !== undefined) {

@@ -155,5 +155,25 @@ const results: Record<string, unknown> = {};
   assert.deepEqual(dry.log, []);
   results.random = w.map((x: any) => x.name);
 }
+// 9. [DX-S1] The save-size ladder (DX_RD3_WINDOWS=ladder): one isolated near-head window per size, at the 50-row cell,
+// each with DX_S1_LADDER_FACTS set to its size while it runs and cleared after the arm.
+{
+  const sizes: number[] = [];
+  const ctx = { ...context("ladder"), selection: "ladder" };
+  const adopted = ctx.calls.adoptedArm;
+  ctx.calls.adoptedArm = async (...args: any[]) => {
+    assert.equal(args[8].rate, 50);
+    sizes.push(Number(process.env.DX_S1_LADDER_FACTS));
+    return adopted(...args);
+  };
+  await sealedArm({ complete: () => {} } as any, "s", "a", async () => { await savesArm(ctx); return ""; }, () => {});
+  const w = summary(ctx);
+  assert.deepEqual(w.map((x: any) => x.name), ["ladder-5", "ladder-10", "ladder-17", "ladder-50", "ladder-100", "ladder-340", "ladder-1000"]);
+  assert.deepEqual(sizes, [5, 10, 17, 50, 100, 340, 1000]);
+  assert.deepEqual(w.map((x: any) => x.facts), sizes);
+  assert(w.every((x: any) => x.pin === "near-head" && x.reads && x.rate === 50));
+  assert.equal(process.env.DX_S1_LADDER_FACTS, undefined);
+  results.ladder = w.map((x: any) => x.name);
+}
 fs.writeFileSync(path.join(root, "harness.json"), JSON.stringify(results, null, 2) + "\n");
 console.log("RD3_SAVES_HARNESS passed " + JSON.stringify(results));

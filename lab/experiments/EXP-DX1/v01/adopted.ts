@@ -366,6 +366,9 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       assert.match(options.subjectFunction, /^:triplex\.subject\/v-[a-f0-9]{24}$/);
       assert(options.subjectOrderedIds && options.subjectNumericOwner && !options.subjectPrefetch);
     }
+    // [DX-S1] The default-off writer options the arm was given are the ones its writer runs (run.ts passes them).
+    assert.deepEqual([Boolean(options.subjectWide), Boolean(options.options?.generalPrefetch), Boolean(options.options?.subjectHints)],
+      [process.env.TX2_SUBJECT_WIDE === "1", process.env.TX2_GENERAL_PREFETCH === "1", process.env.TX2_SUBJECT_HINTS === "1"]);
     assert.deepEqual([Boolean(options.subjectNarrowRevision), Boolean(options.subjectReusePredecessor)],
       [Boolean(peer.serialApply), Boolean(peer.serialApply)]);
     if (retirement) {
