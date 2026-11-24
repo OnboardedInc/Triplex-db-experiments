@@ -134,3 +134,10 @@ adopted-xq6-sweep-bad-int4     b0d88c9ae REFUSED  DX_SWEEP=2
 adopted-xq6-permits-bad-int4   b0d88c9ae REFUSED  DX_SWEEP=1;DX_SWEEP_PERMITS=17
 adopted-xq6-queue-bad-int4     b0d88c9ae REFUSED  DX_SWEEP=1;DX_SWEEP_QUEUE_MS=5001
 adopted-xq6-secret-bad-int4    b0d88c9ae REFUSED  DX_SWEEP=1;DX_SWEEP_CURSOR_SECRET=short
+# [DX-INT4] The second set of afternoon merges (XQ7, ACT7, HA2) at fbbb5b4ae: the question reader off is the default card's
+# stack; on with its cores admitted; a wrong switch, a missing core list and a wrong cache refused at their own tests.
+adopted-card-xq7-int4          fbbb5b4ae ADMITTED -
+adopted-xq7-reader-int4        fbbb5b4ae ADMITTED DX_QUESTION_READER=1;DX_QUESTION_CPUS=6;DX_QUESTION_CACHE=1g
+adopted-xq7-reader-bad-int4    fbbb5b4ae REFUSED  DX_QUESTION_READER=yes
+adopted-xq7-nocpus-int4        fbbb5b4ae REFUSED  DX_QUESTION_READER=1
+adopted-xq7-cache-bad-int4     fbbb5b4ae REFUSED  DX_QUESTION_READER=1;DX_QUESTION_CPUS=6;DX_QUESTION_CACHE=lots
