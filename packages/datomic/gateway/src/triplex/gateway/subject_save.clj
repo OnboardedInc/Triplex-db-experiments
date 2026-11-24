@@ -8,7 +8,7 @@
             [triplex.gateway.schema :as schema]
             [triplex.gateway.small-row :as small-row]
             [triplex.gateway.scope :as scope]
-            [triplex.gateway.trace :as trace]))
+            [triplex.gateway.trace :as trace] [triplex.gateway.cross-index :as cross]))
 
 (def enabled (= "1" (System/getenv "TX2_SUBJECT_SAVE")))
 (def numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_NUMERIC_OWNER")))
@@ -232,6 +232,10 @@
                       position (count prefix) :retirement]])
                   [:db/retract owner :triplex.entity/row (prior (nth op 2))])
                 (and (vector? op) (= :triplex.entity/rev (nth op 2)) (= temp-owner (second op))) nil
+                ;; [DX-XQ4] Why: an index entry for the subject goes to the same numeric owner as its rows.
+                ;; Rejected: keeping the tempid (the owner's upsert map is dropped above, so it would mint an entity).
+                (and numeric-owner? (vector? op) (= :triplex.ix/entry (nth op 2 nil)) (= temp-owner (second op)))
+                (assoc op 1 owner)
                 :else op)))
       ops)))
 
@@ -270,7 +274,8 @@
                (:lean p) (not (:slim-row p)) (= 1 (:span p)) (:assign-record-time p)
                (not-any? p [:scope-wide :position-irregular :irregular :save-ledger :packed-journal :bulk])
                (<= (count ops) 256)
-               (every? #(or (prepared/small-op? %) (and (some? expected-erasure) (envelope-op? %))) ops))
+               (every? #(or (prepared/small-op? %) (and (some? expected-erasure) (envelope-op? %))
+                            (and cross/enabled (cross/op? %))) ops))
       (let [[fn-tx flags owner revision]
             (trace/span "subject.plan-witnesses" "gateway"
               (let [fn-tx (installed db) flags (when fn-tx (scope-witness db scope))

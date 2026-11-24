@@ -4,7 +4,7 @@
             [triplex.gateway.save-ledger :as ledger] [triplex.gateway.packed-journal :as packed]
             [triplex.gateway.subject-save :as subject] [clojure.data.json :as json]
             [triplex.gateway.owner-layout :as owner-layout] [triplex.gateway.owner-root :as owner-root]
-            [triplex.gateway.pinned :as pinned])
+            [triplex.gateway.pinned :as pinned] [triplex.gateway.cross-index :as cross])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -301,6 +301,10 @@
                (map (fn [claim] {:db/id (str "c:" (get claim "commandId"))
                                 :triplex.claim/command-id (get claim "commandId") :triplex.claim/tx "datomic.tx"
                                 :triplex.claim/tx-id (get claim "txId")}) claims))))
+         ;; [DX-XQ4] Why: index entries ride in the same prepared transaction as the rows they key, behind the fence.
+         ;; Rejected: changing the stored commit functions, or computing entries on the transactor.
+         index (when (and cross/enabled lean) (cross/declaration db))
+         ops (if index (into ops (cross/tx-ops db index (or (:attrs privacy/*cut*) #{}) fresh old)) ops)
          journals (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))
          [claim] claims
          command (get claim "commandId")
@@ -477,6 +481,10 @@
               (subject/plan db data input expected)))))))
 (defn commit! [name conn db input]
   (when trace/tx-jfr-enabled (trace/attribute! :databaseHash (schema/sha256 name)))
+  ;; [DX-XQ4] Why: the covering owner head moves rows onto version entities the index does not follow.
+  (when (and cross/enabled owner-layout/enabled (cross/declaration-eid db))
+    (throw (ex-info "The cross-subject index does not support the covering owner head (TX2_SUBJECT_OWNER_HEAD)"
+                    {:status 409 :code "OwnerLayoutUnsupported"})))
   (when (and (not owner-layout/enabled) (owner-root/installed? db))
     (throw (ex-info "This database stores covering owner roots; start the writer with TX2_SUBJECT_OWNER_HEAD=1"
                     {:status 409 :code "OwnerLayoutRequired"})))
@@ -486,8 +494,17 @@
   (try
     (let [parsed (System/nanoTime)
           load-timing (when commit/load-profile (volatile! 0))
-          data (try (binding [*load-timing* load-timing] (trace/span "commit.prepare-and-validate" "gateway" (tx-data db input (scope/entity db))))
-                    (catch Exception e (reject-ordered! conn input e)))
+          ;; [DX-XQ4] Why: an index retraction needs the retired fact's stored text; a peer that does not hold it yet
+          ;; catches up once (d/sync) and prepares again. Rejected: trusting the client's copy of the retired row.
+          [db data] (try (binding [*load-timing* load-timing]
+                           (trace/span "commit.prepare-and-validate" "gateway"
+                             (try [db (tx-data db input (scope/entity db))]
+                                  (catch Exception e
+                                    (if-not (cross/peer-behind? e) (throw e)
+                                      (let [synced (deref (d/sync conn) 2000 ::timeout)]
+                                        (when (= ::timeout synced) (throw e))
+                                        [synced (tx-data synced input (scope/entity synced))]))))))
+                         (catch Exception e (reject-ordered! conn input e)))
           validated (when (= "1" (System/getenv "TX2_SUBJECT_RETIREMENT_TRACE")) (System/nanoTime))
           frame-size (group/frame-measurement (second (first data)) input)
           _ (try (group/bound-frame! frame-size) (catch Exception e (reject-ordered! conn input e)))

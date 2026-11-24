@@ -5,7 +5,8 @@
             [triplex.gateway.write-wire :as write-wire]
             [triplex.gateway.lean-feed :as lean-feed] [triplex.gateway.lean-query :as lean-query]
             [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy]
-            [triplex.gateway.subject-save :as subject] [triplex.gateway.owner-layout :as owner-layout])
+            [triplex.gateway.subject-save :as subject] [triplex.gateway.owner-layout :as owner-layout]
+            [triplex.gateway.cross-find :as cross-find])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -248,6 +249,18 @@
       (let [name (nth (clojure.string/split uri #"/") 3) input (or privacy-input (request-json body)) start (System/nanoTime) db-uri (db-uri name)]
         (try (timed start (response 200 (trace/span "storage/commit!" "gateway" (storage/commit! name (connection db-uri) (trace/span "d/db" "peer-call" (d/db (connection db-uri))) input))))
              (finally (when (get input "release") (storage/release! name (get input "handle"))))))
+      ;; [DX-XQ4] Questions across subjects: the declaration, the offline backfill and the find route (TX2_CROSS_INDEX=1).
+      (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(find|index-declaration|index-backfill)" uri)
+      (let [name (nth (clojure.string/split uri #"/") 3) action (last (clojure.string/split uri #"/"))
+            start (System/nanoTime) conn (connection (db-uri name)) protected (or (:attrs privacy/*cut*) #{})]
+        (timed start
+          (response 200
+            (case [request-method action]
+              [:post "find"] (trace/span "cross/find" "gateway" (cross-find/find! name conn protected (request-json body)))
+              [:post "index-declaration"] (cross-find/declare! name conn protected (request-json body))
+              [:get "index-declaration"] (cross-find/declaration-view name conn)
+              [:post "index-backfill"] (cross-find/backfill! name conn protected (when body (let [b (request-json body)] b)))
+              (throw (ex-info "Unknown method" {:status 404 :code "NotFound"}))))))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/request-index" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body)]
         (response 200 (request-index! name (connection (db-uri name)) input)))

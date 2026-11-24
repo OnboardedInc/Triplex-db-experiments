@@ -1098,6 +1098,7 @@ for role in "${gateway_roles[@]}"; do
     -e "TX2_ENTITY_CACHE_BYTES=$entity_cache_bytes" -e "TX2_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-2097152}" -e "TX2_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-536870912}" \
     -e "TX2_REACH_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-1000000}" \
     -e "TX2_PINNED_SHORTCUT=${DX_PINNED_SHORTCUT:-0}" -e "TX2_PINNED_CUT_LOOKUP=${DX_PINNED_CUT_LOOKUP:-0}" \
+    -e "TX2_CROSS_INDEX=${DX_CROSS_INDEX:-0}" -e "TX2_INDEX_QUERY_PERMITS=${DX_INDEX_QUERY_PERMITS:-1}" \
     -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} \
     ${erase_env[@]+"${erase_env[@]}"} ${erase_mount[@]+"${erase_mount[@]}"} \
     --entrypoint /opt/datomic/bin/run "$image" ${gw_startup_read[@]+"${gw_startup_read[@]}"} -m "$gateway_main" ${pg_data:+gateway} >/dev/null
