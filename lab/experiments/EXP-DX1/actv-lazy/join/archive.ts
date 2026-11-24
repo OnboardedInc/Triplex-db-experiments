@@ -450,10 +450,27 @@ export class Archive {
   // where the previous one ended, chain to its hash, and a piece with `part` must continue the same subject at exactly
   // the number of changes already joined. Returns each changed subject once, with its changes only.
   private async storedFrames(sequence: number, frontier: Progress, identity: string, at: number) {
+    const output: Changes[] = [];
+    for await (const row of this.framesStream(sequence, frontier, identity, at)) output.push(row);
+    return output;
+  }
+  /** [DX-ACT6] The byte-framed pages of a release in order, one subject at a time (a split subject joined), with every
+   * check `stored` makes, so a full-size release can be compared without holding all of it. */
+  async *storedStream(sequence: number) {
+    const { marker, event, census } = await this.source.receipt(sequence);
+    const identity = identityOf(this.source.s.scope, marker, event.at),
+      at = await this.store.head();
+    const frontier = (await this.db.get<Progress>(progressKey(sequence), at)).value;
+    assert(frontier.identity === identity && frontier.frames === "bytes" && frontier.status === "stored" && frontier.through === census.count);
+    yield* this.framesStream(sequence, frontier, identity, at);
+    await recheckErasure(this.source.s.comp, marker.erasureSeq);
+  }
+  private async *framesStream(sequence: number, frontier: Progress, identity: string, at: number) {
     let previous = identity,
       through = 0,
-      tail = 0;
-    const output: Changes[] = [];
+      tail = 0,
+      changes = 0;
+    let last: Changes | undefined;
     for (let first = 1; first <= frontier.frame!; first += 32) {
       const keys = Array.from({ length: Math.min(32, frontier.frame! - first + 1) }, (_, i) =>
         framePageKey(sequence, first + i),
@@ -472,13 +489,14 @@ export class Archive {
         );
         for (const piece of unpack<Changes[]>(p.bytes)) {
           assert(piece.changes.length > 0);
-          const last = output.at(-1);
+          changes += piece.changes.length;
           if (piece.part) {
             assert(last?.subject === piece.subject && last.changes.length === piece.part, "Split subject out of order");
             last.changes.push(...piece.changes);
           } else {
             assert(last?.subject !== piece.subject, "Duplicate settled subject");
-            output.push({ subject: piece.subject, changes: [...piece.changes] });
+            if (last) yield last;
+            last = { subject: piece.subject, changes: [...piece.changes] };
           }
         }
         previous = hash(p);
@@ -486,13 +504,13 @@ export class Archive {
         tail = p.tail;
       }
     }
+    if (last) yield last;
     assert(
       previous === frontier.hash &&
         through === frontier.through &&
         tail === frontier.part &&
-        frontier.changes === output.reduce((n, row) => n + row.changes.length, 0),
+        frontier.changes === changes,
     );
-    return output;
   }
   reader() {
     const source = this.source,

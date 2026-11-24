@@ -371,6 +371,10 @@ export class RecordedNotices {
     }
     assert(state.entries === entries && state.previous === previous);
   }
+  /** [DX-ACT6] The recorded packets in order, checked as `packets` checks them, without holding them all. */
+  streamPackets(at: number) {
+    return this.orderedPackets(at);
+  }
   async packets(at: number) {
     const recorded: Packet[] = [];
     for await (const packet of this.orderedPackets(at)) recorded.push(packet);

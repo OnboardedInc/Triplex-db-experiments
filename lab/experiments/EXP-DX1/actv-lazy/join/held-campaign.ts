@@ -575,17 +575,45 @@ export async function runHeld(
       initialRead,
     });
     settlement = await worker.settle(initial.seq, initialAt - performance.timeOrigin);
-    const [stored, packets] = await Promise.all([
-      worker.archive.stored(initial.seq),
-      worker.recorder.packets(settlement.notices.position),
-    ]);
+    // [DX-ACT6] DX_ACT6_STREAM_CHECK=1 (byte frames only): the stored changes and the packets are compared with the
+    // oracle as they are read, page by page, instead of loaded whole (60 million changes at 200 owed forms for 100,000
+    // subjects would not fit the runner's heap). The same comparisons, in the same order.
+    const streamed = process.env.DX_ACT6_STREAM_CHECK === "1";
+    assert([undefined, "", "1"].includes(process.env.DX_ACT6_STREAM_CHECK));
+    const [stored, packets] = streamed
+      ? [{ frontier: (await worker.archive.values(initial.seq))!.value, output: [] as { subject: string; changes: [string, string | null][] }[], frames: "bytes" as const }, []]
+      : await Promise.all([
+          worker.archive.stored(initial.seq),
+          worker.recorder.packets(settlement.notices.position),
+        ]);
     assert.equal(stored.frontier.status, "stored");
     // [DX-ACT4] Byte-framed pages hold each subject's changes without its full answer.
     const bytes = stored.frames === "bytes";
     const independent = { subjects: 0, owing: 0, changes: 0, notices: 0 };
     const archive = new Map(stored.output.map((x) => [x.subject, x]));
     assert.equal(stored.output.length, archive.size, "Duplicate settled subject");
-    const notices = packets.flatMap((p) => p.deliveries.map(toWire));
+    let notices = packets.flatMap((p) => p.deliveries.map(toWire));
+    const valueStream = streamed ? worker.archive.storedStream(initial.seq) : undefined;
+    const packetStream = streamed ? worker.recorder.streamPackets(settlement.notices.position) : undefined;
+    let noticeBase = 0;
+    // Streamed: keep the packets' deliveries from `entries` on (`noticeBase` is the index of notices[0]).
+    const needNotices = async (upTo: number) => {
+      if (!packetStream) return;
+      if (entries > noticeBase) {
+        notices = notices.slice(entries - noticeBase);
+        noticeBase = entries;
+      }
+      while (noticeBase + notices.length < upTo) {
+        const next = await packetStream.next();
+        assert(!next.done, "Fewer recorded notices than the oracle's");
+        notices.push(...next.value.deliveries.map(toWire));
+      }
+    };
+    const nextStored = async (subject: string) => {
+      const next = await valueStream!.next();
+      assert(!next.done && next.value.subject === subject, "Stored changes out of census order at " + subject);
+      return next.value;
+    };
     for (let i = 0; i < people; i += 32 * oracles.children.length) {
       await Promise.all(
         oracles.children.map(async (oracle, workerIndex) => {
@@ -610,8 +638,13 @@ export async function runHeld(
           }[];
         }),
       ).then((parts) => {
+        return parts;
+      }).then(async (parts) => {
         for (const p of parts)
           for (const row of p ?? []) {
+            if (streamed && row.rows.length) archive.set(row.subject, await nextStored(row.subject));
+            await needNotices(entries + row.deliveries.length);
+            const at0 = entries - noticeBase;
             const saved = archive.get(row.subject);
             if (row.rows.length) {
               assert.deepEqual(saved, {
@@ -623,14 +656,14 @@ export async function runHeld(
             } else assert(!saved);
             changes += row.rows.length;
             assert.deepEqual(
-              notices.slice(entries, entries + row.deliveries.length),
+              notices.slice(at0, at0 + row.deliveries.length),
               row.deliveries,
             );
             if (initialLarge) {
               const i = Number(row.subject.slice(4)),
                 e = expectForms(expected(i, initial.position, history, positions), initialDoc, validTime);
               const got = checkForms(e, row.subject, saved?.changes ?? [],
-                notices.slice(entries, entries + row.deliveries.length) as never, true);
+                notices.slice(at0, at0 + row.deliveries.length) as never, true);
               independent.subjects++;
               if (e.changes.size) independent.owing++;
               independent.changes += got.changes;
@@ -640,9 +673,14 @@ export async function runHeld(
           }
       });
     }
+    if (streamed) {
+      assert((await valueStream!.next()).done, "More stored subjects than the oracle's");
+      await needNotices(entries);
+      assert(notices.length === entries - noticeBase && (await packetStream!.next()).done, "More recorded notices than the oracle's");
+    }
     assert.deepEqual(
       [archive.size, changes, entries],
-      [0, settlement!.values.state.changes, notices.length],
+      [0, settlement!.values.state.changes, noticeBase + notices.length],
     );
     const archived = await worker.archive
       .reader()
