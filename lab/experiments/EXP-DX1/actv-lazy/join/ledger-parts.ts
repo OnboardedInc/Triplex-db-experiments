@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
 import { pack, unpack, type Documents, type Op, type Row } from "../../notify1/store.ts";
 import type { NoticeCandidate } from "./recorded.ts";
+import { FrameTooLarge } from "./frames.ts";
 
 // [DX-ACT6] Why: a subject's notice ledger (the state of each of its notice work items) is one packed value, written
 // whole with the subject's last deliveries. At about 200 owed forms that value alone exceeds the writer's bound (8 ms of
@@ -23,6 +24,10 @@ export function ledgerMode(value = process.env.TX2_NOTICE_LEDGER): LedgerMode {
 }
 /** Characters of the packed ledger per part: one part with the cursor change is about 7.2 ms of estimated service. */
 export const ledgerPartChars = 10240;
+/** The head's frame also retracts the old ledger's parts: with the cursor change, at most 10 fit the writer's bound
+ * (7,985 us estimated; 11 would be 8,224). A ledger is therefore kept to 10 parts (about 1,680 owed notice items on the
+ * synthetic forms, 60.8 packed characters each), so the next release can always replace it. */
+export const ledgerPartsMax = 10;
 export const ledgerKey = (subject: string) => "recorded-ledger:" + subject;
 export const ledgerPartKey = (subject: string, event: number, i: number) =>
   "recorded-ledger-part:" + subject + ":" + event + ":" + i;
@@ -77,6 +82,11 @@ export function ledgerChange(db: Documents, subject: string, event: number, old:
   if (packed.length <= ledgerPartChars)
     return { parts: [] as Op[], closing: [...retire, ...db.change(ledgerKey(subject), old.head, packed)] };
   const count = Math.ceil(packed.length / ledgerPartChars);
+  if (count > ledgerPartsMax)
+    throw new FrameTooLarge(
+      "Subject " + subject + ": its notice ledger needs " + count + " parts of " + ledgerPartChars + " characters (" +
+        items.length + " items); at most " + ledgerPartsMax + " can be replaced within the writer's bound",
+    );
   const parts = Array.from({ length: count }, (_, i) =>
     db.put(ledgerPartKey(subject, event, i), packed.slice(i * ledgerPartChars, (i + 1) * ledgerPartChars)),
   );
