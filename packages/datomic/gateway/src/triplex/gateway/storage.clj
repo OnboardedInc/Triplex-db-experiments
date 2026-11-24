@@ -785,6 +785,8 @@
             _ (assert-subject-route! db basis (if (= route "live") :f/live :f/subject))
             _ (when (and (= route "live") history) (unavailable! "Position-retired route cannot enumerate history"))
             _ (trace/read-span "read.confirm-position" "peer-call" (await-position db (get basis "recordedPosition") (get input "basisWaitMs") (fn [_] db)))]
+        ;; [DX-RPT1] "omitProtected": true reads protected rows without their values (privacy/*omit-protected*).
+        (binding [privacy/*omit-protected* (true? (get input "omitProtected"))]
         (admission/execute-for input admission/reads (fn []
         (let [paged (fn [rows] (if page (history-page rows page) {:rows rows}))
               {rows :rows more :next} (paged
@@ -806,7 +808,8 @@
                               (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source") :basis basis
                  :subjectAttribute (str (if (= route "live") :f/live :f/subject))
                  :rows (mapv #(wire-row (privacy/masked (mask-retirement % basis))) rows)}
-          page (assoc :historyNext more)))))))))
+          page (assoc :historyNext more)
+          privacy/*omit-protected* (assoc :omittedProtected true))))))))))
 
 ;; [EXP-DX1] Why: snapshot, claim and known by-id rows share one immutable prefetch cut.
 ;; Rejected: separate claim/read HTTP calls (R51's six-round-trip commit).

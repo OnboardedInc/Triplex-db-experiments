@@ -99,6 +99,9 @@ export { acceptLoaderPositionRows, loaderPositionRowsAccepted } from "./loaderPo
 export * from "./replica/index.js";
 
 export { resumeCommitOrder } from "./CommitOrder.js";
+// [DX-RPT1] The reporting copy decodes journal row texts and wire rows exactly as the SDK does.
+export { decodeRowText } from "./rowText.js";
+export { decodeRow, type WireRow } from "./protocol.js";
 export * from "./tracing.js";
 
 export { requireDatomicSourcePosition, withDatomicImportClock } from "./TransactionContext.js";
