@@ -153,7 +153,11 @@ export async function localDrill(opts: any, config: any, manager: any) {
     ["hasync-ack", "hasync-move"].includes(mode) && opts.people === "10";
   // [DX-LOAD2] Why: the import-neighbours builder gates its importer change on its own diagnostic slot.
   const importNeighbours = holder === "DX-LOAD2" && diagnostic && mode === "load-fair" && combined === undefined;
-  assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours);
+  // [DX-ACT3] Why: the large-release builder runs the held Publish campaign on the same toy stack, in its own slot.
+  const heldPublish = holder === "DX-ACT3" && diagnostic && mode === "load-fair" && combined === undefined &&
+    process.env.DX_ACT3_HELD === "1";
+  assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours ||
+    heldPublish);
   assert(combined === undefined || ownedCombination);
   if (mode === "load-fair") {
     const { cleanSource } = await import("../v01/source.ts");

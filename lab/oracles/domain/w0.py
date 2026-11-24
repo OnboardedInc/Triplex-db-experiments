@@ -375,7 +375,7 @@ RULE_ORDER = ('LIFE', 'I9S1', 'I9S2', 'EVSUB', 'EVSTAT', 'BGC', 'DOCEXP', 'MINWA
 
 
 class Release:
-    __slots__ = ('name', 'hash', 'doc', 'entries', 'order')
+    __slots__ = ('name', 'hash', 'doc', 'entries', 'order', 'policies')
 
     def __init__(self, doc):
         plain = to_plain(doc)
@@ -390,6 +390,21 @@ class Release:
             self.order.append(ent['id'])
         if tuple(self.order) != RULE_ORDER:   # SPEC 5.1: eleven entries in this fixed order
             raise ValueError('release %s: rule order %r' % (self.name, self.order))
+        # [DX-ACT3] optional synthetic forms and policies (absent from R1, R2 and R3); policies in id order with their form
+        self.policies = []
+        if 'forms' in plain or 'policies' in plain:
+            forms = {f['id']: f for f in plain['forms']}
+            if len(forms) != len(plain['forms']) or not plain['forms']:
+                raise ValueError('release %s: forms' % self.name)
+            ids = [p['id'] for p in plain['policies']]
+            if ids != sorted(set(ids)) or len({p['form'] for p in plain['policies']}) != len(ids):
+                raise ValueError('release %s: policies' % self.name)
+            for p in plain['policies']:
+                f = forms[p['form']]
+                if not (1 <= int_token_value(f['dueBusinessDays']) <= 30) or not (0 <= int_token_value(p['permille']) <= 1000):
+                    raise ValueError('release %s: policy %s' % (self.name, p['id']))
+                self.policies.append((p['id'], f['id'], int_token_value(f['dueBusinessDays']),
+                                      int_token_value(p['permille']), p['notice'] is True))
 
     def params_for(self, rule, jur):
         """SPEC 5.1 scoped entry: scope.params when jur(S) is listed (ids only), else the entry's params."""
@@ -832,6 +847,23 @@ def evaluate_indexed(w, rel, basis_tx, v):
                         task(rule, 'review.proposal', T, None)
         else:
             raise AssertionError(rule)
+
+    # ---- [DX-ACT3] synthetic forms and policies, after the eleven rules, in policy id order ----
+    for pid, fid, days, permille, notice in rel.policies:
+        deps.add((S, 'startDate'))
+        txs = txs_of(sd_f)
+        if sd is None:
+            entry(pid, fid, 0, txs)
+            continue
+        bucket = int(hashlib.sha256(S.encode('utf-8')).hexdigest()[:8], 16) % 1000
+        if bucket >= permille:
+            entry(pid, fid, 1, txs)
+            continue
+        due = end_of_day(add_business_days(sd, days))
+        task(pid, 'form.owed', fid, due)
+        entry(pid, fid, 2, txs)
+        if notice:
+            pending_wis.append((pid, 'notify.form-owed', fid, {'dueAt': due, 'form': fid}))
 
     # ---- SPEC 8.3: due obligations for every task with dueAt != null and v < dueAt ----
     for t in tasks:
