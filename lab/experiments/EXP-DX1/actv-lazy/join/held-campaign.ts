@@ -183,7 +183,7 @@ export function checkSeedFrames(detected: number[], cut: number) {
   return { people: detected.length, frames: new Set(detected).size,
     reordered: detected.filter((p, i) => i > 0 && p < detected[i - 1]!).length };
 }
-export async function seedPositions(client: DatomicClient, seed: AdoptedSeed) {
+export async function seedPositions(client: DatomicClient, seed: AdoptedSeed, account = 0) {
   const detected: number[] = [];
   const width = 128;
   for (let start = 0; start < seed.image.people; start += 4 * width) {
@@ -192,7 +192,7 @@ export async function seedPositions(client: DatomicClient, seed: AdoptedSeed) {
         const first = start + lane * width;
         const count = Math.min(width, seed.image.people - first);
         if (count <= 0) return [];
-        const ids = Array.from({ length: count }, (_, i) => root(0, first + i));
+        const ids = Array.from({ length: count }, (_, i) => root(account, first + i));
         const rows = await client.rows(seed.scope.db, {
           entityIds: ids,
           pattern: { attribute: ":subject/member" },

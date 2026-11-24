@@ -145,6 +145,8 @@ export class Archive {
   /** [DX-ACT5] Frames sent to the writer, refused at commit (the precondition failed), and committed; with the turns'
    * client-side intervals (bounded) for the live-side reading. */
   readonly contest = new Contest();
+  /** [DX-ACT5] The account's pause and pace, read before each frame (TX2_SETTLE_CONTROL=1; unset, none). */
+  control?: { gate: () => Promise<void> };
   private constructor(
     source: JoinedAccount,
     store: Store,
@@ -158,7 +160,7 @@ export class Archive {
     this.queue = queue;
     this.frames = frames;
     this.precondition = precondition;
-    this.db = new Documents(store.comp, source.s.held ? "settlement-" + channel : "settlement");
+    this.db = new Documents(store.comp, source.s.held ? "settlement-" + channel + source.s.names.documents : "settlement");
   }
   static async open(
     source: JoinedAccount,
@@ -207,6 +209,7 @@ export class Archive {
         ? [{ entityId: this.db.prefix + progress.key, tripleIds: progress.prior ? [progress.prior.id] : [] }]
         : undefined;
     assert(this.precondition === "head" || guards, "A settlement frame names its progress row");
+    await this.control?.gate();
     const c = this.contest;
     c.offered++;
     try {

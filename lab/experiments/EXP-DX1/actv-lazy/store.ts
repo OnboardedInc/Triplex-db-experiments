@@ -64,6 +64,10 @@ export async function rejectUnrecordedWrite(
 
 export type EventKind = "activation" | "source" | "due" | "erase" | "baseline";
 export type HeldSource = {
+  // [DX-ACT5] Several publishing accounts in one held database: each account's metadata (releases, clock, origin,
+  // removal marks, cursor) and its notice and settlement documents get the account's own names. Unset, the names are
+  // as before (one publishing account per database).
+  namespace?: boolean;
   account: string;
   prefix: string;
   people: number;
@@ -107,6 +111,17 @@ export async function openStore(
   } finally {
     client.close();
   }
+  const ns = held?.namespace ? "/" + held.account : "";
+  assert(!held?.namespace || /^[a-zA-Z0-9_.-]{1,60}$/.test(held.account));
+  const names = {
+    RELEASE: RELEASE + ns,
+    ORIGIN: ORIGIN + ns,
+    CLOCK: CLOCK + ns,
+    MASK: MASK + ns,
+    CURSOR: CURSOR + ns,
+    /** Suffix of this account's document namespaces (notices, settlement, control). */
+    documents: held?.namespace ? "-" + held.account : "",
+  };
   const h = access === "write" ? await openTriples("datomic", scope) : undefined,
     comp = await openComposition("reach", "datomic", scope);
   const counters = {
@@ -241,27 +256,27 @@ export async function openStore(
   }
   async function controls(p: number, inputOnly = false) {
     const all = await rows(
-      inputOnly ? [RELEASE, CLOCK, ORIGIN] : [RELEASE, CLOCK, MASK, CURSOR, ORIGIN],
+      inputOnly ? [names.RELEASE, names.CLOCK, names.ORIGIN] : [names.RELEASE, names.CLOCK, names.MASK, names.CURSOR, names.ORIGIN],
       p,
     );
     const birth = held
-      ? all.find((r) => r.entityId === ORIGIN && r.position > held.cut)
-      : all.find((r) => r.position === 1 && (r.entityId === ORIGIN || r.entityId === RELEASE));
+      ? all.find((r) => r.entityId === names.ORIGIN && r.position > held.cut)
+      : all.find((r) => r.position === 1 && (r.entityId === names.ORIGIN || r.entityId === names.RELEASE));
     if (held && p > held.cut && birth)
       assert.deepEqual(value(birth), { profile, held: held.seal });
     if (p && !held)
       assert(birth && value(birth).profile === profile, "Foreign source profile or generation");
     const releases = all
-      .filter((r) => r.entityId === RELEASE)
+      .filter((r) => r.entityId === names.RELEASE)
       .map((r) => ({ ...value(r), tx: r.position, id: r.id }));
-    const clocks = all.filter((r) => r.entityId === CLOCK);
+    const clocks = all.filter((r) => r.entityId === names.CLOCK);
     assert(clocks.length <= 1);
     const at = [epoch, ...releases.map((r) => r.at), ...clocks.map((r) => value(r).at)]
       .sort()
       .at(-1)!;
-    const cursors = all.filter((r) => r.entityId === CURSOR);
+    const cursors = all.filter((r) => r.entityId === names.CURSOR);
     assert(cursors.length <= 1);
-    const masks = all.filter((r) => r.entityId === MASK);
+    const masks = all.filter((r) => r.entityId === names.MASK);
     const input = Math.max(
       0,
       ...releases.map((r) => r.tx),
@@ -425,6 +440,7 @@ export async function openStore(
     scope,
     profile,
     held,
+    names,
     counters,
     effectsClear,
     cursorReceipt,

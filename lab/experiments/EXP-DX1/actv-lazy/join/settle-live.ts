@@ -59,7 +59,7 @@ type Case = {
   release: "large" | "small" | "none";
   own: 0 | 3.5 | 23.5 | 39.4;
   others: boolean;
-  extra?: "kill" | "second";
+  extra?: "kill" | "second" | "multi" | "rival";
   turns?: "admission";
 };
 const validTime = W0.POPULATION_VALID_TIME;
@@ -71,7 +71,7 @@ export function parseCases(text: string): Case[] {
     const [name, precondition, frames, release, own, others, extra, turns] = entry.split(":");
     assert(name && ["head", "progress"].includes(precondition!) && ["count", "bytes"].includes(frames!));
     assert(["large", "small", "none"].includes(release!) && ["0", "3.5", "23.5", "39.4"].includes(own!));
-    assert(["0", "1"].includes(others!) && [undefined, "", "kill", "second"].includes(extra));
+    assert(["0", "1"].includes(others!) && [undefined, "", "kill", "second", "multi", "rival"].includes(extra));
     assert([undefined, "", "admission"].includes(turns));
     return {
       name,
@@ -164,8 +164,13 @@ export async function livePhase(c: LiveContext) {
     reads++;
   };
   const recipient = await openStore("lazy-act5-recipient-" + randomUUID());
+  const extras: Extra[] = [];
   try {
     for (const k of cases) {
+      if (k.extra === "multi") {
+        results.push(await multiCase(c, k, seconds, extras, { ref, roster, current: () => current, publish }));
+        continue;
+      }
       const base = current.doc;
       const doc =
         k.release === "large"
@@ -185,9 +190,17 @@ export async function livePhase(c: LiveContext) {
       const worker = published
         ? await Settlement.open(c.a, queue, false, k.frames, k.precondition)
         : undefined;
+      // A rival writer of the same release in the same process, with the other framing and its own queue (a restart
+      // that overlaps the old process, or a second host): exactly one of two frames that follow one progress row lands.
+      const rival =
+        k.extra === "rival" && published
+          ? await Settlement.open(c.a, new BulkQueue(1), false, k.frames === "bytes" ? "count" : "bytes", k.precondition)
+          : undefined;
       const begins = now() + 400,
         ends = begins + seconds * 1000;
       const origin = begins - performance.timeOrigin;
+      rival?.archive.contest.reset(origin);
+      rival?.recorder.archive.contest.reset(origin);
       worker?.archive.contest.reset(origin);
       worker?.recorder.archive.contest.reset(origin);
       const gate: PublishInterleave = {
@@ -238,7 +251,8 @@ export async function livePhase(c: LiveContext) {
           const first = await worker.archive.runValues(published.r.seq);
           superseded = { ...(superseded as object), status: first.status, through: first.through };
           await worker.settle(current.seq);
-        } else await worker.settle(published.r.seq);
+        } else if (rival) await Promise.all([worker.settle(published.r.seq), rival.settle(published.r.seq)]);
+        else await worker.settle(published.r.seq);
         settledAt = now();
       })();
       const probing = (async () => {
@@ -332,6 +346,9 @@ export async function livePhase(c: LiveContext) {
         kills,
         superseded: superseded ?? null,
         lane: lane ? lane.stats() : null,
+        rival: rival
+          ? { values: rival.archive.contest.summary(), notices: rival.recorder.archive.contest.summary() }
+          : null,
         saves: {
           account: saveSide(rows.filter((r) => r.account === 0), turns),
           neighbours: saveSide(rows.filter((r) => r.account > 0), turns),
@@ -341,6 +358,7 @@ export async function livePhase(c: LiveContext) {
       console.log("[act5] " + JSON.stringify({ ...result, saves: undefined }));
       results.push(result);
       await worker?.close();
+      await rival?.close();
       // A large release is followed by its form-free predecessor again (settled quietly, checked the same way).
       if (k.release === "large" && k.extra !== "second") {
         const back = await publish(base);
@@ -379,6 +397,10 @@ export async function livePhase(c: LiveContext) {
     console.log("[act5] delivered " + JSON.stringify(delivered) + " reads " + reads);
   } finally {
     ref.close();
+    for (const x of extras) {
+      x.ref.close();
+      await x.store.close();
+    }
     await recipient.close();
   }
 }
@@ -408,4 +430,227 @@ async function killedChild(c: LiveContext, seq: number, k: Case, ms: number) {
   );
   assert(code === "SIGKILL" || code === 0, "settlement child: " + code + " " + stderr);
   return { ms, ended: code };
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// [DX-ACT5] Several accounts settling at once in the one database. Accounts 1 .. DX_ACT5_ACCOUNTS-1 of the toy seed
+// are enrolled as publishing accounts with their own names (HeldSource.namespace), each with its own oracle. In a
+// `multi` case every account publishes the large release back to back, then all settle at once through ONE bulk
+// queue (accounts rotate round-robin; optionally the admission lane) while every account takes saves.
+type Extra = {
+  index: number;
+  store: Store;
+  a: JoinedAccount;
+  ref: Reference;
+  history: LiveContext["history"];
+  positions: number[];
+  current: { position: number; seq: number; doc: W0.ReleaseDoc };
+  oldOf: Map<number, W0.ReleaseDoc>;
+};
+const ADOPT_SETUP = /^(settled-(values|notice):|notice:v1:)/;
+async function enrol(c: LiveContext, index: number): Promise<Extra> {
+  const { keyFor } = await import("../../scale1/decision/plan.ts");
+  const { seedPositions } = await import("./held-campaign.ts");
+  const { JoinedAccount } = await import("./account.ts");
+  const account = keyFor(index);
+  const descriptor = {
+    account,
+    prefix: "acct/" + account + "/",
+    people: c.people,
+    cut: c.descriptor.cut,
+    seal: sha256(canonical([c.descriptor.seal, "act5-account", account])),
+    namespace: true,
+  };
+  const store = await openStore(c.s.scope, "act2-deep", "write", {
+    ...descriptor,
+    verifyThrough: (p) => c.ledger.verifyThrough(p, false, ADOPT_SETUP),
+    committed: (r) => c.ledger.joined(r),
+  });
+  const a = new JoinedAccount(store);
+  await a.installHeld(validTime);
+  await c.ledger.verifyThrough(await store.head(), false, ADOPT_SETUP);
+  const positions = await seedPositions(c.writer, c.seed, index);
+  const history: LiveContext["history"] = new Map();
+  const ref = new Reference();
+  const p = await a.publish(c.attempt + ":act5:" + account + ":R1", W0.R1.doc, validTime, "owed");
+  const seq = (await a.notices.observe()).value.sequence;
+  const roster = Array.from({ length: c.people }, (_, i) => W0.placementId(i));
+  await ref.check(a, roster, (i) => worldAt(i, p.position, history, positions), W0.R1.doc,
+    { tx: p.position, validTime }, null, undefined, true, false);
+  const x: Extra = { index, store, a, ref, history, positions, current: { position: p.position, seq, doc: W0.R1.doc },
+    oldOf: new Map() };
+  // Its first release settled quietly, so every account starts the case with only the large release owed.
+  const w = await Settlement.open(a, new BulkQueue(1));
+  try {
+    await w.settle(seq);
+  } finally {
+    await w.close();
+  }
+  return x;
+}
+async function multiCase(
+  c: LiveContext,
+  k: Case,
+  seconds: number,
+  extras: Extra[],
+  zero: {
+    ref: Reference;
+    roster: string[];
+    current: () => Release;
+    publish: (doc: W0.ReleaseDoc) => Promise<{ r: Release; old: W0.ReleaseDoc }>;
+  },
+) {
+  const count = Number(process.env.DX_ACT5_ACCOUNTS ?? 3);
+  assert(Number.isInteger(count) && count >= 2 && count <= 10);
+  while (extras.length < count - 1) extras.push(await enrol(c, extras.length + 1));
+  const roster = zero.roster;
+  // Every account publishes the large release (account 0 through the runner, so its reads stay checked).
+  const bases = [zero.current().doc, ...extras.map((x) => x.current.doc)];
+  const published: { seq: number; position: number; doc: W0.ReleaseDoc; old: W0.ReleaseDoc }[] = [];
+  const z = await zero.publish(largeRelease(bases[0]!, shape));
+  published.push({ seq: z.r.seq, position: z.r.position, doc: z.r.doc, old: z.old });
+  for (const x of extras) {
+    const doc = largeRelease(x.current.doc, shape);
+    const p = await x.a.publish(c.attempt + ":act5:" + x.index + ":" + published.length, doc, validTime, "owed");
+    const seq = (await x.a.notices.observe()).value.sequence;
+    await x.ref.check(x.a, roster, (i) => worldAt(i, p.position, x.history, x.positions), doc,
+      { tx: p.position, validTime }, x.current.doc, undefined, true, false);
+    x.oldOf.set(seq, x.current.doc);
+    published.push({ seq, position: p.position, doc, old: x.current.doc });
+    x.current = { position: p.position, seq, doc };
+  }
+  const accounts = [c.a, ...extras.map((x) => x.a)];
+  const queue = new BulkQueue(1);
+  const workers = await Promise.all(accounts.map((a) => Settlement.open(a, queue, false, k.frames, k.precondition)));
+  // Saves: account 0 at its own rate, the others at their usual load (the 23.5 tape), into every account.
+  const tape = heldTape(c.people as never, k.own || 23.5, seconds).filter((x) => (x.account === 0 ? k.own > 0 : k.others));
+  const senders = await preload(c.writer, c.seed, await c.s.head(), tape);
+  const begins = now() + 400,
+    ends = begins + seconds * 1000;
+  for (const w of workers) {
+    w.archive.contest.reset(begins - performance.timeOrigin);
+    w.recorder.archive.contest.reset(begins - performance.timeOrigin);
+  }
+  const histories = new Map<number, LiveContext["history"]>([[0, c.history], ...extras.map((x) => [x.index, x.history] as const)]);
+  const ordinals = new Map(tape.map((x) => [x.account + "/" + x.ordinal, x]));
+  const gate: PublishInterleave = {
+    paused: false,
+    committed: (save) => {
+      c.ledger.saved(save);
+      const h = histories.get(save.account);
+      if (!h) return;
+      const e = ordinals.get(save.account + "/" + save.ordinal)!;
+      const edits = h.get(save.subject) ?? [];
+      edits.push({ position: save.receipt!.p, width: e.width, version: e.version });
+      h.set(save.subject, edits);
+    },
+  };
+  const lane = k.turns === "admission" ? settlementLane(queue, ends) : undefined;
+  const writes = play(senders, tape, begins, c.attempt + "/act5/" + k.name, false, c.ordered,
+    creditModeSelection("rolling6"), gate, false, undefined, lane).finally(() => lane?.close());
+  const finished: (number | null)[] = workers.map(() => null);
+  const settling = Promise.all(
+    workers.map(async (w, j) => {
+      while (now() < begins) await sleep(Math.ceil(begins - now()));
+      await w.settle(published[j]!.seq);
+      finished[j] = now() - begins;
+    }),
+  );
+  const [wr, st] = await Promise.allSettled([writes, settling]);
+  if (wr.status === "rejected") throw wr.reason;
+  if (st.status === "rejected") throw st.reason;
+  await c.ledger.verifyThrough(await c.s.head(), false, ADOPT);
+  const rows = wr.value.rows;
+  assert.equal(wr.value.unresolved.size, 0, "Uncertain save");
+  const turns = workers.flatMap((w) => [...w.archive.contest.turns, ...w.recorder.archive.contest.turns]).map(
+    ([b, e]) => [b + performance.timeOrigin, e + performance.timeOrigin] as [number, number],
+  );
+  const perAccount = [];
+  for (const [j, w] of workers.entries()) {
+    const x = j ? extras[j - 1]! : undefined;
+    const ref = x ? x.ref : zero.ref,
+      history = x ? x.history : c.history,
+      positions = x ? x.positions : c.positions,
+      pub = published[j]!;
+    const stored = await w.archive.stored(pub.seq);
+    assert.equal(stored.frontier.status, "stored");
+    const want = (
+      JSON.parse(
+        await ref.oracle.call("check", {
+          document: pub.doc,
+          old: pub.old,
+          basis: { tx: pub.position, validTime },
+          worlds: roster.map((_, i) => worldAt(i, pub.position, history, positions)),
+          fold: false,
+        }),
+      ) as { subject: string; rows: [string, string | null, string | null][] }[]
+    )
+      .filter((r) => r.rows.length)
+      .map((r) => ({ subject: r.subject, changes: r.rows.map(([key, , v]) => [key, v]) }));
+    const got = stored.output.map((r) => ({ subject: r.subject, changes: r.changes }));
+    assert.deepEqual(got, want, "account " + j + " stored changes differ");
+    const all = (await w.recorder.packets(await w.recorder.archive.store.head())).flatMap((p) =>
+      p.deliveries.map(toWire),
+    );
+    assert.deepEqual(all, ref.owed, "account " + j + " notices differ");
+    const deliveries = (await w.recorder.packets(await w.recorder.archive.store.head()))
+      .filter((p) => p.event === pub.seq)
+      .flatMap((p) => p.deliveries.map(toWire));
+    const by = new Map(got.map((r) => [r.subject, r.changes]));
+    const t = { owing: 0, changes: 0, notices: 0 };
+    for (const [i, s] of roster.entries()) {
+      const e = expectForms(worldAt(i, pub.position, history, positions), pub.doc, validTime);
+      const g = checkForms(e, s, (by.get(s) ?? []) as never, deliveries.filter((d: any) => d.subject === s) as never);
+      if (e.changes.size) t.owing++;
+      t.changes += g.changes;
+      t.notices += g.notices;
+    }
+    perAccount.push({
+      account: j,
+      finishedMs: finished[j],
+      values: w.archive.contest.summary(),
+      notices: w.recorder.archive.contest.summary(),
+      changes: stored.frontier.changes,
+      noticesWritten: deliveries.length,
+      independent: t,
+      saves: saveSide(rows.filter((r) => r.account === j), turns),
+    });
+  }
+  const result = {
+    case: k,
+    seconds,
+    accounts: workers.length,
+    turnsByAccount: Object.fromEntries(queue.turnsByKey),
+    lane: lane ? lane.stats() : null,
+    perAccount,
+    otherSaves: saveSide(rows.filter((r) => r.account >= workers.length), turns),
+  };
+  console.log("[act5] " + JSON.stringify({ ...result, perAccount: perAccount.map((p) => ({ ...p, saves: undefined })) }));
+  for (const w of workers) await w.close();
+  // Back to form-free releases, settled quietly and checked.
+  const back = await zero.publish(bases[0]!);
+  const quiet = await Settlement.open(c.a, new BulkQueue(1), false, k.frames, k.precondition);
+  try {
+    await quiet.settle(back.r.seq);
+  } finally {
+    await quiet.close();
+  }
+  for (const x of extras) {
+    const old = x.current.doc,
+      doc = bases[x.index]!;
+    const p = await x.a.publish(c.attempt + ":act5:" + x.index + ":back:" + k.name, doc, validTime, "owed");
+    const seq = (await x.a.notices.observe()).value.sequence;
+    await x.ref.check(x.a, roster, (i) => worldAt(i, p.position, x.history, x.positions), doc,
+      { tx: p.position, validTime }, old, undefined, true, false);
+    x.current = { position: p.position, seq, doc };
+    const w = await Settlement.open(x.a, new BulkQueue(1), false, k.frames, k.precondition);
+    try {
+      await w.settle(seq);
+      const all = (await w.recorder.packets(await w.recorder.archive.store.head())).flatMap((p) => p.deliveries.map(toWire));
+      assert.deepEqual(all, x.ref.owed, "account " + x.index + " notices differ after its reset release");
+    } finally {
+      await w.close();
+    }
+  }
+  return result;
 }
