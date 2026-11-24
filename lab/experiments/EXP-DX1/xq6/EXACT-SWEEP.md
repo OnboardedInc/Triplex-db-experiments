@@ -240,7 +240,7 @@ own storage read budget); any read or save error.
 | `packages/datomic/gateway/src/triplex/gateway/main.clj` | The route, present only with `TX2_SWEEP=1` |
 | `packages/datomic/src/sweep.ts`, `index.ts` | SDK |
 | `lab/experiments/EXP-DX1/stack/up.sh` | `DX_SWEEP`, `DX_SWEEP_PERMITS`, `DX_SWEEP_PER_ACCOUNT`, `DX_SWEEP_QUEUE_MS`, `DX_SWEEP_CURSOR_SECRET` (unset: environment unchanged) |
-| `xq6/gate.sh`, `gate.ts`, `load.ts`, `suites.sh`, `server.ts`, `dryrun.ts` | Gates, measurements, server runner and its Mac dry run (run `dryrun-1`: every step of `server.ts` ran on a toy stack) |
+| `xq6/gate.sh`, `gate.ts`, `load.ts`, `suites.sh`, `server.ts`, `dryrun.ts` | Gates, measurements, server runner and its Mac dry run (runs `dryrun-1` and `dryrun-2`: every step of the final `server.ts` ran on a toy stack, 0 read or save errors) |
 
 ## 8. Not verified
 
