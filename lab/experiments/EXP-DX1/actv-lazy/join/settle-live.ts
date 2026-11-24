@@ -500,6 +500,9 @@ export async function livePhase(c: LiveContext) {
       };
       console.log("[act5] " + JSON.stringify(result));
       jsonFile(path.join(c.out, "act5-case-" + k.name + ".json"), result);
+      // [DX-ACT7] Every frame so far in this process (cumulative), for act7/calibrate.ts.
+      if (process.env.DX_ACT7_FRAME_COUNTERS === "1")
+        jsonFile(path.join(c.out, "act7-frame-counters-" + k.name + ".json"), { frames: frameCounters });
       results.push(result);
       await worker?.close();
 

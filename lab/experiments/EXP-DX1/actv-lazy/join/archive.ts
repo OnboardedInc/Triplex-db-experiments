@@ -14,7 +14,7 @@ import { LazyReader } from "../read.ts";
 import { JoinedAccount, type Marker } from "./account.ts";
 import { address } from "./index.ts";
 import { evaluateRows } from "./material.ts";
-import { BulkQueue, bulkClaim, type BulkClass } from "./bulk.ts";
+import { BulkQueue, bulkClaim, frameCountersOn, frameEstimates, type BulkClass } from "./bulk.ts";
 import {
   fillFrame,
   frameEstimate,
@@ -194,6 +194,8 @@ export class Archive {
     // [DX-ACT1] Why: constrain native preparation and durable turns independently of page count. Rejected: a multi-megabyte atomic frame or assuming a timeout can preempt a durable native transaction.
     const estimate = frameEstimate(ops);
     assert(estimate.fits, "Bulk batch exceeds W1 service estimate");
+    // [DX-ACT7] The frame counters (DX_ACT7_FRAME_COUNTERS=1) pair each frame's estimate with its reply.
+    if (frameCountersOn) frameEstimates.set(id, { us: estimate.us, wire: estimate.wire, ops: estimate.rows });
     const n = this.admitted;
     if (n) {
       n.frames++;

@@ -20,15 +20,23 @@ export const bulkUs = (rows: number, bytes: number) =>
 // TX2_REMOVAL_COST_READBACK=1), beside the frame's request rows and bytes. With DX_ACT7_FRAME_COUNTERS=1 every bulk
 // frame's reply is recorded (at most 200,000 per process); unset, nothing is recorded and the reply is untouched.
 // Rejected: estimating the real work from the Mac's client-side turn times (they hold the whole round trip).
+export type FrameEstimate = { us: number; wire: number; ops: number };
 export type FrameCounter = { kind: BulkClass; rows: number; requestBytes: number; datoms: number | null;
-  applyMs: number | null; transactMicros: number | null };
-const frameCountersOn = process.env.DX_ACT7_FRAME_COUNTERS === "1";
+  applyMs: number | null; transactMicros: number | null; estimate: FrameEstimate | null };
+export const frameCountersOn = process.env.DX_ACT7_FRAME_COUNTERS === "1";
 export const frameCounters: FrameCounter[] = [];
-function recordFrame(kind: BulkClass, input: { rows?: readonly unknown[] }, reply: Record<string, unknown>) {
+/** The writer's estimate of each frame in flight, by its claim (set by Archive.write when the counters are on). */
+export const frameEstimates = new Map<string, FrameEstimate>();
+function recordFrame(kind: BulkClass, input: { rows?: readonly unknown[]; claims?: readonly { commandId: string }[] },
+  reply: Record<string, unknown>) {
+  const claim = input.claims?.[0]?.commandId;
+  const estimate = claim === undefined ? null : frameEstimates.get(claim) ?? null;
+  if (claim !== undefined) frameEstimates.delete(claim);
   if (frameCounters.length >= 200_000) return;
   const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
   frameCounters.push({ kind, rows: input.rows?.length ?? 0, requestBytes: Buffer.byteLength(JSON.stringify(input)),
-    datoms: n(reply.datoms), applyMs: n(reply.nativeComputeMs) ?? n(reply.nativeApplyMs), transactMicros: n(reply.transactMicros) });
+    datoms: n(reply.datoms), applyMs: n(reply.nativeComputeMs) ?? n(reply.nativeApplyMs), transactMicros: n(reply.transactMicros),
+    estimate });
 }
 
 // [DX-ACT1] Why: the pinned W1 gateway selects the class from the native claim frame. Rejected: an ambient Effect context that can belong to a different writing fiber.
