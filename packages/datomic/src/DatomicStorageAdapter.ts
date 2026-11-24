@@ -34,6 +34,7 @@ import { DatomicClient, DatomicHttpError } from "./DatomicClient.js";
 import { matchesPattern, packValue, packValueOnce, createPackedRow, visibleAt } from "./rows.js";
 import { fastPathEnabled } from "./fastPaths.js";
 import { stagedInput } from "./protocol.js";
+import type { ReadAtLeast } from "./readAtLeast.js";
 import { databaseName } from "./scopeName.js";
 import {
   CurrentTransactions,
@@ -73,6 +74,8 @@ export const makeDatomicStorageAdapter = (
     readonly serverRecordTime?: boolean;
     readonly indexedJournalReads?: boolean;
     readonly recordedJournalReads?: boolean;
+    /** [DX-RD4] Every unpinned read (the head it resolves) is at or after this floor's position. */
+    readonly readAtLeast?: ReadAtLeast;
   } = {},
 ): StorageAdapterService => {
   // [DX-T1] Why: Effect scopes include staging/validation and always close on typed failure or interruption.
@@ -140,7 +143,7 @@ export const makeDatomicStorageAdapter = (
         });
   const committedPosition = () =>
     read(async () => {
-      const result = await client.basis(db);
+      const result = await client.basis(db, options.readAtLeast?.request());
       const position = Number(result.position.v);
       if (!Number.isSafeInteger(position) || position < 0) throw new RangeError("Unsafe position");
       lastSeenPosition = Math.max(lastSeenPosition, position);

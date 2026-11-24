@@ -26,6 +26,7 @@ import { historyIdentityBounds } from "./identityRange.js";
 import { enabledFastPaths, fastPathEnabled } from "./fastPaths.js";
 import { largeRequestBody, encodeLargeRequest } from "./requestEncoding.js";
 import { protectWrite } from "./protectedWrite.js";
+import { checkAtLeastRequest, type ReadAtLeastRequest } from "./readAtLeast.js";
 import http from "node:http";
 import { stringifyExact, stringifyNativeExact, validateTagged, type TaggedValue } from "./codec.js";
 import {
@@ -90,6 +91,9 @@ export interface DatomicBasis {
   position: TaggedValue;
   recordedAt: null;
   schemaHash: string;
+  /** [DX-RD4] Present only when the call asked for at least a position: the echo and the gateway's wait. */
+  atLeast?: number;
+  atLeastWaitMicros?: number;
 }
 
 export interface DatomicLogPage {
@@ -157,6 +161,18 @@ type ReadWireSample = {
   reusedSocket: boolean;
   responseBytes: number;
   echo: string | string[] | undefined;
+};
+
+// [DX-RD4] The body fields of an at-least read, and the check of its answer.
+export const atLeastBody = (atLeast: ReadAtLeastRequest) => ({
+  atLeastPosition: checkAtLeastRequest(atLeast).position,
+  ...(atLeast.waitMs === undefined ? {} : { basisWaitMs: atLeast.waitMs }),
+});
+export const checkAtLeastAnswer = (atLeast: ReadAtLeastRequest, echo: unknown, position: number) => {
+  if (echo !== atLeast.position)
+    throw new TypeError("The gateway did not confirm the at-least read (it predates the parameter)");
+  if (!(position >= atLeast.position))
+    throw new TypeError(`The gateway answered at position ${position}, before the at-least position ${atLeast.position}`);
 };
 
 export class DatomicClient {
@@ -1047,14 +1063,23 @@ export class DatomicClient {
   async begin(
     db: string,
     basis?: ResolvedTemporalBasis,
+    atLeast?: ReadAtLeastRequest,
   ): Promise<{ handle: string; position: number }> {
-    const response = await this.request<{ handle: string; position: TaggedValue }>(
+    // [DX-RD4] Why: an unpinned snapshot is a head the reader resolves; at least its receipt's position when it holds one.
+    // Rejected: sending it with a pinned basis (the gateway refuses that combination).
+    if (atLeast && (basis?.recordedPosition !== undefined || basis?.recordedAt !== undefined))
+      throw new TypeError("An at-least snapshot cannot also be pinned");
+    const response = await this.request<{ handle: string; position: TaggedValue; atLeast?: number }>(
       "POST",
       `/v1/db/${db}/snapshot`,
-      basis === undefined ? {} : { basis },
+      {
+        ...(basis === undefined ? {} : { basis }),
+        ...(atLeast === undefined ? {} : atLeastBody(atLeast)),
+      },
     );
     const position = Number(validateTagged(response.position).v);
     if (!Number.isSafeInteger(position) || position < 0) throw new RangeError("Unsafe position");
+    if (atLeast) checkAtLeastAnswer(atLeast, response.atLeast, position);
     return { handle: response.handle, position };
   }
   async beginCommand(
@@ -1506,10 +1531,17 @@ export class DatomicClient {
       throw new TypeError("Datomic log response checkpoint mismatch");
     return page;
   }
-  async basis(db: string): Promise<DatomicBasis> {
+  // [DX-RD4] Why: `atLeast` makes the head answered at least a receipt's position; the gateway waits on its peer.
+  // Rejected: trusting a gateway that ignores the parameter (an old gateway would answer early without saying so).
+  async basis(db: string, atLeast?: ReadAtLeastRequest): Promise<DatomicBasis> {
     if (!/^(?:s-[a-f0-9]{32}|s2-[A-Za-z0-9_-]+)$/.test(db))
       throw new TypeError("Invalid Datomic database name");
-    const result = await this.request<DatomicBasis>("GET", `/v1/db/${db}/basis`);
-    return { ...result, t: validateTagged(result.t), position: validateTagged(result.position) };
+    const query = atLeast
+      ? `?atLeast=${checkAtLeastRequest(atLeast).position}${atLeast.waitMs === undefined ? "" : `&waitMs=${atLeast.waitMs}`}`
+      : "";
+    const result = await this.request<DatomicBasis>("GET", `/v1/db/${db}/basis${query}`);
+    const basis = { ...result, t: validateTagged(result.t), position: validateTagged(result.position) };
+    if (atLeast) checkAtLeastAnswer(atLeast, result.atLeast, Number(basis.position.v));
+    return basis;
   }
 }
