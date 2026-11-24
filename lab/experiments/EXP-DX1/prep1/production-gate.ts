@@ -137,6 +137,11 @@ const summary = {
 };
 for (const c of summary.cells) assert(c.acked > 0.9 * c.offers, "too few acknowledged saves to judge exactness");
 assert(results[2]!.result.rows.every((r) => (r as any).assertions > 256));
-console.log("REAL2_GATE " + JSON.stringify(summary));
+// [DX-W3] Whether the general writer's hints were attached (present only when TX2_GENERAL_PREFETCH=1).
+const gatewayStats = await reader.request<{ generalHints?: Record<string, number> }>("GET", "/v2/admin/scan-stats");
+const writeOptions = await reader.request<{ options?: { generalPrefetch?: boolean } }>("GET", `/v1/db/${db}/write-options`)
+  .catch(() => undefined);
+console.log("REAL2_GATE " + JSON.stringify({ ...summary, generalHints: gatewayStats.generalHints ?? null,
+  generalPrefetchOption: writeOptions?.options?.generalPrefetch ?? null }));
 client.close();
 reader.close();

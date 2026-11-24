@@ -5,7 +5,8 @@
             [triplex.gateway.write-wire :as write-wire]
             [triplex.gateway.lean-feed :as lean-feed] [triplex.gateway.lean-query :as lean-query]
             [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy]
-            [triplex.gateway.subject-save :as subject] [triplex.gateway.owner-layout :as owner-layout])
+            [triplex.gateway.subject-save :as subject] [triplex.gateway.owner-layout :as owner-layout]
+            [triplex.gateway.general-prefetch :as general-prefetch] [triplex.gateway.admission :as admission])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -84,7 +85,9 @@
                          (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema))
                          (:db-after (trace/span "d/transact" "peer-wait" @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}])))))
         current (subject/install! conn (group/install! conn (commit/install! conn scope schema-ready)))
-        current (owner-layout/install! conn current)]
+        current (owner-layout/install! conn current)
+        ;; [DX-W3] Why: the lookup-only hint function is installed only when its option is on (default off).
+        current (general-prefetch/install! conn current)]
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
       (lean/enabled? current) (assoc :layout "lean" :orderedRowTexts true :journalCuts true)))))
@@ -135,6 +138,8 @@
                        :ledger (boolean (or ledger/enabled packed/enabled))
                        :packedJournal (boolean packed/enabled) :fastReply (boolean group/fast-reply)
                        :pinnedShortcut pinned/enabled :pinnedCutLookup group-cut/current-lookup}}
+      ;; [DX-W3] Why: report the option only when it is on, so default readbacks stay byte-identical.
+      general-prefetch/enabled (assoc-in [:options :generalPrefetch] (general-prefetch/installed? db))
       subject/enabled (assoc :subjectSave true :subjectFunction (when subject-t (str subject/ident))
                              :subjectNumericOwner subject/numeric-owner?
                              :subjectOrderedIds subject/ordered-ids?
@@ -192,6 +197,41 @@
                            (reduce (fn [n _] (inc n)) 0 (d/datoms db :aevt :triplex.journal/packed)) 0)
      :fastReply (boolean group/fast-reply)
      :leanNativeQuery (boolean lean-query/enabled) :leanNativeLog (boolean lean-feed/enabled)}))
+;; [DX-W3] Why: Jetty's own pool says how many web threads are busy and how many requests wait for one.
+;; Rejected: inferring thread starvation from client latency alone (the 2026-11-23 runs recorded no thread counts).
+(def http-max-threads
+  (let [n (Integer/parseInt (or (not-empty (System/getenv "TX2_HTTP_MAX_THREADS")) "512"))]
+    (when-not (<= 8 n 4096) (throw (IllegalArgumentException. "TX2_HTTP_MAX_THREADS must be 8..4096"))) n))
+(defonce jetty-server (atom nil))
+(defonce thread-peaks (atom {:busyPeak 0 :queuedPeak 0 :samples 0 :samplesWithQueue 0 :samplesNoIdle 0}))
+(defn- pool-now []
+  (when-let [^org.eclipse.jetty.server.Server server @jetty-server]
+    (let [^org.eclipse.jetty.util.thread.QueuedThreadPool pool (.getThreadPool server)]
+      {:maxThreads (.getMaxThreads pool) :threads (.getThreads pool) :idleThreads (.getIdleThreads pool)
+       :busyThreads (.getBusyThreads pool) :queuedRequests (.getQueueSize pool)})))
+(defn thread-stats []
+  (merge {:http (pool-now) :peaks @thread-peaks :sampling (= "1" (System/getenv "TX2_THREAD_COUNTERS"))
+          :atMs (System/currentTimeMillis)}
+         (admission/read-stats)))
+(defn reset-thread-peaks! []
+  (reset! thread-peaks {:busyPeak 0 :queuedPeak 0 :samples 0 :samplesWithQueue 0 :samplesNoIdle 0})
+  (admission/reset-peaks!))
+;; [DX-W3] Why: a starved gateway cannot answer the stats route, so peaks are sampled from inside, every 50 ms.
+;; Default off (TX2_THREAD_COUNTERS=1): no background thread unless asked for.
+(defn start-thread-sampler! []
+  (when (= "1" (System/getenv "TX2_THREAD_COUNTERS"))
+    (doto (Thread. (fn []
+                     (loop []
+                       (when-let [{:keys [busyThreads queuedRequests idleThreads]} (pool-now)]
+                         (swap! thread-peaks (fn [p] (-> p (update :samples inc)
+                                                         (update :busyPeak max busyThreads)
+                                                         (update :queuedPeak max queuedRequests)
+                                                         (cond-> (pos? queuedRequests) (update :samplesWithQueue inc)
+                                                                 (zero? idleThreads) (update :samplesNoIdle inc))))))
+                       (Thread/sleep 50)
+                       (recur)))
+                   "tx2-thread-sampler")
+      (.setDaemon true) (.start))))
 (defn route-handler-base [{:keys [request-method uri body query-string privacy-input]}]
   (stats/bump! [:routes (str (name request-method) " " (clojure.string/replace uri #"/s2?-[^/]+/" "/{db}/"))] 1)
   (try
@@ -199,6 +239,9 @@
       (and (= :get request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/write-options" uri))
       (let [name (nth (clojure.string/split uri #"/") 3)]
         (response 200 (write-layout-options (sync-db (db-uri name)) name)))
+      ;; [DX-W3] Why: say whether reads, the web thread pool or the permit queue hold a request back.
+      (and (= :get request-method) (= uri "/v2/admin/threads")) (response 200 (thread-stats))
+      (and (= :post request-method) (= uri "/v2/admin/threads/reset")) (do (reset-thread-peaks!) (response 200 (thread-stats)))
       (= uri "/v2/admin/scan-stats") (response 200 (assoc @stats/counts :idMemo (reach/id-memo-stats) :pinnedShortcut (pinned/stats) :entityCache (let [base (entity-cache/stats) extra (recent/stats)] (assoc (merge base extra) :bytes (+ (:bytes base) (:recentBytes extra))))))
       (and (= :post request-method) (= uri "/v2/admin/scan-stats/reset")) (do (reset! stats/counts {}) (response 200 {}))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(transactions|command|journal|entity-transactions)" uri))
@@ -309,7 +352,8 @@
       :else (response 404 {:code "NotFound"}))
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
-                                  (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e))))))))
+                                  (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e)))
+                                  (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e))))))))
 (defn- with-privacy-guards [scopes work]
   (if-let [[scope & more] (seq scopes)]
     (privacy/guard scope #(with-privacy-guards more work))
@@ -398,8 +442,10 @@
     (try (sync-db (db-uri name))
          (catch Exception e
            (when (some #{name} (d/get-database-names (db-uri "*"))) (throw e)))))
+  (start-thread-sampler!)
   (jetty/run-jetty serve-handler {:port port
-                           :host "0.0.0.0" :join? true :min-threads 8 :max-threads 512}))
+                           :host "0.0.0.0" :join? true :min-threads 8 :max-threads http-max-threads
+                           :configurator (fn [server] (reset! jetty-server server))}))
 
 (defn -main [& [port]]
   (serve! handler (if port (Integer/parseInt port) 8080)))

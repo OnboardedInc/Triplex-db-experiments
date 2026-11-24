@@ -52,10 +52,16 @@ export class DatomicHttpError extends Error {
     message: string,
     readonly maximum?: number,
     readonly route?: string,
+    readonly retryAfterMs?: number,
   ) {
     super(message);
   }
 }
+// [DX-W3] Why: a gateway started with TX2_READ_WAIT_LIMIT answers a read beyond its permit queue with 503 "ReadBusy"
+// at once instead of holding a web thread. Reads are idempotent, so the client waits the suggested delay and asks
+// again within the same deadline. Rejected: retrying writes (a write's outcome must stay single) and retrying any 503.
+const busyRetryRoute = /\/(?:reach|reach-many|read|q)$/;
+const sleepMs = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 class DatomicRequestTooLarge extends DatomicHttpError {
   constructor() {
     super(400, "InvalidValue", "Request too large");
@@ -365,13 +371,28 @@ export class DatomicClient {
     const route = path
       .replace(/\/s2?-[^/]+/g, "/{db}")
       .replace(/\/operation\/[^/]+/, "/operation/{id}");
-    return tracedRequest(
+    const once = (ms: number) => tracedRequest(
       path.endsWith("/transact") ? "commit" : "read",
       `http ${method} ${route}`,
       {},
-      () => this.requestTraced<T>(method, path, body, timeoutMs, onSent),
+      () => this.requestTraced<T>(method, path, body, ms, onSent),
     );
+    if (!busyRetryRoute.test(path)) return once(timeoutMs);
+    const deadline = performance.now() + timeoutMs;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await once(attempt === 0 ? timeoutMs : Math.max(1, deadline - performance.now()));
+      } catch (error) {
+        if (!(error instanceof DatomicHttpError && error.status === 503 && error.code === "ReadBusy")) throw error;
+        const wait = Math.max(1, Math.min(1000, error.retryAfterMs ?? 25));
+        if (deadline - performance.now() <= wait) throw error;
+        this.readBusyRetries++;
+        await sleepMs(wait);
+      }
+    }
   }
+  /** [DX-W3] Reads the gateway answered "ReadBusy" that this client retried (0 unless the bound is on). */
+  readBusyRetries = 0;
   private async requestTraced<T>(
     method: "GET" | "POST",
     path: string,
@@ -581,6 +602,7 @@ export class DatomicClient {
                     String(data["message"] ?? "Gateway request failed"),
                     typeof data["maximum"] === "number" ? data["maximum"] : undefined,
                     typeof data["route"] === "string" ? data["route"] : undefined,
+                    typeof data["retryAfterMs"] === "number" ? data["retryAfterMs"] : undefined,
                   ),
                 );
               else {
