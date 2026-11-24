@@ -46,3 +46,27 @@ These were written before the run, as the project's rule requires. Recorded valu
 - **Bounded configuration reads differ from Triplex's own.** The toy gate compared them with the stock loader; at this size the stock loader would scan, so it is not run here.
 - **A create takes over 300 ms.** The design says to look at the precondition read then.
 
+
+## Result (00:17–00:25 UTC on 2026-11-24, commit `ebe31628f`)
+
+**CONSOLE PROVING RUN FAILED proof=1 gate=1 total=474s.** Bring-up on a fresh working copy: `DEMO READY head=28309866 records=1000251169 t=62888918`, 171 s. 13 checks passed and 3 failed:
+
+- `FAIL define_entity_type Review committed a release and moved test and live -- UnknownType: :review/of: refTarget Subject is not a type in the release (Review)`
+- `FAIL five creates: five numbers, read backs match`
+- `FAIL independent read back of a create (plain SDK rows at the receipt position) -- []`
+
+The first release (type `Review`, whose reference names `Subject`) was refused, and the creates that depended on it did not run.
+
+| Row (table 10.4) | Measured | Prediction |
+| --- | --- | --- |
+| Configuration check | 0.40 ms (p50 of 20; max 0.64) | 1–5 ms warm |
+| First full configuration walk | 8.63 ms (6 batched reads; wall 25.24 ms) | 60–300 ms |
+| Commit a release with one new type | 343.58 ms warm (`Vehicle`; whole tool 395.91 ms over 27 requests); the first (`Review`) failed | 30–120 ms warm; up to 500 ms first |
+| Create an entity | not measured (0 creates) | 20–80 ms |
+| A question on one subject | 14.98 ms console (pull 0.96 ms over 2 requests) | under 10 ms console |
+| Store-source question, ordinary entity | 12.88 ms (p50 of 9; first 155.67 ms) | 5–40 ms |
+| Store-source question, heavily saved entity | 3,929.52 ms first; then 426.71, 387.34, 254.44 ms | 0.2–5 s |
+| Read at position 87,002 with the options on | 1.28 ms (p50 of 20; first 14 ms) | 1–3 ms |
+| Entity journal (G13) and the no-entity-ID guard | no row printed | 20–300 ms; never |
+
+The stack was left up for the orchestrator's browser pass, as asked. Evidence: `evidence/DX-CON1/20261124T001745Z.tar.zst` in the private evidence folder (SHA-256 `b727e25b875eaf2a2c5f94d5dd7230bb094b02284eff1f1c5ee838483b4d4029`).
