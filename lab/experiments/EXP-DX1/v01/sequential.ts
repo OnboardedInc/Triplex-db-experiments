@@ -14,6 +14,8 @@ type CampaignInput = {
   imagePin: string; transferPin: string; originalScope: { db: string; cut: number };
   separateWal: boolean; stages: ReturnType<typeof serverStages>; wal?: ReturnType<typeof preflightWal>;
   windowSeconds?: WindowSeconds; creditMode?: CreditMode;
+  /** [DX-S1] Default-off writer options set for this campaign (v01/production-card.ts writerOptionNames). */
+  writerOptions?: Record<string, string>;
   realistic?: RealisticBinding;
   agedBundle?: string; agedDump?: string;
   // [DX-INT1] Absent in campaigns started before server-32 existed; those ran the server profile.

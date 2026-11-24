@@ -28,6 +28,14 @@ export function parseCardTape(text: string | undefined): CardTape {
 // Rejected: changing parseCardTape's fallback (an old campaign would be re-assembled as shape S) and removing the other
 // tapes (earlier cards must reproduce). When the card branch's production-S-noburst is on this branch, it becomes this.
 export const defaultCardTape: CardTape = "production-S";
+// [DX-S1] Default-off writer options a card arm may run with: wide saves (W2), general-writer hints (W3), per-subject
+// writer hints (W4). run.ts passes them to the arm, adopted-server.ts records the ones set, adopted.ts checks the
+// writer's readback, and the card names them. Rejected: passing the whole environment (unrecorded settings).
+export const writerOptionNames = ["TX2_SUBJECT_WIDE", "TX2_GENERAL_PREFETCH", "TX2_SUBJECT_HINTS"] as const;
+export const writerOptionsSet = (env: NodeJS.ProcessEnv) => {
+  for (const name of writerOptionNames) assert(env[name] === undefined || /^[01]$/.test(env[name]!), name + " is 0 or 1");
+  return Object.fromEntries(writerOptionNames.flatMap((name) => env[name] === "1" ? [[name, "1"]] : [])) as Record<string, "1">;
+};
 export const newRunTape = (text: string | undefined, age: string | undefined): CardTape =>
   parseCardTape(text ?? (age === "realistic" ? "saturday" : defaultCardTape));
 export const tapeShape = (tape: CardTape): Shape | undefined =>

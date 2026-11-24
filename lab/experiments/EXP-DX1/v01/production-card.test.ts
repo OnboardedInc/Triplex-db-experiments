@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { cells, productionArms } from "../prep1/server-tape.ts";
-import { cardTapeReport, commitAssertions, defaultCardTape, fullCellTape, isProduction, newRunTape, parseCardTape, productionCellMetrics, tapeBinding } from "./production-card.ts";
+import { cardTapeReport, commitAssertions, defaultCardTape, fullCellTape, isProduction, newRunTape, parseCardTape, productionCellMetrics, tapeBinding, writerOptionsSet } from "./production-card.ts";
 import { ratedTape } from "./server-workload.ts";
 
 // [DX-INT1] The card's production cells: the card's quiet stream plus exactly REAL2's measured neighbour offers.
@@ -50,4 +50,11 @@ test("a new card runs one commit per subject's save unless another tape is named
   assert.equal(newRunTape("saturday", "fresh"), "saturday");
   assert.equal(newRunTape("production-R", "1B"), "production-R");
   assert.equal(parseCardTape(undefined), "saturday");
+});
+
+// [DX-S1] Writer options reach the card only when set to 1, and only these three.
+test("the card records the default-off writer options it was given", () => {
+  assert.deepEqual(writerOptionsSet({}), {});
+  assert.deepEqual(writerOptionsSet({ TX2_SUBJECT_WIDE: "0", TX2_SUBJECT_HINTS: "1", OTHER: "1" }), { TX2_SUBJECT_HINTS: "1" });
+  assert.throws(() => writerOptionsSet({ TX2_GENERAL_PREFETCH: "yes" }), /0 or 1/);
 });

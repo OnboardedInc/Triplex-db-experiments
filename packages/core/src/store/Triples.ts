@@ -222,6 +222,9 @@ export interface ExplainResult {
 
 export interface TriplesService {
   // --- Writes (append-only semantics) --------------------------------------
+  // [DX-S1] Each of assert, assertBatch, retract and retractByPattern is one commit. A subject's save (every fact a
+  // form, status change or check result changes) is one `transact` call: one commit, one receipt, one feed entry,
+  // all or nothing (lab/experiments/EXP-DX1/v01/SAVE-SHAPE.md). Calling these once per field makes one commit per row.
   readonly assert: (input: TripleInput) => Effect.Effect<Triple, WriteError | InvalidTripleError>;
   readonly assertBatch: (
     inputs: readonly TripleInput[],
