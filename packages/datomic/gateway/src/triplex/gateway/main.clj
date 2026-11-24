@@ -5,7 +5,8 @@
             [triplex.gateway.write-wire :as write-wire]
             [triplex.gateway.lean-feed :as lean-feed] [triplex.gateway.lean-query :as lean-query]
             [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy]
-            [triplex.gateway.subject-save :as subject] [triplex.gateway.owner-layout :as owner-layout])
+            [triplex.gateway.subject-save :as subject] [triplex.gateway.owner-layout :as owner-layout]
+            [triplex.gateway.attribute-index :as xq])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -84,7 +85,9 @@
                          (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema))
                          (:db-after (trace/span "d/transact" "peer-wait" @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}])))))
         current (subject/install! conn (group/install! conn (commit/install! conn scope schema-ready)))
-        current (owner-layout/install! conn current)]
+        current (owner-layout/install! conn current)
+        ;; [DX-XQ2] Why: the index tuples need their schema before the first save; off, nothing is installed.
+        current (xq/install! conn current)]
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
       (lean/enabled? current) (assoc :layout "lean" :orderedRowTexts true :journalCuts true)))))
@@ -214,6 +217,16 @@
                              (trace/span "journal/entity-positions" "gateway" (journal/entity-positions (d/db conn) name input))
                              "command"
                              (trace/span "journal/command" "gateway" (journal/command (trace/span "d/db" "peer-call" (d/db conn)) name input)))}))
+      ;; [DX-XQ2] Spike read route (TX2_ATTRIBUTE_INDEX): one account, bounded, at the head or at a past position.
+      (and (= :post request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/xq" uri))
+      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
+            db (trace/span "d/db" "peer-call" (d/db (connection (db-uri name))))
+            head (storage/head-position name db)
+            p (get-in input ["basis" "recordedPosition"])
+            view (storage/at-position db p)]
+        (timed start (response 200 (assoc (xq/query view input (or (:attrs privacy/*cut*) #{}))
+                                          "position" (or p head) "head" head "asOf" (and (some? p) (< p head))
+                                          "t" (str (d/basis-t db))))))
       (and (= :get request-method) (= "/health" uri))
       (do (trace/span "d/db" "peer-call" (d/db (connection (db-uri "tx2-health"))))
           (response 200 (cond-> {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")}

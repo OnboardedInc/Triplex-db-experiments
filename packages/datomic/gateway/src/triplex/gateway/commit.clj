@@ -1,7 +1,8 @@
 (ns triplex.gateway.commit
   (:require [clojure.data.json :as json] [clojure.walk :as walk] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.schema :as schema]
             [triplex.gateway.trace :as trace] [triplex.gateway.predecessor :as pred]
-            [triplex.gateway.save-ledger :as ledger] [triplex.gateway.packed-journal :as packed]))
+            [triplex.gateway.save-ledger :as ledger] [triplex.gateway.packed-journal :as packed]
+            [triplex.gateway.attribute-index :as xq]))
 
 ;; [DX-W1] Why: only the serialized db-before can prove a whole interval of historical prefixes empty.
 ;; Rejected: trusting client bounds, checking current rows, or stopping at the largest bare prefix (its suffixes sort later).
@@ -366,6 +367,24 @@
       form)))
 ;; [DX-T1-8] Why: embed the exact codec in the installed function hash; the transactor needs no gateway namespace.
 ;; Rejected: an unversioned remote helper or compressing before server clock assignment.
+;; [DX-XQ2] Why: with TX2_ATTRIBUTE_INDEX set, the serial writer retracts a retired row's index datom from the row's
+;; stored text (the only exact source) and appends the peer's index assertions. Off, the function text is unchanged.
+;; Rejected: trusting the client's retired-row columns (the stored row owns the value and validity).
+(def xq-retract-form '(if text [[:db/retract e :triplex.entity/row text]] []))
+(defn with-attribute-index [form]
+  (if-not xq/enabled form
+    (walk/postwalk
+      (fn [x]
+        (cond (= x xq-retract-form)
+              (list 'if 'text (list 'into '[[:db/retract e :triplex.entity/row text]] (list xq/retract-code 'e 'text)) [])
+              (and (seq? x) (= 'vec (first x)) (seq? (second x)) (= 'concat (first (second x))) (= 'prepared (second (second x))))
+              (list 'vec (concat (list 'concat 'prepared
+                                       ;; The payload crosses into the transactor as java.util.List; normalization rewrites
+                                       ;; tempids only in vectors (a list op would make a new entity).
+                                       '(map (fn [[op e a v]] [op e a (vec v)]) (:xq-adds payload)))
+                                 (drop 2 (second x))))
+              :else x))
+      form)))
 (defn expand-code
   ([observe] (expand-code observe false false))
   ([observe optimized? measured?]
@@ -375,7 +394,7 @@
                                           'packed-identity-code packed/identity-code
                                           'packed-encode-code packed/compiled-encode
                                           'recorded-row-code compiled-recorded-row
-                                          'record-range-result observe} (guard-owner-roots operation-code))
+                                          'record-range-result observe} (with-attribute-index (guard-owner-roots operation-code)))
          op (if optimized? (list pred/normalization expanded) expanded)]
      (pred/expand (list 'read-at :w1/function op) optimized? measured?))))
 (def observe-range

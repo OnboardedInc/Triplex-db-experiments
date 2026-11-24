@@ -2,7 +2,7 @@
   (:require [clojure.data.json :as json] [datomic.api :as d]
             [triplex.gateway.envelope :as envelope]
             [triplex.gateway.lean :as lean] [triplex.gateway.privacy :as privacy]
-            [triplex.gateway.scope :as scope])
+            [triplex.gateway.scope :as scope] [triplex.gateway.attribute-index :as xq])
   (:import [java.util UUID]))
 
 ;; [DX-ERASE1] Why: an independent prepared save may advance the database after removal selects its rows.
@@ -55,6 +55,9 @@
   ;; Rejected: letting the public request claim an occupied scope has no plaintext history.
   ([name conn db input staged-position]
   (let [attrs (get input "attributes") sealed? (true? (get input "sealed"))]
+    ;; [DX-XQ2] Why: protected values are never looked up by value, so an indexed attribute cannot become protected.
+    (when (and xq/enabled (some xq/attrs attrs))
+      (privacy/failure! 400 "ProtectedAttributeIndexed" "An attribute in TX2_ATTRIBUTE_INDEX cannot be protected"))
     (when-not (and (lean/enabled? db) (or (privacy/enabled? db) (= (or staged-position 0) (scope/head-position db (scope/entity db)))))
       (privacy/failure! 409 "ProtectedScopeNeedsMigration" "Declare protection before saving into the scope"))
     (privacy/register! name attrs sealed?

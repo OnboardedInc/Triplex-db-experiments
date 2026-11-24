@@ -8,7 +8,8 @@
             [triplex.gateway.schema :as schema]
             [triplex.gateway.small-row :as small-row]
             [triplex.gateway.scope :as scope]
-            [triplex.gateway.trace :as trace]))
+            [triplex.gateway.trace :as trace]
+            [triplex.gateway.attribute-index :as xq]))
 
 (def enabled (= "1" (System/getenv "TX2_SUBJECT_SAVE")))
 (def numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_NUMERIC_OWNER")))
@@ -335,9 +336,15 @@
                          :provisional provisional :submitted-clock (reduce max (map double clocks))
                          :prefixes prefixes
                          :expected-erasure expected-erasure
-                         :ops (trace/span "subject.plan-render" "gateway"
-                                (render-ops ops owner subject prior (or decoded (decode-predecessors prior)) (set new-ids)
-                                  (when mark? [provisional journal])))}
+                         :ops (cond-> (trace/span "subject.plan-render" "gateway"
+                                        (render-ops ops owner subject prior (or decoded (decode-predecessors prior)) (set new-ids)
+                                          (when mark? [provisional journal])))
+                                ;; [DX-XQ2] Why: the certified predecessor texts (revision-checked) own the retired index datoms.
+                                ;; Rejected: re-finding the old row inside the function (a read the plan already paid for).
+                                xq/enabled (into (concat
+                                                   (map (fn [[op e a v]] [op (if (and numeric-owner? (= e (str "e:" subject))) owner e) a v])
+                                                        (:xq-adds p))
+                                                   (keep #(xq/retract-op owner %) (vals prior)))))}
                   mark? (assoc :retirement-prefixes (mapv lean/prefix live))
                   numeric-owner? (assoc :owner-key subject)
                   ordered-ids? (assoc :ordered-bounds (ordered-bounds journal prefixes)))))))))))

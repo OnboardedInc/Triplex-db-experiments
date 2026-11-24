@@ -4,7 +4,7 @@
             [triplex.gateway.save-ledger :as ledger] [triplex.gateway.packed-journal :as packed]
             [triplex.gateway.subject-save :as subject] [clojure.data.json :as json]
             [triplex.gateway.owner-layout :as owner-layout] [triplex.gateway.owner-root :as owner-root]
-            [triplex.gateway.pinned :as pinned])
+            [triplex.gateway.pinned :as pinned] [triplex.gateway.attribute-index :as xq])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -332,6 +332,9 @@
                                             (some #(= (:entity_id r) (get % "txId")) claims))) fresh))
                        (assoc :bulk true)
                        predecessor (assoc :import-predecessor predecessor)
+                       ;; [DX-XQ2] Why: index assertions are computed here, off the serial point, from the request's row texts.
+                       ;; Rejected: putting them in :ops (the per-subject writer's eligibility counts ops).
+                       (and lean xq/enabled) (assoc :xq-adds (xq/tx-adds db input fresh (or (:attrs privacy/*cut*) #{})))
                        (and lean (get input "historyIdentityBounds"))
                        (assoc :identity-bounds (get input "historyIdentityBounds")))]])))
 ;; [DX-B10] Why: only contiguous client sequences enter Datomic, even when HTTP arrivals reorder.
