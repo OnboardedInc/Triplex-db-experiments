@@ -56,18 +56,19 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     holder = (os.environ.get("DX_CHK1_HOLDER", "DX-CHK1") if combined
               else os.environ.get("DX_CHK1_HOLDER", "DX-W1") if owner_head == "1"
               else os.environ.get("DX_CHK1_HOLDER", "DX-REAL2") if mode == "production" else "DX-PREP1")
-    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1", "DX-REAL2", "DX-W3", "DX-W4") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
-    assert mode != "production" or holder in ("DX-REAL2", "DX-THIN1", "DX-W3", "DX-W4")
+    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1", "DX-REAL2", "DX-W3", "DX-W4", "DX-S1") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
+    assert mode != "production" or holder in ("DX-REAL2", "DX-THIN1", "DX-W3", "DX-W4", "DX-S1")
     # [DX-W3] Why: run the production gate with the general writer's hints on or off (default: no file, as before).
     # Rejected: a second gate copy; the hints arm differs from the control only in this one setting.
     general_prefetch = os.environ.get("DX_W3_GENERAL_PREFETCH")
-    if general_prefetch not in (None, "0", "1") or (general_prefetch is not None and (mode != "production" or holder != "DX-W3")):
-        raise SystemExit("DX_W3_GENERAL_PREFETCH is 0 or 1, for the production gate under the DX-W3 holder")
+    # [DX-S1] The save-shape builder runs the production gate with the wide writer and both hint options together.
+    if general_prefetch not in (None, "0", "1") or (general_prefetch is not None and (mode != "production" or holder not in ("DX-W3", "DX-S1"))):
+        raise SystemExit("DX_W3_GENERAL_PREFETCH is 0 or 1, for the production gate under the DX-W3 or DX-S1 holder")
     # [DX-W4] Why: run the production gate with the per-subject writer's hints off or on.
     # Rejected: lifting the TX2_SUBJECT_PREFETCH guard above (that option keeps its meaning).
     subject_hints = os.environ.get("DX_W4_SUBJECT_HINTS")
-    if subject_hints not in (None, "0", "1") or (subject_hints is not None and (mode != "production" or holder != "DX-W4")):
-        raise SystemExit("DX_W4_SUBJECT_HINTS is 0 or 1, for the production gate under the DX-W4 holder")
+    if subject_hints not in (None, "0", "1") or (subject_hints is not None and (mode != "production" or holder not in ("DX-W4", "DX-S1"))):
+        raise SystemExit("DX_W4_SUBJECT_HINTS is 0 or 1, for the production gate under the DX-W4 or DX-S1 holder")
     assert owner_head != "1" or holder in ("DX-W1", "DX-THIN1")
     # [DX-W1] Why: match both saves per owner-layout arm to their transactor read counters.
     # Rejected: treating empty peer I/O metadata as zero native storage reads.
@@ -97,8 +98,10 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     # [Opus W2] Why: run the recovery gates with wide saves on the per-subject writer (TX2_SUBJECT_WIDE=1).
     # Rejected: a separate launcher (the gate must stay the one the other options use).
     wide = os.environ.get("DX_W2_WIDE", "0")
-    if wide not in ("0", "1") or (wide == "1" and (mode, ordered, numeric_owner) != ("rolling-recovery", "1", "1")):
-        raise SystemExit("Wide saves need the ordered rolling-recovery fixture")
+    # [DX-S1] And the production gate under the DX-S1 holder (one commit per subject's save with the wide writer).
+    if wide not in ("0", "1") or (wide == "1" and (ordered, numeric_owner) != ("1", "1")) or (
+            wide == "1" and mode != "rolling-recovery" and (mode, holder) != ("production", "DX-S1")):
+        raise SystemExit("Wide saves need the ordered rolling-recovery fixture, or the production gate under DX-S1")
     if wide == "1":
         (config / "subject-wide").write_text("1\n")
     if combined:
@@ -187,7 +190,8 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     tag_mode = "subject-recovery" if mode == "rolling-recovery" else mode
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
     # [DX-THIN1] Why: REAL2's production gate keeps its own tag; under the integration holder it takes a private one.
-    profile["lanes"]["datomic"]["image"] = (f"tx2-dxw3-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-W3"
+    profile["lanes"]["datomic"]["image"] = (f"tx2-dxs1-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-S1"
+                                            else f"tx2-dxw3-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-W3"
                                             else f"tx2-dxw4-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-W4"
                                             else f"tx2-datomic:dx-w1-head-{out.name}-{head[:8]}" if owner_head == "1" and holder == "DX-W1"
                                             else f"tx2-dxthin-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}"
