@@ -257,7 +257,7 @@
     (.increment requests)
     (when stats?
       (let [reads (:reads (:io-stats measured))
-            loads (reduce + 0 (keep (fn [[k v]] (when (and (number? v) (str/ends-with? (name k) "-load")) (long v))) reads))]
+            loads (reduce + 0 (keep (fn [[k v]] (when (and (number? v) (str/ends-with? (clojure.core/name k) "-load")) (long v))) reads))]
         (.append out ",\"stats\":")
         (.append out (json/write-str {:loads loads :ioReads reads
                                       :handlerCpuMicros (quot (- (.getCurrentThreadCpuTime thread-mx) cpu0) 1000)

@@ -110,6 +110,12 @@ const { today, loader, batch1, keyOf } = makePorts(db, validAt, writer, save);
 type Result = import("./ports.ts").Result;
 
 // ---- Exactness.
+const listIdsRetry = async (c: DatomicClient, request: any) => {
+  for (let attempt = 0; ; attempt++) {
+    try { return await c.listIds(db, request); }
+    catch (e: any) { if (e?.code !== "IndexBusy" || attempt > 2000) throw e; await sleep(2); }
+  }
+};
 const canonRows = (rows: any[]) => JSON.stringify(rows.map((x) => (x.attribute && typeof x.attribute === "object" ? decodeRow(x) : x))
   .map((x: any) => JSON.parse(JSON.stringify(x, (_k, v) => (typeof v === "bigint" ? String(v) : v))))
   .sort((p: any, q: any) => (p.id < q.id ? -1 : p.id > q.id ? 1 : 0)));
@@ -134,7 +140,7 @@ async function checkLoader(c: DatomicClient, shape: Shape, ctx: Ctx, at?: number
     if (canonRows(rows as any[]) !== canonRows(want)) differ(shape.name, { port: "loader", key, P });
   }
   for (const [key, page] of r.pages) {
-    const want = await c.listIds(db, { ...(shape.levels.flat().find((s) => s.key === key)!.page!(ctx)), basis: { recordedPosition: firstP, validAt } } as any);
+    const want = await listIdsRetry(c, { ...(shape.levels.flat().find((s) => s.key === key)!.page!(ctx)), basis: { recordedPosition: firstP, validAt } } as any);
     gate.comparisons++; gate.byShape[shape.name]!.comparisons++;
     if (dropVolatile(page) !== dropVolatile(want)) differ(shape.name, { port: "loader", page: key });
   }
@@ -144,7 +150,7 @@ async function checkBatch(c: DatomicClient, shape: Shape, ctx: Ctx, at?: number,
   const r = await batch1(c, shape, ctx, at, false, limits);
   for (const { step, entry, answer, position, asked } of r.batch) {
     if (step.page) {
-      const want = await c.listIds(db, { ...step.page(ctx), basis: { recordedPosition: position, validAt } } as any);
+      const want = await listIdsRetry(c, { ...step.page(ctx), basis: { recordedPosition: position, validAt } } as any);
       gate.comparisons++; gate.byShape[shape.name]!.comparisons++;
       if (dropVolatile(answer) !== dropVolatile(want)) differ(shape.name, { port: "batch", page: step.key });
     } else if (entry.op === "reach") {
@@ -227,14 +233,14 @@ if (phases.has("gate")) {
   await refuse("unknown op", { basis: b, reads: [{ op: "q" }] }, "BatchUnsupported");
   await refuse("no validAt", { basis: {}, reads: [{ op: "rows", entityIds: [A + ids.placement(1)] }] }, "BatchUnsupported");
   await refuse("at-least with a pin", { basis: { validAt, recordedPosition: seedCut }, atLeastPosition: seedCut, reads: [{ op: "rows", entityIds: [A + ids.placement(1)] }] }, "InvalidValue");
-  // The cursor: a small byte bound splits a subject page into several requests; the answers equal the unbounded batch.
+  // The cursor: a 64 KiB byte bound splits a subject page into several requests; the answers equal the unbounded batch.
   {
     const shape = shapes[0]!, ctx = ctxFor(0, 7);
     const P = await headOf(warm);
-    const whole = await batch1(warm, shape, ctx, P), parts = await batch1(warm, shape, ctx, P, false, { maxBytes: 4096 });
+    const whole = await batch1(warm, shape, ctx, P), parts = await batch1(warm, shape, ctx, P, false, { maxBytes: 65536 });
     gate.cursor = { requestsUnbounded: whole.trips, requestsBounded: parts.trips,
       equal: JSON.stringify(whole.batch.map((x) => x.answer)) === JSON.stringify(parts.batch.map((x) => x.answer)) };
-    await checkBatch(warm, shape, ctx, P, { maxBytes: 4096 });
+    await checkBatch(warm, shape, ctx, P, { maxBytes: 65536 });
   }
   // One permit per batch: read admissions on the gateway before and after one batch of 30 entries.
   {
@@ -306,19 +312,20 @@ async function cell(port: Port, shape: Shape, reader: "warm" | "cold", callers: 
     callsPerSecond: per.length / (wall / 1000), missedOwnWrite: per.reduce((n, x) => n + x.missed, 0) };
   return row;
 }
+const countReaders = (process.env.API1_READERS ?? "warm,cold").split(",") as ("warm" | "cold")[];
 if (phases.has("counts")) {
   const rows: unknown[] = [];
   // Warm-up: every warm subject's shapes once, so the warm reader holds them.
-  for (const shape of shapes) for (let k = 0; k < 40; k++) await batch1(warm, shape, ctxFor(k % accounts, 1 + (k * 13) % 40, k));
+  if (countReaders.includes("warm")) for (const shape of shapes) for (let k = 0; k < 40; k++) await batch1(warm, shape, ctxFor(k % accounts, 1 + (k * 13) % 40, k));
   const ports: Port[] = ["today", "pinned", "loader", "batch1"];
   const big = (s: Shape) => s.name === "subject-list";
-  for (const reader of ["warm", "cold"] as const)
+  for (const reader of countReaders)
     for (const shape of shapes)
       for (const port of ports) {
         const r = await cell(port, shape, reader, 1, big(shape) ? 4 : 16, true);
         rows.push(r); log(JSON.stringify(r));
       }
-  for (const reader of ["warm", "cold"] as const)
+  for (const reader of countReaders)
     for (const callers of [16, 64])
       for (const shape of shapes)
         for (const port of ["today", "loader", "batch1"] as Port[]) {
@@ -327,6 +334,29 @@ if (phases.has("counts")) {
           const r = await cell(port, shape, reader, callers, big(shape) ? callers : callers * 3, false);
           rows.push(r); log(JSON.stringify(r));
         }
+  // Calibration: the 1 billion arm's own exchange (eight subjects' field 0 in one pinned /read), so a Mac CPU figure
+  // can be scaled by the same request measured on the server (1.53 ms re-read, 1.71 ms per random subject).
+  for (const reader of countReaders) {
+    const c = reader === "warm" ? warm : cold, portNo = reader === "warm" ? 8081 : 8082, n = reader === "warm" ? 200 : 100;
+    const idsSeen: string[] = [];
+    const P = await headOf(c);
+    const cpu0 = cpuMs(portNo);
+    const wall: number[] = [];
+    for (let k = 0; k < n; k++) {
+      const subjects = Array.from({ length: 8 }, (_, j) => reader === "warm" ? prefix(j % accounts) + taskId(1 + ((k + j * 5) % 40), 0)
+        : prefix(j % accounts) + taskId(41 + Math.floor(Math.random() * (people - 93)), 0));
+      const t = performance.now();
+      await c.withReadProfile((x: any) => idsSeen.push(x.id), () => c.request<any>("POST", "/v1/db/" + db + "/read",
+        { entityIds: subjects, pattern: { attribute: ":task/field-0" }, basis: { recordedPosition: P, validAt } }));
+      wall.push(performance.now() - t);
+    }
+    const cpu = cpuMs(portNo) - cpu0;
+    await sleep(1500); readTrace(reader === "warm" ? "r-warm" : "r-cold");
+    const loads = idsSeen.reduce((m, id) => m + (traceLoads.get(id) ?? 0), 0) / n;
+    const row = { shape: "exchange-of-8", port: "single", reader, callers: 1, calls: n, reads: 8, trips: 1, loads, cpuMsPerCall: cpu / n,
+      wallMsP50: pct(wall, 0.5), wallMsP99: pct(wall, 0.99) };
+    rows.push(row); log(JSON.stringify(row));
+  }
   results.counts = rows;
   writeFileSync(join(out!, "counts.json"), JSON.stringify(rows, null, 2) + "\n");
 }

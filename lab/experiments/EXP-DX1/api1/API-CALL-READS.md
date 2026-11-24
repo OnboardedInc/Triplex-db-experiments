@@ -34,7 +34,7 @@ On this store a straightforward port has no `IN` query: the store's read is by e
 fetched becomes one read of one entity. That port is the one the engineering lead's sentence describes, and it is the
 port measured below as `today`: 2 to 2,250 reads per call, a median shape around 50.
 
-**The product's read mix** (from its own read load test, `loadtest/scenarios/readApi.js`): 60% list pages, 30% one
+**The product's read mix** (from its own read load test): 60% list pages, 30% one
 resource's detail, 10% a sub-resource (a subject's onboarding, a task's fields). The production write study gives the
 write-path shapes (form saves are under a tenth of saves). The mix of section 7 is built from these two.
 
@@ -123,5 +123,51 @@ const tasks = await Promise.all(placementIds.map((id) => reads.rows(id)));      
   unless 0 or 1). `demo/server/profile.mjs`: `DEMO_READER=tuned` gives the demo bring-up the card's tuned reader
   (three cores, 3 GiB cache in a 9 GiB heap, the early filter) beside the same 32 GiB transactor; unset, its output is
   byte-identical to before (checked).
+
+## 7. Server run: API-call-shaped reads at 1 billion (for the day a machine is rented; none has run)
+
+**Where it goes:** after step 2 of the next server session (`v01/READINESS.md`), in its own bring-up of the 1 billion
+working copy (step 2's bring-up runs the default one-core reader for the ID lists and the sweep; this run needs the
+card's tuned reader with the batched read on). It writes to the working copy (one commit of definitions per deep
+account, then saves), so the copy is not reused.
+
+```bash
+# From step 1's build ($BUILD/repository at the commit that carries this page), on the 12-core, 96 GB machine.
+cd "$BUILD/repository"
+sudo env DEMO_READER=tuned DX_READ_BATCH=1 DX_ID_LISTS=1 DX_INDEX_QUERY_PERMITS=4 \
+  DEMO_ORIGINAL="$SEALED_CLUSTER" DEMO_HANDOFF="$AGE_HANDOFF_JSON" bash demo/server-up.sh --reset
+#    prints DEMO READY head=28309866 records=1000251169 t=62888918 (3 to 12 minutes)
+sudo env "PATH=$BUILD/tools/bin:$PATH" API1_WINDOW_SECONDS=90 API1_CALLERS=64,256 API1_ARMS=today,loader,batch1 \
+  API1_SETS=reread,random API1_SAVES_PER_SECOND=23 API1_ALONE_CALLS=20 \
+  "$BUILD/tools/bin/node" --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/api1/server.ts \
+  /var/tmp/triplex-demo/ready.json /var/tmp/api1-1b
+sudo bash demo/server-down.sh
+tar -C /var/tmp -czf api1-1b.tar.gz api1-1b   # copy back to evidence/DX-API1/server/
+```
+
+**What runs** (`api1/server.ts`; every line of `server.jsonl` is one record):
+1. The reader's options are read back and must show the batched read and both pinned options (refused otherwise);
+   one commit of the definitions in force per deep account (`definitionFacts`: 24 forms, the account entity, 8 property
+   definitions, a policy with 39 rule nodes; about 360 facts each). The 1 billion subjects carry no task-to-form
+   reference, so the shapes name each task's form literally (the same entities).
+2. Warm-up: the re-read set (200 subjects of each deep account, 2,000 in all) read once per shape.
+3. **Alone:** one caller, no saves: each shape × each arm (`today`, `loader`, `batch1`) × each set (re-read, random),
+   20 calls (5 for `subject-list` in `today`): per-call p50 and p99, requests and reads per call, storage loads per call
+   (batch arms, Datomic io-stats), reader CPU per call (the reader's cgroup), per-request p99 (`today`).
+4. **Windows:** the mix below, 90 s each, for each set × callers (64, 256) × arm: 12 windows, beside saves of one subject
+   each (17 rows on its first task, one commit, at 23 per second, through the product's own write path): calls/s,
+   reads/s, per-call p50 and p99, the share of calls inside 50 ms and inside 200 ms, per-read p99 (`today`), reader
+   cores, CPU per call, timeouts (30 s), the saves' p50 and p99, own writes not seen after the save (`form-submit`).
+
+**The mix** (shares of calls; proposed, for the owner to correct): subject list 15%, subject page 15%, task page 15%,
+task fields 15%, placement page 10%, form submission 10%, policy evaluation 8%, import row 7%, check webhook 5%. Basis:
+the product's read load test (60% lists, 30% one resource, 10% sub-resources) with lists cut to 15% because the test's
+lists span six kinds of resources of which subjects are one, and the write-path shapes at a third of calls.
+
+**Duration and cost:** bring-up 3 to 12 min; definitions and warm-up 2 to 4 min; alone 3 to 8 min (54 cells; the
+random `today` list pages are the long ones); windows 12 × (90 s + about 20 s) = 22 min; down 1 min: **31 to 47
+minutes, USD 0.56 to 0.85** at USD 1.09 per machine hour (ceiling 60 min, USD 1.09).
+
+__PREDICTIONS__
 
 __REST__

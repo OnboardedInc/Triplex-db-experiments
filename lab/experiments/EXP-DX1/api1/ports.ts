@@ -36,7 +36,12 @@ export function makePorts(db: string, validAt: number, writer: DatomicClient, sa
         await Promise.all(level.map(async (step) => {
           if (step.page) {
             r.trips++; r.reads++;
-            const page = await c.listIds(db, { ...step.page(ctx), ...(basis ? { basis: { recordedPosition: basis.recordedPosition, validAt } } : {}) } as any);
+            // The ID list route runs one request per account at a time and answers IndexBusy (retry) otherwise.
+          let page: any;
+          for (let attempt = 0; ; attempt++) {
+            try { page = await c.listIds(db, { ...step.page(ctx), ...(basis ? { basis: { recordedPosition: basis.recordedPosition, validAt } } : {}) } as any); break; }
+            catch (e: any) { if (e?.code !== "IndexBusy" || attempt > 2000) throw e; r.trips++; await new Promise((s) => setTimeout(s, 2)); }
+          }
             r.pages.set(step.key, page);
             return;
           }
