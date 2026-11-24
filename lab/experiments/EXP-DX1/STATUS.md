@@ -5516,3 +5516,25 @@ Source: settlement builder, branch `exp/DX-ACT5-settlement-live` `c1579ee50` (ba
 - Not verified: anything at full size; removal on request during settlement; two settling processes putting two frames ahead of a save.
 
 **Started** in the freed slot: builder to make run 2 runnable and to analyse why notice frames hold only about 20 notices (task file `OPUS-ACT7-settlement-at-1b-prep.md`, branch `exp/DX-ACT7-settlement-1b-prep`). The release size limits builder was told to rebase onto `c1579ee50`.
+
+## 2026-11-24 10:49 EST: Fable independent design and adversarial review of questions across subjects
+
+Sam asked for this on 2026-11-24. Files are private (research folder `2026-11-24-cross-subject-questions`): `DESIGN-FABLE.md` (hashed 10:32:42, four seconds before the Opus design was first opened), `REVIEW-FABLE.md`, `probes-fable/`.
+
+**Same conclusion.** Both designs: list entities from the index Datomic already keeps on entity IDs (no cost per save); add one index record per fact of declared attributes in the save's own commit, on the fact's entity; keep a PostgreSQL index as fallback and for reports; one database; no lookup by protected value.
+
+**Independence caveat (reviewer's own).** The brief's review bullets named "id lists", "commit index" and "entries on the row's entity" before the design was written, so those three were not found blind. Reached without a hint: fact ID in the record, the open and closed split, the stale-declaration guard, the rule for positions before the index, PostgreSQL as fallback. Agreement shows the design follows from the constraints; it does not show it is cheap enough.
+
+**Three most serious problems found in the Opus design and step 1 build (reviewer's findings, the step 1 builder is confirming each with counts):**
+
+1. Counts and filtered lists in the step 1 build read every matching entity one by one (`cross_find.clj` `evaluate`). Estimated 6 to 50 s for a count of 20,000 uncached against the design's 3 to 150 ms.
+2. The plan-changing number was converted wrongly (whole-commit latency used as writer time). Corrected: 0.36 to 0.69 ms for three declared values, not 0.6 to 1.0 ms. The "p99 5 ms worse" clause is smaller than run-to-run spread, and indexing jobs are not in the rule.
+3. The backfill is a whole-database outage, would defeat the fast pinned-read route for pins taken before it (`pinned.clj` `unchanged-since?`), and is under-predicted: 2 to 4 h at 1 billion against 30 to 75 min.
+
+**Fourth, to decide before a release-written value is declared:** during settlement after a Publish the index would answer old values and still say "not trailing".
+
+**Reviewer's recommendation:** proceed with named changes. Step 0 as built; step 1 keeps its writing side and gets its reading side changed (about a day) plus three small fixes (pinned route ignores index records; guard from the moment the option is on; entries count toward frame limits and the write budget); rewrite the server rule to judge against the bars on repeated 600 s cells with indexing-job time recorded.
+
+**Not verified by anyone:** every cost at 1 billion (derived from unit costs); the 6 to 50 s estimate; the backfill estimate; step 1's gate results (the reviewer read code only). The documents had an inline self-review only.
+
+**Done:** every finding forwarded to the step 1 builder at 2026-11-24 10:49 EST with the instruction to confirm or refute each with a count before fixing.
