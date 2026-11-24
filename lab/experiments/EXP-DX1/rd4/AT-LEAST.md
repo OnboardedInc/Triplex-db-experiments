@@ -46,10 +46,10 @@ route); journal and receipt lookups (`transaction`, `transactionByCommand`, `/jo
 | Section 3, deadline: held peer, 200 ms wait | Refused with `AtLeastTimeout`, head 304 against receipt 305, after 208.6 ms |
 | Section 4, pinned and feed while held | Record-time pin through Triples, with and without the floor, and a position pin through the client: the value at 306, at once; the feed with and without the floor: the same positions ([306]), not the held save; 98.9 ms for all |
 | Section 5, requests: 100 × (head, entity, pull) | Plain and receipt readers: the same routes and counts (100 `basis`, 100 `read`, 100 `reach`). Chunks from the read peer to the transactor: 0 for the 300 receipt reads, 1 for the plain ones (a heartbeat), 0 and 0 in two idle 1.5 s windows, 21 for the positive control (20 no-argument syncs) |
-| Held Publish toy (`engine.mjs ha1 --experiment load-fair --diagnostic`, `DX_ACT3_HELD=1`), probe with `DX_ACT3_AT_LEAST=1` | Pass: 8 windows, 8 of 8 deadline Publishes inside 1 s, 0 at-least defects, 0 visibility failures, 0 read failures |
+| Held Publish toy (`engine.mjs ha1 --holder DX-RD4 --experiment load-fair --diagnostic`, `DX_ACT3_HELD=1`; separate write and read gateways), probe with `DX_ACT3_AT_LEAST=1` | Pass twice (`f5404a159`; `57e3bae8f` with the per-window counters): 8 windows, 8 of 8 deadline Publishes inside 1 s, 0 at-least defects, 0 visibility failures, 0 read failures; the read gateway's at-least counter: 18 requests per Publish window, 0 waits, 0 refusals |
 | Same, `DX_ACT3_INJECT=stale` | Fails at the end as designed: 1 at-least defect (basis 11 against receipt 43, `injected` true), every window measured |
 | Same, default (setting unset) | Pass, unchanged: `probeAtLeast` false, 0 visibility failures, lag after each acknowledgement 0 |
-| SDK integration suite against a fresh stack of this gateway | See section 5 |
+| SDK integration tests that pin reads (`rd4/integration-pair.sh`: read-pins, reach, adapter, route-equivalence, record-time-peer, history-grouping), a fresh stack of this gateway and a fresh stack of `origin/exp/DX-INT1`'s | Identical on both: 19 passed, 1 skipped; history-grouping fails on both alike (its seed save is refused on this stack's configuration, before any read) |
 
 **The wait when the peer is not held back.** Expected none; measured on the toy: no wait in 294 of 300 receipt reads,
 and 6 waits of 0.3 to 19.6 ms (51.4 ms in all) where the read peer had not yet applied the save the reader had just
@@ -57,7 +57,7 @@ been told about. The same toy showed a plain read early in 9 of 150 such moments
 size: two peers, nothing loaded.
 
 Evidence (private): `evidence/DX-RD4/` on the Mac (`gate-2/`, `selftest-2.log`, `sdk-tests-3.log`, `load1/load-fair-*`,
-`held-*.log`, `sdk-integration-*.log`).
+`held-*.log`, `integration-pair-1/`, `integration-pair-2/`, `route-oracle/`).
 
 ## 3. What a sync per unpinned read would cost (not built)
 
