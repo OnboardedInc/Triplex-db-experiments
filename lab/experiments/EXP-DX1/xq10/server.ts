@@ -97,8 +97,10 @@ for (const { name, kind, q, valid: vs } of questions) for (const v of vs) {
   const base = { account, ...q, basis: { recordedPosition: head, validAt: v } };
   const from = { from: kinds[kind] };
   const t0 = performance.now();
-  const index = await datomic.askAll(client, db, { ...base, ...from, route: "index", bounds: { index: { entries: 1_000_000, ms: 1000, segments: 4096 } } });
+  const index = await datomic.askAll(client, db, { ...base, ...from, route: "index", bounds: { index: { entries: 1_000_000, ms: 1000, segments: 4096 } } })
+    .catch((e: any) => ({ refused: { code: e?.code, message: e?.message, fallback: e?.fallback } }));
   const indexMs = performance.now() - t0;
+  if ((index as any).refused) { compared++; differences++; log("question", { name, validAt: v, same: false, indexRefused: (index as any).refused }); continue; }
   const auto = await datomic.askAll(client, db, { ...base, ...from, bounds: { index: { entries: 1_000_000, ms: 1000, segments: 4096 } } });
   const sweep = await sweepSplit(base, kinds[kind], split.get(kind));
   // The parts must cover the kind: every ID of the kind (its shape kept) was examined by exactly one part.

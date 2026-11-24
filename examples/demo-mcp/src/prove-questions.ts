@@ -211,8 +211,10 @@ function compare(label: string, q: any, pages: any[], expected: Awaited<ReturnTy
     const got = new Map<string, number>(last.groups.map((g: any) => [JSON.stringify(g.value), g.subjects]));
     check(`${label}: groups equal the independent answer`, JSON.stringify([...got].sort()) === JSON.stringify([...expected.groups].sort()), { got: [...got], expected: [...expected.groups] });
   }
+  // [DX-XQ10] The sweep reads every subject with facts; the index reads index entries instead and reports how many.
   const examined = pages.reduce((n, x) => n + x.progress.subjectsExamined, 0);
-  check(`${label}: subjects examined reported`, examined >= expected.subjects, { examined, subjectsWithFacts: expected.subjects });
+  if (first.route.code === "index") check(`${label}: index entries examined reported`, pages.every((x) => Number.isInteger(x.progress.indexEntriesExamined)), { entries: pages.map((x) => x.progress.indexEntriesExamined) });
+  else check(`${label}: subjects examined reported`, examined >= expected.subjects, { examined, subjectsWithFacts: expected.subjects });
   check(`${label}: no ID of another account`, pages.every((x) => (x.rows ?? []).every((r: any) => r.id.startsWith(`acct/${q.account}/`))));
   // [DX-XQ10] The route that answered is stated, and the fast index is marked on exactly when the toy declares one.
   check(`${label}: route and fast-index place reported`,

@@ -151,9 +151,9 @@ if (mode === "main") {
       if (onQ.status !== 200) { bump("(a) refused on both readers, byte-equal"); check(onQ.body?.code === "UnsupportedOperation", "(a) only the ID-order refusal", { body: onQ.text.slice(0, 200) }); break; }
       check(onQ.body.position === p, "(a) find answered at the pinned position", { body: onQ.text.slice(0, 200) });
       if (!onQ.body?.next) break;
-      // every other page continues on the other reader with the cursor the first issued
-      const { basis: _b, ...rest } = req;
-      req = { ...rest, cursor: onQ.body.next };
+      // every other page continues on the other reader with the cursor the first issued; find binds a cursor to the
+      // whole request, the basis included, so the basis is sent again (as XQ4's run-find does)
+      req = { ...req, cursor: onQ.body.next };
       crossed++; // the next page goes to both readers with the cursor the question reader issued
     }
   }
@@ -229,8 +229,8 @@ if (mode === "main") {
   }
   check(early === 0 && differ === 0 && Object.keys(tally).every((k) => ["answered", "BasisNotAvailable", "AtLeastTimeout"].includes(k)), "(c) never answered early; equal to the single reader", { tally, early, differ });
   // the cursor issued before the restart continues after it, exact
-  const cont = await raw(questionUrl, "POST", `/v2/db/${db}/find`, { ...pinnedQ, cursor: before1.body?.next });
-  const cmain = await raw(readUrl, "POST", `/v2/db/${db}/find`, { ...pinnedQ, cursor: before1.body?.next });
+  const cont = await raw(questionUrl, "POST", `/v2/db/${db}/find`, { ...pinnedQ, basis: { recordedPosition: P3, validAt: validTimes[1] }, cursor: before1.body?.next });
+  const cmain = await raw(readUrl, "POST", `/v2/db/${db}/find`, { ...pinnedQ, basis: { recordedPosition: P3, validAt: validTimes[1] }, cursor: before1.body?.next });
   check(cont.status === 200 && cont.body.position === P3 && strip(cont.body) === strip(cmain.body), "(c) a cursor from before the restart continues, on either reader", { status: cont.status, code: cont.body?.code });
   log("(c)", { probes, tally, early, differ });
 } else {

@@ -135,7 +135,7 @@ const canonical = (v: unknown): unknown =>
   : v;
 const questionHash = (q: AskQuestion) => createHash("sha256").update(JSON.stringify(canonical(questionOf(q)))).digest("base64url").slice(0, 22);
 
-interface AskCursor { v: 1; route: AskRoute; cursor: string; position: number; validAt: number; q: string; forced: boolean; ir?: AskRefusal; matched?: number }
+interface AskCursor { v: 1; route: AskRoute; cursor: string; position: number; validAt: number; q: string; forced: boolean; ir?: AskRefusal; matched?: number; fb?: Basis }
 const b64 = (s: string) => Buffer.from(s, "utf8").toString("base64url");
 function openCursor(text: string, q: AskQuestion): AskCursor {
   let c: AskCursor;
@@ -166,7 +166,8 @@ function findRequest(q: AskQuestion, basis: Basis, bounds: AskRequest["bounds"],
     ...(order ? { order: order as CrossIndexFindRequest["order"] } : {}),
     ...(q.project?.length ? { project: q.project } : {}),
     ...(q.limit !== undefined ? { limit: q.limit } : {}),
-    ...(cursor ? { cursor } : { ...(basis.basis ? { basis: basis.basis } : {}), ...(basis.atLeastPosition !== undefined ? { atLeastPosition: basis.atLeastPosition } : {}), ...(basis.basisWaitMs !== undefined ? { basisWaitMs: basis.basisWaitMs } : {}) }),
+    ...(basis.basis ? { basis: basis.basis } : {}),
+    ...(cursor ? { cursor } : { ...(basis.atLeastPosition !== undefined ? { atLeastPosition: basis.atLeastPosition } : {}), ...(basis.basisWaitMs !== undefined ? { basisWaitMs: basis.basisWaitMs } : {}) }),
     ...(bounds?.index ? { bounds: bounds.index } : {}),
   }) as CrossIndexFindRequest;
 }
@@ -275,9 +276,11 @@ export async function askPage(client: DatomicClient, db: string, request: AskReq
   if (route !== "auto" && route !== "index" && route !== "sweep") throw new DatomicHttpError(400, "InvalidValue", "route is auto, index or sweep");
   const attempts = request.busyAttempts ?? 200;
   const forced = route !== "auto";
-  const wrap = (r: AskRoute, cursor: string | null, position: number, validAt: number, ir?: AskRefusal, matched?: number): string | null =>
+  // [fb] find binds its cursor to the whole request, the basis included: the index route's later pages resend the basis
+  // the first page was sent with (found by the console's proof: without it every second index page was CursorMismatch).
+  const wrap = (r: AskRoute, cursor: string | null, position: number, validAt: number, ir?: AskRefusal, matched?: number, fb?: Basis): string | null =>
     cursor === null ? null
-      : b64(JSON.stringify({ v: 1, route: r, cursor, position, validAt, q: questionHash(q), forced, ...(ir ? { ir } : {}), ...(matched !== undefined ? { matched } : {}) } satisfies AskCursor));
+      : b64(JSON.stringify({ v: 1, route: r, cursor, position, validAt, q: questionHash(q), forced, ...(ir ? { ir } : {}), ...(matched !== undefined ? { matched } : {}), ...(fb ? { fb } : {}) } satisfies AskCursor));
   // The sweep's count per value: its groups are running totals; the subjects matched are counted here across pages.
   let priorMatched = 0;
 
@@ -300,7 +303,7 @@ export async function askPage(client: DatomicClient, db: string, request: AskReq
   const onIndex = async (basis: Basis, cursor: string | undefined): Promise<AskAnswer> => {
     const a = await waitingBusy(attempts, () => client.find(db, findRequest(q, basis, request.bounds, cursor)));
     if (a.account !== q.account || !(a.ids ?? []).every((id) => id.startsWith(`acct/${q.account}/`))) throw new TypeError("Invalid find answer");
-    return { route: "index", forced, restarted: false, ...fromIndex(a, q), next: wrap("index", a.next, a.position, a.validAt) };
+    return { route: "index", forced, restarted: false, ...fromIndex(a, q), next: wrap("index", a.next, a.position, a.validAt, undefined, undefined, basis) };
   };
 
   if (request.cursor) {
@@ -309,7 +312,7 @@ export async function askPage(client: DatomicClient, db: string, request: AskReq
     if (forced && c.route !== route) throw new DatomicHttpError(409, "CursorMismatch", `The cursor is the ${c.route} route's; it is never sent to the other route`);
     if (c.route === "sweep") { priorMatched = c.matched ?? 0; return onSweep({}, c.cursor, c.ir, false); }
     try {
-      return await onIndex({}, c.cursor);
+      return await onIndex(c.fb ?? {}, c.cursor);
     } catch (error) {
       // A later index page refused with fallback "sweep": restart the question on the sweep at the pinned basis.
       if (!forced && error instanceof DatomicHttpError && error.fallback === "sweep")

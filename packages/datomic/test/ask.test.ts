@@ -105,6 +105,16 @@ describe("one call for questions across subjects", () => {
     } finally { g.close(); }
   });
 
+  it("resends the first page's basis with every index cursor, because find binds a cursor to the whole request", async () => {
+    const g = await gateway({ find: [{ body: findPage({ next: "FIND-CURSOR", stopped: "entries", position: 42, validAt: 777 }) }, { body: findPage({ position: 42, validAt: 777 }) }], sweep: [] });
+    try {
+      const first = await askPage(g.client, "s2-x", { ...q, basis: { recordedPosition: 42, validAt: 777 } });
+      await askPage(g.client, "s2-x", { ...q, cursor: first.next! });
+      expect(g.seen.map((x) => x.body["basis"])).toEqual([{ recordedPosition: 42, validAt: 777 }, { recordedPosition: 42, validAt: 777 }]);
+      expect(g.seen[1]!.body["cursor"]).toBe("FIND-CURSOR");
+    } finally { g.close(); }
+  });
+
   it("a later index page refused with fallback sweep restarts the question on the sweep at the pinned position", async () => {
     const g = await gateway({
       find: [{ body: findPage({ next: "FIND-CURSOR", stopped: "entries", position: 42, validAt: 777 }) }, refusal(413, "BoundTooSmall", "sweep")],

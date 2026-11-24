@@ -134,6 +134,8 @@ async function pass(scheme) {
     await page.locator('[data-testid="kind-picker"]').click();
     await page.getByRole("option", { name: /^Subtasks/ }).first().click();
     await page.waitForTimeout(800);
+    // [DX-XQ10] The index answers a count in one short page, so Stop is shown on the slow route, which reads page by page.
+    await page.click('[data-testid="route-sweep"]');
     await page.click('[data-testid="ask"]');
     await page.waitForSelector('[data-testid="stop"]', { timeout: 10_000 });
     await page.waitForTimeout(300);
@@ -149,6 +151,7 @@ async function pass(scheme) {
     const finished = await page.locator('[data-testid="question-status"]').innerText();
     check(/Complete/.test(finished) && !/Not complete/.test(finished), "light: the continued question completes at the same position", finished.replace(/\n/g, " | "));
     await shot("07-continued");
+    await page.click('[data-testid="route-auto"]');
 
     // A past position: the as-of control, then a subject list whose links keep the position.
     const head = Number((/Holds for position ([\d,]+)/.exec(finished)?.[1] ?? "0").replace(/,/g, ""));
