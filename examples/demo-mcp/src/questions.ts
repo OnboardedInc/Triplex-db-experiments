@@ -630,7 +630,8 @@ export function askAcross(demo: Demo, input: AskInput) {
       if (pages.length && (page.position !== pages[0]!.position || page.validAt !== pages[0]!.validAt))
         throw new DemoError("Inconsistent", "A page of the question moved position or valid time");
       pages.push(page);
-      for (const [i, id] of (page.ids ?? []).entries())
+      // A top N's IDs arrive on its complete page and become rows below, with their order values.
+      if (result !== "top") for (const [i, id] of (page.ids ?? []).entries())
         rows.push({
           id,
           columns: Object.fromEntries(Object.entries(page.projected?.[i] ?? {}).map(([a, vs]) => [a, vs.map((v) => plainOf(v as { type: string; value: unknown }))])),

@@ -836,8 +836,9 @@ export function QuestionsPage() {
         title="Ask across subjects"
         actions={<span className="text-muted-foreground text-sm">Exact answers, read subject by subject</span>}
       >
-        One account, one kind of entity, up to eight conditions that must all hold. Every answer is the store's, at one
-        position and one valid time, and says so.
+        One account, one kind of entity, up to eight conditions (all of them, or any of up to four groups), on the entity
+        or on its related entities. A list, a count, a count per value, the top N or a sum. Every answer is the store's,
+        at one position and one valid time, and says so.
       </PageTitle>
       <div className="grid gap-6 lg:grid-cols-[17rem_minmax(0,1fr)]">
         <aside className="space-y-2" data-testid="examples">
@@ -1498,7 +1499,7 @@ function HasEditor({
         <Select value={d.related.link} onValueChange={(l) => related({ link: l as "key" | "ref" })}>
           <SelectTrigger size="sm" className="w-56" data-testid="has-link" title="How a related entity is tied to the entity asked about"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="key">with the same number in its ID</SelectItem>
+            <SelectItem value="key">same number in the ID</SelectItem>
             <SelectItem value="ref">through a reference</SelectItem>
           </SelectContent>
         </Select>
