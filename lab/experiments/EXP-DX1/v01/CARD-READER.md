@@ -249,14 +249,14 @@ saves/s), so the arm windows to compare are the `ref-` ones.
 
 | Gate | Result |
 | --- | --- |
-| Lab unit tests (`v01/*.test.ts`, `rd1/*.test.ts`, `w1/migrated-reads.test.ts`, `ha1/launch-hooks.test.ts`, `jvm1/server32.test.mjs`) | GATES-UNIT |
-| Saves arm harness (`rd1/saves-gate/harness.ts`, with the first-window label) | GATES-HARNESS |
+| Lab unit tests (`v01/*.test.ts`, `rd1/*.test.ts`, `w1/migrated-reads.test.ts`, `ha1/launch-hooks.test.ts`, `jvm1/server32.test.mjs`) | 55 of 55 at `19f525b07` (50 before, plus `card-reader.test.ts` and the server-32 combination test); `card-reader.test.ts` 5 of 5 again at `6451ae4e6` |
+| Saves arm harness (`rd1/saves-gate/harness.ts`, with the first-window label) | Pass at `19f525b07`: all ten windows sealed, only the first labelled `firstAfterStart`, isolated faults, deadlines, dry run |
 | Type check of the changed card files | No new error; the errors reported are the ones `9e02cf1d2` already had (`adopted-card.ts` 2, `adopted-server.ts` 2, `run.ts` 1, `sequential.ts` 1, `mac.ts` 1, `cell-telemetry.ts` 2) |
 | Default plan output | Byte for byte as `9e02cf1d2` (section 6) |
 | Launch guard (`ha1/guard-check.sh`, with two new cases: the card's adopted stack with the tuned reader's options, and the default) | 95 of 95 at `7f33a96ad` |
 | Trace file per process start (`v01/trace-restart/gate.sh`) | Pass: three starts, three files |
 | Last night's production-S card re-rendered with this code | Pass (section 5) |
-| Card toys (`v01/mac.ts`: clean checkout, package build, managed image, rolling 6 and the barrier 6 control) | GATES-TOYS |
+| Card toys (`v01/mac.ts`: clean checkout, package build, managed image, rolling 6 and the barrier 6 control) | Pass. Default reader, `production-S`, at `ed3946e1d`… `19f525b07` (P4 now says it started after the drain). `--reader tuned --read-permits 12`, `production-S`, at `ed3946e1d` and `7f33a96ad`; with `production-S-noburst` at `6451ae4e6` (the toy found that a few-second window holds no session below the edge; fixed there): re-read ladder in batches, random line 0 wrong of about 20,000 reads, 97 to 99% answered from the current database, production read-back exact (171 fields of 12 subjects). Evidence `evidence/DX-CARD2/` |
 
 ## 9. What is not verified
 
