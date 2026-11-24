@@ -5062,3 +5062,21 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **MCP registration** `triplex-demo` (local scope) now points at `dx-con1-app/examples/demo-mcp/src/mcp.ts`; connected.
 - **Not yet run on 1 billion:** the proof and the browser pass wait for server 2's card to assemble.
 - **Running (2):** the two drivers.
+
+### 2026-11-23 19:10 local: large-release Publish at 100,000 subjects (20 forms, 20 policies): all 12 windows, 120 of 120 correct inside one second (2 agents running)
+
+- **Second machine, `a54dfca31`** (`origin/exp/DX-BM1-bare-metal` `2005a1ee0`). Record per Publish: 4 changes, 17,681 to 17,690 bytes (forecast 17.6 to 17.8 KB). No probe answered before its Publish in 120 Publishes (at this commit one would have stopped the run). Live reads within their controls in every window.
+
+  | Publish window (credits, live saves/s) | First-correct p50 / p99 ms | Inside 1 s | Live save p99 ms (control) |
+  | --- | --- | --- | --- |
+  | whole-turn, 3.5 | 40.2 / 55.2 | 20 of 20 | 9.8 (23.4) |
+  | per-save, 3.5 | 32.1 / 71.3 | 20 of 20 | 8.0 (8.5) |
+  | whole-turn, 23.5 | 52.4 / 120.5 | 20 of 20 | 27.2 (25.7) |
+  | per-save, 23.5 | 49.3 / 322.8 | 20 of 20 | 28.1 (417.9) |
+  | whole-turn, 39.4 | 63.0 / 140.6 | 20 of 20 | 101.2 (46.0) |
+  | per-save, 39.4 | 67.3 / 190.4 | 20 of 20 | 611.6 (35.5) |
+
+- **Against the small release at the one shared window (whole-turn, 3.5):** p50 40.2 against 31.6 ms (+8.6; forecast +1 to +6, falsifier +10 not reached); p99 55.2 against 93.8 ms.
+- **Live saves at 39.4/s during Publish:** p99 2.2 times the control with whole-turn credits and 17 times with per-save credits (611.6 against 35.5 ms): outside P5's 1.5 times. At 3.5 and 23.5 the ratios are at or under 1.1. The per-save control at 23.5 (417.9 ms) is itself an outlier.
+- **Background settlement of the large release was not run** (the frames exceed the writer's bound; known from the Mac analysis).
+- **Second machine order:** run 1 (small release, eleven windows, repaired runner `f5f8c09ff`, ends about 19:45), start-up read at 1 billion (`968285954`, to about 20:50), owner head pair on fresh from the fixed commit `85fc3a4bd`, delete by 23:30.
