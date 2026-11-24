@@ -164,8 +164,10 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // regression check) on the same stack.
   const settleLive = holder === "DX-ACT5" && diagnostic && mode === "load-fair" && combined === undefined &&
     process.env.DX_ACT3_HELD === "1";
+  // [DX-HA2] Why: the recovery-time builder runs its second-failure drill in its own diagnostic slot.
+  const secondFailure = holder === "DX-HA2" && diagnostic && mode === "hasync-second" && combined === undefined;
   assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours ||
-    heldPublish || settleFrames || settleLive);
+    heldPublish || settleFrames || settleLive || secondFailure);
   assert(combined === undefined || ownedCombination);
   if (mode === "load-fair") {
     const { cleanSource } = await import("../v01/source.ts");

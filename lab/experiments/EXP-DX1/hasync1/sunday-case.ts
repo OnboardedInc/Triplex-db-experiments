@@ -9,6 +9,7 @@ import { checkAdoptedPeer, type AdoptedSeed } from "../v01/adopt.ts";
 import { checkOldRestart } from "./faults.ts";
 import { SyncPair, sundayProfile, type SundayPair } from "./pair.ts";
 import { lsn, wait } from "./supervisor.ts";
+import { recoveryOptionsOn } from "./recovery-options.ts";
 import {
   partitionReceipts,
   readReceipts,
@@ -292,6 +293,7 @@ export async function sundayCase(
       },
       ...(copy ? { copy } : {}),
       ...(loss ? { loss } : {}),
+      ...(recoveryOptionsOn(pair.recovery) ? { recovery: pair.recovery } : {}),
       ...(returning ? { returning } : {}),
     };
     e.write("sunday-observation", result);
