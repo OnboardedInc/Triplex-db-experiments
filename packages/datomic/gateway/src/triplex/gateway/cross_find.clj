@@ -8,7 +8,7 @@
             [triplex.gateway.codec :as codec] [triplex.gateway.cross-index :as x] [triplex.gateway.lean :as lean]
             [triplex.gateway.owner-layout :as owner-layout] [triplex.gateway.reach :as reach]
             [triplex.gateway.scope :as scope] [triplex.gateway.stats :as stats] [triplex.gateway.storage :as storage]
-            [triplex.gateway.trace :as trace] [triplex.gateway.ids :as ids])
+            [triplex.gateway.trace :as trace] [triplex.gateway.ids :as ids] [triplex.gateway.slim :as slim])
   (:import [java.util Base64] [java.util.concurrent Semaphore TimeUnit ConcurrentHashMap]
            [java.security MessageDigest] [java.nio.charset StandardCharsets]))
 
@@ -151,7 +151,12 @@
 ;; ---------------------------------------------------------------------------------------------------------------
 ;; The offline backfill: a reconciliation of every entity's entries with its live rows, restartable, then the epoch.
 (defn- desired [decl protected db eid]
-  (let [rows (keep (fn [datom] (lean/decode (:v datom))) (lean/legacy-live-texts db eid))
+  ;; Only rows of a declared attribute or a listed type are decoded in full (column 3 is the attribute, 14 the type).
+  (let [rows (keep (fn [datom]
+                     (let [cols (slim/row-columns (:v datom))]
+                       (when (or (contains? (:codes decl) (nth cols 3 nil)) (contains? (:entry-types decl) (nth cols 14 nil)))
+                         (lean/decode (:v datom)))))
+                   (lean/legacy-live-texts db eid))
         es (keep #(x/row-entries decl protected %) rows)]
     [(into #{} (keep :value) es) (into #{} (keep :type) es)]))
 (defn- owned? [decl k]
@@ -185,8 +190,10 @@
         expect (get input "expectHead")
         _ (when (and (some? expect) (not= expect head0))
             (refuse! 409 "BackfillRaced" (str "The head is " head0 ", not " expect) {:maximum head0}))
-        ix-a (d/entid db :triplex.ix/entry) row-a (d/entid db :triplex.entity/row)
-        entities (merge-sorted (dedupe (map :e (d/datoms db :aevt row-a))) (dedupe (map :e (d/datoms db :aevt ix-a))))
+        ix-a (d/entid db :triplex.ix/entry) id-a (d/entid db :triplex.entity/id)
+        ;; Business and system entities through the ID index (journal entities `_tx/` are never keyed), account by account.
+        by-prefix (fn [p] (map :e (take-while #(.startsWith ^String (:v %) p) (d/index-range db id-a p nil))))
+        entities (concat (by-prefix "acct/") (by-prefix "_triplex/"))
         started (System/nanoTime)
         totals (volatile! {:entities 0 :added 0 :retracted 0 :batches 0 :typeEntries 0})
         pending (java.util.ArrayList.)
@@ -201,14 +208,13 @@
                    (vswap! totals update :batches inc)
                    (.clear pending)))]
     (doseq [eid entities]
-      (let [{:keys [add retract]} (reconcile decl protected db ix-a eid)
-            rev (:v (first (d/datoms db :eavt eid :triplex.entity/rev)))]
+      (let [{:keys [add retract]} (reconcile decl protected db ix-a eid)]
         (vswap! totals update :entities inc)
         (when (or (seq add) (seq retract))
           (vswap! totals #(-> % (update :added + (count add)) (update :retracted + (count retract))
                               (update :typeEntries + (count (filter (fn [k] (:type (x/parse-key k))) add)))))
-          ;; Each entity's changes go with a fence on its revision, so a save that touched it after the scan refuses the batch.
-          (when rev (.add pending [:db/cas eid :triplex.entity/rev rev rev]))
+          ;; Offline: no per-entity revision check (it made the writer load every entity's segment); the head is
+          ;; checked before every batch and at the end, and nothing is sealed if a save was admitted.
           (doseq [k add] (.add pending [:db/add eid :triplex.ix/entry k]))
           (doseq [k retract] (.add pending [:db/retract eid :triplex.ix/entry k]))
           (when (>= (.size pending) batch) (flush!)))))
@@ -706,7 +712,11 @@
                 (let [id (x/entity-id token local)
                       es (when needs-entity? (aset work 1 (inc (aget work 1))) (entity-entries view eid ix-a work))
                       driver-key? (fn [e] (and (= (:code driver-c) (:code e)) (x/valid-at? e v16) (entry-ok? view driver-c e)))]
-                  (when (and (every? #(matches? view % es v16) rest-conds)
+                  (when (and ;; A value-ordered scan drives: `from` by prefix or ID pattern is applied to the local part.
+                             (or (nil? driver-c) (nil? id-prefix)
+                                 (and (.startsWith local ^String id-prefix)
+                                      (or (nil? shape-re) (re-matches shape-re (subs local (count id-prefix))))))
+                             (every? #(matches? view % es v16) rest-conds)
                              (or (nil? from-type) (do (aset work 1 (inc (aget work 1))) (type-visible? view eid from-type valid)))
                              (or (nil? driver-c)
                                  (and (let [p (x/parse-key k)] (or (not (:long? p)) (confirm driver-c p)))

@@ -48,13 +48,69 @@ step 0); an entity without an account prefix gets no entry.
 | Fence, epoch, backfill | Not built | Built (declaration seq fence on every save, per-code epoch, offline reconciliation) | The design's contract. |
 | Holder | Row's own entity (twin entity measured worse: 354 B against 214 B per entry, no writer-time gain) | Row's own entity | XQ2's numbers. |
 
+## The independent review (`REVIEW-FABLE.md`, read at about 11:40), finding by finding
+
+| # | Finding | Verdict | Evidence or reason |
+| --- | --- | --- | --- |
+| E1 / A4 | Every candidate's entity read, even for one filter | **Confirmed and fixed** | `find!` now answers from the index alone when the conditions allow: every `eq` and `in` and `from` (prefix, shape, ID pattern) are entity-ordered streams intersected by a merge; the entity number comes from the index datom (no lookup by ID); a single `range`, `prefix` or `exists` is answered from its scan with an in-request set (one entity read per candidate only on later pages of a value-ordered scan). Each answer states `indexOnly` and `entityReads`. Gate `XQ4_E1`: E1_COUNTS |
+| E2 | "Not deleted" as a per-entity `missing` check | **Confirmed; answered by declaration, no code** | A `missing` condition needs the entity's own entries (stated). A declared positive flag (for example `:x/live` = true, boolean) is an `eq` and merges with no entity read (`XQ4_E1` "count two eq merged"). |
+| B3 | Unbounded closed part for a past valid time | **Confirmed and fixed (bounded, not cached)** | The closed part is read lazily under the entry and time bounds (every index datom is counted where it is read). A page whose closed part alone exceeds the bounds stops with its cursor unchanged; raise the bounds (caps 1,000,000 entries, 1,000 ms) or ask nearer now. |
+| E4 | Descending value order refused | **Confirmed and fixed** | `order: {by: <range attribute>, direction: "desc"}` scans with `rseek-datoms`. Gate: paged descending answer equal to brute force (`XQ4_E1`). |
+| D5 | Regular-expression key split | **Confirmed and fixed** | Hand-written split on U+0001; the key tests pass (`cross-index-test`). Per-entry time not re-measured. |
+| D6 / D7 / C4 | One question per account, 503 when busy; one permit for all accounts | **Confirmed and fixed (queue); the permit default stated** | Each account has a fair queue of one running question; the permits (`TX2_INDEX_QUERY_PERMITS`, default 1, shared with step 0's ID route) are taken fairly; 503 `IndexBusy` only after waiting the request's own time bound. With the default of 1 every account's index questions share one reader core: an option to raise. Step 0's route keeps its own per-account refusal (its `running` set); a find and an ID list of one account can now overlap, each holding a permit. |
+| D1 | The backfill sends every pinned read of an indexed subject to as-of | **Confirmed and fixed** | `XQ4_D1`: after a backfill that added 2,393 entries, the original check keeps 0 of 200 subjects on the fast route; with the fix 200 of 200 before and after, rows identical. The check is installed from the index namespace (see "stored-function identity" below). |
+| B2 | No fence before the first declaration | **Confirmed and fixed** | With the option on, the declaration entity with sequence 0 is installed when a scope is opened and before a save is prepared; every save carries the fence. Remaining gap: two gateways' very first saves before either installed it. |
+| D3 | Entries invisible to frame bounds and the write budget | **Half confirmed: the budget sees them; frame bounds do not** | The entry ops are in `:ops`, which `write-policy/variable-us` prices: `XQ4_BUDGET` +12 ops, +540 µs estimated for 6 replaced values, rows unchanged. `group/bound-frame!` and the 96-row bulk cap count rows and bytes only: a 96-row frame can carry up to 96 value and 96 type entries. Not changed (it changes import frame sizes). |
+| D2 | A gateway read of the stored row per retired fact on the general writer | **Confirmed, not changed** | One EAVT seek on the owner per retired fact on the write gateway (outside the single writer). On the per-subject writer it is the same datom the planner already reads. Computing it inside the commit function would change the stored function, which the design forbids. Not counted on the toy (warm): a server item in S-2 (gateway reads per save). |
+| B4 | 503 `IndexPeerBehind` for a fact that never existed | **Confirmed and fixed** | After one catch-up, a fact still absent gets no index operation and the commit function refuses the save as before (409). |
+| B5 | Accounts stored as facts get no entry, silently | **Confirmed and fixed** | The declaration is refused with 409 `AccountNotInEntityId` when any entity ID lies outside `acct/`, `_triplex/` and `_tx/` (four probes of the ID index). `XQ4_B5`: refused. |
+| B6 | `from: {type}` by ID pattern finds nothing on loader data (no entity type on rows) | **Confirmed by reading; stated** | The type check reads rows' entity type. On the sealed 1 billion copy, list by `from: {prefix, shape}` (S-3's Q3 does). |
+| B7 | No settlement frames and no 100-value save in the gate | **Half fixed** | 20, 50 and 100 replaced declared values in one save: +40, +100, +200 datoms exactly, 0 reads inside apply on and off (`XQ4_LARGE_SAVES`); the spike's 4 to 5 reads were not reproduced in this form (single samples there; the twin-entity and tuple arms differ). Publish settlement frames: not in the gate (the settlement writer is on `exp/DX-ACT4`/`ACT5`, not on this branch). |
+| B8 | Cursor unsigned | **Confirmed and fixed** | HMAC-SHA256 under `TX2_INDEX_CURSOR_SECRET` (else a key made at start). An edited cursor is 409 `CursorMismatch`. Step 0's cursor is still unsigned. |
+| C2 | `_system` "internal callers only" not enforced | **Confirmed; stated** | The gateway has no caller identity on any route; both routes accept `_system` from any caller, which reads only `_triplex/` entities (no business data). |
+| B1 | Release-written values settle in the background | **Design rule, not built** | Until a settlement rule exists, no attribute a release writes may be declared (a declaration list for the product must leave them out). Not enforced in code: the gateway does not know which attributes releases write. |
+| E3 | Declarations database-wide, 64 attributes | **Stated** | Per-account declarations need the key's code to be per account (the account token is already the key's first part), a declaration entity per account, and a per-account epoch and backfill (walking one account's IDs); the find route would read the account's declaration. About a day; not built. |
+| A5 | Backfill at 1 billion under-predicted | **Confirmed in part and changed** | The backfill now walks business and system entities through the ID index (no journal entities), decodes only rows of declared attributes or listed types, and has no per-entity revision CAS (head checked before every batch and at the end). The indexing jobs that absorb the entries are unchanged. New prediction below (S-1). |
+| A1 | The 0.6 to 1.0 ms conversion used whole-commit latency | **Accepted as stated by the coordinator** | Corrected 0.36 to 0.69 ms for three values on the general writer; S-2 is judged against the owner's bars (below). |
+| F4 | A slow exact route for refused positions | **Next step, not built** | Positions before the epoch and inside grouped commits are refused here; an ID list then each subject's exact read would answer them. |
+| String key against the spike's tuple on the real transactor | | **Not measured** | Not run on the spike's harness; the toy numbers here (XQ4_COST) are for the string form only. |
+
+### Stored-function identity: a hazard this build found in the base
+
+The stored commit and per-subject functions are identified by a hash of their code text, and that text contains
+symbols generated at compile time (`or`, `and` and syntax-quote expansions) numbered by a counter shared with
+everything compiled before them. My first build required the index namespace from `erase.clj` and `subject_save.clj`
+and edited `pinned.clj`, all compiled before `commit.clj` or before the per-subject function: with the option off the
+gateway produced different function identities (`:triplex.write/v-4882…` against the base's `v-007b…`), so it would
+have installed new function versions on every existing database. Fixed by keeping every change out of what compiles
+before those two (the erase check moved to `main.clj`, the per-subject writer resolves the index late, the pinned
+check is installed from the index namespace). G8's paired log is now identical. **Any branch that edits a namespace
+compiled before `commit.clj` or `subject_save.clj` has the same hazard;** the paired log hash is the test for it.
+
 ## Gates (toy, Mac, one ordinary heavy token per run, no lease)
 
 GATES_TABLE
 
 ## Cost on the toy, in counts, beside the design's predictions
 
-COST_TABLE
+Twin scopes in one database server (one declared with `declaration-2`, one not), the same saves alternating which
+goes first, 100 saves per cell, the transactor restarted before the measure (`XQ4_COST`, run `world2`). Keys on the toy
+are about 66 characters (short IDs); production keys are about 120 to 130. Datoms and bytes are counts; apply time is
+the transactor's own `api-ms`, diagnostic.
+
+| Declared values replaced per save (writer) | Datoms per save off → on (design: +2k) | Log value bytes per save off → on (index bytes) | Reads inside apply per save, first touch off / on | Second save off / on | Apply ms median, first touch off / on (diagnostic) |
+| --- | --- | --- | --- | --- | --- |
+| 1 (per-subject) | 21 → 23 (+2) | 1,821 → 1,953 (+132; entries 132 B) | 0.02 / 0.02 | 0 / 0 | 1.13 / 1.15 |
+| 3 (per-subject) | 25 → 31 (+6) | 2,804 → 3,233 (+429) | 0 / 0 | 0 / 0 | 0.72 / 0.78 |
+| 6 (general) | 31 → 43 (+12) | 4,299 → 5,139 (+840) | 0 / 0 | 0 / 0 | 0.94 / 1.10 |
+| 20, 50, 100 in one save (general, 5 saves each) | 59 → 99, 119 → 219, 219 → 419 (+2k exactly) | | 0 / 0 in all 15 | | noisy (2 to 8 ms either arm) |
+
+Against the design's section 8.1 predictions: datoms exact (+2 per replaced value, +3 for "change from now", +n+1 for a
+new entity with n values and a type entry, 0 for k = 0: `XQ4_G6`); log bytes +132 B per replaced value on 66-character
+keys (design +250 to 400 B on 110 to 170-character keys, XQ2 290 to 410 B on production-length keys; consistent
+per character); reads inside apply +0 (design +0 to 0.05; XQ2 +0.05 with spread 0.12 on a toy whose subjects span more
+segments). The toy's cache holds every segment after the first cohort, so first-touch reads here say little: XQ2's
+4,000 × 160 world is the better toy number, and S-2 the real one.
 
 ## Departures from the design, and why
 
@@ -104,8 +160,10 @@ All three run on one bare-metal server from a build of this branch (`DX_V01_BUIL
 `/var/run/docker.sock`, the sealed 1 billion copy stopped at `$AGED_PGDATA_SOURCE`. Total about 4 to 4.5 hours of one
 server including copies, about $5 at $1.09 per hour.
 
-**S-1. Backfill of the sealed 1 billion database, with exactness samples** (60 to 110 min: copy 7 min, start 2 min,
-backfill 25 to 75 min, indexing job 10 to 40 min, samples 5 to 10 min):
+**S-1. Backfill of the sealed 1 billion database, with exactness samples** (90 to 240 min: copy 7 min, start 2 min,
+backfill 45 to 150 min, indexing job 30 to 90 min, samples 5 to 10 min; the review's estimate of 2 to 4 hours for the
+first build is lowered by skipping journal entities, decoding only declared rows and dropping the per-entity CAS, but
+the indexing jobs are not measured by anyone):
 
 ```bash
 cp -a --reflink=auto "$AGED_PGDATA_SOURCE" "$PGDATA_COPY"   # a private copy; it becomes $BACKFILLED_PGDATA
@@ -120,7 +178,7 @@ Predictions, written before any run: value entries 17.9 million ± 5% (the desig
 entry after the indexing job 230 to 330 B (XQ2: 274 B with production-length keys); backfill 25 to 75 min; samples: 0
 mismatches in Q1 and Q2 for 1,000 sampled subjects in each of the ten accounts; the dry-run reconciliation after
 sealing: 0 to add and 0 to retract. **Wrong if:** any sample mismatch or a non-zero dry run (stop: nothing ships); the
-backfill over 2 hours; bytes per entry over 600 B; value entries outside 17.0 to 18.8 million (the design's count is
+backfill and indexing job together over 4 hours (then online, per-account backfill becomes the first version's); bytes per entry over 600 B; value entries outside 17.0 to 18.8 million (the design's count is
 wrong, which changes every size forecast).
 
 **S-2. The save pair on the backfilled copy** (about 100 min, two arms of about 50 min). Preflight (2 min):
@@ -148,8 +206,12 @@ replaced value on the Mac general writer, a server estimate of 0.2 to 0.33 ms) p
 to 1.0 ms, at or over the design's 0.5 ms line;** so the pair must also report apply time by writer and by k (the card
 records the writer per save; k comes from the declared attributes in each save's rows). **Wrong if** any of section 6's
 three numbers is crossed: more than 0.5 ms of writer time per save for 1 to 3 declared values, more than 0.2 extra
-reads inside apply per first touch, commit p99 more than 5 ms worse at 394/s. Then the value index moves to the
-feed-built index (design section 6).
+reads inside apply per first touch. **Judged against the owner's bars, as the review asks:** with the index on, save
+median over 10 ms or p99 over 50 ms in a cell where the off arm is inside them, on repeated 600 s cells (`--window-seconds
+600` where the card allows it, else two 300 s cells per load), with indexing-job time, segments written per job and
+writer allocation stalls recorded from the transactor's metrics. The design's "p99 5 ms worse" clause is smaller than
+the spread between runs at 1 billion (40.6 to 55.6 ms) and is not used. Then the value index moves to the feed-built
+index (design section 6).
 
 **S-3. The question bench** (40 to 60 min):
 
@@ -167,6 +229,15 @@ copy has no saves after its epoch, so here it should equal the head), valid 30 d
 quiet-account pinned-read p99 ratio at most 1.15 beside a cold Q4 count. **Wrong as in the design's section 8.5:** a
 first page above 20 ms warm or 100 ms cold at p99; counts slower than 1 µs per entry warm or 10 ms per 1,000 entries
 cold; the quiet ratio above 1.25 and above its absolute bar.
+
+**The XQ2-shaped write pair (about 1, 3 and 20 declared values per save, comparable with XQ2's page):** on a copy of
+the fresh template, `server.ts declare --declaration lab/experiments/EXP-DX1/xq1/declarations/fields-k3.json` (and
+`fields-k20.json` on a second copy; set `DX_XQ4_DATABASE` and `DX_XQ4_ACCOUNTS` for a copy without an AGE1 bundle),
+then XQ2's `prep1/server.sh production-s` command with `DX_CROSS_INDEX=1` in place of `DX_ATTRIBUTE_INDEX` on each
+declared copy and on an undeclared one (off), about 20 min each. Predictions against off: datoms per commit +5 to +6
+(k3) and +30 to +34 (k20), as XQ2's; warm serial apply +0.36 to 0.69 ms (k3) and +2.4 to 4.6 ms (k20) (the corrected
+conversion); reads per commit from 150 s +0 to 0.1; stored rate unchanged. Wrong if k3 apply is more than 1.0 ms over
+off. Not dry-run: `prep1/server.sh` was not checked for passing `DX_CROSS_INDEX` through to `stack/up.sh`.
 
 **The pairs still owed for the writer, from XQ2's numbers:** the general writer and the per-subject writer, index off
 against on, k = 1 and k = 3, are inside S-2's card (one commit per subject's save mixes both writers). If the card's

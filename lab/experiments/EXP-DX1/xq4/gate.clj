@@ -358,6 +358,10 @@
       (= result "ids") (assoc "project" (vec (take (.nextInt rnd 3) [":placement/task" ":person/profile"])))
       (and (= result "ids") (.nextBoolean rnd) (or from (some #(#{"eq" "in"} (get % "op")) where)))
       (assoc "order" {"by" "entity" "direction" (if (.nextBoolean rnd) "asc" "desc")})
+      ;; Sometimes order by the one range condition, either direction (with or without from).
+      (and (= 1 (count (filter #(= "range" (get % "op")) where))) (zero? (.nextInt rnd 3)))
+      (assoc "order" {"by" (get (first (filter #(= "range" (get % "op")) where)) "attribute")
+                      "direction" (if (.nextBoolean rnd) "asc" "desc")})
       (= result "countByValue") (assoc "of" (nth [":task/status" ":task/progress" ":person/custom-background"] (.nextInt rnd 3)))
       (= result "countDistinct") (assoc "of" (nth [":placement/task" ":person/profile"] (.nextInt rnd 2))))))
 
@@ -908,15 +912,20 @@
                        (ask "count exists (one page)" {"account" "acc-a" "where" [{"attribute" ":task/status" "op" "exists"}] "result" "count"})
                        (ask "from prefix and shape with eq" {"account" "acc-a" "from" {"prefix" "pl:" "shape" "{8 digits}"} "where" [{"attribute" ":person/custom-start" "op" "eq" "value" {"type" "string" "value" "2026-03-03"}}] "result" "count"})
                        (ask "range descending (most recent first)" {"account" "acc-a" "where" [{"attribute" ":task/due" "op" "range" "from" {"type" "datetime" "value" 1.7e12}}] "order" {"by" ":task/due" "direction" "desc"} "result" "ids"})
+                       (ask "range ordered by value inside from prefix" {"account" "acc-b" "from" {"prefix" "pl:00000"} "where" [{"attribute" ":task/progress" "op" "range" "from" {"type" "integer" "value" "50"}}] "order" {"by" ":task/progress"} "result" "count"})
                        (ask "eq with missing (entity read per candidate)" {"account" "acc-a" "where" [{"attribute" ":task/status" "op" "eq" "value" {"type" "string" "value" "complete"}} {"attribute" ":task/flag" "op" "missing"}] "result" "count"})])
         world (world-at name conn (head name conn) 1.79e12)
         expect (fn [q] (count (:ids (brute world (get q "account") q))))
         desc-q {"account" "acc-a" "where" [{"attribute" ":task/due" "op" "range" "from" {"type" "datetime" "value" 1.7e12}}] "order" {"by" ":task/due" "direction" "desc"} "result" "ids"}
         desc-pages (run-find name (assoc desc-q "basis" {"validAt" 1.79e12}) 7 {"entries" 300 "ms" 1000 "segments" 4096})
         desc-ok (= (set (:ids desc-pages)) (set (:ids (brute world "acc-a" desc-q))))
+        from-q {"account" "acc-b" "from" {"prefix" "pl:00000"} "where" [{"attribute" ":task/progress" "op" "range" "from" {"type" "integer" "value" "50"}}] "order" {"by" ":task/progress"} "result" "ids"}
+        from-pages (run-find name (assoc from-q "basis" {"validAt" 1.79e12}) 7 {"entries" 300 "ms" 1000 "segments" 4096})
+        from-ok (= (set (:ids from-pages)) (set (:ids (brute world "acc-b" from-q))))
         index-only (filter (fn [[k v]] (:indexOnly v)) rows)]
     (say "XQ4_E1" {:answers rows :descPagedSameAsBrute desc-ok :descPages (:pages desc-pages)
-                   :pass (and desc-ok (every? (fn [[_ v]] (= 0 (:entityReads v))) index-only) (>= (count index-only) 6))})))
+                   :rangeOrderInsidePrefixSameAsBrute from-ok :fromPages (:pages from-pages)
+                   :pass (and desc-ok from-ok (every? (fn [[_ v]] (= 0 (:entityReads v))) index-only) (>= (count index-only) 6))})))
 
 (defn phase-pinned! []
   ;; D1: a pinned read taken before a backfill keeps the current-database short-cut after it (TX2_PINNED_SHORTCUT=1).
