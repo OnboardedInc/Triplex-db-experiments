@@ -56,6 +56,9 @@
   ;; Rejected: an in-memory mutex alone (an independent gateway would not join it).
   (let [m (get (swap! local-guards #(if (contains? % name) % (assoc % name (Object.)))) name)
         p (path name "writer.lock")]
+    ;; [DX-ERA2] An account's lock (name#removal/<account>) has no directory until its first use; a no-op otherwise.
+    (when removal-scope/enabled
+      (Files/createDirectories (.getParent p) (make-array java.nio.file.attribute.FileAttribute 0)))
     (let [started (when trace/*request* (trace/clock))]
       (locking m
         (with-open [c (FileChannel/open p (into-array StandardOpenOption [StandardOpenOption/CREATE StandardOpenOption/WRITE]))

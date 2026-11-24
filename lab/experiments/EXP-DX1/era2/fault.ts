@@ -8,6 +8,7 @@
 // ERA2_READERS (4 loops), ERA2_FRAME_RATE (4/s), ERA2_SEALED (0), ERA2_PER_ACCOUNT (0: the database stays in the
 // database-wide mode; 1: it is moved to per-account removal sequences before the first save), ERA2_LABEL.
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -167,9 +168,12 @@ async function save(s: Subject, attrs: string[], tag: string, seed = false) {
         if (p !== undefined) { if (!seed) c.acked++; s.pos = p; break; }
         continue;
       }
+      // Anything else (a transactor restarting, a gateway reconnecting): the outcome is unknown until the lookup says.
       if (!seed) c.errors++;
       log("save-error", { id, account: s.a, code, message: String((e as Error).message).slice(0, 300) });
-      throw e;
+      const p = await resolve(id).catch(() => undefined);
+      if (p !== undefined) { s.pos = p; if (!seed) c.acked++; break; }
+      await sleep(250);
     }
   }
   for (const f of facts) s.values.set(f.a, f.v.value);
@@ -263,7 +267,8 @@ async function removalsLoop() {
     nextRemoval = i;
     const p = (async () => {
       const t0 = now();
-      for (let attempt = 0; attempt < 200; attempt++) {
+      // Retried with the same command until it answers (a stopped transactor included), as a caller would.
+      for (let attempt = 0; now() - t0 < 180_000; attempt++) {
         try {
           await writer.erase(db, "era2-erase-" + RUN + "-" + i, [{ entityId: target(i), attribute: SSN }]);
           removalLatency.push(now() - t0);
@@ -344,7 +349,18 @@ async function frameLoop() {
     }
   }
 }
+// ERA2_RESTART_AT_MS with ERA2_TX_CONTAINER: restart this stack's transactor that far into the window.
+const restart = (async () => {
+  const at = env("ERA2_RESTART_AT_MS", 0), name = process.env.ERA2_TX_CONTAINER;
+  if (!at || !name || !name.startsWith("tx2-dxera2-")) return undefined;
+  await sleep(at);
+  const t = now();
+  execFileSync("docker", ["restart", "--time", "1", name], { stdio: "ignore" });
+  log("transactor-restarted", { name, ms: Math.round(now() - t), removedBefore: removed });
+  return { atMs: at, restartMs: Math.round(now() - t), removedBefore: removed };
+})();
 const loops = [
+  restart,
   removalsLoop(),
   stream(SAVE_RATE, others, "save"),
   ...(SAME_RATE > 0 ? [stream(SAME_RATE, spare, "same")] : []),
@@ -417,7 +433,7 @@ const reachDelta = Object.fromEntries(Object.entries(reader.reachDiagnostics).fi
   .map(([k, v]) => [k, (v as number) - ((reachBefore as any)[k] as number)]));
 const result = {
   label: LABEL, db, sealed: SEALED, perAccount: PER_ACCOUNT, accounts: ACCOUNTS, removalRate: REMOVAL_RATE, seconds: SECONDS,
-  windowMs: Math.round(windowMs), moveMs: Math.round(moveMs),
+  windowMs: Math.round(windowMs), moveMs: Math.round(moveMs), restart: await restart,
   latencyMs: Object.fromEntries(Object.entries(latency).map(([k, xs]) => [k, { n: xs.length, p50: q(xs, 0.5), p99: q(xs, 0.99) }])),
   removals: { planned: removals - 2, done: removed, p50: q(removalLatency, 0.5), p99: q(removalLatency, 0.99),
     errors: Object.fromEntries(removalCodes) },

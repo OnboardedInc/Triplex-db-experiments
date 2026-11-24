@@ -184,7 +184,26 @@ GATES-PLACEHOLDER
 
 ## 10. Server run (for the day a machine is rented)
 
-SERVER-PLACEHOLDER
+**What it runs** (`era2/server.sh`, Linux only, root, a clean clone at the branch head; written, not run anywhere). Per arm
+(option off, then on): a byte copy of the stopped 1 billion cluster; the stack on that copy with the production write
+switches and the PostgreSQL removal authority (`stack/up.sh --pg-data`, the ERASE2 path); a removal policy for a NEW
+protected field added by ERASE2's trusted staging at the copy's head (the 1 billion database was loaded without a policy:
+`demo/EXAMPLES.md` section 14 answers "This database has no protected fields"); then `era2/fault.ts` in adoption mode,
+three cells of 600 s each on that copy: no removals (control), 0.2 removals per second (realistic: 720 an hour) and 10
+per second (heavy), all removals in ONE deep account (fresh subjects under that account's prefix, each with a value of
+the new field); 200 small accounts added to the same database saving 200 commits per second in all (one commit per
+subject's save, 70% of 1 to 3 fields on the per-subject writer, 30% of 4 to 6 on the general writer, 1 in 20 replacing a
+protected value), a quiet account at 3.5 saves per second, 8 per second in the deep account's other subjects, 2 per
+second on subjects about to be removed, 32 readers (rows and pinned Reach) and 10 settlement-shaped frames per second.
+With the option on, each cell first calls the move (the first call moves the database; it is timed).
+
+**Durations and cost** (USD 1.09 per machine hour, one machine): build 25 to 50 min if not already built; per arm a copy
+of 176 GB 3 to 12 min, bring-up and staging 3 to 6 min, three cells of 10 min plus seeding (about 1,100 subjects) and
+checks 1 to 3 min each: 40 to 60 min per arm, **80 to 120 min for both arms, USD 1.45 to 2.20** (plus USD 0.45 to 0.90
+for a first build).
+
+PREDICTIONS-PLACEHOLDER
+
 
 ## 11. Not verified
 
@@ -192,4 +211,18 @@ NOTVERIFIED-PLACEHOLDER
 
 ## 12. Files and evidence
 
-FILES-PLACEHOLDER
+| File | What |
+| --- | --- |
+| `packages/datomic/gateway/src/triplex/gateway/removal_scope.clj` | The option, the account of an entity, the counters derived from the log, the fence function, the ticket check, the move's counters |
+| `privacy.clj` | Counters in the cut (option on only); the prepared removal's sequence on an allow-pending cut; `ensure-ticket!`; `verify-data!` on a moved database; the sentinel fence value; account lock directories |
+| `storage.clj` | The fence in a save's data on a moved database; the per-subject writer's expected value |
+| `subject_save.clj` | The per-subject writer accepts the fence in its returned data (option on only) |
+| `erase.clj` | The removal's transaction on a moved database; account locks; `request-cut`; the move route `per-account!` |
+| `main.clj` | Routing on a moved database: the published cut while a removal is applied, account locks for named tickets, the move route, the frontier's per-account fields |
+| `packages/datomic/src/erasure.ts`, `DatomicClient.ts` | `withDatomicErasureSequence(..., accounts)` sends `erasureAccounts` (absent: unchanged bytes) |
+| `lab/bench/lib/datomic-erasure.ts` | `readErasure`, `recheckErasure`, `withErasure` take an optional account (absent: unchanged) |
+| `lab/experiments/EXP-DX1/stack/up.sh` | `DX_ERASURE_SQL=1` (the PostgreSQL removal authority on a toy stack, a fresh wrapping key kept out of the evidence) and `DX_REMOVAL_PER_ACCOUNT` (both default unset) |
+| `era2/fault.ts`, `era2/fault.sh` | The fault measurement (cells ACCOUNTS:RATE[:sealed|three|restart]; `DX_ERA2_GATEWAY_REF` runs the base gateway) and its adoption mode for the server |
+| `era2/gate.clj`, `era2/paired.clj`, `era2/gate.sh` | The in-process interleavings, the paired native log, the gateway suites |
+| `era2/server.sh` | The server run (written, not run) |
+

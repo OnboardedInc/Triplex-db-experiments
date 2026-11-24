@@ -63,8 +63,10 @@ for cell in "$@"; do
   IFS=: read -r accounts rate kind <<< "$cell"
   [[ $accounts =~ ^[0-9]+$ && $rate =~ ^[0-9.]+$ ]] || { echo "bad cell $cell" >&2; exit 2; }
   label="o${option}-a${accounts}-r${rate}${kind:+-$kind}"
+  restart=(); [[ ${kind:-} == restart ]] && restart=(ERA2_RESTART_AT_MS=8000 ERA2_TX_CONTAINER="$prefix-tx")
+  removal3=(); [[ ${kind:-} == three ]] && removal3=(ERA2_REMOVAL_ACCOUNTS=3)
   env ERA2_ACCOUNTS="$accounts" ERA2_REMOVAL_RATE="$rate" ERA2_SEALED=$([[ ${kind:-} == sealed ]] && echo 1 || echo 0) \
-    ERA2_PER_ACCOUNT="$option" ERA2_LABEL="$label" \
+    ERA2_PER_ACCOUNT="$option" ERA2_LABEL="$label" ${restart[@]+"${restart[@]}"} ${removal3[@]+"${removal3[@]}"} \
     node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/era2/fault.ts "$out" \
     "http://127.0.0.1:$port_w" "http://127.0.0.1:$port_r" > "$out/$label.log" 2>&1 || status=$?
   grep -E '"kind":"(PASS|FAIL|result|seeded|scope)"' "$out/$label.log" | cut -c1-900 || tail -20 "$out/$label.log"

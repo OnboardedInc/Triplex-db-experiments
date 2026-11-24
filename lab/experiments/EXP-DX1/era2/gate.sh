@@ -32,7 +32,8 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
        -e TRIPLEX_ERASURE_DIRECTORY=/tmp/era2-authority -e DATOMIC_URI_TEMPLATE='datomic:mem://{db}'
        -e DF01_RECORDED_PAGE=/tmp/recorded-page.json)
   [[ $option == on ]] && env+=(-e TX2_REMOVAL_PER_ACCOUNT=1)
-  docker run --rm --pull never --name "tx2-dxera2-gate-$$-$name" --memory 3g --cpus 2 \
+  mkdir -p "$out/$name.out"
+  docker run --rm --pull never --name "tx2-dxera2-gate-$$-$name" --memory 3g --cpus 2 -v "$out/$name.out:/out" \
     -v "$out/$source/src:/opt/gateway/src:ro" -v "$out/$source/codec-spec.json:/opt/spec/codec-spec.json:ro" \
     -v "$out/lab:/lab:ro" -v "$out/$name.clj:/opt/run.clj:ro" "${env[@]}" --entrypoint /bin/bash "$image" -c \
     'cd /opt/datomic && java -Xmx2g -Ddatomic.objectCacheMax=256m -Ddatomic.memoryIndexMax=256m -Dtriplex.codec.spec=/opt/spec/codec-spec.json -cp "$(DATOMIC_EXT_CLASSPATH=/opt/gateway/src bin/classpath)" clojure.main /opt/run.clj' \

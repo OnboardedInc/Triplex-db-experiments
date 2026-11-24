@@ -77,7 +77,9 @@
         (try
           (loop [k 0]
             (cond (realized? entered) nil
-                  (future-done? leader) (throw (ex-info "held save answered before its plan" {:reply @leader}))
+                  (future-done? leader) (throw (ex-info (str "held save answered before its plan: "
+                                                             (pr-str (offers/outcome @leader)) " "
+                                                             (get-in @leader [:body "message"])) {}))
                   (> k 2000) (throw (ex-info "held save never reached its plan" {}))
                   :else (do (Thread/sleep 5) (recur (inc k)))))
           (during)
@@ -338,15 +340,17 @@
                   "account a's and a1's sequences restored from the log")
           (check! "migrate" (marked? name a1 pin) "a1 still marked per account"))))))
 
+(defn- scenario [label f]
+  (try (f) (catch Throwable e (check! label false (str "scenario stopped: " (.getMessage e))))))
 (defn main []
   (doseq [sealed? [false true]]
-    (when-not sealed? (held-across-removal false))
-    (derived-writes sealed?)
-    (import-replay sealed?)
-    (pinned-reader sealed?)
-    (racing-removals sealed?)
-    (stopped-removal sealed?))
-  (migrate-back-and-forth)
+    (when-not sealed? (scenario "held" #(held-across-removal false)))
+    (scenario (str "derived " sealed?) #(derived-writes sealed?))
+    (scenario (str "import " sealed?) #(import-replay sealed?))
+    (scenario (str "pinned " sealed?) #(pinned-reader sealed?))
+    (scenario (str "race " sealed?) #(racing-removals sealed?))
+    (scenario (str "stopped " sealed?) #(stopped-removal sealed?)))
+  (scenario "migrate" migrate-back-and-forth)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" (if per-account? "per-account" "database-wide")
              (pr-str {:checks (count @results) :failed (count failed)}))

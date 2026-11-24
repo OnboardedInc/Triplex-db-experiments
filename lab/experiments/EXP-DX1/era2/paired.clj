@@ -53,12 +53,16 @@
   (let [db (d/db conn) ident #(d/ident db %) md (java.security.MessageDigest/getInstance "SHA-256")
         skip #{(d/entid db :db/txInstant)} key-attr (d/entid db :triplex.scope/key)
         body (d/entid db :triplex.private/body) n (volatile! 0)]
-    (doseq [{:keys [t data]} (d/tx-range (d/log conn) nil nil) datom data :when (not (skip (:a datom)))]
-      (vswap! n inc)
-      (.update md (.getBytes (pr-str [t (:e datom) (ident (:a datom))
-                                      (cond (= key-attr (:a datom)) "SCOPE" (and body (= body (:a datom))) "BODY"
-                                            :else (normalize name (:v datom)))
-                                      (:added datom)]) "UTF-8")))
+    (with-open [w (if (.exists (java.io.File. "/out")) (clojure.java.io/writer (str "/out/log-" (System/nanoTime) ".txt"))
+                    (java.io.StringWriter.))]
+      (doseq [{:keys [t data]} (d/tx-range (d/log conn) nil nil) datom data :when (not (skip (:a datom)))]
+        (vswap! n inc)
+        (let [line (pr-str [t (:e datom) (ident (:a datom))
+                            (cond (= key-attr (:a datom)) "SCOPE" (and body (= body (:a datom))) "BODY"
+                                  :else (normalize name (:v datom)))
+                            (:added datom)])]
+          (.write w (str line "\n"))
+          (.update md (.getBytes line "UTF-8")))))
     {:datoms @n :sha256 (format "%064x" (java.math.BigInteger. 1 (.digest md)))}))
 
 (defn run [sealed?]

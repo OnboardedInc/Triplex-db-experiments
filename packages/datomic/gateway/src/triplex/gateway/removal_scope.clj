@@ -94,8 +94,10 @@
   "One fence for a write: every entity it writes; for a derived write, every account its ticket names and the unscoped
   account."
   [state rows accounts]
-  [fence-ident (into (mapv (fn [e] [:entity e (entity-seq state e)]) (into (sorted-set) (map :entity_id) rows))
-                     (when accounts (map (fn [a] [:account a (bucket-seq state a)]) (into (sorted-set unscoped) accounts))))])
+  ;; Three elements: the writers read the third element of every vector operation.
+  [fence-ident :v1
+   (into (mapv (fn [e] [:entity e (entity-seq state e)]) (into (sorted-set) (map :entity_id) rows))
+         (when accounts (map (fn [a] [:account a (bucket-seq state a)]) (into (sorted-set unscoped) accounts))))])
 
 (defn ticket-accounts
   "The accounts a derived write's ticket names (erasureAccounts), or nil for a database-wide ticket."
@@ -128,7 +130,7 @@
                 (not (d/entid db :triplex.removal/seq)) (conj (schema/attr :triplex.removal/seq :db.type/long))
                 (not (d/entid db fence-ident))
                 (conj {:db/ident fence-ident
-                       :db/fn (d/function {:lang :clojure :params '[db guards] :requires '[[datomic.api :as d]]
+                       :db/fn (d/function {:lang :clojure :params '[db version guards] :requires '[[datomic.api :as d]]
                                            :code fence-code})}))]
     (if (seq attrs) (:db-after @(d/transact conn attrs)) db)))
 
