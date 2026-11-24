@@ -5207,3 +5207,22 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Migrated-subject reads, owner head over reference:** settled current p50 1.006 and 1.000; settled pinned p50 1.047 and 0.988; inside the bar (1.10 and 1.15). Loaded pinned p99 at 50/s 1.631, outside its predicted 0.7 to 1.5.
 - **Not checked:** records and bytes per save; one run per arm; the append arm is unsealed on the server.
 - **Fresh pair on the second machine** will meet the same check; its evidence is summarised on the Mac the same way.
+
+### 2026-11-23 20:57 local: one-time start-up read at 1 billion: save p99 in the first 30 s after a restart 7.26 s → 0.385 s, stop to admission 41.8 s (2 agents running)
+
+- **Second machine, JVM1 `968285954`** (`origin/exp/DX-BM1-bare-metal` `a3c95d2c2`, `bm1/STARTUP-AGED-READING.md`), held 1 billion cluster, fresh copy per arm, `server-32` cache, per-save credits, 394 offered/s for 300 s after a JVM restart (Saturday's tape), 00:36 to 01:09 UTC.
+
+  | Measure | Without the read: forecast → measured | With the read: forecast → measured |
+  | --- | --- | --- |
+  | Save p99, first 30 s | 6 s → 7.26 s (p50 6.28 s) | 3 s (0.5 to 12) → 0.385 s (p50 10.4 ms) |
+  | Save p99, first 60 s | 5 s → 7.22 s | 2.5 s → 0.380 s |
+  | Save p99, first 120 s | 3.5 s → 7.16 s | 2 s → 0.368 s |
+  | Save p99, whole 300 s | 6.99 s (p50 6.2 ms) | 0.340 s (p50 5.5 ms) |
+  | Storage gets per save, first 60 s | 0.80 → 0.796 | 0.55 → 0.279 |
+  | Storage gets per save, fifth minute | 0.50 → 0.299 | 0.48 → 0.333 |
+  | Stop to admission (bar 60 s) | 35 s → 22.2 s | 50 s → 41.8 s |
+  | Stored per second | 394.0, 0 expired | 394.0, 0 expired |
+
+- **The read itself:** transactor 18.4 s (connect 2.9, select 0.9, read 14.6), 36,453 segment loads (forecast 13,000 to 20,000: above); write peer 5.5 s, 18,344 loads; 9,402 owners each (cap 40,000); both ended `complete`, `poolTerminated` true, no `tx2-sread` thread at the report or at admission. No falsifier fired. No autovacuum worker seen.
+- **Reading:** the restart tail under Saturday's tape at 1 billion is the first minute's cold owners; the one-time read removes it (19 times lower p99 in the first 30 s) for 19.6 s more before admission. The 430 million arm was not run.
+- **Second machine now:** owner head pair on fresh (`85fc3a4bd`) since 01:55 UTC; its append arm's summary will refuse at the known check and is summarised on the Mac. **Server 2:** pinned arm with saves (`e02bf4edf`) timed run since 01:55:47 UTC, ends by 02:33.
