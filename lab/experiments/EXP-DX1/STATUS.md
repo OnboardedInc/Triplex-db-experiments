@@ -5782,3 +5782,18 @@ Source: product-save-path builder, branch `exp/DX-S2-save-shape-sdk` `4d619a516`
 2. Separately, name resolution inside the lab VM was not working (the VM's host resolver at 192.168.5.1 did not answer; the Mac itself reached the registry), so the removed images could not be pulled again and one builder's gate failed to build. Cause of the resolver fault not established.
 3. Fixed at 14:59: public resolvers added to the VM's `/etc/resolv.conf` (original kept beside it), both base images pulled again, a container confirmed to resolve names. Docker context still `colima`; Sam's five dev containers up; console on 28580 answering. All six running builders told to rerun anything that failed on an image build or network step since about 14:45.
 - Rule for next time: never prune images with `-a` while builders run; remove named, superseded images only.
+
+## 2026-11-24 15:10 EST: saves writing two to four owners take the per-subject writer; the tape has none
+
+Source: several-owners builder, branch `exp/DX-S3-several-owners` `7f46bf043` (based on the product-save-path branch; not merged), page `lab/experiments/EXP-DX1/s3/SEVERAL-OWNERS.md`. One option, default off (`TX2_SUBJECT_SEVERAL_OWNERS=1`, SDK `severalOwners`). Mac toy only.
+
+- 7 of the product's 11 save shapes now reach the per-subject writer (6 before): the form page that also writes the subject's profile, gated at 2, 3 and 4 owners.
+- **The production-shaped tape has zero saves with two or more owners** (834, 4,011, 6,919 and 10,569 saves at the four load steps), so the extension changes nothing on the tape and the server arm cannot price a two-owner save. How often real pages write profile fields is unknown; a private research task was started to find out.
+- Built as a second stored function installed only when the option is on; option off: 58 of 58 stored-function identities and code hashes equal to the base in all 8 writer settings; requests byte-identical.
+- Gates: 122 cases against a general-writer control, 399 receipts and 67,954 read-route answers equal; two saves sharing one owner: one commits, the other refused whole and replayed, its 14 identities absent from history; lost reply: nothing sent twice; removal on request of one owner between read and commit: refused, nothing written; production gate 840 R and 88 S on the per-subject writer, two-owner form saves 24 of 24 (0 of 24 with the option off).
+- Counted work for a two-owner form save (PostgreSQL, cache emptied): storage reads inside apply 21 against 31 cold, 3 against 10 warm; serial apply median 2.3 against 7.6 ms (diagnostic); 110 datoms either way.
+- Refused to the general writer, each with a typed reason: more than 4 owners; owners in more than one account; an owner that does not exist yet; references; over 128 facts; sealed protected values. Four shapes stay on the general writer (status change with a file reference, import row, bulk action, progress copy), each 0.24 to 1.4 ms of serial time at 1 billion (forecast).
+- Server arm D written: 71 to 85 minutes.
+- **Harness fault reported:** another builder's shared-slot containers started on this builder's freshly built images ("their harness seems to pick up the newest image"). The merge builder, which was running shared-slot cases at the time, was told to establish which image every case ran on, rerun any that used another branch's image, and fix the selection.
+
+**Started** (research, private, read-only): how the product's real saves are shaped (owners per save, facts per save, shape mix, simultaneous saves, owed forms per subject, release sizes, subjects per account, removals), task file `OPUS-PROD1-save-shapes-in-production.md`. Report stays outside the repository.
