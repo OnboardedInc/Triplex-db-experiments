@@ -56,8 +56,8 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     holder = (os.environ.get("DX_CHK1_HOLDER", "DX-CHK1") if combined
               else os.environ.get("DX_CHK1_HOLDER", "DX-W1") if owner_head == "1"
               else os.environ.get("DX_CHK1_HOLDER", "DX-REAL2") if mode == "production" else "DX-PREP1")
-    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1", "DX-REAL2", "DX-W3", "DX-W4", "DX-S1") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
-    assert mode != "production" or holder in ("DX-REAL2", "DX-THIN1", "DX-W3", "DX-W4", "DX-S1")
+    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1", "DX-REAL2", "DX-W3", "DX-W4", "DX-S1", "DX-IMP2") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
+    assert mode != "production" or holder in ("DX-REAL2", "DX-THIN1", "DX-W3", "DX-W4", "DX-S1", "DX-IMP2")
     # [DX-W3] Why: run the production gate with the general writer's hints on or off (default: no file, as before).
     # Rejected: a second gate copy; the hints arm differs from the control only in this one setting.
     general_prefetch = os.environ.get("DX_W3_GENERAL_PREFETCH")
