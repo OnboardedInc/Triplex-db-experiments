@@ -132,17 +132,17 @@ Every comparison is the full `/read` answer of the reference reader against each
 
 | Run (source) | Toy | Comparisons | Rows | Differences | Prefetch batches (failures) |
 | --- | --- | ---: | ---: | ---: | --- |
-| gate-06 (`dc7b8c1d5` before commit) | 2 accounts × 1,000 subjects, 275,270 facts, 264 saves after the seed | 30,548 | 1,709,361 | **0** | 15,200 and 15,200 (0) |
+| gate-06 (the tree committed as `dc7b8c1d5`) | 2 accounts × 1,000 subjects, 275,270 facts, 264 saves after the seed | 30,548 | 1,709,361 | **0** | 15,200 and 15,200 (0) |
 | gate-07 (`dc7b8c1d5`) | 10 accounts × 200, 234,870 facts, 272 saves | 30,548 | 1,686,069 | **0** | 15,200 and 16,640 (0) |
-| gate-08 (merged head) | 10 accounts × 200 | GATE08 | | | |
+| gate-08 (`bd460b8d7`, the merge with `23b7df344`) | 10 accounts × 200, 234,870 facts, 265 saves | 30,548 | 1,686,057 | **0** | 15,200 and 16,993 (0) |
 
 Each run compares field 0 by pattern in batches of eight at 48 positions (8 inside the seed, 40 from the seed's end to
 the aged head) for every subject, whole subjects at 6 positions and both valid times, history reads of 400 subjects,
 historical worlds (reach) of 64 subjects at 6 positions, and, while saves run through the writer, field 0 at the aged
 head and one position behind the moving head. Gates 07 and 08 also run the server arm's own window
 (`pinnedWindow`, random subjects at the seed cut, every value checked against the seed's): one reader, then odd seats
-on a second reader (gate-07: 15,608 and 20,296 reads, 0 wrong, 0 errors; the second reader took 1,440 of 2,541
-exchanges). Also: gateway selftest 29 tests, 54,160 assertions, with the prefetch off and on (merged head);
+on a second reader (gate-07: 15,608 and 20,296 reads, 0 wrong, 0 errors, the second reader took 1,440 of 2,541 exchanges; gate-08:
+26,672 and 28,568 reads, 0 wrong, 0 errors, 1,793 of 3,575 exchanges on the second reader). Also: gateway selftest 29 tests, 54,160 assertions, with the prefetch off and on (merged head);
 `rd5/prefetch-test.clj` (known, unknown and single subjects, no database change, 0 failures); the saves-arm harness
 (`rd1/saves-gate/harness.ts`) passed. gate-05 is kept as a record of a fault the gate caught: the prefetch called
 `count` on Datomic's datoms iterable, every touch failed and was ignored (121,600 failures, 0 differences), fixed before
@@ -162,6 +162,11 @@ the JVM, read-ahead threads included), read 11 s after each arm; "own loads" are
 | 6 permits, no prefetch | 0.85 / 0.78 | 0.50; 3.5 ms | 0.57 | 0.50 ms | 6,171 |
 | read-ahead off | 0.66 / 0.66 | 0.35; 3.6 ms | 0.33 | 0.40 ms | 5,802 |
 | read-ahead off + prefetch | 0.68 / 0.67 | 0.39; 4.0 ms | 0.32 | 0.37 ms | 7,626 |
+
+**Replicate on the merged head (gate-08, ten accounts of 200 subjects, 234,870 facts):** closed-loop gets per subject
+0.418 → 0.230 with read-ahead off (−45%), 0.198 with the prefetch as well; CPU per subject 0.492 → 0.307 ms (−38%);
+reads/s 5,272 (merged) / 6,166 (prefetch) / 5,870 (6 permits) / 8,183 (read-ahead off) / 8,070 (both). Single cold
+reads 0.83 → 0.655 gets per subject (−21%), exchanges of eight 0.548 → 0.464 (−15%).
 
 - **Read-ahead off:** gets per subject down 34% (single), 43% (exchanges), 40% (closed loop), and the reads' own loads
   down 23 to 38%; CPU per subject down 30 to 43%. The toy cache hits more than 1 billion's does (closed-loop gets 0.33
@@ -389,3 +394,16 @@ every 5 s into `$RD5_OUT/stats.txt` until the container is removed.
 - **A per-subject row cache** is costed, not built.
 
 
+
+## Evidence (private folder `evidence/DX-RD5/`)
+
+| File | Contents | SHA-256 |
+| --- | --- | --- |
+| `gate-05.tar.gz` | the run whose prefetch failed every touch (kept for the record); probes before the fix | `a1054343356fe4f43c8db46fade0d73aaecb2a0bda1508a96ac49c8cad5e0f67` |
+| `gate-06.tar.gz` | two accounts × 1,000: comparison, all five probes (section 4) | `f79d21e5a96ef0e5d39661cbf6a0a1dcd4f9d9ed403221ef3cef8f4466e94ec2` |
+| `gate-07.tar.gz` | ten accounts × 200 at `dc7b8c1d5`: comparison and both read windows (probes cut short when the container was removed during a pause) | `658e7b1cc492700fe280257efe61c9d1af8a077f712c016eaa329eb80ae7bd32` |
+| `gate-08.tar.gz` | ten accounts × 200 at the merge `bd460b8d7`: comparison, both windows, all five probes | `e00142f2aa788072b8a68857d5a4039502840f4a7bee78867988ae0105ed84ad` |
+| `selftest-*.log` | gateway selftest with the prefetch off and on, before and after the merge | |
+
+Reproduce section 1 with `python3 rd5/breakdown.py DIR` on the unpacked server archives; section 4 with
+`python3 rd5/summarize.py out/probe.ndjson` from a gate archive.
