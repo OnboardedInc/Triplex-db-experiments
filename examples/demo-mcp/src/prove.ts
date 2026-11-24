@@ -3,7 +3,7 @@
 // timed against its prediction, G13 measured (transactionsForEntity on an ordinary and on a heavily saved entity),
 // and every changed value read back twice: by the tool, and independently with plain SDK rows at the receipt position.
 // Writes one JSON and one Markdown result. Times are the gateways' own (x-tx2-gateway-micros), plus wall time here.
-// Usage: node src/prove.ts --out DIR [--account account-003] [--subject 50000] [--heavy 0] [--far 87002]
+// Usage: node src/prove.ts --out DIR [--account account-003] [--subject 50000] [--heavy 0] [--far 87002] [--no-entity-route]
 //        (child mode, used by the run itself: --child walk)
 // Why: the things only 1 billion records can show (cold reads, a release commit on the general writer at that size,
 // an entity journal on a heavily saved entity) must be measured before the servers go. Rejected: running the proof
@@ -185,10 +185,18 @@ async function journal(entity: string) {
   const t = await demo.measure(async () => ({ page: await demo.read(Effect.flatMap(Triples, (s) => s.transactionsForEntity(EntityId.make(entity), { limit: 20 }))), position: 0 }));
   return { serverMs: t.timing.serverMs, roundTripMs: t.timing.roundTripMs, requests: t.timing.requests, transactions: t.page.transactions.length, changes: t.page.transactions.reduce((n, x) => n + x.changes.length, 0) };
 }
-const g13 = { ordinary: await journal(ids.task), ordinaryWarm: await journal(ids.task), created: await journal(review["entity"] ?? ids.task), heavy: await journal(ids.heavyTask), heavyWarm: await journal(ids.heavyTask) };
+// --no-entity-route: on the lean layout the gateway's entity-transactions route walks the whole position index under the
+// single journal permit (journal.clj entity-positions), so at 1 billion it does not answer and blocks every journal read
+// behind it (seen 2026-11-23: no answer in 40 s, the gateways had to be restarted). The console builds an entity's journal
+// from bounded feed pages instead (change_feed with entity, timed in section 10b).
+const skipEntityRoute = process.argv.includes("--no-entity-route");
+const none = { serverMs: null, roundTripMs: null, requests: 0, transactions: 0, changes: 0 };
+const g13 = skipEntityRoute
+  ? { skipped: "not run (--no-entity-route): the lean-layout entity-transactions route reads every transaction", ordinary: none, ordinaryWarm: none, created: none, heavy: none, heavyWarm: none }
+  : { ordinary: await journal(ids.task), ordinaryWarm: await journal(ids.task), created: await journal(review["entity"] ?? ids.task), heavy: await journal(ids.heavyTask), heavyWarm: await journal(ids.heavyTask) };
 row("An entity's journal, newest 20", "20 to 300 ms; unknown on a heavily saved entity", "229 ms on the small database for one transaction of 124 changes.", "Over 1 s: slow state on the Journal tab.", 20, 300, 1000, g13.ordinary.serverMs,
   `ordinary ${ids.task}: ${g13.ordinary.serverMs} ms then ${g13.ordinaryWarm.serverMs} ms (${g13.ordinary.transactions} transactions); created review ${g13.created.serverMs} ms; heavily saved ${ids.heavyTask}: ${g13.heavy.serverMs} ms cold, ${g13.heavyWarm.serverMs} ms warm (${g13.heavy.transactions} transactions, ${g13.heavy.changes} changes, ${g13.heavy.requests} requests)`);
-check("G13: transactionsForEntity answers on the heavily saved entity", g13.heavy.transactions > 0, JSON.stringify(g13.heavy));
+if (!skipEntityRoute) check("G13: transactionsForEntity answers on the heavily saved entity", g13.heavy.transactions > 0, JSON.stringify(g13.heavy));
 
 // ---- 8. changes with read back (demo step 6), history, both time axes ------------------------------------------------
 const liveBefore = (await tool("8 live release", "list_entity_types", {}))["release"]?.id;
