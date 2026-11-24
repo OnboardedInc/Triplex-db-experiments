@@ -365,29 +365,36 @@
 (defn- after-items [desc? after s]
   (if (nil? after) s (drop-while #(let [k (compare (first %) after)] (if desc? (>= k 0) (<= k 0))) s)))
 (defn- merge-items
-  "Union of streams sorted by local part (the first stream's item wins a tie)."
+  "Union of streams sorted by local part. Items are [local eid key ok?]; all items of one local part (in any stream,
+  adjacent ones included) collapse into one, accepted when any of them is."
   [desc? streams]
   (let [cmp (if desc? #(compare %2 %1) compare)
         step (fn step [streams]
                (lazy-seq
                  (let [live (filter seq streams)]
                    (when (seq live)
-                     (let [m (reduce (fn [a b] (if (neg? (cmp (first b) (first a))) b a)) (map first live))]
-                       (cons m (step (map (fn [s] (if (and (seq s) (= (first m) (first (first s)))) (rest s) s)) live))))))))]
+                     (let [m (first (reduce (fn [a b] (if (neg? (cmp (first b) (first a))) b a)) (map first live)))
+                           same (mapcat (fn [s] (take-while #(= m (first %)) s)) live)
+                           ok (some #(nth % 3) same)
+                           pick (or (first (filter #(nth % 3) same)) (first same))]
+                       (cons (assoc pick 3 (boolean ok))
+                             (step (map (fn [s] (drop-while #(= m (first %)) s)) live))))))))]
     (step streams)))
 (defn- intersect-items
-  "Intersection of streams sorted by local part, by a merge: an item is kept when every stream holds its local part."
+  "Intersection of streams sorted by local part, by a merge. Every local part read comes out once, in order: accepted
+  when every stream holds it accepted, otherwise as a not-accepted item, so a page whose bound falls between two
+  common local parts still advances its cursor past what it read. When one stream ends, nothing more is common."
   [desc? streams]
   (if (= 1 (count streams)) (first streams)
     (let [cmp (if desc? #(compare %2 %1) compare)
           step (fn step [streams]
                  (lazy-seq
-                   (when (every? seq streams)
-                     (let [heads (map ffirst streams)
-                           top (reduce (fn [a b] (if (pos? (cmp b a)) b a)) heads)]
-                       (if (every? #(= top %) heads)
-                         (cons (ffirst streams) (step (map rest streams)))
-                         (step (map (fn [s] (drop-while #(neg? (cmp (first %) top)) s)) streams)))))))]
+                   (if (every? seq streams)
+                     (let [heads (map first streams)
+                           low (reduce (fn [a b] (if (neg? (cmp b a)) b a)) (map first heads))]
+                       (if (every? #(= low (first %)) heads)
+                         (cons (assoc (first heads) 3 (every? #(nth % 3) heads)) (step (map rest streams)))
+                         (cons [low nil nil false] (step (map (fn [s] (if (= low (ffirst s)) (rest s) s)) streams))))))))]
       (step streams))))
 
 (defn successor
@@ -416,34 +423,34 @@
   (let [base (str token x/sep (:code c) x/sep field x/sep)
         o-prefix (str base "O" x/sep)
         item (fn [datom] (let [p (x/parse-key (:v datom))]
-                           (when (and (x/valid-at? p v16) (or (not (:long? p)) (confirm c p)))
-                             [(:local p) (:e datom)])))
+                           [(:local p) (:e datom) nil (boolean (and (x/valid-at? p v16) (or (not (:long? p)) (confirm c p))))]))
         o (->> (avet-range view ix-a o-prefix (when after (str o-prefix (x/esc after))) desc?)
-               (counted work entries deadline) (keep item) (after-items desc? after))
+               (counted work entries deadline) (map item) (after-items desc? after))
         c-prefix (str base "C" x/sep)
         ;; Realized only when the merge reaches it, inside the request's bounds.
         closed (lazy-seq
                  (let [m (->> (d/index-range view ix-a (str c-prefix v16) nil)
                               (take-while #(.startsWith ^String (:v %) c-prefix))
-                              (counted work entries deadline) (keep item)
+                              (counted work entries deadline) (map item) (filter #(nth % 3))
                               (reduce (fn [m [l e]] (assoc m l e)) (sorted-map)))]
                    (cond->> (seq m)
                      after (filter #(let [k (compare (key %) after)] (if desc? (neg? k) (pos? k))))
                      desc? reverse)))]
-    (merge-items desc? [o (map (fn [[l e]] [l e]) closed)])))
+    (merge-items desc? [o (map (fn [[l e]] [l e nil true]) closed)])))
 
 (defn- type-stream [{:keys [view ix-a work entries deadline token desc?]} entity-type after]
   (let [prefix (str token x/sep "T" x/sep (x/esc entity-type) x/sep)]
     (->> (avet-range view ix-a prefix (when after (str prefix (x/esc after) (if desc? "" "\u0000"))) desc?)
-         (counted work entries deadline) (map (fn [datom] [(:local (x/parse-key (:v datom))) (:e datom)]))
+         (counted work entries deadline) (map (fn [datom] [(:local (x/parse-key (:v datom))) (:e datom) nil true]))
          (after-items desc? after))))
 
 (defn- id-stream [{:keys [view work entries deadline token desc?]} ^String prefix shape-re after]
   (let [base (if (= token x/system-token) "_triplex/" (str "acct/" token "/"))
         start (str base prefix) id-a (d/entid view :triplex.entity/id)]
     (->> (avet-range view id-a start (when after (str base after (if desc? "" "\u0000"))) desc?)
-         (counted work entries deadline) (map (fn [datom] [(subs ^String (:v datom) (count base)) (:e datom)]))
-         (filter #(or (nil? shape-re) (re-matches shape-re (subs ^String (first %) (count prefix)))))
+         (counted work entries deadline)
+         (map (fn [datom] (let [local (subs ^String (:v datom) (count base))]
+                            [local (:e datom) nil (boolean (or (nil? shape-re) (re-matches shape-re (subs local (count prefix)))))])))
          (after-items desc? after))))
 
 (defn- value-stream
@@ -476,8 +483,7 @@
          (map (fn [datom] [(:v datom) (x/parse-key (:v datom)) (:e datom)]))
          (drop-while (fn [[_ p]] (and desc? (past-hi? (:field p)))))
          (take-while (fn [[_ p]] (not (if desc? (below-lo? (:field p)) (past-hi? (:field p))))))
-         (filter (fn [[_ p]] (and (x/valid-at? p v16) (or (:long? p) (field-ok? c (:field p))))))
-         (map (fn [[k p e]] [(:local p) e k])))))
+         (map (fn [[k p e]] [(:local p) e k (boolean (and (x/valid-at? p v16) (or (:long? p) (field-ok? c (:field p)))))])))))
 
 ;; ---- the basis.
 (defn- local-at-least [name conn db position wait-ms]
@@ -691,11 +697,11 @@
               acc (volatile! {:count (get state "count" 0)
                               :counts (into {} (get state "counts" {}))
                               :distinct (into #{} (get state "distinct" []))})
-              reads (volatile! {}) stopped (volatile! nil) last-key (volatile! after)
+              reads (volatile! {}) stopped (volatile! nil) last-key (volatile! after) consumed (long-array 1)
               it (.iterator ^Iterable candidates)
               scan-desc? (and driver-c range-c desc?)
               evaluate
-              (fn [[^String local eid k]]
+              (fn [[^String local eid k _]]
                 (let [id (x/entity-id token local)
                       es (when needs-entity? (aset work 1 (inc (aget work 1))) (entity-entries view eid ix-a work))
                       driver-key? (fn [e] (and (= (:code driver-c) (:code e)) (x/valid-at? e v16) (entry-ok? view driver-c e)))]
@@ -738,7 +744,8 @@
                                        (if-not (.hasNext it)
                                          (vreset! stopped "end")
                                          (let [cand (.next it)]
-                                           (evaluate cand)
+                                           (aset consumed 0 (inc (aget consumed 0)))
+                                           (when (nth cand 3) (evaluate cand))
                                            (vreset! last-key (if driver-c (nth cand 2) (first cand)))
                                            (if (and (= result "ids") (>= (.size ids) limit))
                                              (vreset! stopped (if (.hasNext it) "limit" "end"))
@@ -754,6 +761,10 @@
                     (and (= result "countDistinct") (> (count (:distinct @acc)) 100000)) (vreset! stopped "limit")
                     (and (= result "countByValue") (> (count (:counts @acc)) 10000)) (vreset! stopped "limit")
                     :else (recur))))
+          ;; A page that read its whole entry bound without passing one local part (or one key) could never advance:
+          ;; refuse it rather than hand back the same cursor.
+          (when (and (= @stopped "entries") (zero? (aget consumed 0)))
+            (refuse! 413 "BoundTooSmall" "No candidate fits inside bounds.entries; raise it" {:examined (aget work 0)}))
           (let [more? (not= @stopped "end")
                 {n-count :count counts :counts dset :distinct} @acc
                 micros (quot (- (System/nanoTime) started) 1000)]
