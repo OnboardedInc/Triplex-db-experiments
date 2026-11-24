@@ -38,6 +38,8 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
        -e DF01_RECORDED_PAGE=/tmp/recorded-page.json)
   [[ $option == on || $option == subject ]] && env+=(-e TX2_REMOVAL_PER_ACCOUNT=1)
   [[ $option == subject ]] && env+=(-e TX2_REMOVAL_SUBJECT_CHECK=1 -e TX2_REMOVAL_TRIES_LOG=1 -e "ERA2_RACES=${ERA2_RACES:-1000}")
+  # [DX-ACT9] ERA2_EXTRA_ENV="K=V ..." (default empty): further options on every per-account run (every option on together).
+  if [[ $option != off ]]; then for kv in ${ERA2_EXTRA_ENV:-}; do env+=(-e "$kv"); done; fi
   [[ $name == era3-* ]] && env+=(-e "ERA3_PHASES=${ERA3_PHASES:-d1 d1t d2 d3 d5 d6 fuzz}" -e "ERA3_N=${ERA3_N:-400}"
                                  -e "ERA3_BLOCK=${ERA3_BLOCK:-100}" -e "ERA3_SEED=${ERA3_SEED:-7}" -e "ERA3_RUN=gate")
   mkdir -p "$out/$name.out"
