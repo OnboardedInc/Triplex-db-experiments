@@ -2,7 +2,7 @@
 # [DX-XQ2] Mac native gate for the attribute index spike. One ordinary heavy token per run:
 #   node lab/bin/heavy.mjs --label DX-XQ2-gate -- bash lab/experiments/EXP-DX1/xq2/gate.sh NEW_ABSOLUTE_DIR
 # Uses REAL2's production image (PostgreSQL, Node, Datomic) with this branch's gateway source mounted read-only.
-# XQ2_PHASES ("cost gate edge"), XQ2_ARMS ("n0 n1 n5 n20"), XQ2_COST_SUBJECTS, XQ2_GATE_SUBJECTS, XQ2_EDGE_SUBJECTS size it.
+# XQ2_PHASES ("cost gate edge asof"), XQ2_ARMS ("n0 n1 n3 n5 n20 a5 a20 t1 t5 t20"), XQ2_LONG_IDS, XQ2_FORMS, XQ2_HOT_ROUNDS, XQ2_COST_SUBJECTS, XQ2_GATE_SUBJECTS, XQ2_EDGE_SUBJECTS size it.
 set -uo pipefail
 out=${1:?absolute new output directory under /Users (the lab VM shares only that tree)}
 [[ $out == /Users/* && ! -e $out ]] || { echo "gate.sh: give a new absolute output directory under /Users" >&2; exit 2; }
