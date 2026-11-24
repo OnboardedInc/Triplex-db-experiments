@@ -170,7 +170,9 @@ const result = {
       // (wider saves, first writes of a field) take the general writer. Both must be exact.
       subjectPathAcks: result.rows.filter((r) => (r as any).ack?.subjectSave).length,
       // [DX-W3] General-writer saves that carried hints (0 unless TX2_GENERAL_PREFETCH=1).
-      generalHintsAcks: result.rows.filter((r) => (r as any).ack?.generalHintsAttached).length };
+      generalHintsAcks: result.rows.filter((r) => (r as any).ack?.generalHintsAttached).length,
+      // [DX-W4] Per-subject saves that carried hints (0 unless TX2_SUBJECT_HINTS=1).
+      subjectHintsAcks: result.rows.filter((r) => (r as any).ack?.subjectHintsAttached).length };
   }),
 };
 writeFileSync(join(out!, "result.json"), JSON.stringify(result, null, 2) + "\n");

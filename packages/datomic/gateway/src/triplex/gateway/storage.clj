@@ -4,7 +4,8 @@
             [triplex.gateway.save-ledger :as ledger] [triplex.gateway.packed-journal :as packed]
             [triplex.gateway.subject-save :as subject] [clojure.data.json :as json]
             [triplex.gateway.owner-layout :as owner-layout] [triplex.gateway.owner-root :as owner-root]
-            [triplex.gateway.pinned :as pinned] [triplex.gateway.general-prefetch :as general-prefetch])
+            [triplex.gateway.pinned :as pinned] [triplex.gateway.general-prefetch :as general-prefetch]
+            [triplex.gateway.subject-hints :as subject-hints])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -418,13 +419,26 @@
   ([conn data input timeline subject-plan]
    (if-not subject-plan
      (submit-reference! conn data input timeline)
-     (let [hints (when subject/prefetch?
+     (let [hints (cond
+                   ;; [DX-W4] Why: name every read of the per-subject commit, ordered IDs included (TX2_SUBJECT_HINTS).
+                   ;; Rejected: using the hint or its database value as proof of anything (the native function and
+                   ;; Datomic re-check on the serial db-before); hinting the covering writer (owner head, kept off).
+                   (and subject-hints/enabled (not (:owner-layout subject-plan)))
+                   (let [_ (swap! timeline assoc :subjectHintsStarted (System/nanoTime))
+                         h (try (trace/span "subject.lookup-hints" "peer-call"
+                                  (subject-hints/lookup-hints (d/db conn) (subject-hints/from-plan subject-plan)))
+                                (catch Exception _ (swap! timeline assoc :hintsDeclined (System/nanoTime)) nil))]
+                     (swap! timeline assoc :subjectHintsFinished (System/nanoTime))
+                     (stats/bump! [:subjectHints (if h :attached :none)] 1)
+                     h)
+                   subject/prefetch?
+                   (do
                    (swap! timeline assoc :subjectHintsStarted (System/nanoTime))
                    ;; [DX-PREP1] Why: Datomic prefetch can move cold reads, while the native guards own the decision.
                    ;; Rejected: using the hint result or its database value as proof of absence or revision.
                    (try (trace/span "subject.lookup-hints" "peer-call" (subject/lookup-hints (d/db conn) subject-plan))
                         (catch Exception _ nil)
-                        (finally (swap! timeline assoc :subjectHintsFinished (System/nanoTime)))))
+                        (finally (swap! timeline assoc :subjectHintsFinished (System/nanoTime))))))
            native-data (group/instrument [[(first (:function subject-plan)) subject-plan]])
            options (concat (when hints [:hints hints])
                            (when (or group/stage-clock trace/enabled (= "1" (System/getenv "TX2_REMOVAL_COST_READBACK"))) [:io-context :triplex.gateway/subject]))
