@@ -23,7 +23,7 @@ const { values } = parseArgs({
     "aged-dump-sha256": { type: "string" }, out: { type: "string" }, commit: { type: "string" },
     pgdata: { type: "string", multiple: true }, "pgdata-source": { type: "string" },
     "window-seconds": { type: "string" }, "credit-mode": { type: "string" },
-    arm: { type: "string" }, assemble: { type: "boolean" }, renderer: { type: "string" },
+    arm: { type: "string" }, assemble: { type: "boolean" }, renderer: { type: "string" }, "platform-tape": { type: "boolean" },
     "hourly-usd": { type: "string", default: "1.09" }, help: { type: "boolean" }, plan: { type: "boolean" },
     profile: { type: "string", default: defaultServerProfile },
     tape: { type: "string", default: "saturday" },
@@ -32,7 +32,7 @@ const { values } = parseArgs({
 if (values.help) {
   console.log("scorecard.mjs --age fresh|1B|realistic --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer per-person-ordered] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm j21-g1|j25-g1|j25-zgc] [--write-jvm j21-g1|j25-g1|j25-zgc] [--wal-directory DIR] [--window-seconds 90|300] [--credit-mode barrier6|rolling6|rolling8|rolling12|rolling16] [--profile server|server-32] [--tape saturday|production-R|production-S]\nFor prepared PostgreSQL use --pgdata-source SEALED_PGDATA with --pgdata COPY once per arm (headline zero, headline loaded, barrier6).\nFor 1B also provide --aged-bundle FILE --aged-bundle-sha256 SHA. Without prepared directories, also provide --aged-dump FILE --aged-dump-sha256 SHA for 1B.\nscorecard.mjs --plan");
   console.log("For sequential staging, run --arm 1 through --arm 3 in order with one --pgdata per invocation and the same --out. Then run --assemble --commit COMMIT --out DIRECTORY.");
-  console.log("To assemble with a later renderer: --assemble --commit CAMPAIGN_COMMIT --renderer CHECKED_OUT_COMMIT --out DIRECTORY (the renderer must descend from the campaign commit and differ only in assembly files; the card names both).");
+  console.log("To assemble with a later renderer: --assemble --commit CAMPAIGN_COMMIT --renderer CHECKED_OUT_COMMIT --out DIRECTORY (the renderer must descend from the campaign commit and differ only in assembly files; the card names both). Add --platform-tape when assembling on another platform than the campaign's (the tape must hash to its pre-launch binding; floating-point offsets may differ by at most 1e-6 ms).");
   process.exit(0);
 }
 if (values.assemble) {
@@ -46,7 +46,9 @@ if (values.assemble) {
   assert(!fs.existsSync(path.join(out, "SCORECARD-v0.1.md")), "Campaign already assembled");
   const input = assembleSequential(campaign, source);
   const { writeAdoptedCard } = await import("./adopted-card.ts");
-  writeAdoptedCard({ ...input, toy: false, prepared: true, out, campaign, renderer });
+  // [DX-CARD1] --platform-tape: assembling on another platform than the campaign's; see adopted-card.ts tapeRegeneration.
+  assert(!values["platform-tape"] || renderer, "--platform-tape applies only with --renderer");
+  writeAdoptedCard({ ...input, toy: false, prepared: true, out, campaign, renderer, tapeRegeneration: values["platform-tape"] ? "platform" : "exact" });
   console.log(path.join(out, "SCORECARD-v0.1.md"));
   process.exit(0);
 }

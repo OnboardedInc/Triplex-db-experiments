@@ -27,7 +27,15 @@ type Card = { source: string; age: Age; writer: Writer; jvm?: JvmProfile; toy: b
   /** The save tape: its name, or the input's binding of every loaded cell's tape report (assembled campaigns). */
   tape?: string | { name: string };
   /** [DX-CARD1] A campaign assembled by a later renderer commit than the one that ran it (run.ts --renderer). */
-  renderer?: { commit: string; files: string[] } };
+  renderer?: { commit: string; files: string[] };
+  /**
+   * [DX-CARD1] "platform": the production tape is regenerated on another platform than the campaign's (the Mac for a
+   * Linux campaign), whose Math.log and Math.exp can differ in the last bit. The cell's tape must then hash to the
+   * input's binding (made on the campaign's machine before the first offer) and match the regeneration in every field,
+   * with `ms` and `gap` within `platformTolerance`. Default "exact": the regeneration must equal the tape.
+   */
+  tapeRegeneration?: "exact" | "platform" };
+export const platformTolerance = { ms: 1e-6, gapSeconds: 1e-9 };
 type Observation = Awaited<ReturnType<typeof adoptedArm>>;
 const tag = (x: unknown) => (typeof x === "number" && Number.isFinite(x)) ? String(Number(x.toFixed(3))) : "—";
 export function writeAdoptedCard(run: Card) {
@@ -152,6 +160,7 @@ export function writeAdoptedCard(run: Card) {
   };
   const rows = new Map<string, string[]>();
   const cellWindows: string[] = [], cellTelemetry: string[] = [], edgeRows: string[] = [];
+  const regenerated: { cell: string; ms: number; gap: number; maxMs: number; maxGap: number }[] = [];
   const partial = "PARTIAL";
   const p2Arms = [[loaded, "loaded"], [control, barrierRoot + "loaded"]] as const;
   const commit = p2Arms.flatMap(([a, dir]) => a && a.p2.offered ? [{
@@ -369,8 +378,26 @@ export function writeAdoptedCard(run: Card) {
       assert.deepEqual(arm.tape.map(({ owner: _owner, ...offer }: any) => offer),
         realisticTape(shape, cellPath(cell), windowSeconds, cell.loaded ? cell.rate - 3.5 : 0));
     } else if (shape && cell.loaded) {
-      assert.deepEqual(arm.tape, fullCellTape(shape, cell, windowSeconds));
       const bound = boundTape?.cells.find((c: { cell: string }) => c.cell === cellPath(cell));
+      const again = fullCellTape(shape, cell, windowSeconds);
+      if (run.tapeRegeneration === "platform") {
+        assert(bound);
+        assert.equal(createHash("sha256").update(JSON.stringify(arm.tape)).digest("hex"), bound.tapeSha256,
+          "the cell's tape differs from the one bound in the card's input");
+        assert.equal(arm.tape.length, again.length);
+        const seen = { cell: dir, ms: 0, gap: 0, maxMs: 0, maxGap: 0 };
+        for (const [i, offer] of (arm.tape as any[]).entries()) {
+          const { ms, gap, ...rest } = offer, { ms: ms2, gap: gap2, ...rest2 } = again[i] as any;
+          assert.deepEqual(rest, rest2);
+          assert.equal(typeof gap, typeof gap2);
+          const dMs = Math.abs(ms - ms2), dGap = typeof gap === "number" ? Math.abs(gap - gap2) : 0;
+          assert(dMs <= platformTolerance.ms && dGap <= platformTolerance.gapSeconds, `${seen.cell} offer ${i}: regenerated tape differs`);
+          if (dMs) seen.ms++;
+          if (dGap) seen.gap++;
+          seen.maxMs = Math.max(seen.maxMs, dMs); seen.maxGap = Math.max(seen.maxGap, dGap);
+        }
+        regenerated.push(seen);
+      } else assert.deepEqual(arm.tape, again);
       const reportBytes = fs.readFileSync(file(dir, "tape-report.json"));
       const report = JSON.parse(reportBytes.toString());
       assert(bound && arm.production);
@@ -484,7 +511,8 @@ export function writeAdoptedCard(run: Card) {
   };
   const text = base.trimEnd().split("\n").map((line) => {
     if (run.renderer && line.startsWith("Source `" + run.source + "`")) return line + "\n\n" +
-      `Assembled at renderer \`${run.renderer.commit}\` from this campaign, run at source \`${run.source}\`. The renderer differs from the source only in: ${run.renderer.files.map((f) => "`" + f + "`").join(", ")}.`;
+      `Assembled at renderer \`${run.renderer.commit}\` from this campaign, run at source \`${run.source}\`. The renderer differs from the source only in: ${run.renderer.files.map((f) => "`" + f + "`").join(", ")}.` +
+      (run.tapeRegeneration === "platform" ? ` Production tapes checked by platform regeneration: each cell's tape hashes to the binding made before its first offer and matches this platform's regeneration in every field except the floating-point \`ms\` and \`gap\` (tolerance ${platformTolerance.ms} ms and ${platformTolerance.gapSeconds} s). ${regenerated.map((r) => `${r.cell}: ${r.ms} offsets differ (max ${r.maxMs.toExponential(2)} ms), ${r.gap} gaps (max ${r.maxGap.toExponential(2)} s)`).join("; ")}.` : "");
     if (line === "## Run settings") return `**Save tape:** ${tapeTitle(cardTape)}.` + (shape ? " P2 below counts commits; the production table gives rows and saves." : "") + "\n\n" + (run.writer === "per-person-ordered"
       ? run.toy ? "The headline toy runs the full adopted workload. Barrier6 repeats P2 and P6."
         : "The headline ordered profile runs the full workload. Barrier6 repeats P2 and P6 on the same launch profile."
