@@ -202,7 +202,7 @@
               :db/fn (d/function {:lang :clojure :params '[db ms] :code '(do (Thread/sleep (long ms)) [])})})
 (declare plan-of native)
 (defn queue! []
-  ;; Each subject is touched once, cold, in one of four modes (rotating, so the modes see alike subjects): idle or
+  ;; Each subject is touched once, cold, in one of five modes (rotating, so the modes see alike subjects): idle or
   ;; behind an 80 ms hold of the writer, with or without the per-subject hints. Native transactions, as the gateway
   ;; submits them; io-stats of the subject's own transaction only.
   (let [seed (get (slurp-json "seed.json") "off") name (get seed "db") conn (main/connection (main/db-uri name))
@@ -210,20 +210,23 @@
         used (into (into (set (set-a)) (set-b)) (set-probe))
         ;; Spread over the seed (subjects seeded together share index leaves), so each touch is cold.
         each (parse-long (or (System/getenv "W4_QUEUE_EACH") "40"))
-        pool (vec (take (* 4 each) (remove used (range 37 subjects (quot subjects (+ 8 (* 4 each)))))))
-        modes [[:idle false] [:idle true] [:queued false] [:queued true]]
+        pool (vec (take (* 5 each) (remove used (range 37 subjects (quot subjects (+ 8 (* 5 each)))))))
+        ;; :full names every segment the native commit itself reads on the peer (d/with of the commit), the most
+        ;; any hint can name: reads it leaves inside apply are not hintable.
+        modes [[:idle false] [:idle true] [:queued false] [:queued true] [:queued :full]]
         run (fn [[where hinted] n]
               (let [input (first-touch n (head name conn)) [db plan] (plan-of conn input)
-                    h (when hinted (hints/lookup-hints db (hints/from-plan plan)))
+                    h (cond (= hinted :full) (:hints (d/with db (native plan) :return-hints true))
+                            hinted (hints/lookup-hints db (hints/from-plan plan)))
                     early (when hinted (hints/lookup-hints db (request-payload input)))  ; the same hint from the request alone
                     hold (when (= where :queued) (d/transact-async conn [[:w4/hold-writer 80]]))
                     r @(apply d/transact-async conn (native plan) (concat (when h [:hints h]) [:io-context :w4/queue]))]
                 (when hold @hold)
-                {:mode (str (clojure.core/name where) (if hinted "-hints" "-none"))
+                {:mode (str (clojure.core/name where) (case hinted :full "-full" true "-hints" "-none"))
                  :reads (into {} (filter (fn [[_ v]] (number? v))) (get-in r [:io-stats :reads]))
                  :hintSegments (count (:segments h)) :requestSegments (count (:segments early))
                  :sameAsRequestPayload (= (set (:segments h)) (set (:segments early)))}))
-        rows (vec (map-indexed (fn [i n] (run (nth modes (mod i 4)) n)) pool))
+        rows (vec (map-indexed (fn [i n] (run (nth modes (mod i (count modes))) n)) pool))
         by-mode (into (sorted-map) (for [[m xs] (group-by :mode rows)]
                                      [m {:n (count xs) :reads (apply merge-with + {} (map :reads xs))
                                          :hintSegments (frequencies (map :hintSegments xs))
