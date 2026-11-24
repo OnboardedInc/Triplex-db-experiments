@@ -991,3 +991,10 @@ Verbatim: "why does it only give one option for account?"
 
 - **Cause:** the Subject type's Entities tab is an empty state with one button linking to the default account (`examples/console/src/pages/types/type-page.tsx` near line 362); all ten accounts are in the sidebar only.
 - **Action (orchestrator):** builder resumed to list subjects on that tab with an account picker for all ten accounts and paging by number, to rewrite builder jargon on screen in plain words, and to remove other single hard-wired choices. Not a decision of Sam's; feedback on the app.
+
+### 2026-11-24 06:21 local: Sam, after the Mac crashed overnight
+
+Verbatim, first: "Computer crash. Continue." Then, while the orchestrator was checking what the crash had stopped: "No, no, no. The crash: my whole computer crashed, not you. You should just continue where you left off."
+
+- **Reading (orchestrator's):** no diagnosis of the crash is wanted; restore what it stopped and carry on with the work.
+- **State found at 06:20:** Mac up 7 minutes; both colima VMs stopped; console on 127.0.0.1:28580 down; every commit of 2026-11-23 already pushed; no servers rented; no agent had been running.
