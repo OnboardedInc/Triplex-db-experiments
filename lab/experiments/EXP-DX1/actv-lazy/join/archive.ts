@@ -13,6 +13,7 @@ import { worldsAt, winner } from "../decision.ts";
 import { LazyReader } from "../read.ts";
 import { JoinedAccount, type Marker } from "./account.ts";
 import { address } from "./index.ts";
+import { fingerprint, ticketAccount, ticketAccounts, type AccountFrontier } from "./account-tickets.ts";
 import { evaluateRows } from "./material.ts";
 import { BulkQueue, bulkClaim, frameCountersOn, frameEstimates, type BulkClass } from "./bulk.ts";
 import {
@@ -209,6 +210,9 @@ export class Archive {
       n.usSum += estimate.us;
     }
     if (authority) verifySameErasureAuthority(this.source.s.comp, this.store.comp);
+    // [DX-ACT9] TX2_ACCOUNT_TICKETS=1: the ticket names the held account (the frame's destination is the same database).
+    const accounts = ticketAccounts(this.source.s);
+    const ticket = authority && accounts ? { seq: authority.seq, database: authority.database, accounts } : authority;
     // [DX-ERASE1] Why: admission can wait after a page was derived, so the same ticket belongs on the destination commit.
     // Rejected: a source read immediately before enqueueing (removal can publish while the batch waits).
     // [DX-ACT5] With TX2_SETTLE_PRECONDITION=progress the frame is refused only if its writer's progress row moved.
@@ -230,7 +234,7 @@ export class Archive {
             id,
             kind,
             () => this.store.commit(id, "lazy/settlement", ops, at, context, undefined, undefined, guards),
-            authority,
+            ticket,
           );
         } finally {
           c.turn(begun, performance.now());
@@ -262,7 +266,8 @@ export class Archive {
     const r = await a.receipt(sequence, sourceAt),
       { marker: m, event: e, census } = r;
     assert.equal(m.storage, "owed");
-    const authority = await recheckErasure(s.comp, m.erasureSeq);
+    // [DX-ACT9] With TX2_ACCOUNT_TICKETS=1 against the held account's removal state; otherwise as before.
+    const authority = await recheckErasure(s.comp, m.erasureSeq, ticketAccount(s));
     const identity = identityOf(s.scope, m, e.at),
       key = progressKey(sequence),
       prior = await this.db.row<Progress>(key, at);
@@ -365,7 +370,9 @@ export class Archive {
       { begin, end } = windowOf(start, census.count, width);
     const ids = (await memberPage(a.db, census, begin, m.cut)).slice(start - begin, end - begin);
     assert(ids.length === end - start && ids.length >= 1);
-    const key = canonical([identity, authority?.seq ?? null, begin]);
+    // [DX-ACT9] Under TX2_ACCOUNT_TICKETS=1 the page's evaluation stays valid while the account's removal state does
+    // (removals elsewhere move only the global sequence); otherwise keyed by the global sequence, as before.
+    const key = canonical([identity, (ticketAccount(s) === undefined ? authority?.seq : fingerprint(authority as AccountFrontier | undefined)) ?? null, begin]);
     if (this.window?.key !== key) this.window = { key, changes: new Map() };
     const known = this.window.changes,
       missing = ids.filter((id) => !known.has(id));
@@ -419,7 +426,7 @@ export class Archive {
     assert(frontier.status !== "stored" || frontier.through === census.count);
     if (frontier.frames === "bytes") {
       const output = await this.storedFrames(sequence, frontier, identity, at);
-      await recheckErasure(this.source.s.comp, marker.erasureSeq);
+      await recheckErasure(this.source.s.comp, marker.erasureSeq, ticketAccount(this.source.s));
       return { frontier, output, frames: "bytes" as FrameMode };
     }
     let previous = identity;
@@ -449,7 +456,7 @@ export class Archive {
       previous === frontier.hash &&
         frontier.changes === output.reduce((n, row) => n + row.changes.length, 0),
     );
-    await recheckErasure(this.source.s.comp, marker.erasureSeq);
+    await recheckErasure(this.source.s.comp, marker.erasureSeq, ticketAccount(this.source.s));
     return { frontier, output: output as (Answer | Changes)[], frames: "count" as FrameMode };
   }
   /**
@@ -505,7 +512,7 @@ export class Archive {
     }
     if (open) yield open;
     assert(previous === frontier.hash && through === frontier.through && tail === frontier.part && frontier.changes === changes);
-    await recheckErasure(this.source.s.comp, marker.erasureSeq);
+    await recheckErasure(this.source.s.comp, marker.erasureSeq, ticketAccount(this.source.s));
     return frontier;
   }
   // [DX-ACT4] Reads every frame page of a byte-framed release in order and joins split subjects: each page must start
@@ -568,7 +575,12 @@ export class Archive {
       s = source.s;
     // [DX-ACT4] Byte-framed pages hold changes only, so a read at the release's own basis is worked out from the record,
     // as every read before settlement is (the gates check it equals the answer the archive used to return).
-    if (this.frames === "bytes") return new LazyReader(s, s.profile, 2 << 20, undefined, "shared-cut");
+    // [DX-ACT9] TX2_ACCOUNT_TICKETS=1: keyed on and checked against the account's removal state (JoinedAccount.reader).
+    const account = ticketAccount(s);
+    if (this.frames === "bytes")
+      return account === undefined
+        ? new LazyReader(s, s.profile, 2 << 20, undefined, "shared-cut")
+        : new LazyReader(s, s.profile, 2 << 20, undefined, "shared-cut", undefined, true, account);
     return new LazyReader(
       s,
       s.profile,
@@ -604,10 +616,12 @@ export class Archive {
               parsed.release === r.release &&
               canonical(parsed.basis) === canonical(b),
           );
-          await recheckErasure(s.comp, marker.erasureSeq);
+          await recheckErasure(s.comp, marker.erasureSeq, ticketAccount(s));
           return row.json;
         }
       },
+      account !== undefined,
+      account,
     );
   }
 }

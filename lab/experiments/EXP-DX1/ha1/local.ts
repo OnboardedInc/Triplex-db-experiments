@@ -175,8 +175,11 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // phase and the default campaign as regressions) and the release-limits gate here.
   const besideSaves = holder === "DX-ACT8" && diagnostic && mode === "load-fair" && combined === undefined &&
     (process.env.DX_ACT6_GATE === "1" || process.env.DX_ACT3_HELD === "1");
+  // [DX-ACT9] Why: the account-tickets builder reruns the Publish branch's held gates on its merged head (its own image).
+  const accountTickets = holder === "DX-ACT9" && diagnostic && mode === "load-fair" && combined === undefined &&
+    (process.env.DX_ACT6_GATE === "1" || process.env.DX_ACT3_HELD === "1");
   assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours ||
-    snapshotWhole || heldPublish || settleFrames || settleLive || releaseLimits || besideSaves);
+    snapshotWhole || heldPublish || settleFrames || settleLive || releaseLimits || besideSaves || accountTickets);
   assert(combined === undefined || ownedCombination);
   if (mode === "load-fair") {
     const { cleanSource } = await import("../v01/source.ts");

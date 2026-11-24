@@ -16,6 +16,15 @@ import type { Archive } from "./archive.ts";
 import { fillFrame, frameEstimate, type Candidate, type Piece } from "./frames.ts";
 import type { JoinedAccount } from "./account.ts";
 import { ledgerMode, noticeCandidate, readLedgers, type LedgerMode } from "./ledger-parts.ts";
+import {
+  copyCheck,
+  fingerprint,
+  frontierFor,
+  ticketAccount,
+  ticketAccounts,
+  touchedSubjects,
+  type AccountFrontier,
+} from "./account-tickets.ts";
 
 const step = 4;
 assert(width % step === 0);
@@ -153,7 +162,10 @@ export class RecordedNotices {
     const b = this.archive,
       a = b.source,
       db = b.db;
-    const authority = await readErasure(a.s.comp);
+    // [DX-ACT9] With TX2_ACCOUNT_TICKETS=1 the frontier is read after the cursor (still before any input), so the
+    // cursor's stamp can be checked against the account's removals; otherwise here, as before.
+    const account = ticketAccount(a.s);
+    let authority = account === undefined ? await readErasure(a.s.comp) : undefined;
     const sourceAt = await a.s.head(),
       at = await b.store.head(),
       tail = await a.notices.event(through, sourceAt);
@@ -174,7 +186,8 @@ export class RecordedNotices {
       previous: hash([a.db.prefix, t.epoch, "receiver-genesis"]),
     };
     assert(current.epoch === t.epoch);
-    if (prior && current.erasureSeq !== authority?.seq)
+    if (account !== undefined) authority = await this.cursorAuthority(prior ? current : undefined, at);
+    else if (prior && current.erasureSeq !== authority?.seq)
       throw new ErasureChanged("Recorded notices belong to an earlier removal sequence");
     if (current.event > through) {
       assert(prior);
@@ -251,6 +264,34 @@ export class RecordedNotices {
     );
     return next.event > through ? { current: next, at: ack.position } : undefined;
   }
+  /**
+   * [DX-ACT9] TX2_ACCOUNT_TICKETS=1: the frontier new frames are stamped with, after checking that the recorder may go
+   * on from its cursor. It may while no removal published after the cursor's stamp touched the unscoped account, and
+   * every entity of this account touched since then belongs to no subject or to a subject with no notice ledger
+   * (ACCOUNT-TICKETS.md section 4: a recorded notice and a ledger hold only their own subject's derived values). The
+   * frames' tickets name the account, so a removal of this account committed after this check refuses them at Datomic's
+   * commit point.
+   */
+  private async cursorAuthority(cursor: Cursor | undefined, at: number) {
+    const a = this.archive.source;
+    const stamp = cursor?.erasureSeq;
+    const f = await frontierFor(a.s, stamp);
+    if (!cursor) return f;
+    const refuse = () => {
+      throw new ErasureChanged("Recorded notices belong to an earlier removal sequence");
+    };
+    if (stamp === undefined || !f) return f?.seq === stamp ? f : refuse();
+    if (f.perAccount !== true) return f.seq === stamp ? f : refuse();
+    const touched = touchedSubjects(f, a.s.held!.prefix, stamp);
+    if (touched === "all")
+      return stamp <= f.seq && f.accountSeq! <= stamp && f.unscopedSeq! <= stamp ? f : refuse();
+    if (touched.size) {
+      const ids = [...touched].map((n) => W0.placementId(n));
+      const ledgers = await readLedgers(this.archive.db, ids, at);
+      if (ids.some((id) => ledgers.get(id)?.head !== undefined)) refuse();
+    }
+    return f;
+  }
   // [DX-ACT4] One byte-sized frame of notice entries (frames.ts has the rule). Units are a subject's deliveries; its
   // ledger change is the closing piece and is written with its last deliveries. A subject whose deliveries alone exceed
   // the bound is split by delivery; until its last part is written its ledger keeps the earlier state, so a restart
@@ -272,7 +313,9 @@ export class RecordedNotices {
     const begin = Math.floor(current.start / width) * width;
     const { ids, size } = await this.page(e, current.start, begin + width - current.start);
     assert(current.start <= size && (ids.length >= 1 || current.start === size));
-    const wkey = canonical([e.id, e.at, authority?.seq ?? null, begin]);
+    // [DX-ACT9] Under TX2_ACCOUNT_TICKETS=1 keyed by the account's removal state (removals elsewhere move only the
+    // global sequence); otherwise by the global sequence, as before.
+    const wkey = canonical([e.id, e.at, (ticketAccount(a.s) === undefined ? authority?.seq : fingerprint(authority as AccountFrontier | undefined)) ?? null, begin]);
     if (this.window?.key !== wkey) this.window = { key: wkey, work: new Map() };
     const known = this.window.work,
       missing = ids.filter((id) => !known.has(id));
@@ -343,6 +386,9 @@ export class RecordedNotices {
       entries = 0;
     const head = await a.s.head();
     let bound: Event | undefined;
+    // [DX-ACT9] TX2_ACCOUNT_TICKETS=1: a packet is served while no removal published after its stamp touched the unscoped
+    // account or one of the subjects it holds (one frontier read per stamp); otherwise its stamp must be current.
+    const check = copyCheck(a.s);
     for (let offset = 1; offset <= state.batch; offset += 32) {
       const keys = Array.from({ length: Math.min(32, state.batch - offset + 1) }, (_, i) =>
         packetKey(offset + i),
@@ -365,7 +411,8 @@ export class RecordedNotices {
         );
         entries += p.deliveries.length;
         previous = hash(p);
-        await recheckErasure(a.s.comp, p.erasureSeq);
+        if (check) await check(p.erasureSeq, p.deliveries.map((d) => d.subject));
+        else await recheckErasure(a.s.comp, p.erasureSeq);
         yield p;
       }
     }
@@ -383,9 +430,17 @@ export class RecordedNotices {
   async deliver(sink: Documents, at: number) {
     let effects = 0;
     const source = this.archive.source;
+    // [DX-ACT9] TX2_ACCOUNT_TICKETS=1: each packet checked as when read (its subjects), and the recipient's commit
+    // carries a cross-database ticket naming the source account, checked by the gateway under that account's locks.
+    const accounts = ticketAccounts(source.s), check = copyCheck(source.s);
     for await (const packet of this.orderedPackets(at)) {
+      const subjects = packet.deliveries.map((d) => d.subject);
       const frontier =
-        packet.erasureSeq === undefined ? undefined : () => readErasure(source.s.comp);
+        packet.erasureSeq === undefined
+          ? undefined
+          : check
+            ? () => check(packet.erasureSeq, subjects, true)
+            : () => readErasure(source.s.comp);
       if (frontier) verifySameErasureAuthority(source.s.comp, sink.store);
       if (
         await receiveOrdered(
@@ -396,6 +451,7 @@ export class RecordedNotices {
           undefined,
           undefined,
           frontier,
+          accounts,
         )
       )
         effects += packet.deliveries.length;

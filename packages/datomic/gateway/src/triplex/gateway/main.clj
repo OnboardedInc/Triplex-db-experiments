@@ -414,6 +414,58 @@
                                   (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e)))
                                   (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e)))
                                   (:estimatedMicros (ex-data e)) (assoc :estimatedMicros (:estimatedMicros (ex-data e))))))))
+;; [DX-ACT9] TX2_ACCOUNT_TICKETS=1 (default off; effective only with TX2_REMOVAL_PER_ACCOUNT=1): a cross-database ticket
+;; (a delivery into a recipient database) that names its source accounts is checked under the source's account locks
+;; instead of the source database's lock; the removal frontier reports which entities of an account were touched after
+;; a sequence. Why: one database holds every account, so a delivery of any account waited for and was then refused by
+;; every removal of the source, and a recorded notice can be checked per subject only if the client can tell which
+;; subjects a removal touched. Unset: both routes answer exactly as before. ACCOUNT-TICKETS.md sections 3.2 and 4.
+;; Rejected: checking a cross-database ticket against the source's published sequence alone (a removal committed in
+;; Datomic and not yet published would pass it); a fence in the recipient's transaction (it cannot see the source's
+;; counters).
+(def ^:private account-tickets (if removal-scope/enabled (= "1" (System/getenv "TX2_ACCOUNT_TICKETS")) false))
+(def ^:private touched-limit 1024)
+
+(defn- query-param [query-string k]
+  (some (fn [part]
+          (let [[a v] (clojure.string/split part #"=" 2)]
+            (when (= a k) (java.net.URLDecoder/decode (or v "") "UTF-8"))))
+        (clojure.string/split (or query-string "") #"&")))
+
+(defn- touched-fields
+  "With ?account=A&since=S: the entities of account A whose removal counter in this published cut is above S, sorted, at
+  most touched-limit, and whether that is all of them."
+  [cut query-string]
+  (let [account (query-param query-string "account") since (query-param query-string "since")]
+    (when (and (seq account) since (re-matches #"0|[1-9][0-9]{0,15}" since))
+      (let [s (Long/parseLong since)
+            hits (sort (keep (fn [[e n]] (when (and (> n s) (= account (removal-scope/bucket e))) e)) (:entities cut)))]
+        {:since s :touched (vec (take touched-limit hits)) :touchedComplete (<= (count hits) touched-limit)}))))
+
+(defn- source-accounts
+  "The source accounts a cross-database ticket names, when the option is on and the source is guarded per account."
+  [input source]
+  (when (if account-tickets (if source (contains? input "erasureAccounts") false) false)
+    (when (removal-scope/per-account? (d/db (connection (db-uri source))))
+      (removal-scope/ticket-accounts input))))
+
+(defn- source-ticket!
+  "Under the source's locks of the named accounts and the unscoped account (held from here through the recipient's
+  commit): refused 503 while the source has a pending removal that can touch one of them; refused 409 unless the ticket
+  is current for them in the source's published cut and their native removal counters are at most the ticket's
+  sequence. Every removal holds those locks from before its native commit to its end, so none of theirs can commit
+  between this check and the recipient's commit."
+  [source input accounts]
+  (let [sconn (connection (db-uri source))
+        [scut sdb] (removal-erase/request-cut source sconn (d/db sconn))
+        offered (get input "erasureSeq")
+        named (conj (set accounts) removal-scope/unscoped)]
+    (when-not (:per-account scut) (privacy/unavailable!))
+    (when-let [pending (privacy/pending source)]
+      (when (some (removal-scope/entry-buckets pending) named) (privacy/unavailable!)))
+    (when-not (removal-scope/ticket-current? scut offered accounts) (privacy/stale!))
+    (when-not (every? #(<= (removal-scope/native-account-seq sdb %) offered) named) (privacy/stale!))))
+
 (defn- with-privacy-guards [scopes work]
   (if-let [[scope & more] (seq scopes)]
     (privacy/guard scope #(with-privacy-guards more work))
@@ -445,6 +497,8 @@
                     (codec/invalid "Invalid source scope for protected delivery"))
                 ;; [DX-ERA2] Per account, a ticket naming its source accounts holds those accounts' locks only.
                 ticket-accounts (when (and per-account managed-write? (nil? source)) (removal-scope/ticket-accounts input))
+                ;; [DX-ACT9] A cross-database ticket naming its source accounts (TX2_ACCOUNT_TICKETS=1).
+                source-named (source-accounts input source)
                 [independent db] (if (and managed-write? (or subject/enabled per-account) (nil? source)
                                           (not (contains? input "erasureSeq"))
                                           (not (true? (get input "erasureReplay"))))
@@ -461,6 +515,9 @@
                                                               :seq (or (:seq cut) 0) :erased (or (:erased cut) {})}
                                                        (:per-account cut)
                                                        (merge (removal-scope/frontier-fields cut query-string))
+                                                       ;; [DX-ACT9] Only with TX2_ACCOUNT_TICKETS=1 and ?since=.
+                                                       (if account-tickets (:per-account cut) false)
+                                                       (merge (touched-fields cut query-string))
                                                        ;; [DX-IMP2] The removed families an importer must leave out.
                                                        policy/import-whole? (assoc :families (vec (sort (:families cut))))))
                                        (route-handler-base request))]
@@ -473,9 +530,12 @@
               (and input (or managed-write? source))
               ;; [DX-ERASE1] Why: the source cannot publish an erasure between validation and recipient commit.
               ;; Rejected: an HTTP recheck followed by an independent recipient write.
-              (with-privacy-guards (if ticket-accounts
-                                     (sort (map #(removal-scope/lock-name name %) ticket-accounts))
-                                     (sort (cond-> #{} managed-write? (conj name) source (conj source))))
+              (with-privacy-guards (cond
+                                     ticket-accounts (sort (map #(removal-scope/lock-name name %) ticket-accounts))
+                                     source-named (sort (concat (when managed-write? [name])
+                                                                (map #(removal-scope/lock-name source %)
+                                                                     (conj (set source-named) removal-scope/unscoped))))
+                                     :else (sort (cond-> #{} managed-write? (conj name) source (conj source))))
                 (fn []
                   (let [[current next] (trace/span "privacy/write-frontier" "gateway"
                                          (let [current (d/db conn)]
@@ -488,10 +548,12 @@
                     (when-not (:per-account next) (trace/span "privacy/verify-write" "gateway" (privacy/verify-data! next current)))
                     (when (or source (contains? input "erasureSeq"))
                       (if source
-                        (let [source-db (d/db (connection (db-uri source)))
-                              source-cut (privacy/cut source source-db)]
-                          (privacy/verify-data! source-cut source-db)
-                          (privacy/ensure-seq! source-cut (get input "erasureSeq")))
+                        (if source-named
+                          (source-ticket! source input source-named)
+                          (let [source-db (d/db (connection (db-uri source)))
+                                source-cut (privacy/cut source source-db)]
+                            (privacy/verify-data! source-cut source-db)
+                            (privacy/ensure-seq! source-cut (get input "erasureSeq"))))
                         (removal-scope/ensure-ticket! next input)))
                     (run next))))
               ;; [DX-ERASE1] Why: a guarded write only needs the cut verified inside the writer lock.

@@ -5,6 +5,7 @@ import {
 } from "../../../../packages/datomic/dist/index.js";
 import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { readErasure } from "../../../bench/lib/datomic-erasure.ts";
+import { fingerprint, type AccountFrontier } from "./join/account-tickets.ts";
 import assert from "node:assert/strict";
 import { canonical, sha256, W0, worldOf } from "../../../bench/lib/w0-world.ts";
 import {
@@ -96,7 +97,7 @@ export class LazyReader {
   private cache = new Map<string, string>();
   private used = 0;
   private erased = -1;
-  private removed?: number;
+  private removed?: number | string;
   private replica?: Awaited<ReturnType<typeof captureDemand>>;
   attach(view: Awaited<ReturnType<typeof captureDemand>>) {
     assert(view.scope === this.store.scope && this.format === "w0");
@@ -106,6 +107,17 @@ export class LazyReader {
   private readonly path: "legacy" | "shared-cut";
   private readonly archive?: ArchivedAnswer;
   private readonly protectedScope: boolean;
+  /** [DX-ACT9] TX2_ACCOUNT_TICKETS=1, a held account: the cache keys on and checks this account's removal state (its
+   * and the unscoped counters) instead of the global sequence. Undefined: as before. */
+  private readonly removalAccount?: string;
+  private removal() {
+    return this.removalAccount === undefined
+      ? readErasure(this.store.comp)
+      : readErasure(this.store.comp, this.removalAccount);
+  }
+  private stamp(f: Awaited<ReturnType<typeof readErasure>>) {
+    return this.removalAccount === undefined ? f?.seq : fingerprint(f as AccountFrontier | undefined);
+  }
   constructor(
     store: Store,
     format: Format = "w0",
@@ -114,7 +126,9 @@ export class LazyReader {
     path: "legacy" | "shared-cut" = "legacy",
     archive?: ArchivedAnswer,
     protectedScope = false,
+    removalAccount?: string,
   ) {
+    this.removalAccount = removalAccount;
     this.now = now;
     this.path = path;
     this.archive = archive;
@@ -139,7 +153,7 @@ export class LazyReader {
     // [DX-INT1] Why: a declared protected scope needs authority on every cached read.
     // Rejected: a new authority request on the ordinary Publish path.
     const [head, initialAuthority] = this.protectedScope
-      ? await Promise.all([s.head(), readErasure(s.comp)])
+      ? await Promise.all([s.head(), this.removal()])
       : [await s.head(), undefined];
     stage?.("pin");
     const p = await resolvePin(s, pin, head);
@@ -149,11 +163,11 @@ export class LazyReader {
     assert(W0.isInstant(b.validTime));
     const shared = this.path === "shared-cut";
     let frontier = head;
-    for (let authority = initialAuthority; ; authority = this.protectedScope ? await readErasure(s.comp) : undefined) {
+    for (let authority = initialAuthority; ; authority = this.protectedScope ? await this.removal() : undefined) {
       stage?.("erasure-before");
       // [DX-ERASE1] Why: a native removal changes every old pin without writing a Lazy account mask.
       // Rejected: relying on the mask revision alone to authorize cached output.
-      const sequence = authority?.seq;
+      const sequence = this.stamp(authority);
       const latest = shared
           ? frontier === p
             ? c
@@ -164,9 +178,9 @@ export class LazyReader {
       const stable = async () => {
         const [end, verified] = await Promise.all([
           s.head(),
-          sequence === undefined ? undefined : readErasure(s.comp),
+          sequence === undefined ? undefined : this.removal(),
         ]);
-        if (sequence !== verified?.seq) return false;
+        if (sequence !== this.stamp(verified)) return false;
         if (shared && end === frontier) return true;
         frontier = end;
         const after = await s.controls(end);
@@ -255,14 +269,14 @@ export class LazyReader {
     const b = { tx: position, validTime },
       c = await s.controls(position);
     for (;;) {
-      const sequence = this.protectedScope ? (await readErasure(s.comp))?.seq : undefined;
+      const sequence = this.protectedScope ? this.stamp(await this.removal()) : undefined;
       const current = await s.controls(await s.head()),
         worlds = await worldsAt(s, this.format, subjects, b);
       await prefetchWinner(s, c, b); // [DX-ACT6]
       const rows = worlds.map((w) => evaluate(s, this.format, w, b, c, current).json);
       if (
         maskVersion(current) === maskVersion(await s.controls(await s.head())) &&
-        (sequence === undefined || (await readErasure(s.comp))?.seq === sequence)
+        (sequence === undefined || this.stamp(await this.removal()) === sequence)
       )
         return rows;
     }

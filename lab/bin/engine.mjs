@@ -148,7 +148,7 @@ async function buildDatomic(config, opts) {
   if (isolated) {
     // [DX-ACT8] Why: a private Java 21 image built from this checkout, so a toy run can prove which gateway bytes it ran.
     // Rejected: moving the shared tag or appending a build event (every other builder's next run would start on it).
-    if (!['DX-JVM1', 'DX-CHK1', 'DX-THIN1', 'DX-ACT8'].includes(opts.holder) || fs.existsSync(isolated))
+    if (!['DX-JVM1', 'DX-CHK1', 'DX-THIN1', 'DX-ACT8', 'DX-ACT9'].includes(opts.holder) || fs.existsSync(isolated))
       fail('REFUSED', 'An isolated JVM build requires the assigned holder and a fresh receipt path');
     // [DX-JVM1] Why: this image build reserves no engine slot and finishes under its ordinary heavy token.
     // Rejected: checking slot admission again after the build has a token (races a pending lease drain).
@@ -179,7 +179,7 @@ assert actual==expected, 'Extracted Datomic bytes differ from the pinned ZIP'
   // [DX-CHK1] Why: keep JVM test images and cleanup owned by the combined gate.
   // Rejected: retagging or removing the JVM1 builder's existing image.
   const holder = isolated && opts.holder !== 'DX-JVM1' ? opts.holder : undefined;
-  const tag = isolated ? (holder === 'DX-THIN1' ? 'tx2-dxthin-jre' : holder === 'DX-ACT8' ? 'tx2-dxact8-jre' : holder ? 'tx2-dxchk1-jre' : 'tx2-dxjvm1-jre') + runtime.major + ':' + buildInputsSha256.slice(0, 16) : config.lanes.datomic.image;
+  const tag = isolated ? (holder === 'DX-THIN1' ? 'tx2-dxthin-jre' : holder === 'DX-ACT8' ? 'tx2-dxact8-jre' : holder === 'DX-ACT9' ? 'tx2-dxact9-jre' : holder ? 'tx2-dxchk1-jre' : 'tx2-dxjvm1-jre') + runtime.major + ':' + buildInputsSha256.slice(0, 16) : config.lanes.datomic.image;
   const parent = path.join(ENGINE_DIR, 'datomic-build');
   fs.mkdirSync(parent, { recursive: true });
   const context = path.join(parent, `${buildInputsSha256}-${process.pid}-${Date.now()}`);
@@ -244,7 +244,7 @@ function finishDatomicBuild(config, { context, distribution, dist, gpg, holder, 
 }
 
 function removeJvmImage(opts) {
-  if (!['DX-JVM1', 'DX-CHK1', 'DX-THIN1', 'DX-ACT8'].includes(opts.holder) || typeof opts['variant-receipt'] !== 'string')
+  if (!['DX-JVM1', 'DX-CHK1', 'DX-THIN1', 'DX-ACT8', 'DX-ACT9'].includes(opts.holder) || typeof opts['variant-receipt'] !== 'string')
     fail('USAGE', 'JVM image removal requires the assigned holder and a variant receipt');
   const runtime = datomicRuntime(readJson(opts['variant-receipt']).runtime?.major);
   const receipt = readVariantReceipt(opts['variant-receipt'], runtime);

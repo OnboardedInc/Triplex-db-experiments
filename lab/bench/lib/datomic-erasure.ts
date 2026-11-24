@@ -11,7 +11,9 @@ export type ErasureSource = Pick<CompositionHandle, "backend" | "scopeName">;
 // Rejected: treating the position or the presence of a native handle as an erasure ticket.
 // [DX-ERA2] `account` (optional): on a database guarded per account the answer also carries that account's removal
 // sequence (accountSeq) and the sequence of entities outside every account (unscopedSeq). Without it, as before.
-export async function readErasure(source: Partial<ErasureSource>, account?: string) {
+// [DX-ACT9] `since` (optional, with `account`): a gateway with TX2_ACCOUNT_TICKETS=1 adds the account's entities whose
+// removal counter is above it (`touched`, `touchedComplete`). Without it the request is exactly as before.
+export async function readErasure(source: Partial<ErasureSource>, account?: string, since?: number) {
   if (source.backend?.name !== "datomic" || source.backend.url.startsWith("memory://")) return;
   if (!source.scopeName) throw new ErasureChanged("Datomic scope identity is absent");
   const scope = String(runtimeApi.DatabaseScope.test(source.scopeName));
@@ -22,7 +24,8 @@ export async function readErasure(source: Partial<ErasureSource>, account?: stri
       ? await client.erasureFrontier(db)
       : await client.request<Awaited<ReturnType<DatomicClient["erasureFrontier"]>> & {
           perAccount?: boolean; accountSeq?: number; unscopedSeq?: number;
-        }>("GET", `/v2/db/${db}/erasure-frontier?account=${encodeURIComponent(account)}`);
+        }>("GET", `/v2/db/${db}/erasure-frontier?account=${encodeURIComponent(account)}` +
+          (since === undefined ? "" : "&since=" + String(since)));
     if (cut.protected) return cut;
   } finally {
     client.close();

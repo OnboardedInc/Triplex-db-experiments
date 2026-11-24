@@ -7,7 +7,10 @@ import {
 import { runtimeApi } from "../../../../bench/lib/triplex.ts";
 
 export type BulkClass = "activation" | "notice";
-type SourceTicket = Pick<ErasureFrontier, "seq" | "database">;
+// [DX-ACT9] `accounts` (TX2_ACCOUNT_TICKETS=1): the frame's destination is the source's own database, so the ticket
+// names the account the frame read instead of being sent as a cross-database ticket (which keeps the database-wide
+// check). Absent: exactly as before.
+type SourceTicket = Pick<ErasureFrontier, "seq" | "database"> & { accounts?: readonly string[] };
 const workByClaim = new Map<string, { kind: BulkClass; ticket?: SourceTicket }>();
 let installed = false;
 export const bulkWireLimit = 64 * 1024;
@@ -65,7 +68,9 @@ export async function bulkClaim<T>(
           })
         : original.call(this, db, wire, onSent);
       return work.ticket
-        ? withDatomicErasureSequence(work.ticket.seq, invoke, false, work.ticket.database)
+        ? work.ticket.accounts
+          ? withDatomicErasureSequence(work.ticket.seq, invoke, false, undefined, work.ticket.accounts)
+          : withDatomicErasureSequence(work.ticket.seq, invoke, false, work.ticket.database)
         : invoke();
     };
   }

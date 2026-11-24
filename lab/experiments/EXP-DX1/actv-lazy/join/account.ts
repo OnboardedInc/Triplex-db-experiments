@@ -1,4 +1,5 @@
 import { readErasure, recheckErasure, withErasure } from "../../../../bench/lib/datomic-erasure.ts";
+import { ticketAccount, ticketAccounts } from "./account-tickets.ts";
 import { bytes as transport } from "../../import1/source.ts";
 import assert from "node:assert/strict";
 import {
@@ -222,7 +223,12 @@ export class JoinedAccount {
     return this.notices.db;
   }
   reader() {
-    return new LazyReader(this.s, this.s.profile, 2 << 20, undefined, "shared-cut");
+    // [DX-ACT9] TX2_ACCOUNT_TICKETS=1: the cache keys on and checks the account's removal state (a pinned answer cached
+    // before a removal of this account is not served after it). Unset: as before (held readers check none).
+    const account = ticketAccount(this.s);
+    return account === undefined
+      ? new LazyReader(this.s, this.s.profile, 2 << 20, undefined, "shared-cut")
+      : new LazyReader(this.s, this.s.profile, 2 << 20, undefined, "shared-cut", undefined, true, account);
   }
   private async meta(p: number) {
     const m = (await this.db.get<Meta>("join-meta", p)).value;
@@ -672,7 +678,9 @@ export class JoinedAccount {
       r = xs.find((x) => x.position === e.at);
     assert(r);
     const m = value(r) as Marker;
-    await recheckErasure(this.s.comp, m.erasureSeq);
+    // [DX-ACT9] With TX2_ACCOUNT_TICKETS=1 (and the per-account removal rule) against the account's removal state;
+    // otherwise as before.
+    await recheckErasure(this.s.comp, m.erasureSeq, ticketAccount(this.s));
     // [DX-ACT8] A record written under the account guard stores where it read its account's state (`cut`, and the
     // event's `sourceBefore`); the guard proves that state unchanged up to the record's own position, so the record holds
     // at its own position like every other: its effective cut is that position minus one, which every reader of a marker
@@ -799,7 +807,10 @@ export class JoinedAccount {
       small = storage === "staged" && options.codec !== "legacy";
     assert(Number.isInteger(workers) && workers >= 1 && workers <= 8);
     const priceStart = performance.now();
-    const sequence = (await readErasure(this.s.comp))?.seq;
+    // [DX-ACT9] With TX2_ACCOUNT_TICKETS=1 the ticket names the held account and every recheck is against it; the
+    // marker keeps the global sequence (a point in the one removal log). Unset: as before.
+    const account = ticketAccount(this.s), accounts = ticketAccounts(this.s);
+    const sequence = (await readErasure(this.s.comp, account))?.seq;
     this.lastMaterial = emptyMaterial();
     // [DX-ACT6] By reference: the definitions not stored yet are written first (content-addressed, unfenced, each write
     // within the writer's bound), and the predecessor's too if it was published with full documents.
@@ -967,7 +978,7 @@ export class JoinedAccount {
             compiler: selector,
             ...(beside ? { precondition: "account" as const } : {}),
           };
-          if (sequence !== undefined) await recheckErasure(this.s.comp, sequence);
+          if (sequence !== undefined) await recheckErasure(this.s.comp, sequence, account);
           const record = [fact(namesOf(this.s).RELEASE, "lazy/activation", m), ...np.operations, ...ops];
           // [DX-ACT6] The store takes one fact value of at most 1 MiB (the Datomic value domain, 1,048,576 UTF-8 bytes):
           // with full documents the marker holds the new and the old document in one value and the notice event the new
@@ -1011,6 +1022,8 @@ export class JoinedAccount {
         storage === "owed",
         options.observation,
       ),
+      undefined,
+      accounts,
     );
     try {
       return await run();

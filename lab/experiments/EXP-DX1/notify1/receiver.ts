@@ -15,11 +15,15 @@ export async function receiveOrdered(
   grant?: () => Promise<void>,
   checkpoint?: { binding: string; ops: Op[]; checks: Check[] },
   frontier?: () => Promise<ErasureFrontier | undefined>,
+  // [DX-ACT9] TX2_ACCOUNT_TICKETS=1 (recorded.ts): `frontier` has already checked the packet against the source
+  // account's removals (it throws when stale) and returns the frontier it checked; the commit's cross-database ticket
+  // carries that frontier's sequence and names these source accounts. Absent: as before.
+  accounts?: readonly string[],
 ) {
   const requireFrontier = async () => {
     if (frontier || p.erasureSeq !== undefined) {
       const state = await frontier?.();
-      if (!state || state.seq !== p.erasureSeq)
+      if (!state || (accounts === undefined && state.seq !== p.erasureSeq))
         throw new ErasureChanged("Receiver erasure frontier unavailable or stale");
       return state;
     }
@@ -83,6 +87,7 @@ export async function receiveOrdered(
         [db.guard(key, head), ...(checkpoint?.checks ?? [])],
       ),
     authority?.database,
+    accounts,
   );
   return true;
 }
