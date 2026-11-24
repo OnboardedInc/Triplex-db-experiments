@@ -99,9 +99,9 @@ estimate, about 200 facts**. A subject over it is refused with the limit, never 
 | Importer (the gate's, as load1's protocol) | Packs the longest run of whole subjects whose frame fits; a subject that alone exceeds the bound is reported `ImportSubjectTooLarge {subject, facts, estimateUs, limitUs}` and never sent | |
 | Lab plumbing | `stack/up.sh` forwards both settings to the writers; the combined check's writer settings carry them; `ha1/local.ts` lets DX-IMP2 run the combined cases in its own slot; the fair importer takes one whole subject of up to 1,000 facts per frame and checks the writer's readback; the fair server launcher accepts those widths | Byte-identical launches |
 
-**Not changed:** the load1 snapshot importer still sends through the SDK composition with no write class, so its
-frames are live-class and unbounded; it already never splits a subject (it refuses one larger than its width). The
-product has no import API yet. Where an import gets its identities is the SDK's (below).
+**The load1 snapshot importer** sends import-class frames under the option from its import entry points, and never
+splits a subject (section 8.2). The product has no import API yet. Where an import gets its identities is the SDK's
+(below).
 
 ## 4. Identities, receipts and history
 
@@ -132,9 +132,10 @@ with this branch's gateway sources mounted read-only, and the base's sources for
 | Step 3: several whole subjects per frame | the first frame carries 8 subjects; covered by (b) |
 | **(c) Kill at every frame through the first 50 subjects, resume** (`kill-after-every-frame-and-resume`) | 62 subjects (60 of 20 to 40 facts, one of 160, one of 9) in 11 frames; each of the 9 frames that start before subject 50 was killed before its send, lost its reply once (503, recovered by lookup), was killed after its commit but before its checkpoint (recovered by `CommandConflict` and lookup), and was killed after its checkpoint: 27 kills and 9 lost replies, 28 restarts. Final log equal to a control import datom for datom (4,290 datoms; only operation IDs, one per attempt as the SDK's, excluded), receipts equal, 0 duplicate history rows, each command committed once, 0 half at every position |
 | **(d) Live saves beside an import, same subject and other accounts** (`live-saves-beside-an-import`, both writer modes) | Live save first: the import is refused 409 `CasConflict`, nothing written, then sent again and committed whole on top. Import first: the live save is refused 409 `CasConflict` and replayed on top. Never merged: 0 half in 72 reads; 161 and 121 current facts. Neighbour saves in another account between frames: all 200 |
-| (e) Removal on request beside an import | **Partly.** The combined check's `read` case ran with the option set in the launcher (`ha1 load-fair --combined read`, holder DX-IMP2, toy SQL stack): 4 import frames at positions 5, 7, 13 and 23, a removal on request at position 8 between them, 21 saves, 176 logical reads, 27 replayed commits, exit 0. Its imports are 8-fact subjects in other entities than the removed value, so **removal of a subject that is itself mid-import was not exercised**, and this case does not read the writer's options back |
-| **(f) Fair-import combined check with the option on** (`ha1 load-fair --combined fair`, holder DX-IMP2) | Exit 0: 8 import frames (fair policy) beside live saves, the quiet account and Publish, 36 receipts, 46 replayed commits, every row read back. Run before the writer readback assertion was added (`0e3c57e8e`); the rerun with it was stopped by the lab VM (its disk check needs an XTDB image that is no longer on the VM, and the VM could not resolve the registry) |
-| (f) Production exactness gate with the option on (`DX_CHK1_HOLDER=DX-IMP2 DX_IMP2_WHOLE=1 prep1/manage.py OUT production 10 1 1 0 1`) | **Not run**: the gate builds its own image and the lab VM could not resolve the registry (`node:22.23.2-bookworm-slim`). The plumbing is committed. The production tape has no import, so the option changes nothing on its path; this is argued, not tested |
+| (e) Removal on request of a subject that is itself mid-import | **Pass with the option** (section 8.1): 28 assertions; 0 removed plaintexts in any answer at any position, against 13 with the option off. Earlier, beside an import: **Partly.** The combined check's `read` case ran with the option set in the launcher (`ha1 load-fair --combined read`, holder DX-IMP2, toy SQL stack): 4 import frames at positions 5, 7, 13 and 23, a removal on request at position 8 between them, 21 saves, 176 logical reads, 27 replayed commits, exit 0. Its imports are 8-fact subjects in other entities than the removed value, so **removal of a subject that is itself mid-import was not exercised**, and this case does not read the writer's options back |
+| **(f) Fair-import combined check with the option on** (`ha1 load-fair --combined fair`, holder DX-IMP2) | Exit 0: 8 import frames (fair policy) beside live saves, the quiet account and Publish, 36 receipts, 46 replayed commits, every row read back. Rerun at `f3cda6b85` with the writer readback asserted: **exit 0**, writer `importWholeSubject: true, importCommitMicros: 40000`, 8 import frames, 36 receipts, 46 replayed commits, 0 containers left |
+| (f) Production exactness gate with the option on (`DX_CHK1_HOLDER=DX-IMP2 DX_IMP2_WHOLE=1 prep1/manage.py OUT production 10 1 1 0 1`, at `f3cda6b85`) | **Pass**: R 840 of 840 and S 88 of 88 commits (and 2 wide), 0 expired, 2,264 facts written, 2,836 fields read back exactly. The option reached the stack as its staged `import-whole` setting; this gate has no writer readback of its own. The gate rebuilds the shared `tx2-datomic:dx-real2-production` tag, as every builder's run of it does |
+| Snapshot importer proof with the option on (`ha1 load-proof`, holder DX-IMP2) | **Pass**: every snapshot frame reached the writer as import class (`frameClasses: {import: 2}`), writer readback `importWholeSubject: true`, 20 facts, kill-free reopen and forged-cursor refusal as the proof has always checked |
 | **(g) Counted work** | section 2 table |
 | **Totals** (`imp2/gate.sh` on `0e3c57e8e`'s gateway sources) | memory: 6 tests, 272 assertions, 0 failures; PostgreSQL storage (fsync, synchronous commit, full page writes on): 6 tests, 272 assertions, 0 failures; option-off digest IDENTICAL twice |
 
@@ -198,9 +199,58 @@ machine hour; with server preparation, about 1 hour 15 minutes and USD 1.40.
 
 - **Nothing ran on a server.** Every 1 billion figure is a forecast from the fits named in section 2.
 - **ID lists, the sweep and `find`** were not on the base; their visibility is argued, not tested.
-- **Removal on request of a subject that is itself mid-import** was not exercised; the combined `read` case ran a removal between import frames of other subjects. With whole subjects the question reduces to "removal before or after one commit", but that is argued, not tested.
-- **The production exactness gate with the option on did not run** (the lab VM could not resolve the image registry), and the fair combined check's rerun with the writer readback assertion was stopped the same way.
-- **The product has no import API.** The bound applies to import-class commits; the lab's snapshot importer (load1)
-  sends live-class frames and is not bounded by it.
+- **Removal by assertion ID of a value not yet imported** has nothing to record (the ID does not exist yet); only entity selectors are recorded as families.
+- **ID lists, the sweep and `find`**: `origin/exp/DX-INT1` was still `23b7df344` at 15:52 local, so nothing was merged and the visibility gate does not cover them.
+- **The product has no import API.** The bound applies to import-class commits; the load1 snapshot importer sends
+  them under the option from its import entry points (section 8.2); the toy fixture's seed loader does not.
 - **Toy apply times and storage reads** say nothing about 1 billion; the toy database fits in cache.
 - **The server harness gaps** in section 6 (fresh image, Saturday's tape, five-minute cell, one-entity subjects).
+
+## 8. Closing the open items (2026-11-24, after the lab VM was repaired)
+
+### 8.1 Removal on request of a subject that is itself mid-import (gate e)
+
+**The fault, found first.** A subject being imported does not exist until its frame commits. A removal that names it
+in that window (by its entity, with or without the attribute) matches no row, removes nothing, and only advances the
+removal sequence. The frame is refused whole (`ErasureFrontierChanged`, it carried the old sequence), the importer
+reads the frontier again and resends, and **the removed value is written**. A client that sends no removal sequence
+gets the same result without the refusal.
+
+**The change (default off, with `TX2_IMPORT_WHOLE_SUBJECT=1`):**
+
+1. A removal records the protected families (entity, attribute) its entity selectors name, even when no row exists
+   (`erase.clj` `make-entry`, `import_bound.clj` `removal-families`); every gateway reads them back from the removal
+   record (`privacy.clj` `apply-entry`). With the option off no record gains the key.
+2. The removal frontier route reports `families` (only with the option on).
+3. The existing rule then applies: an importing write (`:_tx/actor` "bulk-import", or `erasureReplay`) of a removed
+   family is refused whole with `ErasureReplayDeclined`. The importer leaves the reported families out and resends.
+
+**Gate** (`imp2/removal_gate.clj`, sealed protected scope with file keys, shredding with no grace; option off then on):
+
+| Case | Option off | Option on |
+| --- | --- | --- |
+| 1. Removal of s1's protected value between its frame's read and commit (s1 alone in its frame) | refused `ErasureFrontierChanged`, resent with the value: **removed value readable** | refused, resent without it: 21 facts then 20, the value never stored |
+| 2. Removal of s3 (all protected attributes) between the read and commit of a frame of s2, s3, s4 | refused, resent whole: **s3's value readable** | refused whole, resent with 104 of 105 facts: s2 and s4 whole with their values, s3 whole without its value |
+| 3. Removal after the commit (s5) | 1 identity removed; key shredded | the same |
+| 4. As 1, from a client that sends no removal sequence (s6) | committed with the value: **readable** | refused `ErasureReplayDeclined`, resent with 55 of 56 facts |
+| Removed plaintext in any route's answer at any of 8 positions (pinned read, pinned history, reach, feed) | 13 cells (s1, s3, s6) | **0** |
+| Every subject wholly in or out on the six routes (288 reads) | 0 half | 0 half |
+| Protected plaintext anywhere in the Datomic log | none (sealed) | none |
+| Values not removed still readable (s2, s4) | yes | yes |
+
+28 assertions, 0 failures. **Not covered:** a removal by assertion ID cannot name a row that does not exist yet, so
+it has nothing to record; a live save (not an import) may still write a removed family, as before.
+
+### 8.2 The load1 snapshot importer (item 4)
+
+- **Bound by the option:** with `TX2_IMPORT_WHOLE_SUBJECT=1`, each import entry point (`file-proof.ts`,
+  `split-import.ts`, `live.ts`) installs `load1/import-class.ts`, which gives the snapshot's own commands
+  (`load1/…`) `writeClass: "import"`, so the gateway's bound applies. A frame refused for the bound writes nothing and
+  is reported `ImportFrameTooLarge {first, end, facts, limitUs}`; the checkpoint does not move.
+- **The toy fixture's pinned seed loader (`age1/scale1-fixture.mjs`) does not opt in.** It is set-up, not an import
+  under test, and its frames of 16 deep subjects (1,938 facts) are about three times the bound: the first rerun of
+  the fair combined check, with the hook installed for every snapshot, refused its seed frame whole, as it must.
+- **It never splits a subject** (`imp2/snapshot-whole.test.ts`): for the thin (300 subjects), seed (120) and deep
+  (24) sources at 9 widths from 8 to 8,192 facts, 597 frames, every frame equals its subjects' facts, whole and in
+  order; when a subject is larger than the width the source refuses before any part of it is framed. Option off, the
+  request is the same object with no write class. 6 tests pass; load1's own 7 tests pass.
