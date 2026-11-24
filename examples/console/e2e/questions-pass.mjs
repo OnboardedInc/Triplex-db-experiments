@@ -51,6 +51,37 @@ async function pass(scheme) {
   check(await page.locator('[data-testid="fast-index-slot"]').isVisible(), `${scheme}: the fast-index place is marked`);
   await shot("02-pending-tasks");
 
+  // [DX-XQ10] The fast answer from the index: which route answered and why, both answers side by side, the route choice,
+  // and the indexed attributes with the declare call shown (not run).
+  const declared = /on: /.test(await page.locator('[data-testid="fast-index-status"]').innerText());
+  check(await page.locator('[data-testid="route-choice"]').isVisible(), `${scheme}: the route can be chosen (auto, index only, slow route only)`);
+  check(await page.locator('[data-testid="indexed-attributes"]').isVisible(), `${scheme}: the indexed attributes view is shown`);
+  if (declared) {
+    // pending tasks has a text column: the index projects only references, so auto answers on the slow route and says why
+    check(/Why not the index/.test(await page.locator('[data-testid="fast-index-slot"]').innerText()), `${scheme}: a question the index does not take says why`);
+    await page.click('[data-testid="example-per-status"]');
+    await settled();
+    check(/Answered from the index/.test(await page.locator('[data-testid="route-used"]').innerText()), `${scheme}: tasks per status answered from the index`);
+    check(/Index entries examined/.test(await page.locator('[data-testid="how-answered"]').innerText()), `${scheme}: index entries examined are reported`);
+    await page.click('[data-testid="compare-routes"]');
+    await page.waitForSelector('[data-testid="compare-same"]', { timeout: 60_000 });
+    const same = await page.locator('[data-testid="compare-same"]').innerText();
+    const costs = [await page.locator('[data-testid="compare-cost-index"]').innerText(), await page.locator('[data-testid="compare-cost-sweep"]').innerText()];
+    check(/same answer from both routes/.test(same) && /index entries examined/.test(costs[0]) && /subjects read/.test(costs[1]), `${scheme}: both routes side by side, the same answer, with their costs`, `${same} | ${costs.join(" | ")}`);
+    await shot("02b-both-routes");
+    await page.click('[data-testid="route-sweep"]');
+    await page.click('[data-testid="ask"]');
+    await settled();
+    check(/reading each subject/.test(await page.locator('[data-testid="route-used"]').innerText()), `${scheme}: the slow route when chosen`);
+    await page.click('[data-testid="route-auto"]');
+    await page.click('[data-testid="show-declare-call"]');
+    const call = await page.locator('[data-testid="declare-call"]').innerText();
+    check(/declareIndexes/.test(call) && /Shown, not run/.test(call), `${scheme}: the declare call is shown, not run`, call.slice(0, 120));
+    await shot("02c-indexed-attributes");
+  } else {
+    check(/off: nothing is declared/.test(await page.locator('[data-testid="fast-index-status"]').innerText()), `${scheme}: no declaration: the fast index is marked off`);
+  }
+
   await page.click('[data-testid="example-per-status"]');
   await settled();
   check(await page.locator('[data-testid="groups-answer"]').isVisible(), `${scheme}: count per value shown`);

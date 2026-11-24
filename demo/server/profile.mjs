@@ -57,6 +57,10 @@ const env = {
   // [DX-XQ9] The sweep's added question shapes (questions over related entities, "is not", "any of these groups", top
   // N, "contains", sums), all on for the console; each only accepts requests the sweep refused before (xq9 gate 9k).
   DX_SWEEP_SHAPES: "all",
+  // [DX-XQ10] The commit-time index (TX2_CROSS_INDEX) for the console's fast answer, only with DEMO_CROSS_INDEX=1 (unset:
+  // the output is as before). demo/toy/up.sh then declares and backfills demo/console/index-declaration.json.
+  // Rejected: on by default (it adds index entries to every save of the owner's toy and needs a backfill).
+  ...(process.env["DEMO_CROSS_INDEX"] === "1" ? { DX_CROSS_INDEX: "1" } : {}),
   ...(question ? { DX_QUESTION_READER: "1", DX_QUESTION_CPUS: "10,11", DX_QUESTION_MEMORY: "6144m", DX_QUESTION_JAVA_OPTS: questionFlags.join(" ") } : {}),
 };
 const args = [

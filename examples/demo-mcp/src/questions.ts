@@ -14,14 +14,16 @@
 // would not be the store's answer); offering a protected attribute as a filter (the store refuses it; the console marks
 // it instead, from the store's own refusal).
 import {
+  AskRefused,
+  askPage,
   DatomicHttpError,
   listIdsPage,
   sweepPageWaiting,
+  type AskAnswer as StoreAskAnswer,
   type DatomicIdListPage,
   type DatomicIdListRequest,
   type SweepCondition,
   type SweepPage,
-  type SweepRequest,
   type SweepValue,
 } from "@triplex-build/triplex-datomic";
 import { resolveBasis, type Basis } from "./entities.ts";
@@ -93,12 +95,20 @@ export const refusalSentences: Record<string, string> = {
     "Busy, retrying: another question of this account is being answered, and the store answers one at a time per account.",
   IndexBusy: "Busy, retrying: another ID list of this account is being read.",
   AccountMismatch: "That starting ID belongs to another account.",
+  // [DX-XQ10] The index route's refusals (find, exp/DX-XQ4); with route "auto" each one marked fallback "sweep" is answered
+  // by the slow exact route instead, and the answer says which refusal sent it there.
+  AttributeNotIndexed: "That attribute (or every attribute, on a database without a declaration) is not declared for the index, so the fast route cannot answer it.",
+  IndexNotAvailableAtPosition: "The index was built at a later position than the one asked; before it, only the slow exact route answers.",
+  IndexOff: "The read gateway runs without the index option (TX2_CROSS_INDEX).",
+  BoundTooSmall: "One page of the index could not pass a single candidate inside its entry bound.",
+  ValueFamilyMismatch: "The value's type is not the type the attribute was declared with; the slow exact route compares by each value's own type.",
+  ReleaseWrittenAttribute: "A release writes that attribute, so its values settle in the background; it is not declared for the index.",
   RouteOff:
     "The read gateway was started without the questions-across-subjects options (TX2_ID_LISTS and TX2_SWEEP). Restart the stack with them on (demo/toy/README-FOR-CONSOLE.md, \"Switch the console\").",
 };
 
 /** A store refusal or error as a DemoError: the store's code, one plain sentence, the store's own message beside it. */
-export function storeError(error: unknown, route: "ids" | "sweep"): unknown {
+export function storeError(error: unknown, route: "ids" | "sweep" | "index"): unknown {
   if (!(error instanceof DatomicHttpError)) return error;
   const code = error.status === 404 && error.code === "NotFound" ? "RouteOff" : error.code;
   const sentence = refusalSentences[code];
@@ -124,21 +134,92 @@ const rethrow = (route: "ids" | "sweep") => (error: unknown): never => {
 // ---- the fast answer from the index (not built here) ------------------------------------------------------------------
 
 /**
- * [DX-XQ8] FAST-INDEX HOOK. The one place a "fast answer from the index" is offered beside the slow exact one.
- * When the commit-time index lands (exp/DX-XQ4-commit-index, its `find` route), answer here first: send the same
- * question (its `where` grammar is the sweep's) to `find`, show that answer with its own position, and keep the slow
- * exact route for what `find` refuses (an attribute not declared, a position before the index's epoch) and as the
- * reference. Until then every question is read subject by subject, and this says so. The console reads this object
- * (askAcross puts it in every answer's `route.fastIndex`) and shows it in "How this was answered".
+ * [DX-XQ10] THE FAST ANSWER FROM THE INDEX, now real (it was the marked FAST-INDEX HOOK of DX-XQ8). Every question goes
+ * through the SDK's one call (askPage, packages/datomic/src/ask.ts): the commit-time index (find, TX2_CROSS_INDEX=1)
+ * when the question is on declared attributes, at a position at or after the index's epoch and in a shape find takes;
+ * otherwise the slow exact route at the same position and valid time, with the index's typed refusal shown. This is
+ * what the database declares, read from the store (GET index-declaration), cached for 30 s.
  */
-export function fastIndex() {
+type Declaration = { declared: boolean; attributes: { attribute: string; code: string; family: string; since: number | null }[]; seq: number; error?: string };
+const declarations = new WeakMap<Demo, { at: number; value: Declaration }>();
+export async function declaration(demo: Demo): Promise<Declaration> {
+  const hit = declarations.get(demo);
+  if (hit && performance.now() - hit.at < 30_000) return hit.value;
+  let value: Declaration;
+  try {
+    const state = await demo.reader.indexDeclaration(demo.db);
+    const epochs = state.epochs ?? {};
+    value = {
+      declared: (state.declaration?.attributes?.length ?? 0) > 0,
+      seq: state.seq,
+      attributes: (state.declaration?.attributes ?? []).map((a) => ({ attribute: a.attribute, code: a.code, family: a.family, since: epochs[a.code]?.position ?? null })),
+    };
+  } catch (error) {
+    value = { declared: false, seq: 0, attributes: [], error: error instanceof DatomicHttpError ? error.code : String(error) };
+  }
+  declarations.set(demo, { at: performance.now(), value });
+  return value;
+}
+export function fastIndex(d: Declaration) {
   return {
-    available: false as const,
+    available: d.declared,
     name: "Fast answer from the index",
-    status: "not built yet (the commit-time index is a separate branch)",
-    whatItWillChange:
-      "Questions on declared attributes will be answered from an index kept at each commit, in milliseconds for a first page instead of reading every subject; this slow exact route stays for everything else and checks it.",
+    status: d.declared
+      ? `on: ${d.attributes.length} attribute${d.attributes.length === 1 ? "" : "s"} declared (${d.attributes.map((a) => a.attribute).join(", ")})`
+      : `off: nothing is declared in this database${d.error && d.error !== "AttributeNotIndexed" ? ` (${d.error})` : ""}`,
+    whatItWillChange: d.declared
+      ? "Questions on declared attributes are answered from an index kept at each commit; everything else is read subject by subject, and the slow route checks the fast one."
+      : "Declare attributes (the Indexed attributes view shows the call) and questions on them are answered from an index kept at each commit.",
   };
+}
+
+/**
+ * [DX-XQ10] What the index holds, for the console's "Indexed attributes" view and the agent tool indexed_attributes:
+ * the declared attributes (database-wide), since which position each answers, which of a kind's attributes are among
+ * them, and the declare call that would add the others. The call is shown, never run here: a declaration is followed
+ * by a backfill, which needs a quiet window (lab/experiments/EXP-DX1/xq4/COMMIT-INDEX.md).
+ */
+const DECLARABLE: Record<string, string> = { string: "string", ref: "ref", integer: "integer", number: "number", datetime: "datetime", boolean: "boolean" };
+export function indexedAttributes(demo: Demo, input: { account: string | number; kind?: Kind | undefined }) {
+  return demo.measure(async () => {
+    const account = checkAccount(demo, input.account);
+    const d = await declaration(demo);
+    const kind = input.kind ? checkKind(input.kind) : undefined;
+    const seen = kind ? await describeKind(demo, { account, prefix: kind.prefix, shape: kind.shape, sample: 24 }) : undefined;
+    const declaredSet = new Map(d.attributes.map((a) => [a.attribute, a]));
+    const rows = seen?.attributes.map((a) => ({
+      attribute: a.attribute,
+      valueTypes: a.valueTypes,
+      declared: declaredSet.has(a.attribute),
+      since: declaredSet.get(a.attribute)?.since ?? null,
+      declarable: !a.protected && a.valueTypes.length === 1 && a.valueTypes[0]! in DECLARABLE && !declaredSet.has(a.attribute),
+      reason: a.protected ? "Protected: never declared (a protected value is never looked up)." : a.valueTypes.length !== 1 ? "Values of more than one type." : a.valueTypes[0] === "json" ? "json values are not indexed." : undefined,
+    }));
+    const codes = new Set(d.attributes.map((a) => a.code));
+    let next = 1;
+    const code = () => { while (codes.has(`c${next}`)) next++; codes.add(`c${next}`); return `c${next}`; };
+    const toAdd = (rows ?? []).filter((r) => r.declarable).map((r) => ({ attribute: r.attribute, code: code(), family: DECLARABLE[r.valueTypes[0]!]! }));
+    const body = { version: 1, attributes: [...d.attributes.map(({ attribute, code, family }) => ({ attribute, code, family })), ...toAdd] };
+    return {
+      account,
+      ...(kind ? { kind: { ...kind, label: kindLabel(kind) } } : {}),
+      declared: d.declared,
+      declarationSeq: d.seq,
+      attributes: d.attributes,
+      scope: "database-wide: one declaration for every account of the one database",
+      ...(rows ? { kindAttributes: rows } : {}),
+      declareCall: toAdd.length
+        ? {
+            shownNotRun: true,
+            sdk: `await client.declareIndexes(db, ${JSON.stringify(body)});\nawait client.backfillIndex(db, {}); // in a quiet window: a save admitted during it refuses it (BackfillRaced)`,
+            http: `POST /v2/db/${demo.db}/index-declaration ${JSON.stringify(body)}\nPOST /v2/db/${demo.db}/index-backfill {}`,
+            adds: toAdd.map((a) => a.attribute),
+            note: "A declaration only grows; codes are never reused. Each new code answers from the position its backfill seals.",
+          }
+        : null,
+      position: seen?.position ?? Number((await demo.reader.basis(demo.db)).position.v),
+    };
+  });
 }
 
 // ---- kinds ---------------------------------------------------------------------------------------------------------
@@ -575,16 +656,20 @@ export type AskInput = {
   ceilingMs?: number | undefined;
   pageSubjects?: number | undefined;
   pageMs?: number | undefined;
+  /** [DX-XQ10] "auto" (default): the index when it can, else the slow exact route; "index" or "sweep" forces one. */
+  route?: "auto" | "index" | "sweep" | undefined;
 };
 
 const MAX_ROWS_TO_END = 5000;
 
 /**
- * A question across the subjects of one kind in one account, answered on the slow exact route: the store lists the
- * kind's IDs in order, reads each subject's facts at one position and one valid time with the pinned read's own code,
- * and tests the conditions. Modes: "page" returns one store page (the console drives paging and shows progress);
- * "fill" (default) follows pages until `limit` rows, the end, or the ceiling; "toEnd" follows pages to the end or the
- * ceiling. A cursor keeps the first page's position and valid time.
+ * [DX-XQ10] A question across the subjects of one kind in one account, through the SDK's one call (askPage): the
+ * commit-time index when it can answer, else the slow exact route at the same position and valid time; `route` forces
+ * either ("index" or "sweep"; default "auto"). Modes: "page" returns one store page (the console drives paging and
+ * shows progress); "fill" (default) follows pages until `limit` rows, the end, or the ceiling; "toEnd" follows pages to
+ * the end or the ceiling. A cursor keeps the first page's route, position and valid time; it is never sent to the
+ * other route (a later index page refused with fallback "sweep" restarts the question on the slow route, and the
+ * answer says so).
  */
 export function askAcross(demo: Demo, input: AskInput) {
   return demo.measure(async () => {
@@ -592,6 +677,7 @@ export function askAcross(demo: Demo, input: AskInput) {
     const kind = checkKind(input.kind);
     const result = input.result ?? "list";
     const mode = input.mode ?? "fill";
+    const route = input.route ?? "auto";
     const defaultCeiling = mode === "toEnd" ? 60_000 : 5_000;
     const ceilingMs = Math.min(Math.max(input.ceilingMs ?? defaultCeiling, 100), 300_000);
     const limit = Math.min(Math.max(input.limit ?? 50, 1), 1000);
@@ -601,8 +687,10 @@ export function askAcross(demo: Demo, input: AskInput) {
     const basis = input.cursor ? undefined : await resolveBasis(demo, input.basis ?? {});
     if (result === "top" && !input.order) throw new DemoError("InvalidInput", "top needs order: { by, type, direction }");
     if (result === "sum" && !input.of) throw new DemoError("InvalidInput", "A sum needs of: the integer attribute to add");
+    if (result === "countByValue" && !input.of) throw new DemoError("InvalidInput", "A count per value needs of: the attribute to count by");
     const orderType = input.order ? (TYPE_ALIASES[input.order.type] ?? input.order.type) : undefined;
-    const request: SweepRequest = {
+    const decl = await declaration(demo);
+    const question = {
       account,
       from: wireKind(kind),
       where,
@@ -613,62 +701,68 @@ export function askAcross(demo: Demo, input: AskInput) {
         : {}),
       ...((result === "countByValue" || result === "sum") && input.of ? { of: input.of } : {}),
       ...(result === "list" && input.columns?.length ? { project: input.columns } : {}),
-      bounds: { subjects: Math.min(Math.max(input.pageSubjects ?? 256, 1), 10_000), ms: Math.min(Math.max(input.pageMs ?? 200, 1), 2000) },
-    };
-    if (result === "countByValue" && !input.of) throw new DemoError("InvalidInput", "A count per value needs of: the attribute to count by");
+      route,
+      bounds: {
+        index: { entries: 100_000, ms: Math.min(Math.max(input.pageMs ?? 200, 1), 1000) },
+        sweep: { subjects: Math.min(Math.max(input.pageSubjects ?? 256, 1), 10_000), ms: Math.min(Math.max(input.pageMs ?? 200, 1), 2000) },
+      },
+    } as const;
     const started = performance.now();
-    const pages: (SweepPage & { busyRetries: number })[] = [];
+    const pages: StoreAskAnswer[] = [];
     const rows: { id: string; columns: Record<string, unknown[]> }[] = [];
     let cursor = input.cursor;
+    let restarted = false;
     for (;;) {
       const want = result === "list" ? (mode === "toEnd" ? Math.min(1000, MAX_ROWS_TO_END - rows.length) : limit - rows.length) : undefined;
-      const page = await sweepPageWaiting(questionClient(demo), demo.db, {
-        ...request,
+      const page = await askPage(questionClient(demo), demo.db, {
+        ...question,
         ...(want !== undefined ? { limit: Math.max(1, want) } : {}),
         ...(cursor ? { cursor } : basis ? { basis: basis.wire } : {}),
-      }).catch(rethrow("sweep"));
+      } as Parameters<typeof askPage>[2]).catch((error: unknown) => { throw storeError(error, error instanceof AskRefused && error.refusedBy === "index" ? "index" : "sweep"); });
+      if (page.restarted) { restarted = true; pages.length = 0; rows.length = 0; }
       if (pages.length && (page.position !== pages[0]!.position || page.validAt !== pages[0]!.validAt))
         throw new DemoError("Inconsistent", "A page of the question moved position or valid time");
       pages.push(page);
-      // A top N's IDs arrive on its complete page and become rows below, with their order values.
       if (result !== "top") for (const [i, id] of (page.ids ?? []).entries())
-        rows.push({
-          id,
-          columns: Object.fromEntries(Object.entries(page.projected?.[i] ?? {}).map(([a, vs]) => [a, vs.map((v) => plainOf(v as { type: string; value: unknown }))])),
-        });
+        rows.push({ id, columns: Object.fromEntries(Object.entries(page.projected?.[i] ?? {}).map(([a, vs]) => [a, vs.map((v) => plainOf(v as { type: string; value: unknown } | null))])) });
       if (page.next === null || mode === "page") break;
-      // A top N or a sum is known only at the end: "fill" follows pages to the end (or the ceiling), as toEnd does.
       if (result === "list" && mode === "fill" && rows.length >= limit) break;
       if (result === "list" && mode === "toEnd" && rows.length >= MAX_ROWS_TO_END) break;
       if (performance.now() - started > ceilingMs) break;
       cursor = page.next;
     }
     const first = pages[0]!, last = pages[pages.length - 1]!;
-    const sum = (f: (p: SweepPage) => number) => pages.reduce((n, p) => n + f(p), 0);
+    const sweepRaw = (p: StoreAskAnswer) => (p.route === "sweep" ? (p.raw as SweepPage) : undefined);
+    const indexRaw = (p: StoreAskAnswer) => (p.route === "index" ? (p.raw as unknown as { queryMicros?: number; queryCpuMicros?: number }) : undefined);
+    const sum = (f: (p: StoreAskAnswer) => number | undefined) => pages.reduce((n, p) => n + (f(p) ?? 0), 0);
     const complete = last.next === null;
     const stoppedBy = complete ? "end" : mode === "page" ? "one page asked"
       : result === "list" && rows.length >= (mode === "toEnd" ? MAX_ROWS_TO_END : limit) ? "rows" : "ceiling";
     const asked = input.cursor ? "the position and valid time of the cursor's first page" : basis!.words;
-    if (result === "top" && complete)
-      for (const [i, id] of (last.ids ?? []).entries()) rows.push({ id, columns: { [input.order!.by]: [plainOf(last.values?.[i] ?? null)] } });
-    const relatedRead = sum((p) => p.related ?? 0);
+    const lastSweep = sweepRaw(last);
+    if (result === "top" && complete && last.top)
+      for (const [i, id] of last.top.ids.entries()) rows.push({ id, columns: { [input.order!.by]: [plainOf(last.top.values[i] ?? null)] } });
+    const relatedRead = sum((p) => sweepRaw(p)?.related);
+    const onIndex = last.route === "index";
+    const refusal = first.indexRefusal ?? last.indexRefusal;
+    const matched = sum((p) => (p.route === "sweep" ? sweepRaw(p)!.matched : p.result === "ids" ? p.ids?.length : undefined));
     return {
       account,
       kind: { ...kind, label: kindLabel(kind) },
       question: {
         where: input.where ?? [], ...(input.anyOf ? { anyOf: input.anyOf } : {}), result, ...(input.of ? { of: input.of } : {}),
-        ...(input.order ? { order: input.order } : {}), ...(input.columns?.length ? { columns: input.columns } : {}),
+        ...(input.order ? { order: input.order } : {}), ...(input.columns?.length ? { columns: input.columns } : {}), route,
       },
       ...(result === "list" || result === "top" ? { rows, returned: rows.length } : {}),
       ...(result === "top"
-        ? { top: { n: limit, order: last.order ?? null, kept: last.kept ?? 0, meaning: "The N best by the order after reading every entity of the kind once; ties by ID; entities without a value of the order's type last. Known only when complete." } }
+        ? { top: { n: limit, order: lastSweep?.order ?? null, kept: lastSweep?.kept ?? 0, meaning: "The N best by the order after reading every entity of the kind once; ties by ID; entities without a value of the order's type last. Known only when complete." } }
         : {}),
-      ...(result === "sum"
-        ? { sum: { of: input.of, sum: last.sum ?? "0", valuesAdded: last.valuesAdded ?? 0, subjectsWithValue: last.subjectsWithValue ?? 0, skipped: last.skipped ?? 0, average: last.average ?? null, countComplete: last.countComplete === true, meaning: "Exact: every visible integer value of the attribute on every matching entity, added without overflow; values of other types are skipped and counted. The average is sum / values." } }
+      ...(result === "sum" && last.sum
+        ? { sum: { of: input.of, ...last.sum, countComplete: complete, meaning: "Exact: every visible integer value of the attribute on every matching entity, added without overflow; values of other types are skipped and counted. The average is sum / values." } }
         : {}),
-      ...(result === "count" ? { count: last.count ?? 0, countComplete: last.countComplete === true } : {}),
+      ...(result === "count" ? { count: last.count ?? 0, countComplete: complete } : {}),
       ...(result === "countByValue"
-        ? { groups: (last.groups ?? []).map((g) => ({ value: plainOf(g.value), type: g.value?.type ?? null, subjects: g.count })), countComplete: last.countComplete === true }
+        ? { groups: (last.counts ?? []).map((g) => ({ value: plainOf(g.value), type: g.value?.type ?? null, subjects: g.count })), countComplete: complete }
         : {}),
       complete,
       stoppedBy,
@@ -682,11 +776,13 @@ export function askAcross(demo: Demo, input: AskInput) {
         meaning: "Exact for the facts recorded at or before this position and valid at this instant. A subject is an ID of the kind with at least one such fact.",
       },
       progress: {
-        subjectsExamined: sum((p) => p.examined),
-        ...(relatedRead || pages.some((p) => p.related !== undefined) ? { relatedRead, relatedRows: sum((p) => p.relatedRows ?? 0) } : {}),
-        subjectsWithFacts: sum((p) => p.subjects),
-        matched: sum((p) => p.matched),
-        idsListed: sum((p) => p.listed),
+        subjectsExamined: sum((p) => p.examined.subjectsRead),
+        ...(relatedRead || pages.some((p) => sweepRaw(p)?.related !== undefined) ? { relatedRead, relatedRows: sum((p) => sweepRaw(p)?.relatedRows) } : {}),
+        subjectsWithFacts: sum((p) => sweepRaw(p)?.subjects),
+        matched,
+        idsListed: sum((p) => p.examined.idsListed),
+        indexEntriesExamined: sum((p) => p.examined.indexEntries),
+        entityReads: sum((p) => p.examined.entityReads),
         storePages: pages.length,
         ceilingMs,
         elapsedMs: round(performance.now() - started),
@@ -694,22 +790,43 @@ export function askAcross(demo: Demo, input: AskInput) {
       facts: "stored" as const,
       factsMeaning: "Stored facts only: a value a release computes but has not written yet is not seen.",
       route: {
-        used: "slow exact read of each subject" as const,
+        used: onIndex ? ("fast answer from the index" as const) : ("slow exact read of each subject" as const),
+        code: last.route,
+        asked: route,
+        forced: route !== "auto",
+        restarted,
+        ...(refusal
+          ? { indexRefusal: { code: refusal.code, fallback: refusal.fallback ?? null, explanation: refusalSentences[refusal.code] ?? refusal.message, storeMessage: refusal.message } }
+          : {}),
         reader: questionReaderUrl(demo) ? "a separate question reader" : "the read gateway",
-        how: "The store listed the kind's IDs in order, read each subject's facts at the position and valid time with the pinned read's own code, and tested every condition there.",
-        pages: pages.map((p) => ({ examined: p.examined, matched: p.matched, rows: p.rows, stopped: p.stopped, storeMs: round(p.micros.total / 1000), busyRetries: (p as { busyRetries?: number }).busyRetries ?? 0 })).slice(0, 100),
-        rowsRead: sum((p) => p.rows),
+        how: onIndex
+          ? "The store read the index kept at each commit for the declared attributes, at the position and valid time, and confirmed each candidate's entries; no subject was read beyond those entries."
+          : "The store listed the kind's IDs in order, read each subject's facts at the position and valid time with the pinned read's own code, and tested every condition there.",
+        pages: pages.map((p) => {
+          const w = sweepRaw(p), x = indexRaw(p);
+          return {
+            route: p.route,
+            examined: w ? w.examined : p.examined.indexEntries ?? 0,
+            matched: w ? w.matched : p.ids?.length ?? 0,
+            rows: w ? w.rows : p.examined.entityReads ?? 0,
+            stopped: w ? w.stopped : ((p.raw as { stopped?: string }).stopped ?? ""),
+            storeMs: round((w ? w.micros.total : x?.queryMicros ?? 0) / 1000),
+            busyRetries: 0,
+          };
+        }).slice(0, 100),
+        rowsRead: sum((p) => sweepRaw(p)?.rows),
         storage: {
-          segmentsLoaded: sum((p) => p.segmentsLoaded),
-          listMs: round(sum((p) => p.micros.list) / 1000),
-          readMs: round(sum((p) => p.micros.read) / 1000),
-          evaluateMs: round(sum((p) => p.micros.evaluate) / 1000),
-          queueMs: round(sum((p) => p.micros.queue) / 1000),
-          cpuMs: round(sum((p) => p.cpuMicros) / 1000),
+          segmentsLoaded: sum((p) => p.examined.segmentsLoaded),
+          listMs: round(sum((p) => sweepRaw(p)?.micros.list) / 1000),
+          readMs: round(sum((p) => sweepRaw(p)?.micros.read) / 1000),
+          evaluateMs: round(sum((p) => sweepRaw(p)?.micros.evaluate) / 1000),
+          queueMs: round(sum((p) => sweepRaw(p)?.micros.queue) / 1000),
+          cpuMs: round(sum((p) => (sweepRaw(p)?.cpuMicros ?? indexRaw(p)?.queryCpuMicros)) / 1000),
+          indexMs: round(sum((p) => indexRaw(p)?.queryMicros) / 1000),
           note: "segmentsLoaded is the store's own count of index segments loaded from storage (0 when everything was cached).",
         },
-        busyRetries: sum((p) => (p as { busyRetries?: number }).busyRetries ?? 0),
-        fastIndex: fastIndex(),
+        busyRetries: 0,
+        fastIndex: fastIndex(decl),
       },
       position: first.position,
     };

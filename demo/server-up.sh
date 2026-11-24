@@ -240,7 +240,7 @@ pinned=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$p
 questions=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$prefix-gw-r" |
   node -e 'const e = require("fs").readFileSync(0, "utf8").split("\n"); const on = (k) => e.includes(k + "=1");
     const shapes = (e.find((x) => x.startsWith("TX2_SWEEP_SHAPES=")) ?? "").slice("TX2_SWEEP_SHAPES=".length);
-    console.log(JSON.stringify({ idLists: on("TX2_ID_LISTS"), sweep: on("TX2_SWEEP"), sweepShapes: shapes }))')
+    console.log(JSON.stringify({ idLists: on("TX2_ID_LISTS"), sweep: on("TX2_SWEEP"), sweepShapes: shapes, ...(on("TX2_CROSS_INDEX") ? { crossIndex: true } : {}) }))')
 [[ $questions == '{"idLists":true,"sweep":true,'* ]] || { echo "The read gateway's question routes are not both on: $questions" >&2; exit 1; }
 
 # 7. The ready file the Mac's connect.sh reads over SSH. No address, credential or personal detail is in it.

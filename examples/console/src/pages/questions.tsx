@@ -76,17 +76,23 @@ type AskAnswer = {
   complete: boolean;
   next: string | null;
   holdsFor: { position: number; validAt: string; validAtMs: number; asked: string; headWhenAnswered: number };
-  progress: { subjectsExamined: number; subjectsWithFacts: number; matched: number; idsListed: number; storePages: number; relatedRead?: number; relatedRows?: number };
+  progress: { subjectsExamined: number; subjectsWithFacts: number; matched: number; idsListed: number; storePages: number; relatedRead?: number; relatedRows?: number; indexEntriesExamined?: number; entityReads?: number };
   top?: { n: number; order: { by: string; type: string; direction: string } | null; kept: number; meaning: string };
   sum?: { of: string; sum: string; valuesAdded: number; subjectsWithValue: number; skipped: number; average: { numerator: string; denominator: string; decimal: string; rounding: string } | null; countComplete: boolean; meaning: string };
   facts: "stored";
   factsMeaning: string;
   route: {
     used: string;
+    /** [DX-XQ10] Which route answered (index or sweep), what was asked (auto, index, sweep), and why the index did not. */
+    code?: "index" | "sweep";
+    asked?: RouteChoice;
+    forced?: boolean;
+    restarted?: boolean;
+    indexRefusal?: { code: string; fallback: string | null; explanation: string; storeMessage: string };
     how: string;
     pages: { examined: number; matched: number; rows: number; stopped: string; storeMs: number; busyRetries: number }[];
     rowsRead: number;
-    storage: { segmentsLoaded: number; listMs: number; readMs: number; evaluateMs: number; queueMs: number; cpuMs: number; note: string };
+    storage: { segmentsLoaded: number; listMs: number; readMs: number; evaluateMs: number; queueMs: number; cpuMs: number; indexMs?: number; note: string };
     busyRetries: number;
     fastIndex: { available: boolean; name: string; status: string; whatItWillChange: string };
   };
@@ -117,6 +123,8 @@ type Draft = {
   inner: Draft[];
 };
 type ResultKind = "list" | "count" | "countByValue" | "top" | "sum";
+/** [DX-XQ10] auto: the index when it can answer, else the slow exact route; index or sweep: that route only. */
+type RouteChoice = "auto" | "index" | "sweep";
 type OrderDraft = { by: string; type: ValueKind; direction: "asc" | "desc"; n: number };
 type Question = {
   account: string;
@@ -130,6 +138,7 @@ type Question = {
   of?: string;
   basis?: Basis;
   pageSubjects?: number;
+  route?: RouteChoice;
 };
 
 const OPS: { op: Op; words: string }[] = [
@@ -311,6 +320,9 @@ type Run = {
   evaluateMs: number;
   queueMs: number;
   busyRetries: number;
+  /** [DX-XQ10] Index entries examined and entities read to confirm them, summed over the index's pages. */
+  indexEntries: number;
+  entityReads: number;
   /** Set while the store answered busy (503 SweepBusy or IndexBusy) and the page waits retryAfterMs to ask again. */
   busy?: { code: string; retryAfterMs: number; attempt: number };
   startedAt: number;
@@ -340,7 +352,7 @@ function useRunner() {
             call: { name: "ask_across_subjects", input: question as unknown as Record<string, unknown> },
             running: true, stoppedByYou: false, rows: [], pages: [], cursor: null, complete: false,
             examined: 0, listed: 0, matched: 0, rowsRead: 0, related: 0, segments: 0, storeMs: 0, roundTripMs: 0,
-            listMs: 0, readMs: 0, evaluateMs: 0, queueMs: 0, busyRetries: 0, startedAt: performance.now(), elapsedMs: 0,
+            listMs: 0, readMs: 0, evaluateMs: 0, queueMs: 0, busyRetries: 0, indexEntries: 0, entityReads: 0, startedAt: performance.now(), elapsedMs: 0,
           }
         : { ...live.current, running: true, stoppedByYou: false, error: undefined };
     const spentBefore = r.elapsedMs;
@@ -371,6 +383,8 @@ function useRunner() {
         }
         if (!a) throw new Error("No answer");
         r = { ...r, busy: undefined };
+        if (a.route.restarted)
+          r = { ...r, rows: [], pages: [], examined: 0, listed: 0, matched: 0, rowsRead: 0, related: 0, segments: 0, indexEntries: 0, entityReads: 0 };
         const s = a.route.storage;
         r = {
           ...r,
@@ -392,6 +406,8 @@ function useRunner() {
           evaluateMs: r.evaluateMs + s.evaluateMs,
           queueMs: r.queueMs + s.queueMs,
           busyRetries: r.busyRetries + a.route.busyRetries,
+          indexEntries: r.indexEntries + (a.progress.indexEntriesExamined ?? 0),
+          entityReads: r.entityReads + (a.progress.entityReads ?? 0),
           elapsedMs: spentBefore + performance.now() - resumedAt,
         };
         set(r);
@@ -482,16 +498,150 @@ function StatusLine({ run }: { run: Run }) {
   );
 }
 
-/** [DX-XQ8] FAST-INDEX SLOT: where the commit-time index's fast answer will be offered beside this slow exact one. */
-function FastIndexSlot({ fast }: { fast?: AskAnswer["route"]["fastIndex"] }) {
+/**
+ * [DX-XQ10] THE FAST ANSWER FROM THE INDEX (the marked slot of DX-XQ8, now real). Which route answered and why, and a
+ * button that asks the same question on both routes, at the same position and valid time, and shows the two answers
+ * side by side with their costs: index entries examined against subjects read.
+ */
+type Side = { route: "index" | "sweep"; answer?: Answer<AskAnswer>; error?: unknown; ms: number };
+const summary = (a: AskAnswer, result: ResultKind) =>
+  result === "count" ? `${n(a.count ?? 0)} subjects`
+  : result === "countByValue" ? (a.groups ?? []).map((g) => `${g.value === null ? "no value" : String(g.value)}: ${n(g.subjects)}`).join(", ") || "no groups"
+  : result === "list" ? `${n(a.rows?.length ?? 0)} IDs${a.complete ? "" : " so far"}`
+  : result === "top" ? `${n(a.rows?.length ?? 0)} IDs` : a.sum ? a.sum.sum : "";
+const sameAnswer = (x: AskAnswer, y: AskAnswer) =>
+  JSON.stringify([x.count ?? null, x.groups ?? null, (x.rows ?? []).map((r) => r.id), x.holdsFor.position, x.holdsFor.validAtMs]) ===
+  JSON.stringify([y.count ?? null, y.groups ?? null, (y.rows ?? []).map((r) => r.id), y.holdsFor.position, y.holdsFor.validAtMs]);
+
+function FastIndexPanel({ run }: { run: Run }) {
+  const r = run.last?.route;
+  const fast = r?.fastIndex;
+  const [sides, setSides] = useState<Side[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  async function compare() {
+    if (!run.last) return;
+    setBusy(true);
+    const h = run.last.holdsFor;
+    // The same question at the position and valid time of the answer shown, once on each route, to the end (lists up
+    // to 1,000 IDs), so the two answers are whole and comparable.
+    const { basis: _b, route: _r, ...q } = run.question;
+    const input = { ...q, basis: { position: h.position, validAt: h.validAtMs }, mode: "toEnd", ceilingMs: 60_000, ...(q.result === "list" ? { limit: 1000 } : {}) };
+    const out: Side[] = [];
+    for (const route of ["index", "sweep"] as const) {
+      const t0 = performance.now();
+      try { out.push({ route, answer: await callTool<AskAnswer>("ask_across_subjects", { ...input, route }), ms: performance.now() - t0 }); }
+      catch (error) { out.push({ route, error, ms: performance.now() - t0 }); }
+    }
+    setSides(out);
+    setBusy(false);
+  }
+  const both = sides && sides[0]!.answer && sides[1]!.answer;
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed p-2 text-xs" data-testid="fast-index-slot">
-      <Button size="sm" variant="outline" disabled>
-        {fast?.name ?? "Fast answer from the index"}
-      </Button>
-      <span className="text-muted-foreground">
-        Not available yet: {fast?.status ?? "the commit-time index is a separate branch"}. {fast?.whatItWillChange ?? ""}
-      </span>
+    <div className="space-y-2 rounded-md border p-2 text-xs" data-testid="fast-index-slot">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant={r?.code === "index" ? "default" : "outline"} data-testid="route-used">
+          {r?.code === "index" ? "Answered from the index" : "Answered by reading each subject"}
+        </Badge>
+        <span className="text-muted-foreground" data-testid="fast-index-status">{fast?.name ?? "Fast answer from the index"}: {fast?.status ?? ""}</span>
+        <Button size="sm" variant="outline" className="ml-auto" disabled={!run.last || run.running || busy} onClick={() => void compare()} data-testid="compare-routes">
+          {busy ? "Asking both..." : "Compare both routes"}
+        </Button>
+      </div>
+      {r?.indexRefusal && (
+        <div className="text-muted-foreground" data-testid="index-refusal">
+          Why not the index: {r.indexRefusal.explanation} <span className="font-mono">({r.indexRefusal.code})</span>
+          {r.restarted ? " The index answered the first pages, then refused a later one; the question started again on the slow route at the same position." : ""}
+        </div>
+      )}
+      {!r?.indexRefusal && fast && <div className="text-muted-foreground">{fast.whatItWillChange}</div>}
+      {sides && (
+        <div className="space-y-1" data-testid="compare-table">
+          <div className="grid grid-cols-[8rem_1fr_1fr] gap-x-3 gap-y-1">
+            <span />
+            {sides.map((sd) => <span key={sd.route} className="font-medium">{sd.route === "index" ? "Index (forced)" : "Slow exact route (forced)"}</span>)}
+            <span className="text-muted-foreground">Answer</span>
+            {sides.map((sd) => (
+              <span key={sd.route} data-testid={`compare-${sd.route}`}>
+                {sd.answer ? summary(sd.answer, run.question.result) : `Refused: ${sd.error instanceof ToolError ? `${sd.error.code}. ${sd.error.message}` : String(sd.error)}`}
+              </span>
+            ))}
+            <span className="text-muted-foreground">Holds for</span>
+            {sides.map((sd) => <span key={sd.route} className="tabular-nums">{sd.answer ? `position ${n(sd.answer.holdsFor.position)}, ${sd.answer.holdsFor.validAt}` : ""}</span>)}
+            <span className="text-muted-foreground">Work</span>
+            {sides.map((sd) => (
+              <span key={sd.route} className="tabular-nums" data-testid={`compare-cost-${sd.route}`}>
+                {sd.answer
+                  ? sd.route === "index"
+                    ? `${n(sd.answer.progress.indexEntriesExamined ?? 0)} index entries examined, ${n(sd.answer.progress.entityReads ?? 0)} entities read`
+                    : `${n(sd.answer.progress.subjectsExamined)} subjects read, ${n(sd.answer.route.rowsRead)} fact rows`
+                  : ""}
+              </span>
+            ))}
+            <span className="text-muted-foreground">Time (diagnostic)</span>
+            {sides.map((sd) => <span key={sd.route} className="tabular-nums">{ms(sd.ms)}</span>)}
+          </div>
+          {both && (
+            <div data-testid="compare-same">
+              {sameAnswer(sides[0]!.answer!, sides[1]!.answer!) ? "The same answer from both routes." : "The two routes gave different answers: that is a defect; please report the question."}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** [DX-XQ10] What the index holds: the declared attributes, which of this kind's attributes are among them, and the
+ * call that would declare the others (shown, never run here: a declaration is followed by a backfill). */
+type IndexedAnswer = {
+  declared: boolean;
+  attributes: { attribute: string; code: string; family: string; since: number | null }[];
+  scope: string;
+  kindAttributes?: { attribute: string; valueTypes: string[]; declared: boolean; since: number | null; declarable: boolean; reason?: string }[];
+  declareCall: { sdk: string; http: string; adds: string[]; note: string } | null;
+};
+function IndexedAttributes({ account, kind }: { account: string; kind?: { prefix: string; shape?: string } }) {
+  const tools = useTools();
+  const a = useTool<IndexedAnswer>("indexed_attributes", { account, ...(kind ? { kind } : {}) }, { enabled: Boolean(account) && tools.has("indexed_attributes"), keepPrevious: true });
+  const [show, setShow] = useState(false);
+  if (!tools.has("indexed_attributes")) return null;
+  const d = a.data;
+  return (
+    <div className="space-y-2 rounded-md border px-3 py-2 text-sm" data-testid="indexed-attributes">
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-medium">Indexed attributes</span>
+        <Badge variant="outline" className="font-normal">{d ? (d.declared ? `${n(d.attributes.length)} declared` : "none") : "..."}</Badge>
+      </div>
+      {d && (
+        <>
+          <div className="text-muted-foreground text-xs">{d.scope}.</div>
+          {d.attributes.map((x) => (
+            <div key={x.attribute} className="flex justify-between gap-2 text-xs" data-testid="indexed-attribute">
+              <span className="font-mono">{x.attribute}</span>
+              <span className="text-muted-foreground tabular-nums">{x.family}{x.since !== null ? `, from position ${n(x.since)}` : ", not built yet"}</span>
+            </div>
+          ))}
+          {d.kindAttributes && (
+            <div className="text-muted-foreground text-xs" data-testid="kind-indexed">
+              This kind: {d.kindAttributes.filter((k) => k.declared).length} of {d.kindAttributes.length} attributes declared
+              {d.kindAttributes.some((k) => k.declarable) ? `; ${d.kindAttributes.filter((k) => k.declarable).length} could be.` : "."}
+            </div>
+          )}
+          {d.declareCall && (
+            <>
+              <Button size="sm" variant="outline" onClick={() => setShow((v) => !v)} data-testid="show-declare-call">
+                {show ? "Hide the declare call" : "Show the declare call"}
+              </Button>
+              {show && (
+                <div className="space-y-1" data-testid="declare-call">
+                  <pre className="bg-muted max-h-48 overflow-auto rounded p-2 font-mono text-[11px] whitespace-pre-wrap">{d.declareCall.sdk}</pre>
+                  <div className="text-muted-foreground text-xs">Shown, not run. {d.declareCall.note}</div>
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -508,7 +658,9 @@ function HowAnswered({ run, kind }: { run: Run; kind?: KindRow }) {
       </CardHeader>
       <CardContent className="space-y-3 px-4 text-sm">
         <div className="grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-4">
-          <Fact label="Route">{r?.used ?? "slow exact read of each subject"}</Fact>
+          <Fact label="Route">{r?.used ?? "slow exact read of each subject"}{r?.forced ? " (chosen)" : ""}</Fact>
+          {run.indexEntries > 0 && <Fact label="Index entries examined">{n(run.indexEntries)}</Fact>}
+          {run.indexEntries > 0 && <Fact label="Entities read to confirm">{n(run.entityReads)}</Fact>}
           <Fact label="Store pages">{n(run.pages.length)}</Fact>
           <Fact label="IDs listed">{n(run.listed)}</Fact>
           <Fact label="Subjects examined">{n(run.examined)}</Fact>
@@ -543,7 +695,7 @@ function HowAnswered({ run, kind }: { run: Run; kind?: KindRow }) {
             ))}
           </div>
         )}
-        <FastIndexSlot fast={r?.fastIndex} />
+        <FastIndexPanel run={run} />
         <p className="text-muted-foreground text-xs">{run.last?.factsMeaning ?? "Stored facts only."}</p>
       </CardContent>
     </Card>
@@ -698,6 +850,7 @@ export function QuestionsPage() {
   const [of, setOf] = useState<string>(asked?.of ?? "");
   const [resultPage, setResultPage] = useState(0);
   const [pageSubjects, setPageSubjects] = useState<number>(asked?.pageSubjects ?? 256);
+  const [route, setRoute] = useState<RouteChoice>(asked?.route ?? "auto");
   const [pendingExample, setPendingExample] = useState<Example | null>(null);
   const { run, go, stop, clear } = useRunner();
 
@@ -759,6 +912,7 @@ export function QuestionsPage() {
           ...(result === "countByValue" || result === "sum" ? { of } : {}),
           ...(questionBasis(basis) ? { basis: questionBasis(basis)! } : {}),
           ...(pageSubjects !== 256 ? { pageSubjects } : {}),
+          ...(route !== "auto" ? { route } : {}),
         }
       : null;
 
@@ -788,6 +942,7 @@ export function QuestionsPage() {
       ...(e.of ? { of: e.of } : {}),
       ...(questionBasis(basis) ? { basis: questionBasis(basis)! } : {}),
       ...(pageSubjects !== 256 ? { pageSubjects } : {}),
+      ...(route !== "auto" ? { route } : {}),
     };
     setResultPage(0);
     setParams((p) => (p.set("ask", JSON.stringify({ ...q, basis: undefined })), p), { replace: true });
@@ -834,7 +989,7 @@ export function QuestionsPage() {
     <div className="mx-auto max-w-7xl">
       <PageTitle
         title="Ask across subjects"
-        actions={<span className="text-muted-foreground text-sm">Exact answers, read subject by subject</span>}
+        actions={<span className="text-muted-foreground text-sm">Exact answers, from the index or read subject by subject</span>}
       >
         One account, one kind of entity, up to eight conditions (all of them, or any of up to four groups), on the entity
         or on its related entities. A list, a count, a count per value, the top N or a sum. Every answer is the store's,
@@ -874,6 +1029,7 @@ export function QuestionsPage() {
               Refused, always: the store never looks subjects up by a protected value, so this console never offers it.
             </div>
           </div>
+          <IndexedAttributes account={account} {...(kindKey ? { kind: shape ? { prefix, shape } : { prefix } } : {})} />
         </aside>
 
         <div className="min-w-0 space-y-4">
@@ -1086,6 +1242,12 @@ export function QuestionsPage() {
                     Continue from where it stopped
                   </Button>
                 )}
+                <ToggleGroup type="single" variant="outline" size="sm" value={route} onValueChange={(v) => v && setRoute(v as RouteChoice)} data-testid="route-choice"
+                  title="Auto: the index when it can answer, else the slow exact route. Or force one.">
+                  <ToggleGroupItem value="auto" data-testid="route-auto">Auto</ToggleGroupItem>
+                  <ToggleGroupItem value="index" data-testid="route-index">Index only</ToggleGroupItem>
+                  <ToggleGroupItem value="sweep" data-testid="route-sweep">Slow route only</ToggleGroupItem>
+                </ToggleGroup>
                 <Select value={String(pageSubjects)} onValueChange={(v) => setPageSubjects(Number(v))}>
                   <SelectTrigger size="sm" className="w-60" data-testid="page-subjects" title="How many subjects the store reads before it reports back; smaller pages show progress sooner">
                     <SelectValue />

@@ -7,7 +7,9 @@
   and retraction reads the owner's EAVT range of :triplex.ix/entry, and the declaration fence's cas reads the
   declaration entity's sequence datom; neither lookup function named them.
   With this option on, both lookup functions also touch, after their own reads, the owner's :triplex.ix/entry range
-  (EAVT) and the declaration's sequence datom (EAVT and AEVT). They stay lookup-only (no datoms, no decision).
+  (EAVT), each entry key the save asserts or retracts (EAVT on its owner, AVET by value) and the declaration's
+  sequence datom (EAVT and AEVT). The index branch's proposal touched only the range's start; measured, that removed
+  none of the excess (xq10/QUESTIONS-CONNECTED.md, the hint fix). They stay lookup-only (no datoms, no decision).
   Stored-function identity: the two functions get NEW code and so new idents, installed once per database only when
   this option is on; with it off this namespace changes no var and nothing is installed, so every existing identity
   is unchanged (checked by xq10/idents.sh). Rejected: editing subject_hints.clj and general_prefetch.clj (their
@@ -34,9 +36,12 @@
 (def subject-code
   ;; The per-subject writer addresses entries to the numeric owner (`owner` in the function's bindings).
   (extend-code subject-hints/code
-               (into '[(when owner
-                         (when-let [ix (d/entid db :triplex.ix/entry)]
-                           (first (d/datoms db :eavt owner ix))))]
+               (into '[(when-let [ix (d/entid db :triplex.ix/entry)]
+                         (when owner (first (d/datoms db :eavt owner ix)))
+                         ;; each entry the save asserts or retracts, exactly: on the owner (EAVT) and by value (AVET)
+                         (doseq [k (:ix-keys payload)]
+                           (when owner (first (d/seek-datoms db :eavt owner ix k)))
+                           (first (d/seek-datoms db :avet ix k))))]
                      declaration-touches)))
 (def subject-ident (keyword "triplex.subject" (str "hints-" (subs (schema/sha256 (pr-str subject-code)) 0 24))))
 
@@ -47,12 +52,22 @@
                (into '[(when-let [ix (d/entid db :triplex.ix/entry)]
                          (doseq [id (distinct (concat entities (vals owners)))]
                            (when-let [e (owner id)]
-                             (first (d/datoms db :eavt e ix)))))]
+                             (first (d/datoms db :eavt e ix))))
+                         ;; each entry operation of the save, exactly: on its owner (EAVT) and by value (AVET)
+                         (doseq [op ops :when (and (list? op) (= :triplex.ix/entry (nth op 2 nil)))]
+                           (let [x (second op) k (nth op 3 nil)
+                                 e (cond (number? x) x (string? x) (owner (public x)))]
+                             (when (and e (string? k)) (first (d/seek-datoms db :eavt e ix k)))
+                             (when (string? k) (first (d/seek-datoms db :avet ix k))))))]
                      declaration-touches)))
 (def general-ident (keyword "triplex.write" (str "prefetch-" (subs (schema/sha256 (pr-str general-code)) 0 24))))
 
 ;; With the option on, the hint namespaces install and call the extended functions under their new idents.
+;; The per-subject payload also carries the save's entry keys (from the plan's operations).
+(defn- entry-keys [ops]
+  (into [] (keep (fn [op] (when (and (vector? op) (= :triplex.ix/entry (nth op 2 nil)) (string? (nth op 3 nil))) (nth op 3)))) ops))
 (when enabled
+  (alter-var-root #'subject-hints/from-plan (fn [from-plan] (fn [plan] (assoc (from-plan plan) :ix-keys (entry-keys (:ops plan))))))
   (alter-var-root #'subject-hints/code (constantly subject-code))
   (alter-var-root #'subject-hints/ident (constantly subject-ident))
   (alter-var-root #'general-prefetch/code (constantly general-code))

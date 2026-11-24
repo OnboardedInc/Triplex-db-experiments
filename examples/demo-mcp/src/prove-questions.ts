@@ -214,7 +214,10 @@ function compare(label: string, q: any, pages: any[], expected: Awaited<ReturnTy
   const examined = pages.reduce((n, x) => n + x.progress.subjectsExamined, 0);
   check(`${label}: subjects examined reported`, examined >= expected.subjects, { examined, subjectsWithFacts: expected.subjects });
   check(`${label}: no ID of another account`, pages.every((x) => (x.rows ?? []).every((r: any) => r.id.startsWith(`acct/${q.account}/`))));
-  check(`${label}: route and fast-index place reported`, first.route.used === "slow exact read of each subject" && first.route.fastIndex.available === false);
+  // [DX-XQ10] The route that answered is stated, and the fast index is marked on exactly when the toy declares one.
+  check(`${label}: route and fast-index place reported`,
+    (first.route.code === "index" ? first.route.used === "fast answer from the index" : first.route.used === "slow exact read of each subject") &&
+      first.route.fastIndex.available === declaredHere, { code: first.route.code, available: first.route.fastIndex.available });
   bump("questions"); bump("store pages", pages.length);
 }
 
@@ -226,6 +229,9 @@ const db = conn.database;
 const A = "account-003", B = "account-007";
 section = "setup";
 const P0 = (await demo.head()).position;
+// [DX-XQ10] Whether this toy declares the commit-time index (demo/toy/up.sh with DEMO_CROSS_INDEX=1).
+const declaredHere = (await tool("indexed_attributes", { account: A })).declared === true;
+counts["toy declares the index"] = declaredHere ? 1 : 0;
 // Writes through the console's own tools, so the answers differ across positions and valid times.
 const save1 = await tool("save_facts", { account: A, subject: 2, kind: "task", changes: { ":i9/status": "complete" } });
 const corr = await tool("correct_past_value", { account: A, subject: 3, kind: "task", attribute: ":i9/status", value: "requires_action", validFrom: new Date(Date.now() - 8 * 86_400_000).toISOString() });
@@ -328,6 +334,73 @@ for (const account of [A, B])
 const varying = [...signatures].filter(([, s]) => s.size > 1).map(([k]) => k);
 check("non-vacuous: some questions have different true answers across the cuts", varying.length >= 3, varying);
 counts["questions whose answer changes across cuts"] = varying.length;
+
+// ---- [DX-XQ10] The fast route: the same questions on the index, on the slow route and on auto, all equal ----------
+section = "fast route (index)";
+{
+  const ia = await tool("indexed_attributes", { account: A, kind: { prefix: "i9:" } });
+  check("indexed_attributes says whether the toy declares the index", ia.declared === declaredHere && Array.isArray(ia.attributes));
+  check("indexed_attributes shows the declare call and never runs it", ia.declareCall === null || (ia.declareCall.shownNotRun === true && /declareIndexes/.test(ia.declareCall.sdk)), ia.declareCall);
+  if (!declaredHere) {
+    const a = await tool("ask_across_subjects", { account: A, kind: { prefix: "i9:" }, where: [{ attribute: ":i9/status", op: "eq", value: "pending" }], result: "count" });
+    check("no declaration: answered by the slow route, the index's refusal stated", a.route.code === "sweep" && typeof a.route.indexRefusal?.code === "string", a.route);
+  } else {
+    check("indexed_attributes: every declared attribute answers from a stated position", ia.attributes.length > 0 && ia.attributes.every((x: any) => Number.isSafeInteger(x.since)), ia.attributes);
+    check("indexed_attributes marks the kind's declared attributes", (ia.kindAttributes ?? []).some((k: any) => k.declared), ia.kindAttributes);
+    const fast = (account: string): any[] => [
+      { name: "pending tasks", kind: { prefix: "i9:" }, where: [{ attribute: ":i9/status", op: "eq", type: "text", value: "pending" }], result: "list" },
+      { name: "tasks with no status", kind: { prefix: "i9:" }, where: [{ attribute: ":i9/status", op: "missing" }], result: "count" },
+      { name: "pending or requiring action, progress 20 to 60", kind: { prefix: "i9:" }, where: [{ attribute: ":i9/status", op: "in", type: "text", values: ["pending", "requires_action"] }, { attribute: ":task/progress", op: "range", type: "integer", from: "20", to: "60" }], result: "list" },
+      { name: "tasks per status", kind: { prefix: "i9:" }, where: [], result: "countByValue", of: ":i9/status" },
+      { name: "active subjects", kind: { prefix: "pl:", shape: "pl:{8 digits}" }, where: [{ attribute: ":placement/status", op: "eq", type: "text", value: "active" }], result: "count" },
+      { name: "reviews of subject 7", kind: { prefix: "review:" }, where: [{ attribute: ":review/of", op: "eq", type: "reference", value: `acct/${account}/pl:00000007` }], result: "list" },
+      { name: "pay from 1,400 to under 2,000", kind: { prefix: "wk:" }, where: [{ attribute: ":person/custom-pay-cents", op: "range", type: "integer", from: "1400", to: "2000", toExclusive: true }], result: "list" },
+      { name: "start text starts with 2026-11", kind: { prefix: "wk:" }, where: [{ attribute: ":person/custom-start", op: "prefix", value: "2026-11" }], result: "count" },
+      { name: "pay per value", kind: { prefix: "wk:" }, where: [{ attribute: ":person/custom-pay-cents", op: "exists" }], result: "countByValue", of: ":person/custom-pay-cents" },
+    ];
+    let both = 0;
+    for (const account of [A, B]) for (const base of fast(account)) for (const [p, v] of [[P1, V_NOW], [P1, V_4], [P0, V_PAST]] as const) {
+      const { name, ...q0 } = base;
+      const q = { ...q0, account, basis: { position: p, validAt: iso(v) } };
+      const expected = await brute(plainClient, db, q, p, v);
+      const label = `${account} ${name} at ${p}, valid ${iso(v).slice(0, 10)}`;
+      const byRoute: Record<string, any[]> = {};
+      for (const route of ["index", "sweep", "auto"]) {
+        const pages = await allPages({ ...q, route }, [{ limit: 3, pageSubjects: 5 }, { limit: 1000 }][both % 2]!);
+        byRoute[route] = pages;
+        compare(`${label} (${route})`, q, pages, expected, p, v);
+        check(`${label} (${route}): every page from the route asked`, pages.every((x) => x.route.code === (route === "sweep" ? "sweep" : "index")), pages.map((x) => [x.route.code, x.route.indexRefusal?.code]));
+      }
+      const answer = (pages: any[]) => JSON.stringify([pages.flatMap((x) => (x.rows ?? []).map((r: any) => r.id)), pages.at(-1).count ?? null, pages.at(-1).groups ?? null]);
+      check(`${label}: index, slow route and auto give the same answer`, answer(byRoute["index"]!) === answer(byRoute["sweep"]!) && answer(byRoute["auto"]!) === answer(byRoute["index"]!));
+      const ix = byRoute["index"]!, sw = byRoute["sweep"]!;
+      check(`${label}: the index examined index entries, the slow route subjects`, ix.every((x) => x.progress.subjectsExamined === 0) && sw.reduce((n, x) => n + x.progress.subjectsExamined, 0) >= expected.subjects);
+      both++;
+    }
+    counts["questions on both routes and auto"] = both;
+    // Not declared, or a shape the index does not take: auto answers on the slow route and says why; a forced index refuses.
+    const slow = [
+      { q: { account: A, kind: { prefix: "wk:" }, where: [{ attribute: ":worker/address", op: "exists" }], result: "count" }, code: "AttributeNotIndexed" },
+      { q: { account: A, kind: { prefix: "i9:" }, where: [{ attribute: ":i9/status", op: "ne", type: "text", value: "pending" }], result: "count" }, code: "UnsupportedOperation" },
+      { q: { account: A, kind: { prefix: "wk:" }, result: "top", order: { by: ":person/custom-pay-cents", type: "integer", direction: "desc" }, limit: 5 }, code: "UnsupportedOperation" },
+    ];
+    for (const { q, code } of slow) {
+      const a = await tool("ask_across_subjects", { ...q, basis: { position: P1, validAt: iso(V_NOW) }, mode: "toEnd" });
+      const expected = await brute(plainClient, db, q, P1, V_NOW);
+      check(`auto on ${q.where?.[0]?.attribute ?? q.result}: the slow route, with the index's refusal ${code}`, a.route.code === "sweep" && a.route.indexRefusal?.code === code && a.route.indexRefusal?.fallback === "sweep", a.route);
+      check(`auto on ${q.where?.[0]?.attribute ?? q.result}: exact`, q.result === "count" ? a.count === expected.ids.length : JSON.stringify(a.rows.map((r: any) => r.id)) === JSON.stringify(expected.top), { got: a.count ?? a.rows?.length });
+      const forced = await refusal("ask_across_subjects", { ...q, route: "index", basis: { position: P1, validAt: iso(V_NOW) } });
+      check(`forced index on ${q.where?.[0]?.attribute ?? q.result}: refused ${code}`, forced.code === code, forced);
+    }
+    // A cursor is its route's: an index cursor is never sent to the slow route.
+    const one = await tool("ask_across_subjects", { account: A, kind: { prefix: "i9:" }, where: [{ attribute: ":i9/status", op: "eq", value: "pending" }], result: "list", limit: 2, mode: "page", route: "index" });
+    if (one.next) {
+      const cross = await refusal("ask_across_subjects", { account: A, kind: { prefix: "i9:" }, where: [{ attribute: ":i9/status", op: "eq", value: "pending" }], result: "list", limit: 2, mode: "page", route: "sweep", cursor: one.next });
+      check("an index cursor sent with route sweep is refused (CursorMismatch)", cross.code === "CursorMismatch", cross);
+    }
+  }
+}
+section = "ask_across_subjects";
 
 // Modes: fill (default) and toEnd in one call each; the default basis is stated and exact.
 {

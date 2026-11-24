@@ -139,9 +139,10 @@ interface AskCursor { v: 1; route: AskRoute; cursor: string; position: number; v
 const b64 = (s: string) => Buffer.from(s, "utf8").toString("base64url");
 function openCursor(text: string, q: AskQuestion): AskCursor {
   let c: AskCursor;
-  try { c = JSON.parse(Buffer.from(text, "base64url").toString("utf8")) as AskCursor; } catch { throw new DatomicHttpError(400, "InvalidValue", "Malformed ask cursor"); }
+  // An edited or foreign cursor is refused as the routes refuse theirs (409 CursorMismatch).
+  try { c = JSON.parse(Buffer.from(text, "base64url").toString("utf8")) as AskCursor; } catch { throw new DatomicHttpError(409, "CursorMismatch", "The cursor was changed or is not an answer's next"); }
   if (!c || c.v !== 1 || (c.route !== "index" && c.route !== "sweep") || typeof c.cursor !== "string" || !Number.isSafeInteger(c.position) || typeof c.validAt !== "number")
-    throw new DatomicHttpError(400, "InvalidValue", "Malformed ask cursor");
+    throw new DatomicHttpError(409, "CursorMismatch", "The cursor was changed or is not an answer's next");
   if (c.q !== questionHash(q)) throw new DatomicHttpError(409, "CursorMismatch", "The cursor belongs to another question");
   return c;
 }
