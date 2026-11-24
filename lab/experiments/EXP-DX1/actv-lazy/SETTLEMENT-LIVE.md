@@ -155,7 +155,105 @@ GATES-TABLE
 
 ## 9. Server runs (for the day a machine is rented)
 
-SERVER-SECTION
+### 9.1 One publishing account, 100,000 subjects, fresh database (the brief's item 5; runnable as written)
+
+The held runner on the fresh SCALE1 template (as `PART9.md` / `SETTLEMENT-FRAMES.md` section 9: build the commit and the
+w0 package from it, fresh prepared copy, about 4.4 minutes). Three cases in one process, saves in the publishing
+account at 23.5/s and the nine others at their usual load (the held tape at 23.5: 211.5/s together), throughout:
+
+```sh
+sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
+  "TX2_SETTLE_FRAMES=bytes" "DX_ACT3_SETTLE=0" "DX_ACT5_LIVE=1" "DX_ACT5_SERVER=1" "DX_HELD_MINUTES=240" \
+  "DX_ACT5_CASES=control:progress:bytes:none:23.5:1:::300,head:head:bytes:large:23.5:1:stop::300,settle:progress:bytes:same:23.5:1:::7200" \
+  bash lab/experiments/EXP-DX1/actv-lazy/join/held-server.sh \
+  "$COMMIT" "$SCALE1_IMAGE" "$SCALE1_IMAGE_SHA256" "$SCALE1_TRANSFER_SHA256" \
+  "$SCALE1_PGDATA" "$PREPARED_PGDATA" "$PREPARED_WAL" "$DX_LAZY_OUT"
+```
+
+`control`: 300 s of saves, no settlement. `head`: Publish the 20 forms and 20 policies release (every subject owes) and
+settle it with today's rule for 300 s while saving, then stop (progress stays durable). `settle`: finish the same
+release with the guard while the saves go on (window up to 7,200 s; the saves stop at the window's end or earlier
+only if the runner's limit is reached). Then the full exactness check (oracle for every subject in pages of 32 on four
+workers; every notice in order; every ledger). Recipient delivery is skipped at this size. COMMIT is the head of
+`exp/DX-ACT5-settlement-live` carrying this page.
+
+**Duration:** about 3 to 3.5 hours: boot and checks 4 min; enrolment and first Publish 2; the oracle's fold of the
+first release over 100,000 subjects 3 to 6; control 5; Publish and its oracle fold 5 to 10; head arm 5; settlement 65 to
+110; exactness check 15 to 30. `DX_HELD_MINUTES=240`.
+
+**Predictions** (from the toy counts above, frames-check's frames per subject for a release that adds 20 forms to a
+form-free one: 4 to 5 subjects per value frame and about 1 per notice frame, and the 2026-11-23 settlement of the small
+release: 31,250 frames in 19.2 minutes, 36.9 ms per frame turn with both writers sharing one queue):
+
+| Quantity | Prediction | Shows it wrong |
+| --- | --- | --- |
+| Head arm: frames committed while the saves run | at most 1% of those offered (toy: 0 of 325 at 39.4/s, 0 of 251 with only the nine others saving) | more than 5% committed |
+| Head arm: frames refused | at least 3,000 in 300 s (10 per second or more per writer) | fewer than 1,000: the database head moves less often than its saves suggest |
+| Settle arm: frames refused | 0 | any refusal (another writer of the same progress, or a guard firing on something else) |
+| Changed values / notices of the release | 5.93 million (59.25 per subject, as the toy's 474 for 8) / 2.00 million, plus the first release's 39,000 notices recorded first | more than 2% away |
+| Value frames / notice frames (this release) | 20,000 to 25,000 / 85,000 to 100,000 (plus about 6,600 for the first release's notices) | outside those ranges |
+| Minutes to settle, beside 235 saves/s | 65 to 110, central 85 (about 121,000 frames at 30 to 45 ms per turn, plus 10 to 20% for the saves); values finish first (15 to 35) | over 120 (the frames compete with saves more than forecast) or under 45 |
+| Live save p50 / p99, account and neighbours, against the control | p50 within +3 ms; p99 within 1.3 times outside stall seconds (one frame of at most 8 ms estimated service ahead of a save); no save refused, expired or uncertain | p99 over 1.5 times outside stalls, or any refused save |
+| Exactness | every change and notice equals the oracle; every read pinned during the run exact | any difference |
+| Writer time spent on frames | about 14 minutes of estimated service (92,000 notice frames and 22,500 value frames near the 8 ms bound), about 16% of the writer over 85 minutes | — |
+
+### 9.2 Several accounts at once at 1 billion records (written; NOT runnable until the preparation below exists)
+
+**What it would run:** the sealed 1 billion database (AGE1's cut; ten deep accounts of 100,000 subjects), three and then
+ten accounts publishing the 20 forms and 20 policies release within minutes of each other, every account saving
+throughout, settlement with byte frames, the guard and the admission lane on, against a no-settlement control:
+
+```sh
+# 3 accounts (then the same with DX_ACT5_ACCOUNTS=10 and a fresh copy)
+sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
+  "TX2_SETTLE_FRAMES=bytes" "DX_ACT3_SETTLE=0" "DX_ACT5_LIVE=1" "DX_ACT5_SERVER=1" "DX_ACT5_ACCOUNTS=3" \
+  "DX_HELD_MINUTES=420" \
+  "DX_ACT5_CASES=control:progress:bytes:none:23.5:1:::300,many:progress:bytes:large:23.5:1:multi:admission:7200" \
+  bash lab/experiments/EXP-DX1/actv-lazy/join/held-server.sh "$COMMIT" <the 1 billion seal, image and prepared copy>
+```
+
+**What must be prepared before Publish can run on the 1 billion database at all** (the held runner has run only on the
+fresh template):
+
+1. *Adoption of the aged seal by the held runner.* `runHeld` adopts a `AdoptedSeed` of the SCALE1 template; the 1 billion
+   seal (AGE1's handoff, cut t 62,888,918, head 28,309,866) must be opened the same way (`openScaleSeal` with its pins)
+   and `checkAdoptedPeer` / `seedPositions` run at the aged head. The scorecard already adopts this seal
+   (`age1/scorecard.mjs`, `v01/adopted-server.ts`); the held runner does not.
+2. *The oracle's worlds for aged subjects.* `held-campaign.ts` `expected()` builds each subject's world from its seed facts
+   and this run's own saves. On the 1 billion copy 2,000 subjects per account carry about 1,400 aged saves each, so the
+   oracle's world for them is wrong and every exactness check would fail. Needed: replay AGE1's deterministic aging
+   tape into the runner's history for those subjects, or read their facts at the Publish position from the database
+   and check kernel against oracle on those facts (weaker: it no longer checks the read path).
+3. *Journal routes.* The runner's ledger walks `/transactions` from its own start, after the loader's 28 million
+   non-canonical position rows; it should not meet them, but the gateway bounds of `exp/DX-JRN1-journal-bounds` should
+   be merged first (fault 22).
+4. *Several publishing accounts in one database:* built here (`HeldSource.namespace`, section 6) and passed at toy size;
+   at full size each further account's enrolment copies 100,000 census members (about 2 minutes each on the fresh
+   template, so about 20 minutes for ten).
+5. *Runner memory:* the check holds each account's oracle state and owed notices (about 2 million per account). Three
+   accounts fit in the runner's 8 GiB; ten need the check streamed one account at a time (not built).
+6. *Production-shaped saves:* the held runner plays the held tape (`heldTape`); REAL2's production-shaped tape is not
+   wired into it. The command above uses the held tape at 23.5/s per account.
+7. *A prepared copy of the 1 billion database* on the server (native restore from object storage; AGE1 measured about
+   0.5 h for its restore) and the `server-32` profile (the proposed default; the 1 billion cards ran with it).
+
+**Predictions** (from the toy multi-account counts, the single-account forecast above, and the 2026-11-23 1 billion
+measurements: uncached pinned reads 1.5 to 1.9 ms of reader CPU against 0.16 ms cached):
+
+| Quantity | 3 accounts | 10 accounts | Shows it wrong |
+| --- | --- | --- | --- |
+| Frames refused | 0 | 0 | any |
+| Frames per account | about 121,000 | about 121,000 | more than 10% away |
+| Turns between accounts | each account within 10% of the others' committed frames in every minute while all are settling | same | an account below half of another's in any minute (starvation) |
+| Minutes to settle, all accounts | 90 to 160: each account prepares its frames in parallel, but frames are committed one at a time per process, so the accounts share about 40 to 65 commits per second (one commit round trip each); slower if reading every subject once uncached at 1 billion dominates | 5 to 9 hours | under 70 minutes (3) or 3.5 hours (10): the one-at-a-time commit is not the bottleneck I assume |
+| Writer time on frames | about 45 minutes of estimated service | about 2.5 hours | — |
+| Live save p50 / p99 per account against the control | p50 within +3 ms, p99 within 1.3 times outside stall seconds (the lane starts a frame only while no save waits) | same | p99 over 1.5 times in any account outside stalls |
+| Quiet account (no Publish, 3.5/s) | commit p99 within 1.25 times its control or under 50 ms | same | outside both |
+
+The ten-account figure is the finding the owner should see before choosing: with one frame in the writer at a time
+(the bound that protects live saves), ten accounts that each owe 20 forms on 100,000 subjects need about 1.2 million
+frames and about 2.5 hours of writer time; they cannot all settle within an hour. Faster needs frames that do more per
+unit of writer time (fewer, larger writes per subject) or a looser live bound, not better turn-taking.
 
 ## 10. Not verified
 

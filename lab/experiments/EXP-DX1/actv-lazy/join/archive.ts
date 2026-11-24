@@ -545,7 +545,7 @@ export class Archive {
 
 export class SettlementStopped extends Error {}
 /** [DX-ACT5] Exact counts of one writer's frames, per-second commit and refusal counts from `origin`, and the turns'
- * client-side intervals (the first 20,000; toy evidence). */
+ * client-side intervals (the first 250,000). */
 export class Contest {
   offered = 0;
   refused = 0;
@@ -554,7 +554,7 @@ export class Contest {
   readonly seconds = new Map<number, { committed: number; refused: number }>();
   readonly turns: [number, number][] = [];
   turn(begun: number, ended: number) {
-    if (this.turns.length < 20_000) this.turns.push([begun, ended]);
+    if (this.turns.length < 250_000) this.turns.push([begun, ended]);
   }
   done(ok: boolean) {
     if (ok) this.committed++;
