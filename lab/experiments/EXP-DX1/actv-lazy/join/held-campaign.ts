@@ -166,6 +166,9 @@ type Release = {
 // [DX-ACT8] DX_ACT8_UNPAUSED=1: the windows publish while every account's saves keep running (no pause, no drain).
 // Unset: the runner pauses and drains the save sender around each Publish, as every earlier result was measured.
 export const unpausedMode = () => process.env.DX_ACT8_UNPAUSED === "1";
+/** [DX-ACT8] Writers the runner adopts from the journal by command ID when saves run beside a Publish: settlement frames,
+ * notice documents written through the composition (other accounts' enrolments), Publishes of a killed process. */
+export const ACT8_ADOPT = /^(settled-(values|notice):|notice:v1:|joined:.*:act8:kill:)/;
 type PairSample = {
   mode: Mode;
   rate: Rate;
@@ -552,6 +555,16 @@ export async function runHeld(
     };
     async function verifyRead(probe: Read, r: Release, i: number, where = "read") {
       const b = probe.result.basis;
+      // [DX-ACT8] With saves running beside the Publish a read's basis can include a save whose receipt has not reached
+      // the oracle's history yet: wait until every position up to the basis is matched to its writer (after the read's
+      // clock stopped, so no time changes). Unset: as before (the pause made the history complete).
+      if (partialVerify)
+        for (const until = now() + 60_000; ; ) {
+          await activeLedger.verifyThrough(b.tx, true, ACT8_ADOPT);
+          if (activeLedger.verified() >= b.tx) break;
+          assert(now() < until, "Receipts below a read's basis never arrived");
+          await sleep(5);
+        }
       const effective = releases.findLast((x) => x.position <= b.tx);
       const values = {
         where,

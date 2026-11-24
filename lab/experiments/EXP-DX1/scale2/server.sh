@@ -36,6 +36,12 @@ for rung in "${rungs[@]}"; do
     1k) shape=(DX_SCALE2_THIN=1000 DX_SCALE2_PUBLISH=210 DX_SCALE2_LATE=10 DX_SCALE2_PUBLISH_MAX=40) ;;
     10k) shape=(DX_SCALE2_THIN=10000 DX_SCALE2_PUBLISH=510 DX_SCALE2_LATE=10 DX_SCALE2_PUBLISH_MAX=40) ;;
     100k) shape=(DX_SCALE2_THIN=100000 DX_SCALE2_PUBLISH=1010 DX_SCALE2_LATE=10 DX_SCALE2_PUBLISH_MAX=40) ;;
+    # [DX-ACT8] The same rungs with every publishing account publishing its large release DURING the window, all at
+    # once, beside every account's saves, under the account guard (TX2_PUBLISH_BESIDE=1; PUBLISH-BESIDE-SAVES.md).
+    1k-live) shape=(DX_SCALE2_THIN=1000 DX_SCALE2_PUBLISH=210 DX_SCALE2_LATE=10 DX_SCALE2_PUBLISH_MAX=40
+      DX_SCALE2_LIVE_PUBLISH=200 DX_SCALE2_LIVE_AT_ONCE=1 TX2_PUBLISH_BESIDE=1) ;;
+    10k-live) shape=(DX_SCALE2_THIN=10000 DX_SCALE2_PUBLISH=510 DX_SCALE2_LATE=10 DX_SCALE2_PUBLISH_MAX=40
+      DX_SCALE2_LIVE_PUBLISH=500 DX_SCALE2_LIVE_AT_ONCE=1 TX2_PUBLISH_BESIDE=1) ;;
     *) echo "unknown rung $rung" >&2; exit 2 ;;
   esac
   r=$out/$rung
@@ -54,7 +60,7 @@ for rung in "${rungs[@]}"; do
     lab/experiments/EXP-DX1/scale2/mini.ts "$r" "http://127.0.0.1:$w" "http://127.0.0.1:$rd" "$prefix" > "$r/mini.log" 2>&1 || status=$?
   for role in gw-r gw-w tx; do docker logs "$prefix-$role" > "$r/$role.log" 2>&1 || true; done
   bash demo/server-down.sh > "$r/down.log" 2>&1 || true
-  grep -E '"kind":"(PASS|load|enrolled|published|late-enrolment|window|feed|settlement)"' "$r/mini.log" | cut -c1-600 || tail -20 "$r/mini.log"
+  grep -E '"kind":"(PASS|load|enrolled|published|live-publish|late-enrolment|window|feed|settlement)"' "$r/mini.log" | cut -c1-600 || tail -20 "$r/mini.log"
   [[ $status == 0 ]] || { echo "rung $rung failed ($status)" >&2; exit "$status"; }
 done
 tar -C "$out" -czf "$out.tar.gz" . && echo "evidence: $out.tar.gz"

@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import type { DatomicClient } from "../../../../../packages/datomic/dist/index.js";
+import { DatomicClient as Client, type DatomicClient } from "../../../../../packages/datomic/dist/index.js";
+import { frameEstimate } from "./frames.ts";
 import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
 import { ids } from "../../../../bench/lib/world.ts";
 import { unpack } from "../../notify1/store.ts";
@@ -61,6 +62,29 @@ const shape150 = parseShape("forms=150,policies=150,permille=1000");
 /** Writers the runner adopts from the journal by command ID: settlement frames, notice documents written through the
  * composition (enrolments of other accounts), and Publishes whose writing process was killed. */
 const ADOPT = /^(settled-(values|notice):|notice:v1:|joined:.*:act8:kill:)/;
+/** Commit samples of every Datomic client in this process (the reply's datoms, the gateway's transact time, request
+ * bytes, HTTP calls), as `w0-http.ts` collects them; bounded. */
+const commitSamples: { transactionIds: string[]; httpCalls: number; requests: any[] }[] = [];
+function captureCommits() {
+  const proto = Client.prototype as any;
+  if (proto.__act8) return;
+  proto.__act8 = true;
+  const original = proto.request;
+  const seen = new WeakSet<object>();
+  proto.request = function (this: any, ...args: unknown[]) {
+    if (!seen.has(this)) {
+      seen.add(this);
+      const prior = this.onCommit;
+      this.onCommit = (sample: any) => {
+        prior?.(sample);
+        commitSamples.push({ transactionIds: sample.transactionIds ?? [], httpCalls: sample.httpCalls,
+          requests: (sample.attempts ?? []).flatMap((a: any) => a.requests ?? []) });
+        if (commitSamples.length > 6000) commitSamples.splice(0, 3000);
+      };
+    }
+    return original.apply(this, args);
+  };
+}
 const pct = (xs: number[], p: number) =>
   xs.length ? xs.toSorted((a, b) => a - b)[Math.max(0, Math.ceil(xs.length * p) - 1)]! : null;
 
@@ -204,6 +228,7 @@ class Gate {
       ackMs: r.received !== undefined && r.offer !== undefined ? r.received - r.offer : null,
       recordBytes: (r as { recordBytes?: number }).recordBytes ?? null, firstCorrectMs: first, withinOneSecond: within, deadline,
     };
+    record.cost = await this.cost(r);
     if (o.settle !== false) record.settled = await this.settle(r, inner ? inner.doc : old);
     return { refused: false as const, r, record };
   }
@@ -251,6 +276,34 @@ class Gate {
     } finally {
       if (!worker) await w.close();
     }
+  }
+  /** What one Publish cost: its changes and operation bytes, the datoms and the gateway's transact time its commit reply
+   * reported, its journal entry (rows and bytes as the feed returns them), the bulk writer's estimate for its operations,
+   * HTTP calls, tries, and what it guarded. */
+  async cost(r: Release & { tx?: string }) {
+    const c = this.c;
+    const page = await c.reader.request<{ transactions: [string, number, string[]][] }>("POST",
+      "/v2/db/" + c.db + "/transactions", { after: r.position - 1, limit: 1 });
+    const [tx, at, rows] = page.transactions[0]!;
+    assert.equal(at, r.position);
+    const stored = await c.s.lookup((await c.s.comp.feedPage(r.position - 1, 1)).transactions[0]!.commandId);
+    const ops = stored.changes.map((x: any) => x.op === "retract" ? { op: "retract", id: x.tripleId }
+      : { op: "assert", entityId: x.entityId, attribute: x.attribute, value: x.value, validFrom: x.validFrom,
+          ...(x.validTo == null ? {} : { validTo: x.validTo }) });
+    const sample = commitSamples.findLast((x) => x.transactionIds.includes(tx));
+    const reply = sample?.requests.filter((q) => typeof q.datoms === "number").at(-1);
+    const marker = JSON.parse(stored.changes.find((x: any) => x.attribute === "lazy/activation").value.value);
+    const guarded = marker.precondition === "account";
+    return {
+      changes: ops.length, operationBytes: Buffer.byteLength(canonical(ops)), datoms: reply?.datoms ?? null,
+      transactMicros: reply?.transactMicros ?? null, requestBytes: reply?.requestBytes ?? null,
+      journalRows: rows.length, journalBytes: rows.reduce((n, x) => n + Buffer.byteLength(x), 0),
+      writerEstimateUs: frameEstimate(ops).us, httpCalls: sample?.httpCalls ?? null, tries: r.tries ?? 1,
+      guarded: guarded
+        ? { rule: "account", entityState: ["join-calendar"], tripleLive: ["tail"], revisionChecked: [...new Set(ops
+            .filter((o: any) => o.op === "assert").map((o: any) => o.entityId))].length + " entities (release, tail, event)" }
+        : { rule: "head", scopeWide: true },
+    };
   }
   /** Every read pinned at the positions from just before the Publish's read to just after its record, all subjects. */
   async checkBetween(r: Release) {
@@ -327,10 +380,12 @@ const nextLarge = (doc: W0.ReleaseDoc, base: W0.ReleaseDoc) => (doc.forms?.lengt
 const toggleSmall = (doc: W0.ReleaseDoc) => (doc.name === "R1" ? W0.R2.doc : W0.R1.doc);
 
 export async function besideGate(c: GateContext) {
-  const parts = (process.env.DX_ACT8_PARTS ?? "beside,adversarial,kill,live,enrol").split(",");
-  assert(parts.every((p) => ["beside", "adversarial", "kill", "live", "enrol", "removal"].includes(p)));
+  const parts = (process.env.DX_ACT8_PARTS ?? "cost,beside,adversarial,kill,live,enrol").split(",");
+  assert(parts.every((p) => ["cost", "beside", "adversarial", "kill", "live", "enrol", "removal"].includes(p)));
   assert(!parts.includes("removal") || parts.at(-1) === "removal", "removal is the last part");
   assert.equal(process.env.TX2_SETTLE_FRAMES, "bytes", "the gate settles with byte frames");
+  assert([undefined, "read-cut"].includes(process.env.DX_ACT8_INJECT), "DX_ACT8_INJECT is unset or read-cut");
+  captureCommits();
   const g = new Gate(c);
   const evidence: Record<string, unknown> = { attempt: c.attempt, people: c.people, parts, startedAt: new Date().toISOString() };
   // The oracle's ledgers follow every release in order, the runner's first included.
@@ -339,6 +394,7 @@ export async function besideGate(c: GateContext) {
   const base = () => (g.current.doc.forms?.length ? (g.oldOf.get(g.current.seq) ?? W0.R1.doc) : g.current.doc);
   const set = (k: string, v: string | undefined) => (v === undefined ? delete process.env[k] : (process.env[k] = v));
   try {
+    if (parts.includes("cost")) evidence.cost = await costPart(g, base, set);
     if (parts.includes("beside")) evidence.beside = await besidePart(g, base, set);
     if (parts.includes("adversarial")) evidence.adversarial = await adversarialPart(g, base, set);
     if (parts.includes("kill")) evidence.kill = await killPart(g, base, set);
@@ -373,8 +429,32 @@ export async function besideGate(c: GateContext) {
   }
 }
 
-// ------------------------------------------------------------------------------------------------ beside
+// ------------------------------------------------------------------------------------------------ cost
 type Setter = (k: string, v: string | undefined) => unknown;
+/** With no saves running (so the whole-head rule lands too): the same releases under both rules, each Publish's cost. */
+async function costPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
+  const out: Record<string, unknown>[] = [];
+  for (const docs of [undefined, "ref"] as const)
+    for (const kind of ["small", "large"] as const)
+      for (const rule of ["head", "account"] as const) {
+        set("TX2_PUBLISH_BESIDE", rule === "account" ? "1" : undefined);
+        set("TX2_RELEASE_DOCS", docs);
+        for (const step of [0, 1]) {
+          const cur = g.current.doc;
+          const doc = kind === "small" ? toggleSmall(cur) : nextLarge(cur, base());
+          const res = await g.publish(doc, "cost-" + (docs ?? "inline") + "-" + kind + "-" + rule, { settle: false });
+          assert(!res.refused);
+          out.push({ docs: docs ?? "inline", kind, rule, step, doc: doc.name, forms: doc.forms?.length ?? 0, ...(res.record.cost as object) });
+        }
+      }
+  set("TX2_PUBLISH_BESIDE", "1");
+  set("TX2_RELEASE_DOCS", undefined);
+  console.log("[act8] cost " + JSON.stringify(out.map((x: any) => [x.docs, x.kind, x.rule, x.changes, x.operationBytes, x.datoms,
+    x.journalBytes, x.writerEstimateUs, x.httpCalls])));
+  return out;
+}
+
+// ------------------------------------------------------------------------------------------------ beside
 async function besidePart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
   const c = g.c;
   const out: Record<string, unknown>[] = [];
@@ -499,7 +579,10 @@ async function adversarialPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) 
   // so its writes never meet the save sender's cached predecessors).
   await g.window("adversarial", 0, true, Number(process.env.DX_ACT8_ADV_SECONDS ?? 150), async () => {
     let k = 0;
-    for (const kind of KINDS)
+    // DX_ACT8_KINDS limits the kinds (the negative control runs startDate alone with DX_ACT8_INJECT=read-cut);
+    // DX_ACT8_ADV_EXTRAS=0 skips the second-Publish and enrolment steps.
+    const only = process.env.DX_ACT8_KINDS?.split(",");
+    for (const kind of KINDS.filter((x) => !only || only.includes(x.name)))
       for (const where of windows) {
         const i = (k++ * 3 + 1) % c.people;
         const doc = nextLarge(g.current.doc, base());
@@ -522,7 +605,8 @@ async function adversarialPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) 
           wrongRuleWouldDiffer: canonical(atRead) !== canonical(atRecord) });
       }
     // A second Publish of the same account inside the window: the first is refused once and lands after it.
-    for (const where of windows) {
+    const extras = process.env.DX_ACT8_ADV_EXTRAS !== "0";
+    for (const where of extras ? windows : []) {
       let inner: Release | undefined;
       const hook = async () => {
         inner = await c.offer(toggleSmall(g.current.doc.forms?.length ? base() : g.current.doc), c.attempt + ":act8:inner:" + where,
@@ -544,7 +628,7 @@ async function adversarialPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) 
     }
     // An enrolment of another account inside the window: the Publish is not refused.
     set("TX2_ENROL_BESIDE_SAVES", "1");
-    for (const where of windows) {
+    for (const where of extras ? windows : []) {
       const index = where === "afterRead" ? 8 : 9;
       let enrolled: { commits: number } | undefined;
       const hook = async () => {
