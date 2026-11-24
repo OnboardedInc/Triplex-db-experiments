@@ -1,7 +1,8 @@
 # A removal in one account stops nothing in another: Publish, settlement, recorded notices and delivery carry their account (`TX2_ACCOUNT_TICKETS`)
 
 Builder DX-ACT9, 2026-11-24, branch `exp/DX-ACT9-account-tickets`: `exp/DX-ACT8-publish-beside-saves` (`2e7ae66c4`) with
-`exp/DX-ERA2-removal-per-account` (`6bc2484f0`) and `exp/DX-IMP2-import-whole-subject` (`d4411c77b`) merged. All accounts
+`exp/DX-ERA2-removal-per-account` (`6bc2484f0`, then its fix heads `a9da13f89` and `5114a74b0`) and
+`exp/DX-IMP2-import-whole-subject` (`d4411c77b`) merged. All accounts
 stay in one Datomic database. Mac work is correctness at toy size; every Mac time is diagnostic. Datomic is not modified.
 Every option is default off; with `TX2_REMOVAL_PER_ACCOUNT` absent or off nothing here changes a byte.
 
@@ -207,5 +208,37 @@ met today, with or without this option (follow-up 2).
 | `TX2_ACCOUNT_TICKETS=1` (gateway) | off | effective only with `TX2_REMOVAL_PER_ACCOUNT=1`: the cross-database ticket naming source accounts (3.2) and the frontier's `touched` field (`?account=A&since=s`: the entities of A whose removal counter is above `s`, sorted, at most 1,024, with `touchedComplete`). Otherwise the routes answer byte for byte as before. |
 
 With either piece absent the wire bytes, the stored records and every check are the Publish branch's.
+
+## 8. Predictions (written 2026-11-24 18:50 local, before any cell, stack case or server run)
+
+**The Mac cells** (`act9/cells.sh`, the many-accounts miniature on its own toy stack; ten shape: ten publishing accounts
+A to J, A removes, two accounts enrol during the cell, saves beside; each account's rounds are Publish (three tries),
+settle (three tries), deliver, read the recorded notices; each removal saves a protected value on a fresh entity of A
+that belongs to no subject, then removes it; 30 s):
+
+| Arm | Rate | Other accounts (B to J) | Account A |
+| --- | --- | --- | --- |
+| before (the per-account rule; tickets without accounts) | 1/s, 10/s | **settle, deliver and read refused in nearly every round after the first removal** (the marker's and the packets' stamps are behind the database-wide sequence; the recorder's cursor refuses for good); Publish tries refused when a removal declares between the plan's read and the commit (some at 1/s, most at 10/s) | the same |
+| after (`TX2_ACCOUNT_TICKETS=1`) | 1/s, 10/s | **0 refusals of every kind** | refusals only where one of A's removals declares or commits between a ticket's read and its write (Publish, frames, deliveries), each retried; reads 0 (the removed entities belong to no subject); every round that settles is exact |
+
+Many shape (50 accounts publishing at once, one round each, removals in a 51st thin account): before, settlement,
+delivery and reading refused in nearly all 50; after, 0. Exactness (every account whose rounds all settled, checked
+against the oracle, notices delivered once) in every cell. Shown wrong if: after, any refusal in another account; before,
+fewer than half of the other accounts' rounds after the first removal refused (the cell would not reproduce the fault).
+
+**The server run** (`act9/server.sh`, never on the Mac): a byte copy of the sealed 1 billion database per arm, the
+protected field added at the copy's head, the database moved per account; 200 accounts publishing (Publish, settle,
+deliver, read, round after round), 1,000 thin accounts saving, ten enrolling; removals on request in one deep account
+at 0.2 per second (120 in 600 s) and 10 per second (6,000 in 600 s).
+
+| Arm | Rate | The 200 other accounts | The removing deep account |
+| --- | --- | --- | --- |
+| before | 0.2/s | settle, deliver and read refused in at least 90% of rounds after the first removal; Publish refused on at most a few percent of tries | the same |
+| before | 10/s | settle, deliver and read refused in more than 99% of rounds; Publish refused on most tries, with rounds left unsettled after three | the same |
+| after | 0.2/s | 0 of every kind | a few Publish and frame tries refused by its own removals, every round completes |
+| after | 10/s | 0 of every kind | Publish and frames refused on many tries (its counter moves every 100 ms); some rounds left unsettled; removal p50 within 20% of the before arm |
+
+Shown wrong if: after, any refusal in the 200 accounts; any exactness check fails; or the thin accounts' save p99 under
+removals moves by more than the quiet bar (1.25x or 50 ms) between the arms.
 
 <!-- RESULTS -->
