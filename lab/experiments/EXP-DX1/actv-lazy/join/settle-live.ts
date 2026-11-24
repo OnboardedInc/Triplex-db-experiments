@@ -382,9 +382,62 @@ export async function livePhase(c: LiveContext) {
           await sleep(150);
         }
       })();
+      // [DX-INT4] Pair (d) of the afternoon merge: with DX_ACT5_SWEEP=1 (and the route on the read gateway, DX_SWEEP=1),
+      // the settling account is swept while the saves and the settlement run: every ID with a visible fact, and a count
+      // of the IDs holding one attribute, in small pages, each question read at its first page's position and valid
+      // time; each answer is checked after the case against the store's own history read at that position (the brute
+      // force of xq6/gate.ts). Unset, nothing is read.
+      type Sweep = { q: string; position: number; validAt: number; ids: string[]; count: number | null; pages: number; attribute?: string };
+      const sweeps: Sweep[] = [];
+      let sweepBusy = 0;
+      const sweepPage = async (body: object): Promise<any> => {
+        for (let i = 0; ; i++) {
+          try { return await c.reader!.request<any>("POST", `/v2/db/${c.db}/sweep`, body); }
+          catch (e: any) {
+            if (e?.code !== "SweepBusy" || i > 200) throw e;
+            sweepBusy++;
+            await sleep(Math.max(5, Number(e.retryAfterMs ?? 25)));
+          }
+        }
+      };
+      const sweeping = (async () => {
+        if (process.env.DX_ACT5_SWEEP !== "1" || !published) return;
+        assert(c.reader, "DX_ACT5_SWEEP needs the read gateway's client");
+        const account = c.descriptor.prefix.slice("acct/".length, -1);
+        // The counted attribute: the first of the subject's own attributes the sweep accepts (a protected one is refused).
+        const first: readonly any[] = await c.reader.rows(c.db, { entityIds: [c.descriptor.prefix + W0.placementId(0)] } as never);
+        const attributes = [...new Set(first.map((r) => String(r.attribute)))].sort();
+        let attribute: string | undefined;
+        for (let j = 0; now() < ends; j++) {
+          const counting = j % 2 === 1;
+          const question: any = counting
+            ? { account, result: "count", where: [{ attribute: attribute ?? attributes[0], op: "exists" }], bounds: { subjects: 16 } }
+            : { account, result: "ids", limit: 50, bounds: { subjects: 16 } };
+          let page: any;
+          try { page = await sweepPage(question); }
+          catch (e: any) {
+            if (counting && e?.code === "ProtectedValueLookup" && attributes.length > 1) { attributes.shift(); continue; }
+            throw e;
+          }
+          if (counting) attribute = question.where[0].attribute;
+          const one: Sweep = { q: counting ? "count-exists" : "ids", position: page.position, validAt: page.validAt, ids: [...(page.ids ?? [])],
+            count: null, pages: 1, ...(counting ? { attribute } : {}) };
+          while (page.next) {
+            page = await sweepPage({ ...question, cursor: page.next });
+            assert.equal(page.position, one.position, "a sweep page moved off its question's position");
+            assert.equal(page.validAt, one.validAt, "a sweep page moved off its question's valid time");
+            one.ids.push(...(page.ids ?? []));
+            one.pages++;
+          }
+          if (counting) { assert.equal(page.countComplete, true); one.count = page.count; }
+          sweeps.push(one);
+          await sleep(100);
+        }
+      })();
       // The lane hands frames back to the queue's own turns once the save window is over.
       const saved = writes.finally(() => lane?.close());
-      const [w, s, p, l] = await Promise.allSettled([saved, settling, probing, listing]);
+      const [w, s, p, l, sw] = await Promise.allSettled([saved, settling, probing, listing, sweeping]);
+      if (sw.status === "rejected") throw sw.reason;
       if (w.status === "rejected") throw w.reason;
       if (s.status === "rejected") throw s.reason;
       if (p.status === "rejected") throw p.reason;
@@ -488,6 +541,34 @@ export async function livePhase(c: LiveContext) {
           pinnedAt: published?.r.position ?? null, idsAtPin: lists.find((x) => x.kind === "pinned")?.ids.length ?? null,
           idsAtLastHead: lists.findLast((x) => x.kind === "head")?.ids.length ?? null };
       }
+      // [DX-INT4] Every recorded sweep against the brute force at its own position and valid time.
+      let sweepCheck: unknown = null;
+      if (sweeps.length) {
+        const prefix = c.descriptor.prefix;
+        const visible = (r: any, p: number, v: number) =>
+          r.recorded_position <= p && !(r.retracted_position != null && r.retracted_position <= p) &&
+          r.valid_from <= v && (r.valid_to == null || r.valid_to > v);
+        const histories = new Map<number, readonly any[]>();
+        let checked = 0, idsChecked = 0;
+        for (const x of sweeps) {
+          if (!histories.has(x.position))
+            histories.set(x.position, await c.reader!.rows(c.db, { pattern: {}, history: true, basis: { recordedPosition: x.position, validAt: 0 } } as never));
+          const seen = new Map<string, Set<string>>();
+          for (const r of histories.get(x.position)!)
+            if (String(r.entity_id).startsWith(prefix) && visible(r, x.position, x.validAt))
+              seen.set(r.entity_id, (seen.get(r.entity_id) ?? new Set()).add(String(r.attribute)));
+          if (x.q === "ids") {
+            assert.deepEqual(x.ids, [...seen.keys()].sort(), `sweep (ids) at ${x.position} differs from the history read: ${k.name}`);
+            idsChecked += x.ids.length;
+          } else
+            assert.equal(x.count, [...seen.values()].filter((a) => a.has(x.attribute!)).length, `sweep (count) at ${x.position} differs: ${k.name}`);
+          checked++;
+        }
+        sweepCheck = { sweeps: sweeps.length, checked, idsChecked, pages: sweeps.reduce((n, x) => n + x.pages, 0),
+          positions: new Set(sweeps.map((x) => x.position)).size, attribute: sweeps.find((x) => x.attribute)?.attribute ?? null,
+          lastCount: sweeps.findLast((x) => x.q !== "ids")?.count ?? null, lastIds: sweeps.findLast((x) => x.q === "ids")?.ids.length ?? null,
+          sweepBusy };
+      }
       // Reads at the release's position and at the head after the case.
       for (const i of [0, c.people - 1]) await pinnedRead(i, "act5-after:" + k.name);
       const result = {
@@ -507,6 +588,7 @@ export async function livePhase(c: LiveContext) {
         lane: lane ? lane.stats() : null,
         rival: rival ? { child: rival.result } : null,
         idLists,
+        sweepCheck,
         saves: {
           account: saveSide(rows.filter((r) => r.account === 0), turns),
           neighbours: saveSide(rows.filter((r) => r.account > 0), turns),
