@@ -48,7 +48,7 @@ const results: Record<string, unknown> = { scope, source: process.env.DX_RD4_SOU
 let version = 0;
 const save = async () => {
   version++;
-  const receipt = await writer.run(writer.triples.transact([
+  const receipt: any = await writer.run(writer.triples.transact([
     { op: "assert", entityId: id, entityType: "RD4", attribute: ":version", value: { type: "number", value: version } },
   ]));
   return { position: receipt.position as number, instant: receipt.instant as number, version };
@@ -59,7 +59,7 @@ const valueOf = (triples: readonly any[]) => {
 };
 const catchUp = async (position: number) => {
   for (let i = 0; i < 500; i++) {
-    if ((await plain.run(plain.triples.currentPosition())) >= position) return;
+    if (((await plain.run(plain.triples.currentPosition())) as number) >= position) return;
     await sleep(2);
   }
   throw Error("The read peer did not catch up");
@@ -118,7 +118,7 @@ try {
     const r = await save();
     floor.raise(r);
     const early = await reads[kind](plain);
-    const isEarly = kind === "head" ? early < r.position : early === previous;
+    const isEarly = kind === "head" ? early! < r.position : early === previous;
     const statsBefore = await gatewayStats();
     const started = now();
     const waiting = reads[kind](receiptReader);
@@ -131,7 +131,7 @@ try {
     const answer = await waiting;
     const ended = now();
     const statsAfter = await gatewayStats();
-    const atOrAfter = kind === "head" ? answer >= r.position : answer === r.version;
+    const atOrAfter = kind === "head" ? answer! >= r.position : answer === r.version;
     held.push({ kind, receipt: r.position, plainAnswer: early, plainEarly: isEarly, stillWaitingAt300ms: stillWaiting,
       receiptAnswer: answer, atOrAfter, waitedMsDiagnostic: ended - started, afterReleaseMsDiagnostic: ended - released,
       gatewayWaited: delta(statsBefore, statsAfter, "waited"),

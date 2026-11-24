@@ -1,0 +1,1 @@
+{"extends":"../../../bench/tsconfig.json","compilerOptions":{"allowJs":true,"lib":["ES2024","DOM","DOM.Iterable"]},"include":["**/*.ts"]}
