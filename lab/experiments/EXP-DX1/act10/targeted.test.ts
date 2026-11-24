@@ -273,3 +273,68 @@ test("C1 (TX2_NOTICE_LEDGER=parts): a release whose ledger exceeds the part cap 
   assert(cursor === undefined || cursor.event <= 2, "the later release's notices were recorded");
   delete process.env.TX2_PUBLISH_BESIDE;
 });
+
+// ---------------------------------------------------------------------------------------------- R1: reads around q
+for (const frames of ["bytes", "count"] as const)
+  test("R1 (" + frames + " frames): reads pinned at q - 1, q and q + 1, before and after settlement, with saves between p and q", async () => {
+    process.env.TX2_PUBLISH_BESIDE = "1";
+    const { LazyReader } = await import("../actv-lazy/read.ts");
+    let reads = 0;
+    const routes: Record<string, number> = {};
+    for (let seed = 1; seed <= 40; seed++) {
+      const db = fresh(500 + seed);
+      const r = rng(seed);
+      const A = await account(db, "acct-r");
+      await A.a.installHeld(validTime);
+      await A.a.publish("acct-r:R1", W0.R1.doc, validTime, "owed");
+      const saveOne = async (tag: string) => {
+        const comp = new Proc(db, "saver").comp();
+        const head = await comp.currentPosition();
+        const i = r.int(people);
+        const rows = (await comp.sweepPage(["acct/acct-r/pl:" + String(i).padStart(8, "0")], { position: head, validAt: Date.parse(validTime) })).rows as any[];
+        const t = r.pick(rows.filter((x) => /custom-(start|pay-cents|weekly-minutes|background)|:task\/progress|:file\/expiresOn/.test(x.attribute)));
+        const v = t.value.type === "integer" ? { ...t.value, value: String(Number(t.value.value) + 1 + r.int(500)) }
+          : /^\d{4}-\d{2}-\d{2}$/.test(t.value.value) ? { ...t.value, value: r.pick(["2026-02-01", "2026-11-03", "2027-09-30"]) }
+          : { ...t.value, value: r.pick(["clear", "pending", "consider"]) };
+        await comp.transact([{ op: "retract", id: t.id }, { op: "assert", entityId: t.entityId, attribute: t.attribute, value: v, validFrom: t.validFrom }],
+          { commandId: "r1:" + seed + ":" + tag, actor: "act10/save", preconditions: [{ _tag: "TripleLive", id: t.id }] });
+      };
+      // Count frames cannot carry a 20-form release (the writer's bound; ACT4 built byte frames for it): R2 there.
+      const doc = frames === "count" ? W0.R2.doc : large(r.pick([1000, 600, 300]));
+      const pub = await A.a.publish("acct-r:large", doc, validTime, "owed", undefined, {
+        afterRead: async () => { for (let k = r.int(3); k >= 0; k--) await saveOne("read" + k); },
+        inside: async () => { if (r.next() < 0.5) await saveOne("inside"); },
+      } as never);
+      const q = pub.position;
+      await saveOne("after"); // q + 1
+      const seq = (await A.a.notices.observe()).value.sequence;
+      const w = settler(db, A, "r1-" + frames, "progress");
+      const values = new (Archive as any)(w.a, memStore(new Proc(db, "rv"), A.held, db.scope + "-rv"), new BulkQueue(1), "values", frames, "progress") as Archive;
+      const check = async (when: string) => {
+        const reader = values.reader();
+        for (const x of [q - 1, q, q + 1]) {
+          const c = await A.s.controls(x);
+          const inForce = c.releases.filter((y: any) => y.tx <= x).sort((l: any, m: any) => m.tx - l.tx)[0];
+          const compiled = W0.compileRelease(inForce.tx === q ? doc : W0.R1.doc);
+          for (let i = 0; i < people; i++) {
+            const subject = W0.placementId(i);
+            const got = await reader.readAt(subject, { position: x, validTime });
+            const [world] = await worldsAt(A.s, "act2-deep", [subject], { tx: x, validTime });
+            const want = W0.RELEASES_BY_HASH.has(compiled.hash)
+              ? W0.reconcileWorld(world!, c.releases.filter((y: any) => y.tx <= x).map((y: any) => ({ from: y.from, tx: y.tx, release: y.release })), { tx: x, validTime })
+              : W0.evaluateWorld(world!, compiled, { tx: x, validTime });
+            assert.equal(got.json, W0.outputJson(want as never), when + ": read of " + subject + " at " + x + " (q " + q + ")");
+            reads++;
+            const k = when + " " + (x === q ? "q" : x < q ? "q-1" : "q+1") + " " + got.route;
+            routes[k] = (routes[k] ?? 0) + 1;
+          }
+        }
+      };
+      await check("before settlement");
+      await values.runValues(seq);
+      await check("after settlement");
+      void w;
+    }
+    console.log("[R1 " + frames + "] " + JSON.stringify({ publishes: 40, reads, routes }));
+    delete process.env.TX2_PUBLISH_BESIDE;
+  });
