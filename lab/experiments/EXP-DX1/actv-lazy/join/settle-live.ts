@@ -732,22 +732,70 @@ async function multiCase(
   const finished: (number | null)[] = workers.map(() => null);
   const kills: unknown[] = [];
   const descriptors = [c.descriptor, ...extras.map((x) => x.descriptor)];
+  // [DX-ACT7] DX_ACT7_CONTROL=ACCOUNT:START_S:PAUSE_S:PACE_MS:PACE_S (with TX2_SETTLE_CONTROL=1): per-account pause and
+  // pace exercised once during the case, through the stored control (settlement-control.ts) exactly as an operator
+  // would write it: at START_S into the window the account is paused for PAUSE_S, then paced at PACE_MS between frames
+  // for PACE_S, then released. The case then checks from the account's own frame turns that none started while it was
+  // paused and none closer than the pace while paced (when the account was still settling), and that the other
+  // accounts kept their turns. Unset: nothing written.
+  const controlSpec = process.env.DX_ACT7_CONTROL?.split(":").map(Number);
+  assert(!controlSpec || (controlSpec.length === 5 && controlSpec.every((x) => Number.isFinite(x) && x >= 0) &&
+    Number.isInteger(controlSpec[0]) && controlSpec[0]! < workers.length && process.env.TX2_SETTLE_CONTROL === "1"),
+    "DX_ACT7_CONTROL is ACCOUNT:START_S:PAUSE_S:PACE_MS:PACE_S and needs TX2_SETTLE_CONTROL=1");
+  const controlLog: { at: number; perf: number; change: string }[] = [];
+  const controlling = controlSpec ? (async () => {
+    const [account, startS, pauseS, paceMs, paceS] = controlSpec as [number, number, number, number, number];
+    const store = account ? extras[account - 1]!.store : c.s;
+    const until = async (s: number) => {
+      const t = begins + s * 1000;
+      while (now() < t) await sleep(Math.min(1000, Math.ceil(t - now())));
+    };
+    const set = async (change: { paused?: boolean; paceMs?: number | null }, label: string) => {
+      await setSettlementControl(store, { ...change, by: "act7-case" });
+      controlLog.push({ at: now() - begins, perf: performance.now(), change: label });
+    };
+    await until(startS);
+    await set({ paused: true }, "paused");
+    await until(startS + pauseS);
+    await set({ paused: false, paceMs }, "paced " + paceMs);
+    await until(startS + pauseS + paceS);
+    await set({ paused: false, paceMs: null }, "released");
+  })() : undefined;
   const settling = (async () => {
     while (now() < begins) await sleep(Math.ceil(begins - now()));
     // Each account's settlement in a child of its own, all children at once, each killed at a random moment; then all
     // resumed here at once.
     if (kill)
       kills.push(...(await Promise.all(workers.map(async (_, j) => ({ account: j,
-        ...(await killedChild(c, published[j]!.seq, k, 1500 + Math.floor(Math.random() * 1500), undefined, descriptors[j]!)) })))));
+        ...(await killedChild(c, published[j]!.seq, k, 1200 + Math.floor(Math.random() * 900), undefined, descriptors[j]!)) })))));
     await Promise.all(workers.map(async (w, j) => {
       await w.settle(published[j]!.seq);
       finished[j] = now() - begins;
     }));
   })();
-  const [wr, st] = await Promise.allSettled([writes, settling]);
+  const [wr, st, ct] = await Promise.allSettled([writes, settling, controlling]);
   if (wr.status === "rejected") throw wr.reason;
   if (st.status === "rejected") throw st.reason;
+  if (ct.status === "rejected") throw ct.reason;
   await c.ledger.verifyThrough(await c.s.head(), false, ADOPT);
+  let control: unknown = null;
+  if (controlSpec) {
+    const [account, , , paceMs] = controlSpec as [number, number, number, number];
+    const w = workers[account]!;
+    // The settlement-control cache is 250 ms, so a frame may start up to 250 ms after a change.
+    const turns = [...w.archive.contest.turns, ...w.recorder.archive.contest.turns].map(([b]) => b).sort((x, y) => x - y);
+    const [paused, paced, released] = controlLog.map((x) => x.perf) as [number, number, number];
+    const inPause = turns.filter((t) => t > paused + 250 && t < paced).length;
+    const pacedTurns = turns.filter((t) => t > paced + 250 && t < released);
+    const gaps = pacedTurns.slice(1).map((t, i) => t - pacedTurns[i]!);
+    const others = workers.map((x, j) => j === account ? null
+      : [...x.archive.contest.turns, ...x.recorder.archive.contest.turns].filter(([b]) => b > paused && b < paced).length);
+    control = { spec: controlSpec, log: controlLog.map(({ at, change }) => ({ at, change })), turnsWhilePaused: inPause,
+      turnsWhilePaced: pacedTurns.length, minGapWhilePacedMs: gaps.length ? Math.min(...gaps) : null,
+      otherAccountsTurnsWhilePaused: others, settledBeforeRelease: finished[account] !== null && finished[account]! < controlLog[2]!.at };
+    assert.equal(inPause, 0, "a paused account started a frame");
+    assert(gaps.every((g) => g >= paceMs - 5), "a paced account's frames closer than its pace: " + Math.min(...gaps));
+  }
   const rows = wr.value.rows;
   assert.equal(wr.value.unresolved.size, 0, "Uncertain save");
   const turns = workers.flatMap((w) => [...w.archive.contest.turns, ...w.recorder.archive.contest.turns]).map(
@@ -834,6 +882,7 @@ async function multiCase(
     predecessors: predecessors ?? null,
     streamed: stream,
     kills,
+    control,
     ledger: { boundedPages: c.ledger.boundedPages, boundedSkips: c.ledger.boundedSkips },
     turnsByAccount: Object.fromEntries(queue.turnsByKey),
     lane: lane ? lane.stats() : null,
