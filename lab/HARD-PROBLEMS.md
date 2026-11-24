@@ -206,3 +206,36 @@ Sam, 2026-11-13: "I don't care about XTDB. Don't go back to that." Not a problem
 4. **CPU split.** Decided: judge on the whole 8-CPU machine (P4 at least 4,400 pulls per second in total); split tuned
    freely.
 5. **Acknowledging from a durable intake log before the engine applies.** Not now (risky); revisit only with numbers.
+
+## H11. What the 1 billion runs of 2026-11-23 added (open problems, each with its evidence in `lab/experiments/EXP-DX1/STATUS.md` of that day)
+
+1. **Pinned reads of subjects the reader does not hold cost ten times more than cached ones.** A cached subject costs
+   0.16 ms of reader CPU, an uncached one 1.5 to 1.9 ms (storage load plus decode). The 256-reader bar is met for
+   re-read subjects (p99 72 ms, three reader cores) and forecast missed for random subjects (p99 about 270 ms); the
+   model asks for about 7 reader cores, and no affordable cache covers the working set (0.7 to 1.1 TB). The hard part:
+   make an uncached pinned read cheaper (smaller segments per subject, a decode that skips what the read does not need)
+   or scale readers out without giving up exactness.
+2. **The store cannot answer a question across subjects.** Facts are kept by entity; there is no index by attribute,
+   value or entity type, so totals, filters and "list the entities of a type" are refused. The console numbers entities
+   per type and account as a workaround. The hard part: an index by attribute and value (and by type) that the one
+   serial writer can maintain inside the commit bars at 1 billion records.
+3. **The gateway's journal routes have no bound of their own.** `/transactions` walks the position index until it has
+   the asked count, and on a loader-built database the 28 million non-canonical position rows never qualify, so one
+   request can walk all of them while holding the single journal permit. `/entity-transactions` walks every transaction
+   on the lean layout. Needed: a limit on entries examined with a cursor, and an index from entity to its transactions.
+   The loader must also write canonical position rows before it is used again.
+4. **An unpinned read on the read gateway can trail an acknowledged write.** The read gateway's peer is not synced to the
+   write gateway's acknowledgement; seen once in at least 241 Publishes. Proposed: readers that hold a receipt pass its
+   position ("at least"), waited for with the existing `storage/await-position`. Sam's decision pending.
+5. **Publish slows neighbours' saves at 39.4 saves/s** (p99 1.7 to 2.3 times the control, bar 1.5) with the small and
+   the large release alike; no slowdown at 3.5 and 23.5. Cause not diagnosed.
+6. **Background settlement of a large release cannot finish.** Frames hold a fixed number of subjects (16 for values, 4
+   for notices); with two or more owed forms per subject they exceed the writer's 64 KiB / 8 ms bound. Needed: frames
+   sized by bytes, and no full answer stored beside each subject's changes.
+7. **Under the worst-case tape, 32 GiB does not hold the working set at 1 billion past about 330 saves/s** (every save a
+   subject not seen before: p99 11 s at 394). Production-shaped traffic at the same load is 45 ms. The worst case is a
+   new-subject import wave, which belongs to the import lane.
+8. **A history read of a heavily saved entity takes 4 s cold** (it loads every row and filters afterwards). Needed: an
+   attribute filter and a row limit inside the gateway's history read.
+9. **The production-shaped tape, one commit per form row (shape R), schedules rows past each cell's end,** so its card
+   cannot be assembled; fixing the tape changes the measured R tapes.
