@@ -5148,3 +5148,25 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 
   Every production field read back exactly (4,410 fields at 50 up to 54,901 at 620).
 - **Journal on the 1 billion copy** (console `fff5ba67a`, through the tunnel, after the gateways' restart at 00:39:48 UTC): newest 5 in 79.13 ms store, newest 20 from the sealed head 29.69 ms, after a position 11.74 ms, Changed since 3 ms (17 read, 4 subjects), entity journal 6.57 ms. The demo pass is rerunning from the journal step.
+
+### 2026-11-23 19:47 local: console demo pass CLEAN on the 1 billion database; proof 37 of 37 through the tunnel (4 agents running)
+
+- **Demo pass** (`origin/exp/DX-CON1-console` `4056d77a4`, console server on 127.0.0.1:28584 against the tunnel connection, type `Survey`, subject 50000 of account-003): ended "DEMO PASS CLEAN", light and dark, 29 steps shot into the private `demo-design/screenshots-1b/` (the first run's files in `run-1-journal-fault/`). Store times on screen (gateway header, taken through the tunnel): subject read 1.85 then 1.45 ms; question 0.63 ms store, 42.69 ms console; sealed head 1.96 ms; position 87,002 2.01 ms; Both time axes approved / approved / pending at 0.32 / 0.43 / 0.43 ms; the assistant's create over MCP at position 28,309,898 arrived in the open Journal without a reload; Changed since read 4 transactions; live moved back.
+- **`prove.ts` through the tunnel** (`a7083cb4e`, results in the private `agents/OPUS-CON1-prove-1b-tunnel/`), 37 of 37:
+
+  | Row of table 10.4 | Predicted | Measured at 1 billion (through the tunnel) |
+  | --- | --- | --- |
+  | Create an entity | 20 to 80 ms | 6.9 ms p50 of five |
+  | Commit a release with one new type | 30 to 120 ms warm, up to 500 first | 27.44 ms warm, 41.91 ms first |
+  | First configuration walk | 60 to 300 ms | 14.98 ms |
+  | Configuration check | 1 to 5 ms | 0.62 ms |
+  | Read at position 87,002 | 1 to 3 ms | 0.51 ms p50 |
+  | Question on one subject | under 10 ms console | 19.74 ms console, 0.31 ms pull |
+  | Store question, ordinary entity | 5 to 40 ms | 10.68 ms |
+  | Store question, heavily saved task | 0.2 to 5 s | 4,027.48 ms first, then 330 to 405 ms |
+  | Scan attempts reaching a gateway | never | 0 requests |
+
+  The release commit measured 343.58 ms on the machine at `ebe31628f` and 27.44 ms here at the later commit; the difference is not explained (to be read from the two result files).
+- **Entity journal:** 13.2 ms store through the console's bounded feed pages (2 requests, 4 transactions). **G13 not measured on purpose:** on the lean layout the gateway's entity-transactions route (`journal.clj` `entity-positions`) walks every transaction in the position index under the single journal permit; that is the call that never answered and one reason the gateways needed a restart. The console no longer uses that route.
+- **Backlog (gateway):** bound `/transactions` and `/entity-transactions` on entries examined, with a cursor; an index from entity to its transactions.
+- **Stack on server 2 stays up until 01:15 UTC** so Sam can open http://127.0.0.1:28584/ against 1 billion records; notification sent.
