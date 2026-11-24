@@ -271,6 +271,14 @@ subject_owner_head=${TX2_SUBJECT_OWNER_HEAD:-0}
 subject_narrow_revision=${TX2_SUBJECT_NARROW_REVISION:-0}
 subject_reuse_predecessor=${TX2_SUBJECT_REUSE_PREDECESSOR:-0}
 lookup_every=${PREP1_LOOKUP_EVERY:-0}
+# [DX-W3] Why: default-off general-writer hints, a bound on reads waiting for a permit, and web-thread counters.
+# Rejected: passing them when unset (every default stack stays byte-identical in its container environment).
+general_prefetch=${TX2_GENERAL_PREFETCH:-0}
+[[ $general_prefetch =~ ^[01]$ ]] || exit 2
+read_wait_limit=${DX_READ_WAIT_LIMIT:-}
+[[ -z $read_wait_limit || $read_wait_limit =~ ^[1-9][0-9]{0,3}$ ]] || exit 2
+thread_counters=${DX_THREAD_COUNTERS:-0}
+[[ $thread_counters =~ ^[01]$ ]] || exit 2
 [[ $lookup_every =~ ^(0|[1-9][0-9]{0,3})$ ]] && (( lookup_every <= 4096 )) || exit 2
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prepw =~ ^(1|2|4)$ ]]
@@ -988,6 +996,11 @@ for role in "${gateway_roles[@]}"; do
       -e "TX2_SUBJECT_OWNER_HEAD=$subject_owner_head"
       -e "TX2_SUBJECT_NARROW_REVISION=$subject_narrow_revision" -e "TX2_SUBJECT_REUSE_PREDECESSOR=$subject_reuse_predecessor")
   fi
+  if [[ $mode == w && $general_prefetch == 1 ]]; then
+    field_policy+=(-e "TX2_GENERAL_PREFETCH=1")
+  fi
+  if [[ -n $read_wait_limit ]]; then field_policy+=(-e "TX2_READ_WAIT_LIMIT=$read_wait_limit"); fi
+  if [[ $thread_counters == 1 ]]; then field_policy+=(-e "TX2_THREAD_COUNTERS=1"); fi
   if [[ $mode == w && $append_retirement == 1 ]]; then
     field_policy+=(-e "TX2_SUBJECT_APPEND_RETIREMENT=1")
   fi

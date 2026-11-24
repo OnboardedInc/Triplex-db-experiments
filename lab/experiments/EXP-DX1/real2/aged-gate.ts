@@ -168,7 +168,9 @@ const result = {
       orderedAcks: result.rows.filter((r) => (r as any).ack?.subjectOrderedIds).length,
       // The per-person writer takes only saves of one to three facts that each replace a current value; the rest
       // (wider saves, first writes of a field) take the general writer. Both must be exact.
-      subjectPathAcks: result.rows.filter((r) => (r as any).ack?.subjectSave).length };
+      subjectPathAcks: result.rows.filter((r) => (r as any).ack?.subjectSave).length,
+      // [DX-W3] General-writer saves that carried hints (0 unless TX2_GENERAL_PREFETCH=1).
+      generalHintsAcks: result.rows.filter((r) => (r as any).ack?.generalHintsAttached).length };
   }),
 };
 writeFileSync(join(out!, "result.json"), JSON.stringify(result, null, 2) + "\n");

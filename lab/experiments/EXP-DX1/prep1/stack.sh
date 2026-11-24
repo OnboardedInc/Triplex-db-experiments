@@ -15,6 +15,9 @@ export TX2_SUBJECT_APPEND_RETIREMENT=$(cat /config/subject-retirement 2>/dev/nul
 export TX2_SUBJECT_OWNER_HEAD=$(cat /config/subject-head 2>/dev/null || printf 0)
 export TX2_SUBJECT_WIDE=$(cat /config/subject-wide 2>/dev/null || printf 0)
 export PREP1_LOOKUP_EVERY=$(cat /config/lookup-every 2>/dev/null || printf 0)
+# [DX-W3] Present only for the DX-W3 production gate: hints for the general writer (0 or 1), with Datomic prefetch on
+# in both arms, as the server launch has it.
+if [[ -f /config/general-prefetch ]]; then export TX2_GENERAL_PREFETCH=$(cat /config/general-prefetch); fi
 if [[ -f /config/tail-sql ]]; then export PREP1_TAIL_SQL=$(cat /config/tail-sql); fi
 if [[ "$PREP1_MODE" == subject-native-suite ]]; then
   # [DX-PREP1] Why: exercise the stock native suite with the real process setting on fresh memory scopes.
@@ -157,6 +160,9 @@ fi
 export DATOMIC_URI_TEMPLATE="datomic:sql://{db}?jdbc:postgresql://$addr:5432/datomic?user=datomic&password=$secret"
 export DATOMIC_EXT_CLASSPATH=/opt/gateway/src
 export DATOMIC_JAVA_OPTS="-Xms96m -Xmx368m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -XX:MaxDirectMemorySize=64m -XX:+ExitOnOutOfMemoryError -Ddatomic.objectCacheMax=$cache -Dtriplex.codec.spec=/opt/gateway/codec-spec.json"
+if [[ -f /config/general-prefetch ]]; then
+  export DATOMIC_JAVA_OPTS="$DATOMIC_JAVA_OPTS -Ddatomic.prefetchProbes=true"
+fi
 if [[ $PREP1_MODE == lookup-profile && $TX2_SUBJECT_PREFETCH == 1 ]]; then
   # [DX-PREP1] Why: both arms need the same active native dispatcher on the one-CPU slot.
   # Rejected: attaching hints to a transaction while native probe dispatch is disabled.

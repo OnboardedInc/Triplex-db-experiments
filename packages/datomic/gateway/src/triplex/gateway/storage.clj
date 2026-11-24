@@ -4,7 +4,7 @@
             [triplex.gateway.save-ledger :as ledger] [triplex.gateway.packed-journal :as packed]
             [triplex.gateway.subject-save :as subject] [clojure.data.json :as json]
             [triplex.gateway.owner-layout :as owner-layout] [triplex.gateway.owner-root :as owner-root]
-            [triplex.gateway.pinned :as pinned])
+            [triplex.gateway.pinned :as pinned] [triplex.gateway.general-prefetch :as general-prefetch])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -343,12 +343,26 @@
 (def writer-readback (= "1" (System/getenv "TX2_INT1_WRITE_READBACK")))
 (def subject-profile (= "1" (System/getenv "TX2_SUBJECT_PROFILE")))
 (defn transaction-hints [conn data timeline]
-  (when commit-hints?
+  (cond
+    commit-hints?
     (try
       (:hints (trace/span "d/with" "peer-call" (d/with (trace/span "d/db" "peer-call" (d/db conn)) data :return-hints true)))
       ;; A stale speculative basis can reject an otherwise valid ordered commit.
       ;; Hints are optional; only the transactor may make the definitive decision.
-      (catch Exception _ (swap! timeline assoc :hintsDeclined (System/nanoTime)) nil))))
+      (catch Exception _ (swap! timeline assoc :hintsDeclined (System/nanoTime)) nil))
+    ;; [DX-W3] Why: name the general commit's cold segments with a lookup-only function, off the serial path.
+    ;; Rejected: using the hint result as proof of anything (the native function re-checks on its own db-before).
+    ;; Grouped commits are submitted by the group worker, which does not take hints (left as it is).
+    (and general-prefetch/enabled (not (group/scheduling?)))
+    (let [db (d/db conn)]
+      (when (general-prefetch/eligible? db data)
+        (swap! timeline assoc :generalHintsStarted (System/nanoTime))
+        (let [hints (try (trace/span "general.lookup-hints" "peer-call" (general-prefetch/lookup-hints db data))
+                         (catch Exception _ (swap! timeline assoc :hintsDeclined (System/nanoTime)) nil))]
+          (swap! timeline assoc :generalHintsFinished (System/nanoTime))
+          (when hints (swap! timeline assoc :generalHintsAttached (System/nanoTime)))
+          (stats/bump! [:generalHints (if hints :attached :none)] 1)
+          hints)))))
 (defn prepared-for [data input p]
   (let [journals (:journal-entities p)
         safe (and group/reuse-prepared (:lean p) (seq journals)
@@ -540,6 +554,7 @@
         (:subject-append-retirement report) (assoc :subjectAppendRetirement true)
         (:subject-owner-head-bytes report) (assoc :subjectOwnerHeadBytes (:subject-owner-head-bytes report))
         (:subject-hints-attached report) (assoc :subjectHintsAttached true)
+        (and (not (:subject-save report)) (:generalHintsAttached @timeline)) (assoc :generalHintsAttached true)
         (:subject-replan report) (assoc :subjectReplan true)
         (and load-timing (not (:subject-save report))) (assoc :loadProfile {:rowNs @load-timing :applyMs (get-in report [:io-stats :api-ms])
                        :tx (clojure.edn/read-string (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.load/metrics))})
@@ -675,7 +690,7 @@
     (assoc r :retracted_at nil :retracted_position nil :retract_tx_id nil) r))
 (defn legacy-read-rows [name current input]
   (let [db (read-db name current input)]
-    (admission/execute admission/reads (fn []
+    (admission/execute-for input admission/reads (fn []
   (let [basis (get input "basis") history (get input "history")
         route (get input "route" "history")
         _ (when-not (#{"history" "live"} route) (codec/invalid "Unknown read route"))
@@ -725,7 +740,7 @@
             _ (assert-subject-route! db basis (if (= route "live") :f/live :f/subject))
             _ (when (and (= route "live") history) (unavailable! "Position-retired route cannot enumerate history"))
             _ (trace/read-span "read.confirm-position" "peer-call" (await-position db (get basis "recordedPosition") (get input "basisWaitMs") (fn [_] db)))]
-        (admission/execute admission/reads (fn []
+        (admission/execute-for input admission/reads (fn []
         {:route (cond (= route "live") "live" (get input "staged") "staged" (get input "handle") "held"
                       (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source") :basis basis
          :subjectAttribute (str (if (= route "live") :f/live :f/subject))
