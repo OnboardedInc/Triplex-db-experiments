@@ -56,13 +56,23 @@
         (finally (.decrementAndGet ^AtomicInteger read-waiting)))))
   (.incrementAndGet ^AtomicLong read-admitted))
 
+(defn- execute-admitted [^Semaphore permits f refusable?]
+  (if (identical? permits reads)
+    (trace/span "gateway.admission-wait" "gateway-queue" (acquire-read! permits refusable?))
+    (trace/span "gateway.admission-wait" "gateway-queue" (.acquire permits)))
+  (try (trace/span "gateway.admitted-work" "gateway" (f)) (finally (.release permits))))
+
+;; [DX-XQ6] Why: the exact sweep reads each subject with the pinned read's own code (storage/read-rows) while it holds a
+;; permit of its own pool (sweep.clj); that code must not also take a read permit, or every sweep would compete with
+;; the pinned and current readers for theirs. Bound only inside a sweep page; unbound, every read is admitted as before.
+(def ^:dynamic *own-pool* nil)
+
 (defn execute
   ([permits f] (execute permits f false))
   ([^Semaphore permits f refusable?]
-   (if (identical? permits reads)
-     (trace/span "gateway.admission-wait" "gateway-queue" (acquire-read! permits refusable?))
-     (trace/span "gateway.admission-wait" "gateway-queue" (.acquire permits)))
-   (try (trace/span "gateway.admitted-work" "gateway" (f)) (finally (.release permits)))))
+   (if (and *own-pool* (identical? permits reads))
+     (trace/span "gateway.admitted-work" "gateway" (f))
+     (execute-admitted permits f refusable?))))
 
 (defn execute-for [input permits f] (execute permits f (pinned? input)))
 

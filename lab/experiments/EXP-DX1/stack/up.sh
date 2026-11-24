@@ -1065,6 +1065,45 @@ for role in "${gateway_roles[@]}"; do
     # Rejected: accepting an output reconstructed only by the same peer that acknowledged the saves.
     field_policy+=(-e TX2_LEAN_NATIVE_QUERY=1 -e TX2_LEAN_NATIVE_LOG=1)
   fi
+  # [DX-XQ3] Why: the ID list route (questions across subjects, step 0) and its permit pool, on every gateway that
+  # serves reads; unset leaves both gateways' environment exactly as before.
+  if [[ -n ${DX_ID_LISTS:-} ]]; then
+    [[ $DX_ID_LISTS =~ ^[01]$ ]] || { echo "up.sh: DX_ID_LISTS must be 0 or 1" >&2; exit 2; }
+    field_policy+=(-e "TX2_ID_LISTS=$DX_ID_LISTS")
+  fi
+  if [[ -n ${DX_INDEX_QUERY_PERMITS:-} ]]; then
+    [[ $DX_INDEX_QUERY_PERMITS =~ ^[1-9][0-9]?$ ]] || { echo "up.sh: DX_INDEX_QUERY_PERMITS must be 1..64" >&2; exit 2; }
+    field_policy+=(-e "TX2_INDEX_QUERY_PERMITS=$DX_INDEX_QUERY_PERMITS")
+  fi
+  # [DX-XQ6] Why: the exact sweep route, its permit pool and its cursor key (one secret for both gateways, so a cursor
+  # survives a gateway restart); unset leaves both gateways' environment exactly as before.
+  if [[ -n ${DX_SWEEP:-} ]]; then
+    [[ $DX_SWEEP =~ ^[01]$ ]] || { echo "up.sh: DX_SWEEP must be 0 or 1" >&2; exit 2; }
+    field_policy+=(-e "TX2_SWEEP=$DX_SWEEP")
+  fi
+  if [[ -n ${DX_SWEEP_PERMITS:-} ]]; then
+    [[ $DX_SWEEP_PERMITS =~ ^([1-9]|1[0-6])$ ]] || { echo "up.sh: DX_SWEEP_PERMITS must be 1..16" >&2; exit 2; }
+    field_policy+=(-e "TX2_SWEEP_PERMITS=$DX_SWEEP_PERMITS")
+  fi
+  if [[ -n ${DX_SWEEP_PER_ACCOUNT:-} ]]; then
+    [[ $DX_SWEEP_PER_ACCOUNT =~ ^([1-9]|1[0-6])$ ]] || { echo "up.sh: DX_SWEEP_PER_ACCOUNT must be 1..16" >&2; exit 2; }
+    field_policy+=(-e "TX2_SWEEP_PER_ACCOUNT=$DX_SWEEP_PER_ACCOUNT")
+  fi
+  if [[ -n ${DX_SWEEP_QUEUE_MS:-} ]]; then
+    [[ $DX_SWEEP_QUEUE_MS =~ ^[1-9][0-9]{0,3}$ && $DX_SWEEP_QUEUE_MS -le 5000 ]] || { echo "up.sh: DX_SWEEP_QUEUE_MS must be 1..5000" >&2; exit 2; }
+    field_policy+=(-e "TX2_SWEEP_QUEUE_MS=$DX_SWEEP_QUEUE_MS")
+  fi
+  if [[ -n ${DX_SWEEP_CURSOR_SECRET:-} ]]; then
+    [[ $DX_SWEEP_CURSOR_SECRET =~ ^[A-Za-z0-9]{16,128}$ ]] || { echo "up.sh: DX_SWEEP_CURSOR_SECRET must be 16..128 letters or digits" >&2; exit 2; }
+    field_policy+=(-e "TX2_SWEEP_CURSOR_SECRET=$DX_SWEEP_CURSOR_SECRET")
+  fi
+  # [DX-XQ3] Why: the ID list gate removes a subject's protected values on request; both gateways share one erasure
+  # directory (an owned volume, removed by down.sh --volumes). Rejected: the erase1 stack (it replaces the gateway main).
+  xq3_mount=()
+  if [[ ${DX_XQ3_ERASURE_DIRECTORY:-0} == 1 ]]; then
+    field_policy+=(-e TRIPLEX_ERASURE_DIRECTORY=/dx-authority)
+    xq3_mount=(-v "$prefix-authority:/dx-authority")
+  fi
   if [[ $mode == w ]]; then
     cpu=$gw_w port=$port_w
     if [[ $role != w ]]; then port=$((port_w + ${role#w} - 1)); fi
@@ -1144,7 +1183,7 @@ for role in "${gateway_roles[@]}"; do
     -e "TX2_REACH_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-1000000}" \
     -e "TX2_PINNED_SHORTCUT=${DX_PINNED_SHORTCUT:-0}" -e "TX2_PINNED_CUT_LOOKUP=${DX_PINNED_CUT_LOOKUP:-0}" \
     -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} \
-    ${erase_env[@]+"${erase_env[@]}"} ${erase_mount[@]+"${erase_mount[@]}"} \
+    ${erase_env[@]+"${erase_env[@]}"} ${erase_mount[@]+"${erase_mount[@]}"} ${xq3_mount[@]+"${xq3_mount[@]}"} \
     --entrypoint /opt/datomic/bin/run "$image" ${gw_startup_read[@]+"${gw_startup_read[@]}"} -m "$gateway_main" ${pg_data:+gateway} >/dev/null
   ok=false
   health_deadline=$((SECONDS + 180))
