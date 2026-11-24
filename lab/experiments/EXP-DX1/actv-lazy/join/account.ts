@@ -1,5 +1,5 @@
 import { readErasure, recheckErasure, withErasure } from "../../../../bench/lib/datomic-erasure.ts";
-import { ticketAccount, ticketAccounts } from "./account-tickets.ts";
+import { markerCurrent, ticketAccount, ticketAccounts } from "./account-tickets.ts";
 import { bytes as transport } from "../../import1/source.ts";
 import assert from "node:assert/strict";
 import {
@@ -678,9 +678,10 @@ export class JoinedAccount {
       r = xs.find((x) => x.position === e.at);
     assert(r);
     const m = value(r) as Marker;
-    // [DX-ACT9] With TX2_ACCOUNT_TICKETS=1 (and the per-account removal rule) against the account's removal state;
-    // otherwise as before.
-    await recheckErasure(this.s.comp, m.erasureSeq, ticketAccount(this.s));
+    // [DX-ACT9] With TX2_ACCOUNT_TICKETS=1 (and the per-account removal rule): the marker holds no subject value, so
+    // only an unscoped removal makes it stale; settlement, the notice recorder and every server of a derived copy check
+    // the subjects they derive from. Otherwise as before.
+    await markerCurrent(this.s, m.erasureSeq);
     // [DX-ACT8] A record written under the account guard stores where it read its account's state (`cut`, and the
     // event's `sourceBefore`); the guard proves that state unchanged up to the record's own position, so the record holds
     // at its own position like every other: its effective cut is that position minus one, which every reader of a marker

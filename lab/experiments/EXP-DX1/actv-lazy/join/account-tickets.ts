@@ -113,3 +113,32 @@ export function verifyCopy(f: AccountFrontier | undefined, prefix: string, stamp
     if (n === undefined || touched.has(n)) stale();
   }
 }
+
+/**
+ * [DX-ACT9] For a derived writer that has used the subjects before `settledBelow` (census numbers) since `stamp`: the
+ * current frontier, after checking that no removal published since the stamp touched the unscoped account or one of
+ * those subjects (a later subject is read again, masked, when its turn comes). Throws ErasureChanged otherwise. With the
+ * option off: `recheckErasure(stamp)`, as before.
+ */
+export async function settledCurrent(s: Pick<Store, "held" | "comp">, stamp: number | undefined, settledBelow: number) {
+  if (ticketAccount(s) === undefined || stamp === undefined) return recheckErasure(s.comp, stamp);
+  const f = await frontierFor(s, stamp);
+  const stale = () => {
+    throw new ErasureChanged("Discard the old protected input cut");
+  };
+  if (!f) return stale();
+  if (f.perAccount !== true) return f.seq === stamp ? f : stale();
+  const touched = touchedSubjects(f, s.held!.prefix, stamp);
+  if (touched === "all") return stamp <= f.seq && f.accountSeq! <= stamp && f.unscopedSeq! <= stamp ? f : stale();
+  for (const n of touched) if (n < settledBelow) stale();
+  return f;
+}
+/** [DX-ACT9] A marker holds no subject value (an owed Publish reads none); under the option it is current while no
+ * removal since its stamp touched the unscoped account, and every caller checks the subjects it derives from. */
+export async function markerCurrent(s: Pick<Store, "held" | "comp">, stamp: number | undefined) {
+  if (ticketAccount(s) === undefined || stamp === undefined) return recheckErasure(s.comp, stamp);
+  const f = await frontierFor(s);
+  if (!f || (f.perAccount === true ? !(stamp <= f.seq && f.unscopedSeq! <= stamp) : f.seq !== stamp))
+    throw new ErasureChanged("Discard the old protected input cut");
+  return f;
+}

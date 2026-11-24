@@ -72,10 +72,11 @@ subject (no `pl:`, `wk:`, `i9:`, `sec:`, `ev:`, `doc:`, `evt:` number, for examp
 | W1 | the account (an owed Publish reads no subject value, so strictly none; the account is kept because the marker's sequence is where W3 starts) | `readErasure(comp, account)`; plan recheck with the account; ticket `withErasure(seq, work, undefined, [account])`; the marker keeps the global sequence |
 | W1', S1, D1 | each non-held store is its own database (one account per database), so its database-wide check is already that account's | unchanged |
 | W2 | none | unchanged |
-| W3 | the account (per subject exact, section 2; the gateway's ticket is per account) | recheck with the account; the frame's ticket names the account and, the destination being the same database, is no longer sent as a cross-database ticket |
+| W3 | the subjects already stored for the release (a later subject is read again, masked, when its turn comes) | a frame goes on while no removal since the release's stamp touched the unscoped account or a subject below the release's progress; the frame's ticket names the account and, the destination being the same database, is no longer sent as a cross-database ticket |
 | W4 | the account for the frame's ticket; the subjects with notice state for the cursor | the cursor may go on while no removal since its stamp touched the unscoped account, and every entity of A touched since it belongs to no subject or to a subject with no notice ledger; new frames are stamped with the current global sequence; the ticket names the account |
 | W5 | the packet's subjects | the client check per packet's subjects (as R3); the recipient's commit carries a cross-database ticket naming the source account, checked by the gateway under the source's account locks (section 3.2) |
-| R1, R2 | the account | recheck with the account |
+| R1 | nothing of an account (the marker holds no subject value); every caller checks what it derives | current while no removal since its stamp touched the unscoped account |
+| R2 | the subjects served | stored changes are served while no removal after the release's stamp touched the unscoped account or one of the subjects served (the count-mode reader: the account) |
 | R3 | the packet's subjects | served while no removal published after the packet's stamp touched the unscoped account or an entity of a subject among the packet's deliveries |
 | R4 | the account | held readers key their cache on the account's removal state and check it before returning (section 3.3) |
 | M1 | the global sequence | unchanged (a point in the one log; each account's check compares it with that account's counter) |
@@ -93,11 +94,15 @@ already moved the counter, and the fence refuses the write (409). This is the pr
 for tickets that name no account; a ticket that names its account has it (the review: 907 of 907 refused after the
 commit). Every ticket this option sends names its account.
 
-What the fence does not cover is a removal whose intent is written and whose native commit has not happened (the
-review's F1b): a derived write then commits before the removal's position. In log order it is a write made before the
-removal; its copy is a copy made before the removal (section 5). DX-ERA2's fix (refuse a ticketed write while the
-pending removal touches one of its accounts or the unscoped account) closes that window; this work takes it from
-DX-ERA2's fixed head rather than duplicating it (section 9 says what waited for it).
+The removal's own window before its native commit (the review's F1b: its intent written, its commit not yet) is closed
+by DX-ERA2's fix (`a9da13f89`, merged here): **a removal's first native transaction declares it**, setting the global
+declared sequence (`:triplex.scope/removal-intent`) and **the counters of every account its selectors can reach to the
+negated sequence**, before it selects or records anything. From that transaction on the same fence refuses every
+ticketed write that names one of those accounts, and the gateway answers 503 while that removal is pending. So the
+invariant at the commit point reads: **a derived write with ticket `(s, [A])` commits only if no removal that can reach A
+or the unscoped account has declared itself natively since `s`.** It depends on no publication: a declared, committed
+or published removal has moved the counter in Datomic before the write's serial point. A derived write that commits
+before the declaration is a write made before the removal; its copy is a copy made before the removal (section 5).
 
 ### 3.2 Delivery: a ticket into another database
 
@@ -110,14 +115,16 @@ from the check through the recipient's commit:
 
 1. the source's cut (published, with a pending removal allowed as DX-ERA2's `request-cut` allows it);
 2. refused (503) while the source has a pending removal whose accounts include a named account or the unscoped one;
-3. refused (409) unless the ticket is current for the named accounts and the unscoped one in the published cut, **and
+3. refused (503) while a removal that can reach them has declared itself natively (a negated counter, written in its
+   first transaction, under the same locks);
+4. refused (409) unless the ticket is current for the named accounts and the unscoped one in the published cut, **and
    the source's native counters of those accounts are at most the ticket's sequence** (read from the source's current
    database value under the locks).
 
 Every removal takes the locks of the accounts its selectors can reach before its native commit and keeps them until
-it ends (`with-bucket-guards` around the whole removal, on both removal paths), so between this check and the
-recipient's commit no removal touching those accounts can commit natively; one that already did is seen in step 3, and
-one stopped after its intent in step 2. Without the option, or for a ticket naming no account, the source's database
+it ends (`with-bucket-guards` around the whole removal, its declaration included), so between this check and the
+recipient's commit no removal touching those accounts can declare or commit natively; one that already declared,
+committed or stopped after either is seen in steps 2 to 4. Without the option, or for a ticket naming no account, the source's database
 lock and the database-wide check, as today.
 
 ### 3.3 The held reader's cache
@@ -154,7 +161,8 @@ the hash of the one before it, and the recipient checks the chain); a mark would
 chained packet. So the rule is the one the code has today, narrowed: a recorded packet stamped `s` is served (read,
 streamed or delivered) only while no removal published after `s` touched the unscoped account or an entity of a subject
 among the packet's deliveries; the recorder goes on after a removal only while no subject touched since its cursor's
-stamp has a notice ledger. A packet that holds the removed subject's notice is therefore never served again, and a
+stamp has a notice ledger. Value settlement follows the same rule: a release's frames go on while no subject touched
+since its stamp is among those already stored (section 3, W3). A packet that holds the removed subject's notice is therefore never served again, and a
 stream that holds one stops at it: the stream is built on that notice, and nothing short of re-recording it can take it
 out (follow-up 1).
 

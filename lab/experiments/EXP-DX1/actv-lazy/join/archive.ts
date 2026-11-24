@@ -13,7 +13,7 @@ import { worldsAt, winner } from "../decision.ts";
 import { LazyReader } from "../read.ts";
 import { JoinedAccount, type Marker } from "./account.ts";
 import { address } from "./index.ts";
-import { fingerprint, ticketAccount, ticketAccounts, type AccountFrontier } from "./account-tickets.ts";
+import { copyCheck, fingerprint, settledCurrent, ticketAccount, ticketAccounts, type AccountFrontier } from "./account-tickets.ts";
 import { evaluateRows } from "./material.ts";
 import { BulkQueue, bulkClaim, frameCountersOn, frameEstimates, type BulkClass } from "./bulk.ts";
 import {
@@ -266,8 +266,10 @@ export class Archive {
     const r = await a.receipt(sequence, sourceAt),
       { marker: m, event: e, census } = r;
     assert.equal(m.storage, "owed");
-    // [DX-ACT9] With TX2_ACCOUNT_TICKETS=1 against the held account's removal state; otherwise as before.
-    const authority = await recheckErasure(s.comp, m.erasureSeq, ticketAccount(s));
+    // [DX-ACT9] With TX2_ACCOUNT_TICKETS=1 the check needs the progress (which subjects are already stored), so it
+    // comes after it is read; still before any subject is read. Otherwise here, as before.
+    const narrowed = ticketAccount(s) !== undefined;
+    let authority = narrowed ? undefined : await recheckErasure(s.comp, m.erasureSeq);
     const identity = identityOf(s.scope, m, e.at),
       key = progressKey(sequence),
       prior = await this.db.row<Progress>(key, at);
@@ -282,6 +284,9 @@ export class Archive {
             changes: 0,
           });
     assert(current.identity === identity && current.through <= census.count);
+    // [DX-ACT9] A held account's census is its subjects in number order, so the subjects stored so far are those below
+    // `through` (a split subject's first changes included: `through` is the subject being split).
+    if (narrowed) authority = await settledCurrent(s, m.erasureSeq, current.through + (current.part ? 1 : 0));
     if (current.status !== "pending") return current;
     const latest = await s.controls(sourceAt);
     assert(
@@ -426,7 +431,10 @@ export class Archive {
     assert(frontier.status !== "stored" || frontier.through === census.count);
     if (frontier.frames === "bytes") {
       const output = await this.storedFrames(sequence, frontier, identity, at);
-      await recheckErasure(this.source.s.comp, marker.erasureSeq, ticketAccount(this.source.s));
+      // [DX-ACT9] Served per subject: no removal after the release's stamp touched one of the stored subjects.
+      const check = copyCheck(this.source.s);
+      if (check) await check(marker.erasureSeq, output.map((x) => x.subject));
+      else await recheckErasure(this.source.s.comp, marker.erasureSeq);
       return { frontier, output, frames: "bytes" as FrameMode };
     }
     let previous = identity;
@@ -456,7 +464,11 @@ export class Archive {
       previous === frontier.hash &&
         frontier.changes === output.reduce((n, row) => n + row.changes.length, 0),
     );
-    await recheckErasure(this.source.s.comp, marker.erasureSeq, ticketAccount(this.source.s));
+    {
+      const check = copyCheck(this.source.s);
+      if (check) await check(marker.erasureSeq, output.map((x) => x.subject));
+      else await recheckErasure(this.source.s.comp, marker.erasureSeq);
+    }
     return { frontier, output: output as (Answer | Changes)[], frames: "count" as FrameMode };
   }
   /**
@@ -477,6 +489,9 @@ export class Archive {
       tail = 0,
       changes = 0;
     let open: Changes | undefined;
+    // [DX-ACT9] Under the option each subject is checked before it is yielded (its stored changes are served only while
+    // no removal after the release's stamp touched it); otherwise the whole release is checked at the end, as before.
+    const check = copyCheck(this.source.s);
     for (let first = 1; first <= frontier.frame!; first += 32) {
       const keys = Array.from({ length: Math.min(32, frontier.frame! - first + 1) }, (_, i) =>
         framePageKey(sequence, first + i),
@@ -501,7 +516,10 @@ export class Archive {
             open.changes.push(...piece.changes);
           } else {
             assert(open?.subject !== piece.subject, "Duplicate settled subject");
-            if (open) yield open;
+            if (open) {
+              if (check) await check(marker.erasureSeq, [open.subject]);
+              yield open;
+            }
             open = { subject: piece.subject, changes: [...piece.changes] };
           }
         }
@@ -510,9 +528,12 @@ export class Archive {
         tail = p.tail;
       }
     }
-    if (open) yield open;
+    if (open) {
+      if (check) await check(marker.erasureSeq, [open.subject]);
+      yield open;
+    }
     assert(previous === frontier.hash && through === frontier.through && tail === frontier.part && frontier.changes === changes);
-    await recheckErasure(this.source.s.comp, marker.erasureSeq, ticketAccount(this.source.s));
+    if (!check) await recheckErasure(this.source.s.comp, marker.erasureSeq);
     return frontier;
   }
   // [DX-ACT4] Reads every frame page of a byte-framed release in order and joins split subjects: each page must start
