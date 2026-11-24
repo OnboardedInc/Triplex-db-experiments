@@ -44,6 +44,10 @@ const ready = { version: "triplex-demo-ready/1", prefix, database: db, writePort
 fs.writeFileSync(path.join(out, "ready.json"), JSON.stringify(ready));
 execFileSync("node", ["--no-warnings", "--experimental-transform-types", path.join(REPO, "lab/experiments/EXP-DX1/xq6/server.ts"), path.join(out, "ready.json"), path.join(out, "server")],
   { stdio: "inherit", env: { ...process.env, DX_XQ6_OLD: String(old), DX_XQ6_SERVER_SUBJECTS: "1000", DX_XQ6_WINDOW_S: "5", DX_XQ9_SKIP_B: "1" } });
-await rt.dispose();
-await writer.delete(scope);
+// The write gateway's keep-alive socket sits idle through Arm C; a fresh client deletes the scope (dryrun-1 failed here
+// with ECONNRESET after the runner had finished). The stack is removed by gate.sh either way.
+await rt.dispose().catch(() => {});
 writer.close();
+const cleaner = new datomic.DatomicClient(writeUrl, 60_000);
+await cleaner.delete(scope).catch((e: unknown) => console.log("scope delete failed (the stack is removed anyway):", String(e)));
+cleaner.close();

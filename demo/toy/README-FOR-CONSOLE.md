@@ -167,6 +167,16 @@ node examples/console/e2e/questions-pass.mjs --url http://127.0.0.1:<its console
 `prove-questions.ts` needs the second toy started with `DX_XQ3_ERASURE_DIRECTORY=1` (its protected scope removes values
 on request); `--keep` leaves that scope and writes `connection-xq8prot.json` for a page server on it.
 
+## The added question shapes (DX-XQ9)
+
+`ask_across_subjects` and the "Ask across subjects" page also take, on a read gateway with `TX2_SWEEP_SHAPES` (the demo
+profile sets `all`; `server-up.sh` records it as `questionRoutes.sweepShapes` in the ready file): `ne` ("is not"; a
+subject with no value counts as not), `contains` (text, optionally any case), `has` (one level of related entities:
+`related: { prefix, shape?, link: "key" | { ref } }`, `where`, `quantifier: some | none | { op, value }`), `anyOf` (up to
+4 groups), `result: "top"` with `order: { by, type, direction }` and `limit` N up to 1,000, and `result: "sum"` with
+`of`. Meanings, refusals and gates: `lab/experiments/EXP-DX1/xq9/QUESTION-SHAPES.md`. A console switched to the branch
+`exp/DX-XQ9-question-shapes` follows the steps below from its worktree (`dx-xq9`) instead.
+
 ## Switch the owner's console to the questions build (keeps the toy's data)
 
 Run in the worktree of `exp/DX-XQ8-console-questions`. The toy's working copy (`tx2-dxdemo1-toy-work`) is kept: no

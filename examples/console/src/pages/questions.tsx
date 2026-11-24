@@ -158,6 +158,10 @@ const kindOfFamily = (family: string | undefined): ValueKind =>
   : family === "boolean" ? "boolean"
   : "text";
 
+/** A value kind from either the page's own words (text, date) or the store's families (string, datetime). */
+const asValueKind = (t: string | undefined): ValueKind =>
+  (["text", "reference", "integer", "number", "date", "boolean"] as string[]).includes(t ?? "") ? (t as ValueKind) : kindOfFamily(t);
+
 let nextKey = 1;
 const blankDraft = (attribute = "", type: ValueKind = "text"): Draft => ({
   key: nextKey++, attribute, op: "eq", type, value: "", values: "", from: "", to: "", fromExclusive: false, toExclusive: false,
@@ -687,7 +691,7 @@ export function QuestionsPage() {
   const [drafts, setDrafts] = useState<Draft[]>(() => (asked?.where ?? []).map((c) => conditionToDraft(c)));
   const [groups, setGroups] = useState<Draft[][]>(() => (asked?.anyOf ?? []).map((g) => g.map((c) => conditionToDraft(c))));
   const [order, setOrder] = useState<OrderDraft>(() => ({
-    by: asked?.order?.by ?? "", type: kindOfFamily(asked?.order?.type), direction: asked?.order?.direction ?? "desc", n: asked?.limit ?? 10,
+    by: asked?.order?.by ?? "", type: asValueKind(asked?.order?.type), direction: asked?.order?.direction ?? "desc", n: asked?.limit ?? 10,
   }));
   const [result, setResult] = useState<ResultKind>(asked?.result ?? "list");
   const [columns, setColumns] = useState<string[]>(asked?.columns ?? []);
@@ -769,7 +773,7 @@ export function QuestionsPage() {
     setKindKey(JSON.stringify([e.kind.prefix, e.kind.shape ?? ""]));
     setDrafts((e.where ?? []).map((c) => conditionToDraft(c)));
     setGroups((e.anyOf ?? []).map((g) => g.map((c) => conditionToDraft(c))));
-    if (e.order) setOrder({ by: e.order.by, type: kindOfFamily(e.order.type), direction: e.order.direction, n: e.limit ?? 10 });
+    if (e.order) setOrder({ by: e.order.by, type: asValueKind(e.order.type), direction: e.order.direction, n: e.limit ?? 10 });
     setResult(e.result);
     setColumns(e.columns ?? []);
     setOf(e.of ?? "");
@@ -779,7 +783,7 @@ export function QuestionsPage() {
       where: (e.where ?? []).map((c) => draftToCondition(conditionToDraft(c)).condition!),
       ...(e.anyOf ? { anyOf: e.anyOf.map((g) => g.map((c) => draftToCondition(conditionToDraft(c)).condition!)) } : {}),
       result: e.result,
-      ...(e.order ? { order: { by: e.order.by, type: kindOfFamily(e.order.type), direction: e.order.direction }, limit: e.limit ?? 10 } : {}),
+      ...(e.order ? { order: { by: e.order.by, type: asValueKind(e.order.type), direction: e.order.direction }, limit: e.limit ?? 10 } : {}),
       ...(e.columns ? { columns: e.columns } : {}),
       ...(e.of ? { of: e.of } : {}),
       ...(questionBasis(basis) ? { basis: questionBasis(basis)! } : {}),
