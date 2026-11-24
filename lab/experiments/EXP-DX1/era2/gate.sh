@@ -24,7 +24,7 @@ cp "$repo/packages/datomic/src/codec-spec.json" "$out/this/codec-spec.json"
 git -C "$repo" archive "$base" packages/datomic/gateway/src packages/datomic/src/codec-spec.json | tar -x -C "$out/base"
 mv "$out/base/packages/datomic/gateway/src" "$out/base/src"; cp "$out/base/packages/datomic/src/codec-spec.json" "$out/base/codec-spec.json"
 rm -rf "$out/base/packages"; echo "$base" > "$out/base/commit"
-cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era2/paired.clj" "$out/lab/"
+cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era2/paired.clj" "$x/era3/attack.clj" "$out/lab/"
 image=${DX_ERA2_IMAGE_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
 [[ $image =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "gate.sh: DX_ERA2_IMAGE_ID must be an image ID" >&2; exit 2; }
 [[ $(docker image inspect --format '{{.Id}}' "$image") == "$image" ]] || { echo "gate.sh: image $image not present" >&2; exit 2; }
@@ -38,6 +38,8 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
        -e DF01_RECORDED_PAGE=/tmp/recorded-page.json)
   [[ $option == on || $option == subject ]] && env+=(-e TX2_REMOVAL_PER_ACCOUNT=1)
   [[ $option == subject ]] && env+=(-e TX2_REMOVAL_SUBJECT_CHECK=1 -e TX2_REMOVAL_TRIES_LOG=1 -e "ERA2_RACES=${ERA2_RACES:-1000}")
+  [[ $name == era3-* ]] && env+=(-e "ERA3_PHASES=${ERA3_PHASES:-d1 d1t d2 d3 d5 d6 fuzz}" -e "ERA3_N=${ERA3_N:-400}"
+                                 -e "ERA3_BLOCK=${ERA3_BLOCK:-100}" -e "ERA3_SEED=${ERA3_SEED:-7}" -e "ERA3_RUN=gate")
   mkdir -p "$out/$name.out"
   docker run --rm --pull never --name "tx2-dxera2-gate-$$-$name" --memory 3g --cpus 2 -v "$out/$name.out:/out" \
     -v "$out/$source/src:/opt/gateway/src:ro" -v "$out/$source/codec-spec.json:/opt/spec/codec-spec.json:ro" \
@@ -45,9 +47,11 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
     'cd /opt/datomic && java -Xmx2g -Ddatomic.objectCacheMax=256m -Ddatomic.memoryIndexMax=256m -Dtriplex.codec.spec=/opt/spec/codec-spec.json -cp "$(DATOMIC_EXT_CLASSPATH=/opt/gateway/src bin/classpath)" clojure.main /opt/run.clj' \
     > "$out/$name.log" 2>&1 || status=1
   echo "$name $image" >> "$out/images-ran"
-  grep -E "ERA2_|SUITES|FAIL|ERROR in|Exception" "$out/$name.log" | cut -c1-2000 | head -40
+  grep -E "ERA2_|ERA3_SUMMARY|ERA3_VIOLATION|SUITES|FAIL|ERROR in|Exception" "$out/$name.log" | cut -c1-2000 | head -40
+  # the review's attacks report violations in their summary line and exit 0
+  if [[ $name == era3-* ]] && ! grep -q 'ERA3_SUMMARY.*:violations 0,' "$out/$name.log"; then status=1; fi
 }
-phases=${ERA2_GATE_PHASES:-paired gate suites}
+phases=${ERA2_GATE_PHASES:-paired gate era3 suites}
 paired='(load-file "/lab/regression.clj") (load-file "/lab/paired.clj") (era2-paired/main)'
 if [[ $phases == *paired* ]]; then
   run paired-base base off "$paired"; run paired-base2 base off "$paired"
@@ -58,6 +62,9 @@ if [[ $phases == *gate* ]]; then
   [[ $phases == *gate-subject-only* ]] || { run gate-off this off "$gate"; run gate-on this on "$gate"; }
   run gate-subject this subject "$gate"
 fi
+# [DX-ERA2 fix pass] the independent review's attacks and fuzzer (era3/attack.clj, era3/REVIEW.md) on both settings
+attack='(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (era3-attack/main)'
+if [[ $phases == *era3* ]]; then run era3-on this on "$attack"; run era3-subject this subject "$attack"; fi
 suites="triplex.gateway.selftest triplex.gateway.group-test triplex.gateway.ids-test triplex.gateway.feed-test triplex.gateway.pinned-test triplex.gateway.recent-test triplex.gateway.cache-key-test triplex.gateway.commit-order-test triplex.gateway.sweep-gates-test triplex.gateway.trace-test"
 for arm in base:off this:off this:subject; do
   [[ $phases == *suites* ]] || continue

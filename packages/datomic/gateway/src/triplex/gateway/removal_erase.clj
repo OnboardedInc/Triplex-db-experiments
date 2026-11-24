@@ -39,14 +39,16 @@
 ;; "head has not moved since my selection" check (database-wide, P9) retries more often; this measures how often.
 ;; One JSON line per removal on standard output when TX2_REMOVAL_TRIES_LOG=1 (unset: nothing printed).
 (def ^:private tries-log (= "1" (System/getenv "TX2_REMOVAL_TRIES_LOG")))
-;; [DX-ERA2] TX2_REMOVAL_SUBJECT_CHECK=1 (default off; only on a database guarded per account): the removal checks its
-;; selection per subject and takes its log position at its own commit (removal_commit.clj, loaded on first use only, so
-;; this file and every installed function text stay as they are without the option).
+;; [DX-ERA2] On a database guarded per account every removal checks its selection per subject, takes its log position at
+;; its own commit and declares itself natively first (removal_commit.clj, loaded on first use only, so this file and
+;; every installed function text stay as they are without the per-account option).
+;; [DX-ERA3 F2] TX2_REMOVAL_SUBJECT_CHECK no longer selects the path: a removal committed by one gateway must be
+;; completable by every gateway of the fleet, so there is one per-account path. The setting is read and ignored.
 (def ^:private subject-check (= "1" (System/getenv "TX2_REMOVAL_SUBJECT_CHECK")))
 
 (defn erase! [name conn input]
   ;; Nested if, not `and`: `and` generates a name, which would renumber the installed functions loaded after this file.
-  (if (if subject-check (removal-scope/per-account? (d/db conn)) false)
+  (if (removal-scope/per-account? (d/db conn))
     ((requiring-resolve 'triplex.gateway.removal-commit/erase!) name conn input)
   (let [selectors (erase/selectors! input)
         started (System/nanoTime)
@@ -62,6 +64,9 @@
         (let [db (erase/sync! conn)
               current (privacy/cut name db true)]
           (when-not current (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
+          ;; [DX-ERA3 F3] A database guarded per account that this gateway cannot treat as such (it runs without the
+          ;; option): refuse before anything is written, so no intent is left for the fleet to trip over.
+          (when (= removal-scope/sentinel (scope/value db (scope/entity db) :triplex.scope/erasure-seq)) (privacy/unavailable!))
           (privacy/clear-completed! name current)
           (if-let [before (get-in current [:commands command])]
             (do (when-not (= selectors (get before "selectors"))
@@ -139,9 +144,14 @@
                       back? [[:db/cas head :triplex.scope/erasure-seq removal-scope/sentinel n]
                              [:db/retract head :triplex.scope/removal-seq n]]
                       :else [[:db/cas head :triplex.scope/erasure-seq n removal-scope/sentinel]
-                             [:db/add head :triplex.scope/removal-seq n]])
+                             [:db/add head :triplex.scope/removal-seq n]
+                             ;; [DX-ERA3 F1] nothing declared beyond the log
+                             [:db/add head :triplex.scope/removal-intent n]])
+                ;; [DX-ERA3] and every native counter the log does not derive goes back to 0 (a held account or subject
+                ;; left by a removal that never reached its intent, or by an earlier move)
                 counters (when (and ops (not back?))
-                           (partition-all 1000 (removal-scope/counter-ops (:entities state) buckets)))
+                           (partition-all 1000 (concat (removal-scope/counter-ops (:entities state) buckets)
+                                                       ((requiring-resolve 'triplex.gateway.removal-commit/stale-counter-ops) db state))))
                 transact! #(when (= ::timeout (deref (d/transact conn (vec %)) 5000 ::timeout)) (privacy/unavailable!))]
             (when (and ops (not back?)) (removal-scope/install! conn db))
             ;; Counters first (nothing reads them before the mode moves), in parts of 1,000; the move itself last.

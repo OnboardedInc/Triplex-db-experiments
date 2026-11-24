@@ -22,10 +22,21 @@
 (def commit-ident :triplex.removal/commit-v1)
 (def moved "TRIPLEX_REMOVAL_SUBJECT_MOVED")
 ;; Tries on the narrow check alone before the subject guard, and tries under the guard before the removal answers 503
-;; and stays pending (resumable). Under the guard only an unfenced write of the subject can fail a try (an owner-root
-;; fold, once per subject); none was observed.
+;; and stays pending (resumable): at most 4 commit attempts. Under the guard only an unfenced write of the subject can
+;; fail a try (an owner-root fold, once per subject); none was observed.
 (def narrow-tries 2)
-(def guarded-tries 3)
+(def guarded-tries 2)
+;; [DX-ERA3] How long the gateway waits for each of the removal's native transactions before it answers 503 (the
+;; transaction may still land: the removal is then pending, declared and possibly committed). A var so a test can force
+;; the wait to expire.
+(def wait-ms (Long/parseLong (or (System/getenv "TX2_REMOVAL_WAIT_MS") "5000")))
+
+(defn transact!
+  "One native transaction of the removal, waited for at most `wait-ms`."
+  [conn ops]
+  (let [report (deref (d/transact-async conn ops) wait-ms ::timeout)]
+    (when (= ::timeout report) (privacy/unavailable!))
+    report))
 (def tries-log (= "1" (System/getenv "TX2_REMOVAL_TRIES_LOG")))
 
 (def commit-code
@@ -75,12 +86,10 @@
 
 (defn- install! [conn db]
   (if (d/entid db commit-ident) db
-    (let [report (deref (d/transact conn [{:db/ident commit-ident
-                                           :db/fn (d/function {:lang :clojure :params '[db scope payload]
-                                                               :requires '[[datomic.api :as d] [clojure.data.json :as json]]
-                                                               :code commit-code})}]) 5000 ::timeout)]
-      (when (= ::timeout report) (privacy/unavailable!))
-      (:db-after report))))
+    (:db-after (transact! conn [{:db/ident commit-ident
+                                 :db/fn (d/function {:lang :clojure :params '[db scope payload]
+                                                     :requires '[[datomic.api :as d] [clojure.data.json :as json]]
+                                                     :code commit-code})}]))))
 
 (defn check-entities
   "The subjects whose selection must be complete at the serial point: every entity a selector names by entity ID. An
@@ -97,9 +106,29 @@
   can expect, so every save of these subjects fails at Datomic's serial point until this removal commits (its commit
   sets the counters again). Other subjects and accounts are untouched."
   [conn entities s]
-  (let [report (deref (d/transact conn (vec (removal-scope/counter-ops (map (fn [e] [e (- s)]) entities) nil))) 5000 ::timeout)]
-    (when (= ::timeout report) (privacy/unavailable!))
-    (:db-after report)))
+  (:db-after (transact! conn (vec (removal-scope/counter-ops (map (fn [e] [e (- s)]) entities) nil)))))
+
+(defn- held-accounts [db head]
+  (set (json/read-str (or (scope/value db head :triplex.scope/removal-held) "[]"))))
+
+(defn declare!
+  "[DX-ERA3 F1, F1b] The removal's first native transaction, before it selects or records anything: the global declared
+  sequence (`:triplex.scope/removal-intent`) moves to the removal's sequence, and every account its selectors can
+  reach takes the negated sequence on its counter. From this transaction on, a ticketed write that read any of those
+  accounts (any account, for a ticket naming none) fails at Datomic's serial point (`removal-scope/ticket-intent-ops`,
+  the fence's account guards) until the removal is committed and published and the ticket is read again. Plain saves
+  fence only on their own subjects and are not touched. Run again on a resume: a declaration left by a removal that
+  stopped before its intent was recorded (same sequence) is replaced, its other accounts released."
+  [conn db current buckets s]
+  (let [head (scope/entity db)
+        intent (scope/value db head :triplex.scope/removal-intent)
+        earlier (if (= intent s) (held-accounts db head) #{})
+        ops (-> [[:db/cas head :triplex.scope/removal-intent intent s]
+                 [:db/add head :triplex.scope/removal-held (json/write-str (vec (sort buckets)))]]
+                (into (removal-scope/counter-ops nil (map (fn [b] [b (- s)]) buckets)))
+                (into (removal-scope/counter-ops nil (for [b earlier :when (not (contains? (set buckets) b))]
+                                                       [b (removal-scope/bucket-seq current b)]))))]
+    (:db-after (transact! conn ops))))
 
 (defn commit!
   "One try: the removal's native transaction through the installed function, which refuses it if a selected subject
@@ -112,18 +141,19 @@
         payload {:basis (d/basis-t view) :entities (check-entities (get entry "selectors")) :stamp (get entry "erasedAt")
                  :rows (@#'erase/journal-rows entry) :record (json/write-str entry)
                  :operation (@#'erase/operation-id entry) :txid (get entry "txId") :cols columns}
-        ;; A held subject that lost no value goes back to its sequence from the published log.
-        released (removal-scope/counter-ops (for [e held :when (not (contains? lost e))] [e (removal-scope/entity-seq current e)]) nil)
+        ;; A held subject or declared account that lost no value goes back to its sequence from the published log.
+        lost-accounts (removal-scope/entry-buckets entry)
+        released (removal-scope/counter-ops (for [e held :when (not (contains? lost e))] [e (removal-scope/entity-seq current e)])
+                                            (for [b (held-accounts db head) :when (not (contains? lost-accounts b))]
+                                              [b (removal-scope/bucket-seq current b)]))
         ops (-> [[commit-ident head payload]
                  {:db/id "privacy-claim" :triplex.claim/command-id (get entry "commandId") :triplex.claim/tx "datomic.tx"
                   :triplex.claim/tx-id (get entry "txId")}
                  [:db/cas head :triplex.scope/erasure-seq removal-scope/sentinel removal-scope/sentinel]
                  [:db/cas head :triplex.scope/removal-seq (dec s) s]]
                 (into (removal-scope/entry-ops entry))
-                (into released))
-        report (deref (d/transact conn ops) 5000 ::timeout)]
-    (when (= ::timeout report) (privacy/unavailable!))
-    report))
+                (into released))]
+    (transact! conn ops)))
 
 (defn- moved? [error]
   (some (fn [x] (= moved (ex-message x))) (take-while some? (iterate ex-cause error))))
@@ -186,7 +216,7 @@
                   (if-let [native (and pending (committed db pending))]
                     (publish! name conn current native 0 false started)
                     ;; A removal resumed after its guard was taken finds its subjects held and keeps them held.
-                    (loop [view db tries 1
+                    (loop [view (do (declare! conn db current (vec buckets) s) (erase/sync! conn)) tries 1
                            held (into #{} (filter (fn [e] (= (- s) (removal-scope/native-entity-seq view e))) checked))]
                       (let [entry (erase/make-entry name view current command selectors)
                             _ (when-not (every? buckets (removal-scope/entry-buckets entry)) (privacy/unavailable!))
@@ -201,3 +231,25 @@
                           (and (empty? held) (>= tries narrow-tries))
                           (do (hold! conn checked s) (recur (erase/sync! conn) (inc tries) (set checked)))
                           :else (recur (erase/sync! conn) (inc tries) held))))))))))))))
+
+(defn stale-counter-ops
+  "Counters a database holds natively that the published log does not derive (a held account or subject left by a
+  removal that never recorded its intent, a copy restored from mid-removal): back to 0."
+  [db state]
+  (if (removal-scope/installed? db)
+    (let [ents (or (:entities state) {}) bks (or (:buckets state) {})
+          native (fn [attr] (d/q '[:find ?k ?s :in $ ?a :where [?e ?a ?k] [?e :triplex.removal/seq ?s]] db attr))]
+      (concat (removal-scope/counter-ops (for [[k v] (native :triplex.removal/entity) :when (and (not= 0 v) (not (contains? ents k)))] [k 0]) nil)
+              (removal-scope/counter-ops nil (for [[k v] (native :triplex.removal/account) :when (and (not= 0 v) (not (contains? bks k)))] [k 0]))))
+    []))
+
+(defn rebuild!
+  "After a restored copy guarded per account has replayed the log: every counter from the log, nothing declared beyond
+  it, no account held."
+  [conn db state]
+  (let [head (scope/entity db)
+        n (scope/value db head :triplex.scope/removal-seq)
+        ops (concat [[:db/add head :triplex.scope/removal-intent n] [:db/add head :triplex.scope/removal-held "[]"]]
+                    (removal-scope/counter-ops (:entities state) (:buckets state))
+                    (stale-counter-ops db state))]
+    (doseq [part (partition-all 1000 ops)] (transact! conn (vec part)))))

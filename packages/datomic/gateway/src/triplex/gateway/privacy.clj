@@ -150,8 +150,11 @@
                   (when root (record-text name "head.json")))
            ;; [DX-ERA2] The prepared removal's sequence, so a request guarded per account can tell a native commit of
            ;; that removal (not yet published) from a native database the log does not describe.
-           pending-seq (when removal-enabled (when allow-pending? (when pending
-                         (get (json/read-str (if (string? pending) pending (record-text name "pending.json"))) "seq"))))]
+           ;; [DX-ERA3 F1b] and the prepared removal itself (its accounts), so a ticketed write can wait for it.
+           ;; [DX-ACT9] Nested `when`, not `and` (it generates a name; see removal-hooks).
+           pending-entry (when removal-enabled (when allow-pending? (when pending
+                           (json/read-str (if (string? pending) pending (record-text name "pending.json"))))))
+           pending-seq (get pending-entry "seq")]
        (let [result
        (when (or wire (enabled? db))
          (when (or (nil? wire) (and (not allow-pending?) pending)) (unavailable!))
@@ -182,7 +185,7 @@
                (let [new (assoc next :wire wire)]
                  (swap! cache update name #(if (and % (> (:seq %) n)) % new))
                  new))))))]
-         (if (if result (integer? pending-seq) false) (assoc result :pending-seq pending-seq) result)))
+         (if (if result (integer? pending-seq) false) (assoc result :pending-seq pending-seq :pending pending-entry) result)))
      (catch clojure.lang.ExceptionInfo e (throw e))
      (catch Exception _ (unavailable!)))))
 

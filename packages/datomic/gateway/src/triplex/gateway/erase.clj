@@ -208,6 +208,10 @@
     {:seq (get entry "seq") :erasedAt (get entry "erasedAt") :txId (get entry "txId")
      :t (str (d/tx->t native)) :position (get entry "position") :identities (mapv #(dissoc % "keyHandle") (get entry "identities"))}))
 
+;; [DX-ACT9] Kept as a plain value so the review's tests can still name it (DX-ERA2 reads and ignores the setting since its
+;; F2 fix; the removal it described lives in removal_erase.clj and removal_commit.clj).
+(def ^:private subject-check (= "1" (System/getenv "TX2_REMOVAL_SUBJECT_CHECK")))
+
 (defn erase! [name conn input]
   ;; [DX-ACT9] With the per-account option or the tries log on, DX-ERA2's removal (removal_erase.clj, loaded after every
   ;; stored function text). Otherwise the base removal, unchanged.
@@ -222,6 +226,9 @@
         (let [db (sync! conn)
               current (privacy/cut name db true)]
           (when-not current (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
+          ;; [DX-ERA3 F3] A database guarded per account that this gateway cannot treat as such (it runs without the
+          ;; option): refuse before anything is written, so no intent is left for the fleet to trip over.
+          (when (= privacy/removal-sentinel (scope/value db (scope/entity db) :triplex.scope/erasure-seq)) (privacy/unavailable!))
           (privacy/clear-completed! name current)
           (if-let [before (get-in current [:commands command])]
             (do (when-not (= selectors (get before "selectors"))
@@ -265,5 +272,9 @@
                                (= (get native "position") (scope/value data eid :triplex.tx/position)))
                   (privacy/unavailable!)))
               (apply-native! conn data (assoc entry "position" (inc (scope/head-position data (scope/entity data))))))))
+        ;; [DX-ERA3] A restored copy guarded per account: counters, declaration and held accounts from the log.
+        ;; [DX-ACT9] Through privacy's hooks (see apply-native!).
+        (when (if privacy/removal-enabled ((:per-account? privacy/removal-hooks) (sync! conn)) false)
+          ((requiring-resolve 'triplex.gateway.removal-commit/rebuild!) conn (sync! conn) state))
         (privacy/verify-data! state (sync! conn))
         {:database name :erasure {:seq (:seq state)}}))))
