@@ -5645,3 +5645,18 @@ Source: settlement-preparation builder, branch `exp/DX-ACT7-settlement-1b-prep` 
 - Not verified: anything at full size; the real 1 billion bundle's ledgers were never read; real work per frame is derived.
 
 **Started** in the freed slot: many small accounts in the one database (task file `OPUS-SCALE2-wide-thin-accounts.md`). The merge builder was told to take the recovery-time and settlement-preparation branches in a second push.
+
+## 2026-11-24 12:27 EST: a separate reader for questions across subjects is built
+
+Source: question-reader builder, branch `exp/DX-XQ7-question-reader` `a5631af24` (based on the sweep branch with the uncached-read branch merged; not merged onto the one branch), page `lab/experiments/EXP-DX1/xq7/QUESTION-READER.md`. Default off. Nothing run on a server.
+
+- Built: a read gateway role that serves only the question routes (ID lists, sweep, and `find` when it exists) with its own Datomic peer, cache, cores and permit pools (`TX2_QUESTION_READER=1`); other gateways refuse those routes naming where they are served (`TX2_QUESTIONS_AT`); one SDK option `questionReaderUrl`; launcher role on the same machine (`DX_QUESTION_READER=1`) or on a second machine.
+- Proof by count (toy, 256 pinned readers re-reading 1,400 subjects on a main reader with a 32 MB cache, 20 s windows): storage reads by pinned reads were 0, 0, 3 in three controls; 0 with sweeps on the question reader (108,416 subjects swept); 104 with the same sweeps on the main reader. Displacement on the toy is small (at most 0.39% of pinned reads); its size at 1 billion is the open question.
+- Byte-equal to the single reader: 2,794 pages, 2,165,641 bytes, 0 differences. Restart mid-sweep: cursor continued, exact. Reader behind by design: 304 probes, 0 answered early.
+- Fairness: 0 of 47,790 ID list pages refused with two sweeps of another account running; a page waited behind at most one page of each other listing account.
+- Size: small (2 cores, 6 GiB container) for lists plus one sweep; standard (4 cores, 10 GiB) for lists, three sweeps and `find`. A small cache costs a sweep at most 3 to 4% (each subject's leaves are read once).
+- **It does not fit in the 89 GiB memory table** (all 12 cores and the whole guard are assigned on the `server-32` profile). The table must grow: a second machine (4 cores, 12 GB) or a 128 GB, 16-core machine. The demo profile can take the small size by the two measured cuts (transactor 60 to 57 GiB, PostgreSQL 8 to 5 GiB).
+- Server run written: one machine, 31 to 57 minutes. Prediction: sweep on the main reader raises storage reads per pinned read to 0.6 to 1.8 and cuts reads/s 40 to 85%; on the question reader they equal the control.
+- Not verified: anything at 1 billion; the second-machine path; fairness with 10 listing accounts.
+
+**Started** in the freed slot: the product's save path using one commit per subject's save end to end (the SDK mints one ordered block per save so a subject's save reaches the fast per-subject writer; the save-size rule), task file `OPUS-S2-save-shape-sdk.md`.
