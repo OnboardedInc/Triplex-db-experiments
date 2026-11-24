@@ -63,15 +63,20 @@
     (when-not (.tryAcquire gate (long list-queue-ms) TimeUnit/MILLISECONDS)
       (stats/bump! busy-stat 1)
       (refuse! 503 "IndexBusy" "Another question of this account is running" {:retryAfterMs retry-ms}))
-    (let [left (max 0 (- list-queue-ms (quot (- (System/nanoTime) started) 1000000)))]
+    ;; [DX-XQ10] The account's turn is taken: what follows is the pool's fair queue. poolAhead counts the questions
+    ;; admitted from here on (the pool's FIFO order bounds it by one per other account waiting); turnMicros is the time
+    ;; before, the account's own turn and any pause of this thread before it reached the pool.
+    (let [turned (System/nanoTime) pool-ticket (.get admitted-count)
+          left (max 0 (- list-queue-ms (quot (- turned started) 1000000)))]
       (when-not (try (.tryAcquire permits left TimeUnit/MILLISECONDS) (catch Throwable e (.release gate) (throw e)))
         (.release gate)
         (stats/bump! busy-stat 1)
-        (refuse! 503 "IndexBusy" "Every index question permit is in use" {:retryAfterMs retry-ms})))
-    (let [ahead (- (.getAndIncrement admitted-count) ticket)]
-      (stats/bump! [:idLists :queued] 1)
-      {:queue {:micros (quot (- (System/nanoTime) started) 1000) :ahead ahead}
-       :release (fn [] (.release permits) (.release gate))})))
+        (refuse! 503 "IndexBusy" "Every index question permit is in use" {:retryAfterMs retry-ms}))
+      (let [n (.getAndIncrement admitted-count)]
+        (stats/bump! [:idLists :queued] 1)
+        {:queue {:micros (quot (- (System/nanoTime) started) 1000) :ahead (- n ticket)
+                 :turnMicros (quot (- turned started) 1000) :poolAhead (- n pool-ticket)}
+         :release (fn [] (.release permits) (.release gate))}))))
 (defn- immediate-admit!
   "The ID list branch's admission: refused at once when the account is busy, then a permit within wait-ms."
   [account wait-ms busy-stat ^Semaphore permits]

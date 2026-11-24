@@ -504,7 +504,7 @@ const saveOne = async (n: number) => (await transact(`behind ${n}`, [a(taskId(A3
     while (going()) {
       try {
         const page = await qreader.listIds(db, { account, prefix: "", limit: 3, bounds: { entries: 50, ms: 100 } });
-        rows.push({ account, ahead: page.queue?.ahead, micros: page.queue?.micros, ok: true });
+        rows.push({ account, ahead: page.queue?.ahead, micros: page.queue?.micros, poolAhead: page.queue?.poolAhead, turnMicros: page.queue?.turnMicros, ok: true });
       } catch (e: any) { rows.push({ account, ok: false, code: e?.code }); }
     }
   };
@@ -531,6 +531,7 @@ const saveOne = async (n: number) => (await transact(`behind ${n}`, [a(taskId(A3
     const ok = rows.filter((r) => r.ok);
     const micros = ok.map((r) => r.micros).sort((x, y) => x - y);
     const arm = { sweeps, listPages: ok.length, refused: rows.length - ok.length, maxAhead: Math.max(...ok.map((r) => r.ahead)),
+      maxPoolAhead: Math.max(...ok.map((r) => r.poolAhead ?? -1)), overAhead: ok.filter((r) => r.ahead > 2).length,
       listPoolAdmissions: (s1.idLists?.queued ?? 0) - (s0.idLists?.queued ?? 0), sweepPages: tally.pages, sweepBusy: tally.busy,
       sweepPagesOnGateway: (s1.sweep?.requests ?? 0) - (s0.sweep?.requests ?? 0),
       queueMsP50: micros[Math.floor(micros.length / 2)]! / 1000, queueMsP99: micros[Math.floor(micros.length * 0.99)]! / 1000, queueMsMax: micros.at(-1)! / 1000 };
@@ -539,7 +540,7 @@ const saveOne = async (n: number) => (await transact(`behind ${n}`, [a(taskId(A3
     check(arm.listPoolAdmissions === arm.listPages, "(f) the ID list pool admitted exactly the ID list pages (no sweep entered it)", arm);
     check(sweeps === 0 || arm.sweepPages > 0, "(f) the sweeps ran during the arm", arm);
     log("f-arm", { rep, ...arm });
-    if (arm.maxAhead > 2) {
+    if (arm.maxAhead > 2 || arm.maxPoolAhead > 2) {
       const at = ok.findIndex((r) => r.ahead === arm.maxAhead);
       log("f-over", { rep, sweeps, worst: ok.filter((r) => r.ahead > 2), around: ok.slice(Math.max(0, at - 6), at + 3) });
     }
