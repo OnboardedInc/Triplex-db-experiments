@@ -840,6 +840,13 @@ export async function runHeld(
       });
       return;
     }
+    // [DX-ACT10] The adversarial review's stack checks (diagnostic toy only) instead of the windows.
+    if (process.env.DX_ACT10_STACK === "1") {
+      assert(diagnostic, "DX_ACT10_STACK is a toy diagnostic");
+      const { act10Stack } = await import("../../act10/stack-part.ts");
+      await act10Stack({ out, s, descriptor, attempt: peer.attempt });
+      return;
+    }
     const windows: PairSample[] = [];
     // [DX-ACT6] By reference, the definitions the windows publish are written once here, before any window (unfenced,
     // idempotent), so each Publish writes none ahead and the save pause around it covers only its record, as in the
