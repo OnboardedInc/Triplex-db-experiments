@@ -43,6 +43,9 @@ export class HeldLedger {
     this.add(row.position, { txId: row.txId, commandId: row.commandId });
   }
   private readonly adopted = new Map<number, string>();
+  /** [DX-ACT7] Bounded journal pages requested, and those that held no journal and were followed by their cursor. */
+  boundedPages = 0;
+  boundedSkips = 0;
 
   pending() {
     return this.highest;
@@ -60,16 +63,33 @@ export class HeldLedger {
   verifyThrough(position: number, mayAwaitAck = false, adopt?: RegExp) {
     const next = this.serial.then(async () => {
       const deadline = now() + 500;
+      // [DX-ACT7] With TRIPLEX_DATOMIC_BOUNDED_JOURNAL=1 (the SDK's option for JRN1's bounded journal pages) every page
+      // is a bounded request: a page that stopped on its entry or time bound with no journal is followed by its `next`
+      // cursor (the positions it examined held no journal), never taken as the end. Unset, the request is as before.
+      // Rejected: a separate option name (the runner and the SDK would then disagree about which pages are bounded).
+      const bounded = process.env.TRIPLEX_DATOMIC_BOUNDED_JOURNAL === "1";
+      // A smaller entry bound per page (toy gate only: it makes every page follow its cursor).
+      const examine = process.env.DX_ACT7_LEDGER_EXAMINE ? Number(process.env.DX_ACT7_LEDGER_EXAMINE) : undefined;
+      assert(examine === undefined || (bounded && Number.isSafeInteger(examine) && examine >= 1));
+      let scan = this.cursor;
       while (this.cursor < position) {
         const available = Math.min(100, position - this.cursor),
-          after = this.cursor;
-        const { transactions } = await this.reader.request<{ transactions: Wire[] }>(
+          after = Math.max(scan, this.cursor);
+        const page = await this.reader.request<{ transactions: Wire[]; stopped?: string; next?: number }>(
           "POST",
           "/v2/db/" + this.database + "/transactions",
-          { after, limit: available },
+          bounded ? { after, limit: available, bounded: true, ...(examine ? { examineEntries: examine } : {}) } : { after, limit: available },
         );
+        const { transactions } = page;
         assert(transactions.length <= available);
+        if (bounded) this.boundedPages++;
         if (!transactions.length) {
+          if (bounded && (page.stopped === "entries" || page.stopped === "time")) {
+            assert(typeof page.next === "number" && page.next > after, "A bounded journal page did not advance");
+            scan = page.next;
+            this.boundedSkips++;
+            continue;
+          }
           if (mayAwaitAck) return;
           assert(now() < deadline, "Missing native journal suffix");
           await sleep(5);
@@ -107,6 +127,7 @@ export class HeldLedger {
           }
           this.expected.delete(p);
           this.cursor = p;
+          scan = p;
         }
       }
     });

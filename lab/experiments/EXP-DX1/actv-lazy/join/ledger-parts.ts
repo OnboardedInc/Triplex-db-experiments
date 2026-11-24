@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
-import { pack, unpack, type Documents, type Op, type Row } from "../../notify1/store.ts";
+import { Documents, pack, unpack, type Op, type Row } from "../../notify1/store.ts";
 import type { NoticeCandidate } from "./recorded.ts";
-import { FrameTooLarge } from "./frames.ts";
+import { FrameTooLarge, frameEstimate } from "./frames.ts";
 
 // [DX-ACT6] Why: a subject's notice ledger (the state of each of its notice work items) is one packed value, written
 // whole with the subject's last deliveries. At about 200 owed forms that value alone exceeds the writer's bound (8 ms of
@@ -24,10 +24,33 @@ export function ledgerMode(value = process.env.TX2_NOTICE_LEDGER): LedgerMode {
 }
 /** Characters of the packed ledger per part: one part with the cursor change is about 7.2 ms of estimated service. */
 export const ledgerPartChars = 10240;
-/** The head's frame also retracts the old ledger's parts: with the cursor change, at most 10 fit the writer's bound
- * (7,985 us estimated; 11 would be 8,224). A ledger is therefore kept to 10 parts (about 1,680 owed notice items on the
- * synthetic forms, 60.8 packed characters each), so the next release can always replace it. */
-export const ledgerPartsMax = 10;
+/** The head's frame also retracts the old ledger's parts, beside the cursor change. A ledger is kept to as many parts as
+ * that frame can retract within the writer's bound by the estimate in force (both its service and its wire limit, so
+ * also under a calibrated TX2_SETTLE_COST): 10 by the default estimate (7,985 us; 11 would be 8,224), about 1,680 owed
+ * notice items on the synthetic forms (60.8 packed characters each). So the next release can always replace it. */
+export function ledgerPartsMax() {
+  const db = new Documents({ scopeName: "ledger-parts-max" } as never, "settlement-notices-" + "x".repeat(24));
+  const sha = "0".repeat(64);
+  // A cursor and head as large as they get: 64-hex hashes, large counters, the longest subject ids.
+  const cursor = { epoch: "0".repeat(26), event: 999999, start: 999999, parent: sha, batch: 999999999, previous: sha,
+    entries: 999999999999, frames: "bytes", part: 999999, ledger: "parts", erasureSeq: 999999 };
+  const head = (n: number): LedgerHead => ({ parts: n, event: 999999, chars: n * ledgerPartChars, sha });
+  const id = "f".repeat(40);
+  const frame = (k: number) => [
+    ...Array.from({ length: k }, () => ({ op: "retract" as const, id })),
+    { op: "retract" as const, id },
+    db.put(ledgerKey("pl:s99999999"), head(k + 1)),
+    { op: "retract" as const, id },
+    db.put("notice-progress", cursor),
+  ];
+  let k = 0;
+  while (k < 4096 && frameEstimate(frame(k + 1)).fits) k++;
+  // A part itself (with the cursor change) must fit too, or nothing can be written in parts.
+  const part = [db.put(ledgerPartKey("pl:s99999999", 999999, 99), "A".repeat(ledgerPartChars)), { op: "retract" as const, id }, db.put("notice-progress", cursor)];
+  assert(frameEstimate(part).fits, "One ledger part does not fit the writer's bound under this estimate");
+  return Math.max(k, 1);
+}
+let partsMax: number | undefined;
 export const ledgerKey = (subject: string) => "recorded-ledger:" + subject;
 export const ledgerPartKey = (subject: string, event: number, i: number) =>
   "recorded-ledger-part:" + subject + ":" + event + ":" + i;
@@ -82,10 +105,11 @@ export function ledgerChange(db: Documents, subject: string, event: number, old:
   if (packed.length <= ledgerPartChars)
     return { parts: [] as Op[], closing: [...retire, ...db.change(ledgerKey(subject), old.head, packed)] };
   const count = Math.ceil(packed.length / ledgerPartChars);
-  if (count > ledgerPartsMax)
+  partsMax ??= ledgerPartsMax();
+  if (count > partsMax)
     throw new FrameTooLarge(
       "Subject " + subject + ": its notice ledger needs " + count + " parts of " + ledgerPartChars + " characters (" +
-        items.length + " items); at most " + ledgerPartsMax + " can be replaced within the writer's bound",
+        items.length + " items); at most " + partsMax + " can be replaced within the writer's bound",
     );
   const parts = Array.from({ length: count }, (_, i) =>
     db.put(ledgerPartKey(subject, event, i), packed.slice(i * ledgerPartChars, (i + 1) * ledgerPartChars)),

@@ -301,6 +301,9 @@ release: 31,250 frames in 19.2 minutes, 36.9 ms per frame turn with both writers
 
 ### 9.2 Several accounts at once at 1 billion records (written; NOT runnable until the preparation below exists)
 
+**Superseded (DX-ACT7, 2026-11-24): the preparation below is built and the runs are rewritten in
+[act7/RUN2.md](act7/RUN2.md)**, with the run 1 command's `DX_HELD_MINUTES` fault fixed and its frame forecast corrected.
+
 **What it would run:** the sealed 1 billion database (AGE1's cut; ten deep accounts of 100,000 subjects), three and then
 ten accounts publishing the 20 forms and 20 policies release within minutes of each other, every account saving
 throughout, settlement with byte frames, the guard and the admission lane on, against a no-settlement control:
