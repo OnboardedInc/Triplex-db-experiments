@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { cells, productionArms } from "../prep1/server-tape.ts";
-import { cardTapeReport, commitAssertions, defaultCardTape, fullCellTape, isProduction, newRunTape, parseCardTape, productionCellMetrics, tapeBinding, writerOptionsSet } from "./production-card.ts";
+import { cardTapeReport, commitAssertions, defaultCardTape, fullCellTape, isProduction, ladderFacts, newRunTape, parseCardTape, productionCellMetrics, tapeBinding, writerOptionsSet } from "./production-card.ts";
 import { ratedTape } from "./server-workload.ts";
 
 // [DX-INT1] The card's production cells: the card's quiet stream plus exactly REAL2's measured neighbour offers.
@@ -57,4 +57,21 @@ test("the card records the default-off writer options it was given", () => {
   assert.deepEqual(writerOptionsSet({}), {});
   assert.deepEqual(writerOptionsSet({ TX2_SUBJECT_WIDE: "0", TX2_SUBJECT_HINTS: "1", OTHER: "1" }), { TX2_SUBJECT_HINTS: "1" });
   assert.throws(() => writerOptionsSet({ TX2_GENERAL_PREFETCH: "yes" }), /0 or 1/);
+});
+
+// [DX-S1] The save-size ladder keeps the S tape's subjects and times and gives every save exactly N facts.
+test("the save-size ladder rewrites every neighbour save of a shape S cell to N facts", () => {
+  const cell = { rate: 50 as const, loaded: true };
+  const plain = fullCellTape("S", cell, 90).filter(isProduction);
+  process.env.DX_S1_LADDER_FACTS = "340";
+  try {
+    const ladder = fullCellTape("S", cell, 90).filter(isProduction);
+    assert.equal(ladder.length, plain.length);
+    assert(ladder.every((e, i) => e.slots.length === 340 && e.slots[339] === 339 && e.ms === plain[i]!.ms &&
+      e.owner === plain[i]!.owner && e.saveKey === plain[i]!.saveKey));
+    assert.throws(() => fullCellTape("R", cell, 90), /shape S saves only/);
+  } finally { delete process.env.DX_S1_LADDER_FACTS; }
+  assert.equal(ladderFacts({}), undefined);
+  assert.throws(() => ladderFacts({ DX_S1_LADDER_FACTS: "0" }), /1 to 4000/);
+  assert.throws(() => ladderFacts({ DX_S1_LADDER_FACTS: "5000" }), /1 to 4000/);
 });

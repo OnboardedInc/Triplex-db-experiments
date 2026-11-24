@@ -76,17 +76,34 @@ export function productionNeighbours(shape: Shape, rate: number, rowTargets: rea
   const { params } = productionParams();
   const offers = productionOffers(params, shape, productionBand(rate), rowTargets, seconds);
   const ordinal = new Map<number, number>();
+  const ladder = ladderFacts(process.env);
+  assert(ladder === undefined || shape === "S", "The save-size ladder rewrites shape S saves only");
   return offers.map((o: ProductionOffer) => {
     const person = fold ? fold(o.account, o.person) : o.person;
     const i = ordinal.get(o.account) ?? 0;
     ordinal.set(o.account, i + 1);
-    const rows = o.slots.filter((s) => s < fieldExtraBase).length || 1;
+    // [DX-S1] The save-size ladder keeps the tape's subjects and times and gives every save exactly N facts.
+    const slots = ladder === undefined ? [...o.slots] : Array.from({ length: ladder }, (_, n) => n);
+    const rows = ladder ?? (o.slots.filter((s) => s < fieldExtraBase).length || 1);
     return {
-      account: o.account, ordinal: i, subject: person, ms: o.ms, width: o.slots.length,
+      account: o.account, ordinal: i, subject: person, ms: o.ms, width: slots.length,
       version: [label, o.account, i].join("/"), owner: task(o.account, person), person,
-      slots: [...o.slots], saveKey: o.account + "/" + o.save, rows, gap: o.gap,
+      slots, saveKey: o.account + "/" + o.save, rows, gap: o.gap,
     };
   });
+}
+
+// [DX-S1] The save-size ladder (rd1 saves arm, DX_RD3_WINDOWS=ladder): DX_S1_LADDER_FACTS=N gives every neighbour save
+// of a shape S cell exactly the fields :task/field-0 to :task/field-(N-1): the seeded fields are replaced and the rest are
+// first writes (then replacements on the subject's later saves). The tape's subjects, accounts and times are unchanged.
+// Rejected: a separate tape generator (the card's preload, identity, journal and read-back checks must judge these saves).
+export const ladderSizes = [5, 10, 17, 50, 100, 340, 1000] as const;
+export function ladderFacts(env: NodeJS.ProcessEnv): number | undefined {
+  const text = env.DX_S1_LADDER_FACTS;
+  if (text === undefined || text === "") return undefined;
+  const n = Number(text);
+  assert(/^[1-9][0-9]{0,3}$/.test(text) && n <= 4000, "DX_S1_LADDER_FACTS is 1 to 4000");
+  return n;
 }
 
 /** Row targets for the nine neighbour accounts: the cell's offered rows minus the quiet account's saves. */

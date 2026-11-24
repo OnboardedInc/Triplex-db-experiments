@@ -55,7 +55,8 @@ const pinnedTuned = process.env.DX_RD2_PINNED_TUNED === "1";
 const pinnedSaves = process.env.DX_RD3_PINNED_SAVES === "1";
 // [DX-RD3] The random arm: only the three random windows, with read permits above the reader's core count.
 const savesSelection = process.env.DX_RD3_WINDOWS ?? "all", readPermits = process.env.DX_RD3_READ_PERMITS ?? "";
-assert(savesSelection === "all" || (savesSelection === "random" && pinnedSaves), "DX_RD3_WINDOWS is all or random, with DX_RD3_PINNED_SAVES=1");
+assert(savesSelection === "all" || ((savesSelection === "random" || savesSelection === "ladder") && pinnedSaves),
+  "DX_RD3_WINDOWS is all, random or ladder (DX-S1), with DX_RD3_PINNED_SAVES=1");
 assert(readPermits === "" || (pinnedSaves && /^[1-9][0-9]?$/.test(readPermits)), "DX_RD3_READ_PERMITS is 1..99, with DX_RD3_PINNED_SAVES=1");
 const pinnedTunedPolicy = pinnedTuned || pinnedSaves ? launchProfile("server", { ...launchOptions, readTuned: true, readCacheMiB: 3072 }) : undefined;
 if (pinnedTuned || pinnedSaves) assert(!tuned && !retirement && !pinnedPair && !(pinnedTuned && pinnedSaves) && writer === "per-person-ordered" && age === "1B",
@@ -214,7 +215,7 @@ for (const loaded of [false, true]) {
         assert.deepEqual(readerEnv.filter((e) => e.startsWith("TX2_READ_PERMITS=")), readPermits ? ["TX2_READ_PERMITS=" + readPermits] : [],
           "the reader does not carry the requested read permits");
         const { pinnedWindow, tapeCandidates, savesSeats, readerRecords } = await import("../rd1/pinned-ladder.ts");
-        await savesArm({ selection: savesSelection as "all" | "random", out, base: peer, agedHead: head, raw, source, seed, writer, deadline: end, stopping: () => stopping,
+        await savesArm({ selection: savesSelection as "all" | "random" | "ladder", out, base: peer, agedHead: head, raw, source, seed, writer, deadline: end, stopping: () => stopping,
           agedCut: () => agedCut(expected!.file, expected!.pin, imagePin, seed.key, seed.scope.db, seed.scope.cut, true),
           counters: Object.fromEntries((["gw-r", "gw-w", "tx", "pg"] as const).map((role) => [role, containerCounters(engines[role]!.id)])),
           calls: { adoptedArm, pinnedWindow, tapeCandidates, readerRecords, savesSeats, firstOffer } });
