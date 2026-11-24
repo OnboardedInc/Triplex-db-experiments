@@ -133,20 +133,25 @@
             (is (= [] (vec (mapcat :ids pages))))
             (is (every? #(= "entries" (:stopped %)) (butlast pages)))
             (is (= ids/permit-count (.availablePermits ids/permits)))
-            (is (.isEmpty ids/running)))
-          (testing "a second request of the same account while one runs is refused, another account is not"
-            (.put ids/running "account-003" true)
-            (try
-              (is (= "IndexBusy" (refused #(call name {"account" "account-003"}))))
-              (is (= :accepted (refused #(call name {"account" "account-004"}))))
-              (finally (.remove ids/running "account-003"))))
+            (is (= 1 (.availablePermits ^java.util.concurrent.Semaphore (@#'ids/account-gate "account-003")))))
+          ;; [DX-XQ4] Since the shared admission (ids/admitted, used by this route and find): a second request of an
+          ;; account waits in that account's fair queue for its own time bound, then is refused; another account is not.
+          (testing "a second request of the same account while one runs waits its time bound, then is refused; another account is not"
+            (let [gate ^java.util.concurrent.Semaphore (@#'ids/account-gate "account-003")]
+              (.acquire gate)
+              (try
+                (let [t0 (System/nanoTime)]
+                  (is (= "IndexBusy" (refused #(call name {"account" "account-003" "bounds" {"ms" 50}}))))
+                  (is (<= 50 (quot (- (System/nanoTime) t0) 1000000))))
+                (is (= :accepted (refused #(call name {"account" "account-004"}))))
+                (finally (.release gate)))))
           (testing "every permit taken: refused after the time bound, with the retry hint"
             (.acquire ids/permits ids/permit-count)
             (try
               (let [e (try (call name {"account" "account-004" "bounds" {"ms" 5}}) nil (catch clojure.lang.ExceptionInfo e (ex-data e)))]
                 (is (= ["IndexBusy" 503 5] [(:code e) (:status e) (:retryAfterMs e)])))
               (finally (.release ids/permits ids/permit-count)))
-            (is (.isEmpty ids/running)))
+            (is (= 1 (.availablePermits ^java.util.concurrent.Semaphore (@#'ids/account-gate "account-003")))))
           (doseq [bad [{"entries" 0} {"entries" 1000001} {"ms" 1001} {"segments" 0} {"other" 1} {"entries" 1.5}]]
             (is (= "InvalidValue" (refused #(call name {"account" "account-003" "bounds" bad}))) (pr-str bad)))
           (is (= "UnsupportedOperation" (refused #(call name {"account" "account-003" "result" "countByValue"}))))
