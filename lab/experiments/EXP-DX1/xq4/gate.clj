@@ -948,11 +948,14 @@
                  (swap! shapes conj {:shape label :expected expected :on (get-in res ["on" :datoms]) :off (get-in res ["off" :datoms])
                                      :delta (delta res) :writer (get-in res ["on" :writer]) :writerOff (get-in res ["off" :writer])
                                      :pass (= expected (delta res))}))
-        cohort (fn [start k] (range start (+ start k)))
+        ;; XQ4_COST_STRIDE > 1 spreads each cohort over the toy (start, start + stride, ...), so first touches land in
+        ;; different segments; 1 keeps the contiguous cohorts of the earlier runs.
+        stride (env-long "XQ4_COST_STRIDE" 1)
+        cohort (fn [start k] (if (> stride 1) (map #(+ start (* % stride)) (range k)) (range start (+ start k))))
         ;; Cost cohorts (first touch after the transactor restart, then a second save of the same subjects).
         per (env-long "XQ4_COST_PER" 100)
         sets {1 [":task/status"] 3 [":task/status" ":task/progress" ":task/score"] 6 g6-attrs}
-        starts {1 0 3 per 6 (* 2 per)}
+        starts (if (> stride 1) {1 50 3 51 6 52} {1 0 3 per 6 (* 2 per)})
         summarize (fn [rs side]
                     (let [xs (map #(get % side) rs) n (max 1 (count xs))]
                       {:saves (count xs) :writer (frequencies (map :writer xs))
