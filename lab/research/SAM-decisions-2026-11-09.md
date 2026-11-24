@@ -1041,3 +1041,11 @@ Verbatim: "Can you have a Fable agent at extra-high effort do a parallel design 
 
 - **Action (orchestrator):** a Fable agent at effort xhigh started (`FABLE-XQ5-independent-design-and-review.md`), named by Sam for this request only. Phase 1: its own design from its own reading of the product and the store, written to the private `research/2026-11-24-cross-subject-questions/DESIGN-FABLE.md` with its SHA-256 recorded before it may open the Opus design, the XQ prompt files, the XQ branches, or today's STATUS and decisions entries after 09:00. Phase 2: an adversarial review of the Opus design and of what is being built on it (`REVIEW-FABLE.md`), and a comparison of the two conclusions.
 - **To keep the limit of six agents:** the uncached pinned-read builder was stopped (its worktree `dx-rd5` keeps its work; to be resumed when a slot frees).
+
+### 2026-11-24 15:27 local: Sam says to continue after the Opus weekly usage limit was hit
+
+Verbatim: "continue, I got more usage"
+
+- **Context:** at about 15:20 local a builder agent (connecting the pieces of questions across subjects) failed at its first step with "You've hit your weekly limit · resets Nov 29 at 4pm (America/New_York)" on the Opus model.
+- **Action (orchestrator):** that builder was resumed from its start; the other running builders (Publish beside saves, removal per account, whole-subject import, the private production research, the afternoon merge) were checked and are still running.
+- **Reading (orchestrator's):** "I got more usage" is taken as: the usage limit no longer blocks Opus agents, so work carries on with at most six agents as before. It is not taken as approval of any server rental or other spending.
