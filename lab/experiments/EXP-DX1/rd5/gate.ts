@@ -155,7 +155,8 @@ const saver = (async () => {
       const answer = await c.request<any>("POST", "/v1/db/" + db + "/read",
         { entityIds: [r.e], pattern: { attribute: ":task/field-0" }, atLeastPosition: r.position, basisWaitMs: 2000 });
       atLeast.reads++;
-      const values = answer.rows.map((x: any) => x.value_string);
+      // A /read row carries its value as value_string, which the lean layout answers as {t, v}.
+      const values = answer.rows.map((x: any) => (x.value_string && typeof x.value_string === "object" ? x.value_string.v : x.value_string));
       if (answer.atLeast !== r.position) atLeast.wrongEcho++;
       if (values.length !== 1 || values[0] !== r.value) {
         atLeast.early++;
