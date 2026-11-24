@@ -10,9 +10,11 @@
 ;; entity ID starts with `acct/<account>/<kind>:`, so one `index-range` from that prefix lists exactly the IDs of that
 ;; kind in that account, in ID order, at any database value: the head, a pinned position, a record time. Nothing is
 ;; written; nothing is backfilled. Behind TX2_ID_LISTS=1 (default off: the route is then absent, as before).
-;; An answer means "an entity with this ID existed at the stated position": a reference target with no facts of its
-;; own is listed too, and a subject whose protected values were removed on request keeps its ID (an ID is never a
-;; protected value). Callers that need "has a fact of type T" read the rows of the page (Triples.entityPage does).
+;; An answer means "an entity with this ID existed at the stated position". In the lean layout an entity gets its ID
+;; datom with its first row (storage/tx-data), so that is "an entity that had a fact recorded at or before the
+;; position", retired or not; the legacy layout also gives reference targets an ID (storage/upserts). A subject whose
+;; protected values were removed on request keeps its ID (an ID is never a protected value). Callers that need "has a
+;; fact of type T visible at the basis" read the rows of the page (Triples.entityPage does).
 ;; Rejected: a scan of `:triplex.entity/row` by type (every entity, no bound); an index written per save (step 1).
 (def enabled (= "1" (System/getenv "TX2_ID_LISTS")))
 
@@ -172,8 +174,9 @@
     (if (= t (d/basis-t db)) db (d/as-of db t))))
 
 (defn scan!
-  "Walk the ID index from `from` (exclusive when `skip`), in `order`, inside `start`. Returns the page's work."
-  [view ^String start ^String from skip order shape-re result limit {:strs [entries ms segments]}]
+  "Walk the ID index from `from` (exclusive when `skip`), in `order`, inside `start`. Returns the page's work.
+  A shape is matched against the ID after the account's base (`acct/<account>/`), as the prefix is."
+  [view ^String base ^String start ^String from skip order shape-re result limit {:strs [entries ms segments]}]
   (let [attr (d/entid view :triplex.entity/id)
         ;; A descending walk starts at the least string above the range and skips that string itself.
         [from skip] (if (and (= order "desc") (nil? from)) [(successor start) true] [from skip])
@@ -203,7 +206,7 @@
                                    (vswap! state assoc :stopped "end")
                                    (let [id ^String (.v x)]
                                      (vswap! state #(-> % (update :examined inc) (assoc :last id)))
-                                     (when (or (nil? shape-re) (re-matches shape-re (subs id (.length start))))
+                                     (when (or (nil? shape-re) (re-matches shape-re (subs id (.length base))))
                                        (vswap! state update :found inc)
                                        (when (= result "ids") (.add ids id)))
                                      (if (and (= result "ids") (>= (.size ids) limit))
@@ -282,7 +285,7 @@
         (refuse! 503 "IndexBusy" "Every ID list permit is in use" {:retryAfterMs (get limits "ms")}))
       (try
         (let [started (System/nanoTime)
-              work (trace/span "ids/scan" "gateway" (scan! view start last-key (some? last-key) order shape-re result limit limits))
+              work (trace/span "ids/scan" "gateway" (scan! view base start last-key (some? last-key) order shape-re result limit limits))
               micros (quot (- (System/nanoTime) started) 1000)
               {:keys [examined found stopped last reads ids]} work
               total (+ prior found)

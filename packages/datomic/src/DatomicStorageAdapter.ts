@@ -31,6 +31,15 @@ import {
   TransactionOutcomeUnknown,
 } from "@triplex-build/triplex/runtime";
 import { DatomicClient, DatomicHttpError } from "./DatomicClient.js";
+import {
+  boundedMatch,
+  DatomicMatchNeedsPaging,
+  entityPage as idListEntityPage,
+  type IdListOptions,
+  type ReadEntities,
+  validateIdListOptions,
+} from "./idLists.js";
+import { isPatternVariable } from "@triplex-build/triplex";
 import { matchesPattern, packValue, packValueOnce, createPackedRow, visibleAt } from "./rows.js";
 import { fastPathEnabled } from "./fastPaths.js";
 import { stagedInput } from "./protocol.js";
@@ -73,8 +82,11 @@ export const makeDatomicStorageAdapter = (
     readonly serverRecordTime?: boolean;
     readonly indexedJournalReads?: boolean;
     readonly recordedJournalReads?: boolean;
+    // [DX-XQ3] Reads by entity type through the gateway's ID list route (default off; see idLists.ts).
+    readonly idLists?: IdListOptions;
   } = {},
 ): StorageAdapterService => {
+  if (options.idLists) validateIdListOptions(options.idLists);
   // [DX-T1] Why: Effect scopes include staging/validation and always close on typed failure or interruption.
   // Rejected: only timing successful HTTP transacts (loses replay, admission and preflight work).
   const traced = <A, E, R>(name: string, effect: Effect.Effect<A, E, R>): Effect.Effect<A, E, R> =>
@@ -242,6 +254,56 @@ export const makeDatomicStorageAdapter = (
         .sort(
           (left, right) => left.recorded_at - right.recorded_at || left.id.localeCompare(right.id),
         );
+    });
+
+  // [DX-XQ3] The rows of a batch of entities at a basis, read and ordered exactly as getByEntities reads them outside
+  // a transaction (queryRows with entityIds), for the ID list paths below.
+  const readEntities: ReadEntities = async (ids, basis) => {
+    const rows = (
+      await client.rows(db, {
+        pattern: {},
+        history: false,
+        entityIds: [...new Set(ids)],
+        ...(basis === undefined ? {} : { basis }),
+      })
+    ).slice();
+    for (const row of rows) remember(row);
+    rows.sort((left, right) => left.recorded_at - right.recorded_at || left.id.localeCompare(right.id));
+    const grouped = new Map<string, TripleRow[]>(ids.map((id) => [id, []]));
+    for (const row of rows) grouped.get(row.entity_id)?.push(row);
+    return grouped;
+  };
+  const listedType = (pattern: QueryPattern) =>
+    options.idLists !== undefined &&
+    (pattern.entityId === undefined || isPatternVariable(pattern.entityId)) &&
+    pattern.entityType !== undefined &&
+    options.idLists.types[pattern.entityType] !== undefined;
+  const boundedQuery = (
+    pattern: QueryPattern,
+    basis?: ResolvedTemporalBasis,
+  ): Effect.Effect<readonly TripleRow[], ReadError> =>
+    Effect.gen(function* () {
+      const lists = options.idLists;
+      if (lists === undefined || (yield* current) !== undefined) return yield* queryRows(pattern, basis);
+      if (listedType(pattern)) {
+        const position = basis?.recordedPosition ?? (yield* committedPosition());
+        return yield* read(() =>
+          boundedMatch(client, db, lists, readEntities, pattern.entityType!, basis!, position, (row) =>
+            matchesPattern(row, pattern),
+          ),
+        );
+      }
+      if (
+        lists.refuseScans === true &&
+        (pattern.entityId === undefined || isPatternVariable(pattern.entityId)) &&
+        pattern.entityType !== "_Transaction"
+      )
+        return yield* Effect.fail(
+          new DatomicMatchNeedsPaging({
+            message: `A read by ${JSON.stringify(pattern)} names no entity and no listed type; it would scan every entity`,
+          }),
+        );
+      return yield* queryRows(pattern, basis);
     });
 
   // [DX-B3-M3] Why: only an ACK bound to this operation or its resolved receipt can publish cached positions.
@@ -1130,7 +1192,24 @@ export const makeDatomicStorageAdapter = (
             ),
           ),
       ),
-    query: (pattern, basis) => queryRows(pattern, basis),
+    query: (pattern, basis) =>
+      options.idLists === undefined ? queryRows(pattern, basis) : boundedQuery(pattern, basis),
+    // [DX-XQ3] Triples.entityPage by ID list for the listed types, outside a transaction (inside one, staged rows
+    // must stay visible, so the scan answers). Absent without idLists.
+    ...(options.idLists === undefined
+      ? {}
+      : {
+          getEntityPage: (request: Parameters<NonNullable<StorageAdapterService["getEntityPage"]>>[0]) =>
+            Effect.gen(function* () {
+              const lists = options.idLists!;
+              if (lists.types[request.entityType] === undefined || (yield* current) !== undefined)
+                return undefined;
+              const position = request.basis.recordedPosition ?? (yield* committedPosition());
+              return yield* read(() =>
+                idListEntityPage(client, db, lists, readEntities, request, position),
+              );
+            }),
+        }),
     history: (entityId) => queryRows({ entityId }, undefined, true),
     dependencyState: (attributes, basis) =>
       Effect.gen(function* () {

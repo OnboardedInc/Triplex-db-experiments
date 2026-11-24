@@ -660,6 +660,24 @@ const makeTriplesServices = Effect.gen(function* () {
                 cause,
               }),
       });
+      // [DX-XQ3] A store that lists entities by type answers the page without the scan below (same page, same cursor).
+      const served =
+        adapter.getEntityPage === undefined
+          ? undefined
+          : yield* adapter.getEntityPage({
+              entityType: request.entityType,
+              ...(prepared.after === undefined ? {} : { after: prepared.after }),
+              limit: prepared.limit,
+              basis: prepared.basis,
+            });
+      if (served !== undefined)
+        return {
+          entities: served.entities.map(([, rows]) => rows.map(rowToTriple)),
+          snapshot: prepared.basis,
+          ...(served.more && served.entities.length > 0
+            ? { nextCursor: encodeEntityPageCursor(prepared, served.entities.at(-1)![0]) }
+            : {}),
+        };
       const facts = yield* adapter.query({ entityType: request.entityType }, prepared.basis);
       const ids = [...new Set(facts.map((row) => row.entity_id))]
         .sort()

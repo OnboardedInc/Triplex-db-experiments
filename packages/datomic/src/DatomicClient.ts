@@ -85,6 +85,45 @@ export interface DatomicDatabase {
   orderedRowTexts?: boolean;
   journalCuts?: boolean;
 }
+/** `POST /v2/db/{db}/ids` (DX-XQ3, design 2026-11-24 section 7.5). */
+export interface DatomicIdListRequest {
+  readonly account: string;
+  readonly prefix?: string;
+  readonly shape?: string;
+  readonly basis?: {
+    readonly recordedPosition?: number;
+    readonly recordedAt?: number;
+    readonly validAt?: number;
+  };
+  readonly atLeastPosition?: number;
+  readonly basisWaitMs?: number;
+  readonly result?: "ids" | "count";
+  readonly limit?: number;
+  readonly order?: "asc" | "desc";
+  readonly cursor?: string;
+  /** Exclusive keyset start: a full entity ID inside the account's prefix. */
+  readonly after?: string;
+  readonly bounds?: { readonly entries?: number; readonly ms?: number; readonly segments?: number };
+}
+export interface DatomicIdListPage {
+  readonly database: string;
+  readonly account: string;
+  readonly position: number;
+  readonly t: string;
+  readonly head: number;
+  readonly validAt: number | null;
+  readonly trailingBy: 0;
+  readonly result: "ids" | "count";
+  readonly ids?: readonly string[];
+  readonly count?: number;
+  readonly countExact?: boolean;
+  readonly examined: number;
+  readonly segmentsLoaded: number;
+  readonly ioReads?: Record<string, unknown>;
+  readonly scanMicros: number;
+  readonly stopped: "end" | "limit" | "entries" | "time" | "segments";
+  readonly next: string | null;
+}
 export interface DatomicBasis {
   t: TaggedValue;
   position: TaggedValue;
@@ -1504,6 +1543,25 @@ export class DatomicClient {
     }
     if (page.nextT !== (page.rows.length ? String(prior + 1n) : fromT))
       throw new TypeError("Datomic log response checkpoint mismatch");
+    return page;
+  }
+  // [DX-XQ3] Why: questions across subjects, step 0: the IDs of one kind in one account, from the gateway's ID list
+  // route (TX2_ID_LISTS=1 on the gateway), one bounded page per call; the answer is returned unchanged.
+  // Rejected: following the cursor here (the caller decides how many pages its own bound allows).
+  async listIds(db: string, request: DatomicIdListRequest): Promise<DatomicIdListPage> {
+    if (!/^(?:s-[a-f0-9]{32}|s2-[A-Za-z0-9_-]+)$/.test(db))
+      throw new TypeError("Invalid Datomic database name");
+    const page = await this.request<DatomicIdListPage>("POST", `/v2/db/${db}/ids`, request);
+    if (
+      typeof page !== "object" ||
+      page === null ||
+      !Number.isSafeInteger(page.position) ||
+      page.trailingBy !== 0 ||
+      page.account !== request.account ||
+      !["end", "limit", "entries", "time", "segments"].includes(page.stopped) ||
+      (page.stopped === "end") !== (page.next === null || page.next === undefined)
+    )
+      throw new DatomicTransportError("Invalid ID list answer");
     return page;
   }
   async basis(db: string): Promise<DatomicBasis> {

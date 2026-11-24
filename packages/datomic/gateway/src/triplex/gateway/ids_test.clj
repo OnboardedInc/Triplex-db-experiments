@@ -36,12 +36,14 @@
                (assoc r :id (str (:id r) "@" position)))
              [(row (str "cfg" position) (str "_triplex/config/object/c" position) ":triplex/config-kind" "k" position (* 10.0 position))])))))
 
-(defn brute [db ^String start shape]
-  (let [re (ids/shape-pattern shape)]
-    (->> (d/datoms db :aevt :triplex.entity/id) (map :v)
-         (filter #(.startsWith ^String % start))
-         (filter #(or (nil? re) (re-matches re (subs % (count start)))))
-         sort vec)))
+(defn brute
+  ([db start shape] (brute db start start shape))
+  ([db ^String base ^String start shape]
+   (let [re (ids/shape-pattern shape)]
+     (->> (d/datoms db :aevt :triplex.entity/id) (map :v)
+          (filter #(.startsWith ^String % start))
+          (filter #(or (nil? re) (re-matches re (subs % (count base)))))
+          sort vec))))
 
 (defn call [name input]
   (ids/page name (gateway/connection (gateway/db-uri name)) input))
@@ -65,13 +67,14 @@
             asof (fn [p] (storage/at-position head-db p))
             cases (for [a ["account-003" "account-0031" "_system"]
                         [prefix shape] [["" nil] ["pl:" nil] ["pl:" "pl:{8 digits}"] ["pl:" "pl:{digits}:p{digits}"] ["wk:" nil]
-                                        ["tk:0000000" nil] ["config/" nil] ["pl:00000004" "pl:{8 digits}"] ["zz:" nil]]]
+                                        ["tk:0000000" nil] ["config/" nil] ["pl:00000004" "pl:{8 digits}"] ["zz:" nil]
+                                        ["" "{segment}:{8 digits}"] ["config/" "config/object/{segment}"]]]
                     [a prefix shape])]
         (is (= 5 head))
         (testing "G1: every page sequence equals the brute-force pass, at the head and at every past commit"
           (doseq [[a prefix shape] cases p (range 0 6) limit [1 4 1000] order ["asc" "desc"]
                   :let [start (str (ids/base-for a) prefix)
-                        expected (cond-> (brute (asof p) start shape) (= order "desc") (-> reverse vec))
+                        expected (cond-> (brute (asof p) (ids/base-for a) start shape) (= order "desc") (-> reverse vec))
                         pages (all-pages name (cond-> {"account" a "prefix" prefix "limit" limit "order" order
                                                        "basis" {"recordedPosition" p "validAt" 1.0}}
                                                 shape (assoc "shape" shape)))

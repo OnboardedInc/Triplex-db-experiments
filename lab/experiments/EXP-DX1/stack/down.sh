@@ -16,6 +16,8 @@ docker network rm "$prefix-net" >/dev/null 2>&1 || true
 # [DX-H3] Why: refusal before volume creation still needs verified cleanup and lock release.
 # Rejected: treating an absent volume as a failed cleanup (final inventories still check the daemon).
 if [[ ${2:-} == --volumes ]] && docker volume inspect "$prefix-pg-data" >/dev/null 2>&1; then docker volume rm "$prefix-pg-data"; fi
+# [DX-XQ3] The ID list gate's shared erasure directory.
+if [[ ${2:-} == --volumes ]] && docker volume inspect "$prefix-authority" >/dev/null 2>&1; then docker volume rm "$prefix-authority"; fi
 
 if [[ $prefix == tx2-dxt1-* && ${2:-} == --volumes ]] && docker volume inspect "$prefix-driver" >/dev/null 2>&1; then docker volume rm "$prefix-driver"; fi
 if [[ $prefix == tx2-dxt1-* && ${2:-} == --volumes ]] && docker volume inspect "$prefix-idle-disk" >/dev/null 2>&1; then
