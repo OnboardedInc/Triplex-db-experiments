@@ -5816,3 +5816,28 @@ Source: step 1 builder, branch `exp/DX-XQ4-commit-index` `0f4843e25` (gateway co
 Not verified: anything on a server; the hint fix; releases that wrote before the option was on; online backfill and uniqueness (later steps).
 
 **Started** in the freed slot: connect the pieces (one SDK call that answers from the index or falls back to the slow exact route at the same position; the question reader serving all three routes; the console's fast answer; the hint fix; an agreement gate between the two routes), task file `OPUS-XQ10-questions-connected.md`.
+
+## 2026-11-24 15:40 EST: removal on request no longer refuses other accounts' saves (toy); the removal itself now retries, open
+
+Source: per-account removal builder, branch `exp/DX-ERA2-removal-per-account` `272a1bd66` (based on the many-accounts branch; not merged), page `lab/experiments/EXP-DX1/era2/REMOVAL-PER-ACCOUNT.md`. Option `TX2_REMOVAL_PER_ACCOUNT=1`, default off. Mac toy only.
+
+**Fault measured first** (one database, production write switches, one commit per subject's save, 30 saves/s, 30 s cells, removals in ONE account): share of OTHER accounts' saves refused.
+
+| Cell | Before | After |
+|---|---|---|
+| 10 accounts, 1 removal/s | 35 of 945 (3.7%) | 0 of 898 |
+| 10 accounts, 10/s | 796 of 906 (87.9%) | 0 of 902 |
+| 200 accounts, 1/s | 82 of 954 (8.6%) | 0 of 886 |
+| 200 accounts, 10/s | 274 of 873 (31.4%) | 0 of 930 |
+| Sealed values, 10/s | 415 of 914 (45.4%) | 0 of 937 |
+| Removals in 3 accounts at once, 10/s | 424 of 922 (46.0%) | 0 of 930 |
+| Transactor restarted mid-run, 1/s | 58 of 874 (6.6%) | 0 of 938 |
+
+- Old rule's law: refused saves per second = total save rate x min(1, removals per second x removal duration); independent of the number of accounts.
+- After, in all 9 cells: 0 SDK replays, 0 refused attempts, 0 refused reads, 0 refused frames; only saves of the subjects being removed are refused (0 to 2 per cell). Exact before and after: 0 wrong values, every removed value marked, 0 removed values found by the scans.
+- How: removals still form one ordered log under one lock; each removal moves only the counters of the entities and accounts it touched; a plain save is checked only on the entities it writes, inside Datomic at the serial point; a settlement or Publish write is checked only on the accounts its ticket names. Ten-point proof on the page. Two paths keep the database-wide guard: cached Reach replies (re-sent whole after any removal) and the removal's own selection check.
+- Adversarial cases: 360 checks (database-wide rule) and 417 (per-account), 0 failed; option off matches the base (replies identical; suites 71,170 assertions).
+- Migration: one call, reversible, no rewrite of rows; 24 to 197 ms on the toy. The 1 billion database has no removal policy as loaded.
+- **Open problem:** with other saves no longer pausing, the removal's own check ("the head has not moved since I selected", still database-wide) fails more often: tries per removal mean 1.7 to 5.2, p99 6 to 63, max 63 (15 s); the retry loop has no upper limit. Builder resumed on exactly this (a per-entity selection check, a hard bound, a guard that blocks at most that subject or account).
+- Publish and settlement tickets do not yet name the account, so those writes stay database-wide; five places listed for the Publish-beside-saves builder, who was told.
+- Server run written: 80 to 120 minutes.
