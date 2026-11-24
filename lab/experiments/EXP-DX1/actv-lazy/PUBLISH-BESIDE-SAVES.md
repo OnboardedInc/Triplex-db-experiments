@@ -181,6 +181,71 @@ deadline path, `schedule`, saves through `JoinedAccount` and non-held Publishes 
 on.
 
 <!-- RESULTS -->
+
+## 8. The runs (toy stack in the lab VM; counts exact, Mac times diagnostic)
+
+Every gate below ran on the held toy stack (`engine.mjs ha1 --experiment load-fair --diagnostic --holder DX-ACT8`, one
+ordinary heavy token per run, no measurement lease): one database holding ten accounts of 8 deep subjects; account 0
+publishes (its first release is the runner's R1 from nothing). The saves are the held tape: account 0 at its own rate
+and the nine others at their usual load (211.5 per second together), one commit per subject's save, open loop. The
+oracle for every read, change and notice is the generator plus every acknowledged save and every adversarial write,
+folded release by release in order; the independent form rule (`form-expect.ts`) checks every form-adding release.
+Runs (private evidence `evidence/DX-ACT8/`, section 14):
+
+| Run | What | Commit | Result |
+| --- | --- | --- | --- |
+| `s1` | shake-out: three beside cases | `34273617e` | pass |
+| `G1` | cost, beside (then adversarial: stopped at my independent-check assumption, section 9.4) | `7132e012c` | cost and beside pass |
+| `G1b` | adversarial, kill, live, enrol | `82d691941` | GATE_G1B |
+| `M1`, `M2` | the many-accounts miniature (section 9.5) | `63f178e73`, `13f82ea8c` | `M1` stopped at a transport deadline, `M2` pass |
+| `W1`, `W2` | the held runner's windows with no pause, account guard and whole-head rule | `7132e012c` | RUN_W |
+| `R1`, `R2`, `R3` | options off: the held default campaign, ACT5's live cases, ACT6's gate | `7132e012c` | RUN_R |
+| `G3` | negative control: settlement at the read position (`DX_ACT8_INJECT=read-cut`) | `7132e012c` | RUN_G3 |
+| `G2` | a removal on request in the Publish's window | `7132e012c` | RUN_G2 |
+
+## 9. Gates
+
+### 9.1 Gate (a): every option off, every existing count unchanged
+
+GATE_A
+
+### 9.2 Gate (b): no pause, the whole-head rule: the refusals
+
+- **Gate part `beside`, case `head-small`** (run `G1`; also `s1`): account 0 saving 23.5 per second and the nine others
+  at their load (1,880 saves in 8 s, all acknowledged), two Publishes of the small release offered with nothing paused:
+  **2 of 2 refused**, "Joined command exhausted three serial predecessor attempts" (each after about one second of three
+  tries). Nothing was written; the oracle and the runner's release list are unchanged.
+- RUN_W2
+
+### 9.3 Gate (c): no pause, the account guard: Publishes beside saves, exact
+
+**Gate part `beside`** (run `G1`; the shake-out `s1` passed the first three cases the same way). Each case runs a save
+window and offers its Publishes inside it with nothing paused; each Publish: the first correct answer (unpinned reads
+until the basis reaches the record, checked against the oracle), the deadline reads at one second (four subjects,
+checked against the release in force at their basis), the oracle fold, then settlement beside the saves (byte frames,
+the progress precondition) checked against the oracle and, for a form-adding release, the independent rule. After the
+window: the journal between each Publish's read and its record, every read pinned at every position from just before
+the read to just after the record (all 8 subjects), and every save of account 0 whose life overlapped a Publish's.
+
+| Case | Saves (account 0 / nine others) | Publishes offered / landed / refused | Tries each | Commits between read and record (of them account 0's saves) | Settled per Publish: changes / notices (independent rule: owing / changes / notices) |
+| --- | --- | --- | --- | --- | --- |
+| small, 23.5/s + others | 282 / 2,538 | 3 / 3 / 0 | 1, 1, 1 | 104 (16), 160 (0), 0 | 39 / 7 each |
+| large, 23.5/s + others | 282 / 2,538 | 2 / 2 / 0 | 1, 1 | 19 (2), 55 (7) | 474 / 160 (8 / 474 / 160); back: 474 / 0 |
+| small, 39.4/s + others | 473 / 4,255 | 3 / 3 / 0 | 1, 1, 1 | 103 (17), 52 (8), 43 (7) | 39 / 7 each |
+| large, 3.5/s, account 0 only | 35 / 0 | 2 / 2 / 0 | 1, 1 | 1 (1), 1 (1) | 474 / 160 (8 / 474 / 160); back: 474 / 0 |
+| large, the nine others only | 0 / 2,115 | 2 / 2 / 0 | 1, 1 | 24 (0), 51 (0) | 474 / 160 (8 / 474 / 160); back: 474 / 0 |
+| 200 forms and 200 policies (ledger in parts), 23.5/s + others | 329 / 2,961 | 2 / 2 / 0 | 1, 1 | 42 (4), 136 (18) | 4,740 / 1,600 (8 / 4,740 / 1,600); back: 4,740 / 0 |
+| large by reference (`TX2_RELEASE_DOCS=ref`), 23.5/s + others | 282 / 2,538 | 2 / 2 / 0 | 1, 1 | 33 (5), 115 (20) | 474 / 160 (8 / 474 / 160); back: 474 / 0 |
+| **All guarded cases** | **every save acknowledged, none refused** | **16 / 16 / 0** | **1** | **0 to 160 (up to 20 of the account's own)** | **every stored change, notice and ledger equal to the oracle; 0 frames refused** |
+
+BETWEEN_C
+
+Every first-correct answer and every deadline read was exact. Diagnostic only (the Mac, other builders' stacks):
+first correct 0.19 to 1.42 s for the inline releases (12 of 14 inside one second), 3.8 and 1.5 s for the by-reference
+release (whose first Publish also writes the definitions ahead); these are Mac clocks under load and not results.
+
+RUN_W1
+
 <!-- GATES -->
 
 ### 9.5 Gates (e) and (f): many accounts publishing at once, and enrolment, beside saves (the miniature)

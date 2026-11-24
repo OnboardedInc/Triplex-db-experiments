@@ -336,7 +336,9 @@ class Gate {
       positions = positions.filter((p, k) => keep.has(p) || k % step === 0);
     }
     for (const p of positions) {
-      const effective = c.releases.findLast((x) => x.position <= p)!;
+      // Positions before the runner's first release have no release in force (nothing to check there).
+      const effective = c.releases.findLast((x) => x.position <= p);
+      if (!effective) continue;
       assert.equal(effective.position >= r.position, p >= r.position, "release in force at " + p);
       for (let i = 0; i < c.people; i++) {
         const probe = await c.demand.read(W0.placementId(i), { position: p, validTime });
