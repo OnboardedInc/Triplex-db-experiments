@@ -1,6 +1,5 @@
 (ns triplex.gateway.subject-hints
   (:require [datomic.api :as d]
-            [triplex.gateway.lean :as lean]
             [triplex.gateway.schema :as schema]))
 
 ;; [DX-W4] Why: a first touch of a subject costs the per-subject writer about two segment loads inside its serial
@@ -10,13 +9,6 @@
 ;; unordered IDs alike. Default off.
 ;; Rejected: changing TX2_SUBJECT_PREFETCH or its guard (an existing option keeps its meaning); modifying Datomic.
 (def enabled (= "1" (System/getenv "TX2_SUBJECT_HINTS")))
-;; [DX-W4] Why: Datomic names in a hint only the segments the speculative d/with had to load; segments the gateway's
-;; peer already holds are left out (w4/HINT-SEMANTICS in SUBJECT-WRITER-HINTS.md). The plan reads the owner's EAVT on
-;; the peer, so a hint taken after the plan misses exactly the first touch's EAVT load. With TX2_SUBJECT_HINTS_EARLY=1
-;; the hint is taken from the raw save before tx-data and the plan touch the owner. Default off; needs the option above.
-;; Rejected: dropping the peer's cache before each lookup (costs every other read on the gateway).
-(def early? (and enabled (= "1" (System/getenv "TX2_SUBJECT_HINTS_EARLY"))))
-
 ;; [DX-W4] Why: the lookups of subject-save/body and of Datomic's identity, redundancy and cardinality checks for the
 ;; ops it returns, and nothing else. It returns no datoms and decides nothing; every check runs again in the
 ;; transaction on its own db-before. A failing lookup (an ID already used, a missing owner) is swallowed so that the
@@ -85,26 +77,6 @@
                  (texts :db/add #{:triplex.entity/retired}))
      :fresh (or (seq (texts :db/add #{:triplex.entity/row})) (:prefixes plan))
      :ordered-bounds (:ordered-bounds plan)}))
-
-(defn from-input
-  "The payload for a save before any gateway read: subject, journal, claims and row ID prefixes from the request
-  alone (no owner number yet; the function resolves it). Nil unless the save names exactly one subject, one claim and
-  at most 16 rows (the per-subject writer's saves are 1 to 3 facts plus their journal rows)."
-  [input rows ordered-bounds-fn]
-  (let [entities (get input "entities") claims (get input "claims")
-        journal (get-in claims [0 "txId"]) command (get-in claims [0 "commandId"])
-        new-ids (get input "newIds")]
-    (when (and (sequential? entities) (= 1 (count entities)) (string? (first entities))
-               (sequential? claims) (= 1 (count claims)) (string? journal)
-               (sequential? new-ids) (<= 1 (count new-ids) 16) (every? string? new-ids) (<= (count rows) 32))
-      (let [prefixes (vec (sort (map lean/prefix new-ids)))]
-        {:subject (first entities) :journal journal :operation (get input "operationId") :command command
-         :live (into [] (keep #(when (and (:retracted_at %) (string? (:id %))) (lean/prefix (:id %)))) rows)
-         :fresh prefixes
-         :ordered-bounds (ordered-bounds-fn journal prefixes)}))))
-
-;; [DX-W4] The early hint for this request, taken by storage/commit! before tx-data (nil otherwise).
-(def ^:dynamic *early* nil)
 
 (defn lookup-hints [db payload]
   (:hints (d/with db [[ident payload]] :return-hints true)))

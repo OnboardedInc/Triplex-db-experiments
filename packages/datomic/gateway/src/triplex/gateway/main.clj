@@ -144,8 +144,7 @@
       ;; [DX-W3] Why: report the option only when it is on, so default readbacks stay byte-identical.
       general-prefetch/enabled (assoc-in [:options :generalPrefetch] (general-prefetch/installed? db))
       ;; [DX-W4] Why: report the option only when it is on, so default readbacks stay byte-identical.
-      subject-hints/enabled (assoc-in [:options :subjectHints] {:installed (subject-hints/installed? db)
-                                                                 :early subject-hints/early?})
+      subject-hints/enabled (assoc-in [:options :subjectHints] (subject-hints/installed? db))
       subject/enabled (assoc :subjectSave true :subjectFunction (when subject-t (str subject/ident))
                              :subjectNumericOwner subject/numeric-owner?
                              :subjectOrderedIds subject/ordered-ids?

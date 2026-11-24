@@ -21,15 +21,10 @@ if [[ -n ${DX_W3_GENERAL_PREFETCH:-} ]]; then
   [[ $DX_W3_GENERAL_PREFETCH =~ ^[01]$ ]] || { echo "DX_W3_GENERAL_PREFETCH must be 0 or 1" >&2; exit 2; }
   w3=(-e "TX2_GENERAL_PREFETCH=$DX_W3_GENERAL_PREFETCH" -e DX_W3_PREFETCH_PROBES=1)
 fi
-# [DX-W4] Optional: the per-subject writer's hints (0, 1 or early) with Datomic prefetch on; unset leaves it as it was.
+# [DX-W4] Optional: the per-subject writer's hints (0 or 1) with Datomic prefetch on; unset leaves it as it was.
 if [[ -n ${DX_W4_SUBJECT_HINTS:-} ]]; then
-  case $DX_W4_SUBJECT_HINTS in
-    0) w3+=(-e TX2_SUBJECT_HINTS=0 -e TX2_SUBJECT_HINTS_EARLY=0) ;;
-    1) w3+=(-e TX2_SUBJECT_HINTS=1 -e TX2_SUBJECT_HINTS_EARLY=0) ;;
-    early) w3+=(-e TX2_SUBJECT_HINTS=1 -e TX2_SUBJECT_HINTS_EARLY=1) ;;
-    *) echo "DX_W4_SUBJECT_HINTS must be 0, 1 or early" >&2; exit 2 ;;
-  esac
-  w3+=(-e DX_W3_PREFETCH_PROBES=1)
+  [[ $DX_W4_SUBJECT_HINTS =~ ^[01]$ ]] || { echo "DX_W4_SUBJECT_HINTS must be 0 or 1" >&2; exit 2; }
+  w3+=(-e "TX2_SUBJECT_HINTS=$DX_W4_SUBJECT_HINTS" -e DX_W3_PREFETCH_PROBES=1)
 fi
 docker run -d --name "$name" --memory 3g -p 127.0.0.1:18592:8080 ${w3[@]+"${w3[@]}"} --entrypoint /bin/bash \
   -v "$repo/packages/datomic/gateway/src:/opt/gateway/src:ro" -v "$out/age1src:/age:ro" \

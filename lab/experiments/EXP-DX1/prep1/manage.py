@@ -63,11 +63,11 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     general_prefetch = os.environ.get("DX_W3_GENERAL_PREFETCH")
     if general_prefetch not in (None, "0", "1") or (general_prefetch is not None and (mode != "production" or holder != "DX-W3")):
         raise SystemExit("DX_W3_GENERAL_PREFETCH is 0 or 1, for the production gate under the DX-W3 holder")
-    # [DX-W4] Why: run the production gate with the per-subject writer's hints off, on ("1") or on and early ("early").
+    # [DX-W4] Why: run the production gate with the per-subject writer's hints off or on.
     # Rejected: lifting the TX2_SUBJECT_PREFETCH guard above (that option keeps its meaning).
     subject_hints = os.environ.get("DX_W4_SUBJECT_HINTS")
-    if subject_hints not in (None, "0", "1", "early") or (subject_hints is not None and (mode != "production" or holder != "DX-W4")):
-        raise SystemExit("DX_W4_SUBJECT_HINTS is 0, 1 or early, for the production gate under the DX-W4 holder")
+    if subject_hints not in (None, "0", "1") or (subject_hints is not None and (mode != "production" or holder != "DX-W4")):
+        raise SystemExit("DX_W4_SUBJECT_HINTS is 0 or 1, for the production gate under the DX-W4 holder")
     assert owner_head != "1" or holder in ("DX-W1", "DX-THIN1")
     # [DX-W1] Why: match both saves per owner-layout arm to their transactor read counters.
     # Rejected: treating empty peer I/O metadata as zero native storage reads.

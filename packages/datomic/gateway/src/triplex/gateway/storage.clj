@@ -424,17 +424,13 @@
                    ;; Rejected: using the hint or its database value as proof of anything (the native function and
                    ;; Datomic re-check on the serial db-before); hinting the covering writer (owner head, kept off).
                    (and subject-hints/enabled (not (:owner-layout subject-plan)))
-                   (if-let [early subject-hints/*early*]
-                     (do (swap! timeline merge (select-keys early [:subjectHintsStarted :subjectHintsFinished]))
-                         (stats/bump! [:subjectHints (if (:hints early) :early :none)] 1)
-                         (:hints early))
-                     (let [_ (swap! timeline assoc :subjectHintsStarted (System/nanoTime))
-                           h (try (trace/span "subject.lookup-hints" "peer-call"
-                                    (subject-hints/lookup-hints (d/db conn) (subject-hints/from-plan subject-plan)))
-                                  (catch Exception _ (swap! timeline assoc :hintsDeclined (System/nanoTime)) nil))]
-                       (swap! timeline assoc :subjectHintsFinished (System/nanoTime))
-                       (stats/bump! [:subjectHints (if h :attached :none)] 1)
-                       h))
+                   (let [_ (swap! timeline assoc :subjectHintsStarted (System/nanoTime))
+                         h (try (trace/span "subject.lookup-hints" "peer-call"
+                                  (subject-hints/lookup-hints (d/db conn) (subject-hints/from-plan subject-plan)))
+                                (catch Exception _ (swap! timeline assoc :hintsDeclined (System/nanoTime)) nil))]
+                     (swap! timeline assoc :subjectHintsFinished (System/nanoTime))
+                     (stats/bump! [:subjectHints (if h :attached :none)] 1)
+                     h)
                    subject/prefetch?
                    (do
                    (swap! timeline assoc :subjectHintsStarted (System/nanoTime))
@@ -515,17 +511,6 @@
   (when group/load-timing (trace/attribute! :operationId (get input "operationId")))
   (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
     (reject-ordered! conn input (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
-  ;; [DX-W4] Why: take the per-subject hint before tx-data and the plan read the owner on this peer; Datomic names in a
-  ;; hint only the segments the d/with had to load. Rejected: taking it for every save (only small one-subject saves).
-  (binding [subject-hints/*early*
-            (when (and subject-hints/early? subject/enabled)
-              (let [started (System/nanoTime)
-                    payload (try (subject-hints/from-input input (map decode-row (get input "rows")) subject/ordered-bounds)
-                                 (catch Exception _ nil))]
-                (when payload
-                  {:hints (try (trace/span "subject.early-hints" "peer-call" (subject-hints/lookup-hints db payload))
-                               (catch Exception _ nil))
-                   :subjectHintsStarted started :subjectHintsFinished (System/nanoTime)})))]
   (try
     (let [parsed (System/nanoTime)
           load-timing (when commit/load-profile (volatile! 0))
@@ -615,7 +600,7 @@
                                     (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"
                                     (re-find #"triplex.claim/command-id" text) "CommandConflict"
                                     (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
-                                    (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e)))))))
+                                    (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e))))))
 (defn operation [db id]
   (if-let [{:keys [position t clock]} (group/receipt db id)]
     (if (nil? position) {:status "absent"} {:status "committed" :operationId id :position (codec/encode-value "long" position)

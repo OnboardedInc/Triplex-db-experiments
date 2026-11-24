@@ -1,13 +1,14 @@
 (ns w4-gate
-  "[DX-W4] Native toy gate for the per-subject writer's hints with ordered IDs (TX2_SUBJECT_HINTS, and
-  TX2_SUBJECT_HINTS_EARLY), on real SQL storage and a real transactor. Phases run in separate JVMs from container.sh:
-  seed (three databases identically), probe (what a hint names), arms off / late / early (each after a transactor
-  restart, so each starts cold), compare (byte-identical logs and receipts), tests (stale, wrong, failing hints,
-  refusals, concurrent saves of one subject). Timings are diagnostic; the counts are the result."
+  "[DX-W4] Native toy gate for the per-subject writer's hints with ordered IDs (TX2_SUBJECT_HINTS), on real SQL
+  storage and a real transactor. Phases run in separate JVMs from container.sh: seed (two databases identically),
+  probe (what a hint names), arms off and on (each after a transactor restart, so each starts cold), queue (the same
+  first touch with the writer idle or busy), compare (byte-identical logs and receipts), tests (stale, wrong and
+  failing hints, used ordered IDs, concurrent saves of one subject). Timings are diagnostic; the counts are the result."
   (:require [clojure.data.json :as json] [clojure.java.io :as io] [clojure.test :refer [deftest is]]
             [datomic.api :as d] [triplex.gateway.main :as main] [triplex.gateway.storage :as storage]
             [triplex.gateway.subject-save :as subject] [triplex.gateway.subject-hints :as hints]
-            [triplex.gateway.selftest :as selftest] [triplex.gateway.scope :as scope])
+            [triplex.gateway.selftest :as selftest] [triplex.gateway.scope :as scope]
+            [triplex.gateway.lean :as lean])
   (:import [java.io ByteArrayInputStream] [java.nio.charset StandardCharsets] [java.sql DriverManager]
            [java.util.concurrent Executors]))
 
@@ -91,7 +92,7 @@
 (def stride 7919)
 (defn set-a [] (vec (distinct (map #(mod (* stride %) subjects) (range edits)))))
 (defn set-b [] (let [a (set (set-a))] (vec (take edits (remove a (map #(mod (* 104729 %) subjects) (range subjects)))))))
-(defn set-probe [] (let [used (into (set (set-a)) (set-b))] (vec (take 40 (remove used (range subjects))))))
+(defn set-probe [] (let [used (into (set (set-a)) (set-b))] (vec (take 40 (remove used (range 11 subjects (quot subjects 48)))))))
 
 ;; ---- storage reads: inside apply (the transaction's own io-stats) and by role (PostgreSQL) ----
 (defn stats-conn [] (DriverManager/getConnection (System/getenv "W4_STATS_JDBC")))
@@ -126,7 +127,7 @@
   ;; Every database gets the same commits in the same order, with the hint function installed in all of them (this
   ;; JVM runs with the option on), so their logs differ only in the scope key.
   (assert hints/enabled "seed runs with TX2_SUBJECT_HINTS=1 so every database holds the hint function")
-  (let [result (into {} (for [label ["off" "late" "early"]]
+  (let [result (into {} (for [label ["off" "on"]]
                           (let [[name conn] (open! label)]
                             (doseq [ns (partition-all seed-batch (range subjects))] (commit-checked! name (seed-batch-save ns)))
                             (let [t (d/basis-t (d/db conn))]
@@ -136,13 +137,22 @@
     (emit! "seed.json" result)
     (println "W4_SEED" (json/write-str result))))
 
+;; The hint payload from the request alone, before tx-data or the plan read anything on this peer (the function
+;; resolves the owner itself). Used to test whether a hint depends on what the peer already holds.
+(defn request-payload [input]
+  (let [rows (map storage/decode-row (get input "rows")) journal (get-in input ["claims" 0 "txId"])
+        prefixes (vec (sort (map lean/prefix (get input "newIds"))))]
+    {:subject (first (get input "entities")) :journal journal :operation (get input "operationId")
+     :command (get-in input ["claims" 0 "commandId"])
+     :live (into [] (keep #(when (:retracted_at %) (lean/prefix (:id %)))) rows) :fresh prefixes
+     :ordered-bounds (subject/ordered-bounds journal prefixes)}))
+
 ;; ---- what a hint names: a lookup on a cold peer against the same lookup after the peer read the owner ----
 (defn hint-size [h] (if (map? h) (count (:segments h)) -1))
 (defn probe! []
   (let [seed (get (slurp-json "seed.json") "off") name (get seed "db") conn (main/connection (main/db-uri name))
         db (d/db conn)
-        rows-of (fn [input] (map storage/decode-row (get input "rows")))
-        payload (fn [n] (hints/from-input (first-touch n (head name conn)) (rows-of (first-touch n 0)) subject/ordered-bounds))
+        payload (fn [n] (request-payload (first-touch n (head name conn))))
         owner-read! (fn [n] (let [e (d/entid db [:triplex.entity/id (subject-id n)])] (dorun (d/datoms db :eavt e)) e))
         [a-set b-set] (split-at 20 (set-probe))
         _ (pg-reset!)
@@ -177,7 +187,7 @@
         _ (.shutdown pool)
         concurrent-reads (pg-reads)
         result {:label label :db name :options (get options "options")
-                :hintsOption hints/enabled :earlyOption hints/early?
+                :hintsOption hints/enabled
                 :firstTouch (assoc (summarize (map first pairs)) :pgReadsByRole sequential-reads :endT sequential-t)
                 :secondSave (summarize (map second pairs))
                 :concurrent (assoc (summarize concurrent) :pgReadsByRole concurrent-reads :inFlight in-flight)
@@ -185,6 +195,41 @@
                 :rawIoStatsExample (get (ffirst pairs) "nativeIoStats")}]
     (emit! (str "arm-" label ".json") result)
     (println "W4_ARM" label (json/write-str (dissoc result :receipts)))))
+
+;; ---- when does a hinted segment arrive: the same first touch with the writer idle or busy ----
+;; A stored function that holds the single writer for ms milliseconds, so the next transaction waits in its queue.
+(def sleeper {:db/ident :w4/hold-writer
+              :db/fn (d/function {:lang :clojure :params '[db ms] :code '(do (Thread/sleep (long ms)) [])})})
+(declare plan-of native)
+(defn queue! []
+  ;; Each subject is touched once, cold, in one of four modes (rotating, so the modes see alike subjects): idle or
+  ;; behind an 80 ms hold of the writer, with or without the per-subject hints. Native transactions, as the gateway
+  ;; submits them; io-stats of the subject's own transaction only.
+  (let [seed (get (slurp-json "seed.json") "off") name (get seed "db") conn (main/connection (main/db-uri name))
+        _ @(d/transact conn [sleeper])
+        used (into (into (set (set-a)) (set-b)) (set-probe))
+        ;; Spread over the seed (subjects seeded together share index leaves), so each touch is cold.
+        each (parse-long (or (System/getenv "W4_QUEUE_EACH") "40"))
+        pool (vec (take (* 4 each) (remove used (range 37 subjects (quot subjects (+ 8 (* 4 each)))))))
+        modes [[:idle false] [:idle true] [:queued false] [:queued true]]
+        run (fn [[where hinted] n]
+              (let [input (first-touch n (head name conn)) [db plan] (plan-of conn input)
+                    h (when hinted (hints/lookup-hints db (hints/from-plan plan)))
+                    early (when hinted (hints/lookup-hints db (request-payload input)))  ; the same hint from the request alone
+                    hold (when (= where :queued) (d/transact-async conn [[:w4/hold-writer 80]]))
+                    r @(apply d/transact-async conn (native plan) (concat (when h [:hints h]) [:io-context :w4/queue]))]
+                (when hold @hold)
+                {:mode (str (clojure.core/name where) (if hinted "-hints" "-none"))
+                 :reads (into {} (filter (fn [[_ v]] (number? v))) (get-in r [:io-stats :reads]))
+                 :hintSegments (count (:segments h)) :requestSegments (count (:segments early))
+                 :sameAsRequestPayload (= (set (:segments h)) (set (:segments early)))}))
+        rows (vec (map-indexed (fn [i n] (run (nth modes (mod i 4)) n)) pool))
+        by-mode (into (sorted-map) (for [[m xs] (group-by :mode rows)]
+                                     [m {:n (count xs) :reads (apply merge-with + {} (map :reads xs))
+                                         :hintSegments (frequencies (map :hintSegments xs))
+                                         :planHintEqualsRequestHint (frequencies (map :sameAsRequestPayload (filter #(pos? (:hintSegments %)) xs)))}]))]
+    (emit! "queue.json" by-mode)
+    (println "W4_QUEUE" (json/write-str by-mode))))
 
 ;; ---- exactness: byte-identical datoms (log through the one-at-a-time phase) and receipts ----
 (defn log-texts [conn end-t]
@@ -204,14 +249,15 @@
          :sha256B (format "%064x" (java.math.BigInteger. 1 (.digest db)))}))))
 (defn live-state [name owners]
   (set (for [o owners r (get-in (route name "v1" "read" {"entityIds" [o]}) [:body "rows"])]
-         (let [v (get r "value_string")] [(get r "entity_id") (get r "id") (get r "attribute") (if (map? v) (get v "v") v)]))))
+         ;; Read rows are wire rows: each column is {"t" type "v" value}.
+         (let [v #(let [x (get r %)] (if (map? x) (get x "v") x))] [(v "entity_id") (v "id") (v "attribute") (v "value_string")]))))
 (defn compare! []
-  (let [arms (into {} (for [l ["off" "late" "early"]] [l (slurp-json (str "arm-" l ".json"))]))
+  (let [arms (into {} (for [l ["off" "on"]] [l (slurp-json (str "arm-" l ".json"))]))
         conn-of #(main/connection (main/db-uri (get % "db")))
         off (arms "off") end-t (get-in off ["firstTouch" "endT"])
         owners (mapv subject-id (concat (set-a) (set-b)))
         state-off (live-state (get off "db") owners)
-        per (into {} (for [l ["late" "early"] :let [arm (arms l) logs (compare-logs (conn-of off) (conn-of arm) end-t)]]
+        per (into {} (for [l ["on"] :let [arm (arms l) logs (compare-logs (conn-of off) (conn-of arm) end-t)]]
                        [l {:sameEndT (= end-t (get-in arm ["firstTouch" "endT"])) :logs logs
                            :logIdentical (and (pos? (:logDatoms logs)) (zero? (:logDatomsDiffering logs))
                                               (= (:sha256A logs) (:sha256B logs)))

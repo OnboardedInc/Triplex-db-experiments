@@ -50,9 +50,9 @@ transactor() {
 }
 restart_transactor() { kill "$tx_pid"; wait "$tx_pid" 2>/dev/null || true; transactor; }
 # The server writer: per-subject ordered writer for one-to-three-fact replacements, the general writer for the rest.
-gate() {  # $1 = TX2_SUBJECT_HINTS, $2 = TX2_SUBJECT_HINTS_EARLY, $3.. = clojure arguments
-  local hints=$1 early=$2; shift 2
-  TX2_SUBJECT_HINTS=$hints TX2_SUBJECT_HINTS_EARLY=$early TX2_GENERAL_PREFETCH=0 TX2_SUBJECT_SAVE=1 TX2_GROUP_COMMIT=0 \
+gate() {  # $1 = TX2_SUBJECT_HINTS, $2.. = clojure arguments
+  local hints=$1; shift
+  TX2_SUBJECT_HINTS=$hints TX2_GENERAL_PREFETCH=0 TX2_SUBJECT_SAVE=1 TX2_GROUP_COMMIT=0 \
     TX2_LIVE_PRIORITY=0 TX2_PREDECESSOR_LOOKUP=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_PREFETCH=0 \
     TX2_GROUP_REUSE_PREPARED=1 TX2_GROUP_FAST_REPLY=1 TX2_GROUP_STAGE_CLOCK=1 TX2_SUBJECT_PROFILE=1 TX2_LEAN_NATIVE_QUERY=1 \
     TX2_LEAN_NATIVE_LOG=1 TX2_GROUP_MAX_MEMBERS=8 WFIX1_URI="$DATOMIC_URI_TEMPLATE" TRIPLEX_TRACE_LEVEL=off \
@@ -61,27 +61,27 @@ gate() {  # $1 = TX2_SUBJECT_HINTS, $2 = TX2_SUBJECT_HINTS_EARLY, $3.. = clojure
 }
 transactor
 phase() { echo "W4_PHASE $1 $(date -u +%FT%TZ)"; }
-want() { [[ " ${W4_PHASES:-seed probe off late early compare tests} " == *" $1 "* ]]; }
+want() { [[ " ${W4_PHASES:-seed probe off on queue compare tests} " == *" $1 "* ]]; }
 G=(-i /w4/w4/gate.clj -e)
-if want seed;  then phase seed;  gate 1 0 "${G[@]}" '(w4-gate/seed!) (shutdown-agents) (System/exit 0)'; fi
-if want probe; then phase probe; restart_transactor; gate 1 0 "${G[@]}" '(w4-gate/probe!) (shutdown-agents) (System/exit 0)'; fi
-if want off;   then phase off;   restart_transactor; gate 0 0 "${G[@]}" '(w4-gate/arm! "off") (shutdown-agents) (System/exit 0)'; fi
-if want late;  then phase late;  restart_transactor; gate 1 0 "${G[@]}" '(w4-gate/arm! "late") (shutdown-agents) (System/exit 0)'; fi
-if want early; then phase early; restart_transactor; gate 1 1 "${G[@]}" '(w4-gate/arm! "early") (shutdown-agents) (System/exit 0)'; fi
-if want compare; then phase compare; code=0; gate 1 0 "${G[@]}" '(w4-gate/compare!)' || code=$?; echo "W4_COMPARE_EXIT $code"; fi
+if want seed;  then phase seed;  gate 1 "${G[@]}" '(w4-gate/seed!) (shutdown-agents) (System/exit 0)'; fi
+if want probe; then phase probe; restart_transactor; gate 1 "${G[@]}" '(w4-gate/probe!) (shutdown-agents) (System/exit 0)'; fi
+if want off;   then phase off;   restart_transactor; gate 0 "${G[@]}" '(w4-gate/arm! "off") (shutdown-agents) (System/exit 0)'; fi
+if want on;    then phase on;    restart_transactor; gate 1 "${G[@]}" '(w4-gate/arm! "on") (shutdown-agents) (System/exit 0)'; fi
+if want queue; then phase queue; restart_transactor; gate 1 "${G[@]}" '(w4-gate/queue!) (shutdown-agents) (System/exit 0)'; fi
+if want compare; then phase compare; code=0; gate 1 "${G[@]}" '(w4-gate/compare!)' || code=$?; echo "W4_COMPARE_EXIT $code"; fi
 if want tests; then
   phase tests
   # The suites that exercise the per-subject writer's refusals (mixed identities, ordered-ID collisions, resends),
-  # hints off, late and early: the same outcome is the claim. The W4 tests run with hints on (late and early).
-  for arm in "0 0" "1 0" "1 1"; do
-    set -- $arm; code=0
-    gate "$1" "$2" -i /w4/w4/gate.clj -i /w4/wfix1/regression.clj -i /w4/prep1/subject_gate.clj -i /w4/prep1/subject_conflicts.clj -e "
+  # hints off and on: the same outcome is the claim. The W4 tests run with hints on.
+  for h in 0 1; do
+    code=0
+    gate "$h" -i /w4/w4/gate.clj -i /w4/wfix1/regression.clj -i /w4/prep1/subject_gate.clj -i /w4/prep1/subject_conflicts.clj -e "
       (let [r (clojure.test/run-tests (quote subject-conflicts) (quote wfix1-regression))
-            w (when (= \"1\" \"$1\") (clojure.test/run-tests (quote w4-gate)))]
-        (println \"W4_SUITE\" \"$1/$2\" (clojure.data.json/write-str (select-keys r [:test :pass :fail :error])))
-        (when w (println \"W4_TESTS\" \"$1/$2\" (clojure.data.json/write-str (select-keys w [:test :pass :fail :error]))))
+            w (when (= \"1\" \"$h\") (clojure.test/run-tests (quote w4-gate)))]
+        (println \"W4_SUITE\" $h (clojure.data.json/write-str (select-keys r [:test :pass :fail :error])))
+        (when w (println \"W4_TESTS\" $h (clojure.data.json/write-str (select-keys w [:test :pass :fail :error]))))
         (shutdown-agents) (System/exit (if (zero? (+ (:fail r) (:error r) (or (:fail w) 0) (or (:error w) 0))) 0 1)))" || code=$?
-    echo "W4_SUITE_EXIT $1/$2 $code"
+    echo "W4_SUITE_EXIT $h $code"
   done
 fi
 phase done
