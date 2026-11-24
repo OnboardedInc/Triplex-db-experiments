@@ -291,8 +291,11 @@
         values (fn [id attr] (get-in world [:entities id :attrs attr] #{}))]
     {:ids (vec (sort matched))
      :projected (into {} (for [id matched] [id (into {} (for [a (get q "project" [])] [a (vec (sort (keep (fn [[f v]] (when (= f "ref") v)) (values id a))))]))]))
+     ;; [DX-XQ10] A matched entity with no value of `of` counts in the "no value" group [nil nil] (both routes now).
      :counts (when (= "countByValue" (get q "result"))
-               (frequencies (mapcat (fn [id] (values id (get q "of"))) matched)))
+               (let [none (count (remove #(seq (values % (get q "of"))) matched))]
+                 (cond-> (frequencies (mapcat (fn [id] (values id (get q "of"))) matched))
+                   (pos? none) (assoc [nil nil] none))))
      :distinct (when (= "countDistinct" (get q "result"))
                  (count (into #{} (mapcat (fn [id] (keep (fn [[f v]] (when (= f "ref") v)) (values id (get q "of")))) matched))))}))
 
@@ -669,7 +672,8 @@
                {"account" "acc-a" "where" [{"attribute" ":person/custom-background" "op" "in" "values" [{"type" "string" "value" "x\u0001y"} {"type" "string" "value" "\u0000zero"} {"type" "string" "value" "\u0002esc"}]}] "result" "ids"}
                {"account" "acc-b" "where" [{"attribute" ":task/status" "op" "exists"}] "result" "countByValue" "of" ":task/status"}
                {"account" "acc-c" "from" {"prefix" "pl:"} "where" [{"attribute" ":placement/task" "op" "missing"}] "result" "ids"}]
-        norm-groups (fn [gs] (into {} (keep (fn [g] (when-let [v (get g "value")] [(tv v) (get g "count")]))) gs))
+        ;; [DX-XQ10] The "no value" group (value null) is compared too: both routes count it now.
+        norm-groups (fn [gs] (into {} (map (fn [g] [(if-let [v (get g "value")] (tv v) [nil nil]) (get g "count")])) gs))
         results (atom [])]
     (doseq [p positions v valid
             q (concat fixed (repeatedly per #(random-question rnd false)))
@@ -683,7 +687,7 @@
                              "ids" (and (= (count (:ids w)) (count (set (:ids w)))) (= (set (:ids f)) (set (:ids w))))
                              "count" (and (get fb "countExact") (get wb "countComplete") (= (get fb "count") (get wb "count")))
                              "countByValue" (and (get fb "countExact") (get wb "countComplete")
-                                                 (= (into {} (map (fn [c] [(tv (get c "value")) (get c "count")]) (get fb "counts")))
+                                                 (= (norm-groups (get fb "counts"))
                                                     (norm-groups (get wb "groups")))))]
                   {:same (boolean same) :result (get q "result" "ids") :n (or (get fb "count") (count (:ids f)))
                    :detail (when-not same {:q q :find (select-keys fb ["count" "counts"]) :findIds (take 10 (sort (:ids f)))

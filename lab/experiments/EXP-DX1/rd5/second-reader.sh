@@ -55,6 +55,14 @@ if [[ $role == question ]]; then
   [[ $sp =~ ^([1-9]|1[0-6])$ && $spa =~ ^([1-9]|1[0-6])$ && $sq =~ ^[1-9][0-9]{0,3}$ && $ip =~ ^[1-9][0-9]?$ && $lq =~ ^[1-9][0-9]{0,3}$ ]] || exit 2
   role_env=(-e TX2_QUESTION_READER=1 -e TX2_ID_LISTS=1 -e TX2_SWEEP=1 -e "TX2_SWEEP_PERMITS=$sp" -e "TX2_SWEEP_PER_ACCOUNT=$spa"
     -e "TX2_SWEEP_QUEUE_MS=$sq" -e "TX2_INDEX_QUERY_PERMITS=$ip" -e "TX2_ID_LIST_QUEUE_MS=$lq" -e "TX2_SWEEP_CURSOR_SECRET=$RD5_SWEEP_CURSOR_SECRET")
+  # [DX-XQ10] find on the second-machine question reader: RD5_CROSS_INDEX=1 turns the index route on (machine 1's writer
+  # writes the entries; this process only reads them), with the index cursor key every answering process shares
+  # (RD5_INDEX_CURSOR_SECRET, required then) and find's own pool (RD5_FIND_PERMITS, default 1). Unset: as before.
+  if [[ ${RD5_CROSS_INDEX:-0} == 1 ]]; then
+    [[ ${RD5_INDEX_CURSOR_SECRET:-} =~ ^[A-Za-z0-9]{16,128}$ ]] || { echo "second-reader.sh: RD5_INDEX_CURSOR_SECRET is required with RD5_CROSS_INDEX=1" >&2; exit 2; }
+    fp=${RD5_FIND_PERMITS:-1}; [[ $fp =~ ^[1-9][0-9]?$ ]] || exit 2
+    role_env+=(-e TX2_CROSS_INDEX=1 -e "TX2_INDEX_CURSOR_SECRET=$RD5_INDEX_CURSOR_SECRET" -e "TX2_FIND_PERMITS=$fp")
+  fi
   app=triplex-gw-q2
 fi
 for p in 5432 4334; do

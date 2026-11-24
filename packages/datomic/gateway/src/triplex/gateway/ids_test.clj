@@ -137,11 +137,12 @@
           ;; [DX-XQ10] One admission for ids and find (ids/admitted). TX2_ID_LIST_QUEUE_MS unset: the ID list branch's
           ;; behaviour, byte for byte (a second request of a busy account is refused at once).
           (testing "a second request of the same account while one runs is refused, another account is not"
-            (.put ids/running "account-003" true)
-            (try
-              (is (= "IndexBusy" (refused #(call name {"account" "account-003"}))))
-              (is (= :accepted (refused #(call name {"account" "account-004"}))))
-              (finally (.remove ids/running "account-003"))))
+            (with-redefs [ids/list-queue-ms nil]
+              (.put ids/running "account-003" true)
+              (try
+                (is (= "IndexBusy" (refused #(call name {"account" "account-003"}))))
+                (is (= :accepted (refused #(call name {"account" "account-004"}))))
+                (finally (.remove ids/running "account-003")))))
           ;; TX2_ID_LIST_QUEUE_MS set: the index branch's behaviour (exp/DX-XQ4): the account's fair queue, waited for at
           ;; most that long, then refused; another account is not.
           (testing "queued: a second request of the same account waits the queue time, then is refused; another account is not"

@@ -97,6 +97,20 @@ export {
   type SweepRequest,
   type SweepValue,
 } from "./sweep.js";
+// [DX-XQ10] One call for questions across subjects: the index when it can, else the exact sweep at the same basis.
+export {
+  askAll,
+  askPage,
+  AskRefused,
+  type AskAll,
+  type AskAnswer,
+  type AskQuestion,
+  type AskRefusal,
+  type AskRequest,
+  type AskResult,
+  type AskRoute,
+  type AskValue,
+} from "./ask.js";
 
 export { sweepRows, decodeSweepRows, type SweepRow } from "./sweepRows.js";
 export { acceptLoaderPositionRows, loaderPositionRowsAccepted } from "./loaderPositionRows.js";

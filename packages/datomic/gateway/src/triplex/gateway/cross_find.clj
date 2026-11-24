@@ -597,9 +597,39 @@
       (refuse! 409 "CursorMismatch" "The cursor was not issued by this gateway or was changed"))
     (decode-cursor (subs text 0 i))))
 
+;; [DX-XQ10] Every attribute a question names, wherever it names it: conditions, the exact sweep's OR groups and
+;; related-entity conditions (exp/DX-XQ9), the reference that ties related entities, `of`, `project` and `order.by`.
+(defn question-attributes [input]
+  (letfn [(conds [cs] (when (sequential? cs)
+                        (mapcat (fn [c] (when (map? c)
+                                          (concat [(get c "attribute")]
+                                                  (when (map? (get c "related")) [(get-in c ["related" "link" "ref"])])
+                                                  (conds (get c "where")))))
+                                cs)))]
+    (when (map? input)
+      (filter string? (concat (conds (get input "where")) (when (sequential? (get input "anyOf")) (mapcat conds (get input "anyOf")))
+                              [(get input "of")] (when (sequential? (get input "project")) (get input "project"))
+                              [(when (map? (get input "order")) (get-in input ["order" "by"]))])))))
+
+;; [DX-XQ10] The exact sweep's added shapes (exp/DX-XQ9: anyOf, result top and sum, ne, contains, has) are not find's.
+;; Why: a question in the shared condition language may carry them; find now refuses them by type, with `fallback`,
+;; so the SDK's one call learns from the index route that the sweep answers them. A protected attribute anywhere in the
+;; question is refused first and carries no fallback (neither route looks it up). Rejected: 400 InvalidValue for an
+;; unknown field (it carries no fallback, so the call would end there).
+(defn- sweep-only-shape! [input]
+  (when (contains? input "anyOf")
+    (refuse! 400 "UnsupportedOperation" "find takes no anyOf (OR groups); the exact sweep does"))
+  (when (#{"top" "sum"} (get input "result"))
+    (refuse! 400 "UnsupportedOperation" (str "find has no result " (get input "result") "; the exact sweep does")))
+  (when (and (map? (get input "order")) (contains? (get input "order") "type"))
+    (refuse! 400 "UnsupportedOperation" "order with a type is the exact sweep's top N; find orders by entity or by its range attribute")))
+
 (defn- find-page! [name conn protected input]
   (when-not x/enabled (off!))
   (when-not (map? input) (codec/invalid "Expected a JSON object"))
+  (when-let [a (first (filter #(contains? protected %) (question-attributes input)))]
+    (refuse! 409 "ProtectedValueLookup" (str a " is protected; a protected value is never looked up")))
+  (sweep-only-shape! input)
   (doseq [k (keys input)] (when-not (find-keys k) (codec/invalid (str "Unknown field " k))))
   (when owner-layout/enabled (refuse! 409 "OwnerLayoutUnsupported" "The cross-subject index does not support the covering owner head"))
   (let [account (get input "account")
@@ -722,6 +752,7 @@
               seen (java.util.HashSet.)
               acc (volatile! {:count (get state "count" 0)
                               :counts (into {} (get state "counts" {}))
+                              :none (long (get state "none" 0))
                               :distinct (into #{} (get state "distinct" []))})
               reads (volatile! {}) stopped (volatile! nil) last-key (volatile! after) consumed (long-array 1)
               it (.iterator ^Iterable candidates)
@@ -757,7 +788,14 @@
                                   (when (seq project-codes)
                                     (.put projected id (into {} (map (fn [[a code]] [a (mapv #(x/unesc (subs % 1)) (values code))]) project-codes)))))
                         "count" nil
-                        "countByValue" (vswap! acc update :counts #(reduce (fn [m f] (update m f (fnil inc 0))) % (values of-code)))
+                        ;; [DX-XQ10] A matching entity with no visible value of `of` is counted in the "no value" group
+                        ;; (value null), as the exact sweep counts it, so every matching subject is in one group or more.
+                        ;; Found by the agreement gate: before, find left them out and the two routes' counts per value
+                        ;; differed by exactly those subjects. Rejected: dropping the sweep's group (the console shows it).
+                        "countByValue" (let [vs (values of-code)]
+                                         (if (seq vs)
+                                           (vswap! acc update :counts #(reduce (fn [m f] (update m f (fnil inc 0))) % vs))
+                                           (vswap! acc update :none inc)))
                         "countDistinct" (vswap! acc update :distinct into (map #(x/unesc (subs % 1)) (values of-code))))
                       (vswap! acc update :count inc)))))]
           (loop []
@@ -796,7 +834,7 @@
           (when (and (= @stopped "entries") (zero? (aget consumed 0)))
             (refuse! 413 "BoundTooSmall" "No candidate fits inside bounds.entries; raise it" {:examined (aget work 0)}))
           (let [more? (not= @stopped "end")
-                {n-count :count counts :counts dset :distinct} @acc
+                {n-count :count counts :counts dset :distinct none :none} @acc
                 micros (quot (- (System/nanoTime) started) 1000)]
             (stats/bump! [:crossFind :requests] 1)
             (stats/bump! [:crossFind :examined] (aget work 0))
@@ -815,11 +853,13 @@
                                            "validAt" valid
                                            "state" (cond-> {"after" @last-key "count" n-count}
                                                      (= result "countByValue") (assoc "counts" counts)
+                                                     (and (= result "countByValue") (pos? none)) (assoc "none" none)
                                                      (= result "countDistinct") (assoc "distinct" (vec dset)))}))}
               (= result "ids") (assoc :ids (vec ids) :count (.size ids))
               (seq project-codes) (assoc :projected projected)
               (= result "count") (assoc :count n-count :countExact (not more?))
-              (= result "countByValue") (assoc :counts (mapv (fn [[f n]] {:value (decode-field f) :count n}) (sort-by key counts))
+              (= result "countByValue") (assoc :counts (cond-> (mapv (fn [[f n]] {:value (decode-field f) :count n}) (sort-by key counts))
+                                                         (pos? none) (conj {:value nil :count none}))
                                                :count n-count :countExact (not more?))
               (= result "countDistinct") (assoc :count (count dset) :matched n-count :countExact (not more?))))))))))
 
@@ -831,22 +871,34 @@
 ;; describes the question's shape only; whether TX2_SWEEP is on is the deployment's.
 ;; Rejected: calling the sweep from here (another permit pool and a far slower page under this route's bounds).
 (defn sweep-fallback
-  "\"sweep\" when the sweep's grammar takes this question with find's order, bounds and cursor removed (from absent
-  or {prefix, shape?}; up to 8 conditions of its six ops with no json or blob value; result ids, count or countByValue; up to 8 projections; ID order
-  ascending), else \"none\"."
+  "\"sweep\" when the sweep's grammar takes this question with find's order (unless it is the sweep's top N order),
+  bounds and cursor removed: from absent or {prefix, shape?}; conditions of the sweep's ops (eq, in, range, prefix,
+  exists, missing; and the shapes of exp/DX-XQ9: ne, contains, has with its own conditions) with no json or blob value,
+  at most 8 in all with anyOf (at most 4 groups) and has; result ids, count, countByValue, top (an order {by, type}) or
+  sum; up to 8 projections; ID order ascending. Else \"none\". It describes the question only; whether the sweep and
+  each named shape (TX2_SWEEP, TX2_SWEEP_SHAPES) are on is the deployment's."
   [input]
   (let [from (get input "from") where (get input "where" []) order (get input "order") project (get input "project")
-        value-ok? (fn [v] (not (and (map? v) (#{"json" "blob"} (get v "type")))))]
+        any-of (get input "anyOf") result (get input "result" "ids")
+        value-ok? (fn [v] (not (and (map? v) (#{"json" "blob"} (get v "type")))))
+        plain-ok? (fn [c] (and (map? c) (#{"eq" "in" "range" "prefix" "exists" "missing" "ne" "contains"} (get c "op"))
+                               (value-ok? (get c "value"))
+                               (or (nil? (get c "values")) (and (sequential? (get c "values")) (every? value-ok? (get c "values"))))))
+        cond-ok? (fn [c] (or (plain-ok? c)
+                             (and (map? c) (= "has" (get c "op")) (map? (get c "related"))
+                                  (or (nil? (get c "where")) (and (sequential? (get c "where")) (every? plain-ok? (get c "where")))))))
+        size (fn [c] (if (= "has" (get c "op")) (inc (count (get c "where" []))) 1))]
     (if (and (map? input) (string? (get input "account"))
              (or (nil? from) (and (map? from) (string? (get from "prefix")) (not (contains? from "type"))))
-             (sequential? where) (<= (count where) 8)
-             (every? #(and (map? %) (#{"eq" "in" "range" "prefix" "exists" "missing"} (get % "op"))
-                           (value-ok? (get % "value"))
-                           (or (nil? (get % "values")) (and (sequential? (get % "values")) (every? value-ok? (get % "values")))))
-                     where)
-             (#{"ids" "count" "countByValue"} (get input "result" "ids"))
+             (sequential? where) (every? cond-ok? where)
+             (or (nil? any-of) (and (sequential? any-of) (<= 1 (count any-of) 4)
+                                    (every? #(and (sequential? %) (seq %) (every? cond-ok? %)) any-of)))
+             (<= (+ (reduce + 0 (map size where)) (reduce + 0 (map size (apply concat any-of)))) 8)
+             (#{"ids" "count" "countByValue" "top" "sum"} result)
              (or (nil? project) (and (sequential? project) (<= (count project) 8)))
-             (or (nil? order) (and (map? order) (= "entity" (get order "by" "entity")) (not= "desc" (get order "direction")))))
+             (if (= "top" result)
+               (and (map? order) (string? (get order "by")) (#{"string" "integer" "number" "datetime"} (get order "type")))
+               (or (nil? order) (and (map? order) (= "entity" (get order "by" "entity")) (not= "desc" (get order "direction"))))))
       "sweep" "none")))
 
 (def ^:private index-refusals

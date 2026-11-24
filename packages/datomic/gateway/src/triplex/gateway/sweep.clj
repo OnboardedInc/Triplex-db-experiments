@@ -373,7 +373,14 @@
     {:queueMicros (quot (- (System/nanoTime) started) 1000)
      :release (fn [] (.release permits) (.release gate))}))
 
-(defn- value-key [[family value]] [family (if (instance? BigInteger value) (str value) value)])
+;; [DX-XQ10] A count per value groups -0.0 with 0.0, as every comparison here does (Clojure's compare uses < on
+;; doubles), as find's key does (cross_index.clj writes -0.0 as 0.0) and as Triplex core does (JavaScript ===). Found by
+;; the agreement gate between the two routes: before, a subject holding -0.0 was counted under its own group "-0.0".
+;; Rejected: telling -0.0 from 0.0 in find instead (eq and range here already treat them as one value).
+(defn- value-key [[family value]]
+  [family (cond (instance? BigInteger value) (str value)
+                (and (instance? Double value) (#{"number" "datetime"} family)) (+ 0.0 (double value))
+                :else value)])
 (defn- wire-value [[family value]] {"type" family "value" (if (instance? BigInteger value) (str value) value)})
 
 (defn- attribute-values ^HashMap [needed rows]
