@@ -116,3 +116,14 @@ adopted-w4-nosubject-int3  0fec06280 ADMITTED TX2_SUBJECT_SAVE=0;TX2_SUBJECT_ORD
 adopted-w4-hints-nosubject-int3 0fec06280 REFUSED TX2_SUBJECT_HINTS=1;TX2_SUBJECT_SAVE=0;TX2_SUBJECT_ORDERED_IDS=0;TX2_SUBJECT_NUMERIC_OWNER=0;DX_PREP1_SUBJECT=0
 adopted-s1-wide-int3       0fec06280 ADMITTED TX2_SUBJECT_WIDE=1
 adopted-s1-wide-nosubject-int3 0fec06280 REFUSED TX2_SUBJECT_WIDE=1;TX2_SUBJECT_SAVE=0;TX2_SUBJECT_ORDERED_IDS=0;TX2_SUBJECT_NUMERIC_OWNER=0;DX_PREP1_SUBJECT=0
+# [DX-INT4] The one branch after the ACT5, XQ3 and RD5 merges: each new launch option admitted and a wrong value refused,
+# beside an admitted control; the refusals now stop at their own test before the first Docker change (1d6072615).
+adopted-card-int4              1d6072615 ADMITTED -
+adopted-xq3-idlists-int4       1d6072615 ADMITTED DX_ID_LISTS=1;DX_INDEX_QUERY_PERMITS=64
+adopted-xq3-idlists-bad-int4   1d6072615 REFUSED  DX_ID_LISTS=2
+adopted-xq3-permits-bad-int4   1d6072615 REFUSED  DX_ID_LISTS=1;DX_INDEX_QUERY_PERMITS=65
+adopted-rd5-prefetch-int4      1d6072615 ADMITTED DX_READ_PREFETCH=1;DX_READ_AHEAD_OFF=1
+adopted-rd5-prefetch-bad-int4  1d6072615 REFUSED  DX_READ_PREFETCH=yes
+adopted-rd5-readahead-bad-int4 1d6072615 REFUSED  DX_READ_AHEAD_OFF=2
+adopted-rd5-remote-int4        1d6072615 ADMITTED DX_REMOTE_READER_HOST=10.0.0.5
+adopted-rd5-remote-bad-int4    1d6072615 REFUSED  DX_REMOTE_READER_HOST=0.0.0.0
