@@ -29,6 +29,7 @@ export function makeDatomicRuntime(options: {
   readonly serverRecordTime?: boolean;
   readonly recordedJournalReads?: boolean;
   readonly resolutionTimeoutMs?: number;
+  readonly idLists?: import("./idLists.js").IdListOptions;
 }): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> {
   const connection = Layer.effect(
     Connection,
@@ -70,6 +71,13 @@ export {
 export { makeDatomicQueryExecutor } from "./DatomicQueryExecutor.js";
 
 export { DatomicBasisNotAvailable, DatomicLayoutUnsupported } from "./readErrors.js";
+export {
+  configStoreIdLists,
+  DatomicMatchNeedsPaging,
+  listIdsPage,
+  type IdListOptions,
+  type IdListSource,
+} from "./idLists.js";
 
 export { sweepRows, decodeSweepRows, type SweepRow } from "./sweepRows.js";
 export { acceptLoaderPositionRows, loaderPositionRowsAccepted } from "./loaderPositionRows.js";

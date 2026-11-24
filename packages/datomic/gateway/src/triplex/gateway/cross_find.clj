@@ -8,7 +8,7 @@
             [triplex.gateway.codec :as codec] [triplex.gateway.cross-index :as x] [triplex.gateway.lean :as lean]
             [triplex.gateway.owner-layout :as owner-layout] [triplex.gateway.reach :as reach]
             [triplex.gateway.scope :as scope] [triplex.gateway.stats :as stats] [triplex.gateway.storage :as storage]
-            [triplex.gateway.trace :as trace])
+            [triplex.gateway.trace :as trace] [triplex.gateway.ids :as ids])
   (:import [java.util Base64] [java.util.concurrent Semaphore TimeUnit ConcurrentHashMap]
            [java.security MessageDigest] [java.nio.charset StandardCharsets]))
 
@@ -19,16 +19,11 @@
 (defn- off! [] (refuse! 409 "IndexOff" "Questions across subjects need TX2_CROSS_INDEX=1 on this gateway"))
 
 ;; ---------------------------------------------------------------------------------------------------------------
-;; Shared with step 0 when present (one pool, one running set); otherwise the same defaults here.
-(defn- shared [sym] (try (some-> (requiring-resolve sym) deref) (catch Throwable _ nil)))
-(def ^Semaphore permits
-  (or (shared 'triplex.gateway.ids/permits)
-      (let [n (Integer/parseInt (or (System/getenv "TX2_INDEX_QUERY_PERMITS") "1"))]
-        (when-not (<= 1 n 64) (throw (IllegalArgumentException. "TX2_INDEX_QUERY_PERMITS must be 1..64")))
-        (Semaphore. n true))))
-(def ^ConcurrentHashMap running (or (shared 'triplex.gateway.ids/running) (ConcurrentHashMap.)))
-(def bound-defaults {"entries" 100000 "ms" 100 "segments" 512})
-(def bound-caps {"entries" 1000000 "ms" 1000 "segments" 4096})
+;; Step 0's pool and running set (exp/DX-XQ3-id-lists): one question per account at a time across both routes.
+(def ^Semaphore permits ids/permits)
+(def ^ConcurrentHashMap running ids/running)
+(def bound-defaults ids/bound-defaults)
+(def bound-caps ids/bound-caps)
 
 (defn- bounds [input]
   (let [given (get input "bounds" {})]
@@ -325,22 +320,7 @@
         (lean/legacy-live-texts view eid)))
 
 ;; Shape grammar of step 0 (exp/DX-XQ3-id-lists): {N digits}, {digits}, {segment}; every other character literal.
-(defn shape-pattern [shape]
-  (when (some? shape)
-    (when-not (and (string? shape) (<= (count shape) 256)) (codec/invalid "shape must be a string of at most 256 characters"))
-    (loop [i 0 out (StringBuilder.)]
-      (if (>= i (count shape))
-        (re-pattern (str out))
-        (if (= \{ (.charAt ^String shape i))
-          (let [end (.indexOf ^String shape "}" (int i))
-                token (when (pos? end) (subs shape (inc i) end))]
-            (cond (nil? token) (codec/invalid "shape has an unclosed {")
-                  (= token "digits") (recur (inc end) (.append out "[0-9]+"))
-                  (= token "segment") (recur (inc end) (.append out "[^:/]+"))
-                  :else (if-let [[_ n] (re-matches #"([1-9][0-9]?) digits" token)]
-                          (recur (inc end) (.append out (str "[0-9]{" (min 32 (Long/parseLong n)) "}")))
-                          (codec/invalid (str "Unknown shape token {" token "}")))))
-          (recur (inc i) (.append out (java.util.regex.Pattern/quote (str (.charAt ^String shape i))))))))))
+(def shape-pattern ids/shape-pattern)
 
 ;; ---- driver streams. Entity-ordered streams yield local parts in order; value-ordered streams yield [key local].
 (defn- after-filter [desc? after s]
@@ -438,6 +418,7 @@
              (throw e))))))
 (def ^:private at-least-await
   (try (requiring-resolve 'triplex.gateway.at-least/await!) (catch Throwable _ nil)))
+;; [DX-XQ4] Step 0's own wait is the same local wait as below; this route keeps its own copy for the refusal shape.
 
 (defn- resolve-view [name conn input]
   (let [basis (get input "basis") wait (get input "basisWaitMs")

@@ -89,6 +89,23 @@ export interface StorageAdapterService {
     roots: readonly string[],
     basis: ResolvedTemporalBasis,
   ) => Effect.Effect<readonly (readonly TripleRow[])[] | undefined, ReadError>;
+  // [DX-XQ3] Why: a store that lists the entities of a type in ID order pages Triples.entityPage without reading every
+  // fact of the type. It returns the page's entities (each with its rows visible at the basis, exactly as getByEntities
+  // returns them), in ascending ID order after `after`, and whether more follow. undefined (the member absent, or
+  // returned for a type it does not list) keeps the existing scan unchanged. Rejected: a required member.
+  readonly getEntityPage?: (request: {
+    readonly entityType: string;
+    readonly after?: string;
+    readonly limit: number;
+    readonly basis: ResolvedTemporalBasis;
+  }) => Effect.Effect<
+    | {
+        readonly entities: ReadonlyArray<readonly [string, readonly TripleRow[]]>;
+        readonly more: boolean;
+      }
+    | undefined,
+    ReadError
+  >;
   // [EXP-QH1-R4] Why: a whole-pull read (Triples.reach) that falls back level by level must read every level at one exact record
   // position, captured once at its start. Whether the adapter has such a position to offer depends on the caller's transaction:
   // inside one, reads already use the transaction's snapshot and must still see its staged writes, which an explicit committed position
