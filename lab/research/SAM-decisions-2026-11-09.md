@@ -1020,3 +1020,17 @@ Verbatim: "Also we need to be able to handle questions across subjects. We shoul
 - **Decision (Sam's):** the store must be able to answer questions across subjects; work on it starts now. It moves from "design work to start" to the first item of work.
 - **State when he asked:** nothing had been started on it; the orchestrator had listed it as gap 2 with a written design as the first step.
 - **Action (orchestrator):** a design agent (Opus, effort xhigh) and a measuring spike started the same hour; builders started on the other gaps that need no server (uncached pinned-read cost, settlement beside live saves in the same account, recovery time after machine loss).
+
+### 2026-11-24 09:11 local: Sam decides the save shape and sets the order of work
+
+Verbatim: "Yeah I agree. We should decide on one commit per subject save. That's what we should do. Let's do that. That seems like what we should do and then we should move forward to figure out how to do it.
+
+I probably want some way, on an account-by-account basis, to figure out background writing on a bunch of accounts, also taking saves. We need to figure that out and figure out how to do a subject owing 200 forms or more, and figure that out, and the whole thing in 1 billion records. The goal is near the 1.3 MB ceiling.
+
+This is super important to also get done so we need to read across. We need questions across subjects and we need to figure out the one commit per subject save. Those are the most important things and then figure it all out at scale. while keeping all the other priorities in mind and then eventually finishing them all off too"
+
+- **Decision (Sam's):** one commit per subject's save is the save shape.
+- **Requirements (Sam's):** background writing account by account, on many accounts at once, beside saves; a subject owing 200 forms or more; releases near the 1.3 MB ceiling; all of it at 1 billion records.
+- **Order (Sam's):** questions across subjects and one commit per subject's save first; then at scale; the other priorities kept in mind and finished afterwards.
+- **Reading (orchestrator's):** "The goal is near the 1.3 MB ceiling" is taken to mean that a release close to the 1.3 MB limit of definitions in force must work. "At 1 billion records" needs a rented machine, which Sam has not yet approved in money terms; asked.
+- **Recorded in** `lab/V0.1.md` on `main` (24c9d6906).
