@@ -38,16 +38,26 @@ export class HeldLedger {
   }
 
   joined(row: Joined & { position: number }) {
+    // [DX-ACT5] A frame already adopted from the journal (its receipt arrived after the walk) is the same write.
+    if (this.adopted.get(row.position) === row.commandId) return;
     this.add(row.position, { txId: row.txId, commandId: row.commandId });
   }
+  private readonly adopted = new Map<number, string>();
 
   pending() {
     return this.highest;
   }
 
+  /** [DX-ACT5] Every native position up to this one is matched to a known writer (reads pinned here are checkable). */
+  verified() {
+    return this.cursor;
+  }
+
   // [DX-ACT1] Why: rank the matched save and metadata frames against one contiguous native journal.
   // Rejected: accepting a policy cut solely because its global transaction number advanced.
-  verifyThrough(position: number, mayAwaitAck = false) {
+  // [DX-ACT5] `adopt`: a transaction this process did not write but whose only command id matches (a settlement frame a
+  // killed child committed) is accepted as a joined write. Unset, as before.
+  verifyThrough(position: number, mayAwaitAck = false, adopt?: RegExp) {
     const next = this.serial.then(async () => {
       const deadline = now() + 500;
       while (this.cursor < position) {
@@ -68,7 +78,14 @@ export class HeldLedger {
         for (const frame of transactions) {
           const [tx, p, encoded] = frame;
           assert.equal(p, this.cursor + 1);
-          const want = this.expected.get(p);
+          let want = this.expected.get(p);
+          if (!want && adopt) {
+            const ids = encoded.map(decodeRowText).filter((row) => row.attribute === ":_tx/command-id");
+            if (ids.length === 1 && adopt.test(String(ids[0]!.value_string))) {
+              want = { txId: tx, commandId: String(ids[0]!.value_string) };
+              this.adopted.set(p, want.commandId);
+            }
+          }
           if (!want && mayAwaitAck) return;
           assert(want, "Unknown writer in held database at position " + p);
           if ("status" in want) {

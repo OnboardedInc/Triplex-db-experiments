@@ -3,7 +3,7 @@ import { Archive } from "./archive.ts";
 import { RecordedNotices } from "./recorded.ts";
 import type { JoinedAccount } from "./account.ts";
 import type { BulkQueue } from "./bulk.ts";
-import { frameMode, type FrameMode } from "./frames.ts";
+import { frameMode, preconditionMode, type FrameMode, type Precondition } from "./frames.ts";
 
 export class Settlement {
   readonly archive: Archive;
@@ -21,10 +21,11 @@ export class Settlement {
     queue: BulkQueue,
     automatic = false,
     frames: FrameMode = frameMode(),
+    precondition: Precondition = preconditionMode(),
   ) {
-    const values = await Archive.open(a, queue, "values", frames);
+    const values = await Archive.open(a, queue, "values", frames, precondition);
     try {
-      const worker = new Settlement(values, await Archive.open(a, queue, "notices", frames));
+      const worker = new Settlement(values, await Archive.open(a, queue, "notices", frames, precondition));
       if (automatic) {
         worker.unsubscribe = a.onNotice(() => worker.wake());
         worker.wake();

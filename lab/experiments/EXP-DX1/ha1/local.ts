@@ -159,8 +159,11 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // [DX-ACT4] Why: the settlement-frames builder runs its toy gate (and the held Publish campaign) on the same stack.
   const settleFrames = holder === "DX-ACT4" && diagnostic && mode === "load-fair" && combined === undefined &&
     (process.env.DX_ACT4_GATE === "1" || process.env.DX_ACT3_HELD === "1");
+  // [DX-ACT5] Why: the settlement-beside-saves builder runs the held runner's live phase on the same stack.
+  const settleLive = holder === "DX-ACT5" && diagnostic && mode === "load-fair" && combined === undefined &&
+    process.env.DX_ACT3_HELD === "1" && process.env.DX_ACT5_LIVE === "1";
   assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours ||
-    heldPublish || settleFrames);
+    heldPublish || settleFrames || settleLive);
   assert(combined === undefined || ownedCombination);
   if (mode === "load-fair") {
     const { cleanSource } = await import("../v01/source.ts");
