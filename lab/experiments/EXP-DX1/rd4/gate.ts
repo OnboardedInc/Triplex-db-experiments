@@ -228,6 +228,14 @@ try {
     for (const [k, v] of Object.entries(plainW!.routes)) assert.equal(receiptW!.routes[k], v, "Different count on " + k);
     assert(control!.toTransactorChunks >= 20, "The positive control must reach the transactor");
   }
+  // [DX-INT3] The read gateway's own counters at the end: journal pages examined per route (bounded pages show under
+  // "transactions-bounded" when the SDK sends them, TRIPLEX_DATOMIC_BOUNDED_JOURNAL=1), at-least requests and waits, and
+  // the read permit queue with its bound (DX_READ_WAIT_LIMIT on the stack). Recorded only; nothing is judged from them.
+  {
+    const stats = await gatewayStats();
+    const threads = await fetch(read + "/v2/admin/threads").then((r) => (r.ok ? r.json() : { status: r.status }), () => null);
+    results.readGatewayAtEnd = { journalExamined: stats.journalExamined ?? null, atLeast: stats.atLeast ?? null, threads };
+  }
   results.passed = true;
 } finally {
   fs.writeFileSync(path.join(out, "gate.json"), JSON.stringify(results, null, 2) + "\n");
