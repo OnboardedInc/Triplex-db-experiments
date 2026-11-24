@@ -4,7 +4,7 @@ import { hostHeadroomMiB, launchProfile, roleMemoryMiB, server32HostMiB } from "
 import { p1Reader, parseReader, randomLineLoads, randomLineMinutes, readerEnvironment, readerFromEnvironment, readerLaunch,
   readerStackOptions, readerTitle } from "./card-reader.ts";
 import { timeBudget } from "./profile.ts";
-import { cardTapeReport, fullCellTape, isProduction, parseCardTape, tapeBinding, tapeEdge, tapeShape } from "./production-card.ts";
+import { cardTapeReport, fullCellTape, isProduction, parseCardTape, productionNeighbours, tapeBinding, tapeEdge, tapeShape } from "./production-card.ts";
 import { parseWindow, quietGateCommits, ratedTape, serverRates, shortestGateSeconds } from "./server-workload.ts";
 
 // [DX-CARD2] The tuned reader as a card setting, the random-subject line's loads, and the cell length setting.
@@ -98,6 +98,11 @@ test("the -noburst tapes drop the end-of-cell burst, keep every row, and leave t
     assert(atEnd(old) >= 9, `${shape} ${rate}/s ${seconds} s: the measured tape has its burst`);
     assert.equal(atEnd(fresh), 0, `${shape} ${rate}/s ${seconds} s: a save still starts at the cell's last instant`);
     assert(fresh.every((e) => e.rows < 100), "a save's rows would reach the extra-field slots");
+  }
+  // The toy's few-second windows (no session below the edge) keep the calibrated tape and every row.
+  for (const shape of ["S", "R"] as const) for (const [rows, seconds] of [[12, 8], [3, 4], [60, 30]] as const) {
+    const t = productionNeighbours(shape, 235, Array(9).fill(rows), seconds, "toy", undefined, "spread");
+    assert.equal(t.reduce((n, e) => n + (shape === "S" ? e.rows : 1), 0), 9 * rows);
   }
   // The measured tape's binding is unchanged, and the new tape's differs.
   const a = tapeBinding("production-S", 90)!, b = tapeBinding("production-S-noburst", 90)!;

@@ -246,7 +246,9 @@ function calibrated(p: ProductionParams, band: number, account: number, rowTarge
     if (windowRows(sessionsAt(profile, p, mid, window)) >= rowTarget) hi = mid;
     else lo = mid;
   }
-  const below = edge === "spread" && windowRows(sessionsAt(profile, p, lo, window)) < rowTarget;
+  // A window that holds no session below the edge (a few seconds on the toy) keeps the calibrated tape.
+  const low = edge === "spread" ? sessionsAt(profile, p, lo, window) : [];
+  const below = low.some((x) => x.times.some((t) => t >= 0)) && windowRows(low) < rowTarget;
   const sessions = sessionsAt(profile, p, below ? lo : hi, window);
   const saves = assign(p, sessions);
   if (below) {
