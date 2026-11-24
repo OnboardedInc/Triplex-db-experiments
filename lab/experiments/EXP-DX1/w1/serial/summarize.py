@@ -66,6 +66,16 @@ def summarize(root, slot, attempt, source, age, credit_mode):
         treatment = "subjectOwnerHead" if os.environ.get("DX_W1_PAIR_OPTION") == "owner-head" else "subjectAppendRetirement"
         receipt_flag = "subjectOwnerHeadBytes" if treatment == "subjectOwnerHead" else "subjectAppendRetirement"
         assert bool(header["settings"]["observed"].get(treatment)) == header["retirement"]["append"]
+        # [Opus W1] Why: with the owner head on, a save runs the covering owner function the arm's write gateway declares
+        # (subjectOwnerHeadFunction); subjectFunction stays the reference function it reinstalls (1B pair, 2026-11-24 UTC).
+        # Rejected: accepting either function in either arm; the reference arm must still run subjectFunction only.
+        declared = header["settings"]["observed"]
+        if treatment == "subjectOwnerHead" and header["retirement"]["append"]:
+            save_function = declared["subjectOwnerHeadFunction"]
+            assert isinstance(save_function, str) and save_function.startswith(":triplex.owner/v-") and save_function != declared["subjectFunction"]
+        else:
+            save_function = declared["subjectFunction"]
+            assert not declared.get("subjectOwnerHeadFunction")
         raw = (window / "operations.json").read_bytes()
         assert hashlib.sha256(raw).hexdigest() == header["observationsSha256"]
         ops = json.loads(raw)
@@ -122,7 +132,7 @@ def summarize(root, slot, attempt, source, age, credit_mode):
                 apply.append((native["applied-at"] - native["started-at"]) / 1_000_000)
                 if row["status"] == "acked":
                     stage = row["stage"]
-                    assert stage["subjectSave"] == header["settings"]["observed"]["subjectFunction"]
+                    assert stage["subjectSave"] == save_function, (stage["subjectSave"], save_function)
                     io.append(stage["nativeIoStats"]["reads"])
                     if groups:
                         by_group[groups[f'{row["account"]}/{row["subject"]}']].append(stage["nativeIoStats"]["reads"])
@@ -158,7 +168,7 @@ def summarize(root, slot, attempt, source, age, credit_mode):
                                                 "errorCount", len(header["migratedReads"][phase]["errors"])),
                                             "errorSamples": header["migratedReads"][phase]["errors"][:20]}
                                          for phase in ("loaded", "settled")} if header.get("migratedReads") else None,
-                       "function": header["settings"]["observed"]["subjectFunction"]})
+                       "function": save_function, "referenceFunction": declared["subjectFunction"]})
 
     assert len(wanted_databases) == 1
     db = next(iter(wanted_databases))

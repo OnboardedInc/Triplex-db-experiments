@@ -14,6 +14,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import summarize  # noqa: E402
 
 ATTEMPT, SLOT, SOURCE = "a" * 36, "tx2-dxscale1-v01-aaaaaaaaaaaa", "f" * 40
+# [Opus W1] The owner-head arm's saves run the covering function its gateway declares, not the reference function.
+SAVE_FUNCTION = ":triplex.owner/v-y"
 
 
 def window(root, rate, first_cut, aged_head, groups, native, lookups, t0):
@@ -29,7 +31,7 @@ def window(root, rate, first_cut, aged_head, groups, native, lookups, t0):
         position, t = first_cut + i + 1, t0 + i
         due = start + ms
         receipt = {"p": position, "t": str(t), "tx": f"tx{t}", "digest": "d", "clock": 1.0 + i}
-        stage = {"subjectSave": ":triplex.subject/v-x", "subjectOwnerHeadBytes": 90,
+        stage = {"subjectSave": SAVE_FUNCTION, "subjectOwnerHeadBytes": 90,
                  "nativeIoStats": {"reads": {"sql": 2 if subject % 7 == 0 else 1, "aevt-load": 1, "eavt-load": 0}},
                  "timeline": {"payloadValidated": 10, "payloadPrepared": 30}}
         writes.append({"account": account, "ordinal": i, "id": ATTEMPT + "-" + event["version"].replace("/", "-"),
@@ -49,7 +51,8 @@ def window(root, rate, first_cut, aged_head, groups, native, lookups, t0):
     (folder / "operations.json").write_bytes(raw)
     header = {"slot": SLOT, "attempt": ATTEMPT, "source": SOURCE, "start": start, "firstCut": first_cut, "terminal": first_cut + rate * seconds,
               "retirement": {"rate": rate, "append": True, "seconds": seconds, "agedHead": aged_head},
-              "settings": {"creditMode": "rolling6", "observed": {"subjectOwnerHead": True, "subjectFunction": ":triplex.subject/v-x"}},
+              "settings": {"creditMode": "rolling6", "observed": {"subjectOwnerHead": True, "subjectFunction": ":triplex.subject/v-x",
+                                                                "subjectOwnerHeadFunction": ":triplex.owner/v-y"}},
               "observationsSha256": hashlib.sha256(raw).hexdigest(), "tapeSha256": "0" * 64,
               "serialAnchor": {"wall": wall, "before": str(mid - 10), "after": str(mid + 10)}, "ownerGroupPeople": {"loader": 1, "seed": 1}}
     (folder / "arm.json").write_text(json.dumps(header))
@@ -57,7 +60,21 @@ def window(root, rate, first_cut, aged_head, groups, native, lookups, t0):
 
 
 def main():
+    global SAVE_FUNCTION
     assert os.environ.get("DX_W1_PAIR_OPTION") == "owner-head"
+    # An owner-head arm whose saves report the reference function is refused (the 1B pair's arms never did this).
+    SAVE_FUNCTION = ":triplex.subject/v-x"
+    try:
+        build_and_run()
+    except AssertionError:
+        pass
+    else:
+        raise SystemExit("summarize accepted an owner-head arm whose saves ran the reference function")
+    SAVE_FUNCTION = ":triplex.owner/v-y"
+    build_and_run()
+
+
+def build_and_run():
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory) / "append"
         (root / "engines" / SLOT / "trace/raw").mkdir(parents=True)
