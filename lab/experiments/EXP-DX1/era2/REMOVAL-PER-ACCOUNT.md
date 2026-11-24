@@ -83,8 +83,10 @@ with `TX2_REMOVAL_TRIES_LOG=1` (`F4`: the same three cells in both modes on this
 
 Database-wide, a removal needs at most 3 tries because every other save pauses once its intent is written. Per account,
 nothing pauses, so it retries until no commit of any account lands inside its selection-to-commit window: one removal
-took 63 tries and 15 s in the gateway at 30 saves per second. The retry loop has no bound. This is the open cost of the
-change (section 11, item 3; prediction 8). The option-off column also repeats Table 1 on this branch's own code: with the
+took 63 tries and 15 s in the gateway at 30 saves per second. The retry loop has no bound. This was the open cost of the
+change (section 11, item 3; prediction 8). **Addressed by `TX2_REMOVAL_SUBJECT_CHECK=1` (section 13)**: the removal
+checks its selection per subject and takes its position at its own commit; on the same toy cells mean 1.00 to 1.10
+tries, at most 4 by construction, at most 3 measured (with 40 racing saves per second on the subjects being removed). The option-off column also repeats Table 1 on this branch's own code: with the
 option off it refuses other accounts as the base does.
 
 **One read refused, then fixed.** The first "after" run (`F2-on`, `1e7b0539b`) refused 1 read of 4,564 in the
@@ -430,8 +432,9 @@ back-off), as on the Mac.
    database too. Plain saves and reads do not depend on this.
 3. **The removal's own latency rises** (prediction 8). P9 stays database-wide: a removal retries when any commit of any
    account lands between its selection and its serial point, and with the option on other accounts' saves no longer
-   pause for it. The retry loop has no bound. Narrowing it needs the removal to take its log position at the serial
-   point (today its journal rows carry the position it selected at): a change to the journal entry, not built.
+   pause for it. The retry loop has no bound. **Built in the second pass behind `TX2_REMOVAL_SUBJECT_CHECK=1`
+   (section 13)**: the removal takes its position at its serial point (the journal entry's form is unchanged) and is
+   bounded at 4 tries by a guard on its own subjects.
 4. **The production exactness gate** (`prep1/manage.py production`) was not run: it admits only its listed builders,
    and its database has no removal policy, where this code does nothing (`per-account?` needs a protected database
    that was moved). The option-off evidence is the paired native log, the gateway suites and the removal regression.
@@ -454,6 +457,8 @@ back-off), as on the Mac.
 | `storage.clj` | The fence in a save's data on a moved database; the per-subject writer's expected value |
 | `subject_save.clj` | The per-subject writer accepts the fence in its returned data (option on only) |
 | `erase.clj` | The removal's transaction on a moved database; account locks; `request-cut` (retries up to four times); the move route `per-account!`; the tries log (`TX2_REMOVAL_TRIES_LOG=1`, default off) |
+| `removal_commit.clj` | `TX2_REMOVAL_SUBJECT_CHECK=1`: the per-subject selection check and position at commit (`:triplex.removal/commit-v1`), the subject guard, the bounded loop; loaded on first use only |
+| `removal_scope.clj` (second pass) | Named entities without a row take a removal's counter |
 | `main.clj` | Routing on a moved database: the published cut while a removal is applied, account locks for named tickets, the move route, the frontier's per-account fields |
 | `packages/datomic/src/erasure.ts`, `DatomicClient.ts` | `withDatomicErasureSequence(..., accounts)` sends `erasureAccounts` (absent: unchanged bytes) |
 | `lab/bench/lib/datomic-erasure.ts` | `readErasure`, `recheckErasure`, `withErasure` take an optional account (absent: unchanged) |
