@@ -264,11 +264,11 @@ function writeSummary(rows: Save[], start: number, end: number) {
   };
 }
 
-const frameSummary = (xs: { us: number; wire: number; rows: number }[]) => ({
-  frames: xs.length,
-  usMax: Math.max(0, ...xs.map((x) => x.us)),
-  usMean: xs.length ? xs.reduce((n, x) => n + x.us, 0) / xs.length : 0,
-  wireMax: Math.max(0, ...xs.map((x) => x.wire)),
+const frameSummary = (x: { frames: number; usMax: number; usSum: number; wireMax: number }) => ({
+  frames: x.frames,
+  usMax: x.usMax,
+  usMean: x.frames ? x.usSum / x.frames : 0,
+  wireMax: x.wireMax,
 });
 function summarizeMs(xs: number[]) {
   const s = xs.toSorted((a, b) => a - b),

@@ -113,17 +113,15 @@ function independent(side: Side, doc: W0.ReleaseDoc, output: any[], deliveries: 
   return total;
 }
 const frameStats = (side: Side) => {
-  const all = [...side.worker.archive.admitted, ...side.worker.recorder.archive.admitted];
-  const of = (kind: string) => all.filter((x) => x.kind === kind);
-  const summary = (xs: typeof all) => ({
-    frames: xs.length,
-    maxUs: Math.max(0, ...xs.map((x) => x.us)),
-    maxWire: Math.max(0, ...xs.map((x) => x.wire)),
-    maxRows: Math.max(0, ...xs.map((x) => x.rows)),
+  const summary = (x: typeof side.worker.archive.admitted) => ({
+    frames: x.frames,
+    maxUs: x.usMax,
+    maxWire: x.wireMax,
+    maxRows: x.rowsMax,
   });
   return {
-    values: summary(of("activation")),
-    notices: summary(of("notice")),
+    values: summary(side.worker.archive.admitted),
+    notices: summary(side.worker.recorder.archive.admitted),
     turnMsDiagnosticMax: Math.max(0, ...side.holds),
   };
 };

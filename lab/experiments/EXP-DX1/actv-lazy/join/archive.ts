@@ -127,8 +127,9 @@ export class Archive {
   readonly queue: BulkQueue;
   /** The framing new work starts with (a release already started keeps its own). */
   readonly frames: FrameMode;
-  /** Every frame this process admitted: its kind, rows, wire estimate and estimated service (diagnostic evidence). */
-  readonly admitted: { kind: BulkClass; rows: number; wire: number; us: number }[] = [];
+  /** The frames this process admitted: count and largest rows, wire estimate and estimated service, and the sum of
+   * estimated service (bounded evidence, not one entry per frame). */
+  readonly admitted = { frames: 0, rowsMax: 0, wireMax: 0, usMax: 0, usSum: 0 };
   private constructor(
     source: JoinedAccount,
     store: Store,
@@ -170,7 +171,14 @@ export class Archive {
     // [DX-ACT1] Why: constrain native preparation and durable turns independently of page count. Rejected: a multi-megabyte atomic frame or assuming a timeout can preempt a durable native transaction.
     const estimate = frameEstimate(ops);
     assert(estimate.fits, "Bulk batch exceeds W1 service estimate");
-    this.admitted?.push({ kind, rows: estimate.rows, wire: estimate.wire, us: estimate.us });
+    const n = this.admitted;
+    if (n) {
+      n.frames++;
+      n.rowsMax = Math.max(n.rowsMax, estimate.rows);
+      n.wireMax = Math.max(n.wireMax, estimate.wire);
+      n.usMax = Math.max(n.usMax, estimate.us);
+      n.usSum += estimate.us;
+    }
     if (authority) verifySameErasureAuthority(this.source.s.comp, this.store.comp);
     // [DX-ERASE1] Why: admission can wait after a page was derived, so the same ticket belongs on the destination commit.
     // Rejected: a source read immediately before enqueueing (removal can publish while the batch waits).
