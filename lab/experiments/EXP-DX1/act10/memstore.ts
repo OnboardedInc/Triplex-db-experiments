@@ -103,6 +103,8 @@ export class MemDb {
             return { ok: false as const, tag: "TransactionConflictError", error: { message: "revision " + e } };
           }
       const r = await this.comp.transact(ops, meta);
+      // The correlation is stored with the transaction, only when it commits (as the gateway stores it).
+      if (r.ok && meta?.correlationId !== undefined) this.correlation.set(meta.commandId, meta.correlationId);
       if (!r.ok) {
         if (r.tag === "CommandAlreadyCommittedError") this.refusals.command++;
         else this.refusals.live++;
@@ -278,8 +280,7 @@ export function memStore(proc: Proc, held: HeldSource, label = proc.db.scope) {
     await proc.gate();
     // A schedule may land another write here: after this commit's read and guards, before the transactor.
     await db.beforeCommit?.(id);
-    db.correlation.set(id, correlationId);
-    const r = await db.transact(ops, { commandId: id, actor, preconditions }, rule);
+    const r = await db.transact(ops, { commandId: id, actor, preconditions, correlationId }, rule);
     if (r.ok) {
       counters.writes++;
       onAck?.(performance.now());
