@@ -5107,3 +5107,21 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Browser pass from the Mac through the tunnel** (`exp/DX-CON1-console` `2fa24d78a`, tunnel round trip 68.6 ms; screenshots in the private `demo-design/screenshots-1b/`): steps 1 to 6 passed: subject 50000 of account-003 read at 21.97 ms then 5.25 ms store; question 1.60 ms store and 40.89 ms console (121 facts, 30 entities); sealed head 25.35 ms; position 87,002 2.69 ms; whole-database question refused; type `Inspection` committed and re-committed (release at position 28,309,877); entity created; correction; Both time axes approved / approved / pending at 1.06 / 0.38 / 13.14 ms store.
 - **Step 7 failed:** every `change_feed` call on this database returns `ReadError: Datomic read failed` (HTTP 400); the Journal screen stays on its loading rows. Builder B resumed to fix it through the live tunnel (first suspects: the loader position-row compatibility flag missing from the connection file; reads starting below the sealed head). Server 2 holds the stack until 01:15 UTC.
 - **Card assembly builder** still working. **Running (4):** two drivers, console builder B, the card builder.
+
+### 2026-11-23 19:39 local: Publish at 100,000, small release, repaired runner: 11 of 11 windows, 100 of 100 inside one second, no early probe; journal fault on the 1 billion copy located (4 agents running)
+
+- **Second machine, `f5f8c09ff`** (`origin/exp/DX-BM1-bare-metal` `3c3419fd5`). 0 of 100 Publishes had a probe before the Publish was visible; `readHeadLagAfterAck` 0 in every Publish. Across the three runs (at least 241 Publishes) the only early probe is the first small run's stop. Records: small 5,289 to 5,296 bytes, large 17,681 to 17,690 bytes, 4 changes each.
+
+  | Window (credits, live saves/s) | Small release: first-correct p50 / p99 ms | Large release (20 forms, 20 policies) |
+  | --- | --- | --- |
+  | whole-turn, 3.5 | 31.6 / 93.8 (first run) | 40.2 / 55.2 |
+  | per-save, 3.5 | 33.1 / 50.9 | 32.1 / 71.3 |
+  | whole-turn, 23.5 | 35.9 / 159.1 | 52.4 / 120.5 |
+  | per-save, 23.5 | 39.6 / 421.4 | 49.3 / 322.8 |
+  | whole-turn, 39.4 | 45.3 / 132.8 | 63.0 / 140.6 |
+  | per-save, 39.4 | 43.9 / 127.0 | 67.3 / 190.4 |
+
+- **The large release's falsifier fired** ("p50 more than 10 ms above the small release") at whole-turn 23.5 (+16.5), whole-turn 39.4 (+17.7) and per-save 39.4 (+23.4). The forecast of +1 to +6 ms was too low at the higher rates; the two runs used different builds and copies.
+- **Live saves at 39.4/s during a small-release Publish:** p99 276 ms (whole-turn) and 273 ms (per-save) against controls of 119 and 165 ms: 2.3 and 1.7 times, outside P5's 1.5 times with the small release too. The large release's 612 ms against 35.5 ms in per-save mode is therefore partly the control's variation between runs.
+- **Journal fault on the 1 billion working copy (console builder, through the tunnel):** `journal.clj` `page` walks `d/index-range :triplex.tx/position` from after+1 and keeps only journals with position in (after, head]; the loader's 28 million position rows (G11, non-canonical) lie in that range and never pass the filter, so a page that asks for more transactions than exist between `after` and the head, or starts below the sealed head, walks all of them while holding the gateway's single journal permit (`admission/journals`); the client gives up at 30 s. One such request ran on each gateway (the read gateway's from the Journal screen's default of head minus 20; the write gateway's from the builder's own probe), so every journal read then waited. A request with after = sealed head + 10, limit 2 answered in 2.6 ms. Driver asked to restart the two gateways; the console fix (never ask past the head, never below the sealed head on a loader-built database, long poll with limit 1, real error text, error states) is being built. **Backlog:** the gateway's journal route needs its own bound on entries examined, with a cursor.
+- **Second machine:** start-up read at 1 billion running since 00:36 UTC, then the fixed owner head pair on fresh.
