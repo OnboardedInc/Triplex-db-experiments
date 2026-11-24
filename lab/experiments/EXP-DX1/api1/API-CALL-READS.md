@@ -31,20 +31,19 @@ here has run on a server.
   inside 50 ms with the batch (2.8 to 31 ms re-read, 6 to 36 ms random; the form submission 35 to 108 ms including
   its save); today the subject page, the policy evaluation and the form submission straddle 50 ms (low and high
   estimates 19 to 66, 33 to 81, 28 to 148 ms); per read today 3 to 15 ms alone, so "each read under 50 ms" holds
-  for one caller (not for the list page's 1,524 reads queued on 3 permits). **At
-  256 concurrent callers nothing meets 50 ms or 200 ms per call, batched or not**: the reader saturates (calls/s =
+  for one caller (not for the list page's 1,524 reads queued on 3 permits). **At 256 concurrent callers nothing meets 50 ms or 200 ms per call, batched or not**: the reader saturates (calls/s =
   2.7 cores ÷ CPU per call), so a subject page's p50 is about 4.7 s today and 1.7 s batched; per read p99 today about
   0.25 to 4 s. At 64 callers only the smallest shape (a task's fields, 2 reads) stays inside 200 ms. **Cold worst
   case:** the list page of 50 random subjects, 1.6 to 2.4 s alone today and 0.2 to 0.3 s batched (about 130 to 570
   storage loads); a random subject's page 23 to 125 ms alone today.
 - **What it means:** the lead's sentence is answerable for one call at a time, not for 256 at once on one reader. The
-  batch takes the round trips out (2.5 to 4 times the calls per core) and makes every call one position; what is left
+  batch takes the round trips out (1.7 to 4.3 times the calls per core) and makes every call one position; what is left
   is CPU per entity read (about 0.4 ms on the server as rows, 0.06 ms inside a reach). 256 subject pages at once
-  inside 50 ms p99 would need about 175 reader cores (about 44 for 200 ms); the next levers are the per-subject row cache costed in RD5 (not built) and more
-  reader machines (RD5 command 2).
+  inside 50 ms p99 would need about 175 reader cores (about 44 for 200 ms); the next levers are the per-subject row
+  cache costed in RD5 (not built) and more reader machines (RD5 command 2).
 - **Server run** (section 7): one bring-up of the 1 billion working copy with the tuned reader and the batch on, alone
-  cells and 12 windows of the mix at 64 and 256 callers, re-read and random subjects, saves at 23/s: 31 to 47 minutes,
-  USD 0.56 to 0.85. **Proposed scorecard line P10** in section 8.
+  cells, 12 windows of the subject-centred mix at 64 and 256 callers and 6 of the list page at 8, re-read and random
+  subjects, saves at 23/s: 33 to 49 minutes, USD 0.60 to 0.89. **Proposed scorecard line P10** in section 8.
 
 
 ## 1. What a real API call reads (the product's handlers, counted from their code)
