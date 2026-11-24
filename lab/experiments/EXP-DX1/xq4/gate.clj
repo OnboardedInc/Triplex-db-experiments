@@ -296,23 +296,30 @@
      :distinct (when (= "countDistinct" (get q "result"))
                  (count (into #{} (mapcat (fn [id] (keep (fn [[f v]] (when (= f "ref") v)) (values id (get q "of")))) matched))))}))
 
+(defn gc-ms
+  "Milliseconds every collector of this JVM has spent so far (stop-the-world for the serial collector)."
+  []
+  (reduce + (map #(.getCollectionTime ^java.lang.management.GarbageCollectorMXBean %)
+                 (java.lang.management.ManagementFactory/getGarbageCollectorMXBeans))))
 (defn run-find
   "Every page of a question, with small pages and bounds to force cursors. Returns the concatenation."
   [name q page-limit bounds]
   (loop [cursor nil pages [] ids [] projected {} guard 0 bounds bounds raises 0]
     (let [input (cond-> (assoc q "limit" page-limit "bounds" bounds) cursor (assoc "cursor" cursor))
+          g0 (gc-ms)
           r (route name "v2" "find" input)
+          gc (- (gc-ms) g0)
           small? (and (= 413 (:status r)) (= "BoundTooSmall" (get-in r [:body "code"])) (< (get bounds "entries") 1000000))]
       ;; A client told its entry bound is too small for one candidate raises it (x10, to the cap) and asks the same page.
       (when-not (or (= 200 (:status r)) small?) (throw (ex-info "find refused" {:q q :reply r})))
       (if small?
         (recur cursor pages ids projected (inc guard) (update bounds "entries" #(min 1000000 (* 10 %))) (inc raises))
       (let [b (:body r) ids (into ids (get b "ids" [])) projected (merge projected (get b "projected" {}))
-            pages (conj pages (select-keys b ["stopped" "examined" "segmentsLoaded" "count" "countExact" "position" "indexEpoch" "entityReads" "indexOnly"]))]
+            pages (conj pages (assoc (select-keys b ["stopped" "examined" "segmentsLoaded" "count" "countExact" "position" "indexEpoch" "entityReads" "indexOnly" "queryMicros"]) "gcMs" gc))]
         (if (and (get b "next") (< guard 100000))
           (recur (get b "next") pages ids projected (inc guard) bounds raises)
           {:ids ids :projected projected :last b :pages (count pages) :stops (frequencies (map #(get % "stopped") pages))
-           :raises raises
+           :raises raises :pageList pages
            :entityReads (reduce + (map #(get % "entityReads" 0) pages))
            :firstPageIndexOnly (get (first pages) "indexOnly") :firstPageEntityReads (get (first pages) "entityReads")}))))))
 
@@ -725,16 +732,17 @@
                                 (= "CursorMismatch" (get-in other [:body "code"])) (= "AccountRequired" (get-in no-account [:body "code"])))}))))
 
 (defn phase-g5! [label]
-  (let [name (db-name label) conn (reopen name)
+  (let [gc-start (gc-ms) name (db-name label) conn (reopen name)
         q {"account" "acc-a" "where" [{"attribute" ":task/status" "op" "exists"}] "result" "count"}
         world (world-at name conn (head name conn) 1.79e12)
         expected (count (:ids (brute world "acc-a" q)))
         paged (run-find name (assoc q "basis" {"validAt" 1.79e12}) 1000 {"entries" 1000 "ms" 1000 "segments" 4096})
         timed (run-find name (assoc q "basis" {"validAt" 1.79e12}) 1000 {"entries" 1000000 "ms" 1 "segments" 4096})
         pool (Executors/newFixedThreadPool 64)
-        heavy (fn [i] (fn [] (let [t0 (System/nanoTime)
+        heavy (fn [i] (fn [] (let [t0 (System/nanoTime) g0 (gc-ms)
                                    r (route name "v2" "find" (assoc q "account" (nth accounts (mod i 3)) "bounds" {"entries" 1000000 "ms" 50 "segments" 4096}))]
                                {:status (:status r) :code (get-in r [:body "code"]) :micros (get-in r [:body "queryMicros"])
+                                :segments (get-in r [:body "segmentsLoaded"]) :gcMs (- (gc-ms) g0)
                                 :wallMs (/ (- (System/nanoTime) t0) 1e6)})))
         reads (future (vec (for [i (range 200)]
                              (:status (route name "v1" "read" {"entityIds" [(subj "acc-b" i)] "basis" {"recordedPosition" (head name conn)}})))))
@@ -745,12 +753,69 @@
                    :pagedByTime {:count (get (:last timed) "count") :pages (:pages timed) :stops (:stops timed)}
                    :concurrent (frequencies (map (juxt :status :code) outcomes))
                    :maxQueryMicrosAnswered (reduce max 0 (keep :micros outcomes))
-                   :answeredMicros (sort (keep :micros outcomes)) :answeredWallMs (sort (keep #(when (:micros %) (:wallMs %)) outcomes))
+                   :answered (vec (sort-by :micros (map #(select-keys % [:micros :gcMs :segments :wallMs]) (filter :micros outcomes))))
+                   ;; GC attribution: the request's time less the collectors' time during it (a pause stops every thread).
+                   :maxAnsweredMicrosLessGc (reduce max 0 (keep #(when (:micros %) (- (:micros %) (* 1000 (:gcMs %)))) outcomes))
+                   :timedPages {:bound-ms 1 :pages (count (:pageList timed))
+                                :maxQueryMicros (reduce max 0 (keep #(get % "queryMicros") (:pageList timed)))
+                                :maxQueryMicrosLessGc (reduce max 0 (keep #(when-let [m (get % "queryMicros")] (- m (* 1000 (get % "gcMs")))) (:pageList timed)))
+                                :pagesWithGc (count (filter #(pos? (get % "gcMs")) (:pageList timed)))
+                                :over11ms (count (filter #(> (get % "queryMicros" 0) 11000) (:pageList timed)))
+                                ;; The pages that ran past their bound by more than 2 ms, with what they read.
+                                :slowPages (vec (for [pg (:pageList timed) :when (> (get pg "queryMicros" 0) 3000)]
+                                                  (select-keys pg ["queryMicros" "gcMs" "segmentsLoaded" "examined" "stopped"])))
+                                :segmentsLoadedPerPage (frequencies (map #(get % "segmentsLoaded") (:pageList timed)))}
+                   :gcMsDuringPhase (- (gc-ms) gc-start)
                    :pinnedReadsDuring (frequencies @reads)
                    :pass (and (= expected (get (:last paged) "count") (get (:last timed) "count"))
                               (every? #(#{200 503} (:status %)) outcomes)
                               (<= (reduce max 0 (keep :micros outcomes)) 60000)
                               (every? #(= 200 %) @reads))})))
+
+;; ---- D3: with the index on, a bulk frame's index entries count beside its rows against the 96 limit.
+(defn phase-d3! []
+  (let [[name conn] (open! "d3")
+        _ (ok! "declaration" (route name "v2" "index-declaration" {"version" 1 "attributes" [{"attribute" ":person/name" "code" "n1" "family" "string"}]}))
+        _ (backfill! name)
+        frame (fn [op n attr cls]
+                ;; n new entities with one fact each: rows = n facts + n changed-entity rows + 3 journal rows.
+                (let [facts (for [i (range n)] [(str op "-" i) (format "acct/acc-d/%s:%04d" op i) attr ["string" (str "v" i)]])]
+                  (cond-> (batch-input op facts) cls (assoc "writeClass" cls))))
+        send (fn [input] (let [r (route name "v1" "transact" input)] [(:status r) (get-in r [:body "code"])]))
+        cases [["30 declared values, import (63 rows + 30 entries = 93)" (frame "d3-a" 30 ":person/name" "import") [200 nil]]
+               ["32 declared values, import (67 rows + 32 entries = 99)" (frame "d3-b" 32 ":person/name" "import") [413 "BulkFrameTooLarge"]]
+               ["32 undeclared values, import (67 rows, no entries)" (frame "d3-c" 32 ":person/other" "import") [200 nil]]
+               ["32 declared values, live save (not a bulk frame)" (frame "d3-d" 32 ":person/name" nil) [200 nil]]
+               ["32 declared values through the import encoding" (let [f (frame "d3-e" 32 ":person/name" "import") order (get f "newIds")]
+                                                                   (-> f (dissoc "rows" "newIds" "rowTexts") (assoc "rowMode" "texts" "freshTexts" (mapv #(get-in f ["rowTexts" %]) order))))
+                [413 "BulkFrameTooLarge"]]]
+        got (mapv (fn [[label input want]] {:case label :got (send input) :want want}) cases)]
+    (say "XQ4_D3" {:cases got :pass (every? #(= (:got %) (:want %)) got)})))
+
+;; ---- B1: an attribute a release writes (write class "activation") is never declared, and a release never writes a
+;; declared attribute.
+(defn phase-b1! []
+  (let [[name conn] (open! "b1")
+        save (fn [op attr cls n]
+               (let [facts (for [i (range n)] [(str op "-" i) (format "acct/acc-r/%s:%04d" op i) attr ["string" (str "v" i)]])
+                     r (route name "v1" "transact" (cond-> (batch-input op facts) cls (assoc "writeClass" cls)))]
+                 [(:status r) (get-in r [:body "code"])]))
+        declare (fn [attrs] (let [r (route name "v2" "index-declaration"
+                                           {"version" 1 "attributes" (vec (map-indexed (fn [i a] {"attribute" a "code" (str "r" i) "family" "string"}) attrs))})]
+                              [(:status r) (get-in r [:body "code"])]))
+        recorded #(let [db (d/db conn)] (sort (xcall 'release-attributes db)))
+        steps [["a release writes :task/score" (save "b1-a" ":task/score" "activation" 3) [200 nil]]
+               ["declaring :task/score is refused" (declare [":task/score"]) [409 "ReleaseWrittenAttribute"]]
+               ["declaring :person/name is accepted" (declare [":person/name"]) [200 nil]]
+               ["a release writing :person/name is refused" (save "b1-b" ":person/name" "activation" 2) [409 "ReleaseWritesDeclaredAttribute"]]
+               ["a live save writing :person/name is accepted" (save "b1-c" ":person/name" nil 2) [200 nil]]
+               ["an import writing :person/name is accepted" (save "b1-d" ":person/name" "import" 2) [200 nil]]
+               ["the release writes :task/score again (nothing new recorded)" (save "b1-e" ":task/score" "activation" 2) [200 nil]]
+               ["declaring :person/name and :task/score together is refused" (declare [":person/name" ":task/score"]) [409 "ReleaseWrittenAttribute"]]]
+        got (mapv (fn [[label result want]] {:step label :got result :want want}) steps)
+        rec (recorded)]
+    (say "XQ4_B1" {:steps got :recordedReleaseAttributes rec
+                   :pass (and (every? #(= (:got %) (:want %)) got) (= [":task/score"] rec))})))
 
 (defn phase-g3! []
   ;; Removal on request: a protected attribute cannot be declared; after removal no entry, its history or the log holds

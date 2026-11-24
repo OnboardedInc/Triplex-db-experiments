@@ -120,8 +120,14 @@
         _ (when-let [odd (account-outside-ids db)]
             (refuse! 409 "AccountNotInEntityId"
                      (str "Entity " odd " has no acct/<account>/ prefix; this database keeps accounts as facts, which the index cannot key")))
-        db (if (x/installed? db) db (:db-after @(d/transact conn x/schema-ops)))
-        current (x/declaration db)]
+        db (if (and (x/installed? db) (x/release-installed? db)) db (:db-after @(d/transact conn x/schema-ops)))
+        current (x/declaration db)
+        ;; Review B1: an attribute a release has written is never declared (checked on the db whose sequence the
+        ;; declaration's cas names; a release recording a new attribute moves that sequence).
+        _ (when-let [written (seq (filter (x/release-attributes db) (map #(get % "attribute") (get input "attributes" []))))]
+            (refuse! 409 "ReleaseWrittenAttribute"
+                     (str "A release writes " (clojure.string/join ", " written) "; its values settle in the background, so an index"
+                          " answer would be stale while it settles. Ask by the exact sweep, or by the subject's own read")))]
     (if (= text (:text current))
       {:database name :seq (:seq current) :declaration (json/read-str text) :changed false
        :epochs (x/epochs db (:eid current))}
@@ -369,7 +375,9 @@
          (let [n (inc (aget work 0))]
            (aset work 0 n)
            (when (> n entries) (stop! "entries"))
-           (when (and (zero? (bit-and n 127)) (>= (System/nanoTime) deadline)) (stop! "time")))
+           ;; Every datom (G5: a check every 128 datoms let a page run 12 ms past a 1 ms bound); a single storage read
+           ;; inside one iterator step can still pass the bound (the true bound is the bound plus one storage read).
+           (when (>= (System/nanoTime) deadline) (stop! "time")))
          x) s))
 (defn- after-items [desc? after s]
   (if (nil? after) s (drop-while #(let [k (compare (first %) after)] (if desc? (>= k 0) (<= k 0))) s)))
@@ -687,6 +695,8 @@
         visibility? (and from (nil? from-type) (not-any? #(#{"eq" "in" "range" "prefix" "exists"} (:op %)) conds))
         needs-entity? (or (seq rest-conds) from-type (seq project-codes) of-code (and driver-c (some? after)) visibility?)
         wait-ms (get limits "ms")
+        ;; The head is read before the time bound starts (it can be a storage read of its own).
+        head-p (storage/head-position name current)
         queued (System/nanoTime)]
     ;; Step 0's shared admission: a fair queue per account, then a fair shared permit (ids/admitted).
     (:value
@@ -789,7 +799,7 @@
             (stats/bump! [:crossFind :examined] (aget work 0))
             (stats/bump! [:crossFind :entityReads] (aget work 1))
             (cond-> {:database name :account account :position position :t (str t) :validAt valid
-                     :head (storage/head-position name current) :indexEpoch epoch-p :trailingBy 0 :result result
+                     :head head-p :indexEpoch epoch-p :trailingBy 0 :result result
                      :order (if driver-c {:by (:attribute driver-c) :direction (if scan-desc? "desc" "asc")}
                               {:by "entity" :direction (if desc? "desc" "asc")})
                      :examined (aget work 0) :entityReads (aget work 1) :indexOnly (not needs-entity?)

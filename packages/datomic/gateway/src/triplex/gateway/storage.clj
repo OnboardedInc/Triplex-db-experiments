@@ -306,6 +306,11 @@
          ;; Rejected: changing the stored commit functions, or computing entries on the transactor.
          index (when (and cross/enabled lean) (cross/declaration db))
          ops (if index (into ops (cross/tx-ops db index (or (:attrs privacy/*cut*) #{}) fresh old (get input ::index-lenient))) ops)
+         release (when index (cross/release-ops db index fresh input))
+         ops (if release
+               (into (mapv #(if (and (vector? %) (= :db/cas (first %)) (= :triplex.ix/seq (nth % 2 nil))) (:fence release) %) ops)
+                     (:ops release))
+               ops)
          journals (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))
          [claim] claims
          command (get claim "commandId")
@@ -539,6 +544,8 @@
           validated (when (= "1" (System/getenv "TX2_SUBJECT_RETIREMENT_TRACE")) (System/nanoTime))
           frame-size (group/frame-measurement (second (first data)) input)
           _ (try (group/bound-frame! frame-size) (catch Exception e (reject-ordered! conn input e)))
+          ;; [DX-XQ4] With the index on, a bulk frame's index entries count beside its rows (review D3).
+          _ (when cross/enabled (try (cross/bound-frame! (second (first data)) input policy/bulk-rows) (catch Exception e (reject-ordered! conn input e))))
           ;; [DX-PREP1] Why: the unordered subject arm submits one native transaction and uses its actual durable report.
           ;; Rejected: bypassing protected-scope erasure or live/import admission, or applying the draft speculatively.
           subject-plan (when (and subject/enabled

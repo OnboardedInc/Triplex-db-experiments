@@ -20,8 +20,11 @@
   [(schema/attr :triplex.ix/declaration :db.type/string)
    (schema/attr :triplex.ix/seq :db.type/long)
    (assoc (schema/attr :triplex.ix/entry :db.type/string nil true) :db/cardinality :db.cardinality/many)
-   (assoc (schema/attr :triplex.ix/epoch :db.type/string) :db/cardinality :db.cardinality/many)])
+   (assoc (schema/attr :triplex.ix/epoch :db.type/string) :db/cardinality :db.cardinality/many)
+   ;; [DX-XQ4] Review B1: attributes a release has written (write class "activation"), on the declaration entity.
+   (assoc (schema/attr :triplex.ix/release-attribute :db.type/string) :db/cardinality :db.cardinality/many)])
 (defn installed? [db] (some? (d/entid db :triplex.ix/entry)))
+(defn release-installed? [db] (some? (d/entid db :triplex.ix/release-attribute)))
 
 ;; ---------------------------------------------------------------------------------------------------------------
 ;; Key encoding. The separator is U+0001; U+0000 to U+0002 inside a text are written as U+0002 followed by the character
@@ -183,8 +186,8 @@
   "[DX-XQ4] With the option on, the fence exists before any declaration: the schema and the declaration entity with
   sequence 0, so a save prepared before the first declaration cannot commit after it. Returns the db to prepare on."
   [conn db]
-  (if (or (not enabled) (declaration-eid db)) db
-    (let [db (if (installed? db) db (:db-after @(d/transact conn schema-ops)))]
+  (if (or (not enabled) (and (declaration-eid db) (release-installed? db))) db
+    (let [db (if (and (installed? db) (release-installed? db)) db (:db-after @(d/transact conn schema-ops)))]
       (if (declaration-eid db) db
         (try (:db-after @(d/transact conn [{:db/id "declaration" :triplex.entity/id declaration-id :triplex.ix/seq 0}]))
              (catch Exception _ (d/db conn)))))))
@@ -209,6 +212,49 @@
           typed (when (contains? (:entry-types decl) (:entity_type row))
                   (type-key token (:entity_type row) local))]
       (when (or value typed) {:value value :type typed}))))
+
+;; [DX-XQ4] Why (review D3): the bulk frame bound (96 rows, write_policy and group/bound-frame!) counts fresh and retired
+;; rows; with the index on, a frame of declared values carries up to one value entry per fresh row, one retraction per
+;; retired row and one type entry per new entity, all applied by the single writer. With the option on, a non-live
+;; frame that carries entries counts them beside its rows against the same limit. Rejected: a separate, larger entry
+;; limit (it would never bind: entries are at most twice the rows), and changing the bound with the option off.
+(defn entry-datoms [p]
+  (count (filter #(and (vector? %) (#{:db/add :db/retract} (first %)) (= :triplex.ix/entry (nth % 2 nil))) (:ops p))))
+(defn bound-frame! [p input limit]
+  (when (and enabled (not= "live" (get input "writeClass" (if (seq (get input "claims")) "live" "import"))))
+    (let [entries (entry-datoms p)
+          rows (+ (count (:new-ids p)) (count (filter #(and (vector? %) (= :triplex/retract (first %))) (:ops p))))]
+      (when (and (pos? entries) (> (+ rows entries) limit))
+        (throw (ex-info (str "Atomic bulk frame exceeds its limit of " limit " rows and index entries (" rows " rows, "
+                             entries " index entries)")
+                        {:code "BulkFrameTooLarge" :status 413 :maximum limit}))))))
+
+;; [DX-XQ4] Why (review B1, the smallest safe rule): a release writes its values in the background (settlement), so an
+;; index answer on such an attribute would be stale while it settles and would still say trailingBy 0. With the option
+;; on, a save of write class "activation" (a release's settlement) records each attribute it writes on the
+;; declaration entity (only those not yet recorded), and is refused when it writes a declared attribute; a
+;; declaration naming a recorded attribute is refused (cross_find.clj). Rejected for now: the full rule (an answer that
+;; names the release in force and the account's settlement state, refusing SettlementInProgress), which needs the
+;; settlement writer's state on this branch.
+(defn release-attributes [db]
+  (if-let [e (and (release-installed? db) (declaration-eid db))]
+    (into #{} (map :v) (d/datoms db :eavt e :triplex.ix/release-attribute))
+    #{}))
+(defn release-ops [db decl fresh input]
+  (when (and enabled (:eid decl) (= "activation" (get input "writeClass")))
+    (let [attrs (into (sorted-set) (comp (filter #(nil? (:retracted_at %))) (map :attribute)
+                                         (filter #(and (string? %) (not (.startsWith ^String % ":_")))))
+                      fresh)
+          declared (filter #(contains? (:codes decl) %) attrs)]
+      (when (seq declared)
+        (throw (ex-info (str "A release may not write an attribute declared for questions across subjects ("
+                             (str/join ", " declared) "): its answers would be stale while the release settles")
+                        {:status 409 :code "ReleaseWritesDeclaredAttribute"})))
+      ;; Recording a new attribute moves the declaration's sequence (the save's fence becomes s -> s+1), so a
+      ;; declaration checked against the set before this save fails its own cas and is checked again.
+      (let [known (release-attributes db)
+            new (vec (for [a attrs :when (not (contains? known a))] [:db/add (:eid decl) :triplex.ix/release-attribute a]))]
+        (when (seq new) {:ops new :fence [:db/cas (:eid decl) :triplex.ix/seq (:seq decl) (inc (:seq decl))]})))))
 
 (defn op? [op]
   (and (vector? op)
