@@ -284,13 +284,17 @@ export async function play(
   // Rejected: rewriting the SDK's request (it would no longer be the product's save).
   const productMode = process.env.DX_S2_PRODUCT;
   assert(productMode === undefined || productMode === "0" || productMode === "1", "DX_S2_PRODUCT is 0 or 1");
+  // [DX-S3] DX_S3_OWNERS=1: the SDK's severalOwners option beside orderedSaves (the writers run the gateway's option).
+  const severalOwners = process.env.DX_S3_OWNERS === "1";
+  assert(!severalOwners || (productMode === "1" && wide), "DX_S3_OWNERS=1 needs DX_S2_PRODUCT=1 and TX2_SUBJECT_WIDE=1");
   const products: Awaited<ReturnType<typeof import("../../s2/product.ts")["productSaver"]>>[] = [];
   if (productMode !== undefined) {
     const { productSaver } = await import("../../s2/product.ts");
     for (const [a, s] of scopes.entries()) {
       const scopeJson = Buffer.from(s.scope.db.replace(/^s2-/, ""), "base64url").toString("utf8");
       products.push(await productSaver([(s.client as unknown as { endpoint: URL }).endpoint.href], scopeJson,
-        { ...(productMode === "1" ? { orderedSaves: true, saveSizeRule: true } : {}), groupAccount: keyFor(a), writeClass: "live" }));
+        { ...(productMode === "1" ? { orderedSaves: true, saveSizeRule: true } : {}), ...(severalOwners ? { severalOwners: true } : {}),
+          groupAccount: keyFor(a), writeClass: "live" }));
     }
   }
   const admit = ramp ? startupAdmission() : undefined;

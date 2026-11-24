@@ -119,8 +119,12 @@ const initial = new Map([...fields].map(([e, rows]) => [e, new Map(rows.map((r) 
 const productMode = process.env.DX_S2_PRODUCT;
 assert(productMode === undefined || productMode === "0" || productMode === "1", "DX_S2_PRODUCT is 0 or 1");
 const { productSaver } = await import("../s2/product.ts");
+// [DX-S3] DX_S3_OWNERS (0 or 1, only with DX_S2_PRODUCT=1): the SDK's severalOwners option beside orderedSaves.
+const severalOwners = process.env.DX_S3_OWNERS;
+assert(severalOwners === undefined || ((severalOwners === "0" || severalOwners === "1") && productMode === "1"), "DX_S3_OWNERS is 0 or 1, with DX_S2_PRODUCT=1");
 const product = productMode === undefined ? undefined
-  : await productSaver([url!], scope, productMode === "1" ? { orderedSaves: true, saveSizeRule: true } : {});
+  : await productSaver([url!], scope, productMode === "1"
+    ? { orderedSaves: true, saveSizeRule: true, ...(severalOwners === undefined ? {} : { severalOwners: severalOwners === "1" }) } : {});
 const legacyIds = new Set([...fields.values()].flatMap((rows) => rows.map((r) => r.id)));
 const results = [];
 let cut = head;
@@ -169,7 +173,7 @@ const result = {
   gate: "real2-aged-live", paramsSha256: sha256, seedCut, head, agingSaves: aged.saves, active: aged.active,
   owners: owners.length, agedRowsAdmitted: agedRows.length, tamperedAgedRowRefused: true, writesOverAgedRows: overAged,
   fieldsChecked, finalCut: cut, timings: "diagnostic", wideSaves: process.env.TX2_SUBJECT_WIDE === "1",
-  productPath: productMode ?? null, saveRoutes: product?.routes() ?? null,
+  productPath: productMode ?? null, saveRoutes: product?.routes() ?? null, ...(severalOwners === undefined ? {} : { severalOwners }),
   cells: results.map(({ cell, result, wallMs }) => {
     const report = tapeReport(cell.tape, cell.duration, params);
     return { label: cell.label, offers: cell.tape.length, acked: result.rows.filter((r) => r.receipt).length,

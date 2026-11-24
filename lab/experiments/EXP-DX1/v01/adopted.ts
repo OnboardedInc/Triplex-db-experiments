@@ -371,6 +371,8 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     // [DX-S1] The default-off writer options the arm was given are the ones its writer runs (run.ts passes them).
     assert.deepEqual([Boolean(options.subjectWide), Boolean(options.options?.generalPrefetch), Boolean(options.options?.subjectHints)],
       [process.env.TX2_SUBJECT_WIDE === "1", process.env.TX2_GENERAL_PREFETCH === "1", process.env.TX2_SUBJECT_HINTS === "1"]);
+    // [DX-S3] The several-owners option the arm was given is the one its writer runs, with its function installed.
+    assert.equal(Boolean(options.subjectSeveralOwners && options.subjectSeveralOwnersFunction), process.env.DX_S3_OWNERS === "1");
     assert.deepEqual([Boolean(options.subjectNarrowRevision), Boolean(options.subjectReusePredecessor)],
       [Boolean(peer.serialApply), Boolean(peer.serialApply)]);
     if (retirement) {

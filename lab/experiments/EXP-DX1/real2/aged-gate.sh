@@ -37,6 +37,14 @@ if [[ -n ${DX_S1_WIDE:-} ]]; then
   w3+=(-e "TX2_SUBJECT_WIDE=$DX_S1_WIDE")
   export TX2_SUBJECT_WIDE=$DX_S1_WIDE
 fi
+# [DX-S3] Optional: several owners on the per-subject writer (0 or 1), in the gateway (TX2_SUBJECT_SEVERAL_OWNERS) and
+# the driver's SDK (severalOwners); needs DX_S1_WIDE=1 and DX_S2_PRODUCT=1. Unset leaves the gate as it was.
+if [[ -n ${DX_S3_OWNERS:-} ]]; then
+  [[ $DX_S3_OWNERS =~ ^[01]$ && ${DX_S1_WIDE:-} == 1 && ${DX_S2_PRODUCT:-} == 1 ]] ||
+    { echo "DX_S3_OWNERS must be 0 or 1, with DX_S1_WIDE=1 and DX_S2_PRODUCT=1" >&2; exit 2; }
+  w3+=(-e "TX2_SUBJECT_SEVERAL_OWNERS=$DX_S3_OWNERS")
+  export DX_S3_OWNERS
+fi
 docker run -d --name "$name" --memory 3g -p "127.0.0.1:$port:8080" ${w3[@]+"${w3[@]}"} --entrypoint /bin/bash \
   -v "$repo/packages/datomic/gateway/src:/opt/gateway/src:ro" -v "$out/age1src:/age:ro" \
   -v "$repo/lab/experiments/EXP-DX1/prep1/aged-live:/gate:ro" -v "$out/out:/out" "$image" /gate/container.sh >/dev/null

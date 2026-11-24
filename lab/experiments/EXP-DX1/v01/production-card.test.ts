@@ -63,6 +63,9 @@ test("the card records the default-off writer options it was given", () => {
   assert.deepEqual(writerOptionsSet({ DX_S2_PRODUCT: "0" }), { DX_S2_PRODUCT: "0" });
   assert.deepEqual(writerOptionsSet({ DX_S2_PRODUCT: "1", TX2_SUBJECT_WIDE: "1" }), { TX2_SUBJECT_WIDE: "1", DX_S2_PRODUCT: "1" });
   assert.throws(() => writerOptionsSet({ DX_S2_PRODUCT: "on" }), /0 or 1/);
+  // [DX-S3] The several-owners option is recorded only when on.
+  assert.deepEqual(writerOptionsSet({ DX_S3_OWNERS: "0" }), {});
+  assert.deepEqual(writerOptionsSet({ DX_S2_PRODUCT: "1", TX2_SUBJECT_WIDE: "1", DX_S3_OWNERS: "1" }), { TX2_SUBJECT_WIDE: "1", DX_S2_PRODUCT: "1", DX_S3_OWNERS: "1" });
 });
 
 // [DX-S1] The save-size ladder keeps the S tape's subjects and times and gives every save exactly N facts.

@@ -39,7 +39,9 @@ export const defaultCardTape: CardTape = "production-S-noburst";
 // [DX-S2] DX_S2_PRODUCT (0 or 1, recorded either way) sends every card save through the product's path (TriplesLive and
 // the Datomic adapter) with the SDK's orderedSaves option off or on; unset, the lab producer as before. It is a client
 // setting, so no writer reads it back.
-export const writerOptionNames = ["TX2_SUBJECT_WIDE", "TX2_GENERAL_PREFETCH", "TX2_SUBJECT_HINTS", "DX_S2_PRODUCT"] as const;
+// [DX-S3] DX_S3_OWNERS=1 (with DX_S2_PRODUCT=1 and TX2_SUBJECT_WIDE=1): the several-owners option in the writers
+// (TX2_SUBJECT_SEVERAL_OWNERS, forwarded by stack/up.sh) and in the SDK (severalOwners); recorded only when on.
+export const writerOptionNames = ["TX2_SUBJECT_WIDE", "TX2_GENERAL_PREFETCH", "TX2_SUBJECT_HINTS", "DX_S2_PRODUCT", "DX_S3_OWNERS"] as const;
 // [DX-INT3] Default-off read gateway options a card arm may run with (W3): the bound on reads waiting for a permit and
 // the web-thread counters. stack/up.sh passes them to the gateways only when set. run.ts passes them to the arm and
 // adopted-server.ts records the ones set. Why: before this run.ts dropped them, so W3's published "bound on" arm would

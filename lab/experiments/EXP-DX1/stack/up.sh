@@ -288,6 +288,10 @@ subject_hints=${TX2_SUBJECT_HINTS:-0}
 # Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
 subject_wide=${TX2_SUBJECT_WIDE:-0}
 [[ $subject_wide =~ ^[01]$ ]] || exit 2
+# [DX-S3] Why: default-off several-owners saves on the per-subject writer (needs the wide writer), from the card's
+# DX_S3_OWNERS. Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
+subject_several=${DX_S3_OWNERS:-0}
+[[ $subject_several =~ ^[01]$ ]] || exit 2
 [[ $lookup_every =~ ^(0|[1-9][0-9]{0,3})$ ]] && (( lookup_every <= 4096 )) || exit 2
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prepw =~ ^(1|2|4)$ ]]
@@ -311,6 +315,8 @@ fi
 [[ $subject_ordered_ids =~ ^[01]$ && ( $subject_ordered_ids == 0 || ( $subject_save == 1 && $subject_prefetch == 0 ) ) ]]
 [[ $subject_hints == 0 || $subject_save == 1 ]] || { echo "TX2_SUBJECT_HINTS needs the per-subject writer" >&2; exit 2; }
 [[ $subject_wide == 0 || $subject_save == 1 ]] || { echo "TX2_SUBJECT_WIDE needs the per-subject writer" >&2; exit 2; }
+[[ $subject_several == 0 || ( $subject_wide == 1 && $subject_owner_head == 0 ) ]] ||
+  { echo "DX_S3_OWNERS needs TX2_SUBJECT_WIDE=1 and not TX2_SUBJECT_OWNER_HEAD=1" >&2; exit 2; }
 [[ $subject_narrow_revision =~ ^[01]$ && $subject_reuse_predecessor =~ ^[01]$ ]] || exit 2
 [[ ( $subject_narrow_revision == 0 && $subject_reuse_predecessor == 0 ) || ( $subject_ordered_ids == 1 && $subject_numeric_owner == 1 ) ]] || exit 2
 prep_pgdata=${DX_PREP1_PGDATA:-}
@@ -1015,6 +1021,9 @@ for role in "${gateway_roles[@]}"; do
   fi
   if [[ $mode == w && $subject_wide == 1 ]]; then
     field_policy+=(-e "TX2_SUBJECT_WIDE=1")
+  fi
+  if [[ $mode == w && $subject_several == 1 ]]; then
+    field_policy+=(-e "TX2_SUBJECT_SEVERAL_OWNERS=1")
   fi
   if [[ -n $read_wait_limit ]]; then field_policy+=(-e "TX2_READ_WAIT_LIMIT=$read_wait_limit"); fi
   if [[ $thread_counters == 1 ]]; then field_policy+=(-e "TX2_THREAD_COUNTERS=1"); fi
