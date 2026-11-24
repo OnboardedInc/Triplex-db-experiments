@@ -547,12 +547,22 @@ const settling = doPublish ? (async () => {
   return workers;
 })() : Promise.resolve([] as any[]);
 // Late enrolment beside the saves (DX_SCALE2_LATE).
-const late: { account: string; ok: boolean; error?: string; pub?: Pub }[] = [];
+const late: { account: string; ok: boolean; error?: string; pub?: Pub; transportRetry?: string }[] = [];
+// [DX-ACT8] A late enrolment that fails on transport (an HTTP request past the client's deadline, a reset socket: the
+// loaded Mac) is run once more (enrolment and Publish are idempotent by command ID); the first error is recorded.
+// A refusal is never retried. Without TX2_ENROL_BESIDE_SAVES: as before.
+const transport = (m: string) => /deadline exceeded|ECONNRESET|socket hang up|EPIPE/i.test(m);
 const lateTask = doPublish && LATE ? (async () => {
   await sleep(2000);
   for (const a of allPublishers.filter((x) => lateAccounts.has(x.key))) {
     try { late.push({ account: a.key, ok: true, pub: await enrolAccount(a) }); }
-    catch (e) { late.push({ account: a.key, ok: false, error: String((e as Error).message).slice(0, 300) }); }
+    catch (e) {
+      const message = String((e as Error).message).slice(0, 300);
+      if (process.env.TX2_ENROL_BESIDE_SAVES === "1" && transport(message))
+        try { late.push({ account: a.key, ok: true, pub: await enrolAccount(a), transportRetry: message }); continue; }
+        catch (e2) { late.push({ account: a.key, ok: false, error: String((e2 as Error).message).slice(0, 300), transportRetry: message }); continue; }
+      late.push({ account: a.key, ok: false, error: message });
+    }
   }
 })() : Promise.resolve();
 // Publish beside the saves (DX_SCALE2_LIVE_PUBLISH): each attempt and its outcome.
@@ -587,8 +597,8 @@ await play(tape);
 await lateTask;
 await livePublishTask;
 log("live-publish", { accounts: livePublish });
-log("late-enrolment", { option: process.env.TX2_ENROL_BESIDE_SAVES === "1", accounts: late.map(({ account, ok, error, pub }) =>
-  ({ account, ok, error, enrolCommits: pub?.enrolCommits, enrolMs: pub ? Math.round(pub.enrolMs) : undefined })) });
+log("late-enrolment", { option: process.env.TX2_ENROL_BESIDE_SAVES === "1", accounts: late.map(({ account, ok, error, pub, transportRetry }) =>
+  ({ account, ok, error, transportRetry, enrolCommits: pub?.enrolCommits, enrolMs: pub ? Math.round(pub.enrolMs) : undefined })) });
 // [DX-ACT8] Under the account guard no live Publish may be refused, and under the finished enrolment option no late
 // enrolment; the counts are logged above either way (the old rules' refusals are the control).
 if (process.env.TX2_PUBLISH_BESIDE === "1")

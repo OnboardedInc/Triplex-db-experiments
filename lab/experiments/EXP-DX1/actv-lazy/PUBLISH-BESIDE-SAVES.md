@@ -208,7 +208,32 @@ sudo env "${common[@]}" TX2_PUBLISH_BESIDE=1 "DX_ACT3_RELEASE=forms=20,policies=
   bash lab/experiments/EXP-DX1/actv-lazy/join/held-server.sh "${args[@]}" "$OUT/C"
 ```
 
-PREDICTIONS_11_1
+**Predictions, arm A (the account guard, no pause, small release)** and what shows each wrong. The basis: the
+record is 4.9 KB and four changes (toy, section 10); the writer applies one commit at a time; S1's server ladder put a
+26 KB commit at 3.9 ms of serial apply; bench 4 at 25,000 subjects gave first answers of 19.83 / 36.72 ms (p50 / p99)
+at 3.5 saves per second with the pause.
+
+| Quantity | 3.5/s (publishing account only) | 23.5/s (235 saves/s in all) | 39.4/s (394/s) | Shows it wrong |
+| --- | --- | --- | --- | --- |
+| Publishes refused | 0 of 20 per window | 0 of 20 | 0 of 20 | any refusal (a guard fired on a save or another account) |
+| Commits between a Publish's read and its record (p50 / max) | 0 / 1 | 3 to 10 / 30 | 5 to 15 / 50 | 0 at 23.5 or 39.4 (the Publish did not run beside saves), or over 200 |
+| Publish acknowledgement p50 / p99 | 10 to 25 / 25 to 60 ms | 15 to 40 / 50 to 150 ms | 20 to 60 / 80 to 300 ms | p50 over 2 times arm B's whole-head acknowledgements at 3.5/s (the guard costs more than its one read) |
+| First correct answer p50 / p99 | 20 to 60 / 50 to 150 ms | 30 to 100 / 80 to 350 ms | 40 to 150 / 120 to 700 ms | p50 over 150 ms at 3.5/s, or any Publish not correct within 100 s |
+| First correct inside one second | 20 of 20 | 20 of 20 | 19 to 20 of 20 | fewer than 19 at 23.5 |
+| Neighbours' save p99 against the same window without Publish | within 1.1 times (each Publish adds one 5 KB commit to the writer every 5 s) | within 1.1 times | within 1.15 times | over 1.25 times and over 50 ms (the quiet-account bar) |
+| The publishing account's save p99 against control | within 1.1 times | within 1.1 times | within 1.15 times | as above |
+| Racing saves refused or replayed | 0 | 0 | 0 | any |
+| Exactness (probes, deadline reads, reopened pins) | every one equal to the oracle | the same | the same | any difference |
+| Visibility failures (probe before the read gateway has the Publish; PUBLISH-STOP.md) | 0 to 3 per rolling window, as with the pause | the same | the same | many more than with the pause (this change moved the read gateway's lag) |
+
+**Arm B (the whole-head rule, no pause):** refused Publishes 0 to 1 of 20 at 3.5/s (only the publishing account
+saves, 3.5 per second: a try is refused when one save lands in its read-to-commit window of about 30 ms, so all three
+tries about once in a thousand), at least 19 of 20 at 23.5/s and 20 of 20 at 39.4/s (a 30 ms window with 235 or 394
+commits per second is empty about once in a thousand). Shows it wrong: fewer than 15 of 20 refused at 23.5/s.
+
+**Arm C (the large release, 17.2 KB record):** as arm A, acknowledgement and first answer +1 to +6 ms; settlement is not
+run in these windows (`DX_ACT3_SETTLE=0`; its time beside saves is ACT5's server run). Shows it wrong: p50 more than
+10 ms above arm A at the same rate and mode.
 
 ### 11.2 The many-accounts rungs: 200 and 500 accounts publishing at once beside saves
 
@@ -221,11 +246,36 @@ sudo env DEMO_ORIGINAL="$SEALED_CLUSTER" DEMO_HANDOFF="$AGE_HANDOFF_JSON" \
   bash lab/experiments/EXP-DX1/scale2/server.sh /var/tmp/act8-many 1k-live 10k-live
 ```
 
-PREDICTIONS_11_2
+**Predictions** (the burst: every publishing account offers its Publish at the same moment, 3 s into the window; 49
+saves per second spread over every account, a busy deep account at 8/s and a quiet thin account at 1/s, throughout):
+
+| Quantity | 1k-live (200 accounts at once) | 10k-live (500 at once) | Shows it wrong |
+| --- | --- | --- | --- |
+| Publishes refused | 0 of 200 | 0 of 500 | any |
+| Late enrolments (10) | 10 of 10 | 10 of 10 | any refused |
+| Publish acknowledgement after the burst starts: p50 / p99 / last | 0.2 to 0.6 / 0.4 to 1.2 / 0.5 to 1.5 s | 0.4 to 1.2 / 1.0 to 2.5 / 1.2 to 3.0 s | the last over 3 s (200) or 6 s (500): a Publish costs the writer more than about 5 ms, or the plans' reads (about ten per Publish) queue on the gateways |
+| Acknowledged inside one second of the offer | 180 to 200 of 200 | 200 to 400 of 500 | fewer than 150 of 200 |
+| Quiet thin account's save p99 over the window against the alone baseline | inside 50 ms or 1.25 times | the same | outside both |
+| Saves delayed by the burst | saves sent during the burst wait behind up to 200 records: max 0.3 to 1.5 s, inside the p99 (the burst is under 1% of a 600 s window) | max 0.6 to 3 s | p99 outside the bar |
+| Every settled change, notice and ledger of every publishing account, every read and feed entry | equal to the oracle | equal | any difference |
+
+**The finding these rungs exist for:** the guard removes the pause and the refusals, but the records still go through
+one writer one at a time. 10,000 Publishes an hour is 2.8 a second, which the writer absorbs (about 1.4% of it at 5 ms
+each); 500 at the same instant take one to three seconds to land, so "inside one second" holds per Publish only when
+bursts stay under about 200. A Publish to every account at once needs either the release stored once (SCALE2 P3) or the
+records grouped into fewer commits.
 
 ### 11.3 Durations and cost (USD 1.09 per machine hour)
 
-COST_11_3
+| Step | Time | Cost |
+| --- | --- | --- |
+| Fetch the SCALE1 template and build (if the machine is fresh; RUN2's figures) | 25 to 50 min | USD 0.45 to 0.90 |
+| 11.1 arm A (prepared copy 4.4 min, boot and checks 4, enrolment and first Publish 2, twelve windows of 100 s 20, reopen 1) | about 32 min | USD 0.58 |
+| 11.1 arm B (three windows) | about 14 min | USD 0.25 |
+| 11.1 arm C (twelve windows, large release) | about 34 min | USD 0.62 |
+| 11.2 1k-live (SCALE2's 1k rung, 22 to 41 min) | 22 to 41 min | USD 0.40 to 0.75 |
+| 11.2 10k-live (SCALE2's 10k rung, 32 to 76 min) | 32 to 76 min | USD 0.60 to 1.40 |
+| **All on one machine that has both the SCALE1 template and the sealed 1 billion cluster** | **about 2.2 to 3.3 h, plus setup** | **USD 2.45 to 3.60, plus 0.45 to 0.90** |
 
 ## 12. What the earlier Publish results (made with the pause) still support
 
