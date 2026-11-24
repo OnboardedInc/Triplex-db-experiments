@@ -148,7 +148,8 @@ if (mode === "main") {
       if (onQ.status === 413 && onQ.body?.code === "BoundTooSmall") { req = { ...req, bounds: { ...req.bounds, entries: req.bounds.entries * 10 } }; continue; }
       pages++; bytes += onQ.text.length;
       check(onQ.status === onMain.status && strip(onQ.body) === strip(onMain.body), "(a) find page byte-equal", { q: req, q1: onQ.text.slice(0, 300), m: onMain.text.slice(0, 300) });
-      check(onQ.status === 200 && onQ.body.position === p, "(a) find answered at the pinned position", { status: onQ.status, body: onQ.text.slice(0, 200) });
+      if (onQ.status !== 200) { bump("(a) refused on both readers, byte-equal"); check(onQ.body?.code === "UnsupportedOperation", "(a) only the ID-order refusal", { body: onQ.text.slice(0, 200) }); break; }
+      check(onQ.body.position === p, "(a) find answered at the pinned position", { body: onQ.text.slice(0, 200) });
       if (!onQ.body?.next) break;
       // every other page continues on the other reader with the cursor the first issued
       const { basis: _b, ...rest } = req;
@@ -164,9 +165,16 @@ if (mode === "main") {
   for (const p of positions) for (const v of validTimes) for (const acct of [A, B]) for (const q of findQuestions(acct)) {
     const request = { ...q, basis: { recordedPosition: p, validAt: v }, ...(q.result === "ids" ? { limit: 7 } : {}),
       bounds: { index: { entries: 100_000, ms: 1000 }, sweep: { subjects: 17, ms: 2000 } } };
-    const i = await datomic.askAll(sdk, db, { ...request, route: "index" });
+    const i = await datomic.askAll(sdk, db, { ...request, route: "index" }).catch((e: any) => e);
     const s = await datomic.askAll(sdk, db, { ...request, route: "sweep" });
     const a = await datomic.askAll(sdk, db, request);
+    if (i instanceof datomic.AskRefused) {
+      // ids in entity ID order driven only by a range or a prefix: find refuses that order (fallback sweep); auto
+      // then answers on the sweep at the same basis, saying why.
+      check(i.fallback === "sweep" && a.route === "sweep" && a.indexRefusal?.code === i.code && norm(a) === norm(s), "(b) a forced-index refusal with fallback sweep: auto answers as the sweep", { code: i.code, route: a.route });
+      bump("index refused, sweep answered");
+      continue;
+    }
     check(norm(i) === norm(s), "(b) index and sweep give the same answer", { q: request, index: norm(i).slice(0, 300), sweep: norm(s).slice(0, 300) });
     check(a.route === "index" && norm(a) === norm(i), "(b) auto answers from the index for a declared question", { route: a.route });
     if (norm(i) === norm(s)) agreed++;
