@@ -57,6 +57,10 @@ type FramePage = {
 /** A changed subject's values without its full answer; `part` is the offset of the first change when split. */
 export type Changes = { subject: string; changes: [string, string | null][]; part?: number };
 const framePageKey = (sequence: number, frame: number) => "answer:" + sequence + ":f" + frame;
+/** [DX-ACT8] Where settlement reads the subjects' worlds: the marker's effective cut. DX_ACT8_INJECT=read-cut (diagnostic
+ * gates only) reads them at the position an account-guarded Publish read its account's state instead: the wrong rule,
+ * which the gate must catch for a subject saved between that read and the record (PUBLISH-BESIDE-SAVES.md section 4). */
+export const worldCut = (m: Marker) => (process.env.DX_ACT8_INJECT === "read-cut" ? m.read ?? m.cut : m.cut);
 export const identityOf = (scope: string, marker: Marker, position: number) =>
   hash([
     scope,
@@ -307,7 +311,7 @@ export class Archive {
     );
     assert(ids.length === Math.min(step, census.count - start));
     const basis = { tx: e.at, validTime: m.at };
-    const worlds = await worldsAt(s, s.profile, ids, { tx: m.cut, validTime: m.at });
+    const worlds = await worldsAt(s, s.profile, ids, { tx: worldCut(m), validTime: m.at });
     assert.deepEqual(
       worlds.map((w) => w.subject),
       ids,
@@ -367,7 +371,7 @@ export class Archive {
       missing = ids.filter((id) => !known.has(id));
     if (missing.length) {
       const basis = { tx: e.at, validTime: m.at };
-      const worlds = await worldsAt(s, s.profile, missing, { tx: m.cut, validTime: m.at });
+      const worlds = await worldsAt(s, s.profile, missing, { tx: worldCut(m), validTime: m.at });
       assert.deepEqual(
         worlds.map((w) => w.subject),
         missing,

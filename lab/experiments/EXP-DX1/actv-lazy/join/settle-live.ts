@@ -64,10 +64,10 @@ export type LiveContext = {
   agedSeal?: AgedSeal;
 };
 // [DX-ACT7] The edit a committed save adds to its subject's history (a production save names its slots).
-const editOf = (position: number, e: Write) => ({ position, width: e.width, version: e.version,
+export const editOf = (position: number, e: Write) => ({ position, width: e.width, version: e.version,
   ...(isProduction(e) ? { slots: [...e.slots] } : {}) });
 /** [DX-ACT7] A case's saves: the held tape (default) or the production-S tape (DX_ACT7_TAPE), and their senders. */
-async function caseTape(c: LiveContext, own: number, others: boolean, seconds: number, label: string) {
+export async function caseTape(c: LiveContext, own: number, others: boolean, seconds: number, label: string) {
   const kind = heldTapeKind();
   const from = await c.s.head();
   if (kind.kind === "held") {
@@ -124,7 +124,7 @@ const pct = (xs: number[], p: number) =>
   xs.length ? xs.toSorted((a, b) => a - b)[Math.max(0, Math.ceil(xs.length * p) - 1)]! : null;
 
 /** Saves of one side: statuses, latency from due (diagnostic), and how many frame turns each one's life overlapped. */
-function saveSide(rows: Save[], turns: [number, number][]) {
+export function saveSide(rows: Save[], turns: [number, number][]) {
   const statuses: Record<string, number> = {};
   for (const r of rows) statuses[r.status] = (statuses[r.status] ?? 0) + 1;
   const done = rows.filter((r) => r.status === "acked");
@@ -938,7 +938,7 @@ async function multiCase(
 /** The notice sequence a Publish at `position` wrote, checked against the tail at that position (an earlier version of
  * this phase reused a Publish command id between cases, got the earlier case's receipt back, and settled the wrong
  * release; that was the "stored changes differ" seen in two toy runs). An unpinned read can also trail the write. */
-async function sequenceAt(a: JoinedAccount, position: number) {
+export async function sequenceAt(a: JoinedAccount, position: number) {
   for (let i = 0; i < 2000; i++) {
     const t = await a.notices.observe();
     if (t.at >= position) {

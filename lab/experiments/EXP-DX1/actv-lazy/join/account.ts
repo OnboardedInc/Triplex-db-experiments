@@ -36,7 +36,7 @@ import {
 import { Documents, type Op } from "../../notify1/store.ts";
 import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
-import { Conflict, fact, millis, namesOf, value, type Store } from "../store.ts";
+import { Conflict, fact, millis, namesOf, value, type EntityGuard, type Store } from "../store.ts";
 import { calculate, worldsAt, type Proposal } from "../decision.ts";
 import { deepImpact, rawDeep, replaceDeep } from "./deep.ts";
 import { subjectOf, type Fact } from "../../../../bench/lib/world.ts";
@@ -77,7 +77,16 @@ export type PublishOptions = {
   observation?: PublishObservation;
   /** [DX-ACT6] How the release document travels (default TX2_RELEASE_DOCS: unset = inline, as before). */
   docs?: DocsMode;
+  /** [DX-ACT8] Diagnostic gates only, with TX2_PUBLISH_BESIDE=1: after the plan's last read (before the transaction);
+   * inside the transaction (after its snapshot, before the guards are read); after the native acknowledgement. */
+  afterRead?: (read: number) => Promise<void>;
+  inside?: () => Promise<void>;
+  onAck?: () => void;
 };
+/** [DX-ACT8] TX2_PUBLISH_BESIDE=1: a held account's (owed) Publish commits with the account guard (its notice tail, its
+ * calendar, and the transactor's revision check on what the record writes) instead of the whole database's head.
+ * PUBLISH-BESIDE-SAVES.md sections 3 and 4. Unset: the whole-head rule, as before. */
+export const publishBeside = () => process.env.TX2_PUBLISH_BESIDE === "1";
 /** [DX-ACT6] A Publish whose record exceeds the 4 MiB request limit (full documents only), refused before any write. */
 export class ReleaseTooLarge extends Error {}
 /** [DX-ACT6] The store's limit on one fact value (`ValueDomains.datomic.string.maxUtf8Bytes`). */
@@ -102,7 +111,14 @@ export type Marker = {
   documentRef?: DocRef;
   oldRef?: DocRef | null;
   release: string;
+  /** The position the record holds at, minus one. [DX-ACT8] For a record with `precondition: "account"` the stored
+   * value is where the Publish read its account's state; `marker()` returns that as `read` and the effective cut
+   * (the record's own position minus one) as `cut`. */
   cut: number;
+  /** [DX-ACT8] Set by `marker()` for a record written under the account guard. */
+  read?: number;
+  /** [DX-ACT8] Stored on a record written under the account guard (TX2_PUBLISH_BESIDE=1). */
+  precondition?: "account";
   at: string;
   from: string;
   kind: "activation";
@@ -124,6 +140,16 @@ const stamp = (t: number) =>
       (_, x) => x + String(Math.round((t - Math.floor(t)) * 1000)).padStart(3, "0") + "Z",
     );
 const dataKey = (seq: number, i: number) => "join-output:" + seq + ":" + i;
+/** A joined command's planned transaction. [DX-ACT8] `guards` replaces the whole-head fence (with `inside` and `onAck`
+ * diagnostic hooks); absent, the commit requires the head it was planned at, as before. */
+type Plan = {
+  ops: any[];
+  context: object;
+  expected?: number;
+  guards?: EntityGuard[];
+  inside?: () => Promise<void>;
+  onAck?: () => void;
+};
 export class JoinedAccount {
   readonly s: Store;
   lastMaterial = emptyMaterial();
@@ -144,6 +170,17 @@ export class JoinedAccount {
     outputBytes: 0,
     noticeIndexBytes: 0,
     addressBytes: 0,
+  };
+  /** [DX-ACT8] Guarded commits (Publish under TX2_PUBLISH_BESIDE, enrolment under TX2_ENROL_BESIDE_SAVES): tries sent,
+   * tries refused (with the refusal's cause), tries recovered by command ID, and the last Publish's read and landing. */
+  readonly beside = {
+    publishes: 0,
+    tries: 0,
+    refused: 0,
+    recovered: 0,
+    enrolTries: 0,
+    causes: [] as string[],
+    last: undefined as { read: number; landed: number; tries: number } | undefined,
   };
   private readonly admission?: AccountAdmission;
   constructor(s: Store, admission?: AccountAdmission) {
@@ -213,8 +250,11 @@ export class JoinedAccount {
     // account's enrolment documents must still stop it).
     const beside = process.env.TX2_ENROL_BESIDE_SAVES === "1" && Boolean(this.s.held?.namespace);
     const own = beside ? new Set<string>(Object.values(namesOf(this.s)).filter((v): v is string => typeof v === "string" && v.length > 0)) : undefined;
+    // [DX-ACT8] The account's own subject saves (`acct/<account>/`) are accepted too: a held enrolment reads no subject
+    // data (its census is the held source's subject IDs), so a save during it is a save before its first Publish.
+    // A commit that writes the account's documents or metadata names still stops it. PUBLISH-BESIDE-SAVES.md section 6.
     const foreign = (changes: any[]) => Boolean(own) && changes.length > 0 && changes.every((v: any) =>
-      !v.entityId.startsWith(this.db.prefix) && !v.entityId.startsWith("acct/" + this.s.held!.account + "/") && !own!.has(v.entityId));
+      !v.entityId.startsWith(this.db.prefix) && !own!.has(v.entityId));
     while (after < p) {
       const f = await this.s.comp.feedPage(after, 32);
       assert(f.transactions.length);
@@ -266,12 +306,30 @@ export class JoinedAccount {
     await this.suffix(source.namespace ? before : source.cut, now, true);
     const meta: Meta = { epoch: source.seal, census, valid: at, source: source.cut,
       compiler: selector, scheduled: false };
-    await s.commit("join-held-enrolment" + (source.namespace ? ":" + source.account : ""), "lazy/join", [
-      fact(namesOf(this.s).ORIGIN, "lazy/generation", { profile: s.profile, held: source.seal }),
-      this.db.put("join-meta", meta),
-      this.db.put("join-calendar", []),
-      fact(namesOf(this.s).CLOCK, "lazy/slot", { joined: source.seal, kind: "baseline", at }),
-    ], now, { intent: h([source.seal, census, at]) });
+    const enrolment = "join-held-enrolment" + (source.namespace ? ":" + source.account : ""),
+      record = [
+        fact(namesOf(this.s).ORIGIN, "lazy/generation", { profile: s.profile, held: source.seal }),
+        this.db.put("join-meta", meta),
+        this.db.put("join-calendar", []),
+        fact(namesOf(this.s).CLOCK, "lazy/slot", { joined: source.seal, kind: "baseline", at }),
+      ];
+    // [DX-ACT8] TX2_ENROL_BESIDE_SAVES=1 (a namespaced account): the enrolment record commits only if its four entities
+    // still have no fact (only a rival enrolment of this account writes them, and its command ID is recovered), instead
+    // of requiring the whole database's head. Up to three tries, each looking the command up first. Unset: as before.
+    if (process.env.TX2_ENROL_BESIDE_SAVES === "1" && source.namespace) {
+      const guards = [namesOf(this.s).ORIGIN, namesOf(this.s).CLOCK, this.db.prefix + "join-meta",
+        this.db.prefix + "join-calendar"].map((entityId) => ({ entityId, tripleIds: [] as string[] }));
+      for (let attempt = 0; ; attempt++) {
+        this.beside.enrolTries++;
+        try {
+          await s.commit(enrolment, "lazy/join", record, now, { intent: h([source.seal, census, at]) },
+            undefined, undefined, guards);
+          break;
+        } catch (e) {
+          if (!(e instanceof Conflict) || attempt >= 2) throw e;
+        }
+      }
+    } else await s.commit(enrolment, "lazy/join", record, now, { intent: h([source.seal, census, at]) });
     assert.deepEqual(await this.roster(census, now), ids);
     return meta;
   }
@@ -470,7 +528,7 @@ export class JoinedAccount {
   private command(
     id: string,
     args: unknown,
-    plan: (p: number) => Promise<{ ops: any[]; context: object; expected?: number }>,
+    plan: (p: number) => Promise<Plan>,
     hook?: () => Promise<void>,
     through?: string,
     priority = false,
@@ -486,7 +544,7 @@ export class JoinedAccount {
   private async execute(
     id: string,
     args: unknown,
-    plan: (p: number) => Promise<{ ops: any[]; context: object; expected?: number }>,
+    plan: (p: number) => Promise<Plan>,
     hook?: () => Promise<void>,
     through?: string,
     observation?: PublishObservation,
@@ -519,33 +577,49 @@ export class JoinedAccount {
           continue;
         }
       }
+      let guarded = false;
       try {
         const body = await plan(p);
         if (attempt) attempt.prepared = performance.now();
+        guarded = Boolean(body.guards);
+        if (guarded) this.beside.tries++;
         const r = await this.s.commit(
           "joined:" + id,
           "lazy/join",
           body.ops,
           body.expected ?? p,
           { ...body.context, intent },
-          hook,
-          attempt &&
-            ((at) => {
-              attempt.nativeAck = at;
-            }),
+          body.guards ? undefined : hook,
+          (at) => {
+            if (attempt) attempt.nativeAck = at;
+            body.onAck?.();
+          },
+          body.guards,
+          body.inside,
         );
         if (attempt) attempt.finished = performance.now();
-        assert.equal(r.position, (body.expected ?? p) + 1);
+        // [DX-ACT8] Under the account guard the record lands at or after the next position; other accounts' commits
+        // (and this account's saves) may come between its read and its landing.
+        if (body.guards) {
+          assert(r.position > (body.expected ?? p), "A guarded record lands after its read");
+          this.beside.last = { read: body.expected ?? p, landed: r.position, tries: retries + 1 };
+        } else assert.equal(r.position, (body.expected ?? p) + 1);
         return this.observed(r);
       } catch (e) {
         const won = await this.original(id, intent);
         if (attempt) attempt.finished = performance.now();
         if (won) {
           if (attempt) attempt.recovered = true;
+          if (guarded) this.beside.recovered++;
           return this.observed(won);
         }
         if (!(e instanceof Conflict)) throw e;
         if (attempt) attempt.conflict = true;
+        if (guarded) {
+          this.beside.refused++;
+          const cause = (e as { cause?: { _tag?: string; message?: string } }).cause;
+          this.beside.causes.push(String(cause?._tag ?? "") + " " + String(cause?.message ?? e.message).slice(0, 160));
+        }
         retries++;
       }
     }
@@ -599,10 +673,21 @@ export class JoinedAccount {
     assert(r);
     const m = value(r) as Marker;
     await recheckErasure(this.s.comp, m.erasureSeq);
+    // [DX-ACT8] A record written under the account guard stores where it read its account's state (`cut`, and the
+    // event's `sourceBefore`); the guard proves that state unchanged up to the record's own position, so the record holds
+    // at its own position like every other: its effective cut is that position minus one, which every reader of a marker
+    // (settlement, the receipt, the notice selection) takes from here. PUBLISH-BESIDE-SAVES.md section 4.
+    const guarded = m.precondition === "account";
+    assert(!guarded || (m.cut < e.at && e.value.sourceBefore === m.cut && !m.stage && m.read === undefined),
+      "Invalid account-guarded release record");
+    if (guarded) {
+      m.read = m.cut;
+      m.cut = e.at - 1;
+    }
     assert(
       m.notice === h(e.value) &&
         m.seq === e.value.sequence &&
-        e.value.sourceBefore === e.at - 1 &&
+        (guarded || e.value.sourceBefore === e.at - 1) &&
         (m.stage ? m.cut < e.at - 1 : m.cut === e.at - 1) &&
         m.compiler === selector &&
         m.census === e.value.census.members &&
@@ -720,6 +805,12 @@ export class JoinedAccount {
     // within the writer's bound), and the predecessor's too if it was published with full documents.
     const byRef = (options.docs ?? docsMode()) === "ref";
     const ref = byRef ? await this.writeDefinitions(doc) : undefined;
+    // [DX-ACT8] The account guard applies to a held account's owed record only (its plan reads no subject data); every
+    // other Publish keeps the whole-head rule.
+    const beside = publishBeside() && Boolean(this.s.held) && storage === "owed";
+    assert(!beside || !hook, "A Publish beside saves takes no fence hook");
+    assert(beside || (!options.afterRead && !options.inside && !options.onAck), "Publish hooks need TX2_PUBLISH_BESIDE=1");
+    if (beside) this.beside.publishes++;
     const run = () => withErasure(sequence, () =>
       this.command(
         id,
@@ -874,6 +965,7 @@ export class JoinedAccount {
             notice: h(np.recipe),
             census: meta.census.members,
             compiler: selector,
+            ...(beside ? { precondition: "account" as const } : {}),
           };
           if (sequence !== undefined) await recheckErasure(this.s.comp, sequence);
           const record = [fact(namesOf(this.s).RELEASE, "lazy/activation", m), ...np.operations, ...ops];
@@ -891,6 +983,15 @@ export class JoinedAccount {
                   (old ? Buffer.byteLength(canonical(old.doc)) : 0) + " bytes). TX2_RELEASE_DOCS=ref stores the " +
                   "definitions by reference.",
               );
+          // [DX-ACT8] The account guard (PUBLISH-BESIDE-SAVES.md section 3): the tail's retraction already carries its
+          // `TripleLive` check; the calendar gets an `EntityState` check (its one row as read here, or none); the release
+          // entity, the tail and the event join the transactor's revision check because the record writes them.
+          let guards: EntityGuard[] | undefined;
+          if (beside) {
+            const calendar = await this.db.row("join-calendar", p);
+            guards = [{ entityId: this.db.prefix + "join-calendar", tripleIds: calendar ? [calendar.id] : [] }];
+            await options.afterRead?.(p);
+          }
           return {
             ops: record,
             expected,
@@ -900,6 +1001,7 @@ export class JoinedAccount {
               output: m.output,
               stage: header?.attempt ?? null,
             },
+            ...(guards ? { guards, inside: options.inside, onAck: options.onAck } : {}),
           };
         },
         hook,

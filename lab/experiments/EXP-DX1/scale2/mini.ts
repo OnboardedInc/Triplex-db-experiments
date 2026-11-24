@@ -556,10 +556,14 @@ const lateTask = doPublish && LATE ? (async () => {
   }
 })() : Promise.resolve();
 // Publish beside the saves (DX_SCALE2_LIVE_PUBLISH): each attempt and its outcome.
-const livePublish: { account: string; ok: boolean; ms: number; error?: string }[] = [];
+const livePublish: { account: string; ok: boolean; ms: number; error?: string; read?: number; position?: number;
+  tries?: number; refused?: number }[] = [];
+// [DX-ACT8] DX_SCALE2_LIVE_AT_ONCE=1: the live Publishes are offered all at once (each account's own command), not one
+// after another. With TX2_PUBLISH_BESIDE=1 each records where it read its account's state, where it landed and its tries.
+const liveAtOnce = process.env.DX_SCALE2_LIVE_AT_ONCE === "1";
 const livePublishTask = doPublish && LIVE_PUBLISH ? (async () => {
   await sleep(3000);
-  for (const x of pubs.filter((p) => livePublishers.has(p.a.key))) {
+  const one = async (x: Pub) => {
     const started = now();
     try {
       const doc = largeRelease(W0.R1.doc, parseShape("forms=20,policies=20,permille=1000"));
@@ -567,11 +571,17 @@ const livePublishTask = doPublish && LIVE_PUBLISH ? (async () => {
       const seq = await sequenceAt(x.joined, p.position);
       x.releases.push({ seq, position: p.position, doc, old: W0.R1.doc });
       x.target = seq;
-      livePublish.push({ account: x.a.key, ok: true, ms: Math.round(now() - started) });
+      const last = x.joined.beside?.last;
+      livePublish.push({ account: x.a.key, ok: true, ms: Math.round(now() - started), position: p.position,
+        ...(last && last.landed === p.position ? { read: last.read, tries: last.tries } : {}), refused: x.joined.beside?.refused ?? 0 });
     } catch (e) {
-      livePublish.push({ account: x.a.key, ok: false, ms: Math.round(now() - started), error: String((e as Error).message).slice(0, 200) });
+      livePublish.push({ account: x.a.key, ok: false, ms: Math.round(now() - started), error: String((e as Error).message).slice(0, 200),
+        refused: x.joined.beside?.refused ?? 0 });
     }
-  }
+  };
+  const live = pubs.filter((p) => livePublishers.has(p.a.key));
+  if (liveAtOnce) await Promise.all(live.map(one));
+  else for (const x of live) await one(x);
 })() : Promise.resolve();
 await play(tape);
 await lateTask;
@@ -579,6 +589,12 @@ await livePublishTask;
 log("live-publish", { accounts: livePublish });
 log("late-enrolment", { option: process.env.TX2_ENROL_BESIDE_SAVES === "1", accounts: late.map(({ account, ok, error, pub }) =>
   ({ account, ok, error, enrolCommits: pub?.enrolCommits, enrolMs: pub ? Math.round(pub.enrolMs) : undefined })) });
+// [DX-ACT8] Under the account guard no live Publish may be refused, and under the finished enrolment option no late
+// enrolment; the counts are logged above either way (the old rules' refusals are the control).
+if (process.env.TX2_PUBLISH_BESIDE === "1")
+  assert(livePublish.every((x) => x.ok && !x.refused), "a live Publish was refused under the account guard");
+if (process.env.TX2_ENROL_BESIDE_SAVES === "1" && process.env.TX2_PUBLISH_BESIDE === "1")
+  assert(late.every((x) => x.ok), "a late enrolment was refused under TX2_ENROL_BESIDE_SAVES");
 const workers = await settling;
 reading = false;
 await Promise.all(readers);

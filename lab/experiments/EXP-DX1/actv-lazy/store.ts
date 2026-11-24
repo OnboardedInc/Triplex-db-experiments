@@ -175,9 +175,13 @@ export async function openStore(
     afterFence?: () => Promise<void>,
     onAck?: (t: number) => void,
     guards?: readonly EntityGuard[],
+    // [DX-ACT8] Diagnostic gates only: runs inside the transaction after its snapshot is taken and before the guards
+    // are read and the operations staged (the adversarial schedule commits a rival write there). Unset: nothing.
+    inside?: () => Promise<void>,
   ) {
     assert(h, "A demand reader has no publication authority");
     assert(!guards || (guards.length > 0 && !afterFence), "Entity guards replace the source-position fence");
+    assert(!inside || guards, "An inside hook is for guarded commits");
     assert(id.length && Number.isSafeInteger(expected) && expected >= 0);
     const correlationId = canonical({ context, hash: sha256(wireBytes([scope, id, actor, ops])) });
     const check = (r: any) => {
@@ -225,6 +229,7 @@ export async function openStore(
           // database's head must still be `expected`.
           if (!guards) yield* requireDatomicSourcePosition(key, expected);
           if (afterFence) yield* Effect.promise(afterFence);
+          if (inside) yield* Effect.promise(inside);
           return yield* h.triples.transact(ops, {
             commandId: id,
             actor,

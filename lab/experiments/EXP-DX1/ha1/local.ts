@@ -167,8 +167,12 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // [DX-ACT6] Why: the release-limits builder runs its toy gate (ledger in parts, definitions by reference) here.
   const releaseLimits = holder === "DX-ACT6" && diagnostic && mode === "load-fair" && combined === undefined &&
     (process.env.DX_ACT6_GATE === "1" || process.env.DX_ACT3_HELD === "1");
+  // [DX-ACT8] Why: the Publish-beside-saves builder runs the held runner (its gate, the unpaused windows, the ACT5 live
+  // phase and the default campaign as regressions) and the release-limits gate here.
+  const besideSaves = holder === "DX-ACT8" && diagnostic && mode === "load-fair" && combined === undefined &&
+    (process.env.DX_ACT6_GATE === "1" || process.env.DX_ACT3_HELD === "1");
   assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours ||
-    heldPublish || settleFrames || settleLive || releaseLimits);
+    heldPublish || settleFrames || settleLive || releaseLimits || besideSaves);
   assert(combined === undefined || ownedCombination);
   if (mode === "load-fair") {
     const { cleanSource } = await import("../v01/source.ts");
