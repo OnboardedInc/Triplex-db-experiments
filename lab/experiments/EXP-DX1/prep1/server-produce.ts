@@ -25,6 +25,7 @@ import {
 } from "./ceiling-seed.ts";
 import { checkJournal } from "../w1/field/journal.ts";
 import { slotAttribute, tapeReport, type ProductionOffer } from "../w1/field/production.ts";
+import type { MixOffer, OwnerRef, RefTarget } from "../w1/field/production-mix.ts";
 import { fieldCount, taskSerial } from "../../../bench/lib/deep-world.ts";
 import { accounts, pooledDigest } from "../w1/group/population.ts";
 import { command, seedPooled } from "../w1/group/workload.ts";
@@ -281,6 +282,9 @@ export async function phase(
   // [DX-S2] Send every save through the product's path (TriplesLive and the Datomic adapter) instead of command():
   // the function returns the request the SDK actually sent and the gateway's answer. Default: the lab producer.
   productSave?: ProductSave,
+  // [DX-S4] Tape M (w1/field/production-mix.ts): how the runner names each owner role and each constant reference
+  // target. An offer with `owners` writes every owner's slots in one product save; a new owner has no predecessor.
+  mix?: { entity: (account: number, ref: OwnerRef) => string; constant: (account: number, name: string) => string },
 ) {
   const inputs = new Map<string, Input>();
   const rows: {
@@ -369,14 +373,22 @@ export async function phase(
       e = root(o.account, o.person),
       id = operation(cell.label, n);
     const slots = (o as Partial<ProductionOffer>).slots;
-    const facts = slots ? slots.map((slot) => fact(e, slotAttribute(slot), `${id}/${slot}`))
+    // [DX-S4] Tape M: every owner's slots as facts (a reference slot names its target's entity), one save.
+    const owners = (o as Partial<MixOffer>).owners;
+    assert(!owners || (productSave && mix), "Tape M is sent only through the product's path");
+    const target = (t: RefTarget) => "constant" in t ? mix!.constant(o.account, t.constant) : mix!.entity(o.account, t);
+    const facts = owners ? owners.flatMap((w) => w.slots.map((slot) => w.refs[slot]
+        ? { e: mix!.entity(o.account, w), a: slotAttribute(slot), v: { type: "ref", value: target(w.refs[slot]!) } } as unknown as Fact
+        : fact(mix!.entity(o.account, w), slotAttribute(slot), `${id}/${slot}`)))
+      : slots ? slots.map((slot) => fact(e, slotAttribute(slot), `${id}/${slot}`))
       : [fact(e, answer, `${o.subtask}/${o.ordinal}`)];
     if (!slots && o.extra) facts.push(fact(e, note, id));
-    const previous = fields.get(e)!;
+    const ownerIds = owners ? [...new Set(facts.map((f) => f.e))] : [e];
+    const previous = owners ? ownerIds.flatMap((x) => fields.get(x) ?? []) : fields.get(e)!;
     // [DX-REAL2] Why: production owners carry every seeded field; retire exactly the attributes this commit writes.
     // Rejected: the old "answer, plus note when extra" filter, which assumed an owner held only those two rows.
-    const written = new Set(facts.map((f) => f.a));
-    const old = previous.filter((r) => written.has(r.attribute));
+    const written = new Set(facts.map((f) => f.e + "\u0000" + f.a));
+    const old = previous.filter((r) => written.has(r.entity_id + "\u0000" + r.attribute));
     // [DX-REAL2] Why: the ordered identity block numbers a commit's assertions in one byte (at most 256). A commit's
     // assertions are its facts, one journal change per fact asserted and per value retired, and four journal rows.
     // Today the product mints a general identity for every assertion and only the per-person writer, which accepts
@@ -443,12 +455,11 @@ export async function phase(
       assert.equal(ack.operationId, productSave ? input.operationId : id);
       assert(ack.writePath?.function && Number(ack.t.v) > 0 && Number.isFinite(ack.recordedAt.v));
       if (!productSave) assert(Number(ack.position.v) > input.sourceK!);
-      fields.set(e, [
-        ...previous.filter((r) => !old.includes(r)),
-        ...input.rows
-          .slice(0, facts.length)
-          .map((r) => assigned(r, Number(ack.position.v), ack.recordedAt.v)),
-      ]);
+      const fresh = input.rows.slice(0, facts.length).map((r) => assigned(r, Number(ack.position.v), ack.recordedAt.v));
+      if (owners)
+        for (const x of ownerIds)
+          fields.set(x, [...(fields.get(x) ?? []).filter((r) => !old.includes(r)), ...fresh.filter((r) => r.entity_id === x)]);
+      else fields.set(e, [...previous.filter((r) => !old.includes(r)), ...fresh]);
       settled = { ...record, end, ack };
       rows.push(settled);
       known = true;
@@ -526,6 +537,9 @@ export async function phase(
         clock,
         command: id,
         root: input.entities![0]!,
+        // [DX-S4] A tape M save names each owner it writes.
+        ...((cell.tape[rec.ordinal] as Partial<MixOffer>).owners
+          ? { roots: [...new Set(input.rows.filter((r) => r.entity_type !== "_Transaction").map((r) => r.entity_id))] } : {}),
         changes,
       });
       if (rec.orderedToken) {

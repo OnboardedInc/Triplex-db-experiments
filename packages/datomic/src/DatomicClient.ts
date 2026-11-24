@@ -1270,6 +1270,8 @@ export class DatomicClient {
       claims: readonly { commandId: string; txId: string; timestamp: number }[];
       handle?: string;
       release?: boolean;
+      /** [DX-S4] Send `historyIdentityBounds` for this save's new IDs (never itself on the wire). */
+      declareIdentityBounds?: boolean;
     },
     onSent?: (dispatched?: boolean) => void,
   ): Promise<unknown> {
@@ -1288,7 +1290,7 @@ export class DatomicClient {
     const encodeStart = performance.now();
     // [DX-B5-L0] Why: two-argument transact wrappers preserve the input, and this callback never belongs on the wire.
     // Rejected: a third-argument-only callback (the NS publication observer drops it).
-    const { onSent: inputSent, ...wireInput } = input;
+    const { onSent: inputSent, declareIdentityBounds, ...wireInput } = input;
     const { rows: inputRows, newIds: ids, ...requestHeader } = wireInput;
     const ticket = erasureWriteTicket();
     onSent ??= inputSent;
@@ -1313,7 +1315,9 @@ export class DatomicClient {
           })
       : inputRows.map(encodeRow);
     const bounds =
-      compact && fastPathEnabled("history-range") ? historyIdentityBounds(input.newIds) : undefined;
+      compact && (fastPathEnabled("history-range") || declareIdentityBounds === true)
+        ? historyIdentityBounds(input.newIds)
+        : undefined;
     const texts = inputRows
       .filter((r) => isNew(r.id))
       .map(

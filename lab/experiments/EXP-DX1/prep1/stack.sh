@@ -30,6 +30,12 @@ if [[ -f /config/s2-product ]]; then export DX_S2_PRODUCT=$(cat /config/s2-produ
 if [[ -f /config/subject-owners ]]; then
   export TX2_SUBJECT_SEVERAL_OWNERS=$(cat /config/subject-owners) DX_S3_OWNERS=$(cat /config/subject-owners)
 fi
+# [DX-S4] Present only for the DX-S4 production gate: tape M's cell (0 or 1) and the creation option in the gateway and
+# the SDK (0 or 1).
+if [[ -f /config/s4-mix ]]; then export DX_S4_MIX=$(cat /config/s4-mix) DX_S4_MIX_PARAMS=/config/production-mix.json; fi
+if [[ -f /config/subject-create ]]; then
+  export TX2_SUBJECT_CREATE=$(cat /config/subject-create) DX_S4_CREATE=$(cat /config/subject-create)
+fi
 if [[ "$PREP1_MODE" == subject-native-suite ]]; then
   # [DX-PREP1] Why: exercise the stock native suite with the real process setting on fresh memory scopes.
   # Rejected: adding PostgreSQL and a transactor for tests written to run in one JVM.

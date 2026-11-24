@@ -128,7 +128,7 @@
         ;; [DX-IMP2] Why: a removal that names a subject whose import has not committed yet matches no row; with the
         ;; whole-subject import bound on it records the families it names, so the import cannot bring them back.
         ;; Rejected: requiring import-bound at load (renumbers the native functions' generated names; see storage.clj).
-        families (when @(requiring-resolve 'triplex.gateway.write-policy/import-whole?)
+        families (when ((requiring-resolve 'triplex.gateway.subject-create/record-families?))
                    ((requiring-resolve 'triplex.gateway.import-bound/removal-families) state selectors))
         entry {"database" name "seq" (inc (:seq state)) "previous" (:seal state) "commandId" command
                "selectors" selectors "txId" (str "_tx/erase-" (UUID/randomUUID)) "position" position

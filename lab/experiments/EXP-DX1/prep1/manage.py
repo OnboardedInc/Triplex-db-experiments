@@ -56,19 +56,27 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     holder = (os.environ.get("DX_CHK1_HOLDER", "DX-CHK1") if combined
               else os.environ.get("DX_CHK1_HOLDER", "DX-W1") if owner_head == "1"
               else os.environ.get("DX_CHK1_HOLDER", "DX-REAL2") if mode == "production" else "DX-PREP1")
-    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1", "DX-REAL2", "DX-W3", "DX-W4", "DX-S1", "DX-S2", "DX-S3", "DX-IMP2") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
-    assert mode != "production" or holder in ("DX-REAL2", "DX-THIN1", "DX-W3", "DX-W4", "DX-S1", "DX-S2", "DX-S3", "DX-IMP2")
+    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1", "DX-REAL2", "DX-W3", "DX-W4", "DX-S1", "DX-S2", "DX-S3", "DX-IMP2", "DX-S4") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
+    assert mode != "production" or holder in ("DX-REAL2", "DX-THIN1", "DX-W3", "DX-W4", "DX-S1", "DX-S2", "DX-S3", "DX-IMP2", "DX-S4")
     # [DX-S2] Why: run the production gate with every save sent through the product's path (TriplesLive and the
     # Datomic adapter), the SDK's orderedSaves option off (0) or on (1). Unset: the lab producer, as before.
     product_path = os.environ.get("DX_S2_PRODUCT")
-    if product_path not in (None, "0", "1") or (product_path is not None and (mode, holder) not in (("production", "DX-S2"), ("production", "DX-S3"))):
-        raise SystemExit("DX_S2_PRODUCT is 0 or 1, for the production gate under the DX-S2 or DX-S3 holder")
+    if product_path not in (None, "0", "1") or (product_path is not None and (mode, holder) not in (("production", "DX-S2"), ("production", "DX-S3"), ("production", "DX-S4"))):
+        raise SystemExit("DX_S2_PRODUCT is 0 or 1, for the production gate under the DX-S2, DX-S3 or DX-S4 holder")
     # [DX-S3] Why: the production gate with the several-owners option off (0) or on (1) in both the gateway
     # (TX2_SUBJECT_SEVERAL_OWNERS) and the SDK (severalOwners), on the product path with the wide writer. Unset: as before.
     several_owners = os.environ.get("DX_S3_OWNERS")
     if several_owners not in (None, "0", "1") or (several_owners is not None and (
-            (mode, holder) != ("production", "DX-S3") or product_path != "1" or os.environ.get("DX_W2_WIDE") != "1")):
-        raise SystemExit("DX_S3_OWNERS is 0 or 1, for the production gate under DX-S3 with DX_S2_PRODUCT=1 and DX_W2_WIDE=1")
+            (mode, holder) not in (("production", "DX-S3"), ("production", "DX-S4")) or product_path != "1" or os.environ.get("DX_W2_WIDE") != "1")):
+        raise SystemExit("DX_S3_OWNERS is 0 or 1, for the production gate under DX-S3 or DX-S4 with DX_S2_PRODUCT=1 and DX_W2_WIDE=1")
+    # [DX-S4] Why: the production gate with tape M (DX_S4_MIX=1: a cell of the real mix of saves, most of them creations)
+    # and the creation option off (DX_S4_CREATE=0) or on (1) in the gateway (TX2_SUBJECT_CREATE) and the SDK
+    # (creationSaves), on the product path with the wide and several-owners writers. Unset: as before.
+    mix_tape = os.environ.get("DX_S4_MIX")
+    creation = os.environ.get("DX_S4_CREATE")
+    if mix_tape not in (None, "0", "1") or creation not in (None, "0", "1") or (
+            (mix_tape is not None or creation is not None) and ((mode, holder) != ("production", "DX-S4") or several_owners != "1")):
+        raise SystemExit("DX_S4_MIX and DX_S4_CREATE are 0 or 1, for the production gate under DX-S4 with DX_S3_OWNERS=1")
     # [DX-W3] Why: run the production gate with the general writer's hints on or off (default: no file, as before).
     # Rejected: a second gate copy; the hints arm differs from the control only in this one setting.
     general_prefetch = os.environ.get("DX_W3_GENERAL_PREFETCH")
@@ -111,7 +119,7 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     wide = os.environ.get("DX_W2_WIDE", "0")
     # [DX-S1] And the production gate under the DX-S1 holder (one commit per subject's save with the wide writer).
     if wide not in ("0", "1") or (wide == "1" and (ordered, numeric_owner) != ("1", "1")) or (
-            wide == "1" and mode != "rolling-recovery" and (mode, holder) not in (("production", "DX-S1"), ("production", "DX-S2"), ("production", "DX-S3"))):
+            wide == "1" and mode != "rolling-recovery" and (mode, holder) not in (("production", "DX-S1"), ("production", "DX-S2"), ("production", "DX-S3"), ("production", "DX-S4"))):
         raise SystemExit("Wide saves need the ordered rolling-recovery fixture, or the production gate under DX-S1")
     if wide == "1":
         (config / "subject-wide").write_text("1\n")
@@ -134,6 +142,11 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
         (config / "s2-product").write_text(product_path + "\n")
     if several_owners is not None:
         (config / "subject-owners").write_text(several_owners + "\n")
+    if mix_tape is not None:
+        (config / "s4-mix").write_text(mix_tape + "\n")
+        shutil.copyfile(EXPERIMENT.parent / "real2/production-mix.json", config / "production-mix.json")
+    if creation is not None:
+        (config / "subject-create").write_text(creation + "\n")
     fresh_first = os.environ.get("DX_PREP1_TEST_FRESH_FIRST") == "1"
     if fresh_first:
         # [DX-THIN1] Why: the one branch keeps INT1's rolling gate, which has no fresh-first arm (PREP1 dropped it).
@@ -215,6 +228,8 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     profile["lanes"]["datomic"]["image"] = (f"tx2-dxs1-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-S1"
                                             else f"tx2-dxs2-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-S2"
                                             else f"tx2-dxs3-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-S3"
+                                            # [DX-S4] A private tag per attempt (the shared production tag is rebuilt by other builders).
+                                            else f"tx2-dxs4-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-S4"
                                             else f"tx2-dxw3-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-W3"
                                             else f"tx2-dxw4-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-W4"
                                             else f"tx2-datomic:dx-w1-head-{out.name}-{head[:8]}" if owner_head == "1" and holder == "DX-W1"
@@ -253,6 +268,8 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "subjectHints": subject_hints,
         "productPath": product_path,
         "severalOwners": several_owners,
+        "mixTape": mix_tape,
+        "creation": creation,
         "ownerHead": owner_head == "1",
         "wideSaves": os.environ.get("DX_W2_WIDE", "0") == "1",
         "freshFirst": fresh_first,

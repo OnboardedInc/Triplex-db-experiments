@@ -21,7 +21,7 @@ import {
   type Write,
 } from "./plan.ts";
 import { journalHash, now, type Scope } from "./observer.ts";
-import { commitAssertions, isProduction, orderedBlockLimit, wideOrderedBlockLimit } from "../../v01/production-card.ts";
+import { commitAssertions, isMix, isProduction, orderedBlockLimit, wideOrderedBlockLimit, type MixWrite } from "../../v01/production-card.ts";
 import { slotAttribute } from "../../w1/field/production.ts";
 
 type Input = Parameters<DatomicClient["transact"]>[1];
@@ -99,6 +99,9 @@ export type Save = {
   // [DX-S2] Sent through the product's path (DX_S2_PRODUCT): the SDK chose the operation ID and the identity block.
   product?: boolean;
   operationId?: string;
+  // [DX-S4] A tape M save: its kind and how many owners it writes (each has one changed-entity journal row).
+  kind?: string;
+  owners?: number;
 };
 
 export type Sender = {
@@ -156,7 +159,20 @@ function productionSave(o: Save, e: Write & { slots: number[] }, prior: readonly
   return { input, entity, written, facts: facts.length, retired: old.length };
 }
 
-export function expectedSave(o: Save, e: Write, prior: readonly Row[]) {
+// [DX-S4] A tape M save: every owner's slots (a reference slot's value is its target's entity ID); each owner retires
+// its own current rows of the attributes written. `entity` is the journal digest's key: the owners, sorted.
+function mixSave(o: Save, e: MixWrite, rowsOf: (entity: string) => readonly Row[]) {
+  const facts: Fact[] = e.mix.owners.flatMap((w) => w.slots.map((slot) => ({ e: w.entity, a: slotAttribute(slot),
+    v: w.refs[slot] !== undefined ? { type: "ref", value: w.refs[slot]! } : { type: "string", value: sha([e.version, slot]).slice(0, 57) } } as Fact)));
+  const old = e.mix.owners.flatMap((w) => rowsOf(w.entity).filter((r) => w.slots.some((slot) => slotAttribute(slot) === r.attribute)));
+  const input = { ...command(o.id, facts, old, true, false, undefined), live: old.map((r) => r.id), groupAccount: keyFor(o.account),
+    writeClass: "live" as const };
+  const owners = [...new Set(e.mix.owners.map((w) => w.entity))].sort();
+  return { input, entity: owners.join("\n"), written: undefined as string[] | undefined, facts: facts.length, retired: old.length, owners };
+}
+
+export function expectedSave(o: Save, e: Write, prior: readonly Row[], rowsOf?: (entity: string) => readonly Row[]) {
+  if (isMix(e)) return mixSave(o, e, rowsOf ?? (() => prior));
   if (isProduction(e)) return productionSave(o, e, prior);
   const entity = e.owner ?? task(o.account, o.subject);
   const old = prior.slice(0, e.width);
@@ -178,6 +194,15 @@ export function expectedSave(o: Save, e: Write, prior: readonly Row[]) {
 
 // Records an acknowledged or recovered commit's new rows as the sender's current predecessors for its subject.
 function settleRows(sender: Sender, candidate: ReturnType<typeof expectedSave>, width: number, p: number, clock: number) {
+  // [DX-S4] A tape M save settles each owner's rows: its retired rows leave, its new business rows join.
+  if ("owners" in candidate && candidate.owners) {
+    const gone = new Set(candidate.input.rows.filter((r) => r.retracted_at !== null && !candidate.input.newIds.includes(r.id)).map((r) => r.id));
+    const fresh = candidate.input.rows.filter((r) => r.entity_type !== "_Transaction" && candidate.input.newIds.includes(r.id))
+      .map((r) => ({ ...r, recorded_at: clock, recorded_position: p }));
+    for (const owner of candidate.owners)
+      sender.rows.set(owner, [...(sender.rows.get(owner) ?? []).filter((r) => !gone.has(r.id)), ...fresh.filter((r) => r.entity_id === owner)]);
+    return;
+  }
   const old = sender.rows.get(candidate.entity)!;
   if (candidate.written) {
     const written = new Set(candidate.written);
@@ -287,6 +312,11 @@ export async function play(
   // [DX-S3] DX_S3_OWNERS=1: the SDK's severalOwners option beside orderedSaves (the writers run the gateway's option).
   const severalOwners = process.env.DX_S3_OWNERS === "1";
   assert(!severalOwners || (productMode === "1" && wide), "DX_S3_OWNERS=1 needs DX_S2_PRODUCT=1 and TX2_SUBJECT_WIDE=1");
+  // [DX-S4] DX_S4_CREATE=1: the SDK's creationSaves beside severalOwners (the writers run TX2_SUBJECT_CREATE); tape M's
+  // saves are sent only through the product's path.
+  const creation = process.env.DX_S4_CREATE === "1";
+  assert(!creation || severalOwners, "DX_S4_CREATE=1 needs DX_S3_OWNERS=1");
+  assert(!tape.some(isMix) || productMode === "1", "Tape M is sent only through the product's path (DX_S2_PRODUCT=1)");
   const products: Awaited<ReturnType<typeof import("../../s2/product.ts")["productSaver"]>>[] = [];
   if (productMode !== undefined) {
     const { productSaver } = await import("../../s2/product.ts");
@@ -294,7 +324,7 @@ export async function play(
       const scopeJson = Buffer.from(s.scope.db.replace(/^s2-/, ""), "base64url").toString("utf8");
       products.push(await productSaver([(s.client as unknown as { endpoint: URL }).endpoint.href], scopeJson,
         { ...(productMode === "1" ? { orderedSaves: true, saveSizeRule: true } : {}), ...(severalOwners ? { severalOwners: true } : {}),
-          groupAccount: keyFor(a), writeClass: "live" }));
+          ...(creation ? { creationSaves: true } : {}), groupAccount: keyFor(a), writeClass: "live" }));
     }
   }
   const admit = ramp ? startupAdmission() : undefined;
@@ -382,8 +412,16 @@ export async function play(
     // [DX-INT1] Why: bind the identity block to this offered save through settling or recovering it.
     // Rejected: minting a new block while looking up an uncertain receipt.
     const entity = e.owner ?? task(row.account, row.subject);
-    const cached = sender.rows.get(entity);
-    if (isProduction(e)) {
+    // [DX-S4] A tape M save reads every owner's settled rows; an owner it creates (or one whose creation never committed)
+    // has none.
+    const mixRows = (x: string) => sender.rows.get(x) ?? [];
+    const cached = isMix(e) ? [] as Row[] : sender.rows.get(entity);
+    if (isMix(e)) {
+      row.saveKey = e.saveKey; row.rows = 1; row.facts = e.slots.length; row.kind = e.mix.kind;
+      row.owners = new Set(e.mix.owners.map((w) => w.entity)).size;
+      row.retired = e.mix.owners.reduce((n, w) => n + mixRows(w.entity).filter((r) => w.slots.some((s) => slotAttribute(s) === r.attribute)).length, 0);
+      row.assertions = commitAssertions(row.facts, row.retired) + row.owners - 1;
+    } else if (isProduction(e)) {
       // [DX-INT1] Why: the ordered identity numbers a commit's assertions in one byte; a production commit over 256
       // assertions takes the general identity whole, as the product does for any commit of more than three facts.
       // Rejected: splitting a save into several commits, which the product does not do.
@@ -401,7 +439,7 @@ export async function play(
     if (orderedIds && !row.generalIdentity && !productMode) row.orderedToken = (wide ? wideOrderedSaveIdentity() : orderedSaveIdentity()).token;
     assert(cached || sender.loadPredecessor, "Missing predecessor");
     function draft(prior: Row[]) {
-      const value = expectedSave(row, e, prior);
+      const value = expectedSave(row, e, prior, mixRows);
       if (orderedIds) value.input.sourceK = Math.max(sender.scope.cut, ...prior.map((field) => field.recorded_position));
       return value;
     }
@@ -435,8 +473,9 @@ export async function play(
           // client is not observed), so latency from send includes the SDK's staging.
           row.product = true;
           row.sent = performance.timeOrigin + performance.now();
+          // [DX-S4] A reference row keeps its type (tape M); every other row is a string, as before.
           const facts = input.rows.slice(0, candidate!.facts).map((r) => ({ e: r.entity_id, a: r.attribute,
-            v: { type: "string", value: r.value_string! } }));
+            v: { type: r.value_type === "ref" ? "ref" : "string", value: r.value_string! } }));
           const old = input.rows.filter((r) => r.retracted_at !== null && !input.newIds.includes(r.id));
           try {
             const sent = await products[account]!.save(0, candidate!.entity, facts, old, row.id);

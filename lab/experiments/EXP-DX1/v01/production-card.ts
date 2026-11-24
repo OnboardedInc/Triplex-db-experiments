@@ -5,7 +5,8 @@ import { fieldCount, fieldValue, taskSerial } from "../../../bench/lib/deep-worl
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { loadParams, productionOffers, slotAttribute, tapeReport, type ProductionOffer, type Shape, type TapeEdge } from "../w1/field/production.ts";
 import { agedFieldRow } from "../prep1/ceiling-seed.ts";
-import { task, type Write } from "../scale1/decision/plan.ts";
+import { keyFor, root, task, type Write } from "../scale1/decision/plan.ts";
+import { loadMixParams, mixOffers, mixReport, newPersonBase, type MixKind, type MixOffer, type OwnerRef, type RefTarget } from "../w1/field/production-mix.ts";
 import { Histogram } from "../../../bench/lib/hist.ts";
 import { cellPath, ratedTape, serverCells, type ServerCell, type WindowSeconds } from "./server-workload.ts";
 
@@ -17,12 +18,16 @@ import { cellPath, ratedTape, serverCells, type ServerCell, type WindowSeconds }
 // [DX-CARD2] The "-noburst" tapes are the same process without the end-of-cell burst (w1/field/production.ts edge
 // "spread"): no account has a save due at the cell's last instant. Their offers and hashes differ from the measured
 // "production-R" and "production-S", which stay as they were so the cards of 2026-11-23 reproduce.
-export const cardTapes = ["saturday", "production-R", "production-S", "production-R-noburst", "production-S-noburst"] as const;
+// [DX-S4] "production-M" is the real mix of saves (w1/field/production-mix.ts: most saves create an entity), at the same
+// saves per second as shape S in each cell; "production-M-burst" is the creation burst (every save creates something).
+// Both are sent only through the product's path (DX_S2_PRODUCT=1). R, S and the default are unchanged.
+export const cardTapes = ["saturday", "production-R", "production-S", "production-R-noburst", "production-S-noburst",
+  "production-M", "production-M-burst"] as const;
 export type CardTape = (typeof cardTapes)[number];
 /** Reads a recorded or passed tape name. A record without one predates the tape setting, so it ran Saturday's tape. */
 export function parseCardTape(text: string | undefined): CardTape {
   const tape = cardTapes.find((t) => t === (text ?? "saturday"));
-  assert(tape, "Choose --tape saturday, production-R, production-S, production-R-noburst or production-S-noburst");
+  assert(tape, "Choose --tape saturday, production-R, production-S, production-R-noburst, production-S-noburst, production-M or production-M-burst");
   return tape;
 }
 // [DX-S1] Why: the owner chose one commit per subject's save as the product's save shape (lab/V0.1.md, 2026-11-24), so a
@@ -41,7 +46,9 @@ export const defaultCardTape: CardTape = "production-S-noburst";
 // setting, so no writer reads it back.
 // [DX-S3] DX_S3_OWNERS=1 (with DX_S2_PRODUCT=1 and TX2_SUBJECT_WIDE=1): the several-owners option in the writers
 // (TX2_SUBJECT_SEVERAL_OWNERS, forwarded by stack/up.sh) and in the SDK (severalOwners); recorded only when on.
-export const writerOptionNames = ["TX2_SUBJECT_WIDE", "TX2_GENERAL_PREFETCH", "TX2_SUBJECT_HINTS", "DX_S2_PRODUCT", "DX_S3_OWNERS"] as const;
+// [DX-S4] DX_S4_CREATE=1 (with DX_S3_OWNERS=1): the creation option in the writers (TX2_SUBJECT_CREATE, forwarded by
+// stack/up.sh) and in the SDK (creationSaves); recorded only when on.
+export const writerOptionNames = ["TX2_SUBJECT_WIDE", "TX2_GENERAL_PREFETCH", "TX2_SUBJECT_HINTS", "DX_S2_PRODUCT", "DX_S3_OWNERS", "DX_S4_CREATE"] as const;
 // [DX-INT3] Default-off read gateway options a card arm may run with (W3): the bound on reads waiting for a permit and
 // the web-thread counters. stack/up.sh passes them to the gateways only when set. run.ts passes them to the arm and
 // adopted-server.ts records the ones set. Why: before this run.ts dropped them, so W3's published "bound on" arm would
@@ -61,9 +68,16 @@ export const writerOptionsSet = (env: NodeJS.ProcessEnv) => {
 export const newRunTape = (text: string | undefined, age: string | undefined): CardTape =>
   parseCardTape(text ?? (age === "realistic" ? "saturday" : defaultCardTape));
 export const tapeShape = (tape: CardTape): Shape | undefined =>
-  tape.startsWith("production-R") ? "R" : tape.startsWith("production-S") ? "S" : undefined;
+  tape.startsWith("production-R") ? "R" : tape.startsWith("production-S") || tape.startsWith("production-M") ? "S" : undefined;
+/** [DX-S4] Tape M's variant, or undefined for the other tapes. Its cells hold shape S's saves per account. */
+export type MixVariant = "mix" | "burst";
+export const tapeMix = (tape: CardTape): MixVariant | undefined =>
+  tape === "production-M" ? "mix" : tape === "production-M-burst" ? "burst" : undefined;
 export const tapeEdge = (tape: CardTape): TapeEdge => tape.endsWith("-noburst") ? "spread" : "calibrated";
-export const tapeTitle = (tape: CardTape) => tape === "saturday"
+export const tapeTitle = (tape: CardTape) => tapeMix(tape) ? (tapeMix(tape) === "burst"
+  ? "the creation burst of tape M (every save creates a subject or an enrolment, one commit each)"
+  : "tape M, the real mix of saves (most of them create an entity; one commit per subject's save), at shape S's saves per second")
+  : tape === "saturday"
   ? "Saturday's tape (every neighbour save a one- or two-field replacement, nearly every save a subject not seen before)"
   : `the production-shaped tape, shape ${tapeShape(tape)} (${tapeShape(tape) === "R"
     ? "one commit per form row at the fixed row rates" : "one commit per subject's save, at the same saves as shape R"})` +
@@ -91,15 +105,35 @@ export type ProductionWrite = Write & {
   gap?: number | null;
 };
 export const isProduction = (e: Write): e is ProductionWrite => Array.isArray((e as ProductionWrite).slots);
+/** [DX-S4] One owner of a tape M save, named in the card's database: its fields, and each reference slot's target. */
+export type MixWriteOwner = { entity: string; role: OwnerRef["role"]; person: number; slots: number[]; refs: Record<number, string>; creates: boolean };
+export type MixWrite = ProductionWrite & { mix: { kind: MixKind; owners: MixWriteOwner[] } };
+export const isMix = (e: Write): e is MixWrite => (e as MixWrite).mix !== undefined;
+const mixParamsFile = new URL("../real2/production-mix.json", import.meta.url).pathname;
+let mixLoaded: ReturnType<typeof loadMixParams> | undefined;
+export const productionMixParams = () => (mixLoaded ??= loadMixParams(mixParamsFile));
+/**
+ * [DX-S4] How the card names tape M's owners: a subject's task and root (its profile) as the seed has them; every entity
+ * the tape creates under its own prefix with the cell's label, so cells of one campaign never share one.
+ */
+export function mixEntity(account: number, ref: OwnerRef, label: string) {
+  const ns = "acct/" + keyFor(account) + "/";
+  return ref.role === "task" ? task(account, ref.person)
+    : ref.role === "profile" ? (ref.person < newPersonBase ? root(account, ref.person) : `${ns}s4/${label}/subject/${ref.person}`)
+    : `${ns}s4/${label}/${ref.role}/${ref.person}/${ref.n}`;
+}
+const mixTarget = (account: number, t: RefTarget, label: string) =>
+  "constant" in t ? "acct/" + keyFor(account) + "/s4/" + t.constant : mixEntity(account, t, label);
 
 /**
  * The neighbour commits of one loaded cell. `fold` maps a tape person onto the database's people (the identity at full
  * size; the toy folds onto its few people per account, keeping each tape person on one toy subject).
  */
 export function productionNeighbours(shape: Shape, rate: number, rowTargets: readonly number[], seconds: number,
-  label: string, fold?: (account: number, person: number) => number, edge: TapeEdge = "calibrated"): ProductionWrite[] {
+  label: string, fold?: (account: number, person: number) => number, edge: TapeEdge = "calibrated", mix?: MixVariant): ProductionWrite[] {
   const { params } = productionParams();
   const offers = productionOffers(params, shape, productionBand(rate), rowTargets, seconds, edge);
+  if (mix) return mixNeighbours(offers, rate, seconds, label, fold, mix);
   const ordinal = new Map<number, number>();
   const ladder = ladderFacts(process.env);
   assert(ladder === undefined || shape === "S", "The save-size ladder rewrites shape S saves only");
@@ -114,6 +148,34 @@ export function productionNeighbours(shape: Shape, rate: number, rowTargets: rea
       account: o.account, ordinal: i, subject: person, ms: o.ms, width: slots.length,
       version: [label, o.account, i].join("/"), owner: task(o.account, person), person,
       slots, saveKey: o.account + "/" + o.save, rows, gap: o.gap,
+    };
+  });
+}
+
+// [DX-S4] Tape M's neighbour commits: each account offers as many saves as shape S's cell does, drawn from the mix.
+// A toy fold maps an existing subject onto the toy's people; a new subject keeps its own number (it is created).
+function mixNeighbours(sOffers: readonly ProductionOffer[], rate: number, seconds: number, label: string,
+  fold: ((account: number, person: number) => number) | undefined, mix: MixVariant): MixWrite[] {
+  assert(ladderFacts(process.env) === undefined, "The save-size ladder rewrites shape S saves only");
+  const saves = Array.from({ length: 9 }, (_, n) => new Set(sOffers.filter((o) => o.account === n + 1).map((o) => o.save)).size);
+  const offers = mixOffers(productionMixParams().params, productionBand(rate), saves, seconds, mix === "burst");
+  const ordinal = new Map<number, number>();
+  const person = (account: number, p: number) => p < newPersonBase && fold ? fold(account, p) : p;
+  return offers.map((o: MixOffer) => {
+    const i = ordinal.get(o.account) ?? 0;
+    ordinal.set(o.account, i + 1);
+    const owners = o.owners.map((w) => {
+      const ref = { ...w, person: person(o.account, w.person) };
+      return { entity: mixEntity(o.account, ref, label), role: w.role, person: ref.person, slots: [...w.slots], creates: w.creates,
+        refs: Object.fromEntries(Object.entries(w.refs).map(([slot, t]) => [slot, mixTarget(o.account,
+          "constant" in t ? t : { ...t, person: person(o.account, t.person) }, label)])) };
+    });
+    const p = person(o.account, o.person);
+    return {
+      account: o.account, ordinal: i, subject: p, ms: o.ms, width: o.slots.length,
+      version: [label, o.account, i].join("/"), owner: owners[0]!.entity, person: p,
+      slots: owners.flatMap((w) => w.slots), saveKey: o.account + "/" + o.save, rows: 1, gap: null,
+      mix: { kind: o.kind, owners },
     };
   });
 }
@@ -141,10 +203,10 @@ export const sortTape = (tape: Write[]) =>
   tape.sort((a, b) => a.ms - b.ms || a.account - b.account || a.ordinal - b.ordinal);
 
 /** A full-size loaded cell on the production tape: the card's own quiet stream, then the production neighbours. */
-export function fullCellTape(shape: Shape, cell: ServerCell, seconds: WindowSeconds, edge: TapeEdge = "calibrated") {
+export function fullCellTape(shape: Shape, cell: ServerCell, seconds: WindowSeconds, edge: TapeEdge = "calibrated", mix?: MixVariant) {
   assert(cell.loaded);
   const quiet = ratedTape(100_000, cell, seconds).filter((e) => e.account === 0);
-  return sortTape([...quiet, ...productionNeighbours(shape, cell.rate, rowTargets(cell.rate, seconds, quiet.length), seconds, cellPath(cell), undefined, edge)]);
+  return sortTape([...quiet, ...productionNeighbours(shape, cell.rate, rowTargets(cell.rate, seconds, quiet.length), seconds, cellPath(cell), undefined, edge, mix)]);
 }
 
 /**
@@ -154,8 +216,10 @@ export function fullCellTape(shape: Shape, cell: ServerCell, seconds: WindowSeco
 export function tapeBinding(tape: CardTape, seconds: WindowSeconds) {
   const shape = tapeShape(tape);
   if (!shape) return undefined;
-  return { name: tape, paramsSha256: productionParams().sha256, cells: serverCells.filter((c) => c.loaded).map((cell) => {
-    const report = cardTapeReport(fullCellTape(shape, cell, seconds, tapeEdge(tape)), seconds);
+  return { name: tape, paramsSha256: productionParams().sha256,
+    ...(tapeMix(tape) ? { mixParamsSha256: productionMixParams().sha256 } : {}),
+    cells: serverCells.filter((c) => c.loaded).map((cell) => {
+    const report = cardTapeReport(fullCellTape(shape, cell, seconds, tapeEdge(tape), tapeMix(tape)), seconds);
     return { cell: cellPath(cell), tapeSha256: report.tapeSha256, reportSha256: createHash("sha256").update(JSON.stringify(report)).digest("hex") };
   }) };
 }
@@ -163,6 +227,14 @@ export function tapeBinding(tape: CardTape, seconds: WindowSeconds) {
 /** The tape report REAL2 writes beside each production run, for the card's neighbour commits. */
 export function cardTapeReport(tape: readonly Write[], seconds: number) {
   const { params, sha256 } = productionParams();
+  // [DX-S4] Tape M's report: kinds, creations, owners, facts and the enrolment tail (w1/field/production-mix.ts).
+  if (tape.some(isMix)) {
+    const offers = tape.filter(isMix).map((e) => ({ ms: e.ms, account: e.account, person: e.person, subtask: 0 as const, ordinal: 0 as const,
+      extra: false as const, save: Number(e.saveKey.split("/")[1]), kind: e.mix.kind, slots: e.slots, gap: null,
+      owners: e.mix.owners.map((w) => ({ role: w.role, person: w.person, n: 0, slots: w.slots, refs: w.refs as never, creates: w.creates })) }));
+    return { paramsSha256: productionMixParams().sha256, tapeSha256: createHash("sha256").update(JSON.stringify(tape)).digest("hex"),
+      ...mixReport(offers, seconds) };
+  }
   const offers = tape.filter(isProduction).map((e) => ({ account: e.account, person: e.person, subtask: 0, ordinal: e.ordinal,
     extra: false, ms: e.ms, slots: e.slots, save: Number(e.saveKey.split("/")[1]), gap: e.gap ?? null }));
   return { paramsSha256: sha256, tapeSha256: createHash("sha256").update(JSON.stringify(tape)).digest("hex"),
@@ -219,6 +291,44 @@ export async function productionPredecessors(reader: DatomicClient, db: string, 
     }
   }
   return { fields, counts };
+}
+
+/**
+ * [DX-S4] Tape M's predecessors: every task it writes as productionPredecessors reads it; every subject root it writes
+ * (the profile) holds no `:task/field-*` row but an earlier cell's of this campaign; every entity it creates is absent.
+ * An entity the tape creates and later writes again (attribute writes after a creation) is the tape's own.
+ */
+export async function mixPredecessors(reader: DatomicClient, db: string, head: number, seedCut: number,
+  writes: readonly MixWrite[], aged?: { cut: AgedCut; head: number }) {
+  const tasks = new Map<string, { account: number; person: number }>(), roots = new Set<string>(), created = new Set<string>();
+  const accountOf = new Map<string, number>();
+  for (const w of writes) for (const o of w.mix.owners) {
+    accountOf.set(o.entity, w.account);
+    if (o.creates) created.add(o.entity);
+    else if (o.role === "task") tasks.set(o.entity, { account: w.account, person: o.person });
+    else if (o.role === "profile" && o.person < newPersonBase) roots.add(o.entity);
+  }
+  for (const e of created) { tasks.delete(e); roots.delete(e); }
+  const base = await productionPredecessors(reader, db, head, seedCut, [...tasks.values()], aged);
+  const fields = new Map(base.fields);
+  const list = [...roots];
+  let rootRows = 0;
+  for (let i = 0; i < list.length; i += 64) {
+    const batch = list.slice(i, i + 64);
+    const rows = await reader.rows(db, { entityIds: batch, basis: { recordedPosition: head, validAt: SEED_VALID_FROM } });
+    for (const e of batch) {
+      const own = rows.filter((r) => r.entity_id === e && fieldNumber(r.attribute) !== undefined);
+      for (const r of own) assert(r.recorded_position > (aged?.head ?? seedCut), `${e} ${r.attribute}: not this campaign's`);
+      rootRows += own.length;
+      fields.set(e, own as Row[]);
+    }
+  }
+  const ids = [...created];
+  for (let i = 0; i < ids.length; i += 64) {
+    const rows = await reader.rows(db, { entityIds: ids.slice(i, i + 64), basis: { recordedPosition: head, validAt: SEED_VALID_FROM } });
+    assert.equal(rows.length, 0, "tape M: an entity the cell creates exists before it");
+  }
+  return { fields, accountOf, counts: { ...base.counts, roots: roots.size, rootRows, created: created.size } };
 }
 
 /**

@@ -292,6 +292,11 @@ subject_wide=${TX2_SUBJECT_WIDE:-0}
 # DX_S3_OWNERS. Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
 subject_several=${DX_S3_OWNERS:-0}
 [[ $subject_several =~ ^[01]$ ]] || exit 2
+# [DX-S4] Why: default-off creation saves on the per-subject writer (needs the several-owners option), from the card's
+# DX_S4_CREATE. Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
+subject_create=${DX_S4_CREATE:-0}
+[[ $subject_create =~ ^[01]$ && ( $subject_create == 0 || $subject_several == 1 ) ]] ||
+  { echo "DX_S4_CREATE is 0 or 1 and needs DX_S3_OWNERS=1" >&2; exit 2; }
 # [DX-IMP2] Why: default-off whole-subject import bound, forwarded to the writers only when set.
 # Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
 import_whole=${TX2_IMPORT_WHOLE_SUBJECT:-0}
@@ -1030,6 +1035,9 @@ for role in "${gateway_roles[@]}"; do
   fi
   if [[ $mode == w && $subject_several == 1 ]]; then
     field_policy+=(-e "TX2_SUBJECT_SEVERAL_OWNERS=1")
+  fi
+  if [[ $mode == w && $subject_create == 1 ]]; then
+    field_policy+=(-e "TX2_SUBJECT_CREATE=1")
   fi
   if [[ $mode == w && $import_whole == 1 ]]; then
     field_policy+=(-e "TX2_IMPORT_WHOLE_SUBJECT=1")

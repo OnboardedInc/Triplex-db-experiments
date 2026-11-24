@@ -121,12 +121,17 @@ export function orderedSaveShape(
   operations: readonly SaveOperation[],
   meta: { readonly commandId?: string; readonly enforce?: unknown; readonly actor?: string } | undefined,
   maxOwners = 1,
+  // [DX-S4] With `creationSaves`: reference values are plain values of the save (the creation writer takes them), and a
+  // save over the owner or fact bound still gets a wide block when its assertions fit one, so the general writer can
+  // probe history once for the whole save (declared identity bounds) instead of once per assertion.
+  creation = false,
 ): { readonly block: "one-byte" | "wide"; readonly reason: string; readonly owners?: number } | { readonly block?: undefined; readonly reason: string } {
   if (meta?.commandId === undefined) return { reason: "no-command-id" };
   if (meta.enforce !== undefined) return { reason: "constraints" };
   const entities = new Set<string>();
   let facts = 0,
-    retired = 0;
+    retired = 0,
+    bound: string | undefined;
   for (const op of operations) {
     if (op.op === "retract") {
       retired++;
@@ -135,15 +140,21 @@ export function orderedSaveShape(
     if (op.op !== "assert") return { reason: "pattern-retraction" };
     entities.add(op.entityId);
     // [DX-S3] With several owners (maxOwners > 1), up to maxOwners entities of one account; otherwise exactly one.
-    if (entities.size > maxOwners) return { reason: maxOwners === 1 ? "several-entities" : "over-owner-bound" };
+    if (entities.size > maxOwners && bound === undefined) {
+      if (!creation) return { reason: maxOwners === 1 ? "several-entities" : "over-owner-bound" };
+      bound = "over-owner-bound";
+    }
     if (op.entityId.startsWith("_")) return { reason: "system-entity" };
     if (op.attribute.startsWith(":_")) return { reason: "system-attribute" };
-    if (op.value.type === "ref") return { reason: "reference-value" };
+    if (op.value.type === "ref" && !creation) return { reason: "reference-value" };
     facts++;
   }
   if (facts + retired === 0) return { reason: "empty" };
   if (entities.size > 1 && !oneAccount([...entities])) return { reason: "several-accounts" };
-  if (facts > SUBJECT_SAVE_FACTS || retired > SUBJECT_SAVE_FACTS) return { reason: "over-subject-bound" };
+  if ((facts > SUBJECT_SAVE_FACTS || retired > SUBJECT_SAVE_FACTS) && bound === undefined) {
+    if (!creation) return { reason: "over-subject-bound" };
+    bound = "over-subject-bound";
+  }
   // Journal rows: position, instant, the optional actor, command, correlation, causation and configuration rows, one
   // changed-entity row per entity (at most the asserted entities plus the retracted facts' owners), and one change per
   // fact and retirement.
@@ -153,6 +164,9 @@ export function orderedSaveShape(
     ["actor", "correlationId", "causationId", "configSnapshot"].filter((k) => m[k]).length +
     (Math.max(1, entities.size) + retired) +
     (facts + retired);
+  // [DX-S4] A save over a per-subject bound keeps a wide block only if every assertion fits one (4,096).
+  if (bound !== undefined)
+    return facts + journal <= 4096 ? { block: "wide", reason: `general-block:${bound}` } : { reason: bound };
   return {
     block: facts + journal <= 256 ? "one-byte" : "wide",
     reason: "ordered",
@@ -213,6 +227,15 @@ export const makeDatomicStorageAdapter = (
      * TRIPLEX_DATOMIC_SEVERAL_OWNERS=1.
      */
     readonly severalOwners?: boolean;
+    /**
+     * [DX-S4] With `orderedSaves`, a save that creates an entity (a new enrolment, a new subject with its profile, a new
+     * owed form) or writes a reference value, on up to four owners of one account, gets one ordered block, so the
+     * gateway's creation writer (`TX2_SUBJECT_CREATE=1`) can admit it; a save over the owner or fact bound gets a wide
+     * block when it fits one, and every block save declares its identity bounds, so the general writer probes history
+     * once instead of once per assertion. Each answer's writer is counted in `client.saveRoutes`. Default off; also on
+     * with TRIPLEX_DATOMIC_CREATION_SAVES=1.
+     */
+    readonly creationSaves?: boolean;
   } = {},
 ): StorageAdapterService => {
   // [DX-T1] Why: Effect scopes include staging/validation and always close on typed failure or interruption.
@@ -233,6 +256,8 @@ export const makeDatomicStorageAdapter = (
     options.saveSizeRule ?? process.env["TRIPLEX_DATOMIC_SAVE_SIZE_RULE"] === "1";
   const severalOwners =
     orderedSaves && (options.severalOwners ?? process.env["TRIPLEX_DATOMIC_SEVERAL_OWNERS"] === "1");
+  const creationSaves =
+    orderedSaves && (options.creationSaves ?? process.env["TRIPLEX_DATOMIC_CREATION_SAVES"] === "1");
   const count = (reason: string) => client.saveRoutes.set(reason, (client.saveRoutes.get(reason) ?? 0) + 1);
   const route = (state: TransactionState | undefined, reason: string) => {
     client.saveRoutes.set(reason, (client.saveRoutes.get(reason) ?? 0) + 1);
@@ -522,6 +547,8 @@ export const makeDatomicStorageAdapter = (
                 state.importInstant === undefined &&
                 [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
               sourceK: state.optimistic && !state.orderedSave ? null : state.sourceK,
+              // [DX-S4] A block save declares its identity bounds (one history probe on the general writer).
+              ...(creationSaves && state.orderedSave ? { declareIdentityBounds: true } : {}),
               position: state.position,
               span: state.position - state.sourceK,
               entities: ownJournals
@@ -587,7 +614,7 @@ export const makeDatomicStorageAdapter = (
           ) {
             // [DX-S3] Why: the gateway's typed reason for a save of several owners it sent to the general writer is on
             // the answer; count it beside the SDK's own reasons. Rejected: a second request to ask.
-            if (severalOwners && state.orderedSave) {
+            if ((severalOwners || creationSaves) && state.orderedSave) {
               const answer = ack as Record<string, unknown>;
               count(
                 typeof answer["subjectSave"] === "string"
@@ -1051,8 +1078,9 @@ export const makeDatomicStorageAdapter = (
                     ? { reason: "not-lean" }
                     : !state.serverRecordTime
                       ? { reason: "client-record-time" }
-                      : orderedSaveShape(operations, meta, severalOwners ? SUBJECT_SAVE_OWNERS : 1);
+                      : orderedSaveShape(operations, meta, severalOwners || creationSaves ? SUBJECT_SAVE_OWNERS : 1, creationSaves);
               route(state, shape.block === undefined ? `runtime:${shape.reason}` : `ordered:${shape.block}`);
+              if (shape.block !== undefined && shape.reason !== "ordered") count(shape.reason);
               if ("owners" in shape && shape.owners !== undefined) count(`owners:${shape.owners}`);
               if (shape.block === undefined) return undefined;
               const identity = shape.block === "one-byte" ? orderedSaveIdentity() : wideOrderedSaveIdentity();

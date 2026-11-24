@@ -9,7 +9,8 @@
             [triplex.gateway.at-least :as at-least]
             [triplex.gateway.general-prefetch :as general-prefetch] [triplex.gateway.admission :as admission]
             [triplex.gateway.subject-hints :as subject-hints]
-            [triplex.gateway.subject-owners :as subject-owners])
+            [triplex.gateway.subject-owners :as subject-owners]
+            [triplex.gateway.subject-create :as subject-create])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -94,7 +95,9 @@
         ;; [DX-W4] Why: the per-subject writer's lookup-only hint function, installed only when its option is on.
         current (subject-hints/install! conn current)
         ;; [DX-S3] Why: the several-owners function is installed only when its option is on (default off).
-        current (subject-owners/install! conn current)]
+        current (subject-owners/install! conn current)
+        ;; [DX-S4] Why: the creation function is installed only when its option is on (default off).
+        current (subject-create/install! conn current)]
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
       (lean/enabled? current) (assoc :layout "lean" :orderedRowTexts true :journalCuts true)))))
@@ -173,7 +176,11 @@
       ;; [DX-S3] Why: launchers read the switch back; the reply is unchanged with the option off.
       subject-owners/enabled (assoc :subjectSeveralOwners subject-owners/max-owners
                                     :subjectSeveralOwnersFunction (when (subject-owners/installed db)
-                                                                    (str subject-owners/ident))))))
+                                                                    (str subject-owners/ident)))
+      ;; [DX-S4] Why: launchers read the switch back; the reply is unchanged with the option off.
+      subject-create/enabled (assoc :subjectCreate subject-create/max-owners
+                                    :subjectCreateFunction (when (subject-create/installed db)
+                                                             (str subject-create/ident))))))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"}
                              :body (trace/read-span "gateway.json-encode" "gateway" (json/write-str data))})
 ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.

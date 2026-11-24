@@ -94,3 +94,33 @@ test("the card records the read gateway's waiting-read bound and thread counters
   assert.throws(() => readQueueOptionsSet({ DX_READ_WAIT_LIMIT: "5000" }));
   assert.throws(() => readQueueOptionsSet({ DX_THREAD_COUNTERS: "yes" }));
 });
+
+// [DX-S4] Tape M: the real mix of saves at shape S's saves per account, every owner named in the card's database, sent
+// only through the product's path; R, S and the default unchanged.
+test("tape M offers shape S's saves per account in the real mix, most of them creations", async () => {
+  const { isMix, tapeMix } = await import("./production-card.ts");
+  assert.equal(parseCardTape("production-M"), "production-M");
+  assert.equal(tapeMix("production-M"), "mix");
+  assert.equal(tapeMix("production-M-burst"), "burst");
+  assert.equal(tapeMix("production-S-noburst"), undefined);
+  assert.equal(defaultCardTape, "production-S-noburst");
+  const cell = { rate: 394 as const, loaded: true };
+  const s = fullCellTape("S", cell, 300, "spread");
+  const m = fullCellTape("S", cell, 300, "spread", "mix");
+  assert.deepEqual(m.filter((e) => e.account === 0), s.filter((e) => e.account === 0), "the quiet stream is the card's");
+  const sSaves = s.filter(isProduction).length, mSaves = m.filter(isMix).length;
+  assert.equal(mSaves, sSaves, "tape M offers as many saves as shape S");
+  const report = cardTapeReport(m, 300) as any;
+  assert(Math.abs(report.kinds.enrolment - 0.55) < 0.03 && Math.abs(report.kinds.newSubject - 0.2) < 0.03, JSON.stringify(report.kinds));
+  assert(report.creating > 0.75, "most saves create an entity");
+  const created = m.filter(isMix).flatMap((e) => e.mix.owners.filter((o) => o.creates).map((o) => o.entity));
+  assert.equal(new Set(created).size, created.length, "every created entity is created once");
+  assert(created.every((e) => /^acct\/account-0(0[2-9]|10)\/s4\/p6-394-loaded\//.test(e)), created.find((e) => !/s4\/p6-394-loaded/.test(e)));
+  assert(new Set(m.map((e) => e.version)).size === m.length);
+  const burst = cardTapeReport(fullCellTape("S", cell, 300, "spread", "burst"), 300) as any;
+  assert.equal(burst.creating, 1);
+  assert.equal(tapeBinding("production-M", 300)!.cells.length, 4);
+  assert(tapeBinding("production-M", 300)!.mixParamsSha256);
+  assert.deepEqual(writerOptionsSet({ DX_S4_CREATE: "1", DX_S3_OWNERS: "1" }), { DX_S3_OWNERS: "1", DX_S4_CREATE: "1" });
+  assert.deepEqual(writerOptionsSet({ DX_S4_CREATE: "0" }), {});
+});

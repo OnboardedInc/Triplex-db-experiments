@@ -67,12 +67,15 @@ export function decodeFeed(db: string, row: Wire, seen: number, includeJournalId
   assert(id.length === 1 && typeof id[0]!.value_string === "string");
   assert(instant.length === 1 && typeof instant[0]!.value_datetime === "number");
   assert(Number.isSafeInteger(position) && position > 0);
-  assert(owner.length === 1 && typeof owner[0]!.value_string === "string");
+  // [DX-S4] A save of several owners (tape M) names each in one changed-entity row; its digest key is the owners, sorted
+  // and joined by newlines (one owner: that owner, as before).
+  assert(owner.length >= 1 && owner.every((o) => typeof o.value_string === "string"));
+  const ownerKey = owner.length === 1 ? owner[0]!.value_string! : owner.map((o) => o.value_string!).sort().join("\n");
   assert.deepEqual(
     attr("position").map((r) => r.value_number),
     [position],
   );
-  assert(fields.length === changes.length + 4);
+  assert(fields.length === changes.length + 3 + owner.length);
   return {
     db,
     position,
@@ -80,7 +83,7 @@ export function decodeFeed(db: string, row: Wire, seen: number, includeJournalId
     id: id[0]!.value_string!,
     clock: instant[0]!.value_datetime!,
     seen,
-    digest: journalHash(owner[0]!.value_string!, changes),
+    digest: journalHash(ownerKey, changes),
     ...(includeJournalIds ? { journalIds: fields.map((field) => field.id).sort() } : {}),
   };
 }

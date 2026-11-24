@@ -56,9 +56,16 @@ const { productSaver } = await import("../s2/product.ts");
 // [DX-S3] With DX_S3_OWNERS set (only with DX_S2_PRODUCT=1), the SDK's severalOwners option off ("0") or on ("1").
 const severalOwners = process.env.DX_S3_OWNERS;
 assert(severalOwners === undefined || ((severalOwners === "0" || severalOwners === "1") && productMode === "1"), "DX_S3_OWNERS is 0 or 1, with DX_S2_PRODUCT=1");
+// [DX-S4] DX_S4_MIX=1 adds a cell of tape M (the real mix, most saves creations) after the other cells; DX_S4_CREATE
+// (0 or 1) is the SDK's creationSaves beside the other options (the gateway runs TX2_SUBJECT_CREATE the same).
+const mixTape = process.env.DX_S4_MIX === "1";
+const creation = process.env.DX_S4_CREATE;
+assert(creation === undefined || ((creation === "0" || creation === "1") && severalOwners === "1"), "DX_S4_CREATE is 0 or 1, with DX_S3_OWNERS=1");
+assert(!mixTape || productMode === "1", "Tape M is sent only through the product's path (DX_S2_PRODUCT=1)");
 const product = productMode === undefined ? undefined
   : await productSaver([url], scope, productMode === "1"
-    ? { orderedSaves: true, saveSizeRule: true, ...(severalOwners === undefined ? {} : { severalOwners: severalOwners === "1" }) } : {});
+    ? { orderedSaves: true, saveSizeRule: true, ...(severalOwners === undefined ? {} : { severalOwners: severalOwners === "1" }),
+        ...(creation === "1" ? { creationSaves: true } : {}) } : {});
 const owners = new Map<string, [number, number]>();
 for (const cell of cellsToRun) for (const o of cell.tape) owners.set(scaleOwner(o.account, o.person), [o.account, o.person]);
 const fields = new Map<string, Row[]>();
@@ -138,6 +145,58 @@ for (let i = 0; i < list.length; i += 50) {
     }
   }
 }
+// [DX-S4] Tape M: one toy cell of the real mix through the product's path. Its existing owners (tasks, profiles) are
+// seeded first; every owner it creates is proved absent before it; afterwards every field of every owner it wrote is
+// read back and compared with the value computed from the tape and the receipts alone.
+const mixResult = mixTape ? await (async () => {
+  const m = await import("../s4/mix-cell.ts");
+  const { scaleAccount } = await import("./ceiling-seed.ts");
+  const window = Number(process.env.DX_S4_GATE_SECONDS ?? 30), saves = Number(process.env.DX_S4_GATE_SAVES ?? 40);
+  const { cell, report, paramsSha256 } = m.toyMixCell(wideChoose(offers(1, window, [0]), 2), 2, saves, window, "M-toy-loaded");
+  const names = m.mixNames((a) => "acct/" + scaleAccount(a) + "/", scaleOwner, (a, p) => "acct/" + scaleAccount(a) + "/s4/profile/" + p, "gate");
+  const { existing: touched, created } = m.mixOwners(cell.tape, names);
+  // The quiet account's owners are tasks too (seeded here when no earlier cell wrote them; not part of tape M's read-back).
+  const existing = new Map(touched);
+  for (const o of cell.tape) if (!(o as any).owners) existing.set(scaleOwner(o.account, o.person), { role: "task", account: o.account, person: o.person });
+  const initial = new Map<string, Map<string, string>>();
+  const list = [...existing].filter(([e]) => !fields.has(e));
+  for (let i = 0; i < list.length; i += 20) {
+    const batch = list.slice(i, i + 20);
+    const facts = batch.flatMap(([e, { role, person }]) => role === "task"
+      ? Array.from({ length: fieldCount(taskSerial(person, 0)) }, (_, f) => ({ e, a: slotAttribute(f), v: fieldValue(person, 0, f, 0) }))
+      : Array.from({ length: 12 }, (_, f) => ({ e, a: slotAttribute(f), v: { type: "string" as const, value: sha(["profile", e, f]).slice(0, 57) } })));
+    const sent = await product!.seed(facts, `${attempt}-mix-seed-${i}`, SEED_VALID_FROM);
+    const ack = sent.ack as { position: { v: string }; recordedAt: { v: number } };
+    cut = Number(ack.position.v);
+    for (const [e] of batch) {
+      const rows = (sent.input.rows as Row[]).filter((r) => r.entity_id === e && sent.input.newIds.includes(r.id))
+        .map((r) => ({ ...r, recorded_position: cut, recorded_at: ack.recordedAt.v }));
+      fields.set(e, rows);
+    }
+  }
+  for (const [e] of touched) initial.set(e, new Map((fields.get(e) ?? []).filter((r) => r.attribute.startsWith(":task/field-")).map((r) => [r.attribute, r.value_string!])));
+  const absent = await m.assertAbsent(reader, db, cut, created);
+  const started = Date.now();
+  const result = await phase([client], reader, db, cut, fields, new Set(), { ...cell, tapeSha: sha(cell.tape) } as any, true, scheduler(),
+    legacyIds, undefined, false, product!.save, names);
+  assert(result.rows.every((row) => !row.reason || row.reason === "expired"), "a tape M save failed: " +
+    JSON.stringify(result.rows.filter((r) => r.reason && r.reason !== "expired").slice(0, 3).map((r) => r.reason)));
+  const wallMs = Date.now() - started;
+  cut = result.after;
+  const acked = result.rows.filter((r) => r.receipt && (cell.tape[r.ordinal] as any).owners).map((r) => ({ ordinal: r.ordinal, id: r.id, p: r.receipt!.p }));
+  const { expected, facts } = m.mixExpected(cell.tape, acked, names, initial);
+  const readback = await m.mixReadback(reader, db, cut, expected);
+  const neighbours = result.rows.filter((r) => (cell.tape[r.ordinal] as any).owners);
+  return {
+    label: cell.label, paramsSha256, report, offers: neighbours.length, acked: acked.length,
+    expired: neighbours.filter((r) => r.reason === "expired").length, wallMs, createdOwners: absent, existingOwners: existing.size,
+    factsWritten: facts, readback,
+    writers: { perSubject: neighbours.filter((r) => r.receipt && (r as any).ack?.subjectSave).length,
+      general: neighbours.filter((r) => r.receipt && !(r as any).ack?.subjectSave).length },
+    byKind: m.mixByKind(cell.tape, result.rows as any),
+  };
+})() : undefined;
+
 // [DX-S2] Counted work of a 20-row form through the product's path (this run's orderedSaves setting): 12 new subjects
 // of 20 fields, each saved twice with all 20 fields replaced. Per save: the writer, storage reads inside the serial
 // apply (the transaction's io-stats), datoms, PostgreSQL WAL bytes around the commit, and the apply time (diagnostic).
@@ -238,7 +297,9 @@ const writeOptions = await reader.request<{ options?: { generalPrefetch?: boolea
   "GET", `/v1/db/${db}/write-options`).catch(() => undefined);
 console.log("REAL2_GATE " + JSON.stringify({ ...summary, wideSaves,
   productPath: productMode ?? null, saveRoutes: product?.routes() ?? null,
-  ...(severalOwners === undefined ? {} : { severalOwners, severalOwnersOption: (writeOptions as any)?.subjectSeveralOwners ?? null }), formWork: formWork ?? null, wideOption: (writeOptions as any)?.subjectWide ?? null, generalHints: gatewayStats.generalHints ?? null,
+  ...(severalOwners === undefined ? {} : { severalOwners, severalOwnersOption: (writeOptions as any)?.subjectSeveralOwners ?? null }),
+  ...(creation === undefined && !mixTape ? {} : { creation: creation ?? null, creationOption: (writeOptions as any)?.subjectCreate ?? null,
+    creationFunction: (writeOptions as any)?.subjectCreateFunction ?? null, mix: mixResult ?? null }), formWork: formWork ?? null, wideOption: (writeOptions as any)?.subjectWide ?? null, generalHints: gatewayStats.generalHints ?? null,
   generalPrefetchOption: writeOptions?.options?.generalPrefetch ?? null,
   subjectHints: gatewayStats.subjectHints ?? null, subjectHintsOption: writeOptions?.options?.subjectHints ?? null }));
 await product?.close();

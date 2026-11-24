@@ -62,6 +62,30 @@ describe("orderedSaveShape with several owners (DX-S3)", () => {
   });
 });
 
+describe("orderedSaveShape with creation saves (DX-S4)", () => {
+  it("takes reference values, keeps the owner bound for the creation writer, and gives a save over a bound a wide block", () => {
+    const ref = { type: "ref", value: "acct/a/subject/1" };
+    // A new enrolment of an existing subject: one new owner with a reference to the subject.
+    expect(orderedSaveShape([assert("acct/a/enrolment/1", ":enrolment/subject", ref), assert("acct/a/enrolment/1", ":enrolment/status")], meta, SUBJECT_SAVE_OWNERS, true))
+      .toEqual({ block: "one-byte", reason: "ordered" });
+    // Off, the same save keeps the runtime's IDs.
+    expect(orderedSaveShape([assert("acct/a/enrolment/1", ":enrolment/subject", ref)], meta, SUBJECT_SAVE_OWNERS).reason).toBe("reference-value");
+    // A new subject, its profile and its first enrolment: two owners, one block.
+    expect(orderedSaveShape([assert("acct/a/subject/2", ":subject/name"), assert("acct/a/enrolment/2", ":enrolment/subject", ref)], meta, SUBJECT_SAVE_OWNERS, true))
+      .toEqual({ block: "one-byte", reason: "ordered", owners: 2 });
+    // A bulk action of six new entities: over the owner bound, a wide block for the general writer's one history probe.
+    const six = Array.from({ length: 6 }, (_, i) => assert(`acct/a/item/${i}`, ":item/form"));
+    expect(orderedSaveShape(six, meta, SUBJECT_SAVE_OWNERS, true)).toEqual({ block: "wide", reason: "general-block:over-owner-bound" });
+    // Over the fact bound on one owner, and over a wide block's 4,096 assertions.
+    const many = (n: number) => Array.from({ length: n }, (_, i) => assert("acct/a/task/1", `:x/f${i}`));
+    expect(orderedSaveShape(many(SUBJECT_SAVE_FACTS + 1), meta, SUBJECT_SAVE_OWNERS, true)).toEqual({ block: "wide", reason: "general-block:over-subject-bound" });
+    expect(orderedSaveShape(many(2100), meta, SUBJECT_SAVE_OWNERS, true)).toEqual({ reason: "over-subject-bound" });
+    // System entities and other accounts are still refused.
+    expect(orderedSaveShape([assert("_tx/x", ":x/a")], meta, SUBJECT_SAVE_OWNERS, true).reason).toBe("system-entity");
+    expect(orderedSaveShape([assert("acct/a/t", ":x/a"), assert("acct/b/p", ":x/a")], meta, SUBJECT_SAVE_OWNERS, true).reason).toBe("several-accounts");
+  });
+});
+
 describe("save-size errors", () => {
   it("name the facts, the bytes and the limit", () => {
     const facts = new SaveTooLarge(1001, 1_227_103);
