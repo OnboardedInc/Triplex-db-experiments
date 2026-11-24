@@ -358,7 +358,8 @@ export function writeAdoptedCard(run: Card) {
   // [DX-CARD2] The tuned reader's settings, its checks before the first read, and each role's cgroup memory peak per
   // stage against its cap (the caps of server-32 with the tuned reader were set from the 2026-11-23 peaks).
   function tunedReaderSection() {
-    const out = ["## Tuned reader", "", readerTitle(run.reader).trim(), ""];
+    const out = ["## Tuned reader", "", readerTitle(run.reader).trim(), "", ...(run.toy ? ["Mac toy: the compact stack's reader runs both pinned options, the early filter and the permits; the random line has " +
+      `${randomLine.toySeats} seats; the toy reader writes no trace, so its storage loads and cache share are not recorded.`, ""] : [])];
     const stagesDirs = [["zero", "P1 zero readers"], ["loaded", "P1 readers, P6, P7, P8"], [barrierRoot + "loaded", "barrier6 control"]] as const;
     const caps = { tx: policy.tx.memoryMiB, "gw-w": policy["gw-w"].memoryMiB, "gw-r": policy["gw-r"].memoryMiB, pg: policy.pg.memoryMiB } as Record<string, number>;
     const gib = (bytes: number) => (bytes / 2 ** 30).toFixed(2);
