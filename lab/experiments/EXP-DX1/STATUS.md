@@ -5188,3 +5188,22 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Server 2, `85fc3a4bd`:** raw window results, every save acknowledged: reference 50/s 6,000 of 6,000, p50/p99 5.15 / 27.39 ms; owner head 50/s 6,000 of 6,000, 4.99 / 19.46 ms; reference 235/s 28,200 of 28,200, 4.54 / 30.08 ms; owner head 235/s 28,200 of 28,200, 4.64 / 31.10 ms. The reference arm sealed. The owner head arm's summary refused at 01:49 UTC: `w1/serial/summarize.py` line 125 `assert stage["subjectSave"] == header["settings"]["observed"]["subjectFunction"]`; no `retirement-comparison.json`. Sampler errors not read yet. Evidence `evidence/DX-SCALE1/owner-head-1b/oh-pair-1b.tar.gz`.
 - **Fix builder resumed (due 21:10):** the two values and whether the check is wrong for the owner head arm or the arm ran the wrong function; the comparison produced on the Mac from the evidence. The fresh pair on the second machine (same commit) will meet the same check.
 - **Pinned arm with saves fixed** (`origin/exp/DX-RD1-readers` `e02bf4edf`): the window list was a module-level const placed after the runner's awaited top-level loop; the window driver is now `v01/saves-arm.ts`; a Mac harness runs `savesArm` itself (seven cases passed: all windows, a failing isolated window, a failing published window, wrong values, two deadline cases, the dry run); the dry run now stops inside the window driver. Server 2 is building it; timed run to about 02:40 UTC; collection from 04:00 UTC.
+
+### 2026-11-23 20:54 local: owner head pair at 1 billion JUDGED (comparison made on the Mac, `6cae9ba1b`): 0 sampler errors; late reads per save down 15% at 235/s, less than predicted (2 agents running)
+
+- **The summary check was wrong, not the run** (`origin/exp/DX-W1-ownerhead-fix` `6cae9ba1b`, `w1/OWNER-HEAD-1B-READING.md`; outputs in `evidence/DX-SCALE1/owner-head-1b/mac-summary/`). The header's `subjectFunction` is the reference function `:triplex.subject/v-…`; the owner head arm's saves report `:triplex.owner/v-…`, exactly the `subjectOwnerHeadFunction` that arm's settings declare; all 34,200 saves of each arm ran their arm's declared function. `summarize.py` now requires the owner head arm to run its declared owner function and the reference arm to declare none.
+- **Sampler errors: 0 in all four windows** (590 loaded and 150 settled samples each), with the sampler that pins at the saved position. The 14 errors of this afternoon's fresh run therefore fit the old sampler's race; that run stays unjudged.
+- **Late half of each 120 s window, reference to owner head, `server` profile, per-save credits, 1 billion:**
+
+  | Measure | 50/s predicted | 50/s measured | 235/s predicted | 235/s measured |
+  | --- | --- | --- | --- | --- |
+  | Stored/s, both arms | 49.5 to 50 | 50.00 / 50.00 | 220 to 235 | 235.0 / 235.0 |
+  | SQL reads per save | 1.0 to 2.0 → 0.30 to 0.80 | 0.704 → 0.587 | 1.2 to 2.5 → 0.40 to 1.0 | 0.478 → 0.408 |
+  | AEVT loads per save, owner head | under 0.20 | 0.240 | under 0.25 | 0.087 (reference 0.453) |
+  | EAVT loads per save | none | 0.573 → 0.573 | none | 0.366 → 0.386 |
+  | Mean apply ms | 1.2 to 2.5 → 0.9 to 1.6 | 1.700 → 1.072 | 1.4 to 3.0 → 1.0 to 1.8 | 1.104 → 0.876 |
+
+- **Falsifier 1 met:** owner head late reads per save at 235/s are 0.854 of the reference's (a 15% cut against 20% or more predicted). The old-row-text reads (AEVT) fell as designed; the owner lookups (EAVT) did not and are now most of what remains. The reference's own reads were below the predicted range: the 16 GiB cache covered more than assumed. Apply time fell in every half of both windows (by 21 to 37% late).
+- **Migrated-subject reads, owner head over reference:** settled current p50 1.006 and 1.000; settled pinned p50 1.047 and 0.988; inside the bar (1.10 and 1.15). Loaded pinned p99 at 50/s 1.631, outside its predicted 0.7 to 1.5.
+- **Not checked:** records and bytes per save; one run per arm; the append arm is unsealed on the server.
+- **Fresh pair on the second machine** will meet the same check; its evidence is summarised on the Mac the same way.
