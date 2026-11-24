@@ -21,7 +21,7 @@ SHIM
 chmod +x "$out/shim/docker"
 stack=$repo/lab/experiments/EXP-DX1/stack
 base=$stack/up-xq7-base.sh
-git -C "$repo" show 6d6409306:lab/experiments/EXP-DX1/stack/up.sh > "$base"
+git -C "$repo" show "${XQ7_PLAN_BASE:-6d6409306}":lab/experiments/EXP-DX1/stack/up.sh > "$base"
 prefix=tx2-dxxq7-plan-$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')
 evidence=$out/evidence
 cleanup() { bash "$stack/down.sh" "$prefix" --volumes >/dev/null 2>&1; rm -f "$base"; }
