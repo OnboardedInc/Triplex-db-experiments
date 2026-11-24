@@ -134,5 +134,24 @@ const results: Record<string, unknown> = {};
   assert.deepEqual(ctx.log, [], "the dry run reached a window");
   assert(!fs.existsSync(path.join(ctx.out, "s-alone")));
 }
+// 8. The random arm (DX_RD3_WINDOWS=random): only the three random windows, each isolated, in order; a fault in the
+// first is recorded and skips the other two without failing the arm; the dry run still stops after resolution.
+{
+  const ctx = { ...context("random"), selection: "random" };
+  await sealedArm({ complete: () => {} } as any, "s", "a", async () => { await savesArm(ctx); return ""; }, () => {});
+  const w = summary(ctx);
+  assert.deepEqual(w.map((x: any) => x.name), ["ref-random-near-head", "s-random-near-head", "ref-random-seed-cut"]);
+  assert(w.every((x: any) => x.reads && x.reader.found === 2 && x.firstCut >= 1000));
+  assert.deepEqual(ctx.log.filter((l: string) => l.startsWith("adopted")), w.map((x: any) => "adopted " + x.name));
+  const fault = { ...context("random-fault", { pinned: "ref-random-near-head" }), selection: "random" };
+  await savesArm(fault);
+  assert.deepEqual(summary(fault).map((x: any) => x.failed ? "failed" : x.skipped ? "skipped" : "ran"), ["failed", "skipped", "skipped"]);
+  process.env.DX_DRY_RUN_FIRST_OFFER = "1";
+  const dry = { ...context("random-dry", {}, 60, firstOffer), selection: "random" };
+  await assert.rejects(savesArm(dry), FirstOfferReached);
+  delete process.env.DX_DRY_RUN_FIRST_OFFER;
+  assert.deepEqual(dry.log, []);
+  results.random = w.map((x: any) => x.name);
+}
 fs.writeFileSync(path.join(root, "harness.json"), JSON.stringify(results, null, 2) + "\n");
 console.log("RD3_SAVES_HARNESS passed " + JSON.stringify(results));

@@ -477,6 +477,124 @@ Everything else runs for real: the window loop, the deadline arithmetic, per-win
 - The call site in `study-server.ts` (seven lines that build the context from the stack, the aged bundle and `containerCounters`). The next dry run executes it.
 - The real `adoptedArm` cell at full size and the real reader trace. The gates cover their toy forms.
 
+### The saves arm's result (`e02bf4edf`, 2026-11-24 ~02:00 UTC) and the random arm
+
+**Result** (all 10 windows ran, 0 wrong values; evidence `evidence/DX-SCALE1/pinned-saves-1b-e02/`):
+
+| Window | Reads/s | p50 / p99 ms | Saves stored/s | S commit p50 / p99 ms | Quiet p50 / p99 ms | Reader cores |
+| --- | ---: | --- | ---: | --- | --- | ---: |
+| `s-alone` | — | — | 23.08 | 11.52 / 55.55 | 10.62 / 48.90 | — |
+| `s-near-head` | 8,960 | 23.81 / 112.13 | 23.08 | 8.06 / 64.77 | 4.77 / 35.07 | 1.90 |
+| `s-seed-cut` | 8,879 | 22.91 / 99.33 | 23.07 | 7.46 / 52.48 | 5.50 / 29.18 | 2.03 |
+| `s-tape` | 1,434.5 | 177.15 / 303.10 | 3.16 (the driver offered only 285 commits) | 282.62 / 1,105.92 | 241.66 / 605.54 | 2.59 |
+| `ref-random-near-head` | 1,219.6 | 207.87 / 333.82 | quiet only | — | 5.63 / 9.41 | 2.09 |
+| `s-random-near-head` | 1,216.6 | 207.87 / 323.58 | 23.07 | 7.90 / 55.81 | 4.19 / 22.53 | 2.14 |
+| `ref-random-seed-cut` | 1,085.5 | 231.42 / 342.01 | quiet only | — | 5.98 / 20.73 | 2.14 |
+| `ref-near-head` | 10,419.7 | 21.38 / 77.82 | quiet only | — | — | 1.99 |
+| `ref-seed-cut` | 8,368.4 | 23.81 / 107.52 | quiet only | — | — | 2.06 |
+| `ref-tape` | 3,445.7 | 68.61 / 137.22 | quiet only | — | 133.12 / 228.35 | 2.41 |
+
+**The driver limited `s-tape` and `ref-tape`.** Its event-loop p99 was 169.87 and 89.65 ms, so falsifier 2 fired. In `s-tape` it offered only 285 commits; those two windows are not measurements of the store.
+
+**For random subjects the model's mechanism held:**
+- **Loads.** 1.76, 1.69 and 1.85 storage reads per subject from the sampled exchanges (14.10, 13.51 and 14.82 per exchange of 8; predicted 1.3 to 2.3, and 10 to 18 per exchange), against 0.06 to 0.09 for re-read subjects.
+- **Rate and cache.** Reads/s inside 900 to 2,200 and cache share by request 0.78 to 0.80. No refuter fired.
+
+**What holds the third core idle: the three permits waiting on storage round trips.** From the sampled exchanges of `ref-random-near-head` (859 sampled; Datomic io-stats per exchange):
+
+| Measure | Value |
+| --- | --- |
+| Exchanges/s | 152.8 (13,752 in 90 s, mean batch 8.0) |
+| Wall time each permit holds an exchange | 3 ÷ 152.8 = 19.6 ms |
+| Handler thread CPU | 8.29 ms |
+| Storage round trips | 14.1 `sql` reads taking 7.21 ms (`sql-ms`), about 0.51 ms each, issued one after another inside the permit |
+| Decoding | 9.76 ms (`deserialize-ms`), partly on Datomic's read-ahead threads |
+| Datomic API time | 209 ms (`api-ms`); this includes the wait for a permit behind 29 other exchanges in flight (256 seats ÷ 8 = 32) |
+| Reader CPU from its cgroup | 2.09 cores ÷ 152.8 = 13.7 ms per exchange, of which 5.4 ms is outside the handler thread (collector, read-ahead decoding, Jetty I/O): CPU spent, not idle |
+
+So each permit spends about 37% of its 19.6 ms (7.2 ms) blocked on PostgreSQL, and with three permits that leaves about 0.8 to 0.9 of the three cores idle.
+- **Not the driver:** its event-loop p99 was 10.94 ms in this window.
+- **Not PostgreSQL's core:** it used 0.31 cores.
+
+**Permits above the core count should therefore fill the third core**, which is the random arm's first configuration.
+
+**Corrected sizing.**
+- **Cost per subject:** 13.7 ms of reader CPU per random exchange of 8, so 1.71 ms per subject all-in.
+- **Rate needed:** p99 ≤ 100 ms at 256 seats needs about 3,600 reads/s (p99 was 1.6 × p50).
+- **Cores:** 450 exchanges/s × 13.7 ms = 6.2 busy cores, so **about 7 physical cores**, with permits about twice the cores so that storage waits do not idle them.
+- **Cache:** no affordable cache. Leaf hits are near zero at 1.7 to 1.9 loads per subject.
+
+### The random arm: read permits above the core count (published 2026-11-23, before launch)
+
+**Why permits and not cores or cache.**
+- **Permits:** the evidence above says the third core idles on permit-held storage waits. So the first thing to test is permits, not cores.
+- **More reader cores cannot be tested on this machine without stopping the saves.** All twelve cores are assigned: transactor 0, 7 and 8; PostgreSQL 1; writer 2, 3 and 4; reader 5, 6 and 11; driver 9 and 10. Six reader cores would take the writer's three, and `s-random-near-head` needs the writer to store 23 commits/s. The other 12 logical CPUs are the same physical cores' second threads.
+- **A larger read cache cannot be tested within the `server` role caps either.** The launcher allows read caches of 32, 1,536 or 3,072 MiB. The reader's 9 GiB container already holds a 6 GiB heap with the 3 GiB cache. Changing that is launch code I could not gate by tonight's deadline. The evidence says it would not help: 1.7 to 1.9 loads per subject is the cold cost, and a 2 to 4× larger cache covers well under 1% more of a 0.7 to 1.1 TB working set.
+
+**What runs.** The saves arm with `DX_RD3_WINDOWS=random` runs only `ref-random-near-head`, `s-random-near-head` and `ref-random-seed-cut` (90 s, 256 seats, batches of eight, every old-pin value checked against the seed's, each window isolated). `DX_RD3_READ_PERMITS=N` passes `TX2_READ_PERMITS=N` to the reader (`stack/up.sh`; `study-server.ts` checks the reader container carries exactly that before the window driver). Everything else is the tuned reader as measured: cores 5, 6 and 11; 3 GiB cache; both pinned options; the early filter.
+
+**Two configurations, one stack and one copy each, in this order:**
+1. **`p6`:** 6 permits on the 3 cores.
+2. **`p12`:** 12 permits on the 3 cores. Launch it only if 18 minutes remain within the 40-minute ceiling.
+
+The dry run enters the window driver as before. It now also checks the reader's permits and resolves the three random windows.
+
+**Command** (environment, build and copy steps as for the saves arm):
+
+```bash
+COMMIT=<the commit that publishes this section>
+random_arm() {  # $1 = new copy of AGED_PGDATA_SOURCE, $2 = new campaign directory, $3 = deadline in ms, $4 = read permits
+  sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
+    "AGE_JAVA=$AGE_JAVA" "AGE_DATOMIC_HOME=$AGE_DATOMIC_HOME" DX_RD3_PINNED_SAVES=1 DX_RD3_WINDOWS=random "DX_RD3_READ_PERMITS=$4" \
+    DX_W1_SERIAL_APPLY=0 PREP1_LOOKUP_EVERY=0 \
+    "DX_RD1_PGDATA_SOURCE=$AGED_PGDATA_SOURCE" DX_RD1_LADDER=pinned-saves "DX_RD1_PGDATA=$1" \
+    ${DX_DRY_RUN_FIRST_OFFER:+DX_DRY_RUN_FIRST_OFFER=1} \
+    bash lab/experiments/EXP-DX1/v01/study-server.sh "$COMMIT" "$2" "$3" "$SCALE1_IMAGE" "$SCALE1_IMAGE_SHA256" \
+    "$SCALE1_TRANSFER_SHA256" 1B per-person-ordered j21-g1 "$AGE_HANDOFF_JSON" "$AGE_HANDOFF_SHA256" "" "" \
+    j25-zgc "$WAL_DIR" j21-g1 rolling6
+}
+OUT=/var/tmp/triplex-pinned-random-1b; mkdir "$OUT"
+T0=$(date +%s%3N)
+random_arm "$COPY_1" "$OUT/p6" $(( T0 + 20 * 60 * 1000 )) 6        # make COPY_1 first, remove it after
+# make COPY_2 only if at least 18 minutes remain before T0 + 40 minutes:
+random_arm "$COPY_2" "$OUT/p12" $(( T0 + 40 * 60 * 1000 )) 12
+```
+
+**Duration: 14.5 to 18.5 minutes per configuration; ceiling 40 minutes for both.**
+
+| Step | Minutes |
+| --- | ---: |
+| Copy | 2–3 |
+| Stack start and aged check | 4–6 |
+| `ref-random-near-head` | about 2 |
+| `s-random-near-head` | about 3.5 |
+| `ref-random-seed-cut` | about 2 |
+| Cleanup | 1–2 |
+
+Each window runs only if its time plus 2 minutes remains before that invocation's deadline. `p12` is skipped cleanly if fewer than 18 minutes remain.
+
+**Predictions** (corrected model: 13.7 ms of reader CPU per random exchange of 8, the reader CPU-bound at 2.6 to 2.9 usable cores once permits exceed cores; p99 ≈ 1.6 × p50):
+
+| Configuration, window | Reads/s (central) | p50 | p99 (central) | Loads per subject | Cache share | Reader cores |
+| --- | --- | --- | --- | --- | --- | --- |
+| `p6`, `ref-random-near-head` | 1,450–1,700 (1,580) | 150–175 ms | 240–290 ms (260) | 1.5–2.0 | 0.76–0.81 | 2.6–2.9 |
+| `p6`, `s-random-near-head` | 1,400–1,700 (1,560) | 150–180 ms | 240–300 ms (265) | 1.5–2.0 | 0.76–0.82 | 2.6–2.9 |
+| `p6`, `ref-random-seed-cut` | 1,300–1,550 (1,420) | 165–195 ms | 260–330 ms (290) | 1.6–2.1 | 0.75–0.80 | 2.6–2.9 |
+| `p12`, each window | 0–10% above `p6` | | | Same | Same | 2.7–2.95 |
+
+Other expectations:
+- **Saves:** `s-random-near-head` stores 23.07/s, S commit p99 50 to 70 ms, quiet p99 20 to 40 ms.
+- **Storage time per exchange** (`sql-ms`): 7 to 9 ms. PostgreSQL rises to 0.35 to 0.45 cores.
+- **Handler CPU per exchange:** 8 to 10 ms.
+- **Exactness:** 0 wrong values and 0 errors.
+- **The 100 ms bar is not met in any configuration** (central p99 260 to 290 ms).
+
+**What would show the sizing claim ("about 7 cores, permits about twice the cores, no affordable cache") wrong:**
+1. **`p6` at or above 2,000 reads/s on 3 cores.** CPU per subject falls with concurrency below 1.35 ms, and fewer than 6 cores would meet the bar.
+2. **`p6` under 1,350 reads/s with the reader under 2.4 cores.** The idle core is not permit-held storage waits but something permits cannot reach: a lock, the collector, PostgreSQL. More cores would then not scale linearly, and 7 is an underestimate.
+3. **`p12` at or above 1.15 × `p6`.** Storage waits still idle cores at two permits per core, so the permit rule becomes about four per core. The core count stands.
+4. **Cache share by request above 0.9, or loads per subject under 1.0.** The working set is smaller than modelled and a cache test is worth building.
+
 ### What is left out
 
 - **The production tape at the card's other rates.** Only the 394 cell runs (shape S, the brief's load), and shape R does not run.

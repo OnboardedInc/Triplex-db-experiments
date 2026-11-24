@@ -35,6 +35,8 @@ const pinKinds: readonly string[] = ["seed-cut", "near-head", "tape", "random-ne
 
 type Counters = Record<string, () => Record<string, string | null>>;
 export type SavesContext = {
+  /** "random": only the three random windows (the random arm), each isolated, in list order. */
+  selection?: "all" | "random";
   out: string; base: Parameters<typeof AdoptedArm>[2]; agedHead: number; raw: string; source: string;
   seed: Parameters<typeof AdoptedArm>[3]; writer: Parameters<typeof AdoptedArm>[4]; deadline: number; stopping: () => boolean;
   agedCut: () => AgedCut; counters: Counters;
@@ -54,13 +56,16 @@ export async function savesArm(ctx: SavesContext) {
   const peer = { ...base, windowSeconds: 90 as const, aged: { cut: ctx.agedCut(), head: agedHead } };
   const traceFile = path.join(raw, "gw-r.jsonl");
   // Resolve every window's settings before the first save, so a dry run (DX_DRY_RUN_FIRST_OFFER=1) covers them.
-  const settings = savesWindows.map((w) => {
+  const chosen = ctx.selection === "random" ? savesWindows.filter((w) => w.pin?.startsWith("random")) : savesWindows;
+  assert(chosen.length === (ctx.selection === "random" ? 3 : 10));
+  const settings = chosen.map((w) => {
     assert(w.pin === undefined || pinKinds.includes(w.pin), `${w.name}: unknown pin kind`);
     assert(w.minutes > 0 && (w.profileEvery === undefined || (Number.isInteger(w.profileEvery) && w.profileEvery > 0)));
     return { ...w, cell: { rate: 394 as const, loaded: w.tape !== "saturday" }, label: "rd3/" + w.name, folder: path.join(out, w.name) };
   });
   assert.equal(new Set(settings.map((w) => w.name)).size, settings.length);
-  assert(settings.slice(0, 4).every((w) => !w.isolated) && settings.slice(4).every((w) => w.isolated));
+  if (ctx.selection !== "random") assert(settings.slice(0, 4).every((w) => !w.isolated) && settings.slice(4).every((w) => w.isolated));
+  else assert(settings.every((w) => w.isolated));
   const probe = { cpu: usage(), memoryMiB: memory(), traceFile: fs.existsSync(traceFile), peerAged: peer.aged.head };
   assert(Object.values(probe.cpu).every((v) => Number.isFinite(v)) && Object.values(probe.memoryMiB).every((v) => Number.isFinite(v)),
     "cgroup counters unreadable: " + JSON.stringify(probe));
@@ -122,7 +127,7 @@ export async function savesArm(ctx: SavesContext) {
       halted = `window ${w.name} failed before it`;
     }
   }
-  jsonFile(path.join(out, "pinned-saves.json"), { source, head: agedHead, seats: calls.savesSeats, windowSeconds: 90, windows });
+  jsonFile(path.join(out, "pinned-saves.json"), { source, selection: ctx.selection ?? "all", head: agedHead, seats: calls.savesSeats, windowSeconds: 90, windows });
   console.log("[DX-RD3] " + JSON.stringify(windows.map((w: any) => ({ name: w.name, skipped: w.skipped, failed: w.failed,
     reads: w.reads && { goodput: w.reads.goodput, p50: w.reads.read?.p50Ms, p99: w.reads.read?.p99Ms, wrong: w.reads.wrong, errors: w.reads.errors },
     saves: w.saves && { p50: w.saves.latency?.p50Ms, p99: w.saves.latency?.p99Ms, receipts: w.saves.receipts, offered: w.saves.offered }, cpu: w.cpuCores, driver: w.driver }))));

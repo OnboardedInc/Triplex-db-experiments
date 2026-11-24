@@ -52,6 +52,10 @@ const pinnedTuned = process.env.DX_RD2_PINNED_TUNED === "1";
 // quiet stream, on one stack admitted exactly as the tuned arm. Rejected: a new save runner (the card's checks judge
 // these saves) and a second stack per window (each window's first cut is the previous window's terminal).
 const pinnedSaves = process.env.DX_RD3_PINNED_SAVES === "1";
+// [DX-RD3] The random arm: only the three random windows, with read permits above the reader's core count.
+const savesSelection = process.env.DX_RD3_WINDOWS ?? "all", readPermits = process.env.DX_RD3_READ_PERMITS ?? "";
+assert(savesSelection === "all" || (savesSelection === "random" && pinnedSaves), "DX_RD3_WINDOWS is all or random, with DX_RD3_PINNED_SAVES=1");
+assert(readPermits === "" || (pinnedSaves && /^[1-9][0-9]?$/.test(readPermits)), "DX_RD3_READ_PERMITS is 1..99, with DX_RD3_PINNED_SAVES=1");
 const pinnedTunedPolicy = pinnedTuned || pinnedSaves ? launchProfile("server", { ...launchOptions, readTuned: true, readCacheMiB: 3072 }) : undefined;
 if (pinnedTuned || pinnedSaves) assert(!tuned && !retirement && !pinnedPair && !(pinnedTuned && pinnedSaves) && writer === "per-person-ordered" && age === "1B",
   "The tuned pinned arm uses the card's writer on the aged database");
@@ -84,7 +88,7 @@ assert(!preparedSource || (((tuned && age === "fresh") || retirement || pinnedPa
   "A prepared run needs --read-study on the fresh seal or DX_W1_RETIREMENT_PAIR=1, a ladder and one --pgdata copy");
 const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin, !preparedSource);
 const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin, !preparedSource) : undefined;
-const record = { source, age, writer, policy: control, treatment: tuned || pinnedTunedPolicy || undefined, diagnostics, retirement: retirement || undefined, pinnedPair: pinnedPair || undefined, pinnedTuned: pinnedTuned || undefined, pinnedSaves: pinnedSaves || undefined, pairOption: retirement ? pairOption : undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
+const record = { source, age, writer, policy: control, treatment: tuned || pinnedTunedPolicy || undefined, diagnostics, retirement: retirement || undefined, pinnedPair: pinnedPair || undefined, pinnedTuned: pinnedTuned || undefined, pinnedSaves: pinnedSaves || undefined, savesSelection: pinnedSaves ? savesSelection : undefined, readPermits: readPermits || undefined, pairOption: retirement ? pairOption : undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
   agedBundle: expected?.pin, agedDump: expected?.dumpPin || undefined };
 const prepared = preparedSource ? openPreparedLadder({ campaign, ladder: process.env.DX_RD1_LADDER!, source: preparedSource,
   copy: process.env.DX_RD1_PGDATA!, wal: walDirectory || undefined, record, kind: retirement ? "retirement" : pinnedPair ? "pinned" : pinnedTuned ? "pinned-tuned" : pinnedSaves ? "pinned-saves" : "read" }) : undefined;
@@ -122,7 +126,7 @@ for (const loaded of [false, true]) {
         : pinnedTuned ? { ...options, DX_PINNED_SHORTCUT: "1", DX_PINNED_CUT_LOOKUP: "1", DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: "1", ...prepared?.env }
         // [DX-RD3] The card's production tape setting: the write gateway reports storage reads per commit.
         : pinnedSaves ? { ...options, DX_PINNED_SHORTCUT: "1", DX_PINNED_CUT_LOOKUP: "1", DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: "1",
-          DX_V01_COMMIT_READS: "1", ...prepared?.env }
+          DX_V01_COMMIT_READS: "1", ...(readPermits ? { DX_READ_PERMITS: readPermits } : {}), ...prepared?.env }
         : options, { policy, walDirectory });
       if (tuned || pinnedTuned || pinnedSaves) placeDriver("9,10");
       const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
@@ -204,8 +208,12 @@ for (const loaded of [false, true]) {
         // top-level constants it needs are passed in (a module-level const read here before its line ran was the
         // 01:27 UTC fault: "Cannot access 'savesWindows' before initialization").
         const { savesArm } = await import("./saves-arm.ts");
+        // The reader container must carry the requested permits (or none, the default of one per core).
+        const readerEnv = JSON.parse(execFileSync("docker", ["inspect", "--format", "{{json .Config.Env}}", engines["gw-r"]!.id], { encoding: "utf8" })) as string[];
+        assert.deepEqual(readerEnv.filter((e) => e.startsWith("TX2_READ_PERMITS=")), readPermits ? ["TX2_READ_PERMITS=" + readPermits] : [],
+          "the reader does not carry the requested read permits");
         const { pinnedWindow, tapeCandidates, savesSeats, readerRecords } = await import("../rd1/pinned-ladder.ts");
-        await savesArm({ out, base: peer, agedHead: head, raw, source, seed, writer, deadline: end, stopping: () => stopping,
+        await savesArm({ selection: savesSelection as "all" | "random", out, base: peer, agedHead: head, raw, source, seed, writer, deadline: end, stopping: () => stopping,
           agedCut: () => agedCut(expected!.file, expected!.pin, imagePin, seed.key, seed.scope.db, seed.scope.cut, true),
           counters: Object.fromEntries((["gw-r", "gw-w", "tx", "pg"] as const).map((role) => [role, containerCounters(engines[role]!.id)])),
           calls: { adoptedArm, pinnedWindow, tapeCandidates, readerRecords, savesSeats, firstOffer } });
