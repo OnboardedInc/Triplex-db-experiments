@@ -39,6 +39,33 @@
     report))
 (def tries-log (= "1" (System/getenv "TX2_REMOVAL_TRIES_LOG")))
 
+(defn ticket-intent-ops
+  "[DX-ERA3 F1] A ticket naming no account read any account, so at Datomic's serial point it must find no removal
+  declared or committed since it: the global declared sequence equals the ticket. A removal declares itself (moves
+  it) in its first transaction, before it selects or records anything. Tickets naming accounts are held the same way
+  by those accounts' counters in the fence (`removal-scope/fence-op`)."
+  [scope input]
+  (if (contains? input "erasureSeq")
+    (if (contains? input "erasureAccounts")
+      []
+      [[:db/cas scope :triplex.scope/removal-intent (get input "erasureSeq") (get input "erasureSeq")]])
+    []))
+
+(defn pending-touches?
+  "[DX-ERA3 F1b] A ticketed write waits (503, as the database-wide rule answers) while a removal is in flight that can
+  reach what it read: always for a ticket naming no account, else when the removal's accounts meet the ticket's or the
+  unscoped account. The serial point enforces the same (`ticket-intent-ops`, the account counters); this answers it
+  early with today's code. Here, not in removal_scope.clj, because a new top-level function there would renumber
+  the generated names in the installed functions' texts loaded after it."
+  [state input]
+  (if (:per-account state)
+    (if (:pending state)
+      (if (contains? input "erasureAccounts")
+        (boolean (some (set (conj (vec (removal-scope/ticket-accounts input)) removal-scope/unscoped)) (removal-scope/entry-buckets (:pending state))))
+        true)
+      false)
+    false))
+
 (def commit-code
   ;; No #() and no syntax quote: the stored function text is the same on every gateway.
   '(let [{:keys [basis entities stamp rows record operation txid cols]} payload
@@ -115,7 +142,7 @@
   "[DX-ERA3 F1, F1b] The removal's first native transaction, before it selects or records anything: the global declared
   sequence (`:triplex.scope/removal-intent`) moves to the removal's sequence, and every account its selectors can
   reach takes the negated sequence on its counter. From this transaction on, a ticketed write that read any of those
-  accounts (any account, for a ticket naming none) fails at Datomic's serial point (`removal-scope/ticket-intent-ops`,
+  accounts (any account, for a ticket naming none) fails at Datomic's serial point (`ticket-intent-ops`,
   the fence's account guards) until the removal is committed and published and the ticket is read again. Plain saves
   fence only on their own subjects and are not touched. Run again on a resume: a declaration left by a removal that
   stopped before its intent was recorded (same sequence) is replaced, its other accounts released."

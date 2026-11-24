@@ -124,33 +124,6 @@
   (and (integer? offered) (<= 0 offered (:seq state))
        (every? #(<= (bucket-seq state %) offered) (conj (set accounts) unscoped))))
 
-(defn ticket-intent-ops
-  "[DX-ERA3 F1] A ticket naming no account read any account, so at Datomic's serial point it must find no removal
-  declared or committed since it: the global declared sequence equals the ticket. A removal declares itself (moves
-  it) in its first transaction, before it selects or records anything. Tickets naming accounts are held the same way
-  by those accounts' counters in the fence (`fence-op`)."
-  ;; No function literal and no name-generating macro (see entry-entities).
-  [scope input]
-  (if (contains? input "erasureSeq")
-    (if (contains? input "erasureAccounts")
-      []
-      [[:db/cas scope :triplex.scope/removal-intent (get input "erasureSeq") (get input "erasureSeq")]])
-    []))
-
-(defn pending-touches?
-  "[DX-ERA3 F1b] A ticketed write waits (503, as the database-wide rule answers) while a removal is in flight that can
-  reach what it read: always for a ticket naming no account, else when the removal's accounts meet the ticket's or the
-  unscoped account. The serial point enforces the same (`ticket-intent-ops`, the account counters); this answers it
-  early with today's code."
-  [state input]
-  (if (:per-account state)
-    (if (:pending state)
-      (if (contains? input "erasureAccounts")
-        (boolean (some (set (conj (vec (ticket-accounts input)) unscoped)) (entry-buckets (:pending state))))
-        true)
-      false)
-    false))
-
 (defn lock-name [name b] (str name "#removal/" b))
 
 (defn install!
@@ -199,8 +172,10 @@
 ;; Rejected: a database-wide comparison for such tickets (any account's removal refused every account's frames).
 ;; [DX-ACT9] Moved here from privacy.clj unchanged (see the hooks below).
 (defn ensure-ticket! [state input]
-  ;; [DX-ERA3 F1b] (DX-ERA2's fix, merged here where this function now lives)
-  (when (pending-touches? state input) (privacy/unavailable!))
+  ;; [DX-ERA3 F1b] (DX-ERA2's fix, merged here where this function now lives; removal-commit is loaded only on a
+  ;; database guarded per account)
+  (when (:per-account state)
+    (when ((requiring-resolve 'triplex.gateway.removal-commit/pending-touches?) state input) (privacy/unavailable!)))
   (if (and (:per-account state) (contains? input "erasureAccounts"))
     (when-not (ticket-current? state (get input "erasureSeq") (ticket-accounts input))
       (privacy/stale!))

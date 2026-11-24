@@ -463,7 +463,7 @@
     (when-not (:per-account scut) (privacy/unavailable!))
     ;; a removal in flight that can reach them: its intent (DX-ERA2's rule for every ticket), and its native declaration
     ;; (a negated counter, written in its first transaction, before its intent)
-    (when (removal-scope/pending-touches? scut input) (privacy/unavailable!))
+    (when ((requiring-resolve 'triplex.gateway.removal-commit/pending-touches?) scut input) (privacy/unavailable!))
     (when-let [pending (privacy/pending source)]
       (when (some (removal-scope/entry-buckets pending) named) (privacy/unavailable!)))
     (when (some #(neg? (removal-scope/native-account-seq sdb %)) named) (privacy/unavailable!))
