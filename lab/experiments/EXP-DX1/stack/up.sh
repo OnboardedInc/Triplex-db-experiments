@@ -288,6 +288,17 @@ subject_hints=${TX2_SUBJECT_HINTS:-0}
 # Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
 subject_wide=${TX2_SUBJECT_WIDE:-0}
 [[ $subject_wide =~ ^[01]$ ]] || exit 2
+# [DX-INT4] Why: XQ3's ID list options, RD5's reader options and its remote reader address were first checked in the
+# gateway loop, after PostgreSQL and the transactor had started; a wrong setting now stops the launch here, before the
+# first Docker change (the launch guard's cases prove each one). The uses stay below. DX_INDEX_QUERY_PERMITS takes the
+# gateway's own range (1..64; the loop's old test admitted 65..99, which the gateway then refused at start-up).
+[[ -z ${DX_ID_LISTS:-} || $DX_ID_LISTS =~ ^[01]$ ]] || { echo "up.sh: DX_ID_LISTS must be 0 or 1" >&2; exit 2; }
+[[ -z ${DX_INDEX_QUERY_PERMITS:-} || $DX_INDEX_QUERY_PERMITS =~ ^([1-9]|[1-5][0-9]|6[0-4])$ ]] ||
+  { echo "up.sh: DX_INDEX_QUERY_PERMITS must be 1..64" >&2; exit 2; }
+[[ ${DX_READ_PREFETCH:-0} =~ ^[01]$ && ${DX_READ_AHEAD_OFF:-0} =~ ^[01]$ ]] ||
+  { echo "up.sh: DX_READ_PREFETCH and DX_READ_AHEAD_OFF are 0 or 1" >&2; exit 2; }
+[[ -z ${DX_REMOTE_READER_HOST:-} || $DX_REMOTE_READER_HOST =~ ^(10|172|192)\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] ||
+  { echo "up.sh: DX_REMOTE_READER_HOST must be this machine's private IPv4 address" >&2; exit 2; }
 [[ $lookup_every =~ ^(0|[1-9][0-9]{0,3})$ ]] && (( lookup_every <= 4096 )) || exit 2
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prepw =~ ^(1|2|4)$ ]]
@@ -1083,7 +1094,7 @@ for role in "${gateway_roles[@]}"; do
     field_policy+=(-e "TX2_ID_LISTS=$DX_ID_LISTS")
   fi
   if [[ -n ${DX_INDEX_QUERY_PERMITS:-} ]]; then
-    [[ $DX_INDEX_QUERY_PERMITS =~ ^[1-9][0-9]?$ ]] || { echo "up.sh: DX_INDEX_QUERY_PERMITS must be 1..64" >&2; exit 2; }
+    [[ $DX_INDEX_QUERY_PERMITS =~ ^([1-9]|[1-5][0-9]|6[0-4])$ ]] || { echo "up.sh: DX_INDEX_QUERY_PERMITS must be 1..64" >&2; exit 2; }
     field_policy+=(-e "TX2_INDEX_QUERY_PERMITS=$DX_INDEX_QUERY_PERMITS")
   fi
   # [DX-XQ3] Why: the ID list gate removes a subject's protected values on request; both gateways share one erasure
