@@ -5125,3 +5125,26 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Live saves at 39.4/s during a small-release Publish:** p99 276 ms (whole-turn) and 273 ms (per-save) against controls of 119 and 165 ms: 2.3 and 1.7 times, outside P5's 1.5 times with the small release too. The large release's 612 ms against 35.5 ms in per-save mode is therefore partly the control's variation between runs.
 - **Journal fault on the 1 billion working copy (console builder, through the tunnel):** `journal.clj` `page` walks `d/index-range :triplex.tx/position` from after+1 and keeps only journals with position in (after, head]; the loader's 28 million position rows (G11, non-canonical) lie in that range and never pass the filter, so a page that asks for more transactions than exist between `after` and the head, or starts below the sealed head, walks all of them while holding the gateway's single journal permit (`admission/journals`); the client gives up at 30 s. One such request ran on each gateway (the read gateway's from the Journal screen's default of head minus 20; the write gateway's from the builder's own probe), so every journal read then waited. A request with after = sealed head + 10, limit 2 answered in 2.6 ms. Driver asked to restart the two gateways; the console fix (never ask past the head, never below the sealed head on a loader-built database, long poll with limit 1, real error text, error states) is being built. **Backlog:** the gateway's journal route needs its own bound on entries examined, with a cursor.
 - **Second machine:** start-up read at 1 billion running since 00:36 UTC, then the fixed owner head pair on fresh.
+
+### 2026-11-23 19:42 local: version 0.1 card on the production-shaped tape at 1 billion ASSEMBLED (`exp/DX-CARD1-prodS-assemble` `78ad445a6`); journal works on the 1 billion copy (4 agents running)
+
+- **Assembly fault's cause:** in each of the 8 loaded cells, 9 rows (one per neighbour account, 72 in all) have a tape offset within 1e-4 ms of the cell's 90 s end (first: `p6-50-loaded`, account 2, save `2/27`, offset 89,999.99999251067 ms); `due = start + offset` rounds to exactly the end at epoch magnitudes near 1.8e12 ms (one float step is 2.4e-4 ms), so `due < end` failed. Every such row was offered as scheduled and acknowledged (sender wait at most 115 ms). The tape puts a save there because `w1/field/production.ts` `calibrated` bisects each account's session rate to the smallest that reaches the cell's row target. Saturday's tape cannot produce it (last offer at least 20.1 ms before the end).
+- **Fix (`d79d3686c`, `8663ff19e`, renderer `6c4f9e4fe`):** rows are placed by tape offset, rows whose `due` rounds to the end are counted in the cell and listed on the card (9 per loaded scope); truly out-of-place rows still fail. `--assemble --commit 090c189a8 --renderer <commit>` records both commits; `--platform-tape` lets the Mac assemble a Linux campaign (tape offsets differ by up to 9.2e-10 ms through `Math.log`/`Math.exp`; each cell's tape must hash to the server's binding). Exact re-assembly on server 2 requested (under 5 minutes).
+- **Shape R cannot be assembled on this tape:** 220 to 323 rows per 90 s loaded cell are scheduled up to 67 ms past the end (the last save's later rows). Needs a tape change, which would change REAL2's measured R tapes; not made.
+- **The card (`v01/SCORECARD-1B-production-S.md`; 1 billion, shape S, `server-32`, per-save credits, 90 s cells):**
+
+  | Priority | Card line | Numbers |
+  | --- | --- | --- |
+  | P1 pinned reads | MISSED | 256 seats field-read p99 13,584 ms (one-core reader in this card); 0 errors to 64 seats |
+  | P2 commits | PARTIAL | all loaded saves at 50/235/394/620: 581 / 1,534 / 2,401 / 3,568 commits, all durable, 0 expired; p50/p99 5.66/57.6, 8.96/40.96, 9.34/44.03, 11.39/46.59 ms. Shape S commits alone: p99 66.56 / 43.01 / 45.31 / 48.64 ms. Whole-turn control p99 72.7 / 45.8 / 49.7 / 57.3 ms |
+  | P3 feed | PARTIAL | 1,260 ordered exact changes; dispatch-to-observation p99 288.8 ms (bar 250) |
+  | P4 current pulls | PARTIAL | p50 4.35, p99 44.54 ms |
+  | P5 Publish | NOT RUN | (measured apart on the second machine at 100,000 subjects, fresh) |
+  | P6 quiet account | PARTIAL | 315 commits per side against the gate's 500; quiet p99 alone to loaded 18.9→12.2, 14.3→20.7, 13.7→17.5, 32.3→21.2 ms; 0 wrong reads |
+  | P7 idle cost | PARTIAL | first pull p99 86.0 ms; added RSS per roster subject 53.0 B transactor, 375.0 B write gateway, 267.8 B read gateway |
+  | P8 import | PARTIAL | 3,266 facts/s; save p99 19.98 ms, read p99 6.27 ms |
+  | P9 machine loss | NOT RUN | needs two servers |
+  | Mixed assertion identities | MET | 2 refusals, 4 checked snapshots |
+
+  Every production field read back exactly (4,410 fields at 50 up to 54,901 at 620).
+- **Journal on the 1 billion copy** (console `fff5ba67a`, through the tunnel, after the gateways' restart at 00:39:48 UTC): newest 5 in 79.13 ms store, newest 20 from the sealed head 29.69 ms, after a position 11.74 ms, Changed since 3 ms (17 read, 4 subjects), entity journal 6.57 ms. The demo pass is rerunning from the journal step.
