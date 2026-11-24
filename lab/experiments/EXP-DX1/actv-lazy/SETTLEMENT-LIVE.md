@@ -3,7 +3,7 @@
 Builder DX-ACT5, 2026-11-24, branch `exp/DX-ACT5-settlement-live` from `exp/DX-ACT4-settlement-frames` (`b623914a4`).
 Mac work is correctness at toy size; every Mac time here is diagnostic, every count exact. Nothing here ran on a server.
 
-## Short answer
+## 1. Short answer
 
 1. **The risk is real and wider than named.** Every settlement frame required the whole database's head to be
    unchanged, and one database holds every account, so a save in *any* account refused it. At toy size, with the
@@ -21,7 +21,7 @@ Mac work is correctness at toy size; every Mac time here is diagnostic, every co
    equal to the oracle and to the independent form rule, every ledger and every pinned read exact, through three kills,
    a second release mid-settlement, a rival writer process, and a pause, restart and pace.
 4. **Live saves:** none was refused in any case, with either rule; each process keeps one frame in flight (at most
-   7,953 µs of estimated service admitted), so a save waits behind at most one frame in the writer; the optional
+   7,998 µs of estimated service admitted, bound 8,000), so a save waits behind at most one frame in the writer; the optional
    admission lane starts a frame only while no save waits for a credit.
 5. **Several accounts at once (owner's addition): built and toy-tested.** Accounts get their own names in the one
    database (`HeldSource.namespace`, default off), take frame turns round-robin through one queue, and never refuse each
@@ -95,7 +95,7 @@ account 0 publishes. Each case publishes the 20 forms and 20 policies release (e
 values and 160 notices, 2 value frames and 7 notice frames by bytes), then settles it while an open-loop save stream
 of 8 s runs (the held tape; `play` with per-save credits). After each case the form-free release is published again
 and settled quietly, so every case starts alike. Cases and code: `join/settle-live.ts`; evidence in
-`evidence/DX-ACT5/load1/` (section 10).
+`evidence/DX-ACT5/load1/` (listed at the end).
 
 **Frames, before (`head`) and after (`progress`).** "Offered" counts every frame sent to the writer, including retries.
 
@@ -132,7 +132,7 @@ large release does not settle at all while the database takes saves, in any acco
    make a save fail. This holds with either rule.
 2. **A live save waits behind at most one frame in the writer.** Each process sends one settlement frame at a time
    (the bulk queue's single turn, shared by both writers and, now, by every account it settles), and every frame is
-   admitted only within the 8 ms estimated-service bound (largest admitted in every case: 7,953 µs). "Overlapped 2"
+   admitted only within the 8 ms estimated-service bound (largest admitted in any case: 7,998 µs, in the 150-form case). "Overlapped 2"
    above counts frame *turns* as the client sees them (read, evaluate, build, send, reply: tens of milliseconds on the
    Mac), not time in the writer: a save that spans the end of one frame's commit and the next frame's reading phase is
    counted twice though only one frame was ahead of it in the writer. The writer-side wait is not measurable on the Mac.
@@ -176,7 +176,23 @@ large release does not settle at all while the database takes saves, in any acco
 **What it costs.** One frame at a time protects every live save's bound and also caps the whole database's settlement
 at one commit round trip per frame. At full size that is the limit for many accounts at once (section 9.2).
 
-MULTI-RESULTS
+**Toy counts (run C5; three accounts, each publishing the 20 forms and 20 policies release back to back, then settling
+at once through one queue while account 0 saves 23.5/s and the nine others save at their usual load, 1,880 saves in
+8 s):**
+
+| | head | progress | progress with the admission lane |
+| --- | --- | --- | --- |
+| Frames offered / refused / committed, account 0 | 137 / 128 / 9 | 9 / 0 / 9 | 9 / 0 / 9 |
+| account 1 | 148 / 139 / 9 | 9 / 0 / 9 | 9 / 0 / 9 |
+| account 2 | 158 / 149 / 9 | 9 / 0 / 9 | 9 / 0 / 9 |
+| Queue turns per account (fairness) | 137 / 148 / 158 (all refusals but 9 each) | 9 / 9 / 9 | 9 / 9 / 9 (27 granted by the admission, 8 grants declined while saves waited) |
+| Each account settled at (s) | 9.76 / 10.12 / 10.20, all after the saves stopped | 1.09 / 1.11 / 1.14 | 0.93 / 0.91 / 0.96 |
+| Saves (all 1,880) refused | 0 | 0 | 0 |
+| Save p99, accounts 0 / 1 / 2 / the other seven (diagnostic) | 147 / 829 / 829 / 817 ms | 78 / 76 / 94 / 79 ms | 53 / 55 / 70 / 58 ms |
+
+Under the guard the three accounts finished within 55 ms of each other with exactly their own 9 frames each; under the
+head rule each account's frames were refused by every other account's frames and saves (a three-way retry storm that
+also slowed every save on the Mac). The lane's save p99 was the lowest of the three (one run each; Mac clocks).
 
 ## 7. Exactness gates (toy, all passed unless marked)
 
@@ -187,7 +203,28 @@ order, with the oracle (cumulative); every subject's notice ledger with the orac
 window a read pinned at the newest position the runner had matched to a known writer, checked exactly against the
 oracle for the release in force there.
 
-GATES-TABLE
+| Case (run) | What it does | Result |
+| --- | --- | --- |
+| `quiet`, `own3`, `own23`, `own39`, `others`, each with `head` and with `progress` (B1) | section 4 | pass, all ten: 474 changes, 160 notices, independent rule 8 of 8 owing; notices in order (cumulative 168 to 1,608); 8 ledgers |
+| `lane-p` (B1) | admission lane, account 23.5/s plus the nine others | pass |
+| `kill-p` (C2) | settlement in a child process killed at 121, 227 and 337 ms (each inside settlement), then finished in the runner; the killed children's committed frames adopted from the journal | pass: the runner finished 5 notice frames; values were complete from the children; exact |
+| `second-p` (C4) | the 150 forms and 150 policies release (every subject split across frames), frames paced 400 ms; a second release (back to the form-free one) published after the first value frame, saves and frames held for the Publish | pass: the first release superseded at subject 1 (2 value frames, 420 changes of 1 subject, each equal to the oracle and the independent rule); all its 1,200 notices recorded in order; the second release settled (3,555 changes) exact |
+| `rival-p` (C4) | a second settlement process started at the same moment on the same release | pass: exact; the runner's 2 value and 16 notice frames all committed or recognized (the rival's identical frames share command ids), 0 refused |
+| `pause-p` (C2) | section 8 | pass |
+| `stop-h` then `same-p` (C2) | the release settled under `head` for 8 s with saves in all ten accounts and stopped, then finished under `progress` | head: 0 of 181 frames committed (90 value, 91 notice refused); progress: finished in 0.99 s while saving, exact |
+| `guard` (C5) | the guard alone on the held database: (1) a write that follows a progress row a rival has already replaced; (2) twenty pairs of writers creating the same absent progress row at the same moment | pass: (1) refused by the read inside the transaction ("another transaction changed it"); the rival's value stands; (2) exactly one of each of the 20 pairs landed, and all 20 losers were refused at the serial commit (`CasConflict`, "source changed while staging"): both had read the row absent inside their transactions, so this is the transactor-side half of the guard; one live row per key |
+| `multi-h`, `multi-p`, `multi-lane` (C5; `multi-h` also C2, C4; `multi-p` also C3) | section 6 | pass: every account's 474 changes and 160 notices equal to its own oracle and the independent rule; notices in order and ledgers per account |
+| Delivered once (end of B1, C2 to C5) | every recorded notice of every release delivered to a recipient, then again | pass: C5 488 delivered, 0 the second time (hash `cb123095...`) |
+| `bulk.test.ts` | 7 of 7 (5 new: round-robin among 3 accounts, pause, pace, hold, admission lane) | pass |
+| All `join/*.test.ts` | 31 of 31 | pass |
+| `frames-check.ts 64` (database-free) | the frame builders unchanged | pass |
+| Type check of `actv-lazy` | | clean |
+
+**Faults found in my own harness on the way (not in the store):** the toy's small release no longer fits one count
+frame on these deep subjects, so a count-framed case is refused at its first frame (as before ACT4); two writers in
+one process share the process's claim registry, so the rival had to be a second process; and a further account's
+Publish reused one command id across cases, got the earlier case's receipt back and settled the wrong release, which
+showed as "stored changes differ" in two runs (C2, C3) until each case got its own id (C5).
 
 ## 8. Control and sight per account
 
@@ -339,6 +376,21 @@ unit of writer time (fewer, larger writes per subject) or a looser live bound, n
   streaming the check for ten accounts, production-shaped saves in the held runner).
 - **Removal on request during settlement** was not exercised here: the argument that the removal-sequence ticket covers
   it is from the code (`TRIPLEX_ERASURE_FRONTIER`), and settlement still refuses an account with removal marks.
+
+## Evidence (private, `evidence/DX-ACT5/`)
+
+| Run | Archive (`load1/`) | sha256 (first 12) | Cases |
+| --- | --- | --- | --- |
+| A (head only; ended at its count-framed case) | `load-fair-84e76507-....tar.gz` | `75d3a55fad67` | control, quiet, own3, own23, own39, others under head (superseded by B1) |
+| B1 | `load-fair-84d5f85c-....tar.gz` | `a7d0113d9c64` | section 4 and 5 tables, lane, kill (first form) |
+| C2 | `load-fair-5575bbe4-....tar.gz` | `7250cf53e9fc` | kill, pause, stop then same, multi-h |
+| C3 | `load-fair-37162b42-....tar.gz` | `2e91552dcf02` | multi-p (pass), then the reused-id harness fault |
+| C4 | `load-fair-663068be-....tar.gz` | `67475b4cf3be` | second (150 forms), rival, multi-h, then the reused-id fault |
+| C5 | `load-fair-a4cb6c0b-....tar.gz` | `3ee0ccd0d7cc` | guard, multi-h, multi-p, multi-lane, delivered once |
+| Logs of every run, the summarizer and the retry wrapper | `toy-logs.tar.gz` | `74f575ed0e06` | |
+
+Each run directory holds `act5-case-<name>.json` per case (frames per second per writer and account, every save's
+status and the frames it overlapped, exactness counts) and the held runner's own files.
 
 ## Files
 
