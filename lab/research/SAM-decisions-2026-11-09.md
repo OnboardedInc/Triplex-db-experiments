@@ -1049,3 +1049,11 @@ Verbatim: "continue, I got more usage"
 - **Context:** at about 15:20 local a builder agent (connecting the pieces of questions across subjects) failed at its first step with "You've hit your weekly limit · resets Nov 29 at 4pm (America/New_York)" on the Opus model.
 - **Action (orchestrator):** that builder was resumed from its start; the other running builders (Publish beside saves, removal per account, whole-subject import, the private production research, the afternoon merge) were checked and are still running.
 - **Reading (orchestrator's):** "I got more usage" is taken as: the usage limit no longer blocks Opus agents, so work carries on with at most six agents as before. It is not taken as approval of any server rental or other spending.
+
+### 2026-11-24 16:51 local: Sam asks whether the concerns in a written comparison are considered and built in from the beginning
+
+Verbatim: "/Users/sam/Downloads/Zino\'s\ triple\ store\ concerns\ vs\ Datomic.md Have we considered all these things and are building them in from the very beginning?"
+
+- **The file:** a private document on Sam's Mac (not copied into this repository) listing twelve concerns an engineering lead raised about a triple store, each set against what Datomic offers, plus notes on size limits, deletion of personal data and migration.
+- **Action (orchestrator):** each concern checked against the code and today's results before answering (what "1 billion records" counts, how removal erases, whether Datomic partitions are used, which integrity rules exist); answer given to Sam in the session. One gap acted on at once: nobody has measured an API call's worth of reads (the "100+ queries per API call" concern); a builder was started on it (`OPUS-API1-api-call-shaped-reads.md`).
+- **Reading (orchestrator's):** a question, not a change of direction. The rule that all accounts live in one Datomic database stands; the answer states the size facts without recommending a split.
