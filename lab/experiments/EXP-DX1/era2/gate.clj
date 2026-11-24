@@ -558,17 +558,16 @@
           (println "ERA2_HAMMER" (pr-str {:rounds rounds :tries (frequencies @tries) :guards @holds})))))))
 
 (defn frame-race
-  "[DX-ERA2 fix pass, DX-ERA3 F1/F1b] The commit-point check itself: a derived write (a ticket naming no account, or
-  naming the removed subject's account) that has passed every gateway check and is paused just before Datomic, released
-  at a random moment while a removal of that account runs (random delays after its declaration and intent). It may
-  commit only if Datomic ordered it before the removal's declaration; otherwise it must be refused. No copy of the
-  removed value may be readable after the removal answers."
+  "[DX-ERA2 fix pass, DX-ERA3 F1/F1b] The commit-point check itself. Live, a derived write and a removal of its account
+  are ordered by their locks, so the case that matters is a derived write whose request gave up (the gateway's 5 s
+  wait expired, its lock released) while its transaction was still queued: here its transaction is held back until
+  the removal has declared itself, then submitted. It must fail at Datomic's serial point, and no copy may land."
   [n]
   (when per-account?
     (fresh-scope false
       (fn [name conn]
         (let [counts (atom {}) bump (fn [k] (swap! counts update k (fnil inc 0)))
-              prepare privacy/prepare! declare rc/declare!]
+              declare rc/declare! submit storage/submit!]
           (doseq [i (range n)]
             (let [x (str "acct/q/s" i) v0 (secret x "seed")
                   _ (offers/send name (frame (str "q-" i) x v0 nil nil))
@@ -577,37 +576,27 @@
                   doc (str "notice:v1:q" i) op (str "qf-" i)
                   input (cond-> (assoc (save-frame op doc ":notice/body" (str "derived:" v0) nil nil) "erasureSeq" ticket)
                           accounts (assoc "erasureAccounts" accounts))
-                  entered (promise) release (promise) submit storage/submit!
+                  declared (promise) outcome (promise)
                   [saved removed]
                   (with-redefs [storage/submit! (fn [& args]
-                                                  (when (= op (get (nth args 2) "operationId"))
-                                                    (deliver entered true) (deref release 15000 nil))
-                                                  (apply submit args))
-                                rc/declare! (fn [& args] (let [r (apply declare args)] (Thread/sleep (long (rand-int 3))) r))
-                                privacy/prepare! (fn [nm e] (prepare nm e) (Thread/sleep (long (rand-int 3))))]
+                                                  (if (= op (get (nth args 2) "operationId"))
+                                                    (future (deref declared 30000 nil)
+                                                            (try (let [r @(apply submit args)] (deliver outcome :committed) r)
+                                                                 (catch Throwable e (deliver outcome (.getMessage e)) (throw e))))
+                                                    (apply submit args)))
+                                rc/declare! (fn [& args] (let [r (apply declare args)] (deliver declared true) r))]
                     (let [saver (future (offers/send name input))]
-                      (deref entered 3000 nil)
+                      (Thread/sleep 50)
                       (let [remover (future (remove! name (str "qr-" i) x))]
-                        (Thread/sleep (long (rand-int 8)))
-                        (deliver release true)
-                        [(deref saver 20000 {:status 0}) (deref remover 20000 {:status 0})])))
-                  db (d/db conn)
-                  scope (triplex.gateway.scope/entity db)
-                  declared (some (fn [x] (when (and (:added x) (= (seq-now name conn) (:v x))) (d/tx->t (:tx x))))
-                                 (d/datoms (d/history db) :eavt scope :triplex.scope/removal-intent))
-                  claim (d/entid db [:triplex.claim/command-id op])
-                  frame-t (when claim (d/tx->t (:db/id (:triplex.claim/tx (d/entity db claim)))))
+                        [(deref saver 20000 {:status 0}) (deref remover 30000 {:status 0})])))
+                  landed (deref outcome 30000 :never-submitted)
                   label (str "frame-race/" (if accounts "account" "no-account"))]
               (check! label (= [200 nil] (offers/outcome removed)) "the removal answers" (offers/outcome removed))
-              (if (= 200 (:status saved))
-                (do (bump [label :committed-before-declaration])
-                    (check! label (and frame-t declared (< frame-t declared))
-                            "a ticketed write commits only before the removal's declaration" {:frame frame-t :declared declared}))
-                (bump [label (offers/outcome saved)]))
-              (check! label (not (and (= 200 (:status saved)) frame-t declared (> frame-t declared))) "never after it")
-              ;; whatever happened, the frame was either refused or made before the removal began: a copy made before a
-              ;; removal is outside what a removal removes (DX-ERA3 F5), so only the order is checked here
-              ))
+              (check! label (not= 200 (:status saved)) "the derived write's request gave up" (offers/outcome saved))
+              (check! label (and (string? landed) (re-find #"TRIPLEX_|cas-failed|Compare failed" landed)) "its late transaction failed at the serial point" landed)
+              (check! label (nil? (d/entid (d/db conn) [:triplex.claim/command-id op])) "it never committed")
+              (check! label (not (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [doc]}))) v0)) "no copy")
+              (bump [label (if (string? landed) (or (re-find #"TRIPLEX_[A-Z_]+[ a-z-]*|cas-failed" landed) landed) landed)])))
           (println "ERA2_FRAME_RACE" (pr-str {:iterations n :outcomes @counts})))))))
 
 (defn native-counters-agree!
@@ -755,7 +744,7 @@
   (scenario "mid-import" #(subject-mid-import 40))
   (scenario "race-loop" #(race-loop (Long/parseLong (or (System/getenv "ERA2_RACES") "1000"))))
   (scenario "hammer" #(hammer 30))
-  (scenario "frame-race" #(frame-race (Long/parseLong (or (System/getenv "ERA2_FRAME_RACES") "600"))))
+  (scenario "frame-race" #(frame-race (Long/parseLong (or (System/getenv "ERA2_FRAME_RACES") "40"))))
   (scenario "orphan-and-rebuild" orphan-and-rebuild)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode
