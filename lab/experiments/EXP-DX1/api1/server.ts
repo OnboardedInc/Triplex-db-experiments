@@ -3,7 +3,7 @@
 // working copy (demo/server-up.sh with DEMO_READER=tuned DX_READ_BATCH=1 DX_ID_LISTS=1) and writes to it: one commit of
 // definitions per deep account, then saves of one subject each (17 rows, one commit) beside the reads.
 //   node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/api1/server.ts READY_FILE OUT
-// Settings (environment): API1_WINDOW_SECONDS (90), API1_CALLERS ("64,256"), API1_ARMS ("today,loader,batch1"),
+// Settings (environment): API1_WINDOW_SECONDS (60), API1_LIST_CALLERS (8), API1_CALLERS ("64,256"), API1_ARMS ("today,loader,batch1"),
 // API1_SETS ("reread,random"), API1_SAVES_PER_SECOND (23), API1_ALONE_CALLS (20), API1_REREAD_PER_ACCOUNT (200),
 // API1_CALL_TIMEOUT_MS (30000), API1_DRY (1: one 10 s window per arm at 8 callers, for a check on a toy).
 // Rejected: a mix sampled per window (every window draws from the same seeded sequence), and timing on the driver's
@@ -26,7 +26,7 @@ assert(!fs.existsSync(out), "OUT must be new");
 fs.mkdirSync(out, { recursive: true });
 const env = (k: string, d: string) => process.env[k] ?? d;
 const dry = env("API1_DRY", "0") === "1";
-const windowSeconds = dry ? 10 : Number(env("API1_WINDOW_SECONDS", "90"));
+const windowSeconds = dry ? 10 : Number(env("API1_WINDOW_SECONDS", "60"));
 const callersList = (dry ? "8" : env("API1_CALLERS", "64,256")).split(",").map(Number);
 const arms = env("API1_ARMS", "today,loader,batch1").split(",") as Port[];
 const sets = env("API1_SETS", "reread,random").split(",");
@@ -103,11 +103,19 @@ const literalForms = (s: Shape): Shape => {
   return { ...s, levels: s.levels.map((l) => l.map(fix)), ...(s.after ? { after: s.after.map((l) => l.map(fix)) } : {}), ...(s.batch ? { batch: s.batch.map(fix) } : {}) };
 };
 const byName = new Map(shapes.map((s) => [s.name, literalForms(s)]));
-// The mix (proposed; API-CALL-READS.md section 7): shares of calls.
-const mix: [string, number][] = [["subject-list", 15], ["subject-page", 15], ["task-page", 15], ["task-fields", 15], ["placement-page", 10],
-  ["form-submit", 10], ["policy-eval", 8], ["import-row", 7], ["check-webhook", 5]];
-const total = mix.reduce((n, [, w]) => n + w, 0);
-const drawShape = () => { let x = rand() * total; for (const [name, w] of mix) { if ((x -= w) < 0) return byName.get(name)!; } return byName.get("subject-page")!; };
+// The mixes (proposed; API-CALL-READS.md section 7): shares of calls. "calls" is every subject-centred shape; the list
+// page (15% of the product's calls in the proposed mix) runs in windows of its own at few callers, because at 64 callers
+// one list page of today's port takes longer than a window.
+const mixes: Record<string, [string, number][]> = {
+  calls: [["subject-page", 15], ["task-page", 15], ["task-fields", 15], ["placement-page", 10], ["form-submit", 10], ["policy-eval", 8],
+    ["import-row", 7], ["check-webhook", 5]],
+  list: [["subject-list", 1]],
+};
+const drawShape = (mix: [string, number][]) => {
+  const total = mix.reduce((n, [, w]) => n + w, 0);
+  let x = rand() * total; for (const [name, w] of mix) { if ((x -= w) < 0) return byName.get(name)!; } return byName.get(mix[0]![0])!;
+};
+const listCallers = dry ? 4 : Number(env("API1_LIST_CALLERS", "8"));
 const { today, loader, batch1 } = makePorts(db, validAt, writer, save);
 const call = (port: Port, shape: Shape, ctx: Ctx, stats = false): Promise<Result> =>
   port === "today" ? today(reader, shape, ctx, false) : port === "pinned" ? today(reader, shape, ctx, true)
@@ -141,8 +149,11 @@ for (const set of sets) for (const shape of byName.values()) for (const port of 
     readerCpuMsPerCall: (cpuMicros() - c0) / 1000 / per.length, requestP99: pct(per.flatMap((x) => x.requestMs ?? []), 0.99),
     missedOwnWrite: per.reduce((n, x) => n + (x.missedOwnWrite ?? 0), 0) });
 }
-// Windows: the mix at 64 and 256 callers beside saves of one subject each.
-for (const set of sets) for (const callers of callersList) for (const port of arms) {
+// Windows: the subject-centred mix at 64 and 256 callers, then the list page alone at few callers, beside saves of one
+// subject each.
+const windows = [...sets.flatMap((set) => callersList.flatMap((callers) => arms.map((port) => ({ set, callers, port, mix: "calls" })))),
+  ...sets.flatMap((set) => arms.map((port) => ({ set, callers: listCallers, port, mix: "list" })))];
+for (const { set, callers, port, mix } of windows) {
   let running = true;
   const commits: number[] = [];
   let saved = 0;
@@ -163,7 +174,7 @@ for (const set of sets) for (const callers of callersList) for (const port of ar
   const c0 = cpuMicros(), t0 = performance.now();
   await Promise.all(Array.from({ length: callers }, async (_, seat) => {
     while (performance.now() - t0 < windowSeconds * 1000) {
-      const shape = drawShape(), [r, i] = pick(set);
+      const shape = drawShape(mixes[mix]!), [r, i] = pick(set);
       const t = performance.now();
       try {
         const x = await call(port, shape, ctxFor(r, i, seat + calls));
@@ -174,7 +185,7 @@ for (const set of sets) for (const callers of callersList) for (const port of ar
   }));
   const seconds = (performance.now() - t0) / 1000, cpu = (cpuMicros() - c0) / 1e6;
   running = false; await saver;
-  log("window", { set, callers, port, seconds, calls, callsPerSecond: calls / seconds, readsPerSecond: reads / seconds, tripsPerCall: trips / Math.max(1, calls),
+  log("window", { mix, set, callers, port, seconds, calls, callsPerSecond: calls / seconds, readsPerSecond: reads / seconds, tripsPerCall: trips / Math.max(1, calls),
     readsPerCall: reads / Math.max(1, calls), callP50: pct(wall, 0.5), callP99: pct(wall, 0.99), requestP99: pct(requests, 0.99),
     under50: wall.filter((m) => m <= 50).length / Math.max(1, wall.length), under200: wall.filter((m) => m <= 200).length / Math.max(1, wall.length),
     readerCores: cpu / seconds, readerCpuMsPerCall: (cpu * 1000) / Math.max(1, calls), timeouts, errors, missedOwnWrite: missed,

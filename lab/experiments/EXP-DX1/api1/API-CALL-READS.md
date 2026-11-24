@@ -4,7 +4,48 @@ DX-API1, 2026-11-24, branch `exp/DX-API1-api-call-reads` from `origin/exp/DX-INT
 `evidence/DX-API1/` (private). Mac times are diagnostic (a Mac shared with five builders); counts are results. Nothing
 here has run on a server.
 
-__ANSWER__
+**Answer (2026-11-24; Mac toy counts, diagnostic times; nothing has run on a server).**
+- **One real API call today is tens to thousands of HTTP round trips.** A straightforward port reads entity by entity
+  (the store has no `IN` query): a subject's page is 44 reads in 44 requests, 7 levels deep; a policy evaluation 61;
+  a form submission 30 plus the save; a list page of 50 subjects with status columns 1,524. On the toy, a subject's
+  page costs 33 to 46 ms of reader CPU per call under load (the Mac; about 50 ms on the server by the calibration
+  below), 43 ms alone (p50, 102 ms p99); the list page 2.3 to 2.8 s of CPU and 1.2 s alone.
+- **After the batch:** the same handler through `CallReads` (the loader) makes one request per level (5 for the
+  subject page, 8 for the list page) and the one-request form makes 1. Reader CPU per call falls 2.0 to 4.8 times for
+  the subject-centred shapes at 16 and 64 callers (subject page 33 to 46 → 10 to 14 ms; policy evaluation 62 to 76 →
+  15 to 19 ms; a task's fields, 2 reads, 1.2 to 1.3 times), and 14 to 43 times for the list page read as 50 reach
+  worlds (warm 2,790 → 65 ms, cold 2,173 → 155 ms); calls/s on the same reader rise 1.7 to 4.3 times (subject page
+  46 to 54 → 163 to 222 calls/s); the subject page's alone p50 is 3.2 times lower (43 → 14 ms).
+- **Can one call's reads straddle a commit today? Yes, and on the toy under saves they did in 26.5% of calls:** 97 of
+  366 unpinned subject-page calls read a subject's root and its first task at two positions (a save writes the same
+  value to both in one commit; the call saw two different values), and the reader's head moved during every one of
+  the 366 calls. Pinned by hand (one `/basis` call first): 0 of 379. The loader: 0 of 1,052. The one-request batch:
+  0 of 1,436. Unpinned reads after the call's own save missed it in 28 of 512 form submissions (5.5%; up to 9 of 48 at
+  16 callers); the loader's and the batch's at-least reads missed 0 of 512 each.
+- **Gate: 45,102 comparisons, 0 differences.** Every batched answer (the loader's and the one-request batch's) equal
+  to the same read issued alone at the same position: nine shapes, at the head, at the seed cut and at a middle
+  position, then at the head with 145 saves running; every call read at one position (two for the call that saves);
+  12 of 12 refusals typed; a 64 KiB byte bound split one batch into 3 requests with answers equal to the unbounded
+  one; a 12-entry batch took 1 read admission (3 permits).
+- **Predicted at 1 billion (one 3-core tuned reader; section 5):** alone, every subject-centred shape's whole call is
+  inside 50 ms with the batch (2.8 to 31 ms re-read, 6 to 36 ms random; the form submission 35 to 108 ms including
+  its save); today the subject page, the policy evaluation and the form submission straddle 50 ms (low and high
+  estimates 19 to 66, 33 to 81, 28 to 148 ms); per read today 3 to 15 ms alone, so "each read under 50 ms" holds
+  for one caller (not for the list page's 1,524 reads queued on 3 permits). **At
+  256 concurrent callers nothing meets 50 ms or 200 ms per call, batched or not**: the reader saturates (calls/s =
+  2.7 cores ÷ CPU per call), so a subject page's p50 is about 4.7 s today and 1.7 s batched; per read p99 today about
+  0.25 to 4 s. At 64 callers only the smallest shape (a task's fields, 2 reads) stays inside 200 ms. **Cold worst
+  case:** the list page of 50 random subjects, 1.6 to 2.4 s alone today and 0.2 to 0.3 s batched (about 130 to 570
+  storage loads); a random subject's page 23 to 125 ms alone today.
+- **What it means:** the lead's sentence is answerable for one call at a time, not for 256 at once on one reader. The
+  batch takes the round trips out (2.5 to 4 times the calls per core) and makes every call one position; what is left
+  is CPU per entity read (about 0.4 ms on the server as rows, 0.06 ms inside a reach). 256 subject pages at once
+  inside 50 ms p99 would need about 175 reader cores (about 44 for 200 ms); the next levers are the per-subject row cache costed in RD5 (not built) and more
+  reader machines (RD5 command 2).
+- **Server run** (section 7): one bring-up of the 1 billion working copy with the tuned reader and the batch on, alone
+  cells and 12 windows of the mix at 64 and 256 callers, re-read and random subjects, saves at 23/s: 31 to 47 minutes,
+  USD 0.56 to 0.85. **Proposed scorecard line P10** in section 8.
+
 
 ## 1. What a real API call reads (the product's handlers, counted from their code)
 
@@ -38,7 +79,144 @@ port measured below as `today`: 2 to 2,250 reads per call, a median shape around
 resource's detail, 10% a sub-resource (a subject's onboarding, a task's fields). The production write study gives the
 write-path shapes (form saves are under a tenth of saves). The mix of section 7 is built from these two.
 
-__MEASURE__
+## 2. What each shape costs on the store today, and after the batch (Mac toy; counts are results, times diagnostic)
+
+**The toy** (`api1/gate.sh`, one lab container started by image ID `sha256:21a67288…`, the gateway source mounted
+from this branch): PostgreSQL, a transactor, the writer (8080), and two read gateways, each the 1 billion arm's
+tuned reader (both pinned options, the early filter, 3 read permits) with the batch, the ID list route and the read
+profile on: **warm** (8081, 384 MB object cache; the subjects read before each cell) and **cold** (8082, 32 MB cache;
+random subjects of 1,000). Two accounts of 500 deep subjects (SCALE1's `deepOwnFacts`, plus each task's reference to
+its form), 24 forms, 8 property definitions and a policy of 39 rule nodes per account: 138,046 facts in 74 frames,
+then 150 saves, indexed. **Counted:** requests (HTTP round trips) and reads per call; storage loads per call
+(Datomic's io-stats: per request through the read profile for single reads, the batch's own `stats` for batches);
+reader CPU per call (the reader JVM's user and system time over the cell, in 10 ms ticks); wall time. Rows decoded:
+a whole-entity read decodes and returns every live row of the entity (the rows column of `counts-*.json`); a field
+read decodes one row of about 20 with the early filter; segment decoding is the storage loads.
+
+**Which reads are independent.** Every shape is written as levels (`api1/shapes.ts`); reads in one level depend only
+on earlier levels and can run side by side; each level needs the references found by the one before it (a task's
+subtasks, a placement's tasks, a rule's children). Depth (levels with reads): subject page 4 to 7 (subtasks are
+chained up to three deep), task page 2 to 5, list page 5 to 8, form submission 5 then the save then 1, import row 2,
+policy evaluation 4, check webhook 3, placement page 3 to 6, task fields 2. In `today` and `pinned` the reads of a
+level go in parallel (the most a port can do); the loader sends one request per level; the one-request batch sends
+the whole call (a save splits it in two).
+
+
+**Warm reader** (one caller; reads, requests and loads per call; reader CPU per call, ms; wall p50 / p99, ms)
+
+| Shape | Reads | Requests today / pinned / loader / batch | Storage loads today / loader / batch | CPU today / pinned / loader / batch | Wall p50 today / loader / batch | Wall p99 today / loader / batch |
+| --- | ---: | --- | --- | --- | --- | --- |
+| subject-page | 44.2 | 44.2 / 45.2 / 5.1 / 1.0 | 0.00 / 0.00 / 0.00 | 115.6 / 66.2 / 18.1 / 15.0 | 43.5 / 25.9 / 13.6 | 101.9 / 40.9 / 16.8 |
+| task-page | 18.5 | 18.5 / 19.5 / 3.1 / 1.0 | 0.00 / 0.00 / 0.00 | 23.1 / 34.4 / 5.6 / 3.8 | 18.5 / 12.5 / 6.8 | 37.1 / 17.0 / 9.6 |
+| subject-list | 1,524.0 | 1,524.0 / 1,525.0 / 8.0 / 1.0 | 0.00 / 0.00 / 0.00 | 2,285.0 / 1,945.0 / 290.0 / 25.0 | 1,235.2 / 374.1 / 39.3 | 2,613.1 / 507.1 / 61.8 |
+| form-submit | 30.2 | 30.2 / 31.2 / 6.0 / 2.0 | 0.00 / 0.00 / 0.00 | 34.4 / 33.1 / 18.1 / 15.6 | 73.0 / 65.7 / 57.8 | 91.6 / 79.0 / 91.6 |
+| import-row | 17.4 | 17.4 / 18.4 / 2.0 / 1.0 | 0.00 / 0.00 / 0.00 | 13.8 / 16.9 / 7.5 / 5.0 | 16.6 / 16.5 / 8.8 | 26.3 / 23.2 / 12.2 |
+| policy-eval | 60.8 | 60.8 / 61.8 / 4.0 / 1.0 | 0.00 / 0.00 / 0.00 | 45.0 / 43.8 / 15.0 / 13.1 | 43.9 / 31.0 / 20.4 | 67.1 / 39.6 / 31.5 |
+| check-webhook | 29.9 | 29.9 / 30.9 / 3.0 / 1.0 | 0.00 / 0.00 / 0.00 | 23.8 / 27.5 / 8.1 / 6.9 | 26.8 / 18.0 / 8.4 | 41.1 / 26.2 / 15.5 |
+| placement-page | 32.0 | 32.0 / 33.0 / 4.1 / 1.0 | 0.00 / 0.00 / 0.00 | 28.8 / 26.2 / 9.4 / 7.5 | 32.7 / 21.1 / 10.3 | 48.6 / 31.2 / 15.9 |
+| task-fields | 2.0 | 2.0 / 3.0 / 2.0 / 1.0 | 0.00 / 0.00 / 0.00 | 2.5 / 3.1 / 2.5 / 2.5 | 8.6 / 7.8 / 4.1 | 10.3 / 10.5 / 6.5 |
+
+**warm, 16 callers** (calls/s; reader CPU per call, ms; wall p50 / p99, ms)
+
+| Shape | Calls/s today / loader / batch | CPU today / loader / batch | p50 today / loader / batch | p99 today / loader / batch |
+| --- | --- | --- | --- | --- |
+| subject-page | 54.0 / 156.4 / 222.4 | 33.1 / 13.5 / 11.9 | 278.9 / 89.1 / 65.0 | 456.2 / 145.2 / 102.2 |
+| task-page | 135.7 / 251.4 / 431.3 | 16.5 / 8.1 / 5.2 | 105.8 / 53.6 / 32.6 | 226.1 / 118.1 / 42.6 |
+| subject-list | 1.1 / 4.6 / 20.0 | 2,790.0 / 345.0 / 65.0 | 14,955.3 / 3,252.8 / 390.7 | 15,022.3 / 3,501.7 / 801.0 |
+| form-submit | 22.0 / 53.3 / 37.1 | 51.0 / 22.5 / 22.9 | 731.1 / 266.3 / 400.6 | 1,012.4 / 457.8 / 589.3 |
+| import-row | 125.1 / 338.7 / 298.2 | 19.8 / 6.2 / 5.8 | 128.3 / 42.9 / 49.1 | 231.0 / 62.9 / 65.2 |
+| policy-eval | 32.7 / 138.5 / 110.3 | 62.3 / 15.2 / 16.0 | 441.1 / 107.7 / 125.8 | 644.1 / 145.6 / 208.5 |
+| check-webhook | 94.3 / 220.4 / 380.3 | 20.6 / 8.1 / 5.8 | 158.8 / 64.7 / 39.1 | 238.3 / 93.3 / 50.0 |
+| placement-page | 78.9 / 217.1 / 254.4 | 21.9 / 10.2 / 9.4 | 186.2 / 65.9 / 61.5 | 300.4 / 114.2 / 77.8 |
+| task-fields | 707.4 / 700.1 / 695.5 | 2.1 / 2.5 / 1.7 | 19.2 / 22.3 / 21.7 | 31.7 / 32.3 / 39.8 |
+
+**warm, 64 callers** (calls/s; reader CPU per call, ms; wall p50 / p99, ms)
+
+| Shape | Calls/s today / loader / batch | CPU today / loader / batch | p50 today / loader / batch | p99 today / loader / batch |
+| --- | --- | --- | --- | --- |
+| subject-page | 46.2 / 151.7 / 163.2 | 46.1 / 13.0 / 9.6 | 1,319.4 / 383.8 / 353.4 | 2,455.7 / 600.2 / 457.0 |
+| task-page | 94.9 / 281.9 / 305.2 | 16.1 / 6.6 / 4.7 | 605.7 / 197.3 / 187.6 | 1,551.6 / 442.3 / 276.2 |
+| form-submit | 35.0 / 73.9 / 87.8 | 27.9 / 16.3 / 13.9 | 1,465.5 / 711.9 / 648.4 | 3,356.3 / 2,385.6 / 1,302.2 |
+| import-row | 111.4 / 267.7 / 311.6 | 22.8 / 6.6 / 6.4 | 551.1 / 239.3 / 188.4 | 978.4 / 286.4 / 257.8 |
+| policy-eval | 31.2 / 127.5 / 97.4 | 76.4 / 14.8 / 18.7 | 1,963.2 / 475.2 / 529.4 | 2,769.1 / 579.0 / 869.0 |
+| check-webhook | 56.0 / 215.8 / 242.1 | 41.7 / 10.3 / 8.8 | 1,153.4 / 282.0 / 260.2 | 1,480.2 / 417.3 / 328.0 |
+| placement-page | 62.0 / 234.0 / 240.6 | 32.9 / 10.5 / 9.2 | 966.2 / 239.9 / 256.3 | 1,627.2 / 510.4 / 313.1 |
+| task-fields | 1,183.7 / 951.8 / 1,043.7 | 2.4 / 2.7 / 1.9 | 47.3 / 61.3 / 53.6 | 106.6 / 115.4 / 70.5 |
+
+**Cold reader** (one caller; reads, requests and loads per call; reader CPU per call, ms; wall p50 / p99, ms)
+
+| Shape | Reads | Requests today / pinned / loader / batch | Storage loads today / loader / batch | CPU today / pinned / loader / batch | Wall p50 today / loader / batch | Wall p99 today / loader / batch |
+| --- | ---: | --- | --- | --- | --- | --- |
+| subject-page | 49.5 | 49.5 / 49.2 / 5.2 / 1.0 | 2.75 / 1.19 / 1.94 | 243.8 / 113.8 / 35.0 / 26.2 | 82.6 / 42.8 / 22.3 | 167.7 / 70.2 / 29.5 |
+| task-page | 18.8 | 18.8 / 19.8 / 3.8 / 1.0 | 1.62 / 1.69 / 1.81 | 33.1 / 32.5 / 16.2 / 16.9 | 26.1 / 14.1 / 13.0 | 47.1 / 25.7 / 20.5 |
+| subject-list | 1,764.5 | 1,764.5 / 1,606.2 / 8.0 / 1.0 | 147.08 / 84.25 / 49.50 | 3,850.0 / 2,110.0 / 540.0 / 265.0 | 1,600.7 / 556.1 / 181.6 | 1,691.9 / 685.1 / 257.1 |
+| form-submit | 31.6 | 31.6 / 31.9 / 6.0 / 2.0 | 1.62 / 1.25 / 1.44 | 45.0 / 41.2 / 21.9 / 20.0 | 97.0 / 72.8 / 69.6 | 141.1 / 88.2 / 80.5 |
+| import-row | 17.8 | 17.8 / 19.3 / 2.0 / 1.0 | 1.19 / 1.06 / 1.62 | 15.0 / 19.4 / 8.1 / 12.5 | 18.0 / 15.4 / 14.4 | 28.8 / 21.7 / 21.9 |
+| policy-eval | 62.1 | 62.1 / 63.0 / 4.0 / 1.0 | 0.62 / 1.19 / 5.81 | 54.4 / 58.8 / 18.1 / 25.6 | 51.9 / 36.8 / 23.8 | 72.0 / 49.6 / 165.8 |
+| check-webhook | 29.9 | 29.9 / 31.8 / 3.0 / 1.0 | 2.00 / 1.81 / 2.19 | 25.6 / 29.4 / 11.9 / 10.0 | 33.4 / 18.8 / 11.8 | 52.1 / 32.1 / 19.9 |
+| placement-page | 36.3 | 36.3 / 39.3 / 3.9 / 1.0 | 1.94 / 1.94 / 2.06 | 31.2 / 36.9 / 11.9 / 10.0 | 31.7 / 22.0 / 11.5 | 55.3 / 36.6 / 20.4 |
+| task-fields | 2.0 | 2.0 / 3.0 / 2.0 / 1.0 | 0.75 / 1.12 / 0.75 | 3.1 / 3.1 / 5.0 / 2.5 | 8.2 / 11.6 / 5.2 | 13.0 / 19.8 / 10.2 |
+
+**cold, 16 callers** (calls/s; reader CPU per call, ms; wall p50 / p99, ms)
+
+| Shape | Calls/s today / loader / batch | CPU today / loader / batch | p50 today / loader / batch | p99 today / loader / batch |
+| --- | --- | --- | --- | --- |
+| subject-page | 54.7 / 108.2 / 107.6 | 41.7 / 16.5 / 17.9 | 276.0 / 133.8 / 103.6 | 411.0 / 206.1 / 233.8 |
+| task-page | 141.0 / 274.2 / 397.4 | 14.2 / 8.3 / 5.4 | 104.2 / 49.2 / 38.5 | 196.6 / 106.7 / 60.8 |
+| subject-list | 1.1 / 3.2 / 15.1 | 2,172.5 / 540.0 / 155.0 | 14,675.7 / 4,985.9 / 669.2 | 14,696.8 / 5,010.8 / 1,058.7 |
+| form-submit | 37.9 / 43.5 / 70.2 | 32.7 / 24.2 / 18.5 | 353.9 / 332.9 / 193.7 | 669.5 / 548.8 / 352.0 |
+| import-row | 125.5 / 269.9 / 252.4 | 16.9 / 9.4 / 10.6 | 103.0 / 52.2 / 57.2 | 183.1 / 80.7 / 84.3 |
+| policy-eval | 37.2 / 110.2 / 112.7 | 76.9 / 17.9 / 18.8 | 357.3 / 141.2 / 128.9 | 1,259.2 / 184.7 / 186.0 |
+| check-webhook | 70.4 / 254.6 / 288.4 | 29.4 / 8.5 / 9.2 | 220.7 / 58.4 / 53.4 | 324.4 / 105.9 / 69.6 |
+| placement-page | 64.8 / 169.1 / 203.7 | 32.1 / 10.6 / 9.8 | 247.9 / 84.5 / 71.9 | 376.0 / 151.8 / 98.5 |
+| task-fields | 742.8 / 703.6 / 891.6 | 2.5 / 2.7 / 2.5 | 19.7 / 19.3 / 16.3 | 36.0 / 30.6 / 26.7 |
+
+**cold, 64 callers** (calls/s; reader CPU per call, ms; wall p50 / p99, ms)
+
+| Shape | Calls/s today / loader / batch | CPU today / loader / batch | p50 today / loader / batch | p99 today / loader / batch |
+| --- | --- | --- | --- | --- |
+| subject-page | 46.8 / 138.6 / 168.8 | 50.3 / 15.4 / 12.3 | 1,280.8 / 402.3 / 382.0 | 2,186.6 / 671.0 / 435.8 |
+| task-page | 117.8 / 315.3 / 370.4 | 23.3 / 5.9 / 6.9 | 514.0 / 177.9 / 167.7 | 1,144.6 / 371.2 / 217.8 |
+| form-submit | 45.5 / 57.8 / 77.0 | 33.6 / 17.7 / 16.7 | 1,193.9 / 971.9 / 694.3 | 2,365.0 / 1,607.5 / 1,140.1 |
+| import-row | 93.9 / 253.6 / 307.3 | 30.5 / 7.8 / 7.8 | 660.9 / 241.9 / 197.9 | 955.2 / 290.3 / 238.1 |
+| policy-eval | 27.0 / 66.1 / 73.7 | 103.4 / 26.4 / 21.9 | 2,275.2 / 926.9 / 834.8 | 3,334.3 / 1,092.4 / 1,838.1 |
+| check-webhook | 70.9 / 198.8 / 280.9 | 30.5 / 8.6 / 7.1 | 823.2 / 313.9 / 222.1 | 1,245.0 / 397.1 / 259.4 |
+| placement-page | 54.9 / 155.2 / 204.3 | 39.6 / 12.1 / 10.5 | 1,111.4 / 368.6 / 307.3 | 1,925.6 / 665.5 / 357.6 |
+| task-fields | 896.4 / 1,065.8 / 1,046.4 | 2.1 / 2.6 / 2.4 | 64.5 / 56.0 / 52.1 | 125.9 / 90.8 / 80.8 |
+
+exchange of 8 (cold): CPU 12.700 ms, loads 2.97, p50 6.50 ms
+
+
+**Calibration exchange** (the 1 billion arm's own request: eight subjects' field 0 in one pinned `/read`): warm, 16
+callers, 1.013 ms of reader CPU per exchange (1,914 exchanges/s on 1.94 cores; one caller 6.05 ms, JIT and background
+threads included, so one-caller CPU figures above are high); cold, 16 callers, 6.36 ms; cold, one caller, 3.63
+storage loads per exchange (0.45 per subject; 1.76 at 1 billion).
+
+**The straddle check** (16 callers for 8 s per port on 10 hot subjects of the warm reader, two savers writing the same
+new value to a subject's root `:placement/stamp` and its first task's `:task/progress` in one commit, 20 to 56 saves/s):
+
+| Port | Calls | Calls whose two values differ (two positions) | Head moved during the call | Saves/s | Calls/s |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| today (unpinned) | 366 | **97 (26.5%)** | 366 of 366 | 20.2 | 44.8 (two head reads per call added) |
+| pinned (one `/basis` first) | 379 | 0 | — | 24.7 | 46.0 |
+| loader (`CallReads`) | 1,052 | 0 | — | 38.4 | 130.2 |
+| one-request batch | 1,436 | 0 | — | 55.5 | 177.6 |
+
+**Read after the call's own write** (`form-submit`, the task read back after its save): unpinned reads missed the save
+in 28 of 512 calls (warm: 1 of 16, 9 of 48, 12 of 192 at 1, 16, 64 callers; cold: 0, 5 of 48, 1 of 192); pinned at the
+receipt 0 of 32; the loader (`afterWrite`, then the at-least read) and the batch (`atLeastPosition`) 0 of 512 each.
+
+**Seen in the counts:** (1) the loader removes most of the requests but keeps one per level, so a deep call still
+pays a round trip per level (subject page 5, list page 8); the one-request batch pays one. (2) Alone, the batch's
+whole call runs on one request thread (entries one after another; only the storage loads overlap), so its wall time
+is its CPU; a `today` call spreads its reads over the reader's 3 permits. Under load that difference disappears and
+CPU per call decides. (3) The list page read as 50 reach worlds costs 65 to 98 ms of CPU against 290 to 345 for the
+same 1,524 entities read as rows through the loader: reach walks a subject's references inside the gateway with one
+identity memo. (4) On the cold toy the batch's prefetch loaded more segments than the single reads for the policy
+evaluation (5.8 against 0.6 per call over 16 calls): it touches each definition entity's whole EAVT range, which a
+32 MB cache had evicted; on the warm reader 0 everywhere. (5) One-caller CPU on the Mac carries JIT and background
+threads (6 ms per exchange alone, 1 ms at 16 callers); the predictions use the loaded figures.
+
 
 ## 3. The batched read, the loader and the memo (built, default off)
 
@@ -124,6 +302,119 @@ const tasks = await Promise.all(placementIds.map((id) => reads.rows(id)));      
   (three cores, 3 GiB cache in a 9 GiB heap, the early filter) beside the same 32 GiB transactor; unset, its output is
   byte-identical to before (checked).
 
+## 4. The exactness gate (Mac, `api1/run.ts` phase `gate`; counts are results)
+
+Every batched answer is compared with the same read issued alone, through the single routes, at the batch's stated
+position: per entity for `rows` entries (canonical rows sorted by ID), the whole answer for `reach` entries against
+`/reach-many` with the same roots, the page for `ids` entries against `/ids` (volatile fields dropped: the peer's
+head, scan time and io-stats). Both readers, both the loader and the one-request batch.
+
+| Part | Comparisons | Differences |
+| --- | ---: | ---: |
+| subject page (12 subjects × 3 positions) | 3,504 | 0 |
+| task page | 1,326 | 0 |
+| list page (4 pages × 3 positions: ID page, 50 reach worlds, definitions) | 21,189 | 0 |
+| form submission (head only: before and after its save) | 742 | 0 |
+| import row | 1,302 | 0 |
+| policy evaluation | 4,446 | 0 |
+| check webhook | 2,184 | 0 |
+| placement page | 2,682 | 0 |
+| task fields | 144 | 0 |
+| the eight subject-centred shapes at the head while 145 saves ran, and the cursor check | 7,583 | 0 |
+| **Total** | **45,102** | **0** |
+
+Positions: the head (the call pins it), the seed cut and a middle position (the call is pinned there by
+`position`). Every loader call and every batch read at one position (two for the form submission, which saves);
+entities found by reference were exactly the references of the source answer. **Refusals, typed (12 of 12):** history,
+row ID lookup, a rows entry without subjects, a held handle, a record-time basis, a forward and a self reference, 257
+entries, 4,097 subjects (`BatchTooLarge`), an unknown operation, no `validAt`, `atLeastPosition` with a pin
+(`InvalidValue`). **Cursor:** a 64 KiB bound answered one subject page in 3 requests, answers equal to the unbounded
+batch's. **Permits:** a 12-entry batch raised the reader's read admissions by exactly 1 (3 permits).
+
+## 5. Predictions at 1 billion (written before any server run)
+
+**The model** (`api1/predict.ts`, inputs: `counts-warm-run08.json`, `counts-cold-run07.json`,
+`calibration-run08.json`; output `predictions.json`, all in the private evidence folder):
+- **Speed of a server core:** f = 1.53 ms (the same exchange measured on the server at 1 billion, re-read subjects at
+  256 seats: 1,302.5 exchanges/s on 1.99 reader cores) ÷ 1.013 ms (the Mac, 16 callers) = **1.51**. Server reader CPU
+  per call, re-read = the Mac's warm CPU per call at 16 callers × 1.51.
+- **Random subjects:** + 0.86 ms per storage load (RD5: 1.52 ms for 1.76 loads), loads per call = distinct subjects ×
+  2.7 (EAVT 2.2: the measured 1.66 for one entity plus about half a leaf for the rest of a subject's 30 to 45
+  entities; identity 0.11 per ID kind read; definitions stay cached); high case the toy's cold loads × 3.9 (1.76 per
+  random subject at 1 billion against 0.45 on the toy).
+- **Alone:** low = CPU ÷ 3 permits (today) or CPU on one request thread (batches) + 0.3 ms per round trip + 1.2 ms
+  per storage wait (0.51 SQL + 0.69 decode; serial in single reads, one overlapped wave per level in a batch); high =
+  the Mac's own alone p50 × 1.51 (it carries the client and the round trips into the lab VM, slower than a server's
+  loopback) plus the 1 billion loads the toy did not make.
+- **N callers on one 3-core reader** (closed loop): calls/s = 2.7 cores ÷ CPU per call; call p50 = max(alone, N ÷
+  calls/s) (Little's law); p99 = 1.7 × p50 (the 1 billion windows' tail, 1.6 to 1.9). Per read (today): p50 = the
+  requests in flight (N × the call's mean level width) × a read's CPU ÷ 2.7; p99 = 1.7 × that.
+
+| Shape | Port | Requests | Reader CPU per call, ms (re-read / random) | Alone p50, ms (low to high): re-read / random | 64 callers p50 / p99, re-read | 256 callers p50 / p99, re-read | 256 callers p50 / p99, random | Calls/s, one 3-core reader (re-read / random) | Per read p99, today: alone / 256 callers |
+| --- | --- | ---: | --- | --- | --- | --- | --- | --- | --- |
+| subject-page | today | 44 | 50 / 52 | 19 to 66 / 23 to 125 | 1,186 / 2,015 | 4,742 / 8,062 | 4,966 / 8,443 | 54 / 52 | 4.5 / 1,152 |
+| subject-page | loader | 5 | 20 / 23 | 22 to 39 / 28 to 67 | 485 / 824 | 1,939 / 3,296 | 2,163 / 3,677 | 132 / 118 | — |
+| subject-page | batch1 | 1 | 18 / 20 | 18 to 20 / 24 to 35 | 425 / 722 | 1,700 / 2,890 | 1,924 / 3,271 | 151 / 133 | — |
+| task-page | today | 18 | 25 / 27 | 9.8 to 28 / 14 to 41 | 589 / 1,001 | 2,356 / 4,005 | 2,571 / 4,371 | 109 / 100 | 3.1 / 801 |
+| task-page | loader | 3 | 12 / 14 | 13 to 19 / 19 to 22 | 291 / 494 | 1,163 / 1,977 | 1,378 / 2,343 | 220 / 186 | — |
+| task-page | batch1 | 1 | 7.9 / 10 | 8.2 to 10 / 14 to 21 | 186 / 317 | 746 / 1,268 | 961 / 1,633 | 343 / 266 | — |
+| subject-list | today | 1,524 | 4,212 / 4,326 | 1,407 to 1,865 / 1,603 to 2,417 | 99,853 / 169,749 | 399,411 / 678,998 | 410,174 / 697,296 | 1 / 1 | 332 / 84,875 |
+| subject-list | loader | 8 | 521 / 634 | 523 to 565 / 646 to 849 | 12,347 / 20,991 | 49,389 / 83,962 | 60,153 / 102,260 | 5 / 4 | — |
+| subject-list | batch1 | 1 | 98 / 212 | 59 to 98 / 220 to 284 | 2,326 / 3,955 | 9,305 / 15,819 | 20,069 / 34,117 | 28 / 13 | — |
+| form-submit | today | 30 | 77 / 79 | 28 to 110 / 31 to 148 | 1,827 / 3,105 | 7,307 / 12,422 | 7,522 / 12,788 | 35 / 34 | 8.1 / 2,070 |
+| form-submit | loader | 6 | 34 / 36 | 36 to 99 / 42 to 112 | 805 / 1,369 | 3,221 / 5,476 | 3,436 / 5,842 | 79 / 74 | — |
+| form-submit | batch1 | 2 | 35 / 37 | 35 to 87 / 41 to 108 | 820 / 1,394 | 3,281 / 5,577 | 3,496 / 5,943 | 78 / 73 | — |
+| import-row | today | 17 | 30 / 32 | 11 to 25 / 14 to 29 | 708 / 1,204 | 2,833 / 4,817 | 3,040 / 5,167 | 90 / 84 | 9.4 / 2,408 |
+| import-row | loader | 2 | 9.4 / 12 | 10 to 25 / 15 to 26 | 224 / 380 | 895 / 1,521 | 1,101 / 1,872 | 286 / 233 | — |
+| import-row | batch1 | 1 | 8.8 / 11 | 9.1 to 13 / 12 to 23 | 209 / 355 | 835 / 1,420 | 1,041 / 1,770 | 307 / 246 | — |
+| policy-eval | today | 61 | 94 / 96 | 33 to 66 / 36 to 81 | 2,229 / 3,790 | 8,918 / 15,160 | 9,124 / 15,511 | 29 / 28 | 15 / 3,790 |
+| policy-eval | loader | 4 | 23 / 25 | 24 to 47 / 30 to 58 | 544 / 925 | 2,177 / 3,701 | 2,383 / 4,052 | 118 / 107 | — |
+| policy-eval | batch1 | 1 | 24 / 26 | 24 to 31 / 30 to 36 | 574 / 976 | 2,296 / 3,904 | 2,503 / 4,255 | 111 / 102 | — |
+| check-webhook | today | 30 | 31 / 33 | 11 to 40 / 15 to 51 | 738 / 1,255 | 2,953 / 5,019 | 3,168 / 5,385 | 87 / 81 | 6.5 / 1,673 |
+| check-webhook | loader | 3 | 12 / 14 | 13 to 27 / 19 to 30 | 291 / 494 | 1,163 / 1,977 | 1,378 / 2,343 | 220 / 186 | — |
+| check-webhook | batch1 | 1 | 8.8 / 11 | 9.1 to 13 / 14 to 19 | 209 / 355 | 835 / 1,420 | 1,050 / 1,786 | 307 / 244 | — |
+| placement-page | today | 32 | 33 / 35 | 13 to 49 / 17 to 49 | 783 / 1,331 | 3,132 / 5,324 | 3,347 / 5,690 | 82 / 76 | 3.5 / 887 |
+| placement-page | loader | 4 | 15 / 18 | 17 to 32 / 22 to 34 | 365 / 621 | 1,461 / 2,484 | 1,677 / 2,850 | 175 / 153 | — |
+| placement-page | batch1 | 1 | 14 / 16 | 14 to 16 / 18 to 20 | 336 / 570 | 1,342 / 2,282 | 1,557 / 2,648 | 191 / 164 | — |
+| task-fields | today | 2 | 3.1 / 5.1 | 1.6 to 13 / 5.1 to 14 | 75 / 127 | 298 / 507 | 487 / 827 | 858 / 526 | 3.2 / 254 |
+| task-fields | loader | 2 | 3.8 / 5.8 | 4.4 to 12 / 8.8 to 20 | 89 / 152 | 358 / 608 | 546 / 929 | 715 / 469 | — |
+| task-fields | batch1 | 1 | 2.5 / 4.5 | 2.8 to 6.1 / 6.0 to 10 | 60 / 101 | 239 / 406 | 427 / 726 | 1,073 / 600 | — |
+
+**Against the bars:**
+
+| Bar | Today (one HTTP read per entity) | Loader | One-request batch |
+| --- | --- | --- | --- |
+| Each read inside 50 ms, one caller | **met** (per read p99 3 to 15 ms; the list page's reads 330 ms p99 at the high end because 1,524 of them queue on 3 permits) | — (one request per level) | — (one request) |
+| Each read inside 50 ms, 256 callers | **not met** (250 ms to 3.8 s for subject-centred shapes) | — | — |
+| The whole call's reads inside 50 ms, one caller | met for task fields, task, import row, check webhook, placement pages at the low end; the subject page (19 to 66 ms re-read, 23 to 125 random) and the policy evaluation (33 to 66 / 36 to 81) at risk; the list page not (1.4 to 2.4 s) | met for most; the subject page and policy evaluation at risk (22 to 67, 24 to 58 ms); the list page not (0.5 to 0.8 s) | **met for every subject-centred shape** (re-read 2.8 to 31 ms, random 6 to 36 ms; the form submission's 35 to 108 ms include its save); the list page not (59 to 98 ms re-read, 220 to 284 random) |
+| The whole call's reads inside 200 ms, one caller | all but the list page | all but the list page | **all, the list page re-read included** (random list page 220 to 284 ms: at risk) |
+| Inside 50 ms or 200 ms per call at 64 callers | only task fields (75 / 127 ms) | only task fields (89 / 152) | only task fields (60 / 101); task page p99 317 |
+| Inside 50 ms or 200 ms per call at 256 callers | none (p50 0.3 s to 400 s) | none | none (p50 0.24 s to 20 s) |
+
+**Cold worst case:** a list page of 50 random subjects: about 130 storage loads (570 at the high end), 1.6 to 2.4 s
+alone today, 0.2 to 0.3 s batched; at 256 callers 20 s p50 batched. A random subject's page: 2.8 loads (10.7 high),
+23 to 125 ms alone today, 24 to 35 ms batched.
+
+**Sizing that follows:** the per-call p99 at N closed-loop callers is about 1.7 × N × CPU ÷ 2.7 cores. For 256
+subject pages at once inside 50 ms p99 the batch needs 256 × 18 ms × 1.7 ÷ 50 ms ÷ 0.9 ≈ 175 reader cores; inside
+200 ms about 44. That is the arithmetic of CPU per entity read (0.3 to 0.4 ms on a server for whole entities), not of
+round trips; the batch has already taken the round trips out.
+
+
+
+## 6. Reproduce on the Mac
+
+```bash
+# one ordinary heavy token per run; each run seeds its own toy (about 1.5 minutes) in one lab container started by image ID
+node lab/bin/heavy.mjs --label DX-API1-gate -- bash lab/experiments/EXP-DX1/api1/gate.sh "$EVIDENCE/run-gate" gate,straddle
+API1_READERS=warm node lab/bin/heavy.mjs --label DX-API1-counts -- bash lab/experiments/EXP-DX1/api1/gate.sh "$EVIDENCE/run-warm" counts,calibrate
+API1_READERS=cold node lab/bin/heavy.mjs --label DX-API1-counts -- bash lab/experiments/EXP-DX1/api1/gate.sh "$EVIDENCE/run-cold" counts
+node lab/bin/heavy.mjs --label DX-API1-serverdry -- bash lab/experiments/EXP-DX1/api1/gate.sh "$EVIDENCE/run-dry" server
+python3 lab/experiments/EXP-DX1/api1/summarize.py "$EVIDENCE"/run-warm/out/counts.json "$EVIDENCE"/run-cold/out/counts.json
+node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/api1/predict.ts \
+  "$EVIDENCE"/run-warm/out/counts.json "$EVIDENCE"/run-cold/out/counts.json "$EVIDENCE"/run-warm/out/calibration.json
+```
+
 ## 7. Server run: API-call-shaped reads at 1 billion (for the day a machine is rented; none has run)
 
 **Where it goes:** after step 2 of the next server session (`v01/READINESS.md`), in its own bring-up of the 1 billion
@@ -137,7 +428,7 @@ cd "$BUILD/repository"
 sudo env DEMO_READER=tuned DX_READ_BATCH=1 DX_ID_LISTS=1 DX_INDEX_QUERY_PERMITS=4 \
   DEMO_ORIGINAL="$SEALED_CLUSTER" DEMO_HANDOFF="$AGE_HANDOFF_JSON" bash demo/server-up.sh --reset
 #    prints DEMO READY head=28309866 records=1000251169 t=62888918 (3 to 12 minutes)
-sudo env "PATH=$BUILD/tools/bin:$PATH" API1_WINDOW_SECONDS=90 API1_CALLERS=64,256 API1_ARMS=today,loader,batch1 \
+sudo env "PATH=$BUILD/tools/bin:$PATH" API1_WINDOW_SECONDS=60 API1_CALLERS=64,256 API1_LIST_CALLERS=8 API1_ARMS=today,loader,batch1 \
   API1_SETS=reread,random API1_SAVES_PER_SECOND=23 API1_ALONE_CALLS=20 \
   "$BUILD/tools/bin/node" --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/api1/server.ts \
   /var/tmp/triplex-demo/ready.json /var/tmp/api1-1b
@@ -154,20 +445,115 @@ tar -C /var/tmp -czf api1-1b.tar.gz api1-1b   # copy back to evidence/DX-API1/se
 3. **Alone:** one caller, no saves: each shape × each arm (`today`, `loader`, `batch1`) × each set (re-read, random),
    20 calls (5 for `subject-list` in `today`): per-call p50 and p99, requests and reads per call, storage loads per call
    (batch arms, Datomic io-stats), reader CPU per call (the reader's cgroup), per-request p99 (`today`).
-4. **Windows:** the mix below, 90 s each, for each set × callers (64, 256) × arm: 12 windows, beside saves of one subject
-   each (17 rows on its first task, one commit, at 23 per second, through the product's own write path): calls/s,
-   reads/s, per-call p50 and p99, the share of calls inside 50 ms and inside 200 ms, per-read p99 (`today`), reader
-   cores, CPU per call, timeouts (30 s), the saves' p50 and p99, own writes not seen after the save (`form-submit`).
+4. **Windows:** 60 s each, beside saves of one subject each (17 rows on its first task, one commit, at 23 per second,
+   through the product's own write path): the subject-centred mix below for each set × callers (64, 256) × arm (12
+   windows), then the list page alone at 8 callers for each set × arm (6 windows; at 64 callers one list page of
+   today's port takes longer than a window). Recorded: calls/s, reads/s, per-call p50 and p99, the share of calls
+   inside 50 ms and inside 200 ms, per-read p99 (`today`), reader cores, CPU per call, timeouts (30 s), the saves' p50
+   and p99, own writes not seen after the save (`form-submit`).
 
 **The mix** (shares of calls; proposed, for the owner to correct): subject list 15%, subject page 15%, task page 15%,
 task fields 15%, placement page 10%, form submission 10%, policy evaluation 8%, import row 7%, check webhook 5%. Basis:
 the product's read load test (60% lists, 30% one resource, 10% sub-resources) with lists cut to 15% because the test's
-lists span six kinds of resources of which subjects are one, and the write-path shapes at a third of calls.
+lists span six kinds of resources of which subjects are one, and the write-path shapes at a third of calls. The
+windows run the 85% without the list page as one mix and the list page in its own windows (above).
 
 **Duration and cost:** bring-up 3 to 12 min; definitions and warm-up 2 to 4 min; alone 3 to 8 min (54 cells; the
-random `today` list pages are the long ones); windows 12 × (90 s + about 20 s) = 22 min; down 1 min: **31 to 47
-minutes, USD 0.56 to 0.85** at USD 1.09 per machine hour (ceiling 60 min, USD 1.09).
+random `today` list pages are the long ones); windows 18 × (60 s + about 20 s) = 24 min; down 1 min: **33 to 49
+minutes, USD 0.60 to 0.89** at USD 1.09 per machine hour (ceiling 60 min, USD 1.09).
 
-__PREDICTIONS__
+**Predictions for this run, written before it** (from section 5; one 3-core tuned reader; mixes weighted as above):
 
-__REST__
+| Window | today: calls/s, p50 / p99 per call | loader | one-request batch |
+| --- | --- | --- | --- |
+| Subject-centred mix, re-read, 64 callers | 60 to 75 calls/s (1,870 reads/s), 0.9 / 1.6 s | 150 to 190 (4,700 reads/s), 0.38 / 0.64 s | 170 to 210 (5,200 reads/s), 0.34 / 0.57 s |
+| The same, 256 callers | 60 to 75, 3.8 / 6.4 s; per read p99 0.8 to 3.8 s | 150 to 190, 1.5 / 2.6 s | 170 to 210, 1.35 / 2.3 s |
+| Subject-centred mix, random, 64 / 256 callers | 55 to 70 calls/s; 1.0 / 1.7 s and 4.0 / 6.8 s | 130 to 165; 0.43 / 0.73 s and 1.7 / 2.9 s | 145 to 185; 0.39 / 0.66 s and 1.6 / 2.7 s |
+| List page, 8 callers, re-read / random | 0.6 calls/s, p50 13 s / 13 s (some time out at 30 s) | 4 to 5, 1.5 / 1.9 s | 28 / 13 calls/s, 0.29 / 0.62 s |
+| Alone (one caller), each shape | as the table of section 5 (low to high) | as section 5 | as section 5 |
+
+- Share of calls inside 50 ms at 64 or 256 callers: under 5% in every arm and set; inside 200 ms: under 10% at 256
+  callers, 10 to 30% for the batch at 64 (task fields and import rows).
+- Reader cores 2.6 to 2.9 in every window; saves stored at 23 per second with commit p99 50 to 80 ms (yesterday's S
+  windows beside readers: 52 to 65 ms); 0 errors; own writes missed after the save: 2 to 10% of form submissions in
+  `today`, 0 in the loader and the batch.
+- Storage loads per random subject-centred call (batch arms, io-stats): 2.2 to 4.4 (central 2.7); per random list
+  page 130 to 570.
+
+**What would show them wrong:**
+1. **Batch arms' calls/s below 1.8 times today's** in the subject-centred windows: per-request overhead is a smaller
+   share of a server read than of a Mac read (f is per exchange; whole-entity rows may cost more per row than the
+   exchange's one-row reads), so batching buys less than the toy says. Look at CPU per call by shape in the alone cells.
+2. **Batch CPU per call above 25 ms re-read** for the subject page: the per-entity cost is higher at 1 billion than
+   the calibration says (row texts of aged entities are longer: the 2,000 aged subjects per account carry about 1,400
+   saves each; the re-read set is drawn from seed subjects, so this would point at the decode, not at history).
+3. **Random subject-centred calls loading more than 6 segments each** (batch io-stats): a subject's entities are not
+   adjacent at 1 billion as they are on the toy (the loader wrote whole subjects per frame; check `eavt-load` against
+   the subject's entity count), and the cold model must count leaves per entity, not per subject.
+4. **Any call whose reads see two positions in the loader or batch arms, any wrong answer, any error:** stop; the
+   batch must not merge.
+5. **The today arm's per-read p99 under 200 ms at 256 callers:** the reader is not saturated by single reads (Jetty or
+   the client limits the requests in flight); then today's numbers measure the driver, not the store.
+6. **Saves' commit p99 above 100 ms** in the batch windows but not in today's: the batch's prefetch pool competes with
+   the writer (both on the machine's cores outside the reader's three); look at the prefetch counters.
+
+## 8. What this adds to the scorecard: a tenth line, "an API call's reads" (proposed; the owner accepts or changes it)
+
+**P10 An API call's reads.** At 1 billion records (and fresh), the API-call workload of section 7 on the card's read
+gateway, beside the production-shaped saves:
+1. **One position per call:** 0 calls whose reads see two positions (the paired-value check of section 2, with the
+   product's port: the loader), and 0 reads after a call's own save that miss it. *(Predicted met with the loader and
+   the batch; not met by unpinned reads: 26.5% and 5.5% on the toy.)*
+2. **One caller:** every subject-centred shape's whole call p99 ≤ 50 ms for re-read subjects and ≤ 100 ms for random
+   ones; the list page of 50 subjects p99 ≤ 200 ms re-read and ≤ 500 ms random. *(Predicted met with the batch, at risk
+   with the loader for the subject page and the policy evaluation, not met today.)*
+3. **Under load:** the subject-centred mix sustains at least R calls per second per reader core with call p99 ≤ 200
+   ms, where R is the owner's: the product's peak rate of subject-reading API calls with headroom (not measured here;
+   the production database would give it). *(At 64 closed-loop callers on three cores the batch is predicted at about
+   60 calls/s per core with p99 0.57 to 0.66 s, so ≤ 200 ms holds only below about a third of that rate.)*
+4. **Reported, not judged:** calls/s and reader CPU per call at 64 and 256 callers per arm, per-read p99 of the single
+   read port, storage loads per random call.
+
+Why these bars: the lead's sentence ("each [read] must return in under about 50 ms") is met per read by the store
+today for one caller; what an API call needs is the whole call inside its budget and one consistent position, and
+the store's cost under load is CPU per entity read, which a bar in calls per second per core states directly.
+
+## 9. What is not verified
+
+- **Nothing here ran on a server.** Every time above is a Mac time (diagnostic); the predictions scale them by one
+  calibration exchange (f = 1.51) and by RD5's unit costs, which were measured for one-row field reads, not for whole
+  entities.
+- **The product's query counts are read from its code**, not traced at run time; auth and permission queries are left
+  out of the shapes; the ORM's relation loading is counted as one query per relation level. The mix is a proposal.
+- **The toy is not 1 billion:** 1,000 subjects, a 32 MB cache for "cold"; its loads per subject (0.45) are a quarter of
+  1 billion's (1.76). The cold model's per-subject loads (2.7) is an estimate; command 7 measures it.
+- **The 1 billion database has no task-to-form references and no definitions**: the server run adds the definitions in
+  one commit per account and names forms literally, so the server's `forms` reads are literal, not by reference.
+- **The server driver ran only as a dry run on this toy** (`run-09`: 8 and 4 callers, 10 s windows, the toy's ready file, 0 errors): its
+  bring-up path (`demo/server-up.sh` with `DEMO_READER=tuned DX_READ_BATCH=1`) has not run; `profile.mjs` prints the
+  tuned reader (checked) and is byte-identical without the setting (checked); `up.sh`'s `DX_READ_BATCH` refusal is not
+  in the launch guard's cases.
+- **Gateway selftest not run** on this branch (the batch has no selftest case; its exactness is the gate's).
+- **Not built:** batching inside the transaction path (reads inside `withTransaction` keep the adapter's own route);
+  a merged reach world per batch for several roots of the loader (each root is its own entry); parallel entries inside
+  one batch (entries run one after another on the request thread; only storage loads overlap). The batch's prefetch
+  touches each entity's whole EAVT range, which loaded more segments than single reads did for definition entities on
+  the cold toy (section 2, item 4); not tuned.
+- **The ID list route allows one running list per account**; the today port retries `IndexBusy`, and a batch's ID list
+  entries retry until the batch's time bound.
+
+## Evidence (private folder `evidence/DX-API1/`)
+
+| File | Contents | SHA-256 |
+| --- | --- | --- |
+| `run-04.tar.gz` | the gate (45,102 comparisons, refusals, cursor, permits) and the straddle check, source `5a550b5bb` plus the harness edits committed in `e4cd0778c` | `03edf1e4f38f1b36c226cf51fa0791b7d16baa37d4dca25e044af6b6f052c86a` |
+| `run-06.tar.gz` | warm counts with loader entries of 512 subjects, and the first dry run of the server driver | `d959549d2a4eef1029ccea09f7656562d4007f84147b512eee2cf913fa0d5310` |
+| `run-07.tar.gz`, `counts-cold-run07.json` | cold counts (the tables above) | `377f6a6f…`, `944821b7…` |
+| `run-08.tar.gz`, `counts-warm-run08.json`, `calibration-run08.json` | warm counts and the calibration exchange (the tables above) | `d8a31eac…`, `1fbd3216…`, `5ff947ca…` |
+| `predictions.json` | section 5's model output | `48918f44…` |
+| `run-09.tar.gz` | the server driver's dry run on the toy (both mixes, 18 windows of 10 s at 8 and 4 callers, definitions and saves through the product's write path; 0 call or save errors) | `8be27f64b948e580a05aa00c7819b4744a97b83a322260ab55aaea56f03e8b13` |
+| `run-05-failed.tar.gz` | a counts run stopped by a save conflict in the harness (fixed: conflicting saves retry) | `02ef7d73…` |
+
+Every container ran image `sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be` (each run's
+`image.json` records the container's own image); the gateway source is the branch's, mounted read-only.
+
