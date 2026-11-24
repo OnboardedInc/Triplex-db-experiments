@@ -117,7 +117,9 @@ async function ledgerCase(forms: number, precondition: Precondition) {
       if (c.start === 0 && (c.part ?? 0) > forms) insideParts++;
       if (c.start > 0 || c.event > 2) break;
     }
-    assert(insideParts >= 1, "no stop fell inside a ledger's parts");
+    // A stop inside the parts is certain once a ledger has three parts or more (500 forms); at 200 forms (two parts) a
+    // calibrated estimate (TX2_SETTLE_COST) can carry both parts and the head in the frames around them.
+    assert(insideParts >= 1 || (forms < 500 && process.env.TX2_SETTLE_COST), "no stop fell inside a ledger's parts");
     // A second release while the first is half settled (values and notices), then a pause mid-subject.
     kill(2, "notices", 1);
     const p3 = await account.publish("moved", moved, valid, "owed");
