@@ -1,7 +1,8 @@
 (ns triplex.gateway.lean
   (:require [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.reach :as reach]
             [triplex.gateway.owner-root :as owner-root] [triplex.gateway.pinned :as pinned]
-            [triplex.gateway.save-ledger :as ledger] [triplex.gateway.trace :as trace]))
+            [triplex.gateway.save-ledger :as ledger] [triplex.gateway.trace :as trace]
+            [triplex.gateway.uncached :as uncached]))
 (set! *warn-on-reflection* false)
 ;; [DX-B5-L2] Why: only row text and native history contain lean facts; no reified fallback exists.
 ;; Rejected: empty answers from :f indexes, or decoding through d/entity/d/pull/d/q.
@@ -134,6 +135,11 @@
         ;; Rejected: substituting the current database for ID lookups or scans (their rows are not bound to one person).
         current (when (and pinned/enabled cut (not inner) (not history?)) pinned/*current*)
         position (second selection)
+        ;; [DX-RD5] Why: behind TX2_READ_PREFETCH, a named-subject read of several subjects loads their identity and
+        ;; EAVT rows side by side first (uncached/prefetch!); the read below is unchanged and finds them cached.
+        ;; Rejected: prefetching for ID lookups, interiors, history or scans (their rows are not one subject's range).
+        _ (when (and uncached/prefetch? entities cut (not inner) (not history?) (not id))
+            (uncached/prefetch! (or current source) (vec (distinct entities))))
         eids (cond id (when-let [datom (by-id view id)] [(owner-of (:e datom))])
                    entities (keep #(if-let [e (when current (pinned/current-eid current cut position %))]
                                      [current e]

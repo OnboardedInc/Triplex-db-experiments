@@ -539,6 +539,9 @@ settings={'protocol':'sql','host':prefix+'-tx','alt-host':prefix+'-tx',
 'sql-url':'jdbc:postgresql://'+prefix+'-pg:5432/datomic?ApplicationName=triplex-tx','sql-user':'datomic','sql-password':'datomic',
 'write-concurrency':'4','read-concurrency':'8','index-parallelism':'1','heartbeat-interval-msec':'5000',
 'memory-index-threshold':sys.argv[3],'memory-index-max':sys.argv[4],'object-cache-max':sys.argv[5],'encrypt-channel':sys.argv[6]}
+# [DX-RD5] Why: a read gateway on a second machine finds the transactor by its alternative address (rd5/second-reader.sh).
+# Rejected: changing the primary host (this machine's peers keep resolving the container by name).
+if os.environ.get('DX_REMOTE_READER_HOST'): settings['alt-host']=os.environ['DX_REMOTE_READER_HOST']
 # [DX-JVM1] Why: tune only approved non-durability properties in this experiment.
 # Rejected: accepting arbitrary properties from an inherited environment.
 extra=json.loads(os.environ.get('DX_JVM1_TX_PROPERTIES', '{}'))
@@ -636,9 +639,17 @@ if [[ -n $pgdata ]]; then
 fi
 docker network create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-net" >/dev/null
 pg_target=/var/lib/postgresql/data
+# [DX-RD5] Why: a second machine's read gateway needs PostgreSQL (segments) and the transactor (novelty) on this
+# machine's private address; nothing is published unless DX_REMOTE_READER_HOST names that address.
+remote_pg=() remote_tx=()
+if [[ -n ${DX_REMOTE_READER_HOST:-} ]]; then
+  [[ $DX_REMOTE_READER_HOST =~ ^(10|172|192)\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] ||
+    { echo "up.sh: DX_REMOTE_READER_HOST must be this machine's private IPv4 address" >&2; exit 2; }
+  remote_pg=(-p "$DX_REMOTE_READER_HOST:5432:5432") remote_tx=(-p "$DX_REMOTE_READER_HOST:4334:4334")
+fi
 pg_args=(--pull never --name "$prefix-pg" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net"
   ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem"
-  -e POSTGRES_PASSWORD=datomic)
+  ${remote_pg[@]+"${remote_pg[@]}"} -e POSTGRES_PASSWORD=datomic)
 # [DX-T1-14] Why: activation uses a byte-verified fresh clone under the holder's lease; a sealed source is never writable.
 # Rejected: S5's old first-use/reuse fallback, incomplete copies, or attaching a transactor directly to a sealed seed.
 if [[ -n $pgdata ]]; then
@@ -960,7 +971,7 @@ COLD_INDEX_LOG
       'exec java -server $JAVA_OPTS -cp "$(bin/classpath)" clojure.main -i /dxh1/prep1-observe.clj -i /dxh1/cold-index.clj'"$startup_read"' -m datomic.launcher /dxh1/sql.properties')
   fi
 fi
-docker run -d --pull never --name "$prefix-tx" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
+docker run -d --pull never --name "$prefix-tx" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} ${remote_tx[@]+"${remote_tx[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
   -e "JAVA_OPTS=$tx_java$spec_java$trace_tx_java$final_flags" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" ${prep_tx[@]+"${prep_tx[@]}"} -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} "${tx_start[@]}" >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
 erase_env=()
@@ -1120,6 +1131,12 @@ for role in "${gateway_roles[@]}"; do
       [[ $DX_READ_PERMITS =~ ^[1-9][0-9]?$ ]] || { echo "up.sh: DX_READ_PERMITS must be 1..99" >&2; exit 2; }
       field_policy+=(-e "TX2_READ_PERMITS=$DX_READ_PERMITS")
     fi
+    # [DX-RD5] Why: an uncached pinned read of eight subjects made its storage round trips one after another inside the
+    # permit, and Datomic's index read-ahead loaded leaves no point read uses (rd5/UNCACHED-READ.md). Both default off.
+    [[ ${DX_READ_PREFETCH:-0} =~ ^[01]$ && ${DX_READ_AHEAD_OFF:-0} =~ ^[01]$ ]] ||
+      { echo "up.sh: DX_READ_PREFETCH and DX_READ_AHEAD_OFF are 0 or 1" >&2; exit 2; }
+    if [[ ${DX_READ_PREFETCH:-0} == 1 ]]; then field_policy+=(-e TX2_READ_PREFETCH=1); fi
+    if [[ ${DX_READ_AHEAD_OFF:-0} == 1 ]]; then role_java+=" -Ddatomic.readAheadPool=0"; fi
   fi
   entity_cache_bytes=${DX_GW_READ_ENTITY_CACHE_BYTES:-268435456}
   [[ $mode != w ]] || entity_cache_bytes=${DX_GW_WRITE_ENTITY_CACHE_BYTES:-268435456}
