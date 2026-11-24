@@ -285,6 +285,16 @@ commits); a move under live saves on a stack was not measured. **Order for a fle
 `TX2_REMOVAL_PER_ACCOUNT=1` first (a gateway without it refuses every request on a moved database: the sentinel -1
 never equals a published sequence), then one call to the move route. **Back:** `{"back": true}`, the same way.
 
+**The subject-check option (section 13).** No data migration. Its first removal installs one function
+(`:triplex.removal/commit-v1`, one schema transaction); it can be turned on at any time on a moved database, and
+gateways with and without it can run together (removals serialise on the database's lock, and both paths write the
+same log and the same counters). Turn it off only with no removal pending: an intent it prepared carries a provisional
+position, which a gateway without the option resumes only if it has not committed natively (a committed one is refused,
+503, until a gateway with the option resumes it). Named entities without a row now take a removal's counter on both
+per-account paths (section 13.2); a database moved per account by an earlier build of this branch whose removals named
+such entities is moved back and forward once to rebuild its counters (none exists outside the toys). On the 1 billion
+database nothing changes beyond section 8: it has no removal yet.
+
 ## 9. Gates
 
 All on the Mac, toy size; counts are results, times diagnostic. Evidence under `evidence/DX-ERA2/` (private).

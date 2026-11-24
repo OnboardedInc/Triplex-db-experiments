@@ -231,13 +231,15 @@ async function contestLoop(rate: number) {
     const s = subjects.get(target(Math.min(removals - 3, nextRemoval + Math.floor(rnd() * 3))))!;
     if (s.busy || s.unresolved) continue;
     s.busy = true; s.contested = true;
-    // [DX-ERA2] A racing save's value, assertion and position, and a Reach session on the read gateway pinned at that
-    // position (it caches the value) for the final check.
-    inflight.push(save(s, [FIELDS[0]!], "contest/" + saveSeq++)
+    // [DX-ERA2] Every other racing save writes the protected field itself (the others an ordinary field). For those,
+    // the value, assertion and position, and a Reach session on the read gateway pinned at that position (it caches
+    // the value) for the final check.
+    const field = saveSeq % 2 === 0 ? SSN : FIELDS[0]!;
+    inflight.push(save(s, [field], "contest/" + saveSeq++)
       .then(async () => {
-        const row = s.rows.get(FIELDS[0]!);
-        if (!row) return;
-        racing.push({ subject: s.id, id: row.id, value: s.values.get(FIELDS[0]!)!, pos: s.pos });
+        const row = s.rows.get(field);
+        if (field !== SSN || !row) return;
+        racing.push({ subject: s.id, id: row.id, value: s.values.get(SSN)!, pos: s.pos });
         await reader.reachEntities(db, [s.id], { recordedPosition: s.pos, validAt: VALID_AT }).catch(() => undefined);
       })
       .catch(() => { s.unresolved = true; }).finally(() => { s.busy = false; }));
@@ -402,11 +404,13 @@ for (const part of chunk([...subjects.values()], 50)) {
     }
   }
 }
-// Every successful removal's subject must show the marker for its protected value.
+// Every successful removal's subject must show the marker for its protected value at the removal's own position (a
+// protected value saved after the removal is new data).
 let removedMarked = 0;
-for (const part of chunk([...removedSet], 50)) {
-  const rows = await writer.rows(db, { entityIds: part, basis: { recordedPosition: finalHead, validAt: VALID_AT } });
-  for (const id of part) if (rows.some((r) => r.entity_id === id && r.attribute === SSN && r.value_type === "erased")) removedMarked++;
+for (const id of removedSet) {
+  const at = removalOf.get(id)?.position ?? finalHead;
+  const rows = await writer.rows(db, { entityIds: [id], basis: { recordedPosition: at, validAt: VALID_AT } });
+  if (rows.some((r) => r.entity_id === id && r.attribute === SSN && r.value_type === "erased")) removedMarked++;
 }
 // The removed values through the second (read) gateway: at the old pin (rows and a Reach session that cached the
 // subject before the removals), the feed and the journal pages answer none of them.

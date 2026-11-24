@@ -507,6 +507,56 @@
                     (take 5 foreign)))
           (println "ERA2_RACE" (pr-str {:iterations n :outcomes @counts})))))))
 
+(defn hammer
+  "The bound: a subject saved without pause by four writers (one of them replacing its protected value) while it is
+  removed. The narrow check keeps failing, so the removal takes the guard on that subject only; it must commit within
+  4 tries, and every protected value committed before its position must be removed with it."
+  [rounds]
+  (when subject?
+    (fresh-scope false
+      (fn [name conn]
+        (let [b (secret b1 "b")
+              _ (expect "hammer" (offers/send name (frame "hb" b1 b nil nil)) [200 nil])
+              commit rc/commit! hold rc/hold! tries (atom []) holds (atom 0)]
+          (doseq [k (range rounds)]
+            (let [h (str "acct/h/s" k) v0 (secret h "seed")
+                  _ (expect "hammer" (offers/send name (frame (str "h-" k) h v0 nil nil)) [200 nil])
+                  pin (head conn) t0 (d/basis-t (d/db conn))
+                  stop (atom false) written (atom []) n (atom 0) calls (atom 0)
+                  writer (fn [w]
+                           (future
+                             (loop [prior (when (zero? w) (str "h-" k))]
+                               (when-not @stop
+                                 (let [id (str "h-" k "-" w "-" (swap! n inc))
+                                       attr (if (zero? w) ":v" (str ":w" w))
+                                       v (secret h (str "w" w))
+                                       r (offers/send name (save-frame id h attr v prior nil))]
+                                   (if (= 200 (:status r))
+                                     (do (when (zero? w) (swap! written conj [id v])) (recur id))
+                                     (do (Thread/sleep 1) (recur prior))))))))
+                  removed (with-redefs [rc/commit! (fn [& args] (swap! calls inc) (apply commit args))
+                                        rc/hold! (fn [& args] (swap! holds inc) (apply hold args))]
+                            (let [ws (mapv writer (range 4))]
+                              (Thread/sleep 20)
+                              (let [r (offers/route name "v2" "erase" {"commandId" (str "rm-h-" k) "selectors" [{"entityId" h "attribute" ":v"}]})]
+                                (Thread/sleep 20) (reset! stop true) (doseq [w ws] (deref w 20000 nil)) r)))
+                  ids (set (map (fn [r] (get r "assertionId")) (get-in removed [:body "identities"])))
+                  position (get-in removed [:body "position"])
+                  pos-of (fn [id] (some-> (d/entid (d/db conn) [:triplex.claim/command-id id])
+                                          (as-> c (:triplex.claim/tx (d/entity (d/db conn) c)))
+                                          (as-> t (:triplex.tx/position t))))
+                  before (filter (fn [[id _]] (let [p (pos-of id)] (and p (< p position)))) @written)]
+              (swap! tries conj @calls)
+              (expect "hammer" removed [200 nil])
+              (check! "hammer" (<= @calls 4) "the removal committed within 4 tries" @calls)
+              (check! "hammer" (every? (fn [[id _]] (contains? ids id)) before)
+                      "every protected value committed before the removal's position was removed with it" {:before (map first before) :ids ids})
+              (check! "hammer" (contains? ids (str "h-" k)) "the seed value was removed")
+              (absent-from-routes! "hammer" name [h] pin t0 (cons v0 (map second before)))))
+          (let [r (offers/route name "v1" "read" {"entityIds" [b1]})]
+            (check! "hammer" (str/includes? (text (:body r)) b) "another account's value is untouched"))
+          (println "ERA2_HAMMER" (pr-str {:rounds rounds :tries (frequencies @tries) :guards @holds})))))))
+
 (defn named-absent
   "A removal naming an entity that has no row yet: a creation save and an import frame of it prepared before the
   removal are refused after it (its counter moved); a creation sent after the removal is new data."
@@ -601,6 +651,7 @@
   (doseq [sealed? [false true]] (scenario (str "same-subject-twice " sealed?) #(same-subject-twice sealed?)))
   (scenario "mid-import" #(subject-mid-import 40))
   (scenario "race-loop" #(race-loop (Long/parseLong (or (System/getenv "ERA2_RACES") "1000"))))
+  (scenario "hammer" #(hammer 30))
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode
              (pr-str {:checks (count @results) :failed (count failed)}))
