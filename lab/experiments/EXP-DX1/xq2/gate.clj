@@ -131,41 +131,80 @@
                     :xqDatoms (xq-datoms db) :rowDatoms (count (seq (d/datoms db :aevt :triplex.entity/row)))}]
         (emit! (str "cost-seed-" label ".json") result)
         (println "XQ2_COST_SEED" (json/write-str result))))))
-(defn first-touch [n seq source]
+(defn first-touch-unused [n seq source]
   (save-input {:seq seq :source source :adds [[(cost-subject n) ":f12" ["string" (str "first-" n)]]]
                :retires [[(first (cost-cell n 12 0)) (cost-subject n) ":f12"]]}))
+(defn touch [n field seq source v prior-id]
+  (save-input {:seq seq :source source :adds [[(cost-subject n) (fattr field) ["string" (str v "-" n)]]]
+               :retires [[prior-id (cost-subject n) (fattr field)]]}))
+(defn interleave-measured
+  "Runs pairs [indexed unindexed] alternately; returns the measured summary of each side (storage deltas are per side
+  from the alternation, so they are reported for the pair as a whole)."
+  [pairs]
+  (let [on (atom []) off (atom []) k0 (kvs) w0 (wal)]
+    ;; Alternate which side goes first, so neither side carries the order's warmth.
+    (doseq [[i [f g]] (map-indexed vector pairs)]
+      (if (even? i) (do (swap! on conj (f)) (swap! off conj (g))) (do (swap! off conj (g)) (swap! on conj (f)))))
+    (let [k1 (kvs) w1 (wal) n (max 1 (* 2 (count pairs)))]
+      {:indexed (summarize @on) :unindexed (summarize @off)
+       :pairKvsBytesPerSave (double (/ (- (:bytes k1) (:bytes k0)) n)) :pairWalBytesPerSave (double (/ (wal-bytes w0 w1) n))})))
 (defn cost-measure! [label]
+  ;; Paired design: in the same database, saves touching indexed fields (f0..f19 as listed) alternate with the same
+  ;; saves on never-listed fields (f30, f40..f59). The difference is the index; arm-to-arm cache noise cancels.
   (let [seed (slurp-json (str "cost-seed-" label ".json")) name (get seed "db") conn (main/connection (main/db-uri name))
         _ (main/sync-db (main/db-uri name))
-        each (env-long "XQ2_COST_EACH" 200)
-        a (vec (take each (map #(mod (* 7919 %) cost-subjects) (range))))
-        b (vec (take each (remove (set a) (map #(mod (* 104729 %) cost-subjects) (range cost-subjects)))))
-        second-ids (atom {})
+        each (env-long "XQ2_COST_EACH" 300)
+        order (vec (distinct (map #(mod (* 7919 %) cost-subjects) (range cost-subjects))))
+        [a a2 b b2 r1 r2] (map #(subvec order (* % each) (* (inc %) each)) (range 6))
+        r1 (subvec r1 0 (min 200 each)) r2 (subvec r2 0 (min 200 each))
+        h (head name conn)
+        read-pass (fn [subjects f]
+                    (pg-reset!)
+                    (let [t0 (System/nanoTime) statuses (frequencies (map f subjects)) ms (/ (- (System/nanoTime) t0) 1e6)]
+                      {:subjects (count subjects) :statuses statuses :msPerSubject (/ ms (max 1 (count subjects)))
+                       :peerReadsPerSubject (double (/ (get (pg-reads) "datomic" 0) (max 1 (count subjects))))}))
+        reach! (fn [n] (let [r (route name "v2" "reach" {"root" (cost-subject n) "basis" {"recordedPosition" h}})]
+                         (:status r)))
+        read! (fn [n] (let [r (route name "v1" "read" {"entityIds" [(cost-subject n)] "basis" {"recordedPosition" h}})]
+                        [(:status r) (count (get-in r [:body "rows"]))]))
+        ;; Uncached subject reads first: this JVM's peer is new and the transactor was restarted.
+        subject-reads {:reachCold (read-pass r1 reach!) :readRouteCold (read-pass r2 read!) :reachWarm (read-pass r1 reach!)
+                       :readRouteWarm (read-pass r2 read!)}
         _ (pg-reset!)
-        ft (measured #(vec (for [n a] (let [{:keys [input ids]} (first-touch n (+ 1000000 n) (head name conn))]
-                                         (swap! second-ids assoc n (first ids)) (commit! name input)))))
-        ss (measured #(vec (for [n a] (commit! name (:input (save-input {:seq (+ 2000000 n) :source (head name conn)
-                                                                        :adds [[(cost-subject n) ":f12" ["string" (str "second-" n)]]]
-                                                                        :retires [[(@second-ids n) (cost-subject n) ":f12"]]}))))))
-        ;; A form save: 17 fields replaced in one commit (general writer), first touch then again.
-        form (fn [n seq v prior]
-               (save-input {:seq seq :source (head name conn)
-                            :adds (for [i (range 17)] [(cost-subject n) (fattr i) ["string" (str "form" v "-" n "-" i)]])
-                            :retires (for [i (range 17)] [(prior n i) (cost-subject n) (fattr i)])}))
-        form-ids (atom {})
-        g1 (measured #(vec (for [n b] (let [{:keys [input ids]} (form n (+ 3000000 n) 1 (fn [n i] (first (cost-cell n i 0))))]
-                                         (swap! form-ids assoc n ids) (commit! name input)))))
-        g2 (measured #(vec (for [n b] (commit! name (:input (form n (+ 4000000 n) 2 (fn [n i] (nth (@form-ids n) i))))))))
-        ;; An import of new subjects: 100 subjects x 24 fields in one general commit, five times.
+        ids (atom {})
+        hd #(head name conn)
+        one (fn [n field seq v prior] (let [{:keys [input] fresh :ids} (touch n field seq (hd) v prior)]
+                                        (swap! ids assoc [n field] (first fresh)) (commit! name input)))
+        ;; Warm-up outside the measure: the first use of each writer function in this process.
+        warm (subvec order (* 6 each) (+ (* 6 each) 4))
+        _ (do (one (warm 0) 12 900001 "w" (first (cost-cell (warm 0) 12 0))) (one (warm 1) 30 900002 "w" (first (cost-cell (warm 1) 30 0))))
+        ft (interleave-measured (map (fn [x y] [#(one x 12 (+ 1000000 x) "first" (first (cost-cell x 12 0)))
+                                                #(one y 30 (+ 1000000 y) "first" (first (cost-cell y 30 0)))]) a a2))
+        ss (interleave-measured (map (fn [x y] [#(one x 12 (+ 2000000 x) "second" (@ids [x 12]))
+                                                #(one y 30 (+ 2000000 y) "second" (@ids [y 30]))]) a a2))
+        ;; Form saves: 20 fields in one commit (general writer): f0..f19 (k = listed ones) against f40..f59 (k = 0).
+        form (fn [n fields seq v prior]
+               (let [{:keys [input] fresh :ids}
+                     (save-input {:seq seq :source (hd)
+                                  :adds (for [i fields] [(cost-subject n) (fattr i) ["string" (str "form" v "-" n "-" i)]])
+                                  :retires (for [i fields] [(prior n i) (cost-subject n) (fattr i)])})]
+                 (doseq [[i id] (map vector fields fresh)] (swap! ids assoc [n i] id))
+                 (commit! name input)))
+        seeded (fn [n i] (first (cost-cell n i 0))) latest (fn [n i] (@ids [n i]))
+        _ (do (form (warm 2) (range 20) 900003 1 seeded) (form (warm 3) (range 40 60) 900004 1 seeded))
+        g1 (interleave-measured (map (fn [x y] [#(form x (range 20) (+ 3000000 x) 1 seeded) #(form y (range 40 60) (+ 3000000 y) 1 seeded)]) b b2))
+        g2 (interleave-measured (map (fn [x y] [#(form x (range 20) (+ 4000000 x) 2 latest) #(form y (range 40 60) (+ 4000000 y) 2 latest)]) b b2))
         per-import (max 1 (quot 2400 fields))
         imp (measured #(vec (for [k (range 5)]
                               (commit! name (batch-input (str "import-" k)
                                               (for [n (range (+ 100000 (* k per-import)) (+ 100000 (* (inc k) per-import))) i (range fields)]
                                                 (cost-cell n i 0)))))))
-        result {:label label :list (vec xq/listed) :firstTouch ft :secondSave ss :formFirst g1 :formSecond g2 :importRowsPerCommit (* per-import fields) :import imp
+        result {:label label :list (vec xq/listed) :holder (System/getenv "TX2_ATTRIBUTE_INDEX_HOLDER") :each each
+                :subjectReads subject-reads :firstTouch ft :secondSave ss :formFirst g1 :formSecond g2
+                :importRowsPerCommit (* per-import fields) :import imp
                 :pgReadsByRole (pg-reads) :xqDatoms (xq-datoms (d/db conn))}]
     (emit! (str "cost-measure-" label ".json") result)
-    (println "XQ2_COST_MEASURE" (json/write-str result))))
+    (println "XQ2_COST_MEASURE" label (json/write-str (dissoc result :subjectReads)))))
 
 ;; ================= exactness gate: 20,000 subjects, two accounts =================
 (def gate-subjects (env-long "XQ2_GATE_SUBJECTS" 20000))

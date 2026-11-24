@@ -23,6 +23,8 @@
   (throw (IllegalStateException. "TX2_ATTRIBUTE_INDEX cannot run with TX2_SUBJECT_OWNER_HEAD (not maintained there)")))
 ;; Cost comparison only: TX2_ATTRIBUTE_INDEX_HOLDER=account puts every tuple on one entity per account (no and-probe).
 (def account-holder? (and enabled (= "account" (System/getenv "TX2_ATTRIBUTE_INDEX_HOLDER"))))
+;; Cost comparison only: TX2_ATTRIBUTE_INDEX_HOLDER=twin puts a subject's tuples on a twin entity in its own partition.
+(def twin-holder? (and enabled (= "twin" (System/getenv "TX2_ATTRIBUTE_INDEX_HOLDER"))))
 
 ;; ---- schema: one tuple attribute per value family (Datomic orders each family natively) ----
 (def families
@@ -43,11 +45,15 @@
      {:db/ident :triplex.xq/long :db/valueType :db.type/tuple :db/cardinality :db.cardinality/many :db/index true
       :db/tupleTypes [:db.type/string :db.type/string :db.type/string :db.type/string :db.type/string]}
      {:db/ident :triplex.xq/holder :db/valueType :db.type/string :db/unique :db.unique/identity
-      :db/cardinality :db.cardinality/one}]))
-(def all-idents (into (conj (set (keys families)) :triplex.xq/type) [:triplex.xq/long :triplex.xq/holder]))
+      :db/cardinality :db.cardinality/one}
+     {:db/ident :triplex.xq/twin :db/valueType :db.type/string :db/unique :db.unique/identity
+      :db/cardinality :db.cardinality/one}
+     {:db/id "xq-part" :db/ident :triplex.xq/part}
+     [:db/add :db.part/db :db.install/partition "xq-part"]]))
+(def all-idents (into (conj (set (keys families)) :triplex.xq/type) [:triplex.xq/long :triplex.xq/holder :triplex.xq/twin]))
 
 (defn install! [conn db]
-  (if (or (not enabled) (every? #(d/entid db %) all-idents))
+  (if (or (not enabled) (every? #(d/entid db %) (conj all-idents :triplex.xq/part)))
     db
     (:db-after @(d/transact conn (vec schema)))))
 
@@ -89,21 +95,29 @@
 
 ;; In the general writer (transactor side): the retired row's stored text decides its index datom.
 (def retract-code
-  (walk/postwalk-replace {'row-columns-code slim/row-columns-code 'xq-key-code key-code 'xq-holder? account-holder?}
+  (walk/postwalk-replace {'row-columns-code slim/row-columns-code 'xq-key-code key-code 'xq-holder? account-holder? 'xq-twin? twin-holder?}
     '(fn [e ^String text]
        (when-let [[a v] (xq-key-code (row-columns-code text))]
-         [[:db/retract (if xq-holder? [:triplex.xq/holder (first v)] e) a v]]))))
+         [[:db/retract (cond xq-holder? [:triplex.xq/holder (first v)] xq-twin? [:triplex.xq/twin (nth v 3)] :else e) a v]]))))
 
 (defn text-columns [^String text] (slim/row-columns text))
 (defn add-op [entity ^String text]
   (when-let [[a v] (key-of (text-columns text))] [:db/add entity a v]))
 (defn retract-op [entity ^String text]
   (when-let [[a v] (key-of (text-columns text))]
-    [:db/retract (if account-holder? [:triplex.xq/holder (first v)] entity) a v]))
+    [:db/retract (cond account-holder? [:triplex.xq/holder (first v)] twin-holder? [:triplex.xq/twin (nth v 3)] :else entity) a v]))
 (defn holder-ops
   "With the account holder, each assertion moves to the account's entity, upserted once per commit."
   [ops]
-  (if-not account-holder? ops
+  (cond
+    twin-holder?
+    (let [entity-of (fn [e] (subs e 2))
+          moved (mapv (fn [[op e a v]] [op (str "xqt:" (entity-of e)) a v]) ops)]
+      (into moved (map (fn [e] (let [t (str "xqt:" (entity-of e))]
+                                  ;; Probed: the value of :db/force-partition is a map from tempid to partition.
+                                  {:db/id t :db/force-partition {t :triplex.xq/part} :triplex.xq/twin (entity-of e)})) (distinct (map second ops)))))
+    (not account-holder?) ops
+    :else
     (let [moved (mapv (fn [[op _ a v]] [op (str "xqh:" (first v)) a v]) ops)]
       (into moved (map (fn [acct] {:db/id (str "xqh:" acct) :triplex.xq/holder acct}) (distinct (map #(first (nth % 3)) ops)))))))
 

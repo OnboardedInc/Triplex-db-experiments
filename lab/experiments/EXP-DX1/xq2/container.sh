@@ -69,13 +69,14 @@ list_for() {
   case $1 in
     n0) echo "";;
     n1) echo ":f12";;
-    n5|a5) echo ":f0,:f1,:f2,:f3,:f12";;
-    n20|a20) echo ":f0,:f1,:f2,:f3,:f4,:f5,:f6,:f7,:f8,:f9,:f10,:f11,:f12,:f13,:f14,:f15,:f16,:f17,:f18,:f19";;
+    n3) echo ":f0,:f1,:f12";;
+    n5|a5|t5) echo ":f0,:f1,:f2,:f3,:f12";;
+    n20|a20|t20) echo ":f0,:f1,:f2,:f3,:f4,:f5,:f6,:f7,:f8,:f9,:f10,:f11,:f12,:f13,:f14,:f15,:f16,:f17,:f18,:f19";;
   esac
 }
 if want cost; then
   for arm in ${XQ2_ARMS:-n0 n1 n5 n20}; do
-    if [[ $arm == a* ]]; then export XQ2_HOLDER=account; else export XQ2_HOLDER=entity; fi
+    case $arm in a*) export XQ2_HOLDER=account;; t*) export XQ2_HOLDER=twin;; *) export XQ2_HOLDER=entity;; esac
     phase "cost-seed-$arm"; gate "$(list_for "$arm")" "(xq2-gate/cost-seed! \"$arm\") $(done_)"
     restart_transactor
     phase "cost-measure-$arm"; gate "$(list_for "$arm")" "(xq2-gate/cost-measure! \"$arm\") $(done_)"
