@@ -146,7 +146,9 @@ async function buildDatomic(config, opts) {
   const runtime = datomicRuntime();
   const isolated = opts['variant-receipt'];
   if (isolated) {
-    if (!['DX-JVM1', 'DX-CHK1', 'DX-THIN1'].includes(opts.holder) || fs.existsSync(isolated))
+    // [DX-ACT8] Why: a private Java 21 image built from this checkout, so a toy run can prove which gateway bytes it ran.
+    // Rejected: moving the shared tag or appending a build event (every other builder's next run would start on it).
+    if (!['DX-JVM1', 'DX-CHK1', 'DX-THIN1', 'DX-ACT8'].includes(opts.holder) || fs.existsSync(isolated))
       fail('REFUSED', 'An isolated JVM build requires the assigned holder and a fresh receipt path');
     // [DX-JVM1] Why: this image build reserves no engine slot and finishes under its ordinary heavy token.
     // Rejected: checking slot admission again after the build has a token (races a pending lease drain).
@@ -177,7 +179,7 @@ assert actual==expected, 'Extracted Datomic bytes differ from the pinned ZIP'
   // [DX-CHK1] Why: keep JVM test images and cleanup owned by the combined gate.
   // Rejected: retagging or removing the JVM1 builder's existing image.
   const holder = isolated && opts.holder !== 'DX-JVM1' ? opts.holder : undefined;
-  const tag = isolated ? (holder === 'DX-THIN1' ? 'tx2-dxthin-jre' : holder ? 'tx2-dxchk1-jre' : 'tx2-dxjvm1-jre') + runtime.major + ':' + buildInputsSha256.slice(0, 16) : config.lanes.datomic.image;
+  const tag = isolated ? (holder === 'DX-THIN1' ? 'tx2-dxthin-jre' : holder === 'DX-ACT8' ? 'tx2-dxact8-jre' : holder ? 'tx2-dxchk1-jre' : 'tx2-dxjvm1-jre') + runtime.major + ':' + buildInputsSha256.slice(0, 16) : config.lanes.datomic.image;
   const parent = path.join(ENGINE_DIR, 'datomic-build');
   fs.mkdirSync(parent, { recursive: true });
   const context = path.join(parent, `${buildInputsSha256}-${process.pid}-${Date.now()}`);
@@ -242,7 +244,7 @@ function finishDatomicBuild(config, { context, distribution, dist, gpg, holder, 
 }
 
 function removeJvmImage(opts) {
-  if (!['DX-JVM1', 'DX-CHK1', 'DX-THIN1'].includes(opts.holder) || typeof opts['variant-receipt'] !== 'string')
+  if (!['DX-JVM1', 'DX-CHK1', 'DX-THIN1', 'DX-ACT8'].includes(opts.holder) || typeof opts['variant-receipt'] !== 'string')
     fail('USAGE', 'JVM image removal requires the assigned holder and a variant receipt');
   const runtime = datomicRuntime(readJson(opts['variant-receipt']).runtime?.major);
   const receipt = readVariantReceipt(opts['variant-receipt'], runtime);
@@ -999,7 +1001,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   // [DX-HA1] Why: destructive process drills need an exclusive, pool-admitted SQL topology. Rejected: killing roles in a resident slot.
   if (command === 'ha1') {
     const { localDrill } = await import('../experiments/EXP-DX1/ha1/local.ts');
-    return localDrill(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
+    return localDrill(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicSources });
   }
   // [DX-ACT2] Why: the SQL activation experiment must reserve its small roles in the shared pool and remove only its private volumes. Rejected: launching a bench stack outside the slot manager.
   if (command === 'delta') return (await import('../experiments/EXP-DX1/actv-delta/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicSources });

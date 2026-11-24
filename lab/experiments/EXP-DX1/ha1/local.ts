@@ -32,6 +32,7 @@ import {
   type Role,
 } from "./common.ts";
 import { drill } from "./run.ts";
+import { datomicRuntime, readVariantReceipt } from "../../../config/datomic/runtime.mjs";
 import { localCheckpoint } from "../hasync1/v2/local-checkpoint.ts";
 import { fleetCaps, fleetMode } from "../hasync1/v2/fleet-config.ts";
 import type { Site } from "./stack.ts";
@@ -439,6 +440,19 @@ export async function localDrill(opts: any, config: any, manager: any) {
           .filter((x) => x.event === "datomic-build")
           .reverse();
         let chosen;
+        // [DX-ACT8] Why: the newest build event can be another builder's gateway; a run under DX_DATOMIC_IMAGE_RECEIPT
+        // starts only the private image built from this checkout's exact Datomic sources, or refuses.
+        // Rejected: trusting the gateway's reported source hash (the harness supplies it as an environment value).
+        const pinned = process.env.DX_DATOMIC_IMAGE_RECEIPT;
+        if (pinned) {
+          const receipt = readVariantReceipt(pinned, datomicRuntime("21"));
+          assert.equal(receipt.holder, holder, "The private image receipt belongs to another holder");
+          assert.equal(manager.datomicSources(root).sha256, receipt.sourceInputsSha256, "This checkout's Datomic sources differ from the private image");
+          const found = await site.docker(["image", "inspect", receipt.imageId, "--format", '{{.Id}} {{index .Config.Labels "tx2.build-inputs-sha256"}}']);
+          assert.equal(found, receipt.imageId + " " + receipt.buildInputsSha256);
+          builds.length = 0;
+          chosen = { imageId: receipt.imageId, buildInputsSha256: receipt.buildInputsSha256, sourceInputsSha256: receipt.sourceInputsSha256, tag: receipt.tag };
+        }
         for (const b of builds) {
           assert(
             /^sha256:[0-9a-f]{64}$/.test(b.imageId) && /^[0-9a-f]{64}$/.test(b.buildInputsSha256),
@@ -463,6 +477,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
           nonce: e!.nonce,
           image: chosen.imageId,
           buildInputs: chosen.buildInputsSha256,
+          ...(pinned ? { sourceInputs: chosen.sourceInputsSha256, tag: chosen.tag, receipt: path.basename(pinned) } : {}),
         });
       } catch (error) {
         clean = true;
