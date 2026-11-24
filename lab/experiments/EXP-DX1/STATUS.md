@@ -5732,3 +5732,18 @@ Source: many-accounts builder, branch `exp/DX-SCALE2-wide-thin` `3e3e652b9` (bas
 - Server test written: 1,000 and 10,000 thin accounts beside the ten deep ones on a fresh copy of the 1 billion database, 54 to 117 minutes, USD 1.00 to 2.15.
 
 **Started** in the freed slot (thinker effort): Publish and enrolment committing beside saves with nobody paused (task file `OPUS-ACT8-publish-beside-saves.md`), design in writing first.
+
+## 2026-11-24 13:35 EST: all twelve of the product's question shapes now have an answer on the toy
+
+Source: question-shapes builder, branch `exp/DX-XQ9-question-shapes` `2ef4cb3c4` (based on the console-questions branch; not merged onto the one branch), page `lab/experiments/EXP-DX1/xq9/QUESTION-SHAPES.md`. Behind `TX2_SWEEP_SHAPES` (default empty). Mac toy only.
+
+- Added to the slow exact route: questions over a subject's related entities, one level, with "at least one", "none" or a count comparison (S10); "is not" (a subject with no value counts as "not", shown in the console); up to 4 "any of" groups; top N by an attribute, N up to 1,000 (S9), exact across a gateway restart; text "contains", optionally ignoring case; exact sums and averages over integers.
+- Still refused by type: ordered pages beyond the top 1,000 and sorting by a referenced entity's attribute (belongs to the index route); two-hop links; children found only by a reverse link; protected values in every position.
+- Option off: the sweep builder's whole gate passes unchanged (5,917 of 5,917) and 2,242 of 2,242 answers are byte-identical to the base.
+- New shapes against independent brute force: 8,519 checks, 0 failures (three accounts, three positions, three valid times; subjects and children changed, a child retired, a removal on request, ties across page boundaries, a restart mid top N; 17 of 17 refusals).
+- Console: questions proof 1,343 of 1,343 (was 815); page pass 43 of 43; existing proof 37 of 37. Fault found and fixed: the agent tool returned top N rows twice.
+- Cost: a question over 3 tasks per subject adds about 0.12 ms of reader CPU per subject; 2 extra storage reads per 1,000 subjects when the tasks were written with their subject, 13 when written later.
+- Prediction at 1 billion for 100,000 subjects: subjects with 3 or more incomplete tasks 220 to 440 s in one part, 45 to 100 s in six; top 100 by an attribute 100 to 200 s in one part. Wrong if arms differ, or one part exceeds 600 s for the children question (tasks not stored beside their subject).
+- Not verified: anything on a server; whether tasks sit beside their subject at 1 billion.
+
+**Started** in the freed slot (thinker effort, design first): removal on request in one account must not refuse saves in other accounts (task file `OPUS-ERA2-removal-per-account.md`); the many-accounts inventory found one removal sequence and one lock for the whole database.
