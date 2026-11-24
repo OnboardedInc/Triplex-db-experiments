@@ -118,7 +118,38 @@ large release does not settle at all while the database takes saves, in any acco
    0.63 s; account save p99 144.3 ms, neighbours 209.9 ms (diagnostic). It is the strict form of "a save waits behind at
    most one frame": no frame starts while a save waits.
 
-MULTI-SECTION
+## 6. Several accounts settling at once (decided and built, default off)
+
+**Two things stood in the way, and both are now handled behind options.**
+
+1. *One publishing account per database.* The held layout named each account's metadata (`lazy/account/releases`,
+   `.../clock`, `.../origin`, `.../erasure`, `.../dispatcher`) and its notice and settlement documents with names that
+   do not include the account, so a second publishing account in the same database would have read and written the
+   first one's release list, notice stream and settlement progress. `HeldSource.namespace` (default off; account 0 of
+   every existing run keeps its names) gives each account its own names (`store.ts` `names`, used by `controls()`,
+   `JoinedAccount`, `Archive`, the control), and lets a further account enrol after others have written
+   (`installHeld` checks its own enrolment writes from the head it starts at; its enrolment command id carries the
+   account).
+2. *Frames of different accounts refusing each other.* With the head rule every frame of every account is refused by
+   any other account's frame or save. With the guard each account's frames depend only on its own progress rows.
+
+**How frames take turns (the decision).**
+
+- *Among accounts:* one bulk queue per settling process, keyed by account (`Archive.turnKey()`: the database scope plus
+  the held account). Ready accounts rotate round-robin, one frame in flight at a time (unit test: three accounts, 12
+  frames, served a0 b0 c0 a1 b1 c1 ...; at most one inside at once). Each account prepares its next frame (reads,
+  evaluation) in parallel with the others; only the commit takes the turn. No account can starve another: an account
+  with a ready frame waits at most one turn per other ready account.
+- *With live saves:* the admission lane (section 5, item 4) puts frames into the same credit admission as saves, as one
+  more participant with a limit of one frame, starting only while no save waits for a credit. Without the lane (the
+  default queue), the existing rule stands: one frame at a time, after eight live completions or when no live write of
+  this process is in flight.
+- *Per account:* pause and pace (section 8) act on the account's key only; the queue serves the next account.
+
+**What it costs.** One frame at a time protects every live save's bound and also caps the whole database's settlement
+at one commit round trip per frame. At full size that is the limit for many accounts at once (section 9.2).
+
+MULTI-RESULTS
 
 ## 7. Exactness gates (toy, all passed unless marked)
 

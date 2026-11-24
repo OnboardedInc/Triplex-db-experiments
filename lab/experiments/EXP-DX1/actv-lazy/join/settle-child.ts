@@ -27,6 +27,9 @@ const worker = await Settlement.open(
 );
 if (input.killAfterMs !== undefined) {
   assert(Number.isSafeInteger(input.killAfterMs) && input.killAfterMs > 0);
+  // [DX-ACT5] `startAt` (epoch ms): start settling at that moment (a rival started together with the parent).
+  if (input.startAt !== undefined)
+    while (Date.now() < input.startAt) await new Promise((r) => setTimeout(r, Math.max(1, input.startAt - Date.now())));
   setTimeout(() => process.kill(process.pid, "SIGKILL"), input.killAfterMs);
   if (input.path === "both") await worker.settle(input.sequence);
   else if (input.path === "values") await worker.archive.runValues(input.sequence);

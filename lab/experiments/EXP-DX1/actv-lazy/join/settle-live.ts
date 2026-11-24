@@ -59,7 +59,7 @@ type Case = {
   precondition: Precondition;
   frames: FrameMode;
   /** `same`: no Publish; settle the release the previous case left (for example after a `stop` case). */
-  release: "large" | "small" | "none" | "same";
+  release: "large" | "huge" | "small" | "none" | "same";
   own: 0 | 3.5 | 23.5 | 39.4;
   others: boolean;
   extra?: "kill" | "second" | "multi" | "rival" | "pause" | "stop";
@@ -77,7 +77,7 @@ export function parseCases(text: string): Case[] {
     const [name, precondition, frames, release, own, others, extra, turns, secs] = entry.split(":");
     assert(secs === undefined || secs === "" || (Number.isInteger(Number(secs)) && Number(secs) >= 2 && Number(secs) <= 7200));
     assert(name && ["head", "progress"].includes(precondition!) && ["count", "bytes"].includes(frames!));
-    assert(["large", "small", "none", "same"].includes(release!) && ["0", "3.5", "23.5", "39.4"].includes(own!));
+    assert(["large", "huge", "small", "none", "same"].includes(release!) && ["0", "3.5", "23.5", "39.4"].includes(own!));
     assert(["0", "1"].includes(others!) && [undefined, "", "kill", "second", "multi", "rival", "pause", "stop"].includes(extra));
     assert([undefined, "", "admission"].includes(turns));
     return {
@@ -209,6 +209,8 @@ export async function livePhase(c: LiveContext) {
       const doc =
         k.release === "large"
           ? largeRelease(base, shape)
+          : k.release === "huge"
+            ? largeRelease(base, parseShape("forms=150,policies=150,permille=1000"))
           : k.release === "small"
             ? base.name === "R1" ? W0.R2.doc : W0.R1.doc
             : undefined;
@@ -324,9 +326,14 @@ export async function livePhase(c: LiveContext) {
           superseded = { ...(superseded as object), status: first.status, through: first.through, frame: first.frame };
           await worker.settle(current.seq);
         } else if (rival)
+          // Both start at the same moment, after the child has booted.
           [, rival.result] = await Promise.all([
-            worker.settle(published.r.seq),
-            killedChild(c, published.r.seq, k, 120_000),
+            (async () => {
+              const at = now() + 4000;
+              while (now() < at) await sleep(Math.ceil(at - now()));
+              return worker.settle(published.r.seq);
+            })(),
+            killedChild(c, published.r.seq, k, 120_000, now() + 4000),
           ]);
         else
           await worker.settle(published.r.seq).catch((e) => {
@@ -503,7 +510,7 @@ export async function livePhase(c: LiveContext) {
 }
 
 /** Runs settlement of `seq` in a child process and kills it after `ms` (inside a frame or between frames). */
-async function killedChild(c: LiveContext, seq: number, k: Case, ms: number) {
+async function killedChild(c: LiveContext, seq: number, k: Case, ms: number, startAt?: number) {
   const child = spawn(
     process.execPath,
     ["--experimental-transform-types", "--no-warnings", new URL("./settle-child.ts", import.meta.url).pathname],
@@ -520,6 +527,7 @@ async function killedChild(c: LiveContext, seq: number, k: Case, ms: number) {
       precondition: k.precondition,
       held: c.descriptor,
       killAfterMs: ms,
+      ...(startAt === undefined ? {} : { startAt }),
     }),
   );
   const code = await new Promise<number | string>((resolve) =>
@@ -685,7 +693,12 @@ async function multiCase(
       .filter((r) => r.rows.length)
       .map((r) => ({ subject: r.subject, changes: r.rows.map(([key, , v]) => [key, v]) }));
     const got = stored.output.map((r) => ({ subject: r.subject, changes: r.changes }));
-    assert.deepEqual(got, want, "account " + j + " stored changes differ");
+    if (canonical(got) !== canonical(want)) {
+      const bad = want.findIndex((x, i) => canonical(x) !== canonical(got[i]));
+      jsonFile(path.join(c.out, "act5-diff-" + k.name + "-" + j + ".json"), { got, want, seq: pub.seq, position: pub.position });
+      assert.fail("account " + j + " stored changes differ at " + bad + ": got " + canonical(got[bad] ?? null).slice(0, 400) +
+        " want " + canonical(want[bad] ?? null).slice(0, 400) + " (counts " + got.length + "/" + want.length + ")");
+    }
     const all = (await w.recorder.packets(await w.recorder.archive.store.head())).flatMap((p) =>
       p.deliveries.map(toWire),
     );
