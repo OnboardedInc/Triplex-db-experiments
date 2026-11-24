@@ -9,7 +9,7 @@
             [triplex.gateway.at-least :as at-least]
             [triplex.gateway.general-prefetch :as general-prefetch] [triplex.gateway.admission :as admission]
             [triplex.gateway.subject-hints :as subject-hints]
-            [triplex.gateway.ids :as ids])
+            [triplex.gateway.ids :as ids] [triplex.gateway.sweep :as sweep])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -385,6 +385,18 @@
                (let [{:keys [status code maximum retryAfterMs]} (ex-data e)]
                  (if (and status code)
                    (timed start (response status (cond-> {:code code :message (.getMessage e) :route "ids"}
+                                                   (some? maximum) (assoc :maximum maximum)
+                                                   (some? retryAfterMs) (assoc :retryAfterMs retryAfterMs))))
+                   (throw e))))))
+      ;; [DX-XQ6] The exact sweep (questions across subjects, read subject by subject); absent unless TX2_SWEEP=1.
+      (and sweep/enabled (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/sweep" uri))
+      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
+            protected (or (:attrs privacy/*cut*) #{})]
+        (try (timed start (response 200 (trace/span "sweep/page" "gateway" (sweep/page name (connection (db-uri name)) protected input))))
+             (catch clojure.lang.ExceptionInfo e
+               (let [{:keys [status code maximum retryAfterMs]} (ex-data e)]
+                 (if (and status code)
+                   (timed start (response status (cond-> {:code code :message (.getMessage e) :route "sweep"}
                                                    (some? maximum) (assoc :maximum maximum)
                                                    (some? retryAfterMs) (assoc :retryAfterMs retryAfterMs))))
                    (throw e))))))

@@ -82,6 +82,17 @@ export {
   type IdListOptions,
   type IdListSource,
 } from "./idLists.js";
+export {
+  sweepAll,
+  sweepCount,
+  sweepPage,
+  sweepPageWaiting,
+  type SweepCondition,
+  type SweepCount,
+  type SweepPage,
+  type SweepRequest,
+  type SweepValue,
+} from "./sweep.js";
 
 export { sweepRows, decodeSweepRows, type SweepRow } from "./sweepRows.js";
 export { acceptLoaderPositionRows, loaderPositionRowsAccepted } from "./loaderPositionRows.js";
