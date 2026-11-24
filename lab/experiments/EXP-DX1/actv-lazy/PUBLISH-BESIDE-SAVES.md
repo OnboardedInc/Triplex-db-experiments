@@ -58,11 +58,29 @@ the database's removal sequence).
 | R11 | Subject data | **None** | Not read. |
 | R12 | Held writer check | Runner only. In the unpaused mode the Publish checks the positions whose receipts it already has; every position is checked at the end of each window and case. | The product has no ledger; the runner's full check still covers every position. |
 
-**So the whole guard is: the account's own notice tail (existing), its calendar (one new `EntityState`), and the
-transactor's revision check on what the record writes.** No other account's commit can fail any of them: other
-accounts' saves, Publishes, enrolments and settlement frames write other entities. The only commits that refuse a
-Publish are this account's own other events (another Publish, a deadline, a scheduled release) and a removal on
-request.
+**So the whole guard is four checks in the one commit: the account's own notice tail (existing), its calendar (one
+new `EntityState`), the transactor's revision check on what the record writes, and the removal ticket (existing).** No
+other account's commit can fail the first three: other accounts' saves, Publishes, enrolments and settlement frames
+write other entities. The only commits that refuse a Publish are this account's own other events (another Publish, a
+deadline, a scheduled release) and, through the fourth, a removal on request.
+
+**The removal marks under this rule (the fourth check).** In a database with a removal policy the Publish reads the
+database's removal sequence before it plans (`readErasure`), checks it again in the plan (`recheckErasure`), stores it
+in the marker (`erasureSeq`), and commits inside `withErasure(sequence)`: the transactor refuses the record if any
+removal was published after that sequence. Today that ticket is database-wide, so **a removal of a protected value of
+any account, between a Publish's read and its commit, refuses the Publish**; the client publishes again (the
+miniature's removal step, section 9.4). The settlement and the recorded notices carry the same database-wide sequence,
+so after a removal anywhere an account's notice recorder refuses to go on ("Recorded notices belong to an earlier
+removal sequence") and reading its recorded notices is refused ("Discard the old protected input cut") (runs `M3-second` and `M3-third`).
+That is the removal rule as it stands, not something this work changed.
+With the per-account removal rule (`TX2_REMOVAL_PER_ACCOUNT`, built on `exp/DX-ERA2-removal-per-account`, not merged
+here) the ticket the Publish carries would name its account: `withErasure(sequence, work, undefined, [account])`, the
+account being the held account's key (the `acct/<account>/` namespace, `this.s.held.account`); the marker keeps the
+database-wide sequence (a point in the one log); the rechecks become `recheckErasure(comp, sequence, account)`. The
+Publish is then refused only by a removal in its own account or of an entity outside every account. That is still
+conservative: an owed Publish reads no protected value (R11), so even its own account's removals change nothing it
+read; the account-scoped ticket is kept because the marker's sequence is where that account's settlement starts its
+own removal check. Passing the account is not built here (section 15, first follow-up).
 
 **Cost of the guard against the whole-head rule:** one extra read inside the transaction (the calendar's row) and the
 transactor's per-entity revision check on the three entities the record already writes; the whole-head rule's
@@ -190,36 +208,65 @@ publishes (its first release is the runner's R1 from nothing). The saves are the
 and the nine others at their usual load (211.5 per second together), one commit per subject's save, open loop. The
 oracle for every read, change and notice is the generator plus every acknowledged save and every adversarial write,
 folded release by release in order; the independent form rule (`form-expect.ts`) checks every form-adding release.
+**Every counted run started the image built from this branch, and only that one.** The shared harness starts the
+newest engine-built image in the lab VM, which during this work was another builder's gateway: every run made here
+before this was found (13 toy runs, and the two miniature runs, which started the shared tag
+`tx2-datomic:1.0.7745-da00`) began on one of five images built from other sources (section 14 lists them); none of
+those runs is counted. So this branch builds a
+private Java 21 image from its own checkout (`engine.mjs build --lane datomic --holder DX-ACT8 --variant-receipt
+<receipt>`, private tag `tx2-dxact8-jre21:<inputs>`, no shared build event, the shared tags untouched), and the harness
+under `DX_DATOMIC_IMAGE_RECEIPT=<receipt>` starts only that image by its ID and refuses to start when the checkout's
+Datomic sources (gateway, configuration, codec) differ from the image's. Each run's `image.json` records the ID it
+started; a read-only recorder also logged the image ID of every running container of each run from the VM itself.
 Runs (private evidence `evidence/DX-ACT8/`, section 14):
 
-| Run | What | Commit | Result |
-| --- | --- | --- | --- |
-| `s1` | shake-out: three beside cases | `34273617e` | pass |
-| `G1` | cost, beside (then adversarial: stopped at my independent-check assumption, section 9.4) | `7132e012c` | cost and beside pass |
-| `G1b` | adversarial, kill, live, enrol | `82d691941` | GATE_G1B |
-| `M1`, `M2` | the many-accounts miniature (section 9.5) | `63f178e73`, `13f82ea8c` | `M1` stopped at a transport deadline, `M2` pass |
-| `W1`, `W2` | the held runner's windows with no pause, account guard and whole-head rule | `7132e012c` | RUN_W |
-| `R1`, `R2`, `R3` | options off: the held default campaign, ACT5's live cases, ACT6's gate | `7132e012c` | RUN_R |
-| `G3` | negative control: settlement at the read position (`DX_ACT8_INJECT=read-cut`) | `7132e012c` | RUN_G3 |
-| `G2` | a removal on request in the Publish's window | `7132e012c` | RUN_G2 |
+| Run | What | Commit | Image started (ID) | Result |
+| --- | --- | --- | --- | --- |
+| `G1r` | every gate part: cost, beside, adversarial, kill, live, enrol | `722ef2f5a` | `a87bf58bf20c` | **pass** |
+| `G1` | the same | `813264dac` | `a87bf58bf20c` | every part passed; the final ledger check then stopped at a fault of the gate itself (it read the ledgers in parts as whole ones; fixed in `722ef2f5a`, rerun as `G1r`) |
+| `W1`, `W2`, `W3` | the held runner's eight windows with no pause: account guard; whole-head rule; account guard with the large release by reference | `813264dac` | `a87bf58bf20c` | **pass** (`W2`: the refusals of section 9.2) |
+| `R1`, `R2`, `R3` | options off: the held default campaign, ACT5's live cases, ACT6's gate | `813264dac` | `a87bf58bf20c` | **pass**, every count as published (section 9.1) |
+| `G3` | negative control: settlement at the read position (`DX_ACT8_INJECT=read-cut`) | `813264dac` | `a87bf58bf20c` | **caught**: stopped at the first Publish with a save between its read and record (section 9.4) |
+| `M2r` | the many-accounts miniature, both options on (section 9.5) | `4d01710e3` | `a87bf58bf20c` | **pass** |
+| `M3` | the miniature with the removal step (`DX_SCALE2_REMOVAL=1`) | `722ef2f5a` | `a87bf58bf20c` | in progress at this commit |
+| `G2` | a removal on request on the held toy (database protected before its load) | `169de51a3` | `a87bf58bf20c` | the load refused (`ErasureFrontierUnavailable`): that stack has no shared removal directory; not a result (section 13) |
+| 15 earlier runs: a shake-out, the gate in two halves, the held windows, the options-off reruns, a removal and a negative control, two miniature runs (`M1`, `M2`), and three that stopped at faults of the gate itself | the same checks, on earlier commits | `34273617e` to `1966682b7` | five images built from other sources | **not counted** (section 14) |
 
 ## 9. Gates
 
 ### 9.1 Gate (a): every option off, every existing count unchanged
 
-GATE_A
+Every option off (`TX2_PUBLISH_BESIDE`, `TX2_ENROL_BESIDE_SAVES`, `DX_ACT8_UNPAUSED`, `DX_ACT8_GATE`, `DX_ACT8_INJECT`,
+`DX_SCALE2_REMOVAL` unset), on this branch's image:
+
+| Check | Run | Count with the options off | The same count published before |
+| --- | --- | --- | --- |
+| The held runner's default campaign (`DX_ACT3_HELD=1`, eight windows, paused, settlement on) | `R1` | 86 changed values and 8 notices equal to the oracle; 8 of 8 Publishes landed at one try with first answers exact; both reopened pins exact; 0 read failures; no save refused | 86 changed values and 8 notices equal to the oracle, 8 of 8 first answers, 2 reopened pins (`PART9.md`, `LARGE-RELEASE.md`) |
+| ACT5's live settlement cases (`DX_ACT5_LIVE=1`: quiet, own23, others under the head precondition; quiet-p, own39-p, others-p, second-p, multi-p under the progress precondition) | `R2` | every case exact: the large release 474 changes and 160 notices (independent rule 8 / 474 / 160) in each of the six single cases; second-p: the 150-form release superseded at 1 subject (420 changes, 1,200 notices) then the second release 3,555 changes; multi-p: 3 accounts, each 474 / 160 (8 / 474 / 160); 2,328 notices delivered once, 0 twice; every save acknowledged | the same (`SETTLEMENT-LIVE.md` section 9: C1 to C5) |
+| ACT6's release-limits gate (`DX_ACT6_GATE=1`, all parts, 200 forms) | `R3` | the ledger in parts at 200 forms: 72 subjects, 4 stops (1 inside a ledger's parts), notices 14,400 / 7,200 / 21,672 equal to the oracle, delivered 21,672 then 0, 2 parts per ledger, independent rule 72 / 42,720 / 14,400, 76 value and 510 notice frames under 8,000 µs; the definitions table: full documents 619,097 and 938,509 B at 0.25 MiB, 1,233,297 B then refused over the 1 MiB value at 0.50 MiB, refused at 1.0 and 1.25 MiB; by reference 3,532 to 3,547 B at every size | the same (`RELEASE-LIMITS.md` sections 2.3 and 3) |
+| The settlement-frames check at 256 subjects (`frames-check`, no stack) | `checks/frames-check-256-default` | every row's frames, splits, changed values and notices identical | ACT6's table |
+| Unit tests of the held join (`actv-lazy/join/*.test.ts`) | Mac | 31 of 31 | — |
+
+With the options off nothing in the record, the retry count or the checks of a Publish changed; the head-rule frame
+refusals in ACT5's head cases (for example 100 value-frame and 117 notice-frame refusals in own23) vary from run to run
+with the saves' timing, as they did there, and every settled count is equal.
 
 ### 9.2 Gate (b): no pause, the whole-head rule: the refusals
 
-- **Gate part `beside`, case `head-small`** (run `G1`; also `s1`): account 0 saving 23.5 per second and the nine others
+- **Gate part `beside`, case `head-small`** (runs `G1r` and `G1`): account 0 saving 23.5 per second and the nine others
   at their load (1,880 saves in 8 s, all acknowledged), two Publishes of the small release offered with nothing paused:
   **2 of 2 refused**, "Joined command exhausted three serial predecessor attempts" (each after about one second of three
   tries). Nothing was written; the oracle and the runner's release list are unchanged.
-- RUN_W2
+- **The held runner's own windows with no pause, the whole-head rule** (run `W2`: `DX_ACT8_UNPAUSED=1`, eight windows):
+  at 23.5 saves per second **4 of 4 Publishes refused** ("Joined command exhausted three serial predecessor
+  attempts"), recorded with each window, which went on; at 3.5 per second (only the publishing account saves) 4 of 4
+  landed, as predicted (a try is refused only when one of 3.5 saves per second falls in its read-to-commit window).
+  Every read check exact; no save refused.
 
 ### 9.3 Gate (c): no pause, the account guard: Publishes beside saves, exact
 
-**Gate part `beside`** (run `G1`; the shake-out `s1` passed the first three cases the same way). Each case runs a save
+**Gate part `beside`** (run `G1r`; the first own-image run `G1` gave the same counts, its commits between read and
+record differing by timing). Each case runs a save
 window and offers its Publishes inside it with nothing paused; each Publish: the first correct answer (unpinned reads
 until the basis reaches the record, checked against the oracle), the deadline reads at one second (four subjects,
 checked against the release in force at their basis), the oracle fold, then settlement beside the saves (byte frames,
@@ -227,24 +274,136 @@ the progress precondition) checked against the oracle and, for a form-adding rel
 window: the journal between each Publish's read and its record, every read pinned at every position from just before
 the read to just after the record (all 8 subjects), and every save of account 0 whose life overlapped a Publish's.
 
-| Case | Saves (account 0 / nine others) | Publishes offered / landed / refused | Tries each | Commits between read and record (of them account 0's saves) | Settled per Publish: changes / notices (independent rule: owing / changes / notices) |
+| Case | Saves (account 0 / nine others), all acknowledged | Publishes offered / landed / refused | Tries each | Commits between read and record (of them account 0's saves) | Settled per Publish: changes / notices (independent rule: owing / changes / notices) |
 | --- | --- | --- | --- | --- | --- |
-| small, 23.5/s + others | 282 / 2,538 | 3 / 3 / 0 | 1, 1, 1 | 104 (16), 160 (0), 0 | 39 / 7 each |
-| large, 23.5/s + others | 282 / 2,538 | 2 / 2 / 0 | 1, 1 | 19 (2), 55 (7) | 474 / 160 (8 / 474 / 160); back: 474 / 0 |
-| small, 39.4/s + others | 473 / 4,255 | 3 / 3 / 0 | 1, 1, 1 | 103 (17), 52 (8), 43 (7) | 39 / 7 each |
+| small, 23.5/s + others | 282 / 2,538 | 3 / 3 / 0 | 1, 1, 1 | 63 (11), 158 (0), 37 (0) | 39 / 7 each |
+| large, 23.5/s + others | 282 / 2,538 | 2 / 2 / 0 | 1, 1 | 27 (1), 57 (5) | 474 / 160 (8 / 474 / 160); back: 474 / 0 |
+| small, 39.4/s + others | 473 / 4,255 | 3 / 3 / 0 | 1, 1, 1 | 75 (10), 69 (10), 116 (16) | 39 / 7 each |
 | large, 3.5/s, account 0 only | 35 / 0 | 2 / 2 / 0 | 1, 1 | 1 (1), 1 (1) | 474 / 160 (8 / 474 / 160); back: 474 / 0 |
-| large, the nine others only | 0 / 2,115 | 2 / 2 / 0 | 1, 1 | 24 (0), 51 (0) | 474 / 160 (8 / 474 / 160); back: 474 / 0 |
-| 200 forms and 200 policies (ledger in parts), 23.5/s + others | 329 / 2,961 | 2 / 2 / 0 | 1, 1 | 42 (4), 136 (18) | 4,740 / 1,600 (8 / 4,740 / 1,600); back: 4,740 / 0 |
-| large by reference (`TX2_RELEASE_DOCS=ref`), 23.5/s + others | 282 / 2,538 | 2 / 2 / 0 | 1, 1 | 33 (5), 115 (20) | 474 / 160 (8 / 474 / 160); back: 474 / 0 |
-| **All guarded cases** | **every save acknowledged, none refused** | **16 / 16 / 0** | **1** | **0 to 160 (up to 20 of the account's own)** | **every stored change, notice and ledger equal to the oracle; 0 frames refused** |
+| large, the nine others only | 0 / 2,115 | 2 / 2 / 0 | 1, 1 | 21 (0), 50 (0) | 474 / 160 (8 / 474 / 160); back: 474 / 0 |
+| 200 forms and 200 policies (ledger in parts), 23.5/s + others | 329 / 2,961 | 2 / 2 / 0 | 1, 1 | 21 (2), 137 (14) | 4,740 / 1,600 (8 / 4,740 / 1,600); back: 4,740 / 0 |
+| large by reference (`TX2_RELEASE_DOCS=ref`), 23.5/s + others | 282 / 2,538 | 2 / 2 / 0 | 1, 1 | 60 (11), 63 (6) | 474 / 160 (8 / 474 / 160); back: 474 / 0 |
+| **All guarded cases** | **18,628 saves, none refused** | **16 / 16 / 0** | **1** | **1 to 158 (up to 16 of the account's own)** | **every stored change, notice and ledger equal to the oracle; 0 frames refused** |
 
-BETWEEN_C
+**Between the read and the record** (all 47 Publishes of the gate run): every read pinned at every position from just
+before each Publish's read to just after its record, all 8 subjects: 544 positions, 4,352 reads, each equal to the
+oracle's answer under the release in force there (the previous release up to `q - 1`, the new one from `q`). **Racing
+saves of the same account** (every save of account 0 whose send-to-acknowledgement overlapped a Publish's
+read-to-record): 126, of which 110 landed before the Publish's record and 16 after; each one commit, none refused or
+replayed, and a read pinned at its receipt answered under the release its position implies (126 reads). **The
+journal** between each read and record held exactly the commits counted above, each once, in position order, and the
+Publish's own four changes at `q`. All 6,602 notices of account 0's releases in order and its 8 ledgers (in parts)
+equal to the oracle at the end.
 
 Every first-correct answer and every deadline read was exact. Diagnostic only (the Mac, other builders' stacks):
-first correct 0.19 to 1.42 s for the inline releases (12 of 14 inside one second), 3.8 and 1.5 s for the by-reference
-release (whose first Publish also writes the definitions ahead); these are Mac clocks under load and not results.
+first correct 0.12 to 1.22 s for the inline releases (12 of 14 inside one second), 1.45 and 0.40 s for the
+by-reference release (whose first Publish also writes the definitions ahead); these are Mac clocks under load and not
+results.
 
-RUN_W1
+**The held runner's own windows with no pause** (run `W1`: `DX_ACT8_UNPAUSED=1 TX2_PUBLISH_BESIDE=1`, the toy's eight
+windows, barrier 6 and rolling 6 at 3.5 and 23.5 saves per second, two Publishes per Publish window): **8 of 8
+Publishes landed, 0 refused, one try each**; commits between a Publish's read and its record 0, 0, 0 and 0 at 3.5/s
+(only the publishing account saves there, 3.5 per second), 49 and 15 (barrier) and 53 and 20 (rolling) at 23.5/s;
+every first-correct probe, every deadline read and both reopened pins equal to the oracle; 0 read-check failures, 0
+missing reads, 0 visibility failures, 0 missed deadlines; 0 of 7,632 saves refused. Diagnostic: first correct 94 to
+702 ms, 8 of 8 inside one second.
+
+**The same windows with the large release stored by reference** (run `W3`: as `W1` plus `TX2_RELEASE_DOCS=ref` and
+`DX_ACT3_RELEASE=forms=20,policies=20,permille=1000`; each record 3.7 KB): **8 of 8 landed, 0 refused, one try each**;
+commits between read and record 0, 0, 0, 0 at 3.5/s and 36, 14, 65, 19 at 23.5/s; every probe, deadline read and
+reopened pin exact; 0 of 7,632 saves refused. Diagnostic: first correct 98 to 546 ms.
+
+
+### 9.4 Gate (d): the adversarial schedule
+
+**Gate part `adversarial`** (run `G1r`; the same 24 steps passed in `G1`). The nine other accounts save throughout (one save in five of their usual
+tape, about 42 per second, so a 150-second window stays light on the toy); account 0's subjects are written only by the
+adversary, through a second store (a second client). Each step publishes the next release (the large one, or back to
+the base) with a hook that commits a write of subject X **between the Publish's read and its commit**, either after the
+plan's last read and before its transaction begins (`afterRead`) or inside its transaction after the snapshot and
+before the guards are read and the operations sent (`inside`); the gate checks that the write landed strictly between
+the read position and the record, then settles the release beside the saves and checks every stored change and notice
+against the oracle, and reads every subject pinned at every position from just before the read to just after the
+record. For each step the gate also asks the oracle whether settling at the read position (the wrong rule) would have
+given X different stored changes.
+
+| Fact the rules read (written to subject X) | `afterRead`: tries / commits between read and record (X's write always among them) / settled changes, notices | `inside`: the same | Would settling at the read position have given X different stored changes (`afterRead`, `inside`) |
+| --- | --- | --- | --- |
+| start date | 1 / 19 / 456, 160 | 1 / 10 / 436, 0 | yes, yes |
+| pay rate | 1 / 3 / 436, 161 | 1 / 6 / 436, 1 | no, no |
+| weekly minutes | 1 / 10 / 436, 160 | 1 / 10 / 436, 0 | no, no |
+| background check | 1 / 15 / 436, 160 | 1 / 10 / 436, 0 | no, no |
+| state minimum wage floor | 1 / 10 / 436, 161 | 1 / 9 / 436, 1 | no, no |
+| local minimum wage floor | 1 / 12 / 436, 160 | 1 / 10 / 436, 0 | no, no |
+| I-9 section 1 | 1 / 10 / 436, 160 | 1 / 10 / 436, 0 | no, no |
+| document expiry | 1 / 10 / 436, 161 | 1 / 10 / 436, 1 | no, no |
+| a form answer | 1 / 1 / 436, 160 | 1 / 10 / 436, 0 | no, no |
+| a form revision | 1 / 8 / 436, 160 | 1 / 10 / 436, 0 | no, no |
+
+**20 of 20 steps: the write landed strictly between the Publish's read and its record, the Publish landed at its first
+try, and every stored change, notice, ledger and pinned read equal to the oracle** (which folds X's write before the
+record). The `afterRead` steps publish the large release (20 forms), the `inside` steps go back to the base; a notice
+count of 161 or 1 is the oracle's own extra notice for X's new value (a pay rate under the floor, an expired document).
+Only the start date changes which policies a subject owes under these releases, so only there would the wrong rule
+have stored different changes for X; that is the case the negative control uses.
+
+**The wrong rule is caught.** Run `G3`: the same part with settlement deliberately reading at the Publish's read
+position (`DX_ACT8_INJECT=read-cut`, diagnostic only), the start-date kind only. **The gate stopped at the first such Publish**: "stored changes differ from the oracle for
+release 2 (read 11, record 31)". Subject X (`pl:s00000001`), whose start date was written between position 11 and 31,
+had 58 stored changes worked out from its world before the write (forms due 2026-11-04) where the oracle has 40 from its
+world at the record (due 2026-10-14, from the new start date); the other 7 subjects were equal. So settling at the
+effective cut `q - 1` is what makes the stored values right, and the checks see the difference.
+
+**A second Publish of the same account in the window** (both windows): the hook publishes another release of account 0.
+Both times the inner Publish landed first and **the outer one was refused once and landed at its second try**, planned
+afresh on top of the inner one: after the plan's reads by the tail's `TripleLive` check ("Expected live triple ...,
+but another transaction changed it", read inside its transaction); when the inner Publish landed after the outer one's
+snapshot, by the transactor at its serial cut (the tail and the release entity had a newer revision: `CasConflict`,
+reported as "Datomic source changed while staging the transaction"). Both halves of the guard fired once each. Each
+outer record landed one position after the inner one and both releases settled exactly (436 changes, 160 notices
+each). This is the only refusal the account guard gave in the whole gate (2 refused tries of
+57).
+
+**An enrolment of another account in the window** (both windows: `account-009` and `account-010` enrolled from inside
+account 0's Publish, 4 enrolment commits each between its read and its record): **account 0's Publish landed at its first
+try both times**, settled exactly; the two accounts' own Publishes and settlement then ran in the gate part `enrol`.
+
+**Kills at every step** (gate part `kill`, runs `G1r` and `G1`; account 0 saving 23.5 per second and the nine others at one in
+five, throughout). The Publish runs in a child process killed after the plan's last read, inside its transaction after
+the snapshot, right after the native acknowledgement, and twice at a random moment after the child's store is open; the
+runner then offers the same Publish again with the same command ID. **Every kill left exactly one record for the
+command ID**: killed after the read and inside the transaction (before the commit), nothing landed and the second
+offer landed at its first try; killed right after the acknowledgement, the record was there and the second offer
+recovered it by its command ID (no second record); at a random moment, in `G1r` both children finished before their
+timers (recovered), in `G1` one was killed before its commit (the second offer landed) and one finished. Every one of
+those releases settled exactly (436 changes; 160 notices for each form-adding one).
+
+**A removal on request in the window** (the miniature's removal step, run `M3`; the held toy's stack cannot hold a
+protected database, section 13): the step ran in three earlier attempts (`M3-first` to `M3-third`); its final run is in progress at this commit.
+
+### 9.6 Gate (g): settlement beside saves and the release limits, with nothing paused
+
+**Gate part `live`** (run `G1r`; ACT5's pause and second-release cases, now with the Publish itself beside saves;
+account 0 at 23.5 per second, the nine others at one in five):
+
+- **Pause and pace:** the large release (17.2 KB record) landed at its first try with 19 commits between read and
+  record; settlement was paused (0 frames offered while paused), then paced (26 frames, none closer than 300 ms), then
+  released; 436 changes and 160 notices, the independent rule 8 / 436 / 160; first correct inside one second.
+- **A second release in the middle of settlement:** the 150-form release (102.7 KB record) landed with 30 commits
+  between; after its settlement had written 2 subjects the base release was published (39 commits between, one try);
+  the first release's values stopped at subject 2 (`superseded`) and the second settled 3,270 changes, 0 notices; every
+  value, notice and ledger equal to the oracle.
+
+**The release limits beside saves:** the 200-form, 200-policy release with the ledger in parts and the large release by
+reference are cases of gate part `beside` (section 9.3: 4,740 / 1,600 and 474 / 160, one try each), and the held
+runner's windows by reference are run `W3`. Options off, ACT5's and ACT6's own gates are `R2` and `R3` (section 9.1).
+
+**Gate part `enrol`** (run `G1r`; the toy's own form of gate (f)): without `TX2_ENROL_BESIDE_SAVES` an enrolment beside
+saves is refused ("Unclassified native writer left the joined source open"); with it, 7 accounts (`account-002` to
+`account-008`) enrolled one after another while every account saved, **each at its first try**; each then published R1
+and the large release beside the saves (**one try each**), and all 7 settled at once through one queue: **each 474
+changes and 168 notices** (8 for R1, 160 for the large release), the independent rule 8 / 474 / 160, each against its
+own oracle.
 
 <!-- GATES -->
 
@@ -260,15 +419,16 @@ by size, a busy deep account at 15 per second, a quiet thin account at 2 per sec
 a feed follower checked every save, then 3 s in **all 50 accounts offered their large release (20 forms, 20 policies)
 at the same moment**, and from 2 s in **10 further accounts were enrolled** one after another, each publishing and
 settling its first release. Afterwards each account's release was settled and checked against the oracle and the
-independent form rule, one account at a time. Run `M2`: **pass**.
+independent form rule, one account at a time. Run `M2r` (on this branch's image): **pass**, with the same counts as the
+first passing run `M2` (which had started the shared tag's image and is not counted).
 
-| Count (exact) | M2: 570 accounts, both options on |
+| Count (exact) | M2r: 570 accounts, both options on |
 | --- | --- |
 | Publishes offered at once / landed / refused / tries per Publish | 50 / **50** / **0** / 1 each |
-| Commits between a Publish's read and its record (min / median / max) | 26 / 51 / 77 (the other 49 Publishes and everyone's saves) |
-| Late enrolments beside the saves / succeeded | 10 / **10** (each 7 to 8 enrolment commits of its own) |
+| Commits between a Publish's read and its record (min / median / max) | 38 / 72 / 103 (the other 49 Publishes and everyone's saves) |
+| Late enrolments beside the saves / succeeded | 10 / **10** (the head moved 156 to 224 commits during each, all accepted by the walk; no transport retry) |
 | Saves acknowledged / refused | 2,367 / 0 (323 accounts touched) |
-| Pinned / current reads checked against the oracle; rows compared | 22,165 / 21,733; 470,221 |
+| Pinned / current reads checked against the oracle; rows compared | 23,933 / 23,572; 509,198 |
 | Feed: saves found once, at their receipt position, in order | 2,343 of 2,343 |
 | Final read of every subject in every account (rows) | 175,472 in 570 accounts |
 | Settled changes / notices of the 50 accounts, equal to the oracle and the independent rule | 29,820 / 10,605 (value frames 121, notice frames 462, 0 refused) |
@@ -276,13 +436,14 @@ independent form rule, one account at a time. Run `M2`: **pass**.
 
 The 50 accounts' settled totals are exactly SCALE2's (F1 and F2: 29,820 / 10,605 with 121 + 462 frames), where the same
 releases were published into a paused database. Diagnostic only (the Mac, five other builders' stacks): the 50
-Publishes offered at once were acknowledged 3.2 to 5.5 s after the offer (median 3.8 s), one after another in the one
-writer; enrolment took 12 to 28 s per account.
+Publishes offered at once were acknowledged 2.2 to 5.1 s after the offer, one after another in the one writer; the
+40 s window's tape took 126 s.
 
-**The first attempt of this run (`M1`) stopped at its own check**: the 50 Publishes again all landed with one try each,
+**An earlier attempt (`M1`, on another image, not counted) stopped at its own check**: the 50 Publishes again all landed with one try each,
 but one of the ten late enrolments failed with "Gateway deadline exceeded" (the HTTP client's request deadline on the
 loaded Mac, a transport failure, not a refusal: the guard never ran). The miniature now runs such an enrolment once
-more (enrolment and Publish are idempotent by command ID) and records the first error; `M2` needed no retry.
+more (enrolment and Publish are idempotent by command ID) and records the first error; `M2` and `M2r` needed no
+retry.
 
 **Without the options** the same Publishes are refused: SCALE2's F0 (3 of 3 refused, "Joined command exhausted three
 serial predecessor attempts") and F1 / F2 (late enrolment refused 3 of 3) on this miniature; not rerun here.
@@ -290,7 +451,7 @@ serial predecessor attempts") and F1 / F2 (late enrolment refused 3 of 3) on thi
 
 ## 10. What a Publish costs, under each rule
 
-Measured by the gate's `cost` part (run `G1`), with no saves running so the whole-head rule lands too: the same
+Measured by the gate's `cost` part (run `G1r`), with no saves running so the whole-head rule lands too: the same
 releases published under each rule, two Publishes per row (the second goes back to the base release). Datoms and the
 gateway's transact time come from the commit reply as the client received it; the journal entry is the transaction's
 own entry as the feed returns it; the writer estimate is the bulk writer's own formula (`frameEstimate`: 3.5 ms + 45 µs
@@ -302,14 +463,14 @@ per row + 70 µs per KiB of wire) applied to the record's operations. "Calls" co
 | small (inline) | whole head | 4 | 4,849 / 4,817 | 35 | 11,821 / 11,768 | 6,395 / 6,388 | 5 | 0 | the whole database (scope-wide) |
 | small (inline) | account | 4 | 4,881 / 4,849 | 35 | 11,863 / 11,828 | 6,401 / 6,395 | 6 | 0 | tail (`TripleLive`), calendar (`EntityState`), 3 written entities revision-checked |
 | large: + 20 forms, 20 policies (inline) | whole head | 4 | 17,175 / 10,914 | 35 | 27,695 / 19,777 | 8,923 / 7,639 | 5 | 0 | the whole database |
-| large (inline) | account | 4 | 17,207 / 10,946 | 35 | 27,738 / 19,803 | 8,929 / 7,645 | 6 | 0 | as above |
-| small (by reference) | whole head | 4 | 3,565 / 3,565 | 35 | 10,015 / 10,017 | 6,132 / 6,132 | 5 | 0 | the whole database |
+| large (inline) | account | 4 | 17,207 / 10,946 | 35 | 27,738 / 19,820 | 8,929 / 7,645 | 6 | 0 | as above |
+| small (by reference) | whole head | 4 | 3,565 / 3,565 | 35 | 10,016 / 10,017 | 6,132 / 6,132 | 5 | 0 | the whole database |
 | small (by reference) | account | 4 | 3,598 / 3,598 | 35 | 10,062 / 10,062 | 6,138 / 6,138 | 6 | 0 | as above |
 | large (by reference) | whole head | 4 | 3,702 / 3,567 | 35 | 10,175 / 10,152 | 6,160 / 6,132 | 5 | 0 | the whole database |
-| large (by reference) | account | 4 | 3,734 / 3,599 | 35 | 10,218 / 10,195 | 6,166 / 6,139 | 6 | 0 | as above |
+| large (by reference) | account | 4 | 3,734 / 3,599 | 35 | 10,201 / 10,194 | 6,166 / 6,139 | 6 | 0 | as above |
 
 **What the account guard costs over the whole-head rule:** 32 bytes in the record (`"precondition":"account"`), the
-same 35 datoms, about 45 bytes of journal, 6 µs of the writer's estimate, and **one more HTTP call** (the calendar's
+same 35 datoms, 26 to 46 bytes of journal, 6 µs of the writer's estimate, and **one more HTTP call** (the calendar's
 row read inside the transaction). The transactor's revision check is per entity in the transaction's set, three for a
 Publish, instead of one comparison of the head. What it saves is every refusal, every retry and every pause (sections 9.1
 to 9.5).
@@ -443,10 +604,16 @@ sender paused and drained around each Publish, under the whole-head rule.
 4. **"10,000 Publishes an hour" as minutes of stopped saves.** SCALE2 estimated 5 to 10 minutes of whole-database
    pause per hour from the pause; without it there is no pause; what remains is the records' writer time.
 
+**Results on other images.** The 15 runs this lane made before it pinned its image (section 8) started gateways built
+from other branches' sources; they support nothing here. Every count in sections 9 and 10 comes from a run that
+started `a87bf58bf20c`, built from this branch. The earlier pages' own toy results (ACT5, ACT6, SCALE2) were made by
+their builders through the same shared harness; whether each started its own branch's image is for those pages to
+show (their evidence lists the image ID each run started).
+
 ## 13. Not verified
 
 - **Nothing at full size, nothing on a server.** Every count is from the toy (8 subjects per publishing account, ten
-  accounts; the miniature's 563 accounts); every Mac time is diagnostic (the lab VM was shared with five other
+  accounts; the miniature's 570 accounts); every Mac time is diagnostic (the lab VM was shared with five other
   builders' stacks throughout). Section 11 carries the server predictions.
 - **The guard's argument for the release list (R2)** rests on the list of its writers in a held account (a Publish, a
   deadline with a scheduled release, `schedule`): a new writer of the release list alone would need to add the release
@@ -460,6 +627,69 @@ sender paused and drained around each Publish, under the whole-head rule.
   here beyond the runner's existing visibility records.
 - **Datoms per Publish** come from the commit reply as the client saw it; the storage bytes per Publish (PostgreSQL's
   write-ahead log) were not measured beside saves (they cannot be told apart from the saves' bytes there).
+- **A removal on request ran in a Publish's window only in the miniature** (`M3`, after the save window, with no
+  settlement frame in flight). The held toy stack gives its two gateways no shared removal directory, so a protected
+  database cannot be loaded there at all (the fixture load is refused with `ErasureFrontierUnavailable`; run `G2`,
+  `169de51a3`); the miniature's stack shares one (`DX_XQ3_ERASURE_DIRECTORY=1`). A removal while settlement frames of a
+  protected database are in flight, and the per-account removal ticket (section 15), were not run.
 - **Several settling processes** and **several publishing hosts** for one account: a second Publish of the same account
   was exercised from the same process (inside the first's window) and from a killed child process, not from a second
   host running concurrently for minutes.
+
+## 14. Evidence and the image each run started
+
+Private evidence, `evidence/DX-ACT8/archives/` (each archive holds the run directory and its logs). Every row below
+started image `sha256:a87bf58bf20cb16e88601c733669557c9015e66ce778c2125d9744738560e655` (tag
+`tx2-dxact8-jre21:c94ac8671abd108d`, built from `813264dac`, Datomic sources `cc2cad4930bb88fc...` equal to every run
+commit's, checked before each run), as each run's own record says (`image.json`, or `config/java-image.txt` for the
+miniature) and as the VM's own container list said while it ran.
+
+| Run | Archive | sha256 |
+| --- | --- | --- |
+| `G1` | `G1-d56a51ab.tar.gz` | `803f5a039e616d404c0a05783198f96c93198a57ebdbce96d94454feb3bfaa9a` |
+| `R2` | `R2-3cc44954.tar.gz` | `7bf31c7c01d578132a44d99ba04269c2559533f8f6cbc59417339059ef0cbf0f` |
+| `W1` | `W1-caa2a7ee.tar.gz` | `68d34473e6ccb5e092ee445e60770beaad3e027b23b6c86a95680336a295c767` |
+| `W2` | `W2-75014f3a.tar.gz` | `7e24e7f5186b039572c4e32ad485509c971eb357a24100b6e3fb4abdaa6907cf` |
+| `W3` | `W3-e9ad48d8.tar.gz` | `2068e48c960a54a8dc6d380a3d5687cf35237f6654598287804ef3c04b47c89f` |
+| `G1r` | `G1r-8a11a3dc.tar.gz` | `1d9c5044de513c0364eed04aa8c1c57dc2c85ed666af52297a83cb5f8e850997` |
+| `R1` | `R1-3b92a167.tar.gz` | `79bd5ec831b7ca1d78466bb0950416eefa2f02dd77f51338061a80d7fdfdf6b0` |
+| `R3` | `R3-6e92e917.tar.gz` | `4767c5d7a74797cc427a87e21b9bb4b0409ef0cd45da9028bfcf7bbdcf641a18` |
+| `G2` | `G2-d7f0d7ac.tar.gz` | `62e3b4c190d1192a2f63afe07f08f52ff6ff262f1b19ecfc38b76e7121aa5057` |
+| `G3` | `G3-ab57e96f.tar.gz` | `ff2a1cb3cf171ca925d0a4799109dbc50d7e4088c4ce9bb9d0ef95eb3406b39a` |
+| `M2r` | `M2r.tar.gz` | `a5a8bb4a1e8c5bb9f0b0ce470fa1ef66111e45e57bbdd7148b8c2e6a66726c1b` |
+| `M3-first` | `M3-first.tar.gz` | `7228274170d89a2c722e4eaf6b0e7980ff28586f9d23baa3ce961ad44e346832` |
+| `M3-second` | `M3-second.tar.gz` | `27c897d48d78047d105973ae77f3f3ebd21e2fac155b770f13524c0471e448b2` |
+| the 15 runs on other images (section 8), with their logs | `foreign-image-runs.tar.gz` | `2d5db3b1fb17577284fb5b0d2a5c62aa1104949b81ac2042699f12ded61272f5` |
+
+The five images those 15 runs started: `d6008c8d52dd`, `4fbfd98a5490`, `90d3ccd615de`, `fd497d71a313` (the shared
+harness's newest build event at the time) and `21a67288007d` (the shared tag `tx2-datomic:1.0.7745-da00`, the
+miniature's default). The settlement-frames check (`checks/frames-check-256-default.json`) runs no stack.
+
+## 15. Follow-ups
+
+1. **Pass the account through the removal ticket (first follow-up).** With the per-account removal rule
+   (`TX2_REMOVAL_PER_ACCOUNT`, `exp/DX-ERA2-removal-per-account` `272a1bd66`, its page section 7) a held account's
+   Publish, enrolment and settlement frames would be refused only by removals in their own account. Not built here: the
+   helpers that take the account (`readErasure(source, account)`, `recheckErasure(source, sequence, account)`,
+   `withErasure(sequence, work, sourceDatabase, accounts)`) and the gateway route and ticket header they use
+   (`erasure-frontier?account=`, the ticket's account list, `removal_scope.clj`) exist only on that branch, which is not
+   merged here; on this branch the change would not compile, and with only the call sites it could not be gated. The
+   change, once both branches meet, guarded by `TX2_REMOVAL_PER_ACCOUNT=1` on the client (and a no-op on a database
+   without the per-account policy, where ERA2's helpers fall back to the database-wide answer):
+
+   | Where (this branch) | Today | With the account |
+   | --- | --- | --- |
+   | `account.ts` 802, `readErasure(this.s.comp)` before a Publish | database-wide sequence | `readErasure(comp, account)`; the marker's `erasureSeq` stays the database-wide sequence |
+   | `account.ts` 814, `withErasure(sequence, ...)` around the Publish command | database-wide ticket | `withErasure(sequence, work, undefined, [account])` |
+   | `account.ts` 970 (the plan) and 675 (`marker()`, every reader of a marker) | `recheckErasure(comp, sequence)` | `recheckErasure(comp, sequence, account)` |
+   | `archive.ts` 265, 422, 452, 508, 607; `recorded.ts` 156, 368, 388; `staging.ts` (stage records keep `erasureSeq`) | database-wide | the same two changes with the frame's account |
+   | `bulk.ts` 68, the frames' ticket | `withDatomicErasureSequence(seq, invoke, false, database)` | the frame's account as the ticket's account list |
+
+   Gate: in a protected database with the per-account policy, a removal in another account between a Publish's read
+   and its commit lets the Publish land at its first try; a removal in its own account refuses it and the republish
+   lands; on a database without the policy both refuse, as today (the gate part `removal` of section 9.4, run once per
+   case); every count of section 9 unchanged with the option off.
+2. **Deadlines and `schedule` beside saves** (section 13): the same guard (tail, calendar, written entities) would
+   apply; not needed by held accounts today.
+3. **Many Publishes at the same instant** (section 11.2): the records go through the one writer one at a time; a burst
+   to every account needs the release stored once or the records grouped.
