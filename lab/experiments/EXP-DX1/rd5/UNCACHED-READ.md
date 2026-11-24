@@ -87,8 +87,8 @@ A 10 GbE link carries the bar's storage traffic at about 30% of its capacity. Th
 Docker bridge a get took 0.51 ms (PostgreSQL's work plus JDBC); a private 10 GbE hop adds about 0.05 to 0.15 ms, so
 about 0.6 ms. Inside a permit that is one more reason for the prefetch: eight gets overlap instead of adding up
 (8 × 1.76 × 0.6 ms = 8.4 ms of waiting per exchange without it). PostgreSQL's one core served 2,155 gets/s at 0.31
-cores; serving two readers at the bar's rate (6,340 gets/s) needs about 0.9 to 1.0 of a core, so its core stays
-enough only if PostgreSQL keeps its 8 GiB page cache warm; give it a second core for this test.
+cores; serving two readers at today's loads per subject (about 5,800 gets/s at 3,300 reads/s) needs 0.65 to 0.95 of
+its one core, so PostgreSQL's core is the first shared limit a second reader meets (falsifier 1 of command 2).
 
 ## 7. Server command 1: one machine, the options at 1 billion (about 50 minutes, ceiling 60)
 
@@ -114,11 +114,11 @@ rd5_arm() {  # $1 new copy, $2 new campaign directory, $3 deadline ms, $4 permit
     "$SCALE1_TRANSFER_SHA256" 1B per-person-ordered j21-g1 "$AGE_HANDOFF_JSON" "$AGE_HANDOFF_SHA256" "" "" \
     j25-zgc "$WAL_DIR" j21-g1 rolling6
 }
-OUT=/var/tmp/triplex-rd5-1b; mkdir "$OUT" "$OUT/pf3" "$OUT/pf3c" "$OUT/pf6r"   # one parent per configuration
+OUT=/var/tmp/triplex-rd5-1b; mkdir "$OUT" "$OUT/pf3" "$OUT/pf3r" "$OUT/pf3c"   # one parent per configuration
 T0=$(date +%s%3N)
 rd5_arm "$COPY_1" "$OUT/pf3/campaign"  $(( T0 + 20 * 60 * 1000 )) 3 1 0 3072   # prefetch, 3 permits
-rd5_arm "$COPY_2" "$OUT/pf3c/campaign" $(( T0 + 40 * 60 * 1000 )) 3 1 0 1536   # the same, 1.5 GiB cache
-rd5_arm "$COPY_3" "$OUT/pf6r/campaign" $(( T0 + 60 * 60 * 1000 )) 6 1 1 3072   # prefetch, 6 permits, read-ahead off
+rd5_arm "$COPY_2" "$OUT/pf3r/campaign" $(( T0 + 40 * 60 * 1000 )) 3 1 1 3072   # the same, read-ahead off
+rd5_arm "$COPY_3" "$OUT/pf3c/campaign" $(( T0 + 60 * 60 * 1000 )) 3 1 0 1536   # the same as pf3, 1.5 GiB cache
 ```
 
 Make each copy just before its configuration and remove it after, as for the random arm. Skip a configuration if
@@ -135,16 +135,20 @@ keep three cores as busy as twelve did; it does not change the loads.
 | Control `p3` (measured) | 1,219.6 / 1,216.6 / 1,085.5 | 208 / 208 / 231 | 334 / 324 / 342 | 1.76 / 1.69 / 1.85 | 2.09 to 2.14 | 8.29 ms | 19.3 ms |
 | Control `p12` (measured) | 1,719.8 / 1,747.2 / 1,563.6 | 145 / 145 / 160 | 289 / 258 / 293 | 1.60 / 1.54 / 1.69 | 2.81 to 2.83 | 7.77 ms | 55.3 ms |
 | `pf3` | 1,500 to 1,850 (1,680) | 140 to 170 | 240 to 310 | 1.5 to 1.9 | 2.65 to 2.9 | 3 to 6 ms | 8 to 14 ms |
+| `pf3r` (read-ahead off), if read-ahead is the excess (my lean, about 60%) | 2,100 to 2,600 (2,350) | 98 to 120 | 160 to 210 | 1.05 to 1.4 | 2.65 to 2.9 | 2 to 5 ms | 6 to 12 ms |
+| `pf3r`, if it is not | as `pf3` ± 7% | | | 1.5 to 1.9 | | | |
 | `pf3c` (1.5 GiB cache) | 1,450 to 1,950 (1,700) | 135 to 175 | 230 to 320 | 1.5 to 2.3 | 2.6 to 2.9 | 3 to 6 ms | 8 to 15 ms |
-| `pf6r` (read-ahead off) | 1,550 to 1,950 (1,720) | 135 to 165 | 230 to 300 | 1.5 to 1.9 | 2.7 to 2.95 | 3 to 6 ms | 15 to 30 ms |
 
 - `s-random-near-head` stores 23.07 to 23.08 commits/s with S commit p99 50 to 70 ms in every configuration; quiet p99
   as yesterday (8 to 60 ms). Wrong values and errors 0. Prefetch failures (`/v2/admin/scan-stats` `readPrefetch.failures`)
   0. **The 100 ms bar is not met in any configuration.**
 - `pf3c` against `pf3`: the collector's pause share falls from about 18 to 20% to 12 to 16% of the wall (fewer decoded
   segments survive a young collection), and loads per subject rise by 0 to 0.15.
-- `pf6r` against `pf3`: process-wide `StorageGet` per subject (the reader's metrics minutes) falls by 0 to 0.2;
-  sampled loads per subject unchanged (the sampled count never included read-ahead loads, Mac finding below).
+- `pf3r` against `pf3`: why I lean towards read-ahead. On the cold toy, Datomic's read-ahead added 0.15 storage gets per
+  single random read that the sampled count never shows (they run on its own threads) and, by filling the small cache
+  with leaves no point read wants, raised the reads' own loads too: storage gets per subject fell 34 to 43% with it off
+  (section 4). At 1 billion the excess over one leaf per subject is 0.66 EAVT loads, which a 3 GiB cache churned by
+  read-ahead leaves (directory and identity segments evicted) would explain; nothing else found explains it.
 
 **What would show them wrong:**
 1. **`pf3` under 1,450 reads/s or under 2.5 reader cores:** something other than storage waits held the permits idle
@@ -156,11 +160,12 @@ keep three cores as busy as twelve did; it does not change the loads.
    claim "no affordable cache" must be re-tested with a 6 GiB arm before the 7-core sizing is used.
 4. **`pf3c` reads/s more than 15% above `pf3`:** collection of cached segments is a larger share of the 1.7 ms than
    section 1 says; a smaller cache becomes a default to propose for random-read readers.
-5. **`pf6r` process-wide gets per subject lower than `pf3`'s by more than 0.3:** Datomic's read-ahead is a real part of
-   the 1 billion cost (the Mac toy says no); the option then belongs in the tuned reader.
+5. **`pf3r` loads per subject within 0.15 of `pf3`'s:** read-ahead is not the 1 billion excess; the 0.66 extra EAVT
+   loads per subject are something else (directory segments larger than the cache, or the layout), and the next step is
+   the 6 GiB cache arm. **`pf3r` reads/s under `pf3`'s:** read-ahead was helping (some leaf it fetched was used).
 6. **Any wrong value, any error, any prefetch failure:** stop; an option must not merge.
 
-## 8. Server command 2: a second reader on a second machine (about 45 minutes with set-up, ceiling 60)
+## 8. Server command 2: a second reader on a second machine (about 55 minutes with set-up, ceiling 60)
 
 **Machines.** Machine 1: the bare-metal shape of 2026-11-23 (12 cores, 96 GB) with the held 1 billion cluster.
 Machine 2: any machine on the same private network with at least 4 cores and 12 GB free, Docker, the scorecard image
@@ -168,39 +173,50 @@ Machine 2: any machine on the same private network with at least 4 cores and 12 
 the driver's private notes.
 
 ```bash
+# Configuration two-pf (prefetch on both readers), then two-pfr (prefetch and read-ahead off on both).
 # On machine 2 (as root), first; it waits up to 10 minutes for machine 1's PostgreSQL and transactor:
-RD5_MACHINE1=<machine 1 private IP> RD5_LISTEN=<machine 2 private IP> RD5_IMAGE="$SCALE1_IMAGE" RD5_REPO=<checkout at $COMMIT> \
-  RD5_CPUS=0-2 RD5_PERMITS=3 RD5_PREFETCH=1 RD5_READ_AHEAD_OFF=0 RD5_HEAP_MIB=6144 RD5_CACHE_MIB=3072 RD5_MEMORY_MIB=9216 \
-  RD5_OUT=/var/tmp/triplex-rd5-second/r2 bash lab/experiments/EXP-DX1/rd5/second-reader.sh start   # prints DX_RD5_SECOND_READER=...
-# On machine 1, at the same time (the function of command 1; unset both settings afterwards):
-OUT=/var/tmp/triplex-rd5-two; mkdir "$OUT" "$OUT/two"
+second() {  # $1 read-ahead off (0 or 1), $2 new output directory
+  RD5_MACHINE1=<machine 1 private IP> RD5_LISTEN=<machine 2 private IP> RD5_IMAGE="$SCALE1_IMAGE" RD5_REPO=<checkout at $COMMIT> \
+    RD5_CPUS=0-2 RD5_PERMITS=3 RD5_PREFETCH=1 "RD5_READ_AHEAD_OFF=$1" RD5_HEAP_MIB=6144 RD5_CACHE_MIB=3072 RD5_MEMORY_MIB=9216 \
+    "RD5_OUT=$2" bash lab/experiments/EXP-DX1/rd5/second-reader.sh start      # prints DX_RD5_SECOND_READER=...
+}
+second 0 /var/tmp/triplex-rd5-second/two-pf
+# On machine 1, at the same time (the function of command 1):
+OUT=/var/tmp/triplex-rd5-two; mkdir "$OUT" "$OUT/two-pf" "$OUT/two-pfr"
 export DX_REMOTE_READER_HOST=<machine 1 private IP> DX_RD5_SECOND_READER=http://<machine 2 private IP>:18492
-rd5_arm "$COPY_1" "$OUT/two/campaign" $(( $(date +%s%3N) + 40 * 60 * 1000 )) 3 1 0 3072
+T0=$(date +%s%3N)
+rd5_arm "$COPY_1" "$OUT/two-pf/campaign" $(( T0 + 25 * 60 * 1000 )) 3 1 0 3072
+# On machine 2, after that arm has ended: stop, then start the second configuration
+RD5_OUT=/var/tmp/triplex-rd5-second/two-pf bash lab/experiments/EXP-DX1/rd5/second-reader.sh stop
+second 1 /var/tmp/triplex-rd5-second/two-pfr
+# On machine 1 (a new copy; skip if fewer than 20 minutes remain of the hour):
+rd5_arm "$COPY_2" "$OUT/two-pfr/campaign" $(( T0 + 60 * 60 * 1000 )) 3 1 1 3072
 unset DX_REMOTE_READER_HOST DX_RD5_SECOND_READER
-# On machine 2, after machine 1's arm has ended:
-RD5_OUT=/var/tmp/triplex-rd5-second/r2 bash lab/experiments/EXP-DX1/rd5/second-reader.sh stop
+RD5_OUT=/var/tmp/triplex-rd5-second/two-pfr bash lab/experiments/EXP-DX1/rd5/second-reader.sh stop   # on machine 2
 ```
 
-The window driver then sends seats 1, 3, 5, … to machine 2 and the others to machine 1's reader; tape pins do
-not run in the random arm. Machine 2's reader keeps no trace; `second-reader.sh` samples its CPU and memory (`docker stats`)
+The window driver sends seats 1, 3, 5, … to machine 2 and the others to machine 1's reader; tape pins do not run in
+the random arm. Machine 2's reader keeps no trace; `second-reader.sh` samples its CPU and memory (`docker stats`)
 every 5 s into `$RD5_OUT/stats.txt` until the container is removed.
 
-**Predictions, written before any run** (two readers of three cores each, both with the prefetch, 128 seats each):
+**Predictions, written before any run** (two readers of three cores each, 128 seats each, three permits each):
 
-| Window | Reads/s, both readers (central) | p50 | p99 | Machine 1 reader cores | Machine 2 reader cores | PostgreSQL cores | SQL ms per get (machine 1 / machine 2) |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| `ref-random-near-head` | 3,000 to 3,600 (3,300) | 70 to 90 ms | 110 to 160 ms | 2.6 to 2.9 | 2.6 to 2.9 | 0.65 to 0.95 | 0.5 to 0.7 / 0.6 to 0.9 |
-| `s-random-near-head` | 2,950 to 3,550 (3,250) | 70 to 90 ms | 110 to 165 ms | 2.6 to 2.9 | 2.6 to 2.9 | 0.7 to 1.0 | as above |
-| `ref-random-seed-cut` | 2,800 to 3,400 (3,100) | 75 to 95 ms | 120 to 175 ms | 2.6 to 2.9 | 2.6 to 2.9 | 0.65 to 0.95 | as above |
+| Configuration, window | Reads/s, both readers (central) | p50 | p99 | Each reader's cores | PostgreSQL cores |
+| --- | --- | --- | --- | --- | --- |
+| `two-pf`, `ref-random-near-head` | 3,000 to 3,600 (3,300) | 70 to 90 ms | 110 to 160 ms | 2.6 to 2.9 | 0.65 to 0.95 |
+| `two-pf`, `s-random-near-head` | 2,950 to 3,550 (3,250) | 70 to 90 ms | 110 to 165 ms | 2.6 to 2.9 | 0.7 to 1.0 |
+| `two-pf`, `ref-random-seed-cut` | 2,800 to 3,400 (3,100) | 75 to 95 ms | 120 to 175 ms | 2.6 to 2.9 | 0.65 to 0.95 |
+| `two-pfr`, each window, if read-ahead is the excess | 4,200 to 5,000 (4,600) | 51 to 61 ms | 85 to 115 ms | 2.6 to 2.9 | 0.55 to 0.85 |
+| `two-pfr`, if it is not | as `two-pf` | | | | |
 
-- Each reader serves its 128 seats at about what one reader serves 256 with the prefetch (`pf3` central 1,680), since
-  the readers share nothing but PostgreSQL. Little's law with 256 seats then gives p50 near 256 ÷ 3,300 = 78 ms, and
-  the tail stays at about 1.6 to 1.9 times p50.
-- **The 100 ms bar: missed narrowly** (central p99 about 135 ms). Six reader cores are not quite enough; the forecast
-  for meeting it is eight reader cores on two machines (two readers of four cores, or one reader of eight).
-- Saves: 23.07 to 23.08 commits/s stored, S commit p99 50 to 75 ms (machine 2's reader adds one more peer receiving
-  novelty from the transactor). Wrong values and errors 0.
-- Network: machine 2 draws 150 to 200 MB/s from PostgreSQL (about 1,650 reads/s × 1.76 gets × 60 KB).
+- Each reader serves its 128 seats at about what one reader serves 256 with the same options (command 1's `pf3` and
+  `pf3r`), since the readers share only PostgreSQL. Little's law with 256 seats gives p50 near 256 ÷ reads/s; the tail
+  is 1.6 to 1.9 times p50.
+- **The 100 ms bar:** `two-pf` misses it (central p99 about 135 ms; eight reader cores would be needed at today's
+  loads); `two-pfr` meets it at the central estimate (about 100 ms) only if read-ahead is the excess.
+- Saves: 23.07 to 23.08 commits/s stored, S commit p99 50 to 75 ms. Wrong values and errors 0 on both readers.
+- Network: machine 2 draws 150 to 200 MB/s from PostgreSQL in `two-pf` (about 1,650 reads/s × 1.76 gets × 60 KB),
+  about 100 to 130 MB/s in `two-pfr` if the loads fall.
 
 **What would show them wrong:**
 1. **Both readers together under 2,600 reads/s, with each reader under 2.4 cores:** something shared limits them.
