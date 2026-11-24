@@ -9,7 +9,7 @@ import { identity, sha } from "./source.ts";
 import { Snapshot } from "./snapshot.ts";
 import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import { runtimeApi } from "../../../bench/lib/triplex.ts";
-import { importWholeSubject } from "./import-class.ts";
+import { importWholeSubject, installSnapshotImportClass } from "./import-class.ts";
 
 export async function proveFile(
   comp: CompositionHandle,
@@ -109,6 +109,8 @@ export async function proveFile(
       return send.call(this, db, input, onSent);
     };
   }
+  // Installed above the counter, so the counter sees the class each frame is sent with.
+  installSnapshotImportClass();
   const start = performance.now();
   try {
     const neighbor = await comp.transact(

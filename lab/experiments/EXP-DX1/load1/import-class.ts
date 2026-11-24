@@ -14,6 +14,9 @@ export function importClassFor<T extends Wire>(input: T): T {
   return { ...input, writeClass: "import" };
 }
 
+// Each import entry point installs it (file-proof, split-import, live). The toy fixture's pinned seed loader
+// (age1/scale1-fixture.mjs) does not: it is set-up, not an import under test, and its frames of 16 deep subjects
+// (about 1,900 facts) are about three times the bound, so with the class they are refused whole, as they must be.
 let installed = false;
 export function installSnapshotImportClass() {
   if (installed || !importWholeSubject()) return;

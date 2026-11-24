@@ -13,7 +13,7 @@ import {
   type Frame,
 } from "./source.ts";
 import { ack, lookup, record, type Seen } from "./oracle.ts";
-import { ImportFrameTooLarge, importRefusal, importWholeSubject, installSnapshotImportClass } from "./import-class.ts";
+import { ImportFrameTooLarge, importRefusal, importWholeSubject } from "./import-class.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 
 interface Entry extends Seen {
@@ -152,7 +152,6 @@ export class Snapshot {
       !orderedStride ||
         (!adaptive && typeof shape !== "string" && shape.namespace === "acct/import/"),
     );
-    installSnapshotImportClass();
     const run = new Snapshot(comp, shape, subjects, width, file, adaptive, orderedStride);
     try {
       const key = run.manifest;
