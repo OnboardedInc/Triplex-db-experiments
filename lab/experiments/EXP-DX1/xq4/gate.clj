@@ -617,9 +617,22 @@
                 bounds {"entries" (nth [300 5000 100000] (.nextInt rnd 3)) "ms" 1000 "segments" 4096}
                 r (try (check-question name world q page bounds)
                        (catch Exception e {:same false :detail {:q q :error (str e) :data (ex-data e)}}))]
-            (swap! results conj (assoc r :position p :validAt v))
+            (swap! results conj (assoc r :position p :validAt v
+                                       ;; [DX-XQ10] the question's class (result and ops), and the question itself when an
+                                       ;; index-only first page read entities
+                                       :class [(get q "result") (vec (sort (map #(get % "op") (get q "where" []))))
+                                               (cond (get-in q ["from" "type"]) "type" (get q "from") "prefix" :else "none")
+                                               (if (get-in q ["basis" "recordedAt"]) "recordTime" "position")]
+                                       :ioq (when (and (:firstPageIndexOnly r) (not (:long r)) (pos? (or (:firstPageEntityReads r) 0))) q)))
             (when-not (:same r) (say "XQ4_G1_DIFF" (:detail r)))))))
     (let [rs @results]
+      ;; [DX-XQ10] Index-only first pages that read entities, with their questions, and the classes asked.
+      (doseq [r (filter :ioq rs)]
+        (say "XQ10_G1_IOREADS" {:reads (:firstPageEntityReads r) :position (:position r) :validAt (:validAt r) :q (:ioq r)}))
+      (say "XQ10_G1_CLASSES" {:byResult (frequencies (map #(first (:class %)) rs))
+                              :byOp (frequencies (mapcat #(second (:class %)) rs))
+                              :byFrom (frequencies (map #(nth (:class %) 2) rs))
+                              :byAxis (frequencies (map #(nth (:class %) 3) rs))})
       (emit! (str "g1-" label ".json") {:questions (count rs) :differences (count (remove :same rs)) :seed seed
                                         :positions positions :validTimes (valid-times)
                                         :stops (apply merge-with + (map :stops rs)) :pages (reduce + (map :pages rs))})
@@ -677,7 +690,10 @@
         results (atom [])]
     (doseq [p positions v valid
             q (concat fixed (repeatedly per #(random-question rnd false)))
-            :let [sq (sweep-shaped q)] :when sq]
+            :let [sq (sweep-shaped q)
+                  ;; [DX-XQ10] a question find says the sweep cannot take, recorded with the reason (not compared)
+                  _ (when-not sq (say "XQ10_SWEEP_SKIPPED" {:position p :validAt v :q q}))]
+            :when sq]
       (let [q (assoc q "basis" {"recordedPosition" p "validAt" v}) sq (assoc sq "basis" {"recordedPosition" p "validAt" v})
             r (try
                 (let [f (run-find name q 1000 {"entries" 1000000 "ms" 1000 "segments" 4096})
