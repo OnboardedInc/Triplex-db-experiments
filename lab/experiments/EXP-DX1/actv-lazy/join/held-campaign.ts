@@ -35,6 +35,7 @@ import { BulkQueue } from "./bulk.ts";
 import { firstOffer } from "../../ha1/first-offer.ts";
 import { largeRelease, parseShape, shapeName } from "./large-release.ts";
 import { checkForms, expectForms } from "./form-expect.ts";
+import { docsMode } from "./definitions.ts";
 
 const validTime = W0.POPULATION_VALID_TIME;
 export const rates = [3.5, 23.5, 39.4] as const;
@@ -769,6 +770,14 @@ export async function runHeld(
       return;
     }
     const windows: PairSample[] = [];
+    // [DX-ACT6] By reference, the definitions the windows publish are written once here, before any window (unfenced,
+    // idempotent), so each Publish writes none ahead and the save pause around it covers only its record, as in the
+    // product, where a release's definitions are prepared before it is published.
+    const definitionsAhead = docsMode() === "ref"
+      ? { started: now(), refs: [await a.writeDefinitions(W0.R2.doc), await a.writeDefinitions(large ?? W0.R3.doc)], ms: 0 }
+      : undefined;
+    if (definitionsAhead) definitionsAhead.ms = now() - definitionsAhead.started;
+    if (definitionsAhead) jsonFile(path.join(out, "held-definitions.json"), definitionsAhead);
     for (const rate of diagnostic ? ([3.5, 23.5] as const) : rates) {
       const seconds = diagnostic ? 8 : 100;
       const tape = heldTape(people as Density, rate, seconds);

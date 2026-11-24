@@ -708,14 +708,7 @@ export class JoinedAccount {
     // [DX-ACT6] By reference: the definitions not stored yet are written first (content-addressed, unfenced, each write
     // within the writer's bound), and the predecessor's too if it was published with full documents.
     const byRef = (options.docs ?? docsMode()) === "ref";
-    let ref: DocRef | undefined;
-    if (byRef) {
-      const staged = await stageDocument(this.s, doc);
-      ref = staged.ref;
-      this.lastDefinitions = { writes: staged.writes, rows: staged.rows, bytes: staged.bytes, retries: staged.retries };
-      const c0 = await this.s.controls(await this.s.head());
-      for (const r of c0.releases) if (r.joined && r.document && !r.documentRef) await stageDocument(this.s, r.document);
-    }
+    const ref = byRef ? await this.writeDefinitions(doc) : undefined;
     const run = () => withErasure(sequence, () =>
       this.command(
         id,
@@ -926,6 +919,16 @@ export class JoinedAccount {
   }
   /** [DX-ACT6] What the last Publish by reference wrote ahead of its record. */
   lastDefinitions = { writes: 0, rows: 0, bytes: 0, retries: 0 };
+  /** [DX-ACT6] Writes the definitions a Publish by reference will name (and its predecessor's, if published with full
+   * documents), unfenced and idempotent. Publish calls it; a caller that pauses saves around a Publish calls it first,
+   * so the pause covers only the record. */
+  async writeDefinitions(doc: W0.ReleaseDoc) {
+    const staged = await stageDocument(this.s, structuredClone(doc));
+    this.lastDefinitions = { writes: staged.writes, rows: staged.rows, bytes: staged.bytes, retries: staged.retries };
+    const c0 = await this.s.controls(await this.s.head());
+    for (const r of c0.releases) if (r.joined && r.document && !r.documentRef) await stageDocument(this.s, r.document);
+    return staged.ref;
+  }
   async physical(seq: number) {
     const p = await this.s.head(),
       e = await this.notices.event(seq, p),
