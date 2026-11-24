@@ -5,7 +5,92 @@ the one branch `23b7df344`). Mac work is correctness and counts at toy size; eve
 Nothing ran on a server. One option, default off: `TX2_REMOVAL_PER_ACCOUNT=1`. All accounts stay in one Datomic
 database. Datomic is not modified; the installed writer functions are unchanged.
 
-RESULTS-PLACEHOLDER
+## 0. Results
+
+**Saves in other accounts that a removal refused: before, 35 to 796 per cell (3.7% to 87.9%); after, 0 in every cell.**
+Toy stacks on the Mac: one Datomic database for all accounts, the production write switches (per-subject writer with
+ordered IDs, the PostgreSQL removal authority shared by a write and a read gateway), one commit per subject's save, 30
+saves per second in all, 30 s per cell, removals of fresh subjects' protected values in ONE account (three in one cell).
+"Refused" counts a save, read or frame refused at least once because of the removal sequence; the driver then retries
+after 10 ms, and every refused attempt is counted (503 attempts, SDK CasConflict replays).
+
+| Cell | Other accounts' saves refused, before | After |
+| --- | --- | --- |
+| 10 accounts, 1 removal per s | 35 of 945 (3.7%) | **0** of 898 |
+| 10 accounts, 10 removals per s | 796 of 906 (87.9%) | **0** of 902 |
+| 200 accounts, 1 removal per s | 82 of 954 (8.6%) | **0** of 886 |
+| 200 accounts, 10 removals per s | 274 of 873 (31.4%) | **0** of 930 |
+| sealed values, 10 accounts, 10 per s | 415 of 914 (45.4%) | **0** of 937 |
+| removals in 3 accounts at once, 10 per s | 424 of 922 (46.0%) | **0** of 930 |
+| transactor restarted 8 s in, 1 per s | 58 of 874 (6.6%) | **0** of 938 |
+| controls (no removals), 10 and 200 accounts | 0 of 949, 0 of 902 | 0 of 1,016, 0 of 998 |
+
+**Table 1. Before** (`F2-base`: this branch's driver and stack scripts, the base gateway `3e3e652b9`, option absent):
+
+| Cell | Other accounts: saves refused | SDK CasConflict replays | 503 attempts | ErasureFrontierChanged | Reads refused | Frames refused | Removal account, other subjects: saves refused | Subjects being removed: saves refused | Removal p50 / p99 ms (diagnostic) | Exact |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 10 accounts, no removals | 0 of 949 (0.0%) | 0 | 0 | 0 | 0 of 2,902 | 0 of 108 | 0 of 107 | 0 of 0 | - / - | 0 wrong, 0/0 marked, 0 leaks |
+| 10 accounts, 1 per s | 35 of 945 (3.7%) | 0 | 102 | 1 | 77 of 2,891 | 19 of 128 | 9 of 124 | 5 of 62 | 75.7 / 293 | 0 wrong, 30/30 marked, 0 leaks |
+| 10 accounts, 10 per s | 796 of 906 (87.9%) | 30 | 4,145 | 9 | 609 of 1,786 | 10 of 110 | 84 of 103 | 44 of 58 | 302.1 / 1676.8 | 0 wrong, 300/300 marked, 0 leaks |
+| 200 accounts, no removals | 0 of 902 (0.0%) | 0 | 0 | 0 | 0 of 3,429 | 0 of 116 | 0 of 121 | 0 of 0 | - / - | 0 wrong, 0/0 marked, 0 leaks |
+| 200 accounts, 1 per s | 82 of 954 (8.6%) | 0 | 479 | 1 | 69 of 2,983 | 21 of 104 | 9 of 123 | 3 of 54 | 66.1 / 1018.7 | 0 wrong, 30/30 marked, 0 leaks |
+| 200 accounts, 10 per s | 274 of 873 (31.4%) | 15 | 1,043 | 4 | 498 of 2,766 | 97 of 120 | 26 of 98 | 23 of 61 | 31.1 / 660.4 | 0 wrong, 300/300 marked, 0 leaks |
+| sealed, 10 accounts, 10 per s | 415 of 914 (45.4%) | 13 | 1,800 | 5 | 523 of 2,393 | 66 of 103 | 57 of 117 | 29 of 64 | 44 / 1027.8 | 0 wrong, 300/300 marked, 0 leaks |
+| removals in 3 accounts, 10 per s | 424 of 922 (46.0%) | 14 | 1,686 | 7 | 534 of 2,633 | 80 of 133 | 56 of 108 | 22 of 53 | 45.3 / 840 | 0 wrong, 300/300 marked, 0 leaks |
+| transactor restart, 10 accounts, 1 per s | 58 of 874 (6.6%) | 0 | 457 | 0 | 87 of 7,805 | 6 of 107 | 37 of 122 | 4 of 15 | 442.4 / 48441.5 | 0 wrong, 30/30 marked, 0 leaks |
+
+**Table 2. After** (`F3-on`: this branch at `f06bdba77`, `TX2_REMOVAL_PER_ACCOUNT=1`, each cell's database moved
+before seeding):
+
+| Cell | Other accounts: saves refused | SDK CasConflict replays | 503 attempts | ErasureFrontierChanged | Reads refused | Frames refused | Removal account, other subjects: saves refused | Subjects being removed: saves refused | Removal p50 / p99 ms (diagnostic) | Exact |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 10 accounts, no removals | 0 of 1,016 (0.0%) | 0 | 0 | 0 | 0 of 3,265 | 0 of 129 | 0 of 117 | 0 of 0 | - / - | 0 wrong, 0/0 marked, 0 leaks |
+| 10 accounts, 1 per s | 0 of 898 (0.0%) | 0 | 0 | 0 | 0 of 3,438 | 0 of 140 | 0 of 113 | 0 of 52 | 28.5 / 607.4 | 0 wrong, 30/30 marked, 0 leaks |
+| 10 accounts, 10 per s | 0 of 902 (0.0%) | 0 | 0 | 0 | 0 of 3,256 | 0 of 117 | 0 of 118 | 1 of 53 | 52.5 / 798.3 | 0 wrong, 300/300 marked, 0 leaks |
+| 200 accounts, no removals | 0 of 998 (0.0%) | 0 | 0 | 0 | 0 of 2,451 | 0 of 122 | 0 of 107 | 0 of 0 | - / - | 0 wrong, 0/0 marked, 0 leaks |
+| 200 accounts, 1 per s | 0 of 886 (0.0%) | 0 | 0 | 0 | 0 of 2,775 | 0 of 103 | 0 of 127 | 0 of 38 | 148 / 2431.7 | 0 wrong, 30/30 marked, 0 leaks |
+| 200 accounts, 10 per s | 0 of 930 (0.0%) | 0 | 0 | 0 | 0 of 3,693 | 0 of 126 | 0 of 120 | 0 of 49 | 75.2 / 9291.3 | 0 wrong, 300/300 marked, 0 leaks |
+| sealed, 10 accounts, 10 per s | 0 of 937 (0.0%) | 0 | 0 | 0 | 0 of 3,202 | 0 of 129 | 0 of 119 | 1 of 57 | 56.9 / 3926.5 | 0 wrong, 300/300 marked, 0 leaks |
+| removals in 3 accounts, 10 per s | 0 of 930 (0.0%) | 0 | 0 | 0 | 0 of 3,363 | 0 of 116 | 0 of 112 | 2 of 46 | 35.6 / 1217.7 | 0 wrong, 300/300 marked, 0 leaks |
+| transactor restart, 10 accounts, 1 per s | 0 of 938 (0.0%) | 0 | 0 | 0 | 0 of 6,702 | 0 of 136 | 0 of 110 | 1 of 27 | 320.8 / 29268.3 | 0 wrong, 30/30 marked, 0 leaks |
+
+**Which paths refused.** Before: every path in section 1's table. A plain save read the database-wide sequence, so a
+removal anywhere refused it with 503 while pending (the 503 attempts), with 409 CasConflict at the per-subject writer's
+serial point (replayed by the SDK) or 409 ErasureFrontierChanged at the general writer's (not replayed); reads refused
+503 while a removal was pending; a frame's ticket was refused by any removal after it was read. After: no save, read or
+frame of another account, and no other subject of the removing account, was refused once. The only refusals left are
+saves of the subjects being removed (0 to 2 per cell), which must be refused.
+
+**Growth law (before).** The share of other accounts' saves refused is about min(1, removals per second x removal
+duration): 1 x 76 ms = 7.6% against 3.7% measured; 1 x 66 ms = 6.6% against 8.6%; 10 x 31 ms = 31% against 31.4%;
+10 x 302 ms = 100% against 87.9%. It does not depend on which account removes or how many accounts there are, only on
+the whole database's save rate R: refused saves per second = R x min(1, removal rate x removal duration). At 200 saves
+per second, 0.2 removals per second and a 50 ms removal, that is 2 refused saves per second across all accounts, every
+hour. After: 0 at every account count and rate (a save is fenced only on the counters of the entities it writes, which
+a removal elsewhere never moves).
+
+**The cost moved to the removal.** Other saves no longer pause during a removal, so the removal's own database-wide
+check (P9: "the head has not moved since my selection") retries more often: removal p99 at 200 accounts and 10 per
+second was 660 ms before and 9,291 ms after (diagnostic; 35,195 ms in an earlier run of the same cell). Counted
+with `TX2_REMOVAL_TRIES_LOG=1` (`F4`: the same three cells in both modes on this branch's final code):
+
+| Cell | Database-wide (option off): tries per removal, mean / p99 / max | Per account (option on) | Other accounts' saves refused, off / on |
+| --- | --- | --- | --- |
+| 10 accounts, 10 per s | 1.87 / 3 / 3 | 1.66 / 6 / 8 | 663 of 896 (74.0%) / 0 of 936 |
+| 200 accounts, 1 per s | 1.53 / 3 / 3 | 5.20 / 63 / 63 | 36 of 919 (3.9%) / 0 of 929 |
+| 200 accounts, 10 per s | 1.92 / 3 / 3 | 2.36 / 17 / 23 | 743 of 964 (77.1%) / 0 of 921 |
+
+Database-wide, a removal needs at most 3 tries because every other save pauses once its intent is written. Per account,
+nothing pauses, so it retries until no commit of any account lands inside its selection-to-commit window: one removal
+took 63 tries and 15 s in the gateway at 30 saves per second. The retry loop has no bound. This is the open cost of the
+change (section 11, item 3; prediction 8). The option-off column also repeats Table 1 on this branch's own code: with the
+option off it refuses other accounts as the base does.
+
+**One read refused, then fixed.** The first "after" run (`F2-on`, `1e7b0539b`) refused 1 read of 4,564 in the
+200-account, 10 per second cell (503 ErasureFrontierUnavailable): a request's cut was behind the published log or lost
+a race with a newer cut on the same gateway, and was refused after one sync. Since `f06bdba77` such a request is
+retried up to four times on a synced database and served only from a cut that passes the rule (section 3). Table 2 is
+that code: 0 reads refused in 9 cells.
 
 ## 1. What the one removal sequence does today (traced in code)
 
@@ -45,7 +130,7 @@ with each other and with every locked path above.
 | P3 | The journal of a save never holds a removed value in clear: sealed change values become the token or the marker (`envelope/protect`), every read masks a change by its assertion identity | the same per-entity fence (a change describes an assertion of an entity the save writes); masking needs nothing | yes |
 | P4 | A save prepared before a removal and committed after it cannot use a cut that misses that removal (a late native write after a timed-out request included) | per written entity, at Datomic's serial point (the fence function `:triplex.removal/fence-v1`, beside the writer's own checks on the same db-before) | yes |
 | P5 | A derived write (settlement frame, notice, Publish, staging, import replay) never re-materialises a value removed after its inputs were read | **per account read**: the ticket names the accounts it read (`erasureAccounts`); it is refused when a removal published after the ticket touched one of them or touched an entity outside every account. A ticket that names no account keeps today's database-wide rule | yes (gateway, SDK and the shared helper); the settlement code itself is ACT8's (section 7) |
-| P6 | A request uses a cut the native data agrees with (no route serves a restored database before the removals are replayed) | per request: the native removal sequence equals the published one, or is one ahead by the removal being published; behind is synced once, then refused | yes |
+| P6 | A request uses a cut the native data agrees with (no route serves a restored database before the removals are replayed) | per request: the native removal sequence equals the published one, or is one ahead by the removal being published; anything else is retried up to four times on a synced database, then refused | yes |
 | P7 | A read after publication answers the marker (the boundary in TARGETS section 7.1) | unchanged: masking uses the published cut read for that request | unchanged |
 | P8 | A cached decoded copy is not reused after a removal (Reach session references at a pin, the SDK's reach cache) | per entity would be exact (an entity's rows are masked only by removals of that entity); the SDK stamps one sequence per reply, so narrowing needs an SDK change | **not built**: kept database-wide (costs re-sent rows, never a refusal or a wrong answer) |
 | P9 | A removal selects exactly the identities present at its own serial point | the removal's "head has not moved" check | unchanged (database-wide: a removal retries when any account commits in between; that is the removal's own latency, not a refusal of anyone else) |
@@ -75,8 +160,10 @@ its reads through its ticket, and the settlement and Publish code reads a whole 
   accounts is checked database-wide under the database's lock, as today.
 - **Requests while a removal is being applied** use the last published cut: the native removal sequence may equal it
   or be one ahead by the removal named in `pending.json`. A save is then fenced at the serial point; a read is a read
-  that started before that removal's publication (TARGETS section 7.1 allows the old value). A native sequence behind
-  the published one is synced once (another gateway's removal not yet seen by this peer), then refused as today.
+  that started before that removal's publication (TARGETS section 7.1 allows the old value). Anything else (a native
+  sequence behind the published one: another gateway's removal not yet seen by this peer; a cut read that lost a race
+  with a newer one on the same gateway) is retried up to four times on a freshly synced database, then refused as
+  today. Retrying changes only whether a request waits: it is served only from a cut that passes the rule above.
 - **The frontier route** adds `perAccount`, `unscopedSeq`, and with `?account=<a>` that account's `accountSeq`.
 - **Paths without the subject writer** are no longer serialised behind the lock: the general writer has the same fence,
   so a plain save takes the independent path on a moved database whatever `TX2_SUBJECT_SAVE` says. A sealed database on
@@ -113,7 +200,7 @@ Let removal R (global sequence s) remove identities I on entities E (accounts A 
    entity ID, and protected attributes take strings only (`ProtectedTypeUnsupported`), so an ID is never a protected
    value. The enrolment census copies subject IDs. The settlement reads one account's subjects (held source per
    account) and writes that account's documents.
-7. **Restore.** A Datomic copy older than the published log has a lower native removal sequence: after one sync it is
+7. **Restore.** A Datomic copy older than the published log has a lower native removal sequence: on every try it is
    still behind, so every route refuses until `restore-erasure` replays the missing removals (the replay commits them
    in whichever mode the restored copy is in; a copy restored from before the move is moved again afterwards).
 8. **Mixed gateways.** On a moved database the database-wide sequence is -1, which never equals a published sequence
@@ -169,14 +256,33 @@ A Publish that passes both lands beside other accounts' saves and other accounts
 ## 8. Moving an existing database, and back
 
 `POST /v2/db/{db}/removal-per-account` (only with the option on) under the removal lock: refuses while a removal is
-pending, checks the published log against the native sequence, installs three attributes and the fence function, writes
+pending, checks the published log against the native sequence, installs four attributes and the fence function, writes
 the counters derived from the log (parts of 1,000 entities; nothing reads them yet), then one transaction moves the
 global sequence to its own attribute and sets the database-wide one to -1. `{"back": true}` moves it back (the counters
 stay; they are ignored database-wide). Online: removals wait for the move (it holds their lock); a save prepared before
 the move fails its fence once and is sent again; gateways must all run the option before the move (a gateway without it
 refuses every request on a moved database).
 
-**The sealed 1 billion database.** MIGRATION-PLACEHOLDER
+**The sealed 1 billion database.** It was loaded without a removal policy (`demo/EXAMPLES.md` section 14 answers
+"This database has no protected fields"), so today it has no removal log and nothing to move. Removal on request there
+first needs a policy for a new protected field, added by ERASE2's trusted staging at the head (a populated scope refuses
+a public declaration). The move then costs, in this order:
+
+| Step | Transactions | Size on the 1 billion database | Blocks |
+| --- | --- | --- | --- |
+| Install four attributes and the fence function | 1, first use only | schema only | nothing |
+| Counters for entities and accounts that already lost a value | one per 1,000 entities | 0 after a fresh staging (no removal yet); one entity per removed subject later | nothing (no route reads them before the switch) |
+| Switch: global sequence to its own attribute, database-wide one to -1 | 1 | one scope entity | removals wait for it (it holds their lock) |
+
+No index build, no copy, no rewrite of stored rows. Predicted under 5 s at the head of the 1 billion copy (the server
+run times it). Measured on the Mac: 24 to 197 ms on a fresh toy database, with no load during the move. **Online:**
+saves and reads never take the removal lock and keep running. A save in flight at the switch fails its fence once: on
+the per-subject writer as 409 CasConflict, which the SDK replays; on the general writer as 409 ErasureFrontierChanged,
+which the SDK does not replay (the caller sees one refusal). Predicted 0 to 2 such refusals at 200 commits per second,
+once, at the switch. In-process this is gate case "Move per account" (the prepared save is refused once, the next save
+commits); a move under live saves on a stack was not measured. **Order for a fleet:** every gateway runs
+`TX2_REMOVAL_PER_ACCOUNT=1` first (a gateway without it refuses every request on a moved database: the sentinel -1
+never equals a published sequence), then one call to the move route. **Back:** `{"back": true}`, the same way.
 
 ## 9. Gates
 
@@ -190,10 +296,12 @@ All on the Mac, toy size; counts are results, times diagnostic. Evidence under `
   unset and once with it on but the database never moved. Every reply's status and code is identical in all four runs.
   The base is reproducible (both base runs identical after replacing clocks, random removal IDs, hashes and ciphertext);
   this gateway's log, option unset and option on, is identical to the base's in every datom written by saves, removals,
-  frames and reads. **3 datoms differ, all in installed function texts**: the reader-generated argument names inside
-  the commit function (`p1__2400#` against `p1__2516#`) and the per-subject writer function, and the source line
-  numbers stored with that function. They change whenever gateway code that loads before them changes (here the new
-  namespace), as on every branch; their behaviour is the same. Consequence: a database first opened by the base gateway
+  frames and reads. **3 datoms differ in each log, all from installed functions**: the reader-generated argument names
+  inside the commit function (`p1__2400#` against `p1__2516#`) and inside the per-subject writer function, and that
+  function's versioned name, which is a hash of its text. They change whenever gateway code that loads before them
+  changes (here the new namespace), as on every branch; their behaviour is the same. Run on the final code (`G7`, at
+  `aa9aa5e0a`): base against base 0 lines differ, option unset against option on 0, base against this 3 per log, every
+  reply identical in all four. Consequence: a database first opened by the base gateway
   gets its writer functions installed once more by this gateway (one transaction), with or without the option.
 - **Gateway suites** (`selftest`, `group-test`, `ids-test`, `feed-test`, `pinned-test`, `recent-test`,
   `cache-key-test`, `commit-order-test`, `sweep-gates-test`, `trace-test`): 76 tests, 71,170 assertions, the same
@@ -202,7 +310,8 @@ All on the Mac, toy size; counts are results, times diagnostic. Evidence under `
 - **The existing removal regression** (ERASE1/ERASE2's 13 route checks, both writer modes, and the sealed witness):
   REGRESSION-PLACEHOLDER
 
-**(b) The fault measurement with the option on**: section 0, table 2.
+**(b) The fault measurement with the option on**: section 0, table 2 (0 other-account saves refused or replayed; the
+subjects being removed refused 0 to 2 per cell).
 
 **(c) Adversarial cases, each deterministic** (`era2/gate.clj`, in-process: the gateway's own route handler, an
 in-memory Datomic, a file removal authority; a save is paused after its cut was read and its data prepared, the step
@@ -210,7 +319,7 @@ runs, then the save commits). Every case checks that the removed value is never 
 reads, reads pinned before the removal, a Reach session that cached the subject at that pin, journal pages and the feed;
 and that the native data holds no copy of it outside its own subject and journals (unsealed: masking keeps the native
 bytes, as today) or **none at all** (sealed). Database-wide **360 checks, 0 failed**; per account **417 checks, 0
-failed** (G5).
+failed** (G5, and the same on the final code in G7).
 
 | Case | Database-wide (today) | Per account |
 | --- | --- | --- |
@@ -241,7 +350,11 @@ it answers.
 
 **(e) The production exactness gate and the combined check with removals in three accounts at once**: the `three` cell
 of the fault measurement (removals round-robin in three accounts at 10 per second, 7 other accounts saving, reading and
-writing frames): EXACTNESS-PLACEHOLDER
+writing frames): with the option on, 300 of 300 removals completed, 2,499 values checked exact, every removed value
+marked on current reads, and 0 removed values found by the scans of reads pinned before the removals, pinned Reach,
+the feed and the journal pages; other accounts' saves refused 0 of 930.
+The same cell before: exact as well, with 424 of 922 other accounts' saves refused. The production exactness gate
+(`prep1/manage.py production`) was not run on this branch (section 11, item 4).
 
 
 ## 10. Server run (for the day a machine is rented)
@@ -264,12 +377,50 @@ of 176 GB 3 to 12 min, bring-up and staging 3 to 6 min, three cells of 10 min pl
 checks 1 to 3 min each: 40 to 60 min per arm, **80 to 120 min for both arms, USD 1.45 to 2.20** (plus USD 0.45 to 0.90
 for a first build).
 
-PREDICTIONS-PLACEHOLDER
+**Predictions, written before any server run.** Offered per cell: 200 saves per second in 200 other accounts (120,000
+in 600 s), the quiet account at 3.5 per second, the deep account's other subjects at 8, 2 on subjects being removed, 10
+frames per second naming their account. "Refused" counts a save that still failed after the driver's retries (10 ms
+back-off), as on the Mac.
+
+| # | Arm, cell | Prediction | Basis | Shown wrong if |
+| --- | --- | --- | --- | --- |
+| 1 | both arms, control (no removals) | 0 refused saves, reads and frames in every account; exact | Mac controls: 0 | any refusal |
+| 2 | off, 0.2 per second | other accounts: 0.2% to 3% of saves refused (240 to 3,600 of 120,000), frames 1% to 10%, reads 0.1% to 3% | the growth law (section 0): refused share = min(1, removals per second x removal window); window 10 to 60 ms on the server (Mac 30 to 300 ms) | under 0.05% (the database-wide rule would then cost little at the realistic rate) or over 10% |
+| 3 | off, 10 per second | 20% to 90% of other accounts' saves refused; the quiet account fails its bar (p99 over 1.25x and over 50 ms above control) | Mac: 31% and 88% | under 10% |
+| 4 | on, every cell | other accounts: **0** saves refused, 0 CasConflict replays, 0 503 attempts, 0 ErasureFrontierChanged, 0 frames refused, 0 reads refused; the deep account's other subjects: 0 refused | the rule (sections 3 and 4); Mac: 0 in 9 cells | any one: it names a path still guarded database-wide |
+| 5 | on, every cell | refused saves only on the subjects being removed (a save computed before that subject's removal committed and sent after it): under 10% of those saves | Mac: 0 to 3 of 42 to 65 | a refusal on any subject not being removed |
+| 6 | both arms, every cell | exact: 0 wrong values, every removed value marked on every route, 0 copies outside its own subject and journals (none at all when sealed) | Mac: every cell exact | any miss: stop, the rule is wrong |
+| 7 | on, 10 per second | the quiet account meets its bar against its control | no refusals, no lock; the removal's own commits are about 5% of commits | over the bar: the removal's commit load, not refusals, costs other accounts |
+| 8 | on against off, removal latency | higher in arm on: other saves no longer pause, so the removal's own database-wide "head has not moved" check (P9) fails more often. Mean tries = e^(C x w), C = all commits per second (about 225), w = the selection-to-serial-point window: w 5 to 15 ms gives 3 to 30 tries. 0.2 per second: p50 under 300 ms, p99 under 2 s. 10 per second: removals queue on the database's lock if tries x try time exceeds 100 ms | Mac at 30 saves per second: per account mean 1.7 to 5.2 tries, max 63; database-wide at most 3 (section 0) | 10 per second with p99 under 1 s (P9 is then no problem at server rates), or a backlog that grows through the cell (removals starve: P9 must be narrowed before such rates, section 11) |
+| 9 | on, the move | under 5 s at the head of the 1 billion copy; 0 to 2 refused saves at the switch | section 8 | over 60 s, or refusals after the switch |
 
 
 ## 11. Not verified
 
-NOTVERIFIED-PLACEHOLDER
+1. **Nothing ran on a server.** Every time on this page is a Mac time with five other builders in the lab VM:
+   diagnostic only. The counts are results at toy size (10 and 200 accounts, 30 saves per second, 30 s cells).
+2. **The settlement and Publish code still sends tickets without accounts.** The gateway, the SDK
+   (`withDatomicErasureSequence(..., accounts)`) and the shared helper (`withErasure`, `readErasure`, `recheckErasure`
+   with an account) are built, and the fault measurement's frames name their account. ACT8's files
+   (`actv-lazy/join/`) were not edited (section 7 lists the five places). Until they pass the account, real settlement
+   frames and Publish keep today's database-wide ticket rule (a removal in any account refuses them), on a moved
+   database too. Plain saves and reads do not depend on this.
+3. **The removal's own latency rises** (prediction 8). P9 stays database-wide: a removal retries when any commit of any
+   account lands between its selection and its serial point, and with the option on other accounts' saves no longer
+   pause for it. The retry loop has no bound. Narrowing it needs the removal to take its log position at the serial
+   point (today its journal rows carry the position it selected at): a change to the journal entry, not built.
+4. **The production exactness gate** (`prep1/manage.py production`) was not run: it admits only its listed builders,
+   and its database has no removal policy, where this code does nothing (`per-account?` needs a protected database
+   that was moved). The option-off evidence is the paired native log, the gateway suites and the removal regression.
+5. **A move under live saves on a stack** was not measured (in-process only: the prepared save refused once).
+6. **Mixed gateways** (one with the option, one without, on a moved database) were not run: argued from the code (the
+   sentinel -1 never equals a published sequence, so the gateway without the option refuses every request).
+7. **Cached Reach replies (P8)** stay keyed by the database-wide sequence: after any removal a pinned Reach session
+   re-sends whole rows instead of references (the Reach inline/ref columns). A cost, never a refusal or a wrong answer.
+8. **A sealed database on the file key store** keeps the database's lock for every save (its key files are issued under
+   it). Production uses the PostgreSQL authority, whose saves are independent; the sealed cell ran on it.
+9. **The 1 billion move and the server rates** (removal tries at about 225 commits per second, the quiet-account bar)
+   are predictions only (section 10).
 
 ## 12. Files and evidence
 
@@ -279,12 +430,16 @@ NOTVERIFIED-PLACEHOLDER
 | `privacy.clj` | Counters in the cut (option on only); the prepared removal's sequence on an allow-pending cut; `ensure-ticket!`; `verify-data!` on a moved database; the sentinel fence value; account lock directories |
 | `storage.clj` | The fence in a save's data on a moved database; the per-subject writer's expected value |
 | `subject_save.clj` | The per-subject writer accepts the fence in its returned data (option on only) |
-| `erase.clj` | The removal's transaction on a moved database; account locks; `request-cut`; the move route `per-account!` |
+| `erase.clj` | The removal's transaction on a moved database; account locks; `request-cut` (retries up to four times); the move route `per-account!`; the tries log (`TX2_REMOVAL_TRIES_LOG=1`, default off) |
 | `main.clj` | Routing on a moved database: the published cut while a removal is applied, account locks for named tickets, the move route, the frontier's per-account fields |
 | `packages/datomic/src/erasure.ts`, `DatomicClient.ts` | `withDatomicErasureSequence(..., accounts)` sends `erasureAccounts` (absent: unchanged bytes) |
 | `lab/bench/lib/datomic-erasure.ts` | `readErasure`, `recheckErasure`, `withErasure` take an optional account (absent: unchanged) |
-| `lab/experiments/EXP-DX1/stack/up.sh` | `DX_ERASURE_SQL=1` (the PostgreSQL removal authority on a toy stack, a fresh wrapping key kept out of the evidence) and `DX_REMOVAL_PER_ACCOUNT` (both default unset) |
+| `lab/experiments/EXP-DX1/stack/up.sh` | `DX_ERASURE_SQL=1` (the PostgreSQL removal authority on a toy stack, a fresh wrapping key kept out of the evidence), `DX_REMOVAL_PER_ACCOUNT` and `DX_REMOVAL_TRIES_LOG` (all default unset) |
 | `era2/fault.ts`, `era2/fault.sh` | The fault measurement (cells ACCOUNTS:RATE[:sealed|three|restart]; `DX_ERA2_GATEWAY_REF` runs the base gateway) and its adoption mode for the server |
 | `era2/gate.clj`, `era2/paired.clj`, `era2/gate.sh` | The in-process interleavings, the paired native log, the gateway suites |
 | `era2/server.sh` | The server run (written, not run) |
 
+Evidence (private, compressed, under the lab's evidence folder `DX-ERA2/`): `F2-base` (Table 1), `F2-on` (the first
+"after" run, one read refused), `F3-on` (Table 2), `F4-o0` and `F4-o1` (tries), `G7` (paired log, interleavings and
+suites on the final code), `reg-subject`, `reg-general`, `reg-sealed` (the existing removal regression), and the earlier
+`F0`, `F1-base`, `G1` to `G6` runs that shaped the driver and the gates.
