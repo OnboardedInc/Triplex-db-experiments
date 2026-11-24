@@ -154,3 +154,37 @@ Per-subject rolling 6 credits, 90 s cells. The 394 cells use exactly the neighbo
 - **The quiet account keeps Saturday's tape,** so P6 measures the card's quiet subject beside production-shaped neighbours, not a production-shaped quiet account.
 - **The per-subject rule is the card's check, not a product requirement.** It holds on the toys; a gateway that routed some qualifying commit differently would stop a cell.
 - **At 1 billion the 50 and 235 cells meet AGE1's edited subjects rarely:** AGE1 edited 2,000 subjects per account, and the production bands hold 30,000. The AGE1 byte check runs on those it meets.
+
+## The 1 billion shape S card (server-32): assembly fault and fix (DX-CARD1)
+
+The card ran all three parts at `090c189a8`; `--assemble` stopped in `v01/windows.ts` line 16. The assembled card is
+[SCORECARD-1B-production-S.md](SCORECARD-1B-production-S.md) (its evidence links point into the private campaign
+archive).
+
+**The rows.** Nine rows in every production-S loaded cell, one per neighbour account, for example cell `p6-50-loaded`,
+account 2, save `2/27`: tape offset 89,999.99999251067 ms of the 90 s cell, cell start 1,795,477,169,887.094 ms. The
+runner sets `due = start + offset`; at these epochs one floating-point step is 2.4e-4 ms, so the sum rounds to exactly
+`start + 90,000`, the cell's end, and `due < end` failed. All 72 such rows (9 per loaded cell, 8 loaded cells) were
+offered by the runner as scheduled (sender wait at most 115 ms, as for any row offered in the same instant) and
+acknowledged (latency at most 140 ms); none was dropped or offered outside its cell's run.
+
+**Why the tape puts them there.** `w1/field/production.ts` `calibrated` bisects each account's session rate to the
+smallest rate that holds the cell's row target. At that limit a new session has just entered the window from its right
+edge, so every account's last save sits within 1e-4 ms of the end. In shape S that save is one commit just inside the
+cell. In shape R its later rows are spaced `rowSpacingMs` apart and land after the end: 220 to 323 rows per 90 s loaded
+cell lie up to 67 ms past it. The window check correctly refuses those, so **an R card on this tape cannot be assembled
+until the tape keeps every row inside its cell** (a tape change, which would change REAL2's measured R tapes; not made
+here). Saturday's tape cannot do this: its last offer in any cell is at least 20 ms before the end (`windows.test.ts`).
+
+**The rule (`v01/windows.ts`).** A row is placed in its cell and half by its tape offset, which the card proves equals
+`due - start` on the cell clock. Rows whose `due` rounds to the cell end are counted in the cell and its second half,
+and the card lists how many there were per scope. A row whose offset is outside the cell, or whose `due` is not exactly
+`start + offset`, still fails; rows without a tape offset keep the old check.
+
+**Assembling a campaign with a later renderer.** `scorecard.mjs --assemble --commit CAMPAIGN --renderer CHECKED_OUT`
+checks every record against the campaign's commit, requires the renderer to descend from it and to change only assembly
+files (`v01/renderer.ts`), and writes both commits and the changed files into the card. `--platform-tape` is for
+assembling on another platform than the campaign's: the Mac regenerates the Linux campaign's production-S tapes with
+offsets up to 9.2e-10 ms different (Math.log and Math.exp differ in the last bit), so each cell's tape must instead
+hash to the binding written on the campaign's machine before its first offer and match the regeneration in every other
+field, with `ms` within 1e-6 ms and `gap` within 1e-9 s. The card states the largest differences per cell.
