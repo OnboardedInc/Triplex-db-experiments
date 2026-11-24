@@ -196,7 +196,8 @@ container ran the pinned runtime image by ID (`sha256:21a67288007d...`, `tx2-dat
 `on` (per account, head check) or `subject` (per account with the subject check). `ERA3_SOURCE=<checkout>` runs another
 checkout's gateway (the DX-IMP2 composition used the local merge above, with `ERA3_EXTRA_ENV=TX2_IMPORT_WHOLE_SUBJECT=1`).
 
-Evidence (private, outside the repository, under the lab's evidence folder `DX-ERA3/`): `st2-stack`, `st1-stack`,
+Evidence (private, outside the repository, one archive `DX-ERA3/DX-ERA3-2026-11-24.tar.gz` under the lab's evidence
+folder; these are the run folders inside it): `st2-stack`, `st1-stack`,
 `st0-stack` (stacks); `f1-subject` to `f3-subject`, `f4-on`, `f5-on` (the 20,000 schedules); `c1-imp2-subject`,
 `c2-imp2-on` (composition); `p1-patched-subject`, `p2-patched-on`, `p3-patched-subject-d1`, `p4-patched-builder-subject`,
 `p5-patched-builder-on` (the fix); `p0-unpatched-subject-d1`, `d-on`, `d-off`, `s1-subject-d1`, `s2-subject-rest`,
