@@ -12,6 +12,7 @@ import { policyWorld, readDeepWorlds } from "../../../bench/lib/deep-activation.
 import { ids, subjectOf } from "../../../bench/lib/world.ts";
 import { parseOutbox } from "../../../bench/lib/w0-outbox-state.ts";
 import { CURSOR, fact, membership, millis, value, type Controls, type Store } from "./store.ts";
+import { cachedRelease, loadRelease } from "./join/definitions.ts";
 
 export type Format = "w0" | "act2-deep";
 export type Point = { tx: number; validTime: string };
@@ -116,8 +117,10 @@ export function render(
   const activations = c.releases.map((r) => ({ from: r.from, tx: r.tx, release: r.release }));
   const w = c.releases.find((r) => r.id === winner(c, b));
   let output;
-  if (w?.joined && w.document && !W0.RELEASES_BY_HASH.has(w.release)) {
-    const custom = W0.compileRelease(w.document);
+  if (w?.joined && (w.document || w.documentRef) && !W0.RELEASES_BY_HASH.has(w.release)) {
+    // [DX-ACT6] A release by reference evaluates the compiled release loaded by `prefetchWinner` (checked by hash).
+    const custom = w.documentRef ? cachedRelease(w.release) : W0.compileRelease(w.document);
+    assert(custom, "Release definitions were not loaded before evaluation");
     assert.equal(custom.hash, w.release, "Unbound release document");
     output = W0.evaluateWorld(world, custom, b);
   } else output = W0.reconcileWorld(world, activations, b);
@@ -153,6 +156,12 @@ export function evaluate(
     ),
   };
 }
+/** [DX-ACT6] Loads (once per process, by hash) the definitions of the release that wins at `b` when it is stored by
+ * reference; nothing for full documents. */
+export async function prefetchWinner(store: Store, c: Controls, b: Point) {
+  const w = c.releases.find((r) => r.id === winner(c, b));
+  if (w?.documentRef && !cachedRelease(w.release)) await loadRelease(store, w.documentRef, w.tx);
+}
 export async function calculate(
   store: Store,
   format: Format,
@@ -161,6 +170,7 @@ export async function calculate(
   c: Controls,
   latest: Controls,
 ) {
+  await prefetchWinner(store, c, b);
   const [world] = await worldsAt(store, format, [subject], b);
   return evaluate(store, format, world!, b, c, latest);
 }

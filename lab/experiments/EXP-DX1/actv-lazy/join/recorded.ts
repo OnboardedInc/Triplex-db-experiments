@@ -15,6 +15,7 @@ import { Conflict } from "../store.ts";
 import type { Archive } from "./archive.ts";
 import { fillFrame, frameEstimate, type Candidate, type Piece } from "./frames.ts";
 import type { JoinedAccount } from "./account.ts";
+import { ledgerMode, noticeCandidate, readLedgers, type LedgerMode } from "./ledger-parts.ts";
 
 const step = 4;
 assert(width % step === 0);
@@ -33,11 +34,16 @@ type Cursor = {
   // waits for its last part).
   frames?: "bytes";
   part?: number;
+  // [DX-ACT6] Set when the event's ledgers are written in parts (TX2_NOTICE_LEDGER=parts); chosen at an event boundary,
+  // so `part` counts the same units (deliveries, then ledger parts) after a restart.
+  ledger?: "parts";
 };
 /** A byte-framed packet may start and end inside one subject's deliveries (`part`, `tail`). */
 type FramePacket = Packet & { part?: number; tail?: number };
 
-export type NoticeCandidate = Candidate<W0.Delivery> & { ledger: Op[] };
+/** [DX-ACT6] Units are the subject's deliveries, then (ledger in parts) its ledger parts; `deliveries` says where the
+ * deliveries end. `ledger` is the closing piece: the ledger change, or in parts mode the head change. */
+export type NoticeCandidate = Candidate<W0.Delivery | Op> & { ledger: Op[]; deliveries: number };
 /**
  * [DX-ACT4] The next byte-sized notice frame from the cursor `current` and the candidates read ahead from
  * `current.start`: the ops exactly as written and the next cursor. Pure, so the database-free check prices the frames.
@@ -47,7 +53,15 @@ export function noticeFrame(
   prior: Awaited<ReturnType<Documents["row"]>> | undefined,
   current: Cursor,
   candidates: NoticeCandidate[],
-  event: { account: string; position: number; recipe: string; next: string; size: number; erasureSeq?: number },
+  event: {
+    account: string;
+    position: number;
+    recipe: string;
+    next: string;
+    size: number;
+    erasureSeq?: number;
+    ledger?: LedgerMode;
+  },
 ) {
   const part = current.part ?? 0;
   if (part) assert(part <= candidates[0]!.units.length, "A split subject's deliveries moved");
@@ -56,7 +70,9 @@ export function noticeFrame(
       deliveries: W0.Delivery[] = [];
     for (const p of pieces) {
       const c = candidates[p.index]!;
-      deliveries.push(...c.units.slice(p.from, p.to));
+      for (let j = p.from; j < p.to; j++)
+        if (j < c.deliveries) deliveries.push(c.units[j] as W0.Delivery);
+        else ops.push(c.units[j] as Op);
       if (p.close) ops.push(...c.ledger);
     }
     const last = pieces.at(-1);
@@ -92,6 +108,7 @@ export function noticeFrame(
       ...seq,
       frames: "bytes",
       part: tail,
+      ...(event.ledger === "parts" ? { ledger: "parts" as const } : {}),
     };
     ops.push(...db.change(stateKey, prior, next));
     if (packet) ops.push(db.put(packetKey(packet.batch), pack(packet)));
@@ -109,8 +126,12 @@ export class RecordedNotices {
   private activation?: { id: string; subjects: string[] };
   private window?: { key: string; work: Map<string, Awaited<ReturnType<JoinedAccount["notices"]["work"]>>[number]> };
   readonly archive: Archive;
-  constructor(archive: Archive) {
+  /** [DX-ACT6] How new events write ledgers (an event already started keeps its own, named in the cursor). */
+  ledger: LedgerMode;
+  constructor(archive: Archive, ledger: LedgerMode = ledgerMode()) {
     this.archive = archive;
+    this.ledger = ledger;
+    assert(ledger === "whole" || archive.frames === "bytes", "TX2_NOTICE_LEDGER=parts needs TX2_SETTLE_FRAMES=bytes");
   }
 
   private async page(e: Event, start: number, count = step) {
@@ -175,8 +196,9 @@ export class RecordedNotices {
     const ops: Op[] = [],
       deliveries: W0.Delivery[] = [];
     for (const [i, subject] of ids.entries()) {
-      const old = previous.get(key(subject)),
-        before = old ? unpack<W0.ItemState[]>(old.value) : [];
+      const old = previous.get(key(subject));
+      assert(old === undefined || typeof old.value === "string", "A ledger in parts needs byte frames");
+      const before = old ? unpack<W0.ItemState[]>(old.value) : [];
       const result = W0.publish({ items: before, subjects: [], pending: [] }, [
         {
           subject,
@@ -254,17 +276,20 @@ export class RecordedNotices {
     if (this.window?.key !== wkey) this.window = { key: wkey, work: new Map() };
     const known = this.window.work,
       missing = ids.filter((id) => !known.has(id));
-    const key = (subject: string) => "recorded-ledger:" + subject;
+    // [DX-ACT6] Ledgers are read whole (a ledger in parts is joined and checked against its head); the mode is the
+    // cursor's for an event already started, else this writer's.
+    const mode: LedgerMode = (current.start === 0 && !current.part ? this.ledger === "parts" : current.ledger === "parts")
+      ? "parts"
+      : "whole";
     const [previous, fresh] = await Promise.all([
-      db.rows<string>(ids.map(key), at),
+      readLedgers(db, ids, at),
       missing.length ? a.notices.work(e, missing, sourceAt) : [],
     ]);
     for (const [i, id] of missing.entries()) known.set(id, fresh[i]!);
     const items = ids.map((id) => known.get(id)!);
     const candidates = ids.map((subject, i) => {
-      const old = previous.get(key(subject)),
-        before = old ? unpack<W0.ItemState[]>(old.value) : [];
-      const result = W0.publish({ items: before, subjects: [], pending: [] }, [
+      const old = previous.get(subject)!;
+      const result = W0.publish({ items: old.items, subjects: [], pending: [] }, [
         {
           subject,
           release: e.value.nextHash,
@@ -272,11 +297,7 @@ export class RecordedNotices {
           workItems: items[i]!,
         },
       ]);
-      const ledger =
-        canonical(result.state.items) !== canonical(before)
-          ? db.change(key(subject), old, pack(result.state.items))
-          : [];
-      return { subject, units: result.deliveries, closing: ledger.length > 0, ledger } as NoticeCandidate;
+      return noticeCandidate(db, subject, current.event, old, result, mode);
     });
     const { next, ops } = noticeFrame(db, prior, current, candidates, {
       account: a.db.prefix,
@@ -285,6 +306,7 @@ export class RecordedNotices {
       next: hash(e.value),
       size,
       ...(authority ? { erasureSeq: authority.seq } : {}),
+      ledger: mode,
     });
     const ack = await b.write(
       "notice",
@@ -348,6 +370,10 @@ export class RecordedNotices {
       }
     }
     assert(state.entries === entries && state.previous === previous);
+  }
+  /** [DX-ACT6] The recorded packets in order, checked as `packets` checks them, without holding them all. */
+  streamPackets(at: number) {
+    return this.orderedPackets(at);
   }
   async packets(at: number) {
     const recorded: Packet[] = [];

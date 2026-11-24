@@ -11,6 +11,7 @@ import { frameEstimate, windowOf } from "./frames.ts";
 import { largeRelease, parseShape, shapeName } from "./large-release.ts";
 import { evaluateRows } from "./material.ts";
 import { noticeFrame, type Cursor, type NoticeCandidate } from "./recorded.ts";
+import { ledgerMode, noticeCandidate } from "./ledger-parts.ts";
 
 // [DX-ACT4] Why: before any stack runs, drive both byte-framed writers' own frame builders (valuesFrame, noticeFrame:
 // the functions the writers call) over deep toy subjects for each release pair, with the writers' own bound, and prove
@@ -132,13 +133,11 @@ for (const pair of pairs) {
   while (cursor.event === 1) {
     const { end } = windowOf(cursor.start, people, width);
     const ids = worlds.slice(cursor.start, end).map((w) => w.subject);
+    // [DX-ACT6] The notice writer's own candidates (TX2_NOTICE_LEDGER=parts writes a long ledger in parts).
     const candidates = ids.map((subject, j): NoticeCandidate => {
       const { before, r } = published[cursor.start + j]!;
-      const ledger =
-        canonical(r.state.items) !== canonical(before)
-          ? db.change("recorded-ledger:" + subject, before.length ? row("x", "", 0) : undefined, pack(r.state.items))
-          : [];
-      return { subject, units: r.deliveries, closing: ledger.length > 0, ledger };
+      const old = { items: before, head: before.length ? row<string>("x", pack(before), 0) : undefined, parts: [] };
+      return noticeCandidate(db, subject, 1, old, r, ledgerMode());
     });
     const f = noticeFrame(db, cursorRow, cursor, candidates, {
       account: "notice:v1:" + sha + ":",
@@ -146,6 +145,7 @@ for (const pair of pairs) {
       recipe: sha,
       next: sha,
       size: people,
+      ledger: ledgerMode(),
     });
     const e = frameEstimate(f.ops);
     assert(e.fits, "a notice frame over the bound");
