@@ -124,6 +124,33 @@
   (and (integer? offered) (<= 0 offered (:seq state))
        (every? #(<= (bucket-seq state %) offered) (conj (set accounts) unscoped))))
 
+(defn ticket-intent-ops
+  "[DX-ERA3 F1] A ticket naming no account read any account, so at Datomic's serial point it must find no removal
+  declared or committed since it: the global declared sequence equals the ticket. A removal declares itself (moves
+  it) in its first transaction, before it selects or records anything. Tickets naming accounts are held the same way
+  by those accounts' counters in the fence (`fence-op`)."
+  ;; No function literal and no name-generating macro (see entry-entities).
+  [scope input]
+  (if (contains? input "erasureSeq")
+    (if (contains? input "erasureAccounts")
+      []
+      [[:db/cas scope :triplex.scope/removal-intent (get input "erasureSeq") (get input "erasureSeq")]])
+    []))
+
+(defn pending-touches?
+  "[DX-ERA3 F1b] A ticketed write waits (503, as the database-wide rule answers) while a removal is in flight that can
+  reach what it read: always for a ticket naming no account, else when the removal's accounts meet the ticket's or the
+  unscoped account. The serial point enforces the same (`ticket-intent-ops`, the account counters); this answers it
+  early with today's code."
+  [state input]
+  (if (:per-account state)
+    (if (:pending state)
+      (if (contains? input "erasureAccounts")
+        (boolean (some (set (conj (vec (ticket-accounts input)) unscoped)) (entry-buckets (:pending state))))
+        true)
+      false)
+    false))
+
 (defn lock-name [name b] (str name "#removal/" b))
 
 (defn install!
@@ -136,6 +163,10 @@
                 (not (d/entid db :triplex.removal/entity))
                 (conj (schema/attr :triplex.removal/entity :db.type/string :db.unique/identity))
                 (not (d/entid db :triplex.removal/seq)) (conj (schema/attr :triplex.removal/seq :db.type/long))
+                ;; [DX-ERA3 F1] The removal's declaration: the sequence of the latest removal that has declared itself
+                ;; natively (equal to removal-seq, or one ahead while it is in flight), and the accounts it holds.
+                (not (d/entid db :triplex.scope/removal-intent)) (conj (schema/attr :triplex.scope/removal-intent :db.type/long))
+                (not (d/entid db :triplex.scope/removal-held)) (conj (schema/attr :triplex.scope/removal-held :db.type/string))
                 (not (d/entid db fence-ident))
                 (conj {:db/ident fence-ident
                        :db/fn (d/function {:lang :clojure :params '[db version guards] :requires '[[datomic.api :as d]]
