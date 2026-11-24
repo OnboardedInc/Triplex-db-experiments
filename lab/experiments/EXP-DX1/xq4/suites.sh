@@ -6,7 +6,7 @@ set -uo pipefail
 out=${1:?absolute new output directory under /Users}
 [[ $out == /Users/* && ! -e $out ]] || { echo "suites.sh: give a new absolute output directory under /Users" >&2; exit 2; }
 # The lab VM's Docker endpoint comes from the environment (never written here).
-: "${DOCKER_HOST:?set DOCKER_HOST to the lab VM's Docker endpoint}"
+: "${DOCKER_HOST:?set DOCKER_HOST to the lab VM Docker endpoint}"
 repo=$(git rev-parse --show-toplevel)
 mkdir -p "$out"
 cp -R "${XQ4_GATEWAY:-$repo/packages/datomic/gateway}" "$out/gateway"
