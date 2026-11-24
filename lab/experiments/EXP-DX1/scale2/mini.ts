@@ -647,16 +647,18 @@ for (const x of pubs.filter((p) => livePublishers.has(p.a.key) && p.target !== u
   await w.settle(x.target);
   liveWorkers.push({ x, w });
 }
-// 3b. [DX-ACT8] DX_SCALE2_REMOVAL=1: a removal on request between a Publish's read and its commit (after the window and
-// after every account above has settled, so no frame is in flight; every frame and Publish of this run carried the
-// removal ticket all the same). Each step: a protected value is saved (under the publishing account's own names, then
+// 4e. [DX-ACT8] DX_SCALE2_REMOVAL=1: a removal on request between a Publish's read and its commit (after every check of
+// 4a to 4d has passed, so no frame is in flight; every frame and Publish of this run carried the removal ticket all the
+// same). Each step: a protected value is saved (under the publishing account's own names, then
 // under a thin account's), the account publishes a further release (21 forms) with the removal of that value in its
 // `afterRead` hook (once); that Publish must be refused, and the same command offered again must land. Then the account's
 // settlement is asked to settle that release and its outcome recorded (with the database-wide removal sequence the
 // notice recorder refuses an account whose cursor predates any removal: PUBLISH-BESIDE-SAVES.md section 3). The release
-// is not added to the 4d checks, which check every account's releases from before the removal.
+// is not checked against the oracle; afterwards an uninvolved account's recorded notices are read once more and the
+// outcome recorded (with the database-wide sequence a removal anywhere discards every account's recorded notices).
 const removalSteps: Record<string, unknown>[] = [];
-if (REMOVAL) {
+const removalAfter: Record<string, unknown> = {};
+async function removalStep() {
   const thin = accounts.find((a) => a.kind === "thin" && !livePublishers.has(a.key))!;
   const live = liveWorkers.slice(0, 2);
   assert.equal(live.length, 2, "the removal step needs two live publishers");
@@ -692,7 +694,14 @@ if (REMOVAL) {
       firstRefused: first, triesFirst, landed: p.position, read: last?.landed === p.position ? last.read : undefined,
       triesSecond: x.joined.beside.tries - tries0 - triesFirst, settlementAfter: settled });
   }
-  log("removal", { attribute: PROTECTED, steps: removalSteps });
+  const other = liveWorkers[2]!;
+  try {
+    const packets = await other.w.recorder.packets(await other.w.recorder.archive.store.head());
+    removalAfter.uninvolved = { account: other.x.a.key, packets: packets.length };
+  } catch (e) {
+    removalAfter.uninvolved = { account: other.x.a.key, refused: [(e as Error).name, String((e as Error).message).slice(0, 160)].join(": ") };
+  }
+  log("removal", { attribute: PROTECTED, steps: removalSteps, after: removalAfter });
   assert(removalSteps.every((s) => s.firstRefused && s.erasedAt !== undefined), "a Publish whose removal ticket changed in its window was not refused");
 }
 // ---- 4. Checks, one account at a time -------------------------------------------------------------------------------
@@ -807,7 +816,6 @@ if (doPublish) {
       turns: queue?.turnsByKey.get(w.archive.turnKey()) ?? null, live: livePublishers.has(x.a.key), checked: { ...checked, noticesByRelease: undefined },
       enrolCommits: x.enrolCommits, publishBytes: x.publishBytes, publishMs: Math.round(x.publishMs), enrolMs: Math.round(x.enrolMs) });
   }
-  for (const { w } of checkList) await w.close();
   for (const l of late) {
     if (!l.pub) continue;
     const x = l.pub;
@@ -819,6 +827,9 @@ if (doPublish) {
         enrolCommits: x.enrolCommits, enrolMs: Math.round(x.enrolMs) });
     } finally { await w.close(); }
   }
+  // The live accounts' workers stay open through the late accounts' checks for the removal step (4e), which runs last.
+  if (REMOVAL) await removalStep();
+  for (const { w } of checkList) await w.close();
   log("settlement", { accounts: settlement.length, late: settlement.filter((s: any) => s.late).map((s: any) => ({ account: s.account,
     changes: s.checked.changes, notices: s.checked.notices })), perAccount: settlement.filter((s: any) => !s.late).map((s: any) => ({ account: s.account, people: s.people,
     valueFrames: s.values.committed, noticeFrames: s.notices.committed, refused: s.values.refused + s.notices.refused,
@@ -845,7 +856,7 @@ const result = {
   feed: { checked: feedChecked, lagMs: { p50: q(lags, 0.5), p99: q(lags, 0.99) } },
   ids: idRows, sweeps: sweepRows, settlement,
   livePublish,
-  ...(REMOVAL ? { removal: { attribute: PROTECTED, steps: removalSteps } } : {}),
+  ...(REMOVAL ? { removal: { attribute: PROTECTED, steps: removalSteps, after: removalAfter } } : {}),
   late: late.map(({ account, ok, error, pub }) => ({ account, ok, error, enrolCommits: pub?.enrolCommits })),
   sweepGates: { beforeSweeps, afterSweeps, sweptAccounts: sweepRows.length },
   routes: { write: await scanStats(writeUrl), read: await scanStats(readUrl) }, feedPages,
