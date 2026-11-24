@@ -5765,3 +5765,20 @@ Source: product-save-path builder, branch `exp/DX-S2-save-shape-sdk` `4d619a516`
 - Not verified: anything on a server; the product path's own extra cost; a wide save carrying protected values.
 
 **Started** in the freed slot: saves that write two to four owners taking the per-subject writer (task file `OPUS-S3-several-owners.md`).
+
+## 2026-11-24 15:00 EST: import of a whole subject built; a lab VM fault of my making and one not, both fixed
+
+**Import** (branch `exp/DX-IMP2-import-whole-subject` `6a0bb4b9d`, based on `23b7df344`, not merged; page `lab/experiments/EXP-DX1/imp2/WHOLE-SUBJECT.md`; option `TX2_IMPORT_WHOLE_SUBJECT=1`, default off; Mac toy only):
+
+- The save shape page's row 9 was not what today's code does. No lab importer splits a subject; they refuse one too large for their frame. Real faults by writer mode: the v0.1 writer has NO import bound (a 500-fact subject is one commit estimated at 91.8 ms of writer time); the grouped writer refuses anything over about 46 facts with `BulkFrameTooLarge` and names no limit; splitting to fit (the only way through) shows the subject half imported on all six read routes (192 of 1,260 reads, 32 of 42 positions), and a kill after 2 of 4 frames left 90 of 160 facts visible for good.
+- Built: each subject one commit (or several whole subjects in one commit); bound 40,000 µs of the writer's own estimate per import commit (about 200 facts), `TX2_IMPORT_COMMIT_US`; above it the importer refuses with `ImportSubjectTooLarge` and the gateway with 413 `ImportCommitTooLarge` naming the maximum.
+- Per subject as one commit: 160 facts = 345 datoms, 200 KB request, 32.4 ms estimate, forecast hold of the writer at 1 billion about 16.5 ms, quiet-account p99 beside it about 40 ms; 500 facts = 1,025 datoms, 621 KB, 91.8 ms estimate, forecast hold about 41 ms, quiet account about 64 ms (outside 50). Declaring identity bounds turns 344 and 1,024 history lookups into 19.
+- Gates: option off byte-identical (3,532 log datoms) under default and v0.1 writer settings; visibility 624 reads per writer mode, 0 half; 27 kills, 9 lost replies, 28 restarts, final log equal to a control import (4,290 datoms), 0 duplicate history; a live save of the same subject beside the import: one commits, the other gets `CasConflict` and is resent, never merged; Clojure gates 272 assertions on memory and on PostgreSQL.
+- NOT done at its report: the production exactness gate (blocked by the lab VM fault below); removal of a subject that is itself mid-import; the fair-import rerun with its readback assertion; the load1 snapshot importer is not bounded by the option. Builder resumed on exactly these.
+- Server run written: two arms (32-fact frames, 160-fact whole subjects), about 45 minutes. Prediction for 160: 3,500 to 6,000 facts/s; quiet account p99 32 to 48 ms.
+
+**Lab VM faults (14:45 to 14:59):**
+1. Disk fell to 21 GiB. At 14:47 I removed lab VM images unused for over 48 hours and build cache older than 48 hours, and trimmed the VM disk: 27 GiB free. **My mistake:** the image prune also removed two unused BASE images (`node:22.23.2-bookworm-slim`, `python:3.13-slim-bookworm`) that builders' image builds start from.
+2. Separately, name resolution inside the lab VM was not working (the VM's host resolver at 192.168.5.1 did not answer; the Mac itself reached the registry), so the removed images could not be pulled again and one builder's gate failed to build. Cause of the resolver fault not established.
+3. Fixed at 14:59: public resolvers added to the VM's `/etc/resolv.conf` (original kept beside it), both base images pulled again, a container confirmed to resolve names. Docker context still `colima`; Sam's five dev containers up; console on 28580 answering. All six running builders told to rerun anything that failed on an image build or network step since about 14:45.
+- Rule for next time: never prune images with `-a` while builders run; remove named, superseded images only.
