@@ -5,6 +5,8 @@ prefix=${1:?usage: down.sh PREFIX [--volumes]}
 [[ $# == 1 || ($# == 2 && $2 == --volumes) ]] || exit 2
 source "$(dirname "${BASH_SOURCE[0]}")/platform.sh"
 roles=(gw-r gw-w tx pg)
+# [DX-RD4] The read-hold proxy of a test stack shares the read gateway's network; remove it after the gateway.
+if [[ $prefix == tx2-dxrd4-* ]]; then roles=(gw-r hold gw-w tx pg); fi
 if [[ $prefix == tx2-dxprep1-* && ${DX_BARE_METAL:-0} == 1 ]]; then roles=(gw-r gw-w4 gw-w3 gw-w2 gw-w tx pg extract seed-copy); fi
 # [DX-T1] Why: interrupted startup may leave one of the runner's short-lived helpers behind.
 # Rejected: releasing a measurement lease while an owned client or writable volume survives.

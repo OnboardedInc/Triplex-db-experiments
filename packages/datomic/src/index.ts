@@ -30,6 +30,8 @@ export function makeDatomicRuntime(options: {
   readonly recordedJournalReads?: boolean;
   readonly boundedJournalPages?: boolean;
   readonly resolutionTimeoutMs?: number;
+  /** [DX-RD4] A reader built from a receipt: every unpinned read answers at or after its position. */
+  readonly readAtLeast?: import("./readAtLeast.js").ReadAtLeast;
 }): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> {
   const connection = Layer.effect(
     Connection,
@@ -51,7 +53,7 @@ export function makeDatomicRuntime(options: {
     Effect.gen(function* () {
       const client = yield* Connection;
       const runtime = yield* TripleStoreRuntime;
-      return makeDatomicQueryExecutor(client, runtime.scope);
+      return makeDatomicQueryExecutor(client, runtime.scope, options);
     }),
   ).pipe(Layer.provide(connection));
   return Runtime.define({ name: "datomic", storage, queries }) as RuntimeDefinition<
@@ -70,7 +72,8 @@ export {
 } from "./DatomicStorageAdapter.js";
 export { makeDatomicQueryExecutor } from "./DatomicQueryExecutor.js";
 
-export { DatomicBasisNotAvailable, DatomicLayoutUnsupported } from "./readErrors.js";
+export { DatomicBasisNotAvailable, DatomicLayoutUnsupported, DatomicAtLeastTimeout } from "./readErrors.js";
+export { ReadAtLeast, type ReadAtLeastRequest } from "./readAtLeast.js";
 
 export { sweepRows, decodeSweepRows, type SweepRow } from "./sweepRows.js";
 export { acceptLoaderPositionRows, loaderPositionRowsAccepted } from "./loaderPositionRows.js";

@@ -26,6 +26,7 @@ import { historyIdentityBounds } from "./identityRange.js";
 import { enabledFastPaths, fastPathEnabled } from "./fastPaths.js";
 import { largeRequestBody, encodeLargeRequest } from "./requestEncoding.js";
 import { protectWrite } from "./protectedWrite.js";
+import { checkAtLeastRequest, type ReadAtLeastRequest } from "./readAtLeast.js";
 import http from "node:http";
 import { stringifyExact, stringifyNativeExact, validateTagged, type TaggedValue } from "./codec.js";
 import {
@@ -90,6 +91,9 @@ export interface DatomicBasis {
   position: TaggedValue;
   recordedAt: null;
   schemaHash: string;
+  /** [DX-RD4] Present only when the call asked for at least a position: the echo and the gateway's wait. */
+  atLeast?: number;
+  atLeastWaitMicros?: number;
 }
 
 export interface DatomicLogPage {
@@ -159,6 +163,18 @@ type ReadWireSample = {
   echo: string | string[] | undefined;
 };
 
+// [DX-RD4] The body fields of an at-least read, and the check of its answer.
+export const atLeastBody = (atLeast: ReadAtLeastRequest) => ({
+  atLeastPosition: checkAtLeastRequest(atLeast).position,
+  ...(atLeast.waitMs === undefined ? {} : { basisWaitMs: atLeast.waitMs }),
+});
+export const checkAtLeastAnswer = (atLeast: ReadAtLeastRequest, echo: unknown, position: number) => {
+  if (echo !== atLeast.position)
+    throw new TypeError("The gateway did not confirm the at-least read (it predates the parameter)");
+  if (!(position >= atLeast.position))
+    throw new TypeError(`The gateway answered at position ${position}, before the at-least position ${atLeast.position}`);
+};
+
 export class DatomicClient {
   // [DX-B2-N3] Why: opt-in transport observations measure real calls without a second HTTP request.
   // Rejected: inferring gateway CPU or transact time from client wall latency.
@@ -203,6 +219,8 @@ export class DatomicClient {
   reachSession = randomUUID();
   readonly reachCache: ByteCache<CachedEntity>;
   private readonly reachReplySequence = new WeakMap<object, number | null>();
+  // [DX-RD4] The gateway's echo of an at-least read whose body is not a map (reach), keyed by the parsed reply.
+  private readonly atLeastEcho = new WeakMap<object, number>();
   private readonly reachSequence = new Map<string, number>();
   private readonly reachStamps = new WeakMap<
     CachedEntity,
@@ -529,6 +547,9 @@ export class DatomicClient {
                   parsed: origin + performance.now(), reusedSocket: req.reusedSocket, responseBytes: size,
                   echo: res.headers["x-triplex-read-profile"] });
               }
+              const atLeastHeader = res.headers["x-tx2-at-least"];
+              if (typeof atLeastHeader === "string" && data && typeof data === "object")
+                this.atLeastEcho.set(data, Number(atLeastHeader));
               const erasureHead = res.headers["x-triplex-erasure-seq"];
               if (
                 erasureHead !== undefined &&
@@ -717,9 +738,13 @@ export class DatomicClient {
     basis: ResolvedTemporalBasis,
     rowPage = false,
     gzipRows = false,
+    atLeast?: ReadAtLeastRequest,
   ) {
+    // [DX-RD4] Why: an unpinned subject pull answers at the gateway's head; a reader holding a receipt asks for at least it.
+    if (atLeast && (basis.recordedPosition !== undefined || basis.recordedAt !== undefined))
+      throw new TypeError("An at-least pull cannot also be pinned");
     return tracedRequest("read", "client.reach", {}, () =>
-      this.reachEntitiesTraced(db, roots, basis, rowPage, gzipRows),
+      this.reachEntitiesTraced(db, roots, basis, rowPage, gzipRows, atLeast),
     );
   }
   private async reachEntitiesTraced(
@@ -728,6 +753,7 @@ export class DatomicClient {
     basis: ResolvedTemporalBasis,
     rowPage: boolean,
     gzipRows: boolean,
+    atLeast?: ReadAtLeastRequest,
   ) {
     const older = [...this.reachInflight];
     let ingested!: () => void;
@@ -736,7 +762,7 @@ export class DatomicClient {
     });
     this.reachInflight.add(ready);
     try {
-      return await this.fetchReachEntities(db, roots, basis, rowPage, gzipRows, older, ingested);
+      return await this.fetchReachEntities(db, roots, basis, rowPage, gzipRows, older, ingested, atLeast);
     } finally {
       ingested();
       this.reachInflight.delete(ready);
@@ -752,6 +778,7 @@ export class DatomicClient {
     gzipRows: boolean,
     older: readonly Promise<void>[],
     ingested: () => void,
+    atLeast?: ReadAtLeastRequest,
   ) {
     const session = this.reachSessionAt(db, basis);
     const page = async (route: string, input: Record<string, unknown>) => {
@@ -763,12 +790,13 @@ export class DatomicClient {
       return {
         response: gzipRows ? decodeReachPage(wire, this.maxResponseBytes) : (wire as ReachWire),
         sequence: this.reachReplySequence.get(wire),
+        echo: this.atLeastEcho.get(wire),
       };
     };
     let requests = 0;
     for (let attempt = 0; attempt < 2; attempt++) {
       requests++;
-      const { response, sequence } = await page(
+      const { response, sequence, echo } = await page(
         `/v2/db/${db}/${roots.length === 1 ? "reach" : "reach-many"}`,
         {
           ...(roots.length === 1 ? { root: roots[0] } : { roots }),
@@ -776,6 +804,7 @@ export class DatomicClient {
           ...(rowPage ? { rowPage: true } : {}),
           session,
           ...(this.forceFullReach || attempt === 1 ? { full: true } : {}),
+          ...(atLeast ? atLeastBody(atLeast) : {}),
         },
       );
       // [DX-ERASE1] Why: a delayed response cannot carry the cache back across an observed frontier.
@@ -801,6 +830,7 @@ export class DatomicClient {
           response.closures.length !== roots.length
         )
           throw new TypeError("Reach response basis/shape mismatch");
+        if (atLeast) checkAtLeastAnswer(atLeast, echo, response.position);
         const prefix = `${db}\0`;
         // [DX-INT1] Why: historical sessions keep their revision keys and guarded references still verify the native cut.
         // Rejected: letting a revision match override the erasure sequence.
@@ -1047,14 +1077,23 @@ export class DatomicClient {
   async begin(
     db: string,
     basis?: ResolvedTemporalBasis,
+    atLeast?: ReadAtLeastRequest,
   ): Promise<{ handle: string; position: number }> {
-    const response = await this.request<{ handle: string; position: TaggedValue }>(
+    // [DX-RD4] Why: an unpinned snapshot is a head the reader resolves; at least its receipt's position when it holds one.
+    // Rejected: sending it with a pinned basis (the gateway refuses that combination).
+    if (atLeast && (basis?.recordedPosition !== undefined || basis?.recordedAt !== undefined))
+      throw new TypeError("An at-least snapshot cannot also be pinned");
+    const response = await this.request<{ handle: string; position: TaggedValue; atLeast?: number }>(
       "POST",
       `/v1/db/${db}/snapshot`,
-      basis === undefined ? {} : { basis },
+      {
+        ...(basis === undefined ? {} : { basis }),
+        ...(atLeast === undefined ? {} : atLeastBody(atLeast)),
+      },
     );
     const position = Number(validateTagged(response.position).v);
     if (!Number.isSafeInteger(position) || position < 0) throw new RangeError("Unsafe position");
+    if (atLeast) checkAtLeastAnswer(atLeast, response.atLeast, position);
     return { handle: response.handle, position };
   }
   async beginCommand(
@@ -1121,7 +1160,10 @@ export class DatomicClient {
     db: string,
     input: Record<string, unknown>,
   ): Promise<readonly TripleRow[]> {
-    const response = await this.request<{ rows: WireRow[] }>("POST", `/v1/db/${db}/read`, input);
+    const response = await this.request<{ rows: WireRow[]; atLeast?: number }>("POST", `/v1/db/${db}/read`, input);
+    // [DX-RD4] A row read that asked for at least a position must carry the gateway's confirmation.
+    if (input["atLeastPosition"] !== undefined && response.atLeast !== input["atLeastPosition"])
+      throw new TypeError("The gateway did not confirm the at-least read (it predates the parameter)");
     const rows = traceSync("client.rows-decode", () => response.rows.map(decodeRow));
     if (!input["staged"])
       for (const row of rows) for (const observe of this.rowObservers) observe(db, row);
@@ -1542,10 +1584,17 @@ export class DatomicClient {
       throw new TypeError("Datomic log response checkpoint mismatch");
     return page;
   }
-  async basis(db: string): Promise<DatomicBasis> {
+  // [DX-RD4] Why: `atLeast` makes the head answered at least a receipt's position; the gateway waits on its peer.
+  // Rejected: trusting a gateway that ignores the parameter (an old gateway would answer early without saying so).
+  async basis(db: string, atLeast?: ReadAtLeastRequest): Promise<DatomicBasis> {
     if (!/^(?:s-[a-f0-9]{32}|s2-[A-Za-z0-9_-]+)$/.test(db))
       throw new TypeError("Invalid Datomic database name");
-    const result = await this.request<DatomicBasis>("GET", `/v1/db/${db}/basis`);
-    return { ...result, t: validateTagged(result.t), position: validateTagged(result.position) };
+    const query = atLeast
+      ? `?atLeast=${checkAtLeastRequest(atLeast).position}${atLeast.waitMs === undefined ? "" : `&waitMs=${atLeast.waitMs}`}`
+      : "";
+    const result = await this.request<DatomicBasis>("GET", `/v1/db/${db}/basis${query}`);
+    const basis = { ...result, t: validateTagged(result.t), position: validateTagged(result.position) };
+    if (atLeast) checkAtLeastAnswer(atLeast, result.atLeast, Number(basis.position.v));
+    return basis;
   }
 }

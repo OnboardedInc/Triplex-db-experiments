@@ -154,7 +154,8 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // [DX-LOAD2] Why: the import-neighbours builder gates its importer change on its own diagnostic slot.
   const importNeighbours = holder === "DX-LOAD2" && diagnostic && mode === "load-fair" && combined === undefined;
   // [DX-ACT3] Why: the large-release builder runs the held Publish campaign on the same toy stack, in its own slot.
-  const heldPublish = holder === "DX-ACT3" && diagnostic && mode === "load-fair" && combined === undefined &&
+  // [DX-RD4] The at-least reads builder runs the same held campaign (DX_ACT3_AT_LEAST) in its own slot.
+  const heldPublish = ["DX-ACT3", "DX-RD4"].includes(holder) && diagnostic && mode === "load-fair" && combined === undefined &&
     process.env.DX_ACT3_HELD === "1";
   // [DX-ACT4] Why: the settlement-frames builder runs its toy gate (and the held Publish campaign) on the same stack.
   const settleFrames = holder === "DX-ACT4" && diagnostic && mode === "load-fair" && combined === undefined &&
