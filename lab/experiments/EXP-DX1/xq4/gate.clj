@@ -315,7 +315,7 @@
       (if small?
         (recur cursor pages ids projected (inc guard) (update bounds "entries" #(min 1000000 (* 10 %))) (inc raises))
       (let [b (:body r) ids (into ids (get b "ids" [])) projected (merge projected (get b "projected" {}))
-            pages (conj pages (assoc (select-keys b ["stopped" "examined" "segmentsLoaded" "count" "countExact" "position" "indexEpoch" "entityReads" "indexOnly" "queryMicros"]) "gcMs" gc))]
+            pages (conj pages (assoc (select-keys b ["stopped" "examined" "segmentsLoaded" "count" "countExact" "position" "indexEpoch" "entityReads" "indexOnly" "queryMicros" "queryCpuMicros"]) "gcMs" gc))]
         (if (and (get b "next") (< guard 100000))
           (recur (get b "next") pages ids projected (inc guard) bounds raises)
           {:ids ids :projected projected :last b :pages (count pages) :stops (frequencies (map #(get % "stopped") pages))
@@ -742,7 +742,7 @@
         heavy (fn [i] (fn [] (let [t0 (System/nanoTime) g0 (gc-ms)
                                    r (route name "v2" "find" (assoc q "account" (nth accounts (mod i 3)) "bounds" {"entries" 1000000 "ms" 50 "segments" 4096}))]
                                {:status (:status r) :code (get-in r [:body "code"]) :micros (get-in r [:body "queryMicros"])
-                                :segments (get-in r [:body "segmentsLoaded"]) :gcMs (- (gc-ms) g0)
+                                :segments (get-in r [:body "segmentsLoaded"]) :cpuMicros (get-in r [:body "queryCpuMicros"]) :gcMs (- (gc-ms) g0)
                                 :wallMs (/ (- (System/nanoTime) t0) 1e6)})))
         reads (future (vec (for [i (range 200)]
                              (:status (route name "v1" "read" {"entityIds" [(subj "acc-b" i)] "basis" {"recordedPosition" (head name conn)}})))))
@@ -753,7 +753,7 @@
                    :pagedByTime {:count (get (:last timed) "count") :pages (:pages timed) :stops (:stops timed)}
                    :concurrent (frequencies (map (juxt :status :code) outcomes))
                    :maxQueryMicrosAnswered (reduce max 0 (keep :micros outcomes))
-                   :answered (vec (sort-by :micros (map #(select-keys % [:micros :gcMs :segments :wallMs]) (filter :micros outcomes))))
+                   :answered (vec (sort-by :micros (map #(select-keys % [:micros :cpuMicros :gcMs :segments :wallMs]) (filter :micros outcomes))))
                    ;; GC attribution: the request's time less the collectors' time during it (a pause stops every thread).
                    :maxAnsweredMicrosLessGc (reduce max 0 (keep #(when (:micros %) (- (:micros %) (* 1000 (:gcMs %)))) outcomes))
                    :timedPages {:bound-ms 1 :pages (count (:pageList timed))
@@ -763,7 +763,7 @@
                                 :over11ms (count (filter #(> (get % "queryMicros" 0) 11000) (:pageList timed)))
                                 ;; The pages that ran past their bound by more than 2 ms, with what they read.
                                 :slowPages (vec (for [pg (:pageList timed) :when (> (get pg "queryMicros" 0) 3000)]
-                                                  (select-keys pg ["queryMicros" "gcMs" "segmentsLoaded" "examined" "stopped"])))
+                                                  (select-keys pg ["queryMicros" "queryCpuMicros" "gcMs" "segmentsLoaded" "examined" "stopped"])))
                                 :segmentsLoadedPerPage (frequencies (map #(get % "segmentsLoaded") (:pageList timed)))}
                    :gcMsDuringPhase (- (gc-ms) gc-start)
                    :pinnedReadsDuring (frequencies @reads)

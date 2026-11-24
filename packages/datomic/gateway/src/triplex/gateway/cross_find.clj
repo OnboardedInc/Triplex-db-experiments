@@ -703,6 +703,9 @@
       (ids/admitted account wait-ms [:crossFind :busy]
         (fn []
         (let [started (System/nanoTime)
+              ;; This thread's CPU time beside the wall time: a page over its bound with little CPU was not running.
+              cpu-bean (java.lang.management.ManagementFactory/getThreadMXBean)
+              cpu0 (.getCurrentThreadCpuTime cpu-bean)
               deadline (+ started (* wait-ms 1000000))
               confirm (fn [c p] (aset work 1 (inc (aget work 1))) (entry-ok? view c p))
               ctx {:view view :ix-a ix-a :work work :entries (get limits "entries") :deadline deadline :token token
@@ -804,6 +807,7 @@
                               {:by "entity" :direction (if desc? "desc" "asc")})
                      :examined (aget work 0) :entityReads (aget work 1) :indexOnly (not needs-entity?)
                      :segmentsLoaded (segment-loads @reads) :queryMicros micros
+                     :queryCpuMicros (quot (- (.getCurrentThreadCpuTime cpu-bean) cpu0) 1000)
                      :queueMicros (quot (- started queued) 1000)
                      :stopped @stopped
                      :next (when more?

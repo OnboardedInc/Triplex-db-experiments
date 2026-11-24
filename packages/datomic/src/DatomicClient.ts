@@ -161,6 +161,11 @@ export interface CrossIndexAnswer {
   readonly matched?: number;
   readonly examined: number;
   readonly segmentsLoaded: number;
+  readonly entityReads?: number;
+  readonly indexOnly?: boolean;
+  readonly queryMicros?: number;
+  readonly queryCpuMicros?: number;
+  readonly queueMicros?: number;
   readonly stopped: "end" | "limit" | "entries" | "time" | "segments";
   readonly next: string | null;
 }
