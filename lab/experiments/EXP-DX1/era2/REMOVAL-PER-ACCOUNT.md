@@ -697,3 +697,8 @@ earlier removals and the Mac's other load (five builders); the restart cell incl
 4. **The worst-case time of 40 s** is the sum of the gateway's own timeouts, not a measurement; measured client time
    to remove: p99 85 ms to 4.3 s (subject check, toy), plus the restart cell's 27.6 s.
 5. **The ERASE1 regression** was not rerun on a pinned image (its harness picks the newest recorded build).
+6. **A kill at every step** is in-process: the gateway's step throws after the intent, after the guard, after the
+   native commit and at publication, and a later request resumes the removal. A gateway process killed on a stack
+   was not run (the stack cells restart the transactor only).
+7. **Code state of the evidence**: the gateway code is unchanged since `5f1fb905a`; `G10` ran at `5f1fb905a`, `G11`
+   and the `F5`/`F6` cells at `e3f2b959f` (driver and gate changes only).
