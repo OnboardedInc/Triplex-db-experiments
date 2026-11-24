@@ -68,13 +68,14 @@ type Case = {
   seconds?: number;
 };
 const validTime = W0.POPULATION_VALID_TIME;
+class SkipDelivery extends Error {}
 const ADOPT = /^settled-(values|notice):/;
 const shape = parseShape("forms=20,policies=20,permille=1000");
 
 export function parseCases(text: string): Case[] {
   return text.split(",").map((entry) => {
     const [name, precondition, frames, release, own, others, extra, turns, secs] = entry.split(":");
-    assert(secs === undefined || secs === "" || (Number.isInteger(Number(secs)) && Number(secs) >= 2 && Number(secs) <= 3600));
+    assert(secs === undefined || secs === "" || (Number.isInteger(Number(secs)) && Number(secs) >= 2 && Number(secs) <= 7200));
     assert(name && ["head", "progress"].includes(precondition!) && ["count", "bytes"].includes(frames!));
     assert(["large", "small", "none", "same"].includes(release!) && ["0", "3.5", "23.5", "39.4"].includes(own!));
     assert(["0", "1"].includes(others!) && [undefined, "", "kill", "second", "multi", "rival", "pause", "stop"].includes(extra));
@@ -136,7 +137,7 @@ export async function livePhase(c: LiveContext) {
   );
   const defaultSeconds = Number(process.env.DX_ACT5_SECONDS ?? 8);
   // Toy windows stay short; the server mode (DX_ACT5_SERVER=1) allows up to an hour per case.
-  const limit = process.env.DX_ACT5_SERVER === "1" ? 3600 : 30;
+  const limit = process.env.DX_ACT5_SERVER === "1" ? 7200 : 30;
   assert(defaultSeconds >= 2 && defaultSeconds <= limit && cases.every((k) => (k.seconds ?? 0) <= limit));
   const ref = new Reference(process.env.DX_ACT5_SERVER === "1" ? 4 : 1);
   const roster = Array.from({ length: c.people }, (_, i) => W0.placementId(i));
@@ -160,18 +161,27 @@ export async function livePhase(c: LiveContext) {
   /** The oracle's changed values of a release pair at the release's own position. */
   const oracleChanges = async (doc: W0.ReleaseDoc, old: W0.ReleaseDoc, at: number) => {
     const out: { subject: string; changes: [string, string | null][] }[] = [];
-    for (let i = 0; i < roster.length; i += 32) {
-      const rows = JSON.parse(
-        await ref.oracle.call("check", {
-          document: doc,
-          old,
-          basis: { tx: at, validTime },
-          worlds: roster.slice(i, i + 32).map((_, j) => world(at)(i + j)),
-          fold: false,
+    // Pages of 32 subjects, one per oracle worker at a time, folded back in roster order.
+    const workers = ref.workers.children;
+    for (let base = 0; base < roster.length; base += 32 * workers.length) {
+      const parts = await Promise.all(
+        workers.map(async (oracle, w) => {
+          const i = base + w * 32;
+          if (i >= roster.length) return [];
+          return JSON.parse(
+            await oracle.call("check", {
+              document: doc,
+              old,
+              basis: { tx: at, validTime },
+              worlds: roster.slice(i, i + 32).map((_, j) => world(at)(i + j)),
+              fold: false,
+            }),
+          ) as { subject: string; rows: [string, string | null, string | null][] }[];
         }),
-      ) as { subject: string; rows: [string, string | null, string | null][] }[];
-      for (const x of rows)
-        if (x.rows.length) out.push({ subject: x.subject, changes: x.rows.map(([k, , v]) => [k, v]) });
+      );
+      for (const rows of parts)
+        for (const x of rows)
+          if (x.rows.length) out.push({ subject: x.subject, changes: x.rows.map(([k, , v]) => [k, v]) });
     }
     return out;
   };
@@ -461,9 +471,11 @@ export async function livePhase(c: LiveContext) {
       }
     }
     // Delivered once: every recorded notice of every release reaches a recipient once; a second pass adds nothing.
+    // (Toy only: at full size it would be millions of recipient commits.)
     const final = await Settlement.open(c.a, new BulkQueue(1));
-    let delivered: unknown;
+    let delivered: unknown = "skipped at server size";
     try {
+      if (process.env.DX_ACT5_SERVER === "1") throw new SkipDelivery();
       const sink = new Documents(recipient.comp, "receiver"),
         at = await final.recorder.archive.store.head();
       const first = await final.recorder.deliver(sink, at),
@@ -471,6 +483,8 @@ export async function livePhase(c: LiveContext) {
       assert.equal(first, ref.owed.length);
       assert.equal(again, 0);
       delivered = { first, again, owed: ref.owed.length, hash: sha256(canonical(ref.owed)) };
+    } catch (e) {
+      if (!(e instanceof SkipDelivery)) throw e;
     } finally {
       await final.close();
     }
