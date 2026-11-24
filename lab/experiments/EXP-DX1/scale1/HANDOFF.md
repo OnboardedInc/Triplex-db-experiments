@@ -3,7 +3,7 @@
 Server 2 accrued about USD 49.51 through 2026-11-21 15:55 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-**State at 02:55 UTC on 2026-11-24 (Server 2's last evening).** Server 2 has cost about USD 113.8 (104.4 h at USD 1.09/hour since 2026-11-19 18:30 UTC). It must be deleted by 04:30 UTC, with evidence collection starting by 04:00 UTC. The last arm (random subjects with 6 and 12 read permits) finished at 02:51 UTC. The queue is empty and the server is being deleted.
+**State at 02:55 UTC on 2026-11-24 (Server 2 deleted).** The last arm (random subjects with 6 and 12 read permits) finished at 02:51 UTC. **Server 2 was deleted at 02:53:08 UTC (reason "queue empty"); Latitude returns 404 for it. Final cost USD 113.78 (104.38 h).** All four rentals are now deleted, for USD 247.62 in total.
 
 Runs finished tonight (seven), each published with its predictions and its evidence on the Mac (checked by SHA-256 on both sides):
 
