@@ -72,7 +72,15 @@ export const refusalSentences: Record<string, string> = {
   AccountRequired: "Name one account. Every question across subjects is asked inside one account.",
   InvalidValue: "One of the values is not in the form the store takes (see the message).",
   UnsupportedOperation:
-    "The slow exact route answers: is, is one of, between, starts with, has a value, has no value; all conditions together, at most 8; values of text, reference, integer, number, date or yes/no.",
+    "The slow exact route answers: is, is not, is one of, between, starts with, contains, has a value, has no value, and \"has related\" (one level); all conditions together or up to 4 \"any of\" groups, at most 8 conditions in all; values of text, reference, integer, number, date or yes/no.",
+  NestedRelatedUnsupported:
+    "A condition on related entities cannot itself ask about their related entities: one level only. Ask the inner question first, or ask it from the other kind.",
+  ReverseLinkUnsupported:
+    "Finding the entities that point at each subject needs an index. Ask the reverse question instead: sweep the kind that holds the reference, with a \"has related\" condition through that reference.",
+  OrderedPagingNeedsIndex:
+    "The slow route reads every entity once, so it can give the top N (up to 1,000) in an order, but not pages in that order beyond them; pages in value order are the index route's (find), which is a separate branch.",
+  RelatedLimitExceeded: "One entity has more than 1,000 related entities of that kind; the store refuses rather than count part of them.",
+  ContainsValueTooLong: "A value of that attribute is longer than 65,536 characters; \"contains\" searches whole values only, so the store refuses rather than search part of one.",
   InteriorPosition:
     "That position is inside a group of commits written together. Ask at the group's own position (the store names it as the maximum).",
   IrregularScope: "The store cannot resolve a record time on this scope. Ask at a position instead.",
@@ -436,9 +444,15 @@ const TYPE_ALIASES: Record<string, ValueType> = {
 };
 export type Scalar = string | number | boolean;
 export type TypedValue = { type: string; value: Scalar };
+export type RelatedInput = { prefix: string; shape?: string | undefined; link?: "key" | { ref: string } | undefined };
 export type ConditionInput = {
-  attribute: string;
-  op: "eq" | "in" | "range" | "prefix" | "exists" | "missing";
+  attribute?: string | undefined;
+  op: "eq" | "ne" | "in" | "range" | "prefix" | "contains" | "exists" | "missing" | "has";
+  caseInsensitive?: boolean | undefined;
+  /** [DX-XQ9] For has: the related kind and how it is tied, its own conditions, and the quantifier. */
+  related?: RelatedInput | undefined;
+  where?: ConditionInput[] | undefined;
+  quantifier?: "some" | "none" | { op: "gte" | "gt" | "lte" | "lt" | "eq"; value: number } | undefined;
   value?: Scalar | TypedValue | undefined;
   values?: (Scalar | TypedValue)[] | undefined;
   from?: Scalar | TypedValue | undefined;
@@ -487,8 +501,32 @@ export function storeValue(input: Scalar | TypedValue, typeName?: string): Sweep
 
 /** A condition in the store's grammar (the find route's, which the sweep takes unchanged). */
 export function storeCondition(c: ConditionInput): SweepCondition {
+  if (c.op === "has") {
+    if (!c.related?.prefix) throw new DemoError("InvalidInput", `"has related" needs related.prefix, the related kind (e.g. i9:)`);
+    const related = {
+      prefix: c.related.prefix,
+      ...(c.related.shape ? { shape: c.related.shape } : {}),
+      link: c.related.link ?? "key",
+    } as const;
+    return {
+      op: "has",
+      related,
+      ...(c.where?.length ? { where: c.where.map((x) => storeCondition(x) as Exclude<SweepCondition, { op: "has" }>) } : {}),
+      ...(c.quantifier !== undefined ? { quantifier: c.quantifier } : {}),
+    };
+  }
+  if (!c.attribute) throw new DemoError("InvalidInput", `${c.op} needs an attribute`);
   const attribute = c.attribute;
   switch (c.op) {
+    case "ne":
+      if (c.value === undefined) throw new DemoError("InvalidInput", `${attribute}: "is not" needs a value`);
+      return { attribute, op: "ne", value: storeValue(c.value, c.type) };
+    case "contains":
+      if (c.value === undefined) throw new DemoError("InvalidInput", `${attribute}: "contains" needs a text value`);
+      return {
+        attribute, op: "contains", value: { type: "string", value: String(isTyped(c.value) ? c.value.value : c.value) },
+        ...(c.caseInsensitive ? { caseInsensitive: true } : {}),
+      };
     case "eq":
       if (c.value === undefined) throw new DemoError("InvalidInput", `${attribute}: "is" needs a value`);
       return { attribute, op: "eq", value: storeValue(c.value, c.type) };
@@ -513,7 +551,7 @@ export function storeCondition(c: ConditionInput): SweepCondition {
     case "exists": case "missing":
       return { attribute, op: c.op };
   }
-  throw new DemoError("InvalidInput", `op is one of eq, in, range, prefix, exists, missing (not ${String((c as { op: unknown }).op)})`);
+  throw new DemoError("InvalidInput", `op is one of eq, ne, in, range, prefix, contains, exists, missing, has (not ${String((c as { op: unknown }).op)})`);
 }
 
 const plainOf = (v: { type: string; value: unknown } | null) =>
@@ -523,7 +561,11 @@ export type AskInput = {
   account: string | number;
   kind: Kind;
   where?: ConditionInput[] | undefined;
-  result?: "list" | "count" | "countByValue" | undefined;
+  /** [DX-XQ9] 1 to 4 groups; the entity matches when every where condition and at least one group hold. */
+  anyOf?: ConditionInput[][] | undefined;
+  result?: "list" | "count" | "countByValue" | "top" | "sum" | undefined;
+  /** [DX-XQ9] For top: the order; `limit` is N. */
+  order?: { by: string; type: string; direction?: "asc" | "desc" | undefined } | undefined;
   columns?: string[] | undefined;
   of?: string | undefined;
   basis?: Basis | undefined;
@@ -555,13 +597,21 @@ export function askAcross(demo: Demo, input: AskInput) {
     const limit = Math.min(Math.max(input.limit ?? 50, 1), 1000);
     if (input.cursor && input.basis) throw new DemoError("InvalidInput", "A cursor keeps its first page's position and valid time; leave basis out when you pass cursor");
     const where = (input.where ?? []).map(storeCondition);
+    const anyOf = input.anyOf?.map((g) => g.map(storeCondition));
     const basis = input.cursor ? undefined : await resolveBasis(demo, input.basis ?? {});
+    if (result === "top" && !input.order) throw new DemoError("InvalidInput", "top needs order: { by, type, direction }");
+    if (result === "sum" && !input.of) throw new DemoError("InvalidInput", "A sum needs of: the integer attribute to add");
+    const orderType = input.order ? (TYPE_ALIASES[input.order.type] ?? input.order.type) : undefined;
     const request: SweepRequest = {
       account,
       from: wireKind(kind),
       where,
+      ...(anyOf ? { anyOf } : {}),
       result: result === "list" ? "ids" : result,
-      ...(result === "countByValue" && input.of ? { of: input.of } : {}),
+      ...(result === "top" && input.order
+        ? { order: { by: input.order.by, type: orderType as "string", direction: input.order.direction ?? "asc" }, limit }
+        : {}),
+      ...((result === "countByValue" || result === "sum") && input.of ? { of: input.of } : {}),
       ...(result === "list" && input.columns?.length ? { project: input.columns } : {}),
       bounds: { subjects: Math.min(Math.max(input.pageSubjects ?? 256, 1), 10_000), ms: Math.min(Math.max(input.pageMs ?? 200, 1), 2000) },
     };
@@ -586,6 +636,7 @@ export function askAcross(demo: Demo, input: AskInput) {
           columns: Object.fromEntries(Object.entries(page.projected?.[i] ?? {}).map(([a, vs]) => [a, vs.map((v) => plainOf(v as { type: string; value: unknown }))])),
         });
       if (page.next === null || mode === "page") break;
+      // A top N or a sum is known only at the end: "fill" follows pages to the end (or the ceiling), as toEnd does.
       if (result === "list" && mode === "fill" && rows.length >= limit) break;
       if (result === "list" && mode === "toEnd" && rows.length >= MAX_ROWS_TO_END) break;
       if (performance.now() - started > ceilingMs) break;
@@ -597,11 +648,23 @@ export function askAcross(demo: Demo, input: AskInput) {
     const stoppedBy = complete ? "end" : mode === "page" ? "one page asked"
       : result === "list" && rows.length >= (mode === "toEnd" ? MAX_ROWS_TO_END : limit) ? "rows" : "ceiling";
     const asked = input.cursor ? "the position and valid time of the cursor's first page" : basis!.words;
+    if (result === "top" && complete)
+      for (const [i, id] of (last.ids ?? []).entries()) rows.push({ id, columns: { [input.order!.by]: [plainOf(last.values?.[i] ?? null)] } });
+    const relatedRead = sum((p) => p.related ?? 0);
     return {
       account,
       kind: { ...kind, label: kindLabel(kind) },
-      question: { where: input.where ?? [], result, ...(input.of ? { of: input.of } : {}), ...(input.columns?.length ? { columns: input.columns } : {}) },
-      ...(result === "list" ? { rows, returned: rows.length } : {}),
+      question: {
+        where: input.where ?? [], ...(input.anyOf ? { anyOf: input.anyOf } : {}), result, ...(input.of ? { of: input.of } : {}),
+        ...(input.order ? { order: input.order } : {}), ...(input.columns?.length ? { columns: input.columns } : {}),
+      },
+      ...(result === "list" || result === "top" ? { rows, returned: rows.length } : {}),
+      ...(result === "top"
+        ? { top: { n: limit, order: last.order ?? null, kept: last.kept ?? 0, meaning: "The N best by the order after reading every entity of the kind once; ties by ID; entities without a value of the order's type last. Known only when complete." } }
+        : {}),
+      ...(result === "sum"
+        ? { sum: { of: input.of, sum: last.sum ?? "0", valuesAdded: last.valuesAdded ?? 0, subjectsWithValue: last.subjectsWithValue ?? 0, skipped: last.skipped ?? 0, average: last.average ?? null, countComplete: last.countComplete === true, meaning: "Exact: every visible integer value of the attribute on every matching entity, added without overflow; values of other types are skipped and counted. The average is sum / values." } }
+        : {}),
       ...(result === "count" ? { count: last.count ?? 0, countComplete: last.countComplete === true } : {}),
       ...(result === "countByValue"
         ? { groups: (last.groups ?? []).map((g) => ({ value: plainOf(g.value), type: g.value?.type ?? null, subjects: g.count })), countComplete: last.countComplete === true }
@@ -619,6 +682,7 @@ export function askAcross(demo: Demo, input: AskInput) {
       },
       progress: {
         subjectsExamined: sum((p) => p.examined),
+        ...(relatedRead || pages.some((p) => p.related !== undefined) ? { relatedRead, relatedRows: sum((p) => p.relatedRows ?? 0) } : {}),
         subjectsWithFacts: sum((p) => p.subjects),
         matched: sum((p) => p.matched),
         idsListed: sum((p) => p.listed),

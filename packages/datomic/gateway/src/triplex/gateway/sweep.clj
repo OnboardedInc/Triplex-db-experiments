@@ -694,7 +694,7 @@
                                     :kept (.size heap) :countComplete complete
                                     :ids (if complete (mapv first heap) [])
                                     :values (if complete (mapv (fn [[_ v]] (when (some? v) (wire-value [(:type (:order q)) v]))) heap) []))
-            (= result "sum") (assoc :of (:of q) :sum (str (:sum s)) :values (:sum-values s) :subjectsWithValue (:sum-subjects s)
+            (= result "sum") (assoc :of (:of q) :sum (str (:sum s)) :valuesAdded (:sum-values s) :subjectsWithValue (:sum-subjects s)
                                     :skipped (:sum-skipped s) :countComplete complete
                                     :average (when complete (average (:sum s) (:sum-values s)))))))
       (finally (release)))))

@@ -38,6 +38,9 @@ const env = {
   // (the page and tools would answer RouteOff on every demo stack).
   DX_ID_LISTS: "1",
   DX_SWEEP: "1",
+  // [DX-XQ9] The sweep's added question shapes (questions over related entities, "is not", "any of these groups", top
+  // N, "contains", sums), all on for the console; each only accepts requests the sweep refused before (xq9 gate 9k).
+  DX_SWEEP_SHAPES: "all",
 };
 const args = [
   ...(policy.tx.cpus ? ["--cpus-tx", policy.tx.cpus, "--cpus-pg", policy.pg.cpus,
@@ -57,7 +60,7 @@ if (process.argv[3] === "--summary") {
     postgres: { containerMiB: policy.pg.memoryMiB, sharedBuffers: policy.pg.settings.shared_buffers ?? "128MB (default)" },
     memoryIndex: policy.index,
     pinnedReads: { shortcut: env.DX_PINNED_SHORTCUT === "1", cutLookup: env.DX_PINNED_CUT_LOOKUP === "1" },
-    questionRoutes: { idLists: env.DX_ID_LISTS === "1", sweep: env.DX_SWEEP === "1" },
+    questionRoutes: { idLists: env.DX_ID_LISTS === "1", sweep: env.DX_SWEEP === "1", sweepShapes: env.DX_SWEEP_SHAPES ?? "" },
   }));
   process.exit(0);
 }

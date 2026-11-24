@@ -123,7 +123,7 @@
             (let [ints (mapcat (fn [s] (keep (fn [[f v]] (when (= f "integer") v)) (vals s ":person/score"))) roots)
                   last-page (last (ask {"result" "sum" "of" ":person/score"}))]
               (is (= (str (reduce + ints)) (:sum last-page)))
-              (is (= (count ints) (:values last-page)))
+              (is (= (count ints) (:valuesAdded last-page)))
               (is (= 1 (:skipped last-page)))))))
       (testing "refusals"
         (let [a "account-003"]

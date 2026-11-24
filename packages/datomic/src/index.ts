@@ -89,6 +89,8 @@ export {
   sweepPageWaiting,
   type SweepCondition,
   type SweepCount,
+  type SweepHasCondition,
+  type SweepPlainCondition,
   type SweepPage,
   type SweepRequest,
   type SweepValue,

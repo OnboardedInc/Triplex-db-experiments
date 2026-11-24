@@ -1097,6 +1097,12 @@ for role in "${gateway_roles[@]}"; do
     [[ $DX_SWEEP_CURSOR_SECRET =~ ^[A-Za-z0-9]{16,128}$ ]] || { echo "up.sh: DX_SWEEP_CURSOR_SECRET must be 16..128 letters or digits" >&2; exit 2; }
     field_policy+=(-e "TX2_SWEEP_CURSOR_SECRET=$DX_SWEEP_CURSOR_SECRET")
   fi
+  # [DX-XQ9] Why: the sweep's added question shapes (related, ne, or, top, contains, sum, or all), each named; unset
+  # leaves both gateways' environment exactly as before.
+  if [[ -n ${DX_SWEEP_SHAPES:-} ]]; then
+    [[ $DX_SWEEP_SHAPES =~ ^(all|(related|ne|or|top|contains|sum)(,(related|ne|or|top|contains|sum))*)$ ]] || { echo "up.sh: DX_SWEEP_SHAPES must be all or a comma list of related,ne,or,top,contains,sum" >&2; exit 2; }
+    field_policy+=(-e "TX2_SWEEP_SHAPES=$DX_SWEEP_SHAPES")
+  fi
   # [DX-XQ3] Why: the ID list gate removes a subject's protected values on request; both gateways share one erasure
   # directory (an owned volume, removed by down.sh --volumes). Rejected: the erase1 stack (it replaces the gateway main).
   xq3_mount=()

@@ -83,6 +83,37 @@ const questionValue = z.union([
   z.boolean(),
   z.object({ type: z.string(), value: z.union([z.string(), z.number(), z.boolean()]) }),
 ]);
+const plainConditionShape = {
+  attribute: z.string().min(1).max(512).describe("Attribute, e.g. :i9/status"),
+  op: z.enum(["eq", "ne", "in", "range", "prefix", "contains", "exists", "missing"]).describe("eq is, ne is not (no value counts as not), in is one of, range between, prefix starts with, contains (text), exists has a value, missing has no value"),
+  value: questionValue.optional().describe("For eq, ne, prefix and contains"),
+  values: z.array(questionValue).min(1).max(64).optional().describe("For in"),
+  from: questionValue.optional().describe("For range: lower end (inclusive unless fromExclusive)"),
+  to: questionValue.optional().describe("For range: upper end (inclusive unless toExclusive)"),
+  fromExclusive: z.boolean().optional(),
+  toExclusive: z.boolean().optional(),
+  caseInsensitive: z.boolean().optional().describe("For contains: ignore case"),
+  type: z.enum(["text", "string", "reference", "ref", "integer", "number", "date", "datetime", "boolean"]).optional().describe("The values' type when it is not obvious"),
+};
+// [DX-XQ9] A condition is a plain one (above) or "has": one level of related entities (TX2_SWEEP_SHAPES related).
+const questionCondition = z.object({
+  ...plainConditionShape,
+  attribute: plainConditionShape.attribute.optional(),
+  op: z.enum(["eq", "ne", "in", "range", "prefix", "contains", "exists", "missing", "has"]).describe(plainConditionShape.op.description + "; has: related entities (give related, where, quantifier)"),
+  related: z
+    .object({
+      prefix: z.string().max(64).describe("The related kind, e.g. i9: (tasks)"),
+      shape: z.string().max(512).optional(),
+      link: z.union([z.literal("key"), z.object({ ref: z.string().min(1).max(512) })]).default("key").describe("key: same number after the kind; {ref}: a reference attribute of the entity asked about"),
+    })
+    .optional()
+    .describe("For has: which related entities"),
+  where: z.array(z.object(plainConditionShape)).max(7).optional().describe("For has: conditions on each related entity (one level)"),
+  quantifier: z
+    .union([z.enum(["some", "none"]), z.object({ op: z.enum(["gte", "gt", "lte", "lt", "eq"]), value: z.number().int().min(0).max(1000) })])
+    .optional()
+    .describe("For has: some (default), none, or a count comparison"),
+});
 const basisParams = (b: { validAt?: string | number | undefined; recordedAt?: string | number | undefined; position?: number | undefined } | undefined) =>
   b ? { validAt: b.validAt as string | undefined, recordedAt: b.recordedAt as string | undefined, position: b.position } : {};
 const changeNote =
@@ -585,9 +616,13 @@ export const tools: Tool[] = [
       "How many subjects in account-003 are active?",
       "Count account-003's tasks per status.",
       "Which reviews in account-003 are about subject 7?",
+      "Which subjects in account-003 have at least one pending task?",
+      "Which subjects in account-003 have 3 or more open tasks?",
+      "Top 10 profiles in account-003 by pay, highest first.",
+      "Which profiles in account-003 have a start date containing -11-?",
     ],
     description:
-      "A question across every entity of one kind in one account, answered exactly on the store's slow exact route: the store lists the kind's IDs in order, reads each one's facts at ONE position and ONE valid time with the pinned read's own code, and tests up to 8 conditions, all required. Result: a list of matching IDs with chosen columns (their values), a count, or a count of subjects per value of one attribute. The answer states the position and valid time it holds for (holdsFor), whether it is complete, how many subjects were examined, and that it reads stored facts (a value a release has not written yet is not seen). Conditions: eq (is), in (is one of, 1 to 64 values), range (from and/or to, inclusive unless fromExclusive/toExclusive; text, integer, number or date), prefix (text starts with), exists (has a value), missing (has no value). Values are plain (true/false, numbers, text; an entity ID is taken as a reference) or { type, value } with type text, reference, integer, number, date or boolean; give type when it is not obvious (an integer attribute does not match a number condition). Protected attributes are never filtered, grouped or listed: such a question is refused (ProtectedValueLookup). mode: fill (default: pages until limit rows, the end, or ceilingMs, default 5 s), toEnd (to the end or ceilingMs, default 60 s; at most 5,000 rows returned), or page (one store page, for callers that page themselves). Pass next as cursor to continue at the same position and valid time; an edited cursor is refused (CursorMismatch). It is slow on a deep account (about 1 to 2 ms per subject at 1 billion records): count a sample first. Every refusal comes back with the store's code and one plain sentence. Example: {\"account\": \"account-003\", \"kind\": {\"prefix\": \"i9:\"}, \"where\": [{\"attribute\": \":i9/status\", \"op\": \"eq\", \"value\": \"pending\"}], \"columns\": [\":task/progress\"]}",
+      "A question across every entity of one kind in one account, answered exactly on the store's slow exact route: the store lists the kind's IDs in order, reads each one's facts at ONE position and ONE valid time with the pinned read's own code, and tests up to 8 conditions, all required. Result: a list of matching IDs with chosen columns (their values), a count, or a count of subjects per value of one attribute. The answer states the position and valid time it holds for (holdsFor), whether it is complete, how many subjects were examined, and that it reads stored facts (a value a release has not written yet is not seen). Conditions: eq (is), in (is one of, 1 to 64 values), range (from and/or to, inclusive unless fromExclusive/toExclusive; text, integer, number or date), prefix (text starts with), exists (has a value), missing (has no value). Values are plain (true/false, numbers, text; an entity ID is taken as a reference) or { type, value } with type text, reference, integer, number, date or boolean; give type when it is not obvious (an integer attribute does not match a number condition). Also (TX2_SWEEP_SHAPES on the read gateway, on in every demo stack): ne (is not; a subject with no value counts as not that value), contains (text contains the value; caseInsensitive true lower-cases both; values searched whole up to 65,536 characters), and has: a condition over related entities, one level, e.g. {\"op\": \"has\", \"related\": {\"prefix\": \"i9:\", \"link\": \"key\"}, \"where\": [{\"attribute\": \":i9/status\", \"op\": \"eq\", \"value\": \"pending\"}], \"quantifier\": \"some\"}; link key ties entities whose ID has the same number after the kind (pl:00000005 and i9:00000005:t2), link {ref: attribute} follows a reference attribute of the entity asked about; quantifier some (default), none, or {op: gte|gt|lte|lt|eq, value}. anyOf: 1 to 4 groups of conditions, the entity matches when every where condition and at least one group hold; 8 conditions in all, a has counting one plus its own. result top: the N best (limit, at most 1,000) by order {by, type: text|integer|number|date, direction: asc|desc}, after reading every entity of the kind once (ties by ID, entities without a value last). result sum with of: the exact sum and average of an integer attribute. Protected attributes are never filtered, grouped, ordered, summed or listed: such a question is refused (ProtectedValueLookup). mode: fill (default: pages until limit rows, the end, or ceilingMs, default 5 s), toEnd (to the end or ceilingMs, default 60 s; at most 5,000 rows returned), or page (one store page, for callers that page themselves). Pass next as cursor to continue at the same position and valid time; an edited cursor is refused (CursorMismatch). It is slow on a deep account (about 1 to 2 ms per subject at 1 billion records): count a sample first. Every refusal comes back with the store's code and one plain sentence. Example: {\"account\": \"account-003\", \"kind\": {\"prefix\": \"i9:\"}, \"where\": [{\"attribute\": \":i9/status\", \"op\": \"eq\", \"value\": \"pending\"}], \"columns\": [\":task/progress\"]}",
     input: {
       account,
       kind: z
@@ -598,27 +633,26 @@ export const tools: Tool[] = [
         .describe("Which entities: one kind of one account (list_kinds lists them)"),
       where: z
         .array(
-          z.object({
-            attribute: z.string().min(1).max(512).describe("Attribute, e.g. :i9/status"),
-            op: z.enum(["eq", "in", "range", "prefix", "exists", "missing"]).describe("eq is, in is one of, range between, prefix starts with, exists has a value, missing has no value"),
-            value: questionValue.optional().describe("For eq and prefix"),
-            values: z.array(questionValue).min(1).max(64).optional().describe("For in"),
-            from: questionValue.optional().describe("For range: lower end (inclusive unless fromExclusive)"),
-            to: questionValue.optional().describe("For range: upper end (inclusive unless toExclusive)"),
-            fromExclusive: z.boolean().optional(),
-            toExclusive: z.boolean().optional(),
-            type: z.enum(["text", "string", "reference", "ref", "integer", "number", "date", "datetime", "boolean"]).optional().describe("The values' type when it is not obvious"),
-          }),
+          questionCondition,
         )
         .max(8)
         .default([])
         .describe("Up to 8 conditions, all required (AND); none asks about every entity of the kind"),
-      result: z.enum(["list", "count", "countByValue"]).default("list").describe("list: matching IDs with columns; count; countByValue: subjects per value of `of`"),
+      anyOf: z.array(z.array(questionCondition).min(1).max(8)).min(1).max(4).optional().describe("1 to 4 groups; the entity matches when at least one group's conditions all hold (and every where condition)"),
+      result: z.enum(["list", "count", "countByValue", "top", "sum"]).default("list").describe("list: matching IDs with columns; count; countByValue: subjects per value of `of`; top: the `limit` best by `order`; sum: exact sum and average of the integer attribute `of`"),
+      order: z
+        .object({
+          by: z.string().min(1).max(512).describe("The attribute to order by"),
+          type: z.enum(["text", "string", "integer", "number", "date", "datetime"]).describe("The values' type; values of another type count as no value"),
+          direction: z.enum(["asc", "desc"]).default("asc"),
+        })
+        .optional()
+        .describe("For top: the order (ties by ID, entities without a value last)"),
       columns: z.array(z.string().min(1).max(512)).max(8).optional().describe("For list: up to 8 attributes whose values come back with each ID"),
-      of: z.string().min(1).max(512).optional().describe("For countByValue: the attribute to count by"),
+      of: z.string().min(1).max(512).optional().describe("For countByValue: the attribute to count by; for sum: the integer attribute to add"),
       basis: basis.describe("When: { position?, recordedAt?, validAt? }; default the latest position and now. The answer states both"),
-      limit: z.number().int().min(1).max(1000).default(50).describe("For list: rows to return in this call"),
-      cursor: z.string().max(65_536).optional().describe("The previous answer's next: continue the same question at the same position and valid time"),
+      limit: z.number().int().min(1).max(1000).default(50).describe("For list: rows to return in this call; for top: N"),
+      cursor: z.string().max(1_048_576).optional().describe("The previous answer's next: continue the same question at the same position and valid time"),
       mode: z.enum(["fill", "toEnd", "page"]).default("fill"),
       ceilingMs: z.number().int().min(100).max(300_000).optional().describe("Longest time for this call (default 5,000 ms; 60,000 with toEnd); the answer says when it stopped there"),
       pageSubjects: z.number().int().min(1).max(10_000).optional().describe("Subjects the store reads per page (default 256)"),
@@ -629,7 +663,7 @@ export const tools: Tool[] = [
       const at = out.holdsFor;
       return out.rows ? { ...out, rows: out.rows.map((r) => ({ ...r, consoleLink: consoleOrigin() + rowRoute(d, r.id, at.position, at.validAt) })) } : out;
     },
-    route: (a) => routes.questions({ account: a.account, kind: a.kind, where: a.where, result: a.result, columns: a.columns, of: a.of, basis: a.basis }),
+    route: (a) => routes.questions({ account: a.account, kind: a.kind, where: a.where, anyOf: a.anyOf, result: a.result, order: a.order, limit: a.result === "top" ? a.limit : undefined, columns: a.columns, of: a.of, basis: a.basis }),
   }),
 ];
 
