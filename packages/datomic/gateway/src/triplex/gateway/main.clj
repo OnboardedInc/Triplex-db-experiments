@@ -5,7 +5,10 @@
             [triplex.gateway.write-wire :as write-wire]
             [triplex.gateway.lean-feed :as lean-feed] [triplex.gateway.lean-query :as lean-query]
             [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy]
-            [triplex.gateway.subject-save :as subject] [triplex.gateway.owner-layout :as owner-layout])
+            [triplex.gateway.subject-save :as subject] [triplex.gateway.owner-layout :as owner-layout]
+            [triplex.gateway.at-least :as at-least]
+            [triplex.gateway.general-prefetch :as general-prefetch] [triplex.gateway.admission :as admission]
+            [triplex.gateway.subject-hints :as subject-hints])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -84,7 +87,11 @@
                          (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema))
                          (:db-after (trace/span "d/transact" "peer-wait" @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}])))))
         current (subject/install! conn (group/install! conn (commit/install! conn scope schema-ready)))
-        current (owner-layout/install! conn current)]
+        current (owner-layout/install! conn current)
+        ;; [DX-W3] Why: the lookup-only hint function is installed only when its option is on (default off).
+        current (general-prefetch/install! conn current)
+        ;; [DX-W4] Why: the per-subject writer's lookup-only hint function, installed only when its option is on.
+        current (subject-hints/install! conn current)]
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
       (lean/enabled? current) (assoc :layout "lean" :orderedRowTexts true :journalCuts true)))))
@@ -96,14 +103,20 @@
       (reach/forget! name)
       (when-let [view (@connections uri)] (let [conn (:conn view)] (feed/unsubscribe! conn) (d/release conn) (swap! connections dissoc uri)))
         {:db name :deleted deleted})))
-(defn basis [base name]
+(defn basis
+  ([base name] (basis base name nil))
+  ;; [DX-RD4] Why: with `atLeast` the head answered is at or after the reader's receipt; the reply echoes the request.
+  ;; Rejected: a new route (every reader already resolves its head here) or answering at the asked position.
+  ([base name wanted]
   (when-not (re-matches #"(s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)" name) (codec/invalid "Invalid database name"))
-  (let [db (trace/span "d/db" "peer-call" (d/db (connection (db-uri name)))) scope (stored-scope db)]
+  (let [conn (connection (db-uri name)) current (trace/span "d/db" "peer-call" (d/db conn)) scope (stored-scope current)]
     (when-not scope (throw (ex-info "Scope not initialized" {:status 409 :code "ScopeUninitialized"})))
-    (let [entity (d/entid db [:triplex.scope/key scope])]
-      {:t (codec/encode-value "long" (d/basis-t db))
-       :position (codec/encode-value "long" (storage/head-position name db))
-       :recordedAt nil :schemaHash (storage/value db entity :triplex.scope/schema-hash)})))
+    (let [{:keys [db waitMicros]} (if wanted (at-least/await! name conn current wanted) {:db current})
+          entity (d/entid db [:triplex.scope/key scope])]
+      (cond-> {:t (codec/encode-value "long" (d/basis-t db))
+               :position (codec/encode-value "long" (storage/head-position name db))
+               :recordedAt nil :schemaHash (storage/value db entity :triplex.scope/schema-hash)}
+        wanted (assoc :atLeast (:position wanted) :atLeastWaitMicros waitMicros))))))
 (defn write-options [name]
   ;; [DX-WFIX1] Why: an enabled launcher option can still select the base function on an unopened scope.
   ;; Rejected: an environment listing or a readback from a different database.
@@ -135,6 +148,10 @@
                        :ledger (boolean (or ledger/enabled packed/enabled))
                        :packedJournal (boolean packed/enabled) :fastReply (boolean group/fast-reply)
                        :pinnedShortcut pinned/enabled :pinnedCutLookup group-cut/current-lookup}}
+      ;; [DX-W3] Why: report the option only when it is on, so default readbacks stay byte-identical.
+      general-prefetch/enabled (assoc-in [:options :generalPrefetch] (general-prefetch/installed? db))
+      ;; [DX-W4] Why: report the option only when it is on, so default readbacks stay byte-identical.
+      subject-hints/enabled (assoc-in [:options :subjectHints] (subject-hints/installed? db))
       subject/enabled (assoc :subjectSave true :subjectFunction (when subject-t (str subject/ident))
                              :subjectNumericOwner subject/numeric-owner?
                              :subjectOrderedIds subject/ordered-ids?
@@ -145,7 +162,9 @@
                              :subjectOwnerHeadFunction (when (and owner-layout/enabled (owner-layout/installed? db))
                                                          (str owner-layout/ident))
                              :subjectPrefetch (boolean (and subject/prefetch? (d/entid db subject/prefetch-ident)))
-                             :subjectFunctionTx (some-> subject-t str)))))
+                             :subjectFunctionTx (some-> subject-t str))
+      ;; [Opus W2] Why: launchers read back the actual wide-save switch; the reply is unchanged with the option off.
+      subject/wide? (assoc :subjectWide true :subjectWideFacts subject/wide-facts))))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"}
                              :body (trace/read-span "gateway.json-encode" "gateway" (json/write-str data))})
 ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.
@@ -192,6 +211,41 @@
                            (reduce (fn [n _] (inc n)) 0 (d/datoms db :aevt :triplex.journal/packed)) 0)
      :fastReply (boolean group/fast-reply)
      :leanNativeQuery (boolean lean-query/enabled) :leanNativeLog (boolean lean-feed/enabled)}))
+;; [DX-W3] Why: Jetty's own pool says how many web threads are busy and how many requests wait for one.
+;; Rejected: inferring thread starvation from client latency alone (the 2026-11-23 runs recorded no thread counts).
+(def http-max-threads
+  (let [n (Integer/parseInt (or (not-empty (System/getenv "TX2_HTTP_MAX_THREADS")) "512"))]
+    (when-not (<= 8 n 4096) (throw (IllegalArgumentException. "TX2_HTTP_MAX_THREADS must be 8..4096"))) n))
+(defonce jetty-server (atom nil))
+(defonce thread-peaks (atom {:busyPeak 0 :queuedPeak 0 :samples 0 :samplesWithQueue 0 :samplesNoIdle 0}))
+(defn- pool-now []
+  (when-let [^org.eclipse.jetty.server.Server server @jetty-server]
+    (let [^org.eclipse.jetty.util.thread.QueuedThreadPool pool (.getThreadPool server)]
+      {:maxThreads (.getMaxThreads pool) :threads (.getThreads pool) :idleThreads (.getIdleThreads pool)
+       :busyThreads (.getBusyThreads pool) :queuedRequests (.getQueueSize pool)})))
+(defn thread-stats []
+  (merge {:http (pool-now) :peaks @thread-peaks :sampling (= "1" (System/getenv "TX2_THREAD_COUNTERS"))
+          :atMs (System/currentTimeMillis)}
+         (admission/read-stats)))
+(defn reset-thread-peaks! []
+  (reset! thread-peaks {:busyPeak 0 :queuedPeak 0 :samples 0 :samplesWithQueue 0 :samplesNoIdle 0})
+  (admission/reset-peaks!))
+;; [DX-W3] Why: a starved gateway cannot answer the stats route, so peaks are sampled from inside, every 50 ms.
+;; Default off (TX2_THREAD_COUNTERS=1): no background thread unless asked for.
+(defn start-thread-sampler! []
+  (when (= "1" (System/getenv "TX2_THREAD_COUNTERS"))
+    (doto (Thread. (fn []
+                     (loop []
+                       (when-let [{:keys [busyThreads queuedRequests idleThreads]} (pool-now)]
+                         (swap! thread-peaks (fn [p] (-> p (update :samples inc)
+                                                         (update :busyPeak max busyThreads)
+                                                         (update :queuedPeak max queuedRequests)
+                                                         (cond-> (pos? queuedRequests) (update :samplesWithQueue inc)
+                                                                 (zero? idleThreads) (update :samplesNoIdle inc))))))
+                       (Thread/sleep 50)
+                       (recur)))
+                   "tx2-thread-sampler")
+      (.setDaemon true) (.start))))
 (defn route-handler-base [{:keys [request-method uri body query-string privacy-input]}]
   (stats/bump! [:routes (str (name request-method) " " (clojure.string/replace uri #"/s2?-[^/]+/" "/{db}/"))] 1)
   (try
@@ -199,6 +253,9 @@
       (and (= :get request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/write-options" uri))
       (let [name (nth (clojure.string/split uri #"/") 3)]
         (response 200 (write-layout-options (sync-db (db-uri name)) name)))
+      ;; [DX-W3] Why: say whether reads, the web thread pool or the permit queue hold a request back.
+      (and (= :get request-method) (= uri "/v2/admin/threads")) (response 200 (thread-stats))
+      (and (= :post request-method) (= uri "/v2/admin/threads/reset")) (do (reset-thread-peaks!) (response 200 (thread-stats)))
       (= uri "/v2/admin/scan-stats") (response 200 (assoc @stats/counts :idMemo (reach/id-memo-stats) :pinnedShortcut (pinned/stats) :entityCache (let [base (entity-cache/stats) extra (recent/stats)] (assoc (merge base extra) :bytes (+ (:bytes base) (:recentBytes extra))))))
       (and (= :post request-method) (= uri "/v2/admin/scan-stats/reset")) (do (reset! stats/counts {}) (response 200 {}))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(transactions|command|journal|entity-transactions)" uri))
@@ -225,7 +282,8 @@
       (and (= :post request-method) (= "/v1/db/delete" uri))
       (response 200 (delete-scope! uri-template (get (request-json body) "scope")))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/basis" uri))
-      (timed (System/nanoTime) (response 200 (basis uri-template (nth (clojure.string/split uri #"/") 3))))
+      (let [start (System/nanoTime)]
+        (timed start (response 200 (basis uri-template (nth (clojure.string/split uri #"/") 3) (at-least/from-query query-string)))))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/write-options" uri))
       (response 200 (write-options (nth (clojure.string/split uri #"/") 3)))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/log" uri))
@@ -258,14 +316,18 @@
       (let [name (nth (clojure.string/split uri #"/") 3) input (trace/read-span "gateway.request-decode" "gateway" (request-json body)) start (System/nanoTime)
             view (connection-view (db-uri name)) conn (:conn view)
             initial (trace/span "d/db" "peer-call" (d/db conn)) p (get-in input ["basis" "recordedPosition"])
+            wanted (at-least/from-body input)
             waited (and (some? p) (> p (storage/head-position name initial)))
             db (if waited (trace/span "storage/await-position" "gateway" (storage/await-position initial p
                  (get input "basisWaitMs")
                  (fn [remaining] (if-let [t (get input "basisT")]
                                    (trace/span "d/sync" "peer-wait" (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout))
                                    (trace/span "d/db" "peer-call" (d/db conn)))) conn)) initial)
+            ;; [DX-RD4] An unpinned reach with atLeastPosition answers at the peer's head once it has that position.
+            {db :db at-least-micros :waitMicros} (if wanted (at-least/await! name conn db wanted) {:db db})
             db (trace/span "storage/await-record-time" "gateway" (storage/await-record-time name conn db input))]
-        (timed start {:status 200 :headers {"Content-Type" "application/json; charset=utf-8" "x-tx2-waited" (str (boolean waited))}
+        (timed start {:status 200 :headers (cond-> {"Content-Type" "application/json; charset=utf-8" "x-tx2-waited" (str (boolean waited))}
+                                             wanted (assoc "x-tx2-at-least" (str (:position wanted)) "x-tx2-at-least-wait-micros" (str at-least-micros)))
          :body (trace/span "reach/response" "gateway" (reach/response name db (if (.endsWith ^String uri "reach-many") input (assoc input "roots" [(get input "root")])) (:generation view) (:recent view)))}))
       (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
       (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (db-uri name) start (System/nanoTime)
@@ -279,11 +341,17 @@
                    (fn [remaining] (if-let [t (get input "basisT")]
                                      (trace/span "d/sync" "peer-wait" (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout))
                                      (trace/span "d/db" "peer-call" (d/db conn)))) conn)))
+            ;; [DX-RD4] Why: snapshot, read and q resolve an unpinned basis from the peer's head; atLeastPosition makes
+            ;; that head at least the reader's receipt. Rejected: accepting it silently on routes that never read a head.
+            wanted (when (contains? input "atLeastPosition")
+                     (when-not (#{"snapshot" "read" "q"} action)
+                       (codec/invalid "atLeastPosition is accepted only on basis, snapshot, read, q, reach and reach-many"))
+                     (at-least/from-body input))
+            {db :db at-least-micros :waitMicros} (if wanted (at-least/await! name conn db wanted) {:db db})
             db (when conn (trace/span "storage/await-record-time" "gateway" (storage/await-record-time name conn db input)))]
         ;; [DX-DEMO1] Why: every read route reports the gateway's own time beside the reply.
         ;; Rejected: inferring server time from the client's round trip.
-        (timed start (response 200
-          (case action
+        (timed start (let [result (case action
             "snapshot" (storage/begin! name db)
             "release" (storage/release! name (get input "handle"))
             "transact" (try (trace/span "storage/commit!" "gateway" (storage/commit! name conn db input))
@@ -305,11 +373,14 @@
                           tx-id (when visible (ledger/claim-tx-id cut claim))]
                       (cond-> {:txId tx-id}
                         (and visible (true? (get input "receipt"))) (assoc :commandId id
-                          :receipt (storage/operation cut (storage/value cut tx :triplex.tx/operation-id)))))))))
+                          :receipt (storage/operation cut (storage/value cut tx :triplex.tx/operation-id))))))]
+          (cond-> (response 200 (cond-> result (and wanted (map? result)) (assoc :atLeast (:position wanted))))
+            wanted (assoc-in [:headers "x-tx2-at-least-wait-micros"] (str at-least-micros))))))
       :else (response 404 {:code "NotFound"}))
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
-                                  (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e))))))))
+                                  (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e)))
+                                  (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e))))))))
 (defn- with-privacy-guards [scopes work]
   (if-let [[scope & more] (seq scopes)]
     (privacy/guard scope #(with-privacy-guards more work))
@@ -398,8 +469,10 @@
     (try (sync-db (db-uri name))
          (catch Exception e
            (when (some #{name} (d/get-database-names (db-uri "*"))) (throw e)))))
+  (start-thread-sampler!)
   (jetty/run-jetty serve-handler {:port port
-                           :host "0.0.0.0" :join? true :min-threads 8 :max-threads 512}))
+                           :host "0.0.0.0" :join? true :min-threads 8 :max-threads http-max-threads
+                           :configurator (fn [server] (reset! jetty-server server))}))
 
 (defn -main [& [port]]
   (serve! handler (if port (Integer/parseInt port) 8080)))

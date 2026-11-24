@@ -15,7 +15,24 @@ git -C "$repo" archive 5cda4ab204b9736e32960843bee8cbc47d5ca74d -- packages/dato
 git -C "$repo" rev-parse HEAD > "$out/source"
 name=tx2-dxreal2-aged-live
 docker rm -f "$name" >/dev/null 2>&1
-docker run -d --name "$name" --memory 3g -p 127.0.0.1:18592:8080 --entrypoint /bin/bash \
+# [DX-W3] Optional: the general writer's hints (0 or 1) with Datomic prefetch on; unset leaves the gate as it was.
+w3=()
+if [[ -n ${DX_W3_GENERAL_PREFETCH:-} ]]; then
+  [[ $DX_W3_GENERAL_PREFETCH =~ ^[01]$ ]] || { echo "DX_W3_GENERAL_PREFETCH must be 0 or 1" >&2; exit 2; }
+  w3=(-e "TX2_GENERAL_PREFETCH=$DX_W3_GENERAL_PREFETCH" -e DX_W3_PREFETCH_PROBES=1)
+fi
+# [DX-W4] Optional: the per-subject writer's hints (0 or 1) with Datomic prefetch on; unset leaves it as it was.
+if [[ -n ${DX_W4_SUBJECT_HINTS:-} ]]; then
+  [[ $DX_W4_SUBJECT_HINTS =~ ^[01]$ ]] || { echo "DX_W4_SUBJECT_HINTS must be 0 or 1" >&2; exit 2; }
+  w3+=(-e "TX2_SUBJECT_HINTS=$DX_W4_SUBJECT_HINTS" -e DX_W3_PREFETCH_PROBES=1)
+fi
+# [DX-S1] Optional: wide saves on the per-subject writer (TX2_SUBJECT_WIDE, 0 or 1), in the gateway and the driver.
+if [[ -n ${DX_S1_WIDE:-} ]]; then
+  [[ $DX_S1_WIDE =~ ^[01]$ ]] || { echo "DX_S1_WIDE must be 0 or 1" >&2; exit 2; }
+  w3+=(-e "TX2_SUBJECT_WIDE=$DX_S1_WIDE")
+  export TX2_SUBJECT_WIDE=$DX_S1_WIDE
+fi
+docker run -d --name "$name" --memory 3g -p 127.0.0.1:18592:8080 ${w3[@]+"${w3[@]}"} --entrypoint /bin/bash \
   -v "$repo/packages/datomic/gateway/src:/opt/gateway/src:ro" -v "$out/age1src:/age:ro" \
   -v "$repo/lab/experiments/EXP-DX1/prep1/aged-live:/gate:ro" -v "$out/out:/out" "$image" /gate/container.sh >/dev/null
 (cd "$repo" && DX_PREP1_LIBRARY=1 DX_PREP1_CAMPAIGN=rolling DX_REAL2_SET=aged DX_PREP1_AGED=1 \

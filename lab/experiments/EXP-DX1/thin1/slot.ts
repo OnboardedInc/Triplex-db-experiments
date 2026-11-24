@@ -291,6 +291,11 @@ const gateway = (label: "write" | "read", secondary = false) => {
       DATOMIC_EXT_CLASSPATH: "/opt/gateway/src",
       DATOMIC_URI_TEMPLATE: template,
       ...(label === "read" && property("readStudy") === "yes" ? { TX2_READ_FILTER_EARLY: "1" } : {}),
+      // [DX-CARD2] The card's tuned reader: both pinned options on both gateways (stack/up.sh does the same), the early
+      // filter and the read permits on the reader. The toy has no reader trace, so the read profile stays off here.
+      ...(property("cardReader") === "tuned" ? { TX2_PINNED_SHORTCUT: "1", TX2_PINNED_CUT_LOOKUP: "1" } : {}),
+      ...(label === "read" && property("cardReader") === "tuned" ? { TX2_READ_FILTER_EARLY: "1",
+        ...(property("readPermits") ? { TX2_READ_PERMITS: property("readPermits")! } : {}) } : {}),
       ...(demand ? { TX2_ID_CACHE_BYTES: "1048576", TX2_ID_CACHE_ENTRIES: "4096",
         TX2_REACH_SESSION_ENTRIES: "4096", TX2_ENTITY_CACHE_BYTES: "8388608" } : {}),
       ...(adopted ? { TX2_LEAN_NATIVE_QUERY: "1", TX2_LEAN_NATIVE_LOG: "1" } : {}),

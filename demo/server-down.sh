@@ -15,8 +15,11 @@ for arg in "$@"; do
 done
 if [[ $toy == 1 ]]; then
   export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
-  root=${DEMO_ROOT:-$HOME/Claude/Projects/triplex-db-2/demo-toy}
-  work=tx2-dxdemo1-toy-work
+  # [DX-INT3] DEMO_TOY_NAME stops the second toy of that name (see server-up.sh); unset, the one toy as before.
+  toy_name=${DEMO_TOY_NAME:-}
+  [[ -z $toy_name || ($toy_name =~ ^[a-z0-9]{2,12}$ && $toy_name != toy) ]] || exit 2
+  root=${DEMO_ROOT:-$HOME/Claude/Projects/triplex-db-2/demo-toy${toy_name:+-$toy_name}}
+  work=tx2-dxdemo1-${toy_name:-toy}-work
 else
   [[ $(uname -s) == Linux && $EUID == 0 ]] || { echo 'Run as root on the rented Linux machine' >&2; exit 2; }
   export DOCKER_HOST=unix:///var/run/docker.sock DX_BARE_METAL=1

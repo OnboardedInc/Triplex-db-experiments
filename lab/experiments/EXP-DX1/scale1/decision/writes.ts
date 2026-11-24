@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { setTimeout as sleep } from "node:timers/promises";
 import {
-  DatomicClient, DatomicHttpError, orderedSaveIdentity,
+  DatomicClient, DatomicHttpError, orderedSaveIdentity, wideOrderedSaveIdentity,
 } from "../../../../../packages/datomic/dist/index.js";
 import { fieldValue } from "../../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM, type Fact } from "../../../../bench/lib/world.ts";
@@ -21,7 +21,7 @@ import {
   type Write,
 } from "./plan.ts";
 import { journalHash, now, type Scope } from "./observer.ts";
-import { commitAssertions, isProduction, orderedBlockLimit } from "../../v01/production-card.ts";
+import { commitAssertions, isProduction, orderedBlockLimit, wideOrderedBlockLimit } from "../../v01/production-card.ts";
 import { slotAttribute } from "../../w1/field/production.ts";
 
 type Input = Parameters<DatomicClient["transact"]>[1];
@@ -273,6 +273,8 @@ export async function play(
   let bulkDue = start;
   let admissionClosed = false;
   const ramp = startup?.ramp === true;
+  // [DX-S1] Wide saves (W2, default off): the gateways must run with the same switch (the launcher forwards it).
+  const wide = process.env.TX2_SUBJECT_WIDE === "1";
   const admit = ramp ? startupAdmission() : undefined;
   const queues = scopes.map(() => [] as { e: Write; row: Save }[]),
     active = scopes.map(() => 0),
@@ -368,9 +370,13 @@ export async function play(
       row.saveKey = e.saveKey; row.rows = e.rows; row.facts = e.slots.length;
       row.retired = cached.filter((r) => written.has(r.attribute)).length;
       row.assertions = commitAssertions(row.facts, row.retired);
-      if (orderedIds && row.assertions > orderedBlockLimit) row.generalIdentity = true;
+      // [DX-S1] Why: with wide saves on, one block numbers up to 4,096 assertions, so a commit takes the general
+      // identity only past that. Rejected: keeping the 256 bound with the option on (the wide writer would never see a
+      // save of more than about 84 facts).
+      if (orderedIds && row.assertions > (wide ? wideOrderedBlockLimit : orderedBlockLimit)) row.generalIdentity = true;
     }
-    if (orderedIds && !row.generalIdentity) row.orderedToken = orderedSaveIdentity().token;
+    // [Opus W2] Why: with wide saves on, the block numbers up to 4,096 assertions; its token rebuilds it on resend.
+    if (orderedIds && !row.generalIdentity) row.orderedToken = (wide ? wideOrderedSaveIdentity() : orderedSaveIdentity()).token;
     assert(cached || sender.loadPredecessor, "Missing predecessor");
     function draft(prior: Row[]) {
       const value = expectedSave(row, e, prior);

@@ -15,7 +15,8 @@ import {
 } from "@triplex-build/triplex/runtime";
 import type { DatalogQuery, WrappedQuery } from "@triplex-build/triplex/datalog";
 import { isVariable } from "@triplex-build/triplex/datalog";
-import { DatomicClient } from "./DatomicClient.js";
+import { DatomicClient, atLeastBody, checkAtLeastAnswer } from "./DatomicClient.js";
+import type { ReadAtLeast } from "./readAtLeast.js";
 import { validateTagged, type TaggedValue } from "./codec.js";
 import { CurrentTransactions, DatomicOptimisticRestart } from "./TransactionContext.js";
 import { compileDatomic } from "./compiler.js";
@@ -32,16 +33,24 @@ const decode = (wire: TaggedValue): QueryContext[string] => {
 export function makeDatomicQueryExecutor(
   client: DatomicClient,
   scopeKey: string,
+  options: { readonly readAtLeast?: ReadAtLeast } = {},
 ): QueryExecutorService {
+  // [DX-RD4] Why: an unpinned query resolves its head on the gateway; a reader holding a receipt asks for at least it.
+  const atLeastFor = (basis: ResolvedTemporalBasis) =>
+    basis.recordedPosition === undefined && basis.recordedAt === undefined
+      ? options.readAtLeast?.request()
+      : undefined;
   const db = databaseName(scopeKey);
   const source = Effect.map(CurrentTransactions, (transactions) =>
     [...transactions.values()].find((s) => s.client === client && s.scopeKey === scopeKey),
   );
   const evaluateNative = async (q: DatalogQuery, basis: ResolvedTemporalBasis, request: Record<string, unknown>) => {
     const compiled = traceSync("client.query-planning", () => compileDatomic(q, basis));
-    const wire = await client.request<{ rows: TaggedValue[][]; recordedPosition?: number; database?: string }>(
-      "POST", `/v1/db/${db}/q`, { edn: compiled.edn, basis, ...request },
+    const atLeast = request["handle"] === undefined ? atLeastFor(basis) : undefined;
+    const wire = await client.request<{ rows: TaggedValue[][]; recordedPosition?: number; database?: string; atLeast?: number }>(
+      "POST", `/v1/db/${db}/q`, { edn: compiled.edn, basis, ...request, ...(atLeast ? atLeastBody(atLeast) : {}) },
     );
+    if (atLeast) checkAtLeastAnswer(atLeast, wire.atLeast, wire.recordedPosition ?? -1);
     return { scope: wire.database, position: wire.recordedPosition, rows: wire.rows.map((row) =>
       Object.fromEntries(compiled.variables.map((v, i) => [v, decode(row[i]!)])),
     ) };
@@ -86,7 +95,7 @@ export function makeDatomicQueryExecutor(
       const started = Date.now();
       return yield* Effect.tryPromise({
         try: async () => {
-          const snapshot = state ? undefined : await client.begin(db, requested);
+          const snapshot = state ? undefined : await client.begin(db, requested, atLeastFor(requested));
           try {
             // [EXP-DA01] Why: all rule rounds, the final query and optional pulls share one immutable source and frozen overlay (Q89d). Rejected: syncing to latest for each subrequest.
             const handle = state?.handle ?? snapshot!.handle;

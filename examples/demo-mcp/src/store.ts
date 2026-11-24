@@ -22,6 +22,7 @@ import {
   makeDatomicQueryExecutor,
   makeDatomicStorageAdapter,
   acceptLoaderPositionRows,
+  ReadAtLeast,
   traceScheduler,
   type DatomicRequestSample,
 } from "@triplex-build/triplex-datomic";
@@ -92,14 +93,14 @@ const round = (n: number) => Math.round(n * 100) / 100;
 const SEED_VALID_FROM = 1_700_000_000_000;
 
 type Store = ManagedRuntime.ManagedRuntime<Triples, never>;
-function store(client: DatomicClient, scope: DatabaseScope): Store {
+function store(client: DatomicClient, scope: DatabaseScope, readAtLeast?: ReadAtLeast): Store {
   const definition = Runtime.define({
     name: "datomic",
     storage: Layer.succeed(
       StorageAdapter,
-      makeDatomicStorageAdapter(client, scope, { layout: "lean", serverRecordTime: true }),
+      makeDatomicStorageAdapter(client, scope, { layout: "lean", serverRecordTime: true, ...(readAtLeast ? { readAtLeast } : {}) }),
     ),
-    queries: Layer.succeed(QueryExecutor, makeDatomicQueryExecutor(client, scope)),
+    queries: Layer.succeed(QueryExecutor, makeDatomicQueryExecutor(client, scope, readAtLeast ? { readAtLeast } : {})),
   });
   return ManagedRuntime.make(definition.layer({ scope, capabilities: Capabilities.none })) as Store;
 }
@@ -132,6 +133,14 @@ export class Demo {
   readonly scope: DatabaseScope;
   private readonly writeStore: Store;
   private readonly readStore: Store;
+  /**
+   * [DX-INT3] Read after this process's own writes: the position of the latest commit the write gateway acknowledged to
+   * this process (any save, creation or release), which every unpinned read on the read gateway asks for at least
+   * (RD4's `ReadAtLeast`; the gateway waits on its own peer up to 2 s, or refuses with AtLeastTimeout).
+   * Why: on the toy a plain read sent straight after a save was answered before it 9 times in 150, so "create, then
+   * show it" and "change, then read back" could show the old state. Rejected: a sync with the transactor on each read.
+   */
+  readonly readFloor = new ReadAtLeast(0, { waitMs: 2000 });
 
   constructor(connection = loadConnection()) {
     this.connection = connection;
@@ -145,8 +154,11 @@ export class Demo {
     this.writer = new GuardedClient(connection.writeUrl, 60_000);
     this.reader = new GuardedClient(connection.readUrl, 60_000);
     this.writer.onRequest = this.reader.onRequest = observe;
+    this.writer.onAcknowledged = (db, position) => {
+      if (db === this.db) this.readFloor.raise(position);
+    };
     this.writeStore = store(this.writer, this.scope);
-    this.readStore = store(this.reader, this.scope);
+    this.readStore = store(this.reader, this.scope, this.readFloor);
   }
 
   close() {
@@ -225,8 +237,9 @@ export class Demo {
     return { ...p, kind, entity: kind === "root" ? p.root : kind === "profile" ? p.profile : p.task };
   }
 
+  /** The read gateway's head, at or after every commit this process has had acknowledged (readFloor). */
   async head() {
-    const basis = await this.reader.basis(this.db);
+    const basis = await this.reader.basis(this.db, this.readFloor.request());
     return { position: Number(basis.position.v), t: String(basis.t.v) };
   }
 
