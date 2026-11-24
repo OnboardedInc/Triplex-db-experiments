@@ -1089,6 +1089,10 @@ for role in "${gateway_roles[@]}"; do
     [[ $DX_SWEEP_PER_ACCOUNT =~ ^([1-9]|1[0-6])$ ]] || { echo "up.sh: DX_SWEEP_PER_ACCOUNT must be 1..16" >&2; exit 2; }
     field_policy+=(-e "TX2_SWEEP_PER_ACCOUNT=$DX_SWEEP_PER_ACCOUNT")
   fi
+  if [[ -n ${DX_SWEEP_QUEUE_MS:-} ]]; then
+    [[ $DX_SWEEP_QUEUE_MS =~ ^[1-9][0-9]{0,3}$ && $DX_SWEEP_QUEUE_MS -le 5000 ]] || { echo "up.sh: DX_SWEEP_QUEUE_MS must be 1..5000" >&2; exit 2; }
+    field_policy+=(-e "TX2_SWEEP_QUEUE_MS=$DX_SWEEP_QUEUE_MS")
+  fi
   if [[ -n ${DX_SWEEP_CURSOR_SECRET:-} ]]; then
     [[ $DX_SWEEP_CURSOR_SECRET =~ ^[A-Za-z0-9]{16,128}$ ]] || { echo "up.sh: DX_SWEEP_CURSOR_SECRET must be 16..128 letters or digits" >&2; exit 2; }
     field_policy+=(-e "TX2_SWEEP_CURSOR_SECRET=$DX_SWEEP_CURSOR_SECRET")
