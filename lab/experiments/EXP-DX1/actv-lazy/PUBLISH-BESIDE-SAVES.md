@@ -71,7 +71,8 @@ removal was published after that sequence. Today that ticket is database-wide, s
 any account, between a Publish's read and its commit, refuses the Publish**; the client publishes again (the
 miniature's removal step, section 9.4). The settlement and the recorded notices carry the same database-wide sequence,
 so after a removal anywhere an account's notice recorder refuses to go on ("Recorded notices belong to an earlier
-removal sequence") and reading its recorded notices is refused ("Discard the old protected input cut") (runs `M3-second` and `M3-third`).
+removal sequence") and reading its recorded notices is refused ("Discard the old protected input cut") for the removal's own account, for the account whose protected value was removed, and for an account
+that had nothing to do with either removal (run `M3`, section 9.4).
 That is the removal rule as it stands, not something this work changed.
 With the per-account removal rule (`TX2_REMOVAL_PER_ACCOUNT`, built on `exp/DX-ERA2-removal-per-account`, not merged
 here) the ticket the Publish carries would name its account: `withErasure(sequence, work, undefined, [account])`, the
@@ -228,7 +229,7 @@ Runs (private evidence `evidence/DX-ACT8/`, section 14):
 | `R1`, `R2`, `R3` | options off: the held default campaign, ACT5's live cases, ACT6's gate | `813264dac` | `a87bf58bf20c` | **pass**, every count as published (section 9.1) |
 | `G3` | negative control: settlement at the read position (`DX_ACT8_INJECT=read-cut`) | `813264dac` | `a87bf58bf20c` | **caught**: stopped at the first Publish with a save between its read and record (section 9.4) |
 | `M2r` | the many-accounts miniature, both options on (section 9.5) | `4d01710e3` | `a87bf58bf20c` | **pass** |
-| `M3` | the miniature with the removal step (`DX_SCALE2_REMOVAL=1`) | `722ef2f5a` | `a87bf58bf20c` | in progress at this commit |
+| `M3` | the miniature on a protected database, with the removal step last (`DX_SCALE2_REMOVAL=1`) | `cacdf65c9` (code as `ba9b13724`) | `a87bf58bf20c` | **pass** (section 9.4); three earlier attempts stopped at a read race and at the removal's effect on settlement, which the final step records |
 | `G2` | a removal on request on the held toy (database protected before its load) | `169de51a3` | `a87bf58bf20c` | the load refused (`ErasureFrontierUnavailable`): that stack has no shared removal directory; not a result (section 13) |
 | 15 earlier runs: a shake-out, the gate in two halves, the held windows, the options-off reruns, a removal and a negative control, two miniature runs (`M1`, `M2`), and three that stopped at faults of the gate itself | the same checks, on earlier commits | `34273617e` to `1966682b7` | five images built from other sources | **not counted** (section 14) |
 
@@ -379,7 +380,27 @@ timers (recovered), in `G1` one was killed before its commit (the second offer l
 those releases settled exactly (436 changes; 160 notices for each form-adding one).
 
 **A removal on request in the window** (the miniature's removal step, run `M3`; the held toy's stack cannot hold a
-protected database, section 13): the step ran in three earlier attempts (`M3-first` to `M3-third`); its final run is in progress at this commit.
+protected database, section 13). The miniature's database was declared protected for `:person/note`
+before its first save, so every Publish, enrolment and settlement frame of the run carried a real removal ticket; all
+of its checks of section 9.5 passed with the same counts as `M2r` (50 of 50 Publishes at once landed at one try, 0
+refused; 10 of 10 late enrolments; 2,367 saves, 0 refused; 15,953 pinned and 15,724 current reads exact; 29,820 changes
+and 10,605 notices settled, 0 frames refused; 862 / 82 for the late accounts; every feed entry and final read exact).
+Then, last, two steps:
+
+| Step | Protected value saved / removed (removal sequence) | First offer | The same command offered again | Then that account's settlement |
+| --- | --- | --- | --- | --- |
+| a value under the publishing account's own names | 4,224 / 4,225 (0 to 1), between the Publish's read and its commit | **refused** at its first try: `ErasureFrontierChanged`, "Discard the old protected input cut" | read at 4,225, **landed at 4,226**, first try | refused: "Recorded notices belong to an earlier removal sequence" |
+| a value under another (thin) account's names | 4,227 / 4,229 (1 to 2), the same | **refused** the same | read at 4,229, **landed at 4,230**, first try | refused the same |
+
+and an account that published and settled before both removals and took no part in them (`account-013`): **reading
+its recorded notices was refused** ("Discard the old protected input cut"). So under the database-wide removal
+sequence: the account guard does not hide a removal (the Publish carries its ticket and is refused, as the whole-head
+rule would have refused it), the republish lands at once, and one removal on request anywhere stops every account's
+recorded notices, which is the coupling the per-account removal rule exists to remove (section 15, first follow-up).
+The three earlier attempts (`M3-first` to `M3-third`) stopped at, in order: a pinned read at a receipt the read
+gateway had not reached (a race of the miniature's own reader on the loaded Mac; the final run waits for it and needed
+0 waits), the settlement refusal above when the live accounts settled after the removals, and the refusal to read
+recorded notices when the checks ran after them; the final run puts the removals last and records those refusals.
 
 ### 9.6 Gate (g): settlement beside saves and the release limits, with nothing paused
 
@@ -659,6 +680,8 @@ miniature) and as the VM's own container list said while it ran.
 | `M2r` | `M2r.tar.gz` | `a5a8bb4a1e8c5bb9f0b0ce470fa1ef66111e45e57bbdd7148b8c2e6a66726c1b` |
 | `M3-first` | `M3-first.tar.gz` | `7228274170d89a2c722e4eaf6b0e7980ff28586f9d23baa3ce961ad44e346832` |
 | `M3-second` | `M3-second.tar.gz` | `27c897d48d78047d105973ae77f3f3ebd21e2fac155b770f13524c0471e448b2` |
+| `M3-third` | `M3-third.tar.gz` | `8dfc92521ee7f0d9857e307ca63db7c25a3bd942659c5a242a8c15a5cf7167ea` |
+| `M3` | `M3.tar.gz` | `eae7029192e8743f92d009694ea22a3242ca23fe803702243792bf8905a2f08e` |
 | the 15 runs on other images (section 8), with their logs | `foreign-image-runs.tar.gz` | `2d5db3b1fb17577284fb5b0d2a5c62aa1104949b81ac2042699f12ded61272f5` |
 
 The five images those 15 runs started: `d6008c8d52dd`, `4fbfd98a5490`, `90d3ccd615de`, `fd497d71a313` (the shared
@@ -685,10 +708,12 @@ miniature's default). The settlement-frames check (`checks/frames-check-256-defa
    | `archive.ts` 265, 422, 452, 508, 607; `recorded.ts` 156, 368, 388; `staging.ts` (stage records keep `erasureSeq`) | database-wide | the same two changes with the frame's account |
    | `bulk.ts` 68, the frames' ticket | `withDatomicErasureSequence(seq, invoke, false, database)` | the frame's account as the ticket's account list |
 
-   Gate: in a protected database with the per-account policy, a removal in another account between a Publish's read
-   and its commit lets the Publish land at its first try; a removal in its own account refuses it and the republish
-   lands; on a database without the policy both refuse, as today (the gate part `removal` of section 9.4, run once per
-   case); every count of section 9 unchanged with the option off.
+   Gate (the miniature's removal step, `DX_SCALE2_REMOVAL=1`, section 9.4): in a protected database with the
+   per-account policy, a removal in another account between a Publish's read and its commit lets the Publish land at
+   its first try, and an uninvolved account's recorded notices stay readable and its settlement goes on; a removal in
+   its own account refuses the Publish and the republish lands; on a database without the policy every case refuses,
+   as `M3` recorded; every count of section 9 unchanged with the option off. What the removal's own account then does
+   with its recorded notices (they may hold the removed value) is the removal rule's question, not the Publish's.
 2. **Deadlines and `schedule` beside saves** (section 13): the same guard (tail, calendar, written entities) would
    apply; not needed by held accounts today.
 3. **Many Publishes at the same instant** (section 11.2): the records go through the one writer one at a time; a burst
