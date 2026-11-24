@@ -147,7 +147,8 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // Rejected: borrowing another builder's live reservation.
   const combined = opts.combined;
   const cells = mode === "load-fair" ? ["fair", "read", "cold", "real-fair"] : ["failover"];
-  const ownedCombination = ["DX-CHK1", "DX-THIN1"].includes(holder) && diagnostic && cells.includes(combined) &&
+  // [DX-IMP2] The whole-subject import builder reruns the combined cases with its option on, in its own slot.
+  const ownedCombination = ["DX-CHK1", "DX-THIN1", "DX-IMP2"].includes(holder) && diagnostic && cells.includes(combined) &&
     (mode === "load-fair" || mode === "hasync-ack");
   const scorecard = holder === "DX-V01" && opts.diagnostic === true && pooled &&
     ["hasync-ack", "hasync-move"].includes(mode) && opts.people === "10";

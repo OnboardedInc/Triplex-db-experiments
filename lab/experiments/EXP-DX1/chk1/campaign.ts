@@ -57,6 +57,10 @@ export async function campaign(stack: Stack, cell: string) {
     PREP1_LOOKUP_EVERY: "64",
     // [Opus W2] Why: rerun the combined cases with wide saves on the per-subject writer when the launcher asks.
     ...(process.env.TX2_SUBJECT_WIDE === "1" ? { TX2_SUBJECT_WIDE: "1" } : {}),
+    // [DX-IMP2] Why: rerun the combined cases with the whole-subject import bound on when the launcher asks.
+    ...(process.env.TX2_IMPORT_WHOLE_SUBJECT === "1" ? { TX2_IMPORT_WHOLE_SUBJECT: "1" } : {}),
+    ...(process.env.TX2_IMPORT_WHOLE_SUBJECT === "1" && process.env.TX2_IMPORT_COMMIT_US
+      ? { TX2_IMPORT_COMMIT_US: process.env.TX2_IMPORT_COMMIT_US } : {}),
   };
   await stack.tool();
   await stack.postgres("pg", a);
