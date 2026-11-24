@@ -185,3 +185,44 @@ Random-subject windows (from the launch message): 900–2,200 reads/s (central 1
 ## Pinned readers with saves (DX-RD3, build `9376ece9c`): faulted before its first window (01:23–01:27 UTC on 2026-11-24)
 
 The dry run reached its first offer (`DX-DRY-RUN first offer reached: pinned pinned-saves lab/experiments/EXP-DX1/v01/study-server.ts:160`); its first attempt was refused in 3 s only because the campaign's parent directory did not exist. The timed arm then stopped in the window driver, before any window: `ReferenceError: Cannot access 'savesWindows' before initialization` at `savesArm` (`v01/study-server.ts:305:19`), called from `study-server.ts:204` and `rd1/prepared.ts:153` `sealedArm`. The stack and the copy were removed; no window ran, so there are no measurements. The builder must fix the variable's initialization order. Evidence: `evidence/DX-SCALE1/pinned-saves-1b/pinned-saves-1b.tar.gz` in the private evidence folder (SHA-256 `2852025f7ad74ddffd651201157dba3295c1d831a0537f150a6cd4460847b256`).
+
+## Pinned readers with saves (DX-RD3, build `e02bf4edf`): result (01:55–02:16 UTC on 2026-11-24)
+
+The dry run printed `[DX-RD3] windows resolved` and stopped inside the window driver (`v01/saves-arm.ts:69`). The timed arm ran all ten windows (90 s each, 256 seats) on a scratch copy of the sealed cluster and exited 0 at 02:16 UTC. Its containers, network and scratch copy were removed. **Wrong values: 0 in every window.**
+
+| Window | Tape | Pin | Reads/s | Read p50 / p99 ms | Wrong | Errors | Stored commits/s | S commit p50 / p99 ms | Quiet commit p50 / p99 ms | Reader cores | Driver loop p99 ms | Sampled storage reads per exchange of 8 | Cache hit share |
+| --- | --- | --- | ---: | --- | ---: | ---: | ---: | --- | --- | ---: | ---: | ---: | ---: |
+| `s-alone` | production-S | none | — | — | — | — | 23.08 | 11.52 / 55.55 | 10.62 / 48.90 | 0.18 | 12.19 | — | — |
+| `s-near-head` | production-S | near-head | 8,960.0 | 23.81 / 112.13 | 0 | 0 | 23.08 | 8.06 / 64.77 | 4.77 / 35.07 | 1.90 | 16.49 | not recorded | not recorded |
+| `s-seed-cut` | production-S | seed-cut | 8,879.0 | 22.91 / 99.33 | 0 | 0 | 23.07 | 7.46 / 52.48 | 5.50 / 29.18 | 2.03 | 16.96 | not recorded | not recorded |
+| `s-tape` | production-S | tape | 1,434.5 | 177.15 / 303.10 | 0 | 0 | 3.16 | 282.62 / 1,105.92 | 241.66 / 605.54 | 2.59 | **169.87** | not recorded | not recorded |
+| `ref-random-near-head` | saturday | random-near-head | 1,219.6 | 207.87 / 333.82 | 0 | 0 | — | — | 5.63 / 9.41 | 2.09 | 10.94 | 14.10 | 78.4% |
+| `s-random-near-head` | production-S | random-near-head | 1,216.6 | 207.87 / 323.58 | 0 | 0 | 23.07 | 7.90 / 55.81 | 4.19 / 22.53 | 2.14 | 16.34 | 13.51 | 81.4% |
+| `ref-random-seed-cut` | saturday | random-seed-cut | 1,085.5 | 231.42 / 342.01 | 0 | 0 | — | — | 5.98 / 20.73 | 2.14 | 10.94 | 14.82 | 77.8% |
+| `ref-near-head` | saturday | near-head | 10,419.7 | 21.38 / 77.82 | 0 | 0 | — | — | 3.90 / 6.27 | 1.99 | 10.94 | 0.45 | 96.7% |
+| `ref-seed-cut` | saturday | seed-cut | 8,368.4 | 23.81 / 107.52 | 0 | 0 | — | — | 4.22 / 6.33 | 2.06 | 10.96 | 0.69 | 95.8% |
+| `ref-tape` | saturday | tape | 3,445.7 | 68.61 / 137.22 | 0 | 0 | — | — | 133.12 / 228.35 | 2.41 | **89.65** | not recorded | not recorded |
+
+Cache hit share is the reader's object-cache hits over requests in its per-minute metrics, weighted by each minute's overlap with the window. The reader record is empty in the four `s-` windows without random pins and in `ref-tape`, so those cells were not recorded.
+
+**Storage loads per subject were inside the predicted 1.3 to 2.3.** The column above counts the sampled storage reads of one exchange, and an exchange carries 8 subjects (mean batch 8). The prediction table gives that as its own column, predicted 10 to 18, and the measured values are inside it. Per subject, two independent counts give:
+
+| Window | Sampled reads per exchange ÷ 8 | Reader `StorageGet` count ÷ reads in the same seconds | Handler CPU per exchange | Reader core-ms per subject |
+| --- | ---: | ---: | ---: | ---: |
+| `ref-random-near-head` | 1.76 | 1.46 | 8.29 ms | 1.72 |
+| `s-random-near-head` | 1.69 | 1.78 | 7.91 ms | 1.76 |
+| `ref-random-seed-cut` | 1.85 | 2.00 | 8.65 ms | 1.97 |
+| `ref-near-head` | 0.06 | 0.10 | 1.15 ms | 0.19 |
+| `ref-seed-cut` | 0.09 | 0.14 | 1.36 ms | 0.25 |
+
+The first report of this run, sent before publication, gave 13.5 to 14.8 as loads per subject. That was the per-exchange figure; the per-subject values are above.
+
+**Against the predictions:**
+1. **Random subjects fit the model.** Reads/s were 1,086 to 1,220 (predicted 800 to 2,200, central 1,250 to 1,400), p99 324 to 342 ms (predicted 170 to 500), loads per subject 1.46 to 2.00, cache hit share 77.8 to 81.4% (predicted 0.76 or 0.78 to 0.90, so at the low edge), and reader CPU 1.7 to 2.0 core-ms per subject (predicted 1.0 to 2.1 ms per subject). None of the three refuters fired. Reads/s were not at or above 2,800 and loads per subject were not at or below 0.5. Reads/s were not under 900 with the reader under 1.8 cores. The 100 ms p99 bar at 256 seats is missed for random subjects, as predicted.
+2. **Saves cost the reader a little near the head: falsifier 1 fired narrowly on rate, not on latency.** `s-near-head` read 8,960/s at p99 112 ms against `ref-near-head`'s 10,420/s at 78 ms. That is 14% fewer reads, 40 reads/s under the 9,000 floor, with p99 inside the 130 ms limit. Reader CPU was 1.90 cores with saves and 1.99 without, and PostgreSQL used 0.20 cores against 0.12, so the loss is not reader CPU; this run does not show which of log ingestion, index adoption or PostgreSQL contention it was. At the old pin, reads were higher with saves: 8,879/s against 8,368/s. Random-near-head was the same with and without saves (1,217 and 1,220).
+3. **Readers did not cost the saves outside the tape window (falsifier 2 did not fire there).** Production-S stored 23.07 to 23.08 commits/s in every window except `s-tape`. In those windows S commit p99 was 52 to 65 ms against `s-alone`'s 55.55 ms (limit 1.5 × = 83 ms), and 0 commits expired. All saves offered were durable and complete. The stored rate was 23.1/s, not the predicted 25.5 to 26.7, because the stored figure counts production-S commits only; the quiet account's 3.5/s is reported separately. S commit p50 was 7.5 to 11.5 ms, well under the predicted 25 to 120 ms.
+4. **Both tape windows were limited by the driver, so they give no reading of the database.** The driver's event-loop p99 was 169.87 ms in `s-tape` and 89.65 ms in `ref-tape`, against the 20 ms threshold, and the driver used 1.1 cores. In `s-tape` it offered only 285 production commits (3.17/s) instead of about 2,086. All 285 were durable. Of the quiet account's 315 offers, 49 were acknowledged. Three quiet reads failed and none were wrong. The predicted `s-tape` rate was 800 to 2,600 reads/s, and 1,434.5 is inside it. Falsifier 3 did not fire, but the window cannot confirm the tape-pin model while the driver is saturated.
+5. **P2's bar for the quiet account** (save p50 ≤ 10 ms, p99 ≤ 50 ms with 256 readers): **met in every window except the two driver-bound tape windows.** Quiet p50 was 3.9 to 10.6 ms and p99 6.3 to 48.9 ms.
+6. **P1's bar** (read p99 ≤ 100 ms at 256 seats): `ref-near-head` met it at 77.82 ms and `s-seed-cut` at 99.33 ms. It was missed narrowly by `s-near-head` (112.13 ms) and `ref-seed-cut` (107.52 ms). The random pins missed it at 324 to 342 ms.
+
+Evidence: `evidence/DX-SCALE1/pinned-saves-1b-e02/` in the private evidence folder, holding `pinned-saves-1b-e02.tar.zst` (SHA-256 `6b732d0ef444d9330e0a68402e6ae91a035f839cd5b93408ba773d043d654783`; all window records, the launch profile, the cleanup record, the run log and the launcher) and `pinned-saves.json` (SHA-256 `315fc987a9d6d2bfa99c3327a91b5615ae4b421933295043483d05330766cb51`). Both were checked on the server and on the Mac.
