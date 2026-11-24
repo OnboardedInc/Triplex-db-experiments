@@ -124,33 +124,6 @@
   (and (integer? offered) (<= 0 offered (:seq state))
        (every? #(<= (bucket-seq state %) offered) (conj (set accounts) unscoped))))
 
-(defn ticket-intent-ops
-  "[DX-ERA3 F1] A ticket naming no account read any account, so at Datomic's serial point it must find no removal
-  declared or committed since it: the global declared sequence equals the ticket. A removal declares itself (moves
-  it) in its first transaction, before it selects or records anything. Tickets naming accounts are held the same way
-  by those accounts' counters in the fence (`fence-op`)."
-  ;; No function literal and no name-generating macro (see entry-entities).
-  [scope input]
-  (if (contains? input "erasureSeq")
-    (if (contains? input "erasureAccounts")
-      []
-      [[:db/cas scope :triplex.scope/removal-intent (get input "erasureSeq") (get input "erasureSeq")]])
-    []))
-
-(defn pending-touches?
-  "[DX-ERA3 F1b] A ticketed write waits (503, as the database-wide rule answers) while a removal is in flight that can
-  reach what it read: always for a ticket naming no account, else when the removal's accounts meet the ticket's or the
-  unscoped account. The serial point enforces the same (`ticket-intent-ops`, the account counters); this answers it
-  early with today's code."
-  [state input]
-  (if (:per-account state)
-    (if (:pending state)
-      (if (contains? input "erasureAccounts")
-        (boolean (some (set (conj (vec (ticket-accounts input)) unscoped)) (entry-buckets (:pending state))))
-        true)
-      false)
-    false))
-
 (defn lock-name [name b] (str name "#removal/" b))
 
 (defn install!

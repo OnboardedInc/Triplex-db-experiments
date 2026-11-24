@@ -6,6 +6,20 @@ Nothing ran on a server. One option, default off: `TX2_REMOVAL_PER_ACCOUNT=1`. A
 database. Datomic is not modified; the installed writer functions' code is unchanged (their stored texts differ only in
 reader-generated names, section 9).
 
+**An independent review found a break in the first version.** DX-ERA3 (`origin/exp/DX-ERA3-removal-review`,
+`8fe9a06f1`, its page `era3/REVIEW.md`, merged here with its tests) showed on `6bc2484f0`: a settlement frame, notice,
+archive record or Publish whose ticket names no account (every such caller on this branch) was compared only with the
+last *published* removal, and nothing checked it at Datomic's commit point. While a removal was committed in Datomic
+but not yet published (its gateway killed or restarted, its commit outlasting the gateway's 5 s wait, the removal log
+briefly unwritable), a frame computed from the old value was accepted, landed after the removal, and its copy of the
+removed value stayed readable after the removal was acknowledged. Today's database-wide rule refuses the same request.
+It also found that any ticketed write was accepted while a removal's intent was pending (F1b), that a removal committed
+by a gateway with the subject check could not be finished by one without it (F2), and that a gateway without the
+per-account option left an intent behind that blocked every removal (F3). All are fixed from `a9da13f89`: every
+removal now declares itself in Datomic before it selects or records anything, and every ticketed write is checked
+against that declaration at Datomic's commit point (section 14). Proof item 5, section 6 and the settlement-frame row
+of section 13.2 were wrong and are rewritten; section 14 lists exactly what changed.
+
 ## 0. Results
 
 **Saves in other accounts that a removal refused: before, 35 to 796 per cell (3.7% to 87.9%); after, 0 in every cell.**
@@ -152,15 +166,21 @@ its reads through its ticket, and the settlement and Publish code reads a whole 
   `:triplex.removal/seq`) and one per account (`:triplex.removal/account`; the account of `acct/<account>/...`, and ""
   for every other entity). Each counter holds the global sequence of the latest removal that touched it, derived from
   the one ordered log (`removal_scope.clj` `add-entry`). The database-wide `:triplex.scope/erasure-seq` is held at -1.
-- **A removal** commits, in its one transaction: the database-wide fence on -1 (unchanged), `cas removal-seq s-1 s`,
-  and the counters of every entity and account its identities belong to. It holds the database's lock (removals stay
-  one ordered log) and the locks of the accounts its selectors can reach.
+- **A removal** first declares itself (one native transaction, `removal-commit/declare!`): `:triplex.scope/removal-intent`
+  takes its sequence s and the counter of every account its selectors can reach takes -s. It then selects, records its
+  intent and commits, in one transaction: the database-wide fence on -1 (unchanged), `cas removal-seq s-1 s`, and the
+  counters of every entity it names or that lost a value and of their accounts (set to s; a declared account that lost
+  nothing goes back to its published value). It holds the database's lock (removals stay one ordered log) and the locks
+  of the accounts its selectors can reach.
 - **A save** carries the installed writers' database-wide fence on -1 (always true, so the installed functions are
   unchanged) and one fence: each entity it writes must have the counter value of the save's cut. A removal elsewhere
   never moves those counters.
 - **A derived write with a ticket naming accounts** takes those accounts' locks (not the database's), is checked
-  against them (no removal after the ticket in a named account or in "") and adds them to its fence. A ticket without
-  accounts is checked database-wide under the database's lock, as today.
+  against them (no removal after the ticket in a named account or in ""), waits (503) while a pending removal can reach
+  one of them, and carries those accounts' guards in its fence, which a removal's declaration makes fail. **A ticket
+  naming no account** takes the database's lock, must equal the published sequence, waits (503) while any removal is
+  pending, and carries `[:db/cas scope :triplex.scope/removal-intent t t]`, which any removal's declaration makes fail
+  (rewritten after DX-ERA3's F1: before, nothing checked it at the commit point).
 - **Requests while a removal is being applied** use the last published cut: the native removal sequence may equal it
   or be one ahead by the removal named in `pending.json`. A save is then fenced at the serial point; a read is a read
   that started before that removal's publication (TARGETS section 7.1 allows the old value). Anything else (a native
@@ -191,12 +211,20 @@ Let removal R (global sequence s) remove identities I on entities E (accounts A 
    entities it writes. If one of them is in E, the save is fenced on that entity (refused if R committed after its cut).
    Otherwise its change rows concern no member of I. Sealed values are written as tokens or markers; every route masks
    a change by its assertion identity.
-5. **A derived write cannot re-materialise a value of R.** Its ticket names the accounts it read; R moves the counter of
-   every account in A before or with its publication (same native transaction as its sequence). The ticket is checked
-   against the published cut under the named accounts' locks, and the fence re-checks the named accounts at the serial
-   point (a removal that took the account's lock after a timed-out request is still caught). A ticket naming no account
-   is checked database-wide, as today. Exactness here rests on the ticket naming every account its inputs came from,
-   exactly as today's ticket rests on its sequence being the one its inputs were read at (section 5, case 1).
+5. **A derived write cannot re-materialise a value of R** (rewritten after DX-ERA3's F1; the first version was false
+   for a ticket naming no account while R was committed but unpublished, and for any ticket while R's intent was
+   pending). R's first native transaction, before it selects or records anything, sets `:triplex.scope/removal-intent`
+   to s and the counter of every account R's selectors can reach to -s; its commit sets those counters to s (or back to
+   their published value) and `removal-seq` to s. A ticketed write commits only in a transaction that also checks, at
+   Datomic's serial point: for a ticket naming no account, `[:db/cas scope :triplex.scope/removal-intent t t]` with t
+   the ticket, which the gateway requires to equal the published sequence; for a ticket naming accounts, the fence's
+   guard on each named account and on "" (each counter must equal its published value, which the gateway requires to
+   be at most the ticket). A ticketed write ordered after R's declaration therefore fails whenever R can reach what it
+   read, whether R is in flight, committed and unpublished, or stopped at any step; one ordered before R's declaration
+   landed before R began, like any frame made before the removal was requested. Nothing depends on publication timing.
+   The gateway also answers such writes 503 while R is pending, so clients see today's codes. Exactness still rests on
+   the ticket naming every account its inputs came from (section 5, case 1); a ticket naming none is treated as having
+   read every account.
 6. **Values cannot cross accounts on any write path the store performs.** Every value the gateway writes comes from the
    request's rows (on the entities written) or from those entities' stored rows (retirements, journal rewrites). A
    Publish copies the release document (definitions, never subject values) into the account. A reference carries an
@@ -207,8 +235,10 @@ Let removal R (global sequence s) remove identities I on entities E (accounts A 
    still behind, so every route refuses until `restore-erasure` replays the missing removals (the replay commits them
    in whichever mode the restored copy is in; a copy restored from before the move is moved again afterwards).
 8. **Mixed gateways.** On a moved database the database-wide sequence is -1, which never equals a published sequence
-   (never negative): a gateway without the option refuses every request on it (503) and its removal's
-   `cas erasure-seq` fails. A save prepared under one mode and committed after a move fails its fence once (the
+   (never negative): a gateway without the option refuses every request on it (503), its removal included, before it
+   writes anything (DX-ERA3 F3: the first version wrote an intent first, which blocked every removal). Gateways with the
+   option take one removal path whatever `TX2_REMOVAL_SUBJECT_CHECK` says (DX-ERA3 F2: the first version had two, and
+   a removal committed by one could not be finished by the other). A save prepared under one mode and committed after a move fails its fence once (the
    installed functions see the database-wide value change) and is sent again under the new mode.
 9. **Two removals at once** serialise on the database's lock and on `cas removal-seq`; each moves its own counters.
 10. **A removal stopped at any step** leaves `pending.json`: before its native commit nothing moved (saves of its own
@@ -226,16 +256,22 @@ Let removal R (global sequence s) remove identities I on entities E (accounts A 
 3. **Cached Reach replies** stay keyed by the database-wide sequence (P8 not built).
 4. **A plain save computed from a value read before a removal and sent after its publication** is not refused by any
    sequence today either (the gateway reads the cut when the request arrives); unchanged.
-5. **The removal's own "head has not moved" check** stays database-wide (P9): it retries the removal, it never refuses
-   another account's work.
+5. **The removal's own "head has not moved" check** was database-wide (P9) in the first version; it is replaced by the
+   per-subject check (section 13), which every per-account removal now uses.
 
-## 6. The lock
+## 6. The locks, and why they are not what keeps derived writes out (rewritten after DX-ERA3's F1)
 
 Removals keep the database's lock among themselves (one log, one pending intent). A removal also takes the lock of each
 account its selectors can reach (`removal-scope/lock-name`), after the database's lock, in sorted order. A derived write
 that names its accounts takes only those accounts' locks, in sorted order, and never the database's, so no wait cycle is
 possible. Plain saves take no lock. Left on the database's lock: tickets without accounts, cross-database delivery, and
 sealed databases on the file key store.
+
+The locks only order live requests. A removal whose run is cut short (its gateway killed or restarted, a wait expired,
+the removal log briefly unwritable) releases them with its intent still pending, and a derived write can then take
+them. The first version relied on the locks here ("a ticket naming no account is checked database-wide, as today"),
+which was false (DX-ERA3 F1, F1b). What keeps a derived write out of a removal's window is the removal's declaration,
+checked at Datomic's serial point (section 4, item 5).
 
 ## 7. Where this meets the per-account guards of Publish and enrolment (ACT8, not edited here)
 
@@ -541,7 +577,7 @@ back after the commit.
 | Such an entity created after publication by a new request | a plain save is new data after the removal. An import frame is refused by DX-IMP2's families (its own option, `origin/exp/DX-IMP2-import-whole-subject`, which records the named (entity, attribute) pairs). On this branch alone the resent frame commits, exactly as with today's defaults (IMP2's finding). The named counters keep IMP2's fix closed under the per-account rule: without them, an import frame prepared before the removal passed both the families check (old cut) and the fence (counter unmoved) |
 | A version entity or sealed record of the subject added or changed in the window | checked the same way (version links and versions; records and their datoms) |
 | A reference to the subject from another entity | carries an entity ID; protected fields take strings only (`ProtectedTypeUnsupported`). The head check never selected it either |
-| A settlement frame materializing a value in that window | cannot commit in the window: the removal holds the database's lock and the lock of every account its selectors reach for its whole run, and ticketed writes take those locks (a ticket naming no account takes the database's). A frame writing the subject itself carries the subject's fence. Unchanged |
+| A settlement frame materializing a value in that window | **Corrected after DX-ERA3 (F1b).** The first version said it cannot commit in the window because of the locks; that was false once a removal's run is cut short (the locks are released, the intent stays pending). Now the removal's declaration comes before its selection, so a ticketed write that can read the removal's accounts and is ordered after the declaration fails at Datomic's serial point, and waits 503 at the gateway while the removal is pending. A frame writing the subject itself also carries the subject's fence |
 | Another removal | serialised on the database's lock |
 | The removal's own log position | taken at the serial point (above) |
 
@@ -559,12 +595,14 @@ Other subjects of the account and other accounts are untouched. The removal's co
 in the same transaction. Under the guard, a try can fail only by a write to the subject that carries no fence: an
 owner-root fold (once per subject, ever). So:
 
-- **at most 4 tries** (2 narrow, then at most 2 under the guard), one guard commit;
-- a hard stop at 5 tries answers 503 and leaves the removal pending, its subjects guarded, resumable with the same
+- **at most 4 commit attempts** (2 narrow, then at most 2 under the guard: `guarded-tries` is 2 from `a9da13f89`; it was
+  3 in the first version, so the code then allowed 5, which DX-ERA3 F4 pointed out), one guard commit;
+- if the 4th attempt fails it answers 503 and leaves the removal pending, its subjects guarded, resumable with the same
   command (a resumed removal finds its guard by the negative counters);
-- **worst-case time to remove**, under any save rate: the wait for earlier removals on the database's lock, plus at
-  most 5 tries and 1 guard commit, each bounded by the gateway's own timeouts (sync 2 s, commit 5 s): at most
-  5 x 7 s + 5 s = 40 s before it answers (done, or 503 and resumable).
+- **worst-case time to remove**, under any save rate: the wait for earlier removals on the database's lock, plus the
+  declaration, at most 4 commit attempts and 1 guard commit, each bounded by the gateway's own waits (sync 2 s, each
+  native transaction `TX2_REMOVAL_WAIT_MS`, default 5 s): at most 5 s + 4 x 7 s + 5 s = 38 s before it answers (done,
+  or 503 and resumable).
 
 A guard taken and then stopped (gateway killed) keeps the subject's saves refused until the removal is resumed, as a
 removal stopped after its native commit does today.

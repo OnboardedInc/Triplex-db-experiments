@@ -209,7 +209,9 @@
 ;; stale only when a removal published after it touched one of them (or the unscoped sequence).
 ;; Rejected: a database-wide comparison for such tickets (any account's removal refused every account's frames).
 (defn ensure-ticket! [state input]
-  (when (removal-scope/pending-touches? state input) (unavailable!))
+  ;; [DX-ERA3 F1b] removal-commit is loaded only on a database guarded per account.
+  (when (:per-account state)
+    (when ((requiring-resolve 'triplex.gateway.removal-commit/pending-touches?) state input) (unavailable!)))
   (if (and (:per-account state) (contains? input "erasureAccounts"))
     (when-not (removal-scope/ticket-current? state (get input "erasureSeq") (removal-scope/ticket-accounts input))
       (stale!))
