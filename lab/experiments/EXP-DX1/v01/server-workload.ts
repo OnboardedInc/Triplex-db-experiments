@@ -8,10 +8,19 @@ import { ceilingSeconds, widePeople } from "../prep1/server-tape.ts";
 export const serverRates = [50, 235, 394, 620] as const;
 export const replaySeconds = ceilingSeconds;
 export const serverCellSeconds = 300;
-export type WindowSeconds = 90 | 300;
+// [DX-CARD2] Why: the quiet-account gate (P6) wants 500 verified commits per side, and the quiet account offers 3.5
+// saves/s in every cell at every load, so 90 s cells give 315 and the gate can only be PARTIAL. The cell length is a
+// setting: 90 or 300 as before, or any multiple of 30 from 90 to 600 s; 150 s is the shortest that offers 500 or more
+// (525). Rejected: a free length (3.5 × seconds must be whole and the tapes are built per 30 s), and changing the 90 s
+// or 300 s cells the earlier cards measured.
+export type WindowSeconds = number;
+export const quietPerSecond = 3.5, quietGateCommits = 500;
+export const shortestGateSeconds = Math.ceil(quietGateCommits / quietPerSecond / 30) * 30;
 export function parseWindow(text: string | undefined): WindowSeconds {
-  assert(text === undefined || text === "90" || text === "300", "Choose --window-seconds 90 or 300");
-  return text === "90" ? 90 : serverCellSeconds;
+  const seconds = text === undefined ? serverCellSeconds : Number(text);
+  assert(text === undefined || (/^[1-9][0-9]*$/.test(text) && seconds % 30 === 0 && seconds >= 90 && seconds <= 600),
+    "Choose --window-seconds 90 or 300 (or a multiple of 30 from 90 to 600)");
+  return seconds;
 }
 export function parseCredits(value = defaultCreditMode): CreditMode {
   const mode = creditModes.find(mode => mode === value);

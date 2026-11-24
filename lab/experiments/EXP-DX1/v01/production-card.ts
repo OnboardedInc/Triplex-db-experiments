@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import type { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import { fieldCount, fieldValue, taskSerial } from "../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
-import { loadParams, productionOffers, slotAttribute, tapeReport, type ProductionOffer, type Shape } from "../w1/field/production.ts";
+import { loadParams, productionOffers, slotAttribute, tapeReport, type ProductionOffer, type Shape, type TapeEdge } from "../w1/field/production.ts";
 import { agedFieldRow } from "../prep1/ceiling-seed.ts";
 import { task, type Write } from "../scale1/decision/plan.ts";
 import { Histogram } from "../../../bench/lib/hist.ts";
@@ -14,19 +14,25 @@ import { cellPath, ratedTape, serverCells, type ServerCell, type WindowSeconds }
 // card's own stream so the P6 pairs stay comparable. Saturday's tape stays selectable so earlier cards reproduce.
 // Rejected: a second runner (the card's admission, journal and receipt checks must judge the new saves) and changing
 // the quiet stream (its solo and loaded halves would no longer be the same tape).
-export const cardTapes = ["saturday", "production-R", "production-S"] as const;
+// [DX-CARD2] The "-noburst" tapes are the same process without the end-of-cell burst (w1/field/production.ts edge
+// "spread"): no account has a save due at the cell's last instant. Their offers and hashes differ from the measured
+// "production-R" and "production-S", which stay as they were so the cards of 2026-11-23 reproduce.
+export const cardTapes = ["saturday", "production-R", "production-S", "production-R-noburst", "production-S-noburst"] as const;
 export type CardTape = (typeof cardTapes)[number];
 export function parseCardTape(text: string | undefined): CardTape {
   const tape = cardTapes.find((t) => t === (text ?? "saturday"));
-  assert(tape, "Choose --tape saturday, production-R or production-S");
+  assert(tape, "Choose --tape saturday, production-R, production-S, production-R-noburst or production-S-noburst");
   return tape;
 }
 export const tapeShape = (tape: CardTape): Shape | undefined =>
-  tape === "production-R" ? "R" : tape === "production-S" ? "S" : undefined;
+  tape.startsWith("production-R") ? "R" : tape.startsWith("production-S") ? "S" : undefined;
+export const tapeEdge = (tape: CardTape): TapeEdge => tape.endsWith("-noburst") ? "spread" : "calibrated";
 export const tapeTitle = (tape: CardTape) => tape === "saturday"
   ? "Saturday's tape (every neighbour save a one- or two-field replacement, nearly every save a subject not seen before)"
   : `the production-shaped tape, shape ${tapeShape(tape)} (${tapeShape(tape) === "R"
-    ? "one commit per form row at the fixed row rates" : "one commit per subject's save, at the same saves as shape R"})`;
+    ? "one commit per form row at the fixed row rates" : "one commit per subject's save, at the same saves as shape R"})` +
+    (tapeEdge(tape) === "spread" ? ", with the end-of-cell burst removed (no save due at a cell's last instant; its offers and tape hashes differ from the measured " +
+      `production-${tapeShape(tape)} tape of 2026-11-23, which stays selectable)` : "");
 
 const paramsFile = new URL("../real2/production-shape.json", import.meta.url).pathname;
 let loaded: ReturnType<typeof loadParams> | undefined;
@@ -55,9 +61,9 @@ export const isProduction = (e: Write): e is ProductionWrite => Array.isArray((e
  * size; the toy folds onto its few people per account, keeping each tape person on one toy subject).
  */
 export function productionNeighbours(shape: Shape, rate: number, rowTargets: readonly number[], seconds: number,
-  label: string, fold?: (account: number, person: number) => number): ProductionWrite[] {
+  label: string, fold?: (account: number, person: number) => number, edge: TapeEdge = "calibrated"): ProductionWrite[] {
   const { params } = productionParams();
-  const offers = productionOffers(params, shape, productionBand(rate), rowTargets, seconds);
+  const offers = productionOffers(params, shape, productionBand(rate), rowTargets, seconds, edge);
   const ordinal = new Map<number, number>();
   return offers.map((o: ProductionOffer) => {
     const person = fold ? fold(o.account, o.person) : o.person;
@@ -82,10 +88,10 @@ export const sortTape = (tape: Write[]) =>
   tape.sort((a, b) => a.ms - b.ms || a.account - b.account || a.ordinal - b.ordinal);
 
 /** A full-size loaded cell on the production tape: the card's own quiet stream, then the production neighbours. */
-export function fullCellTape(shape: Shape, cell: ServerCell, seconds: WindowSeconds) {
+export function fullCellTape(shape: Shape, cell: ServerCell, seconds: WindowSeconds, edge: TapeEdge = "calibrated") {
   assert(cell.loaded);
   const quiet = ratedTape(100_000, cell, seconds).filter((e) => e.account === 0);
-  return sortTape([...quiet, ...productionNeighbours(shape, cell.rate, rowTargets(cell.rate, seconds, quiet.length), seconds, cellPath(cell))]);
+  return sortTape([...quiet, ...productionNeighbours(shape, cell.rate, rowTargets(cell.rate, seconds, quiet.length), seconds, cellPath(cell), undefined, edge)]);
 }
 
 /**
@@ -96,7 +102,7 @@ export function tapeBinding(tape: CardTape, seconds: WindowSeconds) {
   const shape = tapeShape(tape);
   if (!shape) return undefined;
   return { name: tape, paramsSha256: productionParams().sha256, cells: serverCells.filter((c) => c.loaded).map((cell) => {
-    const report = cardTapeReport(fullCellTape(shape, cell, seconds), seconds);
+    const report = cardTapeReport(fullCellTape(shape, cell, seconds, tapeEdge(tape)), seconds);
     return { cell: cellPath(cell), tapeSha256: report.tapeSha256, reportSha256: createHash("sha256").update(JSON.stringify(report)).digest("hex") };
   }) };
 }

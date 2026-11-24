@@ -104,3 +104,6 @@ prod-R394-32-int1-p16    9d62b18ff  ADMITTED  ARM=1-prodR-394-cache32-S
 prod-S394-32-int1-p16    9d62b18ff  ADMITTED  ARM=1-prodS-394-cache32-S
 prod-R394-16-int1-p16    9d62b18ff  ADMITTED  ARM=1-prodR-394-S
 rolling-cache32-int1-p16 9d62b18ff  ADMITTED  ARM=1-rolling6-cache32-S
+# [DX-CARD2] The card's adopted stack with the tuned reader's options (v01/card-reader.ts readerStackOptions) at its build commit, and the default.
+adopted-card-tuned-card2 ed3946e1d ADMITTED DX_PINNED_SHORTCUT=1;DX_PINNED_CUT_LOOKUP=1;DX_RD1_READ_FILTER=1;DX_RD1_READ_PROFILE=1;DX_READ_PERMITS=12
+adopted-card-default-card2 ed3946e1d ADMITTED -

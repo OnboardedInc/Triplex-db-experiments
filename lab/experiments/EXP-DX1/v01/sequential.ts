@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { physicalArms, timeBudget, type writeDiagnostics, type Age, type JvmProfile, type Writer, type serverStages } from "./profile.ts";
 import { type Directory, type preflightWal } from "./pgdata.ts";
+import { randomLineMinutes, type CardReader } from "./card-reader.ts";
 import { cellPath, replaySeconds, serverCells, type WindowSeconds, type CreditMode } from "./server-workload.ts";
 
 import type { RealisticBinding } from "./realistic.ts";
@@ -20,6 +21,8 @@ type CampaignInput = {
   profile?: ServerProfile;
   // [DX-INT1] Absent for Saturday's tape; otherwise every loaded cell's tape and report digests (v01/production-card.ts).
   tape?: { name: string; paramsSha256: string; cells: { cell: string; tapeSha256: string; reportSha256: string }[] };
+  // [DX-CARD2] Absent for the default reader; the tuned reader's setting (v01/card-reader.ts).
+  reader?: CardReader;
 };
 export type SequenceConfig = {
   input: CampaignInput;
@@ -163,7 +166,7 @@ export function sequenceProgress(campaign: string, sequence: Sequence | undefine
     assert(!fs.existsSync(paths.start) && !fs.existsSync(paths.end), `Arm ${next} already started`);
   }
   const elapsed = previous.reduce((ms, step) => ms + step.completedAt - step.startedAt, 0);
-  assert(elapsed <= timeBudget(sequence?.input.windowSeconds ?? replaySeconds, sequence?.input.age === "realistic").ceiling * 60_000, "Sequential campaign exceeded its active time budget");
+  assert(elapsed <= timeBudget(sequence?.input.windowSeconds ?? replaySeconds, sequence?.input.age === "realistic", randomLineMinutes(sequence?.input.reader)).ceiling * 60_000, "Sequential campaign exceeded its active time budget");
   return { previous, elapsed };
 }
 
@@ -204,7 +207,7 @@ export function completeSequentialArm(campaign: string, sequence: Sequence, arm:
   const anchor = checkAnchor(campaign, sequence, invocation, completedAt);
   const spent = Array.from({ length: arm - 1 }, (_, i) => readCompleted(campaign, sequence, i + 1, false))
     .reduce((ms, step) => ms + step.completedAt - step.startedAt, 0);
-  assert(spent + completedAt - invocation.startedAt <= timeBudget(sequence?.input.windowSeconds ?? replaySeconds, sequence?.input.age === "realistic").ceiling * 60_000, "Sequential campaign exceeded its active time budget");
+  assert(spent + completedAt - invocation.startedAt <= timeBudget(sequence?.input.windowSeconds ?? replaySeconds, sequence?.input.age === "realistic", randomLineMinutes(sequence?.input.reader)).ceiling * 60_000, "Sequential campaign exceeded its active time budget");
   write(loc.end, { invocationSha256: sha(bytes), completedAt, files, ...anchor } satisfies Completed);
 }
 

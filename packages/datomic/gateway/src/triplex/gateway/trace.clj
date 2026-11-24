@@ -39,11 +39,19 @@
                       :source (or (System/getenv "TRIPLEX_TRACE_SOURCE") "unbound")
                       :slot (or (System/getenv "TRIPLEX_TRACE_SLOT") "unbound")
                       :process (or (System/getenv "TRIPLEX_TRACE_PROCESS") "gateway")})
+;; [DX-CARD2] Why: a stack's bring-up starts the write gateway three times in one trace directory; the second start
+;; found the first start's file and refused ("Trace file exists"), so every write-gateway trace of 2026-11-23 was lost.
+;; An earlier process's file is kept under a name of its own (its start's position and the time it was set aside), and
+;; this process writes the role's file. Rejected: appending to the earlier file (two processes, two clocks, one file)
+;; and refusing (the trace of the process that serves the run is lost).
 (def writer (delay
   (when-let [dir (System/getenv "TRIPLEX_TRACE_DIR")]
     (.mkdirs (File. dir))
-    (let [file (File. dir (str (:process identity-fields) ".jsonl"))]
-      (when (.exists file) (throw (ex-info "Trace file exists; use a fresh run" {})))
+    (let [process (:process identity-fields) file (File. dir (str process ".jsonl"))]
+      (when (.exists file)
+        (let [n (count (filter #(re-matches (re-pattern (str "\\Q" process "\\E\\.start-\\d+-\\d+\\.jsonl")) %) (or (seq (.list (File. dir))) [])))
+              kept (File. dir (str process ".start-" (inc n) "-" (System/currentTimeMillis) ".jsonl"))]
+          (when-not (.renameTo file kept) (throw (ex-info "Trace file exists and could not be set aside" {:file (str file)})))))
       (BufferedWriter. (FileWriter. file) 262144)))))
 (defn emit! [row]
   (try (when-let [^BufferedWriter w @writer]

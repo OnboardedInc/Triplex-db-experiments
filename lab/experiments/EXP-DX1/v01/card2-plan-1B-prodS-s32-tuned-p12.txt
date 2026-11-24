@@ -1,0 +1,391 @@
+Budget 282 minutes including cleanup, up to USD 5.12 per age. Headline zero/readers use barrier6. Barrier6 repeats P2 and P6 on the identical stack. The P1–P4 pair uses 14 minutes of matched offers. Profile server-32 (transactor 57 GiB cap, 32 GiB object cache; role caps 79 GiB) with read gateway JVM j21-g1, write gateway JVM j21-g1, headline transactor j25-zgc, and WAL on PGDATA. P2 and P6 offered rates 50, 235, 394, 620 rows/s (offered as one commit per subject's save) for 300 seconds per cell. Save tape: the production-shaped tape, shape S (one commit per subject's save, at the same saves as shape R). Credit selection barrier6. Without prepared PGDATA, this command uses logical dumps. Build and AGE1 provisioning are separate. Reader: tuned (cores 5, 6 and 11, 9 GiB heap with a 3 GiB read cache and three collector threads, 12 read permits, both pinned read options with the early filter, request trace off for /read; P1 ladder in client batches of up to 8 subjects, then a random-subject line of 256 seats for 60 s at the seed cut; the driver on cores 9 and 10 while offers run).
+Writer admission and diagnostics {"admission":{"mode":"barrier","credits":6},"diagnostics":{"serialApply":false,"lookupEvery":0}}
+[
+  {
+    "root": "",
+    "loaded": false,
+    "comparison": false,
+    "name": "headline",
+    "policy": {
+      "profile": "server-32",
+      "reduced": false,
+      "creditMode": "barrier6",
+      "tx": {
+        "major": "25",
+        "collector": "ZGC",
+        "cores": 3,
+        "cpus": "0,7,8",
+        "memoryMiB": 58368,
+        "cacheMiB": 32768,
+        "flags": [
+          "-Xms1024m",
+          "-Xmx49152m",
+          "-XX:MaxDirectMemorySize=8192m",
+          "-Ddatomic.objectCacheMax=32768m",
+          "-Ddatomic.prefetchProbes=true",
+          "-XX:+UseZGC",
+          "-XX:ConcGCThreads=2",
+          "-XX:ParallelGCThreads=3",
+          "-XX:+UseDynamicNumberOfGCThreads",
+          "-XX:+ZUncommit",
+          "-XX:ZUncommitDelay=300",
+          "-XX:ZAllocationSpikeTolerance=2",
+          "-XX:ActiveProcessorCount=3",
+          "-XX:+ExitOnOutOfMemoryError",
+          "-XX:-AlwaysPreTouch",
+          "-XX:-UseLargePages",
+          "-XX:-UseTransparentHugePages",
+          "-Xshare:auto",
+          "-XX:+TieredCompilation",
+          "-XX:CICompilerCount=2",
+          "-XX:CompileThresholdScaling=1",
+          "-Ddatomic.txTimeoutMsec=10000"
+        ]
+      },
+      "gw-w": {
+        "major": "21",
+        "collector": "G1",
+        "cores": 3,
+        "cpus": "2,3,4",
+        "memoryMiB": 6144,
+        "cacheMiB": null,
+        "flags": [
+          "-Xms512m",
+          "-Xmx4096m",
+          "-XX:MaxDirectMemorySize=4096m",
+          "-XX:+UseG1GC",
+          "-XX:ActiveProcessorCount=3",
+          "-XX:MaxGCPauseMillis=25",
+          "-XX:ParallelGCThreads=3",
+          "-XX:ConcGCThreads=1",
+          "-XX:+UseDynamicNumberOfGCThreads",
+          "-XX:+ExitOnOutOfMemoryError",
+          "-XX:-AlwaysPreTouch",
+          "-XX:-UseLargePages",
+          "-XX:-UseTransparentHugePages",
+          "-Xshare:auto",
+          "-XX:+TieredCompilation",
+          "-XX:CICompilerCount=2",
+          "-XX:CompileThresholdScaling=1",
+          "-Ddatomic.txTimeoutMsec=10000"
+        ]
+      },
+      "gw-r": {
+        "major": "21",
+        "collector": "G1",
+        "cores": 3,
+        "cpus": "5,6,11",
+        "memoryMiB": 11264,
+        "cacheMiB": 3072,
+        "flags": [
+          "-Xms256m",
+          "-Xmx9216m",
+          "-XX:MaxDirectMemorySize=1024m",
+          "-Ddatomic.objectCacheMax=3072m",
+          "-XX:+UseG1GC",
+          "-XX:ActiveProcessorCount=3",
+          "-XX:MaxGCPauseMillis=50",
+          "-XX:ParallelGCThreads=3",
+          "-XX:ConcGCThreads=1",
+          "-XX:+UseDynamicNumberOfGCThreads",
+          "-XX:+ExitOnOutOfMemoryError",
+          "-XX:-AlwaysPreTouch",
+          "-XX:-UseLargePages",
+          "-XX:-UseTransparentHugePages",
+          "-Xshare:auto",
+          "-XX:+TieredCompilation",
+          "-XX:CICompilerCount=2",
+          "-XX:CompileThresholdScaling=1",
+          "-Ddatomic.txTimeoutMsec=10000"
+        ]
+      },
+      "pg": {
+        "memoryMiB": 5120,
+        "cpus": "1",
+        "settings": {
+          "fsync": "on",
+          "synchronous_commit": "on",
+          "full_page_writes": "on",
+          "shared_buffers": "2GB",
+          "wal_sync_method": "fdatasync",
+          "checkpoint_timeout": "5min",
+          "checkpoint_completion_target": "0.9",
+          "checkpoint_flush_after": "256kB",
+          "min_wal_size": "80MB",
+          "max_wal_size": "1GB",
+          "log_checkpoints": "on",
+          "log_timezone": "UTC",
+          "track_io_timing": "on",
+          "track_wal_io_timing": "on"
+        }
+      },
+      "index": {
+        "threshold": "256m",
+        "max": "1g"
+      },
+      "clients": {
+        "senders": "9",
+        "readers": "10"
+      }
+    },
+    "separateWal": false
+  },
+  {
+    "root": "",
+    "loaded": true,
+    "comparison": false,
+    "name": "headline",
+    "policy": {
+      "profile": "server-32",
+      "reduced": false,
+      "creditMode": "barrier6",
+      "tx": {
+        "major": "25",
+        "collector": "ZGC",
+        "cores": 3,
+        "cpus": "0,7,8",
+        "memoryMiB": 58368,
+        "cacheMiB": 32768,
+        "flags": [
+          "-Xms1024m",
+          "-Xmx49152m",
+          "-XX:MaxDirectMemorySize=8192m",
+          "-Ddatomic.objectCacheMax=32768m",
+          "-Ddatomic.prefetchProbes=true",
+          "-XX:+UseZGC",
+          "-XX:ConcGCThreads=2",
+          "-XX:ParallelGCThreads=3",
+          "-XX:+UseDynamicNumberOfGCThreads",
+          "-XX:+ZUncommit",
+          "-XX:ZUncommitDelay=300",
+          "-XX:ZAllocationSpikeTolerance=2",
+          "-XX:ActiveProcessorCount=3",
+          "-XX:+ExitOnOutOfMemoryError",
+          "-XX:-AlwaysPreTouch",
+          "-XX:-UseLargePages",
+          "-XX:-UseTransparentHugePages",
+          "-Xshare:auto",
+          "-XX:+TieredCompilation",
+          "-XX:CICompilerCount=2",
+          "-XX:CompileThresholdScaling=1",
+          "-Ddatomic.txTimeoutMsec=10000"
+        ]
+      },
+      "gw-w": {
+        "major": "21",
+        "collector": "G1",
+        "cores": 3,
+        "cpus": "2,3,4",
+        "memoryMiB": 6144,
+        "cacheMiB": null,
+        "flags": [
+          "-Xms512m",
+          "-Xmx4096m",
+          "-XX:MaxDirectMemorySize=4096m",
+          "-XX:+UseG1GC",
+          "-XX:ActiveProcessorCount=3",
+          "-XX:MaxGCPauseMillis=25",
+          "-XX:ParallelGCThreads=3",
+          "-XX:ConcGCThreads=1",
+          "-XX:+UseDynamicNumberOfGCThreads",
+          "-XX:+ExitOnOutOfMemoryError",
+          "-XX:-AlwaysPreTouch",
+          "-XX:-UseLargePages",
+          "-XX:-UseTransparentHugePages",
+          "-Xshare:auto",
+          "-XX:+TieredCompilation",
+          "-XX:CICompilerCount=2",
+          "-XX:CompileThresholdScaling=1",
+          "-Ddatomic.txTimeoutMsec=10000"
+        ]
+      },
+      "gw-r": {
+        "major": "21",
+        "collector": "G1",
+        "cores": 3,
+        "cpus": "5,6,11",
+        "memoryMiB": 11264,
+        "cacheMiB": 3072,
+        "flags": [
+          "-Xms256m",
+          "-Xmx9216m",
+          "-XX:MaxDirectMemorySize=1024m",
+          "-Ddatomic.objectCacheMax=3072m",
+          "-XX:+UseG1GC",
+          "-XX:ActiveProcessorCount=3",
+          "-XX:MaxGCPauseMillis=50",
+          "-XX:ParallelGCThreads=3",
+          "-XX:ConcGCThreads=1",
+          "-XX:+UseDynamicNumberOfGCThreads",
+          "-XX:+ExitOnOutOfMemoryError",
+          "-XX:-AlwaysPreTouch",
+          "-XX:-UseLargePages",
+          "-XX:-UseTransparentHugePages",
+          "-Xshare:auto",
+          "-XX:+TieredCompilation",
+          "-XX:CICompilerCount=2",
+          "-XX:CompileThresholdScaling=1",
+          "-Ddatomic.txTimeoutMsec=10000"
+        ]
+      },
+      "pg": {
+        "memoryMiB": 5120,
+        "cpus": "1",
+        "settings": {
+          "fsync": "on",
+          "synchronous_commit": "on",
+          "full_page_writes": "on",
+          "shared_buffers": "2GB",
+          "wal_sync_method": "fdatasync",
+          "checkpoint_timeout": "5min",
+          "checkpoint_completion_target": "0.9",
+          "checkpoint_flush_after": "256kB",
+          "min_wal_size": "80MB",
+          "max_wal_size": "1GB",
+          "log_checkpoints": "on",
+          "log_timezone": "UTC",
+          "track_io_timing": "on",
+          "track_wal_io_timing": "on"
+        }
+      },
+      "index": {
+        "threshold": "256m",
+        "max": "1g"
+      },
+      "clients": {
+        "senders": "9",
+        "readers": "10"
+      }
+    },
+    "separateWal": false
+  },
+  {
+    "root": "barrier6/campaign/",
+    "loaded": true,
+    "comparison": true,
+    "name": "barrier6",
+    "policy": {
+      "profile": "server-32",
+      "reduced": false,
+      "creditMode": "barrier6",
+      "tx": {
+        "major": "25",
+        "collector": "ZGC",
+        "cores": 3,
+        "cpus": "0,7,8",
+        "memoryMiB": 58368,
+        "cacheMiB": 32768,
+        "flags": [
+          "-Xms1024m",
+          "-Xmx49152m",
+          "-XX:MaxDirectMemorySize=8192m",
+          "-Ddatomic.objectCacheMax=32768m",
+          "-Ddatomic.prefetchProbes=true",
+          "-XX:+UseZGC",
+          "-XX:ConcGCThreads=2",
+          "-XX:ParallelGCThreads=3",
+          "-XX:+UseDynamicNumberOfGCThreads",
+          "-XX:+ZUncommit",
+          "-XX:ZUncommitDelay=300",
+          "-XX:ZAllocationSpikeTolerance=2",
+          "-XX:ActiveProcessorCount=3",
+          "-XX:+ExitOnOutOfMemoryError",
+          "-XX:-AlwaysPreTouch",
+          "-XX:-UseLargePages",
+          "-XX:-UseTransparentHugePages",
+          "-Xshare:auto",
+          "-XX:+TieredCompilation",
+          "-XX:CICompilerCount=2",
+          "-XX:CompileThresholdScaling=1",
+          "-Ddatomic.txTimeoutMsec=10000"
+        ]
+      },
+      "gw-w": {
+        "major": "21",
+        "collector": "G1",
+        "cores": 3,
+        "cpus": "2,3,4",
+        "memoryMiB": 6144,
+        "cacheMiB": null,
+        "flags": [
+          "-Xms512m",
+          "-Xmx4096m",
+          "-XX:MaxDirectMemorySize=4096m",
+          "-XX:+UseG1GC",
+          "-XX:ActiveProcessorCount=3",
+          "-XX:MaxGCPauseMillis=25",
+          "-XX:ParallelGCThreads=3",
+          "-XX:ConcGCThreads=1",
+          "-XX:+UseDynamicNumberOfGCThreads",
+          "-XX:+ExitOnOutOfMemoryError",
+          "-XX:-AlwaysPreTouch",
+          "-XX:-UseLargePages",
+          "-XX:-UseTransparentHugePages",
+          "-Xshare:auto",
+          "-XX:+TieredCompilation",
+          "-XX:CICompilerCount=2",
+          "-XX:CompileThresholdScaling=1",
+          "-Ddatomic.txTimeoutMsec=10000"
+        ]
+      },
+      "gw-r": {
+        "major": "21",
+        "collector": "G1",
+        "cores": 3,
+        "cpus": "5,6,11",
+        "memoryMiB": 11264,
+        "cacheMiB": 3072,
+        "flags": [
+          "-Xms256m",
+          "-Xmx9216m",
+          "-XX:MaxDirectMemorySize=1024m",
+          "-Ddatomic.objectCacheMax=3072m",
+          "-XX:+UseG1GC",
+          "-XX:ActiveProcessorCount=3",
+          "-XX:MaxGCPauseMillis=50",
+          "-XX:ParallelGCThreads=3",
+          "-XX:ConcGCThreads=1",
+          "-XX:+UseDynamicNumberOfGCThreads",
+          "-XX:+ExitOnOutOfMemoryError",
+          "-XX:-AlwaysPreTouch",
+          "-XX:-UseLargePages",
+          "-XX:-UseTransparentHugePages",
+          "-Xshare:auto",
+          "-XX:+TieredCompilation",
+          "-XX:CICompilerCount=2",
+          "-XX:CompileThresholdScaling=1",
+          "-Ddatomic.txTimeoutMsec=10000"
+        ]
+      },
+      "pg": {
+        "memoryMiB": 5120,
+        "cpus": "1",
+        "settings": {
+          "fsync": "on",
+          "synchronous_commit": "on",
+          "full_page_writes": "on",
+          "shared_buffers": "2GB",
+          "wal_sync_method": "fdatasync",
+          "checkpoint_timeout": "5min",
+          "checkpoint_completion_target": "0.9",
+          "checkpoint_flush_after": "256kB",
+          "min_wal_size": "80MB",
+          "max_wal_size": "1GB",
+          "log_checkpoints": "on",
+          "log_timezone": "UTC",
+          "track_io_timing": "on",
+          "track_wal_io_timing": "on"
+        }
+      },
+      "index": {
+        "threshold": "256m",
+        "max": "1g"
+      },
+      "clients": {
+        "senders": "9",
+        "readers": "10"
+      }
+    },
+    "separateWal": false
+  }
+]
