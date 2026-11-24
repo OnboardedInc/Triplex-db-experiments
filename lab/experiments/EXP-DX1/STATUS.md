@@ -5475,3 +5475,19 @@ Source: cost spike builder (XQ2), toy of 2,000 subjects x 160 facts with product
 - Gap found: entry datoms are not seen by frame bounds, write-policy row/byte counts or the write budget estimator. Forwarded to the step 1 builder with a gate requirement.
 - Still running in the spike: 20,000-subject exactness gate, as-of far behind the head, edge cases.
 - Forwarded the whole batch to the step 1 builder (XQ4) at 2026-11-24 10:24 EST.
+
+## 2026-11-24 10:34 EST: index cost spike finished (questions across subjects); release size limits builder started
+
+**Spike result** (branch `exp/DX-XQ2-index-cost` `c2c81a638`, page `lab/experiments/EXP-DX1/xq2/INDEX-COST.md`, default off, not merged). Mac toy; counts are the result, times are diagnostic.
+
+- Exactness at 20,000 subjects: 92 of 92 queries equal a brute-force scan (head and an earlier position, valid now and in the past), after 3,105 commits with past-dated corrections, retirements, 40 removals on request, an import and a transactor restart. 0 of 126,842 index datoms on a wrong entity. No protected attribute or value entered the index. No rows of account a in 1,250 answers for account b.
+- Form measured: one tuple datom per currently believed row of a listed attribute on the row's own entity, [account attribute value entity valid-from valid-to row-id]. Differs from the design's string key (open and closed intervals not split; serial function text changes with the option on; grouped commits refused; no fence, epoch rule or backfill).
+- Query cost at 20,000 subjects: most shapes 2 to 25 ms cold, 1.7 to 7 ms warm; equality plus range 404 ms cold (91 segment loads), 55 ms warm; count where 90,000 subjects share a value 245 ms cold (CPU on the distinct set).
+- As-of 30,000 commits back: unchanged range same cost as the head; fully churned range about 1.8 times the head per entry.
+- Edge case unexplained: one save changing 100 indexed facts showed 4 to 5 storage reads inside apply and apply 27 to 72 ms against 8 to 10 ms (two samples).
+- Not measured: indexing-job duration and memory-index growth per 100,000 entries; group commit carrying the index.
+- Server pair written (off, three fields, twenty fields; about 65 minutes). Predictions for three fields: apply +0.6 to 1.0 ms, commit p50 +0.5 to 1.2 ms, p99 +1 to 4 ms, reads per commit +0 to 0.1. Wrong if apply is more than 1.5 ms over off or under 0.3 ms, reads per commit rise more than 0.3, or p99 rises more than 5 ms.
+
+**Forwarded** to the step 1 builder (form differences to decide, 100-fact edge case, count bound and cursor) and to the Fable reviewer (for the review phase only; its own design was hashed at 10:32).
+
+**Started:** release size limits builder (a subject owing 200, 500, 1,000 forms; a release near the 1.3 MiB ceiling), task file `OPUS-ACT6-release-size-limits.md`, branch `exp/DX-ACT6-release-limits`. Six agents running: merge, step 0, step 1, settlement beside saves, Fable design and review, release size limits.
