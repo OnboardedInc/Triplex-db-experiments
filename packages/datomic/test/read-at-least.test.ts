@@ -111,6 +111,21 @@ describe("DatomicClient at-least reads", () => {
   });
 });
 
+describe("DatomicClient at-least row and subject reads", () => {
+  it("requires the gateway's confirmation on a row read and refuses a pinned subject pull", async () => {
+    let reply: unknown = { rows: [], atLeast: 4 };
+    const { client, calls } = await gateway(() => ({ body: reply }));
+    expect(await client.rows("s2-abc", { pattern: {}, atLeastPosition: 4 })).toEqual([]);
+    reply = { rows: [] };
+    await expect(client.rows("s2-abc", { pattern: {}, atLeastPosition: 4 })).rejects.toThrow(/did not confirm/);
+    expect(await client.rows("s2-abc", { pattern: {} })).toEqual([]);
+    await expect(
+      client.reachEntities("s2-abc", ["r"], { validAt: 1, recordedPosition: 2 }, false, false, { position: 4 }),
+    ).rejects.toThrow(TypeError);
+    expect(calls).toHaveLength(3);
+  });
+});
+
 describe("Datomic storage adapter built from a receipt", () => {
   const scope = DatabaseScope.test("rd4-at-least");
   const db = databaseName(scope);

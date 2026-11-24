@@ -30,7 +30,7 @@ import {
   MigrationError,
   TransactionOutcomeUnknown,
 } from "@triplex-build/triplex/runtime";
-import { DatomicClient, DatomicHttpError } from "./DatomicClient.js";
+import { DatomicClient, DatomicHttpError, atLeastBody } from "./DatomicClient.js";
 import { matchesPattern, packValue, packValueOnce, createPackedRow, visibleAt } from "./rows.js";
 import { fastPathEnabled } from "./fastPaths.js";
 import { stagedInput } from "./protocol.js";
@@ -141,6 +141,12 @@ export const makeDatomicStorageAdapter = (
           try: thunk,
           catch: (cause) => readFailure(cause, "Datomic read failed"),
         });
+  // [DX-RD4] Why: an unpinned read outside a transaction resolves the gateway's head; a reader built from a receipt asks for
+  // at least its position on that same request (no extra request). Rejected: pinning first with a basis call (one more trip).
+  const atLeastFor = (basis: ResolvedTemporalBasis | undefined) =>
+    basis?.recordedPosition === undefined && basis?.recordedAt === undefined
+      ? options.readAtLeast?.request()
+      : undefined;
   const committedPosition = () =>
     read(async () => {
       const result = await client.basis(db, options.readAtLeast?.request());
@@ -218,8 +224,10 @@ export const makeDatomicStorageAdapter = (
             .filter((row) => matchesPattern(row, pattern))
             .sort((a, b) => a.recorded_at - b.recorded_at || a.id.localeCompare(b.id));
       }
+      const atLeast = state === undefined ? atLeastFor(basis) : undefined;
       const rows = yield* read(() =>
         client.rows(db, {
+          ...(atLeast ? atLeastBody(atLeast) : {}),
           pattern,
           history,
           ...(id === undefined ? {} : { id }),
@@ -939,7 +947,7 @@ export const makeDatomicStorageAdapter = (
     getReachRows: (root, basis) =>
       Effect.gen(function* () {
         if (yield* current) return undefined;
-        const response = yield* read(() => client.reachEntities(db, [root], basis));
+        const response = yield* read(() => client.reachEntities(db, [root], basis, false, false, atLeastFor(basis)));
         if (!response) return undefined;
         return yield* Effect.try({
           try: () => reachRowsResponse(root, response.entities, basis),
@@ -952,7 +960,7 @@ export const makeDatomicStorageAdapter = (
     getReachRowsMany: (roots, basis) =>
       Effect.gen(function* () {
         if (yield* current) return undefined;
-        const response = yield* read(() => client.reachEntities(db, roots, basis, true));
+        const response = yield* read(() => client.reachEntities(db, roots, basis, true, false, atLeastFor(basis)));
         if (!response) return undefined;
         // [DX-B5-L4] Why: row getters share the triple getter's conservative malformed-coverage fallback.
         // Rejected: turning a missing entity in a transport response into an untyped Effect defect.
@@ -970,7 +978,7 @@ export const makeDatomicStorageAdapter = (
     getReachTriples: (root, basis) =>
       Effect.gen(function* () {
         if (yield* current) return undefined;
-        const response = yield* read(() => client.reachEntities(db, [root], basis));
+        const response = yield* read(() => client.reachEntities(db, [root], basis, false, false, atLeastFor(basis)));
         if (!response) return undefined;
         return yield* Effect.try({
           try: () => reachResponse(root, response.entities, basis),
@@ -983,7 +991,7 @@ export const makeDatomicStorageAdapter = (
     getReachTriplesMany: (roots, basis) =>
       Effect.gen(function* () {
         if (yield* current) return undefined;
-        const response = yield* read(() => client.reachEntities(db, roots, basis));
+        const response = yield* read(() => client.reachEntities(db, roots, basis, false, false, atLeastFor(basis)));
         if (!response) return undefined;
         return yield* Effect.try({
           try: () => roots.map((root) => reachResponse(root, response.entities, basis)),
