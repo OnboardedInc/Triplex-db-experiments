@@ -56,7 +56,12 @@ export function productionHeldTape(people: number, rows: number, seconds: number
         rows: save.rows, gap: save.gap });
     }
   }
-  return sortTape([...own, ...neighbours] as Write[]) as ProductionWrite[];
+  const tape = sortTape([...own, ...neighbours] as Write[]) as ProductionWrite[];
+  // REAL2's generator can give a save of more than 100 rows a row slot equal to an extra field's (100 + r) in windows
+  // of a few seconds (found here at 4 s: one save of 124 slots with 122 distinct); the writer refuses such a save.
+  const twice = tape.filter((e) => new Set(e.slots).size !== e.slots.length).length;
+  assert.equal(twice, 0, "the production tape has a save naming one field twice; use a longer window");
+  return tape;
 }
 
 /** Senders for a production tape: every task-0 field of every subject it writes, read and checked at `head`. */

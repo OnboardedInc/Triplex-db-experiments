@@ -79,10 +79,17 @@ export async function streamCheck(o: {
           const stored = chosen.length
             ? await worldsAt(src, src.profile, chosen.map((i) => o.roster[i]!), { tx: r.position, validTime: o.validTime }) : [];
           const facts = (x: W0.World) => x.facts.map((f) => canonical(f)).sort();
-          chosen.forEach((i, j) => {
-            assert.deepEqual(facts(stored[j]! as W0.World), facts(o.world(r.position)(i)),
-              "the store's facts differ from the oracle's world: " + o.roster[i] + " at release " + r.seq);
-          });
+          for (const [j, i] of chosen.entries()) {
+            const got = facts(stored[j]! as W0.World), want = facts(o.world(r.position)(i));
+            if (canonical(got) === canonical(want)) continue;
+            const g = new Set(got), wn = new Set(want);
+            // Diagnostic: the raw rows of the subject's task 0 field 0 as the store's sweep returns them at this position.
+            const task = src.held!.prefix + "i9:" + o.roster[i]!.slice(4);
+            const raw = (await src.rows([task], r.position, o.validTime)).filter((x) => x.attribute === ":task/field-0");
+            assert.fail("the store's facts differ from the oracle's world: " + o.roster[i] + " at release " + r.seq +
+              " (position " + r.position + "): store only " + got.filter((x) => !wn.has(x)).slice(0, 4).join(" ") +
+              "; oracle only " + want.filter((x) => !g.has(x)).slice(0, 4).join(" ") + "; raw field-0 rows " + JSON.stringify(raw));
+          }
           return out.map((x, j) => ({ ...x, index: lo + j, read: read.get(lo + j) }));
         }));
         const page = pages.flat();

@@ -233,6 +233,12 @@ export async function livePhase(c: LiveContext) {
   };
   const recipient = await openStore("lazy-act5-recipient-" + randomUUID());
   const extras: Extra[] = [];
+  // [DX-ACT7] The saves' history of accounts 1 to 9 from the first case on (account 0's is c.history).
+  const others = new Map<number, LiveContext["history"]>();
+  const historyOf = (account: number) => {
+    if (!others.has(account)) others.set(account, new Map());
+    return others.get(account)!;
+  };
   try {
     for (const k of cases) {
       const seconds = k.seconds ?? defaultSeconds;
@@ -241,7 +247,7 @@ export async function livePhase(c: LiveContext) {
         continue;
       }
       if (k.extra === "multi") {
-        results.push(await multiCase(c, k, seconds, extras, { ref, roster, current: () => current, publish }));
+        results.push(await multiCase(c, k, seconds, extras, { ref, roster, current: () => current, publish }, historyOf));
         continue;
       }
       const base = current.doc;
@@ -290,15 +296,17 @@ export async function livePhase(c: LiveContext) {
         paused: false,
         committed: (save) => {
           c.ledger.saved(save);
-          if (!save.account) {
-            const e = byOrdinal.get(save.ordinal)!;
-            const edits = c.history.get(save.subject) ?? [];
-            edits.push(editOf(save.receipt!.p, e));
-            c.history.set(save.subject, edits);
-          }
+          // [DX-ACT7] Every account's saves go into its history, so an account enrolled for a later several-accounts
+          // case knows the saves the earlier cases made to its subjects (before, only account 0's were kept; no rule
+          // read the fields those saves wrote, so no check could see the gap).
+          const e = byOrdinal.get(save.account + "/" + save.ordinal)!;
+          const h = save.account ? historyOf(save.account) : c.history;
+          const edits = h.get(save.subject) ?? [];
+          edits.push(editOf(save.receipt!.p, e));
+          h.set(save.subject, edits);
         },
       };
-      const byOrdinal = new Map(tape.filter((x) => x.account === 0).map((x) => [x.ordinal, x]));
+      const byOrdinal = new Map(tape.map((x) => [x.account + "/" + x.ordinal, x]));
       // Turn-taking through the account admission (DX_ACT5 case flag `admission`): frames take a credit as a bulk lane
       // that yields to waiting live saves, one frame at a time.
       const lane = k.turns === "admission" && worker ? settlementLane(queue, ends) : undefined;
@@ -610,7 +618,7 @@ function streamReads(aged: AgedBase | undefined) {
   return mode === "all" ? () => true : mode === "none" ? () => false
     : (i: number) => i % 97 === 0 || Boolean(aged?.(i)?.length);
 }
-async function enrol(c: LiveContext, index: number): Promise<Extra> {
+async function enrol(c: LiveContext, index: number, historyOf: (account: number) => LiveContext["history"]): Promise<Extra> {
   const { keyFor } = await import("../../scale1/decision/plan.ts");
   const { seedPositions } = await import("./held-campaign.ts");
   const { JoinedAccount } = await import("./account.ts");
@@ -632,7 +640,7 @@ async function enrol(c: LiveContext, index: number): Promise<Extra> {
   await a.installHeld(validTime);
   await c.ledger.verifyThrough(await store.head(), false, ADOPT_SETUP);
   const positions = await seedPositions(c.writer, c.seed, index);
-  const history: LiveContext["history"] = new Map();
+  const history = historyOf(index);
   const aged = c.aged?.(index);
   const ref = streamed() ? undefined : new Reference();
   const p = await a.publish(c.attempt + ":act5:" + account + ":R1", W0.R1.doc, validTime, "owed");
@@ -662,6 +670,7 @@ async function multiCase(
     current: () => Release;
     publish: (doc: W0.ReleaseDoc) => Promise<{ r: Release; old: W0.ReleaseDoc }>;
   },
+  historyOf: (account: number) => LiveContext["history"],
 ) {
   const count = Number(process.env.DX_ACT5_ACCOUNTS ?? 3);
   assert(Number.isInteger(count) && count >= 2 && count <= 10);
@@ -669,7 +678,7 @@ async function multiCase(
   const kill = process.env.DX_ACT7_MULTI_KILL === "1";
   assert([undefined, "", "0", "1"].includes(process.env.DX_ACT7_MULTI_KILL));
   const enrolStarted = now();
-  while (extras.length < count - 1) extras.push(await enrol(c, extras.length + 1));
+  while (extras.length < count - 1) extras.push(await enrol(c, extras.length + 1, historyOf));
   const enrolMs = now() - enrolStarted;
   const roster = zero.roster;
   // Every account publishes the large release (account 0 through the runner, so its reads stay checked).
@@ -706,8 +715,7 @@ async function multiCase(
     paused: false,
     committed: (save) => {
       c.ledger.saved(save);
-      const h = histories.get(save.account);
-      if (!h) return;
+      const h = histories.get(save.account) ?? historyOf(save.account);
       const e = ordinals.get(save.account + "/" + save.ordinal)!;
       const edits = h.get(save.subject) ?? [];
       edits.push(editOf(save.receipt!.p, e));
@@ -722,11 +730,11 @@ async function multiCase(
   const descriptors = [c.descriptor, ...extras.map((x) => x.descriptor)];
   const settling = (async () => {
     while (now() < begins) await sleep(Math.ceil(begins - now()));
-    // Each account's settlement killed once in a child at a random moment, then all resumed here at once.
+    // Each account's settlement in a child of its own, all children at once, each killed at a random moment; then all
+    // resumed here at once.
     if (kill)
-      for (const [j] of workers.entries())
-        kills.push({ account: j, ...(await killedChild(c, published[j]!.seq, k, 150 + Math.floor(Math.random() * 400),
-          undefined, descriptors[j]!)) });
+      kills.push(...(await Promise.all(workers.map(async (_, j) => ({ account: j,
+        ...(await killedChild(c, published[j]!.seq, k, 1500 + Math.floor(Math.random() * 1500), undefined, descriptors[j]!)) })))));
     await Promise.all(workers.map(async (w, j) => {
       await w.settle(published[j]!.seq);
       finished[j] = now() - begins;
