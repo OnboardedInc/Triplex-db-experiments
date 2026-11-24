@@ -296,7 +296,8 @@ export async function livePhase(c: LiveContext) {
           else process.env.TX2_SETTLE_CONTROL = controlled;
         } else if (k.extra === "second") {
           // A second release while the first is being settled: pause saves and frames, Publish, resume.
-          await sleep(Math.min(1500, (seconds * 1000) / 4));
+          const firstRun = worker.settle(published.r.seq);
+          await sleep(Math.min(700, (seconds * 1000) / 4));
           gate.paused = true;
           await queue.hold();
           try {
@@ -309,8 +310,8 @@ export async function livePhase(c: LiveContext) {
             gate.paused = false;
             gate.resume?.();
           }
-          const first = await worker.archive.runValues(published.r.seq);
-          superseded = { ...(superseded as object), status: first.status, through: first.through };
+          const first = (await firstRun).values.state;
+          superseded = { ...(superseded as object), status: first.status, through: first.through, frame: first.frame };
           await worker.settle(current.seq);
         } else if (rival) await Promise.all([worker.settle(published.r.seq), rival.settle(published.r.seq)]);
         else
