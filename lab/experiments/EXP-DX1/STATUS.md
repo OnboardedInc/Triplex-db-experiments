@@ -5590,3 +5590,19 @@ Source: uncached-read builder, branch `exp/DX-RD5-uncached-read` `67bca118e` (me
 - Not verified: anything at 1 billion; the two-machine path has never run; scan speed with read-ahead off.
 
 **Started** in the freed slot: merge of settlement beside saves, ID lists and the uncached-read options onto the one branch, with one ordered server session list (task file `OPUS-INT4-merge-2026-11-24-afternoon.md`).
+
+## 2026-11-24 11:43 EST: slow exact route for questions across subjects is built (sweep)
+
+Source: sweep builder, branch `exp/DX-XQ6-exact-sweep` `909309c63` (based on the ID lists head `f1f0908df`; not merged), page `lab/experiments/EXP-DX1/xq6/EXACT-SWEEP.md`. Default off (`TX2_SWEEP=1`). Not run on a server.
+
+- Route `POST /v2/db/{db}/sweep`: lists one kind of subject in one account by the ID list, reads each subject with the normal `read` route's code at one position and one valid-time instant, tests up to 8 conditions (eq, in, range, prefix, exists, missing; the same language as the commit-time index's `find`), returns IDs with up to 8 values, a count, or a count per value, in pages with a signed cursor. Any attribute, declared or not, except a protected one. No cost per save, no backfill.
+- Refused by type: protected attribute anywhere in the question; edited or reused cursor; no account; ne, OR, text search, sums, json values; a position inside a group commit; more than 1,000 distinct values in a count per value; busy.
+- Not expressible: questions over a subject's children; values a release has computed but not yet stored (the answer says `facts: "stored"`).
+- Exactness gate: 5,917 checks, 0 failures, against a reference computed by an independent path (history read, visibility and conditions recomputed in TypeScript). 17 shapes x 3 accounts x 3 positions x 3 valid instants = 459 sweeps, 2,134 pages. Subjects changed, removal on request, settlement frames and a gateway restart between pages: all exact at the cursor's position. 15 of 15 refusals as expected. No ID of one account in any answer for another.
+- Other readers on the toy: 0 of 329,621 pinned reads returned a different row count beside 1 and 4 sweeps; sweeps take no read permit.
+- Cost (toy, diagnostic): 0.2 to 0.55 ms of reader CPU per subject; 15 storage loads per 1,000 uncached toy subjects (understates 1 billion, where an uncached subject costs 1.5 to 2.0 loads).
+- Prediction at 1 billion for one account of 100,000 subjects: 120 to 210 s with 1 permit, 45 to 80 s with 3, 30 to 60 s with 6; 150,000 to 200,000 storage loads. Wrong if counts differ between arms, one permit takes over 300 s, or 6 permits are not 1.3 times faster than 3.
+- **Main risk (predicted, not measured):** one sweep pushes 150,000 to 200,000 segments through a reader cache of about 6,000, so re-read pinned readers would fall from 8,000 to 11,000 reads/s toward 1,200 to 1,750 while it runs. Fix suggested, not built: a second read gateway with its own cache.
+- Server command written: 25 to 45 minutes.
+
+**Started** in the freed slot: a separate reader for questions across subjects (task file `OPUS-XQ7-question-reader.md`). The afternoon merge builder was told to add the sweep branch to its list.
