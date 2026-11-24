@@ -5797,3 +5797,22 @@ Source: several-owners builder, branch `exp/DX-S3-several-owners` `7f46bf043` (b
 - **Harness fault reported:** another builder's shared-slot containers started on this builder's freshly built images ("their harness seems to pick up the newest image"). The merge builder, which was running shared-slot cases at the time, was told to establish which image every case ran on, rerun any that used another branch's image, and fix the selection.
 
 **Started** (research, private, read-only): how the product's real saves are shaped (owners per save, facts per save, shape mix, simultaneous saves, owed forms per subject, release sizes, subjects per account, removals), task file `OPUS-PROD1-save-shapes-in-production.md`. Report stays outside the repository.
+
+## 2026-11-24 15:26 EST: step 1 of questions across subjects: the eight open items closed (five pass, three measured with open parts)
+
+Source: step 1 builder, branch `exp/DX-XQ4-commit-index` `0f4843e25` (gateway code last changed at `eedf31cf1`; every final gate ran on that code), page `lab/experiments/EXP-DX1/xq4/COMMIT-INDEX.md`.
+
+| # | Item | Result |
+|---|---|---|
+| 1 | Exactness rerun on the final code | Pass: 2,448 questions against brute force, 0 differences; 77 against the slow exact route, 0 differences; again with both hint options on, 0 differences. Option off: log identical to the base (33,609 datoms) |
+| 2 | SDK typecheck | Pass: `packages/datomic` 0 errors once core is built; core's 6 + 6 errors exist on the base in files this branch does not touch |
+| 3 | Page time limit | Fails in 4 of 8 runs (71 to 93 ms against a 60 ms line for a 50 ms bound). Not GC: in failing answers the request thread used 3.6 to 23.9 ms of CPU while the container was throttled 248 to 509 ms. The bound is now checked on every index datom. True bound: the bound plus one storage read plus building the answer plus time the host does not run the process. For a server with its own cores to settle |
+| 4 | Frame bounds see index entries | Pass, 5 of 5: an import frame counts its entries beside its rows against the 96-row limit (an import with one declared value per row fits about 48 rows per frame) |
+| 5 | Hints with the index | Exact. Entries are NOT hinted: index on minus off adds +0.17, +0.25, +0.45 storage reads inside apply per first-touch save at 1, 3, 6 replaced values (32 MB cache, hints on); the design's +0.2 line is crossed at 3 and 6. Fix proposed, not built |
+| 6 | Production gates with the index on | Pass: production gate 930 saves, 2,836 fields equal, 738 `find` questions returned all 768 expected owners; loader-aged gate 1,927 fields, 414 of 414; sealed removal check passes |
+| 7 | String key against tuple | One paired run each: datoms equal; writer time for 20 values in one save +0.80 ms string against +2.82 ms tuple. String stays |
+| 8 | Release-written attributes | Built and gated, 8 of 8: a settlement save writing a declared attribute is refused; declaring an attribute a release has written is refused |
+
+Not verified: anything on a server; the hint fix; releases that wrote before the option was on; online backfill and uniqueness (later steps).
+
+**Started** in the freed slot: connect the pieces (one SDK call that answers from the index or falls back to the slow exact route at the same position; the question reader serving all three routes; the console's fast answer; the hint fix; an agreement gate between the two routes), task file `OPUS-XQ10-questions-connected.md`.
