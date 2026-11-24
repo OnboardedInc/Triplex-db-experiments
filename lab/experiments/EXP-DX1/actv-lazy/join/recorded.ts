@@ -225,6 +225,7 @@ export class RecordedNotices {
       at,
       next,
       authority,
+      { key: stateKey, prior },
     );
     return next.event > through ? { current: next, at: ack.position } : undefined;
   }
@@ -292,6 +293,7 @@ export class RecordedNotices {
       at,
       next,
       authority,
+      { key: stateKey, prior },
     );
     return next.event > through ? { current: next, at: ack.position } : undefined;
   }

@@ -30,6 +30,8 @@ export const fact = (entityId: string, attribute: string, data: unknown) => ({
 });
 export const value = (row: WorldRow) => JSON.parse(row.value.value);
 export class Conflict extends Error {}
+/** [DX-ACT5] An entity whose complete live fact set must still be `tripleIds` when a commit lands. */
+export type EntityGuard = { entityId: string; tripleIds: readonly string[] };
 
 // [DX-ACT1] Why: a typed write-policy refusal proves this frame was rejected even if another writer advanced the source. Rejected: flattening the adapter's cause into a message or mistaking the other writer for a retryable conflict.
 export async function rejectUnrecordedWrite(
@@ -150,8 +152,10 @@ export async function openStore(
     context: unknown = null,
     afterFence?: () => Promise<void>,
     onAck?: (t: number) => void,
+    guards?: readonly EntityGuard[],
   ) {
     assert(h, "A demand reader has no publication authority");
+    assert(!guards || (guards.length > 0 && !afterFence), "Entity guards replace the source-position fence");
     assert(id.length && Number.isSafeInteger(expected) && expected >= 0);
     const correlationId = canonical({ context, hash: sha256(wireBytes([scope, id, actor, ops])) });
     const check = (r: any) => {
@@ -192,15 +196,23 @@ export async function openStore(
     const exit = await h.runExit(
       h.storage.withTransaction(
         Effect.gen(function* () {
-          yield* requireDatomicSourcePosition(key, expected);
+          // [DX-ACT5] With entity guards (settlement frames under TX2_SETTLE_PRECONDITION=progress) the commit is
+          // refused only when a guarded entity's live facts differ from those observed at `expected`: each guard is read
+          // inside the transaction (its entity then joins the transactor's revision check), so a change before the
+          // transaction began fails here and one after it fails at the serial cut. Without guards, unchanged: the whole
+          // database's head must still be `expected`.
+          if (!guards) yield* requireDatomicSourcePosition(key, expected);
           if (afterFence) yield* Effect.promise(afterFence);
           return yield* h.triples.transact(ops, {
             commandId: id,
             actor,
             correlationId,
-            preconditions: ops
-              .filter((o) => o.op === "retract")
-              .map((o) => ({ _tag: "TripleLive", id: o.id })),
+            preconditions: [
+              ...ops
+                .filter((o) => o.op === "retract")
+                .map((o) => ({ _tag: "TripleLive", id: o.id })),
+              ...(guards ?? []).map((g) => ({ _tag: "EntityState", entityId: g.entityId, tripleIds: [...g.tripleIds] })),
+            ],
           });
         }),
       ),
