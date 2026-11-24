@@ -261,20 +261,23 @@ async function definitionsPart(sql?: (q: string) => Promise<string>) {
       const row: Record<string, unknown> = { forms, mib: +(Buffer.byteLength(canonical(first)) / 1048576).toFixed(3) };
       for (const side of sides) {
         await publish(side, "base-" + forms, W0.R2.doc);
-        const a = await publish(side, "first-" + forms, first);
-        let b: unknown;
-        try {
-          b = await publish(side, "follow-" + forms, follow);
-        } catch (e) {
-          assert(side.docs === "inline" && e instanceof ReleaseTooLarge, String(e));
-          b = { refused: e.message };
-          side.seq; // nothing was written; the oracle's chain stays at `first`
-        }
+        // Full documents may be refused (ReleaseTooLarge, before any write); references never are here.
+        const attempt = async (id: string, doc: W0.ReleaseDoc) => {
+          try {
+            return await publish(side, id, doc);
+          } catch (e) {
+            assert(side.docs === "inline" && e instanceof ReleaseTooLarge, String(e));
+            return { refused: e.message, json: undefined };
+          }
+        };
+        const a: any = await attempt("first-" + forms, first);
+        const b: any = a.refused ? { refused: "not attempted: the first release of the set was refused" } : await attempt("follow-" + forms, follow);
         row[side.docs] = { first: strip(a), follow: strip(b) };
       }
       const i = row.inline as any,
         r = row.ref as any;
-      assert.equal(sameAnswer(i.first.json), sameAnswer(r.first.json), "first release: answers differ between full documents and references");
+      assert(!r.first.refused && !r.follow.refused, "a release by reference was refused");
+      if (!i.first.refused) assert.equal(sameAnswer(i.first.json), sameAnswer(r.first.json), "first release: answers differ between full documents and references");
       if (!i.follow.refused) assert.equal(sameAnswer(i.follow.json), sameAnswer(r.follow.json));
       delete i.first.json, delete r.first.json, delete i.follow.json, delete r.follow.json;
       table.push(row);

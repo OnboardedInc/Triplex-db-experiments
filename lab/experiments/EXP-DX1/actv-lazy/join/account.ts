@@ -80,6 +80,8 @@ export type PublishOptions = {
 };
 /** [DX-ACT6] A Publish whose record exceeds the 4 MiB request limit (full documents only), refused before any write. */
 export class ReleaseTooLarge extends Error {}
+/** [DX-ACT6] The store's limit on one fact value (`ValueDomains.datomic.string.maxUtf8Bytes`). */
+const valueLimit = 1048576;
 export type Edit = { e: string; a: string; values: W0.Fact["v"][]; from?: string };
 type Meta = {
   epoch: string;
@@ -870,8 +872,23 @@ export class JoinedAccount {
             compiler: selector,
           };
           if (sequence !== undefined) await recheckErasure(this.s.comp, sequence);
+          const record = [fact(namesOf(this.s).RELEASE, "lazy/activation", m), ...np.operations, ...ops];
+          // [DX-ACT6] The store takes one fact value of at most 1 MiB (the Datomic value domain, 1,048,576 UTF-8 bytes):
+          // with full documents the marker holds the new and the old document in one value and the notice event the new
+          // one. Refused here, before any write, with the sizes, instead of the store's "outside the exact storage
+          // domain". Unchanged for every release that fits.
+          for (const o of record)
+            if (o.op === "assert" && Buffer.byteLength(o.value.value) > valueLimit)
+              throw new ReleaseTooLarge(
+                "Release refused: its " + (o.attribute === "lazy/activation" ? "release marker" : "notice event") +
+                  " is one fact value of " + Buffer.byteLength(o.value.value) + " bytes, over the store's limit of " +
+                  valueLimit + " bytes per value. With full documents the marker holds the new document (" +
+                  Buffer.byteLength(canonical(doc)) + " bytes) and the old one (" +
+                  (old ? Buffer.byteLength(canonical(old.doc)) : 0) + " bytes). TX2_RELEASE_DOCS=ref stores the " +
+                  "definitions by reference.",
+              );
           return {
-            ops: [fact(namesOf(this.s).RELEASE, "lazy/activation", m), ...np.operations, ...ops],
+            ops: record,
             expected,
             context: {
               epoch: meta.epoch,
