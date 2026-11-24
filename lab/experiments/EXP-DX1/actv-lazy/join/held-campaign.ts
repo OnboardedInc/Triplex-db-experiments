@@ -113,7 +113,7 @@ async function readerPeer(
     const request = requests.get(m.n);
     assert(request, "Unexpected held read response");
     requests.delete(m.n);
-    if (m.error) request.reject(Error(m.error));
+    if (m.error) request.reject(Object.assign(Error(m.error), m.code ? { code: m.code, head: m.head, started: m.started, ended: m.ended } : {}));
     else request.resolve(m);
   });
   const fail = (e: Error) => {
@@ -436,6 +436,10 @@ export async function runHeld(
     }
     connected = await readerPeer(peer, name, descriptor, probeAtLeast);
     const demand = connected;
+    const atLeastCounters = async () => {
+      const c = (await reader.request<{ atLeast?: Record<string, number> }>("GET", "/v2/admin/scan-stats")).atLeast ?? {};
+      return { requests: c.requests ?? 0, waited: c.waited ?? 0, waitMicros: c.waitMicros ?? 0, timeouts: c.timeouts ?? 0 };
+    };
     const handReceipt = async (r: Release) => {
       if (probeAtLeast) assert((await demand.receipt(r.position)).floor >= r.position);
     };
@@ -532,7 +536,14 @@ export async function runHeld(
         const stale = inject === "stale" && !injected && previous !== undefined && releases.length > 1;
         if (stale) injected = true;
         const probe = await demand.read(W0.placementId(i),
-          stale ? { position: previous.position, validTime } : { validTime });
+          stale ? { position: previous.position, validTime } : { validTime }).catch((e) => {
+          // [DX-RD4] The read gateway refused: its peer did not reach the receipt within the reader's 2 s wait. Recorded with
+          // its values; it stops only this window and fails the run at the end.
+          if (e?.code !== "AtLeastTimeout") throw e;
+          readFailures.push({ where: "probe-at-least-timeout", subject: W0.placementId(i), releasePosition: r.position,
+            gatewayHead: e.head, releaseAck: r.durableAt, readStarted: e.started, readEnded: e.ended });
+          throw new ReadCheckFailed("The read gateway did not reach the Publish within the at-least wait");
+        });
         const b = probe.result.basis;
         if (b.tx >= r.position) {
           await verifyRead(probe, r, i, "first-correct");
@@ -712,6 +723,8 @@ export async function runHeld(
             }
           })();
           void ticking.catch(() => {});
+          // [DX-RD4] The read gateway's at-least counters over the window (requests, waits, wait time, refusals).
+          const atLeastBefore = probeAtLeast ? await atLeastCounters() : undefined;
           const writes = play(
             senders,
             tape,
@@ -821,6 +834,7 @@ export async function runHeld(
             done = true;
             await ticking;
           }
+          const atLeastAfter = probeAtLeast ? await atLeastCounters() : undefined;
           const terminal = await s.head();
           await activeLedger.verifyThrough(terminal);
           assert.equal(result.unresolved.size, 0, "Uncertain writer or foreign cut");
@@ -853,6 +867,8 @@ export async function runHeld(
             visibilityFailures: visibilityFailures.length,
             probeAtLeast,
             atLeastDefects: atLeastDefects.length,
+            readGatewayAtLeast: atLeastBefore && atLeastAfter ? Object.fromEntries(
+              (["requests", "waited", "waitMicros", "timeouts"] as const).map((k) => [k, atLeastAfter[k] - atLeastBefore[k]])) : null,
             probesBeforePublishVisible: native.map((x) => (x.firstCorrect as { earlier: unknown[] } | undefined)?.earlier.length ?? null),
             readHeadLagAfterAck: native.map((x) => x.readHeadAfterAck ? x.r.position - x.readHeadAfterAck.position : null),
           };

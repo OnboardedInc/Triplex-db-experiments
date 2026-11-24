@@ -49,7 +49,12 @@ port.on("message", async (data: { n: number; subject: string; pin: Pin } | { n: 
       result,
     });
   } catch (e) {
-    port.postMessage({ n: data.n, error: String(e) });
+    // [DX-RD4] Name the read gateway's at-least refusal (its peer did not reach the receipt in time) for the runner.
+    const chain: any[] = [];
+    for (let c: any = e; c && chain.length < 8; c = c.cause) chain.push(c);
+    const refusal = chain.find((c) => c?.code === "AtLeastTimeout");
+    port.postMessage({ n: data.n, error: String(e), ...(refusal ? { code: "AtLeastTimeout",
+      head: refusal.head ?? refusal.maximum ?? null, ended: performance.timeOrigin + performance.now(), started } : {}) });
   }
 });
 port.postMessage("ready");
