@@ -405,4 +405,4 @@
   ([name current input] (response name current input nil))
   ([name current input epoch] (response name current input epoch nil))
   ([name current input epoch recent-state]
-   (admission/execute admission/reads #(if (true? (get input "replicaCapability")) (replica-capability name current input) (let [body (build-response name current input epoch recent-state)] (if (and (true? (get input "gzipRows")) (true? (get input "rowPage"))) (compressed-rows body) body))))))
+   (admission/execute admission/reads #(if (true? (get input "replicaCapability")) (replica-capability name current input) (let [body (build-response name current input epoch recent-state)] (if (and (true? (get input "gzipRows")) (true? (get input "rowPage"))) (compressed-rows body) body)))) (admission/pinned? input)))

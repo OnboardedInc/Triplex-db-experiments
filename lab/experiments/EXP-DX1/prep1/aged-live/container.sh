@@ -36,7 +36,7 @@ log-dir=$work
 pid-file=$work/tx.pid
 P
 export DATOMIC_URI_TEMPLATE="datomic:sql://{db}?jdbc:postgresql://$addr:5432/datomic?user=datomic&password=$secret"
-opts="-Xms96m -Xmx512m -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError -Ddatomic.objectCacheMax=32m"
+opts="-Xms96m -Xmx512m -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError -Ddatomic.objectCacheMax=32m${DX_W3_PREFETCH_PROBES:+ -Ddatomic.prefetchProbes=true}"
 transactor() {  # $1: gateway source the transactor's installed functions load
   DATOMIC_EXT_CLASSPATH=$1 java -server $opts -cp "$(DATOMIC_EXT_CLASSPATH=$1 bin/classpath)" clojure.main \
     -m datomic.launcher "$work/tx.properties" >> /out/transactor.log 2>&1 &

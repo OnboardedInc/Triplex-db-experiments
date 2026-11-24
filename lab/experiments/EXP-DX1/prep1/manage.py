@@ -56,8 +56,13 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     holder = (os.environ.get("DX_CHK1_HOLDER", "DX-CHK1") if combined
               else os.environ.get("DX_CHK1_HOLDER", "DX-W1") if owner_head == "1"
               else os.environ.get("DX_CHK1_HOLDER", "DX-REAL2") if mode == "production" else "DX-PREP1")
-    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1", "DX-REAL2") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
-    assert mode != "production" or holder in ("DX-REAL2", "DX-THIN1")
+    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1", "DX-REAL2", "DX-W3") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
+    assert mode != "production" or holder in ("DX-REAL2", "DX-THIN1", "DX-W3")
+    # [DX-W3] Why: run the production gate with the general writer's hints on or off (default: no file, as before).
+    # Rejected: a second gate copy; the hints arm differs from the control only in this one setting.
+    general_prefetch = os.environ.get("DX_W3_GENERAL_PREFETCH")
+    if general_prefetch not in (None, "0", "1") or (general_prefetch is not None and (mode != "production" or holder != "DX-W3")):
+        raise SystemExit("DX_W3_GENERAL_PREFETCH is 0 or 1, for the production gate under the DX-W3 holder")
     assert owner_head != "1" or holder in ("DX-W1", "DX-THIN1")
     # [DX-W1] Why: match both saves per owner-layout arm to their transactor read counters.
     # Rejected: treating empty peer I/O metadata as zero native storage reads.
@@ -88,6 +93,8 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
         (config / "subject-retirement").write_text("1\n")
         (config / "chk1-replay").write_text("1\n")
     (config / "lookup-every").write_text(str(lookup_every) + "\n")
+    if general_prefetch is not None:
+        (config / "general-prefetch").write_text(general_prefetch + "\n")
     fresh_first = os.environ.get("DX_PREP1_TEST_FRESH_FIRST") == "1"
     if fresh_first:
         # [DX-THIN1] Why: the one branch keeps INT1's rolling gate, which has no fresh-first arm (PREP1 dropped it).
@@ -166,7 +173,8 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     tag_mode = "subject-recovery" if mode == "rolling-recovery" else mode
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
     # [DX-THIN1] Why: REAL2's production gate keeps its own tag; under the integration holder it takes a private one.
-    profile["lanes"]["datomic"]["image"] = (f"tx2-datomic:dx-w1-head-{out.name}-{head[:8]}" if owner_head == "1" and holder == "DX-W1"
+    profile["lanes"]["datomic"]["image"] = (f"tx2-dxw3-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-W3"
+                                            else f"tx2-datomic:dx-w1-head-{out.name}-{head[:8]}" if owner_head == "1" and holder == "DX-W1"
                                             else f"tx2-dxthin-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}"
                                             if owner_head == "1" or (mode == "production" and holder == "DX-THIN1")
                                             else (f"tx2-dxthin-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}"
@@ -198,6 +206,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "orderedIds": ordered == "1",
         "serialApply": serial == "1",
         "lookupEvery": lookup_every,
+        "generalPrefetch": general_prefetch,
         "ownerHead": owner_head == "1",
         "freshFirst": fresh_first,
         "tailSql": tail_sql,
