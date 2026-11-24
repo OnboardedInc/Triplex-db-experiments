@@ -174,8 +174,9 @@ log("scope", { name, db });
 // publishing accounts each publish a further release while a removal on request of a protected value lands between the
 // Publish's read and its commit, one value under the publishing account's own names and one under a thin account's.
 const REMOVAL = process.env.DX_SCALE2_REMOVAL === "1";
-const PROTECTED = ":person/note";
-if (REMOVAL) {
+// [DX-ACT9] DX_ACT9_FIELD: on an adopted database (the server run) the protected field its trusted staging declared.
+const PROTECTED = process.env.DX_ACT9_FIELD ?? ":person/note";
+if (REMOVAL && !(ready && process.env.DX_ACT9_CELL === "1")) {
   assert(!ready, "the removal step needs a fresh database");
   await writer.declareProtection(db, [PROTECTED], false);
   assert((await writer.erasureFrontier(db)).protected);
@@ -188,6 +189,8 @@ if (REMOVAL) {
 const ACT9 = process.env.DX_ACT9_CELL === "1";
 if (ACT9) {
   assert(REMOVAL, "DX_ACT9_CELL needs DX_SCALE2_REMOVAL=1");
+  // An adopted database was declared protected by its staging; moving it again changes nothing.
+  if (ready) assert((await writer.erasureFrontier(db)).protected, "the adopted database has no protected field");
   const moved = await writer.request<{ perAccount: boolean }>("POST", `/v2/db/${db}/removal-per-account`, {});
   assert(moved.perAccount, "the database did not move to removal per account");
 }
@@ -728,7 +731,9 @@ async function act9Cell(list: { x: Pub; w: any }[]) {
   const rate = Number(process.env.DX_ACT9_RATE ?? 1), seconds = Number(process.env.DX_ACT9_SECONDS ?? 30);
   const maxRounds = Number(process.env.DX_ACT9_ROUNDS ?? 1_000_000);
   const thinRemover = process.env.DX_ACT9_REMOVER === "thin";
-  const remover = thinRemover ? accounts.find((a) => a.kind === "thin" && !touchedAccount(a))! : list[0]!.x.a;
+  // DX_ACT9_REMOVER=deep: the second deep account (the first is the busy one), on the server's adopted database.
+  const remover = process.env.DX_ACT9_REMOVER === "deep" ? accounts.filter((a) => a.kind === "deep")[1]!
+    : thinRemover ? accounts.find((a) => a.kind === "thin" && !touchedAccount(a))! : list[0]!.x.a;
   assert(remover && list.length >= 2, "the cell needs a removing account and other publishing accounts");
   const recipient = await openStore("lazy-act9-recipient-" + RUN);
   const sink = new Documents(recipient.comp, "receiver");
