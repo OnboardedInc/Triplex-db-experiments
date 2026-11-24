@@ -132,10 +132,11 @@ with this branch's gateway sources mounted read-only, and the base's sources for
 | Step 3: several whole subjects per frame | the first frame carries 8 subjects; covered by (b) |
 | **(c) Kill at every frame through the first 50 subjects, resume** (`kill-after-every-frame-and-resume`) | 62 subjects (60 of 20 to 40 facts, one of 160, one of 9) in 11 frames; each of the 9 frames that start before subject 50 was killed before its send, lost its reply once (503, recovered by lookup), was killed after its commit but before its checkpoint (recovered by `CommandConflict` and lookup), and was killed after its checkpoint: 27 kills and 9 lost replies, 28 restarts. Final log equal to a control import datom for datom (4,290 datoms; only operation IDs, one per attempt as the SDK's, excluded), receipts equal, 0 duplicate history rows, each command committed once, 0 half at every position |
 | **(d) Live saves beside an import, same subject and other accounts** (`live-saves-beside-an-import`, both writer modes) | Live save first: the import is refused 409 `CasConflict`, nothing written, then sent again and committed whole on top. Import first: the live save is refused 409 `CasConflict` and replayed on top. Never merged: 0 half in 72 reads; 161 and 121 current facts. Neighbour saves in another account between frames: all 200 |
-| (e) Removal on request mid-import | Not exercised by the Clojure gate (protected values need the removal stack). See the combined check below |
-| **(f) Fair-import combined check with the option on** | see "Combined check" below |
+| (e) Removal on request beside an import | **Partly.** The combined check's `read` case ran with the option set in the launcher (`ha1 load-fair --combined read`, holder DX-IMP2, toy SQL stack): 4 import frames at positions 5, 7, 13 and 23, a removal on request at position 8 between them, 21 saves, 176 logical reads, 27 replayed commits, exit 0. Its imports are 8-fact subjects in other entities than the removed value, so **removal of a subject that is itself mid-import was not exercised**, and this case does not read the writer's options back |
+| **(f) Fair-import combined check with the option on** (`ha1 load-fair --combined fair`, holder DX-IMP2) | Exit 0: 8 import frames beside live saves, the quiet account and Publish, 36 receipts, 46 replayed commits, 0 import grants beside a live queue in yield checks. Run before the writer readback assertion was added (`0e3c57e8e`); the rerun with it was stopped by the lab VM (its disk check needs an XTDB image that is no longer on the VM, and the VM could not resolve the registry) |
+| (f) Production exactness gate with the option on (`DX_CHK1_HOLDER=DX-IMP2 DX_IMP2_WHOLE=1 prep1/manage.py OUT production 10 1 1 0 1`) | **Not run**: the gate builds its own image and the lab VM could not resolve the registry (`node:22.23.2-bookworm-slim`). The plumbing is committed. The production tape has no import, so the option changes nothing on its path; this is argued, not tested |
 | **(g) Counted work** | section 2 table |
-| Totals | memory and PostgreSQL storage (fsync, synchronous commit, full page writes on): see "Totals" below |
+| **Totals** (`imp2/gate.sh` on `0e3c57e8e`'s gateway sources) | memory: 6 tests, 272 assertions, 0 failures; PostgreSQL storage (fsync, synchronous commit, full page writes on): 6 tests, 272 assertions, 0 failures; option-off digest IDENTICAL twice |
 
 ## 6. Server run (published before any run; no machine is rented)
 
@@ -197,7 +198,8 @@ machine hour; with server preparation, about 1 hour 15 minutes and USD 1.40.
 
 - **Nothing ran on a server.** Every 1 billion figure is a forecast from the fits named in section 2.
 - **ID lists, the sweep and `find`** were not on the base; their visibility is argued, not tested.
-- **Removal on request of a subject mid-import** was not exercised by this branch's gate; see the combined check.
+- **Removal on request of a subject that is itself mid-import** was not exercised; the combined `read` case ran a removal between import frames of other subjects. With whole subjects the question reduces to "removal before or after one commit", but that is argued, not tested.
+- **The production exactness gate with the option on did not run** (the lab VM could not resolve the image registry), and the fair combined check's rerun with the writer readback assertion was stopped the same way.
 - **The product has no import API.** The bound applies to import-class commits; the lab's snapshot importer (load1)
   sends live-class frames and is not bounded by it.
 - **Toy apply times and storage reads** say nothing about 1 billion; the toy database fits in cache.
