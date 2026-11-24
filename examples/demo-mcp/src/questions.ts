@@ -111,7 +111,11 @@ export const refusalSentences: Record<string, string> = {
 export function storeError(error: unknown, route: "ids" | "sweep" | "index"): unknown {
   if (!(error instanceof DatomicHttpError)) return error;
   const code = error.status === 404 && error.code === "NotFound" ? "RouteOff" : error.code;
-  const sentence = refusalSentences[code];
+  // [DX-XQ10] A value of another type than the declared one, in a condition the slow exact route refuses too (fallback
+  // "none": a range on yes/no, a json value): neither route answers, so the sentence does not point to the slow route.
+  const sentence = code === "ValueFamilyMismatch" && error.fallback === "none"
+    ? "The value's type is not the type the attribute was declared with, and the slow exact route does not take this condition with a value of that type either, so neither route answers it."
+    : refusalSentences[code];
   if (!sentence) return error;
   const busy = code === "SweepBusy" || code === "IndexBusy";
   return new DemoError(code, `${sentence} (store: ${error.code}${error.message ? ", " + error.message : ""})`, {

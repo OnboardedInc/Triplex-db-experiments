@@ -184,7 +184,7 @@ async function allPages(q: any, opts: { limit?: number; pageSubjects?: number; b
   }
   throw new Error("a cursor must end");
 }
-function compare(label: string, q: any, pages: any[], expected: Awaited<ReturnType<typeof brute>>, p: number, v: number) {
+function compare(label: string, q: any, pages: any[], expected: Awaited<ReturnType<typeof brute>>, p: number, v: number, declared = declaredHere) {
   const first = pages[0];
   check(`${label}: every page at the question's position and valid time`, pages.every((x) => x.holdsFor.position === p && x.holdsFor.validAtMs === v && x.facts === "stored"), { p, v, got: pages.map((x) => [x.holdsFor.position, x.holdsFor.validAtMs]).slice(0, 3) });
   check(`${label}: only the last page is complete`, pages.every((x, i) => x.complete === (i === pages.length - 1)));
@@ -219,7 +219,7 @@ function compare(label: string, q: any, pages: any[], expected: Awaited<ReturnTy
   // [DX-XQ10] The route that answered is stated, and the fast index is marked on exactly when the toy declares one.
   check(`${label}: route and fast-index place reported`,
     (first.route.code === "index" ? first.route.used === "fast answer from the index" : first.route.used === "slow exact read of each subject") &&
-      first.route.fastIndex.available === declaredHere, { code: first.route.code, available: first.route.fastIndex.available });
+      first.route.fastIndex.available === declared, { code: first.route.code, available: first.route.fastIndex.available, declared });
   bump("questions"); bump("store pages", pages.length);
 }
 
@@ -447,7 +447,12 @@ section = "refusals";
   const after = await tool("ask_across_subjects", { ...q, mode: "page", cursor });
   check("the original cursor still continues its own question", after.holdsFor.position === P1);
   const r3 = await refusal("ask_across_subjects", { account: A, kind: { prefix: "i9:" }, where: [{ attribute: ":i9/status", op: "range", type: "boolean", from: true }] });
-  check("a range on yes/no: the store's UnsupportedOperation, explained", r3.code === "UnsupportedOperation" && r3.refused === true && /slow exact route answers/.test(r3.explanation), r3);
+  // [DX-XQ10] With the attribute declared for the index (string), the index refuses the boolean value by its family and,
+  // since the slow route refuses a range on yes/no too, with no fallback: both routes refuse; the codes differ by route.
+  check("a range on yes/no: refused on both routes, explained",
+    r3.refused === true && (declaredHere
+      ? r3.code === "ValueFamilyMismatch" && /neither route answers/.test(r3.explanation)
+      : r3.code === "UnsupportedOperation" && /slow exact route answers/.test(r3.explanation)), r3);
   const r4 = await refusal("ask_across_subjects", { account: A, kind: { prefix: "i9:" }, where: Array.from({ length: 9 }, () => ({ attribute: ":i9/status", op: "exists" })) });
   check("nine conditions refused", r4.code === "InvalidInput", r4.code);
   const r5 = await refusal("list_ids", { account: "account-999", prefix: "pl:" });
@@ -549,9 +554,9 @@ for (const [label, input] of [
   }, pdemo);
   const head = (await pdemo.head()).position;
   check("two removals on request happened between pages", removals === 2 && head > PP, { PP, head });
-  compare("removal between pages, at the question's position", q, pages, await brute(plainClient, pdb, q, PP, V_NOW), PP, V_NOW);
+  compare("removal between pages, at the question's position", q, pages, await brute(plainClient, pdb, q, PP, V_NOW), PP, V_NOW, false);
   const fresh = await allPages({ ...q, basis: { position: head, validAt: iso(V_NOW) } }, {}, pdemo);
-  compare("after the removal, at the new head", q, fresh, await brute(plainClient, pdb, q, head, V_NOW), head, V_NOW);
+  compare("after the removal, at the new head", q, fresh, await brute(plainClient, pdb, q, head, V_NOW), head, V_NOW, false);
   check("no protected value in any page", noProtected(pages) && noProtected(fresh));
   const idsAfter = await tool("list_ids", { account: "account-003", prefix: "pl:", shape: "pl:{8 digits}" }, pdemo);
   check("removal keeps the subjects' IDs (it removes protected values only)", JSON.stringify(idsBefore.ids) === JSON.stringify(idsAfter.ids) && idsAfter.holdsFor.position === head);
