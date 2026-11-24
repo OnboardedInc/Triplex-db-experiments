@@ -367,8 +367,12 @@ export async function livePhase(c: LiveContext) {
           if (r.doc.forms?.length && !old.forms?.length) {
             const by = new Map(got.map((x) => [x.subject, x.changes]));
             const t = { owing: 0, changes: 0, notices: 0 };
+            // A superseded release is checked for the subjects it wrote (each written whole at 20 forms); its notices
+            // are all recorded, so they are checked for every subject.
+            const written = new Set(got.map((x) => x.subject));
             for (const [i, s] of roster.entries()) {
               const e = expectForms(world(r.position)(i), r.doc, validTime);
+              if (stored.frontier.status !== "stored" && !written.has(s)) e.changes.clear();
               const g = checkForms(e, s, (by.get(s) ?? []) as never, deliveries.filter((d: any) => d.subject === s) as never);
               if (e.changes.size) t.owing++;
               t.changes += g.changes;
