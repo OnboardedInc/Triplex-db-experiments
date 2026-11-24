@@ -5176,3 +5176,9 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Exact re-assembly** (server 2, `--commit 090c189a8 --renderer 6c4f9e4fe`, 01:15 UTC, exit 0): `evidence/DX-SCALE1/prodS-card/SCORECARD-v0.1-prodS-1B-exact.md`. Against the Mac card one line differs, the Mac card's platform-tape sentence; no number differs. The prediction held.
 - **Console stack on server 2 taken down at 01:15 UTC** (hold time). The Mac's tunnel and the console server on 28584 close by timer at 20:16 local.
 - **Server 2 now:** pinned arm with saves (`9376ece9c`): build and dry run, then the timed run (22 to 31 minutes), then the fixed owner head pair at 1 billion (`85fc3a4bd`). **Second machine:** start-up read at 1 billion, arm 2 running; then the owner head pair on fresh.
+
+### 2026-11-23 20:29 local: pinned arm with saves faulted in its window driver before any window; builder resumed; server 2 went on to the owner head pair (3 agents running)
+
+- **Server 2, `9376ece9c`, 01:27 UTC:** `ReferenceError: Cannot access 'savesWindows' before initialization` at `savesArm` (`v01/study-server.ts:305:19`, from `:204`, `rd1/prepared.ts:153` `sealedArm`). The dry run had reached its first offer (01:23 UTC) and does not cover the window driver, as the builder had warned ("the timed run is their first execution"). Stack and copy removed cleanly. No window ran.
+- **Builder resumed (due 20:55):** fix the ordering fault, read and execute the rest of `savesArm` on the Mac as far as possible, make the dry run enter the window driver, publish a new commit.
+- **Server 2 now:** the fixed owner head pair at 1 billion (`85fc3a4bd`, 45 to 60 minutes with its build), then the pinned arm with saves at the new commit (about 21:30 local), collection and deletion by 23:30.
