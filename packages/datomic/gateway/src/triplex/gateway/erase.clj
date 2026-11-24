@@ -220,8 +220,14 @@
     (privacy/guard (removal-scope/lock-name name b) #(with-bucket-guards name more work))
     (work)))
 
+;; [DX-ERA2] Why: guarded per account, other accounts' saves no longer pause during a removal, so the removal's own
+;; "head has not moved since my selection" check (database-wide, P9) retries more often; this measures how often.
+;; One JSON line per removal on standard output when TX2_REMOVAL_TRIES_LOG=1 (unset: nothing printed).
+(def ^:private tries-log (= "1" (System/getenv "TX2_REMOVAL_TRIES_LOG")))
+
 (defn erase! [name conn input]
   (let [selectors (selectors! input)
+        started (System/nanoTime)
         command (get input "commandId")
         db (d/db conn)
         ;; [DX-ERA2] Per account, a removal also holds the locks of the accounts it can touch, which is what a derived
@@ -244,7 +250,7 @@
                       (privacy/unavailable!))
                   _ (when (and (not pending) (d/entid db [:triplex.claim/command-id command]))
                       (privacy/failure! 409 "EraseCommandConflict" "The command identity is already claimed"))]
-              (loop [view db prepared pending]
+              (loop [view db prepared pending tries 1]
                 (let [entry (or prepared (make-entry name view current command selectors))
                       ;; [DX-ERA2] The selection cannot reach an account whose lock this removal does not hold.
                       _ (when (and buckets (not (every? buckets (removal-scope/entry-buckets entry))))
@@ -258,8 +264,12 @@
                   (if moved
                     (let [next (sync! conn)
                           committed (d/entid next [:triplex.tx/operation-id (operation-id entry)])]
-                      (recur next (when committed entry)))
+                      (recur next (when committed entry) (inc tries)))
                     (do (privacy/publish! name current entry)
+                        (when tries-log
+                          (println (json/write-str {"schema" "triplex.removal-tries.v1" "seq" (get entry "seq")
+                                                    "tries" tries "perAccount" (boolean buckets)
+                                                    "ms" (/ (- (System/nanoTime) started) 1.0e6)})))
                         (response (d/db conn) entry))))))))))))))
 
 (defn replay-after-restore! [name conn]
