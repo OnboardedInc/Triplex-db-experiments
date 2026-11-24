@@ -147,6 +147,8 @@ export class Archive {
   readonly contest = new Contest();
   /** [DX-ACT5] The account's pause and pace, read before each frame (TX2_SETTLE_CONTROL=1; unset, none). */
   control?: { gate: () => Promise<void> };
+  /** [DX-ACT5] Diagnostic: no frame is sent after this `performance.now()` time (SettlementStopped). */
+  stopAt?: number;
   private constructor(
     source: JoinedAccount,
     store: Store,
@@ -210,6 +212,7 @@ export class Archive {
         : undefined;
     assert(this.precondition === "head" || guards, "A settlement frame names its progress row");
     await this.control?.gate();
+    if (this.stopAt !== undefined && performance.now() > this.stopAt) throw new SettlementStopped();
     const c = this.contest;
     c.offered++;
     try {
@@ -540,6 +543,7 @@ export class Archive {
   }
 }
 
+export class SettlementStopped extends Error {}
 /** [DX-ACT5] Exact counts of one writer's frames, per-second commit and refusal counts from `origin`, and the turns'
  * client-side intervals (the first 20,000; toy evidence). */
 export class Contest {

@@ -14,6 +14,7 @@ import type { AdoptedSeed } from "../../v01/adopt.ts";
 import { openStore, type HeldSource, type Store } from "../store.ts";
 import type { JoinedAccount } from "./account.ts";
 import { BulkQueue, settlementLane } from "./bulk.ts";
+import { SettlementStopped } from "./archive.ts";
 import { Reference, toWire } from "./check.ts";
 import { checkForms, expectForms } from "./form-expect.ts";
 import type { FrameMode, Precondition } from "./frames.ts";
@@ -57,10 +58,11 @@ type Case = {
   name: string;
   precondition: Precondition;
   frames: FrameMode;
-  release: "large" | "small" | "none";
+  /** `same`: no Publish; settle the release the previous case left (for example after a `stop` case). */
+  release: "large" | "small" | "none" | "same";
   own: 0 | 3.5 | 23.5 | 39.4;
   others: boolean;
-  extra?: "kill" | "second" | "multi" | "rival" | "pause";
+  extra?: "kill" | "second" | "multi" | "rival" | "pause" | "stop";
   turns?: "admission";
   /** This case's save window in seconds (default DX_ACT5_SECONDS). */
   seconds?: number;
@@ -74,8 +76,8 @@ export function parseCases(text: string): Case[] {
     const [name, precondition, frames, release, own, others, extra, turns, secs] = entry.split(":");
     assert(secs === undefined || secs === "" || (Number.isInteger(Number(secs)) && Number(secs) >= 2 && Number(secs) <= 3600));
     assert(name && ["head", "progress"].includes(precondition!) && ["count", "bytes"].includes(frames!));
-    assert(["large", "small", "none"].includes(release!) && ["0", "3.5", "23.5", "39.4"].includes(own!));
-    assert(["0", "1"].includes(others!) && [undefined, "", "kill", "second", "multi", "rival", "pause"].includes(extra));
+    assert(["large", "small", "none", "same"].includes(release!) && ["0", "3.5", "23.5", "39.4"].includes(own!));
+    assert(["0", "1"].includes(others!) && [undefined, "", "kill", "second", "multi", "rival", "pause", "stop"].includes(extra));
     assert([undefined, "", "admission"].includes(turns));
     return {
       name,
@@ -201,7 +203,11 @@ export async function livePhase(c: LiveContext) {
             ? base.name === "R1" ? W0.R2.doc : W0.R1.doc
             : undefined;
 
-      const published = doc ? await publish(doc) : undefined;
+      const published = doc
+        ? await publish(doc)
+        : k.release === "same"
+          ? { r: current, old: oldOf.get(current.seq)! }
+          : undefined;
       // Saves: the held tape at the own rate (account 0) and/or the nine others at their usual load (the 23.5 tape).
       const tape = heldTape(c.people as never, k.own || 23.5, seconds).filter((x) =>
         x.account === 0 ? k.own > 0 : k.others,
@@ -228,6 +234,9 @@ export async function livePhase(c: LiveContext) {
       const begins = now() + 400,
         ends = begins + seconds * 1000;
       const origin = begins - performance.timeOrigin;
+      // `stop`: settlement stops at the end of the save window (its progress stays durable for a later `same` case).
+      if (worker && k.extra === "stop") worker.archive.stopAt = worker.recorder.archive.stopAt = ends - performance.timeOrigin;
+      let stopped = false;
       rival?.archive.contest.reset(origin);
       rival?.recorder.archive.contest.reset(origin);
       worker?.archive.contest.reset(origin);
@@ -304,8 +313,12 @@ export async function livePhase(c: LiveContext) {
           superseded = { ...(superseded as object), status: first.status, through: first.through };
           await worker.settle(current.seq);
         } else if (rival) await Promise.all([worker.settle(published.r.seq), rival.settle(published.r.seq)]);
-        else await worker.settle(published.r.seq);
-        settledAt = now();
+        else
+          await worker.settle(published.r.seq).catch((e) => {
+            if (!(e instanceof SettlementStopped)) throw e;
+            stopped = true;
+          });
+        if (!stopped) settledAt = now();
       })();
       const probing = (async () => {
         let i = 0;
@@ -330,7 +343,10 @@ export async function livePhase(c: LiveContext) {
         : [];
       // ---- exactness of this case ----
       const exact: Record<string, unknown> = {};
-      if (worker && published) {
+      if (worker && published && stopped) {
+        const v = await worker.archive.values(published.r.seq);
+        exact.release = { seq: published.r.seq, stoppedAt: v?.value ?? null };
+      } else if (worker && published) {
         const seqs = k.extra === "second" ? [published.r.seq, current.seq] : [published.r.seq];
         for (const [j, seq] of seqs.entries()) {
           const r = c.releases.find((x) => x.seq === seq)!;
@@ -394,6 +410,7 @@ export async function livePhase(c: LiveContext) {
         seconds,
         settledMsFromStart: settledAt === undefined ? null : settledAt - begins,
         finishedWhileSaving: settledAt !== undefined && settledAt <= ends,
+        stopped,
         values: worker?.archive.contest.summary() ?? null,
         notices: worker?.recorder.archive.contest.summary() ?? null,
         frameUsMax: worker
@@ -418,15 +435,16 @@ export async function livePhase(c: LiveContext) {
       await worker?.close();
       await rival?.close();
       // A large release is followed by its form-free predecessor again (settled quietly, checked the same way).
-      if (k.release === "large" && k.extra !== "second") {
-        const back = await publish(base);
+      if (k.release !== "none" && k.release !== "small" && k.extra !== "second" && k.extra !== "stop" && k !== cases.at(-1)) {
+        const formFree = k.release === "same" ? published!.old : base;
+        const back = await publish(formFree);
         const quiet = await Settlement.open(c.a, new BulkQueue(1), false, k.frames, k.precondition);
         try {
           await quiet.settle(back.r.seq);
           const stored = await quiet.archive.stored(back.r.seq);
           assert.deepEqual(
             stored.output.map((x) => ({ subject: x.subject, changes: x.changes })),
-            await oracleChanges(base, back.old, back.r.position),
+            await oracleChanges(formFree, back.old, back.r.position),
           );
           const all = (await quiet.recorder.packets(await quiet.recorder.archive.store.head())).flatMap((x) =>
             x.deliveries.map(toWire),
