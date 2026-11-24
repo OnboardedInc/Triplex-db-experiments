@@ -5247,3 +5247,17 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Saves beside 256 readers:** stored commits unchanged (23.07 to 23.08/s, 0 expired); S commit p99 52 to 65 ms against 55.55 alone; quiet commit p99 22 to 35 ms.
 - **Model check:** reads/s and cache share for random subjects held; storage loads per subject were 13.5 to 14.8 against the predicted 1.3 to 2.3, and the reader used 2.1 of 3 cores at 1,217 reads/s, so the reader is not plainly CPU-bound on random reads. Builder asked to say which from the evidence.
 - **One more arm ordered (due 21:45):** the three random windows with a larger reader (cores and permits, then cache). Server 2's deletion waits for it until 02:50 UTC at the latest; collection from 04:00 UTC, deleted by 04:30 UTC.
+
+### 2026-11-23 21:19 local: CORRECTION to the entry above: the "loads per subject" column was per exchange of eight subjects; the model's mechanism held
+
+- **The driver withdrew its column.** 13.51 to 14.82 is sampled storage reads per exchange of 8 subjects (predicted 10 to 18: inside). Per subject, two independent ways:
+
+  | Window | Sampled reads per exchange ÷ 8 | Reader's StorageGet count ÷ reads in the same seconds | Handler CPU per exchange |
+  | --- | ---: | ---: | ---: |
+  | Random near head, quiet stream | 1.76 | 1.46 | 8.29 ms |
+  | Random near head, with saves | 1.69 | 1.78 | 7.91 ms |
+  | Random, old pin | 1.85 | 2.00 | 8.65 ms |
+  | Re-read near head | 0.06 | 0.10 | 1.15 ms |
+  | Re-read old pin | 0.09 | 0.14 | 1.36 ms |
+
+- **So for random subjects everything predicted held:** reads/s, cache hit share (77.7 to 80.3% against 0.76 or 0.78 to 0.90), loads per subject (1.46 to 2.00 against 1.3 to 2.3), reader CPU (about 1.0 ms of handler CPU per subject). None of the three refuters fired. The statement above that "the reader is not plainly CPU-bound" and that the mechanism missed is withdrawn; what remains open is why the reader used 2.1 of 3 cores (1.7 ms per subject in total). Cache shares to be republished weighted by window overlap.
