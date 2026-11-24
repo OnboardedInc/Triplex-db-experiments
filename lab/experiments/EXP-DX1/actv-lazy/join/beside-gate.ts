@@ -108,6 +108,10 @@ class Gate {
   readonly results: Record<string, unknown>[] = [];
   readonly between = { publishes: 0, positions: 0, reads: 0 };
   readonly racing = { before: 0, after: 0, reads: 0 };
+  /** Set once the adversarial part has changed subjects' base facts: from then on a form-adding release's event may
+   * also carry base-rule notices (a lowered pay rate's "pay below minimum"), so the independent form rule compares only
+   * the added policies' changes and form notices and leaves the rest to the oracle, which checks everything. */
+  perturbed = false;
   /** A second client of the publishing account's data for the adversarial writes (its own counters and runtime). */
   private adversaryStore?: Store;
   async adversary() {
@@ -278,12 +282,13 @@ class Gate {
         const t = { owing: 0, changes: 0, notices: 0 };
         for (const [i, s] of this.roster.entries()) {
           const e = expectForms(this.world(r.position)(i), r.doc, validTime);
-          const g = checkForms(e, s, (by.get(s) ?? []) as never, deliveries.filter((d: any) => d.subject === s) as never);
+          const g = checkForms(e, s, (by.get(s) ?? []) as never, deliveries.filter((d: any) => d.subject === s) as never,
+            this.perturbed);
           if (e.changes.size) t.owing++;
           t.changes += g.changes;
           t.notices += g.notices;
         }
-        independent = t;
+        independent = { ...t, onlyAdded: this.perturbed };
       }
       return { ms, changes: stored.frontier.changes, subjectsChanged: got.length, notices: deliveries.length, independent,
         frames: { values: w.archive.contest.summary(), notices: w.recorder.archive.contest.summary() } };
@@ -599,6 +604,7 @@ async function adversaryWrite(g: Gate, kind: Kind, i: number, tag: string) {
 }
 async function adversarialPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
   const c = g.c;
+  g.perturbed = true;
   set("TX2_PUBLISH_BESIDE", "1");
   const out: Record<string, unknown>[] = [];
   const windows = ["afterRead", "inside"] as const;
