@@ -36,14 +36,36 @@ here has run on a server.
   0.25 to 4 s. At 64 callers only the smallest shape (a task's fields, 2 reads) stays inside 200 ms. **Cold worst
   case:** the list page of 50 random subjects, 1.6 to 2.4 s alone today and 0.2 to 0.3 s batched (about 130 to 570
   storage loads); a random subject's page 23 to 125 ms alone today.
-- **What it means:** the lead's sentence is answerable for one call at a time, not for 256 at once on one reader. The
-  batch takes the round trips out (1.7 to 4.3 times the calls per core) and makes every call one position; what is left
-  is CPU per entity read (about 0.4 ms on the server as rows, 0.06 ms inside a reach). 256 subject pages at once
-  inside 50 ms p99 would need about 175 reader cores (about 44 for 200 ms); the next levers are the per-subject row
-  cache costed in RD5 (not built) and more reader machines (RD5 command 2).
-- **Server run** (section 7): one bring-up of the 1 billion working copy with the tuned reader and the batch on, alone
-  cells, 12 windows of the subject-centred mix at 64 and 256 callers and 6 of the list page at 8, re-read and random
-  subjects, saves at 23/s: 33 to 49 minutes, USD 0.60 to 0.89. **Proposed scorecard line P10** in section 8.
+- **What it meant before the floor work:** the batch takes the round trips out (1.7 to 4.3 times the calls per core)
+  and makes every call one position; 256 subject pages at once inside 50 ms p99 would have needed about 175 reader
+  cores (about 44 for 200 ms). Superseded by the next bullet.
+- **The floor (section 10, added the same evening): about 1.4 ms of reader CPU per subject page on the Mac for
+  subjects in memory, 2.1 ms on the server; 5.4 to 9.4 ms for random subjects at 1 billion (a model).** Where the
+  CPU of the 44-read batch went: building tagged wire rows 21% of the call, JSON encoding 18%, the fixed HTTP request
+  30%, Datomic index seeks 11.5%, row-text decode 6.4%, position resolve under 1%. Three steps took it down: the batch
+  stopped re-parsing its own answers and its prefetch touches one seek per subject (14.1 → 10.0 ms on the Mac); the
+  subject page as **one world read** (reach of the subject, which emits stored row texts and keeps parsed entities by
+  revision) plus the account (11.1 → 1.9 ms); and **definitions kept in the product process by release hash** (1.9 →
+  1.4 ms; it removes 13 of the subject page's 44 reads and 53 of the policy evaluation's 61). A decoded-subject cache
+  was not built: it already exists on the world path (parsed entities by revision, about 0.3 to 0.4 MB per subject),
+  and decoding is 6 to 9% of a call. Gate at the final code: 165,813 comparisons, 0 differences, 670 saves, four
+  release changes.
+- **The 50 ms and 200 ms bars are reachable with the floor.** Subject pages, server cores at f = 1.5:
+
+  | Cores | 64 in flight | 256 in flight |
+  | --- | ---: | ---: |
+  | Re-read, p99 ≤ 50 ms | 5.1 | 20 |
+  | Re-read, p99 ≤ 200 ms | 1.3 | 5.1 |
+  | Random, p99 ≤ 50 ms | 18 (13 to 23) | 72 (52 to 91) |
+  | Random, p99 ≤ 200 ms | 4.5 (3.3 to 5.7) | 18 (13 to 23) |
+
+  That is about 426 subject pages per second per reader core for subjects in memory and about 121 (96 to 167) for
+  random ones (today's port 14 and 13; the entity batch 54 and 45). 1,000 subject pages per second need about 4 cores
+  re-read and about 15 random.
+- **Server run** (section 7): one bring-up of the 1 billion working copy with the tuned reader and the batch on, arms
+  `today`, `batch1` and `floor` (worlds + the definitions cache), alone cells, 12 windows of the subject-centred mix at
+  64 and 256 callers and 6 of the list page at 8, re-read and random subjects, saves at 23/s: 33 to 49 minutes, USD
+  0.60 to 0.89. **Proposed scorecard line P10** in section 8, now with a rate per reader core.
 
 
 ## 1. What a real API call reads (the product's handlers, counted from their code)
@@ -399,6 +421,9 @@ subject pages at once inside 50 ms p99 the batch needs 256 × 18 ms × 1.7 ÷ 50
 200 ms about 44. That is the arithmetic of CPU per entity read (0.3 to 0.4 ms on a server for whole entities), not of
 round trips; the batch has already taken the round trips out.
 
+**Superseded by section 10.6** (the floor): with the world read and the definitions cache the same bar needs about 20
+reader cores for re-read subjects and about 72 (52 to 91) for random ones.
+
 
 
 ## 6. Reproduce on the Mac
@@ -412,6 +437,10 @@ node lab/bin/heavy.mjs --label DX-API1-serverdry -- bash lab/experiments/EXP-DX1
 python3 lab/experiments/EXP-DX1/api1/summarize.py "$EVIDENCE"/run-warm/out/counts.json "$EVIDENCE"/run-cold/out/counts.json
 node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/api1/predict.ts \
   "$EVIDENCE"/run-warm/out/counts.json "$EVIDENCE"/run-cold/out/counts.json "$EVIDENCE"/run-warm/out/calibration.json
+# the floor and its sizing (section 10): profile cells, the cold stand-in, then floor.py
+API1_READERS=warm API1_PROFILE_READERS=warm node lab/bin/heavy.mjs --label DX-API1-floor -- bash lab/experiments/EXP-DX1/api1/gate.sh "$EVIDENCE/run-floor" counts,calibrate,profile
+API1_READERS=cold API1_COLD_ENV=TX2_ENTITY_CACHE_BYTES=0 node lab/bin/heavy.mjs --label DX-API1-floor -- bash lab/experiments/EXP-DX1/api1/gate.sh "$EVIDENCE/run-floor-cold" counts
+API1_F=1.5 python3 lab/experiments/EXP-DX1/api1/floor.py "$EVIDENCE"/run-floor/out/counts.json "$EVIDENCE"/run-floor-cold/out/counts.json "$EVIDENCE"/run-floor/out/calibration.json
 ```
 
 ## 7. Server run: API-call-shaped reads at 1 billion (for the day a machine is rented; none has run)
@@ -427,7 +456,7 @@ cd "$BUILD/repository"
 sudo env DEMO_READER=tuned DX_READ_BATCH=1 DX_ID_LISTS=1 DX_INDEX_QUERY_PERMITS=4 \
   DEMO_ORIGINAL="$SEALED_CLUSTER" DEMO_HANDOFF="$AGE_HANDOFF_JSON" bash demo/server-up.sh --reset
 #    prints DEMO READY head=28309866 records=1000251169 t=62888918 (3 to 12 minutes)
-sudo env "PATH=$BUILD/tools/bin:$PATH" API1_WINDOW_SECONDS=60 API1_CALLERS=64,256 API1_LIST_CALLERS=8 API1_ARMS=today,loader,batch1 \
+sudo env "PATH=$BUILD/tools/bin:$PATH" API1_WINDOW_SECONDS=60 API1_CALLERS=64,256 API1_LIST_CALLERS=8 API1_ARMS=today,batch1,floor \
   API1_SETS=reread,random API1_SAVES_PER_SECOND=23 API1_ALONE_CALLS=20 \
   "$BUILD/tools/bin/node" --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/api1/server.ts \
   /var/tmp/triplex-demo/ready.json /var/tmp/api1-1b
@@ -441,7 +470,9 @@ tar -C /var/tmp -czf api1-1b.tar.gz api1-1b   # copy back to evidence/DX-API1/se
    definitions, a policy with 39 rule nodes; about 360 facts each). The 1 billion subjects carry no task-to-form
    reference, so the shapes name each task's form literally (the same entities).
 2. Warm-up: the re-read set (200 subjects of each deep account, 2,000 in all) read once per shape.
-3. **Alone:** one caller, no saves: each shape × each arm (`today`, `loader`, `batch1`) × each set (re-read, random),
+3. **Alone:** one caller, no saves: each shape × each arm (`today`; `batch1`, the one-request batch of entity reads;
+   `floor`, the subject page, the task page and the policy evaluation as world reads, every shape with the definitions
+   cache) × each set (re-read, random),
    20 calls (5 for `subject-list` in `today`): per-call p50 and p99, requests and reads per call, storage loads per call
    (batch arms, Datomic io-stats), reader CPU per call (the reader's cgroup), per-request p99 (`today`).
 4. **Windows:** 60 s each, beside saves of one subject each (17 rows on its first task, one commit, at 23 per second,
@@ -449,7 +480,10 @@ tar -C /var/tmp -czf api1-1b.tar.gz api1-1b   # copy back to evidence/DX-API1/se
    windows), then the list page alone at 8 callers for each set × arm (6 windows; at 64 callers one list page of
    today's port takes longer than a window). Recorded: calls/s, reads/s, per-call p50 and p99, the share of calls
    inside 50 ms and inside 200 ms, per-read p99 (`today`), reader cores, CPU per call, timeouts (30 s), the saves' p50
-   and p99, own writes not seen after the save (`form-submit`).
+   and p99, own writes not seen after the save (`form-submit`), definitions cache hits and misses per call (`floor`).
+   The loader arm (`loader`) is dropped from the default to keep the run's length: in section 5 it sits between
+   today and the one-request batch (within 5% of the batch for the form submission and the policy evaluation);
+   `API1_ARMS` can add it back.
 
 **The mix** (shares of calls; proposed, for the owner to correct): subject list 15%, subject page 15%, task page 15%,
 task fields 15%, placement page 10%, form submission 10%, policy evaluation 8%, import row 7%, check webhook 5%. Basis:
@@ -463,13 +497,18 @@ minutes, USD 0.60 to 0.89** at USD 1.09 per machine hour (ceiling 60 min, USD 1.
 
 **Predictions for this run, written before it** (from section 5; one 3-core tuned reader; mixes weighted as above):
 
-| Window | today: calls/s, p50 / p99 per call | loader | one-request batch |
+| Window | today: calls/s, p50 / p99 per call | one-request batch | floor (written 2026-11-24 evening) |
 | --- | --- | --- | --- |
-| Subject-centred mix, re-read, 64 callers | 60 to 75 calls/s (1,870 reads/s), 0.9 / 1.6 s | 150 to 190 (4,700 reads/s), 0.38 / 0.64 s | 170 to 210 (5,200 reads/s), 0.34 / 0.57 s |
-| The same, 256 callers | 60 to 75, 3.8 / 6.4 s; per read p99 0.8 to 3.8 s | 150 to 190, 1.5 / 2.6 s | 170 to 210, 1.35 / 2.3 s |
-| Subject-centred mix, random, 64 / 256 callers | 55 to 70 calls/s; 1.0 / 1.7 s and 4.0 / 6.8 s | 130 to 165; 0.43 / 0.73 s and 1.7 / 2.9 s | 145 to 185; 0.39 / 0.66 s and 1.6 / 2.7 s |
-| List page, 8 callers, re-read / random | 0.6 calls/s, p50 13 s / 13 s (some time out at 30 s) | 4 to 5, 1.5 / 1.9 s | 28 / 13 calls/s, 0.29 / 0.62 s |
-| Alone (one caller), each shape | as the table of section 5 (low to high) | as section 5 | as section 5 |
+| Subject-centred mix, re-read, 64 callers | 60 to 75 calls/s (1,870 reads/s), 0.9 / 1.6 s | 170 to 210 (5,200 reads/s), 0.34 / 0.57 s | 280 to 360, 0.20 / 0.34 s |
+| The same, 256 callers | 60 to 75, 3.8 / 6.4 s; per read p99 0.8 to 3.8 s | 170 to 210, 1.35 / 2.3 s | 280 to 360, 0.8 / 1.4 s |
+| Subject-centred mix, random, 64 / 256 callers | 55 to 70 calls/s; 1.0 / 1.7 s and 4.0 / 6.8 s | 145 to 185; 0.39 / 0.66 s and 1.6 / 2.7 s | 200 to 280; 0.27 / 0.46 s and 1.1 / 1.8 s |
+| List page, 8 callers, re-read / random | 0.6 calls/s, p50 13 s / 13 s (some time out at 30 s) | 28 / 13 calls/s, 0.29 / 0.62 s | as the batch (the list page already reads worlds), 5 to 10% more calls/s from the definitions cache |
+| Alone (one caller), each shape | as the table of section 5 (low to high) | as section 5 | subject page 2.4 to 12 ms re-read, 10 to 18 ms random; policy evaluation 2 to 15 / 8 to 18 ms; task page 3 to 12 / 8 to 15 ms (low: the CPU, one round trip and two storage waves; high: the Mac's alone p50 in `run-15` × 1.5) |
+
+The floor column: the dry run's mix CPU per call (5.3 ms on the Mac, `run-15`) × f = 1.5 = 8 ms re-read, plus 2.7
+loads × 0.86 ms and the parse for random subjects, about 11 ms; calls/s = 2.7 cores ÷ that; p50 = callers ÷ calls/s;
+p99 = 1.7 × p50. On one 3-core reader neither bar holds at 64 or 256 callers in any arm: the server run measures the
+CPU per call and the rate per core that section 10.6 sizes from, not the bars themselves.
 
 - Share of calls inside 50 ms at 64 or 256 callers: under 5% in every arm and set; inside 200 ms: under 10% at 256
   callers, 10 to 30% for the batch at 64 (task fields and import rows).
@@ -495,6 +534,13 @@ minutes, USD 0.60 to 0.89** at USD 1.09 per machine hour (ceiling 60 min, USD 1.
    the client limits the requests in flight); then today's numbers measure the driver, not the store.
 6. **Saves' commit p99 above 100 ms** in the batch windows but not in today's: the batch's prefetch pool competes with
    the writer (both on the machine's cores outside the reader's three); look at the prefetch counters.
+7. **The floor arm's subject page alone above 4 ms of reader CPU re-read, or its mix under 1.6 times the batch's
+   calls/s:** the fixed request cost or the world's reach is dearer on the server than f says; section 10.6's core
+   counts scale with it. Compare the alone cells' CPU per call with 10.5.
+8. **The floor arm's definition hits under 1 per call, or misses above 0.01 per call after the warm-up:** the
+   definitions cache is not being used (as in the dry run `run-14`); the floor numbers are then the plain world's.
+9. **Random floor calls above 9.4 ms of reader CPU** (the high end of 10.6): the parse or the storage loads per subject
+   are dearer than modelled; then RD5's per-subject row cache, not more reader cores, is the next lever to cost.
 
 ## 8. What this adds to the scorecard: a tenth line, "an API call's reads" (proposed; the owner accepts or changes it)
 
@@ -506,12 +552,15 @@ gateway, beside the production-shaped saves:
 2. **One caller:** every subject-centred shape's whole call p99 ≤ 50 ms for re-read subjects and ≤ 100 ms for random
    ones; the list page of 50 subjects p99 ≤ 200 ms re-read and ≤ 500 ms random. *(Predicted met with the batch, at risk
    with the loader for the subject page and the policy evaluation, not met today.)*
-3. **Under load:** the subject-centred mix sustains at least R calls per second per reader core with call p99 ≤ 200
-   ms, where R is the owner's: the product's peak rate of subject-reading API calls with headroom (not measured here;
-   the production database would give it). *(At 64 closed-loop callers on three cores the batch is predicted at about
-   60 calls/s per core with p99 0.57 to 0.66 s, so ≤ 200 ms holds only below about a third of that rate.)*
+3. **Rate per reader core:** the subject page served through the floor (world read + the definitions cache) at
+   **at least 300 calls per second per reader core for re-read subjects and at least 90 for random ones**, from the
+   alone cells' reader CPU per call (cores busy ÷ calls/s in the windows as the check). *(Predicted about 426 and 121
+   (96 to 167); today's port 14 and 13; the entity batch 54 and 45.)* The bar in milliseconds follows from it: with
+   R the owner's peak rate of subject-reading API calls, the deployment's reader cores ≥ R ÷ (that rate × 0.5) keep
+   the p99 inside 50 ms (section 10.6 gives the cores for 64 and 256 calls in flight).
 4. **Reported, not judged:** calls/s and reader CPU per call at 64 and 256 callers per arm, per-read p99 of the single
-   read port, storage loads per random call.
+   read port, storage loads per random call, definitions cache hits per call, the parsed-entity cache's bytes per
+   subject.
 
 Why these bars: the lead's sentence ("each [read] must return in under about 50 ms") is met per read by the store
 today for one caller; what an API call needs is the whole call inside its budget and one consistent position, and
@@ -532,6 +581,18 @@ the store's cost under load is CPU per entity read, which a bar in calls per sec
   bring-up path (`demo/server-up.sh` with `DEMO_READER=tuned DX_READ_BATCH=1`) has not run; `profile.mjs` prints the
   tuned reader (checked) and is byte-identical without the setting (checked); `up.sh`'s `DX_READ_BATCH` refusal is not
   in the launch guard's cases.
+- **The floor is measured on the Mac only.** The profile's shares come from a stack sampler on the request thread
+  (250 µs) and per-stage thread CPU, on the toy with subjects in memory; the server's shares may differ. The random
+  floor (5.4 to 9.4 ms) is a model: the cold stand-in (32 MB, the parsed-entity cache off) is not 1 billion's cold.
+- **The definitions cache rests on a contract the store does not enforce:** a definition changes only in a commit that
+  also changes the account's release pointer. The gate wrote releases that way; nothing refuses a definition written
+  without a new pointer. The release-limits builder's definitions by reference are where the store would enforce it.
+- **The parsed-entity cache under removals on request and settlement:** its exactness argument (keys by revision, the
+  removal frontier masked at response time) is the DX-B7-S3 design; this gate ran saves and release changes only, not
+  removals, a second reader or settlement.
+- **The world shapes' coverage on the product:** on this toy no subject references another; a product placement
+  references a shared employer or client entity, which a reach would follow into a shared world. The worlds' size
+  there is not measured.
 - **Gateway selftest not run** on this branch (the batch has no selftest case; its exactness is the gate's).
 - **Not built:** batching inside the transaction path (reads inside `withTransaction` keep the adapter's own route);
   a merged reach world per batch for several roots of the loader (each root is its own entry); parallel entries inside
@@ -540,6 +601,198 @@ the store's cost under load is CPU per entity read, which a bar in calls per sec
   the cold toy (section 2, item 4); not tuned.
 - **The ID list route allows one running list per account**; the today port retries `IndexBusy`, and a batch's ID list
   entries retry until the batch's time bound.
+
+## 10. The floor of reader CPU per API call (added 2026-11-24 evening), and the sizing redone
+
+Asked by the orchestrator after section 5's result (256 subject pages at once inside 50 ms would take about 175 reader
+cores). Mac toy, diagnostic times, counts are results. Runs `run-10` (gate), `run-11` (warm profile and counts),
+`run-12` (cold, parsed-entity cache on), `run-13` (cold stand-in: 32 MB object cache and the gateway's parsed-entity
+cache off, `TX2_ENTITY_CACHE_BYTES=0`), `run-14` (final gate and the server driver's dry run), `run-15` (the dry run after the driver fix of 10.7).
+
+### 10.1 Where the CPU goes (the subject page, subjects in memory, one-request batch of 44 entity reads)
+
+Measured with the batch's own diagnostics (`"profile": true`, `batch.clj`): the request thread's CPU by stage, and a
+sampler that reads the request thread's stack every 250 µs while it runs and names the innermost gateway or Datomic
+frame (4,090 samples over 240 calls for the first row). The reader process's CPU over the same calls gives the rest
+(the web server, request parse, response write, collection, the prefetch pool). Warm reader, 4 callers.
+
+| Subject page, batched (per call, Mac) | As built at `07ca3e634` | Answers kept as built, first-seek prefetch | The same, prefetch off |
+| --- | ---: | ---: | ---: |
+| Reader process CPU | **14.1 ms** | **10.0 ms** | **8.2 ms** |
+| Outside the batch handler (web server, request parse, response write, collection, the prefetch pool's threads) | 5.7 ms (40%) | 3.4 ms (34%) | 2.5 ms (30%) |
+| Batch handler thread | 8.5 ms (60%) | 6.6 ms | 5.7 ms (70%) |
+| … rows read (`storage/read-rows`: identity and index seeks, row-text decode, visibility and valid-time filter, tagged wire rows) | 4.6 ms | 4.1 ms | 3.7 ms |
+| … encoding each answer to JSON | 1.7 ms | 1.6 ms | 1.5 ms |
+| … re-parsing each answer (removed) | 1.0 ms | — | — |
+| … prefetch on the request thread | 0.24 ms | 0.21 ms | — |
+| … position resolve | 0.06 ms | 0.05 ms | 0.05 ms |
+| … admission (permit wait, wall time, not CPU) | 1.3 ms | 0.65 ms | 0.34 ms |
+
+**Sampler shares of the handler thread** (prefetch off): building tagged wire rows (every column of every row encoded
+as `{"t","v"}` and checked by decoding it back, `codec/encode-value`) **30%**; JSON encoding **26%**; Datomic index
+seeks (identity lookup, the row range, the pinned short-cut's checks) **17%**; row-text decode **9%**; the batch's own
+code 9%; visibility, valid-time filter and assembly 4%; the rest under 3% each. **So for 44 entity reads the cost is
+answer-building (tagged rows plus JSON, about 56% of the handler, 40% of the call) and the fixed request cost (30%),
+not decoding (row text 6% of the call) and not the position or admission (under 1%).** The uncached-read builder's
+finding (a read decodes a whole leaf and returns 0.25% of it) is the cold case: on subjects in memory Datomic keeps the
+decoded segment, so the seek, not the decode, is what is paid.
+
+**Two fixes from this profile, built:** (1) the batch no longer re-parses every answer it has just encoded (it was 11
+to 48% of the handler; it keeps rows and ID list answers as built for references); (2) the batch's prefetch touches one
+seek per subject instead of walking its whole EAVT range. Together **14.1 → 10.0 ms** on the subject page, 25.0 → 8.3
+ms on the list page (`legacyParse: true` restores the old path for comparison).
+
+### 10.2 One world read instead of 44 entity reads (built: `subject-page-world`, `task-page-world`, `policy-eval-world`)
+
+The list page's own figure said it: a subject's **world** (`reach`: the root and every entity reachable from it by
+reference) is answered by the reach route, which emits stored row texts as they are and keeps each parsed entity in
+the gateway's existing parsed-entity cache, keyed by entity and revision (section 10.4). The three shapes as worlds:
+
+| Shape | The world read covers | Not covered (read beside it, and why) |
+| --- | --- | --- |
+| Subject page | the root, profile, 1.8 placements, 5.7 tasks, about 31 subtasks (the chained ones too), 1.4 files, and the forms its tasks reference (`:task/template`): 44 to 49 entities, **all 44 of the entity reads but the definitions** | the account entity and its 8 property definitions (not referenced from the subject; definitions in force); nothing in other subjects (no subject references another on this toy; in the product a placement references a shared employer or client entity, which a reach would follow) |
+| Task page | the task's world: the task, its subtasks, its form | the subject root and profile (the task does not reference its subject: the root is named by the task's ID convention, the profile by the root's reference), the account and its property definitions |
+| Policy evaluation | the subject's world, and the policy's world (the policy and its 39 rule nodes, reached by `:policy/node` and `:rule/child`) in a second reach entry | the account and its property definitions |
+
+**Exactness:** every entity of every world equal to the same entity read alone at the same position (decoded with the
+SDK's reach decoder, filtered by valid time); every world equal to the single `/reach-many` at that position.
+
+### 10.3 Definitions in force kept in the product process by release (built: `DefinitionCache` in the SDK)
+
+`DefinitionCache` holds definition answers under the account's **release pointer** (one fact on the account entity,
+`:account/release`, naming the release in force by content hash). A call reads the pointer at its own position (the
+account entity, which every shape reads anyway, in its first batch); a cached definition is used only when the
+pointer at that position names the release it was cached under; a new release is read once and kept. `CallReads`
+offers `definitionRows` and `definitionReach`; the batch port leaves the definition entries out of the call's request
+when the cache holds a release, checks the pointer in the answer, and reads only what it misses, at the same position.
+**The contract:** a definition entity changes only in a commit that also changes the pointer (a release is published
+by writing its definitions and the new pointer together); the release-limits builder's definitions by reference give
+the hash; this toy writes the hash itself. Not keep-warm: the cache fills only from the call's own reads.
+
+**What it removes per call** (entity reads not sent): subject page 13 of 44 (8 property definitions, about 5 forms),
+policy evaluation 53 of 61 (the policy, 39 rules, 8 properties, forms), placement page 11 of 32, check webhook 9 of 30,
+import row 11 of 17; in the world shapes the 8 property definitions and the policy's world. Gate counts (run-10): the
+four caches answered 8,533 definition lookups from the cache and read 346 (once per release and reader), across four
+release changes made during the gate.
+
+### 10.4 A reader-side cache of decoded subjects: it exists on the world path; not built again
+
+The reach route already keeps **parsed entities keyed by (database generation, entity, revision)** (`entity_cache.clj`,
+DX-B7-S3, 256 MiB by default, `TX2_ENTITY_CACHE_VERIFY=1` re-parses and compares every hit). That is the cache the
+question describes, made exact a different way: the key is not a position range but the entity's **revision**, which
+every save of the entity changes; a read at any position first reads the entity's revision at that position (one index
+seek, itself kept per cut in a small revision view) and then takes the parsed entry for that revision. A pinned read at
+an older position finds an older revision: a different key, a hit only if that revision is still held. Removal on
+request: the world route masks protected values at response time from the request's own removal frontier
+(`append-protected-rows!`), and a removal writes a new revision, so a second reader's cached entry for the old revision
+is never served at the removal's position. Settlement writes new revisions the same way.
+
+**What it saves** (the world subject page, profile): reach-build 0.12 ms per subject world with the cache, 0.62 to 0.96
+ms without it (run-13, parsed-entity cache off); the call 2.2 to 2.7 ms against 4.0 to 4.5 ms. **Memory:** reported by
+`/v2/admin/scan-stats` (`entityCache`), run-14: the warm reader held 25,320 parsed entities in 218 MB (8.6 KB each; full, 121,302 evictions over the run), the cold one 4,198 in 27.8 MB (6.6 KB each). **About 0.3 to 0.4 MB per subject** (45 to 49 entities a world), so the default 256 MiB holds about 700 to 900 subjects; a re-read set of 10,000 subjects needs about 3 to 4 GB of reader heap (`TX2_ENTITY_CACHE_BYTES`), which the server's tuned reader has room for (its object cache is the larger user).
+**Why nothing new is built:** decoding is not where the call's CPU is (row-text decode 6 to 9% of an entity-read call);
+the world path already has the exact decoded cache; and for the rows path the cost is the tagged wire rows and JSON,
+which a decoded cache would not remove. Not verified here: the cache under removals on request and settlement (the
+gate ran neither); RD5's costing of a row cache per subject for random subjects (63 times the subjects of the segment
+cache in the same bytes) still stands as the lever for subjects not in memory.
+
+### 10.5 CPU per call, before and after each step (Mac; mean of the 16- and 64-caller cells)
+
+| Shape | Reads | Requests: today → batch → world + definitions | Re-read subjects: today / batch / world / world + definitions | Subjects not held (cold stand-in): today / batch / world / world + definitions |
+| --- | ---: | --- | --- | --- |
+| Subject page | 44 | 44 → 1 → 1 | 43.8 / 11.1 / 1.9 / **1.4 ms** | 48.7 / 12.6 / 5.3 / **5.0 ms** |
+| Task page | 18.5 | 18.5 → 1 → 1 | 18.1 / 4.5 / 2.7 / **1.9 ms** | 15.0 / 6.0 / 4.3 / **3.4 ms** |
+| Policy evaluation | 61 | 61 → 1 → 1 | 56.1 / 11.7 / 2.8 / **1.25 ms** | 52.3 / 16.6 / 5.9 / **3.9 ms** |
+| List page (50 subjects; already worlds in the batch) | 1,524 | 1,524 → 1 → 1 | 2,479 / 25.0 / — / 15.6 ms | 2,288 / 112.5 / — / 112.5 ms |
+| Form submission (with its save) | 30 | 30 → 2 → 2.25 | 24.6 / 11.6 / — / 10.9 ms | not run |
+| Import row | 17 | 17 → 1 → 1 | 14.8 / 5.3 / — / 4.0 ms | not run |
+| Check webhook | 30 | 30 → 1 → 1.25 | 28.4 / 5.7 / — / 4.6 ms | not run |
+| Placement page | 32 | 32 → 1 → 1.25 | 28.3 / 6.9 / — / 5.0 ms | not run |
+| Task fields | 2 | 2 → 1 → 1 | 1.7 / 1.7 / — / 1.4 ms | not run |
+
+The batch column is after 10.1's two fixes. **The floor for the subject page on this toy is about 1.4 ms of reader CPU
+per call for subjects in memory**, of which about 0.9 ms is the fixed cost of one HTTP request (the web server, request
+parse, response write, collection), 0.12 ms the world, about 0.15 ms the account entity's rows, 0.05 ms the position,
+and the rest the batch's framing and prefetch. For subjects not held, 5.0 ms (the parse of each entity and the toy's
+storage loads). Requests per call where definitions miss rise above 1 (the miss is read at the same position, once per
+release). Mac noise: the calibration exchange measured 1.01, 1.34 and 1.53 ms in three runs on the same Mac.
+
+### 10.6 The sizing, redone
+
+**Server CPU per subject page** = Mac × f. The calibration exchange gave f = 1.51, 1.14 and 1.0 in three runs on the
+same Mac (1.01, 1.34 and 1.53 ms against the server's 1.53 ms); the sizing uses **f = 1.5**, the slowest. **Random
+subjects** at 1 billion are a range: low = the re-read CPU + 2.7 storage loads × 0.86 ms (RD5's server unit) + the
+parse the parsed-entity cache no longer saves (0.67 ms on the Mac, world arms only); high = the cold stand-in's CPU × f
+(which already paid the toy's 0.45 loads per subject at the Mac's cost) + the 2.25 more loads per subject that 1
+billion makes. The sizing uses the midpoint. Computed by `api1/floor.py` (`floor-f1.5.json` in the evidence folder).
+
+| Subject page | Reader CPU per call (server) | Calls per second per reader core (90% busy) | Cores for p99 ≤ 50 ms, 64 in flight | ≤ 200 ms, 64 | ≤ 50 ms, 256 | ≤ 200 ms, 256 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Today (44 HTTP reads), re-read | 66 ms | 14 | 159 | 40 | 635 | 159 |
+| Batch of entity reads, re-read | 16.6 ms | 54 | 40 | 10 | 161 | 40 |
+| World, re-read | 2.9 ms | 316 | 6.9 | 1.7 | 28 | 6.9 |
+| **World + definitions, re-read** | **2.1 ms** | **426** | **5.1** | **1.3** | **20** | **5.1** |
+| Today, random subjects | 71 ms (68 to 75) | 13 | 173 | 43 | 691 | 173 |
+| Batch of entity reads, random | 20 ms (19 to 21) | 45 | 48 | 12 | 192 | 48 |
+| World, random | 8.0 ms (6.2 to 9.8) | 112 | 19 | 4.8 | 77 | 19 |
+| **World + definitions, random** | **7.4 ms** (5.4 to 9.4) | **121** (96 to 167) | **18** (13 to 23) | **4.5** (3.3 to 5.7) | **72** (52 to 91) | **18** (13 to 23) |
+
+Cores = 1.7 × in-flight calls × CPU per call ÷ (0.9 × the bar): the closed-loop rule of section 5 (Little's law, p99
+1.7 × p50, a core 90% busy). Alone, every world + definitions call is far inside both bars (about 2.4 ms re-read,
+about 10 ms random with two overlapped storage waves), so the cores decide, not the call.
+
+**What concurrency means here.** "256 calls in flight" is 256 API calls being served at the same instant, each waiting
+on its reads. With each call taking 2.4 to 10 ms alone, that is roughly 25,000 to 100,000 calls arriving per second,
+far above what one account store receives. A capacity plan needs calls per second per reader core instead: **about
+426 subject pages per second per core for subjects in memory and about 121 (96 to 167) for random ones** (today's
+port: 14 and 13; the entity batch: 54 and 45). At an arrival rate of R calls per second, cores = R × CPU per call ÷
+the utilization kept for the p99 (about 0.5 keeps the p99 near two to three times the alone time). For example, 1,000
+subject pages per second need about 4 cores re-read and about 15 random.
+
+**Against the product's current database (from the handler code; queries and rows, not time):** the product serves the
+subject page (the subject's detail plus its tasks and placements as the page loads them) with about 15 to 20 queries
+returning about 150 to 300 rows. Each query is an index lookup; the custom attributes' grouped query alone returns one
+row per property definition, about 50, and runs twice. The store's floor serves it with 1 request of 2 entries: the
+world (about 49 entities, about 170 stored row texts) and the account (10 rows), with the definitions from the
+product's cache. The work is of the same order (rows returned); the store pays per entity seek and per row text, the
+product per query.
+
+**Are the bars reachable? Yes, with the world read and the definitions cache, at reader core counts a deployment can
+hold:**
+- 64 subject pages in flight inside 50 ms p99: about 5 cores for subjects in memory, about 18 (13 to 23) for random ones.
+- 64 in flight inside 200 ms: 1.3 and 4.5.
+- 256 in flight inside 50 ms: about 20 and 72 (52 to 91). The random case is several reader machines.
+- 256 in flight inside 200 ms: 5 and 18.
+
+Today's port needs 159 to 691 cores for the same bars; the entity batch 40 to 192. What is left at the floor is the
+fixed cost of one HTTP request per call (about 65% of the re-read world call), so the next lever is a cheaper request
+or fewer requests per call; for random subjects it is the storage loads and the parse (RD5's per-subject row cache).
+
+### 10.7 The server driver's dry run with the floor arm (Mac toy, `run-14` and `run-15`)
+
+`server.ts` with `API1_DRY=1` on the toy's ready file: 8 callers in the subject-centred mix, 4 on the list page, 10 s
+windows, saves at 23 per second, Mac times (diagnostic).
+- **`run-14` found a driver fault:** the floor arm never used its definitions cache. The driver committed the
+  definitions a second time on a toy that was seeded with them, so the account carried two release pointers, and the
+  cache rightly refuses to choose between two releases (it read every definition, as the plain batch does). The driver
+  now keeps an account's pointer when one is present (the 1 billion database has none) and records cache hits and
+  misses per call in every window.
+- **`run-15`, after the fix:** 0 errors, 0 timeouts in every window; own writes missed after a save: 0 in the batch and
+  floor arms, 2 and 1 in `today` (unpinned).
+
+| Window (Mac, 8 callers, subject-centred mix) | Calls/s | Call p50 / p99, ms | Reader CPU per call | Requests per call | Definition hits / misses per call |
+| --- | ---: | --- | ---: | ---: | --- |
+| Re-read, today | 120 | 63 / 162 | 23.7 ms | 27.2 | — |
+| Re-read, batch of entity reads | 383 | 18 / 66 | 8.6 ms | 1.11 | — |
+| **Re-read, floor (worlds + definitions cache)** | **598** | **8.9 / 62** | **5.3 ms** | 1.12 | 1.54 / 0.002 |
+| Random, today | 88 | 89 / 209 | 26.3 ms | 30.0 | — |
+| Random, batch of entity reads | 322 | 21 / 73 | 8.6 ms | 1.10 | — |
+| **Random, floor** | **519** | **10.2 / 65** | **5.5 ms** | 1.12 | 1.55 / 0 |
+| List page (4 callers), re-read: today / batch / floor | 1 / 81 / 83 | 3,138 / 46 / 45 (p50) | 2,611 / 18.1 / 21.2 ms | 1,504 / 1 / 1 | — |
+
+The mix's requests per call above 1 are the form submission's save and its after-reads (10% of calls). On this toy the
+random set is not cold (the toy fits the reader's caches), so the random rows differ from the re-read rows only by
+which subjects are drawn. The p99s carry the driver on the same Mac and whatever else the Mac was running.
 
 ## Evidence (private folder `evidence/DX-API1/`)
 
@@ -551,6 +804,13 @@ the store's cost under load is CPU per entity read, which a bar in calls per sec
 | `run-08.tar.gz`, `counts-warm-run08.json`, `calibration-run08.json` | warm counts and the calibration exchange (the tables above) | `d8a31eac…`, `1fbd3216…`, `5ff947ca…` |
 | `predictions.json` | section 5's model output | `48918f44…` |
 | `run-09.tar.gz` | the server driver's dry run on the toy (both mixes, 18 windows of 10 s at 8 and 4 callers, definitions and saves through the product's write path; 0 call or save errors) | `8be27f64b948e580a05aa00c7819b4744a97b83a322260ab55aaea56f03e8b13` |
+| `run-10.tar.gz` | the gate with the worlds and the definitions caches (165,813 comparisons, 0 differences; 4 release changes), before the first-seek prefetch | `54268f55…` |
+| `run-11.tar.gz`, `counts-warm-run11.json`, `profile-run11.json`, `calibration-run11.json` | warm counts by step and the profile (section 10.1, 10.5) | `54cff7d2…`, `6b6eff89…`, `3a10e6b2…`, `cae08c8d…` |
+| `run-12.tar.gz`, `counts-cold-run12.json`, `profile-cold-run12.json` | cold, 32 MB, parsed-entity cache on (not representative: the toy fits that cache) | `a8e6d5fe…`, `a68b7bf4…`, `db1153fd…` |
+| `run-13.tar.gz`, `counts-cold-nocache-run13.json`, `profile-cold-nocache-run13.json`, `calibration-run13.json` | the cold stand-in: 32 MB and the parsed-entity cache off (section 10.5) | `ced20bf9…`, `c8082007…`, `87931125…`, `77464eb3…` |
+| `run-14.tar.gz`, `gate-run14.json`, `server-dry-run14.jsonl` | the final gate at the final code (165,813 comparisons, 0 differences, 670 saves) and the dry run that found the driver's second release pointer; entity cache size | `17bf6639…`, `58c5f704…`, `bea93f2a…` |
+| `run-15.tar.gz`, `server-dry-run15.jsonl` | the server driver's dry run after the fix (section 10.7) | `98ebb1c4…`, `2eb47d98…` |
+| `floor-f1.5.json` | `floor.py`'s output at f = 1.5 (section 10.6) | `e68f8e1d…` |
 | `run-05-failed.tar.gz` | a counts run stopped by a save conflict in the harness (fixed: conflicting saves retry) | `02ef7d73…` |
 
 Every container ran image `sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be` (each run's

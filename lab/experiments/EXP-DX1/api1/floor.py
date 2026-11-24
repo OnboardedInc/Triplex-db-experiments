@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 # [DX-API1] The floor of reader CPU per API call and the sizing it gives (API-CALL-READS.md section 10).
-#   python3 floor.py WARM_COUNTS COLD_COUNTS WARM_CALIBRATION [COLD_CALIBRATION]
+#   [API1_F=1.5] python3 floor.py WARM_COUNTS COLD_COUNTS WARM_CALIBRATION [COLD_CALIBRATION]
 # Mac CPU per call = the mean of the 16- and 64-caller cells (one-caller cells carry JIT and background threads); the
 # server = Mac x f, f = 1.53 ms / the same run's 16-caller calibration exchange (the 2026-11-23 server figure for the
-# same request). Random subjects on the server: the re-read CPU + storage loads x 0.86 ms (RD5), loads per call =
-# distinct subjects x 2.7 (central; section 5). Cores for a p99 bar with N calls in flight (closed loop): p99 = 1.7 x
+# same request), or API1_F. Random subjects on the server: a range, below; loads per call = distinct subjects x 2.7
+# (central; section 5). Cores for a p99 bar with N calls in flight (closed loop): p99 = 1.7 x
 # N x CPU / (cores x 0.9), so cores = 1.7 x N x CPU / (0.9 x bar), never below what keeps one call's alone time under
 # the bar.
-import json, sys
+import json, os, sys
 
 warm = json.load(open(sys.argv[1])); cold = json.load(open(sys.argv[2]))
 cal = json.load(open(sys.argv[3])) + (json.load(open(sys.argv[4])) if len(sys.argv) > 4 else [])
 ex = [r for r in cal if r["reader"] == "warm" and r["callers"] == 16][0]
-f = 1.53 / ex["cpuMsPerCall"]
+f = float(os.environ["API1_F"]) if os.environ.get("API1_F") else 1.53 / ex["cpuMsPerCall"]  # API1_F: the sizing's f (1.5)
 def cpu(rows, shape, port):
     xs = [r["cpuMsPerCall"] for r in rows if r["shape"] == shape and r["port"] == port and r["callers"] in (16, 64)]
     return sum(xs) / len(xs) if xs else None
@@ -41,16 +41,28 @@ def sizing(cpu_ms, alone_ms):
             res[f"cores{n}@{bar}"] = None if alone_ms * 1.7 > bar else round(max(cores, 1), 1)
     return res
 best = out["shapes"]["subject-page"]
-# The floor arms: the subject page through each step, re-read and random, on the server.
+cold_shapes = {}
+for label, port, shape in (("today", "today", "subject-page"), ("batch1", "batch1", "subject-page"),
+                           ("world", "batch1", "subject-page-world"), ("worldDefs", "batchDefs", "subject-page-world")):
+    cold_shapes[label] = cpu(cold, shape, port)
+# Random subjects on the server, a range: low = the re-read CPU + 2.7 storage loads x 0.86 ms (RD5's server unit) + for
+# the world arms the parse the parsed-entity cache no longer saves (0.67 ms on the Mac: reach-build 0.79 ms without the
+# cache against 0.12 with it, run-13 profile); high = the cold stand-in's CPU x f (it already paid the toy's 0.45 loads
+# per subject, at the Mac's cost) + the 2.25 loads per subject 1 billion adds. Central = the midpoint, used for sizing.
+PARSE_MAC = 0.67
 floors = {}
 for label in ("today", "batch1", "world", "worldDefs"):
     m = best[label]
     s_warm = m * f
     loads = 2.7
-    s_cold = s_warm + loads * 0.86
+    world = label.startswith("world")
+    low = s_warm + loads * 0.86 + (PARSE_MAC * f if world else 0)
+    high = (cold_shapes[label] * f if cold_shapes[label] else low) + (loads - 0.45) * 0.86
+    s_cold = (low + high) / 2
     alone_w = s_warm / 3 + 0.3 if label == "today" else s_warm + 0.3
     alone_c = alone_w + (loads * 1.2 if label == "today" else 2 * 1.2) + (s_cold - s_warm) / (3 if label == "today" else 1)
-    floors[label] = {"macCpuMs": round(m, 2), "serverCpuMsReread": round(s_warm, 2), "serverCpuMsRandom": round(s_cold, 2),
+    floors[label] = {"macCpuMs": round(m, 2), "macCpuMsCold": round(cold_shapes[label] or 0, 2), "serverCpuMsReread": round(s_warm, 2),
+                     "serverCpuMsRandom": round(s_cold, 2), "serverCpuMsRandomRange": [round(low, 1), round(high, 1)],
                      "aloneMsReread": round(alone_w, 1), "aloneMsRandom": round(alone_c, 1),
                      "reread": sizing(s_warm, alone_w), "random": sizing(s_cold, alone_c)}
 out["subjectPageFloor"] = floors

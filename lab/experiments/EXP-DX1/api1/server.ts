@@ -3,7 +3,7 @@
 // working copy (demo/server-up.sh with DEMO_READER=tuned DX_READ_BATCH=1 DX_ID_LISTS=1) and writes to it: one commit of
 // definitions per deep account, then saves of one subject each (17 rows, one commit) beside the reads.
 //   node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/api1/server.ts READY_FILE OUT
-// Settings (environment): API1_WINDOW_SECONDS (60), API1_LIST_CALLERS (8), API1_CALLERS ("64,256"), API1_ARMS ("today,loader,batch1"),
+// Settings (environment): API1_WINDOW_SECONDS (60), API1_LIST_CALLERS (8), API1_CALLERS ("64,256"), API1_ARMS ("today,batch1,floor"),
 // API1_SETS ("reread,random"), API1_SAVES_PER_SECOND (23), API1_ALONE_CALLS (20), API1_REREAD_PER_ACCOUNT (200),
 // API1_CALL_TIMEOUT_MS (30000), API1_DRY (1: one 10 s window per arm at 8 callers, for a check on a toy).
 // Rejected: a mix sampled per window (every window draws from the same seeded sequence), and timing on the driver's
@@ -12,13 +12,13 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { DatomicClient, DefinitionCache } from "../../../../packages/datomic/dist/index.js";
+import { DatomicClient, DefinitionCache, readBatch } from "../../../../packages/datomic/dist/index.js";
 import { deepTasks, taskId, taskSerial, fieldValue } from "../../../bench/lib/deep-world.ts";
 import { ids } from "../../../bench/lib/world.ts";
 import { pathToFileURL } from "node:url";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { makePorts, type Port, type Result } from "./ports.ts";
-import { def, definitionFacts, FORMS, shapes, type Ctx, type Shape, type Step } from "./shapes.ts";
+import { def, definitionFacts, FORMS, RELEASE, shapes, type Ctx, type Shape, type Step } from "./shapes.ts";
 
 const [readyFile, out] = process.argv.slice(2);
 assert(readyFile && out, "usage: server.ts READY_FILE OUT");
@@ -89,8 +89,14 @@ const save = async (_c: DatomicClient, _id: string, change: { e: string; a: stri
 };
 const run = crypto.randomUUID();
 // The definitions in force (absent on the 1 billion database): one transaction per deep account.
+// An account that already has a release pointer (a toy seeded with them) keeps it: a second commit would add a second
+// pointer value, which the definitions cache refuses (it never guesses between two releases).
+const tagged = (x: any) => (x !== null && typeof x === "object" ? x.v : x);
 for (const r of deep) {
   const t0 = performance.now();
+  const present = (await readBatch(reader, db, { basis: { validAt }, reads: [{ op: "rows", entityIds: [def.account(r.namespace)] }] } as any))
+    .answers[0] as any;
+  if ((present?.rows ?? []).some((x: any) => tagged(x.attribute) === RELEASE)) { log("definitions", { account: r.account, present: true }); continue; }
   const position = await save(writer, "", definitionFacts(r.namespace) as any);
   log("definitions", { account: r.account, position, ms: performance.now() - t0 });
 }
@@ -159,7 +165,7 @@ for (const set of sets) for (const shape of [...byName.values()].filter((x) => !
   log("alone", { set, shape: shape.name, port, calls: per.length, p50: pct(wall, 0.5), p99: pct(wall, 0.99), trips: mean((x) => x.trips),
     reads: mean((x) => x.reads), loads: port === "today" || port === "pinned" ? null : mean((x) => x.loads ?? 0), defHits: mean((x) => x.defHits),
     readerCpuMsPerCall: (cpuMicros() - c0) / 1000 / per.length, requestP99: pct(per.flatMap((x) => x.requestMs ?? []), 0.99),
-    missedOwnWrite: per.reduce((n, x) => n + (x.missedOwnWrite ?? 0), 0) });
+    missedOwnWrite: per.reduce((n, x) => n + (x.missedOwnWrite ?? 0), 0), defMisses: mean((x) => x.defMisses) });
 }
 // Windows: the subject-centred mix at 64 and 256 callers, then the list page alone at few callers, beside saves of one
 // subject each.
@@ -182,7 +188,7 @@ for (const { set, callers, port, mix } of windows) {
     }
   })();
   const wall: number[] = [], requests: number[] = [];
-  let calls = 0, reads = 0, trips = 0, timeouts = 0, errors = 0, missed = 0;
+  let calls = 0, reads = 0, trips = 0, timeouts = 0, errors = 0, missed = 0, defHits = 0, defMisses = 0;
   const c0 = cpuMicros(), t0 = performance.now();
   await Promise.all(Array.from({ length: callers }, async (_, seat) => {
     while (performance.now() - t0 < windowSeconds * 1000) {
@@ -190,7 +196,7 @@ for (const { set, callers, port, mix } of windows) {
       const t = performance.now();
       try {
         const x = await call(port, shape, ctxFor(r, i, seat + calls));
-        wall.push(performance.now() - t); calls++; reads += x.reads; trips += x.trips; missed += x.missedOwnWrite ?? 0;
+        wall.push(performance.now() - t); calls++; reads += x.reads; trips += x.trips; missed += x.missedOwnWrite ?? 0; defHits += x.defHits; defMisses += x.defMisses;
         if (x.requestMs) for (const m of x.requestMs) requests.push(m);
       } catch (error: any) { if (/timeout|aborted/i.test(String(error?.message ?? error))) timeouts++; else { errors++; if (errors < 4) log("call-error", { error: String(error) }); } }
     }
@@ -201,6 +207,7 @@ for (const { set, callers, port, mix } of windows) {
     readsPerCall: reads / Math.max(1, calls), callP50: pct(wall, 0.5), callP99: pct(wall, 0.99), requestP99: pct(requests, 0.99),
     under50: wall.filter((m) => m <= 50).length / Math.max(1, wall.length), under200: wall.filter((m) => m <= 200).length / Math.max(1, wall.length),
     readerCores: cpu / seconds, readerCpuMsPerCall: (cpu * 1000) / Math.max(1, calls), timeouts, errors, missedOwnWrite: missed,
+    defHitsPerCall: defHits / Math.max(1, calls), defMissesPerCall: defMisses / Math.max(1, calls),
     saves: saved, savesPerSecond: saved / seconds, commitP50: pct(commits, 0.5), commitP99: pct(commits, 0.99) });
 }
 const stats = await reader.request<any>("GET", "/v2/admin/scan-stats");
