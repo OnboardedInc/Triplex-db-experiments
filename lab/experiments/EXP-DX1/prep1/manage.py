@@ -84,6 +84,13 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     (config / "subject-ordered").write_text(ordered + "\n")
     (config / "subject-serial").write_text(serial + "\n")
     (config / "subject-head").write_text(owner_head + "\n")
+    # [Opus W2] Why: run the recovery gates with wide saves on the per-subject writer (TX2_SUBJECT_WIDE=1).
+    # Rejected: a separate launcher (the gate must stay the one the other options use).
+    wide = os.environ.get("DX_W2_WIDE", "0")
+    if wide not in ("0", "1") or (wide == "1" and (mode, ordered, numeric_owner) != ("rolling-recovery", "1", "1")):
+        raise SystemExit("Wide saves need the ordered rolling-recovery fixture")
+    if wide == "1":
+        (config / "subject-wide").write_text("1\n")
     if combined:
         (config / "subject-retirement").write_text("1\n")
         (config / "chk1-replay").write_text("1\n")
@@ -199,6 +206,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "serialApply": serial == "1",
         "lookupEvery": lookup_every,
         "ownerHead": owner_head == "1",
+        "wideSaves": os.environ.get("DX_W2_WIDE", "0") == "1",
         "freshFirst": fresh_first,
         "tailSql": tail_sql,
         "pgDataCopy": pgdata_copy,

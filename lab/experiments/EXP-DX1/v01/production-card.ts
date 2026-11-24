@@ -113,6 +113,8 @@ export function cardTapeReport(tape: readonly Write[], seconds: number) {
 /** Assertions a commit carries: one per fact, one journal change per fact and per retired value, four journal rows. */
 export const commitAssertions = (facts: number, retired: number) => 2 * facts + retired + 4;
 export const orderedBlockLimit = 256;
+// [DX-S1] A wide block (`wideOrderedSaveIdentity`, `TX2_SUBJECT_WIDE=1`) numbers up to 4,096 assertions.
+export const wideOrderedBlockLimit = 4096;
 
 type Row = Parameters<DatomicClient["transact"]>[1]["rows"][number];
 export type AgedCut = Parameters<typeof agedFieldRow>[0];
