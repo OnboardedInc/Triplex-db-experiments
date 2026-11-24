@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 # [DX-ERA2] The server run, for the day a machine is rented (never on the Mac): removal on request in ONE deep account of
 # the sealed 1 billion database at a realistic and at a heavy rate, beside saves in 200 other accounts and a quiet
-# account, with TX2_REMOVAL_PER_ACCOUNT off (arm 0) and on (arm 1). Each arm runs on its own disposable byte copy of the
+# account, with TX2_REMOVAL_PER_ACCOUNT off (arm 0), on (arm 1), and on with TX2_REMOVAL_SUBJECT_CHECK=1 (arm 2). Each
+# arm runs on its own disposable byte copy of the
 # stopped cluster, which gets a removal policy for a new protected field by ERASE2's trusted staging (the 1 billion
 # database was loaded without one; a populated scope refuses a public declaration). Run as root from a clean clone:
 #   sudo env DEMO_ORIGINAL=<stopped 1B cluster> SCRATCH=<directory with 200 GB free on the NVMe> \
 #     ERA2_SCOPE='<the database scope JSON from the aged-scorecard handoff>' ERA2_DEEP_KEY=<a deep account key, e.g. account-001> \
-#     bash lab/experiments/EXP-DX1/era2/server.sh OUT_DIR [ARMS (default "0 1")] [CELLS (default "0 0.2 10")]
+#     bash lab/experiments/EXP-DX1/era2/server.sh OUT_DIR [ARMS (default "0 1 2")] [CELLS (default "0 0.2 10")]
 # Cells are removal rates per second in the deep account (0 is the control). Predictions: era2/REMOVAL-PER-ACCOUNT.md
 # section 10. Written; not run anywhere (the staging step is ERASE2's, erase1/measure-server.ts lines 186-209).
 set -euo pipefail
-out=${1:?output directory}; arms=(${2:-0 1}); cells=(${3:-0 0.2 10})
+out=${1:?output directory}; arms=(${2:-0 1 2}); cells=(${3:-0 0.2 10})
 : "${DEMO_ORIGINAL:?the stopped 1 billion cluster}" "${SCRATCH:?a scratch directory for the disposable copies}"
 : "${ERA2_SCOPE:?the database scope JSON}" "${ERA2_DEEP_KEY:?the deep account that removes values}"
 [[ ${DX_BARE_METAL:-1} == 1 && $(uname -s) == Linux ]] || { echo "server.sh runs on the rented server only" >&2; exit 2; }
@@ -42,19 +43,23 @@ for arm in "${arms[@]}"; do
   field=":era2/protected-$(od -An -N4 -tx1 /dev/urandom | tr -d ' \n')"
   token=$(openssl rand -hex 24)
   t0=$SECONDS
-  env "${envs[@]}" "${gateway[@]}" DX_REMOVAL_PER_ACCOUNT="$arm" DX_ERASE2_SCOPE="$ERA2_SCOPE" DX_ERASE2_FIELD="$field" \
+  per=$([[ $arm == 0 ]] && echo 0 || echo 1); subject=$([[ $arm == 2 ]] && echo 1 || echo 0)
+  env "${envs[@]}" "${gateway[@]}" DX_REMOVAL_PER_ACCOUNT="$per" DX_REMOVAL_SUBJECT_CHECK="$subject" DX_REMOVAL_TRIES_LOG=1 \
+    DX_ERASE2_SCOPE="$ERA2_SCOPE" DX_ERASE2_FIELD="$field" \
     DX_ERASE_TOKEN="$token" TRIPLEX_ERASURE_WRAPPING_KEY="$(openssl rand -base64 32)" DX_STACK_EVIDENCE="$a/stack" \
     DX_STACK_WAIT_FOR_TRANSACTOR=1 DX_QUIET_LOGS=1 TRIPLEX_TRACE_LEVEL=off \
     bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --pg-data "$copy" --port-write 18951 --port-read 18955 "${args[@]}" \
     > "$a/up.log" 2>&1
   echo "up_s=$((SECONDS - t0))" >> "$a/timings"
+  # Every container must run the image this stack pinned by ID (shared tags can move under a running stack).
+  for role in tx gw-w gw-r pg; do echo "$prefix-$role $(docker inspect --format '{{.Image}}' "$prefix-$role")"; done > "$a/images-ran"
   head=$(curl -fsS "http://127.0.0.1:18951/v1/db/$db/basis" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).position.v))')
   curl -fsS -X POST "http://127.0.0.1:18951/erase1/server-protection" -H "x-erase1-token: $token" \
     -H 'content-type: application/json' --data "$(node -e 'console.log(JSON.stringify({scope: process.argv[1], position: Number(process.argv[2])}))' "$ERA2_SCOPE" "$head")" \
     > "$a/protection.json"
   status=0
   for cell in "${cells[@]}"; do
-    env ERA2_DB="$db" ERA2_SSN="$field" ERA2_REMOVAL_KEYS="$ERA2_DEEP_KEY" ERA2_PER_ACCOUNT="$arm" ERA2_LABEL="arm$arm-r$cell" \
+    env ERA2_DB="$db" ERA2_SSN="$field" ERA2_REMOVAL_KEYS="$ERA2_DEEP_KEY" ERA2_PER_ACCOUNT="$per" ERA2_LABEL="arm$arm-r$cell" \
       ERA2_ACCOUNTS=202 ERA2_SUBJECTS=5 ERA2_REMOVAL_RATE="$cell" ERA2_SECONDS=600 ERA2_SAVE_RATE=200 ERA2_SAME_RATE=8 \
       ERA2_QUIET_RATE=3.5 ERA2_CONTEST_RATE=2 ERA2_READERS=32 ERA2_INFLIGHT=48 ERA2_FRAME_RATE=10 ERA2_BACKOFF_MS=10 \
       node --no-warnings --experimental-transform-types --max-old-space-size=8192 lab/experiments/EXP-DX1/era2/fault.ts "$a" \

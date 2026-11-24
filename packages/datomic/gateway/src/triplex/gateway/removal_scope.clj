@@ -60,7 +60,8 @@
   "The entities whose removal sequence a removal moves: every entity that lost a value, and every entity a selector
   names by entity ID even when it has no row yet, so a save or import frame of that entity prepared before the removal
   is refused at the serial point instead of creating it after the removal (DX-IMP2's case)."
-  ;; No function literal is added here: generated names in installed function texts stay as they are.
+  ;; No function literal and no macro that generates names (and, or, when-let, for...): the generated names in the
+  ;; installed function texts loaded after this file stay as they are.
   [entry]
   (-> (into (sorted-set) (map #(get % "entity")) (get entry "identities"))
       (into (remove nil? (map get (get entry "selectors") (repeat "entityId"))))))

@@ -230,7 +230,8 @@
 (def ^:private subject-check (= "1" (System/getenv "TX2_REMOVAL_SUBJECT_CHECK")))
 
 (defn erase! [name conn input]
-  (if (and subject-check (removal-scope/per-account? (d/db conn)))
+  ;; Nested if, not `and`: `and` generates a name, which would renumber the installed functions loaded after this file.
+  (if (if subject-check (removal-scope/per-account? (d/db conn)) false)
     ((requiring-resolve 'triplex.gateway.removal-commit/erase!) name conn input)
   (let [selectors (selectors! input)
         started (System/nanoTime)
