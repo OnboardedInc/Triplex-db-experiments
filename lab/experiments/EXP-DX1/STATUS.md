@@ -5841,3 +5841,20 @@ Source: per-account removal builder, branch `exp/DX-ERA2-removal-per-account` `2
 - **Open problem:** with other saves no longer pausing, the removal's own check ("the head has not moved since I selected", still database-wide) fails more often: tries per removal mean 1.7 to 5.2, p99 6 to 63, max 63 (15 s); the retry loop has no upper limit. Builder resumed on exactly this (a per-entity selection check, a hard bound, a guard that blocks at most that subject or account).
 - Publish and settlement tickets do not yet name the account, so those writes stay database-wide; five places listed for the Publish-beside-saves builder, who was told.
 - Server run written: 80 to 120 minutes.
+
+## 2026-11-24 15:46 EST: research on how the product's real saves are shaped (private report; rounded shares only here)
+
+Source: a read-only research agent using aggregate queries only (no individuals, no free text, accounts by rank only); the report is private and stays outside this repository. Two lines of work stopped on permission errors (exact status changes; policies in force per release).
+
+What it means for the store, in shares:
+
+1. **The save tapes do not represent the real load.** Form page saves, which tapes R and S model and the per-subject writer serves, are under 10% of real saves. Over half are a new enrolment of a subject that already exists; about a fifth are a new subject with its profile values; the rest are mostly attribute writes made within seconds of creating their entity and new owed forms. The busiest creation hour ran at about the card's 394 step for an hour. So "7 of 11 save shapes on the per-subject writer" covers under 10% of real saves, and creations (the general writer and import) carry the load.
+2. **Several owners per save:** about 7% of form saves write the task and the subject's profile; three owners almost never; four never. A two-owner bound is enough. This is under 1% of all saves.
+3. **Facts per form save:** median 2, p99 about 40, none over 200; over a third exceed 3, so the narrow writer's bound of 3 is tight and the wide writer's 128 is ample. A page save also creates page-submission records (most hold no value); if those were written as facts of the save, a share of saves would exceed 128.
+4. **Two saves of one subject close together:** under 1% within 100 ms, about 7% within 1 s (mostly prefill bursts and webhooks). The conflict-and-replay behaviour is rarely exercised.
+5. **Release size:** the full-document limit (about 0.5 MiB) is too small: the median account's forms in force are about 0.7 times the limit and the largest about 1.7 times (a lower bound). The 8,192-form cap and the assumed Publishes per hour are generous. A typical release changes one form. Definitions by reference should become the default.
+6. **Owed forms per subject:** the ledger cap holds for forms; it is tight if notices are counted per enrolment for the few subjects with very many enrolments.
+7. **Accounts:** most accounts are empty or small; a few very large accounts hold nearly all subjects, and the largest exceeds the deep-account size the scale target uses.
+8. **Removals:** rare (well under 0.1% of saves) and concentrated in a few accounts. The product marks records deleted today; it does not erase values.
+
+**Started** in the freed slot: a tape with the real mix through the product path, each kind of save mapped to its writer and counted work, and creation saves on the fast writer where exact (task file `OPUS-S4-real-mix-creation-saves.md`).
