@@ -179,3 +179,83 @@ ends the Publish as before (the client publishes again).
 **Unchanged with the options off:** the marker, event, retry count and every check of a whole-head Publish; the
 deadline path, `schedule`, saves through `JoinedAccount` and non-held Publishes keep the head rule even with the option
 on.
+
+<!-- RESULTS -->
+
+## 11. The server run (for the day a machine is rented; nothing here has run)
+
+Two parts. Both from a clean clone at `$COMMIT` (the head of `exp/DX-ACT8-publish-beside-saves` carrying this page),
+built as for `PART9.md`. Predictions written before any run; every Mac time in this page is diagnostic and none is
+used below as a server figure.
+
+### 11.1 The Publish windows at 100,000 subjects, everyone saving, no pause
+
+The held runner on the fresh SCALE1 template (as `LARGE-RELEASE.md` section 7; each arm its own fresh prepared copy,
+about 4.4 minutes). The windows are the existing twelve (barrier 6 and rolling 6; 3.5, 23.5 and 39.4 saves per second
+in the publishing account with the nine others at their usual load in the 23.5 and 39.4 windows; 20 Publishes per
+Publish window, one every 5 s); `DX_ACT8_UNPAUSED=1` removes the pause and drain around each Publish.
+
+```sh
+common=("PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" "DX_ACT3_SETTLE=0" "DX_ACT8_UNPAUSED=1")
+args=("$COMMIT" "$SCALE1_IMAGE" "$SCALE1_IMAGE_SHA256" "$SCALE1_TRANSFER_SHA256" "$SCALE1_PGDATA" "$PREPARED_PGDATA" "$PREPARED_WAL")
+# Arm A: the account guard, small release, all twelve windows (about 30 min)
+sudo env "${common[@]}" TX2_PUBLISH_BESIDE=1 bash lab/experiments/EXP-DX1/actv-lazy/join/held-server.sh "${args[@]}" "$OUT/A"
+# Arm B: the whole-head rule, no pause, the three rolling Publish windows only (about 13 min)
+sudo env "${common[@]}" "DX_HELD_WINDOWS=rolling6/3.5/1,rolling6/23.5/1,rolling6/39.4/1" \
+  bash lab/experiments/EXP-DX1/actv-lazy/join/held-server.sh "${args[@]}" "$OUT/B"
+# Arm C: the account guard, the large release (20 forms, 20 policies), all twelve windows (about 32 min)
+sudo env "${common[@]}" TX2_PUBLISH_BESIDE=1 "DX_ACT3_RELEASE=forms=20,policies=20,permille=1000" \
+  bash lab/experiments/EXP-DX1/actv-lazy/join/held-server.sh "${args[@]}" "$OUT/C"
+```
+
+PREDICTIONS_11_1
+
+### 11.2 The many-accounts rungs: 200 and 500 accounts publishing at once beside saves
+
+`scale2/server.sh` (SCALE2 section 8) on the sealed 1 billion cluster, with the two new rungs: every publishing account
+publishes its large release during the window, all at once, under the account guard; 10 more accounts enrol during
+the window (`TX2_ENROL_BESIDE_SAVES=1`, already on in that script).
+
+```sh
+sudo env DEMO_ORIGINAL="$SEALED_CLUSTER" DEMO_HANDOFF="$AGE_HANDOFF_JSON" \
+  bash lab/experiments/EXP-DX1/scale2/server.sh /var/tmp/act8-many 1k-live 10k-live
+```
+
+PREDICTIONS_11_2
+
+### 11.3 Durations and cost (USD 1.09 per machine hour)
+
+COST_11_3
+
+## 12. What the earlier Publish results (made with the pause) still support
+
+Every Publish number before this page (bench 4, run 1 and 2 of `LARGE-RELEASE.md`, "100 of 100" and "120 of 120
+inside one second at 100,000 subjects", the release-limits and settlement-live toy runs) was measured with the save
+sender paused and drained around each Publish, under the whole-head rule.
+
+**Still supported:**
+
+1. **Exactness of the record and of every read and settled value.** The record is the same four changes (one field
+   and one flag differ, section 4), reads work the answer out the same way, settlement writes the same values (at the
+   effective cut, which under the whole-head rule was the same position).
+2. **The record's size and its writer cost** (5 KB small, 17 KB large, 3.5 KB by reference; the toy cost table in
+   section 10 shows the same bytes under both rules).
+3. **The read path before settlement and its cost**, and the settlement frames' cost and bounds: neither depends on
+   which rule committed the record.
+4. **First-correct times at 3.5 saves per second in the publishing account** as an estimate: the pause there drained
+   at most a few in-flight saves, so the writer was nearly as idle as it is now.
+
+**Not supported:**
+
+1. **That a Publish lands at all while saves run.** Under the whole-head rule it does not (SCALE2 F0: 3 of 3 refused;
+   here, every unpaused Publish under the old rule refused at 23.5 saves per second). Every earlier "N of N inside one
+   second" was a Publish into a stopped database.
+2. **First-correct and acknowledgement times at 23.5 and 39.4 saves per second as product numbers.** They included the
+   drain (the wait for in-flight saves) and then a writer with nothing else to do. Without the pause there is no drain,
+   but the Publish's commit queues in the one writer behind the saves sent before it. Neither is an upper or lower
+   bound on the other; arm A of section 11.1 measures it.
+3. **Neighbours' save p99 in Publish windows.** The pause held every account's saves for the length of each Publish
+   (the "gate hold", tens of milliseconds per Publish), so the earlier windows' save p99 against control charges the
+   Publish with a stop the product never has. Without the pause a Publish costs the writer one record (section 10).
+4. **"10,000 Publishes an hour" as minutes of stopped saves.** SCALE2 estimated 5 to 10 minutes of whole-database
+   pause per hour from the pause; without it there is no pause; what remains is the records' writer time.

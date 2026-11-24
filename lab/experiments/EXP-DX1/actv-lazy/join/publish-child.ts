@@ -13,7 +13,6 @@ assert(["read", "inside", "ack", "random"].includes(input.step) && process.env.T
 const kill = () => {
   process.kill(process.pid, "SIGKILL");
 };
-if (typeof input.killAfterMs === "number") setTimeout(kill, input.killAfterMs);
 const store = await openStore(input.scope, "act2-deep", "write", {
   ...input.held,
   // The runner's ledger adopts this process's record by its command ID; nothing is checked here.
@@ -28,6 +27,8 @@ const options: PublishOptions =
       : input.step === "ack"
         ? { onAck: () => kill() }
         : {};
+// The random kill's clock starts once the store is open, so it falls inside the Publish (or just after it).
+if (typeof input.killAfterMs === "number") setTimeout(kill, input.killAfterMs);
 await new JoinedAccount(store).publish(input.id, input.doc, input.validTime, "owed", undefined, options);
 await store.close();
 process.exit(0);

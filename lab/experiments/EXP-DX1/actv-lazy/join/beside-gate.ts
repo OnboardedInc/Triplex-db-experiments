@@ -548,9 +548,15 @@ async function adversaryWrite(g: Gate, kind: Kind, i: number, tag: string) {
   const prefix = c.descriptor.prefix;
   for (let attempt = 0; ; attempt++) {
     const head = await c.s.head();
-    const rows = await c.s.rows([prefix + ids.placement(i)], head, validTime);
-    const target = rows.filter((r) => kind.pick(r, i, prefix)).sort((a, b) => a.entityId.localeCompare(b.entityId))[0];
-    assert(target, "subject " + i + " has no " + kind.name + " fact");
+    // The first subject from `i` on that has this kind of fact (not every subject has a document).
+    let target: Awaited<ReturnType<Store["rows"]>>[number] | undefined;
+    for (let k = 0; k < c.people && !target; k++) {
+      const j = (i + k) % c.people;
+      const rows = await c.s.rows([prefix + ids.placement(j)], head, validTime);
+      target = rows.filter((r) => kind.pick(r, j, prefix)).sort((a, b) => a.entityId.localeCompare(b.entityId))[0];
+      if (target) i = j;
+    }
+    assert(target, "no subject has a " + kind.name + " fact");
     const v = { ...target.value, value: kind.change(target.value) };
     const marker = "act8/adversary/" + sha256(c.attempt + tag).slice(0, 16);
     const ops = [
@@ -564,7 +570,7 @@ async function adversaryWrite(g: Gate, kind: Kind, i: number, tag: string) {
         { kind: kind.name }, undefined, undefined, [{ entityId: marker, tripleIds: [] }]);
       insertEdit(c.history, i, { position: r.position, version: "act8", width: 0,
         facts: [{ e: target.entityId.slice(prefix.length), a: target.attribute, v }] } as Edit);
-      return { position: r.position, entity: target.entityId.slice(prefix.length), attribute: target.attribute };
+      return { position: r.position, subject: i, entity: target.entityId.slice(prefix.length), attribute: target.attribute };
     } catch (e) {
       if (attempt >= 4) throw e;
     }
@@ -598,10 +604,10 @@ async function adversarialPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) 
         assert(r.read! < landed.position && landed.position < r.position,
           "the write of " + kind.name + " did not land between the Publish's read and its record");
         // Would the wrong rule (settlement at the read position) differ for this subject? The oracle answers.
-        const atRead = await g.oracleChanges(r.doc, g.oldOf.get(r.seq)!, r.read!, [i]);
-        const atRecord = await g.oracleChanges(r.doc, g.oldOf.get(r.seq)!, r.position, [i]);
+        const atRead = await g.oracleChanges(r.doc, g.oldOf.get(r.seq)!, r.read!, [landed.subject]);
+        const atRecord = await g.oracleChanges(r.doc, g.oldOf.get(r.seq)!, r.position, [landed.subject]);
         await g.checkBetween(r);
-        out.push({ kind: kind.name, where, subject: i, write: landed, ...res.record,
+        out.push({ kind: kind.name, where, subject: landed.subject, write: landed, ...res.record,
           wrongRuleWouldDiffer: canonical(atRead) !== canonical(atRecord) });
       }
     // A second Publish of the same account inside the window: the first is refused once and lands after it.
