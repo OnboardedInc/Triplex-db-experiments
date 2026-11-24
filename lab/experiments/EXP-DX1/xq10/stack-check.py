@@ -9,7 +9,8 @@ ev, prefix, gw = pathlib.Path(sys.argv[1]), sys.argv[2], pathlib.Path(sys.argv[3
 stack = sorted(ev.rglob("stack.json"))[-1]
 s = json.loads(stack.read_text())
 attempt = stack.parent
-pinned = (attempt / "config" / "java-image.txt").read_text().split()[0] if (attempt / "config" / "java-image.txt").exists() else None
+# java-image.txt is "<image ID>|<java major>|<base image>": the ID is the first field
+pinned = (attempt / "config" / "java-image.txt").read_text().split()[0].split("|")[0] if (attempt / "config" / "java-image.txt").exists() else None
 bad = 0
 for c in s["containers"]:
     # a stack already removed (the gate scripts remove theirs on exit) is judged by what the launcher recorded
@@ -18,10 +19,17 @@ for c in s["containers"]:
     ok = now == c["imageId"] and (not datomic or pinned is None or pinned in (c["imageId"], c["imageId"].split(":")[-1]))
     bad += not ok
     print(f"{'ok' if ok else 'DIFFERENT'} {c['name']} image {now}" + (f" (pinned {pinned})" if datomic else ""))
+# The gates stage a copy of the gateway with the SDK's codec spec beside it (the tracked tree has none there): compare
+# the launcher's own file list (gateway-files.json, whose hash is the one the gateways answered) file by file with this
+# tree, the codec spec with the SDK's.
+listed = json.loads((attempt / "gateway-files.json").read_bytes())
+ok = hashlib.sha256(json.dumps(listed, sort_keys=True, separators=(",", ":")).encode()).hexdigest() == s["gatewaySourceSha256"]
 files = {str(p.relative_to(gw)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(gw.rglob("*")) if p.is_file()}
-mine = hashlib.sha256(json.dumps(files, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-ok = mine == s["gatewaySourceSha256"]; bad += not ok
-print(f"{'ok' if ok else 'DIFFERENT'} gateway source {s['gatewaySourceSha256']} (recomputed {mine})")
+spec = gw.parent / "src" / "codec-spec.json"
+if "codec-spec.json" not in files and spec.exists(): files["codec-spec.json"] = hashlib.sha256(spec.read_bytes()).hexdigest()
+differ = sorted(k for k in set(listed) | set(files) if listed.get(k) != files.get(k) and not k.startswith("@"))
+ok = ok and not differ; bad += not ok
+print(f"{'ok' if ok else 'DIFFERENT'} gateway source {s['gatewaySourceSha256']} ({len(listed)} files listed; differ from this tree: {differ[:5]})")
 if s.get("questionReaderUrl"):
     try:
         h = json.loads(urllib.request.urlopen(s["questionReaderUrl"] + "/health", timeout=10).read())
