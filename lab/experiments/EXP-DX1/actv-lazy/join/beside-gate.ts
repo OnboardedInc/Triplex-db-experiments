@@ -6,7 +6,7 @@ import { DatomicClient as Client, type DatomicClient } from "../../../../../pack
 import { frameEstimate } from "./frames.ts";
 import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
 import { ids } from "../../../../bench/lib/world.ts";
-import { unpack } from "../../notify1/store.ts";
+import { readLedgers } from "./ledger-parts.ts";
 import { now } from "../../scale1/decision/observer.ts";
 import { play, type PublishInterleave, type Save } from "../../scale1/decision/writes.ts";
 import { keyFor } from "../../scale1/decision/plan.ts";
@@ -432,12 +432,11 @@ export async function besideGate(c: GateContext) {
       await w.settle(g.current.seq);
       const all = (await w.recorder.packets(await w.recorder.archive.store.head())).flatMap((x) => x.deliveries.map(toWire));
       assert.deepEqual(all, g.ref.owed, "notices differ from the oracle");
-      const ldb = w.recorder.archive.db, lat = await ldb.head();
-      const lrows = await ldb.rows<string>(g.roster.map((s) => "recorded-ledger:" + s), lat);
-      for (const s of g.roster) {
-        const v = lrows.get("recorded-ledger:" + s);
-        assert.deepEqual(v ? unpack<any[]>(v.value).map(toWire) : [], g.ref.items.get(s) ?? [], "ledger of " + s);
-      }
+      // Whole ledgers and ledgers in parts (TX2_NOTICE_LEDGER=parts) alike, through the recorder's own reader.
+      const ldb = w.recorder.archive.db;
+      const ledgers = await readLedgers(ldb, g.roster, await ldb.head());
+      for (const s of g.roster)
+        assert.deepEqual(ledgers.get(s)!.items.map(toWire), g.ref.items.get(s) ?? [], "ledger of " + s);
       evidence.noticesInOrder = all.length;
       evidence.ledgers = g.roster.length;
     } finally {
