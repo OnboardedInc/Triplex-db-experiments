@@ -110,7 +110,30 @@ In every options run all three cold copies (both set-up copies and the replaceme
 
 **Unit tests:** [recovery-options.test.ts](recovery-options.test.ts) (6: default script pinned byte for byte, options off when unset, parsing and refusals, the pipelined script keeps every check, both phase reports parse), `sunday.test.ts`, `catch-up.test.ts` (vitest, 13 in all), and `supervisor.test.ts` (node:test, 7), all passing. The changed files typecheck with no errors.
 
-SECOND_FAILURE_RESULTS
+## Second failure: repaired, and run at toy size under both policies
+
+**What was broken.** On November 23, `a-235` opened A's fenced old disk in recovery and pointed a Datomic peer at it. A peer finds its transactor through storage, and that disk still named A's transactor, which the first fault had killed: `Error communicating with HOST …-active … on PORT 4334`. **The repair** (`SyncPair.inspectFirstDisk`) opens the old disk the way an operator would recover from it after losing both machines. PostgreSQL finishes crash recovery and opens it on its own timeline, with synchronous replication off because its standby is gone. A fresh transactor serves it under the standby role on A, which has no startup latch. The peer reads through that transactor. No route sends saves to it, and the case ends after the read. The rejected alternative was reading Datomic's segments from PostgreSQL directly, which would mean decoding Datomic's storage format.
+
+**The drill** ([second-failure.ts](second-failure.ts), mode `hasync-second`) runs two small stacks in the lab VM standing for the two machines, with full Datomic and the shipped client:
+
+1. 24 saves are acknowledged under synchronous commit.
+2. A's PostgreSQL and transactor are killed, and the supervisor fences and promotes B.
+3. Under A, 12 saves are acknowledged on one copy, the ingress is sealed, and B is killed.
+4. Under B, during the hold (before the replacement's copy starts, so the copy never completes), one save is offered and then B is killed.
+5. A's old disk is read through the repaired path.
+
+| Policy (evidence `evidence/DX-HA2/`) | Acknowledged before the first loss: on the survivor / on A's disk | Acknowledged after the first loss | Absent from A's disk after the second loss | Offered during the hold | Old disk read (diagnostic) |
+| --- | --- | --- | --- | --- | --- |
+| A (`hasync-second-2abd69b5…`) | 24 / 24 | 12, on one copy | **all 12 one-copy saves**; 0 earlier | n/a | 24 s from the second kill to the end of the read |
+| B (`hasync-second-3ec3dae6…`) | 24 / 24 | **0** (the hold) | **0** | 1, refused (`SyncTimeout` at the sealed route), absent from A's disk | 22 s |
+
+In both runs the old disk reopened on timeline 1. Its transactor waited out two missed 5 s heartbeats, about 10 s, before serving. Every container, network and volume was removed afterwards.
+
+**What this means:**
+
+- **Policy A.** A second failure before the replacement is synchronous loses every save acknowledged on one copy since the first loss, and nothing from before it. At 235 saves/s that is about 235 saves per second of the window. The window is about 600 s today (up to about 140,000 saves) and about 60 to 150 s with the two options above.
+- **Policy B.** A second failure before the copy is complete loses no acknowledged save, because none was taken after the first loss. Whether the earlier saves are reachable depends on the first machine's disk. When it survives, as when processes die, the kernel panics or the network splits, they are all there and the database reopens from it in about 20 s at toy size (longer at full size, which adds crash recovery). When the first machine's disk was destroyed too, both copies are gone and only a backup restores the data. Two machines cannot avoid that; a third copy can.
+
 
 ## What the 60 s bar asks of policy B
 
