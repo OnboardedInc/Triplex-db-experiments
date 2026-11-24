@@ -1004,3 +1004,11 @@ Verbatim, first: "Computer crash. Continue." Then, while the orchestrator was ch
 Verbatim: "Can you give me a full readout on where we're at overall with our scaling, and what's slow, what's fast, etc., etc.? Using tables and things, then give me your recommended next steps, what the biggest gaps are, etc."
 
 - **Action (orchestrator):** readout given in the session from the readiness page (`origin/exp/DX-INT1` `9e02cf1d2`, `v01/READINESS.md`) and the STATUS entries of 2026-11-23. No decision of Sam's in this message.
+
+### 2026-11-24 09:05 local: Sam sends again his question of 2026-11-23 about commit shape and large releases (with an image)
+
+Verbatim: "What is one-commit-per-subject save versus the other option and how does it interact with widening the fast writer?
+
+I guess my question is, going back to how this is going to be used: if you think way, way back, some of the saves are going to be really big, right? Because we might ship a bunch of policy changes all at once. Maybe we add 20 forms and add 20 policies all in one save. How would that look, I guess, given what we know about this so far?"
+
+- **Action (orchestrator):** answered again in the session, this time with the measurements made since he first asked (production-shaped tape at 1 billion in both commit shapes; Publish at 100,000 subjects with a release of 20 forms and 20 policies; settlement frames sized by bytes built on 2026-11-24). No decision of Sam's in this message; the commit-shape decision stays open with the orchestrator's recommendation (one commit per subject's save).
