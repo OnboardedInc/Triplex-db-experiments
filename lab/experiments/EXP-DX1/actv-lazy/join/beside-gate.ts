@@ -945,8 +945,11 @@ async function removalPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
   const c = g.c;
   set("TX2_PUBLISH_BESIDE", "1");
   const attribute = ":worker/address";
-  await c.writer.declareProtection(c.db, [attribute], false);
-  const out: Record<string, unknown> = { attribute };
+  // The database was declared protected for this attribute before its first save (DX_ACT8_PROTECT, scale1-fixture.mjs).
+  assert.equal(process.env.DX_ACT8_PROTECT, attribute, "the removal part needs DX_ACT8_PROTECT=" + attribute);
+  const before = await c.writer.erasureFrontier(c.db);
+  assert(before.protected, "the held toy's database is not protected");
+  const out: Record<string, unknown> = { attribute, seqBefore: before.seq };
   const rows = await g.window("removal", 0, true, 10, async () => {
     await sleep(500);
     const i = 2 % c.people;
@@ -971,6 +974,7 @@ async function removalPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
     await g.checkBetween(r);
     out.first = first;
     out.erased = erased;
+    out.seqAfter = (await c.writer.erasureFrontier(c.db)).seq;
     out.second = { position: r.position, read: r.read, tries: r.tries, settled };
   });
   out.saves = saveSide(rows, []);
