@@ -107,7 +107,10 @@ for (const acct of [A, B])
 const P2 = await transact([...retract(sid(A, 4), ":person/score"), as(sid(A, 4), "Subject", ":person/score", I(4), 0, T0 - 10 * DAY),
   as(sid(A, 4), "Subject", ":person/score", I(44), T0 - 10 * DAY), ...retract(tid(A, 5), ":task/status")]);
 const P3 = await transact([as(sid(A, N), "Subject", ":person/status", S("pending")), as(sid(A, N), "Subject", ":person/score", I(1))]);
-for (const c of [main, question]) await c.basis(db, { position: P3, waitMs: 5000 });
+// at-least waits are 1..2000 ms per request: wait up to 10 s in steps
+for (const c of [main, question]) for (let n = 0; ; n++) {
+  try { await c.basis(db, { position: P3, waitMs: 2000 }); break; } catch (e) { if (n >= 4) throw e; }
+}
 const positions = [P1, P2, P3];
 const validTimes = [T0 - 20 * DAY, T0 + 3_600_000, T0 + 30 * DAY];
 log("workload", { P0, P1, P2, P3 });
