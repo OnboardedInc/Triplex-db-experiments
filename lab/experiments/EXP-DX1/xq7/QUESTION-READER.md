@@ -126,7 +126,7 @@ about 280,000 `pl:` IDs each.
 
 | Work | CPU | Storage gets | What the cache must hold | Allocation |
 | --- | --- | --- | --- | --- |
-| **ID list page** (1,000 subjects, about 2,800 entries) | 1 to 5 ms warm; cold adds 1 to 2 gets (3 for a first page at the head, 6 to 8 at an old pin) | 0 warm, 1 to 8 cold | The account's ID segments: about 45 per kind of 280,000 IDs (25 to 45 MB at 0.5 to 1 MB each); every kind of the 10 deep accounts: 1,600 to 7,800 segments if all are listed (0.8 to 7.8 GB): the cache keeps the kinds people page through | small |
+| **ID list page** (1,000 subjects, about 2,800 entries) | 1 to 5 ms warm; cold adds 1 to 2 gets (3 for a first page at the head, 6 to 8 at an old pin) | 0 warm, 1 to 8 cold | The account's ID segments: about 45 per kind of 280,000 IDs (25 to 45 MB at 0.5 to 1 MB each); every kind of the 10 deep accounts: 1,600 to 7,800 segments if all are listed (0.8 to 7.8 GB): the cache keeps the kinds users page through | small |
 | **Count of one kind** (280,000 entries) | 0.1 to 0.35 s warm, 0.3 to 1 s cold | about 45 | as above | small |
 | **One sweep of 100,000 subjects** | 180 to 210 core-seconds (1.8 to 2.1 ms per subject) | 176,000 (150,000 to 200,000) | Only what a sweep reuses: the EAVT directory segments and the ID segments it lists (about 45). The subjects' 166,000 leaves are read once each (subjects are not neighbours at 1 billion) and are never reused within the sweep | 194 GB, about 0.8 to 1.0 GB/s per busy permit |
 | **One sweep, wall time** | one permit: 120 to 210 s (XQ6's forecast); my own from the units: 200 to 240 s (2.0 to 2.4 ms per subject: 1.1 to 1.45 ms on the request thread plus 0.9 ms of serial SQL waits) | | | |
