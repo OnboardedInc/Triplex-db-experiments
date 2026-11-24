@@ -160,8 +160,10 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // [DX-ACT4] Why: the settlement-frames builder runs its toy gate (and the held Publish campaign) on the same stack.
   const settleFrames = holder === "DX-ACT4" && diagnostic && mode === "load-fair" && combined === undefined &&
     (process.env.DX_ACT4_GATE === "1" || process.env.DX_ACT3_HELD === "1");
+  // [DX-HA2] Why: the recovery-time builder runs its second-failure drill in its own diagnostic slot.
+  const secondFailure = holder === "DX-HA2" && diagnostic && mode === "hasync-second" && combined === undefined;
   assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours ||
-    heldPublish || settleFrames);
+    heldPublish || settleFrames || secondFailure);
   assert(combined === undefined || ownedCombination);
   if (mode === "load-fair") {
     const { cleanSource } = await import("../v01/source.ts");

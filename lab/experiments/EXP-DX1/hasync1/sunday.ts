@@ -318,7 +318,18 @@ async function serverB(proof: Ready) {
     } finally {
       await loopback();
     }
+    // [DX-HA2] Why: a short server run can measure one case under the recovery options (for example only b-235) without
+    // paying for the others. Unset, every case runs as before. Rejected: editing the case list per run.
+    const selected = process.env["TX2_HA2_CASES"]?.split(",").filter(Boolean);
+    if (selected) {
+      assert(selected.length && selected.every((n) => sundayCases.some((x) => x.name === n)), "TX2_HA2_CASES names unknown cases");
+      console.log("Cases selected by TX2_HA2_CASES: " + selected.join(", ") + ".");
+    }
     for (const cell of sundayCases) {
+      if (selected && !selected.includes(cell.name)) {
+        report.push({ cell: cell.name, skipped: "not selected by TX2_HA2_CASES" });
+        continue;
+      }
       if (performance.now() + cell.budget * minute > stopAt) {
         report.push({ cell: cell.name, skipped: "remaining budget" });
         if (!cell.optional) failures++;
