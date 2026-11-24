@@ -6,7 +6,7 @@ import { defaultCreditMode } from "../jvm1/launch.mjs";
 import { parseCredits } from "./server-workload.ts";
 import { barrierRoot, isWriter } from "./profile.ts";
 import { cleanSource, packageBytes } from "./source.ts";
-import { parseCardTape } from "./production-card.ts";
+import { newRunTape, parseCardTape } from "./production-card.ts";
 
 const [action, commit, argument, writerArg, creditArg, ageArg] = process.argv.slice(2);
 assert(process.platform === "darwin" && commit && argument && path.isAbsolute(argument));
@@ -47,7 +47,9 @@ const env = {
   DX_INT1_GATEWAYS: "demand",
   DX_TOUCHED_READ_MODE: "following",
   // [DX-INT1] The card's save tape (v01/production-card.ts), passed to the toy stack.
-  ...(process.env.DX_V01_TAPE ? { DX_V01_TAPE: process.env.DX_V01_TAPE } : {}),
+  // [DX-S1] The toy card takes the new-run default (shape S) as run.ts does; the other fixtures only pass a named tape.
+  ...(process.env.DX_V01_TAPE || action === "--fixture"
+    ? { DX_V01_TAPE: action === "--fixture" ? newRunTape(process.env.DX_V01_TAPE, age) : process.env.DX_V01_TAPE! } : {}),
 };
 const command = (bin: string, args: string[]) => execFileSync(bin, args, { env, stdio: "inherit" });
 if (action === "--packages") {
@@ -103,7 +105,7 @@ if (action === "--packages") {
     }
     if (action === "--fixture") {
       const { writeAdoptedCard } = await import("./adopted-card.ts");
-      writeAdoptedCard({ source: commit, age, writer, creditMode, toy: true, campaign, tape: parseCardTape(process.env.DX_V01_TAPE),
+      writeAdoptedCard({ source: commit, age, writer, creditMode, toy: true, campaign, tape: parseCardTape(env.DX_V01_TAPE),
         out: fixture, forecast: "Mac diagnostics from the SCALE1 loader fixture." });
     }
   }

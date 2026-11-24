@@ -10,7 +10,7 @@ import { cleanSource, verifyBuild } from "./source.ts";
 import { pgdataArgs } from "./pgdata.ts";
 import { parseCredits, parseWindow, serverRates, writerAdmission } from "./server-workload.ts";
 import { assembleSequential, completeSequentialArm, existingSequence, sequenceProgress } from "./sequential.ts";
-import { parseCardTape, tapeTitle } from "./production-card.ts";
+import { newRunTape, tapeTitle } from "./production-card.ts";
 import { rendererDiff } from "./renderer.ts";
 
 const { values } = parseArgs({
@@ -26,11 +26,11 @@ const { values } = parseArgs({
     arm: { type: "string" }, assemble: { type: "boolean" }, renderer: { type: "string" }, "platform-tape": { type: "boolean" },
     "hourly-usd": { type: "string", default: "1.09" }, help: { type: "boolean" }, plan: { type: "boolean" },
     profile: { type: "string", default: defaultServerProfile },
-    tape: { type: "string", default: "saturday" },
+    tape: { type: "string" },
   },
 });
 if (values.help) {
-  console.log("scorecard.mjs --age fresh|1B|realistic --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer per-person-ordered] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm j21-g1|j25-g1|j25-zgc] [--write-jvm j21-g1|j25-g1|j25-zgc] [--wal-directory DIR] [--window-seconds 90|300] [--credit-mode barrier6|rolling6|rolling8|rolling12|rolling16] [--profile server|server-32] [--tape saturday|production-R|production-S]\nFor prepared PostgreSQL use --pgdata-source SEALED_PGDATA with --pgdata COPY once per arm (headline zero, headline loaded, barrier6).\nFor 1B also provide --aged-bundle FILE --aged-bundle-sha256 SHA. Without prepared directories, also provide --aged-dump FILE --aged-dump-sha256 SHA for 1B.\nscorecard.mjs --plan");
+  console.log("scorecard.mjs --age fresh|1B|realistic --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer per-person-ordered] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm j21-g1|j25-g1|j25-zgc] [--write-jvm j21-g1|j25-g1|j25-zgc] [--wal-directory DIR] [--window-seconds 90|300] [--credit-mode barrier6|rolling6|rolling8|rolling12|rolling16] [--profile server|server-32] [--tape production-S|production-R|saturday (default production-S; realistic: saturday)]\nFor prepared PostgreSQL use --pgdata-source SEALED_PGDATA with --pgdata COPY once per arm (headline zero, headline loaded, barrier6).\nFor 1B also provide --aged-bundle FILE --aged-bundle-sha256 SHA. Without prepared directories, also provide --aged-dump FILE --aged-dump-sha256 SHA for 1B.\nscorecard.mjs --plan");
   console.log("For sequential staging, run --arm 1 through --arm 3 in order with one --pgdata per invocation and the same --out. Then run --assemble --commit COMMIT --out DIRECTORY.");
   console.log("To assemble with a later renderer: --assemble --commit CAMPAIGN_COMMIT --renderer CHECKED_OUT_COMMIT --out DIRECTORY (the renderer must descend from the campaign commit and differ only in assembly files; the card names both). Add --platform-tape when assembling on another platform than the campaign's (the tape must hash to its pre-launch binding; floating-point offsets may differ by at most 1e-6 ms).");
   process.exit(0);
@@ -66,8 +66,9 @@ const windowSeconds = parseWindow(values["window-seconds"]);
 const creditMode = parseCredits(values["credit-mode"] ?? process.env.DX_V01_CREDIT_MODE);
 assert(serverProfiles.includes(values.profile as ServerProfile), "Choose --profile server or server-32");
 const profile = values.profile as ServerProfile;
-// [DX-INT1] The save tape of the loaded cells (v01/production-card.ts); Saturday's stays the default.
-const cardTape = parseCardTape(values.tape);
+// [DX-INT1] The save tape of the loaded cells (v01/production-card.ts).
+// [DX-S1] Default: shape S, one commit per subject's save (the owner's decision); the realistic card keeps its own tape.
+const cardTape = newRunTape(values.tape, values.age);
 assert(cardTape === "saturday" || values.age !== "realistic", "The realistic card keeps its own tape");
 const headline = launchProfile(profile, { jvm, txJvm, writeJvm, creditMode });
 const diagnostics = writeDiagnostics(values.writer, process.env);

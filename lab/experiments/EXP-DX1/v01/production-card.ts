@@ -16,11 +16,20 @@ import { cellPath, ratedTape, serverCells, type ServerCell, type WindowSeconds }
 // the quiet stream (its solo and loaded halves would no longer be the same tape).
 export const cardTapes = ["saturday", "production-R", "production-S"] as const;
 export type CardTape = (typeof cardTapes)[number];
+/** Reads a recorded or passed tape name. A record without one predates the tape setting, so it ran Saturday's tape. */
 export function parseCardTape(text: string | undefined): CardTape {
   const tape = cardTapes.find((t) => t === (text ?? "saturday"));
   assert(tape, "Choose --tape saturday, production-R or production-S");
   return tape;
 }
+// [DX-S1] Why: the owner chose one commit per subject's save as the product's save shape (lab/V0.1.md, 2026-11-24), so a
+// new card's save loads run shape S unless another tape is named; the realistic card keeps its own tape. Only new runs
+// take this default: a recorded campaign without a tape name is still read as Saturday's (parseCardTape).
+// Rejected: changing parseCardTape's fallback (an old campaign would be re-assembled as shape S) and removing the other
+// tapes (earlier cards must reproduce). When the card branch's production-S-noburst is on this branch, it becomes this.
+export const defaultCardTape: CardTape = "production-S";
+export const newRunTape = (text: string | undefined, age: string | undefined): CardTape =>
+  parseCardTape(text ?? (age === "realistic" ? "saturday" : defaultCardTape));
 export const tapeShape = (tape: CardTape): Shape | undefined =>
   tape === "production-R" ? "R" : tape === "production-S" ? "S" : undefined;
 export const tapeTitle = (tape: CardTape) => tape === "saturday"

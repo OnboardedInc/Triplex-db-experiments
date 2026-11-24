@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { cells, productionArms } from "../prep1/server-tape.ts";
-import { cardTapeReport, commitAssertions, fullCellTape, isProduction, parseCardTape, productionCellMetrics, tapeBinding } from "./production-card.ts";
+import { cardTapeReport, commitAssertions, defaultCardTape, fullCellTape, isProduction, newRunTape, parseCardTape, productionCellMetrics, tapeBinding } from "./production-card.ts";
 import { ratedTape } from "./server-workload.ts";
 
 // [DX-INT1] The card's production cells: the card's quiet stream plus exactly REAL2's measured neighbour offers.
@@ -39,4 +39,15 @@ test("production metrics count rows and commits, save completion, reads and the 
   assert.equal(m.saveCompletion.p99Ms, 30);
   assert.deepEqual([m.readsPerCommit.firstMinute, m.readsPerCommit.late], [0.5, 2]);
   assert.deepEqual([m.writerPath.subject.commits, m.writerPath.general.commits], [1, 2]);
+});
+
+// [DX-S1] The owner's save shape is the default for new cards; recorded campaigns without a tape stay Saturday's.
+test("a new card runs one commit per subject's save unless another tape is named", () => {
+  assert.equal(defaultCardTape, "production-S");
+  assert.equal(newRunTape(undefined, "fresh"), "production-S");
+  assert.equal(newRunTape(undefined, "1B"), "production-S");
+  assert.equal(newRunTape(undefined, "realistic"), "saturday");
+  assert.equal(newRunTape("saturday", "fresh"), "saturday");
+  assert.equal(newRunTape("production-R", "1B"), "production-R");
+  assert.equal(parseCardTape(undefined), "saturday");
 });
