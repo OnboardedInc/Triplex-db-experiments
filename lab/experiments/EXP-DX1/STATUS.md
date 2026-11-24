@@ -5288,3 +5288,19 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Launch fault, worked around by the driver:** `ladderPaths` puts `ladders/` in the parent of the campaign directory, so two configurations under one parent collide (`rd1/prepared.ts:85`); the second was rerun under its own parent. The document's command block needs that fix.
 - **Second machine:** owner head pair on fresh (`85fc3a4bd`): both arms ran 394 and 620; the append arm refused at the known `summarize.py:125` check at 02:28 UTC; the driver's monitor had expired a minute earlier, so the machine sat idle 22 minutes (02:28 to 02:50 UTC) until the orchestrator's check woke it. Evidence copy under way (campaign `queue/owner-head2/run/result`), then deletion.
 - **Server 2:** publishes, then deletes at about 03:00 UTC (queue empty).
+
+### 2026-11-23 21:53 local: BOTH SERVERS DELETED at 21:53 local; final rental total $247.62; owner head pair on fresh judged (1 agent finishing)
+
+- **Deleted by their drivers at 21:53 local (02:53 UTC), reason "queue empty":** server 2 `sv_bBmw0K2ywa9VR` (104.38 h, $113.78) and the second machine `sv_y3ZXaDOyQ5p2m` (11.10 h, $12.10). `servers-list` returns no servers (checked by the orchestrator). **Total for all four rentals $247.62** against the $251.19 forecast approved for 23:30. Object storage continues (two databases, about 252 GB, about $2.14 per month). Two-hourly check and the detached alert stopped; the 23:33 one-shot stays.
+- **Owner head pair on the fresh database** (second machine, `85fc3a4bd`; `origin/exp/DX-BM1-bare-metal` `0f9e6b971`, handoff `769d8ef72`; summary and comparison made on the Mac at `6cae9ba1b`, files in `evidence/DX-BM1/bench4/bench4-owner-head2/files/`): 0 sampler errors, 0 wrong pinned reads.
+
+  | Load | Reference | Owner head |
+  | --- | --- | --- |
+  | 394/s stored | 394.0/s | 394.0/s |
+  | 394/s late SQL reads per save | 0.151 | 0.116 |
+  | 394/s late AEVT loads per save | 0.156 | 0.029 |
+  | 620/s stored per second, first / second half | 620.0 / 605.0, 0 refused | 574.3 / 506.4, 8,801 refused or expired |
+  | 620/s late mean apply | 1.16 ms | 1.52 ms |
+
+  Migrated settled current p50, owner head over reference: 1.043 at 394 and 1.009 at 620. **At 620/s on fresh the owner head stored less than the reference and its apply time was higher although its reads were lower.** With the 1 billion pair (15% fewer late reads, 21 to 37% less apply at 50 and 235/s) the option's effect depends on load; it stays off.
+- **Server evidence of tonight on the Mac:** `evidence/DX-SCALE1/` (s32-card, prodS-card, owner-head-1b, pinned-saves-1b-e02, random-1b-d94), `evidence/DX-BM1/bench4/`, `evidence/DX-CON1/`.
