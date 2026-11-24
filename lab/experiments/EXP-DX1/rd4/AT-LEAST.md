@@ -56,8 +56,9 @@ and 6 waits of 0.3 to 19.6 ms (51.4 ms in all) where the read peer had not yet a
 been told about. The same toy showed a plain read early in 9 of 150 such moments, which is the bench 4 stop at toy
 size: two peers, nothing loaded.
 
-Evidence (private): `evidence/DX-RD4/` on the Mac (`gate-2/`, `selftest-2.log`, `sdk-tests-3.log`, `load1/load-fair-*`,
-`held-*.log`, `integration-pair-1/`, `integration-pair-2/`, `route-oracle/`).
+Evidence (private): `evidence/DX-RD4/rd4-evidence-2026-11-24.tar.gz` on the Mac (sha256 `d2800ceb…`; `gate-2/`,
+`selftest-2.log`, `sdk-tests-3.log`, `load1/load-fair-*`, `held-*.log`, `integration-pair-1/`, `integration-pair-2/`,
+`route-oracle/`).
 
 ## 3. What a sync per unpinned read would cost (not built)
 
