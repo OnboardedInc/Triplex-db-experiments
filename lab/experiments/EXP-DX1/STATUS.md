@@ -5170,3 +5170,9 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Entity journal:** 13.2 ms store through the console's bounded feed pages (2 requests, 4 transactions). **G13 not measured on purpose:** on the lean layout the gateway's entity-transactions route (`journal.clj` `entity-positions`) walks every transaction in the position index under the single journal permit; that is the call that never answered and one reason the gateways needed a restart. The console no longer uses that route.
 - **Backlog (gateway):** bound `/transactions` and `/entity-transactions` on entries examined, with a cursor; an index from entity to its transactions.
 - **Stack on server 2 stays up until 01:15 UTC** so Sam can open http://127.0.0.1:28584/ against 1 billion records; notification sent.
+
+### 2026-11-23 20:16 local: production-S card re-assembled exactly on server 2: no number differs from the Mac card; console stack down; pinned arm with saves starting (2 agents running)
+
+- **Exact re-assembly** (server 2, `--commit 090c189a8 --renderer 6c4f9e4fe`, 01:15 UTC, exit 0): `evidence/DX-SCALE1/prodS-card/SCORECARD-v0.1-prodS-1B-exact.md`. Against the Mac card one line differs, the Mac card's platform-tape sentence; no number differs. The prediction held.
+- **Console stack on server 2 taken down at 01:15 UTC** (hold time). The Mac's tunnel and the console server on 28584 close by timer at 20:16 local.
+- **Server 2 now:** pinned arm with saves (`9376ece9c`): build and dry run, then the timed run (22 to 31 minutes), then the fixed owner head pair at 1 billion (`85fc3a4bd`). **Second machine:** start-up read at 1 billion, arm 2 running; then the owner head pair on fresh.
