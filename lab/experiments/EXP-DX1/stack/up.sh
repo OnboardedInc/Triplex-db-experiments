@@ -292,6 +292,12 @@ subject_wide=${TX2_SUBJECT_WIDE:-0}
 # DX_S3_OWNERS. Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
 subject_several=${DX_S3_OWNERS:-0}
 [[ $subject_several =~ ^[01]$ ]] || exit 2
+# [DX-IMP2] Why: default-off whole-subject import bound, forwarded to the writers only when set.
+# Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
+import_whole=${TX2_IMPORT_WHOLE_SUBJECT:-0}
+import_commit_us=${TX2_IMPORT_COMMIT_US:-}
+[[ $import_whole =~ ^[01]$ ]] || exit 2
+[[ -z $import_commit_us || ( $import_whole == 1 && $import_commit_us =~ ^[1-9][0-9]{0,5}$ ) ]] || exit 2
 [[ $lookup_every =~ ^(0|[1-9][0-9]{0,3})$ ]] && (( lookup_every <= 4096 )) || exit 2
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prepw =~ ^(1|2|4)$ ]]
@@ -1024,6 +1030,10 @@ for role in "${gateway_roles[@]}"; do
   fi
   if [[ $mode == w && $subject_several == 1 ]]; then
     field_policy+=(-e "TX2_SUBJECT_SEVERAL_OWNERS=1")
+  fi
+  if [[ $mode == w && $import_whole == 1 ]]; then
+    field_policy+=(-e "TX2_IMPORT_WHOLE_SUBJECT=1")
+    [[ -z $import_commit_us ]] || field_policy+=(-e "TX2_IMPORT_COMMIT_US=$import_commit_us")
   fi
   if [[ -n $read_wait_limit ]]; then field_policy+=(-e "TX2_READ_WAIT_LIMIT=$read_wait_limit"); fi
   if [[ $thread_counters == 1 ]]; then field_policy+=(-e "TX2_THREAD_COUNTERS=1"); fi

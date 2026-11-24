@@ -524,6 +524,12 @@
           validated (when (= "1" (System/getenv "TX2_SUBJECT_RETIREMENT_TRACE")) (System/nanoTime))
           frame-size (group/frame-measurement (second (first data)) input)
           _ (try (group/bound-frame! frame-size) (catch Exception e (reject-ordered! conn input e)))
+          ;; [DX-IMP2] Why: an import commit over the import bound is refused whole, before the writer sees it.
+          ;; Rejected: requiring import-bound at load (it would renumber later namespaces' generated names, and with
+          ;; them the stored native functions' hashes; with the option off it is never loaded).
+          _ (when policy/import-whole?
+              (try ((requiring-resolve 'triplex.gateway.import-bound/bound!) (second (first data)) input)
+                   (catch Exception e (reject-ordered! conn input e))))
           ;; [DX-PREP1] Why: the unordered subject arm submits one native transaction and uses its actual durable report.
           ;; Rejected: bypassing protected-scope erasure or live/import admission, or applying the draft speculatively.
           subject-plan (when (and subject/enabled

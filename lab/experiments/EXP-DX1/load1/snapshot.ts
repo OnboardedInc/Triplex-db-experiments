@@ -13,6 +13,7 @@ import {
   type Frame,
 } from "./source.ts";
 import { ack, lookup, record, type Seen } from "./oracle.ts";
+import { ImportFrameTooLarge, importRefusal, importWholeSubject } from "./import-class.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 
 interface Entry extends Seen {
@@ -291,6 +292,9 @@ export class Snapshot {
       seen = ack(f, out.value);
     } else {
       const original = await lookup(this.comp, f, meta);
+      // [DX-IMP2] Why: a frame refused for the import bound wrote nothing; say so with the limit, never split it.
+      const refused = !original && importWholeSubject() ? importRefusal(out) : undefined;
+      if (refused) throw new ImportFrameTooLarge(f.first, f.end, f.operations.length, refused.maximum);
       if (!original) throw Error("Snapshot write " + out.tag, { cause: out.error });
       seen = original;
     }

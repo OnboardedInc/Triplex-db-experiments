@@ -19,7 +19,10 @@ if (fair) {
   assert.equal(fair, "--fair-import");
   assert.match(rolling ?? "", /^rolling(?:6|8|12|16)$/);
   // [DX-LOAD2] Why: a yield launch may compare two frame widths on one copy; the fair launch keeps its old shape.
-  assert.match(width ?? "", /^(?:[89]|[1-5][0-9]|6[0-4])(?:,(?:[89]|[1-5][0-9]|6[0-4]))*$/);
+  // [DX-IMP2] Why: with the whole-subject import bound on, a frame is one whole subject of up to 1,000 facts.
+  assert.match(width ?? "", process.env.TX2_IMPORT_WHOLE_SUBJECT === "1"
+    ? /^(?:[89]|[1-9][0-9]{1,2}|1000)(?:,(?:[89]|[1-9][0-9]{1,2}|1000))*$/
+    : /^(?:[89]|[1-5][0-9]|6[0-4])(?:,(?:[89]|[1-5][0-9]|6[0-4]))*$/);
   assert.match(credits ?? "", /^[1-5]$/);
   // [DX-LOAD2] Why: the argument must not shadow the launch profile named policy below (a SyntaxError at 760fc0145).
   assert(importPolicy === undefined || importPolicy === "fair" || importPolicy === "yield");
