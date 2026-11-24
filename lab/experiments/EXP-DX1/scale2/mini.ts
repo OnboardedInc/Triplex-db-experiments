@@ -40,6 +40,9 @@ const WINDOW_S = env("DX_SCALE2_WINDOW_S", 40), RATE = env("DX_SCALE2_RATE", 40)
 const QUIET_RATE = env("DX_SCALE2_QUIET_RATE", 2), INFLIGHT = env("DX_SCALE2_INFLIGHT", 12), READERS = env("DX_SCALE2_READERS", 6);
 const SAMPLE = env("DX_SCALE2_SAMPLE", 40);
 const VALID_AT = 1_800_000_000_000;
+// Every command ID of this run carries a nonce, so a second run on the same database (the adoption dry run, a server
+// rung on a copy that already took a run) never meets an earlier run's operation.
+const RUN = randomUUID().slice(0, 8);
 const log = (kind: string, data: object = {}) => {
   const line = JSON.stringify({ kind, at: new Date().toISOString(), ...data });
   console.log(line.length > 2000 ? line.slice(0, 2000) + "..." : line);
@@ -196,7 +199,7 @@ for (const a of accounts) {
 }
 await pool(chunks, env("DX_SCALE2_LOAD_DEPTH", 4), async ({ a, first, end }) => {
   const rows = Array.from({ length: end - first }, (_, k) => facts(a, first + k)).flat();
-  const id = "scale2/load/" + a.key + "/" + first;
+  const id = "scale2/load/" + RUN + "/" + a.key + "/" + first;
   const input = { ...command(id, rows as never, [], false), groupAccount: a.key };
   const p = await transactSure(input);
   const pos = seedPos.get(a.key) ?? Array<number>(a.people).fill(0);
@@ -286,7 +289,7 @@ if (doPublish) {
     const store = await openStore(name, "act2-deep", "write", descriptor);
     const joined = new JoinedAccount(store);
     await joined.installHeld(validTime);
-    const p = await joined.publish("scale2:" + SEED + ":" + a.key + ":R1", W0.R1.doc, validTime, "owed");
+    const p = await joined.publish("scale2:" + RUN + ":" + a.key + ":R1", W0.R1.doc, validTime, "owed");
     const seq = await sequenceAt(joined, p.position);
     const w = await settleModule.Settlement.open(joined, new BulkQueueCls(1));
     try { await w.settle(seq); } finally { await w.close(); }
@@ -310,7 +313,7 @@ if (doPublish) {
     if (livePublishers.has(x.a.key)) continue;
     const doc = largeRelease(W0.R1.doc, shape);
     const started = now();
-    const p = await x.joined.publish("scale2:" + SEED + ":" + x.a.key + ":large", doc, validTime, "owed");
+    const p = await x.joined.publish("scale2:" + RUN + ":" + x.a.key + ":large", doc, validTime, "owed");
     x.publishMs = now() - started;
     x.publishBytes = x.store.counters.lastOps.bytes;
     const seq = await sequenceAt(x.joined, p.position);
@@ -416,7 +419,7 @@ function plan(seconds: number, label: string, opts: { spread: boolean; busy: boo
   const add = (rate: number, choose: () => { a: Account; i: number }, flags: { quiet: boolean; busy: boolean }) => {
     for (let t = -Math.log(1 - rnd()) / rate; t < seconds; t += -Math.log(1 - rnd()) / rate) {
       const x = choose();
-      out.push({ id: "scale2/save/" + label + "/" + out.length, a: x.a, i: x.i, rows: 0, due: t * 1000, ...flags,
+      out.push({ id: "scale2/save/" + RUN + "/" + label + "/" + out.length, a: x.a, i: x.i, rows: 0, due: t * 1000, ...flags,
         alone: Boolean(opts.alone) });
     }
   };
@@ -560,7 +563,7 @@ const livePublishTask = doPublish && LIVE_PUBLISH ? (async () => {
     const started = now();
     try {
       const doc = largeRelease(W0.R1.doc, parseShape("forms=20,policies=20,permille=1000"));
-      const p = await x.joined.publish("scale2:" + SEED + ":" + x.a.key + ":live", doc, W0.POPULATION_VALID_TIME, "owed");
+      const p = await x.joined.publish("scale2:" + RUN + ":" + x.a.key + ":live", doc, W0.POPULATION_VALID_TIME, "owed");
       const seq = await sequenceAt(x.joined, p.position);
       x.releases.push({ seq, position: p.position, doc, old: W0.R1.doc });
       x.target = seq;

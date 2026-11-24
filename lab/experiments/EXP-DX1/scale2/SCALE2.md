@@ -7,7 +7,33 @@ All accounts stay in one Datomic database throughout.
 
 ## 1. Short answer
 
-@@SHORT@@
+1. **The store itself does not grow with the number of accounts.** The gateways and the transactor keep no state per
+   account (except the sweep's gates, fixed below), and at toy size the counted work of a save, a pinned or current read, a feed entry, an ID list and a sweep
+   was the same at 563 and at 2,063 accounts (rows per save 5.4 to 5.7; a 5-subject account's ID list examined 5
+   entries in both; every answer exact: 688,145 read rows, 2,295 feed entries, 627,279 final rows at 2,063 accounts).
+   A tiny account's subject shares an index leaf with other accounts' subjects; that touches only cache use, never
+   exactness or isolation (section 4).
+2. **What grows badly is around Publish, and the worst of it is not fixed.** One account's Publish and enrolment
+   commit only if **the whole database's head** has not moved since they read it (three tries, then they give up). In
+   one database with other accounts saving, **3 of 3 Publishes and 3 of 3 enrolments were refused** on the toy. The
+   held runner's measured Publishes (under one second) **paused and drained every account's saves** for each Publish;
+   the product has no such pause, and with many accounts each Publish would stop every account. This is the change
+   the many-accounts case needs first (proposal P8: ACT5's progress precondition applied to Publish and enrolment);
+   it changes what the Publish record's position means, so it was not built here.
+3. **Fixed, behind default-off options:** the SDK's ID list range check compared every pair of per-account ranges
+   (6.6 s at 10,000 accounts, about 11 minutes at 100,000; now 63 ms at 100,000:
+   `TRIPLEX_DATOMIC_ID_LISTS_MANY_ACCOUNTS`); the settlement process opened about 13 connections to the gateways per
+   settling account (670 for 50 accounts; now 69: `TRIPLEX_DATOMIC_SHARED_AGENT`); the sweep kept one gate per account
+   ever swept (now none left: `TX2_SWEEP_GATE_EVICT`); and the enrolment's own writer check refused other accounts'
+   commits (`TX2_ENROL_BESIDE_SAVES`, necessary for P8, not sufficient alone).
+4. **Not fixed, proposals with their effect (section 7):** the settlement process holds about 0.4 MB per settling
+   account (41 GB at 100,000); one removal sequence and lock for the whole database; every Publish copies the whole
+   release document into each account (17 KB measured, up to 1.3 MB); 7 to 8 enrolment commits and about one notice
+   frame per subject for small accounts; account metadata outside the account's prefix; no account filter on the feed;
+   no "list accounts" (an account registry is proposed).
+5. **The server test is written** (`scale2/server.sh`, section 8): 1,000 and 10,000 thin accounts (and an optional
+   100,000) added to fresh copies of the sealed 1 billion database beside the ten deep accounts, 54 to 117 minutes,
+   USD 1.00 to 2.15 for the two rungs, with predictions per priority. Its adoption mode passed a dry run on the Mac.
 
 ## 2. What exists today, and the test shape chosen
 
@@ -54,7 +80,7 @@ miniature (`F1`: 2,063 accounts) or, where marked, from object sizes (not measur
 
 | # | Per-account thing | Where | Grows | Per account (how known) | At 1,000 | At 10,000 | At 100,000 | State |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | **One account's Publish and enrolment need the whole database's head unchanged** | `actv-lazy/join/account.ts` `execute` (every joined command, Publish included, commits with `expected` = the head it read, retries 3 times, then "Joined command exhausted three serial predecessor attempts"); `installHeld` (the same, and its writer check `suffix`); `held-campaign.ts` near line 851 (the held runner **pauses and drains every account's saves** around each Publish) | Fails beside other accounts' writes; the pause the runner uses stops every account, once per Publish | F0: @@LIVEPUB@@; enrolment beside saves refused 3 of 3 without the option ("Unclassified native writer left the joined source open", F1, F0) and 3 of 3 with it ("Source changed at admission", F2) | each Publish stops all saves for its duration (or fails) | 10,000 Publishes an hour: about 5 to 10 minutes of whole-database save pause per hour at 30 to 60 ms each | 10 times that | **Not fixed** (proposal P8). Built: the writer-check half for enrolment (`TX2_ENROL_BESIDE_SAVES`, necessary, not sufficient) |
+| 1 | **One account's Publish and enrolment need the whole database's head unchanged** | `actv-lazy/join/account.ts` `execute` (every joined command, Publish included, commits with `expected` = the head it read, retries 3 times, then "Joined command exhausted three serial predecessor attempts"); `installHeld` (the same, and its writer check `suffix`); `held-campaign.ts` near line 851 (the held runner **pauses and drains every account's saves** around each Publish) | Fails beside other accounts' writes; the pause the runner uses stops every account, once per Publish | F0: 3 of 3 Publishes beside the saves refused ("Joined command exhausted three serial predecessor attempts"); enrolment beside saves refused 3 of 3 without the option ("Unclassified native writer left the joined source open", F1, F0) and 3 of 3 with it ("Source changed at admission", F2) | each Publish stops all saves for its duration (or fails) | 10,000 Publishes an hour: about 5 to 10 minutes of whole-database save pause per hour at 30 to 60 ms each | 10 times that | **Not fixed** (proposal P8). Built: the writer-check half for enrolment (`TX2_ENROL_BESIDE_SAVES`, necessary, not sufficient) |
 | 2 | **ID list ranges of a type, one per account: the range check compares every pair, and every page sorts them again** | `packages/datomic/src/idLists.ts` `validateIdListOptions`, `candidateIds` | O(A²) at start-up; O(A log A) per page | pairwise 90 ms at 1,000, 605 ms at 3,000, 6.6 s at 10,000 (micro) | 90 ms | 6.6 s | about 11 minutes (A² from the measured points) | **Fixed, option `TRIPLEX_DATOMIC_ID_LISTS_MANY_ACCOUNTS=1`**: 0.5 ms / 2.6 ms / 63 ms, sort kept per type |
 | 3 | **The settlement process holds one store per enrolled account and three per settling account, each with its own HTTP clients, agents and sockets** | `actv-lazy/store.ts` `openStore` (a Triples runtime, a composition, several `DatomicClient`s), `join/archive.ts` `Archive.open` (two more stores) | O(settling) memory and connections | heap 163 KB per enrolled account (slope 10 → 50 accounts, F1) plus 251 KB per account at settlement open; open TCP connections to the gateways: 6.9 per enrolled account, 6.4 more at settlement open (F1: 4 → 350 → 670 for 50 accounts) | 0.41 GB, 13,300 connections | 4.1 GB, 133,000 connections | 41 GB, 1.33 million connections | **Connections fixed, option `TRIPLEX_DATOMIC_SHARED_AGENT=1`** (one agent per process); memory: proposal P1 |
 | 4 | **One removal sequence and one removal lock for the whole database** | `storage.clj` line 212 and `commit.clj` line 187: in a database with a removal policy every commit carries a compare-and-set of the database's one `erasure-seq`; `privacy.clj` `guard` (a PostgreSQL advisory lock keyed by the database) serialises removals and the guarded write path across gateways | Refusals and lock waits grow with A × removals per account | a removal on request in any account refuses the commits of every account then between their gateway's cut and the serial cut (each must be sent again), about (saves per second × commit time): 10 to 20 at 400 saves/s; which saves take the guarded path rather than the independent one was not traced here | small | about 10 times the 1,000 rate | about 100 times | Proposal P2 (removal sequence and lock per account) |
@@ -149,7 +175,59 @@ the release sizes measured; at the ceiling the release document has to be stored
 
 ## 5. The miniature (Mac, toy size, counts exact)
 
-@@MINI@@
+`scale2/mini.sh` under one ordinary heavy token: a fresh toy stack in the lab VM (laptop profile, the held toy's
+write-gateway switches, the ID list route and the sweep on the read gateway), then `scale2/mini.ts`. One database per
+run. The oracle for every subject is the generator plus every acknowledged save (regenerated per subject when needed);
+the settled releases are checked by ACT7's streamed check, one account at a time. Three final runs:
+
+- **F1**: 2,063 accounts (10 deep, 53 publishing, 2,000 thin), every option off;
+- **F0**: 563 accounts (the same, 500 thin), every option off, plus Publish beside saves in 3 accounts and the adoption
+  dry run of the server test;
+- **F2**: 563 accounts, the options on (`TRIPLEX_DATOMIC_SHARED_AGENT`, `TX2_SWEEP_GATE_EVICT`, `TX2_ENROL_BESIDE_SAVES`).
+
+Each: a 10 s quiet-account baseline alone, then a 40 s tape (40 saves/s spread over every account by size with 40% revisits,
+15/s busy deep account, 2/s quiet thin account; the Mac stretched it to 125 to 152 s), 6 readers checking every answer,
+a feed follower, and 50 publishing accounts settling the 20-forms release at once through one queue under the
+progress precondition. **Everything exact in all three runs.**
+
+| Count (exact) | F1: 2,063 accounts | F0: 563 accounts | F2: 563, options on |
+| --- | --- | --- | --- |
+| Subjects / facts loaded (each subject one commit position) | 61,669 / 683,764 | 16,324 / 230,314 | 16,324 / 230,314 |
+| Saves acknowledged / refused / lost replies | 2,319 / 0 / 0 | 2,321 / 0 / 0 | 2,388 / 0 / 0 |
+| Accounts that took saves in the window | 621 | 359 | 360 |
+| Rows per save (one commit per subject's save) | 5.42 | 5.52 | 5.72 |
+| Pinned / current reads checked against the oracle; rows compared | 33,962 / 33,643; 688,145 | 20,710 / 20,354; 437,550 | 29,433 / 29,062; 623,186 |
+| Feed: saves found once, at their receipt position, in order per subject | 2,295 of 2,295 | 2,297 of 2,297 | 2,364 of 2,364 |
+| Final read of every subject's root and form at the last position (rows) | 627,279 in 2,063 accounts | 173,829 in 563 | 173,829 in 563 |
+| ID lists: accounts / IDs equal to the generator / entries examined | 65 / 2,887 / 3,128 | 64 / 1,856 / 2,127 | 64 / 1,856 / 2,127 |
+| A 5-subject account's list: entries examined | 5 | 5 | 5 |
+| Sweeps: accounts / subjects read / count equal to the oracle | 65 / 2,887 / 1,082 | 64 / 1,856 / 751 | 64 / 1,856 / 747 |
+| Sweep gates left in the read gateway afterwards | 65 | 64 | **0** |
+| Publishing accounts settled at once / frames value + notice / refused | 50 / 121 + 462 / 0 | 47 / 114 + 439 / 0 | 50 / 121 + 462 / 0 |
+| Settled changes / notices equal to the W0 oracle and the independent form rule | 29,820 / 10,605 | 28,284 / 10,059 | 29,820 / 10,605 |
+| Frames per subject (accounts of 5 to 12 subjects) | 1.09 to 1.20 | the same | the same |
+| Enrolment commits per account; Publish record bytes | 7 to 8; 17,158 | 7 to 8; 17,158 | 7 to 8; 17,158 |
+| **Publish beside the saves** (3 accounts) | — | **3 of 3 refused**: "Joined command exhausted three serial predecessor attempts" (0.7 to 2.5 s) | — |
+| **Enrolment beside the saves** (3 accounts) | **3 of 3 refused** (writer check) | **3 of 3 refused** (writer check) | **3 of 3 refused** ("Source changed at admission": the head precondition) |
+| Settlement process: heap per enrolled account (slope over 10 to 50 accounts) | 163 KB | 174 KB | 147 KB |
+| Open connections to the gateways: start / 50 enrolled / 50 settling | 4 / 350 / 670 | 4 / 349 / — | **4 / 4 / 69** |
+| Gateways' resident memory before load / after load / after the window, MB (diagnostic) | not recorded | write 229 / 361 / 614; read 226 / 227 / 382 | write 230 / 347 / 581; read 228 / 229 / 394 |
+
+**What grew with the number of accounts** (563 against 2,063, options off): nothing in the counted work of a save, a
+read, a feed entry, an ID list or a sweep. Rows per save, entries examined per account's list, subjects read per sweep,
+frames per subject and enrolment commits per account were the same; a tiny account's list examined its own 5 IDs in
+both. What grew: sweep gates with the accounts swept (65 and 64, kept for ever; 0 with the option), and the settlement
+process's heap and connections with the accounts it holds (not with the accounts in the database). Diagnostic only
+(Mac, shared VM, one run each): save p50 320 to 520 ms in every run (the VM, not the accounts: the quiet account alone
+was 23 to 27 ms p50); feed lag p50 17 to 23 ms; the gateways' memory followed the data loaded, not the accounts.
+
+**The adoption dry run** (`D1`): the server test's adoption mode (`DX_SCALE2_ADOPT`) on the toy's own database, used
+as the sealed one: a first run (74 accounts) builds it; the second adopts it, knows its ten deep accounts only by
+reading them, adds 4 publishing and 60 thin accounts (19,996 facts), and runs the window: 1,172 saves acknowledged, 0
+refused; 18,866 rows of final reads exact (every new subject and every deep subject it touched); 4 accounts settled
+exactly (5 to 12 subjects, 0 refused). **Pass.** An earlier attempt on F0's database first met its own fault (the save
+IDs of the two runs collided: every command ID now carries a run nonce) and then a restart of the toy write gateway
+(its container at 630 of 640 MB after three runs' data; cause not recorded); D1 ran on a fresh stack.
 
 ## 6. Built, all default off
 
@@ -266,7 +344,9 @@ run 2).
   publishing accounts take no saves before their Publish (so the oracle's history is empty there), and the accounts
   enrolled during the window take none at all.
 - **The adoption dry run** used the toy's own database as "sealed", not the 1 billion bundle; the demo bring-up on a
-  server is XQ3's and XQ6's, not rerun here.
+  server is XQ3's and XQ6's, not rerun here. `server.sh` itself has not run anywhere (it needs the server's demo stack).
+- **The Mac runs were stretched** (a 40 s tape took 125 to 152 s on the shared VM); the toy write gateway restarted once
+  in a third run on one database (section 5); no run here measured a latency.
 
 ## 10. Files and evidence
 
@@ -284,5 +364,7 @@ run 2).
 | `stack/up.sh` | `DX_SWEEP_GATE_EVICT` pass-through |
 
 Evidence (private, `evidence/DX-SCALE2/`, compressed): `F1` (2,063 accounts, options off), `F0` (563 accounts, options
-off, and the adoption dry run), `F2` (563 accounts, options on), `gates-1`, `micro-1.json`, `t1` to `t4` (trials while
-building; `t3/heap-diff.json` names what an enrolled account holds).
+off, Publish beside saves; its adoption attempts), `F2` (563 accounts, options on), `D1` (the adoption dry run), `gates-1`, `micro-1.json`, `t1` to `t4` (trials while
+building; `t3/heap-diff.json` names what an enrolled account holds). SHA-256 (first 12): `F1.tar.gz` `b9f82eb044a6`,
+`F0.tar.gz` `7e3f33e27eb8`, `F2.tar.gz` `e2ae58479fa7`, `D1.tar.gz` `b5e477ab55e4`, `gates-1.tar.gz` `fd3c781ba747`,
+`micro-1.json` `77d7d83c0712`.
