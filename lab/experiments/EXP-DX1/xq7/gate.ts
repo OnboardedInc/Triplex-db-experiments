@@ -519,7 +519,9 @@ const saveOne = async (n: number) => (await transact(`behind ${n}`, [a(taskId(A3
   };
   const statsOf = async () => (await qreader.request("GET", "/v2/admin/scan-stats")) as any;
   const arms: any[] = [];
-  for (const sweeps of [0, 2, 0, 2]) {
+  // [DX-XQ10] XQ7_F_REPEAT repeats the four arms (the fairness loop); an arm over the bound logs its worst pages.
+  const repeat = Number(process.env["XQ7_F_REPEAT"] ?? 1);
+  for (let rep = 0; rep < repeat; rep++) for (const sweeps of [0, 2, 0, 2]) {
     const s0 = await statsOf();
     const going = until(6000);
     const rows: any[] = [], tally = { pages: 0, busy: 0 };
@@ -536,7 +538,11 @@ const saveOne = async (n: number) => (await transact(`behind ${n}`, [a(taskId(A3
     check(arm.maxAhead <= 2, "(f) at most one page of each other listing account went ahead of any page (3 accounts listing)", arm);
     check(arm.listPoolAdmissions === arm.listPages, "(f) the ID list pool admitted exactly the ID list pages (no sweep entered it)", arm);
     check(sweeps === 0 || arm.sweepPages > 0, "(f) the sweeps ran during the arm", arm);
-    log("f-arm", arm);
+    log("f-arm", { rep, ...arm });
+    if (arm.maxAhead > 2) {
+      const at = ok.findIndex((r) => r.ahead === arm.maxAhead);
+      log("f-over", { rep, sweeps, worst: ok.filter((r) => r.ahead > 2), around: ok.slice(Math.max(0, at - 6), at + 3) });
+    }
     arms.push(arm);
   }
   // D7: a list screen's burst (8 requests of one account at once) and one request of another account.
