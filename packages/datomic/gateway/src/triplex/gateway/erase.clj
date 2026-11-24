@@ -285,18 +285,23 @@
 
 ;; [DX-ERA2] Why: a request on a database guarded per account uses the last published cut while another removal is
 ;; prepared or natively committed but unpublished: a write is fenced at the serial point on its own accounts, and a
-;; read is then a read that started before that removal's publication (TARGETS section 7.1). A native value behind
-;; the published log is synced once (another gateway's removal not yet seen by this peer), then refused (a restore
-;; must replay first, as before).
+;; read is then a read that started before that removal's publication (TARGETS section 7.1). Anything else is
+;; retried up to four times on a freshly synced database, then refused: a native value behind the published log
+;; (another gateway's removal not yet seen by this peer, and further removals can publish meanwhile), and a cut
+;; read that lost a race with a newer one on this gateway (privacy/cut refuses a published log behind the one it
+;; verified last). A restored copy stays behind on every try and is refused, as before. Retrying changes only
+;; whether a request waits: a request is served only from a cut that passes removal-scope/consistent?.
 ;; Rejected: refusing every request of every account while any removal is pending (the database-wide rule).
 (defn request-cut [name conn db]
-  (loop [db db synced? false]
-    (let [state (privacy/cut name db true)]
+  (loop [db db tries 0]
+    (let [state (try (privacy/cut name db true)
+                     (catch clojure.lang.ExceptionInfo e
+                       (if (and (< tries 4) (= "ErasureFrontierUnavailable" (:code (ex-data e)))) ::retry (throw e))))]
       (cond
+        (= ::retry state) (recur (sync! conn) (inc tries))
         (nil? state) [nil db]
         (removal-scope/consistent? db (:seq state) (:pending-seq state)) [(assoc state :per-account true) db]
-        (and (not synced?) (let [native (removal-scope/native-seq db)] (and (integer? native) (< native (:seq state)))))
-        (recur (sync! conn) true)
+        (< tries 4) (recur (sync! conn) (inc tries))
         :else (privacy/unavailable!)))))
 
 ;; [DX-ERA2] Why: move an existing protected database to removal sequences per account (or back), online: under the

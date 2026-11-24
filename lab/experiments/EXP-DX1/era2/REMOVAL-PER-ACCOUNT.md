@@ -180,7 +180,69 @@ refuses every request on a moved database).
 
 ## 9. Gates
 
-GATES-PLACEHOLDER
+All on the Mac, toy size; counts are results, times diagnostic. Evidence under `evidence/DX-ERA2/` (private).
+
+**(a) Option off changes nothing.**
+
+- **Paired native log** (`era2/paired.clj`, `gate.sh` phase `paired`): one fixed workload (4 accounts, saves on both
+  writers, 3 removals, a ticketed derived write and a refused stale one, a refused import replay, history reads),
+  unsealed (653 datoms) and sealed (698 datoms), run twice on the base gateway, once on this gateway with the option
+  unset and once with it on but the database never moved. Every reply's status and code is identical in all four runs.
+  The base is reproducible (both base runs identical after replacing clocks, random removal IDs, hashes and ciphertext);
+  this gateway's log, option unset and option on, is identical to the base's in every datom written by saves, removals,
+  frames and reads. **3 datoms differ, all in installed function texts**: the reader-generated argument names inside
+  the commit function (`p1__2400#` against `p1__2516#`) and the per-subject writer function, and the source line
+  numbers stored with that function. They change whenever gateway code that loads before them changes (here the new
+  namespace), as on every branch; their behaviour is the same. Consequence: a database first opened by the base gateway
+  gets its writer functions installed once more by this gateway (one transaction), with or without the option.
+- **Gateway suites** (`selftest`, `group-test`, `ids-test`, `feed-test`, `pinned-test`, `recent-test`,
+  `cache-key-test`, `commit-order-test`, `sweep-gates-test`, `trace-test`): 76 tests, 71,170 assertions, the same
+  result on the base, on this gateway with the option unset and with it on: 0 failures, 1 error, the same error in all
+  three (`feed-test` `http-route` reads a byte body as a string; it fails on the base too).
+- **The existing removal regression** (ERASE1/ERASE2's 13 route checks, both writer modes, and the sealed witness):
+  REGRESSION-PLACEHOLDER
+
+**(b) The fault measurement with the option on**: section 0, table 2.
+
+**(c) Adversarial cases, each deterministic** (`era2/gate.clj`, in-process: the gateway's own route handler, an
+in-memory Datomic, a file removal authority; a save is paused after its cut was read and its data prepared, the step
+runs, then the save commits). Every case checks that the removed value is never answered by current reads, history
+reads, reads pinned before the removal, a Reach session that cached the subject at that pin, journal pages and the feed;
+and that the native data holds no copy of it outside its own subject and journals (unsealed: masking keeps the native
+bytes, as today) or **none at all** (sealed). Database-wide **360 checks, 0 failed**; per account **417 checks, 0
+failed** (G5).
+
+| Case | Database-wide (today) | Per account |
+| --- | --- | --- |
+| A save of the same subject computed before the removal, committed after it | refused 409 CasConflict | refused 409 CasConflict |
+| A save of another subject of the same account in that window | refused 409 CasConflict | **commits** (its subjects' sequences did not move) |
+| A save of another account in that window | refused 409 CasConflict | **commits** |
+| A settlement frame of the removed account, ticket read before the removal | refused 409 ErasureFrontierChanged; its derived copy never lands | the same |
+| A Publish of the removed account in that window (ticketed, `lazy/account/releases/a`) | refused 409 ErasureFrontierChanged | the same |
+| A ticket naming no account | refused | refused (database-wide, unchanged) |
+| A settlement frame of another account, ticket read before the removal | refused 409 ErasureFrontierChanged | **commits** |
+| An import replay of the removed field | refused 409 ErasureReplayDeclined | the same |
+| An import replay of another account | commits | commits |
+| A pinned reader that read the value and holds a cached Reach session, reading the same pin after the removal | the marker | the marker |
+| Two removals racing in two accounts, with a third account saving | both commit, sequences 1 and 2; the third account's save may be refused | both commit; each account and subject takes its own sequence; the third account's sequences stay 0 and its save commits |
+| A removal stopped before its native commit, then resumed with the same command | while stopped: every save and read of every account refused 503 | while stopped: another account's save and read, another subject of the account and the subject itself all commit; the resumed removal re-selects and removes the value saved meanwhile too |
+| A removal stopped after its native commit (and at publication), then resumed | every request refused 503 | other accounts and other subjects commit; the subject's own save refused 409 CasConflict until publication; resumed: completes once, sequence 1 |
+| Move per account, a save prepared before a move back, a fresh save after it, the move again | (per account only) | the prepared save refused once; the fresh save commits; moving twice changes nothing; the counters are restored from the log |
+
+Every case runs unsealed and sealed except the paused-save cases, which are unsealed only (a sealed database on the file
+key store takes the database's lock for every save, so a save cannot be paused beside a removal there; the PostgreSQL
+authority's sealed saves are covered by the fault measurement's sealed cell).
+
+**(c, on a stack) A removal during a transactor restart**: the `restart` cell of the fault measurement (table 1 and 2):
+the transactor is restarted 8 s into a 1-per-second removal window; every removal is retried with the same command until
+it answers.
+
+**(d) The sealed removal check**: REGRESSION-SEALED-PLACEHOLDER
+
+**(e) The production exactness gate and the combined check with removals in three accounts at once**: the `three` cell
+of the fault measurement (removals round-robin in three accounts at 10 per second, 7 other accounts saving, reading and
+writing frames): EXACTNESS-PLACEHOLDER
+
 
 ## 10. Server run (for the day a machine is rented)
 
