@@ -446,6 +446,62 @@ export class Archive {
     await recheckErasure(this.source.s.comp, marker.erasureSeq);
     return { frontier, output: output as (Answer | Changes)[], frames: "count" as FrameMode };
   }
+  /**
+   * [DX-ACT7] The same pages and checks as `stored()` for a byte-framed release, yielded one joined subject at a time
+   * in census order, so the check of an account of 100,000 subjects holds one page of 32 frames at a time instead of
+   * every changed value (about 5.9 million at 20 owed forms). The final checks (chain hash, frontier, change count) run
+   * after the last subject. Rejected: changing `stored()` (its callers compare whole arrays).
+   */
+  async *storedStream(sequence: number) {
+    const { marker, event, census } = await this.source.receipt(sequence);
+    const identity = identityOf(this.source.s.scope, marker, event.at),
+      at = await this.store.head();
+    const frontier = (await this.db.get<Progress>(progressKey(sequence), at)).value;
+    assert(frontier.identity === identity && frontier.through <= census.count && frontier.frames === "bytes");
+    assert(frontier.status !== "stored" || frontier.through === census.count);
+    let previous = identity,
+      through = 0,
+      tail = 0,
+      changes = 0;
+    let open: Changes | undefined;
+    for (let first = 1; first <= frontier.frame!; first += 32) {
+      const keys = Array.from({ length: Math.min(32, frontier.frame! - first + 1) }, (_, i) =>
+        framePageKey(sequence, first + i),
+      );
+      const rows = await this.db.rows<FramePage>(keys, at);
+      for (const [i, k] of keys.entries()) {
+        const p = rows.get(k)?.value;
+        assert(
+          p?.identity === identity &&
+            p.frame === first + i &&
+            p.start === through &&
+            p.part === tail &&
+            p.previous === previous &&
+            (p.through > p.start || p.tail > p.part),
+          "Frame page out of order",
+        );
+        for (const piece of unpack<Changes[]>(p.bytes)) {
+          assert(piece.changes.length > 0);
+          changes += piece.changes.length;
+          if (piece.part) {
+            assert(open?.subject === piece.subject && open.changes.length === piece.part, "Split subject out of order");
+            open.changes.push(...piece.changes);
+          } else {
+            assert(open?.subject !== piece.subject, "Duplicate settled subject");
+            if (open) yield open;
+            open = { subject: piece.subject, changes: [...piece.changes] };
+          }
+        }
+        previous = hash(p);
+        through = p.through;
+        tail = p.tail;
+      }
+    }
+    if (open) yield open;
+    assert(previous === frontier.hash && through === frontier.through && tail === frontier.part && frontier.changes === changes);
+    await recheckErasure(this.source.s.comp, marker.erasureSeq);
+    return frontier;
+  }
   // [DX-ACT4] Reads every frame page of a byte-framed release in order and joins split subjects: each page must start
   // where the previous one ended, chain to its hash, and a piece with `part` must continue the same subject at exactly
   // the number of changes already joined. Returns each changed subject once, with its changes only.

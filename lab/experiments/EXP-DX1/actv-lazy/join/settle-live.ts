@@ -23,6 +23,12 @@ import type { HeldLedger } from "./held-ledger.ts";
 import { largeRelease, parseShape } from "./large-release.ts";
 import { Settlement } from "./settlement.ts";
 import { readSettlement, setSettlementControl } from "./settlement-control.ts";
+import type { AgedBase, AgedSeal } from "../act7/aged.ts";
+import { heldTapeKind, productionHeldTape, productionSenders } from "../act7/tape.ts";
+import { streamCheck, type StreamRelease } from "../act7/stream.ts";
+import { frameCounters } from "./bulk.ts";
+import { isProduction } from "../../v01/production-card.ts";
+import type { Write } from "../../scale1/decision/plan.ts";
 
 // [DX-ACT5] Why: settlement had never run beside live saves in the account (or the database) that publishes. This
 // phase of the held toy runner (DX_ACT5_LIVE=1, diagnostic only) runs cases, each a Publish followed by settlement while
@@ -53,7 +59,26 @@ export type LiveContext = {
   db: string;
   ordered: boolean;
   attempt: string;
+  /** [DX-ACT7] On an aged copy: each account's aged history for the oracle, and the seal (production predecessors). */
+  aged?: (account: number) => AgedBase | undefined;
+  agedSeal?: AgedSeal;
 };
+// [DX-ACT7] The edit a committed save adds to its subject's history (a production save names its slots).
+const editOf = (position: number, e: Write) => ({ position, width: e.width, version: e.version,
+  ...(isProduction(e) ? { slots: [...e.slots] } : {}) });
+/** [DX-ACT7] A case's saves: the held tape (default) or the production-S tape (DX_ACT7_TAPE), and their senders. */
+async function caseTape(c: LiveContext, own: number, others: boolean, seconds: number, label: string) {
+  const kind = heldTapeKind();
+  const from = await c.s.head();
+  if (kind.kind === "held") {
+    const tape = heldTape(c.people as never, (own || 23.5) as never, seconds).filter((x) => (x.account === 0 ? own > 0 : others));
+    return { tape: tape as Write[], senders: await preload(c.writer, c.seed, from, tape), from, kind };
+  }
+  const tape = productionHeldTape(c.people, kind.rows, seconds, label).filter((x) => (x.account === 0 ? own > 0 : others));
+  const { senders, counts } = await productionSenders(c.writer, c.seed, from, tape,
+    c.agedSeal ? { cut: c.agedSeal.cut, head: c.agedSeal.head } : undefined);
+  return { tape: tape as Write[], senders, from, kind, predecessors: counts };
+}
 type Case = {
   name: string;
   precondition: Precondition;
@@ -139,21 +164,31 @@ export async function livePhase(c: LiveContext) {
   // Toy windows stay short; the server mode (DX_ACT5_SERVER=1) allows up to an hour per case.
   const limit = process.env.DX_ACT5_SERVER === "1" ? 7200 : 30;
   assert(defaultSeconds >= 2 && defaultSeconds <= limit && cases.every((k) => (k.seconds ?? 0) <= limit));
+  // [DX-ACT7] DX_ACT7_STREAM_CHECK=1: the several-accounts case is checked one account at a time after settlement
+  // (act7/stream.ts) and nothing is folded at Publish, so the other cases may not publish and the several-accounts case
+  // is the last one.
+  const stream = process.env.DX_ACT7_STREAM_CHECK === "1";
+  assert([undefined, "", "0", "1"].includes(process.env.DX_ACT7_STREAM_CHECK));
+  if (stream)
+    assert(cases.every((k, j) => (k.extra === "multi" ? j === cases.length - 1 : k.release === "none" && !k.extra)),
+      "With DX_ACT7_STREAM_CHECK=1 only no-Publish cases come before one several-accounts case, the last");
   const ref = new Reference(process.env.DX_ACT5_SERVER === "1" ? 4 : 1);
   const roster = Array.from({ length: c.people }, (_, i) => W0.placementId(i));
-  const world = (at: number) => (i: number) => worldAt(i, at, c.history, c.positions);
+  const world = (at: number) => (i: number) => worldAt(i, at, c.history, c.positions, c.aged?.(0));
   let current = c.releases.at(-1)!;
   const oldOf = new Map<number, W0.ReleaseDoc>();
   // The oracle's ledgers follow every release in order, the first included.
-  await ref.check(c.a, roster, world(current.position), current.doc, { tx: current.position, validTime }, null,
-    undefined, true, false);
+  if (!stream)
+    await ref.check(c.a, roster, world(current.position), current.doc, { tx: current.position, validTime }, null,
+      undefined, true, false);
   const results: unknown[] = [];
   let n = 0,
     reads = 0;
   const publish = async (doc: W0.ReleaseDoc) => {
     const old = current.doc;
     const r = await c.offer(doc, c.attempt + ":act5:" + n++, now());
-    await ref.check(c.a, roster, world(r.position), doc, { tx: r.position, validTime }, old, undefined, true, false);
+    if (!stream)
+      await ref.check(c.a, roster, world(r.position), doc, { tx: r.position, validTime }, old, undefined, true, false);
     oldOf.set(r.seq, old);
     current = r;
     return { r, old };
@@ -225,11 +260,8 @@ export async function livePhase(c: LiveContext) {
           ? { r: current, old: oldOf.get(current.seq)! }
           : undefined;
       // Saves: the held tape at the own rate (account 0) and/or the nine others at their usual load (the 23.5 tape).
-      const tape = heldTape(c.people as never, k.own || 23.5, seconds).filter((x) =>
-        x.account === 0 ? k.own > 0 : k.others,
-      );
-      const from = await c.s.head();
-      const senders = await preload(c.writer, c.seed, from, tape);
+      // [DX-ACT7] Or the production-S tape (DX_ACT7_TAPE).
+      const { tape, senders } = await caseTape(c, k.own, k.others, seconds, c.attempt + "/act5/" + k.name);
       const queue = new BulkQueue(1);
       // The pause case: the account's settlement is paused before it starts (TX2_SETTLE_CONTROL on for this worker).
       const controlled = k.extra === "pause" ? process.env.TX2_SETTLE_CONTROL : undefined;
@@ -261,7 +293,7 @@ export async function livePhase(c: LiveContext) {
           if (!save.account) {
             const e = byOrdinal.get(save.ordinal)!;
             const edits = c.history.get(save.subject) ?? [];
-            edits.push({ position: save.receipt!.p, width: e.width, version: e.version });
+            edits.push(editOf(save.receipt!.p, e));
             c.history.set(save.subject, edits);
           }
         },
@@ -489,6 +521,10 @@ export async function livePhase(c: LiveContext) {
     let delivered: unknown = "skipped at server size";
     try {
       if (process.env.DX_ACT5_SERVER === "1") throw new SkipDelivery();
+      if (stream) {
+        delivered = "skipped: the streamed check folds no notices in memory";
+        throw new SkipDelivery();
+      }
       const sink = new Documents(recipient.comp, "receiver"),
         at = await final.recorder.archive.store.head();
       const first = await final.recorder.deliver(sink, at),
@@ -506,7 +542,7 @@ export async function livePhase(c: LiveContext) {
   } finally {
     ref.close();
     for (const x of extras) {
-      x.ref.close();
+      x.ref?.close();
       await x.store.close();
     }
     await recipient.close();
@@ -514,7 +550,8 @@ export async function livePhase(c: LiveContext) {
 }
 
 /** Runs settlement of `seq` in a child process and kills it after `ms` (inside a frame or between frames). */
-async function killedChild(c: LiveContext, seq: number, k: Case, ms: number, startAt?: number) {
+async function killedChild(c: LiveContext, seq: number, k: Case, ms: number, startAt?: number,
+  held: object = c.descriptor) {
   const child = spawn(
     process.execPath,
     ["--experimental-transform-types", "--no-warnings", new URL("./settle-child.ts", import.meta.url).pathname],
@@ -529,7 +566,7 @@ async function killedChild(c: LiveContext, seq: number, k: Case, ms: number, sta
       path: "both",
       frames: k.frames,
       precondition: k.precondition,
-      held: c.descriptor,
+      held,
       killAfterMs: ms,
       ...(startAt === undefined ? {} : { startAt }),
     }),
@@ -546,17 +583,25 @@ async function killedChild(c: LiveContext, seq: number, k: Case, ms: number, sta
 // are enrolled as publishing accounts with their own names (HeldSource.namespace), each with its own oracle. In a
 // `multi` case every account publishes the large release back to back, then all settle at once through ONE bulk
 // queue (accounts rotate round-robin; optionally the admission lane) while every account takes saves.
+// [DX-ACT7] With DX_ACT7_STREAM_CHECK=1 nothing is folded at Publish and each account is checked after settlement one
+// at a time (act7/stream.ts); with DX_ACT7_MULTI_KILL=1 each account's settlement first runs in a child process killed
+// at a random moment, one account after another while the saves run, and the runner then resumes all of them; with
+// DX_ACT7_TAPE the saves are the production-S tape; on an aged copy each account's oracle knows its aged subjects.
 type Extra = {
   index: number;
   store: Store;
   a: JoinedAccount;
-  ref: Reference;
+  ref?: Reference;
   history: LiveContext["history"];
   positions: number[];
+  aged?: AgedBase;
+  descriptor: object;
   current: { position: number; seq: number; doc: W0.ReleaseDoc };
   oldOf: Map<number, W0.ReleaseDoc>;
+  releases: StreamRelease[];
 };
 const ADOPT_SETUP = /^(settled-(values|notice):|notice:v1:)/;
+const streamed = () => process.env.DX_ACT7_STREAM_CHECK === "1";
 async function enrol(c: LiveContext, index: number): Promise<Extra> {
   const { keyFor } = await import("../../scale1/decision/plan.ts");
   const { seedPositions } = await import("./held-campaign.ts");
@@ -580,14 +625,15 @@ async function enrol(c: LiveContext, index: number): Promise<Extra> {
   await c.ledger.verifyThrough(await store.head(), false, ADOPT_SETUP);
   const positions = await seedPositions(c.writer, c.seed, index);
   const history: LiveContext["history"] = new Map();
-  const ref = new Reference();
+  const aged = c.aged?.(index);
+  const ref = streamed() ? undefined : new Reference();
   const p = await a.publish(c.attempt + ":act5:" + account + ":R1", W0.R1.doc, validTime, "owed");
   const seq = await sequenceAt(a, p.position);
   const roster = Array.from({ length: c.people }, (_, i) => W0.placementId(i));
-  await ref.check(a, roster, (i) => worldAt(i, p.position, history, positions), W0.R1.doc,
+  await ref?.check(a, roster, (i) => worldAt(i, p.position, history, positions, aged), W0.R1.doc,
     { tx: p.position, validTime }, null, undefined, true, false);
-  const x: Extra = { index, store, a, ref, history, positions, current: { position: p.position, seq, doc: W0.R1.doc },
-    oldOf: new Map() };
+  const x: Extra = { index, store, a, ref, history, positions, aged, descriptor, current: { position: p.position, seq, doc: W0.R1.doc },
+    oldOf: new Map(), releases: [{ seq, position: p.position, doc: W0.R1.doc, old: null }] };
   // Its first release settled quietly, so every account starts the case with only the large release owed.
   const w = await Settlement.open(a, new BulkQueue(1));
   try {
@@ -611,7 +657,12 @@ async function multiCase(
 ) {
   const count = Number(process.env.DX_ACT5_ACCOUNTS ?? 3);
   assert(Number.isInteger(count) && count >= 2 && count <= 10);
+  const stream = streamed();
+  const kill = process.env.DX_ACT7_MULTI_KILL === "1";
+  assert([undefined, "", "0", "1"].includes(process.env.DX_ACT7_MULTI_KILL));
+  const enrolStarted = now();
   while (extras.length < count - 1) extras.push(await enrol(c, extras.length + 1));
+  const enrolMs = now() - enrolStarted;
   const roster = zero.roster;
   // Every account publishes the large release (account 0 through the runner, so its reads stay checked).
   const bases = [zero.current().doc, ...extras.map((x) => x.current.doc)];
@@ -622,18 +673,19 @@ async function multiCase(
     const doc = largeRelease(x.current.doc, shape);
     const p = await x.a.publish(c.attempt + ":act5:" + x.index + ":" + k.name, doc, validTime, "owed");
     const seq = await sequenceAt(x.a, p.position);
-    await x.ref.check(x.a, roster, (i) => worldAt(i, p.position, x.history, x.positions), doc,
+    await x.ref?.check(x.a, roster, (i) => worldAt(i, p.position, x.history, x.positions, x.aged), doc,
       { tx: p.position, validTime }, x.current.doc, undefined, true, false);
     x.oldOf.set(seq, x.current.doc);
     published.push({ seq, position: p.position, doc, old: x.current.doc });
+    x.releases.push({ seq, position: p.position, doc, old: x.current.doc });
     x.current = { position: p.position, seq, doc };
   }
   const accounts = [c.a, ...extras.map((x) => x.a)];
   const queue = new BulkQueue(1);
   const workers = await Promise.all(accounts.map((a) => Settlement.open(a, queue, false, k.frames, k.precondition)));
-  // Saves: account 0 at its own rate, the others at their usual load (the 23.5 tape), into every account.
-  const tape = heldTape(c.people as never, k.own || 23.5, seconds).filter((x) => (x.account === 0 ? k.own > 0 : k.others));
-  const senders = await preload(c.writer, c.seed, await c.s.head(), tape);
+  // Saves: account 0 at its own rate, the others at their usual load (the 23.5 tape), into every account; or the
+  // production-S tape (DX_ACT7_TAPE).
+  const { tape, senders, kind, predecessors } = await caseTape(c, k.own, k.others, seconds, c.attempt + "/act5/" + k.name);
   const begins = now() + 400,
     ends = begins + seconds * 1000;
   for (const w of workers) {
@@ -650,7 +702,7 @@ async function multiCase(
       if (!h) return;
       const e = ordinals.get(save.account + "/" + save.ordinal)!;
       const edits = h.get(save.subject) ?? [];
-      edits.push({ position: save.receipt!.p, width: e.width, version: e.version });
+      edits.push(editOf(save.receipt!.p, e));
       h.set(save.subject, edits);
     },
   };
@@ -658,13 +710,20 @@ async function multiCase(
   const writes = play(senders, tape, begins, c.attempt + "/act5/" + k.name, false, c.ordered,
     creditModeSelection("rolling6"), gate, false, undefined, lane).finally(() => lane?.close());
   const finished: (number | null)[] = workers.map(() => null);
-  const settling = Promise.all(
-    workers.map(async (w, j) => {
-      while (now() < begins) await sleep(Math.ceil(begins - now()));
+  const kills: unknown[] = [];
+  const descriptors = [c.descriptor, ...extras.map((x) => x.descriptor)];
+  const settling = (async () => {
+    while (now() < begins) await sleep(Math.ceil(begins - now()));
+    // Each account's settlement killed once in a child at a random moment, then all resumed here at once.
+    if (kill)
+      for (const [j] of workers.entries())
+        kills.push({ account: j, ...(await killedChild(c, published[j]!.seq, k, 150 + Math.floor(Math.random() * 400),
+          undefined, descriptors[j]!)) });
+    await Promise.all(workers.map(async (w, j) => {
       await w.settle(published[j]!.seq);
       finished[j] = now() - begins;
-    }),
-  );
+    }));
+  })();
   const [wr, st] = await Promise.allSettled([writes, settling]);
   if (wr.status === "rejected") throw wr.reason;
   if (st.status === "rejected") throw st.reason;
@@ -677,56 +736,72 @@ async function multiCase(
   const perAccount = [];
   for (const [j, w] of workers.entries()) {
     const x = j ? extras[j - 1]! : undefined;
-    const ref = x ? x.ref : zero.ref,
-      history = x ? x.history : c.history,
+    const history = x ? x.history : c.history,
       positions = x ? x.positions : c.positions,
+      aged = x ? x.aged : c.aged?.(0),
       pub = published[j]!;
-    const stored = await w.archive.stored(pub.seq);
-    assert.equal(stored.frontier.status, "stored");
-    const want = (
-      JSON.parse(
-        await ref.oracle.call("check", {
-          document: pub.doc,
-          old: pub.old,
-          basis: { tx: pub.position, validTime },
-          worlds: roster.map((_, i) => worldAt(i, pub.position, history, positions)),
-          fold: false,
-        }),
-      ) as { subject: string; rows: [string, string | null, string | null][] }[]
-    )
-      .filter((r) => r.rows.length)
-      .map((r) => ({ subject: r.subject, changes: r.rows.map(([key, , v]) => [key, v]) }));
-    const got = stored.output.map((r) => ({ subject: r.subject, changes: r.changes }));
-    if (canonical(got) !== canonical(want)) {
-      const bad = want.findIndex((x, i) => canonical(x) !== canonical(got[i]));
-      jsonFile(path.join(c.out, "act5-diff-" + k.name + "-" + j + ".json"), { got, want, seq: pub.seq, position: pub.position });
-      assert.fail("account " + j + " stored changes differ at " + bad + ": got " + canonical(got[bad] ?? null).slice(0, 400) +
-        " want " + canonical(want[bad] ?? null).slice(0, 400) + " (counts " + got.length + "/" + want.length + ")");
-    }
-    const all = (await w.recorder.packets(await w.recorder.archive.store.head())).flatMap((p) =>
-      p.deliveries.map(toWire),
-    );
-    assert.deepEqual(all, ref.owed, "account " + j + " notices differ");
-    const deliveries = (await w.recorder.packets(await w.recorder.archive.store.head()))
-      .filter((p) => p.event === pub.seq)
-      .flatMap((p) => p.deliveries.map(toWire));
-    const by = new Map(got.map((r) => [r.subject, r.changes]));
-    const t = { owing: 0, changes: 0, notices: 0 };
-    for (const [i, s] of roster.entries()) {
-      const e = expectForms(worldAt(i, pub.position, history, positions), pub.doc, validTime);
-      const g = checkForms(e, s, (by.get(s) ?? []) as never, deliveries.filter((d: any) => d.subject === s) as never);
-      if (e.changes.size) t.owing++;
-      t.changes += g.changes;
-      t.notices += g.notices;
+    const checkStarted = now();
+    let checked: unknown;
+    if (stream) {
+      // Account 0's releases are the runner's (the first from nothing); an extra's are its own.
+      const releases: StreamRelease[] = x
+        ? x.releases
+        : c.releases.map((r, i) => ({ seq: r.seq, position: r.position, doc: r.doc, old: i ? c.releases[i - 1]!.doc : null }));
+      const counts = await streamCheck({ worker: w, roster, releases, target: pub.seq,
+        world: (at) => (i) => worldAt(i, at, history, positions, aged),
+        workers: process.env.DX_ACT5_SERVER === "1" ? 4 : 1, validTime });
+      assert(counts.independent, "the release under test adds forms");
+      checked = counts;
+    } else {
+      const ref = x ? x.ref! : zero.ref;
+      const stored = await w.archive.stored(pub.seq);
+      assert.equal(stored.frontier.status, "stored");
+      const want = (
+        JSON.parse(
+          await ref.oracle.call("check", {
+            document: pub.doc,
+            old: pub.old,
+            basis: { tx: pub.position, validTime },
+            worlds: roster.map((_, i) => worldAt(i, pub.position, history, positions, aged)),
+            fold: false,
+          }),
+        ) as { subject: string; rows: [string, string | null, string | null][] }[]
+      )
+        .filter((r) => r.rows.length)
+        .map((r) => ({ subject: r.subject, changes: r.rows.map(([key, , v]) => [key, v]) }));
+      const got = stored.output.map((r) => ({ subject: r.subject, changes: r.changes }));
+      if (canonical(got) !== canonical(want)) {
+        const bad = want.findIndex((x, i) => canonical(x) !== canonical(got[i]));
+        jsonFile(path.join(c.out, "act5-diff-" + k.name + "-" + j + ".json"), { got, want, seq: pub.seq, position: pub.position });
+        assert.fail("account " + j + " stored changes differ at " + bad + ": got " + canonical(got[bad] ?? null).slice(0, 400) +
+          " want " + canonical(want[bad] ?? null).slice(0, 400) + " (counts " + got.length + "/" + want.length + ")");
+      }
+      const all = (await w.recorder.packets(await w.recorder.archive.store.head())).flatMap((p) =>
+        p.deliveries.map(toWire),
+      );
+      assert.deepEqual(all, ref.owed, "account " + j + " notices differ");
+      const deliveries = (await w.recorder.packets(await w.recorder.archive.store.head()))
+        .filter((p) => p.event === pub.seq)
+        .flatMap((p) => p.deliveries.map(toWire));
+      const by = new Map(got.map((r) => [r.subject, r.changes]));
+      const t = { owing: 0, changes: 0, notices: 0 };
+      for (const [i, s] of roster.entries()) {
+        const e = expectForms(worldAt(i, pub.position, history, positions, aged), pub.doc, validTime);
+        const g = checkForms(e, s, (by.get(s) ?? []) as never, deliveries.filter((d: any) => d.subject === s) as never);
+        if (e.changes.size) t.owing++;
+        t.changes += g.changes;
+        t.notices += g.notices;
+      }
+      checked = { changes: stored.frontier.changes, noticesWritten: deliveries.length, independent: t };
     }
     perAccount.push({
       account: j,
       finishedMs: finished[j],
+      checkMs: now() - checkStarted,
       values: w.archive.contest.summary(),
       notices: w.recorder.archive.contest.summary(),
-      changes: stored.frontier.changes,
-      noticesWritten: deliveries.length,
-      independent: t,
+      admitted: { values: w.archive.admitted, notices: w.recorder.archive.admitted },
+      checked,
       saves: saveSide(rows.filter((r) => r.account === j), turns),
     });
   }
@@ -734,6 +809,12 @@ async function multiCase(
     case: k,
     seconds,
     accounts: workers.length,
+    enrolMs,
+    tape: kind,
+    predecessors: predecessors ?? null,
+    streamed: stream,
+    kills,
+    ledger: { boundedPages: c.ledger.boundedPages, boundedSkips: c.ledger.boundedSkips },
     turnsByAccount: Object.fromEntries(queue.turnsByKey),
     lane: lane ? lane.stats() : null,
     perAccount,
@@ -741,7 +822,11 @@ async function multiCase(
   };
   console.log("[act5] " + JSON.stringify(result));
   jsonFile(path.join(c.out, "act5-case-" + k.name + ".json"), result);
+  if (process.env.DX_ACT7_FRAME_COUNTERS === "1")
+    jsonFile(path.join(c.out, "act7-frame-counters-" + k.name + ".json"), { frames: frameCounters });
   for (const w of workers) await w.close();
+  // [DX-ACT7] The streamed check folded nothing in memory, so nothing may be compared after it: the case is the last.
+  if (stream) return result;
   // Back to form-free releases, settled quietly and checked.
   const back = await zero.publish(bases[0]!);
   const quiet = await Settlement.open(c.a, new BulkQueue(1), false, k.frames, k.precondition);
@@ -755,14 +840,15 @@ async function multiCase(
       doc = bases[x.index]!;
     const p = await x.a.publish(c.attempt + ":act5:" + x.index + ":back:" + k.name, doc, validTime, "owed");
     const seq = await sequenceAt(x.a, p.position);
-    await x.ref.check(x.a, roster, (i) => worldAt(i, p.position, x.history, x.positions), doc,
+    await x.ref!.check(x.a, roster, (i) => worldAt(i, p.position, x.history, x.positions, x.aged), doc,
       { tx: p.position, validTime }, old, undefined, true, false);
     x.current = { position: p.position, seq, doc };
+    x.releases.push({ seq, position: p.position, doc, old });
     const w = await Settlement.open(x.a, new BulkQueue(1), false, k.frames, k.precondition);
     try {
       await w.settle(seq);
       const all = (await w.recorder.packets(await w.recorder.archive.store.head())).flatMap((p) => p.deliveries.map(toWire));
-      assert.deepEqual(all, x.ref.owed, "account " + x.index + " notices differ after its reset release");
+      assert.deepEqual(all, x.ref!.owed, "account " + x.index + " notices differ after its reset release");
     } finally {
       await w.close();
     }
