@@ -60,7 +60,7 @@ gate() {  # $1 = TX2_CROSS_INDEX (0/1), $2 = TX2_GROUP_COMMIT (0/1), $3.. = cloj
     TX2_GROUP_REUSE_PREPARED=1 TX2_GROUP_FAST_REPLY=1 TX2_GROUP_STAGE_CLOCK=1 TX2_SUBJECT_PROFILE=1 TX2_LEAN_NATIVE_QUERY=1 \
     TX2_LEAN_NATIVE_LOG=1 TX2_GROUP_MAX_MEMBERS=8 TRIPLEX_TRACE_LEVEL=off \
     TRIPLEX_ERASURE_DIRECTORY="$work/erasure" XQ4_RUN="${XQ4_RUN:-r}" \
-    java -server -Xms256m -Xmx2g -XX:+UseSerialGC -Ddatomic.objectCacheMax=256m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json \
+    java -server -Xms256m -Xmx2g -XX:+UseSerialGC ${XQ4_GATE_JAVA_OPTS:-} -Ddatomic.objectCacheMax=256m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json \
     -cp "$(DATOMIC_EXT_CLASSPATH=/opt/gateway/src bin/classpath)" clojure.main -i /xq4/xq4/gate.clj -e "$@"
 }
 transactor

@@ -25,7 +25,7 @@ docker run --name "$name" --memory 4g --cpus 2 --entrypoint /bin/bash \
   -e "XQ4_SUBJECTS=${XQ4_SUBJECTS:-6667}" -e "XQ4_MIXED=${XQ4_MIXED:-3000}" -e "XQ4_QUESTIONS=${XQ4_QUESTIONS:-25}" \
   -e "XQ4_G6_SUBJECTS=${XQ4_G6_SUBJECTS:-1500}" -e "XQ4_COST_PER=${XQ4_COST_PER:-100}" -e "XQ4_G3_SEALED=${XQ4_G3_SEALED:-0}" \
   -e "XQ4_QUESTION_SEED=${XQ4_QUESTION_SEED:-20261124}" \
-  -e "XQ4_SWEEP=${XQ4_SWEEP:-0}" -e "XQ4_SWEEP_QUESTIONS=${XQ4_SWEEP_QUESTIONS:-8}" \
+  -e "XQ4_GATE_JAVA_OPTS=${XQ4_GATE_JAVA_OPTS:-}" -e "XQ4_SWEEP=${XQ4_SWEEP:-0}" -e "XQ4_SWEEP_QUESTIONS=${XQ4_SWEEP_QUESTIONS:-8}" \
   -v "$out/stage/gateway/src:/opt/gateway/src:ro" -v "$out/stage/xq4:/xq4:ro" \
   -v "$out/out:/out" "$image" /xq4/xq4/container.sh > "$out/container.log" 2>&1
 status=$?

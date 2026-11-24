@@ -745,6 +745,7 @@
                    :pagedByTime {:count (get (:last timed) "count") :pages (:pages timed) :stops (:stops timed)}
                    :concurrent (frequencies (map (juxt :status :code) outcomes))
                    :maxQueryMicrosAnswered (reduce max 0 (keep :micros outcomes))
+                   :answeredMicros (sort (keep :micros outcomes)) :answeredWallMs (sort (keep #(when (:micros %) (:wallMs %)) outcomes))
                    :pinnedReadsDuring (frequencies @reads)
                    :pass (and (= expected (get (:last paged) "count") (get (:last timed) "count"))
                               (every? #(#{200 503} (:status %)) outcomes)
