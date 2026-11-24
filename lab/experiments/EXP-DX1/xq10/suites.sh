@@ -32,15 +32,15 @@ for arm in ${XQ10_ARMS:-unset index routes queue}; do
   esac
   cat > "$out/run-$arm.clj" <<CLJ
 (require 'clojure.test) (def nss (quote [$suites])) (apply require nss) (require 'triplex.gateway.main)
-(let [;; a database that exists, so the routes' own checks answer (a missing database is refused before them)
+(let [r (apply clojure.test/run-tests nss)
+      ;; After the suites (a probe before them leaves a feed wakeup that the feed tests count): a database that exists,
+      ;; so the routes' own checks answer (a missing database is refused before them).
       probe-db (:db (triplex.gateway.main/create-scope! "datomic:mem://" "[\\"triplex-scope-v1\\",\\"test\\",\\"xq10\\",\\"probe\\",0]" "lean"))
       call (fn [action] (let [x (triplex.gateway.main/route-handler {:request-method :post :uri (str "/v2/db/" probe-db "/" action)
                                                                       :body (java.io.ByteArrayInputStream. (.getBytes "{\\"account\\":\\"a\\"}" "UTF-8"))})]
                           [(:status x) (let [b (:body x)] (if (bytes? b) (String. ^bytes b "UTF-8") b))]))
-      ;; the routes are probed before the suites run: the tests switch route vars on for their own cases
       routes [(call "ids") (call "sweep") (call "find")]
-      guarded (count (remove nil? (map #(triplex.gateway.question-reader/guard {:request-method :post :uri (str "/v2/db/" probe-db "/" %)}) ["ids" "sweep" "find" "read"])))
-      r (apply clojure.test/run-tests nss)]
+      guarded (count (remove nil? (map #(triplex.gateway.question-reader/guard {:request-method :post :uri (str "/v2/db/" probe-db "/" %)}) ["ids" "sweep" "find" "read"])))]
   (println "XQ10_SUITES $arm" (pr-str (select-keys r [:test :pass :fail :error])))
   (println "XQ10_ROUTES $arm ids" (pr-str (routes 0)) "sweep" (pr-str (routes 1)) "find" (pr-str (routes 2)))
   (println "XQ10_GUARD $arm refusals" guarded "queue" triplex.gateway.ids/list-queue-ms "findPermits" (some? triplex.gateway.ids/find-permits))
