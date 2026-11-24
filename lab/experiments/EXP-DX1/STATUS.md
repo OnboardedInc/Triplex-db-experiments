@@ -5538,3 +5538,17 @@ Sam asked for this on 2026-11-24. Files are private (research folder `2026-11-24
 **Not verified by anyone:** every cost at 1 billion (derived from unit costs); the 6 to 50 s estimate; the backfill estimate; step 1's gate results (the reviewer read code only). The documents had an inline self-review only.
 
 **Done:** every finding forwarded to the step 1 builder at 2026-11-24 10:49 EST with the instruction to confirm or refute each with a count before fixing.
+
+## 2026-11-24 10:59 EST: today's seven branches merged onto the one branch, head `23b7df344`
+
+Source: merge builder. `origin/exp/DX-INT1` now carries settlement frames by bytes, journal bounds, the scorecard reader setting and caps, at-least reads, general-writer hints and the waiting-read bound, per-subject hints, and the save shape (one commit per subject's save; wide writer). Every option default off. One default changed by Sam's decision: the card's tape for new runs is `production-S-noburst`.
+
+- Gates on the merged head (Mac toy): lab unit 73/73; SDK 458 passed; gateway selftest 54,160 assertions; launch guard 102 cases; production exactness gate in four settings, 2,836 fields exact each; saves gate 0 wrong in 204,113 reads; pinned short-cut 92,880 comparisons, 0 differences; console proof 37/37; both toy cards 171 fields exact.
+- Fault found and fixed (`fdabb86e5`): the general-writer hints branch broke every `/reach` and `/reach-many` (HTTP 500) regardless of settings. New gate `int3/reach-gate.sh`: 22 subject pulls identical across this branch, the old baseline and this branch with the read bound; the faulty commit differs on all 22.
+- Weakness found in earlier results: the held Publish runner's probe falls back to `/read` on any error unless `TX2_SWEEP_STRICT=1`, so past held results did not prove subject pulls worked. Rerun strict: pass.
+- Card options `DX_READ_WAIT_LIMIT` and `DX_THREAD_COUNTERS` now reach the run (`4c34fd0f8`).
+- Console: reads after own writes now ask for at least the receipt's position; a second toy can run beside Sam's (names and ports of Sam's toy refused).
+- `READINESS.md` has "Next server session": eleven steps, 10 h 52 to 12 h 32 on one machine, about USD 12 to 14. Steps 1 to 7 take 6 h 38 to 8 h 01.
+- Not yet on the one branch: settlement beside saves (`c1579ee50`), ID lists (`cccaa2e0c`), commit-time index, release size limits, index cost spike.
+
+**Started** (six agents running): slow exact route for questions across subjects (task file `OPUS-XQ6-exact-sweep.md`, branch `exp/DX-XQ6-exact-sweep`); uncached pinned-read cost builder resumed.
