@@ -5456,3 +5456,22 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Limit 3 (commit p99 at load):** cannot be judged on the Mac; a server pair will be published.
 - **Also:** +2 datoms per declared value replaced; about +120 B of log per such pair; 214 B of index per entry on the row's entity and 354 B on a twin (short keys); an uncached subject read with one entry per subject is unchanged (1.03 against 1.02 segment reads). Datomic refuses an add and a retract of the same datom in one transaction (`:db.error/datoms-conflict`); tuple strings over 256 characters are refused.
 - **Bug found by the spike's exactness gate (92 of 92 comparisons after the fix):** the general writer's appended ops arrive in the transactor as `java.util.List` and the optimized writer's tempid normalization rewrites only vectors, so index datoms landed on orphan entities. The design's peer-computed ops would meet the same trap. Passed to the step 1 builder with a gate requirement.
+
+## 2026-11-24 10:24 EST: index cost spike, second batch (questions across subjects)
+
+Source: cost spike builder (XQ2), toy of 2,000 subjects x 160 facts with production-length IDs (keys about 120 characters). Mac numbers, correctness size; server pair still needed.
+
+| Quantity | Measured | Design's plan-changing limit | Reading |
+|---|---|---|---|
+| Writer time per declared value replaced, general writer | 0.12 ms on the Mac (k=1 +0.20 ms, k=20 +2.40 ms p50 on a 20-row form); server estimate 0.2 to 0.33 ms | 0.5 ms per save for 1 to 3 declared values | k=1 inside; k=3 estimated 0.6 to 1.0 ms, at or over the line; needs the server pair |
+| Writer time, per-subject writer, one field, k=1 | -0.08 to +0.04 ms | same | nothing measurable |
+| Storage reads inside apply per first touch | mean +0.05, spread 0.12 | 0.2 | inside; not distinguishable from zero |
+| Bytes per entry | 274 B production-length keys, 214 B short keys | none | about 4.9 GB at 1 billion for 17.9 M entries |
+| Log bytes per declared value replaced | 290 to 410 B | none | +2 datoms per value replaced, +1 per new value |
+| Uncached subject read with 20 entries per subject | range walk 3.70 ms vs 3.91 ms off; segment loads 0.71 vs 0.67 | 5% on segment loads | no measurable cost to priority 1 |
+| Twin entity in its own partition | reads +0.08 vs +0.16; writer +0.30 vs +0.22 ms; 354 B vs 214 B | none | no reason to move entries off the row's entity |
+
+- The k=3 and k=5 hot arms were not fully hot (0.24 to 0.6 reads per save), so their +1.3 ms is not usable.
+- Gap found: entry datoms are not seen by frame bounds, write-policy row/byte counts or the write budget estimator. Forwarded to the step 1 builder with a gate requirement.
+- Still running in the spike: 20,000-subject exactness gate, as-of far behind the head, edge cases.
+- Forwarded the whole batch to the step 1 builder (XQ4) at 2026-11-24 10:24 EST.
