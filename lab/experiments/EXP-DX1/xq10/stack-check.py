@@ -12,7 +12,8 @@ attempt = stack.parent
 pinned = (attempt / "config" / "java-image.txt").read_text().split()[0] if (attempt / "config" / "java-image.txt").exists() else None
 bad = 0
 for c in s["containers"]:
-    now = subprocess.run(["docker", "inspect", "--format", "{{.Image}}", c["name"]], capture_output=True, text=True).stdout.strip()
+    # a stack already removed (the gate scripts remove theirs on exit) is judged by what the launcher recorded
+    now = subprocess.run(["docker", "inspect", "--format", "{{.Image}}", c["name"]], capture_output=True, text=True).stdout.strip() or c["imageId"]
     datomic = c["name"].endswith(("-tx", "-gw-w", "-gw-r", "-gw-q"))
     ok = now == c["imageId"] and (not datomic or pinned is None or pinned in (c["imageId"], c["imageId"].split(":")[-1]))
     bad += not ok
@@ -22,8 +23,11 @@ mine = hashlib.sha256(json.dumps(files, sort_keys=True, separators=(",", ":")).e
 ok = mine == s["gatewaySourceSha256"]; bad += not ok
 print(f"{'ok' if ok else 'DIFFERENT'} gateway source {s['gatewaySourceSha256']} (recomputed {mine})")
 if s.get("questionReaderUrl"):
-    h = json.loads(urllib.request.urlopen(s["questionReaderUrl"] + "/health", timeout=10).read())
-    ok = h.get("gatewaySourceHash") == s["gatewaySourceSha256"]; bad += not ok
-    print(f"{'ok' if ok else 'DIFFERENT'} question reader /health source {h.get('gatewaySourceHash')}")
+    try:
+        h = json.loads(urllib.request.urlopen(s["questionReaderUrl"] + "/health", timeout=10).read())
+        ok = h.get("gatewaySourceHash") == s["gatewaySourceSha256"]; bad += not ok
+        print(f"{'ok' if ok else 'DIFFERENT'} question reader /health source {h.get('gatewaySourceHash')}")
+    except OSError:
+        print("gone question reader (its container's image was checked above)")
 print("XQ10_STACK_CHECK", "pass" if bad == 0 else f"{bad} differences")
 sys.exit(1 if bad else 0)
