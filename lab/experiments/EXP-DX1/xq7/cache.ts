@@ -3,7 +3,7 @@
 // on both), 256 pinned readers re-read a fixed set of subjects on the main reader in 20 s windows: alone, beside one
 // and four sweeps on the question reader, alone, beside one and four sweeps on the main reader, alone. Per window, from
 // the main reader's own counters (Datomic io-stats summed over every read by entity): reads, object cache hits,
-// segments read from storage and loads per index; the sweeps' pages on each gateway (which reader served them); every
+// segments read from storage (`sql`) and loads per index; the sweeps' pages on each gateway (which reader served them); every
 // pinned read's row count against its first read. PostgreSQL's index scans of Datomic's table are recorded too (they
 // sum every peer). Counts are results; times are diagnostic.
 //   bash lab/experiments/EXP-DX1/xq7/gate.sh "$PWD" NEW_OUT_DIR cache.ts   (under one ordinary heavy token)
@@ -119,8 +119,9 @@ for (const [where_, n] of plan) {
   const loadKeys = Object.keys(io).filter((k) => k.endsWith("-load"));
   const arm = {
     arm: where_, sweeps, seconds: ARM_S, readers: READERS, reads, ioReads, rowsPerRead: rows / reads, mismatchedRowCounts: mismatched,
-    mainReader: { objectCacheHits: io["ocache"] ?? 0, storageReads: io["dev"] ?? 0, loads: Object.fromEntries(loadKeys.map((k) => [k, io[k]])),
-      ocachePerRead: per("ocache"), storageReadsPerRead: per("dev"), loadsPerRead: Math.round((loadKeys.reduce((n, k) => n + io[k]!, 0) / Math.max(1, ioReads)) * 10000) / 10000,
+    // Datomic 1.0.7745's io-stats name a segment read from storage `sql` (with `sql-ms`), a decode `deserialize`.
+    mainReader: { objectCacheHits: io["ocache"] ?? 0, storageReads: io["sql"] ?? 0, loads: Object.fromEntries(loadKeys.map((k) => [k, io[k]])),
+      ocachePerRead: per("ocache"), storageReadsPerRead: per("sql"), loadsPerRead: Math.round((loadKeys.reduce((n, k) => n + io[k]!, 0) / Math.max(1, ioReads)) * 10000) / 10000,
       io },
     sweepPagesOnMain: (s1.sweep?.requests ?? 0) - (s0.sweep?.requests ?? 0), sweepPagesOnQuestionReader: (q1.sweep?.requests ?? 0) - (q0.sweep?.requests ?? 0),
     subjectsSwept: tally.subjects, sweepsCompleted: tally.counts.length, sweepCounts: [...new Set(tally.counts)], sweepBusyRetries: tally.busy,

@@ -1156,6 +1156,11 @@ for role in "${gateway_roles[@]}"; do
     elif [[ ${DX_QUESTION_MAIN_REFUSES:-1} == 1 ]]; then
       field_policy+=(-e "TX2_QUESTIONS_AT=$question_url")
     fi
+  elif [[ -n ${DX_QUESTIONS_AT:-} ]]; then
+    # [DX-XQ7] A question reader on another machine (rd5/second-reader.sh with RD5_ROLE=question): every gateway here
+    # refuses questions and names it.
+    [[ $DX_QUESTIONS_AT =~ ^http://[A-Za-z0-9._-]+(:[0-9]{1,5})?$ ]] || { echo "up.sh: DX_QUESTIONS_AT is http://host:port" >&2; exit 2; }
+    field_policy+=(-e "TX2_QUESTIONS_AT=$DX_QUESTIONS_AT")
   fi
   # [DX-XQ7] Per-read io-stats counters on the read gateways (gates count the main reader's object cache hits and loads).
   if [[ ${DX_READ_IO_COUNTERS:-0} == 1 && $mode != w ]]; then field_policy+=(-e TX2_READ_IO_COUNTERS=1); fi
