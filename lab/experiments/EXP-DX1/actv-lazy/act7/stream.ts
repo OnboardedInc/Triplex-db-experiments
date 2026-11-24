@@ -5,6 +5,7 @@ import { unpack } from "../../notify1/store.ts";
 import { toWire } from "../join/check.ts";
 import { checkForms, expectForms } from "../join/form-expect.ts";
 import type { Settlement } from "../join/settlement.ts";
+import { worldsAt } from "../decision.ts";
 
 // [DX-ACT7] Why: the several-accounts case checked each account against an oracle that had folded every release at
 // Publish time and kept every owed notice (about 2 million per account at 20 owed forms) and every subject's ledger in
@@ -38,11 +39,14 @@ export async function streamCheck(o: {
   world: (at: number) => (i: number) => W0.World;
   workers: number;
   validTime: string;
+  /** Subjects whose read at each release's position is compared with the oracle's answer (the whole answer JSON, so
+   * the read path and every fact it reads, aged ones included); `() => true` on the toy. */
+  reads: (i: number) => boolean;
 }) {
   const pool = new DomainOraclePool(new URL("../join/oracle.py", import.meta.url).pathname, o.workers);
   const w = o.worker;
   const at = await w.recorder.archive.store.head();
-  const counts = { subjects: o.roster.length, releases: o.releases.length, changes: 0, subjectsChanged: 0,
+  const counts = { subjects: o.roster.length, releases: o.releases.length, reads: 0, worlds: 0, changes: 0, subjectsChanged: 0,
     notices: 0, noticesByRelease: [] as number[], ledgers: 0, ledgerItems: 0,
     independent: null as null | { owing: number; changes: number; notices: number } };
   try {
@@ -62,14 +66,35 @@ export async function streamCheck(o: {
           const ids = o.roster.slice(lo, lo + 32);
           const out = JSON.parse(await oracle.call("check", { document: r.doc, old: r.old, basis: { tx: r.position, validTime: o.validTime },
             worlds: ids.map((_, j) => o.world(r.position)(lo + j)), fold: true })) as {
-            subject: string; rows: [string, string | null, string | null][]; deliveries: unknown[]; items: unknown[] }[];
-          return out.map((x, j) => ({ ...x, index: lo + j }));
+            subject: string; json: string; rows: [string, string | null, string | null][]; deliveries: unknown[];
+            items: unknown[] }[];
+          // The answers a reader gets at the release's own position, for the chosen subjects of this page.
+          const chosen = ids.map((_, j) => lo + j).filter(o.reads);
+          const answers = chosen.length
+            ? await w.archive.source.reader().readMany(chosen.map((i) => o.roster[i]!), r.position, o.validTime) : [];
+          const read = new Map(chosen.map((i, j) => [i, answers[j]!]));
+          // The facts the store's read path gives those subjects at that position (value and position of every fact),
+          // against the oracle's world: the check that sees AGE1's aged history even where no rule reads it.
+          const src = w.archive.source.s;
+          const stored = chosen.length
+            ? await worldsAt(src, src.profile, chosen.map((i) => o.roster[i]!), { tx: r.position, validTime: o.validTime }) : [];
+          const facts = (x: W0.World) => x.facts.map((f) => canonical(f)).sort();
+          chosen.forEach((i, j) => {
+            assert.deepEqual(facts(stored[j]! as W0.World), facts(o.world(r.position)(i)),
+              "the store's facts differ from the oracle's world: " + o.roster[i] + " at release " + r.seq);
+          });
+          return out.map((x, j) => ({ ...x, index: lo + j, read: read.get(lo + j) }));
         }));
         const page = pages.flat();
         const ledgers = k === last
           ? await ledger.rows<string>(page.map((x) => "recorded-ledger:" + x.subject), at) : undefined;
         for (const x of page) {
           assert.equal(x.subject, o.roster[x.index]);
+          if (x.read !== undefined) {
+            assert.equal(x.read, x.json, "read at release " + r.seq + " differs from the oracle: " + x.subject);
+            counts.reads++;
+            counts.worlds++;
+          }
           const mine: unknown[] = [];
           for (const d of x.deliveries) {
             const next = await delivered.next();

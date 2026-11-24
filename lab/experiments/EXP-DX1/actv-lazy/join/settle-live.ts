@@ -602,6 +602,14 @@ type Extra = {
 };
 const ADOPT_SETUP = /^(settled-(values|notice):|notice:v1:)/;
 const streamed = () => process.env.DX_ACT7_STREAM_CHECK === "1";
+// [DX-ACT7] Which subjects the streamed check also reads at each release's position: `all` (the toy default), or
+// `aged` (the server default: every aged subject and one subject in 97, about 3,000 of 100,000 per account), or `none`.
+function streamReads(aged: AgedBase | undefined) {
+  const mode = process.env.DX_ACT7_STREAM_READS ?? (process.env.DX_ACT5_SERVER === "1" ? "aged" : "all");
+  assert(["all", "aged", "none"].includes(mode), "DX_ACT7_STREAM_READS is all, aged or none");
+  return mode === "all" ? () => true : mode === "none" ? () => false
+    : (i: number) => i % 97 === 0 || Boolean(aged?.(i)?.length);
+}
 async function enrol(c: LiveContext, index: number): Promise<Extra> {
   const { keyFor } = await import("../../scale1/decision/plan.ts");
   const { seedPositions } = await import("./held-campaign.ts");
@@ -749,7 +757,7 @@ async function multiCase(
         : c.releases.map((r, i) => ({ seq: r.seq, position: r.position, doc: r.doc, old: i ? c.releases[i - 1]!.doc : null }));
       const counts = await streamCheck({ worker: w, roster, releases, target: pub.seq,
         world: (at) => (i) => worldAt(i, at, history, positions, aged),
-        workers: process.env.DX_ACT5_SERVER === "1" ? 4 : 1, validTime });
+        workers: process.env.DX_ACT5_SERVER === "1" ? 4 : 1, validTime, reads: streamReads(aged) });
       assert(counts.independent, "the release under test adds forms");
       checked = counts;
     } else {
