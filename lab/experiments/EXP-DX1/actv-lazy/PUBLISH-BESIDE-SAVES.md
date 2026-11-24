@@ -183,33 +183,6 @@ on.
 <!-- RESULTS -->
 <!-- GATES -->
 
-## 10. What a Publish costs, under each rule
-
-Measured by the gate's `cost` part (run `G1`), with no saves running so the whole-head rule lands too: the same
-releases published under each rule, two Publishes per row (the second goes back to the base release). Datoms and the
-gateway's transact time come from the commit reply as the client received it; the journal entry is the transaction's
-own entry as the feed returns it; the writer estimate is the bulk writer's own formula (`frameEstimate`: 3.5 ms + 45 µs
-per row + 70 µs per KiB of wire) applied to the record's operations. "Calls" counts the HTTP requests of the commit
-(begin, guard reads, transact, receipt).
-
-| Release (documents) | Rule | Changes | Operation bytes | Datoms | Journal entry bytes | Writer estimate (µs) | Calls | Retries | Guarded |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| small (inline) | whole head | 4 | 4,849 / 4,817 | 35 | 11,821 / 11,768 | 6,395 / 6,388 | 5 | 0 | the whole database (scope-wide) |
-| small (inline) | account | 4 | 4,881 / 4,849 | 35 | 11,863 / 11,828 | 6,401 / 6,395 | 6 | 0 | tail (`TripleLive`), calendar (`EntityState`), 3 written entities revision-checked |
-| large: + 20 forms, 20 policies (inline) | whole head | 4 | 17,175 / 10,914 | 35 | 27,695 / 19,777 | 8,923 / 7,639 | 5 | 0 | the whole database |
-| large (inline) | account | 4 | 17,207 / 10,946 | 35 | 27,738 / 19,803 | 8,929 / 7,645 | 6 | 0 | as above |
-| small (by reference) | whole head | 4 | 3,565 / 3,565 | 35 | 10,015 / 10,017 | 6,132 / 6,132 | 5 | 0 | the whole database |
-| small (by reference) | account | 4 | 3,598 / 3,598 | 35 | 10,062 / 10,062 | 6,138 / 6,138 | 6 | 0 | as above |
-| large (by reference) | whole head | 4 | 3,702 / 3,567 | 35 | 10,175 / 10,152 | 6,160 / 6,132 | 5 | 0 | the whole database |
-| large (by reference) | account | 4 | 3,734 / 3,599 | 35 | 10,218 / 10,195 | 6,166 / 6,139 | 6 | 0 | as above |
-
-**What the account guard costs over the whole-head rule:** 32 bytes in the record (`"precondition":"account"`), the
-same 35 datoms, about 45 bytes of journal, 6 µs of the writer's estimate, and **one more HTTP call** (the calendar's
-row read inside the transaction). The transactor's revision check is per entity in the transaction's set, three for a
-Publish, instead of one comparison of the head. What it saves is every refusal, every retry and every pause (sections 9.1
-to 9.5).
-
-
 ### 9.5 Gates (e) and (f): many accounts publishing at once, and enrolment, beside saves (the miniature)
 
 `scale2/mini.sh` (its own toy stack in the lab VM, one heavy token), with `TX2_PUBLISH_BESIDE=1`,
@@ -248,6 +221,33 @@ more (enrolment and Publish are idempotent by command ID) and records the first 
 
 **Without the options** the same Publishes are refused: SCALE2's F0 (3 of 3 refused, "Joined command exhausted three
 serial predecessor attempts") and F1 / F2 (late enrolment refused 3 of 3) on this miniature; not rerun here.
+
+
+## 10. What a Publish costs, under each rule
+
+Measured by the gate's `cost` part (run `G1`), with no saves running so the whole-head rule lands too: the same
+releases published under each rule, two Publishes per row (the second goes back to the base release). Datoms and the
+gateway's transact time come from the commit reply as the client received it; the journal entry is the transaction's
+own entry as the feed returns it; the writer estimate is the bulk writer's own formula (`frameEstimate`: 3.5 ms + 45 µs
+per row + 70 µs per KiB of wire) applied to the record's operations. "Calls" counts the HTTP requests of the commit
+(begin, guard reads, transact, receipt).
+
+| Release (documents) | Rule | Changes | Operation bytes | Datoms | Journal entry bytes | Writer estimate (µs) | Calls | Retries | Guarded |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| small (inline) | whole head | 4 | 4,849 / 4,817 | 35 | 11,821 / 11,768 | 6,395 / 6,388 | 5 | 0 | the whole database (scope-wide) |
+| small (inline) | account | 4 | 4,881 / 4,849 | 35 | 11,863 / 11,828 | 6,401 / 6,395 | 6 | 0 | tail (`TripleLive`), calendar (`EntityState`), 3 written entities revision-checked |
+| large: + 20 forms, 20 policies (inline) | whole head | 4 | 17,175 / 10,914 | 35 | 27,695 / 19,777 | 8,923 / 7,639 | 5 | 0 | the whole database |
+| large (inline) | account | 4 | 17,207 / 10,946 | 35 | 27,738 / 19,803 | 8,929 / 7,645 | 6 | 0 | as above |
+| small (by reference) | whole head | 4 | 3,565 / 3,565 | 35 | 10,015 / 10,017 | 6,132 / 6,132 | 5 | 0 | the whole database |
+| small (by reference) | account | 4 | 3,598 / 3,598 | 35 | 10,062 / 10,062 | 6,138 / 6,138 | 6 | 0 | as above |
+| large (by reference) | whole head | 4 | 3,702 / 3,567 | 35 | 10,175 / 10,152 | 6,160 / 6,132 | 5 | 0 | the whole database |
+| large (by reference) | account | 4 | 3,734 / 3,599 | 35 | 10,218 / 10,195 | 6,166 / 6,139 | 6 | 0 | as above |
+
+**What the account guard costs over the whole-head rule:** 32 bytes in the record (`"precondition":"account"`), the
+same 35 datoms, about 45 bytes of journal, 6 µs of the writer's estimate, and **one more HTTP call** (the calendar's
+row read inside the transaction). The transactor's revision check is per entity in the transaction's set, three for a
+Publish, instead of one comparison of the head. What it saves is every refusal, every retry and every pause (sections 9.1
+to 9.5).
 
 
 ## 11. The server run (for the day a machine is rented; nothing here has run)

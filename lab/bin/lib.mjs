@@ -193,15 +193,24 @@ export function dockerStats() {
     cpuPercent: Number.parseFloat(row.CPUPerc),
   }));
 }
+/** [DX-ACT8] The image the disk checks run `df` / `du` in: the pinned XTDB image, or, when it is no longer in the VM
+ * (2026-11-24: the shared VM's images were pruned while its DNS was down, so it could not be pulled again), the toy
+ * stack's own Postgres image if that is present. Never pulls; the checks and their floors are unchanged. */
+function utilityImage(config) {
+  if (docker(['image', 'inspect', config.lanes.xtdb.image, '--format', '{{.Id}}'], { allowFail: true })) return config.lanes.xtdb.image;
+  const fallback = 'postgres:17-alpine';
+  if (docker(['image', 'inspect', fallback, '--format', '{{.Id}}'], { allowFail: true })) return fallback;
+  return config.lanes.xtdb.image;
+}
 /** VM disk via a throwaway container from an already pulled pinned image (no pull, no busybox). */
 export function vmDisk(config) {
-  const out = docker(['run', '--rm', '--network', 'none', '--entrypoint', 'df', config.lanes.xtdb.image, '-P', '-B1', '/']);
+  const out = docker(['run', '--rm', '--network', 'none', '--entrypoint', 'df', utilityImage(config), '-P', '-B1', '/']);
   const fields = out.split('\n')[1].trim().split(/\s+/);
   return { totalBytes: Number(fields[1]), usedBytes: Number(fields[2]), availableBytes: Number(fields[3]) };
 }
 export function volumeBytes(config, volume) {
   if (!docker(['volume', 'inspect', volume], { allowFail: true })) return null;
-  const out = docker(['run', '--rm', '--network', 'none', '-v', `${volume}:/v:ro`, '--entrypoint', 'du', config.lanes.xtdb.image, '-s', '-k', '/v'], { allowFail: true });
+  const out = docker(['run', '--rm', '--network', 'none', '-v', `${volume}:/v:ro`, '--entrypoint', 'du', utilityImage(config), '-s', '-k', '/v'], { allowFail: true });
   return out ? Number(out.split(/\s+/)[0]) * 1024 : null;
 }
 
