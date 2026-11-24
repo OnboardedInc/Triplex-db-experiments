@@ -11,11 +11,11 @@ mkdir -p "$out"
 git -C "$repo" rev-parse HEAD > "$out/source"
 name=tx2-dxs1-suites
 docker rm -f "$name" >/dev/null 2>&1
-docker run --name "$name" --memory 4g --entrypoint /bin/bash \
+docker run --name "$name" --memory 4g -e "DX_S1_SUITES=${DX_S1_SUITES:-off wide wide-hints}" --entrypoint /bin/bash \
   -v "$repo/packages/datomic/gateway/src:/opt/gateway/src:ro" \
   -v "$repo/packages/datomic/src/codec-spec.json:/opt/gateway/codec-spec.json:ro" \
   -v "$repo/lab/experiments/EXP-DX1:/exp:ro" -v "$out:/out" "$image" /exp/s1/suites-run.sh > "$out/suites.log" 2>&1
 status=$?
 docker rm -f "$name" >/dev/null 2>&1
-grep -E '^DX-S1_(SUITE|WIDE_GATE)' "$out/suites.log"
+grep -E '^DX-S1_(SUITE|WIDE_GATE|SELFTEST)' "$out/suites.log"
 exit "$status"

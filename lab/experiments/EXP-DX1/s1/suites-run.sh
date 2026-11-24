@@ -63,8 +63,18 @@ suite() {  # $1 = TX2_SUBJECT_WIDE, $2 = hints (both TX2_SUBJECT_HINTS and TX2_G
         (shutdown-agents) (System/exit (if (zero? (+ (:fail r) (:error r) (or (:fail w) 0) (or (:error w) 0))) 0 1)))" 2>&1 | grep -v '^WARNING: ' || code=$?
   echo "DX-S1_SUITE_EXIT $label $code"
 }
+# The gateway's own selftest (in memory), which reads through reach/response among its routes.
+selftest() {  # $1 = TX2_SUBJECT_WIDE
+  local code=0
+  TX2_SUBJECT_WIDE=$1 TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_PREFETCH=0 \
+    java -server -Xms128m -Xmx1g -XX:+UseSerialGC -Dtriplex.codec.spec=/opt/gateway/codec-spec.json \
+    -cp "$(bin/classpath)" clojure.main -m triplex.gateway.selftest 2>&1 | grep -v '^WARNING: ' | tail -n 5 || code=$?
+  echo "DX-S1_SELFTEST_EXIT wide=$1 $code"
+}
 for arm in ${DX_S1_SUITES:-off wide wide-hints}; do
   case $arm in
+    selftest-off) selftest 0 ;;
+    selftest-wide) selftest 1 ;;
     off) suite 0 0 off ;;
     wide) suite 1 0 wide ;;
     wide-hints) suite 1 1 wide-hints ;;
