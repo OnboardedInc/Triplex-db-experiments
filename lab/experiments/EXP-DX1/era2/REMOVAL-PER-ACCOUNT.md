@@ -3,7 +3,8 @@
 Builder DX-ERA2, branch `exp/DX-ERA2-removal-per-account` from `exp/DX-SCALE2-wide-thin` (`3e3e652b9`, which contains
 the one branch `23b7df344`). Mac work is correctness and counts at toy size; every Mac time below is diagnostic.
 Nothing ran on a server. One option, default off: `TX2_REMOVAL_PER_ACCOUNT=1`. All accounts stay in one Datomic
-database. Datomic is not modified; the installed writer functions are unchanged.
+database. Datomic is not modified; the installed writer functions' code is unchanged (their stored texts differ only in
+reader-generated names, section 9).
 
 ## 0. Results
 
@@ -65,8 +66,8 @@ saves of the subjects being removed (0 to 2 per cell), which must be refused.
 duration): 1 x 76 ms = 7.6% against 3.7% measured; 1 x 66 ms = 6.6% against 8.6%; 10 x 31 ms = 31% against 31.4%;
 10 x 302 ms = 100% against 87.9%. It does not depend on which account removes or how many accounts there are, only on
 the whole database's save rate R: refused saves per second = R x min(1, removal rate x removal duration). At 200 saves
-per second, 0.2 removals per second and a 50 ms removal, that is 2 refused saves per second across all accounts, every
-hour. After: 0 at every account count and rate (a save is fenced only on the counters of the entities it writes, which
+per second, 0.2 removals per second and a 50 ms removal, that is 2 refused saves per second across all accounts (7,200
+an hour). After: 0 at every account count and rate (a save is fenced only on the counters of the entities it writes, which
 a removal elsewhere never moves).
 
 **The cost moved to the removal.** Other saves no longer pause during a removal, so the removal's own database-wide
@@ -308,7 +309,12 @@ All on the Mac, toy size; counts are results, times diagnostic. Evidence under `
   result on the base, on this gateway with the option unset and with it on: 0 failures, 1 error, the same error in all
   three (`feed-test` `http-route` reads a byte body as a string; it fails on the base too).
 - **The existing removal regression** (ERASE1/ERASE2's 13 route checks, both writer modes, and the sealed witness):
-  REGRESSION-PLACEHOLDER
+  `engine.mjs erase1 --run ledger-authority-regression` on this branch's final code (`32c25d98c`, option unset as the
+  regression runs it), each on its own stack with the PostgreSQL authority, a backup and a real restore: per-subject
+  writer **13 of 13** route checks, general writer **13 of 13**, per-subject writer with the sealed witness **13 of
+  13** (`reg-subject`, `reg-general`, `reg-sealed`, all exit 0). The 13 cases: an open handle, fresh history, a current
+  and a retained replica, the journal, feed resume, import replay, the Publish barrier, notice sender and recipient,
+  joined marker staging, the SSN rule, backup and restore.
 
 **(b) The fault measurement with the option on**: section 0, table 2 (0 other-account saves refused or replayed; the
 subjects being removed refused 0 to 2 per cell).
@@ -346,7 +352,10 @@ authority's sealed saves are covered by the fault measurement's sealed cell).
 the transactor is restarted 8 s into a 1-per-second removal window; every removal is retried with the same command until
 it answers.
 
-**(d) The sealed removal check**: REGRESSION-SEALED-PLACEHOLDER
+**(d) The sealed removal check**: the regression with `--sealed-witness` (13 of 13, and its sealed route witness and
+writer removal witness written), the sealed cases of the in-process gate (database-wide and per account, every case
+except the paused saves) and the sealed fault cell on the PostgreSQL authority with the option on (300 of 300 removals,
+0 wrong, 0 removed values found by the scans, 0 other-account saves refused of 937).
 
 **(e) The production exactness gate and the combined check with removals in three accounts at once**: the `three` cell
 of the fault measurement (removals round-robin in three accounts at 10 per second, 7 other accounts saving, reading and
