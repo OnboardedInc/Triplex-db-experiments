@@ -527,6 +527,8 @@ if (phases.has("server")) {
   execFileSync(process.execPath, ["--no-warnings", "--experimental-transform-types", join(import.meta.dirname, "server.ts"), readyFile, join(out!, "server-dry")],
     { stdio: "inherit", env: { ...process.env, API1_DRY: "1", API1_READER_CONTAINER: container, API1_REREAD_PER_ACCOUNT: "20" } });
 }
+results.entityCache = { warm: (await warm.request<any>("GET", "/v2/admin/scan-stats")).entityCache, cold: (await cold.request<any>("GET", "/v2/admin/scan-stats")).entityCache };
+log("entity cache", JSON.stringify(results.entityCache));
 results.batchStats = { warm: (await warm.request<any>("GET", "/v2/admin/scan-stats")).readBatch, cold: (await cold.request<any>("GET", "/v2/admin/scan-stats")).readBatch };
 writeFileSync(join(out!, "results.json"), JSON.stringify(results, null, 2) + "\n");
 for (const c of [warm, cold, writer]) c.close();

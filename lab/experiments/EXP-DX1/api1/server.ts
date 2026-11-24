@@ -12,7 +12,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
+import { DatomicClient, DefinitionCache } from "../../../../packages/datomic/dist/index.js";
 import { deepTasks, taskId, taskSerial, fieldValue } from "../../../bench/lib/deep-world.ts";
 import { ids } from "../../../bench/lib/world.ts";
 import { pathToFileURL } from "node:url";
@@ -28,7 +28,8 @@ const env = (k: string, d: string) => process.env[k] ?? d;
 const dry = env("API1_DRY", "0") === "1";
 const windowSeconds = dry ? 10 : Number(env("API1_WINDOW_SECONDS", "60"));
 const callersList = (dry ? "8" : env("API1_CALLERS", "64,256")).split(",").map(Number);
-const arms = env("API1_ARMS", "today,loader,batch1").split(",") as Port[];
+type Arm = Port | "floor";
+const arms = env("API1_ARMS", "today,batch1,floor").split(",") as Arm[];
 const sets = env("API1_SETS", "reread,random").split(",");
 const savesPerSecond = Number(env("API1_SAVES_PER_SECOND", "23"));
 const aloneCalls = dry ? 3 : Number(env("API1_ALONE_CALLS", "20"));
@@ -102,7 +103,13 @@ const literalForms = (s: Shape): Shape => {
         : { key: step.key, ids: (c) => [def.form(c.A, taskSerial(c.i, c.t) % FORMS)] };
   return { ...s, levels: s.levels.map((l) => l.map(fix)), ...(s.after ? { after: s.after.map((l) => l.map(fix)) } : {}), ...(s.batch ? { batch: s.batch.map(fix) } : {}) };
 };
-const byName = new Map(shapes.map((s) => [s.name, literalForms(s)]));
+// The world forms reach the forms through the task's reference on the toy; at 1 billion they are named literally too.
+const withForms = (s: Shape): Shape => !s.name.endsWith("-world") ? s : {
+  ...s, levels: [[...s.levels[0]!, s.name === "task-page-world"
+    ? { key: "form", ids: (c: Ctx) => [def.form(c.A, taskSerial(c.i, c.t) % FORMS)], def: true }
+    : { key: "forms", ids: (c: Ctx) => [...new Set(Array.from({ length: deepTasks(c.i) }, (_, t) => def.form(c.A, taskSerial(c.i, t) % FORMS)))], def: true }] as Step[],
+    ...s.levels.slice(1)] };
+const byName = new Map(shapes.map((s) => [s.name, withForms(literalForms(s))]));
 // The mixes (proposed; API-CALL-READS.md section 7): shares of calls. "calls" is every subject-centred shape; the list
 // page (15% of the product's calls in the proposed mix) runs in windows of its own at few callers, because at 64 callers
 // one list page of today's port takes longer than a window.
@@ -117,9 +124,14 @@ const drawShape = (mix: [string, number][]) => {
 };
 const listCallers = dry ? 4 : Number(env("API1_LIST_CALLERS", "8"));
 const { today, loader, batch1 } = makePorts(db, validAt, writer, save);
-const call = (port: Port, shape: Shape, ctx: Ctx, stats = false): Promise<Result> =>
+// "floor": the one-request batch with each subject-centred shape read as its world (subject-page-world and the others)
+// and the definitions in force from the product-side cache (DefinitionCache), as API-CALL-READS.md section 10 builds it.
+const floorDefs = new DefinitionCache();
+const call = (port: Arm, shape: Shape, ctx: Ctx, stats = false): Promise<Result> =>
   port === "today" ? today(reader, shape, ctx, false) : port === "pinned" ? today(reader, shape, ctx, true)
-    : port === "loader" ? loader(reader, shape, ctx, { stats }) : batch1(reader, shape, ctx, { stats });
+    : port === "loader" ? loader(reader, shape, ctx, { stats })
+    : port === "floor" ? batch1(reader, byName.get(shape.name + "-world") ?? shape, ctx, { stats, defs: floorDefs })
+    : batch1(reader, shape, ctx, { stats });
 const cpuMicros = () => {
   const text = execFileSync("docker", ["exec", readerContainer, "cat", "/sys/fs/cgroup/cpu.stat"], { encoding: "utf8" });
   return Number(/usage_usec (\d+)/.exec(text)![1]);
@@ -136,7 +148,7 @@ if (sets.includes("reread")) {
   log("warmed", { subjects: rereadSet.length, seconds: (performance.now() - t0) / 1000 });
 }
 // Alone: one caller, each shape, each arm, no saves.
-for (const set of sets) for (const shape of byName.values()) for (const port of arms) {
+for (const set of sets) for (const shape of [...byName.values()].filter((x) => !x.name.endsWith("-world"))) for (const port of arms) {
   const wall: number[] = [], per: Result[] = [];
   const c0 = cpuMicros();
   for (let k = 0; k < (shape.name === "subject-list" && port === "today" ? Math.min(aloneCalls, 5) : aloneCalls); k++) {
@@ -145,7 +157,7 @@ for (const set of sets) for (const shape of byName.values()) for (const port of 
   }
   const mean = (f: (x: Result) => number) => per.reduce((n, x) => n + f(x), 0) / per.length;
   log("alone", { set, shape: shape.name, port, calls: per.length, p50: pct(wall, 0.5), p99: pct(wall, 0.99), trips: mean((x) => x.trips),
-    reads: mean((x) => x.reads), loads: port === "loader" || port === "batch1" ? mean((x) => x.loads ?? 0) : null,
+    reads: mean((x) => x.reads), loads: port === "today" || port === "pinned" ? null : mean((x) => x.loads ?? 0), defHits: mean((x) => x.defHits),
     readerCpuMsPerCall: (cpuMicros() - c0) / 1000 / per.length, requestP99: pct(per.flatMap((x) => x.requestMs ?? []), 0.99),
     missedOwnWrite: per.reduce((n, x) => n + (x.missedOwnWrite ?? 0), 0) });
 }

@@ -81,7 +81,8 @@ java -Xmx512m -cp "$cp" clojure.main "$work/index.clj" "${template/\{db\}/$name}
 tuned=(TX2_PINNED_SHORTCUT=1 TX2_PINNED_CUT_LOOKUP=1 TX2_READ_FILTER_EARLY=1 TX2_READ_PERMITS=3
        TX2_READ_BATCH=1 TX2_ID_LISTS=1 TX2_READ_PROFILE=1 TRIPLEX_TRACE_DIR=/out/trace)
 gateway 8081 1g "-Ddatomic.objectCacheMax=384m" "${tuned[@]}" TRIPLEX_TRACE_PROCESS=r-warm
-gateway 8082 768m "-Ddatomic.objectCacheMax=32m" "${tuned[@]}" TRIPLEX_TRACE_PROCESS=r-cold
+read -r -a cold_env <<< "${API1_COLD_ENV:-}"
+gateway 8082 768m "-Ddatomic.objectCacheMax=32m" "${tuned[@]}" TRIPLEX_TRACE_PROCESS=r-cold ${cold_env[@]+"${cold_env[@]}"}
 echo ready > /out/readers-ready
 wait_file /out/done
 echo ok > /out/finished

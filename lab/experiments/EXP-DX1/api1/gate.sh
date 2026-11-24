@@ -20,7 +20,8 @@ image=$(gate_image "${API1_IMAGE:-sha256:21a67288007d1647ad12136acef23ff23c733a9
 git -C "$repo" rev-parse HEAD > "$out/source"
 git -C "$repo" status --porcelain -- packages/datomic/gateway/src packages/datomic/src lab/experiments/EXP-DX1/api1 > "$out/source-dirty"
 docker rm -f "$name" >/dev/null 2>&1
-docker run -d --name "$name" --memory 6g --cpus 4 -p 127.0.0.1:$base:8080 -p 127.0.0.1:$((base+1)):8081 -p 127.0.0.1:$((base+2)):8082 \
+# API1_COLD_ENV: more settings for the cold reader (8082), for example TX2_ENTITY_CACHE_BYTES=0; empty by default.
+docker run -d --name "$name" --memory 6g --cpus 4 -e "API1_COLD_ENV=${API1_COLD_ENV:-}" -p 127.0.0.1:$base:8080 -p 127.0.0.1:$((base+1)):8081 -p 127.0.0.1:$((base+2)):8082 \
   --entrypoint /bin/bash -v "$repo/packages/datomic/gateway/src:/opt/gateway/src:ro" -v "$here:/gate:ro" -v "$out/out:/out" \
   "$image" /gate/container.sh >/dev/null
 gate_image_ran "$name" "$image" "$out/image.json" || { docker rm -f "$name" >/dev/null; exit 2; }
