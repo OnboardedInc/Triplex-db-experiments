@@ -301,21 +301,27 @@
   []
   (reduce + (map #(.getCollectionTime ^java.lang.management.GarbageCollectorMXBean %)
                  (java.lang.management.ManagementFactory/getGarbageCollectorMXBeans))))
+(defn throttled-ms
+  "Milliseconds the container's CPU quota has held its threads back so far (cgroup v2 cpu.stat), or 0 when unreadable."
+  []
+  (try (let [line (first (filter #(.startsWith ^String % "throttled_usec") (str/split-lines (slurp "/sys/fs/cgroup/cpu.stat"))))]
+         (quot (Long/parseLong (second (str/split line #" "))) 1000))
+       (catch Exception _ 0)))
 (defn run-find
   "Every page of a question, with small pages and bounds to force cursors. Returns the concatenation."
   [name q page-limit bounds]
   (loop [cursor nil pages [] ids [] projected {} guard 0 bounds bounds raises 0]
     (let [input (cond-> (assoc q "limit" page-limit "bounds" bounds) cursor (assoc "cursor" cursor))
-          g0 (gc-ms)
+          g0 (gc-ms) th0 (throttled-ms)
           r (route name "v2" "find" input)
-          gc (- (gc-ms) g0)
+          gc (- (gc-ms) g0) throttled (- (throttled-ms) th0)
           small? (and (= 413 (:status r)) (= "BoundTooSmall" (get-in r [:body "code"])) (< (get bounds "entries") 1000000))]
       ;; A client told its entry bound is too small for one candidate raises it (x10, to the cap) and asks the same page.
       (when-not (or (= 200 (:status r)) small?) (throw (ex-info "find refused" {:q q :reply r})))
       (if small?
         (recur cursor pages ids projected (inc guard) (update bounds "entries" #(min 1000000 (* 10 %))) (inc raises))
       (let [b (:body r) ids (into ids (get b "ids" [])) projected (merge projected (get b "projected" {}))
-            pages (conj pages (assoc (select-keys b ["stopped" "examined" "segmentsLoaded" "count" "countExact" "position" "indexEpoch" "entityReads" "indexOnly" "queryMicros" "queryCpuMicros"]) "gcMs" gc))]
+            pages (conj pages (assoc (select-keys b ["stopped" "examined" "segmentsLoaded" "count" "countExact" "position" "indexEpoch" "entityReads" "indexOnly" "queryMicros" "queryCpuMicros"]) "gcMs" gc "throttledMs" throttled))]
         (if (and (get b "next") (< guard 100000))
           (recur (get b "next") pages ids projected (inc guard) bounds raises)
           {:ids ids :projected projected :last b :pages (count pages) :stops (frequencies (map #(get % "stopped") pages))
@@ -732,17 +738,17 @@
                                 (= "CursorMismatch" (get-in other [:body "code"])) (= "AccountRequired" (get-in no-account [:body "code"])))}))))
 
 (defn phase-g5! [label]
-  (let [gc-start (gc-ms) name (db-name label) conn (reopen name)
+  (let [gc-start (gc-ms) th-start (throttled-ms) name (db-name label) conn (reopen name)
         q {"account" "acc-a" "where" [{"attribute" ":task/status" "op" "exists"}] "result" "count"}
         world (world-at name conn (head name conn) 1.79e12)
         expected (count (:ids (brute world "acc-a" q)))
         paged (run-find name (assoc q "basis" {"validAt" 1.79e12}) 1000 {"entries" 1000 "ms" 1000 "segments" 4096})
         timed (run-find name (assoc q "basis" {"validAt" 1.79e12}) 1000 {"entries" 1000000 "ms" 1 "segments" 4096})
         pool (Executors/newFixedThreadPool 64)
-        heavy (fn [i] (fn [] (let [t0 (System/nanoTime) g0 (gc-ms)
+        heavy (fn [i] (fn [] (let [t0 (System/nanoTime) g0 (gc-ms) th0 (throttled-ms)
                                    r (route name "v2" "find" (assoc q "account" (nth accounts (mod i 3)) "bounds" {"entries" 1000000 "ms" 50 "segments" 4096}))]
                                {:status (:status r) :code (get-in r [:body "code"]) :micros (get-in r [:body "queryMicros"])
-                                :segments (get-in r [:body "segmentsLoaded"]) :cpuMicros (get-in r [:body "queryCpuMicros"]) :gcMs (- (gc-ms) g0)
+                                :segments (get-in r [:body "segmentsLoaded"]) :cpuMicros (get-in r [:body "queryCpuMicros"]) :gcMs (- (gc-ms) g0) :throttledMs (- (throttled-ms) th0)
                                 :wallMs (/ (- (System/nanoTime) t0) 1e6)})))
         reads (future (vec (for [i (range 200)]
                              (:status (route name "v1" "read" {"entityIds" [(subj "acc-b" i)] "basis" {"recordedPosition" (head name conn)}})))))
@@ -753,7 +759,7 @@
                    :pagedByTime {:count (get (:last timed) "count") :pages (:pages timed) :stops (:stops timed)}
                    :concurrent (frequencies (map (juxt :status :code) outcomes))
                    :maxQueryMicrosAnswered (reduce max 0 (keep :micros outcomes))
-                   :answered (vec (sort-by :micros (map #(select-keys % [:micros :cpuMicros :gcMs :segments :wallMs]) (filter :micros outcomes))))
+                   :answered (vec (sort-by :micros (map #(select-keys % [:micros :cpuMicros :gcMs :throttledMs :segments :wallMs]) (filter :micros outcomes))))
                    ;; GC attribution: the request's time less the collectors' time during it (a pause stops every thread).
                    :maxAnsweredMicrosLessGc (reduce max 0 (keep #(when (:micros %) (- (:micros %) (* 1000 (:gcMs %)))) outcomes))
                    :timedPages {:bound-ms 1 :pages (count (:pageList timed))
@@ -763,9 +769,9 @@
                                 :over11ms (count (filter #(> (get % "queryMicros" 0) 11000) (:pageList timed)))
                                 ;; The pages that ran past their bound by more than 2 ms, with what they read.
                                 :slowPages (vec (for [pg (:pageList timed) :when (> (get pg "queryMicros" 0) 3000)]
-                                                  (select-keys pg ["queryMicros" "queryCpuMicros" "gcMs" "segmentsLoaded" "examined" "stopped"])))
+                                                  (select-keys pg ["queryMicros" "queryCpuMicros" "gcMs" "throttledMs" "segmentsLoaded" "examined" "stopped"])))
                                 :segmentsLoadedPerPage (frequencies (map #(get % "segmentsLoaded") (:pageList timed)))}
-                   :gcMsDuringPhase (- (gc-ms) gc-start)
+                   :gcMsDuringPhase (- (gc-ms) gc-start) :throttledMsDuringPhase (- (throttled-ms) th-start)
                    :pinnedReadsDuring (frequencies @reads)
                    :pass (and (= expected (get (:last paged) "count") (get (:last timed) "count"))
                               (every? #(#{200 503} (:status %)) outcomes)
