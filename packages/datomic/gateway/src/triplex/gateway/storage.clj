@@ -5,7 +5,7 @@
             [triplex.gateway.subject-save :as subject] [clojure.data.json :as json]
             [triplex.gateway.owner-layout :as owner-layout] [triplex.gateway.owner-root :as owner-root]
             [triplex.gateway.pinned :as pinned] [triplex.gateway.general-prefetch :as general-prefetch]
-            [triplex.gateway.subject-hints :as subject-hints])
+            [triplex.gateway.subject-hints :as subject-hints] [triplex.gateway.removal-scope :as removal-scope])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -210,7 +210,12 @@
                ;; [DX-ERASE1] Why: a late native write is fenced even if its peer request timed out.
                ;; Rejected: releasing the gateway lock and trusting the delayed transactor outcome.
                (when-let [seq (:seq privacy/*cut*)]
-                 [[:db/cas scope :triplex.scope/erasure-seq seq seq]])
+                 (if (:per-account privacy/*cut*)
+                   ;; [DX-ERA2] Guarded per account: the installed writers' fence on its fixed value, and the removal
+                   ;; sequences of the accounts this write touches (and those its ticket names).
+                   [[:db/cas scope :triplex.scope/erasure-seq removal-scope/sentinel removal-scope/sentinel]
+                    (removal-scope/fence-op privacy/*cut* rows (removal-scope/ticket-accounts input))]
+                   [[:db/cas scope :triplex.scope/erasure-seq seq seq]]))
                ;; [DX-B4-T1] Why: one physical commit can contain several logical journals.
                ;; Rejected: using only tx/id (drops nested transacts at interior cursors).
                (mapcat (fn [[entity rs]]
@@ -525,7 +530,7 @@
                                   (or (not (:sealed privacy/*cut*)) (envelope/shared?))
                                   (not (or policy/priority? policy/field-only? policy/budget-us replay-capture/enabled)))
                          (trace/span "subject.prepare" "gateway"
-                           (subject-prepare conn db data input (when privacy/*cut* (:seq privacy/*cut*)))))
+                           (subject-prepare conn db data input (privacy/fence-seq privacy/*cut*))))
           ;; [Opus W1] Why: a save the covering writer cannot take must not reach legacy rows under a root.
           _ (when (and owner-layout/enabled (nil? subject-plan)) (fold-touched! conn db data))
           start (System/nanoTime)

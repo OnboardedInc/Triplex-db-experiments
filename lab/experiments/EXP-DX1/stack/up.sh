@@ -977,6 +977,20 @@ if [[ -n ${pg_data:-} ]]; then
   erase_mount=(-v "$repo/lab/experiments/EXP-DX1/erase1:/erase1:ro")
   gateway_main=erase1
 fi
+# [DX-ERA2] Why: measure removal on request with the production removal authority (PostgreSQL, shared by both gateways,
+# its advisory lock and pooled value keys) on an ordinary toy stack. A fresh wrapping key per stack lives only in the
+# gateways' environment (filtered from the evidence below). Unset: both gateways' environment exactly as before.
+# Rejected: the ERASE2 staged-copy path (it replaces the gateway main and needs a stopped copy).
+if [[ ${DX_ERASURE_SQL:-0} == 1 ]]; then
+  [[ -z ${pg_data:-} ]] || { echo "up.sh: DX_ERASURE_SQL does not combine with a staged copy" >&2; exit 2; }
+  docker exec "$prefix-pg" psql -Xq -v ON_ERROR_STOP=1 -U postgres -d postgres -c 'CREATE DATABASE removal_authority OWNER datomic'
+  authority_jdbc=${template#*\?}
+  authority_jdbc=${authority_jdbc/\/datomic\?/\/removal_authority\?}
+  TRIPLEX_ERASURE_WRAPPING_KEY=$(openssl rand -base64 32)
+  export TRIPLEX_ERASURE_WRAPPING_KEY
+  erase_env=(-e TRIPLEX_ERASURE_WRAPPING_KEY -e "TRIPLEX_ERASURE_JDBC=$authority_jdbc"
+    -e "TRIPLEX_ERASURE_SHRED_GRACE_MS=${DX_ERASURE_SHRED_GRACE_MS:-0}")
+fi
 # [DX-BM1] Why: avoid probing catalog creation before the SQL transactor announces startup.
 # Rejected: treating an early location read failure as a missing database, or unbounded health fetches.
 if [[ ${DX_STACK_WAIT_FOR_TRANSACTOR:-0} == 1 ]]; then
@@ -1089,6 +1103,15 @@ for role in "${gateway_roles[@]}"; do
     [[ $DX_SWEEP_PER_ACCOUNT =~ ^([1-9]|1[0-6])$ ]] || { echo "up.sh: DX_SWEEP_PER_ACCOUNT must be 1..16" >&2; exit 2; }
     field_policy+=(-e "TX2_SWEEP_PER_ACCOUNT=$DX_SWEEP_PER_ACCOUNT")
   fi
+  # [DX-ERA2] Removal on request guarded per account (TX2_REMOVAL_PER_ACCOUNT) on every gateway (unset: unchanged).
+  if [[ -n ${DX_REMOVAL_PER_ACCOUNT:-} ]]; then
+    [[ $DX_REMOVAL_PER_ACCOUNT =~ ^[01]$ ]] || { echo "up.sh: DX_REMOVAL_PER_ACCOUNT must be 0 or 1" >&2; exit 2; }
+    field_policy+=(-e "TX2_REMOVAL_PER_ACCOUNT=$DX_REMOVAL_PER_ACCOUNT")
+  fi
+  # [DX-ERA2] One line per removal with its number of tries (unset: nothing printed).
+  if [[ ${DX_REMOVAL_TRIES_LOG:-0} == 1 ]]; then field_policy+=(-e "TX2_REMOVAL_TRIES_LOG=1"); fi
+  # [DX-ERA2] The removal checks its selection per subject and takes its position at commit (unset: unchanged).
+  if [[ ${DX_REMOVAL_SUBJECT_CHECK:-0} == 1 ]]; then field_policy+=(-e "TX2_REMOVAL_SUBJECT_CHECK=1"); fi
   # [DX-SCALE2] The sweep's per-account gates evicted when an account's last sweep ends (unset: environment unchanged).
   if [[ -n ${DX_SWEEP_GATE_EVICT:-} ]]; then
     [[ $DX_SWEEP_GATE_EVICT =~ ^[01]$ ]] || { echo "up.sh: DX_SWEEP_GATE_EVICT must be 0 or 1" >&2; exit 2; }
@@ -1228,7 +1251,7 @@ docker exec "$prefix-pg" psql -X -At -U postgres -d datomic -c "SHOW log_min_dur
 if [[ $TRIPLEX_TRACE_POSTGRES == 1 ]]; then
   docker exec "$prefix-pg" psql -X -At -U postgres -d datomic -c "SHOW log_duration; SHOW log_line_prefix;" > "$attempt/postgres-event-settings.txt"
 fi
-if [[ -n $pg_data ]]; then
+if [[ -n $pg_data || ${DX_ERASURE_SQL:-0} == 1 ]]; then
   # [DX-ERASE2] Why: container evidence needs immutable IDs and mounts, while the private gateway keeps its runtime secrets.
   # Rejected: saving full inspect responses containing the ephemeral wrapping key.
   docker inspect "$prefix-pg" "$prefix-tx" "${gateway_roles[@]/#/$prefix-gw-}" |
