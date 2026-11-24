@@ -182,7 +182,13 @@ GATES-TABLE
 - **What the console could show** (not changed): per account, a row with the release, a progress bar of subjects done
   of total for values and for notices, frames refused in the last minute, the estimate of time remaining, and pause,
   resume and pace controls; a database view listing the accounts with settlement in progress.
-- **Toy** (case `pause-p`): PAUSE-RESULT
+- **Toy** (case `pause-p`): paused before it started, the account wrote nothing for 2 s (0 frames offered; `readSettlement` showed values "not
+  started", 0 of 8 subjects, the notice cursor at event 8 with 488 entries, control paused version 1); a second worker
+  opened as after a restart was still paused for 1 s (0 frames offered); after `paceMs: 300` and resume, 17 frame turns
+  of the two workers (the first worker and the restarted one, which then raced as rivals under the guard) were never
+  closer than 300.3 ms; the release settled exactly (474 changes, 160 notices, independent rule agrees); the final
+  sight showed values stored 8 of 8, 474 changes, 2 frames, notices caught up, mean turn 62.8 ms (Mac). A frame
+  repeated by the second worker is recognized by its command id and counted as committed by both.
 
 ## 9. Server runs (for the day a machine is rented)
 
@@ -288,7 +294,24 @@ unit of writer time (fewer, larger writes per subject) or a looser live bound, n
 
 ## 10. Not verified
 
-NOT-VERIFIED
+- **Nothing at full size.** Every count here is at toy size (8 subjects per account, 9 frames per release); every Mac
+  time is diagnostic. The server commands of section 9 carry the predictions.
+- **The writer-side wait of a live save behind a frame** is argued from the code (one frame in flight per process, each
+  admitted at or under 8 ms of estimated service), not measured: the Mac shows client-side turns only, and the 8 ms is
+  the existing estimate (`bulkUs`), not a measured service time.
+- **One settling process per database is assumed.** Two processes settling different accounts would each keep one frame
+  in flight, so a save could wait behind two. The bound "at most one frame" holds per process; a database-wide bound
+  needs every settling account in one process (as the held runner does) or a shared turn on the writer.
+- **The count framing (`TX2_SETTLE_FRAMES` unset) beside saves** was measured only under the head rule in the earlier
+  attempt; the toy's small release no longer fits one count frame on these deep subjects ("Bulk batch exceeds W1
+  service estimate", the fault ACT4 fixed by byte frames), so the after-measurement uses byte frames only. The guard is
+  the same code path for both framings.
+- **Several processes racing on one release** were tested with one rival process (and three killed children); not with
+  many hosts.
+- **The 1 billion run cannot run yet** (section 9.2: adoption of the aged seal, the oracle's worlds for aged subjects,
+  streaming the check for ten accounts, production-shaped saves in the held runner).
+- **Removal on request during settlement** was not exercised here: the argument that the removal-sequence ticket covers
+  it is from the code (`TRIPLEX_ERASURE_FRONTIER`), and settlement still refuses an account with removal marks.
 
 ## Files
 

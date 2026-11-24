@@ -578,7 +578,7 @@ async function enrol(c: LiveContext, index: number): Promise<Extra> {
   const history: LiveContext["history"] = new Map();
   const ref = new Reference();
   const p = await a.publish(c.attempt + ":act5:" + account + ":R1", W0.R1.doc, validTime, "owed");
-  const seq = (await a.notices.observe()).value.sequence;
+  const seq = await sequenceAt(a, p.position);
   const roster = Array.from({ length: c.people }, (_, i) => W0.placementId(i));
   await ref.check(a, roster, (i) => worldAt(i, p.position, history, positions), W0.R1.doc,
     { tx: p.position, validTime }, null, undefined, true, false);
@@ -617,7 +617,7 @@ async function multiCase(
   for (const x of extras) {
     const doc = largeRelease(x.current.doc, shape);
     const p = await x.a.publish(c.attempt + ":act5:" + x.index + ":" + published.length, doc, validTime, "owed");
-    const seq = (await x.a.notices.observe()).value.sequence;
+    const seq = await sequenceAt(x.a, p.position);
     await x.ref.check(x.a, roster, (i) => worldAt(i, p.position, x.history, x.positions), doc,
       { tx: p.position, validTime }, x.current.doc, undefined, true, false);
     x.oldOf.set(seq, x.current.doc);
@@ -750,7 +750,7 @@ async function multiCase(
     const old = x.current.doc,
       doc = bases[x.index]!;
     const p = await x.a.publish(c.attempt + ":act5:" + x.index + ":back:" + k.name, doc, validTime, "owed");
-    const seq = (await x.a.notices.observe()).value.sequence;
+    const seq = await sequenceAt(x.a, p.position);
     await x.ref.check(x.a, roster, (i) => worldAt(i, p.position, x.history, x.positions), doc,
       { tx: p.position, validTime }, old, undefined, true, false);
     x.current = { position: p.position, seq, doc };
@@ -764,4 +764,18 @@ async function multiCase(
     }
   }
   return result;
+}
+
+/** The notice sequence a Publish at `position` wrote. The tail is read until it reaches the Publish: an unpinned read
+ * can trail the acknowledged write (H11.4), and a stale tail would name the previous release. */
+async function sequenceAt(a: JoinedAccount, position: number) {
+  for (let i = 0; i < 2000; i++) {
+    const t = await a.notices.observe();
+    if (t.at >= position) {
+      assert.equal(t.at, position, "another Publish followed");
+      return t.value.sequence;
+    }
+    await sleep(5);
+  }
+  throw new Error("The notice tail never reached the Publish at " + position);
 }
