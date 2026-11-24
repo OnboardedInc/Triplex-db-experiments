@@ -984,3 +984,10 @@ Sam, verbatim (with a screenshot of the orchestrator's "Where the three paths st
 > I guess my question is, going back to how this is going to be used: if you think way, way back, some of the saves are going to be really big, right? Because we might ship a bunch of policy changes all at once. Maybe we add 20 forms and add 20 policies all in one save. How would that look, I guess, given what we know about this so far?
 
 Recorded by the orchestrator: questions, answered in the session. Follow-up started: Publish at 100,000 subjects moved up on the second machine; a builder works through a release of 20 forms and 20 policies from the code and makes release size a setting of the Publish runner.
+
+### 2026-11-23 21:06 local: Sam, using the console on the Mac (with a screenshot of the Subject type page's Entities tab, which shows "Subjects are listed by account" and one button "Open account-003")
+
+Verbatim: "why does it only give one option for account?"
+
+- **Cause:** the Subject type's Entities tab is an empty state with one button linking to the default account (`examples/console/src/pages/types/type-page.tsx` near line 362); all ten accounts are in the sidebar only.
+- **Action (orchestrator):** builder resumed to list subjects on that tab with an account picker for all ten accounts and paging by number, to rewrite builder jargon on screen in plain words, and to remove other single hard-wired choices. Not a decision of Sam's; feedback on the app.
