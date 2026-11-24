@@ -467,7 +467,8 @@
     (->> (avet-range view id-a start (when after (str base after (if desc? "" "\u0000"))) desc?)
          (counted work entries deadline)
          (map (fn [datom] (let [local (subs ^String (:v datom) (count base))]
-                            [local (:e datom) nil (boolean (or (nil? shape-re) (re-matches shape-re (subs local (count prefix)))))])))
+                            ;; [DX-XQ10] A shape describes the whole local part, as the ID list route's grammar.
+                            [local (:e datom) nil (boolean (or (nil? shape-re) (re-matches shape-re local)))])))
          (after-items desc? after))))
 
 (defn- value-stream
@@ -651,8 +652,12 @@
         _ (when (and from-type (not (or (contains? (:entry-types decl) from-type) (contains? (:id-types decl) from-type))))
             (refuse! 409 "AttributeNotIndexed" (str "Entity type " from-type " is not declared")))
         id-pattern (when from-type (get (:id-types decl) from-type))
+        ;; [DX-XQ10] A shape is matched against the whole local part (acct/<account>/ removed), the ID list route's and
+        ;; the sweep's grammar, so one question means one thing on every route; a type's ID pattern is its own shape.
+        ;; Found by the agreement gate: before, find matched the text after the prefix, so `shape: "pl:{8 digits}"`
+        ;; listed every root on the sweep and none on find. Rejected: changing the ID list route (its grammar came first).
         [id-prefix shape] (cond id-pattern (let [i (.indexOf ^String id-pattern "{")]
-                                             (if (neg? i) [id-pattern nil] [(subs id-pattern 0 i) (subs id-pattern i)]))
+                                             (if (neg? i) [id-pattern nil] [(subs id-pattern 0 i) id-pattern]))
                                 (get from "prefix") [(get from "prefix") (get from "shape")])
         shape-re (shape-pattern shape)
         _ (when (and (empty? conds) (nil? from)) (refuse! 400 "UnsupportedOperation" "Give from or at least one condition"))
@@ -765,7 +770,7 @@
                   (when (and ;; A value-ordered scan drives: `from` by prefix or ID pattern is applied to the local part.
                              (or (nil? driver-c) (nil? id-prefix)
                                  (and (.startsWith local ^String id-prefix)
-                                      (or (nil? shape-re) (re-matches shape-re (subs local (count id-prefix))))))
+                                      (or (nil? shape-re) (re-matches shape-re local))))
                              (every? #(matches? view % es v16) rest-conds)
                              (or (nil? from-type) (do (aset work 1 (inc (aget work 1))) (type-visible? view eid from-type valid)))
                              (or (not visibility?) (do (aset work 1 (inc (aget work 1))) (fact-visible? view eid valid)))
@@ -881,9 +886,16 @@
   (let [from (get input "from") where (get input "where" []) order (get input "order") project (get input "project")
         any-of (get input "anyOf") result (get input "result" "ids")
         value-ok? (fn [v] (not (and (map? v) (#{"json" "blob"} (get v "type")))))
+        ;; [DX-XQ10] The sweep's own refusals by value family: a range's ends are one of string, integer, number or
+        ;; datetime; prefix and contains take {type: string} (found by the difference table: a range on a boolean).
+        range-ok? (fn [c] (let [ends (keep #(get c %) ["from" "fromExclusive" "to" "toExclusive"])
+                                fams (set (map #(when (map? %) (get % "type")) ends))]
+                            (and (seq ends) (= 1 (count fams)) (#{"string" "integer" "number" "datetime"} (first fams)))))
+        text-ok? (fn [c] (and (map? (get c "value")) (= "string" (get-in c ["value" "type"]))))
         plain-ok? (fn [c] (and (map? c) (#{"eq" "in" "range" "prefix" "exists" "missing" "ne" "contains"} (get c "op"))
                                (value-ok? (get c "value"))
-                               (or (nil? (get c "values")) (and (sequential? (get c "values")) (every? value-ok? (get c "values"))))))
+                               (or (nil? (get c "values")) (and (sequential? (get c "values")) (every? value-ok? (get c "values"))))
+                               (case (get c "op") "range" (range-ok? c) ("prefix" "contains") (text-ok? c) true)))
         cond-ok? (fn [c] (or (plain-ok? c)
                              (and (map? c) (= "has" (get c "op")) (map? (get c "related"))
                                   (or (nil? (get c "where")) (and (sequential? (get c "where")) (every? plain-ok? (get c "where")))))))
@@ -903,7 +915,9 @@
 
 (def ^:private index-refusals
   "Refusals that come from what the index holds, not from the question: the sweep may answer them."
-  #{"AttributeNotIndexed" "IndexNotAvailableAtPosition" "UnsupportedOperation" "BoundTooSmall" "IndexOff"})
+  ;; [DX-XQ10] ValueFamilyMismatch too: a declared attribute's stored rows can hold values of another family (each entry is
+  ;; keyed by its row's own family), and the sweep compares by the value's own family, so it answers such a question.
+  #{"AttributeNotIndexed" "IndexNotAvailableAtPosition" "UnsupportedOperation" "BoundTooSmall" "IndexOff" "ValueFamilyMismatch"})
 
 (defn find! [name conn protected input]
   (try (find-page! name conn protected input)

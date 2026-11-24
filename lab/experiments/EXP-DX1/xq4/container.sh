@@ -4,6 +4,8 @@
 # A new JVM per phase is a gateway restart; restart_transactor is a transactor restart. Timings are diagnostic.
 set -euo pipefail
 cd /opt/datomic
+# [DX-XQ10] The gateway code this container runs: the mounted tree's hash (gate.sh compares it with the staged copy).
+echo "XQ10_SOURCE_TREE $(cd /opt/gateway/src && find . -type f -name '*.clj' | LC_ALL=C sort | xargs sha256sum | sha256sum | cut -d' ' -f1)"
 work=$(mktemp -d); chmod 755 "$work"
 install -d -o 65534 -g 65534 "$work/data" "$work/socket"
 install -d "$work/erasure"
@@ -57,12 +59,15 @@ gate() {  # $1 = TX2_CROSS_INDEX (0/1), $2 = TX2_GROUP_COMMIT (0/1), $3.. = cloj
     TX2_LIVE_PRIORITY=0 TX2_PREDECESSOR_LOOKUP=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_PREFETCH=0 \
     TX2_SUBJECT_APPEND_RETIREMENT=${XQ4_MARKERS:-0} TX2_PINNED_SHORTCUT=${XQ4_PINNED:-0} \
     TX2_SWEEP=${XQ4_SWEEP:-0} TX2_GENERAL_PREFETCH=${XQ4_HINTS:-0} TX2_SUBJECT_HINTS=${XQ4_HINTS:-0} \
+    TX2_SWEEP_SHAPES=${XQ4_SWEEP_SHAPES:-} TX2_ID_LIST_QUEUE_MS=${XQ4_LIST_QUEUE_MS:-} TX2_INDEX_HINTS=${XQ4_INDEX_HINTS:-} \
     TX2_GROUP_REUSE_PREPARED=1 TX2_GROUP_FAST_REPLY=1 TX2_GROUP_STAGE_CLOCK=1 TX2_SUBJECT_PROFILE=1 TX2_LEAN_NATIVE_QUERY=1 \
     TX2_LEAN_NATIVE_LOG=1 TX2_GROUP_MAX_MEMBERS=8 TRIPLEX_TRACE_LEVEL=off \
     TRIPLEX_ERASURE_DIRECTORY="$work/erasure" XQ4_RUN="${XQ4_RUN:-r}" \
     java -server -Xms256m -Xmx2g -XX:+UseSerialGC ${XQ4_GATE_JAVA_OPTS:-} -Ddatomic.objectCacheMax=256m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json \
-    -cp "$(DATOMIC_EXT_CLASSPATH=/opt/gateway/src bin/classpath)" clojure.main -i /xq4/xq4/gate.clj -e "$@"
+    -cp "$(DATOMIC_EXT_CLASSPATH=/opt/gateway/src bin/classpath)" clojure.main -i /xq4/xq4/gate.clj $extra -e "$@"
 }
+# [DX-XQ10] The agreement gate's phases (xq10/agree.clj), loaded after gate.clj when staged.
+extra=; [[ -f /xq4/xq4/agree.clj ]] && extra="-i /xq4/xq4/agree.clj"
 transactor
 phase() { echo "XQ4_PHASE $1 $(date -u +%FT%TZ)"; }
 want() { [[ " ${XQ4_PHASES:-} " == *" $1 "* ]]; }
@@ -107,5 +112,10 @@ if want world; then
   run g5 1 0 "(xq4-gate/phase-g5! \"a\") $(done_)"
   run e1 1 0 "(xq4-gate/phase-e1! \"a\") $(done_)"
   if [[ ${XQ4_SWEEP:-0} == 1 ]]; then run sweep-a 1 0 "(xq4-gate/phase-sweep! \"a\") $(done_)"; fi
+  if want agree; then
+    run edge-a 1 0 "(xq10-agree/phase-edge! \"a\") $(done_)"
+    run agree-a 1 0 "(xq10-agree/phase-agree! \"a\") $(done_)"
+    run table-a 1 0 "(xq10-agree/phase-table! \"a\") $(done_)"
+  fi
 fi
 phase done

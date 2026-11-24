@@ -13,10 +13,12 @@ out=${1:?absolute new output directory under /Users}
 : "${DOCKER_HOST:?set DOCKER_HOST to the lab VM docker socket}"
 repo=$(git rev-parse --show-toplevel)
 image=${DX_XQ10_IMAGE:-tx2-datomic:dx-real2-production}
+# Shared tags are rebuilt by other builders: start by the ID resolved now; each container's image is recorded below.
+image=$(docker image inspect --format '{{.Id}}' "$image") || exit 1
 mkdir -p "$out"
 git -C "$repo" rev-parse HEAD > "$out/source"
 git -C "$repo" status --porcelain -- packages/datomic/gateway > "$out/dirty"
-docker image inspect --format '{{.Id}}' "$image" > "$out/image-id"
+echo "$image" > "$out/image-id"
 cp -R "$repo/packages/datomic/gateway" "$out/gateway"
 cp "$repo/packages/datomic/src/codec-spec.json" "$out/codec-spec.json"
 base="triplex.gateway.selftest triplex.gateway.commit-order-test triplex.gateway.cache-key-test triplex.gateway.group-test triplex.gateway.feed-test triplex.gateway.recent-test triplex.gateway.pinned-test triplex.gateway.trace-test triplex.gateway.ids-test triplex.gateway.cross-index-test triplex.gateway.question-reader-test"
@@ -45,7 +47,8 @@ CLJ
     ${env[@]+"${env[@]}"} -e DATOMIC_URI_TEMPLATE='datomic:mem://{db}' -e DF01_RECORDED_PAGE=/tmp/recorded-page.json --entrypoint /bin/bash "$image" -c \
     'cd /opt/datomic && java -Xmx2g -Ddatomic.objectCacheMax=256m -Ddatomic.memoryIndexMax=256m -Dtriplex.codec.spec=/opt/spec/codec-spec.json -cp "$(DATOMIC_EXT_CLASSPATH=/opt/gateway/src bin/classpath)" clojure.main /opt/run.clj' \
     > "$out/suites-$arm.log" 2>&1 || status=1
-  echo "$arm $(docker inspect --format '{{.Image}}' "$name")" >> "$out/container-images"
+  ran=$(docker inspect --format '{{.Image}}' "$name"); echo "$arm $ran" >> "$out/container-images"
+  [[ $ran == "$image" ]] || { echo "XQ10_IMAGE_CHECK FAIL $arm ran $ran, pinned $image"; status=1; }
   docker rm -f "$name" >/dev/null 2>&1
   grep -E "XQ10_|FAIL in|ERROR in" "$out/suites-$arm.log" | head -20
 done

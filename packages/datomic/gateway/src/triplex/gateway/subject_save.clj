@@ -225,12 +225,13 @@
   (str prefix (format "%016d" position)
        (format "%016x" (Double/doubleToRawLongBits (double clock))) journal))
 
-;; [DX-XQ4] Why: the cross-subject index is resolved after this namespace's stored function text is compiled: its
-;; identity hashes the code text, whose generated symbol numbers depend on everything compiled before it.
-;; Rejected: requiring the index namespace above (it changed the per-subject function's identity with the option off).
-(def ^:private index-op?
-  (delay (when (= "1" (System/getenv "TX2_CROSS_INDEX")) (requiring-resolve 'triplex.gateway.cross-index/op?))))
-
+;; [DX-XQ4, moved by DX-XQ10] Which operations the per-subject writer takes: the prepared path's small operations, and
+;; with TX2_CROSS_INDEX=1 also index entries (cross_index.clj replaces this var, and wraps render-ops to send a
+;; subject's entries to its numeric owner). Why here as a plain var: code added to this namespace shifts the generated
+;; names of every stored function compiled after it (owner head, general hints), so their identities moved with the
+;; option off; a def of a var and a call through it add none (xq10/idents.sh). Rejected: the index branch's inline
+;; delay and cond clause (they moved two functions' identities).
+(def small-op prepared/small-op?)
 (defn render-ops [ops owner subject prior prior-rows new-ids marker]
   (let [temp-owner (str "e:" subject)
         rewrite #(commit/rewrite-change %1 %2 new-ids prior-rows)]
@@ -256,10 +257,6 @@
                       position (count prefix) :retirement]])
                   [:db/retract owner :triplex.entity/row (prior (nth op 2))])
                 (and (vector? op) (= :triplex.entity/rev (nth op 2)) (= temp-owner (second op))) nil
-                ;; [DX-XQ4] Why: an index entry for the subject goes to the same numeric owner as its rows.
-                ;; Rejected: keeping the tempid (the owner's upsert map is dropped above, so it would mint an entity).
-                (and numeric-owner? (vector? op) (= :triplex.ix/entry (nth op 2 nil)) (= temp-owner (second op)))
-                (assoc op 1 owner)
                 :else op)))
       ops)))
 
@@ -302,8 +299,7 @@
                ;; narrow rule here (the option stays default-off and leaves today's plans byte for byte).
                (not (and wide? (:import-predecessor p)))
                (<= (count ops) (if wide? wide-ops 256))
-               (every? #(or (prepared/small-op? %) (and (some? expected-erasure) (envelope-op? %))
-                            (when-let [f @index-op?] (f %))) ops))
+               (every? #(or (small-op %) (and (some? expected-erasure) (envelope-op? %))) ops))
       (let [[fn-tx flags owner revision]
             (trace/span "subject.plan-witnesses" "gateway"
               (let [fn-tx (installed db) flags (when fn-tx (scope-witness db scope))

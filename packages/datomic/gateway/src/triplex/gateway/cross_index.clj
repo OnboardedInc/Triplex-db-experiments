@@ -6,7 +6,8 @@
   with the option off no function here is reached and no save changes. The transactor's stored functions do not change:
   the write gateway adds plain :db/add, :db/retract and :db/cas operations to the transaction data it prepares."
   (:require [clojure.data.json :as json] [clojure.string :as str] [datomic.api :as d]
-            [triplex.gateway.lean :as lean] [triplex.gateway.schema :as schema] [triplex.gateway.pinned :as pinned]))
+            [triplex.gateway.lean :as lean] [triplex.gateway.schema :as schema] [triplex.gateway.pinned :as pinned]
+            [triplex.gateway.subject-save :as subject] [triplex.gateway.group-prepare :as prepared]))
 
 (set! *warn-on-reflection* false)
 
@@ -325,3 +326,18 @@
            (every? (fn [^datomic.Datom datom] (or (<= (.tx datom) last-tx) (and ix-a (= ix-a (.a datom)))))
                    (d/datoms current :eavt eid))))))
 (alter-var-root #'pinned/unchanged-since? (constantly unchanged-since?))
+
+;; [DX-XQ4, moved by DX-XQ10] The per-subject writer and index entries, installed from here with the option on (as the
+;; pinned check above), so subject_save.clj carries no index code and no stored function's identity moves with it off:
+;; (1) the writer's eligibility admits entry operations beside the prepared path's small operations; (2) an entry for
+;; the subject goes to the same numeric owner as its rows (render-ops drops the owner's upsert map, so a tempid would
+;; mint an entity). render-ops passes entry operations through unchanged, so readdressing them after it is the same.
+(when enabled
+  (alter-var-root #'subject/small-op (constantly (fn [op] (or (prepared/small-op? op) (op? op)))))
+  (alter-var-root #'subject/render-ops
+    (fn [render]
+      (fn [ops owner subject prior prior-rows new-ids marker]
+        (let [temp-owner (str "e:" subject)]
+          (mapv (fn [op] (if (and subject/numeric-owner? (vector? op) (= :triplex.ix/entry (nth op 2 nil)) (= temp-owner (second op)))
+                           (assoc op 1 owner) op))
+                (render ops owner subject prior prior-rows new-ids marker)))))))

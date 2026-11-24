@@ -1,5 +1,5 @@
 (ns triplex.gateway.uncached
-  (:require [datomic.api :as d])
+  (:require [datomic.api :as d] [triplex.gateway.lean :as lean])
   (:import [java.util.concurrent ExecutorService Executors Future ThreadFactory]
            [java.util.concurrent.atomic AtomicLong LongAdder]))
 
@@ -53,3 +53,12 @@
       (doseq [^Future f futures]
         (try (.get f) (catch Throwable _ (.increment failures))))
       nil)))
+
+;; [DX-XQ10] lean/rows calls this hook (the condition the uncached-read branch wrote inline there): a named-subject read
+;; of a plain pinned cut, not an interior, history or ID lookup. Installed only with the option on, from this namespace,
+;; which main.clj loads last, so with the option off no stored function's identity moves (xq10/idents.sh).
+(when prefetch?
+  (alter-var-root #'lean/prefetch-hook
+    (constantly (fn [entities cut inner history? id current source]
+                  (when (and entities cut (not inner) (not history?) (not id))
+                    (prefetch! (or current source) (vec (distinct entities))))))))

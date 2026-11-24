@@ -1,5 +1,5 @@
 (ns triplex.gateway.main
-  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase] [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger] [triplex.gateway.pinned :as pinned] [triplex.gateway.uncached :as uncached] [triplex.gateway.group-cut :as group-cut]
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase] [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger] [triplex.gateway.pinned :as pinned] [triplex.gateway.group-cut :as group-cut]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
             [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed]
             [triplex.gateway.write-wire :as write-wire]
@@ -11,7 +11,11 @@
             [triplex.gateway.subject-hints :as subject-hints]
             [triplex.gateway.ids :as ids] [triplex.gateway.sweep :as sweep]
             [triplex.gateway.question-reader :as qr]
-            [triplex.gateway.cross-find :as cross-find])
+            [triplex.gateway.cross-find :as cross-find]
+            ;; [DX-XQ10] Last, so its option (TX2_INDEX_HINTS) can extend the two lookup functions; off, it changes nothing.
+            [triplex.gateway.index-hints :as index-hints]
+            ;; [DX-XQ10] Late for the same reason (it fills lean/prefetch-hook with TX2_READ_PREFETCH=1).
+            [triplex.gateway.uncached :as uncached])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -158,6 +162,8 @@
       general-prefetch/enabled (assoc-in [:options :generalPrefetch] (general-prefetch/installed? db))
       ;; [DX-W4] Why: report the option only when it is on, so default readbacks stay byte-identical.
       subject-hints/enabled (assoc-in [:options :subjectHints] (subject-hints/installed? db))
+      ;; [DX-XQ10] The index hint fix (TX2_INDEX_HINTS), reported only when on.
+      index-hints/enabled (assoc-in [:options :indexHints] {:subject (str index-hints/subject-ident) :general (str index-hints/general-ident)})
       ;; [DX-RD5] Why: the uncached-read options, reported only when on, as the two above.
       uncached/prefetch? (assoc-in [:options :readPrefetch] true)
       (System/getProperty "datomic.readAheadPool") (assoc-in [:options :readAheadPool] (System/getProperty "datomic.readAheadPool"))
