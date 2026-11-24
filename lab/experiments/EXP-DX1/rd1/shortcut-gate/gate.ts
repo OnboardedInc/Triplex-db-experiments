@@ -15,7 +15,7 @@ import { command } from "../../w1/group/workload.ts";
 import { sha } from "../../w1/field/schedule.ts";
 import { scaleAccount, scaleOwner } from "../../prep1/ceiling-seed.ts";
 
-const [out, url, readerOff, readerOn, readerLookup] = process.argv.slice(2);
+const [out, url, readerOff, readerOn, readerLookup, readerTuned] = process.argv.slice(2);
 // [DX-THIN1] Why: the combined check compares the pinned routes with the owner head on and off. With
 // RD2_GATE_OWNER_HEAD=0 no writer runs the owner head, so the database never stores covering roots, and the readers
 // run without the option; with 1 (the default) phase 5 writes roots and every reader runs with the option.
@@ -174,32 +174,41 @@ await waitFor("compare-ready", 300);
 
 // Comparison: both options off (the reference) against each option set, on every pinned route.
 const off = new DatomicClient(readerOff!, 35_000), on = new DatomicClient(readerOn!, 35_000), lookup = new DatomicClient(readerLookup!, 35_000);
-const readers = { on, lookup } as const;
-for (const c of [off, on, lookup]) for (const sc of [scope, scope2]) await c.create(sc, "lean", true, 35_000);
+// [DX-RD2] The tuned reader (both options, the early filter, the read profile, three permits) joins when given.
+const tuned = readerTuned ? new DatomicClient(readerTuned, 35_000) : undefined;
+const readers: Record<string, DatomicClient> = { on, lookup, ...(tuned ? { tuned } : {}) };
+for (const c of [off, ...Object.values(readers)]) for (const sc of [scope, scope2]) await c.create(sc, "lean", true, 35_000);
 const opts = async (c: DatomicClient) => { const o = (await c.request<any>("GET", "/v1/db/" + db + "/write-options")).options; return [o.pinnedShortcut, o.pinnedCutLookup]; };
 assert.deepEqual([await opts(off), await opts(on), await opts(lookup)], [[false, false], [true, true], [false, true]]);
-for (const c of [off, on, lookup])
+if (tuned) assert.deepEqual(await opts(tuned), [true, true]);
+for (const c of [off, ...Object.values(readers)])
   assert.equal(Boolean((await c.request<any>("GET", "/v1/db/" + db + "/write-options")).subjectOwnerHead), ownerHead);
 const canon = (x: unknown) => JSON.stringify(x, (_k, v) => (Array.isArray(v) && v.length && typeof v[0] === "object" && v[0] && "id" in v[0]
   ? [...v].sort((p: any, q: any) => (p.id < q.id ? -1 : p.id > q.id ? 1 : 0)) : v));
 const differences: unknown[] = [];
 let compared = 0, rows = 0;
 const check = async (route: string, call: (c: DatomicClient) => Promise<unknown>, where: unknown) => {
-  const reference = canon(await call(off));
+  // [DX-RD2] Name the reader and place of a transport failure, and print progress once per 2,000 comparisons.
+  const named = (name: string, c: DatomicClient) => call(c).catch((e) => { throw new Error(`${route} on ${name} at ${JSON.stringify(where)}`, { cause: e }); });
+  const reference = canon(await named("off", off));
   for (const [name, c] of Object.entries(readers)) {
-    compared++;
-    if (canon(await call(c)) !== reference) differences.push({ route, reader: name, where });
+    if (++compared % 2000 === 0) console.error(new Date().toISOString(), "compared", compared, route);
+    if (canon(await named(name, c)) !== reference) differences.push({ route, reader: name, where });
   }
 };
 const chunks = (xs: string[], n: number) => Array.from({ length: Math.ceil(xs.length / n) }, (_, i) => xs.slice(i * n, i * n + n));
 const validTimes = [1, SEED_VALID_FROM + 1];
 async function compareScope(label: string, sc: string, d: string, subjects: string[], tasksOf: string[], top: number) {
-  const read = (basis: object, entities: string[]) => (c: DatomicClient) =>
-    c.request<any>("POST", "/v1/db/" + d + "/read", { entityIds: entities, basis }).then((r) => { rows += r.rows.length; return r.rows; });
+  const read = (basis: object, entities: string[], attribute?: string) => (c: DatomicClient) =>
+    c.request<any>("POST", "/v1/db/" + d + "/read", { entityIds: entities, basis, ...(attribute ? { pattern: { attribute } } : {}) })
+      .then((r) => { rows += r.rows.length; return r.rows; });
   // Record time by logical position: every position from 1 to the head, every subject, two valid times.
   for (let p = 1; p <= top; p++)
     for (const validAt of validTimes)
       for (const part of chunks(subjects, 400)) await check(label + "/read", read({ recordedPosition: p, validAt }, part), { p, validAt });
+  // The ladder's own read shape: field 0 by pattern (the early filter's case), batches of eight task subjects.
+  for (let p = 1; p <= top; p++)
+    for (const part of chunks(tasksOf, 8)) await check(label + "/read-field", read({ recordedPosition: p, validAt: SEED_VALID_FROM + 1 }, part, ":task/field-0"), { p });
   // Record time by clock: every distinct record clock of any subject's row.
   const history: any[] = await off.request<any>("POST", "/v1/db/" + d + "/read", { entityIds: subjects, history: true }).then((r) => r.rows);
   const clocks = [...new Set(history.map((r) => Number(r.recorded_at?.v ?? r.recorded_at)))].filter(Number.isFinite).sort((a, b) => a - b);
@@ -219,7 +228,7 @@ const stats = async (c: DatomicClient) => (await c.request<any>("GET", "/v2/admi
 const result: Record<string, any> = { gate: "pinned-shortcut", ownerHead, seedCut, agedSaves: aged.saves, head, writes, aged: aged1,
   removal: { ...removal, pin: pin2, head: head2, erased: !!erased }, compared, rows,
   differences: differences.slice(0, 20), differenceCount: differences.length,
-  off: await stats(off), on: await stats(on), lookup: await stats(lookup) };
+  off: await stats(off), on: await stats(on), lookup: await stats(lookup), ...(tuned ? { tuned: await stats(tuned) } : {}) };
 // The launcher's ladder module, in its toy size, against the off and on readers: it must refuse a mismatched option,
 // check the seed cut's values on every read and report the short-cut's counters.
 const { pinnedLadder } = await import("../pinned-ladder.ts");
@@ -230,11 +239,17 @@ for (const [label, reader] of [["off", readerOff!], ["on", readerOn!]] as const)
   const seed: any = { scope: { db, cut: seedCut }, image: { people } };
   ladders[label] = await pinnedLadder(dir, reader, seed, head, label === "on", true);
 }
+if (tuned) {
+  const dir = join(out!, "ladder-tuned");
+  mkdirSync(dir);
+  ladders.tuned = await pinnedLadder(dir, readerTuned!, { scope: { db, cut: seedCut }, image: { people } } as any, head, true, true,
+    { seats: [4, 16], batch: 8 });
+}
 await assert.rejects(pinnedLadder(join(out!, "ladder-refused"), readerOff!, { scope: { db, cut: seedCut }, image: { people } } as any, head, true, true));
 Object.assign(result, { ladders });
 writeFileSync(join(out!, "result.json"), JSON.stringify(result, null, 2) + "\n");
 console.log(JSON.stringify({ ...result, writes: writes.length, ladders: undefined }));
-off.close(); on.close(); lookup.close();
+off.close(); on.close(); lookup.close(); tuned?.close();
 writeFileSync(join(out!, "finished"), "ok\n");
 assert.equal(differences.length, 0, "an option changed a pinned answer");
 assert(result.on.currentAnswers > 0 && result.on.asOfAnswers > 0, "the gate must exercise both answers");

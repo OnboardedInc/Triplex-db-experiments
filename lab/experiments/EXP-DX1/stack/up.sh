@@ -1045,6 +1045,12 @@ for role in "${gateway_roles[@]}"; do
   else
     mem=${DX_GW_READ_MEMORY:-$gw_mem}; role_java=$gw_r_java; image=$datomic_image
     field_policy+=(-e "TX2_READ_PROFILE=${DX_RD1_READ_PROFILE:-0}" -e "TX2_READ_FILTER_EARLY=${DX_RD1_READ_FILTER:-0}")
+    # [DX-RD3] Why: read permits above the reader's core count, so a permit waiting on a storage round trip leaves its
+    # core to another read. Unset keeps the gateway's default (the processor count).
+    if [[ -n ${DX_READ_PERMITS:-} ]]; then
+      [[ $DX_READ_PERMITS =~ ^[1-9][0-9]?$ ]] || { echo "up.sh: DX_READ_PERMITS must be 1..99" >&2; exit 2; }
+      field_policy+=(-e "TX2_READ_PERMITS=$DX_READ_PERMITS")
+    fi
   fi
   entity_cache_bytes=${DX_GW_READ_ENTITY_CACHE_BYTES:-268435456}
   [[ $mode != w ]] || entity_cache_bytes=${DX_GW_WRITE_ENTITY_CACHE_BYTES:-268435456}
