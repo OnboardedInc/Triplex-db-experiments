@@ -469,7 +469,7 @@ async function play(tape: Save[], until: () => boolean = () => false) {
 // Readers: pinned (a recent receipt position, any subject) and current (a subject with no save in flight, at least its
 // last receipt). Every answer is compared with the oracle; any difference stops the run.
 let reading = false;
-const readStats = { pinned: 0, current: 0, rows: 0, pinnedMs: [] as number[], currentMs: [] as number[] };
+const readStats = { pinned: 0, current: 0, rows: 0, pinnedMs: [] as number[], currentMs: [] as number[], basisWaits: 0 };
 async function readerLoop(n: number) {
   let st = 0x9e3779b9 ^ (n * 7919);
   const rnd = () => { st ^= st << 13; st ^= st >>> 17; st ^= st << 5; st >>>= 0; return st / 4294967296; };
@@ -480,7 +480,18 @@ async function readerLoop(n: number) {
     if (rnd() < 0.5 && receipts.length) {
       const P = receipts[Math.max(0, receipts.length - 1 - Math.floor(rnd() * 200))]!;
       const t0 = now();
-      const rows = await reader.rows(db, { entityIds: ents, basis: { recordedPosition: P, validAt: VALID_AT } });
+      let rows: readonly any[];
+      // [DX-ACT8] Under DX_SCALE2_REMOVAL only: a pinned read at a receipt the read gateway has not reached yet (the
+      // gateway answers "beyond the available snapshot" at once; seen once on the loaded Mac, run M3-first) asks again
+      // every 100 ms, up to 50 times, and counts the waits. Otherwise as before.
+      for (let k = 0; ; k++) {
+        try { rows = await reader.rows(db, { entityIds: ents, basis: { recordedPosition: P, validAt: VALID_AT } }); break; }
+        catch (e) {
+          if (!REMOVAL || k >= 50 || !/beyond the available snapshot/.test(String((e as Error).message))) throw e;
+          readStats.basisWaits++;
+          await sleep(100);
+        }
+      }
       readStats.pinnedMs.push(now() - t0);
       const got = rows.map(rowKey).sort(), want = ents.flatMap((e) => oracleAt(e, P)).sort();
       assert.deepEqual(got, want, "pinned read differs: " + ents[0] + " at " + P);
@@ -828,6 +839,7 @@ const result = {
     quietAloneMs: { n: quietAlone.length, p50: q(quietAlone, 0.5), p99: q(quietAlone, 0.99) },
     quietLoadedMs: { n: quietLoaded.length, p50: q(quietLoaded, 0.5), p99: q(quietLoaded, 0.99) } },
   reads: { pinned: readStats.pinned, current: readStats.current, rowsCompared: readStats.rows,
+    ...(REMOVAL ? { basisWaits: readStats.basisWaits } : {}),
     pinnedMs: { p50: q(readStats.pinnedMs, 0.5), p99: q(readStats.pinnedMs, 0.99) },
     currentMs: { p50: q(readStats.currentMs, 0.5), p99: q(readStats.currentMs, 0.99) } },
   feed: { checked: feedChecked, lagMs: { p50: q(lags, 0.5), p99: q(lags, 0.99) } },
