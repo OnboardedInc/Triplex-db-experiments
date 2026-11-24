@@ -56,11 +56,15 @@ const post = async (url: string, route: string, body: unknown) => {
 // Every gateway must hold the newest cut before the pinned pulls (each one waits for a pin itself; this keeps it short).
 const head = cuts.at(-1)!;
 for (const [name, url] of Object.entries(gateways)) {
+  // The copies start after the stack (a toy JVM takes up to about a minute); wait for each to answer at the head.
+  let last: unknown = null;
   for (let i = 0; ; i++) {
-    const b = await fetch(`${url}/v1/db/${db}/basis`).then((r) => r.json()).catch(() => null) as any;
-    if (b && Number(b.position?.v) >= head) break;
-    assert(i < 200, name + " gateway never reached the head " + head);
-    await sleep(50);
+    const b = await fetch(`${url}/v1/db/${db}/basis`).then(async (r) => ({ status: r.status, body: await r.text() })).catch((e) => ({ error: String(e) })) as any;
+    last = b;
+    const position = (() => { try { return Number(JSON.parse(b.body).position?.v); } catch { return NaN; } })();
+    if (b.status === 200 && position >= head) break;
+    assert(i < 1200, name + " gateway never reached the head " + head + ": " + JSON.stringify(last).slice(0, 300));
+    await sleep(100);
   }
 }
 const validAt = Date.now();
