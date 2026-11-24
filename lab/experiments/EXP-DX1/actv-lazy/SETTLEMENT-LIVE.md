@@ -215,6 +215,7 @@ oracle for the release in force there.
 | `guard` (C5) | the guard alone on the held database: (1) a write that follows a progress row a rival has already replaced; (2) twenty pairs of writers creating the same absent progress row at the same moment | pass: (1) refused by the read inside the transaction ("another transaction changed it"); the rival's value stands; (2) exactly one of each of the 20 pairs landed, and all 20 losers were refused at the serial commit (`CasConflict`, "source changed while staging"): both had read the row absent inside their transactions, so this is the transactor-side half of the guard; one live row per key |
 | `multi-h`, `multi-p`, `multi-lane` (C5; `multi-h` also C2, C4; `multi-p` also C3) | section 6 | pass: every account's 474 changes and 160 notices equal to its own oracle and the independent rule; notices in order and ledgers per account |
 | Delivered once (end of B1, C2 to C5) | every recorded notice of every release delivered to a recipient, then again | pass: C5 488 delivered, 0 the second time (hash `cb123095...`) |
+| Default held campaign, nothing set (regression, run D) | the held toy runner as before: R1 settled with count frames and the head rule, eight windows | pass: 86 changed values and 8 notices equal to the oracle (as PART9 and ACT4), 0 read and 0 visibility failures, every save acknowledged; first answers 94 to 1,071 ms (one above one second, Mac under other builders' gates: diagnostic) |
 | `bulk.test.ts` | 7 of 7 (5 new: round-robin among 3 accounts, pause, pace, hold, admission lane) | pass |
 | All `join/*.test.ts` | 31 of 31 | pass |
 | `frames-check.ts 64` (database-free) | the frame builders unchanged | pass |
@@ -387,7 +388,8 @@ unit of writer time (fewer, larger writes per subject) or a looser live bound, n
 | C3 | `load-fair-37162b42-....tar.gz` | `2e91552dcf02` | multi-p (pass), then the reused-id harness fault |
 | C4 | `load-fair-663068be-....tar.gz` | `67475b4cf3be` | second (150 forms), rival, multi-h, then the reused-id fault |
 | C5 | `load-fair-a4cb6c0b-....tar.gz` | `3ee0ccd0d7cc` | guard, multi-h, multi-p, multi-lane, delivered once |
-| Logs of every run, the summarizer and the retry wrapper | `toy-logs.tar.gz` | `74f575ed0e06` | |
+| D (default campaign) | `load-fair-8a366a59-....tar.gz` | `f5427ad166c3` | regression |
+| Logs of every run, the summarizer and the retry wrappers | `toy-logs.tar.gz` | `d78a20764d00` | |
 
 Each run directory holds `act5-case-<name>.json` per case (frames per second per writer and account, every save's
 status and the frames it overlapped, exactness counts) and the held runner's own files.
