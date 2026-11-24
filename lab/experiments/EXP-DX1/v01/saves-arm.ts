@@ -38,6 +38,8 @@ export type SavesContext = {
   /** "random": only the three random windows (the random arm), each isolated, in list order. */
   selection?: "all" | "random";
   out: string; base: Parameters<typeof AdoptedArm>[2]; agedHead: number; raw: string; source: string;
+  /** [DX-RD5] A second read gateway on its own machine; odd seats read there (rd5/UNCACHED-READ.md). */
+  secondRead?: string;
   seed: Parameters<typeof AdoptedArm>[3]; writer: Parameters<typeof AdoptedArm>[4]; deadline: number; stopping: () => boolean;
   agedCut: () => AgedCut; counters: Counters;
   calls: { adoptedArm: typeof AdoptedArm; pinnedWindow: typeof Ladder.pinnedWindow; tapeCandidates: typeof Ladder.tapeCandidates;
@@ -93,7 +95,8 @@ export async function savesArm(ctx: SavesContext) {
           const before = usage(), at = now(), driverCpu = process.cpuUsage(), loop = monitorEventLoopDelay({ resolution: 10 });
           loop.enable();
           const step = w.pin ? await calls.pinnedWindow(base.read, seed as never, w.pin, { start, seconds, startHead,
-            candidates: calls.tapeCandidates(tape, start, senders) }, { seats: calls.savesSeats, profileEvery: w.profileEvery })
+            candidates: calls.tapeCandidates(tape, start, senders) }, { seats: calls.savesSeats, profileEvery: w.profileEvery,
+              ...(ctx.secondRead ? { secondRead: ctx.secondRead } : {}) })
             : await new Promise((resolve) => setTimeout(() => resolve(undefined), Math.max(0, start + seconds * 1000 - now())));
           const after = usage(), wall = (now() - at) / 1000, driverUsed = process.cpuUsage(driverCpu);
           loop.disable();

@@ -57,7 +57,20 @@ const pinnedSaves = process.env.DX_RD3_PINNED_SAVES === "1";
 const savesSelection = process.env.DX_RD3_WINDOWS ?? "all", readPermits = process.env.DX_RD3_READ_PERMITS ?? "";
 assert(savesSelection === "all" || (savesSelection === "random" && pinnedSaves), "DX_RD3_WINDOWS is all or random, with DX_RD3_PINNED_SAVES=1");
 assert(readPermits === "" || (pinnedSaves && /^[1-9][0-9]?$/.test(readPermits)), "DX_RD3_READ_PERMITS is 1..99, with DX_RD3_PINNED_SAVES=1");
-const pinnedTunedPolicy = pinnedTuned || pinnedSaves ? launchProfile("server", { ...launchOptions, readTuned: true, readCacheMiB: 3072 }) : undefined;
+// [DX-RD5] The uncached-read options on the reader, default off: the batch prefetch and Datomic's read-ahead off.
+const readPrefetch = process.env.DX_RD5_READ_PREFETCH ?? "0", readAheadOff = process.env.DX_RD5_READ_AHEAD_OFF ?? "0";
+assert(/^[01]$/.test(readPrefetch) && /^[01]$/.test(readAheadOff) && (pinnedSaves || (readPrefetch === "0" && readAheadOff === "0")),
+  "DX_RD5_READ_PREFETCH and DX_RD5_READ_AHEAD_OFF are 0 or 1, with DX_RD3_PINNED_SAVES=1");
+// [DX-RD5] A second read gateway on a second machine (rd5/second-reader.sh), already serving this database: odd seats
+// of every random window read there. Its URL is a private address and stays out of the repository.
+const secondRead = process.env.DX_RD5_SECOND_READER ?? "";
+assert(secondRead === "" || (pinnedSaves && savesSelection === "random" && /^http:\/\/[0-9.]+:[0-9]+$/.test(secondRead)),
+  "DX_RD5_SECOND_READER is http://ADDRESS:PORT, with DX_RD3_PINNED_SAVES=1 and DX_RD3_WINDOWS=random");
+// [DX-RD5] The tuned reader's object cache: 3,072 MiB as measured, or 1,536 MiB (less copying of decoded segments the
+// random windows never read again; the 6 GiB heap stays).
+const readCacheMiB = Number(process.env.DX_RD5_READ_CACHE_MIB ?? "3072") as 1536 | 3072;
+assert([1536, 3072].includes(readCacheMiB) && (readCacheMiB === 3072 || pinnedSaves), "DX_RD5_READ_CACHE_MIB is 1536 or 3072, with DX_RD3_PINNED_SAVES=1");
+const pinnedTunedPolicy = pinnedTuned || pinnedSaves ? launchProfile("server", { ...launchOptions, readTuned: true, readCacheMiB }) : undefined;
 if (pinnedTuned || pinnedSaves) assert(!tuned && !retirement && !pinnedPair && !(pinnedTuned && pinnedSaves) && writer === "per-person-ordered" && age === "1B",
   "The tuned pinned arm uses the card's writer on the aged database");
 if (pinnedPair) assert(!tuned && !retirement && writer === "per-person-ordered", "The pinned pair uses the card's writer and server profile");
@@ -127,7 +140,8 @@ for (const loaded of [false, true]) {
         : pinnedTuned ? { ...options, DX_PINNED_SHORTCUT: "1", DX_PINNED_CUT_LOOKUP: "1", DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: "1", ...prepared?.env }
         // [DX-RD3] The card's production tape setting: the write gateway reports storage reads per commit.
         : pinnedSaves ? { ...options, DX_PINNED_SHORTCUT: "1", DX_PINNED_CUT_LOOKUP: "1", DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: "1",
-          DX_V01_COMMIT_READS: "1", ...(readPermits ? { DX_READ_PERMITS: readPermits } : {}), ...prepared?.env }
+          DX_V01_COMMIT_READS: "1", ...(readPermits ? { DX_READ_PERMITS: readPermits } : {}),
+          DX_READ_PREFETCH: readPrefetch, DX_READ_AHEAD_OFF: readAheadOff, ...prepared?.env }
         : options, { policy, walDirectory });
       if (tuned || pinnedTuned || pinnedSaves) placeDriver("9,10");
       const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
@@ -204,7 +218,7 @@ for (const loaded of [false, true]) {
       } else if (pinnedSaves) {
         const native = JSON.parse(fs.readFileSync(path.join(raw, "gw-r-native-settings.json"), "utf8"));
         assert.deepEqual([native.source, native.slot, native.process], [source, slot, "gw-r"]);
-        assert.equal(native.datomic["datomic.objectCacheMax"].value, 3072 * 1024 ** 2);
+        assert.equal(native.datomic["datomic.objectCacheMax"].value, readCacheMiB * 1024 ** 2);
         // [DX-RD3] The window driver lives in v01/saves-arm.ts so the Mac harness can run it with stubbed calls; the
         // top-level constants it needs are passed in (a module-level const read here before its line ran was the
         // 01:27 UTC fault: "Cannot access 'savesWindows' before initialization").
@@ -213,8 +227,14 @@ for (const loaded of [false, true]) {
         const readerEnv = JSON.parse(execFileSync("docker", ["inspect", "--format", "{{json .Config.Env}}", engines["gw-r"]!.id], { encoding: "utf8" })) as string[];
         assert.deepEqual(readerEnv.filter((e) => e.startsWith("TX2_READ_PERMITS=")), readPermits ? ["TX2_READ_PERMITS=" + readPermits] : [],
           "the reader does not carry the requested read permits");
+        // [DX-RD5] The reader must carry exactly the requested uncached-read options.
+        assert.deepEqual(readerEnv.filter((e) => e.startsWith("TX2_READ_PREFETCH=")), readPrefetch === "1" ? ["TX2_READ_PREFETCH=1"] : [],
+          "the reader does not carry the requested read prefetch");
+        if (readAheadOff === "1") assert.deepEqual(native.datomic["datomic.readAheadPool"], { value: 0, specified: true }, "the reader keeps Datomic's read-ahead");
+        else assert.equal(native.datomic["datomic.readAheadPool"]?.specified, false, "the reader changed Datomic's read-ahead");
         const { pinnedWindow, tapeCandidates, savesSeats, readerRecords } = await import("../rd1/pinned-ladder.ts");
         await savesArm({ selection: savesSelection as "all" | "random", out, base: peer, agedHead: head, raw, source, seed, writer, deadline: end, stopping: () => stopping,
+          ...(secondRead ? { secondRead } : {}),
           agedCut: () => agedCut(expected!.file, expected!.pin, imagePin, seed.key, seed.scope.db, seed.scope.cut, true),
           counters: Object.fromEntries((["gw-r", "gw-w", "tx", "pg"] as const).map((role) => [role, containerCounters(engines[role]!.id)])),
           calls: { adoptedArm, pinnedWindow, tapeCandidates, readerRecords, savesSeats, firstOffer } });
