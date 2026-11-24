@@ -181,3 +181,7 @@ Mean batch 7.5–8; wrong values and errors 0.
 
 
 Random-subject windows (from the launch message): 900–2,200 reads/s (central 1,400), p50 115–285 ms, p99 170–450 ms, 1.3–2.3 storage loads per subject, cache hit share 0.78–0.90, 0 wrong values. Refuters: 2,800 reads/s or more, or 0.5 loads per subject or fewer; reader CPU per subject under 0.8 ms; under 900 reads/s with the reader under 1.8 cores.
+
+## Pinned readers with saves (DX-RD3, build `9376ece9c`): faulted before its first window (01:23–01:27 UTC on 2026-11-24)
+
+The dry run reached its first offer (`DX-DRY-RUN first offer reached: pinned pinned-saves lab/experiments/EXP-DX1/v01/study-server.ts:160`); its first attempt was refused in 3 s only because the campaign's parent directory did not exist. The timed arm then stopped in the window driver, before any window: `ReferenceError: Cannot access 'savesWindows' before initialization` at `savesArm` (`v01/study-server.ts:305:19`), called from `study-server.ts:204` and `rd1/prepared.ts:153` `sealedArm`. The stack and the copy were removed; no window ran, so there are no measurements. The builder must fix the variable's initialization order. Evidence: `evidence/DX-SCALE1/pinned-saves-1b/pinned-saves-1b.tar.gz` in the private evidence folder (SHA-256 `2852025f7ad74ddffd651201157dba3295c1d831a0537f150a6cd4460847b256`).
