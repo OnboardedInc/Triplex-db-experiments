@@ -1027,7 +1027,11 @@
     (emit! "g6.json" {:shapes @shapes :cost cost :large big})
     (say "XQ4_G6" {:shapes @shapes :pass (every? :pass @shapes)})
     (say "XQ4_PLACEMENT_G6" ((resolve 'xq4-gate/placement-check) (conns "on")))
-    (say "XQ4_COST" cost)))
+    (say "XQ4_COST" cost)
+    ;; Which hint options attached hints in this JVM (W3 general writer, W4 per-subject writer).
+    (let [{:keys [body]} (main/route-handler {:request-method :get :uri "/v2/admin/scan-stats"})
+          m (json/read-str (if (string? body) body (String. ^bytes body StandardCharsets/UTF_8)))]
+      (say "XQ4_HINT_STATS" (select-keys m ["generalHints" "subjectHints"])))))
 
 ;; ---- G8: a deterministic sequential workload whose whole log is hashed (run once on the base gateway, once here).
 (defn phase-loghash! []
