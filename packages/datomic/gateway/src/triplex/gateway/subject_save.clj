@@ -18,6 +18,12 @@
 (def reuse-predecessor? (= "1" (System/getenv "TX2_SUBJECT_REUSE_PREDECESSOR")))
 (def append-retirement? (and numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_APPEND_RETIREMENT"))))
 (def owner-head? (and enabled numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_OWNER_HEAD"))))
+;; [Opus W2] Why: one commit per form save carries 6 facts at the median and up to about 120, with first writes and
+;; retirements; the native function has no size or shape dependency, only this plan's eligibility did.
+;; Rejected: a second native function (more moving parts) and an unbounded save (one commit would hold the serial point).
+(def wide? (and enabled (= "1" (System/getenv "TX2_SUBJECT_WIDE"))))
+(def wide-facts 128)
+(def wide-ops 1024)
 ;; [Opus W1] Why: the covering writer reads the plain plan's retractions; it writes its own markers on the version.
 (def ^:dynamic *covering* false)
 (def erase-generation :triplex.scope/erasure-seq)
@@ -66,14 +72,26 @@
                  (recur (next rows) (inc inspected)))))))
        legacy-check)))
 
+(defn- block-bounds [prefixes]
+  (let [hi (peek prefixes)]
+    [(first prefixes) (str (subs hi 0 (dec (count hi))) (char (inc (int (last hi)))))]))
+
 (defn ordered-bounds [journal prefixes]
-  (when-let [[_ token] (re-matches #"_tx/([0-7][0-9A-HJKMNP-TV-Z]{23})00" journal)]
-    (let [base (str "2001a" token) n (count prefixes)]
-      (when (and (<= 1 n 256)
-                 (= prefixes (mapv #(str base (.charAt "0123456789ABCDEF" (quot % 16))
-                                                (.charAt "0123456789ABCDEF" (rem % 16))) (range n))))
-        (let [hi (peek prefixes)]
-          [(first prefixes) (str (subs hi 0 (dec (count hi))) (char (inc (int (last hi)))))])))))
+  (or
+    (when-let [[_ token] (re-matches #"_tx/([0-7][0-9A-HJKMNP-TV-Z]{23})00" journal)]
+      (let [base (str "2001a" token) n (count prefixes)]
+        (when (and (<= 1 n 256)
+                   (= prefixes (mapv #(str base (.charAt "0123456789ABCDEF" (quot % 16))
+                                                  (.charAt "0123456789ABCDEF" (rem % 16))) (range n))))
+          (block-bounds prefixes))))
+    ;; [Opus W2] Why: a 23-character token with a three-hex-digit ordinal keeps the 26-character TripleId and numbers
+    ;; 4,096 assertions; its journal "_tx/<token>W00" cannot match a one-byte block (W is not a hex digit).
+    ;; Rejected: a 27-character ID (the core TripleId brand drops it) and base-32 ordinals (they would not sort with old blocks).
+    (when wide?
+      (when-let [[_ token] (re-matches #"_tx/([0-7][0-9A-HJKMNP-TV-Z]{22})W00" journal)]
+        (let [base (str "2001a" token) n (count prefixes)]
+          (when (and (<= 1 n 4096) (= prefixes (mapv #(str base (format "%03X" %)) (range n))))
+            (block-bounds prefixes)))))))
 
 (def body
   '(let [{:keys [scope flags function owner revision journal operation command ops provisional
@@ -279,7 +297,11 @@
                (#{:triplex/commit (first (commit/variants [true false]))} commit-ident)
                (:lean p) (not (:slim-row p)) (= 1 (:span p)) (:assign-record-time p)
                (not-any? p [:scope-wide :position-irregular :irregular :save-ledger :packed-journal :bulk])
-               (<= (count ops) 256)
+               ;; [Opus W2] Why: an ordered import frame must find its predecessor claim at the serial point, which only
+               ;; the general writer checks; a wide frame of one subject could otherwise qualify. Rejected: changing the
+               ;; narrow rule here (the option stays default-off and leaves today's plans byte for byte).
+               (not (and wide? (:import-predecessor p)))
+               (<= (count ops) (if wide? wide-ops 256))
                (every? #(or (prepared/small-op? %) (and (some? expected-erasure) (envelope-op? %))
                             (when-let [f @index-op?] (f %))) ops))
       (let [[fn-tx flags owner revision]
@@ -312,7 +334,12 @@
                    (= journal (:triplex.tx/id op-header))
                    (string? (:triplex.tx/operation-id op-header))
                    (some #(= [:db/add "datomic.tx" :triplex.tx/journals (str "e:" journal)] %) ops)
-                   (<= 1 (count business) 3) (= (count business) (count retired) (count live))
+                   (if wide?
+                     ;; [Opus W2] Why: first writes and retirements are the same native work as replacements; the
+                     ;; revision compare-and-set covers every predecessor the gateway read. Rejected: unbounded saves.
+                     (and (<= (count business) wide-facts) (<= (count retired) wide-facts)
+                          (pos? (+ (count business) (count retired))) (= (count retired) (count live)))
+                     (and (<= 1 (count business) 3) (= (count business) (count retired) (count live))))
                    (= (set live) (into #{} (map #(nth % 2)) retired)) (every? #(= subject (second %)) retired)
                    (= (count asserted) (count new-ids)) (= (set new-ids) (into #{} (map prepared/row-id) asserted))
                    (every? #(= 5 (count (nth % 3))) asserted)
@@ -329,8 +356,13 @@
                                                 :value_type (get-in % ["value" "type"])})) (vals decoded))
                          (into #{} (map (comp field lean/decode)) (vals prior)))
                 after (into #{} (map (comp field lean/decode second #(nth % 3))) business)]
-            (when (and (= (count live) (count prior) (count before) (count after))
-                       (= before after) (not (contains? before nil))
+            (when (and (if wide?
+                         ;; [Opus W2] Why: distinct plain fields on each side; a field may be replaced, first written
+                         ;; or retired. Rejected: references and system attributes (they widen the read set).
+                         (and (= (count live) (count prior) (count before)) (= (count business) (count after))
+                              (not (contains? after nil)))
+                         (and (= (count live) (count prior) (count before) (count after)) (= before after)))
+                       (not (contains? before nil))
                        ;; [DX-ERASE1] Why: encrypted bodies must belong to these same fresh owner rows.
                        ;; Rejected: accepting any secondary entity map in a per-person frame.
                        (or (empty? envelopes)

@@ -37,6 +37,17 @@ export async function fairLocal(stack: Stack) {
   seedToy(fixture, randomUUID(), write, e.source.git);
   const file = path.join(fixture, "fixture.json");
   const seed = openScaleSeal(file, hex(fs.readFileSync(file)), true);
+  // [DX-ACT4] Why: the settlement-frames gate needs a real store on a toy stack; it opens its own scopes there.
+  // Rejected: a second Mac stack recipe.
+  if (process.env.DX_ACT4_GATE === "1") {
+    const { execFileSync } = await import("node:child_process");
+    const gate = new URL("../actv-lazy/join/settle-frames-gate.ts", import.meta.url).pathname;
+    execFileSync(process.execPath, ["--experimental-transform-types", "--no-warnings", gate, e.dir], {
+      stdio: "inherit",
+      env: { ...process.env, DATOMIC_URL: write, DATOMIC_READ_URLS: read },
+    });
+    return { settleFramesGate: true };
+  }
   // [DX-ACT3] Why: the held Publish campaign (with or without DX_ACT3_RELEASE) at toy size on this same stack.
   // Rejected: a second Mac stack recipe for the same toy seed.
   if (process.env.DX_ACT3_HELD === "1") {

@@ -42,6 +42,8 @@ const wideTape = [0, 1].map((n) => ({ ms: 500 + n * 2000, account: 3, person: wi
   save: 100_000 + n, slots: wideSlots, gap: n ? 2 : 60 }));
 const wideCell = { label: "S-wide-toy-loaded", rate: 0, tape: wideTape, duration: 5, tapeSha: sha(wideTape), credits: 6 };
 const cellsToRun = [toyCell("R", 0), toyCell("S", 1), wideCell];
+// [DX-S1] Wide saves on the per-subject writer (TX2_SUBJECT_WIDE=1 in the gateway and here), default off.
+const wideSaves = process.env.TX2_SUBJECT_WIDE === "1";
 
 const init = await client.create(scope, "lean", true, 35_000);
 assert(init.created && init.strictRecordClocks);
@@ -77,8 +79,10 @@ for (const cell of cellsToRun) {
   const result = await phase([client], reader, db, cut, fields, new Set(), cell, true, scheduler(), legacyIds);
   assert(result.rows.every((row) => !row.reason || row.reason === "expired"), "a save failed");
   if (cell === wideCell) {
-    assert(result.rows.length === 2 && result.rows.every((r) => r.receipt && !r.orderedToken && (r as any).assertions > 256),
-      "a save over 256 assertions was not committed whole with the general identity");
+    // [DX-S1] With wide saves on, such a save takes a wide ordered block (23-character token); off, the general identity.
+    assert(result.rows.length === 2 && result.rows.every((r) => r.receipt && (r as any).assertions > 256 &&
+      (wideSaves ? r.orderedToken?.length === 23 : !r.orderedToken)),
+      "a save over 256 assertions was not committed whole with the expected identity");
   }
   results.push({ cell, result, wallMs: Date.now() - started });
   cut = result.after;
@@ -132,11 +136,23 @@ const summary = {
       maxSlots: Math.max(...cell.tape.map((o) => (o as Partial<ProductionOffer>).slots?.length ?? 0)),
       maxAssertions: Math.max(0, ...result.rows.map((r) => (r as any).assertions ?? 0)),
       generalIdentity: result.rows.filter((r) => r.receipt && !r.orderedToken).length,
+      // [DX-S1] Which writer took each acknowledged commit, and how many carried a wide block.
+      wideIdentity: result.rows.filter((r) => r.receipt && r.orderedToken?.length === 23).length,
+      subjectWriter: result.rows.filter((r) => r.receipt && (r as any).ack?.subjectSave).length,
+      generalWriter: result.rows.filter((r) => r.receipt && !(r as any).ack?.subjectSave).length,
     };
   }),
 };
 for (const c of summary.cells) assert(c.acked > 0.9 * c.offers, "too few acknowledged saves to judge exactness");
 assert(results[2]!.result.rows.every((r) => (r as any).assertions > 256));
-console.log("REAL2_GATE " + JSON.stringify(summary));
+// [DX-W3] Whether the general writer's hints were attached (present only when TX2_GENERAL_PREFETCH=1).
+// [DX-W4] And the per-subject writer's hints (present only when TX2_SUBJECT_HINTS=1).
+const gatewayStats = await reader.request<{ generalHints?: Record<string, number>; subjectHints?: Record<string, number> }>(
+  "GET", "/v2/admin/scan-stats");
+const writeOptions = await reader.request<{ options?: { generalPrefetch?: boolean; subjectHints?: unknown } }>(
+  "GET", `/v1/db/${db}/write-options`).catch(() => undefined);
+console.log("REAL2_GATE " + JSON.stringify({ ...summary, wideSaves, wideOption: (writeOptions as any)?.subjectWide ?? null, generalHints: gatewayStats.generalHints ?? null,
+  generalPrefetchOption: writeOptions?.options?.generalPrefetch ?? null,
+  subjectHints: gatewayStats.subjectHints ?? null, subjectHintsOption: writeOptions?.options?.subjectHints ?? null }));
 client.close();
 reader.close();

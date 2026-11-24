@@ -27,12 +27,37 @@
 (def ^Semaphore permits (Semaphore. permit-count true))
 (def ^ConcurrentHashMap running (ConcurrentHashMap.))
 
-(def bound-defaults {"entries" 100000 "ms" 100 "segments" 512})
-(def bound-caps {"entries" 1000000 "ms" 1000 "segments" 4096})
-(def chunk-size 256)
-
 (defn refuse! [status code message & [extra]]
   (throw (ex-info message (merge {:status status :code code :ids-refusal true} extra))))
+
+;; [DX-XQ4] Why: review finding D6/D7. A list screen asks for a page, a total and several counts at once, and the
+;; workload expects many concurrent list readers: each account queues fairly for its one running index question (the ID
+;; route and the find route share the queue), then takes a permit from the shared pool, also fairly. 503 IndexBusy only
+;; after waiting the request's own time bound. Defaults: one running question per account, TX2_INDEX_QUERY_PERMITS = 1
+;; (every account's index questions share one reader core unless raised). Rejected: refusing at once (the busy
+;; account's own screens failed).
+(def ^:private ^ConcurrentHashMap account-gates (ConcurrentHashMap.))
+(defn- account-gate ^Semaphore [account]
+  (.computeIfAbsent account-gates account (reify java.util.function.Function (apply [_ _] (Semaphore. 1 true)))))
+(defn admitted
+  "Runs `f` holding the account's turn and one shared permit, waiting at most `wait-ms` in all; {:queueMicros, :value}."
+  [account wait-ms busy-stat f]
+  (let [queued (System/nanoTime) gate (account-gate account)]
+    (when-not (.tryAcquire gate wait-ms TimeUnit/MILLISECONDS)
+      (stats/bump! busy-stat 1)
+      (refuse! 503 "IndexBusy" "This account's index questions are queued past this request's time bound" {:retryAfterMs wait-ms}))
+    (try
+      (when-not (.tryAcquire permits (max 1 (- wait-ms (quot (- (System/nanoTime) queued) 1000000))) TimeUnit/MILLISECONDS)
+        (stats/bump! busy-stat 1)
+        (refuse! 503 "IndexBusy" "Every index question permit is in use" {:retryAfterMs wait-ms}))
+      (try {:queueMicros (quot (- (System/nanoTime) queued) 1000) :value (f)}
+           (finally (.release permits)))
+      (finally (.release gate)))))
+
+(def bound-defaults {"entries" 100000 "ms" 100 "segments" 512})
+(def bound-caps {"entries" 1000000 "ms" 1000 "segments" 4096})
+(def chunk-size 64)
+
 
 (def account-pattern #"[A-Za-z0-9_-]{1,64}")
 (defn base-for
@@ -182,7 +207,10 @@
         [from skip] (if (and (= order "desc") (nil? from)) [(successor start) true] [from skip])
         ^Iterable source (if (= order "desc")
                            (if from (d/rseek-datoms view :avet attr from) [])
-                           (d/index-range view attr (or from start) nil))
+                           ;; The AVET walk from the range start (equal to index-range here). On the toy peer Datomic's io-stats
+                           ;; attributed no storage read to this walk, cold or warm (xq3/ID-LISTS.md section 4), so the
+                           ;; segment bound reads 0 there and the entry and time bounds are what bind a page.
+                           (d/seek-datoms view :avet attr (or from start)))
         ^Iterator it (.iterator source)
         deadline (+ (System/nanoTime) (* ms 1000000))
         ids (java.util.ArrayList.)
@@ -217,7 +245,9 @@
                                              (vswap! state assoc :stopped "limit")
                                              (vswap! state assoc :stopped "end")))
                                          (vswap! state assoc :stopped "entries"))
-                                       (recur (inc n)))))
+                                       ;; The clock is read after every entry, so a page overruns its time bound
+                                       ;; by at most one entry's work (one segment load when cold).
+                                       (when (< (System/nanoTime) deadline) (recur (inc n))))))
                                  (vswap! state assoc :stopped "end")))))
                          {:io-context :triplex/id-list :api :lookup}))]
         (vswap! state update :reads merge-reads (:reads (:io-stats measured)))
@@ -276,14 +306,9 @@
             (refuse! 409 "CursorMismatch" "The cursor's key is outside this request's range"))
         prior (if cursor (get cursor "count") 0)]
     ;; Admission after the basis is resolved, so a wait for a position never holds a permit.
-    (when (some? (.putIfAbsent running account true))
-      (stats/bump! [:idLists :busy] 1)
-      (refuse! 503 "IndexBusy" "Another ID list of this account is running" {:retryAfterMs (get limits "ms")}))
-    (try
-      (when-not (.tryAcquire permits (get limits "ms") TimeUnit/MILLISECONDS)
-        (stats/bump! [:idLists :busy] 1)
-        (refuse! 503 "IndexBusy" "Every ID list permit is in use" {:retryAfterMs (get limits "ms")}))
-      (try
+    (:value
+      (admitted account (get limits "ms") [:idLists :busy]
+        (fn []
         (let [started (System/nanoTime)
               work (trace/span "ids/scan" "gateway" (scan! view base start last-key (some? last-key) order shape-re result limit limits))
               micros (quot (- (System/nanoTime) started) 1000)
@@ -302,6 +327,4 @@
                            (encode-cursor {"v" 1 "db" name "account" account "req" req "t" t "position" position
                                            "validAt" valid-at "last" (or last last-key) "count" total}))}
             (= result "ids") (assoc :ids ids)
-            (= result "count") (assoc :count total :countExact (not more?))))
-        (finally (.release permits)))
-      (finally (.remove running account)))))
+            (= result "count") (assoc :count total :countExact (not more?)))))))))

@@ -8,7 +8,8 @@ set -uo pipefail
 out=${1:?absolute new output directory under /Users (the lab VM shares only that tree)}
 phases=${2:-"g3 g6 world replay"}
 [[ $out == /Users/* && ! -e $out ]] || { echo "gate.sh: give a new absolute output directory under /Users" >&2; exit 2; }
-export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
+# The lab VM's Docker endpoint comes from the environment (never written here).
+: "${DOCKER_HOST:?set DOCKER_HOST to the lab VM's Docker endpoint}"
 repo=$(git rev-parse --show-toplevel)
 image=${DX_XQ4_IMAGE:-tx2-datomic:dx-real2-production}
 src=${XQ4_SRC:-$repo/packages/datomic/gateway/src}

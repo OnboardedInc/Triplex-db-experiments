@@ -156,8 +156,7 @@ segments). The toy's cache holds every segment after the first cohort, so first-
 
 ## Server commands (none run; each needs the owner's approval of a rental)
 
-All three run on one bare-metal server from a build of this branch (`DX_V01_BUILD_RECEIPT`), Docker at
-`/var/run/docker.sock`, the sealed 1 billion copy stopped at `$AGED_PGDATA_SOURCE`. Total about 4 to 4.5 hours of one
+All three run on one bare-metal server from a build of this branch (`DX_V01_BUILD_RECEIPT`), the host's own Docker (as `scaleHost.physical()` requires), the sealed 1 billion copy stopped at `$AGED_PGDATA_SOURCE`. Total about 4 to 4.5 hours of one
 server including copies, about $5 at $1.09 per hour.
 
 **S-1. Backfill of the sealed 1 billion database, with exactness samples** (90 to 240 min: copy 7 min, start 2 min,

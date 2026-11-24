@@ -41,6 +41,11 @@ export const guardCounts = { sent: 0, configRewrites: 0, refused: 0, queriesSent
 export class GuardedClient extends DatomicClient {
   /** The five configuration ID lists, set by config.ts after each discovery; undefined until the first. */
   configIds: ConfigIds | undefined;
+  /**
+   * [DX-INT3] Called with the position of every commit this client had acknowledged (POST /v1/db/{db}/transact), from
+   * any caller: the console's saves, its entity creations and the configuration store's releases alike.
+   */
+  onAcknowledged: ((db: string, position: number) => void) | undefined;
 
   override async request<T>(
     method: "GET" | "POST",
@@ -82,6 +87,13 @@ export class GuardedClient extends DatomicClient {
       guardCounts.queriesSent++;
     }
     guardCounts.sent++;
-    return super.request<T>(method, path, body, timeoutMs, onSent);
+    const answer = await super.request<T>(method, path, body, timeoutMs, onSent);
+    const commit = method === "POST" ? /^\/v1\/db\/([^/]+)\/transact$/.exec(path) : null;
+    const position = (answer as { position?: { t?: string; v?: unknown } } | null)?.position;
+    if (commit && this.onAcknowledged && position?.t === "long") {
+      const p = Number(position.v);
+      if (Number.isSafeInteger(p) && p >= 0) this.onAcknowledged(commit[1]!, p);
+    }
+    return answer;
   }
 }

@@ -2,7 +2,7 @@
   "[DX-XQ4] The declaration route, the offline backfill with its epoch, and POST /v2/db/{db}/find over the commit-time
   index of triplex.gateway.cross-index. Every route refuses with 409 IndexOff unless TX2_CROSS_INDEX=1. Permits, bounds,
   cursor fields and refusal codes follow the ID route of step 0 (exp/DX-XQ3-id-lists); when that namespace is on the
-  classpath the two routes share one permit pool and one per-account running set."
+  step 0's ID route shares its admission (a fair queue per account, then a fair shared permit: ids/admitted)."
   (:require [clojure.data.json :as json] [clojure.string :as str] [datomic.api :as d]
             [datomic.measure.io-stats :as io]
             [triplex.gateway.codec :as codec] [triplex.gateway.cross-index :as x] [triplex.gateway.lean :as lean]
@@ -19,9 +19,7 @@
 (defn- off! [] (refuse! 409 "IndexOff" "Questions across subjects need TX2_CROSS_INDEX=1 on this gateway"))
 
 ;; ---------------------------------------------------------------------------------------------------------------
-;; Step 0's pool and running set (exp/DX-XQ3-id-lists): one question per account at a time across both routes.
-(def ^Semaphore permits ids/permits)
-(def ^ConcurrentHashMap running ids/running)
+;; Step 0's bounds (exp/DX-XQ3-id-lists); admission is ids/admitted, shared by both routes.
 (def bound-defaults ids/bound-defaults)
 (def bound-caps ids/bound-caps)
 
@@ -492,6 +490,7 @@
                         {:maximum head}))
              (throw e))))))
 (def ^:private at-least-await
+  ;; The merged "at least my receipt" wait (exp/DX-RD4-at-least-read, on the one branch), as step 0 uses it.
   (try (requiring-resolve 'triplex.gateway.at-least/await!) (catch Throwable _ nil)))
 ;; [DX-XQ4] Step 0's own wait is the same local wait as below; this route keeps its own copy for the refusal shape.
 
@@ -574,13 +573,6 @@
                                                                   (.getBytes (subs text (inc i)) StandardCharsets/UTF_8)))
       (refuse! 409 "CursorMismatch" "The cursor was not issued by this gateway or was changed"))
     (decode-cursor (subs text 0 i))))
-
-;; [DX-XQ4] Why: a list screen asks for a page, a total and counts at once; each account queues fairly for its one
-;; running question instead of being refused, and the permits (TX2_INDEX_QUERY_PERMITS, default 1, shared with the ID
-;; route) are queued fairly across accounts. 503 IndexBusy only after waiting the request's own time bound.
-(def ^:private ^ConcurrentHashMap account-gates (ConcurrentHashMap.))
-(defn- account-gate ^Semaphore [account]
-  (.computeIfAbsent account-gates account (reify java.util.function.Function (apply [_ _] (Semaphore. 1 true)))))
 
 (defn find! [name conn protected input]
   (when-not x/enabled (off!))
@@ -675,17 +667,12 @@
         ;; An answer needs each candidate's own entries only for conditions the merge cannot apply, a type check, a
         ;; projection, a count by value, or a value-ordered page after the first (to list each entity once).
         needs-entity? (or (seq rest-conds) from-type (seq project-codes) of-code (and driver-c (some? after)))
-        gate (account-gate account)
         wait-ms (get limits "ms")
         queued (System/nanoTime)]
-    (when-not (.tryAcquire gate wait-ms TimeUnit/MILLISECONDS)
-      (stats/bump! [:crossFind :busy] 1)
-      (refuse! 503 "IndexBusy" "This account's questions are queued past this request's time bound" {:retryAfterMs wait-ms}))
-    (try
-      (when-not (.tryAcquire permits (max 1 (- wait-ms (quot (- (System/nanoTime) queued) 1000000))) TimeUnit/MILLISECONDS)
-        (stats/bump! [:crossFind :busy] 1)
-        (refuse! 503 "IndexBusy" "Every index question permit is in use" {:retryAfterMs wait-ms}))
-      (try
+    ;; Step 0's shared admission: a fair queue per account, then a fair shared permit (ids/admitted).
+    (:value
+      (ids/admitted account wait-ms [:crossFind :busy]
+        (fn []
         (let [started (System/nanoTime)
               deadline (+ started (* wait-ms 1000000))
               confirm (fn [c p] (aset work 1 (inc (aget work 1))) (entry-ok? view c p))
@@ -792,6 +779,4 @@
               (= result "count") (assoc :count n-count :countExact (not more?))
               (= result "countByValue") (assoc :counts (mapv (fn [[f n]] {:value (decode-field f) :count n}) (sort-by key counts))
                                                :count n-count :countExact (not more?))
-              (= result "countDistinct") (assoc :count (count dset) :matched n-count :countExact (not more?)))))
-        (finally (.release permits)))
-      (finally (.release gate)))))
+              (= result "countDistinct") (assoc :count (count dset) :matched n-count :countExact (not more?))))))))))

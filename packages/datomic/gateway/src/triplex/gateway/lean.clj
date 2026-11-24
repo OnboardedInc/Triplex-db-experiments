@@ -56,8 +56,9 @@
      :retracted_at (reach/bits text (+ end 16))
      :retract_tx_id (subs text (+ end 32))}))
 (defn history-entity
-  ([db eid] (history-entity db eid nil))
-  ([db eid visit-text!]
+  ([db eid] (history-entity db eid nil nil))
+  ([db eid visit-text!] (history-entity db eid visit-text! nil))
+  ([db eid visit-text! attribute]
   (let [history (d/history db)
         ;; [Opus W1] Why: a migrated owner's versions hold its newer rows and their retirement markers.
         ;; Rejected: reading only the owner entity (a covered person's history would lose every save since migration).
@@ -71,12 +72,18 @@
         markers (into {} (map (fn [datom]
                                (let [^String text (:v datom) end (+ 5 (Integer/parseInt text 1 5 16))]
                                  [(subs text 0 end) text])) (scan db :triplex.entity/retired)))
-        grouped (group-by :v (scan history :triplex.entity/row))]
-    (map (fn [[text datoms]]
+        grouped (group-by :v (scan history :triplex.entity/row))
+        ;; [DX-JRN1] Why: a field's history decodes only that field's rows (the attribute is column 3 of every row text).
+        ;; Rejected: decoding every row of a heavily saved entity and filtering afterwards (G8).
+        decoded (if attribute
+                  (keep (fn [[text datoms]] (let [values (slim/row-columns text)]
+                                              (when (= attribute (nth values 3 nil)) [(decode-columns values false) datoms])))
+                        grouped)
+                  (map (fn [[text datoms]] [(decode text) datoms]) grouped))]
+    (map (fn [[row datoms]]
            ;; [Opus W1] Why: a fold moves a live row from its version to the owner (one retraction, two assertions).
            ;; Rejected: treating the first retraction as the row's end (a moved row would read as retracted).
-           (let [row (decode text)
-                 retracts (filter #(not (:added %)) datoms)
+           (let [retracts (filter #(not (:added %)) datoms)
                  retired (when (and (seq retracts) (>= (count retracts) (- (count datoms) (count retracts))))
                            (apply max-key :tx retracts))
                  ^String marker (get markers (prefix (:id row)))]
@@ -86,7 +93,7 @@
                          (assoc row :retracted_at (ledger/clock db tx)
                                     :retracted_position (value db tx :triplex.tx/position)
                                     :retract_tx_id (ledger/tx-id db tx)))
-               :else row))) grouped))))
+               :else row))) decoded))))
 (declare legacy-live-texts)
 (defn live-texts
   ([db eid] (live-texts db eid nil))
@@ -145,4 +152,4 @@
                                 (into [] (keep #(if attribute (decode-live attribute (:v %)) (decode (:v %)))) datoms)))
                             (let [datoms (live-texts source eid visit-text!)]
                               (if attribute (keep #(decode-live attribute (:v %)) datoms) (map #(decode (:v %)) datoms))))
-                      :else (history-entity db eid visit-text!)))) eids)))))
+                      :else (history-entity db eid visit-text! (get input "historyAttribute"))))) eids)))))

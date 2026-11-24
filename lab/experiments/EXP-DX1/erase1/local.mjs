@@ -505,6 +505,7 @@ export async function local(opts, config, manager) {
           // [DX-THIN1] The pinned read options (RD1, default off), passed only when asked for.
           ...(pinnedShortcut !== "0" || pinnedLookup !== "0"
             ? ["-e", "TX2_PINNED_SHORTCUT=" + pinnedShortcut, "-e", "TX2_PINNED_CUT_LOOKUP=" + pinnedLookup] : []),
+          ...(process.env.TX2_SUBJECT_WIDE === "1" ? ["-e", "TX2_SUBJECT_WIDE=1"] : []),
           ...(mode === "fast-authority-regression" ? ["-e", "TX2_REMOVAL_COST_READBACK=1"] : []),
           "-e",
           "DX_ERASE_TOKEN=" + token,

@@ -10,8 +10,9 @@ import { cleanSource, verifyBuild } from "./source.ts";
 import { pgdataArgs } from "./pgdata.ts";
 import { parseCredits, parseWindow, serverRates, writerAdmission } from "./server-workload.ts";
 import { assembleSequential, completeSequentialArm, existingSequence, sequenceProgress } from "./sequential.ts";
-import { parseCardTape, tapeTitle } from "./production-card.ts";
+import { newRunTape, readQueueOptionNames, readQueueOptionsSet, tapeShape, tapeTitle, writerOptionNames } from "./production-card.ts";
 import { rendererDiff } from "./renderer.ts";
+import { parseReader, randomLineMinutes, readerEnvironment, readerLaunch, readerTitle } from "./card-reader.ts";
 
 const { values } = parseArgs({
   options: {
@@ -26,13 +27,15 @@ const { values } = parseArgs({
     arm: { type: "string" }, assemble: { type: "boolean" }, renderer: { type: "string" }, "platform-tape": { type: "boolean" },
     "hourly-usd": { type: "string", default: "1.09" }, help: { type: "boolean" }, plan: { type: "boolean" },
     profile: { type: "string", default: defaultServerProfile },
-    tape: { type: "string", default: "saturday" },
+    tape: { type: "string" },
+    // [DX-CARD2] The tuned pinned reader as a card setting (v01/card-reader.ts); absent means the default reader.
+    reader: { type: "string" }, "read-permits": { type: "string" },
     // [DX-XQ4] off, or the declaration file of the commit-time index (the copy must already hold it with its epochs).
     "cross-index": { type: "string", default: "off" },
   },
 });
 if (values.help) {
-  console.log("scorecard.mjs --age fresh|1B|realistic --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer per-person-ordered] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm j21-g1|j25-g1|j25-zgc] [--write-jvm j21-g1|j25-g1|j25-zgc] [--wal-directory DIR] [--window-seconds 90|300] [--credit-mode barrier6|rolling6|rolling8|rolling12|rolling16] [--profile server|server-32] [--tape saturday|production-R|production-S]\nFor prepared PostgreSQL use --pgdata-source SEALED_PGDATA with --pgdata COPY once per arm (headline zero, headline loaded, barrier6).\nFor 1B also provide --aged-bundle FILE --aged-bundle-sha256 SHA. Without prepared directories, also provide --aged-dump FILE --aged-dump-sha256 SHA for 1B.\nscorecard.mjs --plan");
+  console.log("scorecard.mjs --age fresh|1B|realistic --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer per-person-ordered] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm j21-g1|j25-g1|j25-zgc] [--write-jvm j21-g1|j25-g1|j25-zgc] [--wal-directory DIR] [--window-seconds 90|300] [--credit-mode barrier6|rolling6|rolling8|rolling12|rolling16] [--profile server|server-32] [--tape production-S-noburst|production-S|production-R|production-R-noburst|saturday (default production-S-noburst; realistic: saturday)] [--reader default|tuned [--read-permits 1..99]]\n--window-seconds also takes any multiple of 30 from 90 to 600; 150 is the shortest whose quiet account offers the P6 gate's 500 commits per side.\nFor prepared PostgreSQL use --pgdata-source SEALED_PGDATA with --pgdata COPY once per arm (headline zero, headline loaded, barrier6).\nFor 1B also provide --aged-bundle FILE --aged-bundle-sha256 SHA. Without prepared directories, also provide --aged-dump FILE --aged-dump-sha256 SHA for 1B.\nscorecard.mjs --plan");
   console.log("For sequential staging, run --arm 1 through --arm 3 in order with one --pgdata per invocation and the same --out. Then run --assemble --commit COMMIT --out DIRECTORY.");
   console.log("To assemble with a later renderer: --assemble --commit CAMPAIGN_COMMIT --renderer CHECKED_OUT_COMMIT --out DIRECTORY (the renderer must descend from the campaign commit and differ only in assembly files; the card names both). Add --platform-tape when assembling on another platform than the campaign's (the tape must hash to its pre-launch binding; floating-point offsets may differ by at most 1e-6 ms).");
   process.exit(0);
@@ -68,10 +71,14 @@ const windowSeconds = parseWindow(values["window-seconds"]);
 const creditMode = parseCredits(values["credit-mode"] ?? process.env.DX_V01_CREDIT_MODE);
 assert(serverProfiles.includes(values.profile as ServerProfile), "Choose --profile server or server-32");
 const profile = values.profile as ServerProfile;
-// [DX-INT1] The save tape of the loaded cells (v01/production-card.ts); Saturday's stays the default.
-const cardTape = parseCardTape(values.tape);
+// [DX-INT1] The save tape of the loaded cells (v01/production-card.ts).
+// [DX-S1] Default: shape S, one commit per subject's save (the owner's decision); the realistic card keeps its own tape.
+const cardTape = newRunTape(values.tape, values.age);
+readQueueOptionsSet(process.env);
 assert(cardTape === "saturday" || values.age !== "realistic", "The realistic card keeps its own tape");
-const headline = launchProfile(profile, { jvm, txJvm, writeJvm, creditMode });
+const reader = parseReader(values.reader, values["read-permits"]);
+assert(!reader || values.age !== "realistic", "The tuned reader's random-subject line reads the SCALE1 deep population");
+const headline = launchProfile(profile, { jvm, txJvm, writeJvm, creditMode, ...readerLaunch(reader) });
 // [DX-XQ4] Why: the save pair S-2 runs the same card with the gateways' TX2_CROSS_INDEX off and on; "on" names the
 // declaration the backfilled copy holds, and xq1/server.ts verify checks the copy against it before the arm.
 // Rejected: declaring or backfilling inside the card (a measured arm must start from the sealed backfilled copy).
@@ -84,12 +91,12 @@ const wal = values["wal-directory"] ? path.resolve(values["wal-directory"]) : ""
 // [DX-INT1] Why: every measured 32 GiB arm kept the write log on the second NVMe, as the headline does.
 assert(profile !== "server-32" || wal || values.plan, "server-32 runs with the write log on the second NVMe: pass --wal-directory");
 assert(!wal || arm !== undefined || pgdata.length === physicalArms + 1, "Separate WAL needs prepared scorecard copies");
-const { budget, ceiling: minutes } = timeBudget(windowSeconds, values.age === "realistic");
+const { budget, ceiling: minutes } = timeBudget(windowSeconds, values.age === "realistic", randomLineMinutes(reader));
 const mix = values.age === "realistic" ? " Busy mix 80% deep, 15% thin, 5% small plus the quiet deep account." : "";
-const plan = `Headline zero/readers use ${creditMode}. Barrier6 repeats P2 and P6 on the identical stack. The P1–P4 pair uses ${pairSeconds / 60} minutes of matched offers.`;
+const plan = `Headline zero/readers use ${creditMode}. Barrier6 repeats P2 and P6 on the identical stack. The P1–P4 pair uses ${pairSeconds / 60 + randomLineMinutes(reader)} minutes of matched offers.`;
 const storage = values.age === "realistic" ? "One sealed and hashed prepared copy per arm." : pgdata.length ? "Starts from prepared PGDATA copies. File-level preparation, build and AGE1 provisioning are separate."
   : "Without prepared PGDATA, this command uses logical dumps. Build and AGE1 provisioning are separate.";
-const forecast = `Budget ${minutes} minutes including cleanup, up to USD ${(minutes / 60 * price).toFixed(2)} per age. ${plan} ${profile === "server" ? "Server profile" : `Profile ${profile} (transactor ${headline.tx.memoryMiB / 1024} GiB cap, ${headline.tx.cacheMiB! / 1024} GiB object cache; role caps ${roleMemoryMiB(headline) / 1024} GiB)`} with read gateway JVM ${jvm}, write gateway JVM ${writeJvm}, headline transactor ${txJvm}, and ${wal ? "separate WAL" : "WAL on PGDATA"}. P2 and P6 offered rates ${serverRates.join(", ")} ${cardTape === "production-S" ? "rows/s (offered as one commit per subject's save)" : cardTape === "production-R" ? "rows/s (one commit per row)" : "saves/s"} for ${windowSeconds} seconds per cell. Save tape: ${tapeTitle(cardTape)}. Credit selection ${creditMode}. ${storage}${mix}${crossIndex === "off" ? "" : ` Cross-subject index on (declaration sha256 ${crossIndexSha256}).`}`;
+const forecast = `Budget ${minutes} minutes including cleanup, up to USD ${(minutes / 60 * price).toFixed(2)} per age. ${plan} ${profile === "server" ? "Server profile" : `Profile ${profile} (transactor ${headline.tx.memoryMiB / 1024} GiB cap, ${headline.tx.cacheMiB! / 1024} GiB object cache; role caps ${roleMemoryMiB(headline) / 1024} GiB)`} with read gateway JVM ${jvm}, write gateway JVM ${writeJvm}, headline transactor ${txJvm}, and ${wal ? "separate WAL" : "WAL on PGDATA"}. P2 and P6 offered rates ${serverRates.join(", ")} ${tapeShape(cardTape) === "S" ? "rows/s (offered as one commit per subject's save)" : tapeShape(cardTape) === "R" ? "rows/s (one commit per row)" : "saves/s"} for ${windowSeconds} seconds per cell. Save tape: ${tapeTitle(cardTape)}. Credit selection ${creditMode}. ${storage}${mix}${readerTitle(reader)}${crossIndex === "off" ? "" : ` Cross-subject index on (declaration sha256 ${crossIndexSha256}).`}`;
 if (values.plan) {
   console.log(forecast);
   console.log("Writer admission and diagnostics " + JSON.stringify({ admission: writerAdmission(creditMode), diagnostics }));
@@ -136,8 +143,14 @@ const child = spawn("timeout", ["--kill-after=" + budget.cleanup + "m", String(a
   path.resolve(values.seed), values["image-sha256"], values["transfer-sha256"], values.age, values.writer, jvm,
   ...aged.map((v) => v ?? ""), txJvm, wal, values.arm ?? "", String(startedAt), forecast, String(windowSeconds), creditMode, writeJvm, ...pgdata], {
   stdio: ["ignore", fd, fd],
-  env: Object.fromEntries([...["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT", "AGE_JAVA", "AGE_DATOMIC_HOME", "DX_W1_SERIAL_APPLY", "PREP1_LOOKUP_EVERY", "DX_DRY_RUN_FIRST_OFFER"]
+  env: Object.fromEntries([...["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT", "AGE_JAVA", "AGE_DATOMIC_HOME", "DX_W1_SERIAL_APPLY", "PREP1_LOOKUP_EVERY", "DX_DRY_RUN_FIRST_OFFER",
+    // [DX-S1] Writer options (default off) for the card's server arms; before this they were dropped here, so a card
+    // launched with them set ran without them. The card records them and checks the writers' readback.
+    ...writerOptionNames,
+    // [DX-INT3] The read gateway's waiting-read bound and thread counters (W3), recorded by the arm like the writer options.
+    ...readQueueOptionNames]
     .flatMap((name) => process.env[name] ? [[name, process.env[name]]] : []), ["DX_V01_PROFILE", profile], ["DX_V01_TAPE", cardTape],
+    ...readerEnvironment(reader),
     ...(crossIndex === "off" ? [] : [["DX_CROSS_INDEX", "1"], ["DX_CROSS_INDEX_DECLARATION_SHA256", crossIndexSha256]])]),
 });
 fs.closeSync(fd);
@@ -162,7 +175,7 @@ if (arm !== undefined) {
   process.exit(0);
 }
 const { writeAdoptedCard } = await import("./adopted-card.ts");
-writeAdoptedCard({ source, age: values.age, writer: values.writer, profile, tape: cardTape, jvm, txJvm, writeJvm, diagnostics, separateWal: !!wal, toy: false, out, campaign, forecast, windowSeconds, creditMode, prepared: pgdata.length > 0,
+writeAdoptedCard({ source, age: values.age, writer: values.writer, profile, tape: cardTape, reader, jvm, txJvm, writeJvm, diagnostics, separateWal: !!wal, toy: false, out, campaign, forecast, windowSeconds, creditMode, prepared: pgdata.length > 0,
   failure: exit ? "The adopted campaign stopped. See [campaign.log](campaign.log)." : undefined });
 console.log(path.join(out, "SCORECARD-v0.1.md"));
 if (exit) {

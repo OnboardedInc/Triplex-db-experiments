@@ -18,7 +18,7 @@ const [out, writeUrl, readUrl, prefix] = process.argv.slice(2);
 assert(out && writeUrl && readUrl && prefix?.startsWith("tx2-dx"));
 fs.mkdirSync(out, { recursive: true });
 const docker = (...args: string[]) =>
-  execFileSync("docker", args, { env: { ...process.env, DOCKER_HOST: "unix:///Users/sam/.colima/triplex2/docker.sock" }, encoding: "utf8" });
+  execFileSync("docker", args, { env: { ...process.env, DOCKER_HOST: `unix://${process.env["HOME"]}/.colima/triplex2/docker.sock` }, encoding: "utf8" });
 const log = (kind: string, data: object = {}) => {
   const line = JSON.stringify({ kind, at: new Date().toISOString(), ...data });
   console.log(line);
@@ -69,16 +69,27 @@ const restartReader = async () => {
   reader = new datomic.DatomicClient(readUrl, 600_000);
   await reader.basis(db); // the peer opens the database (one basis read; not an ID list)
 };
+// Storage reads, counted where they happen: PostgreSQL's index scans of Datomic's one table (each segment get is one
+// SELECT by id). Statistics reach pg_stat after the reading backend goes idle (at most 10 s), so each count is the
+// difference of two readings 11 s apart around the page, with the same quiet interval measured alone as a baseline.
+// Datomic's io-stats attributed no read to the ID walk on this peer (counts-1 and counts-2), hence this counter.
+const pgGets = () => Number(docker("exec", `${prefix}-pg`, "psql", "-U", "postgres", "-d", "datomic", "-Atc",
+  "select coalesce(sum(idx_scan),0)+coalesce(sum(seq_scan),0) from pg_stat_user_tables where relname='datomic_kvs'").trim());
+const settle = async () => { await new Promise((s) => setTimeout(s, 11_000)); return pgGets(); };
+const measured = process.env["DX_XQ3_STORAGE_GETS"] === "1";
 const measure = async (label: string, request: any) => {
+  const before = measured ? await settle() : NaN;
   const t0 = performance.now();
   const page = await reader.listIds(db, request);
   const clientMs = performance.now() - t0;
-  const row = { label, position: page.position, returned: page.ids?.length ?? page.count, examined: page.examined,
+  const storageGets = measured ? (await settle()) - before : undefined;
+  const row = { label, storageGets, position: page.position, returned: page.ids?.length ?? page.count, examined: page.examined,
     segmentsLoaded: page.segmentsLoaded, ioReads: page.ioReads, scanMicros: page.scanMicros, clientMs: Math.round(clientMs * 10) / 10, stopped: page.stopped };
   log("page", row);
   return page;
 };
 const big = { bounds: { entries: 1000000, ms: 1000, segments: 4096 } };
+if (measured) { const a = await settle(); const b = await settle(); log("idle-baseline", { storageGetsIn11s: b - a }); }
 for (const [where, basis] of [["head", undefined], ["old", { recordedPosition: p2.position }]] as const) {
   for (const limit of [100, 1000]) {
     await restartReader();
@@ -87,11 +98,14 @@ for (const [where, basis] of [["head", undefined], ["old", { recordedPosition: p
     await measure(`${where} warm first page ${limit}`, request);
     const deep = { account: "account-007", prefix: "pl:", limit, after: `acct/account-007/pl:${String(Math.floor(SUBJECTS / 2)).padStart(8, "0")}`, ...(basis ? { basis } : {}), ...big };
     await measure(`${where} cold-ish middle page ${limit}`, deep);
-    await measure(`${where} warm middle page ${limit}`, deep);
-    await measure(`${where} warm shape page ${limit}`, { ...request, shape: "pl:{8 digits}" });
+    if (!measured) {
+      await measure(`${where} warm middle page ${limit}`, deep);
+      await measure(`${where} warm shape page ${limit}`, { ...request, shape: "pl:{8 digits}" });
+    }
   }
   await restartReader();
   for (const temperature of ["cold", "warm"]) {
+    const before = measured ? await settle() : NaN;
     let next: string | null = null, pages = 0, examined = 0, segments = 0, micros = 0, count = 0;
     const t0 = performance.now();
     do {
@@ -99,7 +113,9 @@ for (const [where, basis] of [["head", undefined], ["old", { recordedPosition: p
         : { account: "account-007", prefix: "pl:", result: "count", ...big, ...(basis ? { basis } : {}) });
       pages++; examined += page.examined; segments += page.segmentsLoaded; micros += page.scanMicros; count = page.count; next = page.next;
     } while (next);
-    log("count", { where, temperature, pages, count, examined, segmentsLoaded: segments, scanMs: micros / 1000, clientMs: performance.now() - t0 });
+    const clientMs = performance.now() - t0;
+    log("count", { where, temperature, pages, count, examined, segmentsLoaded: segments, scanMs: micros / 1000, clientMs,
+      ...(measured ? { storageGets: (await settle()) - before } : {}) });
   }
 }
 // G5 at a size where one request takes long enough to overlap: the time bound, and a burst of eight full counts of one

@@ -1,4 +1,4 @@
-// [DX-XQ3] Server run for the ID list route on the sealed 1 billion database (see ID-LISTS.md section 6 for the
+// [DX-XQ3] Server run for the ID list route on the sealed 1 billion database (see ID-LISTS.md section 5 for the
 // command, its duration and the predictions written before any run). It reads a demo stack brought up with the route on
 // (`DX_ID_LISTS=1` through demo/server-up.sh) and never writes.
 //   node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/xq3/server.ts READY_FILE OUT [ACCOUNT]
@@ -74,10 +74,13 @@ for (const [where, basis] of [["head", undefined], ["old", { recordedPosition: O
     const subjects: string[] = [];
     await walk(`${where} ${temperature} subjects`, { account, prefix: "pl:", shape: "pl:{8 digits}", limit: 1000, bounds, ...(basis ? { basis } : {}) },
       (p) => subjects.push(...p.ids));
-    // Exact checks that need no brute force at 1 billion: the seed's roster is pl:00000000 .. pl:00099999.
-    assert.equal(subjects.length, 100000, `${where}: ${subjects.length} subjects`);
-    assert(subjects.every((id, i) => id === `acct/${account}/pl:${String(i).padStart(8, "0")}`), `${where}: not the roster in order`);
-    log("subjects-exact", { where, temperature, count: subjects.length });
+    // Checks that need no brute force at 1 billion, recorded rather than thrown so one wrong assumption about the
+    // roster does not cost the run: strictly increasing, no duplicate, every ID of the shape, and whether the list is
+    // exactly the seed's roster pl:00000000 .. pl:00099999.
+    const increasing = subjects.every((id, i) => i === 0 || subjects[i - 1]! < id);
+    const shaped = subjects.every((id) => new RegExp(`^acct/${account}/pl:[0-9]{8}$`).test(id));
+    const roster = subjects.length === 100000 && subjects.every((id, i) => id === `acct/${account}/pl:${String(i).padStart(8, "0")}`);
+    log("subjects-check", { where, temperature, count: subjects.length, increasing, shaped, roster, first: subjects[0], last: subjects.at(-1) });
   }
   const kinds: Record<string, number> = {};
   await walk(`${where} warm every ID by kind`, { account, prefix: "", limit: 1000, bounds, ...(basis ? { basis } : {}) }, (p) => {
