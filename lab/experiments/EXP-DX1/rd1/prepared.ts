@@ -82,6 +82,11 @@ export function openPreparedLadder(input: { campaign: string; ladder: string; so
   // A dry run never offers or seals, so the second arm opens its own new campaign without the first arm's seal.
   // Rejected: dry-running only the first arm (the treatment arm's start-up and admission would first run for real).
   if (ladder === first || (dryRun() && !fs.existsSync(campaign))) {
+    // [DX-INT1] Why: the seal records live in `ladders/` beside the campaign directory, so two campaigns under one
+    // parent share it; on 2026-11-23 the random arm's second configuration was refused here with a message that did
+    // not say why. Rejected: moving `ladders/` into the campaign (set-aside and the dry run rename the two apart).
+    assert(fs.existsSync(campaign) || !fs.existsSync(loc.folder),
+      `${loc.folder} already holds another campaign's ladders: give each campaign its own parent directory`);
     assert(!fs.existsSync(campaign) && !fs.existsSync(loc.folder), `Use a new output directory for the ${first} ladder`);
     fs.mkdirSync(campaign);
     fs.mkdirSync(loc.folder, { mode: 0o700 });

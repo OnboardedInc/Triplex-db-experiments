@@ -185,3 +185,30 @@ test("retirement pair on the 1 billion copy seals its own rates, and a dry run o
   assert.throws(() => openPreparedLadder({ campaign: aged, ladder: "append", source: sealed, copy: copy("c6"), record, kind: "retirement" }),
     /already started/);
 });
+
+test("two prepared campaigns need their own parent directories, because ladders/ sits beside the campaign", (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "dx-rd1-parents-")));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const make = (name: string) => {
+    const dir = path.join(root, name);
+    fs.mkdirSync(path.join(dir, "global"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "PG_VERSION"), "17\n");
+    fs.writeFileSync(path.join(dir, "global", "pg_control"), Buffer.alloc(8192, 0));
+    return dir;
+  };
+  const sealed = make("sealed"), record = { source: "a".repeat(40), imagePin: "b".repeat(64) };
+  const shared = path.join(root, "out");
+  fs.mkdirSync(shared);
+  openPreparedLadder({ campaign: path.join(shared, "p6"), ladder: "control", source: sealed, copy: make("copy-1"), record });
+  // The 2026-11-23 random arm's command: a second configuration under the same parent is refused, and says why.
+  assert.throws(() => openPreparedLadder({ campaign: path.join(shared, "p12"), ladder: "control", source: sealed,
+    copy: make("copy-2"), record }), /already holds another campaign's ladders: give each campaign its own parent directory/);
+  assert(!fs.existsSync(path.join(shared, "p12")));
+  // The corrected command: each configuration in its own parent.
+  for (const name of ["p6", "p12"]) fs.mkdirSync(path.join(root, name));
+  for (const [name, copy] of [["p6", "copy-3"], ["p12", "copy-4"]] as const) {
+    const p = openPreparedLadder({ campaign: path.join(root, name, "campaign"), ladder: "control", source: sealed, copy: make(copy), record });
+    assert.equal(p.ladder, "control");
+    assert(fs.existsSync(path.join(root, name, "ladders", "control-start.json")));
+  }
+});

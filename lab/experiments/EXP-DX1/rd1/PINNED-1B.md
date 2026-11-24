@@ -553,12 +553,19 @@ random_arm() {  # $1 = new copy of AGED_PGDATA_SOURCE, $2 = new campaign directo
     "$SCALE1_TRANSFER_SHA256" 1B per-person-ordered j21-g1 "$AGE_HANDOFF_JSON" "$AGE_HANDOFF_SHA256" "" "" \
     j25-zgc "$WAL_DIR" j21-g1 rolling6
 }
-OUT=/var/tmp/triplex-pinned-random-1b; mkdir "$OUT"
+OUT=/var/tmp/triplex-pinned-random-1b; mkdir "$OUT" "$OUT/p6" "$OUT/p12"   # one parent per configuration
 T0=$(date +%s%3N)
-random_arm "$COPY_1" "$OUT/p6" $(( T0 + 20 * 60 * 1000 )) 6        # make COPY_1 first, remove it after
+random_arm "$COPY_1" "$OUT/p6/campaign" $(( T0 + 20 * 60 * 1000 )) 6        # make COPY_1 first, remove it after
 # make COPY_2 only if at least 18 minutes remain before T0 + 40 minutes:
-random_arm "$COPY_2" "$OUT/p12" $(( T0 + 40 * 60 * 1000 )) 12
+random_arm "$COPY_2" "$OUT/p12/campaign" $(( T0 + 40 * 60 * 1000 )) 12
 ```
+
+**Correction (integration, after the run):** the block first gave both configurations one parent (`"$OUT/p6"` and
+`"$OUT/p12"`). The seal records sit in `ladders/` beside each campaign directory (`rd1/prepared.ts` `ladderPaths`),
+so the two shared `$OUT/ladders` and the second was refused at `rd1/prepared.ts:85` before any offer; the driver
+reran `p12` under its own parent ([RD2-PROBE](../scale1/RD2-PROBE.md)). The block above gives each its own parent,
+and the refusal now names the cause (`rd1/prepared.test.ts`, "two prepared campaigns need their own parent
+directories").
 
 **Duration: 14.5 to 18.5 minutes per configuration; ceiling 40 minutes for both.**
 
