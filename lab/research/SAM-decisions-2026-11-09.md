@@ -1012,3 +1012,11 @@ Verbatim: "What is one-commit-per-subject save versus the other option and how d
 I guess my question is, going back to how this is going to be used: if you think way, way back, some of the saves are going to be really big, right? Because we might ship a bunch of policy changes all at once. Maybe we add 20 forms and add 20 policies all in one save. How would that look, I guess, given what we know about this so far?"
 
 - **Action (orchestrator):** answered again in the session, this time with the measurements made since he first asked (production-shaped tape at 1 billion in both commit shapes; Publish at 100,000 subjects with a release of 20 forms and 20 policies; settlement frames sized by bytes built on 2026-11-24). No decision of Sam's in this message; the commit-shape decision stays open with the orchestrator's recommendation (one commit per subject's save).
+
+### 2026-11-24 09:08 local: Sam: questions across subjects must be handled, immediately
+
+Verbatim: "Also we need to be able to handle questions across subjects. We should probably do that immediately or find some way to handle that. This seems like a huge problem for the gap. We need to handle that. How is that going? And what about the other biggest gaps that you're going to be doing?"
+
+- **Decision (Sam's):** the store must be able to answer questions across subjects; work on it starts now. It moves from "design work to start" to the first item of work.
+- **State when he asked:** nothing had been started on it; the orchestrator had listed it as gap 2 with a written design as the first step.
+- **Action (orchestrator):** a design agent (Opus, effort xhigh) and a measuring spike started the same hour; builders started on the other gaps that need no server (uncached pinned-read cost, settlement beside live saves in the same account, recovery time after machine loss).
