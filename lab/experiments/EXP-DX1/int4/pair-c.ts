@@ -42,9 +42,22 @@ for (let a = 0; a < accounts; a++) {
   }
   if (rows.length) frames.push(rows);
 }
+// A commit whose outcome is unknown (the gateway's own deadline on a busy Mac) is resent with the same command; a
+// duplicate answer means the first one committed (as rd5/gate.ts seeds).
+let resent = 0;
+const transact = async (input: unknown) => {
+  for (let attempt = 0; ; attempt++) {
+    try { return await client.transact(db, input as any); }
+    catch (e: any) {
+      if (e?.code === "OperationDuplicate" && attempt > 0) return undefined;
+      if (e?.code !== "OutcomeUnknown" || attempt >= 4) throw e;
+      resent++;
+    }
+  }
+};
 let next = 0;
 await Promise.all(Array.from({ length: 4 }, async () => {
-  while (next < frames.length) { const k = next++; await client.transact(db, command(`pairc-seed-${nonce}-${k}`, frames[k]!) as any); }
+  while (next < frames.length) { const k = next++; await transact(command(`pairc-seed-${nonce}-${k}`, frames[k]!)); }
 }));
 const headOf = async (c: DatomicClient) => Number((await c.request<any>("GET", "/v1/db/" + db + "/write-options")).position);
 const seedCut = await headOf(client);
@@ -82,7 +95,7 @@ const saver = (async () => {
     const head = await headOf(client);
     const before = (await client.rows(db, { entityIds: [e], basis: { recordedPosition: head, validAt } })) as any[];
     const old = before.filter((r) => r.attribute === ":task/field-0");
-    await client.transact(db, command(`pairc-save-${nonce}-${k}`, [{ e, a: ":task/field-0", v: { type: "string", value: fieldValue(i, 0, 0, k + 1).value } }], old) as any);
+    await transact(command(`pairc-save-${nonce}-${k}`, [{ e, a: ":task/field-0", v: { type: "string", value: fieldValue(i, 0, 0, k + 1).value } }], old));
     saves++;
     await sleep(100);
   }
@@ -149,7 +162,7 @@ const okList = (k: string) => k === "200" || k === "503 IndexBusy";
 const refusedOutsideBound = [...Object.keys(statuses.reads).filter((k) => !okRead(k)), ...Object.keys(statuses.steady).filter((k) => !okList(k)),
   ...Object.keys(statuses.burst).filter((k) => !okList(k))];
 const summary = {
-  gate: "int4-pair-c", db, seedCut, finalHead: await headOf(client), accounts, people, seats, seconds, saves, reads, rowsRead,
+  gate: "int4-pair-c", db, seedCut, resent, finalHead: await headOf(client), accounts, people, seats, seconds, saves, reads, rowsRead,
   wrong: wrong.length, statuses, steadyLists, burstCounts, listMismatches: listMismatches.length, refusedOutsideBound,
   readPrefetch: stats.readPrefetch, readPermits: threads?.readPermits ?? null, readWaitLimit: threads?.readWaitLimit ?? null,
   passed: reads > 0 && wrong.length === 0 && refusedOutsideBound.length === 0 && listMismatches.length === 0 && steadyLists > 0 &&

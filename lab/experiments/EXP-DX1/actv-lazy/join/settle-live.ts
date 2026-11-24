@@ -361,6 +361,13 @@ export async function livePhase(c: LiveContext) {
       // alternately at the head and pinned at the case's Publish position; each answer is checked after the case
       // against the store's own history read at the answer's position. Unset, nothing is read.
       const lists: { kind: "head" | "pinned"; position: number; ids: string[]; pages: number }[] = [];
+      // One whole-scope history read per checked position, shared by both checks (the toy's read gateway has a small heap).
+      const histories = new Map<number, readonly any[]>();
+      const historyAt = async (position: number) => {
+        if (!histories.has(position))
+          histories.set(position, await c.reader!.rows(c.db, { pattern: {}, history: true, basis: { recordedPosition: position, validAt: 0 } } as never));
+        return histories.get(position)!;
+      };
       const listing = (async () => {
         if (process.env.DX_ACT5_ID_LISTS !== "1" || !published) return;
         assert(c.reader, "DX_ACT5_ID_LISTS needs the read gateway's client");
@@ -529,7 +536,7 @@ export async function livePhase(c: LiveContext) {
           ...heads.filter((_, i) => i % Math.max(1, Math.ceil(heads.length / 12)) === 0)]);
         let checked = 0, ids = 0;
         for (const position of sample) {
-          const rows: readonly any[] = await c.reader!.rows(c.db, { pattern: {}, history: true, basis: { recordedPosition: position, validAt: 0 } } as never);
+          const rows: readonly any[] = await historyAt(position);
           const want = [...new Set(rows.filter((r) => r.entity_type !== "_Transaction" && String(r.entity_id).startsWith(prefix))
             .map((r) => String(r.entity_id)))].sort();
           for (const x of lists.filter((y) => y.position === position)) {
@@ -551,13 +558,14 @@ export async function livePhase(c: LiveContext) {
         const visible = (r: any, p: number, v: number) =>
           r.recorded_position <= p && !(r.retracted_position != null && r.retracted_position <= p) &&
           r.valid_from <= v && (r.valid_to == null || r.valid_to > v);
-        const histories = new Map<number, readonly any[]>();
+        // Every sweep at a position the ID list check already read, plus up to eight more spread over the window.
+        const own = [...new Set(sweeps.map((x) => x.position))].filter((p) => !histories.has(p));
+        const extra = new Set(own.filter((_, i) => i % Math.max(1, Math.ceil(own.length / 8)) === 0));
+        const chosen = sweeps.filter((x) => histories.has(x.position) || extra.has(x.position));
         let checked = 0, idsChecked = 0;
-        for (const x of sweeps) {
-          if (!histories.has(x.position))
-            histories.set(x.position, await c.reader!.rows(c.db, { pattern: {}, history: true, basis: { recordedPosition: x.position, validAt: 0 } } as never));
+        for (const x of chosen) {
           const seen = new Map<string, Set<string>>();
-          for (const r of histories.get(x.position)!)
+          for (const r of await historyAt(x.position))
             if (String(r.entity_id).startsWith(prefix) && visible(r, x.position, x.validAt))
               seen.set(r.entity_id, (seen.get(r.entity_id) ?? new Set()).add(String(r.attribute)));
           if (x.q === "ids") {
@@ -567,7 +575,7 @@ export async function livePhase(c: LiveContext) {
             assert.equal(x.count, [...seen.values()].filter((a) => a.has(x.attribute!)).length, `sweep (count) at ${x.position} differs: ${k.name}`);
           checked++;
         }
-        sweepCheck = { sweeps: sweeps.length, checked, idsChecked, pages: sweeps.reduce((n, x) => n + x.pages, 0),
+        sweepCheck = { sweeps: sweeps.length, checked, positionsChecked: new Set(chosen.map((x) => x.position)).size, idsChecked, pages: sweeps.reduce((n, x) => n + x.pages, 0),
           positions: new Set(sweeps.map((x) => x.position)).size, attribute: sweeps.find((x) => x.attribute)?.attribute ?? null,
           lastCount: sweeps.findLast((x) => x.q !== "ids")?.count ?? null, lastIds: sweeps.findLast((x) => x.q === "ids")?.ids.length ?? null,
           sweepBusy };

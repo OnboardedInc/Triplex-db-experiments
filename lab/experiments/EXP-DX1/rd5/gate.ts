@@ -84,7 +84,16 @@ const saveOne = async (c: DatomicClient, k: number) => {
   const attrs = k % 3 === 0 ? [":task/field-0", ":task/field-1"] : [":task/field-0"];
   const old = before.filter((r) => attrs.includes(r.attribute));
   const change = attrs.map((attr) => ({ e, a: attr, v: { type: "string" as const, value: fieldValue(i, 0, Number(attr.slice(-1)), k + 1).value } }));
-  const ack: any = await c.transact(db, command(`rd5-age-${nonce}-${k}`, change, old) as any);
+  // [DX-INT4] An aging save whose outcome is unknown (a busy Mac) is resent as the seed's commits are.
+  let ack: any;
+  for (let attempt = 0; ; attempt++) {
+    try { ack = await c.transact(db, command(`rd5-age-${nonce}-${k}`, change, old) as any); break; }
+    catch (e: any) {
+      if (e?.code === "OperationDuplicate" && attempt > 0) { ack = { position: { v: await headOf(c) } }; break; }
+      if (e?.code !== "OutcomeUnknown" || attempt >= 4) throw e;
+      resent++;
+    }
+  }
   saved++;
   return { e, value: change[0]!.v.value, position: Number(ack?.position?.v) };
 };
