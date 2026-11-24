@@ -4,7 +4,7 @@ import { hostHeadroomMiB, launchProfile, roleMemoryMiB, server32HostMiB } from "
 import { p1Reader, parseReader, randomLineLoads, randomLineMinutes, readerEnvironment, readerFromEnvironment, readerLaunch,
   readerStackOptions, readerTitle } from "./card-reader.ts";
 import { timeBudget } from "./profile.ts";
-import { fullCellTape } from "./production-card.ts";
+import { cardTapeReport, fullCellTape, isProduction, parseCardTape, tapeBinding, tapeEdge, tapeShape } from "./production-card.ts";
 import { parseWindow, quietGateCommits, ratedTape, serverRates, shortestGateSeconds } from "./server-workload.ts";
 
 // [DX-CARD2] The tuned reader as a card setting, the random-subject line's loads, and the cell length setting.
@@ -82,4 +82,26 @@ test("cell lengths: 90 and 300 as before, multiples of 30 up to 600, and 150 s i
   assert.equal(timeBudget(150).ceiling - timeBudget(90).ceiling, 16);
   assert.equal(timeBudget(90, false, 2).ceiling - timeBudget(90).ceiling, 2);
   assert.equal(timeBudget(90, false, 2).budget.adoptionAndP1to4, 91);
+});
+
+test("the -noburst tapes drop the end-of-cell burst, keep every row, and leave the measured tapes as they were", () => {
+  assert.deepEqual([tapeShape(parseCardTape("production-S-noburst")), tapeEdge(parseCardTape("production-S-noburst")), tapeEdge(parseCardTape("production-S"))],
+    ["S", "spread", "calibrated"]);
+  for (const seconds of [90, 150, 300]) for (const rate of serverRates) for (const shape of ["S", "R"] as const) {
+    const cell = { rate, loaded: true };
+    const old = fullCellTape(shape, cell, seconds).filter(isProduction), fresh = fullCellTape(shape, cell, seconds, "spread").filter(isProduction);
+    const rows = (t: typeof old) => t.reduce((n, e) => n + (shape === "S" ? e.rows : 1), 0);
+    assert.equal(rows(fresh), rows(old), `${shape} ${rate}/s ${seconds} s: rows`);
+    // A save starts at its first row (shape R spaces a save's later rows after it, some past the cell's end: H11.9).
+    const saveStarts = (t: typeof old) => new Map([...t].reverse().map((e) => [e.saveKey, e.ms])).values();
+    const atEnd = (t: typeof old) => [...saveStarts(t)].filter((ms) => ms > seconds * 1000 - 0.01).length;
+    assert(atEnd(old) >= 9, `${shape} ${rate}/s ${seconds} s: the measured tape has its burst`);
+    assert.equal(atEnd(fresh), 0, `${shape} ${rate}/s ${seconds} s: a save still starts at the cell's last instant`);
+    assert(fresh.every((e) => e.rows < 100), "a save's rows would reach the extra-field slots");
+  }
+  // The measured tape's binding is unchanged, and the new tape's differs.
+  const a = tapeBinding("production-S", 90)!, b = tapeBinding("production-S-noburst", 90)!;
+  assert.equal(a.cells.length, 4);
+  assert(a.cells.every((c, i) => c.tapeSha256 !== b.cells[i]!.tapeSha256));
+  assert.equal(cardTapeReport(fullCellTape("S", { rate: 394, loaded: true }, 90), 90).tapeSha256, a.cells[2]!.tapeSha256);
 });

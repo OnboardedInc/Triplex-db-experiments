@@ -1,4 +1,4 @@
-Budget 282 minutes including cleanup, up to USD 5.12 per age. Headline zero/readers use barrier6. Barrier6 repeats P2 and P6 on the identical stack. The P1–P4 pair uses 14 minutes of matched offers. Profile server-32 (transactor 57 GiB cap, 32 GiB object cache; role caps 79 GiB) with read gateway JVM j21-g1, write gateway JVM j21-g1, headline transactor j25-zgc, and WAL on PGDATA. P2 and P6 offered rates 50, 235, 394, 620 rows/s (offered as one commit per subject's save) for 300 seconds per cell. Save tape: the production-shaped tape, shape S (one commit per subject's save, at the same saves as shape R). Credit selection barrier6. Without prepared PGDATA, this command uses logical dumps. Build and AGE1 provisioning are separate. Reader: tuned (cores 5, 6 and 11, 6 GiB heap, 3 GiB read cache, 12 read permits, both pinned read options with the early filter, request trace off for /read; P1 ladder in client batches of up to 8 subjects, then a random-subject line of 256 seats for 60 s at the seed cut; the driver on cores 9 and 10 while offers run).
+Budget 282 minutes including cleanup, up to USD 5.12 per age. Headline zero/readers use barrier6. Barrier6 repeats P2 and P6 on the identical stack. The P1–P4 pair uses 14 minutes of matched offers. Profile server-32 (transactor 57 GiB cap, 32 GiB object cache; role caps 79 GiB) with read gateway JVM j21-g1, write gateway JVM j21-g1, headline transactor j25-zgc, and WAL on PGDATA. P2 and P6 offered rates 50, 235, 394, 620 rows/s (offered as one commit per subject's save) for 300 seconds per cell. Save tape: the production-shaped tape, shape S (one commit per subject's save, at the same saves as shape R). Credit selection barrier6. Without prepared PGDATA, this command uses logical dumps. Build and AGE1 provisioning are separate. Reader: tuned (cores 5, 6 and 11, 9 GiB heap with a 3 GiB read cache and three collector threads, 12 read permits, both pinned read options with the early filter, request trace off for /read; P1 ladder in client batches of up to 8 subjects, then a random-subject line of 256 seats for 60 s at the seed cut; the driver on cores 9 and 10 while offers run).
 Writer admission and diagnostics {"admission":{"mode":"barrier","credits":6},"diagnostics":{"serialApply":false,"lookupEvery":0}}
 [
   {
@@ -75,11 +75,11 @@ Writer admission and diagnostics {"admission":{"mode":"barrier","credits":6},"di
         "collector": "G1",
         "cores": 3,
         "cpus": "5,6,11",
-        "memoryMiB": 8192,
+        "memoryMiB": 11264,
         "cacheMiB": 3072,
         "flags": [
           "-Xms256m",
-          "-Xmx6144m",
+          "-Xmx9216m",
           "-XX:MaxDirectMemorySize=1024m",
           "-Ddatomic.objectCacheMax=3072m",
           "-XX:+UseG1GC",
@@ -100,7 +100,7 @@ Writer admission and diagnostics {"admission":{"mode":"barrier","credits":6},"di
         ]
       },
       "pg": {
-        "memoryMiB": 8192,
+        "memoryMiB": 5120,
         "cpus": "1",
         "settings": {
           "fsync": "on",
@@ -204,11 +204,11 @@ Writer admission and diagnostics {"admission":{"mode":"barrier","credits":6},"di
         "collector": "G1",
         "cores": 3,
         "cpus": "5,6,11",
-        "memoryMiB": 8192,
+        "memoryMiB": 11264,
         "cacheMiB": 3072,
         "flags": [
           "-Xms256m",
-          "-Xmx6144m",
+          "-Xmx9216m",
           "-XX:MaxDirectMemorySize=1024m",
           "-Ddatomic.objectCacheMax=3072m",
           "-XX:+UseG1GC",
@@ -229,7 +229,7 @@ Writer admission and diagnostics {"admission":{"mode":"barrier","credits":6},"di
         ]
       },
       "pg": {
-        "memoryMiB": 8192,
+        "memoryMiB": 5120,
         "cpus": "1",
         "settings": {
           "fsync": "on",
@@ -333,11 +333,11 @@ Writer admission and diagnostics {"admission":{"mode":"barrier","credits":6},"di
         "collector": "G1",
         "cores": 3,
         "cpus": "5,6,11",
-        "memoryMiB": 8192,
+        "memoryMiB": 11264,
         "cacheMiB": 3072,
         "flags": [
           "-Xms256m",
-          "-Xmx6144m",
+          "-Xmx9216m",
           "-XX:MaxDirectMemorySize=1024m",
           "-Ddatomic.objectCacheMax=3072m",
           "-XX:+UseG1GC",
@@ -358,7 +358,7 @@ Writer admission and diagnostics {"admission":{"mode":"barrier","credits":6},"di
         ]
       },
       "pg": {
-        "memoryMiB": 8192,
+        "memoryMiB": 5120,
         "cpus": "1",
         "settings": {
           "fsync": "on",

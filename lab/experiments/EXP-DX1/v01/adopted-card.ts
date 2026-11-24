@@ -7,7 +7,7 @@ import { render as emptyCard } from "./render.ts";
 import type { MixedIds } from "./mixed-ids.ts";
 import type { adoptedArm } from "./adopted.ts";
 import { defaultCreditMode, launchProfile, type ServerProfile } from "../jvm1/launch.mjs";
-import { barrierRoot, launchIntegration, selectedWriter, writeDiagnostics, serverStages, writerIntegration, type JvmProfile, type Age, type Writer } from "./profile.ts";
+import { barrierRoot, phaseSeconds, launchIntegration, selectedWriter, writeDiagnostics, serverStages, writerIntegration, type JvmProfile, type Age, type Writer } from "./profile.ts";
 import { cellPath, lastServerCell, ratedTape, serverCellSeconds, serverRates, writerAdmission, type CreditMode, type WindowSeconds } from "./server-workload.ts";
 
 import { realisticTape, sweepSize, thinLimit, realPin } from "./realistic-plan.ts";
@@ -18,7 +18,7 @@ import { summarizeTelemetry, type Telemetry } from "./cell-telemetry.ts";
 import { checkAdmission } from "./credit-evidence.ts";
 import { p99Miss, quietVerdict } from "./card-verdict.ts";
 import { windowStats, type WindowWrite } from "./windows.ts";
-import { fullCellTape, parseCardTape, tapeShape, tapeTitle, type CardTape } from "./production-card.ts";
+import { fullCellTape, parseCardTape, tapeEdge, tapeShape, tapeTitle, type CardTape } from "./production-card.ts";
 import { randomLine, readerLaunch, readerTitle, type CardReader } from "./card-reader.ts";
 
 type Card = { source: string; age: Age; writer: Writer; jvm?: JvmProfile; toy: boolean; campaign: string; out: string; forecast: string;
@@ -203,13 +203,18 @@ export function writeAdoptedCard(run: Card) {
           run.toy ? partial : line.wrong || line.errors || randomMiss ? "MISSED" : "MET", String(line.read.count), evidence("loaded")];
       }
     }
-    if (loaded.p3.entries) rows.set("P3", [`${loaded.p3.entries} ordered exact changes${loaded.seed.realistic ? ` (busy deep/thin/small ${armMix(loaded.writes).join("/")})` : ""}; dispatch-to-observation p99 ${tag(loaded.dispatchToFeed.p99Ms)} ms across ${loaded.dispatchToFeed.count} observations. Durable effects and crash resume are open.`, partial,
+    const steps = feedSteps(loaded), at256 = steps.find((x) => x.label === "L256");
+    const lagRule = at256?.lag.count ? `Lag judged at P1's 256 readers, as the bar says: p99 ${tag(at256.lag.p99Ms)} ms (${at256.lag.p99Ms !== null && at256.lag.p99Ms <= 250 ? "lag clause met" : "lag clause missed"}). By ladder step: ${steps.map((x) => `${x.label} p99 ${tag(x.lag.p99Ms)} ms (n=${x.lag.count})`).join("; ")}. Whole tape as before: ` : "";
+    if (loaded.p3.entries) rows.set("P3", [`${loaded.p3.entries} ordered exact changes${loaded.seed.realistic ? ` (busy deep/thin/small ${armMix(loaded.writes).join("/")})` : ""}; ${lagRule}dispatch-to-observation p99 ${tag(loaded.dispatchToFeed.p99Ms)} ms across ${loaded.dispatchToFeed.count} observations. Durable effects and crash resume are open.`, partial,
       String(loaded.p3.entries), evidence("loaded")]);
     if (loaded.p4?.observed.count) {
       const byKind = loaded.p4.byKind;
       if (byKind) assert.equal(Object.values(byKind).reduce((n, summary) => n + summary.count, 0), loaded.p4.observed.count);
       const cohorts = byKind ? " " + Object.entries(byKind).map(([kind, h]) => `${kind} p99 ${tag(h.p99Ms)} ms (n=${h.count})`).join(" · ") + "." : "";
-      rows.set("P4", [`Current demand pulls p50 ${tag(loaded.p4.observed.p50Ms)} ms, p99 ${tag(loaded.p4.observed.p99Ms)} ms.${cohorts} History depth and engine bytes remain open.`, partial,
+      const d = loaded.p4Drain, g = loaded.p4Gateway;
+      const drained = d ? ` Started after the reader's backlog ${d.drained ? "drained" : "did not drain"} (${tag(d.elapsedMs / 1000)} s; ${d.probes.count} probes, p99 ${tag(d.probes.p99Ms)} ms, max ${tag(d.probes.maxMs)} ms).` : "";
+      const gateway = g && !("error" in g) ? ` Gateway time of every pull (${g.found} of ${g.requested} recorded): p50 ${tag(g.p50Ms)}, p99 ${tag(g.p99Ms)}, max ${tag(g.maxMs)} ms.` : "";
+      rows.set("P4", [`Current demand pulls p50 ${tag(loaded.p4.observed.p50Ms)} ms, p99 ${tag(loaded.p4.observed.p99Ms)} ms.${drained}${gateway}${cohorts} History depth and engine bytes remain open.`, partial,
       String(loaded.p4.observed.count), evidence("loaded")]);
     }
     if (loaded.p3.entries) rows.set("Journal queryable", [`Compared ${loaded.p3.entries} queryable journal entries to original operation and predecessor expectations.`, partial,
@@ -306,7 +311,12 @@ export function writeAdoptedCard(run: Card) {
     partial, quiet.map((a) => a.samples).join(" · "), quiet.map((a) => a.link).join(" · ")]);
   const completedRates = new Set<string>();
   if (!run.toy) {
-    const commits = [], pairs = [], headlineVerdicts: ReturnType<typeof quietVerdict>["status"][] = [];
+    const commits = [], pairs = [], headlineVerdicts: ReturnType<typeof quietVerdict>["status"][] = [], steadyVerdicts: boolean[] = [];
+    // [DX-CARD2] P2 is judged in steady state: on the second half of each loaded cell (all loaded saves, from the
+    // scheduled offer), with the first half reported as "after a start" and the whole cell as before. Cells shorter
+    // than 300 s are not judged (on 2026-11-23, 43 to 51% of commits in 90 s cells still read storage in the writer;
+    // the same tape at 394/s for 300 s had p50 10.81 ms in minute 1 and 6.3 to 8.2 ms in minutes 2 to 5).
+    const steady = windowSeconds >= 300;
     const treatments = [[loaded, "", "headline", creditMode],
       [control, barrierRoot, "barrier6 control", defaultCreditMode]] as const;
     for (const [anchor, prefix, name, mode] of treatments) {
@@ -332,8 +342,13 @@ export function writeAdoptedCard(run: Card) {
         const ratio = (base: number | null, loaded: number | null) => tag(base && loaded !== null ? loaded / base : null);
         const mix = armMix(busy.writes);
         if (busy.production) productionRows.push(productionRow(`${name} ${rate}`, busy, loadPath));
+        const h = halves(busy);
+        const met = h.second.due.p50Ms !== null && h.second.due.p99Ms !== null && h.second.due.p50Ms <= 10 && h.second.due.p99Ms <= 50;
+        if (name === "headline") steadyVerdicts.push(met);
         commits.push({
-          reading: `${name} ${rate}/s: ${tag(b.acknowledgedInWindow / b.durationSeconds)}/s in window, ${b.totalReceipts}/${b.totalOffers} durable, ${b.expired} expired${busy.seed.realistic ? `, deep/thin/small receipts ${mix.join("/")}` : ""}, p50/p99 ${tag(busy.p2.latency.p50Ms)}/${tag(busy.p2.latency.p99Ms)} ms`,
+          reading: `${name} ${rate}/s: ${tag(b.acknowledgedInWindow / b.durationSeconds)}/s in window, ${b.totalReceipts}/${b.totalOffers} durable, ${b.expired} expired${busy.seed.realistic ? `, deep/thin/small receipts ${mix.join("/")}` : ""}, ` +
+            `second half p50/p99 ${tag(h.second.due.p50Ms)}/${tag(h.second.due.p99Ms)} ms${steady ? (met ? " (met)" : " (missed)") : ""} (from the actual send ${tag(h.second.send.p50Ms)}/${tag(h.second.send.p99Ms)}; driver timer lateness p50/p99 ${tag(h.second.late.p50Ms)}/${tag(h.second.late.p99Ms)}), ` +
+            `after a start (first half) ${tag(h.first.due.p50Ms)}/${tag(h.first.due.p99Ms)}, whole cell as before p50/p99 ${tag(busy.p2.latency.p50Ms)}/${tag(busy.p2.latency.p99Ms)} ms`,
           samples: `${name} ${rate}: ${b.totalReceipts}`, link: evidence(loadPath),
         });
         pairs.push({
@@ -345,14 +360,66 @@ export function writeAdoptedCard(run: Card) {
         if (rate === serverRates.at(-1)) completedRates.add(name);
       }
     }
-    if (commits.length) rows.set("P2", [commits.map(c => c.reading).join(" · ") + ". Completed-only field saves. Full size bands and retry coverage remain open.",
-      partial, commits.map(c => c.samples).join(" · "), commits.map(c => c.link).join(" · ")]);
+    const p2Rule = steady ? "Judged on the second half of each headline loaded cell (p50 ≤ 10 ms and p99 ≤ 50 ms from the scheduled offer, all loaded saves); the first half is reported as after a start, the whole cell as before. "
+      : `Not judged: the steady-state rule needs cells of 300 s or more (these are ${windowSeconds} s); second halves, first halves and whole cells are reported. `;
+    const p2Status = !steady || !completedRates.has("headline") ? partial : steadyVerdicts.every(Boolean) ? "MET" : "MISSED";
+    if (commits.length) rows.set("P2", [p2Rule + commits.map(c => c.reading).join(" · ") + ". Completed-only field saves. Full size bands and retry coverage remain open.",
+      p2Status, commits.map(c => c.samples).join(" · "), commits.map(c => c.link).join(" · ")]);
     if (!pairs.length && cellWindows.length) rows.set("P6", ["A quiet-only window completed. Its matched loaded window is open.",
       partial, String(cellWindows.length / 3) + " cells", "[Save windows](#within-cell-save-windows)"]);
     if (pairs.length) rows.set("P6", [pairs.map(c => c.reading).join(" · ") +
       `. Each side offers ${windowSeconds * 3.5} quiet saves. The verdict scores the headline burst commit gate. Pinned-read and feed observations accompany it. Publish, import and durable-effect coverage remain open.`,
       headlineVerdicts.includes("MISSED") ? "MISSED" :
         completedRates.has("headline") && headlineVerdicts.every(v => v === "MET") ? "MET" : partial, pairs.map(c => c.samples).join(" · "), pairs.map(c => c.link).join(" · ")]);
+  }
+
+  // [DX-CARD2] Latency of every acknowledged save in each half of a cell, placed by tape offset: from the scheduled offer
+  // (the bar's clock), from the actual send, and the driver timer's lateness (enqueued minus due; about 0.7 ms on
+  // 2026-11-23, from `sleep(Math.ceil(...))` in scale1/decision/writes.ts `play`).
+  function halves(arm: NonNullable<typeof loaded>) {
+    const half = arm.p6!.durationSeconds * 500;
+    const side = () => ({ due: new Histogram(), send: new Histogram(), late: new Histogram() });
+    const h = { first: side(), second: side() };
+    for (const [i, row] of (arm.writes as any[]).entries()) {
+      if (!row.receipt) continue;
+      const s = arm.tape[i]!.ms < half ? h.first : h.second;
+      s.due.recordMs(row.end - row.due);
+      if (Number.isFinite(row.sent)) s.send.recordMs(row.end - row.sent);
+      if (Number.isFinite(row.enqueued)) s.late.recordMs(Math.max(0, row.enqueued - row.due));
+    }
+    const sum = (x: ReturnType<typeof side>) => ({ due: x.due.summary(), send: x.send.summary(), late: x.late.summary() });
+    return { first: sum(h.first), second: sum(h.second) };
+  }
+
+  // [DX-CARD2] Change-feed lag (dispatch to observation) per P1 ladder step: the bar's lag clause is at P1's 256 readers;
+  // the 1,024-seat step is stress, and the tuned reader's random-subject line is its own step after the ladder.
+  function feedSteps(arm: NonNullable<typeof loaded>) {
+    const stepMs = (run.toy ? 4 : phaseSeconds) * 1000;
+    const seen = new Map<string, number>((arm.journal as any[]).map((e) => [e.id, e.seen]));
+    const labels = [...arm.p1.map((p: any) => (p.seats === 1024 ? "L1024 (stress)" : "L" + p.seats)), ...(arm.p1Random ? [`random L${arm.p1Random.seats}`] : [])];
+    const steps = labels.map(() => new Histogram());
+    for (const [i, row] of (arm.writes as any[]).entries()) {
+      const at = seen.get(row.id), step = Math.floor(arm.tape[i]!.ms / stepMs);
+      if (!row.receipt || at === undefined || !Number.isFinite(row.dispatched) || at < row.dispatched || !steps[step]) continue;
+      steps[step]!.recordMs(at - row.dispatched);
+    }
+    return labels.map((label, i) => ({ label, lag: steps[i]!.summary() }));
+  }
+
+  // [DX-CARD2] Which window each stack measured first after it started: those find their subjects cold.
+  function startOrder() {
+    if (!fs.existsSync(run.campaign)) return [];
+    const found: { dir: string; slot: string; startedAt: number }[] = [];
+    for (const rel of fs.readdirSync(run.campaign, { recursive: true, encoding: "utf8" })) {
+      if (path.basename(rel) !== "arm.json") continue;
+      const x = JSON.parse(fs.readFileSync(path.join(run.campaign, rel), "utf8"));
+      if (typeof x.slot === "string" && Number.isFinite(x.startedAt)) found.push({ dir: path.dirname(rel), slot: x.slot, startedAt: x.startedAt });
+    }
+    const bySlot = new Map<string, typeof found>();
+    for (const f of found) bySlot.set(f.slot, [...(bySlot.get(f.slot) ?? []), f]);
+    return [...bySlot.values()].map((list) => list.sort((a, b) => a.startedAt - b.startedAt))
+      .sort((a, b) => a[0]!.startedAt - b[0]!.startedAt)
+      .map((list) => `- Stack \`${list[0]!.slot}\`: **${list[0]!.dir}** (first after the stack started)` + (list.length > 1 ? ", then " + list.slice(1).map((f) => f.dir).join(", ") : "") + ".");
   }
 
   // [DX-CARD2] The tuned reader's settings, its checks before the first read, and each role's cgroup memory peak per
@@ -435,7 +502,7 @@ export function writeAdoptedCard(run: Card) {
         realisticTape(shape, cellPath(cell), windowSeconds, cell.loaded ? cell.rate - 3.5 : 0));
     } else if (shape && cell.loaded) {
       const bound = boundTape?.cells.find((c: { cell: string }) => c.cell === cellPath(cell));
-      const again = fullCellTape(shape, cell, windowSeconds);
+      const again = fullCellTape(shape, cell, windowSeconds, tapeEdge(cardTape));
       if (run.tapeRegeneration === "platform") {
         assert(bound);
         assert.equal(createHash("sha256").update(JSON.stringify(arm.tape)).digest("hex"), bound.tapeSha256,
@@ -601,6 +668,8 @@ export function writeAdoptedCard(run: Card) {
       "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |", ...cellWindows, "",
       ...(edgeRows.length ? ["Rows are placed in a cell and a half by their scheduled tape offset. Rows scheduled within half a floating-point step of their cell's end have a due time equal to the end on the epoch clock; they are counted in the cell and the second half they were offered in. Such rows per scope: " + edgeRows.join(" · ") + ".", ""] : [])] : []),
     ...(cellTelemetry.length ? ["## Within-cell counters", "", ...cellTelemetry, ""] : []),
+    ...(() => { const order = startOrder(); return order.length ? ["## Order after each stack start", "",
+      "The first window each stack measured after it started finds its subjects cold (the quiet account's 52 and 59 ms p99 of 2026-11-23 was such a window). P1's two sides each run first on their own stack, so their writer ratio compares two such windows.", "", ...order, ""] : []; })(),
     ...(run.reader ? tunedReaderSection() : []),
     ...(productionRows.length ? ["## Production-shaped neighbour saves", "",
       `Neighbour accounts only (the quiet account is P6). Latencies are p50 / p99 ms from the scheduled offer to the durable acknowledgement; save completion runs from a save's first row offered to its last row acknowledged. Storage reads are SQL reads per commit from each acknowledgement, in the first 60 s / from 150 s. The per-subject ordered writer takes only commits of one to three facts that each replace a value; every other commit takes the general writer. Commits over 256 assertions carry the general identity. Every field of every production subject was read back at the cell's terminal cut and matched the acknowledged writes.`, "",

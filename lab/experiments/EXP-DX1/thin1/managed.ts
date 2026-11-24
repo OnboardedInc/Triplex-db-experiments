@@ -207,7 +207,7 @@ function setup(compact: boolean) {
   const scorecardTape = writeOptionsAttempt ? (process.env.DX_V01_TAPE ?? "saturday") : undefined;
   // [DX-CARD2] The card's reader setting for its toy (v01/card-reader.ts); recorded for the guest as the tape is.
   const scorecardReader = writeOptionsAttempt ? parseReader(process.env.DX_V01_READER, process.env.DX_V01_READ_PERMITS) : undefined;
-  assert(scorecardTape === undefined || ["saturday", "production-R", "production-S"].includes(scorecardTape));
+  assert(scorecardTape === undefined || ["saturday", "production-R", "production-S", "production-R-noburst", "production-S-noburst"].includes(scorecardTape));
   for (const [n, slot] of slots.entries()) {
     const role = n === 0 ? "write" : "read";
     assert(!fs.existsSync(ownerFile(slot)), "Exclusive slot is in use");

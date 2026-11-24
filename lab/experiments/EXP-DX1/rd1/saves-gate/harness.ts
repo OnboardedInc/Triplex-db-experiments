@@ -83,6 +83,8 @@ const results: Record<string, unknown> = {};
     assert(x.saves.offered === 5 && (x.tape === "production-S") === (x.saves.production !== null));
   }
   assert.deepEqual(w.map((x: any) => x.firstCut), w.map((_: unknown, i: number) => 1000 + 10 * i), "each window starts at the previous terminal");
+  // [DX-CARD2] Only the first window measured after the stack started is labelled so.
+  assert.deepEqual(w.map((x: any) => x.firstAfterStart), w.map((_: unknown, i: number) => i === 0));
   results.all = { windows: w.length, sealed };
 }
 // 2. An isolated window's pinnedWindow fails: recorded, the rest skipped, the arm returns.

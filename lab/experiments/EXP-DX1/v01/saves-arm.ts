@@ -114,7 +114,10 @@ export async function savesArm(ctx: SavesContext) {
       terminal = arm.terminal!;
       const along = arm.alongside.result;
       const production = arm.production;
-      windows.push({ name: w.name, tape: w.tape, pin: w.pin ?? null, firstCut: arm.firstCut, terminal,
+      // [DX-CARD2] The first window measured after the stack started finds the saved subjects cold (on 2026-11-23 the
+      // quiet account's 52 and 59 ms p99 were that); it is labelled so, whatever its name.
+      const firstAfterStart = !windows.some((x: any) => x.firstCut !== undefined);
+      windows.push({ name: w.name, firstAfterStart, tape: w.tape, pin: w.pin ?? null, firstCut: arm.firstCut, terminal,
         reads: along.step ?? null, reader: along.reader ?? null, cpuCores: along.cpuCores, memoryMiB: along.memoryMiB, driver: along.driver,
         saves: { offered: arm.p2.offered, receipts: arm.p2.receipts, latency: arm.p2.latency,
           production: production ? { metrics: production.metrics, readback: production.readback, predecessors: production.predecessors } : null,
@@ -128,7 +131,7 @@ export async function savesArm(ctx: SavesContext) {
     }
   }
   jsonFile(path.join(out, "pinned-saves.json"), { source, selection: ctx.selection ?? "all", head: agedHead, seats: calls.savesSeats, windowSeconds: 90, windows });
-  console.log("[DX-RD3] " + JSON.stringify(windows.map((w: any) => ({ name: w.name, skipped: w.skipped, failed: w.failed,
+  console.log("[DX-RD3] " + JSON.stringify(windows.map((w: any) => ({ name: w.name, ...(w.firstAfterStart ? { firstAfterStart: true } : {}), skipped: w.skipped, failed: w.failed,
     reads: w.reads && { goodput: w.reads.goodput, p50: w.reads.read?.p50Ms, p99: w.reads.read?.p99Ms, wrong: w.reads.wrong, errors: w.reads.errors },
     saves: w.saves && { p50: w.saves.latency?.p50Ms, p99: w.saves.latency?.p99Ms, receipts: w.saves.receipts, offered: w.saves.offered }, cpu: w.cpuCores, driver: w.driver }))));
   for (const w of windows) if (w.reads && (w.reads.wrong || w.reads.errors))

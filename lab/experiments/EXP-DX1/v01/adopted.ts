@@ -24,8 +24,8 @@ import { defaultCreditMode } from "../jvm1/launch.mjs";
 import { collectCell, type physicalTelemetry } from "./cell-telemetry.ts";
 import { migratedReadRate, recentlyOffered, sampleMigratedReads } from "../w1/migrated-reads.ts";
 import { cardTapeReport, fullCellTape, isProduction, parseCardTape, productionCellMetrics, productionNeighbours, productionPredecessors,
-  productionReadback, sortTape, tapeShape, type AgedCut, type ProductionWrite } from "./production-card.ts";
-import { randomLine, randomLineLoads, type P1Reader, type ReaderRecords } from "./card-reader.ts";
+  productionReadback, sortTape, tapeEdge, tapeShape, type AgedCut, type ProductionWrite } from "./production-card.ts";
+import { gatewayTimes, randomLine, randomLineLoads, type P1Reader, type ReaderRecords } from "./card-reader.ts";
 
 export type Residency = Record<string, { rssBytes: number; threads: number }>;
 export type Peer = { write: string; read: string; slot: string; attempt: string; gatewaySource: string; java: unknown;
@@ -301,7 +301,7 @@ async function realisticBackground(client: DatomicClient, seed: AdoptedSeed, sta
   return { mix, errors };
 }
 
-async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: number, toy: boolean, cold = false, samples?: ReadSamples) {
+async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: number, toy: boolean, cold = false, samples?: ReadSamples, every = 16) {
   const h = new Histogram();
   const byKind = { deep: new Histogram(), thin: new Histogram(), small: new Histogram() };
   let unavailable = 0;
@@ -316,7 +316,7 @@ async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: numbe
     const id = mixed ? realSubject(mixed.account, selected) : root(a, person);
     const start = now();
     const pull = () => client.readDemandWorld(seed.key, id, basis, false);
-    const found = await (samples && i % 16 === 0 ? sampledRead(client, samples, pull) : pull());
+    const found = await (samples && i % every === 0 ? sampledRead(client, samples, pull) : pull());
     if (!found) { unavailable++; continue; }
     const elapsed = now() - start;
     const member = found.triples.filter((r) => r.entityId === id && r.attribute === ":subject/member");
@@ -394,13 +394,13 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const seconds = retirement?.seconds ?? (toy ? 8 + randomStep : study ? 30 * ladder.length : rated ? windowSeconds
       : quietCell === undefined ? phaseSeconds * ladder.length + randomStep : cellSeconds("alone"));
     // [DX-INT1] The production-shaped tape replaces the neighbour saves of the loaded cells (DX_V01_TAPE).
-    const shape = tapeShape(parseCardTape(process.env.DX_V01_TAPE));
+    const cardTape = parseCardTape(process.env.DX_V01_TAPE), shape = tapeShape(cardTape), edge = tapeEdge(cardTape);
     const productionCell = shape !== undefined && !retirement && !study && !comparison &&
       ((rated !== undefined && rated.loaded) || (toy && quietCell === 235));
     // [DX-RD3] A window repeated on one stack takes a label, so its saves write new values instead of the same ones.
     const relabel = <T extends Write>(t: T[]): T[] => alongside?.label ? t.map((e) => ({ ...e, version: alongside.label + "/" + e.version })) : t;
     const production = productionCell ? relabel((() => {
-      if (rated) return fullCellTape(shape!, rated, windowSeconds);
+      if (rated) return fullCellTape(shape!, rated, windowSeconds, edge);
       const quiet = quietTape(seed.image.people, 235, true).filter((e) => e.account === 0);
       // The toy folds each tape subject onto one of its few people per account, in order of first appearance.
       const folded = new Map<string, number>(), perAccount = new Map<number, number>();
@@ -413,7 +413,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         }
         return folded.get(key)!;
       } : undefined;
-      const neighbours = productionNeighbours(shape!, 235, Array(9).fill(12), seconds, "p6-235", fold);
+      const neighbours = productionNeighbours(shape!, 235, Array(9).fill(12), seconds, "p6-235", fold, edge);
       return sortTape([...quiet, ...neighbours]);
     })()) : undefined;
     const tape = production ? production : relabel(retirement ? serialApplyTape(seed.image.people as Density, retirement.rate, seconds)
@@ -520,8 +520,22 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         [e, senders[accountOf.get(e)!]!.rows.get(e)!]))),
       metrics: productionCellMetrics(writes.rows, start, seconds),
     } : undefined;
-    const pulls = !retirement && loaded && !comparison && writer !== "grouped" && quietCell === undefined
-      ? await currentPull(reader, seed, terminal, toy, false, study?.sample ? samples : undefined) : undefined;
+    const pullArm = !retirement && loaded && !comparison && writer !== "grouped" && quietCell === undefined;
+    // [DX-CARD2] P4 starts only after the reader's backlog from the ladder's 1,024-seat step has drained (on the cards
+    // of 2026-11-23 the first pull waited 25 s behind abandoned reads), and with the tuned reader every pull carries a
+    // read-profile header, so the reader records each pull's gateway time, not only those over 50 ms.
+    const drain = pullArm && !study ? await drainReader(reader, seed, toy) : undefined;
+    const pullWire: ReadSamples = [];
+    const traceOffset = peer.p1?.random?.trace && fs.existsSync(peer.p1.random.trace) ? fs.statSync(peer.p1.random.trace).size : 0;
+    const pulls = pullArm
+      ? await currentPull(reader, seed, terminal, toy, false, study?.sample ? samples : peer.p1 ? pullWire : undefined, study ? 16 : 1) : undefined;
+    let pullGateway: ReturnType<typeof gatewayTimes> | { error: string } | undefined;
+    if (pulls && peer.p1?.random?.trace && fs.existsSync(peer.p1.random.trace)) {
+      await sleep(3000);
+      try { pullGateway = gatewayTimes(peer.p1.random.trace, traceOffset, pullWire.map((w) => w.id)); }
+      catch (error) { pullGateway = { error: String(error) }; }
+    }
+    const p4Extra = { p4Drain: drain, p4Gateway: peer.p1 ? pullGateway ?? null : undefined, p4Wire: peer.p1 ? wireSummary(pullWire) : undefined };
     if (study) jsonFile(path.join(out, "read-wire.json"), { source, slot: peer.slot, attempt: peer.attempt,
       clock: { bootId: process.platform === "linux" ? fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim() : null,
         offsetMs: now() - Number(process.hrtime.bigint()) / 1e6 }, samples });
@@ -547,7 +561,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     }
     const evidence = path.join(out, "operations.json");
     const p1Random = line.random === undefined ? {} : { p1Random: line.random };
-    jsonFile(evidence, { writes: writes.rows, journal: feed, tape, fairCredits: credits, selection, p1: phases, ...p1Random, p4: pulls, p6, p7, thin,
+    jsonFile(evidence, { writes: writes.rows, journal: feed, tape, fairCredits: credits, selection, p1: phases, ...p1Random, p4: pulls, ...p4Extra, p6, p7, thin,
       ...(tapeGroups ? { ownerGroups: tapeGroups } : {}) });
     const result = { source, writer, telemetrySha256, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
       loaded, retirement, migratedReads, serialAnchor, ownerGroupPeople: tapeGroups && Object.fromEntries(
@@ -561,7 +575,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         return { seats: phase.seats, offered: bucket.length, received: latency.count, latency: latency.summary() };
       }) },
       p1: phases, ...p1Random, p2: { offered: tape.length, receipts: saves.length, latency: saveHistogram.summary() },
-      p3: { entries: feed.length }, p4: pulls, p6, p7, thin, ...(productionResult ? { production: productionResult } : {}),
+      p3: { entries: feed.length }, p4: pulls, ...p4Extra, p6, p7, thin, ...(productionResult ? { production: productionResult } : {}),
       ...(alongside ? { alongside: { label: alongside.label, result: alongsideResult } } : {}) };
     // [DX-RD1] Why: require the complete toy tape and exact read results before publishing a read-study arm.
     // Rejected: declaring success when an empty journal agrees with an empty acknowledged set.
@@ -578,6 +592,35 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     await telemetry?.catch(() => {});
     writerClient.close(); reader.close(); journal.close();
   }
+}
+
+// [DX-CARD2] The reader's backlog has drained when five probes in a row (one pinned field read at the seed cut each,
+// checked against the seed's value) return within 25 ms; the drain gives up after 120 s and says so.
+async function drainReader(client: DatomicClient, seed: AdoptedSeed, toy: boolean) {
+  const began = now(), limit = toy ? 10_000 : 120_000, probes = new Histogram();
+  const basis = { recordedPosition: seed.realistic?.proof.cut ?? seed.scope.cut, validAt: SEED_VALID_FROM };
+  let run = 0, n = 0, errors = 0;
+  while (run < 5 && now() - began < limit) {
+    const subject = n++ % seed.image.people, entity = seed.realistic ? undefined : task(0, subject);
+    const at = now();
+    try {
+      if (entity) {
+        const rows = await client.rows(seed.scope.db, { entityIds: [entity], pattern: { attribute: field(0) }, basis });
+        assert(rows.length === 1 && rows[0]!.value_string === fieldValue(subject, 0, 0, 0).value);
+      } else await client.begin(seed.scope.db).then((h) => client.release(seed.scope.db, h.handle));
+      const ms = now() - at;
+      probes.recordMs(ms);
+      run = ms <= 25 ? run + 1 : 0;
+    } catch { errors++; run = 0; await sleep(100); }
+  }
+  return { drained: run >= 5, elapsedMs: Number((now() - began).toFixed(1)), probes: probes.summary(), errors };
+}
+
+function wireSummary(samples: ReadSamples) {
+  if (!samples.length) return null;
+  const total = new Histogram();
+  for (const s of samples) if (Number.isFinite(s.parsed) && Number.isFinite(s.issue)) total.recordMs(s.parsed - s.issue);
+  return { sampled: samples.length, clientMs: total.summary() };
 }
 
 export async function quietPair(out: string, source: string, peer: Peer, seed: AdoptedSeed, writer: Writer,

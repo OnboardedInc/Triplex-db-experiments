@@ -217,14 +217,22 @@ const memo = new Map<string, ReturnType<typeof calibrated>>();
  * The save process for one neighbour account, calibrated so the window holds exactly `rowTarget` form rows.
  * Deterministic: the session rate is the bisection limit from a fixed bracket.
  */
-export function accountSaves(p: ProductionParams, band: number, account: number, rowTarget: number, window: number) {
-  const key = JSON.stringify([p, band, account, rowTarget, window]);
-  if (!memo.has(key)) memo.set(key, calibrated(p, band, account, rowTarget, window));
+// [DX-CARD2] Why: the bisection settles on the rate at which one more session starts just inside the window's end, so
+// every account's tape ends with a save due at about the last instant of the window (9 saves at once in a card cell,
+// 13.6 to 104 ms each, 3.4% of the 50-load cell). Edge "spread" takes the largest bisected rate whose window holds
+// fewer rows than the target (no session at the edge) and gives the missing rows one each to the latest saves.
+// "calibrated" stays the default, so every measured tape and its hash reproduce. Rejected: dropping the edge saves
+// (the cell would offer fewer rows than its rate) and moving them to another time (an invented arrival).
+export type TapeEdge = "calibrated" | "spread";
+export function accountSaves(p: ProductionParams, band: number, account: number, rowTarget: number, window: number,
+  edge: TapeEdge = "calibrated") {
+  const key = JSON.stringify([p, band, account, rowTarget, window, ...(edge === "calibrated" ? [] : [edge])]);
+  if (!memo.has(key)) memo.set(key, calibrated(p, band, account, rowTarget, window, edge));
   const run = memo.get(key)!;
   return { ...run, saves: run.saves.map((s) => ({ ...s, extras: [...s.extras] })) };
 }
 
-function calibrated(p: ProductionParams, band: number, account: number, rowTarget: number, window: number) {
+function calibrated(p: ProductionParams, band: number, account: number, rowTarget: number, window: number, edge: TapeEdge = "calibrated") {
   assert(rowTarget > 0 && Number.isSafeInteger(rowTarget));
   const profile = profiles(p, band, account);
   const guess = rowTarget / window / (knotMean(p.sessionSize) * knotMean(p.rowsPerSave));
@@ -238,8 +246,16 @@ function calibrated(p: ProductionParams, band: number, account: number, rowTarge
     if (windowRows(sessionsAt(profile, p, mid, window)) >= rowTarget) hi = mid;
     else lo = mid;
   }
-  const sessions = sessionsAt(profile, p, hi, window);
+  const below = edge === "spread" && windowRows(sessionsAt(profile, p, lo, window)) < rowTarget;
+  const sessions = sessionsAt(profile, p, below ? lo : hi, window);
   const saves = assign(p, sessions);
+  if (below) {
+    let missing = rowTarget - rowsIn(saves);
+    for (let i = saves.length - 1; missing > 0; i = i > 0 ? i - 1 : saves.length - 1, missing--) {
+      saves[i]!.rows++;
+      saves[i]!.extras.push(false);
+    }
+  }
   // Trim the excess from the end of the window: the last saves lose their last rows.
   let excess = rowsIn(saves) - rowTarget;
   assert(excess >= 0);
@@ -252,7 +268,7 @@ function calibrated(p: ProductionParams, band: number, account: number, rowTarge
     if (!last.rows) saves.pop();
   }
   assert.equal(rowsIn(saves), rowTarget);
-  return { saves, sessions, sessionsPerSecond: hi };
+  return { saves, sessions, sessionsPerSecond: below ? lo : hi };
 }
 
 export const personOf = (p: ProductionParams, band: number, account: number, local: number) => {
@@ -267,12 +283,13 @@ export function productionOffers(
   band: number,
   rowTargets: readonly number[],
   window: number,
+  edge: TapeEdge = "calibrated",
 ): ProductionOffer[] {
   assert.equal(rowTargets.length, 9);
   const out: ProductionOffer[] = [];
   for (let n = 0; n < 9; n++) {
     const account = n + 1;
-    const { saves } = accountSaves(p, band, account, rowTargets[n]!, window);
+    const { saves } = accountSaves(p, band, account, rowTargets[n]!, window, edge);
     for (const [index, save] of saves.entries()) {
       const person = personOf(p, band, account, save.person);
       const row = (r: number) => [r, ...(save.extras[r] ? [fieldExtraBase + r] : [])];

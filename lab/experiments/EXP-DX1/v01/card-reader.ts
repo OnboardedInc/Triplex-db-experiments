@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 
 // [DX-CARD2] Why: the tuned pinned reader measured at 1 billion on 2026-11-23 (rd1/PINNED-1B.md: three reader cores,
 // 6 GiB heap, 3 GiB read cache, both pinned read options with the early filter, client batches of up to eight, the
@@ -24,9 +25,13 @@ export function readerEnvironment(reader: CardReader | undefined): [string, stri
 }
 export const readerFromEnvironment = (env: NodeJS.ProcessEnv) => parseReader(env.DX_V01_READER, env.DX_V01_READ_PERMITS);
 
-/** The launch options of jvm1/launch.mjs launchProfile for the reader: cores 5, 6, 11, 6 GiB heap, 3 GiB cache. */
+/**
+ * The launch options of jvm1/launch.mjs launchProfile for the reader: cores 5, 6, 11, a 3 GiB cache in a 9 GiB heap (a
+ * third, so the collector has room; three parallel collector threads), an 11 GiB container. The reader arms ran the same
+ * cache in a 6 GiB heap; the card's reader differs from them in heap size only.
+ */
 export const readerLaunch = (reader: CardReader | undefined) =>
-  reader ? { readTuned: true, readCacheMiB: 3072 as const } : {};
+  reader ? { readTuned: true, readCacheMiB: 3072 as const, readHeapThird: true } : {};
 
 /**
  * The stack options (stack/up.sh) of the tuned reader as the tuned arms ran it (v01/study-server.ts): both pinned
@@ -60,7 +65,7 @@ export const randomLineMinutes = (reader: CardReader | undefined) => reader ? 2 
 
 export function readerTitle(reader: CardReader | undefined) {
   if (!reader) return "";
-  return ` Reader: tuned (cores 5, 6 and 11, 6 GiB heap, 3 GiB read cache, ${reader.readPermits ?? 3} read permits` +
+  return ` Reader: tuned (cores 5, 6 and 11, 9 GiB heap with a 3 GiB read cache and three collector threads, ${reader.readPermits ?? 3} read permits` +
     `${reader.readPermits ? "" : " (one per core)"}, both pinned read options with the early filter, request trace off for /read;` +
     ` P1 ladder in client batches of up to ${tunedBatch} subjects, then a random-subject line of ${randomLine.seats} seats for 60 s` +
     ` at the seed cut; the driver on cores 9 and 10 while offers run).`;
@@ -96,4 +101,24 @@ export function randomLineLoads(records: ReaderRecords | undefined, goodput: num
     handlerCpuMsPerExchange: records.handlerCpuMs ? round(records.handlerCpuMs.mean) : null,
     metricsSeconds: round(seconds, 1),
   };
+}
+
+/**
+ * [DX-CARD2] Each profiled request's gateway time (the request record's start to end, `trace.clj` `handler`) for the
+ * given read-profile ids, read from the reader's trace after `offset`. With the read profile on (the tuned reader)
+ * every request carrying the header is recorded, not only those over 50 ms.
+ */
+export function gatewayTimes(file: string, offset: number, ids: readonly string[]) {
+  const wanted = new Set(ids), size = fs.statSync(file).size, ms: number[] = [];
+  const fd = fs.openSync(file, "r"), text = Buffer.alloc(Math.max(0, size - offset));
+  try { fs.readSync(fd, text, 0, text.length, offset); } finally { fs.closeSync(fd); }
+  for (const line of text.toString("utf8").split("\n")) {
+    if (!line.startsWith("{") || !line.includes("readProfileId")) continue;
+    let row: any;
+    try { row = JSON.parse(line); } catch { continue; }
+    if (row.type === "request" && wanted.has(row.readProfileId) && Number.isFinite(row.start) && Number.isFinite(row.end)) ms.push(row.end - row.start);
+  }
+  ms.sort((a, b) => a - b);
+  const at = (q: number) => ms.length ? Number(ms[Math.min(ms.length - 1, Math.ceil(q * ms.length) - 1)]!.toFixed(3)) : null;
+  return { requested: ids.length, found: ms.length, p50Ms: at(0.5), p90Ms: at(0.9), p99Ms: at(0.99), maxMs: ms.length ? Number(ms.at(-1)!.toFixed(3)) : null };
 }

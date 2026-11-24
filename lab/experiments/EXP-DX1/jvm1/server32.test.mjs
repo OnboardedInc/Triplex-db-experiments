@@ -32,27 +32,29 @@ test("server-32 role caps fit a 96 GB machine with the host headroom guard", () 
   assert.throws(() => launchProfile("server-32", { ...headline, txJvm: "j21-g1" }), /ZGC/);
 });
 
-// [DX-CARD2] The 32 GiB transactor with the tuned reader: containers cut to the measured peaks (launch.mjs), every
-// heap, cache, direct limit and core unchanged, and the sum exactly at the guard.
-test("server-32 with the tuned reader fits the guard with 57 and 8 GiB containers", () => {
-  const both = launchProfile("server-32", { ...headline, readTuned: true, readCacheMiB: 3072 });
-  const alone = launchProfile("server-32", headline), tuned = launchProfile("server", { ...headline, readTuned: true, readCacheMiB: 3072 });
-  assert.deepEqual([both.tx.memoryMiB, both["gw-r"].memoryMiB, both["gw-w"].memoryMiB, both.pg.memoryMiB], [57 * 1024, 8 * 1024, 6 * 1024, 8 * 1024]);
+// [DX-CARD2] The 32 GiB transactor with the card's tuned reader (a 3 GiB cache in a 9 GiB heap): containers cut to the
+// measured peaks (launch.mjs), every heap, cache, direct limit and core of the transactor unchanged, the sum exactly at
+// the guard. The reader arms' own tuned reader (6 GiB heap, 9 GiB container) does not fit beside it.
+test("server-32 with the card's tuned reader fits the guard: transactor 57, reader 11, PostgreSQL 5 GiB", () => {
+  const card = { readTuned: true, readCacheMiB: 3072, readHeapThird: true };
+  const both = launchProfile("server-32", { ...headline, ...card });
+  const alone = launchProfile("server-32", headline), tuned = launchProfile("server", { ...headline, ...card });
+  assert.deepEqual([both.tx.memoryMiB, both["gw-r"].memoryMiB, both["gw-w"].memoryMiB, both.pg.memoryMiB], [57 * 1024, 11 * 1024, 6 * 1024, 5 * 1024]);
   assert.equal(roleMemoryMiB(both) + hostHeadroomMiB, server32HostMiB);
   assert.deepEqual(both.tx.flags, alone.tx.flags);
   assert.deepEqual([both.tx.cpus, both.tx.cacheMiB], [alone.tx.cpus, 32768]);
   assert.deepEqual(both["gw-r"].flags, tuned["gw-r"].flags);
   assert.deepEqual([both["gw-r"].cpus, both["gw-r"].cores, both["gw-r"].cacheMiB], ["5,6,11", 3, 3072]);
-  for (const flag of ["-Xmx6144m", "-XX:MaxDirectMemorySize=1024m", "-Ddatomic.objectCacheMax=3072m", "-XX:ActiveProcessorCount=3"])
+  for (const flag of ["-Xmx9216m", "-XX:MaxDirectMemorySize=1024m", "-Ddatomic.objectCacheMax=3072m", "-XX:ActiveProcessorCount=3", "-XX:ParallelGCThreads=3"])
     assert(both["gw-r"].flags.includes(flag), flag);
   assert.deepEqual(both["gw-w"], tuned["gw-w"]);
-  assert.deepEqual([both.clients, both.pg], [tuned.clients, tuned.pg]);
-  // The reader arms' own launch (server profile) keeps its measured 9 GiB reader and 30 GiB transactor.
-  assert.deepEqual([tuned.tx.memoryMiB, tuned["gw-r"].memoryMiB], [30 * 1024, 9 * 1024]);
-});
-
-test("the server profile stays the default until the owner switches it", () => {
-  assert.equal(defaultServerProfile, "server");
-  assert.deepEqual(launchProfile("server", headline).tx.flags.filter((f) => /^-Xmx|^-Ddatomic.objectCacheMax/.test(f)),
-    ["-Xmx24576m", "-Ddatomic.objectCacheMax=16384m"]);
+  assert.deepEqual([both.clients, both.pg.settings], [tuned.clients, tuned.pg.settings]);
+  // On the server profile the card's reader keeps PostgreSQL at 8 GiB and the 30 GiB transactor.
+  assert.deepEqual([tuned.tx.memoryMiB, tuned["gw-r"].memoryMiB, tuned.pg.memoryMiB], [30 * 1024, 11 * 1024, 8 * 1024]);
+  // The reader arms' own launch is unchanged, and does not fit beside the 32 GiB transactor.
+  const arms = launchProfile("server", { ...headline, readTuned: true, readCacheMiB: 3072 });
+  assert.deepEqual([arms.tx.memoryMiB, arms["gw-r"].memoryMiB, arms.pg.memoryMiB], [30 * 1024, 9 * 1024, 8 * 1024]);
+  assert(arms["gw-r"].flags.includes("-Xmx6144m"));
+  assert.throws(() => launchProfile("server-32", { ...headline, readTuned: true, readCacheMiB: 3072 }), /96 GB/);
+  assert.throws(() => launchProfile("server", { ...headline, readHeapThird: true }), /readHeapThird/);
 });
