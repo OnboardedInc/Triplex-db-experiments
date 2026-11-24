@@ -36,6 +36,27 @@
 (def ^ConcurrentHashMap account-gates (ConcurrentHashMap.))
 (defn- account-gate ^Semaphore [account]
   (.computeIfAbsent account-gates account (reify java.util.function.Function (apply [_ _] (Semaphore. (int per-account) true)))))
+;; [DX-SCALE2] Why: the map above keeps one fair semaphore for every account that has ever been swept, so with many
+;; small accounts it only grows (about 200 bytes per account: the map node, the account string, the semaphore and its
+;; fair queue head). With TX2_SWEEP_GATE_EVICT=1 (default off: the map above, unchanged) an account's gate lives only
+;; while a sweep of that account runs or waits: each entry is [semaphore users], `users` counts the requests that
+;; joined it (waiting or holding), and the last one to leave removes it, both inside ConcurrentHashMap's per-key
+;; compute, so an account never has two gates at once and the one-per-account rule is the same.
+;; Rejected: removing the entry when its semaphore shows every permit free (a request that has fetched the gate but
+;; not yet called tryAcquire would then wait on a semaphore no longer in the map, and a second gate could be made).
+(def ^:dynamic *evict-gates* (= "1" (System/getenv "TX2_SWEEP_GATE_EVICT")))
+(def ^ConcurrentHashMap evicting-gates (ConcurrentHashMap.))
+(defn- join-gate ^Semaphore [account]
+  (first (.compute evicting-gates account
+           (reify java.util.function.BiFunction
+             (apply [_ _ old] (if old [(first old) (inc (long (second old)))] [(Semaphore. (int per-account) true) 1]))))))
+(defn- leave-gate! [account]
+  (.computeIfPresent evicting-gates account
+    (reify java.util.function.BiFunction
+      (apply [_ _ old] (let [n (dec (long (second old)))] (when (pos? n) [(first old) n]))))))
+(defn gate-count
+  "Accounts holding a sweep gate now (both maps; for the per-account inventory)."
+  [] (+ (.size account-gates) (.size evicting-gates)))
 
 (def bound-defaults {"subjects" 256 "ms" 200})
 (def bound-caps {"subjects" 10000 "ms" 2000})
@@ -216,17 +237,23 @@
 (defn- admit!
   "Wait (fair, at most queue-ms) for this account's turn and then for a pool permit; return the release function."
   [account]
-  (let [started (System/nanoTime) gate (account-gate account)]
-    (when-not (.tryAcquire gate queue-ms TimeUnit/MILLISECONDS)
+  (let [started (System/nanoTime) evict *evict-gates*
+        ^Semaphore gate (if evict (join-gate account) (account-gate account))
+        leave! (fn [] (when evict (leave-gate! account)))]
+    (when-not (try (.tryAcquire gate queue-ms TimeUnit/MILLISECONDS) (catch Throwable t (leave!) (throw t)))
+      (leave!)
       (stats/bump! [:sweep :busy] 1)
       (refuse! 503 "SweepBusy" "Another sweep of this account is running" {:retryAfterMs queue-ms}))
     (let [left (max 0 (- queue-ms (quot (- (System/nanoTime) started) 1000000)))]
-      (when-not (.tryAcquire permits left TimeUnit/MILLISECONDS)
+      (when-not (try (.tryAcquire permits left TimeUnit/MILLISECONDS) (catch Throwable t (.release gate) (leave!) (throw t)))
         (.release gate)
+        (leave!)
         (stats/bump! [:sweep :busy] 1)
         (refuse! 503 "SweepBusy" "Every sweep permit is in use" {:retryAfterMs queue-ms})))
     {:queueMicros (quot (- (System/nanoTime) started) 1000)
-     :release (fn [] (.release permits) (.release gate))}))
+     :release (fn [] (.release permits) (.release gate) (leave!))}))
+;; [DX-SCALE2] For the gate test only (admission is private).
+(defn admit-for-test! [account] (admit! account))
 
 (defn- value-key [[family value]] [family (if (instance? BigInteger value) (str value) value)])
 (defn- wire-value [[family value]] {"type" family "value" (if (instance? BigInteger value) (str value) value)})

@@ -43,14 +43,42 @@ export class DatomicMatchNeedsPaging extends ReadError {
 const startOf = (source: IdListSource) =>
   (source.account === "_system" ? "_triplex/" : `acct/${source.account}/`) + source.prefix;
 
+// [DX-SCALE2] Why: a type listed per account has one range per account, and the nested check below compares every
+// pair (A squared comparisons: 10^10 at 100,000 accounts, minutes at start-up), while candidateIds sorted the type's
+// ranges again on every page (A log A per page). With TRIPLEX_DATOMIC_ID_LISTS_MANY_ACCOUNTS=1 (default off: both as
+// before) the check sorts the starts once and compares neighbours only, and the sorted ranges are kept per options
+// object and type. Same decision: if some start b begins with another start a, every start sorted between a and b
+// also begins with a, so a's sorted successor begins with a; equal starts are neighbours. Only which offending pair
+// the message names can differ. Rejected: a prefix tree (more code for the same answer).
+export const manyAccountRanges = () => process.env["TRIPLEX_DATOMIC_ID_LISTS_MANY_ACCOUNTS"] === "1";
+const byStart = (a: IdListSource, b: IdListSource) => (startOf(a) < startOf(b) ? -1 : startOf(a) > startOf(b) ? 1 : 0);
+const sortedSources = new WeakMap<IdListOptions, Map<string, readonly IdListSource[]>>();
+const sortedFor = (options: IdListOptions, entityType: string): readonly IdListSource[] => {
+  if (!manyAccountRanges()) return [...(options.types[entityType] ?? [])].sort(byStart);
+  let m = sortedSources.get(options);
+  if (!m) sortedSources.set(options, (m = new Map()));
+  let s = m.get(entityType);
+  if (!s) m.set(entityType, (s = [...(options.types[entityType] ?? [])].sort(byStart)));
+  return s;
+};
+
 export const validateIdListOptions = (options: IdListOptions): void => {
   for (const [type, sources] of Object.entries(options.types)) {
     if (sources.length === 0) throw new TypeError(`idLists.types.${type} lists no ID range`);
     const starts = sources.map(startOf);
-    for (const [i, a] of starts.entries())
-      for (const [j, b] of starts.entries())
-        if (i !== j && b.startsWith(a))
-          throw new TypeError(`idLists.types.${type}: range ${b} is inside range ${a} (entities would be listed twice)`);
+    if (manyAccountRanges()) {
+      const sorted = [...starts].sort();
+      for (let k = 1; k < sorted.length; k++)
+        if (sorted[k]!.startsWith(sorted[k - 1]!))
+          throw new TypeError(
+            `idLists.types.${type}: range ${sorted[k]} is inside range ${sorted[k - 1]} (entities would be listed twice)`,
+          );
+    } else {
+      for (const [i, a] of starts.entries())
+        for (const [j, b] of starts.entries())
+          if (i !== j && b.startsWith(a))
+            throw new TypeError(`idLists.types.${type}: range ${b} is inside range ${a} (entities would be listed twice)`);
+    }
     for (const source of sources)
       if (!/^[A-Za-z0-9_-]{1,64}$/.test(source.account))
         throw new TypeError(`idLists.types.${type}: invalid account ${source.account}`);
@@ -92,9 +120,7 @@ export async function* candidateIds(
   after: string | undefined,
   pageLimit: () => number,
 ): AsyncGenerator<readonly string[]> {
-  const sources = [...(options.types[entityType] ?? [])].sort((a, b) =>
-    startOf(a) < startOf(b) ? -1 : startOf(a) > startOf(b) ? 1 : 0,
-  );
+  const sources = sortedFor(options, entityType);
   for (const source of sources) {
     const start = startOf(source);
     // Ranges are disjoint and sorted: a range wholly at or before `after` is done.
