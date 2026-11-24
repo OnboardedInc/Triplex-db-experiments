@@ -226,3 +226,28 @@ The first report of this run, sent before publication, gave 13.5 to 14.8 as load
 6. **P1's bar** (read p99 ≤ 100 ms at 256 seats): `ref-near-head` met it at 77.82 ms and `s-seed-cut` at 99.33 ms. It was missed narrowly by `s-near-head` (112.13 ms) and `ref-seed-cut` (107.52 ms). The random pins missed it at 324 to 342 ms.
 
 Evidence: `evidence/DX-SCALE1/pinned-saves-1b-e02/` in the private evidence folder, holding `pinned-saves-1b-e02.tar.zst` (SHA-256 `6b732d0ef444d9330e0a68402e6ae91a035f839cd5b93408ba773d043d654783`; all window records, the launch profile, the cleanup record, the run log and the launcher) and `pinned-saves.json` (SHA-256 `315fc987a9d6d2bfa99c3327a91b5615ae4b421933295043483d05330766cb51`). Both were checked on the server and on the Mac.
+
+## Random arm (build `d94dff145`): predictions and falsifiers copied from `rd1/PINNED-1B.md` before launch
+
+This arm reruns the three random windows: `ref-random-near-head`, `s-random-near-head` and `ref-random-seed-cut`. Each is 90 s at 256 seats, run on the tuned reader's 3 cores and 3 GiB cache, and each configuration gets its own fresh copy. The reader runs with 6 permits (`p6`) and then 12 (`p12`), set by `DX_RD3_READ_PERMITS`. `p12` runs only if 18 minutes remain within the 40-minute ceiling, and only if 18 minutes remain before evidence collection starts at 04:00 UTC.
+
+| Configuration, window | Reads/s (central) | p50 | p99 (central) | Loads per subject | Cache share | Reader cores |
+| --- | --- | --- | --- | --- | --- | --- |
+| `p6`, `ref-random-near-head` | 1,450–1,700 (1,580) | 150–175 ms | 240–290 ms (260) | 1.5–2.0 | 0.76–0.81 | 2.6–2.9 |
+| `p6`, `s-random-near-head` | 1,400–1,700 (1,560) | 150–180 ms | 240–300 ms (265) | 1.5–2.0 | 0.76–0.82 | 2.6–2.9 |
+| `p6`, `ref-random-seed-cut` | 1,300–1,550 (1,420) | 165–195 ms | 260–330 ms (290) | 1.6–2.1 | 0.75–0.80 | 2.6–2.9 |
+| `p12`, each window | 0–10% above `p6` | | | Same | Same | 2.7–2.95 |
+
+- **Saves:** `s-random-near-head` stores 23.07/s, with S commit p99 50 to 70 ms and quiet p99 20 to 40 ms.
+- **Storage time per exchange** (`sql-ms`): 7 to 9 ms. PostgreSQL rises to 0.35 to 0.45 cores.
+- **Handler CPU per exchange:** 8 to 10 ms.
+- **Errors and wrong values:** 0 of each.
+- **The 100 ms bar:** not met in any configuration (central p99 260 to 290 ms).
+
+**What would show the sizing claim ("about 7 cores, permits about twice the cores, no affordable cache") wrong:**
+1. **`p6` at or above 2,000 reads/s on 3 cores.** CPU per subject falls with concurrency below 1.35 ms, and fewer than 6 cores would meet the bar.
+2. **`p6` under 1,350 reads/s with the reader under 2.4 cores.** The idle core is not permit-held storage waits but something permits cannot reach: a lock, the collector, PostgreSQL. More cores would then not scale linearly, and 7 is an underestimate.
+3. **`p12` at or above 1.15 × `p6`.** Storage waits still idle cores at two permits per core, so the permit rule becomes about four per core. The core count stands.
+4. **Cache share by request above 0.9, or loads per subject under 1.0.** The working set is smaller than modelled and a cache test is worth building.
+
+Loads per subject here are the sampled storage reads per exchange ÷ 8. The cache share is weighted by each metrics minute's overlap with the window.
