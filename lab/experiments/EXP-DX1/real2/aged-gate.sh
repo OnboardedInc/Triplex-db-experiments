@@ -13,7 +13,9 @@ mkdir -p "$out/out" "$out/age1src"
 git -C "$repo" archive 5cda4ab204b9736e32960843bee8cbc47d5ca74d -- packages/datomic/gateway/src packages/datomic/src/codec-spec.json \
   lab/experiments/EXP-DX1/age1/src | tar -x -C "$out/age1src"
 git -C "$repo" rev-parse HEAD > "$out/source"
-name=tx2-dxreal2-aged-live
+# [DX-XQ4] Optional container name and host port, so two builders' runs never meet (defaults as before).
+name=${DX_REAL2_AGED_NAME:-tx2-dxreal2-aged-live}
+port=${DX_REAL2_AGED_PORT:-18592}
 docker rm -f "$name" >/dev/null 2>&1
 # [DX-W3] Optional: the general writer's hints (0 or 1) with Datomic prefetch on; unset leaves the gate as it was.
 w3=()
@@ -32,11 +34,18 @@ if [[ -n ${DX_S1_WIDE:-} ]]; then
   w3+=(-e "TX2_SUBJECT_WIDE=$DX_S1_WIDE")
   export TX2_SUBJECT_WIDE=$DX_S1_WIDE
 fi
-docker run -d --name "$name" --memory 3g -p 127.0.0.1:18592:8080 ${w3[@]+"${w3[@]}"} --entrypoint /bin/bash \
+# [DX-XQ4] Optional: the commit-time index on (TX2_CROSS_INDEX=1) with xq4/declarations/production-6.json declared and
+# backfilled by the driver after aging; unset leaves the gate as it was.
+if [[ -n ${DX_XQ4_CROSS_INDEX:-} ]]; then
+  [[ $DX_XQ4_CROSS_INDEX == 1 ]] || { echo "DX_XQ4_CROSS_INDEX must be 1 or unset" >&2; exit 2; }
+  w3+=(-e TX2_CROSS_INDEX=1)
+  export DX_XQ4_DECLARATION=$repo/lab/experiments/EXP-DX1/xq4/declarations/production-6.json
+fi
+docker run -d --name "$name" --memory 3g -p "127.0.0.1:$port:8080" ${w3[@]+"${w3[@]}"} --entrypoint /bin/bash \
   -v "$repo/packages/datomic/gateway/src:/opt/gateway/src:ro" -v "$out/age1src:/age:ro" \
   -v "$repo/lab/experiments/EXP-DX1/prep1/aged-live:/gate:ro" -v "$out/out:/out" "$image" /gate/container.sh >/dev/null
 (cd "$repo" && DX_PREP1_LIBRARY=1 DX_PREP1_CAMPAIGN=rolling DX_REAL2_SET=aged DX_PREP1_AGED=1 \
-  node --import tsx lab/experiments/EXP-DX1/real2/aged-gate.ts "$out/out" http://127.0.0.1:18592) 2>&1 | tee "$out/driver.log"
+  node --import tsx lab/experiments/EXP-DX1/real2/aged-gate.ts "$out/out" "http://127.0.0.1:$port") 2>&1 | tee "$out/driver.log"
 status=${PIPESTATUS[0]}
 docker logs "$name" > "$out/out/container.log" 2>&1
 docker rm -f "$name" >/dev/null

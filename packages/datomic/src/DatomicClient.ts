@@ -125,7 +125,7 @@ export type CrossIndexCondition =
       readonly to?: CrossIndexValue;
       readonly toExclusive?: CrossIndexValue;
     }
-  | { readonly attribute: string; readonly op: "prefix"; readonly value: string }
+  | { readonly attribute: string; readonly op: "prefix"; readonly value: string | { readonly type: "string"; readonly value: string } }
   | { readonly attribute: string; readonly op: "exists" | "missing" };
 export interface CrossIndexFindRequest {
   readonly account: string;

@@ -56,8 +56,14 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     holder = (os.environ.get("DX_CHK1_HOLDER", "DX-CHK1") if combined
               else os.environ.get("DX_CHK1_HOLDER", "DX-W1") if owner_head == "1"
               else os.environ.get("DX_CHK1_HOLDER", "DX-REAL2") if mode == "production" else "DX-PREP1")
-    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1", "DX-REAL2", "DX-W3", "DX-W4", "DX-S1") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
-    assert mode != "production" or holder in ("DX-REAL2", "DX-THIN1", "DX-W3", "DX-W4", "DX-S1")
+    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1", "DX-REAL2", "DX-W3", "DX-W4", "DX-S1", "DX-XQ4") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
+    assert mode != "production" or holder in ("DX-REAL2", "DX-THIN1", "DX-W3", "DX-W4", "DX-S1", "DX-XQ4")
+    # [DX-XQ4] Why: run the production gate with the commit-time index on (TX2_CROSS_INDEX=1) and a declaration of six of
+    # the tape's fields, which the driver declares and backfills before the seed and checks after the read-back.
+    # Rejected: a second gate copy; unset, nothing is staged and the gate runs as before.
+    cross_index = os.environ.get("DX_XQ4_CROSS_INDEX")
+    if cross_index not in (None, "1") or (cross_index is not None and (mode != "production" or holder != "DX-XQ4")):
+        raise SystemExit("DX_XQ4_CROSS_INDEX is 1, for the production gate under the DX-XQ4 holder")
     # [DX-W3] Why: run the production gate with the general writer's hints on or off (default: no file, as before).
     # Rejected: a second gate copy; the hints arm differs from the control only in this one setting.
     general_prefetch = os.environ.get("DX_W3_GENERAL_PREFETCH")
@@ -112,6 +118,9 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
         (config / "general-prefetch").write_text(general_prefetch + "\n")
     if subject_hints is not None:
         (config / "subject-hints").write_text(subject_hints + "\n")
+    if cross_index is not None:
+        (config / "cross-index").write_text(cross_index + "\n")
+        shutil.copyfile(EXPERIMENT.parent / "xq4/declarations/production-6.json", config / "cross-index-declaration.json")
     fresh_first = os.environ.get("DX_PREP1_TEST_FRESH_FIRST") == "1"
     if fresh_first:
         # [DX-THIN1] Why: the one branch keeps INT1's rolling gate, which has no fresh-first arm (PREP1 dropped it).
@@ -191,6 +200,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
     # [DX-THIN1] Why: REAL2's production gate keeps its own tag; under the integration holder it takes a private one.
     profile["lanes"]["datomic"]["image"] = (f"tx2-dxs1-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-S1"
+                                            else f"tx2-dxxq4-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-XQ4"
                                             else f"tx2-dxw3-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-W3"
                                             else f"tx2-dxw4-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-W4"
                                             else f"tx2-datomic:dx-w1-head-{out.name}-{head[:8]}" if owner_head == "1" and holder == "DX-W1"
@@ -227,6 +237,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "lookupEvery": lookup_every,
         "generalPrefetch": general_prefetch,
         "subjectHints": subject_hints,
+        "crossIndex": cross_index,
         "ownerHead": owner_head == "1",
         "wideSaves": os.environ.get("DX_W2_WIDE", "0") == "1",
         "freshFirst": fresh_first,
