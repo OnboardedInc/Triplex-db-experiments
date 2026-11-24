@@ -5,7 +5,26 @@ random-subject windows of 2026-11-23 at 1 billion records (`evidence/DX-SCALE1/p
 `evidence/DX-SCALE1/random-1b-d94/`, 6 and 12 permits), and the probe `evidence/DX-SCALE1/rd2-probe/`. Mac evidence:
 `evidence/DX-RD5/` (private). Mac times are diagnostic; counts are exact.
 
-<!-- ANSWER -->
+**Answer (2026-11-24).**
+- **Where 1.7 ms goes:** 1.52 ms of each random subject's 1.71 ms of reader CPU is its 1.76 segment loads (0.69 ms of
+  decoding each, plus collecting what decoding allocates: 1.94 MB per subject, 17.8% of the wall in pauses); 0.19 ms is
+  the gateway's own work, the same as for a re-read subject. The 14.1 loads of an exchange of eight are 14.1 PostgreSQL
+  round trips made one after another inside the read permit (7.2 of its 19.6 ms). A subject needs one EAVT leaf; the
+  1 billion reads loaded 1.66 EAVT and 0.11 AVET leaves per subject, and the leaf returned 0.25% of what it decoded.
+- **Built, default off, exact on the toy (0 differences in 3 × 30,548 comparisons of whole `/read` answers):** a batch
+  prefetch that overlaps the eight subjects' loads (`TX2_READ_PREFETCH`), Datomic's index read-ahead off on the reader
+  (`-Ddatomic.readAheadPool=0`), the reader's cache size as an arm setting, and a second read gateway on its own
+  machine (launcher, script, window driver).
+- **Toy counts (cold, 32 MB cache):** read-ahead off cut storage gets per subject by 34 to 43% and CPU per subject by
+  30 to 43%; the prefetch halved an exchange's wall time and moved decoding off the request thread without changing
+  the loads.
+- **Forecast at 1 billion:** the prefetch alone gives 12 permits' throughput at 3 permits (about 1,700 reads/s, the bar
+  still missed); if read-ahead is the 0.66 excess leaves (my lean, not proven), CPU per subject falls to 1.1 to 1.3 ms,
+  one 3-core reader does 2,100 to 2,600 reads/s and two such readers about 4,600 (p99 near 100 ms). If it is not, the
+  bar needs about 7 reader cores as yesterday's model says.
+- **Server commands** (sections 7 and 8): one machine, three configurations, about 50 minutes; two machines, two
+  configurations, about 55 minutes. Neither has run.
+
 
 ## 1. Where the 1.7 ms goes (1 billion records, `ref-random-near-head`, 3 permits, 3 reader cores)
 
@@ -38,7 +57,131 @@ live row walk, decoding 20 row texts and keeping one, JSON) is the re-read cost,
 **Not the cause:** the as-of view (99.8% of these reads were answered from the current database by the pinned
 short-cut), the driver (event-loop p99 10.9 ms), PostgreSQL's core (0.31 cores, about 0.14 ms of its CPU per get).
 
-<!-- SECTIONS -->
+## 2. What a random subject's read loads
+
+Every random read in the windows asks for field 0 of a subject's first task (its I-9 entity, `acct/<account>/i9:<n>`),
+eight subjects per exchange, near the head or at the seed cut. The pinned short-cut answers 99.8% of them from the
+current database, so the read is: the identity lookup (`[:triplex.entity/id id]`, an AVET leaf), the short-cut's two
+checks on the subject's EAVT range (revision, and that no datom is newer than the pin), and the live row walk on the
+same range. Nothing reads AEVT leaves (0 loads), history or the log.
+
+**The segments, measured on a toy of SCALE1's own subjects** (`deepOwnFacts`, two accounts of 1,000 subjects written
+in the loader's frames of up to 2,000 facts, then indexed; `probe.clj` walks every entity in entity order with
+read-ahead off, so each load is one more leaf; gate-06):
+
+| | Toy | 1 billion |
+| --- | --- | --- |
+| Datoms per EAVT leaf | 334 (732,510 datoms in 2,193 leaves) | not counted |
+| Row text per leaf | 128,000 characters | not counted |
+| Stored bytes per segment (all values in Datomic's table: leaves, directories, log) | median 19.5 KB, mean 35.8 KB, p99 261 KB | about 60 KB per get (the probe's TOAST pages per get) |
+| The read subject's own rows | 20 rows, 6,442 characters (5.0% of its leaf's row text) | 20.1 rows per subject (160.8 per exchange) |
+| What the read returns | 1 row, about 320 characters (0.25% of the leaf's text) | 1 row; 786 bytes of JSON per subject |
+| Who else is in the leaf | the same subject's other 29 or so entities and its neighbours: entities are numbered in the frame's fact order, so read subjects are never next to each other (2,000 runs for 2,000 subjects) | the loader wrote the same frames |
+| Leaves per cold read of one subject (read-ahead off) | 1 in 95% of the reads that loaded any (326 of 344), 2 in 4.4%, 3 or more in 0.9% | **1.66 EAVT + 0.11 AVET** |
+
+**So one leaf per subject is what the layout requires; the 1 billion reads loaded 0.66 more EAVT leaves per subject
+than that.** The decode is Datomic's: it decodes the whole leaf (about 20 to 60 KB stored, 0.5 MB in the object
+cache) for 0.25% of its text. Decoding only what the read asks for would mean changing Datomic, which is ruled out; the
+gateway's own decoding (20 row texts per subject, 0.06 ms) is not worth narrowing further (the early filter already
+skips building the 19 rows it drops).
+
+**Where the 0.66 extra EAVT leaves come from: not established; two candidates, one testable on a server.**
+1. **Datomic's index read-ahead.** Datomic's index iterator (`datomic.index.TreeIter`) submits the following segments
+   to a five-thread read-ahead pool (`datomic.cache/read-ahead`; `datomic.readAheadPool` = 5 in the reader's native
+   settings). A point read never uses them. Their loads run on the pool's threads, so the sampled per-exchange count
+   does not include them (on the toy: 2,858 storage gets by PostgreSQL's own count for a full walk against 1,210 in the
+   walking thread's io-stats). What they do to the reads' own count: they fill the cache with leaves nobody reads and
+   evict what reads do reuse. On the cold toy, read-ahead off cut the reads' own loads by 23 to 38% and all storage
+   gets by 34 to 43% (section 4). At 1 billion the reused segments are the directory and identity segments (174
+   directory probes per exchange, 80% of cache requests hit), which is consistent with the excess; nothing proves it.
+2. **Directory segments larger than the cache keeps.** 1 billion records need on the order of a million EAVT leaves
+   and therefore thousands of directory segments; if the 3 GiB cache under 1.5 GB/s of decoded leaves cannot keep them,
+   each read reloads part of a directory. Command 1 separates the two (read-ahead off at 3 GiB; the cache at 1.5 GiB).
+
+## 3. The options built (all default off; exactness gated)
+
+| Option | Setting | What it does | Saves per subject at 1 billion, and why |
+| --- | --- | --- | --- |
+| **Batch prefetch** | gateway `TX2_READ_PREFETCH=1` (`TX2_READ_PREFETCH_THREADS`, default 16); launcher `DX_READ_PREFETCH=1`; random arm `DX_RD5_READ_PREFETCH=1` | Before a named-subject read of two or more subjects, each subject's identity lookup and EAVT range is walked on a small pool (the request thread takes the first), and the read then runs unchanged on the same database values and finds them cached. `uncached.clj`, called from `lean/rows`. Not for row-ID reads, interiors, history or scans. A failed touch is counted and ignored | **No CPU.** It removes the serial waits: 14.1 round trips × 0.51 ms = 7.2 ms of each 19.6 ms permit hold become one overlapped wave, so three permits keep three cores as busy as twelve did (12 permits: 1,747 reads/s at 13 to 14 ms of queued SQL per exchange). Forecast: reads/s of the 12-permit run at 3 permits, the exchange's permit hold about halved, and the "permits about twice the cores" rule replaced by permits = cores |
+| **Datomic read-ahead off** | JVM `-Ddatomic.readAheadPool=0` on the reader; launcher `DX_READ_AHEAD_OFF=1`; random arm `DX_RD5_READ_AHEAD_OFF=1` | Datomic's iterator no longer fetches the segments after the one a read needs. Configuration of the reader only; Datomic is not changed. Caching only, so answers cannot change | If read-ahead is the excess (section 2): 0.5 to 0.7 fewer loads, 0.45 to 0.6 ms less reader CPU per subject (1.71 → about 1.2 ms). If not: under 0.1 ms. **Cost:** scans lose read-ahead (history reads, journal walks and whole-scope reads load their next segment on demand): not measured |
+| **Reader cache 1.5 GiB** | random arm `DX_RD5_READ_CACHE_MIB=1536` (the launcher's existing size) | Half the object cache, the 6 GiB heap kept | Less copying of decoded segments that random reads never reuse (the collector's pauses were 0.44 ms per subject). Also the test of candidate 2 |
+| **Read permits matched to storage waits** | existing `DX_RD3_READ_PERMITS` | — | With the prefetch, permits = cores; without it, the measured rule (12 > 6 > 3) stands |
+| **Second reader on another machine** | `DX_REMOTE_READER_HOST`, `rd5/second-reader.sh`, `DX_RD5_SECOND_READER` | Section 6 | Cores, not cost per subject |
+
+**Not built:**
+- **A cache of decoded rows per subject instead of whole segments.** Bytes per subject both ways: a subject's 20 live
+  row texts are 6.4 KB of characters, about 8 KB on the heap with their strings and the entry; the segment way costs a
+  whole decoded leaf per random subject, about 0.5 MB (3 GiB held 6,100 to 6,400 segments). So 3 GiB holds about
+  390,000 subjects as rows against about 6,200 as segments (63 times as many), and the 1 billion windows' million
+  subjects fit in about 8 GB as rows against 0.5 TB as segments. Why it is not built today: (1) it is exact only with
+  invalidation from every transaction the peer applies (the transaction report queue), including a race between a read
+  that fills an entry and a save that lands after the read's basis; the revision cannot key it, because reading the
+  revision is the load it should avoid; (2) it fills only from reads (no keep-warm), so a 90 s window at about 2,000
+  reads/s fills at most 180,000 of a million subjects (hit share about 8% inside the window), and its gain shows only
+  in steady state, which no server test measures; (3) a whole-subject pull is about 30 entities, eight times larger.
+  It is the only lever found that makes a random subject cost what a re-read one costs (0.19 ms); worth a design
+  page with the owner's view on (2).
+- **Decoding only what the read returns:** needs a change inside Datomic (ruled out).
+- **One batched storage fetch for the eight subjects:** Datomic's storage interface fetches one segment per call; the
+  prefetch gets the same overlap without changing Datomic.
+
+**Exactness gates (Mac).** `rd5/gate.sh` (one ordinary heavy token, one lab container: PostgreSQL, a transactor, the
+writer and three readers with a 32 MB object cache, all both pinned options, the early filter, 3 permits): the merged
+tuned reader (8081) against the same with the prefetch and read-ahead off (8082) and with the prefetch alone (8083).
+Every comparison is the full `/read` answer of the reference reader against each treatment:
+
+| Run (source) | Toy | Comparisons | Rows | Differences | Prefetch batches (failures) |
+| --- | --- | ---: | ---: | ---: | --- |
+| gate-06 (`dc7b8c1d5` before commit) | 2 accounts × 1,000 subjects, 275,270 facts, 264 saves after the seed | 30,548 | 1,709,361 | **0** | 15,200 and 15,200 (0) |
+| gate-07 (`dc7b8c1d5`) | 10 accounts × 200, 234,870 facts, 272 saves | 30,548 | 1,686,069 | **0** | 15,200 and 16,640 (0) |
+| gate-08 (merged head) | 10 accounts × 200 | GATE08 | | | |
+
+Each run compares field 0 by pattern in batches of eight at 48 positions (8 inside the seed, 40 from the seed's end to
+the aged head) for every subject, whole subjects at 6 positions and both valid times, history reads of 400 subjects,
+historical worlds (reach) of 64 subjects at 6 positions, and, while saves run through the writer, field 0 at the aged
+head and one position behind the moving head. Gates 07 and 08 also run the server arm's own window
+(`pinnedWindow`, random subjects at the seed cut, every value checked against the seed's): one reader, then odd seats
+on a second reader (gate-07: 15,608 and 20,296 reads, 0 wrong, 0 errors; the second reader took 1,440 of 2,541
+exchanges). Also: gateway selftest 29 tests, 54,160 assertions, with the prefetch off and on (merged head);
+`rd5/prefetch-test.clj` (known, unknown and single subjects, no database change, 0 failures); the saves-arm harness
+(`rd1/saves-gate/harness.ts`) passed. gate-05 is kept as a record of a fault the gate caught: the prefetch called
+`count` on Datomic's datoms iterable, every touch failed and was ignored (121,600 failures, 0 differences), fixed before
+gate-06.
+
+## 4. Counts on a toy made cold on purpose (gate-06; counts exact, times diagnostic)
+
+The probe (`probe.clj`) runs in its own peer JVM with a 32 MB object cache against the 275,270-fact toy (2,193 EAVT
+leaves; the cache holds a small share), calling the gateway's `storage/read-rows` with the merged tuned reader's
+settings, near the head. "Gets" are PostgreSQL's own count of index fetches on Datomic's table (every storage get of
+the JVM, read-ahead threads included), read 11 s after each arm; "own loads" are the reading threads' io-stats.
+
+| Configuration | Single cold reads: gets / own loads per subject | Exchanges of 8, one at a time: gets per subject; wall per exchange | Closed loop, 16 clients × 8: gets per subject | CPU per subject | Reads/s |
+| --- | --- | --- | --- | --- | ---: |
+| Merged tuned reader, 3 permits | 1.00 / 0.85 | 0.60; 7.3 ms | 0.56 | 0.60 ms | 4,042 |
+| + prefetch | 0.85 / 0.77 | 0.69; 5.3 ms (median 2.9 against 5.9) | 0.58 | 0.58 ms | 4,940 |
+| 6 permits, no prefetch | 0.85 / 0.78 | 0.50; 3.5 ms | 0.57 | 0.50 ms | 6,171 |
+| read-ahead off | 0.66 / 0.66 | 0.35; 3.6 ms | 0.33 | 0.40 ms | 5,802 |
+| read-ahead off + prefetch | 0.68 / 0.67 | 0.39; 4.0 ms | 0.32 | 0.37 ms | 7,626 |
+
+- **Read-ahead off:** gets per subject down 34% (single), 43% (exchanges), 40% (closed loop), and the reads' own loads
+  down 23 to 38%; CPU per subject down 30 to 43%. The toy cache hits more than 1 billion's does (closed-loop gets 0.33
+  to 0.58 per subject against 1.76), so the size of the effect at 1 billion is the server question.
+- **Prefetch:** the exchange's handler-thread CPU fell from 4.1 to 1.6 ms (decoding moved to the pool) and its median
+  wall from 5.9 to 2.9 ms; CPU per subject unchanged within noise. The closed-loop gain (+22%; +67% in gate-05's
+  repeat) is the permits no longer idling; six permits without it did as well on the toy, where a round trip is short.
+- Times are from a Mac shared with five builders: they rank, they do not size.
+
+## 5. Forecast at 1 billion (the 256-reader bar for random subjects)
+
+| Reader | CPU per subject | Reads/s on 3 cores | 256 seats p50 / p99 | Cores for 3,600 reads/s (p99 about 100 ms) |
+| --- | ---: | ---: | --- | ---: |
+| Measured, 12 permits | 1.6 to 1.7 ms | 1,564 to 1,747 | 145 / 258 to 293 ms | 6.5 to 7 |
+| Prefetch, 3 permits | 1.6 to 1.7 ms | 1,500 to 1,850 | 140 to 170 / 240 to 310 ms | 6.5 to 7 |
+| Prefetch, read-ahead off, if read-ahead is the excess | 1.1 to 1.3 ms | 2,100 to 2,600 | 98 to 120 / 160 to 210 ms | 4.5 to 5 |
+| The same on two readers of 3 cores (command 2) | | 4,200 to 5,000 | 51 to 61 / 85 to 115 ms | — |
+| A row cache in steady state (not built) | about 0.2 to 0.3 ms | 9,000+ | inside the bar | 1 to 2 |
+
+
 
 ## 6. A second reader: what it costs and buys
 
@@ -227,5 +370,22 @@ every 5 s into `$RD5_OUT/stats.txt` until the container is removed.
 3. **p99 under 100 ms at both pins:** six cores meet the bar; the sizing above was pessimistic.
 4. **Any wrong value or error on either reader:** a second peer is not exact as assumed; stop.
 
-<!-- MAC -->
+## 9. What is not verified
+
+- **Nothing here has run at 1 billion.** The cause of the 0.66 extra EAVT leaves per subject is a lean (read-ahead
+  evicting directory and identity segments), not a finding; commands 1 and 2 decide it.
+- **The toy does not reproduce the 1 billion load count** (0.33 to 1.0 gets per subject against 1.76): its 2,193 leaves
+  have a handful of directories and a 32 MB cache still hits; all toy times are from a shared Mac.
+- **Read-ahead off for scans** (history reads, journal walks, whole-scope reads) on the reader: their speed without it
+  was not measured; only their answers were compared (history reads and historical worlds, 0 differences).
+- **The second-machine path** (`DX_REMOTE_READER_HOST`, `second-reader.sh`) has not run anywhere: the Mac gate covers
+  the window driver splitting seats over two readers in one container, not PostgreSQL and the transactor reached
+  across machines, `alt-host`, or PostgreSQL's authentication for a remote client (the image's default allows password
+  logins from any address; a prepared cluster's own `pg_hba.conf` decides on the server).
+- **`study-server.ts`'s new checks** (reader environment, read-ahead in native settings, cache size, the second
+  reader's URL) are type-free TypeScript run only through the harness's stubs; the first dry run executes them.
+- **The prefetch's effect under saves** (the prefetch touches the request's own current database; saves running
+  beside reads were part of the gate's live phase, 0 differences) and at 1,024 seats.
+- **A per-subject row cache** is costed, not built.
+
 
