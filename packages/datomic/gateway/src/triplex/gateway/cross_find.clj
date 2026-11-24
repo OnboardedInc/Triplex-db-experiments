@@ -891,11 +891,15 @@
         range-ok? (fn [c] (let [ends (keep #(get c %) ["from" "fromExclusive" "to" "toExclusive"])
                                 fams (set (map #(when (map? %) (get % "type")) ends))]
                             (and (seq ends) (= 1 (count fams)) (#{"string" "integer" "number" "datetime"} (first fams)))))
-        text-ok? (fn [c] (and (map? (get c "value")) (= "string" (get-in c ["value" "type"]))))
+        ;; A prefix value as find takes it, a string or {type: string}: the same question (the sweep's request carries
+        ;; the typed form, as the SDK sends it). Found by the index gate's sweep comparison: with only the typed form
+        ;; here, every question with a plain prefix was marked "none" and left the comparison (77 to 64).
+        text-ok? (fn [c] (let [v (get c "value")] (or (string? v) (and (map? v) (= "string" (get v "type"))))))
         plain-ok? (fn [c] (and (map? c) (#{"eq" "in" "range" "prefix" "exists" "missing" "ne" "contains"} (get c "op"))
                                (value-ok? (get c "value"))
                                (or (nil? (get c "values")) (and (sequential? (get c "values")) (every? value-ok? (get c "values"))))
-                               (case (get c "op") "range" (range-ok? c) ("prefix" "contains") (text-ok? c) true)))
+                               (case (get c "op") "range" (range-ok? c) "prefix" (text-ok? c)
+                                 "contains" (= "string" (get-in c ["value" "type"])) true)))
         cond-ok? (fn [c] (or (plain-ok? c)
                              (and (map? c) (= "has" (get c "op")) (map? (get c "related"))
                                   (or (nil? (get c "where")) (and (sequential? (get c "where")) (every? plain-ok? (get c "where")))))))
