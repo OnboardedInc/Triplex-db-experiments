@@ -47,3 +47,29 @@ Every window had 0 missed deadlines, 0 pending after one second and 0 expired sa
 - **Live saves and reads.** Reads stayed within their controls everywhere. Saves did not at 39.4/s: the neighbours' save p99 was 2.2× (barrier 6) and 17× (rolling 6) the control. That is the save-backlog cost of a Publish at that rate. The small release's 39.4/s windows will show whether it comes from the large release.
 
 Evidence: `evidence/DX-BM1/bench4/bench4-publish-large/` on the Mac.
+
+## Small release, repaired runner (run 1), ACT3 `f5f8c09ff`: the windows left unjudged
+
+**All eleven selected windows ran, all 100 Publishes were answered correctly inside one second, and no probe saw anything before its Publish: 0 visibility failures in 100 Publishes.** In every Publish, `probesBeforePublishVisible` was 0 and the read gateway's head lag right after the acknowledgement was 0. So the lag the owner asked about was 0 ms in this run. The stop seen earlier tonight (`held-campaign.ts:417`) is the only early probe observed in 220 Publishes across the three runs. The run used one build of `f5f8c09ff` (w0 rebuilt), a fresh verified copy and `DX_ACT3_SETTLE=0`. It went from 00:08:51 to 00:35:58 UTC on 24 November and ended with a passing verdict (`visibilityFailures` and `readFailures` both empty). The permanent record was 4 changes and 5,289–5,296 B per Publish.
+
+**Small (run 1) and large release side by side, per Publish window:**
+
+| Window | Small: first correct p50 / p99, within 1 s, visibility failures | Large: first correct p50 / p99, within 1 s | Forecast (small) | Small: live save p99 (control), read p99 (control) |
+| --- | --- | --- | --- | --- |
+| Barrier 6, 3.5/s | 31.6 / 93.8 ms, 20/20 (first run) | 40.2 / 55.2 ms, 20/20 | 25–70 / 60–180, 20/20 | 13.5 (13.6), 6.3 (27.3) |
+| Rolling 6, 3.5/s | 33.1 / 50.9 ms, 20/20, 0 | 32.1 / 71.3 ms, 20/20 | 25–70 / 60–180, 20/20 | 8.5 (9.2), 5.4 (5.2) |
+| Barrier 6, 23.5/s | 35.9 / 159.1 ms, 20/20, 0 | 52.4 / 120.5 ms, 20/20 | 45–140 / 130–450, 19–20/20 | 40.1 (25.3), 9.5 (7.6) |
+| Rolling 6, 23.5/s | 39.6 / 421.4 ms, 20/20, 0 | 49.3 / 322.8 ms, 20/20 | 40–120 / 100–400, 19–20/20 | 30.5 (219.6), 20.2 (5.7) |
+| Barrier 6, 39.4/s | 45.3 / 132.8 ms, 20/20, 0 | 63.0 / 140.6 ms, 20/20 | 60–220 / 200–900, 18–20/20 | 276.0 (118.9), 23.6 (22.9) |
+| Rolling 6, 39.4/s | 43.9 / 127.0 ms, 20/20, 0 | 67.3 / 190.4 ms, 20/20 | 55–180 / 160–800, 18–20/20 | 273.0 (165.4), 25.1 (21.4) |
+
+**Against the forecasts.**
+
+- **Small release.** Every first-correct figure is at or below its forecast range except rolling 6 at 23.5/s, whose p99 (421.4 ms) is just above the 100–400 ms range. Answers inside one second were 20/20 everywhere.
+- **Large release against small, same window.** p50 is +16.5, +9.7, +17.7 and +23.4 ms at 23.5 and 39.4/s, and −1.0 ms at rolling 6 3.5/s. Three windows are above the 10 ms falsifier, so **the large-release falsifier "p50 more than 10 ms above the small release" fired at barrier 6 23.5, barrier 6 39.4 and rolling 6 39.4.** The p99s are mixed (−101 to +63 ms). The two runs used different builds and copies on the same machine, as the document allowed.
+- **Within one second.** The large release answered 20/20 everywhere, the same as the small, so that falsifier did not fire.
+- **Records.** The large release's record (17,681–17,690 B) is 3.3× the small release's (5,289–5,296 B), with 4 changes each.
+
+**Live accounts during the Publish windows (small release, run 1).** Saves at 39.4/s ran at 2.3× (barrier) and 1.7× (rolling) the matched control's p99, and reads stayed within 1.2× of control. At rolling 6 23.5/s the control window itself had a 219.6 ms save p99. Against quiet, the read and commit ratios ran from 0.44× to 4.8× and from 0.93× to 10.9× (barrier 6 39.4 commit).
+
+Evidence: `evidence/DX-BM1/bench4/bench4-publish-r1/` on the Mac.
