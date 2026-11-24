@@ -297,17 +297,22 @@
 (defn run-find
   "Every page of a question, with small pages and bounds to force cursors. Returns the concatenation."
   [name q page-limit bounds]
-  (loop [cursor nil pages [] ids [] projected {} guard 0]
+  (loop [cursor nil pages [] ids [] projected {} guard 0 bounds bounds raises 0]
     (let [input (cond-> (assoc q "limit" page-limit "bounds" bounds) cursor (assoc "cursor" cursor))
-          r (route name "v2" "find" input)]
-      (when-not (= 200 (:status r)) (throw (ex-info "find refused" {:q q :reply r})))
+          r (route name "v2" "find" input)
+          small? (and (= 413 (:status r)) (= "BoundTooSmall" (get-in r [:body "code"])) (< (get bounds "entries") 1000000))]
+      ;; A client told its entry bound is too small for one candidate raises it (x10, to the cap) and asks the same page.
+      (when-not (or (= 200 (:status r)) small?) (throw (ex-info "find refused" {:q q :reply r})))
+      (if small?
+        (recur cursor pages ids projected (inc guard) (update bounds "entries" #(min 1000000 (* 10 %))) (inc raises))
       (let [b (:body r) ids (into ids (get b "ids" [])) projected (merge projected (get b "projected" {}))
             pages (conj pages (select-keys b ["stopped" "examined" "segmentsLoaded" "count" "countExact" "position" "indexEpoch" "entityReads" "indexOnly"]))]
         (if (and (get b "next") (< guard 100000))
-          (recur (get b "next") pages ids projected (inc guard))
+          (recur (get b "next") pages ids projected (inc guard) bounds raises)
           {:ids ids :projected projected :last b :pages (count pages) :stops (frequencies (map #(get % "stopped") pages))
+           :raises raises
            :entityReads (reduce + (map #(get % "entityReads" 0) pages))
-           :firstPageIndexOnly (get (first pages) "indexOnly") :firstPageEntityReads (get (first pages) "entityReads")})))))
+           :firstPageIndexOnly (get (first pages) "indexOnly") :firstPageEntityReads (get (first pages) "entityReads")}))))))
 
 (def attrs-by-family
   {"string" [":person/custom-background" ":person/custom-start" ":task/status"]
@@ -380,7 +385,7 @@
                                    (= (into {} (map (fn [c] [(tv (get c "value")) (get c "count")]) (get b "counts")))
                                       (into {} (map (fn [[k v]] [(if (= "json" (first k)) ["json" nil] k) v]) (:counts expected)))))
                "countDistinct" (and (= (get b "count") (:distinct expected)) (= (get b "matched") (count (:ids expected)))))]
-    {:same (boolean same) :expected (count (:ids expected)) :pages (:pages got) :stops (:stops got)
+    {:same (boolean same) :expected (count (:ids expected)) :pages (:pages got) :stops (:stops got) :raises (:raises got)
      :entityReads (:entityReads got) :firstPageIndexOnly (:firstPageIndexOnly got) :firstPageEntityReads (:firstPageEntityReads got)
      :long (boolean (re-find #"Lxxxx" (json/write-str q)))
      :detail (when-not same {:q q :got (select-keys b ["count" "counts" "matched" "order"]) :gotIds (take 20 (:ids got))
@@ -601,6 +606,7 @@
                                         :stops (apply merge-with + (map :stops rs)) :pages (reduce + (map :pages rs))})
       (say "XQ4_G1" {:questions (count rs) :differences (count (remove :same rs)) :seed seed :positions (count positions)
                      :validTimes (count (valid-times)) :pages (reduce + (map :pages rs)) :stops (apply merge-with + (map :stops rs))
+                     :boundRaises (reduce + (keep :raises rs))
                      :matchesTotal (reduce + (map :expected rs))
                      :entityReadsTotal (reduce + (keep :entityReads rs))
                      :indexOnlyFirstPages (count (filter :firstPageIndexOnly rs))
