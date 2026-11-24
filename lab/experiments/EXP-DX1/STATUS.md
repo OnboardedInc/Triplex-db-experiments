@@ -5567,3 +5567,26 @@ Source: step 0 builder, branch `exp/DX-XQ3-id-lists` `f1f0908df` (already merged
 - Public-repository slip: pushed commit `1308d44d8` contains the docker socket path in one runner; removed in the next commit but still in that branch's history. The same path is already in the tracked `CLAUDE.md` on `main`, so nothing new is exposed. Reported to Sam.
 
 **Started** in the freed slot: recovery time after a machine loss (task file `OPUS-HA2-recovery-time.md`). Six agents running: step 1, slow exact route, release size limits, settlement at 1 billion, uncached pinned-read cost, recovery time.
+
+## 2026-11-24 11:21 EST: uncached pinned reads: where the 1.7 ms goes, and two options built
+
+Source: uncached-read builder, branch `exp/DX-RD5-uncached-read` `67bca118e` (merges the one branch `23b7df344`; not merged onto it), page `lab/experiments/EXP-DX1/rd5/UNCACHED-READ.md`. Nothing run at 1 billion today; the breakdown is from the 2026-11-23 evidence.
+
+| Per subject at 1 billion | Random (uncached) | Re-read (cached) |
+|---|---|---|
+| Reader CPU | 1.71 ms | 0.19 ms |
+| Storage gets | 1.76 (EAVT leaves 1.66) | 0.06 |
+| Stop-the-world GC share of wall time | 17.8% | 10.0% |
+| Allocation | 1.94 MB | 0.24 MB |
+
+- The extra 1.52 ms is segment loads, about 0.86 ms each (0.69 ms decoding plus collection). The waits are serial: 14.1 gets per exchange at 0.51 ms each inside the read permit.
+- The layout needs one leaf per subject; 1 billion loaded 1.66. Cause of the extra 0.66 not established. Lean: Datomic's index read-ahead filling the cache with leaves point reads never use. Other candidate: directory segments a 3 GiB cache cannot keep.
+- Built, default off: batch prefetch (`TX2_READ_PREFETCH`), read-ahead off on the reader (`DX_READ_AHEAD_OFF`, Datomic configuration only), reader cache size for the random arm, a second reader on a second machine (`DX_REMOTE_READER_HOST`, `rd5/second-reader.sh`).
+- Exactness (toy): three gates of 30,548 comparisons each, about 1.69 million rows each, 0 differences; server arm's own window 0 wrong.
+- Toy counts: read-ahead off cut storage gets per subject 15 to 45% and CPU 30 to 43%. The toy does not reproduce 1.76 gets per subject, so the size at 1 billion is unknown.
+- Forecast at 1 billion on 3 reader cores: prefetch alone 1,500 to 1,850 reads/s, p99 240 to 310 ms (bar missed). With read-ahead off, if it is the cause: 2,100 to 2,600 reads/s, p99 160 to 210 ms, and the bar needs about 5 reader cores instead of 7. Two readers with both: 4,200 to 5,000 reads/s, p99 85 to 115 ms.
+- Server commands: one machine about 50 minutes (three configurations, tells the two causes apart); two machines about 55 minutes.
+- Not built: a cache of decoded rows per subject (about 8 KB per subject against 0.5 MB as segments; needs exact invalidation; fills only from reads).
+- Not verified: anything at 1 billion; the two-machine path has never run; scan speed with read-ahead off.
+
+**Started** in the freed slot: merge of settlement beside saves, ID lists and the uncached-read options onto the one branch, with one ordered server session list (task file `OPUS-INT4-merge-2026-11-24-afternoon.md`).
