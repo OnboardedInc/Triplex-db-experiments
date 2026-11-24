@@ -108,3 +108,19 @@ export function fillFrame<U>(
   pieces.push({ index: lo, from, to: from + m, close: false });
   return { pieces, advance: lo, tail: from + m, split: true };
 }
+
+// [DX-ACT5] Why: every settlement frame used to commit only if the whole database's head was still the one the frame
+// read (one database holds every account), so beside live saves in any account frames were refused and retried. A
+// frame's content depends only on the release's own cut and the writer's own durable progress (SETTLEMENT-LIVE.md
+// section 2), so `TX2_SETTLE_PRECONDITION=progress` makes a frame commit only if its writer's progress row (the release's
+// values progress, or the account's notice cursor) still holds exactly the facts the frame followed. Unset or `head`,
+// unchanged. Rejected: a per-subject check (a save after the release's cut cannot change any frame's content) and
+// keeping the head check for the first frame only (at 394 saves/s in one database it would almost never commit).
+export type Precondition = "head" | "progress";
+export function preconditionMode(value = process.env.TX2_SETTLE_PRECONDITION): Precondition {
+  assert(
+    value === undefined || value === "" || value === "head" || value === "progress",
+    "TX2_SETTLE_PRECONDITION is unset, head or progress",
+  );
+  return value === "progress" ? "progress" : "head";
+}

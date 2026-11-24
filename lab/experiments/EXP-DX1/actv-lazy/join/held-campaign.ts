@@ -191,7 +191,7 @@ export function checkSeedFrames(detected: number[], cut: number) {
   return { people: detected.length, frames: new Set(detected).size,
     reordered: detected.filter((p, i) => i > 0 && p < detected[i - 1]!).length };
 }
-export async function seedPositions(client: DatomicClient, seed: AdoptedSeed) {
+export async function seedPositions(client: DatomicClient, seed: AdoptedSeed, account = 0) {
   const detected: number[] = [];
   const width = 128;
   for (let start = 0; start < seed.image.people; start += 4 * width) {
@@ -200,7 +200,7 @@ export async function seedPositions(client: DatomicClient, seed: AdoptedSeed) {
         const first = start + lane * width;
         const count = Math.min(width, seed.image.people - first);
         if (count <= 0) return [];
-        const ids = Array.from({ length: count }, (_, i) => root(0, first + i));
+        const ids = Array.from({ length: count }, (_, i) => root(account, first + i));
         const rows = await client.rows(seed.scope.db, {
           entityIds: ids,
           pattern: { attribute: ":subject/member" },
@@ -228,7 +228,7 @@ export async function seedPositions(client: DatomicClient, seed: AdoptedSeed) {
   return detected;
 }
 
-function expected(i: number, at: number, edits: History, positions: number[]) {
+export function expected(i: number, at: number, edits: History, positions: number[]) {
   // [DX-ACT1] Why: SCALE1 packs one person's original facts atomically. Trace provenance uses their witnessed loader position.
   // Rejected: giving every authored fact position one, which produces the right tasks but different durable notice versions.
   let rows = authoredSeed(i, positions[i]!);
@@ -720,6 +720,16 @@ export async function runHeld(
         preparedMs: prepared - start, installed, meta, initial, coldFirstMs: initialRead.ended - initialAt,
         settlement: "skipped: DX_ACT3_RELEASE set without DX_ACT3_SETTLE=1",
       });
+    // [DX-ACT5] Settlement beside live saves (diagnostic toy only): DX_ACT5_LIVE runs its cases instead of the windows.
+    if (process.env.DX_ACT5_LIVE) {
+      assert(diagnostic || process.env.DX_ACT5_SERVER === "1", "DX_ACT5_LIVE is a toy diagnostic unless DX_ACT5_SERVER=1");
+      const { livePhase } = await import("./settle-live.ts");
+      await livePhase({
+        out, s, a, offer, verifyRead: verifyRead as never, demand: demand as never, writer, seed, people, history, positions,
+        ledger: activeLedger, releases, descriptor, db, ordered: Boolean(ordered), attempt: peer.attempt,
+      });
+      return;
+    }
     const windows: PairSample[] = [];
     for (const rate of diagnostic ? ([3.5, 23.5] as const) : rates) {
       const seconds = diagnostic ? 8 : 100;

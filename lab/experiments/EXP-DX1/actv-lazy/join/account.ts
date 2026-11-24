@@ -36,7 +36,7 @@ import {
 import { Documents, type Op } from "../../notify1/store.ts";
 import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
-import { CLOCK, ORIGIN, RELEASE, Conflict, fact, millis, value, type Store } from "../store.ts";
+import { Conflict, fact, millis, namesOf, value, type Store } from "../store.ts";
 import { calculate, worldsAt, type Proposal } from "../decision.ts";
 import { deepImpact, rawDeep, replaceDeep } from "./deep.ts";
 import { subjectOf, type Fact } from "../../../../bench/lib/world.ts";
@@ -127,7 +127,7 @@ export class JoinedAccount {
   constructor(s: Store, admission?: AccountAdmission) {
     this.s = s;
     this.admission = admission;
-    this.notices = new Notices(s.comp, "joined", {
+    this.notices = new Notices(s.comp, "joined" + namesOf(s).documents, {
       identity: selector,
       roster: async (c) => this.roster((await this.meta(c.position)).census, c.position),
       worlds: async (ids, c) =>
@@ -143,7 +143,7 @@ export class JoinedAccount {
           return false;
         const rows = tx.changes.filter(
           (r: { entityId: string }) =>
-            r.entityId !== CLOCK && !r.entityId.startsWith(this.db.prefix),
+            r.entityId !== namesOf(this.s).CLOCK && !r.entityId.startsWith(this.db.prefix),
         );
         // [DX-ACT1] Why: W0 owned entities and the deep root namespace cannot be policy dependencies of another enrollee. Rejected: deriving a durable covered set solely from a caller's owner label.
         return (
@@ -211,9 +211,12 @@ export class JoinedAccount {
   }
   async installHeld(at: string) {
     const s = this.s, source = s.held;
-    assert(source && W0.isInstant(at) && (await s.head()) === source.cut);
+    // [DX-ACT5] A namespaced account is enrolled after others have written to the database: its own enrolment writes
+    // are checked from the head it starts at.
+    const before = await s.head();
+    assert(source && W0.isInstant(at) && (source.namespace || before === source.cut));
     const ids = Array.from({ length: source.people }, (_, i) => W0.placementId(i));
-    const init = new Notices(s.comp, "joined", {
+    const init = new Notices(s.comp, "joined" + namesOf(s).documents, {
       identity: selector,
       roster: async () => ids,
       worlds: async () => { throw Error("Unexpected held enrolment evaluation"); },
@@ -224,14 +227,14 @@ export class JoinedAccount {
     const { census } = (await init.observe()).value;
     assert.equal(census.members, h(ids));
     const now = await s.head();
-    await this.suffix(source.cut, now, true);
+    await this.suffix(source.namespace ? before : source.cut, now, true);
     const meta: Meta = { epoch: source.seal, census, valid: at, source: source.cut,
       compiler: selector, scheduled: false };
-    await s.commit("join-held-enrolment", "lazy/join", [
-      fact(ORIGIN, "lazy/generation", { profile: s.profile, held: source.seal }),
+    await s.commit("join-held-enrolment" + (source.namespace ? ":" + source.account : ""), "lazy/join", [
+      fact(namesOf(this.s).ORIGIN, "lazy/generation", { profile: s.profile, held: source.seal }),
       this.db.put("join-meta", meta),
       this.db.put("join-calendar", []),
-      fact(CLOCK, "lazy/slot", { joined: source.seal, kind: "baseline", at }),
+      fact(namesOf(this.s).CLOCK, "lazy/slot", { joined: source.seal, kind: "baseline", at }),
     ], now, { intent: h([source.seal, census, at]) });
     assert.deepEqual(await this.roster(census, now), ids);
     return meta;
@@ -290,7 +293,7 @@ export class JoinedAccount {
         }
       }
     }
-    const init = new Notices(s.comp, "joined", {
+    const init = new Notices(s.comp, "joined" + namesOf(s).documents, {
       identity: selector,
       roster: async () => ids,
       worlds: async () => {
@@ -356,7 +359,7 @@ export class JoinedAccount {
         this.db.put("join-meta", meta),
         this.db.put("join-calendar", [...days].filter((d) => d > at).sort()),
         ...(c.clock ? [{ op: "retract", id: c.clock.id }] : []),
-        fact(CLOCK, "lazy/slot", { joined: c.generation, kind: "baseline", at }),
+        fact(namesOf(this.s).CLOCK, "lazy/slot", { joined: c.generation, kind: "baseline", at }),
       ],
       now,
       { intent: h([ids, at]), epoch: c.generation },
@@ -555,7 +558,7 @@ export class JoinedAccount {
     return out;
   }
   private async marker(e: NoticeEvent) {
-    const xs = await this.s.rows([RELEASE], e.at),
+    const xs = await this.s.rows([namesOf(this.s).RELEASE], e.at),
       r = xs.find((x) => x.position === e.at);
     assert(r);
     const m = value(r) as Marker;
@@ -631,7 +634,7 @@ export class JoinedAccount {
         const calendar = await this.db.get<string[]>("join-calendar", p);
         const dates = [...new Set([...calendar.value, effective])].sort();
         const ops = [
-          fact(RELEASE, "lazy/activation", {
+          fact(namesOf(this.s).RELEASE, "lazy/activation", {
             joined: meta.epoch,
             storage: "scheduled",
             kind: "activation",
@@ -818,7 +821,7 @@ export class JoinedAccount {
           };
           if (sequence !== undefined) await recheckErasure(this.s.comp, sequence);
           return {
-            ops: [fact(RELEASE, "lazy/activation", m), ...np.operations, ...ops],
+            ops: [fact(namesOf(this.s).RELEASE, "lazy/activation", m), ...np.operations, ...ops],
             expected,
             context: {
               epoch: meta.epoch,
@@ -894,7 +897,7 @@ export class JoinedAccount {
         const ops: any[] = [
           ...this.db.change("join-calendar", cal, cal.value.slice(1)),
           ...(c.clock ? [{ op: "retract", id: c.clock.id }] : []),
-          fact(CLOCK, "lazy/slot", { joined: meta.epoch, kind: "due", at: due }),
+          fact(namesOf(this.s).CLOCK, "lazy/slot", { joined: meta.epoch, kind: "due", at: due }),
         ];
         // [DX-ACT1] Why: passage through an enrolled valid-time boundary may change posting inputs without a save. Rejected: treating the original page as authoritative beyond its first unprocessed boundary.
         if (!(await this.db.row("join-invalid", k)))
@@ -938,7 +941,7 @@ export class JoinedAccount {
             census: meta.census.members,
             compiler: selector,
           };
-          ops.push(fact(RELEASE, "lazy/activation", m), ...plan.operations);
+          ops.push(fact(namesOf(this.s).RELEASE, "lazy/activation", m), ...plan.operations);
         } else if (tail.value.release)
           ops.push(
             ...this.notices.plan(
@@ -1022,7 +1025,7 @@ export class JoinedAccount {
         const ops: Op[] = [
           ...source,
           ...(c.clock ? [{ op: "retract" as const, id: c.clock.id }] : []),
-          fact(CLOCK, "lazy/slot", { joined: meta.epoch, kind: "source", at }),
+          fact(namesOf(this.s).CLOCK, "lazy/slot", { joined: meta.epoch, kind: "source", at }),
         ];
         if (
           (impact.posting || (meta.expanded && impact.output)) &&
@@ -1121,7 +1124,7 @@ export class JoinedAccount {
             validFrom: millis(from),
           })),
           ...(c.clock ? [{ op: "retract", id: c.clock.id }] : []),
-          fact(CLOCK, "lazy/slot", { joined: meta.epoch, kind: "source", at }),
+          fact(namesOf(this.s).CLOCK, "lazy/slot", { joined: meta.epoch, kind: "source", at }),
         ];
         if (indexInputs.has(edit.a) || (meta.expanded && outputInputs.has(edit.a))) {
           const invalid = await this.db.row("join-invalid", p);

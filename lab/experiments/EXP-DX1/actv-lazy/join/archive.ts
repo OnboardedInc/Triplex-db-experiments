@@ -8,14 +8,24 @@ import { W0, canonical } from "../../../../bench/lib/w0-world.ts";
 import { memberPage, width } from "../../notify1/census.ts";
 import { Documents, hash, pack, unpack, type Op, type Row } from "../../notify1/store.ts";
 import type { Store } from "../store.ts";
-import { Conflict, openStore } from "../store.ts";
+import { Conflict, namesOf, openStore, type EntityGuard } from "../store.ts";
 import { worldsAt, winner } from "../decision.ts";
 import { LazyReader } from "../read.ts";
 import { JoinedAccount, type Marker } from "./account.ts";
 import { address } from "./index.ts";
 import { evaluateRows } from "./material.ts";
 import { BulkQueue, bulkClaim, type BulkClass } from "./bulk.ts";
-import { fillFrame, frameEstimate, frameMode, windowOf, type Candidate, type FrameMode, type Piece } from "./frames.ts";
+import {
+  fillFrame,
+  frameEstimate,
+  frameMode,
+  preconditionMode,
+  windowOf,
+  type Candidate,
+  type FrameMode,
+  type Piece,
+  type Precondition,
+} from "./frames.ts";
 
 const step = 16;
 assert(width % step === 0);
@@ -130,24 +140,36 @@ export class Archive {
   /** The frames this process admitted: count and largest rows, wire estimate and estimated service, and the sum of
    * estimated service (bounded evidence, not one entry per frame). */
   readonly admitted = { frames: 0, rowsMax: 0, wireMax: 0, usMax: 0, usSum: 0 };
+  /** [DX-ACT5] What each frame's commit needs to hold (TX2_SETTLE_PRECONDITION). */
+  readonly precondition: Precondition;
+  /** [DX-ACT5] Frames sent to the writer, refused at commit (the precondition failed), and committed; with the turns'
+   * client-side intervals (bounded) for the live-side reading. */
+  readonly contest = new Contest();
+  /** [DX-ACT5] The account's pause and pace, read before each frame (TX2_SETTLE_CONTROL=1; unset, none). */
+  control?: { gate: () => Promise<void> };
+  /** [DX-ACT5] Diagnostic: no frame is sent after this `performance.now()` time (SettlementStopped). */
+  stopAt?: number;
   private constructor(
     source: JoinedAccount,
     store: Store,
     queue: BulkQueue,
     channel: string,
     frames: FrameMode,
+    precondition: Precondition,
   ) {
     this.source = source;
     this.store = store;
     this.queue = queue;
     this.frames = frames;
-    this.db = new Documents(store.comp, source.s.held ? "settlement-" + channel : "settlement");
+    this.precondition = precondition;
+    this.db = new Documents(store.comp, source.s.held ? "settlement-" + channel + namesOf(source.s).documents : "settlement");
   }
   static async open(
     source: JoinedAccount,
     queue: BulkQueue,
     channel: "values" | "notices" = "values",
     frames: FrameMode = frameMode(),
+    precondition: Precondition = preconditionMode(),
   ) {
     const s = source.s;
     // [DX-ACT1] Why: the held scorecard includes archive writes and indexes in the same physical database.
@@ -155,7 +177,7 @@ export class Archive {
     const store = s.held
       ? await openStore(s.scope, s.profile, "write", s.held)
       : await openStore("lazy-settlement-" + hash([s.scope, channel]).slice(0, 40));
-    return new Archive(source, store, queue, channel, frames);
+    return new Archive(source, store, queue, channel, frames, precondition);
   }
   close() {
     return this.store.close();
@@ -167,6 +189,7 @@ export class Archive {
     at: number,
     context: unknown,
     authority: Awaited<ReturnType<typeof readErasure>>,
+    progress?: { key: string; prior: Row<unknown> | undefined },
   ) {
     // [DX-ACT1] Why: constrain native preparation and durable turns independently of page count. Rejected: a multi-megabyte atomic frame or assuming a timeout can preempt a durable native transaction.
     const estimate = frameEstimate(ops);
@@ -182,15 +205,42 @@ export class Archive {
     if (authority) verifySameErasureAuthority(this.source.s.comp, this.store.comp);
     // [DX-ERASE1] Why: admission can wait after a page was derived, so the same ticket belongs on the destination commit.
     // Rejected: a source read immediately before enqueueing (removal can publish while the batch waits).
-    return this.queue.submit(this.source.s.scope, () =>
-      bulkClaim(
-        this.store.scope,
-        id,
-        kind,
-        () => this.store.commit(id, "lazy/settlement", ops, at, context),
-        authority,
-      ),
-    );
+    // [DX-ACT5] With TX2_SETTLE_PRECONDITION=progress the frame is refused only if its writer's progress row moved.
+    const guards: EntityGuard[] | undefined =
+      this.precondition === "progress" && progress
+        ? [{ entityId: this.db.prefix + progress.key, tripleIds: progress.prior ? [progress.prior.id] : [] }]
+        : undefined;
+    assert(this.precondition === "head" || guards, "A settlement frame names its progress row");
+    await this.control?.gate();
+    if (this.stopAt !== undefined && performance.now() > this.stopAt) throw new SettlementStopped();
+    const c = this.contest;
+    c.offered++;
+    try {
+      const r = await this.queue.submit(this.turnKey(), async () => {
+        const begun = performance.now();
+        try {
+          return await bulkClaim(
+            this.store.scope,
+            id,
+            kind,
+            () => this.store.commit(id, "lazy/settlement", ops, at, context, undefined, undefined, guards),
+            authority,
+          );
+        } finally {
+          c.turn(begun, performance.now());
+        }
+      });
+      c.done(true);
+      return r;
+    } catch (e) {
+      if (e instanceof Conflict) c.done(false);
+      throw e;
+    }
+  }
+  /** [DX-ACT5] The key the bulk queue rotates on: the account (held accounts share one database scope). */
+  turnKey() {
+    const s = this.source.s;
+    return s.held ? s.scope + "/" + s.held.account : s.scope;
   }
 
   async values(sequence: number) {
@@ -239,6 +289,7 @@ export class Archive {
         at,
         next,
         authority,
+        { key, prior },
       );
       return next;
     };
@@ -338,6 +389,7 @@ export class Archive {
       at,
       next,
       authority,
+      { key: progressKey(sequence), prior },
     );
     return next;
   }
@@ -488,5 +540,43 @@ export class Archive {
         }
       },
     );
+  }
+}
+
+export class SettlementStopped extends Error {}
+/** [DX-ACT5] Exact counts of one writer's frames, per-second commit and refusal counts from `origin`, and the turns'
+ * client-side intervals (the first 250,000). */
+export class Contest {
+  offered = 0;
+  refused = 0;
+  committed = 0;
+  origin = performance.now();
+  readonly seconds = new Map<number, { committed: number; refused: number }>();
+  readonly turns: [number, number][] = [];
+  turn(begun: number, ended: number) {
+    if (this.turns.length < 250_000) this.turns.push([begun, ended]);
+  }
+  done(ok: boolean) {
+    if (ok) this.committed++;
+    else this.refused++;
+    const k = Math.floor((performance.now() - this.origin) / 1000),
+      b = this.seconds.get(k) ?? { committed: 0, refused: 0 };
+    if (ok) b.committed++;
+    else b.refused++;
+    this.seconds.set(k, b);
+  }
+  reset(origin = performance.now()) {
+    this.offered = this.refused = this.committed = 0;
+    this.origin = origin;
+    this.seconds.clear();
+    this.turns.length = 0;
+  }
+  summary() {
+    return {
+      offered: this.offered,
+      refused: this.refused,
+      committed: this.committed,
+      perSecond: [...this.seconds].sort((a, b) => a[0] - b[0]).map(([s, v]) => ({ s, ...v })),
+    };
   }
 }
