@@ -169,6 +169,17 @@ async function transactSure(input: any): Promise<number> {
 }
 const head = async (c = writer) => (await c.begin(db).then(async (b) => { await c.release(db, b.handle); return b.position; }));
 log("scope", { name, db });
+// [DX-ACT8] DX_SCALE2_REMOVAL=1 (default off; the stack needs its shared erasure directory, DX_XQ3_ERASURE_DIRECTORY=1):
+// the fresh database is declared protected for one attribute before its first save; after the window (section 3b) two
+// publishing accounts each publish a further release while a removal on request of a protected value lands between the
+// Publish's read and its commit, one value under the publishing account's own names and one under a thin account's.
+const REMOVAL = process.env.DX_SCALE2_REMOVAL === "1";
+const PROTECTED = ":person/note";
+if (REMOVAL) {
+  assert(!ready, "the removal step needs a fresh database");
+  await writer.declareProtection(db, [PROTECTED], false);
+  assert((await writer.erasureFrontier(db)).protected);
+}
 
 // Positions of every subject's seed commit, per account (the held oracle wants them for the publishing accounts).
 const seedPos = new Map<string, number[]>();
@@ -618,11 +629,59 @@ log("window", { saves: saves.length, acked: saves.filter((s) => s.status === "ac
     last: settled.length ? Math.round(Math.max(...settled.map((x) => x.ms))) : null }, feedPages });
 assert.equal(saves.filter((s) => s.status !== "acked").length, 0, "a save was not acknowledged");
 
+// 3b. [DX-ACT8] DX_SCALE2_REMOVAL=1: a removal on request between a Publish's read and its commit (after the window, so
+// no settlement frame is in flight; every frame and Publish of this run carried the removal ticket all the same). Each
+// step: a protected value is saved, the account publishes a further release (21 forms) with the removal of that value in
+// its `afterRead` hook (once); the gate expects that Publish refused, then offers it again with the same command ID and
+// expects it to land; that release is settled with the account's others and its notices and reads checked in 4d.
+const removalSteps: Record<string, unknown>[] = [];
+const settleTo = new Map<string, number>();
+if (REMOVAL) {
+  const thin = accounts.find((a) => a.kind === "thin" && !livePublishers.has(a.key))!;
+  const live = pubs.filter((p) => livePublishers.has(p.a.key) && p.target !== undefined).slice(0, 2);
+  assert.equal(live.length, 2, "the removal step needs two live publishers");
+  for (const [k, x] of live.entries()) {
+    const owner = k === 0 ? x.a.key : thin.key;
+    const entityId = "acct/" + owner + "/act8-note-" + k;
+    const noted = await transactSure({ ...command("scale2/note/" + RUN + "/" + k,
+      [{ e: entityId, a: PROTECTED, v: { type: "string", value: "note-" + k } }] as never, [], false), groupAccount: owner });
+    const seqBefore = (await writer.erasureFrontier(db)).seq;
+    const prev = x.releases.at(-1)!.doc;
+    const doc = largeRelease(W0.R1.doc, parseShape("forms=21,policies=21,permille=1000"));
+    const id = "scale2:" + RUN + ":" + x.a.key + ":removal";
+    let erased: any, fired = false, first = "";
+    const tries0 = x.joined.beside.tries;
+    try {
+      await x.joined.publish(id, doc, W0.POPULATION_VALID_TIME, "owed", undefined, { afterRead: async () => {
+        if (fired) return;
+        fired = true;
+        erased = await writer.erase(db, "scale2-erase-" + RUN + "-" + k, [{ entityId, attribute: PROTECTED }]);
+      } });
+    } catch (e) {
+      const err = e as { name?: string; code?: string; message?: string };
+      first = [err.name, err.code, String(err.message).slice(0, 160)].filter(Boolean).join(": ");
+    }
+    const triesFirst = x.joined.beside.tries - tries0;
+    const p = await x.joined.publish(id, doc, W0.POPULATION_VALID_TIME, "owed");
+    const seq = await sequenceAt(x.joined, p.position);
+    x.releases.push({ seq, position: p.position, doc, old: prev });
+    settleTo.set(x.a.key, seq);
+    const last = x.joined.beside.last;
+    removalSteps.push({ where: k === 0 ? "own account" : "another account", account: x.a.key, notedAt: noted,
+      erasedAt: erased?.position, erasureSeq: { before: seqBefore, removal: erased?.seq, after: (await writer.erasureFrontier(db)).seq },
+      firstRefused: first, triesFirst, landed: p.position, read: last?.landed === p.position ? last.read : undefined,
+      triesSecond: x.joined.beside.tries - tries0 - triesFirst });
+  }
+  log("removal", { attribute: PROTECTED, steps: removalSteps });
+  assert(removalSteps.every((s) => s.firstRefused && s.erasedAt !== undefined), "a Publish whose removal ticket changed in its window was not refused");
+}
 // Accounts whose Publish landed during the window settle now (quietly), so section 4d checks them as the others.
 const liveWorkers: any[] = [];
 for (const x of pubs.filter((p) => livePublishers.has(p.a.key) && p.target !== undefined)) {
   const w = await settleModule.Settlement.open(x.joined, new BulkQueueCls(1), false, "bytes", "progress");
-  await w.settle(x.target);
+  // [DX-ACT8] An account of the removal step settles through its further release too (4d checks its notices and reads;
+  // the stored changes checked stay the live release's).
+  await w.settle(settleTo.get(x.a.key) ?? x.target);
   liveWorkers.push({ x, w });
 }
 // ---- 4. Checks, one account at a time -------------------------------------------------------------------------------
@@ -774,6 +833,7 @@ const result = {
   feed: { checked: feedChecked, lagMs: { p50: q(lags, 0.5), p99: q(lags, 0.99) } },
   ids: idRows, sweeps: sweepRows, settlement,
   livePublish,
+  ...(REMOVAL ? { removal: { attribute: PROTECTED, steps: removalSteps } } : {}),
   late: late.map(({ account, ok, error, pub }) => ({ account, ok, error, enrolCommits: pub?.enrolCommits })),
   sweepGates: { beforeSweeps, afterSweeps, sweptAccounts: sweepRows.length },
   routes: { write: await scanStats(writeUrl), read: await scanStats(readUrl) }, feedPages,
