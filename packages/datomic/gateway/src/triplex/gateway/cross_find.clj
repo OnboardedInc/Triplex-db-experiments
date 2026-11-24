@@ -759,9 +759,11 @@
                                        (if-not (.hasNext it)
                                          (vreset! stopped "end")
                                          (let [cand (.next it)]
-                                           (aset consumed 0 (inc (aget consumed 0)))
                                            (when (nth cand 3) (evaluate cand))
                                            (vreset! last-key (if driver-c (nth cand 2) (first cand)))
+                                           ;; Counted once the candidate is done: a candidate whose own entity read
+                                           ;; outruns the bound leaves the page with no progress (refused below).
+                                           (aset consumed 0 (inc (aget consumed 0)))
                                            (if (and (= result "ids") (>= (.size ids) limit))
                                              (vreset! stopped (if (.hasNext it) "limit" "end"))
                                              (recur (inc n)))))))
