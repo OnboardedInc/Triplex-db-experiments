@@ -302,8 +302,10 @@
                      :hi (some-> (or to to-ex) (#(encode-value family % attribute))) :hi-ex (some? to-ex)}))
       "prefix" (do (when-not (= family "string")
                      (refuse! 400 "UnsupportedOperation" "prefix needs a string attribute"))
-                   (let [p (get c "value")]
-                     (when-not (string? p) (codec/invalid "prefix takes a string value"))
+                   ;; A bare string, or {type: "string", value} as the exact sweep (XQ6) writes it.
+                   (let [v (get c "value")
+                         p (if (and (map? v) (= "string" (get v "type"))) (get v "value") v)]
+                     (when-not (string? p) (codec/invalid "prefix takes a string value (or {type: string, value})"))
                      {:op op :attribute attribute :code code :pfx (str "s" (x/esc p)) :scan-pfx (str "s" (x/esc (x/truncate p)))}))
       ("exists" "missing") {:op op :attribute attribute :code code})))
 
@@ -337,6 +339,13 @@
       (empty? mine)
       (boolean (some #(entry-ok? view c %) mine)))))
 
+(defn- fact-visible?
+  "The entity has a fact visible at the view and valid time: Triples.entityPage's rule for a subject that exists."
+  [view eid valid]
+  (some (fn [datom]
+          (let [r (lean/decode (:v datom))]
+            (and (<= (double (:valid_from r)) valid) (or (nil? (:valid_to r)) (> (double (:valid_to r)) valid)))))
+        (lean/legacy-live-texts view eid)))
 (defn- type-visible? [view eid entity-type valid]
   (some (fn [datom]
           (let [r (lean/decode (:v datom))]
@@ -672,7 +681,11 @@
         work (long-array 2)
         ;; An answer needs each candidate's own entries only for conditions the merge cannot apply, a type check, a
         ;; projection, a count by value, or a value-ordered page after the first (to list each entity once).
-        needs-entity? (or (seq rest-conds) from-type (seq project-codes) of-code (and driver-c (some? after)))
+        ;; `from` by ID prefix with no condition that needs a visible value (only `missing`, or none): an ID counts only
+        ;; when the entity has a fact visible at the basis (entityPage's rule, as the exact sweep applies it). Any other
+        ;; condition's visible entry, or a type's visible row, already implies one.
+        visibility? (and from (nil? from-type) (not-any? #(#{"eq" "in" "range" "prefix" "exists"} (:op %)) conds))
+        needs-entity? (or (seq rest-conds) from-type (seq project-codes) of-code (and driver-c (some? after)) visibility?)
         wait-ms (get limits "ms")
         queued (System/nanoTime)]
     ;; Step 0's shared admission: a fair queue per account, then a fair shared permit (ids/admitted).
@@ -711,6 +724,7 @@
                                       (or (nil? shape-re) (re-matches shape-re (subs local (count id-prefix))))))
                              (every? #(matches? view % es v16) rest-conds)
                              (or (nil? from-type) (do (aset work 1 (inc (aget work 1))) (type-visible? view eid from-type valid)))
+                             (or (not visibility?) (do (aset work 1 (inc (aget work 1))) (fact-visible? view eid valid)))
                              (or (nil? driver-c)
                                  (and (let [p (x/parse-key k)] (or (not (:long? p)) (confirm driver-c p)))
                                       (.add seen local)

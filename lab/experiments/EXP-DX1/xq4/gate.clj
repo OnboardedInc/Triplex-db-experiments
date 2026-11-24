@@ -278,14 +278,15 @@
 (defn brute [world account q]
   (let [base (str "acct/" account "/")
         from (get q "from")
+        ;; entityPage's rule: an ID is a subject at the basis only when it has a visible fact (`:entities` holds exactly those).
         candidates (cond
-                     (get from "prefix") (filter #(.startsWith ^String % (str base (get from "prefix"))) (:ids world))
+                     (get from "prefix") (filter #(and (.startsWith ^String % (str base (get from "prefix"))) (contains? (:entities world) %)) (:ids world))
                      (= (get from "type") "Subject") (filter #(and (re-matches #"pl:[0-9]{8}" (subs % (count base)))
                                                                    (contains? (get-in world [:entities % :types]) "Subject"))
                                                              (filter #(.startsWith ^String % base) (:ids world)))
                      (get from "type") (filter #(contains? (get-in world [:entities % :types]) (get from "type"))
                                                (filter #(.startsWith ^String % base) (:ids world)))
-                     :else (filter #(.startsWith ^String % base) (:ids world)))
+                     :else (filter #(and (.startsWith ^String % base) (contains? (:entities world) %)) (:ids world)))
         matched (filter (fn [id] (every? #(cond-holds? (get-in world [:entities id]) %) (get q "where"))) candidates)
         values (fn [id attr] (get-in world [:entities id :attrs attr] #{}))]
     {:ids (vec (sort matched))
@@ -634,7 +635,12 @@
           {:ids ids :last b :pages (inc pages)})))))
 (defn sweep-shaped [q]
   ;; The question as the sweep takes it: find's order, bounds and cursor removed (ID order is the sweep's).
-  (when (= "sweep" (xcall-find 'sweep-fallback q)) (dissoc q "order")))
+  ;; Prefix values go as {type: "string", value}, the form both routes take.
+  (when (= "sweep" (xcall-find 'sweep-fallback q))
+    (-> (dissoc q "order")
+        (update "where" (fn [w] (mapv #(if (and (= "prefix" (get % "op")) (string? (get % "value")))
+                                          (assoc % "value" {"type" "string" "value" (get % "value")}) %)
+                                      (or w [])))))))
 (defn phase-sweep! [label]
   (let [name (db-name label) conn (reopen name)
         marks (map json/read-str (str/split-lines (slurp (io/file out (positions-file label)))))
@@ -681,7 +687,7 @@
     (let [rs (remove :skipped @results)]
       (say "XQ4_SWEEP_AGREE" {:compared (count rs) :differences (count (remove :same rs))
                               :skippedFindRefused (count (filter :skipped @results))
-                              :byResult (frequencies (map :result rs)) :nonEmpty (count (filter #(pos? (or (:n %) 0)) rs))
+                              :byResult (frequencies (keep :result rs)) :nonEmpty (count (filter #(pos? (or (:n %) 0)) rs))
                               :positions positions :validTimes valid
                               :pass (and (seq rs) (every? :same rs))}))))
 
@@ -1000,10 +1006,12 @@
         world (world-at name conn (head name conn) 1.79e12)
         expect (fn [q] (count (:ids (brute world (get q "account") q))))
         desc-q {"account" "acc-a" "where" [{"attribute" ":task/due" "op" "range" "from" {"type" "datetime" "value" 1.7e12}}] "order" {"by" ":task/due" "direction" "desc"} "result" "ids"}
-        desc-pages (run-find name (assoc desc-q "basis" {"validAt" 1.79e12}) 7 {"entries" 300 "ms" 1000 "segments" 4096})
+        desc-pages (try (run-find name (assoc desc-q "basis" {"validAt" 1.79e12}) 7 {"entries" 300 "ms" 1000 "segments" 4096})
+                         (catch Exception e (say "XQ4_E1_REFUSED" {:q desc-q :reply (:reply (ex-data e))}) {:ids [:refused]}))
         desc-ok (= (set (:ids desc-pages)) (set (:ids (brute world "acc-a" desc-q))))
         from-q {"account" "acc-b" "from" {"prefix" "pl:00000"} "where" [{"attribute" ":task/progress" "op" "range" "from" {"type" "integer" "value" "50"}}] "order" {"by" ":task/progress"} "result" "ids"}
-        from-pages (run-find name (assoc from-q "basis" {"validAt" 1.79e12}) 7 {"entries" 300 "ms" 1000 "segments" 4096})
+        from-pages (try (run-find name (assoc from-q "basis" {"validAt" 1.79e12}) 7 {"entries" 300 "ms" 1000 "segments" 4096})
+                         (catch Exception e (say "XQ4_E1_REFUSED" {:q from-q :reply (:reply (ex-data e))}) {:ids [:refused]}))
         from-ok (= (set (:ids from-pages)) (set (:ids (brute world "acc-b" from-q))))
         index-only (filter (fn [[k v]] (:indexOnly v)) rows)]
     (say "XQ4_E1" {:answers rows :descPagedSameAsBrute desc-ok :descPages (:pages desc-pages)
