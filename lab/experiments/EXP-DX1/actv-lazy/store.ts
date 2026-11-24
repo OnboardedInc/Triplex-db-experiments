@@ -59,7 +59,7 @@ export async function rejectUnrecordedWrite(
       (native.status === 429 && native.code === "WriteQueueFull"))
   )
     throw native;
-  if ((await head()) !== expected) throw new Conflict("Source changed at admission");
+  if ((await head()) !== expected) throw new Conflict("Source changed at admission", { cause: failure });
   throw new Error(
     "Native write had no receipt: " + (failure instanceof Error ? failure.message : exit._tag),
     { cause: failure },

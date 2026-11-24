@@ -62,7 +62,7 @@ type Case = {
   release: "large" | "huge" | "small" | "none" | "same";
   own: 0 | 3.5 | 23.5 | 39.4;
   others: boolean;
-  extra?: "kill" | "second" | "multi" | "rival" | "pause" | "stop";
+  extra?: "kill" | "second" | "multi" | "rival" | "pause" | "stop" | "guard";
   turns?: "admission";
   /** This case's save window in seconds (default DX_ACT5_SECONDS). */
   seconds?: number;
@@ -78,7 +78,7 @@ export function parseCases(text: string): Case[] {
     assert(secs === undefined || secs === "" || (Number.isInteger(Number(secs)) && Number(secs) >= 2 && Number(secs) <= 7200));
     assert(name && ["head", "progress"].includes(precondition!) && ["count", "bytes"].includes(frames!));
     assert(["large", "huge", "small", "none", "same"].includes(release!) && ["0", "3.5", "23.5", "39.4"].includes(own!));
-    assert(["0", "1"].includes(others!) && [undefined, "", "kill", "second", "multi", "rival", "pause", "stop"].includes(extra));
+    assert(["0", "1"].includes(others!) && [undefined, "", "kill", "second", "multi", "rival", "pause", "stop", "guard"].includes(extra));
     assert([undefined, "", "admission"].includes(turns));
     return {
       name,
@@ -201,6 +201,10 @@ export async function livePhase(c: LiveContext) {
   try {
     for (const k of cases) {
       const seconds = k.seconds ?? defaultSeconds;
+      if (k.extra === "guard") {
+        results.push(await guardCase(c));
+        continue;
+      }
       if (k.extra === "multi") {
         results.push(await multiCase(c, k, seconds, extras, { ref, roster, current: () => current, publish }));
         continue;
@@ -616,7 +620,7 @@ async function multiCase(
   published.push({ seq: z.r.seq, position: z.r.position, doc: z.r.doc, old: z.old });
   for (const x of extras) {
     const doc = largeRelease(x.current.doc, shape);
-    const p = await x.a.publish(c.attempt + ":act5:" + x.index + ":" + published.length, doc, validTime, "owed");
+    const p = await x.a.publish(c.attempt + ":act5:" + x.index + ":" + k.name, doc, validTime, "owed");
     const seq = await sequenceAt(x.a, p.position);
     await x.ref.check(x.a, roster, (i) => worldAt(i, p.position, x.history, x.positions), doc,
       { tx: p.position, validTime }, x.current.doc, undefined, true, false);
@@ -766,8 +770,9 @@ async function multiCase(
   return result;
 }
 
-/** The notice sequence a Publish at `position` wrote. The tail is read until it reaches the Publish: an unpinned read
- * can trail the acknowledged write (H11.4), and a stale tail would name the previous release. */
+/** The notice sequence a Publish at `position` wrote, checked against the tail at that position (an earlier version of
+ * this phase reused a Publish command id between cases, got the earlier case's receipt back, and settled the wrong
+ * release; that was the "stored changes differ" seen in two toy runs). An unpinned read can also trail the write. */
 async function sequenceAt(a: JoinedAccount, position: number) {
   for (let i = 0; i < 2000; i++) {
     const t = await a.notices.observe();
@@ -778,4 +783,63 @@ async function sequenceAt(a: JoinedAccount, position: number) {
     await sleep(5);
   }
   throw new Error("The notice tail never reached the Publish at " + position);
+}
+
+// [DX-ACT5] The guard itself, on the held database: (1) a write that follows a progress row another writer has
+// already replaced is refused; (2) twenty pairs of writers create the same absent progress row at once: exactly one of
+// each pair lands; the refusal's cause says whether the client's read inside the transaction or the transactor's
+// serial check refused it.
+async function guardCase(c: LiveContext) {
+  const { Conflict } = await import("../store.ts");
+  const db = new Documents(c.s.comp, "act5-guard" + randomUUID().slice(0, 8));
+  const guardOf = (k: string, prior?: { id: string }) => [{ entityId: db.prefix + k, tripleIds: prior ? [prior.id] : [] }];
+  const write = (id: string, k: string, prior: { id: string } | undefined, v: unknown, at: number) =>
+    c.s.commit(id, "lazy/settlement", db.change(k, prior as never, v), at, v, undefined, undefined, guardOf(k, prior));
+  const cause = (e: unknown) => {
+    const x = (e as { cause?: { message?: string; _tag?: string } }).cause;
+    return String(x?._tag ?? "") + " " + String(x?.message ?? "");
+  };
+  // (1) follow, rival replaces, follower refused.
+  let at = await c.s.head();
+  await write("act5-guard-a", "p", undefined, 1, at);
+  at = await c.s.head();
+  const prior = await db.row<number>("p", at);
+  assert(prior);
+  await write("act5-guard-rival", "p", prior, 3, at);
+  let followerRefused = "";
+  try {
+    await write("act5-guard-follower", "p", prior, 2, at);
+  } catch (e) {
+    if (!(e instanceof Conflict)) throw e;
+    followerRefused = cause(e);
+  }
+  assert(followerRefused, "a write following a replaced progress row was not refused");
+  assert.equal((await db.row<number>("p", await c.s.head()))!.value, 3);
+  // (2) races on an absent row.
+  const races = { pairs: 20, oneWon: 0, client: 0, transactor: 0, other: [] as string[] };
+  for (let i = 0; i < races.pairs; i++) {
+    const h = await c.s.head();
+    const outcomes = await Promise.allSettled([
+      write("act5-race-" + i + "-a", "r" + i, undefined, "a", h),
+      write("act5-race-" + i + "-b", "r" + i, undefined, "b", h),
+    ]);
+    const won = outcomes.filter((o) => o.status === "fulfilled").length;
+    if (won === 1) races.oneWon++;
+    for (const o of outcomes)
+      if (o.status === "rejected") {
+        if (!(o.reason instanceof Conflict)) throw o.reason;
+        const why = cause(o.reason);
+        if (/observed fact set|TransactionConflict/.test(why)) races.client++;
+        else if (/CONFLICT|Conflict/i.test(why)) races.transactor++;
+        else races.other.push(why.slice(0, 200));
+      }
+    const rows = await db.rows<string>(["r" + i], await c.s.head());
+    assert.equal(rows.size, 1, "one live progress row");
+  }
+  assert.equal(races.oneWon, races.pairs, "exactly one of each pair lands");
+  await c.ledger.verifyThrough(await c.s.head(), false, ADOPT);
+  const result = { case: { name: "guard" }, followerRefused, races };
+  console.log("[act5] " + JSON.stringify(result));
+  jsonFile(path.join(c.out, "act5-case-guard.json"), result);
+  return result;
 }
