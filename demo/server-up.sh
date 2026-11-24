@@ -17,6 +17,15 @@ for arg in "$@"; do
   case $arg in --reset) reset=1;; --fetch) fetch=1;; --toy) toy=1;; *) echo "unknown option $arg" >&2; exit 2;; esac
 done
 port_w=18491 port_r=18495
+# [DX-INT3] DEMO_TOY_NAME=<name> DEMO_TOY_PORTS="<write> <read> <console>": a second toy beside the owner's, with its own
+# working copy (tx2-dxdemo1-<name>-work), state folder (demo-toy-<name>) and ports, copied from the same toy original.
+# Unset: the one toy on 18491/18495 exactly as before. Rejected: a second toy recipe.
+toy_name=${DEMO_TOY_NAME:-}
+if [[ -n $toy_name ]]; then
+  [[ $toy_name =~ ^[a-z0-9]{2,12}$ && $toy_name != toy ]] || { echo 'DEMO_TOY_NAME is 2 to 12 lower-case letters or digits, not "toy"' >&2; exit 2; }
+  read -r port_w port_r _ <<< "${DEMO_TOY_PORTS:?give DEMO_TOY_PORTS=\"write read console\" with DEMO_TOY_NAME}"
+  [[ $port_w =~ ^[0-9]+$ && $port_r =~ ^[0-9]+$ && $port_w != 18491 && $port_r != 18495 ]] || exit 2
+fi
 # Pinned identity of the sealed 1 billion cut (coordinator, 2026-11-23). Digests only; no location or credential.
 handoff_pin=faab1bc5bca8e6303285101003e5a42fc82c8e99fe2eadacaf125259b575bbf2
 archive_pin=ea9a4b1df2d9efb2a416b7b40ae6b621eef62f3c14c33acabbb18f623979ffb6
@@ -31,10 +40,11 @@ timings=
 if [[ $toy == 1 ]]; then
   [[ $(uname -s) == Darwin && $fetch == 0 ]] || { echo 'The toy runs only in the Mac lab VM' >&2; exit 2; }
   export DOCKER_HOST=unix://$HOME/.colima/triplex2/docker.sock
-  root=${DEMO_ROOT:-$HOME/Claude/Projects/triplex-db-2/demo-toy}
+  root=${DEMO_ROOT:-$HOME/Claude/Projects/triplex-db-2/demo-toy${toy_name:+-$toy_name}}
   kind=toy
-  original=tx2-dxdemo1-toy-original work=tx2-dxdemo1-toy-work
-  handoff=$root/original/handoff.json
+  original=tx2-dxdemo1-toy-original work=tx2-dxdemo1-${toy_name:-toy}-work
+  handoff=$HOME/Claude/Projects/triplex-db-2/demo-toy/original/handoff.json
+  [[ -z ${DEMO_ROOT:-} ]] || handoff=$root/original/handoff.json
   export DX_STACK_EVIDENCE=$root/evidence
   heavy=(node lab/bin/heavy.mjs --label DX-DEMO1-toy-up --)
 else
