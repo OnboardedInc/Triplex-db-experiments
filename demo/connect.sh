@@ -19,7 +19,8 @@ started=$SECONDS
 if [[ $toy == 1 ]]; then
   ssh_base=(ssh -F "$HOME/.colima/_lima/colima-triplex2/ssh.config")
   target=lima-colima-triplex2
-  ready_cmd="cat '$HOME/Claude/Projects/triplex-db-2/demo-toy/ready.json'"
+  # [DX-INT3] DEMO_TOY_NAME reads the second toy's ready file (see server-up.sh).
+  ready_cmd="cat '$HOME/Claude/Projects/triplex-db-2/demo-toy${DEMO_TOY_NAME:+-$DEMO_TOY_NAME}/ready.json'"
 else
   server=${DEMO_SERVER:-$(cat "$dir/server" 2>/dev/null || true)}
   [[ -n $server ]] || { echo "Put the server address in $dir/server or DEMO_SERVER" >&2; exit 2; }

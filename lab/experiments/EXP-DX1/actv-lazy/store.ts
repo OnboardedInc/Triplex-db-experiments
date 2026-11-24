@@ -94,6 +94,8 @@ export async function openStore(
   profile: "w0" | "act2-deep" = "w0",
   access: "write" | "read" = "write",
   held?: HeldSource,
+  // [DX-RD4] A reader built from a receipt: its unpinned reads (the head) are at or after the floor's position.
+  options: { readonly readAtLeast?: unknown } = {},
 ) {
   assert(held
     ? profile === "act2-deep" && /^dx-scale-decision-[0-9a-f-]+-0$/.test(scope)
@@ -127,7 +129,8 @@ export async function openStore(
     documents: held?.namespace ? "-" + held.account : "",
   };
   const h = access === "write" ? await openTriples("datomic", scope) : undefined,
-    comp = await openComposition("reach", "datomic", scope);
+    comp = await openComposition("reach", "datomic", scope,
+      options.readAtLeast === undefined ? undefined : { readAtLeast: options.readAtLeast });
   const counters = {
     writes: 0,
     accountReads: 0,

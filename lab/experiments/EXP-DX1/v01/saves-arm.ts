@@ -4,7 +4,7 @@ import path from "node:path";
 import { monitorEventLoopDelay } from "node:perf_hooks";
 import { now } from "../scale1/decision/observer.ts";
 import type { adoptedArm as AdoptedArm } from "./adopted.ts";
-import type { AgedCut } from "./production-card.ts";
+import { ladderSizes, type AgedCut } from "./production-card.ts";
 import type * as Ladder from "../rd1/pinned-ladder.ts";
 
 // [DX-RD3] The window driver of the pinned arm with saves (study-server.ts DX_RD3_PINNED_SAVES=1). Every call it makes
@@ -18,7 +18,9 @@ import type * as Ladder from "../rd1/pinned-ladder.ts";
 // cache-cold case, and sample every n-th exchange's io-stats and handler CPU from the reader.
 // Rejected: placing the random windows first (a fault in new code would cost the published windows).
 export type SavesWindow = { name: string; tape: "production-S" | "saturday"; pin?: Ladder.PinKind;
-  isolated: boolean; minutes: number; profileEvery?: number };
+  isolated: boolean; minutes: number; profileEvery?: number;
+  /** [DX-S1] The save-size ladder: every neighbour save has exactly this many facts, at the 50-row cell's times. */
+  facts?: number; rate?: 50 | 235 | 394 | 620 };
 export const savesWindows: readonly SavesWindow[] = [
   { name: "s-alone", tape: "production-S", isolated: false, minutes: 3.5 },
   { name: "s-near-head", tape: "production-S", pin: "near-head", isolated: false, minutes: 3.5 },
@@ -31,12 +33,19 @@ export const savesWindows: readonly SavesWindow[] = [
   { name: "ref-seed-cut", tape: "saturday", pin: "seed-cut", isolated: true, minutes: 4.5, profileEvery: 128 },
   { name: "ref-tape", tape: "saturday", pin: "tape", isolated: true, minutes: 4.5 },
 ];
+// [DX-S1] The save-size ladder (DX_RD3_WINDOWS=ladder): one isolated window per size with 256 pinned readers near the
+// head, every neighbour save of exactly N facts at the 50 rows/s cell's save times (about 2.9 saves/s), so the serial
+// point stays below a third busy even at 1,000 facts. Rejected: the 394 cell (23 saves/s of 1,000 facts would fill the
+// serial point and measure a queue, not a save).
+export const ladderWindows: readonly SavesWindow[] = ladderSizes.map((facts) =>
+  ({ name: "ladder-" + facts, tape: "production-S", pin: "near-head", isolated: true, minutes: 3.5, facts, rate: 50 }));
 const pinKinds: readonly string[] = ["seed-cut", "near-head", "tape", "random-near-head", "random-seed-cut"];
 
 type Counters = Record<string, () => Record<string, string | null>>;
 export type SavesContext = {
-  /** "random": only the three random windows (the random arm), each isolated, in list order. */
-  selection?: "all" | "random";
+  /** "random": only the three random windows (the random arm), each isolated, in list order. "ladder": the save-size
+   * ladder windows (DX-S1). */
+  selection?: "all" | "random" | "ladder";
   out: string; base: Parameters<typeof AdoptedArm>[2]; agedHead: number; raw: string; source: string;
   seed: Parameters<typeof AdoptedArm>[3]; writer: Parameters<typeof AdoptedArm>[4]; deadline: number; stopping: () => boolean;
   agedCut: () => AgedCut; counters: Counters;
@@ -56,15 +65,17 @@ export async function savesArm(ctx: SavesContext) {
   const peer = { ...base, windowSeconds: 90 as const, aged: { cut: ctx.agedCut(), head: agedHead } };
   const traceFile = path.join(raw, "gw-r.jsonl");
   // Resolve every window's settings before the first save, so a dry run (DX_DRY_RUN_FIRST_OFFER=1) covers them.
-  const chosen = ctx.selection === "random" ? savesWindows.filter((w) => w.pin?.startsWith("random")) : savesWindows;
-  assert(chosen.length === (ctx.selection === "random" ? 3 : 10));
+  const chosen = ctx.selection === "ladder" ? ladderWindows
+    : ctx.selection === "random" ? savesWindows.filter((w) => w.pin?.startsWith("random")) : savesWindows;
+  assert(chosen.length === (ctx.selection === "random" ? 3 : ctx.selection === "ladder" ? ladderSizes.length : 10));
   const settings = chosen.map((w) => {
     assert(w.pin === undefined || pinKinds.includes(w.pin), `${w.name}: unknown pin kind`);
     assert(w.minutes > 0 && (w.profileEvery === undefined || (Number.isInteger(w.profileEvery) && w.profileEvery > 0)));
-    return { ...w, cell: { rate: 394 as const, loaded: w.tape !== "saturday" }, label: "rd3/" + w.name, folder: path.join(out, w.name) };
+    assert(w.facts === undefined || (w.tape === "production-S" && Number.isInteger(w.facts) && w.facts > 0));
+    return { ...w, cell: { rate: w.rate ?? 394 as const, loaded: w.tape !== "saturday" }, label: "rd3/" + w.name, folder: path.join(out, w.name) };
   });
   assert.equal(new Set(settings.map((w) => w.name)).size, settings.length);
-  if (ctx.selection !== "random") assert(settings.slice(0, 4).every((w) => !w.isolated) && settings.slice(4).every((w) => w.isolated));
+  if (ctx.selection === undefined || ctx.selection === "all") assert(settings.slice(0, 4).every((w) => !w.isolated) && settings.slice(4).every((w) => w.isolated));
   else assert(settings.every((w) => w.isolated));
   const probe = { cpu: usage(), memoryMiB: memory(), traceFile: fs.existsSync(traceFile), peerAged: peer.aged.head };
   assert(Object.values(probe.cpu).every((v) => Number.isFinite(v)) && Object.values(probe.memoryMiB).every((v) => Number.isFinite(v)),
@@ -83,6 +94,8 @@ export async function savesArm(ctx: SavesContext) {
     }
     try {
       process.env.DX_V01_TAPE = w.tape;
+      if (w.facts === undefined) delete process.env.DX_S1_LADDER_FACTS;
+      else process.env.DX_S1_LADDER_FACTS = String(w.facts);
       fs.mkdirSync(w.folder);
       const arm: any = await calls.adoptedArm(w.folder, source, peer, seed, writer, true, false, terminal, w.cell, false, undefined, undefined, {
         label: w.label, run: async ({ start, seconds, startHead, tape, senders }) => {
@@ -114,7 +127,10 @@ export async function savesArm(ctx: SavesContext) {
       terminal = arm.terminal!;
       const along = arm.alongside.result;
       const production = arm.production;
-      windows.push({ name: w.name, tape: w.tape, pin: w.pin ?? null, firstCut: arm.firstCut, terminal,
+      // [DX-CARD2] The first window measured after the stack started finds the saved subjects cold (on 2026-11-23 the
+      // quiet account's 52 and 59 ms p99 were that); it is labelled so, whatever its name.
+      const firstAfterStart = !windows.some((x: any) => x.firstCut !== undefined);
+      windows.push({ name: w.name, firstAfterStart, tape: w.tape, pin: w.pin ?? null, ...(w.facts ? { facts: w.facts, rate: w.rate } : {}), firstCut: arm.firstCut, terminal,
         reads: along.step ?? null, reader: along.reader ?? null, cpuCores: along.cpuCores, memoryMiB: along.memoryMiB, driver: along.driver,
         saves: { offered: arm.p2.offered, receipts: arm.p2.receipts, latency: arm.p2.latency,
           production: production ? { metrics: production.metrics, readback: production.readback, predecessors: production.predecessors } : null,
@@ -127,8 +143,9 @@ export async function savesArm(ctx: SavesContext) {
       halted = `window ${w.name} failed before it`;
     }
   }
+  delete process.env.DX_S1_LADDER_FACTS;
   jsonFile(path.join(out, "pinned-saves.json"), { source, selection: ctx.selection ?? "all", head: agedHead, seats: calls.savesSeats, windowSeconds: 90, windows });
-  console.log("[DX-RD3] " + JSON.stringify(windows.map((w: any) => ({ name: w.name, skipped: w.skipped, failed: w.failed,
+  console.log("[DX-RD3] " + JSON.stringify(windows.map((w: any) => ({ name: w.name, ...(w.firstAfterStart ? { firstAfterStart: true } : {}), skipped: w.skipped, failed: w.failed,
     reads: w.reads && { goodput: w.reads.goodput, p50: w.reads.read?.p50Ms, p99: w.reads.read?.p99Ms, wrong: w.reads.wrong, errors: w.reads.errors },
     saves: w.saves && { p50: w.saves.latency?.p50Ms, p99: w.saves.latency?.p99Ms, receipts: w.saves.receipts, offered: w.saves.offered }, cpu: w.cpuCores, driver: w.driver }))));
   for (const w of windows) if (w.reads && (w.reads.wrong || w.reads.errors))
