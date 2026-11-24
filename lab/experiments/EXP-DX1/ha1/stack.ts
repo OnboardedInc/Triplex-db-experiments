@@ -637,6 +637,9 @@ export class Stack {
         // [DX-THIN1] Why: the combined check runs the pinned read options (RD1, default off) on both gateways.
         // Rejected: changing the argument list when neither option is asked for.
         ...pinnedReaderEnv().flatMap((x) => [x, "-e"]),
+        // [DX-INT4] Why: the pair of settlement beside saves with ID list reads needs the route on the toy's gateways.
+        // Rejected: changing the argument list when the option is not asked for.
+        ...idListEnv().flatMap((x) => [x, "-e"]),
         "DATOMIC_URI_TEMPLATE=" + this.uri(pg, store, "{db}", site),
         "-e",
         "GATEWAY_SOURCE_SHA256=" + this.e.source.gateway,
@@ -690,4 +693,12 @@ export function pinnedReaderEnv(env: NodeJS.ProcessEnv = process.env) {
   const on = (name: string) => { const v = env[name] ?? "0"; if (v !== "0" && v !== "1") throw new Error(name + " must be 0 or 1"); return v; };
   const shortcut = on("DX_PINNED_SHORTCUT"), lookup = on("DX_PINNED_CUT_LOOKUP");
   return shortcut === "0" && lookup === "0" ? [] : ["TX2_PINNED_SHORTCUT=" + shortcut, "TX2_PINNED_CUT_LOOKUP=" + lookup];
+}
+
+// [DX-INT4] TX2_ID_LISTS and TX2_INDEX_QUERY_PERMITS from DX_ID_LISTS and DX_INDEX_QUERY_PERMITS (stack/up.sh's names).
+export function idListEnv(env: NodeJS.ProcessEnv = process.env) {
+  const on = env.DX_ID_LISTS, permits = env.DX_INDEX_QUERY_PERMITS;
+  if (on !== undefined && on !== "0" && on !== "1") throw new Error("DX_ID_LISTS must be 0 or 1");
+  if (permits !== undefined && !/^([1-9]|[1-5][0-9]|6[0-4])$/.test(permits)) throw new Error("DX_INDEX_QUERY_PERMITS must be 1..64");
+  return [...(on === undefined ? [] : ["TX2_ID_LISTS=" + on]), ...(permits === undefined ? [] : ["TX2_INDEX_QUERY_PERMITS=" + permits])];
 }

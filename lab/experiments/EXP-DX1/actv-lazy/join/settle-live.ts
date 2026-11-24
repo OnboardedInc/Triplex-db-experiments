@@ -53,6 +53,8 @@ export type LiveContext = {
   db: string;
   ordered: boolean;
   attempt: string;
+  /** [DX-INT4] The read gateway's client (ID list pages with DX_ACT5_ID_LISTS=1). */
+  reader?: DatomicClient;
 };
 type Case = {
   name: string;
@@ -353,12 +355,40 @@ export async function livePhase(c: LiveContext) {
           await pinnedRead(i++ % c.people, "act5-during:" + k.name);
         }
       })();
+      // [DX-INT4] Pair (a) of the afternoon merge: with DX_ACT5_ID_LISTS=1 (and the route on the read gateway,
+      // DX_ID_LISTS=1), every ID of the settling account is listed in pages while the saves and the settlement run,
+      // alternately at the head and pinned at the case's Publish position; each answer is checked after the case
+      // against the store's own history read at the answer's position. Unset, nothing is read.
+      const lists: { kind: "head" | "pinned"; position: number; ids: string[]; pages: number }[] = [];
+      const listing = (async () => {
+        if (process.env.DX_ACT5_ID_LISTS !== "1" || !published) return;
+        assert(c.reader, "DX_ACT5_ID_LISTS needs the read gateway's client");
+        const account = c.descriptor.prefix.slice("acct/".length, -1);
+        let j = 0;
+        while (now() < ends) {
+          const kind = j++ % 2 ? "pinned" : "head";
+          const first = { account, prefix: "", limit: 7, ...(kind === "pinned" ? { basis: { recordedPosition: published.r.position } } : {}) };
+          const ids: string[] = [];
+          let page: any = await c.reader.listIds(c.db, first as never), pages = 1;
+          const position = page.position as number;
+          ids.push(...page.ids);
+          while (page.next) {
+            page = await c.reader.listIds(c.db, { account, prefix: "", limit: 7, cursor: page.next } as never);
+            assert.equal(page.position, position, "an ID list page moved off its first page's position");
+            ids.push(...page.ids);
+            pages++;
+          }
+          lists.push({ kind, position, ids, pages });
+          await sleep(150);
+        }
+      })();
       // The lane hands frames back to the queue's own turns once the save window is over.
       const saved = writes.finally(() => lane?.close());
-      const [w, s, p] = await Promise.allSettled([saved, settling, probing]);
+      const [w, s, p, l] = await Promise.allSettled([saved, settling, probing, listing]);
       if (w.status === "rejected") throw w.reason;
       if (s.status === "rejected") throw s.reason;
       if (p.status === "rejected") throw p.reason;
+      if (l.status === "rejected") throw l.reason;
       await c.ledger.verifyThrough(await c.s.head(), false, ADOPT);
       const rows = (w.value as { rows: Save[]; unresolved: Map<unknown, unknown> }).rows;
       assert.equal((w.value as { unresolved: Map<unknown, unknown> }).unresolved.size, 0, "Uncertain save");
@@ -433,6 +463,31 @@ export async function livePhase(c: LiveContext) {
         exact.noticesInOrder = all.length;
         exact.ledgers = roster.length;
       }
+      // [DX-INT4] Every recorded ID list against the owners of every row the store's history read returns at its
+      // position (the brute force of xq3/gate.ts), at every pinned answer's position and at up to twelve head positions.
+      let idLists: unknown = null;
+      if (lists.length) {
+        const prefix = c.descriptor.prefix;
+        const heads = [...new Set(lists.filter((x) => x.kind === "head").map((x) => x.position))];
+        const sample = new Set([...new Set(lists.filter((x) => x.kind === "pinned").map((x) => x.position)),
+          ...heads.filter((_, i) => i % Math.max(1, Math.ceil(heads.length / 12)) === 0)]);
+        let checked = 0, ids = 0;
+        for (const position of sample) {
+          const rows: readonly any[] = await c.reader!.rows(c.db, { pattern: {}, history: true, basis: { recordedPosition: position, validAt: 0 } } as never);
+          const want = [...new Set(rows.filter((r) => r.entity_type !== "_Transaction" && String(r.entity_id).startsWith(prefix))
+            .map((r) => String(r.entity_id)))].sort();
+          for (const x of lists.filter((y) => y.position === position)) {
+            assert.deepEqual(x.ids, want, `ID list (${x.kind}) at ${position} differs from the history read: ${k.name}`);
+            checked++;
+            ids += x.ids.length;
+          }
+        }
+        idLists = { answers: lists.length, head: lists.filter((x) => x.kind === "head").length,
+          pinned: lists.filter((x) => x.kind === "pinned").length, pages: lists.reduce((n, x) => n + x.pages, 0),
+          headPositions: heads.length, positionsChecked: sample.size, answersChecked: checked, idsChecked: ids,
+          pinnedAt: published?.r.position ?? null, idsAtPin: lists.find((x) => x.kind === "pinned")?.ids.length ?? null,
+          idsAtLastHead: lists.findLast((x) => x.kind === "head")?.ids.length ?? null };
+      }
       // Reads at the release's position and at the head after the case.
       for (const i of [0, c.people - 1]) await pinnedRead(i, "act5-after:" + k.name);
       const result = {
@@ -451,6 +506,7 @@ export async function livePhase(c: LiveContext) {
         superseded: superseded ?? null,
         lane: lane ? lane.stats() : null,
         rival: rival ? { child: rival.result } : null,
+        idLists,
         saves: {
           account: saveSide(rows.filter((r) => r.account === 0), turns),
           neighbours: saveSide(rows.filter((r) => r.account > 0), turns),

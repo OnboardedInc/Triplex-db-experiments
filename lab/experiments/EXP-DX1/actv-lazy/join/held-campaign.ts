@@ -726,7 +726,7 @@ export async function runHeld(
       const { livePhase } = await import("./settle-live.ts");
       await livePhase({
         out, s, a, offer, verifyRead: verifyRead as never, demand: demand as never, writer, seed, people, history, positions,
-        ledger: activeLedger, releases, descriptor, db, ordered: Boolean(ordered), attempt: peer.attempt,
+        ledger: activeLedger, releases, descriptor, db, ordered: Boolean(ordered), attempt: peer.attempt, reader,
       });
       return;
     }
