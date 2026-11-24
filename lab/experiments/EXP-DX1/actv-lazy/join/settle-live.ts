@@ -19,6 +19,7 @@ import { Reference, toWire } from "./check.ts";
 import { checkForms, expectForms } from "./form-expect.ts";
 import type { FrameMode, Precondition } from "./frames.ts";
 import { expected as worldAt, heldTape } from "./held-campaign.ts";
+import { root } from "../../scale1/decision/plan.ts";
 import type { HeldLedger } from "./held-ledger.ts";
 import { largeRelease, parseShape } from "./large-release.ts";
 import { Settlement } from "./settlement.ts";
@@ -405,8 +406,10 @@ export async function livePhase(c: LiveContext) {
         assert(c.reader, "DX_ACT5_SWEEP needs the read gateway's client");
         const account = c.descriptor.prefix.slice("acct/".length, -1);
         // The counted attribute: the first of the subject's own attributes the sweep accepts (a protected one is refused).
-        const first: readonly any[] = await c.reader.rows(c.db, { entityIds: [c.descriptor.prefix + W0.placementId(0)] } as never);
+        // (The held seed's subject roots are SCALE1's `pl:` IDs: scale1/decision/plan.ts `root`.)
+        const first: readonly any[] = await c.reader.rows(c.db, { entityIds: [root(0, 0)] } as never);
         const attributes = [...new Set(first.map((r) => String(r.attribute)))].sort();
+        assert(attributes.length, "the first subject root has no fact to count by: " + root(0, 0));
         let attribute: string | undefined;
         for (let j = 0; now() < ends; j++) {
           const counting = j % 2 === 1;
