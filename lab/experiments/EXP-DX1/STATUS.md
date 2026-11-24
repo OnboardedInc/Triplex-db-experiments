@@ -5719,3 +5719,16 @@ Source: release-limits builder, branch `exp/DX-ACT6-release-limits` `b0529e87d` 
 - Not verified: anything at full size; definitions written ahead beside live saves; two Publishes racing to write the same definitions; the exact wire factor.
 
 **Started** in the freed slot: import a subject whole (task file `OPUS-IMP2-import-whole-subject.md`): today a subject of more than about 46 facts is split across import frames and a reader can see it half imported.
+
+## 2026-11-24 13:27 EST: many small accounts in one database: the store holds, Publish does not
+
+Source: many-accounts builder, branch `exp/DX-SCALE2-wide-thin` `3e3e652b9` (based on the settlement-preparation branch with the sweep merged; not merged onto the one branch), page `lab/experiments/EXP-DX1/scale2/SCALE2.md`. Toy counts; nothing at full size.
+
+- **The store does not grow with the number of accounts.** Saves, pinned and current reads, feed entries, ID lists and sweeps did the same counted work at 563 and 2,063 accounts in one database; everything exact (688,145 read rows against the oracle at 2,063 accounts; 2,319 saves, 0 refused; a 5-subject account's ID list examined 5 entries).
+- **Publish and enrolment break beside other accounts' saves.** They commit only if the WHOLE database's head has not moved since they read it (three tries). Toy: 3 of 3 Publishes and 3 of 3 enrolments refused while other accounts saved. I checked the code: `held-campaign.ts` lines 851 to 861 set `gate.paused`, drain in-flight saves, offer the Publish, then resume. **Every Publish result so far (including 100 of 100 and 120 of 120 inside one second at 100,000 subjects) was made with the save sender paused and drained by the harness.** The product has no such pause. At 10,000 Publishes an hour that would be 5 to 10 minutes of whole-database pause per hour.
+- Fixed behind default-off options: the SDK's ID list range check was pairwise in accounts (6.6 s at 10,000 accounts, about 11 minutes extrapolated at 100,000; now 63 ms at 100,000); the settlement process opened about 13 connections per settling account (670 for 50 accounts; now 69); the sweep kept one gate per account ever swept (now evicted).
+- Ranked inventory, not fixed: settlement process memory per settling account (about 0.41 GB per 1,000); one removal sequence and lock for the whole database; every Publish copies the whole release document into the account (17 MB per 1,000 accounts per release; answered by definitions by reference); 7 to 8 enrolment commits per account; no account filter on the feed; no account registry.
+- 50 accounts settling at once under the progress precondition: 121 + 462 frames, 0 refused, 29,820 changes and 10,605 notices exact.
+- Server test written: 1,000 and 10,000 thin accounts beside the ten deep ones on a fresh copy of the 1 billion database, 54 to 117 minutes, USD 1.00 to 2.15.
+
+**Started** in the freed slot (thinker effort): Publish and enrolment committing beside saves with nobody paused (task file `OPUS-ACT8-publish-beside-saves.md`), design in writing first.
