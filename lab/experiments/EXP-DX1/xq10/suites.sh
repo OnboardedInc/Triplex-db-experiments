@@ -32,12 +32,14 @@ for arm in ${XQ10_ARMS:-unset index routes queue}; do
   esac
   cat > "$out/run-$arm.clj" <<CLJ
 (require 'clojure.test) (def nss (quote [$suites])) (apply require nss) (require 'triplex.gateway.main)
-(let [r (apply clojure.test/run-tests nss)
-      call (fn [action] (let [x (triplex.gateway.main/route-handler {:request-method :post :uri (str "/v2/db/s2-xq10off/" action) :body nil})]
+(let [call (fn [action] (let [x (triplex.gateway.main/route-handler {:request-method :post :uri (str "/v2/db/s2-xq10off/" action) :body nil})]
                           [(:status x) (let [b (:body x)] (if (bytes? b) (String. ^bytes b "UTF-8") b))]))
-      guarded (count (remove nil? (map #(triplex.gateway.question-reader/guard {:request-method :post :uri (str "/v2/db/s2-xq10off/" %)}) ["ids" "sweep" "find" "read"])))]
+      ;; the routes are probed before the suites run: the tests switch route vars on for their own cases
+      routes [(call "ids") (call "sweep") (call "find")]
+      guarded (count (remove nil? (map #(triplex.gateway.question-reader/guard {:request-method :post :uri (str "/v2/db/s2-xq10off/" %)}) ["ids" "sweep" "find" "read"])))
+      r (apply clojure.test/run-tests nss)]
   (println "XQ10_SUITES $arm" (pr-str (select-keys r [:test :pass :fail :error])))
-  (println "XQ10_ROUTES $arm ids" (pr-str (call "ids")) "sweep" (pr-str (call "sweep")))
+  (println "XQ10_ROUTES $arm ids" (pr-str (routes 0)) "sweep" (pr-str (routes 1)) "find" (pr-str (routes 2)))
   (println "XQ10_GUARD $arm refusals" guarded "queue" triplex.gateway.ids/list-queue-ms "findPermits" (some? triplex.gateway.ids/find-permits))
   (shutdown-agents) (System/exit (if (zero? (+ (:fail r) (:error r))) 0 1)))
 CLJ

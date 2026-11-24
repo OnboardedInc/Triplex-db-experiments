@@ -75,6 +75,7 @@ const as = (entityId: string, entityType: string, attribute: string, value: obje
 const retract = (e: string, a: string) => (live.get(`${e} ${a}`) ?? []).splice(0).map((t: any) => ({ op: "retract", id: t.id }));
 
 // ---- workload: two accounts whose names prefix each other, five families, a past-valid correction, then the index ----
+let PS = 0; // the last position before the index's epoch
 for (const acct of [A, B])
   for (let i = 0; i < N; i += 15) {
     const ops: object[] = [];
@@ -84,7 +85,7 @@ for (const acct of [A, B])
       if (j % 5) ops.push(as(sid(acct, j), "Subject", ":person/manager", R(sid(acct, (j + 1) % N))));
       ops.push(as(tid(acct, j), "Task", ":task/status", S(STATUSES[(j + 1) % 4]!)), as(tid(acct, j), "Task", ":task/due", D(T0 + ((j % 9) - 4) * DAY)));
     }
-    await transact(ops);
+    PS = await transact(ops);
   }
 const P0 = await transact([as(sid(A, 0), "Subject", ":person/note", S("before the index"))]);
 const declaration = {
@@ -198,17 +199,20 @@ if (mode === "main") {
     check(a.position === p && a.validAt === v && norm(a) === norm(direct), `(b) ${name}: the same basis and answer as the sweep asked directly`, { got: norm(a).slice(0, 200) });
     autoSweep++;
   }
-  // Before the index's epoch: refused by the index, answered by the sweep at that position.
-  const before = await datomic.askAll(sdk, db, { account: A, where: [{ attribute: ":person/status", op: "eq", value: S("pending") }], result: "count", basis: { recordedPosition: P0, validAt: validTimes[1] } });
-  check(before.route === "sweep" && before.indexRefusal?.code === "IndexNotAvailableAtPosition" && before.position === P0, "(b) before the epoch: the sweep at that position", { route: before.route, position: before.position });
+  // Before the index's epoch (the backfill seals at the head, P0 here): refused by the index, answered by the sweep at
+  // that position.
+  const before = await datomic.askAll(sdk, db, { account: A, where: [{ attribute: ":person/status", op: "eq", value: S("pending") }], result: "count", basis: { recordedPosition: PS, validAt: validTimes[1] } });
+  check(PS < P1 && before.route === "sweep" && before.indexRefusal?.code === "IndexNotAvailableAtPosition" && before.position === PS, "(b) before the epoch: the sweep at that position", { route: before.route, position: before.position, PS, P1, refusal: before.indexRefusal });
   // A protected-free refusal with fallback none is returned as is (countDistinct of an undeclared attribute).
   const none = await datomic.askPage(sdk, db, { account: A, where: [{ attribute: ":person/status", op: "exists" }], result: "countDistinct", of: ":person/name" }).catch((e: any) => e);
   check(none instanceof datomic.AskRefused && none.fallback === "none" && none.refusedBy === "index", "(b) a refusal with fallback none is returned as is", { code: none?.code, fallback: none?.fallback });
   log("(b)", { agreed, autoIndex, autoSweep });
 
   // ---- (c) the question reader started late -----------------------------------------------------------------------------
-  const pinnedQ = { account: A, where: [{ attribute: ":person/status", op: "exists" }], result: "ids", order: { by: "entity", direction: "asc" }, limit: 4 };
+  // an eq list in entity order (find refuses entity order for a list driven only by exists, a range or a prefix)
+  const pinnedQ = { account: A, where: [{ attribute: ":person/status", op: "eq", value: S("pending") }], result: "ids", order: { by: "entity", direction: "asc" }, limit: 4 };
   const before1 = await raw(questionUrl, "POST", `/v2/db/${db}/find`, { ...pinnedQ, basis: { recordedPosition: P3, validAt: validTimes[1] } });
+  check(before1.status === 200 && typeof before1.body?.next === "string", "(c) the first page before the restart has a cursor", { status: before1.status, code: before1.body?.code });
   docker("stop", `${prefix}-gw-q`);
   const late: number[] = [];
   for (let k = 0; k < 5; k++) late.push(await transact([...retract(sid(A, 10 + k), ":person/status"), as(sid(A, 10 + k), "Subject", ":person/status", S("late"))]));
