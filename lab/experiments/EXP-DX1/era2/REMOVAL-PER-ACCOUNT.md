@@ -393,8 +393,9 @@ With the option on, each cell first calls the move (the first call moves the dat
 
 **Durations and cost** (USD 1.09 per machine hour, one machine): build 25 to 50 min if not already built; per arm a copy
 of 176 GB 3 to 12 min, bring-up and staging 3 to 6 min, three cells of 10 min plus seeding (about 1,100 subjects) and
-checks 1 to 3 min each: 40 to 60 min per arm, **80 to 120 min for both arms, USD 1.45 to 2.20** (plus USD 0.45 to 0.90
-for a first build).
+checks 1 to 3 min each: 40 to 60 min per arm, **120 to 180 min for the three arms (off, per account, per account with
+the subject check), USD 2.20 to 3.30** (plus USD 0.45 to 0.90 for a first build). Arms 0 and 2 alone: 80 to 120 min,
+USD 1.45 to 2.20.
 
 **Predictions, written before any server run.** Offered per cell: 200 saves per second in 200 other accounts (120,000
 in 600 s), the quiet account at 3.5 per second, the deep account's other subjects at 8, 2 on subjects being removed, 10
@@ -410,8 +411,11 @@ back-off), as on the Mac.
 | 5 | on, every cell | refused saves only on the subjects being removed (a save computed before that subject's removal committed and sent after it): under 10% of those saves | Mac: 0 to 3 of 42 to 65 | a refusal on any subject not being removed |
 | 6 | both arms, every cell | exact: 0 wrong values, every removed value marked on every route, 0 copies outside its own subject and journals (none at all when sealed) | Mac: every cell exact | any miss: stop, the rule is wrong |
 | 7 | on, 10 per second | the quiet account meets its bar against its control | no refusals, no lock; the removal's own commits are about 5% of commits | over the bar: the removal's commit load, not refusals, costs other accounts |
-| 8 | on against off, removal latency | higher in arm on: other saves no longer pause, so the removal's own database-wide "head has not moved" check (P9) fails more often. Mean tries = e^(C x w), C = all commits per second (about 225), w = the selection-to-serial-point window: w 5 to 15 ms gives 3 to 30 tries. 0.2 per second: p50 under 300 ms, p99 under 2 s. 10 per second: removals queue on the database's lock if tries x try time exceeds 100 ms | Mac at 30 saves per second: per account mean 1.7 to 5.2 tries, max 63; database-wide at most 3 (section 0) | 10 per second with p99 under 1 s (P9 is then no problem at server rates), or a backlog that grows through the cell (removals starve: P9 must be narrowed before such rates, section 11) |
+| 8 | arm 1 (per account, head check) against arm 0, removal latency | higher in arm 1: other saves no longer pause, so the database-wide head check fails more often. Mean tries = e^(C x w) (section 13.1), C = all commits per second (about 225), w = 5 to 15 ms: 3 to 30 tries. 0.2 per second: p50 under 300 ms, p99 under 2 s. 10 per second: removals queue on the database's lock when tries x try time exceeds 100 ms | the law, fitted on the Mac (section 13.1) | 10 per second with p99 under 1 s, or under 1.5 mean tries |
 | 9 | on, the move | under 5 s at the head of the 1 billion copy; 0 to 2 refused saves at the switch | section 8 | over 60 s, or refusals after the switch |
+| 10 | arm 2 (subject check), every cell | other accounts: 0 refused, as arm 1. Tries per removal: mean 1.00 to 1.05, **max 4** (the bound), guards 0 to 10 per cell (only saves of a subject being removed can fail a try: 2 per second spread over 3 subjects) | section 13.3; Mac: mean 1.01 to 1.03, max 2, no guard at 2 per second | any removal over 4 tries; any refusal in another account; a removal answering 503 |
+| 11 | arm 2 against arm 1, time to remove | arm 2: one try plus the wait for earlier removals: p50 10 to 40 ms, p99 under 200 ms at 0.2 per second and under 1 s at 10 per second, flat across the cell; arm 1 at 10 per second follows the law (several tries, a growing queue when tries x try time exceeds 100 ms) | the bound and the law | arm 2 p99 over 1 s at 0.2 per second, or arm 2 not below arm 1 at 10 per second |
+| 12 | arm 2, every cell | exact as in 6; positions 1..N with no gap or repeat; no removal's record time before the commit before it | gate (section 13.5) | any |
 
 
 ## 11. Not verified
@@ -567,3 +571,124 @@ named subjects at R's serial point, because no datom any selector reads changed 
 point (the installed check), and other datoms cannot enter the selection. After R's commit, every entity R names (with
 or without a row) has a moved counter, so no write prepared before R can write it (fence); after R's publication every
 route masks R's identities. Under the guard, no fenced write of R's subjects commits until R does.
+
+### 13.5 Gates (Mac, toy; counts are results, times diagnostic)
+
+Images: every container of every run below ran the runtime image pinned **by ID**,
+`sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be` (`tx2-datomic:1.0.7745-da00`, built
+2026-11-21), and PostgreSQL `sha256:526f86d93c6e...`; each run records the ID every container ran (`images-ran`) and
+refuses to run when one differs from the pinned ID. The gateway code under test is this checkout's, mounted read-only.
+The earlier fault runs (F1 to F4, sections 0 and 9) were checked from their own container records: every Datomic
+container ran `21a67288007d` and PostgreSQL `526f86d93c6e`. The ERASE1 regression harness (section 9 (a)) chose its
+own image, `sha256:fd497d71a313...` (another builder's `tx2-dxthin-managed` build, the newest recorded build present):
+not this checkout's pinned image, so those three runs (13 of 13 each) are reported but not counted.
+
+**Option off, byte for byte** (`G10`, at `5f1fb905a`, base `272a1bd66`): the paired native log, unsealed (653 datoms)
+and sealed (698), is **identical** on the base twice, on this code with both options unset, and with both set on a
+database never moved; every reply identical. (A first run, `G8`, differed in 2 datoms: an `and` in the early-loaded
+`erase.clj` generated a name and renumbered the per-subject writer function's stored text; replaced by a nested `if`.)
+Gateway suites: 76 tests, 71,170 assertions, the same single pre-existing `feed-test` error on base, off and on.
+
+**Interleavings** (`G10`): database-wide 360 checks, per account 475, **subject check 8,529, 0 failed**. The subject
+check arm reruns every case of section 9 (c) with the new path (held saves, derived writes, import replay, pinned
+reader, two removals in two accounts, a removal stopped before its native commit, after it, at publication and **after
+its guard**, the move), plus:
+
+- **the race loop, 1,000 races**: a save of the subject prepared before its removal and released at a random moment
+  during it (random delays after the removal's intent is written): 250 each of a new fact of the subject, the creation
+  of an entity the removal names before it exists, an import frame creating that entity, and a retirement of the
+  removed value. 749 racing saves committed, each before its removal's serial point, and every racing value was
+  removed with its subject (the 185 committed retirements carried no new value; the value they retired was removed);
+  251 were refused (409 CasConflict). Of the arm's 1,030 removals, 712 took two tries (one refused by the per-subject
+  check), 314 one, 4 were resumed after their commit; none took more. Each race ends with no removed or racing value in current or history reads, a pinned read, a Reach session
+  cached at the old pin, the journal pages or the feed; one final pass over every native datom finds none outside
+  its subjects and journals. The stored journal rows equal the gateway's own encoding at the committed position and
+  stamp in every race; positions are 1..N with no gap or repeat; no removal's record time is before the commit before it;
+- **a removal naming an entity with no row**: a creation save and an import frame prepared before the removal and sent
+  after it are refused (409 CasConflict; the entity's counter moved with no row); a creation sent after the removal
+  commits (new data);
+- **a subject mid-import** (40 import frames, each replacing the last, while the subject is removed): every frame that
+  committed was removed by the removal (3, 1 and 2 in three runs: per account, subject check twice), the rest refused (CasConflict or
+  ErasureReplayDeclined), and a second removal finds nothing left;
+- **two removals of the same subject at once**, unsealed and sealed: both answer, sequences 1 and 2, the value removed
+  by exactly one;
+- **the hammer** (`G11`, 30 rounds): four writers save the subject without pause (one replacing its protected value)
+  while it is removed: **every removal took exactly 3 tries** (2 refused by the narrow check, the guard, then commit),
+  30 guards, every protected value committed before the removal's position removed, another account untouched; `G11`
+  subject check 2,343 checks, 0 failed (with 200 races).
+
+The in-process authority is held to the PostgreSQL authority's rule that only an entry equal to the stored intent can
+be published (section 13.7).
+
+**Fault cells on a stack**, tries counted by the gateway (`TX2_REMOVAL_TRIES_LOG=1`); "racing saves" are the saves of
+the protected field of subjects about to be removed (2 per second, or 40 in the hot cells): those committed before
+their subject's removal position must have been removed with it, and are then checked on the read gateway too (rows,
+a Reach session cached at the racing save's own position, the feed and the journal pages). `fast` is the highest save
+rate tried: 150 saves per second offered, 120 to 141 commits per second acknowledged.
+
+Per account, head check (`F5-o1`, `TX2_REMOVAL_SUBJECT_CHECK` unset):
+
+| Cell | Removals | Tries mean / p99 / max | Guards taken | Gateway ms p50 / p99 / max | Client time to remove p50 / p99 ms | Commits per s (acked) | Other accounts refused | Racing saves: removed with subject / after removal / NOT removed | Exact |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| a10-r1 | 30 | 2.70 / 13 / 13 | 0 | 42 / 748 / 748 | 45.4 / 753.7 | 40.9 | 0 of 924 | 17 / 11 / 0 | 0 wrong, 30/30 marked, 0 leaks |
+| a10-r10 | 300 | 1.65 / 7 / 8 | 0 | 21 / 369 / 463 | 24.9 / 348.9 | 40.7 | 0 of 915 | 24 / 5 / 0 | 0 wrong, 300/300 marked, 0 leaks |
+| a200-r1 | 30 | 4.23 / 40 / 40 | 0 | 86 / 10802 / 10802 | 83.4 / 10811.8 | 36.7 | 0 of 969 | 24 / 4 / 0 | 0 wrong, 30/30 marked, 0 leaks |
+| a200-r10 | 300 | 1.88 / 8 / 12 | 0 | 28 / 1411 / 1549 | 31.5 / 1365.7 | 40.2 | 0 of 901 | 19 / 10 / 0 | 0 wrong, 300/300 marked, 0 leaks |
+| a10-r10-fast | 300 | 3.93 / 26 / 69 | 0 | 186 / 3869 / 4437 | 182.7 / 3835.5 | 141.0 | 0 of 4144 | 29 / 0 / 0 | 0 wrong, 300/300 marked, 0 leaks |
+
+Per account with the subject check (`F5-o2`):
+
+| Cell | Removals | Tries mean / p99 / max | Guards taken | Gateway ms p50 / p99 / max | Client time to remove p50 / p99 ms | Commits per s (acked) | Other accounts refused | Racing saves: removed with subject / after removal / NOT removed | Exact |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| a10-r1 | 30 | 1.07 / 2 / 2 | 0 | 64 / 1023 / 1023 | 67 / 1033.1 | 41.3 | 0 of 919 | 20 / 12 / 0 | 0 wrong, 30/30 marked, 0 leaks |
+| a10-r10 | 300 | 1.01 / 2 / 2 | 0 | 207 / 3067 / 3634 | 215.1 / 2991.1 | 34.5 | 0 of 942 | 23 / 3 / 0 | 0 wrong, 300/300 marked, 0 leaks |
+| a200-r1 | 30 | 1.10 / 2 / 2 | 0 | 72 / 4319 / 4319 | 66.9 / 4325.6 | 33.5 | 0 of 899 | 18 / 6 / 0 | 0 wrong, 30/30 marked, 0 leaks |
+| a200-r10 | 300 | 1.03 / 2 / 2 | 0 | 61 / 1767 / 1802 | 65 / 1683 | 42.2 | 0 of 963 | 24 / 3 / 0 | 0 wrong, 300/300 marked, 0 leaks |
+| a10-r10-fast | 300 | 1.00 / 1 / 1 | 0 | 180 / 2461 / 2521 | 185.7 / 2173 | 119.8 | 0 of 3494 | 25 / 1 / 0 | 0 wrong, 300/300 marked, 0 leaks |
+| a10-r10-sealed | 300 | 1.00 / 1 / 2 | 0 | 14 / 82 / 176 | 16.3 / 84.8 | 41.6 | 0 of 938 | 23 / 5 / 0 | 0 wrong, 300/300 marked, 0 leaks |
+| a10-r10-three | 300 | 1.01 / 2 / 2 | 0 | 11 / 191 / 317 | 13.1 / 193.6 | 40.1 | 0 of 909 | 23 / 9 / 0 | 0 wrong, 300/300 marked, 0 leaks |
+| a10-r1-restart | 30 | 1.03 / 2 / 2 | 0 | 447 / 3599 / 3599 | 432.8 / 27628.3 | 22.3 | 0 of 901 | 9 / 5 / 0 | 0 wrong, 30/30 marked, 0 leaks |
+
+Hot racing saves (40 per second on the subjects about to be removed), head check (`F6-o1`) then subject check (`F6-o2`):
+
+| Cell | Removals | Tries mean / p99 / max | Guards taken | Gateway ms p50 / p99 / max | Client time to remove p50 / p99 ms | Commits per s (acked) | Other accounts refused | Racing saves: removed with subject / after removal / NOT removed | Exact |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| a10-r10 | 300 | 2.71 / 14 / 16 | 0 | 95 / 1404 / 1737 | 97.9 / 1296.9 | 67.5 | 0 of 900 | 350 / 62 / 0 | 0 wrong, 300/300 marked, 0 leaks |
+| a200-r10 | 300 | 2.47 / 19 / 33 | 0 | 109 / 6076 / 6223 | 111.9 / 5994.9 | 54.9 | 0 of 932 | 276 / 21 / 0 | 0 wrong, 300/300 marked, 0 leaks |
+
+| Cell | Removals | Tries mean / p99 / max | Guards taken | Gateway ms p50 / p99 / max | Client time to remove p50 / p99 ms | Commits per s (acked) | Other accounts refused | Racing saves: removed with subject / after removal / NOT removed | Exact |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| a10-r10 | 300 | 1.00 / 1 / 2 | 0 | 275 / 3684 / 3996 | 282.7 / 2823.4 | 47.8 | 0 of 927 | 225 / 0 / 0 | 0 wrong, 300/300 marked, 0 leaks |
+| a200-r10 | 300 | 1.10 / 3 / 3 | 4 | 116 / 3758 / 3970 | 117.7 / 3075.8 | 44.2 | 0 of 921 | 205 / 36 / 0 | 0 wrong, 300/300 marked, 0 leaks |
+
+**Reading.** With the head check, tries grow with the whole database's commit rate: mean 1.65 to 4.23, p99 up to 40,
+max 69 at 141 commits per second (the law's fit: `w` about 10 ms there). With the subject check, tries depend only on
+saves of the subject itself: mean 1.00 to 1.10, max 2 at 2 racing saves per second (no guard needed) and max 3 with 4
+guards at 40 per second; never over the bound of 4. Other accounts' saves refused: 0 of every count in every cell,
+both options. Every racing protected value committed before its subject's removal was removed (0 not removed in 17
+cells, 1,334 removed with their subject). Exact in every cell. Times include the wait on the database's lock behind
+earlier removals and the Mac's other load (five builders); the restart cell includes the transactor's restart.
+
+### 13.6 Defects found while building this, both fixed
+
+1. **The committed entry could not be published on the PostgreSQL authority.** The authority deletes the intent by its
+   exact payload in the same transaction that publishes the entry, and the committed entry carries the position and
+   stamp given at the commit, so the first stack cell (`F5-o2-stuck`) left a removal committed and unpublishable:
+   every later removal refused (503) and the removed subject's saves refused. The in-process gate used the file
+   authority, which publishes anything. Fixed (`5f1fb905a`): the intent is rewritten to the committed entry first; the
+   in-process gate now holds the file authority to the same rule.
+2. **The named-entity counters** (section 13.2): before this pass, a removal naming an entity with no row moved no
+   counter, so with DX-IMP2's families fix an import frame prepared before the removal could still create the entity
+   after it. Fixed for both per-account paths.
+
+### 13.7 Not verified (this pass)
+
+1. **No server run.** The law's server numbers (13.1) and predictions 8 to 12 rest on a window `w` of 5 to 15 ms, which
+   is a prediction; the Mac fits are 10 to 45 ms.
+2. **The guard's bound under a write that carries no fence**: the only such write found is the owner-root fold (once per
+   subject); no toy or gate run had an owner root. The hard stop at 5 tries was never reached.
+3. **DX-IMP2's families fix together with this branch**: the composition is argued (13.2) and the in-flight frame is
+   gated here; the resend's refusal needs IMP2's option, which is on its own branch.
+4. **The worst-case time of 40 s** is the sum of the gateway's own timeouts, not a measurement; measured client time
+   to remove: p99 85 ms to 4.3 s (subject check, toy), plus the restart cell's 27.6 s.
+5. **The ERASE1 regression** was not rerun on a pinned image (its harness picks the newest recorded build).
