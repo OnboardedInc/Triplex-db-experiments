@@ -369,7 +369,7 @@ try {
   );
   if (viaAssistant) {
     await page
-      .getByText(String(viaAssistant.position), { exact: true })
+      .getByText(viaAssistant.position.toLocaleString("en-US"), { exact: true })
       .first()
       .waitFor({ timeout: 40_000 });
     note("7", `the open Journal showed position ${viaAssistant.position} without a reload`);

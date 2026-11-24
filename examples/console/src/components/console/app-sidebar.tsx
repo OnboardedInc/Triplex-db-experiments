@@ -222,9 +222,9 @@ export function AppSidebar() {
               <NavLink to="/about">About this database</NavLink>
             </SidebarMenuButton>
             {summary.data && (
-              <SidebarMenuBadge className="tabular-nums">
+              <div className="text-muted-foreground px-2 pt-1 text-xs tabular-nums" data-testid="sidebar-head">
                 Head {n(summary.data.head)}
-              </SidebarMenuBadge>
+              </div>
             )}
           </SidebarMenuItem>
         </SidebarMenu>
