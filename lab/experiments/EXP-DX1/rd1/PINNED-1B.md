@@ -411,7 +411,7 @@ Mean batch 7.5–8; wrong values and errors 0.
 ### What would show each prediction wrong
 
 1. **Saves cost the reader capacity:** `s-near-head` below 9,000 reads/s or p99 above 130 ms while `ref-near-head` (or the tuned arm's 12,376 / 72 ms) holds. Then log ingestion, an index adoption, or PostgreSQL contention costs reads. Look at reader CPU and GC per window, the reader's `StorageGet` counts in `gw-r.jsonl`, and PostgreSQL's CPU.
-2. **Readers cost the saves:** the S commit p99 in a read window above 1.5 × `s-alone`'s, or stored commits/s more than 5% below it. Check the driver's event-loop delay first. If its p99 is above 10 ms, the extra save time is at least partly the driver's, not the store's.
+2. **Readers cost the saves:** the S commit p99 in a read window above 1.5 × `s-alone`'s, or stored commits/s more than 5% below it. Check the driver's event-loop delay first. If its p99 is above 20 ms, the extra save time is at least partly the driver's, not the store's. The histogram includes its 10 ms sampling interval: an idle loop reads about 12 ms.
 3. **The tape-pin model is wrong:** `s-tape` above 4,000 reads/s means a whole-subject single exchange costs well under 0.6 ms. Below 500 means something other than reader CPU limits it: reads pinned ahead of the reader waiting for publication (`BasisNotAvailable` in the failures), or the driver.
 4. **The corrected model is wrong:** reader CPU per exchange in `ref-near-head` outside 1.0 to 1.6 ms, or the reader below 1.7 cores with the driver below 1.5 cores at 256 seats.
 5. **Exactness:** any wrong value or error in any window. In particular, a tape pin that disagrees with the sender's record means a pinned read under concurrent saves on one subject is not exact (the Mac gates never covered concurrent saves on one subject). Then the options must not merge.
@@ -448,6 +448,34 @@ The isolated-window handling in `study-server.ts` (a failed window recorded, lat
    - tape pins: 14,257 wrong of 14,249.
 
    The near-head pin is not value-checked, as in the tuned arm (AGE1 may have changed field 0 there); it checks the attribute, the subject and that the row is at or before the pin.
+
+### First server execution: a fault before any window, fixed (2026-11-24 01:27 UTC)
+
+**The fault.** Build `9376ece9c` stopped as it entered the window driver, before any window: `ReferenceError: Cannot access 'savesWindows' before initialization` at `savesArm` (`study-server.ts:305`), called from `study-server.ts:204` inside `sealedArm`. The window list was a module-level `const` placed after the runner's top-level loop. That loop awaits the whole arm, so the line declaring the list had not yet run when `savesArm` read it. The dry run stopped at the first offer, before `savesArm`, so it could not show this. The driver removed the stack and copy cleanly.
+
+**The fix.**
+- **The window driver moved to its own module.** It is now `v01/saves-arm.ts`. Its window list is that module's own constant, and every call it makes outside the module (the card's cell runner, the read window, the reader-record parser, cgroup counters, the aged cut, the dry-run stop) comes in as a parameter.
+- **No other late declaration is left.** `study-server.ts` declares nothing at top level after its loop except hoisted functions (`containerCounters`, `openAged`, `verifyAged`, which the earlier arms already called from the same place).
+- **The dry run now enters the window driver.** For this arm it no longer stops at the stack's first offer. It stops inside `savesArm`, after every window's settings are resolved and checked (names, pin kinds, sampling, minutes, cells, labels, folders, the isolated split), the aged cut is built, and every role's cgroup CPU and memory counters and the reader's trace file are read once. It prints `[DX-RD3] windows resolved …` and then `DX-DRY-RUN first offer reached: pinned pinned-saves lab/experiments/EXP-DX1/v01/saves-arm.ts:69`, without sending an offer. A dry-run stop is set aside like the others' (`study-server.ts` now sets aside on `FirstOfferReached` too).
+
+**Mac harness** (`rd1/saves-gate/harness.ts`; runs `savesArm` itself, about 1 minute). Stubs:
+- `adoptedArm` checks its arguments (folder, first cut equal to the previous window's terminal, 90 s windows, the tape setting, the label) and invokes the window's alongside run as the card does.
+- `pinnedWindow` writes the sampled exchanges' request records and a metrics minute into a reader trace file.
+- The cgroup counters and `firstOffer` are stubbed too.
+
+Everything else runs for real: the window loop, the deadline arithmetic, per-window isolation, the driver CPU and event-loop records, `readerRecords` on that trace file, the result file and `sealedArm`. Seven cases passed:
+
+1. **All ten windows inside `sealedArm`.** Each window started at the previous terminal, the eight sampled windows found 2 of 3 sampled exchanges with summed io-stats and one metrics minute, the result file was written, and the seal was called.
+2. **An isolated window's read fails** (`s-random-near-head`). It was recorded as `failed`, the four after it were skipped, and the arm returned.
+3. **An isolated window's cell fails** (`ref-random-near-head`). The same.
+4. **A published window fails** (`s-tape`). The arm failed, no result file was written, and there was no seal.
+5. **Wrong values.** In an isolated window they were recorded, not thrown. In a published window they were thrown after the result file was written.
+6. **Deadlines.** With 3.6 minutes left, the four S windows ran and the six isolated ones were skipped. With 3 minutes left, the arm refused the first S window.
+7. **The dry run.** With `DX_DRY_RUN_FIRST_OFFER=1`, the real `firstOffer` stopped after resolution, before any window or folder.
+
+**Not run on the Mac:**
+- The call site in `study-server.ts` (seven lines that build the context from the stack, the aged bundle and `containerCounters`). The next dry run executes it.
+- The real `adoptedArm` cell at full size and the real reader trace. The gates cover their toy forms.
 
 ### What is left out
 
