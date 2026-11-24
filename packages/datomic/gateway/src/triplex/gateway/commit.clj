@@ -381,7 +381,7 @@
               (list 'vec (concat (list 'concat 'prepared
                                        ;; The payload crosses into the transactor as java.util.List; normalization rewrites
                                        ;; tempids only in vectors (a list op would make a new entity).
-                                       '(map (fn [[op e a v]] [op e a (vec v)]) (:xq-adds payload)))
+                                       '(map (fn [x] (if (instance? java.util.Map x) (into {} x) (let [[op e a v] x] [op e a (vec v)]))) (:xq-adds payload)))
                                  (drop 2 (second x))))
               :else x))
       form)))

@@ -2,7 +2,8 @@
   (:require [datomic.api :as d] [triplex.gateway.write-policy :as policy] [triplex.gateway.schema :as schema] [triplex.gateway.lean :as lean]
             [triplex.gateway.group-prepare :as prepared]
             [triplex.gateway.prepare-trace :as census]
-            [triplex.gateway.save-ledger :as ledger] [clojure.string :as str])
+            [triplex.gateway.save-ledger :as ledger] [clojure.string :as str]
+            [triplex.gateway.attribute-index :as xq])
   (:import [java.util WeakHashMap] [java.util.concurrent Executors ThreadFactory]))
 
 ;; [DX-W1] Why: an idle scope dispatches immediately; only work accumulated behind an in-flight append can share its successor.
@@ -124,8 +125,10 @@
                         [[:operation (get input "operationId")]]
                         (for [c (get input "claims")] [:command (get c "commandId")])
                         (when-let [c (get input "clientId")] [[:client c]])))}))
+;; [DX-XQ2] Why: a grouped or prepared physical commit is assembled from members' plain ops, without their index
+;; datoms; with TX2_ATTRIBUTE_INDEX set every save goes alone. Rejected: an index silently missing grouped saves.
 (defn eligible? [db p]
-  (and (:lean p) (not (:slim-row p)) (= 1 (:span p)) (:assign-record-time p)
+  (and (not xq/enabled) (:lean p) (not (:slim-row p)) (= 1 (:span p)) (:assign-record-time p)
        (not (:position-irregular p)) (<= (count (:ops p)) 256)
        (= true (v db (:scope p) :triplex.scope/strict-record-clocks))
        (= 2 (v db (:scope p) :triplex.scope/head-version))

@@ -109,7 +109,7 @@
   (into {} (for [a xq/all-idents :when (d/entid db a)] [(str a) (count (seq (d/datoms db :aevt a)))])))
 
 ;; ================= cost arms (N indexed attributes: 0, 1, 5, 20) =================
-(def fields 24)
+(def fields (env-long "XQ2_FIELDS" 160))
 (defn fattr [i] (str ":f" i))
 (defn cost-subject [n] (format "acct/xq/subject/%05d" n))
 (defn cost-cell [n i v] [(str "c-" n "-f" i "-v" v) (cost-subject n) (fattr i) ["string" (str "value-" n "-" i "-" v)]])
@@ -117,13 +117,17 @@
 (def per-batch 40)
 (defn cost-seed! [label]
   (let [[name conn] (open! label)
+        start (kvs) w0 (wal)
         t0 (System/nanoTime)]
-    (doseq [ns (partition-all per-batch (range cost-subjects))]
+    (doseq [ns (partition-all (max 1 (quot (* per-batch 24) fields)) (range cost-subjects))]
       (commit! name (batch-input (str "seed-" (first ns)) (for [n ns i (range fields)] (cost-cell n i 0)))))
     (let [before (kvs)] (index-now! conn)
       (let [db (d/db conn) after (kvs)
             result {:label label :db name :list (vec xq/listed) :head (head name conn) :t (d/basis-t db)
                     :seedSeconds (/ (- (System/nanoTime) t0) 1e9) :kvsAfterIndexGc after :kvsBeforeIndex before
+                    :kvsAtStart start :fields fields :subjects cost-subjects
+                    :armBytes (- (:bytes after) (:bytes start)) :armSegments (- (:rows after) (:rows start))
+                    :armLogAndIndexBytesBeforeIndex (- (:bytes before) (:bytes start)) :seedWalBytes (wal-bytes w0 (wal))
                     :xqDatoms (xq-datoms db) :rowDatoms (count (seq (d/datoms db :aevt :triplex.entity/row)))}]
         (emit! (str "cost-seed-" label ".json") result)
         (println "XQ2_COST_SEED" (json/write-str result))))))
@@ -153,11 +157,12 @@
                                          (swap! form-ids assoc n ids) (commit! name input)))))
         g2 (measured #(vec (for [n b] (commit! name (:input (form n (+ 4000000 n) 2 (fn [n i] (nth (@form-ids n) i))))))))
         ;; An import of new subjects: 100 subjects x 24 fields in one general commit, five times.
+        per-import (max 1 (quot 2400 fields))
         imp (measured #(vec (for [k (range 5)]
                               (commit! name (batch-input (str "import-" k)
-                                              (for [n (range (+ 100000 (* k 100)) (+ 100000 (* (inc k) 100))) i (range fields)]
+                                              (for [n (range (+ 100000 (* k per-import)) (+ 100000 (* (inc k) per-import))) i (range fields)]
                                                 (cost-cell n i 0)))))))
-        result {:label label :list (vec xq/listed) :firstTouch ft :secondSave ss :formFirst g1 :formSecond g2 :import100x24 imp
+        result {:label label :list (vec xq/listed) :firstTouch ft :secondSave ss :formFirst g1 :formSecond g2 :importRowsPerCommit (* per-import fields) :import imp
                 :pgReadsByRole (pg-reads) :xqDatoms (xq-datoms (d/db conn))}]
     (emit! (str "cost-measure-" label ".json") result)
     (println "XQ2_COST_MEASURE" (json/write-str result))))
@@ -417,7 +422,17 @@
                  :answer (or (get b "count") (count (or (get b "rows") (get b "entities")))) :peerReads (get (pg-reads) "datomic" 0)}))
         _ (main/sync-db (main/db-uri name))
         result (vec (for [[label q] shapes basis [nil {"recordedPosition" mid}] pass ["cold" "warm"]]
-                      (assoc (run label q basis) :pass pass)))]
+                      (assoc (run label q basis) :pass pass)))
+        ;; What an as-of read walks: Datomic merges the current index with the history index (assertions and their
+        ;; retractions) over the same bounds and filters by t.
+        db (d/db conn)
+        walks (into {} (for [[label fam start end] [["eq status=active (55%)" :triplex.xq/s ["a" ":status" "active"] ["a" ":status" "active\u0000"]]
+                                                    ["eq flag=true (1%)" :triplex.xq/b ["a" ":flag" true] ["a" ":flag\u0000"]]
+                                                    ["range start-date 30 days" :triplex.xq/d ["a" ":start-date" (+ year0 (* 90 day))] ["a" ":start-date" (+ year0 (* 120 day))]]]]
+                         [label {:currentDatoms (count (seq (d/index-range db fam start end)))
+                                 :historyDatoms (count (seq (d/index-range (d/history db) fam start end)))}]))]
+    (emit! "query-cost-walks.json" walks)
+    (println "XQ2_QUERY_WALKS" (json/write-str walks))
     (emit! "query-cost.json" result)
     (doseq [r result] (println "XQ2_QUERY" (json/write-str r)))))
 

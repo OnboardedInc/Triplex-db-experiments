@@ -13,8 +13,16 @@
   (let [raw (System/getenv "TX2_ATTRIBUTE_INDEX")]
     (into (sorted-set) (remove empty?) (map str/trim (str/split (or raw "") #",")))))
 (def types? (contains? listed "@type"))
-(def attrs (disj listed "@type"))
+(def attrs (into (sorted-set) (remove #(.endsWith ^String % "*")) (disj listed "@type")))
+;; An entry ending in * lists every attribute with that prefix (for server cost runs over a tape's own fields).
+(def prefixes (into (sorted-set) (keep #(when (.endsWith ^String % "*") (subs % 0 (dec (count %))))) listed))
+(defn listed? [attr] (and (string? attr) (or (contains? attrs attr) (some #(.startsWith ^String attr %) prefixes))))
 (def enabled (boolean (seq listed)))
+;; The covering owner-head writer renders its own ops; the spike does not maintain the index there, so it refuses to start.
+(when (and enabled (= "1" (System/getenv "TX2_SUBJECT_OWNER_HEAD")))
+  (throw (IllegalStateException. "TX2_ATTRIBUTE_INDEX cannot run with TX2_SUBJECT_OWNER_HEAD (not maintained there)")))
+;; Cost comparison only: TX2_ATTRIBUTE_INDEX_HOLDER=account puts every tuple on one entity per account (no and-probe).
+(def account-holder? (and enabled (= "account" (System/getenv "TX2_ATTRIBUTE_INDEX_HOLDER"))))
 
 ;; ---- schema: one tuple attribute per value family (Datomic orders each family natively) ----
 (def families
@@ -33,8 +41,10 @@
      ;; Rows the tuple cannot hold (an element over 256 characters, or a json or blob value): one marker each, so a
      ;; query that could match them is refused instead of answered without them.
      {:db/ident :triplex.xq/long :db/valueType :db.type/tuple :db/cardinality :db.cardinality/many :db/index true
-      :db/tupleTypes [:db.type/string :db.type/string :db.type/string :db.type/string :db.type/string]}]))
-(def all-idents (into (conj (set (keys families)) :triplex.xq/type) [:triplex.xq/long]))
+      :db/tupleTypes [:db.type/string :db.type/string :db.type/string :db.type/string :db.type/string]}
+     {:db/ident :triplex.xq/holder :db/valueType :db.type/string :db/unique :db.unique/identity
+      :db/cardinality :db.cardinality/one}]))
+(def all-idents (into (conj (set (keys families)) :triplex.xq/type) [:triplex.xq/long :triplex.xq/holder]))
 
 (defn install! [conn db]
   (if (or (not enabled) (every? #(d/entid db %) all-idents))
@@ -46,15 +56,16 @@
 (def key-code-template
   '(fn [cols]
      (let [attr (nth cols 3) etype (nth cols 14)]
-       (when (and (contains? xq-attrs attr) (not= "_Transaction" etype))
+       (when (and (string? attr) (or (contains? xq-attrs attr) (some #(.startsWith ^String attr %) xq-prefixes))
+                  (not= "_Transaction" etype))
          (let [^String entity (nth cols 2)
                account (when (string? entity) (second (re-matches (re-pattern "acct/([A-Za-z0-9_-]{1,64})/.+") entity)))]
            (when account
              (let [num (fn [x] (if (= "-0" x) -0.0 (double x)))
                    ^String id (nth cols 1) kind (nth cols 4)
                    from (num (nth cols 11)) to (when (some? (nth cols 12)) (num (nth cols 12)))
-                   ;; Datomic 1.0.7745 refuses tuple strings over 256 characters (probe); bytes are checked too.
-                   short? (fn [^String s] (and (<= (.length s) 256) (<= (alength (.getBytes s "UTF-8")) 256)))
+                   ;; Datomic 1.0.7745 refuses tuple strings over 256 characters (probe: 256 two-byte characters pass).
+                   short? (fn [^String s] (<= (.length s) 256))
                    digest (fn [^String s] (if (short? s) s
                                             (str "sha256:" (apply str (map #(format "%02x" %)
                                               (.digest (java.security.MessageDigest/getInstance "SHA-256")
@@ -73,23 +84,31 @@
                  (and a ids-short (or (not (string? v)) (short? v))) [a [account attr v entity from to id]]
                  :else [:triplex.xq/long [account attr (cond (not ids-short) "identity" a "value" :else "family")
                                           (digest entity) (digest id)]]))))))))
-(def key-code (walk/postwalk-replace {'xq-attrs attrs} key-code-template))
+(def key-code (walk/postwalk-replace {'xq-attrs attrs 'xq-prefixes prefixes} key-code-template))
 (def key-of (eval key-code))
 
 ;; In the general writer (transactor side): the retired row's stored text decides its index datom.
 (def retract-code
-  (walk/postwalk-replace {'row-columns-code slim/row-columns-code 'xq-key-code key-code}
+  (walk/postwalk-replace {'row-columns-code slim/row-columns-code 'xq-key-code key-code 'xq-holder? account-holder?}
     '(fn [e ^String text]
-       (when-let [[a v] (xq-key-code (row-columns-code text))] [[:db/retract e a v]]))))
+       (when-let [[a v] (xq-key-code (row-columns-code text))]
+         [[:db/retract (if xq-holder? [:triplex.xq/holder (first v)] e) a v]]))))
 
 (defn text-columns [^String text] (slim/row-columns text))
 (defn add-op [entity ^String text]
   (when-let [[a v] (key-of (text-columns text))] [:db/add entity a v]))
 (defn retract-op [entity ^String text]
-  (when-let [[a v] (key-of (text-columns text))] [:db/retract entity a v]))
+  (when-let [[a v] (key-of (text-columns text))]
+    [:db/retract (if account-holder? [:triplex.xq/holder (first v)] entity) a v]))
+(defn holder-ops
+  "With the account holder, each assertion moves to the account's entity, upserted once per commit."
+  [ops]
+  (if-not account-holder? ops
+    (let [moved (mapv (fn [[op _ a v]] [op (str "xqh:" (first v)) a v]) ops)]
+      (into moved (map (fn [acct] {:db/id (str "xqh:" acct) :triplex.xq/holder acct}) (distinct (map #(first (nth % 3)) ops)))))))
 
 (defn type-key [account etype entity]
-  (let [short? (fn [^String s] (and (<= (.length s) 256) (<= (alength (.getBytes s "UTF-8")) 256)))]
+  (let [short? (fn [^String s] (<= (.length s) 256))]
     (if (and (short? etype) (short? entity)) [:triplex.xq/type [account etype entity]]
       [:triplex.xq/long [account "@type" "identity" etype entity]])))
 (defn account-of [entity] (when (string? entity) (second (re-matches #"acct/([A-Za-z0-9_-]{1,64})/.+" entity))))
@@ -99,9 +118,9 @@
   (protected attributes never), and a type marker for each entity this peer sees as new."
   [db input fresh protected]
   (when enabled
-    (vec (concat
+    (holder-ops (vec (concat
            (keep (fn [row]
-                   (when (and (nil? (:retracted_at row)) (attrs (:attribute row)) (not (contains? protected (:attribute row))))
+                   (when (and (nil? (:retracted_at row)) (listed? (:attribute row)) (not (contains? protected (:attribute row))))
                      (when-let [text (get-in input ["rowTexts" (:id row)])]
                        (add-op (str "e:" (:entity_id row)) text))))
                  fresh)
@@ -110,7 +129,7 @@
                                                            [(:entity_id r) (:entity_type r)])) fresh))
                    :let [account (account-of entity)]
                    :when (and account (nil? (d/entid db [:triplex.entity/id entity])))]
-               (let [[a v] (type-key account etype entity)] [:db/add (str "e:" entity) a v])))))))
+               (let [[a v] (type-key account etype entity)] [:db/add (str "e:" entity) a v]))))))))
 
 ;; ---- the read route: one account, bounded, with a cursor ----
 (defn- fail! [code message] (throw (ex-info message {:status 400 :code code})))
@@ -145,7 +164,7 @@
 
 (defn- clause-plan [db account clause protected]
   (let [attr (get clause "attribute")]
-    (when-not (and (string? attr) (attrs attr)) (fail! "AttributeNotIndexed" (str "Attribute is not indexed: " attr)))
+    (when-not (listed? attr) (fail! "AttributeNotIndexed" (str "Attribute is not indexed: " attr)))
     (when (contains? protected attr) (fail! "ProtectedAttribute" "Protected values are never looked up by value"))
     (let [markers (long-markers db account attr)
           op (get clause "op" "eq")]

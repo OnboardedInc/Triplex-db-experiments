@@ -53,7 +53,7 @@ restart_transactor() { kill "$tx_pid"; wait "$tx_pid" 2>/dev/null || true; trans
 # The server writer: per-subject ordered writer for one-to-three-fact replacements, the general writer for the rest.
 gate() {  # $1 = TX2_ATTRIBUTE_INDEX ("" = off), $2.. = clojure arguments
   local list=$1; shift
-  TX2_ATTRIBUTE_INDEX=$list TX2_SUBJECT_SAVE=1 TX2_GROUP_COMMIT=0 \
+  TX2_ATTRIBUTE_INDEX=$list TX2_ATTRIBUTE_INDEX_HOLDER=${XQ2_HOLDER:-entity} TX2_SUBJECT_SAVE=1 TX2_GROUP_COMMIT=0 \
     TX2_LIVE_PRIORITY=0 TX2_PREDECESSOR_LOOKUP=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_PREFETCH=0 \
     TX2_GROUP_REUSE_PREPARED=1 TX2_GROUP_FAST_REPLY=1 TX2_GROUP_STAGE_CLOCK=1 TX2_SUBJECT_PROFILE=1 TX2_LEAN_NATIVE_QUERY=1 \
     TX2_LEAN_NATIVE_LOG=1 TX2_GROUP_MAX_MEMBERS=8 WFIX1_URI="$DATOMIC_URI_TEMPLATE" TRIPLEX_TRACE_LEVEL=off \
@@ -69,12 +69,13 @@ list_for() {
   case $1 in
     n0) echo "";;
     n1) echo ":f12";;
-    n5) echo ":f0,:f1,:f2,:f3,:f12";;
-    n20) echo ":f0,:f1,:f2,:f3,:f4,:f5,:f6,:f7,:f8,:f9,:f10,:f11,:f12,:f13,:f14,:f15,:f16,:f17,:f18,:f19";;
+    n5|a5) echo ":f0,:f1,:f2,:f3,:f12";;
+    n20|a20) echo ":f0,:f1,:f2,:f3,:f4,:f5,:f6,:f7,:f8,:f9,:f10,:f11,:f12,:f13,:f14,:f15,:f16,:f17,:f18,:f19";;
   esac
 }
 if want cost; then
   for arm in ${XQ2_ARMS:-n0 n1 n5 n20}; do
+    if [[ $arm == a* ]]; then export XQ2_HOLDER=account; else export XQ2_HOLDER=entity; fi
     phase "cost-seed-$arm"; gate "$(list_for "$arm")" "(xq2-gate/cost-seed! \"$arm\") $(done_)"
     restart_transactor
     phase "cost-measure-$arm"; gate "$(list_for "$arm")" "(xq2-gate/cost-measure! \"$arm\") $(done_)"

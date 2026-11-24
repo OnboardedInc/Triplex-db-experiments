@@ -19,7 +19,7 @@ name=tx2-dxxq2-gate
 docker rm -f "$name" >/dev/null 2>&1
 docker run --name "$name" --memory 4g --cpus 2 --entrypoint /bin/bash \
   -e "XQ2_PHASES=${XQ2_PHASES:-cost gate edge}" -e "XQ2_ARMS=${XQ2_ARMS:-n0 n1 n5 n20}" -e "XQ2_RUN=$(basename "$out")" \
-  -e "XQ2_COST_SUBJECTS=${XQ2_COST_SUBJECTS:-5000}" -e "XQ2_COST_EACH=${XQ2_COST_EACH:-200}" \
+  -e "XQ2_COST_SUBJECTS=${XQ2_COST_SUBJECTS:-2000}" -e "XQ2_FIELDS=${XQ2_FIELDS:-160}" -e "XQ2_COST_EACH=${XQ2_COST_EACH:-200}" \
   -e "XQ2_GATE_SUBJECTS=${XQ2_GATE_SUBJECTS:-20000}" -e "XQ2_EDGE_SUBJECTS=${XQ2_EDGE_SUBJECTS:-100000}" \
   -v "$out/stage/gateway/src:/opt/gateway/src:ro" -v "$out/stage/xq2:/xq2:ro" \
   -v "$out/out:/out" "$image" /xq2/xq2/container.sh > "$out/container.log" 2>&1

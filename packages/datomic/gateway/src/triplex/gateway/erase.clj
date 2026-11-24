@@ -56,7 +56,7 @@
   ([name conn db input staged-position]
   (let [attrs (get input "attributes") sealed? (true? (get input "sealed"))]
     ;; [DX-XQ2] Why: protected values are never looked up by value, so an indexed attribute cannot become protected.
-    (when (and xq/enabled (some xq/attrs attrs))
+    (when (and xq/enabled (some xq/listed? attrs))
       (privacy/failure! 400 "ProtectedAttributeIndexed" "An attribute in TX2_ATTRIBUTE_INDEX cannot be protected"))
     (when-not (and (lean/enabled? db) (or (privacy/enabled? db) (= (or staged-position 0) (scope/head-position db (scope/entity db)))))
       (privacy/failure! 409 "ProtectedScopeNeedsMigration" "Declare protection before saving into the scope"))

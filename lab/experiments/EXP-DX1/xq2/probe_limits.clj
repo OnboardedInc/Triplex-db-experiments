@@ -17,5 +17,8 @@
                                                                      [:db/add "y" :p/tb ["a" false -1 0.0]]]))))
   (try* "read-back" #(mapv :v (d/datoms (d/db conn) :avet :p/tb)))
   (try* "redundant" #(count (:tx-data @(d/transact conn [[:db/add (:e (first (d/datoms (d/db conn) :avet :p/tb))) :p/tb ["a" false -1 0.0]]]))))
+  (try* "retract-absent-tuple" #(count (:tx-data @(d/transact conn [[:db/retract (:e (first (d/datoms (d/db conn) :avet :p/tb))) :p/tb ["zz" true 1 1.0]]]))))
+  (try* "multibyte-200-chars" #(count (:tx-data @(d/transact conn [[:db/add "z" :p/ts ["a" "b" (apply str (repeat 200 "\u00e9"))]]]))))
+  (try* "multibyte-256-chars" #(count (:tx-data @(d/transact conn [[:db/add "z" :p/ts ["a" "b" (apply str (repeat 256 "\u00e9"))]]]))))
   (d/delete-database uri))
 (shutdown-agents) (System/exit 0)

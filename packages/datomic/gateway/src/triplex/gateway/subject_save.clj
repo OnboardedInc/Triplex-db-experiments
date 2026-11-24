@@ -342,7 +342,7 @@
                                 ;; [DX-XQ2] Why: the certified predecessor texts (revision-checked) own the retired index datoms.
                                 ;; Rejected: re-finding the old row inside the function (a read the plan already paid for).
                                 xq/enabled (into (concat
-                                                   (map (fn [[op e a v]] [op (if (and numeric-owner? (= e (str "e:" subject))) owner e) a v])
+                                                   (map (fn [x] (if (map? x) x (let [[op e a v] x] [op (if (and numeric-owner? (= e (str "e:" subject))) owner e) a v])))
                                                         (:xq-adds p))
                                                    (keep #(xq/retract-op owner %) (vals prior)))))}
                   mark? (assoc :retirement-prefixes (mapv lean/prefix live))

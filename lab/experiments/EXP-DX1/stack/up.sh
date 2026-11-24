@@ -988,6 +988,12 @@ for role in "${gateway_roles[@]}"; do
       -e "TX2_SUBJECT_OWNER_HEAD=$subject_owner_head"
       -e "TX2_SUBJECT_NARROW_REVISION=$subject_narrow_revision" -e "TX2_SUBJECT_REUSE_PREDECESSOR=$subject_reuse_predecessor")
   fi
+  # [DX-XQ2] Why: the attribute index spike is one gateway option on every role (writers maintain it, readers answer).
+  # Rejected: a launcher default (the option stays off unless the run names its list).
+  if [[ -n ${DX_ATTRIBUTE_INDEX:-} ]]; then
+    [[ $DX_ATTRIBUTE_INDEX =~ ^[:A-Za-z0-9_/*@.,-]{1,4000}$ ]] || exit 2
+    field_policy+=(-e "TX2_ATTRIBUTE_INDEX=$DX_ATTRIBUTE_INDEX")
+  fi
   if [[ $mode == w && $append_retirement == 1 ]]; then
     field_policy+=(-e "TX2_SUBJECT_APPEND_RETIREMENT=1")
   fi
