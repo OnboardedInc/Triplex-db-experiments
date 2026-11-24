@@ -610,11 +610,6 @@ export function QueryPage() {
                         <JsonView value={answer} />
                       </TabsContent>
                     </Tabs>
-                    {lastCall && (
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">{sourceWords}</Badge>
-                      </div>
-                    )}
                   </>
                 )}
               </div>

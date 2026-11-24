@@ -65,6 +65,7 @@ function RefPicker({
   const connection = useConnection().data;
   const tools = useTools();
   const [open, setOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
   const target = attr.refTarget ?? "";
   const [acct, setAcct] = useState(account);
   const [num, setNum] = useState("");
@@ -162,9 +163,31 @@ function RefPicker({
                 </CommandItem>
               ))}
             </CommandGroup>
+            {tools.has("create_entity") && (
+              <CommandGroup>
+                <CommandItem
+                  value={`create new ${target}`}
+                  onSelect={() => {
+                    setOpen(false);
+                    setCreating(true);
+                  }}
+                >
+                  <PlusIcon /> Create new {target} in {account}
+                </CommandItem>
+              </CommandGroup>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>
+      {/* "Create new" opens the target type's own form above this one; its new entity fills the reference. */}
+      <EntityFormSheet
+        init={creating ? { type: target, account } : null}
+        onClose={() => setCreating(false)}
+        onCreated={(entity) => {
+          onChange(entity);
+          setCreating(false);
+        }}
+      />
     </Popover>
   );
 }
@@ -266,9 +289,12 @@ function converted(attr: AttributeDef, v: Value | undefined): unknown {
 export function EntityFormSheet({
   init,
   onClose,
+  onCreated,
 }: {
   init: EntityFormInit | null;
   onClose: () => void;
+  /** Set when this form was opened from another form's reference: the new entity goes back there, no navigation. */
+  onCreated?: (entity: string) => void;
 }) {
   const navigate = useNavigate();
   const tools = useTools();
@@ -362,6 +388,7 @@ export function EntityFormSheet({
         receiptToast(answer as never, `Created ${shortId(answer.entity)}`, () =>
           navigate("/journal"),
         );
+        if (onCreated) return onCreated(answer.entity);
         onClose();
         navigate(`/entities/${encodeURIComponent(answer.entity)}`);
       },

@@ -77,7 +77,11 @@ const ASSISTANT_SUBJECT = Math.min(target.last, SUBJECT + 7);
 if (SUBJECT < target.first || SUBJECT > target.last)
   throw new Error(`${ACCOUNT} has subjects ${target.first} to ${target.last}`);
 // Step 3's far-back read: position 87,002 on the 1 billion database (the design's script), the seed head on the toy.
-const farBack = arg("far-back") ? Number(arg("far-back")) : database === "1b" ? 87002 : connection.clocks?.seedHead;
+const farBack = arg("far-back")
+  ? Number(arg("far-back"))
+  : database === "1b"
+    ? 87002
+    : connection.clocks?.seedHead;
 note(
   "0",
   `${connection.label}: ${ACCOUNT} subject ${SUBJECT}; sealed head ${connection.sealed?.head}; far-back position ${farBack}`,
@@ -129,7 +133,8 @@ const goto = async (path, idle = true) => {
 };
 const pad8 = (n) => String(n).padStart(8, "0");
 /** An example in the Query screen's list, by the start of its name. */
-const example = (name) => page.getByRole("button", { name: new RegExp("^" + name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) });
+const example = (name) =>
+  page.getByRole("button", { name: new RegExp("^" + name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) });
 
 /** One MCP tools/call over stdio, so the change carries actor "assistant" exactly as Claude Code's would. */
 async function assistantCall(name, args) {
