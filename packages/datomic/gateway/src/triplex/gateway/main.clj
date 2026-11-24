@@ -1,6 +1,6 @@
 (ns triplex.gateway.main
   (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase]
-            [triplex.gateway.removal-scope :as removal-scope] [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger] [triplex.gateway.pinned :as pinned] [triplex.gateway.group-cut :as group-cut]
+            [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger] [triplex.gateway.pinned :as pinned] [triplex.gateway.group-cut :as group-cut]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
             [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed]
             [triplex.gateway.write-wire :as write-wire]
@@ -10,7 +10,10 @@
             [triplex.gateway.at-least :as at-least]
             [triplex.gateway.general-prefetch :as general-prefetch] [triplex.gateway.admission :as admission]
             [triplex.gateway.subject-hints :as subject-hints]
-            [triplex.gateway.ids :as ids] [triplex.gateway.sweep :as sweep])
+            [triplex.gateway.ids :as ids] [triplex.gateway.sweep :as sweep]
+            ;; [DX-ACT9] Last, after every namespace whose stored function text carries generated names (DX-ERA2's code
+            ;; renumbered 17 of 58 of them when it loaded first).
+            [triplex.gateway.removal-scope :as removal-scope] [triplex.gateway.removal-erase :as removal-erase])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -432,7 +435,7 @@
           (and (= :post request-method) (= action "restore-erasure"))
           (response 200 (erase/replay-after-restore! name conn))
           (and removal-scope/enabled (= :post request-method) (= action "removal-per-account"))
-          (response 200 (erase/per-account! name conn (request-json body)))
+          (response 200 (removal-erase/per-account! name conn (request-json body)))
           :else
           (let [[protected-wire input] (when (and (= :post request-method) (= action "transact"))
                                         (write-wire/open name (request-json body)))
@@ -445,7 +448,7 @@
                 [independent db] (if (and managed-write? (or subject/enabled per-account) (nil? source)
                                           (not (contains? input "erasureSeq"))
                                           (not (true? (get input "erasureReplay"))))
-                                   (let [[cut db] (if per-account (erase/request-cut name conn db) [(privacy/cut name db) db])]
+                                   (let [[cut db] (if per-account (removal-erase/request-cut name conn db) [(privacy/cut name db) db])]
                                      [(when (or (not (:sealed cut)) (envelope/shared?)) cut) db])
                                    [nil db])
                 request (cond-> request input (assoc :privacy-input input))
@@ -477,7 +480,7 @@
                   (let [[current next] (trace/span "privacy/write-frontier" "gateway"
                                          (let [current (d/db conn)]
                                            (if (and per-account managed-write?)
-                                             (let [[cut current] (erase/request-cut name conn current)] [current cut])
+                                             (let [[cut current] (removal-erase/request-cut name conn current)] [current cut])
                                              [current (privacy/cut name current)])))]
                     (when (and managed-write? (nil? next)) (privacy/unavailable!))
                     (when (and (:sealed next) (write-wire/required?) (not protected-wire))
@@ -489,16 +492,16 @@
                               source-cut (privacy/cut source source-db)]
                           (privacy/verify-data! source-cut source-db)
                           (privacy/ensure-seq! source-cut (get input "erasureSeq")))
-                        (privacy/ensure-ticket! next input)))
+                        (removal-scope/ensure-ticket! next input)))
                     (run next))))
               ;; [DX-ERASE1] Why: a guarded write only needs the cut verified inside the writer lock.
               ;; Rejected: reading and hashing the authority twice on every guarded save.
               :else
               (let [read-cut (when-not input
                                (trace/span "privacy/frontier" "gateway"
-                                 (if per-account (first (erase/request-cut name conn db)) (privacy/cut name db))))]
+                                 (if per-account (first (removal-erase/request-cut name conn db)) (privacy/cut name db))))]
                 (when (and read-cut (not per-account)) (trace/span "privacy/verify-data" "gateway" (privacy/verify-data! read-cut db)))
-                (when (contains? input "erasureSeq") (privacy/ensure-ticket! read-cut input))
+                (when (contains? input "erasureSeq") (removal-scope/ensure-ticket! read-cut input))
                 (run read-cut))))))
       (catch Exception e
         (let [info (ex-data e)]

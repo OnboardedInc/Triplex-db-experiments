@@ -536,7 +536,7 @@
                                   (or (not (:sealed privacy/*cut*)) (envelope/shared?))
                                   (not (or policy/priority? policy/field-only? policy/budget-us replay-capture/enabled)))
                          (trace/span "subject.prepare" "gateway"
-                           (subject-prepare conn db data input (privacy/fence-seq privacy/*cut*))))
+                           (subject-prepare conn db data input (removal-scope/fence-seq privacy/*cut*))))
           ;; [Opus W1] Why: a save the covering writer cannot take must not reach legacy rows under a root.
           _ (when (and owner-layout/enabled (nil? subject-plan)) (fold-touched! conn db data))
           start (System/nanoTime)

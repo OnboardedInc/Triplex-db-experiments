@@ -1,6 +1,6 @@
 (ns triplex.gateway.removal-scope
   (:require [clojure.string :as str] [datomic.api :as d] [triplex.gateway.schema :as schema]
-            [triplex.gateway.scope :as scope]))
+            [triplex.gateway.scope :as scope] [triplex.gateway.privacy :as privacy]))
 
 ;; [DX-ERA2] Removal on request guarded per account (TX2_REMOVAL_PER_ACCOUNT=1, default off).
 ;; Why: in one database holding every account, one removal sequence refused or delayed every account's saves, reads
@@ -162,3 +162,24 @@
                       (str/split (or query-string "") #"&"))]
     (cond-> {:perAccount true :unscopedSeq (bucket-seq state unscoped)}
       (seq account) (assoc :account account :accountSeq (bucket-seq state account)))))
+
+;; [DX-ERA2] Why: in a database guarded per account, a derived write's ticket that names its source accounts is
+;; stale only when a removal published after it touched one of them (or the unscoped sequence).
+;; Rejected: a database-wide comparison for such tickets (any account's removal refused every account's frames).
+;; [DX-ACT9] Moved here from privacy.clj unchanged (see the hooks below).
+(defn ensure-ticket! [state input]
+  (if (and (:per-account state) (contains? input "erasureAccounts"))
+    (when-not (ticket-current? state (get input "erasureSeq") (ticket-accounts input))
+      (privacy/stale!))
+    (privacy/ensure-seq! state (get input "erasureSeq"))))
+
+;; [DX-ERA2] The value the installed writers' database-wide fence carries for this cut. [DX-ACT9] Moved from privacy.clj.
+(defn fence-seq [state] (when state (if (:per-account state) sentinel (:seq state))))
+
+;; [DX-ACT9] Why: privacy.clj, erase.clj and subject_save.clj load before the namespaces whose stored function texts
+;; carry generated names, so they reach this namespace through privacy/removal-hooks (plain values there), filled here
+;; when this namespace loads (storage.clj requires it, after every stored function text). Rejected: their requiring
+;; this namespace (it moved 17 of 58 stored-function identities with every option off).
+(alter-var-root #'privacy/removal-hooks assoc
+  :add-entry add-entry :ensure-ticket! ensure-ticket! :per-account? per-account? :consistent? consistent?
+  :fence-op? fence-op? :entry-ops entry-ops)

@@ -13,10 +13,11 @@
   Rejected: keeping the head check (unbounded under load); pausing every save of the database or of the account (it
   refuses saves the removal cannot affect); a guard held through the authority only (a save admitted before it could
   still commit, so the bound would depend on the gateway's in-flight writes).
-  Loaded on first use (erase/erase! resolves it), so a gateway without the option loads none of this."
+  Loaded on first use (removal-erase/erase! resolves it), so a gateway without the option loads none of this."
   (:require [clojure.data.json :as json] [datomic.api :as d]
             [triplex.gateway.erase :as erase] [triplex.gateway.privacy :as privacy]
-            [triplex.gateway.removal-scope :as removal-scope] [triplex.gateway.scope :as scope]))
+            [triplex.gateway.removal-scope :as removal-scope] [triplex.gateway.scope :as scope]
+            [triplex.gateway.removal-erase :as removal-erase]))
 
 (def commit-ident :triplex.removal/commit-v1)
 (def moved "TRIPLEX_REMOVAL_SUBJECT_MOVED")
@@ -160,12 +161,12 @@
   (let [selectors (erase/selectors! input)
         command (get input "commandId")
         started (System/nanoTime)
-        buckets (@#'erase/selector-buckets (d/db conn) selectors)]
+        buckets (removal-erase/selector-buckets (d/db conn) selectors)]
     (when-not (privacy/cut name (d/db conn) true)
       (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
     (privacy/guard name
       (fn []
-        (@#'erase/with-bucket-guards name buckets
+        (removal-erase/with-bucket-guards name buckets
           (fn []
             (let [db (erase/sync! conn)
                   current (privacy/cut name db true)]

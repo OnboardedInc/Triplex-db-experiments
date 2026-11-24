@@ -4,7 +4,7 @@
             [triplex.gateway.commit :as commit]
             [triplex.gateway.envelope :as envelope]
             [triplex.gateway.group-prepare :as prepared]
-            [triplex.gateway.lean :as lean] [triplex.gateway.removal-scope :as removal-scope]
+            [triplex.gateway.lean :as lean] [triplex.gateway.privacy :as privacy]
             [triplex.gateway.schema :as schema]
             [triplex.gateway.small-row :as small-row]
             [triplex.gateway.scope :as scope]
@@ -292,10 +292,13 @@
                ;; narrow rule here (the option stays default-off and leaves today's plans byte for byte).
                (not (and wide? (:import-predecessor p)))
                (<= (count ops) (if wide? wide-ops 256))
-               (every? #(or (prepared/small-op? %) (and (some? expected-erasure) (envelope-op? %))
-                            ;; [DX-ERA2] The per-account removal fence rides in the returned data; Datomic applies it
-                            ;; on the same serial db-before. Rejected: the general writer for every guarded save.
-                            (and removal-scope/enabled (some? expected-erasure) (removal-scope/fence-op? %))) ops))
+               ;; [DX-ERA2] The per-account removal fence rides in the returned data; Datomic applies it on the same
+               ;; serial db-before. Rejected: the general writer for every guarded save.
+               ;; [DX-ACT9] Inside the base's own `and`, as an `if` through privacy's hooks: one more `or` or `and` here
+               ;; generates a name and renumbers the stored functions loaded after this file.
+               (every? #(or (prepared/small-op? %) (and (some? expected-erasure)
+                                                        (if (envelope-op? %) true
+                                                          (if privacy/removal-enabled ((:fence-op? privacy/removal-hooks) %) false)))) ops))
       (let [[fn-tx flags owner revision]
             (trace/span "subject.plan-witnesses" "gateway"
               (let [fn-tx (installed db) flags (when fn-tx (scope-witness db scope))

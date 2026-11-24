@@ -1,12 +1,21 @@
 (ns triplex.gateway.privacy
   (:require [clojure.data.json :as json] [clojure.string :as str] [datomic.api :as d]
-            [triplex.gateway.authority-sql :as sql] [triplex.gateway.scope :as scope] [triplex.gateway.trace :as trace]
-            [triplex.gateway.removal-scope :as removal-scope])
+            [triplex.gateway.authority-sql :as sql] [triplex.gateway.scope :as scope] [triplex.gateway.trace :as trace])
   (:import [java.nio.charset StandardCharsets]
            [java.nio.channels FileChannel]
            [java.nio.file Files Path Paths StandardCopyOption StandardOpenOption LinkOption]
            [java.security MessageDigest]
            [java.util HexFormat UUID]))
+
+;; [DX-ACT9] Why: DX-ERA2's removal per account (removal_scope.clj, removal_erase.clj) loads after every namespace whose
+;; stored function text carries generated names; this file and erase.clj load before them, so they reach it through
+;; these plain values only (a new function here renumbers those names). removal_scope.clj and removal_erase.clj fill
+;; `removal-hooks` when they load (storage.clj and main.clj require them). Rejected: requiring removal-scope here (it
+;; moved 17 of 58 stored-function identities with every option off).
+(def removal-enabled (= "1" (System/getenv "TX2_REMOVAL_PER_ACCOUNT")))
+(def removal-late (if removal-enabled true (= "1" (System/getenv "TX2_REMOVAL_TRIES_LOG"))))
+(def removal-sentinel -1)
+(def removal-hooks {})
 
 (def root (System/getenv "TRIPLEX_ERASURE_DIRECTORY"))
 (def ^:dynamic *cut* nil)
@@ -57,7 +66,7 @@
   (let [m (get (swap! local-guards #(if (contains? % name) % (assoc % name (Object.)))) name)
         p (path name "writer.lock")]
     ;; [DX-ERA2] An account's lock (name#removal/<account>) has no directory until its first use; a no-op otherwise.
-    (when removal-scope/enabled
+    (when removal-enabled
       (Files/createDirectories (.getParent p) (make-array java.nio.file.attribute.FileAttribute 0)))
     (let [started (when trace/*request* (trace/clock))]
       (locking m
@@ -113,7 +122,9 @@
 (defn- entry-record [seq] (str "erase-" seq ".json"))
 
 (defn- apply-entry [cut entry]
-  (-> cut
+  ;; [DX-ERA2] Each account's removal sequence, derived from the one ordered log (only with the option on).
+  ;; [DX-ACT9] A `let` and an `if` through the hook, not `cond->` (it generates a name).
+  (let [next (-> cut
       (assoc :seq (get entry "seq") :seal (sha256 (json/write-str entry)))
       (assoc-in [:commands (get entry "commandId")] entry)
       (update :erased (fn [before]
@@ -125,9 +136,8 @@
                                 before (get entry "identities"))))
       ;; [DX-IMP2] An entry may also name the families a removal asked for before any row existed (import bound on).
       (update :families into (concat (map (juxt #(get % "entity") #(get % "attribute")) (get entry "identities"))
-                                     (get entry "families")))
-      ;; [DX-ERA2] Each account's removal sequence, derived from the one ordered log (only with the option on).
-      (cond-> removal-scope/enabled (removal-scope/add-entry entry))))
+                                     (get entry "families"))))]
+    (if removal-enabled ((:add-entry removal-hooks) next entry) next)))
 
 (defn cut
   ([name db] (cut name db false))
@@ -140,8 +150,8 @@
                   (when root (record-text name "head.json")))
            ;; [DX-ERA2] The prepared removal's sequence, so a request guarded per account can tell a native commit of
            ;; that removal (not yet published) from a native database the log does not describe.
-           pending-seq (when (and removal-scope/enabled allow-pending? pending)
-                         (get (json/read-str (if (string? pending) pending (record-text name "pending.json"))) "seq"))]
+           pending-seq (when removal-enabled (when allow-pending? (when pending
+                         (get (json/read-str (if (string? pending) pending (record-text name "pending.json"))) "seq"))))]
        (let [result
        (when (or wire (enabled? db))
          (when (or (nil? wire) (and (not allow-pending?) pending)) (unavailable!))
@@ -172,7 +182,7 @@
                (let [new (assoc next :wire wire)]
                  (swap! cache update name #(if (and % (> (:seq %) n)) % new))
                  new))))))]
-         (if (and result (integer? pending-seq)) (assoc result :pending-seq pending-seq) result)))
+         (if (if result (integer? pending-seq) false) (assoc result :pending-seq pending-seq) result)))
      (catch clojure.lang.ExceptionInfo e (throw e))
      (catch Exception _ (unavailable!)))))
 
@@ -204,15 +214,6 @@
 
 (defn ensure-seq! [state offered]
   (when-not (and state (integer? offered) (= (:seq state) offered)) (stale!)))
-
-;; [DX-ERA2] Why: in a database guarded per account, a derived write's ticket that names its source accounts is
-;; stale only when a removal published after it touched one of them (or the unscoped sequence).
-;; Rejected: a database-wide comparison for such tickets (any account's removal refused every account's frames).
-(defn ensure-ticket! [state input]
-  (if (and (:per-account state) (contains? input "erasureAccounts"))
-    (when-not (removal-scope/ticket-current? state (get input "erasureSeq") (removal-scope/ticket-accounts input))
-      (stale!))
-    (ensure-seq! state (get input "erasureSeq"))))
 
 (def columns [:recorded_position :id :entity_id :attribute :value_type :value_string :value_number
               :value_boolean :value_datetime :value_json :recorded_at :valid_from :valid_to
@@ -277,7 +278,8 @@
 (defn validate-write! [state input rows]
   (when state
     (when (and (contains? input "erasureSeq") (not (contains? input "erasureSourceDatabase")))
-      (ensure-ticket! state input))
+      ;; [DX-ERA2] A ticket naming its source accounts on a database guarded per account (removal_scope.clj).
+      (if (:per-account state) ((:ensure-ticket! removal-hooks) state input) (ensure-seq! state (get input "erasureSeq"))))
     (let [new-ids (set (get input "newIds"))
           importing (or (true? (get input "erasureReplay"))
                         (some #(and (= ":_tx/actor" (:attribute %)) (= "bulk-import" (:value_string %))) rows))]
@@ -292,11 +294,8 @@
           (failure! 409 "ErasureReplayDeclined" "An archived field cannot be replayed across its erasure"))))))
 
 (defn verify-data! [state db]
-  (if (removal-scope/per-account? db)
+  (if (if removal-enabled ((:per-account? removal-hooks) db) false)
     ;; [DX-ERA2] Guarded per account: the native removal sequence (the database-wide one holds the sentinel).
-    (when (and state (not (removal-scope/consistent? db (:seq state) nil))) (unavailable!))
+    (when state (when-not ((:consistent? removal-hooks) db (:seq state) nil) (unavailable!)))
     (when (and state (not= (:seq state) (scope/value db (scope/entity db) :triplex.scope/erasure-seq)))
       (unavailable!))))
-
-;; [DX-ERA2] The value the installed writers' database-wide fence carries for this cut.
-(defn fence-seq [state] (when state (if (:per-account state) removal-scope/sentinel (:seq state))))
