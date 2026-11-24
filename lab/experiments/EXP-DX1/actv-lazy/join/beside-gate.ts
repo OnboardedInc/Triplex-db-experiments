@@ -108,6 +108,20 @@ class Gate {
   readonly results: Record<string, unknown>[] = [];
   readonly between = { publishes: 0, positions: 0, reads: 0 };
   readonly racing = { before: 0, after: 0, reads: 0 };
+  /** A second client of the publishing account's data for the adversarial writes (its own counters and runtime). */
+  private adversaryStore?: Store;
+  async adversary() {
+    this.adversaryStore ??= await openStore(this.c.s.scope, "act2-deep", "write", {
+      ...this.c.descriptor,
+      verifyThrough: async () => {},
+      committed: (r) => this.c.ledger.joined(r),
+    });
+    return this.adversaryStore;
+  }
+  async close() {
+    await this.adversaryStore?.close();
+    this.ref.close();
+  }
   constructor(c: GateContext) {
     this.c = c;
     this.roster = Array.from({ length: c.people }, (_, i) => W0.placementId(i));
@@ -394,12 +408,17 @@ export async function besideGate(c: GateContext) {
   const base = () => (g.current.doc.forms?.length ? (g.oldOf.get(g.current.seq) ?? W0.R1.doc) : g.current.doc);
   const set = (k: string, v: string | undefined) => (v === undefined ? delete process.env[k] : (process.env[k] = v));
   try {
-    if (parts.includes("cost")) evidence.cost = await costPart(g, base, set);
-    if (parts.includes("beside")) evidence.beside = await besidePart(g, base, set);
-    if (parts.includes("adversarial")) evidence.adversarial = await adversarialPart(g, base, set);
-    if (parts.includes("kill")) evidence.kill = await killPart(g, base, set);
-    if (parts.includes("live")) evidence.live = await livePart(g, base, set);
-    if (parts.includes("enrol")) evidence.enrol = await enrolPart(g, set);
+    // Each part's evidence is written as it completes, so a later failure keeps the earlier parts.
+    const keep = (name: string, value: unknown) => {
+      evidence[name] = value;
+      jsonFile(path.join(c.out, "act8-" + name + ".json"), value);
+    };
+    if (parts.includes("cost")) keep("cost", await costPart(g, base, set));
+    if (parts.includes("beside")) keep("beside", await besidePart(g, base, set));
+    if (parts.includes("adversarial")) keep("adversarial", await adversarialPart(g, base, set));
+    if (parts.includes("kill")) keep("kill", await killPart(g, base, set));
+    if (parts.includes("live")) keep("live", await livePart(g, base, set));
+    if (parts.includes("enrol")) keep("enrol", await enrolPart(g, set));
     // Every notice of every release of the publishing account, in order, and every ledger, against the oracle.
     const w = await Settlement.open(c.a, new BulkQueue(1), false, "bytes", "progress");
     try {
@@ -425,7 +444,7 @@ export async function besideGate(c: GateContext) {
     jsonFile(path.join(c.out, "act8-gate.json"), evidence);
     console.log("[act8] PASS " + JSON.stringify({ between: g.between, racing: g.racing, notices: evidence.noticesInOrder }));
   } finally {
-    g.ref.close();
+    await g.close();
   }
 }
 
@@ -546,13 +565,15 @@ const KINDS: Kind[] = [
 async function adversaryWrite(g: Gate, kind: Kind, i: number, tag: string) {
   const c = g.c;
   const prefix = c.descriptor.prefix;
+  // Its own store: a write inside the Publish's transaction must not touch the Publish's store's counters.
+  const a = await g.adversary();
   for (let attempt = 0; ; attempt++) {
-    const head = await c.s.head();
+    const head = await a.head();
     // The first subject from `i` on that has this kind of fact (not every subject has a document).
     let target: Awaited<ReturnType<Store["rows"]>>[number] | undefined;
     for (let k = 0; k < c.people && !target; k++) {
       const j = (i + k) % c.people;
-      const rows = await c.s.rows([prefix + ids.placement(j)], head, validTime);
+      const rows = await a.rows([prefix + ids.placement(j)], head, validTime);
       target = rows.filter((r) => kind.pick(r, j, prefix)).sort((a, b) => a.entityId.localeCompare(b.entityId))[0];
       if (target) i = j;
     }
@@ -566,7 +587,7 @@ async function adversaryWrite(g: Gate, kind: Kind, i: number, tag: string) {
       fact(marker, "act8/adversary", { kind: kind.name, subject: i }),
     ];
     try {
-      const r = await c.s.commit("act8-adversary:" + sha256(c.attempt + tag + attempt).slice(0, 24), "act8/adversary", ops, head,
+      const r = await a.commit("act8-adversary:" + sha256(c.attempt + tag + attempt).slice(0, 24), "act8/adversary", ops, head,
         { kind: kind.name }, undefined, undefined, [{ entityId: marker, tripleIds: [] }]);
       insertEdit(c.history, i, { position: r.position, version: "act8", width: 0,
         facts: [{ e: target.entityId.slice(prefix.length), a: target.attribute, v }] } as Edit);

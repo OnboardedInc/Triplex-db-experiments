@@ -181,6 +181,74 @@ deadline path, `schedule`, saves through `JoinedAccount` and non-held Publishes 
 on.
 
 <!-- RESULTS -->
+<!-- GATES -->
+
+## 10. What a Publish costs, under each rule
+
+Measured by the gate's `cost` part (run `G1`), with no saves running so the whole-head rule lands too: the same
+releases published under each rule, two Publishes per row (the second goes back to the base release). Datoms and the
+gateway's transact time come from the commit reply as the client received it; the journal entry is the transaction's
+own entry as the feed returns it; the writer estimate is the bulk writer's own formula (`frameEstimate`: 3.5 ms + 45 µs
+per row + 70 µs per KiB of wire) applied to the record's operations. "Calls" counts the HTTP requests of the commit
+(begin, guard reads, transact, receipt).
+
+| Release (documents) | Rule | Changes | Operation bytes | Datoms | Journal entry bytes | Writer estimate (µs) | Calls | Retries | Guarded |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| small (inline) | whole head | 4 | 4,849 / 4,817 | 35 | 11,821 / 11,768 | 6,395 / 6,388 | 5 | 0 | the whole database (scope-wide) |
+| small (inline) | account | 4 | 4,881 / 4,849 | 35 | 11,863 / 11,828 | 6,401 / 6,395 | 6 | 0 | tail (`TripleLive`), calendar (`EntityState`), 3 written entities revision-checked |
+| large: + 20 forms, 20 policies (inline) | whole head | 4 | 17,175 / 10,914 | 35 | 27,695 / 19,777 | 8,923 / 7,639 | 5 | 0 | the whole database |
+| large (inline) | account | 4 | 17,207 / 10,946 | 35 | 27,738 / 19,803 | 8,929 / 7,645 | 6 | 0 | as above |
+| small (by reference) | whole head | 4 | 3,565 / 3,565 | 35 | 10,015 / 10,017 | 6,132 / 6,132 | 5 | 0 | the whole database |
+| small (by reference) | account | 4 | 3,598 / 3,598 | 35 | 10,062 / 10,062 | 6,138 / 6,138 | 6 | 0 | as above |
+| large (by reference) | whole head | 4 | 3,702 / 3,567 | 35 | 10,175 / 10,152 | 6,160 / 6,132 | 5 | 0 | the whole database |
+| large (by reference) | account | 4 | 3,734 / 3,599 | 35 | 10,218 / 10,195 | 6,166 / 6,139 | 6 | 0 | as above |
+
+**What the account guard costs over the whole-head rule:** 32 bytes in the record (`"precondition":"account"`), the
+same 35 datoms, about 45 bytes of journal, 6 µs of the writer's estimate, and **one more HTTP call** (the calendar's
+row read inside the transaction). The transactor's revision check is per entity in the transaction's set, three for a
+Publish, instead of one comparison of the head. What it saves is every refusal, every retry and every pause (sections 9.1
+to 9.5).
+
+
+### 9.5 Gates (e) and (f): many accounts publishing at once, and enrolment, beside saves (the miniature)
+
+`scale2/mini.sh` (its own toy stack in the lab VM, one heavy token), with `TX2_PUBLISH_BESIDE=1`,
+`TX2_ENROL_BESIDE_SAVES=1`, `DX_SCALE2_LIVE_AT_ONCE=1` (new: the live Publishes are offered all at once),
+`DX_SCALE2_THIN=500`, `DX_SCALE2_PUBLISH=60`, `DX_SCALE2_LIVE_PUBLISH=50`, `DX_SCALE2_LATE=10`, and SCALE2's other options
+on (`TRIPLEX_DATOMIC_SHARED_AGENT=1`, sweep gates evicted). One database: 570 accounts (10 deep, 60 publishing, 500
+thin; 16,387 subjects, 237,356 facts). The 50 publishing accounts were enrolled and settled their first release before
+the window; during the window (40 s of tape, stretched to 229 s by the Mac) every account saved (40 per second spread
+by size, a busy deep account at 15 per second, a quiet thin account at 2 per second), six readers checked every answer,
+a feed follower checked every save, then 3 s in **all 50 accounts offered their large release (20 forms, 20 policies)
+at the same moment**, and from 2 s in **10 further accounts were enrolled** one after another, each publishing and
+settling its first release. Afterwards each account's release was settled and checked against the oracle and the
+independent form rule, one account at a time. Run `M2`: **pass**.
+
+| Count (exact) | M2: 570 accounts, both options on |
+| --- | --- |
+| Publishes offered at once / landed / refused / tries per Publish | 50 / **50** / **0** / 1 each |
+| Commits between a Publish's read and its record (min / median / max) | 26 / 51 / 77 (the other 49 Publishes and everyone's saves) |
+| Late enrolments beside the saves / succeeded | 10 / **10** (each 7 to 8 enrolment commits of its own) |
+| Saves acknowledged / refused | 2,367 / 0 (323 accounts touched) |
+| Pinned / current reads checked against the oracle; rows compared | 22,165 / 21,733; 470,221 |
+| Feed: saves found once, at their receipt position, in order | 2,343 of 2,343 |
+| Final read of every subject in every account (rows) | 175,472 in 570 accounts |
+| Settled changes / notices of the 50 accounts, equal to the oracle and the independent rule | 29,820 / 10,605 (value frames 121, notice frames 462, 0 refused) |
+| The same of the 10 late accounts | 862 / 82 |
+
+The 50 accounts' settled totals are exactly SCALE2's (F1 and F2: 29,820 / 10,605 with 121 + 462 frames), where the same
+releases were published into a paused database. Diagnostic only (the Mac, five other builders' stacks): the 50
+Publishes offered at once were acknowledged 3.2 to 5.5 s after the offer (median 3.8 s), one after another in the one
+writer; enrolment took 12 to 28 s per account.
+
+**The first attempt of this run (`M1`) stopped at its own check**: the 50 Publishes again all landed with one try each,
+but one of the ten late enrolments failed with "Gateway deadline exceeded" (the HTTP client's request deadline on the
+loaded Mac, a transport failure, not a refusal: the guard never ran). The miniature now runs such an enrolment once
+more (enrolment and Publish are idempotent by command ID) and records the first error; `M2` needed no retry.
+
+**Without the options** the same Publishes are refused: SCALE2's F0 (3 of 3 refused, "Joined command exhausted three
+serial predecessor attempts") and F1 / F2 (late enrolment refused 3 of 3) on this miniature; not rerun here.
+
 
 ## 11. The server run (for the day a machine is rented; nothing here has run)
 
@@ -309,3 +377,24 @@ sender paused and drained around each Publish, under the whole-head rule.
    Publish with a stop the product never has. Without the pause a Publish costs the writer one record (section 10).
 4. **"10,000 Publishes an hour" as minutes of stopped saves.** SCALE2 estimated 5 to 10 minutes of whole-database
    pause per hour from the pause; without it there is no pause; what remains is the records' writer time.
+
+## 13. Not verified
+
+- **Nothing at full size, nothing on a server.** Every count is from the toy (8 subjects per publishing account, ten
+  accounts; the miniature's 563 accounts); every Mac time is diagnostic (the lab VM was shared with five other
+  builders' stacks throughout). Section 11 carries the server predictions.
+- **The guard's argument for the release list (R2)** rests on the list of its writers in a held account (a Publish, a
+  deadline with a scheduled release, `schedule`): a new writer of the release list alone would need to add the release
+  entity to the guard. The transactor's revision check covers the release entity from the transaction's begin to its
+  serial cut in every case; the gate's second-Publish cases exercise both halves.
+- **Deadlines and `schedule` in a held account keep the whole-head rule** (held accounts have none today: their
+  calendar is empty and the held runner never schedules). Beside saves they would be refused as Publishes were.
+- **Non-held stores** keep the whole-head rule for Publish (their plan reads subject data in the stored, envelope and
+  staged modes, which the account guard does not cover).
+- **The read gateway's lag after an acknowledged Publish** (PUBLISH-STOP.md) is unchanged by this work and not measured
+  here beyond the runner's existing visibility records.
+- **Datoms per Publish** come from the commit reply as the client saw it; the storage bytes per Publish (PostgreSQL's
+  write-ahead log) were not measured beside saves (they cannot be told apart from the saves' bytes there).
+- **Several settling processes** and **several publishing hosts** for one account: a second Publish of the same account
+  was exercised from the same process (inside the first's window) and from a killed child process, not from a second
+  host running concurrently for minutes.
