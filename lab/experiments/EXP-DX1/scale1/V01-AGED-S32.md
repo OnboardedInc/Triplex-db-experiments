@@ -1,0 +1,86 @@
+# Aged v0.1 card at the shipping settings: server-32, rolling 6
+
+Server 2 runs this card on the sealed 1B cluster from `exp/DX-INT1` at `0d9693de03ca2cb97c8e650d313895585324741d` (`v01/AGED-SERVER-32.md`): parts 1 and 2 with rolling 6 credits, part 3 the barrier 6 control on the same profile, then `--assemble`. Dry run of part 2 to its first offer first, on a throwaway copy. The bundle is `faab1bc5…`; each part runs on a fresh scratch copy on the root NVMe with WAL on the spare NVMe. The afternoon card at `6770c37ba` is in [V01-AGED.md](V01-AGED.md).
+
+**Dry run of part 2, 21:45–21:53 UTC:** build `0d9693de0` (4 min 34 s), scratch copy 144 s, then `DX-DRY-RUN first offer reached: scorecard arm 2 headline/loaded lab/experiments/EXP-DX1/v01/adopted-server.ts:160`. The aged fresh-peer check passed inside the stack network with no hosts entry. The timed run of parts 1–3 and assembly started at 21:53:23 UTC in `/var/tmp/triplex-v01-1B-s32`.
+
+## Results, part by part
+
+| Part | Result | Afternoon card (`6770c37ba`, part 1) |
+| --- | --- | --- |
+| 1, headline without readers, server-32, rolling 6 | **1,260/1,260 saves stored**; p50/p90/p99 6.34 / 12.03 / 19.58 ms (max 135.00); feed 1,260 entries; cut 28,309,866 → 28,311,126; completed 22:03 UTC | 1,260/1,260; 6.40 / 11.84 / 20.10 ms |
+| 2, headline loaded, server-32, rolling 6 (completed 22:33 UTC) | See below | 16 GiB, fair turns |
+
+**Part 2, P2 and P6** (in-window durable/s · total durable/offered · expired / durable after window · all-save p50/p99 ms · quiet commit p99 solo → loaded · quiet read and feed p99 ratios):
+
+| Offered/s | 1B, server-32, rolling 6 | 1B afternoon, 16 GiB, fair turns | Prediction |
+| ---: | --- | --- | --- |
+| 50 | 50.00 · 4,500/4,500 · 0 / 0 · 11.07 / 57.34 · 18.18 → 43.52 ms (2.39×) · 1.12× · 1.30× | 50.00 · 0 · 12.80 / 60.67 · 21.12 → 50.17 (2.38×) | 50.0 · 0 · 10 / 60 · 22 → 35 ms |
+| 235 | 235.00 · 21,150/21,150 · 0 / 0 · 966.65 / 4,587.52 · 21.38 → 57.09 ms (2.67×) · 1.46× · 1.40× | 235.00 · 0 · 712.70 / 3,817.47 · 24.32 → 162.81 (6.69×) | 235.0 · 0 · 15 / 900 · 24 → 55 ms |
+| 394 | **394.00** · 35,460/35,460 · **0 / 0** · 6,029.31 / 11,010.05 · 42.24 → 34.81 ms (0.82×) · 1.48× · 0.76× | 249.41 · 5,523 · 23,330.81 / 30,054.53 · 19.58 → 87.55 (4.47×) | 375 (300–394) · 1,000 · 2,000 / 15,000 · 20 → 70 ms |
+| 620 | **302.61** · 39,079/55,800 · 16,721 / 11,844 · 29,753.34 / 30,054.73 · 30.98 → 47.62 ms (1.54×) · 1.49× · 1.58× | 239.32 · 26,565 · 29,884.42 / 30,146.56 · 33.28 → 106.50 (3.20×) | 480 (380–620) · 12,000 · 25,000 / 30,000 · 33 → 85 ms |
+
+P1 pinned reads (unchanged reader, as predicted): 19.88 / 20.33 / 21.25 / 21.77 / 20.75 / 12.35 reads/s at 1 / 4 / 16 / 64 / 256 / 1,024 seats, p50 39.68 ms at one seat, 1,587 errors at 1,024. Reference tape 1,260/1,260, p99 20.22 ms. P4 p50/p99 4.42 / 46.59 ms (max 22.5 s). P8 351,680 facts at 3,256.30 facts/s, 10,991 of 11,880 frames.
+
+**Reading.** At 394 offered the server-32 profile with rolling credits stored every save in the window (394.00/s, no expiries), against 249/s this afternoon; the first falsifier (under 300/s at 394) did not trigger. At 620 it stored 302.61/s, below the predicted 380–620, with 16,721 expiries; the second falsifier (620 in full) did not trigger either. The 394 all-save p99 was 11.0 s, inside the predicted 2–30 s. At 394 the quiet account's loaded commit p99 (34.81 ms) was below its solo p99, so the P6 bar held there through its 50 ms clause; at 50 (43.52 ms) too.
+
+**Part 3, barrier 6 at server-32 (completed 22:58 UTC; only the cache differs from the afternoon's part 2):**
+
+| Offered/s | 1B, server-32, barrier 6 | Prediction |
+| ---: | --- | --- |
+| 50 | 50.00 · 4,500/4,500 · 0 / 0 · 12.22 / 87.04 · 19.84 → 56.32 ms (2.84×) · 1.01× · 1.03× | — |
+| 235 | 235.00 · 21,150/21,150 · 0 / 0 · 5,079.04 / 8,781.82 · 16.13 → 102.40 ms (6.35×) · 1.31× · 0.94× | 235 (220–235) · 0; quiet loaded p99 90 ms |
+| 394 | **331.03** · 35,460/35,460 · 0 / 5,667 · 15,859.71 / 22,675.46 · 19.20 → 71.17 ms (3.71×) · 1.25× · 1.16× | 340 (270–394) · 3,000; 80 ms |
+| 620 | **238.61** · 32,193/55,800 · 23,607 / 10,718 · 29,884.42 / 30,081.47 · 22.78 → 94.21 ms (4.13×) · 1.34× · 1.14× | 400 (300–560) · 20,000; 95 ms |
+
+**Assembled at 22:58:41 UTC.** The card's read-exactness lines: P1 "L256 checked field-read p99 12,255 ms exceeds the 100 ms bar", 0 errors from 1 to 256 seats; mixed assertion identities MET; P6 quiet rows PARTIAL on the commit gate (the card wants 500 verified commits per side).
+
+**Reading across the three parts.** Against the afternoon card, the 32 GiB cache alone (part 3, still barrier 6) lifts 394 from 249 to 331 saves/s; adding rolling credits (part 2) lifts it to 394, the full offer. At 620 the cache alone does not help (239 against 239), and rolling credits give 303. The third falsifier (barrier within 5% of rolling) did not trigger: rolling stored 19% more at 394 and 27% more at 620. At 620, part 3 stored less than the predicted 300–560. Evidence: `evidence/DX-SCALE1/s32-card/s32-card.tar.gz` in the private evidence folder (SHA-256 `fdaad7db1bb3b2b06d9bf449da24d8f2c7ef87884cf3ed0ad91440f15c20dec7`), card included.
+
+## Predictions, copied from the builder's document before launch
+
+
+Sources: this afternoon's 1 billion card (16 GiB, fair turns, 90 s cells; `V01-AGED.md` at `182fb4482`); PREP1's 32 GiB arms on the fresh database (three runs on 2026-11-21: 394.00/s and 620.00/s stored with no expiries on three cores, late SQL reads 0.04 per save, but whole-window p99 10–14 s from a cold first minute in 300 s windows; `bm1/ROLLING-READING.md`); PREP1's forecast for 32 GiB at 1 billion (`prep1/AGED-CACHE.md`: late reads 0.45 per save, 393/s at 394, 540/s at 620, second-half p99 1.5 s at 394). In this card the 394 and 620 cells come after the P1–P4 pair and the 50 and 235 cells on the same stack, so the cache is partly warm, but each 90 s cell is short: a backlog formed early in a cell is not drained inside it.
+
+### Part 2, headline, rolling 6, server-32
+
+| Offered/s | Stored in window/s · expired | All-save p50 / p99 ms | Quiet commit p99 solo → loaded (ratio) | Afternoon (16 GiB, fair turns) |
+| ---: | --- | --- | --- | --- |
+| 50 | 50.0 (49.5–50) · 0 | 10 (6–15) / 60 (35–150) | 22 → 35 ms (1.6×; 1.1–2.5) | 50.00 · 0 · 12.80 / 60.67 · 21.12 → 50.17 (2.38×) |
+| 235 | 235.0 (225–235) · 0 (0–500) | 15 (8–200) / 900 (100–4,000) | 24 → 55 ms (2.3×; 1.4–5) | 235.00 · 0 · 712.70 / 3,817.47 · 24.32 → 162.81 (6.69×) |
+| 394 | 375 (300–394) · 1,000 (0–6,000) | 2,000 (30–20,000) / 15,000 (2,000–30,000) | 20 → 70 ms (3.5×; 2–8) | 249.41 · 5,523 · 23,330.81 / 30,054.53 · 19.58 → 87.55 (4.47×) |
+| 620 | 480 (380–620) · 12,000 (0–25,000) | 25,000 (3,000–29,900) / 30,000 (expiry bound) | 33 → 85 ms (2.6×; 1.5–6) | 239.32 · 26,565 · 29,884.42 / 30,146.56 · 33.28 → 106.50 (3.20×) |
+
+- **P6 bar (1.25× or a loaded p99 of 50 ms or less):** met at 50/s only through the 50 ms clause (about 60%); not met at 235, 394 or 620.
+- **P1 pinned reads:** unchanged from this afternoon, because the reader is unchanged: about 18 reads/s (14–24) at every ladder step, and about two thirds of the quiet account's reads still returning errors. The writer's larger cache does not reach the reader.
+- **P4 current pulls, P8 import:** close to this afternoon (P4 p99 30–60 ms; P8 3,100–3,400 facts/s with exact frames).
+- **Transactor memory:** peak cgroup 52–58 GiB of 60; no out-of-memory exit.
+
+### Part 3, barrier 6 at server-32 (only the cache differs from this afternoon's part 2)
+
+| Offered/s | Stored in window/s · expired | Quiet loaded p99 |
+| ---: | --- | --- |
+| 235 | 235 (220–235) · 0 (0–1,500) | 90 ms (50–200) |
+| 394 | 340 (270–394) · 3,000 (0–9,000) | 80 ms (45–160) |
+| 620 | 400 (300–560) · 20,000 (8,000–30,000) | 95 ms (50–200) |
+
+### What would show these wrong
+
+1. **The 32 GiB cache does not cover the 1 billion working set:** part 2 stores under 300/s at 394 offered, or part 3 stores no more than this afternoon's 249/s at 394. Then reads per save at 1 billion stay near 1 or more with 32 GiB, the cache is not the lever at this size, and `server-32` should not become the default on its 1 billion evidence.
+2. **The cache covers it fully:** part 2 stores 620/s at 620 offered with no expiries. Then the working-set model behind PREP1's 74 GiB estimate is too pessimistic.
+3. **Rolling credits do not matter at 1 billion:** part 3 (barrier 6) stores within 5% of part 2 (rolling 6) at both 394 and 620.
+4. **The reserved quiet credit does not protect the quiet account at 1 billion:** part 2's quiet loaded p99 above 150 ms at 394 or 620.
+5. **The reader was not the pinned-read limit:** part 2's P1 goodput above 40 reads/s at 16 seats or more with the reader unchanged. Then this afternoon's 18/s depended on the writer side.
+6. **The launch repairs do not hold:** any part refused at the fresh-peer check (AMQ219007 or a name lookup), or at the P7 residency listing.
+
+## Toy-size check on the Mac (timings diagnostic)
+
+| What | Result |
+| --- | --- |
+| `scorecard.mjs --plan --age 1B --profile server-32 --credit-mode rolling6 --window-seconds 90` | Three stages: headline zero and loaded at rolling 6, barrier 6 control; transactor 60 GiB cap, 32 GiB cache; reader one core, 1,536 MiB cache. Budget 224 minutes |
+| Fresh peer in the stack network (`age1/scorecard.mjs` `peerCommand`), with the lab VM's Datomic image on a private network | The container resolved another container's name on the network, ran `java`, read the mounted state file and could not write it (read-only). Network and container removed |
+| `age1/scorecard.test.mjs` | Command construction: same java arguments, five read-only mounts at host paths, the stack network, the URI and attempt; host path unchanged when unset |
+| `v01/sequential.test.ts` (6 tests) | A part refused before its first offer is set aside and runs again; the campaign then assembles; a completed part cannot be set aside; a dry run may start part 3 alone, a real run may not |
+| `jvm1/server32.test.mjs`, launch guard (58 cases, 0 mismatches), combined check on `840be636c` | Pass (part 15 of `int1/V0.1-STATE.md`) |
+
+**Not exercised on the Mac:** the aged admission itself (it needs the one billion records, the SCALE1 seed pins and a bare-metal Linux host); the scorecard runner end to end (`adopted-server.ts` refuses anything but bare-metal Linux); the set-aside call inside `adopted-server.ts`'s cleanup (its function is unit-tested, the call site only type-checked); `server-32`'s MemTotal guard (Linux only); the dry-run tool with the scorecard parts. The fresh-peer container uses the read gateway's image as `root` with read-only mounts; whether that image's `java` runs the AGE1 peer against PostgreSQL on the server has not run anywhere.
