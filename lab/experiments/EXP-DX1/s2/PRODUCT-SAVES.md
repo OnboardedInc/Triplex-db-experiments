@@ -190,8 +190,10 @@ save, and a conflict on a later part would leave the earlier parts committed (`v
 | The same with `DX_S2_PRODUCT=0` (product path, option off) | | Pass: 840 R, 88 S and the 2 wide commits **all on the general writer, 0 per-subject**; 2,836 fields exact |
 | **(e) Aged-toy gate, every tape save through the product's path** (`DX_S2_PRODUCT=1 DX_S1_WIDE=1 real2/aged-gate.sh OUT`) | AGE1's loader-aged toy | Pass, the same figures as every earlier run: 120 aged rows admitted, a tampered aged row refused, 101 writes over aged rows, 1,927 fields read back, final cut 1,289. **R 840 of 840 and S 88 of 88 on the per-subject writer, ordered** |
 | **(f) Counted work of a 20-field form save** (inside the production gate, 12 subjects, two saves each) | Product path, option off and on, wide writer on | See the table below |
+| **(g) The console's tools with `orderedSaves` on, on a second toy** (`TRIPLEX_DATOMIC_ORDERED_SAVES=1`, the toy's writer started with the per-subject writer, ordered IDs, numeric owner and the wide writer; `DEMO_TOY_NAME=s2`, ports 18781 / 18785 / 28781; `demo/toy/gates.sh`) | The console server, the MCP tools and the scripted proof, all through `TriplesLive` | **Pass:** g12; config 16 of 16; entities 19 of 19; query 24 of 24; journal 7 of 7; derive 4 of 4; catalogue 70 of 70; **proof 37 of 37**. Of the 60 commits the gates made, 19 carried an SDK block and 41 the runtime's IDs (configuration, releases, several entities). The same write gateway, probed with product saves on a new scope, put every replacement on the per-subject writer with ordered IDs. The owner's console on 28580 was not touched (it answered throughout) |
 | W2's wide gate and the mixed-identity suite with the repeated-field rule (`s1/suites.sh`) | PostgreSQL, real transactor | Mixed-identity, collision and conflict suite: 6 tests, 235 assertions, pass with the wide writer off, on, and on with both hints. W2's wide gate: 4 tests, 221 assertions, pass (on; on with hints) |
-| Unit tests | `packages/datomic/test/ordered-saves.test.ts`; card tests `v01/*.test.ts` | 3 of 3; 41 of 41 |
+| **Toy card, every save through the product's path** (`DX_S2_PRODUCT=1 DX_V01_TAPE=production-S-noburst v01/mac.ts --fixture … per-person-ordered rolling6`: clean checkout at `ee00c244f`, package build, managed image, the rolling 6 arm and the barrier 6 control) | The toy's writer runs the narrow per-subject writer (the toy stack does not take the wide option) | Pass, both arms: every save of every cell sent through `TriplesLive` (224 saves over both arms, all marked product), every one on an ordered block from the SDK; the 28 saves of more than three facts (14 per arm) on the general writer, the other 196 per-subject; 0 expired; the card's identity, journal-digest and writer-rule checks held; production read-back exact (171 fields of 12 subjects) |
+| Unit tests | SDK (`packages/datomic`, unit, with `test/ordered-saves.test.ts`); core; card tests `v01/*.test.ts` | SDK 461 passed, 53 skipped (the merged head had 458 and 53); core 863 of 863; card 41 of 41 |
 
 **(f) Counted work, one 20-field form save (toy; storage reads and datoms are counts, times diagnostic):**
 
@@ -262,10 +264,14 @@ if the session has 75 more minutes. Step 2 stays the lab-producer card, so the d
 ## 9. Not verified
 
 - **Nothing here ran on a server.** Every 1 billion figure is a forecast from the fits named.
-- **The card's product path ran only on the Mac toy card** (section 7 when it finishes; the card's launcher refuses
-  to run outside a Linux bare-metal host). The REAL2 runner's `phase()` path ran in the production and aged gates.
-- **The console's save tool with `orderedSaves` on** (gate g): see the run record; the toy console's writer runs
-  without the per-subject writer unless the stack is started with it.
+- **The card's product path ran only on the Mac toy card**, with the narrow writer (the toy stack has no wide option);
+  the card's launcher refuses to run outside a Linux bare-metal host. Card arm C's wide writer with product saves ran
+  only in the production and aged gates (REAL2's `phase()`), not in the card.
+- **The product path's extra cost** (the predecessor request on a subject's first save, client staging) is forecast,
+  not measured: Mac times are diagnostic.
+- **Which writer took the console's own saves** on its loader-built toy database: the console does not expose receipts,
+  so gate g shows that its tools and proof pass with the option on and which commits carried a block, not the writer
+  of each.
 - **Storage reads inside apply** at toy size say nothing about 1 billion.
 - **How often a product page maps profile or employer fields** (the share of two-owner saves) needs a production query;
   none was made.
