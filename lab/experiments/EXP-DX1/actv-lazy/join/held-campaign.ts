@@ -34,6 +34,7 @@ import { Settlement } from "./settlement.ts";
 import { BulkQueue } from "./bulk.ts";
 import { firstOffer } from "../../ha1/first-offer.ts";
 import { largeRelease, parseShape, shapeName } from "./large-release.ts";
+import { checkForms, expectForms } from "./form-expect.ts";
 
 const validTime = W0.POPULATION_VALID_TIME;
 export const rates = [3.5, 23.5, 39.4] as const;
@@ -263,6 +264,17 @@ function writeSummary(rows: Save[], start: number, end: number) {
   };
 }
 
+const frameSummary = (xs: { us: number; wire: number; rows: number }[]) => ({
+  frames: xs.length,
+  usMax: Math.max(0, ...xs.map((x) => x.us)),
+  usMean: xs.length ? xs.reduce((n, x) => n + x.us, 0) / xs.length : 0,
+  wireMax: Math.max(0, ...xs.map((x) => x.wire)),
+});
+function summarizeMs(xs: number[]) {
+  const s = xs.toSorted((a, b) => a - b),
+    q = (p: number) => (s.length ? s[Math.min(s.length - 1, Math.ceil(s.length * p) - 1)]! : null);
+  return { n: s.length, p50: q(0.5), p99: q(0.99), max: s.at(-1) ?? null };
+}
 export async function runHeld(
   out: string,
   source: string,
@@ -282,6 +294,14 @@ export async function runHeld(
   // [DX-ACT3] DX_ACT3_SETTLE=0 also skips it for the small release (its first settlement is measured already).
   assert([undefined, "0", "1"].includes(process.env.DX_ACT3_SETTLE));
   const settleInitial = process.env.DX_ACT3_SETTLE ? process.env.DX_ACT3_SETTLE === "1" : !shape;
+  // [DX-ACT4] Why: settle a large release at full size. DX_ACT4_INITIAL=large makes the first Publish R1 plus the
+  // DX_ACT3_RELEASE forms and policies (from nothing), so the first settlement is a large release's; it needs
+  // DX_ACT3_SETTLE=1 and is meant with TX2_SETTLE_FRAMES=bytes (the old frames refuse it). The settled values and
+  // notices are then also checked against the independent statement of the form rule. Unset, R1 as before.
+  // Rejected: a second Publish before the windows (its notices would wait behind the first release's in one stream).
+  assert([undefined, "large"].includes(process.env.DX_ACT4_INITIAL));
+  const initialLarge = process.env.DX_ACT4_INITIAL === "large";
+  assert(!initialLarge || (shape && settleInitial), "DX_ACT4_INITIAL=large needs DX_ACT3_RELEASE and DX_ACT3_SETTLE=1");
   // [DX-ACT3] Why: rerun only the windows a stopped run left unjudged. DX_HELD_WINDOWS lists mode/rate/publish
   // triples (for example rolling6/3.5/1,barrier6/23.5/0); unset, all twelve run in the original order.
   // Rejected: a second runner with its own window order.
@@ -537,13 +557,15 @@ export async function runHeld(
     }
     firstOffer("held-publish");
     const initialAt = now();
-    const initial = await offer(W0.R1.doc, peer.attempt + ":baseline", initialAt);
+    const initialDoc = initialLarge ? largeRelease(W0.R1.doc, shape!) : W0.R1.doc;
+    const initial = await offer(initialDoc, peer.attempt + ":baseline", initialAt);
     const { probe: initialRead } = await firstCorrect(initial, people - 1, initialAt);
     let changes = 0,
       entries = 0,
       settlement: Awaited<ReturnType<Settlement["settle"]>> | undefined;
     if (settleInitial) {
-    worker = await Settlement.open(a, new BulkQueue(1));
+    const holds: number[] = [];
+    worker = await Settlement.open(a, new BulkQueue(1, (ms) => holds.push(ms)));
     jsonFile(path.join(out, "held-initial.json"), {
       source,
       attempt: peer.attempt,
@@ -558,6 +580,9 @@ export async function runHeld(
       worker.recorder.packets(settlement.notices.position),
     ]);
     assert.equal(stored.frontier.status, "stored");
+    // [DX-ACT4] Byte-framed pages hold each subject's changes without its full answer.
+    const bytes = stored.frames === "bytes";
+    const independent = { subjects: 0, owing: 0, changes: 0, notices: 0 };
     const archive = new Map(stored.output.map((x) => [x.subject, x]));
     assert.equal(stored.output.length, archive.size, "Duplicate settled subject");
     const notices = packets.flatMap((p) => p.deliveries.map(toWire));
@@ -591,7 +616,7 @@ export async function runHeld(
             if (row.rows.length) {
               assert.deepEqual(saved, {
                 subject: row.subject,
-                json: row.json,
+                ...(bytes ? {} : { json: row.json }),
                 changes: row.rows.map(([k, , v]) => [k, v]),
               });
               archive.delete(row.subject);
@@ -601,6 +626,16 @@ export async function runHeld(
               notices.slice(entries, entries + row.deliveries.length),
               row.deliveries,
             );
+            if (initialLarge) {
+              const i = Number(row.subject.slice(4)),
+                e = expectForms(expected(i, initial.position, history, positions), initialDoc, validTime);
+              const got = checkForms(e, row.subject, saved?.changes ?? [],
+                notices.slice(entries, entries + row.deliveries.length) as never, true);
+              independent.subjects++;
+              if (e.changes.size) independent.owing++;
+              independent.changes += got.changes;
+              independent.notices += got.notices;
+            }
             entries += row.deliveries.length;
           }
       });
@@ -616,7 +651,7 @@ export async function runHeld(
       position: initial.position,
       validTime,
     });
-    assert.equal(archived.route, "receipt-archive");
+    assert.equal(archived.route, bytes ? "authoritative-source" : "receipt-archive");
     assert.equal(archived.json, derived.result.json);
     await activeLedger.verifyThrough(await s.head());
     jsonFile(path.join(out, "held-setup.json"), {
@@ -630,6 +665,16 @@ export async function runHeld(
       settlement,
       checkedChanges: changes,
       checkedEntries: entries,
+      // [DX-ACT4] The framing, the frames each writer wrote, the largest estimated hold of the writer, and each bulk
+      // turn's client-side duration (queue entry to reply).
+      frames: {
+        mode: stored.frames,
+        initial: initialLarge ? shapeName(shape!) : "R1",
+        values: frameSummary(worker.archive.admitted),
+        notices: frameSummary(worker.recorder.archive.admitted),
+        turnMs: summarizeMs(holds),
+        independent: initialLarge ? independent : null,
+      },
     });
     await worker.close();
     worker = undefined;
