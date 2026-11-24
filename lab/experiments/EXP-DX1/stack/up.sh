@@ -299,6 +299,15 @@ subject_wide=${TX2_SUBJECT_WIDE:-0}
   { echo "up.sh: DX_READ_PREFETCH and DX_READ_AHEAD_OFF are 0 or 1" >&2; exit 2; }
 [[ -z ${DX_REMOTE_READER_HOST:-} || $DX_REMOTE_READER_HOST =~ ^(10|172|192)\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] ||
   { echo "up.sh: DX_REMOTE_READER_HOST must be this machine's private IPv4 address" >&2; exit 2; }
+# [DX-INT4] XQ6's sweep options, refused here for the same reason (the uses stay in the gateway loop).
+[[ -z ${DX_SWEEP:-} || $DX_SWEEP =~ ^[01]$ ]] || { echo "up.sh: DX_SWEEP must be 0 or 1" >&2; exit 2; }
+[[ -z ${DX_SWEEP_PERMITS:-} || $DX_SWEEP_PERMITS =~ ^([1-9]|1[0-6])$ ]] || { echo "up.sh: DX_SWEEP_PERMITS must be 1..16" >&2; exit 2; }
+[[ -z ${DX_SWEEP_PER_ACCOUNT:-} || $DX_SWEEP_PER_ACCOUNT =~ ^([1-9]|1[0-6])$ ]] ||
+  { echo "up.sh: DX_SWEEP_PER_ACCOUNT must be 1..16" >&2; exit 2; }
+[[ -z ${DX_SWEEP_QUEUE_MS:-} || ( $DX_SWEEP_QUEUE_MS =~ ^[1-9][0-9]{0,3}$ && $DX_SWEEP_QUEUE_MS -le 5000 ) ]] ||
+  { echo "up.sh: DX_SWEEP_QUEUE_MS must be 1..5000" >&2; exit 2; }
+[[ -z ${DX_SWEEP_CURSOR_SECRET:-} || $DX_SWEEP_CURSOR_SECRET =~ ^[A-Za-z0-9]{16,128}$ ]] ||
+  { echo "up.sh: DX_SWEEP_CURSOR_SECRET must be 16..128 letters or digits" >&2; exit 2; }
 [[ $lookup_every =~ ^(0|[1-9][0-9]{0,3})$ ]] && (( lookup_every <= 4096 )) || exit 2
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prepw =~ ^(1|2|4)$ ]]

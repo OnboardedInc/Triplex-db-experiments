@@ -700,5 +700,9 @@ export function idListEnv(env: NodeJS.ProcessEnv = process.env) {
   const on = env.DX_ID_LISTS, permits = env.DX_INDEX_QUERY_PERMITS;
   if (on !== undefined && on !== "0" && on !== "1") throw new Error("DX_ID_LISTS must be 0 or 1");
   if (permits !== undefined && !/^([1-9]|[1-5][0-9]|6[0-4])$/.test(permits)) throw new Error("DX_INDEX_QUERY_PERMITS must be 1..64");
-  return [...(on === undefined ? [] : ["TX2_ID_LISTS=" + on]), ...(permits === undefined ? [] : ["TX2_INDEX_QUERY_PERMITS=" + permits])];
+  // [DX-INT4] XQ6's sweep route for the pair of a sweep beside settlement (DX_SWEEP, as stack/up.sh names it).
+  const sweep = env.DX_SWEEP;
+  if (sweep !== undefined && sweep !== "0" && sweep !== "1") throw new Error("DX_SWEEP must be 0 or 1");
+  return [...(on === undefined ? [] : ["TX2_ID_LISTS=" + on]), ...(permits === undefined ? [] : ["TX2_INDEX_QUERY_PERMITS=" + permits]),
+    ...(sweep === undefined ? [] : ["TX2_SWEEP=" + sweep])];
 }
