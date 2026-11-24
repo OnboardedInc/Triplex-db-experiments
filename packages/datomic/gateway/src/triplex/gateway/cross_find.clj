@@ -50,6 +50,14 @@
   (reduce + 0 (keep (fn [[k v]] (when (and (number? v) (str/ends-with? (name k) "-load")) (long v))) reads)))
 (defn- merge-reads [a b] (merge-with (fn [p q] (if (and (number? p) (number? q)) (+ p q) q)) a b))
 
+(def enabled x/enabled)
+(defn ensure-installed! [conn db] (x/ensure-installed! conn db))
+(defn refuse-protecting-declared! [db input]
+  (when-let [declared (when x/enabled (some-> (x/declaration db) :codes))]
+    (let [attrs (get input "attributes")]
+      (when (some #(contains? declared %) (when (sequential? attrs) attrs))
+        (refuse! 409 "ProtectedValueLookup" "An attribute declared for questions across subjects cannot be protected")))))
+
 ;; ---------------------------------------------------------------------------------------------------------------
 ;; The declaration route.
 (def code-re #"[a-z][a-z0-9]{0,7}")
@@ -92,6 +100,16 @@
        (every? (fn [a] (or (some #(= a %) (:attributes old))
                            (not-any? #(= (get a "code") (get % "code")) (:attributes old)))) (:attributes new))))
 
+(defn- account-outside-ids
+  "An entity ID outside acct/<account>/, _triplex/ and _tx/, if the scope holds any (four probes of the ID index). Such
+  an entity's account is a stored fact (group/persisted-account), which the index cannot key."
+  [db]
+  (when-let [a (d/entid db :triplex.entity/id)]
+    (let [odd (fn [v] (when (and (string? v) (not (or (.startsWith ^String v "acct/") (.startsWith ^String v "_triplex/")
+                                                      (.startsWith ^String v "_tx/")))) v))
+          probe (fn [from to] (some-> (first (d/index-range db a from to)) :v odd))]
+      (or (probe nil "_triplex/") (probe "_triplex0" "_tx/") (probe "_tx0" "acct/") (probe "acct0" nil)))))
+
 (defn declare! [name conn protected input]
   (when-not x/enabled (off!))
   (when owner-layout/enabled
@@ -101,6 +119,9 @@
                               "types" (mapv #(into (sorted-map) %) (get input "types" []))})
         db (deref (d/sync conn) 5000 ::timeout)
         _ (when (= ::timeout db) (refuse! 503 "SyncTimeout" "The gateway's peer did not catch up"))
+        _ (when-let [odd (account-outside-ids db)]
+            (refuse! 409 "AccountNotInEntityId"
+                     (str "Entity " odd " has no acct/<account>/ prefix; this database keeps accounts as facts, which the index cannot key")))
         db (if (x/installed? db) db (:db-after @(d/transact conn x/schema-ops)))
         current (x/declaration db)]
     (if (= text (:text current))
@@ -123,7 +144,7 @@
 (defn declaration-view [name conn]
   (when-not x/enabled (off!))
   (let [db (d/db conn) decl (x/declaration db)]
-    (if decl
+    (if (:text decl)
       {:database name :seq (:seq decl) :declaration (json/read-str (:text decl)) :epochs (x/epochs db (:eid decl))}
       {:database name :seq 0 :declaration nil :epochs {}})))
 
@@ -322,19 +343,48 @@
 ;; Shape grammar of step 0 (exp/DX-XQ3-id-lists): {N digits}, {digits}, {segment}; every other character literal.
 (def shape-pattern ids/shape-pattern)
 
-;; ---- driver streams. Entity-ordered streams yield local parts in order; value-ordered streams yield [key local].
-(defn- after-filter [desc? after s]
-  (if (nil? after) s (drop-while #(let [k (compare % after)] (if desc? (>= k 0) (<= k 0))) s)))
-(defn- dedupe-sorted [s] (dedupe s))
-(defn- merge-locals [desc? streams]
+;; ---- driver streams. Every item is [local eid key]: the entity's local ID part, the entity number the index datom
+;; already carries (no lookup by ID), and for value-ordered streams the index key. Entity-ordered streams are sorted by
+;; local part, so several of them intersect by a merge without reading any entity (design 5.2).
+(defn- stop! [reason] (throw (ex-info "bound" {::stop reason})))
+(defn stop-reason [e] (::stop (ex-data e)))
+(defn- counted
+  "Counts every index datom read and enforces the entry and time bounds inside the scan itself, so no part of a scan
+  (the closed part of a past valid time included) can outrun them."
+  [^longs work entries deadline s]
+  (map (fn [x]
+         (let [n (inc (aget work 0))]
+           (aset work 0 n)
+           (when (> n entries) (stop! "entries"))
+           (when (and (zero? (bit-and n 127)) (>= (System/nanoTime) deadline)) (stop! "time")))
+         x) s))
+(defn- after-items [desc? after s]
+  (if (nil? after) s (drop-while #(let [k (compare (first %) after)] (if desc? (>= k 0) (<= k 0))) s)))
+(defn- merge-items
+  "Union of streams sorted by local part (the first stream's item wins a tie)."
+  [desc? streams]
   (let [cmp (if desc? #(compare %2 %1) compare)
         step (fn step [streams]
                (lazy-seq
                  (let [live (filter seq streams)]
                    (when (seq live)
-                     (let [m (reduce (fn [a b] (if (neg? (cmp b a)) b a)) (map first live))]
-                       (cons m (step (map (fn [s] (if (and (seq s) (= m (first s))) (rest s) s)) live))))))))]
+                     (let [m (reduce (fn [a b] (if (neg? (cmp (first b) (first a))) b a)) (map first live))]
+                       (cons m (step (map (fn [s] (if (and (seq s) (= (first m) (first (first s)))) (rest s) s)) live))))))))]
     (step streams)))
+(defn- intersect-items
+  "Intersection of streams sorted by local part, by a merge: an item is kept when every stream holds its local part."
+  [desc? streams]
+  (if (= 1 (count streams)) (first streams)
+    (let [cmp (if desc? #(compare %2 %1) compare)
+          step (fn step [streams]
+                 (lazy-seq
+                   (when (every? seq streams)
+                     (let [heads (map ffirst streams)
+                           top (reduce (fn [a b] (if (pos? (cmp b a)) b a)) heads)]
+                       (if (every? #(= top %) heads)
+                         (cons (ffirst streams) (step (map rest streams)))
+                         (step (map (fn [s] (drop-while #(neg? (cmp (first %) top)) s)) streams)))))))]
+      (step streams))))
 
 (defn successor
   "The least string greater than every string that starts with `s`."
@@ -355,56 +405,75 @@
                                       (d/rseek-datoms view :avet a top)))))
       (take-while in? (d/index-range view a (or from prefix) nil)))))
 
-(defn- counted [^longs work s] (map (fn [x] (aset work 0 (inc (aget work 0))) x) s))
-
-(defn- eq-stream [view ix-a work token code field v16 desc? after]
-  (let [base (str token x/sep code x/sep field x/sep)
+(defn- eq-stream
+  "Entities with an entry of `code` whose key field is `field` valid at v16, by local part. The open part is read in
+  entity order; the closed part (valid_to after v16, in valid_to order) is read under the bounds and sorted."
+  [{:keys [view ix-a work entries deadline token v16 desc? confirm]} c field after]
+  (let [base (str token x/sep (:code c) x/sep field x/sep)
         o-prefix (str base "O" x/sep)
+        item (fn [datom] (let [p (x/parse-key (:v datom))]
+                           (when (and (x/valid-at? p v16) (or (not (:long? p)) (confirm c p)))
+                             [(:local p) (:e datom)])))
         o (->> (avet-range view ix-a o-prefix (when after (str o-prefix (x/esc after))) desc?)
-               (counted work) (map (comp x/parse-key :v)) (filter #(x/valid-at? % v16)) (map :local))
+               (counted work entries deadline) (keep item) (after-items desc? after))
         c-prefix (str base "C" x/sep)
-        c (->> (take-while #(.startsWith ^String (:v %) c-prefix) (d/index-range view ix-a (str c-prefix v16) nil))
-               (counted work) (map (comp x/parse-key :v)) (filter #(x/valid-at? % v16)) (map :local)
-               (into (sorted-set)))
-        c (cond->> (if (nil? after) c (filter #(let [k (compare % after)] (if desc? (neg? k) (pos? k))) c))
-            desc? reverse)]
-    (dedupe (merge-locals desc? [(after-filter desc? after o) c]))))
+        ;; Realized only when the merge reaches it, inside the request's bounds.
+        closed (lazy-seq
+                 (let [m (->> (d/index-range view ix-a (str c-prefix v16) nil)
+                              (take-while #(.startsWith ^String (:v %) c-prefix))
+                              (counted work entries deadline) (keep item)
+                              (reduce (fn [m [l e]] (assoc m l e)) (sorted-map)))]
+                   (cond->> (seq m)
+                     after (filter #(let [k (compare (key %) after)] (if desc? (neg? k) (pos? k))))
+                     desc? reverse)))]
+    (merge-items desc? [o (map (fn [[l e]] [l e]) closed)])))
 
-(defn- type-stream [view ix-a work token entity-type desc? after]
+(defn- type-stream [{:keys [view ix-a work entries deadline token desc?]} entity-type after]
   (let [prefix (str token x/sep "T" x/sep (x/esc entity-type) x/sep)]
     (->> (avet-range view ix-a prefix (when after (str prefix (x/esc after) (if desc? "" "\u0000"))) desc?)
-         (counted work) (map (comp :local x/parse-key :v)) (after-filter desc? after))))
+         (counted work entries deadline) (map (fn [datom] [(:local (x/parse-key (:v datom))) (:e datom)]))
+         (after-items desc? after))))
 
-(defn- id-stream [view work token ^String prefix shape-re desc? after]
+(defn- id-stream [{:keys [view work entries deadline token desc?]} ^String prefix shape-re after]
   (let [base (if (= token x/system-token) "_triplex/" (str "acct/" token "/"))
         start (str base prefix) id-a (d/entid view :triplex.entity/id)]
     (->> (avet-range view id-a start (when after (str base after (if desc? "" "\u0000"))) desc?)
-         (counted work) (map #(subs ^String (:v %) (count base)))
-         (filter #(or (nil? shape-re) (re-matches shape-re (subs ^String % (count prefix)))))
-         (after-filter desc? after))))
+         (counted work entries deadline) (map (fn [datom] [(subs ^String (:v datom) (count base)) (:e datom)]))
+         (filter #(or (nil? shape-re) (re-matches shape-re (subs ^String (first %) (count prefix)))))
+         (after-items desc? after))))
 
 (defn- value-stream
-  "[key local] of every entry of `code` from the condition's lower bound (or after `after-key`), value order."
-  [view ix-a work token c v16 after-key]
+  "[local eid key] of every entry of the condition's code inside its bounds, in value order (ascending, or descending),
+  starting after `after-key`. Marked (long) entries pass here and are confirmed against their row."
+  [{:keys [view ix-a work entries deadline token v16]} c desc? after-key]
   (let [base (str token x/sep (:code c) x/sep)
-        start (case (:op c)
-                "range" (str base (or (:scan-lo c) (:letter c)))
-                "prefix" (str base (:scan-pfx c))
-                base)
-        stop? (case (:op c)
-                "range" (fn [^String field] (or (not (.startsWith field ^String (:letter c)))
-                                                (and (:hi c) (pos? (compare field (:hi c))))))
-                "prefix" (fn [^String field] (and (not (.startsWith field ^String (:scan-pfx c)))
-                                                  (pos? (compare field (:scan-pfx c)))))
-                (fn [_] false))]
-    (->> (d/index-range view ix-a (or after-key start) nil)
-         (take-while #(.startsWith ^String (:v %) base))
-         (drop-while #(and after-key (= after-key (:v %))))
-         (counted work)
-         (map (fn [datom] [(:v datom) (x/parse-key (:v datom))]))
-         (take-while (fn [[_ p]] (not (stop? (:field p)))))
+        lo (case (:op c) "range" (str base (or (:scan-lo c) (:letter c))) "prefix" (str base (:scan-pfx c)) base)
+        hi (case (:op c)
+             "range" (successor (str base (or (:hi c) (:letter c))))
+             "prefix" (successor (str base (:scan-pfx c)))
+             (successor base))
+        past-hi? (fn [^String field] (case (:op c)
+                                       "range" (or (not (.startsWith field ^String (:letter c))) (and (:hi c) (pos? (compare field (:hi c)))))
+                                       "prefix" (and (not (.startsWith field ^String (:scan-pfx c))) (pos? (compare field (:scan-pfx c))))
+                                       false))
+        below-lo? (fn [^String field] (case (:op c)
+                                        "range" (or (not (.startsWith field ^String (:letter c))) (and (:scan-lo c) (neg? (compare field (:scan-lo c)))))
+                                        "prefix" (and (not (.startsWith field ^String (:scan-pfx c))) (neg? (compare field (:scan-pfx c))))
+                                        false))
+        datoms (if desc?
+                 (let [top (or after-key hi)]
+                   (->> (d/rseek-datoms view :avet ix-a top)
+                        (drop-while #(and (= ix-a (:a %)) (>= (compare (:v %) top) 0)))))
+                 (->> (d/index-range view ix-a (or after-key lo) nil)
+                      (drop-while #(and after-key (= after-key (:v %))))))]
+    (->> datoms
+         (take-while #(and (= ix-a (:a %)) (.startsWith ^String (:v %) base)))
+         (counted work entries deadline)
+         (map (fn [datom] [(:v datom) (x/parse-key (:v datom)) (:e datom)]))
+         (drop-while (fn [[_ p]] (and desc? (past-hi? (:field p)))))
+         (take-while (fn [[_ p]] (not (if desc? (below-lo? (:field p)) (past-hi? (:field p))))))
          (filter (fn [[_ p]] (and (x/valid-at? p v16) (or (:long? p) (field-ok? c (:field p))))))
-         (map (fn [[k p]] [k (:local p)])))))
+         (map (fn [[k p e]] [(:local p) e k])))))
 
 ;; ---- the basis.
 (defn- local-at-least [name conn db position wait-ms]
@@ -480,6 +549,33 @@
 (defn- request-hash [input]
   (sha256 (json/write-str (into (sorted-map) (dissoc input "cursor" "bounds" "limit" "atLeastPosition" "basisWaitMs")))))
 
+;; [DX-XQ4] Why: the cursor states the position, the database time, the valid time and partial counts the answer is
+;; read at; a client must not be able to edit them. HMAC-SHA256 under TX2_INDEX_CURSOR_SECRET (share it between the
+;; gateways that serve one client), else a key made at start (a cursor then works only on the gateway that issued it).
+(def ^:private cursor-key
+  (let [secret (System/getenv "TX2_INDEX_CURSOR_SECRET")
+        bytes (if (seq secret) (.getBytes ^String secret StandardCharsets/UTF_8)
+                (let [b (byte-array 32)] (.nextBytes (java.security.SecureRandom.) b) b))]
+    (javax.crypto.spec.SecretKeySpec. bytes "HmacSHA256")))
+(defn- mac [^String text]
+  (let [m (javax.crypto.Mac/getInstance "HmacSHA256")]
+    (.init m cursor-key)
+    (.encodeToString (.withoutPadding (Base64/getUrlEncoder)) (.doFinal m (.getBytes text StandardCharsets/UTF_8)))))
+(defn- sign-cursor [m] (let [body (encode-cursor m)] (str body "." (mac body))))
+(defn- open-cursor [^String text]
+  (let [i (.lastIndexOf text ".")]
+    (when-not (and (pos? i) (java.security.MessageDigest/isEqual (.getBytes ^String (mac (subs text 0 i)) StandardCharsets/UTF_8)
+                                                                  (.getBytes (subs text (inc i)) StandardCharsets/UTF_8)))
+      (refuse! 409 "CursorMismatch" "The cursor was not issued by this gateway or was changed"))
+    (decode-cursor (subs text 0 i))))
+
+;; [DX-XQ4] Why: a list screen asks for a page, a total and counts at once; each account queues fairly for its one
+;; running question instead of being refused, and the permits (TX2_INDEX_QUERY_PERMITS, default 1, shared with the ID
+;; route) are queued fairly across accounts. 503 IndexBusy only after waiting the request's own time bound.
+(def ^:private ^ConcurrentHashMap account-gates (ConcurrentHashMap.))
+(defn- account-gate ^Semaphore [account]
+  (.computeIfAbsent account-gates account (reify java.util.function.Function (apply [_ _] (Semaphore. 1 true)))))
+
 (defn find! [name conn protected input]
   (when-not x/enabled (off!))
   (when-not (map? input) (codec/invalid "Expected a JSON object"))
@@ -491,7 +587,7 @@
         token (x/account-token account)
         id-base (if (= token x/system-token) "_triplex/" (str "acct/" account "/"))
         current (d/db conn)
-        decl (or (x/declaration current) (refuse! 409 "AttributeNotIndexed" "Nothing is declared in this database"))
+        decl (let [d (x/declaration current)] (if (:text d) d (refuse! 409 "AttributeNotIndexed" "Nothing is declared in this database")))
         where (get input "where" [])
         _ (when-not (and (vector? where) (<= (count where) 4))
             (refuse! 400 "UnsupportedOperation" "where takes at most four conditions, all required (AND)"))
@@ -540,19 +636,18 @@
         range-c (when-not (= by "entity")
                   (or (first (filter #(and (= by (:attribute %)) (= "range" (:op %))) conds))
                       (refuse! 400 "UnsupportedOperation" "order by takes entity or the attribute of the one range condition")))
-        _ (when (and range-c desc?) (refuse! 400 "UnsupportedOperation" "order by a range attribute is ascending (index order)"))
-        ;; The driver: the range when ordering by it; else from; else eq/in; else a value-ordered condition.
-        driver (cond range-c [:value range-c]
-                     from [:from]
-                     :else (if-let [c (first (filter #(#{"eq" "in"} (:op %)) conds))] [:eq c]
-                             (if-let [c (first (filter #(#{"range" "prefix" "exists"} (:op %)) conds))] [:value c]
-                               (refuse! 400 "UnsupportedOperation" "missing needs from or another condition"))))
-        _ (when (and (= :value (first driver)) (nil? range-c) (= result "ids") (some? order))
+        ;; Entity-ordered sources (from, every eq and in) intersect by a merge; the rest are checked per entity.
+        eq-conds (filterv #(#{"eq" "in"} (:op %)) conds)
+        entity-sources? (and (nil? range-c) (or from (seq eq-conds)))
+        driver-c (when-not entity-sources?
+                   (or range-c (first (filter #(#{"range" "prefix" "exists"} (:op %)) conds))
+                       (refuse! 400 "UnsupportedOperation" "missing needs from or another condition")))
+        _ (when (and driver-c (nil? range-c) (= result "ids") (some? order))
             (refuse! 400 "UnsupportedOperation" "order by entity needs from or an eq/in condition; order by the range attribute instead"))
-        entity-order? (not= :value (first driver))
+        rest-conds (if entity-sources? (filterv #(not (#{"eq" "in"} (:op %))) conds) (filterv #(not (identical? % driver-c)) conds))
         limits (bounds input)
         req (request-hash input)
-        cursor (some-> (get input "cursor") decode-cursor)
+        cursor (some-> (get input "cursor") open-cursor)
         _ (when cursor
             (when-not (and (= name (get cursor "db")) (= account (get cursor "account")) (= req (get cursor "req")))
               (refuse! 409 "CursorMismatch" "The cursor belongs to another database, account or request")))
@@ -568,76 +663,91 @@
         v16 (x/hex16 valid)
         ix-a (d/entid view :triplex.ix/entry)
         state (get cursor "state" {})
-        work (long-array 1)]
-    (when (some? (.putIfAbsent running account true))
+        after (get state "after")
+        ;; work[0]: index datoms examined; work[1]: entity reads (an entity's own entries or rows).
+        work (long-array 2)
+        ;; An answer needs each candidate's own entries only for conditions the merge cannot apply, a type check, a
+        ;; projection, a count by value, or a value-ordered page after the first (to list each entity once).
+        needs-entity? (or (seq rest-conds) from-type (seq project-codes) of-code (and driver-c (some? after)))
+        gate (account-gate account)
+        wait-ms (get limits "ms")
+        queued (System/nanoTime)]
+    (when-not (.tryAcquire gate wait-ms TimeUnit/MILLISECONDS)
       (stats/bump! [:crossFind :busy] 1)
-      (refuse! 503 "IndexBusy" "Another question of this account is running" {:retryAfterMs (get limits "ms")}))
+      (refuse! 503 "IndexBusy" "This account's questions are queued past this request's time bound" {:retryAfterMs wait-ms}))
     (try
-      (when-not (.tryAcquire permits (get limits "ms") TimeUnit/MILLISECONDS)
+      (when-not (.tryAcquire permits (max 1 (- wait-ms (quot (- (System/nanoTime) queued) 1000000))) TimeUnit/MILLISECONDS)
         (stats/bump! [:crossFind :busy] 1)
-        (refuse! 503 "IndexBusy" "Every index question permit is in use" {:retryAfterMs (get limits "ms")}))
+        (refuse! 503 "IndexBusy" "Every index question permit is in use" {:retryAfterMs wait-ms}))
       (try
         (let [started (System/nanoTime)
-              deadline (+ started (* (get limits "ms") 1000000))
-              after (get state "after")
-              candidates (case (first driver)
-                           :from (if from-type
-                                   (if id-pattern
-                                     (map (fn [l] [l l]) (id-stream view work token id-prefix shape-re desc? after))
-                                     (map (fn [l] [l l]) (type-stream view ix-a work token from-type desc? after)))
-                                   (map (fn [l] [l l]) (id-stream view work token id-prefix shape-re desc? after)))
-                           :eq (let [c (second driver)]
-                                 (map (fn [l] [l l]) (merge-locals desc? (map #(eq-stream view ix-a work token (:code c) % v16 desc? after) (:scan c)))))
-                           :value (value-stream view ix-a work token (second driver) v16 after))
+              deadline (+ started (* wait-ms 1000000))
+              confirm (fn [c p] (aset work 1 (inc (aget work 1))) (entry-ok? view c p))
+              ctx {:view view :ix-a ix-a :work work :entries (get limits "entries") :deadline deadline :token token
+                   :v16 v16 :desc? desc? :confirm confirm}
+              candidates (if entity-sources?
+                           (intersect-items desc?
+                             (concat (when from
+                                       [(cond (and from-type (not id-pattern)) (type-stream ctx from-type after)
+                                              :else (id-stream ctx id-prefix shape-re after))])
+                                     (for [c eq-conds]
+                                       (merge-items desc? (map #(eq-stream ctx c % after) (:scan c))))))
+                           (value-stream ctx driver-c (and range-c desc?) after))
               ids (java.util.ArrayList.) projected (java.util.LinkedHashMap.)
+              seen (java.util.HashSet.)
               acc (volatile! {:count (get state "count" 0)
                               :counts (into {} (get state "counts" {}))
                               :distinct (into #{} (get state "distinct" []))})
               reads (volatile! {}) stopped (volatile! nil) last-key (volatile! after)
               it (.iterator ^Iterable candidates)
-              evaluate (fn [[k ^String local]]
-                         (let [id (x/entity-id token local)
-                               eid (d/entid view [:triplex.entity/id id])
-                               es (when eid (entity-entries view eid ix-a work))]
-                           (when (and eid
-                                      (every? #(matches? view % es v16) conds)
-                                      (or (nil? from-type) (type-visible? view eid from-type valid))
-                                      ;; A value-ordered driver lists an entity once: at its least matching key.
-                                      (or entity-order?
-                                          (let [c (second driver)
-                                                mine (sort (keep (fn [e] (when (and (= (:code c) (:code e)) (x/valid-at? e v16) (entry-ok? view c e))
-                                                                           (:key e)))
-                                                                 es))]
-                                            (= k (first mine)))))
-                             (when-not (.startsWith ^String id ^String id-base)
-                               (throw (ex-info "ID outside the account" {:status 500 :code "AccountLeak"})))
-                             (let [values (fn [code] (sort (distinct (keep (fn [e] (when (and (= code (:code e)) (x/valid-at? e v16))
-                                                                                     (if (:long? e) (full-field view (:fact e)) (:field e))))
-                                                                           es))))]
-                               (case result
-                                 "ids" (do (.add ids id)
-                                           (when (seq project-codes)
-                                             (.put projected id (into {} (map (fn [[a code]] [a (mapv #(x/unesc (subs % 1)) (values code))]) project-codes)))))
-                                 "count" nil
-                                 "countByValue" (vswap! acc update :counts #(reduce (fn [m f] (update m f (fnil inc 0))) % (values of-code)))
-                                 "countDistinct" (vswap! acc update :distinct into (map #(x/unesc (subs % 1)) (values of-code))))
-                               (vswap! acc update :count inc)))))]
+              scan-desc? (and driver-c range-c desc?)
+              evaluate
+              (fn [[^String local eid k]]
+                (let [id (x/entity-id token local)
+                      es (when needs-entity? (aset work 1 (inc (aget work 1))) (entity-entries view eid ix-a work))
+                      driver-key? (fn [e] (and (= (:code driver-c) (:code e)) (x/valid-at? e v16) (entry-ok? view driver-c e)))]
+                  (when (and (every? #(matches? view % es v16) rest-conds)
+                             (or (nil? from-type) (do (aset work 1 (inc (aget work 1))) (type-visible? view eid from-type valid)))
+                             (or (nil? driver-c)
+                                 (and (let [p (x/parse-key k)] (or (not (:long? p)) (confirm driver-c p)))
+                                      (.add seen local)
+                                      ;; A value-ordered scan lists an entity once: at its first matching key in scan order.
+                                      (or (nil? after)
+                                          (not (some #(and (driver-key? %)
+                                                           (let [c (compare (:key %) after)] (if scan-desc? (pos? c) (neg? c))))
+                                                     es))))))
+                    (when-not (.startsWith id ^String id-base)
+                      (throw (ex-info "ID outside the account" {:status 500 :code "AccountLeak"})))
+                    (let [values (fn [code] (sort (distinct (keep (fn [e] (when (and (= code (:code e)) (x/valid-at? e v16))
+                                                                            (if (:long? e) (full-field view (:fact e)) (:field e))))
+                                                                  es))))]
+                      (case result
+                        "ids" (do (.add ids id)
+                                  (when (seq project-codes)
+                                    (.put projected id (into {} (map (fn [[a code]] [a (mapv #(x/unesc (subs % 1)) (values code))]) project-codes)))))
+                        "count" nil
+                        "countByValue" (vswap! acc update :counts #(reduce (fn [m f] (update m f (fnil inc 0))) % (values of-code)))
+                        "countDistinct" (vswap! acc update :distinct into (map #(x/unesc (subs % 1)) (values of-code))))
+                      (vswap! acc update :count inc)))))]
           (loop []
             (let [measured (io/throw-if-ex!
                              (io/with-io-stats
                                (fn []
-                                 (loop [n 0]
-                                   ;; The time bound is checked before every candidate, so a permit is held at most
-                                   ;; one candidate's work past it; entries and segments are checked per chunk.
-                                   (when (and (< n 64) (< (System/nanoTime) deadline))
-                                     (if-not (.hasNext it)
-                                       (vreset! stopped "end")
-                                       (let [cand (.next it)]
-                                         (evaluate cand)
-                                         (vreset! last-key (first cand))
-                                         (if (and (= result "ids") (>= (.size ids) limit))
-                                           (vreset! stopped (if (.hasNext it) "limit" "end"))
-                                           (recur (inc n))))))))
+                                 (try
+                                   (loop [n 0]
+                                     ;; The time bound is checked before every candidate, so a permit is held at most
+                                     ;; one candidate's work past it; entries are checked on every index datom.
+                                     (when (and (< n 64) (< (System/nanoTime) deadline))
+                                       (if-not (.hasNext it)
+                                         (vreset! stopped "end")
+                                         (let [cand (.next it)]
+                                           (evaluate cand)
+                                           (vreset! last-key (if driver-c (nth cand 2) (first cand)))
+                                           (if (and (= result "ids") (>= (.size ids) limit))
+                                             (vreset! stopped (if (.hasNext it) "limit" "end"))
+                                             (recur (inc n)))))))
+                                   (catch clojure.lang.ExceptionInfo e
+                                     (if-let [reason (stop-reason e)] (vreset! stopped reason) (throw e)))))
                                {:io-context :triplex/cross-find :api :lookup}))]
               (vswap! reads merge-reads (:reads (:io-stats measured)))
               (cond @stopped nil
@@ -652,18 +762,21 @@
                 micros (quot (- (System/nanoTime) started) 1000)]
             (stats/bump! [:crossFind :requests] 1)
             (stats/bump! [:crossFind :examined] (aget work 0))
+            (stats/bump! [:crossFind :entityReads] (aget work 1))
             (cond-> {:database name :account account :position position :t (str t) :validAt valid
                      :head (storage/head-position name current) :indexEpoch epoch-p :trailingBy 0 :result result
-                     :order (if (= :value (first driver)) {:by (:attribute (second driver)) :direction "asc"}
+                     :order (if driver-c {:by (:attribute driver-c) :direction (if scan-desc? "desc" "asc")}
                               {:by "entity" :direction (if desc? "desc" "asc")})
-                     :examined (aget work 0) :segmentsLoaded (segment-loads @reads) :queryMicros micros
+                     :examined (aget work 0) :entityReads (aget work 1) :indexOnly (not needs-entity?)
+                     :segmentsLoaded (segment-loads @reads) :queryMicros micros
+                     :queueMicros (quot (- started queued) 1000)
                      :stopped @stopped
                      :next (when more?
-                             (encode-cursor {"v" 1 "db" name "account" account "req" req "t" t "position" position
-                                             "validAt" valid
-                                             "state" (cond-> {"after" @last-key "count" n-count}
-                                                       (= result "countByValue") (assoc "counts" counts)
-                                                       (= result "countDistinct") (assoc "distinct" (vec dset)))}))}
+                             (sign-cursor {"v" 1 "db" name "account" account "req" req "t" t "position" position
+                                           "validAt" valid
+                                           "state" (cond-> {"after" @last-key "count" n-count}
+                                                     (= result "countByValue") (assoc "counts" counts)
+                                                     (= result "countDistinct") (assoc "distinct" (vec dset)))}))}
               (= result "ids") (assoc :ids (vec ids) :count (.size ids))
               (seq project-codes) (assoc :projected projected)
               (= result "count") (assoc :count n-count :countExact (not more?))
@@ -671,4 +784,4 @@
                                                :count n-count :countExact (not more?))
               (= result "countDistinct") (assoc :count (count dset) :matched n-count :countExact (not more?)))))
         (finally (.release permits)))
-      (finally (.remove running account)))))
+      (finally (.release gate)))))

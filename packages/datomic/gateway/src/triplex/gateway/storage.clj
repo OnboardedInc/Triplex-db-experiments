@@ -304,7 +304,7 @@
          ;; [DX-XQ4] Why: index entries ride in the same prepared transaction as the rows they key, behind the fence.
          ;; Rejected: changing the stored commit functions, or computing entries on the transactor.
          index (when (and cross/enabled lean) (cross/declaration db))
-         ops (if index (into ops (cross/tx-ops db index (or (:attrs privacy/*cut*) #{}) fresh old)) ops)
+         ops (if index (into ops (cross/tx-ops db index (or (:attrs privacy/*cut*) #{}) fresh old (get input ::index-lenient))) ops)
          journals (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))
          [claim] claims
          command (get claim "commandId")
@@ -493,6 +493,8 @@
     (reject-ordered! conn input (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
   (try
     (let [parsed (System/nanoTime)
+          ;; [DX-XQ4] With the index option on, the declaration fence exists before the first declaration.
+          db (if cross/enabled (cross/ensure-installed! conn db) db)
           load-timing (when commit/load-profile (volatile! 0))
           ;; [DX-XQ4] Why: an index retraction needs the retired fact's stored text; a peer that does not hold it yet
           ;; catches up once (d/sync) and prepares again. Rejected: trusting the client's copy of the retired row.
@@ -503,7 +505,8 @@
                                     (if-not (cross/peer-behind? e) (throw e)
                                       (let [synced (deref (d/sync conn) 2000 ::timeout)]
                                         (when (= ::timeout synced) (throw e))
-                                        [synced (tx-data synced input (scope/entity synced))]))))))
+                                        ;; After the catch-up a fact still absent never existed: the commit refuses it.
+                                        [synced (tx-data synced (assoc input ::index-lenient true) (scope/entity synced))]))))))
                          (catch Exception e (reject-ordered! conn input e)))
           validated (when (= "1" (System/getenv "TX2_SUBJECT_RETIREMENT_TRACE")) (System/nanoTime))
           frame-size (group/frame-measurement (second (first data)) input)

@@ -6,7 +6,7 @@
   with the option off no function here is reached and no save changes. The transactor's stored functions do not change:
   the write gateway adds plain :db/add, :db/retract and :db/cas operations to the transaction data it prepares."
   (:require [clojure.data.json :as json] [clojure.string :as str] [datomic.api :as d]
-            [triplex.gateway.lean :as lean] [triplex.gateway.schema :as schema]))
+            [triplex.gateway.lean :as lean] [triplex.gateway.schema :as schema] [triplex.gateway.pinned :as pinned]))
 
 (set! *warn-on-reflection* false)
 
@@ -121,10 +121,19 @@
        (esc local) sep (esc fact) sep (hex16 vf) (when long? (str sep "L"))))
 (defn type-key [token entity-type local] (str token sep "T" sep (esc entity-type) sep (esc local)))
 
+(defn- split-key
+  "The fields of a key, split at U+0001 by hand (a regular expression cost about ten times more per entry)."
+  [^String k]
+  (let [out (java.util.ArrayList. 10)]
+    (loop [start 0]
+      (let [i (.indexOf k (int 1) (int start))]
+        (if (neg? i)
+          (do (.add out (.substring k start)) out)
+          (do (.add out (.substring k start i)) (recur (inc i))))))))
 (defn parse-key
   "A value entry as {:token :code :field :vt :local :fact :vf :long?}; a type entry as {:token :type :local}."
   [^String k]
-  (let [parts (str/split k #"\u0001" -1)
+  (let [parts (vec (split-key k))
         [token code] parts]
     (if (= code "T")
       {:token token :type (unesc (nth parts 2)) :local (unesc (nth parts 3))}
@@ -161,11 +170,24 @@
   (when-let [e (declaration-eid db)]
     (let [text (:v (first (d/datoms db :eavt e :triplex.ix/declaration)))
           s (:v (first (d/datoms db :eavt e :triplex.ix/seq)))]
-      (when (and text s)
-        (let [p (or (get @parsed text)
-                    (let [p (parse-declaration text)]
-                      (swap! parsed #(if (> (count %) 64) {text p} (assoc % text p))) p))]
-          (assoc p :eid e :seq s))))))
+      (when s
+        (if-not text
+          ;; Installed with the option but nothing declared yet: only the fence (sequence 0).
+          {:eid e :seq s :text nil :codes {} :families {} :by-code {} :entry-types #{} :id-types {} :attributes [] :types []}
+          (let [p (or (get @parsed text)
+                      (let [p (parse-declaration text)]
+                        (swap! parsed #(if (> (count %) 64) {text p} (assoc % text p))) p))]
+            (assoc p :eid e :seq s)))))))
+(def ^:private ensured (java.util.concurrent.ConcurrentHashMap.))
+(defn ensure-installed!
+  "[DX-XQ4] With the option on, the fence exists before any declaration: the schema and the declaration entity with
+  sequence 0, so a save prepared before the first declaration cannot commit after it. Returns the db to prepare on."
+  [conn db]
+  (if (or (not enabled) (declaration-eid db)) db
+    (let [db (if (installed? db) db (:db-after @(d/transact conn schema-ops)))]
+      (if (declaration-eid db) db
+        (try (:db-after @(d/transact conn [{:db/id "declaration" :triplex.entity/id declaration-id :triplex.ix/seq 0}]))
+             (catch Exception _ (d/db conn)))))))
 (defn epochs
   "{code {:position p :t t}} from the completion datoms the backfill writes (type lists use the code \"T:<type>\")."
   [db e]
@@ -216,7 +238,7 @@
   "Index operations for one prepared save: an assertion per fresh live row of a declared attribute, a retraction per
   retired fact's entry (its key is computed from the fact's own stored text, which never changes for an ID), a type
   entry when the peer's view lacks it, and the declaration fence on every save. [ops counts]"
-  [db decl protected fresh old]
+  [db decl protected fresh old & [lenient?]]
   (let [ix-a (d/entid db :triplex.ix/entry)
         adds (for [row fresh :when (nil? (:retracted_at row))
                    :let [e (row-entries decl protected row)] :when e]
@@ -230,10 +252,30 @@
         value-ops (for [[row e] adds :when (:value e)] [:db/add (str "e:" (:entity_id row)) :triplex.ix/entry (:value e)])
         retract-ops (keep (fn [row]
                             (let [datom (retired-text db (:id row) (:entity_id row))]
-                              (when-not datom (peer-behind! (:id row)))
-                              (let [stored (lean/decode (:v datom))]
-                                (when-let [k (:value (row-entries decl protected stored))]
-                                  [:db/retract (:e datom) :triplex.ix/entry k]))))
+                              ;; After one catch-up a fact that still is not there never existed: no index operation,
+                              ;; and the commit function refuses the retirement as it always did (409).
+                              (when-not (or datom lenient?) (peer-behind! (:id row)))
+                              (when datom
+                                (let [stored (lean/decode (:v datom))]
+                                  (when-let [k (:value (row-entries decl protected stored))]
+                                    [:db/retract (:e datom) :triplex.ix/entry k])))))
                           (distinct old))]
     (vec (concat [[:db/cas (:eid decl) :triplex.ix/seq (:seq decl) (:seq decl)]]
                  value-ops type-ops retract-ops))))
+
+;; [DX-XQ4] Why: an index entry (a writer's or the backfill's) never changes a row, so it must not send a pinned read of
+;; an unchanged subject to as-of (pinned/unchanged-since? sends any datom newer than the pin there). The check is
+;; installed from here, after the stored functions are compiled: editing pinned.clj itself shifted the generated symbol
+;; numbers inside the stored commit and per-subject functions, whose identity hashes their text. Identical to the
+;; original when a database holds no entry (the attribute is then absent). Rejected: an option (a copy that holds
+;; entries is read by gateways with the index off too, as in the S-2 off arm).
+(defn unchanged-since? [current eid t p]
+  (when (and eid t p)
+    (let [rev-a (d/entid current :triplex.entity/rev)
+          rev (when rev-a (:v (first (d/datoms current :eavt eid rev-a))))
+          last-tx (d/t->tx t)
+          ix-a (d/entid current :triplex.ix/entry)]
+      (and (some? rev) (<= (long rev) (long p))
+           (every? (fn [^datomic.Datom datom] (or (<= (.tx datom) last-tx) (and ix-a (= ix-a (.a datom)))))
+                   (d/datoms current :eavt eid))))))
+(alter-var-root #'pinned/unchanged-since? (constantly unchanged-since?))

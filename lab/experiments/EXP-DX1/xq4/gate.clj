@@ -302,10 +302,12 @@
           r (route name "v2" "find" input)]
       (when-not (= 200 (:status r)) (throw (ex-info "find refused" {:q q :reply r})))
       (let [b (:body r) ids (into ids (get b "ids" [])) projected (merge projected (get b "projected" {}))
-            pages (conj pages (select-keys b ["stopped" "examined" "segmentsLoaded" "count" "countExact" "position" "indexEpoch"]))]
+            pages (conj pages (select-keys b ["stopped" "examined" "segmentsLoaded" "count" "countExact" "position" "indexEpoch" "entityReads" "indexOnly"]))]
         (if (and (get b "next") (< guard 100000))
           (recur (get b "next") pages ids projected (inc guard))
-          {:ids ids :projected projected :last b :pages (count pages) :stops (frequencies (map #(get % "stopped") pages))})))))
+          {:ids ids :projected projected :last b :pages (count pages) :stops (frequencies (map #(get % "stopped") pages))
+           :entityReads (reduce + (map #(get % "entityReads" 0) pages))
+           :firstPageIndexOnly (get (first pages) "indexOnly") :firstPageEntityReads (get (first pages) "entityReads")})))))
 
 (def attrs-by-family
   {"string" [":person/custom-background" ":person/custom-start" ":task/status"]
@@ -375,6 +377,8 @@
                                       (into {} (map (fn [[k v]] [(if (= "json" (first k)) ["json" nil] k) v]) (:counts expected)))))
                "countDistinct" (and (= (get b "count") (:distinct expected)) (= (get b "matched") (count (:ids expected)))))]
     {:same (boolean same) :expected (count (:ids expected)) :pages (:pages got) :stops (:stops got)
+     :entityReads (:entityReads got) :firstPageIndexOnly (:firstPageIndexOnly got) :firstPageEntityReads (:firstPageEntityReads got)
+     :long (boolean (re-find #"Lxxxx" (json/write-str q)))
      :detail (when-not same {:q q :got (select-keys b ["count" "counts" "matched" "order"]) :gotIds (take 20 (:ids got))
                              :expectedIds (take 20 (:ids expected)) :expectedCounts (:counts expected) :expectedDistinct (:distinct expected)
                              :missing (take 10 (set/difference (set (:ids expected)) (set (:ids got))))
@@ -593,7 +597,10 @@
                                         :stops (apply merge-with + (map :stops rs)) :pages (reduce + (map :pages rs))})
       (say "XQ4_G1" {:questions (count rs) :differences (count (remove :same rs)) :seed seed :positions (count positions)
                      :validTimes (count (valid-times)) :pages (reduce + (map :pages rs)) :stops (apply merge-with + (map :stops rs))
-                     :matchesTotal (reduce + (map :expected rs))}))
+                     :matchesTotal (reduce + (map :expected rs))
+                     :entityReadsTotal (reduce + (keep :entityReads rs))
+                     :indexOnlyFirstPages (count (filter :firstPageIndexOnly rs))
+                     :indexOnlyFirstPageEntityReads (reduce + (keep #(when (and (:firstPageIndexOnly %) (not (:long %))) (:firstPageEntityReads %)) rs))}))
     (say "XQ4_PLACEMENT" ((resolve 'xq4-gate/placement-check) conn))
     ;; Interior positions of group commits are refused with the enclosing boundaries.
     (let [grouped (try (slurp-json (str "grouped-" label ".json")) (catch Exception _ []))
@@ -684,6 +691,10 @@
         hits (count (filter #(.contains ^String % secret) (concat entry-texts log-texts)))
         tokens (count (filter #(re-find #"protected:|tok:" %) (concat entry-texts log-texts)))
         alice (route name "v2" "find" {"account" "acc-p" "where" [{"attribute" ":person/name" "op" "eq" "value" {"type" "string" "value" "Alice"}}]})]
+    (let [[odd-name _] (open! "g3-odd")]
+      (commit! odd-name (batch-input "odd-seed" [["odd-1" "plain/0001" ":person/name" ["string" "x"]]]))
+      (let [r (route odd-name "v2" "index-declaration" {"version" 1 "attributes" [{"attribute" ":person/name" "code" "n1" "family" "string"}]})]
+        (say "XQ4_B5" {:status (:status r) :code (get-in r [:body "code"]) :pass (= "AccountNotInEntityId" (get-in r [:body "code"]))})))
     (say "XQ4_G3" {:protection (:status prot) :declareProtected [(:status bad) (get-in bad [:body "code"])]
                    :declareOther (:status good) :save (:status saved) :saveCode (get-in saved [:body "code"])
                    :protectDeclared [(:status protect-declared) (get-in protect-declared [:body "code"])]
@@ -799,7 +810,7 @@
                                    {:datoms [(get-in r ["on" :datoms]) (get-in r ["off" :datoms])]
                                     :reads [(get-in r ["on" :reads]) (get-in r ["off" :reads])]
                                     :applyMs [(get-in r ["on" :applyMs]) (get-in r ["off" :applyMs])]
-                                    :writer (get-in r ["on" :writer])})))]))
+                                    :writer (get-in r ["on" :writer])})))]))]
     ;; G6: exact datom counts per save shape (index on minus index off), against the design's formula.
     (shape! "replace 1 declared value (per-subject writer)" 2 (twin-save! names conns (replace-spec base [":task/status"] 3) false))
     (shape! "replace 3 declared values (per-subject writer)" 6 (twin-save! names conns (replace-spec (+ base 1) (sets 3) 3) false))
@@ -827,9 +838,10 @@
                               {:ops n :variableUs (policy/variable-us n 0)
                                :rows (+ (count (:new-ids p)) (count (filter #(and (vector? %) (= :triplex/retract (first %))) (:ops p))))}))
           on (ops-of "on") off (ops-of "off")]
-      (say "XQ4_BUDGET" {:on on :off off :extraOps (- (:ops on) (:ops off)) :expectedExtraOps 13
+      ;; Both scopes carry the fence (sequence 0 is installed with the option); the declared one adds 6 + 6 entry ops.
+      (say "XQ4_BUDGET" {:on on :off off :extraOps (- (:ops on) (:ops off)) :expectedExtraOps 12
                          :extraVariableUs (- (:variableUs on) (:variableUs off)) :rowsSame (= (:rows on) (:rows off))
-                         :pass (and (= 13 (- (:ops on) (:ops off))) (= (:rows on) (:rows off)))}))
+                         :pass (and (= 12 (- (:ops on) (:ops off))) (= (:rows on) (:rows off)))}))
     (say "XQ4_LARGE_SAVES" (into {} (for [[k rs] big]
                                      [k {:datomsOnOff (first (map :datoms rs)) :extraDatoms (distinct (map #(apply - (:datoms %)) rs))
                                          :readsInsideApplyOn (mapv #(first (:reads %)) rs) :readsInsideApplyOff (mapv #(second (:reads %)) rs)
@@ -853,6 +865,7 @@
                   (str (:e x) " " (:a x) " " (pr-str (:v x)) " " (:added x) " " (:tx x)))
           digest (java.security.MessageDigest/getInstance "SHA-256")]
       (doseq [l lines] (.update digest (.getBytes ^String l "UTF-8")))
+      (spit (io/file out "loghash.txt") (str/join "\n" lines))
       (say "XQ4_LOGHASH" {:datoms (count lines) :head (head name conn)
                           :sha256 (apply str (map #(format "%02x" (bit-and % 0xff)) (.digest digest)))}))))
 
@@ -876,3 +889,57 @@
           ]
       {:entries @n :misplaced (count @bad) :orphanEntities (count @orphans) :entitiesWithoutLiveRows only-entries
        :sample (take 3 @bad) :pass (and (zero? (count @bad)) (empty? @orphans))})))
+
+
+(defn phase-e1! [label]
+  ;; Index-only answers: counts and filters the merge can answer read no entity (entityReads 0).
+  (let [name (db-name label) conn (reopen name)
+        big {"entries" 1000000 "ms" 1000 "segments" 4096}
+        ask (fn [tag q] (let [r (route name "v2" "find" (assoc q "bounds" big "limit" 1000 "basis" {"validAt" 1.79e12}))
+                              b (:body r)]
+                          [tag {:status (:status r) :count (get b "count") :indexOnly (get b "indexOnly") :entityReads (get b "entityReads")
+                                :examined (get b "examined") :stopped (get b "stopped") :queryMicros (get b "queryMicros")}]))
+        rows (into {} [(ask "count eq" {"account" "acc-a" "where" [{"attribute" ":task/status" "op" "eq" "value" {"type" "string" "value" "complete"}}] "result" "count"})
+                       (ask "count two eq merged" {"account" "acc-a" "where" [{"attribute" ":task/status" "op" "eq" "value" {"type" "string" "value" "complete"}}
+                                                                              {"attribute" ":task/flag" "op" "eq" "value" {"type" "boolean" "value" true}}] "result" "count"})
+                       (ask "ids eq and in merged" {"account" "acc-b" "where" [{"attribute" ":task/status" "op" "in" "values" [{"type" "string" "value" "pending"} {"type" "string" "value" "blocked"}]}
+                                                                               {"attribute" ":task/flag" "op" "eq" "value" {"type" "boolean" "value" false}}] "result" "ids"})
+                       (ask "count range (one page)" {"account" "acc-c" "where" [{"attribute" ":task/progress" "op" "range" "from" {"type" "integer" "value" "10"} "to" {"type" "integer" "value" "90"}}] "result" "count"})
+                       (ask "count exists (one page)" {"account" "acc-a" "where" [{"attribute" ":task/status" "op" "exists"}] "result" "count"})
+                       (ask "from prefix and shape with eq" {"account" "acc-a" "from" {"prefix" "pl:" "shape" "{8 digits}"} "where" [{"attribute" ":person/custom-start" "op" "eq" "value" {"type" "string" "value" "2026-03-03"}}] "result" "count"})
+                       (ask "range descending (most recent first)" {"account" "acc-a" "where" [{"attribute" ":task/due" "op" "range" "from" {"type" "datetime" "value" 1.7e12}}] "order" {"by" ":task/due" "direction" "desc"} "result" "ids"})
+                       (ask "eq with missing (entity read per candidate)" {"account" "acc-a" "where" [{"attribute" ":task/status" "op" "eq" "value" {"type" "string" "value" "complete"}} {"attribute" ":task/flag" "op" "missing"}] "result" "count"})])
+        world (world-at name conn (head name conn) 1.79e12)
+        expect (fn [q] (count (:ids (brute world (get q "account") q))))
+        desc-q {"account" "acc-a" "where" [{"attribute" ":task/due" "op" "range" "from" {"type" "datetime" "value" 1.7e12}}] "order" {"by" ":task/due" "direction" "desc"} "result" "ids"}
+        desc-pages (run-find name (assoc desc-q "basis" {"validAt" 1.79e12}) 7 {"entries" 300 "ms" 1000 "segments" 4096})
+        desc-ok (= (set (:ids desc-pages)) (set (:ids (brute world "acc-a" desc-q))))
+        index-only (filter (fn [[k v]] (:indexOnly v)) rows)]
+    (say "XQ4_E1" {:answers rows :descPagedSameAsBrute desc-ok :descPages (:pages desc-pages)
+                   :pass (and desc-ok (every? (fn [[_ v]] (= 0 (:entityReads v))) index-only) (>= (count index-only) 6))})))
+
+(defn phase-pinned! []
+  ;; D1: a pinned read taken before a backfill keeps the current-database short-cut after it (TX2_PINNED_SHORTCUT=1).
+  (let [[name conn] (open! "pinned")
+        n 200]
+    (doseq [ns (partition-all 40 (range n))]
+      (commit! name (batch-input (str "pin-" (first ns)) (mapcat #(seed-facts "acc-a" %) ns))))
+    (let [p (head name conn)
+          _ (commit! name (batch-input "pin-later" [["pin-later-1" "acct/acc-a/other:1" ":person/name" ["string" "later"]]]))
+          stats #(triplex.gateway.pinned/stats)
+          read-all (fn [] (vec (for [i (range n)]
+                                 (get-in (route name "v1" "read" {"entityIds" [(subj "acc-a" i)] "basis" {"recordedPosition" p}}) [:body "rows"]))))
+          s0 (stats) before (read-all) s1 (stats)
+          _ (ok! "declaration" (route name "v2" "index-declaration" deep6))
+          bf (backfill! name)
+          s2 (stats) after (read-all) s3 (stats)
+          delta (fn [a b k] (- (get b k) (get a k)))
+          ;; The original check (every datom of the subject older than the pin) on the same subjects after the backfill.
+          db (d/db conn) t (d/as-of-t (storage/at-position db p))
+          original (count (filter (fn [i] (let [e (d/entid db [:triplex.entity/id (subj "acc-a" i)])]
+                                            (every? #(<= (:tx %) (d/t->tx t)) (d/datoms db :eavt e)))) (range n)))]
+      (say "XQ4_D1" {:subjects n :backfillAdded (get bf "added")
+                     :beforeCurrent (delta s0 s1 :currentAnswers) :beforeAsOf (delta s0 s1 :asOfAnswers)
+                     :afterCurrent (delta s2 s3 :currentAnswers) :afterAsOf (delta s2 s3 :asOfAnswers)
+                     :sameRows (= before after) :originalCheckWouldKeep original
+                     :pass (and (= before after) (= n (delta s0 s1 :currentAnswers)) (= n (delta s2 s3 :currentAnswers)))}))))

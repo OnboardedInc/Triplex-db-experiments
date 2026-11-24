@@ -86,7 +86,9 @@
                          (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema))
                          (:db-after (trace/span "d/transact" "peer-wait" @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}])))))
         current (subject/install! conn (group/install! conn (commit/install! conn scope schema-ready)))
-        current (owner-layout/install! conn current)]
+        current (owner-layout/install! conn current)
+        ;; [DX-XQ4] The index fence (sequence 0) from the moment a scope is opened with the option on.
+        current (if (and cross-find/enabled (lean/enabled? current)) (cross-find/ensure-installed! conn current) current)]
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
       (lean/enabled? current) (assoc :layout "lean" :orderedRowTexts true :journalCuts true)))))
@@ -347,7 +349,10 @@
                         (let [conn (connection (db-uri name))] [conn (d/db conn)]))]
         (cond
           (and (= :post request-method) (= action "protection"))
-          (response 200 (erase/declare! name conn db (request-json body)))
+          (let [input (request-json body)]
+            ;; [DX-XQ4] A declared attribute is keyed by value; protecting it would make the index a lookup by protected value.
+            (cross-find/refuse-protecting-declared! db input)
+            (response 200 (erase/declare! name conn db input)))
           (and (= :post request-method) (= action "erase"))
           (response 200 (erase/erase! name conn (request-json body)))
           (and (= :post request-method) (= action "restore-erasure"))

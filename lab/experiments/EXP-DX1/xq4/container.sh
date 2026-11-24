@@ -55,7 +55,7 @@ gate() {  # $1 = TX2_CROSS_INDEX (0/1), $2 = TX2_GROUP_COMMIT (0/1), $3.. = cloj
   local index=$1 grouping=$2; shift 2
   TX2_CROSS_INDEX=$index TX2_GROUP_COMMIT=$grouping TX2_SUBJECT_SAVE=1 \
     TX2_LIVE_PRIORITY=0 TX2_PREDECESSOR_LOOKUP=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_PREFETCH=0 \
-    TX2_SUBJECT_APPEND_RETIREMENT=${XQ4_MARKERS:-0} \
+    TX2_SUBJECT_APPEND_RETIREMENT=${XQ4_MARKERS:-0} TX2_PINNED_SHORTCUT=${XQ4_PINNED:-0} \
     TX2_GROUP_REUSE_PREPARED=1 TX2_GROUP_FAST_REPLY=1 TX2_GROUP_STAGE_CLOCK=1 TX2_SUBJECT_PROFILE=1 TX2_LEAN_NATIVE_QUERY=1 \
     TX2_LEAN_NATIVE_LOG=1 TX2_GROUP_MAX_MEMBERS=8 TRIPLEX_TRACE_LEVEL=off \
     TRIPLEX_ERASURE_DIRECTORY="$work/erasure" XQ4_RUN="${XQ4_RUN:-r}" \
@@ -70,6 +70,7 @@ run() { local name=$1; shift; phase "$name"; local code=0; gate "$@" || code=$?;
 if want g8log; then run loghash 0 0 "(xq4-gate/phase-loghash!) $(done_)"; fi
 if want g8logon; then run loghash-on 1 0 "(xq4-gate/phase-loghash!) $(done_)"; fi
 if want g3; then run g3 1 0 "(xq4-gate/phase-g3!) $(done_)"; fi
+if want pinned; then XQ4_PINNED=1 run pinned 1 0 "(xq4-gate/phase-pinned!) $(done_)"; fi
 if want g6; then
   run g6-seed 1 0 "(xq4-gate/phase-g6-seed!) $(done_)"
   restart_transactor
@@ -94,5 +95,6 @@ if want world; then
   run check-a 1 0 "(xq4-gate/phase-check! \"a\") $(done_)"
   run g4 1 0 "(xq4-gate/phase-g4! \"a\") $(done_)"
   run g5 1 0 "(xq4-gate/phase-g5! \"a\") $(done_)"
+  run e1 1 0 "(xq4-gate/phase-e1! \"a\") $(done_)"
 fi
 phase done

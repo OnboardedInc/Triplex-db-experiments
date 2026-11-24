@@ -8,7 +8,7 @@
             [triplex.gateway.schema :as schema]
             [triplex.gateway.small-row :as small-row]
             [triplex.gateway.scope :as scope]
-            [triplex.gateway.trace :as trace] [triplex.gateway.cross-index :as cross]))
+            [triplex.gateway.trace :as trace]))
 
 (def enabled (= "1" (System/getenv "TX2_SUBJECT_SAVE")))
 (def numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_NUMERIC_OWNER")))
@@ -207,6 +207,12 @@
   (str prefix (format "%016d" position)
        (format "%016x" (Double/doubleToRawLongBits (double clock))) journal))
 
+;; [DX-XQ4] Why: the cross-subject index is resolved after this namespace's stored function text is compiled: its
+;; identity hashes the code text, whose generated symbol numbers depend on everything compiled before it.
+;; Rejected: requiring the index namespace above (it changed the per-subject function's identity with the option off).
+(def ^:private index-op?
+  (delay (when (= "1" (System/getenv "TX2_CROSS_INDEX")) (requiring-resolve 'triplex.gateway.cross-index/op?))))
+
 (defn render-ops [ops owner subject prior prior-rows new-ids marker]
   (let [temp-owner (str "e:" subject)
         rewrite #(commit/rewrite-change %1 %2 new-ids prior-rows)]
@@ -275,7 +281,7 @@
                (not-any? p [:scope-wide :position-irregular :irregular :save-ledger :packed-journal :bulk])
                (<= (count ops) 256)
                (every? #(or (prepared/small-op? %) (and (some? expected-erasure) (envelope-op? %))
-                            (and cross/enabled (cross/op? %))) ops))
+                            (when-let [f @index-op?] (f %))) ops))
       (let [[fn-tx flags owner revision]
             (trace/span "subject.plan-witnesses" "gateway"
               (let [fn-tx (installed db) flags (when fn-tx (scope-witness db scope))
