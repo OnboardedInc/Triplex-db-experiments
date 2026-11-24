@@ -154,6 +154,8 @@ export async function localDrill(opts: any, config: any, manager: any) {
     ["hasync-ack", "hasync-move"].includes(mode) && opts.people === "10";
   // [DX-LOAD2] Why: the import-neighbours builder gates its importer change on its own diagnostic slot.
   const importNeighbours = holder === "DX-LOAD2" && diagnostic && mode === "load-fair" && combined === undefined;
+  // [DX-IMP2] Why: the whole-subject builder runs load1's snapshot proof with the import bound on, in its own slot.
+  const snapshotWhole = holder === "DX-IMP2" && diagnostic && mode === "load-proof" && combined === undefined;
   // [DX-ACT3] Why: the large-release builder runs the held Publish campaign on the same toy stack, in its own slot.
   // [DX-RD4] The at-least reads builder runs the same held campaign (DX_ACT3_AT_LEAST) in its own slot.
   const heldPublish = ["DX-ACT3", "DX-RD4"].includes(holder) && diagnostic && mode === "load-fair" && combined === undefined &&
@@ -161,7 +163,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // [DX-ACT4] Why: the settlement-frames builder runs its toy gate (and the held Publish campaign) on the same stack.
   const settleFrames = holder === "DX-ACT4" && diagnostic && mode === "load-fair" && combined === undefined &&
     (process.env.DX_ACT4_GATE === "1" || process.env.DX_ACT3_HELD === "1");
-  assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours ||
+  assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours || snapshotWhole ||
     heldPublish || settleFrames);
   assert(combined === undefined || ownedCombination);
   if (mode === "load-fair") {

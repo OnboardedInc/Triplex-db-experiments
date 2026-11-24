@@ -418,8 +418,10 @@
                       (binding [privacy/*cut* cut privacy/*database* name privacy/*data* db
                                 privacy/*unseal* (fn [id e a value] (envelope/decode! name (d/db conn) id e a value))]
                         (let [answer (if (and (= :get request-method) (= action "erasure-frontier"))
-                                       (response 200 {:database name :protected (boolean cut)
-                                                      :seq (or (:seq cut) 0) :erased (or (:erased cut) {})})
+                                       (response 200 (cond-> {:database name :protected (boolean cut)
+                                                              :seq (or (:seq cut) 0) :erased (or (:erased cut) {})}
+                                                       ;; [DX-IMP2] The removed families an importer must leave out.
+                                                       policy/import-whole? (assoc :families (vec (sort (:families cut))))))
                                        (route-handler-base request))]
                           (cond-> answer cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))))))]
             (cond

@@ -44,13 +44,14 @@
 (defn frame
   "One commit carrying `facts` (first writes) on `entities`: the business rows, one journal change per fact, the four
   fixed journal rows and one changed-entity row per entity. `class` nil sends no writeClass (a save), else the class."
-  [{:keys [facts entities command id-block source clock class]}]
+  [{:keys [facts entities command id-block source clock class actor erasure-seq]}]
   (let [{:keys [tx id]} id-block n (volatile! -1) next-id #(id (vswap! n inc))
         business (mapv (fn [{:keys [e a type v]}] (row (next-id) e nil a type v tx clock)) facts)
         j (fn [attr type value] (row (next-id) tx "_Transaction" attr type value tx clock))
         journal (-> [(assoc (j ":_tx/position" "number" nil) :value_number 1.0)
                      (assoc (j ":_tx/instant" "datetime" nil) :value_datetime clock)
                      (j ":_tx/command-id" "string" command)]
+                    (into (when actor [(j ":_tx/actor" "string" actor)]))
                     (into (map #(j ":_tx/changed-entity" "string" %) entities))
                     (into (map (fn [r f] (assoc (j ":_tx/change" "json" nil) :value_json (json/write-str (change (:id r) f tx clock))))
                                business facts)))
@@ -62,7 +63,8 @@
                    "operationId" (str (str/replace command "/" ".") ".op") "assignRecordTime" false
                    "rows" (mapv storage/wire-row fresh) "newIds" ids
                    "claims" [{"commandId" command "txId" tx "timestamp" clock}]}
-            class (assoc "writeClass" class)))
+            class (assoc "writeClass" class)
+            erasure-seq (assoc "erasureSeq" erasure-seq)))
         (assoc "rows" [] "rowMode" "texts" "rowOrder" ids))))
 
 (defn subjects-frame [subjects opts]

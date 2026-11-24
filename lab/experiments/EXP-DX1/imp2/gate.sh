@@ -15,7 +15,7 @@ git -C "$repo" rev-parse HEAD > "$out/source"; echo "$base" > "$out/base-commit"
 git -C "$repo" archive "$base" packages/datomic/gateway/src | tar -x -C "$out/base"
 name=tx2-dximp2-gate
 docker rm -f "$name" >/dev/null 2>&1
-docker run --name "$name" --memory 4g -e "DX_IMP2_ARMS=${DX_IMP2_ARMS:-off-digest mem sql}" -e "DX_IMP2_LIMIT_US=${DX_IMP2_LIMIT_US:-}" -e "DX_IMP2_ONLY=${DX_IMP2_ONLY:-}" \
+docker run --name "$name" --memory 4g -e "DX_IMP2_ARMS=${DX_IMP2_ARMS:-off-digest mem sql removal}" -e "DX_IMP2_LIMIT_US=${DX_IMP2_LIMIT_US:-}" -e "DX_IMP2_ONLY=${DX_IMP2_ONLY:-}" \
   --entrypoint /bin/bash \
   -v "$repo/packages/datomic/gateway/src:/opt/gateway/src:ro" -v "$out/base/packages/datomic/gateway/src:/opt/gateway-base/src:ro" \
   -v "$repo/packages/datomic/src/codec-spec.json:/opt/gateway/codec-spec.json:ro" \

@@ -21,3 +21,12 @@
                              " bytes); whole subjects only, never split")
                         {:code "ImportCommitTooLarge" :status 413 :write-policy true
                          :maximum policy/import-commit-us :estimatedMicros estimate}))))))
+
+(defn removal-families
+  "[DX-IMP2] The protected (entity, attribute) families a removal's entity selectors name, whether or not any row
+  exists yet. An importing write of one of them is then declined (ErasureReplayDeclined), so an import that was
+  framed before the removal can never bring a removed value back."
+  [state selectors]
+  (vec (distinct (for [s selectors :let [e (get s "entityId") a (get s "attribute")] :when e
+                       attr (if a [a] (sort (:attrs state))) :when ((:attrs state) attr)]
+                   [e attr]))))

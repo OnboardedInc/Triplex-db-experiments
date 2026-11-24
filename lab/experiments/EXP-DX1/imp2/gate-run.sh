@@ -24,11 +24,18 @@ off() {  # $1 label, $2 source tree, $3 env set (defaults | v01)
     -i /exp/wfix1/regression.clj -i /exp/imp2/imp2_frames.clj -i /exp/imp2/off_digest.clj -e "(imp2-off-digest/-main)" 2>&1 \
     | grep -E '^DX-IMP2_OFF|Exception|Error' | sed "s/^DX-IMP2_OFF/DX-IMP2_OFF $1 $3/" || true
 }
-for arm in ${DX_IMP2_ARMS:-off-digest mem sql}; do
+for arm in ${DX_IMP2_ARMS:-off-digest mem sql removal}; do
   case $arm in
     off-digest)
       for set in defaults v01; do off base /opt/gateway-base/src $set; off branch /opt/gateway/src $set; done ;;
     mem) gate MEM "" ;;
+    removal)
+      ( mkdir -p /tmp/imp2-erasure && chmod 700 /tmp/imp2-erasure
+        env $v01_env TRIPLEX_ERASURE_DIRECTORY=/tmp/imp2-erasure TRIPLEX_ERASURE_SHRED_GRACE_MS=0 DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+          java $java_opts -cp "$(DATOMIC_EXT_CLASSPATH=/opt/gateway/src bin/classpath)" clojure.main \
+          -i /exp/wfix1/regression.clj -i /exp/imp2/imp2_frames.clj -i /exp/imp2/whole_gate.clj -i /exp/imp2/removal_gate.clj \
+          -e "(removal-gate/-main)" 2>&1 | grep -v '^WARNING: '; exit "${PIPESTATUS[0]}" ) || code=$?
+      echo "DX-IMP2_EXIT REMOVAL ${code:-0}" ;;
     sql)
       work=$(mktemp -d); chmod 755 "$work"; install -d -o 65534 -g 65534 "$work/data" "$work/socket"
       pg=/opt/thin-pg/usr/local/bin; pg_run() { setpriv --reuid=65534 --regid=65534 --clear-groups "$pg/$@"; }

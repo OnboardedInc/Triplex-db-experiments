@@ -634,6 +634,10 @@ export class Stack {
             ]
           : []),
         ...(combination ? Object.entries(combination.settings).flatMap(([key, value]) => [key + "=" + value, "-e"]) : []),
+        // [DX-IMP2] Why: the whole-subject builder's snapshot proof runs its writer with the import bound on.
+        // Rejected: forwarding it for any other holder or mode (their launches stay byte-identical).
+        ...(this.holder === "DX-IMP2" && role === "write" && this.e.mode === "load-proof" &&
+          process.env.TX2_IMPORT_WHOLE_SUBJECT === "1" ? ["TX2_IMPORT_WHOLE_SUBJECT=1", "-e"] : []),
         // [DX-THIN1] Why: the combined check runs the pinned read options (RD1, default off) on both gateways.
         // Rejected: changing the argument list when neither option is asked for.
         ...pinnedReaderEnv().flatMap((x) => [x, "-e"]),
