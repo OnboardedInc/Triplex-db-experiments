@@ -22,6 +22,8 @@ Build `090c189a8` (`exp/DX-INT1`; the document `v01/PRODUCTION-CARD.md` is publi
 
 **Reading.** Every offered commit was stored at every load, with no expiries, and the commit p99 stayed under 50 ms (53.5 ms in the second half at 394). This is far better than the `server`-profile predictions (0.2–15 s), which this card did not run: it ran `server-32` with rolling credits. Against bench 4's out-of-card run at 394 (23.06 commits/s, second-half p99 40.6 ms), this card stored 23.08/s with second-half p99 53.5 ms. The writer rule held in every cell (no cell was stopped). The quiet account's loaded commit p99 stayed between 12 and 21 ms in every cell, so the P6 commit bar held at every load. The quiet account's pinned reads still missed about two thirds of their offers (2,624 errors of 3,840 at 394, 0 wrong), as on every 1B card with the unchanged one-core reader.
 
+**Part 3 completed at 00:16:47 UTC; assembly FAILED.** `scorecard.mjs --assemble` stopped in `v01/windows.ts` line 16, `assert(Number.isFinite(row.due) && row.due >= start && row.due < end)` (`windowStats`, called from `adopted-card.ts` line 341 `addWindows`, line 286 `writeAdoptedCard`, `run.ts` line 42). A write row's scheduled offer time lies outside its cell's window, so no card file was written. The three parts' records are complete and intact in the campaign directory; a renderer fix can assemble them. Evidence: `evidence/DX-SCALE1/prodS-card/prodS-card.tar.gz` in the private evidence folder (SHA-256 `3693fb5912d1a85d825b1fe849a1500774e97d0586af8fb4b32ea4fbb10bb9a4`).
+
 ## Predictions and falsifiers, copied from the builder's document before launch
 
 
