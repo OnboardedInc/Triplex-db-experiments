@@ -339,7 +339,7 @@
                 r (if lost?
                     (with-redefs [d/transact-async (fn [c tx & o] @(apply native c tx o) (promise))] (send! name input))
                     (send! name input))
-                _ (swap! outcomes update (second (:outcome r)) (fnil inc 0))
+                _ (swap! outcomes update (or (second (:outcome r)) "ok") (fnil inc 0))
                 receipt (cond (= 200 (:status r)) {:position (get-in r [:body "position" "v"]) :txId (get-in input ["claims" 0 "txId"])}
                               (#{"CommandConflict" "OperationDuplicate" "OutcomeUnknown"} (second (:outcome r)))
                               (let [found (reference/claim name (str key "/" first))]
