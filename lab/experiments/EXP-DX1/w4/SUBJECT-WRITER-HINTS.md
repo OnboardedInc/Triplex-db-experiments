@@ -120,6 +120,7 @@ segment the commit itself reads on the peer, the most any hint can name). 40 dif
 | REAL2 production exactness gate, fresh toy (`DX_CHK1_HOLDER=DX-W4 DX_W4_SUBJECT_HINTS=1 prep1/manage.py OUT production 10 1 1 0 1`) | W3's off arm on the same code path (this option is inert when off): pass, 840 R and 88 S commits, 2,836 fields | Pass: 840 R and 88 S commits and the 2 wide general-identity commits all acknowledged, 0 expired; 2,836 fields read back exact; `subjectHints.attached` 431 (no lookup declined); write-options `subjectHints: true` |
 | REAL2 production tape on a loader-aged toy (`DX_W4_SUBJECT_HINTS=1 real2/aged-gate.sh OUT`) | W3's off arm: pass, 120 aged rows, 101 writes over aged rows, 1,927 fields, final cut 1,289 | Pass, identical figures: 120 aged rows admitted, a tampered aged row refused, 101 writes over aged rows, 1,927 fields read back, final cut 1,289; every per-subject save carried hints (R 384 of 384, S 52 of 52, all ordered) |
 
+Sources: gate3 ran `0d2298985`, gate4 and both production gates `d12c99bba`; the gateway code is the same in both.
 Gate runs 1 and 2 (the same code with the early variant, and a queue probe whose subjects shared index leaves) gave
 the same exactness results; their arm figures are in the evidence.
 
