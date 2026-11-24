@@ -62,6 +62,8 @@ export class DatomicHttpError extends Error {
 // at once instead of holding a web thread. Reads are idempotent, so the client waits the suggested delay and asks
 // again within the same deadline. Rejected: retrying writes (a write's outcome must stay single) and retrying any 503.
 const busyRetryRoute = /\/(?:reach|reach-many|read|q)$/;
+/** [DX-XQ7] Questions across subjects, served by the question reader when the client names one. */
+export const questionRoute = /^\/v2\/db\/[^/]+\/(?:ids|sweep|find)$/;
 const sleepMs = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 class DatomicRequestTooLarge extends DatomicHttpError {
   constructor() {
@@ -346,6 +348,14 @@ export class DatomicClient {
     return key;
   }
   private readonly endpoint: URL;
+  // [DX-XQ7] Why: a sweep or an ID list reads many subjects once each; sent to a separate read gateway they leave the
+  // main reader's object cache to pinned and current reads. One option, and the routing stays inside the client.
+  // Rejected: the main gateway forwarding them (a hop and a held web thread per page; question_reader.clj).
+  private readonly questionEndpoint: URL | undefined;
+  /** The gateway a call goes to: the question reader for question routes when one is configured. */
+  endpointFor(path: string): URL {
+    return this.questionEndpoint !== undefined && questionRoute.test(path) ? this.questionEndpoint : this.endpoint;
+  }
   constructor(
     endpoint: string,
     readonly timeoutMs = 5000,
@@ -361,6 +371,11 @@ export class DatomicClient {
       readonly receiptPredecessorAttributes?: readonly string[];
       readonly reachKeyBytes?: number;
       readonly historicalRevisionReuse?: boolean;
+      /**
+       * [DX-XQ7] The question reader's URL: questions across subjects (`POST /v2/db/{db}/ids`, `sweep`, `find`) go
+       * there, every other call to `endpoint` as before. Unset (the default): every call goes to `endpoint`.
+       */
+      readonly questionReaderUrl?: string;
     } = {},
   ) {
     this.reachKeyBudget = cacheOptions.reachKeyBytes ?? 4 * 1024 ** 2;
@@ -389,6 +404,11 @@ export class DatomicClient {
     this.endpoint = new URL(endpoint);
     if (this.endpoint.protocol !== "http:" || this.endpoint.username || this.endpoint.password)
       throw new TypeError("Expected HTTP gateway URL without credentials");
+    if (cacheOptions.questionReaderUrl !== undefined) {
+      this.questionEndpoint = new URL(cacheOptions.questionReaderUrl);
+      if (this.questionEndpoint.protocol !== "http:" || this.questionEndpoint.username || this.questionEndpoint.password)
+        throw new TypeError("Expected HTTP question reader URL without credentials");
+    }
     this.agent = new http.Agent({ keepAlive: true, maxSockets: 512, maxTotalSockets: 512 });
     // [DX-T1-12] Why: report real cache occupancy and budgets off the request path, including every writer/reader isolate.
     // Rejected: assume a configured budget is resident, or add a cache walk to every commit.
@@ -547,7 +567,7 @@ export class DatomicClient {
       });
       const socketStarted = performance.now();
       const req = http.request(
-        new URL(path, this.endpoint),
+        new URL(path, this.endpointFor(path)),
         {
           method,
           agent: this.agent,
