@@ -541,7 +541,22 @@ export const errorOf = (error: unknown): ToolError => {
     : error instanceof Error ? error.message
     : typeof error === "object" && error !== null && "message" in error ? String((error as { message: unknown }).message)
     : String(error);
-  return { error: { code, message } };
+  // [DX-CON1] A store error wraps the gateway's own answer (status, code, message); say it, not just "read failed".
+  const causes: string[] = [];
+  for (let c = (error as { cause?: unknown })?.cause, depth = 0; c && depth < 4; c = (c as { cause?: unknown }).cause, depth++) {
+    const x = c as { _tag?: string; name?: string; status?: number; code?: string; message?: string };
+    const text = [x.status ? `HTTP ${x.status}` : "", x.code ?? "", x.message ?? ""].filter(Boolean).join(" ");
+    if (text && !causes.includes(text) && text !== message) causes.push(text);
+  }
+  const deadline = causes.some((t) => /deadline/i.test(t));
+  return {
+    error: {
+      code,
+      message: causes.length ? `${message}: ${causes.join("; ")}` : message,
+      ...(causes.length ? { causes } : {}),
+      ...(deadline ? { hint: "The gateway did not answer within its deadline. On this engine a journal read that walks the bulk loader's saves can take that long; the console bounds every journal page so it should not happen." } : {}),
+    },
+  };
 };
 
 /**

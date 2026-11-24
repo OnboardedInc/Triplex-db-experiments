@@ -513,16 +513,47 @@ export class Demo {
       });
       const keep = (tx: ReturnType<typeof fmt>) => (!ns || tx.changes.length > 0) && (!o.actor || tx.actor === o.actor);
       const compat = this.connection.loaderPositionRows ? { compatibility: compatibilityNote } : {};
+      // [DX-CON1] The gateway's /transactions page walks the position index from after+1 and keeps only journals inside
+      // (after, head]. The bulk loader's saves carry position rows in its own form (G11): they sit in that range but never
+      // pass, so a page that asks for more transactions than exist after `after`, or starts below the sealed head, walks
+      // all of them while holding the gateway's single journal permit. So every page here starts at or after the sealed
+      // head of a loader-built database and asks for at most head - after transactions; a long poll asks for one.
+      // Rejected: the gateway's entity-transactions route on the lean layout, which reads every transaction (G13).
+      const floor = this.connection.loaderPositionRows ? this.connection.sealed.head : 0;
+      const pageAfter = (after: number, want: number, waitMs?: number) => {
+        const from = Math.max(after, floor);
+        const n = waitMs ? 1 : Math.min(want, position - from);
+        if (n <= 0) return Promise.resolve({ transactions: [] as TransactionRecord[], next: undefined as number | undefined, from });
+        return this.run(this.readStore, Effect.flatMap(Triples, (s) => s.transactions({ after: from, limit: n, ...(waitMs ? { waitMs } : {}) })))
+          .then((page) => ({ transactions: page.transactions, next: page.next, from }));
+      };
+      const floorNote = floor
+        ? { searched: `positions after ${floor}, the sealed head: the loader's saves before it are not read by the console (their journal rows are in the loader's own form, gap G11)` }
+        : {};
       if (o.entity !== undefined) {
-        const page = await this.run(this.readStore, Effect.flatMap(Triples, (s) => s.transactionsForEntity(EntityId.make(o.entity!), { limit, ...(o.before === undefined ? {} : { beforePosition: o.before }) })));
-        return { entity: o.entity, order: "newest first", transactions: page.transactions.map(fmt).filter(keep), snapshotPosition: page.snapshotPosition, nextBefore: page.nextBeforePosition ?? null, ...compat, position };
+        // An entity's journal: the transactions since the sealed head that changed it, newest first, in pages of 1,000.
+        const before = Math.min(o.before ?? position + 1, position + 1);
+        const found: TransactionRecord[] = [];
+        let cursor = floor, pages = 0;
+        while (cursor < before - 1 && pages < 10) {
+          const page = await pageAfter(cursor, Math.min(1000, before - 1 - cursor));
+          pages++;
+          for (const tx of page.transactions) if (tx.position < before && tx.changes.some((c) => c.entityId === o.entity)) found.push(tx);
+          if (!page.transactions.length) break;
+          cursor = page.transactions[page.transactions.length - 1]!.position;
+        }
+        const newest = found.sort((a, b) => b.position - a.position);
+        const shown = newest.slice(0, limit);
+        return { entity: o.entity, order: "newest first", transactions: shown.map(fmt).filter(keep), transactionsRead: cursor - floor, pages,
+          nextBefore: newest.length > limit ? shown[shown.length - 1]!.position : null, ...floorNote, ...compat, position };
       }
       if (o.summary) {
         if (o.after === undefined) throw new DemoError("InvalidInput", "Changed since needs after, the position to look back to");
-        let cursor = o.after, read = 0, pages = 0, complete = false;
+        let cursor = Math.max(o.after, floor), read = 0, pages = 0, complete = false;
         const subjects = new Map<string, { subject: string; account: string | null; root: string | null; transactions: Set<number>; facts: number; lastPosition: number }>();
         while (pages < 10) {
-          const page = await this.run(this.readStore, Effect.flatMap(Triples, (s) => s.transactions({ after: cursor, limit: 1000 })));
+          if (cursor >= position) { complete = true; break; }
+          const page = await pageAfter(cursor, 1000);
           pages++;
           read += page.transactions.length;
           for (const tx of page.transactions.map(fmt)) {
@@ -536,21 +567,22 @@ export class Demo {
               subjects.set(k.subject, e);
             }
           }
-          if (page.transactions.length < 1000 || page.next === undefined) { complete = true; break; }
-          cursor = page.next;
+          if (!page.transactions.length) { complete = true; break; }
+          cursor = page.transactions[page.transactions.length - 1]!.position;
         }
         const list = [...subjects.values()].map((e) => ({ subject: e.subject, account: e.account, root: e.root, transactions: e.transactions.size, factsChanged: e.facts, lastPosition: e.lastPosition }))
           .sort((x, y) => y.lastPosition - x.lastPosition);
         return {
           after: o.after, transactionsRead: read, pages, complete,
           ...(complete ? {} : { note: `Stopped after ${pages} pages of 1,000 transactions, at position ${cursor}; ask again with after = ${cursor}.`, resumeAfter: cursor }),
-          subjectsChanged: list.length, subjects: list, ...compat, position,
+          subjectsChanged: list.length, subjects: list, ...floorNote, ...compat, position,
         };
       }
-      const from = o.after ?? Math.max(0, position - limit);
-      const page = await this.run(this.readStore, Effect.flatMap(Triples, (s) => s.transactions({ after: from, limit, ...(o.waitMs ? { waitMs: Math.min(30_000, o.waitMs) } : {}) })));
+      const page = await pageAfter(o.after ?? Math.max(0, position - limit), limit, o.waitMs ? Math.min(30_000, o.waitMs) : undefined);
       const transactions = page.transactions.map(fmt).filter(keep);
-      return { after: from, account: ns ? this.account(o.account!).account : null, actor: o.actor ?? null, transactions, read: page.transactions.length, next: page.next ?? null, ...compat, position };
+      const last = page.transactions[page.transactions.length - 1]?.position;
+      return { after: page.from, account: ns ? this.account(o.account!).account : null, actor: o.actor ?? null, transactions, read: page.transactions.length,
+        next: last ?? null, ...floorNote, ...compat, position };
     });
   }
 

@@ -25,9 +25,12 @@ const direct = (after: number, limit: number) => demo.read(Effect.flatMap(Triple
 const ns = conn.roster.find((r) => r.account === account)!.namespace;
 
 const head = (await call("database_summary", {}))["head"] as number;
-const after = Math.max(0, head - 60);
+// The console reads the journal from the sealed head of a loader-built database on, and never asks a page for more
+// transactions than exist after its start (see changeFeed in store.ts); the direct reads here are bounded the same way.
+const floor = conn.loaderPositionRows ? conn.sealed.head : 0;
+const after = Math.max(floor, head - 60);
 const tool = await call("change_feed", { after, limit: 50 });
-const page = await direct(after, 50);
+const page = await direct(after, Math.min(50, head - after));
 const sig = (t: { position: number; txId: string; actor?: string | null | undefined; configSnapshot?: string | null | undefined; changes: readonly unknown[]; totalChanges?: number | undefined }) =>
   `${t.position} ${t.txId} ${t.actor ?? ""} ${t.configSnapshot ?? ""} ${t.totalChanges ?? t.changes.length}`;
 check("a page equals Triples.transactions (position, transaction, actor, release, changes)", JSON.stringify(tool["transactions"].map(sig)) === JSON.stringify(page.transactions.map(sig)) && tool["next"] === (page.next ?? null),
@@ -43,12 +46,13 @@ for (const actor of actors.slice(0, 3)) {
 }
 
 // Who changed since: against a direct count over every transaction after the position.
-const since = Math.max(0, head - 300);
+const since = Math.max(floor, head - 300);
 const summary = await call("change_feed", { after: since, summary: true });
 const counts = new Map<string, { tx: Set<number>; facts: number }>();
 let cursor = since, read = 0;
 for (;;) {
-  const p = await direct(cursor, 1000);
+  if (cursor >= head) break;
+  const p = await direct(cursor, Math.min(1000, head - cursor));
   read += p.transactions.length;
   for (const t of p.transactions) for (const c of t.changes) {
     const k = subjectKey(c.entityId, conn.roster).subject;
@@ -65,7 +69,8 @@ check("who changed since equals a direct count", same && summary["transactionsRe
 // One entity's journal.
 const entity = `${ns}i9:00000007`;
 const mineE = await call("change_feed", { entity, limit: 20 });
-const directE = await demo.read(Effect.flatMap(Triples, (s) => s.transactionsForEntity(EntityId.make(entity), { limit: 20 })));
+const directAll = await demo.read(Effect.flatMap(Triples, (s) => s.transactionsForEntity(EntityId.make(entity), { limit: 1000 })));
+const directE = { transactions: directAll.transactions.filter((t) => t.position > floor).slice(0, 20) };
 check("one entity's journal equals transactionsForEntity, newest first", JSON.stringify(mineE["transactions"].map(sig)) === JSON.stringify(directE.transactions.map(sig)) &&
   mineE["transactions"].every((t: any, i: number, a: any[]) => i === 0 || a[i - 1].position > t.position), `${directE.transactions.length} transactions`);
 

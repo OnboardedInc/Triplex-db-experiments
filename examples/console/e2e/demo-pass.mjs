@@ -233,6 +233,8 @@ try {
   );
   await snap("query-sealed-head");
   if (farBack !== undefined) {
+    // The same question far back: reload the plain example (its caption is not the sealed-head one), then set the basis.
+    await example("Tasks that are not complete").click();
     await page.getByTestId("basis-control").click();
     await page.getByTestId("basis-position").fill(String(farBack));
     await page.getByRole("button", { name: "Apply" }).click();
@@ -240,6 +242,7 @@ try {
     await page.waitForSelector("[data-testid=query-result] [data-testid=answer-line]", {
       timeout: 60_000,
     });
+    await page.getByRole("tab", { name: "Table" }).click();
     note("3", `position ${farBack}: ` + (await answerLine()));
     await snap("query-far-back");
   }

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { AnswerLine } from "@/components/console/answer-line";
 import { useNewType } from "@/components/console/sheets-context";
-import { EmptyState, ErrorAlert, RecordClockNote } from "@/components/console/states";
+import { EmptyState, ErrorAlert, RecordClockNote, Slow } from "@/components/console/states";
 import { PageTitle } from "@/components/console/layout";
 import { useTool } from "@/hooks/use-tool";
 import { useConnection, useDefaults, useTools } from "@/lib/catalogue";
@@ -218,6 +218,9 @@ export function HomePage() {
             <Link to="/journal">Open Journal</Link>
           </Button>
         </div>
+        <Slow show={feed.slow && !feed.data} elapsed={feed.elapsed}>
+          Reading the journal.
+        </Slow>
         {feed.isError ? (
           <ErrorAlert error={feed.error} onRetry={() => feed.refetch()} />
         ) : (

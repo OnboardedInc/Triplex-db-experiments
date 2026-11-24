@@ -32,6 +32,7 @@ import {
   NotInCatalogue,
   RecordClockNote,
   TableSkeleton,
+  Slow,
 } from "@/components/console/states";
 import { useTool } from "@/hooks/use-tool";
 import { useReleaseLabels } from "@/lib/config";
@@ -325,6 +326,9 @@ export function JournalPage() {
           </Badge>
         )}
       </div>
+      <Slow show={q.slow && !q.data} elapsed={q.elapsed}>
+        Reading the journal.
+      </Slow>
       {q.isError ? (
         <ErrorAlert error={q.error} onRetry={() => q.refetch()} />
       ) : q.isPending ? (

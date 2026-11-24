@@ -62,6 +62,9 @@ export function ErrorAlert({
               {e.status ? `, HTTP ${e.status}` : ""}
             </div>
           )}
+          {typeof e?.detail?.["hint"] === "string" && (
+            <div className="text-xs">{e.detail["hint"] as string}</div>
+          )}
           {hint}
           {onRetry && <RetryButton onRetry={onRetry} />}
         </div>
