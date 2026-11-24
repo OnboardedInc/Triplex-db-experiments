@@ -35,13 +35,13 @@ sql-user=datomic
 sql-password=$secret
 memory-index-threshold=${DX_S4_INDEX_THRESHOLD:-32m}
 memory-index-max=${DX_S4_INDEX_MAX:-80m}
-object-cache-max=32m
+object-cache-max=${DX_S4_OBJECT_CACHE:-32m}
 log-dir=$work
 pid-file=$work/tx.pid
 PROPS
 export DATOMIC_URI_TEMPLATE="datomic:sql://{db}?jdbc:postgresql://$addr:5432/datomic?user=datomic&password=$secret"
 export DATOMIC_EXT_CLASSPATH=/opt/gateway/src
-export DATOMIC_JAVA_OPTS="-Xms96m -Xmx368m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -XX:MaxDirectMemorySize=64m -XX:+ExitOnOutOfMemoryError -Ddatomic.objectCacheMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json"
+export DATOMIC_JAVA_OPTS="-Xms96m -Xmx368m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -XX:MaxDirectMemorySize=64m -XX:+ExitOnOutOfMemoryError -Ddatomic.objectCacheMax=${DX_S4_OBJECT_CACHE:-32m} -Dtriplex.codec.spec=/opt/gateway/codec-spec.json"
 export TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_PREFETCH=0 TX2_PREDECESSOR_LOOKUP=1
 export TX2_SUBJECT_WIDE=1 TX2_SUBJECT_SEVERAL_OWNERS=1 TX2_SUBJECT_CREATE=1 TRIPLEX_TRACE_LEVEL=off
 export TX2_LEAN_NATIVE_QUERY=1 TX2_LEAN_NATIVE_LOG=1

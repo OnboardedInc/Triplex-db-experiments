@@ -127,3 +127,14 @@ export function toyMixCell(quiet: readonly Offer[], band: number, saves: number,
 }
 
 export const mixKinds: readonly MixKind[] = ["enrolment", "newSubject", "attributes", "form", "owedForm"];
+
+/** Folds every existing subject of a tape M cell onto a toy's people (new subjects keep their numbers). */
+export function foldMix<T extends Offer>(tape: readonly T[], fold: (account: number, person: number) => number): T[] {
+  const f = (a: number, p: number) => (p < newPersonBase ? fold(a, p) : p);
+  return tape.map((o) => {
+    const m = o as T & Partial<MixOffer>;
+    if (!m.owners) return { ...o, person: fold(o.account, o.person) };
+    return { ...o, person: f(o.account, o.person), owners: m.owners.map((w) => ({ ...w, person: f(o.account, w.person),
+      refs: Object.fromEntries(Object.entries(w.refs).map(([k, t]) => [k, "constant" in t ? t : { ...t, person: f(o.account, t.person) }])) })) };
+  });
+}

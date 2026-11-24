@@ -45,6 +45,14 @@ if [[ -n ${DX_S3_OWNERS:-} ]]; then
   w3+=(-e "TX2_SUBJECT_SEVERAL_OWNERS=$DX_S3_OWNERS")
   export DX_S3_OWNERS
 fi
+# [DX-S4] Optional: tape M after R and S (DX_S4_MIX=1) and the creation option (DX_S4_CREATE 0 or 1) in the gateway
+# (TX2_SUBJECT_CREATE) and the driver's SDK (creationSaves); needs DX_S3_OWNERS=1. Unset leaves the gate as it was.
+if [[ -n ${DX_S4_MIX:-}${DX_S4_CREATE:-} ]]; then
+  [[ ${DX_S4_MIX:-0} =~ ^[01]$ && ${DX_S4_CREATE:-0} =~ ^[01]$ && ${DX_S3_OWNERS:-} == 1 ]] ||
+    { echo "DX_S4_MIX and DX_S4_CREATE must be 0 or 1, with DX_S3_OWNERS=1" >&2; exit 2; }
+  w3+=(-e "TX2_SUBJECT_CREATE=${DX_S4_CREATE:-0}")
+  export DX_S4_MIX=${DX_S4_MIX:-0} DX_S4_CREATE=${DX_S4_CREATE:-0}
+fi
 docker run -d --name "$name" --memory 3g -p "127.0.0.1:$port:8080" ${w3[@]+"${w3[@]}"} --entrypoint /bin/bash \
   -v "$repo/packages/datomic/gateway/src:/opt/gateway/src:ro" -v "$out/age1src:/age:ro" \
   -v "$repo/lab/experiments/EXP-DX1/prep1/aged-live:/gate:ro" -v "$out/out:/out" "$image" /gate/container.sh >/dev/null
