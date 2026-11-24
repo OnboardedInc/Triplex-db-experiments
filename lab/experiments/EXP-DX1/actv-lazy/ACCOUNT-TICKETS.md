@@ -241,4 +241,27 @@ at 0.2 per second (120 in 600 s) and 10 per second (6,000 in 600 s).
 Shown wrong if: after, any refusal in the 200 accounts; any exactness check fails; or the thin accounts' save p99 under
 removals moves by more than the quiet bar (1.25x or 50 ms) between the arms.
 
+## 9. Merges, and the stored-function identities with every option off
+
+| Merge | Conflicts and how each was resolved (both sides kept every time) |
+| --- | --- |
+| `exp/DX-ERA2-removal-per-account` `6bc2484f0` (`dfa095cf9`) | none; no file changed on both sides |
+| `exp/DX-IMP2-import-whole-subject` `d4411c77b` (`26420c297`) | `ha1/local.ts`: the holder rules of ACT5, ACT6, ACT8 and IMP2's `snapshotWhole`, all in the one assert; `main.clj`: the frontier keeps ERA2's per-account fields and adds IMP2's removed families (each under its own option); `privacy.clj` `apply-entry`: IMP2's families, then ERA2's per-account counters |
+| ERA2's fix head `a9da13f89` (`ddeb986d3`) | `up.sh`: both blocks; `erase.clj`: the fix's F3 refusal goes into the base removal here and into `removal_erase.clj` (where ERA2's removal code lives on this branch), its restore rebuild through privacy's hooks; `privacy.clj`: the prepared removal's entry kept in the cut, written with nested `when`/`if`; `ensure-ticket!` (with the fix's wait) lives in `removal_scope.clj`; `removal_scope.clj`, `storage.clj`, `removal_commit.clj` as they came, `removal_commit.clj`'s references pointed at `removal_erase.clj` |
+| ERA2's head `5114a74b0` (`adcbc8253`) | `privacy.clj`: ERA2 changed `ensure-ticket!` there; on this branch it lives in `removal_scope.clj`, which takes the change (`pending-touches?` resolved from `removal_commit.clj` on a database guarded per account); `main.clj`'s cross-database check resolves it the same way |
+
+**Identities (`act9/idents.sh`, the several-owners builder's method: every stored function's identity under seven writer
+settings, on one pinned runtime image by ID, compared with the base `2e7ae66c4`).** At the start, after the first two
+merges: **17 of 58 moved** in every setting (commit, subject-save, owner-layout, packed-journal, predecessor,
+general-prefetch). Cause: ERA2's new code in `removal_scope.clj`, `privacy.clj` and `erase.clj` loaded before those
+namespaces, and its new functions renumbered the generated names inside their stored texts; a database opened by the
+base would then install its writer functions again. Fix (`a0baaaed1`): `removal_scope.clj` loads after every stored
+function text; the early files reach it through plain values in `privacy.clj` filled when it loads; ERA2's removal code
+moves verbatim to `removal_erase.clj`; every changed early line uses only `if`, `when` and `let`. ERA2 found the same
+fault on its own branch later and fixed it by moving two functions into `removal_commit.clj` (`f2bf6b690`); both fixes
+now hold together. The two keys new to the merged tree (`removal-scope/fence-code`, `fence-ident`) are installed only
+when a database is moved per account.
+
+<!-- IDENTS-FINAL -->
+
 <!-- RESULTS -->
