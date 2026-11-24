@@ -42,7 +42,7 @@ own code at its load pin (`5cda4ab20`) in its own peer JVM and transactor: 200 n
 saves in groups of 8 (`native/age!`, `native/grouped-age!`, the bulk loader's renders, each save with the loader's
 non-canonical position row), aged head 1,261; then a run of 3,000 position entries that yield no journal (positions
 1,262 to 4,261, in the header shape of AGE1's native seed frames: position, transaction ID, record clock, no journal);
-then one ordinary save at 4,262 through a fresh gateway. Evidence: `agents/OPUS-JRN1/runs/g1/` (private).
+then one ordinary save at 4,262 through a fresh gateway. Evidence: `agents/OPUS-JRN1/runs-2026-11-24.tar.zst` (private; `runs/g1`, `runs/g2`, the suite arms).
 Result: **DX-JRN1 GATE PASS.**
 
 **Finding: the loader's saves pass the feed's filter.** All 1,200 aged saves came back as journals from the old route
