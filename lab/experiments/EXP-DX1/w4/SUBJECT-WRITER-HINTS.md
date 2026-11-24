@@ -100,10 +100,11 @@ segment the commit itself reads on the peer, the most any hint can name). 40 dif
 - **The lookup-only function reaches what hints can reach:** whole-commit hints (19 segments per save, against the
   function's 28 to 30) leave the same 0.30 per first touch.
   About 0.3 reads per first touch stay inside apply even then; which segments they are is not established.
-- **W3's question answered the same way.** The general writer's EAVT loads stayed because its function reads the
-  owners' rows by EAVT first (predecessor lookup) and W3's arms never let a commit wait in the queue long; W3's
-  whole-commit arm left the same residue. The same applies here: on an idle writer hints buy little EAVT; on a busy
-  writer, which is exactly the first-touch wave, they buy most of it.
+- **W3's question, most likely the same answer (inferred, not run on the general writer).** The general function's
+  early reads are the retired rows' owners and rows by EAVT (predecessor lookup); W3's arms kept the writer mostly
+  unqueued (one at a time, or eight in flight paced by the gateway's own cold lookups on two cores), and its
+  whole-commit arm left the same residue, as here. On an idle writer hints buy little EAVT; on a busy writer, which
+  is exactly the first-touch wave, they buy most of it. Running w4's queue probe on the general writer would confirm.
 - **A hint does not depend on what the peer holds:** the probe's 40 subjects (spread, cold peer) give 29 segments,
   and 29 again on an immediate repeat after the peer loaded them all; 28 after the peer first read the owner's EAVT.
   The peer read 111 segments for them, so the segments were really cold on the first lookup.
