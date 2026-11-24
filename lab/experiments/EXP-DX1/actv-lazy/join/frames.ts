@@ -16,9 +16,27 @@ export function frameMode(value = process.env.TX2_SETTLE_FRAMES): FrameMode {
 
 /** The writer's own bound, as `Archive.write` checks it before a frame is queued. */
 export const frameBoundUs = 8000;
+// [DX-ACT7] Why: the estimate a frame is admitted by (`bulkUs`: 3,500 µs per transaction, 45 µs per estimated row, 70 µs
+// per KiB of estimated wire) is a conservative model, never measured against the transactor's own serial apply. The
+// bound (8 ms of estimated service, what one frame may hold the single writer for while a live save waits) stays; the
+// model's three coefficients can be set from a server's measurement with TX2_SETTLE_COST=FIXED_US,ROW_US,KIB_US (whole
+// numbers), so a frame holds as much as the measured service allows. Unset: exactly `bulkUs`. Safe to change between
+// frames: every frame follows the durable progress row and commits only while it is unchanged, so a retried frame built
+// with other coefficients is refused if the first one landed. Rejected: raising the 8 ms bound (it is the live save's
+// wait) and changing the coefficients by default before the server measures them (settlement-cost run in act7/RUN2.md).
+type Cost = { fixedUs: number; rowUs: number; kibUs: number };
+export function settleCost(value = process.env.TX2_SETTLE_COST): Cost | undefined {
+  if (value === undefined || value === "") return undefined;
+  const parts = value.split(",").map(Number);
+  assert(parts.length === 3 && parts.every((x) => Number.isSafeInteger(x) && x >= 0) && parts[0]! >= 500,
+    "TX2_SETTLE_COST is FIXED_US,ROW_US,KIB_US (whole numbers, fixed at least 500)");
+  return { fixedUs: parts[0]!, rowUs: parts[1]!, kibUs: parts[2]! };
+}
+const cost = settleCost();
 export function frameEstimate(ops: readonly unknown[]) {
   const wire = 4096 + 3 * Buffer.byteLength(canonical(ops));
-  const us = bulkUs(ops.length * 5 + 16, wire);
+  const rows = ops.length * 5 + 16;
+  const us = cost ? cost.fixedUs + cost.rowUs * rows + Math.ceil((cost.kibUs * wire) / 1024) : bulkUs(rows, wire);
   return { wire, us, rows: ops.length, fits: wire < bulkWireLimit && us <= frameBoundUs };
 }
 

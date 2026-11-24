@@ -35,6 +35,7 @@ import { BulkQueue } from "./bulk.ts";
 import { firstOffer } from "../../ha1/first-offer.ts";
 import { largeRelease, parseShape, shapeName } from "./large-release.ts";
 import { checkForms, expectForms } from "./form-expect.ts";
+import { agedBase, checkAgedLive, type AgedBase, type AgedSeal } from "../act7/aged.ts";
 
 const validTime = W0.POPULATION_VALID_TIME;
 export const rates = [3.5, 23.5, 39.4] as const;
@@ -172,7 +173,9 @@ type PairSample = {
   readMissing: number;
   savesOnly?: number | null;
 };
-type History = Map<number, { position: number; version: string; width: number }[]>;
+// [DX-ACT7] `slots`: a production-shaped save's written field numbers (v01/production-card.ts); absent, fields 0 to
+// width - 1 as before.
+type History = Map<number, { position: number; version: string; width: number; slots?: number[] }[]>;
 // [DX-INT1] Why: SCALE1 packs consecutive people into one loader frame, and the pooled loader keeps two frames in
 // flight, so a later frame can commit first. Positions then fall in member order only within each frame. What the
 // positions must show is that each person's original facts came from one loader frame and each frame holds one
@@ -228,18 +231,24 @@ export async function seedPositions(client: DatomicClient, seed: AdoptedSeed, ac
   return detected;
 }
 
-export function expected(i: number, at: number, edits: History, positions: number[]) {
+export function expected(i: number, at: number, edits: History, positions: number[], aged?: AgedBase) {
   // [DX-ACT1] Why: SCALE1 packs one person's original facts atomically. Trace provenance uses their witnessed loader position.
   // Rejected: giving every authored fact position one, which produces the right tasks but different durable notice versions.
   let rows = authoredSeed(i, positions[i]!);
+  const owner = task(0, i).split("/").at(-1)!;
+  // [DX-ACT7] On an aged database: the subject's task fields as AGE1's tape left them (each at its own position),
+  // regenerated from the handoff's replay inputs (act7/aged.ts). Unset, as before.
+  for (const f of aged?.(i) ?? [])
+    rows = authoredWrite(rows, [{ e: owner, a: f.attribute, v: { type: "string", value: f.value } }], f.position, 0);
   for (const e of edits.get(i) ?? []) {
     if (e.position > at) break;
+    const slots = e.slots ?? Array.from({ length: e.width }, (_, n) => n);
     rows = authoredWrite(
       rows,
-      Array.from({ length: e.width }, (_, n) => ({
-        e: task(0, i).split("/").at(-1)!,
+      slots.map((n) => ({
+        e: owner,
         a: field(n),
-        v: { type: "string", value: sha([e.version, n]).slice(0, 57) },
+        v: { type: "string" as const, value: sha([e.version, n]).slice(0, 57) },
       })),
       e.position,
       0,
@@ -354,8 +363,21 @@ export async function runHeld(
   let connected: Awaited<ReturnType<typeof readerPeer>> | undefined;
   let worker: Settlement | undefined;
   try {
-    const verified = await checkAdoptedPeer(reader, seed, seed.scope.cut);
-    assert.deepEqual(verified, await checkAdoptedPeer(writer, seed, seed.scope.cut));
+    // [DX-ACT7] Why: on an aged copy (the sealed 1 billion database, or the miniature) the live head is the aged head,
+    // not the SCALE1 cut: the held runner adopts it as the scorecard does, then checks AGE1's last save and every aged
+    // subject's task fields against the handoff's replay tape before anything is written. Unset, as before.
+    // Rejected: running on the aged copy with the fresh cut (refused at the head check: "Restored logical head differs").
+    const aged = (seed as AdoptedSeed & { aged?: AgedSeal }).aged;
+    const head = aged?.head ?? seed.scope.cut;
+    const verified = await checkAdoptedPeer(reader, seed, head);
+    assert.deepEqual(verified, await checkAdoptedPeer(writer, seed, head));
+    const agedLive = aged ? await checkAgedLive(reader, seed.scope.db, aged) : null;
+    if (agedLive) jsonFile(path.join(out, "held-aged-live.json"), { source, attempt: peer.attempt, ...agedLive });
+    // [DX-ACT7] Diagnostic only: the oracle without the aged history (the miniature shows it then fails).
+    assert(process.env.DX_ACT7_PLAIN_ORACLE === undefined || (diagnostic && process.env.DX_ACT7_PLAIN_ORACLE === "1"));
+    const agedOf = (account: number) =>
+      aged && process.env.DX_ACT7_PLAIN_ORACLE !== "1" ? agedBase(aged, account) : undefined;
+    const aged0 = agedOf(0);
     const options = await writer.request<{
       attempt: string;
       database: string;
@@ -373,7 +395,7 @@ export async function runHeld(
     }>("GET", "/v1/db/" + seed.scope.db + "/write-options");
     assert.deepEqual(
       [options.database, options.position, options.gatewaySourceHash],
-      [seed.scope.db, seed.scope.cut, peer.gatewaySource],
+      [seed.scope.db, head, peer.gatewaySource],
     );
     assert(
       options.commitFunctionInstalled && options.strictRecordClocks && options.rowsVersion === 3,
@@ -385,7 +407,8 @@ export async function runHeld(
       assert(ordered && !options.options.groupCommit && !options.subjectPrefetch);
       assert.match(options.subjectFunction, /^:triplex\.subject\/v-[a-f0-9]{24}$/);
     }
-    const { cut, name, db } = seed.scope,
+    const { name, db } = seed.scope,
+      cut = head,
       people = seed.image.people;
     const positions = await seedPositions(reader, seed);
     const account = keyFor(0);
@@ -533,7 +556,7 @@ export async function runHeld(
           document: r.doc,
           old: null,
           basis: b,
-          worlds: [expected(i, b.tx, history, positions)],
+          worlds: [expected(i, b.tx, history, positions, aged0)],
           fold: false,
         });
         values.exact = probe.result.json === JSON.parse(text)[0].json;
@@ -629,7 +652,7 @@ export async function runHeld(
           const first = i + workerIndex * 32;
           if (first >= people) return;
           const worlds = Array.from({ length: Math.min(32, people - first) }, (_, j) =>
-            expected(first + j, initial.position, history, positions),
+            expected(first + j, initial.position, history, positions, aged0),
           );
           const b = { tx: initial.position, validTime };
           const text = await oracle.call("check", {
@@ -665,7 +688,7 @@ export async function runHeld(
             );
             if (initialLarge) {
               const i = Number(row.subject.slice(4)),
-                e = expectForms(expected(i, initial.position, history, positions), initialDoc, validTime);
+                e = expectForms(expected(i, initial.position, history, positions, aged0), initialDoc, validTime);
               const got = checkForms(e, row.subject, saved?.changes ?? [],
                 notices.slice(entries, entries + row.deliveries.length) as never, true);
               independent.subjects++;
@@ -727,6 +750,7 @@ export async function runHeld(
       await livePhase({
         out, s, a, offer, verifyRead: verifyRead as never, demand: demand as never, writer, seed, people, history, positions,
         ledger: activeLedger, releases, descriptor, db, ordered: Boolean(ordered), attempt: peer.attempt, reader,
+        aged: aged ? agedOf : undefined, agedSeal: aged,
       });
       return;
     }
