@@ -239,3 +239,45 @@ Sam, 2026-11-13: "I don't care about XTDB. Don't go back to that." Not a problem
    attribute filter and a row limit inside the gateway's history read.
 9. **The production-shaped tape, one commit per form row (shape R), schedules rows past each cell's end,** so its card
    cannot be assembled; fixing the tape changes the measured R tapes.
+
+## H12. What the Mac work of 2026-11-24 added (state of each H11 problem, and new open problems; evidence in `lab/experiments/EXP-DX1/STATUS.md` of that day)
+
+**State of H11's problems.** H11.2 (questions across subjects): answered at toy size by four pieces, none run on a
+server: ID lists, a slow exact route for every question shape, a commit-time index with a `find` route, and a separate
+reader for questions. H11.3 (journal bounds), H11.4 (at-least reads) and H11.6 (frames sized by bytes): built and on the
+one branch. H11.1 (uncached pinned reads): cost broken down (1.71 ms of reader CPU per subject, 1.76 storage loads where
+the layout needs 1); two options built; cause of the extra 0.66 loads not established.
+
+New open problems:
+
+1. **Three operations required the whole database to stand still, and one database holds every account.** Settlement
+   frames (fixed at toy size with a guard on the writer's own progress row), Publish and enrolment (every Publish result
+   so far was made with the harness pausing and draining saves; refused 3 of 3 beside other accounts' saves; being
+   designed), and removal on request (one removal sequence and one lock for the whole database; being designed). The
+   hard part is the same in all three: replace a guard on the whole database's head with the narrowest guard that is
+   still exact, and state what a position means afterwards. Look for a fourth.
+2. **The commit-time index has no measured cost at 1 billion.** On the toy it adds exactly 2 datoms per replaced
+   declared value and 0 storage reads inside apply; the estimate for three declared values per save is 0.36 to 0.69 ms
+   of writer time. Unknown: what the extra datoms do to Datomic's indexing jobs and to the slowest saves; whether the
+   string key or the tuple form is cheaper; the backfill of the sealed database (predicted 90 to 240 minutes).
+3. **A question read subject by subject displaces the reader's cache.** One sweep of a deep account loads 150,000 to
+   200,000 segments through a cache of about 6,000. A separate question reader removes the effect on the toy, but it
+   does not fit in the 89 GiB memory table of the 1 billion profile: it needs a second machine or a larger one.
+4. **Values a release writes in the background are not visible to any question route until settlement reaches the
+   subject.** Both routes answer stored facts only and say so. Needed: a rule (refuse, wait, or evaluate the release for
+   the subject on read) and its cost.
+5. **Settlement is bounded by an estimate, not by measured work.** A frame closes when the next subject would push the
+   estimated writer service over 8 ms; real work is about 30 to 45% of that (derived). Ten accounts owing 20 forms on
+   100,000 subjects need 786,000 frames and 3.4 to 5.5 hours; a calibrated estimate halves both. Needs one server run to
+   calibrate, then the real question: how much writer time may background work take beside live saves.
+6. **Full release documents cap a release at about 0.5 MiB, not 1.3.** The request carries each value twice and one
+   fact value holds the new and old documents together. Definitions stored once by content remove the cap (3.5 KB
+   Publish record at any size); then the read binds: 5,000 policies evaluated and 308 KB returned per read at 1.25 MiB.
+7. **A second machine can be made a protected copy no faster than its disk can be copied and checked.** The 603 s
+   measured was a checksum pinned to one core; forecast 80 to 170 s on 12 cores. The 60 s bar needs a third machine
+   already streaming (option C).
+8. **Several owners in one save, and import of a subject over about 46 facts, do not yet follow the save contract.** A
+   form page that also writes the subject's profile takes the general writer; an import splits a large subject across
+   commits and a reader can see it half imported. Both being built.
+9. **Nothing built on 2026-11-24 has run on a server.** The list of server runs is in `v01/READINESS.md` on the one
+   branch and on each branch's page; none is approved in money terms.
