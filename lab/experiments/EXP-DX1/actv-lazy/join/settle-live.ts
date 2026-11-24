@@ -237,18 +237,15 @@ export async function livePhase(c: LiveContext) {
       const sight: unknown[] = [];
       // A rival writer of the same release in the same process, with its own queue (a restart
       // that overlaps the old process, or a second host): exactly one of two frames that follow one progress row lands.
-      const rival =
-        k.extra === "rival" && published
-          ? await Settlement.open(c.a, new BulkQueue(1), false, k.frames, k.precondition)
-          : undefined;
+      // (A second process: two writers in one process would share the process's claim registry.)
+      const rival = k.extra === "rival" && published ? { result: undefined as unknown } : undefined;
       const begins = now() + 400,
         ends = begins + seconds * 1000;
       const origin = begins - performance.timeOrigin;
       // `stop`: settlement stops at the end of the save window (its progress stays durable for a later `same` case).
       if (worker && k.extra === "stop") worker.archive.stopAt = worker.recorder.archive.stopAt = ends - performance.timeOrigin;
       let stopped = false;
-      rival?.archive.contest.reset(origin);
-      rival?.recorder.archive.contest.reset(origin);
+
       worker?.archive.contest.reset(origin);
       worker?.recorder.archive.contest.reset(origin);
       const gate: PublishInterleave = {
@@ -279,7 +276,7 @@ export async function livePhase(c: LiveContext) {
         while (now() < begins) await sleep(Math.ceil(begins - now()));
         if (k.extra === "kill") {
           // Settle in a child process killed at a random moment (inside or between frames), three times, then here.
-          for (let j = 0; j < 3; j++) kills.push(await killedChild(c, published.r.seq, k, 150 + Math.floor(Math.random() * 900)));
+          for (let j = 0; j < 3; j++) kills.push(await killedChild(c, published.r.seq, k, 80 + Math.floor(Math.random() * 400)));
         }
         if (k.extra === "pause") {
           // Paused: nothing is written for 2 s; a restart (a new worker) is still paused for 1 s; then paced at 300 ms
@@ -306,8 +303,10 @@ export async function livePhase(c: LiveContext) {
           else process.env.TX2_SETTLE_CONTROL = controlled;
         } else if (k.extra === "second") {
           // A second release while the first is being settled: pause saves and frames, Publish, resume.
+          // Frames of this account paced 400 ms apart, so the second Publish lands after the first value frame.
+          queue.pace(worker.archive.turnKey(), 400);
           const firstRun = worker.settle(published.r.seq);
-          await sleep(Math.min(700, (seconds * 1000) / 4));
+          while (worker.archive.contest.committed < 1) await sleep(20);
           gate.paused = true;
           await queue.hold();
           try {
@@ -320,10 +319,15 @@ export async function livePhase(c: LiveContext) {
             gate.paused = false;
             gate.resume?.();
           }
+          queue.pace(worker.archive.turnKey(), null);
           const first = (await firstRun).values.state;
           superseded = { ...(superseded as object), status: first.status, through: first.through, frame: first.frame };
           await worker.settle(current.seq);
-        } else if (rival) await Promise.all([worker.settle(published.r.seq), rival.settle(published.r.seq)]);
+        } else if (rival)
+          [, rival.result] = await Promise.all([
+            worker.settle(published.r.seq),
+            killedChild(c, published.r.seq, k, 120_000),
+          ]);
         else
           await worker.settle(published.r.seq).catch((e) => {
             if (!(e instanceof SettlementStopped)) throw e;
@@ -435,9 +439,7 @@ export async function livePhase(c: LiveContext) {
         sight,
         superseded: superseded ?? null,
         lane: lane ? lane.stats() : null,
-        rival: rival
-          ? { values: rival.archive.contest.summary(), notices: rival.recorder.archive.contest.summary() }
-          : null,
+        rival: rival ? { child: rival.result } : null,
         saves: {
           account: saveSide(rows.filter((r) => r.account === 0), turns),
           neighbours: saveSide(rows.filter((r) => r.account > 0), turns),
@@ -448,7 +450,7 @@ export async function livePhase(c: LiveContext) {
       jsonFile(path.join(c.out, "act5-case-" + k.name + ".json"), result);
       results.push(result);
       await worker?.close();
-      await rival?.close();
+
       // A large release is followed by its form-free predecessor again (settled quietly, checked the same way).
       if (k.release !== "none" && k.release !== "small" && k.extra !== "second" && k.extra !== "stop" && k !== cases.at(-1)) {
         const formFree = k.release === "same" ? published!.old : base;
