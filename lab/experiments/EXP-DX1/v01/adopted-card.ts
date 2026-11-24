@@ -25,7 +25,9 @@ type Card = { source: string; age: Age; writer: Writer; jvm?: JvmProfile; toy: b
   windowSeconds?: WindowSeconds; creditMode?: CreditMode;
   prepared?: boolean; profile?: ServerProfile; txJvm?: JvmProfile; writeJvm?: JvmProfile; diagnostics?: ReturnType<typeof writeDiagnostics>; separateWal?: boolean; failure?: string;
   /** The save tape: its name, or the input's binding of every loaded cell's tape report (assembled campaigns). */
-  tape?: string | { name: string } };
+  tape?: string | { name: string };
+  /** [DX-CARD1] A campaign assembled by a later renderer commit than the one that ran it (run.ts --renderer). */
+  renderer?: { commit: string; files: string[] } };
 type Observation = Awaited<ReturnType<typeof adoptedArm>>;
 const tag = (x: unknown) => (typeof x === "number" && Number.isFinite(x)) ? String(Number(x.toFixed(3))) : "—";
 export function writeAdoptedCard(run: Card) {
@@ -149,7 +151,7 @@ export function writeAdoptedCard(run: Card) {
     return "[adopted arm](" + rel + ")";
   };
   const rows = new Map<string, string[]>();
-  const cellWindows: string[] = [], cellTelemetry: string[] = [];
+  const cellWindows: string[] = [], cellTelemetry: string[] = [], edgeRows: string[] = [];
   const partial = "PARTIAL";
   const p2Arms = [[loaded, "loaded"], [control, barrierRoot + "loaded"]] as const;
   const commit = p2Arms.flatMap(([a, dir]) => a && a.p2.offered ? [{
@@ -338,7 +340,17 @@ export function writeAdoptedCard(run: Card) {
   }
 
   function addWindows(writes: WindowWrite[], arm: Observation, title: string) {
-    for (const w of windowStats(writes, arm.start, arm.p6!.durationSeconds)) {
+    // [DX-CARD1] Each row carries its tape offset (checkRated proved writes[i].due === start + tape[i].ms), so
+    // windowStats places it by the offset; see windows.ts for the rule on rows whose due rounds to the cell end.
+    const offsets = new Map<unknown, number>(arm.writes.map((row: unknown, i: number) => [row, arm.tape[i]!.ms]));
+    const stats = windowStats(writes.map((row) => {
+      const offset = offsets.get(row);
+      assert(offset !== undefined, "a window row is not one of its cell's writes");
+      return { ...row, offset };
+    }), arm.start, arm.p6!.durationSeconds);
+    const edge = stats.find((w) => w.name === "whole")!.edge;
+    if (edge) edgeRows.push(`${title}: ${edge}`);
+    for (const w of stats) {
       cellWindows.push(`| ${title} | ${w.name} | ${tag(w.storedPerSecond)} | ${tag(w.latency.p50Ms)} | ${tag(w.latency.p99Ms)} | ${tag(w.senderWait.p99Ms)} | ${w.offered} | ${w.acked} | ${w.latency.count} | ${w.expired} |`);
     }
   }
@@ -471,6 +483,8 @@ export function writeAdoptedCard(run: Card) {
     P8: "No verified fixed-pace import arm from this attempt.",
   };
   const text = base.trimEnd().split("\n").map((line) => {
+    if (run.renderer && line.startsWith("Source `" + run.source + "`")) return line + "\n\n" +
+      `Assembled at renderer \`${run.renderer.commit}\` from this campaign, run at source \`${run.source}\`. The renderer differs from the source only in: ${run.renderer.files.map((f) => "`" + f + "`").join(", ")}.`;
     if (line === "## Run settings") return `**Save tape:** ${tapeTitle(cardTape)}.` + (shape ? " P2 below counts commits; the production table gives rows and saves." : "") + "\n\n" + (run.writer === "per-person-ordered"
       ? run.toy ? "The headline toy runs the full adopted workload. Barrier6 repeats P2 and P6."
         : "The headline ordered profile runs the full workload. Barrier6 repeats P2 and P6 on the same launch profile."
@@ -498,7 +512,8 @@ export function writeAdoptedCard(run: Card) {
     ...(cellWindows.length ? ["## Within-cell save windows", "",
       "Stored/s counts end-of-save durable ACKs timestamped in each interval. Save latency and sender wait follow the scheduled offer, including slow completions received after its interval. Recovered receipts contribute latency and verified saves, with no in-window ACK credit.", "",
       "| Cell and account scope | Window | Stored/s | Save p50 ms | Save p99 ms | Sender wait p99 ms | Offers | In-window ACKs | Verified receipts by offer | Expired by offer |",
-      "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |", ...cellWindows, ""] : []),
+      "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |", ...cellWindows, "",
+      ...(edgeRows.length ? ["Rows are placed in a cell and a half by their scheduled tape offset. Rows scheduled within half a floating-point step of their cell's end have a due time equal to the end on the epoch clock; they are counted in the cell and the second half they were offered in. Such rows per scope: " + edgeRows.join(" · ") + ".", ""] : [])] : []),
     ...(cellTelemetry.length ? ["## Within-cell counters", "", ...cellTelemetry, ""] : []),
     ...(productionRows.length ? ["## Production-shaped neighbour saves", "",
       `Neighbour accounts only (the quiet account is P6). Latencies are p50 / p99 ms from the scheduled offer to the durable acknowledgement; save completion runs from a save's first row offered to its last row acknowledged. Storage reads are SQL reads per commit from each acknowledgement, in the first 60 s / from 150 s. The per-subject ordered writer takes only commits of one to three facts that each replace a value; every other commit takes the general writer. Commits over 256 assertions carry the general identity. Every field of every production subject was read back at the cell's terminal cut and matched the acknowledged writes.`, "",
