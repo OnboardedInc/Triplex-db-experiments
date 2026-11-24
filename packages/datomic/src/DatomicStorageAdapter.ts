@@ -73,6 +73,12 @@ export const makeDatomicStorageAdapter = (
     readonly serverRecordTime?: boolean;
     readonly indexedJournalReads?: boolean;
     readonly recordedJournalReads?: boolean;
+    /**
+     * [DX-JRN1] Ask the gateway for bounded journal pages (`bounded: true`) and follow each page's cursor until the
+     * caller's limit or the end of the cut, so no single request walks the position index without a bound. The answers
+     * are the same as without it. Default off; also on with TRIPLEX_DATOMIC_BOUNDED_JOURNAL=1.
+     */
+    readonly boundedJournalPages?: boolean;
   } = {},
 ): StorageAdapterService => {
   // [DX-T1] Why: Effect scopes include staging/validation and always close on typed failure or interruption.
@@ -84,6 +90,8 @@ export const makeDatomicStorageAdapter = (
     });
   const key = Symbol(scopeKey);
   const db = databaseName(scopeKey);
+  const boundedJournal =
+    options.boundedJournalPages ?? process.env["TRIPLEX_DATOMIC_BOUNDED_JOURNAL"] === "1";
   const maxRetries = options.maxRetries ?? 12;
   const resolutionTimeoutMs = options.resolutionTimeoutMs ?? 45_000;
   let lastSeenPosition = 0;
@@ -831,16 +839,44 @@ export const makeDatomicStorageAdapter = (
       Effect.gen(function* () {
         if (yield* current) return undefined;
         return yield* read(async () => {
-          const result = await client.request<{
+          type Page = {
             declined?: string;
             head: number;
             transactions: [string, number, string[]][];
-          }>(
-            "POST",
-            `/v2/db/${db}/transactions`,
-            { after, limit, waitMs },
-            Math.max(30_000, waitMs + 5000),
-          );
+            next?: number;
+            stopped?: "limit" | "end" | "entries" | "time";
+          };
+          let result: Page;
+          if (!boundedJournal)
+            result = await client.request<Page>(
+              "POST",
+              `/v2/db/${db}/transactions`,
+              { after, limit, waitMs },
+              Math.max(30_000, waitMs + 5000),
+            );
+          else {
+            // [DX-JRN1] Why: each bounded page holds the journal permit for at most its examine bound; the cursor
+            // resumes exactly after the last position the gateway considered. Only the first page may wait.
+            // Rejected: treating a short bounded page as the end of the feed (it may have stopped on its bound).
+            const transactions: Page["transactions"] = [];
+            let cursor = after;
+            for (let first = true; ; first = false) {
+              const page = await client.request<Page>(
+                "POST",
+                `/v2/db/${db}/transactions`,
+                { after: cursor, limit: limit - transactions.length, waitMs: first ? waitMs : 0, bounded: true },
+                Math.max(30_000, (first ? waitMs : 0) + 5000),
+              );
+              if (page.declined) return undefined;
+              if (page.stopped === undefined || page.next === undefined)
+                throw new TypeError("Bounded journal page without a cursor");
+              if (page.next < cursor) throw new TypeError("Bounded journal cursor moved backwards");
+              transactions.push(...page.transactions);
+              if (page.stopped === "limit" || page.stopped === "end" || transactions.length >= limit) break;
+              cursor = page.next;
+            }
+            result = { head: 0, transactions };
+          }
           if (result.declined) return undefined;
           return result.transactions.map(([txId, position, rows]) => {
             // [DX-B4-T1] Why: portable feed enumeration includes only typed journal rows, even after SPI writes.
@@ -889,16 +925,44 @@ export const makeDatomicStorageAdapter = (
         }
         if (!recordedOnly && !client.supportsJournalCuts(db)) return undefined;
         return yield* read(async () => {
-          const result = await client.request<{
+          type Page = {
             declined?: string;
             positions: [string, number][];
-          }>("POST", `/v2/db/${db}/entity-transactions`, {
-            entityId,
-            limit,
-            basis: recordedOnly ? { recordedPosition: basis.recordedPosition } : basis,
-            ...(recordedOnly ? { recordedOnly } : {}),
-            ...(beforePosition === undefined ? {} : { beforePosition }),
-          });
+            stopped?: "limit" | "end" | "entries" | "time";
+            nextBefore?: number;
+          };
+          const ask = (before: number | undefined, n: number, bounded: boolean) =>
+            client.request<Page>("POST", `/v2/db/${db}/entity-transactions`, {
+              entityId,
+              limit: n,
+              basis: recordedOnly ? { recordedPosition: basis.recordedPosition } : basis,
+              ...(recordedOnly ? { recordedOnly } : {}),
+              ...(before === undefined ? {} : { beforePosition: before }),
+              ...(bounded ? { bounded: true } : {}),
+            });
+          let result: Page;
+          if (!boundedJournal) result = await ask(beforePosition, limit, false);
+          else {
+            // [DX-JRN1] Why: the bounded walk runs newest first and resumes below the lowest position it considered.
+            // Rejected: the unbounded lean walk, which reads every transaction before answering.
+            const positions: Page["positions"] = [];
+            let before = beforePosition;
+            for (;;) {
+              const page = await ask(before, limit - positions.length, true);
+              if (page.declined) {
+                result = page;
+                break;
+              }
+              positions.push(...page.positions);
+              if (page.stopped === "limit" || page.stopped === "end" || page.stopped === undefined || positions.length >= limit) {
+                result = { positions };
+                break;
+              }
+              if (page.nextBefore === undefined || (before !== undefined && page.nextBefore > before))
+                throw new TypeError("Bounded entity journal cursor moved forwards");
+              before = page.nextBefore;
+            }
+          }
           if (result.declined) {
             if (recordedOnly)
               throw new TypeError(`Recorded journal index declined (${result.declined})`);
