@@ -37,10 +37,12 @@
   (loop [attempt 0 out [] between between]
     (let [f (frontier (:name c))
           facts (without (vec (mapcat :facts subjects)) (get f "families"))
+          ;; The frame is framed from this read; the removal falls between it and the send. The commit's clock is
+          ;; taken at send, as the server-assigned record time is.
+          _ (when between (between))
           input (frame {:facts facts :entities (vec (distinct (map :e facts))) :command command :class "import"
                         :actor "bulk-import" :erasure-seq (when-not no-seq (get f "seq")) :source (head (:conn c))
                         :clock (swap! (:clock c) inc) :id-block (block (swap! (:blocks c) inc))})
-          _ (when between (between))
           r (w/send! (:name c) input)
           out (conj out {:attempt attempt :seq (get f "seq") :facts (count facts) :outcome (:outcome r)})]
       (cond (= 200 (:status r)) out
