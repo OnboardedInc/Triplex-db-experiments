@@ -7,7 +7,9 @@ options in "Proposed defaults", one cause withdrawn (fault 22), and the section 
 2026-11-24 (afternoon) after four more merges (ACT5 settlement beside live saves, XQ3 ID lists, RD5 uncached pinned
 reads, XQ6 the exact sweep; Mac toy evidence only): their options in "Proposed defaults", the section "What the 2026-11-24 afternoon merges
 put on the branch" with every gate on the final head and the contradictions found, and "Next server session" rewritten
-in the owner's order of 2026-11-24 with costs. One row per
+in the owner's order of 2026-11-24 with costs; and again that evening after three more (XQ7 the question reader,
+ACT7 settlement at 1 billion, HA2 failover recovery time): their rows in the merge and defaults tables, their gates, and
+steps 2b, 8, 10a to 10c, 17 and 18 of the session list. One row per
 priority: the bar, the latest measured value at 1 billion records and on the
 fresh database (430 million records, ten deep accounts of 100,000 subjects), the settings it was measured with, the
 verdict and the next step. Mac clocks are never used here; every number below is from a rented bare-metal server
@@ -119,6 +121,9 @@ must confirm" names the step of the next server session that judges it.
 | ID lists: route `POST /v2/db/{db}/ids` behind `TX2_ID_LISTS=1` (`DX_ID_LISTS` in `stack/up.sh`), its permit pool `TX2_INDEX_QUERY_PERMITS` (default 1), SDK `listIds` and the adapter option `idLists` (XQ3; page `xq3/ID-LISTS.md`) | off (the route answers 404 as before; the adapter scans) | on for the read gateway, after step 2 | Gateway test 16,460 assertions against a brute-force pass; through the store 1,654 checks (750 page sequences, 34,500 IDs equal to the store's own history read); 72 `entityPage` chains byte-equal to the scan; removal on request leaves the list identical and returns no protected value; a burst of 8 counts on one account ran 1 and refused 7 as busy. Toy account of 400,000 IDs: a cold page of 1,000 costs 2 storage reads at the head, 6 at an old pin; a full cold count 62 to 67 reads. Writes nothing per save; no backfill | Step 2: exactly 100,000 subjects at the head and at 87,002; warm walk 0.1 to 0.35 s, cold 0.3 to 1.0 s; the old pin within 2.5 times the head |
 | Uncached pinned reads: batch prefetch `TX2_READ_PREFETCH=1` (`DX_READ_PREFETCH`), Datomic's read-ahead off on the reader `DX_READ_AHEAD_OFF=1` (`-Ddatomic.readAheadPool=0`, configuration only), the reader cache size for the random arm, a second reader on a second machine (`DX_REMOTE_READER_HOST`, `rd5/second-reader.sh`, `DX_RD5_SECOND_READER`) (RD5; page `rd5/UNCACHED-READ.md`) | off | prefetch with permits equal to cores after step 11; read-ahead off only if step 11 shows it is the excess load; the second reader after step 16 | Breakdown of 2026-11-23's evidence: 1.52 of the 1.71 ms of reader CPU per random subject is 1.76 segment loads (0.86 ms each); the 14.1 storage round trips of an exchange run one after another inside the permit. Toy: 3 × 30,548 whole `/read` comparisons, 0 differences; read-ahead off cut storage gets per subject 34 to 45% and CPU 30 to 43%; the prefetch halved an exchange's wall time without changing loads. The toy does not reproduce the 1.76 loads per subject | Step 11: `pf3` 1,500 to 1,850 reads/s; `pf3r` 2,100 to 2,600 if read-ahead is the excess, which would bring the P1 bar from about 7 to about 5 reader cores. Step 16: two readers 4,200 to 5,000 reads/s, p99 85 to 115 ms |
 | The exact sweep: route `POST /v2/db/{db}/sweep` behind `TX2_SWEEP=1` (`DX_SWEEP` in `stack/up.sh`), its pool `TX2_SWEEP_PERMITS` (default 1), `TX2_SWEEP_PER_ACCOUNT`, `TX2_SWEEP_QUEUE_MS`, `TX2_SWEEP_CURSOR_SECRET`, SDK `sweepPage`, `sweepAll`, `sweepCount` (XQ6; page `xq6/EXACT-SWEEP.md`) | off (the route answers 404 as before) | on for the read gateway after step 2, as the fallback for what the commit-time index refuses and as that index's reference answer | Gate 5,917 checks against a brute force from the store's history read: 459 sweeps, 2,134 pages over 17 question shapes, 3 accounts, 3 positions and 3 valid instants; equal to `read` in 672 comparisons; exact at its position while subjects change, a removal on request, settlement frames and a reader restart land between pages; 15 typed refusals; no protected value in any answer. A sweep's reads skip the read permit (`admission/*own-pool*`); with nothing bound every other read takes and releases its permit exactly as on `23b7df344` (the permit gate below) | Step 2: a count of 100,000 subjects exact and equal at 1, 3 and 6 parts, 120 to 210 s at 1 part, 45 to 80 s at 3; arm B, the re-read readers' loss while a sweep runs on the same reader (the main unknown) |
+| The question reader (XQ7): `DEMO_QUESTION_READER=1`, `DX_QUESTION_*` pools | off (sweeps and ID lists on the main reader) | stay off until step 2b | Toy gates only (section "Gates"); no server number | Sweeps and lists move to their own gateway; the main reader's cache is no longer shared with them |
+| ACT7's runner options `DX_ACT7_*`, `TX2_SETTLE_COST` | off | `TX2_SETTLE_COST` only after step 10a accepts a calibration | Miniature at toy size; no server number | The settlement estimate per frame |
+| HA2's cold-copy options `TX2_HA2_COLD_CORES`, `TX2_HA2_COLD_PIPELINE` | off (every cold copy as at `b03e806fd`) | on for policy B after step 17 | Toy repair gate and the second-failure drill; no server number | The replacement's copy and check use all cores and check each file as it is copied |
 
 ## What the night's merges put on the branch
 
@@ -179,6 +184,10 @@ pass-through), `DatomicClient.ts` and `index.ts` (JRN1, RD4, W3).
 | Fix | `91f02e68b` | `large-release-check.ts`: its writer-admission stub carries what `Archive.write` reads since ACT5 (fault 1 below) |
 | Pairs and the permit gate | `b0b8b079e`, `bcab3640f`, `08d81d3b2`, `3b72ff93a`, `6bba00011`, `2aa1ad8fa` | (a) `DX_ACT5_ID_LISTS=1` in the held live phase; (b) `RD5_TREATMENT_ENV`, `RD5_POOL`, `RD5_AT_LEAST` in the RD5 gate; (c) `int4/pair-c.sh` and `pair-c.ts`; (d) `DX_ACT5_SWEEP=1` in the held live phase; `int4/permit-gate.sh` and `.ts` (read permits counted against the baseline's gateway). All default off; nothing changes when unset |
 | Image choice | `67cb0eecf`, `329cb48cd`, `3f8c135dd` | The ha1 toy runner runs only on a Datomic image built from the checkout under test (fault 3); `lab/bin/gate-image.sh`: the aged, RD5, RD2 shortcut and XQ6 suite gates start from one image ID, record it and refuse fixed shared tags (fault 4); the aged gate passes `DX_READ_PREFETCH`, `DX_ID_LISTS` and `DX_SWEEP` to its gateway |
+| `exp/DX-XQ7-question-reader` `a5631af24` (second push) | `8072b5ad5` | A separate read gateway role for the question routes (ID lists and the sweep), default off: gateway `question_reader.clj`, the per-role ID list and sweep pools in `stack/up.sh` (`DX_QUESTION_*`), `DEMO_QUESTION_READER=1` in `demo/server-up.sh`, SDK question-reader routing; gate, cache gate, plan check, suites and server runner; `xq7/QUESTION-READER.md`. One conflict in `stack/up.sh` (XQ7's per-role block kept with this branch's 1 to 64 range) |
+| `exp/DX-ACT7-settlement-1b-prep` `82ba1ca38` (second push) | `ee4c06297` | Settlement at 1 billion: the held runner adopts the aged seal, an oracle for aged subjects, `DX_ACT7_STREAM_CHECK`, `DX_ACT7_TAPE`, `DX_ACT7_CONTROL`, `TX2_SETTLE_COST`, frame counters and `act7/calibrate.ts`, `held-server.sh` over 180 min, the miniature; `actv-lazy/act7/RUN2.md`. Two conflicts kept side by side (`held-campaign.ts`, `settle-live.ts`'s context type) |
+| `exp/DX-HA2-recovery-time` `13fe78536` (second push) | `7a05aac07` | Failover policy B's cold-copy options `TX2_HA2_COLD_CORES`, `TX2_HA2_COLD_PIPELINE`, `TX2_HA2_CASES`, default off; the second-failure check repaired; `hasync1/RECOVERY-TIME.md`. One conflict in `ha1/local.ts` (both holders kept) |
+| Image choice, second push | `69648310a` | `xq7/suites.sh` and ACT7's miniature start their Datomic containers by image ID (fault 4) |
 
 **Conflicts:** none in text; each merge applied cleanly. The overlaps were read and kept side by side:
 `ha1/local.ts` (ACT5's holder beside ACT4's hook and RD4's holder), `actv-lazy/join/held-campaign.ts` (ACT5's live phase
@@ -187,7 +196,7 @@ write-options entries, shown only when on, beside the hints entries; XQ3's `ids`
 `stack/up.sh` (RD5's remote-reader ports and reader options beside XQ3's ID list options). XQ3 and RD5 had each merged
 `23b7df344` already. XQ6 merged after XQ3 and RD5 (it is based on XQ3; RD5 was already on the branch when it was added); its `main.clj` route sits beside XQ3's and its `up.sh` options beside XQ3's and this branch's early refusals, without conflict.
 
-**Faults found in the merge (all four fixed on this branch):**
+**Faults found in the merges (1 to 4 fixed on this branch; 5 is a harness fault, not fixed):**
 
 1. **The database-free large-release check stopped at its first frame after the ACT5 merge** ("A settlement frame
    names its progress row"). ACT5's `Archive.write` reads the archive's precondition, frame counts and queue key; the
@@ -257,6 +266,8 @@ write-options entries, shown only when on, beside the hints entries; XQ3's `ids`
    images present today. `age1/readback-gate.mjs` runs the image's baked gateway: its results reflect the gateway that
    last built `dx-jvm1-startup-read` (`a7f9ce70…`, 2026-11-23), not necessarily the branch that ran it.
 
+5. **`xq7/plan.sh` writes a temporary copy of the base `stack/up.sh` into the checkout while it runs** (`stack/up-xq7-base.sh`, removed on exit), so a held or settlement run started meanwhile refuses with "Checkout has uncommitted inputs". Found when the second push ran its gates in two lanes; those two cases were rerun after every other gate. A harness fault, not fixed (the base copy must sit beside `up.sh` for its relative paths); run the plan check alone.
+
 **Contradictions between the four pages and the merged code** (the pages are left as their builders wrote them):
 
 1. `xq3/ID-LISTS.md` section 2 and section 6 say the console's gates cannot run beside the owner's toy because
@@ -274,11 +285,11 @@ write-options entries, shown only when on, beside the hints entries; XQ3's `ids`
    bound it: the merge alone does not satisfy that item. The ACT7 preparation should ask for bounded pages there.
 5. `actv-lazy/SETTLEMENT-LIVE.md` section 9.1 and `actv-lazy/SETTLEMENT-FRAMES.md` section 9 predict the same release
    (20 forms and 20 policies on 100,000 subjects, byte frames) differently: 5.93 million changed values and 85,000 to
-   100,000 notice frames (about one subject per notice frame, from `frames-check.ts`) against 6.90 million changes and
-   50,000 notice frames (step 9). The two runs differ in their first release (ACT5 adds the forms to a form-free release
-   after R1; ACT4's `DX_ACT4_INITIAL=large` publishes R1 plus the forms from nothing), which may explain the changes; it
-   does not explain a factor of about two in notice frames per subject. Steps 8 and 9 will each show which page's
-   frame model holds; `exp/DX-ACT7-settlement-1b-prep` is analysing why notice frames hold about 20 notices.
+   100,000 notice frames against 6.90 million changes and 50,000 notice frames. ACT7 (second push,
+   `actv-lazy/act7/RUN2.md` sections 4 and 5) counts the frames without a database and corrects both: per account
+   20,300 value frames and 57,600 + 6,640 notice frames (about 64,000), 5.94 million changes and 2.00 million notices
+   plus R1's 39,000. Step 8 now uses ACT7's numbers; step 9 keeps ACT4's, and the two differ in the first release
+   (ACT4's `DX_ACT4_INITIAL=large` publishes R1 plus the forms from nothing).
 6. The four pages name their own branch head as `COMMIT` for their server commands; on the one branch every command
    uses the one build (step 1). `rd5/UNCACHED-READ.md` and `xq3/ID-LISTS.md` say nothing else would change.
 7. `stack/up.sh` accepts `DX_REMOTE_READER_HOST` matching `10.*`, `172.*` or `192.*` with any later octets, which is
@@ -348,6 +359,41 @@ byte-identical in all four (only `trace.jfc`, a recording profile none of these 
 branch has changed `lab/config/datomic`'s Dockerfile or classpath, or those files, since 2026-11-21. So whichever
 builder last retagged those names, these runs took the same bytes as this head's own image. 
 
+### Gates on the second push's head (XQ7, ACT7, HA2; 2026-11-24 evening)
+
+Mac, toy size, one ordinary heavy token per step, no lease, 21:25 to 23:17 UTC, at `3d5d2950a` (the merges, the
+image-ID fixes for XQ7's suites and ACT7's miniature, and the first push's page). Counts are results; clocks are
+diagnostic. Every ha1 case and ACT7's miniature ran on `sha256:58970a61…` (`tx2-dxthin-jre21:5bd0d1f72455bf8b`), built
+from this head (sources `83789d1f…`), by ID; the selftest-style runs on the same ID.
+
+| Gate (owner) | Result |
+| --- | --- |
+| Lab unit tests | 78 of 78 (the first attempt failed 3 `rd1/prepared.test.ts` cases with "Allow 16 GiB of free space on the PGDATA filesystem" while the Mac had 13 GiB free, an environment refusal; rerun at 38 GiB free: 78 of 78; those files are unchanged since the first push) |
+| ha1 runner tests (`ha1/*.test.ts`, HA2's "ha1") | 27 of 27 |
+| HA2: `recovery-options.test.ts`, `sunday.test.ts`, `catch-up.test.ts` (vitest; includes the default cold-copy script pinned byte for byte) | 13 of 13 |
+| HA2: `supervisor.test.ts` | 7 of 7 |
+| ACT7: `act7/aged.test.ts` | 2 of 2 |
+| All `actv-lazy/join/*.test.ts`; identity tests | 31 of 31; 5 of 5 |
+| SDK (`packages/datomic`, unit; `tsc --noEmit`) | 466 passed, 53 skipped (the 4 new are XQ7's question-reader routing); type check clean |
+| Core (`packages/core`, unit) | 863 of 863 |
+| `frames-check.ts 256`, `large-release-check.ts 256` | Pass, pass |
+| Launch guard (`ha1/guard-check.sh`) | 122 cases, 0 mismatches (117 plus XQ7's 5: the question reader admitted, each wrong setting refused beside an admitted control) |
+| Gateway selftest; XQ3's `ids_test.clj` (image `58970a61…` by ID) | 29 tests, 54,160 assertions, 0 failures; 16,460 assertions, 0 failures |
+| XQ6's suites, `TX2_SWEEP` unset and set | 72 tests, 71,161 assertions, 0 failures, the known `feed-test/http-route` error in both; sweep route unset 404 `NotFound` |
+| XQ7's suites (`xq7/suites.sh`), three arms | Unset: 78 tests, 71,220 assertions, 0 failures, the known error; ID list and sweep routes 404 `NotFound`; the guard passes every request. Set (`TX2_READ_IO_COUNTERS`, `TX2_ID_LISTS`, `TX2_SWEEP`): 0 failures, the known error. Queue (`TX2_ID_LIST_QUEUE_MS=200`): exactly the one assertion the page says must fail (`ids_test.clj` line 140: with a queue a second list of a busy account waits instead of being refused) |
+| XQ7's option-off check (`xq7/plan.sh`, base `9092eb79d`, the first push's head) | Launch commands identical (7), containers identical (environment, command, image, CPU set, memory, binds, ports), `stack.json` identical apart from creation time and container IDs |
+| Default card's plan output against `23b7df344` | Byte-identical in all six option sets that run; the two refused sets differ only in the source path of the stack line |
+| Write-options report and subject pulls (`int3/reach-gate.sh`, base `23b7df344`, `REACH_WRITE_OPTIONS_SAME=1`) | Write-options report byte-identical; 22 of 22 pulls equal; the negative control differs in 22 of 22 |
+| Read permits (`int4/permit-gate.sh`; this source now carries XQ7's gateway) | Pass: every phase as in the first push (40 permits per phase per copy, 0 refused, 2 of 2 free after; at-least 40; prefetch 40 on both prefetch copies); burst admitted + refused = 24 on every copy; sweep route 404 |
+| XQ3 store gate; XQ6 gate | PASS, 1,654 checks; PASS, 5,917 checks (472 sweeps, 2,215 pages, 2,513 IDs, 2,939 counted subjects, 15 refusals as expected), 0 failures |
+| **XQ7 gate (`xq7/gate.sh`): byte-equal answers of the question reader and the main reader, restart mid-sweep, behind by design** | PASS, 6,876 checks, 0 failures: **2,794 pages byte-compared** (2,176,978 bytes), 462 sweeps over 2,183 pages, 2,283 IDs compared, 2,914 counted subjects, 3,492 listed IDs; 304 behind-by-design probes |
+| XQ7 cache gate (`cache.ts`, `DX_SWEEP_PERMITS=2 DX_XQ7_HOT=700`), once | Pass: 256 pinned readers' storage reads per read on the main reader: controls 0.0001, 0 and 0.0026; with every sweep on the question reader 0.0001 and 0 (2 and 0 reads in 63,647); with the same sweeps on the main reader 0.0014 and 0.003 (25 and 44 in 33,003). 0 row-count changes; all 32 sweeps counted exactly. As on XQ7's page, the toy's displacement is small (its 32 MB cache keeps a set re-read every few ms); the server step (2b) is what measures it |
+| REAL2 production exactness gate (default) | Pass: 2,836 fields exact, 0 expired (private image built by the gate, removed after) |
+| REAL2 production tape on a loader-aged toy: default; with `DX_READ_PREFETCH=1 DX_ID_LISTS=1 DX_SWEEP=1` (`3f13d2c1…` by ID) | Pass, both: 120 aged rows, a tampered row refused, 1,927 fields, final cut 1,289; with the options the running gateway reports `TX2_ID_LISTS=1`, `TX2_READ_PREFETCH=1`, `TX2_SWEEP=1` |
+| **ACT7's miniature** (`act7/miniature.sh`, each phase on a fresh aged toy; aging containers on `58970a61…` by ID) | `unadopted` (no aged seal): **refused** at the first check, "Restored logical head differs". `plain` (the old oracle, `DX_ACT7_PLAIN_ORACLE=1`): **fails** as designed, "the store's facts differ from the oracle's world: pl:s00000000 at release 1". `three` (3 accounts, stream check, all children killed): **pass**; 50 adopted subjects replayed (96 aged rows, 4 probes); 3 of 3 children killed inside settlement and resumed; 0 frames refused; 171 bounded ledger pages, 0 skipped; 164 saves of the other accounts all acknowledged. `ten` (10 accounts, 20 s window): **pass**; 10 children killed and resumed; 0 refused; 307 bounded pages, 0 skipped; the admission lane granted 46 frames |
+| HA2's PostgreSQL gate (`hasync1/repair-gate.ts`) with both options (`TX2_HA2_COLD_CORES=0-1`, `TX2_HA2_COLD_PIPELINE=1`), once | Pass: 43 of 43 acknowledged inserts present after the kill and promote; the replacement synchronous; the damaged byte refused by the pipelined copy (the clean copy verified, 8 workers); every cold copy recorded `cold-cores` and then `cold-cores-restored` |
+| Held Publish toy, strict, default; settlement-frames gate, strict (image `58970a61…` via receipt; `image.json` `chosenBy: receipt`) | Pass, both: the held default's eight windows inside their deadlines with 86 changes and 8 ledger entries equal to the oracle; ACT4's counts (4,272 changes, 1,440 notices). Both first refused a dirty checkout while `xq7/plan.sh` ran (fault 5) and were rerun after every other gate |
+
 ## Next server session (one driver, in this order; none has run)
 
 Rewritten on 2026-11-24 (afternoon) after the ACT5, XQ3 and RD5 merges, in the order the owner ranked the work that
@@ -357,7 +403,9 @@ Build the head of `exp/DX-INT1` that carries this page once; every command below
 head; the merged pages name their own branch heads, which this build replaces). Environment, copies and the
 scorecard parts as `v01/AGED-SERVER-32.md` and `v01/PRODUCTION-CARD.md`; the held runs as `actv-lazy/PART9.md`. Each
 step's predictions and refuters are in its page (linked); the table after the commands gives the headline ones. Cost
-is at USD 1.09 per machine hour; every step needs one machine except step 16, which needs two.
+is at USD 1.09 per machine hour; every step needs one machine except steps 16, 17 and 18, which need two.
+Updated in the second push of 2026-11-24 for XQ7 (step 2b), ACT7 (steps 8 and 10a to 10c, which replace ACT5's
+run 1 and the placeholder at 1 billion) and HA2 (steps 17 and 18).
 
 **Corrected on 2026-11-24 (S1's findings, merged):** W3's and W4's pages publish card commands that run `part 2` alone
 and pass the options as bare environment words. The sequential runner refuses a campaign that does not start with
@@ -375,15 +423,18 @@ earlier notes may): 1 → 1, 2 → 3, 3 → 4, 4 → 14, 5 → 15, 6 → 9, 7 �
 | **A** | **Questions across subjects and the save shape** | | | | |
 | 1 | Build (`v01/build.ts`) and the card's dry run (part 1 to its first offer) | `v01/CARD-READER.md` §7 | 1 | 5 + about 10 min | 0.27 |
 | 2 | **Questions across subjects at 1 billion, in one demo bring-up** of the 1 billion working copy with the ID list and sweep routes on: the journal probe first (it wants the read gateway to itself); the **ID lists** (every subject of one deep account, cold and warm, at the head and at 87,002; every ID of the account); the **exact sweep**, arm A (counts of 100,000 subjects at 1, 3 and 6 parts, two lists; reads only) then arm B (the same beside 256 pinned readers and saves at 23/s on account-005, which writes to the working copy, so it runs last); then down | `xq3/ID-LISTS.md` §5; `xq6/EXACT-SWEEP.md` §6; `jrn1/JOURNAL-BOUNDS.md` | 1 | 30 to 60 min (bring-up 3 to 12, journal probe about 3, ID lists 3 to 10, sweep A 10 to 20 and B 10 to 14, down about 1) | 0.55 to 1.09 |
+| 2b | **The question reader (XQ7) at 1 billion:** a new demo bring-up with the question reader on (small size: cores 10 and 11, 4 GiB heap, 1 GiB cache, sweep permits 2, list permits 1) beside the main reader; four 120 s control windows and four counts of account-003's 100,000 subjects (one and three parts, first on the main reader, then on the question reader), with 256 pinned readers and saves at 23/s throughout. Runs on the demo's profile, not `server-32`: the page's memory table (transactor 57 + writer 6 + reader 5 + PostgreSQL 5 + question reader 6 + host 10 = 89 GiB of 96) does not fit beside `server-32`'s transactor | `xq7/QUESTION-READER.md` §6 | 1 | 31 to 57 min (build 5 to 10 if not step 1's, bring-up 3 to 12, windows 21 to 33, down 2) | 0.56 to 1.04 |
 | 3 | **The full card at 1 billion with the tuned reader and 300 s cells** (no-burst shape S, `server-32`, 12 read permits, per-save credits). Its parts 1 and 2 are also S1's "Control" arm | `v01/CARD-READER.md` §7; `v01/SAVE-SHAPE.md` §6.1 | 1 | 2 h 05 min to 2 h 35 min | 2.27 to 2.82 |
 | 4 | S1's "Wide" arm: the card's settings with `TX2_SUBJECT_WIDE=1`, parts 1 and 2 | `v01/SAVE-SHAPE.md` §6.1 | 1 | 71 to 85 min | 1.29 to 1.54 |
 | 5 | S1's save-size ladder at 1 billion with 256 pinned readers (seven windows, 5 to 1,000 facts), wide writer off | `v01/SAVE-SHAPE.md` §6.2 | 1 | 33 to 36 min (deadline 40) | 0.60 to 0.65 |
 | 6 | S1's "Hints" arm (the card's settings with `TX2_GENERAL_PREFETCH=1`, parts 1 and 2), against step 3 as its control (it replaces W3's pair (c)) | `v01/SAVE-SHAPE.md` §6.1; `w3/GENERAL-WRITER-HINTS.md` §4 (c) | 1 | 71 to 85 min | 1.29 to 1.54 |
 | 7 | **Not yet runnable from this branch:** the index cost pair (an index by attribute and value, k = 0, 3 and 20 declared values per save, production-S at 394 on the fresh template). Its option `TX2_ATTRIBUTE_INDEX` is on `origin/exp/DX-XQ2-index-cost` (a measurement, not merged) and its launcher refuses any other `HEAD` | `xq2/INDEX-COST.md` (on that branch) | 1 | about 60 to 65 min | about 1.09 to 1.18 |
 | **B** | **Scale** | | | | |
-| 8 | **Settlement beside live saves, one account, 100,000 subjects, fresh database:** a 300 s control, the 20 forms and 20 policies release settled under today's head rule for 300 s while saving (then stopped), then finished under `progress` while the saves go on (window up to 7,200 s), then the full exactness check | `actv-lazy/SETTLEMENT-LIVE.md` §9.1 | 1 | 3 h to 3 h 30 min | 3.27 to 3.82 |
+| 8 | **ACT7 (a), settlement beside live saves, one account, 100,000 subjects, fresh database** (ACT5's run 1 with its fault fixed and the frame counters on; replaces ACT5's step): a 300 s control, the head arm 300 s, then the settle case under `progress` with a 90 min window, the exactness check, then `act7/calibrate.ts` on the counters | `actv-lazy/act7/RUN2.md` §6.2 | 1 | 2 h 15 min to 2 h 30 min | 2.45 to 2.73 |
 | 9 | Publish at 100,000 subjects with the large first release settled by bytes, then the four 39.4/s windows | `actv-lazy/SETTLEMENT-FRAMES.md` §9 | 1 | 55 to 85 min (runner limit 120) | 1.00 to 1.54 |
-| 10 | **Not yet runnable from this branch:** settlement beside saves at 1 billion with 3 and then 10 accounts publishing within minutes of each other (byte frames, the guard, the admission lane). Six preparation items are missing (adoption of the aged seal by the held runner, the oracle for aged subjects, streaming the check for ten accounts, production-shaped saves in the held runner, a prepared 1 billion copy); being built on `exp/DX-ACT7-settlement-1b-prep` | `actv-lazy/SETTLEMENT-LIVE.md` §9.2 | 1 | page: settlement 90 to 160 min (3 accounts), 5 to 9 h (10), plus a restore of about 30 min each; runner limit 420 min | not costed until runnable |
+| 10a | ACT7 (C), the calibration check: **only if step 8's `calibrate.ts` gives a model at or below 2,500 / 25 / 55**; one account, fresh database, `TX2_SETTLE_COST` from step 8, a 60 min window | `actv-lazy/act7/RUN2.md` §6.3 | 1 | 1 h 35 min to 1 h 50 min | 1.73 to 2.00 |
+| 10b | **ACT7 (b), three accounts at 1 billion**: aged adoption first, production-S at 394 in all ten accounts, three accounts settling the large release under `progress` with the admission lane, account 2 paused for 5 min and paced for 10 min once, streamed exactness check, bounded journal pages | `actv-lazy/act7/RUN2.md` §6.4 | 1 | 2 h 35 min to 3 h | 2.82 to 3.27 |
+| 10c | **ACT7 (c), ten accounts at 1 billion** (the same, ten accounts, a 240 min window; with step 10a's calibration accepted, a 150 min window and `TX2_SETTLE_COST`) | `actv-lazy/act7/RUN2.md` §6.5 | 1 | 6 h 20 min to 9 h 10 min with today's model; 4 h 50 min to 6 h 10 min calibrated | 6.90 to 9.99; 5.27 to 6.72 calibrated |
 | — | A subject owing 200 forms or more and a release near the 1.3 MB ceiling: no server command exists yet (`exp/DX-ACT6-release-limits` is being built) | | | | |
 | **C** | **The other priorities, in priority order** | | | | |
 | 11 | P1: uncached pinned reads, command 1: the random arm with the read prefetch at 3 permits, then the same with Datomic's read-ahead off, then with a 1.5 GiB reader cache (one new copy per configuration) | `rd5/UNCACHED-READ.md` §7 | 1 | about 50 min (ceiling 60) | 0.91 to 1.09 |
@@ -392,21 +443,25 @@ earlier notes may): 1 → 1, 2 → 3, 3 → 4, 4 → 14, 5 → 15, 6 → 9, 7 �
 | 14 | P3: the 1,024-reader step with the waiting-read bound: the production-S card (one-core reader, 90 s), parts 1 and 2, bound off and 128, thread counters on in both | `w3/GENERAL-WRITER-HINTS.md` §4 (b) | 1 | about 2 × 45 min | 1.64 |
 | 15 | P5: Publish at 100,000 subjects, all twelve windows, probe reading at least each receipt | `rd4/AT-LEAST.md` §4 | 1 | about 35 min | 0.64 |
 | 16 | P1: uncached pinned reads, command 2: a second read gateway on a second machine (prefetch on both readers, then prefetch and read-ahead off on both) | `rd5/UNCACHED-READ.md` §8 | **2** (machine 2: at least 4 cores and 12 GB free, same private network) | about 55 min with set-up (ceiling 60) | 2.00 to 2.18 (two machines; at least 2.18 if each machine is billed by the whole hour) |
+| 17 | P4: HA2 run 1, failover policy B with both cold-copy options (`TX2_HA2_COLD_CORES=0-11`, `TX2_HA2_COLD_PIPELINE=1`), the three required cases `b-235`, `a-235` (with the repaired second-failure read) and `move-235`; the pair set-up of `hasync1/PAIR-REPAIR.md`, launched A then B within four minutes | `hasync1/RECOVERY-TIME.md` "Server run" | **2** | 25 to 40 min (outer limit 150), plus the pair set-up | 0.91 to 1.45 (50 to 80 machine minutes) |
+| 18 | P4: HA2 run 2 (optional), cores only, `b-235` only, to split the gain between the two options | `hasync1/RECOVERY-TIME.md` "Server run" | **2** | 15 to 20 min | 0.55 to 0.73 (30 to 40 machine minutes) |
 | — | If time: S1's "Both" arm (wide and general hints, 71 to 85 min); the ladder's wide arm (about 35 min). Not recommended: W3 (a), the worst-case tape with general-writer hints (predicted no change; that tape takes the per-subject writer, which step 12 covers) | | | | |
 
-**Three totals** (runnable steps only; steps 7 and 10 are not runnable from this branch):
+**Three totals** (runnable steps only; step 7 is not runnable from this branch; step 10a runs only if step 8's
+calibration qualifies, and step 10c's length depends on whether step 10a's calibration is accepted):
 
 | Session | Steps | Duration | Cost (USD) |
 | --- | --- | --- | --- |
-| **Shortest that settles the top-ranked questions** (ID lists and the exact sweep at 1 billion; P2 judged on one commit per subject's save in steady state; the wide writer; cost by save size) | 1 to 5 | 4 h 34 min to 5 h 51 min (15 + 30 to 60 + 125 to 155 + 71 to 85 + 33 to 36 min) | 4.98 to 6.38 |
-| **Everything runnable today on one machine** | 1 to 6, 8, 9, 11 to 15 | 15 h 05 min to 17 h 46 min (group A 345 to 436 min, B 235 to 295, C 325 to 335) | 16.44 to 19.37 |
-| **Everything, with the second machine for step 16** | all runnable steps (1 to 6, 8, 9, 11 to 16) | 16 h 00 min to 18 h 46 min of the first machine, plus 55 to 60 min of the second (905 to 1,066 + 110 to 120 machine minutes) | 18.44 to 21.55 |
+| **Shortest that settles the top-ranked questions** (ID lists, the exact sweep and the question reader at 1 billion; P2 judged on one commit per subject's save in steady state; the wide writer; cost by save size) | 1, 2, 2b, 3, 4, 5 | 5 h 05 min to 6 h 48 min (15 + 30 to 60 + 31 to 57 + 125 to 155 + 71 to 85 + 33 to 36 min) | 5.54 to 7.41 |
+| **Everything runnable on one machine** | 1 to 6 with 2b, 8, 9, 10a to 10c, 11 to 15 | 23 h 46 min to 31 h 43 min (group A 376 to 493 min; group B 725 to 1,075: shortest without 10a and with 10c at today's model 135 + 55 + 155 + 380, longest with 10a run and its calibration not accepted 150 + 85 + 110 + 180 + 550; group C 325 to 335) | 25.91 to 34.57 |
+| **Everything, with the second machine for steps 16 to 18** | all runnable steps | 25 h 21 min to 33 h 43 min of the first machine, plus 95 to 120 min of the second (1,616 to 2,143 machine minutes) | 29.36 to 38.93 |
 
-Step 6 (S1's "Hints") is the next step in the top-ranked group; with it the top-ranked group is 5 h 45 min to 7 h 16 min
-(USD 6.27 to 7.92). Steps 7 and 10, once runnable, add about 65 min (USD 1.18) and several hours (step 10 at ten
-accounts alone is 5 to 9 h of settlement).
+With step 10a run and its calibration accepted, step 10c is 290 to 370 min and group B 730 to 895 min. ACT7's four
+runs alone (steps 8, 10a, 10b, 10c) are 11 h 15 min to 16 h 30 min (RUN2.md section 6.5), USD 12.26 to 17.99 at USD
+1.09 per hour. HA2's steps 17 and 18 exclude the pair set-up of `hasync1/PAIR-REPAIR.md` (direct path, firewall,
+guards, images), which its page does not time.
 
-**Which steps share a database bring-up.** Only step 2: the journal probe, the ID list runner and both sweep arms use
+**Which steps share a database bring-up.** Step 2b cannot reuse step 2's: the question reader is chosen at bring-up (`DEMO_QUESTION_READER=1`) and step 2's sweep arm B writes to the working copy, so step 2b starts again from `demo/server-up.sh --reset` (3 to 12 min). Steps 8 and 10a each boot a new prepared copy of the fresh template; steps 10b and 10c each prepare a copy of the stopped 1 billion cluster (`act7/prepare-copy.sh`, 2 to 3 min) from the one fetched for the card steps (fetched once, 15 to 35 min, if no card step ran). Steps 17 and 18 use the two-machine pair set-up, not step 16's. Within step 2: the journal probe, the ID list runner and both sweep arms use
 one demo bring-up of the 1 billion working copy (`demo/server-up.sh --reset` with the ID list and sweep settings; the
 journal probe ignores the routes; sweep arm B writes, so it runs last). Each page publishes its own bring-up and build
 (`pnpm install` and package builds); with step 1's build neither is needed. Every card arm (steps 3, 4, 6, 12, 14) makes a new physical copy per part from the same 1 billion source and
@@ -460,6 +515,17 @@ sudo node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/x
   /var/tmp/triplex-demo/ready.json "$OUT/xq6-1b" account-003
 sudo bash demo/server-down.sh
 
+# 2b. The question reader (QUESTION-READER.md section 6): a new bring-up, the question reader on, the demo's profile
+SECRET=$(od -An -N24 -tx1 /dev/urandom | tr -d ' \n')
+sudo env DEMO_QUESTION_READER=1 DX_QUESTION_MAIN_REFUSES=0 DX_READ_IO_COUNTERS=1 \
+  DX_SWEEP=1 DX_ID_LISTS=1 DX_SWEEP_PERMITS=3 DX_SWEEP_PER_ACCOUNT=3 DX_SWEEP_QUEUE_MS=5000 DX_SWEEP_CURSOR_SECRET="$SECRET" \
+  DX_QUESTION_SWEEP_PERMITS=2 DX_QUESTION_SWEEP_PER_ACCOUNT=3 DX_QUESTION_SWEEP_QUEUE_MS=5000 \
+  DX_QUESTION_INDEX_QUERY_PERMITS=1 DX_QUESTION_ID_LIST_QUEUE_MS=1000 \
+  DEMO_ORIGINAL="$SEALED_CLUSTER" DEMO_HANDOFF="$AGE_HANDOFF_JSON" bash demo/server-up.sh --reset
+#    the question reader answers on 127.0.0.1:18505
+sudo node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/xq7/server.ts /var/tmp/triplex-demo/ready.json "$OUT/xq7-1b"
+sudo bash demo/server-down.sh
+
 # 3. The full card: parts 1 to 3 and assembly
 OUT=/var/tmp/v01-1b-prodSnb-s32-tuned
 for n in 1 2 3; do make_copy "$COPY"; part "$n" "$COPY" "$OUT" "${CARD[@]}"; remove_copy "$COPY"; done
@@ -475,13 +541,12 @@ EXTRA=TX2_GENERAL_PREFETCH=1 arm /var/tmp/s1-card-hints "${CARD[@]}"
 
 # 7. Not yet runnable from this branch (xq2/INDEX-COST.md on origin/exp/DX-XQ2-index-cost)
 
-# 8. Settlement beside live saves, one account, 100,000 subjects, fresh prepared copy (SETTLEMENT-LIVE.md section 9.1)
-sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
-  "TX2_SETTLE_FRAMES=bytes" "DX_ACT3_SETTLE=0" "DX_ACT5_LIVE=1" "DX_ACT5_SERVER=1" "DX_HELD_MINUTES=240" \
-  "DX_ACT5_CASES=control:progress:bytes:none:23.5:1:::300,head:head:bytes:large:23.5:1:stop::300,settle:progress:bytes:same:23.5:1:::7200" \
-  bash lab/experiments/EXP-DX1/actv-lazy/join/held-server.sh \
-  "$COMMIT" "$SCALE1_IMAGE" "$SCALE1_IMAGE_SHA256" "$SCALE1_TRANSFER_SHA256" \
-  "$SCALE1_PGDATA" "$PREPARED_PGDATA" "$PREPARED_WAL" "$DX_LAZY_OUT"
+# 8, 10a, 10b, 10c: ACT7's four runs exactly as actv-lazy/act7/RUN2.md section 6 (its prepare, discard, held, AGED and
+#    LIVE definitions in section 6.1, with this session's $BUILD and $COMMIT); in order:
+#    8   = section 6.2 (a), then calibrate.ts on its counters
+#    10a = section 6.3 (C), only if (a)'s calibrate.ts model is at or below 2,500 / 25 / 55
+#    10b = section 6.4 (b), three accounts at 1 billion, with DX_ACT7_CONTROL=2:2400:300:200:600
+#    10c = section 6.5 (c), ten accounts at 1 billion (window 9000 and TX2_SETTLE_COST if (C) was accepted)
 
 # 9. Publish with the large first release settled by bytes (SETTLEMENT-FRAMES.md section 9); a new prepared copy
 sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
@@ -491,8 +556,6 @@ sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.j
   bash lab/experiments/EXP-DX1/actv-lazy/join/held-server.sh \
   "$COMMIT" "$SCALE1_IMAGE" "$SCALE1_IMAGE_SHA256" "$SCALE1_TRANSFER_SHA256" \
   "$SCALE1_PGDATA" "$PREPARED_PGDATA" "$PREPARED_WAL" "$DX_LAZY_OUT"
-
-# 10. Not yet runnable from this branch (SETTLEMENT-LIVE.md section 9.2; exp/DX-ACT7-settlement-1b-prep)
 
 # 11. Uncached pinned reads, command 1 (UNCACHED-READ.md section 7): three configurations, one new copy each
 rd5_arm() {  # $1 new copy, $2 new campaign directory, $3 deadline ms, $4 permits, $5 prefetch, $6 read-ahead off, $7 cache MiB
@@ -560,6 +623,12 @@ second 1 /var/tmp/triplex-rd5-second/two-pfr
 rd5_arm "$COPY_2" "$OUT/two-pfr/campaign" $(( T0 + 60 * 60 * 1000 )) 3 1 1 3072
 unset DX_REMOTE_READER_HOST DX_RD5_SECOND_READER
 RD5_OUT=/var/tmp/triplex-rd5-second/two-pfr bash lab/experiments/EXP-DX1/rd5/second-reader.sh stop   # on machine 2
+
+# 17. HA2 run 1 (RECOVERY-TIME.md "Server run"), on the pair set up as hasync1/PAIR-REPAIR.md, a new tag; A first,
+#     then B within four minutes (B drives the cases)
+sudo env TX2_HA2_COLD_CORES=0-11 TX2_HA2_COLD_PIPELINE=1 taskset -c 0-11 sh -ceu 'exec 9>/var/tmp/triplex-bm1/dx-bm1-day.lock; flock -n 9; export HA1_SUNDAY_FLOCK=1; exec timeout --kill-after=30s 150m "$1" --import tsx lab/experiments/EXP-DX1/hasync1/sunday.ts a "$2"' run /var/tmp/triplex-p9-build/tools/bin/node /root/p9/config.json
+#     on server B, the same with role b
+# 18. HA2 run 2 (optional): the same two commands with `sudo env TX2_HA2_COLD_CORES=0-11 TX2_HA2_CASES=b-235` and a new tag
 ```
 
 Headline predictions and what would show them wrong (all written before any run; full tables in the pages):
@@ -567,20 +636,25 @@ Headline predictions and what would show them wrong (all written before any run;
 | Step | Predicted | Wrong if |
 | --- | --- | --- |
 | 2 | **Sweep** (arm A): a count of account 3's 100,000 subjects exact and the same at 1, 3 and 6 parts, `examined` 100,000; 120 to 210 s at 1 part, 45 to 80 s at 3, 30 to 60 s at 6; 150,000 to 200,000 storage reads; a filtered list of the first 10,000 subjects cold 12 to 21 s, repeated 2 to 6 s. Arm B: re-read pinned readers down 30 to 80% (1 part) and 50 to 85% (3 parts) while a sweep runs, back within 10% after; saves' p99 within 1.25 times the control; 0 errors. **ID lists:** exactly 100,000 subjects of account 3, in order, 100 pages, at the head and at 87,002; 270,000 to 290,000 entries examined per walk; warm walk 0.1 to 0.35 s in all (0.4 to 1.2 µs per entry); cold 0.3 to 1.0 s (first page 5 to 30 ms); 87,002 at 1.0 to 2.5 times the head; every ID of the account 1 to 5 million (`pl:` 270,000 to 290,000, `i9:` 540,000 to 600,000), warm 1 to 6 s; 0 refusals. **Journal probe:** newest 20 by the old route 20 to 32 entries; pages from below the sealed head stop on `limit` with 1,000 journals; entity pages at most 4,096 entries and about 100 ms; field history warm 20 to 120 ms, cold 1.5 to 5 s | **Sweep:** counts differing between the arms or `examined` other than 100,000 (stop); one part above 300 s; 6 parts not 1.3 times faster than 3; readers within 10% of the control while a sweep runs, or not back within 10% after; save p99 above 1.25 times the control; any error. **ID lists:** any subject count other than 100,000 or an ID out of order (stop: nothing built on the route may ship); warm cost above 3 µs per entry or a cold subject walk above 3 s; 87,002 more than 10 times the head; a first cold page above 100 ms. **Journal probe:** pages stopping on `entries` / `time` with no journals; any page over 4,096 entries or 250 ms; warm history over 200 ms |
+| 2b | Main reader's storage reads per pinned read: control 0 to 0.05; with a count on the main reader 0.6 to 1.8 and reads/s down 40 to 80%; with the count on the question reader equal to the control (0 to 0.05) and reads/s within 10%; counts exact and identical in all four sweep windows; one-part count 250 to 500 s on the main reader, 150 to 260 s on the question reader, three parts 90 to 160 s; saves p99 within 1.25× the control | main-reader storage reads per pinned read more than 0.05 above the control in a question-reader window; reads/s more than 10% below the control there; main-reader windows within 10% of the control (a sweep does not displace the cache); gets per swept subject over 2.3 on the question reader; any count that differs or any error |
 | 3 | P1 re-read L256 8,000 to 11,000/s, p99 75 to 115 ms (even odds); P1 random 1,350 to 1,800/s, p99 250 to 340 ms (missed); P2 second-half p50 7 to 10 ms, p99 30 to 50 ms (met, about 55%); P3 lag at 256 readers 25 to 60 ms; P4 p99 12 to 25 ms after the drain; P6 judged (1,050 per side), loaded quiet p99 12 to 35 ms; P7 first pull 60 to 100 ms; P8 3,100 to 3,350 facts/s; transactor peak 50 to 55.5 of 57 GiB | re-read L256 under 7,000/s or p99 over 130 ms; random under 1,300/s or p99 over 350 ms; S second-half p50 over 10 ms at 394 with at most 0.9 reads per commit; random-line SQL time per storage read over 0.7 ms; transactor peak at or over 56 GiB or any limit event; any wrong value |
 | 4 | Wide: 95 to 100% of shape S commits on the per-subject writer; mean serial apply per commit 0.6 to 1.2 ms against Control's 1.5 to 2.5; commit p99 within 20% of Control; nothing lost or expired | under 95% on the per-subject writer; apply Control ÷ Wide under 1.5 for commits of 60 facts or more (then remove the option); more than one storage read per commit above Control; commit p99 over 20% above Control |
 | 5 | Commit p50 5.39 + 0.201 ms per fact (±30%): 8 to 12 ms at 17 facts, 185 to 260 ms at 1,000; p99 at 1,000 facts 280 to 450 ms; pinned read p99 near the head under 140 to 180 ms | p50 off the fit by more than 30% at 17 facts or more; p99 at 1,000 over 1 s or an expiry at 340 or 1,000; pinned read p99 over twice 112 ms; any lost save |
 | 6 | General reads inside apply down 40 to 55% in the first loaded cell; commit p50 within 2 ms of step 3; commit p99 at 620/s 10 to 30% below step 3 | reads inside apply down less than 25% or more than 70%; 50/s median up more than 4 ms; any exactness difference |
 | 7 | (not runnable here) k3 apply +0.6 to +1.0 ms per commit, k20 +3.4 to +5.6 ms; k3 commit p99 +1 to +4 ms (`xq2/INDEX-COST.md`) | k3 apply more than 1.5 ms or less than 0.3 ms over off; reads per commit more than 0.3 over off; k3 commit p99 more than 5 ms over off |
-| 8 | Head arm: at most 1% of offered frames committed while saving, at least 3,000 refused in 300 s. Settle arm: 0 refused; 5.93 million changed values (59.25 per subject) and 2.00 million notices, plus the first release's 39,000 notices; 20,000 to 25,000 value frames and 85,000 to 100,000 notice frames; settles in 65 to 110 min (central 85) beside 235 saves/s, values first (15 to 35 min); live save p50 within +3 ms and p99 within 1.3 times the control outside stall seconds; no save refused, expired or uncertain; exact | head arm more than 5% committed, or fewer than 1,000 refused; any refusal in the settle arm; counts more than 2% away; frames outside the ranges; over 120 or under 45 min; p99 over 1.5 times outside stalls or any refused save; any exactness difference |
+| 8 | Head arm: at most 1% committed, at least 3,000 refused in 300 s. Settle: 0 refused; per account values 20,300 frames and notices 57,600 + 6,640 (about 64,000, ±5%); 5.94 million changes and 2.00 million notices (+ R1's 39,000 first); settles in 46 to 76 min (central 58) inside the 90 min window; serial apply p50 2 to 3.5 ms, p99 under 6 ms; `calibrate.ts` model at or below 2,500 / 25 / 55; no save refused or uncertain, account p99 within 1.3× the control outside stalls; exact | any refusal under `progress`; frames outside ±5%; changes or notices more than 2% off; settle over 90 or under 35 min; apply p50 over 5 ms or p99 over 8 ms; any save refused or uncertain, p99 over 1.5×; any exactness difference |
 | 9 | Settlement completes within the bound: 6.90 million changes, 2.04 million notices, 22,660 / 50,000 frames (±5%), values 20 to 40 min, notices 25 to 45 min, exact; live p99 per-save outside stalls 0.8 to 1.2 × control | any refusal or frame estimate over 8,000 µs; counts more than 2% off; values over 45 min or notices over 50 min; per-save outside-stall ratio over 1.5 |
-| 10 | (not runnable here) 0 frames refused; about 121,000 frames per account; every account within 10% of the others' committed frames each minute; 90 to 160 min (3 accounts), 5 to 9 h (10); live p99 within 1.3 times control outside stalls; the quiet account within 1.25 times or under 50 ms | any refusal; an account below half of another's frames in any minute; under 70 min (3) or 3.5 h (10); p99 over 1.5 times in any account |
+| 10a | Frames per subject 0.425 (±5%); settle 26 to 42 min; serial apply p99 under 8 ms; saves' p99 within 1.2× step 8's settle window | apply p99 over 8 ms, or saves' p99 over 1.2× step 8's |
+| 10b | Aged adoption: 20,020 subjects, about 2,000 aged per account, every aged row equal to the regenerated tape; 0 refused; per-account frames and changes as step 8; settle 65 to 100 min (central 80); each account within 10% of the others' committed frames every minute outside account 2's pause and pace; account 2: 0 frames while paused, no gap under 200 ms while paced, the others' rate rises while it is paused; stream check under 4 GiB heap, 10 to 18 min per account; exact | any aged row differs; any refusal; settle over 120 or under 50 min; an account below half of another's in a minute; a frame while paused or a gap under 195 ms; out of memory; over 30 min per account of check; any difference |
+| 10c | As 10b for ten accounts: settle 3.4 to 5.5 h (central 4.4; 1.6 to 2.5 h calibrated), the first 4 h beside saves | settle over 6.5 h or under 2.5 h; as 10b |
 | 11 | `pf3` 1,500 to 1,850 reads/s (central 1,680), p99 240 to 310 ms, loads per subject 1.5 to 1.9; `pf3r` 2,100 to 2,600 (p99 160 to 210 ms, loads 1.05 to 1.4) if read-ahead is the excess (about 60%), else as `pf3` ± 7%; `pf3c` 1,450 to 1,950; S stores 23.07 to 23.08 commits/s; 0 wrong values, errors and prefetch failures; the 100 ms bar not met in any configuration | `pf3` under 1,450 reads/s or under 2.5 reader cores; `pf3` loads under 1.3; `pf3c` loads above 2.3 or reads/s 10% under `pf3`, or 15% above; `pf3r` loads within 0.15 of `pf3`'s (read-ahead is not the excess); any wrong value, error or prefetch failure (then no option may merge) |
 | 12 | Off reproduces 2026-11-23 (394 stored, p99 5 to 12 s). On, 394 cell's first 40 s: reads inside apply per save 0.7 to 1.4 (40 to 65% below off), save p99 0.3 to 3 s; 620 cell stores 470 to 600/s | reads inside apply fall less than 25% with hints on 95% or more of per-subject saves; or fall 40% or more while p99 at 394 stays over 5 s; any receipt or read-back difference |
 | 13 | No start-up read: first-60-s save p99 0.5 to 3 s (7.26 s on 2026-11-23 without hints); with the read: 0.2 to 0.5 s; stop to admission unchanged within 5 s | no-read arm's p99 over 4 s with hints on 95% or more of saves; read arm's p99 over 0.6 s; admission moves more than 5 s |
 | 14 | Off: `busyPeak` 512 at the 1,024 step, lag p99 0.3 to 2 s. Bound 128: `busyPeak` under 200, lag p99 under 250 ms (expected 40 to 120), pinned goodput within 10% of off | off shows `busyPeak` under 512 with `queuedPeak` 0 while the poll gap is over 100 ms; on still over 250 ms with `busyPeak` under 200; on loses more than 20% of pinned goodput |
 | 15 | 0 early answers and 0 refusals in 120 Publishes; 20/20 inside one second per Publish window; first-correct p50 within +3 ms of 2026-11-23; waits on 0 to 10% of requests | any at-least defect or refusal; p50 more than 10 ms above 2026-11-23; waits on more than a quarter of requests |
 | 16 | `two-pf` 3,000 to 3,600 reads/s both readers (p99 110 to 160 ms); `two-pfr` 4,200 to 5,000 (p99 85 to 115 ms) if read-ahead is the excess; each reader 2.6 to 2.9 cores; PostgreSQL 0.65 to 0.95 cores; saves 23.07 to 23.08 commits/s; 0 wrong values on both readers | both readers together under 2,600 reads/s with each under 2.4 cores (a shared limit: PostgreSQL's one core first); machine 2's reader more than 15% slower than machine 1's; p99 under 100 ms at both pins (the sizing was pessimistic); any wrong value or error on either reader (stop) |
+| 17 | `b-235`: 0 acknowledged saves lost; first read within 0.35 s, no gap over 1 s; replacement copy and check 60 to 150 s (central 95); **first protected save 80 to 170 s after the fault (central 115 s; 603.4 s measured on 2026-11-23)**, 17 to 22 s after the replacement is ready; set-up cold copy 60 to 150 s per server (594 s on 2026-11-23); `a-235`: 0 lost, first one-copy save 18 to 25 s after the fault, second failure read through the repaired path with every save from before the fault present and every one-copy save absent; `move-235`: 0 lost, write pause 12 to 20 s | any loss or missed read; copy and check over 200 s (the disk bounds it); first protected save over 250 s with the cold-core marks present, or under 60 s; any copy without the restore mark; a save from before the fault absent after the second failure |
+| 18 | `b-235` cores only: copy 45 to 135 s, hash 55 to 75 s, first protected save 120 to 230 s (central 170) | hash over 150 s (the one-core explanation is wrong); first protected save over 300 s |
 
 ## Gates on the merged head (2026-11-24 morning, at `4c34fd0f8` and before)
 
