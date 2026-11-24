@@ -1,5 +1,6 @@
 (ns triplex.gateway.main
-  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase] [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger] [triplex.gateway.pinned :as pinned] [triplex.gateway.group-cut :as group-cut]
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase]
+            [triplex.gateway.removal-scope :as removal-scope] [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger] [triplex.gateway.pinned :as pinned] [triplex.gateway.group-cut :as group-cut]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
             [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed]
             [triplex.gateway.write-wire :as write-wire]
@@ -412,11 +413,14 @@
     (privacy/guard scope #(with-privacy-guards more work))
     (work)))
 
-(defn route-handler [{:keys [uri request-method body] :as request}]
+(defn route-handler [{:keys [uri request-method body query-string] :as request}]
   (if-let [[_ name action] (re-matches #"/v[12]/db/(s2-[A-Za-z0-9_-]+)/(.+)" uri)]
     (try
       (let [[conn db] (trace/span "privacy/current-data" "gateway"
-                        (let [conn (connection (db-uri name))] [conn (d/db conn)]))]
+                        (let [conn (connection (db-uri name))] [conn (d/db conn)]))
+            ;; [DX-ERA2] A database guarded per account (TX2_REMOVAL_PER_ACCOUNT=1 and the database moved): requests use
+            ;; the published cut while another removal is prepared, and writes are fenced on their own accounts.
+            per-account (removal-scope/per-account? db)]
         (cond
           (and (= :post request-method) (= action "protection"))
           (response 200 (erase/declare! name conn db (request-json body)))
@@ -424,6 +428,8 @@
           (response 200 (erase/erase! name conn (request-json body)))
           (and (= :post request-method) (= action "restore-erasure"))
           (response 200 (erase/replay-after-restore! name conn))
+          (and removal-scope/enabled (= :post request-method) (= action "removal-per-account"))
+          (response 200 (erase/per-account! name conn (request-json body)))
           :else
           (let [[protected-wire input] (when (and (= :post request-method) (= action "transact"))
                                         (write-wire/open name (request-json body)))
@@ -431,52 +437,63 @@
                 source (get input "erasureSourceDatabase")
                 _ (when (and source (not (and (string? source) (re-matches #"s2-[A-Za-z0-9_-]+" source))))
                     (codec/invalid "Invalid source scope for protected delivery"))
-                independent (when (and managed-write? subject/enabled (nil? source)
-                                       (not (contains? input "erasureSeq"))
-                                       (not (true? (get input "erasureReplay"))))
-                              (let [cut (privacy/cut name db)] (when (or (not (:sealed cut)) (envelope/shared?)) cut)))
+                ;; [DX-ERA2] Per account, a ticket naming its source accounts holds those accounts' locks only.
+                ticket-accounts (when (and per-account managed-write? (nil? source)) (removal-scope/ticket-accounts input))
+                [independent db] (if (and managed-write? (or subject/enabled per-account) (nil? source)
+                                          (not (contains? input "erasureSeq"))
+                                          (not (true? (get input "erasureReplay"))))
+                                   (let [[cut db] (if per-account (erase/request-cut name conn db) [(privacy/cut name db) db])]
+                                     [(when (or (not (:sealed cut)) (envelope/shared?)) cut) db])
+                                   [nil db])
                 request (cond-> request input (assoc :privacy-input input))
                 run (fn [cut]
                       (trace/attribute! :erasureGuarded (boolean cut))
                       (binding [privacy/*cut* cut privacy/*database* name privacy/*data* db
                                 privacy/*unseal* (fn [id e a value] (envelope/decode! name (d/db conn) id e a value))]
                         (let [answer (if (and (= :get request-method) (= action "erasure-frontier"))
-                                       (response 200 {:database name :protected (boolean cut)
-                                                      :seq (or (:seq cut) 0) :erased (or (:erased cut) {})})
+                                       (response 200 (cond-> {:database name :protected (boolean cut)
+                                                              :seq (or (:seq cut) 0) :erased (or (:erased cut) {})}
+                                                       (:per-account cut)
+                                                       (merge (removal-scope/frontier-fields cut query-string))))
                                        (route-handler-base request))]
                           (cond-> answer cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))))))]
             (cond
               independent
-              ;; [DX-ERASE1] Why: the native transaction checks the verified sequence with the person's revision.
-              ;; Rejected: holding the scope's writer lock while preparing or saving an unrelated person.
-              (do (privacy/verify-data! independent db) (run independent))
+              ;; [DX-ERA2] Per account the cut was checked by request-cut; the fence decides at the serial point.
+              (do (when-not per-account (privacy/verify-data! independent db)) (run independent))
 
               (and input (or managed-write? source))
               ;; [DX-ERASE1] Why: the source cannot publish an erasure between validation and recipient commit.
               ;; Rejected: an HTTP recheck followed by an independent recipient write.
-              (with-privacy-guards (sort (cond-> #{} managed-write? (conj name) source (conj source)))
+              (with-privacy-guards (if ticket-accounts
+                                     (sort (map #(removal-scope/lock-name name %) ticket-accounts))
+                                     (sort (cond-> #{} managed-write? (conj name) source (conj source))))
                 (fn []
                   (let [[current next] (trace/span "privacy/write-frontier" "gateway"
-                                         (let [current (d/db conn)] [current (privacy/cut name current)]))]
+                                         (let [current (d/db conn)]
+                                           (if (and per-account managed-write?)
+                                             (let [[cut current] (erase/request-cut name conn current)] [current cut])
+                                             [current (privacy/cut name current)])))]
                     (when (and managed-write? (nil? next)) (privacy/unavailable!))
                     (when (and (:sealed next) (write-wire/required?) (not protected-wire))
                       (privacy/failure! 400 "ProtectedWriteRequired" "Use the configured protected save transport"))
-                    (trace/span "privacy/verify-write" "gateway" (privacy/verify-data! next current))
+                    (when-not (:per-account next) (trace/span "privacy/verify-write" "gateway" (privacy/verify-data! next current)))
                     (when (or source (contains? input "erasureSeq"))
                       (if source
                         (let [source-db (d/db (connection (db-uri source)))
                               source-cut (privacy/cut source source-db)]
                           (privacy/verify-data! source-cut source-db)
                           (privacy/ensure-seq! source-cut (get input "erasureSeq")))
-                        (privacy/ensure-seq! next (get input "erasureSeq"))))
+                        (privacy/ensure-ticket! next input)))
                     (run next))))
               ;; [DX-ERASE1] Why: a guarded write only needs the cut verified inside the writer lock.
               ;; Rejected: reading and hashing the authority twice on every guarded save.
               :else
               (let [read-cut (when-not input
-                               (trace/span "privacy/frontier" "gateway" (privacy/cut name db)))]
-                (when read-cut (trace/span "privacy/verify-data" "gateway" (privacy/verify-data! read-cut db)))
-                (when (contains? input "erasureSeq") (privacy/ensure-seq! read-cut (get input "erasureSeq")))
+                               (trace/span "privacy/frontier" "gateway"
+                                 (if per-account (first (erase/request-cut name conn db)) (privacy/cut name db))))]
+                (when (and read-cut (not per-account)) (trace/span "privacy/verify-data" "gateway" (privacy/verify-data! read-cut db)))
+                (when (contains? input "erasureSeq") (privacy/ensure-ticket! read-cut input))
                 (run read-cut))))))
       (catch Exception e
         (let [info (ex-data e)]

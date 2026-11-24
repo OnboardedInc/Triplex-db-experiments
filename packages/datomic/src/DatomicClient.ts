@@ -1405,6 +1405,7 @@ export class DatomicClient {
               : {
                   erasureSourceDatabase: ticket.sourceDatabase,
                 }),
+            ...(ticket.accounts === undefined ? {} : { erasureAccounts: ticket.accounts }),
           }
         : {}),
       ...(this.cacheOptions.writeClass ? { writeClass: this.cacheOptions.writeClass } : {}),

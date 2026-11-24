@@ -2,7 +2,7 @@
   (:require [clojure.data.json :as json] [datomic.api :as d]
             [triplex.gateway.envelope :as envelope]
             [triplex.gateway.lean :as lean] [triplex.gateway.privacy :as privacy]
-            [triplex.gateway.scope :as scope])
+            [triplex.gateway.removal-scope :as removal-scope] [triplex.gateway.scope :as scope])
   (:import [java.util UUID]))
 
 ;; [DX-ERASE1] Why: an independent prepared save may advance the database after removal selects its rows.
@@ -177,8 +177,16 @@
                     {:db/id "privacy-journal" :triplex.entity/id tx :triplex.journal/position position
                      :triplex.entity/rev position :triplex.entity/row (journal-rows entry)}
                     {:db/id "privacy-claim" :triplex.claim/command-id (get entry "commandId") :triplex.claim/tx "datomic.tx"
-                     :triplex.claim/tx-id tx}
-                    [:db/cas head :triplex.scope/erasure-seq (dec (get entry "seq")) (get entry "seq")]]
+                     :triplex.claim/tx-id tx}]
+                    ;; [DX-ERA2] Guarded per account: the global removal sequence moves on its own attribute (the
+                    ;; database-wide one keeps the sentinel every write fences on), and each account that lost a value
+                    ;; takes this removal's sequence. Rejected: moving the database-wide sequence (it refuses every save).
+                    (removal-scope/per-account? current)
+                    (into (cons [:db/cas head :triplex.scope/erasure-seq removal-scope/sentinel removal-scope/sentinel]
+                                (cons [:db/cas head :triplex.scope/removal-seq (dec (get entry "seq")) (get entry "seq")]
+                                      (removal-scope/entry-ops entry))))
+                    (not (removal-scope/per-account? current))
+                    (conj [:db/cas head :triplex.scope/erasure-seq (dec (get entry "seq")) (get entry "seq")])
                     (not (scope/head-v2? current head))
                     (conj [:db/cas head :triplex.scope/position (dec position) position]))
               report (deref (d/transact conn ops) 5000 ::timeout)]
@@ -193,13 +201,36 @@
     {:seq (get entry "seq") :erasedAt (get entry "erasedAt") :txId (get entry "txId")
      :t (str (d/tx->t native)) :position (get entry "position") :identities (mapv #(dissoc % "keyHandle") (get entry "identities"))}))
 
+(defn- selector-buckets
+  "The accounts whose values these selectors can reach: an entity selector names its entity; an assertion selector
+  names the entity that assertion belongs to (fixed for its whole life)."
+  [db selectors]
+  (into (sorted-set)
+        (map (fn [s]
+               (removal-scope/bucket
+                 (or (get s "entityId")
+                     (let [id (get s "id")
+                           private-id (when (d/entid db :triplex.private/id) (d/entid db [:triplex.private/id id]))]
+                       (if private-id (scope/value db private-id :triplex.private/entity)
+                         (some-> (lean/by-id (d/history db) id) :v lean/decode :entity_id)))))))
+        selectors))
+
+(defn- with-bucket-guards [name buckets work]
+  (if-let [[b & more] (seq buckets)]
+    (privacy/guard (removal-scope/lock-name name b) #(with-bucket-guards name more work))
+    (work)))
+
 (defn erase! [name conn input]
   (let [selectors (selectors! input)
-        command (get input "commandId")]
-    (when-not (privacy/cut name (d/db conn) true)
+        command (get input "commandId")
+        db (d/db conn)
+        ;; [DX-ERA2] Per account, a removal also holds the locks of the accounts it can touch, which is what a derived
+        ;; write naming those accounts holds instead of the database's lock.
+        buckets (when (removal-scope/per-account? db) (selector-buckets db selectors))]
+    (when-not (privacy/cut name db true)
       (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
     (privacy/guard name
-      (fn []
+      (fn [] (with-bucket-guards name buckets (fn []
         (let [db (sync! conn)
               current (privacy/cut name db true)]
           (when-not current (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
@@ -215,6 +246,9 @@
                       (privacy/failure! 409 "EraseCommandConflict" "The command identity is already claimed"))]
               (loop [view db prepared pending]
                 (let [entry (or prepared (make-entry name view current command selectors))
+                      ;; [DX-ERA2] The selection cannot reach an account whose lock this removal does not hold.
+                      _ (when (and buckets (not (every? buckets (removal-scope/entry-buckets entry))))
+                          (privacy/unavailable!))
                       _ (when-not prepared (privacy/prepare! name entry))
                       moved (try (apply-native! conn view entry) false
                                   (catch Exception error
@@ -226,7 +260,7 @@
                           committed (d/entid next [:triplex.tx/operation-id (operation-id entry)])]
                       (recur next (when committed entry)))
                     (do (privacy/publish! name current entry)
-                        (response (d/db conn) entry))))))))))))
+                        (response (d/db conn) entry))))))))))))))
 
 (defn replay-after-restore! [name conn]
   ;; [DX-ERASE1] Why: data rollback must replay the external prefix before any route becomes eligible.
@@ -248,3 +282,55 @@
               (apply-native! conn data (assoc entry "position" (inc (scope/head-position data (scope/entity data))))))))
         (privacy/verify-data! state (sync! conn))
         {:database name :erasure {:seq (:seq state)}}))))
+
+;; [DX-ERA2] Why: a request on a database guarded per account uses the last published cut while another removal is
+;; prepared or natively committed but unpublished: a write is fenced at the serial point on its own accounts, and a
+;; read is then a read that started before that removal's publication (TARGETS section 7.1). A native value behind
+;; the published log is synced once (another gateway's removal not yet seen by this peer), then refused (a restore
+;; must replay first, as before).
+;; Rejected: refusing every request of every account while any removal is pending (the database-wide rule).
+(defn request-cut [name conn db]
+  (loop [db db synced? false]
+    (let [state (privacy/cut name db true)]
+      (cond
+        (nil? state) [nil db]
+        (removal-scope/consistent? db (:seq state) (:pending-seq state)) [(assoc state :per-account true) db]
+        (and (not synced?) (let [native (removal-scope/native-seq db)] (and (integer? native) (< native (:seq state)))))
+        (recur (sync! conn) true)
+        :else (privacy/unavailable!)))))
+
+;; [DX-ERA2] Why: move an existing protected database to removal sequences per account (or back), online: under the
+;; removal lock, one small transaction (the global sequence moves to its own attribute, the database-wide one takes the
+;; sentinel, and each account that ever lost a value gets its sequence from the published log). A save prepared under
+;; the other mode fails its fence once and is sent again under the new one.
+;; Rejected: rewriting the removal log or the stored rows (neither changes; the log is the same ordered log).
+(defn per-account! [name conn input]
+  (when-not removal-scope/enabled
+    (privacy/failure! 404 "NotFound" "Removal per account is off on this gateway"))
+  (when-not (and (map? input) (every? #{"back"} (keys input)) (contains? #{nil true false} (get input "back")))
+    (privacy/failure! 400 "InvalidValue" "Expected {} or {\"back\": true}"))
+  (let [back? (true? (get input "back"))]
+    (privacy/guard name
+      (fn []
+        (let [db (sync! conn)
+              state (privacy/cut name db)]
+          (when-not state (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
+          (privacy/verify-data! state db)
+          (let [head (scope/entity db) n (:seq state) per? (removal-scope/per-account? db)
+                buckets (:buckets state)
+                ops (cond
+                      (= back? (not per?)) nil
+                      back? [[:db/cas head :triplex.scope/erasure-seq removal-scope/sentinel n]
+                             [:db/retract head :triplex.scope/removal-seq n]]
+                      :else [[:db/cas head :triplex.scope/erasure-seq n removal-scope/sentinel]
+                             [:db/add head :triplex.scope/removal-seq n]])
+                counters (when (and ops (not back?))
+                           (partition-all 1000 (removal-scope/counter-ops (:entities state) buckets)))
+                transact! #(when (= ::timeout (deref (d/transact conn (vec %)) 5000 ::timeout)) (privacy/unavailable!))]
+            (when (and ops (not back?)) (removal-scope/install! conn db))
+            ;; Counters first (nothing reads them before the mode moves), in parts of 1,000; the move itself last.
+            (doseq [part counters] (transact! part))
+            (when ops (transact! ops))
+            (let [after (sync! conn)]
+              {:database name :perAccount (removal-scope/per-account? after) :seq n
+               :accounts (count buckets) :entities (count (:entities state)) :changed (boolean ops)})))))))
