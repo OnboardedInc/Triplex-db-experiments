@@ -54,6 +54,9 @@ export class DatomicHttpError extends Error {
     readonly maximum?: number,
     readonly route?: string,
     readonly retryAfterMs?: number,
+    // [DX-XQ4] On a refusal of `find`: "sweep" when the exact sweep (XQ6, TX2_SWEEP=1) answers the same question
+    // unchanged, "none" when it does not. Absent on every other route.
+    readonly fallback?: "sweep" | "none",
   ) {
     super(message);
   }
@@ -80,6 +83,93 @@ export class DatomicTransportError extends Error {
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);
   }
+}
+// [DX-XQ4] Questions across subjects (commit-time index, gateway option TX2_CROSS_INDEX=1). The shapes mirror
+// lab/experiments/EXP-DX1/xq4/COMMIT-INDEX.md; answers are returned unchanged from the gateway.
+export type CrossIndexFamily = "string" | "integer" | "number" | "datetime" | "boolean" | "ref";
+export interface CrossIndexDeclaration {
+  readonly version: 1;
+  readonly attributes: readonly { readonly attribute: string; readonly code: string; readonly family: CrossIndexFamily }[];
+  readonly types?: readonly (
+    | { readonly entityType: string; readonly list: "entries" }
+    | { readonly entityType: string; readonly list: "idPattern"; readonly idPattern: string }
+  )[];
+}
+export interface CrossIndexEpoch { readonly position: number; readonly t: number }
+export interface CrossIndexDeclarationState {
+  readonly database: string;
+  readonly seq: number;
+  readonly declaration: CrossIndexDeclaration | null;
+  readonly epochs: Readonly<Record<string, CrossIndexEpoch>>;
+  readonly changed?: boolean;
+}
+export interface CrossIndexBackfill {
+  readonly database: string;
+  readonly sealed: boolean;
+  readonly dryRun: boolean;
+  readonly head: number;
+  readonly entities: number;
+  readonly added: number;
+  readonly retracted: number;
+  readonly typeEntries: number;
+  readonly batches: number;
+  readonly epochs?: Readonly<Record<string, CrossIndexEpoch>>;
+}
+export interface CrossIndexValue { readonly type: CrossIndexFamily; readonly value: string | number | boolean }
+export type CrossIndexCondition =
+  | { readonly attribute: string; readonly op: "eq"; readonly value: CrossIndexValue }
+  | { readonly attribute: string; readonly op: "in"; readonly values: readonly CrossIndexValue[] }
+  | {
+      readonly attribute: string;
+      readonly op: "range";
+      readonly from?: CrossIndexValue;
+      readonly fromExclusive?: CrossIndexValue;
+      readonly to?: CrossIndexValue;
+      readonly toExclusive?: CrossIndexValue;
+    }
+  | { readonly attribute: string; readonly op: "prefix"; readonly value: string | { readonly type: "string"; readonly value: string } }
+  | { readonly attribute: string; readonly op: "exists" | "missing" };
+export interface CrossIndexFindRequest {
+  readonly account: string;
+  readonly basis?: { readonly recordedPosition?: number; readonly recordedAt?: number; readonly validAt?: number };
+  readonly atLeastPosition?: number;
+  readonly basisWaitMs?: number;
+  readonly from?: { readonly type: string } | { readonly prefix: string; readonly shape?: string };
+  readonly where?: readonly CrossIndexCondition[];
+  readonly project?: readonly string[];
+  readonly result?: "ids" | "count" | "countByValue" | "countDistinct";
+  readonly of?: string;
+  readonly order?: { readonly by: string; readonly direction?: "asc" | "desc" };
+  readonly limit?: number;
+  readonly cursor?: string | null;
+  readonly bounds?: { readonly entries?: number; readonly ms?: number; readonly segments?: number };
+}
+export interface CrossIndexAnswer {
+  readonly database: string;
+  readonly account: string;
+  readonly position: number;
+  readonly t: string;
+  readonly validAt: number;
+  readonly head: number;
+  readonly indexEpoch: number;
+  readonly trailingBy: 0;
+  readonly result: "ids" | "count" | "countByValue" | "countDistinct";
+  readonly order: { readonly by: string; readonly direction: "asc" | "desc" };
+  readonly ids?: readonly string[];
+  readonly projected?: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>>;
+  readonly count?: number;
+  readonly countExact?: boolean;
+  readonly counts?: readonly { readonly value: { readonly type: string; readonly value?: unknown }; readonly count: number }[];
+  readonly matched?: number;
+  readonly examined: number;
+  readonly segmentsLoaded: number;
+  readonly entityReads?: number;
+  readonly indexOnly?: boolean;
+  readonly queryMicros?: number;
+  readonly queryCpuMicros?: number;
+  readonly queueMicros?: number;
+  readonly stopped: "end" | "limit" | "entries" | "time" | "segments";
+  readonly next: string | null;
 }
 export interface DatomicHealth {
   datomicVersion: string;
@@ -683,6 +773,7 @@ export class DatomicClient {
                     typeof data["maximum"] === "number" ? data["maximum"] : undefined,
                     typeof data["route"] === "string" ? data["route"] : undefined,
                     typeof data["retryAfterMs"] === "number" ? data["retryAfterMs"] : undefined,
+                    data["fallback"] === "sweep" || data["fallback"] === "none" ? data["fallback"] : undefined,
                   ),
                 );
               else {
@@ -1097,6 +1188,20 @@ export class DatomicClient {
           if (typeof value === "string")
             this.reachDiagnostics.decodedTextBytes += Buffer.byteLength(value);
     }
+  }
+  // [DX-XQ4] Why: the declaration, its offline backfill and the bounded find route of the commit-time index.
+  // Rejected: an adapter-level scan fallback (a question too large for the bounds pages with a cursor instead).
+  declareIndexes(db: string, declaration: CrossIndexDeclaration) {
+    return this.request<CrossIndexDeclarationState>("POST", `/v2/db/${db}/index-declaration`, declaration);
+  }
+  indexDeclaration(db: string) {
+    return this.request<CrossIndexDeclarationState>("GET", `/v2/db/${db}/index-declaration`);
+  }
+  backfillIndex(db: string, options: { batchDatoms?: number; dryRun?: boolean; expectHead?: number } = {}) {
+    return this.request<CrossIndexBackfill>("POST", `/v2/db/${db}/index-backfill`, options, 600_000);
+  }
+  find(db: string, request: CrossIndexFindRequest) {
+    return this.request<CrossIndexAnswer>("POST", `/v2/db/${db}/find`, request);
   }
   declareProtection(db: string, attributes: readonly string[], sealed = false) {
     return this.request("POST", `/v2/db/${db}/protection`, { attributes, sealed });

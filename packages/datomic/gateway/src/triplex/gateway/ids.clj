@@ -27,14 +27,23 @@
 (def ^Semaphore permits (Semaphore. permit-count true))
 (def ^ConcurrentHashMap running (ConcurrentHashMap.))
 
-;; [DX-XQ7] Why: a list screen asks for a page, a total and several counts of one account at once (review finding D7);
-;; refusing the second at once makes the screen retry. With TX2_ID_LIST_QUEUE_MS set, a request waits in a fair queue
-;; for its account's turn (TX2_ID_LIST_PER_ACCOUNT running at once, default 1), then in the pool's fair queue, at most
-;; that many ms in all, then 503 IndexBusy with retryAfterMs. Each account holds at most PER_ACCOUNT places in the pool's
-;; FIFO queue, so a page waits behind at most that many pages of each other account: accounts take turns. The answer
-;; then carries `queue` {micros, ahead}: its wait and how many pages of any account were admitted while it waited.
-;; Unset (the default): refused at once when the account is busy, exactly as before.
-;; Rejected: one pool for lists and sweeps (a sweep page holds its permit up to 2 s; a list page up to 1 s).
+(defn refuse! [status code message & [extra]]
+  (throw (ex-info message (merge {:status status :code code :ids-refusal true} extra))))
+
+;; [DX-XQ10] ONE admission for the ID list route and the index route (find), under the question reader's option name.
+;; Why: the index branch (exp/DX-XQ4) and the question reader branch (exp/DX-XQ7) each built a fair queue for the same
+;; review findings (D7, C4); two queues would let one account run a list and a find at once and would make "one
+;; question per account" mean two things. The two meet here:
+;; - TX2_ID_LIST_QUEUE_MS unset (the default): exactly the ID list branch's admission (exp/DX-XQ3): a second question of
+;;   a busy account is refused at once (503 IndexBusy), then a permit is waited for up to the request's time bound.
+;;   find shares the same running map, so one question per account across both routes.
+;; - TX2_ID_LIST_QUEUE_MS set (1..5000): the index branch's behaviour: each account waits in its own fair queue
+;;   (TX2_ID_LIST_PER_ACCOUNT running at once, default 1), then in the pool's fair queue, at most TX2_ID_LIST_QUEUE_MS
+;;   in all, for both routes; 503 IndexBusy with retryAfterMs only after that wait. Answers then carry
+;;   `queue` {micros, ahead}: the wait and how many questions of any account were admitted while it waited. Each
+;;   account holds at most PER_ACCOUNT places in the pool's FIFO queue, so accounts take turns.
+;; Rejected: the index branch's always-on queue waiting each request's own bound (it changes the ID list route with every
+;; option off); one pool for lists and sweeps (a sweep page holds its permit up to 2 s).
 (def list-queue-ms
   (when-let [text (not-empty (System/getenv "TX2_ID_LIST_QUEUE_MS"))]
     (let [n (Long/parseLong text)] (when-not (<= 1 n 5000) (throw (IllegalArgumentException. "TX2_ID_LIST_QUEUE_MS must be 1..5000"))) n)))
@@ -42,32 +51,66 @@
   (let [n (Integer/parseInt (or (not-empty (System/getenv "TX2_ID_LIST_PER_ACCOUNT")) "1"))]
     (when-not (<= 1 n 16) (throw (IllegalArgumentException. "TX2_ID_LIST_PER_ACCOUNT must be 1..16"))) n))
 (def ^ConcurrentHashMap account-gates (ConcurrentHashMap.))
-(def ^java.util.concurrent.atomic.AtomicLong admitted (java.util.concurrent.atomic.AtomicLong.))
+(def ^java.util.concurrent.atomic.AtomicLong admitted-count (java.util.concurrent.atomic.AtomicLong.))
+(defn- account-gate ^Semaphore [account]
+  (.computeIfAbsent account-gates account
+    (reify java.util.function.Function (apply [_ _] (Semaphore. (int list-per-account) true)))))
 (defn- queued-admit!
   "Wait (fair, at most list-queue-ms) for the account's turn and a pool permit; return {:queue ... :release f}."
-  [account retry-ms]
-  (let [started (System/nanoTime) ticket (.get admitted)
-        ^Semaphore gate (.computeIfAbsent account-gates account
-                          (reify java.util.function.Function (apply [_ _] (Semaphore. (int list-per-account) true))))]
+  [account retry-ms busy-stat ^Semaphore permits]
+  (let [started (System/nanoTime) ticket (.get admitted-count)
+        ^Semaphore gate (account-gate account)]
     (when-not (.tryAcquire gate (long list-queue-ms) TimeUnit/MILLISECONDS)
-      (stats/bump! [:idLists :busy] 1)
-      (throw (ex-info "Another ID list of this account is running" {:status 503 :code "IndexBusy" :ids-refusal true :retryAfterMs retry-ms})))
+      (stats/bump! busy-stat 1)
+      (refuse! 503 "IndexBusy" "Another question of this account is running" {:retryAfterMs retry-ms}))
     (let [left (max 0 (- list-queue-ms (quot (- (System/nanoTime) started) 1000000)))]
-      (when-not (.tryAcquire permits left TimeUnit/MILLISECONDS)
+      (when-not (try (.tryAcquire permits left TimeUnit/MILLISECONDS) (catch Throwable e (.release gate) (throw e)))
         (.release gate)
-        (stats/bump! [:idLists :busy] 1)
-        (throw (ex-info "Every ID list permit is in use" {:status 503 :code "IndexBusy" :ids-refusal true :retryAfterMs retry-ms}))))
-    (let [ahead (- (.getAndIncrement admitted) ticket)]
+        (stats/bump! busy-stat 1)
+        (refuse! 503 "IndexBusy" "Every index question permit is in use" {:retryAfterMs retry-ms})))
+    (let [ahead (- (.getAndIncrement admitted-count) ticket)]
       (stats/bump! [:idLists :queued] 1)
       {:queue {:micros (quot (- (System/nanoTime) started) 1000) :ahead ahead}
        :release (fn [] (.release permits) (.release gate))})))
+(defn- immediate-admit!
+  "The ID list branch's admission: refused at once when the account is busy, then a permit within wait-ms."
+  [account wait-ms busy-stat ^Semaphore permits]
+  (when (some? (.putIfAbsent running account true))
+    (stats/bump! busy-stat 1)
+    (refuse! 503 "IndexBusy" (if (= busy-stat [:idLists :busy]) "Another ID list of this account is running"
+                               "Another question of this account is running") {:retryAfterMs wait-ms}))
+  (when-not (try (.tryAcquire permits wait-ms TimeUnit/MILLISECONDS)
+                 (catch Throwable e (.remove running account) (throw e)))
+    (.remove running account)
+    (stats/bump! busy-stat 1)
+    (refuse! 503 "IndexBusy" (if (= busy-stat [:idLists :busy]) "Every ID list permit is in use"
+                               "Every index question permit is in use") {:retryAfterMs wait-ms}))
+  {:release (fn [] (.release permits) (.remove running account))})
+;; [DX-XQ10] find's own permit pool (TX2_FIND_PERMITS, 1..64). Why: the question reader's sizing gives lists and find
+;; separate pools (xq7/QUESTION-READER.md section 4: lists 2, sweeps 3, find 1), so a find page held up to its 1,000 ms
+;; cap never takes a list screen's permit. The account's turn stays shared: one question per account across both
+;; routes. Unset (the default): find takes the ID list pool, exactly as the index branch built it.
+(def ^Semaphore find-permits
+  (when-let [text (not-empty (System/getenv "TX2_FIND_PERMITS"))]
+    (let [n (Integer/parseInt text)]
+      (when-not (<= 1 n 64) (throw (IllegalArgumentException. "TX2_FIND_PERMITS must be 1..64")))
+      (Semaphore. n true))))
+(defn admitted
+  "Runs `f` holding the account's turn and one permit of `pool` (default the ID list pool; see above);
+  {:queueMicros, :queue (when queued), :value}."
+  [account wait-ms busy-stat f & [pool]]
+  (let [t0 (System/nanoTime)
+        pool (or pool permits)
+        {:keys [queue release]} (if list-queue-ms
+                                  (queued-admit! account wait-ms busy-stat pool)
+                                  (immediate-admit! account wait-ms busy-stat pool))]
+    (try (cond-> {:queueMicros (quot (- (System/nanoTime) t0) 1000) :value (f)} queue (assoc :queue queue))
+         (finally (release)))))
 
 (def bound-defaults {"entries" 100000 "ms" 100 "segments" 512})
 (def bound-caps {"entries" 1000000 "ms" 1000 "segments" 4096})
 (def chunk-size 64)
 
-(defn refuse! [status code message & [extra]]
-  (throw (ex-info message (merge {:status status :code code :ids-refusal true} extra))))
 
 (def account-pattern #"[A-Za-z0-9_-]{1,64}")
 (defn base-for
@@ -316,20 +359,9 @@
             (refuse! 409 "CursorMismatch" "The cursor's key is outside this request's range"))
         prior (if cursor (get cursor "count") 0)]
     ;; Admission after the basis is resolved, so a wait for a position never holds a permit.
-    (let [{:keys [queue release]}
-          (if list-queue-ms
-            (queued-admit! account (get limits "ms"))
-            (do
-              (when (some? (.putIfAbsent running account true))
-                (stats/bump! [:idLists :busy] 1)
-                (refuse! 503 "IndexBusy" "Another ID list of this account is running" {:retryAfterMs (get limits "ms")}))
-              (when-not (try (.tryAcquire permits (get limits "ms") TimeUnit/MILLISECONDS)
-                             (catch Throwable e (.remove running account) (throw e)))
-                (.remove running account)
-                (stats/bump! [:idLists :busy] 1)
-                (refuse! 503 "IndexBusy" "Every ID list permit is in use" {:retryAfterMs (get limits "ms")}))
-              {:release (fn [] (.release permits) (.remove running account))}))]
-      (try
+    (let [{:keys [queue value]}
+          (admitted account (get limits "ms") [:idLists :busy]
+            (fn []
         (let [started (System/nanoTime)
               work (trace/span "ids/scan" "gateway" (scan! view base start last-key (some? last-key) order shape-re result limit limits))
               micros (quot (- (System/nanoTime) started) 1000)
@@ -348,6 +380,12 @@
                            (encode-cursor {"v" 1 "db" name "account" account "req" req "t" t "position" position
                                            "validAt" valid-at "last" (or last last-key) "count" total}))}
             (= result "ids") (assoc :ids ids)
-            (= result "count") (assoc :count total :countExact (not more?))
-            queue (assoc :queue queue)))
-        (finally (release))))))
+            (= result "count") (assoc :count total :countExact (not more?))))))]
+      (cond-> value queue (assoc :queue queue)))))
+
+(defn admitted-find
+  "[DX-XQ10] find's admission: the shared account turn, find's own pool when TX2_FIND_PERMITS is set (else the ID list
+  pool), and `queue` in the answer when queued. {:value answer}, as `admitted`."
+  [account wait-ms busy-stat f]
+  (let [{:keys [queue value] :as r} (admitted account wait-ms busy-stat f find-permits)]
+    (assoc r :value (cond-> value queue (assoc :queue queue)))))

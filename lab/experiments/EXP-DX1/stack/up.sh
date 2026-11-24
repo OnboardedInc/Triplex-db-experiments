@@ -1112,6 +1112,11 @@ for role in "${gateway_roles[@]}"; do
     [[ $id_lists =~ ^[01]$ ]] || { echo "up.sh: DX_ID_LISTS must be 0 or 1" >&2; exit 2; }
     field_policy+=(-e "TX2_ID_LISTS=$id_lists")
   fi
+  # [DX-XQ4] The commit-time index for questions across subjects (default off: the variable is not passed).
+  if [[ -n ${DX_CROSS_INDEX:-} ]]; then
+    [[ $DX_CROSS_INDEX =~ ^[01]$ ]] || { echo "up.sh: DX_CROSS_INDEX must be 0 or 1" >&2; exit 2; }
+    field_policy+=(-e "TX2_CROSS_INDEX=$DX_CROSS_INDEX")
+  fi
   if [[ -n $index_permits ]]; then
     [[ $index_permits =~ ^[1-9][0-9]?$ ]] || { echo "up.sh: DX_INDEX_QUERY_PERMITS must be 1..64" >&2; exit 2; }
     field_policy+=(-e "TX2_INDEX_QUERY_PERMITS=$index_permits")

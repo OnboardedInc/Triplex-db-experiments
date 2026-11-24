@@ -5,7 +5,7 @@
             [triplex.gateway.subject-save :as subject] [clojure.data.json :as json]
             [triplex.gateway.owner-layout :as owner-layout] [triplex.gateway.owner-root :as owner-root]
             [triplex.gateway.pinned :as pinned] [triplex.gateway.general-prefetch :as general-prefetch]
-            [triplex.gateway.subject-hints :as subject-hints])
+            [triplex.gateway.subject-hints :as subject-hints] [triplex.gateway.cross-index :as cross])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -302,6 +302,15 @@
                (map (fn [claim] {:db/id (str "c:" (get claim "commandId"))
                                 :triplex.claim/command-id (get claim "commandId") :triplex.claim/tx "datomic.tx"
                                 :triplex.claim/tx-id (get claim "txId")}) claims))))
+         ;; [DX-XQ4] Why: index entries ride in the same prepared transaction as the rows they key, behind the fence.
+         ;; Rejected: changing the stored commit functions, or computing entries on the transactor.
+         index (when (and cross/enabled lean) (cross/declaration db))
+         ops (if index (into ops (cross/tx-ops db index (or (:attrs privacy/*cut*) #{}) fresh old (get input ::index-lenient))) ops)
+         release (when index (cross/release-ops db index fresh input))
+         ops (if release
+               (into (mapv #(if (and (vector? %) (= :db/cas (first %)) (= :triplex.ix/seq (nth % 2 nil))) (:fence release) %) ops)
+                     (:ops release))
+               ops)
          journals (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))
          [claim] claims
          command (get claim "commandId")
@@ -505,6 +514,10 @@
               (subject/plan db data input expected)))))))
 (defn commit! [name conn db input]
   (when trace/tx-jfr-enabled (trace/attribute! :databaseHash (schema/sha256 name)))
+  ;; [DX-XQ4] Why: the covering owner head moves rows onto version entities the index does not follow.
+  (when (and cross/enabled owner-layout/enabled (cross/declaration-eid db))
+    (throw (ex-info "The cross-subject index does not support the covering owner head (TX2_SUBJECT_OWNER_HEAD)"
+                    {:status 409 :code "OwnerLayoutUnsupported"})))
   (when (and (not owner-layout/enabled) (owner-root/installed? db))
     (throw (ex-info "This database stores covering owner roots; start the writer with TX2_SUBJECT_OWNER_HEAD=1"
                     {:status 409 :code "OwnerLayoutRequired"})))
@@ -513,12 +526,26 @@
     (reject-ordered! conn input (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
   (try
     (let [parsed (System/nanoTime)
+          ;; [DX-XQ4] With the index option on, the declaration fence exists before the first declaration.
+          db (if cross/enabled (cross/ensure-installed! conn db) db)
           load-timing (when commit/load-profile (volatile! 0))
-          data (try (binding [*load-timing* load-timing] (trace/span "commit.prepare-and-validate" "gateway" (tx-data db input (scope/entity db))))
-                    (catch Exception e (reject-ordered! conn input e)))
+          ;; [DX-XQ4] Why: an index retraction needs the retired fact's stored text; a peer that does not hold it yet
+          ;; catches up once (d/sync) and prepares again. Rejected: trusting the client's copy of the retired row.
+          [db data] (try (binding [*load-timing* load-timing]
+                           (trace/span "commit.prepare-and-validate" "gateway"
+                             (try [db (tx-data db input (scope/entity db))]
+                                  (catch Exception e
+                                    (if-not (cross/peer-behind? e) (throw e)
+                                      (let [synced (deref (d/sync conn) 2000 ::timeout)]
+                                        (when (= ::timeout synced) (throw e))
+                                        ;; After the catch-up a fact still absent never existed: the commit refuses it.
+                                        [synced (tx-data synced (assoc input ::index-lenient true) (scope/entity synced))]))))))
+                         (catch Exception e (reject-ordered! conn input e)))
           validated (when (= "1" (System/getenv "TX2_SUBJECT_RETIREMENT_TRACE")) (System/nanoTime))
           frame-size (group/frame-measurement (second (first data)) input)
           _ (try (group/bound-frame! frame-size) (catch Exception e (reject-ordered! conn input e)))
+          ;; [DX-XQ4] With the index on, a bulk frame's index entries count beside its rows (review D3).
+          _ (when cross/enabled (try (cross/bound-frame! (second (first data)) input policy/bulk-rows) (catch Exception e (reject-ordered! conn input e))))
           ;; [DX-PREP1] Why: the unordered subject arm submits one native transaction and uses its actual durable report.
           ;; Rejected: bypassing protected-scope erasure or live/import admission, or applying the draft speculatively.
           subject-plan (when (and subject/enabled
@@ -587,7 +614,7 @@
       (let [text (str e)]
         ;; [DX-THIN1] Why: preserve explicitly typed policy errors and the established transaction rejection for malformed row ordering.
         ;; Rejected: treating every codec InvalidValue as a policy error before checking the transaction result.
-        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasedAssertionIdentity" "ProtectedTypeUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
+        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasedAssertionIdentity" "ProtectedTypeUnsupported" "ReleaseWritesDeclaredAttribute" "OwnerLayoutUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
                        {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_ERASURE_FRONTIER|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))

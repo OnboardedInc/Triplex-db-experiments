@@ -10,7 +10,8 @@
             [triplex.gateway.general-prefetch :as general-prefetch] [triplex.gateway.admission :as admission]
             [triplex.gateway.subject-hints :as subject-hints]
             [triplex.gateway.ids :as ids] [triplex.gateway.sweep :as sweep]
-            [triplex.gateway.question-reader :as qr])
+            [triplex.gateway.question-reader :as qr]
+            [triplex.gateway.cross-find :as cross-find])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -93,7 +94,10 @@
         ;; [DX-W3] Why: the lookup-only hint function is installed only when its option is on (default off).
         current (general-prefetch/install! conn current)
         ;; [DX-W4] Why: the per-subject writer's lookup-only hint function, installed only when its option is on.
-        current (subject-hints/install! conn current)]
+        current (subject-hints/install! conn current)
+        ;; [DX-XQ4] The index fence (sequence 0) from the moment a scope is opened with the option on.
+        current (if (and cross-find/enabled (lean/enabled? current)) (cross-find/ensure-installed! conn current) current)]
+
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
       (lean/enabled? current) (assoc :layout "lean" :orderedRowTexts true :journalCuts true)))))
@@ -314,6 +318,18 @@
       (let [name (nth (clojure.string/split uri #"/") 3) input (or privacy-input (request-json body)) start (System/nanoTime) db-uri (db-uri name)]
         (try (timed start (response 200 (trace/span "storage/commit!" "gateway" (storage/commit! name (connection db-uri) (trace/span "d/db" "peer-call" (d/db (connection db-uri))) input))))
              (finally (when (get input "release") (storage/release! name (get input "handle"))))))
+      ;; [DX-XQ4] Questions across subjects: the declaration, the offline backfill and the find route (TX2_CROSS_INDEX=1).
+      (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(find|index-declaration|index-backfill)" uri)
+      (let [name (nth (clojure.string/split uri #"/") 3) action (last (clojure.string/split uri #"/"))
+            start (System/nanoTime) conn (connection (db-uri name)) protected (or (:attrs privacy/*cut*) #{})]
+        (timed start
+          (response 200
+            (case [request-method action]
+              [:post "find"] (trace/span "cross/find" "gateway" (cross-find/find! name conn protected (request-json body)))
+              [:post "index-declaration"] (cross-find/declare! name conn protected (request-json body))
+              [:get "index-declaration"] (cross-find/declaration-view name conn)
+              [:post "index-backfill"] (cross-find/backfill! name conn protected (when body (let [b (request-json body)] b)))
+              (throw (ex-info "Unknown method" {:status 404 :code "NotFound"}))))))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/request-index" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body)]
         (response 200 (request-index! name (connection (db-uri name)) input)))
@@ -415,7 +431,9 @@
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
                                   (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e)))
-                                  (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e))))))))
+                                  (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e)))
+                                  ;; [DX-XQ4] find's refusals say whether the exact sweep answers the same question.
+                                  (:fallback (ex-data e)) (assoc :fallback (:fallback (ex-data e))))))))
 (defn- with-privacy-guards [scopes work]
   (if-let [[scope & more] (seq scopes)]
     (privacy/guard scope #(with-privacy-guards more work))
@@ -428,7 +446,10 @@
                         (let [conn (connection (db-uri name))] [conn (d/db conn)]))]
         (cond
           (and (= :post request-method) (= action "protection"))
-          (response 200 (erase/declare! name conn db (request-json body)))
+          (let [input (request-json body)]
+            ;; [DX-XQ4] A declared attribute is keyed by value; protecting it would make the index a lookup by protected value.
+            (cross-find/refuse-protecting-declared! db input)
+            (response 200 (erase/declare! name conn db input)))
           (and (= :post request-method) (= action "erase"))
           (response 200 (erase/erase! name conn (request-json body)))
           (and (= :post request-method) (= action "restore-erasure"))
