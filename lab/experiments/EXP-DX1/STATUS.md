@@ -5491,3 +5491,28 @@ Source: cost spike builder (XQ2), toy of 2,000 subjects x 160 facts with product
 **Forwarded** to the step 1 builder (form differences to decide, 100-fact edge case, count bound and cursor) and to the Fable reviewer (for the review phase only; its own design was hashed at 10:32).
 
 **Started:** release size limits builder (a subject owing 200, 500, 1,000 forms; a release near the 1.3 MiB ceiling), task file `OPUS-ACT6-release-size-limits.md`, branch `exp/DX-ACT6-release-limits`. Six agents running: merge, step 0, step 1, settlement beside saves, Fable design and review, release size limits.
+
+## 2026-11-24 10:48 EST: settlement beside live saves: the risk was real and is fixed at toy size
+
+Source: settlement builder, branch `exp/DX-ACT5-settlement-live` `c1579ee50` (based on the settlement frames branch `b623914a4`; not merged), page `lab/experiments/EXP-DX1/actv-lazy/SETTLEMENT-LIVE.md`. Toy size on the Mac: 8 subjects per account, release of 20 forms and 20 policies (9 frames, 474 changes, 160 notices). Every new option default off.
+
+**Cause confirmed.** Each settlement frame required the whole database's head to be unchanged, and one database holds all ten accounts, so a save in ANY account refused the frame.
+
+| Saves during settlement | Old head rule: offered / refused / committed, settled at | New rule: offered / refused / committed, settled at |
+|---|---|---|
+| none | 11 / 2 / 9, 0.79 s | 9 / 0 / 9, 0.65 s |
+| same account 3.5/s | 16 / 7 / 9, 1.08 s | 9 / 0 / 9, 0.63 s |
+| same account 23.5/s | 84 / 75 / 9, 3.13 s | 9 / 0 / 9, 0.58 s |
+| same account 39.4/s | 325 / 316 / 9, 8.69 s (after saves stopped) | 9 / 0 / 9, 0.57 s |
+| only the 9 other accounts, 211.5/s | 251 / 242 / 9, 11.30 s (after saves stopped) | 9 / 0 / 9, 0.69 s |
+
+- New rule (`TX2_SETTLE_PRECONDITION=progress`): a frame commits only if its writer's own progress row still holds the facts the frame followed. Checked inside the transaction and again by the transactor's per-entity revision check. Subject data needs no guard because values are read at the release's own position and notices at the Publish position.
+- Exact in every case against the oracle and the independent form rule; three kills mid-settlement; a second release mid-settlement; a rival writer process; 488 notices delivered once.
+- No live save refused under either rule. A save waits behind at most one frame per settling process (largest frame 7,998 of 8,000 µs estimated service). Not measured on the writer side.
+- Several accounts at once: each account now has its own metadata names in the one database (before this, two publishing accounts would have shared one release list, notice stream and progress). Three accounts: 0 refused, finished within 55 ms of each other.
+- Per-account control (`TX2_SETTLE_CONTROL=1`): status, pause (held through a restart) and pace (300 ms pace gave 300.3 ms minimum spacing).
+- Forecast: one account owing 20 forms on 100,000 subjects settles in 65 to 110 minutes beside 235 saves/s (20,000 to 25,000 value frames, 85,000 to 100,000 notice frames). Ten accounts: about 1.2 million frames, 5 to 9 hours. Three: 90 to 160 minutes.
+- Server run 1 (one account, 100,000 subjects, fresh; 3 to 3.5 hours) is runnable as written. Run 2 (3 and 10 accounts at 1 billion) is NOT runnable: six preparation items are missing.
+- Not verified: anything at full size; removal on request during settlement; two settling processes putting two frames ahead of a save.
+
+**Started** in the freed slot: builder to make run 2 runnable and to analyse why notice frames hold only about 20 notices (task file `OPUS-ACT7-settlement-at-1b-prep.md`, branch `exp/DX-ACT7-settlement-1b-prep`). The release size limits builder was told to rebase onto `c1579ee50`.
