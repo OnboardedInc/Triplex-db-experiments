@@ -5080,3 +5080,10 @@ Two machines, fresh full-size seed (ten accounts of 100,000 subjects), 235 saves
 - **Live saves at 39.4/s during Publish:** p99 2.2 times the control with whole-turn credits and 17 times with per-save credits (611.6 against 35.5 ms): outside P5's 1.5 times. At 3.5 and 23.5 the ratios are at or under 1.1. The per-save control at 23.5 (417.9 ms) is itself an outlier.
 - **Background settlement of the large release was not run** (the frames exceed the writer's bound; known from the Mac analysis).
 - **Second machine order:** run 1 (small release, eleven windows, repaired runner `f5f8c09ff`, ends about 19:45), start-up read at 1 billion (`968285954`, to about 20:50), owner head pair on fresh from the fixed commit `85fc3a4bd`, delete by 23:30.
+
+### 2026-11-23 19:18 local: production-S card at 1 billion: parts 1 to 3 complete, assembly failed in the renderer; fix builder started; console proof running (3 agents running)
+
+- **Assembly fault (server 2, build `090c189a8`, 00:16:55 UTC):** `v01/windows.ts` line 16 `assert(Number.isFinite(row.due) && row.due >= start && row.due < end)` in `windowStats` (from `adopted-card.ts` 341 `addWindows`, 286 `writeAdoptedCard`, `run.ts` 42): a write row's scheduled `due` lies outside its cell window. No card file. The three parts' completion files exist; part 2's numbers are published (`d2d8b7961`). Evidence `evidence/DX-SCALE1/prodS-card/prodS-card.tar.gz` (campaign, sequence, logs); the campaign stays on the machine until 23:30.
+- **Fix builder** (`OPUS-CARD1-prodS-assemble-fix.md`, branch `exp/DX-CARD1-prodS-assemble`, due 20:45): find the row and cause from the archive, fix by a stated rule (never a silent drop), assemble from the archive on the Mac if possible, else a re-assembly command for the driver.
+- **Console proving run** (`ebe31628f`) started 00:17 UTC on server 2; the stack stays up afterwards for the browser pass from the Mac.
+- **Running (3):** two drivers, the card assembly builder.
