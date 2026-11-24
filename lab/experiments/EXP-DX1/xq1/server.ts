@@ -30,7 +30,9 @@ const { values, positionals } = parseArgs({
   },
 });
 const mode = positionals[0];
-assert(mode === "backfill" || mode === "bench" || mode === "verify", "server.ts backfill|bench|verify ...");
+// `declare` writes a declaration without building the index (no epoch: questions are refused, every later save pays
+// its entries), for an XQ2-shaped write-cost pair on a copy whose existing rows have no entries.
+assert(mode === "backfill" || mode === "bench" || mode === "verify" || mode === "declare", "server.ts backfill|bench|verify|declare ...");
 assert(values.commit && values.out && values["pgdata-source"] && values.pgdata, "Give --commit, --out, --pgdata-source and --pgdata");
 const out = path.resolve(values.out);
 assert(!fs.existsSync(out), "Use a new --out directory");
@@ -41,7 +43,7 @@ fs.mkdirSync(out, { recursive: true, mode: 0o700 });
 const write = (name: string, value: unknown) => fs.writeFileSync(path.join(out, name), JSON.stringify(value, null, 2) + "\n", { flag: "wx" });
 const declarationText = values.declaration ? fs.readFileSync(values.declaration, "utf8") : undefined;
 const declaration = declarationText ? JSON.parse(declarationText) : undefined;
-assert(mode !== "backfill" || declaration, "backfill needs --declaration");
+assert((mode !== "backfill" && mode !== "declare") || declaration, "backfill and declare need --declaration");
 
 // The database and its roster come from AGE1's handoff bundle (pinned by its digest).
 let database: string;
@@ -177,6 +179,10 @@ try {
       verdict: check.differences === 0 && dry.added === 0 && dry.retracted === 0 && backfillSeconds < 7200 ? "pass" : "fail" };
     write("backfill.json", result);
     console.log(JSON.stringify({ verdict: result.verdict, entries: built.added, backfillSeconds, indexSeconds, bytesPerEntry: result.bytesPerEntry, differences: check.differences }));
+  } else if (mode === "declare") {
+    const declared = ok("declaration", await post(w, `v2/db/${database}/index-declaration`, declaration));
+    write("declare.json", { declared, head });
+    console.log(JSON.stringify({ declared: declared.seq, head }));
   } else if (mode === "verify") {
     const state = ok("declaration", await get(r, `/v2/db/${database}/index-declaration`));
     const expected = declaration ? JSON.stringify(declaration) : undefined;

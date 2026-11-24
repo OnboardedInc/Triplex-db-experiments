@@ -627,7 +627,9 @@
                              (io/with-io-stats
                                (fn []
                                  (loop [n 0]
-                                   (when (< n 64)
+                                   ;; The time bound is checked before every candidate, so a permit is held at most
+                                   ;; one candidate's work past it; entries and segments are checked per chunk.
+                                   (when (and (< n 64) (< (System/nanoTime) deadline))
                                      (if-not (.hasNext it)
                                        (vreset! stopped "end")
                                        (let [cand (.next it)]

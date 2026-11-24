@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "attributes": [
+    {
+      "attribute": ":task/field-0",
+      "code": "f0",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-1",
+      "code": "f1",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-2",
+      "code": "f2",
+      "family": "string"
+    }
+  ],
+  "types": []
+}

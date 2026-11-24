@@ -5,7 +5,7 @@
   (:require [clojure.data.json :as json] [clojure.java.io :as io] [clojure.set :as set] [clojure.string :as str]
             [datomic.api :as d] [triplex.gateway.main :as main] [triplex.gateway.storage :as storage]
             [triplex.gateway.selftest :as selftest]
-            [triplex.gateway.group :as group] [triplex.gateway.lean :as lean])
+            [triplex.gateway.group :as group] [triplex.gateway.lean :as lean] [triplex.gateway.write-policy :as policy])
   (:import [java.io ByteArrayInputStream] [java.nio.charset StandardCharsets] [java.sql DriverManager]
            [java.util Random] [java.util.concurrent Executors Callable]))
 
@@ -537,6 +537,10 @@
                    :sampleDifference (take 3 (concat (set/difference va vb) (set/difference vb va)))
                    :pass (and (zero? (get dry "added")) (zero? (get dry "retracted")) (= va vb) (set/subset? tb ta))})))
 
+(defn record-time-of [conn p]
+  (let [db (d/db conn) tx (:e (first (d/index-range db :triplex.tx/position p nil)))]
+    (when (and tx (= p (:v (first (d/datoms db :eavt tx :triplex.tx/position)))))
+      (:v (first (d/datoms db :eavt tx :triplex.tx/max-recorded-at))))))
 (defn valid-times []
   [1.79e12 (+ v0 (* day 150)) 1.5e12 2.0e12 (vf-of 3) (vf-of 10) (+ v0 (* day 300)) (+ v0 (* day 301)) (- v0 (* day 10))])
 
@@ -570,8 +574,13 @@
       (let [world (world-at name conn p v)
             extra? (>= p (get by-tag "backfilled-2" Long/MAX_VALUE))
             qs (concat (fixed p) (repeatedly per #(random-question rnd extra?)))]
-        (doseq [q qs]
-          (let [q (assoc q "basis" {"recordedPosition" p "validAt" v})
+        (doseq [q (concat qs
+                          ;; The same fixed questions on the record-time axis: the record time of position p's commit.
+                          (when-let [r (record-time-of conn p)]
+                            (map #(assoc % "recordedAt" r) (fixed p))))]
+          (let [q (if-let [r (get q "recordedAt")]
+                    (assoc (dissoc q "recordedAt") "basis" {"recordedAt" r "validAt" v})
+                    (assoc q "basis" {"recordedPosition" p "validAt" v}))
                 page (nth [7 50 1000] (.nextInt rnd 3))
                 bounds {"entries" (nth [300 5000 100000] (.nextInt rnd 3)) "ms" 1000 "segments" 4096}
                 r (try (check-question name world q page bounds)
@@ -605,7 +614,7 @@
     (dotimes [_ 40]
       (let [q (assoc (random-question rnd false) "basis" {"recordedPosition" p "validAt" 1.79e12} "result" "ids")
             ;; Reference values name the asking account's own entities, so both accounts ask the same question.
-            own (fn [acct] (json/read-str (str/replace (json/write-str (assoc q "account" acct)) #"acct/acc-[abc]/" (str "acct/" acct "/"))))
+            own (fn [acct] (json/read-str (str/replace (json/write-str (assoc q "account" acct) :escape-slash false) #"acct/acc-[abc]/" (str "acct/" acct "/"))))
             a (run-find name (own "acc-a") 1000 {"entries" 1000000 "ms" 1000 "segments" 4096})
             b (run-find name (own "acc-b") 1000 {"entries" 1000000 "ms" 1000 "segments" 4096})]
         (swap! n inc)
@@ -699,6 +708,8 @@
      [(str "g-" n "-fl") t ":task/flag" ["boolean" false] {:from vf :etype "Review"}]
      [(str "g-" n "-od") t ":odd/\u0001key\u0002" ["string" "odd"] {:from vf :etype "Review"}]
      [(str "g-" n "-no") t ":task/note" ["string" "undeclared"] {:from vf :etype "Review"}]]))
+(defn big-entity [b] (format "acct/acc-g/big:%04d" b))
+(defn big-facts [b] (for [i (range 100)] [(format "big-%d-%03d" b i) (big-entity b) ":task/status" ["string" (str "b" i)] {:from v0 :etype "Review"}]))
 (def g6-attrs [":task/status" ":task/progress" ":task/score" ":task/due" ":task/flag" ":odd/\u0001key\u0002"])
 (defn g6-value [attr n r]
   (case attr ":task/status" ["string" (str "s" r)] ":task/progress" ["integer" (+ n r)] ":task/score" ["number" (+ 0.25 r)]
@@ -713,8 +724,12 @@
         (ok! "declaration" (route name "v2" "index-declaration" declaration-2))
         (backfill! name))
       (doseq [ns (partition-all 40 (range g6-subjects))]
-        (commit! name (batch-input (str "g6-" (first ns)) (mapcat g6-facts ns)))))
-    (reset! ledger (into {} (for [n (range g6-subjects) [id e a] (g6-facts n)] [[e a] id])))
+        (commit! name (batch-input (str "g6-" (first ns)) (mapcat g6-facts ns))))
+      ;; Fifteen entities with 100 facts of one declared attribute each (very large saves, k = 20, 50, 100).
+      (doseq [b (range 15)]
+        (commit! name (batch-input (str "g6-big-" b) (big-facts b)))))
+    (reset! ledger (into {} (concat (for [n (range g6-subjects) [id e a] (g6-facts n)] [[e a] id])
+                                    (for [b (range 15) [id e a v] (big-facts b)] [[e (str a "#" (second v))] id]))))
     (save-ledger! "g6")
     (say "XQ4_G6_SEEDED" {:subjects g6-subjects})))
 
@@ -773,7 +788,18 @@
                        :firstTouch {:on (summarize first-touch "on") :off (summarize first-touch "off")}
                        :secondSave {:on (summarize second "on") :off (summarize second "off")}
                        :walBytesBothScopes (wal-bytes w0 (wal))}])))
-        base (* 3 per)]
+        base (* 3 per)
+        ;; Very large saves first, on a writer cold since the transactor restart: k of an entity's 100 values replaced.
+        big (into {} (for [[j k] (map-indexed vector [20 50 100])]
+                       [k (vec (for [b (range (* j 5) (* (inc j) 5))]
+                                 (let [e (big-entity b)
+                                       r (twin-save! names conns {:adds (for [i (range k)] [e ":task/status" ["string" (str "n" i)] {:from v0 :etype "Review"}])
+                                                                  :retires (for [i (range k)] [(live-id e (str ":task/status#b" i)) e ":task/status"])}
+                                                     (odd? b))]
+                                   {:datoms [(get-in r ["on" :datoms]) (get-in r ["off" :datoms])]
+                                    :reads [(get-in r ["on" :reads]) (get-in r ["off" :reads])]
+                                    :applyMs [(get-in r ["on" :applyMs]) (get-in r ["off" :applyMs])]
+                                    :writer (get-in r ["on" :writer])})))]))
     ;; G6: exact datom counts per save shape (index on minus index off), against the design's formula.
     (shape! "replace 1 declared value (per-subject writer)" 2 (twin-save! names conns (replace-spec base [":task/status"] 3) false))
     (shape! "replace 3 declared values (per-subject writer)" 6 (twin-save! names conns (replace-spec (+ base 1) (sets 3) 3) false))
@@ -792,7 +818,24 @@
     (let [n (+ base 5) t (format "acct/acc-g/pl:%08d:t0" n)]
       (shape! "retire 1 declared value without replacement" 1
               (twin-save! names conns {:adds [] :retires [[(live-id t ":task/progress") t ":task/progress"]]} false)))
-    (emit! "g6.json" {:shapes @shapes :cost cost})
+    ;; The write budget estimator prices (count (:ops p)); entry operations ride in :ops, so it counts them.
+    (let [spec (replace-spec (+ base 6) g6-attrs 4)
+          ops-of (fn [side] (let [conn (conns side)
+                                  {:keys [input]} (save-input (assoc spec :seq 9100000 :source (head (names side) conn)))
+                                  [[_ p]] (storage/tx-data (d/db conn) input)
+                                  n (count (:ops p))]
+                              {:ops n :variableUs (policy/variable-us n 0)
+                               :rows (+ (count (:new-ids p)) (count (filter #(and (vector? %) (= :triplex/retract (first %))) (:ops p))))}))
+          on (ops-of "on") off (ops-of "off")]
+      (say "XQ4_BUDGET" {:on on :off off :extraOps (- (:ops on) (:ops off)) :expectedExtraOps 13
+                         :extraVariableUs (- (:variableUs on) (:variableUs off)) :rowsSame (= (:rows on) (:rows off))
+                         :pass (and (= 13 (- (:ops on) (:ops off))) (= (:rows on) (:rows off)))}))
+    (say "XQ4_LARGE_SAVES" (into {} (for [[k rs] big]
+                                     [k {:datomsOnOff (first (map :datoms rs)) :extraDatoms (distinct (map #(apply - (:datoms %)) rs))
+                                         :readsInsideApplyOn (mapv #(first (:reads %)) rs) :readsInsideApplyOff (mapv #(second (:reads %)) rs)
+                                         :applyMsOn (mapv #(first (:applyMs %)) rs) :applyMsOff (mapv #(second (:applyMs %)) rs)
+                                         :writer (distinct (map :writer rs)) :pass (= [(* 2 k)] (distinct (map #(apply - (:datoms %)) rs)))}])))
+    (emit! "g6.json" {:shapes @shapes :cost cost :large big})
     (say "XQ4_G6" {:shapes @shapes :pass (every? :pass @shapes)})
     (say "XQ4_PLACEMENT_G6" ((resolve 'xq4-gate/placement-check) (conns "on")))
     (say "XQ4_COST" cost)))
