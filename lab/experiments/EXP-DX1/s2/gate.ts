@@ -68,7 +68,8 @@ async function save(group: string, label: string, ops: any[], meta: Record<strin
     facts: Math.max(ops.filter((o) => o.op === "assert").length, retracted.length),
     assertions: ops.filter((o) => o.op === "assert").length, retirements: retracted.length, entities: entities.size,
     writer: last.ack?.subjectSave ? "per-subject" : "general", orderedIds: last.ack?.subjectOrderedIds === true,
-    block: last.input.claims?.[0]?.txId?.endsWith("W00") ? "wide" : /^_tx\/[0-7][0-9A-Z]{23}00$/.test(last.input.claims?.[0]?.txId ?? "") && last.input.newIds?.[0]?.startsWith(last.input.claims[0].txId.slice(4, 28)) ? "one-byte" : "runtime",
+    // The SDK's own record of the identity it gave the save (orderedSaves): an ordered block, or the runtime's IDs.
+    block: routes.includes("ordered:wide") ? "wide" : routes.includes("ordered:one-byte") ? "one-byte" : "runtime",
     route: routes.join(","), outcome: "committed", ms: Math.round((performance.now() - started) * 100) / 100,
   };
   cases.push(c);

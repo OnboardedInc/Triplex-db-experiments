@@ -450,7 +450,9 @@ export async function play(
       row.operationId = sent.operationId;
       const tx = sent.claims[0]?.txId ?? "";
       const token = /^_tx\/([0-7][0-9A-HJKMNP-TV-Z]{23})00$/.exec(tx)?.[1] ?? /^_tx\/([0-7][0-9A-HJKMNP-TV-Z]{22})W00$/.exec(tx)?.[1];
-      if (token && sent.newIds.every((id) => id.startsWith(token))) row.orderedToken = token;
+      // Exactly the block's first ordinals (a runtime ID run can share a prefix with a journal ID ending in "00").
+      const ids = [...sent.newIds].sort(), digits = token?.length === 24 ? 2 : 3;
+      if (token && ids.every((id, i) => id === token + i.toString(16).toUpperCase().padStart(digits, "0"))) row.orderedToken = token;
       else row.generalIdentity = true;
     };
     const sent = candidate ? submit(candidate.input) : Promise.resolve().then(async () => {
