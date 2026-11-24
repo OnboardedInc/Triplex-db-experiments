@@ -30,6 +30,7 @@ export function makeDatomicRuntime(options: {
   readonly recordedJournalReads?: boolean;
   readonly boundedJournalPages?: boolean;
   readonly resolutionTimeoutMs?: number;
+  readonly idLists?: import("./idLists.js").IdListOptions;
   /** [DX-RD4] A reader built from a receipt: every unpinned read answers at or after its position. */
   readonly readAtLeast?: import("./readAtLeast.js").ReadAtLeast;
 }): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> {
@@ -74,6 +75,13 @@ export { makeDatomicQueryExecutor } from "./DatomicQueryExecutor.js";
 
 export { DatomicBasisNotAvailable, DatomicLayoutUnsupported, DatomicAtLeastTimeout } from "./readErrors.js";
 export { ReadAtLeast, type ReadAtLeastRequest } from "./readAtLeast.js";
+export {
+  configStoreIdLists,
+  DatomicMatchNeedsPaging,
+  listIdsPage,
+  type IdListOptions,
+  type IdListSource,
+} from "./idLists.js";
 
 export { sweepRows, decodeSweepRows, type SweepRow } from "./sweepRows.js";
 export { acceptLoaderPositionRows, loaderPositionRowsAccepted } from "./loaderPositionRows.js";

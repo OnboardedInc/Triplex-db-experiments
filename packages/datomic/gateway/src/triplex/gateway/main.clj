@@ -8,7 +8,8 @@
             [triplex.gateway.subject-save :as subject] [triplex.gateway.owner-layout :as owner-layout]
             [triplex.gateway.at-least :as at-least]
             [triplex.gateway.general-prefetch :as general-prefetch] [triplex.gateway.admission :as admission]
-            [triplex.gateway.subject-hints :as subject-hints])
+            [triplex.gateway.subject-hints :as subject-hints]
+            [triplex.gateway.ids :as ids])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -376,6 +377,17 @@
                           :receipt (storage/operation cut (storage/value cut tx :triplex.tx/operation-id))))))]
           (cond-> (response 200 (cond-> result (and wanted (map? result)) (assoc :atLeast (:position wanted))))
             wanted (assoc-in [:headers "x-tx2-at-least-wait-micros"] (str at-least-micros))))))
+      ;; [DX-XQ3] The ID list route (questions across subjects, step 0); absent unless TX2_ID_LISTS=1.
+      (and ids/enabled (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/ids" uri))
+      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)]
+        (try (timed start (response 200 (trace/span "ids/page" "gateway" (ids/page name (connection (db-uri name)) input))))
+             (catch clojure.lang.ExceptionInfo e
+               (let [{:keys [status code maximum retryAfterMs]} (ex-data e)]
+                 (if (and status code)
+                   (timed start (response status (cond-> {:code code :message (.getMessage e) :route "ids"}
+                                                   (some? maximum) (assoc :maximum maximum)
+                                                   (some? retryAfterMs) (assoc :retryAfterMs retryAfterMs))))
+                   (throw e))))))
       :else (response 404 {:code "NotFound"}))
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
