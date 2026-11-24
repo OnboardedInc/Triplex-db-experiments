@@ -79,11 +79,12 @@ if want g6; then
 fi
 # G7 alone (the seed phase, which asks before and after the backfill): size it with XQ4_SUBJECTS.
 if want g7; then run seed-a 1 0 "(xq4-gate/phase-seed! \"a\" true) $(done_)"; fi
-# E1 alone on a small world (seed, the second declaration, E1).
+# E1 and G5 alone (seed, the second declaration, E1, G5); size it with XQ4_SUBJECTS.
 if want e1quick; then
   run seed-a 1 0 "(xq4-gate/phase-seed! \"a\" true) $(done_)"
   run declare2-a 1 0 "(xq4-gate/phase-declare2! \"a\" true) $(done_)"
   run e1 1 0 "(xq4-gate/phase-e1! \"a\") $(done_)"
+  run g5 1 0 "(xq4-gate/phase-g5! \"a\") $(done_)"
 fi
 if want world; then
   # Run A: the index declared mid-seed and built by writers and backfill; run B: the same saves with the option off.

@@ -642,7 +642,7 @@
         _ (when-not (and (integer? limit) (<= 1 limit 1000)) (codec/invalid "limit must be 1..1000"))
         order (get input "order")
         _ (when-not (or (nil? order) (and (map? order) (string? (get order "by"))
-                                          (#{nil "asc" "desc"} (get order "direction"))))
+                                          (contains? #{nil "asc" "desc"} (get order "direction"))))
             (codec/invalid "order is {by: \"entity\" or the range attribute, direction}"))
         desc? (= "desc" (get order "direction"))
         by (get order "by" "entity")

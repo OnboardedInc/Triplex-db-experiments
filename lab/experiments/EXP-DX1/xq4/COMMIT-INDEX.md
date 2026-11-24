@@ -50,14 +50,18 @@ step 0); an entity without an account prefix gets no entry.
 
 ## The independent review (`REVIEW-FABLE.md`, read at about 11:40), finding by finding
 
+Labels are the review file's own (the coordinator's message called D6 and D7 "D5" and "D6", and C4 "C3"). D5 (first-
+touch reads inside apply +0.05 on the spike) is information: the toy here reads +0 to +0.02 per save (cost table);
+S-2 measures it at full size.
+
 | # | Finding | Verdict | Evidence or reason |
 | --- | --- | --- | --- |
 | E1 / A4 | Every candidate's entity read, even for one filter | **Confirmed and fixed** | `find!` now answers from the index alone when the conditions allow: every `eq` and `in` and `from` (prefix, shape, ID pattern) are entity-ordered streams intersected by a merge; the entity number comes from the index datom (no lookup by ID); a single `range`, `prefix` or `exists` is answered from its scan with an in-request set (one entity read per candidate only on later pages of a value-ordered scan). Each answer states `indexOnly` and `entityReads`. Gate `XQ4_E1`: E1_COUNTS |
 | E2 | "Not deleted" as a per-entity `missing` check | **Confirmed; answered by declaration, no code** | A `missing` condition needs the entity's own entries (stated). A declared positive flag (for example `:x/live` = true, boolean) is an `eq` and merges with no entity read (`XQ4_E1` "count two eq merged"). |
 | B3 | Unbounded closed part for a past valid time | **Confirmed and fixed (bounded, not cached)** | The closed part is read lazily under the entry and time bounds (every index datom is counted where it is read). A page whose closed part alone exceeds the entry bound is refused (413 `BoundTooSmall`); raise the bounds (caps 1,000,000 entries, 1,000 ms) or ask nearer now. |
 | E4 | Descending value order refused | **Confirmed and fixed** | `order: {by: <range attribute>, direction: "desc"}` scans with `rseek-datoms`. Gate: paged descending answer equal to brute force (`XQ4_E1`). |
-| D5 | Regular-expression key split | **Confirmed and fixed** | Hand-written split on U+0001; the key tests pass (`cross-index-test`). Per-entry time not re-measured. |
-| D6 / D7 / C4 | One question per account, 503 when busy; one permit for all accounts | **Confirmed and fixed (queue); the permit default stated** | Each account has a fair queue of one running question; the permits (`TX2_INDEX_QUERY_PERMITS`, default 1, shared with step 0's ID route) are taken fairly; 503 `IndexBusy` only after waiting the request's own time bound. Since the merge of `f1f0908df` the queue lives in step 0's shared admission code (`ids/admitted`), so the ID route and `find` share it: one question per account across both routes. Defaults: one running question per account (fixed), permits `TX2_INDEX_QUERY_PERMITS` default 1, queue wait = the request's `bounds.ms` (default 100, cap 1,000). With 1 permit every account's index questions share one reader core: an option to raise. |
+| D6 | Regular-expression key split | **Confirmed and fixed** | Hand-written split on U+0001; the key tests pass (`cross-index-test`). Per-entry time not re-measured. |
+| D7 / C4 | One question per account, 503 when busy; one permit for all accounts | **Confirmed and fixed (queue); the permit default stated** | Each account has a fair queue of one running question; the permits (`TX2_INDEX_QUERY_PERMITS`, default 1, shared with step 0's ID route) are taken fairly; 503 `IndexBusy` only after waiting the request's own time bound. Since the merge of `f1f0908df` the queue lives in step 0's shared admission code (`ids/admitted`), so the ID route and `find` share it: one question per account across both routes. Defaults: one running question per account (fixed), permits `TX2_INDEX_QUERY_PERMITS` default 1, queue wait = the request's `bounds.ms` (default 100, cap 1,000). With 1 permit every account's index questions share one reader core: an option to raise. **To reconcile at merge:** `exp/DX-XQ7-question-reader` `a5631af24` built its own fair queue for the ID list route behind `TX2_ID_LIST_QUEUE_MS` (1 to 5,000; unset keeps the immediate refusal); this branch's queue is always on for both routes and waits the request's `bounds.ms`. One of the two should stay, under that branch's option name. |
 | D1 | The backfill sends every pinned read of an indexed subject to as-of | **Confirmed and fixed** | `XQ4_D1`: after a backfill that added 2,393 entries, the original check keeps 0 of 200 subjects on the fast route; with the fix 200 of 200 before and after, rows identical. The check is installed from the index namespace (see "stored-function identity" below). |
 | B2 | No fence before the first declaration | **Confirmed and fixed** | With the option on, the declaration entity with sequence 0 is installed when a scope is opened and before a save is prepared; every save carries the fence. Remaining gap: two gateways' very first saves before either installed it. |
 | D3 | Entries invisible to frame bounds and the write budget | **Half confirmed: the budget sees them; frame bounds do not** | The entry ops are in `:ops`, which `write-policy/variable-us` prices: `XQ4_BUDGET` +12 ops, +540 µs estimated for 6 replaced values, rows unchanged. `group/bound-frame!` and the 96-row bulk cap count rows and bytes only: a 96-row frame can carry up to 96 value and 96 type entries. Not changed (it changes import frame sizes). |
@@ -124,12 +128,35 @@ pinned short-cut's entry-blind check (`pinned/unchanged-since?` replaced when `c
 
 ## Gates (toy, Mac, one ordinary heavy token per run, no lease)
 
-GATES_TABLE
+Evidence (private): `evidence/DX-XQ4/runs/`. Final runs: `world5` (G1, G3, G4, G5, G7, E1, the sweep agreement,
+the refusal fallbacks; this branch's gateway plus the exact sweep's files staged by `sweep-src.sh`, the `find` code
+identical to the branch's), `world4` (G2 and the replay, same write code), `world3-stale-g1` (G6, the cost table, D1,
+B5, the budget, large saves, placement; write side unchanged since), `g8-base6`/`g8-mine6` and `suites5` (G8).
+
+| Gate | Result | Counts |
+| --- | --- | --- |
+| **G1 exactness (above all)** | W5_G1_VERDICT | W5_G1_COUNTS |
+| G1 history | Two real faults found and fixed by G1 runs on the way | `world2`: a page that read its entry bound without passing one candidate returned its own cursor (fixed: streams emit every local part read; 413 `BoundTooSmall` when none passes). `world3`: a value-ordered page ending exactly on an entity's first key listed that entity again on the next page (fixed: the continuation check includes the cursor's own key). |
+| Find against the exact sweep (two independent paths) | W5_SWEEP_VERDICT | W5_SWEEP_COUNTS |
+| G2 writer-built index equals a backfill | **Pass** | Replay with the option off, then declare and backfill: 189,476 value entries and 60,096 type entries on both sides, 0 only on either side; the dry-run reconciliation after the writers' index: 0 to add, 0 to retract (`world4`; same in `world3`). |
+| G3 removal on request | **Pass** | A protected attribute cannot be declared (409 `ProtectedValueLookup`), protecting a declared one is refused, asking by it is refused; after removal 0 occurrences of the removed value in entries, their history or the log, 0 token-like entries; the subject's other entry still answers (`world5`). Unsealed only. |
+| G4 isolation | **Pass** | W5_G4 |
+| G5 bounds | **Pass** | W5_G5 |
+| G6 datoms per save shape | **Pass** | 7 shapes, exact: replace 1 / 3 declared values on the per-subject writer +2 / +6; replace 6 on the general writer +12; an undeclared value +0; change from now +3; a new entity with 5 values and a type +6; retire 1 without replacement +1. Placement: 12,021 entries, 0 on another entity, 0 entities holding only entries (the coordinator's List-op trap). Budget: +12 ops and +540 µs priced for 6 values, rows the same. 20, 50, 100 values in one save: +40, +100, +200 datoms, 0 reads inside apply. |
+| G7 epoch | **Pass** | Before the backfill every question is refused 409 `IndexNotAvailableAtPosition` with `fallback: "sweep"`; at the epoch position answered (count 7,919); a code declared later is refused until its own backfill; the fence: a save prepared under seq 1 committed after seq 2 fails its `cas` (`world3`, `world5`). |
+| G8 option off equals before | **Pass** | Paired deterministic workload, base `f1f0908df` against this branch, option off: the same log, 33,609 datoms, head 620, sha256 `0569a8f8…` on both. Gateway suites (selftest, commit-order, cache-key, group, feed, recent, pinned, trace, ids, cross-index): W5_SUITES |
+| Group commits | **Pass** | 942 of 960 saves committed in groups of up to 7; an add and a retract of one entry in one group net to 0 entry datoms in the physical transaction, the entry not live. |
+| Interior positions | **Pass** | 40 positions tried: 31 inside a group commit refused 409 `InteriorPosition` (`fallback: "none"`), 9 commit boundaries answered. |
+| E1 index-only answers | W5_E1_VERDICT | W5_E1_COUNTS |
+| Refusal fallbacks | **Pass** | 7 of 7 (`XQ4_FALLBACK`): undeclared attribute with `count` → `sweep`; with `countDistinct` → `none`; undeclared type → `none`; five conditions → `sweep`; `missing` alone → `sweep`; nine conditions → `none`; a protected attribute → no field. |
+| D1 pinned reads after a backfill | **Pass** | 200 of 200 subjects on the current-database short-cut before and after a backfill that added 2,393 entries (the original check would keep 0), rows identical. |
+| B5 | **Pass** | A database holding an entity outside `acct/`, `_triplex/`, `_tx/`: the declaration is refused 409 `AccountNotInEntityId`. |
+
 
 ## Cost on the toy, in counts, beside the design's predictions
 
 Twin scopes in one database server (one declared with `declaration-2`, one not), the same saves alternating which
-goes first, 100 saves per cell, the transactor restarted before the measure (`XQ4_COST`, run `world2`). Keys on the toy
+goes first, 100 saves per cell, the transactor restarted before the measure (`XQ4_COST`, runs `world2` and `world3`: every count identical; apply medians move by up to 0.4 ms between the two runs, so they are diagnostic only; the table shows `world2`). Keys on the toy
 are about 66 characters (short IDs); production keys are about 120 to 130. Datoms and bytes are counts; apply time is
 the transactor's own `api-ms`, diagnostic.
 
@@ -188,6 +215,14 @@ segments). The toy's cache holds every segment after the first cohort, so first-
     copy). The bench pins the head and the epoch position instead; "far behind the head" needs saves after the epoch
     (the S-2 pair's copy has them).
 14. **The aging loader refuses an indexed database** (design section 12) instead of learning to write entries.
+15. **`from` by ID prefix counts an ID only when the entity has a fact visible at the basis** (`Triples.entityPage`'s
+    rule, which the exact sweep applies). The design does not say; the first build counted every ID in the ID index,
+    and the find-against-sweep gate showed the two routes disagreeing on `from: {prefix}` with only `missing` (or no
+    condition). Any other condition's visible entry, or a type's visible row, already implies a visible fact, so only
+    those questions read each candidate's rows.
+16. **A page that cannot pass one candidate inside `bounds.entries` is refused** (413 `BoundTooSmall`, with
+    `fallback`) instead of answering `stopped: "entries"` with its own cursor; the client raises the bound.
+17. **Refusals carry `fallback`** (`"sweep"` or `"none"`), the coordinator's addition for the exact sweep (XQ6).
 
 ## Server commands (none run; each needs the owner's approval of a rental)
 
