@@ -114,13 +114,20 @@ const tampered = new Proxy(reader, { get: (t, k) => {
 await assert.rejects(scalePredecessors(tampered as DatomicClient, seed, targets, productionSeedFields));
 
 const initial = new Map([...fields].map(([e, rows]) => [e, new Map(rows.map((r) => [r.attribute, r.value_string!]))]));
+// [DX-S2] With DX_S2_PRODUCT set, every tape save goes through the product's path (TriplesLive and the Datomic adapter),
+// orderedSaves off ("0") or on ("1"). The seed and the aging stay the loader's (they are the aged world, not saves).
+const productMode = process.env.DX_S2_PRODUCT;
+assert(productMode === undefined || productMode === "0" || productMode === "1", "DX_S2_PRODUCT is 0 or 1");
+const { productSaver } = await import("../s2/product.ts");
+const product = productMode === undefined ? undefined
+  : await productSaver([url!], scope, productMode === "1" ? { orderedSaves: true, saveSizeRule: true } : {});
 const legacyIds = new Set([...fields.values()].flatMap((rows) => rows.map((r) => r.id)));
 const results = [];
 let cut = head;
 for (const cell of cellsToRun) {
   const started = Date.now();
   const result = await phase([client], reader, db, cut, fields as Map<string, Row[]>, new Set(), cell, true,
-    admission(10, { mode: "rolling", credits: 6 }), legacyIds);
+    admission(10, { mode: "rolling", credits: 6 }), legacyIds, undefined, false, product?.save);
   assert(result.rows.every((row) => !row.reason || row.reason === "expired"), "a save failed");
   results.push({ cell, result, wallMs: Date.now() - started });
   cut = result.after;
@@ -162,6 +169,7 @@ const result = {
   gate: "real2-aged-live", paramsSha256: sha256, seedCut, head, agingSaves: aged.saves, active: aged.active,
   owners: owners.length, agedRowsAdmitted: agedRows.length, tamperedAgedRowRefused: true, writesOverAgedRows: overAged,
   fieldsChecked, finalCut: cut, timings: "diagnostic", wideSaves: process.env.TX2_SUBJECT_WIDE === "1",
+  productPath: productMode ?? null, saveRoutes: product?.routes() ?? null,
   cells: results.map(({ cell, result, wallMs }) => {
     const report = tapeReport(cell.tape, cell.duration, params);
     return { label: cell.label, offers: cell.tape.length, acked: result.rows.filter((r) => r.receipt).length,
@@ -184,9 +192,14 @@ console.log("REAL2_AGED_GATE " + JSON.stringify(result));
 for (const c of result.cells) {
   assert(c.acked + c.expired === c.offers, `${c.label}: an offer neither acknowledged nor expired`);
   assert(c.acked >= 0.9 * c.offers, `${c.label}: ${c.acked} of ${c.offers} acknowledged`);
-  assert.equal(c.orderedAcks, c.subjectPathAcks, `${c.label}: ordered acknowledgements differ from per-person-writer ones`);
-  assert(c.subjectPathAcks > 0, `${c.label}: no save took the per-person writer`);
+  // [DX-S2] On the product path with orderedSaves off, no save reaches the per-subject writer (that is the finding).
+  if (productMode === "0") assert.equal(c.subjectPathAcks, 0, `${c.label}: a product save without ordered IDs took the per-subject writer`);
+  else {
+    assert.equal(c.orderedAcks, c.subjectPathAcks, `${c.label}: ordered acknowledgements differ from per-person-writer ones`);
+    assert(c.subjectPathAcks > 0, `${c.label}: no save took the per-person writer`);
+  }
 }
+await product?.close();
 client.close();
 reader.close();
 writeFileSync(join(out!, "finished"), "ok\n");

@@ -53,6 +53,8 @@ const env = {
     ? { DX_V01_TAPE: action === "--fixture" ? newRunTape(process.env.DX_V01_TAPE, age) : process.env.DX_V01_TAPE! } : {}),
   // [DX-CARD2] The tuned reader setting (v01/card-reader.ts), passed to the toy stack and the toy card.
   ...Object.fromEntries((["DX_V01_READER", "DX_V01_READ_PERMITS"] as const).flatMap((name) => process.env[name] ? [[name, process.env[name]]] : [])),
+  // [DX-S2] Every toy-card save through the product's path (0 or 1: the SDK's orderedSaves off or on).
+  ...(process.env.DX_S2_PRODUCT ? { DX_S2_PRODUCT: process.env.DX_S2_PRODUCT } : {}),
 };
 const reader = readerFromEnvironment(process.env);
 const command = (bin: string, args: string[]) => execFileSync(bin, args, { env, stdio: "inherit" });

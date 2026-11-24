@@ -7,7 +7,7 @@
 #   s2/mem-gateways.sh down <name>                                           removes both containers
 # Gateway sources are mounted read-only from this checkout. Memory storage keeps nothing after `down`.
 set -euo pipefail
-: "${DOCKER_HOST:=unix://$HOME/.colima/triplex2/docker.sock}"
+: "${DOCKER_HOST:?set DOCKER_HOST to the lab VM socket}"
 export DOCKER_HOST
 repo=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
 image=${DX_S2_IMAGE:-tx2-datomic:dx-real2-production}

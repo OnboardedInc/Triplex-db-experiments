@@ -103,8 +103,10 @@ export function checkSavedIdentity(save: Save, row: Feed, writer: Writer, subjec
   }
   // [DX-INT1] Why: a production commit over 256 assertions carries the general identity and goes to the general writer.
   // Rejected: skipping the identity check for it (its journal row must still match its receipt, checked above).
+  // [DX-S2] A product save without a block (orderedSaves off, or a save the SDK's rule keeps on the runtime's IDs) goes
+  // to the general writer whatever its size.
   if (save.generalIdentity) {
-    assert(save.orderedToken === undefined && save.assertions! > 256 && !save.stage?.subjectSave && !save.stage?.subjectOrderedIds);
+    assert(save.orderedToken === undefined && (save.product || save.assertions! > 256) && !save.stage?.subjectSave && !save.stage?.subjectOrderedIds);
     return;
   }
   assert(save.orderedToken);
@@ -510,9 +512,9 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       saveHistogram.recordMs(row.end! - row.due);
     }
     for (const row of saves.filter((_, i) => i === 0 || i === saves.length - 1 || i % 100 === 0)) {
-      const op = await writerClient.operation(seed.scope.db, row.id), r = row.receipt!;
+      const op = await writerClient.operation(seed.scope.db, row.operationId ?? row.id), r = row.receipt!;
       assert.deepEqual([op.status, op.operationId, Number(op.position?.v), op.t?.v, op.recordedAt?.v],
-        ["committed", row.id, r.p, r.t, r.clock]);
+        ["committed", row.operationId ?? row.id, r.p, r.t, r.clock]);
       assert.equal(await writerClient.claim(seed.scope.db, row.id, r.p), r.tx);
     }
     // [DX-INT1] Every field of every production subject, read back at the terminal cut, equals the acknowledged writes.

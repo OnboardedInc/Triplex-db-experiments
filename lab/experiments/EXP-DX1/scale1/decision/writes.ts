@@ -96,6 +96,9 @@ export type Save = {
   retired?: number;
   assertions?: number;
   generalIdentity?: boolean;
+  // [DX-S2] Sent through the product's path (DX_S2_PRODUCT): the SDK chose the operation ID and the identity block.
+  product?: boolean;
+  operationId?: string;
 };
 
 export type Sender = {
@@ -202,7 +205,7 @@ function bind(o: Save, a: Ack, candidate: ReturnType<typeof expectedSave>) {
   const p = Number(a.position.v),
     t = a.t.v,
     clock = a.recordedAt.v;
-  assert(a.operationId === o.id && Number.isSafeInteger(p) && p > 0 && BigInt(t) > 0n);
+  assert(a.operationId === (o.operationId ?? o.id) && Number.isSafeInteger(p) && p > 0 && BigInt(t) > 0n);
   assert(Number.isFinite(clock) && clock > 0 && candidate.input.claims.length === 1);
   o.receipt = {
     p,
@@ -275,6 +278,21 @@ export async function play(
   const ramp = startup?.ramp === true;
   // [DX-S1] Wide saves (W2, default off): the gateways must run with the same switch (the launcher forwards it).
   const wide = process.env.TX2_SUBJECT_WIDE === "1";
+  // [DX-S2] DX_S2_PRODUCT=0|1: every save through the product's path (TriplesLive and the Datomic adapter), with the
+  // SDK's orderedSaves off or on, one product store per account on the account's gateway and scope. The same facts and
+  // retirements as the lab framing, the same command ID; the SDK chooses the operation ID and the identity block.
+  // Rejected: rewriting the SDK's request (it would no longer be the product's save).
+  const productMode = process.env.DX_S2_PRODUCT;
+  assert(productMode === undefined || productMode === "0" || productMode === "1", "DX_S2_PRODUCT is 0 or 1");
+  const products: Awaited<ReturnType<typeof import("../../s2/product.ts")["productSaver"]>>[] = [];
+  if (productMode !== undefined) {
+    const { productSaver } = await import("../../s2/product.ts");
+    for (const [a, s] of scopes.entries()) {
+      const scopeJson = Buffer.from(s.scope.db.replace(/^s2-/, ""), "base64url").toString("utf8");
+      products.push(await productSaver([(s.client as unknown as { endpoint: URL }).endpoint.href], scopeJson,
+        { ...(productMode === "1" ? { orderedSaves: true, saveSizeRule: true } : {}), groupAccount: keyFor(a), writeClass: "live" }));
+    }
+  }
   const admit = ramp ? startupAdmission() : undefined;
   const queues = scopes.map(() => [] as { e: Write; row: Save }[]),
     active = scopes.map(() => 0),
@@ -373,10 +391,10 @@ export async function play(
       // [DX-S1] Why: with wide saves on, one block numbers up to 4,096 assertions, so a commit takes the general
       // identity only past that. Rejected: keeping the 256 bound with the option on (the wide writer would never see a
       // save of more than about 84 facts).
-      if (orderedIds && row.assertions > (wide ? wideOrderedBlockLimit : orderedBlockLimit)) row.generalIdentity = true;
+      if (orderedIds && !productMode && row.assertions > (wide ? wideOrderedBlockLimit : orderedBlockLimit)) row.generalIdentity = true;
     }
     // [Opus W2] Why: with wide saves on, the block numbers up to 4,096 assertions; its token rebuilds it on resend.
-    if (orderedIds && !row.generalIdentity) row.orderedToken = (wide ? wideOrderedSaveIdentity() : orderedSaveIdentity()).token;
+    if (orderedIds && !row.generalIdentity && !productMode) row.orderedToken = (wide ? wideOrderedSaveIdentity() : orderedSaveIdentity()).token;
     assert(cached || sender.loadPredecessor, "Missing predecessor");
     function draft(prior: Row[]) {
       const value = expectedSave(row, e, prior);
@@ -406,8 +424,35 @@ export async function play(
     };
     // [DX-JVM1] Why: a cold run fetches the exact predecessor only for an admitted save under its subject lock.
     // Rejected: a timed leg that starts after an all-subject cache fill.
-    const submit = (input: ReturnType<typeof expectedSave>["input"]) =>
-      waitForRemoval ? send(input) : sender.client.transact(row.db, input);
+    const submit = (input: ReturnType<typeof expectedSave>["input"]) => productMode === undefined
+      ? waitForRemoval ? send(input) : sender.client.transact(row.db, input)
+      : (async () => {
+          // [DX-S2] The product's save of the drafted facts and retirements. Its send time is taken here (the SDK's own
+          // client is not observed), so latency from send includes the SDK's staging.
+          row.product = true;
+          row.sent = performance.timeOrigin + performance.now();
+          const facts = input.rows.slice(0, candidate!.facts).map((r) => ({ e: r.entity_id, a: r.attribute,
+            v: { type: "string", value: r.value_string! } }));
+          const old = input.rows.filter((r) => r.retracted_at !== null && !input.newIds.includes(r.id));
+          try {
+            const sent = await products[account]!.save(0, candidate!.entity, facts, old, row.id);
+            adopt(sent.input);
+            return sent.ack;
+          } catch (error) {
+            const sent = products[account]!.sentFor(row.id);
+            if (sent) adopt(sent);
+            throw error;
+          }
+        })();
+    // [DX-S2] What the SDK actually sent becomes the save's draft: its rows, journal and identity are what is checked.
+    const adopt = (sent: ReturnType<typeof expectedSave>["input"]) => {
+      candidate = { ...candidate!, input: sent };
+      row.operationId = sent.operationId;
+      const tx = sent.claims[0]?.txId ?? "";
+      const token = /^_tx\/([0-7][0-9A-HJKMNP-TV-Z]{23})00$/.exec(tx)?.[1] ?? /^_tx\/([0-7][0-9A-HJKMNP-TV-Z]{22})W00$/.exec(tx)?.[1];
+      if (token && sent.newIds.every((id) => id.startsWith(token))) row.orderedToken = token;
+      else row.generalIdentity = true;
+    };
     const sent = candidate ? submit(candidate.input) : Promise.resolve().then(async () => {
       assert(sender.loadPredecessor, "Missing predecessor");
       const readStart = now();
@@ -577,6 +622,7 @@ export async function play(
       delete s.client.onRequest;
       if (capture) delete diagnosticClient(s.client).onRequestFailure;
     }
+    await Promise.all(products.map((p) => p.close()));
   }
 }
 
@@ -586,11 +632,11 @@ export async function resolveUncertain(
 ) {
   for (const [o, candidate] of outstanding) {
     const client = senders[o.account]!.client;
-    const receipt = await client.operation(o.db, o.id);
+    const receipt = await client.operation(o.db, o.operationId ?? o.id);
     if (receipt.status !== "committed" || !receipt.position || !receipt.t || !receipt.recordedAt)
       continue;
     const p = Number(receipt.position.v);
-    assert.equal(receipt.operationId, o.id);
+    assert.equal(receipt.operationId, o.operationId ?? o.id);
     assert.equal(await client.claim(o.db, o.id, p), candidate.input.claims[0]!.txId);
     bind(
       o,
@@ -598,7 +644,7 @@ export async function resolveUncertain(
         ...receipt,
         requestBytes: 0,
         preparedOps: 0,
-        operationId: o.id,
+        operationId: o.operationId ?? o.id,
         position: { v: String(p) },
         t: { v: String(receipt.t.v) },
         recordedAt: { v: Number(receipt.recordedAt.v) },

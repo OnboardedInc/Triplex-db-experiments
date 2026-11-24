@@ -48,6 +48,13 @@ const wideSaves = process.env.TX2_SUBJECT_WIDE === "1";
 const init = await client.create(scope, "lean", true, 35_000);
 assert(init.created && init.strictRecordClocks);
 const db = init.db;
+// [DX-S2] With DX_S2_PRODUCT set, every save (the seed included) goes through the product's path (TriplesLive and the
+// Datomic adapter), with the SDK's orderedSaves option off ("0") or on ("1"). Unset: the lab producer, as before.
+const productMode = process.env.DX_S2_PRODUCT;
+assert(productMode === undefined || productMode === "0" || productMode === "1", "DX_S2_PRODUCT is 0 or 1");
+const { productSaver } = await import("../s2/product.ts");
+const product = productMode === undefined ? undefined
+  : await productSaver([url], scope, productMode === "1" ? { orderedSaves: true, saveSizeRule: true } : {});
 const owners = new Map<string, [number, number]>();
 for (const cell of cellsToRun) for (const o of cell.tape) owners.set(scaleOwner(o.account, o.person), [o.account, o.person]);
 const fields = new Map<string, Row[]>();
@@ -58,8 +65,9 @@ for (let i = 0; i < list.length; i += 20) {
   const batch = list.slice(i, i + 20);
   const facts = batch.flatMap(([e, [, person]]) =>
     Array.from({ length: fieldCount(taskSerial(person, 0)) }, (_, f) => ({ e, a: slotAttribute(f), v: fieldValue(person, 0, f, 0) })));
-  const change = command(`${attempt}-seed-${i}`, facts, [], false);
-  const ack = (await client.transact(db, change)) as unknown as { position: { v: string }; recordedAt: { v: number } };
+  const sent = product ? await product.seed(facts, `${attempt}-seed-${i}`, SEED_VALID_FROM) : undefined;
+  const change = sent ? sent.input : command(`${attempt}-seed-${i}`, facts, [], false);
+  const ack = (sent ? sent.ack : await client.transact(db, change)) as unknown as { position: { v: string }; recordedAt: { v: number } };
   head = Number(ack.position.v);
   for (const [e, [, person]] of batch) {
     const rows = change.rows.filter((r) => r.entity_id === e)
@@ -76,12 +84,14 @@ let cut = head;
 const scheduler = () => admission(10, { mode: "rolling", credits: 6 });
 for (const cell of cellsToRun) {
   const started = Date.now();
-  const result = await phase([client], reader, db, cut, fields, new Set(), cell, true, scheduler(), legacyIds);
+  const result = await phase([client], reader, db, cut, fields, new Set(), cell, true, scheduler(), legacyIds,
+    undefined, false, product?.save);
   assert(result.rows.every((row) => !row.reason || row.reason === "expired"), "a save failed");
   if (cell === wideCell) {
     // [DX-S1] With wide saves on, such a save takes a wide ordered block (23-character token); off, the general identity.
+    // [DX-S2] On the product path a save of more than 128 facts keeps the runtime's IDs (the save-identity rule).
     assert(result.rows.length === 2 && result.rows.every((r) => r.receipt && (r as any).assertions > 256 &&
-      (wideSaves ? r.orderedToken?.length === 23 : !r.orderedToken)),
+      (wideSaves && !product ? r.orderedToken?.length === 23 : !r.orderedToken)),
       "a save over 256 assertions was not committed whole with the expected identity");
   }
   results.push({ cell, result, wallMs: Date.now() - started });
@@ -124,6 +134,44 @@ for (let i = 0; i < list.length; i += 50) {
     }
   }
 }
+// [DX-S2] Counted work of a 20-row form through the product's path (this run's orderedSaves setting): 12 new subjects
+// of 20 fields, each saved twice with all 20 fields replaced. Per save: the writer, storage reads inside the serial
+// apply (the transaction's io-stats), datoms, PostgreSQL WAL bytes around the commit, and the apply time (diagnostic).
+const formWork = product ? await (async () => {
+  const { execFileSync } = await import("node:child_process");
+  const socket = process.env.DX_S2_PG_SOCKET;
+  const wal = () => socket ? Number(execFileSync("setpriv", ["--reuid=65534", "--regid=65534", "--clear-groups",
+    "/opt/thin-pg/usr/local/bin/psql", "-XAtq", "-h", socket, "-U", "postgres", "-d", "datomic", "-c",
+    "SELECT pg_wal_lsn_diff(pg_current_wal_insert_lsn(), '0/0')"]).toString().trim()) : NaN;
+  const records: Record<string, unknown>[] = [];
+  const business = (input: any, e: string) => (input.rows as Row[]).filter((r) => r.entity_id === e && input.newIds.includes(r.id));
+  for (let i = 0; i < 12; i++) {
+    const e = scaleOwner(5, 90_000 + i);
+    const facts = (tag: string) => Array.from({ length: 20 }, (_, f) => ({ e, a: slotAttribute(f), v: { type: "string" as const, value: sha([tag, e, f]).slice(0, 57) } }));
+    let rows = business((await product.seed(facts("seed"), `${attempt}-form-seed-${i}`, SEED_VALID_FROM)).input, e);
+    for (const save of ["first after seed", "second"]) {
+      const before = wal();
+      const sent = await product.save(0, e, facts(save), rows, `${attempt}-form-${i}-${save}`);
+      const after = wal();
+      const ack: any = sent.ack;
+      records.push({ save, writer: ack.subjectSave ? "per-subject" : "general", orderedIds: ack.subjectOrderedIds === true,
+        readsInsideApply: ack.nativeIoStats?.reads ?? null, datoms: ack.datoms, walBytes: after - before,
+        newIds: sent.input.newIds.length, applyMs: ack.nativeComputeMs ?? null });
+      rows = business(sent.input, e);
+    }
+  }
+  const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)] ?? null;
+  const by = (save: string) => {
+    const xs = records.filter((r) => r.save === save) as any[];
+    return { saves: xs.length, writers: Object.fromEntries(["per-subject", "general"].map((w) => [w, xs.filter((r) => r.writer === w).length])),
+      orderedIds: xs.filter((r) => r.orderedIds).length,
+      sqlReadsInsideApply: { total: xs.reduce((n, r) => n + (r.readsInsideApply?.sql ?? 0), 0), max: Math.max(...xs.map((r) => r.readsInsideApply?.sql ?? 0)) },
+      datoms: median(xs.map((r) => r.datoms)), walBytesMedian: median(xs.map((r) => r.walBytes)),
+      applyMsMedianDiagnostic: median(xs.map((r) => r.applyMs).filter((x) => typeof x === "number")) };
+  };
+  return { form: "20 fields replaced, one subject", first: by("first after seed"), second: by("second"), records };
+})() : undefined;
+
 const summary = {
   attempt, paramsSha256: sha256, window, rowsPerAccount, owners: owners.size, factsWritten, fieldsChecked,
   timings: "diagnostic",
@@ -151,8 +199,10 @@ const gatewayStats = await reader.request<{ generalHints?: Record<string, number
   "GET", "/v2/admin/scan-stats");
 const writeOptions = await reader.request<{ options?: { generalPrefetch?: boolean; subjectHints?: unknown } }>(
   "GET", `/v1/db/${db}/write-options`).catch(() => undefined);
-console.log("REAL2_GATE " + JSON.stringify({ ...summary, wideSaves, wideOption: (writeOptions as any)?.subjectWide ?? null, generalHints: gatewayStats.generalHints ?? null,
+console.log("REAL2_GATE " + JSON.stringify({ ...summary, wideSaves,
+  productPath: productMode ?? null, saveRoutes: product?.routes() ?? null, formWork: formWork ?? null, wideOption: (writeOptions as any)?.subjectWide ?? null, generalHints: gatewayStats.generalHints ?? null,
   generalPrefetchOption: writeOptions?.options?.generalPrefetch ?? null,
   subjectHints: gatewayStats.subjectHints ?? null, subjectHintsOption: writeOptions?.options?.subjectHints ?? null }));
+await product?.close();
 client.close();
 reader.close();

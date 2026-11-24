@@ -41,7 +41,13 @@ export async function openProduct(
   options: Record<string, unknown> = {},
   lose?: (input: Record<string, any>) => boolean,
 ): Promise<ProductStore> {
-  const scope = runtimeApi.DatabaseScope.test(scopeName);
+  // A scope JSON (["triplex-scope-v1", env, tenant, database, generation]) is used as given; a plain name is a test scope.
+  const scope = scopeName.startsWith("[")
+    ? (() => {
+        const [, env, tenant, database, generation] = JSON.parse(scopeName);
+        return runtimeApi.DatabaseScope.make({ env, tenant, database, generation });
+      })()
+    : runtimeApi.DatabaseScope.test(scopeName);
   const creator = new datomic.DatomicClient(url);
   let db: string;
   try {
@@ -108,4 +114,52 @@ export async function openProduct(
     transact: (ops, meta) => managed.runPromise(triples.transact(ops, meta)),
     close: () => managed.dispose(),
   } as ProductStore;
+}
+
+type Fact = { readonly e: string; readonly a: string; readonly v: { readonly type: string; readonly value: string } };
+/**
+ * [DX-S2] The lab producer's hook (`prep1/server-produce.ts` `phase`, `ProductSave`): one store per gateway URL on an
+ * existing scope; each save is one product transact of the same facts (valid from 0, as command() writes them) and
+ * retirements, with the producer's command ID. Returns the request the SDK sent and the gateway's answer.
+ */
+export async function productSaver(urls: readonly string[], scopeJson: string, options: Record<string, unknown>) {
+  const stores: ProductStore[] = [];
+  for (const url of urls) stores.push(await openProduct(url, scopeJson, options));
+  const take = (store: ProductStore, commandId: string) => {
+    const index = store.wire.findIndex((w) => w.ack && w.input.claims?.[0]?.commandId === commandId);
+    if (index < 0) throw new Error("No acknowledged request for " + commandId);
+    const [entry] = store.wire.splice(index, 1);
+    for (let i = store.wire.length - 1; i >= 0; i--)
+      if (store.wire[i]!.input.claims?.[0]?.commandId === commandId) store.wire.splice(i, 1);
+    return { input: entry!.input as any, ack: entry!.ack as any };
+  };
+  return {
+    stores,
+    save: async (peer: number, _entity: string, facts: readonly Fact[], old: readonly { id: string }[], commandId: string) => {
+      const store = stores[peer % stores.length]!;
+      await store.transact(
+        [
+          ...facts.map((f) => ({ op: "assert", entityId: f.e, attribute: f.a, value: f.v, validFrom: 0 })),
+          ...old.map((r) => ({ op: "retract", id: r.id })),
+        ],
+        { commandId },
+      );
+      return take(store, commandId);
+    },
+    /** A setup save of several owners (seeding) through the same path; returns the sent request and the answer. */
+    seed: async (facts: readonly Fact[], commandId: string, validFrom: number) => {
+      const store = stores[0]!;
+      await store.transact(facts.map((f) => ({ op: "assert", entityId: f.e, attribute: f.a, value: f.v, validFrom })), { commandId });
+      return take(store, commandId);
+    },
+    /** The last request sent for a command whose save did not return (a refusal or an unknown outcome). */
+    sentFor: (commandId: string) => {
+      for (const store of stores)
+        for (let i = store.wire.length - 1; i >= 0; i--)
+          if (store.wire[i]!.input.claims?.[0]?.commandId === commandId) return store.wire[i]!.input as any;
+      return undefined;
+    },
+    routes: () => Object.fromEntries(stores.flatMap((s) => [...(s.client.saveRoutes as Map<string, number>)])),
+    close: () => Promise.all(stores.map((s) => s.close())),
+  };
 }

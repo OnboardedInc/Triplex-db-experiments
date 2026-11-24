@@ -64,6 +64,22 @@ import {
 } from "./server-tape.ts";
 
 type Input = Parameters<DatomicClient["transact"]>[1];
+/** [DX-S2] One save through the product's path: the request the SDK sent and the gateway's answer. */
+export type ProductSave = (
+  peer: number,
+  entity: string,
+  facts: readonly { e: string; a: string; v: { type: string; value: string } }[],
+  old: readonly Input["rows"][number][],
+  commandId: string,
+) => Promise<{ input: Input; ack: Ack }>;
+/** [DX-S2] The ordered block token of a request the SDK built, if its journal and IDs form one. */
+export function orderedToken(input: Input): string | undefined {
+  const tx = input.claims[0]?.txId ?? "";
+  const one = /^_tx\/([0-7][0-9A-HJKMNP-TV-Z]{23})00$/.exec(tx)?.[1];
+  const wide = /^_tx\/([0-7][0-9A-HJKMNP-TV-Z]{22})W00$/.exec(tx)?.[1];
+  const token = one ?? wide;
+  return token && input.newIds.length > 0 && input.newIds.every((id) => id.startsWith(token)) ? token : undefined;
+}
 type Row = Input["rows"][number];
 type Ack = {
   operationId: string;
@@ -257,6 +273,9 @@ export async function phase(
   legacyIds?: ReadonlySet<string>,
   sampleCpu?: () => CpuSample,
   freshFirst = false,
+  // [DX-S2] Send every save through the product's path (TriplesLive and the Datomic adapter) instead of command():
+  // the function returns the request the SDK actually sent and the gateway's answer. Default: the lab producer.
+  productSave?: ProductSave,
 ) {
   const inputs = new Map<string, Input>();
   const rows: {
@@ -362,13 +381,13 @@ export async function phase(
     const assertions = 2 * facts.length + old.length + 4;
     // [Opus W2, DX-S1] Why: with TX2_SUBJECT_WIDE=1 the per-subject writer takes up to 128 facts, so a commit over 256
     // assertions takes a wide ordered block (4,096) instead of the general identity; one commit per save either way.
-    const identity = orderedIds && assertions <= orderedBlockLimit ? orderedSaveIdentity()
+    const identity = productSave ? undefined : orderedIds && assertions <= orderedBlockLimit ? orderedSaveIdentity()
       : orderedIds && wideSaves && assertions <= 4096 ? wideOrderedSaveIdentity() : undefined;
-    const input = command(id, facts, old, true, false, identity);
+    let input = command(id, facts, old, true, false, identity);
     input.sourceK = Math.max(head, ...previous.map((r) => r.recorded_position));
     input.groupAccount = wide ? scaleAccount(o.account) : accounts[o.account]!.key;
     input.writeClass = "live";
-    inputs.set(id, input);
+    if (!productSave) inputs.set(id, input);
     busy.add(e);
     const sent = elapsed(),
       peer = nextPeer++ % clients.length;
@@ -393,7 +412,14 @@ export async function phase(
     const work = (async () => {
       let ack: Ack;
       try {
-        ack = (await clients[peer]!.transact(db, input)) as Ack;
+        if (productSave) {
+          // [DX-S2] The same facts and retirements as command(), as one product save with the command ID `id`.
+          const sent = await productSave(peer, e, facts, old, id);
+          input = sent.input;
+          ack = sent.ack;
+          inputs.set(id, input);
+          record.orderedToken = orderedToken(input);
+        } else ack = (await clients[peer]!.transact(db, input)) as Ack;
       } catch (err) {
         // [DX-PREP1] Why: the next same-person offer cannot speculate on a failed or uncertain predecessor.
         // Rejected: sending a later edit against a row whose retirement is unknown.
@@ -403,15 +429,15 @@ export async function phase(
         settled = {
           ...record,
           end: elapsed(),
-          reason: err instanceof DatomicHttpError ? err.code : "transport",
+          reason: err instanceof DatomicHttpError ? err.code : productSave ? `product: ${String((err as Error)?.message ?? err)}` : "transport",
         };
         rows.push(settled);
         return;
       }
       const end = elapsed();
-      assert.equal(ack.operationId, id);
+      assert.equal(ack.operationId, productSave ? input.operationId : id);
       assert(ack.writePath?.function && Number(ack.t.v) > 0 && Number.isFinite(ack.recordedAt.v));
-      assert(Number(ack.position.v) > input.sourceK!);
+      if (!productSave) assert(Number(ack.position.v) > input.sourceK!);
       fields.set(e, [
         ...previous.filter((r) => !old.includes(r)),
         ...input.rows

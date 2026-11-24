@@ -36,7 +36,10 @@ export const defaultCardTape: CardTape = "production-S-noburst";
 // [DX-S1] Default-off writer options a card arm may run with: wide saves (W2), general-writer hints (W3), per-subject
 // writer hints (W4). run.ts passes them to the arm, adopted-server.ts records the ones set, adopted.ts checks the
 // writer's readback, and the card names them. Rejected: passing the whole environment (unrecorded settings).
-export const writerOptionNames = ["TX2_SUBJECT_WIDE", "TX2_GENERAL_PREFETCH", "TX2_SUBJECT_HINTS"] as const;
+// [DX-S2] DX_S2_PRODUCT (0 or 1, recorded either way) sends every card save through the product's path (TriplesLive and
+// the Datomic adapter) with the SDK's orderedSaves option off or on; unset, the lab producer as before. It is a client
+// setting, so no writer reads it back.
+export const writerOptionNames = ["TX2_SUBJECT_WIDE", "TX2_GENERAL_PREFETCH", "TX2_SUBJECT_HINTS", "DX_S2_PRODUCT"] as const;
 // [DX-INT3] Default-off read gateway options a card arm may run with (W3): the bound on reads waiting for a permit and
 // the web-thread counters. stack/up.sh passes them to the gateways only when set. run.ts passes them to the arm and
 // adopted-server.ts records the ones set. Why: before this run.ts dropped them, so W3's published "bound on" arm would
@@ -50,7 +53,8 @@ export const readQueueOptionsSet = (env: NodeJS.ProcessEnv) => {
 };
 export const writerOptionsSet = (env: NodeJS.ProcessEnv) => {
   for (const name of writerOptionNames) assert(env[name] === undefined || /^[01]$/.test(env[name]!), name + " is 0 or 1");
-  return Object.fromEntries(writerOptionNames.flatMap((name) => env[name] === "1" ? [[name, "1"]] : [])) as Record<string, "1">;
+  return Object.fromEntries(writerOptionNames.flatMap((name) => env[name] === "1" || (name === "DX_S2_PRODUCT" && env[name] === "0")
+    ? [[name, env[name]!]] : [])) as Record<string, "0" | "1">;
 };
 export const newRunTape = (text: string | undefined, age: string | undefined): CardTape =>
   parseCardTape(text ?? (age === "realistic" ? "saturday" : defaultCardTape));

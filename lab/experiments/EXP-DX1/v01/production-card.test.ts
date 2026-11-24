@@ -59,6 +59,10 @@ test("the card records the default-off writer options it was given", () => {
   assert.deepEqual(writerOptionsSet({}), {});
   assert.deepEqual(writerOptionsSet({ TX2_SUBJECT_WIDE: "0", TX2_SUBJECT_HINTS: "1", OTHER: "1" }), { TX2_SUBJECT_HINTS: "1" });
   assert.throws(() => writerOptionsSet({ TX2_GENERAL_PREFETCH: "yes" }), /0 or 1/);
+  // [DX-S2] The product-path switch is recorded off as well as on (off still means "the product's path").
+  assert.deepEqual(writerOptionsSet({ DX_S2_PRODUCT: "0" }), { DX_S2_PRODUCT: "0" });
+  assert.deepEqual(writerOptionsSet({ DX_S2_PRODUCT: "1", TX2_SUBJECT_WIDE: "1" }), { TX2_SUBJECT_WIDE: "1", DX_S2_PRODUCT: "1" });
+  assert.throws(() => writerOptionsSet({ DX_S2_PRODUCT: "on" }), /0 or 1/);
 });
 
 // [DX-S1] The save-size ladder keeps the S tape's subjects and times and gives every save exactly N facts.

@@ -641,7 +641,7 @@ export function writeAdoptedCard(run: Card) {
       (run.tapeRegeneration === "platform" ? ` Production tapes checked by platform regeneration: each cell's tape hashes to the binding made before its first offer and matches this platform's regeneration in every field except the floating-point \`ms\` and \`gap\` (tolerance ${platformTolerance.ms} ms and ${platformTolerance.gapSeconds} s). ${regenerated.map((r) => `${r.cell}: ${r.ms} offsets differ (max ${r.maxMs.toExponential(2)} ms), ${r.gap} gaps (max ${r.maxGap.toExponential(2)} s)`).join("; ")}.` : "") + "\n";
     if (line === "## Run settings") return `**Save tape:** ${tapeTitle(cardTape)}.` + (shape ? " P2 below counts commits; the production table gives rows and saves." : "") + "\n\n" +
       // [DX-S1] Default-off writer options the campaign ran with, when any (v01/production-card.ts writerOptionNames).
-      (run.writerOptions ? `**Writer options on:** ${Object.keys(run.writerOptions).map((n) => "`" + n + "=1`").join(", ")}.\n\n` : "") + (run.writer === "per-person-ordered"
+      (run.writerOptions ? `**Writer options on:** ${Object.entries(run.writerOptions).map(([n, v]) => "`" + n + "=" + v + "`").join(", ")}.\n\n` : "") + (run.writer === "per-person-ordered"
       ? run.toy ? "The headline toy runs the full adopted workload. Barrier6 repeats P2 and P6."
         : "The headline ordered profile runs the full workload. Barrier6 repeats P2 and P6 on the same launch profile."
       : "Grouped comparison only. This attempt covers P2 and P6.") + "\n\n" + line;

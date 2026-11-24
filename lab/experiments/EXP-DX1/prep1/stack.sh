@@ -22,6 +22,8 @@ if [[ -f /config/general-prefetch ]]; then export TX2_GENERAL_PREFETCH=$(cat /co
 # on in both arms, as the server launch has it.
 if [[ -f /config/subject-hints ]]; then export TX2_SUBJECT_HINTS=$(cat /config/subject-hints); fi
 if [[ -f /config/tail-sql ]]; then export PREP1_TAIL_SQL=$(cat /config/tail-sql); fi
+# [DX-S2] Present only for the DX-S2 production gate: every save through the product's path, orderedSaves 0 or 1.
+if [[ -f /config/s2-product ]]; then export DX_S2_PRODUCT=$(cat /config/s2-product); fi
 if [[ "$PREP1_MODE" == subject-native-suite ]]; then
   # [DX-PREP1] Why: exercise the stock native suite with the real process setting on fresh memory scopes.
   # Rejected: adding PostgreSQL and a transactor for tests written to run in one JVM.
@@ -438,6 +440,8 @@ case "$PREP1_MODE" in
   production)
     # [DX-REAL2] Why: drive the server producer's phase() on a toy scope with the subject writer and ordered IDs.
     export DX_PREP1_LIBRARY=1 DX_PREP1_CAMPAIGN=rolling DX_REAL2_SET=hour DX_REAL2_PARAMS=/config/production-shape.json
+    # [DX-S2] The product-path gate reads PostgreSQL's WAL position around its form saves.
+    if [[ -f /config/s2-product ]]; then export DX_S2_PG_SOCKET=$work/socket; fi
     subject_workers 1 1
     # The bundle carries launch helpers with their own entry checks; never present it as the entry point.
     node --input-type=module -e 'process.argv.splice(1, 0, "production-gate"); await import("/config/probe.mjs");'
