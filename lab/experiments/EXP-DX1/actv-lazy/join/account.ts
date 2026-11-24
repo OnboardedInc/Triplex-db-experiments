@@ -43,6 +43,17 @@ import { subjectOf, type Fact } from "../../../../bench/lib/world.ts";
 import { AccountAdmission, type PublishObservation, type WriteAttempt } from "./admission.ts";
 import { LazyReader, rosterRoot, rosterSeal } from "../read.ts";
 import {
+  definitionsActor,
+  definitionsOnly,
+  docsMode,
+  loadRelease,
+  rootStored,
+  splitDocument,
+  stageDocument,
+  type DocRef,
+  type DocsMode,
+} from "./definitions.ts";
+import {
   entry,
   hits,
   strategy,
@@ -63,7 +74,11 @@ export type PublishOptions = {
   codec?: "legacy" | "compact";
   afterChunk?: (attempt: string) => Promise<void>;
   observation?: PublishObservation;
+  /** [DX-ACT6] How the release document travels (default TX2_RELEASE_DOCS: unset = inline, as before). */
+  docs?: DocsMode;
 };
+/** [DX-ACT6] A Publish whose record exceeds the 4 MiB request limit (full documents only), refused before any write. */
+export class ReleaseTooLarge extends Error {}
 export type Edit = { e: string; a: string; values: W0.Fact["v"][]; from?: string };
 type Meta = {
   epoch: string;
@@ -79,6 +94,10 @@ export type Marker = {
   seq: number;
   old: W0.ReleaseDoc | null;
   document: W0.ReleaseDoc;
+  // [DX-ACT6] With TX2_RELEASE_DOCS=ref the stored marker carries these instead of `old` and `document`; marker()
+  // fills `old` and `document` from the stored definitions (checked against the release hashes) for its callers.
+  documentRef?: DocRef;
+  oldRef?: DocRef | null;
   release: string;
   cut: number;
   at: string;
@@ -201,6 +220,8 @@ export class JoinedAccount {
         assert(
           allowed ||
             (t.actor === stageActor && stageChanges(this.db.prefix, t.changes)) ||
+            // [DX-ACT6] Content-addressed release definitions written ahead of a Publish (unreachable until it).
+            (t.actor === definitionsActor && definitionsOnly(t.changes)) ||
             (setup &&
               t.actor === "lazy/join-index" &&
               t.changes.every((v: any) => v.entityId.startsWith(this.db.prefix + "join-"))),
@@ -586,6 +607,12 @@ export class JoinedAccount {
       );
       await checkStage(this.db, m.stage, e.at);
     }
+    // [DX-ACT6] A marker by reference: its documents from the stored definitions, each checked against its hash.
+    if (m.documentRef) {
+      assert(m.documentRef.release === m.release && m.document === undefined && m.old === undefined);
+      m.document = (await loadRelease(this.s, m.documentRef, e.at)).doc;
+      m.old = m.oldRef ? (await loadRelease(this.s, m.oldRef, e.at)).doc : null;
+    }
     return m;
   }
   async receipt(sequence: number, at?: number) {
@@ -674,10 +701,21 @@ export class JoinedAccount {
     const priceStart = performance.now();
     const sequence = (await readErasure(this.s.comp))?.seq;
     this.lastMaterial = emptyMaterial();
-    return withErasure(sequence, () =>
+    // [DX-ACT6] By reference: the definitions not stored yet are written first (content-addressed, unfenced, each write
+    // within the writer's bound), and the predecessor's too if it was published with full documents.
+    const byRef = (options.docs ?? docsMode()) === "ref";
+    let ref: DocRef | undefined;
+    if (byRef) {
+      const staged = await stageDocument(this.s, doc);
+      ref = staged.ref;
+      this.lastDefinitions = { writes: staged.writes, rows: staged.rows, bytes: staged.bytes, retries: staged.retries };
+      const c0 = await this.s.controls(await this.s.head());
+      for (const r of c0.releases) if (r.joined && r.document && !r.documentRef) await stageDocument(this.s, r.document);
+    }
+    const run = () => withErasure(sequence, () =>
       this.command(
         id,
-        ["publish", doc, at, storage, options.sources ?? "native", workers, small],
+        ["publish", doc, at, storage, options.sources ?? "native", workers, small, ...(byRef ? ["ref"] : [])],
         async (p) => {
           const { meta, c, tail } = await this.state(p);
           assert(this.s.held ? at === meta.valid : at >= c.at);
@@ -686,10 +724,21 @@ export class JoinedAccount {
           const prev = c.releases
             .filter((r) => r.storage !== "scheduled" && r.from <= at)
             .sort((a, b) => b.from.localeCompare(a.from) || b.tx - a.tx)[0];
-          const old = prev ? W0.compileRelease(prev.document) : undefined;
+          const old = prev
+            ? prev.documentRef
+              ? await loadRelease(this.s, prev.documentRef, p)
+              : W0.compileRelease(prev.document)
+            : undefined;
+          // [DX-ACT6] The record names stored definitions only: the root of this release and of its predecessor.
+          const oldRef: DocRef | null = !byRef || !prev ? null : prev.documentRef ?? splitDocument(prev.document).ref;
+          if (byRef) {
+            assert(await rootStored(this.s, ref!, p), "Release definitions are not stored at the Publish's cut");
+            assert(!oldRef || (await rootStored(this.s, oldRef, p)), "Predecessor definitions are not stored");
+          }
           const req: Request = {
             id,
             document: doc,
+            ...(byRef ? { documentRef: ref } : {}),
             kind: "activation",
             release: doc.name,
             validTime: at,
@@ -804,8 +853,7 @@ export class JoinedAccount {
             joined: meta.epoch,
             ...(sequence === undefined ? {} : { erasureSeq: sequence }),
             seq: np.recipe.sequence,
-            old: old?.doc ?? null,
-            document: doc,
+            ...((byRef ? { documentRef: ref, oldRef } : { old: old?.doc ?? null, document: doc }) as Pick<Marker, "old" | "document">),
             release: next.hash,
             cut: p,
             at,
@@ -839,7 +887,26 @@ export class JoinedAccount {
         options.observation,
       ),
     );
+    try {
+      return await run();
+    } catch (e) {
+      // [DX-ACT6] The 4 MiB request limit, stated with the sizes that reached it (the client refuses before sending).
+      for (let x: unknown = e; x instanceof Error; x = x.cause)
+        if (/Request too large/.test(x.message))
+          throw new ReleaseTooLarge(
+            "Release refused: its Publish record (" +
+              this.s.counters.lastOps.bytes +
+              " bytes of operations) exceeds the 4 MiB request limit (4,194,304 bytes after encoding). With full " +
+              "documents the record is about 3.0 KB + 1.2 x (2 x new + old document); this release's document is " +
+              Buffer.byteLength(canonical(doc)) +
+              " bytes. TX2_RELEASE_DOCS=ref carries the definitions by reference.",
+            { cause: e },
+          );
+      throw e;
+    }
   }
+  /** [DX-ACT6] What the last Publish by reference wrote ahead of its record. */
+  lastDefinitions = { writes: 0, rows: 0, bytes: 0, retries: 0 };
   async physical(seq: number) {
     const p = await this.s.head(),
       e = await this.notices.event(seq, p),
