@@ -101,6 +101,11 @@ export function strategy(
   expanded = false,
 ): "all" | "none" | "index" {
   if (!a) return "all";
+  // [DX-ACT4] Why: W0.diff covers only the eleven rules, so a release that changed only forms or policies chose "none":
+  // no subject was selected and its owed notices were never recorded (outside the held campaign, which selects all;
+  // found by the settlement-frames gate). The index knows no policy's inputs, so such a release selects everyone.
+  // Rejected: indexing the synthetic policies (they read only the start date, which no leaf indexes).
+  if (W0.extensionDiffers(a, b)) return "all";
   const diff = W0.diff(a, b);
   const rules = kind === "output" && expanded ? outputRules : indexed;
   if (kind === "output" && diff.some((r) => !rules.has(r))) return "all";
