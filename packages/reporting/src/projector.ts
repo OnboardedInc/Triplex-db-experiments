@@ -109,6 +109,9 @@ const FACT_COLUMNS = `account text, entity text, kind text, attribute text, asse
   value_string text, value_number text, value_boolean boolean, value_datetime text, value_json jsonb, valid_from text,
   valid_to text, recorded_position bigint, recorded_at text, retracted_position bigint, retracted_at text,
   removed_position bigint`;
+const FACT_TABLE_COLUMNS = `account, entity, kind, attribute, assertion_id, value_type, value_string, value_number,
+  value_boolean, value_datetime, value_json, valid_from, valid_to, recorded_position, recorded_at, retracted_position,
+  retracted_at, removed_position`;
 const FACT_SELECT = `account, entity, kind, attribute, assertion_id, value_type, value_string, value_number::float8,
   value_boolean, value_datetime::float8, value_json, valid_from::float8, valid_to::float8, recorded_position,
   recorded_at::float8, retracted_position, retracted_at::float8, removed_position`;
@@ -151,6 +154,8 @@ export class Projector {
   pages = 0;
   /** A kind's view could not take a new column (a reporting query held it); retried after every page. */
   viewsBehind = false;
+  /** Attributes the gateway has marked protected; a later change of one that carries a value is refused. */
+  private protectedAttributes: Set<string> | null = null;
   private readonly fault: ProjectorOptions["fault"];
   private readonly log: NonNullable<ProjectorOptions["log"]>;
 
@@ -233,6 +238,8 @@ export class Projector {
       const rows = await tx`SELECT account, fence_position FROM rpt.account_state WHERE account = ANY(${[...touched]})`;
       for (const r of rows) fences.set(r.account, Number(r.fence_position));
     }
+    if (this.protectedAttributes === null)
+      this.protectedAttributes = new Set((await tx`SELECT DISTINCT attribute FROM rpt.columns WHERE value_type = 'protected'`).map((r) => r.attribute));
     const inserts: FactRow[] = [];
     const retracts: { account: string; assertion_id: string; position: number; at: string | null }[] = [];
     const removals: { account: string; assertion_id: string; position: number }[] = [];
@@ -253,9 +260,13 @@ export class Projector {
         if (c.op === "assert") {
           if (typeof c.validFrom !== "number" || typeof c.recordedAt !== "number")
             throw new ReportingRefusal("FeedShape", "an assertion lacks its valid-from or record time", { tripleId: c.tripleId });
+          const packed = packChangeValue(c.value);
+          if (packed.value_type === "protected") this.protectedAttributes.add(c.attribute);
+          else if (this.protectedAttributes.has(c.attribute))
+            throw new ReportingRefusal("ProtectedValueArrived", "a change of a protected attribute arrived with a value", { attribute: c.attribute, position: j.position });
           inserts.push({
             account, entity: c.entityId, kind: c.entityType ?? null, attribute: c.attribute, assertion_id: c.tripleId,
-            ...packChangeValue(c.value),
+            ...packed,
             valid_from: dbl(c.validFrom)!, valid_to: dbl(c.validTo ?? null), recorded_position: j.position,
             recorded_at: dbl(c.recordedAt)!, retracted_position: null, retracted_at: null, removed_position: null,
           });
@@ -409,13 +420,20 @@ export class Projector {
    */
   async rebuildAccount(account: string, options: { batch?: number; beforeSwap?: () => Promise<void> } = {}) {
     const t0 = performance.now();
+    const rebuildId = randomUUID();
     const p = await this.source.head();
     const ids = await this.source.accountIds(account, p);
-    const rows: FactRow[] = [];
+    // Stage the account's history at P in batches (bounded memory), outside any lock.
+    await this.sql`DELETE FROM rpt.rebuild_facts WHERE account = ${account}`;
     const batch = options.batch ?? 100;
+    let staged = 0;
     for (let i = 0; i < ids.length; i += batch) {
-      const history = await this.source.history(ids.slice(i, i + batch), p);
-      for (const r of history) if (r.entity_type !== "_Transaction" && accountOf(r.entity_id) === account) rows.push(factFromStoreRow(r));
+      const rows = (await this.source.history(ids.slice(i, i + batch), p))
+        .filter((r) => r.entity_type !== "_Transaction" && accountOf(r.entity_id) === account).map(factFromStoreRow);
+      if (!rows.length) continue;
+      await this.sql.unsafe(`INSERT INTO rpt.rebuild_facts SELECT $2::uuid, ${FACT_SELECT} FROM jsonb_to_recordset($1::text::jsonb) AS x(${FACT_COLUMNS})`,
+        [JSON.stringify(rows), rebuildId]);
+      staged += rows.length;
     }
     const readMs = performance.now() - t0;
     await options.beforeSwap?.();
@@ -426,23 +444,15 @@ export class Projector {
       const g = Number(state.after_position);
       await tx`DELETE FROM rpt.facts WHERE account = ${account}`;
       await tx`DELETE FROM rpt.entities WHERE account = ${account}`;
-      for (let i = 0; i < rows.length; i += 5000) {
-        const part = rows.slice(i, i + 5000);
-        await tx.unsafe(`INSERT INTO rpt.facts SELECT ${FACT_SELECT} FROM jsonb_to_recordset($1::text::jsonb) AS x(${FACT_COLUMNS})`, [JSON.stringify(part)]);
-      }
-      const entities = new Map<string, { account: string; entity: string; kind: string | null; first_position: number }>();
-      for (const r of rows) {
-        const e = entities.get(r.entity);
-        if (!e) entities.set(r.entity, { account, entity: r.entity, kind: r.kind, first_position: r.recorded_position });
-        else {
-          e.first_position = Math.min(e.first_position, r.recorded_position);
-          if (e.kind === null) e.kind = r.kind;
-        }
-      }
-      if (entities.size)
-        await tx.unsafe(`INSERT INTO rpt.entities SELECT * FROM jsonb_to_recordset($1::text::jsonb) AS x(account text, entity text, kind text, first_position bigint)`,
-          [JSON.stringify([...entities.values()])]);
-      const newColumns = rows.length ? await this.recordColumns(tx, [...rows].sort((a, b) => a.recorded_position - b.recorded_position), p) : 0;
+      await tx.unsafe(`INSERT INTO rpt.facts SELECT ${FACT_TABLE_COLUMNS} FROM rpt.rebuild_facts WHERE rebuild_id = $1`, [rebuildId]);
+      await tx`INSERT INTO rpt.entities (account, entity, kind, first_position)
+        SELECT account, entity, (array_agg(kind ORDER BY recorded_position) FILTER (WHERE kind IS NOT NULL))[1], min(recorded_position)
+        FROM rpt.facts WHERE account = ${account} GROUP BY account, entity`;
+      const kinds = await tx`SELECT kind, attribute, value_type, min(recorded_position) AS first FROM rpt.facts
+        WHERE account = ${account} AND kind IS NOT NULL GROUP BY 1, 2, 3 ORDER BY 4, 1, 2, 3`;
+      const newColumns = kinds.length
+        ? await this.recordColumns(tx, kinds.map((k) => ({ kind: k.kind, attribute: k.attribute, value_type: k.value_type }) as unknown as FactRow), p)
+        : 0;
       // Catch up the journals the projector applied while this rebuild read (P, G], for this account only.
       let caught = 0;
       for (let after = p; after < g; ) {
@@ -456,7 +466,8 @@ export class Projector {
       const fence = Math.max(p, g);
       await tx`INSERT INTO rpt.account_state (account, fence_position) VALUES (${account}, ${fence})
         ON CONFLICT (account) DO UPDATE SET fence_position = excluded.fence_position, rebuilt_at = now()`;
-      return { account, position: p, watermark: g, fence, ids: ids.length, facts: rows.length, caughtUp: caught, newColumns };
+      await tx`DELETE FROM rpt.rebuild_facts WHERE rebuild_id = ${rebuildId}`;
+      return { account, position: p, watermark: g, fence, ids: ids.length, facts: staged, caughtUp: caught, newColumns };
     });
     if (result.newColumns) await this.refreshViews();
     return { ...result, readMs, swapMs: performance.now() - t1 };

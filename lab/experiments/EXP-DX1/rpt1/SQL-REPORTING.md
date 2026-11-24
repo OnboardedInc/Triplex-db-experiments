@@ -115,13 +115,17 @@ account `_system`, which no reporting login is granted.
    the watermark, as after a restore to an older point): `StoreBehind`, the copy refuses to move and rebuilds every
    account it knows at a new epoch. **Feed declined** (`declined` on the page): `FeedDeclined`, rebuild.
 7. **Rebuild of one account, saves continuing.** (i) read the store's head `P`; (ii) list the account's entity IDs at
-   `P` (`/v2/db/{db}/ids`, XQ3, needs `TX2_ID_LISTS=1` on the reader) and read their whole history at `P` in batches
-   (`/v1/db/{db}/read` with `entityIds`, `history`, `omitProtected`); (iii) in one SQL transaction: lock the watermark
-   `G`, delete the account's rows, insert what was read, and if `G > P` read journal pages `(P, G]` and apply only that
-   account's changes; set the account's fence to `max(P, G)`. The projector, which locks the same row, applies that
-   account's journals only above the fence. The initial build is the same step for every account named by the
-   operator (the store has no list of accounts), or a replay of the journal from position 0 for a database whose
-   journal is complete.
+   `P` (`/v2/db/{db}/ids`, XQ3, needs `TX2_ID_LISTS=1` on the reader), read their whole history at `P` in batches of
+   100 (`/v1/db/{db}/read` with `entityIds`, `history`, `omitProtected`) and stage the rows in `rpt.rebuild_facts`
+   (bounded memory, no lock held); (iii) in one SQL transaction: lock the watermark `G`, delete the account's rows,
+   move the staged rows in, and if `G > P` read journal pages `(P, G]` and apply only that account's changes; set the
+   account's fence to `max(P, G)`. The projector, which locks the same row, applies that account's journals only above
+   the fence. The initial build is the same step for every account named by the operator (the store has no list of
+   accounts), or a replay of the journal from position 0 for a database whose journal is complete. **Limit at size:**
+   step (iii) holds the watermark for as long as it moves the account's rows in, so every account's lag grows by that
+   time (toy: 44 to 148 ms; a deep account at 1 billion: minutes, section 7). The fix, not built: during the move the
+   projector records that account's changes in a side table instead of skipping them, the move runs in short
+   transactions, and only the replay of the side table takes the lock.
 8. **Lag** is stated and measured: entries behind (store head on the page minus the watermark) and time behind (the
    gateway's `availableAt` on the page minus the journal's record time, plus the projector's own apply time), per page.
 
@@ -148,11 +152,15 @@ make sure none reaches it:
    marker, so it covers sealed values (never unsealed for this request) and removed ones. The answer echoes
    `"omittedProtected": true`.
 2. **The projector refuses anything else.** It refuses a page or read without the echo (`ProtectedOmissionMissing`),
-   and refuses any change of an attribute it has seen marked `protected` that arrives with a value, so a gateway without this change
-   cannot feed it.
+   so a gateway without this change cannot feed it; it refuses a removal marker arriving as a value (the marker is only
+   ever on a protected attribute); it refuses any later change of an attribute it has seen marked `protected` that
+   arrives with a value (`ProtectedValueArrived`); and a removal naming an assertion whose value the copy holds stops it
+   (`RemovedValueWasCopied`). A database with a refusal stops being followed; it is never skipped past.
 
 A removal's own journal entry (`op: "erase"`) sets `removed_position` on the assertions it names, at the removal's log
-position, so the copy can say "removed at position N" exactly as the store's marker does.
+position, so the copy can say "removed at position N" as the store's marker does. A rebuild reads rows, not removal
+entries, so after a rebuild `removed_position` is empty for removals at or below the rebuild's position (the value was
+never in the copy either way).
 
 **What PostgreSQL's own log and backups make impossible to guarantee, stated plainly.** For any value that IS in the
 copy, deleting or updating its row does not remove the old bytes from: the write-ahead log segments still on disk
@@ -180,6 +188,10 @@ account in `rpt.grants`; views are `security_invoker`, so the policy applies to 
 `account = rpt.my_account()`, a `STABLE SECURITY DEFINER` function reading `rpt.grants` for `current_user`, which the
 planner evaluates once and uses as the leading index key. A login cannot change its own account: it is not a member of
 any other login, and `rpt.grants` is not writable by it.
+
+**What the logins share:** the names of kinds and attributes (view and column names, `rpt.columns`) are the same for
+every login, because the views are shared. Values are not. If an account's own attribute names must be hidden from
+other accounts, that needs per-account views (not built).
 
 **One schema per account was rejected for 100,000 accounts:** about 10 relations per account (tables, indexes, views
 per kind) is 1 million relations in the catalog; every new attribute or kind becomes 100,000 DDL statements; every
@@ -214,7 +226,7 @@ every container and volume removed after each run.
 | (f) Lag | saves of the production shape at 20 to 40 per second for 60 s while the projector follows | entries and time behind per page reported (diagnostic) |
 | (g) Rebuild one account while saves continue | rebuild of `account-003` during saves to it and to `account-0031` | exact at the end as in (b) |
 
-**Predictions (written before running):** (a) equal; (b) 0 differences; if the store records an assertion at a position
+**Predictions (written before running; all met, section 9):** (a) equal; (b) 0 differences; if the store records an assertion at a position
 other than its journal's (a group commit's interior position or an import's own position), the facts comparison shows
 it as a `recorded_position` difference and the projector must take the row's own position from the store; (c) equal;
 (d) 0 protected occurrences, the control found at least once in the heap and once in the WAL; (e) 0; (f) on the Mac,
@@ -222,21 +234,143 @@ entries behind p99 under 50 and time behind p99 under 500 ms; (g) 0 differences.
 
 ## 7. Cost, forecast at 1 billion, and the server run
 
-Filled in section 9 from the toy's measurements: rows and bytes per fact (heap, indexes, TOAST), projector CPU per
-1,000 journal entries, read gateway requests and journal permit use per 1,000 entries.
+### 7.1 Measured on the toy (counts exact; times diagnostic)
+
+| What | Measured (run `full2`, defaults) |
+| --- | --- |
+| Bytes per fact, `rpt.facts` | **409 B** (heap 170 B, indexes 234 B, TOAST about 0) over 7,457 facts |
+| Bytes per fact, every table of the copy | **542 B** (`rpt.entities` 59 B, `rpt.commits` 33 B, catalogue tables the rest) |
+| Projector CPU | 131 ms per 1,000 changes (one process replaying 930 positions, 7,547 changes) |
+| Feed read per replay | 5 journal page requests of up to 200 journals; the read gateway examined 930 position entries in 8 bounded pages (1 per position, no walk) |
+| Rebuild of one account (344 entities, 2,475 to 2,629 facts) | read and stage 186 to 259 ms; the swap under the lock 44 to 148 ms |
+| Apply per page while following 25 saves/s | p50 11.5 ms, p99 36.6 ms |
+
+Storage loads caused by the feed read are not counted (the journal route reports entries examined, not segment loads).
 
 **Where the projector reads.** It should read from its own read peer (the question reader of the cross-subject design),
 not the read gateway that serves the 256 pinned readers: a journal page holds the single journal permit while it
-renders (the wait itself does not hold it), and the rebuild reads whole histories, which would evict the product
-readers' cache. Until that peer exists, one projector on the shared reader holds the journal permit for one page at a
-time.
+renders (the long-poll wait itself does not hold it), and a rebuild reads whole histories, which would evict the
+product readers' cache as a sweep does (XQ6 section 4.2). Until that peer exists, one projector on the shared reader
+holds the journal permit for one page at a time.
+
+### 7.2 Forecast at 1 billion records (predictions, not measured)
+
+| Quantity | As built | With two changes not built (integer codes for account, kind and attribute; one unique index `(account, entity, attribute, assertion_id)` instead of the primary key plus the entity index) |
+| --- | --- | --- |
+| Copy size per 1 billion facts | **410 GB** (`rpt.facts`), **540 GB** all tables, plus 10 to 30% if real values are longer than the toy's | 220 to 300 GB |
+| Initial build, journal replay | 1 billion changes at 7,000 to 14,000 changes/s per projector core: **20 to 40 hours**; only for a database whose journal is complete (the loader-built 1 billion copy's is not) | the same |
+| Initial build, by account from the store | a deep account of R facts: reading at about 0.3 to 1 ms per entity (1 to 5 million entity IDs in account-003) is 5 to 80 min; staging at 50,000 to 150,000 rows/s is R / 100,000 s (100 million facts: 11 to 33 min); the swap moves the rows again (as long again) and holds the watermark meanwhile | swap in short transactions (section 2, item 7) |
+| Steady lag at the card's load steps (50 / 235 / 394 / 620 saves/s, about 6 facts per save, so about 300 / 1,400 / 2,400 / 3,700 changes/s) | projector CPU 2 to 50% of one core; time behind p99 = feed delivery (30 to 50 ms at 256 readers, P3) + one page's apply (20 to 80 ms): **under 150 ms at 50 and 235, 80 to 200 ms at 394, 100 to 300 ms at 620**; journals waiting when a page is read p99 under 10 / 30 / 60 / 100 | the same |
+
+What would show the forecast wrong: apply p99 above 200 ms per page at 394 saves/s (index inserts on a table larger than
+memory dominate; then larger pages and `COPY` instead of `jsonb_to_recordset`, or the compact index); lag that grows
+through a 300 s step instead of levelling off (the projector cannot keep up at all on one core); pinned-read p99 more
+than 10% worse with the projector following than without at the same step (the feed read reaches the product readers:
+move the projector to its own read peer).
+
+### 7.3 The server run (needs the owner's approval of a rental; nothing is rented)
+
+One bare-metal machine of the card's type ($1.09 per machine hour), the sealed 1 billion copy restored as the card does,
+this branch's gateway (for `omitProtected`), the ID lists on. The copy's PostgreSQL in its own container on cores and a
+disk directory the stack does not use.
+
+```bash
+cd "$REPO" && git checkout "$COMMIT"            # head of exp/DX-RPT1-sql-reporting
+pnpm install --frozen-lockfile --store-dir "$PNPM_STORE"
+(cd packages/core && pnpm run build) && (cd packages/datomic && pnpm run build) && (cd packages/reporting && pnpm run build)
+sudo env DX_ID_LISTS=1 DEMO_ORIGINAL="$SEALED_CLUSTER" DEMO_HANDOFF="$AGE_HANDOFF_JSON" bash demo/server-up.sh --reset
+#   prints DEMO READY head=28309866 records=1000251169 ...; READ and DB below come from /var/tmp/triplex-demo/ready.json
+docker run -d --name tx2-dxrpt1-srv-rpg --cpuset-cpus "$RPG_CPUS" --memory 24g -p 127.0.0.1:18983:5432 \
+  -e POSTGRES_PASSWORD="$RPG_PASSWORD" -v "$RPG_DATA_DIR":/var/lib/postgresql/data postgres:17-alpine \
+  -c shared_buffers=8GB -c max_wal_size=16GB -c log_min_error_statement=panic
+export RPT_PG_URL="postgres://postgres:$RPG_PASSWORD@127.0.0.1:18983/postgres"
+H=$(curl -s "$READ/v1/db/$DB/basis" | jq -r .position.v)
+node packages/reporting/dist/cli.js follow --reader "$READ" --database "$DB" --start "$H" --until-position "$H"
+/usr/bin/time -v node packages/reporting/dist/cli.js rebuild --reader "$READ" --database "$DB" --account account-003 > "$OUT/rebuild.jsonl"
+psql "$RPT_PG_URL" -c "SELECT count(*), pg_total_relation_size('rpt.facts') FROM rpt.facts" > "$OUT/size.txt"
+# Steady: the card on the production-shaped tape at 50, 235, 394, 620 saves/s, 300 s each, 256 pinned readers, first
+# with the projector following, then the same four steps without it (control). CARD_COMMAND is CARD2's card command;
+# the step and window flags are written here as the card names them on the day.
+node packages/reporting/dist/cli.js follow --reader "$READ" --database "$DB" --wait-ms 500 > "$OUT/follow.jsonl" & F=$!
+"$CARD_COMMAND" --steps 50,235,394,620 --window-seconds 300 > "$OUT/card-with.jsonl"; kill $F
+"$CARD_COMMAND" --steps 50,235,394,620 --window-seconds 300 > "$OUT/card-without.jsonl"
+docker rm -f tx2-dxrpt1-srv-rpg; sudo bash demo/server-down.sh
+```
+
+**Predictions.** Rebuild of account-003: exact (a check to add to the runner, not built: the rows of 1,000 sampled
+entities against the store's history at the rebuild's position); reading 5 to 80 min, staging 10 to 35 min, swap 10 to 40 min;
+size 410 to 540 B per fact. Following: section 7.2's lag rows; pinned-read p99 and the P3 feed lag p99 within 10% of the
+control at every step; 0 save errors.
+
+**Duration and cost:** bring-up 3 to 12 min, rebuild 25 to 155 min, steady 40 min plus 5 min of warm-up, teardown 5 min:
+**75 to 220 minutes, $1.36 to $4.00** at $1.09 per machine hour ($2.18 to $4.36 if billed by the whole hour).
 
 ## 8. What this does not cover
 
 Migrating the product's existing relational data into the store (not started). Derived values written from the feed,
 grouped reports beyond SQL over these views, text search indexes. A materialised wide table (section 1). The real
-Publish code path on the toy (settlement frames are simulated as XQ6's gate does).
+Publish code path (settlement frames are written as a release's writes, as XQ6's gate does). Per-account view names.
 
-## 9. Results
+## 9. Results (2026-11-24, 18:03 EST)
 
-(Written after the gates run.)
+**Every gate passed on the toy: 606 checks, 0 failures, in the default run and in a sealed-value run; the same in a run
+with the per-subject writer's switches on.** Branch head before this page: `524371be8` plus the files listed in
+section 10. Runs, each on a fresh stack of this checkout's gateway (source hash `c1bd5993…` in `full2`), every container
+checked against the image ID recorded at the start (Datomic `sha256:21a67288…`, PostgreSQL `sha256:526f86d9…`; 0
+mismatches in every run):
+
+| Run | Setting | Checks passed | Failures |
+| --- | --- | --- | --- |
+| `full2` | defaults (general writer, unsealed protection) | 606 | 0 |
+| `variant1` | sealed protected values, `TX2_SUBJECT_SAVE=1` | 606 | 0 |
+| `variant2` | unsealed, `TX2_SUBJECT_SAVE=1`, `TX2_SUBJECT_NUMERIC_OWNER=1`, `TX2_SUBJECT_HINTS=1`, one-subject replacement saves added | 606 | 0 |
+| `full1` | the first full run | 602 | 2: the request-count window included the save phase (a harness error), and the kill run's last view regeneration had not run (fixed: one start without a fault after the last kill, as after any crash) |
+
+Gate by gate (`full2`):
+
+| Gate | Result |
+| --- | --- |
+| (a) store unchanged | The followed and the control database's journals equal journal for journal (positions, every change record's op, entity, attribute, value and interval) modulo fresh IDs and clocks. The write gateway's request counts were identical before and after the journal reads, a kill-every-page replay and two concurrent projectors, and before and after a whole replay: the projector sent it nothing. |
+| (b) exact | `rpt.facts` equal to the store's history, column for column, at the head (1,206 facts), at P_A (1,087) and P_B (1,130): 0 missing, 0 extra. Every kind view equal to the store's rows at 3 positions × 3 valid instants: 36 view comparisons, 1,653 entity rows, 0 differences (2 cells had two visible values, shown as the latest recorded, as the rule says). SQL over `rpt.facts_visible`, logged in as each account, equal to the sweep route for XQ6's 17 question shapes in 3 accounts at 9 bases: 459 comparisons, 2,259 IDs, 0 differences. The three dashboard queries of section 0 equal to the sweep's answers. Workload: creations, a subject with 200 attributes, protected values, corrections dated 10 days back, retirements, an import valid from 15 days back, a removal on request of five protected assertions, settlement frames, a changed value type, a new kind, a transactor restart and a read gateway restart while the projector followed. |
+| (c) kill at every page | 36 projector processes, each killed by SIGKILL in its first page (12 after the fetch, 12 inside the SQL transaction, 12 after the commit), pages of 3 journals, a whole replay of 35 positions: tables equal to the clean copy row for row (facts, entities, commits, columns, watermark). Two projectors at once on one copy: 9 pages applied, 3 discarded because the other moved first, tables equal. |
+| (d) removal | 18 protected values written (followed and control databases), 5 removed on request: **0 occurrences** in 2,362 files (122.9 MB: every table, index, TOAST and WAL file of four copies, after `CHECKPOINT`) and in `pg_dump` of the four copies; the control value of an ordinary attribute found 12 times, in all four databases' table files and in two WAL segments. In the copy: 9 protected facts, `value_type = 'protected'`, every value column empty, `removed_position` set by the feed on the 5 removed (2 after the two rebuilds of `account-003`, section 3); the view column `subject.identity_number` marked "protected, not copied". Same in the sealed run. |
+| (e) isolation | One login per account (`account-003`, `account-0031`, `account-009`, names prefixing each other and one empty), 15 tables and views each: 1,599 / 1,111 / 1 own rows, **0 rows of another account**; reading another account's subject by ID: 0 rows; setting `rpt.account` changes nothing; `rpt.rebuild_facts` refused (no grant). |
+| (f) lag (diagnostic) | 25 saves/s (creations of 2 to 12 values) for 30 s: 737 pages, 750 journals; journals waiting when a page was read p50 1, p99 1, max 5; **time behind p50 108 ms, p99 140 ms, max 168 ms** (most of it the read gateway's delivery on the loaded lab VM; apply p50 11.5 ms, p99 36.6 ms). `variant2`, half the saves one-value replacements: p50 167 ms, p99 227 ms, journals waiting p99 3. |
+| (g) rebuild during saves | Two rebuilds of `account-003` while 895 saves ran (0 errors): one read at P = 785 while the projector moved to 797, caught up 23 changes inside the swap; one read at 849 while the projector was paused at 798, fence 849, the projector then skipped that account's journals up to 849. At the end (position 930): 7,457 facts equal to the store, 0 missing, 0 extra; views equal. |
+
+Gateway suites (`rpt1/suites.sh`, image `sha256:21a67288…`): 76 tests, 71,176 assertions, 0 failures, 1 error:
+`feed-test/http-route`, which errors on the base too (READINESS contradiction 8). The 4 new tests in
+`omit_protected_test.clj`: protected rows and change records omitted; a sealed value never unsealed (the unseal
+function throws if called); unbound or with no protection declared, nothing changes; the journal page path masks.
+
+**Not verified:**
+
+1. Anything on a server; every time above is the Mac's.
+2. **The per-subject writer's journals**: its switches reached the gateway in `variant1` and `variant2`, but its own
+   counter recorded no save (the SDK sends no per-subject plan without its client options), so every save in the gates
+   went through the general writer, the import path or the removal path.
+3. The real Publish code path; a Publish marker or a settlement document under `_system` reaching the copy.
+4. The loader-built 1 billion copy (its journal is not complete below the aged head; the copy must be built from the
+   store by account there).
+5. A restore of the store to an older point (`StoreBehind` is coded, not exercised); `FeedDeclined`; `ViewBusy` under a
+   long reporting query; `TooManyColumns`.
+6. A real reporting tool (Metabase or similar) connected to the copy; the gates use SQL directly.
+7. Segment loads caused by the feed read; the cost of views on a deep account.
+
+## 10. Files
+
+| File | What |
+| --- | --- |
+| `packages/reporting/src/projector.ts` | Follow, apply a page in one SQL transaction with the watermark, rebuild one account, view refresh, retry rules |
+| `packages/reporting/src/source.ts` | The store reads (bounded journal pages, history rows, ID lists), all with `omitProtected` and its echo |
+| `packages/reporting/src/schema.ts` | Tables, functions (`rpt.at_position`, `rpt.at_valid`, `rpt.position_at`, `rpt.my_account`), views, row-level security |
+| `packages/reporting/src/views.ts` | Column names and the generated kind views |
+| `packages/reporting/src/cli.ts` | The projector as a process (`follow`, `rebuild`), with the kill points of gate (c) |
+| `packages/datomic/gateway/src/triplex/gateway/privacy.clj` | `*omit-protected*`: protected values omitted inside the verified removal cut |
+| `packages/datomic/gateway/src/triplex/gateway/journal.clj`, `storage.clj` | `"omitProtected": true` on journal pages and row reads, echoed as `"omittedProtected": true`; absent, byte-identical |
+| `packages/datomic/gateway/src/triplex/gateway/omit_protected_test.clj` | The omission's tests |
+| `packages/datomic/src/index.ts` | Exports `decodeRowText` and `decodeRow` (additive) |
+| `lab/experiments/EXP-DX1/rpt1/gate.sh`, `gate.ts` | The gates (a) to (g) and the cost run |
+| `lab/experiments/EXP-DX1/rpt1/suites.sh` | The gateway suites from one image ID |
+
+Evidence (private, compressed): `evidence/DX-RPT1/{full2,variant1-sealed-subject,variant2-subject-writer,full1,suites}-*.tar.gz`.

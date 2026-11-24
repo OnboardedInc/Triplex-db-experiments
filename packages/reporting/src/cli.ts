@@ -61,6 +61,7 @@ try {
     log("rebuilt", await projector.rebuildAccount(account));
   } else throw new Error(`unknown command ${command}`);
   await sql.end();
+  process.exit(0);
 } catch (error) {
   log("error", { message: String((error as Error).message), code: (error as any).code, detail: (error as any).detail });
   await sql.end({ timeout: 1 });

@@ -87,6 +87,9 @@ CREATE TABLE IF NOT EXISTS rpt.columns (
   UNIQUE (kind, attribute, value_type),
   UNIQUE (kind, column_name)
 );
+-- A rebuild stages an account's rows here (bounded memory), then swaps them in under the watermark lock.
+CREATE TABLE IF NOT EXISTS rpt.rebuild_facts (rebuild_id uuid NOT NULL, LIKE rpt.facts);
+CREATE INDEX IF NOT EXISTS rebuild_facts_id ON rpt.rebuild_facts (rebuild_id);
 CREATE TABLE IF NOT EXISTS rpt.grants (
   role_name name PRIMARY KEY,
   account text NOT NULL

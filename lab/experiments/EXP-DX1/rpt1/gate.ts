@@ -47,7 +47,7 @@ const check = (ok: boolean, what: string, detail: object = {}) => {
     if (failures.length > 40) throw new Error("too many failures");
   }
 };
-const docker = (...args: string[]) => execFileSync("docker", args, { encoding: "utf8" });
+const docker = (...args: string[]) => execFileSync("docker", args, { encoding: "utf8", maxBuffer: 256 * 1024 * 1024 });
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const pgUrl = (db: string) => `postgres://postgres:${password}@127.0.0.1:${pgPort}/${db}`;
 const admin = postgres(pgUrl("postgres"), { max: 1, onnotice: () => {} });
@@ -77,7 +77,7 @@ const reader = new datomic.DatomicClient(readUrl, 60_000);
 const makeStore = async (label: string) => {
   const scope = runtimeApi.DatabaseScope.test(`rpt1-${label}-${process.pid}-${Date.now()}`);
   const { db } = await writer.create(scope, "lean");
-  await writer.declareProtection(db, [PROTECTED], false);
+  await writer.declareProtection(db, [PROTECTED], process.env["DX_RPT1_SEALED"] === "1");
   const runtimeFor = (client: any) => {
     const definition = runtimeApi.Runtime.define({
       name: "datomic",
@@ -86,7 +86,13 @@ const makeStore = async (label: string) => {
     });
     return ManagedRuntime.make(definition.layer({ scope, capabilities: runtimeApi.Capabilities.none })) as any;
   };
-  return { label, db, write: runtimeFor(writer), importRt: runtimeFor(importer), live: new Map<string, any[]>(), receipts: [] as any[] };
+  const store = { label, db, write: runtimeFor(writer), importRt: runtimeFor(importer), live: new Map<string, any[]>(), receipts: [] as any[],
+    // After a transactor restart the clients' commit-order sequences are abandoned with fresh clients.
+    fresh: () => {
+      store.write = runtimeFor(new datomic.DatomicClient(writeUrl, 60_000));
+      store.importRt = runtimeFor(new datomic.DatomicClient(writeUrl, 60_000, undefined, { writeClass: "import" }));
+    } };
+  return store;
 };
 type Store = Awaited<ReturnType<typeof makeStore>>;
 const A = await makeStore("followed");
@@ -104,6 +110,9 @@ const transact = async (s: Store, label: string, ops: object[], rt = s.write) =>
       if (attempt > 240 || !/Transactor not available/.test(String(error?.cause?.message ?? error?.message))) throw error;
       bump("transact-retried-transactor-unavailable");
       await sleep(500);
+      const imports = rt === s.importRt;
+      s.fresh();
+      rt = imports ? s.importRt : s.write;
     }
   }
   s.receipts.push({ label, position: r.position });
@@ -196,6 +205,12 @@ log("step", { step: "created", P_A, ms: Math.round(performance.now() - t0) });
 // A transactor restart in the middle of the workload; the projector keeps following through it.
 docker("restart", "-t", "5", `${prefix}-tx`);
 await waitHealthy(writer, A.db);
+// Writes need the transactor itself: wait until a scratch database can be created, then use fresh clients.
+for (let i = 0; ; i++) {
+  try { await new datomic.DatomicClient(writeUrl, 10_000).create(runtimeApi.DatabaseScope.test(`rpt1-probe-${process.pid}-${i}`), "lean"); break; }
+  catch (error) { if (i > 240) throw error; await sleep(500); }
+}
+A.fresh(); B.fresh();
 log("step", { step: "transactor restarted" });
 
 await both(async (s) => {
@@ -209,6 +224,9 @@ await both(async (s) => {
     for (let j = 2; j < N; j += 6) ops.push(...retractAll(s, taskId(acct, j, 0), ":task/status"), a(taskId(acct, j, 0), "Task", ":task/status", S("complete")));
     await transact(s, `corrections ${acct}`, ops);
   }
+  // One-subject replacement saves (a form page's shape: the per-subject writer's saves when it is on).
+  for (let j = 10; j < 20; j++)
+    await transact(s, `replace ${j}`, [...retractAll(s, subjectId(A31, j), ":person/name"), a(subjectId(A31, j), "Subject", ":person/name", S(`renamed ${j}`))]);
   // Retire one protected value of account-0031 (it stays in history) and write a new one.
   const old = retractAll(s, subjectId(A31, 2), PROTECTED);
   const fresh = `IDN-0031-9102-${s.label}`;
@@ -547,19 +565,21 @@ const journalOf = async (db: string) => {
   }
   return out;
 };
-const normalise = (journals: any[]) => {
-  const ids = new Map<string, string>();
-  const id = (x: string) => { if (!ids.has(x)) ids.set(x, `#${ids.size}`); return ids.get(x)!; };
-  return journals.map((j) => ({
-    position: j.position, tx: id(j.txId),
-    changes: j.rows.filter((r: any) => r.attribute === ":_tx/change").map((r: any) => JSON.parse(r.value_json))
-      .map((c: any) => ({ op: c.op, entity: c.entityId.replace(/^(acct\/[^/]+\/)/, "$1"), attribute: c.attribute, value: c.value ? JSON.stringify(c.value).replace(/-(followed|control)/g, "-X") : null,
-        triple: id(c.tripleId), validFrom: c.validFrom, validTo: c.validTo ?? null }))
-      .sort((x: any, y: any) => x.triple < y.triple ? -1 : 1),
-    attributes: j.rows.map((r: any) => r.attribute).filter((x: string) => x !== ":_tx/change").sort(),
-  }));
-};
-const writeStatsBefore = await writer.request("GET", "/v2/admin/scan-stats");
+// Fresh IDs (assertions, transactions, commands) and clocks differ between the two databases by design; everything
+// else of every journal must be the same: position, the change records' op, entity, attribute, value and interval.
+const normalise = (journals: any[]) => journals.map((j) => ({
+  position: j.position,
+  changes: j.rows.filter((r: any) => r.attribute === ":_tx/change").map((r: any) => JSON.parse(r.value_json))
+    .map((c: any) => {
+      const value = c.value?.type === "erased" ? { type: "erased", valueType: c.value.valueType } : c.value ?? null;
+      return JSON.stringify({ op: c.op, entity: c.entityId, attribute: c.attribute, value: value && JSON.stringify(value).replace(/-(followed|control)/g, "-X"),
+        validFrom: c.validFrom, validTo: c.validTo ?? null, erasureSeq: c.erasureSeq ?? null });
+    }).sort(),
+  attributes: j.rows.map((r: any) => r.attribute).filter((x: string) => x !== ":_tx/change").sort(),
+}));
+const writeRoutes = async () => Object.fromEntries(Object.entries((await writer.request("GET", "/v2/admin/scan-stats")).routes ?? {})
+  .filter(([k]) => !k.includes("/v2/admin/")));
+const writeStatsBefore = await writeRoutes();
 const jA = normalise(await journalOf(A.db)), jB = normalise(await journalOf(B.db));
 const firstDiff = jA.findIndex((x, i) => JSON.stringify(x) !== JSON.stringify(jB[i]));
 check(jA.length === jB.length && firstDiff === -1, "a: journals of the followed and the control database equal modulo IDs and clocks",
@@ -587,6 +607,9 @@ for (let seed = 0; ; seed++) {
   if (died) kills[died.point] = (kills[died.point] ?? 0) + 1;
   else if (r.code !== 0) { log("kill-run-error", { lines: r.lines.slice(-5) }); throw new Error("kill run failed"); }
 }
+// One more start without a fault, as after any crash: it regenerates views whose columns a killed run recorded.
+const settle = await runCli({ RPT_PG_URL: pgUrl("rpt_kill") }, ["follow", "--reader", readUrl, "--database", A.db, "--wait-ms", "0", "--until-position", String(P_H)]);
+check(settle.code === 0, "c: the projector starts again cleanly after the last kill", { lines: settle.lines.slice(-3) });
 const tableDump = async (sql: any) => ({
   facts: (await sql`SELECT * FROM rpt.facts ORDER BY account, assertion_id`).map((r: any) => factKey(r) + `|${r.removed_position}`),
   entities: (await sql`SELECT account, entity, kind, first_position FROM rpt.entities ORDER BY account, entity`).map((r: any) => JSON.stringify(r)),
@@ -595,9 +618,11 @@ const tableDump = async (sql: any) => ({
   watermark: Number((await sql`SELECT after_position FROM rpt.feed_state`)[0].after_position),
 });
 const same = (x: any, y: any) => ["facts", "entities", "commits", "columns", "watermark"].filter((k) => JSON.stringify(x[k]) !== JSON.stringify(y[k]));
+const firstDiffs = (x: any, y: any) => Object.fromEntries(same(x, y).map((k) => [k, Array.isArray(x[k])
+  ? { left: x[k].filter((e: string) => !y[k].includes(e)).slice(0, 3), right: y[k].filter((e: string) => !x[k].includes(e)).slice(0, 3) } : { left: x[k], right: y[k] }]));
 const cleanDump = await tableDump(pg["rpt_clean"]);
 const killDump = await tableDump(pg["rpt_kill"]);
-check(same(cleanDump, killDump).length === 0, "c: copy built with a kill at every page equals the clean copy", { differ: same(cleanDump, killDump) });
+check(same(cleanDump, killDump).length === 0, "c: copy built with a kill at every page equals the clean copy", { differ: firstDiffs(cleanDump, killDump) });
 log("c", { killRuns, kills, facts: killDump.facts.length });
 
 // ---- two projectors at once on one copy ----
@@ -613,8 +638,11 @@ await Promise.all(two.map(async (pj: any) => {
   }
 }));
 const twoDump = await tableDump(pg["rpt_two"]);
-check(same(cleanDump, twoDump).length === 0, "two projectors at once: equal to the clean copy", { differ: same(cleanDump, twoDump), lost, applied });
+check(same(cleanDump, twoDump).length === 0, "two projectors at once: equal to the clean copy", { differ: firstDiffs(cleanDump, twoDump), lost, applied });
 log("two", { pagesApplied: applied, pagesDiscardedBecauseTheOtherMovedFirst: lost });
+const writeStatsAfterReads = await writeRoutes();
+check(JSON.stringify(writeStatsBefore) === JSON.stringify(writeStatsAfterReads),
+  "a: the write gateway received no request while the journals were read, a kill-every-page replay and two projectors ran", { before: writeStatsBefore, after: writeStatsAfterReads });
 
 // ---- (e) isolation ----
 const relations = (await pg["rpt_clean"]`SELECT schemaname || '.' || quote_ident(relname) AS r FROM pg_stat_user_tables WHERE schemaname IN ('rpt')
@@ -649,9 +677,12 @@ const saver = (async () => {
   let i = 0;
   const started = Date.now();
   while (saving) {
-    const acct = i % 3 === 0 ? A3 : A31;
-    const sid = subjectId(acct, 1000 + i);
-    const ops = Array.from({ length: sizeOf(i) }, (_, k) => a(sid, "Subject", k === 0 ? ":person/name" : `:form/q${k}`, S(`v ${i} ${k}`)));
+    // Even saves create a subject with 2 to 12 values; odd saves replace one value of the subject created just before.
+    const n = i % 2 === 0 ? i : i - 1;
+    const sid = subjectId(n % 3 === 0 ? A3 : A31, 1000 + n);
+    const ops = i % 2 === 0
+      ? Array.from({ length: sizeOf(i) }, (_, k) => a(sid, "Subject", k === 0 ? ":person/name" : `:form/q${k}`, S(`v ${i} ${k}`)))
+      : [...retractAll(A, sid, ":person/name"), a(sid, "Subject", ":person/name", S(`renamed ${i}`))];
     try { await transact(A, `save ${i}`, ops); saves++; } catch { saveErrors++; }
     i++;
     const due = started + i * 40; // 25 saves per second
@@ -682,22 +713,23 @@ const g1Views = b2Views;
 await b2(pg["rpt_clean"], "g views", [P_END], [V_NOW]);
 log("g", { P_END, saves, saveErrors, facts: afterRebuild, viewsChecked: b2Views - g1Views, g1CaughtUp: g1.caughtUp, g2Fence: g2.fence, g2Watermark: g2.watermark });
 const pct = (xs: number[], q: number) => { const s = [...xs].sort((x, y) => x - y); return s.length ? s[Math.min(s.length - 1, Math.ceil(q * s.length) - 1)] : null; };
-const behindEntries = lagPages.map((s: any) => Math.max(0, s.head - s.next));
+// Journals waiting when a page was read (the page holds every journal from the watermark to the head, up to 200).
+const behindEntries = lagPages.map((s: any) => s.journals);
 const behindMs = lagPages.filter((s: any) => s.newestRecordedAt !== null).map((s: any) => s.availableAt - s.newestRecordedAt + s.applyMs);
 log("f", { pages: lagPages.length, journals: lagPages.reduce((n: number, s: any) => n + s.journals, 0), entriesBehind: { p50: pct(behindEntries, 0.5), p99: pct(behindEntries, 0.99), max: Math.max(0, ...behindEntries) },
   timeBehindMs: { p50: pct(behindMs, 0.5), p99: pct(behindMs, 0.99), max: Math.max(0, ...behindMs) },
   applyMs: { p50: pct(lagPages.map((s: any) => s.applyMs), 0.5), p99: pct(lagPages.map((s: any) => s.applyMs), 0.99) }, savesPerSecondOffered: 25, diagnostic: true });
 
 // ---- cost: a whole replay into its own copy in one process; requests, CPU, the read gateway's journal counters ----
+const writeStatsBeforeReplay = await writeRoutes();
 const readBefore = await reader.request("GET", "/v2/admin/scan-stats");
 const replay = await runCli({ RPT_PG_URL: pgUrl("rpt_replay") }, ["follow", "--reader", readUrl, "--database", A.db, "--page-limit", "200", "--wait-ms", "0", "--until-position", String(P_END)]);
 const readAfter = await reader.request("GET", "/v2/admin/scan-stats");
-const writeStatsAfter = await writer.request("GET", "/v2/admin/scan-stats");
+const writeStatsAfter = await writeRoutes();
 const done = replay.lines.find((l) => l.kind === "done");
 const changesReplayed = replay.lines.filter((l) => l.kind === "page").reduce((n, l) => n + l.changes, 0);
 const journalsReplayed = replay.lines.filter((l) => l.kind === "page").reduce((n, l) => n + l.journals, 0);
-const writeRoutesSame = JSON.stringify(writeStatsBefore.routes) === JSON.stringify(writeStatsAfter.routes);
-check(writeRoutesSame, "a: the write gateway received no request while the journals were read, the views compared and a whole replay ran", {});
+check(JSON.stringify(writeStatsBeforeReplay) === JSON.stringify(writeStatsAfter), "a: the write gateway received no request during a whole replay", {});
 const sizes = (await pg["rpt_replay"]`SELECT c.relname, pg_total_relation_size(c.oid)::bigint AS total, pg_relation_size(c.oid)::bigint AS heap,
   pg_indexes_size(c.oid)::bigint AS indexes, coalesce(pg_total_relation_size(nullif(c.reltoastrelid, 0)), 0)::bigint AS toast
   FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'rpt' AND c.relkind = 'r'`).map((r: any) => ({ ...r, total: Number(r.total), heap: Number(r.heap), indexes: Number(r.indexes), toast: Number(r.toast) }));
@@ -743,6 +775,9 @@ await (cleanLoop2 ?? cleanLoop);
 for (const db of Object.keys(pg)) await pg[db].end({ timeout: 5 });
 await admin.end({ timeout: 5 });
 for (const rt of [A.write, A.importRt, B.write, B.importRt]) await rt.dispose();
+const writeStats = await writer.request("GET", "/v2/admin/scan-stats");
+log("write-gateway", { sealed: process.env["DX_RPT1_SEALED"] === "1", subjectSave: process.env["TX2_SUBJECT_SAVE"] ?? "0",
+  counters: Object.fromEntries(Object.entries(writeStats).filter(([k]) => !["idMemo", "pinnedShortcut", "readPrefetch", "entityCache"].includes(k))) });
 log("summary", { counts, failures: failures.length, ms: Math.round(performance.now() - t0) });
 fs.writeFileSync(path.join(out, "summary.json"), JSON.stringify({ counts, failures }, null, 2));
 process.exit(failures.length ? 1 : 0);
