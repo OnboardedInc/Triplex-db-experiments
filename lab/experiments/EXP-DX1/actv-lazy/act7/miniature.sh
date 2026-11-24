@@ -53,6 +53,20 @@ db=$(node -p 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).db'
 seed_head=$(node -p 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).seedCut' "$out/seed.json")
 people=$(node -p 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).people' "$out/seed.json")
 image=$(DX_JAVA=21 node lab/config/datomic/runtime.mjs image)
+if [[ ${DX_ACT7_SKIP_AGING:-0} == 1 ]]; then
+  # Regression only: the fresh toy, never aged (run its phases with DX_ACT7_ADOPT=0).
+  status=0
+  for p in "$@"; do
+    phase_env=()
+    while IFS= read -r line; do [[ -z $line || $line == \#* ]] || phase_env+=("$line"); done < "$phases_dir/$p.env"
+    echo "[act7] phase $p (fresh toy): ${phase_env[*]}"
+    env "${client_env[@]}" "${phase_env[@]}" DX_ACT7_RUN_NAME="run-$p" node --no-warnings --experimental-transform-types \
+      --max-old-space-size=4096 lab/experiments/EXP-DX1/actv-lazy/act7/miniature.ts fresh "$out" \
+      "http://127.0.0.1:$port_w" "http://127.0.0.1:$port_r" > "$out/phase-$p.log" 2>&1 || status=1
+    grep -E "^ACT7 RUN" "$out/phase-$p.log" || tail -20 "$out/phase-$p.log"
+  done
+  exit "$status"
+fi
 age=$out/age1src
 mkdir -p "$age/gate"
 git archive 5cda4ab20 packages/datomic/gateway packages/datomic/src/codec-spec.json lab/experiments/EXP-DX1/age1/src | tar -x -C "$age"

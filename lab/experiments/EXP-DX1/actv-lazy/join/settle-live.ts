@@ -100,7 +100,8 @@ const shape = parseShape("forms=20,policies=20,permille=1000");
 export function parseCases(text: string): Case[] {
   return text.split(",").map((entry) => {
     const [name, precondition, frames, release, own, others, extra, turns, secs] = entry.split(":");
-    assert(secs === undefined || secs === "" || (Number.isInteger(Number(secs)) && Number(secs) >= 2 && Number(secs) <= 7200));
+    // [DX-ACT7] Up to 4 hours (server mode only; see `limit` below): ten accounts settle for hours beside saves.
+    assert(secs === undefined || secs === "" || (Number.isInteger(Number(secs)) && Number(secs) >= 2 && Number(secs) <= 14_400));
     assert(name && ["head", "progress"].includes(precondition!) && ["count", "bytes"].includes(frames!));
     assert(["large", "huge", "small", "none", "same"].includes(release!) && ["0", "3.5", "23.5", "39.4"].includes(own!));
     assert(["0", "1"].includes(others!) && [undefined, "", "kill", "second", "multi", "rival", "pause", "stop", "guard"].includes(extra));
@@ -162,7 +163,7 @@ export async function livePhase(c: LiveContext) {
   );
   const defaultSeconds = Number(process.env.DX_ACT5_SECONDS ?? 8);
   // Toy windows stay short; the server mode (DX_ACT5_SERVER=1) allows up to an hour per case.
-  const limit = process.env.DX_ACT5_SERVER === "1" ? 7200 : 30;
+  const limit = process.env.DX_ACT5_SERVER === "1" ? 14_400 : 30;
   assert(defaultSeconds >= 2 && defaultSeconds <= limit && cases.every((k) => (k.seconds ?? 0) <= limit));
   // [DX-ACT7] DX_ACT7_STREAM_CHECK=1: the several-accounts case is checked one account at a time after settlement
   // (act7/stream.ts) and nothing is folded at Publish, so the other cases may not publish and the several-accounts case

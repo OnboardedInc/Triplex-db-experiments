@@ -10,6 +10,7 @@ import { jsonFile } from "../../v01/adopted.ts";
 import { stackOptions } from "../../v01/profile.ts";
 import { cleanSource, verifyBuild } from "../../v01/source.ts";
 import { runHeld } from "./held-campaign.ts";
+import { openAgedBundle } from "../act7/aged.ts";
 
 const [source, image, imagePin, transferPin, templateDir, preparedDir, walDir, output, fair, rolling, width, credits, importPolicy] =
   process.argv.slice(2);
@@ -53,12 +54,24 @@ const out = path.resolve(output),
     false,
     transferPin,
   );
+// [DX-ACT7] Why: settlement at 1 billion runs on a prepared copy of the sealed 1 billion cluster (the template is then
+// the stopped, held 1 billion PostgreSQL directory). DX_ACT7_AGED_BUNDLE and DX_ACT7_AGED_PIN name AGE1's handoff
+// (aged-scorecard.json and its SHA-256); the bundle is admitted by PREP1's check and the runner adopts the aged head
+// (held-campaign.ts, act7/aged.ts). DX_HELD_PROFILE=server-32 selects the proposed default profile (the 1 billion cards
+// ran with it). Both unset: exactly as before (the fresh template, profile `server`).
+// Rejected: a second server runner for the aged copy (the prepared-copy checks below are the ones the fresh runs passed).
+const agedBundle = process.env.DX_ACT7_AGED_BUNDLE, agedPin = process.env.DX_ACT7_AGED_PIN;
+assert((agedBundle === undefined) === (agedPin === undefined), "DX_ACT7_AGED_BUNDLE and DX_ACT7_AGED_PIN go together");
+const aged = agedBundle ? openAgedBundle(fs.realpathSync(agedBundle), agedPin!, { imagePin, scopeKey: seed.key,
+  db: seed.scope.db, seedCut: seed.scope.cut, people: seed.image.people, toy: false }) : undefined;
+const heldProfile = (process.env.DX_HELD_PROFILE ?? "server") as "server" | "server-32";
+assert(heldProfile === "server" || heldProfile === "server-32", "DX_HELD_PROFILE is server or server-32");
 const slot = "tx2-dxscale1-publish-" + randomUUID().slice(0, 12).replace("-", ""),
   attempt = randomUUID();
 // [DX-LOAD2] Why: the fewer-index-jobs arm raises only the memory-index threshold and its maximum, nothing else.
 // Rejected: changing heap, object cache or cores in the same arm (one variable per arm).
 const memoryIndex = process.env.DX_LOAD2_MEMORY_INDEX;
-const baseProfile = launchProfile("server", {
+const baseProfile = launchProfile(heldProfile, {
   jvm: "j21-g1", txJvm: "j25-zgc", ...(fair ? { writeJvm: "j25-zgc" as const } : {}),
 });
 let indexSuffix = "";
@@ -144,6 +157,9 @@ jsonFile(path.join(out, "physical-input.json"), {
   before,
   imagePin,
   transferPin,
+  aged: aged ? { bundleSha256: aged.bundleSha256, head: aged.head, active: aged.replay.active, tapeSaves: aged.replay.tapeSaves,
+    probes: aged.replay.probes.size } : null,
+  profile: heldProfile,
   source,
   slot,
   attempt,
@@ -210,7 +226,7 @@ try {
     const { runFair } = await import("../../load1/fair-campaign.ts");
     await runFair(out, source, peer, seed, rolling as CreditMode, width!.split(",").map(Number), Number(credits),
       false, (importPolicy ?? "fair") as "fair" | "yield", 9, indexSuffix);
-  } else await runHeld(out, source, peer, seed);
+  } else await runHeld(out, source, peer, (aged ? { ...seed, aged } : seed) as typeof seed);
   assert.deepEqual(
     [fs.statSync(template).dev, fs.statSync(template).ino, control(template)],
     [original.dev, original.ino, before],

@@ -25,6 +25,25 @@ if (mode === "seed") {
   fs.writeFileSync(path.join(out, "seed.json"), JSON.stringify({ db: seed.scope.db, seedCut: seed.scope.cut,
     people: seed.image.people }) + "\n");
   console.log("ACT7 SEED " + JSON.stringify({ db: seed.scope.db, seedCut: seed.scope.cut, people: seed.image.people }));
+} else if (mode === "fresh") {
+  // Regression: the held runner on the fresh toy exactly as before (no aged adoption, no handoff).
+  assert(read && process.env.DX_ACT7_ADOPT === "0");
+  const file = path.join(fixtureDir, "fixture.json");
+  const seed = openScaleSeal(file, hex(fs.readFileSync(file)), true);
+  const health = (await (await fetch(new URL("/health", write))).json()) as { gatewaySourceHash: string };
+  process.env.DATOMIC_URL = write;
+  process.env.DATOMIC_READ_URLS = read;
+  const run = path.join(out, process.env.DX_ACT7_RUN_NAME ?? "run");
+  fs.mkdirSync(run);
+  const peer = { slot: "act7-miniature", attempt: randomUUID(), write, read, gatewaySource: health.gatewaySourceHash,
+    java: { origin: "managed-laptop" } };
+  try {
+    await runHeld(run, source, peer as never, seed as never, true);
+    console.log("ACT7 RUN PASS");
+  } catch (e) {
+    console.log("ACT7 RUN FAIL " + String((e as Error).message ?? e).slice(0, 600));
+    process.exitCode = 1;
+  }
 } else {
   assert.equal(mode, "run");
   assert(read);

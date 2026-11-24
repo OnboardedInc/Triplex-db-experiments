@@ -28,7 +28,9 @@ const db = new Documents({ scopeName: "frames-account" } as never, "settlement-v
 const fakeId = (k: string) => hash(["triple", k]).slice(0, 40);
 const row = <T>(key: string, value: T, at: number): Row<T> => ({ key, id: fakeId(key + at), at, value });
 const bytes = (x: unknown) => Buffer.byteLength(canonical(x));
-const old = W0.R2.doc, next = largeRelease(W0.R2.doc, shape);
+// The base release (FRAMES_BASE=R1: the server runs' case, R1 then the large release on top; default R2 as frames-check).
+const base = process.env.FRAMES_BASE === "R1" ? W0.R1.doc : W0.R2.doc;
+const old = base, next = largeRelease(base, shape);
 const basis = { tx, validTime };
 const ts = evaluateRows({ worlds, basis }, W0.compileRelease(old), W0.compileRelease(next), false);
 const changedBy = new Map(ts.rows.map((r) => [r.subject, r.rows.map(([k, , v]) => [k, v] as [string, string | null])]));
@@ -125,7 +127,7 @@ function summary(fs: Frame[]) {
     ends, bound: frameBoundUs,
   };
 }
-const report = { people, forms, cost: coef, pair: "R2 -> R2+" + forms + " forms and policies, every subject owes",
+const report = { people, forms, cost: coef, pair: base.name + " -> " + base.name + "+" + forms + " forms and policies, every subject owes",
   changes: ts.rows.reduce((n, r) => n + r.rows.length, 0), values: summary(values), notices: summary(notices),
   perSubject: { changes: sum(values.map((f) => f.units)) / people, notices: sum(notices.map((f) => f.units)) / people,
     valueFrames: values.length / people, noticeFrames: notices.length / people } };
