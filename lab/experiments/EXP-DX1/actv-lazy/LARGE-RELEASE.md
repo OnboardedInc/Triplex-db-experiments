@@ -127,7 +127,9 @@ subject of the baseline and 50 times its notices.
    40 definitions; it matters only at thousands.
 5. **Notice index.** For accounts that select subjects through the notice index (not the held campaign), a change in
    forms or policies now selects the whole census (`strategy` returns `all`), because the index does not know the new
-   policies' inputs. Correct and conservative; slower for large accounts.
+   policies' inputs. Correct and conservative; slower for large accounts. **Correction (DX-ACT4, 2026-11-24):** at
+   `f5f8c09ff` it selected no subject (`strategy` compared only the eleven rules), so such a release's notices were
+   never recorded outside the held campaign; fixed on `exp/DX-ACT4-settlement-frames` (SETTLEMENT-FRAMES.md section 7).
 6. **Oracle independence.** The forms and policies were added to both the TypeScript kernel and the Python oracle in
    the same change, by the same author, from the same rule text. The two agree on every answer, changed value and
    notice tested, but for these rules they are not independent implementations.

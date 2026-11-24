@@ -40,6 +40,8 @@ const pairs: Pair[] = [
   { label: "baseline R1 (no predecessor)", old: null, next: W0.R1.doc, prior: null },
   { label: "small R1 -> R2", old: W0.R1.doc, next: W0.R2.doc, prior: W0.R1.doc },
   ...shapes.flatMap((s) => [
+    // The server forecast's case: the first release is R1 plus the forms (DX_ACT4_INITIAL=large).
+    { label: "R1+" + shapeName(s) + " (no predecessor)", old: null, next: largeRelease(W0.R1.doc, s), prior: null },
     { label: "R2 -> R2+" + shapeName(s), old: W0.R2.doc, next: largeRelease(W0.R2.doc, s), prior: W0.R2.doc, adds: true },
     { label: "R2+" + shapeName(s) + " -> R2", old: largeRelease(W0.R2.doc, s), next: W0.R2.doc, prior: largeRelease(W0.R2.doc, s) },
   ]),
