@@ -5858,3 +5858,15 @@ What it means for the store, in shares:
 8. **Removals:** rare (well under 0.1% of saves) and concentrated in a few accounts. The product marks records deleted today; it does not erase values.
 
 **Started** in the freed slot: a tape with the real mix through the product path, each kind of save mapped to its writer and counted work, and creation saves on the fast writer where exact (task file `OPUS-S4-real-mix-creation-saves.md`).
+
+## 2026-11-24 15:53 EST: whole-subject import: open items closed; a removal fault in today's defaults found; mechanism of the wrong-image hazard
+
+Source: import builder, branch `exp/DX-IMP2-import-whole-subject` `d4411c77b` (not merged), page `lab/experiments/EXP-DX1/imp2/WHOLE-SUBJECT.md` section 8.
+
+- Production exactness gate with the option on: pass (840 of 840 R, 88 of 88 S, 2,836 fields read back exactly). Fair-import combined check with the writer readback: pass (8 import frames, 36 receipts).
+- **Removal on request of a subject that is itself being imported: a fault in today's defaults.** While the subject's import frame is in flight nothing of it exists, so a removal naming it matches no row and removes nothing; the frame is refused whole, the importer resends it, and the removed value is written. Toy: removed values appeared in 13 route answers with the option off, 0 with it on.
+- Fix (only with `TX2_IMPORT_WHOLE_SUBJECT=1`): the removal records the entity and attribute pairs it names even when no row exists yet; any import writing one is refused whole and resent without them. Gate: 28 assertions, 0 failures (single-subject frame, a frame of 3 subjects with the middle one removed, removal after the commit, a client sending no removal sequence); 0 of 288 reads half imported; no protected plaintext in the log. Not covered: a removal by assertion ID of a value not imported yet.
+- The snapshot importer is now bounded by the option and never splits a subject (597 frames at 9 widths, every frame whole subjects in order; an oversized subject refused before any part is sent). The toy fixture's seed loader is exempt by design.
+- The one branch had not moved, so the visibility gate still does not cover the ID list and sweep routes.
+
+**Wrong-image hazard, mechanism confirmed:** every run of the production exactness gate rebuilds and retags the SHARED image tag `tx2-datomic:dx-real2-production`, so a concurrent builder's run can replace the image under another builder's containers and a gate can pass on another branch's gateway code. Every production-gate and aged-gate pass reported today while another builder ran the same gate is exposed. The merge builder is auditing its own cases by image ID and fixing the harness (a tag unique to the commit under test, start by image ID, record it, refuse a fixed shared tag). All running builders told to verify by image ID.
