@@ -13,6 +13,7 @@ import { ids, SEED_VALID_FROM } from "../../../../bench/lib/world.ts";
 import { command } from "../group/workload.ts";
 import { sha } from "../field/schedule.ts";
 import { scaleAccount, scaleOwner } from "../../prep1/ceiling-seed.ts";
+import { sampleMigratedReads } from "../migrated-reads.ts";
 
 const [out, url] = process.argv.slice(2);
 const waitFor = async (file, seconds) => {
@@ -232,6 +233,62 @@ const after = await plain.request("GET", "/v1/db/" + db + "/write-options");
 assert.equal(after.position, coveredRun.head);
 plain.close();
 
+// 7. [Opus W1] The pair's migrated-subject read sampler on this database with the owner head, while the same subject is
+// saved again between the sampler's current read and its pinned read on every attempt (the bench 4 race, forced).
+// The old method's check (a pinned read at a snapshot cut taken after the current read) is evaluated beside it.
+signal("sampler-wanted");
+await waitFor("sampler-ready", 300);
+const { c: sampling, options: samplingOptions } = await open(true);
+assert.equal(samplingOptions.position, coveredRun.head);
+let samplerHead = coveredRun.head;
+const resaves = [], oldCut = { checked: 0, failed: 0, examples: [] };
+const resave = async (owner) => {
+  const old = (await currentRows(sampling, owner, samplerHead)).filter((r) => r.attribute === field(0));
+  assert.equal(old.length, 1, owner);
+  const input = command("aged-owner-head-sampler-" + nonce + "-" + resaves.length, [{ e: owner, a: field(0), v: str("r" + resaves.length) }],
+    old, true, false, orderedSaveIdentity());
+  input.sourceK = Math.max(samplerHead, ...old.map((r) => r.recorded_position));
+  input.groupAccount = owner.split("/")[1];
+  input.writeClass = "live";
+  const ack = await sampling.transact(db, input);
+  samplerHead = Number(ack.position.v);
+  assert(ack.subjectOwnerHeadBytes > 0, "a sampler resave did not go to the covering writer");
+  resaves.push({ owner, position: samplerHead });
+};
+const reader = new DatomicClient(url, 35_000);
+const racing = {
+  async rows(database, input) {
+    const rows = await reader.rows(database, input);
+    const owner = input.entityIds[0];
+    if (input.basis.recordedPosition === undefined) {
+      const saved = Math.max(...rows.map((r) => Number(r.recorded_position)));
+      await resave(owner);
+      const snap = await reader.begin(database);
+      await reader.release(database, snap.handle);
+      const atCut = await reader.rows(database, { entityIds: [owner], basis: { recordedPosition: snap.position, validAt } });
+      oldCut.checked++;
+      if (!atCut.some((r) => Number(r.recorded_position) === saved)) {
+        oldCut.failed++;
+        if (oldCut.examples.length < 3) oldCut.examples.push({ owner, saved, cut: snap.position, atCut: atCut.map((r) => r.recorded_position) });
+      }
+    }
+    return rows;
+  },
+};
+const sampled = await sampleMigratedReads(racing, db, { phase: "loaded", start: Date.now() + 200, seconds: 4, rate: 10,
+  firstCut: agedHead, validAt, candidates: () => owners });
+reader.close();
+sampling.close();
+assert.equal(sampled.errorCount, 0, sampled.errors.join("\n"));
+assert(sampled.attempted >= 20 && sampled.notYetSaved === 0 && sampled.pinned.count === sampled.attempted);
+assert.equal(resaves.length, sampled.attempted);
+assert.equal(oldCut.checked, sampled.attempted);
+assert(oldCut.failed > 0, "the forced interleaving never broke the old check, so this step tested nothing");
+const samplerStep = { attempted: sampled.attempted, errors: sampled.errorCount, resaves: resaves.length,
+  headAfter: samplerHead, oldCutCheck: oldCut, clock: "diagnostic",
+  current: { p50: sampled.current.p50Ms, p99: sampled.current.p99Ms }, pinned: { p50: sampled.pinned.p50Ms, p99: sampled.pinned.p99Ms } };
+console.log("OPUS-W1_SAMPLER " + JSON.stringify(samplerStep));
+
 const byGroup = (group) => perSave.filter((a) => a.group === group);
 const result = { gate: "aged-owner-head", seedCut, agedHead, agedSaves: aged.saves, head: coveredRun.head,
   owners: { loader: loaderOwners, seed: seedOwners }, saves: perSave.length,
@@ -243,7 +300,7 @@ const result = { gate: "aged-owner-head", seedCut, agedHead, agedSaves: aged.sav
   coveredFunctions: [...new Set(perSave.map((a) => a.subjectSave ?? a.writePath))],
   readRoutes: { positions: legacyReads.positions, perOwner: legacyReads.counts, feed: legacyReads.result.feed.length,
     equal: ["legacy = owner head", "legacy = gateway without the option on the owner-head database"] },
-  roots: census.roots, refusals, perSave };
+  roots: census.roots, refusals, samplerStep, perSave };
 writeFileSync(join(out, "result.json"), JSON.stringify(result, null, 2) + "\n");
 console.log(JSON.stringify({ ...result, perSave: undefined }));
 signal("finished");

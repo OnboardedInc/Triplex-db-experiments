@@ -14,6 +14,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import summarize  # noqa: E402
 
 ATTEMPT, SLOT, SOURCE = "a" * 36, "tx2-dxscale1-v01-aaaaaaaaaaaa", "f" * 40
+# [Opus W1] The owner-head arm's saves run the covering function its gateway declares, not the reference function.
+SAVE_FUNCTION = ":triplex.owner/v-y"
 
 
 def window(root, rate, first_cut, aged_head, groups, native, lookups, t0):
@@ -29,7 +31,7 @@ def window(root, rate, first_cut, aged_head, groups, native, lookups, t0):
         position, t = first_cut + i + 1, t0 + i
         due = start + ms
         receipt = {"p": position, "t": str(t), "tx": f"tx{t}", "digest": "d", "clock": 1.0 + i}
-        stage = {"subjectSave": ":triplex.subject/v-x", "subjectOwnerHeadBytes": 90,
+        stage = {"subjectSave": SAVE_FUNCTION, "subjectOwnerHeadBytes": 90,
                  "nativeIoStats": {"reads": {"sql": 2 if subject % 7 == 0 else 1, "aevt-load": 1, "eavt-load": 0}},
                  "timeline": {"payloadValidated": 10, "payloadPrepared": 30}}
         writes.append({"account": account, "ordinal": i, "id": ATTEMPT + "-" + event["version"].replace("/", "-"),
@@ -49,7 +51,8 @@ def window(root, rate, first_cut, aged_head, groups, native, lookups, t0):
     (folder / "operations.json").write_bytes(raw)
     header = {"slot": SLOT, "attempt": ATTEMPT, "source": SOURCE, "start": start, "firstCut": first_cut, "terminal": first_cut + rate * seconds,
               "retirement": {"rate": rate, "append": True, "seconds": seconds, "agedHead": aged_head},
-              "settings": {"creditMode": "rolling6", "observed": {"subjectOwnerHead": True, "subjectFunction": ":triplex.subject/v-x"}},
+              "settings": {"creditMode": "rolling6", "observed": {"subjectOwnerHead": True, "subjectFunction": ":triplex.subject/v-x",
+                                                                "subjectOwnerHeadFunction": ":triplex.owner/v-y"}},
               "observationsSha256": hashlib.sha256(raw).hexdigest(), "tapeSha256": "0" * 64,
               "serialAnchor": {"wall": wall, "before": str(mid - 10), "after": str(mid + 10)}, "ownerGroupPeople": {"loader": 1, "seed": 1}}
     (folder / "arm.json").write_text(json.dumps(header))
@@ -57,7 +60,21 @@ def window(root, rate, first_cut, aged_head, groups, native, lookups, t0):
 
 
 def main():
+    global SAVE_FUNCTION
     assert os.environ.get("DX_W1_PAIR_OPTION") == "owner-head"
+    # An owner-head arm whose saves report the reference function is refused (the 1B pair's arms never did this).
+    SAVE_FUNCTION = ":triplex.subject/v-x"
+    try:
+        build_and_run()
+    except AssertionError:
+        pass
+    else:
+        raise SystemExit("summarize accepted an owner-head arm whose saves ran the reference function")
+    SAVE_FUNCTION = ":triplex.owner/v-y"
+    build_and_run()
+
+
+def build_and_run():
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory) / "append"
         (root / "engines" / SLOT / "trace/raw").mkdir(parents=True)
@@ -71,19 +88,38 @@ def main():
             for block in native:
                 f.write(json.dumps({"attempt": ATTEMPT, **block}) + "\n")
             f.write(json.dumps({"attempt": ATTEMPT, "end": True, "dropped": 0}) + "\n")
-        with (trace / "prep1-lookups.ndjson").open("w") as f:
-            for event in lookups:
-                f.write(json.dumps(event) + "\n")
-            f.write(json.dumps({"attempt": ATTEMPT, "end": True, "dropped": 0}) + "\n")
+        # [Opus W1] observe.clj writes its other retained events to the same file; bench 4 had one PREP1_NATIVE_PREFETCH first.
+        prefetch = {"setting": "true", "enabled": True, "processors": 3, "attempt": ATTEMPT, "kind": "PREP1_NATIVE_PREFETCH"}
+        guard = {"attempt": ATTEMPT, "kind": "PREP1_GUARD", "mode": "x"}
+
+        def lookup_file(rows):
+            with (trace / "prep1-lookups.ndjson").open("w") as f:
+                for event in rows:
+                    f.write(json.dumps(event) + "\n")
+                f.write(json.dumps({"attempt": ATTEMPT, "end": True, "dropped": 0}) + "\n")
+
+        # A PREP1_LOOKUPS event at another sample rate, or a record with no kind that is not the terminal, still fails.
+        for bad in ({**lookups[0], "sampleEvery": 32}, {k: v for k, v in lookups[0].items() if k != "kind"}):
+            lookup_file([prefetch, bad, *lookups[1:]])
+            try:
+                summarize.summarize(root, SLOT, ATTEMPT, SOURCE, "1B", "rolling6")
+            except AssertionError:
+                pass
+            else:
+                raise SystemExit("summarize accepted " + json.dumps(bad)[:120])
+            assert not (root / "retirement-diagnostic.json").exists()
+        lookup_file([prefetch, *lookups[:3], guard, *lookups[3:]])
         summarize.summarize(root, SLOT, ATTEMPT, SOURCE, "1B", "rolling6")
         result = json.loads((root / "retirement-diagnostic.json").read_text())
+        assert result["otherLookupFileEvents"] == {"PREP1_GUARD": 1, "PREP1_NATIVE_PREFETCH": 1}
+        assert result["lookupSamples"] == len(lookups)
         for w in result["windows"]:
             assert w["agedHead"] == aged_head
             late = w["halves"][1]["byOwnerGroup"]
             assert set(late) == {"loader", "seed"}
             assert late["loader"]["sqlReadsPerSave"]["mean"] == 2 and late["seed"]["sqlReadsPerSave"]["mean"] == 1
             assert late["loader"]["saves"] + late["seed"]["saves"] == w["halves"][1]["sqlSamples"]
-        print("summarize per-group test passed", [(w["rate"], {g: v["saves"] for g, v in w["halves"][1]["byOwnerGroup"].items()}) for w in result["windows"]])
+        print("summarize per-group test passed; other kinds counted", result["otherLookupFileEvents"], [(w["rate"], {g: v["saves"] for g, v in w["halves"][1]["byOwnerGroup"].items()}) for w in result["windows"]])
 
 
 if __name__ == "__main__":

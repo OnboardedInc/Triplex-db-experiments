@@ -66,6 +66,16 @@ def summarize(root, slot, attempt, source, age, credit_mode):
         treatment = "subjectOwnerHead" if os.environ.get("DX_W1_PAIR_OPTION") == "owner-head" else "subjectAppendRetirement"
         receipt_flag = "subjectOwnerHeadBytes" if treatment == "subjectOwnerHead" else "subjectAppendRetirement"
         assert bool(header["settings"]["observed"].get(treatment)) == header["retirement"]["append"]
+        # [Opus W1] Why: with the owner head on, a save runs the covering owner function the arm's write gateway declares
+        # (subjectOwnerHeadFunction); subjectFunction stays the reference function it reinstalls (1B pair, 2026-11-24 UTC).
+        # Rejected: accepting either function in either arm; the reference arm must still run subjectFunction only.
+        declared = header["settings"]["observed"]
+        if treatment == "subjectOwnerHead" and header["retirement"]["append"]:
+            save_function = declared["subjectOwnerHeadFunction"]
+            assert isinstance(save_function, str) and save_function.startswith(":triplex.owner/v-") and save_function != declared["subjectFunction"]
+        else:
+            save_function = declared["subjectFunction"]
+            assert not declared.get("subjectOwnerHeadFunction")
         raw = (window / "operations.json").read_bytes()
         assert hashlib.sha256(raw).hexdigest() == header["observationsSha256"]
         ops = json.loads(raw)
@@ -122,7 +132,7 @@ def summarize(root, slot, attempt, source, age, credit_mode):
                 apply.append((native["applied-at"] - native["started-at"]) / 1_000_000)
                 if row["status"] == "acked":
                     stage = row["stage"]
-                    assert stage["subjectSave"] == header["settings"]["observed"]["subjectFunction"]
+                    assert stage["subjectSave"] == save_function, (stage["subjectSave"], save_function)
                     io.append(stage["nativeIoStats"]["reads"])
                     if groups:
                         by_group[groups[f'{row["account"]}/{row["subject"]}']].append(stage["nativeIoStats"]["reads"])
@@ -153,15 +163,26 @@ def summarize(root, slot, attempt, source, age, credit_mode):
                                                         for k in ("count", "p50Ms", "p99Ms")}
                                                  for kind in ("current", "pinned")}
                                          | {"attempted": header["migratedReads"][phase]["attempted"],
-                                            "errors": len(header["migratedReads"][phase]["errors"])}
+                                            # [Opus W1] errors keeps the first 20 messages; errorCount counts all.
+                                            "errors": header["migratedReads"][phase].get(
+                                                "errorCount", len(header["migratedReads"][phase]["errors"])),
+                                            "errorSamples": header["migratedReads"][phase]["errors"][:20]}
                                          for phase in ("loaded", "settled")} if header.get("migratedReads") else None,
-                       "function": header["settings"]["observed"]["subjectFunction"]})
+                       "function": save_function, "referenceFunction": declared["subjectFunction"]})
 
     assert len(wanted_databases) == 1
     db = next(iter(wanted_databases))
     nm = 0
+    other_kinds = defaultdict(int)
     for event in events(trace / "prep1-lookups.ndjson", attempt):
-        assert event["kind"] == "PREP1_LOOKUPS" and event["sampleEvery"] == 64
+        # [Opus W1] Why: observe.clj writes every retained diagnostic event (the native prefetch setting, guards, CPU
+        # pressure) to this file, so other kinds are counted and skipped; the terminal record is checked by events().
+        # Rejected: refusing the arm on a PREP1_NATIVE_PREFETCH event (bench 4, 2026-11-23) or relaxing the sample rate.
+        assert isinstance(event.get("kind"), str), event
+        if event["kind"] != "PREP1_LOOKUPS":
+            other_kinds[event["kind"]] += 1
+            continue
+        assert event["sampleEvery"] == 64, event
         key = (event["db"] or db, event["t"])
         if key not in sample_keys:
             unjoined += 1
@@ -180,7 +201,7 @@ def summarize(root, slot, attempt, source, age, credit_mode):
     assert nm > 0
     with (root / "retirement-diagnostic.json").open("x") as stream:
         json.dump({"source": source, "slot": slot, "attempt": attempt, "age": age, "creditMode": credit_mode, "windows": output,
-                   "lookupSamples": nm, "outOfWindowOrUnjoined": unjoined,
+                   "lookupSamples": nm, "outOfWindowOrUnjoined": unjoined, "otherLookupFileEvents": dict(sorted(other_kinds.items())),
                    "lookupTotals": sampled, "outsideSql": unknown}, stream, indent=2)
         stream.write("\n")
 
