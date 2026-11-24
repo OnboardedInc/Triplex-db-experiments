@@ -1092,7 +1092,22 @@ for role in "${gateway_roles[@]}"; do
       tail1_env+=(-e TX2_TAIL1_ROW_DECODE=1)
     fi
   fi
-  docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
+  role_network=(--network "$prefix-net")
+  if [[ $mode == r && ${DX_RD4_READ_HOLD:-0} == 1 ]]; then
+    # [DX-RD4] Test stack only: the read peer reaches the transactor through rd4/hold-proxy.mjs in a container whose
+    # network namespace it shares, so a gate can hold the peer behind an acknowledged write. Default off.
+    # Rejected: on any other stack, on bare metal, or beside the idle-TCP setting (container networking refuses it).
+    [[ $prefix == tx2-dxrd4-* && $publish == true && ${DX_BARE_METAL:-0} == 0 && -z ${network_tuning[*]:-} ]] ||
+      { echo "DX_RD4_READ_HOLD is only for a published tx2-dxrd4-* stack on the Mac" >&2; exit 2; }
+    tx_address=$(docker inspect --format "{{(index .NetworkSettings.Networks \"$prefix-net\").IPAddress}}" "$prefix-tx")
+    [[ $tx_address =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 2
+    docker run -d --pull never --name "$prefix-hold" --network "$prefix-net" --add-host "$prefix-tx:127.0.0.1" \
+      --memory 128m --memory-swap 128m ${ports[@]+"${ports[@]}"} -p "127.0.0.1:$((port + 100)):8099" \
+      -v "$repo/lab/experiments/EXP-DX1/rd4/hold-proxy.mjs:/hold-proxy.mjs:ro" \
+      node:22.23.2-bookworm-slim node /hold-proxy.mjs "$tx_address" 4334 >/dev/null
+    role_network=(--network "container:$prefix-hold") ports=()
+  fi
+  docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" ${stack_labels[@]+"${stack_labels[@]}"} "${role_network[@]}" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
     ${ports[@]+"${ports[@]}"} ${tail1_env[@]+"${tail1_env[@]}"} "${trace_env[@]}" ${field_policy[@]+"${field_policy[@]}"} -e "TRIPLEX_TRACE_JFR=$role_jfr" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}${final_flags}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src${pg_data:+:/erase1} \
     -e "TRIPLEX_LAYOUT_REPLAY=$([[ $role == w ]] && echo ${DX_LAYOUT_REPLAY:-0} || echo 0)" -e "TX2_SLIM_ROWS=${DX_SLIM_ROWS:-0}" -e "TX2_REV_AEVT=${DX_REV_AEVT:-0}" -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template&ApplicationName=triplex-gw-$role" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -e "TX2_ENTITY_CACHE_BYTES=$entity_cache_bytes" -e "TX2_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-2097152}" -e "TX2_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-536870912}" \

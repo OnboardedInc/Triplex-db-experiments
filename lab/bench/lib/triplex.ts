@@ -45,7 +45,10 @@ export async function openTriples(
   lane: Lane,
   scopeName: string,
   xtdbOptions?: Record<string, unknown>,
+  // [DX-RD4] A reader built from a receipt (the SDK's ReadAtLeast); Datomic only, refused by a dist without it.
+  datomic?: { readonly readAtLeast?: unknown },
 ): Promise<TriplesHandle> {
+  if (datomic?.readAtLeast !== undefined && lane !== "datomic") throw Error("readAtLeast is a Datomic option");
   process.env["TRIPLEX_QUERY_PATH"] ??= `${lane}-datalog`;
   // [EXP-W02-R2] Why: D uses its own public runtime and endpoint even before the shared qualification registry merges. Rejected: routing an unknown lane through the X/Q default.
   const backend = lane === "datomic" ? await (async () => {
@@ -59,6 +62,8 @@ export async function openTriples(
     installDatomicPublication(api);
     if (!isMainThread) installReaderDiagnostics(api);
     if (typeof api.makeDatomicRuntime !== "function") throw Error("Datomic public runtime unavailable");
+    if (datomic?.readAtLeast !== undefined && typeof api.ReadAtLeast !== "function")
+      throw Error("The built Datomic package predates readAtLeast");
     // [DX-R3] Why: new benchmark/seed scopes need source-enforced clock ordering; reopen reports the existing policy.
     // Rejected: changing the runtime default or upgrading sealed scopes (breaks historical import writers).
     // [DX-R3-P9] Why: the writer bisection varies only the immutable policy at fresh scope creation.
@@ -70,7 +75,7 @@ export async function openTriples(
     finally { creator.close(); }
     return { name: lane, url, queryPath: "datomic-datalog", makeRuntime: () => api.makeDatomicRuntime({ url, serverRecordTime: process.env.DX_SERVER_RECORD_TIME !== "0", predecessorCacheBytes: WRITER_PREDECESSOR_CACHE_MIB * 1024 ** 2, predecessorAttributes: isMainThread ? NS_PREDECESSOR_ATTRIBUTES : [],
       ...(isMainThread && process.env.DX_TAIL1_RECEIPTS === "1" ? { receiptPredecessorAttributes: DEEP_RECEIPT_ATTRIBUTES } : {}),
-      ...(!isMainThread && workerData?.entityCacheBytes ? { entityCacheBytes: workerData.entityCacheBytes } : {}), ...(process.env.TRIPLEX_DATOMIC_LAYOUT ? { layout: process.env.TRIPLEX_DATOMIC_LAYOUT } : {}), ...(xtdbOptions && fs.readFileSync(path.join(REPO, "packages/datomic/dist/index.d.ts"), "utf8").includes("admissionQueue") ? xtdbOptions : {}) }) };
+      ...(!isMainThread && workerData?.entityCacheBytes ? { entityCacheBytes: workerData.entityCacheBytes } : {}), ...(datomic?.readAtLeast !== undefined ? { readAtLeast: datomic.readAtLeast } : {}), ...(process.env.TRIPLEX_DATOMIC_LAYOUT ? { layout: process.env.TRIPLEX_DATOMIC_LAYOUT } : {}), ...(xtdbOptions && fs.readFileSync(path.join(REPO, "packages/datomic/dist/index.d.ts"), "utf8").includes("admissionQueue") ? xtdbOptions : {}) }) };
   })() : await qualification.loadQualificationBackend(lane);
   if (lane === "qlever" && process.env["QLEVER_COMMIT_PATH"] === "broker") {
     const api = await import(dist("qlever", "index.js"));
