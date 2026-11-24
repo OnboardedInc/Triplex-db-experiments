@@ -1034,3 +1034,10 @@ This is super important to also get done so we need to read across. We need ques
 - **Order (Sam's):** questions across subjects and one commit per subject's save first; then at scale; the other priorities kept in mind and finished afterwards.
 - **Reading (orchestrator's):** "The goal is near the 1.3 MB ceiling" is taken to mean that a release close to the 1.3 MB limit of definitions in force must work. "At 1 billion records" needs a rented machine, which Sam has not yet approved in money terms; asked.
 - **Recorded in** `lab/V0.1.md` on `main` (24c9d6906).
+
+### 2026-11-24 10:09 local: Sam asks for an independent Fable design and an adversarial review of the Opus design
+
+Verbatim: "Can you have a Fable agent at extra-high effort do a parallel design to the Opus agent that you launched, the one that lists the questions that the product actually asks, etc.? I think I want it to take its own independent crack at a way to read across multiple subjects on top of the Opus one and then have it also adversarially review the Opus design and see if they come to the same conclusion. Then let me know."
+
+- **Action (orchestrator):** a Fable agent at effort xhigh started (`FABLE-XQ5-independent-design-and-review.md`), named by Sam for this request only. Phase 1: its own design from its own reading of the product and the store, written to the private `research/2026-11-24-cross-subject-questions/DESIGN-FABLE.md` with its SHA-256 recorded before it may open the Opus design, the XQ prompt files, the XQ branches, or today's STATUS and decisions entries after 09:00. Phase 2: an adversarial review of the Opus design and of what is being built on it (`REVIEW-FABLE.md`), and a comparison of the two conclusions.
+- **To keep the limit of six agents:** the uncached pinned-read builder was stopped (its worktree `dx-rd5` keeps its work; to be resumed when a slot frees).
