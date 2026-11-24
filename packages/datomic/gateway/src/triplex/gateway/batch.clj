@@ -49,6 +49,50 @@
 
 (def ^ThreadMXBean thread-mx (ManagementFactory/getThreadMXBean))
 
+;; [DX-API1] Diagnostics behind the request field "profile": true (with "stats"): the request thread's CPU per stage, and
+;; a sampler that reads the request thread's stack every 250 microseconds while it is running and names the innermost
+;; frame of the gateway or Datomic it is in. Nothing is sampled or counted without the field.
+;; Rejected: a JVM-wide profiler on the shared Mac (other requests' frames would mix in) and sampling waiting threads.
+(def ^:dynamic *stages* nil)
+(defmacro ^:private stage [k & body]
+  `(if-let [^java.util.HashMap m# *stages*]
+     (let [t0# (.getCurrentThreadCpuTime thread-mx)]
+       (try ~@body (finally (.put m# ~k (+ (long (or (.get m# ~k) 0)) (- (.getCurrentThreadCpuTime thread-mx) t0#))))))
+     (do ~@body)))
+(def ^:private frame-categories
+  [["row-text-decode" #"^triplex\.gateway\.(slim|lean\$decode)"]
+   ["json-encode" #"^clojure\.data\.json\$(write|-write|write_)"]
+   ["json-parse" #"^clojure\.data\.json\$(read|-read|read_)"]
+   ["wire-rows" #"^triplex\.gateway\.(storage\$wire_row|codec\$)"]
+   ["privacy-mask" #"^triplex\.gateway\.privacy"]
+   ["pinned-shortcut" #"^triplex\.gateway\.pinned"]
+   ["position-resolve" #"^triplex\.gateway\.(storage\$(await_position|head_position|at_position|assert_subject_route)|reach\$select_db|reach\$config|scope|group_cut)"]
+   ["reach-walk" #"^triplex\.gateway\.(reach|entity_cache|recent)"]
+   ["live-rows" #"^triplex\.gateway\.(lean|owner_root)"]
+   ["visibility-filter-assemble" #"^triplex\.gateway\.storage"]
+   ["prefetch" #"^triplex\.gateway\.uncached"]
+   ["datomic-index-seek" #"^datomic\."]
+   ["batch-own" #"^triplex\.gateway\.batch"]
+   ["admission" #"^triplex\.gateway\.(admission|trace)"]])
+(defn- classify [^"[Ljava.lang.StackTraceElement;" frames]
+  (or (some (fn [^StackTraceElement f]
+              (let [c (.getClassName f)]
+                (when-not (re-find #"^(java\.|javax\.|jdk\.|sun\.|clojure\.lang\.|clojure\.core)" c)
+                  (or (some (fn [[k re]] (when (re-find re c) k)) frame-categories)
+                      (str "other:" (first (clojure.string/split c #"\$")))))))
+            frames)
+      "runtime-only"))
+(defn- start-sampler! [^Thread target]
+  (let [counts (java.util.HashMap.) stop (volatile! false)
+        t (Thread. ^Runnable (fn []
+                               (while (not @stop)
+                                 (when (= Thread$State/RUNNABLE (.getState target))
+                                   (let [k (classify (.getStackTrace target))] (.put counts k (inc (long (or (.get counts k) 0))))))
+                                 (java.util.concurrent.locks.LockSupport/parkNanos 250000)))
+                   "tx2-batch-sampler")]
+    (.setDaemon t true) (.start t)
+    (fn [] (vreset! stop true) (.join t 100) (into (sorted-map) counts))))
+
 (defn refuse!
   ([code message] (refuse! 400 code message nil))
   ([status code message extra] (throw (ex-info message (merge {:status status :code code :route "batch"} extra)))))
@@ -108,12 +152,12 @@
   (let [source (nth parsed entry) answer (aget ^objects answers entry)
         xs (case (:op source)
              "ids" (do (when attribute (unsupported! i "a reference to an ids entry takes its IDs; name no attribute"))
-                       (vec (get answer "ids")))
+                       (vec (or (get answer "ids") (:ids answer))))
              "rows" (do (when-not attribute (unsupported! i "a reference to a rows entry names the reference attribute"))
                         (into [] (comp (filter #(and (= attribute (get-in % ["attribute" "v"]))
                                                      (= "ref" (get-in % ["value_type" "v"]))))
                                        (map #(get-in % ["value_string" "v"])) (distinct))
-                              (get answer "rows")))
+                              (or (get answer "rows") (:rows answer))))
              (unsupported! i "a reference names a rows or ids entry"))]
     (when (> (count xs) limit)
       (refuse! 400 "BatchTooLarge" (str "Entry " i ": the reference yields " (count xs) " subjects, above its limit " limit
@@ -142,11 +186,11 @@
   [name view input]
   (when-not (map? input) (refuse! "BatchUnsupported" "Expected a JSON object"))
   (doseq [k (keys input)]
-    (when-not (#{"basis" "atLeastPosition" "basisWaitMs" "reads" "from" "limits" "prefetch" "stats"} k)
+    (when-not (#{"basis" "atLeastPosition" "basisWaitMs" "reads" "from" "limits" "prefetch" "stats" "profile" "legacyParse"} k)
       (refuse! "BatchUnsupported" (str "Unknown batch field " k))))
   (let [conn (:conn view)
         basis (get input "basis") reads (get input "reads") from (get input "from" 0)
-        limits (get input "limits" {}) stats? (true? (get input "stats")) prefetch? (not (false? (get input "prefetch")))
+        limits (get input "limits" {}) stats? (true? (get input "stats")) profile? (and stats? (true? (get input "profile"))) legacy-parse? (true? (get input "legacyParse")) prefetch? (not (false? (get input "prefetch")))
         _ (when-not (map? basis) (refuse! "BatchUnsupported" "basis is an object with validAt and an optional recordedPosition"))
         _ (doseq [k (keys basis)]
             (when-not (#{"recordedPosition" "validAt"} k)
@@ -168,15 +212,18 @@
         cpu0 (.getCurrentThreadCpuTime thread-mx)
         work
         (fn []
-          (let [initial (trace/span "d/db" "peer-call" (d/db conn))
-                db (if (and (some? p) (> p (storage/head-position name initial)))
-                     (trace/span "storage/await-position" "gateway"
-                       (storage/await-position initial p (get input "basisWaitMs") (fn [_] (d/db conn)) conn))
-                     initial)
-                wanted (at-least/from-body input)
-                db (if wanted (:db (at-least/await! name conn db wanted)) db)
-                position (or p (storage/head-position name db))
-                _ (when (> position (storage/head-position name db)) (storage/unavailable! "Requested position is beyond the available snapshot"))
+          (let [[db position]
+                (stage "position-resolve"
+                  (let [initial (trace/span "d/db" "peer-call" (d/db conn))
+                        db (if (and (some? p) (> p (storage/head-position name initial)))
+                             (trace/span "storage/await-position" "gateway"
+                               (storage/await-position initial p (get input "basisWaitMs") (fn [_] (d/db conn)) conn))
+                             initial)
+                        wanted (at-least/from-body input)
+                        db (if wanted (:db (at-least/await! name conn db wanted)) db)
+                        position (or p (storage/head-position name db))]
+                    (when (> position (storage/head-position name db)) (storage/unavailable! "Requested position is beyond the available snapshot"))
+                    [db position]))
                 entry-basis {"recordedPosition" position "validAt" valid-at}
                 n (count parsed) answers (object-array n) texts (object-array n)
                 hidden (needed parsed from)
@@ -184,9 +231,11 @@
                 total-subjects (volatile! literal) touched (volatile! #{})
                 ;; ID list entries first, before the read permit (their own pool's admission).
                 _ (doseq [i (range n) :when (and (wanted? i) (= "ids" (:op (nth parsed i))))]
-                    (let [answer (trace/span "batch/ids" "gateway" (ids-page! name conn (:input (nth parsed i)) position valid-at deadline))]
-                      (aset answers i (json/read-str (json/write-str answer)))
-                      (aset texts i (json/write-str answer))))
+                    (stage "ids"
+                      (let [answer (trace/span "batch/ids" "gateway" (ids-page! name conn (:input (nth parsed i)) position valid-at deadline))
+                            text (json/write-str answer)]
+                        (aset answers i (if legacy-parse? (json/read-str text) answer))
+                        (aset texts i text))))
                 subjects-of (fn [i]
                               (let [{:keys [ids from]} (nth parsed i)]
                                 (or ids (when from (when (some? (aget answers (:entry from))) (ref-values i from parsed answers))))))
@@ -202,10 +251,12 @@
                                      (when (seq wave)
                                        (vswap! touched into wave)
                                        (.add subjects-touched (count wave))
-                                       (trace/span "batch/prefetch" "gateway" (uncached/touch-all! db wave))))))
-                bytes (volatile! 0) answered (volatile! 0) stop (volatile! nil)]
+                                       (stage "prefetch" (trace/span "batch/prefetch" "gateway" (uncached/touch-all! db wave (not legacy-parse?))))))))
+                bytes (volatile! 0) answered (volatile! 0) stop (volatile! nil)
+                admit-start (System/nanoTime)]
             (admission/execute-for {"basis" entry-basis} admission/reads
               (fn []
+                (when-let [^java.util.HashMap m *stages*] (.put m "admission-wait-wall" (- (System/nanoTime) admit-start)))
                 (binding [admission/*own-pool* true]
                   (loop [i 0]
                     (when (and (< i n) (nil? @stop))
@@ -220,15 +271,16 @@
                                   _ (when (> @total-subjects max-subjects)
                                       (refuse! 400 "BatchTooLarge" (str "A batch reads at most " max-subjects " subjects") {:maximum max-subjects}))
                                   text (case op
-                                         "rows" (let [result (trace/span "batch/rows" "gateway"
+                                         "rows" (let [result (stage "rows-read" (trace/span "batch/rows" "gateway"
                                                                (storage/read-rows name db (cond-> {"entityIds" subjects "basis" entry-basis}
-                                                                                            pattern (assoc "pattern" pattern))))
-                                                      text (json/write-str result)]
-                                                  (aset answers i (json/read-str text)) text)
-                                         "reach" (let [text (trace/span "batch/reach" "gateway"
+                                                                                            pattern (assoc "pattern" pattern)))))
+                                                      text (stage "rows-json-encode" (json/write-str result))]
+                                                  ;; Only rows and ids answers can be referenced; they are kept as built.
+                                                  (aset answers i (if legacy-parse? (stage "legacy-reparse" (json/read-str text)) result)) text)
+                                         "reach" (let [text (stage "reach-build" (trace/span "batch/reach" "gateway"
                                                               (reach/build-response name db {"roots" subjects "basis" entry-basis}
-                                                                                    (:generation view) (:recent view)))]
-                                                   (aset answers i (json/read-str text)) text))]
+                                                                                    (:generation view) (:recent view))))]
+                                                   (when legacy-parse? (aset answers i (stage "legacy-reparse" (json/read-str text)))) text))]
                               (.increment entries-run)
                               (if (>= i from)
                                 (let [size (+ @bytes (.length ^String text) 1)]
@@ -251,7 +303,11 @@
               (.append out ",\"stopped\":") (.append out (if stopped (json/write-str stopped) "null"))
               (.append out ",\"prefetched\":") (.append out (long (count @touched)))
               {:out out :answers (for [i (range from end)] (aget texts i))})))
-        measured (if stats? (io/throw-if-ex! (io/with-io-stats work {:io-context :triplex/batch-read :api :lookup})) {:ret (work)})
+        stages (when profile? (java.util.HashMap.))
+        stop-sampler (when profile? (start-sampler! (Thread/currentThread)))
+        measured (try (binding [*stages* stages]
+                        (if stats? (io/throw-if-ex! (io/with-io-stats work {:io-context :triplex/batch-read :api :lookup})) {:ret (work)}))
+                      (catch Throwable e (when stop-sampler (stop-sampler)) (throw e)))
         {:keys [out answers]} (:ret measured)
         ^StringBuilder out out]
     (.increment requests)
@@ -259,9 +315,14 @@
       (let [reads (:reads (:io-stats measured))
             loads (reduce + 0 (keep (fn [[k v]] (when (and (number? v) (str/ends-with? (clojure.core/name k) "-load")) (long v))) reads))]
         (.append out ",\"stats\":")
-        (.append out (json/write-str {:loads loads :ioReads reads
+        (.append out (json/write-str (merge {:loads loads :ioReads reads
                                       :handlerCpuMicros (quot (- (.getCurrentThreadCpuTime thread-mx) cpu0) 1000)
-                                      :micros (quot (- (System/nanoTime) started) 1000)}))))
+                                      :micros (quot (- (System/nanoTime) started) 1000)}
+                                     (when profile?
+                                       (let [assemble0 (.getCurrentThreadCpuTime thread-mx)]
+                                         {:stagesCpuMicros (into (sorted-map) (map (fn [[k v]] [k (quot (long v) 1000)]) stages))
+                                          :samples (stop-sampler)
+                                          :sampledAtMicros (quot (- (.getCurrentThreadCpuTime thread-mx) assemble0) 1000)})))))))
     (.append out ",\"answers\":[")
     (loop [xs answers k 0]
       (when (seq xs) (when (pos? k) (.append out \,)) (.append out ^String (first xs)) (recur (rest xs) (inc k))))

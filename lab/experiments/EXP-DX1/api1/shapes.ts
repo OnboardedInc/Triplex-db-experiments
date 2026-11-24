@@ -10,6 +10,7 @@
 // Rejected: describing the shapes by product table names (generic shapes only; the repository is public), and deriving a
 // child's ID from the generator where the store would have to read a reference (every child here is found by a read).
 import { taskId, placementId, deepTasks, taskSerial } from "../../../bench/lib/deep-world.ts";
+import { createHash } from "node:crypto";
 import { ids } from "../../../bench/lib/world.ts";
 
 export const FORMS = 24, PROPS = 8, RULES = 39;
@@ -43,6 +44,19 @@ export function definitionFacts(A: string): Fact[] {
       { e: def.rule(A, k), a: ":rule/op", v: str(["=", "<", ">"][k % 3]!) }, { e: def.rule(A, k), a: ":rule/value", v: str(String(k)) });
     if (3 + 3 * k + 2 < RULES) for (let c = 0; c < 3; c++) rows.push({ e: def.rule(A, k), a: ":rule/child", v: ref(def.rule(A, 3 + 3 * k + c)) });
   }
+  // The release pointer: the content hash of the definitions above (DefinitionCache keys by it).
+  const hash = createHash("sha256").update(JSON.stringify(rows.map((f) => [f.e.slice(A.length), f.a, f.v.value]))).digest("hex").slice(0, 32);
+  rows.push({ e: def.account(A), a: RELEASE, v: str("release " + hash) });
+  return rows;
+}
+export const RELEASE = ":account/release";
+/** A new release of the account's definitions: changed rule values and property names, and the new pointer, in one commit. */
+export function releaseChange(A: string, n: number) {
+  const rows: Fact[] = [];
+  for (let k = 0; k < RULES; k += 7) rows.push({ e: def.rule(A, k), a: ":rule/value", v: str(`${k} (release ${n})`) });
+  for (let k = 0; k < PROPS; k += 3) rows.push({ e: def.prop(A, k), a: ":prop/name", v: str(`property ${k} (release ${n})`) });
+  rows.push({ e: def.form(A, n % FORMS), a: ":form/field-0", v: str(`field 0, release ${n}`) });
+  rows.push({ e: def.account(A), a: RELEASE, v: str(`release ${n} ${createHash("sha256").update(JSON.stringify(rows)).digest("hex").slice(0, 16)}`) });
   return rows;
 }
 /** The reference from each task to the form it was made from (added to the deep subject's own facts). */
@@ -56,8 +70,10 @@ export type Step = {
   from?: { step: string; attribute?: string };
   pattern?: { attribute: string };
   page?: (c: Ctx) => Record<string, unknown>;
-  /** Read each subject's world by reach (one-request form only). */
+  /** Read each subject's world by reach (each listed root's world: everything reachable from it by reference). */
   reach?: true;
+  /** A definition in force (forms, property definitions, the policy): the same for every call at one release. */
+  def?: true;
 };
 export type Shape = {
   name: string;
@@ -84,9 +100,9 @@ export const shapes: Shape[] = [
     levels: [
       [{ key: "root", ids: root }, { key: "account", ids: account }],
       [{ key: "profile", from: { step: "root", attribute: ":person/profile" } }, { key: "placements", from: { step: "root", attribute: ":person/placement" } },
-       { key: "props", from: { step: "account", attribute: ":account/property" } }],
+       { key: "props", from: { step: "account", attribute: ":account/property" }, def: true }],
       [{ key: "files", from: { step: "profile", attribute: ":person/file" } }, { key: "tasks", from: { step: "placements", attribute: ":placement/task" } }],
-      [{ key: "subtasks", from: { step: "tasks", attribute: ":task/subtask" } }, { key: "forms", from: { step: "tasks", attribute: ":task/template" } }],
+      [{ key: "subtasks", from: { step: "tasks", attribute: ":task/subtask" } }, { key: "forms", from: { step: "tasks", attribute: ":task/template" }, def: true }],
       ...chain("subtasks"),
     ],
   },
@@ -95,8 +111,8 @@ export const shapes: Shape[] = [
     what: "a task's page: the task, its subtasks, its form, the subject root and profile, the account's property definitions",
     levels: [
       [{ key: "task", ids: task }, { key: "root", ids: root }, { key: "account", ids: account }],
-      [{ key: "subtasks", from: { step: "task", attribute: ":task/subtask" } }, { key: "form", from: { step: "task", attribute: ":task/template" } },
-       { key: "profile", from: { step: "root", attribute: ":person/profile" } }, { key: "props", from: { step: "account", attribute: ":account/property" } }],
+      [{ key: "subtasks", from: { step: "task", attribute: ":task/subtask" } }, { key: "form", from: { step: "task", attribute: ":task/template" }, def: true },
+       { key: "profile", from: { step: "root", attribute: ":person/profile" } }, { key: "props", from: { step: "account", attribute: ":account/property" }, def: true }],
       ...chain("subtasks"),
     ],
   },
@@ -105,10 +121,10 @@ export const shapes: Shape[] = [
     what: "a list page of 50 subjects with status columns: an ID list page, then each subject's root, profile, placements, tasks, subtasks and forms",
     levels: [
       [{ key: "page", page: (c) => ({ account: c.account, prefix: "pl:", shape: "pl:{8 digits}", limit: 50, after: c.after }) }, { key: "account", ids: account }],
-      [{ key: "roots", from: { step: "page" } }, { key: "props", from: { step: "account", attribute: ":account/property" } }],
+      [{ key: "roots", from: { step: "page" } }, { key: "props", from: { step: "account", attribute: ":account/property" }, def: true }],
       [{ key: "profiles", from: { step: "roots", attribute: ":person/profile" } }, { key: "placements", from: { step: "roots", attribute: ":person/placement" } }],
       [{ key: "tasks", from: { step: "placements", attribute: ":placement/task" } }],
-      [{ key: "subtasks", from: { step: "tasks", attribute: ":task/subtask" } }, { key: "forms", from: { step: "tasks", attribute: ":task/template" } }],
+      [{ key: "subtasks", from: { step: "tasks", attribute: ":task/subtask" } }, { key: "forms", from: { step: "tasks", attribute: ":task/template" }, def: true }],
       ...chain("subtasks"),
     ],
     // One request: the page, then the 50 subjects' worlds by reach (each root's world is everything reachable from it,
@@ -117,7 +133,7 @@ export const shapes: Shape[] = [
       { key: "page", page: (c) => ({ account: c.account, prefix: "pl:", shape: "pl:{8 digits}", limit: 50, after: c.after }) },
       { key: "account", ids: account },
       { key: "worlds", from: { step: "page" }, reach: true },
-      { key: "props", from: { step: "account", attribute: ":account/property" } },
+      { key: "props", from: { step: "account", attribute: ":account/property" }, def: true },
     ],
   },
   {
@@ -126,9 +142,9 @@ export const shapes: Shape[] = [
     levels: [
       [{ key: "root", ids: root }, { key: "account", ids: account }],
       [{ key: "profile", from: { step: "root", attribute: ":person/profile" } }, { key: "placements", from: { step: "root", attribute: ":person/placement" } },
-       { key: "props", from: { step: "account", attribute: ":account/property" } }],
+       { key: "props", from: { step: "account", attribute: ":account/property" }, def: true }],
       [{ key: "tasks", from: { step: "placements", attribute: ":placement/task" } }],
-      [{ key: "forms", from: { step: "tasks", attribute: ":task/template" } }, { key: "task", ids: task },
+      [{ key: "forms", from: { step: "tasks", attribute: ":task/template" }, def: true }, { key: "task", ids: task },
        { key: "profile2", from: { step: "root", attribute: ":person/profile" } }],
       [{ key: "subtasks", from: { step: "task", attribute: ":task/subtask" } }, { key: "existing", ids: task }],
     ],
@@ -140,8 +156,8 @@ export const shapes: Shape[] = [
     what: "one import row's lookups: the subject and its placement by ID, three shared definitions, the account's property definitions, the profile and the placement's task",
     levels: [
       [{ key: "root", ids: root }, { key: "placement", ids: (c) => [c.A + placementId(c.i, 0)] }, { key: "account", ids: account },
-       { key: "shared", ids: (c) => [0, 1, 2].map((k) => def.form(c.A, k)) }],
-      [{ key: "profile", from: { step: "root", attribute: ":person/profile" } }, { key: "props", from: { step: "account", attribute: ":account/property" } },
+       { key: "shared", ids: (c) => [0, 1, 2].map((k) => def.form(c.A, k)), def: true }],
+      [{ key: "profile", from: { step: "root", attribute: ":person/profile" } }, { key: "props", from: { step: "account", attribute: ":account/property" }, def: true },
        { key: "ptask", from: { step: "placement", attribute: ":placement/task" } }],
     ],
   },
@@ -149,11 +165,11 @@ export const shapes: Shape[] = [
     name: "policy-eval",
     what: "a policy evaluated for one subject: the subject's root, profile, placements and tasks with their forms, and the policy's rule graph node by node (40 nodes, depth 4)",
     levels: [
-      [{ key: "root", ids: root }, { key: "account", ids: account }, { key: "policy", ids: (c) => [def.policy(c.A)] }],
+      [{ key: "root", ids: root }, { key: "account", ids: account }, { key: "policy", ids: (c) => [def.policy(c.A)], def: true }],
       [{ key: "profile", from: { step: "root", attribute: ":person/profile" } }, { key: "placements", from: { step: "root", attribute: ":person/placement" } },
-       { key: "props", from: { step: "account", attribute: ":account/property" } }, { key: "rules1", from: { step: "policy", attribute: ":policy/node" } }],
-      [{ key: "tasks", from: { step: "placements", attribute: ":placement/task" } }, { key: "rules2", from: { step: "rules1", attribute: ":rule/child" } }],
-      [{ key: "forms", from: { step: "tasks", attribute: ":task/template" } }, { key: "rules3", from: { step: "rules2", attribute: ":rule/child" } }],
+       { key: "props", from: { step: "account", attribute: ":account/property" }, def: true }, { def: true, key: "rules1", from: { step: "policy", attribute: ":policy/node" } }],
+      [{ key: "tasks", from: { step: "placements", attribute: ":placement/task" } }, { def: true, key: "rules2", from: { step: "rules1", attribute: ":rule/child" } }],
+      [{ key: "forms", from: { step: "tasks", attribute: ":task/template" }, def: true }, { def: true, key: "rules3", from: { step: "rules2", attribute: ":rule/child" } }],
     ],
   },
   {
@@ -161,8 +177,8 @@ export const shapes: Shape[] = [
     what: "a check-result webhook: the check's task by its ID, the subject, the form and subtasks, then each of the task's 13 fields read on its own before it is written",
     levels: [
       [{ key: "task", ids: (c) => [c.A + taskId(c.i, 0)] }, { key: "root", ids: root }, { key: "account", ids: account }],
-      [{ key: "form", from: { step: "task", attribute: ":task/template" } }, { key: "subtasks", from: { step: "task", attribute: ":task/subtask" } },
-       { key: "profile", from: { step: "root", attribute: ":person/profile" } }, { key: "props", from: { step: "account", attribute: ":account/property" } }],
+      [{ key: "form", from: { step: "task", attribute: ":task/template" }, def: true }, { key: "subtasks", from: { step: "task", attribute: ":task/subtask" } },
+       { key: "profile", from: { step: "root", attribute: ":person/profile" } }, { key: "props", from: { step: "account", attribute: ":account/property" }, def: true }],
       Array.from({ length: 13 }, (_, f) => ({ key: `field${f}`, ids: (c: Ctx) => [c.A + taskId(c.i, 0)], pattern: { attribute: `:task/field-${f}` } })),
     ],
   },
@@ -171,17 +187,44 @@ export const shapes: Shape[] = [
     what: "a placement's page: the placement, its tasks with forms and subtasks, the subject root and profile, three shared definitions, the property definitions",
     levels: [
       [{ key: "placement", ids: (c) => [c.A + placementId(c.i, 0)] }, { key: "root", ids: root }, { key: "account", ids: account },
-       { key: "shared", ids: (c) => [0, 1, 2].map((k) => def.form(c.A, k)) }],
+       { key: "shared", ids: (c) => [0, 1, 2].map((k) => def.form(c.A, k)), def: true }],
       [{ key: "tasks", from: { step: "placement", attribute: ":placement/task" } }, { key: "profile", from: { step: "root", attribute: ":person/profile" } },
-       { key: "props", from: { step: "account", attribute: ":account/property" } }],
-      [{ key: "forms", from: { step: "tasks", attribute: ":task/template" } }, { key: "subtasks", from: { step: "tasks", attribute: ":task/subtask" } }],
+       { key: "props", from: { step: "account", attribute: ":account/property" }, def: true }],
+      [{ key: "forms", from: { step: "tasks", attribute: ":task/template" }, def: true }, { key: "subtasks", from: { step: "tasks", attribute: ":task/subtask" } }],
       ...chain("subtasks"),
+    ],
+  },
+  // [DX-API1] The world forms of the three subject-centred shapes: the subject's world in one reach (the root and every
+  // entity reachable from it by reference: profile, placements, tasks, subtasks, files, and the forms its tasks were
+  // made from), plus what is not reachable from the subject (the account entity, its property definitions, the policy).
+  {
+    name: "subject-page-world",
+    what: "the subject page as one world read: reach of the subject root, plus the account entity and its property definitions",
+    levels: [
+      [{ key: "world", ids: root, reach: true }, { key: "account", ids: account }],
+      [{ key: "props", from: { step: "account", attribute: ":account/property" }, def: true }],
+    ],
+  },
+  {
+    name: "task-page-world",
+    what: "the task page as one world read of the task (the task, its subtasks and its form), plus the subject root and profile, the account and its property definitions",
+    levels: [
+      [{ key: "taskWorld", ids: task, reach: true }, { key: "root", ids: root }, { key: "account", ids: account }],
+      [{ key: "profile", from: { step: "root", attribute: ":person/profile" } }, { key: "props", from: { step: "account", attribute: ":account/property" }, def: true }],
+    ],
+  },
+  {
+    name: "policy-eval-world",
+    what: "the policy evaluation as two world reads: the subject's world and the policy's (its 39 rule nodes), plus the account and its property definitions",
+    levels: [
+      [{ key: "world", ids: root, reach: true }, { key: "account", ids: account }, { key: "policy", ids: (c) => [def.policy(c.A)], reach: true, def: true }],
+      [{ key: "props", from: { step: "account", attribute: ":account/property" }, def: true }],
     ],
   },
   {
     name: "task-fields",
     what: "a task's fields through the public API: the task and the form it was made from",
-    levels: [[{ key: "task", ids: task }], [{ key: "form", from: { step: "task", attribute: ":task/template" } }]],
+    levels: [[{ key: "task", ids: task }], [{ key: "form", from: { step: "task", attribute: ":task/template" }, def: true }]],
   },
 ];
 

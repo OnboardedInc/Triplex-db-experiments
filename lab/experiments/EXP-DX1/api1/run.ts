@@ -12,14 +12,15 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, statSync, writeFileSync, openSync, readSync, closeSync } from "node:fs";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
+import { DatomicClient, DefinitionCache } from "../../../../packages/datomic/dist/index.js";
+import { decodeEntity } from "../../../../packages/datomic/dist/reach.js";
 import { makePorts, type Port } from "./ports.ts";
 import { decodeRow } from "../../../../packages/datomic/dist/protocol.js";
 import { deepOwnFacts, deepTasks, fieldValue, taskId } from "../../../bench/lib/deep-world.ts";
 import { ids } from "../../../bench/lib/world.ts";
 import { command } from "../w1/group/workload.ts";
 import { scaleAccount } from "../prep1/ceiling-seed.ts";
-import { definitionFacts, refsOf, shapes, templateFacts, type Ctx, type Shape, type Step } from "./shapes.ts";
+import { definitionFacts, refsOf, releaseChange, shapes, templateFacts, type Ctx, type Shape, type Step } from "./shapes.ts";
 
 const [out, writerUrl, warmUrl, coldUrl] = process.argv.slice(2);
 const phases = new Set((process.env.API1_PHASES ?? "gate,counts,straddle").split(","));
@@ -115,6 +116,7 @@ log("readers ready; seed cut", seedCut, "aged head", agedHead);
 const ctxFor = (a: number, i: number, t = 0): Ctx => ({ A: prefix(a), account: scaleAccount(a), i, t: t % deepTasks(i), after: prefix(a) + ids.placement(Math.max(0, i - 1)) });
 const { today, loader, batch1, keyOf } = makePorts(db, validAt, writer, save);
 type Result = import("./ports.ts").Result;
+type CellPort = Port | "loaderDefs" | "batchDefs";
 
 // ---- Exactness.
 const listIdsRetry = async (c: DatomicClient, request: any) => {
@@ -128,12 +130,29 @@ const canonRows = (rows: any[]) => JSON.stringify(rows.map((x) => (x.attribute &
   .sort((p: any, q: any) => (p.id < q.id ? -1 : p.id > q.id ? 1 : 0)));
 const dropVolatile = (page: any) => { const { head, scanMicros, ioReads, segmentsLoaded, ...rest } = page ?? {}; return JSON.stringify(rest); };
 const gate = { comparisons: 0, differences: [] as unknown[], byShape: {} as Record<string, { comparisons: number; differences: number }>,
-  positionsPerCall: { loader: 0, batch: 0, callsChecked: 0 }, refusals: [] as unknown[], cursor: null as unknown, permits: null as unknown };
+  positionsPerCall: { loader: 0, batch: 0, callsChecked: 0 }, refusals: [] as unknown[], cursor: null as unknown, permits: null as unknown,
+  releaseChanges: 0, definitionCaches: {} as unknown };
 const differ = (shape: string, what: unknown) => { gate.differences.push({ shape, what }); gate.byShape[shape]!.differences++; };
 const single = (c: DatomicClient, id: string, P: number, pattern?: object) =>
   c.request<any>("POST", "/v1/db/" + db + "/read", { entityIds: [id], basis: { recordedPosition: P, validAt }, ...(pattern ? { pattern } : {}) }).then((x) => x.rows);
-async function checkLoader(c: DatomicClient, shape: Shape, ctx: Ctx, at?: number) {
-  const r = await loader(c, shape, ctx, at);
+// A world's entities against the same entities read one by one at the same position (rows visible at validAt).
+const ROW_FIELDS = ["id", "entity_id", "attribute", "value_type", "value_string", "value_number", "value_boolean", "value_datetime",
+  "value_json", "recorded_at", "recorded_position", "valid_from", "valid_to", "tx_id", "entity_type", "created_by", "schema_version"];
+const pickRow = (x: any) => Object.fromEntries(ROW_FIELDS.map((f) => [f, x[f] === undefined ? null : typeof x[f] === "bigint" ? String(x[f]) : x[f]]));
+const canonPicked = (rows: any[]) => JSON.stringify(rows.map(pickRow).sort((p: any, q: any) => (p.id < q.id ? -1 : p.id > q.id ? 1 : 0)));
+async function checkWorld(c: DatomicClient, shapeName: string, world: any, P: number, port: string) {
+  if (world?.declined) { differ(shapeName, { port, declined: world.declined }); return; }
+  for (const entry of world.entities as any[]) {
+    const [id, rev, wire] = entry;
+    if (!Array.isArray(wire)) { differ(shapeName, { port, notInline: id }); continue; }
+    const decoded = decodeEntity(id, rev, wire).storedRows.filter((x: any) => x.valid_from <= validAt && (x.valid_to === null || x.valid_to > validAt));
+    const want = (await single(c, id, P)).map((x: any) => decodeRow(x));
+    gate.comparisons++; gate.byShape[shapeName]!.comparisons++;
+    if (canonPicked(decoded) !== canonPicked(want)) differ(shapeName, { port, worldEntity: id, P });
+  }
+}
+async function checkLoader(c: DatomicClient, shape: Shape, ctx: Ctx, at?: number, defs?: DefinitionCache) {
+  const r = await loader(c, shape, ctx, { at, defs });
   gate.positionsPerCall.callsChecked++;
   const distinct = new Set(r.positions);
   if (distinct.size !== (shape.save ? 2 : 1)) differ(shape.name, { loaderPositions: r.positions });
@@ -146,6 +165,7 @@ async function checkLoader(c: DatomicClient, shape: Shape, ctx: Ctx, at?: number
     gate.comparisons++; gate.byShape[shape.name]!.comparisons++;
     if (canonRows(rows as any[]) !== canonRows(want)) differ(shape.name, { port: "loader", key, P });
   }
+  for (const [, world] of r.worlds) await checkWorld(c, shape.name, world, firstP, "loader");
   for (const [key, page] of r.pages) {
     const want = await listIdsRetry(c, { ...(shape.levels.flat().find((s) => s.key === key)!.page!(ctx)), basis: { recordedPosition: firstP, validAt } } as any);
     gate.comparisons++; gate.byShape[shape.name]!.comparisons++;
@@ -153,8 +173,8 @@ async function checkLoader(c: DatomicClient, shape: Shape, ctx: Ctx, at?: number
   }
   return r;
 }
-async function checkBatch(c: DatomicClient, shape: Shape, ctx: Ctx, at?: number, limits?: object) {
-  const r = await batch1(c, shape, ctx, at, false, limits);
+async function checkBatch(c: DatomicClient, shape: Shape, ctx: Ctx, at?: number, limits?: object, defs?: DefinitionCache) {
+  const r = await batch1(c, shape, ctx, { at, limits, defs });
   for (const { step, entry, answer, position, asked } of r.batch) {
     if (step.page) {
       const want = await listIdsRetry(c, { ...step.page(ctx), basis: { recordedPosition: position, validAt } } as any);
@@ -163,7 +183,11 @@ async function checkBatch(c: DatomicClient, shape: Shape, ctx: Ctx, at?: number,
     } else if (entry.op === "reach") {
       const want = await c.request<any>("POST", "/v2/db/" + db + "/reach-many", { roots: asked, basis: { recordedPosition: position, validAt } });
       gate.comparisons++; gate.byShape[shape.name]!.comparisons++;
-      if (JSON.stringify(answer) !== JSON.stringify(want)) differ(shape.name, { port: "batch", reach: step.key });
+      // The world (entities with their revisions and rows, and the closures) equals the single route's at this position;
+      // a world taken from the definitions cache was read at an earlier position of the same release.
+      const same = (w: any) => JSON.stringify([w?.entities, w?.closures]);
+      if (same(answer) !== same(want)) differ(shape.name, { port: "batch", reach: step.key, position });
+      await checkWorld(c, shape.name, answer, position, "batch");
     } else {
       const byEntity = new Map<string, any[]>();
       for (const row of answer.rows) { const e = row.entity_id.v; byEntity.set(e, [...(byEntity.get(e) ?? []), row]); }
@@ -187,6 +211,7 @@ const pool = async <T,>(items: T[], n: number, f: (x: T) => Promise<void>) => {
 };
 const subjectSample = (n: number, seed: number) => Array.from({ length: n }, (_, k) => [k % accounts, (seed * 7919 + k * 104729) % (people - 52) + 1] as const);
 
+const defCaches = { loaderWarm: new DefinitionCache(), loaderCold: new DefinitionCache(), batchWarm: new DefinitionCache(), batchCold: new DefinitionCache() };
 if (phases.has("gate")) {
   for (const s of shapes) gate.byShape[s.name] = { comparisons: 0, differences: 0 };
   const mid = seedCut + Math.floor((agedHead - seedCut) / 2);
@@ -199,6 +224,9 @@ if (phases.has("gate")) {
         const ctx = ctxFor(a, i, k);
         await checkLoader(k % 2 ? warm : cold, shape, ctx, at);
         await checkBatch(k % 2 ? cold : warm, shape, ctx, at);
+        // The same through the definitions caches (one per port and reader, kept across every call of the gate).
+        await checkLoader(k % 2 ? warm : cold, shape, ctx, at, defCaches[k % 2 ? "loaderWarm" : "loaderCold"]);
+        await checkBatch(k % 2 ? cold : warm, shape, ctx, at, undefined, defCaches[k % 2 ? "batchCold" : "batchWarm"]);
       });
     }
     log("gate", shape.name, gate.byShape[shape.name]);
@@ -213,13 +241,23 @@ if (phases.has("gate")) {
       liveSaves++;
     }
   })();
-  for (const shape of shapes.filter((s) => s.name !== "subject-list")) {
+  // Halfway, a new release of both accounts' definitions (rule values, property names, a form, the pointer) in one
+  // commit each: cached definitions of the old release must not answer a call at a position after it.
+  const live = shapes.filter((s) => s.name !== "subject-list");
+  let releases = 0;
+  for (const [n, shape] of live.entries()) {
+    if (n === Math.floor(live.length / 2) || n === live.length - 1)
+      for (let a = 0; a < accounts; a++) { await save(writer, `api1-release-${crypto.randomUUID()}`, releaseChange(prefix(a), 2 + releases) as any); releases++; }
     await pool(Array.from({ length: 16 }, (_, k) => k), 4, async (k) => {
       const ctx = ctxFor(k % accounts, 1 + (k % 40), k);
       await checkLoader(k % 2 ? warm : cold, shape, ctx);
       await checkBatch(k % 2 ? cold : warm, shape, ctx);
+      await checkLoader(k % 2 ? warm : cold, shape, ctx, undefined, defCaches[k % 2 ? "loaderWarm" : "loaderCold"]);
+      await checkBatch(k % 2 ? cold : warm, shape, ctx, undefined, undefined, defCaches[k % 2 ? "batchCold" : "batchWarm"]);
     });
   }
+  gate.releaseChanges = releases;
+  gate.definitionCaches = Object.fromEntries(Object.entries(defCaches).map(([k, c]) => [k, c.counts]));
   running = false; await saver;
   log("gate under saves done;", liveSaves, "saves");
   // Typed refusals.
@@ -244,7 +282,7 @@ if (phases.has("gate")) {
   {
     const shape = shapes[0]!, ctx = ctxFor(0, 7);
     const P = await headOf(warm);
-    const whole = await batch1(warm, shape, ctx, P), parts = await batch1(warm, shape, ctx, P, false, { maxBytes: 65536 });
+    const whole = await batch1(warm, shape, ctx, { at: P }), parts = await batch1(warm, shape, ctx, { at: P, limits: { maxBytes: 65536 } });
     gate.cursor = { requestsUnbounded: whole.trips, requestsBounded: parts.trips,
       equal: JSON.stringify(whole.batch.map((x) => x.answer)) === JSON.stringify(parts.batch.map((x) => x.answer)) };
     await checkBatch(warm, shape, ctx, P, { maxBytes: 65536 });
@@ -253,7 +291,7 @@ if (phases.has("gate")) {
   {
     const before = await warm.request<any>("GET", "/v2/admin/threads");
     const shape = shapes[0]!;
-    const r = await batch1(warm, shape, ctxFor(1, 9));
+    const r = await batch1(warm, shape, ctxFor(1, 9), {});
     const after = await warm.request<any>("GET", "/v2/admin/threads");
     gate.permits = { entries: r.batch.length, readsAdmitted: after.readsAdmitted - before.readsAdmitted, readPermits: after.readPermits };
   }
@@ -286,11 +324,12 @@ const readTrace = (proc: string) => {
   }
 };
 const pct = (xs: number[], q: number) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.min(s.length - 1, Math.floor(q * s.length))]! : null; };
-async function cell(port: Port, shape: Shape, reader: "warm" | "cold", callers: number, calls: number, profile: boolean) {
+async function cell(port: CellPort, shape: Shape, reader: "warm" | "cold", callers: number, calls: number, profile: boolean) {
+  const defs = port === "loaderDefs" || port === "batchDefs" ? new DefinitionCache() : undefined;
   const c = reader === "warm" ? warm : cold, portNo = reader === "warm" ? 8081 : 8082;
   const pick = (k: number) => reader === "warm" ? ctxFor(k % accounts, 1 + (k * 13) % 40, k) : ctxFor(k % accounts, 41 + ((k * 7919 + Date.now()) % (people - 93)), k);
   const ids: string[] = [];
-  const per: { ms: number; trips: number; reads: number; rows: number; loads: number; missed: number }[] = [];
+  const per: { ms: number; trips: number; reads: number; rows: number; loads: number; missed: number; defHits: number; defMisses: number }[] = [];
   const cpu0 = cpuMs(portNo), w0 = performance.now();
   let k = 0;
   await Promise.all(Array.from({ length: callers }, async () => {
@@ -298,9 +337,9 @@ async function cell(port: Port, shape: Shape, reader: "warm" | "cold", callers: 
       const ctx = pick(k++);
       const t = performance.now();
       const run = () => port === "today" ? today(c, shape, ctx, false) : port === "pinned" ? today(c, shape, ctx, true)
-        : port === "loader" ? loader(c, shape, ctx, undefined, profile) : batch1(c, shape, ctx, undefined, profile);
+        : port === "loader" || port === "loaderDefs" ? loader(c, shape, ctx, { stats: profile, defs }) : batch1(c, shape, ctx, { stats: profile, defs });
       const r: Result = profile && (port === "today" || port === "pinned") ? await c.withReadProfile((s: any) => ids.push(s.id), run) : await run();
-      per.push({ ms: performance.now() - t, trips: r.trips, reads: r.reads, rows: r.rows, loads: r.loads ?? 0, missed: r.missedOwnWrite ?? 0 });
+      per.push({ ms: performance.now() - t, trips: r.trips, reads: r.reads, rows: r.rows, loads: r.loads ?? 0, missed: r.missedOwnWrite ?? 0, defHits: r.defHits, defMisses: r.defMisses });
     }
   }));
   const wall = performance.now() - w0, cpu = cpuMs(portNo) - cpu0;
@@ -317,7 +356,8 @@ async function cell(port: Port, shape: Shape, reader: "warm" | "cold", callers: 
   const mean = (f: (x: (typeof per)[number]) => number) => per.reduce((n, x) => n + f(x), 0) / per.length;
   const row = { shape: shape.name, port, reader, callers, calls: per.length, reads: mean((x) => x.reads), trips: mean((x) => x.trips),
     rows: mean((x) => x.rows), loads, cpuMsPerCall: cpu / per.length, wallMsP50: pct(per.map((x) => x.ms), 0.5), wallMsP99: pct(per.map((x) => x.ms), 0.99),
-    callsPerSecond: per.length / (wall / 1000), missedOwnWrite: per.reduce((n, x) => n + x.missed, 0) };
+    callsPerSecond: per.length / (wall / 1000), missedOwnWrite: per.reduce((n, x) => n + x.missed, 0),
+    defHitsPerCall: mean((x) => x.defHits), defMissesPerCall: mean((x) => x.defMisses) };
   return row;
 }
 const countReaders = (process.env.API1_READERS ?? "warm,cold").split(",") as ("warm" | "cold")[];
@@ -325,18 +365,19 @@ if (phases.has("counts")) {
   const rows: unknown[] = [];
   // Warm-up: every warm subject's shapes once, so the warm reader holds them.
   if (countReaders.includes("warm")) for (const shape of shapes) for (let k = 0; k < 40; k++) await batch1(warm, shape, ctxFor(k % accounts, 1 + (k * 13) % 40, k));
-  const ports: Port[] = ["today", "pinned", "loader", "batch1"];
+  const ports: CellPort[] = (process.env.API1_PORTS ?? "today,pinned,loader,batch1,loaderDefs,batchDefs").split(",") as CellPort[];
+  const shapeFilter = process.env.API1_SHAPES ? new Set(process.env.API1_SHAPES.split(",")) : null;
   const big = (s: Shape) => s.name === "subject-list";
   for (const reader of countReaders)
-    for (const shape of shapes)
+    for (const shape of shapes.filter((s) => !shapeFilter || shapeFilter.has(s.name)))
       for (const port of ports) {
         const r = await cell(port, shape, reader, 1, big(shape) ? 4 : 16, true);
         rows.push(r); log(JSON.stringify(r));
       }
   for (const reader of countReaders)
     for (const callers of [16, 64])
-      for (const shape of shapes)
-        for (const port of ["today", "loader", "batch1"] as Port[]) {
+      for (const shape of shapes.filter((s) => !shapeFilter || shapeFilter.has(s.name)))
+        for (const port of ports.filter((x) => x !== "pinned")) {
           // The list page reads about 2,250 entities per call one by one; it runs at 16 callers only.
           if (big(shape) && callers > 16) continue;
           const r = await cell(port, shape, reader, callers, big(shape) ? callers : callers * 3, false);
@@ -387,6 +428,50 @@ if (phases.has("calibrate")) {
   }
   results.calibration = rows;
   writeFileSync(join(out!, "calibration.json"), JSON.stringify(rows, null, 2) + "\n");
+}
+// ---- Profile: where a batched call's reader CPU goes. For each shape and variant, N calls of the one-request batch at 4
+// callers with "profile": the request thread's CPU by stage and the sampler's frames (gateway batch.clj), beside the
+// reader process's CPU over the same calls (the rest: the HTTP server, request parse, response write, collection,
+// the prefetch pool's threads).
+if (phases.has("profile")) {
+  const rows: unknown[] = [];
+  const names = (process.env.API1_PROFILE_SHAPES ?? "subject-page,subject-page-world,task-page,task-page-world,policy-eval,policy-eval-world,subject-list").split(",");
+  const variants: [string, object][] = [["legacy-parse", { legacyParse: true }], ["kept", {}], ["kept-no-prefetch", { prefetch: false }]];
+  for (const reader of (process.env.API1_PROFILE_READERS ?? "warm").split(",") as ("warm" | "cold")[]) {
+    const c = reader === "warm" ? warm : cold, portNo = reader === "warm" ? 8081 : 8082;
+    for (const name of names) {
+      const shape = shapes.find((x) => x.name === name)!;
+      const n = name === "subject-list" ? 24 : reader === "warm" ? 240 : 120;
+      for (let k = 0; k < 20; k++) await batch1(c, shape, ctxFor(k % accounts, 1 + (k * 13) % 40, k), {});  // warm-up (JIT and the subjects)
+      for (const [label, extra] of variants) {
+        const samples: Record<string, number> = {}, stagesUs: Record<string, number> = {};
+        let handlerUs = 0, calls = 0, reads = 0, rowsN = 0, loads = 0;
+        const pick = (k: number) => reader === "warm" ? ctxFor(k % accounts, 1 + (k * 13) % 40, k) : ctxFor(k % accounts, 41 + Math.floor(Math.random() * (people - 93)), k);
+        const cpu0 = cpuMs(portNo), w0 = performance.now();
+        let k = 0;
+        await Promise.all(Array.from({ length: 4 }, async () => {
+          while (k < n) {
+            const r = await batch1(c, shape, pick(k++), { profile: true, ...extra });
+            calls++; reads += r.reads; rowsN += r.rows; loads += r.loads ?? 0;
+            for (const st of r.profile ?? []) {
+              handlerUs += st.handlerCpuMicros;
+              for (const [kk, vv] of Object.entries(st.samples ?? {})) samples[kk] = (samples[kk] ?? 0) + (vv as number);
+              for (const [kk, vv] of Object.entries(st.stagesCpuMicros ?? {})) stagesUs[kk] = (stagesUs[kk] ?? 0) + (vv as number);
+            }
+          }
+        }));
+        const cpu = cpuMs(portNo) - cpu0, seconds = (performance.now() - w0) / 1000;
+        const total = Object.values(samples).reduce((a, b) => a + b, 0);
+        const row = { phase: "profile", reader, shape: name, variant: label, calls, readsPerCall: reads / calls, rowsPerCall: rowsN / calls, loadsPerCall: loads / calls,
+          processCpuMsPerCall: cpu / calls, handlerCpuMsPerCall: handlerUs / 1000 / calls, callsPerSecond: calls / seconds,
+          stagesMsPerCall: Object.fromEntries(Object.entries(stagesUs).map(([kk, vv]) => [kk, +(vv / 1000 / calls).toFixed(3)])),
+          sampleShares: Object.fromEntries(Object.entries(samples).sort((a, b) => b[1] - a[1]).map(([kk, vv]) => [kk, +(vv / total).toFixed(3)])), samples: total };
+        rows.push(row); log(JSON.stringify(row));
+      }
+    }
+  }
+  results.profile = rows;
+  writeFileSync(join(out!, "profile.json"), JSON.stringify(rows, null, 2) + "\n");
 }
 // ---- Straddle: unpinned calls of the subject page under saves that change a subject's root and its first task in one
 // commit (the same value on both); a call whose two values differ read two positions.

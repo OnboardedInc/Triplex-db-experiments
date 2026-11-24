@@ -77,7 +77,9 @@ export { DatomicBasisNotAvailable, DatomicLayoutUnsupported, DatomicAtLeastTimeo
 export { ReadAtLeast, type ReadAtLeastRequest } from "./readAtLeast.js";
 export {
   CallReads,
+  DefinitionCache,
   readBatch,
+  releaseHash,
   type BatchAnswer,
   type BatchEntry,
   type BatchPattern,

@@ -39,19 +39,28 @@
     ;; d/datoms is an Iterable without count; walking it realizes every leaf the subject's rows sit in.
     (reduce (fn [n _] (inc n)) 0 (d/datoms db :eavt e))))
 
+(defn- touch-first!
+  "Load the segment that holds the start of subject `id`'s rows (its identity lookup and one EAVT seek).
+  [DX-API1] Why: walking a subject's whole EAVT range costs a warm batch a fifth of its CPU (api1/API-CALL-READS.md
+  section 2); the first seek loads the leaf the read needs first, and almost every entity's rows fit in it."
+  [db id]
+  (when-let [e (d/entid db [:triplex.entity/id id])]
+    (first (d/datoms db :eavt e :triplex.entity/row))))
+
 (defn touch-all!
   "Touch each subject of `ids` at `db` concurrently on the prefetch pool (the calling thread takes the first) and wait for
   all, whatever TX2_READ_PREFETCH says. Returns nil; never throws. Loads keep the caller's io-stats bindings.
   [DX-API1] Why: the batched read (batch.clj) prefetches a whole batch's subjects with the same pool and touch.
   Rejected: a second pool (two pools would let one batch take twice the overlap)."
-  [db ids]
+  ([db ids] (touch-all! db ids false))
+  ([db ids first-only?]
   (when (and db (seq ids))
-    (let [task (fn [id] (bound-fn* (fn [] (try (touch! db id) (catch Throwable t (.increment failures) (reset! last-failure (str t)) nil)))))
+    (let [task (fn [id] (bound-fn* (fn [] (try (if first-only? (touch-first! db id) (touch! db id)) (catch Throwable t (.increment failures) (reset! last-failure (str t)) nil)))))
           futures (mapv #(.submit ^ExecutorService @pool ^Callable (task %)) (rest ids))]
       ((task (first ids)))
       (doseq [^Future f futures]
         (try (.get f) (catch Throwable _ (.increment failures))))
-      nil)))
+      nil))))
 
 (defn prefetch!
   "With TX2_READ_PREFETCH=1 and more than one subject, touch each subject of `ids` at `db` concurrently (the calling

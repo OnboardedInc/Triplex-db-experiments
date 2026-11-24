@@ -44,6 +44,8 @@ export interface BatchStats {
   readonly loads: number;
   readonly handlerCpuMicros: number;
   readonly micros: number;
+  /** Each request's own stats as the gateway sent them (with "profile": stages and samples). */
+  readonly pages?: readonly Record<string, unknown>[];
 }
 export interface BatchAnswer {
   readonly route: "batch";
@@ -71,6 +73,7 @@ export async function readBatch(client: DatomicClient, db: string, request: Batc
   let body: Record<string, unknown> = { ...request };
   let first: Page | undefined;
   let requests = 0, loads = 0, cpu = 0, micros = 0;
+  const pages: Record<string, unknown>[] = [];
   for (;;) {
     const page = await client.request<Page>("POST", `/v2/db/${db}/batch`, body);
     requests++;
@@ -85,7 +88,7 @@ export async function readBatch(client: DatomicClient, db: string, request: Batc
       throw new TypeError("The gateway answered a batch below its at-least position");
     first ??= page;
     answers.push(...page.answers);
-    if (page.stats) { loads += page.stats.loads; cpu += page.stats.handlerCpuMicros; micros += page.stats.micros; }
+    if (page.stats) { loads += page.stats.loads; cpu += page.stats.handlerCpuMicros; micros += page.stats.micros; pages.push(page.stats as unknown as Record<string, unknown>); }
     if (page.next === null) break;
     const { atLeastPosition: _drop, ...rest } = request;
     body = { ...rest, basis: { ...request.basis, recordedPosition: first.position }, from: page.next };
@@ -93,9 +96,48 @@ export async function readBatch(client: DatomicClient, db: string, request: Batc
   return {
     route: "batch", position: first.position, t: first.t, validAt: first.validAt, entries: first.entries, answers,
     prefetched: first.prefetched, requests,
-    ...(request.stats ? { stats: { loads, handlerCpuMicros: cpu, micros } } : {}),
+    ...(request.stats ? { stats: { loads, handlerCpuMicros: cpu, micros, pages } } : {}),
   };
 }
+
+/**
+ * [DX-API1] Definitions in force, kept in the product process across calls, by release.
+ *
+ * Why: forms, property definitions and a policy's rule graph are the same for every call of an account at one release,
+ * yet a call that reads them entity by entity pays for them on every call. The cache holds their answers under the
+ * account's release pointer: one entity whose `attribute` names the release in force by content hash. A call reads the
+ * pointer at its own position (one entity, in its first batch, which it reads anyway: the account entity), and a cached
+ * definition is used only when the pointer at that position names the hash it was read under. A new release is a new
+ * hash: its definitions are read once, then kept.
+ * The contract this rests on: a definition entity changes only in a commit that also changes the pointer (a release is
+ * published by writing its definitions and the new pointer together). The gate checks it against single reads at each
+ * call's own position, across a release change.
+ * Rejected: a time to live (a stale answer for its duration), a background refresh (a warmer), and keying by position
+ * (every save moves the head, so every call would miss).
+ */
+export class DefinitionCache {
+  readonly #releases = new Map<string, { hash: string; answers: Map<string, unknown> }>();
+  readonly counts = { hits: 0, misses: 0, releases: 0, uncached: 0 };
+  constructor(readonly maxEntriesPerRelease = 100_000) {}
+  lookup(pointer: string, hash: string, key: string): unknown | undefined {
+    const r = this.#releases.get(pointer);
+    return r && r.hash === hash ? r.answers.get(key) : undefined;
+  }
+  store(pointer: string, hash: string, key: string, value: unknown): void {
+    let r = this.#releases.get(pointer);
+    if (!r || r.hash !== hash) { r = { hash, answers: new Map() }; this.#releases.set(pointer, r); this.counts.releases++; }
+    if (r.answers.size < this.maxEntriesPerRelease) r.answers.set(key, value);
+  }
+  /** The hash this cache last held for the pointer (a guess for a batch built before the pointer is read). */
+  lastHash(pointer: string): string | undefined {
+    return this.#releases.get(pointer)?.hash;
+  }
+}
+/** The release hash an account entity's rows name, or undefined (then nothing is cached for that call). */
+export const releaseHash = (rows: readonly TripleRow[], attribute: string): string | undefined => {
+  const values = rows.filter((r) => r.attribute === attribute).map((r) => r.value_string);
+  return values.length === 1 && typeof values[0] === "string" ? values[0] : undefined;
+};
 
 export interface CallReadsOptions {
   /** Valid time of every read of the call (default: when the loader is made). */
@@ -154,6 +196,33 @@ export class CallReads {
   /** One ID list page at the call's position (needs TX2_ID_LISTS=1 on the gateway). */
   ids(request: { readonly account: string } & Record<string, unknown>): Promise<Record<string, unknown>> {
     return this.#ask("ids " + JSON.stringify(request), { op: "ids", ...request }) as Promise<Record<string, unknown>>;
+  }
+  /**
+   * A definition entity's rows through `cache`: answered from the cache when the pointer's rows at this call's position
+   * name the release it was cached under; otherwise read (in the call's batches, at its position) and kept.
+   */
+  async definitionRows(cache: DefinitionCache, pointer: string, attribute: string, entityId: string, pattern?: BatchPattern): Promise<readonly TripleRow[]> {
+    const hash = releaseHash(await this.rows(pointer), attribute);
+    const key = "rows " + JSON.stringify(pattern ?? null) + " " + entityId;
+    if (hash === undefined) { cache.counts.uncached++; return this.rows(entityId, pattern); }
+    const known = cache.lookup(pointer, hash, key) as readonly TripleRow[] | undefined;
+    if (known) { cache.counts.hits++; return known; }
+    cache.counts.misses++;
+    const rows = await this.rows(entityId, pattern);
+    cache.store(pointer, hash, key, rows);
+    return rows;
+  }
+  /** A definition root's world (for example a policy and its rule graph) through `cache`, as `definitionRows`. */
+  async definitionReach(cache: DefinitionCache, pointer: string, attribute: string, root: string): Promise<ReachWorld> {
+    const hash = releaseHash(await this.rows(pointer), attribute);
+    const key = "reach " + root;
+    if (hash === undefined) { cache.counts.uncached++; return this.reach(root); }
+    const known = cache.lookup(pointer, hash, key) as ReachWorld | undefined;
+    if (known) { cache.counts.hits++; return known; }
+    cache.counts.misses++;
+    const world = await this.reach(root);
+    cache.store(pointer, hash, key, world);
+    return world;
   }
   /** The call saved and holds the receipt: later reads are answered at least at its position (a new pin). */
   afterWrite(receipt: { readonly position: number } | number): void {

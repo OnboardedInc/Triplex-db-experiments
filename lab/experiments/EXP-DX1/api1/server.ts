@@ -119,7 +119,7 @@ const listCallers = dry ? 4 : Number(env("API1_LIST_CALLERS", "8"));
 const { today, loader, batch1 } = makePorts(db, validAt, writer, save);
 const call = (port: Port, shape: Shape, ctx: Ctx, stats = false): Promise<Result> =>
   port === "today" ? today(reader, shape, ctx, false) : port === "pinned" ? today(reader, shape, ctx, true)
-    : port === "loader" ? loader(reader, shape, ctx, undefined, stats) : batch1(reader, shape, ctx, undefined, stats);
+    : port === "loader" ? loader(reader, shape, ctx, { stats }) : batch1(reader, shape, ctx, { stats });
 const cpuMicros = () => {
   const text = execFileSync("docker", ["exec", readerContainer, "cat", "/sys/fs/cgroup/cpu.stat"], { encoding: "utf8" });
   return Number(/usage_usec (\d+)/.exec(text)![1]);
@@ -131,7 +131,7 @@ if (sets.includes("reread")) {
   const t0 = performance.now();
   let k = 0;
   await Promise.all(Array.from({ length: 16 }, async () => {
-    while (k < rereadSet.length) { const [r, i] = rereadSet[k++]!; for (const s of byName.values()) if (!s.save) await batch1(reader, s, ctxFor(r, i, k)); }
+    while (k < rereadSet.length) { const [r, i] = rereadSet[k++]!; for (const s of byName.values()) if (!s.save) await batch1(reader, s, ctxFor(r, i, k), {}); }
   }));
   log("warmed", { subjects: rereadSet.length, seconds: (performance.now() - t0) / 1000 });
 }
