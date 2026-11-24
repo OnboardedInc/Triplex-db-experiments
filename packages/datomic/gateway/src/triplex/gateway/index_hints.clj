@@ -19,6 +19,10 @@
             [triplex.gateway.subject-hints :as subject-hints] [triplex.gateway.general-prefetch :as general-prefetch]))
 
 (def enabled (= "1" (System/getenv "TX2_INDEX_HINTS")))
+;; [DX-XQ10] Lab knob for finding which touch costs (TX2_INDEX_HINTS_PARTS, default every part): range (the owner's
+;; entry range), keys (each entry key, EAVT on its owner and AVET by value), decl (the declaration's sequence datom).
+;; Each subset is its own code and so its own ident, installed only with TX2_INDEX_HINTS=1.
+(def parts (set (map keyword (re-seq #"[a-z]+" (or (not-empty (System/getenv "TX2_INDEX_HINTS_PARTS")) "range,keys,decl")))))
 
 (def ^:private declaration-touches
   ;; The fence's cas reads the declaration entity's :triplex.ix/seq (EAVT); its AEVT neighbourhood is named too.
@@ -36,30 +40,33 @@
 (def subject-code
   ;; The per-subject writer addresses entries to the numeric owner (`owner` in the function's bindings).
   (extend-code subject-hints/code
-               (into '[(when-let [ix (d/entid db :triplex.ix/entry)]
-                         (when owner (first (d/datoms db :eavt owner ix)))
-                         ;; each entry the save asserts or retracts, exactly: on the owner (EAVT) and by value (AVET)
-                         (doseq [k (:ix-keys payload)]
-                           (when owner (first (d/seek-datoms db :eavt owner ix k)))
-                           (first (d/seek-datoms db :avet ix k))))]
-                     declaration-touches)))
+               (cond-> []
+                 (parts :range) (conj '(when-let [ix (d/entid db :triplex.ix/entry)] (when owner (first (d/datoms db :eavt owner ix)))))
+                 ;; each entry the save asserts or retracts, exactly: on the owner (EAVT) and by value (AVET)
+                 (parts :keys) (conj '(when-let [ix (d/entid db :triplex.ix/entry)]
+                                        (doseq [k (:ix-keys payload)]
+                                          (when owner (first (d/seek-datoms db :eavt owner ix k)))
+                                          (first (d/seek-datoms db :avet ix k)))))
+                 (parts :decl) (into declaration-touches))))
 (def subject-ident (keyword "triplex.subject" (str "hints-" (subs (schema/sha256 (pr-str subject-code)) 0 24))))
 
 (def general-code
   ;; The general writer's owners: every entity the save names and every owner of a retired row (`entities`, `owners`
   ;; and the memoized `owner` lookup are the function's own bindings).
   (extend-code general-prefetch/code
-               (into '[(when-let [ix (d/entid db :triplex.ix/entry)]
-                         (doseq [id (distinct (concat entities (vals owners)))]
-                           (when-let [e (owner id)]
-                             (first (d/datoms db :eavt e ix))))
-                         ;; each entry operation of the save, exactly: on its owner (EAVT) and by value (AVET)
-                         (doseq [op ops :when (and (list? op) (= :triplex.ix/entry (nth op 2 nil)))]
-                           (let [x (second op) k (nth op 3 nil)
-                                 e (cond (number? x) x (string? x) (owner (public x)))]
-                             (when (and e (string? k)) (first (d/seek-datoms db :eavt e ix k)))
-                             (when (string? k) (first (d/seek-datoms db :avet ix k))))))]
-                     declaration-touches)))
+               (cond-> []
+                 (parts :range) (conj '(when-let [ix (d/entid db :triplex.ix/entry)]
+                                         (doseq [id (distinct (concat entities (vals owners)))]
+                                           (when-let [e (owner id)]
+                                             (first (d/datoms db :eavt e ix))))))
+                 ;; each entry operation of the save, exactly: on its owner (EAVT) and by value (AVET)
+                 (parts :keys) (conj '(when-let [ix (d/entid db :triplex.ix/entry)]
+                                        (doseq [op ops :when (and (list? op) (= :triplex.ix/entry (nth op 2 nil)))]
+                                          (let [x (second op) k (nth op 3 nil)
+                                                e (cond (number? x) x (string? x) (owner (public x)))]
+                                            (when (and e (string? k)) (first (d/seek-datoms db :eavt e ix k)))
+                                            (when (string? k) (first (d/seek-datoms db :avet ix k)))))))
+                 (parts :decl) (into declaration-touches))))
 (def general-ident (keyword "triplex.write" (str "prefetch-" (subs (schema/sha256 (pr-str general-code)) 0 24))))
 
 ;; With the option on, the hint namespaces install and call the extended functions under their new idents.

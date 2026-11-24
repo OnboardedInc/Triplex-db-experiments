@@ -31,7 +31,7 @@ docker run --name "$name" --memory "${XQ4_CONTAINER_MEMORY:-4g}" --cpus 2 --entr
   -e "XQ4_SUBJECTS=${XQ4_SUBJECTS:-6667}" -e "XQ4_MIXED=${XQ4_MIXED:-3000}" -e "XQ4_QUESTIONS=${XQ4_QUESTIONS:-25}" \
   -e "XQ4_G6_SUBJECTS=${XQ4_G6_SUBJECTS:-1500}" -e "XQ4_G6_PAD=${XQ4_G6_PAD:-0}" -e "XQ4_COST_PER=${XQ4_COST_PER:-100}" -e "XQ4_COST_STRIDE=${XQ4_COST_STRIDE:-1}" -e "XQ4_G3_SEALED=${XQ4_G3_SEALED:-0}" \
   -e "XQ4_QUESTION_SEED=${XQ4_QUESTION_SEED:-20261124}" \
-  -e "XQ4_HINTS=${XQ4_HINTS:-0}" -e "XQ4_SWEEP_SHAPES=${XQ4_SWEEP_SHAPES:-}" -e "XQ4_LIST_QUEUE_MS=${XQ4_LIST_QUEUE_MS:-}" -e "XQ4_INDEX_HINTS=${XQ4_INDEX_HINTS:-}" -e "XQ10_WORLD_QUESTIONS=${XQ10_WORLD_QUESTIONS:-12}" -e "XQ4_TX_CACHE=${XQ4_TX_CACHE:-128m}" -e "XQ4_GATE_JAVA_OPTS=${XQ4_GATE_JAVA_OPTS:-}" -e "XQ4_SWEEP=${XQ4_SWEEP:-0}" -e "XQ4_SWEEP_QUESTIONS=${XQ4_SWEEP_QUESTIONS:-8}" \
+  -e "XQ4_HINTS=${XQ4_HINTS:-0}" -e "XQ4_SWEEP_SHAPES=${XQ4_SWEEP_SHAPES:-}" -e "XQ4_LIST_QUEUE_MS=${XQ4_LIST_QUEUE_MS:-}" -e "XQ4_INDEX_HINTS=${XQ4_INDEX_HINTS:-}" -e "XQ4_INDEX_HINTS_PARTS=${XQ4_INDEX_HINTS_PARTS:-}" -e "XQ10_WORLD_QUESTIONS=${XQ10_WORLD_QUESTIONS:-12}" -e "XQ4_TX_CACHE=${XQ4_TX_CACHE:-128m}" -e "XQ4_GATE_JAVA_OPTS=${XQ4_GATE_JAVA_OPTS:-}" -e "XQ4_SWEEP=${XQ4_SWEEP:-0}" -e "XQ4_SWEEP_QUESTIONS=${XQ4_SWEEP_QUESTIONS:-8}" \
   -v "$out/stage/gateway/src:/opt/gateway/src:ro" -v "$out/stage/xq4:/xq4:ro" -v "$repo/packages/datomic/src/codec-spec.json:/opt/gateway/codec-spec.json:ro" \
   -v "$out/out:/out" "$image" /xq4/xq4/container.sh > "$out/container.log" 2>&1
 status=$?

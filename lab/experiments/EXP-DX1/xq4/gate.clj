@@ -947,6 +947,8 @@
                     {:keys [input ids]} (save-input (assoc spec :seq s :source (head name conn)))
                     r (commit! name input)]
                 [side (assoc (log-bytes conn (Long/parseLong (str (get-in r ["t" "v"])))) :reads (sql-reads r)
+                             ;; [DX-XQ10] every read counter of the transaction's apply (object cache, storage, ...)
+                             :io (get-in r ["nativeIoStats" "reads"])
                              :writer (if (get r "subjectSave") "subject" "general")
                              :applyMs (get-in r ["nativeIoStats" "api-ms"]) :ids ids)]))
         result (into {} (map one (if flip? ["off" "on"] ["on" "off"])))]
@@ -984,6 +986,10 @@
                        :ixDatomsPerSave (double (/ (reduce + (map :ixDatoms xs)) n))
                        :ixBytesPerSave (double (/ (reduce + (map :ixBytes xs)) n))
                        :readsInsideApplyPerSave (double (/ (reduce + (map :reads xs)) n))
+                       :ioReadsPerSave (into (sorted-map) (map (fn [[k v]] [k (double (/ v n))])
+                                                               (apply merge-with (fn [a b] (if (and (number? a) (number? b)) (+ a b) a))
+                                                                      (keep #(when (map? (:io %)) (into {} (filter (comp number? val) (:io %)))) xs))))
+                       :readsPerSaveList (mapv :reads xs)
                        :applyMsMedian (let [v (vec (sort (keep :applyMs xs)))] (when (seq v) (nth v (quot (count v) 2))))}))
         cost (into {}
                (for [[k attrs] sets]
