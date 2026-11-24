@@ -31,7 +31,8 @@ for arm in ${DX_IMP2_ARMS:-off-digest mem sql removal}; do
     mem) gate MEM "" ;;
     removal)
       ( mkdir -p /tmp/imp2-erasure && chmod 700 /tmp/imp2-erasure
-        env $v01_env TRIPLEX_ERASURE_DIRECTORY=/tmp/imp2-erasure TRIPLEX_ERASURE_SHRED_GRACE_MS=0 DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+        # [DX-ACT9] DX_IMP2_EXTRA_ENV="K=V ..." (default empty): further options for this arm (every option on together).
+        env $v01_env ${DX_IMP2_EXTRA_ENV:-} TRIPLEX_ERASURE_DIRECTORY=/tmp/imp2-erasure TRIPLEX_ERASURE_SHRED_GRACE_MS=0 DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
           java $java_opts -cp "$(DATOMIC_EXT_CLASSPATH=/opt/gateway/src bin/classpath)" clojure.main \
           -i /exp/wfix1/regression.clj -i /exp/imp2/imp2_frames.clj -i /exp/imp2/whole_gate.clj -i /exp/imp2/removal_gate.clj \
           -e "(removal-gate/-main)" 2>&1 | grep -v '^WARNING: '; exit "${PIPESTATUS[0]}" ) || code=$?

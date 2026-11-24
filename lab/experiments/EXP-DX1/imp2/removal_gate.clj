@@ -76,6 +76,10 @@
         (fn [name conn]
           (is (str/starts-with? name "s2-"))
           (is (= 200 (:status (route name "v2" "protection" {"attributes" [ssn] "sealed" true}))))
+          ;; [DX-ACT9] DX_IMP2_MOVE_PER_ACCOUNT=1 (with TX2_REMOVAL_PER_ACCOUNT=1): the database is moved to removal
+          ;; sequences per account first, so the gate runs under the per-account rule (every option on together).
+          (when (= "1" (System/getenv "DX_IMP2_MOVE_PER_ACCOUNT"))
+            (is (= 200 (:status (route name "v2" "removal-per-account" {})))))
           (let [tag (str "imp2-rm-" option)
                 _ (reset! clock (double (System/currentTimeMillis)))
                 c {:name name :conn conn :clock clock :blocks (atom (if option 200000 100000))}
