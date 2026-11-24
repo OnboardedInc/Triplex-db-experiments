@@ -79,7 +79,8 @@ that is 2.5 KB packed instead of 5.5 KB with the answer (measured with the kerne
 ## 3. Gates at toy size (Mac, diagnostic clocks)
 
 **`join/settle-frames-gate.ts`** on the toy stack (`engine.mjs ha1 --experiment load-fair --diagnostic --holder DX-ACT4`
-with `DX_ACT4_GATE=1`), 72 deep subjects (two census pages), real stores, at `fa812ca31`: **pass**.
+with `DX_ACT4_GATE=1`), 72 deep subjects (two census pages), real stores: **pass** at `fa812ca31` and again at
+`6fbd3afbc` (identical counts).
 
 | Part | What ran | Result |
 | --- | --- | --- |
@@ -107,8 +108,11 @@ evidence, `frames-check-256.json`). Frames per 256 subjects:
 **Held campaign, toy** (8 subjects, eight 8-second windows): with `TX2_SETTLE_FRAMES=bytes DX_ACT3_SETTLE=1
 DX_ACT4_INITIAL=large DX_ACT3_RELEASE=forms=20,policies=20,permille=1000`: first release R1 + 20 forms settled (2
 value frames, 6 notice frames), 560 changed values and 168 notices equal to the oracle, 474 changes and 160 notices
-equal to the independent rule; every window's Publishes inside one second; 0 read and 0 visibility failures. The
-default campaign (nothing set) is in section 9.
+equal to the independent rule; every window's Publishes inside one second; 0 read and 0 visibility failures (at
+`fa812ca31`). **Default campaign** (nothing set, at `6fbd3afbc`): old framing, first release R1
+settled in 3 value and 2 notice frames, 86 changed values and 8 notices equal to the oracle (as PART9), the read at
+the release basis from the archive as before, every window's Publishes inside one second, 0 read and 0 visibility
+failures.
 
 **Unit tests:** `join/frames.test.ts` 5 of 5 (the rule on synthetic sizes: whole subjects, split, closing piece alone,
 refusal, estimate); `join/ranges.test.ts` 1 of 1 after the selection fix; `bulk.test.ts`, `held.test.ts`,
@@ -268,4 +272,7 @@ risk in section 6.
 `join/form-expect.ts` (independent rule), `join/frames-check.ts`, `join/frames.test.ts`, `join/settle-frames-gate.ts`,
 `join/held-campaign.ts` (`DX_ACT4_INITIAL=large`, changes-only comparison, frame evidence in `held-setup.json`),
 `join/held-server.sh` (`DX_HELD_MINUTES`), `join/stall-reading.py`, `ha1/local.ts` and `load1/fair-local.ts` (toy
-hooks for holder DX-ACT4). Evidence (private): `evidence/DX-ACT4/`.
+hooks for holder DX-ACT4). Evidence (private): `evidence/DX-ACT4/`: `frames-check-256.json`; `load1/load-fair-b1df73df*`
+and `load-fair-0ab9533d*` (gate, sha256 `4ec2aaf3…`, `f47ed409…`), `load-fair-a78e8932*` (held, large first release,
+`f29d79e7…`), `load-fair-e4bf6ce3*` (held, default, `9c8feb6f…`), `load-fair-e63b1b72*` (the first gate attempt, which
+found the selection fault; not a result).
