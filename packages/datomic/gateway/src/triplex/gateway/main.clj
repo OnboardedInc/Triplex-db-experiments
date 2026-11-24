@@ -5,7 +5,8 @@
             [triplex.gateway.write-wire :as write-wire]
             [triplex.gateway.lean-feed :as lean-feed] [triplex.gateway.lean-query :as lean-query]
             [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy]
-            [triplex.gateway.subject-save :as subject] [triplex.gateway.owner-layout :as owner-layout])
+            [triplex.gateway.subject-save :as subject] [triplex.gateway.owner-layout :as owner-layout]
+            [triplex.gateway.at-least :as at-least])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -96,14 +97,20 @@
       (reach/forget! name)
       (when-let [view (@connections uri)] (let [conn (:conn view)] (feed/unsubscribe! conn) (d/release conn) (swap! connections dissoc uri)))
         {:db name :deleted deleted})))
-(defn basis [base name]
+(defn basis
+  ([base name] (basis base name nil))
+  ;; [DX-RD4] Why: with `atLeast` the head answered is at or after the reader's receipt; the reply echoes the request.
+  ;; Rejected: a new route (every reader already resolves its head here) or answering at the asked position.
+  ([base name wanted]
   (when-not (re-matches #"(s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)" name) (codec/invalid "Invalid database name"))
-  (let [db (trace/span "d/db" "peer-call" (d/db (connection (db-uri name)))) scope (stored-scope db)]
+  (let [conn (connection (db-uri name)) current (trace/span "d/db" "peer-call" (d/db conn)) scope (stored-scope current)]
     (when-not scope (throw (ex-info "Scope not initialized" {:status 409 :code "ScopeUninitialized"})))
-    (let [entity (d/entid db [:triplex.scope/key scope])]
-      {:t (codec/encode-value "long" (d/basis-t db))
-       :position (codec/encode-value "long" (storage/head-position name db))
-       :recordedAt nil :schemaHash (storage/value db entity :triplex.scope/schema-hash)})))
+    (let [{:keys [db waitMicros]} (if wanted (at-least/await! name conn current wanted) {:db current})
+          entity (d/entid db [:triplex.scope/key scope])]
+      (cond-> {:t (codec/encode-value "long" (d/basis-t db))
+               :position (codec/encode-value "long" (storage/head-position name db))
+               :recordedAt nil :schemaHash (storage/value db entity :triplex.scope/schema-hash)}
+        wanted (assoc :atLeast (:position wanted) :atLeastWaitMicros waitMicros))))))
 (defn write-options [name]
   ;; [DX-WFIX1] Why: an enabled launcher option can still select the base function on an unopened scope.
   ;; Rejected: an environment listing or a readback from a different database.
@@ -225,7 +232,8 @@
       (and (= :post request-method) (= "/v1/db/delete" uri))
       (response 200 (delete-scope! uri-template (get (request-json body) "scope")))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/basis" uri))
-      (timed (System/nanoTime) (response 200 (basis uri-template (nth (clojure.string/split uri #"/") 3))))
+      (let [start (System/nanoTime)]
+        (timed start (response 200 (basis uri-template (nth (clojure.string/split uri #"/") 3) (at-least/from-query query-string)))))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/write-options" uri))
       (response 200 (write-options (nth (clojure.string/split uri #"/") 3)))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/log" uri))
@@ -258,14 +266,18 @@
       (let [name (nth (clojure.string/split uri #"/") 3) input (trace/read-span "gateway.request-decode" "gateway" (request-json body)) start (System/nanoTime)
             view (connection-view (db-uri name)) conn (:conn view)
             initial (trace/span "d/db" "peer-call" (d/db conn)) p (get-in input ["basis" "recordedPosition"])
+            wanted (at-least/from-body input)
             waited (and (some? p) (> p (storage/head-position name initial)))
             db (if waited (trace/span "storage/await-position" "gateway" (storage/await-position initial p
                  (get input "basisWaitMs")
                  (fn [remaining] (if-let [t (get input "basisT")]
                                    (trace/span "d/sync" "peer-wait" (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout))
                                    (trace/span "d/db" "peer-call" (d/db conn)))) conn)) initial)
+            ;; [DX-RD4] An unpinned reach with atLeastPosition answers at the peer's head once it has that position.
+            {db :db at-least-micros :waitMicros} (if wanted (at-least/await! name conn db wanted) {:db db})
             db (trace/span "storage/await-record-time" "gateway" (storage/await-record-time name conn db input))]
-        (timed start {:status 200 :headers {"Content-Type" "application/json; charset=utf-8" "x-tx2-waited" (str (boolean waited))}
+        (timed start {:status 200 :headers (cond-> {"Content-Type" "application/json; charset=utf-8" "x-tx2-waited" (str (boolean waited))}
+                                             wanted (assoc "x-tx2-at-least" (str (:position wanted)) "x-tx2-at-least-wait-micros" (str at-least-micros)))
          :body (trace/span "reach/response" "gateway" (reach/response name db (if (.endsWith ^String uri "reach-many") input (assoc input "roots" [(get input "root")])) (:generation view) (:recent view)))}))
       (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
       (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (db-uri name) start (System/nanoTime)
@@ -279,11 +291,17 @@
                    (fn [remaining] (if-let [t (get input "basisT")]
                                      (trace/span "d/sync" "peer-wait" (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout))
                                      (trace/span "d/db" "peer-call" (d/db conn)))) conn)))
+            ;; [DX-RD4] Why: snapshot, read and q resolve an unpinned basis from the peer's head; atLeastPosition makes
+            ;; that head at least the reader's receipt. Rejected: accepting it silently on routes that never read a head.
+            wanted (when (contains? input "atLeastPosition")
+                     (when-not (#{"snapshot" "read" "q"} action)
+                       (codec/invalid "atLeastPosition is accepted only on basis, snapshot, read, q, reach and reach-many"))
+                     (at-least/from-body input))
+            {db :db at-least-micros :waitMicros} (if wanted (at-least/await! name conn db wanted) {:db db})
             db (when conn (trace/span "storage/await-record-time" "gateway" (storage/await-record-time name conn db input)))]
         ;; [DX-DEMO1] Why: every read route reports the gateway's own time beside the reply.
         ;; Rejected: inferring server time from the client's round trip.
-        (timed start (response 200
-          (case action
+        (timed start (let [result (case action
             "snapshot" (storage/begin! name db)
             "release" (storage/release! name (get input "handle"))
             "transact" (try (trace/span "storage/commit!" "gateway" (storage/commit! name conn db input))
@@ -305,7 +323,9 @@
                           tx-id (when visible (ledger/claim-tx-id cut claim))]
                       (cond-> {:txId tx-id}
                         (and visible (true? (get input "receipt"))) (assoc :commandId id
-                          :receipt (storage/operation cut (storage/value cut tx :triplex.tx/operation-id)))))))))
+                          :receipt (storage/operation cut (storage/value cut tx :triplex.tx/operation-id))))))]
+          (cond-> (response 200 (cond-> result (and wanted (map? result)) (assoc :atLeast (:position wanted))))
+            wanted (assoc-in [:headers "x-tx2-at-least-wait-micros"] (str at-least-micros))))))
       :else (response 404 {:code "NotFound"}))
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
