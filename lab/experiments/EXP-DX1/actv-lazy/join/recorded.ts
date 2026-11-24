@@ -13,6 +13,8 @@ import { receiveOrdered } from "../../notify1/receiver.ts";
 import { Documents, hash, pack, unpack, type Op } from "../../notify1/store.ts";
 import { Conflict } from "../store.ts";
 import type { Archive } from "./archive.ts";
+import { fillFrame, frameEstimate, type Candidate, type Piece } from "./frames.ts";
+import type { JoinedAccount } from "./account.ts";
 
 const step = 4;
 assert(width % step === 0);
@@ -27,30 +29,104 @@ type Cursor = {
   previous: string;
   entries: number;
   erasureSeq?: number;
+  // [DX-ACT4] Byte-sized frames only: `part` deliveries of subject `start` are already in packets (its ledger change
+  // waits for its last part).
+  frames?: "bytes";
+  part?: number;
 };
+/** A byte-framed packet may start and end inside one subject's deliveries (`part`, `tail`). */
+type FramePacket = Packet & { part?: number; tail?: number };
+
+export type NoticeCandidate = Candidate<W0.Delivery> & { ledger: Op[] };
+/**
+ * [DX-ACT4] The next byte-sized notice frame from the cursor `current` and the candidates read ahead from
+ * `current.start`: the ops exactly as written and the next cursor. Pure, so the database-free check prices the frames.
+ */
+export function noticeFrame(
+  db: Documents,
+  prior: Awaited<ReturnType<Documents["row"]>> | undefined,
+  current: Cursor,
+  candidates: NoticeCandidate[],
+  event: { account: string; position: number; recipe: string; next: string; size: number; erasureSeq?: number },
+) {
+  const part = current.part ?? 0;
+  if (part) assert(part <= candidates[0]!.units.length, "A split subject's deliveries moved");
+  const build = (pieces: readonly Piece[]) => {
+    const ops: Op[] = [],
+      deliveries: W0.Delivery[] = [];
+    for (const p of pieces) {
+      const c = candidates[p.index]!;
+      deliveries.push(...c.units.slice(p.from, p.to));
+      if (p.close) ops.push(...c.ledger);
+    }
+    const last = pieces.at(-1);
+    const end = last ? current.start + last.index + Number(last.close) : current.start,
+      tail = last && !last.close ? last.to : 0;
+    const done = end === event.size && !tail;
+    const seq = event.erasureSeq === undefined ? {} : { erasureSeq: event.erasureSeq };
+    const packet: FramePacket | undefined = deliveries.length
+      ? {
+          account: event.account,
+          epoch: current.epoch,
+          batch: current.batch + 1,
+          previous: current.previous,
+          event: current.event,
+          position: event.position,
+          recipe: event.recipe,
+          start: current.start,
+          through: end,
+          ...(part ? { part } : {}),
+          ...(tail ? { tail } : {}),
+          deliveries,
+          ...seq,
+        }
+      : undefined;
+    const next: Cursor = {
+      epoch: current.epoch,
+      batch: packet?.batch ?? current.batch,
+      previous: packet ? hash(packet) : current.previous,
+      event: current.event + Number(done),
+      start: done ? 0 : end,
+      parent: done ? event.next : current.parent,
+      entries: current.entries + deliveries.length,
+      ...seq,
+      frames: "bytes",
+      part: tail,
+    };
+    ops.push(...db.change(stateKey, prior, next));
+    if (packet) ops.push(db.put(packetKey(packet.batch), pack(packet)));
+    return { next, ops, packet };
+  };
+  const filled = candidates.length
+    ? fillFrame(candidates, part, (p) => frameEstimate(build(p).ops).fits)
+    : { pieces: [], advance: 0, tail: 0, split: false };
+  return { ...build(filled.pieces), filled };
+}
+export type { Cursor };
 
 // [DX-ACT1] Why: retain ordered notice debt for every accepted receipt, even if output settlement becomes obsolete. Rejected: coupling creation of individual notices to a recipient's availability.
 export class RecordedNotices {
   private activation?: { id: string; subjects: string[] };
+  private window?: { key: string; work: Map<string, Awaited<ReturnType<JoinedAccount["notices"]["work"]>>[number]> };
   readonly archive: Archive;
   constructor(archive: Archive) {
     this.archive = archive;
   }
 
-  private async page(e: Event, start: number) {
+  private async page(e: Event, start: number, count = step) {
     const a = this.archive.source;
     if (e.value.kind === "activation") {
       if (this.activation?.id !== e.id)
         this.activation = { id: e.id, subjects: await a.noticeSelection(e) };
       const ids = this.activation.subjects;
-      return { ids: ids.slice(start, start + step), size: ids.length };
+      return { ids: ids.slice(start, start + count), size: ids.length };
     }
     this.activation = undefined;
     const begin = Math.floor(start / width) * width;
     const page = await a.notices.members(e, begin);
     const size =
       e.value.selection.kind === "subjects" ? e.value.selection.ids.length : e.value.census.count;
-    return { ids: page.slice(start - begin, start - begin + step), size };
+    return { ids: page.slice(start - begin, start - begin + count), size };
   }
   private async turn(through: number) {
     const b = this.archive,
@@ -85,6 +161,10 @@ export class RecordedNotices {
     }
     const e = await a.notices.event(current.event, sourceAt);
     assert(e.value.parent === current.parent && e.value.epoch === current.epoch);
+    // [DX-ACT4] The framing is chosen at an event boundary (an event started in one framing finishes in it).
+    const atBoundary = current.start === 0 && !current.part;
+    if (atBoundary ? b.frames === "bytes" : current.frames === "bytes")
+      return this.byteFrame(through, e, current, prior, at, authority);
     const { ids, size } = await this.page(e, current.start);
     assert(current.start <= size && ids.length === Math.min(step, size - current.start));
     const key = (subject: string) => "recorded-ledger:" + subject;
@@ -148,6 +228,73 @@ export class RecordedNotices {
     );
     return next.event > through ? { current: next, at: ack.position } : undefined;
   }
+  // [DX-ACT4] One byte-sized frame of notice entries (frames.ts has the rule). Units are a subject's deliveries; its
+  // ledger change is the closing piece and is written with its last deliveries. A subject whose deliveries alone exceed
+  // the bound is split by delivery; until its last part is written its ledger keeps the earlier state, so a restart
+  // works out the same deliveries again and skips the `part` already recorded.
+  private async byteFrame(
+    through: number,
+    e: Event,
+    current: Cursor,
+    prior: Awaited<ReturnType<Documents["row"]>> | undefined,
+    at: number,
+    authority: Awaited<ReturnType<typeof readErasure>>,
+  ) {
+    const b = this.archive,
+      a = b.source,
+      db = b.db;
+    const sourceAt = await a.s.head();
+    // The rest of the current page of 64 subjects; their work items (the read and evaluation) are kept for the page's
+    // later frames, keyed by the event and the removal sequence. Ledgers are read fresh in every frame.
+    const begin = Math.floor(current.start / width) * width;
+    const { ids, size } = await this.page(e, current.start, begin + width - current.start);
+    assert(current.start <= size && (ids.length >= 1 || current.start === size));
+    const wkey = canonical([e.id, e.at, authority?.seq ?? null, begin]);
+    if (this.window?.key !== wkey) this.window = { key: wkey, work: new Map() };
+    const known = this.window.work,
+      missing = ids.filter((id) => !known.has(id));
+    const key = (subject: string) => "recorded-ledger:" + subject;
+    const [previous, fresh] = await Promise.all([
+      db.rows<string>(ids.map(key), at),
+      missing.length ? a.notices.work(e, missing, sourceAt) : [],
+    ]);
+    for (const [i, id] of missing.entries()) known.set(id, fresh[i]!);
+    const items = ids.map((id) => known.get(id)!);
+    const candidates = ids.map((subject, i) => {
+      const old = previous.get(key(subject)),
+        before = old ? unpack<W0.ItemState[]>(old.value) : [];
+      const result = W0.publish({ items: before, subjects: [], pending: [] }, [
+        {
+          subject,
+          release: e.value.nextHash,
+          basis: { tx: BigInt(e.at), validTime: e.value.validTime },
+          workItems: items[i]!,
+        },
+      ]);
+      const ledger =
+        canonical(result.state.items) !== canonical(before)
+          ? db.change(key(subject), old, pack(result.state.items))
+          : [];
+      return { subject, units: result.deliveries, closing: ledger.length > 0, ledger } as NoticeCandidate;
+    });
+    const { next, ops } = noticeFrame(db, prior, current, candidates, {
+      account: a.db.prefix,
+      position: e.at,
+      recipe: hash(e.value),
+      next: hash(e.value),
+      size,
+      ...(authority ? { erasureSeq: authority.seq } : {}),
+    });
+    const ack = await b.write(
+      "notice",
+      "settled-notice:" + hash([a.s.scope, current, next]),
+      ops,
+      at,
+      next,
+      authority,
+    );
+    return next.event > through ? { current: next, at: ack.position } : undefined;
+  }
   async record(through: number, afterFrame?: () => Promise<void>) {
     try {
       for (;;) {
@@ -186,7 +333,12 @@ export class RecordedNotices {
             p.epoch === state.epoch,
         );
         if (bound?.value.sequence !== p.event) bound = await a.notices.event(p.event, head);
-        assert(p.position === bound.at && p.recipe === hash(bound.value) && p.through > p.start);
+        const fp = p as FramePacket;
+        assert(
+          p.position === bound.at &&
+            p.recipe === hash(bound.value) &&
+            (p.through > p.start || (p.through === p.start && (fp.tail ?? 0) > (fp.part ?? 0))),
+        );
         entries += p.deliveries.length;
         previous = hash(p);
         await recheckErasure(a.s.comp, p.erasureSeq);

@@ -18,6 +18,10 @@ const ordered = process.env.TX2_SUBJECT_ORDERED_IDS === "1";
 const serial = process.env.TX2_SUBJECT_NARROW_REVISION === "1";
 const appendRetirement = process.env.TX2_SUBJECT_APPEND_RETIREMENT === "1";
 const ownerHead = process.env.TX2_SUBJECT_OWNER_HEAD === "1";
+// [Opus W2] Why: with wide saves on, every tape save replaces all four seeded fields (past the narrow writer's three)
+// in a wide ordered block, through the same lost-reply, refused-append and restart checks.
+const wide = process.env.TX2_SUBJECT_WIDE === "1";
+const width = wide ? 4 : 1;
 assert(phase === "before" || phase === "after");
 assert(witnessPath && mode);
 const attempt = process.env.PREP1_ATTEMPT!;
@@ -30,7 +34,7 @@ const scope = JSON.stringify(["triplex-scope-v1", "test", "rolling", nonce, 0]);
 function tape(n: number, label: string, samePerson = false): Write[] {
   return Array.from({ length: n }, (_, ordinal) => ({
     ordinal, account: ordinal % 10, subject: samePerson ? Math.floor(ordinal / 10) % 2 : ordinal,
-    ms: 0, width: 1, version: `${label}/${ordinal}`,
+    ms: 0, width, version: `${label}/${ordinal}`,
   }));
 }
 
@@ -124,6 +128,7 @@ async function before(witness: string) {
     subjectSave?: boolean; subjectOrderedIds?: boolean; subjectNarrowRevision?: boolean; subjectReusePredecessor?: boolean;
     subjectAppendRetirement?: boolean;
     subjectOwnerHead?: boolean;
+    subjectWide?: boolean;
     options: { groupCommit: boolean; ledger: boolean };
   }>("GET", "/v1/db/" + db + "/write-options");
   assert.deepEqual([options.attempt, options.database, options.position], [attempt, db, cut]);
@@ -132,6 +137,7 @@ async function before(witness: string) {
     [ordered, ordered, !ordered, !ordered, serial, serial]);
   assert.equal(Boolean(options.subjectAppendRetirement), appendRetirement);
   assert.equal(Boolean(options.subjectOwnerHead), ownerHead);
+  assert.equal(Boolean(options.subjectWide), wide);
   const rowsByOwner = new Map([...templates].map(([e], i) => [e, change.rows.slice(i * 4, i * 4 + 4)
     .map((r) => ({ ...r, recorded_position: cut, recorded_at: seed.recordedAt.v }))]));
   const senders: Sender[] = Array.from({ length: 10 }, () => ({
@@ -284,7 +290,8 @@ async function after(witness: string) {
     if (ordered) {
       assert(receipt.orderedToken);
       const block = orderedSaveIdentity(receipt.orderedToken);
-      assert.deepEqual(row.journalIds, Array.from({ length: 6 }, (_, i) => block.assertionId(1 + i)));
+      assert.equal(block.capacity, wide ? 4096 : 256);
+      assert.deepEqual(row.journalIds, Array.from({ length: 4 + 2 * width }, (_, i) => block.assertionId(width + i)));
     }
     expected.delete(row.id);
   }
@@ -306,7 +313,7 @@ async function after(witness: string) {
   assert.deepEqual([Number(original.position?.v), original.t?.v, original.recordedAt?.v],
     [proof.lost.p, proof.lost.t, proof.lost.clock]);
   console.log("PREP1_ROLLING " + JSON.stringify({ attempt, credits, db, head: proof.head,
-    mode, ordered, serial, appendRetirement, ownerHead, immediate: proof.immediate, submitted: proof.submitted, durable: journal.length, refused: proof.missing.length, lost: proof.lost, checked: proof.acked }));
+    mode, ordered, serial, appendRetirement, ownerHead, wide, width, immediate: proof.immediate, submitted: proof.submitted, durable: journal.length, refused: proof.missing.length, lost: proof.lost, checked: proof.acked }));
 }
 try {
   if (phase === "before") await before(witnessPath);

@@ -4,7 +4,9 @@ North star P2 and P6, measured on traffic shaped like production. The card's loa
 
 ## What the setting changes
 
-| Item | `--tape saturday` (default, earlier cards) | `--tape production-R` | `--tape production-S` |
+**Default since 2026-11-24 (DX-S1):** a new card runs `--tape production-S` unless another tape is named, because the owner chose one commit per subject's save as the product's save shape (`lab/V0.1.md`). The realistic card keeps its own tape. A recorded campaign without a tape name is still read as Saturday's, so earlier cards re-assemble unchanged. The card's header names the tape that ran.
+
+| Item | `--tape saturday` (earlier cards) | `--tape production-R` | `--tape production-S` (default) |
 | --- | --- | --- | --- |
 | Neighbour saves in the loaded cells (accounts 1 to 9) | One- or two-field replacements, nearly every save a subject not seen before | REAL2's tape: one commit per form row at the cell's row rate (50, 235, 394, 620 rows/s, quiet saves included) | The same saves and rows as R, one commit per subject's save (about 3, 14, 23 and 36 commits/s) |
 | Quiet account (account 0), the solo cells, the P1–P4 pair, P7, P8 | Card's own | Unchanged | Unchanged |

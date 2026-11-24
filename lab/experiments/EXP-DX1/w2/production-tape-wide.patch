@@ -1,0 +1,309 @@
+diff --git a/lab/experiments/EXP-DX1/prep1/server-collect.py b/lab/experiments/EXP-DX1/prep1/server-collect.py
+index 30b6a5c5e..88a973c8a 100644
+--- a/lab/experiments/EXP-DX1/prep1/server-collect.py
++++ b/lab/experiments/EXP-DX1/prep1/server-collect.py
+@@ -688,7 +688,9 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
+                   if r.get("ack") and r["ack"].get("nativeIoStats") is not None]
+             # [DX-REAL2] The per-person writer takes saves of one to three facts that each replace a current value;
+             # wider saves and first writes of a field take the general writer. Report the split and each path's reads.
+-            save_metrics["generalIdentityCommits"] = sum(r.get("assertions", 0) > 256 for r in rows)
++            save_metrics["generalIdentityCommits"] = sum(r.get("assertions", 0) > 256 and not r.get("orderedToken") for r in rows)
++            # [Opus W2] With TX2_SUBJECT_WIDE=1 those commits carry a wide ordered block (23-character token).
++            save_metrics["wideIdentityCommits"] = sum(len(r.get("orderedToken") or "") == 23 for r in rows)
+             save_metrics["writerPath"] = {
+                 "subject": sum(bool(r.get("ack", {}).get("subjectSave")) for r in rows if r["account"]),
+                 "general": sum(bool(r.get("ack")) and not r["ack"].get("subjectSave") for r in rows if r["account"])}
+diff --git a/lab/experiments/EXP-DX1/prep1/server-produce.ts b/lab/experiments/EXP-DX1/prep1/server-produce.ts
+index d74fecb4a..635d2bebd 100644
+--- a/lab/experiments/EXP-DX1/prep1/server-produce.ts
++++ b/lab/experiments/EXP-DX1/prep1/server-produce.ts
+@@ -8,6 +8,7 @@ import {
+   DatomicClient,
+   DatomicHttpError,
+   orderedSaveIdentity,
++  wideOrderedSaveIdentity,
+ } from "../../../../packages/datomic/dist/index.js";
+ import { decodeRowText, encodeRowText } from "../../../../packages/datomic/dist/rowText.js";
+ import { ids, type Fact } from "../../../bench/lib/world.ts";
+@@ -90,6 +91,8 @@ type Seed = {
+ };
+ const requestedCredits = Number(process.env.DX_PREP1_FAIR_CREDITS ?? 0);
+ export const orderedBlockLimit = 256;
++// [Opus W2] The launcher's wide-save switch, read back from every writer's /write-options before the first offer.
++const wideSaves = process.env.TX2_SUBJECT_WIDE === "1";
+ assert([0, 1, 2, 6].includes(requestedCredits));
+ const campaign = process.env.DX_PREP1_CAMPAIGN ?? "comparison";
+ assert(
+@@ -356,7 +359,10 @@ export async function phase(
+     // over 256 assertions takes the general identity, as the product would, and stays one atomic commit.
+     // Rejected: splitting the save into several commits, which the product does not do.
+     const assertions = 2 * facts.length + old.length + 4;
+-    const identity = orderedIds && assertions <= orderedBlockLimit ? orderedSaveIdentity() : undefined;
++    // [Opus W2] Why: with TX2_SUBJECT_WIDE=1 the per-subject writer takes up to 128 facts, so a commit over 256 assertions
++    // takes a wide ordered block (4,096) instead of the general identity; one commit per save either way.
++    const identity = orderedIds && assertions <= orderedBlockLimit ? orderedSaveIdentity()
++      : orderedIds && wideSaves ? wideOrderedSaveIdentity() : undefined;
+     const input = command(id, facts, old, true, false, identity);
+     input.sourceK = Math.max(head, ...previous.map((r) => r.recorded_position));
+     input.groupAccount = wide ? scaleAccount(o.account) : accounts[o.account]!.key;
+@@ -625,6 +631,7 @@ async function armRun(
+       assert.equal(Boolean(got.subjectNumericOwner), Boolean(arm.numericOwner));
+       assert.equal(Boolean(got.subjectPrefetch), Boolean(arm.prefetch));
+       assert.equal(Boolean(got.subjectOrderedIds), Boolean(arm.orderedIds));
++      assert.equal(Boolean(got.subjectWide), wideSaves);
+       // [DX-PREP1] Why: match the fresh, source-bound installed function and verify it again on every ACK.
+       // Rejected: copying a function identifier from a JVM with different generated Clojure symbols.
+       if (b) {
+diff --git a/lab/experiments/EXP-DX1/prep1/server.sh b/lab/experiments/EXP-DX1/prep1/server.sh
+index fc0ec5402..85354acfb 100644
+--- a/lab/experiments/EXP-DX1/prep1/server.sh
++++ b/lab/experiments/EXP-DX1/prep1/server.sh
+@@ -514,6 +514,10 @@ elif [[ $mode == arm ]]; then
+   if [[ $cell == 1-fixed-S || $cell == 1-prefetch-S || $cell == 1-ordered-S || $cell == 1-ceiling-S || $cell == 1-tail-*-S || $cell == 1-scale-*-S ]]; then export TX2_SUBJECT_NUMERIC_OWNER=1; fi
+   if [[ $cell == 1-prefetch-S ]]; then export TX2_SUBJECT_PREFETCH=1; fi
+   if [[ $cell == 1-ordered-S || $cell == 1-ceiling-S || $cell == 1-tail-*-S || $cell == 1-scale-*-S ]]; then export TX2_SUBJECT_ORDERED_IDS=1; fi
++  # [Opus W2] Why: the production arms can run with wide saves on the per-subject writer (DX_REAL2_WIDE=1); default off.
++  # Rejected: a second arm name (every allowlist and collector would need it); run the mode twice instead.
++  export TX2_SUBJECT_WIDE=0
++  if [[ ${DX_REAL2_WIDE:-0} == 1 ]]; then [[ -n ${DX_REAL2_SET:-} ]] || exit 2; export TX2_SUBJECT_WIDE=1; fi
+   export DX_WRITE_OPTIONS_ATTEMPT=$(nonce)
+   # Hold total configured writer heap and the writer CPU mask fixed across peer counts.
+   export DX_GW_WRITE_JAVA_OPTS="-Xms$((512/DX_PREP1_WRITERS))m -Xmx$((4096/DX_PREP1_WRITERS))m -XX:+UseG1GC"
+diff --git a/lab/experiments/EXP-DX1/stack/up.sh b/lab/experiments/EXP-DX1/stack/up.sh
+index da47d59c5..5afb62fd0 100755
+--- a/lab/experiments/EXP-DX1/stack/up.sh
++++ b/lab/experiments/EXP-DX1/stack/up.sh
+@@ -236,6 +236,7 @@ subject_save=${TX2_SUBJECT_SAVE:-0}
+ subject_numeric_owner=${TX2_SUBJECT_NUMERIC_OWNER:-0}
+ subject_prefetch=${TX2_SUBJECT_PREFETCH:-0}
+ subject_ordered_ids=${TX2_SUBJECT_ORDERED_IDS:-0}
++subject_wide=${TX2_SUBJECT_WIDE:-0}
+ if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
+   [[ ${DX_BARE_METAL:-0} == 1 && $prepw =~ ^(1|2|4)$ ]]
+   # [DX-V01] Why: the scorecard uses the same selected writer on private bridge endpoints.
+@@ -758,7 +759,8 @@ for role in "${gateway_roles[@]}"; do
+   # Rejected: coupling activation to trace collection or installing the writer on reader peers.
+   if [[ $mode == w ]]; then
+     field_policy+=(-e "TX2_SUBJECT_SAVE=$subject_save" -e "TX2_SUBJECT_NUMERIC_OWNER=$subject_numeric_owner"
+-      -e "TX2_SUBJECT_PREFETCH=$subject_prefetch" -e "TX2_SUBJECT_ORDERED_IDS=$subject_ordered_ids")
++      -e "TX2_SUBJECT_PREFETCH=$subject_prefetch" -e "TX2_SUBJECT_ORDERED_IDS=$subject_ordered_ids"
++      -e "TX2_SUBJECT_WIDE=$subject_wide")
+   fi
+   if [[ $mode == w && -n ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
+     [[ ${DX_PREDECESSOR_LOOKUP:-} =~ ^[01]$ && $DX_WRITE_OPTIONS_ATTEMPT =~ ^[a-f0-9-]{36}$ ]] || exit 2
+diff --git a/packages/datomic/gateway/src/triplex/gateway/main.clj b/packages/datomic/gateway/src/triplex/gateway/main.clj
+index 0e122599f..469bb472a 100644
+--- a/packages/datomic/gateway/src/triplex/gateway/main.clj
++++ b/packages/datomic/gateway/src/triplex/gateway/main.clj
+@@ -136,7 +136,9 @@
+                              :subjectNumericOwner subject/numeric-owner?
+                              :subjectOrderedIds subject/ordered-ids?
+                              :subjectPrefetch (boolean (and subject/prefetch? (d/entid db subject/prefetch-ident)))
+-                             :subjectFunctionTx (some-> subject-t str)))))
++                             :subjectFunctionTx (some-> subject-t str))
++      ;; [Opus W2] Why: launchers read back the actual wide-save switch; the reply is unchanged with the option off.
++      subject/wide? (assoc :subjectWide true :subjectWideFacts subject/wide-facts))))
+ (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})
+ ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.
+ ;; Rejected: timing the StringBuilder alone (response bytes are not ready yet).
+diff --git a/packages/datomic/gateway/src/triplex/gateway/subject_save.clj b/packages/datomic/gateway/src/triplex/gateway/subject_save.clj
+index e06ccec9a..2590b7bdd 100644
+--- a/packages/datomic/gateway/src/triplex/gateway/subject_save.clj
++++ b/packages/datomic/gateway/src/triplex/gateway/subject_save.clj
+@@ -12,6 +12,10 @@
+ (def numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_NUMERIC_OWNER")))
+ (def prefetch? (= "1" (System/getenv "TX2_SUBJECT_PREFETCH")))
+ (def ordered-ids? (= "1" (System/getenv "TX2_SUBJECT_ORDERED_IDS")))
++;; [Opus W2] Ported from exp/DX-W2-wide-saves: wide saves, first writes and retirements on the per-subject writer.
++(def wide? (and enabled (= "1" (System/getenv "TX2_SUBJECT_WIDE"))))
++(def wide-facts 128)
++(def wide-ops 1024)
+ (def erase-generation :triplex.scope/erasure-seq)
+ (def mutable-flags #{:triplex.scope/feed-irregular :triplex.scope/position-regular
+                      :triplex.scope/irregular :triplex.scope/packed-journals})
+@@ -58,14 +62,23 @@
+                  (recur (next rows) (inc inspected)))))))
+        legacy-check)))
+ 
++(defn- block-bounds [prefixes]
++  (let [hi (peek prefixes)]
++    [(first prefixes) (str (subs hi 0 (dec (count hi))) (char (inc (int (last hi)))))]))
++
+ (defn ordered-bounds [journal prefixes]
+-  (when-let [[_ token] (re-matches #"_tx/([0-7][0-9A-HJKMNP-TV-Z]{23})00" journal)]
+-    (let [base (str "2001a" token) n (count prefixes)]
+-      (when (and (<= 1 n 256)
+-                 (= prefixes (mapv #(str base (.charAt "0123456789ABCDEF" (quot % 16))
+-                                                (.charAt "0123456789ABCDEF" (rem % 16))) (range n))))
+-        (let [hi (peek prefixes)]
+-          [(first prefixes) (str (subs hi 0 (dec (count hi))) (char (inc (int (last hi)))))])))))
++  (or
++    (when-let [[_ token] (re-matches #"_tx/([0-7][0-9A-HJKMNP-TV-Z]{23})00" journal)]
++      (let [base (str "2001a" token) n (count prefixes)]
++        (when (and (<= 1 n 256)
++                   (= prefixes (mapv #(str base (.charAt "0123456789ABCDEF" (quot % 16))
++                                                  (.charAt "0123456789ABCDEF" (rem % 16))) (range n))))
++          (block-bounds prefixes))))
++    (when wide?
++      (when-let [[_ token] (re-matches #"_tx/([0-7][0-9A-HJKMNP-TV-Z]{22})W00" journal)]
++        (let [base (str "2001a" token) n (count prefixes)]
++          (when (and (<= 1 n 4096) (= prefixes (mapv #(str base (format "%03X" %)) (range n))))
++            (block-bounds prefixes)))))))
+ 
+ (def body
+   '(let [{:keys [scope flags function owner revision journal operation command ops provisional
+@@ -218,7 +231,8 @@
+                (#{:triplex/commit (first (commit/variants [true false]))} commit-ident)
+                (:lean p) (not (:slim-row p)) (= 1 (:span p)) (:assign-record-time p)
+                (not-any? p [:scope-wide :position-irregular :irregular :save-ledger :packed-journal :bulk])
+-               (<= (count ops) 256) (every? prepared/small-op? ops))
++               (not (and wide? (:import-predecessor p)))
++               (<= (count ops) (if wide? wide-ops 256)) (every? prepared/small-op? ops))
+       (let [fn-tx (installed db) flags (when fn-tx (scope-witness db scope)) f (into {} flags)
+             owner (d/entid db [:triplex.entity/id subject]) revision (when owner (scope/value db owner :triplex.entity/rev))
+             asserted (filterv #(and (vector? %) (= :triplex/assert (first %))) ops)
+@@ -244,7 +258,10 @@
+                    (= journal (:triplex.tx/id op-header))
+                    (string? (:triplex.tx/operation-id op-header))
+                    (some #(= [:db/add "datomic.tx" :triplex.tx/journals (str "e:" journal)] %) ops)
+-                   (<= 1 (count business) 3) (= (count business) (count retired) (count live))
++                   (if wide?
++                     (and (<= (count business) wide-facts) (<= (count retired) wide-facts)
++                          (pos? (+ (count business) (count retired))) (= (count retired) (count live)))
++                     (and (<= 1 (count business) 3) (= (count business) (count retired) (count live))))
+                    (= (set live) (into #{} (map #(nth % 2)) retired)) (every? #(= subject (second %)) retired)
+                    (= (count asserted) (count new-ids)) (= (set new-ids) (into #{} (map prepared/row-id) asserted))
+                    (every? #(= 5 (count (nth % 3))) asserted)
+@@ -252,8 +269,11 @@
+           (let [prior (into {} (keep (fn [id] (when-let [text (retirement db owner id)] [id text]))) live)
+                 before (into #{} (map (comp field lean/decode)) (vals prior))
+                 after (into #{} (map (comp field lean/decode second #(nth % 3))) business)]
+-            (when (and (= (count live) (count prior) (count before) (count after))
+-                       (= before after) (not (contains? before nil)))
++            (when (and (if wide?
++                         (and (= (count live) (count prior) (count before)) (= (count business) (count after))
++                              (not (contains? after nil)))
++                         (and (= (count live) (count prior) (count before) (count after)) (= before after)))
++                       (not (contains? before nil)))
+               (let [prefixes (vec (sort (map lean/prefix new-ids)))]
+                 (cond-> {:scope scope :flags flags :function [ident fn-tx] :owner owner :revision revision
+                          :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
+diff --git a/packages/datomic/src/index.ts b/packages/datomic/src/index.ts
+index 6a37132d5..091506af9 100644
+--- a/packages/datomic/src/index.ts
++++ b/packages/datomic/src/index.ts
+@@ -61,7 +61,7 @@ export function makeDatomicRuntime(options: {
+ }
+ export * from "./codec.js";
+ export * from "./DatomicClient.js";
+-export { orderedSaveIdentity, type OrderedSaveIdentity } from "./orderedSaveIdentity.js";
++export { orderedSaveIdentity, wideOrderedSaveIdentity, type OrderedSaveIdentity } from "./orderedSaveIdentity.js";
+ export {
+   makeDatomicStorageAdapter,
+   DatomicSerializationConflict,
+diff --git a/packages/datomic/src/orderedSaveIdentity.ts b/packages/datomic/src/orderedSaveIdentity.ts
+index 9941f6a5b..7a00fa677 100644
+--- a/packages/datomic/src/orderedSaveIdentity.ts
++++ b/packages/datomic/src/orderedSaveIdentity.ts
+@@ -1,45 +1,65 @@
+ import { generateId } from "@triplex-build/triplex/internal";
+ 
+ const saveToken = /^[0-7][0-9A-HJKMNP-TV-Z]{23}$/;
++const wideToken = /^[0-7][0-9A-HJKMNP-TV-Z]{22}$/;
+ const alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+ let lastToken = "";
+ 
+-function nextToken(): string {
+-  const sampled = generateId().slice(0, 24);
+-  if (sampled > lastToken) {
+-    lastToken = sampled;
+-    return lastToken;
+-  }
+-  // [DX-PREP1] Why: reserve the final two characters of the SDK's 26-character TripleId.
+-  // Rejected: truncating adjacent ULIDs without advancing their block (they share a prefix).
+-  const digits = lastToken.split("");
++function advance(token: string): string {
++  const digits = token.split("");
+   for (let i = digits.length - 1; i >= 0; i--) {
+     const next = alphabet.indexOf(digits[i]!) + 1;
+     if (next < (i === 0 ? 8 : alphabet.length)) {
+       digits[i] = alphabet[next]!;
+-      lastToken = digits.join("");
+-      return lastToken;
++      return digits.join("");
+     }
+     digits[i] = "0";
+   }
+   throw new RangeError("Ordered save identity space exhausted");
+ }
+ 
++function nextToken(): string {
++  const sampled = generateId().slice(0, 24);
++  if (sampled > lastToken) {
++    lastToken = sampled;
++    return lastToken;
++  }
++  // [DX-PREP1] Why: reserve the final two characters of the SDK's 26-character TripleId.
++  // Rejected: truncating adjacent ULIDs without advancing their block (they share a prefix).
++  lastToken = advance(lastToken);
++  return lastToken;
++}
++
++function nextWideToken(): string {
++  // [Opus W2] Why: a wide block owns every ID that starts with its 23 characters, so it must start above every token this
++  // process has issued, and later one-byte tokens must start above it. Rejected: sampling 23 characters without a floor.
++  const sampled = generateId().slice(0, 23);
++  const floor = lastToken.slice(0, 23);
++  const token = sampled > floor ? sampled : advance(floor.padEnd(23, "0"));
++  lastToken = token + "Z";
++  return token;
++}
++
+ export interface OrderedSaveIdentity {
+   readonly token: string;
+   readonly transactionId: string;
++  /** How many assertion IDs the block holds: 256 (one-byte ordinal) or 4,096 (wide). */
++  readonly capacity: number;
+   readonly assertionId: (ordinal: number) => string;
+ }
+ 
+ /**
+  * Allocate one identity block for a small save. Retain the token and row order
+- * with the command so a resend can reconstruct the same identifiers.
++ * with the command so a resend can reconstruct the same identifiers. A 23-character
++ * token (from `wideOrderedSaveIdentity`) reconstructs the wide block.
+  */
+ export function orderedSaveIdentity(token: string = nextToken()): OrderedSaveIdentity {
++  if (wideToken.test(token)) return wideOrderedSaveIdentity(token);
+   if (!saveToken.test(token)) throw new TypeError("Expected a canonical 24-character save token");
+   return {
+     token,
+     transactionId: `_tx/${token}00`,
++    capacity: 256,
+     // [DX-PREP1] Why: the complete save occupies one range of the full-row AVET index.
+     // Rejected: minting one ULID per assertion, since other saves can interleave in that range.
+     assertionId: (ordinal) => {
+@@ -49,3 +69,23 @@ export function orderedSaveIdentity(token: string = nextToken()): OrderedSaveIde
+     },
+   };
+ }
++
++/**
++ * Allocate one identity block for a wide save (up to 4,096 assertions): a 23-character
++ * token and a three-hex-digit ordinal, so every ID keeps the 26-character TripleId form.
++ * Its journal ID ends in "W00", which no one-byte block can produce for these IDs.
++ * The gateway takes it on the per-subject writer only with `TX2_SUBJECT_WIDE=1`.
++ */
++export function wideOrderedSaveIdentity(token: string = nextWideToken()): OrderedSaveIdentity {
++  if (!wideToken.test(token)) throw new TypeError("Expected a canonical 23-character wide save token");
++  return {
++    token,
++    transactionId: `_tx/${token}W00`,
++    capacity: 4096,
++    assertionId: (ordinal) => {
++      if (!Number.isInteger(ordinal) || ordinal < 0 || ordinal >= 4096)
++        throw new RangeError("Wide ordered save assertion ordinal must be between 0 and 4095");
++      return token + ordinal.toString(16).toUpperCase().padStart(3, "0");
++    },
++  };
++}

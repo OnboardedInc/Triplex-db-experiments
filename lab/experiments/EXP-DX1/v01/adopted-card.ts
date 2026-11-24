@@ -7,7 +7,7 @@ import { render as emptyCard } from "./render.ts";
 import type { MixedIds } from "./mixed-ids.ts";
 import type { adoptedArm } from "./adopted.ts";
 import { defaultCreditMode, launchProfile, type ServerProfile } from "../jvm1/launch.mjs";
-import { barrierRoot, launchIntegration, selectedWriter, writeDiagnostics, serverStages, writerIntegration, type JvmProfile, type Age, type Writer } from "./profile.ts";
+import { barrierRoot, phaseSeconds, launchIntegration, selectedWriter, writeDiagnostics, serverStages, writerIntegration, type JvmProfile, type Age, type Writer } from "./profile.ts";
 import { cellPath, lastServerCell, ratedTape, serverCellSeconds, serverRates, writerAdmission, type CreditMode, type WindowSeconds } from "./server-workload.ts";
 
 import { realisticTape, sweepSize, thinLimit, realPin } from "./realistic-plan.ts";
@@ -18,14 +18,19 @@ import { summarizeTelemetry, type Telemetry } from "./cell-telemetry.ts";
 import { checkAdmission } from "./credit-evidence.ts";
 import { p99Miss, quietVerdict } from "./card-verdict.ts";
 import { windowStats, type WindowWrite } from "./windows.ts";
-import { fullCellTape, parseCardTape, tapeShape, tapeTitle, type CardTape } from "./production-card.ts";
+import { fullCellTape, parseCardTape, tapeEdge, tapeShape, tapeTitle, type CardTape } from "./production-card.ts";
+import { randomLine, readerLaunch, readerTitle, type CardReader } from "./card-reader.ts";
 
 type Card = { source: string; age: Age; writer: Writer; jvm?: JvmProfile; toy: boolean; campaign: string; out: string; forecast: string;
   realistic?: RealisticBinding;
   windowSeconds?: WindowSeconds; creditMode?: CreditMode;
-  prepared?: boolean; profile?: ServerProfile; txJvm?: JvmProfile; writeJvm?: JvmProfile; diagnostics?: ReturnType<typeof writeDiagnostics>; separateWal?: boolean; failure?: string;
+  prepared?: boolean; profile?: ServerProfile; txJvm?: JvmProfile;
+  /** [DX-CARD2] The tuned reader (run.ts --reader tuned); absent for the default reader. */
+  reader?: CardReader; writeJvm?: JvmProfile; diagnostics?: ReturnType<typeof writeDiagnostics>; separateWal?: boolean; failure?: string;
   /** The save tape: its name, or the input's binding of every loaded cell's tape report (assembled campaigns). */
   tape?: string | { name: string };
+  /** [DX-S1] Default-off writer options the campaign ran with (v01/production-card.ts writerOptionNames). */
+  writerOptions?: Record<string, string>;
   /** [DX-CARD1] A campaign assembled by a later renderer commit than the one that ran it (run.ts --renderer). */
   renderer?: { commit: string; files: string[] };
   /**
@@ -44,7 +49,7 @@ export function writeAdoptedCard(run: Card) {
   const file = (arm: string, name: string) => path.join(run.campaign, arm, name);
   const diagnostics = run.diagnostics ?? writeDiagnostics(run.writer);
   const profile = run.profile ?? "server";
-  const policy = launchProfile(profile, { jvm: run.jvm, txJvm: run.txJvm, writeJvm: run.writeJvm, creditMode });
+  const policy = launchProfile(profile, { jvm: run.jvm, txJvm: run.txJvm, writeJvm: run.writeJvm, creditMode, ...readerLaunch(run.reader) });
   const stages = serverStages(policy, !!run.separateWal);
   const readArm = (arm: string, load: boolean, mode = creditMode) => {
     if (!fs.existsSync(file(arm, "arm.json"))) return [];
@@ -56,6 +61,7 @@ export function writeAdoptedCard(run: Card) {
     const raw = JSON.parse(bytes.toString());
     assert.deepEqual([raw.p1, raw.p4, raw.p6, raw.p7, raw.thin, raw.selection, raw.fairCredits],
       [x.p1, x.p4, x.p6, x.p7, x.thin, x.settings.selection, x.settings.fairCredits]);
+    assert.deepEqual(raw.p1Random, x.p1Random);
     assert.equal(x.settings.creditMode, mode);
     const admission = writerAdmission(mode);
     if (x.p6 || !run.toy || admission.mode === "rolling") {
@@ -92,6 +98,7 @@ export function writeAdoptedCard(run: Card) {
       [run.source, run.age, run.writer, run.jvm, run.txJvm, run.writeJvm, diagnostics, !!run.separateWal, stages, windowSeconds, creditMode]);
     assert.deepEqual(input.realistic, run.realistic);
     assert.equal(input.profile ?? "server", profile);
+    assert.deepEqual(input.reader, run.reader, "the campaign ran another reader setting");
     assert.equal(Boolean(input.pgdata), prepared);
     if (prepared) assert.equal(input.pgdata.length, stages.length);
     let systemIdentifier: string | undefined;
@@ -159,6 +166,7 @@ export function writeAdoptedCard(run: Card) {
     return "[adopted arm](" + rel + ")";
   };
   const rows = new Map<string, string[]>();
+  let rowsRandom: string[] | undefined;
   const cellWindows: string[] = [], cellTelemetry: string[] = [], edgeRows: string[] = [];
   const regenerated: { cell: string; ms: number; gap: number; maxMs: number; maxGap: number }[] = [];
   const partial = "PARTIAL";
@@ -175,15 +183,40 @@ export function writeAdoptedCard(run: Card) {
     const baseline = zero?.p2.latency.p99Ms;
     const ratio = baseline && loaded.p2.latency.p99Ms !== null ? loaded.p2.latency.p99Ms / baseline : null;
     const miss = zero && p99Miss(run.toy, loaded.p1.find(p => p.seats === 256)?.read, 100, "L256 checked field-read p99");
-    if (loaded.p1.some(p => p.read.count || p.errors)) rows.set("P1", [`${miss ? miss + ". " : ""}${phases}. Whole-tape writer p99 ratio ${tag(ratio)}. Exact seed-cut field probes; full-world and recovery coverage remain open.`, miss ? "MISSED" : partial,
+    // [DX-CARD2] With the tuned reader the P1 verdict names its case: this row judges re-read subjects (the ladder's
+    // seats re-read a fixed sequence of subjects, so most reads find them in the reader's cache), and the next row
+    // judges the random-subject line on its own, since the two cases differ by about a factor of seven.
+    const judged = run.reader ? "Judges re-read subjects (seat s reads subject 7919·k mod 100,000 of account s mod 10; each subject returns about ten rounds later); random subjects are judged in the next row. " : "";
+    const batches = run.reader ? ` Client batches of up to ${loaded.p1[0]?.batch?.size ?? "—"}: mean ${loaded.p1.map(p => `L${p.seats} ${tag(p.batch?.meanBatch)}`).join(", ")}.` : "";
+    if (loaded.p1.some(p => p.read.count || p.errors)) rows.set("P1", [`${judged}${miss ? miss + ". " : ""}${phases}.${batches} Whole-tape writer p99 ratio ${tag(ratio)}. Exact seed-cut field probes; full-world and recovery coverage remain open.`, miss ? "MISSED" : partial,
       String(loaded.p1.reduce((a, p) => a + p.read.count, 0)), evidence("loaded")]);
-    if (loaded.p3.entries) rows.set("P3", [`${loaded.p3.entries} ordered exact changes${loaded.seed.realistic ? ` (busy deep/thin/small ${armMix(loaded.writes).join("/")})` : ""}; dispatch-to-observation p99 ${tag(loaded.dispatchToFeed.p99Ms)} ms across ${loaded.dispatchToFeed.count} observations. Durable effects and crash resume are open.`, partial,
+    const line = loaded.p1Random;
+    if (run.reader) {
+      assert(run.toy || line, "the tuned reader's card has no random-subject line");
+      if (line) {
+        const l = line.loads;
+        const randomMiss = p99Miss(run.toy, line.read, 100, `L${line.seats} random-subject read p99`);
+        const bad = line.wrong || line.errors ? `${line.wrong} wrong values and ${line.errors} errors; both bars are zero. ` : "";
+        rowsRandom = [`${bad}${randomMiss ? randomMiss + ". " : ""}L${line.seats} random ${tag(line.goodput)}/s, p50 ${tag(line.read.p50Ms)} ms, p99 ${tag(line.read.p99Ms)} ms, ${line.wrong} wrong, ${line.errors} errors; mean batch ${tag(line.meanBatch)}; ` +
+          `${line.population?.accounts ?? "—"} accounts × ${line.population?.subjectsPerAccount ?? "—"} subjects, pinned at the seed cut ${line.position}, every value checked against the seed's. ` +
+          (l ? `Storage loads per subject ${tag(l.loadsPerSubjectSampled)} (${l.sampledExchanges} sampled exchanges, ${tag(l.storageReadsPerExchange)} per exchange) and ${tag(l.loadsPerSubjectMetrics)} (reader metrics, ${tag(l.metricsSeconds)} s); object-cache share ${tag(l.cacheShare)}; handler CPU ${tag(l.handlerCpuMsPerExchange)} ms per exchange. `
+            : "Storage loads and cache share not recorded (no reader trace). ") +
+          `Answered from the current database ${line.shortcut.current} of ${line.shortcut.current + line.shortcut.asOf}.`,
+          run.toy ? partial : line.wrong || line.errors || randomMiss ? "MISSED" : "MET", String(line.read.count), evidence("loaded")];
+      }
+    }
+    const steps = feedSteps(loaded), at256 = steps.find((x) => x.label === "L256");
+    const lagRule = at256?.lag.count ? `Lag judged at P1's 256 readers, as the bar says: p99 ${tag(at256.lag.p99Ms)} ms (${at256.lag.p99Ms !== null && at256.lag.p99Ms <= 250 ? "lag clause met" : "lag clause missed"}). By ladder step: ${steps.map((x) => `${x.label} p99 ${tag(x.lag.p99Ms)} ms (n=${x.lag.count})`).join("; ")}. Whole tape as before: ` : "";
+    if (loaded.p3.entries) rows.set("P3", [`${loaded.p3.entries} ordered exact changes${loaded.seed.realistic ? ` (busy deep/thin/small ${armMix(loaded.writes).join("/")})` : ""}; ${lagRule}dispatch-to-observation p99 ${tag(loaded.dispatchToFeed.p99Ms)} ms across ${loaded.dispatchToFeed.count} observations. Durable effects and crash resume are open.`, partial,
       String(loaded.p3.entries), evidence("loaded")]);
     if (loaded.p4?.observed.count) {
       const byKind = loaded.p4.byKind;
       if (byKind) assert.equal(Object.values(byKind).reduce((n, summary) => n + summary.count, 0), loaded.p4.observed.count);
       const cohorts = byKind ? " " + Object.entries(byKind).map(([kind, h]) => `${kind} p99 ${tag(h.p99Ms)} ms (n=${h.count})`).join(" · ") + "." : "";
-      rows.set("P4", [`Current demand pulls p50 ${tag(loaded.p4.observed.p50Ms)} ms, p99 ${tag(loaded.p4.observed.p99Ms)} ms.${cohorts} History depth and engine bytes remain open.`, partial,
+      const d = loaded.p4Drain, g = loaded.p4Gateway;
+      const drained = d ? ` Started after the reader's backlog ${d.drained ? "drained" : "did not drain"} (${tag(d.elapsedMs / 1000)} s; ${d.probes.count} probes, p99 ${tag(d.probes.p99Ms)} ms, max ${tag(d.probes.maxMs)} ms).` : "";
+      const gateway = g && !("error" in g) ? ` Gateway time of every pull (${g.found} of ${g.requested} recorded): p50 ${tag(g.p50Ms)}, p99 ${tag(g.p99Ms)}, max ${tag(g.maxMs)} ms.` : "";
+      rows.set("P4", [`Current demand pulls p50 ${tag(loaded.p4.observed.p50Ms)} ms, p99 ${tag(loaded.p4.observed.p99Ms)} ms.${drained}${gateway}${cohorts} History depth and engine bytes remain open.`, partial,
       String(loaded.p4.observed.count), evidence("loaded")]);
     }
     if (loaded.p3.entries) rows.set("Journal queryable", [`Compared ${loaded.p3.entries} queryable journal entries to original operation and predecessor expectations.`, partial,
@@ -280,7 +313,12 @@ export function writeAdoptedCard(run: Card) {
     partial, quiet.map((a) => a.samples).join(" · "), quiet.map((a) => a.link).join(" · ")]);
   const completedRates = new Set<string>();
   if (!run.toy) {
-    const commits = [], pairs = [], headlineVerdicts: ReturnType<typeof quietVerdict>["status"][] = [];
+    const commits = [], pairs = [], headlineVerdicts: ReturnType<typeof quietVerdict>["status"][] = [], steadyVerdicts: boolean[] = [];
+    // [DX-CARD2] P2 is judged in steady state: on the second half of each loaded cell (all loaded saves, from the
+    // scheduled offer), with the first half reported as "after a start" and the whole cell as before. Cells shorter
+    // than 300 s are not judged (on 2026-11-23, 43 to 51% of commits in 90 s cells still read storage in the writer;
+    // the same tape at 394/s for 300 s had p50 10.81 ms in minute 1 and 6.3 to 8.2 ms in minutes 2 to 5).
+    const steady = windowSeconds >= 300;
     const treatments = [[loaded, "", "headline", creditMode],
       [control, barrierRoot, "barrier6 control", defaultCreditMode]] as const;
     for (const [anchor, prefix, name, mode] of treatments) {
@@ -306,8 +344,13 @@ export function writeAdoptedCard(run: Card) {
         const ratio = (base: number | null, loaded: number | null) => tag(base && loaded !== null ? loaded / base : null);
         const mix = armMix(busy.writes);
         if (busy.production) productionRows.push(productionRow(`${name} ${rate}`, busy, loadPath));
+        const h = halves(busy);
+        const met = h.second.due.p50Ms !== null && h.second.due.p99Ms !== null && h.second.due.p50Ms <= 10 && h.second.due.p99Ms <= 50;
+        if (name === "headline") steadyVerdicts.push(met);
         commits.push({
-          reading: `${name} ${rate}/s: ${tag(b.acknowledgedInWindow / b.durationSeconds)}/s in window, ${b.totalReceipts}/${b.totalOffers} durable, ${b.expired} expired${busy.seed.realistic ? `, deep/thin/small receipts ${mix.join("/")}` : ""}, p50/p99 ${tag(busy.p2.latency.p50Ms)}/${tag(busy.p2.latency.p99Ms)} ms`,
+          reading: `${name} ${rate}/s: ${tag(b.acknowledgedInWindow / b.durationSeconds)}/s in window, ${b.totalReceipts}/${b.totalOffers} durable, ${b.expired} expired${busy.seed.realistic ? `, deep/thin/small receipts ${mix.join("/")}` : ""}, ` +
+            `second half p50/p99 ${tag(h.second.due.p50Ms)}/${tag(h.second.due.p99Ms)} ms${steady ? (met ? " (met)" : " (missed)") : ""} (from the actual send ${tag(h.second.send.p50Ms)}/${tag(h.second.send.p99Ms)}; driver timer lateness p50/p99 ${tag(h.second.late.p50Ms)}/${tag(h.second.late.p99Ms)}), ` +
+            `after a start (first half) ${tag(h.first.due.p50Ms)}/${tag(h.first.due.p99Ms)}, whole cell as before p50/p99 ${tag(busy.p2.latency.p50Ms)}/${tag(busy.p2.latency.p99Ms)} ms`,
           samples: `${name} ${rate}: ${b.totalReceipts}`, link: evidence(loadPath),
         });
         pairs.push({
@@ -319,14 +362,96 @@ export function writeAdoptedCard(run: Card) {
         if (rate === serverRates.at(-1)) completedRates.add(name);
       }
     }
-    if (commits.length) rows.set("P2", [commits.map(c => c.reading).join(" · ") + ". Completed-only field saves. Full size bands and retry coverage remain open.",
-      partial, commits.map(c => c.samples).join(" · "), commits.map(c => c.link).join(" · ")]);
+    const p2Rule = steady ? "Judged on the second half of each headline loaded cell (p50 ≤ 10 ms and p99 ≤ 50 ms from the scheduled offer, all loaded saves); the first half is reported as after a start, the whole cell as before. "
+      : `Not judged: the steady-state rule needs cells of 300 s or more (these are ${windowSeconds} s); second halves, first halves and whole cells are reported. `;
+    const p2Status = !steady || !completedRates.has("headline") ? partial : steadyVerdicts.every(Boolean) ? "MET" : "MISSED";
+    if (commits.length) rows.set("P2", [p2Rule + commits.map(c => c.reading).join(" · ") + ". Completed-only field saves. Full size bands and retry coverage remain open.",
+      p2Status, commits.map(c => c.samples).join(" · "), commits.map(c => c.link).join(" · ")]);
     if (!pairs.length && cellWindows.length) rows.set("P6", ["A quiet-only window completed. Its matched loaded window is open.",
       partial, String(cellWindows.length / 3) + " cells", "[Save windows](#within-cell-save-windows)"]);
     if (pairs.length) rows.set("P6", [pairs.map(c => c.reading).join(" · ") +
       `. Each side offers ${windowSeconds * 3.5} quiet saves. The verdict scores the headline burst commit gate. Pinned-read and feed observations accompany it. Publish, import and durable-effect coverage remain open.`,
       headlineVerdicts.includes("MISSED") ? "MISSED" :
         completedRates.has("headline") && headlineVerdicts.every(v => v === "MET") ? "MET" : partial, pairs.map(c => c.samples).join(" · "), pairs.map(c => c.link).join(" · ")]);
+  }
+
+  // [DX-CARD2] Latency of every acknowledged save in each half of a cell, placed by tape offset: from the scheduled offer
+  // (the bar's clock), from the actual send, and the driver timer's lateness (enqueued minus due; about 0.7 ms on
+  // 2026-11-23, from `sleep(Math.ceil(...))` in scale1/decision/writes.ts `play`).
+  function halves(arm: NonNullable<typeof loaded>) {
+    const half = arm.p6!.durationSeconds * 500;
+    const side = () => ({ due: new Histogram(), send: new Histogram(), late: new Histogram() });
+    const h = { first: side(), second: side() };
+    for (const [i, row] of (arm.writes as any[]).entries()) {
+      if (!row.receipt) continue;
+      const s = arm.tape[i]!.ms < half ? h.first : h.second;
+      s.due.recordMs(row.end - row.due);
+      if (Number.isFinite(row.sent)) s.send.recordMs(row.end - row.sent);
+      if (Number.isFinite(row.enqueued)) s.late.recordMs(Math.max(0, row.enqueued - row.due));
+    }
+    const sum = (x: ReturnType<typeof side>) => ({ due: x.due.summary(), send: x.send.summary(), late: x.late.summary() });
+    return { first: sum(h.first), second: sum(h.second) };
+  }
+
+  // [DX-CARD2] Change-feed lag (dispatch to observation) per P1 ladder step: the bar's lag clause is at P1's 256 readers;
+  // the 1,024-seat step is stress, and the tuned reader's random-subject line is its own step after the ladder.
+  function feedSteps(arm: NonNullable<typeof loaded>) {
+    const stepMs = (run.toy ? 4 : phaseSeconds) * 1000;
+    const seen = new Map<string, number>((arm.journal as any[]).map((e) => [e.id, e.seen]));
+    const labels = [...arm.p1.map((p: any) => (p.seats === 1024 ? "L1024 (stress)" : "L" + p.seats)), ...(arm.p1Random ? [`random L${arm.p1Random.seats}`] : [])];
+    const steps = labels.map(() => new Histogram());
+    for (const [i, row] of (arm.writes as any[]).entries()) {
+      const at = seen.get(row.id), step = Math.floor(arm.tape[i]!.ms / stepMs);
+      if (!row.receipt || at === undefined || !Number.isFinite(row.dispatched) || at < row.dispatched || !steps[step]) continue;
+      steps[step]!.recordMs(at - row.dispatched);
+    }
+    return labels.map((label, i) => ({ label, lag: steps[i]!.summary() }));
+  }
+
+  // [DX-CARD2] Which window each stack measured first after it started: those find their subjects cold.
+  function startOrder() {
+    if (!fs.existsSync(run.campaign)) return [];
+    const found: { dir: string; slot: string; startedAt: number }[] = [];
+    for (const rel of fs.readdirSync(run.campaign, { recursive: true, encoding: "utf8" })) {
+      if (path.basename(rel) !== "arm.json") continue;
+      const x = JSON.parse(fs.readFileSync(path.join(run.campaign, rel), "utf8"));
+      if (typeof x.slot === "string" && Number.isFinite(x.startedAt)) found.push({ dir: path.dirname(rel), slot: x.slot, startedAt: x.startedAt });
+    }
+    const bySlot = new Map<string, typeof found>();
+    for (const f of found) bySlot.set(f.slot, [...(bySlot.get(f.slot) ?? []), f]);
+    return [...bySlot.values()].map((list) => list.sort((a, b) => a.startedAt - b.startedAt))
+      .sort((a, b) => a[0]!.startedAt - b[0]!.startedAt)
+      .map((list) => `- Stack \`${list[0]!.slot}\`: **${list[0]!.dir}** (first after the stack started)` + (list.length > 1 ? ", then " + list.slice(1).map((f) => f.dir).join(", ") : "") + ".");
+  }
+
+  // [DX-CARD2] The tuned reader's settings, its checks before the first read, and each role's cgroup memory peak per
+  // stage against its cap (the caps of server-32 with the tuned reader were set from the 2026-11-23 peaks).
+  function tunedReaderSection() {
+    const out = ["## Tuned reader", "", readerTitle(run.reader).trim(), "", ...(run.toy ? ["Mac toy: the compact stack's reader runs both pinned options, the early filter and the permits; the random line has " +
+      `${randomLine.toySeats} seats; the toy reader writes no trace, so its storage loads and cache share are not recorded.`, ""] : [])];
+    const stagesDirs = [["zero", "P1 zero readers"], ["loaded", "P1 readers, P6, P7, P8"], [barrierRoot + "loaded", "barrier6 control"]] as const;
+    const caps = { tx: policy.tx.memoryMiB, "gw-w": policy["gw-w"].memoryMiB, "gw-r": policy["gw-r"].memoryMiB, pg: policy.pg.memoryMiB } as Record<string, number>;
+    const gib = (bytes: number) => (bytes / 2 ** 30).toFixed(2);
+    const memory: string[] = [];
+    for (const [dir, title] of stagesDirs) {
+      const check = file(dir, "reader-check.json"), peaks = file(dir, "role-memory.json");
+      if (fs.existsSync(check)) {
+        const c = JSON.parse(fs.readFileSync(check, "utf8"));
+        assert.equal(c.source, run.source);
+        out.push(`- ${title}: reader checked before the first offer: pinned short-cut ${c.pinned?.pinnedShortcut}, cut lookup ${c.pinned?.pinnedCutLookup}, permits ${c.permits.length ? c.permits.join(" ") : "one per core"}.`);
+      }
+      if (fs.existsSync(peaks)) {
+        const m = JSON.parse(fs.readFileSync(peaks, "utf8"));
+        assert.equal(m.source, run.source);
+        memory.push(`| ${title} | ` + ["tx", "gw-w", "gw-r", "pg"].map((role) => {
+          const r = m.roles[role];
+          return r ? `${gib(r.peakBytes)} of ${(caps[role]! / 1024).toFixed(0)}` : "—";
+        }).join(" | ") + " |");
+      }
+    }
+    if (memory.length) out.push("", "Peak cgroup memory per role and stage, GiB of the role's cap (`memory.peak`, page cache included):", "",
+      "| Stage | Transactor | Writer | Reader | PostgreSQL |", "| --- | ---: | ---: | ---: | ---: |", ...memory);
+    return [...out, ""];
   }
 
   function productionRow(label: string, arm: Observation, dir: string) {
@@ -379,7 +504,7 @@ export function writeAdoptedCard(run: Card) {
         realisticTape(shape, cellPath(cell), windowSeconds, cell.loaded ? cell.rate - 3.5 : 0));
     } else if (shape && cell.loaded) {
       const bound = boundTape?.cells.find((c: { cell: string }) => c.cell === cellPath(cell));
-      const again = fullCellTape(shape, cell, windowSeconds);
+      const again = fullCellTape(shape, cell, windowSeconds, tapeEdge(cardTape));
       if (run.tapeRegeneration === "platform") {
         assert(bound);
         assert.equal(createHash("sha256").update(JSON.stringify(arm.tape)).digest("hex"), bound.tapeSha256,
@@ -503,6 +628,7 @@ export function writeAdoptedCard(run: Card) {
     "Fresh commands refused both retired IDs. Four pinned reads matched the original seed, pre-witness and two saved values.",
     run.toy ? partial : "MET", "2 refusals and 4 checked snapshots", "[identity witness](campaign/mixed-ids.json)"]);
   const field = ["P5", "P6", "P7", "P8", "P9"];
+  const randomBar = `${randomLine.seats} readers, each read a random subject of the whole population at the seed cut: read p99 ≤ 100 ms and zero wrong reads (the P1 read bar for subjects not in the reader's memory).`;
   const gaps: Record<string, string> = {
     P5: "The held SCALE1 roster has no Publish window in this run. [Server 1 measured Publish under load](https://github.com/OnboardedInc/Triplex-db-experiments/blob/530b88a6e9f7c9ca0593628bdbd7689707c87408/lab/experiments/EXP-DX1/bm1/HANDOFF.md#joined-publish-at-100000).",
     P6: "No verified matched quiet-account pair from this attempt.",
@@ -513,7 +639,9 @@ export function writeAdoptedCard(run: Card) {
     if (run.renderer && line.startsWith("Source `" + run.source + "`")) return line + "\n\n" +
       `Assembled at renderer \`${run.renderer.commit}\` from this campaign, run at source \`${run.source}\`. The renderer differs from the source only in: ${run.renderer.files.map((f) => "`" + f + "`").join(", ")}.` +
       (run.tapeRegeneration === "platform" ? ` Production tapes checked by platform regeneration: each cell's tape hashes to the binding made before its first offer and matches this platform's regeneration in every field except the floating-point \`ms\` and \`gap\` (tolerance ${platformTolerance.ms} ms and ${platformTolerance.gapSeconds} s). ${regenerated.map((r) => `${r.cell}: ${r.ms} offsets differ (max ${r.maxMs.toExponential(2)} ms), ${r.gap} gaps (max ${r.maxGap.toExponential(2)} s)`).join("; ")}.` : "") + "\n";
-    if (line === "## Run settings") return `**Save tape:** ${tapeTitle(cardTape)}.` + (shape ? " P2 below counts commits; the production table gives rows and saves." : "") + "\n\n" + (run.writer === "per-person-ordered"
+    if (line === "## Run settings") return `**Save tape:** ${tapeTitle(cardTape)}.` + (shape ? " P2 below counts commits; the production table gives rows and saves." : "") + "\n\n" +
+      // [DX-S1] Default-off writer options the campaign ran with, when any (v01/production-card.ts writerOptionNames).
+      (run.writerOptions ? `**Writer options on:** ${Object.keys(run.writerOptions).map((n) => "`" + n + "=1`").join(", ")}.\n\n` : "") + (run.writer === "per-person-ordered"
       ? run.toy ? "The headline toy runs the full adopted workload. Barrier6 repeats P2 and P6."
         : "The headline ordered profile runs the full workload. Barrier6 repeats P2 and P6 on the same launch profile."
       : "Grouped comparison only. This attempt covers P2 and P6.") + "\n\n" + line;
@@ -532,7 +660,8 @@ export function writeAdoptedCard(run: Card) {
     const bar = key === "P6"
       ? "Quiet loaded commit p99 ≤ 50 ms or ≤ 1.25× alone, zero wrong quiet reads or expired quiet commands."
       : match[3]!.trim();
-    return values ? `| ${match[1]!.trim()} | ${bar} | ${values.join(" | ")} |` : line.replace("| NOT MEASURED |", "| NOT RUN |");
+    const randomRow = key === "P1" && rowsRandom ? `\n| P1 random subjects | ${randomBar} | ${rowsRandom.join(" | ")} |` : "";
+    return values ? `| ${match[1]!.trim()} | ${bar} | ${values.join(" | ")} |${randomRow}` : line.replace("| NOT MEASURED |", "| NOT RUN |");
   }).concat([
     "| Mixed assertion identities | Retired old-format and ordered IDs are refused and four pinned reads match their expected values. | " +
     (rows.get("Mixed assertion identities") ?? ["The mixed-ID witness is unavailable in this attempt.", "NOT RUN", "0", "—"]).join(" | ") + " |",
@@ -543,6 +672,9 @@ export function writeAdoptedCard(run: Card) {
       "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |", ...cellWindows, "",
       ...(edgeRows.length ? ["Rows are placed in a cell and a half by their scheduled tape offset. Rows scheduled within half a floating-point step of their cell's end have a due time equal to the end on the epoch clock; they are counted in the cell and the second half they were offered in. Such rows per scope: " + edgeRows.join(" · ") + ".", ""] : [])] : []),
     ...(cellTelemetry.length ? ["## Within-cell counters", "", ...cellTelemetry, ""] : []),
+    ...(() => { const order = startOrder(); return order.length ? ["## Order after each stack start", "",
+      "The first window each stack measured after it started finds its subjects cold (the quiet account's 52 and 59 ms p99 of 2026-11-23 was such a window). P1's two sides each run first on their own stack, so their writer ratio compares two such windows.", "", ...order, ""] : []; })(),
+    ...(run.reader ? tunedReaderSection() : []),
     ...(productionRows.length ? ["## Production-shaped neighbour saves", "",
       `Neighbour accounts only (the quiet account is P6). Latencies are p50 / p99 ms from the scheduled offer to the durable acknowledgement; save completion runs from a save's first row offered to its last row acknowledged. Storage reads are SQL reads per commit from each acknowledgement, in the first 60 s / from 150 s. The per-subject ordered writer takes only commits of one to three facts that each replace a value; every other commit takes the general writer. Commits over 256 assertions carry the general identity. Every field of every production subject was read back at the cell's terminal cut and matched the acknowledged writes.`, "",
       "| Cell | Offered | Stored in window | Commit p50 / p99 ms | Save completion p50 / p99 ms | Reads per commit, first minute / late | Per-subject writer | General writer | General-identity commits | Exactness | Evidence |",
@@ -555,6 +687,7 @@ export function writeAdoptedCard(run: Card) {
     creditMode, admission: run.toy && admission.mode === "barrier" ? { ...admission, scope: "quiet cells" } : admission,
     ...(run.toy ? {} : { launchIntegration, stages, offeredRates: serverRates, windowSeconds, postgresStartup: prepared ? "prepared PGDATA" : "logical dump" }),
     diagnostics, comparison: defaultCreditMode,
+    ...(run.reader ? { reader: run.reader } : {}),
     armReadbacks: arms.map((a) => a.settings),
   };
   fs.writeFileSync(path.join(run.out, "SCORECARD-v0.1.md"),

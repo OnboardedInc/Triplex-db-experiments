@@ -55,6 +55,8 @@ export async function campaign(stack: Stack, cell: string) {
     TX2_SUBJECT_NARROW_REVISION: "1",
     TX2_SUBJECT_REUSE_PREDECESSOR: "1",
     PREP1_LOOKUP_EVERY: "64",
+    // [Opus W2] Why: rerun the combined cases with wide saves on the per-subject writer when the launcher asks.
+    ...(process.env.TX2_SUBJECT_WIDE === "1" ? { TX2_SUBJECT_WIDE: "1" } : {}),
   };
   await stack.tool();
   await stack.postgres("pg", a);

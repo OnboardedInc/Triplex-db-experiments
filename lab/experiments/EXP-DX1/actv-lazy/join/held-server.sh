@@ -9,5 +9,8 @@ flock -xn 9
 export DX_BARE_METAL=1 TRIPLEX_DATOMIC_LAYOUT=lean TRIPLEX_DATOMIC_FAST_PATHS=save-wire
 export TX2_SWEEP_STRICT=1 TX2_W0_POINT_JOURNAL=1 TX2_W0_RESTORE_INDEXED_JOURNAL=1
 export DX_SERVER_RECORD_TIME=1 DX_STRICT_RECORD_CLOCKS=1
-timeout --signal=TERM --kill-after=90s 87m node --max-old-space-size=8192 --experimental-transform-types \
+# [DX-ACT4] DX_HELD_MINUTES raises the runner's limit for a run that settles a large release first (default 87).
+minutes=${DX_HELD_MINUTES:-87}
+[[ $minutes =~ ^[0-9]+$ ]] && (( minutes >= 30 && minutes <= 180 ))
+timeout --signal=TERM --kill-after=90s "${minutes}m" node --max-old-space-size=8192 --experimental-transform-types \
   lab/experiments/EXP-DX1/actv-lazy/join/held-server.ts "$@"

@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import type { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import { fieldCount, fieldValue, taskSerial } from "../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
-import { loadParams, productionOffers, slotAttribute, tapeReport, type ProductionOffer, type Shape } from "../w1/field/production.ts";
+import { loadParams, productionOffers, slotAttribute, tapeReport, type ProductionOffer, type Shape, type TapeEdge } from "../w1/field/production.ts";
 import { agedFieldRow } from "../prep1/ceiling-seed.ts";
 import { task, type Write } from "../scale1/decision/plan.ts";
 import { Histogram } from "../../../bench/lib/hist.ts";
@@ -14,19 +14,55 @@ import { cellPath, ratedTape, serverCells, type ServerCell, type WindowSeconds }
 // card's own stream so the P6 pairs stay comparable. Saturday's tape stays selectable so earlier cards reproduce.
 // Rejected: a second runner (the card's admission, journal and receipt checks must judge the new saves) and changing
 // the quiet stream (its solo and loaded halves would no longer be the same tape).
-export const cardTapes = ["saturday", "production-R", "production-S"] as const;
+// [DX-CARD2] The "-noburst" tapes are the same process without the end-of-cell burst (w1/field/production.ts edge
+// "spread"): no account has a save due at the cell's last instant. Their offers and hashes differ from the measured
+// "production-R" and "production-S", which stay as they were so the cards of 2026-11-23 reproduce.
+export const cardTapes = ["saturday", "production-R", "production-S", "production-R-noburst", "production-S-noburst"] as const;
 export type CardTape = (typeof cardTapes)[number];
+/** Reads a recorded or passed tape name. A record without one predates the tape setting, so it ran Saturday's tape. */
 export function parseCardTape(text: string | undefined): CardTape {
   const tape = cardTapes.find((t) => t === (text ?? "saturday"));
-  assert(tape, "Choose --tape saturday, production-R or production-S");
+  assert(tape, "Choose --tape saturday, production-R, production-S, production-R-noburst or production-S-noburst");
   return tape;
 }
+// [DX-S1] Why: the owner chose one commit per subject's save as the product's save shape (lab/V0.1.md, 2026-11-24), so a
+// new card's save loads run shape S unless another tape is named; the realistic card keeps its own tape. Only new runs
+// take this default: a recorded campaign without a tape name is still read as Saturday's (parseCardTape).
+// Rejected: changing parseCardTape's fallback (an old campaign would be re-assembled as shape S) and removing the other
+// tapes (earlier cards must reproduce).
+// [DX-INT3] With CARD2's tapes on the branch the default is shape S without the end-of-cell burst (the card's P2 rule of
+// 2026-11-24 judges second halves of 300 s cells; the burst tape stays selectable as production-S).
+export const defaultCardTape: CardTape = "production-S-noburst";
+// [DX-S1] Default-off writer options a card arm may run with: wide saves (W2), general-writer hints (W3), per-subject
+// writer hints (W4). run.ts passes them to the arm, adopted-server.ts records the ones set, adopted.ts checks the
+// writer's readback, and the card names them. Rejected: passing the whole environment (unrecorded settings).
+export const writerOptionNames = ["TX2_SUBJECT_WIDE", "TX2_GENERAL_PREFETCH", "TX2_SUBJECT_HINTS"] as const;
+// [DX-INT3] Default-off read gateway options a card arm may run with (W3): the bound on reads waiting for a permit and
+// the web-thread counters. stack/up.sh passes them to the gateways only when set. run.ts passes them to the arm and
+// adopted-server.ts records the ones set. Why: before this run.ts dropped them, so W3's published "bound on" arm would
+// have run with the bound off. Rejected: passing the whole environment (unrecorded settings).
+export const readQueueOptionNames = ["DX_READ_WAIT_LIMIT", "DX_THREAD_COUNTERS"] as const;
+export const readQueueOptionsSet = (env: NodeJS.ProcessEnv) => {
+  const limit = env.DX_READ_WAIT_LIMIT, counters = env.DX_THREAD_COUNTERS;
+  assert(limit === undefined || limit === "" || (/^[1-9][0-9]{0,3}$/.test(limit) && Number(limit) <= 4096), "DX_READ_WAIT_LIMIT is 1..4096");
+  assert(counters === undefined || /^[01]$/.test(counters), "DX_THREAD_COUNTERS is 0 or 1");
+  return { ...(limit ? { DX_READ_WAIT_LIMIT: limit } : {}), ...(counters === "1" ? { DX_THREAD_COUNTERS: "1" } : {}) } as Record<string, string>;
+};
+export const writerOptionsSet = (env: NodeJS.ProcessEnv) => {
+  for (const name of writerOptionNames) assert(env[name] === undefined || /^[01]$/.test(env[name]!), name + " is 0 or 1");
+  return Object.fromEntries(writerOptionNames.flatMap((name) => env[name] === "1" ? [[name, "1"]] : [])) as Record<string, "1">;
+};
+export const newRunTape = (text: string | undefined, age: string | undefined): CardTape =>
+  parseCardTape(text ?? (age === "realistic" ? "saturday" : defaultCardTape));
 export const tapeShape = (tape: CardTape): Shape | undefined =>
-  tape === "production-R" ? "R" : tape === "production-S" ? "S" : undefined;
+  tape.startsWith("production-R") ? "R" : tape.startsWith("production-S") ? "S" : undefined;
+export const tapeEdge = (tape: CardTape): TapeEdge => tape.endsWith("-noburst") ? "spread" : "calibrated";
 export const tapeTitle = (tape: CardTape) => tape === "saturday"
   ? "Saturday's tape (every neighbour save a one- or two-field replacement, nearly every save a subject not seen before)"
   : `the production-shaped tape, shape ${tapeShape(tape)} (${tapeShape(tape) === "R"
-    ? "one commit per form row at the fixed row rates" : "one commit per subject's save, at the same saves as shape R"})`;
+    ? "one commit per form row at the fixed row rates" : "one commit per subject's save, at the same saves as shape R"})` +
+    (tapeEdge(tape) === "spread" ? ", with the end-of-cell burst removed (no save due at a cell's last instant; its offers and tape hashes differ from the measured " +
+      `production-${tapeShape(tape)} tape of 2026-11-23, which stays selectable)` : "");
 
 const paramsFile = new URL("../real2/production-shape.json", import.meta.url).pathname;
 let loaded: ReturnType<typeof loadParams> | undefined;
@@ -55,21 +91,38 @@ export const isProduction = (e: Write): e is ProductionWrite => Array.isArray((e
  * size; the toy folds onto its few people per account, keeping each tape person on one toy subject).
  */
 export function productionNeighbours(shape: Shape, rate: number, rowTargets: readonly number[], seconds: number,
-  label: string, fold?: (account: number, person: number) => number): ProductionWrite[] {
+  label: string, fold?: (account: number, person: number) => number, edge: TapeEdge = "calibrated"): ProductionWrite[] {
   const { params } = productionParams();
-  const offers = productionOffers(params, shape, productionBand(rate), rowTargets, seconds);
+  const offers = productionOffers(params, shape, productionBand(rate), rowTargets, seconds, edge);
   const ordinal = new Map<number, number>();
+  const ladder = ladderFacts(process.env);
+  assert(ladder === undefined || shape === "S", "The save-size ladder rewrites shape S saves only");
   return offers.map((o: ProductionOffer) => {
     const person = fold ? fold(o.account, o.person) : o.person;
     const i = ordinal.get(o.account) ?? 0;
     ordinal.set(o.account, i + 1);
-    const rows = o.slots.filter((s) => s < fieldExtraBase).length || 1;
+    // [DX-S1] The save-size ladder keeps the tape's subjects and times and gives every save exactly N facts.
+    const slots = ladder === undefined ? [...o.slots] : Array.from({ length: ladder }, (_, n) => n);
+    const rows = ladder ?? (o.slots.filter((s) => s < fieldExtraBase).length || 1);
     return {
-      account: o.account, ordinal: i, subject: person, ms: o.ms, width: o.slots.length,
+      account: o.account, ordinal: i, subject: person, ms: o.ms, width: slots.length,
       version: [label, o.account, i].join("/"), owner: task(o.account, person), person,
-      slots: [...o.slots], saveKey: o.account + "/" + o.save, rows, gap: o.gap,
+      slots, saveKey: o.account + "/" + o.save, rows, gap: o.gap,
     };
   });
+}
+
+// [DX-S1] The save-size ladder (rd1 saves arm, DX_RD3_WINDOWS=ladder): DX_S1_LADDER_FACTS=N gives every neighbour save
+// of a shape S cell exactly the fields :task/field-0 to :task/field-(N-1): the seeded fields are replaced and the rest are
+// first writes (then replacements on the subject's later saves). The tape's subjects, accounts and times are unchanged.
+// Rejected: a separate tape generator (the card's preload, identity, journal and read-back checks must judge these saves).
+export const ladderSizes = [5, 10, 17, 50, 100, 340, 1000] as const;
+export function ladderFacts(env: NodeJS.ProcessEnv): number | undefined {
+  const text = env.DX_S1_LADDER_FACTS;
+  if (text === undefined || text === "") return undefined;
+  const n = Number(text);
+  assert(/^[1-9][0-9]{0,3}$/.test(text) && n <= 4000, "DX_S1_LADDER_FACTS is 1 to 4000");
+  return n;
 }
 
 /** Row targets for the nine neighbour accounts: the cell's offered rows minus the quiet account's saves. */
@@ -82,10 +135,10 @@ export const sortTape = (tape: Write[]) =>
   tape.sort((a, b) => a.ms - b.ms || a.account - b.account || a.ordinal - b.ordinal);
 
 /** A full-size loaded cell on the production tape: the card's own quiet stream, then the production neighbours. */
-export function fullCellTape(shape: Shape, cell: ServerCell, seconds: WindowSeconds) {
+export function fullCellTape(shape: Shape, cell: ServerCell, seconds: WindowSeconds, edge: TapeEdge = "calibrated") {
   assert(cell.loaded);
   const quiet = ratedTape(100_000, cell, seconds).filter((e) => e.account === 0);
-  return sortTape([...quiet, ...productionNeighbours(shape, cell.rate, rowTargets(cell.rate, seconds, quiet.length), seconds, cellPath(cell))]);
+  return sortTape([...quiet, ...productionNeighbours(shape, cell.rate, rowTargets(cell.rate, seconds, quiet.length), seconds, cellPath(cell), undefined, edge)]);
 }
 
 /**
@@ -96,7 +149,7 @@ export function tapeBinding(tape: CardTape, seconds: WindowSeconds) {
   const shape = tapeShape(tape);
   if (!shape) return undefined;
   return { name: tape, paramsSha256: productionParams().sha256, cells: serverCells.filter((c) => c.loaded).map((cell) => {
-    const report = cardTapeReport(fullCellTape(shape, cell, seconds), seconds);
+    const report = cardTapeReport(fullCellTape(shape, cell, seconds, tapeEdge(tape)), seconds);
     return { cell: cellPath(cell), tapeSha256: report.tapeSha256, reportSha256: createHash("sha256").update(JSON.stringify(report)).digest("hex") };
   }) };
 }
@@ -113,6 +166,8 @@ export function cardTapeReport(tape: readonly Write[], seconds: number) {
 /** Assertions a commit carries: one per fact, one journal change per fact and per retired value, four journal rows. */
 export const commitAssertions = (facts: number, retired: number) => 2 * facts + retired + 4;
 export const orderedBlockLimit = 256;
+// [DX-S1] A wide block (`wideOrderedSaveIdentity`, `TX2_SUBJECT_WIDE=1`) numbers up to 4,096 assertions.
+export const wideOrderedBlockLimit = 4096;
 
 type Row = Parameters<DatomicClient["transact"]>[1]["rows"][number];
 export type AgedCut = Parameters<typeof agedFieldRow>[0];

@@ -271,6 +271,23 @@ subject_owner_head=${TX2_SUBJECT_OWNER_HEAD:-0}
 subject_narrow_revision=${TX2_SUBJECT_NARROW_REVISION:-0}
 subject_reuse_predecessor=${TX2_SUBJECT_REUSE_PREDECESSOR:-0}
 lookup_every=${PREP1_LOOKUP_EVERY:-0}
+# [DX-W3] Why: default-off general-writer hints, a bound on reads waiting for a permit, and web-thread counters.
+# Rejected: passing them when unset (every default stack stays byte-identical in its container environment).
+general_prefetch=${TX2_GENERAL_PREFETCH:-0}
+[[ $general_prefetch =~ ^[01]$ ]] || exit 2
+read_wait_limit=${DX_READ_WAIT_LIMIT:-}
+[[ -z $read_wait_limit || $read_wait_limit =~ ^[1-9][0-9]{0,3}$ ]] || exit 2
+thread_counters=${DX_THREAD_COUNTERS:-0}
+[[ $thread_counters =~ ^[01]$ ]] || exit 2
+# [DX-W4] Why: default-off hints for the per-subject writer that work with ordered IDs.
+# Rejected: lifting the TX2_SUBJECT_PREFETCH guard below (that option keeps its meaning); passing it when unset.
+subject_hints=${TX2_SUBJECT_HINTS:-0}
+[[ $subject_hints =~ ^[01]$ ]] || exit 2
+[[ $subject_hints == 0 || $subject_prefetch == 0 ]] || { echo "TX2_SUBJECT_HINTS replaces TX2_SUBJECT_PREFETCH; set one" >&2; exit 2; }
+# [DX-S1] Why: default-off wide saves on the per-subject writer (W2), for one commit per subject's save.
+# Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
+subject_wide=${TX2_SUBJECT_WIDE:-0}
+[[ $subject_wide =~ ^[01]$ ]] || exit 2
 [[ $lookup_every =~ ^(0|[1-9][0-9]{0,3})$ ]] && (( lookup_every <= 4096 )) || exit 2
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prepw =~ ^(1|2|4)$ ]]
@@ -292,6 +309,8 @@ fi
 [[ $append_retirement =~ ^[01]$ && ( $append_retirement == 0 || $subject_numeric_owner == 1 ) ]] || exit 2
 [[ $subject_prefetch =~ ^[01]$ && ( $subject_prefetch == 0 || $subject_save == 1 ) ]]
 [[ $subject_ordered_ids =~ ^[01]$ && ( $subject_ordered_ids == 0 || ( $subject_save == 1 && $subject_prefetch == 0 ) ) ]]
+[[ $subject_hints == 0 || $subject_save == 1 ]] || { echo "TX2_SUBJECT_HINTS needs the per-subject writer" >&2; exit 2; }
+[[ $subject_wide == 0 || $subject_save == 1 ]] || { echo "TX2_SUBJECT_WIDE needs the per-subject writer" >&2; exit 2; }
 [[ $subject_narrow_revision =~ ^[01]$ && $subject_reuse_predecessor =~ ^[01]$ ]] || exit 2
 [[ ( $subject_narrow_revision == 0 && $subject_reuse_predecessor == 0 ) || ( $subject_ordered_ids == 1 && $subject_numeric_owner == 1 ) ]] || exit 2
 prep_pgdata=${DX_PREP1_PGDATA:-}
@@ -999,6 +1018,17 @@ for role in "${gateway_roles[@]}"; do
       -e "TX2_SUBJECT_OWNER_HEAD=$subject_owner_head"
       -e "TX2_SUBJECT_NARROW_REVISION=$subject_narrow_revision" -e "TX2_SUBJECT_REUSE_PREDECESSOR=$subject_reuse_predecessor")
   fi
+  if [[ $mode == w && $general_prefetch == 1 ]]; then
+    field_policy+=(-e "TX2_GENERAL_PREFETCH=1")
+  fi
+  if [[ $mode == w && $subject_hints == 1 ]]; then
+    field_policy+=(-e "TX2_SUBJECT_HINTS=1")
+  fi
+  if [[ $mode == w && $subject_wide == 1 ]]; then
+    field_policy+=(-e "TX2_SUBJECT_WIDE=1")
+  fi
+  if [[ -n $read_wait_limit ]]; then field_policy+=(-e "TX2_READ_WAIT_LIMIT=$read_wait_limit"); fi
+  if [[ $thread_counters == 1 ]]; then field_policy+=(-e "TX2_THREAD_COUNTERS=1"); fi
   if [[ $mode == w && $append_retirement == 1 ]]; then
     field_policy+=(-e "TX2_SUBJECT_APPEND_RETIREMENT=1")
   fi
@@ -1109,7 +1139,22 @@ for role in "${gateway_roles[@]}"; do
       tail1_env+=(-e TX2_TAIL1_ROW_DECODE=1)
     fi
   fi
-  docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
+  role_network=(--network "$prefix-net")
+  if [[ $mode == r && ${DX_RD4_READ_HOLD:-0} == 1 ]]; then
+    # [DX-RD4] Test stack only: the read peer reaches the transactor through rd4/hold-proxy.mjs in a container whose
+    # network namespace it shares, so a gate can hold the peer behind an acknowledged write. Default off.
+    # Rejected: on any other stack, on bare metal, or beside the idle-TCP setting (container networking refuses it).
+    [[ $prefix == tx2-dxrd4-* && $publish == true && ${DX_BARE_METAL:-0} == 0 && -z ${network_tuning[*]:-} ]] ||
+      { echo "DX_RD4_READ_HOLD is only for a published tx2-dxrd4-* stack on the Mac" >&2; exit 2; }
+    tx_address=$(docker inspect --format "{{(index .NetworkSettings.Networks \"$prefix-net\").IPAddress}}" "$prefix-tx")
+    [[ $tx_address =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 2
+    docker run -d --pull never --name "$prefix-hold" --network "$prefix-net" --add-host "$prefix-tx:127.0.0.1" \
+      --memory 128m --memory-swap 128m ${ports[@]+"${ports[@]}"} -p "127.0.0.1:$((port + 100)):8099" \
+      -v "$repo/lab/experiments/EXP-DX1/rd4/hold-proxy.mjs:/hold-proxy.mjs:ro" \
+      node:22.23.2-bookworm-slim node /hold-proxy.mjs "$tx_address" 4334 >/dev/null
+    role_network=(--network "container:$prefix-hold") ports=()
+  fi
+  docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" ${stack_labels[@]+"${stack_labels[@]}"} "${role_network[@]}" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
     ${ports[@]+"${ports[@]}"} ${tail1_env[@]+"${tail1_env[@]}"} "${trace_env[@]}" ${field_policy[@]+"${field_policy[@]}"} -e "TRIPLEX_TRACE_JFR=$role_jfr" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}${final_flags}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src${pg_data:+:/erase1} \
     -e "TRIPLEX_LAYOUT_REPLAY=$([[ $role == w ]] && echo ${DX_LAYOUT_REPLAY:-0} || echo 0)" -e "TX2_SLIM_ROWS=${DX_SLIM_ROWS:-0}" -e "TX2_REV_AEVT=${DX_REV_AEVT:-0}" -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template&ApplicationName=triplex-gw-$role" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -e "TX2_ENTITY_CACHE_BYTES=$entity_cache_bytes" -e "TX2_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-2097152}" -e "TX2_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-536870912}" \

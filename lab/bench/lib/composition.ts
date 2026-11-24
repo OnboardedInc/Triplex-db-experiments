@@ -182,8 +182,8 @@ export async function reachPull(h: Pick<TriplesHandle, "triples" | "run"> & Part
     roundTrips: (result.gatewayTrips ?? 1) + (between ? 1 : 0), depth: result.hops - 1, route: "source", language, waitedMs: 0 };
 }
 
-async function publicComposition(lane: Lane, scope: string, variant: "public" | "public-queued" | "broker-h1" | "reach" = "public"): Promise<CompositionHandle> {
-  const h: TriplesHandle = variant === "broker-h1" ? await (await import("./broker-h1.ts")).openBrokerH1(scope) : await openTriples(lane, scope, (lane !== "datomic" && (variant === "public-queued" || variant === "reach")) ? { admissionQueue: true } : undefined);
+async function publicComposition(lane: Lane, scope: string, variant: "public" | "public-queued" | "broker-h1" | "reach" = "public", datomic?: DatomicOpenOptions): Promise<CompositionHandle> {
+  const h: TriplesHandle = variant === "broker-h1" ? await (await import("./broker-h1.ts")).openBrokerH1(scope) : await openTriples(lane, scope, (lane !== "datomic" && (variant === "public-queued" || variant === "reach")) ? { admissionQueue: true } : undefined, datomic);
   const T = h.triples;
   const E = (id: string) => core.EntityId.make(id);
   const outcome = async <A>(effect: any): Promise<Outcome<A>> => {
@@ -251,25 +251,28 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
   return handle;
 }
 
-export const COMPOSITIONS: Record<string, (lane: Lane, scope: string) => Promise<CompositionHandle>> = {
+/** [DX-RD4] Options of a Datomic composition: `readAtLeast` is a reader built from a receipt (SDK ReadAtLeast). */
+export interface DatomicOpenOptions { readonly readAtLeast?: unknown }
+export const COMPOSITIONS: Record<string, (lane: Lane, scope: string, datomic?: DatomicOpenOptions) => Promise<CompositionHandle>> = {
   /** In-process reference store (lib/memory.ts): diagnostic only, readers run in-thread. */
   memory: async (lane, scope) => (await import("./memory.ts")).memoryComposition(lane, scope, Number(process.env["TX2_MEMORY_SERVICE_MS"] ?? "1")),
   "broker-h1": (lane, scope) => { if(lane!=="qlever")throw Error("broker-h1 is lane Q only"); return publicComposition(lane,scope,"broker-h1"); },
-  reach: (lane, scope) => publicComposition(lane, scope, "reach"),
+  reach: (lane, scope, datomic) => publicComposition(lane, scope, "reach", datomic),
   "reach-touched": async (lane, scope) => {
     if (lane !== "datomic") throw Error("The touched replica requires Datomic");
     const { touchedComposition } = await import("./touched-reads.ts");
     return touchedComposition(await publicComposition(lane, scope, "reach"));
   },
-  public: (lane, scope) => publicComposition(lane, scope, "public"),
+  public: (lane, scope, datomic) => publicComposition(lane, scope, "public", datomic),
   /** Same surfaces; on XTDB the adapter queues writes in process (admissionQueue) instead of racing the scope position CAS. */
   "public-queued": (lane, scope) => publicComposition(lane, scope, "public-queued"),
 };
 
-export async function openComposition(name: string, lane: Lane, scope: string): Promise<CompositionHandle> {
+export async function openComposition(name: string, lane: Lane, scope: string, datomic?: DatomicOpenOptions): Promise<CompositionHandle> {
   const factory = COMPOSITIONS[name];
   if (!factory) throw new Error(`unknown composition ${name}; known: ${Object.keys(COMPOSITIONS).join(", ")}`);
-  const handle = await factory(lane, scope);
+  if (datomic && name !== "reach" && name !== "public") throw new Error(`composition ${name} takes no Datomic options`);
+  const handle = await factory(lane, scope, datomic);
   if (lane === "datomic") {
     for (const key of ["transact", "pull", "sweepPull", "feedPage"] as const) {
       const original = handle[key].bind(handle) as any;
