@@ -59,7 +59,8 @@ const app = (name: string, url: string): App => {
         Effect.match(e, {
           onFailure: (error: any) => ({
             ok: false,
-            error: { tag: error?._tag, message: error?.message, code: error?.cause?.code, status: error?.cause?.status },
+            error: { tag: error?._tag, message: error?.message, code: error?.cause?.code, status: error?.cause?.status,
+                     gatewayMessage: error?.cause?.message },
           }),
           onSuccess: (value) => ({ ok: true, value }),
         }),
