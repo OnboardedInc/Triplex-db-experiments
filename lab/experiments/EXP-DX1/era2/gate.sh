@@ -216,11 +216,15 @@ b, o, one = get("base"), get("off"), get("one")
 case = lambda reps: [re.search(r'\["sourceless-removed" ([0-9]+) ([^\]]*)\]', r).groups() if re.search(r'\["sourceless-removed" ([0-9]+) ([^\]]*)\]', r) else None for r in reps]
 native = len(b[0]) == 2 and b[0] == o[0]
 replies = b[1] == o[1]
+# [DX-ERA2 seventh pass, identities] and against the one branch's head (ONE_COMMIT), datom for datom: with every option
+# off this build installs the same writer functions (s3/idents.clj) and writes the same native log
+native_one = len(one[0]) == 2 and one[0] == o[0]
 print("ERA2_PAIRED_SOURCELESS every datom (off vs base):", "identical" if native else "DIFFERENT", "| replies:", "identical" if replies else "DIFFERENT")
+print("ERA2_PAIRED_SOURCELESS every datom (off vs the one branch):", "identical" if native_one else "DIFFERENT")
 print("ERA2_PAIRED_SOURCELESS the case's answer: base", case(b[1]), "| off", case(o[1]), "| merged line", case(one[1]))
 for arm, r in [("base", b), ("off", o), ("one", one)]:
     for x in r[0]: print("  ", arm, x)
-sys.exit(0 if (native and replies and case(b[1]) == case(o[1]) == case(one[1])) else 1)
+sys.exit(0 if (native and native_one and replies and case(b[1]) == case(o[1]) == case(one[1])) else 1)
 PY2
 fi
 # [DX-ERA2 fifth pass] B2: a published removal's key must be deleted within its grace whatever else is pending

@@ -10,7 +10,8 @@
     :both               both, to the same earlier schedule.
   After the event, in the window: a save of a protected value and a removal of a fresh subject (refused 503
   RemovalPolicyBehind while the stored policy lacks an attribute the log's copy lists, else answered), and a read;
-  then the restore route and the rebuild route (the operator's steps), the removal sent again, and the oracles:
+  then the restore route, the rebuild route and the restore route again (the operator's steps), the removal sent again,
+  and the oracles:
     P1  no attribute the protection route added is lost (the stored policy holds every one after the restore route);
     P2  the log's copy holds every attribute of the stored policy (it only grows);
     P3  while the stored policy is behind the copy, the window's save and removal are refused, typed (never 400);
@@ -78,7 +79,11 @@
         ;; the operator's steps after a restore
         route (when (#{:data-restore :authority-restore :both} ev) (f/outcome (f/safe #(offers/route name "v2" "restore-erasure" {}))))
         rebuild (when (#{:data-restore :authority-restore :both} ev) (f/outcome (f/safe #(q/rebuild! name {}))))
-        route2 (when (#{:data-restore :both} ev) (f/outcome (f/safe #(offers/route name "v2" "restore-erasure" {}))))
+        ;; the restore route again after the rebuild, after every restore: a log put back behind the data first answers
+        ;; RemovalLogBehind (the rebuild catches it up), and a log whose copy is newer than the data's policy (an
+        ;; authority restored to a later point than the data) leaves the policy behind until the restore route adds
+        ;; the copy's attributes back (the restore procedure, page section 20)
+        route2 (when (#{:data-restore :authority-restore :both} ev) (f/outcome (f/safe #(offers/route name "v2" "restore-erasure" {}))))
         rm-again (f/outcome (f/safe #(a/remove-attr! name (str "f7-rm-" i) s)))
         masked (f/masked? name s v)
         stored (stored-attrs conn) copy (copy-attrs name)
@@ -86,6 +91,8 @@
                 :restore-route route :rebuild rebuild :restore-route-again route2 :removal-again rm-again
                 :stored (vec stored) :copy (vec copy) :added (vec @(:added state))}]
     (bump! :f7 ev :behind (boolean behind) :window-save window-save :window-removal window-rm :again rm-again)
+    (when (= "1" (System/getenv "ERA3_F7_TRACE"))
+      (println "ERA3_F7_EVENT" mode (pr-str (assoc detail :i i :ev ev :stored-after (vec stored) :copy-after (vec copy)))))
     (oracle! label (every? stored @(:added state)) "P1 no attribute the protection route added is lost" detail)
     (oracle! label (every? copy stored) "P2 the log's copy holds every attribute of the stored policy" detail)
     (when behind

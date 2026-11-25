@@ -227,7 +227,7 @@
       (binding [g/sealed-run? sealed?]
         (with-redefs [group/enabled false policy/priority? false policy/field-only? false policy/budget-us nil]
           (offers/route name "v2" "protection" {"attributes" attrs "sealed" sealed?})
-          (erase/per-account! name conn {})
+          (rs/per-account! name conn {})
           (f name conn))))))
 (defn p1 [sealed?]
   (when per-account?

@@ -85,7 +85,8 @@
                         (boolean (and removal-time (< removal-time 2.5) (contains? fields "frameSourceK")
                                       (or (nil? (get fields "frameSourceK")) (> removal-time 0.5)))))
         declined? (= [409 "ErasureReplayDeclined"] sent)
-        resend (f/outcome (f/safe #(offers/send name (merge (g/frame cmd s v2 nil nil) {"sourceK" (g/head conn) "removalSeen" (stamp name)}))))
+        ;; a resend is a new attempt (its own operation ID) under the same command, framed now
+        resend (f/outcome (f/safe #(offers/send name (merge (g/frame cmd s v2 nil nil) {"operationId" (str cmd "-resend") "sourceK" (g/head conn) "removalSeen" (stamp name)}))))
         renewed (f/outcome (f/safe #(offers/send name (merge (g/frame (str "f8-new-" i) s v3 nil nil) {"sourceK" (g/head conn) "removalSeen" (stamp name)}))))
         text (a/read-text name s)
         answered? (fn [v] (str/includes? text v))

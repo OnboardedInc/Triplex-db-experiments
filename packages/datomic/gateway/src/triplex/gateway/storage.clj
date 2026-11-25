@@ -5,11 +5,13 @@
             [triplex.gateway.subject-save :as subject] [clojure.data.json :as json]
             [triplex.gateway.owner-layout :as owner-layout] [triplex.gateway.owner-root :as owner-root]
             [triplex.gateway.pinned :as pinned] [triplex.gateway.general-prefetch :as general-prefetch]
-            [triplex.gateway.subject-hints :as subject-hints] [triplex.gateway.removal-scope :as removal-scope]
+            [triplex.gateway.subject-hints :as subject-hints]
             ;; [DX-S3] Last, so that it loads after every namespace whose stored code it must not move.
             [triplex.gateway.subject-owners :as owners]
             ;; [DX-S4] After subject-owners, for the same reason.
-            [triplex.gateway.subject-create :as create])
+            [triplex.gateway.subject-create :as create]
+            ;; [DX-ERA2 seventh pass, identities; DX-ERA6] after every installed function's code, the save line's too
+            [triplex.gateway.removal-scope :as removal-scope])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -624,7 +626,7 @@
                                   (or (not (:sealed privacy/*cut*)) (envelope/shared?))
                                   (not (or policy/priority? policy/field-only? policy/budget-us replay-capture/enabled)))
                          (trace/span "subject.prepare" "gateway"
-                           (subject-prepare conn db data input (privacy/fence-seq privacy/*cut*))))
+                           (subject-prepare conn db data input (removal-scope/fence-seq privacy/*cut*))))
           ;; [DX-ERA6] The three planners fence on the value fence-seq gives (the request's sequence, or the per-account
           ;; sentinel), so a database guarded per account fences them as it fences the one-owner writer.
           ;; [DX-S3] Why: a save of two to four owners that the one-owner writer declined may take the several-owners
@@ -634,7 +636,7 @@
                              (or (not (:sealed privacy/*cut*)) (envelope/shared?))
                              (not (or policy/priority? policy/field-only? policy/budget-us replay-capture/enabled)))
                     (trace/span "owners.prepare" "gateway"
-                      (owners/plan db data input (privacy/fence-seq privacy/*cut*))))
+                      (owners/plan db data input (removal-scope/fence-seq privacy/*cut*))))
           ;; [DX-S4] Why: a save that creates an owner or writes a reference, which the writers above declined or did not
           ;; plan, may take the creation function (TX2_SUBJECT_CREATE=1); its typed reason replaces theirs when it is asked.
           ;; Rejected: asking it before them (every save they take keeps today's path byte for byte).
@@ -642,7 +644,7 @@
                               (or (not (:sealed privacy/*cut*)) (envelope/shared?))
                               (not (or policy/priority? policy/field-only? policy/budget-us replay-capture/enabled)))
                      (trace/span "create.prepare" "gateway"
-                       (create/plan db data input (privacy/fence-seq privacy/*cut*))))
+                       (create/plan db data input (removal-scope/fence-seq privacy/*cut*))))
           ;; A reason is reported only for a save no per-subject function took.
           declined (or (:declined creation) (when-not creation (:declined several)))
           subject-plan (or subject-plan (when-not (:declined several) several) (when-not (:declined creation) creation))

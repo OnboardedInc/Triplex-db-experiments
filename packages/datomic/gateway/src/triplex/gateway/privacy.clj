@@ -1,7 +1,6 @@
 (ns triplex.gateway.privacy
   (:require [clojure.data.json :as json] [clojure.string :as str] [datomic.api :as d]
-            [triplex.gateway.authority-sql :as sql] [triplex.gateway.scope :as scope] [triplex.gateway.trace :as trace]
-            [triplex.gateway.removal-scope :as removal-scope])
+            [triplex.gateway.authority-sql :as sql] [triplex.gateway.scope :as scope] [triplex.gateway.trace :as trace])
   (:import [java.nio.charset StandardCharsets]
            [java.nio.channels FileChannel]
            [java.nio.file Files Path Paths StandardCopyOption StandardOpenOption LinkOption]
@@ -57,7 +56,9 @@
   (let [m (get (swap! local-guards #(if (contains? % name) % (assoc % name (Object.)))) name)
         p (path name "writer.lock")]
     ;; [DX-ERA2] An account's lock (name#removal/<account>) has no directory until its first use; a no-op otherwise.
-    (when removal-scope/enabled
+    ;; [DX-ERA2 seventh pass, identities] removal-scope is resolved when called, never required by this file: it loads
+    ;; after every installed function's code is read, so this file's generated names stay the base's
+    (when @(requiring-resolve 'triplex.gateway.removal-scope/enabled)
       (Files/createDirectories (.getParent p) (make-array java.nio.file.attribute.FileAttribute 0)))
     (let [started (when trace/*request* (trace/clock))]
       (locking m
@@ -129,7 +130,7 @@
       (update :families into (concat (map (juxt #(get % "entity") #(get % "attribute")) (get entry "identities"))
                                      (get entry "families")))
       ;; [DX-ERA2] Each account's removal sequence, derived from the one ordered log (only with the option on).
-      (cond-> removal-scope/enabled (removal-scope/add-entry entry))))
+      ((requiring-resolve 'triplex.gateway.removal-scope/add-entry-on) entry)))
 
 (defn cut
   ([name db] (cut name db false))
@@ -144,9 +145,12 @@
            ;; that removal (not yet published) from a native database the log does not describe.
            ;; [DX-ERA3 F1b] and the prepared removal itself (its accounts), so a ticketed write can wait for it.
            ;; [DX-ERA2 fifth pass] the intent read once; gone since the check (its publication finished) is no intent
-           pending-entry (when (and removal-scope/enabled allow-pending? pending)
-                           (let [text (if (string? pending) pending (record-text name "pending.json"))]
-                             (when text (json/read-str text))))
+           ;; nested `when`, not `and` (an `and` adds generated names; see the note in `guard`)
+           pending-entry (when @(requiring-resolve 'triplex.gateway.removal-scope/enabled)
+                           (when allow-pending?
+                             (when pending
+                               (let [text (if (string? pending) pending (record-text name "pending.json"))]
+                                 (when text (json/read-str text))))))
            pending-seq (get pending-entry "seq")]
        (let [result
        (when (or wire (enabled? db))
@@ -178,7 +182,7 @@
                (let [new (assoc next :wire wire)]
                  (swap! cache update name #(if (and % (> (:seq %) n)) % new))
                  new))))))]
-         (if (and result (integer? pending-seq)) (assoc result :pending-seq pending-seq :pending pending-entry) result)))
+         (if (if result (integer? pending-seq) false) (assoc result :pending-seq pending-seq :pending pending-entry) result)))
      (catch clojure.lang.ExceptionInfo e (throw e))
      ;; [DX-ERA2 fifth pass] still 503, now counted and logged (an unreadable record, a storage error)
      (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "cut" name e) (unavailable!)))))
@@ -214,19 +218,6 @@
 
 (defn ensure-seq! [state offered]
   (when-not (and state (integer? offered) (= (:seq state) offered)) (stale!)))
-
-;; [DX-ERA2] Why: in a database guarded per account, a derived write's ticket that names its source accounts is
-;; stale only when a removal published after it touched one of them (or the unscoped sequence).
-;; Rejected: a database-wide comparison for such tickets (any account's removal refused every account's frames).
-(defn ensure-ticket! [state input]
-  ;; [DX-ERA3 F1b] removal-commit is loaded only on a database guarded per account.
-  ;; [DX-ERA3 N1] its refusal is tagged: the gateway completes that removal once this write has released its locks.
-  (when (:per-account state)
-    ((requiring-resolve 'triplex.gateway.removal-commit/refuse-pending!) state input))
-  (if (and (:per-account state) (contains? input "erasureAccounts"))
-    (when-not (removal-scope/ticket-current? state (get input "erasureSeq") (removal-scope/ticket-accounts input))
-      (stale!))
-    (ensure-seq! state (get input "erasureSeq"))))
 
 (def columns [:recorded_position :id :entity_id :attribute :value_type :value_string :value_number
               :value_boolean :value_datetime :value_json :recorded_at :valid_from :valid_to
@@ -291,7 +282,8 @@
 (defn validate-write! [state input rows]
   (when state
     (when (and (contains? input "erasureSeq") (not (contains? input "erasureSourceDatabase")))
-      (ensure-ticket! state input))
+      ;; [DX-ERA2] a derived write's ticket; per account, against the accounts it names (removal-scope/ensure-ticket!)
+      ((requiring-resolve 'triplex.gateway.removal-scope/ensure-ticket!) state input))
     (let [new-ids (set (get input "newIds"))
           importing (or (true? (get input "erasureReplay"))
                         (some #(and (= ":_tx/actor" (:attribute %)) (= "bulk-import" (:value_string %))) rows))]
@@ -311,13 +303,8 @@
           (failure! 409 "ErasureReplayDeclined" "A removed field cannot be created across its removal"))))))
 
 (defn verify-data! [state db]
-  (if (removal-scope/per-account? db)
+  (if ((requiring-resolve 'triplex.gateway.removal-scope/per-account?) db)
     ;; [DX-ERA2] Guarded per account: the native removal sequence (the database-wide one holds the sentinel).
-    (when (and state (not (removal-scope/consistent? db (:seq state) nil))) (unavailable!))
+    ((requiring-resolve 'triplex.gateway.removal-scope/verify-data!) state db)
     (when (and state (not= (:seq state) (scope/value db (scope/entity db) :triplex.scope/erasure-seq)))
       (unavailable!))))
-
-;; [DX-ERA2] The value the installed writers' database-wide fence carries for this cut.
-;; [DX-ERA2 fifth pass] per account, the value the request read (-1, or -2 with the commit boundary): a write planned
-;; before the boundary changes is refused at the serial point and planned again
-(defn fence-seq [state] (when state (if (:per-account state) (get state :erasure-sentinel removal-scope/sentinel) (:seq state))))

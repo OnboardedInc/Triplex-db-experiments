@@ -1,6 +1,6 @@
 (ns triplex.gateway.main
   (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase]
-            [triplex.gateway.removal-scope :as removal-scope] [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger] [triplex.gateway.pinned :as pinned] [triplex.gateway.group-cut :as group-cut]
+            [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger] [triplex.gateway.pinned :as pinned] [triplex.gateway.group-cut :as group-cut]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
             [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed]
             [triplex.gateway.write-wire :as write-wire]
@@ -11,9 +11,12 @@
             [triplex.gateway.general-prefetch :as general-prefetch] [triplex.gateway.admission :as admission]
             [triplex.gateway.subject-hints :as subject-hints]
             [triplex.gateway.ids :as ids] [triplex.gateway.sweep :as sweep]
-            ;; [DX-ERA6] the save line's two namespaces stay last (their stored code's generated names depend on it)
+            ;; [DX-ERA6] the save line's two namespaces stay after the removal branch's, the removal scope last of all
+            ;; (every installed function's generated names depend on what loads before them)
             [triplex.gateway.subject-owners :as subject-owners]
-            [triplex.gateway.subject-create :as subject-create])
+            [triplex.gateway.subject-create :as subject-create]
+            ;; [DX-ERA2 seventh pass, identities] last: it loads after every installed function's code has been read
+            [triplex.gateway.removal-scope :as removal-scope])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -526,7 +529,7 @@
                 ;; [DX-ERA2 sixth pass] back to the database-wide rule: the log's policy copy made the database's first
                 _ (when (and per-account (map? input) (true? (get input "back")))
                     ((requiring-resolve 'triplex.gateway.removal-commit/before-move-back!) name conn))
-                moved (erase/per-account! name conn input)
+                moved (removal-scope/per-account! name conn input)
                 ;; [DX-ERA2 fifth pass, Z2] a database guarded per account holds its own protection policy
                 _ (when (:perAccount moved) ((requiring-resolve 'triplex.gateway.removal-commit/adopt-policy!) name conn (d/db conn)))]
             ;; [DX-ERA2 fifth pass] a process allowed to turns the commit boundary on once the database is per account
@@ -555,7 +558,7 @@
                 [independent db] (if (and managed-write? (or subject/enabled per-account) (nil? source)
                                           (not (contains? input "erasureSeq"))
                                           (not (true? (get input "erasureReplay"))))
-                                   (let [[cut db] (if per-account (erase/request-cut name conn db) [(privacy/cut name db) db])]
+                                   (let [[cut db] (if per-account (removal-scope/request-cut name conn db) [(privacy/cut name db) db])]
                                      ;; [DX-ERA2 fourth pass] a write waits while the data is behind the log
                                      (when per-account ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) cut))
                                      [(when (or (not (:sealed cut)) (envelope/shared?)) cut) db])
@@ -610,7 +613,7 @@
                      ;; [DX-ERA2 sixth pass, V9] refused at the serial point because its database moved to the commit
                      ;; boundary after it was planned: planned once more on the database as it is now
                      (if ((requiring-resolve 'triplex.gateway.removal-commit/boundary-moved?) conn independent answer)
-                       (let [[again db-again] (erase/request-cut name conn (erase/sync! conn))]
+                       (let [[again db-again] (removal-scope/request-cut name conn (erase/sync! conn))]
                          ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) again)
                          ((requiring-resolve 'triplex.gateway.removal-commit/decline-check!) name conn db-again input)
                          (run again))
@@ -626,7 +629,7 @@
                   (let [[current next] (trace/span "privacy/write-frontier" "gateway"
                                          (let [current (d/db conn)]
                                            (if (and per-account managed-write?)
-                                             (let [[cut current] (erase/request-cut name conn current)]
+                                             (let [[cut current] (removal-scope/request-cut name conn current)]
                                                ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) cut)
                                                [current cut])
                                              [current (privacy/cut name current)])))]
@@ -648,7 +651,7 @@
                             (let [source-cut (privacy/cut source source-db)]
                               (privacy/verify-data! source-cut source-db)
                               (privacy/ensure-seq! source-cut (get input "erasureSeq")))))
-                        (privacy/ensure-ticket! next input)))
+                        (removal-scope/ensure-ticket! next input)))
                     ;; [DX-ERA2 fifth pass, R2-2] the same on the general writer's path
                     (if managed-write?
                       (do ((requiring-resolve 'triplex.gateway.removal-commit/decline-check!) name conn current input)
@@ -658,9 +661,9 @@
                              ;; more when the database moved to the commit boundary after the plan; its ticket is
                              ;; checked again
                              (if (and per-account ((requiring-resolve 'triplex.gateway.removal-commit/boundary-moved?) conn next answer))
-                               (let [[again _] (erase/request-cut name conn (erase/sync! conn))]
+                               (let [[again _] (removal-scope/request-cut name conn (erase/sync! conn))]
                                  ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) again)
-                                 (when (and (nil? source) (contains? input "erasureSeq")) (privacy/ensure-ticket! again input))
+                                 (when (and (nil? source) (contains? input "erasureSeq")) (removal-scope/ensure-ticket! again input))
                                  (run again))
                                answer))))
                       (run next)))))
@@ -669,14 +672,14 @@
               :else
               (let [read-cut (when-not input
                                (trace/span "privacy/frontier" "gateway"
-                                 (if per-account (first (erase/request-cut name conn db)) (privacy/cut name db))))]
+                                 (if per-account (first (removal-scope/request-cut name conn db)) (privacy/cut name db))))]
                 (when (and read-cut (not per-account)) (trace/span "privacy/verify-data" "gateway" (privacy/verify-data! read-cut db)))
                 ;; [DX-ERA3 M1] on the log's boundary a read never serves a pending removal already committed in the data
                 ;; from the log before it: that removal is published first
                 (let [read-cut (if (:committed-pending read-cut)
                                  ((requiring-resolve 'triplex.gateway.removal-commit/publish-for-read!) name conn)
                                  read-cut)]
-                (when (contains? input "erasureSeq") (privacy/ensure-ticket! read-cut input))
+                (when (contains? input "erasureSeq") (removal-scope/ensure-ticket! read-cut input))
                 (run read-cut)))))))
       (catch Exception e0
         (let [;; [DX-ERA2 fifth pass] the PostgreSQL authority's session lost mid-way (the removal route, or anything
@@ -723,7 +726,10 @@
 (defn- route-handler-guarded [request]
   (try (route-handler request)
        (catch Throwable t (response 500 {:code "GatewayError" :message ((requiring-resolve 'triplex.gateway.reply/message) t nil)}))))
-(defn handler [request] (trace/handler route-handler-guarded request))
+;; [DX-N1R F1] the last answer is around the trace wrapper too: an exception it raises answers the same fixed JSON
+(defn handler [request]
+  (try (trace/handler route-handler-guarded request)
+       (catch Throwable t (response 500 {:code "GatewayError" :message ((requiring-resolve 'triplex.gateway.reply/message) t nil)}))))
 (defn serve! [serve-handler port]
   (envelope/start!)
   (d/create-database (db-uri "tx2-health"))
