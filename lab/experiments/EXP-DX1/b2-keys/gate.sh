@@ -11,13 +11,22 @@
 #           and sealed: one SHA-256 of the native log per run, every reply, and the key store after one shred pass.
 #           Fails unless the native logs and replies are identical; the key stores are printed and compared.
 #   suites  the gateway's Clojure suites, on the base and on this worktree.
+#   scenarios  [review] b2r/scenarios.clj (S1, S2a, S2b, S3) on the file and the PostgreSQL authority: S3 forces a
+#           failure at every new failure line and fails if a line prints key bytes (a hex run of 64 or more, or \x),
+#           a protected value, a subject ID or a scope word.
+#   fuzz    [review] b2r/fuzz.clj, B2R_SCHEDULES (default 20000) schedules on each authority, seed B2R_SEED.
+# The paired native logs are compared after paired.clj's normalisation, not as raw bytes: :db/txInstant datoms are
+# left out; every clock value (a number from 1e12 to 1e14, a 13-digit number, a float clock, a hex double clock)
+# becomes CLOCK or HEXCLOCK; the database name becomes DB; the random removal transaction IDs, every UUID and every
+# 64-character hash become placeholders; the scope key's value becomes SCOPE and a sealed body's ciphertext BODY.
+# Entity IDs, t values, attributes and every other value are compared as they are.
 set -uo pipefail
 out=${1:?absolute new output directory}; base=${2:-1ed2650bd}
 [[ $out == /* && ! -e $out ]] || { echo "gate.sh: give a new absolute output directory" >&2; exit 2; }
 : "${DOCKER_HOST:?set DOCKER_HOST to the lab VM docker socket}"
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 x=$repo/lab/experiments/EXP-DX1
-phases=${B2_GATE_PHASES:-b2 paired suites}
+phases=${B2_GATE_PHASES:-b2 paired suites scenarios}
 mkdir -p "$out/this" "$out/base" "$out/lab"
 git -C "$repo" rev-parse HEAD > "$out/source"
 git -C "$repo" status --porcelain -- packages/datomic/gateway lab/experiments/EXP-DX1/b2-keys > "$out/dirty"
@@ -94,6 +103,19 @@ if [[ $phases == *suites* ]]; then
   b=$(grep -h "^B2_SUITES" "$out/suites-base.log"); t=$(grep -h "^B2_SUITES" "$out/suites-this.log")
   echo "B2_SUITES base $b"; echo "B2_SUITES this $t"
   [[ -n $t && $b == "$t" ]] || { echo "B2_SUITES differ from the base"; status=1; }
+fi
+if [[ $phases == *scenarios* ]]; then
+  for authority in file pg; do
+    bash "$x/b2r/run.sh" "$out/scenarios-$authority" worktree "$authority" scenarios.clj '(b2r-scenarios/main)' || status=1
+    grep -hE "^B2R_SCEN_SUMMARY|^B2R_SCEN FAIL" "$out/scenarios-$authority/run.log" 2>/dev/null | cut -c1-300 | head -8
+  done
+fi
+if [[ $phases == *fuzz* ]]; then
+  for authority in file pg; do
+    bash "$x/b2r/run.sh" "$out/fuzz-$authority" worktree "$authority" fuzz.clj '(b2r-fuzz/main)' \
+      "B2R_SCHEDULES=${B2R_SCHEDULES:-20000}" "B2R_SEED=${B2R_SEED:-1000000}" || status=1
+    grep -hE "^B2R_FUZZ_SUMMARY|^B2R_FUZZ_VIOLATION" "$out/fuzz-$authority/run.log" 2>/dev/null | cut -c1-600 | tail -6
+  done
 fi
 rm -rf "$out/this/src" "$out/base/src"
 exit "$status"
