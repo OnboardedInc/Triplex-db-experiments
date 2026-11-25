@@ -267,7 +267,9 @@
       (= uri "/v2/admin/scan-stats") (response 200 (cond-> (assoc @stats/counts :idMemo (reach/id-memo-stats) :pinnedShortcut (pinned/stats) :readPrefetch (uncached/stats) :entityCache (let [base (entity-cache/stats) extra (recent/stats)] (assoc (merge base extra) :bytes (+ (:bytes base) (:recentBytes extra)))))
                                                      ;; [DX-XQ7] Present only with their options on (default off: the answer is as before).
                                                      qr/enabled (assoc :questionReader (qr/stats))
-                                                     qr/read-io-enabled (assoc :readIo @qr/read-io)))
+                                                     qr/read-io-enabled (assoc :readIo @qr/read-io)
+                                                     ;; [DX-SCALE2] Accounts holding a sweep gate (only when the sweep is on).
+                                                     sweep/enabled (assoc :sweepGates (sweep/gate-count))))
       (and (= :post request-method) (= uri "/v2/admin/scan-stats/reset")) (do (reset! stats/counts {}) (when qr/read-io-enabled (qr/reset-read-io!)) (response 200 {}))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(transactions|command|journal|entity-transactions)" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)

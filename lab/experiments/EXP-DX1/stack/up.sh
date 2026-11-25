@@ -1158,6 +1158,11 @@ for role in "${gateway_roles[@]}"; do
     [[ $sweep_per_account =~ ^([1-9]|1[0-6])$ ]] || { echo "up.sh: DX_SWEEP_PER_ACCOUNT must be 1..16" >&2; exit 2; }
     field_policy+=(-e "TX2_SWEEP_PER_ACCOUNT=$sweep_per_account")
   fi
+  # [DX-SCALE2] The sweep's per-account gates evicted when an account's last sweep ends (unset: environment unchanged).
+  if [[ -n ${DX_SWEEP_GATE_EVICT:-} ]]; then
+    [[ $DX_SWEEP_GATE_EVICT =~ ^[01]$ ]] || { echo "up.sh: DX_SWEEP_GATE_EVICT must be 0 or 1" >&2; exit 2; }
+    field_policy+=(-e "TX2_SWEEP_GATE_EVICT=$DX_SWEEP_GATE_EVICT")
+  fi
   if [[ -n $sweep_queue ]]; then
     [[ $sweep_queue =~ ^[1-9][0-9]{0,3}$ && $sweep_queue -le 5000 ]] || { echo "up.sh: DX_SWEEP_QUEUE_MS must be 1..5000" >&2; exit 2; }
     field_policy+=(-e "TX2_SWEEP_QUEUE_MS=$sweep_queue")

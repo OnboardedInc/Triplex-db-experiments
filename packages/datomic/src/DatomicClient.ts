@@ -222,12 +222,15 @@ export const checkAtLeastAnswer = (atLeast: ReadAtLeastRequest, echo: unknown, p
     throw new TypeError(`The gateway answered at position ${position}, before the at-least position ${atLeast.position}`);
 };
 
+/** [DX-SCALE2] The process-wide agent used by clients made with TRIPLEX_DATOMIC_SHARED_AGENT=1. */
+let processAgent: http.Agent | undefined;
 export class DatomicClient {
   // [DX-B2-N3] Why: opt-in transport observations measure real calls without a second HTTP request.
   // Rejected: inferring gateway CPU or transact time from client wall latency.
   onRequest?: (sample: DatomicRequestSample) => void;
   onCommit?: (sample: DatomicCommitSample) => void;
   readonly agent: http.Agent;
+  private readonly sharedAgent: boolean;
   // [DX-RD1] Why: each explicitly sampled logical read owns its exchanges across awaits and any repair.
   // Rejected: assigning concurrent response callbacks to the last caller or allocating samples for the whole ladder.
   private readProfile?: AsyncLocalStorage<(sample: ReadWireSample) => void>;
@@ -409,7 +412,16 @@ export class DatomicClient {
       if (this.questionEndpoint.protocol !== "http:" || this.questionEndpoint.username || this.questionEndpoint.password)
         throw new TypeError("Expected HTTP question reader URL without credentials");
     }
-    this.agent = new http.Agent({ keepAlive: true, maxSockets: 512, maxTotalSockets: 512 });
+    // [DX-SCALE2] Why: every client opened its own keep-alive agent, so a process holding one store per account (the
+    // settlement runner opens three per publishing account, each with several clients) kept sockets to the gateways in
+    // proportion to the number of accounts (7 per enrolled account on the toy). With TRIPLEX_DATOMIC_SHARED_AGENT=1
+    // (default off: one agent per client, as before) every client of the process shares one agent with the same
+    // limits, so sockets follow concurrent requests, not accounts. Transport only: requests, replies and caches are
+    // unchanged. Rejected: sharing whole clients (their caches and row observers belong to one runtime).
+    this.sharedAgent = process.env["TRIPLEX_DATOMIC_SHARED_AGENT"] === "1";
+    this.agent = this.sharedAgent
+      ? (processAgent ??= new http.Agent({ keepAlive: true, maxSockets: 512, maxTotalSockets: 512 }))
+      : new http.Agent({ keepAlive: true, maxSockets: 512, maxTotalSockets: 512 });
     // [DX-T1-12] Why: report real cache occupancy and budgets off the request path, including every writer/reader isolate.
     // Rejected: assume a configured budget is resident, or add a cache walk to every commit.
     if (traceLevel !== "off")
@@ -434,7 +446,7 @@ export class DatomicClient {
     this.orderedRowTexts.clear();
     this.journalCuts.clear();
     this.rowObservers.clear();
-    this.agent.destroy();
+    if (!this.sharedAgent) this.agent.destroy();
   }
   async request<T>(
     method: "GET" | "POST",

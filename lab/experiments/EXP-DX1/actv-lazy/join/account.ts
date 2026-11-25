@@ -205,6 +205,16 @@ export class JoinedAccount {
   }
   private async suffix(after: number, p: number, setup = false) {
     if (this.s.held && !setup) return this.s.held.verifyThrough(p);
+    // [DX-SCALE2] Why: a namespaced account's enrolment checks every commit between its first and last enrolment
+    // write and refused any commit that is not its own, so in one database it fails whenever any other account saves
+    // or settles meanwhile (with many accounts, always). With TX2_ENROL_BESIDE_SAVES=1 (default off: as before) a
+    // commit is also accepted when none of its changes touches what this enrolment owns: its own documents, its
+    // account's data (`acct/<account>/`) and its metadata names. Rejected: dropping the check (a writer of this
+    // account's enrolment documents must still stop it).
+    const beside = process.env.TX2_ENROL_BESIDE_SAVES === "1" && Boolean(this.s.held?.namespace);
+    const own = beside ? new Set<string>(Object.values(namesOf(this.s)).filter((v): v is string => typeof v === "string" && v.length > 0)) : undefined;
+    const foreign = (changes: any[]) => Boolean(own) && changes.length > 0 && changes.every((v: any) =>
+      !v.entityId.startsWith(this.db.prefix) && !v.entityId.startsWith("acct/" + this.s.held!.account + "/") && !own!.has(v.entityId));
     while (after < p) {
       const f = await this.s.comp.feedPage(after, 32);
       assert(f.transactions.length);
@@ -223,6 +233,7 @@ export class JoinedAccount {
           );
         assert(
           allowed ||
+            (setup && beside && foreign(t.changes)) ||
             (t.actor === stageActor && stageChanges(this.db.prefix, t.changes)) ||
             // [DX-ACT6] Content-addressed release definitions written ahead of a Publish (unreachable until it).
             (t.actor === definitionsActor && definitionsOnly(this.s, t.changes)) ||
