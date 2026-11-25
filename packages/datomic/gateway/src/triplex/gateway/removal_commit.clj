@@ -107,6 +107,14 @@
   (when-let [b (and state (disagreement db state))] (refuse! b))
   (privacy/unavailable!))
 
+(defn- pending-refusal
+  "[DX-ERA3 N1] The refusal of a ticketed write that a removal in flight can reach. It is tagged so the gateway, once the
+  write has released its locks, completes that removal before it answers (main/route-handler, `complete-pending!`)."
+  []
+  (ex-info (str "A removal this write's inputs can reach is in flight; this gateway completes it. "
+                "Read the ticket again and send the write again.")
+           {:status 503 :code "ErasureFrontierUnavailable" :removal-pending true}))
+
 (defn ticket-intent-ops
   "[DX-ERA3 F1] A ticket naming no account read any account, so at Datomic's serial point it must find no removal
   committed since it (the committed sequence equals the ticket) and none declared since it (the declared sequence is
@@ -115,14 +123,22 @@
   committed sequence [N3]. A database without a declared sequence (moved by an earlier build) is checked on the
   committed sequence only, until its first removal starts one [N2]. A delivery between databases carries the source
   database's ticket, which says nothing about this one: no check here, as on the database-wide rule [N4]. Tickets
-  naming accounts are held by those accounts' counters in the fence (`removal-scope/fence-op`)."
+  naming accounts are held by those accounts' counters in the fence (`removal-scope/fence-op`).
+  [DX-ERA2 third pass] A write that this data already shows declared against (the declared sequence past its ticket,
+  or a named account's counter negative) is refused here with the tagged refusal rather than at the serial point, so
+  every refusal a declaration causes starts the removal's completion, not only the gateway's early one."
   [scope input db]
   (let [t (get input "erasureSeq") source (get input "erasureSourceDatabase")]
     (cond
       (not (contains? input "erasureSeq")) []
-      (contains? input "erasureAccounts") []
+      (contains? input "erasureAccounts")
+      (do (when (some (fn [a] (neg? (long (removal-scope/native-account-seq db a))))
+                      (conj (vec (removal-scope/ticket-accounts input)) removal-scope/unscoped))
+            (throw (pending-refusal)))
+          [])
       (and (some? source) (not= source privacy/*database*)) []
       :else (let [dd (declared-seq db)]
+              (when (and (integer? dd) (integer? t) (> dd t)) (throw (pending-refusal)))
               (cond-> [[:db/cas scope :triplex.scope/removal-seq t t]]
                 (integer? dd) (conj [:db/cas scope :triplex.scope/removal-intent (min dd t) (min dd t)]))))))
 
@@ -147,9 +163,7 @@
   no pending removal outlives the first write it refuses by more than one completion."
   [state input]
   (when (pending-touches? state input)
-    (throw (ex-info (str "A removal this write's inputs can reach is in flight; this gateway completes it. "
-                         "Read the ticket again and send the write again.")
-                    {:status 503 :code "ErasureFrontierUnavailable" :removal-pending true}))))
+    (throw (pending-refusal))))
 
 (def commit-code
   ;; No #() and no syntax quote: the stored function text is the same on every gateway.
