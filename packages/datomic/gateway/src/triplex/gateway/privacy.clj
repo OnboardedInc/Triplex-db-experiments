@@ -129,10 +129,16 @@
       (update :families into (concat (map (juxt #(get % "entity") #(get % "attribute")) (get entry "identities"))
                                      (get entry "families")))))
 
+;; [DX-API1, in DX-INT5's late form] Filled by removal_drops.clj (loaded after commit.clj): called as
+;; (drop-hook name db nil nil) at every cut, and (drop-hook name db base next) when a newer frontier is accepted, so that
+;; parsed entities named by new removals are dropped from the entity cache. Here, before commit.clj, it is only a var and
+;; two calls: API1's inline code moved every stored function's identity with every option off (READINESS.md, step 0).
+(def drop-hook nil)
 (defn cut
   ([name db] (cut name db false))
   ([name db allow-pending?]
    (try
+     (when drop-hook (drop-hook name db nil nil))
      (let [frontier (when sql/url (sql/read-frontier name))
            pending (if sql/url (get frontier "pending.json")
                      (when (and root (exists? (path name "pending.json"))) true))
@@ -165,6 +171,7 @@
                               (= (:attrs next) (set attrs)) (= (:sealed next) sealed?))
                  (unavailable!))
                (let [new (assoc next :wire wire)]
+                 (when drop-hook (drop-hook name db base next))
                  (swap! cache update name #(if (and % (> (:seq %) n)) % new))
                  new)))))))
      (catch clojure.lang.ExceptionInfo e (throw e))

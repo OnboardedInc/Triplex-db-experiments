@@ -19,7 +19,13 @@
             [triplex.gateway.index-hints :as index-hints]
             ;; [DX-INT5, the form of DX-XQ10] Last: it fills lean/prefetch-hook with TX2_READ_PREFETCH=1; loaded before
             ;; commit.clj it moved the stored functions' identities with every option off (READINESS.md, step 0).
-            [triplex.gateway.uncached :as uncached])
+            [triplex.gateway.uncached :as uncached]
+            ;; [DX-API1, DX-INT5's late form] Fills privacy/drop-hook (the entity cache's drops at a removal); after commit.clj.
+            [triplex.gateway.removal-drops :as removal-drops]
+            ;; [DX-API1, DX-INT5's late form] Fills reach's stopAt and reference-attribute hooks; after commit.clj.
+            [triplex.gateway.reach-late :as reach-late]
+            ;; [DX-API1] After uncached, which it requires; behind TX2_READ_BATCH=1.
+            [triplex.gateway.batch :as batch])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -174,6 +180,8 @@
       index-hints/enabled (assoc-in [:options :indexHints] {:subject (str index-hints/subject-ident) :general (str index-hints/general-ident)})
       ;; [DX-RD5] Why: the uncached-read options, reported only when on, as the two above.
       uncached/prefetch? (assoc-in [:options :readPrefetch] true)
+      ;; [DX-API1] Why: the batched read route, reported only when on, as the two above.
+      batch/enabled (assoc-in [:options :readBatch] true)
       (System/getProperty "datomic.readAheadPool") (assoc-in [:options :readAheadPool] (System/getProperty "datomic.readAheadPool"))
       ;; [DX-IMP2] Why: report the option only when it is on, so default readbacks stay byte-identical.
       policy/import-whole? (update :options assoc :importWholeSubject true :importCommitMicros policy/import-commit-us)
@@ -294,7 +302,9 @@
                                                      qr/enabled (assoc :questionReader (qr/stats))
                                                      qr/read-io-enabled (assoc :readIo @qr/read-io)
                                                      ;; [DX-SCALE2] Accounts holding a sweep gate (only when the sweep is on).
-                                                     sweep/enabled (assoc :sweepGates (sweep/gate-count))))
+                                                     sweep/enabled (assoc :sweepGates (sweep/gate-count))
+                                                     ;; [DX-API1] The batched read's counts, only with its option on.
+                                                     batch/enabled (assoc :readBatch (batch/stats-now))))
       (and (= :post request-method) (= uri "/v2/admin/scan-stats/reset")) (do (reset! stats/counts {}) (when qr/read-io-enabled (qr/reset-read-io!)) (response 200 {}))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(transactions|command|journal|entity-transactions)" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
@@ -441,6 +451,12 @@
                                                    (some? maximum) (assoc :maximum maximum)
                                                    (some? retryAfterMs) (assoc :retryAfterMs retryAfterMs))))
                    (throw e))))))
+      ;; [DX-API1] One API call's reads at one position in one request (batch.clj); absent unless TX2_READ_BATCH=1.
+      (and batch/enabled (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/batch" uri))
+      (let [name (nth (clojure.string/split uri #"/") 3) input (trace/read-span "gateway.request-decode" "gateway" (request-json body))
+            start (System/nanoTime) view (connection-view (db-uri name))]
+        (timed start {:status 200 :headers {"Content-Type" "application/json; charset=utf-8"}
+                      :body (trace/span "batch/run" "gateway" (batch/run name view input))}))
       ;; [DX-XQ6] The exact sweep (questions across subjects, read subject by subject); absent unless TX2_SWEEP=1.
       (and sweep/enabled (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/sweep" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
