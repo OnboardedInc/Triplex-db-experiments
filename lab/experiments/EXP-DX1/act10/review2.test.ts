@@ -71,7 +71,10 @@ test("A2: the single-account layout (un-prefixed IDs) and a namespaced account's
   const [Z, B] = await accounts(db, [{ name: "acct-0", namespace: false }, { name: "acct-b" }]);
   const b = await withEnv(OFF, () => outcome(B!.a.publish("r1", W0.R1.doc, validTime, "owed")));
   const z = await withEnv(ON, () => outcome(Z!.a.publish("r1", W0.R1.doc, validTime, "owed")));
-  const out = { bBeforeOption: b, singleLayoutWithOption: z, zGetsBsReceipt: (z as any).txId === (b as any).txId,
+  // Would the legacy path's ownership check (account.ts 495), applied here too, refuse B's record for account 0?
+  const bRecord = await Z!.s.lookup("joined:r1");
+  const ownershipCheckRefuses = !bRecord.changes.some((c: any) => c.entityId.startsWith((Z!.a as any).db.prefix));
+  const out = { bBeforeOption: b, singleLayoutWithOption: z, zGetsBsReceipt: (z as any).txId === (b as any).txId, ownershipCheckRefuses,
     zReleases: await releases(Z!), zTail: await tail(Z!), bReleases: await releases(B!) };
   console.log("[A2] " + JSON.stringify(out));
   // The break if true: account 0's Publish is acknowledged with account B's receipt; nothing is written for account 0.
@@ -221,7 +224,9 @@ test("S3: a record another account writes under joined:<A>/<id> with A's intent:
   // B writes, under A's command ID, a record of its own subject with A's actor and A's correlation context.
   const forged = await withEnv(ON, () => saveAs(B!, joinedCommandId(A!.s, "r2"), "lazy/join", context));
   const resend = await withEnv(ON, () => outcome(A!.a.publish("r2", W0.R2.doc, validTime, "owed")));
-  const out = { lost, forged, resend, resendIsForged: resend.ok && (resend as any).txId === (forged as any).txId,
+  const forgedRecord = await withEnv(ON, () => A!.s.lookup(joinedCommandId(A!.s, "r2")));
+  const ownershipCheckRefuses = !forgedRecord.changes.some((c: any) => c.entityId.startsWith((A!.a as any).db.prefix));
+  const out = { lost, forged, resend, resendIsForged: resend.ok && (resend as any).txId === (forged as any).txId, ownershipCheckRefuses,
     aReleases: await releases(A!), aTail: await tail(A!) };
   console.log("[S3] " + JSON.stringify(out));
   // The break if true: A's Publish is acknowledged with B's record; A's release and notice event were never written.
@@ -302,6 +307,30 @@ test("C4: an account's history: two releases of different policies, then a relea
   };
   const without = await run(false), withCap = await run(true);
   console.log("[C4] " + JSON.stringify({ capOff: without, capOn: withCap }));
+});
+
+test("C5: an account that renames its notice policies at each release: how many releases before the cap refuses every one", async () => {
+  const db = fresh();
+  const [A] = await accounts(db, [{ name: "acct-h" }]);
+  const env = { ...ON, TX2_LEDGER_CAP_AT_PUBLISH: "1", TX2_NOTICE_LEDGER: "parts" };
+  const out: { k: number; published: boolean; error?: string }[] = [];
+  for (let k = 0; k < 12; k++) {
+    // 150 forms and 150 notice policies per release, new IDs each time (a yearly package, say).
+    const p = await withEnv(env, () => outcome(A!.a.publish("h-" + k, tagged(150, "y" + k), validTime, "owed", undefined, { docs: "ref" })));
+    out.push({ k, published: p.ok, ...(p.ok ? {} : { error: (p as any).error.slice(0, 70) }) });
+    if (!p.ok) break;
+  }
+  // After the first refusal: releases of 10 new notice policies until one is refused; the first release again (its
+  // policy IDs already counted); a release with no notice policies.
+  let tens = 0;
+  for (; tens < 20; tens++)
+    if (!(await withEnv(env, () => outcome(A!.a.publish("h-ten-" + tens, tagged(10, "z" + tens), validTime, "owed", undefined, { docs: "ref" })))).ok) break;
+  const again = await withEnv(env, () => outcome(A!.a.publish("h-again", tagged(150, "y0"), validTime, "owed", undefined, { docs: "ref" })));
+  const none = await withEnv(env, () => outcome(A!.a.publish("h-none", W0.R2.doc, validTime, "owed")));
+  const result = { published: out.filter((x) => x.published).length, firstRefused: out.find((x) => !x.published),
+    releasesOfTenNewPoliciesAfter: tens, firstReleaseAgain: again.ok ? "published" : (again as any).error.slice(0, 70), noPolicies: none.ok };
+  console.log("[C5] " + JSON.stringify(result));
+  assert(result.firstRefused && tens < 20);
 });
 
 // ---------------------------------------------------------------------------------------------- (f) frame guards
