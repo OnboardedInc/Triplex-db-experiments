@@ -118,8 +118,76 @@ export function ledgerChange(db: Documents, subject: string, event: number, old:
   return { parts: parts as Op[], closing: [...retire, ...db.change(ledgerKey(subject), old.head, head)] };
 }
 
+// [DX-ACT8, third review U9] The retired-item archive (the account setting `archive`, stored with every settings
+// transition; follow-up 11 of PUBLISH-BESIDE-SAVES.md). Under it a subject's ledger holds only its items in force, and
+// each retired item is one row of its own, keyed by subject and item ID (`retiredKey`). The kernel's fold is unchanged:
+// its input is the ledger plus the archived rows of the work items that are not in the ledger (a retired item that comes
+// back continues at its sequence + 1, as before), and its output is split: the items in force are the new ledger, the
+// retired ones are written as archive rows. A row is only ever read by its key, and the ledger has priority over a row
+// (a row left from an earlier retirement of an item now in force is not read). So a ledger is bounded by what one
+// release can owe one subject, not by the account's history. Rejected: one archive value per subject (it grows with the
+// history, the same lifetime limit one step later), and dropping retired items (a reappearing ID would restart at 1).
+export const retiredKey = (subject: string, id: string) => "recorded-retired:" + subject + ":" + id;
+/** The item IDs whose archive rows a subject's fold needs: work items not in its ledger (to continue their sequence),
+ * and ledger items not among its work items (they retire, or are retired, and move to their rows). */
+export function retiredWanted(old: Ledger, work: readonly { id: string }[]) {
+  const live = new Set(old.items.map((i) => i.id)),
+    present = new Set(work.map((w) => w.id)),
+    ids = new Set<string>();
+  for (const id of present) if (!live.has(id)) ids.add(id);
+  for (const id of live) if (!present.has(id)) ids.add(id);
+  return [...ids].sort();
+}
+/** The archive rows of each subject's `ids` at `at`, keyed by `retiredKey`. */
+export async function readRetired(db: Pick<Documents, "rows">, wanted: Iterable<readonly [string, readonly string[]]>, at: number) {
+  const keys = [...wanted].flatMap(([subject, ids]) => ids.map((id) => retiredKey(subject, id)));
+  const out = new Map<string, Row<W0.ItemState>>();
+  for (let i = 0; i < keys.length; i += 64)
+    for (const [k, r] of await db.rows<W0.ItemState>(keys.slice(i, i + 64), at)) out.set(k, r);
+  return out;
+}
+/** The fold's input under the archive: the ledger's items and the archived state of each work item not in it. */
+export function foldInput(subject: string, old: Ledger, work: readonly { id: string }[], archived: ReadonlyMap<string, Row<W0.ItemState>>) {
+  const live = new Set(old.items.map((i) => i.id)),
+    items = [...old.items];
+  for (const w of work) {
+    if (live.has(w.id)) continue;
+    const r = archived.get(retiredKey(subject, w.id));
+    if (!r) continue;
+    assert(r.value.id === w.id && r.value.subject === subject && r.value.retired === true, "Archived item differs from its key: " + subject);
+    items.push(r.value);
+  }
+  return items.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+}
+/**
+ * Every subject's whole ledger state at `at` (its items in force and its retired items), for checkers: the ledger, and
+ * the archive rows of `known(subject)` that are not in it. Every item a ledger ever held was delivered at least once, so
+ * the IDs of a subject's deliveries (or an oracle's items) are enough. Without an archive it is `readLedgers`.
+ */
+export async function readFullLedgers(db: Pick<Documents, "rows">, subjects: readonly string[], at: number, known: (subject: string) => Iterable<string>) {
+  const live = await readLedgers(db, subjects, at);
+  const wanted = subjects.map((s) => {
+    const ids = new Set(live.get(s)!.items.map((i) => i.id));
+    return [s, [...new Set(known(s))].filter((id) => !ids.has(id))] as const;
+  });
+  const rows = await readRetired(db, wanted, at);
+  const out = new Map<string, Ledger & { archived: number }>();
+  for (const [s, ids] of wanted) {
+    const l = live.get(s)!,
+      extra = ids.flatMap((id) => {
+        const r = rows.get(retiredKey(s, id));
+        return r ? [r.value] : [];
+      });
+    out.set(s, { ...l, archived: extra.length, items: [...l.items, ...extra].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)) });
+  }
+  return out;
+}
+
 /** One subject's notice candidate for the byte frames: its deliveries, then (in parts mode) its ledger parts, as units;
- * the ledger head as the closing piece. `whole` keeps the earlier shape (the ledger change is the closing piece). */
+ * the ledger head as the closing piece. `whole` keeps the earlier shape (the ledger change is the closing piece).
+ * [U9] With `archived` (the archive rows `retiredWanted` names), the ledger written is the items in force only, and each
+ * retired item's row is one more unit after the parts, always written (so a restart inside the subject counts the same
+ * units); a row is written before the head, which is harmless: until the head the ledger still holds that item. */
 export function noticeCandidate(
   db: Documents,
   subject: string,
@@ -127,7 +195,22 @@ export function noticeCandidate(
   old: Ledger,
   result: { deliveries: W0.Delivery[]; state: { items: readonly W0.ItemState[] } },
   mode: LedgerMode,
+  archived?: ReadonlyMap<string, Row<W0.ItemState>>,
 ): NoticeCandidate {
+  if (archived) {
+    assert(mode === "parts", "The retired-item archive writes ledgers in parts");
+    const live = result.state.items.filter((i) => !i.retired),
+      retire = result.state.items.filter((i) => i.retired);
+    const change = ledgerChange(db, subject, event, old, live);
+    const rows = retire.map((it) => db.change(retiredKey(subject, it.id), archived.get(retiredKey(subject, it.id)), it));
+    return {
+      subject,
+      units: [...result.deliveries, ...change.parts, ...rows],
+      deliveries: result.deliveries.length,
+      closing: change.closing.length > 0,
+      ledger: change.closing,
+    };
+  }
   if (mode === "whole") {
     assert(old.parts.length === 0, "A ledger in parts needs TX2_NOTICE_LEDGER=parts");
     const ledger =
@@ -147,8 +230,9 @@ export function noticeCandidate(
 }
 
 // [DX-ACT8, review F3] TX2_LEDGER_CAP_AT_PUBLISH=1 (default off): a Publish is refused when one subject could owe more
-// notice items, across every release of the account (a ledger keeps retired items), than the settlement in force can
-// write for it: in parts, `ledgerPartsMax()` parts; whole, one value that fits one frame beside the cursor change.
+// notice items than the settlement in force can write for it: in parts, `ledgerPartsMax()` parts; whole, one value that
+// fits one frame beside the cursor change. [Third review U9] Under the settings a ledger holds the items in force only
+// (the archive above), so the count is one release's, not the account's history.
 // Otherwise the release is acknowledged and its first ledger write is refused (`FrameTooLarge`), and since the cursor
 // cannot pass it, every later release's notices in that account are never recorded. Unset: nothing here is used.
 const sample = { scopeName: "ledger-capacity" } as never;

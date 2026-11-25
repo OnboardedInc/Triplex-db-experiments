@@ -37,15 +37,17 @@ export class Conflict extends Error {}
  * does not know a field refuses the account: builds since 2026-11-21 compare the origin fact with
  * `{ profile, held }` exactly (the check below, before this change), and this build refuses any version or field it
  * does not know. PUBLISH-BESIDE-SAVES.md section 0.8. */
-export type AccountSettings = { v: 1; accountKeys?: true; frameGuards?: true; ledgerCap?: true; ledger?: "whole" | "parts" };
-const settingsFields = new Set(["v", "accountKeys", "frameGuards", "ledgerCap", "ledger"]);
+// [DX-ACT8, third review] `archive`: the account's ledgers hold only the items in force; retired items are kept beside
+// them, one row each (ledger-parts.ts). A build that does not know the field refuses the account.
+export type AccountSettings = { v: 1; accountKeys?: true; frameGuards?: true; ledgerCap?: true; ledger?: "whole" | "parts"; archive?: true };
+const settingsFields = new Set(["v", "accountKeys", "frameGuards", "ledgerCap", "ledger", "archive"]);
 export function originSettings(origin: any, base: { profile: string; held: string }): AccountSettings | undefined {
   const { settings, ...rest } = origin ?? {};
   assert.deepEqual(rest, base);
   if (settings === undefined) return undefined;
   assert(
     settings && settings.v === 1 && Object.keys(settings).every((k) => settingsFields.has(k)) &&
-      [settings.accountKeys, settings.frameGuards, settings.ledgerCap].every((b) => b === undefined || b === true) &&
+      [settings.accountKeys, settings.frameGuards, settings.ledgerCap, settings.archive].every((b) => b === undefined || b === true) &&
       (settings.ledger === undefined || settings.ledger === "whole" || settings.ledger === "parts"),
     "This account's stored settings are not ones this build knows: it refuses to run against the account",
   );

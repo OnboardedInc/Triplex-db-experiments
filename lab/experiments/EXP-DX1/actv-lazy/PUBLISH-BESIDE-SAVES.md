@@ -5,9 +5,319 @@ Builder DX-ACT8, 2026-11-24, branch `exp/DX-ACT8-publish-beside-saves` from `exp
 work is correctness at toy size; every Mac time is diagnostic, every count exact. Nothing here ran on a server. Every
 option is default off; with nothing set every existing path is unchanged.
 
-Section 0 is what two independent reviews found and what changed after them. Sections 1 to 6 are the design, written before any code. The results follow from section 7.
+Section 0 is what three independent reviews found and what changed after them (0.A is the third, the newest). Sections
+1 to 6 are the design, written before any code. The results follow from section 7.
 
-## 0. What the two reviews found, and what changed after them
+## 0. What the three reviews found, and what changed after them
+
+### 0.A The third review (2026-11-25, `act10/REVIEW-3.md`, `f596d1267`): what changed after it
+
+**Does the one branch have U1? Yes.** `exp/DX-INT1` at `1ed2650bd`, with every option off, carries the two ID
+generators the review read, byte for byte. Its fix is alone on `exp/DX-U1-id-allocator` (`a439e9b9e`, page
+`u1/ID-ALLOCATOR.md` there). This branch carries the same fix (`c3f4dc505`).
+
+| # | Finding, in one line | The fix (commit) | The test that now passes |
+| --- | --- | --- | --- |
+| U1 | A save's block of assertion IDs and the SDK's other IDs came from one ID space, so a valid save could be refused, and refused again on every resend | One allocator (`packages/core` `utils/id.ts` `reserveIdPrefix`); the held tape resends a save refused for an ID collision under a new block once its operation is known absent (`c3f4dc505`) | `identity.test.ts` I1 (0 of 5,000 share a token), I2 (0 of 200,000), I3 (0 of 100,000 IDs inside 28,572 blocks); on the stack, the options-off gate (0.A, the gates) |
+| U2 | The first transition stored the ledger mode of whichever process came first, which could lock the account | Under any setting the ledgers are in parts with the archive, whatever a process names; the cap is computed the same way by every publisher (`f2c3cac73`) | `review3` T1; `review2` C2 |
+| U3 | Another account could compute a settlement frame's or the enrolment's command ID and save under it first, stopping that account for good | Frame IDs carry a random part under any stored setting (`f2c3cac73` under `accountKeys`, widened in `a380292be`); the enrolment's ID carries one under `TX2_ENROL_BESIDE_SAVES`, and is recovered by reading what it writes (`f2c3cac73`) | `review3` T9 (values and notices: the next runs record), T10 (the account enrols) |
+| U4 | A forged record in two accounts' documents was taken as each one's Publish | A record is this account's only if every change it makes is in this account's names (`f2c3cac73`) | `review3` T6 |
+| U5 | A plan of a build from before the settings, made before a transition, could commit after it (a release over the cap landed and locked every later Publish; a frame landed after an acknowledged pause) | The transition fences what was planned before it: it rewrites the account's calendar row, every pending values progress row and the notice cursor, and creates the first such rows if absent (`f2c3cac73`); it commits under the removal sequence it read (`c788f5de2`), guarded on every row it fences (`afae099b1`) | `review3` T4, T5; `settings` S2, S3, S4, each with a negative control |
+| U6 | A process kept a per-process cache of the settings, so it never turned them on again after a direct rewrite | No cache: whether a transition is needed is read at every plan and every frame (`f2c3cac73`) | `review3` T3 |
+| U7 | The `joined:<account>/<id>` form of `bf377c57f` was not looked up | Looked up, under the same ownership rule, with either intent (`f2c3cac73`) | `review3` T7 |
+| U8 | Another account can read a Publish's record by its computed ID, or save under the next one first | **Not fixed on this branch.** The fix is the gateway's account claims (the one mechanism, below) | `review3` T8 still states it |
+| U9 | The ledger cap was a lifetime limit on the account | The retired-item archive (follow-up 11): a ledger holds the items in force only; the cap bounds one release (`f2c3cac73`) | `lifetime.test.ts` (4,000 distinct notice policies over 12 releases); `review2` C5; `targeted` C1 |
+| U10 | The fuzzer excused an old build's late frame by the first attempt under its ID | The memstore records the attempt that landed at each position; the fuzzer reads that one (`f2c3cac73`) | The fuzz campaign (0.A, the gates) |
+
+**U1 in detail.**
+
+- **What the allocator guarantees.** Within one process, no ID issued before a block is reserved starts with the
+  block's prefix, and none issued after does. This holds however the clock moves, a step back included: every new
+  value is compared with the greatest issued so far, never with the clock. Across processes and restarts, IDs stay
+  independent ULIDs; another process's ID shares a 24-character block prefix only if its 10 time characters and the
+  next 14 random characters are equal (70 random bits per pair).
+- **A resend refused for an ID collision is not refused forever.** The held tape sends such a save again under a new
+  block, at most 3 times, and only after the operation lookup says the save is absent (its own earlier attempt may be
+  what holds the IDs).
+- **Which writers refuse a collision.** The general writer ("TRIPLEX_IDENTITY f/id", answered `400 IdentityConflict`);
+  the per-subject writer (its history guard finds the used ID and plans again); `:f/id` is `:db.unique/value` behind
+  both. No ID is ever stored twice.
+- **Which SDK paths have it.** Any process that takes a block from `orderedSaveIdentity()` or
+  `wideOrderedSaveIdentity()` and also makes IDs through `generateId` or `generateTransactionId`: every row ID of
+  `TriplesLive` and `KvTriplesLive`, the `IdGenerator` of `RuntimeServices`, and every transaction ID written through
+  the TypeScript adapter. On the one branch only lab processes take blocks (the held runner's tape and the gates and
+  tapes under `lab/experiments/EXP-DX1`); no path under `packages/` does.
+- **What is and is not byte-identical.** The ID strings differ: they always did from run to run, since ULIDs carry
+  the clock and random bits. Everything else is identical: the paired native log on the U1 branch (`u1/paired.ts`,
+  300 rounds) is the same on the base and the fix once each ID is replaced by its order of first appearance and each
+  clock by a placeholder (normalized SHA-256 `8037b699...` in all four runs); 877 and 928 SDK IDs fell inside a block
+  at the base, 0 with the fix.
+
+**U2 in detail.** With no setting stored, a process writes with its own ledger mode, as before. Once any setting is
+stored, every process writes ledgers in parts with the archive. A ledger in parts replaces a whole one, and a ledger
+that fits one part is written exactly as a whole one, so no ledger already written is a problem, and a process that
+names `whole` is not refused (it writes parts). No release that adds no notice policy is refused by a mode or cap
+check (U9).
+
+**U3 in detail, and what the join layer changes when the gateway's claims land.**
+
+- **Frames.** Under any stored setting a frame's command ID is `settled-values:<hash>:<random>` (or `settled-notice:`).
+  Nothing is recovered by a frame's ID: a frame is guarded on its progress row (or the head), so a frame that landed
+  refuses its own resend, and the next run reads the row it wrote. (Widened from `accountKeys` alone after the
+  single-layout fuzz: a transition rewrites a progress row with its own value, so a deterministic ID can name two
+  plans with different retractions, below.)
+- **The enrolment.** Under `TX2_ENROL_BESIDE_SAVES` a namespaced account's enrolment command ID is
+  `join-held-enrolment:<account>:<random>`. Its four entities (the origin, the clock, `join-meta`, `join-calendar`)
+  are created only if absent, so a lost reply, or a rival enrolment of the same account that landed first, is found by
+  reading them. The journal walk accepts a rival enrolment by what it writes: those four entities and nothing else.
+- **When the gateway's account claims land** (the one mechanism, on the reviewer's four conditions):
+  1. A Publish carries its account: the gateway's `account-of-id` reads `lazy/account/(releases|origin|clock|mask|cursor)/<account>`
+     (0.9). Its claim is stored scoped by the account. This closes U8.
+  2. Frames and the enrolment keep their random IDs. They need no mapping of document namespaces to accounts, since
+     no one can compute them.
+  3. `original` keeps its ownership check, now "every change" (U4), as a second check of what the gateway returns.
+  4. The switch from `joined:v2/...` to the gateway's form goes through a one-way setting in the account's origin, the
+     same way as 0.8's, with the transition's fences (so no rollout order is needed for correctness). `joined:v2/...`,
+     `joined:<account>/<id>` and the plain `joined:<id>` stay looked up.
+
+**U5 in detail: the window is closed without relying on the rollout order.** A transition's commit now also rewrites,
+each with its own value, the rows that whatever was planned before it is guarded on:
+
+- the account's calendar row (every guarded Publish carries an `EntityState` guard on it; a whole-head Publish is
+  fenced on the head);
+- every values progress row of an owed release that is still pending, and the notice cursor (every frame under the
+  progress precondition is guarded on its progress row);
+- for an owed release with no progress row, or an account with notices and no cursor, the first row a frame would
+  start from, so a first frame planned before is refused too.
+
+A reader sees the same values before and after. The transition is guarded on each of those rows as it read them, so a
+frame that writes one between the transition's read and its commit refuses the transition, which reads again (below).
+So a plan of any build, old or new, made before the transition is refused at its commit.
+
+**A fault the fuzzer found in this pass, and its fix.** The first mixed campaign with the transitions dimension, at
+`c788f5de2`, found 19 of 2,500 schedules violating. 18 were one fault: the transition's commit was guarded on the
+origin row only, so a first values frame or first notice frame that created its row between the transition's read and
+its commit left two live rows for one key, and every later read of that row refused. Fixed in `afae099b1` (an
+`EntityState` guard on every fenced row). `settings` S6 lands both first frames in that window: it fails at
+`c788f5de2` and passes now. The 260 schedules from seed 230000 (2 violating at `c788f5de2`) give 0. The 19th
+(seed 231894) was the fuzzer's own classification: its transition-step publisher counted the known refusal of a
+definitions ID shared by two accounts before `accountKeys` (F2) as a violation; it now counts it as every other
+publisher there does. The campaign was rerun from the start at `afae099b1` (the gates, below). A build from before the settings then reads the origin, finds settings it does not know, and
+refuses the account (its exact comparison). The fuzzer now counts such a late frame as a break, not as the admitted
+window.
+
+**What remains of the window, exactly.** A frame of a build from before the settings reads the account (its source)
+at one position and its own progress row at a later one. If a transition lands between those two reads, the frame is
+planned from the fenced row, is not guarded on the origin (that build knows no settings), and lands after the
+transition: one frame per such process, written under that build's rules (no frame guards; a new event's ledgers
+without the archive, which the next event under the archive moves to it, so the fold stays exact). A Publish reads at
+one position, so its window is closed. A second effect: two such builds can plan the same frame under one command ID
+(a hash of the cursor's value), one before the fence and one after, with different retractions; the second to commit
+stops on "commit receipt differs" (nothing is written twice; its restart refuses the account). So the rollout order of
+0.8 (no build from before the settings is running when the first permission is given) is still what removes this last
+frame; the fences remove everything else, and this build's own processes need no order.
+
+**A transition never refuses a plan.** A permitted process tries a transition at most 8 times (each refused only by a
+write to a row it fences); if none lands, it plans under the settings as stored, as a process allowed nothing does, and
+tries again at its next plan. (At `afae099b1` the eighth refusal stopped the process: 4 of the 7 single-layout fuzz
+violations there.)
+
+**U6 in detail.** Settings stay one-way only against this build's own code. A writer of the origin fact can still turn
+them off (a direct rewrite, or a restore to before the transition). What changed: the process that had turned them on
+reads them at its next plan and turns them on again. The notice cursor keeps `archive` once it is set, so the ledgers
+stay exact while the origin says otherwise (the stack case RS below). A second live origin row still refuses the
+account's guarded Publishes ("guard differs"), which is the safe outcome.
+
+**U9 in detail: the lifetime limit is gone.**
+
+- **The design.** Under any setting a subject's ledger holds only its items in force. Each retired item is one row of
+  its own (`recorded-retired:<subject>:<item ID>`), written in the same byte frames before the ledger's head. The
+  kernel's fold is unchanged; its input is the ledger plus the archived rows of the work items not in the ledger, so a
+  retired item that comes back continues at its sequence + 1. A row is only ever read by its key, and the ledger has
+  priority over a row.
+- **The cap now bounds one release:** a Publish is refused only when one subject could owe more notice items from that
+  one release than one ledger can hold, and no single earlier release held all of its notice policies at once. A
+  release whose policies one earlier release held is never refused, so a release that landed over the cap by any route
+  never locks the account's later releases.
+- **Tested** (`lifetime.test.ts`): 10 releases of 400 new notice policies each, then the first release's 400 again,
+  then R2. 4,000 distinct policies over time, 17,607 notices in order equal to the kernel's fold; each of the 4
+  subjects held 4,001 items over time, its ledger and archive together equal to the fold's whole state, its ledger
+  equal to the items in force; 1,603 deliveries at sequence 2, among them the first release's 400 items for each of the 4 subjects. Two releases of 1,000
+  policies each publish, their union in one release (2,000) is refused, either again publishes, R2 publishes.
+
+**The largest account this design supports.**
+
+| Bound | Size | What sets it |
+| --- | --- | --- |
+| Notice policies one subject owes from one release | **1,592** (plus up to 22 items from the base rules) | One ledger: 10 parts of 10,240 characters, the most one frame can replace within the writer's bound; the cap's worst-case estimate of a packed item |
+| Forms and policies in one release, full documents | about **1,983 forms and 1,983 policies** (264 bytes a pair) | The release marker holds the new and the old document in one value of at most 1 MiB, so about 0.5 MiB each |
+| The same, documents by reference | not the bound | Definitions are content-addressed rows; the 1,592 above binds first |
+| Distinct notice policies over the account's life | **no bound from the ledger** | Retired items are archive rows; 4,000 tested, 1 in force at the end |
+| What grows with history | one archive row per retired item per subject | Storage grows with history times subjects; a frame reads archive rows only for items entering or leaving force |
+
+So the largest account is one whose every release keeps at most 1,592 notice policies in force for any one subject,
+and, with full documents, at most about 1,983 forms and policies in a release. Its history is not bounded.
+
+**U10 in detail.** `MemDb.landed` records, at each position, the process and read position of the attempt that landed.
+The fuzzer's frame-guard check reads that, not the first attempt under the command ID.
+
+**U8: why it stays open here.** A Publish's command ID must be found again from the client's ID on a resend, so it
+cannot be random. The route that needs no gateway change (a random ID plus a claim row in the account's own documents,
+read on the resend) would be a second account-authority mechanism beside the gateway's, against the agreed one
+mechanism. So U8 closes when the gateway's account claims land (condition 1 above), not before. Until then another
+account that computes the ID can read the record, or take the ID first; it never gets a wrong acknowledgement or a
+wrong write.
+
+#### The stack cases the third review asked for (`act10/stack-r3.ts`, the held toy stack)
+
+Each modelled process has its own store and its own permissions, so "one process allowed, the others not" is staged
+inside one Node process against one stack: the held runner's environment carries no permission. The same code runs in
+process first (`stack-r3.test.ts`, over the memstore).
+
+| Case | What it does | Result |
+| --- | --- | --- |
+| RO, the rollout on one stack | This build everywhere with no permission (Publishes and settlement; no setting stored); then one process allowed every setting publishes while a settler allowed none has a values frame in flight; then processes allowed none publish and settle | **Pass** (run `7c76646c`, `a380292be`): no setting stored while no process was allowed one (2 releases); the allowed process's Publish turned every setting on at position 38 (`accountKeys`, `frameGuards`, `ledgerCap`, parts, archive) while a values frame was in flight; that frame did not land, and no frame with a deterministic ID landed after the transition; the next Publish by a process allowed none was stored under `joined:v2/...`; all 36 frames after the transition carried a random part |
+| TP | A transition between a Publish's read and its commit | **Pass**: the Publish was refused once and planned again, its record under `joined:v2/11/account-007/...`, the form its read of the settings named |
+| TF | A transition and a later release between a values frame's read and its commit (the fuzzer's S1/S3 shape) | **Pass**: the frame was refused, the release ended superseded, 0 value pages of it after the later release (position 81) |
+| TN | A transition between a notice frame's read and its commit | **Pass**: the notice frame planned before the transition (position 83) did not land; the notices were recorded and checked below |
+| RS, a database restored from before a transition | The origin written back without its settings (what a restore to before the transition leaves of it); processes allowed none publish and settle; then a process allowed the settings publishes | **Pass**: after the rewrite no setting was stored; the next Publish was stored under the plain `joined:<id>`; the notice cursor kept `archive`; the allowed process's next Publish turned the settings on again |
+| KG, a group with an unknown outcome from a killed gateway | One Publish in each of three accounts offered at once into the write gateway's group lane; the gateway killed (SIGKILL) while they are in flight, started again; each command offered again until acknowledged | **Pass, with a limit** (run `8f8687a4`, write gateway with its group lane on, fixed host ports): the kill met all three Publishes inside their transactions (after their snapshots); each failed with "Datomic read failed", so its outcome was unknown to its client; the gateway was back in 5.3 s; each resend was acknowledged at its first try, and each command has exactly one record (positions 166, 167, 168), one more release in each account; the oracle check below covers them. The limit: from the client it cannot be seen whether any of the three commits had reached the group lane before the kill, so a group cut in half by the kill is not shown, only three unknown outcomes resolved exactly once |
+| The oracle | For each account: every notice in order and every ledger with its archive against the kernel's fold over every event; every stored release's values against the world at q - 1 | **Pass** for all 3 accounts (8 subjects each): 342, 175 and 175 notices in order equal to the fold; every ledger with its archive equal to the fold's state (0, 160 and 160 archived items read); values stored 3, 1, 3 and superseded 1, 1, 0, each stored one equal to the world at q - 1 |
+
+#### The gates at the head
+
+All at `a380292be` unless a row says otherwise. Toy stack runs: the private image `98c95f37c42e` (receipt
+`image-43472352c.json`; the run checkout's gateway sources compared equal to the image's before every run), holder
+`DX-ACT8`, the run checkout's `packages/core` and `packages/datomic` built at `f2c3cac73` (no package changed after it).
+
+**The tests (every review's, and this pass's).** All 98 tests in 19 files pass at `a380292be`: `review3` 10, `review2`
+18, `targeted` 16, `cross-account` 11, `identity` 3, `lifetime` 2, `settings` 6, `stack-r3` (the stack cases in
+process) 1, and the 11 `join` files 31.
+
+**The fuzz gate** (`ACT10_TRANSITIONS=1` in every step; the reviewer's dimension):
+
+| Step | Schedules | Violating | Notes |
+| --- | ---: | ---: | --- |
+| All-on, namespaced (two parts) | 20,000 | **0** | 50,446 Publishes acknowledged, 1,982,946 notices in order, 300,766 archived items read back |
+| All-on, single layout | 5,000 | **0** | 12,817 acknowledged, 498,166 notices, 79,129 archived items |
+| Mixed fleet, namespaced | 2,500 | **0** | 5,921 transitions; 12,536 refusals by builds from before the settings |
+| Mixed fleet, single layout | 2,500 | **0** | 5,915 transitions; 1 old-build frame ID taken (counted, 0.A) |
+| Isolation fuzzer | 2,000 | **0** | 4,435 accounts, 9,853 Publishes |
+| Negative control: no legacy lookup | 300 | 53 | caught |
+| Negative control: no origin guard and no fence | 1,000 | 9 | caught (4 old-build frames after a later release) |
+| Negative control: settlement at the read position | 300 | 14 | caught |
+| Negative control: no entity guards | 300 | 155 | caught |
+| The fence alone (no origin guard) | 1,000 | **0** | the fence holds alone |
+| The origin guard alone (no fence) | 1,000 | 2 | both schedules have a build from before the settings: its frame lands after a later release (4 counted); the origin guard covers this build only, the fence covers the old build |
+
+Before this commit: at `c788f5de2` the mixed namespaced step found 19 (fixed in `afae099b1`, 0.A); at `afae099b1`
+the mixed single-layout step found 7 (fixed in `a380292be`). Their logs are kept beside this campaign's.
+
+**The toy stack.**
+
+**The options-off gate: 8 runs, 0 stops.** Every gate part (cost, beside, adversarial, kill, live, enrol), every
+option and permission off, each run's every assertion ID scanned after the gate (`DX_ACT10_IDSCAN=1`, the review's
+`act10/idscan.ts`):
+
+| Run | Attempt | Gate | Positions read between | Pinned reads | Racing saves (before, after) | Notices in order | Ordered saves | Other IDs | IDs inside a save block | Duplicates |
+| --- | --- | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| `g4off-1` | `024fcf5a` | pass | 541 | 4,328 | 115, 14 | 6,764 | 47,862 | 4,538 | **0** | 0 |
+| `g4off-2` | `3ee142fb` | pass | 529 | 4,232 | 109, 10 | 6,764 | 47,862 | 4,537 | **0** | 0 |
+| `g4off-3` | `13448ca0` | pass | 555 | 4,440 | 110, 11 | 6,764 | 47,862 | 4,537 | **0** | 0 |
+| `g4off-4` | `bcea02df` | pass | 537 | 4,296 | 114, 9 | 6,764 | 47,862 | 4,537 | **0** | 0 |
+| `g4off-5` | `a3708589` | pass | 548 | 4,384 | 106, 16 | 6,764 | 47,862 | 4,537 | **0** | 0 |
+| `g4off-6` | `ad0e8f62` | pass | 508 | 4,064 | 102, 10 | 6,764 | 47,862 | 4,537 | **0** | 0 |
+| `g4off-7` | `bedd5662` | pass | 546 | 4,368 | 111, 15 | 6,764 | 47,862 | 4,539 | **0** | 0 |
+| `g4off-8` | `0e752b68` | pass | 523 | 4,184 | 122, 13 | 6,764 | 47,862 | 4,537 | **0** | 0 |
+
+Each run: 49 Publishes; 382,896 ordered saves and 36,299 other IDs in all, and not one ID inside a save's block. The
+review measured 111.6 such IDs a run at `2084d3ba7` (1 stop in 8); the full gate's three stops at that head are
+explained (U1).
+
+**The cases this pass added, and the permission runs:**
+
+| Run | What | Attempt | Result |
+| --- | --- | --- | --- |
+| `r3stack` | `stack-r3.ts`: RO, TP, TF, TN, RS and the oracle (above) | `7c76646c` | **pass** |
+| `r3kill` | the same, and KG: the write gateway killed with three Publishes inside their transactions, group lane on | `8f8687a4` | **pass** |
+| `g4R3` | every gate part, every permission on | `a783db78` | **pass**: 49 Publishes, 513 positions and 4,104 pinned reads between each read and record, 99 racing saves checked, 6,764 notices in order and every ledger (with its archive) equal to the oracle; 47,862 ordered saves, 12,054 other IDs, 0 inside a save block |
+| `s4R3` | the review's stack checks (`act10/stack-part.ts`), permissions on | — | **as fixed**: X1, another account's Publish under the same ID gets its own record (not the first's receipt); X2, the same account's ID with another document refused ("Reused command ID has different input"); X3 and X4, Publishes by reference across accounts land; P1 under head and progress, 0 value frames after the pause; S2 under both, the release superseded, not stored after the later release |
+| `g4grpR3` | adversarial, kill, live and enrol parts with the write gateway's group lane on, saves on the general writer | `7c5d4746` | **pass**: 33 Publishes, 361 positions, 2,888 pinned reads, 3,786 notices in order |
+| `g4resR3` | the transactor, then the write gateway, restarted after a Publish's reads, inside its transaction, and before a settlement frame | `e66e2af5` | **pass**, all six cases: the transactor's afterRead and inside refused 9 and 10 offers while the peers came back, then landed at 13 and 24; the write gateway's three cases lost no offer (restarts of 10.3 s); 6 Publishes, 23 positions, 184 pinned reads, 488 notices in order |
+| `g4kR3`, `w4R3`, `r1R3`, `r2R3`, `r3cR3` | the 1,000-form release in parts with permissions; the held runner's unpaused windows; the three options-off regressions (the default campaign, ACT5's live cases, ACT6's gate) | — | **not run in this pass.** The run checkout waited 70 minutes for a heavy slot (every slot held by other builders) and was stopped before it started a stack. In process, `lifetime.test.ts` covers ledgers in parts with the archive far past 1,000 policies; the options-off path is covered by the eight full options-off gate runs above |
+
+#### What is still not tested
+
+- **A removal inside a group, and a settings change racing a removal.** Not run. The removal branch
+  (`exp/DX-ERA2-removal-per-account`, `3e9bcaaf6`) is not merged into this line, and this toy stack gives its two
+  gateways no shared removal directory, so a protected database cannot be loaded here (the miniature's
+  `DX_SCALE2_REMOVAL` runs the pre-ERA2 removal only). What the code does: a transition reads the database's removal
+  sequence with its fences and commits under it as its ticket (`c788f5de2`), so a removal landing between the
+  transition's read and its commit refuses the transition, which reads again. That rule is untested.
+- **A group cut in half by a killed gateway.** KG shows three Publishes whose outcome was unknown to their clients,
+  each resolved to exactly one record; whether any of the three commits had reached the group lane when the gateway
+  died cannot be seen from the client.
+- **The last old-build frame (0.A, U5).** A frame of a build from before the settings whose two reads straddle a
+  transition can still land after it; the fuzzer's "origin guard alone" control shows such frames when the fence is
+  off, and none landed in the 5,000 mixed schedules with it on, but the window is not closed by construction.
+- **An old build that is really `bf377c57f`.** The fuzzer's and the tests' old build is this build without the origin
+  guard and the settings; the fences now refuse its late plans (T4, T5, S2, S4).
+- **A restore from a real backup.** RS writes the restored origin by hand. A real restore also takes the ledgers, the
+  cursor and the archive rows back to the same moment, which is the state before the transition (the options-off
+  path), and every process reads the settings at each plan (no cache).
+- **Two databases.** Not run; the settings are one origin fact per account per database.
+- **The fuzzer's exact schedules on a stack.** An in-process schedule (seeded yields, kills between store calls) has
+  no stack equivalent. Their shapes ran instead (TP, TF, TN).
+- **The archive's cost at size.** Every count here is at toy size. A frame reads the archive rows of the items entering
+  or leaving force (none for a subject whose items did not move); that read and the rows' storage were not measured on
+  a server.
+
+
+### 0.B The gateway's account mechanism (`exp/DX-S6-save-line-fixes` `cdfc70e02`): the plan against it
+
+The save line built the one mechanism both lines agreed on (its page `s6/SAVE-LINE-FIXES.md` sections 12, 10.1, 11;
+gateway sources from `96b866c6d`). A third review of it has started, so it is not merged here. Its setting is
+`:triplex.scope/account-ids = 1` on the scope entity, one way, and its transition moves the save-writer functions to
+twin idents and leaves the old idents refusing.
+
+**Its six steps for the join layer, and where each stands on this branch:**
+
+| Step | Status here | What it waits for |
+| --- | --- | --- |
+| 1. Drop `joined:v2` and `accountKeys`; IDs back to `joined:<id>`; keep looking up the plain form | Not done: `joined:v2` under `accountKeys` is still this branch's form | The gateway branch's review, then its merge |
+| 2. Open each held account's client with `claimAccount` set to it | Not done | The SDK's `claimAccount` (on the gateway branch) |
+| 3. Documents from `notice:v1:<hash>:` to `notice:v2:<n>/<account>/<hash>:`, still reading v1 | Not done, and possibly not needed (below) | A decision on frame IDs |
+| 4. Every write of an account's processes names the account and touches only that account's names | The second half is done and tested: a Publish, a frame, the enrolment and a settings transition each write only this account's documents and metadata names (U4's every-change rule checks recovered records). Naming the account waits for step 2 | Step 2 |
+| 5. Turn the setting on only after every gateway runs that build | An operating rule; nothing to build here | The merge |
+| 6. `original`'s ownership check becomes "every change" | **Done** (U4, `f2c3cac73`; `review3` T6) | — |
+
+**Are this round's U3 and U8 fixes the temporary ones?**
+
+- **U3: the temporary route, and it may be the lasting one.** Frames carry a random part under any stored setting, and
+  the enrolment under `TX2_ENROL_BESIDE_SAVES`: IDs another account cannot compute. They are not on the gateway's form.
+  But a random ID needs no account to be safe, so U3 stays closed after the merge without step 3. The gateway's page
+  says frames keep no account until `notice:v2`; that is true only for computable frame IDs. **Recommendation:** keep
+  random frame and enrolment IDs (when step 1 drops `accountKeys`, the random part must then follow the database's
+  `account-ids` setting as well as the account's own settings, or an account with none would compute its frame IDs
+  again) and skip the `notice:v2` migration, which would otherwise move every document of every
+  held account and keep two readers. A Publish and the enrolment already have an account under the gateway's rule
+  (they write `lazy/account/<kind>/<account>` names, which name the account in clear; `notice:v1` documents count as
+  journals and do not decide it).
+- **U8: not fixed here.** It closes with steps 1, 2 and 5 (a Publish's claim stored under its account).
+
+**The gateway's transition technique for this branch's own settings (U5's last old-build frame): not adopted.**
+
+- The technique stops an old gateway: once the writer functions move, a gateway that calls them by their old idents
+  is refused. This branch's old builds are join-layer clients. A client from before the settings talks to a gateway,
+  and a new gateway routes its frame to the twins, so the frame commits.
+- This branch's settings are per account (the origin fact), and function idents are per database. Moving the functions
+  at one account's transition would stop every old build of every account in the database.
+- **What would close that last frame, built on the gateway's mechanism:** with `account-ids` on, the gateway refuses a
+  write that touches one account's names without naming that account. A join-layer build from before the settings
+  never names an account (it has no `claimAccount`), so every write it makes would be refused, a frame planned across
+  a transition included. That is a gateway rule for the save line's branch, proposed here, not built.
+- Until then the rollout order of 0.8 (no build from before the settings running when the first permission is given)
+  removes that one frame per old process; the fences remove everything else (0.A, U5).
 
 ### 0.0 The second review (2026-11-24, `REVIEW-2.md`, `5bbb3da09`), in plain words
 
@@ -510,7 +820,11 @@ settings (frame guards, the cap, the ledger mode) are not about IDs and stay in 
     remain possible for a writer that can compute the ID. Both give a refusal or a read, never a wrong acknowledgement
     and never a wrong write.
 
-### 0.10 R10: the ledger cap is a lifetime limit, stated exactly
+### 0.10 R10: the ledger cap (superseded by U9, section 0.A: the cap bounds one release, and there is no lifetime limit)
+
+What follows describes the ledger before the retired-item archive; it is kept as the record of what the second review
+read.
+
 
 A subject's notice ledger keeps one item for every notice policy it was ever owed: retired items are never removed
 (`RELEASE-LIMITS.md`'s deferred removal is not built). So a bound on what one release adds would let the ledger grow
@@ -610,9 +924,11 @@ ledger mode.
 | `Goffctl` | control: the same gate at the first review's head (`653a17183`, the code of `Goff`), at the same hour | `653a17183` | **pass**: 49 Publishes, 537 positions, 4,296 pinned reads, 6,764 notices in order |
 | `G4off4` | the same as `G4off3` | `f34694edf` | **pass**: every part (cost, beside, adversarial, kill, live, enrol); every Publish the gate records with its tries at one try, the whole-head case refused 2 of 2 by design; the 26 adversarial steps exact; 49 Publishes, 533 positions, 4,264 pinned reads, 95 racing saves before and 12 after with 107 reads, 6,764 notices in order and 8 ledgers equal to the oracle, as `G4` |
 
-**The three options-off stops are open.** Each was one save of the gate's own save tape, not a Publish or a
-settlement check: in `G4off3` a save refused on its first and only attempt because an assertion ID it carried was
-already in the database's history; `G4off` and `G4off2` recorded no error. The tape's saves take ordered identities
+**The three options-off stops (explained by the third review: U1, section 0.A).** Each was one save of the gate's own
+save tape, not a Publish or a settlement check: in `G4off3` a save refused on its first and only attempt because an
+assertion ID it carried was already in the database's history. Correction (2026-11-25): `G4off2`'s stop recorded no
+error, but its transactor's console holds the same "TRIPLEX_IDENTITY f/id" refusal; `G4off`'s captured console (its
+last 219 lines) holds none, so its stop is not confirmed as this one. The tape's saves take ordered identities
 (`TX2_SUBJECT_ORDERED_IDS=1`, a random token per save). No permission run of the gate stopped this way (`G4`,
 `G4grp`, `G4grpc`, `G4k`: 0 of 4), and `Goffctl` and `G4off4`, run right after, passed. With no setting stored the
 options-off path writes what it wrote before this change (0.8), and nothing changed in the save path except the

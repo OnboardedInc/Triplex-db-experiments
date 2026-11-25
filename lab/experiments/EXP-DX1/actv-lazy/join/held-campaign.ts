@@ -858,6 +858,12 @@ export async function runHeld(
     // [DX-ACT10] The adversarial review's stack checks (diagnostic toy only) instead of the windows.
     if (process.env.DX_ACT10_STACK === "1") {
       assert(diagnostic, "DX_ACT10_STACK is a toy diagnostic");
+      // [DX-ACT8, third review] DX_ACT8_R3_STACK=1: the third review's stack checks (act10/stack-r3.ts) instead.
+      if (process.env.DX_ACT8_R3_STACK === "1") {
+        const { act8R3Stack } = await import("../../act10/stack-r3.ts");
+        await act8R3Stack({ out, s, descriptor, attempt: peer.attempt });
+        return;
+      }
       const { act10Stack } = await import("../../act10/stack-part.ts");
       await act10Stack({ out, s, descriptor, attempt: peer.attempt });
       return;

@@ -27,7 +27,7 @@ import { Archive } from "../actv-lazy/join/archive.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
 import { toWire } from "../actv-lazy/join/check.ts";
 import { largeRelease, parseShape } from "../actv-lazy/join/large-release.ts";
-import { readLedgers } from "../actv-lazy/join/ledger-parts.ts";
+import { readFullLedgers } from "../actv-lazy/join/ledger-parts.ts";
 import { evaluateRows } from "../actv-lazy/join/material.ts";
 import { RecordedNotices } from "../actv-lazy/join/recorded.ts";
 import { ensureSettings, forgetSettled, originAt, SettingsConflict, type Permits } from "../actv-lazy/join/account-settings.ts";
@@ -345,6 +345,15 @@ async function schedule(seed: number): Promise<Outcome> {
           count("oldBuildRefused");
           continue;
         }
+        // [DX-ACT8, third review] A build from before the settings names its frames by a hash of the cursor's value. A
+        // transition rewrites the cursor with its own value (its fence), so two such builds can plan the same frame
+        // under one command ID, one before the fence and one after, with different retractions; the second to commit
+        // finds the first's record and stops ("commit receipt differs"). Nothing is written twice; its restart refuses
+        // the account (settings stored). Counted; this build's frames carry a random part under any setting.
+        if (proc.oldBuild && /commit receipt differs from the request \(command settled-/.test(String(e?.message))) {
+          count("oldBuildFrameIdTaken");
+          continue;
+        }
         if (e instanceof SettingsConflict) {
           count("settingsConflict");
           continue;
@@ -385,12 +394,17 @@ async function schedule(seed: number): Promise<Outcome> {
         const pid = (SHARED ? "" : A + ":") + seed + ":t" + landed++ + ":R2";
         const pp = new Proc(db, "transition-publisher");
         if (MIXED) pp.permits = NONE;
+        // [DX-ACT8, third review] As for every other Publish here: without the accountKeys setting, two accounts that
+        // publish one document by reference share its definitions' command ID, and the second is refused (F2, a known
+        // refusal, never a wrong write); counted, not a violation.
+        const keysAtStart = (await originAt(memStore(pp, hA) as never, await db.comp.currentPosition())).settings?.accountKeys === true;
         try {
           const receipt = await new JoinedAccount(memStore(pp, hA) as any).publish(pid, DOCS.R2!, validTime, "owed");
           acknowledged.push({ account: A, id: pid, position: receipt.position, txId: receipt.txId, doc: "R2" });
           count("laterReleaseInsideFrame");
         } catch (e: any) {
           if (e instanceof SettingsConflict) return void count("transitionStepConflict");
+          if (!keysAtStart && /commit receipt differs from the request/.test(String(e?.message))) return void count("crossAccountRefusedBeforeKeys");
           if (!(e instanceof Conflict)) violations.push("transition-step Publish " + pid + " failed: " + String(e?.stack ?? e).slice(0, 300));
         }
       }
@@ -526,16 +540,16 @@ async function check(
   const vstore = memStore(proc, hA, db.scope + "-check-v") as any;
   const values = new (Archive as any)(a, vstore, new BulkQueue(1), "values", "bytes", cfg.precondition) as Archive;
   // [second review] A frame landing after a later release breaks the frame guards when the account's `frameGuards`
-  // setting was on at that release, unless a build from before the settings planned it before the transition (the
-  // window PUBLISH-BESIDE-SAVES.md section 0.8 states: one frame per such process; counted).
+  // setting was on at that release. [Third review U5] The transition now fences what any build planned before it (the
+  // progress rows and the cursor are rewritten with it), so a frame of a build from before the settings, planned before
+  // the transition, landing after it is a break too (it was excused as the admitted window); counted apart.
+  // [U10] Who sent a frame is the attempt that landed at its position, not the first attempt under its command ID.
   const breaks = async (position: number, later: number) => {
     if (!(await originAt(s, later)).settings?.frameGuards) return false;
     const t = journal.find((x) => x.position === position);
-    const sent = t && db.sent.get(t.commandId);
-    if (sent?.oldBuild && !(await originAt(s, sent.expected)).settings?.frameGuards) {
+    const sent = db.landed.get(position);
+    if (sent?.oldBuild && !(await originAt(s, sent.expected)).settings?.frameGuards)
       counts.oldBuildInFlightFrames = (counts.oldBuildInFlightFrames ?? 0) + 1;
-      return false;
-    }
     // [DX-ACT10, third review] ACT10_DUMP=1 (diagnostic): what landed late, who sent it, and the settings around it.
     if (process.env.ACT10_DUMP === "1")
       console.log("[act10-dump] " + JSON.stringify({ position, later, command: String(t?.commandId).slice(0, 40), sent,
@@ -638,14 +652,18 @@ async function check(
     v("recorded notices differ from the fold: " + got.length + " recorded, " + want.length + " expected, first difference at " + i);
   }
   const ndb = new Documents(db.comp as any, "settlement-notices-" + A);
-  const stored = await readLedgers(ndb, roster, head);
+  // [DX-ACT8, third review U9] Each ledger with its archived retired items (the oracle's item IDs name the archive rows).
+  const known = (subject: string) => (ledgers.get(subject) ?? []).map((i) => i.id);
+  const stored = await readFullLedgers(ndb, roster, head, known);
+  const archivedItems = [...stored.values()].reduce((n, l) => n + l.archived, 0);
+  if (archivedItems) counts.archivedItems = (counts.archivedItems ?? 0) + archivedItems;
   for (const subject of roster)
     if (canonical(stored.get(subject)!.items) !== canonical(ledgers.get(subject) ?? [])) v("ledger of " + subject + " differs from the fold");
   // -- A ledger read at any position is a whole state of the fold (never half old, half new), parts or not.
   const noticeFrames = journal.filter((t) => String(t.commandId).startsWith("settled-notice:")).map((t) => t.position);
   for (const x of noticeFrames.flatMap((p) => [p - 1, p])) {
     try {
-      const at = await readLedgers(ndb, roster, x);
+      const at = await readFullLedgers(ndb, roster, x, known);
       for (const subject of roster)
         if (!states.get(subject)!.includes(canonical(at.get(subject)!.items))) {
           v("ledger of " + subject + " at " + x + " is no whole state of the fold");
