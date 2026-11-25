@@ -464,7 +464,14 @@
           (and (= :post request-method) (= action "erase"))
           (response 200 (erase/erase! name conn (request-json body)))
           (and (= :post request-method) (= action "restore-erasure"))
-          (response 200 (erase/replay-after-restore! name conn))
+          (do
+            ;; [DX-ERA2 seventh pass, X12] guarded per account: this gateway's cut is first refreshed through log-cut,
+            ;; which re-reads a head whose policy copy another gateway rewrote (same chain only), so the route's own
+            ;; read of the log is not refused once by a stale cache
+            (when (removal-scope/per-account? db)
+              (try ((requiring-resolve 'triplex.gateway.removal-commit/log-cut) name db)
+                   (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "restore-refresh" name e))))
+            (response 200 (erase/replay-after-restore! name conn)))
           (and removal-scope/enabled (= :post request-method) (= action "removal-per-account"))
           (let [input (request-json body)
                 ;; [DX-ERA2 sixth pass] back to the database-wide rule: the log's policy copy made the database's first
@@ -516,9 +523,12 @@
                                                      (envelope/decode! name (d/db conn) id e a value)))]
                         (let [answer (if (and (= :get request-method) (= action "erasure-frontier"))
                                        (response 200 (cond-> {:database name :protected (boolean cut)
-                                                              :seq (or (:seq cut) 0) :erased (or (:erased cut) {})
-                                                              ;; [DX-ERA2 fifth pass, B5] what a cache keys on
-                                                              :removalStamp (or (:stamp cut) (:seq cut) 0)}
+                                                              :seq (or (:seq cut) 0) :erased (or (:erased cut) {})}
+                                                       ;; [DX-ERA2 fifth pass, B5] what a cache keys on; [seventh pass, (a)] only
+                                                       ;; where the replay rule runs (every
+                                                       ;; option off: the frontier as on the merged line)
+                                                       (or (:per-account cut) @(requiring-resolve 'triplex.gateway.removal-commit/replay-rule))
+                                                       (assoc :removalStamp (or (:stamp cut) (:seq cut) 0))
                                                        (:per-account cut)
                                                        (merge (removal-scope/frontier-fields cut query-string))
                                                        ;; [DX-ERA2 sixth pass, V3] the stamp alone (the SDK reads it once
@@ -529,7 +539,8 @@
                           (cond-> answer
                             cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))
                             ;; [DX-ERA2 fifth pass, B5] the value that changes at the commit with the commit boundary
-                            cut (assoc-in [:headers "x-triplex-removal-stamp"] (str (or (:stamp cut) (:seq cut))))))))]
+                            (and cut (or (:per-account cut) @(requiring-resolve 'triplex.gateway.removal-commit/replay-rule)))
+                            (assoc-in [:headers "x-triplex-removal-stamp"] (str (or (:stamp cut) (:seq cut))))))))]
             (cond
               independent
               ;; [DX-ERA2] Per account the cut was checked by request-cut; the fence decides at the serial point.

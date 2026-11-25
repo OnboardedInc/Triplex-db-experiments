@@ -506,6 +506,12 @@ export const makeDatomicStorageAdapter = (
             error.status < 500 &&
             error.code !== "OperationDuplicate"
           ) {
+            // [DX-ERA2 seventh pass, X5] a declined save (its frame is older than a removal of a subject it writes) is
+            // final for this commit: it is never sent again by the SDK, under a newer stamp or otherwise, because that
+            // resend would be a new save after the removal (case 3) carrying data framed before it. The caller decides,
+            // and builds a new save from what it reads now.
+            if (error.code === "ErasureReplayDeclined")
+              throw new WriteError({ message: "A removal declined this save; build a new save from current data", cause: error });
             if (
               [
                 "CasConflict",

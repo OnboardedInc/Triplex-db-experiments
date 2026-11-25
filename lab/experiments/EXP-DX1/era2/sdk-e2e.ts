@@ -117,6 +117,10 @@ check("after the acknowledgement, A's Reach and entity reads do not answer the v
 // S: an optimistic commit carrying the stamp it saw before the removal
 const s2 = secret("a1-s");
 const sFirst = await S.run(assertSecret(a1, s2));
+// [DX-ERA2 seventh pass, X5] the SDK never sends a declined save again by itself (under the stamp the refusal taught it,
+// that resend would be stored as a new save): right after the refusal, no reader answers the declined value
+const afterDecline = await post(`${R}/v1/db/${db}/read`, { entityIds: ["acct/a/one"], history: true });
+check("the declined save was not resent by the SDK (its value is not stored)", !text(afterDecline.body).includes(s2));
 const sSecond = await S.run(assertSecret(a1, s2));
 check("S's save framed on a stamp older than the removal is declined: the application sees ErasureReplayDeclined",
   !sFirst.ok && sFirst.error?.["code"] === "ErasureReplayDeclined", sFirst.error);
