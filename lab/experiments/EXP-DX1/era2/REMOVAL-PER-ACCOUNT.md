@@ -2053,3 +2053,32 @@ violations (E9 aside); the suites as the base's; `b2` 0 failed in every mode on 
 on and commit on PostgreSQL; fuzz3 4,000 schedules per account on the log's boundary (36,094 oracles) and subject
 sealed on the commit boundary (35,287), 0 violations. The suites arms now gate on matching the base's counts (the
 base has the one `http-route` error), not on their exit code.
+
+### 18.15 From the review of the standalone B2 branch (`exp/DX-B2-key-deletion`, review at `8802ef3aa`)
+
+- **F9, applied here too:** a failure line never carries a driver's message. For a failed PostgreSQL batch that
+  message is the statement with its parameters, and the key-pool refill line printed one wrapped key in hex. Now a
+  database error logs its SQL state and the server's own error text; a typed refusal its fixed message; a file-system
+  error its reason and the file's own name; anything else its class only; runs of 32 or more hex or 40 or more base64
+  characters are replaced as a last guard. Test: the review's scenario S3 (every failure line forced; it fails on a
+  hex run of 64 or more, a `\x` run, a protected value, a subject ID or a scope word), run against this branch on both
+  authorities on `6f174d6bf`: 43 checks each, 0 failed; on PostgreSQL the key-pool refill line now reads
+  `"sqlState":"P0001","detail":"b2r blocked"` (the review's own forced refusal), no key bytes. `b2` on `6f174d6bf`: 0 failed
+  in every mode (file: off, on, subject, commit, off-worker, subject-worker; PostgreSQL: off, on, commit).
+- **F5, applied here too:** the first failure of a place, database and code is printed, then at most one line a minute
+  with the number not printed since; every failure is still counted.
+- **F7:** `b2.clj` resends the pending removal in every run and checks it completes.
+- **What the paired comparison normalises** (it is not a comparison of raw bytes): `paired.clj` leaves out the
+  `:db/txInstant` datoms; turns every clock value (a number from 1e12 to 1e14, a 13-digit number, a float clock, a hex
+  double that decodes to a clock) into `CLOCK` or `HEXCLOCK`; the database name into `DB`; the random removal
+  transaction IDs, every UUID and every 64-character hash into placeholders; the scope key's value into `SCOPE` and a
+  sealed body's ciphertext into `BODY`. Entity IDs, t values, attributes and every other value are compared as they
+  are.
+- **Faults the review found on the base, for this branch's next pass (not fixed here):**
+  - **F1:** a gateway that has seen a newer removal log than a restored older copy refuses every cut (the key pass
+    included) until it restarts.
+  - **F3:** on the file authority, `publish!` writes the head without comparing it with the head on disk, so a stale
+    writer after a lost lock can move it back (10 times in the review's fuzzer, 2 logs that no longer verify; 0 on
+    PostgreSQL, which compares).
+  - **F4:** a data restore older than a pending removal's predecessor leaves that removal stuck (the restore route 503,
+    the resend 400). On this branch the restore route and the reconcile route (18.8) are the places to fix it.
