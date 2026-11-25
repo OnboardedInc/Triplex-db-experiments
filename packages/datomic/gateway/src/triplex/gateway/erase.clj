@@ -325,9 +325,10 @@
       (cond
         (= ::retry state) (recur (sync! conn) (inc tries))
         (nil? state) [nil db]
-        (removal-scope/consistent? db (:seq state) (:pending-seq state)) [(assoc state :per-account true) db]
+        ;; [DX-ERA3 N5] the declared sequence too, and a typed answer when the log is behind the data
+        ((requiring-resolve 'triplex.gateway.removal-commit/consistent?) db state) [(assoc state :per-account true) db]
         (< tries 4) (recur (sync! conn) (inc tries))
-        :else (privacy/unavailable!)))))
+        :else ((requiring-resolve 'triplex.gateway.removal-commit/refuse-inconsistent!) db state)))))
 
 ;; [DX-ERA2] Why: move an existing protected database to removal sequences per account (or back), online: under the
 ;; removal lock, one small transaction (the global sequence moves to its own attribute, the database-wide one takes the
