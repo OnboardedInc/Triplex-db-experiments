@@ -12,6 +12,9 @@
 # ERA3_MAIN=6: the sixth review's cases (era3/attack6.clj): a1 a2 a3 b1 b2 c d g1 g2 f bodies6.
 # ERA3_MAIN=7: [DX-ERA2 seventh pass] fuzz7, fuzz5 with a policy event after each schedule (era3/attack7.clj).
 # ERA3_MAIN=8: [DX-ERA6] fuzz8, saves, replays, resends and removals against the merged rule (era3/attack8.clj).
+# ERA3_MAIN=r7: the seventh review's cases on the removal branch (era3/review7.clj): r1 r2 r3 r4 r5 (ERA3_PG=1 for
+# the PostgreSQL authority). ERA3_MAIN=r7b: its cases on the reconciled branch (era3/review7b.clj, ERA3_TESTS_REF=the
+# commit whose s5/ and w2/ helpers it loads). ERA3_MAIN=s5a3: the save line's s5/attack3_gate.clj (S5_ONLY selects).
 # Every container carries the label tx2.holder=DX-ERA3 (ERA3_HOLDER names another holder).
 # ERA3_SOURCE: a checkout whose gateway source runs (default this one), e.g. a local merge with another branch.
 # ERA3_SOURCE_REF: a commit whose gateway source runs instead, archived from this checkout (no second checkout).
@@ -42,19 +45,49 @@ fi
 # ERA3_PATCH=1: apply the review's proposed fix (era3/fix-proposal.py) to this private copy only.
 if [[ ${ERA3_PATCH:-0} == 1 ]]; then python3 "$x/era3/fix-proposal.py" "$out/src" > "$out/patch.log" || exit 2; fi
 echo "patch=${ERA3_PATCH:-0}" > "$out/patched"
-cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era3/attack.clj" "$x/era3/attack2.clj" "$x/era3/attack3.clj" "$x/era3/attack4.clj" "$x/era3/attack5.clj" "$x/era3/attack6.clj" "$x/era3/attack7.clj" "$x/era3/attack8.clj" "$out/lab/"
+cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era3/attack.clj" "$x/era3/attack2.clj" "$x/era3/attack3.clj" "$x/era3/attack4.clj" "$x/era3/attack5.clj" "$x/era3/attack6.clj" "$x/era3/attack7.clj" "$x/era3/attack8.clj" "$x/era3/review7.clj" "$x/era3/review7b.clj" "$out/lab/"
+# ERA3_TESTS_REF: the save line's test helpers (s5/, w2/) archived from that commit, for review7b.clj (Part B)
+if [[ -n ${ERA3_TESTS_REF:-} ]]; then
+  git -C "$repo" archive "$ERA3_TESTS_REF" lab/experiments/EXP-DX1/s5 lab/experiments/EXP-DX1/w2 | tar -x -C "$out/lab"
+  cp "$out/lab/lab/experiments/EXP-DX1/s5/fuzz.clj" "$out/lab/lab/experiments/EXP-DX1/w2/wide_gate.clj" "$out/lab/lab/experiments/EXP-DX1/s5/attack3_gate.clj" "$out/lab/"
+  echo "$ERA3_TESTS_REF" > "$out/tests-ref"
+fi
 image=${DX_ERA3_IMAGE_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
 [[ $image =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "run.sh: DX_ERA3_IMAGE_ID must be an image ID" >&2; exit 2; }
 [[ $(docker image inspect --format '{{.Id}}' "$image") == "$image" ]] || { echo "run.sh: image $image not present" >&2; exit 2; }
-env=(-e TX2_SUBJECT_SAVE=1 -e TX2_SUBJECT_NUMERIC_OWNER=1 -e TX2_SUBJECT_ORDERED_IDS=1
-     -e TRIPLEX_ERASURE_DIRECTORY=/tmp/era3-authority -e DATOMIC_URI_TEMPLATE='datomic:mem://{db}'
+env=(-e TX2_SUBJECT_SAVE=1 -e TX2_SUBJECT_NUMERIC_OWNER=1 -e TX2_SUBJECT_ORDERED_IDS=1 -e DATOMIC_URI_TEMPLATE='datomic:mem://{db}'
      -e DF01_RECORDED_PAGE=/tmp/recorded-page.json -e "ERA3_PHASES=$phases"
      -e "ERA3_SEALED=${ERA3_SEALED:-0}" -e "ERA3_N=${ERA3_N:-200}" -e "ERA3_BLOCK=${ERA3_BLOCK:-100}" -e "ERA3_SEED=${ERA3_SEED:-1}" -e "ERA3_RUN=${ERA3_RUN:-r0}" -e "ERA3_BOUNDARY=${ERA3_BOUNDARY:-log}" -e "ERA3_D_NS=${ERA3_D_NS:-0 300 1200}")
+# ERA3_PG=1: the PostgreSQL removal authority (a postgres container by image ID on a network of its own, data on a
+# tmpfs, fsync off; a random password and wrapping key, never written), else the file authority
+net_args=()
+if [[ ${ERA3_PG:-0} == 1 ]]; then
+  pgimage=${DX_ERA3_PG_ID:-sha256:526f86d93c6ea08fd3f1fe5605650cacc781b2c6013169a0ad8f42c7d3d84f32}
+  [[ $(docker image inspect --format '{{.Id}}' "$pgimage") == "$pgimage" ]] || { echo "run.sh: image $pgimage not present" >&2; exit 2; }
+  pgtag=tx2-dxera3-pg-$$; password=$(openssl rand -hex 16)
+  docker network create --label "tx2.holder=${ERA3_HOLDER:-DX-ERA3}" "$pgtag-net" > /dev/null || exit 1
+  docker run -d --pull never --label "tx2.holder=${ERA3_HOLDER:-DX-ERA3}" --name "$pgtag" --network "$pgtag-net" -e "POSTGRES_PASSWORD=$password" --memory 1g \
+    --tmpfs /var/lib/postgresql/data:rw,size=512m "$pgimage" -c fsync=off -c full_page_writes=off > /dev/null || exit 1
+  trap 'docker rm -f "$pgtag" > /dev/null 2>&1; docker network rm "$pgtag-net" > /dev/null 2>&1' EXIT
+  for i in $(seq 1 60); do docker exec "$pgtag" pg_isready -U postgres > /dev/null 2>&1 && break; sleep 1; done; sleep 2
+  docker inspect --format '{{.Image}}' "$pgtag" > "$out/pg-image-ran"
+  env+=(-e "TRIPLEX_ERASURE_JDBC=jdbc:postgresql://$pgtag:5432/postgres?user=postgres&password=$password"
+        -e "TRIPLEX_ERASURE_WRAPPING_KEY=$(openssl rand -base64 32)")
+  net_args=(--network "$pgtag-net")
+else
+  env+=(-e TRIPLEX_ERASURE_DIRECTORY=/tmp/era3-authority)
+fi
 [[ $mode == on || $mode == subject ]] && env+=(-e TX2_REMOVAL_PER_ACCOUNT=1)
 [[ $mode == subject ]] && env+=(-e TX2_REMOVAL_SUBJECT_CHECK=1)
 [[ -n ${ERA3_EXTRA_ENV:-} ]] && for kv in $ERA3_EXTRA_ENV; do env+=(-e "$kv"); done
 # ERA3_MAIN=2: the second review's attacks (era3/attack2.clj), loaded after the first review's.
-if [[ ${ERA3_MAIN:-1} == 8 ]]; then
+if [[ ${ERA3_MAIN:-1} == r7 ]]; then
+  printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (load-file "/lab/attack6.clj") (load-file "/lab/review7.clj") (era3-review7/main)' > "$out/run.clj"
+elif [[ ${ERA3_MAIN:-1} == r7b ]]; then
+  printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/wide_gate.clj") (load-file "/lab/fuzz.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (load-file "/lab/review7b.clj") (era3-review7b/main)' > "$out/run.clj"
+elif [[ ${ERA3_MAIN:-1} == s5a3 ]]; then
+  printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/wide_gate.clj") (load-file "/lab/fuzz.clj") (load-file "/lab/attack3_gate.clj") (s5-attack3/main)' > "$out/run.clj"
+elif [[ ${ERA3_MAIN:-1} == 8 ]]; then
   printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (load-file "/lab/attack8.clj") (era3-attack8/main)' > "$out/run.clj"
 elif [[ ${ERA3_MAIN:-1} == 7 ]]; then
   printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (load-file "/lab/attack6.clj") (load-file "/lab/attack7.clj") (era3-attack7/main)' > "$out/run.clj"
@@ -73,7 +106,7 @@ else
 fi
 name="tx2-dxera3-$$-$mode"
 started=$(date +%s)
-docker run -d --pull never --name "$name" --label "tx2.holder=${ERA3_HOLDER:-DX-ERA3}" --memory 3g --cpus 2 -v "$out/run.out:/out" \
+docker run -d --pull never --name "$name" --label "tx2.holder=${ERA3_HOLDER:-DX-ERA3}" ${net_args[@]+"${net_args[@]}"} --memory 3g --cpus 2 -v "$out/run.out:/out" \
   -v "$out/src:/opt/gateway/src:ro" -v "$out/codec-spec.json:/opt/spec/codec-spec.json:ro" \
   -v "$out/lab:/lab:ro" -v "$out/run.clj:/opt/run.clj:ro" "${env[@]}" --entrypoint /bin/bash "$image" -c \
   'cd /opt/datomic && java -Xmx2g -Ddatomic.objectCacheMax=256m -Ddatomic.memoryIndexMax=256m -Dtriplex.codec.spec=/opt/spec/codec-spec.json -cp "$(DATOMIC_EXT_CLASSPATH=/opt/gateway/src bin/classpath)" clojure.main /opt/run.clj' > "$out/container" || exit 1

@@ -271,6 +271,52 @@ restore-plain)
   post "$W/v1/db/$E2/transact" "$bodies/save-b1-2.json" "e2-save-after-the-route"
   reads "$R" "$E2" "e2-a1-after-the-route" "$va"
   ;;
+restore-live)
+  # [DX-ERA3, seventh review] the data and the removal authority restored to the same backup while the gateways keep
+  # running (only the transactor is stopped for the restore): the gateways keep the head they verified before. Then
+  # reads on both, the frontier, the rebuild route on the write gateway, reads again, the removal sent again, and the
+  # gateways' acknowledged and start-state lines.
+  va=$(value a1)
+  new_db "$W" g1 "$sealed"; G=$db
+  uri_of "$G" > "$out/tmp/uri-$G"
+  for s in a1 b1 c1; do post "$W/v1/db/$G/transact" "$bodies/seed-$s.json" "seed-$s"; done
+  backup "$G" g1
+  psql_auth -c "create table public.bk_r_g1 as select * from triplex_removal.records where scope='$G'; create table public.bk_k_g1 as select * from triplex_removal.keys where scope='$G';" > /dev/null
+  post "$W/v2/db/$G/erase" "$(erase_subject "rm-a1-$G" acct/a/one)" "removal-a1"
+  sleep 3
+  reads "$R" "$G" "before-the-restore-read-gateway" "$va"
+  reads "$W" "$G" "before-the-restore-write-gateway" "$va"
+  step "stop the transactor only; restore the data and the authority rows; start the transactor (gateways running)"
+  docker stop --time 12 "$prefix-tx" > /dev/null
+  net=$(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' "$prefix-pg" | awk '{print $1}')
+  u=$(cat "$out/tmp/uri-$G")
+  docker create --name "$prefix-restore" --network "$net" --entrypoint /bin/sh "$pinned" -ceu \
+    "cd /opt/datomic; exec bin/datomic -Xms96m -Xmx800m restore-db file:/tmp/era3-backup '$u'" > /dev/null
+  docker cp "$out/backup/g1" "$prefix-restore:/tmp/era3-backup" > /dev/null
+  docker start -a "$prefix-restore" > "$out/restore-g1.log" 2>&1; step "restore-db exit $(docker inspect -f '{{.State.ExitCode}}' "$prefix-restore")"
+  echo "restore $prefix-restore $(docker inspect --format '{{.Image}}' "$prefix-restore")" >> "$out/images-ran"
+  docker rm -f "$prefix-restore" > /dev/null
+  psql_auth -c "delete from triplex_removal.records where scope='$G'; insert into triplex_removal.records select * from public.bk_r_g1; delete from triplex_removal.keys where scope='$G'; insert into triplex_removal.keys select * from public.bk_k_g1;" > /dev/null
+  docker start "$prefix-tx" > /dev/null
+  for i in $(seq 1 60); do curl -sS -m 5 -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' -X POST "$W/v1/db/$G/read" --data-binary '{"entityIds":["acct/b/one"]}' 2>/dev/null | grep -q '^[25]' && break; sleep 2; done
+  sleep 5
+  for k in 1 2; do
+    reads "$R" "$G" "restored-$k-read-gateway" "$va"
+    reads "$W" "$G" "restored-$k-write-gateway" "$va"
+    curl -sS -m 30 "$R/v2/db/$G/erasure-frontier?stampOnly=1" > "$out/replies/frontier-r-$k.json"; step "frontier read gateway: $(head -c 160 "$out/replies/frontier-r-$k.json")"
+    curl -sS -m 30 "$W/v2/db/$G/erasure-frontier?stampOnly=1" > "$out/replies/frontier-w-$k.json"; step "frontier write gateway: $(head -c 160 "$out/replies/frontier-w-$k.json")"
+    sleep 10
+  done
+  post "$W/v1/db/$G/transact" "$bodies/save-b1-0.json" "save-b1"
+  post "$W/v2/db/$G/removal-log-rebuild" '{}' "rebuild-route-write-gateway"
+  reads "$W" "$G" "after-the-rebuild-route-write-gateway" "$va"
+  reads "$R" "$G" "after-the-rebuild-route-read-gateway" "$va"
+  post "$R/v2/db/$G/erase" "$(erase_subject "rm-a1-again-$G" acct/a/one)" "removal-a1-sent-again"
+  reads "$R" "$G" "after-the-removal-sent-again-read-gateway" "$va"
+  reads "$W" "$G" "after-the-removal-sent-again-write-gateway" "$va"
+  for g in gw-w gw-r; do docker logs "$prefix-$g" 2>&1 | grep -E "removal-acknowledged|removal-start-state|removal-start-check|removal-failure" | sed "s/^/$g /" >> "$out/lines.log" || true; done
+  step "lines: $(grep -c . "$out/lines.log" 2>/dev/null || echo 0)"
+  ;;
 *) echo "unknown scenario $scenario" >&2; exit 2 ;;
 esac
 step "done"
