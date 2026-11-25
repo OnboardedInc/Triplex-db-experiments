@@ -368,6 +368,7 @@
     ;; starter's request) is not scheduled sealed
     (if (and sealed-fuzz? (= :hold (:slow s))) (assoc s :slow :commit) s)))
 
+(defn land-hook-extra [p] nil)
 (defn run-schedule3! [name conn run i sch]
   (let [{:keys [slow stop land change completer fresh-cache cstop narrow]} sch
         acct (str "h" (mod i 7)) tag (str run "-" i)
@@ -409,6 +410,8 @@
                        (reset! committed-at-land (>= (long (or (native conn :triplex.scope/removal-seq) 0)) s0))
                        (reset! late-out (b/real-transact conn held))))
         _ (when (= land :before) (land!))
+        ;; [fourth review] a seam for era3/attack4.clj (the completer's gateway, a log copy, a rebuild); a no-op here
+        _ (land-hook-extra :completer-start)
         _ (when fresh-cache (reset! privacy/cache {}))
         _ (reset! a/plan {:stop (when-not (= cstop :none) cstop) :stops-left 1
                           :hook (fn [p] (case [land p]

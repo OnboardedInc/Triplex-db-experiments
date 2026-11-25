@@ -202,7 +202,9 @@ logbehind2|logmissing)
   step "a1 or b1 answered while: $(grep -c -e "$va" -e "$vb" "$out/replies/$(printf '%03d' $n)-read-while.json" || true)"
   post "$R/v1/db/$D/transact" "$bodies/save-a2-0.json" save-a2-while
   if [[ $scenario == logmissing ]]; then
-    post "$W/v2/db/$D/removal-log-rebuild" '{"attributes":[":v"],"sealed":false}' rebuild
+    # [DX-ERA2 fifth pass, Z2] the policy is the database's: the route takes none (with one: 400)
+    post "$W/v2/db/$D/removal-log-rebuild" '{"attributes":[":v"],"sealed":false}' rebuild-with-a-policy
+    post "$W/v2/db/$D/removal-log-rebuild" '{}' rebuild
   else
     post "$W/v2/db/$D/removal-log-rebuild" '{}' rebuild
   fi

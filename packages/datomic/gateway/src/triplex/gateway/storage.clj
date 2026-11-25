@@ -596,7 +596,7 @@
       (let [text (str e)]
         ;; [DX-THIN1] Why: preserve explicitly typed policy errors and the established transaction rejection for malformed row ordering.
         ;; Rejected: treating every codec InvalidValue as a policy error before checking the transaction result.
-        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasedAssertionIdentity" "ProtectedTypeUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
+        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasureFrontierUnavailable" "ErasedAssertionIdentity" "ProtectedTypeUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
                        {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_ERASURE_FRONTIER|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))

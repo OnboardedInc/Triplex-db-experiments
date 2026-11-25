@@ -949,18 +949,22 @@
                 read-a (offers/route name "v1" "read" {"entityIds" [a1 b1]})
                 answered (or (str/includes? (text (:body read-a)) va) (str/includes? (text (:body read-a)) vb))
                 other-save (offers/send name (frame "ls-sc" "acct/c/one" (secret "acct/c/one" "s") (:id (seeds "acct/c/one")) (head conn)))
-                rebuild (offers/route name "v2" "removal-log-rebuild"
-                                      (if (= behind :missing) {"attributes" [":v"] "sealed" false} {}))
+                ;; [DX-ERA2 fifth pass, Z2] the rebuild route takes no policy (it is the database's)
+                with-policy (offers/route name "v2" "removal-log-rebuild" {"attributes" [":v"] "sealed" false})
+                rebuild (offers/route name "v2" "removal-log-rebuild" {})
                 after-any (offers/send name (frame-any name conn "ls-any"))
                 after-removal (remove! name "ls-3" "acct/c/one")]
             (check! label (not answered) "no route answers a removed value while the log is behind or missing")
             (cond
-              (= behind :missing) (do (expect (str label ": a read while the log is missing") read-a [503 "RemovalLogMissing"])
-                                      (expect (str label ": a save while the log is missing") other-save [503 "RemovalLogMissing"]))
+              ;; [DX-ERA2 fifth pass, Z2] the first request is refused and its gateway rebuilds the log from the data and
+              ;; the database's own policy; the next request is served
+              (= behind :missing) (do (expect (str label ": the first request while the log is missing") read-a [503 "RemovalLogMissing"])
+                                      (expect (str label ": the next request (the log rebuilt by the first)") other-save [200 nil]))
               commit? (do (expect (str label ": a read") read-a [200 nil])
                           (expect (str label ": another account's save") other-save [200 nil]))
               (= behind 2) (expect (str label ": a read on the log's boundary") read-a [503 "RemovalLogBehind"])
               :else (expect (str label ": a read on the log's boundary, one behind (nothing pending in the copy)") read-a [503 "RemovalLogBehind"]))
+            (expect (str label ": the rebuild route with a policy in the body") with-policy [400 "InvalidValue"])
             (expect (str label ": the rebuild route") rebuild [200 nil])
             (check! label (= 2 (get-in rebuild [:body "seq"])) "the log rebuilt up to the data (two removals)" (:body rebuild))
             (check! label (= 3 (seq-now name conn) (get-in after-removal [:body "seq"])) "the removal after the rebuild is sequence 3" (:body after-removal))
@@ -1199,6 +1203,42 @@
             (check! label (= 1 (get f1 "seq") (get f1 "removalStamp")) "log boundary: the first read published it; sequence and stamp 1" f1))
           (println "ERA2_CACHE_STAMPS" mode (pr-str {:before (select-keys f0 ["seq" "removalStamp"]) :after (select-keys f1 ["seq" "removalStamp"])})))))))
 
+(defn pending-tag-walk
+  "[DX-ERA2 fifth pass, Z3 of the fourth review] Every kind of write a removal left pending can refuse: the refusal
+  arrives typed (503 ErasureFrontierUnavailable) and its gateway completes the removal (published as sequence 1,
+  nothing pending), on both writers. Each variant: a removal of a1 stopped after its declaration, then one write."
+  []
+  (when per-account?
+    (doseq [variant [:frame-no-account :frame-naming-a :frame-no-account-general :frame-naming-a-general
+                     :delivery-into :delivery-from]]
+      (fresh-scope false
+        (fn [name conn]
+          (fresh-scope false
+            (fn [other oconn]
+              (let [label (str "pending-tag-walk/" mode "/" (clojure.core/name variant))
+                    _ (seed! name [a1 b1]) _ (seed! other [b1])
+                    declare rc/declare!
+                    stopped (with-redefs [rc/declare! (fn [& args] (let [r (apply declare args)] (throw (stop-ex :declared)) r))]
+                              (remove! name "tw-1" a1))
+                    pending (some? (privacy/pending name))
+                    general (fn [f] (with-redefs [subject/plan (fn [& _] nil)] (f)))
+                    deliver (fn [into from ticket]
+                              (offers/send into (assoc (save-frame (str "tw-d-" (UUID/randomUUID)) (str "notice:v1:tw-" (UUID/randomUUID))
+                                                                   ":notice/body" "delivered" nil nil)
+                                                       "erasureSourceDatabase" from "erasureSeq" ticket)))
+                    r (case variant
+                        :frame-no-account (offers/send name (frame-any name conn "tw-any"))
+                        :frame-naming-a (offers/send name (frame-acct name conn "tw-a" "a"))
+                        :frame-no-account-general (general #(offers/send name (frame-any name conn "tw-any-g")))
+                        :frame-naming-a-general (general #(offers/send name (frame-acct name conn "tw-a-g" "a")))
+                        :delivery-into (deliver name other (seq-now other oconn))
+                        :delivery-from (deliver other name (seq-now name conn)))]
+                (check! label (not= 200 (:status stopped)) "the removal stopped after its declaration" (offers/outcome stopped))
+                (check! label pending "it is pending" nil)
+                (expect (str label ": the refused write") r [503 "ErasureFrontierUnavailable"])
+                (check! label (nil? (privacy/pending name)) "the refusal completed the removal" (privacy/pending name))
+                (check! label (= 1 (seq-now name conn)) "published as sequence 1" (seq-now name conn))))))))))
+
 ;; ---- [DX-S5 second review R2-2, adapted] a creation racing a removal of its subject, then the client's replay ----
 (defn creation-race
   "The save-line review's R2-2 (`s5/attack2_gate.clj` `a-creation-racing-a-removal-is-replayed-into-the-removed-family`,
@@ -1242,7 +1282,28 @@
           (expect (str label ": the same frame after the removal (case 1)") stale [409 "ErasureReplayDeclined"])
           (expect (str label ": a replay under the same command, fresh source (case 2)") same-command [409 "ErasureReplayDeclined"])
           (expect (str label ": a resend under a new command, fresh source (case 3, allowed)") replay [200 nil])
-          (check! label stored? "case 3 stored its value (a new save after the removal)" obs))))))
+          (check! label stored? "case 3 stored its value (a new save after the removal)" obs)
+          ;; [DX-ERA2 fifth pass, Z7] the same with frames that carry NO source (the SDK's optimistic commits): the race
+          ;; and the late frame declined; a frame carrying the removal sequence its client saw after the removal stored
+          (let [Y "acct/p4/subject/later" vy (secret Y "framed-before-the-removal")
+                racing-y (frame "r22y-race" Y vy nil nil)
+                removed-y (atom nil) fired-y (atom false)
+                reply-y (general
+                          #(with-redefs [storage/submit! (fn [c data request timeline & more]
+                                                           (when (and (= "r22y-race" (get request "operationId")) (compare-and-set! fired-y false true))
+                                                             (let [f (future (offers/route name "v2" "erase" {"commandId" "r22y-remove" "selectors" [{"entityId" Y "attribute" ":v"}]}))]
+                                                               (reset! removed-y (deref f 3000 :waiting))))
+                                                           (apply orig c data request timeline more))]
+                             (offers/send name racing-y)))
+                late-y (general #(offers/send name (frame "r22y-late" Y vy nil nil)))
+                seen (seq-now name conn)
+                fresh-y (general #(offers/send name (assoc (frame "r22y-new" Y vy nil nil) "removalSeen" seen)))]
+            (println "ERA2_R22_NOSOURCE" mode (pr-str {:writer writer :removal (let [r @removed-y] (if (= :waiting r) :waiting (offers/outcome r)))
+                                                       :race (offers/outcome reply-y) :late (offers/outcome late-y)
+                                                       :withRemovalSeen (offers/outcome fresh-y)}))
+            (expect (str label ": no source, the race (Z7)") reply-y [409 "ErasureReplayDeclined"])
+            (expect (str label ": no source, the late frame (Z7)") late-y [409 "ErasureReplayDeclined"])
+            (expect (str label ": no source, removalSeen after the removal (case 3, allowed)") fresh-y [200 nil])))))))
 
 ;; ERA2_ONLY (space-separated label prefixes) runs only those scenarios: a diagnostic run, never a gate
 (def only (some-> (System/getenv "ERA2_ONLY") str/trim not-empty (str/split #"\s+")))
@@ -1284,6 +1345,7 @@
   (scenario "data-behind" data-behind)
   (scenario "boundary-transition" boundary-transition)
   (scenario "cache-stamps" cache-stamps)
+  (scenario "pending-tag-walk" pending-tag-walk)
   (scenario "creation-race" creation-race)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode
