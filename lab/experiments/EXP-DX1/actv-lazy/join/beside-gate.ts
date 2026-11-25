@@ -808,7 +808,8 @@ async function restartPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
   };
   // A step after a restart, again while it fails only because a peer has not reached the restarted transactor or the
   // gateway is not back (settlement resumes from its durable progress, so running it again is the claim being tested).
-  const transport = /Error communicating with HOST|ECONNREFUSED|ECONNRESET|socket hang up|fetch failed|Native write had no receipt|Gateway deadline/;
+  // [second review] "Transactor not available": a peer's answer while it reconnects (run G4res2, the transactor's frame case).
+  const transport = /Error communicating with HOST|Transactor not available|ECONNREFUSED|ECONNRESET|socket hang up|fetch failed|Native write had no receipt|Gateway deadline/;
   const steady = async <T>(what: string, f: () => Promise<T>, retried: string[]) => {
     for (let k = 0; ; k++) {
       try { return await f(); } catch (e) {
