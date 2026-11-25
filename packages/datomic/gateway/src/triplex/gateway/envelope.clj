@@ -104,7 +104,9 @@
   (when (contains? (:erased privacy/*cut*) id) (privacy/stale!))
   (if sql/url
     (let [^ConcurrentLinkedQueue keys (pool name)]
-      (or (.poll keys) (privacy/failure! 503 "EnvelopeKeyPoolEmpty" "Retry the protected save after replenishment")))
+      ;; [DX-ERA2 sixth pass] an empty pool (this gateway did not serve the database's protection, or restarted) is
+      ;; refilled once before the save is refused (removal-repair/take-key-refilled!)
+      (or (.poll keys) ((requiring-resolve 'triplex.gateway.removal-repair/take-key-refilled!) name)))
     [nil (issue! name id)]))
 
 (defn body-key-handle [wire]
@@ -209,7 +211,8 @@
                 (erase-keys! name (mapcat #(get % "identities") due))
                 (swap! shredded assoc name (get (last due) "seq"))))))
         ;; [DX-ERA2 fifth pass] counted and logged, no longer dropped (B2 was hidden here)
-        (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "shred" name e))))))
+        ;; [DX-ERA2 sixth pass, F1 of the B2 review] then, for this pass only, the log read again without the cache
+        (catch Exception e ((requiring-resolve 'triplex.gateway.removal-repair/shred-after-failure!) name cutoff e))))))
 
 (defn- maintain-keys! []
   (shred-published!)

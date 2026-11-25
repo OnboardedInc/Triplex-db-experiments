@@ -9,7 +9,7 @@
 # ERA3_MAIN=3: the third review's cases (era3/attack3.clj): k2 k3 k4 k5 k6 k7 k8 k9 k10 k12 fuzz3.
 # ERA3_MAIN=4: the fourth review's cases (era3/attack4.clj): q1 q2 q3 q4 q5 q7 q8 q9 q10 q11 r22 fuzz4.
 # ERA3_MAIN=5: the fifth review's cases (era3/attack5.clj): w1 w2 w3 w4 p1 p2 c1 z s t fuzz5 (ERA3_BOUNDARY log, commit or move).
-# Every container carries the label tx2.holder=DX-ERA3.
+# Every container carries the label tx2.holder=DX-ERA3 (ERA3_HOLDER names another holder).
 # ERA3_SOURCE: a checkout whose gateway source runs (default this one), e.g. a local merge with another branch.
 # ERA3_SOURCE_REF: a commit whose gateway source runs instead, archived from this checkout (no second checkout).
 set -uo pipefail
@@ -64,7 +64,7 @@ else
 fi
 name="tx2-dxera3-$$-$mode"
 started=$(date +%s)
-docker run -d --pull never --name "$name" --label tx2.holder=DX-ERA3 --memory 3g --cpus 2 -v "$out/run.out:/out" \
+docker run -d --pull never --name "$name" --label "tx2.holder=${ERA3_HOLDER:-DX-ERA3}" --memory 3g --cpus 2 -v "$out/run.out:/out" \
   -v "$out/src:/opt/gateway/src:ro" -v "$out/codec-spec.json:/opt/spec/codec-spec.json:ro" \
   -v "$out/lab:/lab:ro" -v "$out/run.clj:/opt/run.clj:ro" "${env[@]}" --entrypoint /bin/bash "$image" -c \
   'cd /opt/datomic && java -Xmx2g -Ddatomic.objectCacheMax=256m -Ddatomic.memoryIndexMax=256m -Dtriplex.codec.spec=/opt/spec/codec-spec.json -cp "$(DATOMIC_EXT_CLASSPATH=/opt/gateway/src bin/classpath)" clojure.main /opt/run.clj' > "$out/container" || exit 1

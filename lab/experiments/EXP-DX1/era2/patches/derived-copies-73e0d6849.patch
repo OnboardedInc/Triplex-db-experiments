@@ -1,0 +1,46 @@
+diff --git a/packages/datomic/gateway/src/triplex/gateway/main.clj b/packages/datomic/gateway/src/triplex/gateway/main.clj
+index 681f24866..f42918afa 100644
+--- a/packages/datomic/gateway/src/triplex/gateway/main.clj
++++ b/packages/datomic/gateway/src/triplex/gateway/main.clj
+@@ -508,6 +508,7 @@
+ 
+ (defn route-handler [{:keys [uri request-method body query-string] :as request}]
+   (if-let [[_ name action] (re-matches #"/v[12]/db/(s2-[A-Za-z0-9_-]+)/(.+)" uri)]
++    (let [delivery-source (volatile! nil)]
+     (try
+       (let [[conn db] (trace/span "privacy/current-data" "gateway"
+                         (let [conn (connection (db-uri name))] [conn (d/db conn)]))
+@@ -547,6 +548,7 @@
+                 source (get input "erasureSourceDatabase")
+                 _ (when (and source (not (and (string? source) (re-matches #"s2-[A-Za-z0-9_-]+" source))))
+                     (codec/invalid "Invalid source scope for protected delivery"))
++                _ (vreset! delivery-source source)
+                 ;; [DX-ERA2] Per account, a ticket naming its source accounts holds those accounts' locks only.
+                 ticket-accounts (when (and per-account managed-write? (nil? source)) (removal-scope/ticket-accounts input))
+                 ;; [DX-ACT9] A cross-database ticket naming its source accounts (TX2_ACCOUNT_TICKETS=1).
+@@ -648,7 +650,11 @@
+           (when (:removal-pending info)
+             (let [target (or (:removal-database info) name)]
+               ((requiring-resolve 'triplex.gateway.removal-commit/complete-pending!) target (connection (db-uri target)))))
+-          (response (or (:status info) 400) {:code (or (:code info) "GatewayError") :message (.getMessage e)}))))
++          (let [source @delivery-source]
++            (when (and source (not (:removal-pending info)) (= 503 (:status info)) (= "ErasureFrontierUnavailable" (:code info))
++                       (removal-scope/per-account? (d/db (connection (db-uri source)))) (some? (privacy/pending source)))
++              ((requiring-resolve 'triplex.gateway.removal-commit/complete-pending!) source (connection (db-uri source)))))
++          (response (or (:status info) 400) {:code (or (:code info) "GatewayError") :message (.getMessage e)})))))
+     (route-handler-base request)))
+ 
+ (defn handler [request] (trace/handler route-handler request))
+diff --git a/packages/datomic/gateway/src/triplex/gateway/privacy.clj b/packages/datomic/gateway/src/triplex/gateway/privacy.clj
+index 3bd6461b8..e58cafb49 100644
+--- a/packages/datomic/gateway/src/triplex/gateway/privacy.clj
++++ b/packages/datomic/gateway/src/triplex/gateway/privacy.clj
+@@ -89,7 +89,7 @@
+ 
+ (defn record-text [name record]
+   (if sql/url (sql/read-record name record)
+-    (let [p (path name record)] (when (exists? p) (Files/readString p)))))
++    (let [p (path name record)] (when (exists? p) (try (Files/readString p) (catch java.nio.file.NoSuchFileException _ nil))))))
+ 
+ (defn- save-record! [name record wire]
+   (if sql/url (sql/put! name record wire) (replace! (path name record) wire)))

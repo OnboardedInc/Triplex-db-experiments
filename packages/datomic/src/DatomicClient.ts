@@ -1103,6 +1103,21 @@ export class DatomicClient {
   declareProtection(db: string, attributes: readonly string[], sealed = false) {
     return this.request("POST", `/v2/db/${db}/protection`, { attributes, sealed });
   }
+  /**
+   * [DX-ERA2 sixth pass, V3] The database's removal stamp, read once when this client holds none (one small request:
+   * `?stampOnly=1` leaves out the removed identities). An unprotected database answers 0. A gateway that does not know
+   * the parameter answers the whole frontier, which carries the same fields.
+   */
+  async ensureRemovalStamp(db: string): Promise<void> {
+    if (this.removalStamps.has(db)) return;
+    const result = await this.request<{ protected?: boolean; seq?: number; removalStamp?: number }>(
+      "GET",
+      `/v2/db/${db}/erasure-frontier?stampOnly=1`,
+    );
+    const stamp = Number(result.removalStamp ?? result.seq ?? 0);
+    if (Number.isSafeInteger(stamp) && stamp >= 0)
+      this.removalStamps.set(db, Math.max(this.removalStamps.get(db) ?? 0, stamp));
+  }
   async erasureFrontier(db: string): Promise<ErasureFrontier> {
     const result = await this.request<ErasureFrontier>("GET", `/v2/db/${db}/erasure-frontier`);
     if (

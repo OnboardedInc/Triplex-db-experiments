@@ -55,6 +55,9 @@
   ;; Rejected: letting the public request claim an occupied scope has no plaintext history.
   ([name conn db input staged-position]
   (let [attrs (get input "attributes") sealed? (true? (get input "sealed"))]
+    ;; [DX-ERA2 sixth pass, V1] a database guarded per account is declared through removal-commit/protect! (its policy
+    ;; is in the database); a gateway without the option must not write its log's policy
+    (when (contains? #{removal-scope/sentinel -2} (scope/value db (scope/entity db) :triplex.scope/erasure-seq)) (privacy/unavailable!))
     (when-not (and (lean/enabled? db) (or (privacy/enabled? db) (= (or staged-position 0) (scope/head-position db (scope/entity db)))))
       (privacy/failure! 409 "ProtectedScopeNeedsMigration" "Declare protection before saving into the scope"))
     (privacy/register! name attrs sealed?
@@ -106,7 +109,8 @@
       (when-not row (privacy/failure! 404 "UnknownAssertion" "No assertion matches this identity"))
       (when-not ((:attrs policy) (:attribute row))
         (privacy/failure! 400 "EraseNotProtected" "The assertion attribute is outside the protected policy"))
-      (when (and (:sealed policy) (nil? private-id)) (privacy/unavailable!))
+      ;; [DX-ERA2 sixth pass] a value of an attribute added to the policy later may be stored in clear
+      (when (and (:sealed policy) (nil? private-id)) (when-not (contains? (:added policy) (:attribute row)) (privacy/unavailable!)))
       [row])
     (let [attribute (get selector "attribute") owner (get selector "entityId")]
       (when (and attribute (not ((:attrs policy) attribute)))
@@ -114,7 +118,11 @@
       ;; [DX-ERASE1] Why: erase seeks the detached protected history for this owner.
       ;; Rejected: decoding the owner's ordinary rows and traversing their retired value history.
       (let [rows (if (:sealed policy)
-                   (map #(envelope/assertion-identity db (:e %)) (d/datoms db :avet :triplex.private/entity owner))
+                   ;; [DX-ERA2 sixth pass] and, guarded per account, the values of attributes added to the policy later
+                   ;; that are stored in clear (removal-commit/clear-rows): masked by identity like every removed value
+                   (concat (map #(envelope/assertion-identity db (:e %)) (d/datoms db :avet :triplex.private/entity owner))
+                           (when (seq (:added policy))
+                             ((requiring-resolve 'triplex.gateway.removal-commit/clear-rows) db owner policy attribute)))
                    (when-let [e (d/entid db [:triplex.entity/id owner])] (lean/history-entity db e)))]
         (filter #(and ((:attrs policy) (:attribute %)) (or (nil? attribute) (= attribute (:attribute %)))) rows)))))
 
@@ -295,8 +303,10 @@
   ;; Rejected: restoring the old authority alongside the old data (it would make the removed bytes available again).
   (privacy/guard name
     (fn []
+      ;; [DX-ERA2 sixth pass, F4 of the B2 review] a removal left pending does not stop the replay of the published log
+      ;; (its intent is not a published removal); it is completed afterwards by its resend or the gateway
       (let [db (sync! conn)
-            state (privacy/cut name db)
+            state (privacy/cut name db true)
             entries (sort-by #(get % "seq") (vals (:commands state)))]
         (when-not state (privacy/unavailable!))
         (doseq [entry entries]

@@ -3,7 +3,8 @@
   in a database stops the deletion of every published removal's key. Rebuilt with no dependency on the removal
   builder's own namespaces, so it runs on any gateway source that has the sealed scope (DX-ERASE1): this branch's head
   in every mode, and the merged line (exp/DX-INT1) with every option off, under today's database-wide rule.
-  In process: the gateway's route handler, an in-memory Datomic, the file removal authority, a SEALED protected scope,
+  In process: the gateway's route handler, an in-memory Datomic, the file removal authority (or the PostgreSQL one when
+  TRIPLEX_ERASURE_JDBC is set: era2/b2.sh with ERA2_B2_AUTHORITY=pg), a SEALED protected scope,
   the shred grace from TRIPLEX_ERASURE_SHRED_GRACE_MS (set it above 0). For each stop:
     R1 removes X (account a) and is published; R2 removes Z (account c) and stops (between its native commit and its
     publication, or before its native commit); a read of Z and a save of account b are sent; the shred pass runs every
@@ -45,7 +46,14 @@
 
 (defn- erase [name command owner]
   (offers/route name "v2" "erase" {"commandId" command "selectors" [{"entityId" owner "attribute" ":v"}]}))
-(defn- key-present? [name id] (privacy/exists? (envelope/key-file name id)))
+(defn- key-handle
+  "The key handle of assertion `id` in removal `command`'s published (or pending) entry: the PostgreSQL authority finds a
+  key by it; the file authority by the assertion ID (the handle is then unused)."
+  [name command id]
+  (let [cut (privacy/cut name nil true)
+        entry (or (get-in cut [:commands command]) (when (= command (get (:pending cut) "commandId")) (:pending cut)))]
+    (some #(when (= id (get % "assertionId")) (get % "keyHandle")) (get entry "identities"))))
+(defn- key-present? [name command id] (envelope/key-present? name id (key-handle name command id)))
 (defn- shred-now! [] (#'envelope/maintain-keys!))
 (def worker? (some? (System/getenv "TX2_REMOVAL_WORKER_COMPLETE_MS")))
 (defn- now [] (System/currentTimeMillis))
@@ -82,7 +90,7 @@
             due (+ published envelope/grace-ms hold)
             gone-at (loop []
                       (shred-now!)
-                      (cond (not (key-present? name ix)) (now)
+                      (cond (not (key-present? name "b2-r1" ix)) (now)
                             (>= (now) due) nil
                             :else (do (Thread/sleep 250) (recur))))
             still-pending (some? (privacy/pending name))
@@ -90,14 +98,15 @@
             z-key-gone (when (and worker? (not= stop :control))
                          (let [limit (+ (now) envelope/grace-ms 8000)]
                            (loop [] (shred-now!)
-                             (cond (not (key-present? name iz)) true
+                             (cond (not (key-present? name "b2-r2" iz)) true
                                    (>= (now) limit) false
                                    :else (do (Thread/sleep 250) (recur))))))
-            resent (when (and (not= stop :control) (nil? gone-at)) (offers/outcome (erase name "b2-r2" z)))
+            ;; [review F7] the pending removal is resent in every run, so its completion after the deletion shows too
+            resent (when (not= stop :control) (offers/outcome (erase name "b2-r2" z)))
             gone-after (or gone-at
                            (let [limit (+ (now) 10000)]
                              (loop [] (shred-now!)
-                               (cond (not (key-present? name ix)) (now)
+                               (cond (not (key-present? name "b2-r1" ix)) (now)
                                      (>= (now) limit) nil
                                      :else (do (Thread/sleep 100) (recur))))))
             row {:grace-ms envelope/grace-ms :r1 (offers/outcome r1) :r2 r2 :r2-pending pending-after-r2
@@ -107,8 +116,11 @@
                  :r1-key-deleted-ms-after-publication-with-the-resend (when gone-after (- gone-after published))
                  :outlived-grace-ms (when gone-after (max 0 (- gone-after published envelope/grace-ms)))
                  :worker-completes worker? :r2-key-deleted-by-the-worker z-key-gone}]
-        (println "ERA2_B2" (pr-str [label row]))
+        (println "ERA2_B2" (pr-str [label (assoc row :authority (if (System/getenv "TRIPLEX_ERASURE_JDBC") "postgresql" "file"))]))
         (check! label (some? gone-at) "a published removal's key is deleted within its grace + the hold, whatever else is pending" row)
+        (when (not= stop :control)
+          (check! label (= [200 nil] resent) "the pending removal, resent, completes" row)
+          (check! label (nil? (privacy/pending name)) "nothing pending after the resend" row))
         (when (and worker? (not= stop :control))
           (check! label (nil? (privacy/pending name)) "the worker completed the removal left pending" row)
           (check! label (true? z-key-gone) "the worker's completion published it and its key went after its grace" row))))))

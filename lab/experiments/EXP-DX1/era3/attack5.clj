@@ -174,7 +174,11 @@
                   _ (Thread/sleep 5)
                   passes (with-worker-ms 1 #(vec (for [i (range 3)] (safe (fn [] (worker-pass!) :ok)))))
                   f1 (failures)
-                  detail {:poison poison :p-r1 (offers/outcome p-r1) :q-r1 (offers/outcome q-r1) :passes passes
+                  ;; [DX-ERA2 sixth pass, adapted: V6's way out] storage damage (a record cut short, an entry altered) is
+                  ;; repaired by the operator's rebuild route; the key check below follows it
+                  repair (when (#{:corrupt :log-entry-altered} poison) (offers/outcome (safe #(q/rebuild! p {}))))
+                  _ (when repair (with-worker-ms 1 #(worker-pass!)))
+                  detail {:poison poison :p-r1 (offers/outcome p-r1) :q-r1 (offers/outcome q-r1) :passes passes :operator-repair repair
                           :q-pending-after (some-> (privacy/pending qn) (get "commandId"))
                           :q-published-key-alive (q/keys-alive qn q-keys)
                           :p-published-key-alive (q/keys-alive p p-keys)
@@ -297,9 +301,16 @@
                       :protection-with-the-stored-policy-again back :a-read-at-the-end read-later}]
           (observe! lbl :detail detail)
           (bump! :p2 boundary kind sealed? :removal rm-p :rebuild rebuild)
-          (when-not (= attrs-after [":v" ":p"])
+          ;; [DX-ERA2 sixth pass, adapted: adding an attribute is now a normal operation, one-way, from the database's policy
+          ;; (the coordinator's V1 fix); dropping one is still refused] the narrower list must be refused; the wider list
+          ;; must be an addition to the stored policy, with the log's copy following it
+          (when (< (count attrs-after) 2)
             (oracle! lbl (not= 200 (first protect))
                      "with the log lost, the protection route cannot set a policy other than the stored one" detail))
+          (when (> (count attrs-after) 2)
+            (oracle! lbl (and (= 200 (first protect)) (= (set attrs-after) (set (get (rc/stored-policy (d/db conn)) "attributes")))
+                              (= (set attrs-after) (set (get head-now "attributes"))))
+                     "with the log lost, a wider list adds to the stored policy and the log's copy follows it" detail))
           (oracle! lbl (= 200 (first rm-p)) "a protected value can still be removed on request" detail))))))
 
 ;; ---- W5: a database deleted while one of its removals is pending -------------------------------------------------

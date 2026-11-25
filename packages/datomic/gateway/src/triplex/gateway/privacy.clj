@@ -71,7 +71,9 @@
 
 (defn record-text [name record]
   (if sql/url (sql/read-record name record)
-    (let [p (path name record)] (when (exists? p) (Files/readString p)))))
+    ;; [DX-ERA2 fifth pass] read once: a record can be deleted between the check and the read (a removal's publication
+    ;; deletes its intent), so a missing file at the read is absence, never an error (a 400 to another account's request)
+    (let [p (path name record)] (when (exists? p) (try (Files/readString p) (catch java.nio.file.NoSuchFileException _ nil))))))
 
 (defn- save-record! [name record wire]
   (if sql/url (sql/put! name record wire) (replace! (path name record) wire)))
@@ -139,8 +141,10 @@
            ;; [DX-ERA2] The prepared removal's sequence, so a request guarded per account can tell a native commit of
            ;; that removal (not yet published) from a native database the log does not describe.
            ;; [DX-ERA3 F1b] and the prepared removal itself (its accounts), so a ticketed write can wait for it.
+           ;; [DX-ERA2 fifth pass] the intent read once; gone since the check (its publication finished) is no intent
            pending-entry (when (and removal-scope/enabled allow-pending? pending)
-                           (json/read-str (if (string? pending) pending (record-text name "pending.json"))))
+                           (let [text (if (string? pending) pending (record-text name "pending.json"))]
+                             (when text (json/read-str text))))
            pending-seq (get pending-entry "seq")]
        (let [result
        (when (or wire (enabled? db))
@@ -194,6 +198,9 @@
     (if sql/url
       (sql/publish! name record payload (:wire current) head)
       (do
+        ;; [DX-ERA2 sixth pass, F3 of the B2 review] the head on disk must still be the one this publication read (the
+        ;; PostgreSQL branch compares in its statement): a writer whose lock did not hold cannot move it back
+        (when-not (= (:wire current) (record-text name "head.json")) (unavailable!))
         (when-not previous (save-record! name record payload))
         (save-record! name "head.json" head)
         (remove-record! name "pending.json")))))
