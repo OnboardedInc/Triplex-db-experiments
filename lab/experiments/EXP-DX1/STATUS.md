@@ -6713,3 +6713,17 @@ Source: independent reviewer, branch `exp/DX-ERA5-derived-copies-review` `d018e7
 - Merge default off: the content is fit, the branch is not (it sits on an old removal head; 8 files conflict with the one branch): the removal line lands first.
 
 **Action:** fourth round sent to the builder (two test slots, behind the merges and the server preparation): T1 to T7; "one subject never stops an account" as a tested property in both formats; a declared subject boundary; the re-sweep rebuilt; and Sam's decision of 2026-11-25 that the expired-document notice is KEPT when a document value is removed (the earlier fix, which withdrew it, is reversed).
+
+## 2026-11-25 18:25 EST: save line, fourth pass: the third review's findings answered; fourth review started
+
+Source: save-line builder final message; branch `exp/DX-S6-save-line-fixes` `9f210018f`; page section 13.
+
+- **R3-1 (a reopen put the old writer back):** every place a stored function is installed is wrapped; with the setting on a new body goes to the twin and the old name keeps the refusal; every open repairs moved names. New gate 121 of 121 in 4 settings. On the reviewer's stacks with two real older builds, with predecessor lookup on and off, nothing was stored by a build that does not know the setting (the review had seen 12 of 12 stored). **Admitted, measured, not closed:** an older build with different writer code can still commit saves between its own reopen and this build's next save or open.
+- **R3-2:** the gateway refuses a request that names one account and writes any other account's entity, on every writer; the reserved prefix is refused on 7 routes including the removal route. What the layer in front of the gateway must guarantee is written as five points (the account on every request is the authenticated caller's; reads are not covered by the gateway).
+- R3-3: every save is judged at the earliest of its three positions and declined commands are recorded (the merged rule). R3-4 to R3-8 fixed.
+- Stacks owed from the review: two gateways turning the setting on at once with an old build's group commits in flight (869 old saves: 479 committed, all before the transition, 0 after); the transactor killed during the transition's own transaction (no mixed state; the timing was by chance); covering-owner saves and sealed values under the setting.
+- Gates: the review's tests pass in 5 settings except one case the builder attributes to the test's own harness; stored-form gate 109 of 109; outcome gate 426 of 426 in 5 settings; account gate 10,000 schedules, 0 differences; fuzz with transitions, removals and faults 86,082 saves, 0 differing. Option off: transaction log identical datom for datom to the base; identities equal in 6 settings.
+- Conflicts with the reconciled removal branch: two code files and one test; the builder proposes taking that branch's side for the replay rule.
+- Not tested: a restore of a backup taken before the transition; who the caller is (outside the gateway).
+
+**Action:** fourth independent review started, pinned to `9f210018f`, two test slots, behind the merges and the server preparation.
