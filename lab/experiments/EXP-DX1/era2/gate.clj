@@ -2335,7 +2335,8 @@
   "Each switch's value in this process against the arm's ERA2_EXPECT_<NAME> (gate.sh's `switches` phase), so a flipped
   default that did not take, or an opt-out that did not, fails before the arm's other checks are read."
   []
-  (doseq [[env v] [["ERA2_EXPECT_REPLAY_RULE" (fn [] rc/replay-rule)]]]
+  (doseq [[env v] [["ERA2_EXPECT_REPLAY_RULE" (fn [] rc/replay-rule)]
+                   ["ERA2_EXPECT_WORKER_MS" (fn [] rc/worker-complete-ms)]]]
     (when-let [want (System/getenv env)]
       (println "ERA2_SWITCH" env (pr-str (v)))
       (check! (str "owner-switches/" mode) (= want (pr-str (v))) (str env " is " want) (v)))))

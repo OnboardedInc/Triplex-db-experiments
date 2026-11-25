@@ -1142,14 +1142,25 @@
           answer))
       answer)))
 
+;; [The owner's decision (ii) of 2026-11-25: the 30-second completion worker under today's database-wide rule too]
+;; false in this pass, true once reviewed (approved; this one line, tested by era2/gate.sh's `flip-ii` arms).
+;; TX2_REMOVAL_WORKER_DATABASE_WIDE=1 turns it on and =0 off whatever this says; TX2_REMOVAL_WORKER_COMPLETE_MS still
+;; sets the age (0 turns the worker's completion off). What turning it on changes: era6/REMOVAL-ON-SAVE-LINE.md
+;; section 7.
+(def worker-database-wide-default false)
+(def worker-database-wide (switch "TX2_REMOVAL_WORKER_DATABASE_WIDE" worker-database-wide-default))
+
 (def worker-complete-ms
   "[DX-ERA2 fifth pass] The key-shred worker completes a removal left pending longer than this many milliseconds
   since its intent, as its own resend would, so that neither its effect nor its keys wait for a client that went
   away. Part of the per-account rule: on with TX2_REMOVAL_PER_ACCOUNT=1 (30 s unless TX2_REMOVAL_WORKER_COMPLETE_MS
-  says otherwise; 0 turns it off). Under the database-wide rule only when TX2_REMOVAL_WORKER_COMPLETE_MS is set."
+  says otherwise; 0 turns it off). Under the database-wide rule only when TX2_REMOVAL_WORKER_COMPLETE_MS is set, or
+  with `worker-database-wide` (30 s)."
   (let [v (some-> (System/getenv "TX2_REMOVAL_WORKER_COMPLETE_MS") Long/parseLong)]
     (cond (some? v) (when (pos? v) v)
           removal-scope/enabled 30000
+          ;; [DX-ERA6 eighth pass, the owner's decision (ii)] and under the database-wide rule, with the switch on
+          worker-database-wide 30000
           :else nil)))
 
 (defn complete-stale!

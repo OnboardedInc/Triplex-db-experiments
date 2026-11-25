@@ -160,6 +160,19 @@ print("ERA2_PAIRED_FLIP_I every datom but the decline record:", "identical" if s
 sys.exit(0 if (same and counts == [11, 11]) else 1)
 PYI
   fi
+  # (ii) the completion worker under the database-wide rule: the default flipped, 30 s; =0 off; this branch unset off,
+  # =1 on. B2 database-wide (every option off otherwise): the worker completes the removal left pending, at 30 s
+  if flip flip-ii removal_commit.clj "(def worker-database-wide-default false)" "(def worker-database-wide-default true)"; then
+    ERA2_ONLY=owner-switches RUN_ENV="ERA2_EXPECT_WORKER_MS=30000" run switch-ii-on flip-ii off "$gate"
+    ERA2_ONLY=owner-switches RUN_ENV="TX2_REMOVAL_WORKER_DATABASE_WIDE=0 ERA2_EXPECT_WORKER_MS=nil" run switch-ii-optout flip-ii off "$gate"
+    ERA2_ONLY=owner-switches RUN_ENV="ERA2_EXPECT_WORKER_MS=nil" run switch-ii-default this off "$gate"
+    ERA2_ONLY=owner-switches RUN_ENV="TX2_REMOVAL_WORKER_DATABASE_WIDE=1 ERA2_EXPECT_WORKER_MS=30000" run switch-ii-env this off "$gate"
+    bash "$x/era2/b2.sh" "$out/b2-flip-ii" "dir:$out/flip-ii" "off" > "$out/b2-flip-ii.log" 2>&1 || status=1
+    ERA2_B2_ENV=TX2_REMOVAL_WORKER_DATABASE_WIDE=0 bash "$x/era2/b2.sh" "$out/b2-flip-ii-optout" "dir:$out/flip-ii" "off" > "$out/b2-flip-ii-optout.log" 2>&1 || status=1
+    grep -h "ERA2_B2_SUMMARY" "$out"/b2-flip-ii/b2-*.log "$out"/b2-flip-ii-optout/b2-*.log
+    grep -q ":worker-completes true" "$out"/b2-flip-ii/b2-off.log || { echo "B2 flip-ii: the worker's completion was not checked"; status=1; }
+    ! grep -q ":worker-completes true" "$out"/b2-flip-ii-optout/b2-off.log || { echo "B2 flip-ii =0: the worker ran"; status=1; }
+  fi
   grep -h "ERA2_SWITCH\|ERA2_GATE" "$out"/switch-*.log | sort | uniq -c
 fi
 # [DX-ERA2 fix pass] the independent review's attacks and fuzzer (era3/attack.clj, era3/REVIEW.md) on both settings
@@ -292,5 +305,5 @@ if [[ $phases == *b2* ]]; then
   ERA2_B2_AUTHORITY=pg bash "$x/era2/b2.sh" "$out/b2-pg" worktree "off on commit" || status=1
   grep -h "ERA2_B2_SUMMARY" "$out/b2"/b2-*.log "$out/b2-pg"/b2-*.log
 fi
-rm -rf "$out/this/src" "$out/base/src"
+rm -rf "$out/this/src" "$out/base/src" "$out"/flip-*/src
 exit "$status"

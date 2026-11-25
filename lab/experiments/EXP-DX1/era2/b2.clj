@@ -55,7 +55,13 @@
     (some #(when (= id (get % "assertionId")) (get % "keyHandle")) (get entry "identities"))))
 (defn- key-present? [name command id] (envelope/key-present? name id (key-handle name command id)))
 (defn- shred-now! [] (#'envelope/maintain-keys!))
-(def worker? (some? (System/getenv "TX2_REMOVAL_WORKER_COMPLETE_MS")))
+;; [DX-ERA6 eighth pass, the owner's decision (ii)] the worker's completion is checked with TX2_REMOVAL_WORKER_COMPLETE_MS
+;; set (as before) or the database-wide switch on (its variable or its default line), at the age the gateway reads;
+;; resolved, so the file also loads on a source without them
+(defn- rc-var [sym] (try (some-> (requiring-resolve sym) deref) (catch Exception _ nil)))
+(def worker-ms (rc-var 'triplex.gateway.removal-commit/worker-complete-ms))
+(def worker? (boolean (and worker-ms (or (System/getenv "TX2_REMOVAL_WORKER_COMPLETE_MS")
+                                         (true? (rc-var 'triplex.gateway.removal-commit/worker-database-wide))))))
 (defn- now [] (System/currentTimeMillis))
 
 (defn run-one [stop]
@@ -96,7 +102,7 @@
             still-pending (some? (privacy/pending name))
             ;; with the worker's completion on, R2 itself is completed by a pass and its own key goes after its grace
             z-key-gone (when (and worker? (not= stop :control))
-                         (let [limit (+ (now) envelope/grace-ms 8000)]
+                         (let [limit (+ (now) envelope/grace-ms (long worker-ms) 8000)]
                            (loop [] (shred-now!)
                              (cond (not (key-present? name "b2-r2" iz)) true
                                    (>= (now) limit) false
@@ -115,7 +121,7 @@
                  :r2-resent resent
                  :r1-key-deleted-ms-after-publication-with-the-resend (when gone-after (- gone-after published))
                  :outlived-grace-ms (when gone-after (max 0 (- gone-after published envelope/grace-ms)))
-                 :worker-completes worker? :r2-key-deleted-by-the-worker z-key-gone}]
+                 :worker-completes worker? :worker-ms worker-ms :r2-key-deleted-by-the-worker z-key-gone}]
         (println "ERA2_B2" (pr-str [label (assoc row :authority (if (System/getenv "TRIPLEX_ERASURE_JDBC") "postgresql" "file"))]))
         (check! label (some? gone-at) "a published removal's key is deleted within its grace + the hold, whatever else is pending" row)
         (when (not= stop :control)

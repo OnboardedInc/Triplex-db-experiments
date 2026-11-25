@@ -224,8 +224,10 @@
 (defn- maintain-keys! []
   (shred-published!)
   ;; [DX-ERA2 fifth pass] complete removals left pending too long (removal-commit/worker-complete-ms: on per account)
-  (when (System/getenv "TX2_REMOVAL_PER_ACCOUNT") ((requiring-resolve 'triplex.gateway.removal-commit/complete-stale!)))
-  (when (System/getenv "TX2_REMOVAL_WORKER_COMPLETE_MS") ((requiring-resolve 'triplex.gateway.removal-commit/complete-stale!)))
+  ;; [DX-ERA6 eighth pass, the owner's decision (ii)] once per pass, whatever turned it on (per account,
+  ;; TX2_REMOVAL_WORKER_COMPLETE_MS, or the database-wide switch and its default line); it returns at once when
+  ;; worker-complete-ms is unset. Until now two lines called it, twice per pass with both variables set.
+  ((requiring-resolve 'triplex.gateway.removal-commit/complete-stale!))
   (when sql/url
     (doseq [name (.keySet batches)]
       (try (refill! name) (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "key-pool-refill" name e))))))
