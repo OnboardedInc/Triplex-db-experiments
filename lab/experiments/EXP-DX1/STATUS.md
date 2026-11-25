@@ -6415,3 +6415,13 @@ Source: independent reviewer's re-check, branch `exp/DX-B2R-key-deletion-review`
 - Notes, none blocking: the hex and base64 guard can be evaded only by code installed in the database; a new description of an existing kind of failure waits up to a minute; the limiter never forgets an entry (a handful under one database).
 
 **Action:** the merge agent told to merge `46a8f746a` into the one branch at its next clean point, run the fix's gate on the merged tree on both authorities as a standing gate, and report the pushed head before continuing.
+
+## 2026-11-25 08:03 EST: the key-deletion fix is on the one branch: `exp/DX-INT1` `212853708`
+
+Source: merge agent message; checked against `origin` (the fix commit `46a8f746a` is an ancestor of the new head; the head descends from `1ed2650bd`).
+
+- Two merge commits: `59e10e754` (the fix at exactly `46a8f746a`) and `212853708` (the review branch's tests).
+- Stored-function identities: 58 of 58 equal to `1ed2650bd` in all 8 writer settings, 0 new keys.
+- The fix's gate on the merged tree, image built from `212853708` and started by ID: 16 checks, 0 failed on the file and PostgreSQL authorities (2 failed on each for `1ed2650bd`); paired native log, replies and key store identical with and without removals; suites as on the base (78 tests, 71,220 assertions, 1 known error); scenarios 43 checks, 0 failed on each authority; fuzzer 20,000 schedules per authority, 0 violations; log-line checks 10 of 10. It is now a standing gate of the one branch.
+- Unchanged and open for Sam: under today's rule a pending removal makes every request answer 503 until its client resends.
+- The merge agent reports that its step 0 (restoring stored-function identities to those of `23b7df344`) is not on this head yet and arrives with the first batch (release limits, many accounts, the save line, the reporting copy), whose gates are running.
