@@ -830,7 +830,12 @@ async function restartPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
     throw new Error("the Publish was never acknowledged after the restart: " + failures.join(" | "));
   };
   let stage = "";
-  for (const role of ["active", "write"] as const)
+  // The write gateway only on request (DX_ACT8_RESTART_ROLES=active,write): in load-* modes the toy stack publishes a
+  // gateway on a host port the VM assigns when the container starts (`ha1/stack.ts` 109-111), so a restarted gateway
+  // can come back on another port and this run's clients cannot reach it again.
+  const roles = (process.env.DX_ACT8_RESTART_ROLES ?? "active").split(",") as ("active" | "write")[];
+  assert(roles.every((r) => r === "active" || r === "write"));
+  for (const role of roles)
     for (const where of ["afterRead", "inside", "frame"] as const) try {
       stage = "publish";
       const doc = nextLarge(g.current.doc, base());
