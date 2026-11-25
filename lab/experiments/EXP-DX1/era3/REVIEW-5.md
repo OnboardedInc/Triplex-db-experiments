@@ -25,8 +25,9 @@ stacks), recorded per run. Written 2026-11-25, 05:47 to 07:20 EST.
 **Is there a break? Yes, two, both in the new protection policy, and both on either boundary. No removed value was
 answered to a read after its acknowledgement anywhere.**
 
-- **No exposure after the acknowledgement.** Every case, 90,000 fuzzer schedules, four restore stacks and two acknowledgement stacks: no
-  read answered a removed value after its removal was acknowledged, and no Reach client was told to keep one.
+- **No exposure after the acknowledgement.** Every case, 90,000 fuzzer schedules, four restore stacks and two
+  acknowledgement stacks: no read answered a removed value after its removal was acknowledged, and no Reach client was
+  told to keep one.
 - **What the breaks do:** after the removal log is lost, one ordinary request can leave a database where **no value
   can ever be removed on request again**, with no route out. In some variants new values of a protected attribute are
   also stored in clear, or every request is refused for good.
