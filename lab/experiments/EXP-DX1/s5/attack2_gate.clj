@@ -331,6 +331,24 @@
             (is (not= "x value framed before the removal" stored)
                 "a value framed before the removal must not be stored by the replay of a save that raced it")))))))
 
+;; ---------------------------------------------------------------- 7b. probe: removals with every per-subject writer off
+
+(deftest removals-with-the-per-subject-writers-off
+  ;; Test 7 measured nothing in the settings general and accounts-on-general: its removal answered 503. This probe
+  ;; records what a removal answers there, for an existing entity and for one that does not exist yet.
+  (if-not (and (System/getenv "TRIPLEX_ERASURE_DIRECTORY") (run? "probe"))
+    (println "DX-S5R2_SKIP probe")
+    (reference/in-scope
+      (fn [name conn]
+        (let [decl (reference/route name "v1" "protection" {"attributes" [":p/secret"] "sealed" false})
+              Y "acct/p9/subject/y"
+              seeded (reference/send name (save conn {:facts [{:owner Y :field ":p/secret" :type :string :value "y" :pred nil}]}))
+              e1 (reference/route name "v1" "erase" {"commandId" "remove-y" "selectors" [{"entityId" Y "attribute" ":p/secret"}]})
+              e2 (reference/route name "v1" "erase" {"commandId" "remove-x" "selectors" [{"entityId" "acct/p9/subject/x"}]})]
+          (line {:case "probe: removals" :declared (:status decl) :seed (reference/outcome seeded)
+                 :existing (reference/outcome e1) :existingMessage (get-in e1 [:body "message"])
+                 :notYetExisting (reference/outcome e2) :notYetExistingMessage (get-in e2 [:body "message"])}))))))
+
 ;; ---------------------------------------------------------------- 8. decided refusals answered unknown
 
 (deftest refusals-inside-the-stored-function

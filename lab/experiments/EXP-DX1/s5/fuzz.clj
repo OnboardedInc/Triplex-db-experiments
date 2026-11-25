@@ -608,12 +608,16 @@
         (when (#{:narrow :wide} (:kind (:block spec))) (reset! (:refused-block g) (:block spec)))))
     r))
 
+(defonce shadowed (atom {}))
 (defn shadow-step!
   "A second account's save that reuses the first account's latest command and operation IDs (every client-chosen key
   shared), on both scopes. With TX2_ACCOUNT_CLAIMS=1 it must commit, and each account's lookups must find its own
   transaction only."
   [g ^Random rng {:keys [c-name k-name]}]
-  (when-let [command (peek @(:commands g))]
+  ;; Each first-account command is shadowed once: a second shadow of the same command would reuse the second account's
+  ;; own IDs (its refusal is then the contract, not a cross-account effect).
+  (when-let [command (let [c (peek @(:commands g))] (when (and c (not= c (get @shadowed (:seed g)))) c))]
+    (swap! shadowed assoc (:seed g) command)
     (let [op (peek @(:operations g))
           b-acct (str "fb" (:seed g)) b-owner (str "acct/" b-acct "/s" (swap! (:counter g) inc))
           spec {:owners [b-owner] :new #{b-owner} :command command :operation op :account b-acct :retires [] :faults #{}

@@ -32,7 +32,7 @@ mounted: «IMAGE». Evidence: `DX-S5-review/r2` (outside the repository), «ARCH
   - `outcome.clj` 30-46 (`decided?`) and 66-80 (`fence!`), and the unique `:triplex.tx/operation-id`, so the later of
     the original and the fence is refused at the serial point;
   - `main.clj` 265-272 for the other write routes;
-  - the SDK's `persist` (`DatomicStorageAdapter.ts` 693-740): lookup, then fence, then the receipt or
+  - the SDK's `persist` (`DatomicStorageAdapter.ts` 694-740): lookup, then fence, then the receipt or
     `DatomicOperationNotApplied`, and a new operation ID for the replay (971).
 - **What opens it again.** The fence key is chosen by `account-claims/operation-key` (`account_claims.clj` 75-82):
   for an operation not stored yet it is always the scoped form when the caller names an account. The save's key is
@@ -88,9 +88,9 @@ replan retry and the fence on every gateway, with or without the option. Keep th
 | R2-5 | Low (option on) | With `claimAccount`, every save of no one account is refused `400 InvalidValue`: a new subject without the `acct/` prefix, a system entity. S6 9.2 says such saves keep today's IDs | `account_claims.clj` 96-98 | `claim-account-and-saves-of-no-one-account` | both `400 InvalidValue`; the same saves without `account`: `200` |
 | R2-6 | Low | Refusals inside the general writer's function that carry no marker are now unknown: `503`, the SDK fences and replays the same save, refused the same way, until its replays run out (then a conflict, not a refusal). Seen: "Missing live row datom" (a retirement framed on the wrong owner, «MISSINGLIVE» times in the fuzz runs) and "Invalid commit span" | `commit.clj` 105, 214, 228, 296, 309; `subject_save.clj` 130 | `refusals-inside-the-stored-function`; fuzz `DX-S5R2_UNKNOWN` lines | `503`, fenced, replay `503` |
 | R2-7 | Low (option on) | The fence checks the length of the stored, scoped form: an operation ID of 245 to 256 characters is accepted by the save and refused by the fence (`400`), so its unknown outcome cannot be decided | `outcome.clj` 70; `main.clj` 399-402 | `fences-accumulate` | save `200`, fence `400 InvalidValue` (option off: `200`) |
-| R2-8 | Info | The 503 answer does not name the failure's class (S6 1.1 says it does): `outcome/unknown` puts it in `:cause`, which the response does not carry | `main.clj` 419-424 | fuzz logs | `{"code":"OutcomeUnknown","message":"Commit outcome unknown"}` |
+| R2-8 | Info | The 503 answer does not name the failure's class (S6 1.1 says it does): `outcome/unknown` puts it in `:cause`, which the response does not carry | `main.clj` 421-426 | fuzz logs | `{"code":"OutcomeUnknown","message":"Commit outcome unknown"}` |
 | R2-9 | Info | Fences are permanent, positionless transactions. The fence route names no account and has no limit: anyone who can reach a gateway can fence any operation ID they know or guess | `outcome.clj` 66-80 | `fences-accumulate` | 3,000 fences: 3,000 log transactions, about 2 datoms each; saves, feed and positions unaffected |
-| R2-10 | Info | F2: the S6 bound gate measured the general writer only. Import frames of new subjects take the creation function (F10); the first such frame in a JVM ran at 1.08 of its estimate (cold function), later ones 0.08 to 0.14 | `import_bound.clj` 21-23 | `import-and-live-shapes-against-the-estimate` | «F2» |
+| R2-10 | Info | F2: the S6 bound gate measured the general writer only. Import frames of new subjects take the creation function (F10); the first such frame in a JVM ran at 1.08 of its estimate (cold function), later ones 0.08 to 0.14 | `import_bound.clj` 16-19 | `import-and-live-shapes-against-the-estimate` | «F2» |
 
 ## Attacked without a break
 
