@@ -40,9 +40,21 @@ plans again with new IDs.
 - the `IdGenerator` of `RuntimeServices`;
 - every transaction ID written through the TypeScript adapter.
 
-On the one branch only lab processes take ordered blocks (the held runner's save tape, the gates and load tapes under
-`lab/experiments/EXP-DX1`). No path under `packages/` does: the product's SDK writes never take a block, so they cannot
-collide with each other, since monotonic IDs never repeat.
+**Correction (after the review of this branch, `act10/U1-REVIEW.md` V1).** At `1ed2650bd`, this branch's base, only lab
+processes take ordered blocks (the held runner's save tape, the gates and load tapes under `lab/experiments/EXP-DX1`);
+no path under `packages/` does. **That is not true at the one branch's later head (`8a362ac38`).** There the SDK's own
+save path takes blocks: `DatomicStorageAdapter`'s `saveIdentity` (lines 1131 to 1151) takes `orderedSaveIdentity()` or
+`wideOrderedSaveIdentity()` for every save that `orderedSaveShape` admits, whenever `orderedSaves` is on (the option or
+`TRIPLEX_DATOMIC_ORDERED_SAVES=1`; default off). Every other write of the same process takes its IDs from `generateId`
+and `generateTransactionId`. A refusal there is not retried: `IdentityConflict` is not one of the conflicts the adapter
+replays, so it reaches the caller as a `WriteError`.
+
+**The fix covers that path.** The adapter takes its blocks through `orderedSaveIdentity` and `wideOrderedSaveIdentity`,
+which take their prefixes from the same allocator, the one module instance that `generateId` and
+`generateTransactionId` belong to. The tests here already use exactly that instance: they import `orderedSaveIdentity`
+from `packages/datomic` and resolve the SDK's ID functions the way `packages/datomic` resolves them (I1 to I4). An
+adapter-level test does not fit on this branch, because the adapter's `saveIdentity` does not exist at `1ed2650bd`; it
+belongs with the merge (the review's A2 checks the adapter's instance against a second one).
 
 The process shown to collide on a stack is the held runner. Its save tape and its Publishes, settlement frames and
 definitions writes run in one Node process (the review's 8 + 8 stack runs; the options-off stops `G4off2`, `G4off3`
@@ -54,7 +66,9 @@ and the review's head 4).
   issued, or the end of the last reserved block, and every new ID is greater.
 - **`reserveIdPrefix(length)`** returns a prefix greater than the same-length prefix of every ID issued or reserved
   before. It then moves the greatest value to the block's end (the prefix followed by `Z`s).
-- **`orderedSaveIdentity` and `wideOrderedSaveIdentity`** take their tokens from it (24 and 23 characters).
+- **`orderedSaveIdentity` and `wideOrderedSaveIdentity`** take their tokens from it (24 and 23 characters). It accepts
+  only those two lengths: a shorter prefix leaves so few random characters that, within one millisecond, the successor
+  would carry into the time characters (review V3; test I4).
 - **The held tape** (`scale1/decision/writes.ts`) sends a save refused with `IdentityConflict` again under a new block,
   but only after the operation lookup says the save is absent. Its own earlier attempt may be what holds the IDs. It
   does this at most three times; every other answer is handled as before.
@@ -77,6 +91,7 @@ and the review's head 4).
 | `u1/identity.test.ts` I1 (5,000 pairs) | 4,990 share the token, 1,245 inside | **0 and 0** |
 | I2 (200,000 back-to-back pairs) | the same string after 34,749 | **0 share the token** |
 | I3 (28,572 blocks interleaved with 100,000 IDs) | — | **0 IDs inside any block**; blocks distinct and increasing; IDs increasing |
+| I4 (lengths other than 23 and 24 refused; 20,000 reservations in one millisecond) | — | **refused; 0 of 40,000 IDs and prefixes read another time** |
 | `packages/core` (vitest) | — | 62 files, 863 tests passed |
 | `packages/datomic` (vitest) | — | 71 files and 466 tests passed; 17 files (53 tests) skipped, as on every run without `DATOMIC_INTEGRATION=1` (they need a running gateway) |
 | `prep1/ordered-ids.test.mjs`, `w2/wide-ids.test.mjs` | — | 5 of 5 |
@@ -104,3 +119,15 @@ transaction ID comes from the generators above). The log is every datom of the s
 
 **Why this is acceptable.** No reader or writer may depend on an ID's value beyond its uniqueness and its order within
 a process, and both still hold. The only change is which IDs are chosen: never one inside a block reserved for a save.
+
+## Merging onto the one branch (for whoever merges)
+
+- **`scale1/decision/writes.ts` conflicts in two hunks** with the one branch's product mode. The review's reference
+  merge (`ff0413925` on `exp/DX-ACT10-u1-on-int1`) resolves them: `draft` keeps `mixRows` and records `drafted`; this
+  branch's resend loop becomes `labSubmit`, used only when `productMode` is unset; the product path is unchanged. That
+  is right: on the product path the operation ID is the SDK's and the SDK picks the block, so the lab's resend (keyed on
+  `row.id` and a block the tape chose) does not apply there.
+- **Rebuild both dists:** `packages/core` and `packages/datomic` (the datomic dist imports `reserveIdPrefix` from core).
+- **The review's `act10/u1-review.test.ts` A4 and A5** were written for lengths 11 to 25. With V3's restriction, A4's
+  loop must run over 23 and 24 only (11 to 22 and 25 now refused), and A5 (length 11 in one millisecond) now expects a
+  `RangeError`.

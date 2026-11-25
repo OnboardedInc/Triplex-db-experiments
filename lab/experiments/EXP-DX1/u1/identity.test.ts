@@ -18,7 +18,7 @@ import { orderedSaveIdentity } from "../../../../packages/datomic/dist/index.js"
 // The SDK's `generateId` as the save identity's own module resolves it (one monotonic factory per process).
 const here = path.dirname(new URL(import.meta.url).pathname);
 const fromDatomic = createRequire(path.join(here, "../../../../packages/datomic/package.json"));
-const { generateId, generateTransactionId } = await import(pathToFileURL(fromDatomic.resolve("@triplex-build/triplex/internal")).href);
+const { generateId, generateTransactionId, reserveIdPrefix } = await import(pathToFileURL(fromDatomic.resolve("@triplex-build/triplex/internal")).href);
 
 test("I1: the next SDK ID after a save's ordered identity falls inside the save's own block", () => {
   // Each pair starts on a fresh millisecond, as a save and a Publish of a held runner do (a save is sampled, then the
@@ -80,4 +80,27 @@ test("I3: interleaved reservations and IDs: no ID inside any block, blocks and I
   const inside = ids.filter((id) => tokens.has(id.slice(0, 24))).length;
   console.log("[I3] " + JSON.stringify({ blocks: blocks.length, ids: ids.length, idsInsideABlock: inside }));
   assert.equal(inside, 0);
+});
+
+test("I4: only the two block widths are reserved, and within one millisecond they never move an ID's time", () => {
+  // Review V3: a prefix of 11 characters reserved 16 times in one millisecond carried into the time characters. Only 23
+  // (a wide block) and 24 (a block) are in use, so only they are accepted; every other length is refused.
+  for (const bad of [11, 12, 22, 25, 10, 26, 0, -1, 23.5, Number.NaN]) assert.throws(() => reserveIdPrefix(bad), RangeError, String(bad));
+  const realNow = Date.now;
+  const clock = realNow.call(Date);
+  Date.now = () => clock; // one millisecond for every reservation and ID below
+  try {
+    const time = generateId().slice(0, 10);
+    let moved = 0, n = 0;
+    for (let i = 0; i < 20000; i++) {
+      const p = reserveIdPrefix(i % 3 === 0 ? 23 : 24);
+      const id = i % 2 === 0 ? generateId() : generateTransactionId().slice(4);
+      if (p.slice(0, 10) !== time || id.slice(0, 10) !== time) moved++;
+      n += 2;
+    }
+    console.log("[I4] " + JSON.stringify({ clockTime: time, reservationsAndIds: n, timeCharactersMoved: moved }));
+    assert.equal(moved, 0);
+  } finally {
+    Date.now = realNow;
+  }
 });

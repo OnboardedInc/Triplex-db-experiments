@@ -29,7 +29,9 @@ export const generateTransactionId = (): TransactionId =>
  * only if its 10 time characters and its next 14 random characters are equal (70 random bits).
  */
 export function reserveIdPrefix(length: number): string {
-  if (!Number.isInteger(length) || length < 11 || length > 25) throw new RangeError("Reserved ID prefix length must be 11 to 25");
+  // Only the two block widths in use: a shorter prefix leaves so few random characters that, within one millisecond,
+  // the successor carries into the time characters and later IDs read a later time than the clock's (review V3).
+  if (length !== 23 && length !== 24) throw new RangeError("Reserved ID prefix length must be 23 or 24");
   const floor = greatest.slice(0, length);
   let prefix = monotonicUlid().slice(0, length);
   if (prefix <= floor) prefix = successor(floor);
