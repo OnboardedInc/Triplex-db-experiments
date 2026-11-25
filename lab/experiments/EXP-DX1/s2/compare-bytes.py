@@ -1,0 +1,20 @@
+"""[DX-S2] Compare two request recordings of s2/bytes.ts byte for byte. The only values masked are the snapshot handles
+the gateway issues (random by design, read from its answers); everything the SDK chose itself must match exactly."""
+import json, re, sys
+def load(path):
+    handles, out = {}, []
+    for line in open(path):
+        r = json.loads(line)
+        body = re.sub(r'"handle":"([0-9a-f-]{36})"', lambda m: '"handle":"h%d"' % handles.setdefault(m.group(1), len(handles) + 1), r["body"])
+        out.append((r["method"], r["url"], body, r["body"] == body))
+    return out, len(handles)
+a, ha = load(sys.argv[1]); b, hb = load(sys.argv[2])
+same = len(a) == len(b) and all(x == y for x, y in zip(a, b))
+exact = sum(1 for x, y in zip(a, b) if x == y and x[3])
+print(json.dumps({"requests": [len(a), len(b)], "identical": same, "identicalWithoutMask": exact,
+                  "maskedHandles": [ha, hb], "bytes": sum(len(x[2]) for x in a)}))
+for i, (x, y) in enumerate(zip(a, b)):
+    if x != y:
+        j = next((k for k in range(min(len(x[2]), len(y[2]))) if x[2][k] != y[2][k]), min(len(x[2]), len(y[2])))
+        print(i, x[1], "\n", x[2][max(0, j - 200):j + 200], "\n---\n", y[2][max(0, j - 200):j + 200]); break
+sys.exit(0 if same else 1)

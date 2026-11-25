@@ -68,7 +68,10 @@ apply times diagnostic):
 - **Storage reads inside apply are 0 at toy size**: the toy database fits in cache. They say nothing about 1 billion.
 - **The general writer checks each new ID in history**, one AVET lookup per assertion. Declaring the frame's ordered
   identity block (`historyIdentityBounds`, one wide block per frame) replaces them with one range probe. Import frames
-  create new subjects, so they never reach the per-subject writer whatever their identity.
+  create new subjects, so without the creation option they never reach the per-subject writer whatever their
+  identity. Correction (S5 review finding F10, S6): with `TX2_SUBJECT_CREATE=1`, an import frame of one to four new
+  subjects of one account, with one claim and a source, takes the creation function
+  (`s5-attack/import-bound-estimate-against-apply`); the records are the same as the general writer's.
 
 **What a live save can wait.** Today's live bound is 8 ms of the same estimate, which admits about 20 facts. The bar
 that binds an import is priority 6: a quiet account's commit p99 stays within 1.25 times its control or inside 50 ms.

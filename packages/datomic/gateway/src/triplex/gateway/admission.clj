@@ -56,23 +56,25 @@
         (finally (.decrementAndGet ^AtomicInteger read-waiting)))))
   (.incrementAndGet ^AtomicLong read-admitted))
 
-(defn- execute-admitted [^Semaphore permits f refusable?]
-  (if (identical? permits reads)
-    (trace/span "gateway.admission-wait" "gateway-queue" (acquire-read! permits refusable?))
-    (trace/span "gateway.admission-wait" "gateway-queue" (.acquire permits)))
-  (try (trace/span "gateway.admitted-work" "gateway" (f)) (finally (.release permits))))
-
-;; [DX-XQ6] Why: the exact sweep reads each subject with the pinned read's own code (storage/read-rows) while it holds a
-;; permit of its own pool (sweep.clj); that code must not also take a read permit, or every sweep would compete with
-;; the pinned and current readers for theirs. Bound only inside a sweep page; unbound, every read is admitted as before.
+;; [DX-XQ6, restored by DX-INT5] Why: the exact sweep reads each subject with the pinned read's own code
+;; (storage/read-rows) while it holds a permit of its own pool (sweep.clj); that code must not also take a read permit,
+;; or every sweep would compete with the pinned and current readers for theirs. sweep.clj binds this to the function
+;; that runs the read (in its "gateway.admitted-work" span) only inside a sweep page; unbound, every read is admitted
+;; as before. Why a function and no macro here: this namespace compiles before commit.clj, and any generated name added
+;; here (a second trace span, an `and`) moved the stored functions' identities with every option off (READINESS.md,
+;; step 0 of 2026-11-25). Rejected: XQ6's `execute-admitted` with a span of its own (it moved 17 of 58 identities).
 (def ^:dynamic *own-pool* nil)
 
 (defn execute
   ([permits f] (execute permits f false))
   ([^Semaphore permits f refusable?]
-   (if (and *own-pool* (identical? permits reads))
-     (trace/span "gateway.admitted-work" "gateway" (f))
-     (execute-admitted permits f refusable?))))
+   (if (if *own-pool* (identical? permits reads) false)
+     (*own-pool* f)
+     (do
+       (if (identical? permits reads)
+         (trace/span "gateway.admission-wait" "gateway-queue" (acquire-read! permits refusable?))
+         (trace/span "gateway.admission-wait" "gateway-queue" (.acquire permits)))
+       (try (trace/span "gateway.admitted-work" "gateway" (f)) (finally (.release permits)))))))
 
 (defn execute-for [input permits f] (execute permits f (pinned? input)))
 

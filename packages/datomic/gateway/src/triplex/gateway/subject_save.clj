@@ -4,7 +4,7 @@
             [triplex.gateway.commit :as commit]
             [triplex.gateway.envelope :as envelope]
             [triplex.gateway.group-prepare :as prepared]
-            [triplex.gateway.lean :as lean] [triplex.gateway.privacy :as privacy]
+            [triplex.gateway.lean :as lean]
             [triplex.gateway.schema :as schema]
             [triplex.gateway.small-row :as small-row]
             [triplex.gateway.scope :as scope]
@@ -292,13 +292,11 @@
                ;; narrow rule here (the option stays default-off and leaves today's plans byte for byte).
                (not (and wide? (:import-predecessor p)))
                (<= (count ops) (if wide? wide-ops 256))
-               ;; [DX-ERA2] The per-account removal fence rides in the returned data; Datomic applies it on the same
-               ;; serial db-before. Rejected: the general writer for every guarded save.
-               ;; [DX-ACT9] Inside the base's own `and`, as an `if` through privacy's hooks: one more `or` or `and` here
-               ;; generates a name and renumbers the stored functions loaded after this file.
-               (every? #(or (prepared/small-op? %) (and (some? expected-erasure)
-                                                        (if (envelope-op? %) true
-                                                          (if privacy/removal-enabled ((:fence-op? privacy/removal-hooks) %) false)))) ops))
+               ;; [DX-ERA2] The per-account removal fence rides in the returned data; Datomic applies it on the same serial
+               ;; db-before (removal-scope/without-fence-ops leaves it out of this check). Rejected: the general writer
+               ;; for every guarded save; an `and` here (it adds generated names before the stored code is read).
+               (every? #(or (prepared/small-op? %) (and (some? expected-erasure) (envelope-op? %)))
+                       ((requiring-resolve 'triplex.gateway.removal-scope/without-fence-ops) ops expected-erasure)))
       (let [[fn-tx flags owner revision]
             (trace/span "subject.plan-witnesses" "gateway"
               (let [fn-tx (installed db) flags (when fn-tx (scope-witness db scope))
@@ -352,9 +350,18 @@
                          (into #{} (map (comp field lean/decode)) (vals prior)))
                 after (into #{} (map (comp field lean/decode second #(nth % 3))) business)]
             (when (and (if wide?
-                         ;; [Opus W2] Why: distinct plain fields on each side; a field may be replaced, first written
-                         ;; or retired. Rejected: references and system attributes (they widen the read set).
-                         (and (= (count live) (count prior) (count before)) (= (count business) (count after))
+                         ;; [Opus W2] Why: plain fields on each side; a field may be replaced, first written or retired.
+                         ;; Rejected: references and system attributes (they widen the read set).
+                         ;; [DX-S2] Why: a save "from now on" keeps the old value true until now as a bounded row, so it
+                         ;; asserts two rows of one field (the bounded old value and the new one); every predecessor
+                         ;; is still read here and covered by the revision compare-and-set, and nothing below or in
+                         ;; the native function is keyed by field. Rejected: W2's distinct-field count on each side,
+                         ;; which sent every such product save to the general writer.
+                         ;; [DX-S6] F6: three terms, as the base's condition had (the `true` changes nothing), so this
+                         ;; namespace generates the base's number of names and the stored functions loaded after it
+                         ;; (the covering writer, the general hint function) keep the base's identities (s4/idents.sh).
+                         (and (= (count live) (count prior))
+                              true
                               (not (contains? after nil)))
                          (and (= (count live) (count prior) (count before) (count after)) (= before after)))
                        (not (contains? before nil))

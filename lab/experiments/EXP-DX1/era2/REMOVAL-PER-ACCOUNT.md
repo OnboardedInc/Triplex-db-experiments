@@ -2120,6 +2120,16 @@ This section answers each one. This pass's own tests found two more defects (N1,
   verifies the head before anything is stored. A head from another database is refused (503) and adopts nothing.
 - **A gateway without the per-account option** refuses the protection route on a database guarded per account (it
   would write the log's policy): `erase/declare!`.
+- **Who may call the protection route [decided in the eighth pass, R2 of the seventh review]:** only the service that
+  owns the database (its declaration at start) and an operator. A caller acting for an account (the SDK, an agent of
+  the playground) must never reach it. The gateway checks no caller on any route (it sits behind the service), so the
+  service's front enforces this: it routes only its own declaration to `/v2/db/{db}/protection`. The rebuild route can
+  stay open because it reads nothing from the request. The protection route cannot: it takes its list from the caller,
+  and an attribute it adds stays protected for good (no route removes one). Since the eighth pass it refuses an
+  attribute that already holds a value other than a string (409 `ProtectedTypeUnsupported`, naming the attribute),
+  so a wrong list can no longer stop every account's saves of that attribute. A string attribute added by mistake
+  still makes its values removable by every later removal. The same rule holds for the restore route and the copy-drop
+  route (section 20.5): operators only.
 
 **Adding a protected attribute** (the coordinator's ask: a normal, tested, one-way operation from Datomic):
 
@@ -2228,11 +2238,25 @@ The review's own tests on this head (`era3e-*` arms and `attack5` runs, per acco
   `x-triplex-removal-stamp` and `x-triplex-erasure-seq` of the database as it is now (the route handler adds the headers
   a refusal brings; `after-refusal` replaces the stale ones of the refused plan). The SDK learns its stamp from every
   answer's headers before it looks at the status, so it learns it from the refusal too (Z7c's loop is gone).
-- **A save that says nothing writes nothing (V4).** A save with neither `sourceK` nor `removalSeen` is declined without
-  recording its command: no transaction, no datom, its command not burned. The rule reads only the data's removal
-  records, so the same save is declined again on every resend that still says nothing; a record would add nothing.
-  The same save sent with `removalSeen` set to the refusal's stamp is a new save after the removal (case 3) and is
-  stored, under the same command too.
+- **A save that says nothing writes nothing (V4). [Reversed on the reconciled branch, see the correction below.]** A
+  save with neither `sourceK` nor `removalSeen` is declined without recording its command: no transaction, no datom,
+  its command not burned. The rule reads only the data's removal records, so the same save is declined again on every
+  resend that still says nothing; a record would add nothing. The same save sent with `removalSeen` set to the
+  refusal's stamp is a new save after the removal (case 3) and is stored, under the same command too.
+
+> **Correction (2026-11-25, eighth pass, on `exp/DX-ERA6-removal-on-save-line`).** The V4 bullet above is false on the
+> reconciled branch once the replay rule is on (`TX2_REMOVAL_PER_ACCOUNT=1` or `TX2_REMOVAL_REPLAY_RULE=1`). There the
+> merged rule records **every** declined command, whatever the save stated (`era6/REMOVAL-ON-SAVE-LINE.md` section 1,
+> item 4), so a source-less save of a removed subject's protected value burns its command: a later save under the
+> same command is declined whatever it states, and a new command is a new save. This reverses V4 on purpose (one
+> command has one outcome; the seventh review agreed, M3). What it writes: the record's schema once per database
+> (9 datoms, 10 with the transaction's instant), then 3 datoms per newly declined command; a declined save under a
+> command already recorded writes nothing. The bound is one record per distinct command, not per request; with every
+> option off nothing is recorded (0 datoms, the paired log). The paired workload declines one command, so the
+> per-account arms of the paired log carry exactly 11 datoms more than the one branch (without the instants). A
+> caller can pre-empt another caller's command ID this way (409 for that caller's later save); with every option off
+> the same pre-emption exists in another form (the first caller's save is stored, the second 409
+> `OperationDuplicate`). Account-scoped command IDs (`TX2_ACCOUNT_CLAIMS=1`) scope the record to the account.
 - **A save framed before the removal** (a `sourceK` or `removalSeen` older than it) still records its commands, each
   once (case 2): a replay under that command is refused whatever it then claims, and a further refusal of it writes
   nothing.
@@ -2488,3 +2512,299 @@ back (19.4); `w4pg.clj` on `aad187dc7` (19.7).
     PostgreSQL the retirement is one transaction, so a refusal leaves the log whole. **N2** ran on both authorities (the
     B2 review's S3); `shred-isolation`, with two databases, on the file authority only.
 13. **The fuzzers, the SDK and regression stacks ran on `a3082aba0`**, not on `b047b22a0` (19.8 says what differs).
+
+## 20. The seventh pass and the sixth review (2026-11-25)
+
+The sixth review (`era3/REVIEW-6.md` on `exp/DX-ERA3-removal-review`, pinned to `03bb49cd3`) found four high breaks
+(X1 to X4) and eight smaller findings. Its tests (`era3/attack6.clj`, `era3/stack6.sh`) are on this branch with two
+oracles adapted to this pass's union rule (each marked `[DX-ERA2 seventh pass, adapted oracle]`). The design rule this
+pass follows, as the coordinator wrote it: **nothing derived from the log or the catalog may shrink a policy or delete
+a key.** The log's copy of the policy only grows; the key pass ignores the copy's `sealed` flag; only the explicit
+delete route retires a database's log and keys; each database's file is read inside its own `try` when a pass lists
+them. This pass's own measurements found one more defect, older than this pass (20.3). Mac, toy sizes; every time
+here is diagnostic.
+
+### 20.1 Each finding, its fix and its test
+
+| Finding | Fix | Test |
+| --- | --- | --- |
+| **X1** a data restore made the database forget an added attribute | The log's copy is the union of the copy and the stored policy (`sync-policy-copy!`): never the stored list alone. A stored policy that lacks an attribute the copy lists (valid names only) is **behind**: writes and removals answer 503 `RemovalPolicyBehind` until the restore route adds the missing attributes back (`rebuild!`). | `attack6` A2 (oracle adapted: the removal waits, then the restore route adds `:q` back); `gate.clj` `policy-sixth`, `policy-and-reconcile` (b) and `restore-after-copy-rewrite`; fuzz7 P1 to P5; stack D1, D6 |
+| **X2** the worker retired a log because the catalog missed the database | The worker never retires a log or deletes a key: a database missing from the catalog is skipped and counted (`worker-missing-database`). Only the delete route retires a log and its keys. | `attack6` G2; `gate.clj` `worker-retire` (the ghost log is left and counted) |
+| **X3** the key pass trusted the copy's `sealed` flag | The key pass deletes due keys for **every** database (`envelope/shred-published!` and `removal-repair/shred-after-failure!` test `(some? cut)`, not `(:sealed cut)`). Why every database counts as sealed for deletion, rather than reading the flag from Datomic: a removal in an unsealed database has no keys, so deleting its due keys deletes nothing, and the pass needs no database read per database. | `attack6` B1 |
+| **X4** one unreadable head stopped the pass everywhere (file authority) | Each database's `head.json` is read inside its own `try` when a pass lists databases (`envelope/authority-scopes`); a failure is counted and logged (`listing`) and the pass goes on. The file authority is used only by lab scripts (20.6), so this is fixed on this branch only. | `attack6` G1, three variants |
+| **X5** what the stamp means | Written down in 20.2. The SDK never sends a declined save again: `ErasureReplayDeclined` becomes a `WriteError` before the replay loop (`DatomicStorageAdapter.ts`). | `attack6` D2; `sdk-e2e` (the declined save's value is not stored) |
+| **X6** two callers adding different attributes refused each other | Additions union: any list answers 200 and adds what it names; what it leaves out stays protected and is listed in `notDeclared`. Only a different seal answers 409. An older service whose list lacks an addition starts normally. | `attack6` A3 (with the lock lost too); stack D4; `attack5` P2's narrower list (oracle adapted: 200, and the stored policy and the log's copy keep both attributes) |
+| **X7** a removal sent while its intent was unreadable answered 400 | `pending!`: an unreadable intent answers 503 `ErasureFrontierUnavailable` (counted, `intent-unreadable`). | `attack6` F |
+| **X8** the restore route took any name from the copy | The restore route and adoption keep only names the protection route accepts (`valid-attribute?`: a non-empty string outside `:_tx/`); others are logged (`triplex.protection-policy-copy-invalid.v1`) and never stored. | `attack6` B2 (oracle adapted: `:wider-benign` keeps its benign name) |
+| **X9** the replay rule read every removal, and logged every decline | An index per database, entity to removal records (extended from the newest record); the decline line is throttled to one a minute per database, with the number not printed (`suppressedSinceLastLine`); every decline is counted (`removalDeclines`). | `attack6` D; `gate.clj` `rule-index` |
+| **X10** a restore of the data and the authority to the same backup undoes later removals silently | The start check prints every database's state (`triplex.removal-start-state.v1`: log, native and declared sequences); every acknowledged removal prints `triplex.removal-acknowledged.v1` (database, sequence, command). The procedure in 20.5 compares the two. | stack D3, D3b |
+| **X11** (no defect) the key pool after a real restart of both gateways (N1) | Nothing to fix: the review found the first sealed save on each restarted gateway answered 200 and both values read back, 4 of 4 runs. | stack D5 (20.4) |
+| **E4 of DX-ERA4's gate (e)** (commit boundary, seed 915, schedule 552): another account's ticketed write, sent right after a removal's native commit, answered 503 `ErasureFrontierUnavailable` | Two changes (20.8). `privacy/cut` reads the head this gateway verified **before** it reads the log, not after. `removal-after-source` (the replay rule, run before every save) takes the protected attributes from the database's stored policy and reads the log only when the database has none. | `gate.clj` `cut-read-race` (forced, no seed): 3 kinds of request of account b x the 1st to 4th read of the head, on every per-account boundary |
+| **X12** the restore route's first call failed on a gateway with a stale cache | The restore route first refreshes the head through `log-cut` on a database guarded per account. | `attack6` A2b; `gate.clj` `restore-after-copy-rewrite`; stack D1, D6 |
+
+**(a) Options off change nothing.** The rule for a save framed before a removal (R2-2, Z7), the stamp header and the
+frontier's `removalStamp` run only with `TX2_REMOVAL_PER_ACCOUNT=1` or the new `TX2_REMOVAL_REPLAY_RULE=1` (default
+off). With every option off a save that says nothing about its frame and writes a removed subject's protected value is
+stored, as on the one branch (`gate.clj` `replay-rule-off`, the gate's `plain` arm). The proof is the paired run with
+that save added (`paired.clj`, `PAIRED_SOURCELESS=1`), compared with the one branch's head datom for datom: 20.4.
+
+### 20.2 What the stamp means (X5)
+
+- **The stamp** (`x-triplex-removal-stamp` on every answer about a protected database, and `removalStamp` on the
+  frontier) is one number per database. It increases when what a read may answer changes: on the log's boundary it is
+  the published removal sequence; on the commit boundary, the number of removals committed in the data.
+- **`removalSeen`**, which a save sends, says only: "this client has seen an answer from this database at least this
+  new". It does not say "the data this save was built from is that new". The SDK takes it from every answer's header
+  (the largest per database) and keeps its cached rows when it moves.
+- **What the gateway can tell apart:**
+  - a save whose stated frame (its source position, or its stamp) is older than a removal of a value it writes:
+    declined (409 `ErasureReplayDeclined`), and its command recorded;
+  - a save under a recorded command: declined, whatever it states;
+  - a save that states no frame at all: declined when any removal names a value it writes.
+- **What it cannot tell apart:** a save built from values read before a removal, by a client that has since seen any
+  newer answer about anything in the database, looks exactly like a new save made after the removal. It states a
+  fresh stamp, so it is stored (case 3). Only the client knows which values it read when.
+- **What the SDK guarantees:** it never sends a declined save again, under a newer stamp or otherwise
+  (`DatomicStorageAdapter.ts`: `ErasureReplayDeclined` becomes a `WriteError`). Only the application can send a new
+  save, and that save is built from what it reads then.
+
+### 20.3 Stored-function identities: the defect older than this pass
+
+- **What was wrong.** With every option off, this branch's stored functions differed from the one branch's in 17 of
+  58 identities, in every writer setting (`s3/idents.clj`):
+  - the general writer `:triplex/commit`'s code and hash;
+  - the one-owner writer's ident;
+  - owner-layout, the prefetch function, the packed journal and predecessor normalisation.
+- **What that meant.** A database created by this build installed different writer functions from a database created
+  by the one branch. The paired gate did not show it: its reference, `272a1bd66`, was this branch's own earlier head,
+  with the same shift.
+- **The cause.** Clojure gives each compiled function and each generated symbol the next number of one global counter.
+  Stored code embeds those generated names. Measured per file (the counter across each file's own load, everything
+  else loaded first), against the base:
+
+  | Source of the extra generated names | Extra names |
+  | --- | --- |
+  | `removal_scope.clj`, loaded early by `privacy.clj` | 108 |
+  | `erase.clj` | 35 |
+  | XQ6's `execute-admitted` in `admission.clj` (the one branch had already undone it, DX-INT5) | 24 |
+  | `privacy.clj` | 8 |
+  | `subject_save.clj` (one `and`) | 3 |
+
+  Together they moved every installed function's names by 179.
+- **The fix** (`710f27d12`):
+  - `removal_scope.clj` loads after every installed function's code is read: no early file requires it, and `main` and
+    `storage` require it last.
+  - `privacy.clj`, `erase.clj` and `subject_save.clj` call into it with `requiring-resolve` and keep the base's
+    generated names.
+  - The helpers they defined move there unchanged: `fence-seq`, `ensure-ticket!`, the per-account `verify-data!`,
+    `selector-buckets`, the account locks, the tries line, `request-cut` and `per-account!`.
+  - `and` and `cond->` in those files become nested `if`/`when` or a call.
+  - `admission.clj` and the sweep's binding take the one branch's form.
+- **The check.** `s3/idents.clj` on this tree against the one branch's head `8a362ac38`: 58 of 58 shared identities
+  equal in all 8 writer settings. The two new keys are the removal fence's; its code is a plain quote, so its identity
+  does not depend on load order.
+
+### 20.4 Gates
+
+Every run below is on `383db77d1` (this pass's code with E4's fix, 20.8), from a frozen worktree of that commit. Mac,
+toy sizes; times are diagnostic.
+
+**In process, `era2/gate.sh` (the standing gate, all six reviews' tests), 13:49 to 14:23, exit 0:**
+
+| Phase | Result |
+| --- | --- |
+| Paired native log (reference: the one branch's head `8a362ac38`, twice; this gateway off, per account, commit) | **every datom identical on every arm** (unsealed 653 datoms, `11b4b5ac1069`; sealed 698, `c56443da3cfc`); 0 decline datoms on every arm; replies identical on every arm (md5 `2caaf1e83af2`) |
+| (a) the paired run with a save that says nothing about its frame, of a removed subject's protected value | every option off against the one branch: **every datom identical** (unsealed 673, `07edfec410b2`; sealed 723, `d4953058a1f9`), replies identical, the case answered 200 on both (stored, as on the one branch). The older base `23b7df344` differs from both, as before (its stored functions' generated names, 20.3) |
+| Interleavings (`gate.clj`, with `cut-read-race`) | database-wide 557 checks, per account 2,455, subject 10,729, commit 10,703, the rule-off case 8: 0 failed |
+| First review (D1 to D6, fuzzer) | on 1,979, subject 1,988, commit 1,988 oracles: 0 violations |
+| Second review (E1 to E8, fuzz2) | on, subject, commit 2,785 oracles each: 0 violations; E9 (known, the derived-copies branch's): 2 of 2, reported, not counted |
+| Third review (K2 to K10, fuzz3 with a second gateway) | on 3,640, subject 3,640, commit 3,643: 0 violations |
+| Fourth review (Q1 to Q11, R2-2, fuzz4) | on and subject 3,850 each, Q9 and Q10 14: 0 violations; database-wide 20 builder checks, 0 failed |
+| Fifth review (W, P, C, S, T, Z7, fuzz5) | the log's boundary 4,371 oracles, the commit boundary 4,371, across the move 4,247: 0 violations (P2's narrower list with its oracle adapted to X6); database-wide 12 builder checks, 0 failed |
+| **Sixth review** (`attack6`: A1, A2, A2b, A3, B1, B2, C, D, G1, G2, F, H) | per account 112 oracles, subject 112: 0 violations; database-wide (G1, D) 3 oracles, 0 |
+| Failure lines (`lines.clj`) | 10 of 10 |
+| Reply texts (`replies.clj`, N3) | file authority off 9 of 9, on 9 of 9; PostgreSQL 15 of 15 |
+| The B2 review's scenarios (`b2r`) | file 43 of 43, PostgreSQL 43 of 43 |
+| B2 (`b2.clj`, every mode, both worker variants, both authorities) | file: off 16, on 19, subject 19, commit 19, off with the worker 20, subject with the worker 23; PostgreSQL: off 16, on 19, commit 19: 0 failed |
+| Gateway suites (base off; this off, subject, commit) | 76 tests, 71,170 passed, 0 failed, 1 error on every arm, the base included (`http-route`, a byte array the test reads as a string) |
+
+**Stacks** (PostgreSQL authority, a write and a read gateway; `era3/stack6.sh all6` with the sixth review's bodies):
+
+| Stack | Result (the same on the log's boundary and the commit boundary) |
+| --- | --- |
+| D1, data restored from before an addition, the data level with the log | a save of `:q` and a removal of a1 in the window: 503 `RemovalPolicyBehind`; the restore route 200; the service's `[:v :q]` 200; a1's two values answered until the removal is sent again, then 0 |
+| D2 (control), the restore route first | 0 a1 values after the removal |
+| D6, the data behind the log as well | the removal in the window 503 `RemovalPolicyBehind`; the restore route 200; the client's retry 200; 0 a1 values, also after the service's declaration |
+| D3, the data and the authority (records and keys) restored to the same backup | a1's value answered again on both gateways (1 each, current and history) until the removal is sent again (X10: invisible inside the restored systems), then 0 |
+| D3b, the same with the records only (the key already deleted) | unsealed: as D3; sealed: reads of a1 503 `ErasureFrontierUnavailable` (the value cannot be opened); after the removal sent again 0 |
+| D4, two gateways adding different attributes at once, 6 rounds | 200 and 200 in every round, then the calls with both 200; all 12 added attributes stored, and the log's copy the same (X6) |
+| D5, both gateways restarted (empty key pools) | the first sealed save on each 200; 2 of 2 values read back (X11) |
+| start check after the restore | 8 `triplex.removal-start-check.v1` lines (X10) |
+
+| Stack | Result |
+| --- | --- |
+| `sdk-e2e` (the SDK end to end; log's boundary) | 13 of 13 checks: the SDK's save stored; reads before the removal; after its acknowledgement no Reach or entity read answers the value; S's save framed on an older stamp is declined and reaches the application as `ErasureReplayDeclined`, **and the SDK did not send it again** (its value is not stored, X5); the refusal taught S the current stamp and its next save is stored; F's first save (the SDK reads the stamp first) and its next are stored; no reader answers the removed value at the end; b1's value still answered |
+| `sdk-e2e-commit` (the same on the commit boundary, the removal paused 8 s after its commit) | 16 of 16 checks |
+| `fleet-one`, the one branch's `8a362ac38` on the read gateway beside this build on the write gateway (the rollout's first step), one sealed database that stays database-wide | 18 of 18 requests 200: protection on both, saves on both, a removal on each build read on both; 0 removed values answered after each removal and at the end; the frontier at sequence 2 on both |
+| `fleet-one` with this branch's earlier `03bb49cd3` on the read gateway (whose stored functions' generated names were the shifted ones, 20.7 item 7) | the same: 18 of 18 requests 200, 0 removed values answered |
+
+**fuzz7** (`era3/attack7.clj`: the sixth review's operator steps, restores of the data, the authority or both,
+policy additions, removals and saves at random points), 40,000 schedules per boundary in four chunks of 10,000 (seeds
+differ; sealed and unsealed alternate; key grace 0), on the frozen worktree, at most two heavy jobs at a time from 14:44:
+
+| Boundary | Chunks (oracles; 0 violations each) | Total |
+| --- | --- | --- |
+| The log's (per account, seeds 7101 to 7104) | 154,807; 147,458; 155,103; 147,403 | 40,000 schedules, 604,771 oracles, 0 violations |
+| The commit (subject check, seeds 7201 to 7204) | 154,808; 147,551; 154,861; 147,586 | 40,000 schedules, 604,806 oracles, 0 violations |
+| Across the move (per account, seeds 7301 to 7304) | 154,793; 147,392; 154,809; 147,617 | 40,000 schedules, 604,611 oracles, 0 violations |
+
+Before E4's fix, the first log-boundary chunk on `0c380f341` (seed 7101) gave the same 154,807 oracles and 0
+violations; its second chunk was stopped when the fix landed.
+
+### 20.5 The restore procedure
+
+[Rewritten in the eighth pass, on `exp/DX-ERA6-removal-on-save-line`: steps 2, 3 and 5 changed, R5 and R3 of the
+seventh review.]
+
+**Who runs it:** the operator who restores the data or the removal authority (the deployment's on-call engineer). It is
+part of the restore, not a later check.
+
+After restoring the data, the removal authority, or both, from backups:
+
+1. **Never restore the removal authority to a point before an acknowledged removal on its own.** Restoring it alone
+   to an earlier point puts the log behind the data: the gateway refuses (503 `RemovalLogBehind`) until step 4.
+   Restoring both the data and the authority to the same earlier backup undoes every removal acknowledged after it,
+   and nothing inside the restored systems can see that (X10). Step 5 is the only check.
+2. **The record step 5 compares against is kept outside both backups, all the time, not at restore time.** Every
+   gateway runs with `TX2_REMOVAL_ACK_JOURNAL=<file>` on a volume of its own (never in the Datomic storage's or the
+   removal authority's backup set; or a path whose lines are shipped at once to the log store). Every removal is
+   appended there, forced to disk, before its client is answered 200, whichever step published it (`removal-ack`).
+   The same removal also prints one `triplex.removal-acknowledged.v1` line on standard output.
+3. **Stop every gateway before the restore, and start them after it.** A running gateway's Datomic peer keeps the
+   data as it last saw it, not the restored storage (the seventh review's `restore-live`: the rebuild route found a
+   removal there that the restored storage did not hold, and a removal sent then could not commit); Datomic's own
+   procedure restarts every peer after `restore-db`. On start each gateway prints, for every database guarded per
+   account, one `triplex.removal-start-state.v1` line (log, native and declared sequences), and a
+   `triplex.removal-start-check.v1` line with a code where something is wrong:
+   - `RemovalLogBehind`: the data is ahead of the log;
+   - `RemovalDataBehind`: the log is ahead of the data;
+   - `RemovalPolicyBehind`: the stored policy lacks attributes the log's copy lists (`copyOnly` names them);
+   - `PolicyCopyDiffers`: the log's copy differs from the stored policy (`copyOnly`, `storedOnly`);
+   - `RemovalAcknowledgedLost`: the journal holds acknowledged removals this database's log lacks (`lost`, by
+     command and sequence), for every protected database, the database-wide rule's included;
+   - `Unverified`: the log cannot be read.
+4. **For each database named, run the restore route, then repair, then run it again,** until it answers 200:
+   - send `POST /v2/db/{db}/restore-erasure {}`;
+   - if it answers 503 `RemovalLogBehind`, send `POST /v2/db/{db}/removal-log-rebuild {}`, then the restore route
+     again;
+   - the restore route replays every published removal the data lacks, and adds back every attribute the log's copy
+     lists that the stored policy lacks, for good (`RemovalPolicyBehind` clears). **First read `copyOnly`:** a name
+     that was added through the protection route and lost with a data restore belongs there; a name nobody added (a
+     hand edit, storage damage) does not: drop it first with `POST /v2/db/{db}/removal-policy-copy-drop
+     {"attributes": [...]}` (refused for a name a removal removed values of, or one the stored policy holds);
+   - until then, only saves that write a `copyOnly` attribute wait (503 `RemovalPolicyBehind`, naming it), and so do
+     removals; every other save and every read is served.
+5. **Send every lost removal again.** Each `RemovalAcknowledgedLost` line names the commands; each journal record
+   holds the command's selectors. Send each again with a new command ID (so it cannot collide with anything
+   restored), then restart the gateway or read its next start check: no `RemovalAcknowledgedLost` line is left (a lost
+   record counts as resolved once a removal of the same selectors acknowledged at or after it is in the log). Without
+   a journal this step falls back to the seventh pass's comparison of the stdout lines (kept in the log store) with
+   the start-state lines.
+6. **Services may declare their policy at any time.** The protection route only adds (X6), so an older service's
+   shorter list removes nothing; a list naming an attribute that already holds non-string values is refused (R2).
+
+Tested: stack D1 and D6 (a data restore from before an addition, the data level with the log and behind it), D3 and
+D3b (the data and the authority restored to the same backup; records only), 20.4; the journal's record and the start
+check's `RemovalAcknowledgedLost` in process (`gate.clj` `ack-journal`, era6 page section 6). Step 5's resend is the
+operator's.
+
+### 20.6 Is the file authority used outside tests? No
+
+The file authority is configured (`TRIPLEX_ERASURE_DIRECTORY`) only by lab scripts:
+- the XQ3, XQ6, XQ7 and RPT1 gates;
+- the B2 key and B2R stacks;
+- PREP1, RD1, RD5 and AGE1;
+- `stack/up.sh`.
+
+`demo/server-up.sh`, `demo/toy/up.sh` and `demo/server/profile.mjs` do not set it, and v0.1 uses the PostgreSQL
+authority. X4 is therefore fixed on this branch only.
+
+### 20.7 Still not tested
+
+1. **Scale:** every number is a toy on the Mac; nothing ran on a server.
+2. **Step 5 of the restore procedure** (comparing acknowledged removals with the start state after a restore of both
+   to the same backup) is a procedure, not code: no test runs it end to end. Stack D3 shows the start-state line and
+   the removed value answered again until the removal is sent again.
+3. **E4's forced test on the PostgreSQL authority** (20.8): `cut-read-race` holds a read of the file authority's head
+   only; the PostgreSQL path runs the same reordered code (the cache read now comes before `read-frontier`).
+4. **A gateway that keeps its cache across a data and authority restore** (the sixth review's not-tested 3): Datomic's
+   restore needs the transactor stopped, and the stacks restart the gateways with it.
+5. **X2 and X3 on the PostgreSQL authority in process:** the worker and the key pass do not depend on the authority
+   (`complete-stale!`, `shred-published!`); run on the file authority and on the PostgreSQL stacks only.
+6. **The SDK under load, across a gateway restart, and an SDK build without `removalSeen`:** the stacks run one
+   application of each kind.
+7. **A save planned before an attribute's addition and committed after it** (19.9 item 1): unchanged.
+8. **The stored functions' identities across a rollout from an earlier build of this branch** (`03bb49cd3` or older,
+   whose generated names were the moved ones): the general writer's code hash differs, so a scope opened by one build
+   and then the other has its general writer rewritten by the second (`commit/install-base!`), and the one-owner writer
+   declines a scope whose recorded hash is not its own, so those saves take the general writer. Every option off,
+   saves stay correct; only the per-subject writer's speed is lost until every gateway runs one build. `fleet-one`
+   with `03bb49cd3` (20.4) runs one database through this: 18 of 18 requests 200, 0 removed values answered.
+
+### 20.8 E4 of DX-ERA4's gate (e): another account refused while a removal published
+
+**The report.** DX-ERA4's gate (e) on its head `244b3a254` (which has this branch's `03bb49cd3`), commit boundary, seed
+915, schedule 552: a ticketed write of account b (a derived notice naming only b), sent right after the native commit of
+a removal of account a, answered 503 `ErasureFrontierUnavailable`, "The current erasure sequence cannot be verified".
+One schedule in 20,000; nothing was written. Its rerun of the seed failed at the same schedule. `e4/plan.py` (evidence
+folder) replays the gate's random draws: schedule 552 sends b's notice and b's settlement frame at the same point, right
+after the removal's native commit, with no stop, no kill and no key restore.
+
+**Which check answered it.** None of the four the coordinator named: not the boundary value, the log's catch-up, the
+worker or a delivery's source check. It was `privacy/cut`'s check that the log is not behind a head this gateway
+verified before (`(< n (:seq prior))`), reached through the replay rule:
+
+1. Every save runs `removal-commit/decline-check!` before it is planned (the rule for a save framed before a removal,
+   on with the per-account option). `removal-after-source` read the log through `privacy/cut` to learn the protected
+   attributes. Unlike the request's own read (`removal-scope/request-cut`, which retries a refused read four times on
+   a fresh database value), this read was not retried.
+2. `privacy/cut` read the log's head file first and this gateway's cache of the last verified head second.
+3. The removal of a published between the two reads, and a concurrent request (b's settlement frame in schedule 552)
+   verified the new head and put it in the cache. The request then compared the old head it had read with the newer
+   head in the cache, took it for a log put back behind this gateway, and refused.
+
+So the refusal did not depend on the removal's accounts at all. Any request on any per-account setting (the log's
+boundary, the subject check and the commit boundary alike), plain saves included, could be refused this way while
+another account's removal published. The rule's promise that another account's write is never refused by a removal
+did not hold in this window; the measurements of section 4 (0 refused in 9 cells) never hit it. Reads were not
+affected: their reads of the log go through `request-cut`'s retries (18.10 still holds: on the commit boundary no read
+waits).
+
+**The fix** (two changes; neither adds a generated name to an early file, 20.3):
+- `privacy/cut` reads the cache **before** it reads the log. A head older than the one this gateway had verified
+  before the read began is still refused, so a log really put back behind the gateway is still caught. A head that
+  another request verified during the read no longer counts against this one.
+- `removal-after-source` takes the protected attributes from the database's stored policy, the only policy since the
+  sixth pass. It reads the log only for a database with no stored policy (one moved by an earlier build and not yet
+  adopted). The rule itself reads only the data's removal records, so it never needed the log on these databases.
+
+**The test (forced, no seed): `gate.clj` `cut-read-race`.** The removal of a1 is held just before its publication. A
+request of account b starts, and its k-th read of the log's head (k = 1 to 4) is held right after the file is read.
+Then the removal publishes, a read of b1 moves the gateway's cache to the published head, and the request goes on.
+Three kinds of request run on every per-account setting: a frame naming only b, a plain save of b1, and a read of b1.
+
+| Code | The 2nd read held (frame naming b, plain save of b1) | Every other variant |
+| --- | --- | --- |
+| Before the fix (the frozen head `0c380f341` with the test added) | 503 `ErasureFrontierUnavailable` "The current erasure sequence cannot be verified", on all three per-account settings: 6 failed checks | 200 |
+| After the fix | 200: the request no longer reads the head a 2nd time (the rule reads the stored policy) | 200; with the 1st read held, the request now uses the head it read with no refusal and no retry (the cache read comes first) |
+
+The 1st read is `request-cut`'s (before the fix it was refused once, then retried, so it always answered 200). The 2nd
+read was the replay rule's. Reads make one or two reads of the head and were never refused. Runs:
+`seventh/e4/before` and `seventh/e4/after` in the evidence folder (each the `gate` phase with `ERA2_ONLY=cut-read-race`):
+108 checks per per-account setting, 6 failed before, 0 after. Stored-function identities with the fix: 58 of 58 equal
+to the one branch's `8a362ac38` in all 8 writer settings (`seventh/e4/idents`).
+
+**Not covered:** the PostgreSQL authority runs the same code (the cache read now comes before `read-frontier`); the
+forced test holds a read of the file authority only. A delivery is not in the test: on this branch a delivery waits for
+a pending removal in its source by design (deliveries keep the database's lock, section 5), so its refusal while the
+removal is pending is not one of these.

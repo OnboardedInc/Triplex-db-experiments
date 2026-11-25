@@ -7,15 +7,14 @@
            [java.security MessageDigest]
            [java.util HexFormat UUID]))
 
-;; [DX-ACT9] Why: DX-ERA2's removal per account (removal_scope.clj, removal_erase.clj) loads after every namespace whose
-;; stored function text carries generated names; this file and erase.clj load before them, so they reach it through
-;; these plain values only (a new function here renumbers those names). removal_scope.clj and removal_erase.clj fill
-;; `removal-hooks` when they load (storage.clj and main.clj require them). Rejected: requiring removal-scope here (it
-;; moved 17 of 58 stored-function identities with every option off).
-(def removal-enabled (= "1" (System/getenv "TX2_REMOVAL_PER_ACCOUNT")))
-(def removal-late (if removal-enabled true (= "1" (System/getenv "TX2_REMOVAL_TRIES_LOG"))))
-(def removal-sentinel -1)
-(def removal-hooks {})
+(def root (System/getenv "TRIPLEX_ERASURE_DIRECTORY"))
+(def ^:dynamic *cut* nil)
+(def ^:dynamic *database* nil)
+(def ^:dynamic *data* nil)
+(def ^:dynamic *unseal* nil)
+(def cache (atom {}))
+(def local-guards (atom {}))
+(def zeros (apply str (repeat 64 "0")))
 ;; [DX-ERA4] Set by main.clj only with TX2_DERIVED_SEAL=1 (derived_seal.clj `preview-ok?`); nil otherwise.
 (def derived-preview nil)
 ;; [DX-ERA4] Set by main.clj only with TX2_DERIVED_SEAL=1: a removal's transaction takes a well-formed transaction ID
@@ -25,15 +24,6 @@
 ;; [DX-ERA4, after DX-ERA5's B1 and M3] TX2_DERIVED_SEAL=1: the check of a write's rows against the database's one-way
 ;; setting that its derived documents are sealed (derived_seal.clj `check-rows!`); nil unless the option is on.
 (def derived-check nil)
-
-(def root (System/getenv "TRIPLEX_ERASURE_DIRECTORY"))
-(def ^:dynamic *cut* nil)
-(def ^:dynamic *database* nil)
-(def ^:dynamic *data* nil)
-(def ^:dynamic *unseal* nil)
-(def cache (atom {}))
-(def local-guards (atom {}))
-(def zeros (apply str (repeat 64 "0")))
 
 (defn failure! [status code message]
   (throw (ex-info message {:status status :code code})))
@@ -75,7 +65,9 @@
   (let [m (get (swap! local-guards #(if (contains? % name) % (assoc % name (Object.)))) name)
         p (path name "writer.lock")]
     ;; [DX-ERA2] An account's lock (name#removal/<account>) has no directory until its first use; a no-op otherwise.
-    (when removal-enabled
+    ;; [DX-ERA2 seventh pass, identities] removal-scope is resolved when called, never required by this file: it loads
+    ;; after every installed function's code is read, so this file's generated names stay the base's
+    (when @(requiring-resolve 'triplex.gateway.removal-scope/enabled)
       (Files/createDirectories (.getParent p) (make-array java.nio.file.attribute.FileAttribute 0)))
     (let [started (when trace/*request* (trace/clock))]
       (locking m
@@ -133,9 +125,7 @@
 (defn- entry-record [seq] (str "erase-" seq ".json"))
 
 (defn- apply-entry [cut entry]
-  ;; [DX-ERA2] Each account's removal sequence, derived from the one ordered log (only with the option on).
-  ;; [DX-ACT9] A `let` and an `if` through the hook, not `cond->` (it generates a name).
-  (let [next (-> cut
+  (-> cut
       (assoc :seq (get entry "seq") :seal (sha256 (json/write-str entry)))
       (assoc-in [:commands (get entry "commandId")] entry)
       (update :erased (fn [before]
@@ -147,14 +137,19 @@
                                 before (get entry "identities"))))
       ;; [DX-IMP2] An entry may also name the families a removal asked for before any row existed (import bound on).
       (update :families into (concat (map (juxt #(get % "entity") #(get % "attribute")) (get entry "identities"))
-                                     (get entry "families"))))]
-    (if removal-enabled ((:add-entry removal-hooks) next entry) next)))
+                                     (get entry "families")))
+      ;; [DX-ERA2] Each account's removal sequence, derived from the one ordered log (only with the option on).
+      ((requiring-resolve 'triplex.gateway.removal-scope/add-entry-on) entry)))
 
 (defn cut
   ([name db] (cut name db false))
   ([name db allow-pending?]
    (try
-     (let [frontier (when sql/url (sql/read-frontier name))
+     ;; [DX-ERA2 seventh pass, E4 of DX-ERA4] the head this gateway verified is read BEFORE the log: read after it, a
+     ;; head another request verified meanwhile (a removal published between the two reads) looked like a log behind
+     ;; this gateway's, and refused a request of any account (503) that no removal touched
+     (let [seen (get @cache name)
+           frontier (when sql/url (sql/read-frontier name))
            pending (if sql/url (get frontier "pending.json")
                      (when (and root (exists? (path name "pending.json"))) true))
            wire (if sql/url (get frontier "head.json")
@@ -162,16 +157,18 @@
            ;; [DX-ERA2] The prepared removal's sequence, so a request guarded per account can tell a native commit of
            ;; that removal (not yet published) from a native database the log does not describe.
            ;; [DX-ERA3 F1b] and the prepared removal itself (its accounts), so a ticketed write can wait for it.
-           ;; [DX-ACT9] Nested `when`, not `and` (it generates a name; see removal-hooks).
-           ;; [DX-ERA2 fifth pass, merged] the intent read once; gone since the check (its publication finished) is no intent
-           pending-entry (when removal-enabled (when allow-pending? (when pending
-                           (let [text (if (string? pending) pending (record-text name "pending.json"))]
-                             (when text (json/read-str text))))))
+           ;; [DX-ERA2 fifth pass] the intent read once; gone since the check (its publication finished) is no intent
+           ;; nested `when`, not `and` (an `and` adds generated names; see the note in `guard`)
+           pending-entry (when @(requiring-resolve 'triplex.gateway.removal-scope/enabled)
+                           (when allow-pending?
+                             (when pending
+                               (let [text (if (string? pending) pending (record-text name "pending.json"))]
+                                 (when text (json/read-str text))))))
            pending-seq (get pending-entry "seq")]
        (let [result
        (when (or wire (enabled? db))
          (when (or (nil? wire) (and (not allow-pending?) pending)) (unavailable!))
-         (let [prior (get @cache name)]
+         (let [prior seen]
          (if (= wire (:wire prior))
            prior
            (let [h (json/read-str wire)
@@ -298,8 +295,8 @@
 (defn validate-write! [state input rows]
   (when state
     (when (and (contains? input "erasureSeq") (not (contains? input "erasureSourceDatabase")))
-      ;; [DX-ERA2] A ticket naming its source accounts on a database guarded per account (removal_scope.clj).
-      (if (:per-account state) ((:ensure-ticket! removal-hooks) state input) (ensure-seq! state (get input "erasureSeq"))))
+      ;; [DX-ERA2] a derived write's ticket; per account, against the accounts it names (removal-scope/ensure-ticket!)
+      ((requiring-resolve 'triplex.gateway.removal-scope/ensure-ticket!) state input))
     (let [new-ids (set (get input "newIds"))
           importing (or (true? (get input "erasureReplay"))
                         (some #(and (= ":_tx/actor" (:attribute %)) (= "bulk-import" (:value_string %))) rows))]
@@ -311,11 +308,16 @@
         (when-not (= "string" (:value_type r))
           (failure! 400 "ProtectedTypeUnsupported" "This protected scope accepts string assertions"))
         (when (and importing ((:families state) [(:entity_id r) (:attribute r)]))
-          (failure! 409 "ErasureReplayDeclined" "An archived field cannot be replayed across its erasure"))))))
+          (failure! 409 "ErasureReplayDeclined" "An archived field cannot be replayed across its erasure"))
+        ;; [DX-S4] With TX2_SUBJECT_CREATE=1, a live creation of a removed family (a removal that named the entity before
+        ;; it existed) is refused whole the same way. Resolved at call time: this namespace loads before the stored
+        ;; functions, so a new form here must not add generated names (s3/idents.sh checks it).
+        (when ((requiring-resolve 'triplex.gateway.subject-create/removed-creation?) state r input)
+          (failure! 409 "ErasureReplayDeclined" "A removed field cannot be created across its removal"))))))
 
 (defn verify-data! [state db]
-  (if (if removal-enabled ((:per-account? removal-hooks) db) false)
+  (if ((requiring-resolve 'triplex.gateway.removal-scope/per-account?) db)
     ;; [DX-ERA2] Guarded per account: the native removal sequence (the database-wide one holds the sentinel).
-    (when state (when-not ((:consistent? removal-hooks) db (:seq state) nil) (unavailable!)))
+    ((requiring-resolve 'triplex.gateway.removal-scope/verify-data!) state db)
     (when (and state (not= (:seq state) (scope/value db (scope/entity db) :triplex.scope/erasure-seq)))
       (unavailable!))))

@@ -47,9 +47,10 @@ export TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 
 export TX2_LEAN_NATIVE_QUERY=1 TX2_LEAN_NATIVE_LOG=1
 start_transactor() { java -server $DATOMIC_JAVA_OPTS -cp "$(bin/classpath)" clojure.main -m datomic.launcher "$work/transactor.properties" > "$work/transactor.log" 2>&1 & children[1]=$!; wait_tcp "$!" 4334; }
 start_transactor
+# [DX-S3] $4 = TX2_SUBJECT_SEVERAL_OWNERS (default 0; the arms below that existed before pass nothing).
 suite() {  # $1 = TX2_SUBJECT_WIDE, $2 = hints (both TX2_SUBJECT_HINTS and TX2_GENERAL_PREFETCH), $3 = label
-  local wide=$1 hints=$2 label=$3 code=0
-  TX2_SUBJECT_WIDE=$wide TX2_SUBJECT_HINTS=$hints TX2_GENERAL_PREFETCH=$hints TX2_SUBJECT_SAVE=1 TX2_GROUP_COMMIT=0 \
+  local wide=$1 hints=$2 label=$3 several=${4:-0} code=0
+  TX2_SUBJECT_SEVERAL_OWNERS=$several TX2_SUBJECT_WIDE=$wide TX2_SUBJECT_HINTS=$hints TX2_GENERAL_PREFETCH=$hints TX2_SUBJECT_SAVE=1 TX2_GROUP_COMMIT=0 \
     TX2_LIVE_PRIORITY=0 TX2_PREDECESSOR_LOOKUP=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_PREFETCH=0 \
     TX2_GROUP_REUSE_PREPARED=1 TX2_GROUP_FAST_REPLY=1 TX2_GROUP_STAGE_CLOCK=1 TX2_LEAN_NATIVE_QUERY=1 \
     TX2_LEAN_NATIVE_LOG=1 TX2_GROUP_MAX_MEMBERS=8 WFIX1_URI="$DATOMIC_URI_TEMPLATE" TRIPLEX_TRACE_LEVEL=off \
@@ -78,6 +79,8 @@ for arm in ${DX_S1_SUITES:-off wide wide-hints}; do
     off) suite 0 0 off ;;
     wide) suite 1 0 wide ;;
     wide-hints) suite 1 1 wide-hints ;;
+    wide-several) suite 1 0 wide-several 1 ;;
+    wide-hints-several) suite 1 1 wide-hints-several 1 ;;
   esac
 done
 echo DX-S1_SUITES_DONE

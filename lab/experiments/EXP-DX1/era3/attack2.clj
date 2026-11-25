@@ -113,7 +113,7 @@
       (fn [name conn]
         (let [lbl "E1b undeclared account"
               seeds (g/seed! name [g/a1 g/b1]) value (:value (seeds g/a1))
-              r (with-redefs-fn {#'triplex.gateway.removal-erase/selector-buckets (fn [_ _] (sorted-set "zz"))} #(a/remove-attr! name "e1b-rm" g/a1))
+              r (with-redefs-fn {#'rs/selector-buckets (fn [_ _] (sorted-set "zz"))} #(a/remove-attr! name "e1b-rm" g/a1))
               left {:intent (native conn :triplex.scope/removal-intent) :held (native conn :triplex.scope/removal-held)
                     :pending (some? (privacy/pending name)) :zz (rs/native-account-seq (d/db conn) "zz")}
               unnamed (offers/outcome (offers/send name (frame-copy "e1b-any" "notice:v1:e1b" "x" (g/seq-now name conn) nil)))
@@ -481,7 +481,7 @@
                            (case (if (zero? k) resume :same)
                              (:same :other-first) (erase! name cmd selectors)
                              :restart (do (reset! privacy/cache {}) (erase! name cmd selectors))
-                             :mixed (with-redefs-fn {#'erase/subject-check false} #(erase! name cmd selectors)))))))
+                             :mixed (with-redefs-fn {#'rs/subject-check false} #(erase! name cmd selectors)))))))
         _ (rel!) _ (late!)
         never? (and stopped? (= resume :never))
         ok (= 200 (:status final))

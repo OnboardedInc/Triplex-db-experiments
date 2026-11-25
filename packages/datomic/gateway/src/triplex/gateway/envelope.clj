@@ -188,11 +188,15 @@
     (let [root (Paths/get privacy/root (make-array String 0))]
       (when (privacy/exists? root)
         (with-open [scopes (Files/list root)]
+          ;; [DX-ERA2 seventh pass, X4] each database's head read inside its own try: one unreadable head is skipped
+          ;; and counted (`listing`), and the pass goes on for every other database
           (into [] (keep (fn [dir]
-                          (let [head (.resolve ^Path dir "head.json")]
-                            (when (privacy/exists? head)
-                              (let [name (get (json/read-str (Files/readString head)) "database")]
-                                (when (= head (privacy/path name "head.json")) name))))))
+                          (try
+                            (let [head (.resolve ^Path dir "head.json")]
+                              (when (privacy/exists? head)
+                                (let [name (get (json/read-str (Files/readString head)) "database")]
+                                  (when (= head (privacy/path name "head.json")) name))))
+                            (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "listing" nil e) nil))))
                 (.toArray scopes)))))))
 
 (defn- shred-published! []
@@ -201,8 +205,11 @@
       (try
         ;; [DX-ERA2 fifth pass, B2] the published prefix, a pending removal allowed: one removal left pending must not
         ;; hold back the keys of removals already published (and acknowledged)
+        ;; [DX-ERA2 seventh pass, X3] every database counts as sealed for deletion: the log's copy of `sealed` is
+        ;; derived and unchecked, so it never holds a key back (in an unsealed database a removal's identities have no
+        ;; key; deleting a key that does not exist is harmless)
         (let [cut (privacy/cut name nil true)]
-          (when (:sealed cut)
+          (when (some? cut)
             (let [from (long (get @shredded name 0))
                   due (->> (:commands cut) vals (sort-by #(get % "seq"))
                            (drop-while #(<= (get % "seq") from))

@@ -13,7 +13,7 @@
   Rejected: keeping the head check (unbounded under load); pausing every save of the database or of the account (it
   refuses saves the removal cannot affect); a guard held through the authority only (a save admitted before it could
   still commit, so the bound would depend on the gateway's in-flight writes).
-  Loaded on first use (removal-erase/erase! resolves it), so a gateway without the option loads none of this.
+  Loaded on first use (erase/erase! resolves it), so a gateway without the option loads none of this.
   [DX-ERA3 second review] The order of a removal's steps is: intent (in the log), declaration (native), selection and
   commit (native), publication (log). Every stop leaves a removal the log shows as pending, which every gateway
   answers 503 for the writes it can reach and which any gateway completes (`complete-pending!`): the first derived
@@ -24,8 +24,8 @@
             [triplex.gateway.authority-sql :as sql]
             [triplex.gateway.erase :as erase] [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope]
             [triplex.gateway.removal-scope :as removal-scope] [triplex.gateway.scope :as scope]
-            [triplex.gateway.storage :as storage] [triplex.gateway.removal-erase :as removal-erase]
-            [triplex.gateway.lean :as lean]))
+            [triplex.gateway.storage :as storage] [triplex.gateway.lean :as lean]
+            [triplex.gateway.removal-ack :as removal-ack] [triplex.gateway.owner-root :as owner-root]))
 
 (def commit-ident :triplex.removal/commit-v1)
 (def moved "TRIPLEX_REMOVAL_SUBJECT_MOVED")
@@ -212,6 +212,20 @@
   [db]
   (some-> (stored-text db) json/read-str))
 
+(defn valid-attribute?
+  "[DX-ERA2 seventh pass, X8] An attribute name the protection route accepts: a non-empty string outside the journal's
+  own namespace (`:_tx/`). The restore route and adoption apply the same check to the log's copy."
+  [a]
+  (boolean (and (string? a) (seq a) (not (.startsWith ^String a ":_tx/")))))
+
+(defn policy-behind
+  "[DX-ERA2 seventh pass, X1] The attributes the log's copy lists (valid names only) that the database's stored policy
+  lacks, or nil. The copy only grows (`sync-policy-copy!`), so this is a stored policy restored from before an
+  addition: writes and removals wait for the restore route, which adds them back (`rebuild!`)."
+  [state db]
+  (when-let [p (when state (stored-policy db))]
+    (not-empty (vec (remove (set (get p "attributes")) (filter valid-attribute? (:attrs state)))))))
+
 (defn with-policy
   "The state with the database's stored policy (attributes, seal, attributes added later), never the log head's copy.
   A database with no stored policy keeps its verified head's (an earlier build's move, until adopted)."
@@ -221,10 +235,12 @@
     state))
 
 (defn served
-  "The state a request on a database guarded per account is served from (removal-erase/request-cut)."
+  "The state a request on a database guarded per account is served from (removal-scope/request-cut).
+  [DX-ERA2 seventh pass, X1] A stored policy that lacks an attribute the log's copy lists (data restored from before
+  an addition) refuses writes, on both boundaries, until the restore route adds it back; reads are served."
   [name db state]
-  (let [policy (with-policy state db)]
-  (assoc (if (commit-boundary? db)
+  (let [policy (with-policy state db) behind (policy-behind state db)]
+  (cond-> (assoc (if (commit-boundary? db)
            (effective name db state)
            ;; [DX-ERA3 M1] the log's boundary: a pending removal already committed in the data is flagged; a read then
            ;; publishes it before it is served (main/route-handler, `publish-for-read!`), so a log copy put back with
@@ -245,7 +261,10 @@
          ;; sequence and the tickets wait for the publication)
          :stamp (if (commit-boundary? db)
                   (max (long (:seq state)) (count (:entries (native-entries name db))))
-                  (:seq state)))))
+                  (:seq state)))
+    ;; [DX-ERA6 eighth pass, R3] only a save that writes one of these attributes waits (`check-writes!` with its
+    ;; input): every other save is served, as reads are
+    behind (assoc :policy-behind behind))))
 
 (def ^:private read-publications (atom {}))
 (defn publish-for-read!
@@ -272,7 +291,7 @@
                             (do ((requiring-resolve 'triplex.gateway.failures/note!) "read-publication" name c)
                                 (privacy/unavailable!))))))))
         state (when-not (= ::timeout done)
-                (try (first (removal-erase/request-cut name conn (erase/sync! conn)))
+                (try (first (removal-scope/request-cut name conn (erase/sync! conn)))
                      (catch clojure.lang.ExceptionInfo e (throw e))
                      (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "read-publication" name e)
                        (privacy/unavailable!))))
@@ -285,7 +304,7 @@
     state))
 
 (defn consistent?
-  "Request time (removal-erase/request-cut): the data and the log agree, declarations included. With the commit boundary,
+  "Request time (removal-scope/request-cut): the data and the log agree, declarations included. With the commit boundary,
   served as long as nothing refuses writes (a transient disagreement is retried on a synced database first)."
   [name db state]
   (if (commit-boundary? db)
@@ -301,14 +320,30 @@
     (do (when-let [b (and state (disagreement db state))] (refuse! b))
         (privacy/unavailable!))))
 
+(declare written-protected)
 (defn check-writes!
-  "[commit boundary] A write on a state whose data is behind the log, or which disagrees with it, waits (typed 503)."
-  [state]
-  (when-let [code (:writes-refused state)]
-    (throw (ex-info (if (= code "RemovalDataBehind")
-                      "The data is behind the removal log: replay the log with the restore route; reads are served meanwhile."
-                      "The removal log and the data disagree on a removal: an operator must decide; reads are served meanwhile.")
-                    {:status 503 :code code}))))
+  "[commit boundary] A write on a state whose data is behind the log, or which disagrees with it, waits (typed 503).
+  [DX-ERA6 eighth pass, R3 of the seventh review] With the save's input: a save that writes an attribute the log's
+  copy lists and the stored policy lacks waits too (503 RemovalPolicyBehind, naming the attributes), since its value
+  would be stored unprotected; every other save of every account is served. Before this pass every write of every
+  account waited, whatever it wrote."
+  ([state]
+   (when-let [code (:writes-refused state)]
+     (throw (ex-info (case code
+                       "RemovalDataBehind" "The data is behind the removal log: replay the log with the restore route; reads are served meanwhile."
+                       "The removal log and the data disagree on a removal: an operator must decide; reads are served meanwhile.")
+                     {:status 503 :code code}))))
+  ([state db input]
+   (check-writes! state)
+   (when-let [behind (seq (:policy-behind state))]
+     (when (and (map? input) db)
+       (let [hit (into (sorted-set) (map second) (written-protected db input (set behind)))]
+         (when (seq hit)
+           (throw (ex-info (str "This save writes " (clojure.string/join ", " hit) ", which the removal log's copy of the "
+                                "protection policy lists and the database's stored policy lacks (data restored from before "
+                                "an addition, or a name only the copy holds): it waits. The restore route adds them back; "
+                                "removal-policy-copy-drop removes a name nobody added. Other saves and reads are served.")
+                           {:status 503 :code "RemovalPolicyBehind"}))))))))
 
 (defn- behind-cache?
   "This gateway verified a newer head than the log now shows, and the data still holds every removal it verified."
@@ -619,6 +654,11 @@
   (step! "prepared")
   (privacy/publish! name current entry)
   (step! "published")
+  ;; [DX-ERA2 seventh pass, X10] every acknowledged removal, one line: the record outside both backups that the restore
+  ;; procedure compares the start check's state lines with (a restore of the data and the removal authority to the same
+  ;; backup is invisible to the gateway itself)
+  ;; [DX-ERA6 eighth pass, R5] once per removal, whichever step publishes it (removal-ack)
+  (removal-ack/acknowledged! name entry)
   (when tries-log
     (println (json/write-str {"schema" "triplex.removal-tries.v1" "seq" (get entry "seq") "tries" tries
                               "perAccount" true "subjectCheck" true "held" (boolean held)
@@ -655,6 +695,8 @@
               (@#'privacy/save-record! name "head.json" head)
               (when drop (@#'privacy/remove-record! name "pending.json"))))
         (println (json/write-str {"schema" "triplex.removal-log-catch-up.v1" "seq" k "droppedIntent" (boolean drop)}))
+        ;; [DX-ERA6 eighth pass, R5] a removal published by the catch-up (another removal, a read, the rebuild route)
+        (removal-ack/acknowledged! name (:entry x))
         (recur (privacy/cut name db true) more)))))
 
 (defn- release-orphan!
@@ -721,19 +763,31 @@
             (do (when-let [b (disagreement db (privacy/cut name db true))] (refuse! b))
                 (privacy/unavailable!))))))))
 
+(defn- pending!
+  "[DX-ERA2 seventh pass, X7] The intent record, or nil; one that cannot be read (storage damage, state 11) answers the
+  typed 503 a client retries, never the parser's exception (an untyped 400 a client takes as final). The rebuild route
+  repairs it."
+  [name]
+  (try (privacy/pending name)
+       (catch clojure.lang.ExceptionInfo e (throw e))
+       (catch Exception e
+         ((requiring-resolve 'triplex.gateway.failures/note!) "intent-unreadable" name e)
+         (privacy/failure! 503 "ErasureFrontierUnavailable"
+                           "The removal's intent record cannot be read; it is repaired by the rebuild route (removal-log-rebuild)"))))
+
 (defn erase! [name conn input]
   (let [selectors (erase/selectors! input)
         command (get input "commandId")
         started (System/nanoTime)]
     ;; [DX-ERA3 N1] A removal of another command left pending is completed first, exactly as its own resend would.
-    (when-let [p (privacy/pending name)]
+    (when-let [p (pending! name)]
       (when-not (= command (get p "commandId")) (complete-pending! name conn)))
-    (let [buckets (removal-erase/selector-buckets (d/db conn) selectors)]
+    (let [buckets (removal-scope/selector-buckets (d/db conn) selectors)]
       (when-not (log-cut name (d/db conn))
         (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
       (privacy/guard name
         (fn []
-          (removal-erase/with-bucket-guards name buckets
+          (removal-scope/with-bucket-guards name buckets
             (fn []
               (let [db (erase/sync! conn)
                     current (log-cut name db)
@@ -745,6 +799,14 @@
                     ;; route only, so the rollout decides when each database moves (page 19, the rollout procedure)
                     ;; [DX-ERA2 sixth pass] the log's copy of the policy rewritten from the database when it differs
                     current (sync-policy-copy! name db (log-cut name db))
+                    ;; [DX-ERA2 seventh pass, X1] a stored policy older than the copy (a data restore from before an
+                    ;; addition): the removal waits for the restore route, before anything is recorded or declared
+                    _ (when-let [behind (policy-behind current db)]
+                        (privacy/failure! 503 "RemovalPolicyBehind"
+                                          (str "The database's protection policy lacks " (clojure.string/join ", " behind)
+                                               ", which its removal log's copy lists (data restored from before they were added, "
+                                               "or a name only the copy holds): run the restore route, which adds them back, or "
+                                               "removal-policy-copy-drop for a name nobody added")))
                     ;; [DX-ERA2 fourth pass] with the commit boundary the log is first brought up to the data
                     [db current] (if (commit-boundary? db) (catch-up! name conn db current) [db current])
                     ;; [DX-ERA2 sixth pass] the selection uses the database's own policy, never the log's copy
@@ -753,8 +815,10 @@
                 (if-let [before (get-in current [:commands command])]
                   (do (when-not (= selectors (get before "selectors"))
                         (privacy/failure! 409 "EraseCommandConflict" "The command already used different selectors"))
+                      ;; [DX-ERA6 eighth pass, R5] its client's 200 after another step published it
+                      (removal-ack/acknowledged! name before)
                       (erase/response db before))
-                  (let [pending (privacy/pending name)
+                  (let [pending (pending! name)
                         wire (when pending (intent-wire name))
                         ;; [DX-ERA2 sixth pass, V8] the same command resent with other selectors while it is pending: a
                         ;; terminal answer naming the pending removal (it completes as first sent); another command's
@@ -847,36 +911,83 @@
   (or (some (fn [x] (and (= e (get x "entityId")) (or (nil? (get x "attribute")) (= a (get x "attribute"))))) (get entry "selectors"))
       (some (fn [x] (and (= e (get x "entity")) (= a (get x "attribute")))) (get entry "identities"))))
 
+(def ^:private entity-indexes (atom {}))
+(defn- entity-index
+  "Per database: entity ID -> the indexes (into the data's removal records, in log order) of the removals that name it
+  by a selector or an identity. Extended when the records grew from the same prefix; rebuilt when they changed."
+  [name entries]
+  (let [cached (get @entity-indexes name)
+        n (count entries)
+        same-prefix? (and cached (<= (:n cached) n)
+                          (or (zero? (:n cached)) (= (:last-raw cached) (:raw (entries (dec (:n cached)))))))
+        base (if same-prefix? cached {:n 0 :by {}})
+        by (reduce (fn [by i]
+                     (let [e (:entry (entries i))
+                           ids (distinct (concat (keep #(get % "entityId") (get e "selectors")) (keep #(get % "entity") (get e "identities"))))]
+                       (reduce (fn [by id] (update by id (fnil conj []) i)) by ids)))
+                   (:by base) (range (:n base) n))
+        result {:n n :by by :last-raw (when (pos? n) (:raw (entries (dec n))))}]
+    (when-not (= result cached) (swap! entity-indexes assoc name result))
+    by))
+
+(defn frame-tests
+  "[DX-ERA6, the merged rule of the save line's third review, section 2] When was this save framed, as the tests a
+  removal record must pass to be later than its frame. A save is framed at the EARLIEST of the points it states:
+  - its first attempt's source (`frameSourceK`, which every replay carries): removals at a later position;
+  - its own source (`sourceK`): removals at a later position;
+  - the removal stamp the client held when it framed the save (`removalSeen`, the first attempt's on a replay):
+    removals with a later sequence.
+  A removal is later than the frame when it is later than any point stated. A replay whose first attempt stated no
+  source (`frameSourceK` null) and that carries no stamp counts as framed before every removal, and so does a save that
+  states none of the three. Returns a predicate on a native record ({:position .. :entry ..})."
+  [input]
+  (let [frame (get input "frameSourceK") source (get input "sourceK") seen (get input "removalSeen")
+        tests (cond-> []
+                (integer? frame) (conj (fn [x] (> (long (:position x)) (long frame))))
+                (and (contains? input "frameSourceK") (not (integer? frame)) (not (integer? seen))) (conj (constantly true))
+                (integer? source) (conj (fn [x] (> (long (:position x)) (long source))))
+                (integer? seen) (conj (fn [x] (> (long (get-in x [:entry "seq"] 0)) (long seen)))))]
+    (if (seq tests) (fn [x] (boolean (some #(% x) tests))) (constantly true))))
+
 (defn removal-after-source
   "The newest removal committed in the data AFTER this save was framed that names a protected value the save writes
   (by its selectors, so a subject with no value yet counts), or nil. From the data's own records, so it is the same on
-  both boundaries and database-wide. When was the save framed:
-  - its own frame source (`sourceK`, the position the client framed it from): removals at a later position;
-  - else the removal sequence the client last saw (`removalSeen`, the frontier's sequence or stamp it read): removals
-    with a later sequence;
-  - else nothing tells, so the save counts as framed before every removal (the fourth review's Z7: the SDK's
-    optimistic commits send no source): any removal that names a value it writes declines it. A save sent again with a
-    fresh source or a fresh `removalSeen` is a new save after the removal (case 3) and is not declined."
+  both boundaries and database-wide. When the save was framed: `frame-tests` (the earliest of the first attempt's
+  source, its own source and the removal stamp it states; a save that states none counts as framed before every
+  removal, the fourth review's Z7). A save sent again under a new command with a fresh source and a fresh
+  `removalSeen` is a new save after the removal (case 3) and is not declined; under the same command it is (its
+  command was recorded when it was declined)."
   [name db input]
-  (let [source (get input "sourceK") seen (get input "removalSeen")
-        later? (cond (integer? source) (fn [x] (> (long (:position x)) (long source)))
-                     (integer? seen) (fn [x] (> (long (get-in x [:entry "seq"] 0)) (long seen)))
-                     :else (constantly true))
+  (let [later? (frame-tests input)
         ;; [DX-ERA2 sixth pass] the database's own policy (an attribute added later counts from its addition)
-        cut (with-policy (privacy/cut name db true) db) attrs (or (:attrs cut) #{})]
+        ;; [DX-ERA2 seventh pass, E4 of DX-ERA4] read from the database when it holds one: the rule reads only the data's
+        ;; removal records, so it needs no read of the log (this read, unlike the request's own, was not retried)
+        stored (stored-policy db)
+        attrs (if stored (set (get stored "attributes")) (or (:attrs (with-policy (privacy/cut name db true) db)) #{}))]
     (when (seq attrs)
-      (let [after (take-while later? (rseq (:entries (native-entries name db))))]
-        (when (seq after)
-          (let [w (written-protected db input attrs)]
-            (when (seq w)
-              (some (fn [x] (when (some #(names-value? (:entry x) %) w) (:entry x))) after))))))))
+      (let [w (written-protected db input attrs)]
+        (when (seq w)
+          ;; [DX-ERA2 seventh pass, X9] only the removals that name an entity the save writes (an index per database,
+          ;; extended from the newest record), newest first, instead of every removal ever made
+          (let [{:keys [entries]} (native-entries name db)
+                by-entity (entity-index name entries)
+                candidates (sort > (distinct (mapcat #(get by-entity (first %)) w)))]
+            (some (fn [i] (let [x (entries i)]
+                            (when (later? x) (when (some #(names-value? (:entry x) %) w) (:entry x)))))
+                  (take-while #(later? (entries %)) candidates))))))))
 
 (def ^:private declined-schema
   [{:db/ident :triplex.removal/declined-command :db/valueType :db.type/string :db/cardinality :db.cardinality/one
     :db/unique :db.unique/identity}
    {:db/ident :triplex.removal/declined-by :db/valueType :db.type/string :db/cardinality :db.cardinality/one}])
 
-(defn- commands-of [input] (vec (distinct (keep #(get % "commandId") (get input "claims")))))
+(defn- commands-of
+  "[DX-ERA6] The save's command IDs as a declined command is recorded: in the account's scoped form when the request
+  names its account (the save line's account claims: one account's command ID is not another's), else as sent."
+  [input]
+  (let [account (get input "account")
+        encode (when (string? account) (requiring-resolve 'triplex.gateway.account-claims/encode))]
+    (vec (distinct (for [c (keep #(get % "commandId") (get input "claims"))] (if encode (encode account c) c))))))
 
 (defn- declined-by [db input]
   (when (d/entid db :triplex.removal/declined-command)
@@ -893,29 +1004,46 @@
       {"x-triplex-erasure-seq" (str (:seq cut)) "x-triplex-removal-stamp" (str (or (:stamp cut) (:seq cut)))})
     (catch Exception _ nil)))
 
-(defn- framed? [input] (or (integer? (get input "sourceK")) (integer? (get input "removalSeen"))))
+(def replay-rule
+  "[DX-ERA2 seventh pass, the sixth review's fact 1] The rule for a save framed before a removal of its subject (R2-2,
+  Z7) and the removal stamp it hands out: on with TX2_REMOVAL_PER_ACCOUNT=1 or TX2_REMOVAL_REPLAY_RULE=1, off
+  otherwise. With every option off this gateway's replies and native log equal the merged line's: a save that says
+  nothing about its frame and writes a removed subject's protected value is stored, as there."
+  (or removal-scope/enabled (= "1" (System/getenv "TX2_REMOVAL_REPLAY_RULE"))))
+
+(defn- framed? [input] (or (integer? (get input "sourceK")) (integer? (get input "removalSeen")) (contains? input "frameSourceK")))
+
+(def ^:private decline-lines (atom {}))
 
 (defn- decline!
   "Refuse the save with the terminal answer, carrying the database's current removal stamp (V3: a client that learns
   its stamp from answers, as the SDK does, learns it from this one too, and a save it frames after this answer is a
   new save, case 3).
-  [DX-ERA2 sixth pass, V4] What it writes, bounded:
-  - a save that says when it was framed (a frame source, or removalSeen) and was framed before the removal: its
-    commands recorded as declined (case 2: a replay under the same command is refused whatever it then claims), each
-    command once; a command already recorded writes nothing;
-  - a save that says nothing: nothing. The rule declines it again on every resend that still says nothing (it reads
-    only the data's removal records), so a record adds nothing; a resend carrying this answer's stamp is case 3."
+  [DX-ERA6] What it writes, bounded: the save's commands recorded as declined (case 2: a later save under the same
+  command is refused whatever it then states), each command once; a command already recorded writes nothing. (The
+  sixth pass recorded only a save that stated a frame; the merged rule records every declined command.)"
   [name conn db input entry]
-  (let [fresh (when (framed? input)
-                (vec (remove (fn [c] (and (d/entid db :triplex.removal/declined-command)
-                                          (d/entid db [:triplex.removal/declined-command c])))
-                             (commands-of input))))]
+  ;; [DX-ERA6] the merged rule, point 3: a declined command is recorded whatever the save stated, so every later save
+  ;; under it is declined (the save line's R3-3: a resend of the declined command as a new save). Bounded as before:
+  ;; one record per command, never rewritten.
+  (let [fresh (vec (remove (fn [c] (and (d/entid db :triplex.removal/declined-command)
+                                        (d/entid db [:triplex.removal/declined-command c])))
+                           (commands-of input)))]
     (when (seq fresh)
       (when-not (d/entid db :triplex.removal/declined-command) @(d/transact conn declined-schema))
       @(d/transact conn (vec (for [c fresh] {:triplex.removal/declined-command c :triplex.removal/declined-by (get entry "txId")}))))
-    (println (json/write-str {"schema" "triplex.removal-declined-save.v1" "operationId" (get input "operationId")
-                              "commands" (commands-of input) "recorded" (count fresh) "removal" (get entry "seq")
-                              "source" (get input "sourceK") "removalSeen" (get input "removalSeen")}))
+    ;; [DX-ERA2 seventh pass, X9] counted always; one line a minute per database, carrying the number not printed
+    ((requiring-resolve 'triplex.gateway.stats/bump!) [:removalDeclines] 1)
+    (let [now (System/currentTimeMillis)
+          [before _] (swap-vals! decline-lines (fn [m] (let [{:keys [at]} (get m name)]
+                                                         (if (or (nil? at) (>= (- now at) 60000)) (assoc m name {:at now :suppressed 0})
+                                                           (update-in m [name :suppressed] inc)))))
+          prior (get before name)]
+      (when (or (nil? prior) (>= (- now (:at prior)) 60000))
+        (println (json/write-str {"schema" "triplex.removal-declined-save.v1" "database" name "operationId" (get input "operationId")
+                                  "commands" (commands-of input) "recorded" (count fresh) "removal" (get entry "seq")
+                                  "source" (get input "sourceK") "frameSource" (get input "frameSourceK") "removalSeen" (get input "removalSeen")
+                                  "suppressedSinceLastLine" (:suppressed prior 0)}))))
     (throw (ex-info (if (framed? input)
                       (str "A removal of a subject this save writes committed after the save was framed (removal "
                            (get entry "seq") "); it is declined, and so is its command")
@@ -924,16 +1052,56 @@
                            "framed after this answer sends removalSeen with this answer's x-triplex-removal-stamp"))
                     {:status 409 :code "ErasureReplayDeclined" :headers (current-stamp name (erase/sync! conn))}))))
 
+(defn already-stored?
+  "[DX-ERA6 eighth pass, R6 and M4 of the seventh review, the save line's F1] The save is one the database already
+  stored: its operation is committed, or one of its commands is claimed (for its account, when it names one). The rule
+  then neither declines it nor records its command: the writer answers it exactly as with every option off (409
+  OperationDuplicate, which the SDK resolves by reading the operation's receipt, or the command's own conflict)."
+  [conn db input]
+  (let [op (get input "operationId")
+        find-claim (requiring-resolve 'triplex.gateway.account-claims/find-claim)
+        account (get input "account")]
+    (boolean
+      (or (when (string? op) (d/entid db [:triplex.tx/operation-id op]))
+          (some (fn [c] (when (string? c) (first (find-claim conn db c (when (string? account) account)))))
+                (keep #(get % "commandId") (get input "claims")))))))
+
 (defn decline-check!
   "Before a save (both writers, every mode): refused 409 ErasureReplayDeclined when its command was declined by a
   removal, or when a removal of a subject it writes committed after its own frame source (case 1: the late frame),
-  its commands then recorded as declined (case 2). Every refusal carries the current removal stamp."
+  its commands then recorded as declined (case 2). Every refusal carries the current removal stamp.
+  [DX-ERA6 eighth pass, R6] A save the database already stored is never declined (`already-stored?`)."
   [name conn db input]
+  (when replay-rule
+  (when-not (already-stored? conn db input)
   (when-let [by (declined-by db input)]
     (throw (ex-info (str "This save's command was declined by a removal (" by "); a new command is a new save")
                     {:status 409 :code "ErasureReplayDeclined" :headers (current-stamp name db)})))
   (when-let [entry (removal-after-source name db input)]
-    (decline! name conn db input entry)))
+    (decline! name conn db input entry)))))
+
+(def ^:dynamic *frame-input*
+  "[DX-ERA6 eighth pass] The request's input as sent, bound by main/route-handler around the writers: with the replay
+  rule on, the writers see it without `frameSourceK` (the save line's own first-source check must not decline what the
+  merged rule lets through), and the creation rule still judges by every point the save stated."
+  nil)
+
+(defn creation-removal
+  "[DX-ERA6 eighth pass, M1-c of the seventh review] The creation rule under the merged rule
+  (subject-create/removed-creation? with the replay rule on): the removal in the log's cut that named this (entity,
+  attribute) family and is later than the save's frame (`frame-tests`: the earliest of frameSourceK, sourceK and
+  removalSeen; a save stating none counts as framed before every removal), or nil. A creation or an import frame of a
+  new subject is judged exactly like every other save: the SDK's optimistic re-creation, which states removalSeen and
+  no source, is stored once its stamp is newer than the removal."
+  [state family input]
+  (let [later? (frame-tests (merge input (select-keys *frame-input* ["frameSourceK"])))
+        named? (fn [entry]
+                 (or (some #(= family (vec %)) (get entry "families"))
+                     (some #(= family [(get % "entity") (get % "attribute")]) (get entry "identities"))
+                     (some #(= family (vec %))
+                           ((requiring-resolve 'triplex.gateway.import-bound/removal-families) state (get entry "selectors")))))]
+    (some (fn [entry] (when (named? entry) (when (later? {:position (get entry "position") :entry entry}) entry)))
+          (vals (:commands state)))))
 
 (defn after-refusal
   "After a save was refused at the serial point (409 CasConflict or ErasureFrontierChanged): when the cause is a removal
@@ -945,14 +1113,17 @@
                (get (try (json/read-str (if (string? body) body (String. ^bytes body "UTF-8")))
                          (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "refusal-parse" name e) {}))
                     "code"))]
-    (if (#{"CasConflict" "ErasureFrontierChanged"} code)
+    ;; [DX-ERA6] and a refusal the save line's writers already answered ErasureReplayDeclined (a creation racing a
+    ;; removal): its commands are recorded too when the merged rule finds the removal
+    (if (and replay-rule (#{"CasConflict" "ErasureFrontierChanged" "ErasureReplayDeclined"} code))
       (let [db (erase/sync! conn)]
-        (if-let [entry (removal-after-source name db input)]
+        ;; [DX-ERA6 eighth pass, R6] a save already stored keeps its own answer, and its command is not recorded
+        (if-let [entry (when-not (already-stored? conn db input) (removal-after-source name db input))]
           (try (decline! name conn db input entry)
                (catch clojure.lang.ExceptionInfo e
                  ;; [DX-ERA2 sixth pass, V3] the current stamp, not the one the refused plan read
                  {:status 409 :headers (merge (:headers answer) (:headers (ex-data e)))
-                  :body (json/write-str {:code "ErasureReplayDeclined" :message (.getMessage e)})}))
+                  :body (json/write-str {:code "ErasureReplayDeclined" :message ((requiring-resolve 'triplex.gateway.reply/message) e name)})}))
           answer))
       answer)))
 
@@ -970,9 +1141,9 @@
   "[DX-ERA2 fifth pass] Called by the key-shred worker on every pass (envelope/maintain-keys!). With
   `worker-complete-ms` set, every database whose pending removal is older than it is completed (`complete-pending!`,
   guarded at the serial point like any resend); a failure is counted and logged and the next pass tries again.
-  [DX-ERA2 sixth pass, V5] The log of a database that no longer exists (deleted by an earlier build, or while this
-  gateway was down) is retired instead of failing on every pass (the catalog is read once per pass, only when a
-  removal is stale)."
+  [DX-ERA2 seventh pass, X2 of the sixth review] A database missing from Datomic's catalog (deleted and being restored,
+  or a catalog read that is stale) is skipped and counted (`worker-missing-database`): the worker never retires a log
+  or deletes a key because of what the catalog says. Only the delete route retires a database's log and keys (V5)."
   []
   (when worker-complete-ms
     (let [existing (delay (set (d/get-database-names ((requiring-resolve 'triplex.gateway.main/db-uri) "*"))))]
@@ -981,7 +1152,8 @@
           (when-let [p (privacy/pending name)]
             (when (> (- (System/currentTimeMillis) (long (get p "erasedAt" 0))) worker-complete-ms)
               (if-not (contains? @existing name)
-                ((requiring-resolve 'triplex.gateway.removal-repair/retire-log!) name)
+                ((requiring-resolve 'triplex.gateway.failures/note!) "worker-missing-database" name
+                 (ex-info "Not in the catalog; skipped (only the delete route retires a log)" {:code "DatabaseNotInCatalog"}))
                 (do (println (json/write-str {"schema" "triplex.removal-worker-completion.v1" "database" name "seq" (get p "seq")
                                               "ageMs" (- (System/currentTimeMillis) (long (get p "erasedAt" 0)))}))
                     (complete-pending! name ((requiring-resolve 'triplex.gateway.main/connection)
@@ -1029,7 +1201,10 @@
   (if (stored-policy db) db
     (if-let [cut (privacy/cut name db true)]
       (let [h (json/read-str (:wire cut))
-            policy {"attributes" (vec (get h "attributes")) "sealed" (true? (get h "sealed"))}]
+            ;; [DX-ERA2 seventh pass, X8] only names the protection route accepts
+            policy {"attributes" (vec (filter valid-attribute? (get h "attributes"))) "sealed" (true? (get h "sealed"))}]
+        (when (empty? (get policy "attributes"))
+          (privacy/failure! 409 "ProtectionPolicyMismatch" "The log's head names no attribute the protection route accepts"))
         (covers! name db policy)
         (when-not (d/entid db :triplex.scope/protection-policy) (transact! conn policy-schema))
         (transact! conn [[:db/cas (scope/entity db) :triplex.scope/protection-policy nil (json/write-str policy)]])
@@ -1051,7 +1226,7 @@
       (@#'privacy/save-record! name "head.json" head))))
 
 (defn sync-policy-copy!
-  "[DX-ERA2 sixth pass] Under the removal lock: the log's head carries a copy of the database's policy (its attributes
+  "[DX-ERA2 sixth pass; seventh pass: the copy only grows] Under the removal lock: the log's head carries a copy of the database's policy (its attributes
   and seal), which the database-wide rule and the key pass read; a copy that differs (a log put back from before an
   addition, a head rebuilt by an earlier build) is rewritten from the database over the head it read. The copy is
   never an input while the database holds a policy. Returns the log's cut after it."
@@ -1059,14 +1234,58 @@
   (let [p (when current (stored-policy db))]
     (if-not p current
       (let [h (json/read-str (:wire current))
-            want (vec (get p "attributes")) sealed? (true? (get p "sealed"))]
-        (if (and (= (set want) (set (get h "attributes"))) (= sealed? (get h "sealed"))) current
-          (do (covers! name db p)
+            ;; [DX-ERA2 seventh pass, X1] the copy only grows: the union of the copy and the stored policy, never the
+            ;; stored list alone (a stored policy restored from before an addition must not erase the addition's only
+            ;; record; `policy-behind` then holds writes and removals until the restore route adds it back)
+            have (vec (get h "attributes"))
+            want (into have (remove (set have) (get p "attributes"))) sealed? (true? (get p "sealed"))]
+        (if (and (= (set want) (set have)) (= sealed? (get h "sealed"))) current
+          (do (covers! name db (assoc p "attributes" want))
               (write-head! name (:wire current) (json/write-str (assoc h "attributes" want "sealed" sealed?)))
               (println (json/write-str {"schema" "triplex.protection-policy-copy.v1" "database" name
                                         "attributes" (count want) "copyHad" (count (get h "attributes"))}))
               (swap! privacy/cache dissoc name)
               (privacy/cut name db true)))))))
+
+(defn drop-copy-attributes!
+  "[DX-ERA6 eighth pass, R3 of the seventh review] POST /v2/db/{db}/removal-policy-copy-drop {\"attributes\": [..]}:
+  the way out of RemovalPolicyBehind that protects nothing new (the restore route's way out adds every name the copy
+  lists to the stored policy, for good). Under the removal lock, every named attribute must be one the log's copy
+  lists, the database's stored policy lacks, and no removal in the data or the log removed a value of; then the log's
+  copy is rewritten without them, over the head this step read, and logged (triplex.protection-policy-copy-dropped.v1).
+  A name a removal removed values of is refused: the copy is right about it, and the restore route is the way out.
+  Anything else 409, nothing written. For an operator after a hand edit or storage damage of the log's head; a name
+  that a data restore lost (an addition the service still declares) is added back by the service's own protection
+  call or by the restore route instead."
+  [name conn input]
+  (let [attrs (when (map? input) (get input "attributes"))]
+    (when-not (and (map? input) (= #{"attributes"} (set (keys input))) (vector? attrs) (seq attrs)
+                   (every? string? attrs) (= (count attrs) (count (set attrs))))
+      (privacy/failure! 400 "InvalidValue" "Expected {\"attributes\": [names the log's copy lists and the stored policy lacks]}"))
+    (privacy/guard name
+      (fn []
+        (let [db (erase/sync! conn)
+              p (or (stored-policy db) (privacy/failure! 409 "ProtectionPolicyUnknown" "The database holds no protection policy"))
+              _ (swap! privacy/cache dissoc name)
+              current (or (privacy/cut name db true) (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
+              h (json/read-str (:wire current))
+              copy (vec (get h "attributes"))
+              stored (set (get p "attributes"))
+              removed (into (removed-attributes (:entries (native-entries name db)))
+                            (mapcat (fn [e] (map #(get % "attribute") (get e "identities")))) (vals (:commands current)))]
+          (doseq [a attrs]
+            (when-not (some #{a} copy)
+              (privacy/failure! 409 "ProtectionPolicyMismatch" (str a " is not in the removal log's copy of the policy")))
+            (when (stored a)
+              (privacy/failure! 409 "ProtectionPolicyMismatch" (str a " is in the database's stored policy: it stays protected")))
+            (when (removed a)
+              (privacy/failure! 409 "ProtectionPolicyMismatch"
+                                (str "A removal removed values of " a ": the copy is right about it; run the restore route"))))
+          (let [keep (vec (remove (set attrs) copy))]
+            (write-head! name (:wire current) (json/write-str (assoc h "attributes" keep)))
+            (swap! privacy/cache dissoc name)
+            (println (json/write-str {"schema" "triplex.protection-policy-copy-dropped.v1" "database" name "dropped" attrs}))
+            {:database name :dropped attrs :copy keep :stored (vec (get p "attributes"))}))))))
 
 (defn- intent-state
   "The intent record as stored: nil (none), the intent, or ::unreadable (storage damage: not a removal's intent)."
@@ -1154,6 +1373,8 @@
           (let [after (privacy/cut name db true)]
             (privacy/clear-completed! name after)
             (println (json/write-str {"schema" "triplex.removal-log-rebuilt.v1" "seq" (:seq after) "entries" (count entries)}))
+            ;; [DX-ERA6 eighth pass, R5] every removal of a log written whole from the data
+            (doseq [x entries] (removal-ack/acknowledged! name (:entry x)))
             {:database name :seq (:seq after) :appended (count entries) :written true}))))))
 
 (defn rebuild-log!
@@ -1179,8 +1400,29 @@
     (transact! conn [[:db/cas (scope/entity db) :triplex.scope/protection-policy (stored-text db) (json/write-str next)]])
     (println (json/write-str {"schema" "triplex.protection-policy-added.v1" "database" name "added" (count extra)}))
     (let [db (erase/sync! conn)]
-      (sync-policy-copy! name db (privacy/cut name db true))
+      ;; [DX-ERA2 seventh pass] the copy follows the stored policy even when another writer changed the head between
+      ;; this step's read and its write (the removal lock lost): read again and write again, at most three times
+      (loop [k 0]
+        (let [r (try (swap! privacy/cache dissoc name) (sync-policy-copy! name db (privacy/cut name db true)) nil
+                     (catch clojure.lang.ExceptionInfo e (if (< k 2) ::again (throw e))))]
+          (when (= ::again r) (recur (inc k)))))
       db)))
+
+(defn non-string-value
+  "[DX-ERA6 eighth pass, R2 of the seventh review] The value type of a live value of `attr` in this database that is
+  not a string, or nil. A protected attribute's values must be strings (privacy/validate-write!: 400
+  ProtectedTypeUnsupported), so protecting an attribute that already holds numbers would refuse every later save of it,
+  of every account, for good. One pass over every subject's live rows (the attribute is column 3 of every row text, so
+  a row of another attribute is not decoded further); run only for an attribute being added to the policy, which is
+  rare."
+  [db attr]
+  (let [owner-of (if (owner-root/installed? db) #(owner-root/owner-of db %) identity)
+        eids (distinct (map (comp owner-of :e) (d/datoms db :aevt :triplex.entity/row)))]
+    (some (fn [eid]
+            (some (fn [x] (when-let [row (lean/decode-live attr (:v x))]
+                            (when-not (= "string" (:value_type row)) (:value_type row))))
+                  (lean/live-texts db eid nil)))
+          eids)))
 
 (defn protect!
   "[DX-ERA2 sixth pass, V1] POST /v2/db/{db}/protection on a database guarded per account. The policy is the one stored
@@ -1190,14 +1432,17 @@
     log's copy is rewritten from it. Adding is one-way. New values of an added attribute are protected from the
     addition on; its values stored before it stay as stored (in clear when the database is sealed): a removal selects
     and masks them by identity, but has no key to delete for them;
-  - fewer attributes, or another seal: 409 ProtectionPolicyMismatch, nothing written (an attribute is never dropped).
+  - [seventh pass, X6] any other list: its new attributes are added (the union), and the ones it leaves out stay
+    protected (an attribute is never dropped; the answer names them, `notDeclared`), so two callers adding different
+    attributes both succeed and an older service whose list lacks an addition still starts;
+  - another seal: 409 ProtectionPolicyMismatch, nothing written.
   First, under the removal lock, the log is made what the data says (missing: rebuilt from the data and the stored
   policy; behind: caught up), so this route never writes a log from its request. A database with no stored policy
   adopts its verified log's first; with neither, 409 ProtectionPolicyUnknown."
   [name conn input]
   (let [attrs (get input "attributes") sealed? (true? (get input "sealed"))]
     (when-not (and (vector? attrs) (seq attrs) (= (count attrs) (count (set attrs)))
-                   (every? #(and (string? %) (seq %) (not (.startsWith ^String % ":_tx/"))) attrs)
+                   (every? valid-attribute? attrs)
                    (contains? #{nil true false} (get input "sealed")))
       (privacy/failure! 400 "InvalidProtectedAttributes" "Expected distinct declared protected attributes"))
     (let [result
@@ -1210,15 +1455,23 @@
                     have (vec (get p "attributes"))]
                 (when-not (= sealed? (true? (get p "sealed")))
                   (privacy/failure! 409 "ProtectionPolicyMismatch" "Whether the database is sealed never changes"))
-                (when-not (every? (set attrs) have)
-                  (privacy/failure! 409 "ProtectionPolicyMismatch"
-                                    (str "A protected attribute is never dropped; this database protects " (count have)
-                                         " attributes and the request leaves some out")))
+                ;; [DX-ERA2 seventh pass, X6] additions union: the attributes the request names that the database does
+                ;; not protect are added; the ones it leaves out stay protected (never dropped), and the answer lists
+                ;; them all (`notDeclared`). Two callers adding different attributes both succeed (each adds its own
+                ;; under the removal lock, one compare-and-set), and an older service whose list lacks an addition runs
                 (let [extra (vec (remove (set have) attrs))
+                      ;; [DX-ERA6 eighth pass, R2] an attribute that already holds a value the policy cannot protect
+                      ;; (not a string) is refused here, to the one caller that asked, before anything is added
+                      _ (doseq [a extra]
+                          (when-let [t (non-string-value db a)]
+                            (privacy/failure! 409 "ProtectedTypeUnsupported"
+                                              (str a " already holds " t " values; only an attribute whose values are strings "
+                                                   "can be protected. Nothing was added"))))
                       db (if (seq extra) (add-attributes! name conn db p extra) db)
                       p (stored-policy db)]
                   {:database name :attributes (vec (get p "attributes")) :sealed (true? (get p "sealed"))
-                   :added extra :erasure {:seq (:seq (privacy/cut name db true))}}))))]
+                   :added extra :notDeclared (vec (remove (set attrs) (get p "attributes")))
+                   :erasure {:seq (:seq (privacy/cut name db true))}}))))]
       (envelope/provision! name sealed?)
       result)))
 
@@ -1292,17 +1545,55 @@
             (privacy/failure! 503 (:writes-refused e) "The data and the removal log still differ beyond positions: an operator must decide"))
           {:database name :rewritten (count fixes) :seq (:seq e)})))))
 
+(defn acknowledged-lost!
+  "[DX-ERA6 eighth pass, R5; step 5 of the restore procedure] With TX2_REMOVAL_ACK_JOURNAL set: every removal the
+  journal holds as acknowledged that this database's published log does not hold (a restore of the data and the
+  removal authority to a backup taken before it) is reported, by command and sequence, in one start-check line.
+  Returns the lost records."
+  [name cut]
+  (when (and removal-ack/journal cut)
+    (let [lost (removal-ack/lost name cut)]
+      (when (seq lost)
+        (println (json/write-str {"schema" "triplex.removal-start-check.v1" "database" name "agree" false
+                                  "code" "RemovalAcknowledgedLost" "log" (:seq cut)
+                                  "highestAcknowledged" (reduce max 0 (keep #(when (= name (get % "database")) (get % "seq")) (removal-ack/records)))
+                                  "lost" (vec (for [r lost] (select-keys r ["seq" "commandId" "acknowledgedAt"])))})))
+      lost)))
+
 (defn start-check!
   "[DX-ERA3 N5] At gateway start: every database guarded per account whose data is ahead of (or behind) its removal
-  log is reported. Every request (removal-erase/request-cut) and every removal checks the same again and refuses."
+  log is reported. Every request (removal-scope/request-cut) and every removal checks the same again and refuses."
   [names connect]
   (doseq [name names]
     (try
       (let [db (d/db (connect name))]
         (when (removal-scope/per-account? db)
-          (when-let [b (disagreement db (privacy/cut name db true))]
-            (println (json/write-str {"schema" "triplex.removal-start-check.v1" "database" name "agree" false
-                                      "code" (:code b) "native" (:native b) "declared" (:declared b) "log" (:log b)})))))
+          (let [cut (privacy/cut name db true)
+                p (stored-policy db)
+                behind (policy-behind cut db)
+                ;; [DX-ERA2 seventh pass, X3] the log's copy of the policy differs from the stored policy
+                differs (when (and cut p) (or (not= (set (get p "attributes")) (:attrs cut)) (not= (true? (get p "sealed")) (:sealed cut))))]
+            (when-let [b (disagreement db cut)]
+              (println (json/write-str {"schema" "triplex.removal-start-check.v1" "database" name "agree" false
+                                        "code" (:code b) "native" (:native b) "declared" (:declared b) "log" (:log b)})))
+            (when (or behind differs)
+              (println (json/write-str {"schema" "triplex.removal-start-check.v1" "database" name "agree" false
+                                        "code" (if behind "RemovalPolicyBehind" "PolicyCopyDiffers")
+                                        "storedAttributes" (count (get p "attributes")) "copyAttributes" (count (:attrs cut))
+                                        ;; [DX-ERA6 eighth pass, R3] the names, so an operator sees what the restore route
+                                        ;; would protect for good, and what removal-policy-copy-drop could take out
+                                        "copyOnly" (vec (sort (remove (set (get p "attributes")) (:attrs cut))))
+                                        "storedOnly" (vec (sort (remove (set (:attrs cut)) (get p "attributes"))))
+                                        "storedSealed" (true? (get p "sealed")) "copySealed" (:sealed cut)})))
+            ;; [DX-ERA2 seventh pass, X10] every database's state at start, for the restore procedure to compare with
+            ;; the last `triplex.removal-acknowledged.v1` line of the same database (a restore of the data and the
+            ;; removal authority to the same backup agrees with itself; only that outside record shows it)
+            (println (json/write-str {"schema" "triplex.removal-start-state.v1" "database" name
+                                      "log" (:seq cut) "native" (removal-scope/native-seq db) "declared" (declared-seq db)}))
+            (acknowledged-lost! name cut)))
+        ;; [DX-ERA6 eighth pass, R5] with a journal, the database-wide rule's protected databases too
+        (when (and removal-ack/journal (not (removal-scope/per-account? db)) (privacy/enabled? db))
+          (acknowledged-lost! name (privacy/cut name db true))))
       (catch Exception e
         (println (json/write-str {"schema" "triplex.removal-start-check.v1" "database" name "agree" false
                                   "code" (or (:code (ex-data e)) "Unverified")}))))))
@@ -1327,7 +1618,12 @@
   ;; [DX-ERA2 sixth pass] the restore route replays the log's policy additions too (adding is one-way): data restored
   ;; from before an addition takes the attributes its verified log's copy has and its stored policy lacks
   (let [p (stored-policy db) h (some-> (:wire state) json/read-str)
-        extra (when (and p h) (vec (remove (set (get p "attributes")) (get h "attributes"))))]
+        extra (when (and p h) (vec (remove (set (get p "attributes")) (get h "attributes"))))
+        ;; [DX-ERA2 seventh pass, X8] only names the protection route accepts; the others (a hand edit, storage damage)
+        ;; are skipped and logged, never stored (`:_tx/position` made every later save 400 for good)
+        bad (remove valid-attribute? extra) extra (vec (filter valid-attribute? extra))]
+    (when (seq bad)
+      (println (json/write-str {"schema" "triplex.protection-policy-copy-invalid.v1" "database" (get h "database") "skipped" (count bad)})))
     (when (seq extra) (add-attributes! (get h "database") conn db p extra)))
   (let [head (scope/entity db)
         n (scope/value db head :triplex.scope/removal-seq)

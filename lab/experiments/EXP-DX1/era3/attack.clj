@@ -234,7 +234,7 @@
               _ (reset! plan nil)
               intent (privacy/pending name)
               native-pos (removal-position conn "rm-d2")
-              old (vec (for [_ (range 10)] (offers/outcome (with-redefs-fn {#'erase/subject-check false} #(remove-attr! name "rm-d2" g/a1)))))
+              old (vec (for [_ (range 10)] (offers/outcome (with-redefs-fn {#'rs/subject-check false} #(remove-attr! name "rm-d2" g/a1)))))
               readable (str/includes? (read-text name g/a1) value)
               blocked (offers/outcome (remove-attr! name "rm-d2-b" g/b1))
               done (remove-attr! name "rm-d2" g/a1)
@@ -255,7 +255,7 @@
       (fn [name conn]
         (let [lbl "D3 a gateway without the per-account option on a moved database"
               seeds (g/seed! name [g/a1 g/a2 g/b1])
-              without (fn [f] (with-redefs-fn {#'rs/enabled false #'erase/subject-check false}
+              without (fn [f] (with-redefs-fn {#'rs/enabled false #'rs/subject-check false}
                                 (fn [] (reset! privacy/cache {}) (try (f) (finally (reset! privacy/cache {}))))))
               r-read (without #(offers/route name "v1" "read" {"entityIds" [g/b1]}))
               r-save (without #(offers/send name (g/frame "d3-save" g/b1 (g/secret g/b1 "s") (:id (seeds g/b1)) (g/head conn))))
@@ -455,7 +455,7 @@
                          (case (if (zero? k) resume :same)
                            :same (erase! name cmd selectors)
                            :restart (do (reset! privacy/cache {}) (erase! name cmd selectors))
-                           :mixed (let [r (with-redefs-fn {#'erase/subject-check false} #(erase! name cmd selectors))]
+                           :mixed (let [r (with-redefs-fn {#'rs/subject-check false} #(erase! name cmd selectors))]
                                     (bump! :mixed-resume (offers/outcome r)) r)))))
         _ (rel!)
         other-final (when (= during :other-removal) (erase! name (str "fo-rm-" tag) [{"entityId" s2 "attribute" ":v"}]))

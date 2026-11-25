@@ -1,6 +1,15 @@
 (ns triplex.gateway.removal-scope
-  (:require [clojure.string :as str] [datomic.api :as d] [triplex.gateway.schema :as schema]
-            [triplex.gateway.scope :as scope] [triplex.gateway.privacy :as privacy]))
+  (:require [clojure.string :as str] [clojure.data.json :as json] [datomic.api :as d] [triplex.gateway.schema :as schema]
+            [triplex.gateway.scope :as scope] [triplex.gateway.privacy :as privacy] [triplex.gateway.erase :as erase]
+            [triplex.gateway.lean :as lean]))
+
+;; [DX-ERA2 seventh pass, identities] This namespace loads AFTER every installed function's code has been read: no file
+;; that loads before them requires it (privacy, erase and subject-save resolve what they need from it when called,
+;; with `requiring-resolve`), and storage and main require it after them. Every generated name the per-account rule
+;; adds (functions, `and`, `cond->`, `#()`) is therefore made after the installed functions' names are fixed, so with
+;; every option off their code, idents and hashes are the one branch's (s3/idents.clj).
+;; Rejected: defining these in privacy.clj and erase.clj (loaded before commit.clj): they moved 17 of the 58 stored
+;; identities, so a database created by this build installed writer functions that differ from the one branch's.
 
 ;; [DX-ERA2] Removal on request guarded per account (TX2_REMOVAL_PER_ACCOUNT=1, default off).
 ;; Why: in one database holding every account, one removal sequence refused or delayed every account's saves, reads
@@ -168,32 +177,149 @@
     (cond-> {:perAccount true :unscopedSeq (bucket-seq state unscoped)}
       (seq account) (assoc :account account :accountSeq (bucket-seq state account)))))
 
-;; [DX-ERA2] Why: in a database guarded per account, a derived write's ticket that names its source accounts is
-;; stale only when a removal published after it touched one of them (or the unscoped sequence).
-;; Rejected: a database-wide comparison for such tickets (any account's removal refused every account's frames).
-;; [DX-ACT9] Moved here from privacy.clj unchanged (see the hooks below).
-(defn ensure-ticket! [state input]
-  ;; [DX-ERA3 F1b] (DX-ERA2's fix, merged here where this function now lives; removal-commit is loaded only on a
-  ;; database guarded per account)
+;; ---- [DX-ERA2 seventh pass, identities] moved here from privacy.clj and erase.clj, unchanged in what they do ----------
+(defn add-entry-on
+  "privacy/apply-entry's last step: each account's removal sequence, derived from the one ordered log (option on)."
+  [cut entry]
+  (if enabled (add-entry cut entry) cut))
+
+(defn fence-seq
+  "The value the installed writers' database-wide fence carries for this cut. Per account, the value the request read
+  (-1, or -2 with the commit boundary): a write planned before the boundary changes is refused at the serial point and
+  planned again."
+  [state]
+  (when state (if (:per-account state) (get state :erasure-sentinel sentinel) (:seq state))))
+
+(defn ensure-ticket!
+  "In a database guarded per account, a derived write's ticket that names its source accounts is stale only when a
+  removal published after it touched one of them (or the unscoped sequence); otherwise the database-wide comparison.
+  [DX-ERA3 F1b] removal-commit is loaded only on a database guarded per account. [DX-ERA3 N1] its refusal is tagged:
+  the gateway completes that removal once this write has released its locks."
+  [state input]
   (when (:per-account state)
-    ;; [DX-ERA3 N1] (DX-ERA2's third pass) its refusal is tagged: the gateway completes that removal once this write
-    ;; has released its locks.
     ((requiring-resolve 'triplex.gateway.removal-commit/refuse-pending!) state input))
   (if (and (:per-account state) (contains? input "erasureAccounts"))
     (when-not (ticket-current? state (get input "erasureSeq") (ticket-accounts input))
       (privacy/stale!))
     (privacy/ensure-seq! state (get input "erasureSeq"))))
 
-;; [DX-ERA2] The value the installed writers' database-wide fence carries for this cut. [DX-ACT9] Moved from privacy.clj.
-;; [DX-ERA2 fifth pass, ported] per account, the value the request read (-1, or -2 with the commit boundary): a write
-;; planned before the boundary changes is refused at the serial point and planned again
-(defn fence-seq [state] (when state (if (:per-account state) (get state :erasure-sentinel sentinel) (:seq state))))
+(defn verify-data!
+  "privacy/verify-data! on a database guarded per account: the native removal sequence (the database-wide one holds
+  the sentinel)."
+  [state db]
+  (when (and state (not (consistent? db (:seq state) nil))) (privacy/unavailable!)))
 
-;; [DX-ACT9] Why: privacy.clj, erase.clj and subject_save.clj load before the namespaces whose stored function texts
-;; carry generated names, so they reach this namespace through privacy/removal-hooks (plain values there), filled here
-;; when this namespace loads (storage.clj requires it, after every stored function text). Rejected: their requiring
-;; this namespace (it moved 17 of 58 stored-function identities with every option off).
-(alter-var-root #'privacy/removal-hooks assoc
-  ;; read at call time, so a test that turns `enabled` off sees a gateway without the option, as before the move
-  :add-entry (fn [state entry] (if enabled (add-entry state entry) state)) :ensure-ticket! ensure-ticket! :per-account? per-account? :consistent? consistent?
-  :fence-op? fence-op? :entry-ops entry-ops)
+(defn without-fence-ops
+  "The one-owner writer's operations its small-operation check reads: the per-account fence operation is accepted
+  beside them (it rides in the returned data; Datomic applies it on the same serial db-before)."
+  [ops expected-erasure]
+  (if (and enabled (some? expected-erasure)) (remove fence-op? ops) ops))
+
+(defn selector-buckets
+  "The accounts whose values these selectors can reach: an entity selector names its entity; an assertion selector
+  names the entity that assertion belongs to (fixed for its whole life)."
+  [db selectors]
+  (into (sorted-set)
+        (map (fn [s]
+               (bucket
+                 (or (get s "entityId")
+                     (let [id (get s "id")
+                           private-id (when (d/entid db :triplex.private/id) (d/entid db [:triplex.private/id id]))]
+                       (if private-id (scope/value db private-id :triplex.private/entity)
+                         (some-> (lean/by-id (d/history db) id) :v lean/decode :entity_id)))))))
+        selectors))
+
+(defn with-bucket-guards [name buckets work]
+  (if-let [[b & more] (seq buckets)]
+    (privacy/guard (lock-name name b) #(with-bucket-guards name more work))
+    (work)))
+
+(defn bucket-guarded
+  "erase/erase!'s work under the database's lock: per account, also under the locks of the accounts it can touch."
+  [name buckets work]
+  (fn [] (with-bucket-guards name buckets work)))
+
+;; [DX-ERA2] Why: guarded per account, other accounts' saves no longer pause during a removal, so the removal's own
+;; "head has not moved since my selection" check (database-wide, P9) retries more often; this measures how often.
+;; One JSON line per removal on standard output when TX2_REMOVAL_TRIES_LOG=1 (unset: nothing printed).
+(def tries-log (= "1" (System/getenv "TX2_REMOVAL_TRIES_LOG")))
+;; [DX-ERA2] On a database guarded per account every removal checks its selection per subject, takes its log position at
+;; its own commit and declares itself natively first (removal_commit.clj). [DX-ERA3 F2] TX2_REMOVAL_SUBJECT_CHECK no
+;; longer selects the path (one per-account path for the whole fleet): the setting is read and ignored.
+(def subject-check (= "1" (System/getenv "TX2_REMOVAL_SUBJECT_CHECK")))
+
+(defn log-tries! [entry tries buckets started]
+  (when tries-log
+    (println (json/write-str {"schema" "triplex.removal-tries.v1" "seq" (get entry "seq")
+                              "tries" tries "perAccount" (boolean buckets)
+                              "ms" (/ (- (System/nanoTime) started) 1.0e6)}))))
+
+;; [DX-ERA2] Why: a request on a database guarded per account uses the last published cut while another removal is
+;; prepared or natively committed but unpublished: a write is fenced at the serial point on its own accounts, and a
+;; read is then a read that started before that removal's publication (TARGETS section 7.1). Anything else is
+;; retried up to four times on a freshly synced database, then refused: a native value behind the published log
+;; (another gateway's removal not yet seen by this peer, and further removals can publish meanwhile), and a cut
+;; read that lost a race with a newer one on this gateway (privacy/cut refuses a published log behind the one it
+;; verified last). A restored copy stays behind on every try and is refused, as before. Retrying changes only
+;; whether a request waits: a request is served only from a cut that passes consistent?.
+;; Rejected: refusing every request of every account while any removal is pending (the database-wide rule).
+(defn request-cut [name conn db]
+  (loop [db db tries 0]
+    (let [state (try ((requiring-resolve 'triplex.gateway.removal-commit/log-cut) name db)
+                     (catch clojure.lang.ExceptionInfo e
+                       (if (and (< tries 4) (= "ErasureFrontierUnavailable" (:code (ex-data e)))) ::retry
+                         (throw ((requiring-resolve 'triplex.gateway.removal-commit/typed-failure) name db e)))))]
+      (cond
+        (= ::retry state) (recur (erase/sync! conn) (inc tries))
+        (nil? state) [nil db]
+        ;; [DX-ERA3 N5] the declared sequence too, and a typed answer when the log is behind the data
+        ;; [DX-ERA2 fourth pass] served: a pending removal already committed takes effect (M1); with the commit
+        ;; boundary every removal committed in the data does
+        ((requiring-resolve 'triplex.gateway.removal-commit/consistent?) name db state)
+        [((requiring-resolve 'triplex.gateway.removal-commit/served) name db state) db]
+        (< tries 4) (recur (erase/sync! conn) (inc tries))
+        :else ((requiring-resolve 'triplex.gateway.removal-commit/refuse-inconsistent!) name db state)))))
+
+;; [DX-ERA2] Why: move an existing protected database to removal sequences per account (or back), online: under the
+;; removal lock, one small transaction (the global sequence moves to its own attribute, the database-wide one takes the
+;; sentinel, and each account that ever lost a value gets its sequence from the published log). A save prepared under
+;; the other mode fails its fence once and is sent again under the new one.
+;; Rejected: rewriting the removal log or the stored rows (neither changes; the log is the same ordered log).
+(defn per-account! [name conn input]
+  (when-not enabled
+    (privacy/failure! 404 "NotFound" "Removal per account is off on this gateway"))
+  (when-not (and (map? input) (every? #{"back"} (keys input)) (contains? #{nil true false} (get input "back")))
+    (privacy/failure! 400 "InvalidValue" "Expected {} or {\"back\": true}"))
+  (let [back? (true? (get input "back"))]
+    (privacy/guard name
+      (fn []
+        (let [db (erase/sync! conn)
+              state (privacy/cut name db)]
+          (when-not state (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
+          (privacy/verify-data! state db)
+          ;; [DX-ERA2 fifth pass] the commit boundary is one-way: a database on it does not move back
+          (when back? (when (= -2 (scope/value db (scope/entity db) :triplex.scope/erasure-seq))
+                        (privacy/failure! 409 "RemovalBoundaryOneWay" "This database removes at the commit; it does not move back")))
+          (let [head (scope/entity db) n (:seq state) per? (per-account? db)
+                buckets (:buckets state)
+                ops (cond
+                      (= back? (not per?)) nil
+                      back? [[:db/cas head :triplex.scope/erasure-seq sentinel n]
+                             [:db/retract head :triplex.scope/removal-seq n]]
+                      :else [[:db/cas head :triplex.scope/erasure-seq n sentinel]
+                             [:db/add head :triplex.scope/removal-seq n]
+                             ;; [DX-ERA3 F1] nothing declared beyond the log
+                             [:db/add head :triplex.scope/removal-intent n]])
+                ;; [DX-ERA3] and every native counter the log does not derive goes back to 0 (a held account or subject
+                ;; left by a removal that never reached its intent, or by an earlier move)
+                counters (when (and ops (not back?))
+                           (partition-all 1000 (concat (counter-ops (:entities state) buckets)
+                                                       ((requiring-resolve 'triplex.gateway.removal-commit/stale-counter-ops) db state))))
+                transact! #(when (= ::timeout (deref (d/transact conn (vec %)) 5000 ::timeout)) (privacy/unavailable!))]
+            (when (and ops (not back?)) (install! conn db))
+            ;; Counters first (nothing reads them before the mode moves), in parts of 1,000; the move itself last.
+            (doseq [part counters] (transact! part))
+            (when ops (transact! ops))
+            (let [after (erase/sync! conn)]
+              {:database name :perAccount (per-account? after) :seq n
+               :accounts (count buckets) :entities (count (:entities state)) :changed (boolean ops)})))))))
