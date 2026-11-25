@@ -792,7 +792,7 @@ refused while a removal is pending (`verify-data!`), as the review confirms for 
 | --- | --- | --- | --- |
 | 2 to 7, 9, 10, 14, 16, 17 (every sealed derived record: packets, ledgers, settled changes, the recipient's records, their journal and feed entries, native data, backups, the reporting copy, caches) | the open route: removed from the native commit or the publication, whichever first; and, without any log, the key's destruction after the publication and the grace | correct (stricter by P5 to P7) | correct |
 | 4 (ledgers, re-recording) | the generation a forgotten subject takes is the removal's sequence, from the published log or from the native record (the same number) | correct | correct |
-| 19 (the held reader's answer cache, client memory) | keyed on the erasure frontier's published sequence; the cache is cleared on any change, so a sequence that goes back (M1) resurrects nothing | correct | **correct only if the erasure frontier reports a removal from its native commit**: otherwise an answer cached before the commit is served until the publication. Depends on how the removal builder's option reports the frontier; gate to rerun on its head (11.8) |
+| 19 (the held reader's answer cache, client memory) | keyed on the erasure frontier's published sequence; the cache is cleared on any change, so a sequence that goes back (M1) resurrects nothing | correct | **correct only if the erasure frontier changes at the native commit**: otherwise an answer cached before the commit is served until the publication. The removal builder's `cd242e8c0` says the commit boundary keeps the cut at the log's sequence, so as written this row would be **wrong** under `TX2_REMOVAL_COMMIT_BOUNDARY=1` until the frontier reports the commit (read from its commit message, not run); gate to rerun on its head (11.8) |
 | 1 (the subject's own fact, plain reads) | the removal builder's (M1 is there) | — | — |
 | 11, 12, 13, 20 | hold no value or derivative (12, 13, 20) or are the keys themselves (11) | unchanged | unchanged |
 
@@ -829,7 +829,11 @@ state above. The plain read's own M1 is the removal builder's to fix.
 
 ### 11.8 Gates to rerun on the removal builder's head (M2 to M5 fixes and the native-commit option)
 
-When `exp/DX-ERA2-removal-per-account` reports, merge it and rerun, with its new option both off and on:
+At 23:44 EST the branch had moved to `cd242e8c0` (`65914fd9a`: M1 to M5 and the new default-off option
+`TX2_REMOVAL_COMMIT_BOUNDARY=1`; `cd242e8c0`: on the log's boundary a read that finds a pending removal committed
+publishes it first; with the commit boundary values are masked from the commit "while the cut keeps the log's
+sequence"). It was still changing and had not reported, so it is not merged here. When it reports, merge it and rerun,
+with `TX2_REMOVAL_COMMIT_BOUNDARY` both off and on:
 
 1. **(a)** stored-function identities and the paired native log (every option off; the native-commit option on as
    information);
