@@ -56,6 +56,11 @@ const SCOPE = "act10-fz-" + process.pid;
 const SHARED = process.env.ACT10_SHARED === "1",
   MIXED = process.env.ACT10_MIXED === "1",
   SINGLE = process.env.ACT10_SINGLE === "1";
+// [DX-ACT10, third review] Off by default: ACT10_TRANSITIONS=1 lands a settings transition of account A (a process with
+// random permissions and ledger mode) inside the window between a commit's read and its commit (a Publish, a values
+// frame or a notice frame), and inside a frame's window, half the time, also a later release of A (a Publish of R2): the
+// schedule that tells a frame guarded on the origin row from one that is not (DX_ACT8_INJECT=no-origin-guard).
+const TRANSITIONS = process.env.ACT10_TRANSITIONS === "1";
 const relName = (acct: string) => (SINGLE && acct === "acct-b" ? "lazy/account/releases" : "lazy/account/releases/" + acct);
 // [DX-ACT8, second review] Under ACT10_MIXED every modelled process is one of a fleet's builds (`build`), drawn per
 // publisher per phase and per settling process at each restart: "1" this build allowed to turn some of the account's
@@ -350,6 +355,47 @@ async function schedule(seed: number): Promise<Outcome> {
       await new Promise((x) => setImmediate(x));
     }
   };
+  if (TRANSITIONS) {
+    let budget = 1 + r.int(2), landed = 0;
+    db.beforeCommit = async (id) => {
+      const kind = /^settled-values:/.test(id) ? "values" : /^settled-notice:/.test(id) ? "notice" : /^joined:/.test(id) ? "publish" : null;
+      if (!kind || budget <= 0) return;
+      // Inside a frame's window the step matters when the frame read the account without frame guards: it then turns
+      // them on (and half the time lands a later release too). Inside a Publish's window, any transition.
+      const frame = kind !== "publish";
+      if (frame && (await originAt(memStore(new Proc(db, "peek"), hA) as never, await db.comp.currentPosition())).settings?.frameGuards) return;
+      if (r.next() > (frame ? 0.6 : 0.3)) return;
+      budget--;
+      const tp = new Proc(db, "transition-" + landed);
+      let permits: Permits;
+      do permits = { accountKeys: r.next() < 0.5, frameGuards: frame || r.next() < 0.7, ledgerCap: r.next() < 0.4 };
+      while (!permits.accountKeys && !permits.frameGuards && !permits.ledgerCap);
+      // Under ACT10_MIXED a random ledger mode or none; otherwise the schedule's (every process of it names that one).
+      const ledger = MIXED ? r.pick([undefined, "whole", "parts"] as const) : cfg.ledger;
+      if (ledger) permits.ledger = ledger;
+      tp.permits = permits;
+      try {
+        await ensureSettings(memStore(tp, hA) as any);
+        count("transitionStep:" + kind);
+      } catch (e: any) {
+        if (e instanceof SettingsConflict) return void count("transitionStepConflict");
+        throw e;
+      }
+      if (frame && r.next() < 0.7) {
+        const pid = (SHARED ? "" : A + ":") + seed + ":t" + landed++ + ":R2";
+        const pp = new Proc(db, "transition-publisher");
+        if (MIXED) pp.permits = NONE;
+        try {
+          const receipt = await new JoinedAccount(memStore(pp, hA) as any).publish(pid, DOCS.R2!, validTime, "owed");
+          acknowledged.push({ account: A, id: pid, position: receipt.position, txId: receipt.txId, doc: "R2" });
+          count("laterReleaseInsideFrame");
+        } catch (e: any) {
+          if (e instanceof SettingsConflict) return void count("transitionStepConflict");
+          if (!(e instanceof Conflict)) violations.push("transition-step Publish " + pid + " failed: " + String(e?.stack ?? e).slice(0, 300));
+        }
+      }
+    };
+  }
   const settlers = Array.from({ length: cfg.settlers }, (_, k) => settler(k));
   const bDocs = SHARED && r.next() < 0.6 ? cfg.publishes : [r.pick(["L1000", "R2"])];
   const phases = MIXED ? r.pick(PHASES) : [process.env.TX2_ACCOUNT_KEYS === "1" ? "1" : "0"];
@@ -373,6 +419,7 @@ async function schedule(seed: number): Promise<Outcome> {
   if (MIXED) (cfg as any).builds = builds.join(" ");
   // A clean process finishes everything (no kills). Under ACT10_MIXED: this build, allowed nothing, naming no ledger mode.
   db.stall = undefined;
+  db.beforeCommit = undefined;
   const clean = new Proc(db, "clean");
   if (MIXED) clean.permits = NONE;
   try {
