@@ -6,6 +6,30 @@ Nothing ran on a server. One option, default off: `TX2_REMOVAL_PER_ACCOUNT=1`. A
 database. Datomic is not modified; the installed writer functions' code is unchanged (their stored texts differ only in
 reader-generated names, section 9).
 
+**History, in plain words (third pass, 2026-11-24).**
+
+1. **The first version broke (F1).** A derived write whose ticket names no account was checked only against the last
+   published removal, so while a removal was committed but not yet published, a copy of the removed value could land
+   after it and stay readable after the acknowledgement (DX-ERA3's first review, details below).
+2. **The fix introduced three new faults (N1, N4, N5), found by DX-ERA3's second review** (`era3/REVIEW-2.md`, of
+   `27733d980`). N1: a removal stopped between its new declaration and its intent left a block in Datomic that refused
+   every derived write naming no account, in every account, with no gateway able to see why, until another removal ran.
+   N5 (a break, after an operator restores the removal log from a backup older than the data): the next removal's
+   declaration released an account that had lost a value, and a derived write that had read it landed after the removal.
+   N4: deliveries between databases into a database guarded per account were refused.
+3. **The third pass (section 15) fixes them** by ordering the steps intent first, declaration second, so every stop
+   leaves a removal that every gateway sees as pending and any gateway completes on contact; by refusing every removal,
+   restore and request while the data is ahead of the removal log; and by checking a delivery only against its source.
+4. **The invariant now:** a ticketed write commits only if, at Datomic's serial point, no removal that can reach an
+   account it read (any account, for a ticket naming none) has declared or committed itself after the published cut
+   its ticket was checked against; and no removal declares, releases or commits while the data is ahead of the log.
+
+**Known unmet requirement (E9, not this branch's work).** A derived copy recorded BEFORE a removal (a settlement frame,
+notice or Publish that copied the value while it was still current) stays readable after the removal, in its document
+and in its own journal entry, unsealed and sealed, on today's database-wide rule and on this branch alike. TARGETS 7.3
+asks that erasure reach every place a protected value or anything derived from it lives. That is owned by
+`exp/DX-ERA4-derived-copies`; this branch only promises that no copy lands after a removal.
+
 **An independent review found a break in the first version.** DX-ERA3 (`origin/exp/DX-ERA3-removal-review`,
 `8fe9a06f1`, its page `era3/REVIEW.md`, merged here with its tests) showed on `6bc2484f0`: a settlement frame, notice,
 archive record or Publish whose ticket names no account (every such caller on this branch) was compared only with the
@@ -322,15 +346,24 @@ once, at the switch. In-process this is gate case "Move per account" (the prepar
 commits); a move under live saves on a stack was not measured. **Order for a fleet:** every gateway runs
 `TX2_REMOVAL_PER_ACCOUNT=1` first (a gateway without it refuses every request on a moved database: the sentinel -1
 never equals a published sequence), then one call to the move route. **Back:** `{"back": true}`, the same way.
+[Third pass, DX-ERA3 N3 and the fleet's versions:] **every gateway runs this version before any removal runs on a
+moved database, and no gateway of an earlier build takes derived writes on a moved database while a removal can run.**
+An earlier build's derived writes carry no check of the declaration, so during a mixed fleet a copy can land between a
+removal's declaration and its commit (a copy made before the removal, E9's kind) and, on builds before `a9da13f89`,
+after its commit (F1). This version tolerates an earlier build's removals (its tickets are checked on the committed
+sequence, so N3's refusals are gone, and it completes an earlier build's pending removal on contact); section 15.6 has
+the mixed-fleet stack run in both orders.
 
 **The subject-check path (section 13) and the declaration (section 14).** From `a9da13f89` every removal on a moved
 database takes the subject-check path; `TX2_REMOVAL_SUBJECT_CHECK` is read and ignored, so gateways with and without it
 behave the same (the first version had two paths, and a removal committed by one could not be finished by the other:
 DX-ERA3 F2). No data migration: the first removal installs one function (`:triplex.removal/commit-v1`) and, with the
 move, two attributes (`removal-intent`, `removal-held`); the move sets `removal-intent` to the published sequence and
-zeroes any counter the log does not derive. A database moved by an earlier build of this branch has no
-`removal-intent` value, so its tickets naming no account fail at the commit point (fail-closed) until a removal runs or
-the database is moved back and forward once (none exists outside the toys). Named entities without a row take a
+zeroes any counter the log does not derive. [Corrected in the third pass: the earlier text said a database moved by an
+earlier build is fail-closed "until a removal runs or the database is moved back and forward once"; a removal did not
+run on it (DX-ERA3 N2: 400 not-an-entity).] From the third pass, a database moved by an earlier build needs nothing:
+its tickets naming no account are checked on the committed sequence alone until its first removal installs the two
+attributes and starts the declared sequence at the committed one (section 15). Named entities without a row take a
 removal's counter (section 13.2). On the 1 billion database nothing changes beyond section 8: it has no removal yet.
 
 ## 9. Gates
@@ -776,7 +809,7 @@ and `X4-stack2-repro` (stack, option 2), with 15 and 12 violations in-process an
 | # | Finding (the review's words, shortened) | Reproduced on `6bc2484f0` | Fix | Test that now passes (final code) |
 | --- | --- | --- | --- | --- |
 | F1 | A derived write whose ticket names no account lands after a removal committed but not published; its copy stays readable after the acknowledgement | `D1` after the commit and at publication: frame with no accounts 200, copy readable, both paths, unsealed and sealed (8 of 8 cases); stack option 2: the frame 200 at position 4 after the removal at 3, copy readable after the acknowledgement | the declaration (section 14.1): a ticket naming no account carries `[:db/cas scope :triplex.scope/removal-intent t t]`, which every removal's first transaction makes fail; the gateway answers 503 while it is pending | `D1`, all stops, both settings, unsealed and sealed: both frames 503 while stopped, 0 copies; review's stack, options 1 and 2: the frame with no accounts 503 while pending, 409 ErasureFrontierChanged when resent after the acknowledgement, no copy (option 0 unchanged); `D1-timeout` (commit landing 1.5 s after a 300 ms wait): frame refused, no copy; the frame race (40 late transactions behind an expired wait, released after the declaration): 20 of 20 failed `cas-failed`, 20 of 20 failed the account fence, 0 committed; on a stack with the waits forced to 5 and 10 ms: 5 ms: the removal answered 503 61 times before its 200 (62 attempts), each frame (no accounts, and naming the account) refused 62 of 62 times (58 at Datomic's serial point, 409 CasConflict; 3 by the gateway, 503; 1 after the acknowledgement, 409 ErasureFrontierChanged), 0 landed, no copy, and the subject's own racing save, which committed during the attempts, removed with it and 10 ms: 31 attempts, every frame refused (28 at the serial point, 2 by the gateway, 1 after), 0 landed, no copy; with the transactor restarted while the removal is pending: both frames 503, the removal resumed 200, no copy |
-| F1b | Any ticketed write commits while a removal's intent is pending, before its commit | `D1` before the commit and after the guard: both frames 200, copy readable | the same declaration, which comes before the removal's selection and intent; the account counters hold tickets naming the account | `D1` before the commit and after the guard: both frames 503, 0 copies; the orphan case (stopped after its declaration, before its intent: nothing pending, so the gateway's check passes): the frame naming the account fails at the serial point (409 CasConflict); stack timeouts: 172 frames refused at the serial point while only the declaration had landed |
+| F1b | Any ticketed write commits while a removal's intent is pending, before its commit | `D1` before the commit and after the guard: both frames 200, copy readable | the same declaration, which comes before the removal's selection and intent; the account counters hold tickets naming the account | `D1` before the commit and after the guard: both frames 503, 0 copies; the orphan case (stopped after its declaration, before its intent: nothing pending, so the gateway's check passes): the frame naming the account fails at the serial point (409 CasConflict); stack timeouts: 172 frames refused at the serial point while only the declaration had landed. [Corrected in the third pass: the orphan case was called a pass, but it never sent a frame naming no account, which that orphan refused in every account until another removal ran (DX-ERA3 N1); the stop point no longer exists, section 15] |
 | F2 | A removal committed by a gateway with the subject check cannot be completed by one without it | `D2`: 10 of 10 resumes 503 | one per-account path: `TX2_REMOVAL_SUBJECT_CHECK` is read and ignored. (The review's suggested fix in the old path is not needed: the old path never runs on a moved database now except on a gateway without the per-account option, which F3's fix stops before it reads or writes anything) | `D2`: 10 of 10 resumes without the setting 200; fuzzer resumes "mixed" all completed (section 14.4) |
 | F3 | A gateway without the per-account option leaves a removal intent that blocks every removal | `D3`: removal 400, intent left, another removal on a good gateway 503 | the old path refuses (503) before it writes an intent when the database holds the per-account sentinel (`erase.clj` 254) | `D3`, both settings: removal 503, intent left: false, another removal on a good gateway 200 |
 | F4 | Page errors (proof item 5, section 6, the 13.2 row; the bound said 2 tries under the guard where the code allowed 3) | (page) | rewritten (sections 4, 6, 13.2, 13.3, and the statement at the top); `guarded-tries` set to 2, so the code allows what the page says: at most 4 commit attempts | the hammer: 30 of 30 removals in exactly 3 attempts |
@@ -877,3 +910,273 @@ the reproduction on `6bc2484f0` and the intermediate runs: `DX-ERA2/fixpass-inte
 9. **Derived copies made before a removal** (the review's F5: a derived write's journal holds its copy in clear): no
    copy can land after a removal's declaration any more; copies made before a removal are outside this branch.
 10. **A ticket naming fewer accounts than its writer read**: a client error, outside the protocol (section 5, case 1).
+
+## 15. The second review (DX-ERA3, `era3/REVIEW-2.md`) and the third pass (2026-11-24)
+
+Review: `origin/exp/DX-ERA3-removal-review` at `1c656316b`, of this branch at `27733d980`. It confirmed F1 closed on
+every route it tried and found new faults the fix had introduced. Its new tests (`era3/attack2.clj`, `stack2.sh`,
+`stack2-ack.mjs`, the `run.sh` changes) are merged and run in `era2/gate.sh` phase `era3` from now on (cases E1 to E8
+and a 400-schedule fuzzer on both settings; E9 is reported, not counted, section 0). Fixes at `0ea7db896` and `e921f3ef1`;
+the stack scripts at `b1d524802` and `a735e0a7e`. Every result below was reproduced first on `27733d980`, then rerun on the fixed code.
+
+### 15.1 The order of a removal's steps, and the invariant
+
+A removal now runs, under the database's removal lock and the locks of the accounts its selectors can reach:
+
+1. **Agreement check** (`removal_commit.clj` 402): the data's committed and declared sequences are not past the log's
+   top (its head, or the pending removal one past it), and the committed one is not behind the head. Otherwise a typed
+   503 (`RemovalLogBehind` or `RemovalDataBehind`) before anything is written (N5).
+2. **First removal on a database moved by an earlier build** (`ensure-declaration!`, 245): installs the two
+   attributes and starts the declared sequence at the committed one (N2).
+3. **Intent** in the log (`put-intent!`, 333, called at 409): written only where no intent is (PostgreSQL
+   `INSERT ... ON CONFLICT DO NOTHING`, one row or 503), and later replaced only over the exact text this removal last
+   wrote (`UPDATE ... WHERE payload=`), so two removals that both believe they hold the lock cannot replace each
+   other's intent.
+4. **Declaration** in Datomic (`declare!`, 254; operations 273-277): the declared sequence moves to s, the accounts its
+   selectors reach take -s. It lands only while the committed sequence is still s-1 (`[:db/cas head removal-seq (dec
+   s) (dec s)]`, 274), and an earlier declaration at s is taken as its own only when its intent was already in the log
+   (272: otherwise refused before writing).
+5. **Selection and commit** (`commit!`, 281): the commit lands only under its own declaration
+   (`[:db/cas head removal-intent s s]`, 303) and only if the selected subjects did not change; at most 4 attempts and
+   one subject guard (`hold!`, 230, guarded the same way, 238-239). A commit refused at the serial point because an
+   earlier attempt's commit landed first publishes that commit (424).
+6. **Intent rewritten to the committed entry, then publication** (`publish!`), unchanged.
+
+**The invariant, in one sentence:** a ticketed write commits only if, at Datomic's serial point, no removal that can
+reach an account it read (any account, for a ticket naming none) has declared or committed itself after the published
+cut its ticket was checked against, and no removal declares, releases or commits while the data is ahead of the log.
+
+**Where it is enforced at the serial point:**
+
+- **A ticket naming no account** (`removal_commit.clj` 142-143, added to the write's transaction at `storage.clj`
+  219): `[:db/cas scope :triplex.scope/removal-seq t t]` (no removal of any version committed since the ticket) and
+  `[:db/cas scope :triplex.scope/removal-intent (min d t) (min d t)]` (no declaration since the ticket; d is the
+  declared sequence the gateway read, lower than t only after an earlier build's removals, which do not declare).
+- **A ticket naming accounts:** the fence's comparison, `removal_scope.clj` 95, unchanged: a declaration sets those
+  accounts' counters to -s and the commit to s, and the ticket expects its published value.
+- **The declaration, the hold and the commit** carry their own compare-and-set (274, 238-239, 303), so a late
+  transaction of a stopped attempt cannot land after a later state.
+- **Not at the serial point, and not relied on for exactness:** the gateway's early 503 while a pending removal can
+  reach a ticket (`refuse-pending!`, 160, called at `privacy.clj` 215), the same refusal before
+  submission when the gateway's data already shows a declaration against the ticket (137, 141), and request-time
+  agreement (`erase.clj` 329-331).
+
+### 15.2 Every stop point, what it leaves, and who completes it
+
+s is the removal's sequence, h = s - 1 the log's head. "Refused" means refused for derived writes the removal can
+reach (a ticket naming no account, or naming one of its accounts); every other write and every read is served
+throughout.
+
+| # | Stopped after | Log | Datomic | What a gateway sees and does | Who completes it, and why it is safe |
+| --- | --- | --- | --- | --- | --- |
+| P0 | the agreement check (nothing written) | head h | unchanged | nothing to see; nothing refused | nothing to complete; the resend starts afresh |
+| P1 | its intent (the declaration not sent, or sent and its wait expired) | head h, intent at s | declared h, or s if the late declaration lands | the pending intent: 503 for the writes it can reach, and the refusing gateway completes it | **any gateway**, as a resend: its declaration reads the declared sequence (h, or s: then its own, because its intent was in the log before) and compares-and-sets from it, so a late declaration of the stopped attempt makes one of the two fail (503, completed at the next contact) and never lands after the commit (its `removal-seq` check) |
+| P2 | its declaration | head h, intent at s | declared s, accounts at -s | as P1; at the serial point the declared sequence and the counters refuse | any gateway: the declaration at s is its own (its intent was in the log); it declares again and releases what it no longer reaches |
+| P3 | its subject guard | as P2 | + the subjects' counters at -s | as P1; saves of those subjects refused at the serial point | any gateway: it finds the subjects held and keeps them held; a late hold cannot land after the commit (238-239) |
+| P4 | a commit sent whose wait expired | intent at s (this attempt's selection) | committed h, or s if it lands | as P1 | any gateway: if the commit landed, it is found by the command's claim and published (the same removal: same command, selectors, sequence, previous seal; its selection is the commit's own); if it lands during the completer's own attempt, that attempt is refused at the serial point and publishes it (gate case `late-own-commit`) |
+| P5 | its commit | intent at s | committed s | as P1; the committed sequence refuses tickets at h | any gateway: publishes the commit |
+| P6 | the intent rewritten to the committed entry | intent = committed entry | committed s | as P1 | any gateway: publishes it |
+| P7 | its publication (no answer sent) | head s | declared = committed = s | nothing pending; tickets at h are stale (409 ErasureFrontierChanged at the gateway, refused by the committed sequence at the serial point) | nothing; the resend answers 200 from the log |
+
+**The reviewer's ambiguity is gone:** "a declaration without an intent" cannot be produced by this version (the
+intent comes first, and the log loses an intent only by publishing it). When it is found, the data is ahead of the
+log (a log restored behind the data, or the earlier build `27733d980`), and every gateway refuses with
+`RemovalLogBehind`, which names what clears it.
+
+### 15.3 How long a stopped removal can refuse others' writes
+
+- **What it refuses:** only derived writes whose ticket names no account or names one of the accounts its selectors
+  reach. Reads, plain saves and derived writes naming other accounts are served throughout (stack runs, 15.6).
+- **The bound:** from the stop, until the first such write arrives at any gateway, plus one completion. That write is
+  refused (503) and its gateway, after releasing the write's locks, completes the removal (`main.clj` 500-502,
+  `complete-pending!` 440). A completion waits for the removal lock (only if a live gateway still holds it, which is
+  itself bounded) and runs at most six native transactions (one declaration, one guard, 4 commit attempts; seven on a
+  database's first removal, which installs its function), each waited at most 5 s: at most 30 to 35 s at the default
+  wait, plus the log's round trips (milliseconds on the stacks). If a completion is itself refused (a late transaction of the
+  stopped attempt landed first), it answers 503 and the next refused write completes it from what landed.
+- **What clears it:** the first refused derived write (any gateway), any removal of another command (which completes
+  the pending one first), or the removal's own resend. Time alone does not, but nothing it refuses can wait unseen:
+  every refusal is a 503 with a typed code, and every refusal starts the completion.
+- **The precondition:** at least one gateway's wait (`TX2_REMOVAL_WAIT_MS`, default 5 s) outlasts one native
+  transaction. With every gateway at 1 ms (the review's `orphan-wait` setting) no completion can finish: the removal
+  stays pending and visible, and the writes it can reach get 503, not an unexplained 409 (15.6).
+- **The only other unbounded case** is a removal log or data that disagree (an operator restored one of them): refused,
+  typed, until the operator puts the current log back or runs the restore route. That is today's rule's behaviour too.
+
+### 15.4 Each finding, its fix and the test that now passes
+
+Reproduced first on `27733d980` with the review's tests (`R1-on`, `R1-subject`: 9 violations on each setting; stacks
+`orphan`, `orphan-wait`, `upgrade` with `272a1bd66`), then rerun on `e921f3ef1`.
+
+| # | Finding | Reproduced on `27733d980` | Fix | Test that now passes (on `e921f3ef1`) |
+| --- | --- | --- | --- | --- |
+| N5 | High: the removal log restored behind the data; the next removal's declaration released an account that had lost a value, and a derived write that read it landed after the removal | `e7b`, both settings: the old frame 200 at position 5, after the removal at 4, copy readable once the log is back; the second attempt 400 | agreement check before anything is written, in every removal (402), the restore route (491) and every request (`erase.clj` 329-331); the declaration lands only while the committed sequence is s-1 and takes a declaration at s as its own only when its intent was in the log (272-274); the gateway's start reports it (`start-check!`, 460) | `e7b`, both settings: the second attempt 503 `RemovalLogBehind`, the old frame 503 `RemovalLogBehind` before and after it, no copy. Gate `log-behind`, one and two removals behind: the removal and the restore route 503 `RemovalLogBehind`, a frame that read the removed value and a frame naming no account refused, the declared and committed sequences, the held list and the counters unchanged, the start check reports `RemovalLogBehind`; once the current log is back a frame naming b, one naming no account and the removal 200, every counter equal to the log's. Stack `logbehind` (the PostgreSQL log one removal behind, gateways restarted): the start check reports it; a removal, the restore route, a read and frames with the old ticket 503 `RemovalLogBehind`; with the current log back, all 200 and the value not answered.TACK |
+| E7 | Low: after N5's release, frames naming either account refused for good once the log was back | `e7`: 409, 409, 409 after another removal; counters a 0 against -1, b 1 against 0 | N5's fix (nothing is released from a log behind the data) | `e7`: the removal while behind 503 `RemovalLogBehind`, reads while behind 503; once the log is back frames naming a and b 200, and after another removal; every counter equal to the log's |
+| N1 | High: a removal stopped between its declaration and its intent (a kill, or its declaration's wait expiring) refused every derived write naming no account, in every account, with nothing any gateway could see, until another removal ran | `e1`, 4 clearing routes, both settings: 5 of 5 frames 409 CasConflict; stacks: refused at 0, 5 and 10 s, after the write gateway restarted and 60 s later; with 1 ms waits for the 91 s observed, and another removal 503 | intent first (409), then the declaration (411); the pending intent is seen by every gateway, which answers 503 (tagged) to the writes it can reach and completes it once the refused write released its locks (`main.clj` 500-502, `complete-pending!` 440); a removal of another command completes it first | `e1`, 4 clearing routes, both settings: the intent pending; of 5 frames naming no account the first 503, then 4 of 4 200, and the removal published after the first; gate `stop-points`, 5 stops (intent, declared, held, committed, prepared), both per-account settings: the first frame naming no account 503 and the removal published by that contact, the next one and one naming the removed account 200, a frame naming another account and another account's save 200 while stopped, the resend 200 with sequence 1, the value gone everywhere, every counter equal to the log's. Fuzzer (44,000 schedules): 6,309 stops right after the declaration, every one completed by the first derived write after it (3,456 times the probe itself, 503; 2,853 times an earlier action); the liveness probes after every schedule 44,000 of 44,000 pairs 200. Stacks: the write gateway killed at intent, declared, committed, prepared and published, and its waits at 1 ms: in every run the first frame naming no account 503 and the read gateway completed the removal, every later frame 200, the value not answered; the review's `orphan` stack: nothing recorded, every frame 200 throughout. |
+| E1b | Low: a removal whose selection reached an account it had not declared was refused after its declaration, leaving a block of the wrong account | `e1-bucket`: 503, then frames naming no account 409 until the resend | the intent first; the completion computes the accounts again | `e1-bucket`: 503; the next frame naming no account 503 and completes it; the resend 200; then 200 |
+| N4 | High: a delivery between databases into a database guarded per account was refused | `e4`: 409, 409 | no check against the recipient's sequences when the ticket names another database (`ticket-intent-ops`, 139); a delivery into the same database keeps both checks | `e4`: 200, 200. Gate `deliveries`, both per-account settings, per account to per account, per account to database-wide, database-wide to per account, and into the same database: a delivery with the current source ticket 200, one with a source ticket older than a source removal 409 ErasureFrontierChanged, one with the new ticket 200 |
+| N3 | Medium: after a removal by an earlier version, this version's tickets naming no account were refused until a removal by this version ran | stack `upgrade`: fresh frames 409 twice, "Compare failed: 1 0"; `e3`: a fresh frame 409 | a ticket naming no account is checked on the committed sequence (any version's removals move it) and on the declared sequence where the gateway read it (the lower of it and the ticket) | `e3` (an earlier version emulated): a frame while its removal is pending 503 and completes it, a fresh frame after it 200, no copy, this version's removal and a fresh frame after it 200. Stack `mixed` with `27733d980` and with `272a1bd66`: this version's frames after an earlier build's removal 200, 200; an earlier build's pending removal completed by this version's first refused frame. |
+| N2 | Low: a database moved by an earlier build had no declared sequence; every removal and every frame naming no account failed | stack `upgrade`: the removal 400 twice, the frame 400 | the first removal installs the attributes and starts the declared sequence at the committed one (`ensure-declaration!`, 245); until then tickets are checked on the committed sequence | `e2` (the value retracted): a frame naming no account 200, the removal 200, a frame after it 200. Stack `upgrade` with `272a1bd66` (the review's): on the database moved by the earlier build, a fresh frame 200 and a removal by this version 200, resent 200. |
+| E6 | Information: a ticket naming fewer accounts than its writer read lets its copy survive | `e6` | none (by design: every caller must name every account it read, section 5, case 1) | `e6`: unchanged, the copy survives |
+| E9 | High against TARGETS 7.3, older than this branch: a derived copy recorded before a removal stays readable | `e9` | none here: `exp/DX-ERA4-derived-copies`; stated at the top of this page | `e9` (reported by the gate, not counted): copy readable, in the journal, 4 native copies unsealed, 2 sealed |
+| P1 | The page: section 8 ("until a removal runs"), the fleet order, the 14.2 F1b row | (page) | corrected in place, marked "[Corrected in the third pass ...]" | (page) |
+
+**Found while fixing (not in the review), fixed and tested:**
+
+- **A commit whose wait expired could land after the resend recorded a fresh selection**, and the removal could then
+  never be published (the stored intent's selection differed from the commit's). Now the same removal means the same
+  command, selectors, sequence and previous seal, and the commit's own selection is published. Gate
+  `late-own-commit`, both settings: the first attempt 503, its commit landed during the resend, the resend 200 with the
+  landed commit's position, a frame naming no account 200, every counter equal to the log's.
+- **A subject guard whose wait expired could land after the commit** and refuse the subject's saves until another
+  removal touched it. The guard now lands only while the removal is declared and uncommitted (238-239).
+- **Two removals that both believe they hold the lock could replace each other's intent.** The intent is written only
+  where none is, and replaced only over the text last seen (333). Gate `lock-lost`: 20 pairs of removals of two
+  accounts with the database's lock bypassed, both per-account settings: in every pair one 200 and one 503 at once, both
+  200 when resent, two sequences, both values gone, every counter equal to the log's. Stacks `lockloss-intent` and `lockloss-declared` (the PostgreSQL sessions of the gateway in the middle of a removal killed): the other gateway completed it and ran its own; the one that lost its lock wrote nothing.
+- **A ticket naming an account the data already showed declared** (the account reached through an assertion selector
+  with nothing left to remove there) was refused at the serial point without starting the completion; now it gets the
+  tagged refusal before submission (137, 141).
+
+### 15.5 What changed, exactly (for the third review)
+
+Commits after the reviewed head `27733d980`: `0ea7db896` (the fixes and the merged tests), `b1d524802` (the stack
+script), `e921f3ef1` (the tagged refusal before submission, below), `a735e0a7e` (the log-behind stack script), and the
+page commit.
+
+| File | Change |
+| --- | --- |
+| `removal_commit.clj` | `erase!`: the new order (agreement check, first-removal install, intent, declaration, selection and commit, publication); a removal of another command left pending is completed first (`complete-pending!`); a commit refused at the serial point publishes an earlier attempt's commit when that is what landed. New: `disagreement`, `refuse!`, `consistent?`, `refuse-inconsistent!` (data against log, typed answers); `declared-seq`, `ensure-declaration!` (N2); `put-intent!` (the intent written only over the text last seen); `pending-refusal`, `refuse-pending!` (the tagged 503) and `complete-pending!`; `start-check!`; `step!` (the test seam `TX2_REMOVAL_TEST_PAUSE_AT` and `TX2_REMOVAL_TEST_PAUSE_MS`, unset by default). Changed: `transact!` (a refused native step answers 503, tagged as refused); `ticket-intent-ops` (now also takes the database value: the committed-sequence compare-and-set, the declared one at the lower of the declared sequence and the ticket, nothing for a delivery from another database, and the tagged refusal before submission when the data already shows a declaration against the ticket); `declare!` (lands only while the committed sequence is s-1; takes a declaration at s as its own only when its intent was in the log); `hold!` and `commit!` (only under their own declaration); `same-removal` (the command, selectors, sequence and previous seal); `publish!` (the intent rewritten only over the text last seen); `rebuild!` (refused when the data is ahead of the log) |
+| `privacy.clj` 215 | `ensure-ticket!` raises the tagged refusal (`refuse-pending!`) instead of the plain 503 |
+| `storage.clj` 219 | passes the database value to `ticket-intent-ops` |
+| `erase.clj` 329-331 | `request-cut`: agreement includes the declared sequence; after its retries a typed answer (`RemovalLogBehind`, `RemovalDataBehind`) |
+| `main.clj` 500-502, 518-521 | a write refused by a pending removal: the gateway completes that removal once the write's locks are released; at start, every database guarded per account whose data and log disagree is reported |
+| `stack/up.sh` | `DX_REMOVAL_WAIT_MS_WRITE`, `DX_REMOVAL_TEST_PAUSE_AT`, `DX_REMOVAL_TEST_PAUSE_MS` (the write gateway only) |
+| `era3/` (the review's) | merged: `REVIEW-2.md`, `attack2.clj` (two adaptations, 15.7), `stack2.sh`, `stack2-ack.mjs`, `run.sh` |
+| `era2/gate.clj` | new cases `stop-points` (5 stops, each with a frame naming no account), `late-own-commit`, `log-behind` (one and two behind, and a declaration the log does not show), `rebuild`, `deliveries` (three directions, the same database, and the cross-database window), `lock-lost` (20 pairs of removals with the database's lock bypassed); `orphan-and-rebuild` removed |
+| `era2/gate.sh` | phase `era3` also runs the second review's cases E1 to E8 and its fuzzer (400 schedules) on both settings, and E9 (reported, not counted) |
+| `era2/stack-steps.sh` | new: a gateway killed at each step, an expired wait, a lost lock, a data restore taken while a removal was declared, a mixed fleet in both orders |
+
+**Change after the first rerun (`e921f3ef1`):** a ticket naming accounts whose data already showed one of them
+declared (counter negative) was refused at the serial point (409, untagged), so a removal whose declaration reached an
+account through an assertion selector with nothing left to remove there could refuse that account's frames without
+its completion starting. Every refusal a declaration causes now starts the completion; every result below is on
+`e921f3ef1`.
+
+### 15.6 Gates on the fixed code
+
+Gateway code `e921f3ef1` for every run below (later commits change only lab scripts and this page). Images: every
+container of every run ran the pinned runtime image by ID, `sha256:21a67288007d...` (`tx2-datomic:1.0.7745-da00`), and
+PostgreSQL `sha256:526f86d93c6e...` on the stacks; each run records the IDs it ran (`image-ran`, `images-ran`).
+Evidence (private): `DX-ERA2/p3/` in the project's evidence folder, compressed as `third-pass-e921f3ef1.tar.gz`.
+
+**In-process (`era2/gate.sh`, run `G2`):**
+
+| Gate | Result |
+| --- | --- |
+| Option off byte for byte (paired log, base `272a1bd66`) | identical: unsealed `e6ea7dfc4eec...` (653 datoms), sealed `033f30cd2767...` (698 datoms), on the base twice, on this code with the option off, and with it on and the database not moved; replies identical (md5 `2caaf1e83af2...`) |
+| Own gate, database-wide / per account / subject setting | 360 / 1,545 / 9,813 checks, 0 failed (per account was 695 before this pass: the new cases) |
+| `stop-points` (5 stops, both per-account settings) | 10 of 10: the first frame naming no account 503 and the removal completed by it (10 completions logged), the next frames 200 |
+| `late-own-commit`, `log-behind` (1 and 2 behind, undeclared), `rebuild`, `deliveries` (4 kinds) | all checks passed on both settings |
+| `lock-lost`, 20 pairs per setting | 40 of 40 pairs: one 200 and one 503 at once; all resent 200; two sequences; values gone; counters agree |
+| Frame race (late transactions behind an expired wait, released after the declaration) | 40 per setting: 20 refused by the declared sequence (`cas-failed`), 20 by the account fence; 0 committed |
+| Race loop, 1,000 saves racing a removal of their subject | 839 committed before the removal and removed with it, 161 refused (409 CasConflict), 0 after it |
+| Hammer, 30 rounds | 30 of 30 removals in 3 attempts, 30 guards |
+| The first review's attacks (`era3/attack.clj`, D1 to D6 and 400 schedules) | per account 1,979 oracles, subject setting 1,988; 0 violations |
+| The second review's cases E1 to E8 and 400 schedules (`era3/attack2.clj`) | 2,785 oracles on each setting; 0 violations |
+| E9, reported only | 2 violations, as on today's rule (the known unmet requirement) |
+| The gateway's Clojure suites | 76 tests, 71,170 assertions, the same single error as the base (`http-route`, `json.clj:82`) on all three arms |
+
+**The second review's fuzzer with the declaration dimensions (`era3/attack2.clj` fuzz2), 44,000 schedules, 0
+violations of F1, F1b or N5:**
+
+| Run | Setting | Sealed | Seed | Schedules | Oracles | Violations |
+| --- | --- | --- | --- | --- | --- | --- |
+| Z1 | per account | no | 1501 | 14,000 | 95,780 | 0 |
+| Z2 | subject | no | 1601 | 14,000 | 95,897 | 0 |
+| Z3 | per account | yes | 1701 | 8,000 | 58,637 | 0 |
+| Z4 | subject | yes | 1801 | 8,000 | 58,622 | 0 |
+| **Total** | | 16,000 sealed | | **44,000** | **308,936** | **0** |
+
+What the 44,000 schedules exercised (sums over the four runs):
+
+- **Late transactions with an old ticket** (prepared before the removal, submitted straight to Datomic after its
+  declaration, after its commit or after its answer): frames naming no account or naming the account, 14,183 refused,
+  0 committed; frames of another account 7,151 committed (as they must); late saves of the subject 2,090 committed
+  before the removal and removed with it, 4,867 refused, 0 after it.
+- **Derived writes sent during a stopped or completed removal:** 9,416, none landed after it.
+- **Stops right after the declaration:** 6,309. The first derived write after the stop: 3,456 times the fuzzer's probe
+  (503, and it completed the removal), 2,853 times an earlier action of the schedule had already completed it (the
+  probe then 200). Of these, 1,287 were never resent by their client: in every one, the next removal of the database
+  (another account) answered 200 and the liveness probes after it committed.
+- **Liveness after every schedule:** a fresh frame naming no account and one naming the account, 44,000 pairs, all 200.
+- **DX-IMP2's known resend** (an import frame of an entity named before it had a row, resent after the removal):
+  committed 471 times on the unsealed runs, as before (the families option on DX-IMP2's branch refuses it).
+
+**Stacks (per account, PostgreSQL authority shared by a write and a read gateway):**
+
+| Run | What was done | Result |
+| --- | --- | --- |
+| `step-intent`, `step-declared`, `step-committed`, `step-prepared` | the write gateway's removal of a1 paused at that step and the gateway killed there; nobody resent; every request after it to the read gateway | 4 of 4: the intent pending (1), published sequence 0; a frame naming b 200 and a save of b1 200; the first frame naming no account 503, after which the intent was gone and the removal published (sequence 1) by the read gateway; the next frame naming no account 200, a frame naming a 200; the resend 200 with sequence 1; another removal 200 with sequence 2; a1's value answered by its subject 0 times and by the refused frame's document 0 times; the write gateway restarted: a frame 200, no start-check line |
+| `step-published` | killed after its publication, before its answer | nothing pending, published sequence 1; every frame 200; the resend 200 with sequence 1; a1's value answered by its subject 0 times (the frame counted once was sent with ticket 1, after the publication: new data) |
+| `wait` | the write gateway's waits 1 ms (its removal answered 503 and its steps landed later); no resend | the same as the step runs: intent pending, the first frame naming no account 503 and the read gateway (5 s waits) completed the removal, everything after 200, the value not answered |
+| `lockloss-intent`, `lockloss-declared` | the write gateway's removal of a1 paused 20 s at that step; its PostgreSQL sessions killed (advisory locks 2, then 0); meanwhile a removal of b1 on the read gateway | 2 of 2: the read gateway's removal 200 with sequence 2, after completing the paused one as sequence 1; the paused removal, going on without its lock, answered 400 ("This connection has been closed.") and wrote nothing (nothing pending, the published sequence still 2); both resends 200 with sequences 1 and 2; frames naming no account, a and b 200; no value answered |
+| `restore` | a data backup taken while the removal of b1 was declared (paused); b1 (sequence 1) and a1 (sequence 2) then published; transactor and gateways stopped, `restore-db` from that backup (exit 0), restarted | start check: `RemovalDataBehind`, native 0, declared 1, log 2; a read of a1, a frame and a removal 503 `RemovalDataBehind` (a1's restored value not answered); the restore route 200 (sequence 2); then frames naming no account, a and b 200, a removal 200 with sequence 3; no value answered |
+| `logbehind` (`stack-logbehind.sh`) | the PostgreSQL removal log put back to a copy taken before the removal of b1; both gateways restarted; then the current log put back and both restarted | start check: `RemovalLogBehind`, native 1, declared 1, log 0; a removal, the restore route, a read of b1 and frames with the old ticket (naming b, naming none) all 503 `RemovalLogBehind`; with the current log back: no start-check line, frames 200, a removal 200 with sequence 2, b1's value not answered |
+| `mixed` with `27733d980`, and with `272a1bd66` (the read gateway on the earlier build) | 1. earlier build's removal, then this version's frames; 2. this version's removal, then the earlier build's frames; 3. this version's removal paused 15 s after its declaration while the earlier build sent frames with tickets from before it; 4. the earlier build's removal killed inside its publication, then this version's frames; 5. the earlier build back | both builds alike: 1. 200, 200 (N3 gone); 2. 200, 200; 3. the earlier build's two frames waited for the database's lock and were refused 409 ErasureFrontierChanged once the removal had published; 0 copies of a1 in their documents; its plain save 200; 4. intent pending; this version's frame naming b 503 and this version completed the earlier build's removal (published sequence 4); the frame naming no account with the same old ticket 409 ErasureFrontierChanged; fresh frames 200; 5. the earlier build's resend 200 with sequence 4, its frames 200; no value answered |
+| the review's `stack2.sh orphan` | the write gateway killed while its removal's first authority write (now the intent) was held by a table lock | nothing recorded and nothing declared: every frame naming no account 200 at 0, 5 and 10 s, after the restart and 60 s later; frames naming a and b 200; another removal 200 (before the fix: all 409 CasConflict until another removal) |
+| the review's `stack2.sh orphan-wait` | every gateway's removal waits 1 ms (the review's setting: both gateways); no resend | the removal answered 503 and stayed pending, visibly (1 intent); every frame naming no account and the frame naming a 503, at 0, 5 and 10 s, after the restart and 60 s later; the frame naming b, saves and reads 200; 9 completions were tried on contact and each timed out at 1 ms, as did another removal (503). This is the bound's one precondition: a completion needs one gateway whose wait outlasts a native transaction (with 5 s waits on the read gateway, run `wait` above, it completed at the first contact) |
+| the review's `stack2.sh ack` | 20 removals on the write gateway; on the read gateway a current read, a read pinned before the removal and a cached Reach session, in a loop | 20 of 20 acknowledged; 5,314 reads started after an acknowledgement (session 1,776, current 1,775, pinned 1,763), 0 answered the value; 736 of 1,115 reads started before an acknowledgement did (allowed) |
+| the review's `stack2.sh upgrade`, `OLD_REF=272a1bd66`, and the same with `6bc2484f0` (identical outcomes) | both gateways on the earlier build, a database moved by it; the read gateway switched to this version, a second database moved by it; a removal by the earlier build stopped inside its publication in each; then everything on this version | the database moved by this version: a frame naming no account 503 while the earlier build's removal was pending, one naming b 200; the removal resumed 200; frames with a fresh ticket 200, 200 (before the fix 409 twice, N3); a removal by this version and a frame after it 200. The database moved by the earlier build (no declared sequence): a frame 503 while pending, a save and a read 200; the removal resumed 200; a fresh frame 200 and one naming b 200 (before: 400); a removal by this version 200 and resent 200 (before: 400 twice, N2); moves back and forward, a removal and a frame 200 |
+| the first review's `stack.sh`, options 0, 1 and 2 | the write gateway killed inside the removal's publication; frames to the read gateway with the old ticket | option 0 (today's rule) unchanged: everything 503 while pending, the removal resumed 200 (sequence 1, position 3), the frame resent after it 409 ErasureFrontierChanged, no copy. Options 1 and 2 alike: the subject's own save 409 CasConflict; the frame naming no account 503, and its gateway completed the removal; the frame naming the account, with the same old ticket, then 409 ErasureFrontierChanged; the resend 200 (sequence 1, position 3); no copy; a1 no longer answers its value |
+| `era2/stack-timeout.sh`, 5 ms and 10 ms waits on both gateways | the removal sent again and again until it answers 200; after every answer, frames with the old ticket (naming no account, naming the account) and a save of a1 to the read gateway | 5 ms: 35 attempts (34 answered 503), 68 completions tried on contact and each timed out; each frame kind refused 35 of 35 (34 by the tagged 503, which the gateway now gives before submission because its data shows the declaration; 1 after the acknowledgement, 409 ErasureFrontierChanged); 0 landed after the removal; no copy; a1 not readable. 10 ms: 3 attempts, every frame refused (2 + 1), 0 landed, no copy |
+
+### 15.7 The review's tests that had to change, and why
+
+- **E1's first oracle** said "a stopped removal that recorded no intent does not refuse every unnamed derived write".
+  No stop records no intent now. It is replaced by three oracles: the stopped removal's intent is pending; it refuses
+  unnamed derived writes only until the first one, whose gateway completes it (that one 503, the next four 200); and the
+  log has the removal after that first write. The rest of E1 is unchanged.
+- **E3's emulation of an earlier version** removed only the declaration step. This version's commit and hold also
+  check the declaration, so that emulation no longer behaved like an earlier build; it now also strips those checks
+  from the removal's own transactions (`earlier-version` in `attack2.clj`).
+- **`era2/gate.clj`'s orphan case** is replaced by `stop-points` (each stop, with a frame naming no account), and its
+  restore-rebuild part by `rebuild` (a copy restored from mid-removal; the declaration the log does not show is now
+  case `log-behind/undeclared`, refused and cleared by the move).
+
+### 15.8 The cross-database delivery window (the account-ticket builder's finding)
+
+**Confirmed unchanged by these fixes.** Gate case `deliveries`, last part, both settings: a delivery's recipient
+transaction prepared under the source's current ticket and submitted after a removal in the source was acknowledged
+committed, and its copy of the removed value is readable in the recipient. The delivery's check of the source runs in
+the gateway, under the source's lock; it is not at any serial point, because each database here is its own Datomic
+database and no transaction spans two. Live requests are ordered by the lock; a delivery whose wait expired (its lock
+released) can land later.
+
+**What would close it.** Either (a) the source and the recipient in one Datomic database (the one-database goal): the
+recipient's transaction then carries the source's committed and declared compare-and-sets, exactly as a delivery into
+the same database does now (gate case `deliveries/same-database`: an old source ticket refused); or (b), while they
+are separate, a two-step delivery: a claim written in the source (checked there against its sequences) before the
+recipient commit, and a token in the recipient that the source's removal must revoke (a write into every recipient
+with an open claim) before it commits.
+
+### 15.9 Still not tested
+
+1. **No server run.** Toy sizes only; every time is diagnostic.
+2. **The subject guard's stop (P3) on a stack:** in-process only (gate `stop-points/held`, the fuzzer's `after-guard`
+   stops); a stack cannot force the subject to change between attempts. Every other step was killed on a stack.
+3. **A completion's latency under load.** The bound (15.3) is from the code; no run measured a completion while the
+   database took load, and the toy completions took under a second.
+4. **A removal log behind the data with removals pending in it** (a backup of the log taken while a removal was
+   pending, restored after more removals): in-process the log was put back one and two removals behind, idle; on a
+   stack one removal behind, idle.
+5. **Earlier builds' derived writes during this version's declared removal** (the window the fleet order forbids):
+   measured on the mixed-fleet stack, not closed; the order in section 8 is the only protection.
+6. **The owner-root fold under the guard** (the bound's only unfenced write): no run had an owner root.
+7. **The PostgreSQL advisory lock's fairness** under bursts of removals: not measured.
+8. **The ERASE1 regression on the pinned image** (its harness chooses the newest recorded build).
+9. **DX-IMP2 together with this branch:** the known resend (471 times here) is refused only with DX-IMP2's families
+   option, on its own branch.
+10. **Whether every caller that names accounts names every account it read** (E6 depends on it): callers not reviewed.
+11. **The cross-database delivery window** (15.8): confirmed open, not closed.
+12. **E9, derived copies recorded before a removal:** a known unmet requirement, owned by `exp/DX-ERA4-derived-copies`.

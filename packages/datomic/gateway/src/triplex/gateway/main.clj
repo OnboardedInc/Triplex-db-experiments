@@ -497,6 +497,9 @@
                 (run read-cut))))))
       (catch Exception e
         (let [info (ex-data e)]
+          ;; [DX-ERA3 N1] a write refused by a pending removal: this gateway completes that removal (its locks released)
+          (when (:removal-pending info)
+            ((requiring-resolve 'triplex.gateway.removal-commit/complete-pending!) name (connection (db-uri name))))
           (response (or (:status info) 400) {:code (or (:code info) "GatewayError") :message (.getMessage e)}))))
     (route-handler-base request)))
 
@@ -512,6 +515,10 @@
     (try (sync-db (db-uri name))
          (catch Exception e
            (when (some #{name} (d/get-database-names (db-uri "*"))) (throw e)))))
+  ;; [DX-ERA3 N5] report every database guarded per account whose data and removal log disagree
+  (when removal-scope/enabled
+    ((requiring-resolve 'triplex.gateway.removal-commit/start-check!) (d/get-database-names (db-uri "*"))
+                                                                      (fn [name] (connection (db-uri name)))))
   (start-thread-sampler!)
   (jetty/run-jetty serve-handler {:port port
                            :host "0.0.0.0" :join? true :min-threads 8 :max-threads http-max-threads

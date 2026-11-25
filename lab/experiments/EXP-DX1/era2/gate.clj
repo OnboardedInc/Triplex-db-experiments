@@ -613,41 +613,279 @@
                      (triplex.gateway.scope/value db scope :triplex.scope/removal-seq))
             "nothing declared beyond the log")))
 
-(defn orphan-and-rebuild
-  "A removal stopped between its declaration and its intent (an orphan declaration: accounts held, nothing pending), then
-  another removal; and a restore replay that rebuilds counters a copy holds out of step with the log."
+(defn- frame-any [name conn id]
+  (assoc (save-frame id (str "notice:v1:" id) ":notice/body" "derived" nil nil) "erasureSeq" (seq-now name conn)))
+(defn- frame-acct [name conn id account]
+  (assoc (frame-any name conn id) "erasureAccounts" [account]))
+(defn- stop-ex [step] (ex-info (str "stopped " (clojure.core/name step)) {}))
+
+(defn stop-points
+  "[DX-ERA3 second review, N1] A removal stopped after each of its steps. Every stop leaves a removal the log shows as
+  pending: a write it cannot reach commits; the first derived write it can reach (here one naming no account) is
+  refused 503 and its gateway completes the removal; the next ones commit; the stopped removal, resent, answers the
+  same removal; the counters agree with the log and nothing is declared past it."
+  []
+  (when per-account?
+    (doseq [step [:intent :declared :held :committed :prepared]]
+      (fresh-scope false
+        (fn [name conn]
+          (let [label (str "stop-points/" (clojure.core/name step))
+                seeds (seed! name [a1 a2 b1]) value (:value (seeds a1)) pin (head conn)
+                before (raw-occurrences conn value)
+                declare rc/declare! commit rc/commit! hold rc/hold! publish privacy/publish! first-try (atom true)
+                stopped (with-redefs [rc/declare! (fn [& args]
+                                                    (when (= step :intent) (throw (stop-ex step)))
+                                                    (let [r (apply declare args)] (when (= step :declared) (throw (stop-ex step))) r))
+                                      rc/narrow-tries (if (= step :held) 1 rc/narrow-tries)
+                                      rc/commit! (fn [& args]
+                                                   (when (and (= step :held) (compare-and-set! first-try true false))
+                                                     (throw (ex-info rc/moved {})))
+                                                   (let [r (apply commit args)] (when (= step :committed) (throw (stop-ex step))) r))
+                                      rc/hold! (fn [& args] (let [r (apply hold args)] (when (= step :held) (throw (stop-ex step))) r))
+                                      privacy/publish! (fn [& args] (if (= step :prepared) (throw (stop-ex step)) (apply publish args)))]
+                          (remove! name "sp-1" a1))
+                pending (privacy/pending name)
+                other-frame (offers/send name (frame-acct name conn "sp-b" "b"))
+                other-save (offers/send name (frame "sp-sb" b1 (secret b1 "s") (:id (seeds b1)) (head conn)))
+                first-any (offers/send name (frame-any name conn "sp-any-1"))
+                seq-after (seq-now name conn)
+                second-any (offers/send name (frame-any name conn "sp-any-2"))
+                named-a (offers/send name (frame-acct name conn "sp-a" "a"))
+                resent (remove! name "sp-1" a1)]
+            (check! label (not= 200 (:status stopped)) "the removal did not answer while stopped" (offers/outcome stopped))
+            (check! label (= 1 (get pending "seq")) "its intent is pending (every gateway sees it)" pending)
+            (expect (str label ": a frame naming another account") other-frame [200 nil])
+            (expect (str label ": another account's save") other-save [200 nil])
+            (expect (str label ": the first frame naming no account is refused, its gateway completes the removal") first-any
+                    [503 "ErasureFrontierUnavailable"])
+            (check! label (= 1 seq-after) "the removal was completed by that contact" seq-after)
+            (expect (str label ": the next frame naming no account") second-any [200 nil])
+            (expect (str label ": a frame naming the removed account") named-a [200 nil])
+            (expect (str label ": the stopped removal resent") resent [200 nil])
+            (check! label (= 1 (get-in resent [:body "seq"])) "the resend answers the same removal" (:body resent))
+            (check! label (marked? name a1 pin) "a1's value is marked")
+            (removed-everywhere! label name conn a1 value before pin)
+            (native-counters-agree! label name conn)))))))
+
+(defn late-own-commit
+  "[DX-ERA3 second review] The removal's commit waits longer than the gateway (503), and its transaction lands while
+  the resend is in flight, after the resend recorded a fresh selection: the resend publishes the commit that landed."
   []
   (when per-account?
     (fresh-scope false
       (fn [name conn]
-        (let [seeds (seed! name [a1 b1]) prepare privacy/prepare!
-              ticket (seq-now name conn)
-              frame-a (fn [id] (assoc (save-frame id (str "notice:v1:" id) ":notice/body" (secret a1 id) nil nil)
-                                      "erasureSeq" (seq-now name conn) "erasureAccounts" ["a"]))
-              stopped (with-redefs [privacy/prepare! (fn [& _] (throw (ex-info "stop before the intent" {})))]
-                        (remove! name "orphan-1" a1))]
-          (check! "orphan" (not= 200 (:status stopped)) "stopped before its intent" (offers/outcome stopped))
-          (check! "orphan" (nil? (privacy/pending name)) "no intent recorded")
-          (expect "orphan: a frame of the held account fails at the commit point" (offers/send name (frame-a "orphan-f1")) [409 "CasConflict"])
-          (expect "orphan: another account's save" (offers/send name (frame "orphan-b" b1 (secret b1 "o") (:id (seeds b1)) (head conn))) [200 nil])
-          (expect "orphan: another removal replaces the declaration" (remove! name "orphan-2" b1) [200 nil])
-          (expect "orphan: the frame of account a, read again" (offers/send name (frame-a "orphan-f2")) [200 nil])
-          (expect "orphan: the stopped removal resent" (remove! name "orphan-1" a1) [200 nil])
-          (native-counters-agree! "orphan" name conn)
-          ;; a copy whose counters are out of step with the log (as a copy restored from mid-removal can be)
-          (let [db (d/db conn) scope (triplex.gateway.scope/entity db) n (triplex.gateway.scope/value db scope :triplex.scope/removal-seq)]
-            @(d/transact conn [[:db/add scope :triplex.scope/removal-intent (inc n)]
-                               [:db/add scope :triplex.scope/removal-held "[\"zz\",\"a\"]"]
-                               {:db/id "zz" :triplex.removal/account "zz" :triplex.removal/seq (- (inc n))}
-                               {:db/id "za" :triplex.removal/account "a" :triplex.removal/seq (- (inc n))}
-                               {:db/id "ze" :triplex.removal/entity "acct/zz/x" :triplex.removal/seq 7}]))
+        (let [seeds (seed! name [a1 b1]) value (:value (seeds a1)) pin (head conn) before (raw-occurrences conn value)
+              tx rc/transact! commit rc/commit! landed (promise) late (atom nil)
+              commit-op? (fn [ops] (some (fn [op] (and (vector? op) (= rc/commit-ident (first op)))) ops))
+              first-reply (with-redefs [rc/transact! (fn [c ops]
+                                                       (if (and (commit-op? ops) (nil? @late))
+                                                         (do (reset! late ops) (privacy/unavailable!))
+                                                         (tx c ops)))]
+                            (remove! name "late-1" a1))
+              ;; the resend: once it has recorded its own selection and reaches its commit, the first commit lands
+              resent (with-redefs [rc/commit! (fn [& args]
+                                                (when-not (realized? landed)
+                                                  (deliver landed (try @(d/transact-async conn @late) :committed
+                                                                       (catch Exception e (.getMessage e)))))
+                                                (apply commit args))]
+                       (remove! name "late-1" a1))
+              native (d/entid (d/db conn) [:triplex.tx/operation-id (str "privacy-" (privacy/sha256 "late-1"))])]
+          (expect "late-own-commit: the first attempt" first-reply [503 "ErasureFrontierUnavailable"])
+          (check! "late-own-commit" (= :committed (deref landed 1000 nil)) "the first attempt's commit landed late" (deref landed 1000 nil))
+          (expect "late-own-commit: the resend" resent [200 nil])
+          (check! "late-own-commit" (= (get-in resent [:body "position"]) (:triplex.tx/position (d/entity (d/db conn) native)))
+                  "the resend published the commit that landed" (:body resent))
+          (expect "late-own-commit: sent again" (remove! name "late-1" a1) [200 nil])
+          (expect "late-own-commit: a frame naming no account" (offers/send name (frame-any name conn "late-any")) [200 nil])
+          (removed-everywhere! "late-own-commit" name conn a1 value before pin)
+          (native-counters-agree! "late-own-commit" name conn))))))
+
+(defn- copy-dir! [^java.nio.file.Path from ^java.nio.file.Path to]
+  (java.nio.file.Files/createDirectories to (make-array java.nio.file.attribute.FileAttribute 0))
+  (with-open [st (java.nio.file.Files/list to)] (doseq [p (iterator-seq (.iterator st))] (java.nio.file.Files/delete p)))
+  (with-open [st (java.nio.file.Files/list from)]
+    (doseq [p (iterator-seq (.iterator st))]
+      (java.nio.file.Files/copy ^java.nio.file.Path p (.resolve to (.getFileName ^java.nio.file.Path p))
+                                (into-array java.nio.file.CopyOption [java.nio.file.StandardCopyOption/REPLACE_EXISTING])))))
+
+(defn log-behind
+  "[DX-ERA3 N5] The removal log restored from a backup one and two removals behind the data: every removal, the
+  restore route and every derived write are refused (typed) before anything is declared or released, the native
+  counters do not move, a derived write that read a removed value never lands; the gateway's start check reports it;
+  once the current log is back everything works again. Also a declaration the log does not show (left by the earlier
+  build), cleared by moving the database back and forward."
+  []
+  (when per-account?
+    (doseq [behind [1 2]]
+      (fresh-scope false
+        (fn [name conn]
+          (let [label (str "log-behind/" behind)
+                seeds (seed! name [a1 b1 "acct/c/one"]) vb (:value (seeds b1))
+                dir (.getParent (privacy/path name "head.json"))
+                tmp (fn [t] (java.nio.file.Paths/get "/tmp" (into-array String [(str "era2-lb-" behind "-" t)])))
+                _ (copy-dir! dir (tmp "old"))
+                r1 (remove! name "lb-1" b1)
+                r2 (when (= behind 2) (remove! name "lb-2" "acct/c/one"))
+                _ (copy-dir! dir (tmp "current"))
+                _ (copy-dir! (tmp "old") dir) _ (reset! privacy/cache {})
+                native (fn [] (let [db (d/db conn) sc (triplex.gateway.scope/entity db)]
+                                {:declared (triplex.gateway.scope/value db sc :triplex.scope/removal-intent)
+                                 :committed (triplex.gateway.scope/value db sc :triplex.scope/removal-seq)
+                                 :held (triplex.gateway.scope/value db sc :triplex.scope/removal-held)
+                                 :b (rs/native-account-seq db "b") :a (rs/native-account-seq db "a")}))
+                n0 (native)
+                removal (remove! name "lb-3" a1)
+                restore (offers/route name "v2" "restore-erasure" {})
+                old-frame (offers/send name (assoc (save-frame "lb-old" "notice:v1:lb-old" ":notice/body" (str "derived:" vb) nil nil)
+                                                   "erasureSeq" 0 "erasureAccounts" ["b"]))
+                any-frame (offers/send name (assoc (save-frame "lb-any" "notice:v1:lb-any" ":notice/body" "x" nil nil) "erasureSeq" 0))
+                start (with-out-str (rc/start-check! [name] (fn [_] conn)))
+                n1 (native)
+                _ (copy-dir! (tmp "current") dir) _ (reset! privacy/cache {})
+                back-frame (offers/send name (frame-acct name conn "lb-b" "b"))
+                back-any (offers/send name (frame-any name conn "lb-any2"))
+                back-removal (remove! name "lb-3" a1)]
+            (expect label r1 [200 nil])
+            (when r2 (expect label r2 [200 nil]))
+            (expect (str label ": a removal while the log is behind") removal [503 "RemovalLogBehind"])
+            (expect (str label ": the restore route while the log is behind") restore [503 "RemovalLogBehind"])
+            (check! label (not= 200 (:status old-frame)) "a derived write that read the removed value never lands" (offers/outcome old-frame))
+            (check! label (not= 200 (:status any-frame)) "a derived write naming no account is refused" (offers/outcome any-frame))
+            (check! label (str/includes? start "RemovalLogBehind") "the start check reports it" start)
+            (check! label (= n0 n1) "nothing declared, held or released while the log is behind" {:before n0 :after n1})
+            (check! label (not (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" ["notice:v1:lb-old"]}))) vb)) "no copy")
+            (expect (str label ": once the current log is back, a frame naming b") back-frame [200 nil])
+            (expect (str label ": and one naming no account") back-any [200 nil])
+            (expect (str label ": and the removal") back-removal [200 nil])
+            (native-counters-agree! label name conn)))))
+    ;; a declaration the log does not show, as the earlier build (27733d980) could leave
+    (fresh-scope false
+      (fn [name conn]
+        (let [label "log-behind/undeclared" seeds (seed! name [a1 b1])
+              db (d/db conn) sc (triplex.gateway.scope/entity db)
+              n (triplex.gateway.scope/value db sc :triplex.scope/removal-seq)
+              _ @(d/transact conn [[:db/add sc :triplex.scope/removal-intent (inc n)] [:db/add sc :triplex.scope/removal-held "[\"a\"]"]
+                                   {:db/id "za" :triplex.removal/account "a" :triplex.removal/seq (- (inc n))}])
+              removal (remove! name "ud-1" a1)
+              frame (offers/send name (frame-any name conn "ud-any"))
+              moves [(offers/route name "v2" "removal-per-account" {"back" true}) (offers/route name "v2" "removal-per-account" {})]]
+          (expect (str label ": a removal") removal [503 "RemovalLogBehind"])
+          (check! label (not= 200 (:status frame)) "a frame naming no account is refused" (offers/outcome frame))
+          (check! label (= [[200 nil] [200 nil]] (map offers/outcome moves)) "moved back and forward" (map offers/outcome moves))
+          (expect (str label ": after the moves, the removal") (remove! name "ud-1" a1) [200 nil])
+          (expect (str label ": and a frame naming no account") (offers/send name (frame-any name conn "ud-any2")) [200 nil])
+          (native-counters-agree! label name conn))))))
+
+(defn rebuild
+  "A copy restored from mid-removal (counters out of step with the log, accounts held): the restore replay rebuilds
+  every counter from the log."
+  []
+  (when per-account?
+    (fresh-scope false
+      (fn [name conn]
+        (let [seeds (seed! name [a1 b1])
+              _ (expect "rebuild" (remove! name "rb-1" b1) [200 nil])
+              db (d/db conn) scope (triplex.gateway.scope/entity db) n (triplex.gateway.scope/value db scope :triplex.scope/removal-seq)]
+          @(d/transact conn [[:db/add scope :triplex.scope/removal-held "[\"zz\",\"a\"]"]
+                             {:db/id "zz" :triplex.removal/account "zz" :triplex.removal/seq (- n)}
+                             {:db/id "za" :triplex.removal/account "a" :triplex.removal/seq (- n)}
+                             {:db/id "ze" :triplex.removal/entity "acct/zz/x" :triplex.removal/seq 7}])
           (let [r (erase/replay-after-restore! name conn)]
             (check! "rebuild" (= (seq-now name conn) (get-in r [:erasure :seq])) "the restore replay answers" r))
           (native-counters-agree! "rebuild" name conn)
-          (expect "rebuild: a frame of account a" (offers/send name (frame-a "rebuild-f")) [200 nil])
-          (expect "rebuild: a ticket naming no account"
-                  (offers/send name (assoc (save-frame "rebuild-any" "notice:v1:rebuild-any" ":notice/body" "x" nil nil) "erasureSeq" (seq-now name conn)))
-                  [200 nil]))))))
+          (expect "rebuild: a frame of account a" (offers/send name (frame-acct name conn "rebuild-f" "a")) [200 nil])
+          (expect "rebuild: a ticket naming no account" (offers/send name (frame-any name conn "rebuild-any")) [200 nil]))))))
+
+(defn deliveries
+  "[DX-ERA3 N4] A delivery between databases (erasureSourceDatabase, the source's ticket) in both directions between a
+  database guarded per account and one on the database-wide rule, and into the same database; a delivery with a
+  source ticket older than a source removal is refused. Then the finding of the account-ticket builder, which this
+  fix does not change: a delivery whose recipient transaction was prepared before a source removal and lands after
+  it commits, because no serial point spans the two databases."
+  []
+  (when per-account?
+    (doseq [[src-moved? rcp-moved?] [[true true] [true false] [false true]]]
+      (fresh-scope false
+        (fn [recipient rconn]
+          (fresh-scope false
+            (fn [source sconn]
+              (let [label (str "deliveries/" (if src-moved? "per-account" "database-wide") "->" (if rcp-moved? "per-account" "database-wide"))
+                    _ (when-not src-moved? (offers/route source "v2" "removal-per-account" {"back" true}))
+                    _ (when-not rcp-moved? (offers/route recipient "v2" "removal-per-account" {"back" true}))
+                    _ (seed! source [a1 b1]) _ (seed! recipient [a1 b1 "acct/c/one"])
+                    _ (expect label (remove! recipient "dl-r1" b1) [200 nil])
+                    _ (expect label (remove! recipient "dl-r2" "acct/c/one") [200 nil])
+                    deliver (fn [k ticket] (offers/send recipient (assoc (save-frame (str "dl-" k) (str "notice:v1:dl-" k) ":notice/body" "delivered" nil nil)
+                                                                         "erasureSourceDatabase" source "erasureSeq" ticket)))
+                    d1 (deliver 1 (seq-now source sconn))
+                    old (seq-now source sconn)
+                    _ (expect label (remove! source "dl-s1" a1) [200 nil])
+                    d2 (deliver 2 old)
+                    d3 (deliver 3 (seq-now source sconn))]
+                (expect (str label ": a delivery with the current source ticket") d1 [200 nil])
+                (expect (str label ": a delivery with a source ticket older than a source removal") d2 [409 "ErasureFrontierChanged"])
+                (expect (str label ": a delivery with the source's new ticket") d3 [200 nil])))))))
+    (fresh-scope false
+      (fn [name conn]
+        (let [label "deliveries/same-database" _ (seed! name [a1 b1])
+              deliver (fn [k ticket] (offers/send name (assoc (save-frame (str "ds-" k) (str "notice:v1:ds-" k) ":notice/body" "x" nil nil)
+                                                              "erasureSourceDatabase" name "erasureSeq" ticket)))
+              d1 (deliver 1 (seq-now name conn))
+              old (seq-now name conn)
+              _ (expect label (remove! name "ds-r" b1) [200 nil])
+              d2 (deliver 2 old)
+              d3 (deliver 3 (seq-now name conn))]
+          (expect (str label ": current ticket") d1 [200 nil])
+          (expect (str label ": a ticket older than a removal of the same database") d2 [409 "ErasureFrontierChanged"])
+          (expect (str label ": the new ticket") d3 [200 nil]))))
+    ;; the cross-database window (observed, not a check of this branch)
+    (fresh-scope false
+      (fn [recipient rconn]
+        (fresh-scope false
+          (fn [source sconn]
+            (let [seeds (seed! source [a1]) v (:value (seeds a1))
+                  input (assoc (save-frame "dw-late" "notice:v1:dw-late" ":notice/body" (str "derived:" v) nil nil)
+                               "erasureSourceDatabase" source "erasureSeq" (seq-now source sconn))
+                  captured (atom nil) submit d/transact-async
+                  _ (with-redefs [d/transact-async (fn [c data & more] (if (nil? @captured) (do (reset! captured data) (future (throw (ex-info "held back" {}))))
+                                                                          (apply submit c data more)))]
+                      (offers/send recipient input))
+                  removed (remove! source "dw-rm" a1)
+                  landed (try @(d/transact-async rconn @captured) :committed (catch Exception e (.getMessage e)))
+                  copy (str/includes? (text (:body (offers/route recipient "v1" "read" {"entityIds" ["notice:v1:dw-late"]}))) v)]
+              (println "ERA2_DELIVERY_WINDOW" (pr-str {:source-removal (offers/outcome removed) :late-recipient-transaction landed
+                                                       :copy-readable-in-recipient-after-ack copy})))))))))
+
+(defn lock-lost
+  "[DX-ERA3 second review] Two removals of different commands at once, with the database's lock not held (as after a
+  lost lock): the intent is the arbiter, one records it and the other answers 503; resent, both complete, the log
+  verifies, every counter agrees and both values are removed."
+  [n]
+  (when per-account?
+    (fresh-scope false
+      (fn [name conn]
+        (let [counts (atom {}) guard privacy/guard]
+          (doseq [i (range n)]
+            (let [x (str "acct/k/s" i) y (str "acct/j/s" i)
+                  vx (secret x "seed") vy (secret y "seed")
+                  _ (expect "lock-lost: seed" (offers/send name (frame (str "kseed-x" i) x vx nil nil)) [200 nil])
+                  _ (expect "lock-lost: seed" (offers/send name (frame (str "kseed-y" i) y vy nil nil)) [200 nil])
+                  pin (head conn)
+                  bx (raw-occurrences conn vx) by (raw-occurrences conn vy)
+                  [rx ry] (with-redefs [privacy/guard (fn [scope work] (if (str/includes? scope "#removal/") (guard scope work) (work)))]
+                            (let [fx (future (remove! name (str "kx-" i) x)) fy (future (remove! name (str "ky-" i) y))]
+                              [(deref fx 20000 {:status 0}) (deref fy 20000 {:status 0})]))
+                  outcomes (sort (map offers/outcome [rx ry]))
+                  ax (remove! name (str "kx-" i) x) ay (remove! name (str "ky-" i) y)]
+              (swap! counts update outcomes (fnil inc 0))
+              (check! "lock-lost" (some #(= [200 nil] %) outcomes) "one of the two completes at once" outcomes)
+              (check! "lock-lost" (every? #(contains? #{[200 nil] [503 "ErasureFrontierUnavailable"]} %) outcomes) "the other completes or answers 503" outcomes)
+              (expect "lock-lost: x resent" ax [200 nil]) (expect "lock-lost: y resent" ay [200 nil])
+              (check! "lock-lost" (not= (get-in ax [:body "seq"]) (get-in ay [:body "seq"])) "two sequences")
+              (removed-everywhere! "lock-lost/x" name conn x vx bx pin)
+              (removed-everywhere! "lock-lost/y" name conn y vy by pin)))
+          (native-counters-agree! "lock-lost" name conn)
+          (println "ERA2_LOCK_LOST" (pr-str {:iterations n :outcomes @counts})))))))
 
 (defn named-absent
   "A removal naming an entity that has no row yet: a creation save and an import frame of it prepared before the
@@ -745,7 +983,12 @@
   (scenario "race-loop" #(race-loop (Long/parseLong (or (System/getenv "ERA2_RACES") "1000"))))
   (scenario "hammer" #(hammer 30))
   (scenario "frame-race" #(frame-race (Long/parseLong (or (System/getenv "ERA2_FRAME_RACES") "40"))))
-  (scenario "orphan-and-rebuild" orphan-and-rebuild)
+  (scenario "stop-points" stop-points)
+  (scenario "late-own-commit" late-own-commit)
+  (scenario "log-behind" log-behind)
+  (scenario "rebuild" rebuild)
+  (scenario "deliveries" deliveries)
+  (scenario "lock-lost" #(lock-lost (Long/parseLong (or (System/getenv "ERA2_LOCK_LOST") "20"))))
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode
              (pr-str {:checks (count @results) :failed (count failed)}))

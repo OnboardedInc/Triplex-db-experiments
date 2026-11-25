@@ -1114,6 +1114,11 @@ for role in "${gateway_roles[@]}"; do
   if [[ ${DX_REMOVAL_SUBJECT_CHECK:-0} == 1 ]]; then field_policy+=(-e "TX2_REMOVAL_SUBJECT_CHECK=1"); fi
   # [DX-ERA2] The removal's wait for each of its native transactions, in ms (tests force it to expire; unset: 5000).
   if [[ -n ${DX_REMOVAL_WAIT_MS:-} ]]; then field_policy+=(-e "TX2_REMOVAL_WAIT_MS=$DX_REMOVAL_WAIT_MS"); fi
+  # [DX-ERA2 third pass] The write gateway only: its removal wait, and the test seam that pauses its removals at one
+  # step (TX2_REMOVAL_TEST_PAUSE_AT, for TX2_REMOVAL_TEST_PAUSE_MS or until killed). Unset: nothing.
+  if [[ $mode == w && -n ${DX_REMOVAL_WAIT_MS_WRITE:-} ]]; then field_policy+=(-e "TX2_REMOVAL_WAIT_MS=$DX_REMOVAL_WAIT_MS_WRITE"); fi
+  if [[ $mode == w && -n ${DX_REMOVAL_TEST_PAUSE_AT:-} ]]; then field_policy+=(-e "TX2_REMOVAL_TEST_PAUSE_AT=$DX_REMOVAL_TEST_PAUSE_AT"); fi
+  if [[ $mode == w && -n ${DX_REMOVAL_TEST_PAUSE_MS:-} ]]; then field_policy+=(-e "TX2_REMOVAL_TEST_PAUSE_MS=$DX_REMOVAL_TEST_PAUSE_MS"); fi
   # [DX-SCALE2] The sweep's per-account gates evicted when an account's last sweep ends (unset: environment unchanged).
   if [[ -n ${DX_SWEEP_GATE_EVICT:-} ]]; then
     [[ $DX_SWEEP_GATE_EVICT =~ ^[01]$ ]] || { echo "up.sh: DX_SWEEP_GATE_EVICT must be 0 or 1" >&2; exit 2; }

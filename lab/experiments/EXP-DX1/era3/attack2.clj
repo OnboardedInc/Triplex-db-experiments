@@ -76,6 +76,7 @@
               save-a2 (offers/outcome (offers/send name (g/frame "e1-s-a2" g/a2 (g/secret g/a2 "s") (:id (seeds g/a2)) (g/head conn))))
               save-a1 (offers/outcome (offers/send name (g/frame "e1-s-a1" g/a1 (g/secret g/a1 "s") (:id (seeds g/a1)) (g/head conn))))
               readable (read-has? name g/a1 value)
+              seq-after-frames (g/seq-now name conn)
               cleared (case clear
                         :resend (offers/outcome (a/remove-attr! name "e1-rm" g/a1))
                         :other (offers/outcome (a/remove-attr! name "e1-other" g/b1))
@@ -89,10 +90,17 @@
                       :unnamed-frames-while-orphaned (frequencies unnamed) :frame-naming-a named-a :frame-naming-b named-b
                       :save-other-subject save-a2 :save-of-the-subject save-a1 :value-readable readable
                       :cleared-by clear :clear-outcome cleared :unnamed-frame-after after :frame-a-after after-a
-                      :intent-after (native conn :triplex.scope/removal-intent) :removal-seq-after (native conn :triplex.scope/removal-seq)}]
+                      :intent-after (native conn :triplex.scope/removal-intent) :removal-seq-after (native conn :triplex.scope/removal-seq)
+                      :published-after-the-frames seq-after-frames}]
           (observe! lbl :detail detail)
-          (oracle! lbl (every? #(= [200 nil] %) unnamed)
-                   "a stopped removal that recorded no intent does not refuse every unnamed derived write of the database" detail)
+          ;; [DX-ERA2, adapted after the fix (era2/REMOVAL-PER-ACCOUNT.md section 15): the intent is recorded before the
+          ;; declaration, so no stop leaves a block that no gateway can see. The stopped removal is pending; the first
+          ;; unnamed derived write it refuses (503) has its gateway complete it; the next ones commit. The reviewer's
+          ;; oracle ("no unnamed derived write is refused") assumed a stop that leaves no intent, which no longer exists.]
+          (oracle! lbl (:pending state) "a removal stopped after its declaration is visible: its intent is pending" detail)
+          (oracle! lbl (and (= [503 "ErasureFrontierUnavailable"] (first unnamed)) (every? #(= [200 nil] %) (rest unnamed)))
+                   "a stopped removal refuses unnamed derived writes only until the first one completes it" detail)
+          (oracle! lbl (= 1 seq-after-frames) "the first refused write completed the removal" detail)
           (oracle! lbl (= [200 nil] after) "after the clearing step, an unnamed derived write commits" detail)
           (a/counters-agree! name conn lbl))))))
 
@@ -139,6 +147,15 @@
           (oracle! lbl (= [200 nil] after) "after it, unnamed derived writes commit" detail))))))
 
 ;; ---- E3: a removal by a gateway of an earlier version (no declaration), beside gateways of this version ----------
+(defn- earlier-version
+  "[DX-ERA2 adaptation] An earlier version's removal: no declaration, and no check of one in its own transactions (this
+  version's commit and hold carry one, so removing only the declaration step no longer emulates an earlier version)."
+  [f]
+  (let [tx rc/transact!]
+    (with-redefs-fn {#'rc/declare! (fn [_ db & _] db)
+                     #'rc/transact! (fn [conn ops]
+                                      (tx conn (vec (remove (fn [op] (and (vector? op) (= :triplex.scope/removal-intent (nth op 2 nil)))) ops))))}
+      f)))
 (defn e3
   "Emulated in-process: the removal runs with the declaration step removed (what 6bc2484f0's path does), stopped after
   its commit, while this version's gateways take derived writes; then resumed, then this version's tickets."
@@ -149,10 +166,10 @@
         (let [lbl "E3 removal by an earlier version (emulated: no declaration)"
               seeds (g/seed! name [g/a1 g/b1]) value (:value (seeds g/a1)) t0 (g/seq-now name conn)
               _ (reset! a/plan {:stop :after-native :stops-left 1})
-              stopped (with-redefs-fn {#'rc/declare! (fn [_ db _ _ _] db)} #(a/remove-attr! name "e3-rm" g/a1))
+              stopped (earlier-version #(a/remove-attr! name "e3-rm" g/a1))
               _ (reset! a/plan nil)
               w-any (offers/send name (frame-copy "e3-any" "notice:v1:e3" value t0 nil))
-              done (with-redefs-fn {#'rc/declare! (fn [_ db _ _ _] db)} #(a/remove-attr! name "e3-rm" g/a1))
+              done (earlier-version #(a/remove-attr! name "e3-rm" g/a1))
               copy (read-has? name "notice:v1:e3" value)
               fresh (offers/outcome (offers/send name (frame-copy "e3-any-2" "notice:v1:e3-2" "x" (g/seq-now name conn) nil)))
               state {:intent (native conn :triplex.scope/removal-intent) :removal-seq (native conn :triplex.scope/removal-seq)}

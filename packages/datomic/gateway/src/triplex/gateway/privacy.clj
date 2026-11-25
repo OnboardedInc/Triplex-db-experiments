@@ -210,8 +210,9 @@
 ;; Rejected: a database-wide comparison for such tickets (any account's removal refused every account's frames).
 (defn ensure-ticket! [state input]
   ;; [DX-ERA3 F1b] removal-commit is loaded only on a database guarded per account.
+  ;; [DX-ERA3 N1] its refusal is tagged: the gateway completes that removal once this write has released its locks.
   (when (:per-account state)
-    (when ((requiring-resolve 'triplex.gateway.removal-commit/pending-touches?) state input) (unavailable!)))
+    ((requiring-resolve 'triplex.gateway.removal-commit/refuse-pending!) state input))
   (if (and (:per-account state) (contains? input "erasureAccounts"))
     (when-not (removal-scope/ticket-current? state (get input "erasureSeq") (removal-scope/ticket-accounts input))
       (stale!))
