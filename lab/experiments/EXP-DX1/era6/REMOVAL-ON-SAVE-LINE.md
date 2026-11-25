@@ -47,9 +47,13 @@ This follows the save line's third review (`s5/REVIEW-3.md`, section 2). Its com
 - on `ErasureReplayDeclined` it reads the head once and throws `WriteError` (the save line's handler). It never sends
   the declined save again.
 
-**Not covered by the merged rule:** the creation option's `subject-create/removed-creation?`
-(`TX2_SUBJECT_CREATE=1`) still judges a creation by its own `sourceK` only. A creation with no source is declined
-whenever any removal ever named its family. With removalSeen it would be stored under the rule above.
+**Creations and import frames follow the merged rule (since the eighth pass, M1 of the seventh review).** Until
+`c01f2f0c4` the creation option's `subject-create/removed-creation?` (`TX2_SUBJECT_CREATE=1`) judged a creation by its
+own `sourceK` only, so a creation or import frame with no `sourceK` was declined whenever any removal had named its
+family, even when its `frameSourceK` or `removalSeen` was later than the removal (3 of the review's 27 combinations).
+With the replay rule on it now asks `removal-commit/creation-removal`: the same `frame-tests` over the save's
+`sourceK`, `removalSeen` and the original request's `frameSourceK` (`*frame-input*`, bound by `main.clj` before the
+writers strip it). With the rule off the old check answers, unchanged. Section 5 has the test.
 
 ## 2. What the merge kept
 
@@ -137,3 +141,30 @@ four chunks of 10,000 each (seeds differ; sealed and unsealed alternate), on the
 **R3-2 route 2, for the save line's builder:** the removal route now refuses a command ID with the reserved account
 prefix (`main.clj`, `account-claims/check-ids!` on the erase route; section 2). It is on this branch, not on the save
 line's.
+
+## 5. The eighth pass: the seventh review's findings
+
+The seventh review (`era3/REVIEW-7.md`, on `exp/DX-ERA3-removal-review` `7da3ca3b3`) tested this branch's
+`674300b17` and the removal branch's `383db77d1`. Its tests are on this branch since `a33c88218` (`era3/review7.clj`,
+`review7b.clj`, `idents7.sh`, `paired7.sh`, `stack6.sh restore-live`; `era3/run.sh` modes `r7`, `r7b`, `s5a3`,
+`ERA3_PG=1`). This branch is now the reconciled branch: the removal branch's own page is
+`era2/REMOVAL-PER-ACCOUNT.md`, here too (sections 19.1, 19.3 and 20.5 corrected in this pass).
+
+| Finding | The fix | Commit | The test |
+| --- | --- | --- | --- |
+| **R5** (high): 4 of the 10 ways a removal is answered 200 printed no `triplex.removal-acknowledged.v1` line, so step 5 of the restore procedure could miss a lost removal | `removal-ack/acknowledged!` is called by every way a removal is answered 200 or published: its own request, its client's resend, the catch-up from the data (another removal, a read, the rebuild route), the rebuild route writing a missing log whole, and both database-wide sites. One line per removal per process. With `TX2_REMOVAL_ACK_JOURNAL=<file>` the removal is appended to that file and forced to disk (SYNC) before its client is answered 200, once per removal. The file lives on a volume outside the Datomic storage's and the authority's backup sets, so a restore of both cannot roll it back. A failed append answers 503 `RemovalAcknowledgementUnavailable`. The start check compares the file with each protected database's log and prints `RemovalAcknowledgedLost` naming the lost commands; a lost record is resolved once a removal of the same selectors acknowledged at or after it is in the log (step 5's resend under a new command) | `827edd4e4`, the resolution in the next commit | `review7.clj` `r5` (all 10 ways), `gate.clj` `ack-journal` (journal arms off, per account, commit: one record per removal whichever step published it, the start check names exactly the lost commands, each resend resolves its own) |
+| **R2** (high): any caller could add a protected attribute holding numbers; every account's saves of it were then 400 `ProtectedTypeUnsupported` for good | `protect!` scans the live rows for each attribute it would add and refuses one holding a value other than a string (409 `ProtectedTypeUnsupported`, naming it), nothing written. Who may call the route is written down (removal page 19.1): the owning service and an operator only, enforced in front of the gateway | `827edd4e4` | `review7.clj` `r2` |
+| **R3**: a name only the log's copy lists stopped every account's writes (503 `RemovalPolicyBehind`); the only way out, the restore route, protected the name for good | Only a save that writes such an attribute, and a removal, wait (503 `RemovalPolicyBehind` naming the attributes); every other save and every read is served. New operator route `POST /v2/db/{db}/removal-policy-copy-drop {"attributes": [...]}` drops a name from the copy when the stored policy lacks it and no removal in the data or the log removed its values; it prints `triplex.protection-policy-copy-dropped.v1`. The start-check line names the attributes (`copyOnly`, `storedOnly`) | `827edd4e4` | `review7.clj` `r3` (the drop before the restore route), `attack7.clj` P3 (adapted: the missing attribute's save 503, another attribute's save served) |
+| **R6 = M4 = the save line's F1** (medium): a stored save sent again after a removal was 409 `ErasureReplayDeclined` while its operation read `committed` | `removal-commit/already-stored?` looks up the operation (`:triplex.tx/operation-id`) and each claim's command (account-scoped too) before `decline-check!` and `after-refusal` decline; a save already stored answers as with every option off (409 `OperationDuplicate`, which the SDK resolves by reading the receipt) | `c01f2f0c4` | `review7.clj` `r6`, `review7b.clj` `m4` |
+| **M1-c, the creation rule**: creations and import frames with no `sourceK` were declined even when `frameSourceK` or `removalSeen` was fresh (3 of 27 combinations) | Section 1: with the replay rule on, `removed-creation?` asks `creation-removal` (the merged rule's `frame-tests`) | `c01f2f0c4` | `review7b.clj` `m1` (27 combinations on every writer, creation and import included) |
+| **M3, the V4 reversal** (low, by design) | Written down: removal page 19.3's correction (what a declined save writes, the bound, the pre-emption and account-scoped IDs) | page | `review7b.clj` `m3`: reported, by design (2 per mode) |
+| **The restore procedure** | Removal page 20.5: step 2 the journal; step 3 stop every gateway before the restore and start them after (a running gateway's Datomic peer keeps the pre-restore data, `restore-live`); step 4 reads `copyOnly` and may drop a name first; step 5 resends each lost removal under a new command | page | `stack6.sh` (D1, D3, D3b, D6) and `restore-live` |
+
+**First results on `827edd4e4`** (`era3/run.sh`, frozen worktree, evidence `DX-ERA6/eighth/`):
+
+| Run | Mode, phases | Oracles | Violations |
+| --- | --- | --- | --- |
+| `a-on` | per account, file, `r1` to `r6` | 50 | 1: R4 log-put-back's "the next read is served", which the review withdrew |
+| `a-subject` | the subject check, file, `r1` to `r6` | 50 | the same 1 (withdrawn) |
+| `a-pg-on` | per account, PostgreSQL, `r1 r4 r5 r6` | 34 | 0 |
+| `b-rule`, `b-on`, `b-commit` | the rule on database-wide, per account, the commit boundary; `m1 m3 m4` | 22 each | 2 each, all M3 (by design) |

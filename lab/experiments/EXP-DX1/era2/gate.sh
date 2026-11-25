@@ -116,6 +116,10 @@ if [[ $phases == *gate* ]]; then
   [[ $phases == *gate-subject-only* ]] || { run gate-off this offrule "$gate"; run gate-on this on "$gate"; run gate-plain this plain "$gate"; }
   run gate-subject this subject "$gate"
   run gate-commit this commit "$gate"
+  # [DX-ERA6 eighth pass, R5] the acknowledgement journal: every option off with a journal, per account, commit boundary
+  for arm in off on commit; do
+    ERA2_ONLY=ack-journal RUN_ENV="TX2_REMOVAL_ACK_JOURNAL=/tmp/era2-acks/acks.jsonl" run "gate-journal-$arm" this "$arm" "$gate"
+  done
 fi
 # [DX-ERA2 fix pass] the independent review's attacks and fuzzer (era3/attack.clj, era3/REVIEW.md) on both settings
 attack='(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (era3-attack/main)'

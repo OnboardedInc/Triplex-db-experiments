@@ -82,10 +82,21 @@
                                     "commandId" (get entry "commandId")}))
           (swap! printed conj k))))))
 
+(defn- selection [r] (let [s (get r "selectors")] (if (sequential? s) (set s) s)))
+
 (defn lost
   "The acknowledged removals of database `name` that its published log (`cut`, privacy/cut) does not hold, the same
   command at the same sequence: after a restore of the data and the removal authority to one backup, the removals
-  acknowledged after that backup. Each record names its command and selectors, so it can be sent again."
+  acknowledged after that backup. Each record names its command and selectors, so it can be sent again.
+  A lost removal is resolved, and no longer reported, once a removal of the same selectors acknowledged at or after
+  it IS in the log: step 5's resend under a new command (it removes every protected value of that selection the data
+  holds then, so it covers every earlier removal of the same selection)."
   [name cut]
-  (let [have (into #{} (map (fn [e] [(get e "seq") (get e "commandId")])) (vals (:commands cut)))]
-    (vec (for [r (records) :when (= name (get r "database")) :when (not (have [(get r "seq") (get r "commandId")]))] r))))
+  (let [have (into #{} (map (fn [e] [(get e "seq") (get e "commandId")])) (vals (:commands cut)))
+        mine (filter #(= name (get % "database")) (records))
+        in-log? (fn [r] (contains? have [(get r "seq") (get r "commandId")]))
+        kept (filter in-log? mine)
+        resolved? (fn [r] (some (fn [r2] (and (= (selection r) (selection r2))
+                                              (>= (long (or (get r2 "acknowledgedAt") 0)) (long (or (get r "acknowledgedAt") 0)))))
+                                kept))]
+    (vec (for [r mine :when (not (in-log? r)) :when (not (resolved? r))] r))))

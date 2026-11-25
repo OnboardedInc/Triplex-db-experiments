@@ -2120,6 +2120,16 @@ This section answers each one. This pass's own tests found two more defects (N1,
   verifies the head before anything is stored. A head from another database is refused (503) and adopts nothing.
 - **A gateway without the per-account option** refuses the protection route on a database guarded per account (it
   would write the log's policy): `erase/declare!`.
+- **Who may call the protection route [decided in the eighth pass, R2 of the seventh review]:** only the service that
+  owns the database (its declaration at start) and an operator. A caller acting for an account (the SDK, an agent of
+  the playground) must never reach it. The gateway checks no caller on any route (it sits behind the service), so the
+  service's front enforces this: it routes only its own declaration to `/v2/db/{db}/protection`. The rebuild route can
+  stay open because it reads nothing from the request. The protection route cannot: it takes its list from the caller,
+  and an attribute it adds stays protected for good (no route removes one). Since the eighth pass it refuses an
+  attribute that already holds a value other than a string (409 `ProtectedTypeUnsupported`, naming the attribute),
+  so a wrong list can no longer stop every account's saves of that attribute. A string attribute added by mistake
+  still makes its values removable by every later removal. The same rule holds for the restore route and the copy-drop
+  route (section 20.5): operators only.
 
 **Adding a protected attribute** (the coordinator's ask: a normal, tested, one-way operation from Datomic):
 
@@ -2228,11 +2238,25 @@ The review's own tests on this head (`era3e-*` arms and `attack5` runs, per acco
   `x-triplex-removal-stamp` and `x-triplex-erasure-seq` of the database as it is now (the route handler adds the headers
   a refusal brings; `after-refusal` replaces the stale ones of the refused plan). The SDK learns its stamp from every
   answer's headers before it looks at the status, so it learns it from the refusal too (Z7c's loop is gone).
-- **A save that says nothing writes nothing (V4).** A save with neither `sourceK` nor `removalSeen` is declined without
-  recording its command: no transaction, no datom, its command not burned. The rule reads only the data's removal
-  records, so the same save is declined again on every resend that still says nothing; a record would add nothing.
-  The same save sent with `removalSeen` set to the refusal's stamp is a new save after the removal (case 3) and is
-  stored, under the same command too.
+- **A save that says nothing writes nothing (V4). [Reversed on the reconciled branch, see the correction below.]** A
+  save with neither `sourceK` nor `removalSeen` is declined without recording its command: no transaction, no datom,
+  its command not burned. The rule reads only the data's removal records, so the same save is declined again on every
+  resend that still says nothing; a record would add nothing. The same save sent with `removalSeen` set to the
+  refusal's stamp is a new save after the removal (case 3) and is stored, under the same command too.
+
+> **Correction (2026-11-25, eighth pass, on `exp/DX-ERA6-removal-on-save-line`).** The V4 bullet above is false on the
+> reconciled branch once the replay rule is on (`TX2_REMOVAL_PER_ACCOUNT=1` or `TX2_REMOVAL_REPLAY_RULE=1`). There the
+> merged rule records **every** declined command, whatever the save stated (`era6/REMOVAL-ON-SAVE-LINE.md` section 1,
+> item 4), so a source-less save of a removed subject's protected value burns its command: a later save under the
+> same command is declined whatever it states, and a new command is a new save. This reverses V4 on purpose (one
+> command has one outcome; the seventh review agreed, M3). What it writes: the record's schema once per database
+> (9 datoms, 10 with the transaction's instant), then 3 datoms per newly declined command; a declined save under a
+> command already recorded writes nothing. The bound is one record per distinct command, not per request; with every
+> option off nothing is recorded (0 datoms, the paired log). The paired workload declines one command, so the
+> per-account arms of the paired log carry exactly 11 datoms more than the one branch (without the instants). A
+> caller can pre-empt another caller's command ID this way (409 for that caller's later save); with every option off
+> the same pre-emption exists in another form (the first caller's save is stored, the second 409
+> `OperationDuplicate`). Account-scoped command IDs (`TX2_ACCOUNT_CLAIMS=1`) scope the record to the account.
 - **A save framed before the removal** (a `sourceK` or `removalSeen` older than it) still records its commands, each
   once (case 2): a replay under that command is refused whatever it then claims, and a further refusal of it writes
   nothing.
@@ -2639,41 +2663,60 @@ violations; its second chunk was stopped when the fix landed.
 
 ### 20.5 The restore procedure
 
+[Rewritten in the eighth pass, on `exp/DX-ERA6-removal-on-save-line`: steps 2, 3 and 5 changed, R5 and R3 of the
+seventh review.]
+
+**Who runs it:** the operator who restores the data or the removal authority (the deployment's on-call engineer). It is
+part of the restore, not a later check.
+
 After restoring the data, the removal authority, or both, from backups:
 
 1. **Never restore the removal authority to a point before an acknowledged removal on its own.** Restoring it alone
    to an earlier point puts the log behind the data: the gateway refuses (503 `RemovalLogBehind`) until step 4.
    Restoring both the data and the authority to the same earlier backup undoes every removal acknowledged after it,
    and nothing inside the restored systems can see that (X10). Step 5 is the only check.
-2. **Before restoring:** keep the gateways' `triplex.removal-acknowledged.v1` lines (database, sequence, command ID)
-   in a log store outside the systems being restored. They are the record step 5 compares against.
-3. **Start the gateways.** Each prints, for every database guarded per account, one `triplex.removal-start-state.v1`
-   line (log, native and declared sequences). Where something disagrees it also prints a
-   `triplex.removal-start-check.v1` line with a code:
+2. **The record step 5 compares against is kept outside both backups, all the time, not at restore time.** Every
+   gateway runs with `TX2_REMOVAL_ACK_JOURNAL=<file>` on a volume of its own (never in the Datomic storage's or the
+   removal authority's backup set; or a path whose lines are shipped at once to the log store). Every removal is
+   appended there, forced to disk, before its client is answered 200, whichever step published it (`removal-ack`).
+   The same removal also prints one `triplex.removal-acknowledged.v1` line on standard output.
+3. **Stop every gateway before the restore, and start them after it.** A running gateway's Datomic peer keeps the
+   data as it last saw it, not the restored storage (the seventh review's `restore-live`: the rebuild route found a
+   removal there that the restored storage did not hold, and a removal sent then could not commit); Datomic's own
+   procedure restarts every peer after `restore-db`. On start each gateway prints, for every database guarded per
+   account, one `triplex.removal-start-state.v1` line (log, native and declared sequences), and a
+   `triplex.removal-start-check.v1` line with a code where something is wrong:
    - `RemovalLogBehind`: the data is ahead of the log;
    - `RemovalDataBehind`: the log is ahead of the data;
-   - `RemovalPolicyBehind`: the stored policy lacks an attribute the log's copy lists;
-   - `PolicyCopyDiffers`: the log's copy differs from the stored policy;
+   - `RemovalPolicyBehind`: the stored policy lacks attributes the log's copy lists (`copyOnly` names them);
+   - `PolicyCopyDiffers`: the log's copy differs from the stored policy (`copyOnly`, `storedOnly`);
+   - `RemovalAcknowledgedLost`: the journal holds acknowledged removals this database's log lacks (`lost`, by
+     command and sequence), for every protected database, the database-wide rule's included;
    - `Unverified`: the log cannot be read.
 4. **For each database named, run the restore route, then repair, then run it again,** until it answers 200:
    - send `POST /v2/db/{db}/restore-erasure {}`;
    - if it answers 503 `RemovalLogBehind`, send `POST /v2/db/{db}/removal-log-rebuild {}`, then the restore route
      again;
    - the restore route replays every published removal the data lacks, and adds back every attribute the log's copy
-     lists that the stored policy lacks (`RemovalPolicyBehind` clears);
-   - writes and removals on that database wait (503) until then; reads are served from the published log.
-5. **Compare.** For each database, find the highest `seq` in step 2's acknowledged lines. Compare it with the `log`
-   value in the database's start-state line after step 4.
-   - If the acknowledged sequence is higher, those removals were lost with the backup.
-   - Send each lost removal again from its requester's own record. The acknowledged line names its command; the
-     selectors are in the requester's request.
-   - Do not reuse the old command ID, so a lost removal cannot collide with anything restored.
+     lists that the stored policy lacks, for good (`RemovalPolicyBehind` clears). **First read `copyOnly`:** a name
+     that was added through the protection route and lost with a data restore belongs there; a name nobody added (a
+     hand edit, storage damage) does not: drop it first with `POST /v2/db/{db}/removal-policy-copy-drop
+     {"attributes": [...]}` (refused for a name a removal removed values of, or one the stored policy holds);
+   - until then, only saves that write a `copyOnly` attribute wait (503 `RemovalPolicyBehind`, naming it), and so do
+     removals; every other save and every read is served.
+5. **Send every lost removal again.** Each `RemovalAcknowledgedLost` line names the commands; each journal record
+   holds the command's selectors. Send each again with a new command ID (so it cannot collide with anything
+   restored), then restart the gateway or read its next start check: no `RemovalAcknowledgedLost` line is left (a lost
+   record counts as resolved once a removal of the same selectors acknowledged at or after it is in the log). Without
+   a journal this step falls back to the seventh pass's comparison of the stdout lines (kept in the log store) with
+   the start-state lines.
 6. **Services may declare their policy at any time.** The protection route only adds (X6), so an older service's
-   shorter list removes nothing.
+   shorter list removes nothing; a list naming an attribute that already holds non-string values is refused (R2).
 
 Tested: stack D1 and D6 (a data restore from before an addition, the data level with the log and behind it), D3 and
-D3b (the data and the authority restored to the same backup; records only), 20.4. Step 5 is not automated: no test
-runs it.
+D3b (the data and the authority restored to the same backup; records only), 20.4; the journal's record and the start
+check's `RemovalAcknowledgedLost` in process (`gate.clj` `ack-journal`, era6 page section 6). Step 5's resend is the
+operator's.
 
 ### 20.6 Is the file authority used outside tests? No
 

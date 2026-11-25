@@ -2268,6 +2268,68 @@
             (check! label (not (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [a1]}))) va))
                     "a1 not answered" nil)))))))
 
+;; ---- [DX-ERA6 eighth pass, R5 of the seventh review] the acknowledgement journal and step 5 of the restore procedure ---
+(defn ack-journal
+  "With TX2_REMOVAL_ACK_JOURNAL set (the gate's journal arms): every removal answered 200 is in the journal exactly
+  once, whichever step published it (its own request, its client's resend, and per account the rebuild route after a
+  stop past the native commit); the log put back to a copy from before them (what a restore of the data and the
+  authority to one backup leaves) makes the start check name exactly those removals, by command, as
+  RemovalAcknowledgedLost; each sent again under a new command is no longer reported lost (removal-ack/lost)."
+  []
+  (when @(requiring-resolve 'triplex.gateway.removal-ack/journal)
+    (fresh-scope false
+      (fn [name conn]
+        (let [label (str "ack-journal/" mode)
+              records-of (fn [] (filter #(= name (get % "database")) ((requiring-resolve 'triplex.gateway.removal-ack/records))))
+              count-of (fn [cmd] (count (filter #(= cmd (get % "commandId")) (records-of))))
+              _ (seed! name [a1 b1 a2])
+              dir (.getParent (privacy/path name "head.json"))
+              tmp (java.nio.file.Paths/get "/tmp" (into-array String [(str "era2-aj-" (UUID/randomUUID))]))
+              _ (copy-dir! dir tmp)
+              r1 (remove! name "aj-1" a1)
+              r1-again (remove! name "aj-1" a1)
+              r2 (when per-account? (stop-after :committed #(remove! name "aj-2" b1)))
+              rebuild (when per-account? (offers/route name "v2" "removal-log-rebuild" {}))
+              r2-again (when per-account? (remove! name "aj-2" b1))
+              counts {:aj-1 (count-of "aj-1") :aj-2 (count-of "aj-2")}
+              ;; the log put back to the copy from before both removals, the gateway restarted (no cache)
+              current (java.nio.file.Paths/get "/tmp" (into-array String [(str "era2-aj-cur-" (UUID/randomUUID))]))
+              _ (copy-dir! dir current) _ (copy-dir! tmp dir) _ (reset! privacy/cache {})
+              start (with-out-str (rc/start-check! [name] (fn [_] conn)))
+              lost-line (first (filter #(str/includes? % "RemovalAcknowledgedLost") (str/split-lines start)))
+              lost (some-> lost-line json/read-str (get "lost"))
+              _ (copy-dir! current dir) _ (reset! privacy/cache {})
+              ;; sent again under new commands (step 5): those are acknowledged too, and resolve the lost ones. The
+              ;; restored log is the current one without aj-1 and aj-2 (an in-memory database cannot be restored, so
+              ;; the restored cut is built from the log as it is now)
+              lost-cmds (fn [] (let [cut (privacy/cut name (d/db conn) true)
+                                     restored (assoc cut :commands (into {} (remove (fn [[_ e]] (#{"aj-1" "aj-2"} (get e "commandId")))) (:commands cut)))]
+                                 (set (map #(get % "commandId") ((requiring-resolve 'triplex.gateway.removal-ack/lost) name restored)))))
+              before-resend (lost-cmds)
+              re1 (remove! name "aj-1-again" a1)
+              after-re1 (lost-cmds)
+              re2 (when per-account? (remove! name "aj-2-again" b1))
+              after-re2 (lost-cmds)
+              obs {:r1 (offers/outcome r1) :r1-again (offers/outcome r1-again) :r2-stopped (some-> r2 offers/outcome)
+                   :rebuild (some-> rebuild offers/outcome) :r2-again (some-> r2-again offers/outcome) :records counts
+                   :lost (mapv #(get % "commandId") lost) :resent (offers/outcome re1) :resent2 (some-> re2 offers/outcome)
+                   :lost-before-resend before-resend :lost-after-re1 after-re1 :lost-after-re2 after-re2}]
+          (println "ERA2_ACK_JOURNAL" mode (pr-str obs))
+          (expect label r1 [200 nil])
+          (expect label r1-again [200 nil])
+          (check! label (= 1 (:aj-1 counts)) "a removal and its resend: one journal record" obs)
+          (when per-account?
+            (expect label r2-again [200 nil])
+            (check! label (= 1 (:aj-2 counts)) "a removal published by the rebuild route, then its resend: one journal record" obs))
+          (check! label (= (set (if per-account? ["aj-1" "aj-2"] ["aj-1"])) (set (:lost obs)))
+                  "the log put back from before them: the start check names exactly those removals as lost" obs)
+          (expect label re1 [200 nil])
+          (check! label (= (set (if per-account? ["aj-1" "aj-2"] ["aj-1"])) before-resend) "before the resend both are lost" obs)
+          (check! label (= (if per-account? #{"aj-2"} #{}) after-re1) "the resend of aj-1 under a new command resolves aj-1 only" obs)
+          (when per-account?
+            (expect label re2 [200 nil])
+            (check! label (= #{} after-re2) "both resent: nothing is reported lost" obs)))))))
+
 ;; ERA2_ONLY (space-separated label prefixes) runs only those scenarios: a diagnostic run, never a gate
 (def only (some-> (System/getenv "ERA2_ONLY") str/trim not-empty (str/split #"\s+")))
 (defn- scenario [label f]
@@ -2332,6 +2394,8 @@
   (scenario "peer-behind-move" peer-behind-move)
   ;; [DX-ERA2 seventh pass, E4 of DX-ERA4]
   (scenario "cut-read-race" cut-read-race)
+  ;; [DX-ERA6 eighth pass]
+  (scenario "ack-journal" ack-journal)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode
              (pr-str {:checks (count @results) :failed (count failed)}))
