@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "attributes": [
+    { "attribute": ":i9/status", "code": "t1", "family": "string" },
+    { "attribute": ":task/progress", "code": "t2", "family": "integer" },
+    { "attribute": ":placement/status", "code": "p1", "family": "string" },
+    { "attribute": ":review/of", "code": "r1", "family": "ref" },
+    { "attribute": ":person/custom-pay-cents", "code": "w1", "family": "integer" },
+    { "attribute": ":person/custom-start", "code": "w2", "family": "string" }
+  ]
+}

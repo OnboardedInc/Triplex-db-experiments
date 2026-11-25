@@ -56,8 +56,8 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     holder = (os.environ.get("DX_CHK1_HOLDER", "DX-CHK1") if combined
               else os.environ.get("DX_CHK1_HOLDER", "DX-W1") if owner_head == "1"
               else os.environ.get("DX_CHK1_HOLDER", "DX-REAL2") if mode == "production" else "DX-PREP1")
-    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1", "DX-REAL2", "DX-W3", "DX-W4", "DX-S1", "DX-S2", "DX-S3", "DX-IMP2", "DX-S4") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
-    assert mode != "production" or holder in ("DX-REAL2", "DX-THIN1", "DX-W3", "DX-W4", "DX-S1", "DX-S2", "DX-S3", "DX-IMP2", "DX-S4")
+    assert holder in ("DX-CHK1", "DX-THIN1", "DX-PREP1", "DX-W1", "DX-REAL2", "DX-W3", "DX-W4", "DX-S1", "DX-S2", "DX-S3", "DX-IMP2", "DX-S4", "DX-XQ4") and (not combined or holder in ("DX-CHK1", "DX-THIN1"))
+    assert mode != "production" or holder in ("DX-REAL2", "DX-THIN1", "DX-W3", "DX-W4", "DX-S1", "DX-S2", "DX-S3", "DX-IMP2", "DX-S4", "DX-XQ4")
     # [DX-S2] Why: run the production gate with every save sent through the product's path (TriplesLive and the
     # Datomic adapter), the SDK's orderedSaves option off (0) or on (1). Unset: the lab producer, as before.
     product_path = os.environ.get("DX_S2_PRODUCT")
@@ -77,6 +77,13 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     if mix_tape not in (None, "0", "1") or creation not in (None, "0", "1") or (
             (mix_tape is not None or creation is not None) and ((mode, holder) != ("production", "DX-S4") or several_owners != "1")):
         raise SystemExit("DX_S4_MIX and DX_S4_CREATE are 0 or 1, for the production gate under DX-S4 with DX_S3_OWNERS=1")
+    # [DX-XQ4] Why: run the production gate with the commit-time index on (TX2_CROSS_INDEX=1) and a declaration of six of
+    # the tape's fields, which the driver declares and backfills before the seed and checks after the read-back.
+    # Rejected: a second gate copy; unset, nothing is staged and the gate runs as before.
+    cross_index = os.environ.get("DX_XQ4_CROSS_INDEX")
+    if cross_index not in (None, "1") or (cross_index is not None and (mode != "production" or holder not in ("DX-XQ4", "DX-S4"))):
+        # [DX-INT5] Also under DX-S4: tape M with the creation option and the index on (the evening merge's pair).
+        raise SystemExit("DX_XQ4_CROSS_INDEX is 1, for the production gate under the DX-XQ4 or DX-S4 holder")
     # [DX-W3] Why: run the production gate with the general writer's hints on or off (default: no file, as before).
     # Rejected: a second gate copy; the hints arm differs from the control only in this one setting.
     general_prefetch = os.environ.get("DX_W3_GENERAL_PREFETCH")
@@ -147,6 +154,9 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
         shutil.copyfile(EXPERIMENT.parent / "real2/production-mix.json", config / "production-mix.json")
     if creation is not None:
         (config / "subject-create").write_text(creation + "\n")
+    if cross_index is not None:
+        (config / "cross-index").write_text(cross_index + "\n")
+        shutil.copyfile(EXPERIMENT.parent / "xq4/declarations/production-6.json", config / "cross-index-declaration.json")
     fresh_first = os.environ.get("DX_PREP1_TEST_FRESH_FIRST") == "1"
     if fresh_first:
         # [DX-THIN1] Why: the one branch keeps INT1's rolling gate, which has no fresh-first arm (PREP1 dropped it).
@@ -230,6 +240,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
                                             else f"tx2-dxs3-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-S3"
                                             # [DX-S4] A private tag per attempt (the shared production tag is rebuilt by other builders).
                                             else f"tx2-dxs4-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-S4"
+                                            else f"tx2-dxxq4-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-XQ4"
                                             else f"tx2-dxw3-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-W3"
                                             else f"tx2-dxw4-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}" if holder == "DX-W4"
                                             else f"tx2-datomic:dx-w1-head-{out.name}-{head[:8]}" if owner_head == "1" and holder == "DX-W1"
@@ -270,6 +281,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "severalOwners": several_owners,
         "mixTape": mix_tape,
         "creation": creation,
+        "crossIndex": cross_index,
         "ownerHead": owner_head == "1",
         "wideSaves": os.environ.get("DX_W2_WIDE", "0") == "1",
         "freshFirst": fresh_first,

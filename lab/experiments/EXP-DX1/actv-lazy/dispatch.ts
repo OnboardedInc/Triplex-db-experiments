@@ -10,6 +10,7 @@ import {
   cursorOps,
   pendingRoot,
   progress,
+  prefetchWinner,
   type Format,
   type Proposal,
 } from "./decision.ts";
@@ -147,6 +148,7 @@ export class Dispatcher {
         deliveries: W0.Delivery[] = [];
       const changedSubjects: string[] = [];
       const worlds = await worldsAt(s, this.format, ids, b);
+      await prefetchWinner(s, historical, b); // [DX-ACT6]
       const ledger = ids.length ? await s.rows(ids.map(itemRoot), p) : [];
       for (const [i, subject] of ids.entries()) {
         if (c.masks.some((r) => r.position > sl.cut))

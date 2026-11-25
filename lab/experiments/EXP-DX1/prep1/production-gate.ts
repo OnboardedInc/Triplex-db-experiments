@@ -7,6 +7,7 @@ import { offers, sha } from "../w1/field/schedule.ts";
 import { loadParams, productionOffers, slotAttribute, tapeReport, type ProductionOffer, type Shape } from "../w1/field/production.ts";
 import { admission } from "./rolling-credits.ts";
 import { scaleOwner } from "./ceiling-seed.ts";
+import { checkIndex, declareAndBackfill } from "../xq4/production-index.ts";
 
 // [DX-REAL2] Mac exactness gate for the production-shaped tape. It drives the server producer's own phase()
 // (sender, rolling credits, journal check) on a toy scope seeded like the fresh cut's task-0 fields, then reads
@@ -48,6 +49,8 @@ const wideSaves = process.env.TX2_SUBJECT_WIDE === "1";
 const init = await client.create(scope, "lean", true, 35_000);
 assert(init.created && init.strictRecordClocks);
 const db = init.db;
+// [DX-XQ4] With DX_XQ4_DECLARATION set (the gateway runs TX2_CROSS_INDEX=1): declare and backfill before the seed.
+const xq4 = await declareAndBackfill(client, db);
 // [DX-S2] With DX_S2_PRODUCT set, every save (the seed included) goes through the product's path (TriplesLive and the
 // Datomic adapter), with the SDK's orderedSaves option off ("0") or on ("1"). Unset: the lab producer, as before.
 const productMode = process.env.DX_S2_PRODUCT;
@@ -291,11 +294,13 @@ for (const c of summary.cells) assert(c.acked > 0.9 * c.offers, "too few acknowl
 assert(results[2]!.result.rows.every((r) => (r as any).assertions > 256));
 // [DX-W3] Whether the general writer's hints were attached (present only when TX2_GENERAL_PREFETCH=1).
 // [DX-W4] And the per-subject writer's hints (present only when TX2_SUBJECT_HINTS=1).
+// [DX-XQ4] The index against the rows (dry-run reconciliation) and find against the expected values.
+const crossIndex = xq4 ? { ...xq4, ...(await checkIndex(reader, db, cut, SEED_VALID_FROM, expected, xq4.attributes)) } : null;
 const gatewayStats = await reader.request<{ generalHints?: Record<string, number>; subjectHints?: Record<string, number> }>(
   "GET", "/v2/admin/scan-stats");
 const writeOptions = await reader.request<{ options?: { generalPrefetch?: boolean; subjectHints?: unknown } }>(
   "GET", `/v1/db/${db}/write-options`).catch(() => undefined);
-console.log("REAL2_GATE " + JSON.stringify({ ...summary, wideSaves,
+console.log("REAL2_GATE " + JSON.stringify({ ...summary, crossIndex, wideSaves,
   productPath: productMode ?? null, saveRoutes: product?.routes() ?? null,
   ...(severalOwners === undefined ? {} : { severalOwners, severalOwnersOption: (writeOptions as any)?.subjectSeveralOwners ?? null }),
   ...(creation === undefined && !mixTape ? {} : { creation: creation ?? null, creationOption: (writeOptions as any)?.subjectCreate ?? null,

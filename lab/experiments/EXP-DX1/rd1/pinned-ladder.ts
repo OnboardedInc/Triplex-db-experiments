@@ -107,13 +107,28 @@ const rowKey = (r: Pick<Row, "attribute" | "id" | "value_string" | "recorded_pos
 export async function pinnedWindow(read: string, seed: AdoptedSeed, kind: PinKind, window: { start: number; seconds: number;
   startHead: number; candidates: Candidate[] }, opts: { seats?: number; batch?: number; distance?: number; plant?: (rows: Row[]) => Row[];
   /** Every n-th exchange carries a read-profile header, so the reader traces its io-stats and handler CPU. */
-  profileEvery?: number } = {}) {
+  profileEvery?: number;
+  /** [DX-RD5] A second read gateway (its own machine): odd seats send their batched reads there. Tape pins stay on
+   * the first. Not a load balancer: the seat decides, and each reader keeps its own batches. */
+  secondRead?: string } = {}) {
   const seats = opts.seats ?? savesSeats, batch = kind === "tape" ? 1 : (opts.batch ?? tunedBatch);
   const client = new DatomicClient(read, 35_000);
-  const options = await client.request<any>("GET", "/v1/db/" + seed.scope.db + "/write-options");
-  assert.deepEqual([options.options.pinnedShortcut, options.options.pinnedCutLookup], [true, true],
-    "the read gateway does not run both pinned options");
-  const stats = async () => (await client.request<any>("GET", "/v2/admin/scan-stats")).pinnedShortcut;
+  const second = opts.secondRead && kind !== "tape" ? new DatomicClient(opts.secondRead, 35_000) : undefined;
+  // The second reader opens the scope itself (a new peer); it must name the same database as the first.
+  if (second) {
+    const opened = await second.create(JSON.stringify(["triplex-scope-v1", "test", "test", seed.scope.name, 0]), "lean", true, 35_000);
+    assert(!opened.created && opened.db === seed.scope.db, "the second reader does not serve this database");
+  }
+  for (const c of second ? [client, second] : [client]) {
+    const options = await c.request<any>("GET", "/v1/db/" + seed.scope.db + "/write-options");
+    assert.deepEqual([options.options.pinnedShortcut, options.options.pinnedCutLookup], [true, true],
+      "the read gateway does not run both pinned options");
+  }
+  const statsOf = async (c: DatomicClient) => (await c.request<any>("GET", "/v2/admin/scan-stats")).pinnedShortcut;
+  const stats = async () => {
+    const [a, b] = await Promise.all([statsOf(client), second ? statsOf(second) : Promise.resolve({ currentAnswers: 0, asOfAnswers: 0 })]);
+    return { currentAnswers: a.currentAnswers + b.currentAnswers, asOfAnswers: a.asOfAnswers + b.asOfAnswers };
+  };
   const random = kind === "random-near-head" || kind === "random-seed-cut";
   const seedPin = kind === "seed-cut" || kind === "random-seed-cut";
   const position = seedPin ? seed.scope.cut : kind === "near-head" || kind === "random-near-head" ? Math.max(seed.scope.cut, window.startHead - (opts.distance ?? recentDistance)) : undefined;
@@ -124,6 +139,11 @@ export async function pinnedWindow(read: string, seed: AdoptedSeed, kind: PinKin
     exchanges++; batched += size;
     return opts.profileEvery && exchanges % opts.profileEvery === 0
       ? client.withReadProfile((sample) => profiles.push(sample as unknown as ReadProfileSample), send) : send();
+  });
+  // [DX-RD5] The second reader's exchanges are counted apart; its read profile stays on its own machine (not sampled).
+  let secondExchanges = 0, secondBatched = 0;
+  const fetchSecond = basis && second && pinnedFields(second, seed.scope.db, field(0), basis, batch, (send, size) => {
+    secondExchanges++; secondBatched += size; return send();
   });
   const delay = new Histogram(), failures: Record<string, number> = {};
   let errors = 0, wrong = 0, notYetSaved = 0, idle = 0, checkedRows = 0;
@@ -147,7 +167,7 @@ export async function pinnedWindow(read: string, seed: AdoptedSeed, kind: PinKin
         const a = random ? Math.floor(Math.random() * accounts.length) : seat % accounts.length, entity = task(a, subject);
         const issued = now();
         try {
-          const rows = await fetch!(entity);
+          const rows = await (fetchSecond && seat % 2 === 1 ? fetchSecond : fetch)!(entity);
           assert.equal(rows.length, 1);
           assert.deepEqual([rows[0]!.entity_id, rows[0]!.attribute], [entity, field(0)]);
           assert(rows[0]!.recorded_position <= position!);
@@ -193,11 +213,12 @@ export async function pinnedWindow(read: string, seed: AdoptedSeed, kind: PinKin
     }
   }));
   const after = await stats();
-  client.close();
+  client.close(); second?.close();
   const step = { pin: kind, position: position ?? null, seats, seconds: window.seconds, goodput: delay.count / window.seconds,
     errors, failures, wrong, read: delay.summary(),
     shortcut: { current: after.currentAnswers - before.currentAnswers, asOf: after.asOfAnswers - before.asOfAnswers },
-    batch, exchanges, meanBatch: exchanges ? batched / exchanges : 0,
+    batch, exchanges: exchanges + secondExchanges, meanBatch: exchanges + secondExchanges ? (batched + secondBatched) / (exchanges + secondExchanges) : 0,
+    ...(second ? { readers: { first: { exchanges, subjects: batched }, second: { exchanges: secondExchanges, subjects: secondBatched } } } : {}),
     ...(random ? { population: { accounts: accounts.length, subjectsPerAccount: seed.image.people } } : {}),
     ...(opts.profileEvery ? { profiled: { every: opts.profileEvery, ids: profiles.map((p) => p.id) } } : {}),
     ...(kind === "tape" ? { tape: { subjects: tapeSubjects.size, checkedRows, notYetSaved, idle, sinceOffer: lag.summary() } } : {}) };

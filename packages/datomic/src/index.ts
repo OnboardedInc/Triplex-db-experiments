@@ -35,6 +35,8 @@ export function makeDatomicRuntime(options: {
   readonly idLists?: import("./idLists.js").IdListOptions;
   /** [DX-RD4] A reader built from a receipt: every unpinned read answers at or after its position. */
   readonly readAtLeast?: import("./readAtLeast.js").ReadAtLeast;
+  /** [DX-XQ7] The question reader's URL: ID lists, sweeps and find go there; everything else to `url` as before. */
+  readonly questionReaderUrl?: string;
   /** [DX-S2] One ordered block of identities per subject's save (see the adapter option). Default off. */
   readonly orderedSaves?: boolean;
   /** [DX-S2] The save-size rule (see the adapter option). Default off. */
@@ -90,6 +92,24 @@ export { makeDatomicQueryExecutor } from "./DatomicQueryExecutor.js";
 export { DatomicBasisNotAvailable, DatomicLayoutUnsupported, DatomicAtLeastTimeout } from "./readErrors.js";
 export { ReadAtLeast, type ReadAtLeastRequest } from "./readAtLeast.js";
 export {
+  CallReads,
+  DefinitionCache,
+  readBatch,
+  releaseHash,
+  revisionMap,
+  worldRevisions,
+  DefinitionReleaseAmbiguous,
+  type CachedDefinition,
+  type BatchAnswer,
+  type BatchEntry,
+  type BatchPattern,
+  type BatchReference,
+  type BatchRequest,
+  type BatchStats,
+  type CallReadsOptions,
+  type ReachWorld,
+} from "./callReads.js";
+export {
   configStoreIdLists,
   DatomicMatchNeedsPaging,
   listIdsPage,
@@ -103,16 +123,35 @@ export {
   sweepPageWaiting,
   type SweepCondition,
   type SweepCount,
+  type SweepHasCondition,
+  type SweepPlainCondition,
   type SweepPage,
   type SweepRequest,
   type SweepValue,
 } from "./sweep.js";
+// [DX-XQ10] One call for questions across subjects: the index when it can, else the exact sweep at the same basis.
+export {
+  askAll,
+  askPage,
+  AskRefused,
+  type AskAll,
+  type AskAnswer,
+  type AskQuestion,
+  type AskRefusal,
+  type AskRequest,
+  type AskResult,
+  type AskRoute,
+  type AskValue,
+} from "./ask.js";
 
 export { sweepRows, decodeSweepRows, type SweepRow } from "./sweepRows.js";
 export { acceptLoaderPositionRows, loaderPositionRowsAccepted } from "./loaderPositionRows.js";
 export * from "./replica/index.js";
 
 export { resumeCommitOrder } from "./CommitOrder.js";
+// [DX-RPT1] The reporting copy decodes journal row texts and wire rows exactly as the SDK does.
+export { decodeRowText } from "./rowText.js";
+export { decodeRow, type WireRow } from "./protocol.js";
 export * from "./tracing.js";
 
 export { requireDatomicSourcePosition, withDatomicImportClock } from "./TransactionContext.js";

@@ -10,6 +10,7 @@ import { offers, sha } from "../w1/field/schedule.ts";
 import { loadParams, productionOffers, slotAttribute, tapeReport, type Shape } from "../w1/field/production.ts";
 import { admission } from "../prep1/rolling-credits.ts";
 import { productionSeedFields, scaleAccount, scaleOwner, scalePredecessors } from "../prep1/ceiling-seed.ts";
+import { checkIndex, declareAndBackfill } from "../xq4/production-index.ts";
 
 // [DX-REAL2] Mac live gate for the production tape on an aged cut. PREP1's aged-live container seeds nothing itself:
 // this driver seeds a SCALE1-shaped toy (every task-0 field of each person) through this branch's gateway, AGE1's own
@@ -73,6 +74,8 @@ assert(!opened.created && opened.db === db);
 const options = await client.request<any>("GET", "/v1/db/" + db + "/write-options");
 assert.equal(options.position, head);
 assert(options.subjectSave && options.subjectOrderedIds && options.subjectNumericOwner);
+// [DX-XQ4] With DX_XQ4_DECLARATION set (the gateway runs TX2_CROSS_INDEX=1): declare and backfill over the aged rows.
+const xq4 = await declareAndBackfill(client, db);
 // [DX-S1] The gateway runs the wide-save switch the driver was given (default off).
 assert.equal(Boolean(options.subjectWide), process.env.TX2_SUBJECT_WIDE === "1");
 
@@ -187,8 +190,10 @@ for (let i = 0; i < owners.length; i += 50) {
     }
   }
 }
+// [DX-XQ4] The index against the rows (dry-run reconciliation) and find against the expected values.
+const crossIndex = xq4 ? { ...xq4, ...(await checkIndex(reader, db, cut, SEED_VALID_FROM, expected, xq4.attributes)) } : null;
 const result = {
-  gate: "real2-aged-live", paramsSha256: sha256, seedCut, head, agingSaves: aged.saves, active: aged.active,
+  gate: "real2-aged-live", crossIndex, paramsSha256: sha256, seedCut, head, agingSaves: aged.saves, active: aged.active,
   owners: owners.length, agedRowsAdmitted: agedRows.length, tamperedAgedRowRefused: true, writesOverAgedRows: overAged,
   fieldsChecked, finalCut: cut, timings: "diagnostic", wideSaves: process.env.TX2_SUBJECT_WIDE === "1",
   productPath: productMode ?? null, saveRoutes: product?.routes() ?? null, ...(severalOwners === undefined ? {} : { severalOwners }),

@@ -200,3 +200,58 @@ the builder's gate's (`tx2-dxb2-gate-*`, `tx2-dxb2-b2-*`, run with `--rm`, unlab
 
 Evidence (outside the repository): `evidence/b2r/` in the project's private evidence folder, sealed as
 `b2r-<head>.tar.gz`.
+
+## 7. Re-check of the named fix at `46a8f746a` (2026-11-25, 07:30 to 07:45 EST)
+
+**Verdict: merge `46a8f746a`.** F9 holds for every failure the pass, the key-pool refill and the worker loop can
+raise; F5 and F7 are as claimed; nothing else changed. Three notes below (N1 to N3) need no change before the merge.
+
+**(1) What changed.** `git diff 4743df766...46a8f746a -- packages/`: `failures.clj` only (68 lines added, 6
+removed); `427ab755b` to `46a8f746a` changes no gateway code. `envelope.clj` and every caller of `note!` are as
+reviewed, `note!` still returns nil, so the pass behaves as before. The lab side: `b2.clj` (F7: r2 resent in every run
+and checked), `gate.sh` (phases `scenarios`, `fuzz`, `lines`; what the paired run normalises is now listed), the new
+`lines.clj`, and this review's files unchanged.
+
+**(2) F9 on a real PostgreSQL server and driver** (`b2r/lines2.clj`, PostgreSQL authority, gateway source of
+`46a8f746a`):
+
+| Case | The server's detail line (not printed) | The failure line |
+| --- | --- | --- |
+| P1 duplicate key handle, raised by `authority-sql/issue!` | `Key (scope, id)=(...) already exists.` | `sqlState 23505`, `duplicate key value violates unique constraint "keys_pkey"`: no handle, no detail |
+| P2 a unique index on the wrapped key, a 15-byte key (30 hex characters, under the guard) | `Key (wrapped)=(\x0102...0f) already exists.` | the constraint's name only; no key bytes |
+| P3 a check constraint refusing a 7-byte key | `Failing row contains (<database>, <handle>, \x6566...6b).` | `sqlState 23514`, the constraint's name only |
+
+- The server keeps row values and key bytes in its detail line; `failures.clj` prints only the primary message
+  (`ServerErrorMessage.getMessage`). No built-in error of the authority's statements puts a value in the primary
+  message. On the routes, S3 now prints `sqlState P0001` with the server's text on both PostgreSQL lines (43 of 43).
+- **A key file's name** prints as `assertion-<hex>.key` (S3, file authority): the name is the SHA-256 of the
+  assertion ID (not a subject, an entity or a value), and the guard removes it. A failing scope directory's own name
+  is the SHA-256 of the database name and is removed the same way; the other authority files have fixed names or
+  random temporary names.
+- **N1, the guard can be evaded (no reachable source).** P4 installs a trigger that raises the key in the server's
+  PRIMARY message: octal escapes (`encode(...,'escape')`) and hex split by colons pass whole; 30 hex characters pass
+  (15 bytes); base64 with the server's line breaks is caught except a 4-character tail. Only code installed in the
+  database can do this; the guard is a last guard behind "primary message only", which holds.
+
+**(3) The rate limiter.**
+
+- **The first line of each kind always prints;** a kind is (place, database, code, SQL state, class): 10,000
+  databases failing once printed 10,000 lines; S3 on the file authority printed one worker line for three failures
+  in 1.3 s.
+- **N2, a new description of the same kind is not printed for up to a minute,** and never if it does not recur after
+  the minute: a second `AccessDeniedException` on another file 1 ms after the first printed nothing (R1); three
+  different trigger errors of one place printed one line (P4's first run). Counted all the same. Improvement if
+  wanted: add the scrubbed description to the limiter's key.
+- **N3, the limiter never forgets an entry:** one per kind, never removed; 10,000 databases failing once left 10,001
+  entries (R2). Under the one-database rule that is a handful; it grows only with databases that fail.
+- **Counters:** every failure counted, printed or not (R3: 2 of 2, 10,000 of 10,000; `lines.clj` the same). Failures
+  after the last printed line are only in the counter until the next line.
+
+**(4) Reruns on `46a8f746a`'s gateway source** (runtime image `sha256:21a67288007d…`, PostgreSQL
+`sha256:526f86d93c6e…`, by ID):
+
+| | file | PostgreSQL |
+| --- | --- | --- |
+| Fuzzer, 5,000 schedules (seed 3,000,000) | 26,120 passes, 1,963 with a removal pending and one due, 14,867 deleted keys and 37,217 due keys checked: **0 violations** (F1 18, F2 37, F3 1 counted apart) | 26,120 passes, 1,749, 14,998 and 37,450: **0 violations** (F1 13, F2 34) |
+| Scenarios S1, S2a, S2b, S3 | 43 of 43 | 43 of 43 |
+| `lines2.clj` | | 5 of 5 checks; P4 and R1 to R3 as notes |

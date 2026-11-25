@@ -67,6 +67,28 @@ const templates: Record<string, (i: Record<string, unknown>) => string> = {
   query: () => "Answer this Triplex Datalog question.",
   evaluate_derivation: (i) =>
     `Evaluate the derivation ${(i["derivation"] as { name?: string })?.name ?? ""} for this subject.`,
+  // [DX-XQ8] Questions across subjects.
+  list_kinds: (i) => `What kinds of entity does ${i["account"]} hold, and how many of each?`,
+  describe_kind: (i) => `What attributes do the ${i["prefix"]} entities of ${i["account"]} have?`,
+  list_ids: (i) =>
+    i["result"] === "count"
+      ? `How many ${i["prefix"] || "IDs"} does ${i["account"]} have${basisWords(i["basis"])}?`
+      : `List the ${i["prefix"] || ""} IDs of ${i["account"]}${basisWords(i["basis"])}.`,
+  ask_across_subjects: (i) => {
+    const kind = (i["kind"] as { prefix?: string })?.prefix ?? "";
+    const where = (i["where"] as { attribute: string; op: string; value?: unknown; values?: unknown[]; from?: unknown; to?: unknown }[]) ?? [];
+    const words = where
+      .map((c) =>
+        c.op === "eq" ? `${c.attribute} is ${String(c.value)}`
+        : c.op === "in" ? `${c.attribute} is one of ${(c.values ?? []).map(String).join(", ")}`
+        : c.op === "range" ? `${c.attribute} is between ${c.from ?? "any"} and ${c.to ?? "any"}`
+        : c.op === "prefix" ? `${c.attribute} starts with ${String(c.value)}`
+        : c.op === "exists" ? `${c.attribute} has a value`
+        : `${c.attribute} has no value`)
+      .join(" and ");
+    const what = i["result"] === "count" ? "How many" : i["result"] === "countByValue" ? `Count per ${i["of"]} the` : "Which";
+    return `${what} ${kind} entities in ${i["account"]}${words ? ` where ${words}` : ""}${basisWords(i["basis"])}?`;
+  },
 };
 
 export function sentenceFor(call: ToolCall, fallback?: string) {

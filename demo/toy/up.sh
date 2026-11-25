@@ -24,4 +24,7 @@ echo $! > "$logs/console.pid"
 for _ in $(seq 20); do curl -fsS -o /dev/null http://127.0.0.1:$port/api/health 2>/dev/null && break; sleep 0.5; done
 # A fresh toy (--reset) gets the one worked example a visitor first sees: the Review type and a few reviews.
 if [[ " $* " == *" --reset "* ]]; then node examples/demo-mcp/src/seed-example.ts; fi
+# [DX-XQ10] With DEMO_CROSS_INDEX=1 (the profile then turns the index on): declare a small set of the demo data's
+# attributes and backfill them, so the console's fast answer is visible. Already declared: nothing is written.
+if [[ ${DEMO_CROSS_INDEX:-0} == 1 ]]; then node examples/demo-mcp/src/declare-index.ts demo/console/index-declaration.json; fi
 echo "Console: http://127.0.0.1:$port/   (catalogue: http://127.0.0.1:$port/api/catalogue)"

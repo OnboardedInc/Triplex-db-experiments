@@ -508,10 +508,16 @@ export class Archive {
   // where the previous one ended, chain to its hash, and a piece with `part` must continue the same subject at exactly
   // the number of changes already joined. Returns each changed subject once, with its changes only.
   private async storedFrames(sequence: number, frontier: Progress, identity: string, at: number) {
+    const output: Changes[] = [];
+    for await (const row of this.framesStream(sequence, frontier, identity, at)) output.push(row);
+    return output;
+  }
+  private async *framesStream(sequence: number, frontier: Progress, identity: string, at: number) {
     let previous = identity,
       through = 0,
-      tail = 0;
-    const output: Changes[] = [];
+      tail = 0,
+      changes = 0;
+    let last: Changes | undefined;
     for (let first = 1; first <= frontier.frame!; first += 32) {
       const keys = Array.from({ length: Math.min(32, frontier.frame! - first + 1) }, (_, i) =>
         framePageKey(sequence, first + i),
@@ -530,13 +536,14 @@ export class Archive {
         );
         for (const piece of unpack<Changes[]>(p.bytes)) {
           assert(piece.changes.length > 0);
-          const last = output.at(-1);
+          changes += piece.changes.length;
           if (piece.part) {
             assert(last?.subject === piece.subject && last.changes.length === piece.part, "Split subject out of order");
             last.changes.push(...piece.changes);
           } else {
             assert(last?.subject !== piece.subject, "Duplicate settled subject");
-            output.push({ subject: piece.subject, changes: [...piece.changes] });
+            if (last) yield last;
+            last = { subject: piece.subject, changes: [...piece.changes] };
           }
         }
         previous = hash(p);
@@ -544,13 +551,13 @@ export class Archive {
         tail = p.tail;
       }
     }
+    if (last) yield last;
     assert(
       previous === frontier.hash &&
         through === frontier.through &&
         tail === frontier.part &&
-        frontier.changes === output.reduce((n, row) => n + row.changes.length, 0),
+        frontier.changes === changes,
     );
-    return output;
   }
   reader() {
     const source = this.source,

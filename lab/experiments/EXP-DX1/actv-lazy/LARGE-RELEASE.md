@@ -122,7 +122,11 @@ subject of the baseline and 50 times its notices.
    operations per byte of new document, measured); the 4 MiB request limit allows roughly 1.3 MiB of definitions in
    force. At that size the single writer is held for roughly 280 ms by the `bulkUs` byte price (derived), and Publish
    fences every account's saves during its turn. A delta document (only the
-   changed definitions, the rest by hash) would remove this growth.
+   changed definitions, the rest by hash) would remove this growth. **Correction (DX-ACT6, 2026-11-24):** the binding limits are lower: the
+   transact body carries each new value twice (a row and an escaped row text), so the 4 MiB request is reached by a
+   first set between 0.50 and 0.70 MiB (measured on the toy), and the store takes one fact value of at most 1 MiB, which
+   the marker (new plus old document) reaches at about 0.5 MiB for a release following a set of its own size.
+   `TX2_RELEASE_DOCS=ref` stores the definitions by reference (RELEASE-LIMITS.md).
 4. **Per-read cost grows linearly with policies:** about 4 µs per policy on the Mac plus the answer's size. Small at
    40 definitions; it matters only at thousands.
 5. **Notice index.** For accounts that select subjects through the notice index (not the held campaign), a change in

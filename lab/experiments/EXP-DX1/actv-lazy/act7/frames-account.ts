@@ -9,6 +9,7 @@ import { frameBoundUs, frameEstimate, settleCost, windowOf } from "../join/frame
 import { largeRelease, parseShape } from "../join/large-release.ts";
 import { evaluateRows } from "../join/material.ts";
 import { noticeFrame, type Cursor, type NoticeCandidate } from "../join/recorded.ts";
+import { ledgerMode, noticeCandidate } from "../join/ledger-parts.ts";
 
 // [DX-ACT7] Why: say exactly what closes a settlement frame and what its estimated service is made of, from the
 // writers' own frame builders (no database): every frame of both writers for one release pair, with the estimate split
@@ -87,13 +88,12 @@ const notices: Frame[] = [];
     const ids = worlds.slice(cursor.start, end).map((w) => w.subject);
     const candidates = ids.map((subject, j): NoticeCandidate => {
       const { before, r } = published[cursor.start + j]!;
-      // The real ledger change retracts the previous ledger row by ID and asserts the new packed ledger.
-      const ledger = canonical(r.state.items) !== canonical(before)
-        ? db.change("recorded-ledger:" + subject, before.length ? row("recorded-ledger:" + subject, pack(before), 1) : undefined, pack(r.state.items))
-        : [];
-      return { subject, units: r.deliveries, closing: ledger.length > 0, ledger };
+      // [DX-ACT6] The notice writer's own candidate: the ledger change retracts the previous ledger row by ID and asserts
+      // the new one (whole, or with TX2_NOTICE_LEDGER=parts in parts before a head).
+      const old = { items: before, head: before.length ? row<string>("recorded-ledger:" + subject, pack(before), 1) : undefined, parts: [] };
+      return noticeCandidate(db, subject, 1, old, r, ledgerMode());
     });
-    const f = noticeFrame(db, cursorRow, cursor, candidates, { account: "notice:v1:" + sha + ":", position: tx, recipe: sha, next: sha, size: people });
+    const f = noticeFrame(db, cursorRow, cursor, candidates, { account: "notice:v1:" + sha + ":", position: tx, recipe: sha, next: sha, size: people, ledger: ledgerMode() });
     const kinds = f.ops.map((op) => {
       const o = op as { op: string; entityId?: string; id?: string };
       if (o.op === "retract") return "retract (ledger or cursor)";

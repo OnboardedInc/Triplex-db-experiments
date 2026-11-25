@@ -57,7 +57,11 @@
       (when-let [v (verify-log name)]
         (let [prior (get @privacy/cache name)]
           (if (or (nil? prior) (and (>= (long (:seq v)) (long (:seq prior))) (= (:seal prior) (seal-at v (:seq prior)))))
-            (swap! privacy/cache update name (fn [c] (if (and c (> (long (:seq c)) (long (:seq v)))) c v)))
+            (do (swap! privacy/cache update name (fn [c] (if (and c (> (long (:seq c)) (long (:seq v)))) c v)))
+                ;; [DX-ERA6 eighth pass, the merge of the one branch] the cache advanced here, not through privacy/cut:
+                ;; the entity cache's drop hook (removal_drops) is told of the removals it accepted, as cut would
+                (when privacy/drop-hook
+                  (privacy/drop-hook name nil (or prior {:seq 0 :commands {}}) v)))
             (swap! envelope/shredded update name (fn [m] (min (long (or m 0)) (long (:seq v))))))
           ;; [DX-ERA2 seventh pass, X3] as the pass itself: whatever the copy says about `sealed`
           (when (some? v)

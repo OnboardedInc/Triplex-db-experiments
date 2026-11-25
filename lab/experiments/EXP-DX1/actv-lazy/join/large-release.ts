@@ -23,14 +23,16 @@ export function parseShape(text: string): ReleaseShape {
     permille: parts.permille ?? 1000,
     fields: parts.fields ?? 12,
   };
-  assert(shape.forms >= 1 && shape.forms <= 512 && shape.policies >= 0 && shape.policies <= shape.forms);
+  // [DX-ACT6] Up to 8,192 forms (subjects owing 1,000 forms, and definition sets near the 1.3 MiB ceiling).
+  assert(shape.forms >= 1 && shape.forms <= 8192 && shape.policies >= 0 && shape.policies <= shape.forms);
   assert(shape.permille >= 0 && shape.permille <= 1000 && shape.fields >= 1 && shape.fields <= 64);
   return shape;
 }
 export const shapeName = (s: ReleaseShape) =>
   "f" + s.forms + "-p" + s.policies + "-m" + s.permille + "-x" + s.fields;
 
-const pad = (n: number) => String(n).padStart(3, "0");
+// [DX-ACT6] Three digits up to 999 forms (the names every earlier release used), four above.
+const padTo = (width: number) => (n: number) => String(n).padStart(width, "0");
 /**
  * The base document plus `forms` forms and `policies` policies; policy k makes a subject owe form k and sends a notice
  * when the subject's bucket is below `permille`. Buckets depend on the subject only, so `permille` is the share of
@@ -38,9 +40,10 @@ const pad = (n: number) => String(n).padStart(3, "0");
  */
 export function largeRelease(base: W0.ReleaseDoc, shape: ReleaseShape): W0.ReleaseDoc {
   assert(!base.forms && !base.policies);
+  const pad = padTo(shape.forms > 999 ? 4 : 3);
   const forms = Array.from({ length: shape.forms }, (_, k) => ({
     dueBusinessDays: 1 + (k % 10),
-    fields: Array.from({ length: shape.fields }, (_, j) => "field-" + pad(j + 1)),
+    fields: Array.from({ length: shape.fields }, (_, j) => "field-" + padTo(3)(j + 1)),
     id: "form:f" + pad(k + 1),
   }));
   const policies = Array.from({ length: shape.policies }, (_, k) => ({

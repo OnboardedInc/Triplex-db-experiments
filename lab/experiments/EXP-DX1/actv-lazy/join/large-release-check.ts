@@ -34,7 +34,10 @@ const retract = { op: "retract", id: "t".repeat(40) };
 const sha = "0".repeat(64);
 // The background writer's own admission: Archive.write checks the frame before it queues anything. A stub queue
 // accepts a frame that passes, so nothing reaches a database.
-const stub = { queue: { submit: async () => "queued" }, source: { s: { scope: "x" } }, store: { scope: "y" } };
+// [DX-INT4] Since ACT5 (c1579ee50) write() also reads the archive's precondition, its frame counts and its queue key; the
+// stub carries the defaults every real Archive has (precondition "head" when TX2_SETTLE_PRECONDITION is unset).
+const stub = { queue: { submit: async () => "queued" }, source: { s: { scope: "x" } }, store: { scope: "y" },
+  precondition: "head", contest: { offered: 0, turn() {}, done() {} }, turnKey: () => "x" };
 const admitted = async (kind: "activation" | "notice", ops: unknown[]) => {
   try {
     await Archive.prototype.write.call(stub as never, kind, "frame", ops as never, 0, null, undefined);

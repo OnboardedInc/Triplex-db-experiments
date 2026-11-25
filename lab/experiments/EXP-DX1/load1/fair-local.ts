@@ -37,6 +37,15 @@ export async function fairLocal(stack: Stack) {
   seedToy(fixture, randomUUID(), write, e.source.git);
   const file = path.join(fixture, "fixture.json");
   const seed = openScaleSeal(file, hex(fs.readFileSync(file)), true);
+  // [DX-ACT6] Why: the release-limits gate opens its own scopes on this stack; it reads the storage WAL position through
+  // the stack's own SQL to price each Publish. Rejected: a second Mac stack recipe.
+  if (process.env.DX_ACT6_GATE === "1") {
+    process.env.DATOMIC_URL = write;
+    process.env.DATOMIC_READ_URLS = read;
+    const { releaseLimitsGate } = await import("../actv-lazy/join/release-limits-gate.ts");
+    await releaseLimitsGate(e.dir, (q) => stack.sql("pg", q, "moving"));
+    return { releaseLimitsGate: process.env.DX_ACT6_PART ?? "all" };
+  }
   // [DX-ACT4] Why: the settlement-frames gate needs a real store on a toy stack; it opens its own scopes there.
   // Rejected: a second Mac stack recipe.
   if (process.env.DX_ACT4_GATE === "1") {

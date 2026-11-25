@@ -5,7 +5,7 @@
             [triplex.gateway.subject-save :as subject] [clojure.data.json :as json]
             [triplex.gateway.owner-layout :as owner-layout] [triplex.gateway.owner-root :as owner-root]
             [triplex.gateway.pinned :as pinned] [triplex.gateway.general-prefetch :as general-prefetch]
-            [triplex.gateway.subject-hints :as subject-hints]
+            [triplex.gateway.subject-hints :as subject-hints] [triplex.gateway.cross-index :as cross]
             ;; [DX-S3] Last, so that it loads after every namespace whose stored code it must not move.
             [triplex.gateway.subject-owners :as owners]
             ;; [DX-S4] After subject-owners, for the same reason.
@@ -334,6 +334,15 @@
                (map (fn [claim] {:db/id (str "c:" (get claim "commandId"))
                                 :triplex.claim/command-id (get claim "commandId") :triplex.claim/tx "datomic.tx"
                                 :triplex.claim/tx-id (get claim "txId")}) claims))))
+         ;; [DX-XQ4] Why: index entries ride in the same prepared transaction as the rows they key, behind the fence.
+         ;; Rejected: changing the stored commit functions, or computing entries on the transactor.
+         index (when (and cross/enabled lean) (cross/declaration db))
+         ops (if index (into ops (cross/tx-ops db index (or (:attrs privacy/*cut*) #{}) fresh old (get input ::index-lenient))) ops)
+         release (when index (cross/release-ops db index fresh input))
+         ops (if release
+               (into (mapv #(if (and (vector? %) (= :db/cas (first %)) (= :triplex.ix/seq (nth % 2 nil))) (:fence release) %) ops)
+                     (:ops release))
+               ops)
          journals (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))
          [claim] claims
          command (get claim "commandId")
@@ -587,6 +596,10 @@
                     (timed-input-rows prepared lean new-ids)))))))))
 (defn commit! [name conn db input]
   (when trace/tx-jfr-enabled (trace/attribute! :databaseHash (schema/sha256 name)))
+  ;; [DX-XQ4] Why: the covering owner head moves rows onto version entities the index does not follow.
+  (when (and cross/enabled owner-layout/enabled (cross/declaration-eid db))
+    (throw (ex-info "The cross-subject index does not support the covering owner head (TX2_SUBJECT_OWNER_HEAD)"
+                    {:status 409 :code "OwnerLayoutUnsupported"})))
   (when (and (not owner-layout/enabled) (owner-root/installed? db))
     (throw (ex-info "This database stores covering owner roots; start the writer with TX2_SUBJECT_OWNER_HEAD=1"
                     {:status 409 :code "OwnerLayoutRequired"})))
@@ -602,9 +615,21 @@
   (let [submitted (volatile! false)]
   (try
     (let [parsed (System/nanoTime)
+          ;; [DX-XQ4] With the index option on, the declaration fence exists before the first declaration.
+          db (if cross/enabled (cross/ensure-installed! conn db) db)
           load-timing (when commit/load-profile (volatile! 0))
-          data (try (binding [*load-timing* load-timing] (trace/span "commit.prepare-and-validate" "gateway" (tx-data db input (scope/entity db))))
-                    (catch Exception e (reject-ordered! conn input e)))
+          ;; [DX-XQ4] Why: an index retraction needs the retired fact's stored text; a peer that does not hold it yet
+          ;; catches up once (d/sync) and prepares again. Rejected: trusting the client's copy of the retired row.
+          [db data] (try (binding [*load-timing* load-timing]
+                           (trace/span "commit.prepare-and-validate" "gateway"
+                             (try [db (tx-data db input (scope/entity db))]
+                                  (catch Exception e
+                                    (if-not (cross/peer-behind? e) (throw e)
+                                      (let [synced (deref (d/sync conn) 2000 ::timeout)]
+                                        (when (= ::timeout synced) (throw e))
+                                        ;; After the catch-up a fact still absent never existed: the commit refuses it.
+                                        [synced (tx-data synced (assoc input ::index-lenient true) (scope/entity synced))]))))))
+                         (catch Exception e (reject-ordered! conn input e)))
           validated (when (= "1" (System/getenv "TX2_SUBJECT_RETIREMENT_TRACE")) (System/nanoTime))
           frame-size (group/frame-measurement (second (first data)) input)
           _ (try (group/bound-frame! frame-size) (catch Exception e (reject-ordered! conn input e)))
@@ -621,6 +646,8 @@
           _ (when policy/import-whole?
               (try ((requiring-resolve 'triplex.gateway.import-bound/bound!) (second (first data)) input)
                    (catch Exception e (reject-ordered! conn input e))))
+          ;; [DX-XQ4] With the index on, a bulk frame's index entries count beside its rows (review D3).
+          _ (when cross/enabled (try (cross/bound-frame! (second (first data)) input policy/bulk-rows) (catch Exception e (reject-ordered! conn input e))))
           ;; [DX-S6] TX2_READ_SET_BOUND=1: every class's read set is capped (no repeats, at most 4,096 names).
           _ (when (= "1" (System/getenv "TX2_READ_SET_BOUND"))
               (try ((requiring-resolve 'triplex.gateway.import-bound/read-set!) (second (first data)) input)
@@ -727,7 +754,7 @@
       (let [text (str e)]
         ;; [DX-THIN1] Why: preserve explicitly typed policy errors and the established transaction rejection for malformed row ordering.
         ;; Rejected: treating every codec InvalidValue as a policy error before checking the transaction result.
-        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasureFrontierUnavailable" "ErasedAssertionIdentity" "ProtectedTypeUnsupported" "EnvelopeKeyPoolEmpty"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
+        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasureFrontierUnavailable" "ErasedAssertionIdentity" "ProtectedTypeUnsupported" "EnvelopeKeyPoolEmpty" "ReleaseWritesDeclaredAttribute" "OwnerLayoutUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         ;; [DX-S6] After submit, unrecognised means unknown: 503 OutcomeUnknown, and the caller looks the operation up.
         (when @submitted
           (when-not ((requiring-resolve 'triplex.gateway.outcome/decided?) e)
@@ -943,6 +970,8 @@
             _ (assert-subject-route! db basis (if (= route "live") :f/live :f/subject))
             _ (when (and (= route "live") history) (unavailable! "Position-retired route cannot enumerate history"))
             _ (trace/read-span "read.confirm-position" "peer-call" (await-position db (get basis "recordedPosition") (get input "basisWaitMs") (fn [_] db)))]
+        ;; [DX-RPT1] "omitProtected": true reads protected rows without their values (privacy/*omit-protected*).
+        (binding [privacy/*omit-protected* (true? (get input "omitProtected"))]
         (admission/execute-for input admission/reads (fn []
         (let [paged (fn [rows] (if page (history-page rows page) {:rows rows}))
               {rows :rows more :next} (paged
@@ -964,7 +993,8 @@
                               (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source") :basis basis
                  :subjectAttribute (str (if (= route "live") :f/live :f/subject))
                  :rows (mapv #(wire-row (privacy/masked (mask-retirement % basis))) rows)}
-          page (assoc :historyNext more)))))))))
+          page (assoc :historyNext more)
+          privacy/*omit-protected* (assoc :omittedProtected true))))))))))
 
 ;; [EXP-DX1] Why: snapshot, claim and known by-id rows share one immutable prefetch cut.
 ;; Rejected: separate claim/read HTTP calls (R51's six-round-trip commit).

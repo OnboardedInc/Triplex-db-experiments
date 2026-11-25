@@ -38,6 +38,7 @@ import {
   DATOMIC_REQUEST_LIMIT_BYTES,
   atLeastBody,
 } from "./DatomicClient.js";
+import { orderedSaveIdentity, wideOrderedSaveIdentity } from "./orderedSaveIdentity.js";
 import {
   boundedMatch,
   DatomicMatchNeedsPaging,
@@ -47,7 +48,6 @@ import {
   validateIdListOptions,
 } from "./idLists.js";
 import { isPatternVariable } from "@triplex-build/triplex";
-import { orderedSaveIdentity, wideOrderedSaveIdentity } from "./orderedSaveIdentity.js";
 import { matchesPattern, packValue, packValueOnce, createPackedRow, visibleAt } from "./rows.js";
 import { fastPathEnabled } from "./fastPaths.js";
 import { stagedInput } from "./protocol.js";
