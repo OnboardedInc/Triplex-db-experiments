@@ -81,11 +81,41 @@
                    :subject-page-400-items {:on-open (timed #(open-all src page200 (str "cost|a|" (subjects 0))))}}]
           (println "ERA5_COST" (pr-str row)))))))
 
+;; [DX-ERA5, second review] The owner's deep-account shape (decisions 2026-11-19: 160 facts per subject): each record
+;; names its subject's whole world as the writers do (every string row: 160 names), of which p are protected (p = 8,
+;; an assumption: SSN, birth date, two document numbers, bank account and routing, two more); the route drops the rest.
+(defn deep []
+  (let [p 8 facts 160]
+    (g/fresh-scope true
+      (fn [src conn]
+        (let [subjects (vec (for [s (range 64)] (format "acct/a/pl:%08d" s)))
+              t0 (System/nanoTime)
+              names (vec (for [[si subj] (map-indexed vector subjects)]
+                           (vec (concat (for [j (range p)] (seed-retry! src (str "dk-" si "-" j) (str subj "/f" j)))
+                                        (for [j (range (- facts p))] (a5/plain-row! src (str "dp-" si "-" j) (str subj "/p" j)))))))
+              seed-s (/ (- (System/nanoTime) t0) 1e9)
+              unit (apply str (repeat 217 "u"))
+              item (fn [si u] {"ids" (names si) "value" (str unit si "-" u) "place" (str "cost|a|" (subjects si))})
+              frame6 (vec (for [si (range 64) u (range 6)] (item si u)))
+              [_ sealed6] (seal-all src frame6)
+              page6 (mapv #(get % "sealed") (take 6 sealed6))
+              clear-doc (apply str (repeat 64 (str unit unit unit)))
+              n (atom 0)
+              t (fn [] (g/seq-now src conn))
+              row {:authority (if sql/url "postgresql" "file") :shape "deep: 160 names per record, 8 protected"
+                   :seeding-seconds (Math/round (double seed-s))
+                   :request-bytes-frame-64x6 (count (json/write-str {"items" frame6}))
+                   :settlement-frame-64x6 {:on-seal (timed #(first (seal-all src frame6)))
+                                           :off-write-clear (timed #(:status (offers/send src (assoc (g/save-frame (str "dc6-" (swap! n inc)) "settlement-values-a:answer:dc6" ":notice/body" (subs clear-doc 0 41000) nil nil) "erasureSeq" (t) "erasureAccounts" ["a"]))))}
+                   :subject-page-6-changes {:on-open (timed #(open-all src page6 (str "cost|a|" (subjects 0))))
+                                            :off-read (timed #(:status (offers/route src "v1" "read" {"entityIds" ["settlement-values-a:answer:dc6"]})))}}]
+          (println "ERA5_COST" (pr-str row)))))))
+
 (defn main []
   (x/install-hooks!)
   (install-counter!)
   ((requiring-resolve 'triplex.gateway.envelope/start!))
-  (measure)
+  (if (= "1" (System/getenv "ERA5_COST_DEEP")) (deep) (measure))
   (println "ERA5_SUMMARY" (pr-str {:oracles @x/oracles :violations (count @x/violations)}))
   (shutdown-agents)
   (System/exit 0))

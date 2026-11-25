@@ -30,7 +30,10 @@ name="tx2-dxera5-cost-$$-$authority"; net="tx2-dxera5-net-$$"; pg="tx2-dxera5-pg
 env=(-e TX2_SUBJECT_SAVE=1 -e TX2_SUBJECT_NUMERIC_OWNER=1 -e TX2_SUBJECT_ORDERED_IDS=1 -e TX2_REMOVAL_PER_ACCOUNT=1
      -e TX2_REMOVAL_SUBJECT_CHECK=1 -e TX2_ACCOUNT_TICKETS=1 -e ACT9_ARM=after -e TX2_DERIVED_SEAL=1 -e ERA4_ARM=on
      -e TRIPLEX_ERASURE_DIRECTORY=/tmp/era5-authority -e DATOMIC_URI_TEMPLATE='datomic:mem://{db}'
-     -e "TRIPLEX_ERASURE_SHRED_GRACE_MS=$grace" -e DF01_RECORDED_PAGE=/tmp/recorded-page.json)
+     -e "TRIPLEX_ERASURE_SHRED_GRACE_MS=$grace" -e DF01_RECORDED_PAGE=/tmp/recorded-page.json
+     -e "ERA5_COST_DEEP=${ERA5_COST_DEEP:-0}")
+# [DX-ERA5, second review] ERA5_COST_DEEP=1: the deep-account shape (cost5.clj `deep`); ERA5_EXTRA_ENV adds options
+for kv in ${ERA5_EXTRA_ENV:-}; do env+=(-e "$kv"); done
 cleanup() {
   docker rm -f "$name" > /dev/null 2>&1 || true
   docker rm -f "$pg" > /dev/null 2>&1 || true
