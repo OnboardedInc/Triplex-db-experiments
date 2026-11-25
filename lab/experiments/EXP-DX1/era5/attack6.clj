@@ -454,7 +454,8 @@
                   _ (when slow (bump! :slow-answer (cond (:not-held slow) :not-held (get slow-answer "sealed") :sealed
                                                          (contains? slow-answer "removed") :removed :else :other)))
                   _ (when (and slow slow-wire)
-                      (let [o (doc! src (str "fzw-slow-" tag) (str "answer:" i ":fs")
+                      ;; (a page key as the writers make it, answer:<n>:f<n>: the setting refuses a kind it does not know)
+                      (let [o (doc! src (str "fzw-slow-" tag) (str "answer:" i ":f9999")
                                     (page [["" slow-wire]] {"subject" (ds/place-subject (:place slow-rec))}))]
                         (x/oracle! (str "F6 " i) (= [200 nil] o) "the setting accepts the slow seal's record" {:o o})))
                   ok (= 200 (:status (:final rm)))
