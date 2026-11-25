@@ -57,7 +57,8 @@
   (let [attrs (get input "attributes") sealed? (true? (get input "sealed"))]
     ;; [DX-ERA2 sixth pass, V1] a database guarded per account is declared through removal-commit/protect! (its policy
     ;; is in the database); a gateway without the option must not write its log's policy
-    (when (contains? #{removal-scope/sentinel -2} (scope/value db (scope/entity db) :triplex.scope/erasure-seq)) (privacy/unavailable!))
+    ;; (-1 is removal-scope/sentinel: on this branch erase.clj does not load removal-scope, as before the merge)
+    (when (contains? #{-1 -2} (scope/value db (scope/entity db) :triplex.scope/erasure-seq)) (privacy/unavailable!))
     (when-not (and (lean/enabled? db) (or (privacy/enabled? db) (= (or staged-position 0) (scope/head-position db (scope/entity db)))))
       (privacy/failure! 409 "ProtectedScopeNeedsMigration" "Declare protection before saving into the scope"))
     (privacy/register! name attrs sealed?
