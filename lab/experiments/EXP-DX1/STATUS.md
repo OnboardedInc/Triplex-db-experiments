@@ -6355,3 +6355,25 @@ Source: removal builder final message. Branches: `exp/DX-B2-key-deletion` `4743d
 - On the removal branch: the check-then-read on the authority's pending file fixed (a forced-interleaving test: before, another account's removal answered 400 on all three per-account modes; after, none); a delivery refused without the completion tag now completes its source's removal; a removal whose PostgreSQL session dies answers a typed 503 and is completed (10 stack runs across 5 steps and both boundaries, 0 removed values answered, nothing left pending). A patch for the derived-copies branch is in `lab/experiments/EXP-DX1/era2/patches/`.
 
 **Action:** independent adversarial review of the standalone branch started (task file `OPUS-B2R-review-key-deletion-fix`, branch `exp/DX-B2R-key-deletion-review`). It merges into the one branch only on a clean review.
+
+## 2026-11-25 07:18 EST: two reviews in: the standalone key-deletion fix may merge after one fix; the derived seal's setting stops notices above 30 owed forms
+
+**Review of the standalone key-deletion fix.** Source: independent reviewer, branch `exp/DX-B2R-key-deletion-review` `8802ef3aa`, `lab/experiments/EXP-DX1/b2r/REVIEW.md`. Reviewed: `exp/DX-B2-key-deletion` `4743df766`.
+
+- **No break; recommendation: merge with one named fix.** The pass reads only entries up to the published head, and the head moves only after a removal's native commit, so it cannot include or run past a pending removal on either authority.
+- Builder's figures confirmed (key outlived its grace by 17 to 40 ms on the branch against 30,018 to 30,212 ms on the one branch). Fuzzer: 20,000 schedules on each authority, 209,595 passes checked, 0 violations; the same fuzzer on the one branch: 1,259 violations in 2,000 schedules. 42 of 42 route scenarios on both authorities. Toy stack by image ID: the key was gone at publication plus 320 s with another removal still pending; the pending one completed on resend. TypeScript removal tests pass.
+- **F9, the named fix:** on the PostgreSQL authority a new failure log line prints one wrapped key in hex (the database driver's error message carries the statement's parameters). No exposure today; key material must not reach a log. F5: the new lines have no rate limit.
+- Base faults recorded, not caused by the fix: a gateway that has seen a newer log than a restored older copy refuses every cut until it restarts; on the file authority a stale writer after a lost lock can move the published head back; a data restore older than a pending removal's predecessor leaves it stuck.
+- Not tested: PostgreSQL authority on a stack; a real Datomic backup and restore.
+
+**Second review of the derived seal.** Source: independent reviewer, branch `exp/DX-ERA5-derived-copies-review` `1c02a37df`, `REVIEW-2.md`. Reviewed: `exp/DX-ERA4-derived-copies` `73e0d6849`.
+
+- **No way found to get a removed value back with today's writers, under either boundary:** 20,000 schedules, 512,418 checks, 0 failures; every earlier finding re-ran as fixed; 0 clear copies in 578 datoms across four databases after the whole held path with the setting.
+- **N1, high: with the setting declared, a subject owing more than 30 forms stops the account's notices for good.** A sealed ledger item is about 400 characters against 60.8 in clear; the ledger outgrows the writer's frame limit between 30 and 32 forms; the way past is ledgers in parts, which the setting refuses. So the setting and 200 owed forms cannot coexist yet.
+- N2, high, needs one operator call: a removal-log rebuild that drops a protected attribute makes later derived copies public (closed by the removal builder's policy-in-Datomic fix once merged). N3, medium: a record whose writer names too few rows is sealed under a key anyone can compute. N4, medium: the setting checks document shapes only (17 of 18 hand-made documents holding a protected value pass). N5, N6: the key re-sweep and the held read both scale with the number of removals (35 ms per second at 1,000 removals; 77 ms per key at 100,000 removed values). N7 to N10 low.
+- Reviewer's judgement of the shape: keep each value's own key, but have the gateway choose the keys (every live protected value of the subject the record belongs to).
+- A product rule to confirm with Sam: a removed document value now counts as absent, so the expired-document notice is withdrawn.
+
+**Actions:** the removal builder resumed to fix F9 and F5 on the standalone branch; it then goes to the merge. The derived-copies builder resumed with N1 first (ledgers in parts must work with the setting, at 200, 1,000 and 1,700 owed forms), then gateway-chosen keys, then the rest. A third review of the derived seal follows.
+
+**Disk.** Free space fell to 18 GiB at 07:15. Trimmed 9 build contexts from 2026-11-19 and 20 in one finished worktree (Dockerfiles and receipts kept): 2.6 GB. Started the existing verified archive of five first-rental benchmark evidence folders (5.5 GB) to the Drive archive; log in the private evidence folder under `ORCH-disk`. An earlier figure of 193 GB for worktrees was not real usage (copy-on-write clones of one package store).
