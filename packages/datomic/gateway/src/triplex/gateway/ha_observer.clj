@@ -23,7 +23,7 @@
         (main/response 200 {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")})
         (if-let [[_ name op] (re-matches #"/ha1/(s2-[A-Za-z0-9_-]+)/(state|sync|operations)" (:uri req))]
           (try (observation req name op)
-               (catch Exception e (main/response 503 {:code "ObservationUnavailable" :message (.getMessage e)})))
+               (catch Exception e (main/response 503 {:code "ObservationUnavailable" :message ((requiring-resolve 'triplex.gateway.reply/hidden) "ha1-observation" name e)})))
           (base req))))]
       ;; [DX-HASYNC1] Why: fleet URIs each have their own SQL account, and each cell proves data readiness separately.
       ;; Rejected: creating a health database and listing every database through one nonexistent SQL account.

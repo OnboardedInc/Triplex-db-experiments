@@ -198,7 +198,7 @@
       (let [chain (take-while some? (iterate #(some-> ^Throwable % .getCause) ex))
             code (or (some #(get (ex-data %) :code) chain)
                      (some #(second (re-find #"HA1_([A-Za-z]+)" (str %))) chain) "SharedTransactionError")]
-        (main/response 409 {:code code :message (if (= code "SharedTransactionError") (str ex) code)})))))
+        (main/response 409 {:code code :message (if (= code "SharedTransactionError") ((requiring-resolve 'triplex.gateway.reply/hidden) "ha1-shared" nil ex) code)})))))
 (defn -main [& _]
   (let [scope (System/getenv "HA1_SHARED_SCOPE") secret (System/getenv "HA1_ADMIN_TOKEN")
         _ (assert (and (seq scope) (seq secret))) name (:db (main/create-scope! nil scope "legacy" true false))

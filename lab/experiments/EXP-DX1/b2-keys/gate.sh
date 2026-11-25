@@ -18,6 +18,9 @@
 #   lines   [review F5, F9] b2-keys/lines.clj on this worktree: a persistent failure prints one line, then one a minute
 #           with the number not printed; a refused PostgreSQL batch prints its SQL state and the server's text, never
 #           the driver's message (the statement with a wrapped key); other exceptions print their class only.
+#           [DX-N1, N3] And n1-keys/replies.clj on the file and the PostgreSQL authority: the declaration's refused key
+#           batch answers a typed 503 with no hex run, SQL text or key handle; every route, with an exception injected
+#           where it reaches storage, a driver or Datomic, answers without the exception's message.
 #   n1      [DX-N1] n1-keys/pool.clj (R0 to R3: the key pool after a restart, a save of more protected values than the
 #           pool holds, a burst) on this worktree and on the base, file and PostgreSQL authority: this worktree must pass
 #           every check (the base's result is printed as the reference); and b2-keys/paired.clj on the PostgreSQL
@@ -129,6 +132,12 @@ if [[ $phases == *lines* ]]; then
   run lines-this this '(load-file "/lab/lines.clj") (b2-lines/main)'
   grep -hE "^B2_LINES" "$out/lines-this.log" | cut -c1-300
   grep -q "^B2_LINES_SUMMARY {:checks 10, :failed 0}" "$out/lines-this.log" || status=1
+  # [DX-N1, N3] nothing an exception carries reaches a caller: n1-keys/replies.clj (the declaration's refused key batch,
+  # PostgreSQL; every route with an injected exception, file and PostgreSQL)
+  for authority in file pg; do
+    bash "$x/n1-keys/run.sh" "$out/replies-this-$authority" worktree "$authority" n1-keys/replies.clj '(n1-replies/main)' > /dev/null || status=1
+    grep -hE "^N1_REPLY_SUMMARY|^N1_REPLY FAIL" "$out/replies-this-$authority/run.log" | cut -c1-300 | head -8
+  done
 fi
 if [[ $phases == *n1* ]]; then
   for authority in file pg; do

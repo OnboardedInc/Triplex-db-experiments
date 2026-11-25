@@ -47,7 +47,7 @@
   (when (and prefetch? db (next ids))
     (.increment batches)
     (.add subjects (count ids))
-    (let [task (fn [id] (bound-fn* (fn [] (try (touch! db id) (catch Throwable t (.increment failures) (reset! last-failure (str t)) nil)))))
+    (let [task (fn [id] (bound-fn* (fn [] (try (touch! db id) (catch Throwable t (.increment failures) (reset! last-failure (.getName (class t))) nil)))))
           futures (mapv #(.submit ^ExecutorService @pool ^Callable (task %)) (rest ids))]
       ((task (first ids)))
       (doseq [^Future f futures]
