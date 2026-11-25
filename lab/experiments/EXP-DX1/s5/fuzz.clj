@@ -106,7 +106,7 @@
 (defn- block-of [g ^Random rng total]
   (let [n (swap! (:counter g) inc) r (.nextDouble rng)]
     (cond
-      (and (< r 0.3) (<= total 256)) (assoc (wide/identity-block :narrow n) :kind :narrow)
+      (and (< r 0.3) (<= total 248)) (assoc (wide/identity-block :narrow n) :kind :narrow)
       (< r 0.85) (assoc (wide/identity-block :wide n) :kind :wide)
       :else {:kind :plain :tx (str "_tx/plain-" (:seed g) "-" n) :id #(str "plain" (:seed g) "-" n "-" %)})))
 
@@ -374,12 +374,18 @@
                (cond (< r 0.10) :race (< r 0.13) :lost-reply (< r 0.155) :kill-after (< r 0.18) :kill-before
                      (< r 0.20) :same-command (< r 0.215) :same-operation (< r 0.23) :reuse-block
                      (< r 0.24) :reuse-refused-block :else :plain))
+        ;; A reused one-byte block holds at most 256 identities; a larger save keeps its own block.
+        fits? (fn [b] (or (not= :narrow (:kind b))
+                          (<= (+ (count (:facts spec)) (journal-rows (:facts spec) (:retires spec)
+                                                                     (distinct (concat (:owners spec) (map :owner (:retires spec))
+                                                                                       (keep :frame-owner (:retires spec))))))
+                              256)))
         spec (case mode
                :same-command (if-let [c (some-> @(:commands g) seq vec (->> (pick rng)))]
                                (assoc spec :command c :operation (str c "/again-" (swap! (:counter g) inc))) spec)
                :same-operation (if-let [o (some-> @(:operations g) seq vec (->> (pick rng)))] (assoc spec :operation o) spec)
-               :reuse-block (if-let [b (some-> @(:blocks g) seq vec (->> (pick rng)))] (assoc spec :block b) spec)
-               :reuse-refused-block (if-let [b @(:refused-block g)] (assoc spec :block b) spec)
+               :reuse-block (if-let [b (some-> @(:blocks g) seq vec (->> (pick rng)))] (if (fits? b) (assoc spec :block b) spec) spec)
+               :reuse-refused-block (if-let [b @(:refused-block g)] (if (fits? b) (assoc spec :block b) spec) spec)
                spec)
         [command input] (input-of g spec)
         operation (get input "operationId")
@@ -558,7 +564,7 @@
                   (let [r (try (serial-step! g rng ctx)
                                (catch Throwable e {:equal false :error (str e) :mode :error}))]
                     (swap! out (fn [o] (-> o (update :serial inc) (update-in [:modes (:mode r)] (fnil inc 0))
-                                           (update-in [:writers (:writer r)] (fnil inc 0))
+                                           (update-in [:writers (or (:writer r) :none)] (fnil inc 0))
                                            (update-in [:outcomes (str (:k r))] (fnil inc 0))
                                            (cond-> (:declined r) (update-in [:declined (:declined r)] (fnil inc 0)))
                                            (cond-> (:kc r) (update-in [:races (str [(:kc-writer r) (:kc r) (:writer r) (:k r)])] (fnil inc 0))))))
