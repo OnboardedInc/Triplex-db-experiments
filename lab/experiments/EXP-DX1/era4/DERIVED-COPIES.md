@@ -614,6 +614,11 @@ not written yet (follow-up 4).
    removal's transaction ID in the SDK's form (it also fixes DX-ACT9's enrolment beside removals), the lazy account's
    walk accepting a removal, and a preview of unprotected staged rows on a sealed scope.
 6. **Should an unsealed protected scope exist outside tests?** No (section 1): refuse it in production configuration.
+7. **A derivation from two databases' protected rows** (11.7): the seal route could refuse a name that is not a row of
+   its database, so a caller cannot seal without the other database's keys unnoticed; the one-database goal removes it.
+8. **The shred worker's progress** (11.6): a key file restored with an older copy of the authority stays until the
+   gateway restarts; the worker could check every published removal's keys again on each pass, or on a restore.
+9. **Row 19 under the native-commit boundary** (11.6): the held reader's cache key must change at the native commit.
 
 ## 11. After the merge of DX-ERA2's third pass, and the second review's E9 and E6 as gates (2026-11-24)
 
@@ -642,10 +647,10 @@ to be completed when a gateway dies.
 
 | This option's step | Where it runs among P0 to P7 | If its gateway dies there, who completes it |
 | --- | --- | --- |
-| Seal | at derivation time, at any stop point; from P7 on it answers removed | nothing to complete (a seal writes nothing); the client retries a 503 up to 50 times, 100 ms apart |
+| Seal | at derivation time, at any stop point; from P5 (the native commit) on it answers removed | nothing to complete (a seal writes nothing); the client retries a 503 up to 50 times, 100 ms apart |
 | Record (the derived write of a sealed copy) | at any time; from P1 to P6 refused with 503 when the removal can reach its ticket | the caller resends it; its refusal makes that gateway complete the removal (DX-ERA2 15.3) |
 | The removal's transaction ID | inside the commit's native transaction (P4, P5) | whichever gateway completes the removal writes the same form, **provided every gateway runs the option**: a gateway without it writes `_tx/erase-<uuid>`, which stops every SDK feed read past it (5.1 item 2) |
-| Open | at any time; the value until P7, removed from P7 | nothing to complete (a read) |
+| Open | at any time; the value until P5, removed from P5 (the native commit) or P7 (the publication), whichever comes first | nothing to complete (a read) |
 | The key's destruction | after P7 and the grace (row S) | every gateway's shred worker, from the published log; a restart starts from 0 |
 | Re-recording | the account's next frame after P7 | the account's next frame, in whichever process runs it: the generation comes from what its ledger opens to and from the published cut, not from memory |
 
@@ -659,14 +664,16 @@ The table below follows DX-ERA2 15.2 (s is the removal's sequence); "checks" is
 | P2 | its declaration | the value | sealed | the value | 503, and it completed the removal | as P1 | stop after `declare!`: fired |
 | P3 | its subject guard | as P2 | as P2 | as P2 | as P2 | as P1 | **not reached**: a quiet removal commits at its first attempt and takes no guard (DX-ERA2's own gate stops there in process) |
 | P4 | a commit sent whose wait expired | not landed: as P2; landed: as P5 | as P2 | as P2 | as P2 | as P1; the removal's transaction ID is inside that commit, so a late landing carries it | stop before the commit's native transaction: fired, as P2 |
-| P5 | its commit | the value (the published cut does not hold it yet) | sealed | the value | 503, and it completed the removal | as P1 | stop after the commit: fired |
-| P6 | the intent rewritten to the committed entry | the value | sealed | the value | 503, and it completed the removal | as P1 | stop at the publication: fired |
+| P5 | its commit | **removed** (since `d803df016`: the native commit decides for this option's routes; before it, the value) | **removed** (before `d803df016`: sealed) | the value (the published cut does not hold it yet) | 503, and it completed the removal | as P1 | stop after the commit: fired |
+| P6 | the intent rewritten to the committed entry | **removed** (before `d803df016`: the value) | **removed** | the value | 503, and it completed the removal | as P1 | stop at the publication: fired |
 | P7 | its publication (answer not sent) | **removed** | **removed** | no value | 409 `ErasureFrontierChanged` (a ticket from before) | nothing; the resend answers 200 | ran to its answer: open and seal answered removed at once |
 | S | the key's destruction (after `TRIPLEX_ERASURE_SHRED_GRACE_MS`) | removed (the cut decides before, the missing key after) | removed | no value | as P7 | **every gateway's shred worker** (every 500 ms, from the published log; a restart starts from 0 and deletes again; gate (e) kills and restores a key); if no gateway runs, the key stays and the published cut alone keeps every route from opening a copy | key deleted within 5 s in every row (grace 0) |
 
-**One rule over the whole table, checked at every stop that fired:** while a removal is pending, a copy opens exactly
-when the plain read of the value still answers it (oracle held at P1, P2, P4, P5 and P6), so this option never answers
-more than the store already does; from the publication on, every copy opens as removed. After each row's
+**One rule over the whole table, checked at every stop that fired:** while a removal is pending, a copy opens only
+while the plain read of the value still answers it (oracle held at P1, P2, P4, P5 and P6), so this option never
+answers more than the store already does. Since `d803df016` (section 11.6) a copy opens as removed from the removal's
+native commit (P5) or its publication (P7), whichever comes first; before that change it opened exactly when the plain
+read answered (the first `checks` runs). After each row's
 acknowledgement: the copy's document, the journal and every native datom hold no clear value, the copy opens as removed,
 the assertion seals nothing, another subject's copy still opens, and the key is gone.
 
@@ -748,3 +755,75 @@ Every container ran the pinned runtime image `sha256:21a67288007d...` by ID (rec
 | `stop-checks`: this option at P1 to P7 | 7 rows (P3 not reached); every stop that fired was completed by the refused derived write; after each acknowledgement 9 checks each passed (11.1) |
 | Phase `checks` in all (`checks-v3-1` on the merge before it was committed, `checks-v3-2` on `1827b191e`) | 135 oracles, **0 violations**, each time |
 | (g) Cost phase (`races.clj` `cost`) | the removal wrote 1 identity, 1 position and 35 datoms with 0, 10, 100 and 1,000 sealed copies of its subject (time 39, 18, 19, 14 ms, diagnostic); opening every copy afterwards 0, 7, 11, 79 ms |
+
+### 11.6 After the third review (REVIEW-3, `af62ce1dc`): which removal boundary each derived copy assumes
+
+The third review of the removal rule found M1 to M6. The removal builder is fixing M2 to M5 and adding a default-off
+option under which a removal takes effect for reads at its native commit in Datomic instead of at the log's
+publication; the owner has not chosen, so both boundaries must hold. This option does not duplicate those fixes; what
+it changed is only its own routes.
+
+**The change (`d803df016`, under `TX2_DERIVED_SEAL` only).** The seal and open routes take a removal as effective at
+its native commit or at its publication, **whichever comes first**: on a database guarded per account, when the data's
+committed removal sequence is past the published head, the identities of every native erasure record past the head
+count as removed (`derived_seal.clj` `native-erased`; one read of the committed sequence otherwise). Under today's
+boundary this is stricter than required (a copy stops opening at P5 instead of P7, while the plain read still answers
+until P7; TARGETS 7.1 allows a read before the publication to see the value, it does not require it). Under the
+native-commit boundary it is exactly that boundary. On the database-wide rule nothing changes: there every request is
+refused while a removal is pending (`verify-data!`), as the review confirms for plain reads.
+
+**Per derived copy (inventory rows):**
+
+| Rows | What decides that a removed value is gone | Publication boundary (today) | Native-commit boundary (the new option) |
+| --- | --- | --- | --- |
+| 2 to 7, 9, 10, 14, 16, 17 (every sealed derived record: packets, ledgers, settled changes, the recipient's records, their journal and feed entries, native data, backups, the reporting copy, caches) | the open route: removed from the native commit or the publication, whichever first; and, without any log, the key's destruction after the publication and the grace | correct (stricter by P5 to P7) | correct |
+| 4 (ledgers, re-recording) | the generation a forgotten subject takes is the removal's sequence, from the published log or from the native record (the same number) | correct | correct |
+| 19 (the held reader's answer cache, client memory) | keyed on the erasure frontier's published sequence; the cache is cleared on any change, so a sequence that goes back (M1) resurrects nothing | correct | **correct only if the erasure frontier reports a removal from its native commit**: otherwise an answer cached before the commit is served until the publication. Depends on how the removal builder's option reports the frontier; gate to rerun on its head (11.8) |
+| 1 (the subject's own fact, plain reads) | the removal builder's (M1 is there) | — | — |
+| 11, 12, 13, 20 | hold no value or derivative (12, 13, 20) or are the keys themselves (11) | unchanged | unchanged |
+
+**When the published log is behind, missing, or restored from an older or pending-state copy:**
+
+| Log state | This option's routes | Evidence |
+| --- | --- | --- |
+| behind the data (restored from before the removal's intent) | per account: `RemovalLogBehind` (503) on every request, these routes included (their cut comes from `request-cut`); database-wide: refused by `verify-data!` | DX-ERA2's `log-behind`, the reviews' E7 and E7b with the option on, 0 violations (11.5) |
+| **restored to a copy taken while the removal was pending, after it was published (M1)** | **removed**: the native commit decides. Without the change the copy reopened to the removed value (the file authority keeps the key files beside the log, so the copy brought the key back) | `checks` case `m1`: before `d803df016` 2 violations (the copy opened to the value, the assertion sealed again); after it 0. The plain read answered the value after the restore in both (M1 as the review found it), until the next derived write was refused and completed the removal again |
+| missing (no log for a protected database) | the cut is nil: the routes refuse (409 `DerivedSealNeedsSealedScope`); with the file authority the keys are gone with the log, so nothing opens anywhere | read from code; not run |
+| keys restored with an older copy of the authority | the native commit or the publication decides, so no route opens a copy; **the restored key file is not deleted again until the gateway restarts** (the shred worker's progress `@shredded` is in memory and already past that removal), so its bytes are recoverable from the authority's storage meanwhile | `m1`: restored key not deleted again within 5 s; gate (e)'s restores reset the worker as a restart does |
+
+So a derived copy is never the route by which a removed value comes back, under either boundary and under each log
+state above. The plain read's own M1 is the removal builder's to fix.
+
+### 11.7 M2 and M4 against this option's own derived writes
+
+- **M2 (a derived write naming another database as its source skips its own database's removals).** This option's
+  writes into a database other than their source are the receiver's records in the recipient and the settlement and
+  notice archives in their own databases. Their content is computed only from the source's rows (the receiver's prior
+  state is itself sealed under the source's assertions) and sealed under the source's assertions, so the source's
+  removals reach them whenever they land (11.3: a late delivery is ciphertext under a destroyed key). They hold no value
+  of the database they land in, so a missing check of that database's removals cannot let one of its values into
+  them. The check itself (ordering) is the removal builder's M2 fix; this option does not depend on it.
+- **A limit this surfaced:** the seal route seals under the protected assertions of the one database it is called on.
+  A derivation that read protected rows of two databases would have the other database's IDs dropped as unknown and be
+  sealed without them. None of this option's writers does that (every name they send is a row of the source); the
+  one-database goal removes the case. Follow-up 7.
+- **M4 (a delivery refused by its source's pending removal starts no completion).** Liveness only for this option: the
+  receiver's client retries a 503 for 5 s and then fails, until the source's removal is completed by a write in the
+  source. Not met in these runs (T1 delivers after the publication). The fix is the removal builder's.
+- **M3, M5, M6:** liveness and the fleet order; no derived copy is involved beyond what M6 already says (an earlier
+  build's derived write in clear lands; this option's copies need every gateway on the option, 11.1).
+
+### 11.8 Gates to rerun on the removal builder's head (M2 to M5 fixes and the native-commit option)
+
+When `exp/DX-ERA2-removal-per-account` reports, merge it and rerun, with its new option both off and on:
+
+1. **(a)** stored-function identities and the paired native log (every option off; the native-commit option on as
+   information);
+2. **phase `checks`** (e9s, e6s, window, stop-checks, m1): the stop table and m1 must hold under both boundaries; with the
+   native-commit option on, the plain read must stop at P5 too, and the one-sided oracle becomes two-sided;
+3. **T1** on and off, and on with every option set; plus a held reader (row 19) read across a removal stopped after its
+   native commit, with the native-commit option on;
+4. **gate (e)**, 20,000 schedules with every option on, under each boundary;
+5. **(f)** DX-ERA2's gate set (its own new cases for M2 to M5 included), the reviews' attacks and DX-ACT9's gate, every
+   option on;
+6. **(g)** the cost phase (a removal's work must still not grow with copies).
