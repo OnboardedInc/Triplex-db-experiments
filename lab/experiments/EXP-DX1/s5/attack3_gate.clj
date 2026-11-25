@@ -178,6 +178,38 @@
             (is (not= [200 nil] (:oldBuildGeneralSave r)) [reopen? "a build that does not know the setting must be refused"])
             (is (not (:storedPlainAfterTheSetting r)) [reopen? "no plain claim of an account-named save after the setting is on"])))))))
 
+(deftest a-reopen-by-a-real-other-general-writer
+  ;; The same reopen with the bodies another process really installs: the head under TX2_LOAD1_PROFILE=1 (the load
+  ;; profile's instrumentation and its metrics attribute) and under the covering-owner options (the owner-root fence).
+  ;; Each is computed here from commit.clj with the option's var on, then installed by install-base! as that process
+  ;; would. After it, a general save of a build that does not know the setting (naming no account).
+  (when (run? "reinstall2")
+    (doseq [option [:load-profile :owner-head]]
+      (reference/in-scope
+        (fn [name conn]
+          (let [a (str "v" (swap! counter inc)) _ (seed! name conn a)
+                scope-key (:v (first (d/datoms (d/db conn) :aevt :triplex.scope/key)))
+                _ (turn-on! conn)
+                body (case option
+                       :load-profile (with-redefs [commit/load-profile true]
+                                       (commit/observe-load (commit/instrument-code (commit/expand-code commit/observe-range))))
+                       :owner-head (with-redefs [commit/owner-root-guard? true]
+                                     (commit/observe-load (commit/instrument-code (commit/expand-code commit/observe-range)))))
+                hash (str (hash body))
+                _ (with-redefs [commit/code body commit/source-hash hash commit/load-profile (= option :load-profile)]
+                    (commit/install-base! conn scope-key))
+                db (d/db conn)
+                old-input (save conn {:facts [{:owner (str "acct/" a "/subject/old") :field ":a/f0" :type :string :value "old build" :pred nil}]})
+                old-build (with-redefs [ac/on? (constantly false) ac/permitted? false] (fz/general #(reference/send name old-input)))
+                r {:case "a general save of a build that does not know the setting, after a reopen by another real general writer"
+                   :option option :oldIdentRefuses (= @refusal-code (fn-code db :triplex/commit))
+                   :bodyDiffersFromDefault (not= (fn-code db :triplex/commit) commit/code)
+                   :oldBuildGeneralSave (reference/outcome old-build)
+                   :message (subs (str (get-in old-build [:body "message"])) 0 (min 160 (count (str (get-in old-build [:body "message"])))))
+                   :oldBuildStored (op-status name (get old-input "operationId"))}]
+            (line r)
+            (is (not= [200 nil] (:oldBuildGeneralSave r)) [option "a build that does not know the setting must be refused"])))))))
+
 ;; ---------------------------------------------------------------- 4. a save prepared on an old snapshot
 
 (deftest a-held-snapshot-from-before-the-transition
