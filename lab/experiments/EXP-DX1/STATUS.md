@@ -6433,3 +6433,18 @@ Source: merge agent message; checked against `origin`: release limits `b0529e87d
 - All options default off. Stored-function identities on the new head: 58 of 58 equal to `23b7df344` in all 8 writer settings (the restoration the merge's first step was for); the key-deletion fix moved nothing (66 of 66).
 - Gates passed on the head's own images, with one exception: the real-mix tape with creation saves off rejected one save in 4 runs; cause not yet established; recorded as an open fault. The merge agent has been asked to check that run's transactor log for the known ID collision (third Publish review, U1), which fits it.
 - Second batch (questions across subjects: ID lists, sweep, index and find, question reader, console and agent tools) is merged locally with identities 58 of 58 and 4 new keys; its gates are running on its own image, including the console on a second toy. Then the readiness page and the final push.
+
+## 2026-11-25 09:30 EST: removal rule, sixth pass: the stored policy is now the only policy; sixth review started
+
+Source: removal builder final message; branch `exp/DX-ERA2-removal-per-account` `03bb49cd3` (gateway code `b047b22a0`); page section 19.
+
+- **V1 and V2 (the fifth review's two breaks) fixed:** the protected-field list stored in Datomic is the only policy; the protection route compares with it and never with the log; a field is only ever added; a narrower list is refused and nothing changes; adoption from the log happens once, only from a head that passes the log's own checks and covers every removed value's field, checked before anything is stored. The reviewer's tests: 0 violations (were 28 of 28 and 8 of 8 failed). The log keeps a derived copy written only from the stored policy.
+- **V3 and V4:** every refusal of a replayed save carries the removal stamp; the SDK reads the stamp once before a save that holds none; a save with neither a source nor the stamp is refused and writes nothing (50 refused saves: 0 transactions). With options off the paired native log is again identical datom for datom.
+- V5 to V9 and three notes from the standalone fix's review fixed.
+- **Two defects the builder found itself:** N1, a gateway with no key pool for a sealed database refilled none, so that database's first saves got a 400 (it says the same defect is on the one branch); N2, its own change let one database's failed key deletion stop the key pass for the databases after it (fixed, new gate).
+- States: none refuses for good; none needs a particular client.
+- Rollout procedure for the commit boundary written (five steps) and run on one stack: move without permission 403; move with the log behind 503; rebuild then move 200; removals after 200; 0 removed values answered.
+- Gates on the pinned code: all five reviews' tests 0 failed; paired native log identical on every arm; suites as on the base. Fuzzers (0 violations over about 176,000 checks) and the SDK stacks (12 of 12, 15 of 15) ran two commits earlier. Worker cost on PostgreSQL with no removals: 2 queries per pass per database, 0.08 ms and 0.14 ms median at 1,000 accounts.
+- Not tested: a save planned before a field is added to the policy and committed after; data restored from before an addition; two gateways adding different fields at once; an old SDK without the stamp; scale.
+
+**Actions:** sixth independent review started, pinned to `03bb49cd3`, with a direct question: is per-account removal on the commit boundary fit to merge default off. The removal builder asked to establish whether N1 is reachable on the one branch without a hand-made state and, if so, to put its fix alone on a branch for its own review; and to show whether N2 exists on the one branch.
