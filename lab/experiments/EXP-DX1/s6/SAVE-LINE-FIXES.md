@@ -484,6 +484,115 @@ transaction (`_tx/…DW00` in the gate's line), and a lookup naming no account d
 **SDK:** `packages/datomic/test/claim-account.test.ts`, 2 of 2. With `claimAccount`, every lookup names the account;
 without it, the requests are exactly as before.
 
+## 12. After the second review: one stored form per ID (design written before the code, 2026-11-25)
+
+The second review ([REVIEW-2](../s5/REVIEW-2.md), `9dc800e7b`) found the break of section 9.2 (R2-1). With
+`TX2_ACCOUNT_CLAIMS=1`, a fence was stored under one form of an operation ID while the save it fenced was stored under
+the other. This happened in a mixed fleet and in the per-subject replan retry. The late original then committed, and
+the SDK's replay stored the save a second time.
+
+The cause is that the form an ID took depended on each process's environment and on the code path. This section is
+the design that replaces it. It follows the same rules as the Publish builder's settings
+(`actv-lazy/PUBLISH-BESIDE-SAVES.md` 0.8): settings stored in the database, one-way, and the environment only grants
+permission.
+
+### 12.1 Operation IDs: one stored form in every state
+
+An operation ID is stored as the client sent it: by the save, by its replan retry, and by the fence, on every gateway,
+whatever the setting.
+
+- Scoping operation IDs by account bought almost nothing. The SDK draws them at random (a UUID per attempt), so another
+  account can only reuse one it has already seen, and the feed shows those only once they are committed.
+- Reusing a committed ID refuses only the reuser. An operation ID taken by another transaction is never settled on: the
+  receipt names its transaction, and the SDK checks it against its own journal (S6 section 9.2).
+
+**What this makes impossible:** a fence and a save of one operation stored under different forms. That is R2-1 by
+both of the review's paths, and on any future gateway build too, because no code chooses a form.
+
+### 12.2 Command IDs: the setting
+
+**Where the setting lives.** `:triplex.scope/account-ids` = 1 on the database's scope entity. Absent means command IDs
+are stored as sent (today). It is installed with its value by `account_claims.clj` `turn-on!`.
+
+**Who turns it on.** Only a process started with `TX2_ACCOUNT_CLAIMS=1`. It does so through
+`POST /v1/db/<db>/settings {"accountIds": true}`, or at its first save that names an account. It never turns off.
+`TX2_ACCOUNT_CLAIMS` no longer changes how any request behaves; it only grants permission.
+
+**How a gateway learns it, and how stale it may be.**
+
+- Every gateway of this build reads the setting from the database value it prepares a save on (`stored-ids`), and the
+  same for every lookup.
+- Its view can be stale only between that read and the commit:
+  - Setting already on at prepare: nothing can change, since it is one-way.
+  - Setting absent at prepare, and the save names an account: the save carries one more statement,
+    `[:triplex.account/ids-guard-v1 scope nil]`. It refuses the save (`TRIPLEX_CONFLICT`, answered `409 CasConflict`,
+    which the SDK replays) if the setting turned on before the commit. The replay is prepared on the new value.
+- So no save that names its account stores a plain command ID after the setting is on.
+- The guard function is installed in a database only when a save there first names an account, so option-off
+  databases are untouched.
+
+**One place chooses the form.** `account_claims.clj` `stored-ids` picks it once per save:
+
+- **Scoped** (`acct-id/v1/<n>/<account>/<id>`): the save names its account, writes only that account's entities, and
+  the setting is on.
+- **Plain:** any other save that names an account.
+- **As sent:** a request that names no account.
+
+`apply-ids` writes the choice into the prepared data, and the replan retry re-applies the same choice from the
+request's `:triplex/stored-ids` (`storage.clj`). That fixes R2-1b. The gate `s6/stored_ids_gate.clj` lists every place
+in the gateway that writes or reads a stored ID, and fails if one is added or changed.
+
+**A save in flight across the transition.**
+
+- Prepared before, committing after: refused by the guard, then replayed scoped. Nothing stored.
+- Committed before: its claim is plain. A resend naming the same account after the transition is refused
+  `CommandConflict` (`stored-ids` finds the account's plain claim), and the SDK's claim check finds it as the account's
+  own.
+
+**Plain claims afterwards (R2-11).** A plain claim belongs to an account when its transaction wrote that account's
+entities, alone or with other accounts' (a save across two accounts belongs to both), or when it wrote no account's
+entities (a system save).
+
+- A lookup naming an account finds its scoped claim, or else a plain claim that is its own.
+- A plain claim of other accounts only is answered `taken`. Its transaction is never returned.
+
+**What an old build does when it meets the setting.** It cannot be made to refuse: no check in a build older than
+this one reads a value that this build can set without refusing its own saves. Instead the design makes an old build
+harmless where it could store twice:
+
+- **Operation IDs** have one form, so an old build's save and a new build's fence always agree.
+- **Command IDs:** an old build stores the plain form, which a new build's lookups find as that account's own.
+
+What an old build still loses is isolation: its plain command IDs collide across accounts, as today. Operations rule:
+turn the setting on only once every gateway runs this build or later. The only builds with any account option are the
+S6 lab builds, which never ran outside the lab.
+
+### 12.3 The reserved prefix, the command path and the other findings
+
+- **R2-3:** no client-supplied ID may begin with `acct-id/v1/` on any route (save, claim, begin, command, operation,
+  fence), with or without an account named, and whatever the setting.
+- **R2-4:** a command lookup is made for an account when the caller names one, or when it names its own save's
+  entities and they belong to one account. The SDK sends `claimAccount`, or else the frame's entities. A plain claim of
+  other accounts is answered `taken`, and the SDK fails the save with `DatomicCommandIdTaken`, a decided refusal that
+  is never another account's receipt. A caller that names neither, such as `TriplesLive`'s claim check run before the
+  transaction reads anything, keeps today's answer.
+- **R2-2:** a refusal at the serial point on a protected scope whose removal sequence moved is answered
+  `ErasureReplayDeclined`, not the replayable `CasConflict`, when the save creates a protected value of a family that a
+  removal named at a position after the save's source. That is exactly the frame `removed-creation?` refuses when it
+  arrives after the removal. This compares positions, so it holds whether a removal takes effect at its entry's
+  position (today) or at its Datomic commit (DX-ERA2's option).
+- **R2-5:** a save naming an account whose entities belong to no one account keeps the plain form; it is not refused.
+  It is refused only when its entities are another single account's.
+- **R2-6:** the general writer's refusals that carry no marker are decided by their exact messages (`outcome.clj`),
+  answered 400 and never replayed. The stored functions are unchanged.
+- **R2-7:** the fence accepts any operation ID the save accepts.
+- **R2-8:** the 503 answer names the failure's class (`cause`).
+- **R2-9:** the fence route stays unbounded. Operation IDs are random per attempt, so fencing another caller's in-flight
+  operation means knowing an ID the store has not published. The review's 3,000 fences per setting left saves, feed and
+  positions unaffected, at about 2 datoms each.
+- **Group commit:** a save carrying the guard is not grouped. Operation IDs are plain, so the group's duplicate check
+  (`group.clj` 142) checks the stored form.
+
 ## 10. The standing gate phase and the other gates
 
 **Every gate ran by image ID on `tx2-dxs6:959634af4f1c`, built from the head by `s6/image.sh`.**

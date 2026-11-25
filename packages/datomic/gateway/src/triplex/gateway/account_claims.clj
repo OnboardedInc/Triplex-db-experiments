@@ -1,22 +1,28 @@
 (ns triplex.gateway.account-claims
-  "[DX-S6] TX2_ACCOUNT_CLAIMS=1: a save's command ID and operation ID are stored scoped by the save's account, so two
-  accounts in the one database can use the same IDs without blocking, or finding, each other's.
+  "[DX-S6] Account-scoped command IDs, switched on by a one-way setting stored in the database.
 
-  A save is scoped when the request names its account (field `account`, the SDK's `claimAccount` option), which must be the
-  account of every business entity it writes (group/classify's rule: the acct/<account>/ prefix, or else the stored
-  :subject/account on the lean layout). A lookup (claim, command, begin, operation, fence) is scoped when the caller
-  names its account. A caller that names none keeps today's database-wide IDs for its saves and its lookups alike, so
-  its own lookups always find its own saves (an unknown outcome is never fenced under the wrong key).
+  The setting. `:triplex.scope/account-ids` = 1 on the scope entity. Absent: every ID is stored as the client sent it
+  (today). Present: a command ID of a save that names its account (`account`, the SDK's `claimAccount`) and writes only
+  that account's entities is stored as \"acct-id/v1/<n>/<account>/<id>\" (n: the account's length, so the boundary is
+  exact whatever either contains). Every gateway of this build reads it from the database it serves, on every save,
+  lookup and fence; TX2_ACCOUNT_CLAIMS=1 only lets a process turn it on (at its first save that names an account, or
+  through POST /v1/db/<db>/settings). It never turns off.
 
-  Stored value: \"acct-id/v1/<n>/<account>/<id>\", n the account's length in characters. The length makes it
-  unambiguous whatever the account or the ID contains (a `/` in either cannot shift the boundary), and a client ID that
-  begins with the prefix is refused, so a stored value is either a plain legacy ID or exactly one (account, ID) pair.
-  Rejected: \"joined:<account>/<id>\"-style concatenation (ambiguous once a name may contain the separator).
+  One stored form per ID, chosen in one place. Operation IDs have a single stored form, the client's own, on every
+  gateway and in every state of the setting: the save, its replan retry and the fence can never disagree, so a fenced
+  original can never commit (S5 R2-1). A command ID's form is chosen by `stored-ids`, once per save; the replan retry
+  re-applies the same choice (`apply-ids`). A save that names its account while the setting is absent carries a guard
+  (`:triplex.account/ids-guard-v1`) that refuses it, replayably, if the setting turned on before it commits, so no
+  command is stored in the plain form after the setting is on by a save that names its account.
 
-  A legacy plain claim (written before the option, or by a gateway without it) is still found for the account that
-  wrote it: its transaction's business entities must all be that account's (read from the log). It is never found
-  for another account. Loaded through requiring-resolve, after every stored function is defined; no stored function
-  changes (they see a longer string)."
+  Old claims. A plain claim is the account's own when its transaction wrote that account's entities (an account among
+  several included, S5 R2-11) or no account's entities at all; a lookup naming an account finds its scoped claim, else
+  such a plain claim, and answers `taken` for a plain claim of other accounts only.
+
+  The reserved prefix may not begin any client-supplied ID on any route (save, claim, begin, command, operation,
+  fence), whatever the setting (S5 R2-3).
+
+  Loaded through requiring-resolve, after every stored function is defined; no stored function changes."
   (:require [clojure.string :as str] [datomic.api :as d] [triplex.gateway.lean :as lean]))
 
 (def enabled (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS")))
@@ -48,6 +54,47 @@
         accounts (set (map #(account-of-id db %) business))]
     (when (and (seq business) (= 1 (count accounts)) (some? (first accounts))) (first accounts))))
 
+(def setting-attr :triplex.scope/account-ids)
+(def guard-ident :triplex.account/ids-guard-v1)
+(def permitted? (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS")))
+
+(defn- scope-eid [db] (:e (first (d/datoms db :aevt :triplex.scope/key))))
+
+(defn setting
+  "The database's account-ID setting: 1 when on, nil when absent."
+  [db]
+  (when (d/entid db setting-attr) (:v (first (d/datoms db :eavt (scope-eid db) setting-attr)))))
+
+(def ^:private guard-code
+  '(let [a (d/entid db :triplex.scope/account-ids)
+         v (when a (:v (first (d/datoms db :eavt scope a))))]
+     (when-not (= v expected) (throw (ex-info "TRIPLEX_CONFLICT" {:triplex.account/ids-changed true})))
+     []))
+
+(defn turn-on!
+  "Turns the setting on (one way) and installs the guard. Only a process with TX2_ACCOUNT_CLAIMS=1 may."
+  [conn]
+  (when-not permitted? (throw (ex-info "This process may not turn account IDs on" {:status 403 :code "SettingNotPermitted"})))
+  (let [db (d/db conn)]
+    (when-not (d/entid db setting-attr)
+      @(d/transact conn [{:db/ident setting-attr :db/valueType :db.type/long :db/cardinality :db.cardinality/one}]))
+    (let [db (d/db conn)]
+      (when-not (= 1 (setting db)) @(d/transact conn [[:db/add (scope-eid db) setting-attr 1]]))
+      (d/db conn))))
+
+(defn install-guard! [conn]
+  (when-not (d/entid (d/db conn) guard-ident)
+    @(d/transact conn [{:db/ident guard-ident
+                        :db/fn (d/function {:lang :clojure :params '[db scope expected] :requires '[[datomic.api :as d]] :code guard-code})}])))
+
+(defn reserved? [id] (and (string? id) (str/starts-with? id prefix)))
+
+(defn check-ids!
+  "Refuses any client-supplied ID that begins with the reserved prefix (every route, every setting)."
+  [ids]
+  (when (some reserved? ids)
+    (throw (ex-info "IDs may not begin with the reserved account prefix" {:status 400 :code "InvalidValue" :write-policy true}))))
+
 (defn- tx-accounts
   "The accounts of the business entities a transaction wrote (their revision changed in it), from the log."
   [conn db tx]
@@ -57,57 +104,63 @@
     (set (map #(account-of-id db %) (remove #(.startsWith ^String % "_") ids)))))
 
 (defn owned?
-  "Whether the plain legacy claim entity `claim` was written by a save of exactly `account`."
+  "Whether the plain claim entity `claim` is `account`'s: its transaction wrote that account's entities (alone or with
+  others), or no account's entities at all."
   [conn db claim account]
-  (let [tx (or (:v (first (d/datoms db :eavt claim :triplex.claim/tx))) claim)]
-    (= #{account} (tx-accounts conn db tx))))
-
-(defn- plain-op-owned? [conn db e account] (= #{account} (tx-accounts conn db e)))
+  (let [tx (or (:v (first (d/datoms db :eavt claim :triplex.claim/tx))) claim)
+        accounts (disj (tx-accounts conn db tx) nil)]
+    (or (empty? accounts) (contains? accounts account))))
 
 (defn find-claim
-  "The claim entity of command `id` for `account` (nil: today's database-wide lookup)."
+  "[claim-entity status] of command `id` for `account`: :scoped, :plain (an owned plain claim), :taken (a plain claim of
+  other accounts only, not returned) or nil. Without an account: today's database-wide lookup."
   [conn db id account]
-  (if (and enabled account)
-    (or (d/entid db [:triplex.claim/command-id (encode account id)])
-        (when-let [e (d/entid db [:triplex.claim/command-id id])] (when (owned? conn db e account) e)))
-    (d/entid db [:triplex.claim/command-id id])))
+  (if-not account
+    (when-let [e (d/entid db [:triplex.claim/command-id id])] [e :plain])
+    (if-let [e (d/entid db [:triplex.claim/command-id (encode account id)])]
+      [e :scoped]
+      (when-let [e (d/entid db [:triplex.claim/command-id id])]
+        (if (owned? conn db e account) [e :plain] [nil :taken])))))
 
-(defn operation-key
-  "The stored operation ID to look up for `account` (the scoped one if it exists, else a plain one it owns)."
-  [conn db id account]
-  (if (and enabled account)
-    (let [scoped (encode account id)]
-      (cond (d/entid db [:triplex.tx/operation-id scoped]) scoped
-            (when-let [e (d/entid db [:triplex.tx/operation-id id])] (plain-op-owned? conn db e account)) id
-            :else scoped))
-    id))
+(defn account-for
+  "The account a lookup is made for: the one it names, or else the one account of the entities it names (`entities`,
+  the caller's own save), or nil (today's database-wide lookup)."
+  [db input]
+  (or (get input "account")
+      (let [ids (filter string? (get input "entities"))
+            accounts (set (map #(account-of-id db %) (remove #(.startsWith ^String % "_") ids)))]
+        (when (and (seq ids) (= 1 (count accounts))) (first accounts)))))
 
 (defn- refuse! [status code message] (throw (ex-info message {:status status :code code :write-policy true})))
 
-(defn scope!
-  "Rewrites a prepared save's command and operation IDs to its account's scoped values (unchanged for a save of no one
-  account). Refuses, before anything is sent: a client ID that begins with the reserved prefix; an `account` in the
-  request that is not the save's; a command this account already claimed under its plain legacy ID."
-  [conn db data input]
-  (let [[[ident p] & more] data
-        ids (concat (:command-ids p) (keep #(get % "commandId") (get input "claims")) [(get input "operationId")])]
-    (when (some #(and (string? %) (str/starts-with? % prefix)) ids)
-      (refuse! 400 "InvalidValue" "Command and operation IDs may not begin with the reserved account prefix"))
-    (let [account (get input "account")]
-      (when (and account (not= account (account-of db p)))
+(defn stored-ids
+  "The one place a save's stored command IDs are chosen. nil for a request that names no account (stored as sent).
+  Otherwise {:account :scoped? :guard}: scoped when the setting is on and the save writes only the named account's
+  entities; a save of no one account keeps the plain form; a save of another account is refused."
+  [conn db p input]
+  (when-let [account (get input "account")]
+    (let [own (account-of db p)]
+      (when (and own (not= own account))
         (refuse! 400 "InvalidValue" "The request's account is not the account of the entities it saves"))
-      (if-not account
-        data
-        (do
+      (let [db (if (and own (nil? (setting db)) permitted?) (turn-on! conn) db)
+            on (= 1 (setting db))]
+        (when (and own on)
           (doseq [c (:command-ids p)]
             (when-let [e (d/entid db [:triplex.claim/command-id c])]
               (when (owned? conn db e account)
-                (refuse! 409 "CommandConflict" "This account already committed the command (legacy claim)"))))
-          (let [cmd #(encode account %)
-                op (fn [x] (cond-> x
-                             (and (map? x) (:triplex.claim/command-id x)) (update :triplex.claim/command-id cmd)
-                             (and (map? x) (string? (:triplex.tx/operation-id x))) (update :triplex.tx/operation-id cmd)))
-                p (cond-> (update p :ops #(mapv op %))
-                    (:command-ids p) (update :command-ids #(mapv cmd %))
-                    (:import-predecessor p) (update :import-predecessor cmd))]
-            (vec (cons [ident p] more))))))))
+                (refuse! 409 "CommandConflict" "This account already committed the command (plain claim)")))))
+        (when-not on (install-guard! conn))
+        {:account account :scoped? (boolean (and own on)) :guard (when-not on [guard-ident (scope-eid db) nil])}))))
+
+(defn apply-ids
+  "Rewrites prepared data to the stored IDs `ids` chose (the first attempt and its replan retry alike)."
+  [data ids]
+  (if-not ids
+    data
+    (let [[[ident p] & more] data
+          cmd (if (:scoped? ids) #(encode (:account ids) %) identity)
+          op (fn [x] (if (and (map? x) (:triplex.claim/command-id x)) (update x :triplex.claim/command-id cmd) x))
+          p (cond-> (update p :ops #(mapv op %))
+              (:command-ids p) (update :command-ids #(mapv cmd %))
+              (:import-predecessor p) (update :import-predecessor cmd))]
+      (vec (concat [[ident p]] more (when (:guard ids) [(:guard ids)]))))))

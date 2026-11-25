@@ -54,7 +54,7 @@
             clock (required (ledger/clock cut tx-id))]
         {:t (str t) :kind "commit"
          :transaction (merge {:positions (mapv #(str (bigint %)) positions)
-                              :txIds (vec txids) :operationId (let [o (required (:triplex.tx/operation-id tx))] (if (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS")) ((requiring-resolve 'triplex.gateway.account-claims/plain) o) o))
+                              :txIds (vec txids) :operationId (required (:triplex.tx/operation-id tx))
                               :commandIds (vec (distinct (map :value_string (records ":_tx/command-id"))))
                               :changes (vec (sort-by (juxt #(bigint (:position %)) :assertionId :op) changes))}
                              (stamp clock))}))))
@@ -81,14 +81,14 @@
                                               (if (= "assert" (:op c)) (:f/tx-id f) (:f/retract-tx-id f)))) changes))
                        (remove nil?) distinct sort vec)
             commands (sort (trace/span "d/q" "peer-call" (d/q '[:find [?id ...] :in $ ?tx :where [?c :triplex.claim/tx ?tx] [?c :triplex.claim/command-id ?id]] cut (d/t->tx t))))
-            ;; [DX-S6] TX2_ACCOUNT_CLAIMS=1: the feed names the caller's IDs, not their stored account-scoped values.
-            commands (if (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS")) (sort (map (requiring-resolve 'triplex.gateway.account-claims/plain) commands)) commands)
+            ;; [DX-S6] The feed names the caller's IDs, not their stored account-scoped values (unchanged for plain IDs).
+            commands (sort (map (requiring-resolve 'triplex.gateway.account-claims/plain) commands))
             clock (required (:triplex.tx/recorded-at tx))]
         ;; [EXP-DF01] Why: DA01 fractional legacy record times cannot satisfy FD01's natural stamp.
         ;; Rejected: rounding the annotation or borrowing :db/txInstant (changes the decided record time).
         {:t (str t) :kind "commit"
          :transaction (merge {:positions positions :txIds txids
-                              :operationId (let [o (required (:triplex.tx/operation-id tx))] (if (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS")) ((requiring-resolve 'triplex.gateway.account-claims/plain) o) o)) :commandIds (vec commands) :changes changes}
+                              :operationId (required (:triplex.tx/operation-id tx)) :commandIds (vec commands) :changes changes}
                              (stamp clock))})))))
 (defn project-application [db entry] (project db entry true))
 

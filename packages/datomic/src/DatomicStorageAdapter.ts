@@ -32,6 +32,7 @@ import {
 } from "@triplex-build/triplex/runtime";
 import {
   DatomicClient,
+  DatomicCommandIdTaken,
   DatomicHttpError,
   DatomicRequestTooLarge,
   DATOMIC_REQUEST_LIMIT_BYTES,
@@ -1421,8 +1422,10 @@ export const makeDatomicStorageAdapter = (
         }
         const existing = yield* read(() =>
           state.prefetch?.commandId === commandId
-            ? Promise.resolve(state.prefetch.claim)
-            : client.claim(db, commandId, state.sourceK),
+            ? (state.prefetch as { claimTaken?: boolean }).claimTaken === true
+              ? Promise.reject(new DatomicCommandIdTaken(commandId))
+              : Promise.resolve(state.prefetch.claim)
+            : client.claim(db, commandId, state.sourceK, [...state.entities]),
         ).pipe(
           Effect.mapError(
             (cause) => new WriteError({ message: "Cannot read command claim", cause }),

@@ -96,6 +96,16 @@ export interface DatomicOperationState {
   t?: TaggedValue;
   recordedAt?: TaggedValue;
 }
+/**
+ * [DX-S6] The command ID is held by a plain claim of other accounts only (a caller naming its account). Decided, never
+ * another account's receipt (S5 R2-4).
+ */
+export class DatomicCommandIdTaken extends Error {
+  readonly _tag = "DatomicCommandIdTaken";
+  constructor(readonly commandId: string) {
+    super(`Command ID ${commandId} is held by another account's save`);
+  }
+}
 /** [DX-S6] An unknown outcome decided as never committed: the fence holds the operation ID. */
 export class DatomicOperationFenced extends Error {
   readonly _tag = "DatomicOperationFenced";
@@ -1191,6 +1201,7 @@ export class DatomicClient {
       position: TaggedValue;
       t: TaggedValue;
       claim: string | null;
+      claimTaken?: boolean;
       rows: WireRow[];
     }>("POST", `/v2/db/${db}/begin`, {
       ...(hint.commandId === undefined ? {} : { commandId: hint.commandId }),
@@ -1233,6 +1244,7 @@ export class DatomicClient {
       prefetch: {
         ...(hint.commandId === undefined ? {} : { commandId: hint.commandId }),
         claim: response.claim,
+        ...(response.claimTaken === true ? { claimTaken: true } : {}),
         rows,
       },
     };
@@ -1631,14 +1643,24 @@ export class DatomicClient {
         try {
           const found = await this.request<{
             txId: string | null;
+            taken?: boolean;
             receipt?: Result & { status: string };
             commandId?: string;
           }>(
             "POST",
             `/v1/db/${db}/claim`,
-            { commandId: claim.commandId, receipt: true, ...this.accountField() },
+            {
+              commandId: claim.commandId,
+              receipt: true,
+              ...this.accountField(),
+              ...(() => {
+                const entities = [...new Set(input.rows.filter((r) => r.entity_type !== "_Transaction").map((r) => r.entity_id))];
+                return this.cacheOptions.claimAccount === undefined && entities.length > 0 ? { entities } : {};
+              })(),
+            },
             remaining,
           );
+          if (found.taken === true) throw new DatomicCommandIdTaken(claim.commandId);
           if (found.txId) {
             if (found.commandId !== claim.commandId || found.receipt?.status !== "committed")
               throw new TypeError("Stored command receipt mismatch");
@@ -1652,7 +1674,7 @@ export class DatomicClient {
               throw new DatomicOperationFenced(input.operationId, { cause: error });
           }
         } catch (readError) {
-          if (readError instanceof DatomicOperationFenced) throw readError;
+          if (readError instanceof DatomicOperationFenced || readError instanceof DatomicCommandIdTaken) throw readError;
           if (!(readError instanceof DatomicTransportError || (readError instanceof DatomicHttpError && readError.status >= 500)))
             throw readError;
           // [DX-HASYNC1] Why: an interrupted claim lookup keeps the decision unknown. Rejected: returning a definite conflict without reading the claim.
@@ -1698,12 +1720,18 @@ export class DatomicClient {
       await sleepMs(25);
     }
   }
-  async claim(db: string, commandId: string, position: number): Promise<string | null> {
-    const result = await this.request<{ txId: string | null }>("POST", `/v1/db/${db}/claim`, {
+  /**
+   * [DX-S6] `entities`: the caller's own save's entities. With no `claimAccount`, the gateway takes their one account
+   * as the caller's, so a plain claim of other accounts is answered taken, not returned (S5 R2-4).
+   */
+  async claim(db: string, commandId: string, position: number, entities?: readonly string[]): Promise<string | null> {
+    const result = await this.request<{ txId: string | null; taken?: boolean }>("POST", `/v1/db/${db}/claim`, {
       commandId,
       position,
       ...this.accountField(),
+      ...(this.cacheOptions.claimAccount === undefined && entities !== undefined && entities.length > 0 ? { entities } : {}),
     });
+    if (result.taken === true) throw new DatomicCommandIdTaken(commandId);
     return result.txId;
   }
   // [EXP-DF01] Why: explicit t and bounded waits preserve restart replay through the native log.

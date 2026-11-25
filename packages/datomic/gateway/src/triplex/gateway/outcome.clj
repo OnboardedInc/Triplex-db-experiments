@@ -20,6 +20,11 @@
   (re-pattern (str "TRIPLEX_(?:CONFLICT|CLOCK_EXHAUSTED|CLOCK|ERASURE_FRONTIER|OPERATION_DUPLICATE|COMMAND_DUPLICATE"
                    "|IMPORT_PREDECESSOR|IDENTITY|SLIM_LAYOUT_MISMATCH|GROUP_STALE|SUBJECT_REPLAN|ERASE_HEAD_MOVED"
                    "|PROTECTION_MIGRATION_REQUIRED)\\b"
+                   ;; [DX-S6] The general writer's refusals that carry no marker (commit.clj 105, 214, 228, 296, 309;
+                   ;; subject_save.clj 130): decided, so answered 400 and never replayed (S5 R2-6). Rejected: adding markers
+                   ;; inside the stored functions (it changes their stored code and identities).
+                   "|Packed row requires server clock|Invalid strict record clock|Invalid commit span"
+                   "|Missing live row datom|Strict scopes require one record clock per commit"
                    "|:db\\.error/cas-failed|:db\\.error/unique-conflict|:db\\.error/datoms-conflict|cas-failed|unique-conflict")))
 
 (def ^:private decided-errors #{:db.error/cas-failed :db.error/unique-conflict :db.error/datoms-conflict})
@@ -67,8 +72,10 @@
   "Stores operation ID `id` on an empty transaction (no position), so the original save can never commit, and answers
   the operation's decided state: committed (the original won), or absent and fenced."
   [conn id operation]
-  (when-not (and (string? id) (<= 1 (count id) 256) (not (.startsWith ^String id "privacy-")))
+  ;; [DX-S6] Any operation ID a save accepts (no length limit, S5 R2-7), except a removal's and the reserved prefix.
+  (when-not (and (string? id) (pos? (count id)) (not (.startsWith ^String id "privacy-")))
     (throw (ex-info "Invalid operation ID" {:status 400 :code "InvalidValue"})))
+  ((requiring-resolve 'triplex.gateway.account-claims/check-ids!) [id])
   (let [report (try (deref (d/transact conn [{:db/id "datomic.tx" :triplex.tx/operation-id id}]) 5000 ::timeout)
                     (catch Exception e (if (operation-taken? e) ::taken (throw (unknown e)))))]
     (when (= report ::timeout) (throw (ex-info "Fence outcome unknown" {:status 503 :code "OutcomeUnknown" :cause "deref-timeout"})))

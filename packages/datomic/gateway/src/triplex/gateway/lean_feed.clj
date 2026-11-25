@@ -44,8 +44,8 @@
             journals (ledger/journals cut tx)
             claims-a (d/entid cut :triplex.claim/command-id)
             commands (sort (distinct (for [x data :when (and (= claims-a (:a x)) (:added x))] (:v x))))
-            ;; [DX-S6] TX2_ACCOUNT_CLAIMS=1: the caller's IDs, not their stored account-scoped values.
-            commands (if (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS")) (sort (map (requiring-resolve 'triplex.gateway.account-claims/plain) commands)) commands)
+            ;; [DX-S6] The caller's IDs, not their stored account-scoped values (unchanged for plain IDs).
+            commands (sort (map (requiring-resolve 'triplex.gateway.account-claims/plain) commands))
             txids (sort (distinct (remove nil? (concat [(ledger/tx-id cut tx)]
                     (map #(ledger/value cut (first %) :triplex.entity/id) journals)
                     (map (comp :tx_id second) (filter (fn [[x r]] (and (:added x) (not= "_Transaction" (:entity_type r)))) row-data))
@@ -53,5 +53,5 @@
             positions (mapv str (sort (distinct (concat [p] (map second journals) (map #(Long/parseLong ^String (:position %)) ordered)))))]
         {:t (str t) :kind "commit"
          :transaction (merge {:positions positions :changes ordered :txIds (vec txids) :commandIds (vec commands)
-                              :operationId (let [o (feed/required (ledger/value cut tx :triplex.tx/operation-id))] (if (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS")) ((requiring-resolve 'triplex.gateway.account-claims/plain) o) o))}
+                              :operationId (feed/required (ledger/value cut tx :triplex.tx/operation-id))}
                              (feed/stamp (feed/required (ledger/clock cut tx))))}))))
