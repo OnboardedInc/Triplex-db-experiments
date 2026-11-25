@@ -7,6 +7,9 @@ import { fileSource, type Group } from "./export.ts";
 import { sealedSnapshot } from "./file-source.ts";
 import { identity, sha } from "./source.ts";
 import { Snapshot } from "./snapshot.ts";
+import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
+import { runtimeApi } from "../../../bench/lib/triplex.ts";
+import { importWholeSubject, installSnapshotImportClass } from "./import-class.ts";
 
 export async function proveFile(
   comp: CompositionHandle,
@@ -95,6 +98,19 @@ export async function proveFile(
   invalidExport.close();
   assert.throws(() => sealedSnapshot(invalidFile, invalidHeader, namespace, width));
   const data = sealedSnapshot(exportFile, header, namespace, width);
+  // [DX-IMP2] Why: count the write class each snapshot frame reaches the gateway with (installed beneath the
+  // importer's own class hook), and read the writer's bound back. Rejected: trusting the launcher's environment.
+  const classes: Record<string, number> = {};
+  if (importWholeSubject()) {
+    const send = DatomicClient.prototype.transact;
+    DatomicClient.prototype.transact = function (db, input, onSent) {
+      if (input.claims.some((c) => c.commandId.startsWith("load1/")))
+        classes[input.writeClass ?? "none"] = (classes[input.writeClass ?? "none"] ?? 0) + 1;
+      return send.call(this, db, input, onSent);
+    };
+  }
+  // Installed above the counter, so the counter sees the class each frame is sent with.
+  installSnapshotImportClass();
   const start = performance.now();
   try {
     const neighbor = await comp.transact(
@@ -139,7 +155,21 @@ export async function proveFile(
       const proof = await reopened.verify();
       assert.equal(proof.facts, subjects * 5);
       assert.equal(proof.cut, reopened.totals().commands + 2);
+      let importBound: unknown;
+      if (importWholeSubject()) {
+        const client = new DatomicClient(process.env["DATOMIC_URL"]!);
+        try {
+          const db = "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scope))).toString("base64url");
+          const options = (await client.request<{ options: Record<string, unknown> }>("GET", "/v1/db/" + db + "/write-options")).options;
+          assert.equal(options["importWholeSubject"], true);
+          assert(classes["import"]! > 0 && classes["none"] === undefined, JSON.stringify(classes));
+          importBound = { importCommitMicros: options["importCommitMicros"], frameClasses: classes };
+        } finally {
+          client.close();
+        }
+      }
       return {
+        ...(importBound ? { importBound } : {}),
         scope,
         sourceSeal: data.data.seal,
         facts: proof.facts,

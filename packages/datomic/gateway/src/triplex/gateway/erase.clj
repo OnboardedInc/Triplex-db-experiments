@@ -124,10 +124,16 @@
         ids (->> selectors (mapcat #(matches db state %)) (map identity)
                  (remove #(contains? (:erased state) (get % "assertionId")))
                  (reduce (fn [m r] (assoc m (get r "assertionId") r)) (sorted-map))
-                 vals vec)]
-    {"database" name "seq" (inc (:seq state)) "previous" (:seal state) "commandId" command
-     "selectors" selectors "txId" (str "_tx/erase-" (UUID/randomUUID)) "position" position
-     "erasedAt" stamp "identities" ids}))
+                 vals vec)
+        ;; [DX-IMP2] Why: a removal that names a subject whose import has not committed yet matches no row; with the
+        ;; whole-subject import bound on it records the families it names, so the import cannot bring them back.
+        ;; Rejected: requiring import-bound at load (renumbers the native functions' generated names; see storage.clj).
+        families (when ((requiring-resolve 'triplex.gateway.subject-create/record-families?))
+                   ((requiring-resolve 'triplex.gateway.import-bound/removal-families) state selectors))
+        entry {"database" name "seq" (inc (:seq state)) "previous" (:seal state) "commandId" command
+               "selectors" selectors "txId" (str "_tx/erase-" (UUID/randomUUID)) "position" position
+               "erasedAt" stamp "identities" ids}]
+    (if (seq families) (assoc entry "families" families) entry)))
 
 (defn- journal-rows [entry]
   (let [tx (get entry "txId") ids (get entry "identities") stamp (get entry "erasedAt")

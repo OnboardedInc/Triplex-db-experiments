@@ -25,6 +25,7 @@ import {
 } from "./ceiling-seed.ts";
 import { checkJournal } from "../w1/field/journal.ts";
 import { slotAttribute, tapeReport, type ProductionOffer } from "../w1/field/production.ts";
+import type { MixOffer, OwnerRef, RefTarget } from "../w1/field/production-mix.ts";
 import { fieldCount, taskSerial } from "../../../bench/lib/deep-world.ts";
 import { accounts, pooledDigest } from "../w1/group/population.ts";
 import { command, seedPooled } from "../w1/group/workload.ts";
@@ -64,6 +65,27 @@ import {
 } from "./server-tape.ts";
 
 type Input = Parameters<DatomicClient["transact"]>[1];
+/** [DX-S2] One save through the product's path: the request the SDK sent and the gateway's answer. */
+export type ProductSave = (
+  peer: number,
+  entity: string,
+  facts: readonly { e: string; a: string; v: { type: string; value: string } }[],
+  old: readonly Input["rows"][number][],
+  commandId: string,
+) => Promise<{ input: Input; ack: Ack }>;
+/** [DX-S2] The ordered block token of a request the SDK built, if its journal and IDs form one. */
+export function orderedToken(input: Input): string | undefined {
+  const tx = input.claims[0]?.txId ?? "";
+  const one = /^_tx\/([0-7][0-9A-HJKMNP-TV-Z]{23})00$/.exec(tx)?.[1];
+  const wide = /^_tx\/([0-7][0-9A-HJKMNP-TV-Z]{22})W00$/.exec(tx)?.[1];
+  const token = one ?? wide;
+  // Exactly the block's first ordinals, as the gateway's ordered-bounds requires: a runtime ID run that happens to start
+  // at a journal ID ending in "00" shares the prefix but not the ordinals.
+  const digits = one ? 2 : 3;
+  const ids = [...input.newIds].sort();
+  return token && ids.length > 0 && ids.every((id, i) => id === token + i.toString(16).toUpperCase().padStart(digits, "0"))
+    ? token : undefined;
+}
 type Row = Input["rows"][number];
 type Ack = {
   operationId: string;
@@ -257,6 +279,12 @@ export async function phase(
   legacyIds?: ReadonlySet<string>,
   sampleCpu?: () => CpuSample,
   freshFirst = false,
+  // [DX-S2] Send every save through the product's path (TriplesLive and the Datomic adapter) instead of command():
+  // the function returns the request the SDK actually sent and the gateway's answer. Default: the lab producer.
+  productSave?: ProductSave,
+  // [DX-S4] Tape M (w1/field/production-mix.ts): how the runner names each owner role and each constant reference
+  // target. An offer with `owners` writes every owner's slots in one product save; a new owner has no predecessor.
+  mix?: { entity: (account: number, ref: OwnerRef) => string; constant: (account: number, name: string) => string },
 ) {
   const inputs = new Map<string, Input>();
   const rows: {
@@ -345,14 +373,22 @@ export async function phase(
       e = root(o.account, o.person),
       id = operation(cell.label, n);
     const slots = (o as Partial<ProductionOffer>).slots;
-    const facts = slots ? slots.map((slot) => fact(e, slotAttribute(slot), `${id}/${slot}`))
+    // [DX-S4] Tape M: every owner's slots as facts (a reference slot names its target's entity), one save.
+    const owners = (o as Partial<MixOffer>).owners;
+    assert(!owners || (productSave && mix), "Tape M is sent only through the product's path");
+    const target = (t: RefTarget) => "constant" in t ? mix!.constant(o.account, t.constant) : mix!.entity(o.account, t);
+    const facts = owners ? owners.flatMap((w) => w.slots.map((slot) => w.refs[slot]
+        ? { e: mix!.entity(o.account, w), a: slotAttribute(slot), v: { type: "ref", value: target(w.refs[slot]!) } } as unknown as Fact
+        : fact(mix!.entity(o.account, w), slotAttribute(slot), `${id}/${slot}`)))
+      : slots ? slots.map((slot) => fact(e, slotAttribute(slot), `${id}/${slot}`))
       : [fact(e, answer, `${o.subtask}/${o.ordinal}`)];
     if (!slots && o.extra) facts.push(fact(e, note, id));
-    const previous = fields.get(e)!;
+    const ownerIds = owners ? [...new Set(facts.map((f) => f.e))] : [e];
+    const previous = owners ? ownerIds.flatMap((x) => fields.get(x) ?? []) : fields.get(e)!;
     // [DX-REAL2] Why: production owners carry every seeded field; retire exactly the attributes this commit writes.
     // Rejected: the old "answer, plus note when extra" filter, which assumed an owner held only those two rows.
-    const written = new Set(facts.map((f) => f.a));
-    const old = previous.filter((r) => written.has(r.attribute));
+    const written = new Set(facts.map((f) => f.e + "\u0000" + f.a));
+    const old = previous.filter((r) => written.has(r.entity_id + "\u0000" + r.attribute));
     // [DX-REAL2] Why: the ordered identity block numbers a commit's assertions in one byte (at most 256). A commit's
     // assertions are its facts, one journal change per fact asserted and per value retired, and four journal rows.
     // Today the product mints a general identity for every assertion and only the per-person writer, which accepts
@@ -362,13 +398,13 @@ export async function phase(
     const assertions = 2 * facts.length + old.length + 4;
     // [Opus W2, DX-S1] Why: with TX2_SUBJECT_WIDE=1 the per-subject writer takes up to 128 facts, so a commit over 256
     // assertions takes a wide ordered block (4,096) instead of the general identity; one commit per save either way.
-    const identity = orderedIds && assertions <= orderedBlockLimit ? orderedSaveIdentity()
+    const identity = productSave ? undefined : orderedIds && assertions <= orderedBlockLimit ? orderedSaveIdentity()
       : orderedIds && wideSaves && assertions <= 4096 ? wideOrderedSaveIdentity() : undefined;
-    const input = command(id, facts, old, true, false, identity);
+    let input = command(id, facts, old, true, false, identity);
     input.sourceK = Math.max(head, ...previous.map((r) => r.recorded_position));
     input.groupAccount = wide ? scaleAccount(o.account) : accounts[o.account]!.key;
     input.writeClass = "live";
-    inputs.set(id, input);
+    if (!productSave) inputs.set(id, input);
     busy.add(e);
     const sent = elapsed(),
       peer = nextPeer++ % clients.length;
@@ -393,7 +429,14 @@ export async function phase(
     const work = (async () => {
       let ack: Ack;
       try {
-        ack = (await clients[peer]!.transact(db, input)) as Ack;
+        if (productSave) {
+          // [DX-S2] The same facts and retirements as command(), as one product save with the command ID `id`.
+          const sent = await productSave(peer, e, facts, old, id);
+          input = sent.input;
+          ack = sent.ack;
+          inputs.set(id, input);
+          record.orderedToken = orderedToken(input);
+        } else ack = (await clients[peer]!.transact(db, input)) as Ack;
       } catch (err) {
         // [DX-PREP1] Why: the next same-person offer cannot speculate on a failed or uncertain predecessor.
         // Rejected: sending a later edit against a row whose retirement is unknown.
@@ -403,21 +446,20 @@ export async function phase(
         settled = {
           ...record,
           end: elapsed(),
-          reason: err instanceof DatomicHttpError ? err.code : "transport",
+          reason: err instanceof DatomicHttpError ? err.code : productSave ? `product: ${String((err as Error)?.message ?? err)}` : "transport",
         };
         rows.push(settled);
         return;
       }
       const end = elapsed();
-      assert.equal(ack.operationId, id);
+      assert.equal(ack.operationId, productSave ? input.operationId : id);
       assert(ack.writePath?.function && Number(ack.t.v) > 0 && Number.isFinite(ack.recordedAt.v));
-      assert(Number(ack.position.v) > input.sourceK!);
-      fields.set(e, [
-        ...previous.filter((r) => !old.includes(r)),
-        ...input.rows
-          .slice(0, facts.length)
-          .map((r) => assigned(r, Number(ack.position.v), ack.recordedAt.v)),
-      ]);
+      if (!productSave) assert(Number(ack.position.v) > input.sourceK!);
+      const fresh = input.rows.slice(0, facts.length).map((r) => assigned(r, Number(ack.position.v), ack.recordedAt.v));
+      if (owners)
+        for (const x of ownerIds)
+          fields.set(x, [...(fields.get(x) ?? []).filter((r) => !old.includes(r)), ...fresh.filter((r) => r.entity_id === x)]);
+      else fields.set(e, [...previous.filter((r) => !old.includes(r)), ...fresh]);
       settled = { ...record, end, ack };
       rows.push(settled);
       known = true;
@@ -495,6 +537,9 @@ export async function phase(
         clock,
         command: id,
         root: input.entities![0]!,
+        // [DX-S4] A tape M save names each owner it writes.
+        ...((cell.tape[rec.ordinal] as Partial<MixOffer>).owners
+          ? { roots: [...new Set(input.rows.filter((r) => r.entity_type !== "_Transaction").map((r) => r.entity_id))] } : {}),
         changes,
       });
       if (rec.orderedToken) {

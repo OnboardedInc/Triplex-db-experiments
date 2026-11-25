@@ -65,11 +65,23 @@ const busyRetryRoute = /\/(?:reach|reach-many|read|q)$/;
 /** [DX-XQ7] Questions across subjects, served by the question reader when the client names one. */
 export const questionRoute = /^\/v2\/db\/[^/]+\/(?:ids|sweep|find)$/;
 const sleepMs = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-class DatomicRequestTooLarge extends DatomicHttpError {
-  constructor() {
+export class DatomicRequestTooLarge extends DatomicHttpError {
+  // [DX-S2] Why: the save-size rule names the refused body's size; the code and message stay as before.
+  constructor(readonly bytes?: number) {
     super(400, "InvalidValue", "Request too large");
   }
 }
+/** [DX-S2] The largest transact body the SDK and the gateway accept (bytes). */
+export const DATOMIC_REQUEST_LIMIT_BYTES = 4 * 1024 * 1024;
+// [DX-S2] Why: the save-size rule reports the exact body a refused save would have sent, measured by the same encoder,
+// and nothing is sent. Rejected: estimating bytes from row texts (JSON escaping and journal changes count too).
+class DatomicRequestMeasured extends Error {
+  constructor(readonly bytes: number) {
+    super("Request measured, not sent");
+  }
+}
+const measuringInputs = new WeakSet<object>();
+const measuringBodies = new WeakSet<object>();
 class DatomicProtectedWriteEncodingError extends DatomicHttpError {
   constructor() {
     super(400, "ProtectedWriteUnavailable", "The configured protected save transport could not encode this request");
@@ -184,6 +196,8 @@ export interface DatomicCommitAttempt {
   transactionIds?: string[];
   ready?: number;
   released?: number;
+  /** [DX-S2] Why the save rules gave this attempt its identity or route (only with an option on). */
+  saveRoute?: string;
 }
 export interface DatomicCommitSample {
   operationId: string;
@@ -490,6 +504,7 @@ export class DatomicClient {
     onSent?: (published?: boolean) => void,
   ): Promise<T> {
     const started = performance.now();
+    const measureOnly = typeof body === "object" && body !== null && measuringBodies.has(body);
     const readProfile = this.readProfile?.getStore();
     const profileId = readProfile ? randomUUID().replaceAll("-", "") : undefined;
     const observation = this.activeObservation;
@@ -539,10 +554,11 @@ export class DatomicClient {
       }
     }
     const byteLength = typeof bytes === "string" ? Buffer.byteLength(bytes) : (bytes?.length ?? 0);
+    if (measureOnly) throw new DatomicRequestMeasured(byteLength);
     // [DX-WFIX1] Why: validate the complete UTF-8 transaction after its final wire encoding and before opening a socket.
     // Rejected: estimating row sizes (JSON escaping, envelopes and row texts all count against the same body cap).
     if (path.endsWith("/transact") && byteLength > 4 * 1024 * 1024)
-      throw new DatomicRequestTooLarge();
+      throw new DatomicRequestTooLarge(byteLength);
     const serializeMicros = (performance.now() - serializeStart) * 1000;
     const remainingMs = timeoutMs - (performance.now() - started);
     if (remainingMs <= 0)
@@ -1161,6 +1177,10 @@ export class DatomicClient {
     else this.journalCuts.delete(result.db);
     return result;
   }
+  /** [DX-S2] Whether this client opened `db` on the lean layout (the per-subject writer's layout). */
+  isLean(db: string): boolean {
+    return this.layouts.get(db) === "lean";
+  }
   supportsJournalCuts(db: string): boolean {
     return this.journalCuts.has(db);
   }
@@ -1321,6 +1341,8 @@ export class DatomicClient {
       claims: readonly { commandId: string; txId: string; timestamp: number }[];
       handle?: string;
       release?: boolean;
+      /** [DX-S4] Send `historyIdentityBounds` for this save's new IDs (never itself on the wire). */
+      declareIdentityBounds?: boolean;
     },
     onSent?: (dispatched?: boolean) => void,
   ): Promise<unknown> {
@@ -1339,7 +1361,7 @@ export class DatomicClient {
     const encodeStart = performance.now();
     // [DX-B5-L0] Why: two-argument transact wrappers preserve the input, and this callback never belongs on the wire.
     // Rejected: a third-argument-only callback (the NS publication observer drops it).
-    const { onSent: inputSent, ...wireInput } = input;
+    const { onSent: inputSent, declareIdentityBounds, ...wireInput } = input;
     const { rows: inputRows, newIds: ids, ...requestHeader } = wireInput;
     const ticket = erasureWriteTicket();
     onSent ??= inputSent;
@@ -1364,7 +1386,9 @@ export class DatomicClient {
           })
       : inputRows.map(encodeRow);
     const bounds =
-      compact && fastPathEnabled("history-range") ? historyIdentityBounds(input.newIds) : undefined;
+      compact && (fastPathEnabled("history-range") || declareIdentityBounds === true)
+        ? historyIdentityBounds(input.newIds)
+        : undefined;
     const texts = inputRows
       .filter((r) => isNew(r.id))
       .map(
@@ -1446,6 +1470,7 @@ export class DatomicClient {
               rowTexts: Object.fromEntries(texts),
             }),
     };
+    if (measuringInputs.has(input)) measuringBodies.add(body);
     endSpan(encodeSpan);
     this.commitDiagnostics.transactEncodeMicros = (performance.now() - encodeStart) * 1000;
     const sendKey = `${db}/${input.operationId}`;
@@ -1460,7 +1485,11 @@ export class DatomicClient {
     try {
       response = await this.request("POST", `/v1/db/${db}/transact`, body, this.timeoutMs);
     } catch (error) {
-      dispatched = !(error instanceof DatomicRequestTooLarge || error instanceof DatomicProtectedWriteEncodingError);
+      dispatched = !(
+        error instanceof DatomicRequestTooLarge ||
+        error instanceof DatomicProtectedWriteEncodingError ||
+        error instanceof DatomicRequestMeasured
+      );
       throw error;
     } finally {
       this.sentCallbacks.delete(sendKey);
@@ -1512,6 +1541,23 @@ export class DatomicClient {
     }
     return response;
   }
+  /**
+   * [DX-S2] The UTF-8 length of the body `transact` would send for this input, measured by the same encoder; nothing is
+   * sent. Used by the save-size rule to name a refused save's size.
+   */
+  async transactRequestBytes(db: string, input: Parameters<DatomicClient["transact"]>[1]): Promise<number> {
+    const { onSent: _ignored, ...plain } = input;
+    measuringInputs.add(plain);
+    try {
+      await this.transact(db, plain);
+    } catch (error) {
+      if (error instanceof DatomicRequestMeasured) return error.bytes;
+      throw error;
+    }
+    throw new Error("Request measurement did not reach the encoder");
+  }
+  /** [DX-S2] How the save rules routed each save, by reason (only counted when an option is on). */
+  readonly saveRoutes = new Map<string, number>();
   async *transactBulkFrames(
     db: string,
     kind: Exclude<DatomicWriteClass, "live">,

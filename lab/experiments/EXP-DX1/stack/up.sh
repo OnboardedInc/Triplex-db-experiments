@@ -324,6 +324,21 @@ subject_wide=${TX2_SUBJECT_WIDE:-0}
   { echo "up.sh: DX_SWEEP_QUEUE_MS must be 1..5000" >&2; exit 2; }
 [[ -z ${DX_SWEEP_CURSOR_SECRET:-} || $DX_SWEEP_CURSOR_SECRET =~ ^[A-Za-z0-9]{16,128}$ ]] ||
   { echo "up.sh: DX_SWEEP_CURSOR_SECRET must be 16..128 letters or digits" >&2; exit 2; }
+# [DX-S3] Why: default-off several-owners saves on the per-subject writer (needs the wide writer), from the card's
+# DX_S3_OWNERS. Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
+subject_several=${DX_S3_OWNERS:-0}
+[[ $subject_several =~ ^[01]$ ]] || exit 2
+# [DX-S4] Why: default-off creation saves on the per-subject writer (needs the several-owners option), from the card's
+# DX_S4_CREATE. Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
+subject_create=${DX_S4_CREATE:-0}
+[[ $subject_create =~ ^[01]$ && ( $subject_create == 0 || $subject_several == 1 ) ]] ||
+  { echo "DX_S4_CREATE is 0 or 1 and needs DX_S3_OWNERS=1" >&2; exit 2; }
+# [DX-IMP2] Why: default-off whole-subject import bound, forwarded to the writers only when set.
+# Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
+import_whole=${TX2_IMPORT_WHOLE_SUBJECT:-0}
+import_commit_us=${TX2_IMPORT_COMMIT_US:-}
+[[ $import_whole =~ ^[01]$ ]] || exit 2
+[[ -z $import_commit_us || ( $import_whole == 1 && $import_commit_us =~ ^[1-9][0-9]{0,5}$ ) ]] || exit 2
 [[ $lookup_every =~ ^(0|[1-9][0-9]{0,3})$ ]] && (( lookup_every <= 4096 )) || exit 2
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prepw =~ ^(1|2|4)$ ]]
@@ -347,6 +362,8 @@ fi
 [[ $subject_ordered_ids =~ ^[01]$ && ( $subject_ordered_ids == 0 || ( $subject_save == 1 && $subject_prefetch == 0 ) ) ]]
 [[ $subject_hints == 0 || $subject_save == 1 ]] || { echo "TX2_SUBJECT_HINTS needs the per-subject writer" >&2; exit 2; }
 [[ $subject_wide == 0 || $subject_save == 1 ]] || { echo "TX2_SUBJECT_WIDE needs the per-subject writer" >&2; exit 2; }
+[[ $subject_several == 0 || ( $subject_wide == 1 && $subject_owner_head == 0 ) ]] ||
+  { echo "DX_S3_OWNERS needs TX2_SUBJECT_WIDE=1 and not TX2_SUBJECT_OWNER_HEAD=1" >&2; exit 2; }
 [[ $subject_narrow_revision =~ ^[01]$ && $subject_reuse_predecessor =~ ^[01]$ ]] || exit 2
 [[ ( $subject_narrow_revision == 0 && $subject_reuse_predecessor == 0 ) || ( $subject_ordered_ids == 1 && $subject_numeric_owner == 1 ) ]] || exit 2
 prep_pgdata=${DX_PREP1_PGDATA:-}
@@ -1066,6 +1083,16 @@ for role in "${gateway_roles[@]}"; do
   fi
   if [[ $mode == w && $subject_wide == 1 ]]; then
     field_policy+=(-e "TX2_SUBJECT_WIDE=1")
+  fi
+  if [[ $mode == w && $subject_several == 1 ]]; then
+    field_policy+=(-e "TX2_SUBJECT_SEVERAL_OWNERS=1")
+  fi
+  if [[ $mode == w && $subject_create == 1 ]]; then
+    field_policy+=(-e "TX2_SUBJECT_CREATE=1")
+  fi
+  if [[ $mode == w && $import_whole == 1 ]]; then
+    field_policy+=(-e "TX2_IMPORT_WHOLE_SUBJECT=1")
+    [[ -z $import_commit_us ]] || field_policy+=(-e "TX2_IMPORT_COMMIT_US=$import_commit_us")
   fi
   if [[ -n $read_wait_limit ]]; then field_policy+=(-e "TX2_READ_WAIT_LIMIT=$read_wait_limit"); fi
   if [[ $thread_counters == 1 ]]; then field_policy+=(-e "TX2_THREAD_COUNTERS=1"); fi

@@ -14,6 +14,8 @@ export TX2_SUBJECT_REUSE_PREDECESSOR=$TX2_SUBJECT_NARROW_REVISION
 export TX2_SUBJECT_APPEND_RETIREMENT=$(cat /config/subject-retirement 2>/dev/null || printf 0)
 export TX2_SUBJECT_OWNER_HEAD=$(cat /config/subject-head 2>/dev/null || printf 0)
 export TX2_SUBJECT_WIDE=$(cat /config/subject-wide 2>/dev/null || printf 0)
+# [DX-IMP2] Present only when the gate runs with the whole-subject import bound on.
+if [[ -f /config/import-whole ]]; then export TX2_IMPORT_WHOLE_SUBJECT=1; fi
 export PREP1_LOOKUP_EVERY=$(cat /config/lookup-every 2>/dev/null || printf 0)
 # [DX-W3] Present only for the DX-W3 production gate: hints for the general writer (0 or 1), with Datomic prefetch on
 # in both arms, as the server launch has it.
@@ -22,6 +24,18 @@ if [[ -f /config/general-prefetch ]]; then export TX2_GENERAL_PREFETCH=$(cat /co
 # on in both arms, as the server launch has it.
 if [[ -f /config/subject-hints ]]; then export TX2_SUBJECT_HINTS=$(cat /config/subject-hints); fi
 if [[ -f /config/tail-sql ]]; then export PREP1_TAIL_SQL=$(cat /config/tail-sql); fi
+# [DX-S2] Present only for the DX-S2 production gate: every save through the product's path, orderedSaves 0 or 1.
+if [[ -f /config/s2-product ]]; then export DX_S2_PRODUCT=$(cat /config/s2-product); fi
+# [DX-S3] Present only for the DX-S3 production gate: the several-owners option in the gateway and the SDK (0 or 1).
+if [[ -f /config/subject-owners ]]; then
+  export TX2_SUBJECT_SEVERAL_OWNERS=$(cat /config/subject-owners) DX_S3_OWNERS=$(cat /config/subject-owners)
+fi
+# [DX-S4] Present only for the DX-S4 production gate: tape M's cell (0 or 1) and the creation option in the gateway and
+# the SDK (0 or 1).
+if [[ -f /config/s4-mix ]]; then export DX_S4_MIX=$(cat /config/s4-mix) DX_S4_MIX_PARAMS=/config/production-mix.json; fi
+if [[ -f /config/subject-create ]]; then
+  export TX2_SUBJECT_CREATE=$(cat /config/subject-create) DX_S4_CREATE=$(cat /config/subject-create)
+fi
 if [[ "$PREP1_MODE" == subject-native-suite ]]; then
   # [DX-PREP1] Why: exercise the stock native suite with the real process setting on fresh memory scopes.
   # Rejected: adding PostgreSQL and a transactor for tests written to run in one JVM.
@@ -438,6 +452,8 @@ case "$PREP1_MODE" in
   production)
     # [DX-REAL2] Why: drive the server producer's phase() on a toy scope with the subject writer and ordered IDs.
     export DX_PREP1_LIBRARY=1 DX_PREP1_CAMPAIGN=rolling DX_REAL2_SET=hour DX_REAL2_PARAMS=/config/production-shape.json
+    # [DX-S2] The product-path gate reads PostgreSQL's WAL position around its form saves.
+    if [[ -f /config/s2-product ]]; then export DX_S2_PG_SOCKET=$work/socket; fi
     subject_workers 1 1
     # The bundle carries launch helpers with their own entry checks; never present it as the entry point.
     node --input-type=module -e 'process.argv.splice(1, 0, "production-gate"); await import("/config/probe.mjs");'

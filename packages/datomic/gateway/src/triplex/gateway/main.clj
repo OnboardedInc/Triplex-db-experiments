@@ -11,6 +11,8 @@
             [triplex.gateway.subject-hints :as subject-hints]
             [triplex.gateway.ids :as ids] [triplex.gateway.sweep :as sweep]
             [triplex.gateway.question-reader :as qr]
+            [triplex.gateway.subject-owners :as subject-owners]
+            [triplex.gateway.subject-create :as subject-create]
             ;; [DX-INT5, the form of DX-XQ10] Last: it fills lean/prefetch-hook with TX2_READ_PREFETCH=1; loaded before
             ;; commit.clj it moved the stored functions' identities with every option off (READINESS.md, step 0).
             [triplex.gateway.uncached :as uncached])
@@ -96,7 +98,11 @@
         ;; [DX-W3] Why: the lookup-only hint function is installed only when its option is on (default off).
         current (general-prefetch/install! conn current)
         ;; [DX-W4] Why: the per-subject writer's lookup-only hint function, installed only when its option is on.
-        current (subject-hints/install! conn current)]
+        current (subject-hints/install! conn current)
+        ;; [DX-S3] Why: the several-owners function is installed only when its option is on (default off).
+        current (subject-owners/install! conn current)
+        ;; [DX-S4] Why: the creation function is installed only when its option is on (default off).
+        current (subject-create/install! conn current)]
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
       (lean/enabled? current) (assoc :layout "lean" :orderedRowTexts true :journalCuts true)))))
@@ -160,6 +166,8 @@
       ;; [DX-RD5] Why: the uncached-read options, reported only when on, as the two above.
       uncached/prefetch? (assoc-in [:options :readPrefetch] true)
       (System/getProperty "datomic.readAheadPool") (assoc-in [:options :readAheadPool] (System/getProperty "datomic.readAheadPool"))
+      ;; [DX-IMP2] Why: report the option only when it is on, so default readbacks stay byte-identical.
+      policy/import-whole? (update :options assoc :importWholeSubject true :importCommitMicros policy/import-commit-us)
       subject/enabled (assoc :subjectSave true :subjectFunction (when subject-t (str subject/ident))
                              :subjectNumericOwner subject/numeric-owner?
                              :subjectOrderedIds subject/ordered-ids?
@@ -172,7 +180,15 @@
                              :subjectPrefetch (boolean (and subject/prefetch? (d/entid db subject/prefetch-ident)))
                              :subjectFunctionTx (some-> subject-t str))
       ;; [Opus W2] Why: launchers read back the actual wide-save switch; the reply is unchanged with the option off.
-      subject/wide? (assoc :subjectWide true :subjectWideFacts subject/wide-facts))))
+      subject/wide? (assoc :subjectWide true :subjectWideFacts subject/wide-facts)
+      ;; [DX-S3] Why: launchers read the switch back; the reply is unchanged with the option off.
+      subject-owners/enabled (assoc :subjectSeveralOwners subject-owners/max-owners
+                                    :subjectSeveralOwnersFunction (when (subject-owners/installed db)
+                                                                    (str subject-owners/ident)))
+      ;; [DX-S4] Why: launchers read the switch back; the reply is unchanged with the option off.
+      subject-create/enabled (assoc :subjectCreate subject-create/max-owners
+                                    :subjectCreateFunction (when (subject-create/installed db)
+                                                             (str subject-create/ident))))))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"}
                              :body (trace/read-span "gateway.json-encode" "gateway" (json/write-str data))})
 ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.
@@ -420,7 +436,8 @@
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
                                   (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e)))
-                                  (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e))))))))
+                                  (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e)))
+                                  (:estimatedMicros (ex-data e)) (assoc :estimatedMicros (:estimatedMicros (ex-data e))))))))
 (defn- with-privacy-guards [scopes work]
   (if-let [[scope & more] (seq scopes)]
     (privacy/guard scope #(with-privacy-guards more work))
@@ -455,8 +472,10 @@
                       (binding [privacy/*cut* cut privacy/*database* name privacy/*data* db
                                 privacy/*unseal* (fn [id e a value] (envelope/decode! name (d/db conn) id e a value))]
                         (let [answer (if (and (= :get request-method) (= action "erasure-frontier"))
-                                       (response 200 {:database name :protected (boolean cut)
-                                                      :seq (or (:seq cut) 0) :erased (or (:erased cut) {})})
+                                       (response 200 (cond-> {:database name :protected (boolean cut)
+                                                              :seq (or (:seq cut) 0) :erased (or (:erased cut) {})}
+                                                       ;; [DX-IMP2] The removed families an importer must leave out.
+                                                       policy/import-whole? (assoc :families (vec (sort (:families cut))))))
                                        (route-handler-base request))]
                           (cond-> answer cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))))))]
             (cond

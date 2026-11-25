@@ -15,7 +15,12 @@ image=$(gate_image "${DX_REAL2_GATE_IMAGE:-tx2-datomic:dx-real2-production}" "$o
 git -C "$repo" archive 5cda4ab204b9736e32960843bee8cbc47d5ca74d -- packages/datomic/gateway/src packages/datomic/src/codec-spec.json \
   lab/experiments/EXP-DX1/age1/src | tar -x -C "$out/age1src"
 git -C "$repo" rev-parse HEAD > "$out/source"
-name=tx2-dxreal2-aged-live
+# [DX-S2] Optional: a private container name and port (default as before), and DX_S2_PRODUCT (0 or 1) for the driver:
+# every tape save through the product's path with the SDK's orderedSaves option off or on.
+name=tx2-dxreal2-aged-live${DX_REAL2_AGED_NAME:+-$DX_REAL2_AGED_NAME}
+port=${DX_REAL2_AGED_PORT:-18592}
+[[ $port =~ ^[0-9]+$ ]] || { echo "DX_REAL2_AGED_PORT must be a port number" >&2; exit 2; }
+[[ -z ${DX_S2_PRODUCT:-} || $DX_S2_PRODUCT =~ ^[01]$ ]] || { echo "DX_S2_PRODUCT must be 0 or 1" >&2; exit 2; }
 docker rm -f "$name" >/dev/null 2>&1
 # [DX-W3] Optional: the general writer's hints (0 or 1) with Datomic prefetch on; unset leaves the gate as it was.
 w3=()
@@ -41,7 +46,23 @@ for v in DX_READ_PREFETCH DX_ID_LISTS DX_SWEEP; do
   [[ ${!v} =~ ^[01]$ ]] || { echo "$v must be 0 or 1" >&2; exit 2; }
   w3+=(-e "TX2_${v#DX_}=${!v}")
 done
-docker run -d --name "$name" --memory 3g -p 127.0.0.1:18592:8080 ${w3[@]+"${w3[@]}"} --entrypoint /bin/bash \
+# [DX-S3] Optional: several owners on the per-subject writer (0 or 1), in the gateway (TX2_SUBJECT_SEVERAL_OWNERS) and
+# the driver's SDK (severalOwners); needs DX_S1_WIDE=1 and DX_S2_PRODUCT=1. Unset leaves the gate as it was.
+if [[ -n ${DX_S3_OWNERS:-} ]]; then
+  [[ $DX_S3_OWNERS =~ ^[01]$ && ${DX_S1_WIDE:-} == 1 && ${DX_S2_PRODUCT:-} == 1 ]] ||
+    { echo "DX_S3_OWNERS must be 0 or 1, with DX_S1_WIDE=1 and DX_S2_PRODUCT=1" >&2; exit 2; }
+  w3+=(-e "TX2_SUBJECT_SEVERAL_OWNERS=$DX_S3_OWNERS")
+  export DX_S3_OWNERS
+fi
+# [DX-S4] Optional: tape M after R and S (DX_S4_MIX=1) and the creation option (DX_S4_CREATE 0 or 1) in the gateway
+# (TX2_SUBJECT_CREATE) and the driver's SDK (creationSaves); needs DX_S3_OWNERS=1. Unset leaves the gate as it was.
+if [[ -n ${DX_S4_MIX:-}${DX_S4_CREATE:-} ]]; then
+  [[ ${DX_S4_MIX:-0} =~ ^[01]$ && ${DX_S4_CREATE:-0} =~ ^[01]$ && ${DX_S3_OWNERS:-} == 1 ]] ||
+    { echo "DX_S4_MIX and DX_S4_CREATE must be 0 or 1, with DX_S3_OWNERS=1" >&2; exit 2; }
+  w3+=(-e "TX2_SUBJECT_CREATE=${DX_S4_CREATE:-0}")
+  export DX_S4_MIX=${DX_S4_MIX:-0} DX_S4_CREATE=${DX_S4_CREATE:-0}
+fi
+docker run -d --name "$name" --memory 3g -p "127.0.0.1:$port:8080" ${w3[@]+"${w3[@]}"} --entrypoint /bin/bash \
   -v "$repo/packages/datomic/gateway/src:/opt/gateway/src:ro" -v "$out/age1src:/age:ro" \
   -v "$repo/lab/experiments/EXP-DX1/prep1/aged-live:/gate:ro" -v "$out/out:/out" "$image" /gate/container.sh >/dev/null
 gate_image_ran "$name" "$image" "$out/image.json" || { docker rm -f "$name" >/dev/null; exit 2; }
@@ -49,7 +70,7 @@ for ((i=0; i<480; i++)); do [[ -f $out/out/ready ]] && break; sleep .5; done
 docker exec "$name" bash -c 'for p in /proc/[0-9]*; do tr "\0" " " < $p/cmdline 2>/dev/null | grep -q triplex.gateway.main &&
   tr "\0" "\n" < $p/environ | grep -E "^TX2_(READ_PREFETCH|ID_LISTS|SWEEP)=" | sort; done; true' > "$out/out/gateway-options.txt" 2>&1
 (cd "$repo" && DX_PREP1_LIBRARY=1 DX_PREP1_CAMPAIGN=rolling DX_REAL2_SET=aged DX_PREP1_AGED=1 \
-  node --import tsx lab/experiments/EXP-DX1/real2/aged-gate.ts "$out/out" http://127.0.0.1:18592) 2>&1 | tee "$out/driver.log"
+  node --import tsx lab/experiments/EXP-DX1/real2/aged-gate.ts "$out/out" "http://127.0.0.1:$port") 2>&1 | tee "$out/driver.log"
 status=${PIPESTATUS[0]}
 docker logs "$name" > "$out/out/container.log" 2>&1
 docker rm -f "$name" >/dev/null

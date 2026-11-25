@@ -119,7 +119,9 @@
                                       (assoc m id {"type" "erased" "valueType" (get identity "valueType")
                                                    "erasedAt" (get entry "erasedAt") "erasureTxId" (get entry "txId")}))))
                                 before (get entry "identities"))))
-      (update :families into (map (juxt #(get % "entity") #(get % "attribute")) (get entry "identities")))))
+      ;; [DX-IMP2] An entry may also name the families a removal asked for before any row existed (import bound on).
+      (update :families into (concat (map (juxt #(get % "entity") #(get % "attribute")) (get entry "identities"))
+                                     (get entry "families")))))
 
 (defn cut
   ([name db] (cut name db false))
@@ -266,7 +268,12 @@
         (when-not (= "string" (:value_type r))
           (failure! 400 "ProtectedTypeUnsupported" "This protected scope accepts string assertions"))
         (when (and importing ((:families state) [(:entity_id r) (:attribute r)]))
-          (failure! 409 "ErasureReplayDeclined" "An archived field cannot be replayed across its erasure"))))))
+          (failure! 409 "ErasureReplayDeclined" "An archived field cannot be replayed across its erasure"))
+        ;; [DX-S4] With TX2_SUBJECT_CREATE=1, a live creation of a removed family (a removal that named the entity before
+        ;; it existed) is refused whole the same way. Resolved at call time: this namespace loads before the stored
+        ;; functions, so a new form here must not add generated names (s3/idents.sh checks it).
+        (when ((requiring-resolve 'triplex.gateway.subject-create/removed-creation?) state r)
+          (failure! 409 "ErasureReplayDeclined" "A removed field cannot be created across its removal"))))))
 
 (defn verify-data! [state db]
   (when (and state (not= (:seq state) (scope/value db (scope/entity db) :triplex.scope/erasure-seq)))

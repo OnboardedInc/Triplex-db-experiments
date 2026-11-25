@@ -5,7 +5,11 @@
             [triplex.gateway.subject-save :as subject] [clojure.data.json :as json]
             [triplex.gateway.owner-layout :as owner-layout] [triplex.gateway.owner-root :as owner-root]
             [triplex.gateway.pinned :as pinned] [triplex.gateway.general-prefetch :as general-prefetch]
-            [triplex.gateway.subject-hints :as subject-hints])
+            [triplex.gateway.subject-hints :as subject-hints]
+            ;; [DX-S3] Last, so that it loads after every namespace whose stored code it must not move.
+            [triplex.gateway.subject-owners :as owners]
+            ;; [DX-S4] After subject-owners, for the same reason.
+            [triplex.gateway.subject-create :as create])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -426,12 +430,18 @@
                    (and subject-hints/enabled (not (:owner-layout subject-plan)))
                    (let [_ (swap! timeline assoc :subjectHintsStarted (System/nanoTime))
                          h (try (trace/span "subject.lookup-hints" "peer-call"
-                                  (subject-hints/lookup-hints (d/db conn) (subject-hints/from-plan subject-plan)))
+                                  ;; [DX-S3] A save of several owners names every owner's reads (one call per owner).
+                                  (cond
+                                    (:creation subject-plan) (create/lookup-hints (d/db conn) subject-plan)
+                                    (:owners subject-plan)
+                                    (owners/lookup-hints (d/db conn) subject-plan)
+                                    :else
+                                    (subject-hints/lookup-hints (d/db conn) (subject-hints/from-plan subject-plan))))
                                 (catch Exception _ (swap! timeline assoc :hintsDeclined (System/nanoTime)) nil))]
                      (swap! timeline assoc :subjectHintsFinished (System/nanoTime))
                      (stats/bump! [:subjectHints (if h :attached :none)] 1)
                      h)
-                   subject/prefetch?
+                   (and subject/prefetch? (not (:owners subject-plan)))
                    (do
                    (swap! timeline assoc :subjectHintsStarted (System/nanoTime))
                    ;; [DX-PREP1] Why: Datomic prefetch can move cold reads, while the native guards own the decision.
@@ -468,9 +478,10 @@
                                retry (deref (submit-reference! conn (tx-data db input) input timeline) (remaining) timeout)]
                            (if (identical? timeout retry) timeout (assoc retry :subject-replan true)))))
                (identical? timeout result) timeout
-               :else (cond-> (if (:owner-layout subject-plan)
-                               (owner-layout/verify-report result subject-plan)
-                               (subject/verify-report result subject-plan))
+               :else (cond-> (cond (:owner-layout subject-plan) (owner-layout/verify-report result subject-plan)
+                                   (:creation subject-plan) (create/verify-report result subject-plan)
+                                   (:owners subject-plan) (owners/verify-report result subject-plan)
+                                   :else (subject/verify-report result subject-plan))
                        hints (assoc :subject-hints-attached true))))))))))
 ;; [DX-B10] Why: a definitive preflight rejection resolves its sequence without a database write.
 ;; Rejected: skipping that turn (strands all later valid commands behind a permanent gap).
@@ -519,6 +530,12 @@
           validated (when (= "1" (System/getenv "TX2_SUBJECT_RETIREMENT_TRACE")) (System/nanoTime))
           frame-size (group/frame-measurement (second (first data)) input)
           _ (try (group/bound-frame! frame-size) (catch Exception e (reject-ordered! conn input e)))
+          ;; [DX-IMP2] Why: an import commit over the import bound is refused whole, before the writer sees it.
+          ;; Rejected: requiring import-bound at load (it would renumber later namespaces' generated names, and with
+          ;; them the stored native functions' hashes; with the option off it is never loaded).
+          _ (when policy/import-whole?
+              (try ((requiring-resolve 'triplex.gateway.import-bound/bound!) (second (first data)) input)
+                   (catch Exception e (reject-ordered! conn input e))))
           ;; [DX-PREP1] Why: the unordered subject arm submits one native transaction and uses its actual durable report.
           ;; Rejected: bypassing protected-scope erasure or live/import admission, or applying the draft speculatively.
           subject-plan (when (and subject/enabled
@@ -526,6 +543,25 @@
                                   (not (or policy/priority? policy/field-only? policy/budget-us replay-capture/enabled)))
                          (trace/span "subject.prepare" "gateway"
                            (subject-prepare conn db data input (when privacy/*cut* (:seq privacy/*cut*)))))
+          ;; [DX-S3] Why: a save of two to four owners that the one-owner writer declined may take the several-owners
+          ;; function (TX2_SUBJECT_SEVERAL_OWNERS=1); a save it refuses keeps the general writer and its typed reason.
+          ;; Rejected: trying it before the one-owner plan (every one-owner save keeps today's path byte for byte).
+          several (when (and owners/enabled (nil? subject-plan)
+                             (or (not (:sealed privacy/*cut*)) (envelope/shared?))
+                             (not (or policy/priority? policy/field-only? policy/budget-us replay-capture/enabled)))
+                    (trace/span "owners.prepare" "gateway"
+                      (owners/plan db data input (when privacy/*cut* (:seq privacy/*cut*)))))
+          ;; [DX-S4] Why: a save that creates an owner or writes a reference, which the writers above declined or did not
+          ;; plan, may take the creation function (TX2_SUBJECT_CREATE=1); its typed reason replaces theirs when it is asked.
+          ;; Rejected: asking it before them (every save they take keeps today's path byte for byte).
+          creation (when (and create/enabled (nil? subject-plan) (or (nil? several) (:declined several))
+                              (or (not (:sealed privacy/*cut*)) (envelope/shared?))
+                              (not (or policy/priority? policy/field-only? policy/budget-us replay-capture/enabled)))
+                     (trace/span "create.prepare" "gateway"
+                       (create/plan db data input (when privacy/*cut* (:seq privacy/*cut*)))))
+          ;; A reason is reported only for a save no per-subject function took.
+          declined (or (:declined creation) (when-not creation (:declined several)))
+          subject-plan (or subject-plan (when-not (:declined several) several) (when-not (:declined creation) creation))
           ;; [Opus W1] Why: a save the covering writer cannot take must not reach legacy rows under a root.
           _ (when (and owner-layout/enabled (nil? subject-plan)) (fold-touched! conn db data))
           start (System/nanoTime)
@@ -564,6 +600,12 @@
         (and (= "1" (System/getenv "TX2_REMOVAL_COST_READBACK")) (number? (get-in report [:io-stats :api-ms])))
         (assoc :nativeApplyMs (get-in report [:io-stats :api-ms]))
         (:subject-save report) (assoc :subjectSave (:subject-save report))
+        ;; [DX-S3] Only with TX2_SUBJECT_SEVERAL_OWNERS=1: how many owners the per-subject writer took, or why a save of
+        ;; two to four owners went to the general writer.
+        (:subject-owners report) (assoc :subjectOwners (:subject-owners report))
+        ;; [DX-S4] Only with TX2_SUBJECT_CREATE=1: how many owners the creation function created.
+        (:subject-created report) (assoc :subjectCreated (:subject-created report))
+        declined (assoc :subjectDeclined declined)
         (:subject-ordered-ids report) (assoc :subjectOrderedIds true)
         (:subject-append-retirement report) (assoc :subjectAppendRetirement true)
         (:subject-owner-head-bytes report) (assoc :subjectOwnerHeadBytes (:subject-owner-head-bytes report))
