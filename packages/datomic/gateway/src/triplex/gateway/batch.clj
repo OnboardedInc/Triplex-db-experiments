@@ -284,7 +284,10 @@
             (admission/execute-for {"basis" entry-basis} admission/reads
               (fn []
                 (when-let [^java.util.HashMap m *stages*] (.put m "admission-wait-wall" (- (System/nanoTime) admit-start)))
-                (binding [admission/*own-pool* true]
+                ;; [DX-INT5] *own-pool* holds the function that runs admitted work (step 0 of the 2026-11-25 merge moved the
+                ;; sweep's span out of admission.clj); a plain `true` here was called as that function (Boolean cannot be
+                ;; cast to IFn on every batch).
+                (binding [admission/*own-pool* (fn [f] (trace/span "gateway.admitted-work" "gateway" (f)))]
                   (loop [i 0]
                     (when (and (< i n) (nil? @stop))
                       (let [{:keys [op pattern]} (nth parsed i)]
