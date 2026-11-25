@@ -6171,3 +6171,19 @@ Source: independent reviewer, third review, branch `exp/DX-ERA3-removal-review` 
 - Recommendation: merge with named fixes, not as is.
 
 **Action:** the removal builder resumed a fourth time: fix M2 to M5; build the commit-as-boundary mechanism behind its own default-off option with the design in writing first (what it makes impossible, which checks can be deleted, the state count before and after), and a route that rebuilds the log from Datomic. A fourth review follows. Sam to be asked to confirm the boundary change.
+
+## 2026-11-24 23:28 EST: second review of Publish and settlement fixes: two breaks, both from per-process switches
+
+Source: independent reviewer, second review, branch `exp/DX-ACT10-publish-review` `5bbb3da09`, `lab/experiments/EXP-DX1/act10/REVIEW-2.md`. Reviewed: `exp/DX-ACT8-publish-beside-saves` `bf377c57f`. Private image built from the reviewer's branch; 5 toy runs, the builder's gate passed in all five; 18 of 18 in-process tests pass.
+
+- **With every option on in every process and no records from before the options: 0 violating in 25,000 fuzzed schedules** where accounts share every client-chosen and content-chosen key (62,397 Publishes, 225,000 saves, 8,256 kills, 2.46 million notices). The narrowed guards held again.
+- **R1, high:** the command ID collision across accounts (F1) is still open for the single-account layout: a record found under its un-prefixed key is returned with no ownership check; account 0 receives another account's receipt with nothing published (fuzz 118 of 2,500).
+- **R2, high:** a mixed fleet publishes twice: a Publish sent with the account-keys option and resent through a process without it lands twice (fuzz 643 of 2,500).
+- R3, medium: the account in a key is a name, not an authority: another account can read a Publish's record by its command ID, can save first under a Publish's ID so that Publish fails every time, and with store-level write access can forge a record the Publish takes as its own.
+- R4, R5, medium: per-process settings reopen F3 and F4 (a publisher in parts mode accepts a release a whole-ledger settler can never record; a settler without frame guards writes 6 frames after an acknowledged pause).
+- R10, medium: the ledger cap is a lifetime limit per account: after about 1,580 distinct notice policies every release adding a new one is refused for good.
+- R6 open: the one-try refusal did not reproduce in 66 Publishes. R7, R8 low. R9 information.
+- Not tested: write-gateway restart; enrolment beside a removal; group commit with the full gate on a stack; 1,000 forms with ledgers in parts on a stack.
+- **Recommendation:** do not ship these as per-process switches; store the three settings in the database as one-way settings every process reads; apply the ownership check to every recovered record.
+
+**Action:** the Publish builder resumed: reproduce R1 to R5, R8, R10; build the in-database one-way settings with the design in writing first; ownership check on every recovered record; one account-authority mechanism shared with the save line's account claims; fix the lifetime cap; the stack runs still owed. A third review follows. Publish beside saves stays off the one branch.
