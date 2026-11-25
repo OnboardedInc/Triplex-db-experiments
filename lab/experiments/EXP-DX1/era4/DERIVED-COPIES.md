@@ -12,7 +12,7 @@ lives must be reached by the removal, or the value must live there only under a 
 Sections 1 to 4 were written before any code of the option (the inventory from the code of `c2aa3d416`, the failing
 test, the design). Results follow from section 6.
 
-**Summary for the owner (2026-11-24, 23:10 EST).**
+**Summary for the owner (written 2026-11-25, 01:24 EST).**
 
 1. **Before this work no removal reached any derived copy.** A notice, a ledger, a settled change or a recipient's
    record computed from a protected value kept it in clear, and the journal, the native data and every backup kept it
@@ -23,7 +23,7 @@ test, the design). Results follow from section 6.
    every copy becomes unreadable wherever it went, and nothing has to find it (a missed copy cannot exist). T1 on: 0, 0,
    0; the stream goes on (a subject whose notices read the removed value starts a new generation); the chain verifies.
 3. **Gates:** identities 60 of 60 in 7 settings and the native log identical with every option off, at the start and
-   on the merged head; gate (e) 20,000 schedules, 303,550 oracles, 0 violations before the merge, {{SERIES3_SHORT}} on the
+   on the merged head; gate (e) 20,000 schedules, 303,550 oracles, 0 violations before the merge, 20,000 schedules, 303,710 oracles, 0 violations on the
    merged head; DX-ERA2's, DX-ACT9's and both reviews' gate sets with every option on, 0 violations; the second
    review's E9 green when the copy is sealed as this option writes it (`e9s`).
 4. **The removal's own work does not grow with copies** (35 datoms with 0 or 1,000 copies). Bytes grow 17 to 31%.
@@ -747,7 +747,7 @@ Every container ran the pinned runtime image `sha256:21a67288007d...` by ID (rec
 | (b), (c), (d) T1 (`T1-on-v3`, `T1-off-unsealed-v3`, `T1-on-alloptions-v3`, source `a177f4893`) | off, unsealed: X's removed date **100** times in 21 places, its version 37 in 13, its item ID 92 in 20 (the same as before the merge); **on, sealed: 0, 0, 0**, and the same with every option on (per-account rule, subject check, account tickets, whole-subject import; the T1 database is not moved per account, so the per-account path itself is exercised by gate (e), not by T1). On: the chain verifies, Y and account B unchanged, X reads removed; stream after the removal 3 of 3 equal to the oracle, 0 differ; delivered again 0; the late recipient ends equal to the first (X generation 1 with 1 entry, Y generation 0 with 2) |
 | The caller, at run time (T1 on, section 11.2) | 186 sealed records found in 31 of the 56 scanned places (at most 17 in one), every one opened with the keys the store holds: 119 opened to a value, the rest answered removed, and none of the opened texts holds X's removed value or a derivative (0); seal calls 13 (39 records sealed, 4 left clear: computed from no protected value), open calls 52 |
 | (f) DX-ACT9's gate (`act9/inproc.sh after`, 1,000 schedules, every option on) | 8,355 oracles, **0 violations** |
-| (e) Gate (e) on the final head (`series3`, `d803df016`) | {{SERIES3}} |
+| (e) Gate (e) on the final head (`series3`, `d803df016`) | 20 runs of 1,000 (seeds 301 to 320, two parallel series, source `d803df016` in every run, image by ID): **20,000 schedules, 303,710 oracles, 0 violations**; kills 4,888, key restores 2,540; the removed account's copies that landed 11,080 (delivery 2,665, frame 2,768, notice 2,840, Publish 2,807); E6 frames 20,000; other account's writes 80,000, none refused; native datoms holding a removed value in clear **0** in 200 block scans of the source and 200 of the recipient; stops before the commit 3,316, after it 3,279, at the publication 3,252, after the guard 3,357 asked and 0 fired. Off (500 schedules, seed 401): 3,045 oracles, **15 violations as expected** (journal 5, native 10). 570 to 590 s per run, diagnostic |
 | (a) Stored-function identities (`act9/idents.sh`, seven writer settings), this head against the merge without this work (the merged tree with this branch's gateway changes reversed) | **60 of 60 equal in all seven settings**; that tree also equals `c2aa3d416` 60 of 60 (the third pass moved no identity) |
 | (a) Native log (`era2/gate.sh` phase `paired`, base `c2aa3d416` twice, this gateway options unset, the per-account option on and never moved) | **identical**: 653 and 698 datoms, `d4b11ca6...` and `5197942f...`, the same hashes as before the merge; every reply identical. With `TX2_DERIVED_SEAL=1` on the last arm: the same datom counts and replies; the log and read hashes differ (the removal's transaction ID, 5.1 item 2) |
 | (f) DX-ERA2's interleavings, every option on | database-wide 360 checks, per account 1,545, subject check 9,813: **0 failed**; frame race 40 per setting (20 `cas-failed`, 20 at the account fence); lock lost 20 of 20 (one 200, one 503) |
