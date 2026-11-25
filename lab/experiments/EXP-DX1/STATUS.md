@@ -6670,3 +6670,17 @@ Sam's words are in `lab/research/SAM-decisions-2026-11-09.md`; the targets and t
 - The old worktree, image and volumes are kept; rollback is three commands on the page.
 
 **Server session.** A plan-and-predictions analyst started at 17:28 (task file `OPUS-SRV1-session-plan-predictions`): why read goodput stayed flat at about 18 per second at every concurrency level at 1 billion; how much memory 1 billion and 10 billion would need; how to tell a read in memory from one not in memory; the run list under a 50-dollar cap; numeric predictions for every reading. Nothing is rented.
+
+## 2026-11-25 17:42 EST: seventh review of the removal rule: with options off both branches equal the one branch; mergeable only as the reconciled branch; four findings before any database moves
+
+Source: independent reviewer, seventh review, branch `exp/DX-ERA3-removal-review` `7da3ca3b3`, `REVIEW-7.md`. Reviewed: `exp/DX-ERA2-removal-per-account` `383db77d1` and `exp/DX-ERA6-removal-on-save-line` `ae82b8984`.
+
+- **With every option off both branches match the one branch's head `efee27905`:** paired native log identical datom for datom, replies identical, every shared stored-function identity equal in 11 settings. The replay rule does nothing with options off.
+- **Fit to merge default off only as the reconciled branch**, merged again onto the one branch's current head and measured on that merge commit (the removal branch alone lacks 12 of the one branch's 70 identities; the reconciled branch lacks 4).
+- The sixth review's X1 to X4 and X7 are fixed. The merged replay rule holds on all 27 combinations of its three positions on four writers. The builder's rewritten gate condition (a declined command is recorded) is right.
+- **R5, high, restore procedure:** in 4 of the 10 ways a removal is answered 200 no acknowledged line is printed, so the manual restore step can miss that removal and its value is answered again after a restore of data and authority. **R2, high, availability:** any caller can protect an attribute whose values are numbers; every account's saves of it are then refused for good. R3: a name only the log's copy lists stops every account's writes, and the only way out protects it for good. R6, medium: a stored save sent again after a removal is answered as declined, not as a duplicate.
+- Creation and import frames with no source are declined even when the other positions are fresh (3 of 27 combinations).
+- None of the four answers a removed value unless a restore happens. Held: cache-before-log read 16 variants; key pass on unsealed databases 16 variants; fuzz 60,392 checks, 0 violations.
+- Not tested: scale; the SDK end to end on these builds; the builder's restore stacks.
+
+**Action:** eighth pass sent to the removal builder on the reconciled branch: R2, R3, R5, R6, the creation rule, the restore procedure; Sam's three decisions built as separate switches (replay rule on by default; completion worker under today's rule; protected attributes refused on an unsealed database outside tests), none flipped in this pass; then a merge of the one branch's head with identities and the paired log measured on the merge commit. Sam's decisions 1 and 2 were conditional on this review: they wait for the eighth.
