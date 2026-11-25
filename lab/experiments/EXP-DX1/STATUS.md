@@ -6465,3 +6465,15 @@ Source: removal builder final message; branch `exp/DX-ERA2-removal-per-account` 
 - Not tested: the removal branch's code together with this; a real older build in the fleet; the transition under load on PostgreSQL; the join layer on this mechanism.
 
 **Actions:** third independent review of the save line started, pinned to `cdfc70e02` (the function move at the transition, a real older build, the replay rule against a real removal, account authority, the ID collision under load). The Publish builder told the six changes the join layer needs. **Owed after the reviews:** one reconciliation of the save-line fixes with the removal branch, with one replay-after-removal rule, not two.
+
+## 2026-11-25 09:52 EST: two more faults shown on the one branch (`8a362ac38`), PostgreSQL key store: sealed saves refused after a gateway restart; key material in an error reply
+
+Source: removal builder final message; fix branch `exp/DX-N1-key-pool` `c78185f5b` (a direct child of `8a362ac38`). Runtime image by ID; PostgreSQL key store; a real gateway restart on a stack.
+
+- **N1, reachable without any hand-made state, PostgreSQL key store only:** a gateway fills a sealed database's key pool (256 keys) only when it serves that database's protection declaration itself, and its worker refills only pools it already holds. After a gateway restart, or on any second gateway, every sealed save is refused with a 400 until the worker's next pass: 10 of 11 saves over 463 ms after a real restart on a stack; 11 of 12 over 820 ms on the read gateway; 23 of 24 over 283 ms in process. **A save with more than 256 protected values is refused on every attempt.** The SDK does not retry writes, so a client treats the 400 as final. Cannot happen on the file key store.
+- Fix on the branch: a save that finds the pool empty fills it once and proceeds; a failed fill is counted and answers a typed 503. Stack on the branch: 0 refused in every step (first save after a real restart stored at 194 ms; a 300-value save stored 3 of 3). Gate: in process 5 of 5 on both key stores (the one branch fails 4 of 5 on PostgreSQL); suites as on the base; paired native log identical on both key stores after the stated normalisation.
+- **N2 (one database's failed key deletion stopping the pass for others) is NOT on the one branch:** 6 of 6 on both key stores; the check does detect it on the commit where it existed.
+- **N3, on the one branch, not yet fixed:** if the PostgreSQL key store refuses the key batch of a protection declaration, the route answers a 400 whose message is the database driver's statement, including the wrapped keys in hex. Key material reaches the caller.
+- Not tested: a pool drained at a production save rate; more than two gateways; the extra round trip's latency at scale.
+
+**Action:** the builder asked to put the N3 fix on the same branch as its own commit, and to find every path where a driver's or library's message can reach an HTTP reply and replace it with a fixed text and a code. An independent review of the branch starts when it reports; it merges only on a clean review.
