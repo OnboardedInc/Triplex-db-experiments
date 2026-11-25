@@ -39,8 +39,10 @@ let saves = 0;
 try {
   for (let i = 0; i < 120; i++) {
     const subject = `acct/u1/pl:${String(i).padStart(8, "0")}`;
-    // Even saves: a few facts (one-byte block); every fifth: more than 256 assertions (wide block).
-    const n = i % 5 === 4 ? 300 : 3 + (i % 4);
+    // Most saves: a few facts (one-byte block). Every fifth: 128 facts, the per-subject bound (SUBJECT_SAVE_FACTS), whose
+    // facts and journal rows (128 + 132) do not fit 256, so it takes a wide block. (A first version sent 300 facts: over
+    // the bound, so the adapter gave those saves no block at all and the check counted 96 blocks for 120 saves.)
+    const n = i % 5 === 4 ? 128 : 3 + (i % 4);
     const ops = Array.from({ length: n }, (_, k) => ({ op: "assert", entityId: subject, attribute: `:task/f${k}`, value: str(`v${i}.${k}`), entityType: "Task" }));
     const wireBefore = store.wire.length;
     await store.transact(ops, { commandId: `u1-adapter-${run}-${i}` });

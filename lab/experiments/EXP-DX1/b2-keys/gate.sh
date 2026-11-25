@@ -105,16 +105,34 @@ fi
 if [[ $phases == *suites* ]]; then
   suites=$(cd "$repo/packages/datomic/gateway/src" && ls triplex/gateway/*_test.clj | sed 's#/#.#g; s#_#-#g; s#\.clj$##' | tr '\n' ' ')
   suites="triplex.gateway.selftest $suites"
+  # [DX-INT5] A suite that tests an option's code runs in its own JVM with that option set (as its builder's gate runs
+  # it), so the standing count is the one known error (feed-test http-route) and a new error cannot hide among the
+  # errors of suites run without their option. sweep-shapes-test (XQ9, via XQ10): TX2_SWEEP=1 TX2_SWEEP_SHAPES=all, as
+  # xq10/suites.sh's routes arm. Each runs only where that source has the file.
+  # One line per optioned suite: the namespace, then its docker -e arguments (bash 3.2 on the Mac: no associative arrays).
+  optioned="triplex.gateway.sweep-shapes-test -e TX2_SWEEP=1 -e TX2_SWEEP_SHAPES=all"
+  plain=$suites
+  while read -r ns _; do plain=$(printf '%s\n' $plain | grep -vxF "$ns" | tr '\n' ' '); done <<< "$optioned"
+  form() { echo "(require 'clojure.test) (def nss (quote [$1])) (apply require nss)
+(let [r (apply clojure.test/run-tests nss)] (println \"B2_SUITES\" (pr-str (select-keys r [:test :pass :fail :error])))
+  (shutdown-agents) (System/exit (if (zero? (+ (:fail r) (:error r))) 0 1)))"; }
   # the gate: this worktree's suites end exactly as the base's (the same tests, passes, failures and errors)
   kept=$status
   for source in base this; do
-    run "suites-$source" "$source" "(require 'clojure.test) (def nss (quote [$suites])) (apply require nss)
-(let [r (apply clojure.test/run-tests nss)] (println \"B2_SUITES\" (pr-str (select-keys r [:test :pass :fail :error])))
-  (shutdown-agents) (System/exit (if (zero? (+ (:fail r) (:error r))) 0 1)))"
+    run "suites-$source" "$source" "$(form "$plain")"
+    while read -r ns args; do
+      file=$(echo "${ns#triplex.gateway.}" | tr - _).clj
+      [[ -f $out/$source/src/triplex/gateway/$file ]] || continue
+      run "suites-$source-${ns#triplex.gateway.}" "$source" "$(form "$ns")" $args < /dev/null
+    done <<< "$optioned"
   done
   status=$kept
-  b=$(grep -h "^B2_SUITES" "$out/suites-base.log"); t=$(grep -h "^B2_SUITES" "$out/suites-this.log")
-  echo "B2_SUITES base $b"; echo "B2_SUITES this $t"
+  for source in base this; do
+    plainline=$(grep -h "^B2_SUITES" "$out/suites-$source.log")
+    echo "B2_SUITES $source $plainline"
+    for f in "$out"/suites-$source-*.log; do [[ -f $f ]] && echo "B2_SUITES $source $(basename "$f" .log | sed "s/^suites-$source-//") $(grep -h '^B2_SUITES' "$f")"; done
+  done
+  b=$(cat "$out"/suites-base*.log | grep -h "^B2_SUITES" | sort); t=$(cat "$out"/suites-this*.log | grep -h "^B2_SUITES" | sort)
   [[ -n $t && $b == "$t" ]] || { echo "B2_SUITES differ from the base"; status=1; }
 fi
 if [[ $phases == *scenarios* ]]; then
