@@ -286,7 +286,7 @@ test("T9: R3 for settlement frames: another account computes an account's next f
 test("T10: R3 for enrolment: another account saves first under an account's enrolment command ID", async () => {
   const t = await setup(["acct-b"]);
   const [B] = t.accounts as [any];
-  // Account A is seeded but not enrolled yet; its enrolment's command ID is join-held-enrolment:<account> (account.ts 317).
+  // Account A is seeded but not enrolled yet; its enrolment's command ID is join-held-enrolment:<account> (account.ts 329).
   const cut = await seedAccount(t.db, "acct-a", 4);
   const heldA = heldAccount("acct-a", 4, cut);
   const bs = B.store(t.proc("b-saver", NONE));
