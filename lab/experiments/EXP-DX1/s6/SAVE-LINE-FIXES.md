@@ -631,6 +631,10 @@ layer's present documents, `notice:v1:<hash>:...`, are journals and never decide
     cannot land between them: it waits, and then covers the value (the review's test now shows this on its own thread).
   - Cost: a replay whose first attempt was optimistic is judged as framed before every removal, so it is declined when
     it writes a family any removal ever named.
+  - Found on the stack: the SDK's optimistic source is the last position the client saw, which can precede the removal,
+    so a creation saved after the removal was declined, and so would every later one. On `ErasureReplayDeclined` the
+    SDK now reads the head once; the caller's next save is framed after the removal and stored (`sdk-stack.ts`
+    `REPLAY_ACROSS_REMOVAL`).
 - **R2-5:** a save naming an account whose entities belong to no one account keeps the plain form; it is not refused.
   It is refused only when its entities are another single account's.
 - **R2-6:** the general writer's refusals that carry no marker are decided by their exact messages (`outcome.clj`),
@@ -715,6 +719,65 @@ client may write system entities is the API's rule, not the store's.
 - On the sealed scope, `ProtectedTypeUnsupported` appears when a replacement writes a non-string type onto a protected
   field; it is the same on both scopes.
 
+## 10.1 S6b: the gates on the head image (2026-11-25)
+
+**Image:** `tx2-dxs6:96b866c6ddf8` (`sha256:55cdd3f517fe…`), built from `96b866c6d` by `s6/image.sh` on the pinned
+runtime `sha256:da58aea16b31…`; every step below ran on it by image ID (`s6/final.sh`, chain `final3-96b866c6d`). The
+later head `e8f393920` changes the SDK only (the gateway sources are identical); its stack run used the review's
+image built from `96b866c6d` (`s5/image2.sh`, `tx2-dxs5:96b866c6ddf8`). Mac toy, times diagnostic. Evidence: the archive
+`DX-S6-save-line` (`s6b-final-e8f393920.tar.gz` sha256 `3b1e6df6…`, `s6b-earlier-runs.tar.gz` `8f14e0fa…`), kept outside
+the repository.
+
+| Gate | Settings | Result |
+| --- | --- | --- |
+| `s5/attack2_gate.clj` (every test of the second review) | accounts-off, accounts-on, accounts-on-serial, accounts-on-general, bound, general | 24, 64, 64, 55, 44 and 22 assertions, 0 failures |
+| `s6/stored_ids_gate.clj` (sites list, every writer, the transition, an older build, a Publish-shaped write, frames and the enrolment) | accounts-on, accounts-on-serial, accounts-on-general, group-accounts | 109 of 109 each |
+| `s6/outcome_gate.clj` (F1 fault points; removal and declaration with the original in flight) | server, general, accounts-on, group, group-accounts | 426 of 426 each |
+| `s6/race_gate.clj`, `s6/bound_gate.clj`, `s5/attack_gate.clj` | server; bound; server, import | 22; 127; 49 and 151 |
+| `s6/accounts_gate.clj` | accounts-off (control); accounts-on; group-accounts | 1,000 schedules (the control shows today's differences, 8 of 8); 10,000 schedules, 127,848 saves, 0 differences, 0 lookups not the account's own; 2,000 schedules, 25,632 saves, 0 differences |
+| `s3/owners_gate.clj`, `s4/create_gate.clj` | s3, s3-serial; server, serial, hints | 262, 262; 145, 145, 147 |
+| `s5/fuzz.clj` with faults (`S5_FAULTS`) and the second account (`S5_ACCOUNTS`), 10 seeds each | accounts-on, accounts-on-serial, accounts-on-general, group-accounts | 31,298, 31,072, 31,360 and 31,228 saves, 0 differences |
+| The same, option off | server | 31,258 saves, 0 differences |
+| Protected values with faults | server, sealed; accounts-on, unsealed, second account | 7,200 and 9,426 saves, 0 differences |
+| `s5/fuzz.clj` without faults (value types, protected, sealed) | server, serial, plainowner | 19,200 saves, 0 differences |
+| Identities, every writer setting, options off | head `96b866c6d` against base `23b7df344` (`s4/idents.sh`, `s3/compare-idents.py`) | equal |
+| `s5/stack2.sh` (the review's mixed fleet on PostgreSQL: a gateway with the option and one without, both pairings) | — | passed (`DX-S5R2_STACK_EXIT 0`) |
+| `s6/stack.sh` (the SDK end to end, faults, then the replay across a removal) | server, head `e8f393920` | passed: 12,000 saves, 0 violations; the replay declined on a new and an existing entity, the save after the removal stored |
+| SDK suite (`packages/datomic`) | vitest | 470 passed, 53 skipped |
+
+**The fuzzer with faults and the second account: 172,842 saves, 0 differences.** That is 134,384 with the setting on
+(fleet states: the setting absent, turned on by the run's first save naming an account, and on; per-subject writers on,
+serial options, general writer only, group commit) and 38,458 with it off. Shadows of a command first committed by a
+save of no one account are refused, as the shared rule says (1,473, counted apart). Every fault mode resolved by lookup
+and fence; no save stored twice.
+
+**The stack.** At `e8f393920` (run `final4-e8f393920-stack`): 12,000 SDK saves through proxies dropping 2% of
+requests and replies, with transactor and gateway faults: 12,000 stored and reported stored, 0 violations, positions
+contiguous, every subject read back equal. Then the replay across a removal: on a new entity and on an existing one the
+SDK's replay carried its first attempt's source (0, then 3) and was declined `ErasureReplayDeclined`; nothing of the
+value framed before the removal was stored; the caller's next save was framed after the removal (source 1, then 4) and
+stored. The earlier run at `96b866c6d` (11,835 stored, 165 reported not stored and not stored, 0 violations) found the
+stale optimistic source that `e8f393920` fixes.
+
+**R2-6, what the unmarked refusals are** (`s6/r26_tally.clj`, general writer, setting on, 3 seeds, 8,304 saves): every
+"Missing live row datom" refusal (51) carries the generator's `wrong-owner-retire` fault: a retirement framed on another
+owner's entity. They are now answered `400 TransactionRejected`, never 503, so nothing replays them. The review's 984
+were these, each replayed until replays ran out.
+
+**R2-10, the creation function's import frame, measured** (`s5/attack2_gate.clj`, bound): ten repeats of the frame
+(one new subject, 20 values of 100 bytes) ran at 0.09 to 0.18 of the estimate. The first call of each stored function
+in a transactor process ran at 1.62 (16 ms against 10 ms): it includes the function's compile, which no estimate
+prices. The review's 1.08 was that first call. Consequence: once per function per transactor start, an import frame can
+exceed the bound by the compile time; every later call is within it.
+
+**`TRIPLEX_IDENTITY f/id` in these gates.** In the in-process fuzzer, 46 in the R2-6 tally's 8,304 saves, and 922 in
+the first review's 59,000: the fuzzer's own `reuse-block` and `reuse-refused-block` modes, which send a save under an
+identity block already used, refused on both scopes alike. The in-process gates do not use the SDK's ID generator, so
+the Publish review's U1 (the SDK's monotonic factory handing out IDs inside a save's block) cannot occur there. On the
+stack (the SDK, 12,000 saves a run, three runs at `63273b0c6`, `373c15207` and `96b866c6d`), no save was refused for
+identity: every failed save was `DatomicOperationNotApplied`. U1 is not the cause of any stop in these gates, nor of the
+984.
+
 ## 11. What is still not tested
 
 **On the server**
@@ -739,6 +802,22 @@ client may write system entities is the API's rule, not the store's.
   removal without the option.
 - Account claims on removal commands, and an import frame whose predecessor command is a legacy plain claim: not
   scoped.
+
+**S6b: what is still not tested**
+
+- **DX-ERA2's removal at its Datomic commit:** not run; its branch does not merge here (five files conflict). The R2-2
+  rules compare positions, so they hold under it by construction, not by test.
+- **A real older build in the fleet:** simulated in process (no stored-ID choice, no routing); the stack's mixed fleet
+  ran this build with and without permission, not a binary from before this change.
+- **A build whose writer code differs from this one's** is not refused by the transition (it installs its own
+  functions); not tested, and not safe today either.
+- **The transition under load on PostgreSQL:** tested in process only (one save across it, every writer).
+- **The join layer on this mechanism:** not built here (section 12.4 lists its changes); `notice:v2` documents are
+  tested with hand-made entity names.
+- **Group commit with the setting on:** such saves are not grouped; the cost is not measured.
+- **An optimistic replay** is judged as framed before every removal (its first attempt stated no source); not measured
+  how often a real workload declines that way.
+- **Operation IDs under a removal command** and the import predecessor of a legacy plain claim: not scoped (as in S6).
 
 **Contract and API limits**
 
