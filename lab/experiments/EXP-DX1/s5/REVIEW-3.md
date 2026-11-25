@@ -2,7 +2,7 @@
 
 Reviewer's branch `exp/DX-S5-save-line-review`. It holds the head under review, `cdfc70e02` (a fast-forward), plus
 the reviewer's tests; nothing under `packages/` differs from `cdfc70e02`, whose gateway sources are identical from
-`96b866c6d` on. Started 2026-11-25 09:35 EST, written TODO EST. Mac figures are toy-size and diagnostic.
+`96b866c6d` on. Started 2026-11-25 09:35 EST, written 11:20 EST. Mac figures are toy-size and diagnostic.
 [First review](REVIEW.md) · [Second review](REVIEW-2.md) · [The fixes](../s6/SAVE-LINE-FIXES.md) (sections 12, 10.1, 11)
 
 **How it ran.** Every counted run used an image built from this branch's committed head by `s5/image3.sh`: the
@@ -21,7 +21,9 @@ the SDK drivers bundled from the head's built SDK, started by image ID, with not
   fuzzer, 3 settings x 8 seeds, and the second U1 run (200-row saves).
 - Development runs (tests mounted from the working tree) are not counted, nor are the first image's fuzz runs and the
   second image's stopped one (their placeholders were incomplete); the harness errors they found are in section 5.
-- Evidence, outside the repository: `DX-S5-review/r3-archives`, one archive per run, with `SHA256SUMS`.
+- Evidence, outside the repository: `DX-S5-review/r3-archives`, one archive per run (`r3-final-*`, `r3-final2-*`,
+  `r3-final3-*`), with `SHA256SUMS`. Kept but not counted: `r3-final-fuzz-*` (the first image's fuzz),
+  `r3-final2-fuzz-accounts-on` (stopped) and the development runs (`dev-*`).
 
 ## Page 1
 
@@ -54,7 +56,8 @@ meant to stop commit again. With the setting absent, no break found.**
   builds refused (18 of 18), as the hashed variants predict.
 - **With the setting absent:** the native log is identical datom for datom to the base `23b7df344` and to
   `a6d02225c`'s (2 settings, 240 saves each, apart from the scope's random key), identities equal in 6 settings, the
-  second review's tests pass (143 assertions, 3 settings), and the fuzzer TODO.
+  second review's tests pass (143 assertions, 3 settings), and the fuzzer found no difference in 114,720 saves with the
+  transition, stale planners and removals as steps.
 
 **The three most serious findings, each with its test** (`s5/attack3_gate.clj` unless named):
 
@@ -188,7 +191,7 @@ on its own build with the same requests: `s5/attack3_gate.clj` on the head (7 se
 | Identities equal to the base with every option off (S6 section 6) | `s3/idents.clj` on the head and `23b7df344`, `s3/compare-idents.py` | 6 settings | 58 keys equal in each, none missing; 8 new keys, all of the several-owners and creation namespaces |
 | The second review's tests, as the builder updated them | `s5/attack2_gate.clj` on this image; the builder's edits read: 5 assertions changed to the new contract (one stored operation-ID form, `taken` for another account's plain claim, the general writer's lock in the R2-2 race, the first call's compile excluded from R2-10's ratio); none drops a check | 3 settings, 36 tests | 143 assertions, 0 failures |
 | The removal branch's own rule, where it holds | `s5/attack3_era.clj`: a save racing a removal, then a resend of the same command, then the same values under a new command | 6 (3 writers x 2 settings) | race and resend declined, the command recorded; the new command stored |
-| The fuzzer: candidate (every per-subject writer) against the general writer as control, with faults, a second account, the transition at one third of the steps, stale planners after it, removals alone and racing a save with the SDK's replay | TODO | TODO | TODO |
+| The fuzzer: candidate (every per-subject writer) against the general writer as control, with faults, a second account, the transition at one third of the steps, stale planners after it, removals alone and racing a save with the SDK's replay | `s5/fuzz.clj`, 3 settings (per-subject, serial, general with predecessor lookup off) x 8 seeds x 3,000 steps, the three settings at once; each step compares answers and receipts, and every 400 steps the stored datoms, every read route and the feed | 114,720 saves (93,120 serial, 21,600 concurrent in 48 rounds of 2 and 4 writers); 10,274 with an unknown outcome injected; 15,863 of a second account; 24 transitions; 1,401 stale-planner saves; 1,437 removals; 720 removal races | 0 differences, 240 deep compares equal, 0 unjustified refusals; every stale-planner save refused on both scopes and none stored; every replay across a landed removal declined |
 
 ## 4. Not tested
 
