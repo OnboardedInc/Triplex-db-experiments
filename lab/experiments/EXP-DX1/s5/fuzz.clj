@@ -386,7 +386,9 @@
           (get b "subjectReplan") :replan
           :else :general)))
 
-(defn- receipt [reply] (select-keys (:body reply) ["position" "recordedAt" "datoms" "operationId"]))
+;; [S5 third review] A removal takes its record time from the clock at the moment each scope runs it, so after one the
+;; two scopes' next record times differ by design; with S5_REMOVALS=1 the receipt comparison leaves recordedAt out.
+(defn- receipt [reply] (select-keys (:body reply) (if (= "1" (System/getenv "S5_REMOVALS")) ["position" "datoms" "operationId"] ["position" "recordedAt" "datoms" "operationId"])))
 (defn position-of "The committed position of a receipt (tagged long)." [reply]
   (some-> (get-in reply [:body "position" "v"]) str Long/parseLong))
 

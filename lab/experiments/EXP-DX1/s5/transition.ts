@@ -11,7 +11,7 @@
 //   node transition.mjs <G_new> <G_prof> <G_s6a> <G_base> <work dir>
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { appendFileSync } from "node:fs";
+import { appendFileSync, existsSync } from "node:fs";
 import { core, datomic, Effect, openProduct, type ProductStore } from "../s2/product.ts";
 
 const [newUrl, profUrl, s6aUrl, baseUrl, work] = process.argv.slice(2);
@@ -24,7 +24,8 @@ const direct = new datomic.DatomicClient(newUrl);
 function classify(cause: unknown) {
   const text = JSON.stringify(cause) ?? String(cause);
   const code = text.match(/"code":"([A-Za-z]+)"/)?.[1];
-  if (code) return `WriteError:${code}`;
+  const message = [...text.matchAll(/"message":"([^"]{0,160})/g)].map((m) => m[1]).filter((m, i, a) => a.indexOf(m) === i).slice(0, 3).join(" | ");
+  if (code) return `WriteError:${code} (${message})`;
   const tag = [...text.matchAll(/"_tag":"([A-Za-z]+)"/g)].map((m) => m[1]).filter((t) => t !== "Fail" && t !== "Cause");
   return `Error:${tag.join("/") || text.slice(0, 200)}`;
 }
@@ -57,12 +58,27 @@ async function open(label: string, url: string, claimAccount?: string) {
 }
 
 const results: any[] = [];
-const newStore = await open("new", newUrl, "m1");
+// Before the setting, the head's saves name no account: a save naming one, on a process permitted to turn the setting
+// on, turns it on (account_claims.clj stored-ids), and the "before" step would not be before.
+const newPlain = await open("new", newUrl);
 const s6aStore = await open("s6a", s6aUrl);
-for (const [label, store] of [["new", newStore], ["s6a", s6aStore]] as const)
+for (const [label, store] of [["new", newPlain], ["s6a", s6aStore]] as const)
   for (const kind of ["one-owner", "general", "creation"] as const) results.push(await save(label, store, kind, "before"));
-const turned = await direct.request("POST", `/v1/db/${newStore.db}/settings`, { accountIds: true });
+const turned = await direct.request("POST", `/v1/db/${newPlain.db}/settings`, { accountIds: true });
 log("SETTING", { turned });
+const newStore = await open("new", newUrl, "m1");
+// Account authority through the SDK: a second client names account m1 itself (claimAccount "m1"; nothing ties the
+// account to the caller) and saves first under the command ID m1's own client then uses.
+{
+  const taken = `m1-publish-${randomUUID().slice(0, 8)}`;
+  const intruder = await open("names-m1", newUrl, "m1");
+  const one = (entityId: string, value: string) => [{ op: "assert", entityId, attribute: ":t/x", value: { type: "string", value }, entityType: "subject", validFrom: 0 }];
+  const plant = await intruder.exit(Effect.flatMap(core.Triples, (s: any) => s.transact(one("acct/m1/subject/planted", "planted"), { commandId: taken })));
+  const own = await newStore.exit(Effect.flatMap(core.Triples, (s: any) => s.transact(one("acct/m1/subject/own", "own"), { commandId: taken })));
+  const show = (e: any) => e._tag === "Success" ? { stored: JSON.stringify(e.value)?.slice(0, 200) } : classify(e.cause);
+  log("AUTHORITY", { case: "another client names account m1 and saves first under m1's command ID", plant: show(plant), own: show(own),
+    claim: await claimForms(newStore.db, taken) });
+}
 for (const [label, store] of [["new", newStore], ["s6a", s6aStore]] as const)
   for (const kind of ["one-owner", "general", "creation"] as const) results.push(await save(label, store, kind, "after"));
 // The base build opens the database only now: its writer functions are installed after the transition.
@@ -73,6 +89,18 @@ if (baseStore) for (const kind of ["one-owner", "general", "creation"] as const)
 const profStore = await open("prof", profUrl);
 for (const [label, store] of [["new", newStore], ["s6a", s6aStore], ["prof", profStore], ...(baseStore ? [["base", baseStore]] : [])] as [string, ProductStore][])
   for (const kind of ["one-owner", "general", "creation"] as const) results.push(await save(label, store, kind, "after-reopen"));
+// The transactor restarts (stack3-run.sh's watcher): a running transactor may hold the function body it last ran under
+// an ident; a restarted one reads the body the database holds now.
+appendFileSync(`${work}/restart`, "");
+for (let i = 0; i < 600 && !existsSync(`${work}/restarted`); i++) await new Promise((r) => setTimeout(r, 200));
+log("RESTARTED", { restarted: existsSync(`${work}/restarted`) });
+for (const [label, store] of [["new", newStore], ["s6a", s6aStore], ["prof", profStore], ...(baseStore ? [["base", baseStore]] : [])] as [string, ProductStore][])
+  for (const kind of ["one-owner", "general", "creation"] as const) {
+    let r = await save(label, store, kind, "after-restart");
+    // The first save after a restart can meet the peer's reconnect; one more try, recorded as its own row.
+    if (r.outcome !== "stored" && !r.outcome.startsWith("WriteError:CasConflict")) results.push(r), r = await save(label, store, kind, "after-restart-again");
+    results.push(r);
+  }
 const storedAfterTheSetting = results.filter((r) => r.step !== "before" && r.outcome === "stored" && r.build !== "new" && r.build !== "prof");
 log("DONE", { saves: results.length, storedByABuildThatDoesNotKnowTheSetting: storedAfterTheSetting.map((r) => `${r.build} ${r.kind} ${r.step}`),
   plainClaimsAfterTheSetting: results.filter((r) => r.step !== "before" && r.claim.plain).map((r) => `${r.build} ${r.kind} ${r.step}`) });

@@ -2,7 +2,7 @@
 # [DX-S5 third review] In-memory runs on the reviewer's image (s5/image3.sh), by image ID, nothing mounted but the output
 # directory. One writer setting per JVM.
 #   DOCKER_HOST=<lab VM socket> node lab/bin/heavy.mjs --label DX-S5R3-clj -- bash lab/experiments/EXP-DX1/s5/clj-run3.sh OUT MODE SETTINGS
-# MODE: attack3 (s5/attack3_gate.clj on the head), era (s5/attack3_era.clj on the removal branch's tree), fuzz (s5/fuzz.clj;
+# MODE: attack3 (s5/attack3_gate.clj on the head), attack2 (the second review's tests as the builder updated them), era (s5/attack3_era.clj on the removal branch's tree), fuzz (s5/fuzz.clj;
 # S5_FAULTS, S5_ACCOUNTS, S5_TRANSITION, S5_PROTECTED, S5_REMOVALS), idents (s3/idents.clj on the tree S5_BUILD names:
 # head, s6a, base, era2), logdigest (s5/logdigest.clj on the tree S5_BUILD names). Development only, never counted: S5_DEV_TESTS=1 mounts the working tree's test files.
 set -uo pipefail
@@ -37,6 +37,9 @@ settings=(
   "accounts-on:$base TX2_ACCOUNT_CLAIMS=1"
   "accounts-on-serial:$base TX2_ACCOUNT_CLAIMS=1 TX2_SUBJECT_NARROW_REVISION=1 TX2_SUBJECT_REUSE_PREDECESSOR=1 TX2_SUBJECT_APPEND_RETIREMENT=1"
   "accounts-on-general:TX2_SUBJECT_SAVE=0 TX2_ACCOUNT_CLAIMS=1"
+  # The gateway's default (predecessor lookup off): the general writer is the fixed ident :triplex/commit.
+  "accounts-on-nopred:$base TX2_ACCOUNT_CLAIMS=1 TX2_PREDECESSOR_LOOKUP=0"
+  "accounts-on-general-nopred:TX2_SUBJECT_SAVE=0 TX2_ACCOUNT_CLAIMS=1 TX2_PREDECESSOR_LOOKUP=0"
   "group-accounts:$base TX2_ACCOUNT_CLAIMS=1 TX2_GROUP_COMMIT=1"
   "era-server:TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_WIDE=1"
   "era-per-account:TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_WIDE=1 TX2_REMOVAL_PER_ACCOUNT=1"
@@ -51,6 +54,7 @@ pre="-i /exp/wfix1/regression.clj -i /exp/w2/wide_gate.clj"
 case $mode in
   fuzz) files="$pre -i /exp/s5/fuzz.clj"; expr="(s5-fuzz/main)" ;;
   attack3) files="$pre -i /exp/s5/fuzz.clj -i /exp/s5/attack3_gate.clj"; expr="(s5-attack3/main)" ;;
+  attack2) files="$pre -i /exp/s5/fuzz.clj -i /exp/s5/attack_gate.clj -i /exp/s5/attack2_gate.clj"; expr="(s5-attack2/main)" ;;
   era) files="$pre -i /exp/s5/attack3_era.clj"; expr="(s5-attack3-era/main)" ;;
   idents) files=""; expr="" ;;
   logdigest) files="$pre -i /exp/s5/attack3_era.clj -i /exp/s5/logdigest.clj"; expr="(s5-logdigest/main)" ;;

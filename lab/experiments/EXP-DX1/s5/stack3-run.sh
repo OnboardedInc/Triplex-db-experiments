@@ -61,9 +61,20 @@ healthy() { for port in 18081 18082 18083 18084; do node -e "fetch('http://127.0
 for ((i=0; i<480; i++)); do healthy && break; sleep .5; done
 healthy || { echo "DX-S5R3_STACK gateways never healthy"; tail -5 "$work"/gw-*.log; exit 1; }
 echo "DX-S5R3_GATEWAYS healthy $(date -u +%T): 18081 head+permission, 18082 head+load-profile, 18083 $(cat $b/s6a/commit), 18084 $(cat $b/base/commit)"
+# The driver asks for a transactor restart by creating $work/restart; the watcher restarts it and answers $work/restarted.
+start_tx() {
+  java -server -Xms96m -Xmx368m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -XX:MaxDirectMemorySize=64m -XX:+ExitOnOutOfMemoryError \
+    -Ddatomic.objectCacheMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json -cp "/opt/gateway/src:$cp" clojure.main -m datomic.launcher "$data/transactor.properties" >> "$work/transactor.log" 2>&1 &
+  tx=$!; }
+( while [[ ! -e $work/restart ]]; do sleep .2; done
+  kill "$tx"; while kill -0 "$tx" 2>/dev/null; do sleep .2; done
+  start_tx; wait_tcp "$tx" 4334 && echo "$tx" > "$work/restarted"
+  echo "DX-S5R3_TX restarted $(date -u +%T)"
+  wait "$tx" ) &
+children+=($!)
 node /opt/s5/transition.mjs http://127.0.0.1:18081 http://127.0.0.1:18082 http://127.0.0.1:18083 http://127.0.0.1:18084 "$work" > "$work/driver.out" 2>&1
 status=$?
-grep -E '^DX-S5R3_(OPEN|SAVE|SETTING|DONE|OPEN_FAILED)' "$work/driver.log" | cut -c1-1500
+grep -E '^DX-S5R3_(OPEN|SAVE|SETTING|DONE|OPEN_FAILED|RESTARTED|AUTHORITY)' "$work/driver.log" | cut -c1-1500
 tail -3 "$work/driver.out" | cut -c1-500
 echo "DX-S5R3_STACK_DONE $status"
 exit $status

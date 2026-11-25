@@ -36,7 +36,12 @@
             norm (fn [^String t] (-> t (str/replace name "SCOPE") (str/replace scope-key "SCOPEKEY")))]
         (doseq [{:keys [data]} txs, x data :when (not= instant (:a x))]
           (vswap! n inc)
-          (.update md (.getBytes ^String (norm (pr-str [(:e x) (d/ident db (:a x)) (:v x) (:added x)])) "UTF-8")))
+          (let [text (norm (pr-str [(:e x) (d/ident db (:a x)) (:v x) (:added x)]))
+                one (MessageDigest/getInstance "SHA-256")]
+            (.update md (.getBytes ^String text "UTF-8"))
+            ;; One line per datom (its own digest and its first 160 characters), so two builds' logs can be diffed.
+            (println "DX-S5R3_DATOM" @n (subs (apply str (map #(format "%02x" %) (.digest one (.getBytes ^String text "UTF-8")))) 0 16)
+                     (subs text 0 (min 160 (count text))))))
         (println "DX-S5R3_LOG" (json/write-str {:outcomes (into {} (map (fn [[k v]] [(str k) v]) outcomes)) :transactions (count txs)
                                                 :datoms @n :digest (apply str (map #(format "%02x" %) (.digest md)))
                                                 :settings (into (sorted-map) (filter (fn [[k]] (str/starts-with? k "TX2_")) (System/getenv)))})))))

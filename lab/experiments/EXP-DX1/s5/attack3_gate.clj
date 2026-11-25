@@ -44,7 +44,8 @@
 (defn- late! [held]
   (when held
     (try (let [r @(held)] {:late "committed" :t (d/basis-t (:db-after r))})
-         (catch Exception e {:late "refused" :marker (re-find #"TRIPLEX_[A-Z_]+|unique-conflict" (str e))}))))
+         (catch Exception e {:late "refused" :marker (re-find #"TRIPLEX_[A-Z_]+|unique-conflict" (str e))
+                             :message (let [c (or (.getCause e) e)] (subs (str (.getMessage c) " " (pr-str (ex-data c))) 0 (min 300 (count (str (.getMessage c) " " (pr-str (ex-data c)))))))}))))
 
 (defn- turn-on! [conn] (with-redefs [ac/permitted? true] (ac/turn-on! conn)))
 
@@ -125,6 +126,8 @@
       (is (empty? (mapcat :bad results)) "every moved function: the old ident refuses and the twin keeps the original body"))))
 
 ;; ---------------------------------------------------------------- 3. the fixed ident of the general writer is reinstalled
+;; The general writer calls :triplex/commit when predecessor lookup is off (the gateway's default; commit.clj entry) and
+;; its hashed variant :triplex.write/v-... when it is on. Run under accounts-on-nopred to see the fixed ident's case.
 
 (deftest a-reopen-with-another-commit-hash-restores-the-old-ident
   ;; create-scope! (every store open) calls commit/install-base!, which re-transacts :triplex/commit whenever the
@@ -149,11 +152,22 @@
                 _ (when reopen? (with-redefs [commit/source-hash (str "f" (subs commit/source-hash 1))] (commit/install-base! conn scope-key)))
                 db (d/db conn)
                 old-body-refuses (= @refusal-code (fn-code db :triplex/commit))
+                ;; Which body the transactor runs under the old ident: the refusal throws with
+                ;; {:triplex.account/ids-changed true}; the writer's body fails some other way on an empty payload.
+                probe (try @(d/transact conn [[:triplex/commit {}]]) "committed"
+                           (catch Exception e (let [c (or (.getCause e) e)]
+                                                (if (:triplex.account/ids-changed (ex-data c)) "refusal body" (str "writer body: " (subs (str (.getMessage c)) 0 (min 80 (count (str (.getMessage c))))))))))
                 late (late! held)
                 claim (get-in input ["claims" 0 "commandId"])
+                ;; A build that does not know the setting (same writer code, the setting never read), after the reopen:
+                ;; a general save naming no account, as base 23b7df344 or a6d02225c sends it.
+                old-input (save conn {:facts [{:owner (str "acct/" a "/subject/old") :field ":a/f0" :type :string :value "old build" :pred nil}]})
+                old-build (with-redefs [ac/on? (constantly false) ac/permitted? false] (fz/general #(reference/send name old-input)))
                 db2 (d/db conn)
                 r {:case "the general writer's ident after a reopen by a process with another commit hash" :reopened reopen?
-                   :answer (reference/outcome reply) :oldIdentRefuses old-body-refuses :lateOriginal late
+                   :answer (reference/outcome reply) :oldIdentRefuses old-body-refuses :bodyRun probe :lateOriginal late
+                   :oldBuildGeneralSave (reference/outcome old-build)
+                   :oldBuildStored (op-status name (get old-input "operationId"))
                    :storedPlainAfterTheSetting (some? (d/entid db2 [:triplex.claim/command-id claim]))
                    :twinIsTransitionBody (= (fn-code db2 (ac/twin :triplex/commit)) (fn-code (d/db conn) (ac/twin :triplex/commit)))
                    :routedTo (str (ffirst (ac/route-data conn db2 [[:triplex/commit {}]])))}]
@@ -161,6 +175,7 @@
             (is (= 1 (ac/setting db2)))
             (is (:oldIdentRefuses r) [reopen? "after the transition the old ident must keep refusing"])
             (is (not= "committed" (:late (:lateOriginal r))) [reopen? "a save planned before the transition must never commit after it"])
+            (is (not= [200 nil] (:oldBuildGeneralSave r)) [reopen? "a build that does not know the setting must be refused"])
             (is (not (:storedPlainAfterTheSetting r)) [reopen? "no plain claim of an account-named save after the setting is on"])))))))
 
 ;; ---------------------------------------------------------------- 4. a save prepared on an old snapshot
@@ -176,41 +191,59 @@
               input (assoc (with-account (save conn {:facts [{:owner (str "acct/" a "/subject/s") :field ":a/f0" :type :string :value "h" :pred (cur name (str "acct/" a "/subject/s") ":a/f0")}]}) a)
                            "handle" handle)
               first-try (reference/send name input)
-              again (reference/send name (-> input (dissoc "handle") (assoc "operationId" (str (get input "operationId") "/2"))))
+              db (d/db conn)
+              claim (get-in input ["claims" 0 "commandId"])
               r {:case "a save sent with a snapshot handle taken before the transition" :handle (some? handle)
-                 :firstTry (reference/outcome first-try) :withoutTheHandle (reference/outcome again)}]
+                 :firstTry (reference/outcome first-try)
+                 :claimPlain (some? (d/entid db [:triplex.claim/command-id claim]))
+                 :claimScoped (some? (d/entid db [:triplex.claim/command-id (ac/encode a claim)]))}]
           (line r)
-          (is (= [200 nil] (:withoutTheHandle r)) "a save after a fresh read commits"))))))
+          (when (= [200 nil] (:firstTry r))
+            (is (and (:claimScoped r) (not (:claimPlain r))) "a save prepared on a snapshot from before the transition, stored after it, stores the scoped form")))))))
 
 ;; ---------------------------------------------------------------- 5. account authority
 
 (deftest one-account-against-anothers-command-ids-with-the-setting-on
   ;; S6 12.2 "what stays": a write of no one account's names under an ID before the account's own write refuses that
   ;; write. Measured: how long (for good), and who can do it (any caller that writes a system entity or two accounts'
-  ;; names, naming no account).
+  ;; names, naming no account). And :names-the-account: B names account a9 itself (the gateway takes the account from
+  ;; the request) and writes an a9 entity under a9's command ID first; S6 12.4 says another account cannot take a
+  ;; Publish's ID first once the setting is on.
   (when (run? "authority")
-    (doseq [setting-on [true false] how [:system-entity :two-accounts]]
+    (doseq [setting-on [true false] how [:system-entity :two-accounts :names-the-account]]
       (reference/in-scope
         (fn [name conn]
           (when setting-on (turn-on! conn))
           (let [A "acct/a9/subject/alice" cmd (str "joined:alice-" (swap! counter inc))
+                ;; Operation IDs are random per attempt in the SDK (protocol.ts randomUUID): every save here has its own.
+                op #(str "op-" (swap! counter inc))
+                ;; With the setting off it stays off: no process here is permitted to turn it on.
+                keep-off (fn [f] (if setting-on (f) (with-redefs [ac/permitted? false] (f))))
                 b-facts (case how
                           :system-entity [{:owner "_sys/notes" :field ":n/text" :type :string :value "b" :pred nil}]
                           :two-accounts [{:owner "acct/b9/subject/x" :field ":a/f" :type :string :value "b" :pred nil}
-                                         {:owner "acct/c9/subject/x" :field ":a/f" :type :string :value "b" :pred nil}])
-                b (fz/general #(reference/send name (save conn {:command cmd :facts b-facts})))
+                                         {:owner "acct/c9/subject/x" :field ":a/f" :type :string :value "b" :pred nil}]
+                          :names-the-account [{:owner "acct/a9/subject/planted-by-b" :field ":a/f" :type :string :value "b" :pred nil}])
+                b (keep-off #(fz/general (fn [] (reference/send name (with-account (save conn {:command cmd :operation (op) :facts b-facts})
+                                                                             (when (= how :names-the-account) "a9"))))))
                 tries (vec (for [i (range 5)]
-                             (reference/outcome (reference/send name (with-account (save conn {:command cmd :facts [{:owner A :field ":a/f" :type :string :value (str "a" i) :pred (cur name A ":a/f")}]}) "a9")))))
-                filler (dotimes [i 30] (reference/send name (save conn {:facts [{:owner (str "acct/a9/subject/f" i) :field ":a/f" :type :string :value "x" :pred nil}]})))
-                later (reference/outcome (reference/send name (with-account (save conn {:command cmd :facts [{:owner A :field ":a/f" :type :string :value "late" :pred (cur name A ":a/f")}]}) "a9")))
+                             (reference/outcome (keep-off #(reference/send name (with-account (save conn {:command cmd :operation (op) :facts [{:owner A :field ":a/f" :type :string :value (str "a" i) :pred (cur name A ":a/f")}]}) "a9"))))))
+                filler (dotimes [i 30] (keep-off #(reference/send name (save conn {:operation (op) :facts [{:owner (str "acct/a9/subject/f" i) :field ":a/f" :type :string :value "x" :pred nil}]}))))
+                later (reference/outcome (keep-off #(reference/send name (with-account (save conn {:command cmd :operation (op) :facts [{:owner A :field ":a/f" :type :string :value "late" :pred (cur name A ":a/f")}]}) "a9"))))
+                setting-after (ac/setting (d/db conn))
                 lookup (:body (reference/route name "v1" "claim" {"commandId" cmd "account" "a9" "receipt" true}))
                 forged (:body (reference/route name "v1" "claim" {"commandId" cmd "receipt" true}))
                 r {:case "another caller's write of no one account takes an account's command ID first" :settingOn setting-on :how how
                    :bWrite (reference/outcome b) :accountsSaves tries :after30MoreSaves later
-                   :accountsLookup (select-keys lookup ["txId" "taken"]) :lookupNamingNoAccount (get forged "txId")}]
+                   :accountsLookup (select-keys lookup ["txId" "taken"]) :lookupNamingNoAccount (get forged "txId")
+                   :settingAfter setting-after :deniedForGood (not-any? #(= [200 nil] %) (conj tries later))}]
             (line r)
             (is (= [200 nil] (:bWrite r)))
-            (is (some #(= [200 nil] %) (:accountsSaves r)) [setting-on how "the account's own command must not be denied for good"])))))))
+            (is (= (when setting-on 1) setting-after))
+            ;; Asserted only where the page claims it: S6 12.4 (U8) with the setting on. The other cases are admitted
+            ;; (12.2 "what stays"; with the setting off command IDs are database-wide) and only measured.
+            (when (and setting-on (= how :names-the-account))
+              (is (some #(= [200 nil] %) (:accountsSaves r)) [setting-on how "another account must not take an account's ID first (S6 12.4, U8)"]))))))))
 
 (deftest naming-another-account-reads-its-claims
   ;; The account a lookup is made for is the one the request names, or the account of the entities it names. Nothing
@@ -240,7 +273,7 @@
   ;; carries the same values. The rule under review: an SDK replay (frameSourceK = its first attempt's source) is
   ;; declined; a new save (no frameSourceK) is judged by its own source.
   (when (and (System/getenv "TRIPLEX_ERASURE_DIRECTORY") (run? "r22"))
-    (doseq [[label path] [["one owner" :fast] ["general" :general]]]
+    (doseq [[label path] [["one owner" :fast] ["general" :general]] chosen ["value chosen before" "old secret"]]
       (reference/in-scope
         (fn [name conn]
           (protected! name)
@@ -250,24 +283,24 @@
                 ;; (a) The first attempt is refused for a reason unrelated to the removal (a concurrent save of S).
                 cmd (str "c-" (swap! counter inc))
                 first-source (head conn)
-                attempt (save conn {:command cmd :source first-source
-                                    :facts [{:owner S :field ":p/secret" :type :string :value "value chosen before" :pred (cur name S ":p/secret")}]})
+                attempt (save conn {:command cmd :operation (str cmd "/1") :source first-source
+                                    :facts [{:owner S :field ":p/secret" :type :string :value chosen :pred (cur name S ":p/secret")}]})
                 _ (wrap #(reference/send name (save conn {:facts [{:owner S :field ":a/f" :type :string :value "y" :pred (cur name S ":a/f")}]})))
                 refused (wrap #(reference/send name attempt))
                 removed (erase! name "remove-s" [{"entityId" S "attribute" ":p/secret"}])
-                fresh (fn [extra] (merge (save conn {:command cmd :facts [{:owner S :field ":p/secret" :type :string :value "value chosen before" :pred (cur name S ":p/secret")}]}) extra))
+                fresh (fn [n extra] (merge (save conn {:command cmd :operation (str cmd "/" n) :facts [{:owner S :field ":p/secret" :type :string :value chosen :pred (cur name S ":p/secret")}]}) extra))
                 ;; (b) The SDK's replay: fresh source, the first attempt's source as frameSourceK.
-                replay (wrap #(reference/send name (fresh {"frameSourceK" first-source})))
+                replay (wrap #(reference/send name (fresh 2 {"frameSourceK" first-source})))
                 ;; (c) The caller resends the same command after the decline: a new save (no frameSourceK).
-                resend (wrap #(reference/send name (fresh {})))
+                resend (wrap #(reference/send name (fresh 3 {})))
                 stored (get-in (fz/read-owner name S {"validAt" 5.0}) [":p/secret" :value])
-                r {:case "a save refused before a removal, replayed and resent after it" :writer label
+                r {:case "a save refused before a removal, replayed and resent after it" :writer label :chosen chosen
                    :firstAttempt (reference/outcome refused) :removal (:status removed) :sdkReplay (reference/outcome replay)
                    :callerResendSameCommand (reference/outcome resend) :storedAfter stored}]
             (line r)
             (is (= 200 (:removal r)))
             (is (= [409 "ErasureReplayDeclined"] (:sdkReplay r)) [label "the SDK's replay across the removal is declined"])
-            (is (not= "value chosen before" stored) [label "a value chosen before the removal must not be stored by a resend of the same command"])))))))
+            (is (not= chosen stored) [label chosen "a value chosen before the removal must not be stored by a resend of the same command"])))))))
 
 (deftest r2-2-an-optimistic-replay-against-an-old-removal
   ;; frameSourceK null (an optimistic first attempt) is judged as framed before every removal: a replay is declined when
