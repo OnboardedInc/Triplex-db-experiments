@@ -152,9 +152,11 @@ all6)
   for d in $D1 $D2 $D6; do for s in a1 b1; do post "$W/v1/db/$d/transact" "$bodies/seed-$s.json" "seed-$s"; post "$W/v1/db/$d/transact" "$bodies/seedq-$s.json" "seedq-$s"; done; done
   for d in $D3 $D3B; do for s in a1 b1 c1; do post "$W/v1/db/$d/transact" "$bodies/seed-$s.json" "seed-$s"; done; done
   backup "$D1" d1; backup "$D2" d2; backup "$D6" d6; backup "$D3" d3; backup "$D3B" d3b
-  for d in $D3 $D3B; do
-    psql_auth -c "create table public.\"bk_r_$d\" as select * from triplex_removal.records where scope='$d'; create table public.\"bk_k_$d\" as select * from triplex_removal.keys where scope='$d';" > /dev/null
-    step "authority rows of $d backed up: records $(psql_auth -c "select count(*) from public.\"bk_r_$d\"") keys $(psql_auth -c "select count(*) from public.\"bk_k_$d\"")"
+  # (the backup tables are named by tag: PostgreSQL cuts names at 63 bytes, and the database names share a long prefix)
+  for pair in d3:$D3 d3b:$D3B; do
+    t=${pair%%:*} d=${pair#*:}
+    psql_auth -c "create table public.bk_r_$t as select * from triplex_removal.records where scope='$d'; create table public.bk_k_$t as select * from triplex_removal.keys where scope='$d';" > /dev/null
+    step "authority rows of $t backed up: records $(psql_auth -c "select count(*) from public.bk_r_$t") keys $(psql_auth -c "select count(*) from public.bk_k_$t")"
   done
   for d in $D1 $D2 $D6; do
     post "$W/v2/db/$d/protection" "{\"attributes\":[\":v\",\":q\"],\"sealed\":$sealed}" "add-q"
@@ -165,14 +167,14 @@ all6)
     post "$W/v2/db/$d/erase" "$(erase_subject "rm-a1-$d" acct/a/one)" "removal-a1"
     sleep 3
     reads "$R" "$d" "after-the-removal-$d" "$va"
-    step "keys of $d: $(psql_auth -c "select count(*) from triplex_removal.keys where scope='$d'") (backed up $(psql_auth -c "select count(*) from public.\"bk_k_$d\""))"
+    step "keys of $d: $(psql_auth -c "select count(*) from triplex_removal.keys where scope='$d'")"
   done
   # D6: a removal of b1 after the backup and the addition, so the restored data is behind the log
   post "$W/v2/db/$D6/erase" "$(erase_subject "rm-b1-$D6" acct/b/one)" "d6-removal-b1-after-the-backup"
   restore_all d1:$D1 d2:$D2 d6:$D6 d3:$D3 d3b:$D3B
   # the removal authority's rows of D3 (records and keys) and D3b (records only) put back to the backup
-  psql_auth -c "delete from triplex_removal.records where scope='$D3'; insert into triplex_removal.records select * from public.\"bk_r_$D3\"; delete from triplex_removal.keys where scope='$D3'; insert into triplex_removal.keys select * from public.\"bk_k_$D3\";" > /dev/null
-  psql_auth -c "delete from triplex_removal.records where scope='$D3B'; insert into triplex_removal.records select * from public.\"bk_r_$D3B\";" > /dev/null
+  psql_auth -c "delete from triplex_removal.records where scope='$D3'; insert into triplex_removal.records select * from public.bk_r_d3; delete from triplex_removal.keys where scope='$D3'; insert into triplex_removal.keys select * from public.bk_k_d3;" > /dev/null
+  psql_auth -c "delete from triplex_removal.records where scope='$D3B'; insert into triplex_removal.records select * from public.bk_r_d3b;" > /dev/null
   step "authority put back: D3 keys $(psql_auth -c "select count(*) from triplex_removal.keys where scope='$D3'"), D3b keys $(psql_auth -c "select count(*) from triplex_removal.keys where scope='$D3B'")"
   start_all restored
   grep -h "removal-start-check" "$out/evidence/"*.log 2>/dev/null | tail -5 >> "$out/steps.log" || true
