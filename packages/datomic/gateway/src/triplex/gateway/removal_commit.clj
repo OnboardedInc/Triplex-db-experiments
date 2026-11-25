@@ -637,7 +637,7 @@
           db (release-orphan! conn db current)]
       [db current])))
 
-(declare complete-pending!)
+(declare complete-pending! adopt-policy!)
 
 (defn- turn-on-locked!
   "Under the database's removal lock, with no removal pending and the data and the log in agreement (the log's
