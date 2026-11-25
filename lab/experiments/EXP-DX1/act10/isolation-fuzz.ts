@@ -21,7 +21,7 @@ import { Archive } from "../actv-lazy/join/archive.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
 import { toWire } from "../actv-lazy/join/check.ts";
 import { largeRelease, parseShape } from "../actv-lazy/join/large-release.ts";
-import { readLedgers } from "../actv-lazy/join/ledger-parts.ts";
+import { readFullLedgers } from "../actv-lazy/join/ledger-parts.ts";
 import { RecordedNotices } from "../actv-lazy/join/recorded.ts";
 import { heldAccount, MemDb, memStore, Proc, rng, seedAccount, type Rng } from "./memstore.ts";
 
@@ -144,7 +144,10 @@ async function settleAndRead(db: MemDb, held: ReturnType<typeof heldAccount>, la
   const packets = tail ? await recorder.packets(await s.head()) : [];
   const roster = Array.from({ length: PEOPLE }, (_, i) => W0.placementId(i));
   const ndb = new Documents(db.comp as any, "settlement-notices-" + held.account);
-  const ledgers = await readLedgers(ndb, roster, await s.head());
+  // [DX-ACT8, third review U9] Each ledger with its archived retired items, named by the IDs of its deliveries.
+  const delivered = new Map<string, string[]>();
+  for (const p of packets as any[]) for (const d of p.deliveries) delivered.set(d.subject, [...(delivered.get(d.subject) ?? []), d.id]);
+  const ledgers = await readFullLedgers(ndb, roster, await s.head(), (x) => delivered.get(x) ?? []);
   // A work item's version (`wv:<hash>`) is taken over the event's basis, a position; it is compared by order of first
   // appearance (the same versions on the same deliveries), not by value.
   const versions = new Map<string, string>();

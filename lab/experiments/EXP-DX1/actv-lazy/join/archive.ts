@@ -9,7 +9,8 @@ import { memberPage, width } from "../../notify1/census.ts";
 import { Documents, hash, pack, unpack, type Op, type Row } from "../../notify1/store.ts";
 import type { Store } from "../store.ts";
 import { Conflict, namesOf, openStore, type EntityGuard } from "../store.ts";
-import { ensureSettings, originAt } from "./account-settings.ts";
+import { randomUUID } from "node:crypto";
+import { ensureSettings, injected, needsTransition, originAt } from "./account-settings.ts";
 /** [DX-ACT8, review F4/F5] TX2_SETTLE_FRAME_GUARDS=1: the pause and a later release are part of each frame's guard. */
 /** [DX-ACT8, second review] Whether a held account's frames are guarded is its stored `frameGuards` setting, read at
  * each frame's own read position (`account-settings.ts`); there is no per-process switch any more. */
@@ -203,6 +204,16 @@ export class Archive {
     authority: Awaited<ReturnType<typeof readErasure>>,
     progress?: { key: string; prior: Row<unknown> | undefined },
   ) {
+    // [DX-ACT8, third review U6] Whether this process must turn a setting on is read from the settings stored at this
+    // frame's read (no per-process cache); if so it does, and this frame, planned under the old settings, is then refused
+    // by its guards (the origin row, or the head) and planned again.
+    const origin = await originAt(this.source.s, at);
+    if (needsTransition(this.source.s, origin.settings)) await ensureSettings(this.source.s);
+    // [DX-ACT8, third review U3] Under the account's `accountKeys` setting a frame's command ID carries a random part, so
+    // no other account can compute it and save under it first. Nothing is recovered by a frame's ID: a frame is guarded
+    // on its progress row (or the head), so a frame that landed refuses its own resend and the next run reads the row it
+    // wrote. Unset: the deterministic ID, as before.
+    if (origin.settings?.accountKeys) id = id + ":" + randomUUID();
     // [DX-ACT1] Why: constrain native preparation and durable turns independently of page count. Rejected: a multi-megabyte atomic frame or assuming a timeout can preempt a durable native transaction.
     const estimate = frameEstimate(ops);
     assert(estimate.fits, "Bulk batch exceeds W1 service estimate");
@@ -229,16 +240,13 @@ export class Archive {
     // precondition the frame is also guarded on the account's origin row (it changes only at enrolment and at a settings
     // transition), so a frame planned under the old settings never commits after the transition. Under the head
     // precondition the head fence already refuses it.
-    // A settler allowed to turn a setting on does so before it reads (also when it was built without `Archive.open`).
-    await ensureSettings(this.source.s);
-    const origin = await originAt(this.source.s, at);
     const fenced = origin.settings?.frameGuards === true;
     const controlGuard = fenced && this.control?.gateAt ? await this.control.gateAt(at) : undefined;
     const guards: EntityGuard[] | undefined =
       this.precondition === "progress" && progress
         ? [{ entityId: this.db.prefix + progress.key, tripleIds: progress.prior ? [progress.prior.id] : [] },
           // DX_ACT8_INJECT=no-origin-guard (diagnostic only, the fuzzer's negative control) drops the origin guard.
-          ...(origin.row && process.env.DX_ACT8_INJECT !== "no-origin-guard" ? [{ entityId: namesOf(this.source.s).ORIGIN, tripleIds: [origin.row.id] }] : []),
+          ...(origin.row && !injected("no-origin-guard") ? [{ entityId: namesOf(this.source.s).ORIGIN, tripleIds: [origin.row.id] }] : []),
           ...(controlGuard ? [controlGuard] : []),
           ...(fenced && kind === "activation" && this.frameTail ? [this.frameTail] : [])]
         : undefined;

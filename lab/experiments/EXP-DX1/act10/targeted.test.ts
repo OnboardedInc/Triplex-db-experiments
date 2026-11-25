@@ -319,8 +319,8 @@ test("C1 (TX2_LEDGER_CAP_AT_PUBLISH=1): the release over the ledger cap is refus
     console.log("[C1 cap] " + JSON.stringify({ refused: String(e?.message).slice(0, 400), definitionsWritten: wrote, thousandAt: k.position,
       laterAt: r2.position, cursorEvent: cursor?.event ?? null }));
     assert(e && e.constructor.name === "ReleaseTooLarge", "the over-cap release was accepted: " + String(e));
-    // [DX-ACT8, second review R10] The message states the account's lifetime limit.
-    assert.match(String(e.message), /would hold 1750 distinct notice policies \(1750 new in this one\).*could owe 1772 notice items.*in its lifetime/);
+    // [DX-ACT8, third review U9] The message states the limit of one release (a ledger holds the items in force only).
+    assert.match(String(e.message), /could owe 1772 notice items from this release \(1750 notice policies, 1750 not published before.*not the account's history/);
     assert.equal(wrote, 0, "the refused Publish wrote something");
     assert.equal(cursor.event, 4, "the later releases' notices were not all recorded");
   } finally {

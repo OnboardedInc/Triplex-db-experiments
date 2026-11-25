@@ -2,16 +2,25 @@
 //
 // Where they live: the account's origin fact (`namesOf(s).ORIGIN`, attribute `lazy/generation`), field `settings`. Every
 // Publish plan and every settlement frame already reads that fact (`controls`); a build from before this change compares
-// it exactly with `{ profile, held }` and so refuses the account once a setting is on (it cannot publish twice or write an
-// unguarded frame there). Every guarded Publish and every settlement frame under the progress precondition is also
-// guarded on the origin row, so nothing planned under the old settings commits after the transition.
+// it exactly with `{ profile, held }` and so refuses the account once a setting is on. Every guarded Publish and every
+// settlement frame under the progress precondition is also guarded on the origin row, so nothing this build planned under
+// the old settings commits after the transition.
 //
 // The transition: a process allowed to turn a setting on (TX2_ACCOUNT_KEYS, TX2_SETTLE_FRAME_GUARDS,
 // TX2_LEDGER_CAP_AT_PUBLISH) rewrites the origin with the merged settings, guarded on the origin row it read. Settings
-// only turn on; the ledger mode is recorded at the first transition (TX2_NOTICE_LEDGER of that process, whole if unset)
-// and may only go from whole to parts. A process with none of the three variables never writes a setting.
+// only turn on. A process with none of the three variables never writes a setting.
+//
+// [DX-ACT8, third review] U2: the ledger mode is never a process's. Under any setting the account's ledgers are written
+// in parts with their retired items kept beside them (`archive`, ledger-parts.ts), because a ledger in parts replaces a
+// whole ledger or one in parts alike and holds the most; the transition stores `ledger: "parts", archive: true` whatever
+// the process names. U5: the transition also fences what any build planned before it (the account's calendar row, which
+// every Publish is guarded on, and every settlement progress row in force, which every frame is guarded on), so a plan
+// of a build from before the settings that was made before the transition is refused at its commit, whatever the
+// rollout order. U6: no per-process cache: whether a transition is needed is read at each plan from the stored settings.
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { Documents, hash, type Op } from "../../notify1/store.ts";
+import { readErasure } from "../../../../bench/lib/datomic-erasure.ts";
 import { Conflict, fact, namesOf, originSettings, value, type AccountSettings, type Store } from "../store.ts";
 
 export type LedgerSetting = "whole" | "parts";
@@ -31,69 +40,115 @@ export function permitsOf(s: Pick<Store, "held">): Permits {
   };
 }
 export class SettingsConflict extends Error {}
+/** Diagnostic only, the negative controls: DX_ACT8_INJECT is a comma-separated list of the defences to drop. */
+export const injected = (name: string) => (process.env.DX_ACT8_INJECT ?? "").split(",").includes(name);
 
-/** The ledger mode a held account's settlement must write with: the stored one when the account has settings (a process
- * whose own explicit mode differs refuses), otherwise the process's own, as before. */
-export function ledgerFor(settings: AccountSettings | undefined, own: LedgerSetting, explicit: boolean): LedgerSetting {
-  if (!settings?.ledger) return own;
-  if (explicit && own !== settings.ledger)
-    throw new SettingsConflict("This account's stored ledger mode is " + settings.ledger + "; this process writes " + own +
-      " ledgers (TX2_NOTICE_LEDGER): it refuses to settle the account");
-  return settings.ledger;
+/** The ledger mode a held account's settlement writes with: under any setting, in parts with the archive, whatever the
+ * process names (a ledger in parts replaces a whole one, and one that fits one part is written exactly as a whole one,
+ * so no process's mode can lock the account); with no setting, the process's own, as before. */
+export function ledgerFor(settings: AccountSettings | undefined, own: LedgerSetting, _explicit: boolean): LedgerSetting {
+  return settings ? "parts" : own;
 }
 
-function merge(stored: AccountSettings | undefined, w: Permits) {
-  const env = w.ledger;
-  const ledger: LedgerSetting = stored?.ledger === "parts" || env === "parts" ? "parts" : stored?.ledger ?? "whole";
-  if (stored?.ledger === "parts" && env === "whole")
-    throw new SettingsConflict("This account's stored ledger mode is parts; this process has TX2_NOTICE_LEDGER=whole");
-  const next: AccountSettings = {
+/** Whether the stored settings already hold everything `w` may turn on (and the fields every transition writes). */
+const holds = (stored: AccountSettings | undefined, w: Permits) =>
+  Boolean(stored) && stored!.ledger === "parts" && stored!.archive === true &&
+  (!w.accountKeys || stored!.accountKeys === true) && (!w.frameGuards || stored!.frameGuards === true) &&
+  (!w.ledgerCap || stored!.ledgerCap === true);
+const allowsAny = (w: Permits) => w.accountKeys || w.frameGuards || w.ledgerCap;
+function merge(stored: AccountSettings | undefined, w: Permits): AccountSettings {
+  return {
     v: 1,
     ...(stored?.accountKeys || w.accountKeys ? { accountKeys: true as const } : {}),
     ...(stored?.frameGuards || w.frameGuards ? { frameGuards: true as const } : {}),
     ...(stored?.ledgerCap || w.ledgerCap ? { ledgerCap: true as const } : {}),
-    ledger,
+    ledger: "parts",
+    archive: true,
   };
-  return next;
 }
 
+/** [U6] Kept for the tests that model a new process: there is no per-process cache any more. */
+export const forgetSettled = () => {};
+/** Whether this process must turn a setting on, given the settings stored at its read (no read of its own). */
+export const needsTransition = (s: Pick<Store, "held">, stored: AccountSettings | undefined) => {
+  const w = permitsOf(s);
+  return Boolean(s.held) && allowsAny(w) && !holds(stored, w);
+};
+
 /** Turns on, one way, the settings this process is allowed to turn on that the account does not have yet. Nothing at all
- * (not even a read) for a process allowed none, or for a store that is not a held account. */
-const settled = new Set<string>();
-/** Forgets what this Node process has seen turned on (a test that restores a database to an earlier state). */
-export const forgetSettled = () => settled.clear();
+ * (not even a read) for a process allowed none, or for a store that is not a held account; one read otherwise. */
 export async function ensureSettings(s: Store) {
   const w = permitsOf(s);
-  if (!s.held || !(w.accountKeys || w.frameGuards || w.ledgerCap)) return undefined;
-  // Settings only turn on, so once this process has seen them hold everything it may turn on, it need not look again.
-  const key = JSON.stringify([s.scope, s.held.account, s.held.seal, w]);
-  if (settled.has(key)) return undefined;
+  if (!s.held || !allowsAny(w)) return undefined;
   for (let attempt = 0; attempt < 8; attempt++) {
     const p = await s.head();
     const c = await s.controls(p);
     if (!c.origin) return undefined; // not enrolled yet: the first Publish after enrolment turns them on
+    if (holds(c.settings, w)) return c.settings;
     const next = merge(c.settings, w);
-    if (c.settings && JSON.stringify(sorted(c.settings)) === JSON.stringify(sorted(next))) {
-      settled.add(key);
-      return c.settings;
-    }
     const origin = namesOf(s).ORIGIN;
     try {
       // A random command ID: no other account can compute it and claim it first, and the transition needs no recovery
       // by ID (it is read back from the origin itself).
       await s.commit("account-settings:" + randomUUID(), "lazy/settings",
-        [{ op: "retract", id: c.origin.id }, fact(origin, "lazy/generation", { ...value(c.origin), settings: next })],
+        [{ op: "retract", id: c.origin.id }, fact(origin, "lazy/generation", { ...value(c.origin), settings: next }),
+          // DX_ACT8_INJECT=no-fence (diagnostic only, a negative control) leaves what was planned before unfenced.
+          ...(injected("no-fence") ? [] : await fences(s, p, c.releases))],
         p, { settings: next }, undefined, undefined, [{ entityId: origin, tripleIds: [c.origin.id] }]);
     } catch (e) {
       if (!(e instanceof Conflict) && !isConflict(e)) throw e;
     }
   }
   const c = await s.controls(await s.head());
-  assert(c.settings, "The account's settings could not be turned on");
+  assert(holds(c.settings, w), "The account's settings could not be turned on");
   return c.settings;
 }
-const sorted = (x: object) => Object.fromEntries(Object.entries(x).sort(([a], [b]) => a.localeCompare(b)));
 const isConflict = (e: unknown) => /conflict|changed|live triple/i.test(String((e as Error)?.message));
+
+/**
+ * [U5] What the transition writes beside the settings so that every write any build planned before it is refused at its
+ * commit: the account's calendar row, rewritten with its own value (a guarded Publish carries an `EntityState` guard on
+ * it, a whole-head Publish the head fence); every values progress row of an owed release that is still pending, and the
+ * notice cursor, rewritten the same way (every frame under the progress precondition is guarded on its progress row; a
+ * frame under the head precondition on the head); and for an owed release, or the account's notices, with no progress
+ * row yet, the row a first frame would start from (`valuesProgress`, the fresh cursor), so a first frame planned before
+ * is refused too. Every value is the one a reader already reads, so nothing a reader sees changes.
+ */
+async function fences(s: Store, p: number, releases: readonly { storage?: string; seq?: number }[]): Promise<Op[]> {
+  const [{ JoinedAccount }, { identityOf, valuesProgress, progressKey }] = await Promise.all([
+    import("./account.ts"), import("./archive.ts")]);
+  const docs = namesOf(s).documents;
+  const joined = new Documents(s.comp, "joined" + docs),
+    values = new Documents(s.comp, "settlement-values" + docs),
+    notices = new Documents(s.comp, "settlement-notices" + docs);
+  const ops: Op[] = [];
+  const calendar = await joined.row("join-calendar", p);
+  if (calendar) ops.push(...joined.change("join-calendar", calendar, calendar.value));
+  const a = new JoinedAccount(s);
+  for (const rel of releases.filter((x) => x.storage === "owed")) {
+    const key = progressKey(rel.seq!), row = await values.row<{ status: string }>(key, p);
+    if (row) {
+      if (row.value.status === "pending") ops.push(...values.change(key, row, row.value));
+    } else {
+      const { marker, event } = await a.receipt(rel.seq!, p);
+      ops.push(values.put(key, valuesProgress(identityOf(s.scope, marker, event.at))));
+    }
+  }
+  const cursor = await notices.row("notice-progress", p);
+  if (cursor) ops.push(...notices.change("notice-progress", cursor, cursor.value));
+  else {
+    const tail = (await a.notices.observe()).value.sequence;
+    if (tail >= 1) {
+      const t = (await a.notices.event(tail, p)).value, authority = await readErasure(s.comp);
+      ops.push(notices.put("notice-progress", {
+        epoch: t.epoch, event: 1, start: 0, batch: 0, entries: 0,
+        parent: hash([a.db.prefix, t.epoch, t.census]), previous: hash([a.db.prefix, t.epoch, "receiver-genesis"]),
+        ...(authority ? { erasureSeq: authority.seq } : {}),
+      }));
+    }
+  }
+  return ops;
+}
 
 /** The held account's origin row and stored settings at `p` (one row read), for a settlement frame. */
 export async function originAt(s: Store, p: number) {

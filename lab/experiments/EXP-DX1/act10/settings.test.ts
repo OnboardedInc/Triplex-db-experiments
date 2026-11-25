@@ -67,23 +67,27 @@ test("S1: a Publish planned before the accountKeys transition is refused at its 
   assert.equal(out.releases, 2);
 });
 
-test("S2: a build from before the settings: its Publish planned before the transition lands after it under the unscoped key; a resend finds it; its next plan refuses", async () => {
+test("S2: a build from before the settings: its Publish planned before the transition is refused at its commit (the calendar fence), then it refuses the account; the resend publishes once", async () => {
+  // [DX-ACT8, third review U5] The transition rewrites the account's calendar row, which every guarded Publish is guarded
+  // on: the old build's plan made before it no longer lands after it (it did at 2084d3ba7, section 0.8's window).
   const x = await setup();
   const old = x.account(x.proc("old-build", NONE, true));
   landBefore(x.db, "joined:", () => ensureSettings(memStore(x.proc("upgrader", { ...NONE, accountKeys: true }), x.held) as any));
-  const r2 = await old.publish("r2", W0.R2.doc, validTime, "owed");
+  const r2 = await old.publish("r2", W0.R2.doc, validTime, "owed").then((r) => r, (e) => String(String(e?.message).split("\n")[0]));
   x.db.beforeCommit = undefined;
-  const record = (await journal(x.db)).find((t) => t.position === r2.position);
   // The client resends through a process of this build (allowed nothing; it follows the stored setting).
   const resend = await x.account(x.proc("new-build", NONE)).publish("r2", W0.R2.doc, validTime, "owed");
+  const again = await x.account(x.proc("new-build-2", NONE)).publish("r2", W0.R2.doc, validTime, "owed");
   const after = await old.publish("r3", W0.R2.doc, validTime, "owed").then(() => "published", (e) => String(String(e?.message).split("\n")[0]));
   const s = memStore(x.proc("peek", NONE), x.held) as any;
-  const out = { landedAs: record.commandId, settings: await settingsAt(x), resendSame: resend.txId === r2.txId,
-    releases: (await s.controls(await s.head())).releases.length, oldBuildAfter: after };
+  const record = (await journal(x.db)).find((t) => t.position === resend.position);
+  const out = { oldBuild: typeof r2 === "string" ? r2 : "landed at " + r2.position, settings: await settingsAt(x), resendAs: record.commandId,
+    resendFoundAgain: again.txId === resend.txId, releases: (await s.controls(await s.head())).releases.length, oldBuildAfter: after };
   console.log("[S2] " + JSON.stringify(out));
-  assert.equal(out.landedAs, "joined:r2", "the in-flight plan of a build from before lands under the old rule");
+  assert.match(out.oldBuild, /deep-equal|deepStrictEqual|Expected values/i, "the old build's plan is refused, and its next plan refuses the account");
   assert.equal(out.settings?.accountKeys, true);
-  assert.equal(out.resendSame, true, "no second landing: the resend under the setting finds the unscoped record");
+  assert.match(String(out.resendAs), /^joined:v2\//, "the resend publishes under the scoped form");
+  assert.equal(out.resendFoundAgain, true);
   assert.equal(out.releases, 2);
   assert.match(out.oldBuildAfter, /deep-equal|deepStrictEqual|Expected values/i, "a build from before refuses once the setting is on");
 });
@@ -113,29 +117,41 @@ async function frameAcross(oldBuild: boolean) {
   return { fired: fired.done, end, next, pagesAfterLaterRelease: late, settings: await settingsAt(x) };
 }
 
-test("S3: a values frame planned before the frameGuards transition, with a later release landing too, is refused (origin guard)", async () => {
+const without = async <T>(defences: string, f: () => Promise<T>) => {
+  process.env.DX_ACT8_INJECT = defences;
+  try {
+    return await f();
+  } finally {
+    delete process.env.DX_ACT8_INJECT;
+  }
+};
+test("S3: a values frame planned before the frameGuards transition, with a later release landing too, is refused (origin guard and transition fence, each alone)", async () => {
   const out = await frameAcross(false);
-  const control = await (async () => {
-    process.env.DX_ACT8_INJECT = "no-origin-guard";
-    try {
-      return await frameAcross(false);
-    } finally {
-      delete process.env.DX_ACT8_INJECT;
-    }
-  })();
-  console.log("[S3] " + JSON.stringify({ out, control }));
+  // [DX-ACT8, third review U5] Two defences refuse it now, each enough alone: the origin guard and the transition's
+  // fence (its rewrite of the progress row). The negative control drops both.
+  const fenceOnly = await without("no-origin-guard", () => frameAcross(false));
+  const guardOnly = await without("no-fence", () => frameAcross(false));
+  const control = await without("no-origin-guard,no-fence", () => frameAcross(false));
+  console.log("[S3] " + JSON.stringify({ out, fenceOnly, guardOnly, control }));
   assert(out.fired && out.settings?.frameGuards === true);
   assert.equal(out.pagesAfterLaterRelease, 0, "no value page lands after the later release");
   assert.equal(out.end, "superseded");
-  assert(control.pagesAfterLaterRelease > 0, "negative control: without the origin guard the planned frame lands after the later release");
+  assert.equal(fenceOnly.pagesAfterLaterRelease, 0, "the fence alone refuses it");
+  assert.equal(guardOnly.pagesAfterLaterRelease, 0, "the origin guard alone refuses it");
+  assert(control.pagesAfterLaterRelease > 0, "negative control: without both the planned frame lands after the later release");
 });
 
-test("S4: the window of a build from before: its frame planned before the transition lands after it (one frame), then it refuses", async () => {
+test("S4: a build from before: its frame planned before the transition is refused (the fence), then it refuses the account", async () => {
+  // [DX-ACT8, third review U5] At 2084d3ba7 this frame landed (section 0.8's window); the fence closes it. Without the
+  // fence (the negative control) it lands as it did.
   const out = await frameAcross(true);
-  console.log("[S4] " + JSON.stringify(out));
+  const control = await without("no-fence", () => frameAcross(true));
+  console.log("[S4] " + JSON.stringify({ out, control }));
   assert(out.fired && out.settings?.frameGuards === true);
-  assert.equal(out.pagesAfterLaterRelease, 1, "the one frame planned before the transition lands (section 0.8's window)");
+  assert.equal(out.pagesAfterLaterRelease, 0, "the frame planned before the transition does not land");
+  assert.match(out.end, /^refused: .*(deep-equal|Expected values)/i);
   assert.match(out.next, /^refused: .*(deep-equal|Expected values)/i, "its next turn refuses the account");
+  assert.equal(control.pagesAfterLaterRelease, 1, "negative control: without the fence the old build's one frame lands");
 });
 
 test("S5: settings this build does not know (another version or field) are refused, not ignored", async () => {

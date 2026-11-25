@@ -273,11 +273,12 @@ test("C2: the cap computed by a publisher with ledgers in parts, the account set
   const wholePub = await withEnv({ ...env, TX2_NOTICE_LEDGER: undefined }, () => outcome(A2!.a.publish("c-400", doc, validTime, "owed", undefined, { docs: "ref" })));
   const settled = await settleNotices(db, A!, "whole", 1);
   console.log("[C2] " + JSON.stringify({ publisherInParts: pub, settlerWhole: settled, publisherWhole: wholePub }));
-  // [DX-ACT8] Fixed (R4): the publisher's ledger mode is stored with the account; a settler writing whole ledgers
-  // refuses the account instead of failing every frame, and one that follows the stored mode records it.
+  // [DX-ACT8, third review U2] Under the settings the ledgers are in parts with the archive whatever a process names:
+  // the settler naming whole records the account, and the cap is the same for every publisher (the 400-policy release
+  // publishes whether its publisher names a mode or not).
   const follows = await settleNotices(db, A!, undefined as never, 1);
   console.log("[C2 after] " + JSON.stringify({ settlerFollowingTheStoredMode: follows }));
-  assert(pub.ok && /stored ledger mode is parts/.test(settled) && follows === "recorded" && !wholePub.ok);
+  assert(pub.ok && settled === "recorded" && follows === "recorded" && wholePub.ok);
 });
 
 test("C3: at, one under and one over the cap (ledgers in parts), and whether the cap's limit is the settlement's", async () => {
@@ -346,7 +347,9 @@ test("C5: an account that renames its notice policies at each release: how many 
   const result = { published: out.filter((x) => x.published).length, firstRefused: out.find((x) => !x.published),
     releasesOfTenNewPoliciesAfter: tens, firstReleaseAgain: again.ok ? "published" : (again as any).error.slice(0, 70), noPolicies: none.ok };
   console.log("[C5] " + JSON.stringify(result));
-  assert(result.firstRefused && tens < 20);
+  // [DX-ACT8, third review U9] No lifetime limit: a ledger holds the items in force only (retired ones are archived), so
+  // renaming the policies at every release never reaches the cap.
+  assert(!result.firstRefused && tens === 20 && result.firstReleaseAgain === "published" && result.noPolicies);
 });
 
 // ---------------------------------------------------------------------------------------------- (f) frame guards

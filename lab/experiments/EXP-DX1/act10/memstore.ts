@@ -56,6 +56,9 @@ export class MemDb {
   /** [DX-ACT8, second review] Who sent each command, and the position it read (`expected`): the fuzzer's checks tell a
    * frame or Publish of a build from before the settings, planned before the transition, from the others. */
   readonly sent = new Map<string, { proc: string; oldBuild: boolean; expected: number }>();
+  /** [DX-ACT8, third review U10] Who sent the attempt that landed at each position, and the position it read: two
+   * processes can try one command ID (a deterministic frame ID), and the one that landed may not be the first. */
+  readonly landed = new Map<number, { proc: string; oldBuild: boolean; expected: number; commandId: string }>();
   maxYield = 3;
   constructor(scope: string, seed: number) {
     this.scope = scope;
@@ -311,6 +314,7 @@ export function memStore(proc: Proc, held: HeldSource, label = proc.db.scope) {
     // [DX-ACT10, third review] ACT10_DUMP=1: every attempt of a command, its rule and outcome.
     if (process.env.ACT10_DUMP === "1") ((db as any).attempts ??= []).push({ id: id.slice(0, 40), proc: proc.name, expected, rule: rule && { ...rule, entities: rule.entities?.length }, ok: r.ok, position: r.ok ? r.value.position : undefined });
     if (r.ok) {
+      db.landed.set(r.value.position, { proc: proc.name, oldBuild: proc.oldBuild, expected, commandId: id });
       counters.writes++;
       onAck?.(performance.now());
     }

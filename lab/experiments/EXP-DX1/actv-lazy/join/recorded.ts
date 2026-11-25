@@ -15,8 +15,9 @@ import { Conflict } from "../store.ts";
 import type { Archive } from "./archive.ts";
 import { fillFrame, frameEstimate, type Candidate, type Piece } from "./frames.ts";
 import type { JoinedAccount } from "./account.ts";
-import { ledgerMode, noticeCandidate, readLedgers, type LedgerMode } from "./ledger-parts.ts";
+import { foldInput, ledgerMode, noticeCandidate, readLedgers, readRetired, retiredWanted, type LedgerMode } from "./ledger-parts.ts";
 import { ledgerFor, originAt } from "./account-settings.ts";
+import type { AccountSettings } from "../store.ts";
 
 const step = 4;
 assert(width % step === 0);
@@ -38,13 +39,17 @@ type Cursor = {
   // [DX-ACT6] Set when the event's ledgers are written in parts (TX2_NOTICE_LEDGER=parts); chosen at an event boundary,
   // so `part` counts the same units (deliveries, then ledger parts) after a restart.
   ledger?: "parts";
+  // [DX-ACT8, third review U9] Set when the event's ledgers hold the items in force only and retired items are archived
+  // (the account setting `archive`). Chosen at an event boundary and kept from then on: once the cursor carries it, every
+  // later event archives too, whatever the origin says (a ledger without its archive would lose retired sequences).
+  archive?: true;
 };
 /** A byte-framed packet may start and end inside one subject's deliveries (`part`, `tail`). */
 type FramePacket = Packet & { part?: number; tail?: number };
 
 /** [DX-ACT6] Units are the subject's deliveries, then (ledger in parts) its ledger parts; `deliveries` says where the
  * deliveries end. `ledger` is the closing piece: the ledger change, or in parts mode the head change. */
-export type NoticeCandidate = Candidate<W0.Delivery | Op> & { ledger: Op[]; deliveries: number };
+export type NoticeCandidate = Candidate<W0.Delivery | Op | Op[]> & { ledger: Op[]; deliveries: number };
 /**
  * [DX-ACT4] The next byte-sized notice frame from the cursor `current` and the candidates read ahead from
  * `current.start`: the ops exactly as written and the next cursor. Pure, so the database-free check prices the frames.
@@ -62,6 +67,7 @@ export function noticeFrame(
     size: number;
     erasureSeq?: number;
     ledger?: LedgerMode;
+    archive?: boolean;
   },
 ) {
   const part = current.part ?? 0;
@@ -73,7 +79,11 @@ export function noticeFrame(
       const c = candidates[p.index]!;
       for (let j = p.from; j < p.to; j++)
         if (j < c.deliveries) deliveries.push(c.units[j] as W0.Delivery);
-        else ops.push(c.units[j] as Op);
+        else {
+          const u = c.units[j] as Op | Op[];
+          if (Array.isArray(u)) ops.push(...u); // [U9] an archive row (its change: a retraction and an assertion)
+          else ops.push(u);
+        }
       if (p.close) ops.push(...c.ledger);
     }
     const last = pieces.at(-1);
@@ -110,6 +120,7 @@ export function noticeFrame(
       frames: "bytes",
       part: tail,
       ...(event.ledger === "parts" ? { ledger: "parts" as const } : {}),
+      ...(event.archive ? { archive: true as const } : {}),
     };
     ops.push(...db.change(stateKey, prior, next));
     if (packet) ops.push(db.put(packetKey(packet.batch), pack(packet)));
@@ -190,8 +201,12 @@ export class RecordedNotices {
     assert(e.value.parent === current.parent && e.value.epoch === current.epoch);
     // [DX-ACT4] The framing is chosen at an event boundary (an event started in one framing finishes in it).
     const atBoundary = current.start === 0 && !current.part;
-    if (atBoundary ? b.frames === "bytes" : current.frames === "bytes")
-      return this.byteFrame(through, e, current, prior, at, authority);
+    // [DX-ACT8, third review U9] So is the archive: the account's stored setting, or the cursor's from an earlier event
+    // (it is never dropped). An event under the archive is written in byte frames whatever this writer's framing.
+    const stored = atBoundary ? (await originAt(a.s, sourceAt)).settings : undefined;
+    const archive = atBoundary ? stored?.archive === true || current.archive === true : current.archive === true;
+    if (atBoundary ? b.frames === "bytes" || archive : current.frames === "bytes")
+      return this.byteFrame(through, e, current, prior, at, authority, stored, archive);
     const { ids, size } = await this.page(e, current.start);
     assert(current.start <= size && ids.length === Math.min(step, size - current.start));
     const key = (subject: string) => "recorded-ledger:" + subject;
@@ -268,6 +283,8 @@ export class RecordedNotices {
     prior: Awaited<ReturnType<Documents["row"]>> | undefined,
     at: number,
     authority: Awaited<ReturnType<typeof readErasure>>,
+    stored: AccountSettings | undefined,
+    archive: boolean,
   ) {
     const b = this.archive,
       a = b.source,
@@ -285,9 +302,12 @@ export class RecordedNotices {
     // [DX-ACT6] Ledgers are read whole (a ledger in parts is joined and checked against its head); the mode is the
     // cursor's for an event already started, else this writer's.
     // [DX-ACT8, second review] A held account's stored ledger mode decides a new event's mode (`ledgerFor`).
+    // [U2, U9] Under the settings, or a cursor that already archives, the ledgers are in parts with the archive.
     const fresh0 = current.start === 0 && !current.part;
-    const own: LedgerMode = fresh0 ? ledgerFor((await originAt(a.s, sourceAt)).settings, this.ledger, this.explicit) : this.ledger;
-    const mode: LedgerMode = (fresh0 ? own === "parts" : current.ledger === "parts")
+    const own: LedgerMode = fresh0
+      ? ledgerFor(stored ?? (archive ? { v: 1, ledger: "parts", archive: true } : undefined), this.ledger, this.explicit)
+      : this.ledger;
+    const mode: LedgerMode = archive || (fresh0 ? own === "parts" : current.ledger === "parts")
       ? "parts"
       : "whole";
     const [previous, fresh] = await Promise.all([
@@ -296,9 +316,14 @@ export class RecordedNotices {
     ]);
     for (const [i, id] of missing.entries()) known.set(id, fresh[i]!);
     const items = ids.map((id) => known.get(id)!);
+    // [U9] The archive rows each subject's fold reads or replaces (none for a subject whose items in force did not move).
+    const archived = archive
+      ? await readRetired(db, ids.map((subject, i) => [subject, retiredWanted(previous.get(subject)!, items[i]!)] as const), at)
+      : undefined;
     const candidates = ids.map((subject, i) => {
       const old = previous.get(subject)!;
-      const result = W0.publish({ items: old.items, subjects: [], pending: [] }, [
+      const input = archived ? foldInput(subject, old, items[i]!, archived) : old.items;
+      const result = W0.publish({ items: input, subjects: [], pending: [] }, [
         {
           subject,
           release: e.value.nextHash,
@@ -306,7 +331,7 @@ export class RecordedNotices {
           workItems: items[i]!,
         },
       ]);
-      return noticeCandidate(db, subject, current.event, old, result, mode);
+      return noticeCandidate(db, subject, current.event, old, result, mode, archived);
     });
     const { next, ops } = noticeFrame(db, prior, current, candidates, {
       account: a.db.prefix,
@@ -316,6 +341,7 @@ export class RecordedNotices {
       size,
       ...(authority ? { erasureSeq: authority.seq } : {}),
       ledger: mode,
+      archive,
     });
     const ack = await b.write(
       "notice",

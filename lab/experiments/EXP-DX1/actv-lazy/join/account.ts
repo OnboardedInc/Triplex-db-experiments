@@ -1,6 +1,7 @@
 import { readErasure, recheckErasure, withErasure } from "../../../../bench/lib/datomic-erasure.ts";
 import { bytes as transport } from "../../import1/source.ts";
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import {
   W0,
   canonical,
@@ -38,7 +39,7 @@ import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
 import { Conflict, fact, millis, namesOf, value, type EntityGuard, type Store } from "../store.ts";
 import { ledgerCapacity, ledgerPartChars, noticeItems, worstLedgerChars, type LedgerMode } from "./ledger-parts.ts";
-import { ensureSettings } from "./account-settings.ts";
+import { ensureSettings, injected, needsTransition } from "./account-settings.ts";
 import { calculate, worldsAt, type Proposal } from "../decision.ts";
 import { deepImpact, rawDeep, replaceDeep } from "./deep.ts";
 import { subjectOf, type Fact } from "../../../../bench/lib/world.ts";
@@ -167,6 +168,8 @@ type Plan = {
   inside?: () => Promise<void>;
   onAck?: () => void;
 };
+/** [U3] The four entities a held account's enrolment record writes (each created only if absent under the beside rule). */
+const enrolmentEntities = (s: Store, prefix: string) => [namesOf(s).ORIGIN, namesOf(s).CLOCK, prefix + "join-meta", prefix + "join-calendar"];
 export class JoinedAccount {
   readonly s: Store;
   lastMaterial = emptyMaterial();
@@ -294,6 +297,10 @@ export class JoinedAccount {
             // [DX-ACT8, review F6] A rival enrolment of this same account whose record lands inside this walk: its
             // command ID is this account's enrolment command, so this enrolment then recovers it (one record, not two).
             (setup && beside && t.actor === "lazy/join" && t.commandId === "join-held-enrolment:" + this.s.held!.account) ||
+            // [U3] The same rival enrolment under the random form: recognized by what it writes, the four entities of
+            // this account's enrolment record and nothing else.
+            (setup && beside && t.actor === "lazy/join" && String(t.commandId).startsWith("join-held-enrolment:" + this.s.held!.account + ":") &&
+              t.changes.length > 0 && t.changes.every((v: any) => enrolmentEntities(this.s, this.db.prefix).includes(v.entityId))) ||
             (t.actor === stageActor && stageChanges(this.db.prefix, t.changes)) ||
             // [DX-ACT6] Content-addressed release definitions written ahead of a Publish (unreachable until it).
             (t.actor === definitionsActor && definitionsOnly(this.s, t.changes)) ||
@@ -337,21 +344,32 @@ export class JoinedAccount {
     // still have no fact (only a rival enrolment of this account writes them, and its command ID is recovered), instead
     // of requiring the whole database's head. Up to three tries, each looking the command up first. Unset: as before.
     if (process.env.TX2_ENROL_BESIDE_SAVES === "1" && source.namespace) {
-      const guards = [namesOf(this.s).ORIGIN, namesOf(this.s).CLOCK, this.db.prefix + "join-meta",
-        this.db.prefix + "join-calendar"].map((entityId) => ({ entityId, tripleIds: [] as string[] }));
+      const guards = enrolmentEntities(this.s, this.db.prefix).map((entityId) => ({ entityId, tripleIds: [] as string[] }));
+      // [DX-ACT8, third review U3] The command ID carries a random part, so no other account can compute it and take it
+      // first (`join-held-enrolment:<account>` could be taken by any save, and the account could then never enrol). The
+      // write needs no recovery by its ID: its four entities are created only if absent, so a lost reply, or a rival
+      // enrolment of this account that landed first, is found by reading them (`enrolledWith`).
       for (let attempt = 0; ; attempt++) {
         this.beside.enrolTries++;
         try {
-          await s.commit(enrolment, "lazy/join", record, now, { intent: h([source.seal, census, at]) },
+          await s.commit(enrolment + ":" + randomUUID(), "lazy/join", record, now, { intent: h([source.seal, census, at]) },
             undefined, undefined, guards);
           break;
         } catch (e) {
+          if (await this.enrolledWith(source.seal, census)) break;
           if (!(e instanceof Conflict) || attempt >= 2) throw e;
         }
       }
     } else await s.commit(enrolment, "lazy/join", record, now, { intent: h([source.seal, census, at]) });
     assert.deepEqual(await this.roster(census, now), ids);
     return meta;
+  }
+  /** [U3] Whether this account's enrolment record (its origin with this seal and its census) is already stored. */
+  private async enrolledWith(seal: string, census: unknown) {
+    const p = await this.s.head();
+    const origin = (await this.s.rows([namesOf(this.s).ORIGIN], p)).find((r: { position: number }) => r.position > this.s.held!.cut);
+    const meta = await this.db.row<Meta>("join-meta", p);
+    return Boolean(origin && value(origin).held === seal && meta && canonical(meta.value.census) === canonical(census));
   }
   async install(ids: string[], at: string, expanded = false) {
     ids = [...ids];
@@ -502,18 +520,31 @@ export class JoinedAccount {
    * is this account's only if it wrote this account's own joined documents (every joined command writes its notice
    * documents); any other record under the same key, another account's or a forged one, is not this command. */
   private async original(id: string, intents: { scoped: string; legacy: string }) {
+    // [DX-ACT8, third review U4] Every change of the record, not some, must be in this account's names: its joined
+    // documents and its metadata names (the transaction's own journal aside). A record that also writes another
+    // account's documents is no account's Publish.
+    const names = new Set(Object.values(namesOf(this.s)).filter((v): v is string => typeof v === "string" && v.length > 0));
     const own = (r: { changes: { entityId: string }[] } | null) =>
-      Boolean(r?.changes.some((c) => c.entityId.startsWith(this.db.prefix)));
+      Boolean(r && r.changes.length > 0 && r.changes.some((c) => c.entityId.startsWith(this.db.prefix)) &&
+        r.changes.every((c) => c.entityId.startsWith(this.db.prefix) || names.has(c.entityId) || c.entityId.startsWith("_tx/")));
     if (this.s.held) {
       const key = joinedCommandId(this.s, id, true), found = await this.s.lookup(key);
       if (own(found)) return this.recorded(key, intents.scoped);
+      // [U7] The `joined:<account>/<id>` form a per-process switch wrote at `bf377c57f` (test databases): found too,
+      // under the same ownership rule. With its switch on that build's intent named the account (as the scoped form's
+      // does); a record under the form with the account-free intent is accepted too, since the key and the ownership
+      // rule already tie it to this account.
+      if (this.s.held.namespace) {
+        const old = "joined:" + this.s.held.account + "/" + id, earlier = await this.s.lookup(old);
+        if (own(earlier)) return this.recorded(old, intents.scoped, intents.legacy);
+      }
     }
     // DX_ACT8_INJECT=no-legacy (diagnostic only, the fuzzer's negative control): a held account's lookup skips the
     // unscoped form, the rule of a process that knows only one form (the second review's R2).
-    const legacy = process.env.DX_ACT8_INJECT === "no-legacy" && this.s.held ? null : await this.s.lookup("joined:" + id);
+    const legacy = injected("no-legacy") && this.s.held ? null : await this.s.lookup("joined:" + id);
     return own(legacy) ? this.recorded("joined:" + id, intents.legacy) : null;
   }
-  private recorded(key: string, intent: string) {
+  private recorded(key: string, intent: string, alternative?: string) {
     return this.s.lookup(key).then((r) => {
       if (!r) return null;
       assert(
@@ -539,8 +570,9 @@ export class JoinedAccount {
         JSON.parse(r.correlationId).hash,
         sha256(transport([this.s.scope, r.commandId, r.actor, ops])),
       );
+      const stored = JSON.parse(r.correlationId).context.intent;
       assert.equal(
-        JSON.parse(r.correlationId).context.intent,
+        alternative !== undefined && stored === alternative ? intent : stored,
         intent,
         "Reused command ID has different input",
       );
@@ -669,28 +701,39 @@ export class JoinedAccount {
   }
   /** [DX-ACT8, review F3] Refuses a release when one subject could owe more notice items across this account's
    * releases (`releases`, plus `doc`) than its ledger can be written with (ledger-parts.ts). */
+  /** [DX-ACT8, third review U2, U9] Under the account's `ledgerCap` setting, refuses a release one subject's ledger could
+   * not hold. The account's ledgers hold only the items in force (retired items are kept beside them, `archive`), and
+   * after a release's event a subject's items in force are that release's work items for it: at most each notice policy
+   * of the release once, and the base rules' items. So the bound is on one release, not on the account's lifetime. A
+   * release that adds no notice policy the account has not published before is never refused (whatever the ledgers
+   * hold, it adds nothing to them). The ledger mode is not an input: every account with a setting writes in parts. */
   private async ledgerCap(doc: W0.ReleaseDoc, releases: readonly { documentRef?: DocRef; document?: W0.ReleaseDoc }[], p: number,
-    mode: LedgerMode) {
-    const docs = [doc];
-    for (const r of releases) docs.push(r.documentRef ? (await loadRelease(this.s, r.documentRef, p)).doc : r.document!);
-    const { items, policies, base } = noticeItems(docs);
-    const need = worstLedgerChars(items), cap = ledgerCapacity(mode);
+    _mode?: LedgerMode) {
+    const { items, policies, base } = noticeItems([doc]);
+    const need = worstLedgerChars(items), cap = ledgerCapacity("parts");
     if (need <= cap) return;
+    // A release whose notice policies one earlier release already held all at once is never refused: a subject's ledger
+    // after it is no longer than after that release (so a release adding no notice policy, or one that lands over the
+    // cap by any route, never locks the account's later releases).
+    const key = ([rule, k]: readonly [string, string]) => rule + " " + k;
+    const own = items.filter(([rule]) => !rule.startsWith("base:")).map(key);
+    const known = new Set<string>();
+    for (const r of releases) {
+      const d = r.documentRef ? (await loadRelease(this.s, r.documentRef, p)).doc : r.document!;
+      const held = new Set(noticeItems([d]).items.map(key));
+      if (own.every((x) => held.has(x))) return;
+      for (const x of held) known.add(x);
+    }
+    const added = own.filter((x) => !known.has(x)).length;
     let fit = 0;
     while (fit < items.length && worstLedgerChars(items.slice(0, fit + 64)) <= cap) fit += 64;
-    // [DX-ACT8, second review R10] A subject's ledger keeps one item for every notice policy it was ever owed (retired
-    // items are never removed), so this is a limit over the account's lifetime: the distinct notice policies of all its
-    // releases together. Releases that add no new notice policy keep publishing.
-    const known = noticeItems(docs.slice(1)).policies;
     throw new ReleaseTooLarge(
-      "Release refused: this account's releases would hold " + policies + " distinct notice policies (" +
-        (policies - known) + " new in this one); with up to " + base + " items from the base rules one subject could owe " +
-        items.length + " notice items, a packed ledger of about " + need + " characters, over the " + cap +
-        " the settlement can write for one subject (" +
-        (mode === "parts" ? cap / ledgerPartChars + " parts of " + ledgerPartChars + " characters" :
-          "one value per frame") + "). A ledger keeps every notice policy a subject was ever owed, so this account can " +
-        "use at most about " + Math.max(0, fit - base) + " distinct notice policies in its lifetime; publish one that " +
-        "reuses its existing notice policy IDs or adds none.",
+      "Release refused: one subject could owe " + items.length + " notice items from this release (" + policies +
+        " notice policies, " + added + " not published before, and up to " + base + " from the base rules), a packed " +
+        "ledger of about " + need + " characters, over the " + cap + " the settlement can write for one subject (" +
+        cap / ledgerPartChars + " parts of " + ledgerPartChars + " characters). A ledger holds the items in force only, " +
+        "so this bounds one release, not the account's history: a release can carry about " + Math.max(0, fit - base) +
+        " notice policies, and one whose notice policies an earlier release held all at once always publishes.",
     );
   }
   private async choose(
@@ -874,8 +917,13 @@ export class JoinedAccount {
     const byRef = (options.docs ?? docsMode()) === "ref";
     // [DX-ACT8, second review] A process allowed to turn a setting on does so first (one way, `account-settings.ts`);
     // then what this Publish does follows the account's stored settings only.
-    await ensureSettings(this.s);
-    const h0 = await this.s.head(), c0 = this.s.held ? await this.s.controls(h0) : undefined;
+    // [U6] Whether a transition is needed is read from the stored settings at this plan (no per-process cache).
+    let h0 = await this.s.head(), c0 = this.s.held ? await this.s.controls(h0) : undefined;
+    if (c0 && needsTransition(this.s, c0.settings)) {
+      await ensureSettings(this.s);
+      h0 = await this.s.head();
+      c0 = await this.s.controls(h0);
+    }
     // [DX-ACT8, review F3] Also before the definitions are written, so a refused release writes nothing.
     if (c0?.settings?.ledgerCap && storage === "owed") await this.ledgerCap(doc, c0.releases, h0, c0.settings.ledger!);
     const ref = byRef ? await this.writeDefinitions(doc, c0?.settings?.accountKeys === true) : undefined;
