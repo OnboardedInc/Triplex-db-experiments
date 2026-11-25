@@ -89,6 +89,15 @@
 
 ;; ---------------------------------------------------------------- (c, e) a competing change between plan and commit
 
+(defn- race-at-submit
+  "[DX-S6] Run `competing` once, after the save was planned (any writer) and before its submit; return the reply."
+  [name input competing]
+  (let [orig storage/submit! fired (atom false) id (get input "operationId")]
+    (with-redefs [storage/submit! (fn [conn data request timeline & more]
+                                    (when (and (= id (get request "operationId")) (compare-and-set! fired false true)) (competing))
+                                    (apply orig conn data request timeline more))]
+      (reference/send name input))))
+
 (defn- race-before-submit
   "Plan the save, run `competing` after the creation plan exists and before it is sent; expect `expected`."
   [name conn input competing expected]
@@ -194,9 +203,12 @@
                                           (race-before-submit name conn input
                                             #(reset! erased (reference/route name "v1" "erase" {"commandId" "remove-x" "selectors" [{"entityId" x}]}))
                                             [409 "CasConflict"])
-                                          (let [_ (reset! erased (reference/route name "v1" "erase" {"commandId" "remove-x" "selectors" [{"entityId" x}]}))]
-                                            ;; Off: the frame carries the sequence it was planned with, so it is refused the same way.
-                                            {:status 409 :body {"code" "CasConflict"}}))
+                                          ;; [DX-S6] Off: measured, not assumed. The general writer gets the same race at
+                                          ;; the same point (after the plan, before the submit) and must give the same code.
+                                          (let [reply (race-at-submit name input
+                                                        #(reset! erased (reference/route name "v1" "erase" {"commandId" "remove-x" "selectors" [{"entityId" x}]})))]
+                                            (is (= [409 "CasConflict"] (reference/outcome reply)) (pr-str reply))
+                                            reply))
                               resend (reference/send name (assoc input "operationId" "create-x-again"))
                               without (when (not= 200 (:status resend))
                                         (reference/send name (og/frame {:command "create-x-without" :block (block) :source (head conn)

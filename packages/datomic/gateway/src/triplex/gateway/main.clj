@@ -262,6 +262,14 @@
                        (recur)))
                    "tx2-thread-sampler")
       (.setDaemon true) (.start))))
+(defn write-status
+  "[DX-S6] 400 for a decided failure of a write route (or any failure of another route), 503 for an unknown one."
+  [request-method uri e]
+  (if (= :post request-method)
+    (if (re-find #"/(?:transact|fence|erase|protection|restore-erasure|create|delete)$" uri)
+      ((requiring-resolve 'triplex.gateway.outcome/route-status) e)
+      400)
+    400))
 (defn route-handler-base [{:keys [request-method uri body query-string privacy-input]}]
   (stats/bump! [:routes (str (name request-method) " " (clojure.string/replace uri #"/s2?-[^/]+/" "/{db}/"))] 1)
   (try
@@ -345,7 +353,7 @@
         (timed start {:status 200 :headers (cond-> {"Content-Type" "application/json; charset=utf-8" "x-tx2-waited" (str (boolean waited))}
                                              wanted (assoc "x-tx2-at-least" (str (:position wanted)) "x-tx2-at-least-wait-micros" (str at-least-micros)))
          :body (trace/span "reach/response" "gateway" (reach/response name db (if (.endsWith ^String uri "reach-many") input (assoc input "roots" [(get input "root")])) (:generation view) (:recent view)))}))
-      (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
+      (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|fence|operation/[^/]+)" uri)
       (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (db-uri name) start (System/nanoTime)
             input (when (= request-method :post) (trace/read-span "gateway.request-decode" "gateway" (request-json body)))
             conn (when (and (not= action "release") (or (= action "transact") (not (get input "handle")))) (connection db-uri))
@@ -381,6 +389,9 @@
                         (lean-query/assert-unprotected! (or db (d/db (connection db-uri)))))
                       (query/run name db input)))
             "operation" (storage/operation db id)
+            ;; [DX-S6] Why: a caller with an unknown outcome makes it decided: committed, or fenced and never committed.
+            ;; Rejected: waiting a fixed time for the original (a stopped gateway's save can still be in the transactor).
+            "fence" ((requiring-resolve 'triplex.gateway.outcome/fence!) conn (get input "operationId") storage/operation)
             "claim" (let [cut (storage/at-position db (get input "position"))
                           id (get input "commandId") claim (d/entid cut [:triplex.claim/command-id id])
                           tx (when claim (ledger/claim-tx cut claim))
@@ -393,8 +404,9 @@
           (cond-> (response 200 (cond-> result (and wanted (map? result)) (assoc :atLeast (:position wanted))))
             wanted (assoc-in [:headers "x-tx2-at-least-wait-micros"] (str at-least-micros))))))
       :else (response 404 {:code "NotFound"}))
-    (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
-                                (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
+    ;; [DX-S6] A write route's failure without a status is a refusal only when decided; otherwise 503 OutcomeUnknown.
+    (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 (write-status request-method uri e)))
+                                (cond-> {:code (or (:code (ex-data e)) (if (= 503 (write-status request-method uri e)) "OutcomeUnknown" "GatewayError")) :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
                                   (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e)))
                                   (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e)))
                                   (:estimatedMicros (ex-data e)) (assoc :estimatedMicros (:estimatedMicros (ex-data e))))))))
@@ -472,8 +484,8 @@
                 (when (contains? input "erasureSeq") (privacy/ensure-seq! read-cut (get input "erasureSeq")))
                 (run read-cut))))))
       (catch Exception e
-        (let [info (ex-data e)]
-          (response (or (:status info) 400) {:code (or (:code info) "GatewayError") :message (.getMessage e)}))))
+        (let [info (ex-data e) status (or (:status info) (write-status request-method uri e))]
+          (response status {:code (or (:code info) (if (= 503 status) "OutcomeUnknown" "GatewayError")) :message (.getMessage e)}))))
     (route-handler-base request)))
 
 (defn handler [request] (trace/handler route-handler request))

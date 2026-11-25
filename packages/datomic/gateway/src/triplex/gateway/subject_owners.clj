@@ -59,9 +59,16 @@
 ;; [DX-S3] Why: an account is a subject's namespace (acct/<account>/...), as group/classify reads it; a save across
 ;; accounts is not one subject's save. Rejected: reading :subject/account here (a storage read per owner on the plan path).
 (defn- account [id] (second (re-matches #"acct/([A-Za-z0-9_-]{1,64})/.+" id)))
-(defn one-account? [owners]
-  (let [accounts (map account owners)]
-    (or (every? nil? accounts) (and (not-any? nil? accounts) (apply = accounts)))))
+;; [DX-S6] F9: the same rule as group/classify: an owner's account is its prefix, or else its stored :subject/account
+;; (on the lean layout), and every owner must have the same one (an owner with neither counts as no account, which
+;; must then be every owner's). Before, owners without the prefix counted as one account whatever they stored.
+;; Rejected: declining every owner without the prefix (the S3 gate's and older scopes' owners have none).
+(defn one-account?
+  ([owners] (one-account? nil owners))
+  ([db owners]
+   (let [stored (requiring-resolve 'triplex.gateway.group/persisted-account)
+         accounts (set (map (fn [o] (if-let [a (account o)] a (when (and db (lean/enabled? db)) (stored db o)))) owners))]
+     (= 1 (count accounts)))))
 
 (defn render-ops
   "subject-save/render-ops for several owners: each owner's tempid becomes its numeric entity, each retraction goes to
@@ -117,7 +124,7 @@
        (> (count owners) max-owners) (decline "over-owner-bound")
        (not (every? string? owners)) (decline "frame")
        (some #(.startsWith ^String % "_") owners) (decline "system-entity")
-       (not (one-account? owners)) (decline "several-accounts")
+       (not (one-account? db owners)) (decline "several-accounts")
        (not= owner-set (set entities)) (decline "read-only-entity")
        (not (and (ids journal) (= 1 (count journal-entities))
                  (integer? source)

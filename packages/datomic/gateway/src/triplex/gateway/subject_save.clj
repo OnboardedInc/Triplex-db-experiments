@@ -379,6 +379,13 @@
                   numeric-owner? (assoc :owner-key subject)
                   ordered-ids? (assoc :ordered-bounds (ordered-bounds journal prefixes)))))))))))
 
+;; [DX-S6] F6: the S2 edit above removed one term of an `and`, so one generated name fewer, and every namespace loaded
+;; after this one (the covering writer, the general hint function) embedded shifted names in its quoted code: 5 stored
+;; values differed from the base (`23b7df344`). Taking back exactly that one name restores them (s4/idents.sh).
+;; Rejected: hashing renamed code (changes every identity, options off included), and removing generated names from
+;; the two functions' quoted code (changes both identities again, away from the base).
+(gensym)
+
 (defn plan
   ([db data input]
    (plan-with-erasure db data input nil retirement #(scope/value %1 %2 :triplex.entity/rev)))

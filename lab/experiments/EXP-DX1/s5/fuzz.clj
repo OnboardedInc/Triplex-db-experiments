@@ -10,7 +10,7 @@
   submit, resends with the same or a different body), then concurrent rounds (2 or 4 writer threads on the candidate,
   each reading pinned at its source and saving; every committed save is then replayed on the control in commit order
   and must commit with the same receipt). Run by s5/clj-run.sh; reviewer's harness, not a gate of the code under review."
-  (:require [clojure.data.json :as json] [clojure.string :as str] [clojure.set]
+  (:require [clojure.data.json :as json] [clojure.string :as str] [clojure.set] [clojure.walk]
             [datomic.api :as d] [triplex.gateway.storage :as storage] [triplex.gateway.main :as main]
             [triplex.gateway.selftest :as rows] [triplex.gateway.reach :as reach]
             [triplex.gateway.subject-save :as subject] [triplex.gateway.subject-owners :as owners]
@@ -31,14 +31,25 @@
   {:id id :entity_id e :entity_type entity-type :attribute attr :value_type "string" :value_string nil
    :valid_from 0.0 :recorded_at 1000.0 :recorded_position 1 :schema_version 1 :tx_id tx})
 
+(defn- canonical-json [v] (json/write-str (clojure.walk/postwalk #(if (map? %) (into (sorted-map) %) %) v)))
+;; [DX-S6] JSON, boolean, datetime and blob values (S5_VALUE_TYPES=1), as the SDK packs them (packages/datomic/src/rows.ts).
+(defn- blob-meta [value] (canonical-json (cond-> {"mimeType" (:mime value) "size" (:size value)} (:filename value) (assoc "filename" (:filename value)))))
 (defn- typed-row [r {:keys [type value]}]
   (case type
     :ref (assoc r :value_type "ref" :value_string value)
     :number (assoc r :value_type "number" :value_number (double value))
+    :boolean (assoc r :value_type "boolean" :value_boolean (if value 1 0))
+    :datetime (assoc r :value_type "datetime" :value_datetime (double value))
+    :json (assoc r :value_type "json" :value_json (canonical-json value))
+    :blob (assoc r :value_type "blob" :value_string (:hash value) :value_json (blob-meta value))
     (assoc r :value_type "string" :value_string value)))
 
 (defn- change-value [{:keys [type value]}]
-  (case type :ref {"type" "ref" "value" value} :number {"type" "number" "value" (double value)} {"type" "string" "value" value}))
+  (case type :ref {"type" "ref" "value" value} :number {"type" "number" "value" (double value)}
+    :boolean {"type" "boolean" "value" (boolean value)} :datetime {"type" "datetime" "value" (double value)}
+    :json {"type" "json" "value" value}
+    :blob (cond-> {"type" "blob" "value" (:hash value) "mimeType" (:mime value) "size" (:size value)} (:filename value) (assoc "filename" (:filename value)))
+    {"type" "string" "value" value}))
 
 (defn frame
   "One save as the SDK frames it. facts: {:owner :field :value :type :pred}; retires: {:owner :field :pred} where
@@ -84,10 +95,24 @@
 (defn- chance [^Random rng p] (< (.nextDouble rng) p))
 (defn- between [^Random rng lo hi] (+ lo (.nextInt rng (inc (- hi lo)))))
 
+(def ^:private value-types? (= "1" (System/getenv "S5_VALUE_TYPES")))
+(def protected-fields
+  "[DX-S6] S5_PROTECTED=unsealed or sealed: both scopes declare these protected; one value in ten is written to one."
+  (when (#{"unsealed" "sealed"} (System/getenv "S5_PROTECTED")) [":fz/p0" ":fz/p1"]))
+(defn- typed-value [^Random rng g]
+  (let [k (swap! (:counter g) inc)]
+    (case (int (.nextInt rng 4))
+      0 {:type :boolean :value (.nextBoolean rng)}
+      1 {:type :datetime :value (double (+ 1.7E12 (* 1000 (.nextInt rng 1000000))))}
+      2 {:type :json :value (pick rng [{"k" k "l" [1 "two" true nil]} [] {} "text" 0 {"nested" {"z" 1 "a" [k]}} (str "é" k)])}
+      {:type :blob :value (cond-> {:hash (str "sha256:" (format "%064x" (biginteger k))) :mime (pick rng ["application/pdf" "image/png"])
+                                   :size (.nextInt rng 100000)} (.nextBoolean rng) (assoc :filename (str "f" k ".pdf")))})))
+
 (defn- value [^Random rng g owners-pool ref-rate]
   (let [r (.nextDouble rng)]
     (cond
       (< r ref-rate) {:type :ref :value (pick rng owners-pool)}
+      (and value-types? (< r (+ ref-rate 0.25))) (typed-value rng g)
       (< r (+ ref-rate 0.12)) {:type :number :value (pick rng [0.0 1.0 -1.5 1.0E300 4.9E-324 123456.789 (double (.nextInt rng 1000))])}
       :else {:type :string :value (str (pick rng strings) "|" (swap! (:counter g) inc))})))
 
@@ -141,8 +166,12 @@
         ref-rate (if (chance rng 0.4) 0.25 0.0)
         per-owner (fn [o]
                     (if (contains? @news o)
-                      {:facts (vec (for [i (range (between rng 1 (if big? 70 8)))]
-                                     (merge {:owner o :field (str ":fz/f" i) :pred nil} (value rng g pool ref-rate))))
+                      {:facts (vec (concat
+                                     (for [i (range (between rng 1 (if big? 70 8)))]
+                                       (merge {:owner o :field (str ":fz/f" i) :pred nil} (value rng g pool ref-rate)))
+                                     (when (and protected-fields (chance rng 0.1))
+                                       [{:owner o :field (pick rng protected-fields) :pred nil :type :string
+                                         :value (str "protected|" (swap! (:counter g) inc))}])))
                        :retires []}
                       (let [live (vec (sort (keys (get model o))))
                             shuffled (vec (shuffle-with rng live))
@@ -216,8 +245,17 @@
                    :let [vt (get-in row ["value_type" "v"])]]
                [(get-in row ["attribute" "v"])
                 {:id (get-in row ["id" "v"])
-                 :type (case vt "ref" :ref "number" :number :string)
-                 :value (case vt "number" (get-in row ["value_number" "v"]) (get-in row ["value_string" "v"]))}]))))
+                 :type (case vt "ref" :ref "number" :number "boolean" :boolean "datetime" :datetime "json" :json "blob" :blob :string)
+                 ;; [DX-S6] The added value types read back in the generator's own representation.
+                 :value (case vt
+                          "number" (get-in row ["value_number" "v"])
+                          "boolean" (let [b (get-in row ["value_boolean" "v"])] (if (number? b) (not (zero? b)) (boolean b)))
+                          "datetime" (get-in row ["value_datetime" "v"])
+                          "json" (json/read-str (get-in row ["value_json" "v"]))
+                          "blob" (let [m (json/read-str (get-in row ["value_json" "v"]))]
+                                   (cond-> {:hash (get-in row ["value_string" "v"]) :mime (get m "mimeType") :size (get m "size")}
+                                     (get m "filename") (assoc :filename (get m "filename"))))
+                          (get-in row ["value_string" "v"]))}]))))
 
 ;; ---------------------------------------------------------------- comparison
 
@@ -280,7 +318,9 @@
         khead (storage/head-position (d/db k-conn))]
     (if (not= head khead)
       {:what "head" :control head :candidate khead}
-      (let [datoms? (not subject/append-retirement?)]
+      ;; [DX-S6] Sealed values are encrypted under each scope's own keys, so stored datoms differ by design; the read
+      ;; routes (which unseal) and the feed are still compared.
+      (let [datoms? (and (not subject/append-retirement?) (not= "sealed" (System/getenv "S5_PROTECTED")))]
         (if (and datoms? (not= (canon-digest c-conn) (canon-digest k-conn)))
           {:what "datoms" :difference (first-difference (canon c-conn (- head 60)) (canon k-conn (- head 60)))}
           (let [positions (vec (sort (distinct (concat (range (max 1 (- head 4)) (inc head))
@@ -546,6 +586,11 @@
       (fn [c-name c-conn]
         (reference/in-scope
           (fn [k-name k-conn]
+            ;; [DX-S6] Protected (and sealed) values: both scopes declare the same fields before the first save.
+            (when protected-fields
+              (doseq [n [c-name k-name]]
+                (let [r (reference/route n "v1" "protection" {"attributes" protected-fields "sealed" (= "sealed" (System/getenv "S5_PROTECTED"))})]
+                  (when-not (= 200 (:status r)) (throw (ex-info "protection failed" {:reply r}))))))
             (let [ctx {:c-name c-name :c-conn c-conn :k-name k-name :k-conn k-conn}
                   deep! (fn [label]
                           (let [db (d/db k-conn)

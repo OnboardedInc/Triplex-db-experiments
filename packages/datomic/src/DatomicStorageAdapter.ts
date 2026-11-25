@@ -55,6 +55,13 @@ export class DatomicSerializationConflict extends WriteError {
   readonly reason = "serialization-conflict" as const;
 }
 
+// [DX-S6] Why: an unknown outcome that the gateway's fence decided as never committed is a refusal like a conflict:
+// nothing was stored, so a replay-safe save is staged again from a fresh read.
+// Rejected: answering TransactionOutcomeUnknown after a fixed wait (the save could still commit later).
+export class DatomicOperationNotApplied extends DatomicSerializationConflict {
+  readonly notApplied = true as const;
+}
+
 // [DX-B10] Why: callers distinguish an unsubmitted suffix from an ambiguous durable commit.
 // Rejected: retrying a gap as a serialization conflict (would allocate still later sequence numbers).
 export class DatomicCommitOrderError extends WriteError {
@@ -686,9 +693,21 @@ export const makeDatomicStorageAdapter = (
         }
         do {
           try {
-            const receipt = await bounded(
+            let receipt = await bounded(
               client.observeRequests(state.diagnostic, () => client.operation(db, operationId)),
             );
+            // [DX-S6] Why: "absent" alone is not an answer while the original may still be in the transactor; the
+            // fence stores the operation ID so it never commits, or finds that it already did.
+            // Rejected: polling until the deadline (a save stored after it was reported unknown).
+            if (receipt.status !== "committed" && receipt.fenced !== true)
+              receipt = await bounded(
+                client.observeRequests(state.diagnostic, () => client.fence(db, operationId)),
+              );
+            if (receipt.status !== "committed" && receipt.fenced === true)
+              throw new DatomicOperationNotApplied({
+                message: "Datomic outcome was unknown; the operation was fenced and never committed",
+                cause: submitError,
+              });
             if (receipt.status === "committed") {
               const pTag = validateTagged(receipt.position),
                 tTag = validateTagged(receipt.t);
@@ -710,6 +729,7 @@ export const makeDatomicStorageAdapter = (
               return;
             }
           } catch (error) {
+            if (error instanceof DatomicOperationNotApplied) throw error;
             submitError = error;
           }
           if (Date.now() >= until) break;
@@ -737,7 +757,8 @@ export const makeDatomicStorageAdapter = (
     },
   ): Effect.Effect<A, E | WriteError> =>
     Effect.suspend(() => {
-      const operationId = randomUUID();
+      // [DX-S6] Reassigned when a replay follows a fence: the fenced operation ID can never commit.
+      let operationId = randomUUID();
       const diagnostic: import("./DatomicClient.js").DatomicCommitSample | undefined =
         client.onCommit
           ? {
@@ -939,6 +960,7 @@ export const makeDatomicStorageAdapter = (
                       ),
                       Effect.suspend(() => {
                         client.commitDiagnostics.replays++;
+                        if (error instanceof DatomicOperationNotApplied) operationId = randomUUID();
                         for (const id of hint?.tripleIds ?? []) {
                           cache.delete(id);
                           client.predecessorCache.delete(prefix + id);

@@ -85,6 +85,25 @@ class DatomicProtectedWriteEncodingError extends DatomicHttpError {
     super(400, "ProtectedWriteUnavailable", "The configured protected save transport could not encode this request");
   }
 }
+/** [DX-S6] The answer of the operation and fence routes. */
+export interface DatomicOperationState {
+  status: "committed" | "absent";
+  fenced?: boolean;
+  operationId?: string;
+  position?: TaggedValue;
+  t?: TaggedValue;
+  recordedAt?: TaggedValue;
+}
+/** [DX-S6] An unknown outcome decided as never committed: the fence holds the operation ID. */
+export class DatomicOperationFenced extends Error {
+  readonly _tag = "DatomicOperationFenced";
+  constructor(
+    readonly operationId: string,
+    options?: ErrorOptions,
+  ) {
+    super(`Operation ${operationId} was fenced and never committed`, options);
+  }
+}
 export class DatomicTransportError extends Error {
   readonly _tag = "DatomicTransportError";
   constructor(message: string, options?: ErrorOptions) {
@@ -1055,8 +1074,9 @@ export class DatomicClient {
             this.reachDiagnostics.decodedTextBytes += Buffer.byteLength(value);
     }
   }
+  // [DX-S6] A declaration is idempotent (declaring the same attributes again answers the same state): resend on unknown.
   declareProtection(db: string, attributes: readonly string[], sealed = false) {
-    return this.request("POST", `/v2/db/${db}/protection`, { attributes, sealed });
+    return this.resend(() => this.request("POST", `/v2/db/${db}/protection`, { attributes, sealed }));
   }
   async erasureFrontier(db: string): Promise<ErasureFrontier> {
     const result = await this.request<ErasureFrontier>("GET", `/v2/db/${db}/erasure-frontier`);
@@ -1072,8 +1092,24 @@ export class DatomicClient {
       throw new TypeError("Erasure frontier scope or shape mismatch");
     return result;
   }
-  erase(db: string, commandId: string, selectors: readonly ErasureSelector[]) {
-    return this.request<ErasureReceipt>("POST", `/v2/db/${db}/erase`, { commandId, selectors });
+  // [DX-S6] Why: a removal is keyed by its command, and the gateway answers a resend with the original receipt; an
+  // unknown outcome (transport failure or 5xx) is decided by resending within the client's deadline.
+  // Rejected: surfacing a 503 for a removal that may have been stored.
+  async erase(db: string, commandId: string, selectors: readonly ErasureSelector[]) {
+    return this.resend(() => this.request<ErasureReceipt>("POST", `/v2/db/${db}/erase`, { commandId, selectors }));
+  }
+  private async resend<A>(send: () => Promise<A>): Promise<A> {
+    const until = Date.now() + this.timeoutMs;
+    for (;;) {
+      try {
+        return await send();
+      } catch (error) {
+        const unknown =
+          error instanceof DatomicTransportError || (error instanceof DatomicHttpError && error.status >= 500);
+        if (!unknown || Date.now() >= until) throw error;
+        await sleepMs(25);
+      }
+    }
   }
   restoreErasure(db: string) {
     return this.request("POST", `/v2/db/${db}/restore-erasure`, {});
@@ -1498,7 +1534,27 @@ export class DatomicClient {
     // Rejected: splitting one application's atomic write or pre-submitting the suffix before the current ACK.
     if (this.cacheOptions.writeClass && this.cacheOptions.writeClass !== kind)
       throw new TypeError("Bulk producer class differs from its configured role");
-    for await (const frame of frames) yield await this.transact(db, { ...frame, writeClass: kind });
+    for await (const frame of frames) yield await this.transactResolved(db, { ...frame, writeClass: kind });
+  }
+  /**
+   * [DX-S6] One transact whose unknown outcome (a transport failure, any 5xx, or OperationDuplicate) is decided by
+   * lookup and fence: the original receipt when it committed, `DatomicOperationFenced` when it never did.
+   * Rejected: surfacing a 503 to an importer, which cannot tell a stored frame from a lost one.
+   */
+  async transactResolved(db: string, input: Parameters<DatomicClient["transact"]>[1]) {
+    try {
+      return await this.transact(db, input);
+    } catch (error) {
+      if (
+        !(
+          error instanceof DatomicTransportError ||
+          (error instanceof DatomicHttpError && (error.status >= 500 || error.code === "OperationDuplicate"))
+        )
+      )
+        throw error;
+      const state = await this.resolveOperation(db, input.operationId, Date.now() + this.timeoutMs);
+      return { ...state, resolved: true as const };
+    }
   }
   // [DX-W1] Why: all retries of one claimed command return its original durable logical receipt, including after an ambiguous transport failure.
   // Rejected: retrying a write after an unknown ACK or returning the last member of its physical transaction.
@@ -1572,8 +1628,17 @@ export class DatomicClient {
               throw new TypeError("Stored command receipt mismatch");
             return receipt(found.txId, found.receipt);
           }
+          // [DX-S6] Why: a command not found yet may still commit under this operation; the fence decides it.
+          // Rejected: polling until the deadline and then answering unknown.
+          if (!cas) {
+            const fenced = await this.fence(db, input.operationId);
+            if (fenced.status !== "committed" && fenced.fenced === true)
+              throw new DatomicOperationFenced(input.operationId, { cause: error });
+          }
         } catch (readError) {
-          if (!(readError instanceof DatomicTransportError)) throw readError;
+          if (readError instanceof DatomicOperationFenced) throw readError;
+          if (!(readError instanceof DatomicTransportError || (readError instanceof DatomicHttpError && readError.status >= 500)))
+            throw readError;
           // [DX-HASYNC1] Why: an interrupted claim lookup keeps the decision unknown. Rejected: returning a definite conflict without reading the claim.
           if (cas) throw readError;
         }
@@ -1584,17 +1649,32 @@ export class DatomicClient {
       throw error;
     }
   }
-  operation(
-    db: string,
-    operationId: string,
-  ): Promise<{
-    status: "committed" | "absent";
-    operationId?: string;
-    position?: TaggedValue;
-    t?: TaggedValue;
-    recordedAt?: TaggedValue;
-  }> {
+  operation(db: string, operationId: string): Promise<DatomicOperationState> {
     return this.request("GET", `/v1/db/${db}/operation/${encodeURIComponent(operationId)}`);
+  }
+  /** [DX-S6] Stores the operation ID without a position so the original can never commit; answers its decided state. */
+  fence(db: string, operationId: string): Promise<DatomicOperationState> {
+    return this.request("POST", `/v1/db/${db}/fence`, { operationId });
+  }
+  /**
+   * [DX-S6] Decides an unknown outcome: the committed receipt, or `DatomicOperationFenced` when it never committed.
+   * Still unknown only at `until` (epoch ms), when the last failure is thrown.
+   */
+  async resolveOperation(db: string, operationId: string, until: number): Promise<DatomicOperationState> {
+    let last: unknown;
+    for (;;) {
+      try {
+        let state = await this.operation(db, operationId);
+        if (state.status !== "committed" && state.fenced !== true) state = await this.fence(db, operationId);
+        if (state.status === "committed") return state;
+        if (state.fenced === true) throw new DatomicOperationFenced(operationId, { cause: last });
+      } catch (error) {
+        if (error instanceof DatomicOperationFenced) throw error;
+        last = error;
+      }
+      if (Date.now() >= until) throw last ?? new DatomicTransportError("Datomic outcome resolution deadline exceeded");
+      await sleepMs(25);
+    }
   }
   async claim(db: string, commandId: string, position: number): Promise<string | null> {
     const result = await this.request<{ txId: string | null }>("POST", `/v1/db/${db}/claim`, {

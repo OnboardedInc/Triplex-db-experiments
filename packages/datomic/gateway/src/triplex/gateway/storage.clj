@@ -514,6 +514,12 @@
         (let [db (fold-touched! conn db data)]
           (or (owner-layout/prepare db data input expected)
               (subject/plan db data input expected)))))))
+(defn- frontier-moved?
+  "[DX-S6] After a refusal, whether the scope's removal sequence moved past the frontier this request was checked at."
+  [conn]
+  (when privacy/*cut*
+    (let [db (deref (d/sync conn) 1000 nil)]
+      (when db (not= (:seq privacy/*cut*) (value db (scope/entity db) :triplex.scope/erasure-seq))))))
 (defn commit! [name conn db input]
   (when trace/tx-jfr-enabled (trace/attribute! :databaseHash (schema/sha256 name)))
   (when (and (not owner-layout/enabled) (owner-root/installed? db))
@@ -522,6 +528,10 @@
   (when group/load-timing (trace/attribute! :operationId (get input "operationId")))
   (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
     (reject-ordered! conn input (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
+  ;; [DX-S6] Why: once the transaction is handed to Datomic, only a refusal it or a stored function decided is final;
+  ;; any other failure (transport, timeout, a stopped transactor, anything unrecognised) may follow a commit.
+  ;; Rejected: mapping every unrecognised failure to 400 TransactionRejected (a committed save was answered refused).
+  (let [submitted (volatile! false)]
   (try
     (let [parsed (System/nanoTime)
           load-timing (when commit/load-profile (volatile! 0))
@@ -535,6 +545,10 @@
           ;; them the stored native functions' hashes; with the option off it is never loaded).
           _ (when policy/import-whole?
               (try ((requiring-resolve 'triplex.gateway.import-bound/bound!) (second (first data)) input)
+                   (catch Exception e (reject-ordered! conn input e))))
+          ;; [DX-S6] TX2_READ_SET_BOUND=1: every class's read set is capped (no repeats, at most 4,096 names).
+          _ (when (= "1" (System/getenv "TX2_READ_SET_BOUND"))
+              (try ((requiring-resolve 'triplex.gateway.import-bound/read-set!) (second (first data)) input)
                    (catch Exception e (reject-ordered! conn input e))))
           ;; [DX-PREP1] Why: the unordered subject arm submits one native transaction and uses its actual durable report.
           ;; Rejected: bypassing protected-scope erasure or live/import admission, or applying the draft speculatively.
@@ -568,7 +582,8 @@
           ready-ms (when group/queue-clock (System/currentTimeMillis))
           timeline (atom (cond-> {:requestParsed parsed :payloadPrepared start}
                            validated (assoc :payloadValidated validated)))
-          report (trace/span "peer.transact-await (includes order/network/storage)" "peer-wait" (deref (submit! conn data input timeline subject-plan) 5000 ::timeout))
+          report (do (vreset! submitted true)
+                     (trace/span "peer.transact-await (includes order/network/storage)" "peer-wait" (deref (submit! conn data input timeline subject-plan) 5000 ::timeout)))
           completed (System/nanoTime)
           transact-micros (quot (- completed start) 1000)
           stamp (when (and group/queue-clock (not= report ::timeout))
@@ -630,10 +645,20 @@
         ;; [DX-THIN1] Why: preserve explicitly typed policy errors and the established transaction rejection for malformed row ordering.
         ;; Rejected: treating every codec InvalidValue as a policy error before checking the transaction result.
         (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasedAssertionIdentity" "ProtectedTypeUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
+        ;; [DX-S6] After submit, unrecognised means unknown: 503 OutcomeUnknown, and the caller looks the operation up.
+        (when @submitted
+          (when-not ((requiring-resolve 'triplex.gateway.outcome/decided?) e)
+            (throw ((requiring-resolve 'triplex.gateway.outcome/unknown) e))))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
                        {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_ERASURE_FRONTIER|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
-                        :code (cond (re-find #"TRIPLEX_ERASURE_FRONTIER" text) "ErasureFrontierChanged"
+                        ;; [DX-S6] F3: a save racing a removal on request (or a protection declaration) gets one code
+                        ;; on every writer: CasConflict (the contract's "changed after the source"; the SDK re-reads and
+                        ;; replays), or ErasureFrontierChanged when the request itself named the frontier (erasureSeq).
+                        ;; Rejected: the writer's own marker (per-subject writers CasConflict, the general writer
+                        ;; ErasureFrontierChanged, so one request had two answers).
+                        :code (cond (re-find #"TRIPLEX_ERASURE_FRONTIER" text) (if (contains? input "erasureSeq") "ErasureFrontierChanged" "CasConflict")
+                                    (and (contains? input "erasureSeq") (re-find #"TRIPLEX_CONFLICT" text) (frontier-moved? conn)) "ErasureFrontierChanged"
                                     (re-find #"TRIPLEX_OPERATION_DUPLICATE" text) "OperationDuplicate"
                                     (re-find #"TRIPLEX_COMMAND_DUPLICATE" text) "CommandConflict"
                                     (re-find #"TRIPLEX_IMPORT_PREDECESSOR" text) "ImportPredecessorMissing"
@@ -642,10 +667,11 @@
                                     (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"
                                     (re-find #"triplex.claim/command-id" text) "CommandConflict"
                                     (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
-                                    (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e))))))
+                                    (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e)))))))
 (defn operation [db id]
   (if-let [{:keys [position t clock]} (group/receipt db id)]
-    (if (nil? position) {:status "absent"} {:status "committed" :operationId id :position (codec/encode-value "long" position)
+    ;; [DX-S6] An operation ID stored without a position is a fence: the original save can never commit.
+    (if (nil? position) {:status "absent" :fenced true :operationId id} {:status "committed" :operationId id :position (codec/encode-value "long" position)
      :t (codec/encode-value "long" t) :recordedAt (codec/encode-value "double" clock)})
     {:status "absent"}))
 (defn head-position
