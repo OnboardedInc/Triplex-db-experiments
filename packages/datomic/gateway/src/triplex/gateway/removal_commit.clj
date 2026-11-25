@@ -213,11 +213,16 @@
   removal is published first (its gateway takes the removal lock; only the log is written), then the read is served
   from the published log. Each such read waits for the publication; none is served from the log before it."
   [name conn]
-  (when-let [p (privacy/pending name)]
-    (erase/erase! name conn {"commandId" (get p "commandId") "selectors" (get p "selectors")}))
-  (let [state (first (erase/request-cut name conn (erase/sync! conn)))]
-    (when (:committed-pending state) (privacy/unavailable!))
-    state))
+  (let [started (System/nanoTime) p (privacy/pending name)]
+    (when p (erase/erase! name conn {"commandId" (get p "commandId") "selectors" (get p "selectors")}))
+    (let [state (first (erase/request-cut name conn (erase/sync! conn)))
+          ms (/ (- (System/nanoTime) started) 1.0e6)]
+      ;; [DX-ERA2 fifth pass] each such wait is counted and logged (its distribution is measured on the stack)
+      ((requiring-resolve 'triplex.gateway.stats/bump!) [:removalReadWaits] 1)
+      (println (json/write-str {"schema" "triplex.removal-read-wait.v1" "database" name "seq" (get p "seq") "ms" ms
+                                "published" (not (:committed-pending state))}))
+      (when (:committed-pending state) (privacy/unavailable!))
+      state)))
 
 (defn consistent?
   "Request time (erase/request-cut): the data and the log agree, declarations included. With the commit boundary,

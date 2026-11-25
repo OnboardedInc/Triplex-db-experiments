@@ -1020,11 +1020,12 @@
               pin (head conn) t0 (d/basis-t (d/db conn))
               remove-x #(offers/route name "v2" "erase" {"commandId" % "selectors" [{"entityId" x "attribute" ":v"}]})
               r1 (with-held name (frame "early" x v nil (head conn)) #(expect "named-absent" (remove-x "rm-n1") [200 nil]))]
-          (expect "named-absent: a creation prepared before the removal, sent after it" r1 [409 "CasConflict"])
+          ;; [DX-ERA2 fifth pass, R2-2] the terminal answer: a removal naming its subject landed after its frame
+          (expect "named-absent: a creation prepared before the removal, sent after it" r1 [409 "ErasureReplayDeclined"])
           (check! "named-absent" (= 1 (rs/native-entity-seq (d/db conn) x)) "the named entity's sequence moved with no row")
           (let [r2 (with-held name (frame* "import-early" x ":v" vi nil (head conn) {:actor "bulk-import"})
                      #(expect "named-absent" (remove-x "rm-n2") [200 nil]))]
-            (expect "named-absent: an import frame prepared before a removal, sent after it" r2 [409 "CasConflict"]))
+            (expect "named-absent: an import frame prepared before a removal, sent after it" r2 [409 "ErasureReplayDeclined"]))
           (absent-from-routes! "named-absent" name [x] pin t0 [v vi])
           (let [late (offers/send name (frame "late" x vl nil (head conn)))]
             (expect "named-absent: a creation sent after the removal (new data)" late [200 nil])))))))
