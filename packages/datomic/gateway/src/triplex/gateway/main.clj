@@ -13,6 +13,7 @@
             [triplex.gateway.question-reader :as qr]
             [triplex.gateway.subject-owners :as subject-owners]
             [triplex.gateway.subject-create :as subject-create]
+            [triplex.gateway.omit-protected :as omit-protected]
             ;; [DX-INT5, the form of DX-XQ10] Last: it fills lean/prefetch-hook with TX2_READ_PREFETCH=1; loaded before
             ;; commit.clj it moved the stored functions' identities with every option off (READINESS.md, step 0).
             [triplex.gateway.uncached :as uncached])

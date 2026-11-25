@@ -1,5 +1,6 @@
 (ns triplex.gateway.omit-protected-test
-  (:require [clojure.test :refer :all] [clojure.data.json :as json] [triplex.gateway.privacy :as privacy]))
+  (:require [clojure.test :refer :all] [clojure.data.json :as json] [triplex.gateway.privacy :as privacy]
+            [triplex.gateway.omit-protected]))
 
 ;; [DX-RPT1] "omitProtected": true (privacy/*omit-protected*) sends no protected value: rows of a protected attribute
 ;; leave with every value column empty and type "protected"; change records of a protected attribute leave with the

@@ -204,21 +204,15 @@
               :created_by :entity_type :schema_version :tx_id])
 (def payload-cols [:value_string :value_number :value_boolean :value_datetime :value_json])
 
-(defn- omitted [row attrs]
-  (cond
-    (= ":_tx/change" (:attribute row))
-    (let [change (json/read-str (:value_json row))]
-      (if (and (contains? change "value") (attrs (get change "attribute")))
-        (assoc row :value_json (json/write-str (assoc change "value" {"type" "protected"})))
-        row))
-    (attrs (:attribute row)) (assoc (reduce #(assoc %1 %2 nil) row payload-cols) :value_type "protected")
-    :else row))
+;; [DX-RPT1, moved by DX-INT5] The omitting function lives in omit_protected.clj, which main.clj loads last and which
+;; fills this hook: a function defined here compiles before commit.clj and moved the stored functions' identities.
+(def omit-hook nil)
 
 (defn masked [row]
   (if-not *cut* row
     (let [sealed? (:sealed *cut*) attrs (:attrs *cut*)]
       (cond
-        *omit-protected* (omitted row attrs)
+        *omit-protected* (omit-hook row attrs)
         (= ":_tx/change" (:attribute row))
         (let [change (json/read-str (:value_json row)) id (get change "tripleId")
               attr (get change "attribute") marker (get-in *cut* [:erased id])
@@ -261,7 +255,8 @@
   (zipmap columns (json/read-str (subs text (packed-tail text)))))
 
 (defn text [^String bytes]
-  (if (and *cut* (or *omit-protected* (:sealed *cut*) (seq (:erased *cut*))))
+  ;; [DX-INT5] `if` inside the first clause keeps this `or` at two clauses (one more moved the stored identities).
+  (if (and *cut* (or (if *omit-protected* true (:sealed *cut*)) (seq (:erased *cut*))))
     (let [end (packed-tail bytes)
           values (json/read-str (subs bytes end))
           row (zipmap columns values)
