@@ -443,12 +443,15 @@
       (let [[conn db] (trace/span "privacy/current-data" "gateway"
                         (let [conn (connection (db-uri name))] [conn (d/db conn)]))]
         (cond
-          ;; [DX-S6b] S5 R3-2: the reserved account prefix is closed on the removal and declaration routes too (they
-          ;; store their command ID as a claim).
           (and (= :post request-method) (= action "protection"))
-          (response 200 (erase/declare! name conn db ((requiring-resolve 'triplex.gateway.account-claims/checked) (request-json body))))
+          (response 200 (erase/declare! name conn db (request-json body)))
           (and (= :post request-method) (= action "erase"))
-          (response 200 (erase/erase! name conn ((requiring-resolve 'triplex.gateway.account-claims/checked) (request-json body))))
+          ;; [DX-ERA6, the save line's third review R3-2, route 2] a removal's command ID is stored as a claim: it may not
+          ;; begin with the reserved account prefix (400 InvalidValue, as on every other route), so a removal can never
+          ;; take an account's scoped command ID first
+          (let [input (request-json body)]
+            (when (map? input) ((requiring-resolve 'triplex.gateway.account-claims/check-ids!) [(get input "commandId")]))
+            (response 200 (erase/erase! name conn input)))
           (and (= :post request-method) (= action "restore-erasure"))
           (response 200 (erase/replay-after-restore! name conn))
           :else

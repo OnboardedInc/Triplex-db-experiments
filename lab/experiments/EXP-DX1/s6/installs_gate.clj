@@ -133,7 +133,7 @@
 
 (deftest every-route-refuses-the-reserved-prefix
   ;; S5 R3-2 route 2: every route that stores a command or operation ID refuses one that begins with the prefix, and
-  ;; nothing is stored. Walks every write route the gateway serves.
+  ;; nothing is stored. Walks every route that takes a command or operation ID (a declaration takes none).
   (reference/in-scope
     (fn [name conn]
       (reference/route name "v1" "protection" {"attributes" [":p/secret"] "sealed" false})
@@ -143,7 +143,6 @@
                     "transact (operation)" #(reference/send name (save conn {:operation bad :facts [{:owner "acct/a20/subject/s" :field ":a/f" :type :string :value "x" :pred nil}]}))
                     "fence" #(reference/route name "v1" "fence" {"operationId" bad})
                     "erase" #(reference/route name "v1" "erase" {"commandId" bad "selectors" [{"entityId" "acct/a20/subject/s"}]})
-                    "protection" #(reference/route name "v1" "protection" {"commandId" bad "attributes" [":p/secret"] "sealed" false})
                     "claim" #(reference/route name "v1" "claim" {"commandId" bad "receipt" true})
                     "begin" #(reference/route name "v2" "begin" {"commandId" bad "ids" []})
                     "command" #(reference/route name "v2" "command" {"commandId" bad})}

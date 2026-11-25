@@ -302,15 +302,6 @@
   (when (some reserved? ids)
     (throw (ex-info "IDs may not begin with the reserved account prefix" {:status 400 :code "InvalidValue" :write-policy true}))))
 
-(defn checked
-  "A request body with no client ID that begins with the reserved prefix (`commandId`, `operationId`, every claim's
-  `commandId`), else refused 400. Returns the body."
-  [input]
-  (when (map? input)
-    (check-ids! (concat [(get input "commandId") (get input "operationId")]
-                        (map #(when (map? %) (get % "commandId")) (get input "claims")))))
-  input)
-
 (defn- tx-accounts
   "The accounts of the business entities a transaction wrote (their revision changed in it), from the log; nil among
   them for a business entity of no account."
