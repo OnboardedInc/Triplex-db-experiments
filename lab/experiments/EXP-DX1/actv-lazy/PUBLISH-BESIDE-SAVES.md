@@ -35,8 +35,17 @@ settle. Section 0.4 said a Publish could share a physical transaction with saves
 there (R7, corrected in 0.4).
 
 **What changed.** The three switches are gone as behaviour. Each became a one-way setting stored in the account's own
-origin fact, which every process reads and which a build that does not know it refuses (0.8). Every record a Publish
-recovers by its command ID must have written that account's own documents (0.9). The rest in 0.9 to 0.12.
+origin fact, which every process reads and which a build that does not know it refuses (0.8). The variables now only
+allow a process to turn a setting on. Every record a Publish recovers by its command ID must have written that account's
+own documents (0.9). Section 0.10 states R10's lifetime limit, 0.11 the rest, 0.12 each finding with its test, 0.13 the
+gates at the head.
+
+**What is still open from the second review.** R3 for a Publish's own command ID: another account that can compute it
+can still read the record or take the ID first (a refusal, never a wrong acknowledgement); the fix is the save line's
+account claims in the gateway (follow-up 10). R10: the lifetime limit is real until retired ledger items are removed
+(follow-up 11). An old build still running at the transition can land one plan it made before it (0.8; the rollout
+order closes it). Three of four options-off gate runs at this head stopped on one save of the gate's own save tape;
+the fourth passed, as did the earlier code's control (0.13). Cause open.
 
 ### The first review (`REVIEW.md`), as written after it (2026-11-24; the first commit after it at 19:56 local)
 
@@ -180,6 +189,12 @@ here (follow-up 5).
 
 ### 0.4 Group commit
 
+**[after the second review] Tested on a stack, exact.** Run `G4grpc` (0.13): every gate part with the write gateway's
+group commit on and saves on the general path; 33 of 50 Publishes shared their Datomic transaction with 1 to 5 saves,
+in every part, and every check held (every read pinned between a read and its record, every racing save, every
+notice and ledger). `G4grp` ran the adversarial, kill, live and enrol parts the same way and held. Not run: group commit
+with subject saves on their own path (there a Publish groups only with other general commits, R7).
+
 **[corrected after the second review, R7]** In the toy's `load-fair` configuration a subject save never enters the
 group lane (the write gateway runs `TX2_SUBJECT_SAVE=1`, and a subject save goes straight to `d/transact-async`,
 `storage.clj` 419-447), so there a Publish can group only with other general commits; with group commit on, no group
@@ -208,9 +223,9 @@ gateway with `TX2_GROUP_COMMIT=0` for every `load-fair` run (`ha1/stack.ts` 572-
   event, none of which is a subject with a covering owner root (the one shortcut there assumes no grouped write touches
   such a subject's root, `group_cut.clj` `entity-slice`), so a read pinned at the save's position `q - 1` inside the
   group would see the previous release, as the guard's argument needs.
-- **Not tested.** No run had a Publish in a group. Until a gate runs it (the gate with the write gateway's group
-  commit on, checking every read pinned inside each group that holds a Publish), `TX2_PUBLISH_BESIDE` should not be run
-  with `TX2_GROUP_COMMIT=1` (follow-up 6).
+- **Not tested [superseded: tested after the second review, above].** No run had a Publish in a group. Until a gate
+  runs it (the gate with the write gateway's group commit on, checking every read pinned inside each group that holds a
+  Publish), `TX2_PUBLISH_BESIDE` should not be run with `TX2_GROUP_COMMIT=1` (follow-up 6).
 
 ### 0.5 A transactor and a gateway restart, and ledgers in parts, on a stack
 
@@ -232,6 +247,8 @@ account's releases in order (328) and its 8 ledgers in parts equal to the oracle
 same three cases the same way before it went on to the gateway. Each restart returned in about 0.5 s
 (`docker restart`); the refused offers are the peers reaching the transactor again afterwards.
 
+**[after the second review] A gateway restart: tested** (run `G4res3`, 0.13), on fixed host ports.
+
 **A gateway restart: not tested.** The first full run (`Gres3`) went on to restart the write gateway: every later offer
 was refused with `ECONNREFUSED` on the gateway's old host port for two minutes. In `load-*` modes the toy stack
 publishes a gateway on a host port the VM assigns when the container starts (`ha1/stack.ts` 109-111; its other modes
@@ -239,12 +256,35 @@ use a fixed port for exactly this reason), so a restarted gateway can come back 
 it. The part now restarts the write gateway only with `DX_ACT8_RESTART_ROLES=active,write`; a gateway restart needs the
 fixed-port publication of the HA drills (follow-up 9).
 
+**[after the second review] 1,000 forms with ledgers in parts on a stack:** run `G4k` (0.13), exact.
+
 **Ledgers in parts on a stack:** the gate's `beside` part publishes and settles the 200-form, 200-policy release with
 `TX2_NOTICE_LEDGER=parts` (runs `G1f`, `G1f2` and, options off, `Goff`; section 8), and the final check reads every
 ledger in parts through the recorder's own reader; ACT6's gate at 200 forms (run `R3`) is the options-off check. 1,000 forms in parts ran in the
 fuzzer only (30 schedules).
 
 ### 0.6 What is still not tested
+
+**After the second review** (the list below it is as written after the first; group commit, 1,000 forms in parts on a
+stack and the gateway restart have run since, 0.13):
+
+- **R3 for a Publish's command ID:** another account that can compute it can read its record or take it first (S1,
+  S2: a refusal or a read, never a wrong acknowledgement). Waits on the one account-claims mechanism (0.9, follow-up 10).
+- **R10's lifetime limit** stays until retired ledger items are removed (follow-up 11).
+- **An old build in flight across a transition** on a stack: shown in process only (settings S2, S4); the fuzzer did
+  not reach a frame of it landing late (0 of 5,000), and its negative control without the origin guard was not caught
+  by the fuzzer (S3 catches it).
+- **A rollout on a stack:** this build without permission beside an old build, then one process given permission. The
+  pieces ran (the options-off runs; the permission runs; the fuzzer's mixed fleet) but not that sequence on one stack.
+- **Two databases**, and a database restored from a backup taken before a transition: the processes that cached
+  "settings on" would not write the transition again until they restart (they still follow what is stored).
+- **Three options-off gate runs stopped on one save of the gate's save tape** (0.13, `G4off` to `G4off3`; one refused
+  as an assertion ID already in history); `G4off4` and the control `Goffctl` passed. Cause open.
+- **A write gateway killed with a commit in flight:** its restarts in `G4res3` failed no commit (requests sent during its
+  stop completed); a `docker kill` was not run.
+- The enrolment walk beside a removal (follow-up 5) and the cause of the original one-try refusal (R6).
+
+As written after the first review:
 
 - Group commit with a Publish in a group (0.4).
 - The enrolment walk beside a removal (0.3), and a removal on request on the held toy stack (no shared removal
@@ -281,7 +321,22 @@ Branch `exp/DX-ACT8-publish-beside-saves`, from `2e7ae66c4` (the head the review
 | `4e2811bb5` | The restart part restarts the transactor by default, the write gateway only on request | `beside-gate.ts` |
 | the commit after `4e2811bb5` (the branch head when this was written) | This page: section 0, the corrections marked "[corrected after the review]", the options table, the runs after the review (section 8), 9.1's options-off reruns, the evidence (section 14), follow-ups 0 and 4 to 9 | `PUBLISH-BESIDE-SAVES.md` |
 
-New options, all off by default: `TX2_ACCOUNT_KEYS`, `TX2_SETTLE_FRAME_GUARDS`, `TX2_LEDGER_CAP_AT_PUBLISH`; gate-only:
+**After the second review**, from `bf377c57f` (the head the second review read):
+
+| Commit | What | Files |
+| --- | --- | --- |
+| `9208250f4` | Merge of the second review (`5bbb3da09`): `REVIEW-2.md`, its 18 tests, its fuzz dimensions (shared keys, mixed options, single layout), its stack switches | `act10/REVIEW-2.md`, `review2.test.ts`, `fuzz.ts`, `memstore.ts`, `ha1/stack.ts` and the holder lists |
+| `1b3e0deee` | The three options become one-way settings in the account's origin (0.8); ownership of every recovered record (R1, S3); the `joined:v2/<n>/<account>/<id>` form (R8); random definitions and settings command IDs (S2); the cap's lifetime message (R10); the adapter's refusal code (R6); the review's tests assert the fixed behaviour; the stack harness's group commit and fixed ports for holder DX-ACT8; a 1,000-form gate case | `store.ts` (`originSettings`, `controls`), `join/account-settings.ts` (new), `account.ts`, `definitions.ts`, `archive.ts`, `recorded.ts`, `packages/datomic/src/DatomicStorageAdapter.ts` (and its `dist`), `act10/*.test.ts`, `memstore.ts`, `fuzz.ts`, `ha1/stack.ts`, `beside-gate.ts` |
+| `8218b4300` | The fuzzer models a mixed fleet process by process (0.13); `settings.test.ts`; two diagnostic negative controls (`DX_ACT8_INJECT=no-legacy`, `no-origin-guard`); a store may carry its process's permits | `fuzz.ts`, `memstore.ts`, `settings.test.ts`, `account-settings.ts`, `account.ts`, `archive.ts` |
+| `81ba9e81e` | The held runner and the gate check a joined record under the form in force at its position (`joinedCommandIdAt`); the held ledger adopts a settings transition another process wrote. The first stack run at `8218b4300` stopped at the runner's own check, which expected the unscoped form | `account.ts`, `held-campaign.ts`, `beside-gate.ts` |
+| `73f1d98a6` | The fuzzer excuses a refused guarded Publish only when a transition of its own account landed while it ran | `fuzz.ts` |
+| `2abece6fa` | The gate's restart part begins the frame case's restart before the second settlement frame of either kind | `beside-gate.ts` |
+| `805214785` | The restart part runs a step again on "Transactor not available" | `beside-gate.ts` |
+| `f34694edf` | The gate's uncertain-save stop names the saves' errors | `beside-gate.ts` |
+| the commit after `f34694edf` | This page: 0.0, 0.4 to 0.13, sections 8, 14 and 15 | `PUBLISH-BESIDE-SAVES.md` |
+
+New options, all off by default: `TX2_ACCOUNT_KEYS`, `TX2_SETTLE_FRAME_GUARDS`, `TX2_LEDGER_CAP_AT_PUBLISH` (since
+`1b3e0deee` each only allows a process to turn the account's setting on); gate-only:
 `DX_ACT8_ADV_OWN`, `DX_ACT8_PARTS=restart`, `DX_ACT10_STACK`. Nothing in the Datomic sources changed (the private image
 was rebuilt only because the merge changed the harness's `runtime.mjs`, which is among the image's inputs).
 
@@ -324,6 +379,8 @@ turn the setting on". They are never what a request's behaviour depends on.
   differs from the stored mode refuses to settle the account (`SettingsConflict`), and to upgrade it if it has no
   permission.
 - **What a process without permission does:** it follows the stored settings, whatever its environment.
+- **Where a process's permission comes from:** its environment (`account-settings.ts` `permitsOf`). A store may carry
+  `permits` instead; only the in-process fuzzer uses that, to model a fleet's processes in one Node process.
 
 **A Publish in flight across the transition.**
 
@@ -334,11 +391,30 @@ turn the setting on". They are never what a request's behaviour depends on.
 
 **What an old build does when it meets a setting.** Every build since 2026-11-21 (`a50e5dbf1`) compares the held
 origin fact exactly with `{ profile, held }` in `controls` (`store.ts`, before this change lines 279-281). Every Publish
-plan and every settlement turn of such a build calls it. So once an account has any setting, an old build's Publish and
-settlement of that account fail with an assertion before they plan or write anything. It cannot publish twice, write an
-unguarded frame, or write a ledger in the wrong mode there. Before any setting exists an old build behaves as a new
-build with none stored; that includes the old F1 shape in old builds only. This build refuses a settings version or
-field it does not know (`originSettings`), so the same holds for the next change.
+plan and every settlement turn of such a build calls it (a values turn in `Archive.turn`, a notice turn in
+`RecordedNotices.turn`). So once an account has any setting, every Publish and every settlement turn an old build
+*starts* fails with an assertion before it plans or writes anything. Before any setting exists an old build behaves as
+a new build with none stored; that includes the old F1 shape in old builds only. This build refuses a settings version
+or field it does not know (`originSettings`), so the same holds for the next change.
+
+**The window of an old build, and the rollout order that closes it.** An old build guards nothing on the origin row. So
+a plan it made before the transition can still commit after it: at most one Publish and one frame per old-build
+process, each under the old rules. Tested in `settings.test.ts`:
+
+- **Its Publish (S2):** lands after the transition under the unscoped key; the resend through this build finds it as the
+  account's own and returns its receipt (one release); the old build's next Publish refuses. So it cannot land twice.
+  That one release was not checked by the cap, like a release landed before the setting.
+- **Its frame (S4):** a values frame planned before the transition lands after a later release that landed after it
+  (one value page); the same process's next turn refuses. So a pause acknowledged after the transition can be followed
+  by at most one frame from each old-build process still running then.
+- **This build has no such window (S1, S3):** its Publish and its progress frame are guarded on the origin row, so a
+  plan made before the transition is refused at its commit and planned again; without that guard (the negative control
+  `DX_ACT8_INJECT=no-origin-guard`) the frame lands after the later release.
+
+**The rollout order:** first run this build on every process with no permission. While no setting exists it writes
+what the old build wrote (the unscoped key, no cap, no frame guards); it differs only by one more row read, and by one
+more `EntityState` guard on a guarded commit, which is not stored. Then give the permission to one process. At that
+transition no old build is running, so nothing lands under the old rules after it.
 
 **Records from before the setting, and who owns them afterwards.**
 
@@ -350,7 +426,7 @@ field it does not know (`originSettings`), so the same holds for the next change
 - **The `joined:<account>/<id>` form of `bf377c57f`:** not read. It existed only in test databases written with that
   commit's per-process switch.
 
-**What it makes impossible** (each checked in 0.10):
+**What it makes impossible**, with the rollout order above (each tested in 0.12 and 0.13):
 
 - **R2:** a command landing twice in a mixed fleet. Every process that can still act on the account uses one key form
   at a position, and finds the other form.
@@ -363,6 +439,8 @@ field it does not know (`originSettings`), so the same holds for the next change
 
 **What it does not make impossible.**
 
+- One Publish and one frame per old-build process planned before the transition, if the rollout order is not kept
+  (above).
 - A process from before 2026-11-21: no held account ran before then.
 - A process that writes the origin fact itself with other values.
 - R3's learn and deny for Publish IDs (0.9).
@@ -393,16 +471,41 @@ acknowledged with a record that is not its own.
   claim as `acct-id/v1/<n>/<account>/<id>`, with the account taken from the entities the write writes (the request must
   name the same account). A lookup scoped by account finds only that account's claims, and its legacy plain claims by
   the log.
-  - **What the join layer needs from it:** the gateway must count a held account's Publish entities as that account's.
-    The release entity `lazy/account/releases/<account>` matches a fixed pattern. The notice documents are named by a
-    hash of the database and the account's document name, which the gateway can recompute for the fixed names
-    (`joined-<account>`, `settlement-values-<account>`, `settlement-notices-<account>`, `settlement-control-<account>`).
-    A Publish would then name its account; its claim would be stored scoped by it; another account's save under the
-    same client ID would be stored scoped by that account. Neither could claim, find or deny the other's.
+  - **What the join layer needs from it.** Today the gateway gives a Publish no account: `account_claims.clj`
+    `account-of` needs every business entity a write touches to be one account's, by the `acct/<account>/` prefix (or
+    the stored `:subject/account`), and a Publish writes `lazy/account/releases/<account>` and notice documents named
+    `notice:v1:<hash>`. Two changes there: `account-of-id` also reads the account from
+    `lazy/account/(releases|origin|clock|mask|cursor)/<account>`, and `notice:v1:` entities count as journal entities
+    (as the claim and the transaction's own entities do). Then a Publish, whose only non-journal entities are its
+    account's metadata names, has that account. The join store is opened with the SDK's `claimAccount` set to the held
+    account, so its commit and every lookup (`transactionByCommand`) name it. Its claim is then stored as
+    `acct-id/v1/<n>/<account>/joined:...`; another account's write under the same client ID is stored scoped by that
+    other account. Neither can find, take or deny the other's (S1 and S2), and a plain claim from before is found only
+    for the account whose entities it wrote (S6's `owned?`).
   - **Not built here.** It needs the save line's branch, which is not merged into this one, and a gateway change with
-    its own image (follow-up 10). One mechanism: the join layer's `joined:v2/...` form names the account inside the
-    client's ID only so that two accounts do not collide by accident. The gateway's account claim is what stops one
-    account taking another's.
+    its own image (follow-up 10).
+
+**One mechanism for both lines (2026-11-25, after the save line's second review, `s5/REVIEW-2.md` `9dc800e7b`).**
+Today there are two: this page's `joined:v2/<n>/<account>/<id>` under the account's `accountKeys` setting (the join
+layer chooses the form), and the save line's `acct-id/v1/<n>/<account>/<id>` under `TX2_ACCOUNT_CLAIMS` (the gateway
+chooses it). The save line's review found the same break in its form as R2 here: a fence and a save stored under two
+forms (a mixed fleet; a replan retry rebuilt after scoping), lookups open to the reserved prefix, and a plain claim of a
+save across two accounts owned by no account. **The one to keep is the gateway's**, fixed as that review asks, because
+the gateway is where every writer's claim is stored and looked up (saves, Publishes, settlement frames, fences) and
+because only it can tie a claim to the account whose entities the write writes, which stops another account taking a
+computed ID (S2). What both lines would then share:
+
+| Part | One rule for both lines |
+| --- | --- |
+| The setting | One one-way setting in the database, read at every commit, lookup and fence by every gateway (and by the join layer through them); a gateway or a join build that does not know it refuses the database instead of using the plain form. Whether it is per account or database-wide is the save line's choice; the join layer needs only to read it |
+| The key form | `acct-id/v1/<n>/<account>/<id>`, chosen once per operation the same way on every path (the save, its replan retry, the fence, a Publish), never by the client |
+| The ownership check | The account of a write is the account of the entities it writes (`acct/<account>/`, `:subject/account`, and for the join layer `lazy/account/(releases\|origin\|clock\|mask\|cursor)/<account>`, with `notice:v1:` entities counted as journal entities); the request must name the same account. A plain claim from before is found only for the one account all its entities belong to; a plain claim of no one account stays the database's (it refuses every account, as today), so it is never committed twice |
+| The reserved prefix | `acct-id/v1/` refused in every route that takes an ID: save, claim, command, begin, operation, fence |
+
+When that lands, the join layer drops its `joined:v2` form and its `accountKeys` setting: a Publish's client ID is
+`joined:<id>`, it names its account, and `original` keeps its ownership check (0.9's first paragraph) as a second check
+of what the gateway returns. No record under `joined:v2/...` exists outside test databases. The join layer's other
+settings (frame guards, the cap, the ledger mode) are not about IDs and stay in the account's origin fact.
   - **Until then:** reading another account's record by command ID (S1) and claiming its next Publish ID first (S2)
     remain possible for a writer that can compute the ID. Both give a refusal or a read, never a wrong acknowledgement
     and never a wrong write.
@@ -428,13 +531,94 @@ is real in this ledger shape**:
 
 - **R6:** the adapter's refusal message now carries the gateway's code and status ("Datomic transaction was rejected
   (TransactionRejected, 400)", `DatomicStorageAdapter.ts`), so the next one-try refusal names what refused it. The gate
-  keeps counting tries.
+  keeps counting tries. In the runs after this change no Publish under the account guard had a refused try other than
+  by a rival Publish of its own account (`G4`, `W4`, `G4k`: 0; `G4grpc`: the 2 of the rival-Publish step, by design,
+  "Source changed at admission"); the only refusals with the new message were the offers refused while peers reached a restarted
+  transactor (`G4res`), all `TransactionRejected, 400`. The cause of the original one-try refusal is still open.
 - **R7:** section 0.4 corrected. In the toy's `load-fair` configuration a subject save never enters the group lane
   (`TX2_SUBJECT_SAVE=1`), so a Publish groups only with other general commits. With saves on the general path the
   review ran it (H2: 11 of 11 Publishes grouped with saves, the gate held).
 - **R8:** closed by the `joined:v2/<n>/<account>/<id>` form for every held account under the setting (0.8).
 - **R9:** no change. Refusing a frame on any change of the control row is what makes the pause bound exact; each
   refused frame plans again and the release ends stored.
+
+### 0.12 Each second-review finding, its fix, and the test that now passes
+
+In process (`act10/review2.test.ts`, the review's 18 tests with their assertions turned to the fixed behaviour;
+`act10/settings.test.ts`, new). Each test's own line in the log (`agents/DX-ACT8/act10/r2/tests-3.log`) gives the
+values quoted. Before any change the same 18 tests reproduced every fault as the review found it (`repro-before.log`).
+
+| # | Fix | Test now | Before (the review's run) |
+| --- | --- | --- | --- |
+| R1 | Every record `original` recovers, under both key forms and in every layout, must have written this account's own joined documents (0.9) | A2: account 0 (single layout) publishes its own release (`zGetsBsReceipt: false`, 1 release); A1, A2b, D3m: each account its own record | A2: account 0 got account B's receipt, 0 releases |
+| R2 | The key form is the account's stored setting, read at the plan's position; both forms are looked up (0.8) | D1m: sent under the setting, resent by a process without the variable: the same record, 1 release (`joined:v2/6/acct-a/r1` only); D2m the reverse; settings S1 (a transition inside the Publish: refused once, planned again, scoped key, 2 releases); the mixed fuzzer (0.13); negative control `no-legacy` caught | D1m: 2 releases |
+| R3 | Definitions and settings command IDs random under the setting; ownership check against forged records (0.9). Publish IDs: designed, not built (follow-up 10) | S1 (learn): another account can still read the record by its computed ID (open); S2 (deny): the definitions ID can no longer be taken (`takenDefs` lands, the Publish by reference still lands at 18), the Publish ID still can (refused twice, open); S3 (forge): the forged record is not taken (`resendIsForged: false`; the resend is refused, 1 release) | S3: the forged record acknowledged |
+| R4 | The ledger mode is stored with the settings; the cap and every settler use it; a process naming another mode refuses (`SettingsConflict`) | C2: the settler naming `whole` refuses; a settler naming none records with the stored `parts` ("recorded") | C2: `FrameTooLarge` after the release was accepted |
+| R5 | `frameGuards` is the account's setting; frames are guarded on the origin row | G2: a second settling process without the variable: 0 frames after the pause (and with: 0); settings S3: a frame planned before the transition is refused (control `no-origin-guard`: 1 page after the later release) | G2: 6 frames after the pause |
+| R6 | The adapter's refusal names the gateway's code and status | `G4res3`: every offer refused while the peers reached a restarted transactor reads "Datomic transaction was rejected (TransactionRejected, 400)"; the gate runs count tries (no unexplained refused try since, 0.11) | the code hidden |
+| R7 | Section 0.4 corrected | — | — |
+| R8 | Under the setting every held account's key is `joined:v2/<n>/<account>/<id>` | B1: 74,088 (account, ID) pairs, 0 collisions, account 0's deadline key no other's | B1: account 0's deadline key = account `deadline`'s |
+| R9 | No change (0.11) | G1: pace change and pause-resume each refuse 2 frames, all end stored | the same |
+| R10 | The limit is stated as a lifetime limit; message and page say what refuses and what removes it (0.10) | C5 (an account renaming its 150 notice policies at every release): 10 releases publish, the 11th (1,650 distinct) is refused with the lifetime message; then 8 releases of 10 new policies publish before one is refused; the first release again (its policies already counted) and one with no policies still publish; C3: the boundary at 1,592 distinct policies (1,592 publishes and settles, 1,593 refused) | C5: the same counts; the message said only "fewer notice policies" |
+
+New in `settings.test.ts`: S1 to S4 (the transition inside a Publish and inside a frame, this build and an old build,
+0.8) and S5 (a settings version or field this build does not know: refused, "not ones this build knows").
+
+### 0.13 The gates at the head
+
+**In process.** At `f34694edf` (and before at `81ba9e81e`): the review's 18 tests, the earlier 27 (cross-account and
+targeted) and the 5 settings tests: **50 of 50**; the held join's unit tests **31 of 31**
+(`agents/DX-ACT8/act10/r2/tests-5.log`, `tests-join-5.log`). Typecheck of the changed files: no new error (the strict base configuration's index-signature and
+unused-name warnings in the review's harness aside; `archive.ts` 608 as before).
+
+**The fuzzer.** Two campaigns (`agents/DX-ACT8/act10/r2/fuzz/`, each step under one ordinary heavy token):
+
+| Campaign (at `73f1d98a6`) | Schedules | Violating | Of note |
+| --- | ---: | ---: | --- |
+| **All on**: every process allowed every setting, accounts sharing Publish IDs, documents and save command IDs (`ACT10_SHARED=1`); namespaced 20,000, account B in the single-account layout 5,000; each schedule's ledger mode stored by its first transition (30% `parts`) | **25,000** | **0** | 62,471 acknowledged Publishes, 2,448,114 notices and 335,098 ledger reads checked, 9,185 kills, 162,580 and 62,229 saves (22,867 inside a Publish's window), 11,268 transitions (ledger mode moved to `parts`); 18,515 supersessions, each with only the frame that marks it; 2,171 refused Publishes, all in schedules with racing Publishes of one account or a killed publisher (0 excused by a transition) |
+| **Mixed fleet** (`ACT10_MIXED=1`, shared keys): every publisher per phase and every settling process at each restart drawn as this build allowed some of the three settings (each at 60%, at least one), allowed none, or a build from before the settings, each naming `whole`, `parts` or no ledger mode; nine phase patterns with resends of earlier commands across phases; the baseline holds no setting; 2,500 namespaced, 2,500 single layout | **5,000** | **0** | 20,180 acknowledged Publishes, 496,384 notices, 1,375 kills, 13,192 transitions; **0 commands landed twice, 0 wrong acknowledgements**; refusals, each counted and none a violation: 26,438 by a build from before meeting a setting, 5,984 by a process naming a ledger mode the stored one forbids, 1,968 cross-account command ID collisions before the account had `accountKeys` (the first review's F2 shape, a refusal), 7 Publishes refused across a transition of their own account; 64 releases stored by a frame after a later release, none with `frameGuards` on at that release; 0 frames of an old build in flight landed late (the window S4 shows was not reached by the fuzzer) |
+| The cross-account isolation fuzzer, every permission | 2,000 | **0 differing** | 4,440 accounts, 9,840 Publishes, 0 refused in the shared database |
+| Negative controls: the legacy lookup dropped (`no-legacy`, mixed fleet); the origin guard dropped (`no-origin-guard`, mixed fleet); settlement at the read position (`read-cut`); the entity guards dropped (`ACT10_WEAKEN=entity`); 300 each | 1,200 | **caught**: 55, **0**, 14 and 63 | `no-legacy`: commands landed twice. `no-origin-guard` was **not** caught by the fuzzer, which does not land a transition and a later release inside one frame's read and commit; settings S3 does, by hand (1 page after the later release without the guard, 0 with it) |
+
+A first all-on step at `8218b4300` (10,000 namespaced schedules, before the refusal check was narrowed to transitions of
+the Publish's own account) also gave 0 violating.
+
+**On the toy stack** (image `98c95f37c42e`, built from `43472352c`; the Datomic sources of every run commit equal the
+image's, checked before each run; each run's `image.json` names that ID):
+
+"Permissions on" is `TX2_ACCOUNT_KEYS=1 TX2_SETTLE_FRAME_GUARDS=1 TX2_LEDGER_CAP_AT_PUBLISH=1` in every process of the
+run, so the first Publish turns every setting on and the gate's `TX2_NOTICE_LEDGER=parts` is stored as the account's
+ledger mode.
+
+| Run | What | Commit | Result |
+| --- | --- | --- | --- |
+| `S4` | the review's stack part (`DX_ACT10_STACK=1`), permissions on | `73f1d98a6` | **pass**: X1 both accounts publish at 30 and 32 (`secondHasFirstsReceipt: false`, 1 release each); X2 the account's own reuse with another document refused; X3, X4 by reference land (33 to 46); P1 0 value frames after the pause under head and progress; S2 `superseded` under both |
+| `S4-first` | the same | `8218b4300` | stopped at the runner's own check, which expected the unscoped key (`joined:<id>`) where the setting gave `joined:v2/11/account-001/...`; fixed in `81ba9e81e` |
+| `G4` | every gate part (cost, beside, adversarial, kill, live, enrol), permissions on | `73f1d98a6` | **pass**: every Publish the gate records with its tries landed at one try (22; 0 refused tries), the whole-head case refused 2 of 2 by design; the 26 adversarial steps exact; kill, live, enrol exact; 49 Publishes with 531 positions between read and record and 4,248 pinned reads; 6,764 notices in order |
+| `G4grp` | adversarial, kill, live, enrol with group commit on (`DX_ACT10_GROUP=1`) and saves on the general path (`DX_ACT10_GROUP_SAVES=general`), permissions on | `73f1d98a6` | **pass**: 33 Publishes, 351 positions, 2,808 pinned reads, 3,786 notices in order |
+| `G4grpc` | every gate part with group commit on, saves on the general path and the review's causes recorder (`DX_ACT10_CAUSES=1`), permissions on | `73f1d98a6` | **pass**; **33 of 50 Publishes shared their Datomic transaction with 1 to 5 saves** (22 with one, 5 with two, 2 each with three, four and five), in every part (beside 11 of 16, adversarial 17 of 28 including its two inner Publishes, kill 2 of 3, live 3 of 3); 569 positions between read and record with 4,552 pinned reads, 69 racing saves before and 17 after with 86 reads, 6,068 notices in order; 8 refused tries, 6 by the whole-head rule and 2 in the rival-Publish step, both by design |
+| `G4k` | the `beside` part with the 1,000-form, 1,000-policy release (`limits1000`), ledgers in parts, permissions on | `73f1d98a6` | **pass**: the 1,000-form Publish at one try (read 126, record 171, 44 commits between, record 621,193 B); settled 23,700 changes and 8,000 notices, equal to the oracle and the independent rule (8 / 23,700 / 8,000); 8,008 notices in order and the 8 ledgers equal to the oracle, read through the recorder's reader (a 1,000-item ledger is about 60,000 characters by the cap's own estimate, so several parts of 10,240) |
+| `G4res` | the `restart` part, transactor and write gateway, gateways on fixed host ports (`DX_ACT8_FIXED_PORTS=1`), permissions on | `73f1d98a6` | the transactor's three cases **passed** (10, 10 and 0 offers refused while the peers came back, each now named "Datomic transaction was rejected (TransactionRejected, 400)"; then landed, settled 474 / 160 equal to the oracle); the write gateway's `afterRead` and `inside` cases **passed** (restart about 10.3 s; the Publish landed with no failed offer; settled 474 changes); its `frame` case stopped at the part's own check: no second values frame came, so the restart never began. Fixed in `2abece6fa` (restart at the second frame of either kind) |
+| `G4res2` | the same | `2abece6fa` | the transactor's `afterRead` and `inside` cases **passed** again (7 and 9 offers refused while the peers came back, then landed; 474 changes); its `frame` case stopped at the part's own retry rule: a peer answered "Transactor not available" while it reconnected, which the rule did not count as transport. Fixed in `805214785` |
+| `G4res3` | the same | `805214785` | **pass**, all six cases. The transactor: `afterRead` and `inside` 7 and 10 offers refused ("TransactionRejected, 400") while the peers came back, then landed at 13 and 24 (read 12 and 23); `frame`: the restart began before the second settlement frame (a notice frame), that frame's commit was refused, the worker stopped, and the settlement resumed from its durable progress after 7 transport retries (474 changes, 160 notices, equal to the oracle and the independent rule). The write gateway, on fixed host ports: restarts of 14.7, 10.3 and 10.4 s; no offer failed (the commits sent during its stop completed), the Publishes landed at 39, 44 and 54, and in the `frame` case the first settlement run finished. Every read pinned between each read and record exact (23 positions, 184 reads), 488 notices in order and 8 ledgers equal to the oracle |
+| `G4neg` | negative control, settlement at the read position (`DX_ACT8_INJECT=read-cut`), permissions on | `73f1d98a6` | **caught**: "stored changes differ from the oracle for release 2 (read 12, record 28)" |
+| `W4` | the held runner's eight windows with no pause, the account guard, permissions on | `73f1d98a6` | **pass**: 8 of 8 Publishes at one try, 0 refused; every save acknowledged |
+| `R1c`, `R2c`, `R3c` | options off: the held default campaign, ACT5's live cases, ACT6's gate | `73f1d98a6` | **pass**, every count as published (section 9.1): R1 86 changed values and 8 notices, 8 of 8 Publishes at one try inside one second, 8 first answers, 2 reopened pins, 0 read failures, 0 of 7,632 saves refused; R2 474 / 160 (8 / 474 / 160) in each of the six single cases, second-p superseded at 1 subject (420 changes, 1,200 notices) then 3,555, 2,328 notices delivered once and 0 twice; R3 72 subjects, 4 stops (1 inside a ledger's parts), notices 14,400 / 7,200 / 21,672 delivered once, 2 parts per ledger, the independent rule 72 / 42,720 / 14,400, 76 value and 510 notice frames under 8,000 µs, the definitions table 619,097 and 1,233,297 B then refused over 1 MiB, 3,532 B by reference |
+| `G4off` | every gate part, options and permissions off | `73f1d98a6` | cost and beside as `Goff`; stopped in the adversarial window with one save of the save tape unresolved ("Uncertain save": its acknowledgement did not arrive within one second of the window's end; no gateway error in the logs) |
+| `G4off2` | the same | `2abece6fa` | stopped the same way in the first `beside` window (one save of the tape unresolved) |
+| `G4off3` | the same, with the stop naming the save's error (`f34694edf`) | `f34694edf` | stopped in the `beside` part's `large-own3` window: one save of the tape refused by the transactor's commit function, "TRIPLEX_IDENTITY f/id" (an assertion ID already in history), 11 ms after it was due; the transactor's log has the same refusal. Every Publish and settlement check before it held |
+| `Goffctl` | control: the same gate at the first review's head (`653a17183`, the code of `Goff`), at the same hour | `653a17183` | **pass**: 49 Publishes, 537 positions, 4,296 pinned reads, 6,764 notices in order |
+| `G4off4` | the same as `G4off3` | `f34694edf` | **pass**: every part (cost, beside, adversarial, kill, live, enrol); every Publish the gate records with its tries at one try, the whole-head case refused 2 of 2 by design; the 26 adversarial steps exact; 49 Publishes, 533 positions, 4,264 pinned reads, 95 racing saves before and 12 after with 107 reads, 6,764 notices in order and 8 ledgers equal to the oracle, as `G4` |
+
+**The three options-off stops are open.** Each was one save of the gate's own save tape, not a Publish or a
+settlement check: in `G4off3` a save refused on its first and only attempt because an assertion ID it carried was
+already in the database's history; `G4off` and `G4off2` recorded no error. The tape's saves take ordered identities
+(`TX2_SUBJECT_ORDERED_IDS=1`, a random token per save). No permission run of the gate stopped this way (`G4`,
+`G4grp`, `G4grpc`, `G4k`: 0 of 4), and `Goffctl` and `G4off4`, run right after, passed. With no setting stored the
+options-off path writes what it wrote before this change (0.8), and nothing changed in the save path except the
+refusal's message; but three of four stops at this head against none in the earlier code's runs (`Goff`, `Goffctl`)
+is not explained. Next: record each tape save's attempts (its identity token and every answer) so the next such stop
+names the save and its first writer.
 
 ## 1. The problem in one paragraph
 
@@ -702,6 +886,8 @@ run; each run's `image.json` and the VM's own container list name that ID for ev
 | `Gres4` | the same, the transactor only | `4e2811bb5` | **pass**: the three transactor cases (section 0.5), 328 notices in order and 8 ledgers equal to the oracle |
 | `M2f` | the many-accounts miniature (section 9.5), both options and the fixes on | `59995bd36` | **pass**, with `M2r`'s counts: 50 of 50 Publishes offered at once landed at one try, 0 refused (17 / 43 / 67 commits between read and record); 10 of 10 late enrolments (the head moved 152 to 217 commits during each); 2,367 saves in 323 accounts, 0 refused; 24,713 pinned and 24,363 current reads exact (526,006 rows); 2,343 of 2,343 saves in the feed once, in order; 29,820 changes and 10,605 notices settled for the 50 (121 value and 462 notice frames, 0 refused), 862 / 82 for the late 10; every subject of the 570 accounts read at the end |
 | `Cell` | ACT9's removal cell on the merge with the account tickets, fixes on (section 0.3) | `9481d33f6` (scratch), image `9b98c6a511ef` | **pass**, section 0.3 |
+
+**Runs after the second review:** section 0.13 (the same image, `98c95f37c42e`).
 
 ## 9. Gates
 
@@ -1195,6 +1381,38 @@ built from the scratch merge `9481d33f6`); each run's own record and the VM's co
 | `Gres3` | `Gres3-26e2fd51.tar.gz` | `8e9f022de0e1e157c46b43dde6fb087fc51aa1d4e48d8d14dc189d526f2a178f` |
 | `Gres4` | `Gres4-d2825d2d.tar.gz` | `b7b35dfa52979420e5634626bcaf78e83c617075ad2c91864db12cd02959c2de` |
 
+**After the second review.** Every row below started `sha256:98c95f37c42ebb36f6f4a729f52d7b54388ec150740f4c03d26e01aca5ecf4db`,
+as each run's `image.json` says and, for every run from `G4` on, as the VM's own container list said for every
+container but PostgreSQL's (the recorder started after `S4`).
+
+| Run | Commit | Archive | sha256 |
+| --- | --- | --- | --- |
+| `S4-first` | `8218b4300` | `S4-first-c9f59210.tar.gz` | `d0ce27c855fff140c34d19729e1a52f097080776df44807dd873faa8b1ebec53` |
+| `S4` | `73f1d98a6` | `S4-cc31fcfc.tar.gz` | `ca0caf47df59b6eeb5ccbc66899321cdcdcd0c63f9d29c366cfb1523ecef7573` |
+| `G4` | `73f1d98a6` | `G4-a848e851.tar.gz` | `3cae4785d160324b63d05c45969b84fcc4eb082cb55d673338c7593e481b5949` |
+| `G4grp` | `73f1d98a6` | `G4grp-93fc7911.tar.gz` | `3a4bf007ce042ff9356cffbd3effc6a8256ef2dc48b842f893a25c07d0e665c5` |
+| `G4grpc` | `73f1d98a6` | `G4grpc-ca03da8b.tar.gz` | `f81a6fa7736646940f2f7661070f8c0e822a6d28ef6f60306411224e3fd67bcf` |
+| `G4k` | `73f1d98a6` | `G4k-290fffd3.tar.gz` | `6d0fc194c03348d70aebf448e744959b88b690697006f0db0dc5844d44289e14` |
+| `G4res` | `73f1d98a6` | `G4res-464f57b4.tar.gz` | `373ac2aed32a72ae64a22aad0d16730f54b8f46d623481cf179d2bcaa865ddf4` |
+| `G4res2` | `2abece6fa` | `G4res2-c73e74ce.tar.gz` | `0b152a4b67f6d0614455ff1ded8c1f0790ff343c0b6a8ace6118fdf83e1835fc` |
+| `G4neg` | `73f1d98a6` | `G4neg-8912e90e.tar.gz` | `13f54edb6f19fafff8b67a1006bb0c5c47947dbf56aa9b7101dba31db9b22b43` |
+| `W4` | `73f1d98a6` | `W4-0dd5dbc7.tar.gz` | `ff4d17df775b050f02a6955428713cf72e0d60fe134b8aedea36c99878ea9ba0` |
+| `R1c` | `73f1d98a6` | `R1c-fab7deac.tar.gz` | `6a84211aa91f8a52513d9caad93c1c85006cd50178f4fc0ec3e407e169a9791a` |
+| `R2c` | `73f1d98a6` | `R2c-c63b8503.tar.gz` | `26996c48c2118c31b37115245941377036624f3a8c6b8920ec2cc39d4bef94e1` |
+| `R3c` | `73f1d98a6` | `R3c-769a5214.tar.gz` | `b742c6038f3f1dcd9a9bb03abce0b54e192a4686e8771f327c7e6d14da578cdc` |
+| `G4off` | `73f1d98a6` | `G4off-89b95f71.tar.gz` | `075a8f43f864fb0c755c50a3ec90e8d30aca6681ae4a24c36bef865562358f9f` |
+| `G4res3` | `805214785` | `G4res3-8a3cf0cd.tar.gz` | `d1cb1e2a43f6a61445f56a56fff6f3ecbc57717458bc897dd463ca70f3d96227` |
+| `G4off2` | `2abece6fa` | `G4off2-0040dfe8.tar.gz` | `4a7e47ea349e6c41a3c5e170f9ff1cee6bfc483a50182dee1f1492516bf7cc8f` |
+| `G4off3` | `f34694edf` | `G4off3-2b6af953.tar.gz` | `008b39fa4aae4c17ea415c6dab9a10fe3712c6b0bce5fb3cd52d8a3a5adfd907` |
+| `Goffctl` | `653a17183` | `Goffctl-82461071.tar.gz` | `eab316a755fb4e211a686747569c45d0a7fdaf6f0441b2f906d141a6cc8e43e7` |
+| `G4off4` | `f34694edf` | `G4off4-87c36009.tar.gz` | `09c8649a535a3b6f5193a4b756d83a88794f121840872d6667d9aa3b8b2294cc` |
+
+In process after the second review, `agents/DX-ACT8/act10/r2/`: `repro-before.log` (the review's 18 tests reproducing
+every fault before any change), `tests-3.log`, `tests-4.log` and `tests-join-4.log` (the test phase at `8218b4300` and
+`81ba9e81e`), `fuzz/` (both campaigns' logs, JSON and the commit each ran at; `first-8218b4300/` the earlier all-on
+step), `g4grpc-causes.jsonl` (each landed Publish's Datomic t and its neighbours'), `g4res-restart-partial.json` and
+`g4res2-restart-partial.json` (the restart cases recorded before each stop).
+
 In process (no stack), private evidence `agents/DX-ACT8/act10/`: `repro-before.log` (the review's 16 tests before any
 change), `tests-after.log`, `final/` (the test phase, typecheck and head at `59995bd36` and `eca2e81d1`), `fuzz/` (every
 fuzz run's log and JSON, with the commit each ran at), `compose/` (the in-process checks on the merge with the tickets).
@@ -1247,7 +1465,7 @@ miniature's default). The settlement-frames check (`checks/frames-check-256-defa
    since the enrolment record is now guarded by `EntityState` on its own entities and the census pages and genesis are
    created only if absent (the walk would then only be the runner's ledger check). Gate: ACT9's cell with its two late
    enrolments, which fail today in both arms.
-6. **[after the review] Group commit with a Publish in a group** (section 0.4): a gate with the write gateway's
+6. **[done after the second review: runs `G4grp` and `G4grpc`, section 0.4]** **[after the review] Group commit with a Publish in a group** (section 0.4): a gate with the write gateway's
    `TX2_GROUP_COMMIT=1` (the held runner sets 0 for `load-fair`; an option to set it for the diagnostic gate only), counting
    the groups that hold a Publish and a save (the reply's `groupSize`) and checking every read pinned inside each such
    group. Until then do not run `TX2_PUBLISH_BESIDE` with group commit.
@@ -1259,8 +1477,28 @@ miniature's default). The settlement-frames check (`checks/frames-check-256-defa
    passed. It is not the record clock (with server-assigned record time the gateway raises no clock conflict,
    `commit.clj` 309-312). Keep the native code in `beside.causes`, find which check refuses, and either guard it or
    show it cannot change an answer.
-8. **[after the review] Store the ledger mode with the account.** `TX2_NOTICE_LEDGER` is read by each process; the
+8. **[done after the second review: the ledger mode is stored with the account's settings, 0.8]** **[after the review] Store the ledger mode with the account.** `TX2_NOTICE_LEDGER` is read by each process; the
    Publish-time cap (`TX2_LEDGER_CAP_AT_PUBLISH`) and the settlement must agree on it. Write the mode into the account's
    settlement control (or the enrolment) and have both read it there.
 9. **[after the review] A gateway restart on a stack.** Publish the toy stack's gateways on fixed host ports in a
    diagnostic mode (as the HA drills do) and run the `restart` part with `DX_ACT8_RESTART_ROLES=active,write`.
+   [done after the second review: `DX_ACT8_FIXED_PORTS=1` for holder DX-ACT8, run `G4res3`, section 0.13. The write
+   gateway's restarts failed no commit there: requests sent during its stop completed. A stop that refuses a commit in
+   flight (a killed gateway, `docker kill`) is not run.]
+10. **[after the second review] The account as an authority for a Publish's command ID (R3, learn and deny).** Merge the
+    save line's account claims (`exp/DX-S6-save-line-fixes` `a6d02225c`, `TX2_ACCOUNT_CLAIMS`, `account_claims.clj`)
+    and extend the gateway's rule that takes a write's account from the entities it writes (`account_claims.clj`
+    `account-of-id`) to `lazy/account/(releases|origin|clock|mask|cursor)/<account>`, with `notice:v1:` entities counted
+    as journal entities (section 0.9). The join store is opened with `claimAccount` set to the held account; its claim
+    is stored as `acct-id/v1/<n>/<account>/<id>`, and a lookup by command ID answers only that account. One mechanism with the save line's; the join layer's `joined:v2/...` form stays only
+    so two accounts do not collide by accident. Needs a gateway change and its own image. Gate: S1 and S2 of
+    `review2.test.ts` on a stack (another account can neither read nor take the ID), and the isolation fuzzer.
+11. **[after the second review] Remove retired ledger items, so the cap bounds the ledger in force (R10).** Build
+    `RELEASE-LIMITS.md`'s deferred retraction of old ledger parts: once no reader needs a retired notice policy's items
+    (every event that could deliver them recorded), a settlement frame retracts them. Then the cap can bound the items
+    in force plus what one release adds, and an account that renames its policies every year has no lifetime limit.
+    Gate: C5 with yearly renamed packages past 1,650 distinct policies, every notice and ledger equal to the fold.
+12. **[after the second review] Optional: close the old-build window without the rollout order (0.8).** A transition
+    could also rewrite the progress rows of releases and events still in progress, so that an old build's frame planned
+    before it fails its progress guard. Not built: the rollout order closes the window with no code, and the first
+    frame of a release has no progress row to rewrite.
