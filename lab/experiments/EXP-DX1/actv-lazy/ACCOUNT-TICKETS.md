@@ -60,6 +60,24 @@ account `a`, every other entity to the unscoped account `""` (`removal_scope.clj
 4. **No rule reads another account.** The W0 kernel evaluates one subject's world (`S`); the deep releases map one
    subject's rows (`deep-activation.ts` `policyWorld` asserts `subjectOf(r.entityId) === i` for every row).
 
+**What each kind of derived write reads, from the code** (so which accounts its ticket must name):
+
+| Kind | What it reads | Through | Why nothing outside A and the unscoped account can be among it |
+| --- | --- | --- | --- |
+| Publish of a held account (W1, `owed`) | the account's notice tail, release list, calendar, enrolment record, definitions | `join/account.ts` `publish` | it reads documents only (no subject row: `stats.worlds === 0`); a held account's documents carry the account's own names (`HeldSource.namespace`), definitions are content-addressed and unscoped |
+| Settlement frame (W3) and its archive page | the census page's subject IDs and those subjects' worlds at the marker's cut; its progress row | `join/archive.ts` `turn`, `byteFrame` -> `decision.ts` `worldsAt` -> `heldWorlds` | `heldWorlds` asserts every row's entity and every reference starts with `acct/<A>/` ("Foreign account in a pinned world") and belongs to a requested subject ("Foreign subject in a pinned world"); the subject list is `pl:sNNNNNNNN` of A's census only |
+| Notice frame (W4) | the event's subjects' worlds, their notice ledgers, the cursor | `join/recorded.ts` `turn` -> `worldsAt` (`heldWorlds`) and the account's ledger documents | as W3 for worlds; ledgers and the cursor are A's own documents, holding payloads computed earlier from the same subjects' worlds |
+| Delivery (W5) | A's recorded packets | `recorded.ts` `orderedPackets` | each packet read is asserted to be A's (`p.account === a.db.prefix`) |
+| Staging (S1), a non-held store's Publish (W1') | its own database | `staging.ts`, `store.ts` | a non-held store is one account per database; its ticket names no account and is checked database-wide (unchanged) |
+
+A protected value is a value of a protected attribute on some entity. Subject worlds take subject entities' rows only;
+documents are read by their own document attributes, which no writer here declares protected. So a protected value
+on an entity of A that belongs to no subject is an input of nothing. **A ticket names fewer accounts than its writer
+read only if one of these reads crossed an account, and each such read stops the evaluation instead** (gated:
+`account-tickets.test.ts`, "a held world refuses another account's or another subject's rows", and the cells, where
+every held read of every account passed these assertions). The gateway cannot see reads, so the protection is in the
+client, as DX-ERA2's section 5 case 1 states; every check above also names the unscoped account.
+
 So a derived write or copy of account A can be affected only by removals that touched A's entities or unscoped
 entities. **Per subject is exact too**: the content for subject Y is a function of Y's world only (1 and 4), so a
 removal of subject X's value can change only X's derived content. And an entity under `acct/A/` that belongs to no
@@ -122,6 +140,15 @@ from the check through the recipient's commit:
    the source's native counters of those accounts are at most the ticket's sequence** (read from the source's current
    database value under the locks).
 
+**The order that counts for a delivery is its check, not its commit.** The recipient is another database; no
+transaction there can carry a guard on the source's counters. A delivery whose request gives up (the gateway's 5 s wait
+for its commit) releases the source's account locks while its recipient transaction may still be queued; a removal
+can then declare, and the queued transaction still lands in the recipient (measured: section 10.6, delivery race). Its
+content was checked under the source's locks before the removal could declare, so it is a copy made before the
+removal (section 5) and stays in the recipient. This is so with every option off as well: the database-wide check
+holds the source's database lock with the same release. Closing it needs the removal to wait for deliveries in flight
+(a native in-flight mark in the source that every removal's declaration checks): follow-up 3.
+
 Every removal takes the locks of the accounts its selectors can reach before its native commit and keeps them until
 it ends (`with-bucket-guards` around the whole removal, its declaration included), so between this check and the
 recipient's commit no removal touching those accounts can declare or commit natively; one that already declared,
@@ -175,6 +202,19 @@ contains only B's subjects (`p.account === source.db.prefix` is asserted on read
 none of their bytes and none of what they would be if recomputed.
 
 **What stays (section 5):** a notice recorded before the removal is not removed; it is refused.
+
+**What a removal of subject X in account A does to copies already made from X's value**, gated:
+
+| Copy | What happens | Gate |
+| --- | --- | --- |
+| A's recorded packets holding X's notices; X's notice ledger | kept; refused whenever read, streamed or delivered; A's recorder stops for good once X has a ledger (re-recording is follow-up 1); other subjects' packets and other accounts are served | cell with removals on A's subjects (10.1): A's settle refused 30 times, delivery and read 10 each, 0 of 12 rounds complete; the nine other accounts 0 refused, 46 of 46 complete; `verifyCopy` unit test |
+| A's stored changes (settlement pages) holding X | kept; served only while no removal after the release's stamp touched a stored subject; a new Publish settles again from reads masked by the removal | the same cell (A's settlement refused, then each new Publish's) |
+| Deliveries already made (the recipient's effect records) | untouched: the recipient is another database, the removal does not reach it; the payload stays in clear there | in process: 158 recipient copies made before a removal, counted and left (10.2) |
+| The journal and feed entries of every derived write committed before the removal | readable in clear (the review's F5) | in process: 429 source copies made before a removal, each found only where expected (10.2) |
+
+None of these copies is made after a removal has declared itself natively (section 3.1; for a delivery, after its
+check, section 3.2). The table is today's limit of removal on request: TARGETS 7.3 asks that the removal reach every
+copy of a protected value or anything derived from it, which no option here does.
 
 ## 5. Copies made before a removal (unchanged, and the limit of removal on request today)
 
@@ -289,7 +329,8 @@ subject; 30 s (ten shape) or 50 accounts, one round each, removals in a 51st acc
 | before, 1/s, many (50) | 61 (83, 1,322) | **141 / 24 / 8 / 8** (42 of 50 accounts' Publish refused all three tries) | **0 of 50** | (does nothing else) | none checked |
 | after, 1/s, many (50) | 61 (55, 5,411) | **0 / 0 / 0 / 0** | **50 of 50** | — | 50 of 50 exact; 0 late, 0 twice |
 | after, 1/s, ten | 20 (702, 2,678) | **0 / 0 / 0 / 0** | **55 of 55** | 1 / 0 / 1 / 0 (a Publish try and a delivery whose ticket one of A's removals overtook; both went through on the next try or round) | 10 of 10 exact; 0 late, 0 twice |
-<!-- B2-SUB -->
+| after, 1/s, ten, **removals on A's subjects** | 16 (1,031, 3,033) | **0 / 0 / 0 / 0** | **46 of 46** | 15 / 30 / 10 / 10 (0 of 12 rounds complete: A's recorder stops once a subject with notices is removed, section 4) | 9 of 9 other accounts exact |
+| before, 1/s, ten, removals on A's subjects | 30 (182, 5,042) | **129 / 405 / 135 / 135** | **0 of 157** | 17 / 45 / 15 / 15 | none checked |
 
 The first run of the after 1/s cell stopped at its end on the miniature's own assertion "a notice was delivered twice in
 account-003" (A): that assertion counted A's 252 notices delivered at the end, after a refused delivery in its last
@@ -361,7 +402,7 @@ difference the option makes on the gateway is the cross-database delivery (3.2):
 | DX-ERA2's gate (`era2/gate.sh`, `ERA2_EXTRA_ENV="TX2_ACCOUNT_TICKETS=1 TX2_IMPORT_WHOLE_SUBJECT=1"` on every per-account run), head `a8870e290` | interleavings database-wide 360, per-account 695, subject-check 8,963 checks, **0 failed**; race loop 1,000; hammer 30 rounds; frame race 40 (20 no-account `cas-failed`, 20 account fence); the review's attacks and fuzzer 1,979 and 1,988 oracles, **0 violations**; suites 76 tests, 71,170 pass, 1 error (the same `http-route` error as the base) |
 | (its first run, `28bb0d46c`) | 1 of 691 and 1 of 8,959 failed: `named-absent`'s import step was refused earlier than the case expects (IMP2's rule declines an import of a removed family at validation, 409 `ErasureReplayDeclined`, so it never reaches the plan the case holds). The case now expects that refusal when `TX2_IMPORT_WHOLE_SUBJECT=1` (`era2/gate.clj`) |
 | IMP2's removal gate, every option on, the database moved per account (`imp2/gate.sh`, `DX_IMP2_MOVE_PER_ACCOUNT=1`) | **30 of 30** (IMP2's 28 and the two moves) |
-| ACT8's adversarial schedule, every option on (`ha1 load-fair`, `DX_ACT8_PARTS=adversarial`) | <!-- TOY-ADV --> |
+| ACT8's adversarial schedule, every option on (`ha1 load-fair`, `DX_ACT8_PARTS=adversarial`) | **passed**: 24 schedules (each field changed after the plan's read and inside the commit, a second Publish, another account's enrolment), `PASS` (2,104 notices), with `TX2_REMOVAL_PER_ACCOUNT`, `TX2_ACCOUNT_TICKETS`, `TX2_IMPORT_WHOLE_SUBJECT`, `TX2_PUBLISH_BESIDE`, `TX2_ENROL_BESIDE_SAVES` on client and gateways. The toy gate never moves its database per account, so there the per-account rule and this option's narrowing were inert (a ticket naming accounts on a database not moved is checked database-wide): it shows the options together change nothing on such a database; the miniature's cells (10.1) are the combined run on a moved one |
 | gate (e) in process with every option on | 10.2, third row |
 | `era3/stack.sh` option 1 with every option on | 10.3, last row |
 
@@ -371,8 +412,70 @@ difference the option makes on the gateway is the cross-database delivery (3.2):
 | --- | --- |
 | stored-function identities | 58 of 58 in seven settings (section 9) |
 | native log (`era2/paired.clj`, base `2e7ae66c4`) | options off: identical to the base (653 and 698 datoms, `d4b11ca6...`, `5197942f...`), in every gate run; with `TX2_ACCOUNT_TICKETS=1` on (database not moved): identical; with `TX2_IMPORT_WHOLE_SUBJECT=1`: different, as IMP2's option makes a removal record the families it names |
-| ACT8's toy gates (`ha1 load-fair`, holder DX-ACT9): every part, this option off | <!-- TOY-G1 --> |
-| the held runner's default campaign | <!-- TOY-R1 --> |
-| unit tests | `account-tickets.test.ts` 5 of 5; type check: no error in a file this work changed (the lazy lane's 20 errors are in five files the branch does not touch and in `load1/snapshot.ts`, which is byte for byte IMP2's head; the miniature 0) |
+| ACT8's toy gates (`ha1 load-fair`, holder DX-ACT9): every part, this option off | every part passed, in two runs: cost, beside (8 cases), adversarial (24 schedules) in the first, whose kill part then stopped on one save left uncertain under the lab VM's load ("Uncertain save", a commit past the 5 s wait); kill (5 cases), live and enrol (7 accounts), `PASS` (1,688 notices) in the second |
+| the held runner's default campaign | exit 0 (held barrier and rolling campaigns at 3.5 and 23.5 saves per second, two attempts each) |
+| unit tests | `account-tickets.test.ts` 6 of 6 (the sixth: a held world refuses another account's row or reference, another subject's row, an entity of no subject and an unscoped entity); type check: no error in a file this work changed (the lazy lane's 20 errors are in five files the branch does not touch and in `load1/snapshot.ts`, which is byte for byte IMP2's head; the miniature 0) |
+
+### 10.6 The commit-point race for each kind of derived write (`act9/tickets.clj`, `ACT9_PHASES=races`)
+
+DX-ERA2's frame-race case, per kind: the derived write's request gives up (the gateway's 5 s wait), releasing its
+locks while its transaction is held back; the removal of its subject then declares itself and the transaction is
+submitted. 6 races per kind and arm; in process, runtime image `sha256:21a67288007d`.
+
+| Kind | after (`TX2_ACCOUNT_TICKETS=1`, every option on) | before (tickets without accounts) |
+| --- | --- | --- |
+| settlement frame | 6 of 6 refused at the serial point (`removal-fence`), no copy | 6 of 6 refused (`cas-failed` on the declared sequence), no copy |
+| notice write | 6 of 6 refused (`removal-fence`), no copy | 6 of 6 refused (`cas-failed`), no copy |
+| Publish marker | 6 of 6 refused (`removal-fence`), no copy | 6 of 6 refused (`cas-failed`), no copy |
+| archive page | 6 of 6 refused (`removal-fence`), no copy | 6 of 6 refused (`cas-failed`), no copy |
+| staging record (a non-held store: no account named in either arm) | 6 of 6 refused (`cas-failed`), no copy | 6 of 6 refused (`cas-failed`), no copy |
+| **delivery record (another database)** | **6 of 6 committed in the recipient after the removal declared; the copy is there** | **the same, 6 of 6** |
+
+126 oracles per arm, 0 violations. The delivery rows are section 3.2: a recipient has no serial point in common with
+the source, so a delivery whose commit outcome was unknown when its locks were released lands after the removal began.
+Its content was checked before the removal could declare; it is a copy made before the removal, and the database-wide
+check (before) behaves the same. Not closed here (follow-up 3).
+
+## 11. The server run
+
+Written, not run: `act9/server.sh` (the many-accounts rung on a byte copy of the sealed 1 billion database per arm, 200
+accounts publishing and settling, 1,000 thin accounts saving, ten enrolling, removals in one deep account at 0.2 and 10
+per second, 600 s each), with the predictions of section 8. No server was rented: a rental needs the owner's approval
+in money terms. Two things the Mac showed change what the server can show: (1) removals in one database run one at a
+time, and under the option a removal also waits for its own account's derived writes in flight, so "10 per second" is
+an offered rate; the run reports the rate reached (`removals.offered`, `removals.ok`, the latency); (2) the ten
+enrolling accounts will fail while removals commit in their window (10.1, found fault), so the run reports them apart
+and they are not counted as refusals caused by the removal rule.
+
+## 12. Not verified
+
+1. **The server run** (section 11). Every count above is Mac toy size; every time is diagnostic and taken with five
+   other builders on the lab VM.
+2. **Enrolment beside removals**: every enrolment during removals failed, in both arms (10.1); the cause is the held
+   enrolment's walk of the commits in its window meeting a removal's transaction (`Schema validation failed` in its
+   journal decode, or its position check); not fixed, not caused by this option (enrolment carries no ticket).
+3. **A delivery whose commit outcome is unknown** can land in the recipient after the source's removal declared (10.6),
+   in both arms; its content was checked before. Not closed (follow-up 3).
+4. **The removal's held path** (its subjects held after repeated retries) and the guard stop: no schedule of gate (e)
+   reached them (10.2); DX-ERA2's hammer gate drives them (30 rounds, passed with every option on).
+5. **Stopping a removal after its declaration and before its intent on a stack**: the stack case reached "intent
+   recorded" instead (10.3); declared-only is in process only (DX-ERA2's `orphan` case).
+6. **A release whose rules read a protected attribute**: no toy release reads one, so no notice or settled change in
+   any run held a protected value; the per-subject refusals were exercised by subject, not by content.
+7. **The 10 per second cell with the option on reached 17 removals in 30 s** (10.1), against 238 without it; the claim
+   "0 refused in other accounts" at that rate rests on those 17, the in-process gate and the many cell.
+8. **ACT8's adversarial schedule on a database moved per account**: its toy gate does not move the database (10.4).
+9. **Mixed gateways** (one with `TX2_ACCOUNT_TICKETS`, one without) were not run; a gateway without it answers a
+   cross-database ticket naming accounts with its database-wide check, and the frontier without `touched`, which the
+   client treats as "all" (refuse), so a mix can only refuse more.
+
+## 13. Follow-ups
+
+1. **Re-recording**: let a removal reset the removed subject's notice ledger and re-record its notices from masked
+   reads, so the account's recorder goes on (today it stops for good once a subject with notices is removed).
+2. **Removal reaching derived copies** (TARGETS 7.3, the review's F5): recorded packets, ledgers, stored changes,
+   recipients' effect records and the journal entries of derived writes hold copies in clear.
+3. **Deliveries in flight**: a native in-flight mark in the source, written before a delivery's recipient commit and
+   cleared after, that every removal's declaration checks, so no delivery can land after a removal began.
 
 <!-- RESULTS -->

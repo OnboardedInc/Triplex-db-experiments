@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { erasureWriteTicket } from "../../../../../packages/datomic/dist/erasure.js";
 import { withErasure } from "../../../../bench/lib/datomic-erasure.ts";
+import { heldWorlds } from "../decision.ts";
 import {
   accountTicketsOn,
   fingerprint,
@@ -97,4 +98,20 @@ test("a cache keyed on the account's removal state survives removals elsewhere",
   assert.notEqual(fingerprint(frontier({ seq: 9, accountSeq: 2, unscopedSeq: 9 })), a);
   assert.equal(fingerprint(frontier({ perAccount: false, seq: 9 })), 9, "a database-wide frontier keys on its sequence");
   assert.equal(fingerprint(undefined), undefined);
+});
+
+test("a held world refuses another account's or another subject's rows (a ticket can name only its account)", () => {
+  const p = "acct/acc-7/", b = { position: 1, validAt: 0 };
+  const row = (entityId: string, value: { type: string; value: string } = { type: "string", value: "x" }) =>
+    ({ entityId, attribute: ":person/note", value, validFrom: 0, validTo: null }) as never;
+  // a row of another account
+  assert.throws(() => heldWorlds([row("acct/other/pl:00000001")], p, "acc-7", [1], b), /Foreign account in a pinned world/);
+  // a reference into another account
+  assert.throws(() => heldWorlds([row(p + "pl:00000001", { type: "ref", value: "acct/other/pl:00000001" })], p, "acc-7", [1], b),
+    /Foreign account in a pinned world/);
+  // a row of another subject of the same account, and of an entity that belongs to no subject
+  assert.throws(() => heldWorlds([row(p + "pl:00000002")], p, "acc-7", [1], b), /Foreign subject in a pinned world/);
+  assert.throws(() => heldWorlds([row(p + "act9-note-1")], p, "acc-7", [1], b), /Foreign subject in a pinned world/);
+  // an unscoped entity
+  assert.throws(() => heldWorlds([row("pl:00000001")], p, "acc-7", [1], b), /Foreign account in a pinned world/);
 });
