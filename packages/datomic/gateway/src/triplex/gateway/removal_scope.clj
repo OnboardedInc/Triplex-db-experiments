@@ -175,7 +175,9 @@
   ;; [DX-ERA3 F1b] (DX-ERA2's fix, merged here where this function now lives; removal-commit is loaded only on a
   ;; database guarded per account)
   (when (:per-account state)
-    (when ((requiring-resolve 'triplex.gateway.removal-commit/pending-touches?) state input) (privacy/unavailable!)))
+    ;; [DX-ERA3 N1] (DX-ERA2's third pass) its refusal is tagged: the gateway completes that removal once this write
+    ;; has released its locks.
+    ((requiring-resolve 'triplex.gateway.removal-commit/refuse-pending!) state input))
   (if (and (:per-account state) (contains? input "erasureAccounts"))
     (when-not (ticket-current? state (get input "erasureSeq") (ticket-accounts input))
       (privacy/stale!))

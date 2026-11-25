@@ -216,7 +216,7 @@
                    ;; [DX-ERA3 F1] and, for a ticket naming no account, the global declared removal sequence.
                    (into [[:db/cas scope :triplex.scope/erasure-seq removal-scope/sentinel removal-scope/sentinel]
                           (removal-scope/fence-op privacy/*cut* rows (removal-scope/ticket-accounts input))]
-                         ((requiring-resolve 'triplex.gateway.removal-commit/ticket-intent-ops) scope input))
+                         ((requiring-resolve 'triplex.gateway.removal-commit/ticket-intent-ops) scope input db))
                    [[:db/cas scope :triplex.scope/erasure-seq seq seq]]))
                ;; [DX-B4-T1] Why: one physical commit can contain several logical journals.
                ;; Rejected: using only tx/id (drops nested transacts at interior cursors).
