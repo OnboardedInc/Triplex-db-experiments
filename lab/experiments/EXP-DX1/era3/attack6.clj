@@ -414,7 +414,7 @@
     (when (phases "b1") (doseq [bd boundaries] (guarded "B1" #(b1-copy-sealed bd))))
     (when (phases "b2") (doseq [k [:wider-benign :wider-journal :narrower]] (guarded "B2" #(b2-copy-attributes k))))
     (when (phases "c") (doseq [s? [false true] w [:seq0 :seq1]] (guarded "C" #(c-adopt-own-past s? w))))
-    (when (phases "d") (doseq [n [0 300 1200]] (guarded "D1" #(d-cost n)))
+    (when (phases "d") (doseq [n (if-let [ns (System/getenv "ERA3_D_NS")] (map #(Long/parseLong %) (str/split ns #" ")) [0 300 1200])] (guarded "D1" #(d-cost n)))
       (doseq [bd (if per-account? boundaries [:log]) o [:another-subject :another-account]] (guarded "D2" #(d-other bd o))))
     (when (phases "g1") (doseq [p [:cut-short :no-database :an-array]] (guarded "G1" #(g1-scopes p))))
     (when (phases "g2") (guarded "G2" g2-retire-live))

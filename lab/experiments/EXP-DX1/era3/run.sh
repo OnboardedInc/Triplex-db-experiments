@@ -47,7 +47,7 @@ image=${DX_ERA3_IMAGE_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695
 env=(-e TX2_SUBJECT_SAVE=1 -e TX2_SUBJECT_NUMERIC_OWNER=1 -e TX2_SUBJECT_ORDERED_IDS=1
      -e TRIPLEX_ERASURE_DIRECTORY=/tmp/era3-authority -e DATOMIC_URI_TEMPLATE='datomic:mem://{db}'
      -e DF01_RECORDED_PAGE=/tmp/recorded-page.json -e "ERA3_PHASES=$phases"
-     -e "ERA3_SEALED=${ERA3_SEALED:-0}" -e "ERA3_N=${ERA3_N:-200}" -e "ERA3_BLOCK=${ERA3_BLOCK:-100}" -e "ERA3_SEED=${ERA3_SEED:-1}" -e "ERA3_RUN=${ERA3_RUN:-r0}" -e "ERA3_BOUNDARY=${ERA3_BOUNDARY:-log}")
+     -e "ERA3_SEALED=${ERA3_SEALED:-0}" -e "ERA3_N=${ERA3_N:-200}" -e "ERA3_BLOCK=${ERA3_BLOCK:-100}" -e "ERA3_SEED=${ERA3_SEED:-1}" -e "ERA3_RUN=${ERA3_RUN:-r0}" -e "ERA3_BOUNDARY=${ERA3_BOUNDARY:-log}" -e "ERA3_D_NS=${ERA3_D_NS:-0 300 1200}")
 [[ $mode == on || $mode == subject ]] && env+=(-e TX2_REMOVAL_PER_ACCOUNT=1)
 [[ $mode == subject ]] && env+=(-e TX2_REMOVAL_SUBJECT_CHECK=1)
 [[ -n ${ERA3_EXTRA_ENV:-} ]] && for kv in $ERA3_EXTRA_ENV; do env+=(-e "$kv"); done
