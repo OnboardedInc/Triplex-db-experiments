@@ -828,6 +828,12 @@ export async function runHeld(
       });
       return;
     }
+    // [DX-ACT10] Second review (diagnostic toy only): the held account's commits record each refusal's cause chain and
+    // each Publish's Datomic t (act10/causes.ts), for the gate parts below. Unset: nothing is wrapped.
+    if (process.env.DX_ACT10_CAUSES === "1") {
+      assert(diagnostic, "DX_ACT10_CAUSES is a toy diagnostic");
+      (await import("../../act10/causes.ts")).recordCauses(s, out);
+    }
     // [DX-ACT8] A Publish and an enrolment beside every account's saves (diagnostic toy unless DX_ACT8_SERVER=1): this
     // builder's gate parts (beside-gate.ts) instead of the windows.
     if (process.env.DX_ACT8_GATE === "1") {

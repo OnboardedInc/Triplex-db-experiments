@@ -569,6 +569,9 @@ export class Stack {
     const frontier = this.e.mode.startsWith("load-frontier-") || (microLoad(this.e.mode) && !fair);
     const split = splitLoad(this.e.mode);
     const priority = this.e.mode === "load-live" || this.e.mode === "load-tail" || frontier;
+    // [DX-ACT10] Second review: DX_ACT10_GROUP=1 (holder DX-ACT10, diagnostic load-fair only) turns the write gateway's
+    // group commit on, so a Publish beside saves can share one physical transaction with them. Unset: unchanged.
+    const reviewGroup = process.env.DX_ACT10_GROUP === "1" && this.holder === "DX-ACT10" && fair && role === "write";
     const grouping = priority || (split && role === "write");
     await this.start(
       role,
@@ -585,7 +588,7 @@ export class Stack {
                     ? "summary"
                     : "off"),
               "-e",
-              "TX2_GROUP_COMMIT=" + Number(grouping),
+              "TX2_GROUP_COMMIT=" + Number(grouping || reviewGroup),
               "-e",
               "TX2_LOAD2_TIMING=" + Number(this.e.mode === "load-tail" || frontier),
               "-e",

@@ -160,6 +160,75 @@ test("B1: joined command IDs and definitions prefixes are one-to-one over the al
   assert.equal(collisions, 0);
 });
 
+// ---------------------------------------------------------------------------------------------- (c) keys left database-wide
+/** A commit of account `x`'s own subject (a save as the store sees it) under the command ID `id` chosen by its client. */
+async function saveAs(x: { s: any; held: any }, id: string, actor = "save", context: unknown = null, ops?: any[]) {
+  const subject = x.held.prefix + "act10-probe";
+  return outcome(x.s.commit(id, actor, ops ?? [{ op: "assert", entityId: subject, attribute: ":act10/probe", value: { type: "string", value: id }, validFrom: 0 }],
+    await x.s.head(), context));
+}
+test("S1: what one account learns from another's command ID (the store's lookup is database-wide)", async () => {
+  const db = fresh();
+  const [A, B] = await accounts(db, [{ name: "acct-a" }, { name: "acct-b" }]);
+  await withEnv(ON, () => A!.a.publish("r1", W0.R1.doc, validTime, "owed"));
+  // B's own store, asking for A's Publish by its command ID (the ID form is public: joined:<account>/<id>).
+  const seen = await withEnv(ON, () => B!.s.lookup(joinedCommandId(A!.s, "r1")));
+  const out = { found: Boolean(seen), position: seen?.position, changes: seen?.changes.length,
+    aEntities: seen?.changes.filter((c: any) => String(c.entityId).startsWith("notice:v1:") || /\/acct-a$/.test(c.entityId)).length,
+    sample: seen?.changes.slice(0, 2).map((c: any) => [c.entityId.slice(0, 40), c.attribute]) };
+  console.log("[S1] " + JSON.stringify(out));
+  assert(out.found && out.changes! > 0);
+});
+test("S2: one account's save takes another account's next Publish ID (and its definitions ID): the Publish is refused", async () => {
+  const db = fresh();
+  const [A, B] = await accounts(db, [{ name: "acct-a" }, { name: "acct-b" }]);
+  await withEnv(ON, () => A!.a.publish("r1", W0.R1.doc, validTime, "owed"));
+  // B guesses A's next ID; its save (its own subject) carries that ID as its client-chosen command ID.
+  const taken = await withEnv(ON, () => saveAs(B!, joinedCommandId(A!.s, "r2")));
+  const publish = await withEnv(ON, () => outcome(A!.a.publish("r2", W0.R2.doc, validTime, "owed")));
+  const again = await withEnv(ON, () => outcome(A!.a.publish("r2", W0.R2.doc, validTime, "owed")));
+  // The definitions ID is content-chosen: B computes it from A's release document and the public definitions prefix.
+  const big = large(500);
+  let definitionsId = "";
+  await withEnv({ ...ON, TX2_RELEASE_DOCS: "ref" }, async () => {
+    const probe = fresh();
+    const [P] = await accounts(probe, [{ name: "acct-a" }]);
+    const commit = P!.s.commit;
+    P!.s.commit = (...args: any[]) => { if (String(args[0]).startsWith("definitions:") && !definitionsId) definitionsId = String(args[0]); return commit(...args); };
+    await P!.a.publish("r3", big, validTime, "owed", undefined, { docs: "ref" });
+  });
+  const takenDefs = await withEnv(ON, () => saveAs(B!, definitionsId));
+  const byRef = await withEnv({ ...ON, TX2_RELEASE_DOCS: "ref" }, () => outcome(A!.a.publish("r3", big, validTime, "owed", undefined, { docs: "ref" })));
+  const other = await withEnv(ON, () => outcome(A!.a.publish("r2-other", W0.R2.doc, validTime, "owed")));
+  const out = { taken, publish, again, definitionsId: definitionsId.slice(0, 24), takenDefs, byRef, otherId: other, aReleases: await releases(A!) };
+  console.log("[S2] " + JSON.stringify(out));
+  assert(taken.ok && !publish.ok && !again.ok && takenDefs.ok && !byRef.ok && other.ok);
+});
+test("S3: a record another account writes under joined:<A>/<id> with A's intent: does A take it as its own Publish?", async () => {
+  const db = fresh();
+  const [A, B] = await accounts(db, [{ name: "acct-a" }, { name: "acct-b" }]);
+  await withEnv(ON, () => A!.a.publish("r1", W0.R1.doc, validTime, "owed"));
+  // A's correlation context for r2 is computed from public inputs (database scope, account, ID, document, valid time);
+  // here it is read off A's own first attempt, whose request is lost before it reaches the transactor.
+  let context: any;
+  const commit = A!.s.commit;
+  A!.s.commit = async (...args: any[]) => {
+    if (String(args[0]) === joinedCommandId(A!.s, "r2") && !context) { context = args[4]; throw new Error("request lost"); }
+    return commit(...args);
+  };
+  const lost = await withEnv(ON, () => outcome(A!.a.publish("r2", W0.R2.doc, validTime, "owed")));
+  A!.s.commit = commit;
+  // B writes, under A's command ID, a record of its own subject with A's actor and A's correlation context.
+  const forged = await withEnv(ON, () => saveAs(B!, joinedCommandId(A!.s, "r2"), "lazy/join", context));
+  const resend = await withEnv(ON, () => outcome(A!.a.publish("r2", W0.R2.doc, validTime, "owed")));
+  const out = { lost, forged, resend, resendIsForged: resend.ok && (resend as any).txId === (forged as any).txId,
+    aReleases: await releases(A!), aTail: await tail(A!) };
+  console.log("[S3] " + JSON.stringify(out));
+  // The break if true: A's Publish is acknowledged with B's record; A's release and notice event were never written.
+  assert.equal(out.resendIsForged, true);
+  assert.equal(out.aReleases, 1);
+});
+
 // ---------------------------------------------------------------------------------------------- (e) the ledger cap
 /** A large release whose forms and policies carry `tag` in their IDs (distinct policy sets across releases). */
 function tagged(n: number, tag: string, base = W0.R1.doc) {
