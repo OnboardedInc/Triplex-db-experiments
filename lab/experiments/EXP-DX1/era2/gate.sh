@@ -3,7 +3,7 @@
 # ordinary heavy token, no stack:
 #   DOCKER_HOST=unix://<lab VM socket> node lab/bin/heavy.mjs --label DX-ERA2-gate -- \
 #     bash lab/experiments/EXP-DX1/era2/gate.sh NEW_ABSOLUTE_DIR [BASE_COMMIT]
-# 1. paired log: era2/paired.clj on the base gateway (BASE_COMMIT, default this branch's base), on this gateway with
+# 1. paired log: era2/paired.clj on the one branch's head (ONE_COMMIT; BASE_COMMIT is now the suites' base only), on this gateway with
 #    TX2_REMOVAL_PER_ACCOUNT unset, and with it on but the database never moved: one SHA-256 of the native log each;
 # 2. interleavings: era2/gate.clj with the option unset (database-wide), on (database moved per account), and on with
 #    TX2_REMOVAL_SUBJECT_CHECK=1 (the removal checks its selection per subject and takes its position at commit);
@@ -100,7 +100,10 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
 phases=${ERA2_GATE_PHASES:-paired gate era3 suites b2 lines b2r}
 paired='(load-file "/lab/regression.clj") (load-file "/lab/paired.clj") (era2-paired/main)'
 if [[ $phases == *paired* ]]; then
-  run paired-base base off "$paired"; run paired-base2 base off "$paired"
+  # [DX-ERA2 seventh pass, identities] the reference is the one branch's head (ONE_COMMIT): with every option off this
+  # gateway installs the one branch's writer functions and writes its native log, datom for datom (until 710f27d12 the
+  # reference was 272a1bd66, this branch's own earlier head, which shared the moved generated names)
+  run paired-base one off "$paired"; run paired-base2 one off "$paired"
   run paired-off this off "$paired"; run paired-on this subject "$paired"; run paired-commit this commit "$paired"
   # [DX-ERA2 seventh pass, (a)] the same workload plus a save that says nothing about its frame and writes a removed
   # subject's protected value: every option off here, the base, and the merged line's head
@@ -213,6 +216,7 @@ def get(arm):
     f = lambda l, k: (re.search(r':' + k + r' ("[^"]*"|[0-9]+|true|false)', l) or [None, None])[1]
     return [(f(l, "sealed"), f(l, "datoms"), f(l, "sha256"), f(l, "reads")) for l in logs], reps
 b, o, one = get("base"), get("off"), get("one")
+# the one branch's head is the reference (seventh pass, identities); the old base is printed for comparison only
 case = lambda reps: [re.search(r'\["sourceless-removed" ([0-9]+) ([^\]]*)\]', r).groups() if re.search(r'\["sourceless-removed" ([0-9]+) ([^\]]*)\]', r) else None for r in reps]
 native = len(b[0]) == 2 and b[0] == o[0]
 replies = b[1] == o[1]
@@ -224,7 +228,9 @@ print("ERA2_PAIRED_SOURCELESS every datom (off vs the one branch):", "identical"
 print("ERA2_PAIRED_SOURCELESS the case's answer: base", case(b[1]), "| off", case(o[1]), "| merged line", case(one[1]))
 for arm, r in [("base", b), ("off", o), ("one", one)]:
     for x in r[0]: print("  ", arm, x)
-sys.exit(0 if (native and native_one and replies and case(b[1]) == case(o[1]) == case(one[1])) else 1)
+replies_one = one[1] == o[1]
+print("ERA2_PAIRED_SOURCELESS replies (off vs the one branch):", "identical" if replies_one else "DIFFERENT")
+sys.exit(0 if (native_one and replies_one and case(o[1]) == case(one[1])) else 1)
 PY2
 fi
 # [DX-ERA2 fifth pass] B2: a published removal's key must be deleted within its grace whatever else is pending
