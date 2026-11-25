@@ -6026,3 +6026,17 @@ Source: connection builder, branch `exp/DX-XQ10-questions-connected` `f078320a2`
 The evening merge was told this line is ready for its second batch.
 
 **Started** (thinker effort): an adversarial review of the save line (product path, several owners, whole-subject import, creation saves on the per-subject writer), task file `OPUS-S5-adversarial-review-save-line.md`.
+
+## 2026-11-24 19:25 EST: the removal rule's break is fixed on its branch; second independent review started
+
+Source: removal builder, branch `exp/DX-ERA2-removal-per-account` `27733d980` (code from `5114a74b0`; not merged), page rewritten with the break stated at the top. Every stack container ran pinned image IDs.
+
+- Reproduced first on the reviewed head with the reviewer's tests: F1/F1b 15 and 12 violations in process, and on a stack a frame naming no account got 200 at position 4 after the removal at position 3 with the copy readable after the acknowledgement; F2 and F3 as reported. The reviewer's test files are merged into the branch and run as a standing gate phase.
+- **Invariant now relied on:** a ticketed write commits only if, at Datomic's serial point, no removal that can reach an account the write read has declared itself after the published cut its ticket was checked against; for a ticket naming no account, any removal counts.
+- **Enforcement at the serial point:** a removal's first native transaction is a cas that declares it (moves a removal-intent attribute to its sequence, records the accounts it holds, sets each selector account's counter negative); every ticket naming no account carries a cas on that attribute; a ticket naming accounts carries account guards checked by the fence function. The early 503 in the gateway is only a fast refusal.
+- F2 fixed: one per-account path (the subject-check setting is read and ignored), 10 of 10 mixed-gateway resumes succeed. F3 fixed: the old path refuses before writing an intent.
+- Gates on the fixed code: option off byte-identical to the base (653 and 698 datoms); the reviewer's fuzzer 70,000 schedules and 351,784 oracles, 0 violations of F1 or F1b (17,567 derived writes, 0 landed after their removal); frame race 40 per setting, 0 committed; a forced commit timeout: the frame is refused and there is no copy after the acknowledgement; the reviewer's three stack options pass; a transactor restart during a pending removal passes; fault cells: 0 other-account refusals, tries mean 1.00 to 1.07, max 3.
+- Not tested (its own list): a full restore on a stack; mixed gateways and the move on a stack; a Reach session on a second read gateway; a gateway killed at every step on a stack; a ticket that names fewer accounts than it read; copies made by a derived write BEFORE a removal (F5); the sealed per-account fuzzer run was 10,000 schedules, half the asked size.
+- Stated plainly: a value stays readable while its removal is pending, before the acknowledgement.
+
+**Started:** the same independent reviewer, second review, on the fixed head (attack the new declaration step, orphan declarations, incomplete account lists, the items not tested). The account-ticket builder was told to merge the fixed head and to gate "a ticket that names fewer accounts than it read".
