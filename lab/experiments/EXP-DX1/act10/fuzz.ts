@@ -385,12 +385,17 @@ async function schedule(seed: number): Promise<Outcome> {
         const pid = (SHARED ? "" : A + ":") + seed + ":t" + landed++ + ":R2";
         const pp = new Proc(db, "transition-publisher");
         if (MIXED) pp.permits = NONE;
+        // [DX-ACT8, third review] As for every other Publish here: without the accountKeys setting, two accounts that
+        // publish one document by reference share its definitions' command ID, and the second is refused (F2, a known
+        // refusal, never a wrong write); counted, not a violation.
+        const keysAtStart = (await originAt(memStore(pp, hA) as never, await db.comp.currentPosition())).settings?.accountKeys === true;
         try {
           const receipt = await new JoinedAccount(memStore(pp, hA) as any).publish(pid, DOCS.R2!, validTime, "owed");
           acknowledged.push({ account: A, id: pid, position: receipt.position, txId: receipt.txId, doc: "R2" });
           count("laterReleaseInsideFrame");
         } catch (e: any) {
           if (e instanceof SettingsConflict) return void count("transitionStepConflict");
+          if (!keysAtStart && /commit receipt differs from the request/.test(String(e?.message))) return void count("crossAccountRefusedBeforeKeys");
           if (!(e instanceof Conflict)) violations.push("transition-step Publish " + pid + " failed: " + String(e?.stack ?? e).slice(0, 300));
         }
       }

@@ -21,7 +21,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { Documents, hash, type Op } from "../../notify1/store.ts";
 import { readErasure, withErasure } from "../../../../bench/lib/datomic-erasure.ts";
-import { Conflict, fact, namesOf, originSettings, value, type AccountSettings, type Store } from "../store.ts";
+import { Conflict, fact, namesOf, originSettings, value, type AccountSettings, type EntityGuard, type Store } from "../store.ts";
 
 export type LedgerSetting = "whole" | "parts";
 /** What a process may turn on, and the ledger mode it names itself (TX2_NOTICE_LEDGER, if set). */
@@ -93,11 +93,14 @@ export async function ensureSettings(s: Store) {
     try {
       // A random command ID: no other account can compute it and claim it first, and the transition needs no recovery
       // by ID (it is read back from the origin itself).
+      // DX_ACT8_INJECT=no-fence (diagnostic only, a negative control) leaves what was planned before unfenced.
+      const fence = injected("no-fence") ? { ops: [], guards: [] } : await fences(s, p, c.releases, authority?.seq);
       const ops = [{ op: "retract" as const, id: c.origin.id }, fact(origin, "lazy/generation", { ...value(c.origin), settings: next }),
-        // DX_ACT8_INJECT=no-fence (diagnostic only, a negative control) leaves what was planned before unfenced.
-        ...(injected("no-fence") ? [] : await fences(s, p, c.releases, authority?.seq))];
+        ...fence.ops];
+      // Guarded on the origin row and on every row it fences, each as read at `p`: a frame that writes one of them
+      // between this read and the commit refuses the transition (it reads again), so a row is never written twice.
       await withErasure(authority?.seq, () => s.commit("account-settings:" + randomUUID(), "lazy/settings", ops,
-        p, { settings: next }, undefined, undefined, [{ entityId: origin, tripleIds: [c.origin!.id] }]));
+        p, { settings: next }, undefined, undefined, [{ entityId: origin, tripleIds: [c.origin!.id] }, ...fence.guards]));
     } catch (e) {
       if (!(e instanceof Conflict) && !isConflict(e) && !/erasure|frontier/i.test(String((e as Error)?.name) + String((e as Error)?.message))) throw e;
     }
@@ -117,29 +120,39 @@ const isConflict = (e: unknown) => /conflict|changed|live triple/i.test(String((
  * row yet, the row a first frame would start from (`valuesProgress`, the fresh cursor), so a first frame planned before
  * is refused too. Every value is the one a reader already reads, so nothing a reader sees changes.
  */
-async function fences(s: Store, p: number, releases: readonly { storage?: string; seq?: number }[], erasureSeq: number | undefined): Promise<Op[]> {
+async function fences(s: Store, p: number, releases: readonly { storage?: string; seq?: number }[], erasureSeq: number | undefined) {
   const [{ JoinedAccount }, { identityOf, valuesProgress, progressKey }] = await Promise.all([
     import("./account.ts"), import("./archive.ts")]);
   const docs = namesOf(s).documents;
   const joined = new Documents(s.comp, "joined" + docs),
     values = new Documents(s.comp, "settlement-values" + docs),
     notices = new Documents(s.comp, "settlement-notices" + docs);
-  const ops: Op[] = [];
+  const ops: Op[] = [], guards: EntityGuard[] = [];
+  const guard = (d: Documents, key: string, row: { id: string } | undefined) => guards.push({ entityId: d.prefix + key, tripleIds: row ? [row.id] : [] });
   const calendar = await joined.row("join-calendar", p);
-  if (calendar) ops.push(...joined.change("join-calendar", calendar, calendar.value));
+  if (calendar) {
+    ops.push(...joined.change("join-calendar", calendar, calendar.value));
+    guard(joined, "join-calendar", calendar);
+  }
   const a = new JoinedAccount(s);
   for (const rel of releases.filter((x) => x.storage === "owed")) {
     const key = progressKey(rel.seq!), row = await values.row<{ status: string }>(key, p);
     if (row) {
-      if (row.value.status === "pending") ops.push(...values.change(key, row, row.value));
+      if (row.value.status === "pending") {
+        ops.push(...values.change(key, row, row.value));
+        guard(values, key, row);
+      }
     } else {
       const { marker, event } = await a.receipt(rel.seq!, p);
       ops.push(values.put(key, valuesProgress(identityOf(s.scope, marker, event.at))));
+      guard(values, key, undefined);
     }
   }
   const cursor = await notices.row("notice-progress", p);
-  if (cursor) ops.push(...notices.change("notice-progress", cursor, cursor.value));
-  else {
+  if (cursor) {
+    ops.push(...notices.change("notice-progress", cursor, cursor.value));
+    guard(notices, "notice-progress", cursor);
+  } else {
     const tail = (await a.notices.observe()).value.sequence;
     if (tail >= 1) {
       const t = (await a.notices.event(tail, p)).value;
@@ -148,9 +161,10 @@ async function fences(s: Store, p: number, releases: readonly { storage?: string
         parent: hash([a.db.prefix, t.epoch, t.census]), previous: hash([a.db.prefix, t.epoch, "receiver-genesis"]),
         ...(erasureSeq !== undefined ? { erasureSeq } : {}),
       }));
+      guard(notices, "notice-progress", undefined);
     }
   }
-  return ops;
+  return { ops, guards };
 }
 
 /** The held account's origin row and stored settings at `p` (one row read), for a settlement frame. */

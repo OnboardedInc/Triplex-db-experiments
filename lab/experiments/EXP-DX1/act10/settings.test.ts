@@ -9,6 +9,8 @@ import { JoinedAccount, scopedJoinedId } from "../actv-lazy/join/account.ts";
 import { ensureSettings, type Permits } from "../actv-lazy/join/account-settings.ts";
 import { Archive } from "../actv-lazy/join/archive.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
+import { RecordedNotices } from "../actv-lazy/join/recorded.ts";
+import { largeRelease, parseShape } from "../actv-lazy/join/large-release.ts";
 import { fact, namesOf, value } from "../actv-lazy/store.ts";
 import { heldAccount, MemDb, memStore, Proc, seedAccount } from "./memstore.ts";
 
@@ -164,4 +166,39 @@ test("S5: settings this build does not know (another version or field) are refus
     console.log("[S5] " + JSON.stringify({ settings, got: got.slice(0, 120) }));
     assert.match(got, /not ones this build knows/);
   }
+});
+
+test("S6: a first values frame and a first notice frame landing between a transition's read and its commit: the transition reads again; one row per key", async () => {
+  // [DX-ACT8, third review fuzz finding] The transition creates the first progress row and the first notice cursor when
+  // they are absent (its fences). A frame that creates them between the transition's read and its commit used to leave
+  // two live rows for one key (seeds 230057 and 230234 of the mixed campaign at c788f5de2). The transition is now guarded
+  // on every row it fences, so it is refused and reads again.
+  const x = await setup();
+  await x.account(x.proc("pub", NONE)).publish("large", largeRelease(W0.R1.doc, parseShape("forms=20,policies=20,permille=1000")), validTime, "owed");
+  const settler = x.proc("settler", NONE);
+  const a = new JoinedAccount(memStore(settler, x.held) as any);
+  const values = new (Archive as any)(a, memStore(settler, x.held, x.db.scope + "-v"), new BulkQueue(1), "values", "bytes", "progress") as Archive;
+  const notices = new (Archive as any)(a, memStore(settler, x.held, x.db.scope + "-n"), new BulkQueue(1), "notices", "bytes", "progress") as Archive;
+  const tail = (await a.notices.observe()).value.sequence;
+  const stop = new Error("one frame");
+  // The frames land after the transition's read and before its commit begins (the window its guards are checked over).
+  const up = memStore(x.proc("upgrader", { ...NONE, frameGuards: true, accountKeys: true }), x.held) as any;
+  const commit = up.commit, fired = { done: false };
+  up.commit = async (...args: any[]) => {
+    if (!fired.done && String(args[0]).startsWith("account-settings:")) {
+      fired.done = true;
+      await values.turn(2); // the release's first values frame (its progress row is created)
+      await new RecordedNotices(notices).record(tail, async () => { throw stop; }).catch((e) => { if (e !== stop) throw e; });
+    }
+    return commit(...args);
+  };
+  const settings = await ensureSettings(up);
+  const transitions = (await journal(x.db)).filter((t) => t.actor === "lazy/settings").length;
+  const stored = (await values.runValues(2)).status;
+  await new RecordedNotices(notices).record(tail);
+  const rows = await Promise.all([values.db.rows(["values:2"], await x.db.head()), notices.db.rows(["notice-progress"], await x.db.head())]);
+  console.log("[S6] " + JSON.stringify({ fired: fired.done, settings, transitions, stored, rows: rows.map((r) => r.size) }));
+  assert(fired.done && settings?.frameGuards && settings?.archive);
+  assert.equal(transitions, 1, "the refused transition read again and landed once");
+  assert.equal(stored, "stored");
 });
