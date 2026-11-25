@@ -15,9 +15,10 @@ their own pools, byte-equal to the single reader on 2,463 `find` pages and 2,794
 gate, never early after a late start. With every option off the stored log equals the base gateway's (33,609 datoms,
 same hash) and 58 of 58 stored-function identities equal the base, after fixing a hazard the merge inherited. The
 console shows which route answered and why, lets either be forced, puts both answers side by side with their costs and
-lists the indexed attributes with the declare call shown, not run. **The hint fix does not work**: with it, the index's
-extra reads inside apply rise (+0.34, +0.29, +0.48 at 1, 3, 6 values against +0.06, +0.09, +0.21 without it, 300
-saves a cell); keep it off. Nothing ran on a server; the shortest session that answers "affordable and exact at
+lists the indexed attributes with the declare call shown, not run. **The hint fix's first form made things worse; the
+follow-up found why** (it touched EAVT and AVET while the apply's extra reads are AEVT loads) **and corrected it**: on
+a 32 MB cache the index's extra reads inside apply per first-touch save are +0.19 without and +0.13 with it, on 256 MB
++0.10 and +0.04 (5 to 7 runs of 900 saves, section 8b); it stays off by default until run C measures it. Nothing ran on a server; the shortest session that answers "affordable and exact at
 1 billion" is 4.2 to 7.7 hours, **$4.61 to $8.41** (section 8).
 
 ## 1. What was built
@@ -30,7 +31,7 @@ saves a cell); keep it off. Nothing ran on a server; the shortest session that a
 | **One admission for ID lists and `find`** | `ids.clj` `admitted`, `admitted-find` | `TX2_ID_LIST_QUEUE_MS` unset: the ID list branch's admission byte for byte (a second question of a busy account refused at once), shared by `find`. Set: the index branch's fair queue (per-account turn, `TX2_ID_LIST_PER_ACCOUNT`, then the fair pool, `IndexBusy` only after the wait) for both routes. `TX2_FIND_PERMITS` gives `find` its own pool (unset: the ID list pool, as built). | Off |
 | **The question reader serves `find`** | `question_reader.clj` (unchanged: `find` was already in its route list), `stack/up.sh`, `rd5/second-reader.sh` | Role `q` gets `TX2_CROSS_INDEX` with the stack; `DX_QUESTION_FIND_PERMITS`; the launcher makes both cursor keys per stack when the question reader is on (section 5). | Off |
 | **Stored-function identities restored** | `lean.clj`, `uncached.clj`, `subject_save.clj`, `cross_index.clj`, `main.clj` | The merge moved 17 identities with every option off, inherited; fixed (section 3). | No change with options off |
-| **The hint fix** | `index_hints.clj`, `TX2_INDEX_HINTS=1` | Both lookup functions also touch the owner's entry range, each entry key the save writes (EAVT on its owner, AVET by value) and the declaration's sequence datom; new idents installed only with the option on (section 7). | Off |
+| **The hint fix** | `index_hints.clj`, `TX2_INDEX_HINTS=1` | Both lookup functions also touch the AEVT neighbourhood of `:triplex.ix/entry` for each entry the save writes; new idents installed only with the option on (sections 7 and 8b). | Off |
 | **Console and agent tools** | `examples/demo-mcp/src/questions.ts`, `tools.ts`, `declare-index.ts`; `examples/console/src/pages/questions.tsx` | The page's "Fast answer from the index" is real: the route that answered and why, a route choice, both answers side by side with their costs, an "Indexed attributes" view with the declare call shown and not run; `ask_across_subjects` gains `route` and the route fields; new read-only `indexed_attributes` (section 6). | The page's default route is auto; on a database with no declaration every answer comes from the slow route as before |
 | **Toy option** | `demo/server/profile.mjs`, `demo/server-up.sh`, `demo/toy/up.sh`, `demo/console/index-declaration.json` | `DEMO_CROSS_INDEX=1`: the toy's gateways run the index and the start script declares and backfills six of the demo data's attributes. | Off |
 | **Gates** | `xq10/agree.clj` (inside the index gate's world), `xq10/reader.ts` + `reader.sh`, `xq10/stacks.sh`, `xq10/suites.sh`, `xq10/idents.sh`, `xq10/stack-check.py`, `packages/datomic/test/ask.test.ts` | Sections 2 to 7. | |
@@ -46,7 +47,7 @@ everywhere.
 | 1 | `demo/server/profile.mjs` | The question routes on in the demo environment (XQ8/XQ9) against the question reader's role (XQ7) | Both: the routes, then `DEMO_QUESTION_READER`'s role |
 | 2 | `stack/up.sh` (first merge) | `DX_SWEEP_SHAPES` (XQ9) against the question reader role and `DX_QUESTIONS_AT` (XQ7) | Both, in that order; role `q` gets the shapes too (they are in the loop over every role) |
 | 3 | `stack/up.sh` (second merge) | The index's `DX_CROSS_INDEX` and `DX_INDEX_QUERY_PERMITS` blocks against XQ7's per-role pool variables | XQ7's per-role variables kept (role `q` takes `DX_QUESTION_*` first); `DX_CROSS_INDEX` added for every role; the index branch's duplicate `DX_INDEX_QUERY_PERMITS` block dropped (`index_permits` already passes it) |
-| 4 | `ids.clj` admission | The index branch's always-on fair queue (`ids/admitted`, shared by `ids` and `find`, waiting each request's own bound) against XQ7's optional queue (`TX2_ID_LIST_QUEUE_MS`, ID lists only) | **One queue under the question reader's option name.** Unset: the ID list branch's admission byte for byte (busy account refused at once, permit waited up to the request's bound), now shared by `find`. Set: the index branch's behaviour for both routes (fair per-account turn, `TX2_ID_LIST_PER_ACCOUNT` places, fair pool, `IndexBusy` with `retryAfterMs` only after the queue time); answers carry `queue {micros, ahead}`. XQ7's counter renamed `admitted-count` so the index branch's `admitted` function keeps its name. Change of behaviour against the index branch alone: with the option unset, a second `find` of a busy account is refused at once instead of queued; set the option for the index branch's behaviour (the index gate below runs with it at 50 ms) |
+| 4 | `ids.clj` admission | The index branch's always-on fair queue (`ids/admitted`, shared by `ids` and `find`, waiting each request's own bound) against XQ7's optional queue (`TX2_ID_LIST_QUEUE_MS`, ID lists only) | **One queue under the question reader's option name.** Unset: the ID list branch's admission byte for byte (busy account refused at once, permit waited up to the request's bound), now shared by `find`. Set: the index branch's behaviour for both routes (fair per-account turn, `TX2_ID_LIST_PER_ACCOUNT` places, fair pool, `IndexBusy` with `retryAfterMs` only after the queue time); answers carry `queue {micros, ahead}`, and since the follow-up `turnMicros` and `poolAhead` (section 8b, item 3). XQ7's counter renamed `admitted-count` so the index branch's `admitted` function keeps its name. Change of behaviour against the index branch alone: with the option unset, a second `find` of a busy account is refused at once instead of queued; set the option for the index branch's behaviour (the index gate below runs with it at 50 ms) |
 | 5 | `ids_test.clj` busy case | XQ3's immediate refusal against XQ4's queued wait | Both cases: the off case as XQ3 wrote it (pinned to the option unset), the queued case as XQ4 wrote it under the option |
 | 6 | `main.clj` requires | `sweep` and `question-reader` (XQ9, XQ7) against `cross-find` (XQ4) | All three, after `commit` and `subject-save`; `route-handler` (the guard) wraps `route-handler-routed` as XQ7 built it, and the `find` routes sit inside the latter (auto-merged) |
 | 7 | `question_reader_test.clj` | Uses XQ7's counter and two-argument `queued-admit!` | Follows the renames |
@@ -98,24 +99,27 @@ retagged by another builder at 15:49 local from `3ac77d8ae37c…`, the image the
 `tx2-datomic:1.0.7745-da00` = `21a67288007d…`. No image was built by this branch (neither image carries the gateway: the
 code that runs is the mounted tree).
 
+**Final head `231f1ae6d`** (gateway code; later commits change only this page): every stack-based row below was run
+there, after the follow-up of section 8b, unless the row says otherwise.
+
 | Piece | Gate | Run | Result | Image and source check |
 | --- | --- | --- | --- | --- |
-| Index | G1 exactness against brute force | `world-1` | **2,718 questions, 0 differences** (6 positions x 9 valid times, 197,475 pages, 4,928,127 matching answers; the index branch: 2,448, see section 9) | pass |
-| Index | Agreement with the exact sweep (the index branch's own) | `world-1` | **64 questions, 0 differences** (ids 43, count per value 17, count 4; the index branch: 77) | pass |
-| Index | G2 backfill against the writers | `world-1` | 189,476 value and 60,096 type entries both ways, dry run 0 to add and 0 to retract | pass |
-| Index | G3 protection, D3 bulk frames, B1 release rule, G4 accounts and cursors, E1 index-only answers | `world-1` | all pass | pass |
-| Index | G5 bounds | `world-1` | counts, pages, busy and pinned reads pass; **the 60 ms time clause failed** (63.8 ms, throttled; section 9) | pass |
-| Index | G8 stored log with every option off | `g8-base` (base `2ef4cb3c4`'s gateway) / `g8-mine` | **identical**: 33,609 datoms, head 620, SHA-256 `460d2d0f…` on both, byte-equal files | pass, both |
-| Index, shapes, reader | Stored-function identities, 10 settings | `idents/final-656909cce` | **58 of 58 equal to the base in 9 settings**; with `TX2_INDEX_HINTS=1` exactly the 4 hint identities change | by ID |
-| All | In-memory suites, 4 arms (unset, index, routes, queue) | `suites-final` | 84 or 85 tests, 236,356 to 236,445 assertions, **0 failures**, 1 error each: `feed-test/http-route`, the shapes branch's own (its `suites-off` has it) | by ID, all 4 |
-| ID lists | XQ3's stack gate | `stacks-1/xq3` | **1,654 pass**, 0 fail | pass |
-| Sweep | XQ6's stack gate | `stacks-1/xq6` | **5,917 pass**, 0 fail | pass |
-| Shapes | XQ9's gate, shapes off, with the twin | `stacks-1/xq9off` | **5,917 pass**; twin with the shapes on: 2,244 of 2,244 compared answers identical, 6 busy skipped | pass |
-| Shapes | XQ9's gate, every shape on | `stacks-1/xq9shapes` | **8,519 pass**, 0 fail | pass |
-| Question reader | XQ7's stack gate | `stacks-1/xq7` | **6,875 pass, 1 fail**: byte-equal **2,794 pages** (2,176,978 bytes) question reader against the single reader; the one fail: fairness (f), one of four arms had a page with 4 admissions ahead of it where the gate allows 2 (6,944 pages; the other three arms 2). **Repeated** (`stacks-2/xq7`): **6,876 pass, 0 fail**, at most 2 ahead in all four arms (1 in one). Not traced; 1 arm of 8 over the two runs | pass |
-| Connected | `xq10/reader.ts` main | `stacks-3/reader` | **5,783 pass, 0 fail** (section 5) | pass, the question reader's `/health` too |
-| Connected | `xq10/reader.ts` refusal | `stacks-2/refusal` | **9 of 9**: with `TX2_QUESTIONS_AT` the main reader and the writer refuse `ids`, `sweep` and `find` with 421 naming the question reader; the SDK without `questionReaderUrl` gets that refusal, with it the question reader's index answer, equal to the count asked directly; the question reader counts the `find` pages it served | pass |
-| Console | questions 2,603, existing 37, page pass 56, catalogue 80 | `console-3`, `console-4` | all pass (section 6) | the toy's own stack: image `21a67288007d…`, source hash `2abf5da3…` = this tree |
+| Index | G1 exactness against brute force | `world-3-231f1ae6d` | **2,448 questions, 0 differences**, equal in every count to the index branch's `world-final` (section 8b, items 1a and 5) | pass |
+| Index | Agreement with the exact sweep (the index branch's own) | `world-3-231f1ae6d` | **77 questions, 0 differences** (ids 45, count 13, count per value 19), as the index branch | pass |
+| Index | G2, G3, D3, B1, G4, E1 | `world-3-231f1ae6d` | all pass | pass |
+| Index | G5 bounds | `world-3-231f1ae6d` | counts, pages, busy and pinned reads pass; **the 60 ms time clause failed** by 0.17 ms under throttling, as on the index branch | pass |
+| Connected | Agreement gate and difference table | `world-3-231f1ae6d` | **4,626 questions, 0 differences**; 45 cases, none inconsistent (section 8b, item 5) | pass |
+| Index | G8 stored log with every option off | `g8-base` (base `2ef4cb3c4`) / `g8-mine-231f1ae6d` | **identical**: 33,609 datoms, head 620, SHA-256 `460d2d0f…`, byte-equal files | pass, both |
+| Index, shapes, reader | Stored-function identities, 10 settings | `idents/final-231f1ae6d` | **58 of 58 equal to the base in 9 settings**; with `TX2_INDEX_HINTS=1` exactly the 4 hint identities change | by ID |
+| All | In-memory suites, 4 arms, and the off-means-404 probe | `suites-final-231f1ae6d` | 84 or 85 tests, **0 failures**, 1 error each (`feed-test/http-route`, the shapes branch's own); **the probe passes in every arm** (section 8b, item 6) | by ID, all 4 |
+| ID lists | XQ3's stack gate | `stacks-final-231f1ae6d/xq3` | **1,654 pass**, 0 fail | pass |
+| Sweep | XQ6's stack gate | `stacks-final-231f1ae6d/xq6` | **5,917 pass**, 0 fail | pass |
+| Shapes | XQ9's gate, shapes off, with the twin | `stacks-final-231f1ae6d/xq9off` | **5,917 pass**; twin with the shapes on: 2,246 of 2,246 compared answers identical, 4 busy skipped | pass |
+| Shapes | XQ9's gate, every shape on | `stacks-final-231f1ae6d/xq9shapes` | **8,519 pass**, 0 fail | pass |
+| Question reader | XQ7's stack gate | `stacks-final-231f1ae6d/xq7` | **6,876 pass, 0 fail**: byte-equal **2,794 pages** question reader against the single reader; fairness on the restated bound (section 8b, item 3): one arm had one page 5 ahead inside the pool window, the other three at most 2 | pass |
+| Question reader | Fairness loop, 2 x 30 repeats of the four arms | `fair-30` (at `82ee0aa76`), `fair-30b` (at `84551bef4`, the counts added) | 22 and 11 pages over 2 ahead in 1.7 million and more; every arm within the restated bound | pass (images); `fair-30`'s tree differs from the final in `cross_find.clj`, `ids.clj` and `index_hints.clj` only |
+| Connected | `xq10/reader.ts` main and refusal | `stacks-final-231f1ae6d/reader`, `/refusal` | main **5,783 pass, 0 fail** (2,463 `find` pages byte-equal, 2,031 continued across readers; 396 questions identical on both routes through the SDK; 0 early after a late start); refusal **9 of 9** | pass, both, the question reader's `/health` too |
+| Console | questions 2,603, existing 37, page pass 56, catalogue 80 | `console-3`, `console-4` (at `a1327de00`) | all pass (section 6); **not rerun at the final head**: the gateway changed since only in the prefix fallback, the queue's two new counts and the hint fix (all behind options or for raw plain-prefix requests the SDK does not send) | the toy's own stack: image `21a67288007d…`, source hash `2abf5da3…` = the tree then |
 | SDK | `ask.test.ts` | | 9 of 9 | |
 
 ## 4. One meaning on both routes: the agreement gate and the difference table
@@ -310,36 +314,22 @@ route answers. (4) Stop could not be shown because the index answers the count i
 route.
 
 
-## 7. The hint fix, measured: it does not help; keep it off
+## 7. The hint fix, measured, explained and corrected
 
 **What it is** (`index_hints.clj`, `TX2_INDEX_HINTS=1`, default off): the per-subject writer's and the general writer's
-lookup functions also touch the owner's index entry range, each entry key the save writes (EAVT on its owner, AVET by
-value) and the declaration's sequence datom, so that the entries' segments are in the cache before the transaction
-applies. Installed as **new function identities** (S3's method): with the option on exactly 4 identities change (the two
-hint functions' code and ident) and 4 new keys appear; with it off, 58 of 58 equal the base (section 3).
+lookup functions also touch, before the transaction applies, the AEVT neighbourhood of `:triplex.ix/entry` for each
+entry the save writes, so that its segments are cached when Datomic checks the entry datoms. Installed as **new
+function identities** (S3's method): with the option on exactly the 2 hint functions' code and ident change (4
+identities) and 4 new keys appear; with it off, 58 of 58 equal the base (section 3).
 
-**Measured:** the index gate's G6 cost harness, 10,000 subjects padded to 30 facts each, transactor object cache 32 MB,
-both hint options on, reads inside apply per first-touch save, **index on minus index off**, at 1, 3 and 6 declared
-values (1 and 3 on the per-subject writer, 6 on the general writer). Every cell passed its image and source check
-(image `da58aea16b31…`, the gateway tree mounted and hashed); both arms attach the same hints (general 1,238, per
-subject 2,406 in the 300-save cells).
-
-| Cell | Saves per arm | k = 1 | k = 3 | k = 6 |
-| --- | ---: | ---: | ---: | ---: |
-| fix off, run 1 | 100 | +0.23 | +0.22 | +0.29 |
-| fix off, run 2 | 100 | +0.35 | +0.19 | +0.08 |
-| **fix off, run 3** | **300** | **+0.06** | **+0.09** | **+0.21** |
-| fix on, range starts only (the index branch's proposal) | 100 | +0.34 | +0.28 | +0.54 |
-| fix on, exact keys, run 2 | 100 | +0.13 | +0.16 | +0.56 |
-| **fix on, exact keys, run 3** | **300** | **+0.34** | **+0.29** | **+0.48** |
-
-**Reading.** The target was +0.2 or under. Without the fix the 300-save cell is +0.06, +0.09 and +0.21 (the 100-save
-cells scatter from +0.08 to +0.35 between runs of the same code, so a 100-save cell cannot separate +0.1 from +0.3).
-With the fix the 300-save cell is +0.34, +0.29 and +0.48: **the fix makes reads inside apply worse, at every k**; the
-touches themselves appear to load segments that the apply then reads again, or evict ones it needed (not traced).
-Datoms per save (+2, +6, +12, exactly 2 per declared value) and index bytes per save (134, 433, 847 B) are the same in
-every cell. **Recommendation: leave `TX2_INDEX_HINTS` off and do not carry it forward**; the server pair (section 8, run
-C) measures the excess on the real cache size, where it may not exist.
+**History, kept because it is the evidence.** The first form touched the owner's EAVT entry range, each entry key in
+EAVT and AVET, and the declaration's sequence datom. On the toy's 32 MB cache it made the excess worse (first 300-save
+cells: +0.34, +0.29, +0.48 against +0.06, +0.09, +0.21 without it). The follow-up (section 8b, item 4) measured why from
+the apply's io-stats: the excess is AEVT segment loads, which the first form did not touch, and its extra EAVT and
+AVET segments evicted others on 32 MB. Corrected to the AEVT touches (5 to 7 runs of 900 saves): **+0.131 ± 0.015 with
+against +0.193 ± 0.020 without on 32 MB, +0.037 ± 0.010 against +0.100 ± 0.024 on 256 MB**. Datoms per save (+2, +6,
++12, exactly 2 per declared value) and index bytes per save (134, 433, 847 B) are the same in every cell. Keep it
+off by default until run C measures it at 1 billion (section 8b, item 4).
 
 ## 8. Server runs for questions across subjects, in order, for the day a machine is rented
 
@@ -356,9 +346,13 @@ pieces); predictions were written before any run, by the piece's builder, except
 | D | **Sweep arms** (`xq6/EXACT-SWEEP.md` section 5 arms A and B; `xq9/QUESTION-SHAPES.md` section 6 arm C; `xq6/server.ts`) | bring-up 1 | 40 to 70 min | $0.73 to $1.27 | 100,000 subjects: 120 to 210 s on 1 permit, 45 to 80 s on 3, 30 to 60 s on 6, 150,000 to 200,000 loads; a sweep beside re-read pinned readers cuts their reads/s 30 to 80%; C1 (subjects with 3 or more open tasks) 220 to 440 s on one part, 45 to 100 s on six; C2 (top 100 by pay) 100 to 200 s on one part | counts that differ between arms; one permit over 300 s; six parts not 1.3 times faster than three; C1 one part over 600 s (tasks not stored beside their subject) |
 | E | **Question reader arm** (`xq7/QUESTION-READER.md` section 6; `xq7/server.ts`) | bring-up 2 | 21 to 33 min of windows | $0.38 to $0.60 | Main reader's storage reads per pinned read: 0 to 0.05 in controls and with the sweeps on the question reader; 0.6 to 1.8 with them on the main reader (reads/s down 40 to 85%) | question-reader windows above the control by more than 0.05; main-reader windows within 10% of the control (then sweeps could share the main reader) |
 | B | **Backfill of the 1 billion database** with exactness samples (`xq4/COMMIT-INDEX.md` S-1; `xq1/server.ts backfill`) | its own copy | 90 to 240 min | $1.64 to $4.36 | value entries 17.9 million ± 5%; bytes per entry 230 to 330 B; backfill 25 to 75 min; 1,000 sampled subjects in each of ten accounts: 0 mismatches; dry run 0 to add, 0 to retract | any sample mismatch or a non-zero dry run (stop: nothing ships); backfill and indexing job over 4 h (then an online, per-account backfill comes first); entries outside 17.0 to 18.8 million |
-| C | **The save pair judged against the bars** (`xq4/COMMIT-INDEX.md` S-2; `lab/bin/scorecard.mjs --cross-index`) | two copies of the backfilled database | about 100 min (+2 preflight, +14 for the two copies) | $2.10 | on minus off: datoms per save +1.5 to 2.5; log bytes +300 to 800 B; reads inside apply +0 to 0.05; commit p50 +0.05 to 0.4 ms, p99 +0 to 3 ms; stored rate unchanged | with the index on, save median over 10 ms or p99 over 50 ms in a cell where the off arm is inside them (repeated 600 s cells); over 0.5 ms of writer time per save for 1 to 3 declared values; over 0.2 extra reads inside apply per first touch (section 7: on the toy's 32 MB cache the excess is +0.06 to +0.21 over 300 saves, and the hint fix makes it worse) |
+| C | **The save pair judged against the bars** (`xq4/COMMIT-INDEX.md` S-2; `lab/bin/scorecard.mjs --cross-index`) | two copies of the backfilled database | about 100 min (+2 preflight, +14 for the two copies) | $2.10 | on minus off: datoms per save +1.5 to 2.5; log bytes +300 to 800 B; reads inside apply +0 to 0.05; commit p50 +0.05 to 0.4 ms, p99 +0 to 3 ms; stored rate unchanged | with the index on, save median over 10 ms or p99 over 50 ms in a cell where the off arm is inside them (repeated 600 s cells); over 0.5 ms of writer time per save for 1 to 3 declared values; over 0.2 extra reads inside apply per first touch (section 8b, item 4: on the toy's 32 MB cache the excess is +0.19 without the hint fix and +0.13 with it; run C adds a `TX2_INDEX_HINTS=1` arm) |
 | F | **Question bench, index** (`xq4/COMMIT-INDEX.md` S-3; `xq1/server.ts bench`) | its own bring-up of the backfilled copy | 40 to 60 min | $0.73 to $1.09 | first pages 1 to 5 ms warm, 8 to 50 ms cold; Q1 count 30 to 120 ms warm; Q4 full count 0.15 to 0.5 s warm; Q5 40 to 150 ms warm; quiet-account pinned-read p99 ratio at most 1.15 beside a cold Q4 count | a first page over 20 ms warm or 100 ms cold at p99; counts slower than 1 µs per entry warm or 10 ms per 1,000 entries cold; the quiet ratio over 1.25 and over its bar |
 | G | **The agreement gate at 1 billion** (this page; `xq10/server.ts`) | bring-up 3 (backfilled copy, `DX_CROSS_INDEX=1 DX_SWEEP=1 DX_SWEEP_SHAPES=all DX_SWEEP_PERMITS=6 DX_SWEEP_PER_ACCOUNT=6`) | 3 to 12 min bring-up + 15 to 30 min | $0.33 to $0.76 | account-003, the head, now and 30 days ago: 11 comparisons of 7 questions (profiles by background, a range of start dates, the subjects, tasks complete with progress 10 or more, tasks per status with the no-value group, tasks with no status, one complete ID list), **0 differences**; auto answers every one from the index; index counts 0.03 to 0.5 s warm; each sweep of 100,000 profiles or subjects 30 to 60 s on 10 parts over 6 permits, each sweep of about 570,000 tasks 3 to 6 min; the parts examine exactly the kind's IDs (the runner stops otherwise) | any difference (stop: the index is not exact at that size, nothing builds on it); an index count over 3 s; a sweep part at another position |
+
+**C's optional hint arm** (section 8b, item 4): a third copy with `TX2_INDEX_HINTS=1`, one more 600 s cell set,
+about 50 min plus 7 min for the copy: **$1.04 more**; it answers whether the corrected hint fix removes the index's
+extra reads at 1 billion and is not needed for the shortest session below.
 
 **Bring-ups that can be shared.** Bring-up 1 (the sealed cluster with `DX_ID_LISTS=1 DX_SWEEP=1 DX_SWEEP_SHAPES=all`,
 six sweep permits): A and D. Bring-up 2 (the sealed cluster with `DEMO_QUESTION_READER=1`, three main-reader sweep
@@ -379,24 +373,151 @@ on its own fetched copy beside B, C, F and G on the first saves 1.2 to 2.7 hours
 $0.55 to $1.18 more.
 
 
+## 8b. Follow-up: every number that differed, explained (2026-11-24, evening)
+
+The coordinator asked for each count that differed from an earlier one to be explained before a merge. Each item:
+cause, counts, and whether a question class was lost.
+
+**1a. G1 asked 2,718 questions, the index branch 2,448: a run setting, not code.** The index branch ran its world
+gates with `XQ4_QUESTIONS=20` (its launch line for `world-final`: `XQ4_SWEEP=1 XQ4_QUESTIONS=20`); `world-1` used the
+launcher's default, 25. G1 asks, at each of 6 positions x 9 valid times, the 10 or 14 fixed questions, the same fixed
+set again on the record-time axis, and `XQ4_QUESTIONS` random ones: 5 more per cell is 6 x 9 x 5 = **270**, exactly
+2,718 - 2,448. **Proof:** `world-20` (this branch's gateway, `XQ4_QUESTIONS=20`, image `da58aea16b31…`, the staged
+tree's hash checked inside the container) reproduces the index branch's `world-final` in every count: **2,448
+questions, 151,250 pages, 4,384,573 matching answers, 14,826,543 entity reads, 684 index-only first pages, 0
+entity reads on them, the same stops (limit 94,280, entries 54,522, end 2,448), 0 differences**. The same seed and
+generator give the same questions, so no question class was dropped; the classes asked (`XQ10_G1_CLASSES`): ids 1,171,
+count 689, count per value 373, distinct count 215; conditions eq 818, range 701, exists 631, prefix 350, missing 553,
+in 539; from a type 972, a prefix 321, none 1,155; 1,764 on the position axis and 684 on the record-time axis.
+
+**1b. The sweep comparison asked 64 questions, the index branch 77: a merged change dropped a class; fixed.** The
+comparison takes the questions `find`'s `sweep-fallback` says the sweep can take. This branch added value-family
+checks to `sweep-fallback` (section 4, row 5), and its prefix check required the typed form `{type: "string",
+value}`, while `find` also takes a plain string, which is what the gate's random prefixes are. Every question with a
+plain prefix was therefore marked "none" and left the comparison: of the 53 questions skipped in `world-20`, **13 were
+skipped only for that** (77 - 64 = 13); the other 40 are skipped on the index branch too (a `from {type}`, a distinct
+count, an order the sweep does not take). **Fixed** (`cross_find.clj`): a plain prefix is the same question; `contains`
+stays typed-only (the sweep refuses it otherwise). The final head's run is item 5.
+
+**2. 28 entity reads on index-only first pages: one question, long values, the index branch's own path.**
+`XQ10_G1_IOREADS` names it: account `acc-b`, `:person/custom-background` in a range up to (not including) "pending",
+a count ordered by that attribute descending, at position 8,689 and valid time 2023-11-19. The range runs over the
+seeded values `long-a` and `long-b` (231 and 215 characters); index keys hold a value up to 200 characters
+(`cross_index.clj` `long-limit`) and mark longer ones, so each long-valued candidate the scan meets is confirmed
+against its fact row (`confirm` in `find-page!`, counted as an entity read): 28 on that first page. The code is the
+index branch's, unchanged (`cross_find.clj` lines 443 and 778 are identical at `0f4843e25`); it is not the
+prefix-shape fix, the no-value group (the question is a count) or the queue. The index branch's runs counted 0
+because that question is one of the 5 extra random questions per cell (1a), and the gate's accounting leaves out
+only questions whose text names a long value. **E1 is not undone; its shapes and cost, stated:** a `range` or `prefix`
+on a text attribute is answered from the index alone except for one entity read per candidate whose value is over
+200 characters (no read for values up to 200). The other 693 index-only first pages read nothing.
+
+**3. The question reader's fairness bound: the count, not the queue; restated.** Reproduced at once with the fairness
+arms in a loop (`fair-30`: 30 repeats of the four arms, 120 arms): **18 of 120 arms** had a page with more than 2
+admissions ahead (up to 8), on a lab VM loaded with this branch's world and hint runs and other builders' stacks.
+`fair-30b` added two counts to the queued admission's answer (`ids.clj`, only with `TX2_ID_LIST_QUEUE_MS` set):
+`turnMicros` (the time before the request reaches the pool queue) and `poolAhead` (admissions from then on). 30 more
+repeats (1,732,814 list pages): **10 of 120 arms over, 11 pages**: 8 of them with the time spent before the pool
+(turnMicros 1.3 to 5.5 ms of their 1.3 to 5.5 ms wait, 0 ahead inside the pool), 1 with a 4.2 ms pause after
+taking the turn and before reading the pool counter (turnMicros 0, poolAhead 0), and 2 with 5 and 6 counted inside the pool window after a 4 to 5 ms wait.
+The pool's queue is a fair `Semaphore` acquired with a timed `tryAcquire`, which Java serves first-in first-out; the
+account turn is one place per account and the listers are sequential, so neither lets a page be overtaken twice by
+the same account in queue order. The count includes every admission between reading a counter and joining the queue,
+so a paused thread on a loaded host (the question reader has 2 cores) shows admissions it never queued behind; the
+counts cannot separate such a pause from overtaking, and no other explanation fits a FIFO semaphore. **The code is
+the question reader branch's** (`queued-admit!` at `a5631af24` has the same ticket, turn and pool steps), so the
+single-queue resolution did not change it. **Restated** (`xq7/QUESTION-READER.md` and `xq7/gate.ts` (f)): at most one
+page of each other listing account goes ahead of 99.9% of an arm's pages (every arm of both loops meets it: at most 2
+pages over in an arm of 5,529 or more pages; 22 pages over in all in `fair-30`, 11 in `fair-30b`), and the pages over are logged with their wait split.
+
+**6. "Off means 404", shown.** The suites' probe now creates a database first and asks after the suites ran (asked
+before them, it left a feed wakeup that 6 feed tests count). Each arm checks its expected answers
+(`XQ10_ROUTES_CHECK`): on the final head (`suites-final-231f1ae6d`, image `da58aea16b31…` in all four arms), **every
+arm passes**: options unset, `ids` 404, `sweep` 404, `find` 409 `IndexOff`; `TX2_CROSS_INDEX=1` alone, `ids` and
+`sweep` 404 and `find` answers (409 `AttributeNotIndexed`: nothing is declared there); the routes arm, `ids` and `sweep`
+200 and `find` `IndexOff`; the queue arm, `ids` 200 with its `queue` (micros, ahead, turnMicros, poolAhead), `sweep`
+404, `find` `IndexOff`. The suites themselves: 84 or 85 tests, 0 failures, 1 error in each arm, the shapes branch's
+own (`feed-test/http-route`).
+
+**4. Why the hint fix made reads inside apply worse, from counts; the fix corrected.** The cost harness now records
+every read counter of each save's apply (Datomic's transaction io-stats: lookups and segment loads per index, object
+cache hits, storage reads). Cells of 300 first-touch saves per arm, 3 repeats where it matters, both hint options on,
+image `da58aea16b31…` and the staged tree checked in every cell (`runs/hints2`: 21 cells, the parts separated by a lab
+knob since removed; `runs/hints3`: 11 cells of the final code, interleaved with no-fix cells on the same tree
+`0d43510d…`). Index on minus off, reads inside apply per first-touch save, as run means over 1, 3 and 6 values
+(± is the standard error over runs):
+
+| Transactor cache | No fix | First form (EAVT range, EAVT and AVET keys, declaration) | AEVT neighbourhood (the final code) |
+| --- | ---: | ---: | ---: |
+| 32 MB | **+0.193 ± 0.020** (6 runs: +0.12 +0.25 +0.17 +0.16 +0.24 +0.22) | **+0.297 ± 0.031** (3 runs: +0.33 +0.33 +0.23), worse | **+0.131 ± 0.015** (7 runs: +0.14 +0.08 +0.12 +0.21 +0.12 +0.14 +0.11) |
+| 256 MB | **+0.100 ± 0.024** (5 runs: +0.19 +0.10 +0.08 +0.07 +0.06) | +0.076 ± 0.020 (3 runs) | **+0.037 ± 0.010** (5 runs: +0.07 +0.05 +0.03 +0.01 +0.02) |
+
+The final code alone against no fix on the same tree, interleaved (`runs/hints3`, per-save paired): 32 MB +0.144 ±
+0.016 (3,600 saves) against +0.206 ± 0.020 (2,700); 256 MB +0.018 ± 0.016 against +0.064 ± 0.015 (1,800 each). The
+first form's parts alone, one run each on 32 MB: the owner's EAVT range +0.19, the keys (EAVT and AVET) +0.15, the
+declaration's sequence datom +0.20, all at the no-fix level. **Scatter:** one 300-save run's mean moves by up to
+0.13 between runs of the same code (32 MB, no fix: +0.12 to +0.25), the run-level standard deviation is 0.04 to 0.05
+(0.02 for the final code on 256 MB), so a single cell cannot separate +0.1 from +0.2; with 5 to 7 runs the standard
+error is 0.010 to 0.020, and the final code's gain over no fix is 0.062 ± 0.025 on 32 MB and 0.063 ± 0.026 on 256 MB
+(2.5 standard errors each); the first form's loss on 32 MB is 0.104 ± 0.037.
+
+**What the counts show.** With the index on, each save does exactly 2 more AEVT lookups and 2 more directory reads per
+declared value (the entry datoms' own checks) and 2 more AVET lookups; the extra segment loads are in **AEVT**: +0.14 to
++0.21 per save on 32 MB with no fix (EAVT +0.06, AVET about 0). The first form touched EAVT and AVET, which the apply does not read for
+the entries: on 32 MB those extra segments take cache space and the AEVT excess rises to +0.18 to +0.26 (eviction); on
+256 MB they cost nothing and save a little. Touching the AEVT neighbourhood instead brings the AEVT excess from +0.17 to +0.08 on 32 MB
+(run means) and from +0.05 to +0.03 on 256 MB. **So the fix is corrected, not removed:** `TX2_INDEX_HINTS=1` now touches only the AEVT
+neighbourhood of each entry the save writes (`index_hints.clj`; the EAVT, AVET and declaration touches and the lab
+knob used to separate them are removed). It meets the +0.2 target on both caches (+0.13 and +0.04); what is left on 32 MB is AEVT loads (+0.08) and
+EAVT loads (+0.05) per save that the touches do not remove; why those AEVT loads remain is not traced.
+
+**The three questions asked, answered from the counts.** (1) Which segments the extra touches load: EAVT and AVET
+segments of `:triplex.ix/entry`, which the apply never reads for the entries (its extra lookups are AEVT). (2)
+Whether touching the owner's entry range evicts what the save needs on 32 MB: alone, no (+0.19, AEVT loads +0.21,
+both at the no-fix level); together with the EAVT and AVET key touches, yes: AEVT loads rise to +0.22 and the excess to
++0.30. (3) Whether the declaration's sequence datom is what costs: no (alone +0.20, at the no-fix level). The code
+comment in `index_hints.clj` quotes the first, `runs/hints2`-only pooling (+0.18 and +0.11 on 32 MB, +0.12 and +0.05
+on 256 MB); the run-level numbers above, with `runs/hints3` added, are the ones to use.
+
+**What the server pair must measure (run C).** The excess at 1 billion depends on how often a first touch's AEVT
+segment of `:triplex.ix/entry` is already cached; on a deep account it mostly is not, as on the 32 MB toy, so the
+toy's 32 MB numbers are the closer guide. Run C should add one arm: the backfilled copy with `TX2_INDEX_HINTS=1` beside
+the existing on and off arms, and report reads inside apply per first-touch save and the AEVT segment loads from the
+io-stats. Prediction: index on minus off +0.10 to +0.20 without the fix and +0.03 to +0.12 with it; the fix is wrong if
+the AEVT loads do not fall with it, or if the excess with it is above +0.2.
+
+**5. The final head's own agreement and index gate** (`world-3-231f1ae6d`, the gateway at `231f1ae6d`, image
+`da58aea16b31…` pinned by ID, the staged tree's hash `0d43510d…` checked inside the container; `XQ4_QUESTIONS=20`, so G1
+is the index branch's question set):
+
+| Gate | Final head | Index branch `world-final` | `world-1` (`bc0ce9efd`) |
+| --- | --- | --- | --- |
+| G1 against brute force | **2,448 questions, 0 differences**; 151,250 pages, 4,384,573 matches, 14,826,543 entity reads, 0 on index-only first pages | the same in every count | 2,718 (25 a cell), 0 differences |
+| Index against the sweep | **77 questions, 0 differences** (ids 45, count 13, count per value 19; 36 not empty); 40 skipped, all for reasons the index branch skips too | 77, the same breakdown | 64 (the dropped prefix class, item 1b) |
+| Agreement gate | **4,626 questions, 0 differences, 0 refused** (ids 2,361, count 2,023, count per value 242; 3,857 not empty) at positions 11,674, 11,703, 11,712 x 3 valid times | (not on that branch) | 4,626, 0 differences (ids 2,360, count 2,025, count per value 241) |
+| Difference table | 45 cases, no index fallback to a refusing sweep, no sweep answer behind an index "none" | | the same |
+| G2, G3, D3, B1, G4, E1 | all pass (G2: 189,476 value and 60,096 type entries both ways, dry run 0 and 0) | pass | pass |
+| G5 time clause | failed by 0.17 ms (60.17 ms against 60, with 1,488 ms of throttling in the phase); counts, busy and the pinned reads pass | fails in 4 of 8 toy runs | failed by 3.8 ms |
+
+The agreement gate's own random questions for `acc-a` are drawn until 12 a cell are accepted by `sweep-fallback`;
+with plain prefixes now accepted (item 1b) a few of them changed, hence the slightly different split by result at
+the same total.
+
 ## 9. What is not verified
 
 - **Nothing ran on a server.** Every number at 1 billion is a prediction (section 8); every time on this page is the
   Mac's and diagnostic.
 - **Agreement at 1 billion** (run G): written and checked for syntax, not run at size. Whether `demo/server-up.sh`
   accepts the backfilled copy is not checked.
-- **The hint fix does not help** (section 7): with it, reads inside apply rise; why is not traced. Without it the
-  300-save cell meets +0.2 at 1 and 3 values and is +0.21 at 6, on the Mac's 32 MB cache only.
-- **G5's time limit** (the index gate's concurrency case) failed by 3.8 ms: the slowest of 64 concurrent `find`
-  requests took 63.8 ms against 60 ms, with 139 ms of host throttling during it and 6.9 s of collector time in the
-  phase; counts, statuses and the 200 pinned reads beside it all passed. The index branch's page records the same
-  clause failing in 4 of its 8 toy runs under CPU-quota throttling (`xq4/COMMIT-INDEX.md` G5). Not rerun here.
-- **28 entity reads on index-only first pages** in `world-1`'s G1 (the index branch's runs counted 0): they are the
-  confirmations of long keys the counter includes; which questions drew them is not traced. `world-1`'s G1 asked
-  2,718 questions where the index branch's asked 2,448 with the same seed; the cause of the larger count (this run has
-  the sweep and its shapes on) is not traced either. 0 differences in both.
-- **`world-1` ran at `bc0ce9efd`**: the gateway tree differs from the final one only in `index_hints.clj` (the exact-key
-  touches), which loads but does nothing with `TX2_INDEX_HINTS` unset, as in that run.
+- **The corrected hint fix at 1 billion** (section 8b, item 4): measured on the toy's 32 MB and 256 MB caches only;
+  run C's optional arm measures it at size.
+- **G5's time limit** (the index gate's concurrency case): on the final head the slowest of 64 concurrent `find`
+  requests took 60.17 ms against 60 ms, with 1,488 ms of host throttling in the phase (`world-1`: 63.8 ms); counts,
+  statuses and the pinned reads beside it pass. The index branch's page records the same clause failing in 4 of its 8
+  toy runs under CPU-quota throttling (`xq4/COMMIT-INDEX.md` G5); not judged on the Mac.
+- **Long values on index-only answers** (section 8b, item 2): a text `range` or `prefix` reads one entity per
+  candidate whose value is over 200 characters; the gate's accounting still leaves out only questions that name a
+  long value, so it does not separate these reads from others.
 - **Top N against the index's value order**: not offered as one question (the SDK sends a top N only to the sweep);
   their different tie order and order value are recorded, not unified (section 4).
 - **The index's own refusal of ID order for lists driven only by a range or a prefix** means such lists are answered
@@ -408,10 +529,6 @@ $0.55 to $1.18 more.
 - **The second-machine question reader serving `find`** (`rd5/second-reader.sh RD5_CROSS_INDEX=1`): written, not run
   anywhere (as XQ7's second-machine path).
 - **The owner's console** still runs `dx-con1-app`; the switch steps (section 6) are written, not run.
-- **"Off means 404" inside the suites:** the suites' probe of the ID list, sweep and `find` routes on a database that does
-  not exist gets the gateway's database-not-found answer before any route check, with the options off and on alike,
-  so it shows nothing; the option-off state is shown instead by the stored log (equal to the base's), the identities
-  and the shapes twin (2,244 of 2,244 identical).
-- **The question reader's fairness bound** (XQ7 gate (f)): one arm of eight over two runs had a page with 4
-  admissions ahead where the gate allows 2; the repeat passed every arm. Not traced.
+- **The fairness count cannot tell a paused thread from an overtaking** (section 8b, item 3): the explanation rests
+  on the queue being a FIFO semaphore; 2 of the 11 pages over the bound were counted inside the pool window.
 - **Release-written values** (settlement): both routes read stored facts only, as their pages state; unchanged.
