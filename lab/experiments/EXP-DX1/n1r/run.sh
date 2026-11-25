@@ -34,7 +34,7 @@ label=(--label tx2.holder=DX-N1R)
 tag=tx2-dxn1r-$$-$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')
 net=; pg=
 cleanup() {
-  [[ -n $pg ]] && docker rm -f "$pg" > /dev/null 2>&1
+  [[ -n $pg ]] && { docker logs "$pg" > "$out/pg.log" 2>&1; docker rm -f "$pg" > /dev/null 2>&1; }
   [[ -n $net ]] && docker network rm "$net" > /dev/null 2>&1
   rm -rf "$out/src"
 }
@@ -47,8 +47,8 @@ if [[ $authority == pg ]]; then
   [[ $(docker image inspect --format '{{.Id}}' "$pgimage") == "$pgimage" ]] || { echo "run.sh: image $pgimage not present" >&2; exit 2; }
   net=$tag-net; pg=$tag-pg; password=$(openssl rand -hex 16)
   docker network create "${label[@]}" "$net" > /dev/null || exit 1
-  docker run -d --pull never "${label[@]}" --name "$pg" --network "$net" -e "POSTGRES_PASSWORD=$password" --memory 1g \
-    --tmpfs /var/lib/postgresql/data:rw,size=512m "$pgimage" -c fsync=off -c full_page_writes=off > /dev/null || exit 1
+  docker run -d --pull never "${label[@]}" --name "$pg" --network "$net" -e "POSTGRES_PASSWORD=$password" --memory 2g \
+    --tmpfs /var/lib/postgresql/data:rw,size=1g "$pgimage" -c fsync=off -c full_page_writes=off -c max_wal_size=64MB -c min_wal_size=32MB > /dev/null || exit 1
   docker inspect --format '{{.Image}}' "$pg" > "$out/pg-image-ran"
   for i in $(seq 1 60); do docker exec "$pg" pg_isready -U postgres > /dev/null 2>&1 && break; sleep 1; done
   sleep 2

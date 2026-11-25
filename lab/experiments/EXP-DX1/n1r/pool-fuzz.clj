@@ -57,7 +57,7 @@
 
 ;; ---- direct reads (the oracle) ----
 (def conn* (atom nil))
-(defn jdbc [] (or @conn* (reset! conn* (java.sql.DriverManager/getConnection sql/url))))
+(defn jdbc [] (let [c @conn*] (if (and c (not (.isClosed ^java.sql.Connection c))) c (reset! conn* (java.sql.DriverManager/getConnection sql/url)))))
 (defn exec! [s] (with-open [st (.createStatement ^java.sql.Connection (jdbc))] (.execute st s)))
 (defn pg-handles [name]
   (with-open [st (.prepareStatement ^java.sql.Connection (jdbc) "SELECT id FROM triplex_removal.keys WHERE scope=?")]
