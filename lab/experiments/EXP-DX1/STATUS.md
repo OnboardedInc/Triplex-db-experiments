@@ -6591,3 +6591,13 @@ Source: Publish reviewer, part 2; branch `exp/DX-ACT10-publish-review` `5079fa7c
 - Not tested: removal on request beside the archive; two databases; a restore.
 
 **Actions:** the merge agent told to merge `a6f89a409` into the one branch last, every option and setting off, with the reviewer's conditions on the readiness page. The Publish builder resumed for a fifth round (Z1 to Z8; every frame whose size depends on history bounded by construction; the archive made a kind the sealing check accepts) and asked to read why indexed saves leave the fast writers. Merge order now: API-call reads, save-line fixes, key-pool and reply fix, ID allocator, Publish line.
+
+## 2026-11-25 16:19 EST: API-call reads merged: the one branch `exp/DX-INT1` is at `9eda0a935`
+
+Source: merge agent message; checked against `origin`: `2bba5e360` is an ancestor of the head; the save-line fixes, the key-pool fix, the ID fix, the Publish line and per-account removal are not yet.
+
+- All options default off. As merged, the branch moved all 17 stored-function identities with every option off (its code compiled before the commit namespace); restored with the late-loading form: 58 of 58 equal to `23b7df344` in 8 writer settings on the head's own image. The standing key-deletion gate passes and its paired comparison against the previous head is identical.
+- **A real fault caught by the merged tree's gates before the push:** every batched read answered 400. Cause: the morning's identity restoration turned an internal flag into a function, and the batch route, written earlier, still set it to true. One-file fix; only the batch route (behind `TX2_READ_BATCH`) was affected.
+- Gates: the branch's own gate 167,357 comparisons, 0 differences; its cache gate 6,208 probes, 0 removed values served; production gate exact; aged; the questions line's stacks; the reporting copy 606 checks, 0 failed; console with the questions proof 2,599 of 2,599.
+- Open: one gate stopped once on a 503 right after its scope was created and passed 1,654 of 1,654 on rerun; cause not found.
+- Next: the save-line fixes (in-memory gates passed on their own image: outcome gate 426 in each of 5 settings, fuzz 27,629 saves 0 differing; stack lane starting), then the key-pool and reply fix, the ID fix, the Publish line.
