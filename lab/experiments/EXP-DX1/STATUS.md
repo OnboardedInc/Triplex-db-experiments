@@ -6548,3 +6548,12 @@ Source: independent reviewer, branch `exp/DX-N1R-key-pool-review` `71e6c453d`, `
 - Not tested: a killed PostgreSQL session or transactor during a save on a stack; two gateway processes filling at the same moment.
 
 **Action:** the builder asked to make the one-line fix now, with the reviewer's check in the gate, and report the new head; it then goes to the merge.
+
+## 2026-11-25 12:22 EST: second batch merged: questions across subjects are on the one branch, `exp/DX-INT1` `f633233f6`
+
+Source: merge agent message; checked against `origin`: the questions line `f078320a2` (ID lists, sweep with every product question shape, commit-time index and find, question reader, console "Ask across subjects" and agent tools) is an ancestor of the head, with the first batch and the key-deletion fix; the save-line fixes, API-call reads, the Publish line, per-account removal, the key-pool fix and the ID fix are not yet.
+
+- All options default off. Stored-function identities on the head's own image: 58 of 58 equal to `23b7df344` in all 8 writer settings; 12 new keys installed only with their options on. The reference gate log equals the reference commit's.
+- Gates passed (some after reruns for the merge agent's own harness faults, four of them, listed on the readiness page): the questions line's suites and stacks; agreement of index and sweep on 4,626 questions, 0 differences; the console on a second toy with the questions proof 2,599 of 2,599 and the console proof 37 of 37; the reporting copy paired with find, 90 three-way comparisons equal; the real-mix tape with the index on, exact 360 of 360; the standing key-deletion gate.
+- **One finding on the page:** with the commit-time index on, every save of the real-mix tape took the general writer, not the per-subject or creation writer. So the index and the fast save path do not yet work together.
+- Next, merged locally and in gates: API-call reads (identities restored with the late-loading form), then the save-line fixes with the account setting left off.
