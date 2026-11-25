@@ -6,6 +6,8 @@
      the operation ID as sent and the command ID in the form account-claims/stored-ids chose.
   3. The transition: a save naming its account prepared before the setting turns on and committed after is refused
      (replayable) and its replay is stored once, scoped.
+  4. A build that does not know the setting (simulated: no stored-ids, no routing) is refused on every writer once
+     the setting is on, and stores nothing; the writer functions moved to their twins.
   Run by s6/clj-run.sh (mode ids) with TX2_ACCOUNT_CLAIMS=1 (setting accounts-on). Each case prints DX-S6_IDS."
   (:require [clojure.data.json :as json] [clojure.java.io :as io] [clojure.string :as str] [clojure.test :refer [deftest is]]
             [datomic.api :as d] [triplex.gateway.storage :as storage]
@@ -77,8 +79,8 @@
           (is (not (:operationOtherForm r)) (pr-str r))))))))
 
 (deftest a-save-across-the-transition
-  ;; Prepared with the setting absent (plain command form and the guard), the setting turns on before its commit: it
-  ;; is refused replayably; the replay (a new operation ID, the same command) is stored once, scoped.
+  ;; Prepared with the setting absent (plain command form, the old function idents), the setting turns on before its
+  ;; commit, moving the functions: it is refused replayably; the replay (a new operation ID, the same command) is stored once, scoped.
   (doseq [kind ["one owner" "general" "creation"]]
     (with-redefs [ac/permitted? false]
     (reference/in-scope
@@ -105,6 +107,62 @@
           (is (= [200 nil] (:replay r)) (pr-str r))
           (is (not (:plainStored r)) "no plain command stored after the setting turned on")
           (is (:scopedStored r))))))))
+
+(deftest an-older-build-is-refused-once-the-setting-is-on
+  (doseq [kind ["one owner" "several owners" "creation" "general"]]
+    (reference/in-scope
+      (fn [name conn]
+        (let [a (str "o" (swap! counter inc))
+              seed (reference/send name (assoc (save conn {:command (str "seed-" a) :facts [{:owner (str "acct/" a "/subject/s") :field ":a/f0" :type :string :value "s" :pred nil}
+                                                                                            {:owner (str "acct/" a "/subject/s") :field ":a/f1" :type :string :value "s" :pred nil}
+                                                                                            {:owner (str "acct/" a "/profile/s") :field ":a/f0" :type :string :value "p" :pred nil}]}) "account" a))
+              on (with-redefs [ac/permitted? true] (reference/route name "v1" "settings" {"accountIds" true}))
+              cmd (str "cmd-" (swap! counter inc)) op (str "op-" (swap! counter inc))
+              input (save conn {:command cmd :operation op :facts (with-preds name ((kinds kind) a 1))})
+              ;; An older build: it neither chooses stored IDs nor routes; it calls the writer functions by their idents.
+              reply (with-redefs [ac/stored-ids (constantly nil) ac/on? (constantly false)]
+                      ((if (= kind "general") fz/general (fn [f] (f))) #(reference/send name input)))
+              db (d/db conn)
+              moved (into (sorted-map) (for [[i] (d/q '[:find ?i :where [?e :db/fn] [?e :db/ident ?i]] db) :when (ac/swappable? i)]
+                                         [(str i) (some? (d/entid db (ac/twin i)))]))
+              cmds (stored conn :triplex.claim/command-id) ops (stored conn :triplex.tx/operation-id)
+              r {:kind kind :seed (reference/outcome seed) :settingOn (:status on) :olderBuild (reference/outcome reply)
+                 :operationStored (contains? ops op) :commandStored (or (contains? cmds cmd) (contains? cmds (@encode a cmd)))
+                 :functionsMovedToTwins moved}]
+          (line (assoc r :case "an older build once the setting is on"))
+          (is (= [200 nil] (:seed r)))
+          (is (= 200 (:settingOn r)))
+          (is (= [409 "CasConflict"] (:olderBuild r)) (pr-str r))
+          (is (not (:operationStored r)))
+          (is (not (:commandStored r)))
+          (is (every? true? (vals moved)) (pr-str moved)))))))
+
+(deftest a-publish-shaped-write-is-its-accounts
+  ;; [DX-S6b] The join layer's Publish writes its account's metadata (`lazy/account/<kind>/<account>`) and notice
+  ;; documents (`notice:v1:...`, journals). Its account is the metadata's; two accounts' Publishes under one client ID
+  ;; are each stored scoped; neither can read or take the other's; a lookup naming no account finds neither.
+  (with-redefs [ac/permitted? true]
+    (reference/in-scope
+      (fn [name conn]
+        (let [publish (fn [acct n] (assoc (save conn {:command "joined:release-1" :operation (str "pub-op-" acct)
+                                                      :facts [{:owner (str "lazy/account/releases/" acct) :field ":lazy/head" :type :string :value (str n) :pred nil}
+                                                              {:owner (str "notice:v1:" acct "-" n) :field ":lazy/notice" :type :string :value (str n) :pred nil}]})
+                                     "account" acct))
+              a (reference/send name (publish "pa.1" 1))
+              b (reference/send name (publish "pb" 2))
+              look (fn [acct] (:body (reference/route name "v1" "claim" (cond-> {"commandId" "joined:release-1" "receipt" true} acct (assoc "account" acct)))))
+              cmds (stored conn :triplex.claim/command-id)
+              r {:case "a Publish-shaped write" :a (reference/outcome a) :b (reference/outcome b)
+                 :aScoped (contains? cmds (@encode "pa.1" "joined:release-1")) :bScoped (contains? cmds (@encode "pb" "joined:release-1"))
+                 :plainStored (contains? cmds "joined:release-1")
+                 :lookupA (get (look "pa.1") "txId") :lookupB (get (look "pb") "txId") :lookupOther (get (look "pc") "txId") :lookupNone (get (look nil) "txId")}]
+          (line r)
+          (is (= [200 nil] (:a r)) (pr-str r))
+          (is (= [200 nil] (:b r)) (pr-str r))
+          (is (and (:aScoped r) (:bScoped r) (not (:plainStored r))) (pr-str r))
+          (is (and (some? (:lookupA r)) (some? (:lookupB r)) (not= (:lookupA r) (:lookupB r))) (pr-str r))
+          (is (nil? (:lookupOther r)))
+          (is (nil? (:lookupNone r))))))))
 
 (defn main []
   (let [r (clojure.test/run-tests 's6-ids)]

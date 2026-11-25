@@ -484,7 +484,7 @@ transaction (`_tx/…DW00` in the gate's line), and a lookup naming no account d
 **SDK:** `packages/datomic/test/claim-account.test.ts`, 2 of 2. With `claimAccount`, every lookup names the account;
 without it, the requests are exactly as before.
 
-## 12. After the second review: one stored form per ID (design written before the code, 2026-11-25)
+## 12. After the second review: one stored form per ID, one account mechanism for both lines (design written before the tests, 2026-11-25)
 
 The second review ([REVIEW-2](../s5/REVIEW-2.md), `9dc800e7b`) found the break of section 9.2 (R2-1). With
 `TX2_ACCOUNT_CLAIMS=1`, a fence was stored under one form of an operation ID while the save it fenced was stored under
@@ -492,9 +492,10 @@ the other. This happened in a mixed fleet and in the per-subject replan retry. T
 the SDK's replay stored the save a second time.
 
 The cause is that the form an ID took depended on each process's environment and on the code path. This section is
-the design that replaces it. It follows the same rules as the Publish builder's settings
-(`actv-lazy/PUBLISH-BESIDE-SAVES.md` 0.8): settings stored in the database, one-way, and the environment only grants
-permission.
+the design that replaces it. It follows the rules of the Publish builder's settings
+(`actv-lazy/PUBLISH-BESIDE-SAVES.md` 0.8 at `2084d3ba7`): a setting stored in the database, one-way, and the
+environment only grants permission. The Publish builder's answer (its 0.9) is that the gateway's mechanism is the one
+both lines keep; section 12.4 says what the join layer changes to use it.
 
 ### 12.1 Operation IDs: one stored form in every state
 
@@ -504,68 +505,88 @@ whatever the setting.
 - Scoping operation IDs by account bought almost nothing. The SDK draws them at random (a UUID per attempt), so another
   account can only reuse one it has already seen, and the feed shows those only once they are committed.
 - Reusing a committed ID refuses only the reuser. An operation ID taken by another transaction is never settled on: the
-  receipt names its transaction, and the SDK checks it against its own journal (S6 section 9.2).
+  receipt names its transaction, and the SDK checks it against its own journal (section 9.2).
 
 **What this makes impossible:** a fence and a save of one operation stored under different forms. That is R2-1 by
 both of the review's paths, and on any future gateway build too, because no code chooses a form.
 
 ### 12.2 Command IDs: the setting
 
-**Where the setting lives.** `:triplex.scope/account-ids` = 1 on the database's scope entity. Absent means command IDs
-are stored as sent (today). It is installed with its value by `account_claims.clj` `turn-on!`.
+**Where it lives.** `:triplex.scope/account-ids` = 1 on the database's scope entity: one setting per database. Absent
+means command IDs are stored as sent (as before). A value other than 1 is one this build does not know, and it refuses
+every save of that database (`409 SettingUnknown`), so the next setting a later build adds stops this build the same
+way.
 
-**Who turns it on.** Only a process started with `TX2_ACCOUNT_CLAIMS=1`. It does so through
-`POST /v1/db/<db>/settings {"accountIds": true}`, or at its first save that names an account. It never turns off.
-`TX2_ACCOUNT_CLAIMS` no longer changes how any request behaves; it only grants permission.
+**Who turns it on.** Only a process started with `TX2_ACCOUNT_CLAIMS=1`, through `POST /v1/db/<db>/settings
+{"accountIds": true}` or at its first save that names an account. It never turns off. `TX2_ACCOUNT_CLAIMS` no longer
+changes how any request behaves; it only grants permission.
 
-**How a gateway learns it, and how stale it may be.**
+**The transition moves the writer functions.** The transaction that sets the value also, for each save-writer
+function installed in the database (the general commit function and its variants, the one-owner, several-owners,
+creation and covering-owner functions):
 
-- Every gateway of this build reads the setting from the database value it prepares a save on (`stored-ids`), and the
-  same for every lookup.
-- Its view can be stale only between that read and the commit:
-  - Setting already on at prepare: nothing can change, since it is one-way.
-  - Setting absent at prepare, and the save names an account: the save carries one more statement,
-    `[:triplex.account/ids-guard-v1 scope nil]`. It refuses the save (`TRIPLEX_CONFLICT`, answered `409 CasConflict`,
-    which the SDK replays) if the setting turned on before the commit. The replay is prepared on the new value.
-- So no save that names its account stores a plain command ID after the setting is on.
-- The guard function is installed in a database only when a save there first names an account, so option-off
-  databases are untouched.
+1. installs the same body under a twin ident (`<name>-ids1`);
+2. replaces the body under the old ident with one that refuses (`TRIPLEX_CONFLICT`, answered `409 CasConflict`, which
+   the SDK replays).
+
+The functions every build calls inside or beside a save (row assertion, removal guards, group application, hints,
+folds) are not moved. A writer function first installed after the transition is moved the first time this build
+routes a save to it, by the same statements; two processes doing it at once write the same values.
+
+**How a gateway learns it, and how stale its view may be.**
+
+- Every gateway of this build reads the setting from the database value it prepares a save on, and the same for every
+  lookup. With it on, the save calls the twins (`account_claims.clj` `route-data` and `route-plan`; the replan retry
+  calls what the first attempt called).
+- Its view can be stale only between that read and the commit. A save prepared with the setting absent calls the old
+  idents; if the transition commits first, those refuse it, and the SDK's replay is prepared under the setting. **No
+  save prepared under the old view commits after the transition.**
 
 **One place chooses the form.** `account_claims.clj` `stored-ids` picks it once per save:
 
 - **Scoped** (`acct-id/v1/<n>/<account>/<id>`): the save names its account, writes only that account's entities, and
   the setting is on.
-- **Plain:** any other save that names an account.
+- **Plain:** any other save that names an account (its entities are several accounts' or none).
 - **As sent:** a request that names no account.
 
 `apply-ids` writes the choice into the prepared data, and the replan retry re-applies the same choice from the
 request's `:triplex/stored-ids` (`storage.clj`). That fixes R2-1b. The gate `s6/stored_ids_gate.clj` lists every place
-in the gateway that writes or reads a stored ID, and fails if one is added or changed.
+in the gateway that writes or reads a stored ID, and fails if one is added or changed; the list
+(`s6/stored-id-sites.txt`, 73 lines) is the answer to "every place a stored ID is computed today": the form is
+computed in `stored-ids` and written in `apply-ids` only; every other listed line reads or checks an ID in the form the
+request already carries.
 
 **A save in flight across the transition.**
 
-- Prepared before, committing after: refused by the guard, then replayed scoped. Nothing stored.
+- Prepared before, committing after: refused by the old ident, then replayed under the setting. Nothing stored.
 - Committed before: its claim is plain. A resend naming the same account after the transition is refused
   `CommandConflict` (`stored-ids` finds the account's plain claim), and the SDK's claim check finds it as the account's
   own.
 
-**Plain claims afterwards (R2-11).** A plain claim belongs to an account when its transaction wrote that account's
-entities, alone or with other accounts' (a save across two accounts belongs to both), or when it wrote no account's
-entities (a system save).
+**What an old build does.** A build that does not know the setting calls the writer functions by their old idents.
+Once the setting is on, every save it makes, whichever writer, is refused, and so is a save it planned before the
+transition and commits after it: **the window the Publish builder admits for its old builds (one write planned before
+the transition) is closed here.** The test `an-older-build-is-refused-once-the-setting-is-on` runs it for the one-owner,
+several-owners, creation and general writers: `409 CasConflict`, no operation and no command stored.
 
-- A lookup naming an account finds its scoped claim, or else a plain claim that is its own.
-- A plain claim of other accounts only is answered `taken`. Its transaction is never returned.
+- Exactly which builds this covers: every build whose writer functions are this build's, which is every build since
+  the base `23b7df344` run with the same writer options (their identities are equal, section 6). A build whose writer
+  code differs installs its own functions under its own idents and is not stopped; two such builds already cannot share
+  a database safely today.
+- Removals, declarations, fences and the other non-save routes of an old build still run. None of them stores a command
+  ID of an account's save.
 
-**What an old build does when it meets the setting.** It cannot be made to refuse: no check in a build older than
-this one reads a value that this build can set without refusing its own saves. Instead the design makes an old build
-harmless where it could store twice:
+**Ownership of plain claims (one rule for both lines).** A write's account is the account of the entities it writes:
+`acct/<account>/...`, the stored `:subject/account`, and the join layer's `lazy/account/<kind>/<account>` (kind
+`releases`, `origin`, `clock`, `erasure`, `dispatcher`; `mask` and `cursor` too). System entities (`_...`) and notice
+documents (`notice:v1:...`) are journals and never decide it.
 
-- **Operation IDs** have one form, so an old build's save and a new build's fence always agree.
-- **Command IDs:** an old build stores the plain form, which a new build's lookups find as that account's own.
-
-What an old build still loses is isolation: its plain command IDs collide across accounts, as today. Operations rule:
-turn the setting on only once every gateway runs this build or later. The only builds with any account option are the
-S6 lab builds, which never ran outside the lab.
+- A plain claim belongs to each account whose entities its transaction wrote, alone or with other accounts' (a save
+  across two accounts belongs to both, R2-11).
+- A lookup naming an account finds its scoped claim, or else a plain claim that is its own. Any other plain claim is
+  answered `taken`, and its transaction is never returned.
+- A plain claim of no account's entities is no account's. It refuses every account's save of that ID
+  (`CommandConflict`) and is answered `taken` to every account's lookup, so it is never committed twice.
 
 ### 12.3 The reserved prefix, the command path and the other findings
 
@@ -575,23 +596,54 @@ S6 lab builds, which never ran outside the lab.
   entities and they belong to one account. The SDK sends `claimAccount`, or else the frame's entities. A plain claim of
   other accounts is answered `taken`, and the SDK fails the save with `DatomicCommandIdTaken`, a decided refusal that
   is never another account's receipt. A caller that names neither, such as `TriplesLive`'s claim check run before the
-  transaction reads anything, keeps today's answer.
-- **R2-2:** a refusal at the serial point on a protected scope whose removal sequence moved is answered
-  `ErasureReplayDeclined`, not the replayable `CasConflict`, when the save creates a protected value of a family that a
-  removal named at a position after the save's source. That is exactly the frame `removed-creation?` refuses when it
-  arrives after the removal. This compares positions, so it holds whether a removal takes effect at its entry's
-  position (today) or at its Datomic commit (DX-ERA2's option).
+  transaction reads anything, keeps the database-wide answer for plain claims and never sees a scoped one.
+- **R2-2:** a replay is judged by the source of its save's first attempt.
+  - The SDK sends `frameSourceK` on every replay: the source its first attempt sent (null when it sent none, an
+    optimistic attempt).
+  - The gateway refuses a save carrying it with `409 ErasureReplayDeclined`, never replayed, when it writes a protected
+    value of an (entity, attribute) family that a removal named at a position after that source, on a new entity or an
+    existing one (`storage.clj` `replay-frame-check!`, inside `tx-data`, so every writer and the replan retry).
+  - A creation racing a removal is still answered `ErasureReplayDeclined` at once when the removal named its family
+    (`removal-race-declined?`).
+  - Both rules compare the removal's position with the frame's source, so they hold whether a removal takes effect at
+    its entry's position (today) or at its Datomic commit (DX-ERA2's option): a removal not yet published refuses every
+    write it can reach (503), so a replay is admitted only after it is published, and is then judged by its first
+    source. Not run on DX-ERA2's code, which does not merge into this branch (five files conflict).
+  - With the per-subject writers off, the save holds the scope's writer lock from its plan to its commit, so a removal
+    cannot land between them: it waits, and then covers the value (the review's test now shows this on its own thread).
+  - Cost: a replay whose first attempt was optimistic is judged as framed before every removal, so it is declined when
+    it writes a family any removal ever named.
 - **R2-5:** a save naming an account whose entities belong to no one account keeps the plain form; it is not refused.
   It is refused only when its entities are another single account's.
 - **R2-6:** the general writer's refusals that carry no marker are decided by their exact messages (`outcome.clj`),
   answered 400 and never replayed. The stored functions are unchanged.
 - **R2-7:** the fence accepts any operation ID the save accepts.
-- **R2-8:** the 503 answer names the failure's class (`cause`).
+- **R2-8:** the 503 answer names the failure's class (`cause`) on every write route, the privacy-guarded ones included.
 - **R2-9:** the fence route stays unbounded. Operation IDs are random per attempt, so fencing another caller's in-flight
   operation means knowing an ID the store has not published. The review's 3,000 fences per setting left saves, feed and
   positions unaffected, at about 2 datoms each.
-- **Group commit:** a save carrying the guard is not grouped. Operation IDs are plain, so the group's duplicate check
-  (`group.clj` 142) checks the stored form.
+- **Group commit:** a save under the setting is not grouped (it calls the twins, which the group path does not route).
+  A group of an old build is refused at its members' functions.
+
+### 12.4 What the join layer changes to use this mechanism
+
+1. Drop the `joined:v2/<n>/<account>/<id>` form and the `accountKeys` setting. A Publish's client ID is
+   `joined:<id>` again.
+2. Open the join store's client with the SDK's `claimAccount` set to the held account. Its commits and every lookup
+   (`claim`, `transactionByCommand`, `operation`, `fence`) then name the account; the gateway stores the Publish's
+   claim as `acct-id/v1/<n>/<account>/joined:<id>` once the database's setting is on.
+3. Turn the setting on from a process with `TX2_ACCOUNT_CLAIMS=1` (`POST /v1/db/<db>/settings {"accountIds": true}`),
+   after every gateway runs this build.
+4. Keep `original`'s ownership check as a second check of what the gateway returns. A plain `joined:<id>` claim from
+   before the setting is found for the account whose entities it wrote; another account's lookup is answered `taken`.
+5. Nothing else: the account is taken from the entities the Publish writes (`lazy/account/releases/<account>` and the
+   other metadata names), and its notice documents count as journals.
+
+What this closes on the Publish side: another account can neither read a Publish's record by its computed command ID
+(its lookup finds its own scoped claim or `taken`; a lookup naming no account finds no scoped claim) nor take a
+Publish's ID first (its own claim is stored under its own account). What stays: a write of no account's entities (only
+system entities) under that ID before the Publish refuses the Publish (`CommandConflict`), never a wrong
+acknowledgement.
 
 ## 10. The standing gate phase and the other gates
 

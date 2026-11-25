@@ -258,7 +258,19 @@
           (line r)
           (is (= [200 nil] (:first r)))
           (is (= 409 (first (:sameCommandNamingAccount r))) "a command already committed must not commit again")
-          (is (= 409 (first (:sameOperationNamingAccount r))) "an operation already committed must not commit again"))))))
+          (is (= 409 (first (:sameOperationNamingAccount r))) "an operation already committed must not commit again")
+          ;; [DX-S6b] A plain claim of no account's entities (a system save): it refuses every account's save of the
+          ;; ID and is never returned to an account's lookup (the rule both lines share).
+          (let [sys (reference/send name (save conn {:command "joined:sys" :operation "sys-op-1" :facts [{:owner "_sys/z" :field ":a/f" :type :string :value "s" :pred nil}]}))
+                again (reference/send name (with-account (save conn {:command "joined:sys" :operation "sys-op-2" :facts [{:owner "acct/z1/subject/v" :field ":a/f" :type :string :value "v" :pred nil}]}) "z1"))
+                lookup (:body (reference/route name "v1" "claim" {"commandId" "joined:sys" "receipt" true "account" "z1"}))
+                r {:case "a plain claim of no account's entities, then an account's save of the same ID"
+                   :system (reference/outcome sys) :accountSave (reference/outcome again) :lookupTx (get lookup "txId") :lookupTaken (get lookup "taken")}]
+            (line r)
+            (is (= [200 nil] (:system r)))
+            (is (= [409 "CommandConflict"] (:accountSave r)))
+            (is (nil? (:lookupTx r)))
+            (is (true? (:lookupTaken r)))))))))
 
 ;; ---------------------------------------------------------------- 5. two resolvers of one unknown outcome
 
@@ -472,10 +484,16 @@
         (let [est (requiring-resolve 'triplex.gateway.import-bound/estimate-us)
               limit @(requiring-resolve 'triplex.gateway.write-policy/import-commit-us)
               estimate (fn [input] (let [data (storage/tx-data (d/db conn) input)] (est (second (first data)) input)))
+              ;; [DX-S6b] R2-10: the first call of each stored function in this transactor process is marked; it
+              ;; includes the function's compile, which no estimate prices (measured below, repeated).
+              called (atom #{})
               measure (fn [label wrap input]
                         (let [e (estimate input) reply (wrap #(reference/send name input))
                               t (get-in reply [:body "transactMicros"])
-                              r {:frame label :writer (or (get-in reply [:body "subjectSave"]) "general") :outcome (reference/outcome reply)
+                              writer (or (get-in reply [:body "subjectSave"]) "general")
+                              first-call (and (= 200 (:status reply)) (not (contains? @called writer)))
+                              _ (when (= 200 (:status reply)) (swap! called conj writer))
+                              r {:frame label :writer writer :firstCallOfItsFunction first-call :outcome (reference/outcome reply)
                                  :message (when-not (= 200 (:status reply)) (get-in reply [:body "message"]))
                                  :estimateUs e :transactMicros t :ratio (when (and t (pos? e)) (/ (double t) e)) :importBoundUs limit}]
                           (line (assoc r :case "F2 shape against the estimate")) r))
@@ -509,8 +527,19 @@
                   _ (swap! results conj (measure (str label ": live, one fact, 4,095 existing entities and 4,096 read-only live IDs") wrap c))]))
           (let [over (filter #(and (= 200 (first (:outcome %))) (:ratio %) (> (:ratio %) 1.0)) @results)]
             (line {:case "F2 summary" :admittedOverEstimate (count over) :worst (when (seq @results) (select-keys (apply max-key #(or (:ratio %) 0) @results) [:frame :writer :ratio :transactMicros :estimateUs]))})
-            (doseq [r @results :when (and (= 200 (first (:outcome r))) (re-find #"import" (:frame r)))]
-              (is (<= (:ratio r) 1.0) [r "an admitted import frame costs no more than its estimate"]))))))))
+            (doseq [r @results :when (and (= 200 (first (:outcome r))) (re-find #"import" (:frame r)) (not (:firstCallOfItsFunction r)))]
+              (is (<= (:ratio r) 1.0) [r "an admitted import frame costs no more than its estimate"])))
+          ;; [DX-S6b] R2-10, measured: the creation function's import frame (one new subject, 20 values of 100 bytes)
+          ;; ten times on fresh subjects, after the calls above (so not the function's first call).
+          (let [series (vec (for [i (range 10)]
+                              (measure (str "fast: import, one new subject, 20 values of 100 bytes, repeat " i) (fn [f] (f))
+                                       (assoc (save conn {:facts (vec (for [j (range 20)] {:owner (str "acct/b5/subject/rep-" i) :field (str ":b/f" j) :type :string :value (big j 100) :pred nil}))})
+                                              "writeClass" "import"))))
+                ratios (keep :ratio series)]
+            (line {:case "R2-10: the creation import frame, repeated" :writers (frequencies (map :writer series))
+                   :ratios (mapv #(/ (Math/round (* 1000.0 %)) 1000.0) ratios) :maxRatio (when (seq ratios) (apply max ratios))
+                   :firstCalls (filterv :firstCallOfItsFunction @results)})
+            (is (every? #(<= % 1.0) ratios) "every repeat of the creation import frame costs no more than its estimate")))))))
 
 (defn main []
   (let [r (clojure.test/run-tests 's5-attack2)]

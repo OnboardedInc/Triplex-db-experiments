@@ -3,35 +3,35 @@ account_claims.clj (when-let [e (d/entid db [:triplex.claim/command-id c])]
 account_claims.clj (when-let [e (d/entid db [:triplex.claim/command-id id])]
 account_claims.clj (when-let [e (d/entid db [:triplex.claim/command-id id])] [e :plain])
 account_claims.clj op (fn [x] (if (and (map? x) (:triplex.claim/command-id x)) (update x :triplex.claim/command-id cmd) x))
+commit.clj (when (and (value e :triplex.tx/operation-id) (not (value e :triplex.tx/id)))
 commit.clj _ (when (and import-predecessor (not (d/entid db [:triplex.claim/command-id import-predecessor])))
 commit.clj _ (when (and operation-id (d/entid db [:triplex.tx/operation-id operation-id]))
 commit.clj _ (when (some #(d/entid db [:triplex.claim/command-id %]) command-ids)
-commit.clj (when (and (value e :triplex.tx/operation-id) (not (value e :triplex.tx/id)))
 commit.clj command-ids (or (:command-ids payload) (keep :triplex.claim/command-id ops))
 commit.clj operation-id (or (:triplex.tx/operation-id (first ops)) (some :triplex.tx/operation-id ops))
-erase.clj _ (when (and (not pending) (d/entid db [:triplex.claim/command-id command]))
 erase.clj (let [native (d/entid db [:triplex.tx/operation-id (operation-id entry)])]
-erase.clj {:db/id "datomic.tx" :triplex.tx/position position :triplex.tx/operation-id (operation-id entry)
-erase.clj {:db/id "privacy-claim" :triplex.claim/command-id (get entry "commandId") :triplex.claim/tx "datomic.tx"
+erase.clj _ (when (and (not pending) (d/entid db [:triplex.claim/command-id command]))
 erase.clj committed (d/entid next [:triplex.tx/operation-id (operation-id entry)])]
 erase.clj eid (d/entid current [:triplex.tx/operation-id (operation-id entry)])
 erase.clj eid (d/entid data [:triplex.tx/operation-id (operation-id entry)])]
+erase.clj {:db/id "datomic.tx" :triplex.tx/position position :triplex.tx/operation-id (operation-id entry)
+erase.clj {:db/id "privacy-claim" :triplex.claim/command-id (get entry "commandId") :triplex.claim/tx "datomic.tx"
 feed.clj :operationId (required (:triplex.tx/operation-id tx)) :commandIds (vec commands) :changes changes}
 feed.clj :txIds (vec txids) :operationId (required (:triplex.tx/operation-id tx))
 feed.clj commands (sort (trace/span "d/q" "peer-call" (d/q '[:find [?id ...] :in $ ?tx :where [?c :triplex.claim/tx ?tx] [?c :triplex.claim/command-id ?id]] cut (d/t->tx t))))
 general_prefetch.clj unique-keys [:triplex.entity/id :triplex.attr/key :triplex.claim/command-id :triplex.tx/operation-id]
-group_prepare.clj :id (:triplex.tx/id (first ops)) :operation (:triplex.tx/operation-id (first ops))
-group_prepare.clj (:triplex.claim/command-id op) (assoc op :triplex.claim/tx member)
-group_prepare.clj (v newest :triplex.tx/operation-id)]))
-group_prepare.clj [(or (value :triplex.tx/position) 0) (value :triplex.tx/max-recorded-at) (value :triplex.tx/operation-id)]))
-group_prepare.clj #{:db/id :triplex.claim/command-id :triplex.claim/tx :triplex.claim/tx-id}
-group_prepare.clj #{:db/id :triplex.tx/position :triplex.tx/operation-id :triplex.tx/id :triplex.tx/recorded-at}}
-group_prepare.clj claims (filter :triplex.claim/command-id maps)
 group.clj (def receipt-attrs [:triplex.tx/operation-id :triplex.group/members :triplex.group/physical
 group.clj (when (and (= physical (:triplex.group/physical v)) (:triplex.tx/operation-id v))
 group.clj (when (d/entid view [:triplex.tx/operation-id (:id entry)])
 group.clj (when-let [e (d/entid db [:triplex.tx/operation-id id])]
 group.clj [(:triplex.tx/operation-id v)
+group_prepare.clj #{:db/id :triplex.claim/command-id :triplex.claim/tx :triplex.claim/tx-id}
+group_prepare.clj #{:db/id :triplex.tx/position :triplex.tx/operation-id :triplex.tx/id :triplex.tx/recorded-at}}
+group_prepare.clj (:triplex.claim/command-id op) (assoc op :triplex.claim/tx member)
+group_prepare.clj (v newest :triplex.tx/operation-id)]))
+group_prepare.clj :id (:triplex.tx/id (first ops)) :operation (:triplex.tx/operation-id (first ops))
+group_prepare.clj [(or (value :triplex.tx/position) 0) (value :triplex.tx/max-recorded-at) (value :triplex.tx/operation-id)]))
+group_prepare.clj claims (filter :triplex.claim/command-id maps)
 ha_shared.clj "lookup" (let [id (get input "operationId") _ (check (owned? tenant id) "ScopeMismatch") e (d/entity db [:triplex.tx/operation-id id])]
 ha_shared.clj (let [r (json/read-str (json/write-str (dissoc (store/operation db (:triplex.tx/operation-id entry)) :status)))
 ha_shared.clj existing (fn [cut] (when-let [id (d/entid cut [:triplex.tx/operation-id op])]
@@ -51,23 +51,23 @@ save_ledger.clj (assoc :triplex.entity/id journal :triplex.claim/command-id comm
 save_ledger.clj (when (and (value db e :triplex.entity/id) (value db e :triplex.tx/operation-id)
 schema.clj (attr :triplex.claim/command-id :db.type/string :db.unique/value) (attr :triplex.claim/tx :db.type/ref)
 schema.clj (attr :triplex.tx/operation-id :db.type/string :db.unique/value)
+storage.clj (try ((requiring-resolve 'triplex.gateway.account-claims/stored-ids) conn db (second (first data)) input)
+storage.clj (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
 storage.clj :triplex.claim/command-id (get claim "commandId") :triplex.claim/tx "datomic.tx"
 storage.clj :triplex.tx/operation-id (get input "operationId") :triplex.tx/id (or (:id metadata) "")
 storage.clj :txId (ledger/tx-id db (d/entid db [:triplex.tx/operation-id id]))})
-storage.clj ((requiring-resolve 'triplex.gateway.account-claims/apply-ids) (tx-data db input) ids)
-storage.clj (try ((requiring-resolve 'triplex.gateway.account-claims/stored-ids) conn db (second (first data)) input)
-storage.clj (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
 storage.clj [(d/entid db [:triplex.claim/command-id command])]))
 storage.clj data (if ids ((requiring-resolve 'triplex.gateway.account-claims/apply-ids) data ids) data)
-subject_create.clj :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
+storage.clj data (if ids ((requiring-resolve 'triplex.gateway.account-claims/apply-ids) data ids) data)
 subject_create.clj (string? (:triplex.tx/operation-id op-header))
+subject_create.clj :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
 subject_hints.clj (doseq [[k v] [[:triplex.tx/operation-id operation] [:triplex.claim/command-id command] [:triplex.entity/id journal]]]
-subject_owners.clj :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
 subject_owners.clj (string? (:triplex.tx/operation-id op-header))
-subject_save.clj :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
+subject_owners.clj :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
 subject_save.clj (string? (:triplex.tx/operation-id op-header))
 subject_save.clj (when (d/entid db [:triplex.claim/command-id command])
 subject_save.clj (when (d/entid db [:triplex.tx/operation-id operation])
 subject_save.clj (when-not (and (= operation (scope/value db tx :triplex.tx/operation-id))
+subject_save.clj :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
 subject_save.clj cmd (d/entid db [:triplex.claim/command-id command])
 transaction_shape.clj (let [tx (d/entid db [:triplex.tx/operation-id operationId])

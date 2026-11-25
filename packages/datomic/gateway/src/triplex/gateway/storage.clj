@@ -428,8 +428,8 @@
         submit (if-not (group/scheduling?) solo
                  (fn [] (try (let [p (second (first data)) current (d/db conn) work (when (or policy/priority? policy/budget-us) (policy/work p input)) class (group/classify current p input)]
                    (group/submit! conn (merge class work {:id (get input "operationId") :params p :eligible (and (not (:bulk p)) (not (and pred/diagnostic (true? (get input "readProfile")))) (group/eligible? current p)
-                                                                                     ;; [DX-S6] A save with a further statement (the account-ID guard) is not grouped.
-                                                                                     (= 1 (count data)))
+                                                                                     ;; [DX-S6b] A save under the account-ID setting is not grouped.
+                                                                                     (not (:triplex/routed (meta input))))
                      :prepare (prepared-for data input p) :data data
                      :original-data (when group/stage-clock data) :solo solo})))
                    (catch Exception e (group/outcome-future (deliver (promise) {:error e}))))))]
@@ -468,8 +468,7 @@
                    (try (trace/span "subject.lookup-hints" "peer-call" (subject/lookup-hints (d/db conn) subject-plan))
                         (catch Exception _ nil)
                         (finally (swap! timeline assoc :subjectHintsFinished (System/nanoTime))))))
-           ;; [DX-S6] Any further statement of the prepared data (the account-ID guard) goes with the function.
-           native-data (group/instrument (into [[(first (:function subject-plan)) subject-plan]] (rest data)))
+           native-data (group/instrument [[(first (:function subject-plan)) subject-plan]])
            options (concat (when hints [:hints hints])
                            (when (or group/stage-clock trace/enabled (= "1" (System/getenv "TX2_REMOVAL_COST_READBACK"))) [:io-context :triplex.gateway/subject]))
            _ (swap! timeline assoc :predecessorReady (System/nanoTime))
@@ -496,10 +495,12 @@
                                    ;; Rejected: refusing the retry (an identity conflict must keep its legacy outcome).
                                    (owner-layout/fold! conn db (:owner subject-plan)))
                                ;; [DX-S6] The retry stores exactly the IDs the first attempt chose (S5 R2-1, R2-1b).
-                               retry (deref (submit-reference! conn (if-let [ids (:triplex/stored-ids (meta input))]
-                                                                      ((requiring-resolve 'triplex.gateway.account-claims/apply-ids) (tx-data db input) ids)
-                                                                      (tx-data db input))
-                                                               input timeline) (remaining) timeout)]
+                               ids (:triplex/stored-ids (meta input))
+                               data (tx-data db input)
+                               data (if ids ((requiring-resolve 'triplex.gateway.account-claims/apply-ids) data ids) data)
+                               ;; [DX-S6b] The retry calls the functions the first attempt called.
+                               data (if (:triplex/routed (meta input)) ((requiring-resolve 'triplex.gateway.account-claims/route-data) conn db data) data)
+                               retry (deref (submit-reference! conn data input timeline) (remaining) timeout)]
                            (if (identical? timeout retry) timeout (assoc retry :subject-replan true)))))
                (identical? timeout result) timeout
                :else (cond-> (cond (:owner-layout subject-plan) (owner-layout/verify-report result subject-plan)
@@ -634,6 +635,12 @@
           ;; A reason is reported only for a save no per-subject function took.
           declined (or (:declined creation) (when-not creation (:declined several)))
           subject-plan (or subject-plan (when-not (:declined several) several) (when-not (:declined creation) creation))
+          ;; [DX-S6b] Under the account-ID setting (read on the database this save was prepared on, or turned on by
+          ;; it), the save calls the twins of the writer functions; prepared before it, the old idents refuse it.
+          routed (or (:on ids) ((requiring-resolve 'triplex.gateway.account-claims/on?) db))
+          input (if routed (vary-meta input assoc :triplex/routed true) input)
+          data (if routed ((requiring-resolve 'triplex.gateway.account-claims/route-data) conn db data) data)
+          subject-plan (if (and routed subject-plan) ((requiring-resolve 'triplex.gateway.account-claims/route-plan) conn db subject-plan) subject-plan)
           ;; [Opus W1] Why: a save the covering writer cannot take must not reach legacy rows under a root.
           _ (when (and owner-layout/enabled (nil? subject-plan)) (fold-touched! conn db data))
           start (System/nanoTime)
