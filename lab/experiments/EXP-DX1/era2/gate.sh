@@ -200,8 +200,14 @@ same2 = len(keys.get("base", [])) == 2 and all(keys.get(a) == keys["base"] for a
 counts = {arm: [r22(r) for r in v] for arm, v in by.items()}
 # [DX-ERA2 sixth pass, V4] a declined save that says nothing about when it was framed writes nothing: 0 on every arm
 expect = all(counts.get(a) == [0, 0] for a in ["base", "base2", "off", "on", "commit"])
+# [DX-ERA6] the merged rule records a declined command whatever the save stated (era6/REMOVAL-ON-SAVE-LINE.md section 1,
+# item 4): with the per-account option on, the workload's import replay with no frame source is declined and its
+# command recorded, 11 datoms per run (the record's two attributes and the record); every option off, nothing
+expect = (all(counts.get(a) == [0, 0] for a in ["base", "base2", "off"])
+          and all(counts.get(a) == [11, 11] for a in ["on", "commit"]))
 print("ERA2_PAIRED_LOGS_WITHOUT_R22", "identical" if same2 else "DIFFERENT", "r22 datoms", counts, "as expected" if expect else "UNEXPECTED")
-sys.exit(0 if (same and same2 and expect) else 1)
+# [DX-ERA6] every datom identical holds only with those datoms left out (`same2`); `same` is printed, not required
+sys.exit(0 if (same2 and expect) else 1)
 PY
 for arm in base base2 off on commit; do grep -h "^ERA2_PAIRED_REPLIES" "$out/paired-$arm.log" | md5 | sed "s/^/replies $arm /"; done
 # [DX-ERA2 seventh pass, (a)] with a save that says nothing about its frame of a removed subject's protected value:

@@ -85,4 +85,41 @@ This needed the removal branch's fix of section 20.3 of its page (`710f27d12`).
 
 ## 4. Gates
 
-(filled below)
+Every run below is on `ae82b8984` (this branch with the removal branch's `383db77d1` merged), from a frozen worktree of
+that commit.
+
+**The save line's gates** (`era6/save-line-gates.sh`; the source and the tests archived from the commit):
+
+| Gate | Replay rule off (every option off but the save line's) | Replay rule on |
+| --- | --- | --- |
+| `attack2_gate` (the second review), 3 settings | 24, 64, 55 passed, 0 failed | the same |
+| `outcome_gate`, 3 settings | 426 of 426 each | the same |
+| Stored-form gate (`stored_ids_gate`), 4 settings | 109 of 109 each | (run with the rule off) |
+| `attack3_gate` (the third review), 7 settings | the save line's own failures only (below) | the save line's own failures, minus R3-3 |
+| `attack3_era` (the removal branch's rule), database-wide and per account | 5 passed, 3 failed each: the same 3 on the removal branch's own `03bb49cd3` (replays of the old protocol, with no first source) | (the rule is on in this gate) |
+
+**What `attack3_gate` still fails, test by test**, against the save line's head `cdfc70e02` with the same tests:
+- the same on both: R3-1 (`a-reopen-with-another-commit-hash-restores-the-old-ident`, 7 settings;
+  `a-reopen-by-a-real-other-general-writer`, 2), R3-2 route 1 (`one-account-against-anothers-command-ids-with-the-setting-on`,
+  7), R3-4 (`an-import-chain-across-the-transition`, 1), R3-6 (`r2-2-an-optimistic-replay-against-an-old-removal`, 7:
+  the merged rule declines it, section 1 item 3), `r2-2-race-on-each-writer` (2, the general writer: the removal waits
+  for the save, by design);
+- **passing here, failing on `cdfc70e02`**: R3-2 route 2 (`a-removal-takes-an-accounts-scoped-command-id`, 7 settings,
+  both rule settings), and with the rule on R3-3 (`r2-2-replays-across-a-removal`, 7).
+
+**The removal branch's gate** (`era2/gate.sh`, all six removal reviews' tests and `cut-read-race`), 15:02 to 15:34:
+
+| Phase | Result |
+| --- | --- |
+| Paired native log (reference: the one branch's `8a362ac38`, twice; this gateway off, per account, commit) | every option off: every datom identical to the one branch. Per account and commit: identical once the recorded decline is left out; the workload's import replay with no frame source is declined and its command recorded (section 1, item 4): 11 datoms per run, where the removal branch alone writes none. Replies identical on every arm (md5 `2caaf1e83af2`) |
+| (a) the paired run with a save that says nothing about its frame, of a removed subject's protected value | every option off against the one branch: every datom identical, replies identical, the case answered 200 on both |
+| Interleavings (`gate.clj`) | database-wide 572 checks, per account 2,472, subject 10,746, commit 10,720, the rule-off case 19: 0 failed |
+| The six reviews' attacks and fuzzers (`era3`, `era3b` to `era3f`, every arm) | 0 violations; E9 2 of 2 (the derived-copies branch's, reported, not counted) |
+| Reply texts, failure lines, the B2 review's scenarios, B2 | file 9 of 9 (off, on), PostgreSQL 15 of 15; 10 of 10; file 43 of 43, PostgreSQL 43 of 43; every mode 0 failed |
+| Gateway suites (base off; this off, subject, commit) | 76 tests, 71,170 passed, 0 failed, 1 error on every arm, the base included |
+
+The run's exit status was 1: the gate's paired condition was the removal branch's (no decline datom on any arm). The
+condition is now this branch's (`era2/gate.sh`, `[DX-ERA6]`: 0 datoms with every option off, exactly 11 per run per
+account, every other datom identical); applied to that run's own `paired.txt` it passes. The source is unchanged.
+
+(filled below: fuzz8, the identities)
