@@ -555,8 +555,12 @@
    [#"recorded-ledger:(.+)" :ledger]
    [#"receiver:([^:]+):(.+)" :receiver]
    [#"effects:([^:]+):([0-9]+)" :effects]])
+;; [DX-ERA4, second review N4] the review's census (forms.ts K), plus what T1 writes after a removal (the join index's
+;; leaves and its invalidation marker) and the settlement control document. These hold no value of the current
+;; protection policy (document types and expiry dates); the join index's postings hold values of the indexed rules'
+;; inputs (pay, location, status), so a policy that protects one of those makes this list wrong (14.4).
 (def ^:private other-kinds
-  #"(notice-progress|values:[0-9]+|claim:.+|census:.+|members:.+|join-meta|join-calendar|join-member:.+|join-index-base:[0-9]+|event:[0-9]+|tail|erasure|received:.+|effect-erasure:.+|recorded-generation:.+|recorded-cursor|cursor|settled-values:.+|settled-notice:.+)")
+  #"(notice-progress|values:[0-9]+|claim:.+|census:.+|members:.+|join-meta|join-calendar|join-member:.+|join-index-base:[0-9]+|join-index:[0-9]+|join-invalid|control|event:[0-9]+|tail|erasure|received:.+|effect-erasure:.+|recorded-generation:.+|recorded-cursor|cursor|settled-values:.+|settled-notice:.+)")
 
 (defn- check-document!
   "One derived document of kind `kind` whose stored text is `text`: a content kind decoded and checked to its exact
