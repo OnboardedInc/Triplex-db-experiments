@@ -155,3 +155,11 @@ adopted-imp2-commit-nowhole-int5 b43413000 REFUSED TX2_IMPORT_COMMIT_US=8000
 adopted-imp2-commit-bad-int5   b43413000 REFUSED  TX2_IMPORT_WHOLE_SUBJECT=1;TX2_IMPORT_COMMIT_US=0
 adopted-scale2-evict-int5      b43413000 ADMITTED DX_SWEEP=1;DX_SWEEP_GATE_EVICT=1
 adopted-scale2-evict-bad-int5  b43413000 REFUSED  DX_SWEEP=1;DX_SWEEP_GATE_EVICT=2
+# [DX-INT5] The second batch (XQ10: the commit-time index, the ID list queue, the sweep's shapes): admitted, and each
+# wrong value refused at its own named test before the first Docker change, beside an admitted control (631dd9d3c).
+adopted-card-int5x             631dd9d3c ADMITTED -
+adopted-xq10-index-int5x       631dd9d3c ADMITTED DX_CROSS_INDEX=1;DX_ID_LISTS=1;DX_SWEEP=1;DX_SWEEP_SHAPES=all;DX_ID_LIST_QUEUE_MS=200;DX_ID_LIST_PER_ACCOUNT=4
+adopted-xq10-index-bad-int5x   631dd9d3c REFUSED  DX_CROSS_INDEX=2
+adopted-xq10-queue-bad-int5x   631dd9d3c REFUSED  DX_ID_LISTS=1;DX_ID_LIST_QUEUE_MS=5001
+adopted-xq10-peracct-bad-int5x 631dd9d3c REFUSED  DX_ID_LISTS=1;DX_ID_LIST_PER_ACCOUNT=17
+adopted-xq10-shapes-bad-int5x  631dd9d3c REFUSED  DX_SWEEP=1;DX_SWEEP_SHAPES=everything
