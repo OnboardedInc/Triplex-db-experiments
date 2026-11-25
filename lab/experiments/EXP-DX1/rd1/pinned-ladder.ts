@@ -8,7 +8,7 @@ import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { now } from "../scale1/decision/observer.ts";
 import { accounts, field, task } from "../scale1/decision/plan.ts";
 import type { AdoptedSeed } from "../v01/adopt.ts";
-import { pinnedFields } from "../v01/pinned-fields.ts";
+import { exchangeTags, pinnedFields, profiledExchange } from "../v01/pinned-fields.ts";
 import { isProduction } from "../v01/production-card.ts";
 import type { Write } from "../scale1/decision/plan.ts";
 import type { Sender } from "../scale1/decision/writes.ts";
@@ -110,7 +110,9 @@ export async function pinnedWindow(read: string, seed: AdoptedSeed, kind: PinKin
   profileEvery?: number;
   /** [DX-RD5] A second read gateway (its own machine): odd seats send their batched reads there. Tape pins stay on
    * the first. Not a load balancer: the seat decides, and each reader keeps its own batches. */
-  secondRead?: string } = {}) {
+  secondRead?: string;
+  /** [DX-SRV2] Each read answered by a profiled exchange, as [profile id, latency ms], for the card's classification. */
+  sampledReads?: [string, number][] } = {}) {
   const seats = opts.seats ?? savesSeats, batch = kind === "tape" ? 1 : (opts.batch ?? tunedBatch);
   const client = new DatomicClient(read, 35_000);
   const second = opts.secondRead && kind !== "tape" ? new DatomicClient(opts.secondRead, 35_000) : undefined;
@@ -137,6 +139,8 @@ export async function pinnedWindow(read: string, seed: AdoptedSeed, kind: PinKin
   const profiles: ReadProfileSample[] = [];
   const fetch = basis && pinnedFields(client, seed.scope.db, field(0), basis, batch, (send, size) => {
     exchanges++; batched += size;
+    if (opts.profileEvery && exchanges % opts.profileEvery === 0 && opts.sampledReads)
+      return profiledExchange(client, send, (sample) => profiles.push(sample as unknown as ReadProfileSample));
     return opts.profileEvery && exchanges % opts.profileEvery === 0
       ? client.withReadProfile((sample) => profiles.push(sample as unknown as ReadProfileSample), send) : send();
   });
@@ -173,7 +177,12 @@ export async function pinnedWindow(read: string, seed: AdoptedSeed, kind: PinKin
           assert(rows[0]!.recorded_position <= position!);
           const value = opts.plant ? opts.plant([...rows])[0]!.value_string : rows[0]!.value_string;
           if (seedPin && value !== fieldValue(subject, 0, 0, 0).value) wrong++;
-          if (now() <= end) delay.recordMs(now() - issued);
+          const answered = now();
+          if (answered <= end) {
+            delay.recordMs(answered - issued);
+            const id = opts.sampledReads && exchangeTags.get(rows);
+            if (id) opts.sampledReads!.push([id, answered - issued]);
+          }
         } catch (error) {
           errors++;
           const key = error instanceof Error ? (error as any).code ?? error.name : "unknown";

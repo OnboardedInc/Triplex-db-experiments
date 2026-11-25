@@ -287,7 +287,9 @@ const gateway = (label: "write" | "read", secondary = false) => {
     {
       DATOMIC_JAVA_OPTS:
         words.filter((x) => !x.startsWith("-Ddxthin.")).join(" ") +
-        " -Dtriplex.codec.spec=/opt/gateway/codec-spec.json",
+        " -Dtriplex.codec.spec=/opt/gateway/codec-spec.json" +
+        // [DX-SRV2] The card's read-ahead-off option on the toy reader, as stack/up.sh sets it on a server's reader.
+        (label === "read" && property("readAheadOff") === "yes" ? " -Ddatomic.readAheadPool=0" : ""),
       DATOMIC_EXT_CLASSPATH: "/opt/gateway/src",
       DATOMIC_URI_TEMPLATE: template,
       ...(label === "read" && property("readStudy") === "yes" ? { TX2_READ_FILTER_EARLY: "1" } : {}),
@@ -296,6 +298,12 @@ const gateway = (label: "write" | "read", secondary = false) => {
       ...(property("cardReader") === "tuned" ? { TX2_PINNED_SHORTCUT: "1", TX2_PINNED_CUT_LOOKUP: "1" } : {}),
       ...(label === "read" && property("cardReader") === "tuned" ? { TX2_READ_FILTER_EARLY: "1",
         ...(property("readPermits") ? { TX2_READ_PERMITS: property("readPermits")! } : {}) } : {}),
+      // [DX-SRV2] Per-read classification on the toy: the reader writes the read profile of sampled exchanges into a
+      // directory of the card's output (mounted at the same path for the toy driver), as a server's reader writes
+      // trace/raw/gw-r.jsonl; and the card's read prefetch option. Neither changes a read.
+      ...(label === "read" && property("cardReader") === "tuned" && property("readerTrace") ? {
+        TX2_READ_PROFILE: "1", TRIPLEX_TRACE_DIR: property("readerTrace")!, TRIPLEX_TRACE_PROCESS: "gw-r" } : {}),
+      ...(label === "read" && property("cardReader") === "tuned" && property("readPrefetch") === "yes" ? { TX2_READ_PREFETCH: "1" } : {}),
       ...(demand ? { TX2_ID_CACHE_BYTES: "1048576", TX2_ID_CACHE_ENTRIES: "4096",
         TX2_REACH_SESSION_ENTRIES: "4096", TX2_ENTITY_CACHE_BYTES: "8388608" } : {}),
       ...(adopted ? { TX2_LEAN_NATIVE_QUERY: "1", TX2_LEAN_NATIVE_LOG: "1" } : {}),
@@ -308,6 +316,13 @@ const gateway = (label: "write" | "read", secondary = false) => {
         TX2_SUBJECT_NUMERIC_OWNER: ordered ? "1" : "0", TX2_SUBJECT_PREFETCH: "0",
         TX2_FIELD_COALESCE: "0",
       } : {}),
+      // [DX-SRV2] The product's save-path options on the toy's writer, named as stack/up.sh names them on a server's.
+      ...(adopted && label === "write" ? Object.fromEntries((property("writerOptions") ?? "").split(",").filter(Boolean).map((name) => {
+        const gateway = ({ TX2_SUBJECT_WIDE: "TX2_SUBJECT_WIDE", TX2_SUBJECT_HINTS: "TX2_SUBJECT_HINTS", TX2_GENERAL_PREFETCH: "TX2_GENERAL_PREFETCH",
+          DX_S3_OWNERS: "TX2_SUBJECT_SEVERAL_OWNERS", DX_S4_CREATE: "TX2_SUBJECT_CREATE" } as Record<string, string>)[name];
+        assert(gateway, "unknown writer option " + name);
+        return [gateway, "1"];
+      })) : {}),
       ...(campaign && label === "write" ? {
         TX2_INT1_WRITE_READBACK: "1", TX2_PREDECESSOR_LOOKUP: "0", TX2_SMALL_ROWS: "0", TX2_GROUP_STAGE_CLOCK: "1",
         TX2_GROUP_COMMIT: "0", TX2_LIVE_PRIORITY: "0", TX2_FIELD_COALESCE: "0", TX2_GROUP_REUSE_PREPARED: "0",

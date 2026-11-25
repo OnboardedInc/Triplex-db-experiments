@@ -14,7 +14,7 @@ import { accounts, activeSubjects, cellSeconds, field, root, serialApplyTape, ta
 import { play, resolveUncertain, type Row, type Save, type Sender } from "../scale1/decision/writes.ts";
 import { checkAdoptedPeer, hex, openScaleSeal, type AdoptedSeed } from "./adopt.ts";
 import { ladder, phaseSeconds, selectedWriter, type Writer } from "./profile.ts";
-import { pinnedFields } from "./pinned-fields.ts";
+import { exchangeTags, pinnedFields, profiledExchange } from "./pinned-fields.ts";
 import { cellPath, writerAdmission, ratedTape, serverCells, serverCellSeconds, type CreditMode, type ServerCell, type WindowSeconds } from "./server-workload.ts";
 
 import { checkRealisticField, ownerFields, thinSweep, toyRealSeed, withOwners } from "./realistic.ts";
@@ -25,7 +25,7 @@ import { collectCell, type physicalTelemetry } from "./cell-telemetry.ts";
 import { migratedReadRate, recentlyOffered, sampleMigratedReads } from "../w1/migrated-reads.ts";
 import { cardTapeReport, fullCellTape, isMix, isProduction, mixPredecessors, parseCardTape, productionCellMetrics, productionNeighbours, productionPredecessors,
   productionReadback, sortTape, tapeEdge, tapeMix, tapeShape, type AgedCut, type MixWrite, type ProductionWrite } from "./production-card.ts";
-import { gatewayTimes, randomLine, randomLineLoads, type P1Reader, type ReaderRecords } from "./card-reader.ts";
+import { classifyReads, gatewayTimes, randomLine, randomLineLoads, traceExchanges, type P1Reader, type ReaderRecords } from "./card-reader.ts";
 
 export type Residency = Record<string, { rssBytes: number; threads: number }>;
 export type Peer = { write: string; read: string; slot: string; attempt: string; gatewaySource: string; java: unknown;
@@ -226,6 +226,10 @@ async function readWindows(client: DatomicClient, seed: AdoptedSeed, start: numb
   const duration = toy ? 4 : study ? 30 : phaseSeconds;
   const phases = [];
   const requested = { recordedPosition: seed.realistic?.proof.cut ?? seed.scope.cut, validAt: SEED_VALID_FROM };
+  // [DX-SRV2] Per-read classification: the sampled reads of each step (exchange profile id, latency from the client).
+  const classify = p1?.classify && !seed.realistic ? p1.classify : undefined;
+  const traceOffset = classify?.trace && fs.existsSync(classify.trace) ? fs.statSync(classify.trace).size : 0;
+  const sampledByStep: [string, number][][] = [];
   for (const [i, seats] of intervals.entries()) {
     await sleep(Math.max(0, start + i * duration * 1000 - now()));
     const end = start + (i + 1) * duration * 1000;
@@ -236,12 +240,15 @@ async function readWindows(client: DatomicClient, seed: AdoptedSeed, start: numb
     const perSeat = study && new Uint32Array(seats);
     let errors = 0, unique = 0, exchanges = 0, groupTotal = 0, peakQueued = 0, peakSockets = 0, index = 0;
     const mix = { deep: 0, thin: 0, small: 0 };
+    const sampled: [string, number][] = [];
+    sampledByStep.push(sampled);
     // [DX-THIN1] Why: without a read study this sends one exact client.rows call per read, as the card does.
     // Rejected: a second read path for the scorecard's unbatched ladder.
     // [DX-CARD2] With the tuned reader the card's ladder sends queued reads together, up to p1.batch per exchange.
     const send = pinnedFields(client, seed.scope.db, field(0), requested, study?.batch ?? p1?.batch ?? 1, (send, size) => {
       if (!study) {
         if (p1) { exchanges++; groupTotal += size; }
+        if (classify && exchanges % classify.every === 0) return profiledExchange(client, send);
         return send();
       }
       groupTotal += size;
@@ -274,6 +281,7 @@ async function readWindows(client: DatomicClient, seed: AdoptedSeed, start: numb
           const checked = now();
           if (checked <= end) {
             delay.recordMs(checked - issued);
+            if (classify) { const id = exchangeTags.get(result); if (id) sampled.push([id, checked - issued]); }
             if (seen && perSeat) {
               perSeat[seat] = perSeat[seat]! + 1;
               const key = a * seed.image.people + subject, bit = 1 << (key % 8), index = Math.floor(key / 8);
@@ -291,6 +299,17 @@ async function readWindows(client: DatomicClient, seed: AdoptedSeed, start: numb
         eventLoop: performance.eventLoopUtilization(elu || undefined), gateway: { begin, end: study.counters?.() } } : undefined });
   }
   if (p1?.random && loaded) line.random = await randomSubjects(read!, seed, start + intervals.length * duration * 1000, duration, p1);
+  if (classify && loaded) {
+    // [DX-SRV2] Each step's sampled reads classed by their exchanges' io-stats in the reader's trace.
+    let exchanges: ReturnType<typeof traceExchanges>["found"] | undefined, error: string | undefined;
+    if (classify.trace && fs.existsSync(classify.trace)) {
+      await sleep(3000);
+      try { exchanges = traceExchanges(classify.trace, traceOffset, new Set(sampledByStep.flat().map(([id]) => id))).found; }
+      catch (e) { error = String(e); }
+    } else error = "no reader trace";
+    for (const [i, phase] of phases.entries())
+      (phase as any).classified = exchanges ? classifyReads(sampledByStep[i]!, exchanges, phase.read.count, classify.every) : { error };
+  }
   return phases;
 }
 
@@ -302,8 +321,9 @@ async function randomSubjects(read: string, seed: AdoptedSeed, start: number, se
   assert(p1.random && !seed.realistic, "The random-subject line reads the SCALE1 deep population");
   const { pinnedWindow, readerRecords } = await import("../rd1/pinned-ladder.ts");
   const trace = p1.random.trace, offset = trace && fs.existsSync(trace) ? fs.statSync(trace).size : 0;
+  const sampledReads: [string, number][] = [];
   const step = await pinnedWindow(read, seed, randomLine.pin, { start, seconds, startHead: seed.scope.cut, candidates: [] },
-    { seats: p1.random.seats, batch: p1.batch, profileEvery: p1.random.profileEvery });
+    { seats: p1.random.seats, batch: p1.batch, profileEvery: p1.random.profileEvery, ...(p1.classify ? { sampledReads } : {}) });
   let reader: ReaderRecords | { error: string } | undefined;
   if (trace && fs.existsSync(trace)) {
     // The reader buffers its trace; wait before taking this line's sampled exchanges and metrics minutes.
@@ -311,7 +331,22 @@ async function randomSubjects(read: string, seed: AdoptedSeed, start: number, se
     try { reader = readerRecords(trace, offset, start, start + seconds * 1000, step.profiled?.ids ?? []); }
     catch (error) { reader = { error: String(error) }; }
   }
-  return { ...step, reader, loads: reader && !("error" in reader) ? randomLineLoads(reader, step.goodput, step.meanBatch) ?? null : null };
+  // [DX-SRV2] The random line's sampled reads classed by their exchanges, and the sampled storage reads against the
+  // reader's StorageGet count over the line's seconds (the difference is Datomic's read-ahead and other requests).
+  let classified: unknown;
+  if (p1.classify) {
+    if (trace && fs.existsSync(trace)) {
+      try {
+        const { found, minutes } = traceExchanges(trace, offset, new Set(sampledReads.map(([id]) => id)), { start, end: start + seconds * 1000 });
+        const c = classifyReads(sampledReads, found, step.read.count, p1.classify.every);
+        const gets = minutes.every((m) => m.storageGets !== null) && minutes.length
+          ? minutes.reduce((t, m) => t + m.storageGets! * Math.min(1, m.overlapSeconds / 60), 0) : null;
+        classified = { ...c, readerStorageGets: gets === null ? null : Math.round(gets) };
+      } catch (e) { classified = { error: String(e) }; }
+    } else classified = { error: "no reader trace" };
+  }
+  return { ...step, reader, loads: reader && !("error" in reader) ? randomLineLoads(reader, step.goodput, step.meanBatch) ?? null : null,
+    ...(classified ? { classified } : {}) };
 }
 
 async function realisticBackground(client: DatomicClient, seed: AdoptedSeed, start: number, seconds: number, toy: boolean) {

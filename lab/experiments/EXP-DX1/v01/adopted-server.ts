@@ -20,7 +20,7 @@ import { parseWindow, parseCredits } from "./server-workload.ts";
 import { realSeed, proveRealistic } from "./realistic.ts";
 import { physicalTelemetry } from "./cell-telemetry.ts";
 import { firstOffer, FirstOfferReached } from "../ha1/first-offer.ts";
-import { p1Reader, randomLineMinutes, readerFromEnvironment, readerLaunch, readerStackOptions } from "./card-reader.ts";
+import { cardReadOptionsSet, p1Reader, parseSampleEvery, randomLineMinutes, readerFromEnvironment, readerLaunch, readerOptionsSummary, readerStackOptions, readOptionsExpected } from "./card-reader.ts";
 
 const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, requestedWriter, jvm, agedFile, agedPin,
   agedDump, agedDumpPin, txJvm, walDirectory, armText, startedText, forecast, windowText, creditText, writeJvm, pgdataSource, ...pgdataPaths] = process.argv.slice(2);
@@ -43,6 +43,9 @@ const diagnostics = writeDiagnostics(requestedWriter, process.env);
 const cardTape = parseCardTape(process.env.DX_V01_TAPE);
 const writerOptions = writerOptionsSet(process.env);
 const readQueue = readQueueOptionsSet(process.env);
+// [DX-SRV2] The card's read options (prefetch, read-ahead off, per-read classification), recorded only when set.
+const readOptions = cardReadOptionsSet(process.env, reader);
+const sampleEvery = parseSampleEvery(process.env.DX_V01_SAMPLE_EVERY, reader);
 assert(cardTape === "saturday" || age !== "realistic", "The realistic card keeps its own tape");
 const stages = serverStages(policy, !!walDirectory);
 assert(armText === "" || /^[1-3]$/.test(armText ?? ""), "Choose arm 1, 2 or 3");
@@ -85,7 +88,8 @@ const input = { source, age, writer: requestedWriter, jvm: jvm as JvmProfile, im
   // [DX-S1] Recorded only when one is set, so a default campaign's input stays as it was.
   ...(Object.keys(writerOptions).length ? { writerOptions } : {}),
   // [DX-INT3] The read gateway's waiting-read bound and thread counters, recorded only when set.
-  ...(Object.keys(readQueue).length ? { readQueue } : {}) };
+  ...(Object.keys(readQueue).length ? { readQueue } : {}),
+  ...(Object.keys(readOptions).length ? { readOptions } : {}) };
 assert(cardTape === "saturday" || age !== "1B" || copies.length, "The production tape at 1 billion runs from prepared copies");
 let spent = 0, previousSystem: string | undefined;
 if (sequenceArm !== undefined) {
@@ -188,7 +192,7 @@ for (const [i, stage] of stages.entries()) {
     const aged = expected && cardTape !== "saturday"
       ? { cut: agedCut(expected.file, expected.pin, imagePin, seed.key, seed.scope.db, seed.scope.cut, true), head } : undefined;
     const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency, windowSeconds, creditMode: stage.policy.creditMode, serialApply: diagnostics.serialApply, telemetry: physicalTelemetry(out, engines), aged,
-      p1: p1Reader(reader, false, path.join(out, "engines", slot, "trace", "raw", "gw-r.jsonl")) };
+      p1: p1Reader(reader, false, path.join(out, "engines", slot, "trace", "raw", "gw-r.jsonl"), sampleEvery) };
     firstOffer("scorecard arm " + (sequenceArm ?? i + 1) + " " + stage.name + "/" + path.basename(out));
     const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head, undefined, comparison);
     if (loaded && !stopping) {
@@ -300,7 +304,13 @@ async function checkReader(read: string, container: string, out: string) {
   assert.deepEqual(permits, reader!.readPermits ? ["TX2_READ_PERMITS=" + reader!.readPermits] : [], "the reader does not carry the requested read permits");
   for (const want of ["TX2_PINNED_SHORTCUT=1", "TX2_PINNED_CUT_LOOKUP=1", "TX2_READ_FILTER_EARLY=1", "TX2_READ_PROFILE=1"])
     assert(env.includes(want), "the reader lacks " + want);
-  jsonFile(path.join(out, "reader-check.json"), { source, at: Date.now(), reader, pinned: options.options, permits });
+  // [DX-SRV2] The card's read options must be on the reader exactly when asked for (stack/up.sh: the prefetch as an
+  // environment switch, read-ahead off as a Java option in DATOMIC_JAVA_OPTS).
+  const expected = readOptionsExpected(readOptions), java = env.find((e) => e.startsWith("DATOMIC_JAVA_OPTS=")) ?? "";
+  assert.equal(env.includes("TX2_READ_PREFETCH=1"), expected.env.includes("TX2_READ_PREFETCH=1"), "the reader's read prefetch is not as requested");
+  assert.equal(/(^|[ =])-Ddatomic\.readAheadPool=0( |$)/.test(java), expected.java.length > 0, "the reader's read-ahead setting is not as requested");
+  jsonFile(path.join(out, "reader-check.json"), { source, at: Date.now(), reader, pinned: options.options, permits,
+    ...(Object.keys(readOptions).length ? { readOptions, readOptionsSeen: readerOptionsSummary(env) } : {}) });
 }
 
 function roleMemory(engines: NonNullable<ReturnType<typeof startScaleStack>["engines"]>) {
