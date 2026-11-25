@@ -738,8 +738,10 @@ async function act9Cell(list: { x: Pub; w: any }[]) {
   const recipient = await openStore("lazy-act9-recipient-" + RUN);
   const sink = new Documents(recipient.comp, "receiver");
   const why = (e: unknown) => {
-    const x = e as { name?: string; code?: string; message?: string; cause?: { code?: string; message?: string } };
-    return [x.name, x.code ?? x.cause?.code, String(x.message ?? "").slice(0, 120)].filter(Boolean).join(": ");
+    const x = e as { name?: string; code?: string; message?: string; cause?: { name?: string; code?: string; message?: string } };
+    // a read failure wraps its cause (the gateway's refusal): both are kept
+    const inner = x.cause ? [x.cause.name, x.cause.code, String(x.cause.message ?? "").slice(0, 120)].filter(Boolean).join(": ") : "";
+    return [x.name, x.code ?? x.cause?.code, String(x.message ?? "").slice(0, 120), inner && "(" + inner + ")"].filter(Boolean).join(": ");
   };
   type Kind = { ok: number; refused: number; errors: Record<string, number> };
   const kind = (): Kind => ({ ok: 0, refused: 0, errors: {} });
@@ -820,10 +822,13 @@ async function act9Cell(list: { x: Pub; w: any }[]) {
     const checked = await streamCheck({ worker: w, roster: x.roster, releases: x.releases, target: st.lastSettled,
       world: (at: number) => (i: number) => worldAt(i, at, new Map(), seedPos.get(x.a.key)!), workers: 1,
       validTime: W0.POPULATION_VALID_TIME, reads: () => true });
-    const again = await w.recorder.deliver(sink, await w.recorder.archive.store.head());
+    // Notices recorded but not delivered during the rounds (a round's delivery refused or failed) are delivered now;
+    // a further delivery must add nothing (the receiver takes each packet once).
+    let lateCount: number | string = 0, again: number | string = 0;
+    try { lateCount = await w.recorder.deliver(sink, await w.recorder.archive.store.head()); } catch (e) { lateCount = why(e); }
+    try { again = await w.recorder.deliver(sink, await w.recorder.archive.store.head()); } catch (e) { again = why(e); }
     checks.push({ account: x.a.key, checked: true, changes: checked.changes, notices: checked.notices,
-      independent: checked.independent, deliveredAgain: again });
-    assert.equal(again, 0, "a notice was delivered twice in " + x.a.key);
+      independent: checked.independent, deliveredLate: lateCount, deliveredAgain: again });
   }
   await recipient.close();
   const sum = (key: "publish" | "settle" | "deliver" | "read", others: boolean) =>
@@ -836,6 +841,7 @@ async function act9Cell(list: { x: Pub; w: any }[]) {
     refusedInRemovingAccount: { publish: sum("publish", false), settle: sum("settle", false), deliver: sum("deliver", false), read: sum("read", false) },
     perAccount: Object.fromEntries(per), late, checks });
   log("act9-cell", act9);
+  for (const c of checks) assert(c.deliveredAgain === undefined || c.deliveredAgain === 0, "a notice was delivered twice in " + c.account);
 }
 const touchedAccount = (a: Account) => livePublishers.has(a.key) || lateAccounts.has(a.key);
 // ---- 4. Checks, one account at a time -------------------------------------------------------------------------------

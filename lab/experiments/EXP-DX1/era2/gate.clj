@@ -662,9 +662,18 @@
               r1 (with-held name (frame "early" x v nil (head conn)) #(expect "named-absent" (remove-x "rm-n1") [200 nil]))]
           (expect "named-absent: a creation prepared before the removal, sent after it" r1 [409 "CasConflict"])
           (check! "named-absent" (= 1 (rs/native-entity-seq (d/db conn) x)) "the named entity's sequence moved with no row")
-          (let [r2 (with-held name (frame* "import-early" x ":v" vi nil (head conn) {:actor "bulk-import"})
-                     #(expect "named-absent" (remove-x "rm-n2") [200 nil]))]
-            (expect "named-absent: an import frame prepared before a removal, sent after it" r2 [409 "CasConflict"]))
+          (let [r2 (if policy/import-whole?
+                     ;; [DX-ACT9] With TX2_IMPORT_WHOLE_SUBJECT=1 (every option on together) an import of a removed
+                     ;; family is declined at validation, before any plan (DX-IMP2's rule; the first removal already
+                     ;; named this family), so it cannot be held at its plan: prepared before the second removal, sent
+                     ;; after it, it is declined.
+                     (let [f (frame* "import-early" x ":v" vi nil (head conn) {:actor "bulk-import"})]
+                       (expect "named-absent" (remove-x "rm-n2") [200 nil])
+                       (offers/send name f))
+                     (with-held name (frame* "import-early" x ":v" vi nil (head conn) {:actor "bulk-import"})
+                       #(expect "named-absent" (remove-x "rm-n2") [200 nil])))]
+            (expect "named-absent: an import frame prepared before a removal, sent after it" r2
+                    (if policy/import-whole? [409 "ErasureReplayDeclined"] [409 "CasConflict"])))
           (absent-from-routes! "named-absent" name [x] pin t0 [v vi])
           (let [late (offers/send name (frame "late" x vl nil (head conn)))]
             (expect "named-absent: a creation sent after the removal (new data)" late [200 nil])))))))

@@ -262,6 +262,10 @@ fault on its own branch later and fixed it by moving two functions into `removal
 now hold together. The two keys new to the merged tree (`removal-scope/fence-code`, `fence-ident`) are installed only
 when a database is moved per account.
 
+**At the end** (`adcbc8253`, the last gateway change; `act9/idents.sh` on runtime image `sha256:a87bf58bf20c`): **58 of
+58 equal to the base in all seven settings** (base, server, server-wide, server-wide-hints, serial-retire, owner-head,
+and every option on, `TX2_ACCOUNT_TICKETS=1` included). Evidence: `evidence/DX-ACT9/idents/compare-merged-era2-adcbc8253.txt`.
+
 <!-- IDENTS-FINAL -->
 
 <!-- RESULTS -->
