@@ -104,7 +104,9 @@
 
 (def may-turn-on
   "[DX-ERA2 fifth pass] TX2_REMOVAL_COMMIT_BOUNDARY=1 now means only: this process may turn the commit boundary on for a
-  database guarded per account. What a request does depends on the database, never on this variable."
+  database guarded per account. What a request does depends on the database, never on this variable.
+  [DX-ERA2 sixth pass] It allows the explicit move routes only (removal-commit-boundary, and removal-per-account on
+  this process continuing to the commit boundary); a removal on this process no longer moves its database."
   (= "1" (System/getenv "TX2_REMOVAL_COMMIT_BOUNDARY")))
 
 (def commit-boundary
@@ -714,7 +716,9 @@
           {:database name :boundary "commit" :changed false}
           (if (turn-on-locked! name conn db)
             {:database name :boundary "commit" :changed true}
-            (privacy/unavailable!)))))))
+            ;; [DX-ERA2 sixth pass] the rollout's refusal says what to clear first (the log or the data behind)
+            (do (when-let [b (disagreement db (privacy/cut name db true))] (refuse! b))
+                (privacy/unavailable!))))))))
 
 (defn erase! [name conn input]
   (let [selectors (erase/selectors! input)
@@ -735,8 +739,9 @@
                     _ (when-not current (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
                     ;; [DX-ERA2 fifth pass, Z2] the database's own policy (adopted from the log once)
                     db (adopt-policy! name conn db)
-                    ;; [DX-ERA2 fifth pass] a process allowed to turns the commit boundary on before its removal
-                    db (or (when (and may-turn-on (not (commit-boundary? db))) (turn-on-locked! name conn db)) db)
+                    ;; [DX-ERA2 sixth pass] a removal no longer moves its database to the commit boundary on a process
+                    ;; allowed to (the fifth pass did, at a database's first removal there): the move is the explicit
+                    ;; route only, so the rollout decides when each database moves (page 19, the rollout procedure)
                     ;; [DX-ERA2 sixth pass] the log's copy of the policy rewritten from the database when it differs
                     current (sync-policy-copy! name db (log-cut name db))
                     ;; [DX-ERA2 fourth pass] with the commit boundary the log is first brought up to the data

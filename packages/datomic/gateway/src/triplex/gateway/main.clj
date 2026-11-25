@@ -516,7 +516,11 @@
                                                               ;; [DX-ERA2 fifth pass, B5] what a cache keys on
                                                               :removalStamp (or (:stamp cut) (:seq cut) 0)}
                                                        (:per-account cut)
-                                                       (merge (removal-scope/frontier-fields cut query-string))))
+                                                       (merge (removal-scope/frontier-fields cut query-string))
+                                                       ;; [DX-ERA2 sixth pass, V3] the stamp alone (the SDK reads it once
+                                                       ;; before an optimistic commit that holds none)
+                                                       (and query-string (re-find #"(^|&)stampOnly=1(&|$)" query-string))
+                                                       (dissoc :erased)))
                                        (route-handler-base request))]
                           (cond-> answer
                             cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))

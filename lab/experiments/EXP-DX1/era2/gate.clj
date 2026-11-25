@@ -1237,7 +1237,8 @@
           (check! label (nil? (privacy/pending name)) "the pending removal was completed before the move" (privacy/pending name))
           (check! label (= 1 (seq-now name conn)) "published as sequence 1" (seq-now name conn))
           (check! label (rc/commit-boundary? (d/db conn)) "the database now removes at the commit" nil)
-          (expect (str label ": a save planned before the move, committed after it") late [409 "CasConflict"])
+          ;; [DX-ERA2 sixth pass, V9] the gateway plans it once more (was 409 CasConflict, replayed by the client)
+          (expect (str label ": a save planned before the move, committed after it") late [200 nil])
           (check! label (= [200 false] [(:status again) (get-in again [:body "changed"])]) "moving again changes nothing" (:body again))
           (expect (str label ": moving back") back [409 "RemovalBoundaryOneWay"])
           (expect (str label ": the save sent again") resent [200 nil])
@@ -1979,6 +1980,34 @@
       (finally
         (doseq [u [newer older]] (with-redefs [main/uri-template u] (try (main/delete-scope! nil scope) (catch Exception _ nil))))))))
 
+
+(defn peer-behind-move
+  "[owed by the fifth review] A gateway whose Datomic peer has not yet seen its database's move to the commit boundary
+  (its first database value is from before the move): a save planned there carries the old fence value and is refused
+  at the serial point; the gateway plans it once more on the database as it is now and it is stored (V9). A read on
+  that gateway is served (as a read a moment earlier would be) and answers no removed value."
+  []
+  (when (and per-account? (not commit?))
+    (fresh-scope false
+      (fn [name conn]
+        (let [label (str "peer-behind-move/" mode)
+              seeds (seed! name [a1 b1]) va (:value (seeds a1))
+              _ (expect label (remove! name "pb-1" a1) [200 nil])
+              stale (d/db conn)
+              _ (alter-var-root #'rc/may-turn-on (constantly true))
+              moved (try (offers/route name "v2" "removal-commit-boundary" {}) (finally (alter-var-root #'rc/may-turn-on (constantly false))))
+              behind (fn [f] (let [orig d/db armed (atom true)]
+                               (with-redefs [d/db (fn [c] (if (and (identical? c conn) (compare-and-set! armed true false)) stale (orig c)))]
+                                 (f))))
+              save (behind #(offers/send name (frame "pb-save" b1 (secret b1 "x") (:id (seeds b1)) (head conn))))
+              read (behind #(offers/route name "v1" "read" {"entityIds" [a1 b1] "history" true}))]
+          (println "ERA2_PEER_BEHIND" mode (pr-str {:move (offers/outcome moved) :save (offers/outcome save) :read (offers/outcome read)}))
+          (expect (str label ": the move") moved [200 nil])
+          (check! label (= -1 (triplex.gateway.scope/value stale (triplex.gateway.scope/entity stale) :triplex.scope/erasure-seq)) "the stale value is from before the move" nil)
+          (expect (str label ": a save planned on the stale value") save [200 nil])
+          (check! label (not= 400 (:status read)) "a read on the stale value is not a 400" (offers/outcome read))
+          (check! label (not (str/includes? (text (:body read)) va)) "no removed value answered" nil))))))
+
 ;; ERA2_ONLY (space-separated label prefixes) runs only those scenarios: a diagnostic run, never a gate
 (def only (some-> (System/getenv "ERA2_ONLY") str/trim not-empty (str/split #"\s+")))
 (defn- scenario [label f]
@@ -2035,6 +2064,7 @@
   (scenario "key-pass-behind" key-pass-behind)
   (scenario "file-publish-compare" file-publish-compare)
   (scenario "restore-with-pending" restore-with-pending)
+  (scenario "peer-behind-move" peer-behind-move)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode
              (pr-str {:checks (count @results) :failed (count failed)}))
