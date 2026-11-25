@@ -24,6 +24,13 @@
 #     delivery b 200; no-account delivery 200 (the same database-wide check); resumed 200; the a-delivery again 409.
 #   Shown wrong if: after, anything of b is refused; any arm, a write naming a commits after the declaration, or a1's
 #   value appears after the removal anywhere but in a copy the verdict lists as made before it.
+# Observed (2026-11-24, first runs): MODE declared does not leave a removal declared only. The removal's intent write
+# waits on the table lock inside PostgreSQL; killing its gateway does not cancel that waiting statement, which commits
+# when the lock is released (the script then reads "pending intents: 1"). So MODE declared leaves the removal declared
+# natively WITH its intent recorded and its native commit never sent: the review's "intent written, not committed"
+# case. Its declared-only predictions above therefore do not apply; the state reached answers as MODE publication
+# does while the removal is pending (503 for a, the no-account writes and, before, every delivery). The declared-only
+# state (no intent) is DX-ERA2's in-process "orphan" gate case.
 set -euo pipefail
 out=${1:?new absolute output directory}; bodies=${2:?bodies directory}; arm=${3:?before or after}; mode=${4:?publication or declared}
 [[ $out == /* && ! -e $out ]] || { echo "give a new absolute output directory" >&2; exit 2; }
