@@ -17,7 +17,6 @@
 // every Publish is guarded on, and every settlement progress row in force, which every frame is guarded on), so a plan
 // of a build from before the settings that was made before the transition is refused at its commit, whatever the
 // rollout order. U6: no per-process cache: whether a transition is needed is read at each plan from the stored settings.
-import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { Documents, hash, type Op } from "../../notify1/store.ts";
 import { readErasure, withErasure } from "../../../../bench/lib/datomic-erasure.ts";
@@ -105,9 +104,9 @@ export async function ensureSettings(s: Store) {
       if (!(e instanceof Conflict) && !isConflict(e) && !/erasure|frontier/i.test(String((e as Error)?.name) + String((e as Error)?.message))) throw e;
     }
   }
-  const c = await s.controls(await s.head());
-  assert(holds(c.settings, w), "The account's settings could not be turned on");
-  return c.settings;
+  // Eight tries, each refused by a write to a row it fences: the settings stay as stored, and this process plans under
+  // them (as a process allowed nothing does); its next plan tries again. Never a reason to refuse the plan itself.
+  return (await s.controls(await s.head())).settings;
 }
 const isConflict = (e: unknown) => /conflict|changed|live triple/i.test(String((e as Error)?.message));
 

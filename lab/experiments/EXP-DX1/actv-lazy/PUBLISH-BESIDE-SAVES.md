@@ -20,9 +20,9 @@ generators the review read, byte for byte. Its fix is alone on `exp/DX-U1-id-all
 | --- | --- | --- | --- |
 | U1 | A save's block of assertion IDs and the SDK's other IDs came from one ID space, so a valid save could be refused, and refused again on every resend | One allocator (`packages/core` `utils/id.ts` `reserveIdPrefix`); the held tape resends a save refused for an ID collision under a new block once its operation is known absent (`c3f4dc505`) | `identity.test.ts` I1 (0 of 5,000 share a token), I2 (0 of 200,000), I3 (0 of 100,000 IDs inside 28,572 blocks); on the stack, the options-off gate (0.A, the gates) |
 | U2 | The first transition stored the ledger mode of whichever process came first, which could lock the account | Under any setting the ledgers are in parts with the archive, whatever a process names; the cap is computed the same way by every publisher (`f2c3cac73`) | `review3` T1; `review2` C2 |
-| U3 | Another account could compute a settlement frame's or the enrolment's command ID and save under it first, stopping that account for good | Frame IDs carry a random part under the `accountKeys` setting; the enrolment's ID carries one under `TX2_ENROL_BESIDE_SAVES`, and is recovered by reading what it writes (`f2c3cac73`) | `review3` T9 (values and notices: the next runs record), T10 (the account enrols) |
+| U3 | Another account could compute a settlement frame's or the enrolment's command ID and save under it first, stopping that account for good | Frame IDs carry a random part under any stored setting (`f2c3cac73` under `accountKeys`, widened in the next commit); the enrolment's ID carries one under `TX2_ENROL_BESIDE_SAVES`, and is recovered by reading what it writes (`f2c3cac73`) | `review3` T9 (values and notices: the next runs record), T10 (the account enrols) |
 | U4 | A forged record in two accounts' documents was taken as each one's Publish | A record is this account's only if every change it makes is in this account's names (`f2c3cac73`) | `review3` T6 |
-| U5 | A plan of a build from before the settings, made before a transition, could commit after it (a release over the cap landed and locked every later Publish; a frame landed after an acknowledged pause) | The transition fences what was planned before it: it rewrites the account's calendar row, every pending values progress row and the notice cursor, and creates the first such rows if absent (`f2c3cac73`); it commits under the removal sequence it read (`c788f5de2`) | `review3` T4, T5; `settings` S2, S3, S4, each with a negative control |
+| U5 | A plan of a build from before the settings, made before a transition, could commit after it (a release over the cap landed and locked every later Publish; a frame landed after an acknowledged pause) | The transition fences what was planned before it: it rewrites the account's calendar row, every pending values progress row and the notice cursor, and creates the first such rows if absent (`f2c3cac73`); it commits under the removal sequence it read (`c788f5de2`), guarded on every row it fences (`afae099b1`) | `review3` T4, T5; `settings` S2, S3, S4, each with a negative control |
 | U6 | A process kept a per-process cache of the settings, so it never turned them on again after a direct rewrite | No cache: whether a transition is needed is read at every plan and every frame (`f2c3cac73`) | `review3` T3 |
 | U7 | The `joined:<account>/<id>` form of `bf377c57f` was not looked up | Looked up, under the same ownership rule, with either intent (`f2c3cac73`) | `review3` T7 |
 | U8 | Another account can read a Publish's record by its computed ID, or save under the next one first | **Not fixed on this branch.** The fix is the gateway's account claims (the one mechanism, below) | `review3` T8 still states it |
@@ -61,9 +61,11 @@ check (U9).
 
 **U3 in detail, and what the join layer changes when the gateway's claims land.**
 
-- **Frames.** Under the account's `accountKeys` setting a frame's command ID is `settled-values:<hash>:<random>` (or
-  `settled-notice:`). Nothing is recovered by a frame's ID: a frame is guarded on its progress row (or the head), so a
-  frame that landed refuses its own resend, and the next run reads the row it wrote.
+- **Frames.** Under any stored setting a frame's command ID is `settled-values:<hash>:<random>` (or `settled-notice:`).
+  Nothing is recovered by a frame's ID: a frame is guarded on its progress row (or the head), so a frame that landed
+  refuses its own resend, and the next run reads the row it wrote. (Widened from `accountKeys` alone after the
+  single-layout fuzz: a transition rewrites a progress row with its own value, so a deterministic ID can name two
+  plans with different retractions, below.)
 - **The enrolment.** Under `TX2_ENROL_BESIDE_SAVES` a namespaced account's enrolment command ID is
   `join-held-enrolment:<account>:<random>`. Its four entities (the origin, the clock, `join-meta`, `join-calendar`)
   are created only if absent, so a lost reply, or a rival enrolment of the same account that landed first, is found by
@@ -88,10 +90,37 @@ each with its own value, the rows that whatever was planned before it is guarded
 - for an owed release with no progress row, or an account with notices and no cursor, the first row a frame would
   start from, so a first frame planned before is refused too.
 
-A reader sees the same values before and after. So a plan of any build, old or new, made before the transition is
-refused at its commit. A build from before the settings then reads the origin, finds settings it does not know, and
+A reader sees the same values before and after. The transition is guarded on each of those rows as it read them, so a
+frame that writes one between the transition's read and its commit refuses the transition, which reads again (below).
+So a plan of any build, old or new, made before the transition is refused at its commit.
+
+**A fault the fuzzer found in this pass, and its fix.** The first mixed campaign with the transitions dimension, at
+`c788f5de2`, found 19 of 2,500 schedules violating. 18 were one fault: the transition's commit was guarded on the
+origin row only, so a first values frame or first notice frame that created its row between the transition's read and
+its commit left two live rows for one key, and every later read of that row refused. Fixed in `afae099b1` (an
+`EntityState` guard on every fenced row). `settings` S6 lands both first frames in that window: it fails at
+`c788f5de2` and passes now. The 260 schedules from seed 230000 (2 violating at `c788f5de2`) give 0. The 19th
+(seed 231894) was the fuzzer's own classification: its transition-step publisher counted the known refusal of a
+definitions ID shared by two accounts before `accountKeys` (F2) as a violation; it now counts it as every other
+publisher there does. The campaign was rerun from the start at `afae099b1` (the gates, below). A build from before the settings then reads the origin, finds settings it does not know, and
 refuses the account (its exact comparison). The fuzzer now counts such a late frame as a break, not as the admitted
-window. The rollout order of 0.8 stays the recommended order, but correctness no longer depends on it.
+window.
+
+**What remains of the window, exactly.** A frame of a build from before the settings reads the account (its source)
+at one position and its own progress row at a later one. If a transition lands between those two reads, the frame is
+planned from the fenced row, is not guarded on the origin (that build knows no settings), and lands after the
+transition: one frame per such process, written under that build's rules (no frame guards; a new event's ledgers
+without the archive, which the next event under the archive moves to it, so the fold stays exact). A Publish reads at
+one position, so its window is closed. A second effect: two such builds can plan the same frame under one command ID
+(a hash of the cursor's value), one before the fence and one after, with different retractions; the second to commit
+stops on "commit receipt differs" (nothing is written twice; its restart refuses the account). So the rollout order of
+0.8 (no build from before the settings is running when the first permission is given) is still what removes this last
+frame; the fences remove everything else, and this build's own processes need no order.
+
+**A transition never refuses a plan.** A permitted process tries a transition at most 8 times (each refused only by a
+write to a row it fences); if none lands, it plans under the settings as stored, as a process allowed nothing does, and
+tries again at its next plan. (At `afae099b1` the eighth refusal stopped the process: 4 of the 7 single-layout fuzz
+violations there.)
 
 **U6 in detail.** Settings stay one-way only against this build's own code. A writer of the origin fact can still turn
 them off (a direct rewrite, or a restore to before the transition). What changed: the process that had turned them on

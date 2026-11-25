@@ -286,17 +286,33 @@ export async function act8R3Stack(c: Ctx) {
       const ids = held.map((h) => "act8r3-" + run + "-kg-" + h.account), docsK = held.map((_, i) => large(20, 1000 - 100 * i));
       const releasesBefore = await Promise.all(xs.map(async (x) => (await x.store.controls(await x.store.head())).releases.length));
       const headBefore = await c.s.head();
-      const first = xs.map((x, i) => x.a.publish(ids[i]!, docsK[i]!, validTime, "owed", undefined, { docs: "inline" })
+      // Each Publish waits inside its transaction (its plan read, its snapshot taken) until all three are there; then
+      // the gateway is killed while the three commits go out, so each meets the kill with its commit in flight.
+      let inside = 0, release!: () => void, killedAt = 0;
+      const all = new Promise<void>((r) => (release = r));
+      let killing: Promise<void> | undefined;
+      const hook = async () => {
+        if (++inside === xs.length) {
+          // The kill is sent first; the three commits leave 30 ms later, while it takes effect (as the restart part's
+          // `inside` case does).
+          killedAt = Date.now();
+          killing = docker(["kill", name]).then(() => undefined);
+          await sleep(30);
+          release();
+        }
+        await all;
+      };
+      const first = xs.map((x, i) => x.a.publish(ids[i]!, docsK[i]!, validTime, "owed", undefined, { docs: "inline", inside: hook } as never)
         .then((r) => ({ ok: true as const, position: r.position }), (e) => ({ ok: false as const, error: String(e?.constructor?.name) + ": " + String(e?.message).split("\n")[0]!.slice(0, 160) })));
-      await sleep(20);
-      const killedAt = Date.now();
-      await docker(["kill", name]);
+      const outcomesP = Promise.all(first);
+      await all;
+      await killing;
       await docker(["start", name]);
       for (let k = 0; ; k++) {
         try { await c.s.head(); await c.s.lookup("act8-r3-probe"); break; } catch (e) { if (k > 120) throw e; await sleep(1000); }
       }
       const backMs = Date.now() - killedAt;
-      const outcomes = await Promise.all(first);
+      const outcomes = await outcomesP;
       // Each command offered again until it is acknowledged (a lost reply, a refused try or a gateway still coming back).
       const receipts: number[] = [], failures: string[][] = [];
       for (const [i, x] of xs.entries()) {
@@ -318,7 +334,7 @@ export async function act8R3Stack(c: Ctx) {
       const after = (await journal(headBefore)).filter((t) => t.position > headBefore && t.actor === "lazy/join");
       const records = ids.map((id) => after.filter((t) => String(t.commandId) === "joined:" + id || String(t.commandId).endsWith("/" + id)));
       const releasesAfter = await Promise.all(xs.map(async (x) => (await x.store.controls(await x.store.head())).releases.length));
-      results.KG = { killedAfterMs: 20, gatewayBackMs: backMs, firstOutcomes: outcomes, failures, receipts,
+      results.KG = { killedInsideAllThree: inside === xs.length, gatewayBackMs: backMs, firstOutcomes: outcomes, failures, receipts,
         records: records.map((r) => r.map((t) => [t.position, String(t.commandId).slice(0, 60)])), releasesBefore, releasesAfter };
       save();
       for (const [i, r] of records.entries()) {

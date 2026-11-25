@@ -345,6 +345,15 @@ async function schedule(seed: number): Promise<Outcome> {
           count("oldBuildRefused");
           continue;
         }
+        // [DX-ACT8, third review] A build from before the settings names its frames by a hash of the cursor's value. A
+        // transition rewrites the cursor with its own value (its fence), so two such builds can plan the same frame
+        // under one command ID, one before the fence and one after, with different retractions; the second to commit
+        // finds the first's record and stops ("commit receipt differs"). Nothing is written twice; its restart refuses
+        // the account (settings stored). Counted; this build's frames carry a random part under any setting.
+        if (proc.oldBuild && /commit receipt differs from the request \(command settled-/.test(String(e?.message))) {
+          count("oldBuildFrameIdTaken");
+          continue;
+        }
         if (e instanceof SettingsConflict) {
           count("settingsConflict");
           continue;

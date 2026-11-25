@@ -209,11 +209,14 @@ export class Archive {
     // by its guards (the origin row, or the head) and planned again.
     const origin = await originAt(this.source.s, at);
     if (needsTransition(this.source.s, origin.settings)) await ensureSettings(this.source.s);
-    // [DX-ACT8, third review U3] Under the account's `accountKeys` setting a frame's command ID carries a random part, so
-    // no other account can compute it and save under it first. Nothing is recovered by a frame's ID: a frame is guarded
-    // on its progress row (or the head), so a frame that landed refuses its own resend and the next run reads the row it
-    // wrote. Unset: the deterministic ID, as before.
-    if (origin.settings?.accountKeys) id = id + ":" + randomUUID();
+    // [DX-ACT8, third review U3] Under any stored setting a frame's command ID carries a random part, so no other account
+    // can compute it and save under it first. Nothing is recovered by a frame's ID: a frame is guarded on its progress
+    // row (or the head), so a frame that landed refuses its own resend and the next run reads the row it wrote. (Under
+    // the settings a deterministic ID would also break: a transition rewrites a progress row with its own value, so a
+    // plan made before it and one made after share the ID with different retractions, and the later commit would find
+    // the earlier's record as "a receipt that differs": the mixed single-layout fuzz at afae099b1.) With no setting
+    // stored: the deterministic ID, as before.
+    if (origin.settings) id = id + ":" + randomUUID();
     // [DX-ACT1] Why: constrain native preparation and durable turns independently of page count. Rejected: a multi-megabyte atomic frame or assuming a timeout can preempt a durable native transaction.
     const estimate = frameEstimate(ops);
     assert(estimate.fits, "Bulk batch exceeds W1 service estimate");
