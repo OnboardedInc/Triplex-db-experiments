@@ -8,11 +8,14 @@
 # PostgreSQL removal authority shared by a write and a read gateway, every container on the image the stack pinned by
 # ID, the gateway source this checkout's HEAD (or SOURCE_REF). BOUNDARY=commit gives both gateways the permission and
 # moves each database through its route.
-# SCENARIO all6, in one stack:
+# SCENARIO all6, in one stack (D6 added after the first run, st-log-sealed1, had started):
 #   D1, D2: a1 and b1 hold :v and :q (:q not protected); the data is backed up; :q is added to the policy; a1 saves :q;
 #     the data is restored from the backup (transactor and gateways stopped). D1: a removal of the whole subject a1
 #     before the restore route; D2 (control): the restore route first, then the removal. Then the restore route, the
 #     protection route with [:v :q] (a service's restart), reads of a1, a second removal of a1, reads again.
+#   D6: as D1, with a removal of b1 after the backup and the addition, so the restored data is behind the log: a removal
+#     of a1 sent before the restore route (refused), the restore route, the client's retry of the removal, reads; then
+#     the protection route with [:v :q], reads.
 #   D3, D3b: a1, b1, c1 hold :v; the data AND the removal authority's rows of the database are backed up; a1 is removed
 #     (acknowledged) and its keys deleted by the key pass (grace 0); both are restored to the backup (D3: records and
 #     keys; D3b: records only). Then reads of a1 on both gateways, a save, a removal of a1 again, reads.
@@ -141,18 +144,19 @@ all6)
   va=$(value a1) vq=$(value a1:q) vq0=$(value a1:q0) vq1=$(value a1:q1)
   new_db "$W" d1 "$sealed"; D1=$db
   new_db "$W" d2 "$sealed"; D2=$db
+  new_db "$W" d6 "$sealed"; D6=$db
   new_db "$W" d3 "$sealed"; D3=$db
   new_db "$W" d3b "$sealed"; D3B=$db
   uri_of_stopped() { cat "$out/tmp/uri-$1"; }
-  for d in $D1 $D2 $D3 $D3B; do uri_of "$d" > "$out/tmp/uri-$d"; done
-  for d in $D1 $D2; do for s in a1 b1; do post "$W/v1/db/$d/transact" "$bodies/seed-$s.json" "seed-$s"; post "$W/v1/db/$d/transact" "$bodies/seedq-$s.json" "seedq-$s"; done; done
+  for d in $D1 $D2 $D6 $D3 $D3B; do uri_of "$d" > "$out/tmp/uri-$d"; done
+  for d in $D1 $D2 $D6; do for s in a1 b1; do post "$W/v1/db/$d/transact" "$bodies/seed-$s.json" "seed-$s"; post "$W/v1/db/$d/transact" "$bodies/seedq-$s.json" "seedq-$s"; done; done
   for d in $D3 $D3B; do for s in a1 b1 c1; do post "$W/v1/db/$d/transact" "$bodies/seed-$s.json" "seed-$s"; done; done
-  backup "$D1" d1; backup "$D2" d2; backup "$D3" d3; backup "$D3B" d3b
+  backup "$D1" d1; backup "$D2" d2; backup "$D6" d6; backup "$D3" d3; backup "$D3B" d3b
   for d in $D3 $D3B; do
     psql_auth -c "create table public.\"bk_r_$d\" as select * from triplex_removal.records where scope='$d'; create table public.\"bk_k_$d\" as select * from triplex_removal.keys where scope='$d';" > /dev/null
     step "authority rows of $d backed up: records $(psql_auth -c "select count(*) from public.\"bk_r_$d\"") keys $(psql_auth -c "select count(*) from public.\"bk_k_$d\"")"
   done
-  for d in $D1 $D2; do
+  for d in $D1 $D2 $D6; do
     post "$W/v2/db/$d/protection" "{\"attributes\":[\":v\",\":q\"],\"sealed\":$sealed}" "add-q"
     post "$W/v1/db/$d/transact" "$bodies/saveq-a1-0.json" "saveq-a1-after-the-addition"
     step "head copy $d after the addition: $(headcopy "$d")"
@@ -163,7 +167,9 @@ all6)
     reads "$R" "$d" "after-the-removal-$d" "$va"
     step "keys of $d: $(psql_auth -c "select count(*) from triplex_removal.keys where scope='$d'") (backed up $(psql_auth -c "select count(*) from public.\"bk_k_$d\""))"
   done
-  restore_all d1:$D1 d2:$D2 d3:$D3 d3b:$D3B
+  # D6: a removal of b1 after the backup and the addition, so the restored data is behind the log
+  post "$W/v2/db/$D6/erase" "$(erase_subject "rm-b1-$D6" acct/b/one)" "d6-removal-b1-after-the-backup"
+  restore_all d1:$D1 d2:$D2 d6:$D6 d3:$D3 d3b:$D3B
   # the removal authority's rows of D3 (records and keys) and D3b (records only) put back to the backup
   psql_auth -c "delete from triplex_removal.records where scope='$D3'; insert into triplex_removal.records select * from public.\"bk_r_$D3\"; delete from triplex_removal.keys where scope='$D3'; insert into triplex_removal.keys select * from public.\"bk_k_$D3\";" > /dev/null
   psql_auth -c "delete from triplex_removal.records where scope='$D3B'; insert into triplex_removal.records select * from public.\"bk_r_$D3B\";" > /dev/null
@@ -187,6 +193,17 @@ all6)
     post "$R/v2/db/$d/erase" "$(erase_subject "rm-a1-again-$d" acct/a/one)" "second-removal-a1"
     reads "$R" "$d" "after-the-second-removal-$d" "$va" "$vq" "$vq1"
   done
+  # D6: the data restored from before the addition and before a removal (behind the log): a removal of a1 sent in the
+  # window, then the restore route, then the client's retry of the removal, reads; then the service's declaration
+  step "head copy $D6 after the data restore: $(headcopy "$D6")"
+  post "$R/v2/db/$D6/erase" "$(erase_subject "rm-a1-$D6" acct/a/one)" "d6-removal-a1-in-the-window"
+  step "head copy $D6 after the refused removal: $(headcopy "$D6")"
+  post "$W/v2/db/$D6/restore-erasure" '{}' "d6-restore-route"
+  post "$R/v2/db/$D6/erase" "$(erase_subject "rm-a1-$D6" acct/a/one)" "d6-removal-a1-retried"
+  reads "$R" "$D6" "d6-after-the-retried-removal" "$va" "$vq"
+  post "$W/v2/db/$D6/protection" "{\"attributes\":[\":v\",\":q\"],\"sealed\":$sealed}" "d6-service-declares-v-q"
+  step "protection answer: $(head -c 300 "$last")"
+  reads "$R" "$D6" "d6-after-the-service" "$va" "$vq"
   # D3 and D3b: the data and the log restored to the same backup
   for d in $D3 $D3B; do
     reads "$R" "$d" "restored-read-gateway-$d" "$va"
