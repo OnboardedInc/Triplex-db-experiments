@@ -623,8 +623,15 @@
                      (triplex.gateway.scope/value db scope :triplex.scope/removal-seq))
             "nothing declared beyond the log")))
 
+(defn- served-seq
+  "The ticket a client reads: the sequence of the state a request is served from. With the commit boundary that is
+  the data's (the log's cut with the removals committed past its head), else the log's."
+  [name conn]
+  (if commit?
+    (let [db (d/db conn)] (:seq (rc/effective name db (privacy/cut name db true))))
+    (seq-now name conn)))
 (defn- frame-any [name conn id]
-  (assoc (save-frame id (str "notice:v1:" id) ":notice/body" "derived" nil nil) "erasureSeq" (seq-now name conn)))
+  (assoc (save-frame id (str "notice:v1:" id) ":notice/body" "derived" nil nil) "erasureSeq" (served-seq name conn)))
 (defn- frame-acct [name conn id account]
   (assoc (frame-any name conn id) "erasureAccounts" [account]))
 (defn- stop-ex [step] (ex-info (str "stopped " (clojure.core/name step)) {}))
@@ -723,7 +730,10 @@
   restore route and every derived write are refused (typed) before anything is declared or released, the native
   counters do not move, a derived write that read a removed value never lands; the gateway's start check reports it;
   once the current log is back everything works again. Also a declaration the log does not show (left by the earlier
-  build), cleared by moving the database back and forward."
+  build), cleared by moving the database back and forward. [DX-ERA2 fourth pass] With the commit boundary the same
+  steps are served instead: the removal first appends the missing entries to the log and then commits after them (so
+  the restore route finds the log current), a declaration the log does not show is released by the next removal, and a
+  derived write that read a removed value still never lands."
   []
   (when per-account?
     (doseq [behind [1 2]]
@@ -757,12 +767,19 @@
                 back-removal (remove! name "lb-3" a1)]
             (expect label r1 [200 nil])
             (when r2 (expect label r2 [200 nil]))
-            (expect (str label ": a removal while the log is behind") removal [503 "RemovalLogBehind"])
-            (expect (str label ": the restore route while the log is behind") restore [503 "RemovalLogBehind"])
+            (if commit?
+              (do (expect (str label ": a removal while the log is behind (it catches the log up first)") removal [200 nil])
+                  (check! label (= (inc behind) (get-in removal [:body "seq"])) "the removal follows the appended entries" (:body removal))
+                  (expect (str label ": the restore route after the catch-up") restore [200 nil])
+                  (check! label (not (str/includes? start "RemovalLogBehind")) "the start check finds the log current" start)
+                  (check! label (= {:declared (inc behind) :committed (inc behind) :held "[]" :b 1 :a (inc behind)} n1)
+                          "only the removal moved the counters" {:before n0 :after n1}))
+              (do (expect (str label ": a removal while the log is behind") removal [503 "RemovalLogBehind"])
+                  (expect (str label ": the restore route while the log is behind") restore [503 "RemovalLogBehind"])
+                  (check! label (str/includes? start "RemovalLogBehind") "the start check reports it" start)
+                  (check! label (= n0 n1) "nothing declared, held or released while the log is behind" {:before n0 :after n1})))
             (check! label (not= 200 (:status old-frame)) "a derived write that read the removed value never lands" (offers/outcome old-frame))
             (check! label (not= 200 (:status any-frame)) "a derived write naming no account is refused" (offers/outcome any-frame))
-            (check! label (str/includes? start "RemovalLogBehind") "the start check reports it" start)
-            (check! label (= n0 n1) "nothing declared, held or released while the log is behind" {:before n0 :after n1})
             (check! label (not (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" ["notice:v1:lb-old"]}))) vb)) "no copy")
             (expect (str label ": once the current log is back, a frame naming b") back-frame [200 nil])
             (expect (str label ": and one naming no account") back-any [200 nil])
@@ -779,8 +796,11 @@
               removal (remove! name "ud-1" a1)
               frame (offers/send name (frame-any name conn "ud-any"))
               moves [(offers/route name "v2" "removal-per-account" {"back" true}) (offers/route name "v2" "removal-per-account" {})]]
-          (expect (str label ": a removal") removal [503 "RemovalLogBehind"])
-          (check! label (not= 200 (:status frame)) "a frame naming no account is refused" (offers/outcome frame))
+          (if commit?
+            (do (expect (str label ": a removal (it releases the declaration first)") removal [200 nil])
+                (expect (str label ": a frame naming no account after it") frame [200 nil]))
+            (do (expect (str label ": a removal") removal [503 "RemovalLogBehind"])
+                (check! label (not= 200 (:status frame)) "a frame naming no account is refused" (offers/outcome frame))))
           (check! label (= [[200 nil] [200 nil]] (map offers/outcome moves)) "moved back and forward" (map offers/outcome moves))
           (expect (str label ": after the moves, the removal") (remove! name "ud-1" a1) [200 nil])
           (expect (str label ": and a frame naming no account") (offers/send name (frame-any name conn "ud-any2")) [200 nil])

@@ -86,7 +86,7 @@ if [[ $phases == *era3* ]]; then
   run era3c-on this on "$attack3"; run era3c-subject this subject "$attack3"; run era3c-commit this commit "$attack3"
 fi
 suites="triplex.gateway.selftest triplex.gateway.group-test triplex.gateway.ids-test triplex.gateway.feed-test triplex.gateway.pinned-test triplex.gateway.recent-test triplex.gateway.cache-key-test triplex.gateway.commit-order-test triplex.gateway.sweep-gates-test triplex.gateway.trace-test"
-for arm in base:off this:off this:subject; do
+for arm in base:off this:off this:subject this:commit; do
   [[ $phases == *suites* ]] || continue
   source=${arm%%:*} option=${arm##*:}
   run "suites-$source-$option" "$source" "$option" "(require 'clojure.test) (def nss (quote [$suites])) (apply require nss)
