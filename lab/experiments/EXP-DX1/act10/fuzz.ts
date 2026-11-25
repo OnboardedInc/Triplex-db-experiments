@@ -49,6 +49,14 @@ const V = Date.parse(validTime);
 const A = "acct-a",
   B = "acct-b";
 const SCOPE = "act10-fz-" + process.pid;
+// [DX-ACT10, second review] Off by default (every earlier run unchanged): ACT10_SHARED=1 both accounts share Publish IDs,
+// documents (B by reference too) and save command IDs; ACT10_MIXED=1 publishing runs in phases with TX2_ACCOUNT_KEYS on
+// or off per phase and resends earlier commands; ACT10_SINGLE=1 account B uses the single-account layout.
+const SHARED = process.env.ACT10_SHARED === "1",
+  MIXED = process.env.ACT10_MIXED === "1",
+  SINGLE = process.env.ACT10_SINGLE === "1";
+const relName = (acct: string) => (SINGLE && acct === "acct-b" ? "lazy/account/releases" : "lazy/account/releases/" + acct);
+const PHASES = [["1", "0"], ["0", "1"], ["0", "1", "0"], ["1", "0", "1"], ["1"], ["0"]];
 const SNAP = SCOPE + "-snap";
 process.env.TX2_ENROL_BESIDE_SAVES = "1";
 const shape = (permille: number) => parseShape("forms=" + FORMS + ",policies=" + FORMS + ",permille=" + permille);
@@ -69,10 +77,15 @@ async function prepare() {
   dropMemoryScope(SNAP);
   const db = new MemDb(SCOPE, 1);
   db.maxYield = 0;
-  const cuts = [await seedAccount(db, A, PEOPLE), await seedAccount(db, B, PEOPLE)];
   const proc = new Proc(db, "prepare");
-  for (const [i, n] of [A, B].entries()) {
-    const a = new JoinedAccount(memStore(proc, heldAccount(n, PEOPLE, cuts[i]!)) as any);
+  const cuts: number[] = [];
+  if (SINGLE) cuts[1] = await seedAccount(db, B, PEOPLE);
+  else cuts.push(await seedAccount(db, A, PEOPLE), await seedAccount(db, B, PEOPLE));
+  for (const [i, n] of (SINGLE ? [B, A] : [A, B]).entries()) {
+    if (SINGLE && n === A) cuts[0] = await seedAccount(db, A, PEOPLE);
+    const k = n === A ? 0 : 1;
+    void i;
+    const a = new JoinedAccount(memStore(proc, heldAccount(n, PEOPLE, cuts[k]!, !(SINGLE && n === B))) as any);
     await a.installHeld(validTime);
     process.env.TX2_PUBLISH_BESIDE = "1";
     await a.publish(n + ":base:R1", DOCS.R1!, validTime, "owed");
@@ -205,16 +218,17 @@ async function schedule(seed: number): Promise<Outcome> {
   const env = { TX2_PUBLISH_BESIDE: cfg.beside ? "1" : "0", TX2_RELEASE_DOCS: cfg.docs === "ref" ? "ref" : "" };
   Object.assign(process.env, env);
   const hA = heldAccount(A, PEOPLE, snapshot!.cuts[0]!),
-    hB = heldAccount(B, PEOPLE, snapshot!.cuts[1]!);
+    hB = heldAccount(B, PEOPLE, snapshot!.cuts[1]!, !SINGLE);
   if (cfg.stall)
     db.stall = async () => {
       if (db.random.next() < 0.15) for (let k = db.random.int(6); k > 0; k--) await new Promise((x) => setImmediate(x));
     };
   // ---- actors ----
-  const acknowledged: { account: string; id: string; position: number; txId: string; doc: string }[] = [];
+  const acknowledged: { account: string; id: string; position: number; txId: string; doc: string; keys?: string }[] = [];
   const refused: { id: string; message: string }[] = [];
   let publishing = true;
   let killsLeft = cfg.kills;
+  let phaseTag = "";
   const publisher = async (account: string, held: typeof hA, docs: string[], race: boolean) => {
     const proc = new Proc(db, "publisher-" + account);
     if (cfg.killPublisher && account === A) {
@@ -223,16 +237,16 @@ async function schedule(seed: number): Promise<Outcome> {
     }
     const a = new JoinedAccount(memStore(proc, held) as any);
     const one = async (k: number, name: string) => {
-      const id = account + ":" + seed + ":" + k + ":" + name;
+      const id = (SHARED ? "" : account + ":") + seed + ":" + k + ":" + name;
       const hook = cfg.hookSave && account === A
         ? { [cfg.hookSave]: async () => { const p = await save(new Proc(db, "hook"), A, r.int(PEOPLE), r, "hook" + seed + k); if (p) count("hookSaves"); } }
         : {};
       try {
         // Account B publishes with full documents unless ACT10_CROSS_DOCS=1: by reference, two accounts that share a
         // predecessor document collide on the definitions' command IDs (finding F2, cross-account.test.ts X3, X4).
-        const docs = account === B && process.env.ACT10_CROSS_DOCS !== "1" ? { docs: "inline" } : {};
+        const docs = account === B && process.env.ACT10_CROSS_DOCS !== "1" && !SHARED ? { docs: "inline" } : {};
         const receipt = await a.publish(id, DOCS[name]!, validTime, "owed", undefined, { ...hook, ...docs } as never);
-        acknowledged.push({ account, id, position: receipt.position, txId: receipt.txId, doc: name });
+        acknowledged.push({ account, id, position: receipt.position, txId: receipt.txId, doc: name, keys: process.env.TX2_ACCOUNT_KEYS === "1" ? "on" : "off" });
       } catch (e: any) {
         if (e instanceof Killed) return;
         refused.push({ id, message: String(e?.message ?? e).slice(0, 200) });
@@ -245,7 +259,7 @@ async function schedule(seed: number): Promise<Outcome> {
   const saver = async (account: string, n: number) => {
     const proc = new Proc(db, "saver-" + account);
     for (let j = 0; j < n; j++) {
-      const p = await save(proc, account, r.int(PEOPLE), r, account + seed + ":" + j);
+      const p = await save(proc, account, r.int(PEOPLE), r, (SHARED ? "" : account) + seed + ":" + j + ":" + phaseTag);
       if (p) count("saves" + (account === A ? "A" : "B"));
     }
   };
@@ -275,12 +289,23 @@ async function schedule(seed: number): Promise<Outcome> {
     }
   };
   const settlers = Array.from({ length: cfg.settlers }, (_, k) => settler(k));
-  const publishers = Promise.all([
-    publisher(A, hA, cfg.publishes, cfg.race),
-    cfg.bPublish ? publisher(B, hB, [r.pick(["L1000", "R2"])], false) : Promise.resolve(),
-    saver(A, cfg.saves),
-    saver(B, cfg.savesB),
-  ]).finally(() => (publishing = false));
+  const bDocs = SHARED && r.next() < 0.6 ? cfg.publishes : [r.pick(["L1000", "R2"])];
+  const phases = MIXED ? r.pick(PHASES) : [process.env.TX2_ACCOUNT_KEYS === "1" ? "1" : "0"];
+  (cfg as any).phases = phases.join("");
+  const publishers = (async () => {
+    for (const [n, phase] of phases.entries()) {
+      if (MIXED) phase === "1" ? (process.env.TX2_ACCOUNT_KEYS = "1") : delete process.env.TX2_ACCOUNT_KEYS;
+      phaseTag = MIXED ? String(n) : "";
+      // In later phases a client resends some of the earlier commands (the same ID and document).
+      const again = n > 0 && r.next() < 0.6;
+      await Promise.all([
+        publisher(A, hA, n === 0 || again ? cfg.publishes : [r.pick(["R2", "L500"])], cfg.race),
+        cfg.bPublish ? publisher(B, hB, n === 0 || again ? bDocs : [r.pick(["L1000", "R2"])], false) : Promise.resolve(),
+        saver(A, cfg.saves),
+        saver(B, cfg.savesB),
+      ]);
+    }
+  })().finally(() => (publishing = false));
   await publishers;
   await Promise.all(settlers);
   // A clean process finishes everything (no kills).
@@ -329,7 +354,7 @@ async function settleAll(db: MemDb, proc: Proc, held: ReturnType<typeof heldAcco
 /** The checks, against positions read from the store. */
 async function check(
   db: MemDb, cfg: Cfg, hA: ReturnType<typeof heldAccount>, hB: ReturnType<typeof heldAccount>,
-  acknowledged: { account: string; id: string; position: number; txId: string; doc: string }[],
+  acknowledged: { account: string; id: string; position: number; txId: string; doc: string; keys?: string }[],
   refused: { id: string; message: string }[], violations: string[], counts: Record<string, number>, r: Rng,
 ) {
   const v = (m: string) => violations.push(m);
@@ -342,13 +367,17 @@ async function check(
   for (const x of acknowledged) {
     const tx = journal.find((t) => t.position === x.position);
     const rel = (x.account === A ? "lazy/account/releases/" + A : "lazy/account/releases/" + B);
-    if (!tx || tx.commandId !== joinedCommandId({ held: x.account === A ? hA : hB } as never, x.id) || !tx.changes.some((c: any) => c.entityId === rel && c.op === "assert"))
-      v("acknowledged Publish " + x.id + " is not its own account's record at " + x.position);
+    const forms = ["joined:" + x.id, joinedCommandId({ held: x.account === A ? hA : hB } as never, x.id), "joined:" + x.account + "/" + x.id];
+    if (!tx || !forms.includes(tx.commandId) || !tx.changes.some((c: any) => c.entityId === relName(x.account) && c.op === "assert"))
+      v("acknowledged Publish " + x.id + " is not its own account's record at " + x.position + " (TX2_ACCOUNT_KEYS " + (x.keys ?? "?") + ")");
   }
   for (const [acct, held] of [[A, hA], [B, hB]] as const) {
     const st = memStore(proc, held) as any;
     const ja = new JoinedAccount(st);
-    const landed = journal.filter((t) => t.actor === "lazy/join" && t.changes.some((c: any) => c.entityId === "lazy/account/releases/" + acct && c.op === "assert"));
+    const landed = journal.filter((t) => t.actor === "lazy/join" && t.changes.some((c: any) => c.entityId === relName(acct) && c.op === "assert"));
+    // [second review] One command lands at most once for one account, whatever form its ID took.
+    const logical = landed.map((t) => String(t.commandId).replace(/^joined:(?:[a-zA-Z0-9_.-]+\/)?/, ""));
+    for (const id of new Set(logical)) if (logical.filter((x) => x === id).length > 1) v(acct + ": command " + id + " landed " + logical.filter((x) => x === id).length + " times");
     const rels = (await st.controls(head)).releases;
     const tail = (await ja.notices.observe()).value.sequence;
     if (rels.length !== landed.length || tail !== landed.length) v(acct + ": releases " + rels.length + ", tail " + tail + ", landed records " + landed.length);
