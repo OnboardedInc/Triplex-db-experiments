@@ -526,7 +526,11 @@
     (throw (ex-info "This database stores covering owner roots; start the writer with TX2_SUBJECT_OWNER_HEAD=1"
                     {:status 409 :code "OwnerLayoutRequired"})))
   (when group/load-timing (trace/attribute! :operationId (get input "operationId")))
-  (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
+  ;; [DX-S6] TX2_ACCOUNT_CLAIMS=1 and the request names its account: only that account's operation ID counts.
+  (when (if (and (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS")) (get input "account"))
+          (d/entid db [:triplex.tx/operation-id ((requiring-resolve 'triplex.gateway.account-claims/operation-key)
+                                                 conn db (get input "operationId") (get input "account"))])
+          (d/entid db [:triplex.tx/operation-id (get input "operationId")]))
     (reject-ordered! conn input (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
   ;; [DX-S6] Why: once the transaction is handed to Datomic, only a refusal it or a stored function decided is final;
   ;; any other failure (transport, timeout, a stopped transactor, anything unrecognised) may follow a commit.
@@ -540,6 +544,11 @@
           validated (when (= "1" (System/getenv "TX2_SUBJECT_RETIREMENT_TRACE")) (System/nanoTime))
           frame-size (group/frame-measurement (second (first data)) input)
           _ (try (group/bound-frame! frame-size) (catch Exception e (reject-ordered! conn input e)))
+          ;; [DX-S6] TX2_ACCOUNT_CLAIMS=1: the command and operation IDs of a save of one account are stored scoped by it.
+          data (if (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS"))
+                 (try ((requiring-resolve 'triplex.gateway.account-claims/scope!) conn db data input)
+                      (catch Exception e (reject-ordered! conn input e)))
+                 data)
           ;; [DX-IMP2] Why: an import commit over the import bound is refused whole, before the writer sees it.
           ;; Rejected: requiring import-bound at load (it would renumber later namespaces' generated names, and with
           ;; them the stored native functions' hashes; with the option off it is never loaded).
@@ -671,8 +680,10 @@
 (defn operation [db id]
   (if-let [{:keys [position t clock]} (group/receipt db id)]
     ;; [DX-S6] An operation ID stored without a position is a fence: the original save can never commit.
-    (if (nil? position) {:status "absent" :fenced true :operationId id} {:status "committed" :operationId id :position (codec/encode-value "long" position)
-     :t (codec/encode-value "long" t) :recordedAt (codec/encode-value "double" clock)})
+    (if (nil? position) {:status "absent" :fenced true :operationId id} {:status "committed" :operationId (if (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS")) ((requiring-resolve 'triplex.gateway.account-claims/plain) id) id) :position (codec/encode-value "long" position)
+     :t (codec/encode-value "long" t) :recordedAt (codec/encode-value "double" clock)
+     ;; [DX-S6] The receipt names the transaction, so a caller can tell its own save from another's under one ID.
+     :txId (ledger/tx-id db (d/entid db [:triplex.tx/operation-id id]))})
     {:status "absent"}))
 (defn head-position
   ([db]
@@ -883,7 +894,10 @@
     (try
       (merge snapshot
         {:t (codec/encode-value "long" (d/basis-t db))
-         :claim (when command (when-let [eid (d/entid db [:triplex.claim/command-id command])] (ledger/claim-tx-id db eid)))
+         :claim (when command (when-let [eid (if (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS"))
+                                                  ((requiring-resolve 'triplex.gateway.account-claims/find-claim) (:conn (meta input)) db command (get input "account"))
+                                                  (d/entid db [:triplex.claim/command-id command]))]
+                                 (ledger/claim-tx-id db eid)))
          :rows (if (lean/enabled? db)
                  (vec (mapcat #(:rows (read-rows name db {"id" %})) ids))
                  (mapv wire-row

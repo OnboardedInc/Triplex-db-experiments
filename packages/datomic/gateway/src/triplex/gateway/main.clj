@@ -294,7 +294,7 @@
                              "entity-transactions"
                              (trace/span "journal/entity-positions" "gateway" (journal/entity-positions (d/db conn) name input))
                              "command"
-                             (trace/span "journal/command" "gateway" (journal/command (trace/span "d/db" "peer-call" (d/db conn)) name input)))}))
+                             (trace/span "journal/command" "gateway" (journal/command (trace/span "d/db" "peer-call" (d/db conn)) name (vary-meta input assoc :conn conn))))}))
       (and (= :get request-method) (= "/health" uri))
       (do (trace/span "d/db" "peer-call" (d/db (connection (db-uri "tx2-health"))))
           (response 200 (cond-> {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")}
@@ -335,7 +335,7 @@
         (response 200 (request-index! name (connection (db-uri name)) input)))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/begin" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)]
-        (timed start (response 200 (trace/span "storage/begin-command!" "gateway" (storage/begin-command! name (trace/span "d/db" "peer-call" (d/db (connection (db-uri name)))) input)))))
+        (timed start (response 200 (trace/span "storage/begin-command!" "gateway" (storage/begin-command! name (trace/span "d/db" "peer-call" (d/db (connection (db-uri name)))) (vary-meta input assoc :conn (connection (db-uri name))))))))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(reach|reach-many)" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (trace/read-span "gateway.request-decode" "gateway" (request-json body)) start (System/nanoTime)
             view (connection-view (db-uri name)) conn (:conn view)
@@ -388,12 +388,25 @@
                       (when (and (nil? privacy/*cut*) lean-query/enabled (lean/enabled? (or db (storage/held-db name (get input "handle")))))
                         (lean-query/assert-unprotected! (or db (d/db (connection db-uri)))))
                       (query/run name db input)))
-            "operation" (storage/operation db id)
+            ;; [DX-S6] TX2_ACCOUNT_CLAIMS=1: ?account=<account> looks the operation up as that account's.
+            "operation" (if (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS"))
+                          (let [account (some-> (second (re-find #"(?:^|&)account=([^&]+)" (or query-string ""))) (java.net.URLDecoder/decode "UTF-8"))
+                                id (java.net.URLDecoder/decode ^String id "UTF-8")]
+                            (assoc (storage/operation db ((requiring-resolve 'triplex.gateway.account-claims/operation-key) conn db id account)) :operationId id))
+                          (storage/operation db id))
             ;; [DX-S6] Why: a caller with an unknown outcome makes it decided: committed, or fenced and never committed.
             ;; Rejected: waiting a fixed time for the original (a stopped gateway's save can still be in the transactor).
-            "fence" ((requiring-resolve 'triplex.gateway.outcome/fence!) conn (get input "operationId") storage/operation)
+            "fence" (if (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS"))
+                      (let [id (get input "operationId")]
+                        (assoc ((requiring-resolve 'triplex.gateway.outcome/fence!) conn
+                                ((requiring-resolve 'triplex.gateway.account-claims/operation-key) conn db id (get input "account")) storage/operation)
+                               :operationId id))
+                      ((requiring-resolve 'triplex.gateway.outcome/fence!) conn (get input "operationId") storage/operation))
             "claim" (let [cut (storage/at-position db (get input "position"))
-                          id (get input "commandId") claim (d/entid cut [:triplex.claim/command-id id])
+                          id (get input "commandId")
+                          claim (if (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS"))
+                                  ((requiring-resolve 'triplex.gateway.account-claims/find-claim) conn cut id (get input "account"))
+                                  (d/entid cut [:triplex.claim/command-id id]))
                           tx (when claim (ledger/claim-tx cut claim))
                           pos (when (and tx (d/entid cut :triplex.group/position)) (storage/value cut tx :triplex.group/position))
                           visible (and claim (or (nil? pos) (nil? (get input "position")) (<= pos (get input "position"))))

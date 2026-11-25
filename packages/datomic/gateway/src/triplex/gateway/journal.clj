@@ -154,7 +154,10 @@
 (defn build-command [db name input]
   (try
     (supported! db name false)
-    (let [claim (d/entid db [:triplex.claim/command-id (get input "commandId")])
+    ;; [DX-S6] TX2_ACCOUNT_CLAIMS=1 with the caller's account: the account's claim only (s6 account_claims.clj).
+    (let [claim (if (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS"))
+                  ((requiring-resolve 'triplex.gateway.account-claims/find-claim) (:conn (meta input)) db (get input "commandId") (get input "account"))
+                  (d/entid db [:triplex.claim/command-id (get input "commandId")]))
           id (when claim (ledger/claim-tx-id db claim)) out (StringBuilder.)]
       (.append out "{\"txId\":")
       (if id (reach/append-string! out id) (.append out "null"))

@@ -37,6 +37,8 @@ settings=(
   "readback:$base TX2_REMOVAL_COST_READBACK=1"
   "general:TX2_SUBJECT_SAVE=0"
   "bound:$base TX2_IMPORT_WHOLE_SUBJECT=1 TX2_REMOVAL_COST_READBACK=1 TX2_READ_SET_BOUND=1"
+  "accounts-off:$base"
+  "accounts-on:$base TX2_ACCOUNT_CLAIMS=1"
 )
 s5="-i /exp/s5/fuzz.clj"
 case $mode in
@@ -45,6 +47,7 @@ case $mode in
   outcome) files="$s5 -i /exp/s6/outcome_gate.clj"; expr="(s6-outcome/main)" ;;
   bound) files="$s5 -i /exp/s6/bound_gate.clj"; expr="(s6-bound/main)" ;;
   race) files="$s5 -i /exp/s6/race_gate.clj"; expr="(s6-race/main)" ;;
+  accounts) files="$s5 -i /exp/s6/accounts_gate.clj"; expr="(s6-accounts/main)" ;;
   owners) files="-i /exp/s3/owners_gate.clj -i /exp/s6/gates_main.clj"; expr="(s6-gates/run (quote owners-gate))" ;;
   create) files="-i /exp/s3/owners_gate.clj -i /exp/s4/create_gate.clj -i /exp/s6/gates_main.clj"; expr="(s6-gates/run (quote create-gate))" ;;
   *) echo "mode $mode?" >&2; exit 2 ;;
@@ -61,7 +64,7 @@ for entry in $wanted; do
   docker run --rm --name "$name" --label dx-s6=clj --pull never --memory 3g "${envs[@]}" ${key[@]+"${key[@]}"} \
     -e TX2_GROUP_COMMIT=0 -e TX2_LIVE_PRIORITY=0 -e TX2_PREDECESSOR_LOOKUP=1 -e TX2_LEAN_NATIVE_QUERY=1 -e TX2_LEAN_NATIVE_LOG=1 \
     -e TRIPLEX_TRACE_LEVEL=off -e TRIPLEX_ERASURE_DIRECTORY=/tmp/erasure -e PREP1_ATTEMPT=dx-s6-clj \
-    -e S5_SEEDS -e S5_STEPS -e S5_ROUNDS -e S5_THREADS -e S5_PER_THREAD -e S5_REMOVALS -e S5_VALUE_TYPES -e S5_PROTECTED \
+    -e S5_SEEDS -e S5_STEPS -e S5_ROUNDS -e S5_THREADS -e S5_PER_THREAD -e S5_REMOVALS -e S5_VALUE_TYPES -e S5_PROTECTED -e S6_ACCOUNT_SCHEDULES \
     ${dev[@]+"${dev[@]}"} -v "$repo/lab/experiments/EXP-DX1:/exp:ro" --entrypoint /bin/bash "$image_id" -c "
       mkdir -p /tmp/erasure && cd /opt/datomic && java -Xmx2g -XX:+UseSerialGC -Dtriplex.codec.spec=/opt/gateway/codec-spec.json \
         -cp \"/opt/gateway/src:\$(bin/classpath)\" clojure.main -i /exp/wfix1/regression.clj -i /exp/w2/wide_gate.clj $files \

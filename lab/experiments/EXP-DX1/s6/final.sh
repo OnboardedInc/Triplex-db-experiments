@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # [DX-S6] The standing gate phase on the image built from the committed head (s6/image.sh), one call per step:
 #   DOCKER_HOST=<lab VM socket> node lab/bin/heavy.mjs --label DX-S6-clj -- bash lab/experiments/EXP-DX1/s6/final.sh OUT STEP
-# STEP: gates (outcome, race, bound, attack), older (s3 owners, s4 create) or fuzz (the differential fuzzer: three writer settings,
+# STEP: gates (outcome, race, bound, attack), older (s3 owners, s4 create), accounts (two accounts, shared IDs) or fuzz (the differential fuzzer: three writer settings,
 # value types, protected and sealed values).
 set -uo pipefail
 out=${1:?new output directory}; step=${2:?gates or fuzz}
@@ -18,6 +18,9 @@ case $step in
   older)
     bash "$r" "$out/owners" owners "server serial" || status=1
     bash "$r" "$out/create" create "server serial hints" || status=1 ;;
+  accounts)
+    S6_ACCOUNT_SCHEDULES=1000 bash "$r" "$out/accounts-off" accounts accounts-off || status=1
+    S6_ACCOUNT_SCHEDULES=${S6_ACCOUNT_SCHEDULES:-10000} bash "$r" "$out/accounts-on" accounts accounts-on || status=1 ;;
   fuzz)
     S5_SEEDS=${S5_SEEDS:-21,22} S5_STEPS=${S5_STEPS:-1500} S5_VALUE_TYPES=1 bash "$r" "$out/types" fuzz "server serial plainowner" || status=1
     S5_SEEDS=23 S5_STEPS=1500 S5_VALUE_TYPES=1 S5_PROTECTED=unsealed bash "$r" "$out/unsealed" fuzz "server" || status=1

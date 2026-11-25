@@ -708,6 +708,14 @@ export const makeDatomicStorageAdapter = (
                 message: "Datomic outcome was unknown; the operation was fenced and never committed",
                 cause: submitError,
               });
+            // [DX-S6] The operation ID belongs to another save (a caller reused it): this save can never commit under
+            // it, so it is decided not applied. Rejected: settling on another transaction's position.
+            const own = new Set([...state.rows.values()].filter((row) => row.entity_type === "_Transaction" && state.newIds.has(row.id)).map((row) => row.entity_id));
+            if (receipt.status === "committed" && typeof receipt.txId === "string" && own.size > 0 && !own.has(receipt.txId))
+              throw new DatomicOperationNotApplied({
+                message: "Datomic operation ID belongs to another transaction; this save was not applied",
+                cause: submitError,
+              });
             if (receipt.status === "committed") {
               const pTag = validateTagged(receipt.position),
                 tTag = validateTagged(receipt.t);
@@ -1184,7 +1192,7 @@ export const makeDatomicStorageAdapter = (
           const result = await client.request<{ declined?: string; txId: string | null }>(
             "POST",
             `/v2/db/${db}/command`,
-            { commandId },
+            { commandId, ...client.accountField() },
           );
           if (result.declined) return undefined;
           if (result.txId !== null && typeof result.txId !== "string")

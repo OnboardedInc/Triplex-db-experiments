@@ -88,6 +88,8 @@ class DatomicProtectedWriteEncodingError extends DatomicHttpError {
 /** [DX-S6] The answer of the operation and fence routes. */
 export interface DatomicOperationState {
   status: "committed" | "absent";
+  /** [DX-S6] The committed transaction's ID (its journal), so a caller can tell its own save from another's. */
+  txId?: string;
   fenced?: boolean;
   operationId?: string;
   position?: TaggedValue;
@@ -346,6 +348,12 @@ export class DatomicClient {
     readonly maxResponseBytes = 64 * 1024 ** 2,
     readonly cacheOptions: {
       readonly groupAccount?: string;
+      /**
+       * [DX-S6] The account this client saves for. Named on every save and every claim, command, begin, operation
+       * and fence lookup; with the gateway's TX2_ACCOUNT_CLAIMS=1 the command and operation IDs are then the
+       * account's own. Unset (the default): requests are byte for byte as before.
+       */
+      readonly claimAccount?: string;
       readonly writeClass?: DatomicWriteClass;
       readonly saveWire?: boolean;
       readonly entityCacheBytes?: number;
@@ -1187,6 +1195,7 @@ export class DatomicClient {
     }>("POST", `/v2/db/${db}/begin`, {
       ...(hint.commandId === undefined ? {} : { commandId: hint.commandId }),
       ids: hint.tripleIds ?? [],
+      ...this.accountField(),
     });
     const decodeSpan = beginSpan("client.begin-validate-and-decode");
     const decodeStart = performance.now();
@@ -1326,7 +1335,9 @@ export class DatomicClient {
     const encodeStart = performance.now();
     // [DX-B5-L0] Why: two-argument transact wrappers preserve the input, and this callback never belongs on the wire.
     // Rejected: a third-argument-only callback (the NS publication observer drops it).
-    const { onSent: inputSent, declareIdentityBounds, ...wireInput } = input;
+    const { onSent: inputSent, declareIdentityBounds, ...plainInput } = input;
+    const claimAccount = this.cacheOptions.claimAccount;
+    const wireInput = claimAccount === undefined ? plainInput : { ...plainInput, account: claimAccount };
     const { rows: inputRows, newIds: ids, ...requestHeader } = wireInput;
     const ticket = erasureWriteTicket();
     onSent ??= inputSent;
@@ -1553,6 +1564,11 @@ export class DatomicClient {
       )
         throw error;
       const state = await this.resolveOperation(db, input.operationId, Date.now() + this.timeoutMs);
+      // [DX-S6] An operation ID another transaction holds: this frame can never commit under it.
+      const newIds = new Set(input.newIds);
+      const own = new Set(input.rows.filter((r) => r.entity_type === "_Transaction" && newIds.has(r.id)).map((r) => r.entity_id));
+      if (typeof state.txId === "string" && own.size > 0 && !own.has(state.txId))
+        throw new DatomicOperationFenced(input.operationId, { cause: error });
       return { ...state, resolved: true as const };
     }
   }
@@ -1620,7 +1636,7 @@ export class DatomicClient {
           }>(
             "POST",
             `/v1/db/${db}/claim`,
-            { commandId: claim.commandId, receipt: true },
+            { commandId: claim.commandId, receipt: true, ...this.accountField() },
             remaining,
           );
           if (found.txId) {
@@ -1650,11 +1666,17 @@ export class DatomicClient {
     }
   }
   operation(db: string, operationId: string): Promise<DatomicOperationState> {
-    return this.request("GET", `/v1/db/${db}/operation/${encodeURIComponent(operationId)}`);
+    const account = this.cacheOptions.claimAccount;
+    return this.request("GET", `/v1/db/${db}/operation/${encodeURIComponent(operationId)}` +
+      (account === undefined ? "" : `?account=${encodeURIComponent(account)}`));
+  }
+  /** [DX-S6] The account to name on a lookup body (absent when the client has none). */
+  accountField(): { account?: string } {
+    return this.cacheOptions.claimAccount === undefined ? {} : { account: this.cacheOptions.claimAccount };
   }
   /** [DX-S6] Stores the operation ID without a position so the original can never commit; answers its decided state. */
   fence(db: string, operationId: string): Promise<DatomicOperationState> {
-    return this.request("POST", `/v1/db/${db}/fence`, { operationId });
+    return this.request("POST", `/v1/db/${db}/fence`, { operationId, ...this.accountField() });
   }
   /**
    * [DX-S6] Decides an unknown outcome: the committed receipt, or `DatomicOperationFenced` when it never committed.
@@ -1680,6 +1702,7 @@ export class DatomicClient {
     const result = await this.request<{ txId: string | null }>("POST", `/v1/db/${db}/claim`, {
       commandId,
       position,
+      ...this.accountField(),
     });
     return result.txId;
   }
