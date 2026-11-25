@@ -91,6 +91,25 @@ export const feeder = async (client: DatomicClient, db: string, from: number, de
 };
 
 const ownerHeadPair = process.env.DX_W1_PAIR_OPTION === "owner-head";
+// [DX-S6] F5: checkSavedIdentity accepts a general-writer commit whenever a save names no per-subject function, so a
+// run in which no eligible save took the per-subject writer would pass. Assert the split: with the per-subject writer
+// on, at least one eligible save takes it, and with several owners or creations on, every tape M save (it names its
+// owners) either takes a per-subject function or carries the gateway's typed reason.
+// Rejected: asserting a share from the configured flags alone (the flags say nothing about what ran).
+export function checkWriterSplit(saves: readonly Save[], writer: Writer,
+  options: { subjectSave?: boolean; subjectSeveralOwnersFunction?: string; subjectCreateFunction?: string }) {
+  if (options.subjectSave !== true || writer === "grouped") return { eligible: 0, taken: 0 };
+  const eligible = saves.filter((r) => r.status === "acked" && r.saveKey !== undefined && !r.generalIdentity);
+  const taken = eligible.filter((r) => typeof r.stage?.subjectSave === "string");
+  if (eligible.length > 0) assert(taken.length > 0, `no eligible save took the per-subject writer (${eligible.length} eligible)`);
+  if (options.subjectSeveralOwnersFunction || options.subjectCreateFunction) {
+    const unexplained = eligible.filter((r) => r.owners !== undefined && typeof r.stage?.subjectSave !== "string"
+      && typeof (r.stage as Record<string, unknown> | undefined)?.["subjectDeclined"] !== "string");
+    assert.equal(unexplained.length, 0, `${unexplained.length} tape M saves went to the general writer without a reason`);
+  }
+  return { eligible: eligible.length, taken: taken.length };
+}
+
 export function checkSavedIdentity(save: Save, row: Feed, writer: Writer, subjectFunction?: string, otherFunctions: readonly string[] = []) {
   const receipt = save.receipt;
   assert(receipt && (save.status === "acked" || save.status === "recovered"));
@@ -529,6 +548,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
 
       saveHistogram.recordMs(row.end! - row.due);
     }
+    checkWriterSplit(saves, writer, options);
     for (const row of saves.filter((_, i) => i === 0 || i === saves.length - 1 || i % 100 === 0)) {
       const op = await writerClient.operation(seed.scope.db, row.operationId ?? row.id), r = row.receipt!;
       assert.deepEqual([op.status, op.operationId, Number(op.position?.v), op.t?.v, op.recordedAt?.v],

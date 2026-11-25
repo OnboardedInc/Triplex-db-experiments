@@ -17,6 +17,8 @@ class Connection extends Context.Service<Connection, DatomicClient>()(
 export function makeDatomicRuntime(options: {
   readonly url: string;
   readonly groupAccount?: string;
+  /** [DX-S6] The account this store saves for (see DatomicClient `claimAccount`). Default unset. */
+  readonly claimAccount?: string;
   readonly writeClass?: import("./DatomicClient.js").DatomicWriteClass;
   readonly layout?: "lean" | "legacy";
   readonly entityCacheBytes?: number;

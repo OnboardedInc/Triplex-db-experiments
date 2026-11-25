@@ -158,7 +158,12 @@
 (defn build-command [db name input]
   (try
     (supported! db name false)
-    (let [claim (d/entid db [:triplex.claim/command-id (get input "commandId")])
+    ;; [DX-S6] A caller naming its account finds its own claim only (account_claims.clj); the reserved prefix is refused.
+    (let [_ ((requiring-resolve 'triplex.gateway.account-claims/check-ids!) [(get input "commandId")])
+          account ((requiring-resolve 'triplex.gateway.account-claims/account-for) db input)
+          claim (if account
+                  (first ((requiring-resolve 'triplex.gateway.account-claims/find-claim) (:conn (meta input)) db (get input "commandId") account))
+                  (d/entid db [:triplex.claim/command-id (get input "commandId")]))
           id (when claim (ledger/claim-tx-id db claim)) out (StringBuilder.)]
       (.append out "{\"txId\":")
       (if id (reach/append-string! out id) (.append out "null"))

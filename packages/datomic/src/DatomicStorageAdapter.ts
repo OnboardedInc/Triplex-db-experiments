@@ -32,6 +32,7 @@ import {
 } from "@triplex-build/triplex/runtime";
 import {
   DatomicClient,
+  DatomicCommandIdTaken,
   DatomicHttpError,
   DatomicRequestTooLarge,
   DATOMIC_REQUEST_LIMIT_BYTES,
@@ -62,6 +63,13 @@ import {
 export class DatomicSerializationConflict extends WriteError {
   readonly maximum?: number;
   readonly reason = "serialization-conflict" as const;
+}
+
+// [DX-S6] Why: an unknown outcome that the gateway's fence decided as never committed is a refusal like a conflict:
+// nothing was stored, so a replay-safe save is staged again from a fresh read.
+// Rejected: answering TransactionOutcomeUnknown after a fixed wait (the save could still commit later).
+export class DatomicOperationNotApplied extends DatomicSerializationConflict {
+  readonly notApplied = true as const;
 }
 
 // [DX-B10] Why: callers distinguish an unsubmitted suffix from an ambiguous durable commit.
@@ -609,6 +617,8 @@ export const makeDatomicStorageAdapter = (
                 state.importInstant === undefined &&
                 [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
               sourceK: state.optimistic && !state.orderedSave ? null : state.sourceK,
+              // [DX-S6b] A replay names its first attempt's source: a removal after it declines the replay (R2-2).
+              ...(state.frameSourceK === undefined ? {} : { frameSourceK: state.frameSourceK }),
               // [DX-S4] A block save declares its identity bounds (one history probe on the general writer).
               ...(creationSaves && state.orderedSave ? { declareIdentityBounds: true } : {}),
               position: state.position,
@@ -742,15 +752,47 @@ export const makeDatomicStorageAdapter = (
             }
             if (error.code.startsWith("CommitOrder"))
               throw new DatomicCommitOrderError({ message: error.message, cause: error });
+            // [DX-S6b] Declined across a removal: this client has now learned of the removal, so the caller's next
+            // save must be framed after it. An optimistic save's source is the last position this client saw, which
+            // can precede the removal and would decline every later creation of the family; read the head once.
+            // Rejected: replaying here (the caller's values were chosen before the removal).
+            if (error.code === "ErasureReplayDeclined") {
+              try {
+                const seen = Number((await client.basis(db)).position.v);
+                if (Number.isSafeInteger(seen) && seen >= 0) lastSeenPosition = Math.max(lastSeenPosition, seen);
+              } catch {
+                // The caller's next save then begins from a fresh read instead.
+              }
+            }
             throw new WriteError({ message: "Datomic transaction was rejected", cause: error });
           }
           submitError = error;
         }
         do {
           try {
-            const receipt = await bounded(
+            let receipt = await bounded(
               client.observeRequests(state.diagnostic, () => client.operation(db, operationId)),
             );
+            // [DX-S6] Why: "absent" alone is not an answer while the original may still be in the transactor; the
+            // fence stores the operation ID so it never commits, or finds that it already did.
+            // Rejected: polling until the deadline (a save stored after it was reported unknown).
+            if (receipt.status !== "committed" && receipt.fenced !== true)
+              receipt = await bounded(
+                client.observeRequests(state.diagnostic, () => client.fence(db, operationId)),
+              );
+            if (receipt.status !== "committed" && receipt.fenced === true)
+              throw new DatomicOperationNotApplied({
+                message: "Datomic outcome was unknown; the operation was fenced and never committed",
+                cause: submitError,
+              });
+            // [DX-S6] The operation ID belongs to another save (a caller reused it): this save can never commit under
+            // it, so it is decided not applied. Rejected: settling on another transaction's position.
+            const own = new Set([...state.rows.values()].filter((row) => row.entity_type === "_Transaction" && state.newIds.has(row.id)).map((row) => row.entity_id));
+            if (receipt.status === "committed" && typeof receipt.txId === "string" && own.size > 0 && !own.has(receipt.txId))
+              throw new DatomicOperationNotApplied({
+                message: "Datomic operation ID belongs to another transaction; this save was not applied",
+                cause: submitError,
+              });
             if (receipt.status === "committed") {
               const pTag = validateTagged(receipt.position),
                 tTag = validateTagged(receipt.t);
@@ -772,6 +814,7 @@ export const makeDatomicStorageAdapter = (
               return;
             }
           } catch (error) {
+            if (error instanceof DatomicOperationNotApplied) throw error;
             submitError = error;
           }
           if (Date.now() >= until) break;
@@ -799,7 +842,10 @@ export const makeDatomicStorageAdapter = (
     },
   ): Effect.Effect<A, E | WriteError> =>
     Effect.suspend(() => {
-      const operationId = randomUUID();
+      // [DX-S6] Reassigned when a replay follows a fence: the fenced operation ID can never commit.
+      let operationId = randomUUID();
+      // [DX-S6b] The source the first attempt sent; every replay carries it (S5 R2-2).
+      let frameSource: number | null | undefined;
       const diagnostic: import("./DatomicClient.js").DatomicCommitSample | undefined =
         client.onCommit
           ? {
@@ -951,6 +997,7 @@ export const makeDatomicStorageAdapter = (
             handle: snapshot.handle,
             ...("prefetch" in snapshot ? { prefetch: snapshot.prefetch } : {}),
             position: sourceK,
+            ...(frameSource === undefined ? {} : { frameSourceK: frameSource }),
             rows: new Map(),
             claims: new Map(),
             newIds: new Set(),
@@ -1001,6 +1048,8 @@ export const makeDatomicStorageAdapter = (
                       ),
                       Effect.suspend(() => {
                         client.commitDiagnostics.replays++;
+                        frameSource ??= state.optimistic && !state.orderedSave ? null : state.sourceK;
+                        if (error instanceof DatomicOperationNotApplied) operationId = randomUUID();
                         for (const id of hint?.tripleIds ?? []) {
                           cache.delete(id);
                           client.predecessorCache.delete(prefix + id);
@@ -1224,7 +1273,7 @@ export const makeDatomicStorageAdapter = (
           const result = await client.request<{ declined?: string; txId: string | null }>(
             "POST",
             `/v2/db/${db}/command`,
-            { commandId },
+            { commandId, ...client.accountField() },
           );
           if (result.declined) return undefined;
           if (result.txId !== null && typeof result.txId !== "string")
@@ -1453,8 +1502,10 @@ export const makeDatomicStorageAdapter = (
         }
         const existing = yield* read(() =>
           state.prefetch?.commandId === commandId
-            ? Promise.resolve(state.prefetch.claim)
-            : client.claim(db, commandId, state.sourceK),
+            ? (state.prefetch as { claimTaken?: boolean }).claimTaken === true
+              ? Promise.reject(new DatomicCommandIdTaken(commandId))
+              : Promise.resolve(state.prefetch.claim)
+            : client.claim(db, commandId, state.sourceK, [...state.entities]),
         ).pipe(
           Effect.mapError(
             (cause) => new WriteError({ message: "Cannot read command claim", cause }),

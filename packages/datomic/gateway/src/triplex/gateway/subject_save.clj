@@ -360,9 +360,9 @@
                          ;; is still read here and covered by the revision compare-and-set, and nothing below or in
                          ;; the native function is keyed by field. Rejected: W2's distinct-field count on each side,
                          ;; which sent every such product save to the general writer.
-                         ;; [DX-INT5] The `true` keeps this `and` at three clauses as before S2: each clause past
-                         ;; the first is one generated name, and owner_layout.clj and general_prefetch.clj compile after
-                         ;; this file, so one clause fewer moved those two stored functions' identities (step 0).
+                         ;; [DX-S6] F6: three terms, as the base's condition had (the `true` changes nothing), so this
+                         ;; namespace generates the base's number of names and the stored functions loaded after it
+                         ;; (the covering writer, the general hint function) keep the base's identities (s4/idents.sh).
                          (and (= (count live) (count prior))
                               true
                               (not (contains? after nil)))

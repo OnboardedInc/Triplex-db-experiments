@@ -287,6 +287,14 @@
                        (recur)))
                    "tx2-thread-sampler")
       (.setDaemon true) (.start))))
+(defn write-status
+  "[DX-S6] 400 for a decided failure of a write route (or any failure of another route), 503 for an unknown one."
+  [request-method uri e]
+  (if (= :post request-method)
+    (if (re-find #"/(?:transact|fence|settings|erase|protection|restore-erasure|create|delete)$" uri)
+      ((requiring-resolve 'triplex.gateway.outcome/route-status) e)
+      400)
+    400))
 (defn route-handler-base [{:keys [request-method uri body query-string privacy-input]}]
   (stats/bump! [:routes (str (name request-method) " " (clojure.string/replace uri #"/s2?-[^/]+/" "/{db}/"))] 1)
   (try
@@ -318,7 +326,7 @@
                              "entity-transactions"
                              (trace/span "journal/entity-positions" "gateway" (journal/entity-positions (d/db conn) name input))
                              "command"
-                             (trace/span "journal/command" "gateway" (journal/command (trace/span "d/db" "peer-call" (d/db conn)) name input)))}))
+                             (trace/span "journal/command" "gateway" (journal/command (trace/span "d/db" "peer-call" (d/db conn)) name (vary-meta input assoc :conn conn))))}))
       (and (= :get request-method) (= "/health" uri))
       (do (trace/span "d/db" "peer-call" (d/db (connection (db-uri "tx2-health"))))
           (response 200 (cond-> {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")}
@@ -371,7 +379,7 @@
         (response 200 (request-index! name (connection (db-uri name)) input)))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/begin" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)]
-        (timed start (response 200 (trace/span "storage/begin-command!" "gateway" (storage/begin-command! name (trace/span "d/db" "peer-call" (d/db (connection (db-uri name)))) input)))))
+        (timed start (response 200 (trace/span "storage/begin-command!" "gateway" (storage/begin-command! name (trace/span "d/db" "peer-call" (d/db (connection (db-uri name)))) (vary-meta input assoc :conn (connection (db-uri name))))))))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(reach|reach-many)" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (trace/read-span "gateway.request-decode" "gateway" (request-json body)) start (System/nanoTime)
             view (connection-view (db-uri name)) conn (:conn view)
@@ -389,7 +397,7 @@
         (timed start {:status 200 :headers (cond-> {"Content-Type" "application/json; charset=utf-8" "x-tx2-waited" (str (boolean waited))}
                                              wanted (assoc "x-tx2-at-least" (str (:position wanted)) "x-tx2-at-least-wait-micros" (str at-least-micros)))
          :body (trace/span "reach/response" "gateway" (reach/response name db (if (.endsWith ^String uri "reach-many") input (assoc input "roots" [(get input "root")])) (:generation view) (:recent view)))}))
-      (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
+      (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|fence|settings|operation/[^/]+)" uri)
       (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (db-uri name) start (System/nanoTime)
             input (when (= request-method :post) (trace/read-span "gateway.request-decode" "gateway" (request-json body)))
             conn (when (and (not= action "release") (or (= action "transact") (not (get input "handle")))) (connection db-uri))
@@ -428,14 +436,31 @@
                       (when (and (nil? privacy/*cut*) lean-query/enabled (lean/enabled? (or db (storage/held-db name (get input "handle")))))
                         (lean-query/assert-unprotected! (or db (d/db (connection db-uri)))))
                       (query/run name db input)))
-            "operation" (storage/operation db id)
+            ;; [DX-S6] An operation ID has one stored form, the client's own, on every gateway (S5 R2-1).
+            "operation" (do ((requiring-resolve 'triplex.gateway.account-claims/check-ids!) [(java.net.URLDecoder/decode ^String id "UTF-8")])
+                            (storage/operation db id))
+            ;; [DX-S6] Why: a caller with an unknown outcome makes it decided: committed, or fenced and never committed.
+            ;; Rejected: waiting a fixed time for the original (a stopped gateway's save can still be in the transactor).
+            "fence" ((requiring-resolve 'triplex.gateway.outcome/fence!) conn (get input "operationId") storage/operation)
+            ;; [DX-S6] Turns the database's account-ID setting on (one way); only a process with TX2_ACCOUNT_CLAIMS=1 may.
+            "settings" (do (when-not (true? (get input "accountIds")) (codec/invalid "Only {\"accountIds\": true} is accepted"))
+                           ((requiring-resolve 'triplex.gateway.account-claims/turn-on!) conn)
+                           {:accountIds true})
             "claim" (let [cut (storage/at-position db (get input "position"))
-                          id (get input "commandId") claim (d/entid cut [:triplex.claim/command-id id])
+                          id (get input "commandId")
+                          _ ((requiring-resolve 'triplex.gateway.account-claims/check-ids!) [id])
+                          ;; [DX-S6] A caller naming its account finds its own claim only; a plain claim of other accounts
+                          ;; is answered taken, never returned (S5 R2-4).
+                          account ((requiring-resolve 'triplex.gateway.account-claims/account-for) cut input)
+                          [claim status] (if account
+                                           ((requiring-resolve 'triplex.gateway.account-claims/find-claim) conn cut id account)
+                                           [(d/entid cut [:triplex.claim/command-id id])])
                           tx (when claim (ledger/claim-tx cut claim))
                           pos (when (and tx (d/entid cut :triplex.group/position)) (storage/value cut tx :triplex.group/position))
                           visible (and claim (or (nil? pos) (nil? (get input "position")) (<= pos (get input "position"))))
                           tx-id (when visible (ledger/claim-tx-id cut claim))]
                       (cond-> {:txId tx-id}
+                        (= status :taken) (assoc :taken true)
                         (and visible (true? (get input "receipt"))) (assoc :commandId id
                           :receipt (storage/operation cut (storage/value cut tx :triplex.tx/operation-id))))))]
           (cond-> (response 200 (cond-> result (and wanted (map? result)) (assoc :atLeast (:position wanted))))
@@ -470,13 +495,16 @@
                                                    (some? retryAfterMs) (assoc :retryAfterMs retryAfterMs))))
                    (throw e))))))
       :else (response 404 {:code "NotFound"}))
-    (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
-                                (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
+    ;; [DX-S6] A write route's failure without a status is a refusal only when decided; otherwise 503 OutcomeUnknown.
+    (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 (write-status request-method uri e)))
+                                (cond-> {:code (or (:code (ex-data e)) (if (= 503 (write-status request-method uri e)) "OutcomeUnknown" "GatewayError")) :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
                                   (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e)))
                                   (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e)))
                                   (:estimatedMicros (ex-data e)) (assoc :estimatedMicros (:estimatedMicros (ex-data e)))
                                   ;; [DX-XQ4] find's refusals say whether the exact sweep answers the same question.
-                                  (:fallback (ex-data e)) (assoc :fallback (:fallback (ex-data e))))))))
+                                  (:fallback (ex-data e)) (assoc :fallback (:fallback (ex-data e)))
+                                  ;; [DX-S6] An unknown outcome names the failure's class (S5 R2-8).
+                                  (string? (:cause (ex-data e))) (assoc :cause (:cause (ex-data e))))))))
 (defn- with-privacy-guards [scopes work]
   (if-let [[scope & more] (seq scopes)]
     (privacy/guard scope #(with-privacy-guards more work))
@@ -554,8 +582,10 @@
                 (when (contains? input "erasureSeq") (privacy/ensure-seq! read-cut (get input "erasureSeq")))
                 (run read-cut))))))
       (catch Exception e
-        (let [info (ex-data e)]
-          (response (or (:status info) 400) {:code (or (:code info) "GatewayError") :message (.getMessage e)}))))
+        (let [info (ex-data e) status (or (:status info) (write-status request-method uri e))]
+          ;; [DX-S6] An unknown outcome names the failure's class here too (S5 R2-8).
+          (response status (cond-> {:code (or (:code info) (if (= 503 status) "OutcomeUnknown" "GatewayError")) :message (.getMessage e)}
+                             (= 503 status) (assoc :cause (or (:cause info) ((requiring-resolve 'triplex.gateway.outcome/kind) e))))))))
     (route-handler-base request)))
 
 ;; [DX-XQ7] Why: a question reader serves only questions across subjects, and a gateway beside one refuses them, before

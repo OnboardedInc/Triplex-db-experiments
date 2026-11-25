@@ -207,6 +207,38 @@
             (println "DX-S3_RACE" (json/write-str {:case label :headBefore before :headAfter (head conn)}))))))))
 
 ;; [DX-S3] Removal on request of one owner's protected value, on a protected scope, between the plan and the commit.
+(defn- race-at-submit
+  "[DX-S6] Run `competing` once, after the save was planned (any writer) and before its submit; return the reply."
+  [name input competing]
+  (let [orig storage/submit! fired (atom false) id (get input "operationId")]
+    (with-redefs [storage/submit! (fn [conn data request timeline & more]
+                                    (when (and (= id (get request "operationId")) (compare-and-set! fired false true)) (competing))
+                                    (apply orig conn data request timeline more))]
+      (reference/send name input))))
+
+;; [DX-S6] The control this gate lacked: the same removal at the same point, with every per-subject plan declined, so
+;; the general writer decides the same request; it must give the same code (F3: CasConflict on every writer).
+(deftest removal-on-request-between-plan-and-commit-general-control
+  (if-not (System/getenv "TRIPLEX_ERASURE_DIRECTORY")
+    (println "DX-S3_SKIP removal needs TRIPLEX_ERASURE_DIRECTORY")
+    (reference/in-scope
+      (fn [name conn]
+        (let [declared (reference/route name "v1" "protection" {"attributes" [":p/secret"] "sealed" false})
+              _ (is (= 200 (:status declared)) (pr-str declared))
+              model (into {} (for [o [A B]] [o (seed! name o)]))
+              secret (frame {:command "secret" :block (block) :source (head conn)
+                             :facts [{:owner B :field ":p/secret" :value "a protected value"}]})
+              _ (is (= [200 nil] (reference/outcome (reference/send name secret))))
+              input (two-owner-save model 2 (head conn))
+              erased (atom nil)
+              reply (with-redefs [owners/plan (fn [& _] nil) subject/plan (fn [& _] nil)]
+                      (race-at-submit name input
+                        #(reset! erased (reference/route name "v1" "erase" {"commandId" "remove-b" "selectors" [{"entityId" B "attribute" ":p/secret"}]}))))]
+          (is (= 200 (:status @erased)) (pr-str @erased))
+          (is (= [409 "CasConflict"] (reference/outcome reply)) (pr-str reply))
+          (is (= "absent" (get (reference/operation name (get input "operationId")) "status")) "refused whole")
+          (println "DX-S3_REMOVAL_CONTROL" (json/write-str {:erase (:status @erased) :general (reference/outcome reply)})))))))
+
 (deftest removal-on-request-between-plan-and-commit
   (if-not (System/getenv "TRIPLEX_ERASURE_DIRECTORY")
     (println "DX-S3_SKIP removal needs TRIPLEX_ERASURE_DIRECTORY")

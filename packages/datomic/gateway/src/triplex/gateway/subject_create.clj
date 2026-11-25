@@ -66,13 +66,34 @@
 ;; families it names (DX-IMP2's record), or the creation's resend would bring the removed value back.
 (defn record-families? [] (boolean (or policy/import-whole? enabled)))
 
+(defn family-removed-at
+  "[DX-S6] The latest position of a removal entry that named this (entity, attribute) family, or nil: by its recorded
+  families, by the rows it removed, or (F11) by its selectors, which every gateway records whatever its options, so a
+  removal handled by a gateway without the creation option still counts here.
+  Rejected: relying on the recorded families alone (a mixed fleet brought the removed value back)."
+  [state family]
+  (let [named? (fn [entry]
+                 (or (some #(= family (vec %)) (get entry "families"))
+                     (some #(= family [(get % "entity") (get % "attribute")]) (get entry "identities"))
+                     (some #(= family (vec %))
+                           ((requiring-resolve 'triplex.gateway.import-bound/removal-families) state (get entry "selectors")))))
+        positions (for [entry (vals (:commands state)) :when (named? entry)] (get entry "position"))]
+    (when (seq positions) (reduce max positions))))
+
 (defn removed-creation?
   "[DX-S4] With the option on: does this new row write a removed (entity, attribute) family onto an entity that does
-  not exist yet? Such a creation was framed before the removal (the removal named an entity with no rows), so it is
-  refused whole (ErasureReplayDeclined) on every writer, as an import of a removed family is."
-  [state row]
-  (boolean (and enabled state ((:families state) [(:entity_id row) (:attribute row)])
-                privacy/*data* (nil? (d/entid privacy/*data* [:triplex.entity/id (:entity_id row)])))))
+  not exist yet, in a save framed before that removal? Such a save could carry the removed value, so it is refused
+  whole (ErasureReplayDeclined) on every writer, as an import of a removed family is.
+  [DX-S6] F4: a save whose source position is at or after the removal (it was framed after it, from data that no
+  longer holds the value) is a new value, exactly as a new value on an existing entity after its own removal; it is
+  not refused. A save without a stated source is treated as framed before. Rejected: refusing every creation of the
+  family whatever its frame (the same value commits when split into two saves)."
+  ([state row] (removed-creation? state row nil))
+  ([state row input]
+   (boolean (and enabled state ((:attrs state) (:attribute row))
+                 privacy/*data* (nil? (d/entid privacy/*data* [:triplex.entity/id (:entity_id row)]))
+                 (let [source (get input "sourceK") removed (family-removed-at state [(:entity_id row) (:attribute row)])]
+                   (and (some? removed) (not (and (integer? source) (>= source removed)))))))))
 
 (defn installed [db]
   (when-let [eid (d/entid db ident)]
@@ -124,7 +145,7 @@
        (> (count owners) max-owners) (decline "over-owner-bound")
        (not (every? string? owners)) (decline "frame")
        (some #(.startsWith ^String % "_") owners) (decline "system-entity")
-       (not (owners/one-account? owners)) (decline "several-accounts")
+       (not (owners/one-account? db owners)) (decline "several-accounts")
        (not= owner-set (set entities)) (decline "read-only-entity")
        (not (and (ids journal) (= 1 (count journal-entities))
                  (integer? source)

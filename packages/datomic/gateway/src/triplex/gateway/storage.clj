@@ -171,6 +171,22 @@
           (when-not (and stream (= 1 (count claims))) (codec/invalid "Invalid ordered import claim"))
           (let [n (Long/parseLong ordinal)]
             (if (zero? n) "load1/manifest/import" (str "load1/" stream "/" (dec n)))))))))
+(defn- replay-frame-check!
+  "[DX-S6b] S5 R2-2. A replay (the SDK's next attempt of one save after a refusal) carries `frameSourceK`, the source of
+  the save's first attempt (null when that attempt stated none). A replay that writes a protected value of an (entity,
+  attribute) family a removal named after that first source is refused ErasureReplayDeclined, never staged again: the
+  caller's values were chosen before the removal, whatever the replay's own source. The removal's position is the one
+  the published removal states, whichever rule assigned it (its entry's position today, its Datomic commit under
+  DX-ERA2's option); a removal not yet published refuses every write it can reach (503), so the replay waits for it.
+  Rejected: judging a replay by its own source (it is always after the removal, which is how R2-2 stored the value)."
+  [state input rows new-ids]
+  (when (and state (contains? input "frameSourceK") (seq (:commands state)))
+    (let [source (get input "frameSourceK")
+          removed-at (requiring-resolve 'triplex.gateway.subject-create/family-removed-at)]
+      (doseq [r rows :when (new-ids (:id r)) :when ((:attrs state) (:attribute r))]
+        (when-let [at (removed-at state [(:entity_id r) (:attribute r)])]
+          (when (or (not (integer? source)) (< source at))
+            (privacy/failure! 409 "ErasureReplayDeclined" "A save first framed before a removal of a field it writes is not replayed")))))))
 (defn tx-data
   ([db input] (tx-data db input (:e (first (d/datoms db :aevt :triplex.scope/key)))))
   ([db input scope]
@@ -178,6 +194,7 @@
          input (ordered-row-texts (expand-fresh input lean))
          new-ids (set (get input "newIds")) rows (timed-input-rows input lean new-ids)
          _ (trace/span "privacy/validate-rows" "gateway" (privacy/validate-write! privacy/*cut* input rows))
+         _ (replay-frame-check! privacy/*cut* input rows new-ids)
          protected (trace/span "privacy/prepare-envelopes" "gateway"
                      (envelope/protect privacy/*database* privacy/*cut* input rows))
          input (:input protected) rows (:rows protected)
@@ -419,7 +436,9 @@
                    (swap! timeline assoc :submitted (System/nanoTime)) future))
         submit (if-not (group/scheduling?) solo
                  (fn [] (try (let [p (second (first data)) current (d/db conn) work (when (or policy/priority? policy/budget-us) (policy/work p input)) class (group/classify current p input)]
-                   (group/submit! conn (merge class work {:id (get input "operationId") :params p :eligible (and (not (:bulk p)) (not (and pred/diagnostic (true? (get input "readProfile")))) (group/eligible? current p))
+                   (group/submit! conn (merge class work {:id (get input "operationId") :params p :eligible (and (not (:bulk p)) (not (and pred/diagnostic (true? (get input "readProfile")))) (group/eligible? current p)
+                                                                                     ;; [DX-S6b] A save under the account-ID setting is not grouped.
+                                                                                     (not (:triplex/routed (meta input))))
                      :prepare (prepared-for data input p) :data data
                      :original-data (when group/stage-clock data) :solo solo})))
                    (catch Exception e (group/outcome-future (deliver (promise) {:error e}))))))]
@@ -484,7 +503,13 @@
                                    ;; [Opus W1] Why: the reference writer refuses a person with a covering root.
                                    ;; Rejected: refusing the retry (an identity conflict must keep its legacy outcome).
                                    (owner-layout/fold! conn db (:owner subject-plan)))
-                               retry (deref (submit-reference! conn (tx-data db input) input timeline) (remaining) timeout)]
+                               ;; [DX-S6] The retry stores exactly the IDs the first attempt chose (S5 R2-1, R2-1b).
+                               ids (:triplex/stored-ids (meta input))
+                               data (tx-data db input)
+                               data (if ids ((requiring-resolve 'triplex.gateway.account-claims/apply-ids) data ids) data)
+                               ;; [DX-S6b] The retry calls the functions the first attempt called.
+                               data (if (:triplex/routed (meta input)) ((requiring-resolve 'triplex.gateway.account-claims/route-data) conn db data) data)
+                               retry (deref (submit-reference! conn data input timeline) (remaining) timeout)]
                            (if (identical? timeout retry) timeout (assoc retry :subject-replan true)))))
                (identical? timeout result) timeout
                :else (cond-> (cond (:owner-layout subject-plan) (owner-layout/verify-report result subject-plan)
@@ -523,6 +548,36 @@
         (let [db (fold-touched! conn db data)]
           (or (owner-layout/prepare db data input expected)
               (subject/plan db data input expected)))))))
+(defn- frontier-moved?
+  "[DX-S6] After a refusal, whether the scope's removal sequence moved past the frontier this request was checked at."
+  [conn]
+  (when privacy/*cut*
+    (let [db (deref (d/sync conn) 1000 nil)]
+      (when db (not= (:seq privacy/*cut*) (value db (scope/entity db) :triplex.scope/erasure-seq))))))
+(defn- removal-race-declined?
+  "[DX-S6] After a refusal at the serial point on a protected scope whose removal sequence has moved: does the save
+  create a protected value of a family that a removal named at or after the save's source, on an entity that does not
+  exist? Such a save is the frame the creation rule refuses (subject_create.clj removed-creation?), so its answer is
+  ErasureReplayDeclined, never a replayable conflict. Holds for a removal taking effect at its entry's position (today)
+  and at its Datomic commit (DX-ERA2's option): both are positions the source is compared with."
+  [name conn input]
+  (when privacy/*cut*
+    (when-let [db (deref (d/sync conn) 1000 nil)]
+      (when (not= (:seq privacy/*cut*) (value db (scope/entity db) :triplex.scope/erasure-seq))
+        (when-let [state (privacy/cut name db)]
+          (let [lean (lean? db)
+                prepared (ordered-row-texts (expand-fresh input lean))
+                new-ids (set (get prepared "newIds"))
+                ;; [DX-S6b] A replay is judged by its first attempt's source (replay-frame-check!).
+                source (if (contains? input "frameSourceK") (get input "frameSourceK") (get input "sourceK"))
+                removed-at (requiring-resolve 'triplex.gateway.subject-create/family-removed-at)]
+            (boolean
+              (some (fn [r]
+                      (when (and (new-ids (:id r)) ((:attrs state) (:attribute r))
+                                 (nil? (d/entid db [:triplex.entity/id (:entity_id r)])))
+                        (when-let [at (removed-at state [(:entity_id r) (:attribute r)])]
+                          (or (not (integer? source)) (< source at)))))
+                    (timed-input-rows prepared lean new-ids)))))))))
 (defn commit! [name conn db input]
   (when trace/tx-jfr-enabled (trace/attribute! :databaseHash (schema/sha256 name)))
   ;; [DX-XQ4] Why: the covering owner head moves rows onto version entities the index does not follow.
@@ -533,8 +588,15 @@
     (throw (ex-info "This database stores covering owner roots; start the writer with TX2_SUBJECT_OWNER_HEAD=1"
                     {:status 409 :code "OwnerLayoutRequired"})))
   (when group/load-timing (trace/attribute! :operationId (get input "operationId")))
+  ;; [DX-S6] No client ID may begin with the reserved account prefix (S5 R2-3).
+  ((requiring-resolve 'triplex.gateway.account-claims/check-ids!)
+   (cons (get input "operationId") (map #(get % "commandId") (get input "claims"))))
   (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
     (reject-ordered! conn input (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
+  ;; [DX-S6] Why: once the transaction is handed to Datomic, only a refusal it or a stored function decided is final;
+  ;; any other failure (transport, timeout, a stopped transactor, anything unrecognised) may follow a commit.
+  ;; Rejected: mapping every unrecognised failure to 400 TransactionRejected (a committed save was answered refused).
+  (let [submitted (volatile! false)]
   (try
     (let [parsed (System/nanoTime)
           ;; [DX-XQ4] With the index option on, the declaration fence exists before the first declaration.
@@ -555,6 +617,13 @@
           validated (when (= "1" (System/getenv "TX2_SUBJECT_RETIREMENT_TRACE")) (System/nanoTime))
           frame-size (group/frame-measurement (second (first data)) input)
           _ (try (group/bound-frame! frame-size) (catch Exception e (reject-ordered! conn input e)))
+          ;; [DX-S6] A request that names its account: its stored command IDs are chosen once (account_claims.clj
+          ;; stored-ids) and kept on the request for the replan retry. A request naming none is stored as sent.
+          ids (when (get input "account")
+                (try ((requiring-resolve 'triplex.gateway.account-claims/stored-ids) conn db (second (first data)) input)
+                     (catch Exception e (reject-ordered! conn input e))))
+          input (if ids (vary-meta input assoc :triplex/stored-ids ids) input)
+          data (if ids ((requiring-resolve 'triplex.gateway.account-claims/apply-ids) data ids) data)
           ;; [DX-IMP2] Why: an import commit over the import bound is refused whole, before the writer sees it.
           ;; Rejected: requiring import-bound at load (it would renumber later namespaces' generated names, and with
           ;; them the stored native functions' hashes; with the option off it is never loaded).
@@ -563,6 +632,10 @@
                    (catch Exception e (reject-ordered! conn input e))))
           ;; [DX-XQ4] With the index on, a bulk frame's index entries count beside its rows (review D3).
           _ (when cross/enabled (try (cross/bound-frame! (second (first data)) input policy/bulk-rows) (catch Exception e (reject-ordered! conn input e))))
+          ;; [DX-S6] TX2_READ_SET_BOUND=1: every class's read set is capped (no repeats, at most 4,096 names).
+          _ (when (= "1" (System/getenv "TX2_READ_SET_BOUND"))
+              (try ((requiring-resolve 'triplex.gateway.import-bound/read-set!) (second (first data)) input)
+                   (catch Exception e (reject-ordered! conn input e))))
           ;; [DX-PREP1] Why: the unordered subject arm submits one native transaction and uses its actual durable report.
           ;; Rejected: bypassing protected-scope erasure or live/import admission, or applying the draft speculatively.
           subject-plan (when (and subject/enabled
@@ -589,13 +662,20 @@
           ;; A reason is reported only for a save no per-subject function took.
           declined (or (:declined creation) (when-not creation (:declined several)))
           subject-plan (or subject-plan (when-not (:declined several) several) (when-not (:declined creation) creation))
+          ;; [DX-S6b] Under the account-ID setting (read on the database this save was prepared on, or turned on by
+          ;; it), the save calls the twins of the writer functions; prepared before it, the old idents refuse it.
+          routed (or (:on ids) ((requiring-resolve 'triplex.gateway.account-claims/on?) db))
+          input (if routed (vary-meta input assoc :triplex/routed true) input)
+          data (if routed ((requiring-resolve 'triplex.gateway.account-claims/route-data) conn db data) data)
+          subject-plan (if (and routed subject-plan) ((requiring-resolve 'triplex.gateway.account-claims/route-plan) conn db subject-plan) subject-plan)
           ;; [Opus W1] Why: a save the covering writer cannot take must not reach legacy rows under a root.
           _ (when (and owner-layout/enabled (nil? subject-plan)) (fold-touched! conn db data))
           start (System/nanoTime)
           ready-ms (when group/queue-clock (System/currentTimeMillis))
           timeline (atom (cond-> {:requestParsed parsed :payloadPrepared start}
                            validated (assoc :payloadValidated validated)))
-          report (trace/span "peer.transact-await (includes order/network/storage)" "peer-wait" (deref (submit! conn data input timeline subject-plan) 5000 ::timeout))
+          report (do (vreset! submitted true)
+                     (trace/span "peer.transact-await (includes order/network/storage)" "peer-wait" (deref (submit! conn data input timeline subject-plan) 5000 ::timeout)))
           completed (System/nanoTime)
           transact-micros (quot (- completed start) 1000)
           stamp (when (and group/queue-clock (not= report ::timeout))
@@ -657,10 +737,24 @@
         ;; [DX-THIN1] Why: preserve explicitly typed policy errors and the established transaction rejection for malformed row ordering.
         ;; Rejected: treating every codec InvalidValue as a policy error before checking the transaction result.
         (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasedAssertionIdentity" "ProtectedTypeUnsupported" "ReleaseWritesDeclaredAttribute" "OwnerLayoutUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
+        ;; [DX-S6] After submit, unrecognised means unknown: 503 OutcomeUnknown, and the caller looks the operation up.
+        (when @submitted
+          (when-not ((requiring-resolve 'triplex.gateway.outcome/decided?) e)
+            (throw ((requiring-resolve 'triplex.gateway.outcome/unknown) e))))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
                        {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_ERASURE_FRONTIER|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
-                        :code (cond (re-find #"TRIPLEX_ERASURE_FRONTIER" text) "ErasureFrontierChanged"
+                        ;; [DX-S6] F3: a save racing a removal on request (or a protection declaration) gets one code
+                        ;; on every writer: CasConflict (the contract's "changed after the source"; the SDK re-reads and
+                        ;; replays), or ErasureFrontierChanged when the request itself named the frontier (erasureSeq).
+                        ;; Rejected: the writer's own marker (per-subject writers CasConflict, the general writer
+                        ;; ErasureFrontierChanged, so one request had two answers).
+                        ;; [DX-S6] S5 R2-2: a creation racing a removal that named its entity's protected family is
+                        ;; refused as the same frame arriving after the removal is (not replayable), so a replay can never
+                        ;; store the value framed before the removal.
+                        :code (cond (and (re-find #"TRIPLEX_ERASURE_FRONTIER|TRIPLEX_CONFLICT" text) (removal-race-declined? name conn input)) "ErasureReplayDeclined"
+                                    (re-find #"TRIPLEX_ERASURE_FRONTIER" text) (if (contains? input "erasureSeq") "ErasureFrontierChanged" "CasConflict")
+                                    (and (contains? input "erasureSeq") (re-find #"TRIPLEX_CONFLICT" text) (frontier-moved? conn)) "ErasureFrontierChanged"
                                     (re-find #"TRIPLEX_OPERATION_DUPLICATE" text) "OperationDuplicate"
                                     (re-find #"TRIPLEX_COMMAND_DUPLICATE" text) "CommandConflict"
                                     (re-find #"TRIPLEX_IMPORT_PREDECESSOR" text) "ImportPredecessorMissing"
@@ -669,11 +763,14 @@
                                     (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"
                                     (re-find #"triplex.claim/command-id" text) "CommandConflict"
                                     (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
-                                    (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e))))))
+                                    (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e)))))))
 (defn operation [db id]
   (if-let [{:keys [position t clock]} (group/receipt db id)]
-    (if (nil? position) {:status "absent"} {:status "committed" :operationId id :position (codec/encode-value "long" position)
-     :t (codec/encode-value "long" t) :recordedAt (codec/encode-value "double" clock)})
+    ;; [DX-S6] An operation ID stored without a position is a fence: the original save can never commit.
+    (if (nil? position) {:status "absent" :fenced true :operationId id} {:status "committed" :operationId id :position (codec/encode-value "long" position)
+     :t (codec/encode-value "long" t) :recordedAt (codec/encode-value "double" clock)
+     ;; [DX-S6] The receipt names the transaction, so a caller can tell its own save from another's under one ID.
+     :txId (ledger/tx-id db (d/entid db [:triplex.tx/operation-id id]))})
     {:status "absent"}))
 (defn head-position
   ([db]
@@ -882,12 +979,21 @@
 
 ;; [EXP-DX1] Why: snapshot, claim and known by-id rows share one immutable prefetch cut.
 ;; Rejected: separate claim/read HTTP calls (R51's six-round-trip commit).
+(defn- claim-of
+  "[claim-entity status] of a command for the request's account (account_claims.clj), or today's lookup."
+  [input db command]
+  ((requiring-resolve 'triplex.gateway.account-claims/check-ids!) [command])
+  (if-let [account ((requiring-resolve 'triplex.gateway.account-claims/account-for) db input)]
+    ((requiring-resolve 'triplex.gateway.account-claims/find-claim) (:conn (meta input)) db command account)
+    [(d/entid db [:triplex.claim/command-id command])]))
 (defn begin-command! [name db input]
   (let [snapshot (begin! name db) command (get input "commandId") ids (get input "ids" [])]
     (try
       (merge snapshot
+        ;; [DX-S6] A caller naming its account: a plain claim of other accounts is answered taken (S5 R2-4).
+        (when (and command (or (get input "account") (get input "entities"))) {:claimTaken (= :taken (second (claim-of input db command)))})
         {:t (codec/encode-value "long" (d/basis-t db))
-         :claim (when command (when-let [eid (d/entid db [:triplex.claim/command-id command])] (ledger/claim-tx-id db eid)))
+         :claim (when command (when-let [eid (first (claim-of input db command))] (ledger/claim-tx-id db eid)))
          :rows (if (lean/enabled? db)
                  (vec (mapcat #(:rows (read-rows name db {"id" %})) ids))
                  (mapv wire-row
