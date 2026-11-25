@@ -44,6 +44,9 @@ if (retirement) assert(!tuned && writer === "per-person-ordered" && jvm === "j21
 // [DX-RD2] Why: the pinned short-cut pair (TX2_PINNED_SHORTCUT off, then on) reuses this runner's prepared aged arms.
 // Rejected: a separate launcher with its own copy admission and aged fresh-peer check.
 const pinnedPair = process.env.DX_RD2_PINNED_PAIR === "1";
+// [DX-SRV2] The A1 arm variants (rd1/pinned-ladder.ts pairVariant): undefined unless DX_RD2_PAIR_VARIANT is set.
+const { pairVariant } = await import("../rd1/pinned-ladder.ts");
+const variant = pairVariant(process.env, pinnedPair, process.env.DX_RD1_LADDER);
 // [DX-RD2] Why: the tuned pinned arm runs both pinned options on the read study's tuned reader (three cores, 3 GiB
 // cache, the early filter) with client batches of eight, admitted from the held aged copy like the pinned pair.
 // Rejected: the read study's own tuned arm, which admits only the fresh seal and needs a control ladder first.
@@ -103,7 +106,7 @@ assert(!preparedSource || (((tuned && age === "fresh") || retirement || pinnedPa
   "A prepared run needs --read-study on the fresh seal or DX_W1_RETIREMENT_PAIR=1, a ladder and one --pgdata copy");
 const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin, !preparedSource);
 const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin, !preparedSource) : undefined;
-const record = { source, age, writer, policy: control, treatment: tuned || pinnedTunedPolicy || undefined, diagnostics, retirement: retirement || undefined, pinnedPair: pinnedPair || undefined, pinnedTuned: pinnedTuned || undefined, pinnedSaves: pinnedSaves || undefined, savesSelection: pinnedSaves ? savesSelection : undefined, readPermits: readPermits || undefined, pairOption: retirement ? pairOption : undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
+const record = { source, age, writer, policy: control, treatment: tuned || pinnedTunedPolicy || undefined, diagnostics, retirement: retirement || undefined, pinnedPair: pinnedPair || undefined, pinnedTuned: pinnedTuned || undefined, pinnedSaves: pinnedSaves || undefined, ...(variant ? { pairVariant: { variant: variant.variant, pins: variant.pins, seats: variant.seats } } : {}), savesSelection: pinnedSaves ? savesSelection : undefined, readPermits: readPermits || undefined, pairOption: retirement ? pairOption : undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
   agedBundle: expected?.pin, agedDump: expected?.dumpPin || undefined };
 const prepared = preparedSource ? openPreparedLadder({ campaign, ladder: process.env.DX_RD1_LADDER!, source: preparedSource,
   copy: process.env.DX_RD1_PGDATA!, wal: walDirectory || undefined, record, kind: retirement ? "retirement" : pinnedPair ? "pinned" : pinnedTuned ? "pinned-tuned" : pinnedSaves ? "pinned-saves" : "read" }) : undefined;
@@ -137,7 +140,7 @@ for (const loaded of [false, true]) {
       const { engines } = startScaleStack(out, slot, source, writer === "grouped", tuned ? {
         ...options, DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: loaded ? "1" : "0", ...prepared?.env,
       } : retirement ? { ...options, [treatmentKey]: loaded ? "1" : "0", ...prepared?.env }
-        : pinnedPair ? { ...options, DX_PINNED_SHORTCUT: loaded ? "1" : "0", DX_PINNED_CUT_LOOKUP: loaded ? "1" : "0", ...prepared?.env }
+        : pinnedPair ? { ...options, DX_PINNED_SHORTCUT: loaded ? "1" : "0", DX_PINNED_CUT_LOOKUP: loaded ? "1" : "0", ...variant?.stack, ...prepared?.env }
         : pinnedTuned ? { ...options, DX_PINNED_SHORTCUT: "1", DX_PINNED_CUT_LOOKUP: "1", DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: "1", ...prepared?.env }
         // [DX-RD3] The card's production tape setting: the write gateway reports storage reads per commit.
         : pinnedSaves ? { ...options, DX_PINNED_SHORTCUT: "1", DX_PINNED_CUT_LOOKUP: "1", DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: "1",
@@ -242,7 +245,7 @@ for (const loaded of [false, true]) {
         if (prepared) assert(!stopping, "Prepared pinned arm with saves was interrupted");
       } else if (pinnedPair) {
         const { pinnedLadder } = await import("../rd1/pinned-ladder.ts");
-        await pinnedLadder(out, read, seed, head, loaded);
+        await pinnedLadder(out, read, seed, head, loaded, false, variant ? { expect: variant.expect, pins: variant.pins, seats: variant.seats } : {});
         if (prepared) assert(!stopping, "Prepared pinned ladder was interrupted");
       } else {
         const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head);
