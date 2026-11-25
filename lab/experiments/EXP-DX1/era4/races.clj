@@ -357,7 +357,7 @@
   [["P1" :before-declare] ["P2" :after-declare] ["P3" :after-guard] ["P4-not-landed" :before-native] ["P5" :after-native]
    ["P6" :at-publish] ["P7" nil]])
 
-(defn stops
+(defn stop-checks
   "At each stop point of DX-ERA2's third pass: what this option's routes answer while the removal is left there (open a
   copy recorded before it, seal its assertion again, the plain read of the value itself, a derived write of a new
   sealed copy), who completes it, and, after the acknowledgement, that every copy is unreadable and the key is gone."
@@ -418,7 +418,7 @@
   (envelope/start!)
   (case (System/getenv "ERA4_PHASE")
     "cost" (cost)
-    "checks" (do (e9s) (e6s) (window) (stops))
+    "checks" (do (e9s) (e6s) (window) (stop-checks))
     (fuzz (or (System/getenv "ERA4_RUN") "e0") (Long/parseLong (or (System/getenv "ERA4_N") "200"))
           (Long/parseLong (or (System/getenv "ERA4_BLOCK") "50")) (Long/parseLong (or (System/getenv "ERA4_SEED") "1"))))
   (println "ERA4_TALLY" arm (pr-str (into (sorted-map) (map (fn [[kk v]] [(pr-str kk) v])) @tally)))
