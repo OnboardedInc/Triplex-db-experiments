@@ -13,7 +13,7 @@ import { keyFor } from "../../scale1/decision/plan.ts";
 import { creditModeSelection } from "../../prep1/rolling-credits.ts";
 import { jsonFile } from "../../v01/adopted.ts";
 import { fact, openStore, type Store } from "../store.ts";
-import { JoinedAccount, publishBeside, type PublishOptions } from "./account.ts";
+import { JoinedAccount, joinedCommandId, publishBeside, type PublishOptions } from "./account.ts";
 import { BulkQueue } from "./bulk.ts";
 import { Reference, toWire } from "./check.ts";
 import { checkForms, expectForms } from "./form-expect.ts";
@@ -388,7 +388,7 @@ class Gate {
         kinds[k] = (kinds[k] ?? 0) + 1;
         if (t.position === r.position) {
           assert.equal(t.actor, "lazy/join");
-          if (id) assert.equal(t.commandId, "joined:" + id);
+          if (id) assert.equal(t.commandId, joinedCommandId(c.s, id));
         }
       }
     }
@@ -717,7 +717,7 @@ async function killPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
       await g.fold(r, old);
       g.published.push(r);
       // Exactly one record for the command ID, at the position the receipt names.
-      const found = await c.s.lookup("joined:" + id);
+      const found = await c.s.lookup(joinedCommandId(c.s, id));
       assert.equal(found.position, r.position);
       const settled = await g.settle(r, old);
       await g.checkBetween(r);

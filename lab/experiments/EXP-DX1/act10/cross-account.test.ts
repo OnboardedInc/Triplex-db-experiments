@@ -28,8 +28,20 @@ async function twoAccounts(seed: number, names = ["account-001", "account-002"])
 const releasesOf = async (x: { s: any }) => (await x.s.controls(await x.s.head())).releases;
 const tailOf = async (x: { a: JoinedAccount }) => (await x.a.notices.observe()).value.sequence;
 
+// [DX-ACT8] Each case runs with TX2_ACCOUNT_KEYS unset (the review's finding, kept as the control: it must still
+// reproduce) and set (the fix: each account its own record).
+const withKeys = async (keys: string, f: () => Promise<void>) => {
+  if (keys === "1") process.env.TX2_ACCOUNT_KEYS = "1";
+  else delete process.env.TX2_ACCOUNT_KEYS;
+  try {
+    await f();
+  } finally {
+    delete process.env.TX2_ACCOUNT_KEYS;
+  }
+};
+for (const keys of ["0", "1"])
 for (const beside of ["0", "1"])
-  test("X1 (TX2_PUBLISH_BESIDE=" + beside + "): two accounts publish with the same command ID and the same document", async () => {
+  test("X1 (TX2_PUBLISH_BESIDE=" + beside + ", TX2_ACCOUNT_KEYS=" + keys + "): two accounts publish with the same command ID and the same document", () => withKeys(keys, async () => {
     process.env.TX2_PUBLISH_BESIDE = beside;
     try {
       const { accounts: [A, B] } = await twoAccounts(1);
@@ -44,31 +56,45 @@ for (const beside of ["0", "1"])
         aTail: await tailOf(A!),
         bTail: await tailOf(B!),
       };
-      console.log("[X1 beside=" + beside + "] " + JSON.stringify(out));
-      // The break: B's Publish is acknowledged with A's receipt; B has no release and no notice event.
-      assert.equal(out.bReceiptIsAs, true, "B's Publish returned its own receipt");
-      assert.equal(out.bReleases, 0);
-      assert.equal(out.bTail, 0);
+      console.log("[X1 beside=" + beside + " keys=" + keys + "] " + JSON.stringify(out));
+      if (keys === "0") {
+        // The break: B's Publish is acknowledged with A's receipt; B has no release and no notice event.
+        assert.equal(out.bReceiptIsAs, true, "B's Publish returned its own receipt");
+        assert.equal(out.bReleases, 0);
+        assert.equal(out.bTail, 0);
+      } else {
+        assert.equal(out.bReceiptIsAs, false, "B's Publish returned A's receipt");
+        assert(out.bPosition > out.aPosition);
+        assert.deepEqual([out.aReleases, out.bReleases, out.aTail, out.bTail], [1, 1, 1, 1]);
+      }
     } finally {
       delete process.env.TX2_PUBLISH_BESIDE;
     }
-  });
+  }));
 
-test("X2: two accounts publish with the same command ID and different documents", async () => {
+for (const keys of ["0", "1"])
+test("X2 (TX2_ACCOUNT_KEYS=" + keys + "): two accounts publish with the same command ID and different documents", () => withKeys(keys, async () => {
   process.env.TX2_PUBLISH_BESIDE = "1";
   try {
     const { accounts: [A, B] } = await twoAccounts(2);
     await A!.a.publish("r1", W0.R1.doc, validTime, "owed");
     const e = await B!.a.publish("r1", W0.R2.doc, validTime, "owed").then(() => null, (x) => x);
-    console.log("[X2] " + JSON.stringify({ refused: e ? String(e.message).slice(0, 120) : null, bReleases: (await releasesOf(B!)).length }));
-    assert(e, "B's Publish under another account's command ID was accepted");
-    assert.match(String(e.message), /Reused command ID has different input/);
+    console.log("[X2 keys=" + keys + "] " + JSON.stringify({ refused: e ? String(e.message).slice(0, 120) : null, bReleases: (await releasesOf(B!)).length }));
+    if (keys === "0") {
+      assert(e, "B's Publish under another account's command ID was accepted");
+      assert.match(String(e.message), /Reused command ID has different input/);
+    } else {
+      assert.equal(e, null, "B refused under its own command ID");
+      assert.equal((await releasesOf(B!)).length, 1);
+      assert.equal((await releasesOf(A!)).length, 1);
+    }
   } finally {
     delete process.env.TX2_PUBLISH_BESIDE;
   }
-});
+}));
 
-test("X3 (TX2_RELEASE_DOCS=ref): two accounts publish the same document by reference with their own command IDs", async () => {
+for (const keys of ["0", "1"])
+test("X3 (TX2_RELEASE_DOCS=ref, TX2_ACCOUNT_KEYS=" + keys + "): two accounts publish the same document by reference with their own command IDs", () => withKeys(keys, async () => {
   process.env.TX2_PUBLISH_BESIDE = "1";
   process.env.TX2_RELEASE_DOCS = "ref";
   try {
@@ -82,16 +108,22 @@ test("X3 (TX2_RELEASE_DOCS=ref): two accounts publish the same document by refer
       bReleases: (await releasesOf(B!)).length,
       bTail: await tailOf(B!),
     };
-    console.log("[X3] " + JSON.stringify(out));
-    assert(e, "B published");
-    assert.equal(out.bReleases, 0);
+    console.log("[X3 keys=" + keys + "] " + JSON.stringify(out));
+    if (keys === "0") {
+      assert(e, "B published");
+      assert.equal(out.bReleases, 0);
+    } else {
+      assert.equal(e, null, "B refused");
+      assert.deepEqual([out.bReleases, out.bTail], [1, 1]);
+    }
   } finally {
     delete process.env.TX2_PUBLISH_BESIDE;
     delete process.env.TX2_RELEASE_DOCS;
   }
-});
+}));
 
-test("X4 (TX2_RELEASE_DOCS=ref): an account cannot publish anything by reference once another account staged their shared predecessor", async () => {
+for (const keys of ["0", "1"])
+test("X4 (TX2_RELEASE_DOCS=ref, TX2_ACCOUNT_KEYS=" + keys + "): an account publishes by reference after another account staged their shared predecessor", () => withKeys(keys, async () => {
   process.env.TX2_PUBLISH_BESIDE = "1";
   try {
     const { accounts: [A, B] } = await twoAccounts(4);
@@ -101,20 +133,52 @@ test("X4 (TX2_RELEASE_DOCS=ref): an account cannot publish anything by reference
     // B turns on definitions by reference: its Publish also stores its predecessor R1 by reference.
     const large = (permille: number) => largeRelease(W0.R1.doc, parseShape("forms=20,policies=20,permille=" + permille));
     await B!.a.publish("account-002:large", large(1000), validTime, "owed", undefined, { docs: "ref" });
-    // A, with a different new document, by reference: refused, every time.
+    // A, with a different new document, by reference.
     const tries: string[] = [];
     for (let k = 0; k < 3; k++) {
-      const e = await A!.a.publish("account-001:large-" + k, large(500), validTime, "owed", undefined, { docs: "ref" }).then(() => null, (x) => x);
+      const e = await A!.a.publish("account-001:large-" + k, large(500 + k), validTime, "owed", undefined, { docs: "ref" }).then(() => null, (x) => x);
       tries.push(e ? String(e.message).slice(0, 90) : "published");
     }
     const out = { tries, aReleases: (await releasesOf(A!)).length, bReleases: (await releasesOf(B!)).length };
-    console.log("[X4] " + JSON.stringify(out));
-    assert(tries.every((t) => t !== "published"));
-    assert.equal(out.aReleases, 1);
-    // With full documents A still publishes (the option is the trigger).
-    await A!.a.publish("account-001:large-inline", large(500), validTime, "owed", undefined, { docs: "inline" });
-    assert.equal((await releasesOf(A!)).length, 2);
+    console.log("[X4 keys=" + keys + "] " + JSON.stringify(out));
+    if (keys === "0") {
+      assert(tries.every((t) => t !== "published"));
+      assert.equal(out.aReleases, 1);
+      // With full documents A still publishes (the option is the trigger).
+      await A!.a.publish("account-001:large-inline", large(500), validTime, "owed", undefined, { docs: "inline" });
+      assert.equal((await releasesOf(A!)).length, 2);
+    } else {
+      assert(tries.every((t) => t === "published"), "A refused: " + tries.join("; "));
+      assert.deepEqual([out.aReleases, out.bReleases], [4, 2]);
+    }
   } finally {
     delete process.env.TX2_PUBLISH_BESIDE;
+  }
+}));
+
+// [DX-ACT8] X5: a database written before TX2_ACCOUNT_KEYS (records under `joined:<id>`) is still read correctly with
+// it: the account's own old command is recovered (not published twice), and another account's old record under the
+// same ID is not taken for this account's.
+test("X5: records written before TX2_ACCOUNT_KEYS, read with it", async () => {
+  process.env.TX2_PUBLISH_BESIDE = "1";
+  try {
+    const { accounts: [A, B] } = await twoAccounts(5);
+    delete process.env.TX2_ACCOUNT_KEYS;
+    const old = await A!.a.publish("shared-id", W0.R1.doc, validTime, "owed");
+    process.env.TX2_ACCOUNT_KEYS = "1";
+    const again = await A!.a.publish("shared-id", W0.R1.doc, validTime, "owed");
+    const other = await B!.a.publish("shared-id", W0.R1.doc, validTime, "owed");
+    const out = { old: old.position, again: again.position, other: other.position, aReleases: (await releasesOf(A!)).length,
+      bReleases: (await releasesOf(B!)).length };
+    console.log("[X5] " + JSON.stringify(out));
+    assert.equal(again.txId, old.txId, "A's own old command was not recovered");
+    assert.notEqual(other.txId, old.txId, "B took A's old record");
+    assert.deepEqual([out.aReleases, out.bReleases], [1, 1]);
+    // A different document under A's old ID is still refused as a reused ID.
+    const e = await A!.a.publish("shared-id", W0.R2.doc, validTime, "owed").then(() => null, (x) => x);
+    assert.match(String(e?.message), /Reused command ID has different input/);
+  } finally {
+    delete process.env.TX2_PUBLISH_BESIDE;
+    delete process.env.TX2_ACCOUNT_KEYS;
   }
 });

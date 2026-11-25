@@ -26,7 +26,7 @@ import { checkAdoptedPeer, type AdoptedSeed } from "../../v01/adopt.ts";
 import { jsonFile, preload, type Peer } from "../../v01/adopted.ts";
 import { openStore, type HeldSource } from "../store.ts";
 import type { Pin } from "../read.ts";
-import { JoinedAccount, publishBeside, type PublishOptions } from "./account.ts";
+import { JoinedAccount, joinedCommandId, publishBeside, type PublishOptions } from "./account.ts";
 import { toWire } from "./check.ts";
 import { authoredSeed, authoredWrite, expectedPolicy } from "./deep-reference.ts";
 import { HeldLedger } from "./held-ledger.ts";
@@ -517,12 +517,12 @@ export async function runHeld(
       const received = now(),
         ack = s.counters.lastReceipt,
         record = s.counters.lastOps;
-      assert.equal(record.id, "joined:" + id);
+      assert.equal(record.id, joinedCommandId(s, id));
       assert(
         ack &&
           ack.position === published.position &&
           ack.txId === published.txId &&
-          ack.commandId === "joined:" + id,
+          ack.commandId === joinedCommandId(s, id),
       );
       const durableAt = performance.timeOrigin + ack.time;
       assert(offered <= durableAt && durableAt <= received);

@@ -22,7 +22,7 @@ import { W0, canonical, sha256 } from "../../../bench/lib/w0-world.ts";
 import { ids } from "../../../bench/lib/world.ts";
 import { Documents, hash, unpack } from "../notify1/store.ts";
 import { worldsAt, winner } from "../actv-lazy/decision.ts";
-import { JoinedAccount } from "../actv-lazy/join/account.ts";
+import { JoinedAccount, joinedCommandId } from "../actv-lazy/join/account.ts";
 import { Archive } from "../actv-lazy/join/archive.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
 import { toWire } from "../actv-lazy/join/check.ts";
@@ -342,7 +342,7 @@ async function check(
   for (const x of acknowledged) {
     const tx = journal.find((t) => t.position === x.position);
     const rel = (x.account === A ? "lazy/account/releases/" + A : "lazy/account/releases/" + B);
-    if (!tx || tx.commandId !== "joined:" + x.id || !tx.changes.some((c: any) => c.entityId === rel && c.op === "assert"))
+    if (!tx || tx.commandId !== joinedCommandId({ held: x.account === A ? hA : hB } as never, x.id) || !tx.changes.some((c: any) => c.entityId === rel && c.op === "assert"))
       v("acknowledged Publish " + x.id + " is not its own account's record at " + x.position);
   }
   for (const [acct, held] of [[A, hA], [B, hB]] as const) {
@@ -353,7 +353,7 @@ async function check(
     const tail = (await ja.notices.observe()).value.sequence;
     if (rels.length !== landed.length || tail !== landed.length) v(acct + ": releases " + rels.length + ", tail " + tail + ", landed records " + landed.length);
     for (const t of landed) {
-      const id = String(t.commandId).replace(/^joined:/, "");
+      const id = String(t.commandId).replace(/^joined:(?:[a-zA-Z0-9_.-]+\/)?/, "");
       if (id.includes(":base:")) continue;
       if (!acknowledged.some((x) => x.id === id) && !cfg.killPublisher) v(acct + ": Publish " + id + " landed but was not acknowledged and its process was not killed");
     }
@@ -368,7 +368,7 @@ async function check(
   const roster = Array.from({ length: PEOPLE }, (_, i) => W0.placementId(i));
   const docOf = new Map<number, W0.ReleaseDoc>();
   for (const rel of rels) {
-    const id = String(journal.find((t) => t.position === rel.tx)!.commandId).replace(/^joined:/, "");
+    const id = String(journal.find((t) => t.position === rel.tx)!.commandId).replace(/^joined:(?:[a-zA-Z0-9_.-]+\/)?/, "");
     docOf.set(rel.tx, DOCS[id.split(":").at(-1)!]!);
   }
   const vstore = memStore(proc, hA, db.scope + "-check-v") as any;

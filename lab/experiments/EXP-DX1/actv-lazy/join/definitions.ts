@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
-import { fact, namesOf, type EntityGuard } from "../store.ts";
+import { accountKeys, fact, namesOf, type EntityGuard } from "../store.ts";
 import { frameEstimate } from "./frames.ts";
 
 // [DX-ACT6] Why: every Publish carried the whole definition set in force three times (the new document twice, in the
@@ -234,7 +234,10 @@ export async function stageDocument(s: Committer, doc: W0.ReleaseDoc) {
       try {
         // Entity guards (no live fact yet) replace the head fence: unfenced beside every account's saves.
         const p = await s.head();
-        await s.commit("definitions:" + sha256(canonical(todo)), definitionsActor, ops, p, { nodes: todo.length }, undefined, undefined,
+        // [DX-ACT8, review F2] With TX2_ACCOUNT_KEYS the command ID names the account's definitions prefix: the rows are
+        // under the account's own names, so the same content in two accounts is two commands. Unset: as before.
+        const command = "definitions:" + sha256(canonical(accountKeys() ? [prefixOf(s), todo] : todo));
+        await s.commit(command, definitionsActor, ops, p, { nodes: todo.length }, undefined, undefined,
           todo.map((k) => ({ entityId: definitionEntity(s, k), tripleIds: [] })));
         stats.writes++;
         stats.rows += ops.length;

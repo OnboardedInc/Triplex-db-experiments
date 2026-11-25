@@ -36,7 +36,7 @@ import {
 import { Documents, type Op } from "../../notify1/store.ts";
 import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
-import { Conflict, fact, millis, namesOf, value, type EntityGuard, type Store } from "../store.ts";
+import { accountKeys, Conflict, fact, millis, namesOf, value, type EntityGuard, type Store } from "../store.ts";
 import { calculate, worldsAt, type Proposal } from "../decision.ts";
 import { deepImpact, rawDeep, replaceDeep } from "./deep.ts";
 import { subjectOf, type Fact } from "../../../../bench/lib/world.ts";
@@ -86,6 +86,10 @@ export type PublishOptions = {
 /** [DX-ACT8] TX2_PUBLISH_BESIDE=1: a held account's (owed) Publish commits with the account guard (its notice tail, its
  * calendar, and the transactor's revision check on what the record writes) instead of the whole database's head.
  * PUBLISH-BESIDE-SAVES.md sections 3 and 4. Unset: the whole-head rule, as before. */
+/** [DX-ACT8, review F1] The command ID of joined command `id` in store `s`: with TX2_ACCOUNT_KEYS, a namespaced held
+ * account's carries its account (`joined:<account>/<id>`); otherwise, and for the single-account layout, `joined:<id>`. */
+export const joinedCommandId = (s: Pick<Store, "held">, id: string) =>
+  accountKeys() && s.held?.namespace ? "joined:" + s.held.account + "/" + id : "joined:" + id;
 export const publishBeside = () => process.env.TX2_PUBLISH_BESIDE === "1";
 /** [DX-ACT6] A Publish whose record exceeds the 4 MiB request limit (full documents only), refused before any write. */
 export class ReleaseTooLarge extends Error {}
@@ -197,7 +201,7 @@ export class JoinedAccount {
         if (
           tx?.position !== event.at ||
           tx.actor !== "lazy/join" ||
-          tx.commandId !== "joined:" + event.value.request ||
+          (tx.commandId !== joinedCommandId(s, event.value.request) && tx.commandId !== "joined:" + event.value.request) ||
           event.value.sourceBefore !== event.at - 1
         )
           return false;
@@ -477,11 +481,21 @@ export class JoinedAccount {
     await this.suffix(c.input, p);
     return { meta, c, tail };
   }
-  private original(id: string, intent: string) {
-    return this.s.lookup("joined:" + id).then((r) => {
+  private async original(id: string, intent: string, legacyIntent?: string) {
+    const key = joinedCommandId(this.s, id);
+    const found = await this.recorded(key, intent);
+    if (found || key === "joined:" + id || legacyIntent === undefined) return found;
+    // [DX-ACT8, review F1] A record written before TX2_ACCOUNT_KEYS carries the unscoped ID: it is this command only if
+    // it wrote this account's own joined documents; another account's record under the same ID is not this command.
+    const legacy = await this.s.lookup("joined:" + id);
+    if (!legacy || !legacy.changes.some((c: { entityId: string }) => c.entityId.startsWith(this.db.prefix))) return null;
+    return this.recorded("joined:" + id, legacyIntent);
+  }
+  private recorded(key: string, intent: string) {
+    return this.s.lookup(key).then((r) => {
       if (!r) return null;
       assert(
-        r.commandId === "joined:" + id &&
+        r.commandId === key &&
           r.txId &&
           Number.isSafeInteger(r.position) &&
           r.position > 0,
@@ -552,14 +566,17 @@ export class JoinedAccount {
     assert(
       /^[a-zA-Z0-9_.:-]{1,145}$/.test(id) || (!through && /^deadline\/[a-f0-9]{64}$/.test(id)),
     );
-    const intent = h([this.s.scope, id, args]);
+    // [DX-ACT8, review F1] With TX2_ACCOUNT_KEYS the intent names the account too (the scope is the whole database's).
+    const scoped = joinedCommandId(this.s, id) !== "joined:" + id;
+    const intent = scoped ? h([this.s.scope, this.s.held!.account, id, args]) : h([this.s.scope, id, args]),
+      legacyIntent = scoped ? h([this.s.scope, id, args]) : undefined;
     // [DX-ACT2] Why: only a different scope writer can beat an admitted turn. Bound that case and recover the original durable receipt by identity. Rejected: spinning against a moving source head.
     for (let retries = 0; retries < 3; ) {
       const attempt: WriteAttempt | undefined = observation
         ? { started: performance.now() }
         : undefined;
       if (attempt) observation!.attempts.push(attempt);
-      const old = await this.original(id, intent);
+      const old = await this.original(id, intent, legacyIntent);
       if (old) {
         if (attempt) {
           attempt.recovered = true;
@@ -584,7 +601,7 @@ export class JoinedAccount {
         guarded = Boolean(body.guards);
         if (guarded) this.beside.tries++;
         const r = await this.s.commit(
-          "joined:" + id,
+          joinedCommandId(this.s, id),
           "lazy/join",
           body.ops,
           body.expected ?? p,
@@ -606,7 +623,7 @@ export class JoinedAccount {
         } else assert.equal(r.position, (body.expected ?? p) + 1);
         return this.observed(r);
       } catch (e) {
-        const won = await this.original(id, intent);
+        const won = await this.original(id, intent, legacyIntent);
         if (attempt) attempt.finished = performance.now();
         if (won) {
           if (attempt) attempt.recovered = true;

@@ -30,6 +30,11 @@ export const fact = (entityId: string, attribute: string, data: unknown) => ({
 });
 export const value = (row: WorldRow) => JSON.parse(row.value.value);
 export class Conflict extends Error {}
+/** [DX-ACT8, review F1/F2] TX2_ACCOUNT_KEYS=1 (default off): no lookup by a key the client or the content chooses crosses
+ * accounts. Command IDs are unique in the whole database (`:triplex.claim/command-id`), so in the one database a
+ * namespaced held account's joined commands and its definitions writes carry the account in their command IDs (and the
+ * joined intent names the account). Unset: every command ID as before. PUBLISH-BESIDE-SAVES.md section 0. */
+export const accountKeys = () => process.env.TX2_ACCOUNT_KEYS === "1";
 /** [DX-ACT5] An account's metadata names (the defaults unless the held account is namespaced); test doubles of a
  * store without `names` get the defaults. */
 export const defaultNames = { RELEASE, ORIGIN, CLOCK, MASK, CURSOR, documents: "" };
