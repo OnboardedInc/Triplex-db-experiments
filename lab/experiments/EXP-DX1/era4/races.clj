@@ -52,6 +52,9 @@
 
 (defn- key-file [src id] (envelope/key-file src id))
 
+(declare packed doc-write)
+(def ^:private faults [:fail :slow :refused])
+
 (defn run-schedule! [src rcp conn rconn run i ^Random r]
   (let [pick (fn [v] (v (.nextInt r (count v))))
         a (str "ka" (mod i 3)) b (str "kb" (mod i 3)) tag (str run "-" i)
@@ -76,8 +79,22 @@
                              :cmd (str "kw-" tag "-" acct "-" (name kind))}))
                      {:acct b :kind :frame :content cx :at (pick points) :doc (str (doc-of :frame b i) "-read-" a) :cross true
                       :cmd (str "kw-" tag "-" b "-cross")})
+        ;; [DX-ERA4, after DX-ERA5's B1] with the option: a settlement writer whose seal call failed, stalled past the
+        ;; client's deadline or was refused (a gateway without the option) and that fell back to writing X's unit in
+        ;; clear, at a random point of the removal; the database's setting must refuse it at every point
+        fault (when on? (pick faults))
+        writes (if on?
+                 (conj writes {:acct a :kind :degraded :fault fault :at (pick points) :cmd (str "kw-" tag "-" a "-degraded")
+                               :doc (str "notice:v1:" (apply str (repeat 64 "e")) ":answer:" i ":f1")
+                               :content (str "derived:" vx)})
+                 writes)
         replies (atom {}) reached (atom #{})
-        send! (fn [w] (offers/send (if (= :delivery (:kind w)) rcp src) (body src w t (:content w))))
+        send! (fn [w] (if (= :degraded (:kind w))
+                        (doc-write src (:cmd w) (subs (:doc w) (count (str "notice:v1:" (apply str (repeat 64 "e")) ":")))
+                                   {"identity" "i" "frame" 1 "start" 0 "part" 0 "through" 1 "tail" 0 "previous" "p"
+                                    "bytes" (packed [{"subject" sx "changes" [["k" (:content w)]]}])}
+                                   (apply str (repeat 64 "e")))
+                        (offers/send (if (= :delivery (:kind w)) rcp src) (body src w t (:content w)))))
         fire! (fn [p] (when-not (@reached p)
                         (swap! reached conj p)
                         (doseq [w writes :when (= p (:at w))] (swap! replies assoc (:cmd w) (future (send! w))))))
@@ -107,6 +124,22 @@
         (x/oracle! label (= [200 nil] (get outcomes (:cmd w))) "a derived write of another account is never refused by this removal"
                    {:kind (:kind w) :at (:at w) :outcome (get outcomes (:cmd w))
                     :message (some-> (deref (get @replies (:cmd w)) 1000 nil) :body (get "message") str (subs 0) (as-> m (subs m 0 (min 300 (count m)))))})))
+    (doseq [w writes :when (= :degraded (:kind w))]
+      (let [o (get outcomes (:cmd w))]
+        (bump! :degraded (:fault w) o)
+        (x/oracle! label (not= 200 (first o)) "a derived unit written in clear after a failed, slow or refused seal is refused"
+                   {:fault (:fault w) :at (:at w) :outcome o})
+        (x/oracle! label (nil? (x/position-of conn (:cmd w))) "it never lands" {:at (:at w)})))
+    (when (if on? (zero? (.nextInt r 8)) false)
+      (let [[rd wr] (with-redefs [main/derived-seal-on false]
+                      [(offers/outcome (offers/route src "v1" "read" {"entityIds" [sx]}))
+                       (offers/outcome (doc-write src (str "kw-" tag "-nooption") (str "answer:" i ":f2")
+                                                  {"identity" "i" "frame" 1 "start" 0 "part" 0 "through" 1 "tail" 0 "previous" "p"
+                                                   "bytes" (packed [{"subject" sy "changes" [["" cy]]}])}
+                                                  (apply str (repeat 64 "e"))))])]
+        (bump! :gateway-without-the-option rd wr)
+        (x/oracle! label (= [rd wr] [[503 "DerivedSealRequired"] [503 "DerivedSealRequired"]])
+                   "a gateway without the option refuses a database that requires sealed derived documents" {:read rd :write wr})))
     (doseq [w landed] (bump! :landed (cond (:cross w) :read-removed-account (= (:acct w) a) :removed-account :else :other-account) (:kind w)))
     (when (and ok on?)
       ;; (3) after the acknowledgement: X's copies open as removed, Y's open to Y's value; sealing X again answers removed
@@ -160,6 +193,10 @@
         (fn [src conn]
           (offers/in-scope
             (fn [rcp rconn]
+              ;; [DX-ERA4, after DX-ERA5's B1] with the option, the source requires sealed derived documents
+              (when on?
+                (x/oracle! "E4 setting" (= 200 (:status (offers/route src "v2" "derived-seal-required" {})))
+                           "the setting is recorded" nil))
               (let [results (vec (for [i (range (* kb block) (min n (* (inc kb) block)))]
                                    (try (run-schedule! src rcp conn rconn run i r)
                                         (catch Throwable e
@@ -559,9 +596,11 @@
     (loop [] (let [n (.deflate d buf)] (when (pos? n) (.write out buf 0 n)) (when-not (.finished d) (recur))))
     (.end d)
     (.encodeToString (java.util.Base64/getEncoder) (.toByteArray out))))
-(defn- doc-write [src cmd key value]
+(defn- doc-write
   ;; one derived document written as Documents.put writes it: attribute notice/value, its canonical JSON as a string
-  (offers/send src (g/save-frame cmd (str "notice:v1:" (apply str (repeat 64 "a")) ":" key) "notice/value" (json/write-str value) nil nil)))
+  ([src cmd key value] (doc-write src cmd key value (apply str (repeat 64 "a"))))
+  ([src cmd key value hex]
+   (offers/send src (g/save-frame cmd (str "notice:v1:" hex ":" key) "notice/value" (json/write-str value) nil nil))))
 
 (defn setting
   "[DX-ERA4, after DX-ERA5's B1 and M3] The one-way database setting `derived-seal-required` and the write route's check:
