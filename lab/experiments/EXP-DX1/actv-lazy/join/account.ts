@@ -344,6 +344,9 @@ export class JoinedAccount {
     return meta;
   }
   async install(ids: string[], at: string, expanded = false) {
+    // [DX-ERA4] The expanded reconcile index stores each subject's world facts verbatim (join/index.ts `entry`), so a
+    // protected value would sit there in clear, out of every removal's reach; under TX2_DERIVED_SEAL it is refused.
+    assert(!expanded || !derivedSealOn(), "TX2_DERIVED_SEAL refuses the expanded reconcile index (it stores world facts in clear)");
     ids = [...ids];
     const s = this.s,
       p = await s.head(),

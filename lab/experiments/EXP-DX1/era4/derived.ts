@@ -263,6 +263,10 @@ const A = await account("lazy-era4-a-" + RUN, [
 const B = await account("lazy-era4-b-" + RUN, [{ id: W0.placementId(5), expires: W_EXP }]);
 const sink = await openStore("lazy-era4-sink-" + RUN);
 const sinkDocs = new Documents(sink.comp, "sink");
+// A second recipient that receives nothing until after the removal: packets recorded before it, delivered after it
+// (section 3.5), then the stream after it.
+const late = await openStore("lazy-era4-late-" + RUN);
+const lateDocs = new Documents(late.comp, "sink");
 const deliveredFirst = await A.notices.deliver(sinkDocs, await A.noticeArchive.store.head());
 const oracleA1 = await oracleStep(A, A.first, new Set(), 0);
 const oracleB1 = await oracleStep(B, B.first, new Set(), 0);
@@ -294,6 +298,7 @@ const dbs = {
   values: dbOf(A.values.store),
   notices: dbOf(A.noticeArchive.store),
   sink: dbOf(sink),
+  late: dbOf(late),
   "b-source": B.db,
   "b-notices": dbOf(B.noticeArchive.store),
 };
@@ -302,6 +307,7 @@ const stores: Record<keyof typeof dbs, { head(): Promise<number>; comp: Store["c
   values: A.values.store,
   notices: A.noticeArchive.store,
   sink,
+  late,
   "b-source": B.store,
   "b-notices": B.noticeArchive.store,
 };
@@ -331,6 +337,8 @@ log("removed", { seq: erased.seq, identities: ids.length, keyFilesJustAfter: pre
   const rows = await peer.rows(A.db, { entityIds: [docOf(X)], history: true });
   log("x-doc-rows", { rows: rows.map((r) => [r.attribute, r.tx_id, r.retract_tx_id, r.value_type, r.id]) });
 }
+const lateFirst = await A.notices.deliver(lateDocs, await A.noticeArchive.store.head()).catch((e) => String(e));
+log("late-delivery", { arm: sealOn ? "on" : "off", effects: lateFirst });
 // ---- the scan after the acknowledgement ----
 let refused: Record<string, string> = {};
 const tryRead = async (name: string, f: () => Promise<unknown>) => {
@@ -406,9 +414,26 @@ try {
   step = "deliver";
   const effects = await A.notices.deliver(sinkDocs, await A.noticeArchive.store.head());
   const again = await A.notices.deliver(sinkDocs, await A.noticeArchive.store.head());
+  step = "late recipient";
+  const lateEffects = await A.notices.deliver(lateDocs, await A.noticeArchive.store.head());
+  // Both recipients' state of every subject, opened: equal for Y and Z; for X, only X's new generation.
+  const origin = hash([before.A[0]!.account, before.A[0]!.epoch]);
+  const stateOf = async (docs: Documents, s: string) => {
+    const r = await docs.row<string>("receiver:" + origin + ":" + s, await docs.head());
+    if (!r) return null;
+    const v = unpack<{ g: number; e: unknown[] }>(r.value);
+    return { g: v.g, e: (await open(url, v.e)).map((x) => (typeof x === "string" ? x : canonical(x))) };
+  };
+  const recipients: Record<string, unknown> = {};
+  for (const s of A.ids) {
+    const [a1, a2] = [await stateOf(sinkDocs, s), await stateOf(lateDocs, s)];
+    recipients[s] = { same: canonical(a1) === canonical(a2), generation: [a1?.g, a2?.g], entries: [a1?.e.length, a2?.e.length] };
+  }
+  stream.late = { effects: lateEffects, recipients };
   const ps = (await packetsOf(A)) as Packet[];
   const cmp = steps.map((m, i) => compare(A, A.first + 1 + i, m, ps));
   stream = {
+    ...stream,
     recorded: true,
     events: next - A.first,
     oracle: cmp.reduce((t, c) => ({ same: t.same + c.same, differ: t.differ + c.differ }), { same: 0, differ: 0 }),
@@ -434,9 +459,10 @@ const pass =
   (table["control (unprotected)"]?.["native:" + A.db] ?? 0) > 0 &&
   Object.keys(table["Y expiry date (kept)"] ?? {}).some((k) => k.includes("+opened") || k.startsWith("native-opened")) &&
   chain.aVerifies && chain.yUnchanged && chain.bUnchanged &&
-  stream.recorded === true && (stream.oracle as { differ: number }).differ === 0 && stream.deliveredAgain === 0;
+  stream.recorded === true && (stream.oracle as { differ: number }).differ === 0 && stream.deliveredAgain === 0 &&
+  Object.values(((stream.late as { recipients?: Record<string, { same: boolean }> })?.recipients) ?? { none: { same: false } }).every((r) => r.same);
 log("verdict", { arm: sealOn ? "on" : "off", sealed: SEALED, xFound, pass, seconds: Math.round((performance.now() - t0) / 100) / 10 });
 peer.close();
-for (const s of [A.store, B.store, sink, A.values.store, A.noticeArchive.store, B.values.store, B.noticeArchive.store])
+for (const s of [A.store, B.store, sink, late, A.values.store, A.noticeArchive.store, B.values.store, B.noticeArchive.store])
   await s.close().catch(() => {});
 process.exit(sealOn ? (pass ? 0 : 1) : xFound > 0 ? 0 : 1);

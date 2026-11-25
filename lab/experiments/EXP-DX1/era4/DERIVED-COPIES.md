@@ -77,6 +77,7 @@ deflate plus base64 of it (`pack`), which anyone can decode.
 | 20 | Logs and traces at every layer | gateway spans and attributes: no values (status, sizes, operation IDs, hashes, timings); lab drivers log counts and IDs | — | unchanged; the option's own code logs no value | `trace.clj` 96-161, every `trace/attribute!` call |
 | 21 | Erase proofs of the older notice-level erase (`erase-proof:<hash(subject)>:<n>`, `Notices.erase`) | **yes**: the subject's work items packed in clear, written on purpose before a notice-level erase | not reached (they exist to keep the preimage) | not used on the held path (only `notify1/hosts.ts` calls it); under the option the recorder refuses a subject with an erase proof rather than serve it | `journal.ts` 376-420 |
 | 22 | Non-held paths: the older dispatcher's packets and ledgers (`dispatcher.ts` 156, 187), staged Publish records (`staging.ts` 46, 70), a non-held store's stored answers | yes | refused by their stamp checks; readable in clear | **not reached in this pass** (section 3.9): the held path and the W0 lazy store's recorded notices are |
+| 23 | The lazy account's reconcile index (`join/index.ts` leaves and base: per-subject postings computed from the world by `actv-delta/rules.ts` `describe`; with `expanded`, the world's facts themselves) | **yes, whenever an indexed rule reads a protected attribute**: the default index keeps MINWAGE, EVSTAT and PAYCHG postings (EVSTAT reads `everifyStatus` and `everifyStatusAt`, strings, so protectable); the expanded index adds DOCEXP (the expiry day, `rules.ts` 149) and stores every world fact verbatim (`index.ts` 67). In T1 the default index held MINWAGE postings only (the pay rate, an integer) | not reached | **not reached in this pass**: the expanded index is refused under the option; a default-index posting computed from a protected attribute is not sealed (follow-up 2) | `index.ts` 18-29, 60-68; `rules.ts` 107-150 |
 
 **What this says.** On `c2aa3d416` a removal reaches the subject's own fact (masking, and the key for a sealed value)
 and nothing derived from it: rows 2 to 7, 9, 10, 14, 17 and 19 hold copies or derivatives the removal only refuses to
@@ -118,6 +119,17 @@ the scan finds X's start date nowhere (then the test does not reproduce the faul
 in the exact byte shape the TS code writes, through the gateway's route handler, on a sealed database; then the
 removal; then the same scan over every route and the native data. It runs inside the reviewer's fuzzer schedules for
 gate (e).
+
+**As run (written after the first runs; the plan above is kept as it was).** (1) EVSUB could not run: the joined
+account refuses any SSN input on purpose (`account.ts` 379-382, "Protected input requires a retention ruling"), so its
+submission notice never occurs there. T1 uses W0's rule DOCEXP instead, which has both properties asked for: it copies
+a subject's document `docType` and `expiresOn` verbatim into `notify.document-expired`, and that notice exists only if
+the protected expiry date is in the past (`kernel.ts` 551-607; R1 covers `ead` and `visa` documents). The protected
+attributes are `docType` and `expiresOn`; X's and Y's documents are expired, Z's is not (so Z has no notice), and W
+(account B) is expired. (2) T2 became the in-process schedules of `era4/races.clj` (gate (e)), which write derived
+documents through the gateway's route handler in DX-ACT9's shapes. (3) With the option off the derived writers cannot
+run on a sealed database at all (section 6.1, first finding), so the failing test runs on an unsealed protected database,
+the only setting where today's notices are recorded; the sealed refusal is recorded as its own row.
 
 ## 3. Design
 
@@ -270,4 +282,134 @@ header names one of them. The header is in clear exactly so that this needs no l
 | `TX2_DERIVED_SEAL=1` (gateway) | off | the routes `POST /v2/db/{db}/derived-seal` and `derived-open` (section 3.1); on a database that is not sealed and protected they answer 409 `DerivedSealNeedsSealedScope`. Otherwise every route answers byte for byte as before. |
 | `TX2_DERIVED_SEAL=1` (client) | off | recorded notices, ledgers, settled stored changes and the recipient's records are written sealed (3.1 to 3.4); readers open them; the recorder forgets and re-records a subject whose records open as removed; held readers key their caches on the removal sequence. |
 
-<!-- RESULTS -->
+## 5. What was built (behind `TX2_DERIVED_SEAL`, default off)
+
+| File | Change |
+| --- | --- |
+| `gateway/derived_seal.clj` (new, loaded only with the option: `main.clj` resolves it at call time) | the routes `derived-seal` and `derived-open` (3.1); `preview-ok?`; `removal-tx-id` |
+| `gateway/main.clj` | the two routes in the dispatch, under the request's published cut (written with `if`, `let` and calls only); with the option on, two hooks set at load |
+| `gateway/privacy.clj` | two plain values (`derived-preview`, `derived-tx-id`), nil unless the option is on |
+| `gateway/storage.clj` (two places) | a staged preview on a sealed scope is served when `derived-preview` says its staged rows hold no protected attribute |
+| `gateway/erase.clj` (one line) | a removal's transaction ID comes from `derived-tx-id` when it is set |
+| `lab/bench/lib/derived-seal.ts` (new) | the client: which rows a world was built from, seal and open through the routes, the removed marker |
+| `actv-lazy/decision.ts`, `notify1/journal.ts` | each world and each evaluation carries the IDs of the string rows it was built from (3.2) |
+| `actv-lazy/join/recorded.ts` | deliveries and ledger items sealed; ledgers opened; a subject whose ledger opens as removed is forgotten and takes a new generation (`recorded-generation:<subject>`); `openedPackets` |
+| `notify1/receiver.ts` | the recipient's per-subject state `{g, e}`, each item sealed under the source's assertions; a higher generation starts it again; a delivery that opens as removed is not applied |
+| `actv-lazy/join/archive.ts` | each settled change unit sealed (`["", sealed]`); readers open them (`openChanges`) |
+| `actv-lazy/join/account-tickets.ts` | `copyCheck`, `settledCurrent`, `markerCurrent` return the current frontier instead of refusing (the copies they guarded are sealed) |
+| `actv-lazy/join/account.ts` | the account's walk of its source accepts a removal's transaction (only `erase` changes) |
+| `actv-lazy/read.ts` | every held reader keys its answer cache on the removal sequence (row 19) |
+| `era4/run.sh`, `derived.ts`, `serve.clj` | T1 |
+| `era4/races.clj`, `inproc.sh`, `series.sh` | gate (e) in process, and the cost phase |
+| `lab/bench/lib/derived-seal.test.ts` | unit tests (4) |
+
+### 5.1 Three faults found on the way, each blocking derived copies on a sealed database or the stream after a removal
+
+All three are older than this branch and are fixed here only under the option (every default unchanged).
+
+1. **With every option off, the derived writers cannot run on a sealed database.** Their transactions read their own
+   staged documents, and on a sealed scope the gateway refuses every staged preview ("A protected row preview requires
+   a guarded save", `storage.clj` 661 and 786), because preparing a preview seals protected staged rows and so issues
+   keys outside the writer's lock. T1 off, sealed: refused at the first derived write (the census install). Under the
+   option a preview whose staged rows hold no protected attribute, directly or inside a change record, is served (it
+   seals nothing); one that holds one is still refused. Consequence that stays: **a lazy account cannot save a
+   protected attribute on a sealed database** through `JoinedAccount.save` (its transaction previews the protected row),
+   with or without this option; T1's later saves are of unprotected attributes.
+2. **After any removal, the SDK cannot read past the removal's transaction.** A removal writes its transaction as
+   `_tx/erase-<uuid>` (`erase.clj` 134); the SDK's and core's `TransactionId` accept only `_tx/` and 26 characters
+   (`core/src/Branded.ts` 42-44), so every feed read that crosses a removal fails ("Schema validation failed", the same
+   fault as DX-ACT9's enrolment beside removals), and with it every save of a lazy account (T1 off: the first save
+   after the removal fails). Under the option a removal's transaction takes a well-formed ID (128 random bits in base
+   32); nothing in the gateway or the SDK reads the old prefix.
+3. **The lazy account's walk of its own source stops on a removal's transaction** ("Unclassified native writer left
+   the joined source open", `account.ts` 280): it accepts only the writers it knows. Under the option it also accepts a
+   transaction whose changes are all `erase` records (a removal writes no content of the source).
+
+A fourth limit is W0's, not the store's: **the W0 kernel accepts a removed value only for `ssn`** (`w0/src/schema.ts`
+69 is the only attribute declared erasable); a world holding a removed `docType` or `expiresOn` is `W0.E_VALUE` and is
+not evaluated at all. So after a removal of any other attribute, that subject's evaluation stops until the removed
+value leaves its world. T1 unlinks X's document (an unprotected reference) before X's next save. The reconcile index
+(`actv-delta/rules.ts` `describe`) refuses the same worlds.
+
+## 6. Results
+
+Mac, toy size; every time is diagnostic. Every container ran the pinned runtime image by ID,
+`sha256:21a67288007d...` (`tx2-datomic:1.0.7745-da00`), with this head's gateway source copied in and its SHA-256 recorded
+(`gateway-source-sha`); each run records `image-ran` and fails on a mismatch. Evidence: `evidence/DX-ERA4/` (the owner's
+project folder, not the repository).
+
+### 6.1 Gate (b): the failing test turns green (T1)
+
+After the removal is acknowledged (and the keys are shredded, grace 0), occurrences found by the scan of section 2:
+
+| Arm | X's removed expiry date | X's notice `version` (derivative) | X's item `id` (derivative) | Y's kept date (scan works) | Control (unprotected) |
+| --- | --- | --- | --- | --- | --- |
+| **off**, unsealed (`T1-off-unsealed-final`) | **100**, in 21 places | **37**, in 13 | **92**, in 20 | 108 | 39 |
+| off, sealed (`T1-off-sealed-final`) | refused at the first derived write (`ProtectedPreviewUnavailable`, 5.1 item 1) | | | | |
+| **on**, sealed (`T1-on-6`) | **0** | **0** | **0** | 112 (29 places, opened with the keys the store holds) | 40 |
+
+Where the off arm found X's removed date: current rows, history, rows pinned before the removal and pinned history of
+the settlement archive, the notice archive and the recipient (12 each), their journal entries (5), the client's ledger
+and recipient reads (6), and the native data of the source (5: masking keeps the bytes), the recipient (15) and both
+archives (15 and 6). The client's own packet and stored-change reads refused ("Discard the old protected input cut");
+the routes and the raw data did not. In the on arm every sealed record found in any place (up to 17 per place) was
+opened with the keys the store still holds: X's opened as removed, Y's and W's to their values.
+
+{{T1LATE}}
+
+### 6.2 Gate (c): the chain, the other subjects and accounts, delivered once
+
+On arm (`T1-on-6`): after the removal the recorded packets of account A read and verify their chain (`orderedPackets`
+asserts every `previous` hash and the cursor's count); X's delivery reads `{subject, generation, removed}`; Y's
+deliveries are byte for byte what they were before; account B's packets are byte for byte what they were; a second
+delivery of everything added 0 effects. Off arm: the packets of A are refused after the removal (the stamp check), so
+the chain cannot be read through the store; account B is unchanged.
+
+### 6.3 Gate (d): the notice stream continues exactly
+
+On arm: after the removal, Y's pay change, X's document unlinked and X's pay change (3 events) were recorded and
+delivered; each event's deliveries were compared with an oracle that does not read the recorder's ledgers or seals (W0's
+kernel on each subject's world read through the gateway at the event, folded with `W0.publish`, a subject forgotten at
+its first event after a removal of an assertion its items were computed from): **3 of 3 equal, 0 differ**; before the
+removal 3 of 3 (A) and 1 of 1 (B). X's new notice (`notify.pay-change-approval`) is generation 1, sequence 1; Y's is
+generation 0, sequence 1. Off arm: the stream stops at the first save after the removal (5.1 item 2). DX-ACT9's "the
+recorder stops for good" is gone under the option: nothing refuses the recorder. The independent form rule
+(`form-expect.ts`) applies to form-adding releases of the deep profile; T1's W0 release adds no form, so it was not run.
+
+### 6.4 Gate (e): races in process
+
+{{SERIES}}
+
+### 6.5 Gate (a): every option off
+
+| Check | Result |
+| --- | --- |
+| Stored-function identities (`act9/idents.sh`, seven writer settings, runtime image by ID, this head against the base `c2aa3d416`) | **60 of 60 equal in all seven settings** (base, server, server-wide, server-wide-hints, serial-retire, owner-head, every other option on) |
+| Native log (`era2/gate.sh` phase `paired`, base `c2aa3d416` twice, this gateway options unset, and the per-account option on with the database never moved) | **identical**: 653 and 698 datoms, `d4b11ca6...` and `5197942f...`; every reply identical |
+| The same with `TX2_DERIVED_SEAL=1` added to the last arm (information) | the same datom counts and every reply identical; the log hash differs, as it must: a removal's transaction ID takes the new form (5.1 item 2) |
+| Unit tests | `derived-seal.test.ts` 4 of 4; `account-tickets.test.ts` 6 of 6 |
+| Type check of the lazy lane | 20 errors, the lane's known 20, none in a file this work changed |
+
+### 6.6 Gate (f): the removal branch's gate set, the account-ticket gate set and the reviewers' tests, every option on
+
+{{GATEF}}
+
+### 6.7 Gate (g): what it costs
+
+{{COST}}
+
+## 7. What the store now promises about derived copies, and what it cannot
+
+{{PROMISES}}
+
+## 8. The server run (written, not run)
+
+{{SERVER}}
+
+## 9. Not verified
+
+{{NOTVERIFIED}}
+
+## 10. Follow-ups
+
+{{FOLLOWUPS}}
