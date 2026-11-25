@@ -41,8 +41,12 @@
 (defn- seal-all [src xs]
   (let [rs (mapv #(a5/seal-many src %) (partition-all 512 xs))]
     [(mapv :status rs) (vec (mapcat #(get-in % [:body "items"]) rs))]))
-(defn- open-all [src wires]
-  (mapv :status (mapv #(offers/route src "v2" "derived-open" {"items" (vec %)}) (partition-all 512 wires))))
+(defn- open-all
+  ;; [DX-ERA4, after L1] a placed record opens only for the place the reader states
+  ([src wires] (open-all src wires nil))
+  ([src wires place]
+   (mapv :status (mapv #(offers/route src "v2" "derived-open" {"items" (mapv (fn [w] (if place {"record" w "place" place} w)) %)})
+                       (partition-all 512 wires)))))
 
 (defn measure []
   (doseq [p [1 2 5 20]]
@@ -72,9 +76,9 @@
                                            :off-write-clear (timed #(:status (offers/send src (assoc (g/save-frame (str "c6-" p "-" (swap! n inc)) "settlement-values-a:answer:c6" ":notice/body" (subs clear-doc 0 41000) nil nil) "erasureSeq" (t) "erasureAccounts" ["a"]))))}
                    :settlement-frame-64x20 {:on-seal (timed #(first (seal-all src frame20)))}
                    :notice-frame-one-subject-owing-200-forms {:on-seal (timed #(first (seal-all src owes200)))}
-                   :subject-page-6-changes {:on-open (timed #(open-all src page6))
+                   :subject-page-6-changes {:on-open (timed #(open-all src page6 (str "cost|a|" (subjects 0))))
                                             :off-read (timed #(:status (offers/route src "v1" "read" {"entityIds" ["settlement-values-a:answer:c6"]})))}
-                   :subject-page-400-items {:on-open (timed #(open-all src page200))}}]
+                   :subject-page-400-items {:on-open (timed #(open-all src page200 (str "cost|a|" (subjects 0))))}}]
           (println "ERA5_COST" (pr-str row)))))))
 
 (defn main []
