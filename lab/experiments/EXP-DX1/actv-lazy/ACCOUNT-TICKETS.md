@@ -268,4 +268,105 @@ and every option on, `TX2_ACCOUNT_TICKETS=1` included). Evidence: `evidence/DX-A
 
 <!-- IDENTS-FINAL -->
 
+## 10. Results: what a removal in one account stopped in other accounts, before and after
+
+Mac, toy size, diagnostic times; every count below is from the run named. Private image `sha256:8924e7252497`
+(receipt `agents/DX-ACT9/image-adcbc8253.json`, its Datomic sources equal to the branch head's, `srccheck` before each
+stack run); in-process runs on runtime image `sha256:21a67288007d` with the head's gateway source copied in. Evidence:
+`evidence/DX-ACT9/runs/` (the owner's project folder, not the repository).
+
+### 10.1 The many-accounts miniature (gates b, c, d, g)
+
+`act9/cells.sh`: ten publishing accounts, the first (A) removes, each removal on a fresh entity of A that belongs to no
+subject; 30 s (ten shape) or 50 accounts, one round each, removals in a 51st account doing nothing else, 60 s (many).
+"Refused" counts every refused try (Publish and settle are tried up to three times a round).
+
+| Cell | Removals done (p50, p99 ms) | Other accounts: Publish / settle / deliver / read refused | Other accounts' rounds complete | A refused | Exactness |
+| --- | --- | --- | --- | --- | --- |
+| before, 1/s, ten | 11 (1,461, 8,187) | **98 / 93 / 31 / 31** | **0 of 50** | 11 / 9 / 3 / 3 | no account had every round settled, none checked |
+| before, 10/s, ten | 238 (58, 975) | **1,286 / 21 / 7 / 7** | **0 of 433** | 133 / 3 / 1 / 1 | none checked |
+| after, 10/s, ten | 16 of 17 offered (692, 5,825; one 503) | **0 / 0 / 0 / 0** | **38 of 38** | 0 / 0 / 0 / 0 (1 round, complete) | 10 of 10 accounts exact; 0 notices delivered late, 0 twice |
+| before, 1/s, many (50) | 61 (83, 1,322) | **141 / 24 / 8 / 8** (42 of 50 accounts' Publish refused all three tries) | **0 of 50** | (does nothing else) | none checked |
+| after, 1/s, many (50) | 61 (55, 5,411) | **0 / 0 / 0 / 0** | **50 of 50** | — | 50 of 50 exact; 0 late, 0 twice |
+| after, 1/s, ten | <!-- B2-AFTER1 --> | | | | |
+
+Every refusal in the before cells is `ErasureFrontierChanged` ("Discard the old protected input cut", "Recorded notices
+belong to an earlier removal sequence"). The miniature's own end checks (every subject's root and form at the final
+head against the oracle, every account) passed in every cell that finished.
+
+**The after arm's removal rate.** Removals in one database run one at a time, and under the option a removal of A also
+waits for A's own derived writes in flight (they hold A's lock from their check through their commit); the after cells
+also carry nine accounts' completed rounds, where the before cells carry almost none. So at "10/s" the after cell did
+17 removals in 30 s against the before cell's 238. Its claim "0 refused elsewhere" rests on 17 removals, the in-process
+gate (10.2) and the many cell (61 removals). Removal on request in A was never refused by the option.
+
+**Enrolment beside removals is broken in both arms (found, not fixed).** Every cell enrolled two more accounts during
+the removals; all twelve enrolments failed, in both arms: `ReadError: Datomic read failed (Schema validation failed)`,
+one `677 !== 676`, and in the before arm one `ErasureFrontierChanged` at its first Publish. The held enrolment walks
+every commit between its first and last write (`join/account.ts`, the `beside` walk) and stops on a removal's
+transaction in that window (its journal decode, or the walk's position check). Enrolment carries no removal ticket
+(section 2, W2), so this option does not touch it; it predates this branch's code (DX-ACT8's walk meeting DX-ERA2's
+removals) and is listed under not verified.
+
+### 10.2 Gate (e) in process: removal completeness, 1,000 schedules per arm
+
+`act9/tickets.clj` (loaded after DX-ERA2's gate and the review's `era3/attack.clj`, whose hooks stop a removal at any
+step). Each schedule: subject X of account A and Y of account B seeded with protected values; eight derived writes
+(settlement frame, notice frame, Publish marker, delivery into a recipient database; for A and for B) copy their
+subject's value under a ticket read before the removal of X, each sent at a random point (before, at the same moment,
+after its intent, inside its commit, after its guard, after its native commit, after its first answer, after its
+resume); the removal stopped at a random step (none, **its intent written but not committed**, **committed but not
+published**, at its publication, after its guard) and resumed. Block checks after every 50 schedules: no copy of a
+removed value in any journal page (the readable form), feed entry or native datom, source or recipient, except X's own
+removed assertion and the copies that landed before the removal's position.
+
+| Run | Oracles | Violations | B's derived writes committed | A's derived writes sent at or after the removal's intent | Copies made before a removal (source, recipient) |
+| --- | --- | --- | --- | --- | --- |
+| after (`TX2_ACCOUNT_TICKETS=1`) | 8,307 | **0** | **4,000 of 4,000** | all refused (2,208 409, 1,205 503); 587 sent before or with its start committed, each before its position | 429, 158 |
+| before | 2,283 | **0** | **544 of 4,000** (3,456 refused: 2,211 409, 1,245 503) | all refused | 405, 154 |
+| after, `TX2_IMPORT_WHOLE_SUBJECT=1` too | 8,357 | **0** | **4,000 of 4,000** | all refused (3,446) | 442, 112 |
+
+Stops drawn (after run): none 336, intent written not committed 162, committed not published 158, at publication 170,
+after its guard 174 (the guard step is reached only on the removal's held path, which no schedule took: those 174 ran as
+"none"; DX-ERA2's hammer gate drives the held path, 30 rounds).
+
+### 10.3 Gate (e) on a stack: the top cases (`act9/stack.sh`, `era3/stack.sh`)
+
+A removal of a1 (account a) stopped with its gateway killed; on the read gateway, tickets read before it (seq 0):
+
+| Case | Frame a | Frame b | Frame, no account | Delivery a | Delivery b | Delivery, no account | Resumed | Delivery a again | a1's value after (source read, journal; recipient read, journal) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| committed, not published; after | 503 | **200** | 503 | 503 | **200** | 503 | 200 (seq 1) | 409 | 0, 0; 0, 0 |
+| the same; before | 503 | 200 | 503 | 503 | **503** | 503 | 200 | 409 | 0, 0; 0, 0 |
+| intent recorded, not committed; after | 503 | **200** | 503 | 503 | **200** | 503 | 200 | 409 | 0, 0; 0, 0 |
+| the same; before | 503 | 200 | 503 | 503 | **503** | 503 | 200 | 409 | 0, 0; 0, 0 |
+| `era3/stack.sh` option 1, every option on | — | — | 503 | — | — | — | 200 (seq 1) | resent no-account frame 409 | derived copy not readable; a1 not readable |
+
+The "intent recorded" rows were meant to stop the removal after its declaration and before its intent; the intent
+write, waiting on a table lock, completed in PostgreSQL after its gateway was killed, so the state reached was the
+review's other case (`act9/stack.sh` header). The declared-only state is DX-ERA2's in-process `orphan` case (10.4).
+Frame b commits in both arms: DX-ERA2's rule already honours a ticket naming its accounts in the same database. The
+difference the option makes on the gateway is the cross-database delivery (3.2): delivery b 200 instead of 503.
+
+### 10.4 Gate (f): every option on together
+
+| Gate | Result |
+| --- | --- |
+| DX-ERA2's gate (`era2/gate.sh`, `ERA2_EXTRA_ENV="TX2_ACCOUNT_TICKETS=1 TX2_IMPORT_WHOLE_SUBJECT=1"` on every per-account run), head `a8870e290` | interleavings database-wide 360, per-account 695, subject-check 8,963 checks, **0 failed**; race loop 1,000; hammer 30 rounds; frame race 40 (20 no-account `cas-failed`, 20 account fence); the review's attacks and fuzzer 1,979 and 1,988 oracles, **0 violations**; suites 76 tests, 71,170 pass, 1 error (the same `http-route` error as the base) |
+| (its first run, `28bb0d46c`) | 1 of 691 and 1 of 8,959 failed: `named-absent`'s import step was refused earlier than the case expects (IMP2's rule declines an import of a removed family at validation, 409 `ErasureReplayDeclined`, so it never reaches the plan the case holds). The case now expects that refusal when `TX2_IMPORT_WHOLE_SUBJECT=1` (`era2/gate.clj`) |
+| IMP2's removal gate, every option on, the database moved per account (`imp2/gate.sh`, `DX_IMP2_MOVE_PER_ACCOUNT=1`) | **30 of 30** (IMP2's 28 and the two moves) |
+| ACT8's adversarial schedule, every option on (`ha1 load-fair`, `DX_ACT8_PARTS=adversarial`) | <!-- TOY-ADV --> |
+| gate (e) in process with every option on | 10.2, third row |
+| `era3/stack.sh` option 1 with every option on | 10.3, last row |
+
+### 10.5 Gate (a): every option off
+
+| Check | Result |
+| --- | --- |
+| stored-function identities | 58 of 58 in seven settings (section 9) |
+| native log (`era2/paired.clj`, base `2e7ae66c4`) | options off: identical to the base (653 and 698 datoms, `d4b11ca6...`, `5197942f...`), in every gate run; with `TX2_ACCOUNT_TICKETS=1` on (database not moved): identical; with `TX2_IMPORT_WHOLE_SUBJECT=1`: different, as IMP2's option makes a removal record the families it names |
+| ACT8's toy gates (`ha1 load-fair`, holder DX-ACT9): every part, this option off | <!-- TOY-G1 --> |
+| the held runner's default campaign | <!-- TOY-R1 --> |
+| unit tests | `account-tickets.test.ts` 5 of 5; type check: no error in a file this work changed (the lazy lane's 20 errors are in five files the branch does not touch and in `load1/snapshot.ts`, which is byte for byte IMP2's head; the miniature 0) |
+
 <!-- RESULTS -->
