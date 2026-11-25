@@ -6403,3 +6403,15 @@ Source: removal builder message. Branch `exp/DX-B2-key-deletion` `46a8f746a` (ga
 - The same two fixes are on the removal branch (`6f174d6bf`).
 
 **Action:** the reviewer of the standalone branch resumed for a short re-check of the fix (can the server's own error text or a key file's name carry key material or identify a subject; can the rate limiter hide a first occurrence). The merge takes `46a8f746a` only on its word. The removal builder has started its sixth pass.
+
+## 2026-11-25 07:42 EST: standalone key-deletion fix cleared by its reviewer: "merge 46a8f746a"; sent to the merge
+
+Source: independent reviewer's re-check, branch `exp/DX-B2R-key-deletion-review` `801ef756a` (section 7 of its review page, test `b2r/lines2.clj`).
+
+- The change since the first review is `failures.clj` only (68 lines added, 6 removed); the key-deletion pass and every caller are byte-identical to what was reviewed.
+- F9 tested on a real PostgreSQL server and driver through the gateway's own statements: a duplicate key handle, a unique violation on a 15-byte wrapped key (under the hex guard's threshold) and a check violation whose server detail line echoes the row: the failure line prints the error code and the constraint name, never the handle or key bytes. Key file names are a hash of the assertion ID, not a subject, entity or value.
+- Rate limiter: the first line of each kind always prints (10,000 databases failing once printed 10,000 lines); counters never skipped.
+- Reruns on the fixed code: fuzzer 5,000 schedules on each authority, 0 violations; scenarios 43 of 43 on both.
+- Notes, none blocking: the hex and base64 guard can be evaded only by code installed in the database; a new description of an existing kind of failure waits up to a minute; the limiter never forgets an entry (a handful under one database).
+
+**Action:** the merge agent told to merge `46a8f746a` into the one branch at its next clean point, run the fix's gate on the merged tree on both authorities as a standing gate, and report the pushed head before continuing.
