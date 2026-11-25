@@ -103,7 +103,20 @@ for arm, _, rest in rows: by.setdefault(arm, []).append(rest)
 same = len(by.get("base", [])) == 2 and by.get("base") == by.get("base2") == by.get("off") == by.get("on") == by.get("commit")
 print("ERA2_PAIRED_LOGS", "identical" if same else "DIFFERENT", {k: len(v) for k, v in by.items()})
 for arm, v in by.items(): print(arm, *v, sep="\n  ")
-sys.exit(0 if same else 1)
+# [DX-ERA2 fifth pass] R2-2 is fixed on every mode (the coordinator's ask), so the import replay the workload sends
+# with no frame source is declined AND its command recorded, on this gateway with the option off too: 11 datoms (two
+# attributes, one record). The gate: every arm identical once exactly those datoms are left out, none on the base,
+# and the same 11 on every arm of this gateway.
+def key(r):
+    d = dict(re.findall(r':([a-z0-9-]+) ("[^"]*"|[0-9]+|true|false)', r))
+    return (d.get("sealed"), d.get("sha256-without-r22"), d.get("reads"), int(d.get("datoms", 0)) - int(d.get("r22-datoms", 0)))
+def r22(r): return int(dict(re.findall(r':([a-z0-9-]+) ("[^"]*"|[0-9]+|true|false)', r)).get("r22-datoms", "-1"))
+keys = {arm: [key(r) for r in v] for arm, v in by.items()}
+same2 = len(keys.get("base", [])) == 2 and all(keys.get(a) == keys["base"] for a in ["base2", "off", "on", "commit"])
+counts = {arm: [r22(r) for r in v] for arm, v in by.items()}
+expect = all(counts.get(a) == [0, 0] for a in ["base", "base2"]) and all(counts.get(a) == [11, 11] for a in ["off", "on", "commit"])
+print("ERA2_PAIRED_LOGS_WITHOUT_R22", "identical" if same2 else "DIFFERENT", "r22 datoms", counts, "as expected" if expect else "UNEXPECTED")
+sys.exit(0 if (same2 and expect) else 1)
 PY
 for arm in base base2 off on commit; do grep -h "^ERA2_PAIRED_REPLIES" "$out/paired-$arm.log" | md5 | sed "s/^/replies $arm /"; done
 fi
