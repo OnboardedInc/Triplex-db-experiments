@@ -5,7 +5,248 @@ Builder DX-ACT8, 2026-11-24, branch `exp/DX-ACT8-publish-beside-saves` from `exp
 work is correctness at toy size; every Mac time is diagnostic, every count exact. Nothing here ran on a server. Every
 option is default off; with nothing set every existing path is unchanged.
 
-Sections 1 to 6 are the design, written before any code. The results follow from section 7.
+Section 0 is what an independent review found and what changed after it. Sections 1 to 6 are the design, written before any code. The results follow from section 7.
+
+## 0. What the independent review found, and what changed after it (2026-11-24; the first commit after it at 19:56 local)
+
+**What the review found.** An independent adversarial review (DX-ACT10, `lab/experiments/EXP-DX1/act10/REVIEW.md`,
+`a1163648e`) found that the two narrowed guards this page adds held: the account guard on a Publish and the progress
+guard on settlement frames gave the stored changes, notices, ledgers and reads the positions say they must in 20,000
+randomized schedules (0 violations; both negative controls caught). It found seven other faults. Three were serious:
+
+1. **F1, a break: a lost Publish that was acknowledged.** Command IDs are unique in the whole database, and a Publish
+   looked its command up as `joined:<id>` with an intent that named the database, not the account. Two accounts that
+   published with the same command ID and document: the second was told it published and got the first account's
+   receipt; nothing was written for it.
+2. **F2: Publishes refused for good.** With definitions by reference, the definitions write's command ID was the hash
+   of the content alone, while its rows are under the account's names. Once one account had stored some definitions,
+   every other account storing the same ones (in the lab, every account's first release) was refused, five tries, and
+   could never publish by reference again.
+3. **F4: a paused account still wrote.** Under the progress precondition a frame that passed the pause check before a
+   pause landed committed after it (one frame per writer); under both preconditions the worker kept the control cached
+   for 250 ms, so frames planned after the pause still went (up to 5 in the test).
+
+The other four: **F3** a release whose notice ledger could not be written was acknowledged and then stopped every later
+notice of its account; **F5** a values frame planned before a later release could land after it and leave the earlier
+release `stored` instead of `superseded`; **F6** a rival enrolment of the same account refused the other's walk instead
+of being recovered; **F7** this page's adversarial gate wrote only facts of the subject itself, with the publishing
+account's own save tape off.
+
+**Where this page was wrong.** Section 2 said nothing a Publish reads lives outside its own account's names: its command
+lookup and its definitions write's command ID did (F1, F2). Sections 5 and 6 said a Publish or a rival enrolment that
+landed is "recovered by its command ID": a Publish recovered another account's record (F1), and a rival enrolment was
+refused, not recovered (F6). Section 9.6 implied that a pause stops frames (F4). The supersession sentence taken from
+SETTLEMENT-LIVE 2 was false in F5's case. Each place is corrected below and marked "[corrected after the review]".
+
+**The rule now, in one sentence: no lookup by a key the client or the content chooses crosses accounts.**
+
+### 0.1 Each finding, its fix, and the test that now passes
+
+Every fix is behind an option that is off by default; with the options off every path is as before and the review's
+tests still show the faults (they are kept as the controls). In-process tests run the real `JoinedAccount`, `Archive`,
+`RecordedNotices` and `Settlement` code on the review's in-memory store (`act10/memstore.ts`); stack runs are on the
+held toy stack, each started by image ID from the image built from this branch (section 14).
+
+| # | Fix (option) | Test now (counts) | The same test with the option off (the control) |
+| --- | --- | --- | --- |
+| F1 | `TX2_ACCOUNT_KEYS=1`. A namespaced held account's joined command ID is `joined:<account>/<id>` and its intent hashes the account (`account.ts` 92-93, 574-576). A record written before the option (`joined:<id>`) is still read: it is accepted only if it wrote this account's own documents (`account.ts` 488-496, `original`); the single-account layout keeps `joined:<id>`. Deadlines go through the same `execute`, so their `deadline/<sha256>` IDs are scoped the same way. | X1 under both Publish rules: the second account lands at its own position (11 and 12), 1 release each; X2: the second account's different document publishes (1 release); X5, an old record: read again at its position 11, the other account's Publish distinct (12), a reused ID with another document still refused. Stack (run `Sfix`): X1 positions 28 and 29, `secondHasFirstsReceipt: false`, 1 release each; X2 the same account's own reuse with a different document refused ("Reused command ID has different input"), as it must be. | X1: the second account gets the first's receipt (position 11 = 11, 0 releases, tail 0); stack (run `Soff`): both at 28 with the same transaction ID, second account 0 releases. |
+| F2 | The same option. The definitions write's command ID is `definitions:` + SHA-256 of the account's definitions prefix and the nodes (`definitions.ts` 239). Old records need no read: definitions are content-addressed and guarded by `EntityState` (created only if absent), so a write under the new ID over stored rows changes nothing. | X3: the second account publishes by reference (1 release, tail 1); X4: 3 of 3 by-reference Publishes land (4 and 2 releases); fuzzer with both accounts by reference, 500 schedules: **0 violating** (20 refused tries, all in schedules with racing Publishes of the same account or a killed publisher; in any other schedule a refusal counts as a violation). Stack: X3 and X4 by reference land (positions 34, 38, 42). | X3 refused ("commit receipt differs from the request (command definitions:4724bb34...)"); X4 3 of 3 refused; fuzzer 232 of 500 schedules violating; stack: X4 and X3 by reference refused. |
+| F3 | `TX2_LEDGER_CAP_AT_PUBLISH=1`. Before anything is written, a Publish is refused (`ReleaseTooLarge`) when one subject could owe more notice items, across this account's releases, than its ledger can be written with (`account.ts` 651-670, called at 850 before the definitions are written and at 877 in the plan). The count: every notice policy of every release of the account (retired items stay in ledgers) plus up to twice the base rules (`ledger-parts.ts` 190); the size: a packed ledger of that many items with the longest IDs and 31 due dates (`ledger-parts.ts` 181, measured 15%, 6.5% and 5.9% above the real ledger at 200, 1,000 and 1,500 forms, so it refuses early, never late); the limit: 10 parts of 10,240 characters with ledgers in parts, one value per frame without (`ledger-parts.ts` 159). The message gives both numbers and what to do: "Publish a release with fewer notice policies (this account's releases can hold about N)". **The limit depends on the ledger mode, which the Publish reads from its own process (`TX2_NOTICE_LEDGER`); the processes that settle the account must use the same mode** (a publisher in parts with a settler writing whole ledgers would let F3 through again; the reverse refuses early). The first fuzz runs of ledgers in parts set the mode only for their settlers, and the cap, reading whole, refused every 200- and 1,000-form release (364 of 400 and 27 of 30 schedules "violating", all of them that refusal); rerun with the mode set for both (below). Follow-up 8. | C1 with the option: the 1,750-policy release refused at Publish with "one subject could owe 1772 notice items ... about 103432 characters, over the 102400 the settlement can write for one subject (10 parts of 10240 characters)", 0 commits written; a 1,000-form release then publishes, and the account's next release publishes and its notices are recorded (cursor at event 4). | C1: acknowledged, then 3 of 3 ledger writes refused (`FrameTooLarge`, 11 parts needed, 1,751 items) and the later release's notices never recorded. |
+| F4 | `TX2_SETTLE_FRAME_GUARDS=1`. Each frame reads the account's control row at the same position its guard is read (no cache), waits while paused, and otherwise carries the control row in its guard (`settlement-control.ts` 79-89, `archive.ts` 220-233). **The bound: after a pause is acknowledged at position x, no settlement frame of that account commits after x (N = 0), under both preconditions.** Under progress a frame read before the pause names the control row's earlier live fact in its `EntityState` guard, so the pause refuses it at its transaction's begin or at the serial cut; under head the pause moves the head, which refuses it. The refused frame plans again and finds the pause. Cost: one control-row read per frame, where the cache allowed one per 250 ms. | P1 (a pause landing while a frame is in flight): 0 frames after the pause under head and under progress; P1b (40 ms frames, pause inside the cache window): 0 and 0. Stack (run `Sfix`): P1-head 0, P1-progress 0 value frames after the pause. | P1: 0 (head) and 2 (progress: one values, one notice frame); P1b: 2 and 5; stack (run `Soff`): P1-progress 1 frame after the pause (at 48, the pause at 47). |
+| F5 | The same option: **a guard, not a corrected sentence.** A values frame also carries the account's notice tail row read at its source position (`archive.ts` 277-279); a held account's tail changes only at a Publish, so a frame is refused exactly when a later release lands, and the next frame marks the release superseded. Chosen over correcting SETTLEMENT-LIVE 2 because it makes the stored state the same under both preconditions for one read per frame; the earlier sentence ("the next frame marks it superseded") is now true. Consequence: as under the head precondition, a release superseded in the middle of a split subject keeps that subject's first part only; no reader consults a superseded release's pages, and the gate checks that part against the oracle's first changes. | Fuzzer, 20,000 schedules with the option (which makes `storedAfterSuperseded` and `pagesAfterSuperseded` violations): 0 and 0; 14,549 supersessions, each with only the frame that marks it. Stack (run `Sfix`): S2 under head and under progress: `superseded`. | Fuzzer, 5,000 schedules with the option off: 512 releases `stored` although a later release landed before their last frame, 515 pages written after it (not violations without the option); stack (run `Soff`): S2-progress `stored`, its progress row at 53 after the later release at 52. |
+| F6 | `TX2_ENROL_BESIDE_SAVES` itself (no new option): the walk accepts a commit whose command ID is this account's own enrolment command (`join-held-enrolment:<account>`), and the enrolment then recovers that record (`account.ts` 284). | E1, 300 races: 204 with both enrolments returning the one record, 96 with no rival, **0 refused**; always one enrolment record. | E1: 111 of 300 with one enrolment refused ("Unclassified native writer left the joined source open"). |
+| F7 | The gate (no option): in the adversarial window the publishing account's own save tape runs (23.5 per second, `DX_ACT8_ADV_OWN`, 0 for the earlier gate); two new kinds of write: a child entity linked by reference (a new file document with an expiry, linked by `:person/file`) and a reference removed (a `:person/file` link retracted); the independent form rule is narrowed only for the subjects the adversary changed, and (`dbc1f3c09`) only for the release right after the write (its notices reach the subject at that release's event), every other subject and release checked strictly (`beside-gate.ts` adversaryWrite, `Gate.settle`). Narrowed means the rule still checks every added-policy change and every form notice of that subject and leaves the base rules' notices (which it does not model) to the oracle, which checks every change and notice exactly in every step. "Shared configuration": a held account has none; every entity of a held world belongs to its subject (`heldWorlds` asserts it), and the jurisdiction and location entities exist only in the single-account W0 profile. Bitemporal writes (back-dated, future-dated) stay with the review's fuzzer, which ran them (the gate's oracle folds facts without valid-to). | Runs `G1f` (fixes on) and `Goff` (options off): 26 adversarial steps each, every one exact (section 8); `G1f2` with the per-release narrowing: 26 steps, each narrowed for at most the one subject written in it (for example `[1]`, `[7]`), the second-Publish and enrolment steps and every release after a write fully strict, every one exact. | — |
+
+**What the review's tests are now.** Its 16 tests (with the controls above and the new cases: 27 in all), its fuzzer and
+its stack part are a standing gate phase: `node --experimental-strip-types --test lab/experiments/EXP-DX1/act10/*.test.ts`,
+`act10/fuzz.ts`, `act10/isolation-fuzz.ts`, and the held toy runner with `DX_ACT10_STACK=1` (holder DX-ACT8 or
+DX-ACT10). At `59995bd36`: **27 of 27** with no option set, **27 of 27** with the three fixes set in the environment
+(each test sets its own options; the controls unset theirs), the held join's unit tests 31 of 31; the typecheck of
+`actv-lazy` and `act10` gives the 15 errors it gave before the review, all in `load1/snapshot.ts` and `prep1/*`
+(at `eca2e81d1`, which also types one lookup in the review's harness, `memstore.ts` 124, that the typecheck flagged,
+and again at `4e2811bb5`). The commits after `59995bd36` change only the gate (`beside-gate.ts`, which no test imports)
+and that type annotation.
+
+**Fuzzers, every fix on** (`TX2_ACCOUNT_KEYS=1 TX2_SETTLE_FRAME_GUARDS=1 TX2_LEDGER_CAP_AT_PUBLISH=1`):
+
+| Fuzzer | Schedules | Violating | Of note |
+| --- | ---: | ---: | --- |
+| The review's mixed schedules (`fuzz.ts`), seeds 10,000 to 29,999 | **20,000** | **0** | 44,284 acknowledged Publishes, 18,675 saves committed inside a Publish's window, 180,141 saves in all, 6,655 kills, 1,990,145 notices and 271,218 ledger reads checked; 14,549 supersessions, each with exactly the one frame that marks it (`storedAfterSuperseded` and `pagesAfterSuperseded`, violations under the option: 0) |
+| The same, ledgers in parts at 200 forms (400 schedules) and 1,000 forms (30), with `TX2_NOTICE_LEDGER=parts` for the publishers too (at `eca2e81d1`) | **430** | **0** | 895 acknowledged Publishes, 1,770 ledgers written in parts, 476,150 notices; the first attempt without the mode for the publishers: every large release refused by the cap (F3 row) |
+| Both accounts by reference (`ACT10_CROSS_DOCS=1`), seeds 50,000 to 50,499 | 500 | **0** | 1,092 acknowledged Publishes, 47,443 notices, 113 kills; control (options off): 232 violating |
+| **New: the cross-account isolation fuzzer** (`isolation-fuzz.ts`), whole ledgers 5,000 and ledgers in parts 5,000 | **10,000** | **0 differing** | 22,036 accounts, 48,616 Publishes, 0 refused in the shared database; control (options off), 1,000 schedules: 679 differ |
+| Negative controls with the fixes on: settlement at the read position (`DX_ACT8_INJECT=read-cut`) and the entity guards dropped (`ACT10_WEAKEN=entity`), 300 each | 600 | **caught**: 13 and 48 | the review's: 20 and 14 of 300 |
+
+**The cross-account isolation fuzzer** (new, `act10/isolation-fuzz.ts`). Each schedule puts two to four accounts in one
+database and has them share, on purpose, command IDs (`r1`, `r2`, `publish`, `x`, ...), documents (R1, R2, 20-form
+releases inline and by reference, an 8-form one), release names, definition content and subject keys (every account's
+subjects are `pl:s0000000k`), with account names that are prefixes of each other (`a-003`, `a-0031`), look like
+metadata names (`definitions`, `releases`) or differ only in case (`ACCT`, `acct`). Each account runs a random sequence
+of saves (fixed values, so the same in both runs), Publishes inline and by reference, and settlements. The same
+sequence of each account is then run alone in a fresh database. **Each account's result in the shared database must
+equal its result alone**: every Publish's outcome, its release list, every stored change, every recorded notice, every
+ledger (version hashes compared up to renaming, since they hash positions).
+
+### 0.2 Keys without the account that find a record in the one database
+
+Searched in the join code, the notice store, the lazy store, the Datomic client and the gateway, for every key, hash or
+name used to find a record: command IDs, content hashes, definitions, release names, notice streams, cursors and cache
+keys. Account names are `^[a-zA-Z0-9_.-]{1,60}$` (`store.ts` 126), so a name holds no `/`.
+
+| Key | Where | Account in it? | What was done |
+| --- | --- | --- | --- |
+| `joined:<id>`, a Publish's and a deadline's command ID, looked up before planning | `account.ts` 92-93, 488-500, 574-630 | **No** (F1) | Fixed: `joined:<account>/<id>` under `TX2_ACCOUNT_KEYS=1`; old records read and accepted only if they wrote this account's documents |
+| `definitions:<sha256(nodes)>`, the definitions write | `definitions.ts` 239 | **No** (F2) | Fixed: the account's definitions prefix is hashed in, same option |
+| A save's command ID chosen by the client (the SDK) | core `KvTriplesLive.ts` 466, gateway `commit.clj` 184 and `subject_save.clj` 105 (`:triplex.claim/command-id` unique in the database, `schema.clj` 64) | No | **Not fixed here; refused, never wrongly acknowledged.** A second account's save with a used ID is refused with 409 `command_already_committed` (`EntityHttpHandlers.ts` 121); the lazy store's own commit checks the found record against its own operations (`store.ts` 191-224) and refuses a foreign one; outcome recovery keys on a random operation ID (`DatomicStorageAdapter.ts` 582), not the command ID. So one account can block another's command ID and learn that it exists. The fix belongs where the API knows the caller's account (scope the claim by account); follow-up 4 |
+| A removal's command ID (on the removal branches, not this one) | `removal_commit.clj` 232-240 on `exp/DX-ACT9-account-tickets` | No | **Not on this branch.** Refused across accounts (409 `EraseCommandConflict`); a repeat with the same selectors returns the earlier removal, and selectors name entity IDs, which carry the account. Follow-up 4, for the removal branch |
+| `join-held-enrolment:<account>`, an enrolment | `account.ts` 317 | Yes (the single-account layout's `join-held-enrolment` has one account per database) | None needed |
+| `join-index-<i>`, `join-enrolment` | `account.ts` 433, 457 | No | Justified: the non-held `install` only, which runs in its own database per account |
+| `settled-values:<hash>` | `archive.ts` 310, 410 | Yes, through the identity, which hashes the release event's position (`archive.ts` 66-78); a position is unique in the database | None needed |
+| `settled-notice:<hash>` | `recorded.ts` 245, 313 | Yes: the cursor's hash chain starts at `hash([account prefix, epoch, "receiver-genesis"])` | None needed |
+| `settlement-control:<hash>` | `settlement-control.ts` 43 | Yes (`held.account` is hashed in) | None needed |
+| `join-stage:<attempt>` | `staging.ts` 53, 109 | Random attempt (`randomUUID`) | None needed |
+| A notice document's claim (every `Documents` commit) | `notify1/store.ts` 123-148 | Yes: `prefix + "claim:" + hash(id)`, and the prefix is `notice:v1:` + `hash([database, document name])` | None needed (a hashed name cannot collide by concatenation) |
+| The receiver's `received:<hash(account, epoch)>` | `notify1/receiver.ts` 30-32 | Yes within one source database (the packet's account is the source account's document prefix, `recorded.ts` 218, 303) | Justified for the one database; a receiver taking packets from two source databases whose accounts share a prefix and an epoch would need the source database in it (outside the one-database model) |
+| The settlement and control documents' names | `archive.ts` 173, `settlement-control.ts` 20 | Yes: `settlement-values-<account>`, `settlement-notices-<account>`, `settlement-control-<account>`, hashed into the prefix | None needed |
+| Release, origin, clock, mask and cursor names | `store.ts` 125-135 | Yes: `<name>/<account>`; the definitions prefix `lazy/account/releases/<account>/definitions/` | None needed: no account name holds `/`, and a definitions key is 64 hex characters, so no account's names equal another's (the review's N1 and the isolation fuzzer's name pools check it) |
+| Compiled releases by hash (one map per process) | `definitions.ts` 147-156 | No | Justified: keyed by the content hash and checked on entry (`compiled.hash === claimed`), so a hit is the same content whichever account asks |
+| The lazy reader's answer cache; the archive's and recorder's window keys | `read.ts` 96, `archive.ts` 385, `recorded.ts` 275 | Per instance; each instance belongs to one account | None needed |
+| The Datomic client's row and entity caches | `RowCache.ts` 110-132, `DatomicClient.ts` 910-934 | Keyed by database, entity ID and revision; entity IDs carry the account's namespace | None needed |
+| Operation IDs and commit-order client IDs | `DatomicStorageAdapter.ts` 582, `CommitOrder.ts` 14, 26 | Random (`randomUUID`) | None needed |
+| `deadline:<sha256(due)>`, `act8-adversary:`, `iso:<account>:` | `gate.ts` 223, `beside-gate.ts`, `isolation-fuzz.ts` | Gate and fuzzer IDs | Gate only |
+
+### 0.3 Removal on request with the account tickets: does F1's fix compose?
+
+**Yes, as far as the runs below reach.** `exp/DX-ACT9-account-tickets` (`c2aa3d416`, which already contains this branch
+up to `2e7ae66c4`) merged into this branch's `b2ae7b32b` with three conflicts, each a holder list in the lab harness
+(`engine.mjs`, `runtime.mjs`, `ha1/local.ts`), resolved as the union; `account.ts` and `archive.ts` merged with no
+conflict. The merge is a scratch commit, `9481d33f6`, on no branch and not pushed (tree `53dbf730950e...`); it can be
+made again with `git merge c2aa3d416` and the three unions. The two changes meet in one place, the account's name: the
+tickets name the account by `held.account` (with the prefix `acct/<account>/`), and F1's command IDs use the same
+`held.account`; the tickets change only what removal sequence a write carries and checks, F1 only what command ID it
+uses.
+
+| Check, on the merge, with every option of both on (`TX2_ACCOUNT_KEYS`, `TX2_SETTLE_FRAME_GUARDS`, `TX2_LEDGER_CAP_AT_PUBLISH`, `TX2_ACCOUNT_TICKETS`, `TX2_REMOVAL_PER_ACCOUNT`) | Result |
+| --- | --- |
+| The tickets' own tests (`account-tickets.test.ts`) | 6 of 6 |
+| The review's cross-account tests, X1 to X5 | 11 of 11 |
+| The review's targeted tests | 15 of 16; the one failure was the C1 control, which then ran with the Publish-time refusal on from the environment; it now unsets that option itself (`b2ae7b32b`) |
+| The review's fuzzer, 2,000 schedules; both accounts by reference, 500 | 0 and 0 violating |
+| The isolation fuzzer, 1,000 schedules | 0 differing |
+| ACT9's removal cell on its many-accounts miniature (`act9/cells.sh`, after arm, 1 removal per second, ten publishing accounts, account A removing), with the three fixes on, on an image built from the merge (`9b98c6a511ef`, started by ID for its transactor and both gateways, as its `java-image.txt` and the VM's container list say) | **pass** (run `Cell`): 22 of 22 removals in A (p50 1,059 ms, p99 2,568 ms); the nine other accounts: **0 Publish, 0 settle, 0 delivery, 0 read refused**, 50 of 50 rounds complete; A: 1 Publish try refused by its own removal (`ErasureFrontierChanged`) and 1 delivery refused, both through on the next try or round; **10 of 10 accounts exact** against the oracle and the independent form rule, 0 notices delivered late, 0 twice; 1,043 saves in 74 accounts. ACT9's own after cell (`ACCOUNT-TICKETS.md` 10.1, without these fixes): 20 removals, 0 / 0 / 0 / 0, 55 of 55, A 1 / 0 / 1 / 0, 10 of 10 exact. Of the two late enrolments, one failed on the walk fault below ("Schema validation failed") and one enrolled (391 commits in its walk) |
+
+In process the store has no removal authority, so there the ticket checks take their unprotected branch; the cell is
+the combined run on a protected database moved to the per-account rule.
+
+**A fault the ticket branch found in this branch's enrolment walk.** ACT9's cells (`ACCOUNT-TICKETS.md` 10.1) found
+every enrolment beside removals failing in both arms: the held enrolment under `TX2_ENROL_BESIDE_SAVES` walks every
+commit between its first and last write through the feed, and a removal's transaction in that window stops it (the feed
+reader rejects the removal entry, "Schema validation failed", or the walk's position check fails, `677 !== 676`). It is a
+refusal, not an exactness fault: nothing wrong is written and an enrolment after the removal succeeds. It is not fixed
+here (follow-up 5).
+
+### 0.4 Group commit
+
+**A Publish under the account guard can share one physical Datomic transaction with saves, when the write gateway runs
+with `TX2_GROUP_COMMIT=1`; from the code that is exact, but it has not been run.** The held runner starts its write
+gateway with `TX2_GROUP_COMMIT=0` for every `load-fair` run (`ha1/stack.ts` 572-588), so no result here had a group.
+
+- **Eligible.** A Publish is a general commit; the group lane takes any commit that is lean, one span, with a
+  server-assigned record time and at most 256 operations, on a regular scope (`group.clj` 127-133), from any account,
+  up to `TX2_GROUP_MAX_MEMBERS` (8) at once (`group.clj` 373-404). Under the whole-head rule any member before a
+  Publish in its group refused it (its scope-wide fence is checked in the group's speculative database); under the
+  account guard only its own account's events refuse it, so it can land in a group behind saves. A Publish of the small
+  or the large release (4 changes, tens of operations) is eligible; one of more than 256 operations never is.
+- **Commit side: exact.** The group's members are evaluated one after another, each on the speculative database left
+  by the ones before it (`group.clj` `evaluate`, 135-159: `d/with` per member), and each member's transaction functions
+  run there: the tail's `TripleLive`, the calendar's `EntityState` and the revision checks see every earlier member.
+  The physical transaction is then fenced on the whole database's basis (`:triplex.group/apply-v1`, `group.clj` 47): if
+  anything committed since the evaluation, the group is stale and every member runs alone (`definitive?`, 223-233). A
+  member refused in evaluation gets its own refusal and retries as alone. The prepared path (`group_prepare.clj`) groups
+  only members whose keys are disjoint, and a Publish's keys include its guard entities (`group.clj` `classify`, 121-125).
+- **Read side: from the code, exact.** Each member keeps its own position (`:triplex.group/position`). A read pinned at a
+  position inside a group is cut per entity at that position (`group_cut.clj` `interior`, `legacy-slice`): an entity's
+  rows written by a later member of the same group are left out. A Publish writes its release entity, its tail and its
+  event, none of which is a subject with a covering owner root (the one shortcut there assumes no grouped write touches
+  such a subject's root, `group_cut.clj` `entity-slice`), so a read pinned at the save's position `q - 1` inside the
+  group would see the previous release, as the guard's argument needs.
+- **Not tested.** No run had a Publish in a group. Until a gate runs it (the gate with the write gateway's group
+  commit on, checking every read pinned inside each group that holds a Publish), `TX2_PUBLISH_BESIDE` should not be run
+  with `TX2_GROUP_COMMIT=1` (follow-up 6).
+
+### 0.5 A transactor and a gateway restart, and ledgers in parts, on a stack
+
+**A transactor restart: tested, exact.** The gate part `restart` (`DX_ACT8_PARTS=restart`, fixes on, saves stopped)
+runs `docker restart` on this run's own transactor container three times: completed between a Publish's reads and its
+commit (`afterRead`), begun inside its transaction 30 ms before the operations are sent so the commit meets the stopping
+transactor (`inside`), and begun 30 ms before the second values frame of the settlement is sent (`frame`). The same
+command is offered again every 2 s until acknowledged; a settlement stopped by the restart is run again until it
+finishes.
+
+| Case | What the restart did | Then | Checks |
+| --- | --- | --- | --- |
+| `afterRead` | 9 offers refused with "Native write had no receipt: Datomic transaction was rejected" while the peers reached the restarted transactor (7 in `Gres3`) | landed at its position 12 (read 11) | one record for the command ID; the next notice sequence; settled 474 changes, 160 notices, equal to the oracle and the independent rule; every read pinned from the read to the record exact |
+| `inside` | 9 offers refused the same way (9 in `Gres3`; the first commit met the stopping transactor and no record of it landed) | landed at 23 (read 22) | one record; settled 474 / 0 exactly; pinned reads exact |
+| `frame` | the settlement's frame commit met the stopping transactor; the worker stopped ("Native write had no receipt") | the settlement run again 7 times on transport failures only, then it resumed from its durable progress and finished | 474 / 160, every stored change and notice equal to the oracle; pinned reads exact |
+
+Run `Gres4` (`4e2811bb5`, the transactor only) gave the table above and then the gate's end checks: every notice of the
+account's releases in order (328) and its 8 ledgers in parts equal to the oracle; `Gres3` (`95c836459`) had given the
+same three cases the same way before it went on to the gateway. Each restart returned in about 0.5 s
+(`docker restart`); the refused offers are the peers reaching the transactor again afterwards.
+
+**A gateway restart: not tested.** The first full run (`Gres3`) went on to restart the write gateway: every later offer
+was refused with `ECONNREFUSED` on the gateway's old host port for two minutes. In `load-*` modes the toy stack
+publishes a gateway on a host port the VM assigns when the container starts (`ha1/stack.ts` 109-111; its other modes
+use a fixed port for exactly this reason), so a restarted gateway can come back where this run's clients cannot reach
+it. The part now restarts the write gateway only with `DX_ACT8_RESTART_ROLES=active,write`; a gateway restart needs the
+fixed-port publication of the HA drills (follow-up 9).
+
+**Ledgers in parts on a stack:** the gate's `beside` part publishes and settles the 200-form, 200-policy release with
+`TX2_NOTICE_LEDGER=parts` (runs `G1f`, `G1f2` and, options off, `Goff`; section 8), and the final check reads every
+ledger in parts through the recorder's own reader; ACT6's gate at 200 forms (run `R3`) is the options-off check. 1,000 forms in parts ran in the
+fuzzer only (30 schedules).
+
+### 0.6 What is still not tested
+
+- Group commit with a Publish in a group (0.4).
+- The enrolment walk beside a removal (0.3), and a removal on request on the held toy stack (no shared removal
+  directory there; the miniature has one).
+- A gateway restart (0.5).
+- A restart while saves run: the restart part stops the save tapes, since a tape cannot tell a save lost in a restart
+  from a refused one; a standby transactor taking over (failover) is not this part's case.
+- 1,000 forms with ledgers in parts on a stack (the fuzzer only); with the ledger cap on, such a release is refused at
+  Publish anyway unless its account's releases fit (section 0.1, F3).
+- The cause of the one refused try in `Goff` and in `G1f2` (follow-up 7).
+- From the review's list, unchanged: two settling processes with different `TX2_SETTLE_COST`; imports, deadlines and
+  scheduled releases in a held account (the deadline command IDs now carry the account under `TX2_ACCOUNT_KEYS`, by the
+  same `execute`, but no held account has a deadline); server sizes and timings.
+- Everything in section 13 that the review did not change.
+
+### 0.7 Exactly what changed after the review (for the second review)
+
+Branch `exp/DX-ACT8-publish-beside-saves`, from `2e7ae66c4` (the head the review read):
+
+| Commit | What | Files |
+| --- | --- | --- |
+| `43472352c` | Merge of the review's branch (`a1163648e`): its harness, fuzzer, 16 tests and stack part; the stack part may run under holder DX-ACT10 | `act10/REVIEW.md`, `memstore.ts`, `fuzz.ts`, `cross-account.test.ts`, `targeted.test.ts`, `stack-part.ts`; `held-campaign.ts` (the `DX_ACT10_STACK` hook); `ha1/local.ts`, `engine.mjs`, `runtime.mjs` (holder lists) |
+| `75a0654d5` | F1, F2: `TX2_ACCOUNT_KEYS`; tests X1 to X5 with the option on and off | `store.ts` (`accountKeys`), `account.ts` (`joinedCommandId`, `original`, `recorded`, `execute`), `definitions.ts`, `held-campaign.ts` and `beside-gate.ts` (look records up through `joinedCommandId`), `fuzz.ts`, `cross-account.test.ts` |
+| `2af0ec835` | F3: `TX2_LEDGER_CAP_AT_PUBLISH`; F4, F5: `TX2_SETTLE_FRAME_GUARDS`; F6; tests P1, P1b, E1, C1 with the options on and off | `account.ts` (`ledgerCap`, the walk), `ledger-parts.ts` (`ledgerCapacity`, `worstLedgerChars`, `noticeItems`), `settlement-control.ts` (`gateAt`), `archive.ts` (frame guards), `fuzz.ts`, `targeted.test.ts`, `ledger-probe.ts` (diagnostic) |
+| `8bfedf43d` | The cross-account isolation fuzzer | `act10/isolation-fuzz.ts` |
+| `caadc7aa3` | F7: the widened adversarial window | `beside-gate.ts`, `deep-reference.ts` (a fact can be a removal), `held-campaign.ts` (the fact type) |
+| `653a17183` | The review's stack part may run under holder DX-ACT8 | `ha1/local.ts` |
+| `b2ae7b32b` | The gate's superseded-release check allows a split subject's first part (F5's consequence); the C1 control unsets the Publish-time refusal | `beside-gate.ts`, `targeted.test.ts` |
+| `59995bd36` | The gate part `restart` (not in the default list) | `beside-gate.ts` |
+| `dbc1f3c09` | F7: the independent rule narrowed only for the release right after an adversary's write | `beside-gate.ts` |
+| `ca3c34182` | The restart part waits until both gateways reach the restarted transactor; a failure names its step | `beside-gate.ts` |
+| `eca2e81d1` | A type annotation in the review's harness | `act10/memstore.ts` |
+| `95c836459` | The restart part runs a step again while it fails only on transport after a restart, and records each such retry | `beside-gate.ts` |
+| `4e2811bb5` | The restart part restarts the transactor by default, the write gateway only on request | `beside-gate.ts` |
+| the commit after `4e2811bb5` (the branch head when this was written) | This page: section 0, the corrections marked "[corrected after the review]", the options table, the runs after the review (section 8), 9.1's options-off reruns, the evidence (section 14), follow-ups 0 and 4 to 9 | `PUBLISH-BESIDE-SAVES.md` |
+
+New options, all off by default: `TX2_ACCOUNT_KEYS`, `TX2_SETTLE_FRAME_GUARDS`, `TX2_LEDGER_CAP_AT_PUBLISH`; gate-only:
+`DX_ACT8_ADV_OWN`, `DX_ACT8_PARTS=restart`, `DX_ACT10_STACK`. Nothing in the Datomic sources changed (the private image
+was rebuilt only because the merge changed the harness's `runtime.mjs`, which is among the image's inputs).
+
 
 ## 1. The problem in one paragraph
 
@@ -37,11 +278,14 @@ position `p` it read the head at:
 | R10 | The database's removal sequence | `readErasure` before the command, `recheckErasure` in the plan | the removal ticket the commit carries (`withErasure`), checked by the transactor at its serial cut | a removal on request in any account |
 | R11 | Subject data | not read: an owed Publish lists, reads and evaluates no subject (`a.stats.worlds === 0`, asserted by the runner) | — | every save |
 | R12 | The held writer check | `suffix` → `HeldSource.verifyThrough(p)` | the runner's ledger: every position up to `p` is a known writer | (a runner check, not part of the store) |
+| R13 [added after the review] | The command's own record | `execute` → `original(id)`: `transactionByCommand("joined:" + id)` before planning and after a refused try | a Publish that already landed is returned, not written twice | **any account**: command IDs are unique in the whole database (`:triplex.claim/command-id`), so another account's `joined:<id>` is found too (F1); likewise the definitions write's `definitions:<hash>` (F2) |
 
 **Why the whole head guarded all of them.** It was the one guard that covers everything at once: if nothing at all
 committed between the read and the commit, nothing read can have changed. It was never about subject data (R11: none
-is read) and never about other accounts (nothing a Publish reads lives outside its own account's names, documents and
-the database's removal sequence).
+is read). **[corrected after the review]** This page said it was never about other accounts either, because nothing a
+Publish reads lives outside its own account's names, documents and the database's removal sequence. That was wrong for
+R13: the command lookup reads a key the client chooses, in the whole database. No guard was the problem there (the
+whole-head rule has the same fault); the key was. With `TX2_ACCOUNT_KEYS=1` the key names the account (section 0.1).
 
 ## 3. The narrower guard for each read
 
@@ -53,7 +297,7 @@ the database's removal sequence).
 | R5 | Calendar | **New: an `EntityState` guard** on the calendar document (its one live row, or none) | One row; read inside the transaction at its begin and revision-checked at the serial cut, so a deadline added between `p` and the commit refuses this Publish and the retry processes the deadline first, as the whole-head rule would have. |
 | R6 | Business clock | **None** | A held Publish's record does not depend on it: `at` must equal the enrolment's valid time whatever the clock says, and the notice plan checks valid time against the tail (R1). |
 | R7 | Removal marks | **None** | Not an input of an owed record; never written in a held account. |
-| R9 | Definitions | **None** | Content-addressed (key = SHA-256 of the node), created only if absent, never retracted: stored at `p` means stored at the commit. |
+| R9 | Definitions | **None** | Content-addressed (key = SHA-256 of the node), created only if absent, never retracted: stored at `p` means stored at the commit. [corrected after the review] The rows are under the account's names, but the write's command ID was the content hash alone, so a second account storing the same nodes was refused for good (F2); with `TX2_ACCOUNT_KEYS=1` the account's definitions prefix is in the command ID. |
 | R10 | Removal sequence | **The existing removal ticket, unchanged** | `withErasure(sequence)` makes the transactor compare the database's removal sequence at its serial cut, independent of the head rule. A removal between the read and the commit refuses the Publish (the plan's `recheckErasure` throws `ErasureChanged` on the next try); the client publishes again. Only in a database with a removal policy; without one no removal can run. |
 | R11 | Subject data | **None** | Not read. |
 | R12 | Held writer check | Runner only. In the unpaused mode the Publish checks the positions whose receipts it already has; every position is checked at the end of each window and case. | The product has no ledger; the runner's full check still covers every position. |
@@ -61,7 +305,8 @@ the database's removal sequence).
 **So the whole guard is four checks in the one commit: the account's own notice tail (existing), its calendar (one
 new `EntityState`), the transactor's revision check on what the record writes, and the removal ticket (existing).** No
 other account's commit can fail the first three: other accounts' saves, Publishes, enrolments and settlement frames
-write other entities. The only commits that refuse a Publish are this account's own other events (another Publish, a
+write other entities. [corrected after the review] Another account's commit could still reach a Publish through its
+command ID (R13, F1, F2), outside the guard; `TX2_ACCOUNT_KEYS=1` closes that. The only commits that refuse a Publish are this account's own other events (another Publish, a
 deadline, a scheduled release) and, through the fourth, a removal on request.
 
 **The removal marks under this rule (the fourth check).** In a database with a removal policy the Publish reads the
@@ -160,8 +405,14 @@ progress identity hashes the effective cut and the marker's `notice` hash. These
   the new one. A read pinned at the receipt answers accordingly.
 - **The Publish's client** sees its Publish refused only by its own account's other events (another Publish of the same
   account, a deadline, a scheduled release) or a removal on request. The Publish is then planned again at the new head
-  (up to three tries, as before). A save of any account never causes a retry. Nothing is replayed: the retry plans
-  afresh from the account's state, and a Publish that did land is recovered by its command ID.
+  (up to three tries, as before). A save of any account never causes a retry. [corrected after the review] Not shown
+  as stated: in runs `Goff` and `G1f2` one small Publish, with the publishing account saving 39.4 per second, had one
+  try refused with "Datomic transaction was rejected" (a gateway refusal other than the guard's conflicts; the gate did
+  not record its code) with only saves and no other event of the account between its read and its record; it planned
+  again and landed at its second try, exactly (follow-up 7). Nothing is replayed: the retry plans
+  afresh from the account's state, and a Publish that did land is recovered by its command ID. [corrected after the
+  review] Without `TX2_ACCOUNT_KEYS=1` that lookup also finds another account's Publish with the same command ID and
+  returns its receipt (F1); with it, only this account's.
 
 ## 6. Enrolment beside saves (`TX2_ENROL_BESIDE_SAVES=1`)
 
@@ -172,7 +423,10 @@ with the option a commit that touches none of the account's documents or metadat
 
 1. **The enrolment record commits with `EntityState` guards that its four entities have no fact yet** instead of the
    head. Only a rival enrolment of the same account can write them (and the same command ID is recovered, not
-   doubled). Up to three tries, each first looking the command up.
+   doubled). Up to three tries, each first looking the command up. [corrected after the review] The rival's record was
+   not recovered when it landed inside this enrolment's walk: the walk refused it ("Unclassified native writer left the
+   joined source open", F6; 111 of 300 races). The walk now accepts a commit with this account's own enrolment command
+   ID, and the enrolment then recovers it (0 of 300 refused).
 2. **The walk also accepts the account's own subject saves.** A held enrolment reads no subject data: its census is the
    subject IDs of the held source (`placementId(0 .. people - 1)`), the genesis and pages are built from those IDs, and
    nothing evaluates a world. A save of one of its subjects during enrolment is simply a save before its first
@@ -189,6 +443,12 @@ with the option a commit that touches none of the account's documents or metadat
 | `DX_ACT8_UNPAUSED=1` (runner) | off: the held runner pauses and drains saves around each Publish | The held windows publish with saves running; nothing pauses or drains. |
 | `DX_ACT8_GATE=1` (runner, diagnostic) | off | The held runner runs this builder's gate parts instead of the windows. |
 | `DX_ACT8_INJECT=read-cut` (diagnostic only) | off | Settlement evaluates at the read position `p` instead of the effective cut: the wrong rule, to show the checks catch it. |
+| `TX2_ACCOUNT_KEYS=1` [after the review] | off: command IDs as before | A namespaced held account's joined and definitions command IDs carry the account (F1, F2, section 0.1); old `joined:<id>` records are read and accepted only if they wrote this account's documents. |
+| `TX2_SETTLE_FRAME_GUARDS=1` [after the review] | off: the control cached 250 ms, frames unguarded on control and tail | Every settlement frame reads the control at its read position and is guarded on it; a values frame is also guarded on the notice tail (F4, F5). After a pause is acknowledged no frame of the account commits. |
+| `TX2_LEDGER_CAP_AT_PUBLISH=1` [after the review] | off: such a release is acknowledged and its ledger refused later | A release whose notice ledger one subject could not be written with is refused at Publish, before any write, with the count and the limit (F3). |
+| `DX_ACT8_ADV_OWN` (gate) [after the review] | 23.5: the publishing account's save tape runs in the adversarial window | 0: as the gate before the review. |
+| `DX_ACT8_PARTS=restart` (gate, diagnostic) [after the review] | not in the default parts | The transactor and the write gateway restarted inside a Publish and a settlement (section 0.5). |
+| `DX_ACT10_STACK=1` (the held runner, diagnostic) | off | The review's stack checks (X1 to X4, P1 and S2 under each precondition), holder DX-ACT8 or DX-ACT10. |
 
 **Retry rule.** A refused try is a `Conflict` (the tail's `TripleLive`, the calendar's `EntityState` or the
 transactor's revision check). The next try looks the command ID up (a try that landed is recovered), reads the head
@@ -233,6 +493,28 @@ Runs (private evidence `evidence/DX-ACT8/`, section 14):
 | `G2` | a removal on request on the held toy (database protected before its load) | `169de51a3` | `a87bf58bf20c` | the load refused (`ErasureFrontierUnavailable`): that stack has no shared removal directory; not a result (section 13) |
 | 15 earlier runs: a shake-out, the gate in two halves, the held windows, the options-off reruns, a removal and a negative control, two miniature runs (`M1`, `M2`), and three that stopped at faults of the gate itself | the same checks, on earlier commits | `34273617e` to `1966682b7` | five images built from other sources | **not counted** (section 14) |
 
+**Runs after the review** (on the image built from `43472352c`, `sha256:98c95f37c42ebb36f6f4a729f52d7b54388ec150740f4c03d26e01aca5ecf4db`,
+tag `tx2-dxact8-jre21:7c2e1c12509ecb67`; the Datomic sources of every run commit equal the image's, checked before each
+run; each run's `image.json` and the VM's own container list name that ID for every container but PostgreSQL's).
+"Fixes on" is `TX2_ACCOUNT_KEYS=1 TX2_SETTLE_FRAME_GUARDS=1 TX2_LEDGER_CAP_AT_PUBLISH=1`:
+
+| Run | What | Commit | Result |
+| --- | --- | --- | --- |
+| `Sfix` | the review's stack part (`DX_ACT10_STACK=1`), fixes on | `653a17183` | **pass**: X1 to X4 publish in both accounts, X2's own reuse refused; P1 0 frames after the pause under both preconditions; S2 `superseded` under both (section 0.1) |
+| `Soff` | the same, options off | `653a17183` | the review's faults, as it found them: X1 the first's receipt, X3 and X4 refused, P1-progress 1 frame after the pause, S2-progress `stored` |
+| `G1f` | every gate part, fixes on (with F7's widened adversarial window) | `59995bd36` | **pass**: `beside` 2 of 2 refused under the whole head; 16 of 16 landed under the account guard, one try each, commits between read and record 0 to 89 (up to 12 of the account's own), every settled count as section 9.3 (39 / 7; 474 / 160 with 8 / 474 / 160; 4,740 / 1,600 with 8 / 4,740 / 1,600 at 200 forms in parts; by reference 474 / 160), first correct inside one second 16 of 16; adversarial 26 steps, the publishing account's tape on at 23.5/s: 11 kinds at both points (the 9 subject facts but the form answer, which the tape writes, plus a child file linked by reference and a reference removed), each write strictly between read and record, one try each, every change, notice, ledger and pinned read exact; the second Publish refused once each time as designed; the two enrolments of other accounts beside it; kill 5 of 5 with one record each; live: 0 frames while paused, 26 paced frames at least 300 ms apart, the second release supersedes the first inside its split first subject (362 of its 364 changes stored, each the oracle's) and settles 3,270; enrol 7 of 7 at one try, each 474 / 168; at the end 6,764 notices in order and 8 ledgers in parts equal to the oracle; 553 positions and 4,424 pinned reads between reads and records, 105 racing saves |
+| `G1f2` | the same with the independent rule narrowed only for the release after an adversary's write | `dbc1f3c09` | **pass**, every count as `G1f` (adversarial 26 steps, each narrowed for at most the one subject written in that step, every other subject and every later release strict; live: superseded inside the split first subject, 362 of 364; enrol 7 of 7, 474 / 168 each; 6,764 notices, 8 ledgers; 543 positions and 4,344 pinned reads; 97 racing saves), except that one small Publish at 39.4/s again needed a second try after "Datomic transaction was rejected" (as in `Goff`; follow-up 7) |
+| `G1f-first` | the same | `653a17183` | every part up to `live` passed; `live` stopped at the gate's own check of the superseded release (it expected whole subjects; with the frame guards a superseded release can stop inside a split subject, F5's consequence); check fixed in `b2ae7b32b`, rerun as `G1f` |
+| `G3f` | negative control, settlement at the read position, fixes on | `653a17183` | **caught**: "stored changes differ from the oracle for release 2 (read 11, record 31)" |
+| `W1f`, `W3f` | the held runner's eight windows with no pause, the account guard, fixes on; `W3f` the large release by reference | `653a17183` | **pass**: 8 of 8 Publishes at one try each, inside one second; commits between read and record 0, 0, 0, 0 at 3.5/s and 38, 13, 29, 10 (`W1f`) and 42, 13, 33, 20 (`W3f`) at 23.5/s; every probe, deadline read and reopened pin exact; 0 of 7,632 saves refused |
+| `R1b`, `R2b`, `R3b` | options off: the held default campaign, ACT5's live cases, ACT6's gate | `653a17183` | **pass**, every count as published (section 9.1) |
+| `Goff` | every gate part, options off (with F7's widened adversarial window) | `653a17183` | **pass**: cost as section 10; `beside` 2 of 2 refused under the whole head, 16 of 16 landed under the account guard with every settled count as section 9.3 (one try each but one: a small Publish at 39.4/s refused once with "Datomic transaction was rejected", a gateway refusal whose code the run did not record, planned again and landed at its second try; every check exact; cause not found, follow-up 7); adversarial 26 steps (11 kinds at both points, the second Publish refused once each time as designed, two enrolments), every one exact; kill 5 of 5 with one record each, 436 changes each; live: pause 0 frames offered while paused, 26 paced frames at least 300 ms apart, the second release supersedes the first; enrol 7 of 7 at one try, each 474 / 168; at the end 6,764 notices in order and 8 ledgers equal to the oracle; 547 positions and 4,376 pinned reads between reads and records, 129 racing saves |
+| `Gres-first`, `Gres2` | the gate part `restart`, fixes on | `59995bd36`, `ca3c34182` | stopped at the part's own waits: the first at a step after the `afterRead` restart that met a peer not yet at the restarted transactor ("Error communicating with HOST ... PORT 4334"; the run did not record which step), the second at the settlement after the `frame` restart for the same reason (the two Publish cases had passed); the part now runs such a step again while it fails only on transport (`95c836459`) |
+| `Gres3` | the same | `95c836459` | the three transactor cases passed (section 0.5); stopped at the first write-gateway case (its host port moved) |
+| `Gres4` | the same, the transactor only | `4e2811bb5` | **pass**: the three transactor cases (section 0.5), 328 notices in order and 8 ledgers equal to the oracle |
+| `M2f` | the many-accounts miniature (section 9.5), both options and the fixes on | `59995bd36` | **pass**, with `M2r`'s counts: 50 of 50 Publishes offered at once landed at one try, 0 refused (17 / 43 / 67 commits between read and record); 10 of 10 late enrolments (the head moved 152 to 217 commits during each); 2,367 saves in 323 accounts, 0 refused; 24,713 pinned and 24,363 current reads exact (526,006 rows); 2,343 of 2,343 saves in the feed once, in order; 29,820 changes and 10,605 notices settled for the 50 (121 value and 462 notice frames, 0 refused), 862 / 82 for the late 10; every subject of the 570 accounts read at the end |
+| `Cell` | ACT9's removal cell on the merge with the account tickets, fixes on (section 0.3) | `9481d33f6` (scratch), image `9b98c6a511ef` | **pass**, section 0.3 |
+
 ## 9. Gates
 
 ### 9.1 Gate (a): every option off, every existing count unchanged
@@ -247,6 +529,16 @@ Every option off (`TX2_PUBLISH_BESIDE`, `TX2_ENROL_BESIDE_SAVES`, `DX_ACT8_UNPAU
 | ACT6's release-limits gate (`DX_ACT6_GATE=1`, all parts, 200 forms) | `R3` | the ledger in parts at 200 forms: 72 subjects, 4 stops (1 inside a ledger's parts), notices 14,400 / 7,200 / 21,672 equal to the oracle, delivered 21,672 then 0, 2 parts per ledger, independent rule 72 / 42,720 / 14,400, 76 value and 510 notice frames under 8,000 µs; the definitions table: full documents 619,097 and 938,509 B at 0.25 MiB, 1,233,297 B then refused over the 1 MiB value at 0.50 MiB, refused at 1.0 and 1.25 MiB; by reference 3,532 to 3,547 B at every size | the same (`RELEASE-LIMITS.md` sections 2.3 and 3) |
 | The settlement-frames check at 256 subjects (`frames-check`, no stack) | `checks/frames-check-256-default` | every row's frames, splits, changed values and notices identical | ACT6's table |
 | Unit tests of the held join (`actv-lazy/join/*.test.ts`) | Mac | 31 of 31 | — |
+
+**After the review** (runs `R1b`, `R2b`, `R3b` on `653a17183`, image `98c95f37c42e`; the code those runs execute is the
+same at the final head, which changed only the gate and a test since): every count above again, exactly: R1 86
+changed values and 8 notices, 8 of 8 Publishes at one try and inside one second, 2 reopened pins, 0 read failures, 0 of
+7,632 saves refused; R2 474 / 160 (8 / 474 / 160) in each of the six single cases, second-p superseded at 1 subject
+(420 changes, 1,200 notices) then 3,555, 2,328 notices delivered once and 0 twice; R3 72 subjects, 4 stops (1 inside a
+ledger's parts), notices 14,400 / 7,200 / 21,672, 2 parts per ledger, the independent rule 72 / 42,720 / 14,400, 76
+value and 510 notice frames, the definitions table 619,097 and 1,233,297 B then refused over the 1 MiB value, 3,532 B
+by reference. The review's fuzzer with every option off, 5,000 schedules (seeds 10,000 to 14,999): 0 violating (the
+earlier rules' checks; F5's counts are reported, not violations, without its option: 512 and 515).
 
 With the options off nothing in the record, the retry count or the checks of a Publish changed; the head-rule frame
 refusals in ACT5's head cases (for example 100 value-frame and 117 notice-frame refusals in own23) vary from run to run
@@ -410,6 +702,10 @@ account 0 at 23.5 per second, the nine others at one in five):
 - **Pause and pace:** the large release (17.2 KB record) landed at its first try with 19 commits between read and
   record; settlement was paused (0 frames offered while paused), then paced (26 frames, none closer than 300 ms), then
   released; 436 changes and 160 notices, the independent rule 8 / 436 / 160; first correct inside one second.
+  [corrected after the review] "0 frames offered while paused" counts frames offered after the worker saw the pause; it
+  does not show that no frame commits after the pause lands. Without `TX2_SETTLE_FRAME_GUARDS` one can under the
+  progress precondition, and the 250 ms cache lets more through under both (F4: 2 and 5 in the review's P1b). With the
+  option none can (section 0.1).
 - **A second release in the middle of settlement:** the 150-form release (102.7 KB record) landed with 30 commits
   between; after its settlement had written 2 subjects the base release was published (39 commits between, one try);
   the first release's values stopped at subject 2 (`superseded`) and the second settled 3,270 changes, 0 notices; every
@@ -684,12 +980,45 @@ miniature) and as the VM's own container list said while it ran.
 | `M3` | `M3.tar.gz` | `eae7029192e8743f92d009694ea22a3242ca23fe803702243792bf8905a2f08e` |
 | the 15 runs on other images (section 8), with their logs | `foreign-image-runs.tar.gz` | `2d5db3b1fb17577284fb5b0d2a5c62aa1104949b81ac2042699f12ded61272f5` |
 
+**After the review.** Every row below started `sha256:98c95f37c42ebb36f6f4a729f52d7b54388ec150740f4c03d26e01aca5ecf4db`
+(tag `tx2-dxact8-jre21:7c2e1c12509ecb67`, receipt built from `43472352c`; Datomic sources `6da365971c5f00d6...` equal to
+every run commit's, checked before each run) except `Cell`, which started
+`sha256:9b98c6a511ef8b6264ed03ce57400689f6eeef3b742504a4f51ca95807c1e09c` (tag `tx2-dxact8-jre21:f323f50c55c6d011`,
+built from the scratch merge `9481d33f6`); each run's own record and the VM's container list name the same ID.
+
+| Run | Archive | sha256 |
+| --- | --- | --- |
+| `Sfix` | `Sfix-cc56472f.tar.gz` | `87f7177d07db4e8e189621ab7d04c3ed68f690b5e7611480c24225c31ea9c9d5` |
+| `Soff` | `Soff-4a9477c2.tar.gz` | `93126b5581904ca38d9da240c9156764f25a4478d24e1fef163056393839425f` |
+| `G1f-first` | `G1f-first-f23f29a3.tar.gz` | `3b430c56224d5d23e24031b684fab370ce6b819f323b1472a2dcf84ee467fceb` |
+| `G1f` | `G1f-1f830317.tar.gz` | `2ae5154ff91cb702ff669458e90a4a6b39f05d732018d0e8537c93e5e383dce7` |
+| `G3f` | `G3f-f3097fb4.tar.gz` | `67720f5e56cf21e4ce1464e859f33959f638f4a68e257cdb702aff285172e8fb` |
+| `W1f` | `W1f-f0048cc2.tar.gz` | `48d8fdcec6172e6bc68e5842888ac634ef5dafe1e76f11707fa526f81706e25a` |
+| `W3f` | `W3f-01a30910.tar.gz` | `d3fd90bce12ba3c83c352b1221f99ab91caa367008808ba81ea156d0b0bd73f3` |
+| `R1b` | `R1b-57b1e2c5.tar.gz` | `7bb4abab32ee4d2d9aa5d73ab47e96712a4c9390b2347cfdb3186f65fda9e938` |
+| `R2b` | `R2b-139ae55d.tar.gz` | `f39bc6bb8b085f91dfd791e535eedd23374ebcea288780d297e1465e61bdcf3b` |
+| `R3b` | `R3b-95f9a23c.tar.gz` | `b151957711c866d0b7a36d342e3fb85e1d8b92899fb41f35c8cdbaf365e76517` |
+| `Goff` | `Goff-9f4d60d3.tar.gz` | `205a7f008274e20256a2d42b8c964f1f74457e4545118cdb8571e6e873206122` |
+| `Gres-first` | `Gres-first-a8e3edc8.tar.gz` | `71d05fa85dd9e745cae6957aa8930501a979f5d50d078e61fdfb29442260b93a` |
+| `M2f` | `M2f.tar.gz` | `a1b32506c1c4905d494ba53b86d9dd6e2f8d86e717e470ed4a1a606559d8db58` |
+| `Cell` | `Cell-9481d33f6.tar.gz` | `1e2ea2b4f02952a25d1f2e0cda248f168af837bf30ebd25a26e86ee7e4453006` |
+| `G1f2` | `G1f2-4a74057c.tar.gz` | `b03a2956f76ea7cbd7815ee88f73d69a6b243b7b2adfe334b1b339dbd2046b3e` |
+| `Gres2` | `Gres2-57d04346.tar.gz` | `27165e315ca63fee1790ee06ac11539df2673515f2f9f921726a4d9dd05c494e` |
+| `Gres3` | `Gres3-26e2fd51.tar.gz` | `8e9f022de0e1e157c46b43dde6fb087fc51aa1d4e48d8d14dc189d526f2a178f` |
+| `Gres4` | `Gres4-d2825d2d.tar.gz` | `b7b35dfa52979420e5634626bcaf78e83c617075ad2c91864db12cd02959c2de` |
+
+In process (no stack), private evidence `agents/DX-ACT8/act10/`: `repro-before.log` (the review's 16 tests before any
+change), `tests-after.log`, `final/` (the test phase, typecheck and head at `59995bd36` and `eca2e81d1`), `fuzz/` (every
+fuzz run's log and JSON, with the commit each ran at), `compose/` (the in-process checks on the merge with the tickets).
+
 The five images those 15 runs started: `d6008c8d52dd`, `4fbfd98a5490`, `90d3ccd615de`, `fd497d71a313` (the shared
 harness's newest build event at the time) and `21a67288007d` (the shared tag `tx2-datomic:1.0.7745-da00`, the
 miniature's default). The settlement-frames check (`checks/frames-check-256-default.json`) runs no stack.
 
 ## 15. Follow-ups
 
+0. **[after the review] Built elsewhere and composed:** follow-up 1 below was built on `exp/DX-ACT9-account-tickets`
+   (`c2aa3d416`); section 0.3 has the merge with this branch and its runs.
 1. **Pass the account through the removal ticket (first follow-up).** With the per-account removal rule
    (`TX2_REMOVAL_PER_ACCOUNT`, `exp/DX-ERA2-removal-per-account` `272a1bd66`, its page section 7) a held account's
    Publish, enrolment and settlement frames would be refused only by removals in their own account. Not built here: the
@@ -718,3 +1047,32 @@ miniature's default). The settlement-frames check (`checks/frames-check-256-defa
    apply; not needed by held accounts today.
 3. **Many Publishes at the same instant** (section 11.2): the records go through the one writer one at a time; a burst
    to every account needs the release stored once or the records grouped.
+4. **[after the review] Command IDs the API's client chooses** (section 0.2): a save's command ID, and on the removal
+   branches a removal's, are unique in the whole database, so one account's ID refuses another's (409, never a wrong
+   acknowledgement). Scope the claim by account where the API knows the caller's account (for example
+   `<account>/<id>` in `:triplex.claim/command-id` for a write whose entities are all in one account's namespace), with
+   the old form still read, as `TX2_ACCOUNT_KEYS` does for joined commands.
+5. **[after the review] The enrolment walk beside a removal** (section 0.3, found by DX-ACT9): with
+   `TX2_ENROL_BESIDE_SAVES`, an enrolment whose walk meets a removal's transaction stops (the feed reader rejects the
+   removal entry, or the walk's position check fails). Two ways: read the walk's window with a reader that decodes
+   removal entries and accept a removal that touches none of the account's documents; or drop the walk under the option,
+   since the enrolment record is now guarded by `EntityState` on its own entities and the census pages and genesis are
+   created only if absent (the walk would then only be the runner's ledger check). Gate: ACT9's cell with its two late
+   enrolments, which fail today in both arms.
+6. **[after the review] Group commit with a Publish in a group** (section 0.4): a gate with the write gateway's
+   `TX2_GROUP_COMMIT=1` (the held runner sets 0 for `load-fair`; an option to set it for the diagnostic gate only), counting
+   the groups that hold a Publish and a save (the reply's `groupSize`) and checking every read pinned inside each such
+   group. Until then do not run `TX2_PUBLISH_BESIDE` with group commit.
+7. **[after the review] Record the gateway's code for a refused guarded try.** A guarded Publish's refused try is
+   classed as a conflict whenever the head moved (`store.ts` `rejectUnrecordedWrite`), which under saves is always, so
+   the gate records only "Datomic transaction was rejected" (`DatomicStorageAdapter.ts` 525) and not the code under it.
+   Runs `Goff` and `G1f2` each had one such try, both in the case with the publishing account saving 39.4 per second
+   and only saves between the Publish's read and its record (`G1f` had none); the retries landed and every check
+   passed. It is not the record clock (with server-assigned record time the gateway raises no clock conflict,
+   `commit.clj` 309-312). Keep the native code in `beside.causes`, find which check refuses, and either guard it or
+   show it cannot change an answer.
+8. **[after the review] Store the ledger mode with the account.** `TX2_NOTICE_LEDGER` is read by each process; the
+   Publish-time cap (`TX2_LEDGER_CAP_AT_PUBLISH`) and the settlement must agree on it. Write the mode into the account's
+   settlement control (or the enrolment) and have both read it there.
+9. **[after the review] A gateway restart on a stack.** Publish the toy stack's gateways on fixed host ports in a
+   diagnostic mode (as the HA drills do) and run the `restart` part with `DX_ACT8_RESTART_ROLES=active,write`.
