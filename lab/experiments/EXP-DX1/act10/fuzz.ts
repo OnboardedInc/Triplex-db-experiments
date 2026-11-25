@@ -399,7 +399,11 @@ async function check(
         const progressKey = "values:" + rel.seq;
         const vdb = new Documents(db.comp as any, "settlement-values-" + A);
         const row = await vdb.row(progressKey, head);
-        if (row && row.at > later.tx) counts.storedAfterSuperseded = (counts.storedAfterSuperseded ?? 0) + 1;
+        if (row && row.at > later.tx) {
+          counts.storedAfterSuperseded = (counts.storedAfterSuperseded ?? 0) + 1;
+          // [DX-ACT8, review F5] With TX2_SETTLE_FRAME_GUARDS a values frame is guarded on the notice tail it read.
+          if (process.env.TX2_SETTLE_FRAME_GUARDS === "1") v("release " + rel.seq + " stored by a frame that landed after a later release");
+        }
       }
     } else if (status === "superseded") {
       if (canonical(got) !== canonical(want.slice(0, got.length).map((w, j) => (j === got.length - 1 && got[j] ? { subject: w.subject, changes: w.changes.slice(0, got[j].changes.length) } : w))))
@@ -414,6 +418,7 @@ async function check(
       const pages = journal.filter((t) => t.position > rels[k + 1].tx && t.changes.some((c: any) => c.entityId === key && c.op === "assert") &&
         t.changes.some((c: any) => /answer:/.test(String(c.entityId)))).length;
       if (pages) counts.pagesAfterSuperseded = (counts.pagesAfterSuperseded ?? 0) + pages;
+      if (pages && process.env.TX2_SETTLE_FRAME_GUARDS === "1") v("release " + rel.seq + ": " + pages + " value pages written after a later release");
     }
     if (status === "superseded") {
     } else if (status !== "stored") v("release " + rel.seq + " still " + status + " after the clean settlement");

@@ -47,9 +47,12 @@ async function expectedChanges(x: { s: any }, q: number, old: W0.ReleaseDoc, doc
 }
 
 // ---------------------------------------------------------------------------------------------- P1: pause in flight
+for (const guardsOn of ["0", "1"])
 for (const precondition of ["head", "progress"] as const)
-  test("P1 (" + precondition + "): a pause that lands while a frame is in flight", async () => {
+  test("P1 (" + precondition + ", TX2_SETTLE_FRAME_GUARDS=" + guardsOn + "): a pause that lands while a frame is in flight", async () => {
     process.env.TX2_PUBLISH_BESIDE = "1";
+    if (guardsOn === "1") process.env.TX2_SETTLE_FRAME_GUARDS = "1";
+    else delete process.env.TX2_SETTLE_FRAME_GUARDS;
     const db = fresh(11);
     const A = await account(db, "acct-p");
     await A.a.installHeld(validTime);
@@ -73,21 +76,26 @@ for (const precondition of ["head", "progress"] as const)
     await new Promise((x) => setTimeout(x, 1200));
     const journal = (await db.comp.feedPage(0, 100000)).transactions as any[];
     const after = journal.filter((t) => t.position > pause! && /^settled-/.test(String(t.commandId)));
-    console.log("[P1 " + precondition + "] " + JSON.stringify({ releaseAt: r.position, pauseAt: pause, framesAfterPause: after.length,
+    console.log("[P1 " + precondition + " guards=" + guardsOn + "] " + JSON.stringify({ releaseAt: r.position, pauseAt: pause, framesAfterPause: after.length,
       kinds: after.map((t) => String(t.commandId).split(":")[0]) }));
     db.beforeCommit = undefined;
     await setSettlementControl(ctl, { paused: false, by: "act10" });
     (w.values.control as any).seen = (w.notices.control as any).seen = undefined;
     const done = await running;
     assert(done.every((x) => x.status === "fulfilled"));
-    if (precondition === "head") assert.equal(after.length, 0);
+    // [DX-ACT8, review F4] With TX2_SETTLE_FRAME_GUARDS no frame lands after the pause under either precondition.
+    if (precondition === "head" || guardsOn === "1") assert.equal(after.length, 0);
     else assert(after.length >= 1, "under progress the frame in flight lands after the pause");
     delete process.env.TX2_PUBLISH_BESIDE;
+    delete process.env.TX2_SETTLE_FRAME_GUARDS;
   });
 
+for (const guardsOn of ["0", "1"])
 for (const precondition of ["head", "progress"] as const)
-test("P1b (" + precondition + "): frames sent within the control cache after a pause landed", async () => {
+test("P1b (" + precondition + ", TX2_SETTLE_FRAME_GUARDS=" + guardsOn + "): frames sent within the control cache after a pause landed", async () => {
   process.env.TX2_PUBLISH_BESIDE = "1";
+  if (guardsOn === "1") process.env.TX2_SETTLE_FRAME_GUARDS = "1";
+  else delete process.env.TX2_SETTLE_FRAME_GUARDS;
   const db = fresh(12);
   const A = await account(db, "acct-q");
   await A.a.installHeld(validTime);
@@ -107,13 +115,16 @@ test("P1b (" + precondition + "): frames sent within the control cache after a p
   await new Promise((x) => setTimeout(x, 1500));
   const journal = (await db.comp.feedPage(0, 100000)).transactions as any[];
   const after = journal.filter((t) => t.position > pause! && /^settled-/.test(String(t.commandId)));
-  console.log("[P1b " + precondition + "] " + JSON.stringify({ pauseAt: pause, framesAfterPause: after.length }));
+  console.log("[P1b " + precondition + " guards=" + guardsOn + "] " + JSON.stringify({ pauseAt: pause, framesAfterPause: after.length }));
   db.beforeCommit = undefined;
   db.stall = undefined;
   await setSettlementControl(ctl, { paused: false, by: "act10" });
   await running;
-  assert(after.length >= 1);
+  // [DX-ACT8, review F4] With TX2_SETTLE_FRAME_GUARDS the 250 ms cache no longer lets a frame through: 0 after the pause.
+  if (guardsOn === "1") assert.equal(after.length, 0);
+  else assert(after.length >= 1);
   delete process.env.TX2_PUBLISH_BESIDE;
+  delete process.env.TX2_SETTLE_FRAME_GUARDS;
 });
 
 // ---------------------------------------------------------------------------------------------- E1: enrolment races
@@ -171,6 +182,8 @@ test("E1: an enrolment racing its account's first saves, a rival enrolment of th
     checked++;
   }
   console.log("[E1] " + JSON.stringify({ schedules: 300, checked, outcomes }));
+  // [DX-ACT8, review F6] Under TX2_ENROL_BESIDE_SAVES a rival enrolment of the same account is recovered, not refused.
+  assert(Object.keys(outcomes).every((k) => !k.includes("refused")), "an enrolment was refused by its rival: " + JSON.stringify(outcomes));
   delete process.env.TX2_PUBLISH_BESIDE;
   delete process.env.TX2_ENROL_BESIDE_SAVES;
 });
@@ -272,6 +285,43 @@ test("C1 (TX2_NOTICE_LEDGER=parts): a release whose ledger exceeds the part cap 
   assert(tries.every((t) => /FrameTooLarge/.test(t)));
   assert(cursor === undefined || cursor.event <= 2, "the later release's notices were recorded");
   delete process.env.TX2_PUBLISH_BESIDE;
+});
+
+// [DX-ACT8, review F3] C1 with TX2_LEDGER_CAP_AT_PUBLISH=1: the same release is refused at Publish, with the limit and
+// the count, before anything is written; the account's next release then publishes and its notices are recorded.
+test("C1 (TX2_LEDGER_CAP_AT_PUBLISH=1): the release over the ledger cap is refused at Publish; the account goes on", async () => {
+  process.env.TX2_PUBLISH_BESIDE = "1";
+  process.env.TX2_LEDGER_CAP_AT_PUBLISH = "1";
+  process.env.TX2_NOTICE_LEDGER = "parts";
+  try {
+    const db = fresh(32);
+    const A = await account(db, "acct-cap2");
+    await A.a.installHeld(validTime);
+    await A.a.publish("acct-cap2:R1", W0.R1.doc, validTime, "owed");
+    const before = await db.head();
+    const big = largeRelease(W0.R1.doc, parseShape("forms=1750,policies=1750,permille=1000"));
+    const e = await A.a.publish("acct-cap2:big", big, validTime, "owed", undefined, { docs: "ref" }).then(() => null, (x) => x);
+    const wrote = (await db.head()) - before;
+    // 1,000 owed forms (ACT6's largest ledger in parts, 6 parts) still publish.
+    const k = await A.a.publish("acct-cap2:1000", largeRelease(W0.R1.doc, parseShape("forms=1000,policies=1000,permille=1000")),
+      validTime, "owed", undefined, { docs: "ref" });
+    const r2 = await A.a.publish("acct-cap2:R2", W0.R2.doc, validTime, "owed", undefined, { docs: "ref" });
+    const proc = new Proc(db, "settle");
+    const a = new JoinedAccount(memStore(proc, A.held) as any);
+    const notices = new (Archive as any)(a, memStore(proc, A.held, db.scope + "-n"), new BulkQueue(1), "notices", "bytes", "progress") as Archive;
+    await new RecordedNotices(notices, "parts").record(3);
+    const cursor = (await notices.db.row<any>("notice-progress", await db.head()))?.value;
+    console.log("[C1 cap] " + JSON.stringify({ refused: String(e?.message).slice(0, 400), definitionsWritten: wrote, thousandAt: k.position,
+      laterAt: r2.position, cursorEvent: cursor?.event ?? null }));
+    assert(e && e.constructor.name === "ReleaseTooLarge", "the over-cap release was accepted: " + String(e));
+    assert.match(String(e.message), /could owe \d+ notice items across this account's releases \(1750 notice policies/);
+    assert.equal(wrote, 0, "the refused Publish wrote something");
+    assert.equal(cursor.event, 4, "the later releases' notices were not all recorded");
+  } finally {
+    delete process.env.TX2_PUBLISH_BESIDE;
+    delete process.env.TX2_LEDGER_CAP_AT_PUBLISH;
+    delete process.env.TX2_NOTICE_LEDGER;
+  }
 });
 
 // ---------------------------------------------------------------------------------------------- R1: reads around q

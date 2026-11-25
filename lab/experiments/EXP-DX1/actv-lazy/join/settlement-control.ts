@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { setTimeout as sleep } from "node:timers/promises";
 import { Documents, hash } from "../../notify1/store.ts";
-import { Conflict, namesOf, type Store } from "../store.ts";
+import { Conflict, namesOf, type EntityGuard, type Store } from "../store.ts";
 import type { BulkQueue } from "./bulk.ts";
 import type { Settlement } from "./settlement.ts";
 import type { Progress } from "./archive.ts";
@@ -72,6 +72,20 @@ export class SettlementControl {
     if (!this.seen || performance.now() - this.seen.at > 250)
       this.seen = { at: performance.now(), control: (await readControl(this.store)).control };
     return this.seen.control;
+  }
+  /** [DX-ACT8, review F4] TX2_SETTLE_FRAME_GUARDS: the control as it stood at the frame's read position `at` (no
+   * cache). Paused there: nothing is sent; once the control at the head is running again the frame plans afresh
+   * (`Conflict`). Running: the control row, for the frame's guard. */
+  async gateAt(at: number): Promise<EntityGuard> {
+    const { row, control } = await readControl(this.store, at);
+    this.queue.pace(this.key, control.paceMs);
+    if (control.paused) {
+      const begun = performance.now();
+      while ((await readControl(this.store)).control.paused) await sleep(250);
+      this.waitedMs += performance.now() - begun;
+      throw new Conflict("Settlement control changed: the frame plans again");
+    }
+    return { entityId: documents(this.store).prefix + KEY, tripleIds: row ? [row.id] : [] };
   }
   async gate() {
     const begun = performance.now();

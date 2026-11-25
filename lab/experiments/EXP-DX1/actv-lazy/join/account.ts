@@ -37,6 +37,7 @@ import { Documents, type Op } from "../../notify1/store.ts";
 import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
 import { accountKeys, Conflict, fact, millis, namesOf, value, type EntityGuard, type Store } from "../store.ts";
+import { ledgerCapacity, ledgerMode, ledgerPartChars, noticeItems, worstLedgerChars } from "./ledger-parts.ts";
 import { calculate, worldsAt, type Proposal } from "../decision.ts";
 import { deepImpact, rawDeep, replaceDeep } from "./deep.ts";
 import { subjectOf, type Fact } from "../../../../bench/lib/world.ts";
@@ -278,6 +279,9 @@ export class JoinedAccount {
         assert(
           allowed ||
             (setup && beside && foreign(t.changes)) ||
+            // [DX-ACT8, review F6] A rival enrolment of this same account whose record lands inside this walk: its
+            // command ID is this account's enrolment command, so this enrolment then recovers it (one record, not two).
+            (setup && beside && t.actor === "lazy/join" && t.commandId === "join-held-enrolment:" + this.s.held!.account) ||
             (t.actor === stageActor && stageChanges(this.db.prefix, t.changes)) ||
             // [DX-ACT6] Content-addressed release definitions written ahead of a Publish (unreachable until it).
             (t.actor === definitionsActor && definitionsOnly(this.s, t.changes)) ||
@@ -642,6 +646,25 @@ export class JoinedAccount {
     }
     throw new Conflict("Joined command exhausted three serial predecessor attempts");
   }
+  /** [DX-ACT8, review F3] Refuses a release when one subject could owe more notice items across this account's
+   * releases (`releases`, plus `doc`) than its ledger can be written with (ledger-parts.ts). */
+  private async ledgerCap(doc: W0.ReleaseDoc, releases: readonly { documentRef?: DocRef; document?: W0.ReleaseDoc }[], p: number) {
+    const docs = [doc];
+    for (const r of releases) docs.push(r.documentRef ? (await loadRelease(this.s, r.documentRef, p)).doc : r.document!);
+    const mode = ledgerMode(), { items, policies, base } = noticeItems(docs);
+    const need = worstLedgerChars(items), cap = ledgerCapacity(mode);
+    if (need <= cap) return;
+    let fit = 0;
+    while (fit < items.length && worstLedgerChars(items.slice(0, fit + 64)) <= cap) fit += 64;
+    throw new ReleaseTooLarge(
+      "Release refused: one subject could owe " + items.length + " notice items across this account's releases (" +
+        policies + " notice policies and up to " + base + " from the base rules); its packed notice ledger would be about " +
+        need + " characters, over the " + cap + " the settlement can write for one subject (" +
+        (mode === "parts" ? cap / ledgerPartChars + " parts of " + ledgerPartChars + " characters" :
+          "one value per frame; TX2_NOTICE_LEDGER=parts writes it in parts") + "). Publish a release with fewer notice " +
+        "policies (this account's releases can hold about " + Math.max(0, fit - base) + ").",
+    );
+  }
   private async choose(
     meta: Meta,
     p: number,
@@ -821,6 +844,11 @@ export class JoinedAccount {
     // [DX-ACT6] By reference: the definitions not stored yet are written first (content-addressed, unfenced, each write
     // within the writer's bound), and the predecessor's too if it was published with full documents.
     const byRef = (options.docs ?? docsMode()) === "ref";
+    // [DX-ACT8, review F3] Also before the definitions are written, so a refused release writes nothing.
+    if (process.env.TX2_LEDGER_CAP_AT_PUBLISH === "1" && storage === "owed") {
+      const h0 = await this.s.head();
+      await this.ledgerCap(doc, (await this.s.controls(h0)).releases, h0);
+    }
     const ref = byRef ? await this.writeDefinitions(doc) : undefined;
     // [DX-ACT8] The account guard applies to a held account's owed record only (its plan reads no subject data); every
     // other Publish keeps the whole-head rule.
@@ -845,6 +873,8 @@ export class JoinedAccount {
               ? await loadRelease(this.s, prev.documentRef, p)
               : W0.compileRelease(prev.document)
             : undefined;
+          // [DX-ACT8, review F3] TX2_LEDGER_CAP_AT_PUBLISH=1: checked again at the plan's own read position.
+          if (process.env.TX2_LEDGER_CAP_AT_PUBLISH === "1") await this.ledgerCap(doc, c.releases, p);
           // [DX-ACT6] The record names stored definitions only: the root of this release and of its predecessor.
           const oldRef: DocRef | null = !byRef || !prev ? null : prev.documentRef ?? splitDocument(prev.document).ref;
           if (byRef) {

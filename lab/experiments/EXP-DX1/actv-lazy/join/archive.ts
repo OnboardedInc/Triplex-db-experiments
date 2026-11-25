@@ -9,6 +9,8 @@ import { memberPage, width } from "../../notify1/census.ts";
 import { Documents, hash, pack, unpack, type Op, type Row } from "../../notify1/store.ts";
 import type { Store } from "../store.ts";
 import { Conflict, namesOf, openStore, type EntityGuard } from "../store.ts";
+/** [DX-ACT8, review F4/F5] TX2_SETTLE_FRAME_GUARDS=1: the pause and a later release are part of each frame's guard. */
+export const frameGuards = () => process.env.TX2_SETTLE_FRAME_GUARDS === "1";
 import { worldsAt, winner } from "../decision.ts";
 import { LazyReader } from "../read.ts";
 import { JoinedAccount, type Marker } from "./account.ts";
@@ -150,7 +152,9 @@ export class Archive {
    * client-side intervals (bounded) for the live-side reading. */
   readonly contest = new Contest();
   /** [DX-ACT5] The account's pause and pace, read before each frame (TX2_SETTLE_CONTROL=1; unset, none). */
-  control?: { gate: () => Promise<void> };
+  control?: { gate: () => Promise<void>; gateAt?: (at: number) => Promise<EntityGuard> };
+  /** [DX-ACT8, review F5] The notice tail as this turn read it (TX2_SETTLE_FRAME_GUARDS, values frames only). */
+  private frameTail?: EntityGuard;
   /** [DX-ACT5] Diagnostic: no frame is sent after this `performance.now()` time (SettlementStopped). */
   stopAt?: number;
   private constructor(
@@ -212,12 +216,21 @@ export class Archive {
     // [DX-ERASE1] Why: admission can wait after a page was derived, so the same ticket belongs on the destination commit.
     // Rejected: a source read immediately before enqueueing (removal can publish while the batch waits).
     // [DX-ACT5] With TX2_SETTLE_PRECONDITION=progress the frame is refused only if its writer's progress row moved.
+    // [DX-ACT8, review F4/F5] TX2_SETTLE_FRAME_GUARDS=1 (default off): the account's settlement control is read at the
+    // frame's own read position (no cache), a pause there sends nothing, and under the progress precondition the frame
+    // is also guarded on that control row (a pause that lands after the read refuses the frame) and, for a values frame,
+    // on the notice tail its turn read (a Publish that lands after the read refuses it, so the next frame sees the
+    // release superseded). Under the head precondition the head fence already refuses both. Unset: as before.
+    const fenced = frameGuards();
+    const controlGuard = fenced && this.control?.gateAt ? await this.control.gateAt(at) : undefined;
     const guards: EntityGuard[] | undefined =
       this.precondition === "progress" && progress
-        ? [{ entityId: this.db.prefix + progress.key, tripleIds: progress.prior ? [progress.prior.id] : [] }]
+        ? [{ entityId: this.db.prefix + progress.key, tripleIds: progress.prior ? [progress.prior.id] : [] },
+          ...(controlGuard ? [controlGuard] : []),
+          ...(fenced && kind === "activation" && this.frameTail ? [this.frameTail] : [])]
         : undefined;
     assert(this.precondition === "head" || guards, "A settlement frame names its progress row");
-    await this.control?.gate();
+    if (!controlGuard) await this.control?.gate();
     if (this.stopAt !== undefined && performance.now() > this.stopAt) throw new SettlementStopped();
     const c = this.contest;
     c.offered++;
@@ -261,6 +274,10 @@ export class Archive {
       sourceAt = await s.head();
     const r = await a.receipt(sequence, sourceAt),
       { marker: m, event: e, census } = r;
+    if (frameGuards()) {
+      const tail = await a.db.row("tail", sourceAt);
+      this.frameTail = { entityId: a.db.prefix + "tail", tripleIds: tail ? [tail.id] : [] };
+    }
     assert.equal(m.storage, "owed");
     const authority = await recheckErasure(s.comp, m.erasureSeq);
     const identity = identityOf(s.scope, m, e.at),

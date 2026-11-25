@@ -145,3 +145,56 @@ export function noticeCandidate(
     ledger: change.closing,
   };
 }
+
+// [DX-ACT8, review F3] TX2_LEDGER_CAP_AT_PUBLISH=1 (default off): a Publish is refused when one subject could owe more
+// notice items, across every release of the account (a ledger keeps retired items), than the settlement in force can
+// write for it: in parts, `ledgerPartsMax()` parts; whole, one value that fits one frame beside the cursor change.
+// Otherwise the release is acknowledged and its first ledger write is refused (`FrameTooLarge`), and since the cursor
+// cannot pass it, every later release's notices in that account are never recorded. Unset: nothing here is used.
+const sample = { scopeName: "ledger-capacity" } as never;
+const longCursor = { epoch: "0".repeat(26), event: 999999, start: 999999, parent: "0".repeat(64), batch: 999999999,
+  previous: "0".repeat(64), entries: 999999999999, frames: "bytes", part: 999999, ledger: "parts", erasureSeq: 999999 };
+let wholeMax: number | undefined;
+/** The longest packed ledger one subject can have and still be written. */
+export function ledgerCapacity(mode: LedgerMode) {
+  if (mode === "parts") return (partsMax ??= ledgerPartsMax()) * ledgerPartChars;
+  if (wholeMax === undefined) {
+    const db = new Documents(sample, "settlement-notices-" + "x".repeat(24)),
+      id = "f".repeat(40);
+    const fits = (n: number) => frameEstimate([{ op: "retract" as const, id }, db.put(ledgerKey("pl:s99999999"), "A".repeat(n)),
+      { op: "retract" as const, id }, db.put("notice-progress", longCursor)]).fits;
+    let lo = 0, hi = 4 << 20;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (fits(mid)) lo = mid;
+      else hi = mid - 1;
+    }
+    wholeMax = lo;
+  }
+  return wholeMax;
+}
+/** The packed ledger of a subject that owes each of `items` ((rule, key) pairs), as the kernel writes one: items in id
+ * order, a work item id is a 64-hex hash, its payload names the form and one of 31 due dates (the real ledgers' dates
+ * spread less, so they pack smaller), its sequence is six digits; plus 3% for what the sample does not show. With the
+ * base allowance this is 15%, 6.5% and 5.9% above the real ledger at 200, 1,000 and 1,500 owed synthetic forms
+ * (act10/ledger-probe.ts). */
+export function worstLedgerChars(items: readonly (readonly [string, string])[]) {
+  const subject = "pl:s99999999";
+  const states = items.map(([rule, key], k) => ({ id: "wi:" + sha256(canonical([subject, rule, key])),
+    payload: canonical({ dueAt: "2026-11-" + String(1 + (k % 31) % 30).padStart(2, "0") + "T00:00:00.000000Z", form: key }),
+    retired: false, seq: 999999n, subject })).sort((a, b) => (a.id < b.id ? -1 : 1));
+  return Math.ceil(pack(states).length * 1.03);
+}
+/** Every (rule, key) notice item the documents can give one subject: each notice policy one item, and an allowance of
+ * two items per base rule (the base rules give at most one per rule and document on the held subjects). */
+export function noticeItems(docs: readonly W0.ReleaseDoc[]) {
+  const items = new Map<string, readonly [string, string]>();
+  let rules = 0;
+  for (const d of docs) {
+    rules = Math.max(rules, d.rules?.length ?? 0);
+    for (const p of d.policies ?? []) if (p.notice) items.set(p.id + " " + p.form, [p.id, p.form]);
+  }
+  const policies = items.size;
+  for (let k = 0; k < 2 * rules; k++) items.set("base " + k, ["base:" + k, "form:base-" + k]);
+  return { items: [...items.values()], policies, base: 2 * rules };
+}
