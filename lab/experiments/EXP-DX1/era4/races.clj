@@ -16,6 +16,7 @@
   source or the recipient other than X itself."
   (:require [clojure.data.json :as json] [clojure.string :as str] [datomic.api :as d]
             [triplex.gateway.main :as main] [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope]
+            [triplex.gateway.removal-commit :as rc]
             [wfix1-regression :as offers] [era2-gate :as g] [era3-attack :as x] [act9-tickets :as k])
   (:import [java.nio.file Files OpenOption StandardOpenOption] [java.util Random]))
 
@@ -208,11 +209,216 @@
                                         :identities (count (get-in reply [:body "identities"])) :removal-positions (- (g/head conn) before) :removal-datoms tx-datoms
                                         :tries (get-in reply [:body "tries"]) :open-all-ms (Math/round ^double open-ms)})))))))
 
+;; ---- [DX-ERA4, after DX-ERA2's third pass] phase `checks`: e9 as the option writes copies, the caller's reliance,
+;; the cross-database window, and the option's answers at every stop point of a removal (P1 to P7) ----------------
+
+(defn- install-declare-hooks!
+  "Stops before and after the declaration (DX-ERA2's third pass: intent, declaration, selection and commit, publication),
+  through era3/attack.clj's plan, as era3/attack2.clj stops after it."
+  []
+  (let [declare rc/declare!]
+    (alter-var-root #'rc/declare!
+      (fn [_] (fn [& args]
+                (@#'x/stop! :before-declare)
+                (let [r (apply declare args)] (@#'x/stop! :after-declare) r))))))
+
+(defn- seed-x!
+  "A protected value of `owner` saved on its own; [value assertion-ids]."
+  [src cmd owner tag]
+  (let [v (g/secret owner tag) f (g/frame cmd owner v nil nil) rep (offers/send src f)]
+    (x/oracle! "seed" (= 200 (:status rep)) "the seed save" (offers/outcome rep))
+    [v (protected-id f)]))
+
+(defn- key-gone? [src ids]
+  (loop [n 0]
+    (cond (not-any? #(privacy/exists? (key-file src %)) ids) true
+          (> n 50) false
+          :else (do (Thread/sleep 100) (recur (inc n))))))
+
+(defn- journal-text [src] (g/text (:body (offers/route src "v2" "transactions" {"after" 0 "limit" 1000}))))
+
+(defn- derived-copy [src cmd doc content t]
+  (cond-> (assoc (g/save-frame cmd doc ":notice/body" content nil nil) "erasureSeq" t)
+    k/after? (assoc "erasureAccounts" ["a"])))
+
+(defn e9s
+  "The second review's e9 (era3/attack2.clj, REVIEW-2 E9), with the copy made the way this option's derived writers make
+  it: sealed through the derived-seal route under the protected assertion it read, then recorded in a derived document
+  BEFORE the removal. Green means: after the acknowledgement the copy is not readable in its document, its journal or
+  any native datom, opening it answers removed, and the assertion's key is gone. Also: the review's unsealed setting,
+  where the option refuses to seal (an unsealed scope keeps the removed bytes; section 1)."
+  []
+  (g/fresh-scope true
+    (fn [name conn]
+      (let [lbl "E9s derived copy recorded before the removal, sealed by the option"
+            [vx ids-x] (seed-x! name "e9s-x" g/a1 "e9s") [vy ids-y] (seed-x! name "e9s-y" g/b1 "e9s")
+            cx (seal! name ids-x (str "derived:" vx)) cy (seal! name ids-y (str "derived:" vy))
+            w (offers/send name (derived-copy name "e9-f" "notice:v1:e9" cx (g/seq-now name conn)))
+            wy (offers/send name (assoc (g/save-frame "e9-fy" "notice:v1:e9y" ":notice/body" cy nil nil)
+                                        "erasureSeq" (g/seq-now name conn) "erasureAccounts" ["b"]))
+            removed (x/remove-attr! name "e9-rm" g/a1)
+            gone (key-gone? name ids-x)
+            detail {:frame-before (offers/outcome w) :removal (offers/outcome removed) :key-gone gone
+                    :copy-readable-after-ack (str/includes? (x/read-text name "notice:v1:e9") vx)
+                    :copy-in-journal (str/includes? (journal-text name) vx)
+                    :native-copies (count (g/raw-occurrences conn vx))
+                    :opened (second (open! name cx)) :kept-opened (second (open! name cy))}]
+        (x/observe! lbl :detail detail)
+        (println "ERA4_E9S" (pr-str (dissoc detail :kept-opened)))
+        (x/oracle! lbl (= [200 nil] (offers/outcome w)) "the sealed copy is recorded before the removal" detail)
+        (x/oracle! lbl (= 200 (:status removed)) "the removal completes" detail)
+        (x/oracle! lbl (not (:copy-readable-after-ack detail))
+                   "TARGETS 7.3: erasure reaches every copy of a protected value or anything derived from it" detail)
+        (x/oracle! lbl (not (:copy-in-journal detail)) "the copy's journal holds no clear copy" detail)
+        (x/oracle! lbl (zero? (:native-copies detail)) "no native datom holds the removed value in clear" detail)
+        (x/oracle! lbl (contains? (:opened detail) "removed") "the recorded copy opens as removed" detail)
+        (x/oracle! lbl gone "the removed assertion's key is deleted" detail)
+        (x/oracle! lbl (= (str "derived:" vy) (get (:kept-opened detail) "value")) "another subject's copy still opens" detail))))
+  (g/fresh-scope false
+    (fn [name conn]
+      (let [[vx ids-x] (seed-x! name "e9u-x" g/a1 "e9u")
+            r (offers/route name "v2" "derived-seal" {"items" [{"ids" ids-x "value" (str "derived:" vx)}]})]
+        (println "ERA4_E9S_UNSEALED" (pr-str (offers/outcome r)))
+        (x/oracle! "E9s unsealed" (= [409 "DerivedSealNeedsSealedScope"] (offers/outcome r))
+                   "on an unsealed scope the option refuses to seal (no key exists that a removal destroys)" (offers/outcome r))))))
+
+(defn e6s
+  "The caller's reliance, shown (as the second review showed E6 for tickets): a copy of X's value sealed naming only Y's
+  assertion (fewer assertions than its derivation read) is not reached by X's removal. Observed, not an oracle: the
+  option relies on the caller naming every row it read (DERIVED-COPIES.md section 7)."
+  []
+  (g/fresh-scope true
+    (fn [name conn]
+      (let [[vx _] (seed-x! name "e6s-x" g/a1 "e6s") [_ ids-y] (seed-x! name "e6s-y" g/b1 "e6s")
+            wrong (seal! name ids-y (str "derived:" vx))
+            removed (x/remove-attr! name "e6s-rm" g/a1)
+            opened (second (open! name wrong))
+            survives (= (str "derived:" vx) (get opened "value"))]
+        (println "ERA4_E6S" (pr-str {:removal (offers/outcome removed) :copy-named-fewer-survives survives}))
+        (bump! :e6s (if survives :copy-survives :reached))))))
+
+(defn window
+  "DX-ERA2 15.8's cross-database window, on this option: a delivery's recipient transaction prepared under the source's
+  current ticket, captured before the source's removal and submitted to the recipient's Datomic after the removal was
+  acknowledged (bypassing every gateway check, as a delivery whose wait expired). With a clear copy (as today) the late
+  copy is readable in the recipient; with a sealed copy it must be harmless: committed, but holding no clear value in
+  the recipient's routes or datoms, and opening it through the source answers removed."
+  []
+  (doseq [sealed-copy? [false true]]
+    (g/fresh-scope true
+      (fn [src sconn]
+        (offers/in-scope
+          (fn [rcp rconn]
+            (let [lbl (str "window " (if sealed-copy? "sealed copy" "clear copy"))
+                  [vx ids-x] (seed-x! src (str "win-x-" sealed-copy?) g/a1 "win")
+                  content (if sealed-copy? (seal! src ids-x (str "derived:" vx)) (str "derived:" vx))
+                  input (assoc (derived-copy src "dw-late" "notice:v1:dw-late" content (g/seq-now src sconn))
+                               "erasureSourceDatabase" src)
+                  ;; the recipient's first write installs what a database needs; only the delivery itself is held back
+                  warm (offers/send rcp (g/frame (str "win-warm-" sealed-copy?) "acct/c/warm" "warm" nil nil))
+                  _ (x/oracle! lbl (= 200 (:status warm)) "the recipient takes a plain save first" (offers/outcome warm))
+                  captured (atom nil) submit d/transact-async
+                  _ (with-redefs [d/transact-async (fn [c data & more]
+                                                     (if (nil? @captured)
+                                                       (do (reset! captured data) (future (throw (ex-info "held back" {}))))
+                                                       (apply submit c data more)))]
+                      (offers/send rcp input))
+                  removed (x/remove-attr! src (str "dw-rm-" sealed-copy?) g/a1)
+                  gone (key-gone? src ids-x)
+                  landed (if @captured
+                           (try @(d/transact-async rconn @captured) :committed (catch Exception e (.getMessage e)))
+                           :nothing-captured)
+                  txt (g/text (:body (offers/route rcp "v1" "read" {"entityIds" ["notice:v1:dw-late"]})))
+                  wire (first (re-seq #"tdx1\.[A-Za-z0-9_.-]+" txt))
+                  detail {:sealed-copy sealed-copy? :source-removal (offers/outcome removed) :key-gone gone
+                          :late-recipient-transaction landed
+                          :copy-readable-in-recipient-after-ack (str/includes? txt vx)
+                          :recipient-journal-clear (str/includes? (journal-text rcp) vx)
+                          :native-clear-recipient (count (native-clear rconn [vx]))
+                          :native-clear-source (count (native-clear sconn [vx]))
+                          :sealed-copy-landed (some? wire)
+                          :opened-through-source (when wire (second (open! src wire)))
+                          :opened-through-recipient (when wire (offers/outcome (offers/route rcp "v2" "derived-open" {"items" [wire]})))}]
+              (println "ERA4_WINDOW" (pr-str detail))
+              (bump! :window (if sealed-copy? :sealed :clear) (if (:copy-readable-in-recipient-after-ack detail) :readable :unreadable))
+              (x/oracle! lbl (= 200 (:status removed)) "the source's removal completes" detail)
+              (when sealed-copy?
+                (x/oracle! lbl (= :committed landed) "the window is still open: the late transaction commits (as DX-ERA2 15.8)" detail)
+                (x/oracle! lbl (:sealed-copy-landed detail) "what landed is the sealed copy" detail)
+                (x/oracle! lbl (not (:copy-readable-in-recipient-after-ack detail)) "the late copy is not readable in the recipient" detail)
+                (x/oracle! lbl (not (:recipient-journal-clear detail)) "nor in the recipient's journal" detail)
+                (x/oracle! lbl (zero? (:native-clear-recipient detail)) "no recipient datom holds the value in clear" detail)
+                (x/oracle! lbl (zero? (:native-clear-source detail)) "no source datom holds the value in clear" detail)
+                (x/oracle! lbl (contains? (:opened-through-source detail) "removed") "opened through its source it answers removed" detail)
+                (x/oracle! lbl gone "the source assertion's key is deleted" detail)))))))))
+
+(def stop-points
+  "DX-ERA2 REMOVAL-PER-ACCOUNT.md 15.2: the stop after which the removal is left (nil: it runs to its answer)."
+  [["P1" :before-declare] ["P2" :after-declare] ["P3" :after-guard] ["P4-not-landed" :before-native] ["P5" :after-native]
+   ["P6" :at-publish] ["P7" nil]])
+
+(defn stops
+  "At each stop point of DX-ERA2's third pass: what this option's routes answer while the removal is left there (open a
+  copy recorded before it, seal its assertion again, the plain read of the value itself, a derived write of a new
+  sealed copy), who completes it, and, after the acknowledgement, that every copy is unreadable and the key is gone."
+  []
+  (doseq [[p stop] stop-points]
+    (g/fresh-scope true
+      (fn [src conn]
+        (let [lbl (str "stop " p)
+              [vx ids-x] (seed-x! src (str "st-x-" p) g/a1 (str "st" p)) [vy ids-y] (seed-x! src (str "st-y-" p) g/b1 (str "st" p))
+              cx (seal! src ids-x (str "derived:" vx)) cy (seal! src ids-y (str "derived:" vy))
+              t (g/seq-now src conn)
+              w0 (offers/send src (derived-copy src (str "st-w0-" p) "notice:v1:st-x" cx t))
+              cmd (str "st-rm-" p) sel [{"entityId" g/a1 "attribute" ":v"}]
+              _ (reset! x/plan (when stop {:stop stop :stops-left 1}))
+              first-reply (x/erase! src cmd sel)
+              fired (and stop (zero? (long (:stops-left @x/plan 1))))
+              _ (reset! x/plan nil)
+              pending-at-stop (some? (privacy/pending src))
+              at-stop {:open-copy (let [[s o] (open! src cx)] [s (cond (contains? o "removed") :removed (contains? o "value") :value :else o)])
+                       :seal-again (let [i (first (get-in (offers/route src "v2" "derived-seal" {"items" [{"ids" ids-x "value" "probe"}]}) [:body "items"]))]
+                                     (cond (contains? i "removed") :removed (contains? i "sealed") :sealed :else i))
+                       :plain-read-has-value (str/includes? (x/read-text src g/a1) vx)
+                       :key-present (some #(privacy/exists? (key-file src %)) ids-x)}
+              w1 (offers/send src (derived-copy src (str "st-w1-" p) "notice:v1:st-x1" (seal! src ids-y (str "derived:" vy)) t))
+              pending-after-w1 (some? (privacy/pending src))
+              final (loop [n 0 reply first-reply]
+                      (if (or (= 200 (:status reply)) (>= n 3)) reply (recur (inc n) (x/erase! src cmd sel))))
+              gone (key-gone? src ids-x)
+              after {:open-copy (second (open! src cx)) :seal-again (first (get-in (offers/route src "v2" "derived-seal" {"items" [{"ids" ids-x "value" "probe"}]}) [:body "items"]))
+                     :doc-has-value (str/includes? (x/read-text src "notice:v1:st-x") vx)
+                     :journal-has-value (str/includes? (journal-text src) vx)
+                     :native-clear (count (native-clear conn [vx]))
+                     :kept-opens (= (str "derived:" vy) (get (second (open! src cy)) "value"))}
+              row {:p p :stop stop :stop-fired (boolean fired) :first (offers/outcome first-reply) :pending-at-stop pending-at-stop
+                   :at-stop at-stop :derived-write-at-stop (offers/outcome w1) :completed-by-that-refusal (and pending-at-stop (not pending-after-w1))
+                   :final (offers/outcome final) :key-gone gone :after (update after :open-copy #(if (contains? % "removed") :removed %))
+                   :seal-again-after (if (contains? (:seal-again after) "removed") :removed (:seal-again after))}]
+          (println "ERA4_STOP" (pr-str (dissoc row :after :seal-again-after)) (pr-str (select-keys after [:doc-has-value :journal-has-value :native-clear :kept-opens])))
+          (bump! :stop p (if fired :fired :not-reached))
+          (x/oracle! lbl (= [200 nil] (offers/outcome w0)) "the copy is recorded before the removal" (offers/outcome w0))
+          (x/oracle! lbl (= 200 (:status final)) "the removal completes" row)
+          (x/oracle! lbl (contains? (:open-copy after) "removed") "after the acknowledgement the copy opens as removed" row)
+          (x/oracle! lbl (contains? (:seal-again after) "removed") "after the acknowledgement the assertion seals nothing" row)
+          (x/oracle! lbl (not (:doc-has-value after)) "the copy's document holds no clear value" row)
+          (x/oracle! lbl (not (:journal-has-value after)) "the journal holds no clear value" row)
+          (x/oracle! lbl (zero? (:native-clear after)) "no native datom holds the value in clear" row)
+          (x/oracle! lbl (:kept-opens after) "another subject's copy still opens" row)
+          (x/oracle! lbl gone "the key is deleted" row)
+          ;; while the removal is left at its stop it is not yet acknowledged: whatever opens then is a read that started
+          ;; before the publication (TARGETS 7.1); recorded in the table, checked only for agreement with the plain read
+          (when pending-at-stop
+            (x/oracle! lbl (= (= :value (second (:open-copy at-stop))) (:plain-read-has-value at-stop))
+                       "while pending, a copy opens exactly when the plain read still answers the value" row)))))))
+
 (defn main []
   (x/install-hooks!)
+  (install-declare-hooks!)
   (envelope/start!)
-  (if (= "cost" (System/getenv "ERA4_PHASE"))
-    (cost)
+  (case (System/getenv "ERA4_PHASE")
+    "cost" (cost)
+    "checks" (do (e9s) (e6s) (window) (stops))
     (fuzz (or (System/getenv "ERA4_RUN") "e0") (Long/parseLong (or (System/getenv "ERA4_N") "200"))
           (Long/parseLong (or (System/getenv "ERA4_BLOCK") "50")) (Long/parseLong (or (System/getenv "ERA4_SEED") "1"))))
   (println "ERA4_TALLY" arm (pr-str (into (sorted-map) (map (fn [[kk v]] [(pr-str kk) v])) @tally)))
