@@ -269,12 +269,14 @@
     (= 1 v)))
 
 (defn- repair-routed!
-  "The old ident a save is routed away from: when it holds a working body again (another build rewrote it), put the
-  refusal back before this save commits (one datom read per save)."
+  "The old ident a save is routed away from, and the general writer's fixed ident `:triplex/commit` (the one a build
+  that does not know the setting rewrites on its open, whatever writer this save takes): when either holds a working
+  body again, put the refusal back before this save commits (two datom reads per save)."
   [conn db ident]
-  (when-let [e (d/entid db ident)]
-    (let [f (:v (first (d/datoms db :eavt e :db/fn)))]
-      (when (and f (not (refusal? f))) (repair! conn (d/db conn))))))
+  (when (some (fn [i] (when-let [e (d/entid db i)]
+                        (let [f (:v (first (d/datoms db :eavt e :db/fn)))] (and f (not (refusal? f))))))
+              (distinct [ident :triplex/commit]))
+    (repair! conn (d/db conn))))
 
 (defn route-data
   "The general writer's prepared data, calling the twin of its function (setting on)."
