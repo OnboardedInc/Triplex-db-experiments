@@ -98,7 +98,8 @@
 (defn shared? [] (some? sql/url))
 
 (defn provision! [name sealed?]
-  (when (and sql/url sealed?) (refill! name)))
+  ;; [DX-N1, N3] a refused fill answers a typed 503 with a fixed text, never the driver's message (key-pool/provision!)
+  (when (and sql/url sealed?) ((requiring-resolve 'triplex.gateway.key-pool/provision!) name)))
 
 (defn- take-key! [name id]
   (when (contains? (:erased privacy/*cut*) id) (privacy/stale!))

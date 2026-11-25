@@ -21,3 +21,15 @@
        (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "key-pool-refill" name e)))
   (or (.poll ^ConcurrentLinkedQueue (@#'envelope/pool name))
       (privacy/failure! 503 "EnvelopeKeyPoolEmpty" "Retry the protected save after replenishment")))
+
+(defn provision!
+  "[DX-N1, N3] The declaration's fill of a sealed database's pool (envelope/provision!, from the protection route). A
+  refused fill is counted and logged through failures/note! (`key-pool-refill`) and the declaration is answered the
+  typed 503 with a fixed text; the declaration is stored before its fill, so sending it again fills the pool. Before,
+  the driver's exception reached the route's generic catch, whose reply carried its message to the caller: for a
+  refused batch, the INSERT statement with every new key, wrapped, in hex (a 400 GatewayError)."
+  [name]
+  (try (@#'envelope/refill! name)
+       (catch Exception e
+         ((requiring-resolve 'triplex.gateway.failures/note!) "key-pool-refill" name e)
+         (privacy/failure! 503 "EnvelopeKeyPoolEmpty" "Retry the protection declaration after replenishment"))))
