@@ -680,6 +680,106 @@ layer's present documents, `notice:v1:<hash>:...`, are journals and never decide
 the account's own write refuses that write (`CommandConflict`), never a wrong acknowledgement. Whether an ordinary
 client may write system entities is the API's rule, not the store's.
 
+## 13. After the third review: the fourth pass (design written before the tests, 2026-11-25)
+
+The third review ([REVIEW-3](../s5/REVIEW-3.md), `c85a0d0b3`) found the setting fit to merge off and broken on: a scope
+open put a working general writer back under its moved ident (R3-1). This section is the fourth pass.
+
+### 13.1 Every place a stored function is written, and the setting
+
+A moved ident stays refused only while nothing writes a working body under it again. These are all the places any
+build writes a stored function (`:db/fn`), found by searching the gateway for `d/function` and `:db/fn`:
+
+| Where | Idents | Moved by the transition | Under the setting |
+| --- | --- | --- | --- |
+| `commit.clj` `install-base!` (every scope open; writes when the scope's recorded hash differs from the process's: another build's `commit.clj`, `TX2_LOAD1_PROFILE=1`, the covering-owner options) | `:triplex/commit` | yes | the body goes to the twin; the old ident keeps the refusal; the recorded hash is left as the transition found it |
+| `commit.clj` `install!` (scope open; a variant when absent) | `triplex.write/v-*` | yes | a new variant is installed under its twin, with a refusal under its own ident |
+| `subject_save.clj` `install!` | `triplex.subject/v-*`, `triplex.subject/prefetch-*` | the writer (`v-`) | as above |
+| `subject_owners.clj` `install!` | `triplex.subject/owners-*` | yes | as above |
+| `subject_create.clj` `install!` | `triplex.subject/create-*` | yes | as above |
+| `owner_layout.clj` `install!` | `triplex.owner/v-*` (moved), `triplex.owner/fold-*` | the writer (`v-`) | as above |
+| `general_prefetch.clj`, `subject_hints.clj` `install!` | `triplex.write/prefetch-*`, `triplex.subject/hints-*` (read-only, `d/with`) | no | unchanged (guarded) |
+| `group.clj` `install!` | the group guard, the queue clock | no | unchanged (guarded) |
+| `group_prepare.clj` `install!` | group application | no | unchanged |
+| `erase.clj` | the removal guards | no | unchanged |
+| `layout_replay.clj`, `ha_shared.clj`, `owner_layout.clj` `install-fixture!` | replay tooling, the HA lab, a test fixture | no | unchanged |
+| `account_claims.clj` | the setting guard, the twins, the refusals | — | — |
+
+**How each install respects the setting** (`account_claims.clj` `installing`, `install-sites`). Every install function
+in the table's first nine rows runs under `installing`, whoever calls it (a scope open, a test, a tool). Its
+transaction is rewritten:
+
+- the setting attribute absent: unchanged (a database without the setting stores exactly what it stored before); if
+  the setting appeared while the install was in flight, what it wrote is moved at once;
+- the setting attribute present: the transaction carries the setting guard (`:triplex.account/setting-guard-v1`,
+  installed with the attribute), refused if the setting changed since it was read, then retried;
+- the setting on: a body for a moved ident is written under its twin (which also refreshes the twin with this build's
+  code: R3-1b), and the old ident gets or keeps the refusal.
+
+**What this build cannot control: another build's code.** A build that does not know the setting runs its own
+`install-base!`. It writes its body under `:triplex/commit` when its hash differs from the scope's recorded hash. Two
+measures bound that:
+
+1. Under the setting this build never changes the recorded hash, so a build with the hash recorded at the transition
+   (every build whose general writer is the base's, `23b7df344` and `a6d02225c` included) never rewrites the old
+   ident.
+2. Every save this build routes reads the body under the ident it routes away from (one datom); when it is a working
+   body, the refusal goes back before that save commits; every scope open by this build does the same for all moved
+   idents (`repair!`). Saves of the other build between its open and this build's next save commit: that window is
+   measured (13.4), not closed. Operations rule: after the transition only builds that know the setting open the
+   database.
+
+### 13.2 The account authority: what the gateway does, and what the layer in front must guarantee
+
+**What the gateway does now.**
+
+- A request that names account A and writes any entity of another account is refused `400 InvalidValue`, on every
+  writer: it is checked in `stored-ids`, which runs in `commit!` before any writer is chosen (one owner, several
+  owners, creation, general, import frames, group commit). Before this pass it was refused only when every entity was
+  another single account's.
+- Under the setting, every save that names A is stored under A's scoped form, whatever else it writes (system
+  entities, documents that carry no account). So after the transition a plain claim can only come from a request
+  that names no account.
+- The reserved prefix is refused on every route that stores or looks up a command or operation ID: save, fence, claim,
+  begin, command, operation, and now removal (`erase`) and declaration (`protection`), which store their command ID as
+  a claim (R3-2 route 2). One test walks every route.
+
+**What the gateway cannot do: tell who the caller is.** The account a request names is whatever the request says.
+
+**What the layer in front of the gateway must guarantee:**
+
+1. Every write and every lookup names an account (`account`, the SDK's `claimAccount`), and that account is the
+   authenticated caller's, set by the layer, never taken from the client's body.
+2. A caller writes only its own account's entities; the gateway enforces the half it can see (no other account's
+   entities in a request naming A), the layer enforces that A is the caller.
+3. Requests that name no account (the system's own writes) come only from the system. Only such a request can write
+   a plain claim after the transition, and only such a claim can still refuse an account's command ID (R3-5).
+4. Removal and declaration requests come only from callers allowed to remove (the gateway refuses the reserved
+   prefix there; it cannot judge who may remove).
+5. Reads of rows are not covered: the gateway has no read authority.
+
+With 1 to 4, R3-2's route 1 is closed (B cannot name A), route 2 is closed in the gateway (the prefix), and R3-5 can
+be reached by the system only.
+
+### 13.3 R2-2 with the removal branch: the merged rule, this branch's half
+
+- **Framing (rule 1).** A save is framed at the earliest of the positions it states, its first attempt's
+  (`frameSourceK`) and its own (`sourceK`), and at the removal sequence it read (`removalSeen`, accepted when sent;
+  the removal branch's SDK sends it). It is declined when a removal naming a protected value it writes is later than
+  that frame; a save that states none is declined against any such removal (`storage.clj` `frame-of`,
+  `frame-check!`, on every save, not only replays).
+- **This SDK always states a frame** (rule 2): an optimistic attempt sends no source, so it sends `frameSourceK`, the
+  newest position the client had seen; a replay sends its first attempt's. So a value saved after a removal the client
+  had seen is not declined for having no source (R3-6, bounded). A null `frameSourceK` (an SDK from before) states
+  nothing.
+- **Declined commands are recorded** (rule 3): a save declined across a removal that stated its frame has its commands
+  recorded (`:triplex.removal/declined-command`, `:triplex.removal/declined-by`, the removal branch's own attributes),
+  and every later save under one of them is declined, whatever it states (R3-3). Under the setting the recorded form
+  is the scoped one, so one account's declined command never declines another's.
+- **The creation rule** (`removed-creation?`) judges the same earliest frame.
+- The comparison (rule 4) is the removal's published position against a position, and its sequence against
+  `removalSeen`, both from the same published record.
+
 ## 10. The standing gate phase and the other gates
 
 **Every gate ran by image ID on `tx2-dxs6:959634af4f1c`, built from the head by `s6/image.sh`.**

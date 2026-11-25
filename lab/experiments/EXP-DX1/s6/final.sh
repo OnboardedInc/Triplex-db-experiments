@@ -15,6 +15,11 @@ case $step in
     # [DX-S6b] The second review's tests in every setting they distinguish, and the one-stored-form gate.
     bash "$r" "$out/attack2" attack2 "accounts-off accounts-on accounts-on-serial accounts-on-general bound general" || status=1
     bash "$r" "$out/ids" ids "accounts-on accounts-on-serial accounts-on-general group-accounts" || status=1 ;;
+  review3)
+    # [DX-S6b fourth pass] The third review's tests in every setting it ran, and the install gate.
+    bash "$r" "$out/attack3" attack3 "accounts-off accounts-on accounts-on-serial accounts-on-general accounts-on-nopred accounts-on-general-nopred accounts-on-import group-accounts general" || status=1
+    bash "$r" "$out/installs" installs "accounts-on accounts-on-nopred accounts-on-general-nopred group-accounts" || status=1
+    bash "$r" "$out/ids-nopred" ids "accounts-on-nopred accounts-on-general-nopred" || status=1 ;;
   gates)
     bash "$r" "$out/outcome" outcome "server general accounts-on group group-accounts" || status=1
     bash "$r" "$out/race" race server || status=1

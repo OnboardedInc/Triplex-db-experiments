@@ -555,8 +555,14 @@ export const makeDatomicStorageAdapter = (
                 state.importInstant === undefined &&
                 [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
               sourceK: state.optimistic && !state.orderedSave ? null : state.sourceK,
-              // [DX-S6b] A replay names its first attempt's source: a removal after it declines the replay (R2-2).
-              ...(state.frameSourceK === undefined ? {} : { frameSourceK: state.frameSourceK }),
+              // [DX-S6b] A replay names its first attempt's frame: a removal after it declines the replay (R2-2). An
+              // optimistic attempt sends no source, so it states its frame here: the newest position this client had
+              // seen (S5 R3-6: a value saved after a removal the client had seen is never declined for that removal).
+              ...(state.frameSourceK !== undefined
+                ? { frameSourceK: state.frameSourceK }
+                : state.optimistic && !state.orderedSave
+                  ? { frameSourceK: state.sourceK }
+                  : {}),
               // [DX-S4] A block save declares its identity bounds (one history probe on the general writer).
               ...(creationSaves && state.orderedSave ? { declareIdentityBounds: true } : {}),
               position: state.position,
@@ -986,7 +992,7 @@ export const makeDatomicStorageAdapter = (
                       ),
                       Effect.suspend(() => {
                         client.commitDiagnostics.replays++;
-                        frameSource ??= state.optimistic && !state.orderedSave ? null : state.sourceK;
+                        frameSource ??= state.sourceK;
                         if (error instanceof DatomicOperationNotApplied) operationId = randomUUID();
                         for (const id of hint?.tripleIds ?? []) {
                           cache.delete(id);
