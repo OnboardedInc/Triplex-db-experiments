@@ -141,3 +141,17 @@ adopted-xq7-reader-int4        fbbb5b4ae ADMITTED DX_QUESTION_READER=1;DX_QUESTI
 adopted-xq7-reader-bad-int4    fbbb5b4ae REFUSED  DX_QUESTION_READER=yes
 adopted-xq7-nocpus-int4        fbbb5b4ae REFUSED  DX_QUESTION_READER=1
 adopted-xq7-cache-bad-int4     fbbb5b4ae REFUSED  DX_QUESTION_READER=1;DX_QUESTION_CPUS=6;DX_QUESTION_CACHE=lots
+# [DX-INT5] The evening merge (ACT6, SCALE2, S4 with S2, S3 and IMP2, RPT1): each new launch option admitted and each
+# wrong value refused at its own named test before the first Docker change, beside an admitted control (b43413000).
+adopted-card-int5              b43413000 ADMITTED -
+adopted-s3-owners-int5         b43413000 ADMITTED DX_S3_OWNERS=1;TX2_SUBJECT_WIDE=1
+adopted-s3-owners-bad-int5     b43413000 REFUSED  DX_S3_OWNERS=2
+adopted-s4-create-int5         b43413000 ADMITTED DX_S3_OWNERS=1;DX_S4_CREATE=1;TX2_SUBJECT_WIDE=1
+adopted-s4-create-bad-int5     b43413000 REFUSED  DX_S3_OWNERS=1;DX_S4_CREATE=2
+adopted-s4-create-noowners-int5 b43413000 REFUSED DX_S4_CREATE=1
+adopted-imp2-whole-int5        b43413000 ADMITTED TX2_IMPORT_WHOLE_SUBJECT=1;TX2_IMPORT_COMMIT_US=8000
+adopted-imp2-whole-bad-int5    b43413000 REFUSED  TX2_IMPORT_WHOLE_SUBJECT=yes
+adopted-imp2-commit-nowhole-int5 b43413000 REFUSED TX2_IMPORT_COMMIT_US=8000
+adopted-imp2-commit-bad-int5   b43413000 REFUSED  TX2_IMPORT_WHOLE_SUBJECT=1;TX2_IMPORT_COMMIT_US=0
+adopted-scale2-evict-int5      b43413000 ADMITTED DX_SWEEP=1;DX_SWEEP_GATE_EVICT=1
+adopted-scale2-evict-bad-int5  b43413000 REFUSED  DX_SWEEP=1;DX_SWEEP_GATE_EVICT=2
