@@ -1180,3 +1180,145 @@ with an open claim) before it commits.
 10. **Whether every caller that names accounts names every account it read** (E6 depends on it): callers not reviewed.
 11. **The cross-database delivery window** (15.8): confirmed open, not closed.
 12. **E9, derived copies recorded before a removal:** a known unmet requirement, owned by `exp/DX-ERA4-derived-copies`.
+
+## 16. Commit as the boundary (`TX2_REMOVAL_COMMIT_BOUNDARY=1`, default off): the design (written 2026-11-24, 23:20 EST, before its gates ran)
+
+**What the owner is asked to confirm.** TARGETS 7.1 says a read that started before a removal's publication MAY
+return the old value, and every read that starts after it returns the removed marker. With this option a removal takes
+effect at its commit in Datomic, which is before its publication: stricter than 7.1 asks, which its wording permits, but
+it moves the moment a removal becomes visible. Nothing changes unless the option is set, and it applies only to a
+database guarded per account. The third review (`era3/REVIEW-3.md`) proposed it, because every fault of rounds two
+and three sat at the boundary between the external log and Datomic (N1, N5, E7, M1).
+
+### 16.1 What a reader needs in Datomic to mask without the log
+
+- **The removal's own record.** Every removal's commit carries its entry on its transaction
+  (`:triplex.tx/erasure-record`). The entry holds:
+  - its sequence and the previous entry's seal;
+  - the command and its selectors;
+  - every removed identity (assertion ID, value type, entity, attribute);
+  - its stamp and transaction ID.
+  It is the exact text its publication writes into the log (the publication publishes the native record). The marker
+  a reader answers is built from these fields by the same function as today (`privacy/apply-entry`).
+- **The reader's position.** The database value the gateway serves the request from (its current value, synced as
+  today), not a pinned basis. A pinned or history read masks every removal committed up to that value, as it masks
+  every published one today.
+- **What is not in Datomic: the policy** (the protected attributes, sealed or not). It is in the log's head and never
+  changes. So a missing log cannot be served, and the rebuild route asks for the policy (16.6).
+- **The cost.** One index lookup per request (the newest `erasure-record` datom), with the entries cached per database
+  and extended from the newest one seen; the effective state applies only the entries past the log's head (normally
+  none, or the one being published).
+
+**The state every request is served from (`removal_commit.clj` `effective`):** the log's cut, with every removal
+committed in the data past the log's head applied in order. The two are hash chains (each entry carries the previous
+seal), so one comparison at the log's head proves they agree on every earlier entry.
+
+### 16.2 Sealed scopes: when the key is destroyed
+
+- **Unchanged: after publication** (plus the grace period), by the shred worker, from the log.
+- **Between the commit and the key's destruction a reader masks by the commit**: it answers the marker and never
+  unseals the value. A write cannot reuse the identity: `issue!` and `take-key!` check the same erased set.
+- **Destroying the key at the commit** would also be exact (the commit is durable), but it is not needed. Keeping it at
+  publication keeps the key store following the acknowledged record, and a log put back behind the data cannot bring a
+  key back by itself (the key store's rows are deleted, and a restored key store would still meet the commit's mask).
+
+### 16.3 The 503s while a removal is pending
+
+- **Today's database-wide rule** (option off) answers 503 to every request while a removal is pending. Unchanged:
+  this option is for databases guarded per account only.
+- **Per account, on either boundary:** reads were already served while a removal is pending.
+- **With the commit boundary, reads are never refused because the log and the data disagree in time.** That covers
+  the log behind the data (any amount, a copy with a removal pending in it, or an orphan declaration) and the data
+  behind the log. Only a missing log refuses reads, because the policy is in the log.
+- **Writes the pending removal can reach** still get the tagged 503, and their gateway completes the removal, which
+  publishes it.
+- **Writes are refused (typed) only** while the data is behind the log (`RemovalDataBehind`, until the restore route)
+  or the two disagree on an entry (`RemovalLogConflict`).
+
+### 16.4 What acknowledgement means
+
+Unchanged: the removal's 200 is sent after its publication, so it still means "committed in Datomic and recorded in
+the acknowledged log". The value stops being answered at the commit, which is before the acknowledgement. So every read
+that starts after the acknowledgement returns the marker, as 7.1 requires, and so does every read that starts after the
+commit.
+
+### 16.5 The log ahead of, behind, or missing relative to the data
+
+| Relation | The log's boundary (today's per-account default, with this pass's fixes) | With the commit boundary |
+| --- | --- | --- |
+| The log and the data agree | served | served |
+| A removal in flight (intent; declared; committed but not published) | served; writes it can reach 503 and complete it | the same |
+| The log one behind with that removal pending in its copy (M1) | served; reads masked by that commit (the M1 fix below) | served from the data |
+| The log behind the data, no intent for the missing removals, any number | every request 503 `RemovalLogBehind`; the rebuild route is the way out | served from the data; the next removal or the rebuild route appends the missing entries |
+| A declaration past every commit with no intent (an earlier build; a copy put back from before the intent) | every request 503 `RemovalLogBehind`; moving back and forward clears it | served; the next removal releases it |
+| The data behind the log (older data restored) | every request 503 `RemovalDataBehind` until the restore route | reads served, masked by the log; writes 503 `RemovalDataBehind` until the restore route |
+| The log and the data disagree on an entry | not told apart (each side checked against itself only) | reads masked by both; writes 503 `RemovalLogConflict` |
+| The log missing | every request 503, no way out before this pass | every request 503 `RemovalLogMissing`; the rebuild route with the policy writes it from the data |
+
+**On the log's boundary this pass also fixes M1.** A pending removal that is already committed in the data takes
+effect for requests (`served`), so a copy put back with it pending cannot answer its value again. This is the one case
+of the commit boundary that the log's boundary needs to stay exact.
+
+### 16.6 The rebuild route (both boundaries)
+
+`POST /v2/db/{db}/removal-log-rebuild`, under the removal lock:
+
+- **The data's records must be a dense chain:** sequences 1 to n, each previous seal right.
+- **When the log exists:** it must agree with them up to its head. The missing entries are then appended, each with
+  the text its publication would have written, and a pending intent of an appended removal is dropped.
+- **When the log is missing:** it is written whole from the data. The body gives the policy
+  (`{"attributes": [...], "sealed": bool}`), which must cover every removed value's attribute, and must say sealed if
+  the data holds sealed values.
+- **Refused** when the data is behind the log (the restore route does that) or when the two disagree.
+- **This is the way out the third review found missing** (its "not tested" item 7): a log two or more removals behind,
+  or lost.
+
+### 16.7 What becomes impossible by construction, and what can be deleted
+
+| Finding | With the commit boundary | Why |
+| --- | --- | --- |
+| N5 (a declaration released an account from a log behind the data) | impossible | a removal first appends the data's missing entries to the log (`catch-up!`), so the declaration's values are the data's; and requests are served from the data |
+| E7 (counters behind the log once the right log was back) | impossible | the same: nothing is released from a log behind the data |
+| M1 (a log copy with a pending removal answered the value again) | impossible | reads are masked by the commit; no copy of the log can unmask it |
+| N1 (a block no gateway could see) | already impossible by the order of the steps (intent first); unchanged | the intent is always in the log before the declaration |
+
+**Checks the option makes dead.** The log's boundary still needs them, and it stays the default until the owner
+confirms. Each would be deleted if the option became the rule:
+
+1. the `RemovalLogBehind` branch of `disagreement` and its three callers (the removal at `erase!`, `rebuild!`,
+   `start-check!`);
+2. `consistent?`'s comparison of the declared and committed sequences with the log;
+3. `refuse-inconsistent!`'s refusal (it serves instead);
+4. the M1 special case in `served`;
+5. `typed-failure` for everything but a missing log;
+6. the restore route's refusal of a log behind the data.
+
+The declaration's own check (an earlier declaration at s is its own only if its intent was in the log) stays: it
+protects against a lost lock, not against a lagging log.
+
+### 16.8 The number of states
+
+**Log and data relations the code tells apart, and what each does:**
+
+| # | State | The log's boundary | The commit boundary |
+| --- | --- | --- | --- |
+| 1 | agree | serve | serve |
+| 2 | intent only | serve; reachable writes 503 + complete | the same |
+| 3 | intent and declaration | the same | the same |
+| 4 | intent and commit | the same | the same |
+| 5 | the log behind, a removal pending in its copy (M1) | serve, masked by the commit | serve (state 7) |
+| 6 | the log behind by an intent-less declaration | refuse all | serve; release it |
+| 7 | the log behind by one or more commits | refuse all | serve; catch up |
+| 8 | the data behind the log | refuse all | serve reads; refuse writes |
+| 9 | the log and the data disagree | not told apart | serve reads masked by both; refuse writes |
+| 10 | the log missing | refuse all (now: until the rebuild route) | refuse all until the rebuild route |
+
+**What the numbers say:**
+
+- **On the log's boundary**, 5 of these 10 states refuse every request: 6, 7, 8, 10, plus the copy of state 5 two
+  behind, which falls into 7.
+- **On the commit boundary**, 1 does (10), and 2 refuse writes only (8, 9). States 5, 6 and 7 become one state, "the
+  log lags the data", which is served and caught up.
+- **States with a different behaviour each:** 7 on the log's boundary (serve; serve with the M1 mask; refuse
+  LogBehind; refuse DataBehind; refuse missing; refuse after M1's two-behind; the M1 case) against 4 on the commit
+  boundary (serve; serve and catch up; serve reads and refuse writes; refuse missing).

@@ -89,23 +89,145 @@
   [{:keys [code native declared log pending]}]
   (throw (ex-info (str (if (= code "RemovalLogBehind")
                          (str "The removal log is behind the data (restored from an older backup?): put the current "
-                              "removal log back; a declaration the log does not show, left by an earlier build, is "
-                              "cleared by moving the database back and forward. ")
+                              "removal log back, or rebuild it from the data (POST removal-log-rebuild); a declaration "
+                              "the log does not show, left by an earlier build, is cleared by moving the database back "
+                              "and forward. ")
                          "The data is behind the removal log: replay the log with the restore route. ")
                        "Native removal " native ", declared " declared ", log " log
                        (when (some? pending) (str ", pending " pending)))
                   {:status 503 :code code})))
 
+(def commit-boundary
+  "[DX-ERA2 fourth pass] TX2_REMOVAL_COMMIT_BOUNDARY=1 (default off; only on a database guarded per account): a
+  removal takes effect for every request at its commit in Datomic, not at its publication in the removal log. Every
+  request is served from the log's cut with every removal committed in the data past the log's head applied
+  (`effective`); the log stays the acknowledged, ordered record and what a restore of older data replays. A log
+  behind the data then cannot undo a removal (N5, E7, M1): it is caught up from the data by the next removal or the
+  rebuild route. See era2/REMOVAL-PER-ACCOUNT.md section 16."
+  (= "1" (System/getenv "TX2_REMOVAL_COMMIT_BOUNDARY")))
+
+(def ^:private natives (atom {}))
+(defn native-entries
+  "The removals committed in this database value, in log order (their transactions are in sequence order):
+  {:entries [{:raw text :entry map}] :dense bool}, dense when the sequences are 1..n and each entry's previous seal is
+  the one before it. Cached per database and extended from the newest record seen."
+  [name db]
+  (if-let [attr (d/entid db :triplex.tx/erasure-record)]
+    (let [newest (first (d/rseek-datoms db :aevt attr))
+          cached (get @natives name)
+          still? (fn [c] (when (:last-e c)
+                           (when-let [x (first (d/datoms db :eavt (:last-e c) attr))] (= (:v x) (:last-raw c)))))]
+      (cond
+        (nil? newest) {:entries [] :dense true}
+        (and cached (= (:last-e cached) (:e newest)) (= (:last-raw cached) (:v newest))) cached
+        :else
+        (let [base (if (and cached (still? cached)) cached {:entries [] :dense true})
+              more (->> (if (:last-e base) (rest (d/seek-datoms db :aevt attr (:last-e base))) (d/datoms db :aevt attr))
+                        (take-while (fn [x] (= attr (:a x)))))
+              result (reduce (fn [acc x]
+                               (let [entry (json/read-str (:v x)) entries (:entries acc) prior (peek entries)
+                                     ok (and (= (get entry "seq") (inc (count entries)))
+                                             (= (get entry "previous") (if prior (privacy/sha256 (:raw prior)) privacy/zeros)))]
+                                 {:entries (conj entries {:raw (:v x) :entry entry}) :dense (and (:dense acc) ok)
+                                  :last-e (:e x) :last-raw (:v x)}))
+                             base more)]
+          (swap! natives assoc name result)
+          result)))
+    {:entries [] :dense true}))
+
+(defn- seal-at [state k]
+  ;; the log's seal after its entry k (k <= head)
+  (cond (zero? k) privacy/zeros
+        (= k (:seq state)) (:seal state)
+        :else (some (fn [e] (when (= k (get e "seq")) (privacy/sha256 (json/write-str e)))) (vals (:commands state)))))
+
+(defn- union-mask [state entries]
+  (let [mask (reduce @#'privacy/apply-entry {:seq 0 :erased {} :families #{} :commands {}} (map :entry entries))]
+    (-> state (update :erased #(merge (:erased mask) %)) (update :families into (:families mask)))))
+
+(defn effective
+  "[commit boundary] The state a request is served from: the log's cut with every removal committed in the data past
+  the log's head applied in order (the log behind or missing entries: served from the data). The data behind the log
+  (older data restored): the log's cut, which masks more, and writes wait for the restore route. The two disagreeing
+  on an entry: reads masked by both, writes refused."
+  [name db state]
+  (let [{:keys [entries dense]} (native-entries name db)
+        c (count entries) h (:seq state)
+        agree (fn [k] (or (zero? k) (= (privacy/sha256 (:raw (entries (dec k)))) (seal-at state k))))]
+    (cond
+      (not dense) (assoc (union-mask state entries) :writes-refused "RemovalLogConflict")
+      (and (>= c h) (agree h)) (reduce @#'privacy/apply-entry state (map :entry (subvec entries h)))
+      (and (< c h) (agree c)) (assoc state :writes-refused "RemovalDataBehind")
+      :else (assoc (union-mask state entries) :writes-refused "RemovalLogConflict"))))
+
+(def ^:private removal-keys ["database" "seq" "previous" "commandId" "selectors"])
+
+(defn served
+  "The state a request on a database guarded per account is served from (erase/request-cut)."
+  [name db state]
+  (assoc (if commit-boundary
+           (effective name db state)
+           ;; [DX-ERA3 M1] the log's boundary: a pending removal already committed in the data takes effect for reads,
+           ;; so a log copy put back with that removal pending in it cannot answer its value again
+           (let [p (:pending-seq state) {:keys [entries]} (native-entries name db)
+                 native (when (and (integer? p) (= p (inc (:seq state))) (<= p (count entries))) (:entry (entries (dec p))))]
+             (if (and native (= (select-keys native removal-keys) (select-keys (:pending state) removal-keys)))
+               (@#'privacy/apply-entry state native)
+               state)))
+         :per-account true))
+
 (defn consistent?
-  "Request time (erase/request-cut): the data and the log agree, declarations included."
-  [db state]
-  (and (removal-scope/consistent? db (:seq state) (:pending-seq state)) (nil? (disagreement db state))))
+  "Request time (erase/request-cut): the data and the log agree, declarations included. With the commit boundary,
+  served as long as nothing refuses writes (a transient disagreement is retried on a synced database first)."
+  [name db state]
+  (if commit-boundary
+    (nil? (:writes-refused (effective name db state)))
+    (and (removal-scope/consistent? db (:seq state) (:pending-seq state)) (nil? (disagreement db state)))))
 
 (defn refuse-inconsistent!
-  "After request-cut's retries: the typed disagreement when there is one, else 503."
-  [db state]
-  (when-let [b (and state (disagreement db state))] (refuse! b))
-  (privacy/unavailable!))
+  "After request-cut's retries: with the commit boundary the request is served (reads; writes are refused by
+  `check-writes!`), else the typed disagreement when there is one, else 503."
+  [name db state]
+  (if commit-boundary
+    [(served name db state) db]
+    (do (when-let [b (and state (disagreement db state))] (refuse! b))
+        (privacy/unavailable!))))
+
+(defn check-writes!
+  "[commit boundary] A write on a state whose data is behind the log, or which disagrees with it, waits (typed 503)."
+  [state]
+  (when-let [code (:writes-refused state)]
+    (throw (ex-info (if (= code "RemovalDataBehind")
+                      "The data is behind the removal log: replay the log with the restore route; reads are served meanwhile."
+                      "The removal log and the data disagree on a removal: an operator must decide; reads are served meanwhile.")
+                    {:status 503 :code code}))))
+
+(defn- behind-cache?
+  "This gateway verified a newer head than the log now shows, and the data still holds every removal it verified."
+  [name db]
+  (when-let [prior (get @privacy/cache name)]
+    (when-let [wire (privacy/record-text name "head.json")]
+      (and (< (get (json/read-str wire) "seq") (:seq prior))
+           (>= (count (:entries (native-entries name db))) (:seq prior))))))
+
+(defn log-cut
+  "The published log's cut (pending removal included). With the commit boundary, a log put back behind a head this
+  gateway verified is read again as it is, when the data still holds every removal verified (it is served from the
+  data); otherwise refused as before (a restore of both the data and the log to an older copy)."
+  [name db]
+  (try (privacy/cut name db true)
+       (catch clojure.lang.ExceptionInfo e
+         (if (and commit-boundary (behind-cache? name db))
+           (do (swap! privacy/cache dissoc name) (privacy/cut name db true))
+           (throw e)))))
+
+(defn typed-failure
+  "The refusal request-cut throws after its retries: typed when the database is protected and its log is missing."
+  [name db e]
+  (if (and (privacy/enabled? db) (nil? (privacy/record-text name "head.json")))
+    (ex-info "The removal log is missing: rebuild it from the data (POST removal-log-rebuild with the policy)."
+             {:status 503 :code "RemovalLogMissing"})
+    e))
 
 (defn- pending-refusal
   "[DX-ERA3 N1] The refusal of a ticketed write that a removal in flight can reach. It is tagged so the gateway, once the
@@ -122,7 +244,8 @@
   sequence) before it selects anything; a removal of an earlier version does not, and its commit is caught by the
   committed sequence [N3]. A database without a declared sequence (moved by an earlier build) is checked on the
   committed sequence only, until its first removal starts one [N2]. A delivery between databases carries the source
-  database's ticket, which says nothing about this one: no check here, as on the database-wide rule [N4]. Tickets
+  database's ticket, which says nothing about this one [N4]: it is checked against this database's own cut instead
+  [M2]. Tickets
   naming accounts are held by those accounts' counters in the fence (`removal-scope/fence-op`).
   [DX-ERA2 third pass] A write that this data already shows declared against (the declared sequence past its ticket,
   or a named account's counter negative) is refused here with the tagged refusal rather than at the serial point, so
@@ -136,8 +259,10 @@
                       (conj (vec (removal-scope/ticket-accounts input)) removal-scope/unscoped))
             (throw (pending-refusal)))
           [])
-      (and (some? source) (not= source privacy/*database*)) []
-      :else (let [dd (declared-seq db)]
+      ;; [DX-ERA3 M2] a ticket naming another database speaks for that database; this database's own removals are
+      ;; still checked, at the sequence of this request's own cut (what today's rule does with its one sequence)
+      :else (let [dd (declared-seq db)
+                  t (if (and (some? source) (not= source privacy/*database*)) (:seq privacy/*cut*) t)]
               (when (and (integer? dd) (integer? t) (> dd t)) (throw (pending-refusal)))
               (cond-> [[:db/cas scope :triplex.scope/removal-seq t t]]
                 (integer? dd) (conj [:db/cas scope :triplex.scope/removal-intent (min dd t) (min dd t)]))))))
@@ -312,7 +437,6 @@
 ;; selection (identities, transaction ID) is the native commit's own: an attempt whose wait expired can commit after
 ;; a later attempt recorded a fresh selection, and the command's claim admits exactly one commit, checked at its
 ;; serial point. Rejected: requiring the stored intent's selection (that removal could then never be published).
-(def ^:private removal-keys ["database" "seq" "previous" "commandId" "selectors"])
 (defn- same-removal [native entry]
   (= (select-keys native removal-keys) (select-keys entry removal-keys)))
 
@@ -334,19 +458,24 @@
   "[DX-ERA3 second review] Record the removal's intent only over the intent this removal last saw (`expected`, its
   stored text; nil: none), so two removals that both believe they hold the database's lock (one lost it) cannot replace
   each other's intent: the loser answers 503 and nothing of it is in the log. Returns the stored text."
-  [name expected item]
+  [name expected item & [head]]
+  ;; [DX-ERA3 M5] the first intent is written only while the log's head is the one this removal read: a removal that
+  ;; lost its lock cannot record an intent at a sequence another removal has published meanwhile
   (let [wire (json/write-str item)]
     (if sql/url
       (let [n (@#'sql/with-session
                 (fn [c]
                   (if (nil? expected)
-                    (@#'sql/execute! c (str "INSERT INTO triplex_removal.records(scope,record,payload) VALUES (?,'pending.json',?) "
-                                            "ON CONFLICT (scope,record) DO NOTHING") [name wire])
+                    (@#'sql/execute! c (str "INSERT INTO triplex_removal.records(scope,record,payload) "
+                                            "SELECT ?, 'pending.json', ? WHERE EXISTS (SELECT 1 FROM triplex_removal.records "
+                                            "WHERE scope=? AND record='head.json' AND payload=?) "
+                                            "ON CONFLICT (scope,record) DO NOTHING") [name wire name head])
                     (@#'sql/execute! c (str "UPDATE triplex_removal.records SET payload=? "
                                             "WHERE scope=? AND record='pending.json' AND payload=?") [wire name expected]))))]
         (when-not (= 1 n) (privacy/unavailable!)))
       (locking intent-lock
         (when-not (= expected (intent-wire name)) (privacy/unavailable!))
+        (when (and (nil? expected) (not= head (privacy/record-text name "head.json"))) (privacy/unavailable!))
         (privacy/prepare! name item)))
     wire))
 
@@ -366,6 +495,66 @@
                               "ms" (/ (- (System/nanoTime) started) 1.0e6)})))
   (erase/response (d/db conn) entry))
 
+(defn- append-log!
+  "[DX-ERA2 fourth pass] Append removals committed in the data to the log after its head, each exactly as its commit
+  recorded it (its text is the entry its own publication would have written), dropping a pending intent of the same
+  removal. Under the removal lock. Returns the log's new cut."
+  [name db state entries]
+  (loop [state state [x & more] entries]
+    (if-not x state
+      (let [k (get (:entry x) "seq") raw (:raw x) record (str "erase-" k ".json")
+            prior-wire (:wire state)
+            head (json/write-str (assoc (json/read-str prior-wire) "seq" k "seal" (privacy/sha256 raw)))
+            pending (intent-wire name)
+            drop (when pending
+                   (let [p (json/read-str pending)]
+                     (when (= (select-keys p ["seq" "commandId"]) (select-keys (:entry x) ["seq" "commandId"])) pending)))
+            existing (privacy/record-text name record)]
+        (when (and existing (not= existing raw)) (privacy/failure! 503 "RemovalLogConflict" "The removal log and the data disagree on a removal: an operator must decide"))
+        (if sql/url
+          (@#'sql/transaction!
+            (fn [c]
+              (when-not existing
+                (@#'sql/execute! c "INSERT INTO triplex_removal.records(scope,record,payload) VALUES (?,?,?)" [name record raw]))
+              (when-not (= 1 (@#'sql/execute! c (str "UPDATE triplex_removal.records SET payload=? "
+                                                     "WHERE scope=? AND record='head.json' AND payload=?") [head name prior-wire]))
+                (throw (java.sql.SQLException. "Removal authority moved during the catch-up")))
+              (when drop
+                (@#'sql/execute! c "DELETE FROM triplex_removal.records WHERE scope=? AND record='pending.json' AND payload=?" [name drop]))))
+          (do (when-not existing (@#'privacy/save-record! name record raw))
+              (@#'privacy/save-record! name "head.json" head)
+              (when drop (@#'privacy/remove-record! name "pending.json"))))
+        (println (json/write-str {"schema" "triplex.removal-log-catch-up.v1" "seq" k "droppedIntent" (boolean drop)}))
+        (recur (privacy/cut name db true) more)))))
+
+(defn- release-orphan!
+  "[commit boundary] A declaration past every commit with no intent in the log (left by an earlier build, or a log put
+  back to a copy from before the intent): nothing was committed under it, and a late commit under it is refused (it
+  checks its own declaration), so it is released: the declared sequence back to the committed one, its accounts to
+  the log's values."
+  [conn db current]
+  (let [head (scope/entity db) dd (declared-seq db) c (removal-scope/native-seq db)]
+    (if (and (integer? dd) (integer? c) (> dd c) (nil? (:pending current)))
+      (do (println (json/write-str {"schema" "triplex.removal-orphan-released.v1" "declared" dd "committed" c}))
+          (:db-after (transact! conn (-> [[:db/cas head :triplex.scope/removal-intent dd c]
+                                          [:db/cas head :triplex.scope/removal-seq c c]
+                                          [:db/add head :triplex.scope/removal-held "[]"]]
+                                         (into (removal-scope/counter-ops nil (for [b (held-accounts db head)]
+                                                                                [b (removal-scope/bucket-seq current b)])))))))
+      db)))
+
+(defn catch-up!
+  "[commit boundary] Under the removal lock, before anything else: the log brought up to the data (every removal
+  committed past its head appended), an orphan declaration released; refused (typed) when the data is behind the log
+  or the two disagree. Returns [db current]."
+  [name conn db current]
+  (let [{:keys [entries]} (native-entries name db)
+        e (effective name db current)]
+    (check-writes! e)
+    (let [current (if (> (count entries) (:seq current)) (append-log! name db current (subvec entries (:seq current))) current)
+          db (release-orphan! conn db current)]
+      [db current])))
+
 (declare complete-pending!)
 
 (defn erase! [name conn input]
@@ -376,15 +565,17 @@
     (when-let [p (privacy/pending name)]
       (when-not (= command (get p "commandId")) (complete-pending! name conn)))
     (let [buckets (@#'erase/selector-buckets (d/db conn) selectors)]
-      (when-not (privacy/cut name (d/db conn) true)
+      (when-not (log-cut name (d/db conn))
         (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
       (privacy/guard name
         (fn []
           (@#'erase/with-bucket-guards name buckets
             (fn []
               (let [db (erase/sync! conn)
-                    current (privacy/cut name db true)]
-                (when-not current (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
+                    current (log-cut name db)
+                    _ (when-not current (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
+                    ;; [DX-ERA2 fourth pass] with the commit boundary the log is first brought up to the data
+                    [db current] (if commit-boundary (catch-up! name conn db current) [db current])]
                 (privacy/clear-completed! name current)
                 (if-let [before (get-in current [:commands command])]
                   (do (when-not (= selectors (get before "selectors"))
@@ -399,20 +590,27 @@
                         s (inc (:seq current))
                         _ (when (and pending (not= s (get pending "seq"))) (privacy/unavailable!))
                         ;; [DX-ERA3 N5] before anything is recorded, declared or released: the data is not ahead of the log
-                        _ (when-let [b (disagreement db current)] (refuse! b))
+                        ;; (with the commit boundary the catch-up above has already made it so)
+                        _ (when-not commit-boundary (when-let [b (disagreement db current)] (refuse! b)))
                         checked (check-entities selectors)]
                     (if-let [native (and pending (committed db pending))]
                       (publish! name conn current native wire 0 false started)
                       (let [db (ensure-declaration! conn db)
                             ;; [DX-ERA3 N1] the intent first: from here on, every stop leaves a removal that every
                             ;; gateway sees as pending and any gateway completes
-                            wire (or wire (put-intent! name nil (erase/make-entry name db current command selectors)))
+                            wire (or wire (put-intent! name nil (erase/make-entry name db current command selectors) (:wire current)))
                             _ (step! "intent")
                             view (do (declare! conn db current (vec buckets) s) (erase/sync! conn))
-                            _ (step! "declared")]
-                        ;; A removal resumed after its guard was taken finds its subjects held and keeps them held.
-                        (loop [view view wire wire tries 1
-                               held (into #{} (filter (fn [e] (= (- s) (removal-scope/native-entity-seq view e))) checked))]
+                            _ (step! "declared")
+                            ;; A removal resumed after its guard was taken finds its subjects held and keeps them held.
+                            held (into #{} (filter (fn [e] (= (- s) (removal-scope/native-entity-seq view e))) checked))
+                            ;; [DX-ERA3 M3] a resumed removal takes its subject guard before its first commit attempt: its
+                            ;; earlier attempts' tries are not counted across requests, and a subject saved while each
+                            ;; slow commit is in flight would otherwise refuse every attempt
+                            [view held] (if (and pending (empty? held) (seq checked))
+                                          [(do (hold! conn checked s) (erase/sync! conn)) (set checked)]
+                                          [view held])]
+                        (loop [view view wire wire tries 1 held held]
                           (let [entry (erase/make-entry name view current command selectors)
                                 _ (when-not (every? buckets (removal-scope/entry-buckets entry)) (privacy/unavailable!))
                                 wire (put-intent! name wire entry)
@@ -448,7 +646,7 @@
     (let [[before _] (swap-vals! completing conj name)]
       (when-not (contains? before name)
         (try
-          (let [r (erase! name conn {"commandId" (get p "commandId") "selectors" (get p "selectors")})]
+          (let [r (erase/erase! name conn {"commandId" (get p "commandId") "selectors" (get p "selectors")})]
             (println (json/write-str {"schema" "triplex.removal-completion.v1" "seq" (get p "seq") "outcome" "completed"
                                       "position" (:position r)})))
           (catch Exception e
@@ -456,6 +654,71 @@
                                       "code" (:code (ex-data e))})))
           (finally (swap! completing disj name)))))
     nil))
+
+(defn check-source!
+  "[DX-ERA3 M4] A delivery's source database, checked under its lock (main/route-handler): a pending removal there
+  refuses the delivery with the tagged 503 naming that database, so its gateway completes the source's removal; then
+  the source's state (served as a request on it would be) must match the delivery's ticket."
+  [source db ticket]
+  (let [state (log-cut source db)]
+    (when (and state (:pending state))
+      (throw (ex-info (str "A removal is in flight in the delivery's source database; this gateway completes it. "
+                           "Read the source's ticket again and send the delivery again.")
+                      {:status 503 :code "ErasureFrontierUnavailable" :removal-pending true :removal-database source})))
+    (let [state (if (and state (removal-scope/per-account? db)) (served source db state) state)]
+      (if (and state (removal-scope/per-account? db))
+        (if commit-boundary (check-writes! state) (privacy/verify-data! state db))
+        (privacy/verify-data! state db))
+      (privacy/ensure-seq! state ticket))))
+
+(defn rebuild-log!
+  "[DX-ERA2 fourth pass] POST /v2/db/{db}/removal-log-rebuild: the removal log rebuilt from the data, under the
+  removal lock. Every removal committed in Datomic carries its entry exactly as published, chained by its previous
+  seal, so the log is the data's records in order. A log behind the data (any number of removals, or a copy with a
+  removal pending in it) is caught up; a missing log is written whole from the policy given in the body
+  ({\"attributes\": [...], \"sealed\": bool}), which must cover every removed value's attribute. Refused when the data is
+  behind the log (the restore route), or when they disagree. The way out of RemovalLogBehind on either boundary."
+  [name conn input]
+  (when-not (and (map? input) (every? #{"attributes" "sealed"} (keys input)))
+    (privacy/failure! 400 "InvalidValue" "Expected {} or {\"attributes\": [...], \"sealed\": bool}"))
+  (privacy/guard name
+    (fn []
+      (let [db (erase/sync! conn)
+            {:keys [entries dense]} (native-entries name db)
+            wire (privacy/record-text name "head.json")]
+        (when-not (privacy/enabled? db) (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
+        (when-not dense (privacy/failure! 503 "RemovalLogConflict" "The data's removal records are not a dense chain"))
+        (if wire
+          (let [_ (swap! privacy/cache dissoc name)
+                current (privacy/cut name db true)
+                e (effective name db current)
+                _ (check-writes! e)
+                h (:seq current)
+                after (if (> (count entries) h) (append-log! name db current (subvec entries h)) current)]
+            (privacy/clear-completed! name after)
+            {:database name :seq (:seq after) :appended (- (:seq after) h) :written false})
+          (let [attrs (get input "attributes") sealed? (get input "sealed")
+                removed (into #{} (mapcat (fn [x] (map #(get % "attribute") (get (:entry x) "identities")))) entries)]
+            (when-not (and (vector? attrs) (seq attrs) (every? string? attrs) (= (count attrs) (count (set attrs)))
+                           (instance? Boolean sealed?))
+              (privacy/failure! 400 "InvalidValue" "A missing log needs the policy: {\"attributes\": [...], \"sealed\": bool}"))
+            (when-not (every? (set attrs) removed)
+              (privacy/failure! 409 "ProtectionPolicyMismatch" "The policy does not cover every removed value's attribute"))
+            (when (and (not sealed?) (d/entid db :triplex.private/id) (seq (d/datoms db :aevt :triplex.private/id)))
+              (privacy/failure! 409 "ProtectionPolicyMismatch" "The data holds sealed values"))
+            (when-not sql/url
+              (java.nio.file.Files/createDirectories (.getParent (privacy/path name "head.json"))
+                                                     (make-array java.nio.file.attribute.FileAttribute 0)))
+            (doseq [x entries] (@#'privacy/save-record! name (str "erase-" (get (:entry x) "seq") ".json") (:raw x)))
+            (@#'privacy/save-record! name "head.json"
+              (json/write-str {"database" name "seq" (count entries)
+                               "seal" (if (seq entries) (privacy/sha256 (:raw (peek entries))) privacy/zeros)
+                               "attributes" attrs "sealed" sealed?}))
+            (swap! privacy/cache dissoc name)
+            (let [after (privacy/cut name db true)]
+              (privacy/clear-completed! name after)
+              (println (json/write-str {"schema" "triplex.removal-log-rebuilt.v1" "seq" (:seq after) "entries" (count entries)}))
+              {:database name :seq (:seq after) :appended (count entries) :written true})))))))
 
 (defn start-check!
   "[DX-ERA3 N5] At gateway start: every database guarded per account whose data is ahead of (or behind) its removal

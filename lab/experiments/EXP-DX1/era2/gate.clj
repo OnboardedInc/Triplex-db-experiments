@@ -18,7 +18,8 @@
 ;; TX2_REMOVAL_SUBJECT_CHECK=1 with the per-account option: the removal checks its selection per subject and takes its
 ;; position at commit (removal_commit.clj).
 (def subject? (and per-account? (= "1" (System/getenv "TX2_REMOVAL_SUBJECT_CHECK"))))
-(def mode (cond subject? "subject-check" per-account? "per-account" :else "database-wide"))
+(def commit? (and per-account? (= "1" (System/getenv "TX2_REMOVAL_COMMIT_BOUNDARY"))))
+(def mode (cond commit? "commit-boundary" subject? "subject-check" per-account? "per-account" :else "database-wide"))
 (def ^:dynamic sealed-run? false)
 (def results (atom []))
 (defn check! [scenario ok message & [detail]]
@@ -856,6 +857,96 @@
               (println "ERA2_DELIVERY_WINDOW" (pr-str {:source-removal (offers/outcome removed) :late-recipient-transaction landed
                                                        :copy-readable-in-recipient-after-ack copy})))))))))
 
+(defn commit-visibility
+  "[DX-ERA2 fourth pass] A removal stopped after its commit in Datomic, before its publication: with the commit
+  boundary no read route answers its value; on the log's boundary a read may (TARGETS 7.1 allows it before the
+  publication). Then the first derived write that reaches it completes it."
+  []
+  (when per-account?
+    (fresh-scope false
+      (fn [name conn]
+        (let [label (str "commit-visibility/" mode)
+              seeds (seed! name [a1 b1]) value (:value (seeds a1)) pin (head conn)
+              commit rc/commit!
+              stopped (with-redefs [rc/commit! (fn [& args] (let [r (apply commit args)] (throw (stop-ex :committed)) r))]
+                        (remove! name "cv-1" a1))
+              texts (apply str (map (fn [[_ r]] (text (:body r))) (route-texts name a1 pin)))
+              answered (str/includes? texts value)
+              first-any (offers/send name (frame-any name conn "cv-any"))]
+          (check! label (not= 200 (:status stopped)) "stopped after its commit" (offers/outcome stopped))
+          (if commit?
+            (check! label (not answered) "with the commit boundary, no route answers the value once it is committed")
+            (println "ERA2_COMMIT_VISIBILITY log-boundary value-answered-before-publication" answered))
+          (expect (str label ": the first frame naming no account") first-any [503 "ErasureFrontierUnavailable"])
+          (check! label (= 1 (seq-now name conn)) "completed by that contact")
+          (check! label (not (str/includes? (apply str (map (fn [[_ r]] (text (:body r))) (route-texts name a1 pin))) value)) "not answered after the completion"))))))
+
+(defn log-states
+  "[DX-ERA2 fourth pass] The data current and the log put back to an older copy (one and two removals behind), and
+  the log missing. On the log's boundary: RemovalLogBehind (two behind), and the rebuild route is the way out; with the
+  commit boundary every request is served from the data, the next removal catches the log up, and a missing log is
+  refused until the rebuild route writes it from the data with the policy. In every case no route answers a removed
+  value, and once the log is back every counter equals it."
+  []
+  (when per-account?
+    (doseq [behind [1 2 :missing]]
+      (fresh-scope false
+        (fn [name conn]
+          (let [label (str "log-states/" mode "/" behind)
+                seeds (seed! name [a1 b1 "acct/c/one"]) va (:value (seeds a1)) vb (:value (seeds b1)) pin (head conn)
+                dir (.getParent (privacy/path name "head.json"))
+                tmp (java.nio.file.Paths/get "/tmp" (into-array String [(str "era2-ls-" (UUID/randomUUID))]))
+                _ (copy-dir! dir tmp)
+                _ (expect label (remove! name "ls-1" a1) [200 nil])
+                _ (when (= behind 1) (copy-dir! dir tmp))
+                _ (expect label (remove! name "ls-2" b1) [200 nil])
+                _ (if (= behind :missing)
+                    (with-open [st (java.nio.file.Files/list dir)] (doseq [p (iterator-seq (.iterator st))] (java.nio.file.Files/delete p)))
+                    (copy-dir! tmp dir))
+                _ (reset! privacy/cache {})
+                read-a (offers/route name "v1" "read" {"entityIds" [a1 b1]})
+                answered (or (str/includes? (text (:body read-a)) va) (str/includes? (text (:body read-a)) vb))
+                other-save (offers/send name (frame "ls-sc" "acct/c/one" (secret "acct/c/one" "s") (:id (seeds "acct/c/one")) (head conn)))
+                rebuild (offers/route name "v2" "removal-log-rebuild"
+                                      (if (= behind :missing) {"attributes" [":v"] "sealed" false} {}))
+                after-any (offers/send name (frame-any name conn "ls-any"))
+                after-removal (remove! name "ls-3" "acct/c/one")]
+            (check! label (not answered) "no route answers a removed value while the log is behind or missing")
+            (cond
+              (= behind :missing) (do (expect (str label ": a read while the log is missing") read-a [503 "RemovalLogMissing"])
+                                      (expect (str label ": a save while the log is missing") other-save [503 "RemovalLogMissing"]))
+              commit? (do (expect (str label ": a read") read-a [200 nil])
+                          (expect (str label ": another account's save") other-save [200 nil]))
+              (= behind 2) (expect (str label ": a read on the log's boundary") read-a [503 "RemovalLogBehind"])
+              :else (expect (str label ": a read on the log's boundary, one behind (nothing pending in the copy)") read-a [503 "RemovalLogBehind"]))
+            (expect (str label ": the rebuild route") rebuild [200 nil])
+            (check! label (= 2 (seq-now name conn) (get-in rebuild [:body "seq"])) "the log rebuilt up to the data" (:body rebuild))
+            (expect (str label ": a frame naming no account after it") after-any [200 nil])
+            (expect (str label ": a removal after it") after-removal [200 nil])
+            (check! label (not (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [a1 b1]}))) va)) "a1 not answered after")
+            (native-counters-agree! label name conn)))))))
+
+(defn catch-up
+  "[DX-ERA2 fourth pass, commit boundary] The log put back two removals behind; the next removal appends both from the
+  data before its own; the log then equals the data."
+  []
+  (when commit?
+    (fresh-scope false
+      (fn [name conn]
+        (let [seeds (seed! name [a1 b1 "acct/c/one"]) va (:value (seeds a1))
+              dir (.getParent (privacy/path name "head.json"))
+              tmp (java.nio.file.Paths/get "/tmp" (into-array String [(str "era2-cu-" (UUID/randomUUID))]))
+              _ (copy-dir! dir tmp)
+              _ (expect "catch-up" (remove! name "cu-1" a1) [200 nil])
+              _ (expect "catch-up" (remove! name "cu-2" b1) [200 nil])
+              _ (copy-dir! tmp dir) _ (reset! privacy/cache {})
+              r (remove! name "cu-3" "acct/c/one")]
+          (expect "catch-up: the next removal" r [200 nil])
+          (check! "catch-up" (= 3 (get-in r [:body "seq"]) (seq-now name conn)) "sequence 3, after appending 1 and 2" (:body r))
+          (check! "catch-up" (= #{"cu-1" "cu-2" "cu-3"} (set (keys (:commands (privacy/cut name (d/db conn) true))))) "the log holds all three")
+          (check! "catch-up" (not (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [a1]}))) va)) "a1 not answered")
+          (native-counters-agree! "catch-up" name conn))))))
+
 (defn lock-lost
   "[DX-ERA3 second review] Two removals of different commands at once, with the database's lock not held (as after a
   lost lock): the intent is the arbiter, one records it and the other answers 503; resent, both complete, the log
@@ -989,6 +1080,9 @@
   (scenario "rebuild" rebuild)
   (scenario "deliveries" deliveries)
   (scenario "lock-lost" #(lock-lost (Long/parseLong (or (System/getenv "ERA2_LOCK_LOST") "20"))))
+  (scenario "commit-visibility" commit-visibility)
+  (scenario "log-states" log-states)
+  (scenario "catch-up" catch-up)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode
              (pr-str {:checks (count @results) :failed (count failed)}))
