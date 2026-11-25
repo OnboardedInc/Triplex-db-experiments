@@ -332,6 +332,15 @@ subject_wide=${TX2_SUBJECT_WIDE:-0}
   { echo "up.sh: DX_SWEEP_CURSOR_SECRET must be 16..128 letters or digits" >&2; exit 2; }
 # [DX-INT5] SCALE2's sweep-gate eviction, refused here for the same reason (it was checked only in the gateway loop).
 [[ -z ${DX_SWEEP_GATE_EVICT:-} || $DX_SWEEP_GATE_EVICT =~ ^[01]$ ]] || { echo "up.sh: DX_SWEEP_GATE_EVICT must be 0 or 1" >&2; exit 2; }
+# [DX-INT5] XQ10's settings (the commit-time index, the ID list queue and per-account limit, the sweep's shapes), refused
+# here for the same reason; the uses stay in the gateway loop. The question reader's own copies are checked there.
+[[ -z ${DX_CROSS_INDEX:-} || $DX_CROSS_INDEX =~ ^[01]$ ]] || { echo "up.sh: DX_CROSS_INDEX must be 0 or 1" >&2; exit 2; }
+[[ -z ${DX_ID_LIST_QUEUE_MS:-} || ( $DX_ID_LIST_QUEUE_MS =~ ^[1-9][0-9]{0,3}$ && $DX_ID_LIST_QUEUE_MS -le 5000 ) ]] ||
+  { echo "up.sh: DX_ID_LIST_QUEUE_MS must be 1..5000" >&2; exit 2; }
+[[ -z ${DX_ID_LIST_PER_ACCOUNT:-} || $DX_ID_LIST_PER_ACCOUNT =~ ^([1-9]|1[0-6])$ ]] ||
+  { echo "up.sh: DX_ID_LIST_PER_ACCOUNT must be 1..16" >&2; exit 2; }
+[[ -z ${DX_SWEEP_SHAPES:-} || $DX_SWEEP_SHAPES =~ ^(all|(related|ne|or|top|contains|sum)(,(related|ne|or|top|contains|sum))*)$ ]] ||
+  { echo "up.sh: DX_SWEEP_SHAPES must be all or a comma list of related,ne,or,top,contains,sum" >&2; exit 2; }
 # [DX-S3] Why: default-off several-owners saves on the per-subject writer (needs the wide writer), from the card's
 # DX_S3_OWNERS. Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
 subject_several=${DX_S3_OWNERS:-0}
