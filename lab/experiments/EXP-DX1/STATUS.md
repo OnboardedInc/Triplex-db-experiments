@@ -6646,3 +6646,14 @@ Source: merge agent message; checked against `origin`: `cdfc70e02` is an ancesto
 - Stored-function identities 58 of 58 equal to the reference in 8 writer settings. Gates on the head's own image: the standing key-deletion gate; the outcome gate 426 in each of 5 settings; the reviews' tests; the two-account gate; fuzzer with faults 27,629 saves, 0 differing; SDK 489; production gate exact; the real-mix tape exact with creation saves on and off, and no refusal in the transactor's lines, which the gate now keeps.
 - The readiness page carries the table of faults found in merged code on 2026-11-25.
 - Next: the key-pool and reply fix (`09730f887`, merged locally), then the ID fix (`cc5656aa2`), then the Publish line with options off.
+
+## 2026-11-25 17:07 EST: Sam's decisions of 2026-11-25 recorded and acted on
+
+Sam's words are in `lab/research/SAM-decisions-2026-11-09.md`; the targets and the version 0.1 file are updated (`1fd3a41ff`).
+
+- **Read bar:** p99 at most 100 ms for a subject in memory and at most 300 ms for a subject not in memory, at 1 billion records; 100 ms stays the aim for both.
+- **A server session of up to 50 US dollars more is approved** (spent before it: 247.62). Nothing is rented yet: the three reviewed merges still queued land first, then a written session plan with predictions.
+- Removal: the replay rule and the completion worker under today's rule are to be turned on after the seventh review; protected fields on an unsealed database are to be refused outside tests (to be built as a small standalone change). Notices: the expired-document notice is kept when a document value is removed (the derived-copies line's change, which withdraws it, must be reversed in its next round).
+- Migration gets no work; the SQL reporting copy stays as built.
+- **Console:** an agent started at 17:06 to switch the console on port 28580 to the one branch's build, with a database dump first and a rollback.
+- **Deletion approved:** the merge agent told it may delete its superseded build contexts.
