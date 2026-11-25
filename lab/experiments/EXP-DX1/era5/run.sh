@@ -57,7 +57,7 @@ for i in $(seq 1 240); do
 done
 [[ $(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$port/health") == 200 ]] || { echo "run.sh: gateway did not start" >&2; exit 4; }
 cd "$repo"
-env "${client[@]}" ERA4_ARM="$arm" ERA4_SEALED="${ERA4_SEALED:-1}" node --no-warnings --experimental-transform-types \
+env "${client[@]}" ERA5_GATEWAY_CONTAINER="$name" ERA4_ARM="$arm" ERA4_SEALED="${ERA4_SEALED:-1}" node --no-warnings --experimental-transform-types \
   lab/experiments/EXP-DX1/era5/attack.ts "$out" "$out/run.out" > "$out/attack.log" 2>&1
 status=$?
 echo "$(( $(date +%s) - started ))" > "$out/seconds"

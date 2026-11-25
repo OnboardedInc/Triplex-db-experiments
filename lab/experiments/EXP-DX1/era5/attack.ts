@@ -13,6 +13,7 @@
 //      settled changes, the recipient's state), against Y's records opened through the route; which document types fit.
 // Counts are the result; times are diagnostic (Mac).
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -44,14 +45,27 @@ const log = (kind: string, data: object = {}) => {
 const dbOf = (s: Pick<Store, "scope">) => "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(s.scope))).toString("base64url");
 
 // ---- one failed seal call, as a gateway restart, a timeout or a gateway without the option answers ----------------
-let faults = 0;
+let faults = 0, stalls = 0;
 const injected: string[] = [];
 const request = DatomicClient.prototype.request;
+// W2: no injected error. The gateway's container is paused (`docker pause`, as a long collection pause or an overloaded
+// host stalls it) while one seal call is in flight; the client's own 5 s timeout ends the call; the container resumes.
+const container = process.env.ERA5_GATEWAY_CONTAINER;
+const docker = (verb: string) => execFileSync("docker", [verb, container!], { stdio: "ignore" });
 DatomicClient.prototype.request = function (this: DatomicClient, method: "GET" | "POST", p: string, ...rest: unknown[]) {
   if (faults > 0 && method === "POST" && p.endsWith("/derived-seal")) {
     faults--;
     injected.push(p);
     return Promise.reject(new Error("fetch failed (injected once: the gateway restarted during the seal call)"));
+  }
+  if (stalls > 0 && container && method === "POST" && p.endsWith("/derived-seal")) {
+    stalls--;
+    docker("pause");
+    const t = performance.now();
+    return (request as (...a: unknown[]) => Promise<unknown>).call(this, method, p, ...rest).finally(() => {
+      docker("unpause");
+      injected.push("stall " + Math.round(performance.now() - t) + " ms");
+    });
   }
   return (request as (...a: unknown[]) => Promise<unknown>).call(this, method, p, ...rest);
 } as typeof request;
@@ -179,6 +193,14 @@ await F.notices.record(F.first);
 await C.notices.record(C.first);
 await C.notices.deliver(sinkDocs, await C.noticeArchive.store.head());
 
+// W2: account G, the same first frame with the gateway stalled during its seal call (no injected error)
+const G = await account("lazy-era5-stall-" + RUN);
+stalls = container ? 1 : 0;
+const stallTurn = await G.values.runValues(G.first).then(() => "completed", (e) => String((e as Error).message).slice(0, 160));
+stalls = 0;
+const stallRetry = await G.values.runValues(G.first).then((p) => p.status, (e) => "refused: " + String((e as Error).message).slice(0, 160));
+await G.notices.record(G.first);
+
 const unitsOf = async (acc: Account) => {
   const pieces = await framePages(acc);
   const bySubject: Record<string, { sealed: number; clear: number; clearText: string[] }> = {};
@@ -205,6 +227,8 @@ log("W-before-removal", {
   faultArchive: Object.fromEntries(Object.entries(beforeF).map(([s, b]) => [s, { sealed: b.sealed, clear: b.clear }])),
   controlArchive: Object.fromEntries(Object.entries(beforeC).map(([s, b]) => [s, { sealed: b.sealed, clear: b.clear }])),
   xClearUnitsSample: beforeF[X]?.clearText.slice(0, 2),
+  stall: { container: Boolean(container), firstTurn: stallTurn, retry: stallRetry,
+    units: Object.fromEntries(Object.entries(await unitsOf(G)).map(([s, b]) => [s, { sealed: b.sealed, clear: b.clear }])) },
   faultPackets: await packetsOf(F),
   controlPackets: await packetsOf(C),
 });
@@ -223,7 +247,7 @@ async function removeX(acc: Account) {
   }
   return { seq: erased.seq, ids, keysGone: gone };
 }
-const removedF = await removeX(F), removedC = await removeX(C);
+const removedF = await removeX(F), removedC = await removeX(C), removedG = await removeX(G);
 
 // ---- after the acknowledgement: what the store serves and holds ----
 const served = async (acc: Account) => {
@@ -248,6 +272,7 @@ const scanArchive = async (acc: Account) => {
 const W = {
   fault: { removal: removedF, servedAfterRemoval: await served(F), archive: await scanArchive(F) },
   control: { removal: removedC, servedAfterRemoval: await served(C), archive: await scanArchive(C) },
+  stall: { removal: removedG, servedAfterRemoval: await served(G), archive: await scanArchive(G) },
 };
 log("W-after-removal", W);
 
@@ -317,11 +342,12 @@ const S = { afterRemoval: await nextRelease(C, "c"), control: await nextRelease(
 log("S-next-release", S);
 
 const breaks = {
+  W2: (W.stall.archive.routes.xExpiry + W.stall.archive.native.xExpiry + ((W.stall.servedAfterRemoval as { xExpiry?: number }).xExpiry ?? 0)) > 0,
   W: (W.fault.archive.routes.xExpiry + W.fault.archive.native.xExpiry + ((W.fault.servedAfterRemoval as { xExpiry?: number }).xExpiry ?? 0)) > 0,
   L: Object.values(L).some((v) => JSON.stringify((v as { typesThatFit: string[] }).typesThatFit) === '["visa"]'),
   S: JSON.stringify(S.afterRemoval).includes("FAILED") && !JSON.stringify(S.control).includes("FAILED"),
 };
 log("verdict", { breaks, sealCounters: counters, run: RUN });
 peer.close();
-for (const s of [D.store, D.values.store, D.noticeArchive.store, F.store, C.store, sink, F.values.store, F.noticeArchive.store, C.values.store, C.noticeArchive.store]) await s.close().catch(() => {});
+for (const s of [G.store, G.values.store, G.noticeArchive.store, D.store, D.values.store, D.noticeArchive.store, F.store, C.store, sink, F.values.store, F.noticeArchive.store, C.values.store, C.noticeArchive.store]) await s.close().catch(() => {});
 process.exit(0);
