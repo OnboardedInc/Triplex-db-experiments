@@ -143,7 +143,9 @@
                 "protection declared")
         (when per-account?
           (let [moved (offers/route name "v2" "removal-per-account" {})]
-            (check! "setup" (and (= 200 (:status moved)) (get-in moved [:body "perAccount"])) "database moved per account" moved)))
+            (check! "setup" (and (= 200 (:status moved)) (get-in moved [:body "perAccount"])) "database moved per account" moved)
+            ;; [DX-ERA2 fifth pass] the boundary is the database's: a process allowed to (commit mode) moved it on
+            (check! "setup" (= commit? (rc/commit-boundary? (d/db conn))) "the database's boundary is the mode's" (:body moved))))
         (f name conn))))))
 
 (defn seed! [name owners]
@@ -175,7 +177,8 @@
               before2 (raw-occurrences conn v2)
               r (with-held name (frame "same-subject" a1 (secret a1 "v3") "a1-v2" (head conn))
                   #(expect "held/same-subject" (remove! name "rm-2" a1) [200 nil]))]
-          (expect "held: the same subject's save across its removal" r [409 "CasConflict"])
+          ;; [DX-ERA2 fifth pass, R2-2] refused with the terminal answer: a removal of its subject landed after its frame
+          (expect "held: the same subject's save across its removal" r [409 "ErasureReplayDeclined"])
           (removed-everywhere! "held/same-subject" name conn a1 v2 before2 (head conn)))
         ;; 3. Another subject of the same account (a2) held while a3's value is removed: database-wide refused; guarded
         ;; per account a save is fenced on the subjects it writes, so it commits.
@@ -353,9 +356,17 @@
             (removed-everywhere! (str scenario "/own") name conn a1 v #{} (head conn))))))))
 
 (defn migrate-back-and-forth
-  "Per account only: the move is idempotent, reversible, and a save prepared under the other mode is refused once."
+  "Per account only: the move is idempotent, reversible, and a save prepared under the other mode is refused once.
+  [DX-ERA2 fifth pass] On the commit boundary (one-way) moving back is refused and nothing else is checked here."
   []
-  (when per-account?
+  (when (and per-account? commit?)
+    (fresh-scope false
+      (fn [name conn]
+        (seed! name [a1 b1])
+        (expect "migrate: moving back from the commit boundary" (offers/route name "v2" "removal-per-account" {"back" true})
+                [409 "RemovalBoundaryOneWay"])
+        (check! "migrate" (rc/commit-boundary? (d/db conn)) "still on the commit boundary" nil))))
+  (when (and per-account? (not commit?))
     (fresh-scope false
       (fn [name conn]
         (let [seeds (seed! name [a1 b1]) pin (head conn)]
@@ -801,7 +812,9 @@
                 (expect (str label ": a frame naming no account after it") frame [200 nil]))
             (do (expect (str label ": a removal") removal [503 "RemovalLogBehind"])
                 (check! label (not= 200 (:status frame)) "a frame naming no account is refused" (offers/outcome frame))))
-          (check! label (= [[200 nil] [200 nil]] (map offers/outcome moves)) "moved back and forward" (map offers/outcome moves))
+          ;; [DX-ERA2 fifth pass] the commit boundary is one-way: moving back is refused there
+          (check! label (= (if commit? [[409 "RemovalBoundaryOneWay"] [200 nil]] [[200 nil] [200 nil]]) (map offers/outcome moves))
+                  "moved back and forward (back refused on the commit boundary)" (map offers/outcome moves))
           (expect (str label ": after the moves, the removal") (remove! name "ud-1" a1) [200 nil])
           (expect (str label ": and a frame naming no account") (offers/send name (frame-any name conn "ud-any2")) [200 nil])
           (native-counters-agree! label name conn))))))
@@ -1019,7 +1032,8 @@
               pin (head conn) t0 (d/basis-t (d/db conn))
               remove-x #(offers/route name "v2" "erase" {"commandId" % "selectors" [{"entityId" x "attribute" ":v"}]})
               r1 (with-held name (frame "early" x v nil (head conn)) #(expect "named-absent" (remove-x "rm-n1") [200 nil]))]
-          (expect "named-absent: a creation prepared before the removal, sent after it" r1 [409 "CasConflict"])
+          ;; [DX-ERA2 fifth pass, R2-2] the terminal answer: a removal naming its subject landed after its frame
+          (expect "named-absent: a creation prepared before the removal, sent after it" r1 [409 "ErasureReplayDeclined"])
           (check! "named-absent" (= 1 (rs/native-entity-seq (d/db conn) x)) "the named entity's sequence moved with no row")
           (let [r2 (if policy/import-whole?
                      ;; [DX-ACT9] With TX2_IMPORT_WHOLE_SUBJECT=1 (every option on together) an import of a removed
@@ -1032,7 +1046,8 @@
                      (with-held name (frame* "import-early" x ":v" vi nil (head conn) {:actor "bulk-import"})
                        #(expect "named-absent" (remove-x "rm-n2") [200 nil])))]
             (expect "named-absent: an import frame prepared before a removal, sent after it" r2
-                    (if policy/import-whole? [409 "ErasureReplayDeclined"] [409 "CasConflict"])))
+                    ;; [DX-ERA2 fifth pass, R2-2] declined on the general writer's path too
+                    [409 "ErasureReplayDeclined"]))
           (absent-from-routes! "named-absent" name [x] pin t0 [v vi])
           (let [late (offers/send name (frame "late" x vl nil (head conn)))]
             (expect "named-absent: a creation sent after the removal (new data)" late [200 nil])))))))
@@ -1107,6 +1122,93 @@
           (check! "data-behind" (= 2 (:seq e)) "served from the log's cut (both removals masked)" (:seq e))
           (check! "data-behind" (contains? (:erased e) (:id (seeds b1))) "b1's value, removed only in the log's newer entry, is masked" (keys (:erased e))))))))
 
+(defn boundary-transition
+  "[DX-ERA2 fifth pass] The commit boundary as a one-way setting in the database (-2 in :triplex.scope/erasure-seq),
+  turned on by a process allowed to (here `rc/may-turn-on` redefined true, on a database guarded per account and still
+  on the log's boundary). A save planned before the move and committed after it is refused at the serial point (it
+  fenced on -1) and is stored when sent again; a removal left committed but unpublished is completed by the move
+  before it turns; the move is idempotent; the database does not move back; a process without permission is refused
+  and follows the stored setting (its requests are served on the commit boundary)."
+  []
+  (when (and per-account? (not commit?))
+    (fresh-scope false
+      (fn [name conn]
+        (let [label (str "boundary-transition/" mode)
+              seeds (seed! name [a1 a2 b1]) va (:value (seeds a1)) pin (head conn)
+              turn #(offers/route name "v2" "removal-commit-boundary" {})
+              refused-without (turn)
+              ;; a removal left committed and unpublished (its gateway stopped there)
+              commit rc/commit! apply-native erase/apply-native!
+              stopped (with-redefs [rc/commit! (fn [& args] (let [r (apply commit args)] (throw (ex-info "stopped after the commit" {})) r))
+                                    erase/apply-native! (fn [& args] (let [r (apply apply-native args)] (throw (ex-info "stopped after the commit" {})) r))]
+                        (remove! name "bt-1" a1))
+              pending-before (some? (privacy/pending name))
+              ;; a save of b1 planned before the move, committed after it
+              held (frame "bt-held" b1 (secret b1 "held") (:id (seeds b1)) (head conn))
+              [moved late] (with-redefs [rc/may-turn-on true]
+                             (let [m (atom nil)
+                                   r (with-held name held #(reset! m (turn)))]
+                               [@m r]))
+              again (with-redefs [rc/may-turn-on true] (turn))
+              back (offers/route name "v2" "removal-per-account" {"back" true})
+              resent (offers/send name (frame "bt-held-2" b1 (secret b1 "held2") (:id (seeds b1)) (head conn)))
+              read-a1 (offers/route name "v1" "read" {"entityIds" [a1]})]
+          (expect (str label ": a process without permission") refused-without [403 "RemovalBoundaryNotPermitted"])
+          (check! label (not= 200 (:status stopped)) "the removal stopped after its commit" (offers/outcome stopped))
+          (check! label pending-before "it is pending" nil)
+          (check! label (and (= 200 (:status moved)) (true? (get-in moved [:body "changed"]))) "the move to the commit boundary" (:body moved))
+          (check! label (nil? (privacy/pending name)) "the pending removal was completed before the move" (privacy/pending name))
+          (check! label (= 1 (seq-now name conn)) "published as sequence 1" (seq-now name conn))
+          (check! label (rc/commit-boundary? (d/db conn)) "the database now removes at the commit" nil)
+          (expect (str label ": a save planned before the move, committed after it") late [409 "CasConflict"])
+          (check! label (= [200 false] [(:status again) (get-in again [:body "changed"])]) "moving again changes nothing" (:body again))
+          (expect (str label ": moving back") back [409 "RemovalBoundaryOneWay"])
+          (expect (str label ": the save sent again") resent [200 nil])
+          (check! label (not (str/includes? (text (:body read-a1)) va)) "a1 not answered" nil)
+          (check! label (marked? name a1 pin) "a1 marked at the old position" nil)
+          (native-counters-agree! label name conn))))))
+
+(defn cache-stamps
+  "[DX-ERA2 fifth pass, B5] Caches across a removal stopped after its commit in Datomic (before its publication). Reach
+  sessions remember a1 at a pin (the server then answers a remembered entity without its rows, and the client reuses
+  its own copy) and the erasure frontier is read; the removal of a1 commits and stops; then the same sessions read the
+  same pin. Each must send a1 again with its rows (masked), never `unchanged`, and no route may answer the value. With
+  the commit boundary the frontier's sequence stays (tickets wait for the publication) and its removalStamp moves at
+  the commit; on the log's boundary the first read publishes the removal, so both move. Also a fresh session and the
+  plain read routes."
+  []
+  (when per-account?
+    (fresh-scope false
+      (fn [name conn]
+        (let [label (str "cache-stamps/" mode)
+              seeds (seed! name [a1 b1]) value (:value (seeds a1)) pin (head conn)
+              frontier #(:body (offers/route name "v2" "erasure-frontier" nil))
+              reach-at (fn [session] (offers/route name "v2" "reach" {"root" a1 "basis" {"recordedPosition" pin "validAt" 1.0e12}
+                                                                       "session" session "erasureRefs" true}))
+              entity-of (fn [r] (some (fn [e] (when (= a1 (first e)) e)) (get (json/read-str (text (:body r))) "entities")))
+              w1 (reach-at "cs-pin-1") w2 (reach-at "cs-pin-2")
+              f0 (frontier)
+              stop (fn [f] (fn [& args] (let [r (apply f args)] (throw (ex-info "stopped after the commit" {})) r)))
+              stopped (with-redefs [rc/commit! (stop rc/commit!) erase/apply-native! (stop erase/apply-native!)]
+                        (remove! name "cs-1" a1))
+              r1 (reach-at "cs-pin-1") r2 (reach-at "cs-pin-2") r3 (reach-at "cs-pin-fresh")
+              f1 (frontier)
+              texts (route-texts name a1 pin)]
+          (check! label (str/includes? (text (:body w1)) value) "warm: the session at the pin holds the value" nil)
+          (check! label (= 3 (count (entity-of w2))) "warm: sent with its rows" (entity-of w2))
+          (check! label (not= 200 (:status stopped)) "the removal stopped after its commit" (offers/outcome stopped))
+          (doseq [[k r] {:remembered-1 r1 :remembered-2 r2 :fresh r3}]
+            (check! label (= 200 (:status r)) (str "reach " k " answers") (:status r))
+            (check! label (not (str/includes? (text (:body r)) value)) (str "reach " k " does not answer the value") nil)
+            (check! label (= 3 (count (entity-of r))) (str "reach " k " sends a1 again with its rows, not `unchanged`") (entity-of r)))
+          (doseq [[route reply] texts]
+            (check! label (not (str/includes? (text (:body reply)) value)) (str "route " route " does not answer the value") nil))
+          (if commit?
+            (do (check! label (= (get f0 "seq") (get f1 "seq")) "commit boundary: the sequence waits for the publication" [f0 f1])
+                (check! label (= (inc (get f0 "removalStamp")) (get f1 "removalStamp")) "commit boundary: the stamp moved at the commit" [(get f0 "removalStamp") (get f1 "removalStamp")]))
+            (check! label (= 1 (get f1 "seq") (get f1 "removalStamp")) "log boundary: the first read published it; sequence and stamp 1" f1))
+          (println "ERA2_CACHE_STAMPS" mode (pr-str {:before (select-keys f0 ["seq" "removalStamp"]) :after (select-keys f1 ["seq" "removalStamp"])})))))))
+
 ;; ---- [DX-S5 second review R2-2, adapted] a creation racing a removal of its subject, then the client's replay ----
 (defn creation-race
   "The save-line review's R2-2 (`s5/attack2_gate.clj` `a-creation-racing-a-removal-is-replayed-into-the-removed-family`,
@@ -1115,8 +1217,10 @@
   plan and its commit (run from inside the save's submit, on another thread, waited for 3 s); then the same frame is
   sent after the removal under a new operation ID (its source still before the removal); then the client's replay: the
   same caller-supplied value with a fresh source and a new operation ID, as the SDK replays a CasConflict. On the
-  subject writer and on the general writer. Asserted: the racing save is not stored when the removal landed in its
-  window. Observed and printed (ERA2_R22), not asserted: what the frame sent after and the replay answer."
+  subject writer and on the general writer. [DX-ERA2 fifth pass] Asserted on every mode: the race and the late frame
+  refused with the same terminal answer (409 ErasureReplayDeclined, case 1); a replay under the racing save's command
+  with a fresh source refused the same way (case 2); a resend under a new command with a fresh source stored (case 3,
+  allowed until the owner decides). Printed as ERA2_R22."
   []
   (doseq [writer [:subject :general]]
     (fresh-scope false
@@ -1136,13 +1240,19 @@
               removal (let [r @removed] (if (= :waiting r) [:waited-past-3s] (offers/outcome r)))
               removal-seq (seq-now name conn)
               stale (general #(offers/send name (frame "r22-stale" X v nil pin)))
+              same-command (general #(offers/send name (assoc (frame "r22-race" X v nil (head conn)) "operationId" "r22-race-replay")))
               replay (general #(offers/send name (frame "r22-replay" X v nil (head conn))))
               stored? (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [X]}))) v)
               obs {:writer writer :removal removal :removalSeq removal-seq :racing (offers/outcome reply)
-                   :sameFrameAfterTheRemoval (offers/outcome stale) :replay (offers/outcome replay) :valueStoredAfter stored?}]
+                   :sameFrameAfterTheRemoval (offers/outcome stale) :replayUnderTheSameCommand (offers/outcome same-command)
+                   :replayUnderANewCommand (offers/outcome replay) :valueStoredAfter stored?}]
           (println "ERA2_R22" mode (pr-str obs))
-          (when (= [200 nil] removal)
-            (check! label (not= 200 (:status reply)) "the creation the removal landed inside is not stored" obs)))))))
+          (check! label (= [200 nil] removal) "the removal landed inside the creation's window" obs)
+          (expect (str label ": the race (case 1)") reply [409 "ErasureReplayDeclined"])
+          (expect (str label ": the same frame after the removal (case 1)") stale [409 "ErasureReplayDeclined"])
+          (expect (str label ": a replay under the same command, fresh source (case 2)") same-command [409 "ErasureReplayDeclined"])
+          (expect (str label ": a resend under a new command, fresh source (case 3, allowed)") replay [200 nil])
+          (check! label stored? "case 3 stored its value (a new save after the removal)" obs))))))
 
 ;; ERA2_ONLY (space-separated label prefixes) runs only those scenarios: a diagnostic run, never a gate
 (def only (some-> (System/getenv "ERA2_ONLY") str/trim not-empty (str/split #"\s+")))
@@ -1182,6 +1292,8 @@
   (scenario "log-states" log-states)
   (scenario "catch-up" catch-up)
   (scenario "data-behind" data-behind)
+  (scenario "boundary-transition" boundary-transition)
+  (scenario "cache-stamps" cache-stamps)
   (scenario "creation-race" creation-race)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode

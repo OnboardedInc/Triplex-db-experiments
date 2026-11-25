@@ -15,6 +15,14 @@
 #                is restored from that backup (transactor and gateways stopped); then the restore route
 #   mixed        OLD_REF on the read gateway, this version on the write gateway, one database: removals and derived
 #                writes of each version in both orders, a removal of each version pending while the other writes
+#   fleet-oldcommit, fleet-oldlog  [DX-ERA2 fifth pass] OLD_REF (a build with the per-process boundary switch) on the
+#                read gateway with its switch on (commit) or off (log), on its own source; this version on the write
+#                gateway, allowed to move the database to the commit boundary. The earlier build moves the database
+#                per account (log's boundary in the database); its removal pauses 8 s after its commit while both
+#                gateways read and write; then this version moves the database to the commit boundary; then both again
+#   sdkcache     [DX-ERA2 fifth pass] the SDK's Reach cache across a removal paused 8 s after its commit (commit boundary)
+#   readwait, readwait-commit  [DX-ERA2 fifth pass] removals at 1 and at 10 per second on the write gateway while
+#                readers read on both gateways (era2/readwait.mjs); the log's boundary (or the commit boundary)
 # Predictions (written 2026-11-24, 20:50 EST, before the first run):
 #   step-*: after the kill the removal is pending (published only for step-published); a frame naming another account
 #   and a plain save of another account 200; the first frame naming no account 503, after which the removal is
@@ -53,7 +61,7 @@ cleanup() {
   for role in gw-r gw-w tx; do docker logs "$prefix-$role" > "$out/evidence/$role.log" 2>&1 || true; done
   docker rm -f "$prefix-restore" >/dev/null 2>&1 || true
   bash lab/experiments/EXP-DX1/stack/down.sh "$prefix" --volumes >/dev/null 2>&1 || true
-  rm -rf "$out/gw" "$out/gwtmp" "$out/backup"
+  rm -rf "$out/gw" "$out/gwtmp" "$out/backup" "$out/gw-old"
 }
 trap cleanup EXIT
 place_source() { # REF ("" for this checkout's HEAD)
@@ -79,6 +87,18 @@ case $scenario in
   lockloss-*) gateway+=(DX_REMOVAL_TEST_PAUSE_AT=${scenario#lockloss-} DX_REMOVAL_TEST_PAUSE_MS=20000) ;;
   restore) gateway+=(DX_REMOVAL_TEST_PAUSE_AT=declared DX_REMOVAL_TEST_PAUSE_MS=12000) ;;
   mixed) [[ -n ${OLD_REF:-} ]] || { echo "mixed needs OLD_REF" >&2; exit 2; }; gateway+=(DX_REMOVAL_TEST_PAUSE_AT=declared DX_REMOVAL_TEST_PAUSE_MS=15000) ;;
+  fleet-oldcommit|fleet-oldlog)
+    [[ -n ${OLD_REF:-} ]] || { echo "$scenario needs OLD_REF" >&2; exit 2; }
+    mkdir -p "$out/gw-old" "$out/gwtmp-old"
+    git archive "$OLD_REF" packages/datomic/gateway packages/datomic/src/codec-spec.json | tar -x -C "$out/gwtmp-old"
+    cp -R "$out/gwtmp-old/packages/datomic/gateway/." "$out/gw-old/"; cp "$out/gwtmp-old/packages/datomic/src/codec-spec.json" "$out/gw-old/codec-spec.json"
+    rm -rf "$out/gwtmp-old"; echo "read gateway: $OLD_REF" >> "$out/sources-placed"
+    old_switch=1; [[ $scenario == fleet-oldlog ]] && old_switch=0
+    gateway+=(DX_REMOVAL_COMMIT_BOUNDARY=1 "DX_GATEWAY_SRC_READ=$out/gw-old"
+              "DX_GATEWAY_ENV_READ=TX2_REMOVAL_COMMIT_BOUNDARY=$old_switch TX2_REMOVAL_TEST_PAUSE_AT=committed TX2_REMOVAL_TEST_PAUSE_MS=8000") ;;
+  readwait) ;;
+  sdkcache) gateway+=(DX_REMOVAL_COMMIT_BOUNDARY=1 "DX_GATEWAY_ENV_WRITE=TX2_REMOVAL_TEST_PAUSE_AT=committed TX2_REMOVAL_TEST_PAUSE_MS=8000") ;;
+  readwait-commit) gateway+=(DX_REMOVAL_COMMIT_BOUNDARY=1) ;;
   *) echo "unknown scenario $scenario" >&2; exit 2 ;;
 esac
 env "${envs[@]}" "${gateway[@]}" DX_STACK_EVIDENCE="$out/evidence" DX_STACK_WAIT_FOR_TRANSACTOR=1 DX_QUIET_LOGS=1 \
@@ -296,6 +316,64 @@ mixed)
   # the window the upgrade order forbids: an earlier version's derived writes while this version's removal is declared
   post "$W/v1/db/$D/read" '{"entityIds":["notice:v1:st2-any-2","notice:v1:st2-a-2"]}' mixed-window-documents
   step "copies of a1 from the earlier version's writes during the declared removal: $(grep -c "$va" "$out/replies/$(printf '%03d' $n)-mixed-window-documents.json" || true)"
+  ;;
+fleet-oldcommit|fleet-oldlog)
+  reply() { echo "$out/replies/$(printf '%03d' $n)-$1.json"; }
+  new_db "$R" d; D=$db
+  step "the earlier build ($OLD_REF, its switch $old_switch) moved the database per account: the database is on the log's boundary"
+  for s in a1 b1 c1; do post "$W/v1/db/$D/transact" "$bodies/seed-$s.json" "seed-$s"; done
+  step "--- 1. a mixed fleet: the earlier build's removal of a1 pauses 8 s after its commit"
+  ( post "$R/v2/db/$D/erase" "$(remove era2-fl-a1 acct/a/one)" earlier-removal-a1 ) & rm_pid=$!; bg_pids+=("$rm_pid")
+  wait_log "$prefix-gw-r" "TRIPLEX_REMOVAL_PAUSED committed" && step "committed and paused" || step "never paused"
+  post "$R/v1/db/$D/read" '{"entityIds":["acct/a/one"]}' earlier-read-a1
+  step "a1 answered by the earlier build while committed: $(grep -c "$va" "$(reply earlier-read-a1)" || true)"
+  ms() { python3 -c 'import time;print(int(time.time()*1000))'; }
+  t0=$(ms)
+  post "$W/v1/db/$D/read" '{"entityIds":["acct/a/one"]}' this-read-a1
+  step "a1 answered by this build while committed: $(grep -c "$va" "$(reply this-read-a1)" || true) (the read took $(( $(ms) - t0 )) ms)"
+  t=$(seq_of "$W" "$D"); step "sequence this build reads: $t"
+  post "$W/v1/db/$D/transact" "$bodies/frame-any-0.json" this-frame-no-accounts "$t"
+  post "$R/v1/db/$D/transact" "$bodies/save-b1-0.json" earlier-save-b1
+  wait "$rm_pid" || true
+  t=$(seq_of "$W" "$D"); step "sequence after the earlier build's removal: $t"
+  step "--- 2. this build moves the database to the commit boundary"
+  post "$W/v2/db/$D/removal-commit-boundary" '{}' move-to-commit
+  post "$W/v2/db/$D/removal-commit-boundary" '{}' move-again
+  step "--- 3. after the move"
+  post "$R/v1/db/$D/read" '{"entityIds":["acct/a/one","acct/b/one"]}' earlier-read-after
+  step "a1 answered by the earlier build after the move: $(grep -c "$va" "$(reply earlier-read-after)" || true)"
+  post "$R/v1/db/$D/transact" "$bodies/save-b1-1.json" earlier-save-b1-after
+  post "$R/v2/db/$D/erase" "$(remove era2-fl-b1 acct/b/one)" earlier-removal-after
+  post "$W/v2/db/$D/erase" "$(remove era2-fl-c1 acct/c/one)" this-removal-after
+  t=$(seq_of "$W" "$D"); step "sequence this build reads: $t"
+  post "$W/v1/db/$D/transact" "$bodies/frame-any-1.json" this-frame-no-accounts-after "$t"
+  post "$W/v1/db/$D/transact" "$bodies/save-b1-2.json" this-save-b1-after
+  curl -sS -m 30 "$W/v2/db/$D/erasure-frontier" > "$out/replies/frontier-end.json"
+  step "frontier at the end: $(node -e 'const f=JSON.parse(require("fs").readFileSync(process.argv[1]));console.log(JSON.stringify({seq:f.seq,stamp:f.removalStamp}))' "$out/replies/frontier-end.json")"
+  leak_check "$W" "$D" end '[]' "$va"
+  ;;
+sdkcache)
+  # [DX-ERA2 fifth pass, B5] the SDK's Reach cache (era2/sdkcache.ts, run with tsx from SDK_WT, a checkout with
+  # node_modules holding the same packages/datomic/src as this one)
+  new_db "$W" d; D=$db
+  for s in a1 b1; do post "$W/v1/db/$D/transact" "$bodies/seed-$s.json" "seed-$s"; done
+  step "the SDK's source: $(git -C "${SDK_WT:?a checkout with node_modules}" rev-parse HEAD) (this checkout $(git rev-parse HEAD))"
+  "$SDK_WT/node_modules/.bin/tsx" "$SDK_WT/lab/experiments/EXP-DX1/era2/sdkcache.ts" "$W" "$R" "$D" "$va" "$out/sdkcache.json" | tee -a "$out/steps.log"
+  ;;
+readwait|readwait-commit)
+  new_db "$W" d; D=$db
+  post "$W/v1/db/$D/transact" "$bodies/seed-a1.json" seed-a1
+  step "boundary: $(curl -sS -m 30 "$W/v2/db/$D/erasure-frontier" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const f=JSON.parse(s);console.log("seq",f.seq,"stamp",f.removalStamp)})')"
+  for rate in 1 10; do
+    secs=60; [[ $rate == 10 ]] && secs=30
+    step "--- removals at $rate per second for $secs s; 4 readers (2 on each gateway)"
+    since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    node "$here/readwait.mjs" "$W" "$R" "$D" "$rate" "$secs" 4 "$out/readwait-$rate.json" | tee -a "$out/steps.log"
+    for role in w r; do
+      docker logs --since "$since" "$prefix-gw-$role" 2>&1 | grep -F '"triplex.removal-read-wait.v1"' > "$out/waits-$rate-$role.jsonl" || true
+      step "gateway $role: $(wc -l < "$out/waits-$rate-$role.jsonl" | tr -d ' ') reads waited; $(node -e 'const xs=require("fs").readFileSync(process.argv[1],"utf8").trim().split("\n").filter(Boolean).map(l=>JSON.parse(l.slice(l.indexOf("{"))).ms).sort((a,b)=>a-b);const q=p=>xs.length?Math.round(xs[Math.min(xs.length-1,Math.floor(p*xs.length))]*10)/10:null;console.log(JSON.stringify({n:xs.length,p50:q(.5),p90:q(.9),p99:q(.99),max:q(1)}))' "$out/waits-$rate-$role.jsonl")"
+    done
+  done
   ;;
 esac
 step "done"

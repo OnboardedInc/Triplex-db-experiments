@@ -312,7 +312,9 @@
           ;; Rejected: enabling references for older SDKs that check revision alone.
           session-state (when (or (not privacy/*cut*) (true? (get input "erasureRefs")))
                           (session-map name (get input "session") epoch))
-          witness-cut (when-let [sequence (:seq privacy/*cut*)] [position t sequence])
+          ;; [DX-ERA2 fifth pass, B5] the removal stamp, not the sequence: with the commit boundary a removal committed
+          ;; and not yet published changes what a pinned read may answer while its position, t and sequence stay
+          witness-cut (when-let [sequence (:seq privacy/*cut*)] [position t (get privacy/*cut* :stamp sequence)])
           generation (when session-state @session-state)
           ^ConcurrentHashMap remembered (:entries generation) out (StringBuilder. 65536)]
       (when-not (and (vector? roots) (<= 1 (count roots) (if need 50000 5000))) (decline! "roots"))

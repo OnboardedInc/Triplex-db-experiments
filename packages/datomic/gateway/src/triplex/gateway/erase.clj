@@ -189,7 +189,9 @@
                     ;; takes this removal's sequence. Rejected: moving the database-wide sequence (it refuses every save).
                     ;; [DX-ACT9] Through privacy's hooks (removal_scope.clj loads after every stored function text).
                     (if privacy/removal-enabled ((:per-account? privacy/removal-hooks) current) false)
-                    (into (cons [:db/cas head :triplex.scope/erasure-seq privacy/removal-sentinel privacy/removal-sentinel]
+                    ;; [DX-ERA2 fifth pass] on the value this removal's view read (-1, or -2 with the commit boundary)
+                    (into (cons [:db/cas head :triplex.scope/erasure-seq (scope/value current head :triplex.scope/erasure-seq)
+                                 (scope/value current head :triplex.scope/erasure-seq)]
                                 (cons [:db/cas head :triplex.scope/removal-seq (dec (get entry "seq")) (get entry "seq")]
                                       ((:entry-ops privacy/removal-hooks) entry))))
                     (not (if privacy/removal-enabled ((:per-account? privacy/removal-hooks) current) false))
@@ -228,7 +230,7 @@
           (when-not current (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
           ;; [DX-ERA3 F3] A database guarded per account that this gateway cannot treat as such (it runs without the
           ;; option): refuse before anything is written, so no intent is left for the fleet to trip over.
-          (when (= privacy/removal-sentinel (scope/value db (scope/entity db) :triplex.scope/erasure-seq)) (privacy/unavailable!))
+          (when (contains? #{privacy/removal-sentinel -2} (scope/value db (scope/entity db) :triplex.scope/erasure-seq)) (privacy/unavailable!))
           (privacy/clear-completed! name current)
           (if-let [before (get-in current [:commands command])]
             (do (when-not (= selectors (get before "selectors"))

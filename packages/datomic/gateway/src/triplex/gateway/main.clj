@@ -409,7 +409,11 @@
                                                    (some? retryAfterMs) (assoc :retryAfterMs retryAfterMs))))
                    (throw e))))))
       :else (response 404 {:code "NotFound"}))
-    (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
+    (catch Exception e
+      ;; [DX-ERA2 fifth pass] an exception that is not a typed refusal is a fault: counted and logged (the commit
+      ;; boundary's restore defect was answered 400 GatewayError with no message and no log line)
+      (when-not (instance? clojure.lang.ExceptionInfo e) ((requiring-resolve 'triplex.gateway.failures/note!) "gateway-error" uri e))
+      (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
                                   (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e)))
                                   (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e)))
@@ -520,7 +524,14 @@
           (and (= :post request-method) (= action "restore-erasure"))
           (response 200 (erase/replay-after-restore! name conn))
           (and removal-scope/enabled (= :post request-method) (= action "removal-per-account"))
-          (response 200 (removal-erase/per-account! name conn (request-json body)))
+          (let [input (request-json body) moved (removal-erase/per-account! name conn input)]
+            ;; [DX-ERA2 fifth pass] a process allowed to turns the commit boundary on once the database is per account
+            (response 200 (if (and (:perAccount moved) @(requiring-resolve 'triplex.gateway.removal-commit/may-turn-on))
+                            (assoc moved :boundary (:boundary ((requiring-resolve 'triplex.gateway.removal-commit/turn-on!) name conn)))
+                            moved)))
+          ;; [DX-ERA2 fifth pass] the one-way move to the commit boundary (a process allowed to: TX2_REMOVAL_COMMIT_BOUNDARY=1)
+          (and removal-scope/enabled (= :post request-method) (= action "removal-commit-boundary"))
+          (response 200 ((requiring-resolve 'triplex.gateway.removal-commit/turn-on!) name conn))
           (if (= :post request-method) (if derived-seal-on (derived-action? action) false) false)
           (response 200 (derived-seal! name conn db per-account action (request-json body)))
           ;; [DX-ERA2 fourth pass] the removal log rebuilt from the data (behind, a pending copy, or missing)
@@ -552,7 +563,9 @@
                                 privacy/*unseal* (fn [id e a value] (envelope/decode! name (d/db conn) id e a value))]
                         (let [answer (if (and (= :get request-method) (= action "erasure-frontier"))
                                        (response 200 (cond-> {:database name :protected (boolean cut)
-                                                              :seq (or (:seq cut) 0) :erased (or (:erased cut) {})}
+                                                              :seq (or (:seq cut) 0) :erased (or (:erased cut) {})
+                                                              ;; [DX-ERA2 fifth pass, B5] what a cache keys on
+                                                              :removalStamp (or (:stamp cut) (:seq cut) 0)}
                                                        (:per-account cut)
                                                        (merge (removal-scope/frontier-fields cut query-string))
                                                        ;; [DX-ACT9] Only with TX2_ACCOUNT_TICKETS=1 and ?since=.
@@ -561,11 +574,17 @@
                                                        ;; [DX-IMP2] The removed families an importer must leave out.
                                                        policy/import-whole? (assoc :families (vec (sort (:families cut))))))
                                        (route-handler-base request))]
-                          (cond-> answer cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))))))]
+                          (cond-> answer
+                            cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))
+                            ;; [DX-ERA2 fifth pass, B5] the value that changes at the commit with the commit boundary
+                            cut (assoc-in [:headers "x-triplex-removal-stamp"] (str (or (:stamp cut) (:seq cut))))))))]
             (cond
               independent
               ;; [DX-ERA2] Per account the cut was checked by request-cut; the fence decides at the serial point.
-              (do (when-not per-account (privacy/verify-data! independent db)) (run independent))
+              (do (when-not per-account (privacy/verify-data! independent db))
+                  ;; [DX-ERA2 fifth pass, R2-2] a save framed before a removal of its subject, or under a declined command
+                  ((requiring-resolve 'triplex.gateway.removal-commit/decline-check!) name conn db input)
+                  ((requiring-resolve 'triplex.gateway.removal-commit/after-refusal) name conn input (run independent)))
 
               (and input (or managed-write? source))
               ;; [DX-ERASE1] Why: the source cannot publish an erasure between validation and recipient commit.
@@ -600,7 +619,11 @@
                                 (privacy/verify-data! source-cut source-db)
                                 (privacy/ensure-seq! source-cut (get input "erasureSeq"))))))
                         (removal-scope/ensure-ticket! next input)))
-                    (run next))))
+                    ;; [DX-ERA2 fifth pass, R2-2] the same on the general writer's path
+                    (if managed-write?
+                      (do ((requiring-resolve 'triplex.gateway.removal-commit/decline-check!) name conn current input)
+                          ((requiring-resolve 'triplex.gateway.removal-commit/after-refusal) name conn input (run next)))
+                      (run next)))))
               ;; [DX-ERASE1] Why: a guarded write only needs the cut verified inside the writer lock.
               ;; Rejected: reading and hashing the authority twice on every guarded save.
               :else
@@ -628,6 +651,8 @@
 (defn handler [request] (trace/handler route-handler request))
 (defn serve! [serve-handler port]
   (envelope/start!)
+  ;; [DX-ERA4, after DX-ERA5's M2] with the option the key re-sweep runs from the start, not only after a derived call
+  (if derived-seal-on ((requiring-resolve 'triplex.gateway.derived-seal/start-resweep!)) nil)
   (d/create-database (db-uri "tx2-health"))
   ;; [EXP-DX1] Why: synchronize existing databases before accepting HTTP, not from their first read.
   ;; Rejected: per-read initialization barriers.

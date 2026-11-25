@@ -406,7 +406,7 @@
                      :journal-has-value (str/includes? (journal-text src) vx)
                      :native-clear (count (native-clear conn [vx]))
                      :kept-opens (= (str "derived:" vy) (get (second (open! src cy)) "value"))}
-              row {:p p :stop stop :pre (some-> pre-reply offers/outcome) :boundary (if rc/commit-boundary :commit :log) :stop-fired (boolean fired) :first (offers/outcome first-reply) :pending-at-stop pending-at-stop
+              row {:p p :stop stop :pre (some-> pre-reply offers/outcome) :boundary (if rc/may-turn-on :commit :log) :stop-fired (boolean fired) :first (offers/outcome first-reply) :pending-at-stop pending-at-stop
                    :at-stop at-stop :derived-write-at-stop (offers/outcome w1) :completed-by-that-refusal (and pending-at-stop (not pending-after-w1))
                    :final (offers/outcome final) :key-gone gone :after (update after :open-copy #(if (contains? % "removed") :removed %))
                    :seal-again-after (if (contains? (:seal-again after) "removed") :removed (:seal-again after))}]
@@ -504,7 +504,7 @@
   []
   (g/fresh-scope true
     (fn [src conn]
-      (let [lbl (str "log states " (if rc/commit-boundary "commit" "log"))
+      (let [lbl (str "log states " (if rc/may-turn-on "commit" "log"))
             sel [{"entityId" g/a1 "attribute" ":v"}]
             [vx ids-x] (seed-x! src "ls-x" g/a1 "ls") [vy ids-y] (seed-x! src "ls-y" g/b1 "ls")
             cx (seal! src ids-x (str "derived:" vx)) cy (seal! src ids-y (str "derived:" vy))
@@ -539,8 +539,8 @@
                     :behind behind :rebuild-behind [(:status rebuild-behind) (:body rebuild-behind)] :after-rebuild-behind after-behind
                     :restored-key-still-there-after-rebuild key-after-rebuild
                     :missing missing :rebuild-missing [(:status rebuild-missing) (:body rebuild-missing)] :after-rebuild-missing after-missing}]
-        (println "ERA4_LOGSTATES" (if rc/commit-boundary "commit" "log") (pr-str states))
-        (bump! :log-states (if rc/commit-boundary :commit :log) :restored-key (if key-after-rebuild :kept :deleted))
+        (println "ERA4_LOGSTATES" (if rc/may-turn-on "commit" "log") (pr-str states))
+        (bump! :log-states (if rc/may-turn-on :commit :log) :restored-key (if key-after-rebuild :kept :deleted))
         (x/oracle! lbl (= 200 (:status done)) "the removal is acknowledged" states)
         (x/oracle! lbl gone "its key is deleted" states)
         (doseq [[k st] (select-keys states [:behind :after-rebuild-behind :missing :after-rebuild-missing])]

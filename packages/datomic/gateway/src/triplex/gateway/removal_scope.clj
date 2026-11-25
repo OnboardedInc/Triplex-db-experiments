@@ -82,7 +82,8 @@
   [db published pending]
   (let [native (native-seq db)]
     (and (integer? native) (integer? published)
-         (= sentinel (scope/value db (scope/entity db) :triplex.scope/erasure-seq))
+         ;; [DX-ERA2 fifth pass] -2: guarded per account with the commit as the boundary (a one-way setting)
+         (contains? #{sentinel -2} (scope/value db (scope/entity db) :triplex.scope/erasure-seq))
          (or (= native published) (and (integer? pending) (= pending (inc published)) (= native pending))))))
 
 (def fence-code
@@ -184,7 +185,9 @@
     (privacy/ensure-seq! state (get input "erasureSeq"))))
 
 ;; [DX-ERA2] The value the installed writers' database-wide fence carries for this cut. [DX-ACT9] Moved from privacy.clj.
-(defn fence-seq [state] (when state (if (:per-account state) sentinel (:seq state))))
+;; [DX-ERA2 fifth pass, ported] per account, the value the request read (-1, or -2 with the commit boundary): a write
+;; planned before the boundary changes is refused at the serial point and planned again
+(defn fence-seq [state] (when state (if (:per-account state) (get state :erasure-sentinel sentinel) (:seq state))))
 
 ;; [DX-ACT9] Why: privacy.clj, erase.clj and subject_save.clj load before the namespaces whose stored function texts
 ;; carry generated names, so they reach this namespace through privacy/removal-hooks (plain values there), filled here

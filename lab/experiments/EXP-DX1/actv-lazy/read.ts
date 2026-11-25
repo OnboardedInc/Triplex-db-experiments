@@ -125,7 +125,10 @@ export class LazyReader {
     // is cleared whenever this stamp changes.
     if (!derivedSealOn() || !f) return base;
     const removed = Object.keys((f as { erased?: Record<string, unknown> }).erased ?? {}).sort();
-    return `${base}|${removed.length}|${sha256(removed.join("\n")).slice(0, 16)}`;
+    // and the gateway's removal stamp when it sends one (the removal builder's B5 fix: it moves at the commit with the
+    // commit boundary, at the publication otherwise)
+    const removal = (f as { removalStamp?: unknown }).removalStamp;
+    return `${base}|${removal ?? ""}|${removed.length}|${sha256(removed.join("\n")).slice(0, 16)}`;
   }
   constructor(
     store: Store,

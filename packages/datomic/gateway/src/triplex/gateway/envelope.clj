@@ -160,7 +160,8 @@
                  (if encoded? (json/read-str value) value))
                (finally (Arrays/fill ^bytes clear (byte 0)))))
         (finally (Arrays/fill ^bytes key (byte 0)))))
-    (catch Exception _ (privacy/unavailable!))))
+    ;; [DX-ERA2 fifth pass] still 503 to the caller, now counted and logged (a missing key, a refused tag)
+    (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "decode" name e) (privacy/unavailable!))))
 
 (defn erase-keys! [name identities]
   ;; [DX-ERASE1] Why: revoke independent keys before submitting optional native cleanup.
@@ -196,7 +197,9 @@
   (let [cutoff (- (System/currentTimeMillis) grace-ms)]
     (doseq [name (authority-scopes)]
       (try
-        (let [cut (privacy/cut name nil)]
+        ;; [DX-ERA2 fifth pass, B2] the published prefix, a pending removal allowed: one removal left pending must not
+        ;; hold back the keys of removals already published (and acknowledged)
+        (let [cut (privacy/cut name nil true)]
           (when (:sealed cut)
             (let [from (long (get @shredded name 0))
                   due (->> (:commands cut) vals (sort-by #(get % "seq"))
@@ -205,13 +208,16 @@
               (when (seq due)
                 (erase-keys! name (mapcat #(get % "identities") due))
                 (swap! shredded assoc name (get (last due) "seq"))))))
-        (catch Exception _ nil)))))
+        ;; [DX-ERA2 fifth pass] counted and logged, no longer dropped (B2 was hidden here)
+        (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "shred" name e))))))
 
 (defn- maintain-keys! []
   (shred-published!)
+  ;; [DX-ERA2 fifth pass] TX2_REMOVAL_WORKER_COMPLETE_MS (default off): complete removals left pending too long
+  (when (System/getenv "TX2_REMOVAL_WORKER_COMPLETE_MS") ((requiring-resolve 'triplex.gateway.removal-commit/complete-stale!)))
   (when sql/url
     (doseq [name (.keySet batches)]
-      (try (refill! name) (catch Exception _ nil)))))
+      (try (refill! name) (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "key-pool-refill" name e))))))
 
 ;; [DX-ERASE1] Why: the durable published prefix survives a restart and schedules key removal before any native indexing.
 ;; Rejected: making native cleanup the only caller that revokes a key.
@@ -220,7 +226,7 @@
     (doto (Thread. ^Runnable
             (fn []
               (loop []
-                (try (maintain-keys!) (catch Exception _ nil))
+                (try (maintain-keys!) (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "shred-worker" nil e)))
                 (let [continue? (try (Thread/sleep 500) true (catch InterruptedException _ false))]
                   (when continue? (recur)))))
             "triplex-envelope-shred")
