@@ -8,7 +8,7 @@
 # PostgreSQL removal authority shared by a write and a read gateway, every container on the image the stack pinned by
 # ID, the gateway source this checkout's HEAD (or SOURCE_REF). BOUNDARY=commit gives both gateways the permission and
 # moves each database through its route.
-# SCENARIO all6, in one stack (D6 added after the first run, st-log-sealed1, had started):
+# SCENARIO all6, in one stack:
 #   D1, D2: a1 and b1 hold :v and :q (:q not protected); the data is backed up; :q is added to the policy; a1 saves :q;
 #     the data is restored from the backup (transactor and gateways stopped). D1: a removal of the whole subject a1
 #     before the restore route; D2 (control): the restore route first, then the removal. Then the restore route, the
