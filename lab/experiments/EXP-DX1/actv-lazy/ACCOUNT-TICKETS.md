@@ -288,7 +288,13 @@ subject; 30 s (ten shape) or 50 accounts, one round each, removals in a 51st acc
 | after, 10/s, ten | 16 of 17 offered (692, 5,825; one 503) | **0 / 0 / 0 / 0** | **38 of 38** | 0 / 0 / 0 / 0 (1 round, complete) | 10 of 10 accounts exact; 0 notices delivered late, 0 twice |
 | before, 1/s, many (50) | 61 (83, 1,322) | **141 / 24 / 8 / 8** (42 of 50 accounts' Publish refused all three tries) | **0 of 50** | (does nothing else) | none checked |
 | after, 1/s, many (50) | 61 (55, 5,411) | **0 / 0 / 0 / 0** | **50 of 50** | — | 50 of 50 exact; 0 late, 0 twice |
-| after, 1/s, ten | <!-- B2-AFTER1 --> | | | | |
+| after, 1/s, ten | 20 (702, 2,678) | **0 / 0 / 0 / 0** | **55 of 55** | 1 / 0 / 1 / 0 (a Publish try and a delivery whose ticket one of A's removals overtook; both went through on the next try or round) | 10 of 10 exact; 0 late, 0 twice |
+<!-- B2-SUB -->
+
+The first run of the after 1/s cell stopped at its end on the miniature's own assertion "a notice was delivered twice in
+account-003" (A): that assertion counted A's 252 notices delivered at the end, after a refused delivery in its last
+round, as delivered twice (the receiver takes each packet once). It now counts them apart (`deliveredLate`, then a
+second delivery that must add nothing) and logs the cell first; the row above is the rerun.
 
 Every refusal in the before cells is `ErasureFrontierChanged` ("Discard the old protected input cut", "Recorded notices
 belong to an earlier removal sequence"). The miniature's own end checks (every subject's root and form at the final

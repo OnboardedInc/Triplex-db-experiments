@@ -152,10 +152,71 @@
                 (bump! :pre-removal-derived-copies (reduce + 0 (map count (vals derived))))
                 (println "ACT9_PROGRESS" arm (pr-str {:block k :schedules (get @tally [:schedules]) :violations (count @x/violations)}))))))))))
 
+;; ---- the commit-point race for each kind of derived write (DX-ERA2's frame-race case, per kind) ------------------
+;; A derived write whose request gave up (the gateway's 5 s wait expired and its locks were released) while its
+;; transaction was still queued: the transaction is held back until the removal of its subject has declared itself,
+;; then submitted. Same database (settlement frame, notice write, Publish marker, archive page, staging record): it
+;; must fail at Datomic's serial point and no copy may land. Staging is a non-held store (one account per database), so
+;; its ticket names no account in both arms. Delivery: the recipient is another database, with no serial point in
+;; common with the source; what lands is counted (its check under the source's locks passed before the removal could
+;; declare: a copy made before the removal, section 5 of the page).
+(def race-kinds [:frame :notice :publish :archive :staging :delivery])
+(defn- race-doc [kind i]
+  (case kind
+    :frame (str "settlement-values-q:answer:" i) :notice (str "settlement-notices-q:recorded-notices:" i)
+    :publish (str "lazy/account/releases/q/" i) :archive (str "settlement-values-q:page:" i)
+    :staging (str "stage/q/" i) :delivery (str "receiver:q:" i)))
+
+(defn races [n]
+  (g/fresh-scope false
+    (fn [src conn]
+      (offers/in-scope
+        (fn [rcp rconn]
+          (let [declare (deref #'triplex.gateway.removal-commit/declare!) submit triplex.gateway.storage/submit!]
+            (doseq [kind race-kinds i (range n)]
+              (let [x (str "acct/q/r" (name kind) i) v0 (g/secret x "seed") tag (str (name kind) "-" i)
+                    _ (offers/send src (g/frame (str "rs-" tag) x v0 nil nil))
+                    ticket (g/seq-now src conn)
+                    accounts (when (and after? (not= kind :staging)) ["q"])
+                    doc (race-doc kind i) op (str "rf-" tag) delivery? (= kind :delivery)
+                    input (cond-> (assoc (g/save-frame op doc ":notice/body" (str "derived:" v0) nil nil) "erasureSeq" ticket)
+                            accounts (assoc "erasureAccounts" accounts)
+                            delivery? (assoc "erasureSourceDatabase" src))
+                    declared (promise) outcome (promise)
+                    [saved removed]
+                    (with-redefs [triplex.gateway.storage/submit!
+                                  (fn [& args]
+                                    (if (= op (get (nth args 2) "operationId"))
+                                      (future (deref declared 30000 nil)
+                                              (try (let [r @(apply submit args)] (deliver outcome :committed) r)
+                                                   (catch Throwable e (deliver outcome (.getMessage e)) (throw e))))
+                                      (apply submit args)))
+                                  triplex.gateway.removal-commit/declare!
+                                  (fn [& args] (let [r (apply declare args)] (deliver declared true) r))]
+                      (let [saver (future (offers/send (if delivery? rcp src) input))]
+                        (Thread/sleep 50)
+                        (let [remover (future (g/remove! src (str "rr-" tag) x))]
+                          [(deref saver 20000 {:status 0}) (deref remover 30000 {:status 0})])))
+                    landed (deref outcome 30000 :never-submitted)
+                    label (str "K race " arm " " (name kind))
+                    copy? (str/includes? (g/text (:body (offers/route (if delivery? rcp src) "v1" "read" {"entityIds" [doc]}))) v0)]
+                (x/oracle! label (= [200 nil] (offers/outcome removed)) "the removal answers" (offers/outcome removed))
+                (bump! :race kind :request (offers/outcome saved))
+                (bump! :race kind :transaction (if (string? landed) (or (re-find #"TRIPLEX_[A-Z_]+[ a-z-]*|cas-failed" landed) "failed") landed))
+                (if delivery?
+                  (bump! :race kind :copy-in-recipient copy?)
+                  (do (x/oracle! label (and (string? landed) (boolean (re-find #"TRIPLEX_|cas-failed|Compare failed" landed)))
+                                 "its late transaction failed at the serial point" landed)
+                      (x/oracle! label (nil? (d/entid (d/db conn) [:triplex.claim/command-id op])) "it never committed")
+                      (x/oracle! label (not copy?) "no copy")))))))))))
+
 (defn main []
   (x/install-hooks!)
-  (fuzz (or (System/getenv "ACT9_RUN") "k0") (Long/parseLong (or (System/getenv "ACT9_N") "200"))
-        (Long/parseLong (or (System/getenv "ACT9_BLOCK") "50")) (Long/parseLong (or (System/getenv "ACT9_SEED") "1")))
+  (let [phases (set (str/split (or (System/getenv "ACT9_PHASES") "fuzz") #" "))]
+    (when (phases "races") (races (Long/parseLong (or (System/getenv "ACT9_RACES") "6"))))
+    (when (phases "fuzz")
+      (fuzz (or (System/getenv "ACT9_RUN") "k0") (Long/parseLong (or (System/getenv "ACT9_N") "200"))
+            (Long/parseLong (or (System/getenv "ACT9_BLOCK") "50")) (Long/parseLong (or (System/getenv "ACT9_SEED") "1")))))
   (println "ACT9_TALLY" arm (pr-str (into (sorted-map) (map (fn [[k v]] [(pr-str k) v])) @tally)))
   (println "ACT9_SUMMARY" arm (pr-str {:oracles @x/oracles :violations (count @x/violations)}))
   (shutdown-agents)
