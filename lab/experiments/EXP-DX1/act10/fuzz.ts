@@ -536,6 +536,14 @@ async function check(
       counts.oldBuildInFlightFrames = (counts.oldBuildInFlightFrames ?? 0) + 1;
       return false;
     }
+    // [DX-ACT10, third review] ACT10_DUMP=1 (diagnostic): what landed late, who sent it, and the settings around it.
+    if (process.env.ACT10_DUMP === "1")
+      console.log("[act10-dump] " + JSON.stringify({ position, later, command: String(t?.commandId).slice(0, 40), sent,
+        frameGuardsAtExpected: Boolean((await originAt(s, sent?.expected ?? 0)).settings?.frameGuards),
+        transitions: journal.filter((x) => x.actor === "lazy/settings").map((x) => x.position),
+        releases: journal.filter((x) => x.actor === "lazy/join").map((x) => [x.position, String(x.commandId).slice(-12)]),
+        laterWrites: journal.filter((x) => x.position === later).flatMap((x) => x.changes.map((c: any) => c.op + " " + String(c.entityId).slice(-30) + " " + String(c.tripleId ?? ""))).slice(0, 12),
+        attempts: ((db as any).attempts ?? []).filter((x: any) => x.id === String(t?.commandId).slice(0, 40)) }));
     return true;
   };
   for (const [k, rel] of rels.entries()) {

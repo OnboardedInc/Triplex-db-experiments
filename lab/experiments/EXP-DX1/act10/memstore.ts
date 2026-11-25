@@ -302,10 +302,14 @@ export function memStore(proc: Proc, held: HeldSource, label = proc.db.scope) {
       rule = weak ? {} : { sourceK, entities: [...entities] };
     }
     await proc.gate();
-    if (!db.sent.has(id)) db.sent.set(id, { proc: proc.name, oldBuild: proc.oldBuild, expected });
+    if (!db.sent.has(id)) db.sent.set(id, { proc: proc.name, oldBuild: proc.oldBuild, expected,
+      // [DX-ACT10, third review] For ACT10_DUMP: the guards this commit carried and the position they were checked at.
+      ...(process.env.ACT10_DUMP === "1" ? { sourceK, guards: (guards ?? []).map((g) => g.entityId.slice(-24) + "=" + g.tripleIds.join(",")) } : {}) } as never);
     // A schedule may land another write here: after this commit's read and guards, before the transactor.
     await db.beforeCommit?.(id);
     const r = await db.transact(ops, { commandId: id, actor, preconditions, correlationId }, rule);
+    // [DX-ACT10, third review] ACT10_DUMP=1: every attempt of a command, its rule and outcome.
+    if (process.env.ACT10_DUMP === "1") ((db as any).attempts ??= []).push({ id: id.slice(0, 40), proc: proc.name, expected, rule: rule && { ...rule, entities: rule.entities?.length }, ok: r.ok, position: r.ok ? r.value.position : undefined });
     if (r.ok) {
       counters.writes++;
       onAck?.(performance.now());
