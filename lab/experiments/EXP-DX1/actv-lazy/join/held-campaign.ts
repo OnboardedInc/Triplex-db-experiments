@@ -841,11 +841,18 @@ export async function runHeld(
     if (process.env.DX_ACT8_GATE === "1") {
       assert(diagnostic || process.env.DX_ACT8_SERVER === "1", "DX_ACT8_GATE is a toy diagnostic unless DX_ACT8_SERVER=1");
       const { besideGate } = await import("./beside-gate.ts");
-      await besideGate({
-        out, s, a, offer, verifyRead: verifyRead as never, demand: demand as never, writer, seed, people, history, positions,
-        ledger: activeLedger, releases, descriptor, db, ordered: Boolean(ordered), attempt: peer.attempt,
-        firstCorrect: firstCorrect as never, reader, peer,
-      });
+      try {
+        await besideGate({
+          out, s, a, offer, verifyRead: verifyRead as never, demand: demand as never, writer, seed, people, history, positions,
+          ledger: activeLedger, releases, descriptor, db, ordered: Boolean(ordered), attempt: peer.attempt,
+          firstCorrect: firstCorrect as never, reader, peer,
+        });
+      } finally {
+        // [DX-ACT10] Third review (diagnostic toy only): every assertion ID of the run checked for the duplicate-identity
+        // shape, whether the gate passed or stopped (act10/idscan.ts). Unset: nothing.
+        if (process.env.DX_ACT10_IDSCAN === "1")
+          await (await import("../../act10/idscan.ts")).idScan(s, out, descriptor.cut).catch((e) => console.log("[act10-idscan] failed " + String(e?.message)));
+      }
       return;
     }
     // [DX-ACT10] The adversarial review's stack checks (diagnostic toy only) instead of the windows.
