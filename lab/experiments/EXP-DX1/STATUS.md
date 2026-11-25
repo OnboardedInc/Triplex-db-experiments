@@ -6085,3 +6085,17 @@ Recommendation: merge with named fixes; fix F1 and F2 before a second account pu
 - **Unsealed protected scope:** the value's bytes stay in Datomic; every route of the store masks it at answer time from the published removal log. This is masking, not erasure.
 - **Sealed protected scope:** the value is stored encrypted and the removal destroys the key (after a grace period, default 30 s). This is the form that meets "real erasure or crypto-shredding".
 The requirement is therefore met only for sealed scopes. Told to the derived-copies builder, whose inventory now starts from this.
+
+## 2026-11-24 20:14 EST: second review of the removal rule: the first break is closed; the fix introduced three new high findings
+
+Source: independent reviewer, second review, branch `exp/DX-ERA3-removal-review` `1c656316b`, `lab/experiments/EXP-DX1/era3/REVIEW-2.md`. Reviewed: `exp/DX-ERA2-removal-per-account` `27733d980`. Pinned images.
+
+- **F1 is closed** on every route tried: fuzzer 44,000 schedules (16,000 sealed), 308,967 checks, 0 violations; 14,029 late transactions with old tickets sent straight to Datomic, all refused; a second read gateway with a cached Reach session, 6,076 reads after 20 acknowledgements, 0 answered the value; option off byte-identical.
+- **N5, high, a break after an operator mistake:** if the removal log is restored from a backup older than the data, the next removal's declaration step releases an account that had lost a value, and a derived write that read that value before its removal commits after it (reproduced every time in process; not run on a stack). Today's database-wide rule refuses the same sequence.
+- **N1, high:** a removal stopped between its declaration and its intent refuses every derived write naming no account in EVERY account until another removal runs or it is resent; time never clears it; it happens without a crash when the declaration's 5 s wait expires and the client does not resend. Stacks refused for 60 s and 91 s and through a gateway restart; 5,546 of 6,250 fuzzer probes refused. The builder's orphan gate could not see it.
+- **N4, high:** a delivery between databases into a recipient moved per account is refused.
+- N3 medium (mixed gateway versions), N2 low (a database moved by an earlier build cannot run a removal), E6 information (a ticket naming fewer accounts than it read lets its copy survive; relies on the caller).
+- **E9, high against the targets, existed before this branch:** a derived copy recorded before a removal stays readable after it, sealed and unsealed. The store only promises that no copy lands after a removal. (The derived-copies builder owns this.)
+- Recommendation: merge with named fixes, not as is.
+
+**Action:** the removal builder resumed a third time to reproduce and fix N5, N1, N4, N3, N2 with the reviewer's new tests as standing gates, a stop-point table for a removal, and a bound on how long a declaration can block others. A third review follows.
