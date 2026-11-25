@@ -81,7 +81,7 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
   if [[ $name == era3-* || $name == era3b-* || $name == era3c-* || $name == era3d-* || $name == era3e-* ]] && ! grep -q 'ERA3_SUMMARY.*:violations 0,' "$out/$name.log"; then status=1; fi
   if [[ $name == lines-* ]] && ! grep -q '^B2_LINES_SUMMARY {:checks 10, :failed 0}' "$out/$name.log"; then status=1; fi
 }
-phases=${ERA2_GATE_PHASES:-paired gate era3 suites b2 lines}
+phases=${ERA2_GATE_PHASES:-paired gate era3 suites b2 lines b2r}
 paired='(load-file "/lab/regression.clj") (load-file "/lab/paired.clj") (era2-paired/main)'
 if [[ $phases == *paired* ]]; then
   run paired-base base off "$paired"; run paired-base2 base off "$paired"
@@ -113,6 +113,14 @@ if [[ $phases == *era3* ]]; then
 fi
 # [DX-ERA2 sixth pass] the failure lines (the standalone branch's lines.clj: F5 and F9 on failures.clj itself)
 if [[ $phases == *lines* ]]; then run lines-this this off '(load-file "/lab/lines.clj") (b2-lines/main)'; fi
+# [DX-ERA2 sixth pass] the B2 review's scenarios (b2r/scenarios.clj: S1, S2a, S2b, S3; S3 fails on key bytes, a
+# protected value, a subject ID or a scope word in any failure line) on the file and the PostgreSQL authority
+if [[ $phases == *b2r* ]]; then
+  for authority in file pg; do
+    bash "$x/b2r/run.sh" "$out/b2r-$authority" worktree "$authority" scenarios.clj '(b2r-scenarios/main)' > "$out/b2r-$authority.log" 2>&1 || status=1
+    grep -hE "^B2R_SCEN_SUMMARY|^B2R_SCEN FAIL" "$out/b2r-$authority/run.log" 2>/dev/null | cut -c1-300 | head -8
+  done
+fi
 suites="triplex.gateway.selftest triplex.gateway.group-test triplex.gateway.ids-test triplex.gateway.feed-test triplex.gateway.pinned-test triplex.gateway.recent-test triplex.gateway.cache-key-test triplex.gateway.commit-order-test triplex.gateway.sweep-gates-test triplex.gateway.trace-test"
 # [DX-ERA2 fifth pass] the suites gate on matching the base's counts (the base has one known error, http-route), not on
 # their exit code (which failed every run, the base's included)
