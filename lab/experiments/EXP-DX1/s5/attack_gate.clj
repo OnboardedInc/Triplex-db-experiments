@@ -201,8 +201,10 @@
                                    (import-frame conn "imp-existing" "acct/i1/subject/e" 1 :entities (repeat 18000 l)))
                 _live (measure (str "1 fact, " (count live-ids) " read-only live IDs")
                                (import-frame conn "imp-live" "acct/i1/subject/v" 1 :live live-ids))]
-            (is (= [200 nil] (:outcome absent)) "the adversarial frame is admitted under the bound")
-            (is (<= (:estimateUs absent) policy/import-commit-us))))))))
+            ;; [DX-S6] F2 fixed: the review asserted the finding (admitted under the bound); the standing gate asserts
+            ;; the fix: the adversarial frame is refused by type, and its estimate now prices its lookups over the bound.
+            (is (= [400 "ReadSetTooLarge"] (:outcome absent)) "the adversarial frame is refused by type")
+            (is (> (:estimateUs absent) policy/import-commit-us) "its lookups are priced")))))))
 
 ;; ---------------------------------------------------------------- 4. the removal-scan on every per-subject commit
 

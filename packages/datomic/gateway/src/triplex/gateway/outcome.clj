@@ -15,7 +15,12 @@
   ;; Every refusal a stored function throws carries a TRIPLEX_ marker; Datomic's own refusals of a transaction carry
   ;; these error keys. Source: https://docs.datomic.com/transactions/transaction-functions.html and the :db.error keys
   ;; Datomic reports for a refused transaction.
-  #"TRIPLEX_[A-Z_]+|:db\.error/cas-failed|:db\.error/unique-conflict|:db\.error/datoms-conflict|cas-failed|unique-conflict")
+  ;; Only the refusals the stored functions throw (commit.clj, subject_save.clj, group.clj, erase.clj), not every
+  ;; TRIPLEX_ text (settings names are TRIPLEX_ too).
+  (re-pattern (str "TRIPLEX_(?:CONFLICT|CLOCK_EXHAUSTED|CLOCK|ERASURE_FRONTIER|OPERATION_DUPLICATE|COMMAND_DUPLICATE"
+                   "|IMPORT_PREDECESSOR|IDENTITY|SLIM_LAYOUT_MISMATCH|GROUP_STALE|SUBJECT_REPLAN|ERASE_HEAD_MOVED"
+                   "|PROTECTION_MIGRATION_REQUIRED)\\b"
+                   "|:db\\.error/cas-failed|:db\\.error/unique-conflict|:db\\.error/datoms-conflict|cas-failed|unique-conflict")))
 
 (def ^:private decided-errors #{:db.error/cas-failed :db.error/unique-conflict :db.error/datoms-conflict})
 
