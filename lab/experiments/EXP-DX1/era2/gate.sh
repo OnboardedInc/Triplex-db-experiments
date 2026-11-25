@@ -97,6 +97,9 @@ if [[ $phases == *era3* ]]; then
   run era3d-q910-on this on "$attack4"
 fi
 suites="triplex.gateway.selftest triplex.gateway.group-test triplex.gateway.ids-test triplex.gateway.feed-test triplex.gateway.pinned-test triplex.gateway.recent-test triplex.gateway.cache-key-test triplex.gateway.commit-order-test triplex.gateway.sweep-gates-test triplex.gateway.trace-test"
+# [DX-ERA2 fifth pass] the suites gate on matching the base's counts (the base has one known error, http-route), not on
+# their exit code (which failed every run, the base's included)
+kept_status=$status
 for arm in base:off this:off this:subject this:commit; do
   [[ $phases == *suites* ]] || continue
   source=${arm%%:*} option=${arm##*:}
@@ -104,6 +107,14 @@ for arm in base:off this:off this:subject this:commit; do
 (let [r (apply clojure.test/run-tests nss)] (println \"ERA2_SUITES $option\" (pr-str (select-keys r [:test :pass :fail :error])))
   (shutdown-agents) (System/exit (if (zero? (+ (:fail r) (:error r))) 0 1)))"
 done
+if [[ $phases == *suites* ]]; then
+  status=$kept_status
+  want=$(grep -h "^ERA2_SUITES" "$out/suites-base-off.log" | sed 's/^ERA2_SUITES [a-z]* //')
+  for arm in off subject commit; do
+    got=$(grep -h "^ERA2_SUITES" "$out/suites-this-$arm.log" | sed 's/^ERA2_SUITES [a-z]* //')
+    [[ -n $got && $got == "$want" ]] || { echo "ERA2_SUITES this:$arm $got differs from the base's $want"; status=1; }
+  done
+fi
 if [[ $phases == *paired* ]]; then
 for arm in base base2 off on commit; do grep -h "^ERA2_PAIRED " "$out/paired-$arm.log" | sed "s/^/$arm /"; done > "$out/paired.txt"
 python3 - "$out/paired.txt" <<'PY' || status=1

@@ -1987,3 +1987,69 @@ on the log's boundary were run again with the right bodies, `R2-*`, `A2-*`; the 
     fleets ran with `bd4ec0d1a` builds (stack) and with the in-process seam (Q5, fuzz4).
 12. **Scale:** every number here is a toy on the Mac; nothing ran on a server.
 13. **E9** (a derived copy recorded before a removal): the derived-copies branch's, unchanged.
+
+### 18.14 After the fifth review was pinned (`61692eec8`): two findings from the derived-copies gates, and a lost session
+
+Commits added after `61692eec8`; the fifth review is pinned there.
+
+**1. Another account answered 400 because of someone else's removal (a check, then a read).**
+
+- **The fault:** `privacy/record-text` (file authority) checked that a record existed and then read it. A removal's
+  publication deletes its intent (`pending.json`) as its last step; deleted between the two, the read threw
+  `NoSuchFileException`, and any request that read the intent outside the cut's own catch answered 400
+  `GatewayError` naming the file. On the derived-copies line it was a delivery through `source-ticket!` (which reads the
+  intent directly); on this branch, reproduced below, a removal of another account.
+- **Every check-then-read on the authority:**
+
+  | Place | Check, then read | Now |
+  | --- | --- | --- |
+  | `privacy/record-text` (every record: head, intent, entries) | file exists, then read | read once; gone at the read is absence |
+  | `privacy/cut`, the intent | exists, then read the intent | an intent gone since the check is no intent |
+  | `envelope/issue!` (a key file) | exists, then read | not a removal race: inside the writer lock, and a key is deleted only after its removal is published, which the lock's cut already shows (the write is refused stale) |
+  | `envelope/authority-scopes` (each scope's head) | exists, then read | not a removal race: a head is never deleted by a removal; a failure is counted (`shred-worker`) and the next pass retries |
+  | PostgreSQL authority (rows) | none: each record is one query; head and intent are read together (`read-frontier`); writes are guarded by the row they expect | unchanged |
+
+- **Test that forces the interleaving** (gate case `pending-file-race`): a removal of a1 published up to its last
+  step (head written, intent file left); then, for nine kinds of request of ANOTHER account, every check of that
+  intent file deletes it first. Before the fix (`61692eec8` with this test): a removal of another account answered
+  **400 `GatewayError`** on all three per-account modes. After: no request answered 400, on every mode.
+
+**2. A delivery naming its source's accounts left the source's removal pending (`source-ticket!`, account-ticket line).**
+
+- **The fault:** `source-ticket!` refuses with a plain 503 while the source has a removal pending; without the tag,
+  nothing completes that removal, and every later delivery is refused the same way.
+- **The fix here:** `route-handler` completes the source's pending removal when a delivery is refused with an
+  untagged 503 `ErasureFrontierUnavailable` (a source guarded per account, a removal pending there), as the tag
+  would. It covers any source check that forgets the tag. `source-ticket!` is not on this branch; the derived-copies
+  line gets it by merging, and `era2/patches/derived-copies-73e0d6849.patch` is the same change on its head.
+- **Tests:**
+  - `pending-tag-walk` gains a delivery naming the source's accounts and an emulated untagged source check. Before the
+    fix (`61692eec8`): the untagged variant left the removal pending on every per-account mode. After: completed.
+  - `era2/source-tag.clj` (self-contained; any line). On `73e0d6849` with `TX2_ACCOUNT_TICKETS=1`: the delivery
+    naming the account got 503 "The current erasure sequence cannot be verified", the removal stayed pending and the
+    next try was refused again. With the patch: completed by the first refusal, the next try 200. On this branch: pass.
+
+**3. A removal whose PostgreSQL session dies mid-way answered 400.**
+
+- **The fix:** a `java.sql.SQLException` anywhere in a failure's causes is answered **503
+  `ErasureFrontierUnavailable`**, counted (`authority`); on a database guarded per account it carries the completion
+  tag, so the gateway completes what the removal left pending with a fresh session. Under the database-wide rule the
+  client's resend completes it, as today (completion without the client is the owner's decision there).
+- **Tests:**
+  - Gate case `authority-fault-steps`: the authority fails once with that error at the intent, the declaration, the
+    native commit, the prepared publication and the publication. Before: 400 `GatewayError` at every step on every
+    mode. After: 503 at every step; per account the removal is completed by the gateway (nothing pending, published as
+    1); a save of another account then 200.
+  - Stack `stack-steps.sh lockloss-<step>` for the five steps on both boundaries: the PostgreSQL sessions of the
+    gateway holding the removal killed at that step; `LOCKLOSS_ANSWER` must not be 400: on `bc641526e`, both
+    boundaries, all five steps: **503 `ErasureFrontierUnavailable`** (at `3998744c7` the declared and intent steps had
+    answered 400 "This connection has been closed."); nothing pending afterwards, the resend 200, 0 removed values
+    answered.
+
+**Gates on the new code:** `bc641526e` (the gateway code of the head; later commits change tests and this page).
+the paired native log identical to the base once R2-2's 11 records are left out (the same digests as 18.12);
+interleavings 500, 2,057, 10,331 and 10,332 checks with the three new cases, 0 failed; all four reviews' cases 0
+violations (E9 aside); the suites as the base's; `b2` 0 failed in every mode on the file authority and in modes off,
+on and commit on PostgreSQL; fuzz3 4,000 schedules per account on the log's boundary (36,094 oracles) and subject
+sealed on the commit boundary (35,287), 0 violations. The suites arms now gate on matching the base's counts (the
+base has the one `http-route` error), not on their exit code.
