@@ -6250,3 +6250,24 @@ Source: Publish builder final message; branch `exp/DX-ACT8-publish-beside-saves`
 - **One account mechanism:** the builder recommends the gateway's form (the save line's, fixed) for both lines; the join layer then drops its own form.
 
 **Action:** third independent review started (same reviewer): the settings and their transitions, the old-build window, the options-off stops as the first line of attack, group commit with Publish, a killed write gateway. The save-line builder told it owns the single account mechanism and what Publish needs from it. Publish beside saves stays off the one branch.
+
+## 2026-11-25 02:24 EST: independent review of the derived seal: the encryption held; three breaks in what surrounds it
+
+Source: independent reviewer, branch `exp/DX-ERA5-derived-copies-review` `a8213bc33`, `lab/experiments/EXP-DX1/era5/REVIEW.md`. Reviewed: `exp/DX-ERA4-derived-copies` `aee618710`; one test against the removal head `bd4ec0d1a`. Pinned image IDs. Mac only; times diagnostic.
+
+- **The encryption held:** 20,000 schedules, 538,753 checks, 0 violations (6,265 kills, 4,975 second removals, 3,083 key restores); one source of n removed held for n = 1 to 512; tampering refused; every hash covers sealed bytes; stop point P3 reached and held.
+- **B1, break, highest:** the settlement writer stores derived copies in clear after one failed seal call (the clear frame is cached before the seal call; the retry writes it unsealed; the checks that would catch it are off under the option). Triggers: a gateway restart, a network error, the client's own 5 s timeout, a gateway without the option. Result: 0 sealed, 17 clear; the store serves the removed date and type after the removal and key deletion. This path runs in the v0.1 held configuration.
+- **B2, break, high, also on the removal head `bd4ec0d1a`:** one removal left pending anywhere in the database stops every key deletion in that database (the shred worker's refusal is swallowed). A published removal's key was still present 25 s and 45 s after publication with a 15 s grace; gone 2 s after the pending removal was resent.
+- **B3, break, high:** the stored length of a sealed copy identifies the removed value (no padding); equal contents seal to equal bytes.
+- **B4, high:** after one subject's document values are removed, the account's next Publish fails for every subject.
+- **B5, high, under the commit boundary:** the held reader's cache serves the removed value between the removal's commit in Datomic and its publication, because the sequence it is keyed on changes only at publication.
+- M1 to M4, L1, L2 medium and low (the seal route answers clear for unknown names; a restored key decodes copies until a restart; nothing in the database requires derived copies to be sealed; all of a subject's notices are re-delivered after a removal; a sealed record is not bound to its place; size limits fail a whole frame).
+- Row 11 confirmed and measured: the deleted key's wrapped bytes remain in the PostgreSQL write-ahead log and decode the copy.
+- **Cost, PostgreSQL key store, diagnostic:** a settlement frame of 64 subjects by 6 changes costs 82 to 156 ms to seal at 1 to 5 protected values per subject against 4 to 7 ms in clear; 609 ms at 20 values; a subject page 1 to 8 ms to open against 1 to 3 ms.
+- Unsealed databases: a removal deletes nothing (2 native datoms with the value before, 2 after); nothing outside tests prevents an unsealed protected database.
+- Reviewer's judgement: sealing derived copies under keys the removal destroys is the right family; a simpler shape is the gateway sealing under one key per subject and generation. Recommendation: do not merge as is.
+- Note: the reviewer committed under a neutral lab identity, not the usual one.
+
+**Action:** the derived-copies builder told every finding (queued behind its rerun): sealing must be required by a one-way setting in the database and enforced by the gateway's write route, never degrade to clear; padding and binding; one subject's removal must not stop an account; the cache key; the cost. The removal builder resumed for a fifth pass: B2 and a list of every swallowed refusal, whether B2 exists on the one branch with options off, what every cache keys on under each boundary, the two refusals for the creation-versus-removal replay, the boundary choice moved into the database, the read wait measured. The fourth removal review told B2 and B5. A second review of derived copies follows.
+
+**Consequence for the open question to Sam:** the commit boundary must not become the rule until every cache is keyed on something that changes at the commit (B5).
