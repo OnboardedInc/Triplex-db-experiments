@@ -6307,3 +6307,24 @@ Source: derived-copies builder final message; branch `exp/DX-ERA4-derived-copies
 - Not tested: a real two-gateway fleet with the setting; the real writers with the PostgreSQL key store; the re-sweep's cost with many removals; re-sealing old-format records.
 
 **Action:** second independent review started (same reviewer) on `73e0d6849`: how the gateway decides a write is derived, under-named seals, the new format, whether "counts as absent" yields wrong notices, every cache on the merged gateway, the re-sweep, the composition with the removal review's Z2, cost at the deep-account shape. The removal builder told the two findings in its code. The derived seal stays off and off the one branch.
+
+## 2026-11-25 05:03 EST: the evening merge had stalled since 18:21 and was resumed; removal fifth pass in; a key-deletion fault exists on the one branch today
+
+**Orchestrator error.** The evening merge agent made its last recorded action at 18:21 EST on 2026-11-24, two minutes after it started, and wrote nothing for 10 hours 40 minutes. Every status table since then listed it as running, on the strength of the harness's flag alone. Nothing was merged overnight; the one branch is still `1ed2650bd`. Found at 05:01 by checking the agent's last write time; stopped and resumed at 05:03 with the same task and an explicit do-not-merge list. Rule from now on: a status table lists an agent as running only after its last write time has been checked.
+
+**Removal rule, fifth pass.** Source: removal builder final message; branch `exp/DX-ERA2-removal-per-account` `61692eec8` (gateway code unchanged since `3998744c7`); page section 18.
+
+- **B2 exists on the one branch `exp/DX-INT1` `1ed2650bd` with every option off:** one pending removal stops the deletion of every published removal's key. In process, file authority, sealed scope, 2 s grace: the key outlived its grace by 30,147 ms and 30,112 ms with the other removal held 30 s, and was deleted about 0.1 s after that removal was resent. Nothing bounds it. Not yet shown on a stack.
+- B2 fixed on the removal branch (the shred pass reads the published prefix while a removal is pending; failures are counted and logged; a gate phase fails when a published removal's key outlives its grace). 21 places where a refusal was caught and dropped are listed on the page; the ones that hid faults are now counted or typed.
+- **A completion worker is now part of the per-account rule** (30 s): a pending removal completes without a client resend.
+- **One removal stamp for every cache**, changing at the commit under the commit boundary. The fourth review's route test: 0 of 15 read routes leave the value with the reader on both boundaries. Not proved: the SDK's own cache on a stack.
+- **Replays after a removal:** a save framed before the removal is declined; a save carrying neither a source nor the removal stamp it last saw counts as older than every removal and is declined (so a removed subject refuses such saves for good); a new command framed after the removal is stored. With every option off a declined save now writes 11 datoms (the decline record).
+- **The boundary is a one-way value in the database**; a fleet with the earlier build beside it answered 0 removed values.
+- Fourth review's Z1 (restore), Z2 (the protection policy is now stored in Datomic; the rebuild route takes nothing from the caller), Z3, Z5, Z6, Z7 fixed with the reviewer's tests passing. States that refuse every request until someone acts: today's boundary 3 of 10 (was 4), commit boundary 0 (was 1). States that waited for one particular client request: none.
+- Read wait on today's boundary: bounded at 5 s then a typed 503; at 10 removals per second 2.6% of reads waited, p99 48 ms (toy).
+- Gates: 0 violations over 941,107 fuzzer checks; all four reviews' cases 0 violations (E9 known); stacks 0 removed values answered on both boundaries.
+- Not tested: the SDK cache and the SDK's stamp end to end; older gateways receiving the new field; B2 on the one branch on a stack; the worker under load; server scale.
+
+**Actions:** fifth independent review started, pinned to `61692eec8`. The removal builder asked for a standalone fix of B2 on a new branch from the one branch (only the key-deletion pass, its counters and its test), to be reviewed before it merges. The evening merge resumed.
+
+**For Sam:** (1) a save with neither a source nor the stamp is declined for a removed subject for good: accept, or require the SDK to always send the stamp; (2) should the completion worker also run under today's database-wide rule (changes behaviour with every option off); recommended yes.
