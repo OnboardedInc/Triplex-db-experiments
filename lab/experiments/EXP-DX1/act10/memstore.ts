@@ -121,7 +121,7 @@ export class MemDb {
   }
   /** A commit record as the real `lookup` returns it (changes with assertion ids, the correlation id). */
   async lookup(commandId: string) {
-    const r = (await this.comp.transactionByCommand(commandId)).value as any;
+    const r = ((await this.comp.transactionByCommand(commandId)) as any).value;
     if (!r) return null;
     return {
       ...r,
