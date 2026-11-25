@@ -11,7 +11,7 @@
 # BODIES_DIR: written by `ERA3_MAIN=2 era3/run.sh OUT subject bodies2` (OUT/run.out/bodies).
 # Database D1 (control): a1 (account a) removed on the read gateway; nothing else. Database D2: a1 removed on the read
 # gateway, then c1 (account c) removed on the write gateway, which pauses after the intent and is killed there.
-# Predictions of this adaptation (written 2026-11-25 02:55 EST, after the fix 2d05e00c0): D2: a1's key row is gone within
+# Predictions of this adaptation (written 2026-11-25 02:50 EST, after the fix 2d05e00c0): D2: a1's key row is gone within
 # the grace plus a few seconds although c1's removal is still pending; with the worker, c1's removal is completed by the
 # read gateway about N ms after its intent and c1's key row is gone a grace later. The reviewer's predictions: D1: a1's key row is gone within the grace plus a few
 # seconds. D2: while c1's removal stays pending, a1's key row is still in triplex_removal.keys 25 s after a1's

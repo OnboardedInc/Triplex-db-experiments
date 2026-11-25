@@ -121,4 +121,5 @@
     (println "ERA2_B2_SUMMARY" (pr-str {:checks (count @results) :failed (count failed)
                                         :source (System/getenv "ERA2_B2_SOURCE")}))
     (shutdown-agents)
-    (System/exit 0)))
+    ;; a gate: a published removal's key that outlived its grace fails the run
+    (System/exit (if (empty? failed) 0 1))))

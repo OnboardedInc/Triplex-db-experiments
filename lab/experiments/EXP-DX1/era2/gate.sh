@@ -63,7 +63,7 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
   # E9 (copies recorded before a removal) is a known unmet requirement owned by another builder: reported, not counted
   if [[ $name == era3-* || $name == era3b-* || $name == era3c-* ]] && ! grep -q 'ERA3_SUMMARY.*:violations 0,' "$out/$name.log"; then status=1; fi
 }
-phases=${ERA2_GATE_PHASES:-paired gate era3 suites}
+phases=${ERA2_GATE_PHASES:-paired gate era3 suites b2}
 paired='(load-file "/lab/regression.clj") (load-file "/lab/paired.clj") (era2-paired/main)'
 if [[ $phases == *paired* ]]; then
   run paired-base base off "$paired"; run paired-base2 base off "$paired"
@@ -106,6 +106,12 @@ for arm, v in by.items(): print(arm, *v, sep="\n  ")
 sys.exit(0 if same else 1)
 PY
 for arm in base base2 off on commit; do grep -h "^ERA2_PAIRED_REPLIES" "$out/paired-$arm.log" | md5 | sed "s/^/replies $arm /"; done
+fi
+# [DX-ERA2 fifth pass] B2: a published removal's key must be deleted within its grace whatever else is pending
+# (era2/b2.clj in every mode, and with the shred worker's completion), on this checkout's gateway source
+if [[ $phases == *b2* ]]; then
+  bash "$x/era2/b2.sh" "$out/b2" worktree "off on subject commit off-worker subject-worker" || status=1
+  grep -h "ERA2_B2_SUMMARY" "$out/b2"/b2-*.log
 fi
 rm -rf "$out/this/src" "$out/base/src"
 exit "$status"
