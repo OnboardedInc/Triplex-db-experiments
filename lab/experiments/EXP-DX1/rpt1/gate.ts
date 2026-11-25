@@ -575,6 +575,83 @@ for (const acct of ACCOUNTS)
         }
         b3++;
       }
+// [DX-INT5] Pair (reporting, find, sweep): with the commit-time index on (the gateway runs TX2_CROSS_INDEX=1), seven of
+// the attributes above are declared and backfilled on the followed store; once the copy's watermark reaches the head
+// after the backfill, the copy is compared with the store's history there (the backfill's commits included), and every
+// question whose conditions use only declared attributes is answered three ways at that one position and three valid
+// times: SQL on the copy, the sweep, and find. Counts, groups and ID lists must be equal; a question find refuses is
+// counted, not failed. Unset: nothing here runs.
+if (process.env["DX_INT5_PAIR_FIND"] === "1") {
+  const declared = [":task/status", ":task/assignee", ":task/due", ":task/progress", ":task/form", ":person/score", ":person/name"];
+  const families: Record<string, string> = { ":task/status": "string", ":task/assignee": "ref", ":task/due": "datetime",
+    ":task/progress": "integer", ":task/form": "ref", ":person/score": "integer", ":person/name": "string" };
+  // Both stores (gate (a) below compares the followed store's journals with the control's).
+  const backfills: any = {};
+  await both(async (s) => {
+    await writer.declareIndexes(s.db, { version: 1, attributes: declared.map((attribute, i) => ({ attribute, code: `i${i + 1}`, family: families[attribute] })) });
+    backfills[s.label] = await writer.backfillIndex(s.db, {});
+  });
+  const backfill = backfills[A.label];
+  // Whole subjects imported after the backfill (one import commit each, declared attributes among their facts): the
+  // index entries the import writes must equal a backfill's (a dry run adds and retracts nothing).
+  await both(async (s) => {
+    for (let k = 0; k < 6; k++) {
+      const id = subjectId(A31, N + 200 + k);
+      await transact(s, `pair-find import ${k}`, [a(id, "Subject", ":person/name", S(`imported indexed ${k}`), T_IMPORT),
+        a(id, "Subject", ":person/score", I(700 + k), T_IMPORT),
+        ...Array.from({ length: 12 }, (_, f) => a(id, "Subject", `:form/ix-f${String(f).padStart(2, "0")}`, S(`v ${k}.${f}`), T_IMPORT))], s.importRt);
+    }
+  });
+  const dry = await writer.backfillIndex(A.db, { dryRun: true });
+  check(dry.dryRun === true && dry.added === 0 && dry.retracted === 0 && dry.entities > 0,
+    "pair (find): index entries of imported subjects equal a backfill's (dry run 0 to add, 0 to retract)", { dry });
+  const P_X = await headOf(A.db);
+  await waitWatermark(clean, P_X, 120_000);
+  compareFacts("pair (find): copy equals the store at the head after the index backfill", storeFacts(await omitRows(A.db, P_X)), await copyFacts(pg["rpt_clean"], P_X));
+  const findAll = async (request: any) => {
+    const pages: any[] = [];
+    let cursor: string | null = null;
+    for (let n = 0; n < 20000; n++) {
+      const page = await reader.request<any>("POST", `/v2/db/${A.db}/find`, cursor ? { ...request, cursor } : request);
+      pages.push(page);
+      if (!page.next) return pages;
+      cursor = page.next;
+    }
+    throw new Error("find cursor did not end");
+  };
+  let compared = 0, refused = 0;
+  const refusals: Record<string, number> = {};
+  for (const acct of ACCOUNTS)
+    for (const base of questions(acct)) {
+      const attrs = [...(base.where ?? []).map((w: any) => w.attribute), ...(base.of ? [base.of] : [])];
+      if (!attrs.length || attrs.some((x: string) => !declared.includes(x)) || base.project) continue;
+      for (const v of [V_PAST1, V_PAST2, V_NOW]) {
+        const { name, ...q } = { ...base, account: acct };
+        const basis = { recordedPosition: P_X, validAt: v };
+        let found: any[];
+        try { found = await findAll({ ...q, limit: 1000, basis }); }
+        catch (e: any) { refused++; refusals[`${name}: ${e?.code ?? e?.message}`] = (refusals[`${name}: ${e?.code ?? e?.message}`] ?? 0) + 1; continue; }
+        const swept = await sweepAll({ ...q, limit: 1000, bounds: { subjects: 10000, ms: 2000 }, basis });
+        const got = await sqlAnswer(q, P_X, v);
+        const label = `pair (find) ${acct} ${name} p=${P_X} v=${v}`;
+        const result = q.result ?? "ids";
+        if (result === "count") check(got.count === swept.at(-1).count && got.count === found.at(-1).count, label, { sql: got.count, sweep: swept.at(-1).count, find: found.at(-1).count });
+        else if (result === "countByValue") {
+          const norm = (gs: any[]) => JSON.stringify(gs.map((g: any) => [keyOf(g.value === null ? null : condValue(g.value)), g.count]).sort());
+          check(norm(swept.at(-1).groups) === JSON.stringify([...got.groups.entries()].sort()) && norm(found.at(-1).counts) === norm(swept.at(-1).groups), label,
+            { sql: [...got.groups.entries()], sweep: swept.at(-1).groups, find: found.at(-1).counts });
+        } else {
+          const ids = swept.flatMap((x: any) => x.ids), fids = found.flatMap((x: any) => x.ids);
+          check(JSON.stringify(ids) === JSON.stringify(got.ids) && JSON.stringify([...fids].sort()) === JSON.stringify([...ids].sort()), label,
+            { sql: got.ids.length, sweep: ids.length, find: fids.length });
+        }
+        compared++;
+      }
+    }
+  check(compared >= 30, "pair (find): at least 30 questions answered by all three routes", { compared, refused });
+  bump("pair-find-compared", compared);
+  log("pair-find", { backfill, dry, P_X, compared, refused, refusals });
+}
 // The three dashboard queries of the page, against the sweep's own answers at the head, valid now.
 const dash: any = {};
 {
