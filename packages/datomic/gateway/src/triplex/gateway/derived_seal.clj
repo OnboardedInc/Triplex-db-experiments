@@ -360,7 +360,9 @@
 (def ^:private content-key
   #"^notice:v1:[0-9a-f]{64}:(answer:[0-9]+:f[0-9]+|answer:[0-9]+:[0-9]+|recorded-notices:[0-9]+|recorded-ledger-part:.+|recorded-ledger:.+|receiver:[^:]+:.+|effects:[^:]+:[0-9]+)$")
 (defn- unsealed! [what]
-  (privacy/failure! 409 "DerivedRecordUnsealed" (str "This database requires sealed derived documents; refused: " what)))
+  ;; :write-policy: the write path passes it through as typed (storage.clj maps any other failure to TransactionRejected)
+  (throw (ex-info (str "This database requires sealed derived documents; refused: " what)
+                  {:status 409 :code "DerivedRecordUnsealed" :write-policy true})))
 (defn- inflate ^String [^bytes b]
   (let [inf (java.util.zip.Inflater. true) out (java.io.ByteArrayOutputStream.) buf (byte-array 65536)
         in (Arrays/copyOf b (inc (alength b)))]
