@@ -780,6 +780,31 @@ be reached by the system only.
 - The comparison (rule 4) is the removal's published position against a position, and its sequence against
   `removalSeen`, both from the same published record.
 
+### 13.4 Each finding of the third review
+
+| Finding | Fix | Test |
+| --- | --- | --- |
+| R3-1 (a reopen put the old general writer back) | every install respects the setting (13.1); routed saves and opens restore the refusal | `s5/attack3_gate.clj` `a-reopen-with-another-commit-hash-restores-the-old-ident`, `a-reopen-by-a-real-other-general-writer`; `s6/installs_gate.clj` (every option combination, another build's general writer, an old build's own rewrite); the review's transition stacks with real `a6d02225c` and `23b7df344` gateways, predecessor lookup on and off |
+| R3-1b (the twin never refreshed) | an install under the setting writes this build's body under the twin | `s6/installs_gate.clj` `twinsWork` |
+| R3-2 route 1 (naming the account) | the gateway refuses a request naming A that writes another account's entities, on every writer; the rest is the front layer's (13.2) | `s6/installs_gate.clj` `a-request-naming-one-account-cannot-write-another`; `s6/stored_ids_gate.clj` frames (mixed) |
+| R3-2 route 2 (a removal under the prefix) | the prefix refused on `erase` and `protection` | `a-removal-takes-an-accounts-scoped-command-id`; `every-route-refuses-the-reserved-prefix` |
+| R3-3 (a resend after a decline stored the value) | the merged rule's frame on every save; declined commands recorded | `r2-2-replays-across-a-removal`, `r2-2-race-on-each-writer` |
+| R3-4 (an import stream stopped at the transition) | the predecessor keeps its stored form | `an-import-chain-across-the-transition` (accounts-on-import) |
+| R3-5 (a write of no one account's names blocks an ID) | under the setting every save naming A is A's; only a request naming no account (the system's, 13.2) can still write a plain claim | `one-account-against-anothers-command-ids-with-the-setting-on` (measured); `stored_ids_gate` frames |
+| R3-6 (an optimistic replay declined for any removal) | the SDK states its frame on an optimistic attempt | `r2-2-an-optimistic-replay-against-an-old-removal`; SDK suite |
+| R3-7 (an old build's refusal named nothing) | the refusal's text names the setting; this build answers it `409 CasConflict`, a build that does not know the marker answers it with that text | `the-refusal-names-the-setting` |
+| R3-8 (account names differ by form) | one rule, `[A-Za-z0-9_.-]{1,64}`, in `account_claims.clj`, `group.clj` and `subject_owners.clj`, and for a request's `account` | `a-request-naming-one-account-cannot-write-another` (`dottedAccount`) |
+
+### 13.5 Expected conflicts with the removal branch
+
+Against `origin/exp/DX-ERA2-removal-per-account` at `0c380f341`, which does not contain `cdfc70e02` yet (`git merge-tree`):
+`storage.clj` 4 hunks, `main.clj` 6, `privacy.clj` 1, `DatomicStorageAdapter.ts` 2, `ha1/local.ts` 1. The review's
+trial merge of `cdfc70e02` saw 3, 5, 1, 2 and 1; this pass adds one hunk in `storage.clj` (`frame-check!`, the
+declined commands and `commit!` beside the branch's `decline-check!`) and one in `main.clj` (the removal and declaration
+routes' prefix check beside the branch's removal route). Where the halves meet: the declined commands use the branch's
+own attributes (`:triplex.removal/declined-command`, `:triplex.removal/declined-by`), `removalSeen` is read when sent,
+and one decline check should stay (the branch's `decline-check!` or this `frame-check!`, not both).
+
 ## 10. The standing gate phase and the other gates
 
 **Every gate ran by image ID on `tx2-dxs6:959634af4f1c`, built from the head by `s6/image.sh`.**
