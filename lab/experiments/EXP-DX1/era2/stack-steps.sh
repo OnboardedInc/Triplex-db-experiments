@@ -108,6 +108,16 @@ case $scenario in
     gateway+=(DX_REMOVAL_COMMIT_BOUNDARY=1 "DX_GATEWAY_SRC_READ=$out/gw-old"
               "DX_GATEWAY_ENV_READ=TX2_REMOVAL_COMMIT_BOUNDARY=$old_switch TX2_REMOVAL_TEST_PAUSE_AT=committed TX2_REMOVAL_TEST_PAUSE_MS=8000") ;;
   readwait) ;;
+  fleet-one)
+    # [DX-ERA2 seventh pass, the sixth review's not-tested 2] rollout step 1: the merged line's build (OLD_REF, the one
+    # branch) on the read gateway beside this build on the write gateway (the per-account option on, no move permission),
+    # one sealed database that stays database-wide
+    [[ -n ${OLD_REF:-} ]] || { echo "fleet-one needs OLD_REF" >&2; exit 2; }
+    mkdir -p "$out/gw-old" "$out/gwtmp-old"
+    git archive "$OLD_REF" packages/datomic/gateway packages/datomic/src/codec-spec.json | tar -x -C "$out/gwtmp-old"
+    cp -R "$out/gwtmp-old/packages/datomic/gateway/." "$out/gw-old/"; cp "$out/gwtmp-old/packages/datomic/src/codec-spec.json" "$out/gw-old/codec-spec.json"
+    rm -rf "$out/gwtmp-old"; echo "read gateway: $OLD_REF" >> "$out/sources-placed"
+    gateway+=("DX_GATEWAY_SRC_READ=$out/gw-old") ;;
   sdkcache) gateway+=(DX_REMOVAL_COMMIT_BOUNDARY=1 "DX_GATEWAY_ENV_WRITE=TX2_REMOVAL_TEST_PAUSE_AT=committed TX2_REMOVAL_TEST_PAUSE_MS=8000") ;;
   readwait-commit) gateway+=(DX_REMOVAL_COMMIT_BOUNDARY=1) ;;
   sdk-e2e) gateway+=(DX_REMOVAL_COMMIT_BOUNDARY=1 "DX_GATEWAY_ENV_READ=TX2_REMOVAL_COMMIT_BOUNDARY=0") ;;
@@ -440,6 +450,34 @@ rollout)
   post "$R/v1/db/$D2/transact" "$bodies/save-b1-1.json" save-d2-after
   leak_check "$R" "$D1" end-d1 '[]' "$va" "$vb"
   leak_check "$W" "$D2" end-d2 '[]' "$va" "$vb"
+  ;;
+fleet-one)
+  scope=$(node -e 'console.log(JSON.stringify(JSON.stringify(["triplex-scope-v1","test","era2-fleet-one",require("crypto").randomUUID(),0])))')
+  post "$R/v1/db/create" "{\"scope\":$scope,\"layout\":\"lean\",\"strictRecordClocks\":true}" "create-on-the-merged-line"
+  D=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1])).db)' "$out/replies/$(printf '%03d' $n)-create-on-the-merged-line.json")
+  echo "d $D" >> "$out/dbs"
+  post "$R/v2/db/$D/protection" '{"attributes":[":v"],"sealed":true}' "protection-on-the-merged-line"
+  post "$W/v2/db/$D/protection" '{"attributes":[":v"],"sealed":true}' "protection-on-this-build"
+  for s in a1 b1; do post "$W/v1/db/$D/transact" "$bodies/seed-$s.json" "seed-$s-on-this-build"; done
+  post "$R/v1/db/$D/transact" "$bodies/seed-c1.json" "seed-c1-on-the-merged-line"
+  post "$R/v1/db/$D/read" '{"entityIds":["acct/a/one","acct/b/one","acct/c/one"]}' "read-all-on-the-merged-line"
+  step "--- a removal on this build, read on both"
+  post "$W/v2/db/$D/erase" "$(remove era2-f1-a1 acct/a/one)" "removal-a1-on-this-build"
+  leak_check "$R" "$D" "after-a1-merged-line" '[]' "$va"
+  leak_check "$W" "$D" "after-a1-this-build" '[]' "$va"
+  step "--- a removal on the merged line, read on both"
+  post "$R/v2/db/$D/erase" "$(remove era2-f1-b1 acct/b/one)" "removal-b1-on-the-merged-line"
+  leak_check "$W" "$D" "after-b1-this-build" '[]' "$va" "$vb"
+  leak_check "$R" "$D" "after-b1-merged-line" '[]' "$va" "$vb"
+  step "--- saves on both, the frontier on both"
+  post "$W/v1/db/$D/transact" "$bodies/save-b1-0.json" "save-on-this-build"
+  for k in 0 1; do post "$R/v1/db/$D/transact" "$bodies/seed-r$k.json" "save-r$k-on-the-merged-line"; done
+  step "frontier on the merged line: $(curl -sS -m 30 "$R/v2/db/$D/erasure-frontier" | head -c 160)"
+  step "frontier on this build: $(curl -sS -m 30 "$W/v2/db/$D/erasure-frontier" | head -c 160)"
+  sleep 3
+  step "key rows of the database left: $(psql_auth -c "SELECT count(*) FROM triplex_removal.keys WHERE scope='$D'")"
+  leak_check "$W" "$D" "end-this-build" '[]' "$va" "$vb"
+  leak_check "$R" "$D" "end-merged-line" '[]' "$va" "$vb"
   ;;
 worker-lockloss)
   reply() { echo "$out/replies/$(printf '%03d' $n)-$1.json"; }

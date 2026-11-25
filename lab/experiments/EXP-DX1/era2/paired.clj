@@ -99,6 +99,10 @@
             (send "derived-stale" (assoc (save-frame "derived-stale" "notice:v1:y" ":notice/body" "n2" nil nil) "erasureSeq" ticket)))
           (send "replay" (assoc (save-frame "replay" "acct/a/one" ":v" "v2-acct/a/one" nil nil)
                                 "erasureSeq" (get-in (offers/route name "v2" "erasure-frontier" nil) [:body "seq"]) "erasureReplay" true))
+          ;; [DX-ERA2 seventh pass, the sixth review's fact 1] PAIRED_SOURCELESS=1: a save that says nothing about its
+          ;; frame (no frame source, no removalSeen) and writes a removed subject's protected value
+          (when (= "1" (System/getenv "PAIRED_SOURCELESS"))
+            (send "sourceless-removed" (save-frame "sourceless-removed" "acct/a/one" ":v" "v4-acct/a/one" nil nil)))
           (erase "rm-1" "acct/a/one")
           (doseq [o owners] (note (str "read-" o) (offers/route name "v1" "read" {"entityIds" [o] "history" true})))
           (let [reads (mapv (fn [o] (get-in (offers/route name "v1" "read" {"entityIds" [o] "history" true}) [:body "rows"])) owners)]

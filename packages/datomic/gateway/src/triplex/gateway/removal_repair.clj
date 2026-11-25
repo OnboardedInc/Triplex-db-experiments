@@ -59,7 +59,8 @@
           (if (or (nil? prior) (and (>= (long (:seq v)) (long (:seq prior))) (= (:seal prior) (seal-at v (:seq prior)))))
             (swap! privacy/cache update name (fn [c] (if (and c (> (long (:seq c)) (long (:seq v)))) c v)))
             (swap! envelope/shredded update name (fn [m] (min (long (or m 0)) (long (:seq v))))))
-          (when (:sealed v)
+          ;; [DX-ERA2 seventh pass, X3] as the pass itself: whatever the copy says about `sealed`
+          (when (some? v)
             (let [from (long (get @envelope/shredded name 0))
                   due (->> (:commands v) vals (sort-by #(get % "seq"))
                            (drop-while #(<= (get % "seq") from))

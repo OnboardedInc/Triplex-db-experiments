@@ -125,7 +125,11 @@
           (bump! :a2 step boundary sealed? :restore-adds-q (boolean (some #{":q"} (get stored-after-restore "attributes"))) :answered (count left))
           (oracle! lbl (boolean (some #{":q"} (get stored-after-restore "attributes")))
                    "after the restore route the policy holds every attribute added before the data restore (adding is one-way)" detail)
-          (oracle! lbl (empty? left) "an acknowledged removal of a1 leaves none of a1's protected values answered once the restore is complete" detail))))))
+          ;; [DX-ERA2 seventh pass, adapted oracle] with X1 fixed, a removal sent in the window (the stored policy behind the
+          ;; log's copy) is refused 503 RemovalPolicyBehind and acknowledges nothing; the client's removal after the restore
+          ;; route (`again`, this case's second removal) is then the acknowledged one, and the oracle reads after it
+          (oracle! lbl (empty? (if (and (= step :removal) (= [503 "RemovalPolicyBehind"] window)) left-again left))
+                   "an acknowledged removal of a1 leaves none of a1's protected values answered once the restore is complete" detail))))))
 
 ;; ---- A2b: the same, the removal in the window served by another gateway; the restore route on this one --------------
 (defn a2b-restore-route-other-gateway [sealed? boundary]
@@ -243,7 +247,14 @@
           (observe! lbl :detail detail)
           (bump! :b2 kind :stored (get stored "attributes") :save save :protect protect)
           (oracle! lbl (not p-answered) "a removal of a1 removes its :p value" detail)
-          (oracle! lbl (= (set (get stored "attributes")) #{":v" ":p"}) "the stored policy takes nothing from a hand-edited copy of the log" detail)
+          ;; [DX-ERA2 seventh pass, adapted oracle] with X1 fixed the log's copy is the record of additions a data restore
+          ;; may have lost, so the restore route takes back a valid name it lists (`:z`: protecting more is the safe
+          ;; direction, and a hand edit cannot be told from a real addition); X8: a name the protection route refuses
+          ;; (`:_tx/position`) is never taken, and a narrower copy takes nothing away
+          (oracle! lbl (if (= kind :wider-benign)
+                         (= (set (get stored "attributes")) #{":v" ":p" ":z"})
+                         (= (set (get stored "attributes")) #{":v" ":p"}))
+                   "the stored policy takes only valid names from the log's copy, and never loses one" detail)
           (oracle! lbl (= [200 nil] save2) "saves keep working" detail))))))
 
 ;; ---- C: adoption from a head of this database's own past --------------------------------------------------------
