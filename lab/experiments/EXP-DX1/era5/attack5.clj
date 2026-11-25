@@ -95,7 +95,12 @@
               c (Cipher/getInstance "AES/GCM/NoPadding")]
           (.init c (int Cipher/DECRYPT_MODE) (SecretKeySpec. okm "AES") (GCMParameterSpec. 128 ^bytes nonce))
           (.updateAAD c (utf8 header))
-          (String. (.doFinal c ^bytes body) StandardCharsets/UTF_8))
+          (let [clear (.doFinal c ^bytes body)]
+            ;; [DX-ERA4, after B3] tdx2: a 4-byte length, the clear bytes, then padding to the size class
+            (if (str/starts-with? wire "tdx2.")
+              (let [n (.getInt (java.nio.ByteBuffer/wrap clear))]
+                (String. clear 4 (int n) StandardCharsets/UTF_8))
+              (String. clear StandardCharsets/UTF_8))))
         (catch Exception _ nil)))))
 (defn offline [src wire] (offline-open wire #(file-key src %)))
 
