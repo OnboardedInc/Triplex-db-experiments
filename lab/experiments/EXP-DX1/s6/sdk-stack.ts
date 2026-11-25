@@ -278,7 +278,56 @@ log("CONSTRAINTS", attacks);
 const u = attacks.unique as any, rt = attacks.referenceTarget as any, rel = attacks.releaseBetweenReadAndCommit as any;
 const constraintsOk = u.exactlyOneCommitted === u.pairs && rt.dangling === 0 && rel.withPrecondition.outcome === "failed"
   && /TransactionConflict|SerializationConflict/.test(rel.withPrecondition.error ?? "");
-log("DONE", { faultOk, constraintsOk });
+
+// ---------------------------------------------------------------- [DX-S6b] S5 R2-2: the SDK's replay across a removal
+// A save's first attempt is answered with a replayable conflict after a removal named the family it writes (the
+// answer F3 gave a creation racing a removal). The SDK replays it from a fresh read; the replay carries its first
+// attempt's source (frameSourceK) and is declined, on a new entity and on an existing one. Control: the same values
+// saved fresh after the removal are a new save and are stored.
+const replay: Record<string, unknown> = {};
+{
+  const declared = await direct.declareProtection(db, [":p/secret"]);
+  replay.declared = declared?.attributes ?? declared;
+  const sent: any[] = [];
+  const client = A.client;
+  const original = client.transact.bind(client);
+  let inject: { entity: string; command: string } | null = null;
+  client.transact = async (dbName: string, input: any, ...more: any[]) => {
+    if (inject && input.rows?.some((r: any) => r.entity_id === inject!.entity)) {
+      sent.push({ sourceK: input.sourceK, frameSourceK: input.frameSourceK ?? "absent" });
+      if (sent.length === 1) {
+        await direct.erase(db, inject.command, [{ entityId: inject.entity, attribute: ":p/secret" }]);
+        throw new datomic.DatomicHttpError(409, "CasConflict", "injected: a removal landed between plan and commit");
+      }
+    }
+    return original(dbName, input, ...more);
+  };
+  for (const kind of ["new entity", "existing entity"]) {
+    sent.length = 0;
+    const X = `acct/s6/subject/replay-${kind.split(" ")[0]}-${randomUUID().slice(0, 6)}`;
+    if (kind === "existing entity")
+      assert.equal((await save(A, 103, "replay-seed", [{ op: "assert", entityId: X, attribute: ":s/name", value: { type: "string", value: "x" }, entityType: "subject", validFrom: 0 }])).outcome, "ok");
+    inject = { entity: X, command: `remove-${randomUUID()}` };
+    const r = await save(A, 103, "replay", [{ op: "assert", entityId: X, attribute: ":p/secret", value: { type: "string", value: "framed before the removal" }, entityType: "subject", validFrom: 0 }]);
+    inject = null;
+    const rows = await direct.rows(db, { entityIds: [X] });
+    const after = await save(A, 103, "fresh-after-removal", [{ op: "assert", entityId: X, attribute: ":p/secret", value: { type: "string", value: "saved after the removal" }, entityType: "subject", validFrom: 0 }]);
+    const rowsAfter = await direct.rows(db, { entityIds: [X] });
+    replay[kind] = { outcome: r.outcome, error: r.error, attempts: [...sent],
+      storedBeforeTheFreshSave: rows.filter((x: any) => x.attribute === ":p/secret").length,
+      freshSave: after.outcome, freshError: after.error ?? null,
+      secretValuesAfter: rowsAfter.filter((x: any) => x.attribute === ":p/secret" && x.retracted_at === null).map((x: any) => x.value_string ?? x.value) };
+  }
+  client.transact = original;
+}
+log("REPLAY_ACROSS_REMOVAL", replay);
+const replayOk = ["new entity", "existing entity"].every((k) => {
+  const x = replay[k] as any;
+  return x.outcome === "failed" && /ErasureReplayDeclined/.test(x.error ?? "") && x.attempts.length === 2
+    && x.attempts[0].frameSourceK === "absent" && x.attempts[1].frameSourceK === x.attempts[0].sourceK
+    && x.storedBeforeTheFreshSave === 0 && x.freshSave === "ok";
+});
+log("DONE", { faultOk, constraintsOk, replayOk });
 for (const s of stores) await s.close();
 direct.close();
-process.exit(faultOk && constraintsOk ? 0 : 1);
+process.exit(faultOk && constraintsOk && replayOk ? 0 : 1);

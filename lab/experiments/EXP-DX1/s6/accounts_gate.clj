@@ -38,25 +38,30 @@
             a-save (frame conn {:command "shared-command" :operation "shared-op" :block (block (swap! counter inc))
                                 :facts [{:owner A :field ":a/f0" :type :string :value "a's value" :pred nil}]})
             a (send name a-save (acct "a1"))
-            b-save (frame conn {:command "shared-command" :operation "shared-op" :block (block (swap! counter inc))
+            ;; [DX-S6b] Operation IDs have one stored form (S6 12.1): B shares A's command ID, not its operation ID.
+            b-save (frame conn {:command "shared-command" :operation "b-own-op" :block (block (swap! counter inc))
                                 :facts [{:owner B :field ":a/f0" :type :string :value "b's value" :pred nil}]})
             b (send name b-save (acct "b1"))
             a-tx (get-in a-save ["claims" 0 "txId"]) b-tx (get-in b-save ["claims" 0 "txId"])
             b-claim (claim name "shared-command" (acct "b1"))
             b-command (command name "shared-command" (acct "b1"))
-            b-op (operation name "shared-op" (acct "b1"))
+            b-op (operation name "b-own-op" (acct "b1"))
+            b-reuse (send name (frame conn {:command "b-other" :operation "shared-op" :block (block (swap! counter inc))
+                                            :facts [{:owner B :field ":a/f1" :type :string :value "b" :pred nil}]}) (acct "b1"))
             plain-claim (claim name "shared-command" nil)
             r {:option on? :aSave (reference/outcome a) :bSave (reference/outcome b)
                :bClaimTxId (get b-claim "txId") :bCommandTxId (get b-command "txId") :bOperation (select-keys b-op ["status" "txId"])
-               :claimWithoutAccount (get plain-claim "txId") :aTx a-tx :bTx b-tx}]
+               :claimWithoutAccount (get plain-claim "txId") :aTx a-tx :bTx b-tx
+               :bReusingAsOperationId (reference/outcome b-reuse)}]
         (line (assoc r :case "two accounts use one command ID and one operation ID"))
         (is (= [200 nil] (:aSave r)))
         (if on?
           (do (is (= [200 nil] (:bSave r)) "with the option, B's save commits under its own IDs")
               (is (= b-tx (:bClaimTxId r) (:bCommandTxId r)) "B's lookups find B's transaction")
               (is (= b-tx (get-in r [:bOperation "txId"])) "B's operation lookup finds B's transaction")
-              (is (nil? (:claimWithoutAccount r)) "a lookup naming no account finds neither scoped claim"))
-          (do (is (= 409 (first (:bSave r))) "without it, A's IDs deny B's save")
+              (is (nil? (:claimWithoutAccount r)) "a lookup naming no account finds neither scoped claim")
+              (is (= [409 "OperationDuplicate"] (:bReusingAsOperationId r)) "an operation ID has one form: reusing it refuses only the reuser"))
+          (do (is (= [409 "CommandConflict"] (:bSave r)) "without it, A's command ID denies B's save")
               (is (= a-tx (:bClaimTxId r) (:bCommandTxId r)) "without it, B's lookups return A's transaction")))))))
 
 (deftest an-operation-id-taken-by-another-account-is-not-this-saves-receipt
@@ -74,10 +79,8 @@
             r {:option on? :b (reference/outcome b) :a (reference/outcome a) :aLookup (select-keys looked ["status" "txId"])
                :aJournal (get-in a-save ["claims" 0 "txId"])}]
         (line (assoc r :case "an operation ID another account committed first"))
-        (if on?
-          (is (= [200 nil] (:a r)) "with the option, A commits under its own scoped operation ID")
-          (do (is (= [409 "OperationDuplicate"] (:a r)))
-              (is (not= (:aJournal r) (get-in r [:aLookup "txId"])) "the receipt names another transaction, which the SDK refuses to settle on")))))))
+        (is (= [409 "OperationDuplicate"] (:a r)))
+        (is (not= (:aJournal r) (get-in r [:aLookup "txId"])) "the receipt names another transaction, which the SDK refuses to settle on")))))
 
 (deftest legacy-plain-claims
   (if-not on?
@@ -108,7 +111,7 @@
           (is (nil? (:theirs r)) "another account does not")
           (is (= [409 "CommandConflict"] (:resendByOwner r)) "the owner cannot claim it twice")
           (is (= [200 nil] (:otherAccount r)) "another account's own claim of the same ID commits")
-          (is (= [200 nil] (:otherAccountSameOperation r)) "a legacy plain operation ID of one account does not block another's")
+          (is (= [409 "OperationDuplicate"] (:otherAccountSameOperation r)) "an operation ID has one form, database-wide (S6 12.1)")
           (is (= [400 "InvalidValue"] (:reservedPrefix r)) "a client ID cannot forge a scoped value")
           (is (= [400 "InvalidValue"] (:wrongAccount r)) "a request cannot name an account it does not write"))))))
 
@@ -187,7 +190,7 @@
                                                   (into {} (for [o [(str base "/subject/" n) (str base "/profile/" n)]]
                                                              [o (fz/read-owner scope-name o {"validAt" 5.0})])))
                                           command (str "cmd-" n "-" (name (if (= s :resend) :main s)))
-                                          op (str "op-" n "-" (name s))
+                                          op (str "op-" n "-" (name s) "-" a)
                                           input (step-input conn kind base n (if (= s :resend) :main s) command op (blocks [(if (= s :resend) :main s) a]) model)
                                           reply (run-save scope-name conn kind input (acct (str a n)))]
                                       (when (and (= where :shared) (= s :main) (= 200 (:status reply)))
@@ -211,7 +214,7 @@
                       (let [account (acct (str a n))
                             found [(get (claim shared (str "cmd-" n "-main") account) "txId")
                                    (get (command shared (str "cmd-" n "-main") account) "txId")
-                                   (get (operation shared (str "op-" n "-main") account) "txId")]]
+                                   (get (operation shared (str "op-" n "-main-" a) account) "txId")]]
                         (swap! checked + 3)
                         (swap! foreign + (count (remove #(= tx %) found)))))
                     (swap! stats assoc :lookupsChecked @checked :lookupsNotOwn @foreign)

@@ -171,6 +171,22 @@
           (when-not (and stream (= 1 (count claims))) (codec/invalid "Invalid ordered import claim"))
           (let [n (Long/parseLong ordinal)]
             (if (zero? n) "load1/manifest/import" (str "load1/" stream "/" (dec n)))))))))
+(defn- replay-frame-check!
+  "[DX-S6b] S5 R2-2. A replay (the SDK's next attempt of one save after a refusal) carries `frameSourceK`, the source of
+  the save's first attempt (null when that attempt stated none). A replay that writes a protected value of an (entity,
+  attribute) family a removal named after that first source is refused ErasureReplayDeclined, never staged again: the
+  caller's values were chosen before the removal, whatever the replay's own source. The removal's position is the one
+  the published removal states, whichever rule assigned it (its entry's position today, its Datomic commit under
+  DX-ERA2's option); a removal not yet published refuses every write it can reach (503), so the replay waits for it.
+  Rejected: judging a replay by its own source (it is always after the removal, which is how R2-2 stored the value)."
+  [state input rows new-ids]
+  (when (and state (contains? input "frameSourceK") (seq (:commands state)))
+    (let [source (get input "frameSourceK")
+          removed-at (requiring-resolve 'triplex.gateway.subject-create/family-removed-at)]
+      (doseq [r rows :when (new-ids (:id r)) :when ((:attrs state) (:attribute r))]
+        (when-let [at (removed-at state [(:entity_id r) (:attribute r)])]
+          (when (or (not (integer? source)) (< source at))
+            (privacy/failure! 409 "ErasureReplayDeclined" "A save first framed before a removal of a field it writes is not replayed")))))))
 (defn tx-data
   ([db input] (tx-data db input (:e (first (d/datoms db :aevt :triplex.scope/key)))))
   ([db input scope]
@@ -178,6 +194,7 @@
          input (ordered-row-texts (expand-fresh input lean))
          new-ids (set (get input "newIds")) rows (timed-input-rows input lean new-ids)
          _ (trace/span "privacy/validate-rows" "gateway" (privacy/validate-write! privacy/*cut* input rows))
+         _ (replay-frame-check! privacy/*cut* input rows new-ids)
          protected (trace/span "privacy/prepare-envelopes" "gateway"
                      (envelope/protect privacy/*database* privacy/*cut* input rows))
          input (:input protected) rows (:rows protected)
@@ -541,7 +558,8 @@
           (let [lean (lean? db)
                 prepared (ordered-row-texts (expand-fresh input lean))
                 new-ids (set (get prepared "newIds"))
-                source (get input "sourceK")
+                ;; [DX-S6b] A replay is judged by its first attempt's source (replay-frame-check!).
+                source (if (contains? input "frameSourceK") (get input "frameSourceK") (get input "sourceK"))
                 removed-at (requiring-resolve 'triplex.gateway.subject-create/family-removed-at)]
             (boolean
               (some (fn [r]

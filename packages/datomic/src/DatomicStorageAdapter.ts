@@ -555,6 +555,8 @@ export const makeDatomicStorageAdapter = (
                 state.importInstant === undefined &&
                 [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
               sourceK: state.optimistic && !state.orderedSave ? null : state.sourceK,
+              // [DX-S6b] A replay names its first attempt's source: a removal after it declines the replay (R2-2).
+              ...(state.frameSourceK === undefined ? {} : { frameSourceK: state.frameSourceK }),
               // [DX-S4] A block save declares its identity bounds (one history probe on the general writer).
               ...(creationSaves && state.orderedSave ? { declareIdentityBounds: true } : {}),
               position: state.position,
@@ -768,6 +770,8 @@ export const makeDatomicStorageAdapter = (
     Effect.suspend(() => {
       // [DX-S6] Reassigned when a replay follows a fence: the fenced operation ID can never commit.
       let operationId = randomUUID();
+      // [DX-S6b] The source the first attempt sent; every replay carries it (S5 R2-2).
+      let frameSource: number | null | undefined;
       const diagnostic: import("./DatomicClient.js").DatomicCommitSample | undefined =
         client.onCommit
           ? {
@@ -919,6 +923,7 @@ export const makeDatomicStorageAdapter = (
             handle: snapshot.handle,
             ...("prefetch" in snapshot ? { prefetch: snapshot.prefetch } : {}),
             position: sourceK,
+            ...(frameSource === undefined ? {} : { frameSourceK: frameSource }),
             rows: new Map(),
             claims: new Map(),
             newIds: new Set(),
@@ -969,6 +974,7 @@ export const makeDatomicStorageAdapter = (
                       ),
                       Effect.suspend(() => {
                         client.commitDiagnostics.replays++;
+                        frameSource ??= state.optimistic && !state.orderedSave ? null : state.sourceK;
                         if (error instanceof DatomicOperationNotApplied) operationId = randomUUID();
                         for (const id of hint?.tripleIds ?? []) {
                           cache.delete(id);

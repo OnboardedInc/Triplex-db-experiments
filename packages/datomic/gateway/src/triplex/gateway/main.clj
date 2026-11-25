@@ -501,7 +501,9 @@
                 (run read-cut))))))
       (catch Exception e
         (let [info (ex-data e) status (or (:status info) (write-status request-method uri e))]
-          (response status {:code (or (:code info) (if (= 503 status) "OutcomeUnknown" "GatewayError")) :message (.getMessage e)}))))
+          ;; [DX-S6] An unknown outcome names the failure's class here too (S5 R2-8).
+          (response status (cond-> {:code (or (:code info) (if (= 503 status) "OutcomeUnknown" "GatewayError")) :message (.getMessage e)}
+                             (= 503 status) (assoc :cause (or (:cause info) ((requiring-resolve 'triplex.gateway.outcome/kind) e))))))))
     (route-handler-base request)))
 
 (defn handler [request] (trace/handler route-handler request))

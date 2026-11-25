@@ -119,8 +119,9 @@
   ;; request, after account-claims/scope! rewrote the prepared data. The retry therefore stores the plain IDs.
   ;; Trigger (natural): between the plan and the commit, a general-writer save whose journal has no instant row flips
   ;; :triplex.scope/feed-irregular (a mutable scope flag), which the per-subject function answers with REPLAN.
-  (if-not (and on? (run? "replan"))
-    (println "DX-S5R2_SKIP replan needs TX2_ACCOUNT_CLAIMS=1")
+  ;; [DX-S6b] A replan exists only on the per-subject writer (TX2_SUBJECT_SAVE=1); with it off there is nothing to test.
+  (if-not (and on? (= "1" (System/getenv "TX2_SUBJECT_SAVE")) (run? "replan"))
+    (println "DX-S5R2_SKIP replan needs TX2_ACCOUNT_CLAIMS=1 and TX2_SUBJECT_SAVE=1")
     (doseq [hold? [false true]]
       (reference/in-scope
         (fn [name conn]
@@ -157,8 +158,11 @@
             (if hold?
               (when (get resolved "fenced") (is (= "refused" (:late late)) "a fenced original must never commit"))
               (do (is (true? (:subjectReplan r)) "the trigger produced a replan")
-                  (is (:storedScoped r) "a save naming its account stores its scoped operation ID (S6 9.2)")
-                  (is (not (:claimStoredPlain r)) "and its scoped command ID")))))))))
+                  ;; [DX-S6b] One stored form: an operation ID is stored as sent on every path (S6 12.1); the command
+                  ;; ID keeps the form the first attempt chose, here the account's scoped form (S6 12.2).
+                  (is (:storedPlain r) "the operation ID is stored in its one form, as sent")
+                  (is (not (:storedScoped r)) "no second form of the operation ID exists")
+                  (is (not (:claimStoredPlain r)) "the replanned save's command ID keeps its scoped form")))))))))
 
 ;; ---------------------------------------------------------------- 3. the reserved prefix in lookups
 
@@ -334,28 +338,49 @@
                                                                        {:owner X :field ":p/secret" :type :string :value "x value framed before the removal" :pred nil}]}) acct))
                 ;; (a) the removal lands between this save's plan and its commit.
                 racing (frame-before)
-                removed (atom nil)
+                removed (promise) waited (atom false)
+                ;; [DX-S6b] The removal runs on its own thread (no conveyed bindings), as a second request would. Where
+                ;; the save holds the scope's writer lock from its plan to its commit (the managed general path), the
+                ;; removal waits for the save: the race cannot happen there, and the removal then covers the value.
                 reply ((if fast? (fn [f] (f)) fz/general)
                        (fn [] (let [orig storage/submit! fired (atom false) id (get racing "operationId")]
                                 (with-redefs [storage/submit! (fn [c data request timeline & more]
                                                                 (when (and (= id (get request "operationId")) (compare-and-set! fired false true))
-                                                                  (reset! removed (reference/route name "v1" "erase" {"commandId" "remove-x" "selectors" [{"entityId" X}]})))
+                                                                  (.start (Thread. ^Runnable (fn [] (deliver removed (reference/route name "v1" "erase" {"commandId" "remove-x" "selectors" [{"entityId" X}]})))))
+                                                                  (when (= ::waiting (deref removed 3000 ::waiting)) (reset! waited true)))
                                                                 (apply orig c data request timeline more))]
                                   (reference/send name racing)))))
+                removed (deref removed 30000 {:status :timeout})
                 ;; (b) the same save framed before the removal, sent after it (no race): F4's refusal.
                 stale (reference/send name (assoc racing "operationId" (str "stale-" (swap! counter inc))))
-                ;; (c) the SDK's replay of (a): the same caller values, a fresh source, a new operation ID.
-                replay ((if fast? (fn [f] (f)) fz/general)
-                        #(reference/send name (with-account (save conn {:facts [{:owner X :field ":a/f" :type :string :value "x" :pred nil}
-                                                                                {:owner X :field ":p/secret" :type :string :value "x value framed before the removal" :pred nil}]}) acct)))
+                ;; (c) the SDK's replay of (a): the same caller values, a fresh source, a new operation ID. [DX-S6b] The
+                ;; SDK replays only CasConflict (DatomicStorageAdapter); any other answer reaches the caller unreplayed.
+                replayable? (= [409 "CasConflict"] (reference/outcome reply))
+                replay (if-not replayable?
+                         "not replayed"
+                         ((if fast? (fn [f] (f)) fz/general)
+                          #(reference/send name (with-account (save conn {:facts [{:owner X :field ":a/f" :type :string :value "x" :pred nil}
+                                                                                  {:owner X :field ":p/secret" :type :string :value "x value framed before the removal" :pred nil}]}) acct))))
+                ;; (d) [DX-S6b] The SDK's replay as it now is: a fresh frame that names its first attempt's source.
+                named-replay ((if fast? (fn [f] (f)) fz/general)
+                              #(reference/send name (assoc (with-account (save conn {:facts [{:owner X :field ":p/secret" :type :string :value "x value framed before the removal" :pred nil}]}) acct)
+                                                           "frameSourceK" (get racing "sourceK"))))
+                ;; (e) Control: the same values saved fresh after the removal are a new save.
+                fresh ((if fast? (fn [f] (f)) fz/general)
+                       #(reference/send name (with-account (save conn {:facts [{:owner X :field ":p/secret" :type :string :value "x saved after the removal" :pred nil}]}) acct)))
                 stored (get-in (fz/read-owner name X {"validAt" 5.0}) [":p/secret" :value])
                 r {:case "a creation racing a removal that named its entity" :writer (if fast? "creation writer" "general writer")
-                   :removal (:status @removed) :racingAnswer (reference/outcome reply)
-                   :sameFrameAfterTheRemoval (reference/outcome stale) :sdkReplay (reference/outcome replay) :storedAfterReplay stored}]
-            (line r)
+                   :removal (:status removed) :removalBody (:body removed) :racingAnswer (reference/outcome reply)
+                   :sameFrameAfterTheRemoval (reference/outcome stale) :sdkReplay (if (string? replay) replay (reference/outcome replay))
+                   :replayNamingItsFirstSource (reference/outcome named-replay) :freshSaveAfterTheRemoval (reference/outcome fresh) :storedAtTheEnd stored}]
+            (line (assoc r :removalWaitedForTheSave @waited))
             (is (= 200 (:removal r)))
-            (is (= 409 (first (:racingAnswer r))))
-            (is (= [409 "ErasureReplayDeclined"] (:sameFrameAfterTheRemoval r)))
+            (if @waited
+              (is (= [200 nil] (:racingAnswer r)) "the save committed before the removal it held back")
+              (do (is (= 409 (first (:racingAnswer r))))
+                  (is (= [409 "ErasureReplayDeclined"] (:sameFrameAfterTheRemoval r)))))
+            (is (= [409 "ErasureReplayDeclined"] (:replayNamingItsFirstSource r)) "a replay first framed before the removal is declined")
+            (is (= [200 nil] (:freshSaveAfterTheRemoval r)) "a save framed after the removal is a new value")
             (is (not= "x value framed before the removal" stored)
                 "a value framed before the removal must not be stored by the replay of a save that raced it")))))))
 
@@ -421,14 +446,17 @@
               b (reference/send name b-input)
               a-input (save conn {:command "joined:shared" :operation "a6-op" :facts [{:owner "acct/a6/subject/s" :field ":a/f" :type :string :value "a" :pred nil}]})
               a (reference/send name a-input)
-              found (:body (reference/route name "v1" "claim" {"commandId" "joined:shared" "receipt" true}))
+              ;; [DX-S6b] The lookup as the SDK now makes it: naming the caller's own save's entities (or its account).
+              found (:body (reference/route name "v1" "claim" {"commandId" "joined:shared" "receipt" true "entities" ["acct/a6/subject/s"]}))
               r {:case "the command path with the option off" :b (reference/outcome b) :a (reference/outcome a)
                  :aJournal (get-in a-input ["claims" 0 "txId"]) :claimLookupTxId (get found "txId")
                  :claimLookupReceiptStatus (get-in found ["receipt" "status"]) :aStored (= "committed" (get (operation name (get a-input "operationId") nil) "status"))}]
           (line r)
           (is (= [409 "CommandConflict"] (:a r)))
           (is (not (:aStored r)))
-          (is (= (:aJournal r) (:claimLookupTxId r)) "the transaction the SDK would settle on is not A's"))))))
+          ;; [DX-S6b] The lookup never answers B's transaction for A: it answers taken, which the SDK fails as decided.
+          (is (nil? (:claimLookupTxId r)) "the lookup for A's save does not return B's transaction")
+          (is (true? (get found "taken")) "it answers taken"))))))
 
 ;; ---------------------------------------------------------------- 9. F2: shapes the S6 bound gate did not send
 

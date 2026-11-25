@@ -188,6 +188,49 @@
             (is (= 200 (:status removed-again)) "the resend of the same command answers its receipt")
             (is (= 1 (get-in frontier [:body "seq"])) "exactly one removal stored")))))))
 
+(deftest removal-and-declaration-with-the-original-in-flight
+  ;; [DX-S6b] The first transaction of a removal (and of a declaration) is held, not sent: the gateway's deref times
+  ;; out; the client resends while the original is still pending; then the original is sent. Exactly one removal (one
+  ;; declaration) is stored and the resend answers the decided state.
+  (if-not (System/getenv "TRIPLEX_ERASURE_DIRECTORY")
+    (println "DX-S6_SKIP removal needs TRIPLEX_ERASURE_DIRECTORY")
+    (reference/in-scope
+      (fn [name conn]
+        (let [orig d/transact held (atom []) holding (atom false)
+              hold (fn [c tx] (if (compare-and-set! holding true false)
+                                (do (swap! held conj #(orig c tx)) (hanging))
+                                (orig c tx)))
+              ;; The declaration's last transaction (the declare call) is held.
+              declared (with-redefs [d/transact (fn [c tx] (if (and (vector? (first tx)) (= :triplex.privacy/declare-v2 (ffirst tx))) (hold c tx) (orig c tx)))]
+                         (reset! holding true)
+                         (reference/route name "v1" "protection" {"attributes" [":p/secret"] "sealed" false}))
+              declared-again (reference/route name "v1" "protection" {"attributes" [":p/secret"] "sealed" false})
+              late-declare (mapv (fn [f] (try @(f) "committed" (catch Exception e (or (re-find #"TRIPLEX_[A-Z_]+|unique-conflict|cas-failed" (str e)) "refused")))) @held)
+              _ (reset! held [])
+              seeded (reference/send name (save conn {:command "seed" :facts [{:owner S :field ":p/secret" :type :string :value "secret" :pred nil}]}))
+              removal {"commandId" "remove-s" "selectors" [{"entityId" S "attribute" ":p/secret"}]}
+              removed (with-redefs [d/transact (fn [c tx] (if (some #(and (map? %) (:triplex.tx/erasure-record %)) tx) (hold c tx) (orig c tx)))]
+                        (reset! holding true)
+                        (reference/route name "v1" "erase" removal))
+              removed-again (reference/route name "v1" "erase" removal)
+              late-removal (mapv (fn [f] (try @(f) "committed" (catch Exception e (or (re-find #"TRIPLEX_[A-Z_]+|unique-conflict|cas-failed" (str e)) "refused")))) @held)
+              removed-third (reference/route name "v1" "erase" removal)
+              frontier (reference/route name "v1" "erasure-frontier" nil)
+              erase-txs (count (filter #(str/starts-with? (str %) "privacy-") (map :v (d/datoms (d/db conn) :aevt :triplex.tx/operation-id))))
+              r {:case "removal and declaration with the original in flight"
+                 :declared (reference/outcome declared) :declaredAgain (reference/outcome declared-again) :lateDeclare late-declare
+                 :seed (reference/outcome seeded) :removed (reference/outcome removed) :removedAgain (reference/outcome removed-again)
+                 :lateRemoval late-removal :removedThird (reference/outcome removed-third)
+                 :frontierSeq (get-in frontier [:body "seq"]) :removalTransactions erase-txs}]
+          (line r)
+          (is (not= 400 (:status declared)))
+          (is (= 200 (:status declared-again)))
+          (is (= [200 nil] (:seed r)))
+          (is (not= 400 (:status removed)) "never a refusal for an unknown outcome")
+          (is (= 200 (:status removed-third)) "the resend after the original answers the removal")
+          (is (= 1 (:frontierSeq r)) "exactly one removal in the sequence")
+          (is (= 1 (:removalTransactions r)) "exactly one removal transaction stored"))))))
+
 (defn main []
   (let [r (clojure.test/run-tests 's6-outcome)]
     (println "DX-S6_RESULT" (json/write-str (assoc (select-keys r [:test :pass :fail :error])

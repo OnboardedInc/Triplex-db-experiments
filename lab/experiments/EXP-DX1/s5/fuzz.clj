@@ -629,7 +629,10 @@
     (swap! shadowed update (:seed g) (fnil into #{}) [command op])
     (let [
           b-acct (str "fb" (:seed g)) b-owner (str "acct/" b-acct "/s" (swap! (:counter g) inc))
-          spec {:owners [b-owner] :new #{b-owner} :command command :operation op :account b-acct :retires [] :faults #{}
+          ;; [DX-S6b] Operation IDs have one stored form, the client's own, database-wide (S6 12.1): the shadow shares
+          ;; the first account's command ID only, under an operation ID of its own.
+          b-op (str "fb-op-" (swap! (:counter g) inc))
+          spec {:owners [b-owner] :new #{b-owner} :command command :operation b-op :account b-acct :retires [] :faults #{}
                 :facts (vec (for [i (range (between rng 1 4))] {:owner b-owner :field (str ":fz/b" i) :type :string :value (str "b|" i) :pred nil}))
                 :source (storage/head-position (d/db (main/connection (main/db-uri c-name)))) :block (block-of g rng 12)}
           [_ input] (input-of g spec)
@@ -639,7 +642,7 @@
           on (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS"))
           lookups (fn [name]
                     {:claim (get (:body (reference/route name "v1" "claim" {"commandId" command "account" b-acct})) "txId")
-                     :op (get (op-lookup name op b-acct) "txId")
+                     :op (get (op-lookup name b-op b-acct) "txId")
                      :a-op (get (op-lookup name op (subs (:acct g) 5)) "txId")})
           lc (lookups c-name) lk (lookups k-name)
           cross (if on (count (filter #(and (some? %) (not= b-tx %)) [(:claim lk) (:op lk)])) 0)]

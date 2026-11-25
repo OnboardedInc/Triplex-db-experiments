@@ -1315,6 +1315,8 @@ export class DatomicClient {
       replaySafe?: boolean;
       assignRecordTime?: boolean;
       sourceK: number | null;
+      /** [DX-S6b] A replay's first attempt's source (S5 R2-2). */
+      frameSourceK?: number | null;
       span?: number;
       entities?: readonly string[];
       live?: readonly string[];

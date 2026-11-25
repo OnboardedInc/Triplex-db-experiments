@@ -41,6 +41,10 @@ settings=(
   "s3-serial:TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_PREFETCH=0 TX2_SUBJECT_WIDE=1 TX2_SUBJECT_SEVERAL_OWNERS=1 TX2_SUBJECT_NARROW_REVISION=1 TX2_SUBJECT_REUSE_PREDECESSOR=1 TX2_SUBJECT_APPEND_RETIREMENT=1"
   "accounts-off:$base"
   "accounts-on:$base TX2_ACCOUNT_CLAIMS=1"
+  "accounts-on-serial:$base TX2_ACCOUNT_CLAIMS=1 TX2_SUBJECT_NARROW_REVISION=1 TX2_SUBJECT_REUSE_PREDECESSOR=1 TX2_SUBJECT_APPEND_RETIREMENT=1"
+  "accounts-on-general:TX2_SUBJECT_SAVE=0 TX2_ACCOUNT_CLAIMS=1"
+  "group:$base TX2_GROUP_COMMIT=1"
+  "group-accounts:$base TX2_GROUP_COMMIT=1 TX2_ACCOUNT_CLAIMS=1"
 )
 s5="-i /exp/s5/fuzz.clj"
 case $mode in
@@ -50,6 +54,8 @@ case $mode in
   bound) files="$s5 -i /exp/s6/bound_gate.clj"; expr="(s6-bound/main)" ;;
   race) files="$s5 -i /exp/s6/race_gate.clj"; expr="(s6-race/main)" ;;
   accounts) files="$s5 -i /exp/s6/accounts_gate.clj"; expr="(s6-accounts/main)" ;;
+  attack2) files="$s5 -i /exp/s5/attack_gate.clj -i /exp/s5/attack2_gate.clj"; expr="(s5-attack2/main)" ;;
+  ids) files="$s5 -i /exp/s6/stored_ids_gate.clj"; expr="(s6-ids/main)" ;;
   owners) files="-i /exp/s3/owners_gate.clj -i /exp/s6/gates_main.clj"; expr="(s6-gates/run (quote owners-gate))" ;;
   create) files="-i /exp/s3/owners_gate.clj -i /exp/s4/create_gate.clj -i /exp/s6/gates_main.clj"; expr="(s6-gates/run (quote create-gate))" ;;
   *) echo "mode $mode?" >&2; exit 2 ;;
@@ -59,14 +65,14 @@ for entry in $wanted; do
   line=
   for s in "${settings[@]}"; do [[ ${s%%:*} == "$entry" ]] && line=${s#*:}; done
   [[ -n $line ]] || { echo "unknown setting $entry" >&2; exit 2; }
-  envs=(); for kv in $line; do envs+=(-e "$kv"); done
+  envs=(); group=0; for kv in $line; do [[ $kv == TX2_GROUP_COMMIT=1 ]] && group=1 || envs+=(-e "$kv"); done
   name=tx2-dxs6-clj-$$-$entry
   # Sealed values need a wrapping key: a random one per run, never written down.
   key=(); [[ ${S5_PROTECTED:-} == sealed ]] && key=(-e "TRIPLEX_ERASURE_WRAPPING_KEY=$(head -c 32 /dev/urandom | base64)")
   docker run --rm --name "$name" --label dx-s6=clj --pull never --memory 3g "${envs[@]}" ${key[@]+"${key[@]}"} \
-    -e TX2_GROUP_COMMIT=0 -e TX2_LIVE_PRIORITY=0 -e TX2_PREDECESSOR_LOOKUP=1 -e TX2_LEAN_NATIVE_QUERY=1 -e TX2_LEAN_NATIVE_LOG=1 \
+    -e TX2_GROUP_COMMIT=${group:-0} -e TX2_LIVE_PRIORITY=0 -e TX2_PREDECESSOR_LOOKUP=1 -e TX2_LEAN_NATIVE_QUERY=1 -e TX2_LEAN_NATIVE_LOG=1 \
     -e TRIPLEX_TRACE_LEVEL=off -e TRIPLEX_ERASURE_DIRECTORY=/tmp/erasure -e PREP1_ATTEMPT=dx-s6-clj \
-    -e S5_SEEDS -e S5_STEPS -e S5_ROUNDS -e S5_THREADS -e S5_PER_THREAD -e S5_REMOVALS -e S5_VALUE_TYPES -e S5_PROTECTED -e S6_ACCOUNT_SCHEDULES \
+    -e S5_SEEDS -e S5_STEPS -e S5_ROUNDS -e S5_THREADS -e S5_PER_THREAD -e S5_REMOVALS -e S5_VALUE_TYPES -e S5_PROTECTED -e S6_ACCOUNT_SCHEDULES -e S5_FAULTS -e S5_ACCOUNTS -e S5_ONLY \
     ${dev[@]+"${dev[@]}"} -v "$repo/lab/experiments/EXP-DX1:/exp:ro" --entrypoint /bin/bash "$image_id" -c "
       mkdir -p /tmp/erasure && cd /opt/datomic && java -Xmx2g -XX:+UseSerialGC -Dtriplex.codec.spec=/opt/gateway/codec-spec.json \
         -cp \"/opt/gateway/src:\$(bin/classpath)\" clojure.main -i /exp/wfix1/regression.clj -i /exp/w2/wide_gate.clj $files \
