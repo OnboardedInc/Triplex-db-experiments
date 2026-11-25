@@ -46,7 +46,9 @@ if [[ $toy == 1 ]]; then
   handoff=$HOME/Claude/Projects/triplex-db-2/demo-toy/original/handoff.json
   [[ -z ${DEMO_ROOT:-} ]] || handoff=$root/original/handoff.json
   export DX_STACK_EVIDENCE=$root/evidence
-  heavy=(node lab/bin/heavy.mjs --label DX-DEMO1-toy-up --)
+  # [DX-CON2] Why: the owner's console is down while this waits; at 1 s polling it lost the token to builders polling
+  # at 100 to 250 ms for over 9 minutes on 2026-11-25. Rejected: a second token or more slots (the lab limit stays 4).
+  heavy=(node lab/bin/heavy.mjs --poll-ms 100 --label DX-DEMO1-toy-up --)
 else
   [[ $(uname -s) == Linux && $EUID == 0 ]] || { echo 'Run as root on the rented Linux machine' >&2; exit 2; }
   export DOCKER_HOST=unix:///var/run/docker.sock DX_BARE_METAL=1
