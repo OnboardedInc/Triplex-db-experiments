@@ -279,6 +279,20 @@
                   :triplex.tx/max-recorded-at :triplex.tx/journals :triplex.journal/position
                   :triplex.scope/feed-irregular :triplex.scope/irregular :triplex.scope/position-regular])
 
+;; [S5 third review] With removals on (S5_REMOVALS=1), each scope's removal takes its own random transaction ID
+;; (_tx/erase-<uuid>) and its record time from the clock when that scope runs it, and every later server-assigned
+;; record time follows from it; those values differ between the two scopes by design, so they are compared as
+;; placeholders: removal IDs as erase-*, and every double of 1e12 or more (an epoch-millisecond record time) as MS.
+(def ^:private removal-steps? (= "1" (System/getenv "S5_REMOVALS")))
+(defn- norm-text [^String s]
+  (if removal-steps? (-> s (str/replace #"erase-[0-9a-f-]{36}" "erase-*") (str/replace #"[0-9]\.[0-9]+E1[2-9]" "MS")) s))
+(defn- norm-value [x]
+  (if removal-steps?
+    (clojure.walk/postwalk (fn [v] (cond (and (double? v) (>= (double v) 1e12)) "MS"
+                                         (string? v) (norm-text v)
+                                         :else v)) x)
+    x))
+
 (defn- canon-entries
   "The canonical datoms (as strings) of the attributes above whose transaction position passes keep?."
   [conn keep?]
@@ -294,7 +308,7 @@
         ref? #{:triplex.claim/tx :triplex.tx/journals}]
     (for [a canon-attrs :when (d/entid db a) dt (d/datoms h :aevt a)
           :let [p (tx-pos (:tx dt))] :when (and p (keep? p))]
-      (pr-str [(named (:e dt)) a (if (ref? a) (named (:v dt)) (:v dt)) (:added dt) (str "T@" p)]))))
+      (norm-text (pr-str [(named (:e dt)) a (if (ref? a) (named (:v dt)) (:v dt)) (:added dt) (str "T@" p)])))))
 
 (defn canon-digest
   "Every datom ever asserted or retracted of the attributes above, entities named by public ID (claims by command,
@@ -348,14 +362,14 @@
                            [[:reach-pinned s p] (fn [n] (reach-of n (if (= n c-name) c-conn k-conn) s {"validAt" 5.0 "recordedPosition" p}))])
                          (for [id ids-sample] [[:by-id id] (fn [n] [(get-in (reference/route n "v1" "read" {"id" id "basis" {"validAt" 5.0}}) [:body "rows"])
                                                                     (get-in (reference/route n "v1" "read" {"id" id "history" true}) [:body "rows"])])]))
-                route-diff (some (fn [[label f]] (let [e (f c-name) a (f k-name)] (when (not= e a) {:what "routes" :at label :control (take 2 e) :candidate (take 2 a)})))
+                route-diff (some (fn [[label f]] (let [e (norm-value (f c-name)) a (norm-value (f k-name))] (when (not= e a) {:what "routes" :at label :control (take 2 e) :candidate (take 2 a)})))
                                  checks)
                 feed-diff (when-not route-diff
                             (loop [after 0 pages 0]
                               (let [e (reference/feed c-name after 200) a (reference/feed k-name after 200)]
                                 (cond
-                                  (not= (map #(vec (take 2 %)) e) (map #(vec (take 2 %)) a)) {:what "feed" :after after}
-                                  (not= (map wide/feed-changes e) (map wide/feed-changes a)) {:what "feed-changes" :after after}
+                                  (not= (norm-value (map #(vec (take 2 %)) e)) (norm-value (map #(vec (take 2 %)) a))) {:what "feed" :after after}
+                                  (not= (norm-value (map wide/feed-changes e)) (norm-value (map wide/feed-changes a))) {:what "feed-changes" :after after}
                                   (empty? e) nil
                                   :else (recur (second (peek e)) (inc pages))))))]
             (or route-diff feed-diff)))))))
@@ -743,8 +757,12 @@
               rk (reference/send k-name (assoc (replay k-name) "frameSourceK" head))]
           (swap! (:model g) assoc o (read-owner c-name o {"validAt" 5.0}))
           {:mode :removal-race :c [(outcome c) (some-> @ce :status) (outcome rc)] :k [(outcome k) (some-> @ke :status) (outcome rk)]
+           ;; With the per-subject writers off the save holds the scope's writer lock from plan to commit, so the removal
+           ;; sent at its submit waits (503) and the save commits first: no race, nothing to decline (S6 12.3).
            :equal (and (= (outcome c) (outcome k)) (= (some-> @ce :status) (some-> @ke :status)) (= (outcome rc) (outcome rk))
-                       (not= 200 (:status rc)) (not= 200 (:status rk)) (not= 200 (:status k)))})))))
+                       (if (= 200 (some-> @ke :status))
+                         (and (not= 200 (:status rc)) (not= 200 (:status rk)) (not= 200 (:status k)))
+                         true))})))))
 
 ;; ---------------------------------------------------------------- the concurrent phase
 
