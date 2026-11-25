@@ -104,7 +104,8 @@
     (doseq [w writes :when (not= (:acct w) a)]
       (when k/after?
         (x/oracle! label (= [200 nil] (get outcomes (:cmd w))) "a derived write of another account is never refused by this removal"
-                   {:kind (:kind w) :at (:at w) :outcome (get outcomes (:cmd w))})))
+                   {:kind (:kind w) :at (:at w) :outcome (get outcomes (:cmd w))
+                    :message (some-> (deref (get @replies (:cmd w)) 1000 nil) :body (get "message") str (subs 0) (as-> m (subs m 0 (min 300 (count m)))))})))
     (doseq [w landed] (bump! :landed (cond (:cross w) :read-removed-account (= (:acct w) a) :removed-account :else :other-account) (:kind w)))
     (when (and ok on?)
       ;; (3) after the acknowledgement: X's copies open as removed, Y's open to Y's value; sealing X again answers removed
@@ -127,6 +128,11 @@
                                               :else (do (Thread/sleep 100) (recur (inc n))))))]
           (x/oracle! label (gone?) "the removed assertion's key is deleted within 5 s" {:id x-id})
           (when (and restore? backup)
+            ;; a restart: wait until the worker has recorded this removal as shredded (resetting its progress while it
+            ;; sits between the delete and that record would let it record the removal after the reset, which no real
+            ;; restart can do: a new process starts from 0), then the key comes back and the worker starts from 0
+            (let [seq-r (long (or (get-in final [:body "seq"]) 0))]
+              (loop [n 0] (when (and (< (long (get @envelope/shredded src 0)) seq-r) (< n 100)) (Thread/sleep 50) (recur (inc n)))))
             (Files/write (key-file src x-id) ^bytes backup (into-array OpenOption [StandardOpenOption/CREATE StandardOpenOption/WRITE]))
             (reset! envelope/shredded {})
             (x/oracle! label (contains? (second (open! src cx)) "removed") "with the key restored, the published removal still decides" nil)

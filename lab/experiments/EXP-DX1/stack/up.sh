@@ -1124,6 +1124,8 @@ for role in "${gateway_roles[@]}"; do
   if [[ ${DX_REMOVAL_SUBJECT_CHECK:-0} == 1 ]]; then field_policy+=(-e "TX2_REMOVAL_SUBJECT_CHECK=1"); fi
   # [DX-ACT9] Cross-database tickets naming source accounts and the frontier's touched entities (unset: unchanged).
   if [[ ${DX_ACCOUNT_TICKETS:-0} == 1 ]]; then field_policy+=(-e "TX2_ACCOUNT_TICKETS=1"); fi
+  # [DX-ERA4] Derived records sealed under the keys of the protected assertions they were computed from (unset: unchanged).
+  if [[ ${DX_DERIVED_SEAL:-0} == 1 ]]; then field_policy+=(-e "TX2_DERIVED_SEAL=1"); fi
   # [DX-ERA2] The removal's wait for each of its native transactions, in ms (tests force it to expire; unset: 5000).
   if [[ -n ${DX_REMOVAL_WAIT_MS:-} ]]; then field_policy+=(-e "TX2_REMOVAL_WAIT_MS=$DX_REMOVAL_WAIT_MS"); fi
   # [DX-SCALE2] The sweep's per-account gates evicted when an account's last sweep ends (unset: environment unchanged).

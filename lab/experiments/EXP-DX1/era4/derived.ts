@@ -364,7 +364,8 @@ await tryRead("client:recipient", async () => {
 });
 const entityCounts: Record<string, number> = {};
 for (const k of Object.keys(dbs) as (keyof typeof dbs)[]) entityCounts[k] = await routes(k, dbs[k], heads[k]!, stores[k].comp);
-const dumped = await dump(0);
+// ERA4_NO_DUMP=1 (the server run, era4/server.sh): no in-memory gateway to dump; the stored rows are scanned from pg_dump.
+const dumped = process.env.ERA4_NO_DUMP === "1" ? 0 : await dump(0);
 const openedSealed: Record<string, unknown> = {};
 for (const name of [...places.keys()]) if (!name.endsWith("+opened")) openedSealed[name] = await openAllSealed(name);
 const needles = {

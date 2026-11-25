@@ -61,9 +61,18 @@ async function call<T>(url: string, db: string, action: "derived-seal" | "derive
   const client = new DatomicClient(url);
   try {
     for (let i = 0; i < items.length; i += CHUNK) {
-      const r = await client.request<{ items: T[] }>("POST", `/v2/db/${db}/${action}`, {
-        items: items.slice(i, i + CHUNK),
-      });
+      // While a removal is being applied the gateway answers 503 (its cut refuses a pending removal): wait and retry,
+      // at most 50 times 100 ms; anything else, or a removal still pending after that, fails the caller.
+      let r: { items: T[] } | undefined;
+      for (let tries = 0; !r; tries++) {
+        try {
+          r = await client.request<{ items: T[] }>("POST", `/v2/db/${db}/${action}`, { items: items.slice(i, i + CHUNK) });
+        } catch (e) {
+          if ((e as { status?: number }).status !== 503 || tries >= 50) throw e;
+          counters.retried503++;
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
       assert(Array.isArray(r.items) && r.items.length === Math.min(CHUNK, items.length - i));
       out.push(...r.items);
     }
@@ -72,7 +81,7 @@ async function call<T>(url: string, db: string, action: "derived-seal" | "derive
   }
   return out;
 }
-export const counters = { sealCalls: 0, sealed: 0, clear: 0, openCalls: 0, opened: 0, removed: 0 };
+export const counters = { sealCalls: 0, sealed: 0, clear: 0, openCalls: 0, opened: 0, removed: 0, retried503: 0 };
 
 /** Seals each value under the protected assertions among `inputs` of `source`'s database. A value computed from no
  * protected assertion comes back unchanged (it held none); one whose assertion is already removed comes back as the

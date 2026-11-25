@@ -344,9 +344,9 @@ After the removal is acknowledged (and the keys are shredded, grace 0), occurren
 
 | Arm | X's removed expiry date | X's notice `version` (derivative) | X's item `id` (derivative) | Y's kept date (scan works) | Control (unprotected) |
 | --- | --- | --- | --- | --- | --- |
-| **off**, unsealed (`T1-off-unsealed-final`) | **100**, in 21 places | **37**, in 13 | **92**, in 20 | 108 | 39 |
+| **off**, unsealed (`T1-off-unsealed-final`, and `-final2` with the late recipient: the same counts) | **100**, in 21 places | **37**, in 13 | **92**, in 20 | 108 | 39 |
 | off, sealed (`T1-off-sealed-final`) | refused at the first derived write (`ProtectedPreviewUnavailable`, 5.1 item 1) | | | | |
-| **on**, sealed (`T1-on-6`) | **0** | **0** | **0** | 112 (29 places, opened with the keys the store holds) | 40 |
+| **on**, sealed (`T1-on-6`, and `T1-on-final` with the late recipient: 0, 0, 0) | **0** | **0** | **0** | 112 (29 places, opened with the keys the store holds) | 40 |
 
 Where the off arm found X's removed date: current rows, history, rows pinned before the removal and pinned history of
 the settlement archive, the notice archive and the recipient (12 each), their journal entries (5), the client's ledger
@@ -355,7 +355,14 @@ archives (15 and 6). The client's own packet and stored-change reads refused ("D
 the routes and the raw data did not. In the on arm every sealed record found in any place (up to 17 per place) was
 opened with the keys the store still holds: X's opened as removed, Y's and W's to their values.
 
-{{T1LATE}}
+**A packet recorded before the removal and delivered after it (`T1-on-final`, the late recipient).** A second
+recipient received nothing until after the removal, then everything: the first packet holds X's removed delivery and
+Y's; X's was not applied (it opens as removed) and was not taken as a gap. After the stream, both recipients hold the
+same state for every subject: X generation 1 with its one new entry, Y generation 0 with two entries, Z none. The
+scan of that run (the late recipient's database included) found X's removed value and derivatives **0** times. Off arm
+(`T1-off-unsealed-final2`, the same counts as the table: 100, 37, 92): the late recipient's delivery is refused whole
+("Discard the old protected input cut"), so with today's store a recipient that was behind at the removal never
+receives the other subjects' notices either, and the stream stops at the next save.
 
 ### 6.2 Gate (c): the chain, the other subjects and accounts, delivered once
 
@@ -392,24 +399,143 @@ recorder stops for good" is gone under the option: nothing refuses the recorder.
 
 ### 6.6 Gate (f): the removal branch's gate set, the account-ticket gate set and the reviewers' tests, every option on
 
-{{GATEF}}
+Every option on together: `TX2_REMOVAL_PER_ACCOUNT`, `TX2_REMOVAL_SUBJECT_CHECK`, `TX2_ACCOUNT_TICKETS`,
+`TX2_IMPORT_WHOLE_SUBJECT` and `TX2_DERIVED_SEAL`, on runtime image `sha256:21a67288007d...` by ID.
+
+| Gate set | Result |
+| --- | --- |
+| DX-ERA2's gate (`era2/gate.sh`, phases gate, era3, suites; `ERA2_EXTRA_ENV` with the three later options) | interleavings database-wide 360 checks, per account 695, subject check 8,963: **0 failed**; frame race 40 per setting (20 `cas-failed`, 20 at the account fence, 0 committed); the first review's attacks and fuzzer (`era3/attack.clj`) 1,979 and 1,988 oracles: **0 violations**; gateway suites 76 tests, 71,170 assertions passing, 1 error: the known `feed-test` `http-route` error, the same on the base (it is what makes the script exit 1, as for DX-ERA2 and DX-ACT9) |
+| DX-ACT9's gate (`act9/inproc.sh after`, 1,000 schedules) | 8,267 oracles, **0 violations** |
+| The second review (`REVIEW-2.md`, `1c656316b`), its findings as gates | **E9** (a derived copy recorded before a removal stays readable, unsealed and sealed): closed for the copies this option seals (T1; gate (e), whose oracles allow no copy). **E6** (a ticket naming fewer accounts than its writer read lets the copy survive): closed for sealed copies, because the key follows the rows read, not the ticket (gate (e)'s cross-account write). **N5** (a log restored older than the data): not run; argued in section 9, item 9. **N1 to N4** (the removal protocol: an orphan declaration, deliveries into a recipient moved per account, mixed versions): not changed by this option and not closed here. Its `attack2.clj` was not run on this branch: its derived writes are written in clear, so with or without the option they show the copy E9 describes |
 
 ### 6.7 Gate (g): what it costs
 
-{{COST}}
+**Bytes and datoms (T1, the same scenario off and on, the dump taken at the same point).** Sealing adds **no datom**:
+every derived database holds the same number of string datoms in both arms (recipient 88 and 88; the four archives 81,
+77, 73, 73 and the same). Bytes grow: the recipient's stored strings 21,551 to 25,260 (+17%), the four archives
+62,753 to 81,931 (+31%). Per sealed record (31 distinct in `T1-on-final`): median clear size 217 bytes, sealed 540
+characters, about 323 characters of overhead, of which 206 are the header; most of the header is the source
+database's long name (`s2-` and base64 of the scope), so a short database ID would about halve it. A settled change is
+sealed per unit, so a form with many small fields pays the overhead per field. A notice frame makes one seal call (all its
+deliveries and ledger items) and, for each subject in it, one open of its ledger (batched per frame); a delivery makes one
+open of the packet's deliveries and one seal of the recipient's state. Seal counters of `T1-on-6`: 6 seal calls (31
+records), 36 open calls (147 opened, 71 removed answers) for the whole run.
+
+**The removal's own work as a function of how many derived copies its subject has** (`era4/races.clj` phase `cost`, in
+process, sealed, file authority; times diagnostic):
+
+| Sealed copies of the subject's value | Removal: identities | Positions it wrote | Datoms it wrote | Time (ms) | Opening every copy afterwards (ms) |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 1 | 1 | 35 | 34 | 0 |
+| 10 | 1 | 1 | 35 | 43 | 3 |
+| 100 | 1 | 1 | 35 | 16 | 20 |
+| 1,000 | 1 | 1 | 35 | 12 | 50 |
+
+The removal visits no derived copy, so its work is the same with 1,000 copies as with none (the time falls as the JVM
+warms). It therefore stays within its try bound exactly as before: the subject check bounds it at 4 commit attempts by
+construction (DX-ERA2 13.3), and every removal of gate (e) completed within 3 resumes. What grows with the copies is the
+work of whoever opens them afterwards, which answers removed.
+
+**Gateway CPU per call** was not measured (Mac). Each seal or open derives one key per record from its assertions'
+keys: with the file authority one file read per assertion, with the PostgreSQL authority one SQL read and one AES
+unwrap per assertion, uncached (follow-up 3).
 
 ## 7. What the store now promises about derived copies, and what it cannot
 
-{{PROMISES}}
+**Promised, under `TX2_DERIVED_SEAL=1` on a sealed protected database, for the derived copies this option seals**
+(recorded notice packets, notice ledgers, settled stored changes, the recipient's state and delivered records, and so
+the journal entries, feed entries, native data, backups and any copy made from them, such as the reporting copy):
+
+1. From the removal's publication, no route of the store opens a derived record computed from the removed value: the
+   open route answers `{removed: [assertion IDs], seq}` at any basis (the boundary of TARGETS 7.1), and the recorder,
+   the settlement readers and the receiver read it as removed.
+2. Once the removed assertion's key is deleted (the shred worker, after `TRIPLEX_ERASURE_SHRED_GRACE_MS`, default 5
+   minutes), no byte the store holds can be opened, in any database of the same removal authority, in any journal
+   entry, feed entry, backup or restored copy of the data: the record's key is computed from that key and stored
+   nowhere. A key restored from an older copy of the authority is deleted again by the worker (`@shredded` starts at 0
+   after a restart), and the published removal decides meanwhile (gate (e): restores).
+3. This holds whatever the derived write's ticket named (the second review's E6 is closed for sealed copies: the key
+   follows the rows the derivation read, not the accounts its ticket named), whenever the copy landed (before, during or
+   after the removal: DX-ACT9's in-flight deliveries are closed for content), and whichever process wrote it.
+4. The notice stream goes on: a subject whose notices were computed from the removed value starts a new generation and
+   is sent its current notices again from the masked data; every other subject and account continues byte for byte.
+
+**Not promised:**
+
+1. **That a notice existed.** The packet keeps one entry per delivery with its subject and generation in clear; a
+   subject's ledger document exists; its generation changes when its state is forgotten. "Subject X had a notice at
+   event E" stays readable, even when only a rule reading a protected value could have produced it (DOCEXP: X's
+   document had expired). Kind, rule, key, item ID, payload, version and sequence are inside the sealed bytes.
+2. **A delivered notice cannot be un-sent.** A recipient outside the store (a person, an email, a payroll system), or a
+   client that opened a record before the removal and kept the clear bytes, has what it was given. The store tells a
+   follower what to forget: the removal's `erase` change names the removed assertion IDs, and every sealed record names
+   in clear the assertion IDs it was sealed under.
+3. **Copies outside this option's reach** (inventory rows 11, 22, 23, and every unsealed database): the keys' own dead
+   copies in PostgreSQL and in backups of the authority (they open with the one wrapping key); the non-held paths; the
+   reconcile index's postings; every protected value of an unsealed database (masking only).
+4. **During the grace period** (published, key not yet deleted) the value is masked on every route but recoverable by
+   anyone who can read the authority and the wrapping key.
+5. **The client's memory**: the clear content between evaluation and the seal call, and what a caller keeps after
+   opening. Held readers' caches key on the removal sequence under the option (row 19).
 
 ## 8. The server run (written, not run)
 
-{{SERVER}}
+`era4/server.sh` (Linux, a clean clone at the head, this branch's image by ID; written, not run). Per arm a stack with
+the PostgreSQL removal authority shared by both gateways (the production removal path, grace 0), the per-account rule,
+the subject check and account tickets; T1 against it (on: sealed; off: unsealed, as on the Mac); `pg_dump` of the data
+and of the authority (the key table left out) scanned afterwards. Predictions, written 2026-11-24 before any server run:
+
+| Measure | Off | On | Shown wrong if |
+| --- | --- | --- | --- |
+| X's removed value and derivatives in routes, client reads and `pg_dump` of the data | found (about 100 or more, as the Mac) | **0** | any occurrence on |
+| Y's and W's values | found | found through the open route | absent (the scan or the open route is broken) |
+| Stream after the removal | stops at the first save | continues, oracle 0 differ | any difference |
+| A frame's time (settlement, notice) | as today | **+20 to +150%**: one seal call per frame, and with the PostgreSQL authority each protected assertion's key is one SQL read (64 subjects with 2 protected values each: 128 reads per frame; no key cache) | more than 3 times off (then a per-cut key cache in the gateway is needed before any scale run) |
+| The removal's own time | as today | within 10% of off (it visits no derived copy) | it grows with the subject's number of derived copies |
+| Bytes per delivery, per ledger item | as today | +60 to +100% (about 130 to 200 bytes of header, nonce and tag, and base64) | above +200% |
+
+At the deep scale (the held layout, 1 billion records) the same option needs the miniature to declare a protected
+attribute its rules read (the deep profile's string pay rate) and the server's protected database to be sealed; that is
+not written yet (follow-up 4).
 
 ## 9. Not verified
 
-{{NOTVERIFIED}}
+1. **Nothing ran on a server.** Every count is Mac toy size; every time is diagnostic, taken with several other builders
+   on the lab VM.
+2. **The held layout's derived writers** (one database, `heldWorlds`, deep worlds) were not run with the option: T1 is the
+   W0 lazy store, which runs the same `RecordedNotices`, `Archive` and `receiveOrdered` code with its archives in their
+   own databases. `heldWorlds` notes its rows (`decision.ts` 58) but no held run sealed anything.
+3. **A real backup and restore** of the data and the authority: in process the restore is the authority's key put back
+   and the worker restarted; the data was never restored from a backup.
+4. **The PostgreSQL authority with the option**: every run used the file authority. With PostgreSQL a key is one SQL read
+   per assertion per call (no cache), and destroying it deletes a row whose dead copy stays in PostgreSQL's files and WAL
+   until overwritten (row 11).
+5. **Cached replies on a second reader**: T1 has one gateway. The gateway's caches hold derived documents as sealed
+   bytes by construction (rows 14, 17); the second review's stack read Reach on a second gateway for protected values.
+6. **Ledger in parts** (`TX2_NOTICE_LEDGER=parts`) and count frames: the option needs byte frames and was run with
+   whole ledgers only.
+7. **A protected attribute saved after the removal by a lazy account on a sealed database** is refused by the SDK's
+   preview (5.1 item 1); T1's later saves are of unprotected attributes.
+8. **The reconcile index** (row 23) and the non-held paths (row 22) are not sealed.
+9. **The second review's N5** (a removal log restored older than the data lets an old derived write land after the
+   removal) was not run with the option. Argued: its copy is sealed under the removed assertion's key, so it opens as
+   removed once the correct log is back, and as soon as the key is deleted it opens nowhere; the frame landing after the
+   removal is unchanged. N1 to N4 concern the removal protocol and are unchanged by this option.
+10. **Derived values computed from several subjects**: the design covers them (the union of their worlds' rows), but no
+   rule here computes one, so none was run.
 
 ## 10. Follow-ups
 
-{{FOLLOWUPS}}
+1. **Wrapping-key rotation** (row 11, TARGETS 7.9): re-wrap every live key under a new wrapping key after each removal
+   (or each day) and destroy the old one, so a destroyed key's dead copies and older backups of the authority cannot be
+   opened.
+2. **The reconcile index** (row 23, TARGETS 7.4): seal each subject's postings and evaluate the ranges after opening, or
+   keep protected attributes out of indexed rules.
+3. **A per-cut key cache in the gateway** for the derived routes (the PostgreSQL authority reads one key per assertion
+   per call), dropped on every published removal.
+4. **The held layout at scale**: declare a protected attribute the deep rules read (the string pay rate), run the
+   miniature and the server run sealed.
+5. **The three faults of 5.1**, now fixed only under the option, should be fixed by default on the one branch: a
+   removal's transaction ID in the SDK's form (it also fixes DX-ACT9's enrolment beside removals), the lazy account's
+   walk accepting a removal, and a preview of unprotected staged rows on a sealed scope.
+6. **Should an unsealed protected scope exist outside tests?** No (section 1): refuse it in production configuration.
