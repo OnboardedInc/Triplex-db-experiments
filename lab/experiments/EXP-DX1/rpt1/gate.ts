@@ -250,6 +250,52 @@ await both(async (s) => {
 });
 log("step", { step: "imported and removed" });
 
+// [DX-INT5] Pair (a): whole-subject imports (the gateway runs TX2_IMPORT_WHOLE_SUBJECT=1, one import commit per subject)
+// while the clean projector follows. A watcher reads the copy's watermark and the imported subjects' fact counts in ONE
+// repeatable-read transaction every few milliseconds: every count must be 0 or the whole subject (never half imported).
+// Every watermark it saw is compared with the store's history at that position after the helpers below (pairAMarks).
+// Unset: nothing here runs and the gate is as before.
+const pairA = process.env["DX_INT5_PAIR_A"] === "1";
+const pairAMarks = new Set<number>();
+if (pairA) {
+  const K = Number(process.env["DX_INT5_PAIR_A_SUBJECTS"] ?? 12), FIELDS = 24;
+  const ids = Array.from({ length: K }, (_, k) => subjectId(A31, N + 100 + k));
+  const counts = new Map<string, Set<number>>(ids.map((id) => [id, new Set<number>()]));
+  let watching = true, polls = 0;
+  const watcher = (async () => {
+    while (watching) {
+      await pg["rpt_clean"].begin("isolation level repeatable read", async (tx: any) => {
+        const [mark] = await tx`SELECT after_position FROM rpt.feed_state`;
+        const rows = await tx`SELECT entity, count(*)::int AS n FROM rpt.facts WHERE entity = ANY(${ids}) GROUP BY entity`;
+        const by = new Map(rows.map((r: any) => [r.entity, r.n]));
+        for (const id of ids) counts.get(id)!.add(Number(by.get(id) ?? 0));
+        pairAMarks.add(Number(mark.after_position));
+      });
+      polls++;
+      await sleep(15);
+    }
+  })();
+  await both(async (s) => {
+    for (const [k, id] of ids.entries()) {
+      await transact(s, `pair-a import ${k}`, Array.from({ length: FIELDS }, (_, f) =>
+        a(id, "Subject", `:form/import-f${String(f).padStart(2, "0")}`, S(`imported whole ${k}.${f}`), T_IMPORT)), s.importRt);
+      if (s === A) await sleep(120);
+    }
+  });
+  await waitWatermark(clean, A.receipts.at(-1).position, 120_000);
+  await sleep(200);
+  watching = false;
+  await watcher;
+  const half = [...counts].filter(([, c]) => [...c].some((n) => n !== 0 && n !== FIELDS));
+  check(half.length === 0, "pair (a): no imported subject seen half imported in the copy",
+    { half: half.slice(0, 3).map(([id, c]) => ({ id, counts: [...c] })) });
+  check([...counts.values()].every((c) => c.has(FIELDS)), "pair (a): every imported subject seen whole at the end");
+  bump("pair-a-polls", polls);
+  bump("pair-a-watermarks", pairAMarks.size);
+  log("pair-a", { subjects: K, fields: FIELDS, polls, watermarks: pairAMarks.size,
+    countsSeen: Object.fromEntries([...counts].map(([id, c]) => [id.slice(-12), [...c].sort((x, y) => x - y)])) });
+}
+
 // A read gateway restart: the projector's own source goes away for a few seconds.
 docker("restart", "-t", "5", `${prefix}-gw-r`);
 await waitHealthy(reader, A.db);
@@ -310,6 +356,13 @@ for (const [label, p] of [["head", P_H], ["P_A", P_A], ["P_B", P_B]] as const) {
   b1[label] = compareFacts(`b1 ${label}`, store, copy);
 }
 log("b1", b1);
+// [DX-INT5] Pair (a): the copy equals the store's history at every watermark the watcher saw during the imports.
+if (pairA) {
+  const marks = [...pairAMarks].filter((p) => p > 0).sort((x, y) => x - y);
+  const picked = marks.length <= 16 ? marks : Array.from({ length: 16 }, (_, i) => marks[Math.floor(i * (marks.length - 1) / 15)]!);
+  for (const p of picked) compareFacts(`pair (a) at watermark ${p}`, storeFacts(await omitRows(A.db, p)), await copyFacts(pg["rpt_clean"], p));
+  log("pair-a-watermarks-compared", { seen: marks.length, compared: picked.length, first: picked[0], last: picked.at(-1) });
+}
 await stopAfter("b1");
 
 // ---- (b2) every kind view equals the store at three positions and three valid instants ----

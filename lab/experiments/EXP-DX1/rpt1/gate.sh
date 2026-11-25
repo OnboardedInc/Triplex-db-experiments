@@ -11,7 +11,8 @@ repo=$1 out=$2
 export DOCKER_HOST
 prefix=tx2-dxrpt1-$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')
 mkdir -p "$out/stack"
-datomic_id=$(docker image inspect --format '{{.Id}}' "$(node "$repo/lab/config/datomic/runtime.mjs" tag)")
+# [DX-INT5] The image the launcher itself takes: the receipt's (DX_DATOMIC_IMAGE_RECEIPT) when set, else the runtime tag.
+datomic_id=$(docker image inspect --format '{{.Id}}' "$(node "$repo/lab/config/datomic/runtime.mjs" image)")
 pg_id=$(docker image inspect --format '{{.Id}}' postgres:17-alpine)
 node_id=$(docker image inspect --format '{{.Id}}' node:22.23.2-bookworm-slim)
 printf '{"datomic":"%s","postgres":"%s","node":"%s"}\n' "$datomic_id" "$pg_id" "$node_id" > "$out/images-expected.json"
