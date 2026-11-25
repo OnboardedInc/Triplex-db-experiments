@@ -4,7 +4,7 @@
 # committed head (gateway sources baked in; only the test files are mounted). One writer setting per JVM.
 # One ordinary heavy token per call:
 #   DOCKER_HOST=<lab VM socket> node lab/bin/heavy.mjs --label DX-S6-clj -- bash lab/experiments/EXP-DX1/s6/clj-run.sh OUT MODE SETTINGS
-# MODE: fuzz, attack (S5 attacks), outcome, bound, race, or all-gates (attack outcome bound race). Times are diagnostic.
+# MODE: fuzz, attack (S5 attacks), outcome, bound, race, owners (s3), create (s4). Times are diagnostic.
 set -uo pipefail
 : "${DOCKER_HOST:?set DOCKER_HOST to the lab VM socket}"
 out=${1:?new output directory}
@@ -45,6 +45,8 @@ case $mode in
   outcome) files="$s5 -i /exp/s6/outcome_gate.clj"; expr="(s6-outcome/main)" ;;
   bound) files="$s5 -i /exp/s6/bound_gate.clj"; expr="(s6-bound/main)" ;;
   race) files="$s5 -i /exp/s6/race_gate.clj"; expr="(s6-race/main)" ;;
+  owners) files="-i /exp/s3/owners_gate.clj -i /exp/s6/gates_main.clj"; expr="(s6-gates/run (quote owners-gate))" ;;
+  create) files="-i /exp/s3/owners_gate.clj -i /exp/s4/create_gate.clj -i /exp/s6/gates_main.clj"; expr="(s6-gates/run (quote create-gate))" ;;
   *) echo "mode $mode?" >&2; exit 2 ;;
 esac
 status=0
