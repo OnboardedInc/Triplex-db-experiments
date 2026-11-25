@@ -282,13 +282,18 @@
 ;; [S5 third review] With removals on (S5_REMOVALS=1), each scope's removal takes its own random transaction ID
 ;; (_tx/erase-<uuid>) and its record time from the clock when that scope runs it, and every later server-assigned
 ;; record time follows from it; those values differ between the two scopes by design, so they are compared as
-;; placeholders: removal IDs as erase-*, and every double of 1e12 or more (an epoch-millisecond record time) as MS.
+;; placeholders: removal IDs as erase-*, and every epoch-millisecond time (a double of 1e12 or more, or a 13-digit
+;; integer in text) as MS.
 (def ^:private removal-steps? (= "1" (System/getenv "S5_REMOVALS")))
 (defn- norm-text [^String s]
-  (if removal-steps? (-> s (str/replace #"erase-[0-9a-f-]{36}" "erase-*") (str/replace #"[0-9]\.[0-9]+E1[2-9]" "MS")) s))
+  (if removal-steps?
+    (-> s (str/replace #"erase-[0-9a-f-]{36}" "erase-*") (str/replace #"[0-9]\.[0-9]+E1[2-9]" "MS")
+        ;; an erased value's marker carries its removal's time as an integer (erasedAt)
+        (str/replace #"(?<![0-9])1[0-9]{12}(?![0-9])" "MS"))
+    s))
 (defn- norm-value [x]
   (if removal-steps?
-    (clojure.walk/postwalk (fn [v] (cond (and (double? v) (>= (double v) 1e12)) "MS"
+    (clojure.walk/postwalk (fn [v] (cond (and (number? v) (>= (double v) 1e12)) "MS"
                                          (string? v) (norm-text v)
                                          :else v)) x)
     x))
