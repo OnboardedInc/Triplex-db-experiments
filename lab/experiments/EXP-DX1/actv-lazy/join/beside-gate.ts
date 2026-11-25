@@ -296,6 +296,9 @@ class Gate {
         }
         independent = { ...t, onlyAddedSubjects: [...this.perturbed].sort((x, y) => x - y) };
       }
+      // [DX-ACT8, review F7] An adversary's write reaches a subject's notices at the next release's event, which this
+      // release's settlement has now recorded, so from the next release on that subject is checked strictly again.
+      this.perturbed.clear();
       return { ms, changes: stored.frontier.changes, subjectsChanged: got.length, notices: deliveries.length, independent,
         frames: { values: w.archive.contest.summary(), notices: w.recorder.archive.contest.summary() } };
     } finally {
