@@ -6477,3 +6477,16 @@ Source: removal builder final message; fix branch `exp/DX-N1-key-pool` `c78185f5
 - Not tested: a pool drained at a production save rate; more than two gateways; the extra round trip's latency at scale.
 
 **Action:** the builder asked to put the N3 fix on the same branch as its own commit, and to find every path where a driver's or library's message can reach an HTTP reply and replace it with a fixed text and a code. An independent review of the branch starts when it reports; it merges only on a clean review.
+
+## 2026-11-25 10:33 EST: second standalone fix built (key pool after a restart; no driver or library text in any reply); independent review started
+
+Source: removal builder final message; branch `exp/DX-N1-key-pool` `94c63ad6b`, three commits directly on the one branch's `8a362ac38`.
+
+- N1: a save that finds a sealed database's key pool empty fills it once and proceeds; a failed fill is counted and answers a typed 503. Stack with the PostgreSQL key store and a real restart: 0 saves refused in every step.
+- N3 narrow: a protection declaration whose key batch the key store refuses answers a typed 503 with a fixed text (before: a 400 carrying the driver's statement with the new wrapped keys in hex).
+- N3 wide: no reply carries a driver's, Datomic's or library's message. A refusal the gateway throws itself keeps its own text; every other exception answers its code with one fixed text and its detail goes only to the scrubbed failure line; refused native transactions answer a fixed text per code; a last catch around the whole handler replaces the web server's 500 page. Only two answers change code (the refused declaration fill; the save that met an empty pool); statuses and codes otherwise unchanged.
+- Tests: an injected exception carrying a marker, an INSERT statement and a 64-character hex run on every route (39 requests, three injection points): none appears in any body or header. Before the fix 5 of 9 checks failed on the file key store and 10 of 15 on PostgreSQL, one returning real wrapped key bytes; after, 0 failed. Gate exit 0: paired native log and replies (by status and code) identical on both key stores; suites as on the base.
+- **The same reply leak existed on the removal branch** (Datomic's own messages reached callers); fixed there in `c4dc117b0`, after the sixth review's pin.
+- Changes for a caller with every option off: error texts become fixed texts; this could break anything that matches on a reply's message text.
+
+**Action:** independent adversarial review of the branch started (the reviewer of the first standalone fix): keys issued, used or deleted wrongly by the fill on demand; any remaining path for a message to reach a reply; callers that depend on the old texts, including the save-line branch's rule that decides some refusals by exact message. It merges only on that reviewer's word.
