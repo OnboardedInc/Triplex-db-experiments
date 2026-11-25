@@ -88,3 +88,61 @@ cleanly and a new PostgreSQL container opens the same volume.
   identity check) plus the wait for a heavy token, which depends on the other agents' jobs (all four tokens held at
   17:16).
 - `datomic_kvs` grows by a few rows (the open's transaction and index work); nothing shrinks.
+
+## 5. What happened (executed 17:22 to 17:27)
+
+- **Builds (17:22:28 to 17:23:12):** install, SDK and console app, each under one heavy token with `--poll-ms 100`. A
+  first install at the default 1 s polling waited over 9 minutes without getting a token and was stopped by its own
+  process ID; hence the one change of this branch: `demo/server-up.sh` now polls for the toy start's token every 100
+  ms (`3b03e0511`). A smoke start of the new console server on a spare port answered `/api/health` and listed 27
+  tools, then was stopped by its process ID.
+- **Downtime: 17:23:36 to 17:25:35, 1 minute 59 seconds.** Old console stopped by its process ID at 17:23:36; no other
+  `page.ts 28580` process existed. `down.sh`: `DEMO DOWN in 12 s; working copy: shut down`. `up.sh` (no `--reset`):
+  start-stack 101 s (about 50 s of it waiting for a heavy token), identity 4 s, `DEMO READY head=279 records=45105
+  t=4913`, forwards on the same local ports, `Console: http://127.0.0.1:28580/` at 17:25:35.
+- **New stack:** prefix `tx2-dxdemo1-toy-d5643837`, PostgreSQL on the same volume `tx2-dxdemo1-toy-work`, the three
+  Java roles on image `21a67288` by ID, gateway source staged from `3b03e0511` (the one branch's `efee27905` plus this
+  page and the polling line; gateway files identical to `efee27905`).
+
+## 6. Verification on the live console (17:25 to 17:27)
+
+| Check | Before (old build) | After (one branch) |
+| --- | --- | --- |
+| Head position | 279 | 279 |
+| Records counted at start | 45,105 | 45,105 |
+| Accounts / subjects / per account | 10 / 120 / 12 each | 10 / 120 / 12 each |
+| Reviews in `account-003` | 6 | 6 |
+| 33 read-only answers (summary, accounts checked live, every account's subjects, reviews, four subjects now, at a past valid time, at position 270 and at a past record time, the change feed) | captured 17:13 | 0 value differences, 0 fields added or lost (timings and links set aside) |
+| `datomic_kvs` rows / value bytes | 1,227 / 22,666,117 | 1,232 / 22,798,836 (grew; nothing lost) |
+| "Ask across subjects": pending tasks of `account-003` | page absent | 12 of 48, complete, slow exact route, position 279 |
+| Questions page pass (`questions-pass.mjs`, read-only), light and dark | — | 46 of 46 |
+| Agent tool over MCP (`ask_across_subjects`) | — | 12, complete, slow exact route, position 279 |
+
+The prediction that the scope open would move the head was wrong: the head stayed 279 (the open's work did not add a
+logical position); the PostgreSQL table grew by 5 rows. Everything else matched the predictions.
+
+**The index is off for this database** (`indexed_attributes`: nothing declared; the page says "Fast answer from the
+index: off" and `IndexOff`). Turning it on (`DEMO_CROSS_INDEX=1 bash demo/toy/up.sh`) would start the read gateway
+with `TX2_CROSS_INDEX`, declare six attributes (`:i9/status`, `:task/progress`, `:placement/status`, `:review/of`,
+`:person/custom-pay-cents`, `:person/custom-start`) and backfill their entries into the owner's working copy
+(database-wide, only growing; about 966 entries on a fresh toy), after which "Auto" would answer those questions from
+the index and "Compare both routes" would show both. Not done: it is off by default and the page works without it.
+
+**Options the toy runs with now:** read gateway `TX2_PINNED_SHORTCUT=1`, `TX2_PINNED_CUT_LOOKUP=1`, `TX2_ID_LISTS=1`,
+`TX2_SWEEP=1`, `TX2_SWEEP_SHAPES=all`, a fresh sweep cursor key; the laptop memory profile as before. Off: the index,
+the erasure directory, the batched read route of API1 (`TX2_READ_BATCH`; its code is in the gateway, the route is
+absent), the account setting, per-account removal, the commit boundary, sealing and every Publish setting.
+
+## 7. Agent tools
+
+`triplex-demo` re-registered in the same local scope of the main checkout, now
+`node <dx-con2-app>/examples/demo-mcp/src/mcp.ts`; `claude mcp get` reports it connected, and a stdio call listed 27
+tools and answered `ask_across_subjects` (12, complete). Sessions already open keep their old MCP process until they
+are restarted.
+
+## 8. Rollback (not needed)
+
+From the worktree `dx-con1-app`: `bash demo/toy/down.sh`, then `bash demo/toy/up.sh` (no `--reset`), then re-register
+`triplex-demo` at `dx-con1-app`. The old worktree and the image are kept. The old build reinstalls its own commit
+function on open; the schema this build added is additive. If the data itself were ever damaged, the private dump of
+17:11 restores the working copy as it was before the switch.
