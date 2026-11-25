@@ -143,7 +143,9 @@
                 "protection declared")
         (when per-account?
           (let [moved (offers/route name "v2" "removal-per-account" {})]
-            (check! "setup" (and (= 200 (:status moved)) (get-in moved [:body "perAccount"])) "database moved per account" moved)))
+            (check! "setup" (and (= 200 (:status moved)) (get-in moved [:body "perAccount"])) "database moved per account" moved)
+            ;; [DX-ERA2 fifth pass] the boundary is the database's: a process allowed to (commit mode) moved it on
+            (check! "setup" (= commit? (rc/commit-boundary? (d/db conn))) "the database's boundary is the mode's" (:body moved))))
         (f name conn))))))
 
 (defn seed! [name owners]
@@ -354,9 +356,17 @@
             (removed-everywhere! (str scenario "/own") name conn a1 v #{} (head conn))))))))
 
 (defn migrate-back-and-forth
-  "Per account only: the move is idempotent, reversible, and a save prepared under the other mode is refused once."
+  "Per account only: the move is idempotent, reversible, and a save prepared under the other mode is refused once.
+  [DX-ERA2 fifth pass] On the commit boundary (one-way) moving back is refused and nothing else is checked here."
   []
-  (when per-account?
+  (when (and per-account? commit?)
+    (fresh-scope false
+      (fn [name conn]
+        (seed! name [a1 b1])
+        (expect "migrate: moving back from the commit boundary" (offers/route name "v2" "removal-per-account" {"back" true})
+                [409 "RemovalBoundaryOneWay"])
+        (check! "migrate" (rc/commit-boundary? (d/db conn)) "still on the commit boundary" nil))))
+  (when (and per-account? (not commit?))
     (fresh-scope false
       (fn [name conn]
         (let [seeds (seed! name [a1 b1]) pin (head conn)]
@@ -802,7 +812,9 @@
                 (expect (str label ": a frame naming no account after it") frame [200 nil]))
             (do (expect (str label ": a removal") removal [503 "RemovalLogBehind"])
                 (check! label (not= 200 (:status frame)) "a frame naming no account is refused" (offers/outcome frame))))
-          (check! label (= [[200 nil] [200 nil]] (map offers/outcome moves)) "moved back and forward" (map offers/outcome moves))
+          ;; [DX-ERA2 fifth pass] the commit boundary is one-way: moving back is refused there
+          (check! label (= (if commit? [[409 "RemovalBoundaryOneWay"] [200 nil]] [[200 nil] [200 nil]]) (map offers/outcome moves))
+                  "moved back and forward (back refused on the commit boundary)" (map offers/outcome moves))
           (expect (str label ": after the moves, the removal") (remove! name "ud-1" a1) [200 nil])
           (expect (str label ": and a frame naming no account") (offers/send name (frame-any name conn "ud-any2")) [200 nil])
           (native-counters-agree! label name conn))))))
