@@ -35,7 +35,7 @@ import { ensureSettings, type Permits } from "../actv-lazy/join/account-settings
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
 import { toWire } from "../actv-lazy/join/check.ts";
 import { largeRelease, parseShape } from "../actv-lazy/join/large-release.ts";
-import { readFullLedgers } from "../actv-lazy/join/ledger-parts.ts";
+import { comparable, readFullLedgers } from "../actv-lazy/join/ledger-parts.ts";
 import { evaluateRows } from "../actv-lazy/join/material.ts";
 import { Settlement } from "../actv-lazy/join/settlement.ts";
 import { Documents } from "../notify1/store.ts";
@@ -375,7 +375,7 @@ export async function act8R3Stack(c: Ctx) {
         const got = (await w.recorder.packets(head)).flatMap((p) => p.deliveries.map(toWire));
         assert.equal(canonical(got), canonical(want), h.account + ": notices differ from the fold");
         const full = await readFullLedgers(w.recorder.archive.db, roster, head, (s) => (state.get(s) ?? []).map((i) => i.id));
-        for (const s of roster) assert.equal(canonical(full.get(s)!.items), canonical(state.get(s) ?? []), h.account + ": ledger of " + s);
+        for (const s of roster) assert.equal(canonical(comparable(full.get(s)!.items)), canonical(comparable(state.get(s) ?? [])), h.account + ": ledger of " + s);
         // Values: every owed release after the first, stored or superseded, against the world at q - 1.
         const rels = ((await x.store.controls(head)).releases as any[]).filter((r) => r.storage === "owed").sort((l, r) => l.tx - r.tx);
         let stored = 0, superseded = 0;

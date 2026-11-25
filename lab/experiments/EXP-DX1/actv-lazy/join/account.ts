@@ -39,7 +39,7 @@ import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
 import { Conflict, fact, millis, namesOf, value, type EntityGuard, type Store } from "../store.ts";
 import { ledgerCapacity, ledgerPartChars, noticeItems, worstLedgerChars, type LedgerMode } from "./ledger-parts.ts";
-import { ensureSettings, injected, needsTransition } from "./account-settings.ts";
+import { ensureSettings, injected, needsTransition, transitionFencesMax } from "./account-settings.ts";
 import { calculate, worldsAt, type Proposal } from "../decision.ts";
 import { deepImpact, rawDeep, replaceDeep } from "./deep.ts";
 import { subjectOf, type Fact } from "../../../../bench/lib/world.ts";
@@ -105,6 +105,8 @@ export async function joinedCommandIdAt(s: Store, id: string, position: number) 
 export const publishBeside = () => process.env.TX2_PUBLISH_BESIDE === "1";
 /** [DX-ACT6] A Publish whose record exceeds the 4 MiB request limit (full documents only), refused before any write. */
 export class ReleaseTooLarge extends Error {}
+/** [DX-ACT8, fourth review Z2] A retryable refusal: the Publish wrote nothing and may be offered again. */
+export class SettingsPending extends Conflict {}
 /** [DX-ACT6] The store's limit on one fact value (`ValueDomains.datomic.string.maxUtf8Bytes`). */
 const valueLimit = 1048576;
 export type Edit = { e: string; a: string; values: W0.Fact["v"][]; from?: string };
@@ -524,9 +526,11 @@ export class JoinedAccount {
     // documents and its metadata names (the transaction's own journal aside). A record that also writes another
     // account's documents is no account's Publish.
     const names = new Set(Object.values(namesOf(this.s)).filter((v): v is string => typeof v === "string" && v.length > 0));
-    const own = (r: { changes: { entityId: string }[] } | null) =>
+    // [Fourth review Z6] The transaction's journal entity counts only when it is the record's own (`txId`), not any
+    // transaction's.
+    const own = (r: { txId?: string; changes: { entityId: string }[] } | null) =>
       Boolean(r && r.changes.length > 0 && r.changes.some((c) => c.entityId.startsWith(this.db.prefix)) &&
-        r.changes.every((c) => c.entityId.startsWith(this.db.prefix) || names.has(c.entityId) || c.entityId.startsWith("_tx/")));
+        r.changes.every((c) => c.entityId.startsWith(this.db.prefix) || names.has(c.entityId) || (r.txId !== undefined && c.entityId === r.txId)));
     if (this.s.held) {
       const key = joinedCommandId(this.s, id, true), found = await this.s.lookup(key);
       if (own(found)) return this.recorded(key, intents.scoped);
@@ -919,10 +923,21 @@ export class JoinedAccount {
     // then what this Publish does follows the account's stored settings only.
     // [U6] Whether a transition is needed is read from the stored settings at this plan (no per-process cache).
     let h0 = await this.s.head(), c0 = this.s.held ? await this.s.controls(h0) : undefined;
-    if (c0 && needsTransition(this.s, c0.settings)) {
+    // [DX-ACT8, fourth review Z2] A process holding a permission never plans as if the setting did not exist. If its
+    // transition cannot land (each try refused by a frame writing a row it fences, or a backlog over the fence bound),
+    // it waits and tries again (four rounds of eight tries, 25 to 75 ms apart); then its Publish is refused with a
+    // retryable answer and writes nothing, and the client offers it again. (Planning under the settings as stored
+    // published a release over the cap with no cap applied.)
+    for (let round = 0; c0 && needsTransition(this.s, c0.settings); round++) {
       await ensureSettings(this.s);
       h0 = await this.s.head();
       c0 = await this.s.controls(h0);
+      if (!c0.origin || !needsTransition(this.s, c0.settings)) break;
+      if (round === 3)
+        throw new SettingsPending("Publish refused for now: this process may turn on settings the account does not hold " +
+          "yet, and its transition did not land (each try was refused by a settlement write, or more than " +
+          transitionFencesMax + " owed releases wait for their values); offer the Publish again");
+      await new Promise((wake) => setTimeout(wake, 25 * (round + 1)));
     }
     // [DX-ACT8, review F3] Also before the definitions are written, so a refused release writes nothing.
     if (c0?.settings?.ledgerCap && storage === "owed") await this.ledgerCap(doc, c0.releases, h0, c0.settings.ledger!);

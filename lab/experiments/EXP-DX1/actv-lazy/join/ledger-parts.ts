@@ -33,7 +33,7 @@ export function ledgerPartsMax() {
   const sha = "0".repeat(64);
   // A cursor and head as large as they get: 64-hex hashes, large counters, the longest subject ids.
   const cursor = { epoch: "0".repeat(26), event: 999999, start: 999999, parent: sha, batch: 999999999, previous: sha,
-    entries: 999999999999, frames: "bytes", part: 999999, ledger: "parts", erasureSeq: 999999 };
+    entries: 999999999999, frames: "bytes", part: 999999, ledger: "parts", erasureSeq: 999999, archive: true };
   const head = (n: number): LedgerHead => ({ parts: n, event: 999999, chars: n * ledgerPartChars, sha });
   const id = "f".repeat(40);
   const frame = (k: number) => [
@@ -83,7 +83,8 @@ export async function readLedgers(db: Pick<Documents, "rows">, subjects: readonl
     }
     const h = head.value,
       rows: Row<string>[] = [];
-    assert(Number.isSafeInteger(h.parts) && h.parts >= 2 && Number.isSafeInteger(h.event) && h.event >= 1);
+    // [DX-ACT8, fourth review Z1] A head may name one part: a ledger in parts that shrinks stays in parts.
+    assert(Number.isSafeInteger(h.parts) && h.parts >= 1 && Number.isSafeInteger(h.event) && h.event >= 1);
     for (let i = 0; i < h.parts; i++) {
       const r = parts.get(ledgerPartKey(s, h.event, i));
       assert(r && typeof r.value === "string" && r.at <= head.at, "Ledger part missing under its head: " + s);
@@ -102,9 +103,14 @@ export function ledgerChange(db: Documents, subject: string, event: number, old:
   if (canonical(items) === canonical(old.items)) return { parts: [] as Op[], closing: [] as Op[] };
   const packed = pack(items),
     retire: Op[] = old.parts.map((r) => ({ op: "retract" as const, id: r.id }));
-  if (packed.length <= ledgerPartChars)
+  // [DX-ACT8, fourth review Z1] Only a ledger not in parts is replaced by a whole value: then the closing piece is one
+  // retraction and one value of at most a part (what `ledgerPartsMax` checks a part against). A ledger already in parts
+  // stays in parts even when it shrinks to what one part holds (under the archive a ledger holds the items in force, so
+  // it shrinks): its closing piece is then the retraction of its parts and a small head, the frame `ledgerPartsMax` was
+  // sized for, never the old parts beside a packed ledger.
+  if (packed.length <= ledgerPartChars && old.parts.length === 0)
     return { parts: [] as Op[], closing: [...retire, ...db.change(ledgerKey(subject), old.head, packed)] };
-  const count = Math.ceil(packed.length / ledgerPartChars);
+  const count = Math.max(1, Math.ceil(packed.length / ledgerPartChars));
   partsMax ??= ledgerPartsMax();
   if (count > partsMax)
     throw new FrameTooLarge(
@@ -128,6 +134,22 @@ export function ledgerChange(db: Documents, subject: string, event: number, old:
 // release can owe one subject, not by the account's history. Rejected: one archive value per subject (it grows with the
 // history, the same lifetime limit one step later), and dropping retired items (a reappearing ID would restart at 1).
 export const retiredKey = (subject: string, id: string) => "recorded-retired:" + subject + ":" + id;
+// [DX-ACT8, fourth review Z4] An archive row holds no payload: the item's ID (a hash of its key, kind, rule and subject),
+// its subject and its sequence, nothing else. The kernel's fold never reads a retired item's payload: an item that comes
+// back is delivered at its sequence + 1 whatever its payload (RULINGS Q40h, case C78), and the payload it holds from
+// then on is the new one. So every delivery and every item in force is the same as with the payload kept, and an archive
+// row carries no value of a subject's facts: a removal on request has nothing to reach in it, and the removal line's
+// sealing check can list the kind with the content-free ones. Rejected: keeping the payload (one more copy of a possibly
+// protected value per retired item, for good) and sealing each row (a record per retired item, for a field never read).
+/** A retired item as its archive row holds it. */
+export const archivedItem = (it: W0.ItemState) => ({ id: it.id, retired: true as const, seq: it.seq, subject: it.subject });
+/** An archive row read back as a kernel item state, its payload (which the fold never reads) the JSON `null`. */
+const fromArchive = (v: { id: string; retired: true; seq: bigint; subject: string }): W0.ItemState =>
+  ({ id: v.id, payload: "null", retired: true, seq: v.seq, subject: v.subject }) as W0.ItemState;
+/** For checkers: `items` with each retired item's payload the JSON `null`, the form in which the archive keeps it.
+ * Items in force are unchanged. */
+export const comparable = (items: readonly W0.ItemState[]) =>
+  items.map((i) => (i.retired ? ({ ...i, payload: "null" } as W0.ItemState) : i));
 /** The item IDs whose archive rows a subject's fold needs: work items not in its ledger (to continue their sequence),
  * and ledger items not among its work items (they retire, or are retired, and move to their rows). */
 export function retiredWanted(old: Ledger, work: readonly { id: string }[]) {
@@ -155,7 +177,7 @@ export function foldInput(subject: string, old: Ledger, work: readonly { id: str
     const r = archived.get(retiredKey(subject, w.id));
     if (!r) continue;
     assert(r.value.id === w.id && r.value.subject === subject && r.value.retired === true, "Archived item differs from its key: " + subject);
-    items.push(r.value);
+    items.push(fromArchive(r.value as never));
   }
   return items.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
@@ -176,7 +198,7 @@ export async function readFullLedgers(db: Pick<Documents, "rows">, subjects: rea
     const l = live.get(s)!,
       extra = ids.flatMap((id) => {
         const r = rows.get(retiredKey(s, id));
-        return r ? [r.value] : [];
+        return r ? [fromArchive(r.value as never)] : [];
       });
     out.set(s, { ...l, archived: extra.length, items: [...l.items, ...extra].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)) });
   }
@@ -202,7 +224,7 @@ export function noticeCandidate(
     const live = result.state.items.filter((i) => !i.retired),
       retire = result.state.items.filter((i) => i.retired);
     const change = ledgerChange(db, subject, event, old, live);
-    const rows = retire.map((it) => db.change(retiredKey(subject, it.id), archived.get(retiredKey(subject, it.id)), it));
+    const rows = retire.map((it) => db.change(retiredKey(subject, it.id), archived.get(retiredKey(subject, it.id)), archivedItem(it)));
     return {
       subject,
       units: [...result.deliveries, ...change.parts, ...rows],
@@ -237,7 +259,7 @@ export function noticeCandidate(
 // cannot pass it, every later release's notices in that account are never recorded. Unset: nothing here is used.
 const sample = { scopeName: "ledger-capacity" } as never;
 const longCursor = { epoch: "0".repeat(26), event: 999999, start: 999999, parent: "0".repeat(64), batch: 999999999,
-  previous: "0".repeat(64), entries: 999999999999, frames: "bytes", part: 999999, ledger: "parts", erasureSeq: 999999 };
+  previous: "0".repeat(64), entries: 999999999999, frames: "bytes", part: 999999, ledger: "parts", erasureSeq: 999999, archive: true };
 let wholeMax: number | undefined;
 /** The longest packed ledger one subject can have and still be written. */
 export function ledgerCapacity(mode: LedgerMode) {

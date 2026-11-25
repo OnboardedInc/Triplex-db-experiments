@@ -1,6 +1,10 @@
 // [DX-ACT10, fourth review] Attacks on the Publish line at a6f89a409 (code a380292be): the transition's fences, the
 // retired-item archive, the random frame and enrolment IDs, U2 and U4 as fixed. Real code over memstore.ts (in process,
 // diagnostic only). Run: node --experimental-strip-types --test lab/experiments/EXP-DX1/act10/review4.test.ts
+// [DX-ACT8, fifth round] Flipped to the fixed behaviour: W1, W1b (Z3), W3 (Z6), W7 (Z2), W8, W8b (Z1). W4 counts any stop
+// as a failure (W4_SEEDS histories from W4_FROM; the standing gate runs 200). W2 still states Z5 (closed by the gateway
+// rule, not here). Ledgers with their archive are compared in the archive's form (`comparable`: a retired item's payload,
+// which the kernel's fold never reads, is not kept; Z4).
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { W0, canonical } from "../../../bench/lib/w0-world.ts";
@@ -11,7 +15,7 @@ import { Archive } from "../actv-lazy/join/archive.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
 import { toWire } from "../actv-lazy/join/check.ts";
 import { largeRelease, parseShape } from "../actv-lazy/join/large-release.ts";
-import { readFullLedgers, readLedgers } from "../actv-lazy/join/ledger-parts.ts";
+import { comparable, readFullLedgers, readLedgers } from "../actv-lazy/join/ledger-parts.ts";
 import { RecordedNotices } from "../actv-lazy/join/recorded.ts";
 import { fact, namesOf } from "../actv-lazy/store.ts";
 import { Documents } from "../notify1/store.ts";
@@ -121,7 +125,7 @@ async function oracle(t: Setup, x = t.x) {
   const live = await readLedgers(ndb, roster, head);
   const subjects = roster.map((s) => ({
     s,
-    fullEqual: canonical(full.get(s)!.items) === canonical(state.get(s) ?? []),
+    fullEqual: canonical(comparable(full.get(s)!.items)) === canonical(comparable(state.get(s) ?? [])),
     liveIsInForce: canonical(live.get(s)!.items) === canonical((state.get(s) ?? []).filter((i) => !i.retired)),
     everHeld: (state.get(s) ?? []).length,
     inForce: (state.get(s) ?? []).filter((i) => !i.retired).length,
@@ -133,7 +137,7 @@ async function oracle(t: Setup, x = t.x) {
 }
 
 // --------------------------------------------------------------------------------------------- (1) the fences, W1
-test("W1: a transition between a notice turn's two head reads: the next event is written under the settings without the archive, in the settler's own mode", async () => {
+test("W1: a transition between a notice turn's two head reads: the event is written under the archive, in parts (Z3 fixed)", async () => {
   const t = await setup();
   // Before any setting: a release of 40 notice policies, its notices recorded by a settler naming no mode (whole).
   assert((await publish(t, t.proc("pub-g0", NONE), "g0", tagged(40, "g0"))).ok);
@@ -164,18 +168,20 @@ test("W1: a transition between a notice turn's two head reads: the next event is
   const next = await recordNotices(t, "s2", NONE, undefined, await tailOf(t));
   const o2 = await oracle(t);
   const out = { transitionLanded: fired, settings, first, cursorAfterEvent: { event: cursor?.event, archive: cursor?.archive ?? null, ledger: cursor?.ledger ?? null },
-    afterEvent: o1.subjects.map((s) => ({ ledger: s.ledger, inForce: s.inForce, parts: s.parts, archived: s.archived })), noticesEqual: o1.noticesEqual,
+    afterEvent: o1.subjects.map((s) => ({ ledger: s.ledger, inForce: s.inForce, parts: s.parts, archived: s.archived, fullEqual: s.fullEqual })), noticesEqual: o1.noticesEqual,
     next, afterNext: o2.subjects.map((s) => ({ ledger: s.ledger, inForce: s.inForce, archived: s.archived, fullEqual: s.fullEqual })), nextNoticesEqual: o2.noticesEqual };
   console.log("[W1] " + JSON.stringify(out));
   assert(settings?.archive && settings.ledger === "parts", "the settings were on when the event was written");
   assert.equal(first, "recorded");
-  // The finding: the event written after the transition carries no archive, and its ledgers keep the retired items.
-  assert.equal(cursor?.archive, undefined);
-  assert(o1.subjects.every((s) => s.ledger > s.inForce && s.archived === 0), "the event's ledgers hold retired items, none archived");
+  // [DX-ACT8, fifth round] Fixed (Z3): the decision is read at the position the frame is guarded on, so the event written
+  // after the transition is under the archive, its ledgers hold the items in force only, and the fold is exact.
+  assert.equal(cursor?.archive, true);
+  assert.equal(cursor?.ledger, "parts");
+  assert(o1.noticesEqual && o1.subjects.every((s) => s.ledger === s.inForce && s.archived > 0 && s.fullEqual), "the event archives its retired items");
   assert(o2.noticesEqual && o2.subjects.every((s) => s.fullEqual && s.ledger === s.inForce), "the next event archives and the fold is exact");
 });
 
-test("W1b: the same window for a settler naming no mode on ledgers already in parts: U2's refusal, once", async () => {
+test("W1b: the same window for a settler naming no mode on ledgers already in parts: recorded at once (Z3 fixed)", async () => {
   const t = await setup();
   // Before any setting, as every gate ran: a 400-policy release, its notices recorded in parts.
   assert((await publish(t, t.proc("pub-big", NONE), "big", tagged(400, "h"))).ok);
@@ -199,13 +205,14 @@ test("W1b: the same window for a settler naming no mode on ledgers already in pa
   const o = await oracle(t);
   const out = { settings: await settingsOf(t), first, again, noticesEqual: o.noticesEqual, subjects: o.subjects.map((s) => ({ fullEqual: s.fullEqual, archived: s.archived })) };
   console.log("[W1b] " + JSON.stringify(out));
-  assert.match(first, /A ledger in parts needs TX2_NOTICE_LEDGER=parts/);
+  // [DX-ACT8, fifth round] Fixed (Z3): no refusal, the first run records (the second finds nothing left).
+  assert.equal(first, "recorded");
   assert.equal(again, "recorded");
   assert(o.noticesEqual && o.subjects.every((s) => s.fullEqual));
 });
 
 // ------------------------------------------------------------------------------------- (3) the enrolment ID, W2
-test("W2: the enrolment with TX2_ENROL_BESIDE_SAVES unset keeps the computable ID; with it set, another account can write one of the four entities first", async () => {
+test("W2: the enrolment with TX2_ENROL_BESIDE_SAVES unset keeps the computable ID; with it set, another account can write one of the four entities first (Z5: stays, closed by the gateway rule)", async () => {
   const t = await setup(["acct-b"]);
   const B = t.accounts[0]!;
   const enrolAs = async (held: ReturnType<typeof heldAccount>, label: string) =>
@@ -237,7 +244,7 @@ test("W2: the enrolment with TX2_ENROL_BESIDE_SAVES unset keeps the computable I
 });
 
 // --------------------------------------------------------------------------------- (U4 as fixed) the journal rule, W3
-test("W3: the every-change rule accepts a change to any transaction's journal entity, not only the record's own", async () => {
+test("W3: the every-change rule accepts only the record's own journal entity, not another transaction's (Z6 fixed)", async () => {
   const t = await setup(["acct-a", "acct-b"]);
   const [A, B] = t.accounts as [Acct, Acct];
   // A Publish of B, whose journal entity a forged record of A then writes into.
@@ -255,9 +262,11 @@ test("W3: the every-change rule accepts a change to any transaction's journal en
   const prefixA = (A.account(f) as any).db.prefix;
   const forged = await outcome(fs.commit("joined:r9", "lazy/join", [fact(prefixA + "act10-forged", "act10/x", 1), fact(String(rb.txId), "act10/x", 1)], await fs.head(), context));
   const a = await outcome(A.account(t.proc("pa2", NONE)).publish("r9", W0.R2.doc, validTime, "owed") as any);
-  const out = { bTx: rb.txId, forged, aGetsForged: a.ok && (a as any).txId === (forged as any).txId };
+  const out = { bTx: rb.txId, forged, a, aGetsForged: a.ok && (a as any).txId === (forged as any).txId };
   console.log("[W3] " + JSON.stringify(out));
-  assert(out.aGetsForged, "a record that also writes another transaction's journal entity is taken as A's own");
+  // [DX-ACT8, fifth round] Fixed (Z6): the forged record is never returned as A's Publish.
+  assert((forged as any).ok, "the forged record landed");
+  assert(!out.aGetsForged, "a record that also writes another transaction's journal entity is not A's own");
 });
 
 // ------------------------------------------------------ (2) the archive's fold against an independent oracle, W4
@@ -283,7 +292,7 @@ test("W4: random retire, re-add, rename and payload changes over many releases, 
     const pool = tagged(240, "w");
     const all = pool.policies!.map((p) => p.id);
     const renames = new Map<string, string>(), due = new Map<string, number>();
-    let turnedOn = -1, kills = 0, settles = 0, stop: string | undefined;
+    let turnedOn = -1, kills = 0, settles = 0, stop: string | undefined, maxParts = 0;
     const modes: (undefined | "whole" | "parts")[] = [undefined, "whole", "parts"];
     releasesLoop: for (let k = 0; k < releases; k++) {
       // Before release `on`, publishers and settlers are allowed nothing and name `whole` or nothing (whole ledgers);
@@ -308,18 +317,20 @@ test("W4: random retire, re-add, rename and payload changes over many releases, 
           .then(() => "recorded", (e) => (e instanceof Killed ? "killed" : String(e?.constructor?.name) + ": " + String(e?.message).split("\n")[0]!.slice(0, 120)));
         if (res === "recorded") break;
         if (res === "killed") { kills++; continue; }
-        // W8's stop (a ledger shrinking from parts to a nearly full single part): counted, and this seed ends here.
-        if (/closing piece alone exceeds/.test(res)) { stop = "release " + k + " (" + size + " policies): " + res.slice(0, 80); stopped++; break releasesLoop; }
-        throw new Error("seed " + seed + " release " + k + ": " + res);
+        // [DX-ACT8, fifth round] Any stop is a failure (Z1 fixed): counted, and this seed ends here.
+        stop = "release " + k + " (" + size + " policies): " + res.slice(0, 120); stopped++; break releasesLoop;
       }
     }
     if (stop) { rows.push({ seed, turnedOn, settles, kills, stop }); continue; }
     const o = await oracle(t);
-    const ok = o.noticesEqual && o.subjects.every((s) => s.fullEqual && s.liveIsInForce);
+    const ok = o.noticesEqual && o.subjects.every((s) => s.fullEqual && s.liveIsInForce) && turnedOn >= 0;
     if (!ok) failures++;
-    rows.push({ seed, turnedOn, settles, kills, notices: o.notices, ok, subjects: o.subjects.map((s) => [s.everHeld, s.inForce, s.ledger, s.parts, s.archived]) });
+    for (const s of o.subjects) maxParts = Math.max(maxParts, s.parts);
+    rows.push({ seed, turnedOn, settles, kills, notices: o.notices, ok, maxParts, subjects: o.subjects.map((s) => [s.everHeld, s.inForce, s.ledger, s.parts, s.archived]) });
   }
-  console.log("[W4] " + JSON.stringify({ seeds, releases, failures, stoppedByW8: stopped, rows }));
+  const totals = rows.reduce((n: any, x: any) => ({ notices: n.notices + (x.notices ?? 0), kills: n.kills + x.kills, settles: n.settles + x.settles }), { notices: 0, kills: 0, settles: 0 });
+  console.log("[W4] " + JSON.stringify({ seeds, from, releases, failures, stopped, totals, rows }));
+  assert.equal(stopped, 0, "no history stops the recorder");
   assert.equal(failures, 0);
 });
 
@@ -367,7 +378,7 @@ test("W6: the fence creates an owed release's first values row in the byte-frame
 });
 
 // ------------------------------------------------------- (1) a transition starved by frames, W7
-test("W7: a permitted publisher whose eight transitions are each refused by a frame plans without the settings: the cap is not applied and the release over it publishes", async () => {
+test("W7: a permitted publisher whose transitions are refused by frames waits, then either turns the settings on (the cap refuses) or refuses its Publish, retryable; the release over the cap never publishes (Z2 fixed)", async () => {
   const t = await setup(["acct-a"], 256);
   const A = t.x;
   // A pending owed release whose values frames (pages of four subjects) write its progress row, which every transition fences.
@@ -386,14 +397,25 @@ test("W7: a permitted publisher whose eight transitions are each refused by a fr
   const settingsAfter = await settingsOf(t);
   // With no one busy, the next permitted Publish turns the settings on; the over-cap release's notices then cannot record.
   const next = await publish(t, t.proc("publisher-2", { ...NONE, ledgerCap: true }), "r3", W0.R2.doc);
+  // The over-cap release offered again, now that the settings are on: the cap refuses it.
+  const overAgain = await publish(t, t.proc("publisher-3", { ...NONE, ledgerCap: true }), "over", tagged(1700, "o"));
   const notices = await recordNotices(t, "settler", NONE, undefined, await tailOf(t));
-  const out = { transitionsTried: transitions, framesBetween: frames, over, settingsAfterOver: settingsAfter ?? null, next, settings: await settingsOf(t), notices };
+  const out = { transitionsTried: transitions, framesBetween: frames, over, settingsAfterOver: settingsAfter ?? null, next, overAgain, settings: await settingsOf(t), notices };
   console.log("[W7] " + JSON.stringify(out));
-  assert(transitions >= 8 && over.ok && settingsAfter === undefined, "the over-cap release published without the cap");
+  // [DX-ACT8, fifth round] Fixed (Z2): the permitted Publish waits and tries again (four rounds of eight tries). Here the
+  // values release runs out of frames while it waits, so its transition lands and the cap refuses the release; had every
+  // try been refused it would have been refused, retryable, writing nothing (round5.test.ts R5-4). Either way the
+  // release over the cap never publishes.
+  assert(transitions >= 8 && !over.ok, "the over-cap release did not publish");
+  assert.match((over as any).error, /Publish refused for now|Release refused: one subject could owe/);
+  assert(settingsAfter === undefined ? /Publish refused for now/.test((over as any).error) : settingsAfter.ledgerCap === true);
+  assert(next.ok && (await settingsOf(t))?.ledgerCap === true, "the next permitted Publish turned the settings on");
+  assert(!overAgain.ok && /Release refused|owe|parts/i.test((overAgain as any).error), "the cap refuses the release");
+  assert.equal(notices, "recorded");
 });
 
 // ------------------------------------------------- (2) a ledger that shrinks from parts to one part, W8
-test("W8: under the archive a subject's ledger shrinks from parts back to one part; when that part is nearly full the closing piece cannot be written", async () => {
+test("W8: under the archive a subject's ledger shrinks from parts to what one part holds: it stays in parts, and every size records (Z1 fixed)", async () => {
   const results: Record<string, unknown>[] = [];
   for (const n of [120, 140, 150, 155, 160, 163, 166]) {
     const t = await setup(["acct-a"], 2);
@@ -407,10 +429,16 @@ test("W8: under the archive a subject's ledger shrinks from parts back to one pa
     const small = await publish(t, publisher, "small", tagged(n, "s" + n));
     const second = await recordNotices(t, "settler-small", NONE, undefined, await tailOf(t));
     const again = second === "recorded" ? "-" : await recordNotices(t, "settler-small-2", NONE, "parts", await tailOf(t));
-    results.push({ policies: n, big: big.ok, first, partsBefore, small: small.ok, second, again });
+    const partsAfter = (await readLedgers(ndb, roster, await peek.head())).get(roster[0]!)!.parts.length;
+    const o = await oracle(t);
+    results.push({ policies: n, big: big.ok, first, partsBefore, small: small.ok, second, again, partsAfter, exact: o.noticesEqual && o.subjects.every((s) => s.fullEqual && s.liveIsInForce) });
   }
   console.log("[W8] " + JSON.stringify(results));
-  assert(results.some((r) => /closing piece alone exceeds/.test(String(r.second))), "some size between one part and parts cannot be closed");
+  // [DX-ACT8, fifth round] Fixed (Z1): every size records at the first try, the ledger stays in parts (one part up to
+  // 163 policies, two at 166), exact.
+  assert(results.every((r) => r.big && r.small && r.first === "recorded" && r.second === "recorded" && r.partsBefore === 2 &&
+    (r.partsAfter === 1 || r.partsAfter === 2) && r.exact), "every shrink records");
+  assert(results.some((r) => r.partsAfter === 1), "a ledger in parts that shrinks to one part stays in parts");
 });
 
 // ------------------------------------------- (3) the random enrolment ID: kills at every step, two at once, W9
@@ -455,7 +483,7 @@ test("W9: an enrolment killed at every step (reply lost or not), then enrolled a
   assert.equal(bad.length, 0);
 });
 
-test("W8b: after a ledger of ten parts, small releases (20 and 60 policies here) stop the recorder too: the closing piece then has no margin beyond a head", async () => {
+test("W8b: after a ledger of ten parts, small releases record: the closing piece is the retractions and a head (Z1 fixed)", async () => {
   const results: Record<string, unknown>[] = [];
   for (const n of [20, 60, 100, 120, 140, 150, 166]) {
     const t = await setup(["acct-a"], 1);
@@ -464,10 +492,12 @@ test("W8b: after a ledger of ten parts, small releases (20 and 60 policies here)
     const first = await recordNotices(t, "settler-big", NONE, undefined, await tailOf(t));
     await publish(t, publisher, "small", tagged(n, "y" + n));
     const second = await recordNotices(t, "settler-small", NONE, undefined, await tailOf(t));
-    results.push({ policies: n, first, second: second === "recorded" ? "recorded" : second.slice(0, 90) });
+    const o = await oracle(t);
+    results.push({ policies: n, first, second: second === "recorded" ? "recorded" : second.slice(0, 90), exact: o.noticesEqual && o.subjects.every((s) => s.fullEqual && s.liveIsInForce) });
   }
   console.log("[W8b] " + JSON.stringify(results));
-  assert(results.some((r) => /closing piece alone exceeds/.test(String(r.second))));
+  // [DX-ACT8, fifth round] Fixed (Z1).
+  assert(results.every((r) => r.first === "recorded" && r.second === "recorded" && r.exact));
 });
 
 test("W8c: probe, which releases after a ledger of K parts stop the recorder (diagnostic map)", { skip: process.env.W8C !== "1" }, async () => {

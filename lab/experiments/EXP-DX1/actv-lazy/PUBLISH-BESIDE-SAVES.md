@@ -5,10 +5,202 @@ Builder DX-ACT8, 2026-11-24, branch `exp/DX-ACT8-publish-beside-saves` from `exp
 work is correctness at toy size; every Mac time is diagnostic, every count exact. Nothing here ran on a server. Every
 option is default off; with nothing set every existing path is unchanged.
 
-Section 0 is what three independent reviews found and what changed after them (0.A is the third, the newest). Sections
-1 to 6 are the design, written before any code. The results follow from section 7.
+Section 0 is what four independent reviews found and what changed after them (0.C is the fourth, the newest; 0.A the
+third). Sections 1 to 6 are the design, written before any code. The results follow from section 7.
 
-## 0. What the three reviews found, and what changed after them
+## 0. What the four reviews found, and what changed after them
+
+### 0.C The fourth review (2026-11-25, `act10/REVIEW-4.md` on `exp/DX-ACT10-publish-review`, `5079fa7cc`): what changed after it
+
+**The review's verdict.** Fit to merge with every option off. With a setting on, one break that needs no attacker:
+under the archive a ledger in parts that shrank to one part was written whole beside the retraction of every old part,
+the closing piece exceeded the writer's bound, and the account's notices stopped for good (Z1). The code of this round
+is `8455107b6`.
+
+| # | Finding, in one line | The fix | The test that now passes |
+| --- | --- | --- | --- |
+| Z1 | A ledger in parts that shrinks to one part was written whole in the closing piece beside the retraction of every old part; the piece could exceed the writer's bound and stop the account's notices for good | A ledger already in parts stays in parts, even at one part (a head naming one part): its closing piece is always the retraction of at most `ledgerPartsMax()` parts and a head. Only a ledger not in parts is replaced by a whole value, and then the piece is one retraction and one value of at most one part. The limits are now computed with the largest cursor (the archive's) | `review4` W8 (after 2 parts, 120 to 166 policies: every size records at once, exact), W8b (after 10 parts, 20 to 166 policies), W4 at 200 histories with no stop (the gates, below); `round5` R5-3 (every old ledger, whole or 1 to 10 parts, against every new size: 77 closing pieces, the largest 7,998 us of the 8,000 us bound) |
+| Z2 | A permitted publisher whose transition was starved planned with no setting, skipped the cap, and published a release over it | A process holding a permission never plans as if no setting existed: it waits and tries again (four rounds of eight tries, 25 to 75 ms apart), then refuses its Publish with `SettingsPending` (a `Conflict`: retryable, nothing written). A settlement frame still plans under the stored settings (it writes what every reader reads) | `review4` W7 (the over-cap release never publishes: here the wait outlasts the busy frames, the settings turn on and the cap refuses it); `round5` R5-4 (a transition refused at every try: 32 tries, then `SettingsPending`, 0 records written; the next Publish turns the settings on and the cap refuses the release) |
+| Z3 | The notice turn decided the archive and the ledger mode from its first head read but committed guarded on its second | The settings are read at the settlement head the frame's guards (cursor and origin row) are read at (`recorded.ts`, `originAt(a.s, at)`) | `review4` W1 (the event after the transition is under the archive: ledgers hold the items in force, retired ones archived, exact), W1b (recorded at the first run, no refusal) |
+| Z4 | The archive's rows are a document kind the removal line's sealing check does not know, parts are character slices, and a retired item's payload was kept for good | An archive row now holds the item's ID, subject and sequence only, no payload (below); what the removal line must add is written below | `round5` R5-2 (every archive row's keys are exactly `id, retired, seq, subject`; re-added items delivered at sequence 2); every fold check in `review4`, `lifetime`, `fuzz.ts`, `stack-r3.ts` and `beside-gate.ts` compares ledgers with their archive in this form |
+| Z5 | The enrolment can still be denied: (a) with `TX2_ENROL_BESIDE_SAVES` unset its ID is computable; (b) with it set, one fact on one of its four entities blocks it | **Not changed here.** (a) is the one branch's behaviour with every option off, kept byte for byte; both close with the gateway rule (below) | `review4` W2 still states it |
+| Z6 | U4's every-change rule accepted a change to any `_tx/` journal entity | Only the record's own journal entity (`r.txId`) counts | `review4` W3 (the forged record is not returned as A's Publish) |
+| Z7 | The fence creates an owed release's first values row in the byte-frame form, so a page-framed settler then stores that release in byte frames | Information: every reader reads both framings; the values are the same (39 changes either way). "Nothing a reader sees changes" holds for the values, not for the framing | `review4` W6 |
+| Z8 | With no setting stored, frame IDs are deterministic as before | Information: every account with the options off; it closes with the account's first setting | — |
+
+**Z1 and older builds.** A reader from before this round (this line's earlier builds, and the one branch's ACT6
+reader) asserts that a ledger head names at least two parts, so it refuses a one-part head; it never misreads one. Such
+a head is written only under the settings (which a build from before them refuses anyway) or, with
+`TX2_NOTICE_LEDGER=parts` and no setting, when a ledger in parts shrinks below one part by payload changes alone
+(without the archive a ledger never loses items). With every option off nothing here changes.
+
+**The frames whose size depends on history, each bounded by construction.** Every commit this line's writers make,
+and what its size grows with:
+
+| Frame | Grows with | Bound (how it is kept) |
+| --- | --- | --- |
+| A notice frame's closing piece (a subject's ledger head change, the retraction of its old parts, the cursor) | The old ledger's part count, and, before Z1, a whole ledger beside the old parts | **At most `ledgerPartsMax()` = 10 retractions and a head**, or one retraction and one value of at most one part: Z1's rule. `ledgerPartsMax()` is the most parts whose retraction fits beside a head and the largest cursor, by the estimate in force (so also under a calibrated `TX2_SETTLE_COST`). R5-3 checks all 77 combinations |
+| A ledger (its parts) | Under the settings: the items in force, one release's. With no setting: every item the subject ever held | Under the settings: **the per-release cap at Publish** (at most 10 parts; 1,592 notice policies on the synthetic forms; a release whose policies one earlier release held always publishes). With no setting (every option off): not bounded, as on the one branch; a ledger that outgrows the bound is refused with `FrameTooLarge` (the old F3 / R10 limit). The options-off path is unchanged |
+| Archive rows | One row per item retiring in this event | Each row is a separate unit of fixed size (an ID, a subject, a sequence) written before the head; at most as many as the previous ledger's items in force, so bounded by the cap. Never in the closing piece |
+| The settings transition (origin, calendar, fenced progress rows, cursor) | The owed releases whose values are not settled (a paused account keeps publishing) | **At most 32 fenced releases** (`transitionFencesMax`): 23.9 ms of estimated service with an empty calendar. With more pending the transition does not commit this time; a permitted Publish meanwhile waits and is refused retryably (Z2), so no permitted process adds to the backlog (a process allowed nothing still can, during a rollout). R5-1: 33 pending, the Publish refused with nothing written; one drained, the transition lands with 37 changes |
+| The calendar row (`join-calendar`), written whole by every Publish, the transition, each due day's clock tick, and every save that adds a due day | The account's distinct future due instants (past ones leave at each tick); data, not history | **Not bounded by construction on this line.** It is the join layer's row (ACT1). By the writer's estimate a transition with no pending release stays within the 8 ms bound up to 284 calendar instants (about 8.5 ms at 365, 26.3 ms at 365 with 32 fenced releases), and about 34,900 instants fit the 1 MiB value. An account whose due horizon holds more than a few hundred distinct days needs the calendar in parts (one row per month, say) before it is beside saves at that size |
+| A Publish record | One release (its documents, the old one with full documents) plus the calendar | Refused before any write when one value exceeds the store's 1 MiB (`ReleaseTooLarge`) |
+| Values frames, notice packets, the cursor, the enrolment, the settlement control | One release, one frame, nothing | Filled to the writer's bound by `fillFrame`, or fixed size |
+
+Two reads (not frames) also grow with history: every plan reads all of the account's release facts (`controls`), and
+the transition reads the progress row of every owed release, one at a time. Neither holds the single writer.
+
+**Z4: the archive and the removal line.**
+
+- **Retired payloads are dropped at retirement (bound zero).** The kernel's fold never reads a retired item's
+  payload: an item that comes back is delivered at its sequence + 1 whatever its payload (RULINGS Q40h, case C78), and
+  from then on holds the new payload. So an archive row needs the item's ID, subject and sequence, and every delivery
+  and every item in force is the same as with the payload kept (W4, `lifetime`, the fuzzer). The ID is a SHA-256 over
+  the item's key, kind, rule and subject: identifiers, not a value of the subject's facts.
+- **What a removal on request does to archive rows that carry a removed value:** none does now. On this line a removal
+  does not rewrite ledgers: the recorder refuses notices of an earlier removal sequence, and a payload already written
+  stays in the ledger of items in force and in the delivered notices, as before the archive. Under the removal line's
+  sealing setting those two are sealed records, which a removal makes unreadable; the line's removed marker keeps the
+  IDs and sequences, which is all the fold needs.
+- **What the removal line's check must accept** (its `derived_seal.clj` on `exp/DX-ERA4-derived-copies` `6b6243ead`,
+  read, not merged):
+  1. `recorded-retired:<subject>:wi:<64 hex>` as a content-free kind, best checked to its exact shape (keys `id`,
+     `retired`, `seq`, `subject`; `id` matching the key; `subject` the key's subject), so no writer can put a value
+     there.
+  2. Ledger parts go through that line's sealed form (its `ledgerChangeUnits`: each part one sealed record of whole
+     items, head `form: "units"`), which already cuts at item boundaries. Cutting this line's clear parts at item
+     boundaries would not help: the check refuses clear content in a part whatever its cut. The merged recorder feeds
+     the archive's ledger (the items in force) into that path.
+  3. **That path has Z1's shape:** `ledgerChangeUnits` writes a list that packs within one part in its whole form
+     beside the retraction of every old part. Unreachable there today (without the archive a ledger never shrinks);
+     reachable once merged with the archive. The merge must apply Z1's rule there too.
+  4. **The per-release cap under the seal is not yet bounded by construction.** That line's page (14.2) gives a sealed
+     part about 180 items against about 168 in clear (1,790 and 1,680 a ledger), so the cap computed here in clear
+     characters is conservative for a new subject. But a sealed part's header grows with its subject's protected
+     history (superseded values count until removed), and a part that does not fit is resealed with a smaller chunk
+     (its 14.3), so for a subject with a long protected history a release this cap admits could need more than 10
+     sealed parts. That header is a frame size that depends on history: the merge must either compute the cap from
+     the sealed capacity of the subject's current header, or bound the header (for example by sealing under the live
+     protected values only).
+- Until the merge does 1 to 3, an account's settings here and that line's sealing setting must not both be on in one
+  database (as the review says).
+
+**Z5 and U8: what closes them.** The gateway rule of 0.B (with `account-ids` on, a write that touches an account's
+names without naming that account is refused), with two conditions from the save line's third review
+(`s5/REVIEW-3.md` on `exp/DX-S5-save-line-review` `c85a0d0b3`): its condition 3 (the account a request names comes
+from the authenticated caller, and a caller writes only its own account's entities; without it the setting separates
+honest callers only) and its R3-5 (a write of no one account's names under an account's command ID refuses that
+account's save for good). With both: Z5 (b) closes (the four entities are the account's names), U8 closes (0.B), and
+Z5 (a) closes for an account whose enrolment names it. Z5 (a) with every option off is the one branch's today.
+
+**The index question (read, not built).** With `TX2_CROSS_INDEX=1` every tape M save took the general writer
+(readiness page on `exp/DX-INT1` `f633233f6`, its XQ10 row: per-subject 23, general 337, against 360 and 0 without the
+index). Why, from the code at that commit:
+
+- `cross_index.clj` adds index operations to every save when the option is on: an entry per fresh declared value,
+  a retraction per retired one, a type entry when needed, and **a compare-and-set on the declaration's sequence on
+  every save** (`tx-ops`).
+- The one-owner writer admits them: it tests operations through the var `subject-save/small-op`, which
+  `cross_index.clj` replaces when the option is on, and it wraps `subject-save/render-ops` to send each entry to the
+  subject's numeric owner. So its 23 saves stayed on it.
+- **The creation writer (`subject_create.clj` 138) and the several-owners writer (`subject_owners.clj` 131) call
+  `prepared/small-op?` directly**, so every save that reaches them with the option on carries at least the fence and
+  declines with `protected-values-or-frame`; the general writer takes it. Tape M's other 337 saves are the ones the
+  one-owner writer declines anyway (290 of them create an owner); with the index off the creation writer takes all
+  of them (360 per-subject, 0 general), with it on none.
+
+What it would take for indexed saves to stay on the fast writers: (1) both writers test through the replaceable var,
+installed from `cross_index.clj` as for the one-owner writer, so no stored function's identity moves with the option
+off; (2) wrap `subject-owners/render-ops` (used by both) the same way, so an entry for an existing owner goes to its
+numeric entity and an entry for an owner created in the save keeps the owner's temporary ID, which the creation
+function resolves; (3) count the entries apart from the bound of 1,024 operations, or a save near it changes writer;
+(4) the gates: stored-function identities equal with the option off (`xq10/idents.sh`), the writer-built index equal
+to a backfill for creations and several-owner saves (XQ4's G2), datoms per shape (G6), and tape M with creation and the
+index on reading 360 per-subject and 0 general from `saveRoutes`.
+
+**The gates at the head.** All at `8455107b6`. Toy stack runs: the private image `98c95f37c42e` by ID (its gateway
+and runtime source inputs, SHA-256 `6da36597…`, are the head's: no gateway source changed after `43472352c`; compared
+equal before every run), holder `DX-ACT8`, the run checkout's `packages/core` and `packages/datomic` built at
+`f2c3cac73` (no package changed after it).
+
+**The tests.** All 114 tests in 21 files pass: the fourth review's `review4` 12 (W8c and W8d are diagnostics, skipped),
+`round5` 4, `review3` 10, `review2` 18, `targeted` 16, `cross-account` 11, `identity` 3, `lifetime` 2, `settings` 6,
+`stack-r3` 1, and the 11 `join` files 31.
+
+**W4 at 200 histories, the standing gate from this round** (`W4_FROM` 0, 50, 100, 150; 50 histories of 14 releases
+each, any stop a failure): **200 of 200 exact, 0 stopped.** The settings turned on at the fourth release in every
+history; 693,192 notices in order equal to the kernel's fold; 4,904 settling runs, 2,104 killed (half after the commit
+with the reply lost); 800 subjects, each ledger with its archive equal to the fold's state and its ledger equal to the
+items in force; up to 375 items over time, 219 in force, 320 archived, 2 parts; 492 subjects ended with a one-part head
+(Z1's shape), each written and read back exactly. Run: for `n` in 0, 50, 100 and 150,
+`W4_FROM=n W4_SEEDS=50 W4_RELEASES=14 node --experimental-strip-types --test --test-name-pattern='^W4' lab/experiments/EXP-DX1/act10/review4.test.ts`
+(about 15 minutes for two chunks side by side on the Mac).
+
+**The fuzz gate** (`ACT10_TRANSITIONS=1` in every step; seeds new to this round):
+
+| Step | Schedules | Violating | Notes |
+| --- | ---: | ---: | --- |
+| All-on, namespaced (two parts) | 20,000 | **0** | 50,019 Publishes acknowledged, 1,971,763 notices in order, 307,798 archived items read back, 8,000 kills |
+| All-on, single layout | 5,000 | **0** | 12,536 acknowledged, 496,099 notices, 77,907 archived items, 2,014 kills |
+| Mixed fleet, namespaced | 2,500 | **0** | 10,274 Publishes acknowledged, 5,854 transitions, 249,750 notices, 65,169 archived items read back; 12,425 refusals by builds from before the settings (counted) |
+| Mixed fleet, single layout | 2,500 | **0** | 10,001 acknowledged, 5,885 transitions, 243,996 notices, 61,319 archived items; 11,615 old-build refusals |
+| Isolation fuzzer | 2,000 | **0** | 4,408 accounts, 9,680 Publishes |
+| Negative control: no legacy lookup | 300 | 50 | caught |
+| Negative control: no origin guard and no fence | 1,000 | 7 | caught |
+| Negative control: settlement at the read position | 300 | 15 | caught |
+| Negative control: no entity guards | 300 | 164 | caught |
+| The fence alone (no origin guard) | 1,000 | **0** | the fence holds alone |
+| The origin guard alone (no fence) | 1,000 | 3 | as designed: each is a build from before the settings whose frame lands after a later release ("release 2 stored by a frame that landed after a later release"); the fence covers the old build |
+
+**The toy stack.**
+
+| Run | What | Attempt | Result |
+| --- | --- | --- | --- |
+| `r3stack5` | `stack-r3.ts`: RO, TP, TF, TN, RS and the oracle | `36372361` | **pass**: the allowed process's Publish turned every setting on at 38 while a values frame was in flight (it did not land; 0 deterministic frames after; 35 of 35 frames after carried a random part); TP refused once, then `joined:v2/11/account-007/...`; TF superseded, 0 pages after the later release; TN's planned frame did not land; RS: no setting after the rewrite, the cursor kept `archive`, the settings on again at 144; the oracle: 342, 175 and 175 notices in order, 0, 160 and 160 archived items, values 3, 1, 3 stored |
+| `r3kill5` | the same and KG (the write gateway killed with three Publishes inside their transactions, group lane on) | `8c052931` | **pass**: the kill met all three inside; back in 6.3 s; each resend acknowledged at its first try, one record each (164, 165, 166); the oracle: 342, 322 and 322 notices, 0, 20 and 20 archived |
+| `g4kR5` | the 1,000-form release, every permission (ledgers in parts with the archive) | `4466ec96` | **pass**: 2 Publishes at one try, 17 positions and 136 pinned reads between read and record; the release settled 23,700 changes and 8,000 notices (independent rule 8 / 23,700 / 8,000) in 72 values frames, 0 refused; 8,008 notices in order |
+| `w4R5` | the held runner's unpaused windows, every permission | `97654137` | **pass**: 8 Publishes in 4 windows, each at one try, 0 refused, 0 missed deadlines, 0 read or visibility failures, 0 writes refused |
+| `r1R5` | options off: the default campaign | `4f61defc` | **pass**, the earlier counts: 86 changed values and 8 notices checked, 8 of 8 Publishes at one try, 0 read failures |
+| `r2R5` | options off: ACT5's live cases | `2b115273` | **pass**, the earlier counts: 474 changes and 160 notices (8 subjects owing) in each of the six single cases; second-p superseded at 1 subject (420, 1,200); 2,328 notices delivered once, 0 twice |
+| `r3cR5` | options off: ACT6's gate at 200 forms | `2ee94b54` | **pass**, the earlier counts: 72 subjects, 4 stops (1 inside a ledger's parts), notices 14,400 / 7,200 / 21,672 delivered, then 0 again; 2 parts per ledger; independent rule 72 / 42,720 / 14,400; 76 value and 510 notice frames (at most 7,995 and 8,000 us of the 8,000 us bound); the definitions table 619,097 and 938,509 B, 1,233,297 B, refused over the 1 MiB value at 1.0 and 1.25 MiB, 3,532 B by reference |
+| `g4R5` | every gate part, every permission on | `5500ed8b` | **pass**: 49 Publishes, 494 positions and 3,952 pinned reads between each read and record, 112 racing saves checked, 6,764 notices in order and every ledger (with its archive) equal to the oracle. Its ID scan after the gate failed ("Datomic read failed"), so the run was repeated as `g4R5b` (next row) |
+| `g4R5b` | the same, again | `7e90c635` | **pass**: 49 Publishes, 504 positions and 4,032 pinned reads between read and record, 105 racing saves checked, 6,764 notices in order and every ledger equal to the oracle; the ID scan: 47,862 ordered saves, 12,408 other IDs, **0** inside a save block, 0 duplicates |
+| `s4R5` | the review's stack checks (`act10/stack-part.ts`), permissions on | `dc9bc73f` | **as fixed**: X1, another account's Publish under the same ID gets its own record (not the first's receipt); X2, the same account's ID with another document refused ("Reused command ID has different input"); X3 and X4, Publishes by reference across accounts land; P1 under head and progress, 0 value frames after the pause; S2 under both, the release superseded, not stored after the later release |
+| `g4grpR5` | adversarial, kill, live and enrol parts with the write gateway's group lane on, saves on the general writer | `4d9349b8` | **pass**: 33 Publishes, 345 positions, 2,760 pinned reads, 3,786 notices in order |
+| `g4resR5` | the transactor, then the write gateway, restarted after a Publish's reads, inside its transaction, and before a settlement frame | `a913027d` | **pass**, all six cases: the transactor's afterRead and inside refused 7 and 10 offers while the peers came back, then landed at 13 and 24; the write gateway's three cases lost no offer (restarts of about 11.4 s); 6 Publishes, 23 positions, 184 pinned reads, 488 notices in order |
+
+**The options-off gate: 8 runs, 0 stops.** Every gate part (cost, beside, adversarial, kill, live, enrol), every
+option and permission off, each run's every assertion ID scanned after the gate (`DX_ACT10_IDSCAN=1`):
+
+| Run | Attempt | Gate | Positions read between | Pinned reads | Racing saves (before, after) | Notices in order | Ordered saves | Other IDs | IDs inside a save block | Duplicates |
+| --- | --- | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| `g4off5-1` | `b7a82fe6` | pass | 497 | 3,976 | 136, 13 | 6,764 | 47,862 | 4,538 | **0** | 0 |
+| `g4off5-2` | `31c8cd3c` | pass | 517 | 4,136 | 118, 13 | 6,764 | 47,862 | 4,539 | **0** | 0 |
+| `g4off5-3` | `f5250cdd` | pass | 537 | 4,296 | 114, 14 | 6,764 | 47,862 | 4,537 | **0** | 0 |
+| `g4off5-4` | `eb74dda6` | pass | 539 | 4,312 | 106, 13 | 6,764 | 47,862 | 4,537 | **0** | 0 |
+| `g4off5-5` | `cf9b8e98` | pass | 540 | 4,320 | 108, 12 | 6,764 | 47,862 | 4,537 | **0** | 0 |
+| `g4off5-6` | `9f6cc93e` | pass | 546 | 4,368 | 99, 10 | 6,764 | 47,862 | 4,537 | **0** | 0 |
+| `g4off5-7` | `08e07c78` | pass | 505 | 4,040 | 95, 10 | 6,764 | 47,862 | 4,539 | **0** | 0 |
+| `g4off5-8` | `c92ea158` | pass | 524 | 4,192 | 119, 8 | 6,764 | 47,862 | 4,538 | **0** | 0 |
+
+Each run: 49 Publishes; 382,896 ordered saves and 36,302 other IDs in all, and not one ID inside a save's block. With
+the three options-off regressions above (`r1R5`, `r2R5`, `r3cR5`, every count equal to the earlier runs'), the
+options-off path is unchanged. With every option off two changed lines run: the notice turn reads the origin at the
+settlement head instead of the source head (Z3; it finds no setting either way and writes nothing different), and a
+recovered Publish record is accepted only with its own journal entity (Z6; on the stack a record's journal entity is
+its `_tx/<ULID>` transaction ID, and every lost-reply recovery in these runs found its record).
+
+**What is not tested in this round.**
+
+- **The removal line beside the archive.** Not run: that line is not merged here; section Z4 above is code read.
+- **Z1 on a stack.** The fix is in the writer's own estimate before any commit (`fillFrame`); a stack refuses the same
+  frames. The stack's `g4kR5` writes ledgers in parts with the archive at 1,000 forms, but its releases do not shrink.
+- **A transition refused 32 times on a stack.** Shown in process (R5-4); on a stack the first permitted Publish's
+  transition landed at once in every run (below).
+- **The calendar at size.** Its bound is the join layer's; not measured.
+- **The sealed path's Z1 rule and the archive rows on a sealed database.** They need the merge.
+- As in 0.A: a removal inside a group, a group cut in half by a killed gateway, the last old-build frame (closed by the
+  rollout order), a restore from a real backup, two databases, the fuzzer's exact schedules on a stack.
 
 ### 0.A The third review (2026-11-25, `act10/REVIEW-3.md`, `f596d1267`): what changed after it
 
@@ -120,7 +312,8 @@ frame; the fences remove everything else, and this build's own processes need no
 **A transition never refuses a plan.** A permitted process tries a transition at most 8 times (each refused only by a
 write to a row it fences); if none lands, it plans under the settings as stored, as a process allowed nothing does, and
 tries again at its next plan. (At `afae099b1` the eighth refusal stopped the process: 4 of the 7 single-layout fuzz
-violations there.)
+violations there.) [Superseded for a Publish by 0.C, Z2: a permitted Publish waits, then refuses retryably; a frame
+still plans under the stored settings.]
 
 **U6 in detail.** Settings stay one-way only against this build's own code. A writer of the origin fact can still turn
 them off (a direct rewrite, or a restore to before the transition). What changed: the process that had turned them on
@@ -131,7 +324,8 @@ account's guarded Publishes ("guard differs"), which is the safe outcome.
 **U9 in detail: the lifetime limit is gone.**
 
 - **The design.** Under any setting a subject's ledger holds only its items in force. Each retired item is one row of
-  its own (`recorded-retired:<subject>:<item ID>`), written in the same byte frames before the ledger's head. The
+  its own (`recorded-retired:<subject>:<item ID>`; since 0.C, Z4, holding its ID, subject and sequence, no payload),
+  written in the same byte frames before the ledger's head. The
   kernel's fold is unchanged; its input is the ledger plus the archived rows of the work items not in the ledger, so a
   retired item that comes back continues at its sequence + 1. A row is only ever read by its key, and the ledger has
   priority over a row.
