@@ -284,6 +284,12 @@
   (g/fresh-scope true
     (fn [src conn]
       (let [lbl "n3deep"
+            ;; [DX-ERA4, third review T3 and T4] the database declares SCALE1's subject boundary (the rule no longer
+            ;; walks references from a root the place carries; it finds the root itself)
+            _ (ds/declare-boundary! conn {"v" 1 "subject" "pl:s{n}" "root" "acct/{account}/pl:{n}" "rootRows" true
+                                          "own" (vec (mapcat (fn [kind] (concat (when-not (= kind "pl") [(str "acct/{account}/" kind ":{n}")])
+                                                                                [(str "acct/{account}/" kind ":{n}:*")]))
+                                                             ["pl" "wk" "i9" "sec" "ev" "doc" "evt"]))})
             k 24
             ok! (fn [what rep] (x/oracle! lbl (= 200 (:status rep)) (str "setup: " what) (offers/outcome rep)))
             subjects
@@ -318,7 +324,8 @@
             wrong-account (:status (a5/seal-many src [{"ids" [(:plain (first subjects))] "value" "x"
                                                        "place" (str "deep|b|@" (:root (first subjects)) "|" (:subject (first subjects)))}]))
             ;; the new place's record as a settled page of its subject, under the setting
-            stored (doc! src "n3d-page" "answer:1:f1" (page [["" (:new (first records))]] {"subject" (:subject (:sj (first records)))}))
+            stored (binding [era4-races/*derived-account* "a"]
+                     (doc! src "n3d-page" "answer:1:f1" (page [["" (:new (first records))]] {"subject" (:subject (:sj (first records)))})))
             ;; one value of each subject removed: the worker's for even subjects, the document's for odd ones
             removed (set (for [[i sj] (map-indexed vector subjects)] [(:subject sj) (if (even? i) :wk :doc)]))
             rm (a5/erase-until-done! src "n3d-rm" (vec (for [[i sj] (map-indexed vector subjects)]

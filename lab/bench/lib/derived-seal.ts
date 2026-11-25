@@ -86,17 +86,13 @@ type Source = { backend?: { name: string; url: string }; scopeName?: string };
 /** [DX-ERA4, after DX-ERA5's L1] A record's place: its account (the source's scope, and the held account when one
  * database holds several) and its subject. A record sealed for one place opens only where a reader expects that place. */
 export const placeOf = (
-  source: Source & { held?: { account: string }; subjectRoot?: { account: string; root: (subject: string) => string | undefined } },
+  source: Source & { held?: { account: string }; derivedAccount?: string },
   subject: string,
   account?: string,
-) => {
-  // [DX-ERA4, after the second review's N3] a held account in the deep format: the subject's root entity rides in the
-  // place (`@<root>`), so the gateway can reach every entity of the subject's world (it checks the root's rows)
-  const root = source.subjectRoot?.root(subject);
-  return root === undefined
-    ? `${source.scopeName}|${account ?? source.held?.account ?? ""}|${subject}`
-    : `${source.scopeName}|${account ?? source.subjectRoot!.account}|@${root}|${subject}`;
-};
+) =>
+  // [DX-ERA4, third review T3] `<scope>|<account>|<subject>`: the gateway finds the subject's root itself from the
+  // database's declared subject boundary (the place no longer carries it); a held store's records name its account
+  `${source.scopeName}|${account ?? source.held?.account ?? source.derivedAccount ?? ""}|${subject}`;
 export const databaseOf = (source: Source) => {
   assert(source.backend?.name === "datomic" && source.scopeName, "Derived sealing needs a Datomic scope");
   return "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(source.scopeName))).toString("base64url");

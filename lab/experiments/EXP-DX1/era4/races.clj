@@ -597,11 +597,16 @@
     (loop [] (let [n (.deflate d buf)] (when (pos? n) (.write out buf 0 n)) (when-not (.finished d) (recur))))
     (.end d)
     (.encodeToString (java.util.Base64/getEncoder) (.toByteArray out))))
+(def ^:dynamic *derived-account*
+  "[DX-ERA4, third review T3] the account a test's derived write names (`derivedAccount`), as a held archive does; nil:
+  none (a database with a subject boundary of accounts then refuses its units)."
+  nil)
 (defn- doc-write
   ;; one derived document written as Documents.put writes it: attribute notice/value, its canonical JSON as a string
   ([src cmd key value] (doc-write src cmd key value (apply str (repeat 64 "a"))))
   ([src cmd key value hex]
-   (offers/send src (g/save-frame cmd (str "notice:v1:" hex ":" key) "notice/value" (json/write-str value) nil nil))))
+   (offers/send src (cond-> (g/save-frame cmd (str "notice:v1:" hex ":" key) "notice/value" (json/write-str value) nil nil)
+                      *derived-account* (assoc "derivedAccount" *derived-account*)))))
 
 (defn setting
   "[DX-ERA4, after DX-ERA5's B1 and M3] The one-way database setting `derived-seal-required` and the write route's check:

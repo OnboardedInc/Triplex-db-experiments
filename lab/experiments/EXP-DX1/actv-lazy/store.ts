@@ -143,6 +143,8 @@ export async function openStore(
   // `subjectOf`). Under TX2_DERIVED_SEAL the database declares that as its subject boundary (once; the same value again
   // changes nothing): the gateway then finds a place's subject's root itself and takes the protected values of exactly
   // those entities, and refuses a protected value written anywhere else. The place no longer carries the root.
+  // A held store's derived records are placed in its account (derived-seal.ts placeOf).
+  if (held) Object.defineProperty(comp, "derivedAccount", { value: held.account });
   if (held && profile === "act2-deep" && derivedSealOn() && access === "write" && held.prefix === "acct/" + held.account + "/")
     await declareBoundary(comp as never);
   const counters = {

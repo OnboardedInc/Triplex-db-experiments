@@ -21,11 +21,20 @@
 (defn ref! [src cmd owner attr target] (offers/send src (#'a6/ref-frame cmd owner attr target)))
 (defn row! [src cmd owner attr value] (offers/send src (g/save-frame cmd owner attr value nil nil)))
 
+;; [DX-ERA4, fourth round: adapted to the declared subject boundary (third review T3 and T4)] the database declares
+;; SCALE1's boundary, plus this fuzzer's value entities `val:N:...`, before its first subject; the page writes name their
+;; account (`derivedAccount`, as the held archives do). Nothing else of this file changed but fuzz7's one oracle on a
+;; sealed unit stored in its subject's page (a unit placed in another account is now refused).
+(def deep7
+  {"v" 1 "subject" "pl:s{n}" "root" "acct/{account}/pl:{n}" "rootRows" true
+   "own" (vec (mapcat (fn [k] (concat (when-not (= k "pl") [(str "acct/{account}/" k ":{n}")]) [(str "acct/{account}/" k ":{n}:*")]))
+                      ["pl" "wk" "i9" "sec" "ev" "doc" "evt" "val"]))})
 (defn subject!
   "One subject of a held deep account as SCALE1's person keeps it (n3deep's shape): root acct/<acct>/pl:N with
   :subject/account and :subject/member, protected values on its worker entity and its document entity, the chain of
   references root -> wk, root -> i9 -> sec -> ev -> doc, and one unprotected row on the root. Returns its names."
   [src lbl acct m]
+  (x/oracle! lbl (= 200 (:status (offers/route src "v2" "subject-boundary" deep7))) "setup: the subject boundary" nil)
   (let [n (format "%08d" m) e (fn [k] (str "acct/" acct "/" k ":" n))
         root (e "pl") wk (e "wk") i9 (e "i9") sec (str (e "sec") ":0") ev (str (e "ev") ":0:0") doc (str (e "doc") ":0:0")
         tag (str acct "-" n)
@@ -69,8 +78,9 @@
                     :no-root (str "deep|a|" (:subject a7))}
             sealed (into {} (for [[k p] places] [k (seal! src a7 content p)]))
             stored (into {} (for [[k s] sealed :when (:wire s)]
-                              [k (a6/doc! src (str "d7-page-" (name k)) (str "answer:7:f" (count (name k)))
-                                          (a6/page [["" (:wire s)]] {"subject" (:subject a7)}))]))
+                              [k (binding [era4-races/*derived-account* "a"]
+                                   (a6/doc! src (str "d7-page-" (name k)) (str "answer:7:f" (count (name k)))
+                                            (a6/page [["" (:wire s)]] {"subject" (:subject a7)})))]))
             rm (a5/erase-until-done! src "d7-rm" [(second (:wk a7))] nil nil)
             gone (a5/key-gone? src [(second (:wk a7))])
             outcome (into {} (for [[k s] sealed :when (:wire s)] [k (after src (:wire s) (places k) content)]))
@@ -85,53 +95,38 @@
         (x/oracle! lbl (= :removed (:real outcome)) "the real root's record opens as removed" row)))))
 
 ;; ---- d2: what the walk reaches: another subject, a shared entity, a cycle, a reverse reference, the bound -----------
+;; [DX-ERA4, fourth round] d2 under the declared boundary: the review's cases, re-asserted. A reference to another
+;; subject's root reaches nothing; a protected value on a shared entity, or on an entity that only refers to a subject,
+;; is refused at its write (no subject owns it); a cycle is nothing to walk. (The review's version asserted the walk.)
 (defn d2 []
   (g/fresh-scope true
     (fn [src conn]
       (let [lbl "d2"
             s1 (subject! src lbl "a" 1) s2 (subject! src lbl "a" 2) s3 (subject! src lbl "a" 3) s4 (subject! src lbl "a" 4)
-            ;; s1 refers to s2's root (a manager, a household member, a referrer)
             _ (ok! lbl "manager ref" (ref! src "d7-mgr" (:root s1) ":placement/manager" (:root s2)))
-            ;; s3 and s4 both refer to one shared site entity holding a protected value (a site's access code)
             site "acct/a/site:0001"
-            [vsite isite] (a5/seed! src "d7-site" site "site")
+            write (fn [cmd e] (offers/outcome (offers/send src (g/frame cmd e (g/secret e "x") nil nil))))
+            site-write (write "d7-site" site)
             _ (ok! lbl "site ref 3" (ref! src "d7-site3" (:root s3) ":placement/site" site))
             _ (ok! lbl "site ref 4" (ref! src "d7-site4" (:root s4) ":placement/site" site))
-            ;; a cycle: s1's document refers back to its root
             _ (ok! lbl "cycle" (ref! src "d7-cyc" (last (:entities s1)) ":document/owner" (:root s1)))
-            ;; s2 keeps a protected note on an entity that refers TO its root (a reverse reference)
             note "acct/a/note:00000002"
-            [vnote inote] (a5/seed! src "d7-note" note "note")
+            note-write (write "d7-note" note)
             _ (ok! lbl "note ref" (ref! src "d7-noter" note ":note/subject" (:root s2)))
             _ (a6/require! src)
             rec (fn [sj extra] (let [c (str "derived-" (:subject sj) ":" extra)] (assoc (seal! src sj c (place-of sj)) :content c :sj sj)))
-            r1 (rec s1 (first (:wk s1)))
-            r2 (rec s2 (str (first (:wk s2)) "|" vnote))
-            r3 (rec s3 (first (:wk s3)))
-            r4 (rec s4 (first (:wk s4)))
+            r1 (rec s1 (first (:wk s1))) r2 (rec s2 (first (:wk s2))) r3 (rec s3 (first (:wk s3))) r4 (rec s4 (first (:wk s4)))
             names {:s1-refers-to-s2 (names-of (:wire r1)) :s2 (names-of (:wire r2)) :s3-site (names-of (:wire r3)) :s4-site (names-of (:wire r4))}
-            ;; remove s2's worker value: s1's record is sealed under it too
             rm2 (a5/erase-until-done! src "d7-rm-s2" [(second (:wk s2))] nil nil)
             after-s2 {:s1 (after src (:wire r1) (place-of s1) (:content r1)) :s2 (after src (:wire r2) (place-of s2) (:content r2))}
-            ;; remove the shared site value: every subject referring to the site loses its records
-            rm-site (a5/erase-until-done! src "d7-rm-site" [isite] nil nil)
-            after-site {:s3 (after src (:wire r3) (place-of s3) (:content r3)) :s4 (after src (:wire r4) (place-of s4) (:content r4))}
-            ;; s2's note (reverse reference): a record computed from it and naming only an unprotected row
-            note-rec (rec s2 (str "note-only:" vnote))
-            _ (a5/erase-until-done! src "d7-rm-note" [inote] nil nil)
-            note-after (after src (:wire note-rec) (place-of s2) (:content note-rec))
-            ;; the bound: the same walk with the limit lowered to 5 entities (the real one is 65,536)
-            bound (with-redefs [ds/max-world 5] (let [r (a5/seal-many src [{"ids" [(:plain s3)] "value" "x" "place" (place-of s3)}])]
-                                                  [(:status r) (get-in r [:body "code"])]))
-            row {:header-names names :removal-of-s2 (:status (:final rm2)) :after-s2-removal after-s2
-                 :removal-of-the-site (:status (:final rm-site)) :after-site-removal after-site
-                 :reverse-reference-record-names (names-of (:wire note-rec)) :reverse-reference-after-removal note-after
-                 :cycle-sealed (some? (:wire r1)) :world-over-a-lowered-bound bound}]
+            row {:header-names names :site-value-write site-write :note-value-write note-write
+                 :removal-of-s2 (:status (:final rm2)) :after-s2-removal after-s2 :cycle-sealed (some? (:wire r1))}]
         (report :d2 row)
-        (when (= :removed (:s1 after-s2)) (finding! :d2-another-subjects-removal-removes-this-subjects-records {:s1 :removed}))
-        (when (= #{:removed} (set (vals after-site))) (finding! :d2-a-shared-entity-couples-every-subject-referring-to-it after-site))
-        (when (= :value note-after) (finding! :d2-reverse-reference-not-reached {:names (names-of (:wire note-rec))}))
-        (x/oracle! lbl (some? (:wire r1)) "a cycle in the references terminates" row)))))
+        (x/oracle! lbl (= {:s1-refers-to-s2 2 :s2 2 :s3-site 2 :s4-site 2} names) "each record is sealed under its own subject's two values only" row)
+        (x/oracle! lbl (= 409 (first site-write)) "a protected value on a shared entity is refused" row)
+        (x/oracle! lbl (= 409 (first note-write)) "a protected value on an entity that only refers to a subject is refused" row)
+        (x/oracle! lbl (= {:s1 :value :s2 :removed} after-s2) "another subject's removal leaves this subject's records" row)
+        (x/oracle! lbl (some? (:wire r1)) "a cycle in the references is nothing to walk" row)))))
 
 ;; ---- d3: a protected value added to the subject after a record was sealed -------------------------------------------
 (defn d3 []
@@ -308,10 +303,13 @@
                          {:k k :srcs srcs :sj sj :place place :pm pm :full full :content content :mode mode :wire wire})))
         _ (doseq [rec records]
             (let [unit (if (:wire rec) ["" (:wire rec)] ["k" (:content rec)])
-                  o (a6/doc! src (str "f7w-" tag "-" (:k rec)) (str "answer:" i ":f" (:k rec))
-                             (a6/page [unit] {"subject" (:subject (:sj rec))}))]
+                  o (binding [era4-races/*derived-account* (:acct (:sj rec))]
+                      (a6/doc! src (str "f7w-" tag "-" (:k rec)) (str "answer:" i ":f" (:k rec))
+                               (a6/page [unit] {"subject" (:subject (:sj rec))})))]
               (if (:wire rec)
-                (x/oracle! (str "F7 " i) (= [200 nil] o) "the setting accepts a sealed unit in its subject's page" {:pm (:pm rec) :o o})
+                (if (= :other-account (:pm rec))
+                  (x/oracle! (str "F7 " i) (= 409 (first o)) "the setting refuses a unit placed in another account than its page's" {:o o})
+                  (x/oracle! (str "F7 " i) (= [200 nil] o) "the setting accepts a sealed unit in its subject's page" {:pm (:pm rec) :o o}))
                 (when (not= :ok (:mode rec))
                   (x/oracle! (str "F7 " i) (= [409 "DerivedRecordUnsealed"] o) "the setting refuses the clear content stored after a failed or refused seal" {:o o})))))
         rounds (if (zero? (.nextInt r 4)) 2 1)]

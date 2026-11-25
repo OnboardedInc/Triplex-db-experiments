@@ -236,10 +236,9 @@
 ;; read per pattern), instead of walking references (the second review's rule, which reached other subjects and shared
 ;; entities and missed entities that point at the subject). Every protected value written into a database with a
 ;; boundary must be on an entity the boundary gives to exactly one subject, or the write is refused, so no protected
-;; value lies outside every subject's set. Without a declaration the W0 boundary applies: the subject's entity and the
-;; entities named under it, as before.
+;; value lies outside every subject's set. Without a declaration the W0 rule applies exactly as before: the subject's
+;; entity and the entities named under it, for any subject ID.
 (def ^:private boundary-attr :triplex.scope/subject-boundary)
-(def ^:private default-boundary {"v" 1 "subject" "pl:s{n}" "root" "pl:s{n}" "rootRows" false "own" ["pl:s{n}/*"]})
 (def ^:private literal #"[A-Za-z0-9_:./-]*")
 (defn- pattern-parts
   "A pattern's literal pieces and its slots, in order: `{n}` the subject's 8-digit number, `{account}` the account, and a
@@ -287,7 +286,7 @@
     (let [v (:v (first (d/datoms db :eavt (scope/entity db) boundary-attr)))]
       (if (string? v) (json/read-str v) nil))
     nil))
-(defn- boundary [db] (compile-boundary (or (declared-boundary db) default-boundary)))
+(defn- boundary [db] (let [b (declared-boundary db)] (if b (compile-boundary b) nil)))
 (defn- owner-of
   "[account number] of the subject the boundary gives entity `e` to, or nil."
   [c ^String e]
@@ -351,14 +350,19 @@
     (let [c (boundary db)
           look (fn []
                  (let [native (native-erased db cut)
-                       [root n] (subject-root! db c subject account carried)
-                       b (:b c)
-                       datoms (mapcat (fn [p]
-                                        (let [x (instantiate p account n)]
-                                          (if (str/ends-with? p "*")
-                                            (d/index-range db :triplex.private/entity x (str x "￿"))
-                                            (d/datoms db :avet :triplex.private/entity x))))
-                                      (cons (get b "root") (get b "own")))]
+                       datoms (if c
+                                (let [[_ n] (subject-root! db c subject account carried) b (:b c)]
+                                  (mapcat (fn [p]
+                                            (let [x (instantiate p account n)]
+                                              (if (str/ends-with? p "*")
+                                                (d/index-range db :triplex.private/entity x (str x "￿"))
+                                                (d/datoms db :avet :triplex.private/entity x))))
+                                          (cons (get b "root") (get b "own"))))
+                                ;; no declared boundary: the W0 rule, the subject's entity and the entities named under
+                                ;; it (a place carrying a root needs a declared boundary)
+                                (do (when (some? carried) (invalid! "A place with a subject root needs the database's declared subject boundary"))
+                                    (concat (d/datoms db :avet :triplex.private/entity subject)
+                                            (d/index-range db :triplex.private/entity (str subject "/") (str subject "/￿")))))]
                    (vec (sort (distinct
                                 (for [x datoms
                                       :let [id (scope/value db (:e x) :triplex.private/id)]
