@@ -353,7 +353,11 @@
                          ;; is still read here and covered by the revision compare-and-set, and nothing below or in
                          ;; the native function is keyed by field. Rejected: W2's distinct-field count on each side,
                          ;; which sent every such product save to the general writer.
+                         ;; [DX-INT5] The `true` keeps this `and` at three clauses as before S2: each clause past
+                         ;; the first is one generated name, and owner_layout.clj and general_prefetch.clj compile after
+                         ;; this file, so one clause fewer moved those two stored functions' identities (step 0).
                          (and (= (count live) (count prior))
+                              true
                               (not (contains? after nil)))
                          (and (= (count live) (count prior) (count before) (count after)) (= before after)))
                        (not (contains? before nil))
