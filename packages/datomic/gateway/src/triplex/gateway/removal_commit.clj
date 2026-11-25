@@ -102,14 +102,21 @@
                        (when (some? pending) (str ", pending " pending)))
                   {:status 503 :code code})))
 
-(def commit-boundary
-  "[DX-ERA2 fourth pass] TX2_REMOVAL_COMMIT_BOUNDARY=1 (default off; only on a database guarded per account): a
-  removal takes effect for every request at its commit in Datomic, not at its publication in the removal log. Every
-  request is served from the log's cut with every removal committed in the data past the log's head applied
-  (`effective`); the log stays the acknowledged, ordered record and what a restore of older data replays. A log
-  behind the data then cannot undo a removal (N5, E7, M1): it is caught up from the data by the next removal or the
-  rebuild route. See era2/REMOVAL-PER-ACCOUNT.md section 16."
+(def may-turn-on
+  "[DX-ERA2 fifth pass] TX2_REMOVAL_COMMIT_BOUNDARY=1 now means only: this process may turn the commit boundary on for a
+  database guarded per account. What a request does depends on the database, never on this variable."
   (= "1" (System/getenv "TX2_REMOVAL_COMMIT_BOUNDARY")))
+
+(defn commit-boundary?
+  "[DX-ERA2 fourth pass; fifth pass: a setting in the database] True when this database value removes at the commit:
+  its database-wide erasure sequence holds -2 instead of the per-account sentinel -1. A removal then takes effect for
+  every request at its commit in Datomic, not at its publication in the removal log: every request is served from the
+  log's cut with every removal committed in the data past the log's head applied (`effective`); the log stays the
+  acknowledged, ordered record and what a restore of older data replays. Read at each request's own position. The
+  value is the one every write and removal fences on at Datomic's serial point, so a plan made before the setting
+  changes is refused, and a build that does not know -2 refuses the database (see era2/REMOVAL-PER-ACCOUNT.md 18)."
+  [db]
+  (= -2 (scope/value db (scope/entity db) :triplex.scope/erasure-seq)))
 
 (def ^:private natives (atom {}))
 (defn native-entries
@@ -180,7 +187,7 @@
 (defn served
   "The state a request on a database guarded per account is served from (erase/request-cut)."
   [name db state]
-  (assoc (if commit-boundary
+  (assoc (if (commit-boundary? db)
            (effective name db state)
            ;; [DX-ERA3 M1] the log's boundary: a pending removal already committed in the data is flagged; a read then
            ;; publishes it before it is served (main/route-handler, `publish-for-read!`), so a log copy put back with
@@ -190,7 +197,9 @@
              (cond-> state
                (and (integer? p) (= p (inc (:seq state))) (<= p (count entries)) (pending-of? state (:entry (entries (dec p)))))
                (assoc :committed-pending true))))
-         :per-account true))
+         :per-account true
+         ;; [DX-ERA2 fifth pass] the value every write of this request fences on (-1, or -2 with the commit boundary)
+         :erasure-sentinel (scope/value db (scope/entity db) :triplex.scope/erasure-seq)))
 
 (defn publish-for-read!
   "[DX-ERA3 M1, the log's boundary] A read found its database's pending removal already committed in the data: the
@@ -207,7 +216,7 @@
   "Request time (erase/request-cut): the data and the log agree, declarations included. With the commit boundary,
   served as long as nothing refuses writes (a transient disagreement is retried on a synced database first)."
   [name db state]
-  (if commit-boundary
+  (if (commit-boundary? db)
     (nil? (:writes-refused (effective name db state)))
     (and (removal-scope/consistent? db (:seq state) (:pending-seq state)) (nil? (disagreement db state)))))
 
@@ -215,7 +224,7 @@
   "After request-cut's retries: with the commit boundary the request is served (reads; writes are refused by
   `check-writes!`), else the typed disagreement when there is one, else 503."
   [name db state]
-  (if commit-boundary
+  (if (commit-boundary? db)
     [(served name db state) db]
     (do (when-let [b (and state (disagreement db state))] (refuse! b))
         (privacy/unavailable!))))
@@ -244,7 +253,7 @@
   [name db]
   (try (privacy/cut name db true)
        (catch clojure.lang.ExceptionInfo e
-         (if (and commit-boundary (behind-cache? name db))
+         (if (and (commit-boundary? db) (behind-cache? name db))
            (do (swap! privacy/cache dissoc name) (privacy/cut name db true))
            (throw e)))))
 
@@ -449,7 +458,8 @@
         ops (-> [[commit-ident head payload]
                  {:db/id "privacy-claim" :triplex.claim/command-id (get entry "commandId") :triplex.claim/tx "datomic.tx"
                   :triplex.claim/tx-id (get entry "txId")}
-                 [:db/cas head :triplex.scope/erasure-seq removal-scope/sentinel removal-scope/sentinel]
+                 [:db/cas head :triplex.scope/erasure-seq (scope/value db head :triplex.scope/erasure-seq)
+                  (scope/value db head :triplex.scope/erasure-seq)]
                  [:db/cas head :triplex.scope/removal-seq (dec s) s]
                  ;; [DX-ERA3 second review] a commit lands only under its own declaration
                  [:db/cas head :triplex.scope/removal-intent s s]]
@@ -584,6 +594,38 @@
 
 (declare complete-pending!)
 
+(defn- turn-on-locked!
+  "Under the database's removal lock, with no removal pending and the data and the log in agreement (the log's
+  boundary rules): the one-way move to the commit boundary, one compare-and-set from -1 to -2. Every write and removal
+  planned before it carries -1 and is refused at the serial point. Returns the database after it, or nil when it is
+  not done now (already on, a removal pending, or the two disagreeing: the request then follows the log's boundary)."
+  [name conn db]
+  (let [head (scope/entity db) v (scope/value db head :triplex.scope/erasure-seq) cut (privacy/cut name db true)]
+    (when (and (= removal-scope/sentinel v) (removal-scope/per-account? db) cut (nil? (:pending cut))
+               (nil? (privacy/pending name)) (= (removal-scope/native-seq db) (:seq cut)) (nil? (disagreement db cut)))
+      (transact! conn [[:db/cas head :triplex.scope/erasure-seq removal-scope/sentinel -2]])
+      (println (json/write-str {"schema" "triplex.removal-boundary.v1" "database" name "boundary" "commit" "seq" (:seq cut)}))
+      (erase/sync! conn))))
+
+(defn turn-on!
+  "[DX-ERA2 fifth pass] POST /v2/db/{db}/removal-commit-boundary: a process allowed to (TX2_REMOVAL_COMMIT_BOUNDARY=1)
+  moves this database to the commit boundary, for good. A removal left pending is completed first; a removal in
+  flight on another gateway holds the removal lock, so this waits for it. Idempotent."
+  [name conn]
+  (when-not may-turn-on
+    (privacy/failure! 403 "RemovalBoundaryNotPermitted" "This process may not move a database to the commit boundary"))
+  (when-not (removal-scope/per-account? (erase/sync! conn))
+    (privacy/failure! 409 "NotGuardedPerAccount" "Move the database to removal per account first"))
+  (complete-pending! name conn)
+  (privacy/guard name
+    (fn []
+      (let [db (erase/sync! conn)]
+        (if (commit-boundary? db)
+          {:database name :boundary "commit" :changed false}
+          (if (turn-on-locked! name conn db)
+            {:database name :boundary "commit" :changed true}
+            (privacy/unavailable!)))))))
+
 (defn erase! [name conn input]
   (let [selectors (erase/selectors! input)
         command (get input "commandId")
@@ -601,8 +643,11 @@
               (let [db (erase/sync! conn)
                     current (log-cut name db)
                     _ (when-not current (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
+                    ;; [DX-ERA2 fifth pass] a process allowed to turns the commit boundary on before its removal
+                    db (or (when (and may-turn-on (not (commit-boundary? db))) (turn-on-locked! name conn db)) db)
+                    current (log-cut name db)
                     ;; [DX-ERA2 fourth pass] with the commit boundary the log is first brought up to the data
-                    [db current] (if commit-boundary (catch-up! name conn db current) [db current])]
+                    [db current] (if (commit-boundary? db) (catch-up! name conn db current) [db current])]
                 (privacy/clear-completed! name current)
                 (if-let [before (get-in current [:commands command])]
                   (do (when-not (= selectors (get before "selectors"))
@@ -618,7 +663,7 @@
                         _ (when (and pending (not= s (get pending "seq"))) (privacy/unavailable!))
                         ;; [DX-ERA3 N5] before anything is recorded, declared or released: the data is not ahead of the log
                         ;; (with the commit boundary the catch-up above has already made it so)
-                        _ (when-not commit-boundary (when-let [b (disagreement db current)] (refuse! b)))
+                        _ (when-not (commit-boundary? db) (when-let [b (disagreement db current)] (refuse! b)))
                         checked (check-entities selectors)]
                     (if-let [native (and pending (committed db pending))]
                       (publish! name conn current native wire 0 false started)
@@ -801,7 +846,7 @@
                       {:status 503 :code "ErasureFrontierUnavailable" :removal-pending true :removal-database source})))
     (let [state (if (and state (removal-scope/per-account? db)) (served source db state) state)]
       (if (and state (removal-scope/per-account? db))
-        (if commit-boundary (check-writes! state) (privacy/verify-data! state db))
+        (if (commit-boundary? db) (check-writes! state) (privacy/verify-data! state db))
         (privacy/verify-data! state db))
       (privacy/ensure-seq! state ticket))))
 

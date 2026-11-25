@@ -214,7 +214,9 @@
                    ;; [DX-ERA2] Guarded per account: the installed writers' fence on its fixed value, and the removal
                    ;; sequences of the accounts this write touches (and those its ticket names).
                    ;; [DX-ERA3 F1] and, for a ticket naming no account, the global declared removal sequence.
-                   (into [[:db/cas scope :triplex.scope/erasure-seq removal-scope/sentinel removal-scope/sentinel]
+                   ;; [DX-ERA2 fifth pass] on the value read at the request's position (-1, or -2 with the commit boundary)
+                   (into [[:db/cas scope :triplex.scope/erasure-seq (get privacy/*cut* :erasure-sentinel removal-scope/sentinel)
+                           (get privacy/*cut* :erasure-sentinel removal-scope/sentinel)]
                           (removal-scope/fence-op privacy/*cut* rows (removal-scope/ticket-accounts input))]
                          ((requiring-resolve 'triplex.gateway.removal-commit/ticket-intent-ops) scope input db))
                    [[:db/cas scope :triplex.scope/erasure-seq seq seq]]))

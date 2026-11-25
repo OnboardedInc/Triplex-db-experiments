@@ -433,7 +433,14 @@
           (and (= :post request-method) (= action "restore-erasure"))
           (response 200 (erase/replay-after-restore! name conn))
           (and removal-scope/enabled (= :post request-method) (= action "removal-per-account"))
-          (response 200 (erase/per-account! name conn (request-json body)))
+          (let [input (request-json body) moved (erase/per-account! name conn input)]
+            ;; [DX-ERA2 fifth pass] a process allowed to turns the commit boundary on once the database is per account
+            (response 200 (if (and (:perAccount moved) @(requiring-resolve 'triplex.gateway.removal-commit/may-turn-on))
+                            (assoc moved :boundary (:boundary ((requiring-resolve 'triplex.gateway.removal-commit/turn-on!) name conn)))
+                            moved)))
+          ;; [DX-ERA2 fifth pass] the one-way move to the commit boundary (a process allowed to: TX2_REMOVAL_COMMIT_BOUNDARY=1)
+          (and removal-scope/enabled (= :post request-method) (= action "removal-commit-boundary"))
+          (response 200 ((requiring-resolve 'triplex.gateway.removal-commit/turn-on!) name conn))
           ;; [DX-ERA2 fourth pass] the removal log rebuilt from the data (behind, a pending copy, or missing)
           (and removal-scope/enabled (= :post request-method) (= action "removal-log-rebuild"))
           (response 200 ((requiring-resolve 'triplex.gateway.removal-commit/rebuild-log!) name conn (request-json body)))

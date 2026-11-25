@@ -304,4 +304,6 @@
       (unavailable!))))
 
 ;; [DX-ERA2] The value the installed writers' database-wide fence carries for this cut.
-(defn fence-seq [state] (when state (if (:per-account state) removal-scope/sentinel (:seq state))))
+;; [DX-ERA2 fifth pass] per account, the value the request read (-1, or -2 with the commit boundary): a write planned
+;; before the boundary changes is refused at the serial point and planned again
+(defn fence-seq [state] (when state (if (:per-account state) (get state :erasure-sentinel removal-scope/sentinel) (:seq state))))

@@ -82,7 +82,8 @@
   [db published pending]
   (let [native (native-seq db)]
     (and (integer? native) (integer? published)
-         (= sentinel (scope/value db (scope/entity db) :triplex.scope/erasure-seq))
+         ;; [DX-ERA2 fifth pass] -2: guarded per account with the commit as the boundary (a one-way setting)
+         (contains? #{sentinel -2} (scope/value db (scope/entity db) :triplex.scope/erasure-seq))
          (or (= native published) (and (integer? pending) (= pending (inc published)) (= native pending))))))
 
 (def fence-code

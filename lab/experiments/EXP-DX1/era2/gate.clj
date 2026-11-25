@@ -1098,6 +1098,52 @@
           (check! "data-behind" (= 2 (:seq e)) "served from the log's cut (both removals masked)" (:seq e))
           (check! "data-behind" (contains? (:erased e) (:id (seeds b1))) "b1's value, removed only in the log's newer entry, is masked" (keys (:erased e))))))))
 
+(defn boundary-transition
+  "[DX-ERA2 fifth pass] The commit boundary as a one-way setting in the database (-2 in :triplex.scope/erasure-seq),
+  turned on by a process allowed to (here `rc/may-turn-on` redefined true, on a database guarded per account and still
+  on the log's boundary). A save planned before the move and committed after it is refused at the serial point (it
+  fenced on -1) and is stored when sent again; a removal left committed but unpublished is completed by the move
+  before it turns; the move is idempotent; the database does not move back; a process without permission is refused
+  and follows the stored setting (its requests are served on the commit boundary)."
+  []
+  (when (and per-account? (not commit?))
+    (fresh-scope false
+      (fn [name conn]
+        (let [label (str "boundary-transition/" mode)
+              seeds (seed! name [a1 a2 b1]) va (:value (seeds a1)) pin (head conn)
+              turn #(offers/route name "v2" "removal-commit-boundary" {})
+              refused-without (turn)
+              ;; a removal left committed and unpublished (its gateway stopped there)
+              commit rc/commit! apply-native erase/apply-native!
+              stopped (with-redefs [rc/commit! (fn [& args] (let [r (apply commit args)] (throw (ex-info "stopped after the commit" {})) r))
+                                    erase/apply-native! (fn [& args] (let [r (apply apply-native args)] (throw (ex-info "stopped after the commit" {})) r))]
+                        (remove! name "bt-1" a1))
+              pending-before (some? (privacy/pending name))
+              ;; a save of b1 planned before the move, committed after it
+              held (frame "bt-held" b1 (secret b1 "held") (:id (seeds b1)) (head conn))
+              [moved late] (with-redefs [rc/may-turn-on true]
+                             (let [m (atom nil)
+                                   r (with-held name held #(reset! m (turn)))]
+                               [@m r]))
+              again (with-redefs [rc/may-turn-on true] (turn))
+              back (offers/route name "v2" "removal-per-account" {"back" true})
+              resent (offers/send name (frame "bt-held-2" b1 (secret b1 "held2") (:id (seeds b1)) (head conn)))
+              read-a1 (offers/route name "v1" "read" {"entityIds" [a1]})]
+          (expect (str label ": a process without permission") refused-without [403 "RemovalBoundaryNotPermitted"])
+          (check! label (not= 200 (:status stopped)) "the removal stopped after its commit" (offers/outcome stopped))
+          (check! label pending-before "it is pending" nil)
+          (check! label (and (= 200 (:status moved)) (true? (get-in moved [:body "changed"]))) "the move to the commit boundary" (:body moved))
+          (check! label (nil? (privacy/pending name)) "the pending removal was completed before the move" (privacy/pending name))
+          (check! label (= 1 (seq-now name conn)) "published as sequence 1" (seq-now name conn))
+          (check! label (rc/commit-boundary? (d/db conn)) "the database now removes at the commit" nil)
+          (expect (str label ": a save planned before the move, committed after it") late [409 "CasConflict"])
+          (check! label (= [200 false] [(:status again) (get-in again [:body "changed"])]) "moving again changes nothing" (:body again))
+          (expect (str label ": moving back") back [409 "RemovalBoundaryOneWay"])
+          (expect (str label ": the save sent again") resent [200 nil])
+          (check! label (not (str/includes? (text (:body read-a1)) va)) "a1 not answered" nil)
+          (check! label (marked? name a1 pin) "a1 marked at the old position" nil)
+          (native-counters-agree! label name conn))))))
+
 ;; ---- [DX-S5 second review R2-2, adapted] a creation racing a removal of its subject, then the client's replay ----
 (defn creation-race
   "The save-line review's R2-2 (`s5/attack2_gate.clj` `a-creation-racing-a-removal-is-replayed-into-the-removed-family`,
@@ -1181,6 +1227,7 @@
   (scenario "log-states" log-states)
   (scenario "catch-up" catch-up)
   (scenario "data-behind" data-behind)
+  (scenario "boundary-transition" boundary-transition)
   (scenario "creation-race" creation-race)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode
