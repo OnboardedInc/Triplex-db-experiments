@@ -6657,3 +6657,16 @@ Sam's words are in `lab/research/SAM-decisions-2026-11-09.md`; the targets and t
 - Migration gets no work; the SQL reporting copy stays as built.
 - **Console:** an agent started at 17:06 to switch the console on port 28580 to the one branch's build, with a database dump first and a rollback.
 - **Deletion approved:** the merge agent told it may delete its superseded build contexts.
+
+## 2026-11-25 17:28 EST: the console on port 28580 is on the one branch's build; the server session plan and predictions started
+
+**Console switch.** Source: switch agent final message; branch `exp/DX-CON2-console-switch` `1e583a7e7`; page `lab/experiments/EXP-DX1/con2/SWITCH.md` (plan and predictions pushed before executing). Checked by the orchestrator at 17:28: the console and its questions page answer.
+
+- Down 1 minute 59 seconds (17:23:36 to 17:25:35), about 50 s of it waiting for a shared slot. No rollback.
+- Data check, before and after: head position 279 and 279; records 45,105 and 45,105; 10 accounts and 120 subjects; 33 read-only answers (subjects read now, at a past valid time, at an earlier position, at a past record time) with 0 differences; the questions page 46 of 46 checks. A database dump with checksums was taken first and is kept in the private backups folder.
+- New for Sam: "Ask across subjects" (the exact sweep route; route badge and comparison), 27 agent tools (22 before). The gateway runs code identical to `efee27905`.
+- Options on the toy: the two pinned-read options as before plus the two question routes and every question shape. Off: the index, the removal-log directory, API-call reads, the account setting, per-account removal, the commit boundary, sealing, every Publish setting.
+- The PostgreSQL container was replaced, not kept, because the start script refuses to start while a container uses the data volume; the data is on a named volume and PostgreSQL shut down cleanly. No image was built. One prediction was wrong (the head was expected to move by 1 or 2 on opening; it did not move).
+- The old worktree, image and volumes are kept; rollback is three commands on the page.
+
+**Server session.** A plan-and-predictions analyst started at 17:28 (task file `OPUS-SRV1-session-plan-predictions`): why read goodput stayed flat at about 18 per second at every concurrency level at 1 billion; how much memory 1 billion and 10 billion would need; how to tell a read in memory from one not in memory; the run list under a 50-dollar cap; numeric predictions for every reading. Nothing is rented.
