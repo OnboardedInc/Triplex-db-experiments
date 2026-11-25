@@ -378,7 +378,11 @@
     (str/starts-with? kind "answer:")
     ;; a settled page's entries are exactly {subject, changes, part?}; each change is ["", sealed record or null]. The
     ;; unframed page (entries with the clear answer in `json`) is refused: it is never written with the option.
-    (let [entries (if (if (map? doc) (string? (get doc "bytes")) false)
+    (let [entries (if (if (map? doc)
+                        (if (string? (get doc "bytes"))
+                          (every? #{"identity" "frame" "start" "part" "through" "tail" "previous" "bytes"} (keys doc))
+                          false)
+                        false)
                     (try (document (str "\"" (get doc "bytes") "\"")) (catch Exception _ nil))
                     nil)]
       (when-not (vector? entries) (unsealed! kind))
@@ -399,7 +403,7 @@
     (do (when-not (vector? doc) (unsealed! kind)) (doseq [d doc] (delivery! kind d)))
     (str/starts-with? kind "recorded-ledger-part:") (unsealed! (str kind " (ledger parts cannot be checked)"))
     (str/starts-with? kind "recorded-ledger:")
-    (let [items (if (map? doc) (get doc "items") doc)]
+    (let [items (if (map? doc) (if (= #{"items"} (set (keys doc))) (get doc "items") nil) doc)]
       (when-not (vector? items) (unsealed! kind))
       (doseq [x items] (when-not (or (sealed-unit? x) (removed-unit? x)) (unsealed! kind))))
     (str/starts-with? kind "receiver:")
