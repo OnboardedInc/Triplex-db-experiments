@@ -29,6 +29,10 @@
     (fn [name conn]
       (reference/route name "v1" "protection" {"attributes" [":p/secret"] "sealed" false})
       (when rs/enabled (reference/route name "v2" "removal-per-account" {}))
+      ;; ERA3_7B_COMMIT=1 (with TX2_REMOVAL_COMMIT_BOUNDARY=1): the database then moves to the commit boundary
+      (when (and rs/enabled (= "1" (System/getenv "ERA3_7B_COMMIT")))
+        (let [r (reference/route name "v2" "removal-commit-boundary" {})]
+          (when-not (= 200 (:status r)) (throw (ex-info "the commit boundary was not turned on" {:reply r})))))
       (f name conn))))
 
 ;; The writers: [label path kind write-class creates?] (the save line's own list, s5/attack3_gate.clj)
@@ -47,21 +51,24 @@
     (fn [name conn]
       (let [wrap (if (= path :general) fz/general (fn [f] (f)))
             removed-value "the removed value"
-            ;; one subject per combination for the writers that create; one removed subject for the others
-            subject (fn [k] (if creates? (str "acct/m" k "/subject/new" (swap! counter inc)) "acct/m0/subject/s"))
-            S0 (subject 0)
-            _ (when-not creates?
-                (wrap #(reference/send name (save conn {:facts [{:owner S0 :field ":p/secret" :type :string :value removed-value :pred nil}]})))
-                (when (= label "several owners")
-                  (wrap #(reference/send name (save conn {:facts [{:owner (str S0 "-profile") :field ":a/f0" :type :string :value "seed" :pred nil}]})))))
-            old-source (head conn) old-seen (or (frontier-seq name) 0)
+            ;; [second run] one subject per combination on every writer (the first run gave the non-creating writers one
+            ;; subject for all 27, so a combination stored earlier left the value there and moved the subject past the
+            ;; fresh source: its oracle flagged answers that were right, and fresh saves met CasConflict)
+            subject (fn [k] (if creates? (str "acct/m" k "/subject/new" (swap! counter inc)) (str "acct/m0/subject/s" (swap! counter inc))))
             combos (for [fk points sk points rk points] [fk sk rk])
-            ;; for the creating writers each combination's subject is removed first (a removal names a subject with no
-            ;; value yet); for the others the one subject is removed once
-            subjects (into {} (for [c combos] [c (if creates? (subject (hash c)) S0)]))
-            removals (if creates?
-                       (vec (for [[_ S] subjects] (:status (reference/route name "v2" "erase" {"commandId" (str "rm-" (swap! counter inc)) "selectors" [{"entityId" S}]}))))
-                       [(:status (reference/route name "v2" "erase" {"commandId" "rm-s0" "selectors" [{"entityId" S0 "attribute" ":p/secret"}]}))])
+            subjects (into {} (for [c combos] [c (subject (hash c))]))
+            S0 (subjects (first combos))
+            _ (when-not creates?
+                (doseq [[_ S] subjects]
+                  (wrap #(reference/send name (save conn {:facts [{:owner S :field ":p/secret" :type :string :value removed-value :pred nil}]})))
+                  (when (= label "several owners")
+                    (wrap #(reference/send name (save conn {:facts [{:owner (str S "-profile") :field ":a/f0" :type :string :value "seed" :pred nil}]}))))))
+            old-source (head conn) old-seen (or (frontier-seq name) 0)
+            ;; each combination's subject is removed (for the creating writers a removal names a subject with no value
+            ;; yet), one removal per subject
+            removals (vec (for [[_ S] subjects]
+                            (:status (reference/route name "v2" "erase" {"commandId" (str "rm-" (swap! counter inc))
+                                                                         "selectors" [(cond-> {"entityId" S} (not creates?) (assoc "attribute" ":p/secret"))]}))))
             fresh-source (head conn) fresh-seen (frontier-seq name)
             pick (fn [p old fresh] (case p :absent nil :old old :fresh fresh))
             results (vec (for [[fk sk rk :as c] combos]
@@ -90,13 +97,13 @@
                                                                                                 :facts (facts-of label name S removed-value)})
                                                                                    "frameSourceK" fresh-source "removalSeen" fresh-seen)
                                                                             klass (assoc "writeClass" klass))))))
-            S2 (if creates? (:subject declined) S0)
+            S2 (:subject declined)
             new-cmd (when declined
                       (reference/outcome (wrap #(reference/send name (cond-> (assoc (save conn {:block (block kind) :source fresh-source
                                                                                                  :facts (facts-of label name S2 "a value chosen after the removal")})
                                                                                     "frameSourceK" fresh-source "removalSeen" fresh-seen)
                                                                              klass (assoc "writeClass" klass))))))
-            lbl (str "M1 the merged rule, every combination of frameSourceK, sourceK and removalSeen, " label ", " mode)
+            lbl (str "M1 the merged rule, every combination of frameSourceK, sourceK and removalSeen, " label ", " mode (when (= "1" (System/getenv "ERA3_7B_COMMIT")) ", commit"))
             detail {:removals (frequencies removals) :combinations (count results)
                     :answers (frequencies (map :answer results)) :writers-that-committed (frequencies (map :writer results))
                     :wrong (mapv #(select-keys % [:combo :answer :expect :removed-value-stored :writer]) wrong)
