@@ -49,7 +49,7 @@ async function route(saveTo: string, restTo: string): Promise<string> {
 
 const direct = new datomic.DatomicClient(onUrl);
 async function commits(db: string) {
-  const out: { positions: string[]; commandIds: string[] }[] = [];
+  const out: { positions: string[]; commandIds: string[]; txIds: string[] }[] = [];
   let skipped = 0;
   for (let from = "0"; ;) {
     const page = await direct.log(db, from, 1000);
@@ -57,7 +57,7 @@ async function commits(db: string) {
     if (page.rows.length === 0 || page.nextT === from) break;
     from = page.nextT;
   }
-  return { commits: out.length, skipped };
+  return { commits: out.length, skipped, txIds: out.map((t) => t.txIds[0]!) };
 }
 async function liveFacts(db: string, owner: string, attribute: string) {
   const rows = await direct.rows(db, { entityIds: [owner] });
@@ -68,7 +68,11 @@ const classify = (cause: unknown) => {
   if (/TransactionOutcomeUnknown/.test(text)) return "TransactionOutcomeUnknown";
   if (/"notApplied":true/.test(text)) return "OperationNotApplied";
   const code = text.match(/"code":"([A-Za-z]+)"/)?.[1];
-  return code ? `WriteError:${code}` : `WriteError:${text.slice(0, 160)}`;
+  if (code) return `WriteError:${code}`;
+  // A typed error from the core (for example the command already committed), named by its tag and transaction.
+  const tag = [...text.matchAll(/"_tag":"([A-Za-z]+)"/g)].map((m) => m[1]).filter((t) => t !== "Fail" && t !== "Cause");
+  const tx = text.match(/"transactionId":"([^"]+)"/)?.[1];
+  return `Error:${tag.join("/") || text.slice(0, 160)}${tx ? ` transactionId=${tx}` : ""}`;
 };
 
 type Case = { label: string; saveTo: string; restTo: string; fault: "stop" | "kill"; command: boolean; holdMs: number };
@@ -95,10 +99,15 @@ async function runCase(c: Case, index: number) {
   const after = await commits(store.db);
   const notes = await liveFacts(store.db, S, ":m/note");
   const reported = exit._tag === "Success" ? "stored" : classify(exit.cause);
+  const reportedTx = exit._tag === "Success" ? exit.value.txId : reported.match(/transactionId=(\S+)/)?.[1];
   const storedTransactions = after.commits - before.commits;
-  const r = { case: c.label, fault: c.fault, holdMs: c.holdMs, command: c.command, reported, ms,
+  const r = { case: c.label, fault: c.fault, holdMs: c.holdMs, command: c.command, reported, reportedTx, storedTx: after.txIds.slice(before.commits), ms,
     storedTransactionsForOneSave: storedTransactions, liveNotes: notes, fencesInLog: after.skipped - before.skipped,
-    exact: reported === "stored" ? storedTransactions === 1 && notes === 1 : storedTransactions === 0 && notes === 0 };
+    // Exact: one stored transaction and one fact for a save reported stored (with its receipt), none for one reported
+    // not stored; a command already committed is exact when it names the one stored transaction.
+    exact: reported === "stored" ? storedTransactions === 1 && notes === 1 && reportedTx === after.txIds[after.txIds.length - 1]
+      : reportedTx ? storedTransactions === 1 && notes === 1 && reportedTx === after.txIds[after.txIds.length - 1]
+      : storedTransactions === 0 && notes === 0 };
   log("CASE", r);
   await store.close();
   return r;

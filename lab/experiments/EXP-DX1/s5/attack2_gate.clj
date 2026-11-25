@@ -360,6 +360,30 @@
             (when (= 503 (first (:answer v)))
               (is (not= 503 (first (:replay v))) [k "a deterministic refusal answered unknown is replayed forever"]))))))))
 
+;; ---------------------------------------------------------------- 8b. the command path with the option off
+
+(deftest the-command-path-settles-on-whichever-transaction-holds-the-command
+  ;; S6 9.2: "fixed for every caller: the operation and fence answers name the transaction and the SDK settles only on
+  ;; its own". DatomicClient.transactCommand (1640-1645) settles on the claim lookup's txId without comparing it with
+  ;; its own journal. With TX2_ACCOUNT_CLAIMS off, B's earlier save of the same command ID makes A's save answer
+  ;; CommandConflict, and A's claim lookup returns B's transaction, which the SDK returns as A's receipt.
+  (if-not (and (not on?) (run? "command"))
+    (println "DX-S5R2_SKIP the option-off command path")
+    (reference/in-scope
+      (fn [name conn]
+        (let [b-input (save conn {:command "joined:shared" :operation "b6-op" :facts [{:owner "acct/b6/subject/s" :field ":a/f" :type :string :value "b" :pred nil}]})
+              b (reference/send name b-input)
+              a-input (save conn {:command "joined:shared" :operation "a6-op" :facts [{:owner "acct/a6/subject/s" :field ":a/f" :type :string :value "a" :pred nil}]})
+              a (reference/send name a-input)
+              found (:body (reference/route name "v1" "claim" {"commandId" "joined:shared" "receipt" true}))
+              r {:case "the command path with the option off" :b (reference/outcome b) :a (reference/outcome a)
+                 :aJournal (get-in a-input ["claims" 0 "txId"]) :claimLookupTxId (get found "txId")
+                 :claimLookupReceiptStatus (get-in found ["receipt" "status"]) :aStored (= "committed" (get (operation name (get a-input "operationId") nil) "status"))}]
+          (line r)
+          (is (= [409 "CommandConflict"] (:a r)))
+          (is (not (:aStored r)))
+          (is (= (:aJournal r) (:claimLookupTxId r)) "the transaction the SDK would settle on is not A's"))))))
+
 ;; ---------------------------------------------------------------- 9. F2: shapes the S6 bound gate did not send
 
 (deftest import-and-live-shapes-against-the-estimate
@@ -378,6 +402,7 @@
                         (let [e (estimate input) reply (wrap #(reference/send name input))
                               t (get-in reply [:body "transactMicros"])
                               r {:frame label :writer (or (get-in reply [:body "subjectSave"]) "general") :outcome (reference/outcome reply)
+                                 :message (when-not (= 200 (:status reply)) (get-in reply [:body "message"]))
                                  :estimateUs e :transactMicros t :ratio (when (and t (pos? e)) (/ (double t) e)) :importBoundUs limit}]
                           (line (assoc r :case "F2 shape against the estimate")) r))
               big (fn [n bytes] (apply str (repeat bytes (char (+ 97 (mod n 26))))))
@@ -390,15 +415,17 @@
             (is (= [200 nil] (reference/outcome (fz/general #(reference/send name (save conn {:facts (vec (for [i (range 512)] {:owner (str "acct/b5/subject/e" k "-" i) :field ":e/f" :type :string :value "e" :pred nil}))})))))))
           (doseq [[label wrap] [["general" fz/general] ["fast" (fn [f] (f))]]]
             (let [tag (str label "-" (swap! counter inc))
-                  ;; (a) one new subject, 2,000 facts of 400-byte values, as an import frame
-                  a (assoc (save conn {:facts (vec (for [i (range 2000)] {:owner (str "acct/b5/subject/big-" tag) :field (str ":b/f" i) :type :string :value (big i 400) :pred nil}))})
-                           "writeClass" "import")
-                  _ (swap! results conj (measure (str label ": import, one new subject, 2,000 values of 400 bytes") wrap a))
-                  ;; (b) a re-import of S: every live fact retired and written again (live = retired, the read set is S)
-                  live (into {} (fz/read-owner name S {"validAt" 5.0}))
-                  b (assoc (save conn {:facts (vec (for [[f p] (take 1500 live)] {:owner S :field f :type :string :value (str "re-" tag) :pred p}))})
-                           "writeClass" "import")
-                  _ (swap! results conj (measure (str label ": import, a subject re-imported, 1,500 retirements and 1,500 values") wrap b))
+                  ;; (a) one new subject per frame, n facts of v-byte values, as an import frame (sizes around the bound)
+                  _ (doseq [[n v] [[20 100] [20 8000] [60 2000] [100 100] [150 100]]]
+                      (let [a (assoc (save conn {:facts (vec (for [i (range n)] {:owner (str "acct/b5/subject/big-" tag "-" n "-" v) :field (str ":b/f" i) :type :string :value (big i v) :pred nil}))})
+                                     "writeClass" "import")]
+                        (swap! results conj (measure (str label ": import, one new subject, " n " values of " v " bytes") wrap a))))
+                  ;; (b) a re-import of S: k live facts retired and written again (live = retired, the read set is S)
+                  _ (doseq [k [20 60 100 150]]
+                      (let [live (into {} (fz/read-owner name S {"validAt" 5.0}))
+                            b (assoc (save conn {:facts (vec (for [[f p] (take k live)] {:owner S :field f :type :string :value (str "re-" tag "-" k) :pred p}))})
+                                     "writeClass" "import")]
+                        (swap! results conj (measure (str label ": import, a subject re-imported, " k " retirements and " k " values") wrap b))))
                   ;; (c) a live save at both caps: 4,096 existing entities read, 4,096 read-only live IDs, one fact
                   entities (vec (for [k (range 8) i (range 512)] (str "acct/b5/subject/e" k "-" i)))
                   live-ids (vec (take 4096 (concat (map (comp :id val) (fz/read-owner name S {"validAt" 5.0}))
