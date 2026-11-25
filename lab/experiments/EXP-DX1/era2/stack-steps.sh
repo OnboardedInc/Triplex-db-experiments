@@ -136,9 +136,11 @@ remove() { echo "{\"commandId\":\"$1\",\"selectors\":[{\"entityId\":\"$2\",\"att
 leak_check() { # URL DB NAME DOCS VALUE...
   local url=$1 d=$2 name=$3 docs=$4; shift 4
   post "$url/v1/db/$d/read" "{\"entityIds\":[\"acct/a/one\",\"acct/b/one\"]}" "$name-subjects"
-  local f1="$out/replies/$(printf '%03d' $n)-$name-subjects.json"
-  post "$url/v1/db/$d/read" "{\"entityIds\":$docs}" "$name-old-ticket-documents"
-  local f2="$out/replies/$(printf '%03d' $n)-$name-old-ticket-documents.json"
+  local f1="$out/replies/$(printf '%03d' $n)-$name-subjects.json" f2=/dev/null
+  if [[ $docs != '[]' ]]; then
+    post "$url/v1/db/$d/read" "{\"entityIds\":$docs}" "$name-old-ticket-documents"
+    f2="$out/replies/$(printf '%03d' $n)-$name-old-ticket-documents.json"
+  fi
   local leaks=0
   for v in "$@"; do for f in "$f1" "$f2"; do if grep -q "$v" "$f"; then leaks=$((leaks + 1)); fi; done; done
   step "$name: removed values answered by their subjects or by documents of writes with older tickets: $leaks"
@@ -161,6 +163,10 @@ step-*|wait)
   fi
   step "intents pending: $(pending_of "$D")"
   t=$(seq_of "$R" "$D"); step "published sequence on the read gateway: $t"
+  # [DX-ERA2 fourth pass, M1] on the log's boundary a read that finds the removal committed publishes it first, so the
+  # ticket the first frame naming no account carries is then already after the removal: its copy of the value is a
+  # new write after the removal, not a write with an older ticket
+  old_docs='["notice:v1:st2-any-0"]'; [[ $t -ge 1 ]] && { old_docs='[]'; step "the first frames carry a ticket after the removal ($t)"; }
   post "$R/v1/db/$D/transact" "$bodies/frame-b-0.json" frame-naming-b "$t"
   post "$R/v1/db/$D/transact" "$bodies/save-b1-0.json" save-b1
   post "$R/v1/db/$D/transact" "$bodies/frame-any-0.json" first-frame-no-accounts "$t"
@@ -172,7 +178,7 @@ step-*|wait)
   post "$R/v2/db/$D/erase" "$(remove era2-other acct/c/one)" another-removal
   t=$(seq_of "$R" "$D")
   post "$R/v1/db/$D/transact" "$bodies/frame-any-2.json" frame-no-accounts-after-another-removal "$t"
-  leak_check "$R" "$D" after '["notice:v1:st2-any-0"]' "$va"
+  leak_check "$R" "$D" after "$old_docs" "$va"
   if [[ $scenario == wait ]]; then docker restart "$prefix-gw-w" > /dev/null; else docker start "$prefix-gw-w" > /dev/null; fi
   wait_up "$W"; check_images restarted
   t=$(seq_of "$W" "$D")

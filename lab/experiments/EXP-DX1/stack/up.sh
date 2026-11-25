@@ -1128,6 +1128,8 @@ for role in "${gateway_roles[@]}"; do
   if [[ ${DX_DERIVED_SEAL:-0} == 1 ]]; then field_policy+=(-e "TX2_DERIVED_SEAL=1"); fi
   # [DX-ERA2] The removal's wait for each of its native transactions, in ms (tests force it to expire; unset: 5000).
   if [[ -n ${DX_REMOVAL_WAIT_MS:-} ]]; then field_policy+=(-e "TX2_REMOVAL_WAIT_MS=$DX_REMOVAL_WAIT_MS"); fi
+  # [DX-ERA2 fourth pass] A removal takes effect at its commit in Datomic (unset: at its publication, as today).
+  if [[ ${DX_REMOVAL_COMMIT_BOUNDARY:-0} == 1 ]]; then field_policy+=(-e "TX2_REMOVAL_COMMIT_BOUNDARY=1"); fi
   # [DX-ERA2 third pass] The write gateway only: its removal wait, and the test seam that pauses its removals at one
   # step (TX2_REMOVAL_TEST_PAUSE_AT, for TX2_REMOVAL_TEST_PAUSE_MS or until killed). Unset: nothing.
   if [[ $mode == w && -n ${DX_REMOVAL_WAIT_MS_WRITE:-} ]]; then field_policy+=(-e "TX2_REMOVAL_WAIT_MS=$DX_REMOVAL_WAIT_MS_WRITE"); fi

@@ -18,7 +18,8 @@
 ;; TX2_REMOVAL_SUBJECT_CHECK=1 with the per-account option: the removal checks its selection per subject and takes its
 ;; position at commit (removal_commit.clj).
 (def subject? (and per-account? (= "1" (System/getenv "TX2_REMOVAL_SUBJECT_CHECK"))))
-(def mode (cond subject? "subject-check" per-account? "per-account" :else "database-wide"))
+(def commit? (and per-account? (= "1" (System/getenv "TX2_REMOVAL_COMMIT_BOUNDARY"))))
+(def mode (cond commit? "commit-boundary" subject? "subject-check" per-account? "per-account" :else "database-wide"))
 (def ^:dynamic sealed-run? false)
 (def results (atom []))
 (defn check! [scenario ok message & [detail]]
@@ -322,17 +323,26 @@
             (expect (str scenario ": another account's save while stopped") other
                     (if per-account? [200 nil] [503 "ErasureFrontierUnavailable"]))
             (check! scenario (= (if per-account? 200 503) (:status read)) "another account's read while stopped" (:status read))
-            (expect (str scenario ": another subject of the account while stopped") same
-                    (if per-account? [200 nil] [503 "ErasureFrontierUnavailable"]))
-            ;; the removed subject: before the native commit the save lands first and the removal re-plans over it;
-            ;; after it, the save is refused until the removal is published
-            (expect (str scenario ": the removed subject while stopped") own
-                    (cond (not per-account?) [503 "ErasureFrontierUnavailable"]
-                          (= step :before-native) [200 nil]
-                          :else [409 "CasConflict"]))
-            (when (= 200 (:status own))
-              ;; the value saved before the resumed removal's serial point is removed with it
-              (swap! own-values assoc scenario v-own)))
+            ;; [DX-ERA3 M1] on the log's boundary a read that finds the pending removal committed in the data publishes
+            ;; it before it is served; with the commit boundary nothing is published by a read (the data masks it)
+            (let [published-by-read (and per-account? (not commit?) (#{:after-native :at-publish} step))]
+              (when per-account?
+                (check! scenario (= (if published-by-read 1 0) (seq-now name conn))
+                        (if published-by-read "the read published the committed removal first" "nothing published while stopped")
+                        (seq-now name conn)))
+              (expect (str scenario ": another subject of the account while stopped") same
+                      (if per-account? [200 nil] [503 "ErasureFrontierUnavailable"]))
+              ;; the removed subject: before the native commit the save lands first and the removal re-plans over it;
+              ;; after it, the save is refused until the removal is published; once a read has published it, the save is
+              ;; an ordinary save after the removal (answered, not removed by it)
+              (expect (str scenario ": the removed subject while stopped") own
+                      (cond (not per-account?) [503 "ErasureFrontierUnavailable"]
+                            (= step :before-native) [200 nil]
+                            published-by-read [200 nil]
+                            :else [409 "CasConflict"]))
+              (when (and (= 200 (:status own)) (not published-by-read))
+                ;; the value saved before the resumed removal's serial point is removed with it
+                (swap! own-values assoc scenario v-own))))
           ;; resumed with the same command: completes exactly once
           (let [done (remove! name "rm-s" a1)]
             (expect scenario done [200 nil])
@@ -613,8 +623,15 @@
                      (triplex.gateway.scope/value db scope :triplex.scope/removal-seq))
             "nothing declared beyond the log")))
 
+(defn- served-seq
+  "The ticket a client reads: the sequence of the state a request is served from. With the commit boundary that is
+  the data's (the log's cut with the removals committed past its head), else the log's."
+  [name conn]
+  (if commit?
+    (let [db (d/db conn)] (:seq (rc/effective name db (privacy/cut name db true))))
+    (seq-now name conn)))
 (defn- frame-any [name conn id]
-  (assoc (save-frame id (str "notice:v1:" id) ":notice/body" "derived" nil nil) "erasureSeq" (seq-now name conn)))
+  (assoc (save-frame id (str "notice:v1:" id) ":notice/body" "derived" nil nil) "erasureSeq" (served-seq name conn)))
 (defn- frame-acct [name conn id account]
   (assoc (frame-any name conn id) "erasureAccounts" [account]))
 (defn- stop-ex [step] (ex-info (str "stopped " (clojure.core/name step)) {}))
@@ -713,7 +730,10 @@
   restore route and every derived write are refused (typed) before anything is declared or released, the native
   counters do not move, a derived write that read a removed value never lands; the gateway's start check reports it;
   once the current log is back everything works again. Also a declaration the log does not show (left by the earlier
-  build), cleared by moving the database back and forward."
+  build), cleared by moving the database back and forward. [DX-ERA2 fourth pass] With the commit boundary the same
+  steps are served instead: the removal first appends the missing entries to the log and then commits after them (so
+  the restore route finds the log current), a declaration the log does not show is released by the next removal, and a
+  derived write that read a removed value still never lands."
   []
   (when per-account?
     (doseq [behind [1 2]]
@@ -747,12 +767,19 @@
                 back-removal (remove! name "lb-3" a1)]
             (expect label r1 [200 nil])
             (when r2 (expect label r2 [200 nil]))
-            (expect (str label ": a removal while the log is behind") removal [503 "RemovalLogBehind"])
-            (expect (str label ": the restore route while the log is behind") restore [503 "RemovalLogBehind"])
+            (if commit?
+              (do (expect (str label ": a removal while the log is behind (it catches the log up first)") removal [200 nil])
+                  (check! label (= (inc behind) (get-in removal [:body "seq"])) "the removal follows the appended entries" (:body removal))
+                  (expect (str label ": the restore route after the catch-up") restore [200 nil])
+                  (check! label (not (str/includes? start "RemovalLogBehind")) "the start check finds the log current" start)
+                  (check! label (= {:declared (inc behind) :committed (inc behind) :held "[]" :b 1 :a (inc behind)} n1)
+                          "only the removal moved the counters" {:before n0 :after n1}))
+              (do (expect (str label ": a removal while the log is behind") removal [503 "RemovalLogBehind"])
+                  (expect (str label ": the restore route while the log is behind") restore [503 "RemovalLogBehind"])
+                  (check! label (str/includes? start "RemovalLogBehind") "the start check reports it" start)
+                  (check! label (= n0 n1) "nothing declared, held or released while the log is behind" {:before n0 :after n1})))
             (check! label (not= 200 (:status old-frame)) "a derived write that read the removed value never lands" (offers/outcome old-frame))
             (check! label (not= 200 (:status any-frame)) "a derived write naming no account is refused" (offers/outcome any-frame))
-            (check! label (str/includes? start "RemovalLogBehind") "the start check reports it" start)
-            (check! label (= n0 n1) "nothing declared, held or released while the log is behind" {:before n0 :after n1})
             (check! label (not (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" ["notice:v1:lb-old"]}))) vb)) "no copy")
             (expect (str label ": once the current log is back, a frame naming b") back-frame [200 nil])
             (expect (str label ": and one naming no account") back-any [200 nil])
@@ -769,8 +796,11 @@
               removal (remove! name "ud-1" a1)
               frame (offers/send name (frame-any name conn "ud-any"))
               moves [(offers/route name "v2" "removal-per-account" {"back" true}) (offers/route name "v2" "removal-per-account" {})]]
-          (expect (str label ": a removal") removal [503 "RemovalLogBehind"])
-          (check! label (not= 200 (:status frame)) "a frame naming no account is refused" (offers/outcome frame))
+          (if commit?
+            (do (expect (str label ": a removal (it releases the declaration first)") removal [200 nil])
+                (expect (str label ": a frame naming no account after it") frame [200 nil]))
+            (do (expect (str label ": a removal") removal [503 "RemovalLogBehind"])
+                (check! label (not= 200 (:status frame)) "a frame naming no account is refused" (offers/outcome frame))))
           (check! label (= [[200 nil] [200 nil]] (map offers/outcome moves)) "moved back and forward" (map offers/outcome moves))
           (expect (str label ": after the moves, the removal") (remove! name "ud-1" a1) [200 nil])
           (expect (str label ": and a frame naming no account") (offers/send name (frame-any name conn "ud-any2")) [200 nil])
@@ -855,6 +885,97 @@
                   copy (str/includes? (text (:body (offers/route recipient "v1" "read" {"entityIds" ["notice:v1:dw-late"]}))) v)]
               (println "ERA2_DELIVERY_WINDOW" (pr-str {:source-removal (offers/outcome removed) :late-recipient-transaction landed
                                                        :copy-readable-in-recipient-after-ack copy})))))))))
+
+(defn commit-visibility
+  "[DX-ERA2 fourth pass] A removal stopped after its commit in Datomic, before its publication: no read route answers
+  its value. With the commit boundary the reads are masked by the commit and the first derived write that reaches the
+  removal completes it; on the log's boundary the first read publishes it before it is served (M1), so the derived
+  write after it is an ordinary write."
+  []
+  (when per-account?
+    (fresh-scope false
+      (fn [name conn]
+        (let [label (str "commit-visibility/" mode)
+              seeds (seed! name [a1 b1]) value (:value (seeds a1)) pin (head conn)
+              commit rc/commit!
+              stopped (with-redefs [rc/commit! (fn [& args] (let [r (apply commit args)] (throw (stop-ex :committed)) r))]
+                        (remove! name "cv-1" a1))
+              texts (apply str (map (fn [[_ r]] (text (:body r))) (route-texts name a1 pin)))
+              answered (str/includes? texts value)
+              first-any (offers/send name (frame-any name conn "cv-any"))]
+          (check! label (not= 200 (:status stopped)) "stopped after its commit" (offers/outcome stopped))
+          (check! label (not answered) "no route answers the value once it is committed")
+          (expect (str label ": the first frame naming no account") first-any
+                  (if commit? [503 "ErasureFrontierUnavailable"] [200 nil]))
+          (check! label (= 1 (seq-now name conn)) (if commit? "completed by that contact" "published by the first read"))
+          (check! label (not (str/includes? (apply str (map (fn [[_ r]] (text (:body r))) (route-texts name a1 pin))) value)) "not answered after the completion"))))))
+
+(defn log-states
+  "[DX-ERA2 fourth pass] The data current and the log put back to an older copy (one and two removals behind), and
+  the log missing. On the log's boundary: RemovalLogBehind (two behind), and the rebuild route is the way out; with the
+  commit boundary every request is served from the data, the next removal catches the log up, and a missing log is
+  refused until the rebuild route writes it from the data with the policy. In every case no route answers a removed
+  value, and once the log is back every counter equals it."
+  []
+  (when per-account?
+    (doseq [behind [1 2 :missing]]
+      (fresh-scope false
+        (fn [name conn]
+          (let [label (str "log-states/" mode "/" behind)
+                seeds (seed! name [a1 b1 "acct/c/one"]) va (:value (seeds a1)) vb (:value (seeds b1)) pin (head conn)
+                dir (.getParent (privacy/path name "head.json"))
+                tmp (java.nio.file.Paths/get "/tmp" (into-array String [(str "era2-ls-" (UUID/randomUUID))]))
+                _ (copy-dir! dir tmp)
+                _ (expect label (remove! name "ls-1" a1) [200 nil])
+                _ (when (= behind 1) (copy-dir! dir tmp))
+                _ (expect label (remove! name "ls-2" b1) [200 nil])
+                _ (if (= behind :missing)
+                    (with-open [st (java.nio.file.Files/list dir)] (doseq [p (iterator-seq (.iterator st))] (java.nio.file.Files/delete p)))
+                    (copy-dir! tmp dir))
+                _ (reset! privacy/cache {})
+                read-a (offers/route name "v1" "read" {"entityIds" [a1 b1]})
+                answered (or (str/includes? (text (:body read-a)) va) (str/includes? (text (:body read-a)) vb))
+                other-save (offers/send name (frame "ls-sc" "acct/c/one" (secret "acct/c/one" "s") (:id (seeds "acct/c/one")) (head conn)))
+                rebuild (offers/route name "v2" "removal-log-rebuild"
+                                      (if (= behind :missing) {"attributes" [":v"] "sealed" false} {}))
+                after-any (offers/send name (frame-any name conn "ls-any"))
+                after-removal (remove! name "ls-3" "acct/c/one")]
+            (check! label (not answered) "no route answers a removed value while the log is behind or missing")
+            (cond
+              (= behind :missing) (do (expect (str label ": a read while the log is missing") read-a [503 "RemovalLogMissing"])
+                                      (expect (str label ": a save while the log is missing") other-save [503 "RemovalLogMissing"]))
+              commit? (do (expect (str label ": a read") read-a [200 nil])
+                          (expect (str label ": another account's save") other-save [200 nil]))
+              (= behind 2) (expect (str label ": a read on the log's boundary") read-a [503 "RemovalLogBehind"])
+              :else (expect (str label ": a read on the log's boundary, one behind (nothing pending in the copy)") read-a [503 "RemovalLogBehind"]))
+            (expect (str label ": the rebuild route") rebuild [200 nil])
+            (check! label (= 2 (get-in rebuild [:body "seq"])) "the log rebuilt up to the data (two removals)" (:body rebuild))
+            (check! label (= 3 (seq-now name conn) (get-in after-removal [:body "seq"])) "the removal after the rebuild is sequence 3" (:body after-removal))
+            (expect (str label ": a frame naming no account after it") after-any [200 nil])
+            (expect (str label ": a removal after it") after-removal [200 nil])
+            (check! label (not (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [a1 b1]}))) va)) "a1 not answered after")
+            (native-counters-agree! label name conn)))))))
+
+(defn catch-up
+  "[DX-ERA2 fourth pass, commit boundary] The log put back two removals behind; the next removal appends both from the
+  data before its own; the log then equals the data."
+  []
+  (when commit?
+    (fresh-scope false
+      (fn [name conn]
+        (let [seeds (seed! name [a1 b1 "acct/c/one"]) va (:value (seeds a1))
+              dir (.getParent (privacy/path name "head.json"))
+              tmp (java.nio.file.Paths/get "/tmp" (into-array String [(str "era2-cu-" (UUID/randomUUID))]))
+              _ (copy-dir! dir tmp)
+              _ (expect "catch-up" (remove! name "cu-1" a1) [200 nil])
+              _ (expect "catch-up" (remove! name "cu-2" b1) [200 nil])
+              _ (copy-dir! tmp dir) _ (reset! privacy/cache {})
+              r (remove! name "cu-3" "acct/c/one")]
+          (expect "catch-up: the next removal" r [200 nil])
+          (check! "catch-up" (= 3 (get-in r [:body "seq"]) (seq-now name conn)) "sequence 3, after appending 1 and 2" (:body r))
+          (check! "catch-up" (= #{"cu-1" "cu-2" "cu-3"} (set (keys (:commands (privacy/cut name (d/db conn) true))))) "the log holds all three")
+          (check! "catch-up" (not (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [a1]}))) va)) "a1 not answered")
+          (native-counters-agree! "catch-up" name conn))))))
 
 (defn lock-lost
   "[DX-ERA3 second review] Two removals of different commands at once, with the database's lock not held (as after a
@@ -967,8 +1088,67 @@
           (println "ERA2_MID_IMPORT" (pr-str (frequencies (map second @results))))
           (absent-from-routes! "mid-import" name [y] pin t0 (vals @values)))))))
 
+(defn data-behind
+  "[DX-ERA2 fourth pass, commit boundary] The data behind the log (older data restored): the state a request is
+  served from is the log's cut, which masks every removal the log holds, and writes are refused RemovalDataBehind.
+  Checked on a database value from before the log's last removal (the stack's restore of older data found `effective`
+  indexing past the data's last entry)."
+  []
+  (when commit?
+    (fresh-scope false
+      (fn [name conn]
+        (let [seeds (seed! name [a1 b1])
+              _ (expect "data-behind" (remove! name "db-1" a1) [200 nil])
+              older (d/db conn)
+              _ (expect "data-behind" (remove! name "db-2" b1) [200 nil])
+              state (privacy/cut name (d/db conn) true)
+              e (try (rc/effective name older state) (catch Throwable t {:threw (str t)}))]
+          (check! "data-behind" (= "RemovalDataBehind" (:writes-refused e)) "writes refused, typed" (select-keys e [:writes-refused :threw :seq]))
+          (check! "data-behind" (= 2 (:seq e)) "served from the log's cut (both removals masked)" (:seq e))
+          (check! "data-behind" (contains? (:erased e) (:id (seeds b1))) "b1's value, removed only in the log's newer entry, is masked" (keys (:erased e))))))))
+
+;; ---- [DX-S5 second review R2-2, adapted] a creation racing a removal of its subject, then the client's replay ----
+(defn creation-race
+  "The save-line review's R2-2 (`s5/attack2_gate.clj` `a-creation-racing-a-removal-is-replayed-into-the-removed-family`,
+  at 9dc800e7b), rebuilt on this branch's harness: that test needs the save line's own code (`subject-create`), which
+  this branch does not have. A creation of subject X (no prior value) is framed; a removal naming X lands between its
+  plan and its commit (run from inside the save's submit, on another thread, waited for 3 s); then the same frame is
+  sent after the removal under a new operation ID (its source still before the removal); then the client's replay: the
+  same caller-supplied value with a fresh source and a new operation ID, as the SDK replays a CasConflict. On the
+  subject writer and on the general writer. Asserted: the racing save is not stored when the removal landed in its
+  window. Observed and printed (ERA2_R22), not asserted: what the frame sent after and the replay answer."
+  []
+  (doseq [writer [:subject :general]]
+    (fresh-scope false
+      (fn [name conn]
+        (let [label (str "creation-race/" mode "/" (clojure.core/name writer))
+              X "acct/p3/subject/later" v (secret X "framed-before-the-removal") pin (head conn)
+              racing (frame "r22-race" X v nil pin)
+              removed (atom nil) fired (atom false) orig storage/submit!
+              general (fn [f] (if (= writer :general) (with-redefs [subject/plan (fn [& _] nil)] (f)) (f)))
+              reply (general
+                      #(with-redefs [storage/submit! (fn [c data request timeline & more]
+                                                       (when (and (= "r22-race" (get request "operationId")) (compare-and-set! fired false true))
+                                                         (let [f (future (offers/route name "v2" "erase" {"commandId" "r22-remove" "selectors" [{"entityId" X "attribute" ":v"}]}))]
+                                                           (reset! removed (deref f 3000 :waiting))))
+                                                       (apply orig c data request timeline more))]
+                         (offers/send name racing)))
+              removal (let [r @removed] (if (= :waiting r) [:waited-past-3s] (offers/outcome r)))
+              removal-seq (seq-now name conn)
+              stale (general #(offers/send name (frame "r22-stale" X v nil pin)))
+              replay (general #(offers/send name (frame "r22-replay" X v nil (head conn))))
+              stored? (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [X]}))) v)
+              obs {:writer writer :removal removal :removalSeq removal-seq :racing (offers/outcome reply)
+                   :sameFrameAfterTheRemoval (offers/outcome stale) :replay (offers/outcome replay) :valueStoredAfter stored?}]
+          (println "ERA2_R22" mode (pr-str obs))
+          (when (= [200 nil] removal)
+            (check! label (not= 200 (:status reply)) "the creation the removal landed inside is not stored" obs)))))))
+
+;; ERA2_ONLY (space-separated label prefixes) runs only those scenarios: a diagnostic run, never a gate
+(def only (some-> (System/getenv "ERA2_ONLY") str/trim not-empty (str/split #"\s+")))
 (defn- scenario [label f]
-  (try (f) (catch Throwable e (check! label false (str "scenario stopped: " (.getMessage e))))))
+  (when (or (nil? only) (some #(str/starts-with? label %) only))
+    (try (f) (catch Throwable e (check! label false (str "scenario stopped: " (.getMessage e)))))))
 (defn main []
   ;; The file authority publishes whatever it is given; the PostgreSQL authority publishes only an entry equal to the
   ;; stored intent. Every run here holds the file authority to that rule as well.
@@ -998,6 +1178,11 @@
   (scenario "rebuild" rebuild)
   (scenario "deliveries" deliveries)
   (scenario "lock-lost" #(lock-lost (Long/parseLong (or (System/getenv "ERA2_LOCK_LOST") "20"))))
+  (scenario "commit-visibility" commit-visibility)
+  (scenario "log-states" log-states)
+  (scenario "catch-up" catch-up)
+  (scenario "data-behind" data-behind)
+  (scenario "creation-race" creation-race)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode
              (pr-str {:checks (count @results) :failed (count failed)}))

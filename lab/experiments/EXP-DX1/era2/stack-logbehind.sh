@@ -81,7 +81,7 @@ gateway=(TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=
   DX_W1_FAST_REPLY=1 DX_W1_JOURNAL_QUERY=1 DX_GROUP_COMMIT=0 DX_PINNED_SHORTCUT=0 DX_PINNED_CUT_LOOKUP=0
   DX_ERASURE_SQL=1 DX_INT1_NATIVE_WRITE_READBACK=1 DX_REMOVAL_PER_ACCOUNT=1 DX_REMOVAL_SUBJECT_CHECK=1)
 case $scenario in
-  logbehind) ;;
+  logbehind|logbehind2|logmissing) ;;
   step-*) gateway+=(DX_REMOVAL_TEST_PAUSE_AT=${scenario#step-}) ;;
   wait) gateway+=(DX_REMOVAL_WAIT_MS_WRITE=1) ;;
   lockloss-*) gateway+=(DX_REMOVAL_TEST_PAUSE_AT=${scenario#lockloss-} DX_REMOVAL_TEST_PAUSE_MS=20000) ;;
@@ -181,6 +181,37 @@ logbehind)
   post "$W/v2/db/$D/erase" "$(remove era2-lb-a acct/a/one)" removal-a1
   post "$R/v1/db/$D/read" '{"entityIds":["acct/b/one","notice:v1:st2-b-0","notice:v1:st2-any-0"]}' read-after
   step "b1's value answered after: $(grep -c "$vb" "$out/replies/$(printf '%03d' $n)-read-after.json" || true)"
+  ;;
+logbehind2|logmissing)
+  # [DX-ERA2 fourth pass] two removals behind (no pending), or the log deleted; then the rebuild route
+  new_db "$W" d; D=$db
+  for s in a1 b1 c1; do post "$W/v1/db/$D/transact" "$bodies/seed-$s.json" "seed-$s"; done
+  psql_auth -c "CREATE TABLE era2_log_copy AS SELECT * FROM triplex_removal.records WHERE scope='$D'" > /dev/null
+  post "$W/v2/db/$D/erase" "$(remove era2-lb-a acct/a/one)" removal-a1
+  post "$W/v2/db/$D/erase" "$(remove era2-lb-b acct/b/one)" removal-b1
+  if [[ $scenario == logmissing ]]; then
+    step "delete this database's removal log (PostgreSQL rows); restart both gateways"
+    psql_auth -c "DELETE FROM triplex_removal.records WHERE scope='$D'" > /dev/null
+  else
+    step "put the copy from before both removals back (two behind); restart both gateways"
+    psql_auth -c "BEGIN; DELETE FROM triplex_removal.records WHERE scope='$D'; INSERT INTO triplex_removal.records SELECT * FROM era2_log_copy; COMMIT;" > /dev/null
+  fi
+  docker restart "$prefix-gw-w" "$prefix-gw-r" > /dev/null; wait_up "$W"; wait_up "$R"; check_images restarted
+  step "start check on the write gateway: $(docker logs "$prefix-gw-w" 2>&1 | grep removal-start-check | tail -1 | cut -c1-200)"
+  post "$R/v1/db/$D/read" '{"entityIds":["acct/a/one","acct/b/one"]}' read-while
+  step "a1 or b1 answered while: $(grep -c -e "$va" -e "$vb" "$out/replies/$(printf '%03d' $n)-read-while.json" || true)"
+  post "$R/v1/db/$D/transact" "$bodies/save-a2-0.json" save-a2-while
+  if [[ $scenario == logmissing ]]; then
+    post "$W/v2/db/$D/removal-log-rebuild" '{"attributes":[":v"],"sealed":false}' rebuild
+  else
+    post "$W/v2/db/$D/removal-log-rebuild" '{}' rebuild
+  fi
+  t=$(seq_of "$R" "$D"); step "published sequence after the rebuild: $t"
+  post "$R/v1/db/$D/transact" "$bodies/frame-b-1.json" frame-naming-b "$t"
+  post "$R/v1/db/$D/transact" "$bodies/frame-any-1.json" frame-no-accounts "$t"
+  post "$W/v2/db/$D/erase" "$(remove era2-lb-c acct/c/one)" removal-c1
+  post "$R/v1/db/$D/read" '{"entityIds":["acct/a/one","acct/b/one"]}' read-after
+  step "a1 or b1 answered after: $(grep -c -e "$va" -e "$vb" "$out/replies/$(printf '%03d' $n)-read-after.json" || true)"
   ;;
 *) echo "unknown scenario $scenario" >&2; exit 2 ;;
 esac

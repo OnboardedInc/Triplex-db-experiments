@@ -110,17 +110,21 @@
 ;; Rejected: refusing every request of every account while any removal is pending (the database-wide rule).
 (defn request-cut [name conn db]
   (loop [db db tries 0]
-    (let [state (try (privacy/cut name db true)
+    (let [state (try ((requiring-resolve 'triplex.gateway.removal-commit/log-cut) name db)
                      (catch clojure.lang.ExceptionInfo e
-                       (if (and (< tries 4) (= "ErasureFrontierUnavailable" (:code (ex-data e)))) ::retry (throw e))))]
+                       (if (and (< tries 4) (= "ErasureFrontierUnavailable" (:code (ex-data e)))) ::retry
+                         (throw ((requiring-resolve 'triplex.gateway.removal-commit/typed-failure) name db e)))))]
       (cond
         (= ::retry state) (recur (erase/sync! conn) (inc tries))
         (nil? state) [nil db]
         ;; [DX-ERA3 N5] the declared sequence too, and a typed answer when the log is behind the data (DX-ERA2's third
         ;; pass, merged here where this function now lives)
-        ((requiring-resolve 'triplex.gateway.removal-commit/consistent?) db state) [(assoc state :per-account true) db]
+        ;; [DX-ERA2 fourth pass] served: a pending removal already committed takes effect (M1); with the commit
+        ;; boundary every removal committed in the data does (merged here, DX-ERA4)
+        ((requiring-resolve 'triplex.gateway.removal-commit/consistent?) name db state)
+        [((requiring-resolve 'triplex.gateway.removal-commit/served) name db state) db]
         (< tries 4) (recur (erase/sync! conn) (inc tries))
-        :else ((requiring-resolve 'triplex.gateway.removal-commit/refuse-inconsistent!) db state)))))
+        :else ((requiring-resolve 'triplex.gateway.removal-commit/refuse-inconsistent!) name db state)))))
 
 ;; [DX-ERA2] Why: move an existing protected database to removal sequences per account (or back), online: under the
 ;; removal lock, one small transaction (the global sequence moves to its own attribute, the database-wide one takes the
