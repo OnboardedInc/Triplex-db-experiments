@@ -353,8 +353,11 @@
                          ;; is still read here and covered by the revision compare-and-set, and nothing below or in
                          ;; the native function is keyed by field. Rejected: W2's distinct-field count on each side,
                          ;; which sent every such product save to the general writer.
-                         (and (= (count live) (count prior))
-                              (not (contains? after nil)))
+                         ;; [DX-S6] F6: written as `if`, not `and`, so this namespace generates the base's number of
+                         ;; names and the stored functions loaded after it keep the base's identities (s4/idents.sh).
+                         (if (= (count live) (count prior))
+                           (not (contains? after nil))
+                           false)
                          (and (= (count live) (count prior) (count before) (count after)) (= before after)))
                        (not (contains? before nil))
                        ;; [DX-ERASE1] Why: encrypted bodies must belong to these same fresh owner rows.
@@ -378,13 +381,6 @@
                   mark? (assoc :retirement-prefixes (mapv lean/prefix live))
                   numeric-owner? (assoc :owner-key subject)
                   ordered-ids? (assoc :ordered-bounds (ordered-bounds journal prefixes)))))))))))
-
-;; [DX-S6] F6: the S2 edit above removed one term of an `and`, so one generated name fewer, and every namespace loaded
-;; after this one (the covering writer, the general hint function) embedded shifted names in its quoted code: 5 stored
-;; values differed from the base (`23b7df344`). Taking back exactly that one name restores them (s4/idents.sh).
-;; Rejected: hashing renamed code (changes every identity, options off included), and removing generated names from
-;; the two functions' quoted code (changes both identities again, away from the base).
-(gensym)
 
 (defn plan
   ([db data input]
