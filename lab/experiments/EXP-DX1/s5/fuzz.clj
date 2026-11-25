@@ -670,6 +670,80 @@
                    (or (not on) (= 200 (:status k))
                        (and (:plain fa) (not (single-owner? (:plainAccounts fa))) (= [409 "CommandConflict"] (outcome k)))))})))
 
+;; ---------------------------------------------------------------- [S5 third review] the setting's transition and removals
+
+(def transition? "S5_TRANSITION=1: the account-ID setting turns on at one third of the serial steps." (= "1" (System/getenv "S5_TRANSITION")))
+(def removals? "S5_REMOVALS=1 (with S5_PROTECTED): removals on request, alone and racing a save, as steps." (= "1" (System/getenv "S5_REMOVALS")))
+(defonce transitioned (atom #{}))
+
+(defn- account-var [s] (requiring-resolve (symbol "triplex.gateway.account-claims" s)))
+(defn- turn-on-both! [c-conn k-conn]
+  (with-redefs-fn {(account-var "permitted?") true}
+    #(do ((account-var "turn-on!") c-conn) ((account-var "turn-on!") k-conn))))
+
+(defn extra-step!
+  "One step of the third review's dimensions, after the main step, on both scopes: the transition (once), a save
+  planned by a process that has not read the setting (after it), a removal on request, a save racing a removal and the
+  SDK's replay of it. Returns nil when no step is due."
+  [g ^Random rng i steps {:keys [c-name c-conn k-name k-conn]}]
+  (let [setting (fn [conn] ((account-var "setting") (d/db conn)))
+        model @(:model g)
+        protected-owner (fn [] (let [xs (vec (sort (for [[o fs] model :when (some #(contains? fs %) protected-fields)] o)))]
+                                 (when (seq xs) (pick rng xs))))]
+    (cond
+      (and transition? (>= i (quot steps 3)) (not (@transitioned (:seed g))))
+      (do (swap! transitioned conj (:seed g))
+          (turn-on-both! c-conn k-conn)
+          {:mode :transition :c (setting c-conn) :k (setting k-conn) :equal (= 1 (setting c-conn) (setting k-conn))})
+
+      (and transition? (@transitioned (:seed g)) (chance rng 0.03))
+      ;; A planner that has not read the setting (a stale view, or a build that does not know it): every save it
+      ;; prepares must be refused once the setting is on, and store nothing.
+      (let [exists @(:exists g) head (storage/head-position (d/db c-conn))
+            spec (gen-save g rng model exists head)
+            [_ input] (input-of g spec)
+            op (get input "operationId")
+            stale (fn [f] (with-redefs-fn {(account-var "on?") (constantly false) (account-var "permitted?") false} f))
+            c (stale #(general (fn [] (reference/send c-name input))))
+            k (stale #(reference/send k-name input))
+            stored (fn [name] (= "committed" (get (op-lookup name op nil) "status")))]
+        {:mode :stale-planner :c (outcome c) :k (outcome k) :committed [(stored c-name) (stored k-name)]
+         :equal (and (= (outcome c) (outcome k)) (not= 200 (:status c)) (not= 200 (:status k)) (not (stored c-name)) (not (stored k-name)))})
+
+      (and removals? protected-fields (chance rng 0.02))
+      (when-let [o (protected-owner)]
+        (let [f (first (filter #(contains? (get model o) %) protected-fields))
+              cmd (str "rm-" (:seed g) "-" (swap! (:counter g) inc))
+              sel [{"entityId" o "attribute" f}]
+              c (reference/route c-name "v1" "erase" {"commandId" cmd "selectors" sel})
+              k (reference/route k-name "v1" "erase" {"commandId" cmd "selectors" sel})]
+          (swap! (:model g) assoc o (read-owner c-name o {"validAt" 5.0}))
+          {:mode :removal :c [(:status c)] :k [(:status k)] :equal (= (:status c) (:status k))}))
+
+      (and removals? protected-fields (chance rng 0.01))
+      (when-let [o (protected-owner)]
+        (let [f (first (filter #(contains? (get model o) %) protected-fields))
+              head (storage/head-position (d/db c-conn))
+              spec {:owners [o] :new #{} :retires [] :faults #{} :source head :block (block-of g rng 8)
+                    :facts [{:owner o :field f :type :string :value (str "chosen-before|" (swap! (:counter g) inc)) :pred (get-in model [o f])}]}
+              [command input] (input-of g spec)
+              op (get input "operationId")
+              cmd (str "rmr-" (:seed g) "-" (swap! (:counter g) inc))
+              sel [{"entityId" o "attribute" f}]
+              ce (atom nil) ke (atom nil)
+              c (general #(with-competing op (fn [] (reset! ce (reference/route c-name "v1" "erase" {"commandId" cmd "selectors" sel}))) (fn [] (reference/send c-name input))))
+              k (with-competing op (fn [] (reset! ke (reference/route k-name "v1" "erase" {"commandId" cmd "selectors" sel}))) #(reference/send k-name input))
+              ;; The SDK's replay: a fresh read (the value is now removed), the same values, the first source.
+              fresh-pred (get (read-owner c-name o {"validAt" 5.0}) f)
+              replay (fn [name] (second (input-of g (assoc spec :command command :operation (str op "/replay") :source (storage/head-position (d/db c-conn))
+                                                              :facts [(assoc (first (:facts spec)) :pred fresh-pred)]))))
+              rc (general #(reference/send c-name (assoc (replay c-name) "frameSourceK" head)))
+              rk (reference/send k-name (assoc (replay k-name) "frameSourceK" head))]
+          (swap! (:model g) assoc o (read-owner c-name o {"validAt" 5.0}))
+          {:mode :removal-race :c [(outcome c) (some-> @ce :status) (outcome rc)] :k [(outcome k) (some-> @ke :status) (outcome rk)]
+           :equal (and (= (outcome c) (outcome k)) (= (some-> @ce :status) (some-> @ke :status)) (= (outcome rc) (outcome rk))
+                       (not= 200 (:status rc)) (not= 200 (:status rk)) (not= 200 (:status k)))})))))
+
 ;; ---------------------------------------------------------------- the concurrent phase
 
 (defn thread-input
@@ -801,7 +875,10 @@
                         s (when (and (:equal r) accounts? (chance rng 0.25))
                             (try (shadow-step! g rng ctx) (catch Throwable e {:equal false :error (str e) :mode :shadow-error})))
                         _ (when s (record! s))
-                        ok (and (:equal r) (or (nil? s) (:equal s)))]
+                        x (when (and (:equal r) (or (nil? s) (:equal s)) (or transition? removals?))
+                            (try (extra-step! g rng i steps ctx) (catch Throwable e {:equal false :error (str e) :mode :extra-error})))
+                        _ (when x (record! x))
+                        ok (and (:equal r) (or (nil? s) (:equal s)) (or (nil? x) (:equal x)))]
                     (when (and ok (pos? i) (zero? (mod i 400))) (deep! i))
                     (when ok (recur (inc i))))))
               (when (empty? (:differences @out)) (deep! "serial-end"))
