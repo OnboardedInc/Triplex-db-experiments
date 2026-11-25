@@ -6490,3 +6490,19 @@ Source: removal builder final message; branch `exp/DX-N1-key-pool` `94c63ad6b`, 
 - Changes for a caller with every option off: error texts become fixed texts; this could break anything that matches on a reply's message text.
 
 **Action:** independent adversarial review of the branch started (the reviewer of the first standalone fix): keys issued, used or deleted wrongly by the fill on demand; any remaining path for a message to reach a reply; callers that depend on the old texts, including the save-line branch's rule that decides some refusals by exact message. It merges only on that reviewer's word.
+
+## 2026-11-25 11:21 EST: sixth review of the removal rule: fit to merge default off; four new high findings bar any database from moving to it
+
+Source: independent reviewer, sixth review, branch `exp/DX-ERA3-removal-review` `58a0ab8d4`, `lab/experiments/EXP-DX1/era3/REVIEW-6.md`. Pinned to `exp/DX-ERA2-removal-per-account` `03bb49cd3`.
+
+- The fifth review's two breaks are fixed. Without a restore, no read returned a value after its removal was acknowledged: 80,000 fuzzer schedules, 836,735 checks, 0 violations. The key-pool fix held after a real restart (4 of 4).
+- **X1, high, both boundaries:** after the data is restored from before a protected field was added, the first removal, rebuild or protection call shortens the log's copy of the policy, before any refusal; a removal acknowledged in that window leaves the subject's values of that field readable. In process 8 of 8; on a PostgreSQL stack with a real backup and restore 4 of 4.
+- **X2, high:** the completion worker retires the log and every key of a live database that is missing from the catalog for one pass while a removal is stale; every sealed value in it is then unreadable for good.
+- **X3, high for keys:** the key pass reads the sealed flag from the log's unchecked copy; if it says unsealed, no due key is deleted and nothing is counted.
+- **X4, high, file key store, also on the one branch with every option off:** one unreadable head file stops key deletion and stale-removal completion for every database.
+- X5, medium, design: the removal stamp is one number per database, so a stamp learned from any other subject lets a removed value be saved again. X6 to X12 medium and low (two callers adding different fields; untyped 400 on an unreadable intent; the replay rule's cost grows with the number of removals: 1.87 ms at 4,801; restoring data and the removal authority to the same backup undoes a removal with no refusal).
+- **Verdict:** fit to merge default off, with two facts stated: the rule refusing saves framed before a removal runs with every option off (a behaviour change against the one branch); X4 is already on the one branch. No database may move until X1 to X4 are fixed and the restore procedure is written and checked.
+- Reviewer's rule: nothing derived from the log or the catalog may shrink a policy or delete a key.
+- Not tested: the SDK end to end on this branch; an older build beside this one; a fuzzer with policy events; scale.
+
+**Action:** seventh pass sent to the removal builder: X1 to X12 under the reviewer's rule; the replay rule put behind a default-off option so that options off changes nothing; whether the file key store is used outside tests (if so, X4 gets a standalone fix for the one branch); a written restore procedure; a fuzzer with policy events. A seventh review follows. Six rounds, each finding new high-severity faults at the seams (the log, restores, the worker): per-account removal stays off the one branch until a round is clean on the options-off path.
