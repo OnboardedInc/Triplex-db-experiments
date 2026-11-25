@@ -469,7 +469,10 @@
             (cond
               independent
               ;; [DX-ERA2] Per account the cut was checked by request-cut; the fence decides at the serial point.
-              (do (when-not per-account (privacy/verify-data! independent db)) (run independent))
+              (do (when-not per-account (privacy/verify-data! independent db))
+                  ;; [DX-ERA2 fifth pass, R2-2] a save framed before a removal of its subject, or under a declined command
+                  ((requiring-resolve 'triplex.gateway.removal-commit/decline-check!) name conn db input)
+                  ((requiring-resolve 'triplex.gateway.removal-commit/after-refusal) name conn input (run independent)))
 
               (and input (or managed-write? source))
               ;; [DX-ERASE1] Why: the source cannot publish an erasure between validation and recipient commit.
@@ -499,7 +502,11 @@
                               (privacy/verify-data! source-cut source-db)
                               (privacy/ensure-seq! source-cut (get input "erasureSeq")))))
                         (privacy/ensure-ticket! next input)))
-                    (run next))))
+                    ;; [DX-ERA2 fifth pass, R2-2] the same on the general writer's path
+                    (if managed-write?
+                      (do ((requiring-resolve 'triplex.gateway.removal-commit/decline-check!) name conn current input)
+                          ((requiring-resolve 'triplex.gateway.removal-commit/after-refusal) name conn input (run next)))
+                      (run next)))))
               ;; [DX-ERASE1] Why: a guarded write only needs the cut verified inside the writer lock.
               ;; Rejected: reading and hashing the authority twice on every guarded save.
               :else

@@ -23,7 +23,8 @@
   (:require [clojure.data.json :as json] [datomic.api :as d]
             [triplex.gateway.authority-sql :as sql]
             [triplex.gateway.erase :as erase] [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope]
-            [triplex.gateway.removal-scope :as removal-scope] [triplex.gateway.scope :as scope]))
+            [triplex.gateway.removal-scope :as removal-scope] [triplex.gateway.scope :as scope]
+            [triplex.gateway.storage :as storage]))
 
 (def commit-ident :triplex.removal/commit-v1)
 (def moved "TRIPLEX_REMOVAL_SUBJECT_MOVED")
@@ -680,6 +681,91 @@
                                       "code" (:code (ex-data e))})))
           (finally (swap! completing disj name)))))
     nil))
+
+;; ---- [DX-ERA2 fifth pass] R2-2 of the save line's second review: a save framed before a removal of its subject ----
+(defn- written-protected
+  "The [entity attribute] pairs of the protected values this save writes (its new rows on a protected attribute)."
+  [db input attrs]
+  (let [fresh (set (get input "newIds"))]
+    (into #{} (comp (filter #(fresh (:id %))) (filter #(attrs (:attribute %))) (map (juxt :entity_id :attribute)))
+          (storage/input-rows input (storage/lean? db) fresh))))
+
+(defn- names-value? [entry [e a]]
+  (or (some (fn [x] (and (= e (get x "entityId")) (or (nil? (get x "attribute")) (= a (get x "attribute"))))) (get entry "selectors"))
+      (some (fn [x] (and (= e (get x "entity")) (= a (get x "attribute")))) (get entry "identities"))))
+
+(defn removal-after-source
+  "The newest removal committed in the data AFTER this save's own frame source (`sourceK`, the position the client
+  framed it from) that names a protected value the save writes (by its selectors, so a subject with no value yet
+  counts), or nil. From the data's own records, so it is the same on both boundaries and database-wide."
+  [name db input]
+  (let [source (get input "sourceK")]
+    (when (integer? source)
+      (let [cut (privacy/cut name db true) attrs (or (:attrs cut) #{})]
+        (when (seq attrs)
+          (let [after (take-while (fn [x] (> (long (get-in x [:entry "position"] 0)) source)) (rseq (:entries (native-entries name db))))]
+            (when (seq after)
+              (let [w (written-protected db input attrs)]
+                (when (seq w)
+                  (some (fn [x] (when (some #(names-value? (:entry x) %) w) (:entry x))) after))))))))))
+
+(def ^:private declined-schema
+  [{:db/ident :triplex.removal/declined-command :db/valueType :db.type/string :db/cardinality :db.cardinality/one
+    :db/unique :db.unique/identity}
+   {:db/ident :triplex.removal/declined-by :db/valueType :db.type/string :db/cardinality :db.cardinality/one}])
+
+(defn- commands-of [input] (vec (distinct (keep #(get % "commandId") (get input "claims")))))
+
+(defn- declined-by [db input]
+  (when (d/entid db :triplex.removal/declined-command)
+    (some (fn [c] (when-let [e (d/entid db [:triplex.removal/declined-command c])]
+                    (:v (first (d/datoms db :eavt e :triplex.removal/declined-by)))))
+          (commands-of input))))
+
+(defn- decline!
+  "Record the save's commands as declined by `entry` (so a replay under the same command is refused whatever source it
+  carries), then refuse it with the terminal answer."
+  [conn db input entry]
+  (when (seq (commands-of input))
+    (when-not (d/entid db :triplex.removal/declined-command) @(d/transact conn declined-schema))
+    @(d/transact conn (vec (for [c (commands-of input)]
+                             {:triplex.removal/declined-command c :triplex.removal/declined-by (get entry "txId")}))))
+  (println (json/write-str {"schema" "triplex.removal-declined-save.v1" "operationId" (get input "operationId")
+                            "commands" (commands-of input) "removal" (get entry "seq") "source" (get input "sourceK")}))
+  (throw (ex-info (str "A removal of a subject this save writes committed after the save was framed (removal "
+                       (get entry "seq") "); it is declined, and so is its command")
+                  {:status 409 :code "ErasureReplayDeclined"})))
+
+(defn decline-check!
+  "Before a save (both writers, every mode): refused 409 ErasureReplayDeclined when its command was declined by a
+  removal, or when a removal of a subject it writes committed after its own frame source (case 1: the late frame),
+  its commands then recorded as declined (case 2)."
+  [name conn db input]
+  (when-let [by (declined-by db input)]
+    (throw (ex-info (str "This save's command was declined by a removal (" by "); a new command is a new save")
+                    {:status 409 :code "ErasureReplayDeclined"})))
+  (when-let [entry (removal-after-source name db input)]
+    (decline! conn db input entry)))
+
+(defn after-refusal
+  "After a save was refused at the serial point (409 CasConflict or ErasureFrontierChanged): when the cause is a removal
+  of a subject it writes that committed after its frame source (case 1: the race), the same terminal answer as the
+  late frame, and its commands recorded as declined (case 2). Any other answer is returned unchanged."
+  [name conn input answer]
+  (let [body (:body answer)
+        code (when (= 409 (:status answer))
+               (get (try (json/read-str (if (string? body) body (String. ^bytes body "UTF-8")))
+                         (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "refusal-parse" name e) {}))
+                    "code"))]
+    (if (#{"CasConflict" "ErasureFrontierChanged"} code)
+      (let [db (erase/sync! conn)]
+        (if-let [entry (removal-after-source name db input)]
+          (try (decline! conn db input entry)
+               (catch clojure.lang.ExceptionInfo e
+                 {:status 409 :headers (:headers answer)
+                  :body (json/write-str {:code "ErasureReplayDeclined" :message (.getMessage e)})}))
+          answer))
+      answer)))
 
 (def worker-complete-ms
   "[DX-ERA2 fifth pass] TX2_REMOVAL_WORKER_COMPLETE_MS (default unset: off): the key-shred worker completes a removal

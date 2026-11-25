@@ -67,8 +67,13 @@
                  :control nil
                  :at-publish (with-redefs [privacy/publish! (fn [& _] (throw (ex-info "stopped at publication" {})))]
                                (offers/outcome (erase name "b2-r2" z)))
-                 :before-native (with-redefs [erase/apply-native! (fn [& _] (throw (ex-info "stopped before the native commit" {})))]
-                                  (offers/outcome (erase name "b2-r2" z))))
+                 :before-native (let [stop (fn [& _] (throw (ex-info "stopped before the native commit" {})))
+                                      ;; per account the removal's own commit step (this branch only; resolved, so the
+                                      ;; file also loads on a source without it)
+                                      rc (when per-account? (require 'triplex.gateway.removal-commit)
+                                               (resolve 'triplex.gateway.removal-commit/commit!))]
+                                  (with-redefs-fn (cond-> {#'erase/apply-native! stop} rc (assoc rc stop))
+                                    #(offers/outcome (erase name "b2-r2" z)))))
             pending-after-r2 (some? (privacy/pending name))
             contacts {:read-z (offers/outcome (offers/route name "v1" "read" {"entityIds" [z]}))
                       :save-b (offers/outcome (offers/send name (frame (str "b2-b-" (UUID/randomUUID)) b "b-plain")))}
@@ -105,11 +110,11 @@
         (println "ERA2_B2" (pr-str [label row]))
         (check! label (some? gone-at) "a published removal's key is deleted within its grace + the hold, whatever else is pending" row)
         (when (and worker? (not= stop :control))
-          (check! label (not still-pending) "the worker completed the removal left pending" row)
+          (check! label (nil? (privacy/pending name)) "the worker completed the removal left pending" row)
           (check! label (true? z-key-gone) "the worker's completion published it and its key went after its grace" row))))))
 
 (defn main []
-  (doseq [stop (if per-account? [:control :at-publish] [:control :at-publish :before-native])]
+  (doseq [stop [:control :at-publish :before-native]]
     (try (run-one stop)
          (catch Throwable t (check! (str "B2/" (name stop)) false (str "stopped: " (.getMessage t)) nil))))
   (let [failed (remove :ok @results)]

@@ -1106,8 +1106,10 @@
   plan and its commit (run from inside the save's submit, on another thread, waited for 3 s); then the same frame is
   sent after the removal under a new operation ID (its source still before the removal); then the client's replay: the
   same caller-supplied value with a fresh source and a new operation ID, as the SDK replays a CasConflict. On the
-  subject writer and on the general writer. Asserted: the racing save is not stored when the removal landed in its
-  window. Observed and printed (ERA2_R22), not asserted: what the frame sent after and the replay answer."
+  subject writer and on the general writer. [DX-ERA2 fifth pass] Asserted on every mode: the race and the late frame
+  refused with the same terminal answer (409 ErasureReplayDeclined, case 1); a replay under the racing save's command
+  with a fresh source refused the same way (case 2); a resend under a new command with a fresh source stored (case 3,
+  allowed until the owner decides). Printed as ERA2_R22."
   []
   (doseq [writer [:subject :general]]
     (fresh-scope false
@@ -1127,13 +1129,19 @@
               removal (let [r @removed] (if (= :waiting r) [:waited-past-3s] (offers/outcome r)))
               removal-seq (seq-now name conn)
               stale (general #(offers/send name (frame "r22-stale" X v nil pin)))
+              same-command (general #(offers/send name (assoc (frame "r22-race" X v nil (head conn)) "operationId" "r22-race-replay")))
               replay (general #(offers/send name (frame "r22-replay" X v nil (head conn))))
               stored? (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [X]}))) v)
               obs {:writer writer :removal removal :removalSeq removal-seq :racing (offers/outcome reply)
-                   :sameFrameAfterTheRemoval (offers/outcome stale) :replay (offers/outcome replay) :valueStoredAfter stored?}]
+                   :sameFrameAfterTheRemoval (offers/outcome stale) :replayUnderTheSameCommand (offers/outcome same-command)
+                   :replayUnderANewCommand (offers/outcome replay) :valueStoredAfter stored?}]
           (println "ERA2_R22" mode (pr-str obs))
-          (when (= [200 nil] removal)
-            (check! label (not= 200 (:status reply)) "the creation the removal landed inside is not stored" obs)))))))
+          (check! label (= [200 nil] removal) "the removal landed inside the creation's window" obs)
+          (expect (str label ": the race (case 1)") reply [409 "ErasureReplayDeclined"])
+          (expect (str label ": the same frame after the removal (case 1)") stale [409 "ErasureReplayDeclined"])
+          (expect (str label ": a replay under the same command, fresh source (case 2)") same-command [409 "ErasureReplayDeclined"])
+          (expect (str label ": a resend under a new command, fresh source (case 3, allowed)") replay [200 nil])
+          (check! label stored? "case 3 stored its value (a new save after the removal)" obs))))))
 
 ;; ERA2_ONLY (space-separated label prefixes) runs only those scenarios: a diagnostic run, never a gate
 (def only (some-> (System/getenv "ERA2_ONLY") str/trim not-empty (str/split #"\s+")))
