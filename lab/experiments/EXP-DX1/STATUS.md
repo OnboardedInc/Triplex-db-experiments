@@ -6099,3 +6099,19 @@ Source: independent reviewer, second review, branch `exp/DX-ERA3-removal-review`
 - Recommendation: merge with named fixes, not as is.
 
 **Action:** the removal builder resumed a third time to reproduce and fix N5, N1, N4, N3, N2 with the reviewer's new tests as standing gates, a stop-point table for a removal, and a bound on how long a declaration can block others. A third review follows.
+
+## 2026-11-24 20:57 EST: adversarial review of the save line: the per-subject writers held; a committed save can be answered as refused (every writer, older than the line)
+
+Source: independent reviewer, branch `exp/DX-S5-save-line-review` `316d13d22`, `lab/experiments/EXP-DX1/s5/REVIEW.md`. Reviewed: `exp/DX-S4-real-mix` `2d78680f7`. The reviewer changed no gateway code. (Its runs used the real-mix builder's runtime image with the review branch's sources mounted first.)
+
+**Held:** in the per-subject writers (one owner, several owners, creation) no save stored anything the general writer would not have stored. Differential fuzzer: 82,400 saves in 13 runs over 5 writer settings, 0 differences in outcome, receipt, stored datoms or any read route (59,000 one at a time with 5,883 competing saves injected between plan and commit, kills before and after submit, lost replies, resends, reused blocks; 23,400 concurrent with 2 and 4 writers: all 17,100 commits accepted again by the general writer at the same prior state, all 6,300 refusals justified). PostgreSQL stack, 6 runs, two write gateways, one killed, transactor restarted: 2,373 committed saves all replayed equal on a control. Every general-writer check mapped against the per-subject functions; names differing by case, Unicode form, padding, account; references between owners; saves over 256 assertions.
+
+**Broke:**
+- F1, high, every writer, older than the line and on the one branch today: if the transactor stops between applying a save and acknowledging it, the gateway answers `400 TransactionRejected` and the SDK treats 400 as final, so the caller is told the save failed while it is stored. 2 of 6 stack runs with a transactor restart; every time in process on three writers. Each restart also gave about 700 unstored saves the same final answer. (The store's lost-acknowledgement requirement.)
+- F2, medium: the import commit bound can be passed by a frame built to estimate low and cost high: a 1-fact frame with 55,000 absent entity names, one name 18,000 times, or 12,000 read-only predecessors is admitted under the 40,000 µs bound and held the writer 85 to 174 ms on the toy (an honest 100-fact frame: 1.4 to 3.2 ms).
+- F3, medium-low: a save racing a removal gets `CasConflict` from the per-subject writers (the SDK replays) and `ErasureFrontierChanged` from the general writer (the SDK fails it); one gate hard-coded the general writer's answer instead of measuring it.
+- F4 to F11 low or information, among them: the card's identity check passes a wide-writer run in which no eligible save took the per-subject writer; every per-subject commit scans every excision entity at the serial point; one excision anywhere turns every per-subject writer off for every account.
+
+Recommendation: merge with named fixes. Not tested by the review: the SDK end to end; JSON, boolean, datetime and blob values; protected and sealed values in the fuzzer; a transactor killed with SIGKILL.
+
+**Actions:** the real-mix builder resumed on a new branch `exp/DX-S6-save-line-fixes` to fix F1 (classify every commit-path exception as decided or unknown, unknown by default; the SDK resolves by lookup), F2 (price every lookup; apply the same test to live saves), F3 and the rest, and to cover the SDK end to end. The evening merge told to list F1 at the top of the readiness page's faults.
