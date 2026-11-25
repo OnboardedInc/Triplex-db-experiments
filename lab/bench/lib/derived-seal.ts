@@ -14,7 +14,8 @@ export const isSealed = (v: unknown): v is string =>
 export function sealedHeader(wire: string): { d: string; k: string[]; p?: string } {
   assert(isSealed(wire), "Not a sealed derived record");
   const h = JSON.parse(Buffer.from(wire.split(".")[1]!, "base64url").toString("utf8"));
-  assert(typeof h.d === "string" && Array.isArray(h.k) && h.k.length > 0);
+  // a placed record computed from no protected value names no assertion (sealed under the key of none, DX-ERA5 B1)
+  assert(typeof h.d === "string" && Array.isArray(h.k) && (h.k.length > 0 || typeof h.p === "string"));
   return h;
 }
 /** What a record that cannot be opened reads as: the assertions it was computed from that are removed. */
