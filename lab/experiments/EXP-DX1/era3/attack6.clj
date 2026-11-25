@@ -127,6 +127,32 @@
                    "after the restore route the policy holds every attribute added before the data restore (adding is one-way)" detail)
           (oracle! lbl (empty? left) "an acknowledged removal of a1 leaves none of a1's protected values answered once the restore is complete" detail))))))
 
+;; ---- A2b: the same, the removal in the window served by another gateway; the restore route on this one --------------
+(defn a2b-restore-route-other-gateway [sealed? boundary]
+  (when per-account?
+    (f/scope5-with [":v"] sealed? boundary
+      (fn [name conn]
+        (let [lbl (str "A2b data restored from before :q was added, a removal on another gateway, then the restore route here, " (bname boundary) (if sealed? ", sealed" ""))
+              seeds (g/seed! name [g/a1 g/b1])
+              q-old (g/secret g/a1 "q-old") _ (offers/send name (qsave "a2b-q-old" g/a1 q-old nil))
+              p-before (rc/stored-policy (d/db conn))
+              add (offers/outcome (offers/route name "v2" "protection" {"attributes" [":v" ":q"] "sealed" sealed?}))
+              _ @(d/transact conn [[:db/add (scope/entity (d/db conn)) :triplex.scope/protection-policy (json/write-str p-before)]])
+              ;; this gateway verifies the log as it is (its copy lists :q)
+              read0 (offers/outcome (offers/route name "v1" "read" {"entityIds" [g/b1]}))
+              mine (get @privacy/cache name)
+              ;; another gateway serves a removal: it rewrites the copy; this gateway's cache keeps the copy it verified
+              rm (offers/outcome (a/erase! name "a2b-rm-b1" [{"entityId" g/b1}]))
+              _ (swap! privacy/cache assoc name mine)
+              route1 (offers/outcome (f/safe #(offers/route name "v2" "restore-erasure" {})))
+              read1 (offers/outcome (offers/route name "v1" "read" {"entityIds" [g/b1]}))
+              route2 (offers/outcome (f/safe #(offers/route name "v2" "restore-erasure" {})))
+              detail {:addition add :read-before read0 :removal-on-the-other-gateway rm :restore-route-here route1
+                      :a-read-here-then read1 :restore-route-again route2 :copy (head-copy name)}]
+          (observe! lbl :detail detail)
+          (bump! :a2b boundary sealed? route1 route2)
+          (oracle! lbl (= 200 (first route1)) "the restore route answers on a gateway whose cache holds the copy from before another gateway rewrote it" detail))))))
+
 ;; ---- A3: two callers adding different attributes at once ----------------------------------------------------------
 (defn a3-two-adders [sealed? lock?]
   (when per-account?
@@ -434,6 +460,7 @@
     (when (phases "bodies6") (bodies6))
     (when (phases "a1") (doseq [s? [false true] bd boundaries btw? [false true]] (guarded "A1" #(a1-late-save s? bd btw?))))
     (when (phases "a2") (doseq [s? [false true] bd boundaries st window-steps] (guarded "A2" #(a2-restore-window s? bd st))))
+    (when (phases "a2b") (doseq [s? [false true] bd boundaries] (guarded "A2b" #(a2b-restore-route-other-gateway s? bd))))
     (when (phases "a3") (doseq [s? [false true] lock? [true false]] (guarded "A3" #(a3-two-adders s? lock?))))
     (when (phases "b1") (doseq [bd boundaries] (guarded "B1" #(b1-copy-sealed bd))))
     (when (phases "b2") (doseq [k [:wider-benign :wider-journal :narrower]] (guarded "B2" #(b2-copy-attributes k))))
