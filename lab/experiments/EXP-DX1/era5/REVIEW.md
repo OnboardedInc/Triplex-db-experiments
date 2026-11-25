@@ -71,13 +71,25 @@ builder's page lists as a limit of W0 but that contradicts the option's own prom
    - Output (`attack-2`): X's clear lengths against Y's in each of the four places a copy lives: packets 329 against
      328, ledger 189 against 188, settled changes `[...,293]` against `[...,292]`, recipient 271 against 270; **types
      that fit: `["visa"]` in all four** (X's removed type was `visa`). Also: two copies of one content under the same
-     names are byte-for-byte equal for good (`two-copies-equal true`).
+     names are byte-for-byte equal for good (`two-copies-equal true`). The route alone gives the same (`cases-2`,
+     02:07 EST: X's record 311 bytes against Y's 310, types that fit `["visa"]`).
 
 **B4 (admitted by the builder, page 5.1, but it contradicts promise 7.4).** After X's document values are removed, the
 account's next Publish cannot settle or record notices for anyone: `S-next-release` gives settlement
 `FAILED: W0.E_VALUE`, notices `FAILED: W0.E_VALUE for pl:s00000000`; the same Publish on an account without a
 removal: `stored`, `recorded`. W0 accepts a removed value only for `ssn`, and one subject's evaluation error fails the
 whole frame (`material.ts` 25, `journal.ts` 368).
+
+**B5 (in the composition with the removal builder's settled head `bd4ec0d1a`, under its commit boundary).** The
+coordinator asked: can the held reader's answer cache serve a computed answer holding the removed value between the
+removal's commit and its publication? **Yes.** `era5/row19.ts` (the option's reader, `TX2_DERIVED_SEAL=1`, against the
+gateway source of `bd4ec0d1a` with `TX2_REMOVAL_COMMIT_BOUNDARY=1`, per account, the removal paused 20 s after its native
+commit): 63 ms after the commit the plain read of X's document answers `erased`, a fresh reader computes an answer
+without X's date, and **the reader that had read X before answers from its cache (`exact-cache`) with X's removed
+expiry date**, because the erasure frontier's sequence stays 0 until the publication (`removal_commit.clj` `effective`
+masks through `union-mask` and keeps `:seq`). After the publication the cache is cleared. With the commit boundary off
+the same reads wait for the publication (a read publishes a committed pending removal first) and nothing leaks.
+Page 11.6 predicted this row wrong under that option; this run shows it.
 
 **Recommendation: do not merge as is. Merge after these named fixes, each with its test from this branch turned green:**
 
@@ -93,6 +105,9 @@ whole frame (`material.ts` 25, `journal.ts` 368).
 4. W0 or the writers: a subject whose world holds a removed value must not stop the frame for other subjects (B4;
    `attack.ts` S).
 5. `derived_seal.clj`: refuse a name that is not an assertion of this database instead of answering `clear` (M1).
+6. Before the commit boundary is merged with this option: the held reader's cache must change key at a removal's
+   native commit (for example the frontier reports the committed sequence, or the masked identities, and the reader
+   stamps on it) (B5; `row19.ts`).
 
 **My judgement of the design.** Sealing derived copies under keys that the removal destroys is the right family: it is
 the only means that reaches journal entries, recipient databases and backups without finding them, and its core held
@@ -125,7 +140,7 @@ needed.
 | L2 | Low (liveness) | One record naming more than 512 rows, or longer than 4,000,000 characters, fails the whole seal call and so the whole frame; through B1 the retry writes the frame in clear | `derived_seal.clj` 18, 109-111; `attack5.clj` c1: 513 names `[400 "InvalidDerivedRecord"]` | Split per record; refuse one record, not the frame |
 | C1 | Cost (diagnostic) | Each seal or open reads one key per protected name per record, no cache: a settlement frame of 64 subjects x 6 changes is 384 to 7,680 PostgreSQL key reads | `cost5.clj`; table below | A per-request key cache (the same names repeat across a frame's records) |
 | R11 | Confirmed, admitted (inventory row 11) | After the key row is deleted its wrapped bytes are still in PostgreSQL's WAL; with the one wrapping key they decode X's copy | `pending5.clj` p2: heap tuple pruned (not found), WAL segment `000000010000000000000001` holds it, copy decoded | Page 10, follow-up 1 (wrapping-key rotation) |
-| R19 | Confirmed from code, not run | Under the removal builder's commit boundary the held reader's cache is not cleared at the commit: the served cut keeps the published sequence | `6524bab92` `removal_commit.clj` `served` and `effective` (`union-mask`: "its counters and sequence wait for its publication"); `read.ts` keys on that sequence | As page 11.6 predicts: key the cache on the masked identities, not the sequence |
+| B5 | **Break under the commit boundary (high)**; composition with `bd4ec0d1a` | The held reader's cache serves an answer holding the removed value between the native commit and the publication | `read.ts` 138, 173, 193, 212 (key and check on the frontier sequence; a cache hit on the legacy path returns without a recheck); `bd4ec0d1a` `removal_commit.clj` `effective` / `union-mask` (sequence unchanged at the commit); `row19.ts` arm commit: plain read `erased`, cached reader `exact-cache` with X's date, frontier sequence 0; arm log: no leak (reads wait for the publication) | Stamp the cache on what the commit changes (a committed sequence or the masked identities in the frontier) |
 
 **Unsealed databases (line of attack 6).** On an unsealed protected database a removal deletes nothing from storage:
 `attack5.clj` c5, the value in **2 native datoms before and 2 after** the removal (the read route masks it). Nothing
@@ -173,12 +188,17 @@ about 5,120 sequential key reads, about 5 s: the client's timeout, and through B
 
 ## What I could not test
 
-1. **The composition with the removal builder's head** (`6524bab92`, commit boundary). A local merge into
-   `exp/DX-ERA5-compose` conflicts in `erase.clj`, `main.clj`, `removal_commit.clj` and `era2/gate.sh`: the fourth pass
-   still edits `request-cut` and `per-account!` in `erase.clj`, where DX-ACT9 moved them to `removal_erase.clj`, and
-   replaces `source-ticket!` with `check-source!`. Porting that is the builder's merge, and a wrong port would make any
-   result meaningless, so I did not test a merged gateway. From code: `derived_seal.clj` `native-erased` already treats
-   a removal as effective at its native commit, so the derived routes do not depend on the boundary; row 19 does (R19).
+1. **A merged gateway of this option and the removal builder's settled head** (`bd4ec0d1a`). A local merge of the
+   head as it stood at 01:50 (`6524bab92`) into `aee618710` conflicts in `erase.clj`, `main.clj`, `removal_commit.clj`
+   and `era2/gate.sh`: the fourth pass still edits `request-cut` and `per-account!` in `erase.clj`, where DX-ACT9 moved
+   them to `removal_erase.clj`, and replaces `source-ticket!` with `check-source!`. Porting that is the derived-copies
+   builder's merge (the coordinator has asked for it), and a wrong port would make any result meaningless, so I did not
+   build one. What I ran instead, on a second branch of work: the option's client (this branch, `TX2_DERIVED_SEAL=1`)
+   against the gateway source of `bd4ec0d1a` with and without `TX2_REMOVAL_COMMIT_BOUNDARY=1` (`row19.ts`, B5). From
+   code: `derived_seal.clj` `native-erased` already treats a removal as effective at its native commit, so the derived
+   routes do not depend on the boundary; `envelope.clj` and `privacy.clj` are unchanged from `3edb9f5d9` to
+   `bd4ec0d1a`, so B2 is on that head too; B1 and B3 are in code the removal head does not touch. None of B1 to B4 was
+   re-run on a merged head: no merged head existed when this page was written.
 2. **The reporting copy and the commit-time index** (`f084d5adb`, `f078320a2`): from code only. The reporting copy reads
    journal pages and rows with `omitProtected` (protected attributes emptied) and copies every other value as stored,
    so it copies sealed bytes, or clear ones where B1 wrote them. The commit-time index never keys a protected attribute
@@ -205,6 +225,7 @@ owner's project folder, `evidence/DX-ERA5/` (not the repository).
 | `era5/attack5.clj` phase `fuzz` | `bash lab/experiments/EXP-DX1/era5/series.sh ROOT RUNS N FIRST_SEED` (inproc.sh per run) | the fuzzer |
 | `era5/pending5.clj` | `bash lab/experiments/EXP-DX1/era5/cost.sh NEW_DIR pg era5-pending-pg` | p1 (B2, PostgreSQL), p2 (row 11), p3 (P3) |
 | `era5/cost5.clj` | `bash lab/experiments/EXP-DX1/era5/cost.sh NEW_DIR file` and `... pg` | C1 |
+| `era5/row19.ts` | `ERA5_DRIVER=row19.ts ERA5_GATEWAY_REF=bd4ec0d1a ERA5_GATEWAY_ENV="TX2_REMOVAL_PER_ACCOUNT=1 TX2_REMOVAL_TEST_PAUSE_AT=committed TX2_REMOVAL_TEST_PAUSE_MS=20000 TX2_REMOVAL_COMMIT_BOUNDARY=1" bash lab/experiments/EXP-DX1/era5/run.sh NEW_DIR on` (drop the last option for the log boundary) | B5 |
 | `era5/stack-shred.sh` | `ERA3_MAIN=2 bash lab/experiments/EXP-DX1/era3/run.sh BODIES subject bodies2`, then `bash lab/experiments/EXP-DX1/era5/stack-shred.sh NEW_DIR BODIES/run.out/bodies` | B2 on a stack |
 
 Every container ran the pinned runtime image `sha256:21a67288007d...` by ID (each run records `image-ran`), with this

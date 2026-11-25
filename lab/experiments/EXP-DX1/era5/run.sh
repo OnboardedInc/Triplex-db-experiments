@@ -17,9 +17,19 @@ x=$repo/lab/experiments/EXP-DX1
 mkdir -p "$out/src" "$out/run.out"
 git -C "$repo" rev-parse HEAD > "$out/source"
 git -C "$repo" status --porcelain -- packages/datomic/gateway lab/experiments/EXP-DX1/era5 lab/bench/lib > "$out/dirty"
-cp -R "$repo/packages/datomic/gateway/src/." "$out/src/"
+# ERA5_GATEWAY_REF: the gateway source of another commit (git archive), e.g. the removal builder's head, for a
+# composition; unset: this checkout's. ERA5_GATEWAY_ENV="K=V ...": options for the gateway only. ERA5_DRIVER: the
+# client script in era5/ (default attack.ts).
+if [[ -n ${ERA5_GATEWAY_REF:-} ]]; then
+  mkdir -p "$out/gwtmp"
+  git -C "$repo" archive "$ERA5_GATEWAY_REF" packages/datomic/gateway packages/datomic/src/codec-spec.json | tar -x -C "$out/gwtmp"
+  cp -R "$out/gwtmp/packages/datomic/gateway/src/." "$out/src/"
+  git -C "$repo" rev-parse "$ERA5_GATEWAY_REF" > "$out/gateway-ref"
+else
+  cp -R "$repo/packages/datomic/gateway/src/." "$out/src/"
+fi
 (cd "$out/src" && find . -type f -name '*.clj' | LC_ALL=C sort | xargs shasum -a 256 | shasum -a 256 | cut -c1-64) > "$out/gateway-source-sha"
-cp "$repo/packages/datomic/src/codec-spec.json" "$out/codec-spec.json"
+if [[ -n ${ERA5_GATEWAY_REF:-} ]]; then cp "$out/gwtmp/packages/datomic/src/codec-spec.json" "$out/codec-spec.json"; else cp "$repo/packages/datomic/src/codec-spec.json" "$out/codec-spec.json"; fi
 cp "$x/era4/serve.clj" "$out/serve.clj"
 image=${DX_ERA5_RUNTIME_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
 port=${DX_ERA5_PORT:-18975}
@@ -31,6 +41,7 @@ client=(DATOMIC_URL="http://127.0.0.1:$port" TRIPLEX_DATOMIC_LAYOUT=lean TX2_SET
         TX2_SETTLE_PRECONDITION=progress)
 if [[ $arm == on ]]; then env+=(-e TX2_DERIVED_SEAL=1); client+=(TX2_DERIVED_SEAL=1); fi
 for kv in ${ERA5_EXTRA_ENV:-}; do env+=(-e "$kv"); client+=("$kv"); done
+for kv in ${ERA5_GATEWAY_ENV:-}; do env+=(-e "$kv"); done
 name="tx2-dxera5-attack-$$-$arm"
 cleanup() {
   touch "$out/run.out/stop"
@@ -41,7 +52,7 @@ cleanup() {
     (cd "$out/run.out/authority" && find . -type f | LC_ALL=C sort) > "$out/authority-files-at-end"
     rm -rf "$out/run.out/authority"
   fi
-  rm -rf "$out/src"
+  rm -rf "$out/src" "$out/gwtmp"
 }
 trap cleanup EXIT
 started=$(date +%s)
@@ -58,7 +69,7 @@ done
 [[ $(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$port/health") == 200 ]] || { echo "run.sh: gateway did not start" >&2; exit 4; }
 cd "$repo"
 env "${client[@]}" ERA5_GATEWAY_CONTAINER="$name" ERA4_ARM="$arm" ERA4_SEALED="${ERA4_SEALED:-1}" node --no-warnings --experimental-transform-types \
-  lab/experiments/EXP-DX1/era5/attack.ts "$out" "$out/run.out" > "$out/attack.log" 2>&1
+  "lab/experiments/EXP-DX1/era5/${ERA5_DRIVER:-attack.ts}" "$out" "$out/run.out" > "$out/attack.log" 2>&1
 status=$?
 echo "$(( $(date +%s) - started ))" > "$out/seconds"
 grep -E '^\{"kind":' "$out/attack.log" | cut -c1-3000 | tail -40
