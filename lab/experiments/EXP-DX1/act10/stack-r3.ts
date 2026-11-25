@@ -12,6 +12,9 @@
 //   TF  a transition and a later release between a values frame's read and its commit: the frame is refused, the
 //       release ends superseded, and no value page of it lands after the later release.
 //   TN  a transition between a notice frame's read and its commit: the frame is refused and recorded again.
+//   KG  (DX_ACT8_R3_KILL=1, with DX_ACT10_GROUP=1 and DX_ACT8_FIXED_PORTS=1) one Publish in each of the three accounts
+//       offered at once into the write gateway's group lane, the gateway killed (SIGKILL) while they are in flight and
+//       started again; each command offered again until acknowledged: one record per command, its receipt the record.
 //   RS  the account's origin written back without its settings (what a restore to before the transition leaves): the
 //       processes allowed none publish under the plain key and settle with the archive the notice cursor keeps; a
 //       process allowed the settings turns them on again at its next Publish.
@@ -19,7 +22,9 @@
 // over every event, and every stored release's values against the world at q - 1. A failing check stops the run.
 // Results: <out>/act8-r3-stack.json.
 import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
 import { writeFileSync } from "node:fs";
+import { setTimeout as sleep } from "node:timers/promises";
 import path from "node:path";
 import { W0, canonical, sha256 } from "../../../bench/lib/w0-world.ts";
 import { keyFor } from "../scale1/decision/plan.ts";
@@ -268,6 +273,60 @@ export async function act8R3Stack(c: Ctx) {
       assert.match(String(plainId), /^joined:act8r3-/, "with no settings stored the plain key");
       assert.equal(cursor?.archive, true);
       assert((await settingsAt(none1))?.archive);
+    }
+
+    // ---------------------------------------------------------------------------------------------------------- KG
+    if (process.env.DX_ACT8_R3_KILL === "1") {
+      assert(process.env.DOCKER_HOST?.includes("triplex2") && process.env.DX_ACT10_GROUP === "1" && process.env.DX_ACT8_FIXED_PORTS === "1",
+        "KG runs only against the lab VM, with the write gateway's group lane on and fixed host ports");
+      const docker = (args: string[]) => new Promise<string>((resolve, reject) =>
+        execFile("docker", args, { timeout: 180_000 }, (e, out, err) => (e ? reject(new Error(String(err || e))) : resolve(String(out)))));
+      const name = "tx2-ha1-" + c.attempt.slice(0, 8) + "-write";
+      const xs = await Promise.all(held.map((h) => proc(h, NONE)));
+      const ids = held.map((h) => "act8r3-" + run + "-kg-" + h.account), docsK = held.map((_, i) => large(20, 1000 - 100 * i));
+      const releasesBefore = await Promise.all(xs.map(async (x) => (await x.store.controls(await x.store.head())).releases.length));
+      const headBefore = await c.s.head();
+      const first = xs.map((x, i) => x.a.publish(ids[i]!, docsK[i]!, validTime, "owed", undefined, { docs: "inline" })
+        .then((r) => ({ ok: true as const, position: r.position }), (e) => ({ ok: false as const, error: String(e?.constructor?.name) + ": " + String(e?.message).split("\n")[0]!.slice(0, 160) })));
+      await sleep(20);
+      const killedAt = Date.now();
+      await docker(["kill", name]);
+      await docker(["start", name]);
+      for (let k = 0; ; k++) {
+        try { await c.s.head(); await c.s.lookup("act8-r3-probe"); break; } catch (e) { if (k > 120) throw e; await sleep(1000); }
+      }
+      const backMs = Date.now() - killedAt;
+      const outcomes = await Promise.all(first);
+      // Each command offered again until it is acknowledged (a lost reply, a refused try or a gateway still coming back).
+      const receipts: number[] = [], failures: string[][] = [];
+      for (const [i, x] of xs.entries()) {
+        const f: string[] = [];
+        for (let k = 0; ; k++) {
+          try {
+            const r = await x.a.publish(ids[i]!, docsK[i]!, validTime, "owed", undefined, { docs: "inline" });
+            receipts.push(r.position);
+            docs.get(held[i]!.account)!.set(r.position, docsK[i]!);
+            break;
+          } catch (e: any) {
+            f.push(String(e?.constructor?.name) + ": " + String(e?.message).split("\n")[0]!.slice(0, 120));
+            if (k >= 60) throw new Error("never acknowledged after the kill: " + f.join(" | "));
+            await sleep(2000);
+          }
+        }
+        failures.push(f);
+      }
+      const after = (await journal(headBefore)).filter((t) => t.position > headBefore && t.actor === "lazy/join");
+      const records = ids.map((id) => after.filter((t) => String(t.commandId) === "joined:" + id || String(t.commandId).endsWith("/" + id)));
+      const releasesAfter = await Promise.all(xs.map(async (x) => (await x.store.controls(await x.store.head())).releases.length));
+      results.KG = { killedAfterMs: 20, gatewayBackMs: backMs, firstOutcomes: outcomes, failures, receipts,
+        records: records.map((r) => r.map((t) => [t.position, String(t.commandId).slice(0, 60)])), releasesBefore, releasesAfter };
+      save();
+      for (const [i, r] of records.entries()) {
+        assert.equal(r.length, 1, "one record for " + ids[i]);
+        assert.equal(r[0].position, receipts[i], "the receipt is the record for " + ids[i]);
+        assert.equal(releasesAfter[i], releasesBefore[i]! + 1);
+      }
+      for (const x of xs) await settle(x);
     }
 
     // ------------------------------------------------------------------------------------------- the oracle check
