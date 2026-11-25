@@ -118,7 +118,7 @@ run_step() {  # runs "$@" in its own process group with the spend watcher beside
   local opts=() code
   while [[ $1 != -- ]]; do opts+=("$1"); shift; done; shift
   guard "$step"
-  record start 0 "${opts[@]}"
+  record start 0 ${opts[@]+"${opts[@]}"}
   set +e
   # Its own process group where the command is a program (setsid on the server), so the watcher stops all of it.
   if [[ $(type -t "$1") != function ]] && command -v setsid >/dev/null; then setsid "$@" & else ( "$@" ) & fi
@@ -127,7 +127,7 @@ run_step() {  # runs "$@" in its own process group with the spend watcher beside
   wait "$pid"; code=$?
   kill "$w" 2>/dev/null; wait "$w" 2>/dev/null
   set -e
-  record end "$code" "${opts[@]}"
+  record end "$code" ${opts[@]+"${opts[@]}"}
   echo "[srv2] step $step exit $code; record $EVID/run-record.json"
   return "$code"
 }

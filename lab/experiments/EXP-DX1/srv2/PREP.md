@@ -126,11 +126,42 @@ FILLED BELOW.
 
 ## 4. Guards
 
-FILLED BELOW.
+- **One settings file per machine** (`session.settings.example` names every key). The parser takes `KEY=plain-value`
+  lines only, from a fixed list of keys; anything else (a `$`, a space, a quote, an unknown key) refuses before any
+  step. Object storage credentials are not in it: `STORAGE_ENV` names a second private file read only by `stage` and
+  passed only through the environment to `rclone` and `demo/server-up.sh`.
+- **Spend from elapsed machine minutes.** `MACHINE_A_STARTED`/`_ENDED` and `MACHINE_B_STARTED`/`_ENDED` (epoch
+  seconds from the provider, written by the orchestrator), `PRICE_PER_HOUR` 1.09 and `SPEND_BEFORE`; `session.sh spend`
+  prints the estimate. Tested: 20 h of A and 5 h of B at 1.09 gives USD 27.25 with one machine running.
+- **No new step past USD 46.** Before every step: spend so far + the step's high estimate (the plan's C.2 ceilings,
+  charged at every running machine's price, which is stricter than the plan's wording) + 30 minutes of cleanup per
+  running machine; over 46 the step refuses with exit 98. Tested at USD 44.87 so far: `check` (0 min) runs, `a4`
+  (160 min) refuses with a forecast of USD 51.77.
+- **Delete at USD 48.** At or past 48 every step refuses with exit 99 and writes `$OUT_ROOT/STOP-DELETE-NOW`; a
+  watcher beside each running step checks every 60 s and stops the step's whole process group (`setsid` on the
+  server) at 48. Tested at USD 48.47: `a1` stops before starting and writes the marker.
+- **The delete is held by the last-run driver.** `session.sh finish` (A10, B10) makes one evidence archive per
+  machine with its SHA-256 and `deletion-ready.json` listing the four remaining actions (copy and check on the Mac,
+  delete through the provider, confirm 404, ledger row). **No script in `srv2/` can create or delete a machine**: none
+  holds a provider credential or calls a provider; `grep` over the folder finds no provider endpoint.
+- **Detached alert on the Mac** (`srv2/mac-alert.sh 'YYYY-MM-DD HH:MM' HOSTS_FILE`, started with `nohup … &`): from the
+  deadline (forecast end plus 2 hours) every 15 minutes, a notification on the Mac's own notification centre while any
+  listed machine answers on TCP 22; stops when none answers, or after 14 hours. The hosts file is private, outside the
+  repository. Tested on the Mac with a local listener: it alerted every interval while the port answered and ended
+  ("no rented machine answers; alert loop ends") within one interval of the listener stopping.
 
-## 5. Inputs
+## 5. Inputs (what can be verified from the Mac without credentials, and what the orchestrator checks)
 
-FILLED BELOW.
+| Input | Verified here | Left for the orchestrator |
+| --- | --- | --- |
+| `aged-1b/cluster.tar.zst`, 145,378,109,239 bytes, SHA-256 `ea9a4b1d…` (pinned in `demo/server-up.sh`), with `aged-scorecard.json` (`faab1bc5…`) and the manifest files | the pins in the code match the ledger's figures | the bucket listing (needs the storage credentials, private) |
+| SCALE1 metadata (`image.json` `77d66794…`, `transfer.json` `1fabec59…`, from `scale1/HANDOFF.md`) | **not fetched by `demo/server-up.sh`** (it fetches `aged-1b/` only): `session.sh stage` now fetches both from `fresh-a/` and checks both digests | that `fresh-a/image.json` and `transfer.json` are in the bucket (the ledger of 2026-11-23 says so) |
+| Datomic Pro 1.0.7745 | the archive at the vendor's URL is 272,751,248 bytes, equal to `lab/config/datomic/verification.json`; its SHA-256 `60ac6bc5…` is checked after download by `t1/bare-metal.sh` on the server | — |
+| Node 22.23.2 for Linux x64 | downloaded on the Mac: SHA-256 `d60acfe0…`, equal to the pin in `t1/bare-metal.sh` and in `srv2/bootstrap.sh`, and to the release manifest | — |
+| Java 21 and 25 | the two base images are pinned by digest in `lab/config/datomic/runtime.mjs` (`eclipse-temurin:21.0.13_9-jre-noble@sha256:0eda5830…`, `25.0.5_8-jre-noble@sha256:23481dc3…`); a wrong digest fails the pull | — |
+| `AGE_JAVA`, `AGE_DATOMIC_HOME` | the aged check's fresh peer runs in a container from the reader's image (`age1/scorecard.mjs` `peerCommand`), so `AGE_JAVA` is that image's `/opt/java/openjdk/bin/java` and `AGE_DATOMIC_HOME` the directory `demo/server-up.sh` copies out of the image (`$DEMO_ROOT/datomic-home`); `stage` checks the jar is there | — |
+| Disk per machine | `demo/server-up.sh --fetch` refuses under 520 GB free under `DEMO_ROOT` (archive 146, original 177, working copy 177, slack); `make_copy` refuses without the copy's size plus 20 GiB; `stage` refuses `SCRATCH` and `WAL_ROOT` on one device | the root NVMe of each machine (960 GB) holds the cluster, one working copy and the scratch copies one at a time; machine B also needs the backfilled copy (about 540 GB after the archive is deleted) |
+| Credentials, addresses, the SSH key name | none in the repository | private settings and storage files on each machine |
 
 ## 6. Set-up faults found while preparing
 
