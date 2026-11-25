@@ -22,12 +22,12 @@ import { W0, canonical, sha256 } from "../../../bench/lib/w0-world.ts";
 import { ids } from "../../../bench/lib/world.ts";
 import { Documents, hash, unpack } from "../notify1/store.ts";
 import { worldsAt, winner } from "../actv-lazy/decision.ts";
-import { JoinedAccount, joinedCommandId, scopedJoinedId } from "../actv-lazy/join/account.ts";
+import { JoinedAccount, joinedCommandId, scopedJoinedId, SettingsPending } from "../actv-lazy/join/account.ts";
 import { Archive } from "../actv-lazy/join/archive.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
 import { toWire } from "../actv-lazy/join/check.ts";
 import { largeRelease, parseShape } from "../actv-lazy/join/large-release.ts";
-import { readFullLedgers } from "../actv-lazy/join/ledger-parts.ts";
+import { comparable, readFullLedgers } from "../actv-lazy/join/ledger-parts.ts";
 import { evaluateRows } from "../actv-lazy/join/material.ts";
 import { RecordedNotices } from "../actv-lazy/join/recorded.ts";
 import { ensureSettings, forgetSettled, originAt, SettingsConflict, type Permits } from "../actv-lazy/join/account-settings.ts";
@@ -299,6 +299,9 @@ async function schedule(seed: number): Promise<Outcome> {
         if (proc.oldBuild && /deep|equal/i.test(String(e?.message))) return void count("oldBuildRefused");
         // A process naming a ledger mode the stored settings forbid refuses: counted, not refused.
         if (e instanceof SettingsConflict) return void count("settingsConflict");
+        // [Fourth review Z2] A permitted process whose transition could not land refuses its Publish, retryable, having
+        // written nothing (a landed record not acknowledged is a violation below): counted, not refused.
+        if (e instanceof SettingsPending) return void count("settingsPending");
         if (!keysBefore && /commit receipt differs from the request/.test(String(e?.message))) return void count("crossAccountRefusedBeforeKeys");
         refused.push({ id, account, message: String(e?.message ?? e).slice(0, 200), from, to: await db.comp.currentPosition() });
         if (!(e instanceof Conflict)) violations.push("Publish " + id + " failed: " + String(e?.stack ?? e).slice(0, 400));
@@ -404,6 +407,7 @@ async function schedule(seed: number): Promise<Outcome> {
           count("laterReleaseInsideFrame");
         } catch (e: any) {
           if (e instanceof SettingsConflict) return void count("transitionStepConflict");
+          if (e instanceof SettingsPending) return void count("settingsPending");
           if (!keysAtStart && /commit receipt differs from the request/.test(String(e?.message))) return void count("crossAccountRefusedBeforeKeys");
           if (!(e instanceof Conflict)) violations.push("transition-step Publish " + pid + " failed: " + String(e?.stack ?? e).slice(0, 300));
         }
@@ -523,7 +527,7 @@ async function check(
   if (cfg.beside)
     for (const x of refused) {
       if (cfg.race || cfg.killPublisher) continue;
-      if (transitions.some((t) => t.position > x.from && t.position <= x.to && t.changes.some((c: any) => c.entityId === origins[x.account])))
+      if (transitions.some((t) => t.position > x.from && t.position <= x.to && t.changes.some((c: any) => c.entityId === (origins as Record<string, string>)[x.account])))
         counts.refusedAcrossTransition = (counts.refusedAcrossTransition ?? 0) + 1;
       else v("Publish " + x.id + " refused under the account guard with no rival Publish: " + x.message);
     }
@@ -641,7 +645,7 @@ async function check(
         { subject: w.subject, release: e.value.nextHash, basis: { tx: BigInt(e.at), validTime: e.value.validTime }, workItems: (out as any).workItems },
       ]);
       ledgers.set(w.subject, res.state.items as W0.ItemState[]);
-      states.get(w.subject)!.push(canonical(res.state.items));
+      states.get(w.subject)!.push(canonical(comparable(res.state.items as W0.ItemState[])));
       want.push(...res.deliveries.map(toWire));
     }
   }
@@ -658,14 +662,14 @@ async function check(
   const archivedItems = [...stored.values()].reduce((n, l) => n + l.archived, 0);
   if (archivedItems) counts.archivedItems = (counts.archivedItems ?? 0) + archivedItems;
   for (const subject of roster)
-    if (canonical(stored.get(subject)!.items) !== canonical(ledgers.get(subject) ?? [])) v("ledger of " + subject + " differs from the fold");
+    if (canonical(comparable(stored.get(subject)!.items)) !== canonical(comparable(ledgers.get(subject) ?? []))) v("ledger of " + subject + " differs from the fold");
   // -- A ledger read at any position is a whole state of the fold (never half old, half new), parts or not.
   const noticeFrames = journal.filter((t) => String(t.commandId).startsWith("settled-notice:")).map((t) => t.position);
   for (const x of noticeFrames.flatMap((p) => [p - 1, p])) {
     try {
       const at = await readFullLedgers(ndb, roster, x, known);
       for (const subject of roster)
-        if (!states.get(subject)!.includes(canonical(at.get(subject)!.items))) {
+        if (!states.get(subject)!.includes(canonical(comparable(at.get(subject)!.items)))) {
           v("ledger of " + subject + " at " + x + " is no whole state of the fold");
           break;
         }

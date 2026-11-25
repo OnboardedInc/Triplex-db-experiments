@@ -39,6 +39,15 @@ export function permitsOf(s: Pick<Store, "held">): Permits {
   };
 }
 export class SettingsConflict extends Error {}
+/** [DX-ACT8, fourth review: frames sized by history] The most owed releases one transition fences (one values progress
+ * row each, besides the origin, the calendar and the cursor). The transition is one commit beside saves; without a
+ * bound its size would grow with the account's backlog of releases whose values are not settled (a paused account
+ * keeps publishing), about 0.56 ms of estimated service per release. With more pending, the transition does not commit
+ * this time (it waits for the settlers to drain the backlog), and a Publish by a process holding a permission is
+ * refused with a retryable answer meanwhile (Z2), so the backlog only shrinks. 32 rows: about 24 ms of estimated
+ * service beside the calendar, which each due day's clock tick writes whole anyway. */
+export const transitionFencesMax = 32;
+class FenceBacklog extends Error {}
 /** Diagnostic only, the negative controls: DX_ACT8_INJECT is a comma-separated list of the defences to drop. */
 export const injected = (name: string) => (process.env.DX_ACT8_INJECT ?? "").split(",").includes(name);
 
@@ -101,11 +110,15 @@ export async function ensureSettings(s: Store) {
       await withErasure(authority?.seq, () => s.commit("account-settings:" + randomUUID(), "lazy/settings", ops,
         p, { settings: next }, undefined, undefined, [{ entityId: origin, tripleIds: [c.origin!.id] }, ...fence.guards]));
     } catch (e) {
+      // More owed releases pending than one transition fences: not now (another try would read the same backlog).
+      if (e instanceof FenceBacklog) break;
       if (!(e instanceof Conflict) && !isConflict(e) && !/erasure|frontier/i.test(String((e as Error)?.name) + String((e as Error)?.message))) throw e;
     }
   }
-  // Eight tries, each refused by a write to a row it fences: the settings stay as stored, and this process plans under
-  // them (as a process allowed nothing does); its next plan tries again. Never a reason to refuse the plan itself.
+  // Eight tries, each refused by a write to a row it fences, or a backlog over `transitionFencesMax`: the settings stay
+  // as stored, and a settlement frame plans under them (as a process allowed nothing does); its next plan tries again.
+  // [Fourth review Z2] A Publish by this process is refused instead (account.ts, `SettingsPending`), so a permission
+  // never publishes what the setting would refuse.
   return (await s.controls(await s.head())).settings;
 }
 const isConflict = (e: unknown) => /conflict|changed|live triple/i.test(String((e as Error)?.message));
@@ -134,8 +147,12 @@ async function fences(s: Store, p: number, releases: readonly { storage?: string
     guard(joined, "join-calendar", calendar);
   }
   const a = new JoinedAccount(s);
+  let fenced = 0;
   for (const rel of releases.filter((x) => x.storage === "owed")) {
     const key = progressKey(rel.seq!), row = await values.row<{ status: string }>(key, p);
+    if (!row || row.value.status === "pending")
+      if (++fenced > transitionFencesMax)
+        throw new FenceBacklog("More than " + transitionFencesMax + " owed releases wait for their values");
     if (row) {
       if (row.value.status === "pending") {
         ops.push(...values.change(key, row, row.value));

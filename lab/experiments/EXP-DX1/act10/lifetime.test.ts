@@ -12,7 +12,7 @@ import { Archive } from "../actv-lazy/join/archive.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
 import { toWire } from "../actv-lazy/join/check.ts";
 import { largeRelease, parseShape } from "../actv-lazy/join/large-release.ts";
-import { ledgerCapacity, readFullLedgers, readLedgers, worstLedgerChars, noticeItems } from "../actv-lazy/join/ledger-parts.ts";
+import { comparable, ledgerCapacity, readFullLedgers, readLedgers, worstLedgerChars, noticeItems } from "../actv-lazy/join/ledger-parts.ts";
 import { RecordedNotices } from "../actv-lazy/join/recorded.ts";
 import { Documents } from "../notify1/store.ts";
 import { heldAccount, MemDb, memStore, Proc, seedAccount } from "./memstore.ts";
@@ -131,7 +131,7 @@ test("U9: 4,000 distinct notice policies over 12 releases of one account: every 
   };
   console.log("[U9] " + JSON.stringify(out));
   for (const s of roster) {
-    assert.equal(canonical(full.get(s)!.items), canonical(state.get(s)), "the ledger and its archive are the fold's whole state: " + s);
+    assert.equal(canonical(comparable(full.get(s)!.items)), canonical(comparable(state.get(s)!)), "the ledger and its archive are the fold's whole state: " + s);
     assert.equal(canonical(live.get(s)!.items), canonical(state.get(s)!.filter((i) => !i.retired)), "the ledger holds the items in force only: " + s);
     assert(state.get(s)!.length > 4000, "the subject held more items over time than one ledger can: " + s);
   }

@@ -203,7 +203,10 @@ export class RecordedNotices {
     const atBoundary = current.start === 0 && !current.part;
     // [DX-ACT8, third review U9] So is the archive: the account's stored setting, or the cursor's from an earlier event
     // (it is never dropped). An event under the archive is written in byte frames whatever this writer's framing.
-    const stored = atBoundary ? (await originAt(a.s, sourceAt)).settings : undefined;
+    // [Fourth review Z3] The settings are read at `at`, the position the frame's guards (the cursor and the origin row)
+    // are read at, not at the source head read before it: a transition between the two reads would otherwise go
+    // unseen by the decision yet not refuse the frame (its fence rewrites the cursor before `at`).
+    const stored = atBoundary ? (await originAt(a.s, at)).settings : undefined;
     const archive = atBoundary ? stored?.archive === true || current.archive === true : current.archive === true;
     if (atBoundary ? b.frames === "bytes" || archive : current.frames === "bytes")
       return this.byteFrame(through, e, current, prior, at, authority, stored, archive);

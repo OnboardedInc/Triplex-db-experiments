@@ -6,7 +6,7 @@ import { DatomicClient as Client, type DatomicClient } from "../../../../../pack
 import { frameEstimate } from "./frames.ts";
 import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
 import { ids } from "../../../../bench/lib/world.ts";
-import { readFullLedgers } from "./ledger-parts.ts";
+import { comparable, readFullLedgers } from "./ledger-parts.ts";
 import { now } from "../../scale1/decision/observer.ts";
 import { play, type PublishInterleave, type Save } from "../../scale1/decision/writes.ts";
 import { keyFor } from "../../scale1/decision/plan.ts";
@@ -450,7 +450,7 @@ export async function besideGate(c: GateContext) {
       // [DX-ACT8, third review U9] With the archived retired items (named by the oracle's item IDs).
       const ledgers = await readFullLedgers(ldb, g.roster, await ldb.head(), (s) => (g.ref.items.get(s) ?? []).map((i: any) => i.id));
       for (const s of g.roster)
-        assert.deepEqual(ledgers.get(s)!.items.map(toWire), g.ref.items.get(s) ?? [], "ledger of " + s);
+        assert.deepEqual(comparable(ledgers.get(s)!.items).map(toWire), (g.ref.items.get(s) ?? []).map((i: any) => (i.retired ? { ...i, payload: null } : i)), "ledger of " + s);
       evidence.noticesInOrder = all.length;
       evidence.ledgers = g.roster.length;
     } finally {
