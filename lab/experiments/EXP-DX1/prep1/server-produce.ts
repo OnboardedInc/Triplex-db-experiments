@@ -446,7 +446,10 @@ export async function phase(
         settled = {
           ...record,
           end: elapsed(),
-          reason: err instanceof DatomicHttpError ? err.code : productSave ? `product: ${String((err as Error)?.message ?? err)}` : "transport",
+          // [DX-INT5] The product path's errors carry the gateway's answer in their cause (the SDK wraps every refusal other
+          // than a conflict as "Datomic transaction was rejected"): the reason names its status, code and message.
+          reason: err instanceof DatomicHttpError ? err.code : productSave ? `product: ${String((err as Error)?.message ?? err)}${
+            (err as any)?.cause ? ` [${(err as any).cause.status ?? ""} ${(err as any).cause.code ?? ""}: ${String((err as any).cause.message ?? "").slice(0, 400)}]` : ""}` : "transport",
         };
         rows.push(settled);
         return;
