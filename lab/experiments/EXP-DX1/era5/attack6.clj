@@ -406,7 +406,13 @@
                       (bump! :mode mode)
                       (case mode
                         :ok (recur (inc k) (conj acc (assoc rec :wire (get (a5/seal-placed src (vec named) content pl) "sealed"))) want)
-                        :mislabelled (recur (inc k) (conj acc (assoc rec :wire (get (a5/seal-placed src (vec plains) content pl) "sealed"))) want)
+                        ;; [DX-ERA4, after the second review's N3] and its twin: the same record, the same too-few names,
+                        ;; placed at its first source's SUBJECT as the option's writers place records (placeOf: the
+                        ;; subject), so the two placements are counted apart
+                        :mislabelled (let [tp (str "acct|" (subjects (:si (values (first srcs)))))]
+                                       (recur (inc k) (conj acc (assoc rec :wire (get (a5/seal-placed src (vec plains) content pl) "sealed")
+                                                                          :twin (get (a5/seal-placed src (vec plains) content tp) "sealed")
+                                                                          :twin-place tp)) want))
                         :failed (let [o (with-redefs [ds/handle! (fn [& _] (throw (ex-info "injected: the seal call failed" {})))]
                                           (offers/route src "v2" "derived-seal" {"items" [{"ids" (vec named) "value" content "place" pl}]}))]
                                   (bump! :failed-seal-answer (:status o))
@@ -476,7 +482,28 @@
                     (cond
                       (= :mislabelled (:mode rec))
                       (do (bump! :mislabelled (if hit :from-removed :kept) :route (a5/shape o) :outside (if dec :decodes :no))
-                          (when (and hit (= (:content rec) (a5/opened o))) (bump! :mislabelled-removed-value-still-opens)))
+                          (when (and hit (= (:content rec) (a5/opened o))) (bump! :mislabelled-removed-value-still-opens))
+                          ;; [DX-ERA4, after the second review's N3] why a record from a removed value still opens: each
+                          ;; removed source is on the place's own entity (or under it: the gateway names it, so it must
+                          ;; open as removed), on another entity of the same subject (the reviewer places a record at a
+                          ;; value's entity, not at its subject), or of another subject (a record computed from two
+                          ;; subjects whose writer named neither)
+                          (when hit
+                            (let [ps (ds/place-subject (:place rec)) si (:si (values (first (:srcs rec))))
+                                  removed (filter gone-set (:srcs rec))
+                                  at-place? (fn [x] (let [ow (:owner (values x))] (or (= ow ps) (str/starts-with? ow (str ps "/")))))
+                                  cls (cond (some at-place? removed) :removed-source-on-the-place
+                                            (every? #(= si (:si (values %))) removed) :removed-source-on-another-entity-of-the-subject
+                                            (not-any? #(= si (:si (values %))) removed) :removed-source-of-another-subject-only
+                                            :else :both)
+                                  ot (a5/open-placed src (:twin rec) (:twin-place rec))
+                                  tcls (if (some #(= si (:si (values %))) removed) :a-removed-source-of-the-subject :removed-sources-of-another-subject-only)]
+                              (bump! :n3-placed-at-a-value-entity cls (a5/shape o))
+                              (bump! :n3-placed-at-the-subject tcls (a5/shape ot))
+                              (x/oracle! label (or (not= cls :removed-source-on-the-place) (a5/removed? o))
+                                         "N3: a record whose removed source is on its place's entity opens as removed" {:cls cls})
+                              (x/oracle! label (or (not= tcls :a-removed-source-of-the-subject) (a5/removed? ot))
+                                         "N3: a record placed at its subject opens as removed after a removal of that subject's value" {:cls tcls}))))
                       hit
                       (do (x/oracle! label (a5/removed? o) "a record computed from a removed value opens as removed" {:mode (:mode rec)})
                           (if (and restored (some #(= restored (:id (values %))) (:srcs rec))
