@@ -116,13 +116,7 @@
     (reduce max 0 (for [[_ e] (:commands cut) :when (some #(want (get % "assertionId")) (get e "identities"))]
                     (get e "seq")))))
 
-(defn- native-erased
-  "[DX-ERA4, after the third review's M1] On a database guarded per account, every assertion whose removal is committed
-  in Datomic past the published head, with that removal's sequence. For this option's routes a removal takes effect at
-  its native commit or its publication, whichever comes first, so a removal log that lags the data, or is put back to a
-  copy taken while the removal was pending (with the key files, which the file authority keeps beside the log), cannot
-  reopen a sealed copy. Empty unless the data is ahead of the published head (a pending removal committed natively), so
-  the usual cost is one read of the committed sequence."
+(defn- native-erased*
   [db cut]
   (let [h (:seq cut) c (if (:per-account cut) (removal-scope/native-seq db) nil)]
     (if (if (integer? c) (if (integer? h) (> c h) false) false)
@@ -132,7 +126,20 @@
                      i (get e "identities") :let [a (get i "assertionId")] :when a]
                  [a s]))
       {})))
+;; [DX-ERA4, second review N9] computed once per call (it was once per item)
+(def ^:dynamic ^:private *native* nil)
+(defn- native-erased
+  "[DX-ERA4, after the third review's M1] On a database guarded per account, every assertion whose removal is committed
+  in Datomic past the published head, with that removal's sequence. For this option's routes a removal takes effect at
+  its native commit or its publication, whichever comes first, so a removal log that lags the data, or is put back to a
+  copy taken while the removal was pending (with the key files, which the file authority keeps beside the log), cannot
+  reopen a sealed copy. Empty unless the data is ahead of the published head (a pending removal committed natively), so
+  the usual cost is one read of the committed sequence."
+  [db cut]
+  (if *native* @*native* (native-erased* db cut)))
 
+;; [DX-ERA4, second review N9] one derived key per distinct name list per call (a subject's records share one list)
+(def ^:dynamic ^:private *derived* nil)
 (defn- with-key
   "Calls (f key) with the derived key of `ids`, or returns {\"removed\" ids...} when one of them is removed in the
   published cut or committed natively past it (`native-erased`), or its key is gone."
@@ -141,13 +148,17 @@
         erased (filterv #(if (contains? (:erased cut) %) true (contains? native %)) ids)]
     (if (seq erased)
       {"removed" erased "seq" (reduce max (removal-seq cut erased) (keep native erased))}
-      (let [keys (mapv (fn [id] (let [eid (protected-eid db id)] (when eid (assertion-key name db eid id)))) ids)]
-        (if (some nil? keys)
-          (do (doseq [k keys] (when k (Arrays/fill ^bytes k (byte 0))))
-              {"removed" (vec (keep-indexed (fn [i k] (when (nil? k) (nth ids i))) keys))})
-          (let [k (derive-key name ids keys)]
-            (doseq [x keys] (Arrays/fill ^bytes x (byte 0)))
-            (try (f k) (finally (Arrays/fill k (byte 0))))))))))
+      (let [cached (if *derived* (get @*derived* ids) nil)]
+        (if cached
+          (let [k (aclone ^bytes cached)] (try (f k) (finally (Arrays/fill k (byte 0)))))
+          (let [keys (mapv (fn [id] (let [eid (protected-eid db id)] (when eid (assertion-key name db eid id)))) ids)]
+            (if (some nil? keys)
+              (do (doseq [k keys] (when k (Arrays/fill ^bytes k (byte 0))))
+                  {"removed" (vec (keep-indexed (fn [i k] (when (nil? k) (nth ids i))) keys))})
+              (let [k (derive-key name ids keys)]
+                (doseq [x keys] (Arrays/fill ^bytes x (byte 0)))
+                (when *derived* (swap! *derived* assoc ids (aclone k)))
+                (try (f k) (finally (Arrays/fill k (byte 0))))))))))))
 
 (defn- gcm [mode ^bytes key ^bytes nonce ^bytes aad ^bytes data]
   (let [c (Cipher/getInstance "AES/GCM/NoPadding")]
@@ -156,10 +167,13 @@
     (.doFinal c data)))
 
 (defn- size-class
-  "The padded length for n bytes (4 of length and the clear bytes): 64, 128, ... 4,096, then multiples of 4,096. What a
-  stored record still shows is its class: within a factor of two below 4 KiB, to 4 KiB above."
+  "The padded length for n bytes (4 of length and the clear bytes): 64, 128, ... 4,096, then multiples of 512 (was
+  4,096: [DX-ERA4, second review N1] a ledger part holds about 180 items in one record, and a coarser class cost it a
+  tenth of them). What a stored record shows is its class: within a factor of two below 4 KiB, to 512 bytes above (for
+  a ledger part, its item count to within about ten)."
   ^long [^long n]
-  (if (<= n 4096) (loop [c 64] (if (<= n c) c (recur (* 2 c)))) (* 4096 (quot (+ n 4095) 4096))))
+  (if (<= n 4096) (loop [c 64] (if (<= n c) c (recur (* 2 c)))) (* 512 (quot (+ n 511) 512))))
+(defn- size-class? [^long n] (if (<= n 4096) (contains? #{64 128 256 512 1024 2048 4096} n) (zero? (rem n 512))))
 (defn- pad ^bytes [^bytes clear]
   (let [n (alength clear) out (byte-array (size-class (+ 4 n)))]
     (.putInt (ByteBuffer/wrap out) n)
@@ -191,34 +205,84 @@
   (when-not (or (nil? place) (and (string? place) (<= 1 (count place) max-place)))
     (invalid! "A place is a string of 1 to 512 characters")))
 
-(defn- seal-one [name db cut {:strs [ids value place] :as item}]
-  (when-not (and (map? item) (every? #{"ids" "value" "place"} (keys item)) (vector? ids) (<= (count ids) max-ids)
-                 (every? #(and (string? %) (<= 1 (count %) 256)) ids) (string? value) (<= (count value) max-value))
-    (invalid! "Each item needs ids (at most 65,536 assertion IDs), a string value and optionally its place"))
-  (place! place)
-  ;; [DX-ERA4, after DX-ERA5's M1] every name must be a row of this database: a name the gateway does not know is
-  ;; refused, never taken as "computed from no protected value". An empty list states that explicitly.
-  (let [unknown (remove #(second (name-of db %)) ids)]
-    (when (seq unknown)
-      (privacy/failure! 400 "UnknownDerivedInput"
-                        (str (count unknown) " of the names are not rows of this database; a derived record names the rows it read"))))
-  ;; Only the protected assertions count; the client sends every string row it read (section 3.2).
+(defn place-subject
+  "The subject a place names: `<scope>|<account>|<subject>` (era4 lab `placeOf`), the text after the last bar; nil for a
+  place without a bar or with nothing after it."
+  [^String place]
+  (if (string? place)
+    (let [j (.lastIndexOf place "|")]
+      (if (>= j 0) (let [s (subs place (inc j))] (if (seq s) s nil)) nil))
+    nil))
+
+;; [DX-ERA4, second review N3] The gateway chooses the keys: every protected assertion of the subject the record's
+;; place names (its entity and the entities under `<subject>/`), current or superseded, that is not removed; plus
+;; whatever else the writer names. A writer that names too few rows of its own subject can no longer get a record
+;; sealed under the key of no assertion while that subject holds a protected value. One index scan per subject per call.
+(def ^:dynamic ^:private *subjects* nil)
+(defn- subject-protected [db cut subject]
+  (if (nil? subject)
+    []
+    (let [look (fn []
+                 (let [native (native-erased db cut)
+                       lo (str subject "/") hi (str subject "/￿")]
+                   (vec (sort (distinct
+                                (for [x (concat (d/datoms db :avet :triplex.private/entity subject)
+                                                (d/index-range db :triplex.private/entity lo hi))
+                                      :let [id (scope/value db (:e x) :triplex.private/id)]
+                                      :when (string? id)
+                                      :when (not (contains? (:erased cut) id))
+                                      :when (not (contains? native id))]
+                                  id))))))
+          c *subjects*]
+      (if c (or (get @c subject) (let [r (look)] (swap! c assoc subject r) r)) (look)))))
+
+(defn- plan-seal
+  "Checks one seal item and computes the assertions it is sealed under. An item is {value | bytes, place?, ids?}:
+  `value` a string; `bytes` base64 of raw bytes (a ledger part the writer compressed, second review N1); `ids` the rows
+  the writer read beyond what the call's `names` gives for the item's place (second review N9: names travel once per
+  place per call)."
+  [db cut names item]
+  (when-not (map? item) (invalid! "Each item is an object"))
+  (let [{:strs [ids value bytes place]} item
+        ids (or ids [])]
+    (when-not (and (every? #{"ids" "value" "bytes" "place"} (keys item)) (vector? ids) (<= (count ids) max-ids)
+                   (every? #(and (string? %) (<= 1 (count %) 256)) ids)
+                   (if (some? value) (if (nil? bytes) (if (string? value) (<= (count value) max-value) false) false)
+                     (if (string? bytes) (<= (count bytes) max-value) false)))
+      (invalid! "Each item needs a string value or base64 bytes, optionally its place and the rows it read (at most 65,536)"))
+    (place! place)
+    (when (if (some? bytes) (nil? place) false) (invalid! "A record of bytes needs its place"))
+    (let [all (vec (distinct (concat ids (if place (get names place) nil))))]
+      ;; [DX-ERA4, after DX-ERA5's M1] every name must be a row of this database
+      (let [unknown (remove #(second (name-of db %)) all)]
+        (when (seq unknown)
+          (privacy/failure! 400 "UnknownDerivedInput"
+                            (str (count unknown) " of the names are not rows of this database; a derived record names the rows it read"))))
+      {:protected (vec (sort (distinct (concat (filter #(first (name-of db %)) all)
+                                               (if place (subject-protected db cut (place-subject place)) [])))))
+       :place place
+       :clear (if (some? bytes)
+                (try (.decode (Base64/getDecoder) ^String bytes) (catch Exception _ (invalid! "bytes is not base64")))
+                (utf8 value))
+       :bytes? (some? bytes)})))
+
+(defn- seal-planned [name db cut {:keys [protected place clear bytes?]}]
   ;; [DX-ERA4, after DX-ERA5's B1] a placed item computed from no protected value is sealed too (under the key of no
-  ;; assertion, which protects nothing and is never destroyed), so every derived unit a writer stores has one format
-  ;; and a database that requires sealed derived documents can refuse anything else; an unplaced one stays clear.
-  (let [protected (vec (sort (distinct (filter #(first (name-of db %)) ids))))]
-    (if (if (empty? protected) (nil? place) false)
-      {"clear" true}
-      (with-key name db cut protected
-        (fn [k]
-          (let [header (b64 (utf8 (json/write-str (if place {"d" name "k" protected "p" place} {"d" name "k" protected}))))
-                nonce (let [b (byte-array 12)] (.nextBytes ^SecureRandom random b) b)
-                padded (pad (utf8 value))
-                body (try (gcm Cipher/ENCRYPT_MODE k nonce (utf8 header) padded) (finally (Arrays/fill padded (byte 0))))]
-            {"sealed" (str prefix header "." (b64 nonce) "." (b64 body))}))))))
+  ;; assertion), so every derived unit a writer stores has one format; an unplaced one stays clear. With the gateway's
+  ;; own choice of keys (N3) that happens only when the subject holds no protected value and the writer named none.
+  (if (if (empty? protected) (nil? place) false)
+    {"clear" true}
+    (with-key name db cut protected
+      (fn [k]
+        (let [h (cond-> {"d" name "k" protected} place (assoc "p" place) bytes? (assoc "b" 1))
+              header (b64 (utf8 (json/write-str h)))
+              nonce (let [b (byte-array 12)] (.nextBytes ^SecureRandom random b) b)
+              padded (pad clear)
+              body (try (gcm Cipher/ENCRYPT_MODE k nonce (utf8 header) padded) (finally (Arrays/fill ^bytes padded (byte 0))))]
+          {"sealed" (str prefix header "." (b64 nonce) "." (b64 body))})))))
 
 (defn header-of
-  "The clear header of a sealed record: {\"d\" database, \"k\" assertion IDs}."
+  "The clear header of a sealed record: {\"d\" database, \"k\" assertion IDs, \"p\" place, \"b\" 1 for bytes}."
   [^String wire]
   (when-not (and (string? wire) (or (str/starts-with? wire prefix) (str/starts-with? wire legacy-prefix)))
     (invalid! "Not a sealed derived record"))
@@ -227,8 +291,9 @@
     (let [h (try (json/read-str (String. (unb64 (first parts)) StandardCharsets/UTF_8)) (catch Exception _ nil))]
       (when-not (and (map? h) (string? (get h "d")) (vector? (get h "k")) (or (seq (get h "k")) (string? (get h "p")))
                      (every? string? (get h "k")) (= (get h "k") (vec (sort (distinct (get h "k")))))
-                     ;; a record with no protected name exists only in the placed format (see seal-one)
-                     (every? #{"d" "k" "p"} (keys h)) (or (nil? (get h "p")) (string? (get h "p"))))
+                     ;; a record with no protected name exists only in the placed format (see seal-planned)
+                     (every? #{"d" "k" "p" "b"} (keys h)) (or (nil? (get h "p")) (string? (get h "p")))
+                     (or (nil? (get h "b")) (= 1 (get h "b"))))
         (invalid! "Malformed sealed derived record header"))
       [h parts])))
 
@@ -248,26 +313,41 @@
     (with-key name db cut (get h "k")
       (fn [k]
         (let [clear (try (gcm Cipher/DECRYPT_MODE k (unb64 nonce) (utf8 header) (unb64 body))
-                         (catch Exception _ (privacy/failure! 409 "DerivedRecordInvalid" "The sealed record does not open")))]
-          {"value" (String. ^bytes (if v2 (unpad clear) clear) StandardCharsets/UTF_8)})))))
+                         (catch Exception _ (privacy/failure! 409 "DerivedRecordInvalid" "The sealed record does not open")))
+              out (if v2 (unpad clear) clear)]
+          (if (= 1 (get h "b"))
+            {"bytes" (.encodeToString (Base64/getEncoder) ^bytes out)}
+            {"value" (String. ^bytes out StandardCharsets/UTF_8)}))))))
+
+(defn- names! [names]
+  (when-not (or (nil? names)
+                (and (map? names) (<= (count names) max-items)
+                     (every? (fn [[p v]] (and (string? p) (<= 1 (count p) max-place) (vector? v) (<= (count v) max-ids)
+                                              (every? #(and (string? %) (<= 1 (count %) 256)) v)))
+                             names)))
+    (invalid! "names maps a place to the rows read for it (at most 65,536)")))
 
 (defn handle!
-  "POST /v2/db/{db}/derived-seal {items: [{ids, value}]} and derived-open {items: [sealed]}, under the request's
-  published cut (a read of any basis after the removal's publication answers removed, TARGETS 7.1)."
+  "POST /v2/db/{db}/derived-seal {items: [{value | bytes, place?, ids?}], names?: {place: [ids]}} and derived-open
+  {items: [sealed | {record, place}]}, under the request's published cut (a read of any basis after the removal's
+  publication answers removed, TARGETS 7.1)."
   [name db cut action input]
   (sealed-scope! cut)
-  (let [items (get input "items")]
-    (when-not (and (map? input) (= #{"items"} (set (keys input))) (vector? items) (<= 1 (count items) max-items))
+  (let [items (get input "items") names (get input "names")]
+    (when-not (and (map? input) (vector? items) (<= 1 (count items) max-items)
+                   (every? (if (= action "derived-seal") #{"items" "names"} #{"items"}) (keys input)))
       (invalid! "Expected {items: [...]} with 1 to 1024 items"))
-    (binding [*keys* (atom {}) *names* (atom {})]
+    (names! names)
+    (binding [*keys* (atom {}) *names* (atom {}) *subjects* (atom {}) *derived* (atom {})
+              *native* (delay (native-erased* db cut))]
       (try
-        (prefetch! name db (if (= action "derived-seal")
-                             (mapcat #(when (map? %) (let [ids (get % "ids")] (when (vector? ids) ids))) items)
-                             (mapcat #(try (get (first (header-of (if (map? %) (get % "record") %))) "k") (catch Exception _ nil)) items)))
-        {:items (if (= action "derived-seal")
-                  (mapv #(seal-one name db cut %) items)
-                  (mapv #(open-one name db cut %) items))}
-        (finally (doseq [v (vals @*keys*)] (when (bytes? v) (Arrays/fill ^bytes v (byte 0)))))))))
+        (if (= action "derived-seal")
+          (let [plans (mapv #(plan-seal db cut names %) items)]
+            (prefetch! name db (mapcat :protected plans))
+            {:items (mapv #(seal-planned name db cut %) plans)})
+          (do (prefetch! name db (mapcat #(try (get (first (header-of (if (map? %) (get % "record") %))) "k") (catch Exception _ nil)) items))
+              {:items (mapv #(open-one name db cut %) items)}))
+        (finally (doseq [v (concat (vals @*keys*) (vals @*derived*))] (when (bytes? v) (Arrays/fill ^bytes v (byte 0)))))))))
 
 (defn- wire [v] (if (map? v) (get v "v") v))
 
@@ -294,74 +374,109 @@
     (let [s (.toUpperCase (.toString (BigInteger. 1 b) 32))]
       (str "_tx/" (apply str (repeat (- 26 (count s)) "0")) s))))
 
-;; [DX-ERA4, after DX-ERA5's M2 and B2] Every removal's keys deleted again on every pass, not from a progress counter:
-;; the published removals (the cut read allowing a pending removal, so a pending one holds back nothing) and the
-;; removals committed in the data (a log put back to a copy taken while one was pending holds it pending; the data does
-;; not). A key file restored from an older copy of the authority is deleted at the next pass, without a restart. Every
-;; gateway with the option runs it; each pass reads each database's committed erasure records.
+;; [DX-ERA4, after DX-ERA5's M2 and B2; second review N5] The key re-sweep: every removal's keys deleted again, not from a
+;; progress counter, so a key restored from an older copy of the authority goes again without a restart; the removals
+;; are the published ones (the cut read allowing a pending removal) and those committed in the data (a log put back to a
+;; copy taken while one was pending holds it pending; the data does not). Bounded: a database's committed records are
+;; read incrementally (only transactions since the last pass), and each pass checks at most `resweep-batch` identities
+;; of that database, the newest removals first and then a window that rotates over the older ones, so a restored key is
+;; deleted within (identities / batch) passes and a pass costs the same at 1,000 removals as at 1,000,000. Every
+;; failure is counted and logged (failures/note!, `:removalFailures "resweep"`), never dropped.
 (def ^:private resweep-ms 1000)
-(defn resweep! [conn-of]
+(def ^:private resweep-batch 512)
+(defonce ^:private resweep-state (atom {}))
+(defn- note! [where name e] ((requiring-resolve 'triplex.gateway.failures/note!) where name e))
+(defn- committed-records
+  "The database's committed erasure records, read incrementally: those of transactions after the last pass's basis."
+  [name db]
+  (let [{:keys [t records]} (get @resweep-state name)
+        t (long (or t 0))
+        fresh (if (d/entid db :triplex.tx/erasure-record)
+                (mapv (fn [x] (json/read-str (:v x))) (d/datoms (if (pos? t) (d/since db t) db) :aevt :triplex.tx/erasure-record))
+                [])
+        all (into (or records {}) (map (fn [e] [(get e "seq") e])) fresh)]
+    (swap! resweep-state update name assoc :t (d/basis-t db) :records all)
+    (vals all)))
+(defn- present-keys [name identities]
+  (if sql/url
+    (let [by-handle (into {} (keep (fn [i] (when-let [h (get i "keyHandle")] [h i])) identities))
+          found (when (seq by-handle)
+                  (#'sql/with-session
+                    (fn [c] (#'sql/select! c "SELECT id FROM triplex_removal.keys WHERE scope=? AND id = ANY(?)"
+                                           [name (.createArrayOf ^java.sql.Connection c "text" (to-array (keys by-handle)))]
+                                           (fn [^java.sql.ResultSet rs]
+                                             (loop [out #{}] (if (.next rs) (recur (conj out (.getString rs 1))) out)))))))]
+      (filterv #(contains? found (get % "keyHandle")) (vals by-handle)))
+    (filterv (fn [i] (envelope/key-present? name (get i "assertionId") (get i "keyHandle"))) identities)))
+(defn resweep-one! [name db]
   (let [cutoff (- (System/currentTimeMillis) envelope/grace-ms)
-        due? (fn [e] (let [at (get e "erasedAt")] (if (number? at) (<= at cutoff) false)))]
-    (doseq [name (#'envelope/authority-scopes)]
-      (try
-        (let [cut (privacy/cut name nil true)]
-          (when (:sealed cut)
-            (let [native (try (let [db (d/db (conn-of name))]
-                                (if (d/entid db :triplex.tx/erasure-record)
-                                  (mapv (fn [x] (json/read-str (:v x))) (d/datoms db :aevt :triplex.tx/erasure-record))
-                                  []))
-                              (catch Exception _ []))
-                  entries (filter due? (concat (vals (:commands cut)) native))
-                  ids (distinct (mapcat #(get % "identities") entries))
-                  ;; with the PostgreSQL authority one query per database per pass, not one per identity
-                  present (if sql/url
-                            (let [by-handle (into {} (keep (fn [i] (when-let [h (get i "keyHandle")] [h i])) ids))
-                                  found (when (seq by-handle)
-                                          (#'sql/with-session
-                                            (fn [c] (#'sql/select! c "SELECT id FROM triplex_removal.keys WHERE scope=? AND id = ANY(?)"
-                                                                   [name (.createArrayOf ^java.sql.Connection c "text" (to-array (keys by-handle)))]
-                                                                   (fn [^java.sql.ResultSet rs]
-                                                                     (loop [out #{}] (if (.next rs) (recur (conj out (.getString rs 1))) out)))))))]
-                              (filterv #(contains? found (get % "keyHandle")) (vals by-handle)))
-                            (filterv (fn [i] (envelope/key-present? name (get i "assertionId") (get i "keyHandle"))) ids))]
-              (when (seq present) (envelope/erase-keys! name present)))))
-        (catch Exception _ nil)))))
+        due? (fn [e] (let [at (get e "erasedAt")] (if (number? at) (<= at cutoff) false)))
+        cut (privacy/cut name nil true)]
+    (when (:sealed cut)
+      (let [native (committed-records name db)
+            entries (sort-by #(- (long (or (get % "seq") 0))) (filter due? (concat (vals (:commands cut)) native)))
+            ids (vec (distinct (mapcat #(get % "identities") entries)))
+            n (count ids)
+            newest (vec (take (quot resweep-batch 2) ids))
+            from (long (get-in @resweep-state [name :cursor] 0))
+            older (if (> n (count newest))
+                    (let [rest (subvec ids (count newest)) m (count rest) from (mod from m)]
+                      (swap! resweep-state assoc-in [name :cursor] (+ from (quot resweep-batch 2)))
+                      (take (quot resweep-batch 2) (concat (subvec rest from) (subvec rest 0 from))))
+                    [])
+            check (vec (distinct (concat newest older)))
+            present (present-keys name check)]
+        (swap! resweep-state update name assoc :identities n :checked (count check) :deleted (count present))
+        (when (seq present)
+          (envelope/erase-keys! name present)
+          ((requiring-resolve 'triplex.gateway.stats/bump!) [:derivedResweep :deleted] (count present)))))))
+(defn resweep! [conn-of]
+  (doseq [name (try (#'envelope/authority-scopes) (catch Exception e (note! "resweep-scopes" nil e) []))]
+    (try (resweep-one! name (d/db (conn-of name)))
+         (catch Exception e (note! "resweep" name e)))))
 (defonce ^:private resweeper (atom nil))
 (defn start-resweep! []
   (when (compare-and-set! resweeper nil true)
     (doto (Thread. ^Runnable (fn [] (loop [] (try (resweep! (fn [n] ((requiring-resolve 'triplex.gateway.main/connection)
                                                                     ((requiring-resolve 'triplex.gateway.main/db-uri) n))))
-                                                  (catch Exception _ nil))
+                                                  (catch Exception e (note! "resweep-loop" nil e)))
                                       (when (try (Thread/sleep (long resweep-ms)) true (catch InterruptedException _ false)) (recur))))
                    "triplex-derived-resweep")
       (.setDaemon true)
       (.start))))
 
 ;; ---- [DX-ERA4, after DX-ERA5's B1 and M3] the database's one-way setting, and the write route's check ----------------
-(defn required? [db]
-  (if (d/entid db :triplex.scope/derived-sealed)
-    (true? (scope/value db (scope/entity db) :triplex.scope/derived-sealed))
-    false))
+(def ^:private setting-attr :triplex.scope/derived-sealed)
+(defn- setting-value [db]
+  (if (d/entid db setting-attr) (scope/value db (scope/entity db) setting-attr) nil))
+(defn required? [db] (true? (setting-value db)))
+(defn install!
+  "[DX-ERA4, second review N7] At a database's opening on a gateway with the option: the setting's attribute, and its
+  value false when it has none, so every derived write can fence on the value it read (a declaration between a write's
+  check and its commit then fails the write at the serial point). Returns the database after."
+  [conn db]
+  (let [db (if (d/entid db setting-attr) db
+             (:db-after @(d/transact conn [{:db/ident setting-attr :db/valueType :db.type/boolean
+                                            :db/cardinality :db.cardinality/one
+                                            :db/doc "[DX-ERA4] One-way: the derived documents of this database must be sealed."}])))
+        head (scope/entity db)]
+    (if (if head (nil? (scope/value db head setting-attr)) false)
+      (try (:db-after @(d/transact conn [[:db/cas head setting-attr nil false]]))
+           (catch Exception _ (d/db conn)))
+      db)))
 (defn require!
   "POST /v2/db/{db}/derived-seal-required: from now on every derived document of this database must be sealed. One-way:
   no route removes it; a gateway of this build without the option refuses the database."
   [name conn]
-  (let [db (d/db conn) head (scope/entity db)]
+  (let [db (install! conn (d/db conn)) head (scope/entity db)]
     (when-not head (privacy/failure! 400 "InvalidValue" "Not a Triplex database"))
-    (when-not (d/entid db :triplex.scope/derived-sealed)
-      @(d/transact conn [{:db/ident :triplex.scope/derived-sealed :db/valueType :db.type/boolean
-                          :db/cardinality :db.cardinality/one
-                          :db/doc "[DX-ERA4] One-way: the derived documents of this database must be sealed."}]))
-    (when-not (required? (d/db conn))
-      @(d/transact conn [[:db/cas head :triplex.scope/derived-sealed nil true]]))
+    (when-not (required? db)
+      @(d/transact conn [[:db/cas head setting-attr (setting-value db) true]]))
     {:database name :derivedSealed (required? (d/db conn))}))
 
-(def ^:private content-key
-  #"^notice:v1:[0-9a-f]{64}:(answer:[0-9]+:f[0-9]+|answer:[0-9]+:[0-9]+|recorded-notices:[0-9]+|recorded-ledger-part:.+|recorded-ledger:.+|receiver:[^:]+:.+|effects:[^:]+:[0-9]+)$")
 (defn- unsealed! [what]
   ;; :write-policy: the write path passes it through as typed (storage.clj maps any other failure to TransactionRejected)
-  (throw (ex-info (str "This database requires sealed derived documents; refused: " what)
+  (throw (ex-info (str "This database requires sealed derived documents (derived-seal-required); refused: " what)
                   {:status 409 :code "DerivedRecordUnsealed" :write-policy true})))
 (defn- inflate ^String [^bytes b]
   (let [inf (java.util.zip.Inflater. true) out (java.io.ByteArrayOutputStream.) buf (byte-array 65536)
@@ -376,60 +491,153 @@
 (defn- document [^String text]
   (let [v (json/read-str text)]
     (if (string? v) (json/read-str (inflate (.decode (Base64/getDecoder) ^String v))) v)))
-(defn- sealed-unit? [x]
-  (if (string? x)
-    (if (str/starts-with? x prefix) (try (string? (get (first (header-of x)) "p")) (catch Exception _ false)) false)
+
+;; ---- [DX-ERA4, second review N4] exact shapes ------------------------------------------------------------------------
+(def ^:private hex64 #"[0-9a-f]{64}")
+(defn- nat? [x] (if (integer? x) (>= (long x) 0) false))
+(defn- hex64? [x] (if (string? x) (some? (re-matches hex64 x)) false))
+(defn- id-like? [x] (if (string? x) (if (<= 1 (count x) 256) (some? (re-matches #"[A-Za-z0-9_:./|-]+" x)) false) false))
+(defn- canonical-b64 ^bytes [^String s]
+  (let [b (try (unb64 s) (catch Exception _ nil))] (if b (if (= s (b64 b)) b nil) nil)))
+(defn sealed-header
+  "The header of `x` when it is a sealed, placed `tdx2` record of exact form (canonical base64url parts, a header of
+  {d, k, p, b?} with sorted distinct names and a place naming a subject, a 12-byte nonce, a body that is a size class
+  plus the 16-byte tag), else nil. A record cannot be told from a forged one without its key; this bounds what a forged
+  one can be (second review N4)."
+  [x]
+  (if (if (string? x) (str/starts-with? x prefix) false)
+    (let [parts (str/split (subs x (count prefix)) #"\." -1)]
+      (if (= 3 (count parts))
+        (let [[hh nn bb] parts
+              hb (canonical-b64 hh) nonce (canonical-b64 nn) body (canonical-b64 bb)
+              h (if hb (try (json/read-str (String. ^bytes hb StandardCharsets/UTF_8)) (catch Exception _ nil)) nil)]
+          (if (and (map? h) (every? #{"d" "k" "p" "b"} (keys h))
+                   (string? (get h "d")) (some? (re-matches #"s2-[A-Za-z0-9_-]+" (get h "d")))
+                   (vector? (get h "k")) (every? id-like? (get h "k")) (= (get h "k") (vec (sort (distinct (get h "k")))))
+                   (string? (get h "p")) (<= (count (get h "p")) max-place) (some? (place-subject (get h "p")))
+                   (or (nil? (get h "b")) (= 1 (get h "b")))
+                   (some? nonce) (= 12 (alength ^bytes nonce))
+                   (some? body) (> (alength ^bytes body) 16) (size-class? (- (alength ^bytes body) 16)))
+            h nil))
+        nil))
+    nil))
+(defn- removed-marker? [x]
+  (if (map? x)
+    (and (every? #{"removed" "seq"} (keys x)) (vector? (get x "removed")) (every? id-like? (get x "removed"))
+         (or (nil? (get x "seq")) (nat? (get x "seq"))))
     false))
-(defn- removed-unit? [x] (if (map? x) (vector? (get x "removed")) false))
-(defn- delivery! [what d]
-  (when-not (and (map? d) (every? #{"subject" "generation" "sealed"} (keys d))
-                 (or (sealed-unit? (get d "sealed")) (removed-unit? (get d "sealed"))))
+(defn- unit!
+  "A content unit: a sealed record for `subject` (its place names it) or the removed marker."
+  [what subject x]
+  (if (removed-marker? x)
+    nil
+    (let [h (sealed-header x)]
+      (when-not h (unsealed! what))
+      (when-not (= subject (place-subject (get h "p"))) (unsealed! (str what " (a record of another subject)"))))))
+(defn- exact-keys! [what m required optional]
+  (when-not (and (map? m) (every? #(contains? m %) required) (every? (into (set required) optional) (keys m)))
     (unsealed! what)))
+(defn- delivery! [what d]
+  (exact-keys! what d ["subject" "generation" "sealed"] [])
+  (when-not (and (id-like? (get d "subject")) (nat? (get d "generation"))) (unsealed! what))
+  (unit! what (get d "subject") (get d "sealed")))
+(defn- units! [what subject v]
+  (when-not (vector? v) (unsealed! what))
+  (doseq [x v] (unit! what subject x)))
+
+;; Every kind of derived document the option's writers store (second review K: 19 kinds on the held path, plus the
+;; ledger's parts and generations). Under the setting a kind not on this list is refused. Content kinds are checked to
+;; their exact shape; the others hold counters, hashes, IDs and release documents, and are not shape-checked.
+(def ^:private content-kinds
+  [[#"answer:([0-9]+):f([0-9]+)" :page]
+   [#"recorded-notices:([0-9]+)" :packet]
+   [#"recorded-ledger-part:(.+):([0-9]+):([0-9]+)" :ledger-part]
+   [#"recorded-ledger:(.+)" :ledger]
+   [#"receiver:([^:]+):(.+)" :receiver]
+   [#"effects:([^:]+):([0-9]+)" :effects]])
+(def ^:private other-kinds
+  #"(notice-progress|values:[0-9]+|claim:.+|census:.+|members:.+|join-meta|join-calendar|join-member:.+|join-index-base:[0-9]+|event:[0-9]+|tail|erasure|received:.+|effect-erasure:.+|recorded-generation:.+|recorded-cursor|cursor|settled-values:.+|settled-notice:.+)")
+
 (defn- check-document! [kind doc]
-  (cond
-    (str/starts-with? kind "answer:")
-    ;; a settled page's entries are exactly {subject, changes, part?}; each change is ["", sealed record or null]. The
-    ;; unframed page (entries with the clear answer in `json`) is refused: it is never written with the option.
-    (let [entries (if (if (map? doc)
-                        (if (string? (get doc "bytes"))
-                          (every? #{"identity" "frame" "start" "part" "through" "tail" "previous" "bytes"} (keys doc))
-                          false)
-                        false)
-                    (try (document (str "\"" (get doc "bytes") "\"")) (catch Exception _ nil))
-                    nil)]
-      (when-not (vector? entries) (unsealed! kind))
-      (doseq [e entries]
-        (when-not (and (map? e) (every? #{"subject" "changes" "part"} (keys e)) (string? (get e "subject"))
-                       (vector? (get e "changes")) (or (nil? (get e "part")) (integer? (get e "part"))))
-          (unsealed! kind))
-        (doseq [u (get e "changes")]
-          (when-not (and (vector? u) (= 2 (count u)) (= "" (first u)) (or (nil? (second u)) (sealed-unit? (second u))))
-            (unsealed! kind)))))
-    (str/starts-with? kind "recorded-notices:")
-    (do (when-not (and (map? doc) (vector? (get doc "deliveries"))
-                       (every? #{"account" "epoch" "batch" "previous" "event" "position" "recipe" "start" "through"
-                                 "part" "tail" "deliveries" "erasureSeq"} (keys doc)))
-          (unsealed! kind))
-        (doseq [d (get doc "deliveries")] (delivery! kind d)))
-    (str/starts-with? kind "effects:")
-    (do (when-not (vector? doc) (unsealed! kind)) (doseq [d doc] (delivery! kind d)))
-    (str/starts-with? kind "recorded-ledger-part:") (unsealed! (str kind " (ledger parts cannot be checked)"))
-    (str/starts-with? kind "recorded-ledger:")
-    (let [items (if (map? doc) (if (= #{"items"} (set (keys doc))) (get doc "items") nil) doc)]
-      (when-not (vector? items) (unsealed! kind))
-      (doseq [x items] (when-not (or (sealed-unit? x) (removed-unit? x)) (unsealed! kind))))
-    (str/starts-with? kind "receiver:")
-    (do (when-not (and (map? doc) (every? #{"g" "e"} (keys doc)) (vector? (get doc "e"))) (unsealed! kind))
-        (doseq [x (get doc "e")] (when-not (or (sealed-unit? x) (removed-unit? x)) (unsealed! kind))))))
+  (let [[m tag] (some (fn [[re tag]] (when-let [m (re-matches re kind)] [m tag])) content-kinds)]
+    (case tag
+      :page
+      ;; a settled page: exactly its frame fields; entries {subject, changes, part?}, each change ["", sealed | null]
+      (let [_ (exact-keys! kind doc ["identity" "frame" "start" "part" "through" "tail" "previous" "bytes"] [])
+            _ (when-not (and (hex64? (get doc "identity")) (hex64? (get doc "previous")) (nat? (get doc "frame"))
+                             (nat? (get doc "start")) (nat? (get doc "part")) (nat? (get doc "through")) (nat? (get doc "tail"))
+                             (string? (get doc "bytes")))
+                (unsealed! kind))
+            entries (try (document (str "\"" (get doc "bytes") "\"")) (catch Exception _ nil))]
+        (when-not (vector? entries) (unsealed! kind))
+        (doseq [e entries]
+          (exact-keys! kind e ["subject" "changes"] ["part"])
+          (when-not (and (id-like? (get e "subject")) (vector? (get e "changes")) (or (nil? (get e "part")) (nat? (get e "part"))))
+            (unsealed! kind))
+          (doseq [u (get e "changes")]
+            (when-not (and (vector? u) (= 2 (count u)) (= "" (first u))) (unsealed! kind))
+            (when (some? (second u)) (unit! kind (get e "subject") (second u))))))
+      :packet
+      (do (exact-keys! kind doc ["deliveries"] ["account" "epoch" "batch" "previous" "event" "position" "recipe" "start"
+                                                 "through" "part" "tail" "erasureSeq"])
+          (when-not (and (every? #(or (nil? (get doc %)) (nat? (get doc %))) ["batch" "event" "position" "start" "through" "part" "tail" "erasureSeq"])
+                         (every? #(or (nil? (get doc %)) (hex64? (get doc %))) ["previous" "recipe"])
+                         (every? #(or (nil? (get doc %)) (id-like? (get doc %))) ["account" "epoch"])
+                         (vector? (get doc "deliveries")))
+            (unsealed! kind))
+          (doseq [d (get doc "deliveries")] (delivery! kind d)))
+      :effects
+      (do (when-not (vector? doc) (unsealed! kind)) (doseq [d doc] (delivery! kind d)))
+      :ledger-part
+      (units! kind (nth m 1) doc)
+      :ledger
+      (if (map? doc)
+        ;; the head of a ledger in parts: content-free, exact
+        (do (exact-keys! kind doc ["parts" "event" "chars" "sha" "form"] [])
+            (when-not (and (nat? (get doc "parts")) (>= (long (get doc "parts")) 1) (nat? (get doc "event")) (>= (long (get doc "event")) 1)
+                           (nat? (get doc "chars")) (hex64? (get doc "sha")) (= "units" (get doc "form")))
+              (unsealed! kind)))
+        (units! kind (nth m 1) doc))
+      :receiver
+      (do (exact-keys! kind doc ["g" "e"] [])
+          (when-not (nat? (get doc "g")) (unsealed! kind))
+          (units! kind (nth m 2) (get doc "e")))
+      (when-not (re-matches other-kinds kind) (unsealed! (str kind " (a kind of derived document this gateway does not know)"))))))
+
+(def ^:private document-entity #"notice:v1:([0-9a-f]{64}):(.+)")
+(defn- derived-entity? [x] (if (string? x) (str/starts-with? (str/lower-case x) "notice:v1:") false))
+
 (defn check-rows!
-  "Every new `notice/value` row of a content-bearing derived document (settled changes, recorded packets, ledgers, a
-  recipient's state and delivered effects) on a database that requires it: each content unit a sealed, placed record
-  or the removed marker; anything else refused (409 DerivedRecordUnsealed), whatever the client or its option says."
+  "The write route's part (storage/tx-data, at preparation, called through privacy/derived-check). Every new row of a
+  derived document (an entity `notice:v1:...`), and every journal change record of one, on a database that requires
+  sealed derived documents: attribute `notice/value`, the entity exactly `notice:v1:<64 lowercase hex>:<kind>`, the kind
+  on the list, a content kind of its exact shape (each unit a sealed, placed record of its own subject, or the removed
+  marker), and a change record equal to its row; anything else refused (409 DerivedRecordUnsealed). Returns the fence
+  [DX-ERA4, second review N7]: a compare-and-set of the setting on the value read here, so a declaration between this
+  check and the commit fails the write at the serial point."
   [db rows new-ids]
-  (when (required? db)
-    (doseq [r rows]
-      (when (if (contains? new-ids (:id r)) (= "notice/value" (:attribute r)) false)
-        (when-let [m (re-matches content-key (str (:entity_id r)))]
-          (let [kind (second m)
+  (let [fresh (filterv #(contains? new-ids (:id %)) rows)
+        by-id (into {} (map (fn [r] [(:id r) r])) fresh)
+        changes (keep (fn [r]
+                        (when (= ":_tx/change" (:attribute r))
+                          (let [c (try (json/read-str (str (or (:value_json r) (:value_string r)))) (catch Exception _ ::bad))]
+                            (if (= ::bad c) {:bad r} (when (derived-entity? (get c "entityId")) c)))))
+                      fresh)
+        docs (filterv #(derived-entity? (:entity_id %)) fresh)
+        touched (if (seq docs) true (boolean (seq changes)))
+        value (if touched (setting-value db) nil)]
+    (when (true? value)
+      (doseq [r docs]
+        (let [entity (str (:entity_id r)) m (re-matches document-entity entity)]
+          (when-not (and m (= "notice/value" (:attribute r))) (unsealed! (str entity " (not a derived document's own form)")))
+          (let [kind (nth m 2)
                 doc (try (document (str (:value_string r))) (catch Exception _ (unsealed! (str kind " (undecodable)"))))]
-            (check-document! kind doc)))))))
+            (check-document! kind doc))))
+      (doseq [c changes]
+        (when (:bad c) (unsealed! "an unreadable journal change record"))
+        (when (= "assert" (get c "op"))
+          (let [row (get by-id (get c "tripleId"))]
+            (when-not (and row (= (get c "entityId") (:entity_id row)) (= (get c "attribute") (:attribute row))
+                           (= (get-in c ["value" "value"]) (:value_string row)))
+              (unsealed! "a journal change record that differs from its row"))))))
+    (if (some? value) [[:db/cas (scope/entity db) setting-attr value value]] nil)))

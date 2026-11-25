@@ -11,7 +11,7 @@ export const derivedSealOn = () => process.env["TX2_DERIVED_SEAL"] === "1";
  * the header names the database, the assertions and the record's place. */
 export const isSealed = (v: unknown): v is string =>
   typeof v === "string" && (v.startsWith("tdx2.") || v.startsWith("tdx1."));
-export function sealedHeader(wire: string): { d: string; k: string[]; p?: string } {
+export function sealedHeader(wire: string): { d: string; k: string[]; p?: string; b?: 1 } {
   assert(isSealed(wire), "Not a sealed derived record");
   const h = JSON.parse(Buffer.from(wire.split(".")[1]!, "base64url").toString("utf8"));
   // a placed record computed from no protected value names no assertion (sealed under the key of none, DX-ERA5 B1)
@@ -28,10 +28,30 @@ export const isRemoved = (v: unknown): v is Removed =>
 /** The string rows each world was built from (protected attributes take strings only); set where worlds are built. */
 const worldRows = new WeakMap<object, readonly string[]>();
 const union = (...lists: readonly (readonly string[])[]) => [...new Set(lists.flat())].sort();
-export function noteWorld<W extends object>(world: W, rows: Iterable<{ id: string; value?: { type?: string } }>): W {
-  if (derivedSealOn())
-    worldRows.set(world, union([...rows].filter((r) => r.value?.type === "string").map((r) => r.id)));
+// [DX-ERA4, second review N9] The entity of each string row a world was built from, so a placed record's names can
+// leave out its own subject's rows: the gateway takes every protected row of the place's subject itself (N3). Bounded:
+// cleared when full, after which a record's names are sent whole until worlds note them again (more names, never fewer).
+const entityOf = new Map<string, string>();
+const ENTITY_MAX = 500_000;
+export function noteWorld<W extends object>(world: W, rows: Iterable<{ id: string; entityId?: string; value?: { type?: string } }>): W {
+  if (derivedSealOn()) {
+    const strings = [...rows].filter((r) => r.value?.type === "string");
+    for (const r of strings)
+      if (r.entityId !== undefined) {
+        if (entityOf.size >= ENTITY_MAX) entityOf.clear();
+        entityOf.set(r.id, r.entityId);
+      }
+    worldRows.set(world, union(strings.map((r) => r.id)));
+  }
   return world;
+}
+/** The names a placed record sends: its inputs less the rows of its own subject (the subject and `subject/...`). */
+export function foreignInputs(inputs: readonly string[], place: string) {
+  const subject = place.slice(place.lastIndexOf("|") + 1);
+  return inputs.filter((id) => {
+    const e = entityOf.get(id);
+    return e === undefined || !(e === subject || e.startsWith(subject + "/"));
+  });
 }
 export function worldInputs(world: object): readonly string[] {
   const ids = worldRows.get(world);
@@ -67,7 +87,8 @@ const CHUNK = 512;
  * network error, as the client's own 5 s timeout after a stalled gateway, or as a gateway without the option (404).
  * Unset in every other use. */
 export const faults: { next?: "fail" | "slow" | "refused"; action?: "derived-seal" | "derived-open"; fired: Record<string, number> } = { fired: {} };
-async function call<T>(url: string, db: string, action: "derived-seal" | "derived-open", items: unknown[]) {
+async function call<T>(url: string, db: string, action: "derived-seal" | "derived-open", items: unknown[],
+  extra?: (chunk: unknown[], start: number) => Record<string, unknown>) {
   if (faults.next && (faults.action === undefined || faults.action === action)) {
     const kind = faults.next;
     faults.next = undefined;
@@ -85,7 +106,8 @@ async function call<T>(url: string, db: string, action: "derived-seal" | "derive
       let r: { items: T[] } | undefined;
       for (let tries = 0; !r; tries++) {
         try {
-          r = await client.request<{ items: T[] }>("POST", `/v2/db/${db}/${action}`, { items: items.slice(i, i + CHUNK) });
+          const chunk = items.slice(i, i + CHUNK);
+          r = await client.request<{ items: T[] }>("POST", `/v2/db/${db}/${action}`, { items: chunk, ...(extra?.(chunk, i) ?? {}) });
         } catch (e) {
           if ((e as { status?: number }).status !== 503 || tries >= 50) throw e;
           counters.retried503++;
@@ -105,21 +127,43 @@ export const counters = { sealCalls: 0, sealed: 0, clear: 0, openCalls: 0, opene
 /** Seals each value under the protected assertions among `inputs` of `source`'s database. A value computed from no
  * protected assertion comes back unchanged (it held none); one whose assertion is already removed comes back as the
  * removed marker (it is never stored in clear). */
-export async function seal(source: Source, items: { inputs: readonly string[]; value: string; place?: string }[]) {
+export async function seal(
+  source: Source,
+  items: { inputs: readonly string[]; value?: string; bytes?: Buffer; place?: string }[],
+) {
   if (!items.length) return [] as (string | Removed)[];
   const db = databaseOf(source);
   counters.sealCalls++;
+  // [DX-ERA4, second review N9] a placed item's rows travel once per place per call (`names`), not once per record:
+  // a frame's records repeat their subject's world; the gateway also takes the subject's own protected rows itself (N3)
+  const wire = items.map((x) => {
+    const content = x.bytes !== undefined ? { bytes: x.bytes.toString("base64") } : { value: x.value! };
+    return x.place === undefined ? { ids: [...x.inputs], ...content } : { ...content, place: x.place };
+  });
   const r = await call<{ sealed?: string; clear?: true; removed?: string[]; seq?: number }>(
     source.backend!.url,
     db,
     "derived-seal",
-    items.map((x) => (x.place === undefined ? { ids: [...x.inputs], value: x.value } : { ids: [...x.inputs], value: x.value, place: x.place })),
+    wire,
+    (chunk, start) => {
+      const names = new Map<string, Set<string>>();
+      for (const it of items.slice(start, start + chunk.length))
+        if (it.place !== undefined) {
+          const set = names.get(it.place) ?? new Set<string>();
+          for (const id of foreignInputs(it.inputs, it.place)) set.add(id);
+          names.set(it.place, set);
+        }
+      return { names: Object.fromEntries([...names].map(([p, set]) => [p, [...set].sort()])) };
+    },
   );
   // [DX-ERA4, after DX-ERA5's B1] every answer is sealed, removed, or clear because the gateway found no protected
   // input; anything else fails the caller, whose frame then writes nothing
   return r.map((x, i): string | Removed => {
     if (typeof x.sealed === "string" && isSealed(x.sealed)) return counters.sealed++, x.sealed;
-    if (x.clear === true) return counters.clear++, items[i]!.value;
+    if (x.clear === true) {
+      assert(items[i]!.value !== undefined, "A record of bytes came back clear");
+      return counters.clear++, items[i]!.value!;
+    }
     assert(Array.isArray(x.removed), "The seal route answered neither sealed, removed nor clear");
     return { removed: x.removed, ...(x.seq ? { seq: x.seq } : {}) };
   });
@@ -137,10 +181,12 @@ export async function open(url: string, values: readonly unknown[], places?: rea
   });
   for (const [db, idx] of by) {
     counters.openCalls++;
-    const r = await call<{ value?: string; removed?: string[]; seq?: number }>(url, db, "derived-open",
+    const r = await call<{ value?: string; bytes?: string; removed?: string[]; seq?: number }>(url, db, "derived-open",
       idx.map((i) => (places?.[i] === undefined ? values[i] : { record: values[i], place: places[i] })));
     r.forEach((x, j) => {
       if (x.value !== undefined) (counters.opened++, (out[idx[j]!] = x.value));
+      // [DX-ERA4, second review N1] a record of bytes (a ledger part) opens to its bytes
+      else if (x.bytes !== undefined) (counters.opened++, (out[idx[j]!] = { bytes: Buffer.from(x.bytes, "base64") }));
       else (counters.removed++, (out[idx[j]!] = { removed: x.removed!, ...(x.seq ? { seq: x.seq } : {}) }));
     });
   }

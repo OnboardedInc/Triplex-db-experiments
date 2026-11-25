@@ -91,7 +91,7 @@
         replies (atom {}) reached (atom #{})
         send! (fn [w] (if (= :degraded (:kind w))
                         (doc-write src (:cmd w) (subs (:doc w) (count (str "notice:v1:" (apply str (repeat 64 "e")) ":")))
-                                   {"identity" "i" "frame" 1 "start" 0 "part" 0 "through" 1 "tail" 0 "previous" "p"
+                                   {"identity" (apply str (repeat 64 "b")) "frame" 1 "start" 0 "part" 0 "through" 1 "tail" 0 "previous" (apply str (repeat 64 "c"))
                                     "bytes" (packed [{"subject" sx "changes" [["k" (:content w)]]}])}
                                    (apply str (repeat 64 "e")))
                         (offers/send (if (= :delivery (:kind w)) rcp src) (body src w t (:content w)))))
@@ -134,7 +134,7 @@
       (let [[rd wr] (with-redefs [main/derived-seal-on false]
                       [(offers/outcome (offers/route src "v1" "read" {"entityIds" [sx]}))
                        (offers/outcome (doc-write src (str "kw-" tag "-nooption") (str "answer:" i ":f2")
-                                                  {"identity" "i" "frame" 1 "start" 0 "part" 0 "through" 1 "tail" 0 "previous" "p"
+                                                  {"identity" (apply str (repeat 64 "b")) "frame" 1 "start" 0 "part" 0 "through" 1 "tail" 0 "previous" (apply str (repeat 64 "c"))
                                                    "bytes" (packed [{"subject" sy "changes" [["" cy]]}])}
                                                   (apply str (repeat 64 "e"))))])]
         (bump! :gateway-without-the-option rd wr)
@@ -614,7 +614,7 @@
             place "a|pl:00000001"
             sealed (first (get-in (offers/route src "v2" "derived-seal" {"items" [{"ids" ids-x "value" (str "derived:" vx) "place" place}]}) [:body "items"]))
             wire (get sealed "sealed")
-            frame (fn [unit] {"identity" "i" "frame" 1 "start" 0 "part" 0 "through" 1 "tail" 0 "previous" "p"
+            frame (fn [unit] {"identity" (apply str (repeat 64 "b")) "frame" 1 "start" 0 "part" 0 "through" 1 "tail" 0 "previous" (apply str (repeat 64 "c"))
                               "bytes" (packed [{"subject" "pl:00000001" "changes" [unit]}])})
             before-clear (offers/outcome (doc-write src "set-w0" "answer:1:f1" (frame ["k" (str "derived:" vx)])))
             required (offers/route src "v2" "derived-seal-required" {})
@@ -629,14 +629,15 @@
                                                      (packed {"deliveries" [{"subject" "pl:00000001" "generation" 0 "sealed" wire}]})))
             ledger-clear (offers/outcome (doc-write src "set-w7" "recorded-ledger:pl:00000001" (packed [{"id" "x" "payload" vx}])))
             state-sealed (offers/outcome (doc-write src "set-w8" "receiver:o:pl:00000001" (packed {"g" 0 "e" [wire]})))
-            other-doc (offers/outcome (doc-write src "set-w9" "census" {"count" 1}))
+            ;; [DX-ERA4, second review N4] a kind the held path writes (the setting refuses a kind it does not know)
+            other-doc (offers/outcome (doc-write src "set-w9" "notice-progress" {"count" 1}))
             ;; an entry that carries the clear answer beside sealed changes, the unframed page (its entries' `json`), and a
             ;; packet with a field the recorder never writes
             json-entry (offers/outcome (doc-write src "set-w10" "answer:1:f6"
                                                   (assoc (frame ["" wire]) "bytes"
                                                          (packed [{"subject" "pl:00000001" "changes" [["" wire]] "json" (str "{\"e\":\"" vx "\"}")}]))))
             unframed (offers/outcome (doc-write src "set-w11" "answer:1:0"
-                                                {"identity" "i" "start" 0 "through" 1 "previous" "p"
+                                                {"identity" (apply str (repeat 64 "b")) "start" 0 "through" 1 "previous" (apply str (repeat 64 "c"))
                                                  "bytes" (packed [{"subject" "pl:00000001" "changes" [] "json" (str "{\"e\":\"" vx "\"}")}])}))
             packet-extra (offers/outcome (doc-write src "set-w12" "recorded-notices:3"
                                                     (packed {"note" vx "deliveries" [{"subject" "pl:00000001" "generation" 0 "sealed" wire}]})))

@@ -174,8 +174,9 @@
          input (ordered-row-texts (expand-fresh input lean))
          new-ids (set (get input "newIds")) rows (timed-input-rows input lean new-ids)
          _ (trace/span "privacy/validate-rows" "gateway" (privacy/validate-write! privacy/*cut* input rows))
-         ;; [DX-ERA4, after DX-ERA5] a database that requires sealed derived documents refuses one that is not
-         _ (if privacy/derived-check (privacy/derived-check db rows new-ids) nil)
+         ;; [DX-ERA4, after DX-ERA5] a database that requires sealed derived documents refuses one that is not; the
+         ;; answer is the fence on the setting's value read here (second review N7), nil without the option
+         derived-ops (if privacy/derived-check (privacy/derived-check db rows new-ids) nil)
          protected (trace/span "privacy/prepare-envelopes" "gateway"
                      (envelope/protect privacy/*database* privacy/*cut* input rows))
          input (:input protected) rows (:rows protected)
@@ -209,6 +210,7 @@
                  :triplex.tx/operation-id (get input "operationId") :triplex.tx/id (or (:id metadata) "")
                  :triplex.tx/recorded-at [:triplex/record-time (finite! (:recorded-at metadata))]}]
                (:bodies protected)
+               derived-ops
                ;; [DX-ERASE1] Why: a late native write is fenced even if its peer request timed out.
                ;; Rejected: releasing the gateway lock and trusting the delayed transactor outcome.
                (when-let [seq (:seq privacy/*cut*)]

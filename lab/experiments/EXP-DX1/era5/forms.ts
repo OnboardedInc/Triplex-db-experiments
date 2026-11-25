@@ -18,7 +18,8 @@ import { inflateRawSync } from "node:zlib";
 import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { W0, triplexValue } from "../../../bench/lib/w0-world.ts";
-import { counters, derivedSealOn } from "../../../bench/lib/derived-seal.ts";
+import { counters, derivedSealOn, isRemoved, open, placeOf } from "../../../bench/lib/derived-seal.ts";
+import { readLedgers } from "../actv-lazy/join/ledger-parts.ts";
 import { Documents, unpack } from "../notify1/store.ts";
 import { openStore, fact, type Store } from "../actv-lazy/store.ts";
 import { JoinedAccount } from "../actv-lazy/join/account.ts";
@@ -90,6 +91,21 @@ async function formsCase(F: number, mode: "whole" | "parts", setting: boolean) {
     const xl = ledgers.get("recorded-ledger:" + X)?.value;
     row.ledgerChars = typeof xl === "string" ? xl.length : xl === undefined ? null : JSON.stringify(xl).length;
     row.ledgerItems = typeof xl === "string" ? unpack<unknown[]>(xl).length : null;
+    // [DX-ERA4, second review N1] the ledger as a reader gets it: its form, its parts, and its items opened
+    const head = xl as unknown as { parts?: number; form?: string } | string | undefined;
+    row.ledgerForm = typeof head === "object" ? (head.form ?? "parts") : head === undefined ? null : "whole";
+    row.ledgerParts = typeof head === "object" ? head.parts : 0;
+    if (head !== undefined) {
+      const comp = acc.noticeArchive.source.s.comp;
+      const led = (await readLedgers(acc.noticeArchive.db, [X], at)).get(X)!;
+      const opened = await open(comp.backend!.url, led.items, led.items.map(() => placeOf(comp, X)));
+      row.ledgerUnits = led.items.length;
+      row.ledgerItemsOpened = opened.reduce<number>((n, v) => {
+        const b = (v as { bytes?: Buffer } | null)?.bytes;
+        return n + (Buffer.isBuffer(b) ? (JSON.parse(inflateRawSync(b).toString()) as unknown[]).length : isRemoved(v) ? 0 : 1);
+      }, 0);
+      row.ledgerLargestPartChars = led.parts.length ? Math.max(...led.parts.map((r) => r.value.length)) : null;
+    }
     row.packets = (await acc.notices.packets(at)).length;
     await closeAll(acc.store, acc.values.store, acc.noticeArchive.store);
   } catch (e) {
@@ -103,8 +119,9 @@ async function formsCase(F: number, mode: "whole" | "parts", setting: boolean) {
 }
 const list = (process.env.ERA5_FORMS ?? "5,10,20,30,40,60,100,200").split(",").map(Number);
 for (const F of list) await formsCase(F, "whole", true);
-await formsCase(200, "parts", true);
-await formsCase(200, "parts", false);
+// [DX-ERA4, second review N1] ledgers in parts with the setting at the owner's sizes (ERA5_PARTS_FORMS), and without it
+for (const F of (process.env.ERA5_PARTS_FORMS ?? "200").split(",").filter(Boolean).map(Number)) await formsCase(F, "parts", true);
+for (const F of (process.env.ERA5_PARTS_OFF ?? "200").split(",").filter(Boolean).map(Number)) await formsCase(F, "parts", false);
 
 // ---- K: every clear copy of a kept value, by attribute and kind ----
 let dumps = 0;

@@ -96,7 +96,10 @@
         ;; [DX-W3] Why: the lookup-only hint function is installed only when its option is on (default off).
         current (general-prefetch/install! conn current)
         ;; [DX-W4] Why: the per-subject writer's lookup-only hint function, installed only when its option is on.
-        current (subject-hints/install! conn current)]
+        current (subject-hints/install! conn current)
+        ;; [DX-ERA4, second review N7] with the option, the derived-documents setting has a value every derived write
+        ;; can fence on
+        current (if (= "1" (System/getenv "TX2_DERIVED_SEAL")) ((requiring-resolve 'triplex.gateway.derived-seal/install!) conn current) current)]
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
       (lean/enabled? current) (assoc :layout "lean" :orderedRowTexts true :journalCuts true)))))
@@ -600,7 +603,11 @@
                                 privacy/*unseal* (fn [id e a value] (envelope/decode! name (d/db conn) id e a value))]
                         (let [answer (if (and (= :get request-method) (= action "erasure-frontier"))
                                        (response 200 (cond-> {:database name :protected (boolean cut)
-                                                              :seq (or (:seq cut) 0) :erased (or (:erased cut) {})
+                                                              ;; [DX-ERA4, second review N6] ?stamp=1: without the removed set
+                                                              ;; (a cache keys on removalStamp alone; the set grows with every
+                                                              ;; removal the database ever had)
+                                                              :seq (or (:seq cut) 0)
+                                                              :erased (if (= "1" (query-param query-string "stamp")) nil (or (:erased cut) {}))
                                                               ;; [DX-ERA2 fifth pass, B5] what a cache keys on
                                                               :removalStamp (or (:stamp cut) (:seq cut) 0)}
                                                        (:per-account cut)

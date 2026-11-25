@@ -59,6 +59,11 @@ export async function rejectUnrecordedWrite(
       (native.status === 429 && native.code === "WriteQueueFull"))
   )
     throw native;
+  // [DX-ERA4, second review N10] a refusal by the database's derived-seal setting names it (the adapter's own message is
+  // "Datomic read failed"): the frame wrote nothing, and retrying it the same way is refused the same way
+  for (let c: unknown = failure, depth = 0; c instanceof Error && depth < 6; c = c.cause, depth++)
+    if (c instanceof DatomicHttpError && c.code.startsWith("Derived"))
+      throw new Error("Refused by the database's derived-seal-required setting (" + c.code + "): " + c.message, { cause: c });
   if ((await head()) !== expected) throw new Conflict("Source changed at admission", { cause: failure });
   throw new Error(
     "Native write had no receipt: " + (failure instanceof Error ? failure.message : exit._tag),

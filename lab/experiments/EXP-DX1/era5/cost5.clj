@@ -99,12 +99,29 @@
               frame6 (vec (for [si (range 64) u (range 6)] (item si u)))
               [_ sealed6] (seal-all src frame6)
               page6 (mapv #(get % "sealed") (take 6 sealed6))
+              ;; [DX-ERA4, second review N9] the same frame as the writers now send it: (a) each subject's names once per
+              ;; call (`names`, by place), (b) only names outside the record's own subject, which here is none: the
+              ;; gateway takes the subject's protected rows itself (N3), so each item is its value and place
+              placed (vec (for [si (range 64) u (range 6)] (dissoc (item si u) "ids")))
+              once {"items" placed "names" (into {} (for [si (range 64)] [(str "cost|a|" (subjects si)) (names si)]))}
+              bare {"items" placed "names" {}}
+              seal-body (fn [body] (offers/route src "v2" "derived-seal" body))
+              once-r (seal-body once)
+              bare-r (seal-body bare)
+              names-of (fn [r] (frequencies (map #(count (:k (a5/wire-parts (get % "sealed")))) (get-in r [:body "items"]))))
               clear-doc (apply str (repeat 64 (str unit unit unit)))
               n (atom 0)
               t (fn [] (g/seq-now src conn))
               row {:authority (if sql/url "postgresql" "file") :shape "deep: 160 names per record, 8 protected"
                    :seeding-seconds (Math/round (double seed-s))
                    :request-bytes-frame-64x6 (count (json/write-str {"items" frame6}))
+                   :request-bytes-frame-64x6-names-once (count (json/write-str once))
+                   :request-bytes-frame-64x6-place-only (count (json/write-str bare))
+                   ;; every record sealed under its subject's 8 protected rows in all three wires
+                   :header-names {:per-record (names-of {:body {"items" sealed6}}) :names-once (names-of once-r)
+                                  :place-only (names-of bare-r)}
+                   :settlement-frame-64x6-names-once {:on-seal (timed #(:status (seal-body once)))}
+                   :settlement-frame-64x6-place-only {:on-seal (timed #(:status (seal-body bare)))}
                    :settlement-frame-64x6 {:on-seal (timed #(first (seal-all src frame6)))
                                            :off-write-clear (timed #(:status (offers/send src (assoc (g/save-frame (str "dc6-" (swap! n inc)) "settlement-values-a:answer:dc6" ":notice/body" (subs clear-doc 0 41000) nil nil) "erasureSeq" (t) "erasureAccounts" ["a"]))))}
                    :subject-page-6-changes {:on-open (timed #(open-all src page6 (str "cost|a|" (subjects 0))))

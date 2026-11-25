@@ -112,9 +112,12 @@ export class LazyReader {
    * and the unscoped counters) instead of the global sequence. Undefined: as before. */
   private readonly removalAccount?: string;
   private removal() {
+    // [DX-ERA4, second review N6] with TX2_DERIVED_SEAL the key is the gateway's removal stamp: the removed set is not
+    // fetched (it grows with every removal the database ever had: 13 MB and 77 ms per key at 100,000)
+    const stampOnly = derivedSealOn();
     return this.removalAccount === undefined
-      ? readErasure(this.store.comp)
-      : readErasure(this.store.comp, this.removalAccount);
+      ? readErasure(this.store.comp, undefined, undefined, stampOnly)
+      : readErasure(this.store.comp, this.removalAccount, undefined, stampOnly);
   }
   private stamp(f: Awaited<ReturnType<typeof readErasure>>) {
     const base = this.removalAccount === undefined ? f?.seq : fingerprint(f as AccountFrontier | undefined);
@@ -123,12 +126,12 @@ export class LazyReader {
     // publication, so a key on the sequence alone served an answer computed before the commit, removed value included,
     // to a read pinned before it (era4/held.ts; era4/DERIVED-COPIES.md 11.9). The removed set only grows, and the cache
     // is cleared whenever this stamp changes.
+    // [DX-ERA4, second review N6] Since the removal builder's B5 fix the key is the gateway's removal stamp alone: it
+    // moves at the commit with the commit boundary and at the publication otherwise, exactly when the removed set does.
     if (!derivedSealOn() || !f) return base;
-    const removed = Object.keys((f as { erased?: Record<string, unknown> }).erased ?? {}).sort();
-    // and the gateway's removal stamp when it sends one (the removal builder's B5 fix: it moves at the commit with the
-    // commit boundary, at the publication otherwise)
     const removal = (f as { removalStamp?: unknown }).removalStamp;
-    return `${base}|${removal ?? ""}|${removed.length}|${sha256(removed.join("\n")).slice(0, 16)}`;
+    assert(removal !== undefined, "TX2_DERIVED_SEAL's held reader needs a gateway that sends removalStamp");
+    return `${base}|${String(removal)}`;
   }
   constructor(
     store: Store,

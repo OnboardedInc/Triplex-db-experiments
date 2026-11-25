@@ -38,7 +38,7 @@
   [src cmd key value]
   (offers/outcome (#'r4/doc-write src cmd key value)))
 (defn page [units & [entry-extra]]
-  {"identity" "i" "frame" 1 "start" 0 "part" 0 "through" 1 "tail" 0 "previous" "p"
+  {"identity" (apply str (repeat 64 "b")) "frame" 1 "start" 0 "part" 0 "through" 1 "tail" 0 "previous" (apply str (repeat 64 "c"))
    "bytes" (packed [(merge {"subject" "pl:00000001" "changes" units} entry-extra)])})
 (def place "a|pl:00000001")
 
@@ -57,6 +57,10 @@
             ;; the key of no assertion, which anyone can compute
             under (get (a5/seal-placed src [plain idx] (str "control:" vx) place) "sealed")
             under-named (get (a5/seal-placed src [plain] (str "derived:" vx) place) "sealed")
+            ;; [DX-ERA4, second review N3] the same writer naming too few rows, for X's own subject: the gateway takes the
+            ;; subject's protected rows itself
+            own-place (str "a|" g/a1)
+            own-under (get (a5/seal-placed src [plain] (str "derived:" vx) own-place) "sealed")
             ;; a hand-made string in the record's shape whose body is the clear value in base64
             forged (str "tdx2." (b64u (utf8 (json/write-str {"d" src "k" [] "p" place}))) "." (b64u (byte-array 12)) "." (b64u (utf8 vx)))
             dl (fn [s] {"subject" "pl:00000001" "generation" 0 "sealed" s})
@@ -99,6 +103,8 @@
             after-route (a5/open-placed src under-named place)
             after-control (a5/open-placed src under place)
             outside (a5/offline-open under-named (fn [_] nil))
+            own-after (a5/open-placed src own-under own-place)
+            own-outside (a5/offline-open own-under (fn [_] nil))
             forged-open (a5/open-placed src forged place)
             row {:setting req :outcomes outcomes :other-attribute other-attr :upper-case-hex upper
                  :removal (:status (:final rm)) :key-gone gone
@@ -107,13 +113,26 @@
                  :under-named-after-removal-holds-value (boolean (some-> (a5/opened after-route) (str/includes? vx)))
                  :under-named-decoded-outside-with-no-key (boolean (some-> outside (str/includes? vx)))
                  :control-after-removal (a5/shape after-control)
-                 :forged-through-the-open-route (a5/shape forged-open)}]
+                 :forged-through-the-open-route (a5/shape forged-open)
+                 :own-subject-under-named-names (:k (a5/wire-parts own-under))
+                 :own-subject-under-named-after-removal (a5/shape own-after)
+                 :own-subject-under-named-decoded-outside-with-no-key (boolean (some-> own-outside (str/includes? vx)))}]
         (when (= [200 nil] other-attr) (finding! :e1-accepted {:case :other-attribute}))
         (when (= [200 nil] upper) (finding! :e1-accepted {:case :upper-case-hex}))
         (report :e1 row)
         (x/oracle! "e1" (= [409 "DerivedRecordUnsealed"] (:control-clear-unit outcomes)) "control: a clear unit is refused" row)
         (x/oracle! "e1" (= [200 nil] (:control-sealed-unit outcomes)) "control: a sealed unit is accepted" row)
-        (x/oracle! "e1" (a5/removed? after-control) "control: a record naming the removed row opens as removed" row)))))
+        (x/oracle! "e1" (a5/removed? after-control) "control: a record naming the removed row opens as removed" row)
+        ;; [DX-ERA4, second review N4 and N3] the fixes: every hand-made document is refused but the cross-subject
+        ;; under-named record (a record for subject pl:00000001 computed from acct/a/one's value, naming neither: a
+        ;; residual, stated); for the value's own subject the gateway names the row itself
+        (doseq [[k _ _ want] cases :when (= want :refuse) :when (not= k :under-named-record)]
+          (x/oracle! "e1" (= [409 "DerivedRecordUnsealed"] (get outcomes k)) (str "refused: " (name k)) row))
+        (x/oracle! "e1" (= [409 "DerivedRecordUnsealed"] other-attr) "refused: another attribute" row)
+        (x/oracle! "e1" (= [409 "DerivedRecordUnsealed"] upper) "refused: capital hex" row)
+        (x/oracle! "e1" (some #{idx} (:own-subject-under-named-names row)) "the gateway names the subject's own row" row)
+        (x/oracle! "e1" (a5/removed? own-after) "that record opens as removed after the removal" row)
+        (x/oracle! "e1" (not (:own-subject-under-named-decoded-outside-with-no-key row)) "and no key-free decoding holds the value" row)))))
 
 ;; a stored derived document decoded as the check decodes it (its packed page bytes too), searched for `needle`
 (defn page-holds? [src entity needle]
@@ -140,6 +159,8 @@
                  :same-write-after again :stored-document-holds-the-clear-copy stored}]
         (report :e2 row)
         (when (and (= 200 (:status reply)) required stored) (finding! :e2-window {:stored stored}))
+        ;; [DX-ERA4, second review N7] the fix: the held write fenced on the setting's value fails at the serial point
+        (x/oracle! "e2" (not (and required stored)) "a write checked before the setting cannot commit after it" row)
         (x/oracle! "e2" (= [409 "DerivedRecordUnsealed"] again) "after the setting the same write is refused" row)))))
 
 ;; ---- e3: the journal's change record of a derived write -------------------------------------------------------
@@ -176,7 +197,10 @@
             row {:write o :native-datoms-with-the-clear-copy native
                  :journal-route-shows-it (str/includes? journal (str "derived-in-journal:" vx))}]
         (report :e3 row)
-        (when (= [200 nil] o) (finding! :e3-journal-change-accepted row))))))
+        (when (= [200 nil] o) (finding! :e3-journal-change-accepted row))
+        ;; [DX-ERA4, second review N8] the fix: a change record that differs from its row is refused
+        (x/oracle! "e3" (= [409 "DerivedRecordUnsealed"] o) "a journal change record unlike its row is refused" row)
+        (x/oracle! "e3" (zero? native) "no clear copy lands" row)))))
 
 ;; ---- z2: the removal review's Z2 (a rebuilt log drops a protected attribute) with this option ----------------------
 (defn scope-with [attrs f]
@@ -253,9 +277,13 @@
               ;; The shred worker's failures are counted since DX-ERA2's fifth pass; the re-sweep's?
               _ (a5/restore-key! src id0 backup)
               before (failures-total)
-              _ (with-redefs [envelope/authority-scopes (fn [] [src])
-                              envelope/erase-keys! (fn [& _] (throw (ex-info "injected: the authority refused the delete" {})))]
-                  (ds/resweep! conn-of))
+              ;; [DX-ERA4, second review N5] a pass checks at most 512 identities (the 256 newest and 256 more from a
+              ;; rotating cursor), so the oldest removal is reached within ceil((n - 256) / 256) passes: run failing
+              ;; passes until one reaches the restored key (counted), at most that many
+              bound (+ 2 (quot n 256))
+              failed-passes (with-redefs [envelope/authority-scopes (fn [] [src])
+                                          envelope/erase-keys! (fn [& _] (throw (ex-info "injected: the authority refused the delete" {})))]
+                              (loop [k 1] (ds/resweep! conn-of) (if (or (> (failures-total) before) (>= k bound)) k (recur (inc k)))))
               after-resweep (failures-total)
               still-there (boolean (a5/file-key src id0))
               _ (reset! envelope/shredded {})
@@ -263,9 +291,11 @@
                               envelope/erase-keys! (fn [& _] (throw (ex-info "injected: the authority refused the delete" {})))]
                   (#'envelope/shred-published!))
               after-shred (failures-total)
-              _ (with-redefs [envelope/authority-scopes (fn [] [src])] (ds/resweep! conn-of))
+              good-passes (with-redefs [envelope/authority-scopes (fn [] [src])]
+                            (loop [k 1] (ds/resweep! conn-of) (if (or (not (a5/file-key src id0)) (>= k bound)) k (recur (inc k)))))
               row {:removals n :removals-ms (Math/round (double removal-ms))
                    :resweep-pass-ms (mapv #(Math/round (double %)) passes)
+                   :pass-bound bound :failing-passes-until-counted failed-passes :good-passes-until-deleted good-passes
                    :restored-key-left-after-a-failed-resweep still-there
                    :failures-counted-during-the-failed-resweep (- after-resweep before)
                    :failures-counted-by-the-shred-worker-under-the-same-fault (- after-shred after-resweep)
@@ -273,7 +303,9 @@
           (report :m2 row)
           (when (and still-there (zero? (- after-resweep before))) (bump! :m2-resweep-failure-silent))
           (x/oracle! "m2" (pos? (- after-shred after-resweep)) "control: the shred worker counts its failure" row)
-          (x/oracle! "m2" (not (:restored-key-left-after-a-good-pass row)) "a good pass deletes the restored key" row))))))
+          (x/oracle! "m2" (not (:restored-key-left-after-a-good-pass row)) "a good pass deletes the restored key" row)
+          ;; [DX-ERA4, second review N5] the fix: the re-sweep counts its failure, within the pass bound
+          (x/oracle! "m2" (pos? (- after-resweep before)) "the re-sweep counts a failed delete" row))))))
 
 ;; ---- z4: the removal review's Z4 on the merged head: a Reach session primed before a removal, read at its pin between
 ;; the removal's native commit and its publication (stop after the native commit), on this database's boundary ----------

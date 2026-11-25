@@ -54,8 +54,10 @@ let partsMax: number | undefined;
 export const ledgerKey = (subject: string) => "recorded-ledger:" + subject;
 export const ledgerPartKey = (subject: string, event: number, i: number) =>
   "recorded-ledger-part:" + subject + ":" + event + ":" + i;
-/** The head of a ledger written in parts. A ledger that fits one part keeps its old form: the packed string itself. */
-export type LedgerHead = { parts: number; event: number; chars: number; sha: string };
+/** The head of a ledger written in parts. A ledger that fits one part keeps its old form: the packed string itself.
+ * [DX-ERA4, second review N1] `form: "units"` (TX2_DERIVED_SEAL): each part is a packed list of one unit (a sealed
+ * record of a chunk of the ledger's items, or the removed marker), so the gateway's check can read each part alone. */
+export type LedgerHead = { parts: number; event: number; chars: number; sha: string; form?: "units" };
 export type Ledger = { items: W0.ItemState[]; head?: Row<string | LedgerHead>; parts: Row<string>[] };
 
 /** Every subject's ledger at `at`: the head and, for a ledger in parts, each part, joined and checked. */
@@ -83,7 +85,7 @@ export async function readLedgers(db: Pick<Documents, "rows">, subjects: readonl
     }
     const h = head.value,
       rows: Row<string>[] = [];
-    assert(Number.isSafeInteger(h.parts) && h.parts >= 2 && Number.isSafeInteger(h.event) && h.event >= 1);
+    assert(Number.isSafeInteger(h.parts) && h.parts >= (h.form === "units" ? 1 : 2) && Number.isSafeInteger(h.event) && h.event >= 1);
     for (let i = 0; i < h.parts; i++) {
       const r = parts.get(ledgerPartKey(s, h.event, i));
       assert(r && typeof r.value === "string" && r.at <= head.at, "Ledger part missing under its head: " + s);
@@ -91,7 +93,9 @@ export async function readLedgers(db: Pick<Documents, "rows">, subjects: readonl
     }
     const whole = rows.map((r) => r.value).join("");
     assert(whole.length === h.chars && sha256(whole) === h.sha, "Ledger parts differ from their head: " + s);
-    out.set(s, { items: unpack<W0.ItemState[]>(whole), head, parts: rows });
+    // [DX-ERA4, second review N1] units: each part is its own packed list of units
+    const items = h.form === "units" ? rows.flatMap((r) => unpack<W0.ItemState[]>(r.value)) : unpack<W0.ItemState[]>(whole);
+    out.set(s, { items, head, parts: rows });
   }
   return out;
 }
@@ -144,4 +148,69 @@ export function noticeCandidate(
     closing: change.closing.length > 0,
     ledger: change.closing,
   };
+}
+
+/** [DX-ERA4, second review N1] TX2_DERIVED_SEAL: the ops that replace `old` by `units` (sealed records of chunks of the
+ * subject's ledger items, or removed markers). A list that packs within one part keeps the whole form (the ledger
+ * document is the packed list); otherwise (ledger in parts) each unit is a part of its own, a packed list of one unit
+ * that the gateway's check reads alone, and the head names them with `form: "units"`. The head's frame retracts the old
+ * ledger's parts as in clear, so the same limit applies: at most `ledgerPartsMax()` parts. */
+export function ledgerChangeUnits(db: Documents, subject: string, event: number, old: Ledger, units: readonly unknown[], mode: LedgerMode) {
+  // `old.items` are the stored units (readLedgers does not open them): an empty ledger, or the same removed markers,
+  // is no change; a sealed record is new on every seal
+  if (canonical(units) === canonical(old.items)) return { parts: [] as Op[], closing: [] as Op[] };
+  const retire: Op[] = old.parts.map((r) => ({ op: "retract" as const, id: r.id }));
+  const packed = pack(units);
+  if (mode === "whole" || packed.length <= ledgerPartChars) {
+    assert(mode === "parts" || old.parts.length === 0, "A ledger in parts needs TX2_NOTICE_LEDGER=parts");
+    return { parts: [] as Op[], closing: [...retire, ...db.change(ledgerKey(subject), old.head, packed)] };
+  }
+  partsMax ??= ledgerPartsMax();
+  if (units.length > partsMax)
+    throw new FrameTooLarge(
+      "Subject " + subject + ": its sealed notice ledger needs " + units.length + " parts; at most " + partsMax +
+        " can be replaced within the writer's bound",
+    );
+  const values = units.map((u) => pack([u]));
+  const parts = values.map((v, i) => db.put(ledgerPartKey(subject, event, i), v));
+  const joined = values.join("");
+  const head: LedgerHead = { parts: values.length, event, chars: joined.length, sha: sha256(joined), form: "units" };
+  return { parts: parts as Op[], closing: [...retire, ...db.change(ledgerKey(subject), old.head, head)] };
+}
+/** The sealed variant of noticeCandidate: deliveries (sealed each), then the ledger's parts, as units. */
+export function noticeCandidateUnits(
+  db: Documents,
+  subject: string,
+  event: number,
+  old: Ledger,
+  deliveries: W0.Delivery[],
+  units: readonly unknown[],
+  mode: LedgerMode,
+): NoticeCandidate {
+  const change = ledgerChangeUnits(db, subject, event, old, units, mode);
+  return {
+    subject,
+    units: [...deliveries, ...change.parts],
+    deliveries: deliveries.length,
+    closing: change.closing.length > 0,
+    ledger: change.closing,
+  };
+}
+/** [DX-ERA4, second review N1] Compressed bytes of ledger items per sealed chunk: with the record's 4-byte length it fills
+ * the 8,192-byte size class, about 11,000 characters sealed, so a part with the cursor change fits the writer's bound
+ * (`ledgerPartValueMax()`, 12,918 characters by the default estimate) with room for the header's names. */
+export const ledgerChunkBytes = 8188;
+/** The largest packed part (characters) one frame carries with the cursor change, by the estimate in force. */
+let partValueMax: number | undefined;
+export function ledgerPartValueMax() {
+  if (partValueMax !== undefined) return partValueMax;
+  const db = new Documents({ scopeName: "ledger-parts-max" } as never, "settlement-notices-" + "x".repeat(24));
+  const sha = "0".repeat(64);
+  const cursor = { epoch: "0".repeat(26), event: 999999, start: 999999, parent: sha, batch: 999999999, previous: sha,
+    entries: 999999999999, frames: "bytes", part: 999999, ledger: "parts", erasureSeq: 999999 };
+  const id = "f".repeat(40);
+  const fits = (n: number) => frameEstimate([db.put(ledgerPartKey("pl:s99999999", 999999, 99), "A".repeat(n)), { op: "retract" as const, id }, db.put("notice-progress", cursor)]).fits;
+  let lo = ledgerPartChars, hi = 64 * 1024;
+  while (lo < hi) { const m = Math.ceil((lo + hi) / 2); if (fits(m)) lo = m; else hi = m - 1; }
+  return (partValueMax = lo);
 }

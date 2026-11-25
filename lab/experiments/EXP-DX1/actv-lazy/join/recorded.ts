@@ -15,7 +15,19 @@ import { Conflict } from "../store.ts";
 import type { Archive } from "./archive.ts";
 import { fillFrame, frameEstimate, type Candidate, type Piece } from "./frames.ts";
 import type { JoinedAccount } from "./account.ts";
-import { ledgerMode, noticeCandidate, readLedgers, type Ledger, type LedgerMode } from "./ledger-parts.ts";
+import {
+  ledgerChunkBytes,
+  ledgerMode,
+  ledgerPartChars,
+  ledgerPartValueMax,
+  noticeCandidate,
+  noticeCandidateUnits,
+  readLedgers,
+  type Ledger,
+  type LedgerMode,
+} from "./ledger-parts.ts";
+import { deflateRawSync, inflateRawSync } from "node:zlib";
+import { FrameTooLarge } from "./frames.ts";
 import {
   derivedSealOn,
   inputUnion,
@@ -63,10 +75,40 @@ async function openLedgers(source: { backend?: { name: string; url: string }; sc
       o.forget = Math.max(o.forget ?? 0, v.seq ?? fallback);
       return;
     }
-    const item = typeof v === "string" ? parse<W0.ItemState>(v) : (v as W0.ItemState);
-    o.items.push(item);
-    o.named.set(item.id, namedInputs(flat[j]));
+    // [DX-ERA4, second review N1] a record of bytes is a chunk of the ledger: its items, compressed canonical JSON; each
+    // item names what the chunk was sealed under
+    const items: W0.ItemState[] =
+      v !== null && typeof v === "object" && Buffer.isBuffer((v as { bytes?: Buffer }).bytes)
+        ? parse<W0.ItemState[]>(inflateRawSync((v as { bytes: Buffer }).bytes).toString())
+        : [typeof v === "string" ? parse<W0.ItemState>(v) : (v as W0.ItemState)];
+    for (const item of items) {
+      o.items.push(item);
+      o.named.set(item.id, namedInputs(flat[j]));
+    }
   });
+  return out;
+}
+/** [DX-ERA4, second review N1] A subject's ledger items, in order, in chunks whose compressed canonical JSON is at most
+ * `budget` bytes (an item larger than that alone is a chunk of its own). Searched by doubling, then halving. */
+export function ledgerChunks(items: readonly W0.ItemState[], budget: number) {
+  const out: W0.ItemState[][] = [];
+  const fits = (s: number, e: number) => deflateRawSync(canonical(items.slice(s, e)), { level: 9 }).length <= budget;
+  const n = items.length;
+  let guess = 64;
+  for (let s = 0; s < n; ) {
+    let good = s + 1,
+      bad = n + 1,
+      e = Math.min(n, s + guess);
+    while (bad - good > 1) {
+      if (fits(s, e)) good = Math.max(good, e);
+      else bad = e;
+      if (bad - good <= 1) break;
+      e = bad === n + 1 ? Math.min(n, s + 2 * (good - s)) : Math.floor((good + bad) / 2);
+    }
+    out.push(items.slice(s, good));
+    guess = good - s;
+    s = good;
+  }
   return out;
 }
 type Cursor = {
@@ -439,24 +481,53 @@ export class RecordedNotices {
       const named = (id: string) => inputUnion(inputs, o.forget === undefined ? (o.named.get(id) ?? []) : []);
       return { subject, generation, before, result, named, forget: o.forget !== undefined };
     });
-    const queue: { inputs: readonly string[]; value: string; place: string }[] = [];
+    // [DX-ERA4, second review N1] Deliveries are sealed one each. The ledger is sealed in chunks of items, one record of
+    // bytes each (compressed canonical JSON), under what its items name and its subject's protected values (N3), so a
+    // ledger in parts is one record per part and the gateway's check reads each part alone. A chunk whose part would
+    // not fit the writer's bound with the cursor is resealed smaller (its subject's chunks with a lower budget).
+    type Queued = { inputs: readonly string[]; value?: string; bytes?: Buffer; place: string };
+    const chunkOf = (p: (typeof plans)[number], budget: number) =>
+      ledgerChunks(p.result.state.items, budget).map((chunk): Queued => ({
+        inputs: inputUnion(...chunk.map((it) => p.named(it.id))),
+        bytes: deflateRawSync(canonical(chunk), { level: 9 }),
+        place: placeOf(source, p.subject),
+      }));
+    const queue: Queued[] = [];
     for (const p of plans) {
       const place = placeOf(source, p.subject);
       for (const d of p.result.deliveries) queue.push({ inputs: p.named(d.id), value: canonical(d), place });
-      for (const it of p.result.state.items) queue.push({ inputs: p.named(it.id), value: canonical(it), place });
     }
-    const sealed = await seal(source, queue);
-    let k = 0;
-    return plans.map((p) => {
-      const deliveries = p.result.deliveries.map(
-        () => ({ subject: p.subject, generation: p.generation, sealed: sealed[k++] }) as unknown as W0.Delivery,
-      );
-      const state = p.result.state.items.map(() => {
-        const v = sealed[k++]!;
-        return (typeof v === "string" && !isSealed(v) ? parse<W0.ItemState>(v) : v) as unknown as W0.ItemState;
+    const budgets = plans.map(() => ledgerChunkBytes);
+    const chunks = plans.map((p, i) => chunkOf(p, budgets[i]!));
+    const sealed = await seal(source, [...queue, ...chunks.flat()]);
+    const units: (string | Removed)[][] = [];
+    let k = queue.length;
+    for (const c of chunks) units.push(sealed.slice(k, (k += c.length)));
+    const partMax = mode === "parts" ? ledgerPartValueMax() : Infinity;
+    const over = (u: readonly (string | Removed)[]) =>
+      pack(u).length > ledgerPartChars ? Math.max(0, ...u.map((x) => pack([x]).length - partMax)) : 0;
+    for (let round = 0; ; round++) {
+      const redo = plans.flatMap((_, i) => (over(units[i]!) > 0 ? [i] : []));
+      if (!redo.length) break;
+      if (round >= 4)
+        throw new FrameTooLarge("Subject " + plans[redo[0]!]!.subject + ": a sealed ledger part does not fit the writer's bound");
+      const again = redo.map((i) => {
+        // one size class (512 bytes) or the overshoot in compressed bytes, whichever is more
+        budgets[i] = budgets[i]! - Math.max(512, Math.ceil(over(units[i]!) * 0.8));
+        assert(budgets[i]! >= 512, "A sealed ledger part's header leaves no room for its items");
+        return chunkOf(plans[i]!, budgets[i]!);
       });
+      const resealed = await seal(source, again.flat());
+      let j = 0;
+      redo.forEach((i, r) => (units[i] = resealed.slice(j, (j += again[r]!.length))));
+    }
+    let d = 0;
+    return plans.map((p, i) => {
+      const deliveries = p.result.deliveries.map(
+        () => ({ subject: p.subject, generation: p.generation, sealed: sealed[d++] }) as unknown as W0.Delivery,
+      );
       const old = previous.get(p.subject)!;
-      const c = noticeCandidate(db, p.subject, event, old, { deliveries, state: { items: state } }, mode);
+      const c = noticeCandidateUnits(db, p.subject, event, old, deliveries, units[i]!, mode);
       if (p.generation !== (p.before?.value ?? 0)) {
         // The new generation is written with the subject's ledger (its closing piece), or alone.
         c.ledger.push(...db.change(generationKey(p.subject), p.before, p.generation));
