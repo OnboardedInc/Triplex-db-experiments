@@ -76,3 +76,4 @@ subject_save.clj (when-not (and (= operation (scope/value db tx :triplex.tx/oper
 subject_save.clj :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
 subject_save.clj cmd (d/entid db [:triplex.claim/command-id command])
 transaction_shape.clj (let [tx (d/entid db [:triplex.tx/operation-id operationId])
+removal_commit.clj (or (when (string? op) (d/entid db [:triplex.tx/operation-id op]))

@@ -596,7 +596,9 @@
                                                        (dissoc :erased)
                                                        ;; [DX-IMP2] The removed families an importer must leave out.
                                                        policy/import-whole? (assoc :families (vec (sort (:families cut))))))
-                                       (route-handler-base request))]
+                                       ;; [DX-ERA6 eighth pass] the input as sent, for the creation rule (M1-c)
+                                       (with-bindings {(requiring-resolve 'triplex.gateway.removal-commit/*frame-input*) input}
+                                         (route-handler-base request)))]
                           (cond-> answer
                             cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))
                             ;; [DX-ERA2 fifth pass, B5] the value that changes at the commit with the commit boundary

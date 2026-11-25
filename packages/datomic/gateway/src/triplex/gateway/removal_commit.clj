@@ -1029,17 +1029,56 @@
                            "framed after this answer sends removalSeen with this answer's x-triplex-removal-stamp"))
                     {:status 409 :code "ErasureReplayDeclined" :headers (current-stamp name (erase/sync! conn))}))))
 
+(defn already-stored?
+  "[DX-ERA6 eighth pass, R6 and M4 of the seventh review, the save line's F1] The save is one the database already
+  stored: its operation is committed, or one of its commands is claimed (for its account, when it names one). The rule
+  then neither declines it nor records its command: the writer answers it exactly as with every option off (409
+  OperationDuplicate, which the SDK resolves by reading the operation's receipt, or the command's own conflict)."
+  [conn db input]
+  (let [op (get input "operationId")
+        find-claim (requiring-resolve 'triplex.gateway.account-claims/find-claim)
+        account (get input "account")]
+    (boolean
+      (or (when (string? op) (d/entid db [:triplex.tx/operation-id op]))
+          (some (fn [c] (when (string? c) (first (find-claim conn db c (when (string? account) account)))))
+                (keep #(get % "commandId") (get input "claims")))))))
+
 (defn decline-check!
   "Before a save (both writers, every mode): refused 409 ErasureReplayDeclined when its command was declined by a
   removal, or when a removal of a subject it writes committed after its own frame source (case 1: the late frame),
-  its commands then recorded as declined (case 2). Every refusal carries the current removal stamp."
+  its commands then recorded as declined (case 2). Every refusal carries the current removal stamp.
+  [DX-ERA6 eighth pass, R6] A save the database already stored is never declined (`already-stored?`)."
   [name conn db input]
   (when replay-rule
+  (when-not (already-stored? conn db input)
   (when-let [by (declined-by db input)]
     (throw (ex-info (str "This save's command was declined by a removal (" by "); a new command is a new save")
                     {:status 409 :code "ErasureReplayDeclined" :headers (current-stamp name db)})))
   (when-let [entry (removal-after-source name db input)]
-    (decline! name conn db input entry))))
+    (decline! name conn db input entry)))))
+
+(def ^:dynamic *frame-input*
+  "[DX-ERA6 eighth pass] The request's input as sent, bound by main/route-handler around the writers: with the replay
+  rule on, the writers see it without `frameSourceK` (the save line's own first-source check must not decline what the
+  merged rule lets through), and the creation rule still judges by every point the save stated."
+  nil)
+
+(defn creation-removal
+  "[DX-ERA6 eighth pass, M1-c of the seventh review] The creation rule under the merged rule
+  (subject-create/removed-creation? with the replay rule on): the removal in the log's cut that named this (entity,
+  attribute) family and is later than the save's frame (`frame-tests`: the earliest of frameSourceK, sourceK and
+  removalSeen; a save stating none counts as framed before every removal), or nil. A creation or an import frame of a
+  new subject is judged exactly like every other save: the SDK's optimistic re-creation, which states removalSeen and
+  no source, is stored once its stamp is newer than the removal."
+  [state family input]
+  (let [later? (frame-tests (merge input (select-keys *frame-input* ["frameSourceK"])))
+        named? (fn [entry]
+                 (or (some #(= family (vec %)) (get entry "families"))
+                     (some #(= family [(get % "entity") (get % "attribute")]) (get entry "identities"))
+                     (some #(= family (vec %))
+                           ((requiring-resolve 'triplex.gateway.import-bound/removal-families) state (get entry "selectors")))))]
+    (some (fn [entry] (when (named? entry) (when (later? {:position (get entry "position") :entry entry}) entry)))
+          (vals (:commands state)))))
 
 (defn after-refusal
   "After a save was refused at the serial point (409 CasConflict or ErasureFrontierChanged): when the cause is a removal
@@ -1055,7 +1094,8 @@
     ;; removal): its commands are recorded too when the merged rule finds the removal
     (if (and replay-rule (#{"CasConflict" "ErasureFrontierChanged" "ErasureReplayDeclined"} code))
       (let [db (erase/sync! conn)]
-        (if-let [entry (removal-after-source name db input)]
+        ;; [DX-ERA6 eighth pass, R6] a save already stored keeps its own answer, and its command is not recorded
+        (if-let [entry (when-not (already-stored? conn db input) (removal-after-source name db input))]
           (try (decline! name conn db input entry)
                (catch clojure.lang.ExceptionInfo e
                  ;; [DX-ERA2 sixth pass, V3] the current stamp, not the one the refused plan read
