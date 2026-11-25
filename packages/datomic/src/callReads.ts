@@ -29,6 +29,8 @@ export type BatchEntry =
   | { readonly op: "rows"; readonly entityIdsFrom: BatchReference; readonly pattern?: BatchPattern }
   | { readonly op: "reach"; readonly roots: readonly string[] }
   | { readonly op: "reach"; readonly rootsFrom: BatchReference }
+  | { readonly op: "revisions"; readonly entityIds: readonly string[] }
+  | { readonly op: "revisions"; readonly entityIdsFrom: BatchReference }
   | ({ readonly op: "ids"; readonly account: string } & Record<string, unknown>);
 
 export interface BatchRequest {
@@ -58,12 +60,15 @@ export interface BatchAnswer {
   readonly prefetched: number;
   /** Requests this batch took (more than one when the gateway stopped at a byte or time bound). */
   readonly requests: number;
+  /** The removal sequence the gateway masked the answers with (absent on a scope without removal on request). */
+  readonly erasureSeq?: number;
   readonly stats?: BatchStats;
 }
 
 type Page = {
   route: string; position: number; t: string; validAt: number; entries: number; from: number;
   next: number | null; stopped: string | null; prefetched: number; stats?: BatchStats; answers: unknown[];
+  erasureSeq?: number;
 };
 
 /** One batch, following the gateway's cursor until every entry is answered, all at the first page's position. */
@@ -81,6 +86,7 @@ export async function readBatch(client: DatomicClient, db: string, request: Batc
       page?.route !== "batch" || !Number.isSafeInteger(page.position) || !Array.isArray(page.answers) ||
       page.answers.length !== (page.next ?? page.entries) - page.from ||
       (first !== undefined && page.position !== first.position) ||
+      (first !== undefined && page.erasureSeq !== first.erasureSeq) ||
       (request.basis.recordedPosition !== undefined && page.position !== request.basis.recordedPosition)
     )
       throw new TypeError("Invalid batch answer");
@@ -95,49 +101,71 @@ export async function readBatch(client: DatomicClient, db: string, request: Batc
   }
   return {
     route: "batch", position: first.position, t: first.t, validAt: first.validAt, entries: first.entries, answers,
-    prefetched: first.prefetched, requests,
+    prefetched: first.prefetched, requests, ...(first.erasureSeq !== undefined ? { erasureSeq: first.erasureSeq } : {}),
     ...(request.stats ? { stats: { loads, handlerCpuMicros: cpu, micros, pages } } : {}),
   };
 }
 
 /**
- * [DX-API1] Definitions in force, kept in the product process across calls, by release.
+ * [DX-API1] Definitions in force, kept in the product process across calls, by release and by revision.
  *
  * Why: forms, property definitions and a policy's rule graph are the same for every call of an account at one release,
- * yet a call that reads them entity by entity pays for them on every call. The cache holds their answers under the
- * account's release pointer: one entity whose `attribute` names the release in force by content hash. A call reads the
- * pointer at its own position (one entity, in its first batch, which it reads anyway: the account entity), and a cached
- * definition is used only when the pointer at that position names the hash it was read under. A new release is a new
- * hash: its definitions are read once, then kept.
- * The contract this rests on: a definition entity changes only in a commit that also changes the pointer (a release is
- * published by writing its definitions and the new pointer together). The gate checks it against single reads at each
- * call's own position, across a release change.
- * Rejected: a time to live (a stale answer for its duration), a background refresh (a warmer), and keying by position
- * (every save moves the head, so every call would miss).
+ * yet a call that reads them entity by entity pays for them on every call. An answer is kept under the account's release
+ * marker (one entity whose `attribute` names the release in force by content hash) together with the revision of every
+ * entity it holds and the removal sequence it was masked with. A call uses it only when, at the call's own position, the
+ * marker names the same hash, every one of those entities has the same revision (a `revisions` batch entry: one seek
+ * each, no rows) and the removal sequence is the same. So a definition changed outside a release (a commit that does not
+ * move the marker) is seen: its revision moved, the call reads the store's answer and keeps that. The marker groups the
+ * answers; exactness rests on the revisions alone. An account with two release markers is refused
+ * (`DefinitionReleaseAmbiguous`), never guessed.
+ * Rejected: a time to live (a stale answer for its duration), a background refresh (a warmer), keying by position
+ * (every save moves the head, so every call would miss), and trusting the marker alone (nothing in the store refuses a
+ * definition written without a new marker).
  */
+export class DefinitionReleaseAmbiguous extends Error {
+  readonly code = "DefinitionReleaseAmbiguous";
+  constructor(readonly pointer: string, readonly values: readonly unknown[]) {
+    super(`The account ${pointer} names ${values.length} releases in force; definitions are read, not cached`);
+  }
+}
+export type CachedDefinition = { readonly value: unknown; readonly revisions: ReadonlyMap<string, number>; readonly erasureSeq: number | undefined };
 export class DefinitionCache {
-  readonly #releases = new Map<string, { hash: string; answers: Map<string, unknown> }>();
-  readonly counts = { hits: 0, misses: 0, releases: 0, uncached: 0 };
+  readonly #releases = new Map<string, { hash: string; answers: Map<string, CachedDefinition> }>();
+  readonly counts = { hits: 0, misses: 0, releases: 0, uncached: 0, revisionMisses: 0 };
   constructor(readonly maxEntriesPerRelease = 100_000) {}
-  lookup(pointer: string, hash: string, key: string): unknown | undefined {
+  /** The kept answer for `key` under `hash`, without checking its revisions (use `valid` before serving it). */
+  entry(pointer: string, hash: string, key: string): CachedDefinition | undefined {
     const r = this.#releases.get(pointer);
     return r && r.hash === hash ? r.answers.get(key) : undefined;
   }
-  store(pointer: string, hash: string, key: string, value: unknown): void {
+  /** True when `current` (entity → revision at the call's position) and the removal sequence match the kept answer. */
+  valid(entry: CachedDefinition, current: ReadonlyMap<string, number>, erasureSeq: number | undefined): boolean {
+    if (entry.erasureSeq !== erasureSeq || entry.revisions.size !== current.size) return false;
+    for (const [id, rev] of entry.revisions) if (current.get(id) !== rev) return false;
+    return true;
+  }
+  store(pointer: string, hash: string, key: string, value: unknown, revisions: ReadonlyMap<string, number>, erasureSeq: number | undefined): void {
     let r = this.#releases.get(pointer);
     if (!r || r.hash !== hash) { r = { hash, answers: new Map() }; this.#releases.set(pointer, r); this.counts.releases++; }
-    if (r.answers.size < this.maxEntriesPerRelease) r.answers.set(key, value);
+    if (r.answers.size < this.maxEntriesPerRelease || r.answers.has(key)) r.answers.set(key, { value, revisions: new Map(revisions), erasureSeq });
   }
   /** The hash this cache last held for the pointer (a guess for a batch built before the pointer is read). */
   lastHash(pointer: string): string | undefined {
     return this.#releases.get(pointer)?.hash;
   }
 }
-/** The release hash an account entity's rows name, or undefined (then nothing is cached for that call). */
-export const releaseHash = (rows: readonly TripleRow[], attribute: string): string | undefined => {
+/** The release hash an account entity's rows name; undefined when it names none; two or more are refused. */
+export const releaseHash = (rows: readonly TripleRow[], attribute: string, pointer = ""): string | undefined => {
   const values = rows.filter((r) => r.attribute === attribute).map((r) => r.value_string);
+  if (values.length > 1) throw new DefinitionReleaseAmbiguous(pointer, values);
   return values.length === 1 && typeof values[0] === "string" ? values[0] : undefined;
 };
+/** A `revisions` answer as entity → revision. */
+export const revisionMap = (answer: unknown): Map<string, number> =>
+  new Map(((answer as { revisions?: [string, number][] })?.revisions ?? []).map(([id, rev]) => [id, Number(rev)]));
+/** The entity → revision map of a reach world answer (its entities are [id, revision, rows?]). */
+export const worldRevisions = (world: unknown): Map<string, number> =>
+  new Map(((world as { entities?: unknown[][] })?.entities ?? []).map((e) => [String(e[0]), Number(e[1])]));
 
 export interface CallReadsOptions {
   /** Valid time of every read of the call (default: when the loader is made). */
@@ -170,6 +198,8 @@ export class CallReads {
   #scheduled = false;
   #inFlight: Promise<void> = Promise.resolve();
   readonly counts = { reads: 0, memoHits: 0, batches: 0, requests: 0, entries: 0, loads: 0, handlerCpuMicros: 0, positions: [] as number[] };
+  /** The removal sequence of the call's latest batch. */
+  erasureSeq: number | undefined;
 
   constructor(readonly client: DatomicClient, readonly db: string, readonly options: CallReadsOptions = {}) {
     this.validAt = options.validAt ?? Date.now();
@@ -193,35 +223,46 @@ export class CallReads {
   reach(root: string): Promise<ReachWorld> {
     return this.#ask("reach " + root, { op: "reach", roots: [root] }) as Promise<ReachWorld>;
   }
+  /** Each entity's revision at the call's position, without rows (one seek each). */
+  async revisions(entityIds: readonly string[]): Promise<Map<string, number>> {
+    if (entityIds.length === 0) return new Map();
+    return revisionMap(await this.#ask("revisions " + JSON.stringify(entityIds), { op: "revisions", entityIds }));
+  }
   /** One ID list page at the call's position (needs TX2_ID_LISTS=1 on the gateway). */
   ids(request: { readonly account: string } & Record<string, unknown>): Promise<Record<string, unknown>> {
     return this.#ask("ids " + JSON.stringify(request), { op: "ids", ...request }) as Promise<Record<string, unknown>>;
   }
   /**
-   * A definition entity's rows through `cache`: answered from the cache when the pointer's rows at this call's position
-   * name the release it was cached under; otherwise read (in the call's batches, at its position) and kept.
+   * A definition entity's rows through `cache`: answered from the cache when, at this call's position, the pointer names
+   * the release it was kept under, the entity's revision is the kept one and the removal sequence is the same;
+   * otherwise read (in the call's batches, at its position) and kept.
    */
   async definitionRows(cache: DefinitionCache, pointer: string, attribute: string, entityId: string, pattern?: BatchPattern): Promise<readonly TripleRow[]> {
-    const hash = releaseHash(await this.rows(pointer), attribute);
+    const hash = releaseHash(await this.rows(pointer), attribute, pointer);
     const key = "rows " + JSON.stringify(pattern ?? null) + " " + entityId;
     if (hash === undefined) { cache.counts.uncached++; return this.rows(entityId, pattern); }
-    const known = cache.lookup(pointer, hash, key) as readonly TripleRow[] | undefined;
-    if (known) { cache.counts.hits++; return known; }
+    const [current, known] = [await this.revisions([entityId]), cache.entry(pointer, hash, key)];
+    if (known && cache.valid(known, current, this.erasureSeq)) { cache.counts.hits++; return known.value as readonly TripleRow[]; }
+    if (known) cache.counts.revisionMisses++;
     cache.counts.misses++;
     const rows = await this.rows(entityId, pattern);
-    cache.store(pointer, hash, key, rows);
+    cache.store(pointer, hash, key, rows, current, this.erasureSeq);
     return rows;
   }
-  /** A definition root's world (for example a policy and its rule graph) through `cache`, as `definitionRows`. */
+  /** A definition root's world (for example a policy and its rule graph) through `cache`, as `definitionRows`: every
+   * entity of the kept world must have its kept revision (a new member needs a new reference, which moves one). */
   async definitionReach(cache: DefinitionCache, pointer: string, attribute: string, root: string): Promise<ReachWorld> {
-    const hash = releaseHash(await this.rows(pointer), attribute);
+    const hash = releaseHash(await this.rows(pointer), attribute, pointer);
     const key = "reach " + root;
     if (hash === undefined) { cache.counts.uncached++; return this.reach(root); }
-    const known = cache.lookup(pointer, hash, key) as ReachWorld | undefined;
-    if (known) { cache.counts.hits++; return known; }
+    const known = cache.entry(pointer, hash, key);
+    if (known && cache.valid(known, await this.revisions([...known.revisions.keys()]), this.erasureSeq)) {
+      cache.counts.hits++; return known.value as ReachWorld;
+    }
+    if (known) cache.counts.revisionMisses++;
     cache.counts.misses++;
     const world = await this.reach(root);
-    cache.store(pointer, hash, key, world);
+    cache.store(pointer, hash, key, world, worldRevisions(world), this.erasureSeq);
     return world;
   }
   /** The call saved and holds the receipt: later reads are answered at least at its position (a new pin). */
@@ -289,6 +330,9 @@ export class CallReads {
         });
         if (pinned === undefined) this.#position = answer.position;
         else if (answer.position !== pinned) throw new TypeError("A batch was answered at another position than the call's");
+        // A removal published between two batches of a call masks the later answers only (the earlier ones preceded its
+        // acknowledgement); kept definitions compare with the latest sequence.
+        this.erasureSeq = answer.erasureSeq;
         this.counts.batches++;
         this.counts.requests += answer.requests;
         this.counts.entries += part.length;

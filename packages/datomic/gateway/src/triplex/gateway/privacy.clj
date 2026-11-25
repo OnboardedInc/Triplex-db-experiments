@@ -1,6 +1,7 @@
 (ns triplex.gateway.privacy
   (:require [clojure.data.json :as json] [clojure.string :as str] [datomic.api :as d]
-            [triplex.gateway.authority-sql :as sql] [triplex.gateway.scope :as scope] [triplex.gateway.trace :as trace])
+            [triplex.gateway.authority-sql :as sql] [triplex.gateway.scope :as scope] [triplex.gateway.trace :as trace]
+            [triplex.gateway.entity-cache :as entity-cache])
   (:import [java.nio.charset StandardCharsets]
            [java.nio.channels FileChannel]
            [java.nio.file Files Path Paths StandardCopyOption StandardOpenOption LinkOption]
@@ -121,10 +122,18 @@
                                 before (get entry "identities"))))
       (update :families into (map (juxt #(get % "entity") #(get % "attribute")) (get entry "identities")))))
 
+;; [DX-API1] Entities named by removals this process has applied but not yet dropped from the parsed-entity cache: a
+;; frontier advanced without a database (the key shred worker's `(cut name nil)`) is dropped by the next call that has one.
+(def ^:private undropped (atom {}))
+(defn- drain-drops! [name db]
+  (let [[old _] (swap-vals! undropped dissoc name)]
+    (when-let [ids (seq (get old name))]
+      (entity-cache/forget-entities! name (keep #(try (d/entid db [:triplex.entity/id %]) (catch Exception _ nil)) ids)))))
 (defn cut
   ([name db] (cut name db false))
   ([name db allow-pending?]
    (try
+     (when (and db (seq (get @undropped name))) (drain-drops! name db))
      (let [frontier (when sql/url (sql/read-frontier name))
            pending (if sql/url (get frontier "pending.json")
                      (when (and root (exists? (path name "pending.json"))) true))
@@ -156,7 +165,13 @@
                (when-not (and (= (:seal next) (get h "seal"))
                               (= (:attrs next) (set attrs)) (= (:sealed next) sealed?))
                  (unavailable!))
-               (let [new (assoc next :wire wire)]
+               (let [new (assoc next :wire wire)
+                     named (distinct (for [entry (vals (:commands next)) :when (> (long (get entry "seq")) (long (:seq base)))
+                                           identity (get entry "identities")] (get identity "entity")))]
+                 ;; [DX-API1] Drop parsed entities the new removals name (entity-cache/forget-entities!), now or at the
+                 ;; next call with a database.
+                 (when (seq named) (swap! undropped update name (fnil into #{}) named))
+                 (when db (drain-drops! name db))
                  (swap! cache update name #(if (and % (> (:seq %) n)) % new))
                  new)))))))
      (catch clojure.lang.ExceptionInfo e (throw e))

@@ -62,6 +62,21 @@ here has run on a server.
   That is about 426 subject pages per second per reader core for subjects in memory and about 121 (96 to 167) for
   random ones (today's port 14 and 13; the entity batch 54 and 45). 1,000 subject pages per second need about 4 cores
   re-read and about 15 random.
+- **The floor's exactness and privacy gaps, closed (section 11, added the same night).** The parsed-entity cache
+  predates this branch (`a3a499680`, 2026-11-10, on the one branch; every world read uses it). A removal on request does
+  not move the revision it keys on (3 → 3); every answer masks the value, and now each reader also drops the removed
+  entities' parsed entries when it first sees the removal (a first version missed drops when the sealed-key worker saw
+  the removal first; fixed). Gate: 6,208 probes over removals (by assertion, entity and attribute, entity; sealed and
+  unsealed), a removal committed but not published, settlement-shaped frames, an import, creations, a restarted reader
+  and a stopped one, on two readers that each cached the worlds: **0 removed values served, 54,048 world entities equal
+  to the rows route, 0 verification errors**. The definitions cache now checks each kept entity's revision and the
+  removal sequence at the call's position: **167,357 comparisons, 0 differences, with 4 writes that change definitions
+  without the marker**; two markers are refused (`DefinitionReleaseAmbiguous`, 84 of 84 cached calls that read the
+  marker). A world follows outward references only, so a shared employer costs the same 5 entities at 1, 100 and
+  10,000 sharing subjects; `stopAt` covers a shared entity that lists its members. A request's fixed cost is about 0.5
+  ms of the floor's 1.9; keep-alive is on and compression off already; row texts for the account would save 0.43 ms
+  (proposed). The floor moved to 1.56 ms on the Mac (2.34 on the server): about 385 subject pages per second per core
+  re-read and 112 random; 256 in flight inside 50 ms need about 23 and 77 (55 to 100) reader cores.
 - **Server run** (section 7): one bring-up of the 1 billion working copy with the tuned reader and the batch on, arms
   `today`, `batch1` and `floor` (worlds + the definitions cache), alone cells, 12 windows of the subject-centred mix at
   64 and 256 callers and 6 of the list page at 8, re-read and random subjects, saves at 23/s: 33 to 49 minutes, USD
@@ -440,6 +455,9 @@ node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/api1/p
 # the floor and its sizing (section 10): profile cells, the cold stand-in, then floor.py
 API1_READERS=warm API1_PROFILE_READERS=warm node lab/bin/heavy.mjs --label DX-API1-floor -- bash lab/experiments/EXP-DX1/api1/gate.sh "$EVIDENCE/run-floor" counts,calibrate,profile
 API1_READERS=cold API1_COLD_ENV=TX2_ENTITY_CACHE_BYTES=0 node lab/bin/heavy.mjs --label DX-API1-floor -- bash lab/experiments/EXP-DX1/api1/gate.sh "$EVIDENCE/run-floor-cold" counts
+# the parsed-entity cache gate (section 11.2), then the shared entity and the request costs with the cache check off
+API1_DRIVER=cache-gate.ts API1_READER_ENV=TX2_ENTITY_CACHE_VERIFY=1 node lab/bin/heavy.mjs --label DX-API1-cachegate -- bash lab/experiments/EXP-DX1/api1/gate.sh "$EVIDENCE/run-cache" cache
+API1_DRIVER=cache-gate.ts node lab/bin/heavy.mjs --label DX-API1-shared -- bash lab/experiments/EXP-DX1/api1/gate.sh "$EVIDENCE/run-shared" cache,shared,request
 API1_F=1.5 python3 lab/experiments/EXP-DX1/api1/floor.py "$EVIDENCE"/run-floor/out/counts.json "$EVIDENCE"/run-floor-cold/out/counts.json "$EVIDENCE"/run-floor/out/calibration.json
 ```
 
@@ -499,14 +517,15 @@ minutes, USD 0.60 to 0.89** at USD 1.09 per machine hour (ceiling 60 min, USD 1.
 
 | Window | today: calls/s, p50 / p99 per call | one-request batch | floor (written 2026-11-24 evening) |
 | --- | --- | --- | --- |
-| Subject-centred mix, re-read, 64 callers | 60 to 75 calls/s (1,870 reads/s), 0.9 / 1.6 s | 170 to 210 (5,200 reads/s), 0.34 / 0.57 s | 280 to 360, 0.20 / 0.34 s |
-| The same, 256 callers | 60 to 75, 3.8 / 6.4 s; per read p99 0.8 to 3.8 s | 170 to 210, 1.35 / 2.3 s | 280 to 360, 0.8 / 1.4 s |
-| Subject-centred mix, random, 64 / 256 callers | 55 to 70 calls/s; 1.0 / 1.7 s and 4.0 / 6.8 s | 145 to 185; 0.39 / 0.66 s and 1.6 / 2.7 s | 200 to 280; 0.27 / 0.46 s and 1.1 / 1.8 s |
+| Subject-centred mix, re-read, 64 callers | 60 to 75 calls/s (1,870 reads/s), 0.9 / 1.6 s | 170 to 210 (5,200 reads/s), 0.34 / 0.57 s | 250 to 330, 0.22 / 0.38 s |
+| The same, 256 callers | 60 to 75, 3.8 / 6.4 s; per read p99 0.8 to 3.8 s | 170 to 210, 1.35 / 2.3 s | 250 to 330, 0.9 / 1.5 s |
+| Subject-centred mix, random, 64 / 256 callers | 55 to 70 calls/s; 1.0 / 1.7 s and 4.0 / 6.8 s | 145 to 185; 0.39 / 0.66 s and 1.6 / 2.7 s | 180 to 250; 0.30 / 0.51 s and 1.2 / 2.0 s |
 | List page, 8 callers, re-read / random | 0.6 calls/s, p50 13 s / 13 s (some time out at 30 s) | 28 / 13 calls/s, 0.29 / 0.62 s | as the batch (the list page already reads worlds), 5 to 10% more calls/s from the definitions cache |
 | Alone (one caller), each shape | as the table of section 5 (low to high) | as section 5 | subject page 2.4 to 12 ms re-read, 10 to 18 ms random; policy evaluation 2 to 15 / 8 to 18 ms; task page 3 to 12 / 8 to 15 ms (low: the CPU, one round trip and two storage waves; high: the Mac's alone p50 in `run-15` × 1.5) |
 
-The floor column: the dry run's mix CPU per call (5.3 ms on the Mac, `run-15`) × f = 1.5 = 8 ms re-read, plus 2.7
-loads × 0.86 ms and the parse for random subjects, about 11 ms; calls/s = 2.7 cores ÷ that; p50 = callers ÷ calls/s;
+The floor column (revised 2026-11-24 night for the revision check): the dry runs' mix CPU per call (5.3 to 6.9 ms on
+the Mac, `run-15` and `run-27`) × f = 1.5 = 8 to 10 ms re-read, plus 2.7 loads × 0.86 ms and the parse for random
+subjects, about 11 to 13 ms; calls/s = 2.7 cores ÷ that; p50 = callers ÷ calls/s;
 p99 = 1.7 × p50. On one 3-core reader neither bar holds at 64 or 256 callers in any arm: the server run measures the
 CPU per call and the rate per core that section 10.6 sizes from, not the bars themselves.
 
@@ -554,8 +573,8 @@ gateway, beside the production-shaped saves:
    with the loader for the subject page and the policy evaluation, not met today.)*
 3. **Rate per reader core:** the subject page served through the floor (world read + the definitions cache) at
    **at least 300 calls per second per reader core for re-read subjects and at least 90 for random ones**, from the
-   alone cells' reader CPU per call (cores busy ÷ calls/s in the windows as the check). *(Predicted about 426 and 121
-   (96 to 167); today's port 14 and 13; the entity batch 54 and 45.)* The bar in milliseconds follows from it: with
+   alone cells' reader CPU per call (cores busy ÷ calls/s in the windows as the check). *(Predicted about 385 and 112
+   (87 to 159) with the revision check of section 11.3; today's port 14 and 13; the entity batch 54 and 45.)* The bar in milliseconds follows from it: with
    R the owner's peak rate of subject-reading API calls, the deployment's reader cores ≥ R ÷ (that rate × 0.5) keep
    the p99 inside 50 ms (section 10.6 gives the cores for 64 and 256 calls in flight).
 4. **Reported, not judged:** calls/s and reader CPU per call at 64 and 256 callers per arm, per-read p99 of the single
@@ -584,15 +603,15 @@ the store's cost under load is CPU per entity read, which a bar in calls per sec
 - **The floor is measured on the Mac only.** The profile's shares come from a stack sampler on the request thread
   (250 µs) and per-stage thread CPU, on the toy with subjects in memory; the server's shares may differ. The random
   floor (5.4 to 9.4 ms) is a model: the cold stand-in (32 MB, the parsed-entity cache off) is not 1 billion's cold.
-- **The definitions cache rests on a contract the store does not enforce:** a definition changes only in a commit that
-  also changes the account's release pointer. The gate wrote releases that way; nothing refuses a definition written
-  without a new pointer. The release-limits builder's definitions by reference are where the store would enforce it.
-- **The parsed-entity cache under removals on request and settlement:** its exactness argument (keys by revision, the
-  removal frontier masked at response time) is the DX-B7-S3 design; this gate ran saves and release changes only, not
-  removals, a second reader or settlement.
-- **The world shapes' coverage on the product:** on this toy no subject references another; a product placement
-  references a shared employer or client entity, which a reach would follow into a shared world. The worlds' size
-  there is not measured.
+- **Closed in section 11:** the definitions cache no longer rests on the release rule (it checks revisions); the
+  parsed-entity cache is gated under removals, a pending removal, frames, imports, creations, a restart and a stopped
+  reader; the shared entity is measured.
+- **Still not verified after section 11:** a Publish (DX-ACT8) and the archive writer's own settlement frames against
+  the cache (frames were written in their shape); the owner-layout fold, which rewrites an owner's rows without a new
+  revision; the cache gate on the per-account removal rule (DX-ERA2) once it merges; a reader that is behind and
+  answers 503 (the stopped reader had caught up before its first answer); whether the product's port stores a member
+  list on any shared entity; the gateway selftest on this branch (the new `revisions` entry, `stopAt` and the removal
+  drop have no selftest case; the gates above are their evidence); every time here is a Mac time.
 - **Gateway selftest not run** on this branch (the batch has no selftest case; its exactness is the gate's).
 - **Not built:** batching inside the transaction path (reads inside `withTransaction` keep the adapter's own route);
   a merged reach world per batch for several roots of the loader (each root is its own entry); parallel entries inside
@@ -659,6 +678,8 @@ SDK's reach decoder, filtered by valid time); every world equal to the single `/
 
 ### 10.3 Definitions in force kept in the product process by release (built: `DefinitionCache` in the SDK)
 
+*Revised in section 11.3: the cache now checks each kept entity's revision, so it no longer rests on the contract below.*
+
 `DefinitionCache` holds definition answers under the account's **release pointer** (one fact on the account entity,
 `:account/release`, naming the release in force by content hash). A call reads the pointer at its own position (the
 account entity, which every shape reads anyway, in its first batch); a cached definition is used only when the
@@ -676,6 +697,9 @@ four caches answered 8,533 definition lookups from the cache and read 346 (once 
 release changes made during the gate.
 
 ### 10.4 A reader-side cache of decoded subjects: it exists on the world path; not built again
+
+*Gated in section 11.2 under removals, a pending removal, frames, imports, creations, a restart and a stopped reader; a
+removal now also drops the entries of the entities it names.*
 
 The reach route already keeps **parsed entities keyed by (database generation, entity, revision)** (`entity_cache.clj`,
 DX-B7-S3, 256 MiB by default, `TX2_ENTITY_CACHE_VERIFY=1` re-parses and compares every hit). That is the cache the
@@ -718,6 +742,9 @@ storage loads). Requests per call where definitions miss rise above 1 (the miss 
 release). Mac noise: the calibration exchange measured 1.01, 1.34 and 1.53 ms in three runs on the same Mac.
 
 ### 10.6 The sizing, redone
+
+*The world + definitions rows are superseded by section 11.6 (the revision check moved the floor from 1.41 to 1.56 ms on
+the Mac).*
 
 **Server CPU per subject page** = Mac × f. The calibration exchange gave f = 1.51, 1.14 and 1.0 in three runs on the
 same Mac (1.01, 1.34 and 1.53 ms against the server's 1.53 ms); the sizing uses **f = 1.5**, the slowest. **Random
@@ -794,6 +821,183 @@ The mix's requests per call above 1 are the form submission's save and its after
 random set is not cold (the toy fits the reader's caches), so the random rows differ from the re-read rows only by
 which subjects are drawn. The p99s carry the driver on the same Mac and whatever else the Mac was running.
 
+## 11. The floor's exactness and privacy gaps closed, the shared entity, and a request's fixed cost (added 2026-11-24 night)
+
+Asked by the orchestrator after section 10. Mac toy, counts are results, times diagnostic. Runs `run-17` to `run-27`;
+the final code's runs are `run-21` (definitions gate and warm counts), `run-22` (cold stand-in counts), `run-24`
+(shared entity and request costs, verify off), `run-26` (the parsed-entity cache gate, verify on), `run-27` (server
+driver dry run).
+
+### 11.1 The parsed-entity cache predates this branch
+
+It was added by commit `a3a499680` (DX-B7 step 3, 2026-11-10) and is on the one branch (`exp/DX-INT1`) and every branch
+made from it; it is not on `main`. It serves every world read: `POST /v2/db/{db}/reach` and `/reach-many` (the SDK's
+subject reads), the journal route's inline worlds (`journal.clj`), DX-B8's report-fed revisions (`recent.clj`, off by
+default) and, on this branch, the batch's `reach` entries. The rows route and the batch's `rows` entries do not use it.
+So the gap was the one branch's, not only this branch's.
+
+### 11.2 Removals on request and the cache (fix built; gate added permanently: `api1/cache-gate.ts`, phase `cache`)
+
+**What a removal changes.** On this branch a removal on request does not touch the subject's datoms: `erase.clj`
+`apply-native!` commits a journal entity, a claim and the database's removal sequence, so **the revision the cache keys
+on does not move** (measured: the removed task's revision 3 before and 3 after, on both readers). The removed value is
+kept out of answers at emission, from the request's own verified frontier: `privacy/masked` and `privacy/text` replace
+it by assertion ID on the rows route, the journal and every world (`reach/append-protected-rows!`).
+
+**The store's rule, from the code:** once a removal is published, its assertion is masked on every read at every
+position (the mask is by assertion ID; it does not look at the read's position), so a pinned read at a position before
+the removal must not serve it either. While a removal is committed in Datomic but not published, every request on the
+database is refused 503 `ErasureFrontierUnavailable` (`privacy/cut` refuses while the pending record exists, and
+`verify-data!` refuses when Datomic's sequence differs from the published one).
+
+**The fix (the orchestrator's rule: a revision that does not move at a removal is a break).** Each reader now drops
+the parsed entries of every entity a newly published removal names, the first time it sees that removal
+(`privacy/cut` → `entity-cache/forget-entities!`). The first version missed drops: the sealed-key shred worker advances
+every gateway's frontier every 500 ms without a database, so when the worker saw a removal first, the drop was skipped
+(`run-25`: the second reader dropped 4 of the 5 entities it held). The named entities are now queued and dropped by the
+next call that has a database (`run-26`: every named entity, on both readers). What this does: no entry parsed before a
+removal outlives it. What it does not do: the next read parses the same stored bytes again (this branch does not excise
+an unsealed value from Datomic) and masks them at emission as before; sealed values are held as tokens whose key is
+shredded after the grace.
+
+**The gate** (`run-26`; both readers with `TX2_ENTITY_CACHE_VERIFY=1`, so every cache hit is also parsed fresh and
+compared). Two protected scopes (unsealed and sealed), 24 subjects each with a protected value on the profile and one
+on the first task. Both readers (separate processes, each its own cache) first read every world. After each event every
+subject is probed on both readers through `reach-many`, `reach-many` with a session, the batch (a reach and a rows
+entry) and the rows route, at the head and at pinned positions before and after the event; every world entity is
+compared with the rows route at the same position.
+
+| Event (each in both scopes) | Result |
+| --- | --- |
+| (a) Three removals: by assertion, by entity and attribute, by entity | 768 probes per scope, at the head, the seed cut, before the removals and after: **0 removed values served** (pinned before the removal included), 0 kept values missing; the removed task's revision 3 → 3; drops 4 of 4 on each reader |
+| (b) A removal committed but not published (its log record's path made a directory, so publication fails after the commit), with a derived write that copies the value, then the same command resent | while pending: 32 of 32 reads refused 503 on both readers; the derived write refused 503 `ErasureFrontierUnavailable`; resent: published as sequence 4; the derived write sent again with its old ticket refused 409 `ErasureFrontierChanged`; **no derived copy exists**; 768 probes, 0 removed values served; drops 1 of 1 on each reader |
+| (c) A settlement-shaped frame (8 subjects' owed values, with the removal ticket) and a release change | the frame's task revision 7 → 30; 384 probes, 0 differences |
+| (d) An import frame of a cached subject, entities created inside a cached world (a placement and a task referenced from the root), an import replay of a removed field | the root's revision 8 → 33; both new entities in the world; the replay refused `ErasureReplayDeclined`; 384 probes, 0 differences |
+| (e1) A reader restarted (its caches empty) | 384 probes, 0 differences, 0 removed values served |
+| (e2) A reader stopped (SIGSTOP) while a save and a removal land, then resumed and probed at once | its first 8 answers all 200 with the removal applied (it had caught up; no 503 seen); 384 probes, 0 removed values served; drop 1 of 1 |
+| **Totals** | **6,208 probes, 54,048 world entities compared with the rows route: 0 differences, 0 removed values served, 0 verification errors** over 98,792 + 197,584 verified hits on the first reader and 20,254 on the second |
+
+What this gate does not cover: settlement frames are written in their shape (ticketed writes through the same commit
+path), not by the archive writer itself; a Publish (DX-ACT8) is not on this branch; the owner-layout fold (which
+rewrites an owner's rows without a new revision, content-preserving by design) is not exercised (the toy's writer runs
+without `TX2_SUBJECT_SAVE`).
+
+**DX-ERA3's break** (a derived write whose ticket names no account committing while a removal is committed but not
+published) is on `exp/DX-ERA2-removal-per-account`, whose per-account rule is not on this branch: here the same write is
+refused 503 while pending and 409 after (case (b) above). When the per-account rule merges, case (b) must pass on the
+merged code; it is in the gate for that.
+
+### 11.3 The definitions cache without the unenforced rule (built; gate in `run.ts` phase `gate`)
+
+A kept definition answer now carries the revision of every entity it holds and the removal sequence it was masked
+with. A call uses it only when, at the call's own position, the release marker names the same hash, **every revision is
+the kept one** (a batch `revisions` entry: one seek per entity, no rows, the reach route's own revision through the same
+cut memo) and the removal sequence is the same. So a definition written without a new marker is seen: its revision moved,
+the call reads the store's answer at the same position and keeps that. Two markers on one account are refused with
+`DefinitionReleaseAmbiguous` (SDK `releaseHash`, `CallReads.definitionRows` and `definitionReach`, the batch port).
+
+**Gate (`run-21`): 167,357 comparisons with single reads at each call's position, 0 differences**, across 683 saves, 4
+release changes and **4 writes that break the rule** (rule values, a property name and a form field changed, the marker
+unchanged). 28 kept answers were refused because a revision had moved (7, 8, 9 and 4 in the four caches). Two markers on
+one account: 84 of 88 cached calls refused with `DefinitionReleaseAmbiguous`, 0 other errors; the other 4 are a task's
+fields, whose batch reads no account entity and so keeps no definitions (it reads them on every call); the same 44
+calls without a cache answered equal to single reads. The marker was then made single again for the later phases.
+
+**A refusal in the store instead (not built).** It would go in the commit path (`storage/tx-data`, before the native
+transaction, and as a check in the transaction function at the serial point): a commit that writes an entity of a
+definition kind must also write the account's release marker. Cost: one set lookup per written entity on every commit,
+plus a way to know an entity is a definition (an attribute namespace or ID prefix the schema declares). Checking that
+the marker's hash matches the definitions' content would mean reading every definition of the release at the commit
+(a Publish of 200 forms reads them all). The revision check makes the cache exact without it.
+
+**What the revision check costs** (Mac, warm, mean of 16 and 64 callers; `run-11` → `run-21`): the subject page world
+with definitions 1.41 → 1.56 ms, the task page 1.90 → 1.88 ms, the policy evaluation 1.25 → 1.80 ms (its 40 rule
+entities' revisions). The policy evaluation read entity by entity with the cache now takes 2.9 to 3.9 requests per call
+(nested definition steps' revisions are read after the first request); its world shape stays at 1.
+
+### 11.4 A world with a shared entity (`run-24`, phase `shared`)
+
+One shared employer (with one location entity of its own) referenced by each subject's enrolment
+(`:enrolment/employer`), 1, 100 and 10,000 subjects; then the employer also listing its members (one
+`:employer/enrolment` reference per enrolment). One subject's world, warm reader:
+
+| Subjects sharing the employer | References | World read (follow every reference) | World with `stopAt: [":enrolment/employer"]` plus the employer's rows |
+| ---: | --- | --- | --- |
+| 1 | forward only | 5 entities, 2.3 KB, 0.85 ms | 3 entities + 1, 2.9 KB, 0.70 ms |
+| 100 | forward only | 5 entities, 2.3 KB, 0.40 ms | 3 + 1, 2.9 KB, 0.75 ms |
+| 10,000 | forward only | **5 entities, 2.3 KB, 0.60 ms** | 3 + 1, 2.9 KB, 2.55 ms (one noisy cell) |
+| 1 | the employer lists its members | 5 entities, 2.5 KB, 0.65 ms | 3 + 1, 3.7 KB, 0.85 ms |
+| 100 | the employer lists its members | **302 entities, 159 KB, 4.0 ms** | 3 + 1, 73 KB (the employer's own 100 member rows), 3.7 ms |
+| 10,000 | the employer lists its members | **refused** (`declined: entity-budget`, above 5,000 entities) | refused (`BatchEntryTooLarge`: the employer's 10,000 rows exceed 4 MiB) |
+
+(Reader CPU per call over 200 calls; the 10 ms tick makes each cell ±0.05 ms, and the Mac adds noise.)
+
+**The rule for what a world includes:** a world follows the references stored on the entities it reaches, outward
+only; the store keeps no reverse references. With the product's shape as the orchestrator describes it (the enrolment
+references its employer; the employer does not list its enrolments), the world is the subject's own entities plus the
+shared employer and the employer's own outward references: **5 entities at 1, 100 and 10,000 sharing subjects, so the
+subject page's cost does not depend on how many subjects share it. That is the default (unchanged).** It stops holding
+only if a shared entity stores a list of its members; then following it reads other subjects' worlds (302 entities at
+100, refused at 10,000). For that case a world entry takes `stopAt` (built: reference attributes not followed, 1 to 64;
+the gateway's parsed entity now records each reference's attribute): the world stops at the subject's own entities.
+`stopAt` is exact (3 of 3 entities equal to the rows route; the employer absent). Reading such an employer whole is still
+proportional to its members, so a member list should not be stored on a shared entity. Not verified: whether the product's
+port stores any such list.
+
+### 11.5 What one request costs before its reads (`run-24`, phase `request`)
+
+Warm reader, 4 callers, 1,500 calls per variant, two rounds (reader CPU per call, Mac):
+
+| Variant | Round 1 | Round 2 | Mean |
+| --- | ---: | ---: | ---: |
+| The floor: a world plus the account entity's rows (tagged wire rows) | 2.17 ms | 1.69 ms | **1.93 ms** |
+| The account entity as row texts instead (a reach entry with `stopAt` its references) | 1.53 | 1.47 | **1.50 ms (−0.43, −22%)** |
+| The same floor without keep-alive (a new connection per request) | 2.38 | 1.97 | 2.18 ms (+0.25) |
+| A minimal batch (one revision of one entity) | 0.55 | 0.49 | **0.52 ms** |
+| One world alone (`reach-many`) | 0.95 | 0.99 | 0.97 ms |
+| The same with `gzipRows` | 1.03 | 0.96 | 1.00 ms (+0.02) |
+| `GET /health` (no database) | 0.24 | 0.17 | 0.21 ms |
+
+**So a database request's fixed cost is about 0.5 ms of the floor's 1.9** (27%): 0.2 ms for the web server alone, 0.3
+ms for per-request database work (on a protected scope, the frontier read from the removal log; the position; admission;
+the request parse). Section 10's "65% outside the handler" counted the response write and collection of the answer's
+bytes too; those grow with the answer.
+
+- **Keep-alive:** already on (the SDK's `http.Agent` keeps connections); off would add 0.25 ms. Nothing to build.
+- **Compression:** already off by default; `gzipRows` costs 0.02 ms on a 30 KB world. Nothing to build.
+- **A compact encoding for rows: 0.43 ms per call (22% of the floor), proposed, not built.** The account entity's 10 rows
+  as tagged wire rows cost that much more than as stored row texts. Building it is not a few lines: the batch's
+  references (`entityIdsFrom`, which the property definitions' and the revisions' entries use) read IDs only from a rows
+  answer, so they would have to read a reach answer's rows too (about 30 lines and a gate case).
+
+### 11.6 The numbers again
+
+| Subject page, world + definitions | Before (section 10) | Now (revision check) |
+| --- | ---: | ---: |
+| Reader CPU per call, Mac, re-read | 1.41 ms | **1.56 ms** |
+| The same, cold stand-in | 4.97 ms | 5.60 ms (a noisier run: the entity batch measured 17.5 against 12.6) |
+| Server, re-read (f = 1.5) | 2.1 ms | **2.34 ms** |
+| Server, random subjects (range; midpoint used) | 5.4 to 9.4 (7.4) ms | **5.7 to 10.3 (8.0) ms** |
+| Calls per second per reader core, re-read / random | 426 / 121 | **385 / 112** (87 to 159) |
+
+| Cores for the subject page (world + definitions) | 64 in flight | 256 in flight |
+| --- | ---: | ---: |
+| Re-read, p99 ≤ 50 ms | 5.7 | 23 |
+| Re-read, p99 ≤ 200 ms | 1.4 | 5.7 |
+| Random, p99 ≤ 50 ms | 19 (14 to 25) | 77 (55 to 100) |
+| Random, p99 ≤ 200 ms | 4.8 (3.4 to 6.2) | 19 (14 to 25) |
+
+The other shapes with the revision check (Mac, warm, world + definitions): the task page 1.88 ms, the policy evaluation
+1.80 ms. Today's port and the entity batch did not change (section 10.6). Both bars stay reachable; the random case at
+256 calls in flight inside 50 ms is several reader machines.
+
+### 11.7 The server driver's dry run at the final code (`run-27`)
+
+The floor arm with the revision check, 8 callers, the toy: 420 calls/s re-read and 470 random at 6.9 and 6.0 ms of reader
+CPU per call (`run-15`: 598 and 519 at 5.3 and 5.5 ms on a quieter Mac); 1.13 and 1.11 requests per call (the revisions
+ride in the first request); 1.54 and 1.58 definition hits per call, misses 0.003 and 0; 0 errors, 0 timeouts; the batch
+arm 343 and 312 calls/s at 8.5 and 8.7 ms; today's port 112 and 86 at 22.4 and 23.8 ms.
+
 ## Evidence (private folder `evidence/DX-API1/`)
 
 | File | Contents | SHA-256 |
@@ -811,6 +1015,14 @@ which subjects are drawn. The p99s carry the driver on the same Mac and whatever
 | `run-14.tar.gz`, `gate-run14.json`, `server-dry-run14.jsonl` | the final gate at the final code (165,813 comparisons, 0 differences, 670 saves) and the dry run that found the driver's second release pointer; entity cache size | `17bf6639…`, `58c5f704…`, `bea93f2a…` |
 | `run-15.tar.gz`, `server-dry-run15.jsonl` | the server driver's dry run after the fix (section 10.7) | `98ebb1c4…`, `2eb47d98…` |
 | `floor-f1.5.json` | `floor.py`'s output at f = 1.5 (section 10.6) | `e68f8e1d…` |
+| `run-16-failed.tar.gz`, `run-18-countsfailed.tar.gz`, `run-20-prerev.tar.gz` | a cache gate stopped by the Mac-side view of the bind mount (fixed: the fault is made inside the container); a counts phase stopped by the gate's second marker (fixed: one marker restored); cold counts before revisions stopped parsing rows | `7b93bc3b…`, `e36ebb44…`, `2332f3bd…` |
+| `run-17.tar.gz`, `cache-gate-run17.json`; `run-23.tar.gz`, `cache-gate-run23.json`; `run-25.tar.gz`, `cache-gate-run25.json` | the cache gate before the final code (0 removed values served in each; `run-25` counted the missed drops) | `6b0894e0…`, `1a2b1d61…`, `8f1ad284…`, `fc40c25f…`, `04ae2d44…`, `cb8b77b3…` |
+| `run-26.tar.gz`, `cache-gate-run26.json` | **the parsed-entity cache gate at the final code** (section 11.2) | `acc428b0…`, `7f1139c4…` |
+| `run-19.tar.gz`, `gate-run19.json`, `counts-warm-run19.json` | the definitions gate with revisions read through parsed entities | `33662eca…`, `8f5094e1…`, `90aae1f5…` |
+| `run-21.tar.gz`, `gate-run21.json`, `counts-warm-run21.json` | **the definitions gate and warm counts at the final code** (section 11.3) | `741eed9d…`, `425ef6c8…`, `2b686e1d…` |
+| `run-22.tar.gz`, `counts-cold-nocache-run22.json` | cold stand-in counts at the final code | `653c8532…`, `f1744e51…` |
+| `run-24.tar.gz`, `cache-gate-run24.json` | the shared entity and the request costs (sections 11.4, 11.5), with the cache gate verify off | `3819fced…`, `6a4c593e…` |
+| `run-27.tar.gz`, `server-dry-run27.jsonl` | the server driver's dry run at the final code | `e72c483f…`, `0537f6ff…` |
 | `run-05-failed.tar.gz` | a counts run stopped by a save conflict in the harness (fixed: conflicting saves retry) | `02ef7d73…` |
 
 Every container ran image `sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be` (each run's

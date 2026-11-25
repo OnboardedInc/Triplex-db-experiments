@@ -3,7 +3,8 @@
             [triplex.gateway.admission :as admission] [triplex.gateway.storage :as storage]
             [triplex.gateway.reach :as reach] [triplex.gateway.uncached :as uncached]
             [triplex.gateway.at-least :as at-least] [triplex.gateway.ids :as ids]
-            [triplex.gateway.stats :as stats] [triplex.gateway.trace :as trace])
+            [triplex.gateway.stats :as stats] [triplex.gateway.trace :as trace]
+            [triplex.gateway.privacy :as privacy] [triplex.gateway.entity-cache :as cache])
   (:import [java.lang.management ManagementFactory ThreadMXBean]))
 
 ;; [DX-API1] One API call of the product makes tens to thousands of reads (lab/experiments/EXP-DX1/api1/API-CALL-READS.md).
@@ -131,19 +132,31 @@
                   :from (some->> (get e "entityIdsFrom") (reference! i)) :pattern pattern}))
       "reach" (do
                 (doseq [k (keys e)]
-                  (when-not (#{"op" "roots" "rootsFrom"} k)
-                    (unsupported! i (str "reach entries carry roots or rootsFrom; not " k))))
+                  (when-not (#{"op" "roots" "rootsFrom" "stopAt"} k)
+                    (unsupported! i (str "reach entries carry roots or rootsFrom and an optional stopAt; not " k))))
                 (when (= (contains? e "roots") (contains? e "rootsFrom"))
                   (unsupported! i "a reach entry names its roots with exactly one of roots and rootsFrom"))
-                {:op "reach" :ids (some->> (get e "roots") (id-list! i "roots" 64))
+                (when (and (contains? e "stopAt") (not (and (vector? (get e "stopAt")) (<= 1 (count (get e "stopAt")) 64) (every? string? (get e "stopAt")))))
+                  (unsupported! i "stopAt is 1..64 reference attributes"))
+                {:op "reach" :stop-at (get e "stopAt") :ids (some->> (get e "roots") (id-list! i "roots" 64))
                  :from (some-> (get e "rootsFrom") (->> (reference! i)) (update :limit min 64))})
+      ;; [DX-API1] The revision of each entity at the batch's position (the reach route's own revision), without its rows:
+      ;; a client that keeps answers by revision checks them here. An entity with no rows answers revision 0.
+      "revisions" (do
+                    (doseq [k (keys e)]
+                      (when-not (#{"op" "entityIds" "entityIdsFrom"} k)
+                        (unsupported! i (str "revisions entries carry entityIds or entityIdsFrom; not " k))))
+                    (when (= (contains? e "entityIds") (contains? e "entityIdsFrom"))
+                      (unsupported! i "a revisions entry names its subjects with exactly one of entityIds and entityIdsFrom"))
+                    {:op "revisions" :ids (some->> (get e "entityIds") (id-list! i "entityIds" max-entry-subjects))
+                     :from (some->> (get e "entityIdsFrom") (reference! i))})
       "ids" (do
               (when-not ids/enabled (unsupported! i "ID list entries need TX2_ID_LISTS=1 on this gateway"))
               (doseq [k (keys e)]
                 (when-not (#{"op" "account" "prefix" "shape" "result" "limit" "order" "after" "bounds"} k)
                   (unsupported! i (str "an ids entry takes the ID list fields without basis, atLeastPosition or cursor; not " k))))
               {:op "ids" :input (dissoc e "op")})
-      (unsupported! i "op must be rows, reach or ids"))))
+      (unsupported! i "op must be rows, reach, revisions or ids"))))
 
 (defn- ref-values
   "The subjects an entry takes from entry `j`'s answer: an ids page's IDs, or the reference values of one attribute in a
@@ -180,6 +193,20 @@
                         (if (and (= "IndexBusy" (:code (ex-data e))) (< (System/nanoTime) deadline))
                           ::busy (throw e))))]
       (if (= ::busy result) (do (Thread/sleep 2) (recur)) result))))
+
+(defn- revisions-text [name current basis view ids valid-at]
+  (let [epoch (:generation view)
+        [db position t recent-eligible group-cut] (reach/select-db name current basis epoch)
+        base (reach/config name current epoch)
+        cfg (assoc base :group-cut group-cut :identity-db current :connection-generation epoch :selected-t t
+                   :selected-position position :recent-state nil :recent-eligible recent-eligible
+                   :revision-view (cache/revision-view [name epoch (:cache-generation base) t]))
+        out (StringBuilder. (+ 32 (* 48 (count ids))))]
+    (.append out "{\"revisions\":[")
+    (doseq [[k id] (map-indexed vector ids)]
+      (when (pos? k) (.append out \,))
+      (.append out \[) (reach/append-string! out id) (.append out \,) (.append out (reach/revision-of name db cfg id)) (.append out \]))
+    (.append out "]}") (.toString out)))
 
 (defn run
   "POST /v2/db/{db}/batch. `view` is the gateway's connection view {:conn :generation :recent}."
@@ -277,8 +304,10 @@
                                                       text (stage "rows-json-encode" (json/write-str result))]
                                                   ;; Only rows and ids answers can be referenced; they are kept as built.
                                                   (aset answers i (if legacy-parse? (stage "legacy-reparse" (json/read-str text)) result)) text)
+                                         "revisions" (stage "revisions" (revisions-text name db entry-basis view subjects valid-at))
                                          "reach" (let [text (stage "reach-build" (trace/span "batch/reach" "gateway"
-                                                              (reach/build-response name db {"roots" subjects "basis" entry-basis}
+                                                              (reach/build-response name db (cond-> {"roots" subjects "basis" entry-basis}
+                                                                                              (:stop-at (nth parsed i)) (assoc "stopAt" (:stop-at (nth parsed i))))
                                                                                     (:generation view) (:recent view))))]
                                                    (when legacy-parse? (aset answers i (stage "legacy-reparse" (json/read-str text)))) text))]
                               (.increment entries-run)
@@ -302,6 +331,8 @@
               (.append out ",\"next\":") (.append out (if next (str next) "null"))
               (.append out ",\"stopped\":") (.append out (if stopped (json/write-str stopped) "null"))
               (.append out ",\"prefetched\":") (.append out (long (count @touched)))
+              ;; The removal sequence the answers were masked with (a client cache keys on it).
+              (when-let [s (:seq privacy/*cut*)] (.append out ",\"erasureSeq\":") (.append out (long s)))
               {:out out :answers (for [i (range from end)] (aget texts i))})))
         stages (when profile? (java.util.HashMap.))
         stop-sampler (when profile? (start-sampler! (Thread/currentThread)))

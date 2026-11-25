@@ -59,6 +59,15 @@ export function releaseChange(A: string, n: number) {
   rows.push({ e: def.account(A), a: RELEASE, v: str(`release ${n} ${createHash("sha256").update(JSON.stringify(rows)).digest("hex").slice(0, 16)}`) });
   return rows;
 }
+/** [DX-API1] A change to definitions that breaks the release rule: rule values, a property name and a form field change,
+ * the release marker does not. A definitions cache must still answer what the store holds. */
+export function ruleBreak(A: string, n: number) {
+  const rows: Fact[] = [];
+  for (let k = 1; k < RULES; k += 11) rows.push({ e: def.rule(A, k), a: ":rule/value", v: str(`${k} (outside a release ${n})`) });
+  rows.push({ e: def.prop(A, 1), a: ":prop/name", v: str(`property 1 (outside a release ${n})`) });
+  rows.push({ e: def.form(A, (n + 5) % FORMS), a: ":form/field-0", v: str(`field 0, outside a release ${n}`) });
+  return rows;
+}
 /** The reference from each task to the form it was made from (added to the deep subject's own facts). */
 export const templateFacts = (A: string, i: number): Fact[] =>
   Array.from({ length: deepTasks(i) }, (_, t) => ({ e: A + taskId(i, t), a: ":task/template", v: ref(def.form(A, taskSerial(i, t) % FORMS)) }));

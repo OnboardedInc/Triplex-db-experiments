@@ -1,5 +1,5 @@
 (ns triplex.gateway.reach
-  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.trace :as trace] [triplex.gateway.group-cut :as group-cut] [triplex.gateway.owner-root :as owner-root] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission] [triplex.gateway.save-ledger :as ledger] [triplex.gateway.pinned :as pinned])
+  (:require [clojure.data.json :as json] [triplex.gateway.privacy :as privacy] [triplex.gateway.trace :as trace] [triplex.gateway.group-cut :as group-cut] [triplex.gateway.owner-root :as owner-root] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission] [triplex.gateway.save-ledger :as ledger] [triplex.gateway.pinned :as pinned])
   (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap] [java.util.concurrent.atomic AtomicInteger LongAdder]))
 (set! *warn-on-reflection* false)
 
@@ -154,6 +154,25 @@
               (when (>= (.size lru) 64)
                 (let [it (.iterator (.keySet lru))] (.next it) (.remove it)))
               (.put lru session m) m))))))
+;; [DX-API1] The attribute of a reference row (the fourth string of its stored column array), so a world read can stop at
+;; references the caller declares shared (`stopAt`). Rejected: parsing the whole column array of every reference row.
+(defn- json-string-at [^String s ^long start ^long n]
+  (let [len (.length s)]
+    (loop [i start k 0]
+      (when (< i len)
+        (if (= \" (.charAt s i))
+          (let [end (loop [j (inc i) escaped false]
+                      (when (< j len)
+                        (let [c (.charAt s j)]
+                          (cond (= c \\) (recur (+ j 2) true)
+                                (= c \") [j escaped]
+                                :else (recur (inc j) escaped)))))]
+            (when end
+              (let [[j escaped] end]
+                (if (= k n)
+                  (if escaped (json/read-str (subs s i (inc j))) (subs s (inc i) j))
+                  (recur (inc j) (inc k))))))
+          (recur (inc i) k))))))
 (defn parse-entity [db cfg eid revision row-limit]
   (let [texts (ArrayList.) refs (ArrayList.) out (StringBuilder.)
         ;; [Opus W1] Why: a covering root masks superseded legacy rows and carries the newer rows inline.
@@ -182,7 +201,9 @@
                 (let [ref-start (+ start 36) size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)
                       from (bits text start) end (+ start 16)
                       to (if (= \- (.charAt text (int end))) Double/POSITIVE_INFINITY (bits text end))]
-                  (.add refs [(.substring text (int ref-start) (int (+ ref-start size))) from to])))))))]
+                  (.add refs [(.substring text (int ref-start) (int (+ ref-start size))) from to
+                              (let [^String logical (if (= \2 (.charAt text 0)) (slim/logical-text text (+ ref-start size 1)) text)]
+                                (when (= \2 (.charAt logical 0)) (json-string-at logical (+ ref-start size 1) 3)))])))))))]
     (.append out \[)
     (if cover
       ;; [Opus W1] Why: keep the legacy row order (index order of the stored texts) for migrated people too.
@@ -230,8 +251,9 @@
       (recent/install! recent-state eid selected-t @witness (:recent-safe value)))
     (aset counts 0 (+ (aget counts 0) (count (:texts value))))
     (when (> (aget counts 0) 100000) (decline! "row-budget"))
-    (doseq [[ref from to] (:refs value)]
-      (when (and (<= (double from) valid) (< valid (double to))) (.add refs ref)))
+    (doseq [[ref from to attr] (:refs value)]
+      (when (and (<= (double from) valid) (< valid (double to)) (not (and (:stop-at cfg) (contains? (:stop-at cfg) attr))))
+        (.add refs ref)))
     [eid (:rev value) (:texts value) refs (:json value)]))
 ;; [DX-B9-A] Why: disabled report witnesses must also avoid their per-entity volatile/closure/miss costs.
 ;; Rejected: disabling only the consumer while retaining its extra hot-path work.
@@ -249,8 +271,9 @@
         refs (ArrayList.)]
     (aset counts 0 (+ (aget counts 0) (count (:texts value))))
     (when (> (aget counts 0) 100000) (decline! "row-budget"))
-    (doseq [[ref from to] (:refs value)]
-      (when (and (<= (double from) valid) (< valid (double to))) (.add refs ref)))
+    (doseq [[ref from to attr] (:refs value)]
+      (when (and (<= (double from) valid) (< valid (double to)) (not (and (:stop-at cfg) (contains? (:stop-at cfg) attr))))
+        (.add refs ref)))
     [eid (:rev value) (:texts value) refs (:json value)]))
 (defn read-entity [name db cfg id valid counts]
   (if-let [cut (:group-cut cfg)]
@@ -258,7 +281,8 @@
           value (when eid (if-let [at (:root-db slice)]
                             (parse-entity at cfg eid (:rev slice) (- 100000 (aget ^longs counts 0)))
                             (parse-entity db (assoc cfg :slice slice) eid (:rev slice) (- 100000 (aget ^longs counts 0)))))
-          refs (ArrayList. ^java.util.Collection (vec (for [[ref from to] (:refs value) :when (<= from valid) :when (< valid to)] ref)))]
+          refs (ArrayList. ^java.util.Collection (vec (for [[ref from to attr] (:refs value) :when (<= from valid) :when (< valid to)
+                                                            :when (not (and (:stop-at cfg) (contains? (:stop-at cfg) attr)))] ref)))]
       (aset ^longs counts 0 (+ (aget ^longs counts 0) (count (:texts value))))
       [eid (or (:rev value) 0) (or (:texts value) []) refs (or (:json value) "[]")])
     ;; [DX-RD2] Why: behind TX2_PINNED_SHORTCUT, a subject unchanged since a plain pinned cut is read from the request's
@@ -268,6 +292,19 @@
       (read-entity-legacy name (:identity-db cfg) cfg id valid counts)
       (if (:recent-state cfg) (read-entity-recent name db cfg id valid counts)
       (read-entity-legacy name db cfg id valid counts)))))
+;; [DX-API1] An entity's revision at the request's cut without parsing its rows (the batch's `revisions` entry): the same
+;; revision read-entity keys its parsed entry on, through the same cut memo. An entity with no rows answers its stored
+;; revision here (read-entity answers 0 for it).
+(defn revision-of [name db cfg ^String id]
+  (if-let [cut (:group-cut cfg)]
+    (let [eid (d/entid db [:triplex.entity/id id]) slice (when eid (group-cut/entity-slice cut eid))] (long (or (:rev slice) 0)))
+    (let [db (if (when (and pinned/enabled (:identity-db cfg)) (pinned/current-eid (:identity-db cfg) db (:selected-position cfg) id))
+               (:identity-db cfg) db)
+          eid (entity-id db name id cfg)]
+      (if eid
+        (long (cache/revision (:revision-view cfg) eid
+                (fn [] (long (or (:v (first (d/datoms db :eavt eid (:rev cfg)))) (ledger/implicit-position db eid) 0)))))
+        0))))
 (defn append-strings! [^StringBuilder out ^Iterable values]
   (.append out \[)
   (let [it (.iterator values) n (long-array 1)]
@@ -297,7 +334,12 @@
     (let [[db position t recent-eligible group-cut] (trace/read-span "reach.select-db" "peer-call" (select-db name current (get input "basis") epoch))
           base-cfg (config name current epoch)
           cfg (assoc base-cfg :group-cut group-cut :identity-db current :connection-generation epoch :selected-t t :selected-position position :recent-state recent-state :recent-eligible recent-eligible
-                :revision-view (cache/revision-view [name epoch (:cache-generation base-cfg) t])) valid (double (get-in input ["basis" "validAt"]))
+                :revision-view (cache/revision-view [name epoch (:cache-generation base-cfg) t])
+                ;; [DX-API1] References by these attributes are not followed (their targets are named in the rows only).
+                :stop-at (when (contains? input "stopAt")
+                           (let [stop (get input "stopAt")]
+                             (when-not (and (vector? stop) (<= 1 (count stop) 64) (every? string? stop)) (decline! "stopAt"))
+                             (set stop)))) valid (double (get-in input ["basis" "validAt"]))
           ;; [DX-R2] Why: inline journals replace changed rows; only newly introduced reference roots need graph expansion.
           ;; Rejected: repeating every unchanged form/answer entity after a scalar replacement.
           shallow-roots (set (get input "shallowRoots"))

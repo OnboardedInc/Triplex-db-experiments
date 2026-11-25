@@ -20,7 +20,7 @@ import { deepOwnFacts, deepTasks, fieldValue, taskId } from "../../../bench/lib/
 import { ids } from "../../../bench/lib/world.ts";
 import { command } from "../w1/group/workload.ts";
 import { scaleAccount } from "../prep1/ceiling-seed.ts";
-import { definitionFacts, refsOf, releaseChange, shapes, templateFacts, type Ctx, type Shape, type Step } from "./shapes.ts";
+import { definitionFacts, refsOf, releaseChange, ruleBreak, RELEASE, shapes, templateFacts, type Ctx, type Shape, type Step } from "./shapes.ts";
 
 const [out, writerUrl, warmUrl, coldUrl] = process.argv.slice(2);
 const phases = new Set((process.env.API1_PHASES ?? "gate,counts,straddle").split(","));
@@ -131,7 +131,7 @@ const canonRows = (rows: any[]) => JSON.stringify(rows.map((x) => (x.attribute &
 const dropVolatile = (page: any) => { const { head, scanMicros, ioReads, segmentsLoaded, ...rest } = page ?? {}; return JSON.stringify(rest); };
 const gate = { comparisons: 0, differences: [] as unknown[], byShape: {} as Record<string, { comparisons: number; differences: number }>,
   positionsPerCall: { loader: 0, batch: 0, callsChecked: 0 }, refusals: [] as unknown[], cursor: null as unknown, permits: null as unknown,
-  releaseChanges: 0, definitionCaches: {} as unknown };
+  releaseChanges: 0, ruleBreaks: 0, definitionCaches: {} as unknown, twoMarkers: {} as Record<string, unknown> };
 const differ = (shape: string, what: unknown) => { gate.differences.push({ shape, what }); gate.byShape[shape]!.differences++; };
 const single = (c: DatomicClient, id: string, P: number, pattern?: object) =>
   c.request<any>("POST", "/v1/db/" + db + "/read", { entityIds: [id], basis: { recordedPosition: P, validAt }, ...(pattern ? { pattern } : {}) }).then((x) => x.rows);
@@ -248,6 +248,10 @@ if (phases.has("gate")) {
   for (const [n, shape] of live.entries()) {
     if (n === Math.floor(live.length / 2) || n === live.length - 1)
       for (let a = 0; a < accounts; a++) { await save(writer, `api1-release-${crypto.randomUUID()}`, releaseChange(prefix(a), 2 + releases) as any); releases++; }
+    // A quarter and three quarters in: definitions changed outside a release (the marker unchanged). Every cached call
+    // after it must answer the store's new definitions (the comparison with single reads at the call's position).
+    if (n === Math.floor(live.length / 4) || n === Math.floor((3 * live.length) / 4))
+      for (let a = 0; a < accounts; a++) { await save(writer, `api1-rulebreak-${crypto.randomUUID()}`, ruleBreak(prefix(a), gate.ruleBreaks) as any); gate.ruleBreaks++; }
     await pool(Array.from({ length: 16 }, (_, k) => k), 4, async (k) => {
       const ctx = ctxFor(k % accounts, 1 + (k % 40), k);
       await checkLoader(k % 2 ? warm : cold, shape, ctx);
@@ -259,6 +263,32 @@ if (phases.has("gate")) {
   gate.releaseChanges = releases;
   gate.definitionCaches = Object.fromEntries(Object.entries(defCaches).map(([k, c]) => [k, c.counts]));
   running = false; await saver;
+  // Two release markers on one account (a second value added beside the first): every cached call of that account is
+  // refused with DefinitionReleaseAmbiguous; the same calls without a cache answer as before.
+  {
+    const head = await headOf(writer);
+    const A = prefix(0), extra = { e: A + "def/account", a: RELEASE, v: { type: "string", value: "release second-marker" } };
+    const [present] = await Promise.all([rowsOf(writer, A + "def/account", { recordedPosition: head, validAt })]);
+    assert(present.some((r) => r.attribute === RELEASE), "the account has a release marker");
+    await transact(writer, command(`api1-twomarkers-${nonce}`, [extra] as any));
+    const counts = { refusedLoader: 0, refusedBatch: 0, otherErrors: 0, uncachedCalls: 0, calls: 0 };
+    for (const shape of live.filter((x) => x.levels.flat().some((s) => s.def)))
+      for (let k = 0; k < 4; k++) {
+        const ctx = ctxFor(0, 1 + k, k);
+        for (const [port, cache] of [["loader", defCaches.loaderWarm], ["batch", defCaches.batchWarm]] as const) {
+          counts.calls++;
+          try { port === "loader" ? await loader(warm, shape, ctx, { defs: cache }) : await batch1(warm, shape, ctx, { defs: cache }); }
+          catch (e: any) { if (e?.code === "DefinitionReleaseAmbiguous") counts[port === "loader" ? "refusedLoader" : "refusedBatch"]++; else { counts.otherErrors++; log("two markers:", String(e)); } }
+        }
+        await checkBatch(warm, shape, ctx); counts.uncachedCalls++;
+      }
+    // One marker again (both values retracted, one written), so later phases read a single release.
+    await save(writer, `api1-onemarker-${nonce}`, [{ e: A + "def/account", a: RELEASE, v: { type: "string", value: "release restored " + nonce } }]);
+    const after = (await rowsOf(writer, A + "def/account", { recordedPosition: await headOf(writer), validAt })).filter((r) => r.attribute === RELEASE);
+    assert.equal(after.length, 1, "one release marker again");
+    gate.twoMarkers = counts;
+    log("two markers", counts);
+  }
   log("gate under saves done;", liveSaves, "saves");
   // Typed refusals.
   const refuse = async (label: string, body: object, code: string) => {

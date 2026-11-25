@@ -1,13 +1,15 @@
 // [DX-API1] The four ports of a shape (shapes.ts): today, pinned, loader (CallReads) and batch1 (one request), shared by
 // the Mac driver (run.ts) and the server driver (server.ts). With `defs` (a DefinitionCache), the loader and batch1 take
 // the steps marked `def` (definitions in force) from the cache when the call's release pointer names the cached release.
-import { DatomicClient, CallReads, readBatch, DefinitionCache } from "../../../../packages/datomic/dist/index.js";
+import { DatomicClient, CallReads, readBatch, DefinitionCache, DefinitionReleaseAmbiguous, revisionMap, worldRevisions } from "../../../../packages/datomic/dist/index.js";
 import { taskId } from "../../../bench/lib/deep-world.ts";
 import { def, refsOf, RELEASE, type Ctx, type Shape, type Step } from "./shapes.ts";
 
 export type Result = { trips: number; reads: number; rows: number; position?: number; positions: number[]; loads?: number;
   answers: Map<string, any[]>; pages: Map<string, any>; worlds: Map<string, any>; afterKeys: Set<string>; savedValue?: string;
   missedOwnWrite?: number; defHits: number; defMisses: number; profile?: any[];
+  /** Definition answers kept but refused because a revision or the removal sequence moved; revision lookups sent. */
+  defRevisionMisses?: number; revisionReads?: number;
   /** Wall time of each single request (today and pinned). */
   requestMs?: number[] };
 export type Save = (c: DatomicClient, id: string, change: { e: string; a: string; v: { type: string; value: string } }[]) => Promise<number>;
@@ -16,8 +18,9 @@ export type Options = { at?: number; stats?: boolean; limits?: object; defs?: De
 const fresh = (): Result => ({ trips: 0, reads: 0, rows: 0, positions: [], answers: new Map(), pages: new Map(), worlds: new Map(),
   afterKeys: new Set(), defHits: 0, defMisses: 0 });
 const v = (x: any) => (x !== null && typeof x === "object" ? x.v : x);
-const hashOf = (rows: readonly any[]) => {
+const hashOf = (rows: readonly any[], pointer = "") => {
   const values = rows.filter((r) => v(r.attribute) === RELEASE).map((r) => v(r.value_string));
+  if (values.length > 1) throw new DefinitionReleaseAmbiguous(pointer, values);
   return values.length === 1 && typeof values[0] === "string" ? (values[0] as string) : undefined;
 };
 
@@ -157,6 +160,8 @@ export function makePorts(db: string, validAt: number, writer: DatomicClient, sa
       index.set(step.key, entries.length);
       const ids = literal.get(step.key) ?? (step.ids ? step.ids(ctx) : undefined);
       if (step.page) entries.push({ op: "ids", ...step.page(ctx) });
+      else if ((step as any).revisions && ids) entries.push({ op: "revisions", entityIds: ids });
+      else if ((step as any).revisions) entries.push({ op: "revisions", entityIdsFrom: { entry: index.get(step.from!.step)!, attribute: step.from!.attribute } });
       else if (step.reach && ids) entries.push({ op: "reach", roots: ids });
       else if (step.reach) entries.push({ op: "reach", rootsFrom: { entry: index.get(step.from!.step)!, ...(step.from!.attribute ? { attribute: step.from!.attribute } : {}), limit: 64 } });
       else if (ids) entries.push({ op: "rows", entityIds: ids, ...(step.pattern ? { pattern: step.pattern } : {}) });
@@ -171,6 +176,7 @@ export function makePorts(db: string, validAt: number, writer: DatomicClient, sa
       ...(o.prefetch === false ? { prefetch: false } : {}), ...(o.limits ? { limits: o.limits } : {}) };
     const record = (step: Step, entry: any, a: any, position: number, asked: string[]) => {
       byKey.set(step.key, a);
+      if ((step as any).revisions) { r.revisionReads = (r.revisionReads ?? 0) + (a?.revisions?.length ?? 0); return; }
       r.batch.push({ step, entry, answer: a, position, asked });
       if (step.page) { r.pages.set(step.key, a); r.reads++; }
       else if (step.reach) r.reads += Array.isArray(a?.entities) ? a.entities.length : asked.length;  // every entity of the worlds
@@ -188,37 +194,73 @@ export function makePorts(db: string, validAt: number, writer: DatomicClient, sa
       return answer;
     };
     const all = shape.batch ?? shape.levels.flat();
-    // With a definitions cache: when the cache holds a release for this account, the first request leaves out the
-    // definition steps; the call's own pointer (the account entity, in the request) then says whether that release is
-    // still in force at the call's position. Misses are read at the same position and kept.
+    // With a definitions cache (DefinitionCache): a definition step whose answers the cache holds under the account's last
+    // seen release is left out of the first request, and the revisions of its entities are read in its place (a
+    // `revisions` entry: one seek each, no rows). Its kept answer is used only when, at the call's position, the release
+    // marker names the same hash, every revision is the kept one and the removal sequence is the same; otherwise the step
+    // is read at the same position and kept. Rows definition steps read in the first request carry a revisions entry too,
+    // so what is kept carries its revisions. Two release markers on one account: DefinitionReleaseAmbiguous.
     const pointer = def.account(ctx.A);
+    const keyFor = (step: Step, id: string) => (step.reach ? "reach " : "rows " + JSON.stringify(step.pattern ?? null) + " ") + id;
     const guess = o.defs?.lastHash(pointer);
-    const omit = o.defs && guess !== undefined ? all.filter((s) => s.def) : [];
-    const first = await one(all.filter((s) => !omit.includes(s)), {});
+    const literalIds = (step: Step) => (step.ids ? step.ids(ctx) : undefined);
+    const keptWorldIds = (step: Step) => {
+      const roots = literalIds(step);
+      if (!roots || guess === undefined) return undefined;
+      const kept = roots.map((id) => o.defs!.entry(pointer, guess, keyFor(step, id)));
+      return kept.every(Boolean) ? [...new Set(kept.flatMap((k) => [...k!.revisions.keys()]))] : undefined;
+    };
+    const omit = o.defs && guess !== undefined ? all.filter((s) => s.def && (!s.reach || keptWorldIds(s))) : [];
+    const sent = all.filter((s) => !omit.includes(s));
+    const revStep = (step: Step, ids?: string[]): Step => ({ ...step, key: step.key + "#rev", ...(ids ? { ids: () => ids, from: undefined } : {}), revisions: true } as any);
+    const revSteps = o.defs ? all.filter((s) => s.def).flatMap((s) => {
+      if (s.reach) { const ids = omit.includes(s) ? keptWorldIds(s) : undefined; return ids ? [revStep(s, ids)] : []; }
+      return s.ids || (s.from && sent.some((x) => x.key === s.from!.step)) ? [revStep(s)] : [];
+    }) : [];
+    const first = await one([...sent, ...revSteps], {});
     if (o.defs) {
+      const seq = first.erasureSeq;
       const accountStep = all.find((s) => s.key === "account");
-      const hash = accountStep ? hashOf(byKey.get("account")?.rows ?? []) : undefined;
-      const keyFor = (step: Step, id: string) => (step.reach ? "reach " : "rows " + JSON.stringify(step.pattern ?? null) + " ") + id;
-      // Steps read in the first request are kept under the pointer's release.
+      const hash = accountStep ? hashOf(byKey.get("account")?.rows ?? [], pointer) : undefined;
+      const revisionsFor = async (step: Step, ids: string[]) => {
+        const got = byKey.get(step.key + "#rev");
+        if (got) return revisionMap(got);
+        await one([revStep(step, ids)], {}, first.position);
+        return revisionMap(byKey.get(step.key + "#rev"));
+      };
+      const only = (m: Map<string, number>, ids: Iterable<string>) => new Map([...ids].map((id) => [id, m.get(id) ?? -1]));
+      // Definition steps read in the first request are kept with their revisions.
       if (hash !== undefined) for (const b of r.batch.filter((b) => b.step.def)) {
-        if (b.step.reach) for (const id of b.asked) o.defs.store(pointer, hash, keyFor(b.step, id), b.answer);
-        else for (const id of b.asked) o.defs.store(pointer, hash, keyFor(b.step, id), b.answer.rows.filter((x: any) => v(x.entity_id) === id));
+        if (b.step.reach) for (const id of b.asked) o.defs.store(pointer, hash, keyFor(b.step, id), b.answer, worldRevisions(b.answer), seq);
+        else {
+          const revs = await revisionsFor(b.step, b.asked);
+          for (const id of b.asked) o.defs.store(pointer, hash, keyFor(b.step, id), b.answer.rows.filter((x: any) => v(x.entity_id) === id), only(revs, [id]), seq);
+        }
       }
       for (const step of omit) {
         const ids = askedFor(step);
-        const cachedAll = hash !== undefined && ids.every((id) => o.defs!.lookup(pointer, hash, keyFor(step, id)) !== undefined);
-        if (cachedAll) {
+        const kept = ids.map((id) => (hash !== undefined ? o.defs!.entry(pointer, hash, keyFor(step, id)) : undefined));
+        let ok = hash !== undefined && kept.every(Boolean);
+        let current = new Map<string, number>();
+        if (ok) {
+          current = await revisionsFor(step, step.reach ? [...new Set(kept.flatMap((k) => [...k!.revisions.keys()]))] : ids);
+          ok = kept.every((k, n) => o.defs!.valid(k!, only(current, step.reach ? k!.revisions.keys() : [ids[n]!]), seq));
+          if (!ok) { o.defs.counts.revisionMisses++; r.defRevisionMisses = (r.defRevisionMisses ?? 0) + 1; }
+        }
+        if (ok) {
           o.defs.counts.hits++; r.defHits++;
-          const a = step.reach ? o.defs.lookup(pointer, hash!, keyFor(step, ids[0]!))
-            : { rows: ids.flatMap((id) => o.defs!.lookup(pointer, hash!, keyFor(step, id)) as any[]) };
+          const a = step.reach ? kept[0]!.value : { rows: kept.flatMap((k) => k!.value as any[]) };
           record(step, { op: step.reach ? "reach" : "rows", ...(step.reach ? { roots: ids } : { entityIds: ids }) }, a, first.position, ids);
         } else {
           o.defs.counts.misses++; r.defMisses++;
           await one([step], {}, first.position, new Map([[step.key, ids]]));
           const b = r.batch[r.batch.length - 1]!;
           if (hash !== undefined) {
-            if (step.reach) for (const id of ids) o.defs.store(pointer, hash, keyFor(step, id), b.answer);
-            else for (const id of ids) o.defs.store(pointer, hash, keyFor(step, id), b.answer.rows.filter((x: any) => v(x.entity_id) === id));
+            if (step.reach) for (const id of ids) o.defs.store(pointer, hash, keyFor(step, id), b.answer, worldRevisions(b.answer), seq);
+            else {
+              const revs = current.size ? current : await revisionsFor(step, ids);
+              for (const id of ids) o.defs.store(pointer, hash, keyFor(step, id), b.answer.rows.filter((x: any) => v(x.entity_id) === id), only(revs, [id]), seq);
+            }
           }
         }
       }

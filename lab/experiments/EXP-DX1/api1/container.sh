@@ -80,9 +80,23 @@ name=$(node -p 'JSON.parse(require("node:fs").readFileSync("/out/seed.json","utf
 java -Xmx512m -cp "$cp" clojure.main "$work/index.clj" "${template/\{db\}/$name}" > /out/index.json
 tuned=(TX2_PINNED_SHORTCUT=1 TX2_PINNED_CUT_LOOKUP=1 TX2_READ_FILTER_EARLY=1 TX2_READ_PERMITS=3
        TX2_READ_BATCH=1 TX2_ID_LISTS=1 TX2_READ_PROFILE=1 TRIPLEX_TRACE_DIR=/out/trace)
-gateway 8081 1g "-Ddatomic.objectCacheMax=384m" "${tuned[@]}" TRIPLEX_TRACE_PROCESS=r-warm
 read -r -a cold_env <<< "${API1_COLD_ENV:-}"
-gateway 8082 768m "-Ddatomic.objectCacheMax=32m" "${tuned[@]}" TRIPLEX_TRACE_PROCESS=r-cold ${cold_env[@]+"${cold_env[@]}"}
+# API1_READER_ENV: settings for both readers (the cache gate sets TX2_ENTITY_CACHE_VERIFY=1); empty by default.
+read -r -a reader_env <<< "${API1_READER_ENV:-}"
+start_warm() { gateway 8081 1g "-Ddatomic.objectCacheMax=384m" "${tuned[@]}" TRIPLEX_TRACE_PROCESS=r-warm ${reader_env[@]+"${reader_env[@]}"}; }
+start_cold() { gateway 8082 768m "-Ddatomic.objectCacheMax=32m" "${tuned[@]}" TRIPLEX_TRACE_PROCESS=r-cold ${cold_env[@]+"${cold_env[@]}"} ${reader_env[@]+"${reader_env[@]}"}; }
+start_warm; start_cold
 echo ready > /out/readers-ready
-wait_file /out/done
+# The cache gate's restart: /out/restart-PORT stops that reader and starts it again (its caches empty), then
+# /out/restarted-PORT is written.
+while [[ ! -f /out/done ]]; do
+  for port in 8081 8082; do
+    if [[ -f /out/restart-$port ]]; then
+      rm -f "/out/restart-$port"; p=$(cat "/out/pid-$port"); kill "$p" 2>/dev/null || true; wait "$p" 2>/dev/null || true
+      if [[ $port == 8081 ]]; then start_warm; else start_cold; fi
+      touch "/out/restarted-$port"
+    fi
+  done
+  sleep 0.5
+done
 echo ok > /out/finished

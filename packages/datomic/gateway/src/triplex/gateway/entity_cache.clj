@@ -39,8 +39,8 @@
 ;; [DX-B7-S3] Why: verification compares reference interval bits as well as exact row/JSON strings.
 ;; Rejected: numeric equality alone (signed zero and NaN have distinct bit behavior).
 (defn reference-bits [refs]
-  (mapv (fn [[id from to]] [id (Double/doubleToRawLongBits (double from))
-                             (Double/doubleToRawLongBits (double to))]) refs))
+  (mapv (fn [[id from to attr]] [id (Double/doubleToRawLongBits (double from))
+                                  (Double/doubleToRawLongBits (double to)) attr]) refs))
 (defn check! [key cached fresh]
   (when-not (and (= (dissoc cached :refs) (dissoc fresh :refs))
                  (= (reference-bits (:refs cached)) (reference-bits (:refs fresh))))
@@ -121,10 +121,28 @@
   (locking revision-views
     (doseq [key (.keySet revision-views) :when (= name (key-name key))] (remove-revision-view! key))
     (.removeIf revision-order (reify Predicate (test [_ key] (= name (key-name key)))))))
+;; [DX-API1] Why: a removal on request leaves Datomic's bytes (and so every revision) unchanged; it is applied to every
+;; answer from the request's verified frontier. A parsed entry of an entity that a newly published removal names is
+;; dropped when a reader first sees that removal, so no entry parsed before a removal outlives it; entries parsed after
+;; it are emitted through the same frontier. Rejected: a key on the global removal sequence (every removal in the
+;; database would empty the cache) and caching masked rows (sealed values would be held unsealed).
+(def ^LongAdder removal-drops (LongAdder.))
+(def ^LongAdder removal-drop-calls (LongAdder.))
+(def ^LongAdder removal-drop-named (LongAdder.))
+(defn forget-entities! [name eids]
+  (let [eids (set (map long eids))]
+    (.increment removal-drop-calls) (.add removal-drop-named (count eids))
+    (when (seq eids)
+      (let [named? (fn [key] (and (instance? ParsedKey key) (= name (.-name ^ParsedKey key)) (contains? eids (.-eid ^ParsedKey key))))]
+        (locking entries
+          (doseq [key (.keySet entries) :when (named? key)]
+            (when-let [removed (.remove entries key)]
+              (.addAndGet bytes (- (long (:bytes removed)))) (.increment removal-drops)))
+          (.removeIf order (reify Predicate (test [_ key] (named? key)))))))))
 (defn stats []
   {:hits (.sum hits) :misses (.sum misses) :evictions (.sum evictions)
    :bytes (+ (.get bytes) (.get revision-bytes)) :entityBytes (.get bytes) :revisionBytes (.get revision-bytes)
    :revisionHits (.sum revision-hits) :revisionMisses (.sum revision-misses) :revisionViews (.size revision-views)
    :revisionEvictions (.sum revision-evictions) :entityBudgetBytes (entity-budget) :revisionBudgetBytes (revision-budget)
    :verificationErrors (.sum mismatches) :budgetBytes budget :entries (.size entries)
-   :verified (.sum verified) :verify verify-enabled :policy "insertion-order; oldest-cut revision eviction"})
+   :verified (.sum verified) :verify verify-enabled :removalDrops (.sum removal-drops) :removalDropCalls (.sum removal-drop-calls) :removalDropNamed (.sum removal-drop-named) :policy "insertion-order; oldest-cut revision eviction"})

@@ -4,6 +4,8 @@
 # PHASES (comma-separated, default gate,counts,straddle): gate = exactness of the batch and the loader against single reads;
 # counts = round trips, storage loads, reader CPU per shape and port, warm and cold, 1/16/64 callers; straddle = unpinned
 # calls under saves. Seeds a deep toy first. Times are diagnostic; counts are results.
+# API1_DRIVER: the Mac driver (default run.ts; cache-gate.ts for the parsed-entity cache gate, the shared-entity toy and
+# the request costs). API1_READER_ENV: settings for both readers.
 # API1_IMAGE: an image ID (default: the ID the runtime tag named when this was written, checked by gate-image.sh).
 set -uo pipefail
 out=${1:?absolute new output directory}
@@ -21,11 +23,11 @@ git -C "$repo" rev-parse HEAD > "$out/source"
 git -C "$repo" status --porcelain -- packages/datomic/gateway/src packages/datomic/src lab/experiments/EXP-DX1/api1 > "$out/source-dirty"
 docker rm -f "$name" >/dev/null 2>&1
 # API1_COLD_ENV: more settings for the cold reader (8082), for example TX2_ENTITY_CACHE_BYTES=0; empty by default.
-docker run -d --name "$name" --memory 6g --cpus 4 -e "API1_COLD_ENV=${API1_COLD_ENV:-}" -p 127.0.0.1:$base:8080 -p 127.0.0.1:$((base+1)):8081 -p 127.0.0.1:$((base+2)):8082 \
+docker run -d --name "$name" --memory 6g --cpus 4 -e "API1_COLD_ENV=${API1_COLD_ENV:-}" -e "API1_READER_ENV=${API1_READER_ENV:-}" -p 127.0.0.1:$base:8080 -p 127.0.0.1:$((base+1)):8081 -p 127.0.0.1:$((base+2)):8082 \
   --entrypoint /bin/bash -v "$repo/packages/datomic/gateway/src:/opt/gateway/src:ro" -v "$here:/gate:ro" -v "$out/out:/out" \
   "$image" /gate/container.sh >/dev/null
 gate_image_ran "$name" "$image" "$out/image.json" || { docker rm -f "$name" >/dev/null; exit 2; }
-(cd "$repo" && API1_CONTAINER=$name API1_PHASES=$phases node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/api1/run.ts "$out/out" \
+(cd "$repo" && API1_CONTAINER=$name API1_PHASES=$phases node --no-warnings --experimental-transform-types "lab/experiments/EXP-DX1/api1/${API1_DRIVER:-run.ts}" "$out/out" \
   http://127.0.0.1:$base http://127.0.0.1:$((base+1)) http://127.0.0.1:$((base+2))) 2>&1 | tee "$out/driver.log"
 status=${PIPESTATUS[0]}
 touch "$out/out/done"
