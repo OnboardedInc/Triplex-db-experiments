@@ -250,3 +250,35 @@ test("T8: R3 per route with the setting on: what another account reads and denie
   console.log("[T8] " + JSON.stringify(out));
   assert(out.learn.found && tries.every((x) => !x));
 });
+
+test("T9: R3 for settlement frames: another account computes an account's next frame command ID and saves under it first", async () => {
+  const out: Record<string, unknown> = {};
+  for (const kind of ["values", "notice"] as const) {
+    const t = await setup(["acct-a", "acct-b"]);
+    const [A, B] = t.accounts as [any, any];
+    await A.account(t.proc("pub", { ...NONE, accountKeys: true, frameGuards: true })).publish("large", largeRelease(W0.R1.doc, parseShape("forms=20,policies=20,permille=1000")), validTime, "owed");
+    // The next frame's command ID is a hash of what the account's records and the code determine (archive.ts 323,
+    // recorded.ts 251); here it is read off the settler's first attempt, whose request is lost before the transactor.
+    let frameId = "";
+    const prefix = kind === "values" ? "settled-values:" : "settled-notice:";
+    t.db.beforeCommit = async (id) => {
+      if (!frameId && id.startsWith(prefix)) { frameId = id; throw new Error("request lost"); }
+    };
+    const settle = async (label: string) => {
+      const p = t.proc(label, NONE), a = A.account(p), queue = new BulkQueue(1);
+      const archive = new (Archive as any)(a, memStore(p, A.held, t.db.scope + "-" + label), queue, kind === "values" ? "values" : "notices", "bytes", "progress") as Archive;
+      const run = kind === "values" ? archive.runValues(2).then((x) => "values " + x.status)
+        : new RecordedNotices(archive, undefined).record(await tailOf(t, A)).then(() => "notices recorded");
+      return run.then((x) => x, (e) => "refused: " + String(e?.constructor?.name) + " " + String(e?.message).split("\n")[0]!.slice(0, 90));
+    };
+    const first = await settle("settler-1");
+    t.db.beforeCommit = undefined;
+    // B saves its own subject under that ID (any writer chooses its command ID).
+    const bs = B.store(t.proc("b-saver", NONE));
+    const taken = await outcome(bs.commit(frameId, "save", [fact(B.held.prefix + "act10-probe", ":act10/probe", 1)], await bs.head()));
+    const runs = [await settle("settler-2"), await settle("settler-3"), await settle("settler-4")];
+    out[kind] = { frameId: frameId.slice(0, 30), first, taken: taken.ok, laterRuns: runs };
+  }
+  console.log("[T9] " + JSON.stringify(out));
+  assert((out.values as any).taken && (out.values as any).laterRuns.every((x: string) => x.startsWith("refused")));
+});
