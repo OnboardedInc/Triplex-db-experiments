@@ -43,7 +43,9 @@ recoverable from an older backup of the authority together with the wrapping key
 **Should an unsealed protected scope exist outside tests? No.** It cannot meet TARGETS 7.3 for any value, and nothing in
 this design can fix that (there is no key to destroy). It is useful for tests that check masking and the removal's
 ordering; for production every protected database should be sealed, with the PostgreSQL authority. This design is for
-the sealed model only: under the option a derived write from a protected world on an unsealed database is refused.
+the sealed model only: under the option the seal route refuses on an unsealed database (409
+`DerivedSealNeedsSealedScope`), so this option's derived writers fail there rather than store clear derived content.
+(Corrected after the merge, section 11.2: the gateway itself does not refuse a clear derived save from another writer.)
 
 "Derivative" means anything computed from a protected value: a copy, a hash of a payload that holds it, a notice whose
 kind or existence follows from it, a label computed from such a kind. "Reached" means the removal deletes it, rewrites it,
@@ -257,9 +259,12 @@ header names one of them. The header is in clear exactly so that this needs no l
    destroyed key; this one is encrypted under the wrapping key too. Closing it needs the wrapping key rotated after each
    removal (re-wrap every live key, destroy the old wrapping key) or keys kept outside any backed-up storage. Not built.
 2. **Unsealed protected databases.** Their protected values stay in clear in Datomic's segments (masking only); the
-   option needs a sealed database and refuses otherwise (a derived write from a protected world on an unsealed database
-   fails rather than store clear derived content).
+   option needs a sealed database: its seal route refuses otherwise, so its derived writers fail rather than store
+   clear derived content.
 3. **Copies outside the store** (3.7).
+4. **(Added after the merge, section 11.2.) A copy a caller writes in clear, or seals naming fewer assertions than it
+   read.** The gateway cannot tell a clear copy of a protected value from any other string without looking it up by
+   value, which the store never does; the option relies on its writers sealing, and naming every row they read.
 
 ### 3.9 Kinds of copy and the means chosen, one by one
 
@@ -456,7 +461,10 @@ the journal entries, feed entries, native data, backups and any copy made from t
    after a restart), and the published removal decides meanwhile (gate (e): restores).
 3. This holds whatever the derived write's ticket named (the second review's E6 is closed for sealed copies: the key
    follows the rows the derivation read, not the accounts its ticket named), whenever the copy landed (before, during or
-   after the removal: DX-ACT9's in-flight deliveries are closed for content), and whichever process wrote it.
+   after the removal: DX-ACT9's in-flight deliveries are closed for content; a late cross-database delivery too,
+   section 11.3), and whichever process stored it, **provided the copy was sealed through the seal route naming every
+   row its derivation read** (corrected after the merge, section 11.2: a copy written in clear, or sealed naming fewer
+   assertions, is not reached).
 4. The notice stream goes on: a subject whose notices were computed from the removed value starts a new generation and
    is sent its current notices again from the masked data; every other subject and account continues byte for byte.
 
@@ -477,6 +485,10 @@ the journal entries, feed entries, native data, backups and any copy made from t
    anyone who can read the authority and the wrapping key.
 5. **The client's memory**: the clear content between evaluation and the seal call, and what a caller keeps after
    opening. Held readers' caches key on the removal sequence under the option (row 19).
+6. **(Added after the merge, section 11.2.) A copy a caller writes in clear or seals naming fewer assertions than it
+   read.** The second review's `e9`, run as written (a hand-made derived save holding the value in clear), stays red
+   with the option on; a copy of X sealed naming only Y's assertion survives X's removal. This option's own writers
+   (the recorder, the settlement archive, the receiver) seal, and take the names from the world they read.
 
 ## 8. The server run (written, not run)
 
@@ -539,3 +551,121 @@ not written yet (follow-up 4).
    removal's transaction ID in the SDK's form (it also fixes DX-ACT9's enrolment beside removals), the lazy account's
    walk accepting a removal, and a preview of unprotected staged rows on a sealed scope.
 6. **Should an unsealed protected scope exist outside tests?** No (section 1): refuse it in production configuration.
+
+## 11. After the merge of DX-ERA2's third pass, and the second review's E9 and E6 as gates (2026-11-24)
+
+The coordinator asked, after sections 1 to 10 were written: merge DX-ERA2's third version
+(`origin/exp/DX-ERA2-removal-per-account` `3edb9f5d9`, gateway code at `e921f3ef1`; intent before declaration, any
+gateway completes a pending removal, `RemovalLogBehind`), rerun the stored-function identities, place every step of this
+option on that version's stop points P0 to P7, make the second review's `e9` a gate that must turn green, say whether
+this design relies on callers naming what they read (E6) and gate the caller, and confirm or refute that a sealed copy
+makes the cross-database delivery window harmless.
+
+**The merge** (`1d01d02ab`). Three conflicts, all where DX-ACT9 had moved functions to late namespaces to keep the
+stored-function identities: the third pass's change to `request-cut` (the declared sequence checked, a typed
+`RemovalLogBehind` answer) went into `removal_erase.clj`, its change to `ensure-ticket!` (a tagged refusal that starts the
+removal's completion) into `removal_scope.clj`, and its `removal_commit.clj` was taken with DX-ACT9's three references to
+`removal-erase` restored. The review's `attack2.clj` E1b case was pointed at `removal-erase/selector-buckets` (moved by
+DX-ACT9); nothing else in it changed. This option needed no change for the new order: it adds no step to a removal.
+
+### 11.1 Every step of this option on the removal's stop points
+
+This option's steps are: **seal** (derivation time, the `derived-seal` route), **record** (the derived write that stores
+the sealed copy, an ordinary ticketed write), **open** (the `derived-open` route, any reader), the **removal's
+transaction ID** in the SDK's form (inside the removal's commit, P4 and P5), the **key's destruction** (DX-ERASE1's shred
+worker, after the publication), and the client's **re-recording** of a subject whose records open as removed (its next
+frame after the publication). Only the last two act after a removal; none adds state to the removal, so nothing new has
+to be completed when a gateway dies. The table follows DX-ERA2 15.2 (s is the removal's sequence); "checks" is
+`era4/races.clj` phase `checks`, in process on the merged head, sealed database, file authority, every option on.
+
+| # | Stopped after | Open a copy recorded before it | Seal the removed assertion again | The plain read of the value | A derived write of a copy it can reach | Who completes it, and what this option adds | Checks |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| P0 | the agreement check (nothing written) | the value | sealed | the value | accepted (no removal exists yet) | nothing to complete | argued (nothing is written) |
+| P1 | its intent (declaration not sent) | the value (the request uses the last published cut, TARGETS 7.1) | sealed: harmless, the copy is under the key the removal destroys | the value | 503 `ErasureFrontierUnavailable`, tagged; that refusal completed the removal | any gateway (DX-ERA2 15.2); the option adds nothing | stop before `declare!`: fired; after the acknowledgement every check below passed |
+| P2 | its declaration | the value | sealed | the value | 503, and it completed the removal | as P1 | stop after `declare!`: fired |
+| P3 | its subject guard | as P2 | as P2 | as P2 | as P2 | as P1 | **not reached**: a quiet removal commits at its first attempt and takes no guard (DX-ERA2's own gate stops there in process) |
+| P4 | a commit sent whose wait expired | not landed: as P2; landed: as P5 | as P2 | as P2 | as P2 | as P1; the removal's transaction ID is inside that commit, so a late landing carries it | stop before the commit's native transaction: fired, as P2 |
+| P5 | its commit | the value (the published cut does not hold it yet) | sealed | the value | 503, and it completed the removal | as P1 | stop after the commit: fired |
+| P6 | the intent rewritten to the committed entry | the value | sealed | the value | 503, and it completed the removal | as P1 | stop at the publication: fired |
+| P7 | its publication (answer not sent) | **removed** | **removed** | no value | 409 `ErasureFrontierChanged` (a ticket from before) | nothing; the resend answers 200 | ran to its answer: open and seal answered removed at once |
+| S | the key's destruction (after `TRIPLEX_ERASURE_SHRED_GRACE_MS`) | removed (the cut decides before, the missing key after) | removed | no value | as P7 | **every gateway's shred worker** (every 500 ms, from the published log; a restart starts from 0 and deletes again; gate (e) kills and restores a key); if no gateway runs, the key stays and the published cut alone keeps every route from opening a copy | key deleted within 5 s in every row (grace 0) |
+
+**One rule over the whole table, checked at every stop that fired:** while a removal is pending, a copy opens exactly
+when the plain read of the value still answers it (oracle held at P1, P2, P4, P5 and P6), so this option never answers
+more than the store already does; from the publication on, every copy opens as removed. After each row's
+acknowledgement: the copy's document, the journal and every native datom hold no clear value, the copy opens as removed,
+the assertion seals nothing, another subject's copy still opens, and the key is gone.
+
+### 11.2 What this design relies on: the caller seals, and names every row it read
+
+**Yes, it relies on the caller,** in two ways, and neither can be checked by the gateway without looking a protected
+value up by value, which the store never does:
+
+1. **The copy must go through the seal route.** A writer that saves a protected value in clear into a derived document
+   is not reached. The second review's `e9`, run as written with the option on (its copy is a hand-made derived save
+   holding the value in clear), stays red: section 11.5.
+2. **The seal must name every row its derivation read.** The gateway keeps the protected IDs among those the caller
+   names; it cannot know what the caller read. `e6s` (phase `checks`): a copy of X's value sealed naming only Y's
+   assertion **survives** X's removal, exactly as E6 shows for a ticket naming fewer accounts.
+
+**How the caller is gated.**
+
+- **By construction in this option's writers.** The three call sites of `seal` take their names from the world the
+  reader built, never from a list a caller writes: the settlement archive from `worldInputs(world)` (`archive.ts` 417),
+  the recorder from `outputInputs(items)` united with what the subject's earlier items named (`recorded.ts` 438-445),
+  the receiver from the names in the sealed records it received (`receiver.ts` 135-153). `worldInputs` throws for a world
+  whose rows were not noted, and `outputInputs` for an evaluation without its world, so a derived record cannot be
+  sealed from a world built outside `decision.ts`'s readers (unit tests 2 and 3).
+- **At run time, on W0's real writers (T1, gate b).** After the removal, every sealed record found anywhere (every
+  route, every client read, the native data of all four databases) is opened with the keys the store holds; a record
+  sealed under too few assertions would open to X's removed value and be found. Found: 0 (section 6.1, and 11.5 on the
+  merged head).
+- **Not gated:** a writer outside this option's three (a new derived writer, the non-held paths of row 22, a caller of
+  the gateway's save route). The rule for any new derived writer: it calls `seal` with the names `noteWorld` recorded,
+  and T1's scan covers it only once T1 drives it.
+
+### 11.3 The cross-database delivery window, with a sealed copy
+
+DX-ERA2 15.8: a delivery's recipient transaction prepared under the source's current ticket and submitted after the
+source's removal was acknowledged commits, and today its copy is readable in the recipient. **Confirmed open, and
+confirmed harmless for a sealed copy** (phase `checks`, `window`; the recipient transaction captured as its gateway
+prepared it and submitted straight to the recipient's Datomic after the source's acknowledgement and the key's
+deletion, which bypasses every gateway check):
+
+| Copy | Late transaction | Readable in the recipient (read route) | In the recipient's journal | Recipient datoms holding the value in clear | Opened through the source | Opened through the recipient |
+| --- | --- | --- | --- | --- | --- | --- |
+| clear (as today) | committed | **yes** | yes | 2 | — | — |
+| sealed (this option) | committed | **no** | no | **0** | `{removed: [its assertion], seq: 1}` | 409 `DerivedSealNeedsSealedScope` (only the source can open it) |
+
+So the window stays open for ordering (a copy can land after the acknowledgement), and a sealed copy makes it harmless
+for content: whenever it lands, it is ciphertext under a key that no longer exists. What still lands in clear is what
+every sealed record keeps in clear: the source database's name, the assertion IDs in its header, and the recipient
+document's own name (existence, section 7).
+
+### 11.4 E6 and E9 of the second review, as gates
+
+| Finding | As the review wrote it | With this option | Gate |
+| --- | --- | --- | --- |
+| E9: a derived copy recorded before a removal stays readable | `e9` (clear copy; unsealed and sealed scope) | **sealed scope, copy sealed through the route (`e9s`): green**: after the acknowledgement the copy is not in its document, its journal or any native datom, it opens as removed, the key is gone, another subject's copy still opens. **Unsealed scope:** the option refuses to seal (409), by design (section 1). **As written** (a clear hand-made copy): red with the option on too (11.2, item 1) | `e9s` in phase `checks`; `era3e9-on` in DX-ERA2's gate with the option on (11.5) |
+| E6: a ticket naming fewer accounts than its writer read | `e6` | the copy is sealed under the rows read, not the ticket: X's removal makes it unreadable (gate (e)'s cross-account write, every schedule) | gate (e) |
+| E6 for seals: a seal naming fewer assertions than read | (new here) | **survives**, as expected: the design relies on the caller (11.2) | `e6s`, observed |
+
+### 11.5 Gates on the merged head
+
+Every container ran the pinned runtime image `sha256:21a67288007d...` by ID (recorded per run). Source: the merge
+`1d01d02ab` and the phase `checks` commit `1b9d0e227` (in-process runs copy the gateway source at their start).
+
+| Gate | Result |
+| --- | --- |
+| (a) Stored-function identities (`act9/idents.sh`, seven writer settings), this head against the merge without this work (the merged tree with this branch's gateway changes reversed) | **60 of 60 equal in all seven settings**; that tree also equals `c2aa3d416` 60 of 60 (the third pass moved no identity) |
+| (a) Native log (`era2/gate.sh` phase `paired`, base `c2aa3d416` twice, this gateway options unset, the per-account option on and never moved) | **identical**: 653 and 698 datoms, `d4b11ca6...` and `5197942f...`, the same hashes as before the merge; every reply identical. With `TX2_DERIVED_SEAL=1` on the last arm: the same datom counts and replies; the log and read hashes differ (the removal's transaction ID, 5.1 item 2) |
+| (f) DX-ERA2's interleavings, every option on | database-wide 360 checks, per account 1,545, subject check 9,813: **0 failed**; frame race 40 per setting (20 `cas-failed`, 20 at the account fence); lock lost 20 of 20 (one 200, one 503) |
+| (f) The gateway's Clojure suites (base `c2aa3d416` off, this head off, this head with every option on) | 76 tests, 71,170 assertions passing in each; 1 error in each, the known `feed-test` `http-route` error, the same on the base |
+| (f) The first review's attacks and fuzzer (`era3/attack.clj`), every option on | 1,979 and 1,988 oracles, **0 violations** |
+| (f) The second review's cases E1 to E8 and its 400-schedule fuzzer (`era3/attack2.clj`), every option on, both settings | 2,785 and 2,785 oracles, **0 violations** (E7 and E7b, the log restored behind the data, included) |
+| (f) The second review's `e9` as written, every option on | **red, as expected** (2 violations: unsealed and sealed, the copy readable and in the journal; 4 and 2 native copies): its copy is a hand-made clear save, which no option can reach (11.2) |
+| **`e9s`**: the review's `e9` with the copy sealed as this option writes it | **green**: copy not readable after the acknowledgement, not in the journal, 0 native copies, opens as removed, key gone; another subject's copy opens; on an unsealed scope the seal route answers 409 |
+| `window`: DX-ERA2 15.8's late cross-database delivery | clear copy: committed late, **readable** in the recipient, in its journal, 2 native copies; sealed copy: committed late, **not readable**, 0 native copies in either database, opens through the source as removed |
+| `stops`: this option at P1 to P7 | 7 rows (P3 not reached); every stop that fired was completed by the refused derived write; after each acknowledgement 9 checks each passed (11.1) |
+| Phase `checks` in all | 135 oracles, **0 violations** |
+| (g) Cost phase (`races.clj` `cost`) | the removal wrote 1 identity, 1 position and 35 datoms with 0, 10, 100 and 1,000 sealed copies of its subject (time 39, 18, 19, 14 ms, diagnostic); opening every copy afterwards 0, 7, 11, 79 ms |
