@@ -6054,3 +6054,20 @@ Source: account-ticket builder, branch `exp/DX-ACT9-account-tickets` `c2aa3d416`
 - Server run written, not run.
 
 **Started** (thinker effort, design first): a removal reaching every derived copy (task file `OPUS-ERA4-removal-reaches-derived-copies.md`), beginning with an inventory from code and a failing test that puts a protected value into a notice.
+
+## 2026-11-24 19:55 EST: adversarial review of Publish and settlement: the narrowed guards held; the many-accounts path around them did not
+
+Source: independent reviewer, branch `exp/DX-ACT10-publish-review` `a1163648e`, review `lab/experiments/EXP-DX1/act10/REVIEW.md`, its own in-memory harness, fuzzer, 16 tests and a stack part (private image built from its checkout). Reviewed: `exp/DX-ACT8-publish-beside-saves` `2e7ae66c4`. The reviewer changed no code under review.
+
+**Held:** the account guard on a Publish and the progress guard on settlement frames. 20,000 mixed randomized schedules, 0 violations of stored changes, notices, ledgers or reads (44,106 acknowledged Publishes; 18,873 saves committed between a Publish's read and its record; 4,715 schedules with racing Publishes; two or three settling processes; 6,754 kills and lost replies; 1,989,343 notices and 271,246 ledger reads checked). 2,880 reads pinned at q - 1, q and q + 1: 0 differences. Both negative controls caught. Ledger in parts at 200, 500 and 1,000 owed forms: 550 schedules, 305,356 ledger reads, 0 half-old half-new. The builder's oracle is independent; no pause or drain in the unpaused mode.
+
+**Broke (certain; each reproduced on a real stack):**
+- F1, high, pre-existing and already on the one branch: joined command IDs are looked up across the whole database. Two accounts publishing with the same command ID and document: the second gets the first's receipt (same position, same transaction) and nothing is written for it. No gate saw it because every lab caller puts the account in the ID.
+- F2, high: with definitions by reference the definitions command ID is the same in every account, so a second account storing the same definitions is refused and can never publish by reference again while its current release matches another account's (in the lab, everyone's first release).
+- F3, medium, pre-existing: a release needing more than 10 ledger parts is acknowledged; its notices fail and every later release's notices in that account are never recorded.
+- F4, medium, caused by the narrowing: a settlement frame can commit after a pause is durable (0 under the head rule, 1 to 5 under progress).
+- F5 low (a superseded release can end marked stored), F6 low (a rival enrolment is refused, not recovered), F7 harness (the builder's adversarial writes covered only the subject's own facts).
+
+Recommendation: merge with named fixes; fix F1 and F2 before a second account publishes in the one database. Not tested by the review: removal on request; group commit; restarts on a stack; ledgers in parts on a stack.
+
+**Actions:** the Publish builder resumed to reproduce and fix F1 to F6 with the reviewer's tests as standing gates, and to search for every other record found by a key that does not contain the account (this class produced two of the three serious findings). The evening merge told to mark on the readiness page: more than one publishing account is not safe until F1 is fixed unless command IDs contain the account; definitions by reference for one publishing account only; the parts cap and the late pause.
