@@ -123,12 +123,14 @@
           (x/oracle! label (not (str/includes? txt vx)) "a pinned read holds no clear copy of the removed value" {:doc (:doc w)})
           (doseq [wire (re-seq #"tdx1\.[A-Za-z0-9_.-]+" txt)]
             (x/oracle! label (contains? (second (open! src wire)) "removed") "what a pinned reader read cannot be opened" {:doc (:doc w)}))))
-      ;; (5) the key is deleted; a key restored from a copy taken before the removal is deleted again
-      (when x-id
+      ;; (5) the key is deleted; a key restored from a copy taken before the removal is deleted again. [DX-ERA4, after
+      ;; DX-ERA2's fourth pass] Only a schedule that restores the key waits for the shred worker here; every other
+      ;; schedule's key is checked at its block's end (`fuzz`), so a schedule no longer waits up to 500 ms for the worker
+      (when (if x-id (if restore? backup false) false)
         (let [gone? (fn [] (loop [n 0] (cond (not (privacy/exists? (key-file src x-id))) true (> n 50) false
                                               :else (do (Thread/sleep 100) (recur (inc n))))))]
           (x/oracle! label (gone?) "the removed assertion's key is deleted within 5 s" {:id x-id})
-          (when (and restore? backup)
+          (do
             ;; a restart: wait until the worker has recorded this removal as shredded (resetting its progress while it
             ;; sits between the delete and that record would let it record the removal after the reset, which no real
             ;; restart can do: a new process starts from 0), then the key comes back and the worker starts from 0
@@ -140,7 +142,7 @@
             (x/oracle! label (gone?) "a restored key is deleted again by the restarted worker" {:id x-id})
             (bump! :restore)))))
     (bump! :schedules)
-    {:gone {vx #{sx}} :derived {} :derived-txs #{} :delivered #{}}))
+    {:gone {vx #{sx}} :derived {} :derived-txs #{} :delivered #{} :keys (if (if ok on? false) (if x-id [x-id] []) [])}))
 
 (defn- native-clear
   "Every native datom (history included) whose string holds one of `values` in clear: an exact scan (era2/gate.clj's
@@ -164,7 +166,16 @@
                                           (reset! x/plan nil)
                                           (x/oracle! (str "E4 " arm " " i) false (str "schedule stopped: " (.getMessage e)))
                                           nil))))
-                    gone (apply merge-with into {} (keep :gone results))]
+                    gone (apply merge-with into {} (keep :gone results))
+                    ;; (5) every removed assertion's key of the block is deleted, within 5 s of the block's end
+                    keys-x (vec (mapcat :keys (remove nil? results)))
+                    deadline (+ (System/currentTimeMillis) 5000)
+                    _ (loop [] (when (if (some #(privacy/exists? (key-file src %)) keys-x) (< (System/currentTimeMillis) deadline) false)
+                                 (Thread/sleep 100) (recur)))
+                    left (filterv #(privacy/exists? (key-file src %)) keys-x)]
+                (bump! :keys-checked (count keys-x))
+                (x/oracle! (str "E4 block " kb) (empty? left)
+                           "every removed assertion's key of the block is deleted within 5 s of its end" {:left (count left)})
                 ;; (6) strict: no derived copy is allowed, before or after the removal's position
                 (x/block-checks! src conn (str "E4 block " kb) gone {} #{})
                 (doseq [[label c] [["source" conn] ["recipient" rconn]]]
@@ -354,15 +365,15 @@
 
 (def stop-points
   "DX-ERA2 REMOVAL-PER-ACCOUNT.md 15.2: the stop after which the removal is left (nil: it runs to its answer)."
-  [["P1" :before-declare] ["P2" :after-declare] ["P3" :after-guard] ["P4-not-landed" :before-native] ["P5" :after-native]
-   ["P6" :at-publish] ["P7" nil]])
+  [["P1" :before-declare] ["P2" :after-declare] ["P3" :after-guard :after-declare] ["P4-not-landed" :before-native]
+   ["P5" :after-native] ["P6" :at-publish] ["P7" nil]])
 
 (defn stop-checks
   "At each stop point of DX-ERA2's third pass: what this option's routes answer while the removal is left there (open a
   copy recorded before it, seal its assertion again, the plain read of the value itself, a derived write of a new
   sealed copy), who completes it, and, after the acknowledgement, that every copy is unreadable and the key is gone."
   []
-  (doseq [[p stop] stop-points]
+  (doseq [[p stop pre] stop-points]
     (g/fresh-scope true
       (fn [src conn]
         (let [lbl (str "stop " p)
@@ -371,6 +382,10 @@
               t (g/seq-now src conn)
               w0 (offers/send src (derived-copy src (str "st-w0-" p) "notice:v1:st-x" cx t))
               cmd (str "st-rm-" p) sel [{"entityId" g/a1 "attribute" ":v"}]
+              ;; P3 (the subject guard) is reached only by a resumed removal: since DX-ERA2's fourth pass (M3) a removal
+              ;; resumed after a stop takes its subject guard before its first commit attempt; so the removal is first
+              ;; stopped after its declaration, then resent and stopped right after the guard
+              pre-reply (when pre (reset! x/plan {:stop pre :stops-left 1}) (x/erase! src cmd sel))
               _ (reset! x/plan (when stop {:stop stop :stops-left 1}))
               first-reply (x/erase! src cmd sel)
               fired (and stop (zero? (long (:stops-left @x/plan 1))))
@@ -391,7 +406,7 @@
                      :journal-has-value (str/includes? (journal-text src) vx)
                      :native-clear (count (native-clear conn [vx]))
                      :kept-opens (= (str "derived:" vy) (get (second (open! src cy)) "value"))}
-              row {:p p :stop stop :stop-fired (boolean fired) :first (offers/outcome first-reply) :pending-at-stop pending-at-stop
+              row {:p p :stop stop :pre (some-> pre-reply offers/outcome) :boundary (if rc/commit-boundary :commit :log) :stop-fired (boolean fired) :first (offers/outcome first-reply) :pending-at-stop pending-at-stop
                    :at-stop at-stop :derived-write-at-stop (offers/outcome w1) :completed-by-that-refusal (and pending-at-stop (not pending-after-w1))
                    :final (offers/outcome final) :key-gone gone :after (update after :open-copy #(if (contains? % "removed") :removed %))
                    :seal-again-after (if (contains? (:seal-again after) "removed") :removed (:seal-again after))}]
@@ -410,9 +425,12 @@
           ;; before the publication (TARGETS 7.1); recorded in the table. After the third review (M1) a copy opens as
           ;; removed from the removal's native commit, before the plain read stops answering at the publication: a
           ;; copy never opens where the plain read no longer answers the value
+          ;; Since DX-ERA2's fourth pass the plain read stops answering at the native commit too (the commit boundary
+          ;; masks from the commit; on the log's boundary a read that finds the removal committed publishes it first),
+          ;; so the check is two-sided again: a copy opens exactly while the plain read answers the value
           (when pending-at-stop
-            (x/oracle! lbl (if (= :value (second (:open-copy at-stop))) (:plain-read-has-value at-stop) true)
-                       "while pending, a copy opens only while the plain read still answers the value" row)))))))
+            (x/oracle! lbl (= (= :value (second (:open-copy at-stop))) (:plain-read-has-value at-stop))
+                       "while pending, a copy opens exactly while the plain read answers the value" row)))))))
 
 (defn- copy-dir!
   "era3/attack2.clj's: replace the files of `to` by those of `from` (one flat directory: the file authority's scope)."
@@ -477,13 +495,70 @@
         (x/oracle! lbl (= (str "derived:" vy) (get kept "value")) "another subject's copy still opens" detail)
         (x/oracle! lbl (contains? opened-after "removed") "after the next derived write the copy still opens as removed" detail)))))
 
+(defn log-states
+  "DX-ERA2's fourth pass (`removal-log-rebuild`), for this option's routes: the file authority's directory (the removal
+  log and the key files) put back to a copy taken BEFORE the removal, after it was acknowledged and its key deleted (the
+  log behind the data, X's key back); the rebuild route; then the directory emptied (the log and every key file
+  missing); the rebuild route with the policy. The gateway's verified-head memory is cleared at each step, as by a
+  restart. In no state may a copy of X's value open or X's assertion seal anything."
+  []
+  (g/fresh-scope true
+    (fn [src conn]
+      (let [lbl (str "log states " (if rc/commit-boundary "commit" "log"))
+            sel [{"entityId" g/a1 "attribute" ":v"}]
+            [vx ids-x] (seed-x! src "ls-x" g/a1 "ls") [vy ids-y] (seed-x! src "ls-y" g/b1 "ls")
+            cx (seal! src ids-x (str "derived:" vx)) cy (seal! src ids-y (str "derived:" vy))
+            dir (.getParent (privacy/path src "head.json"))
+            snap (java.nio.file.Paths/get "/tmp" (into-array String [(str "era4-ls-" (java.util.UUID/randomUUID))]))
+            _ (copy-dir! dir snap)
+            done (x/erase! src "ls-rm" sel)
+            gone (key-gone? src ids-x)
+            word (fn [o] (cond (contains? o "removed") :removed (contains? o "value") :VALUE (contains? o "sealed") :SEALED
+                               :else (get o "code" (pr-str o))))
+            probe (fn []
+                    (let [o (offers/route src "v2" "derived-open" {"items" [cx]})
+                          sx (offers/route src "v2" "derived-seal" {"items" [{"ids" ids-x "value" "probe"}]})
+                          oy (offers/route src "v2" "derived-open" {"items" [cy]})
+                          r (offers/route src "v1" "read" {"entityIds" [g/a1]})
+                          one (fn [rep] [(:status rep) (if (= 200 (:status rep)) (word (first (get-in rep [:body "items"]))) (get-in rep [:body "code"]))])]
+                      {:open-x (one o) :seal-x (one sx) :open-y (one oy)
+                       :plain-read [(:status r) (if (= 200 (:status r)) (str/includes? (g/text (:body r)) vx) (get-in r [:body "code"]))]}))
+            _ (copy-dir! snap dir)
+            _ (reset! privacy/cache {})
+            key-back (boolean (some #(privacy/exists? (key-file src %)) ids-x))
+            behind (probe)
+            rebuild-behind (offers/route src "v2" "removal-log-rebuild" {})
+            after-behind (probe)
+            key-after-rebuild (boolean (some #(privacy/exists? (key-file src %)) ids-x))
+            _ (with-open [st (Files/list dir)] (doseq [q (iterator-seq (.iterator st))] (Files/delete q)))
+            _ (reset! privacy/cache {})
+            missing (probe)
+            rebuild-missing (offers/route src "v2" "removal-log-rebuild" {"attributes" [":v"] "sealed" true})
+            after-missing (probe)
+            states {:acknowledged (offers/outcome done) :key-gone gone :key-back-with-the-copy key-back
+                    :behind behind :rebuild-behind [(:status rebuild-behind) (:body rebuild-behind)] :after-rebuild-behind after-behind
+                    :restored-key-still-there-after-rebuild key-after-rebuild
+                    :missing missing :rebuild-missing [(:status rebuild-missing) (:body rebuild-missing)] :after-rebuild-missing after-missing}]
+        (println "ERA4_LOGSTATES" (if rc/commit-boundary "commit" "log") (pr-str states))
+        (bump! :log-states (if rc/commit-boundary :commit :log) :restored-key (if key-after-rebuild :kept :deleted))
+        (x/oracle! lbl (= 200 (:status done)) "the removal is acknowledged" states)
+        (x/oracle! lbl gone "its key is deleted" states)
+        (doseq [[k st] (select-keys states [:behind :after-rebuild-behind :missing :after-rebuild-missing])]
+          (x/oracle! lbl (not= :VALUE (second (:open-x st))) "no log state opens a copy of the removed value" {:state k :probe st})
+          (x/oracle! lbl (not= :SEALED (second (:seal-x st))) "no log state lets the removed assertion seal" {:state k :probe st}))
+        (x/oracle! lbl (= 200 (:status rebuild-behind)) "the rebuild route catches up a log behind the data" states)
+        (x/oracle! lbl (= [200 :removed] (:open-x after-behind)) "after that rebuild the copy opens as removed" states)
+        (x/oracle! lbl (= [200 :VALUE] (:open-y after-behind)) "after that rebuild another subject's copy opens" states)
+        (x/oracle! lbl (= 200 (:status rebuild-missing)) "the rebuild route writes a missing log from the policy" states)
+        (x/oracle! lbl (= [200 :removed] (:open-x after-missing)) "after a missing log is rebuilt the copy opens as removed" states)))))
+
 (defn main []
   (x/install-hooks!)
   (install-declare-hooks!)
   (envelope/start!)
   (case (System/getenv "ERA4_PHASE")
     "cost" (cost)
-    "checks" (do (e9s) (e6s) (window) (stop-checks) (m1))
+    "checks" (do (e9s) (e6s) (window) (stop-checks) (m1) (log-states))
     (fuzz (or (System/getenv "ERA4_RUN") "e0") (Long/parseLong (or (System/getenv "ERA4_N") "200"))
           (Long/parseLong (or (System/getenv "ERA4_BLOCK") "50")) (Long/parseLong (or (System/getenv "ERA4_SEED") "1"))))
   (println "ERA4_TALLY" arm (pr-str (into (sorted-map) (map (fn [[kk v]] [(pr-str kk) v])) @tally)))

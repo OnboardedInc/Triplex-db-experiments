@@ -57,9 +57,10 @@ for i in $(seq 1 240); do
 done
 [[ $(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$port/health") == 200 ]] || { echo "run.sh: gateway did not start" >&2; exit 4; }
 cd "$repo"
-env "${client[@]}" ERA4_ARM="$arm" ERA4_SEALED="${ERA4_SEALED:-1}" node --no-warnings --experimental-transform-types \
-  lab/experiments/EXP-DX1/era4/derived.ts "$out" "$out/run.out" > "$out/derived.log" 2>&1
+# ERA4_SCRIPT=held.ts: the held reader across a removal paused after its commit (inventory row 19), instead of T1.
+env "${client[@]}" ERA4_ARM="$arm" ERA4_SEALED="${ERA4_SEALED:-1}" ERA4_CONTAINER="$name" node --no-warnings \
+  --experimental-transform-types lab/experiments/EXP-DX1/era4/"${ERA4_SCRIPT:-derived.ts}" "$out" "$out/run.out" > "$out/derived.log" 2>&1
 status=$?
 echo "$(( $(date +%s) - started ))" > "$out/seconds"
-grep -E '^\{"kind":"(scan|verdict|stream|chain|cost|error)' "$out/derived.log" | cut -c1-1200 | tail -60
+grep -E '^\{"kind":"(scan|verdict|stream|chain|cost|error|held)' "$out/derived.log" | cut -c1-1200 | tail -60
 exit "$status"

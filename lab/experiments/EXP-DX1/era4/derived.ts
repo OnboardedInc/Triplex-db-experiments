@@ -79,6 +79,9 @@ async function account(scope: string, people: { id: string; expires: string }[])
   const store = await openStore(scope);
   const db = dbOf(store);
   await peer.declareProtection(db, PROTECTED, SEALED);
+  // [DX-ERA4] ERA4_MOVE=1 (with TX2_REMOVAL_PER_ACCOUNT=1 on the gateway): the source database guarded per account, so the
+  // removal runs DX-ERA2's per-account path (and TX2_REMOVAL_COMMIT_BOUNDARY applies). Unset: database-wide, as before.
+  if (process.env.ERA4_MOVE === "1") await peer.request("POST", `/v2/db/${db}/removal-per-account`, {});
   const a = new JoinedAccount(store);
   const ids = people.map((p) => p.id);
   await store.input("era4-seed", { kind: "baseline", at: valid }, [

@@ -117,7 +117,15 @@ export class LazyReader {
       : readErasure(this.store.comp, this.removalAccount);
   }
   private stamp(f: Awaited<ReturnType<typeof readErasure>>) {
-    return this.removalAccount === undefined ? f?.seq : fingerprint(f as AccountFrontier | undefined);
+    const base = this.removalAccount === undefined ? f?.seq : fingerprint(f as AccountFrontier | undefined);
+    // [DX-ERA4] TX2_DERIVED_SEAL=1: the key also holds the removed identities. With TX2_REMOVAL_COMMIT_BOUNDARY=1 a
+    // removal takes effect for reads at its commit in Datomic while the frontier keeps the log's sequence until the
+    // publication, so a key on the sequence alone served an answer computed before the commit, removed value included,
+    // to a read pinned before it (era4/held.ts; era4/DERIVED-COPIES.md 11.9). The removed set only grows, and the cache
+    // is cleared whenever this stamp changes.
+    if (!derivedSealOn() || !f) return base;
+    const removed = Object.keys((f as { erased?: Record<string, unknown> }).erased ?? {}).sort();
+    return `${base}|${removed.length}|${sha256(removed.join("\n")).slice(0, 16)}`;
   }
   constructor(
     store: Store,
