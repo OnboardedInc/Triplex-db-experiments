@@ -101,7 +101,8 @@
                              (cond (not (key-present? name "b2-r2" iz)) true
                                    (>= (now) limit) false
                                    :else (do (Thread/sleep 250) (recur))))))
-            resent (when (and (not= stop :control) (nil? gone-at)) (offers/outcome (erase name "b2-r2" z)))
+            ;; [review F7] the pending removal is resent in every run, so its completion after the deletion shows too
+            resent (when (not= stop :control) (offers/outcome (erase name "b2-r2" z)))
             gone-after (or gone-at
                            (let [limit (+ (now) 10000)]
                              (loop [] (shred-now!)
@@ -117,6 +118,9 @@
                  :worker-completes worker? :r2-key-deleted-by-the-worker z-key-gone}]
         (println "ERA2_B2" (pr-str [label (assoc row :authority (if (System/getenv "TRIPLEX_ERASURE_JDBC") "postgresql" "file"))]))
         (check! label (some? gone-at) "a published removal's key is deleted within its grace + the hold, whatever else is pending" row)
+        (when (not= stop :control)
+          (check! label (= [200 nil] resent) "the pending removal, resent, completes" row)
+          (check! label (nil? (privacy/pending name)) "nothing pending after the resend" row))
         (when (and worker? (not= stop :control))
           (check! label (nil? (privacy/pending name)) "the worker completed the removal left pending" row)
           (check! label (true? z-key-gone) "the worker's completion published it and its key went after its grace" row))))))

@@ -220,6 +220,9 @@
     (if sql/url
       (sql/publish! name record payload (:wire current) head)
       (do
+        ;; [DX-ERA2 sixth pass, F3 of the B2 review] the head on disk must still be the one this publication read (the
+        ;; PostgreSQL branch compares in its statement): a writer whose lock did not hold cannot move it back
+        (when-not (= (:wire current) (record-text name "head.json")) (unavailable!))
         (when-not previous (save-record! name record payload))
         (save-record! name "head.json" head)
         (remove-record! name "pending.json")))))

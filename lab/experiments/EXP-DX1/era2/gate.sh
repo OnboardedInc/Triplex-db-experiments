@@ -24,7 +24,7 @@ cp "$repo/packages/datomic/src/codec-spec.json" "$out/this/codec-spec.json"
 git -C "$repo" archive "$base" packages/datomic/gateway/src packages/datomic/src/codec-spec.json | tar -x -C "$out/base"
 mv "$out/base/packages/datomic/gateway/src" "$out/base/src"; cp "$out/base/packages/datomic/src/codec-spec.json" "$out/base/codec-spec.json"
 rm -rf "$out/base/packages"; echo "$base" > "$out/base/commit"
-cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era2/paired.clj" "$x/era3/attack.clj" "$x/era3/attack2.clj" "$x/era3/attack3.clj" "$x/era3/attack4.clj" "$out/lab/"
+cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era2/paired.clj" "$x/era3/attack.clj" "$x/era3/attack2.clj" "$x/era3/attack3.clj" "$x/era3/attack4.clj" "$x/era3/attack5.clj" "$x/era2/lines.clj" "$out/lab/"
 image=${DX_ERA2_IMAGE_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
 [[ $image =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "gate.sh: DX_ERA2_IMAGE_ID must be an image ID" >&2; exit 2; }
 [[ $(docker image inspect --format '{{.Id}}' "$image") == "$image" ]] || { echo "gate.sh: image $image not present" >&2; exit 2; }
@@ -61,8 +61,17 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
   # database-wide: the Q cases are per-account only and fuzz4 drives per-account completion (the reviewer ran it on the
   # per-account modes only), so this arm is R2-2
   [[ $name == era3d-off ]] && env+=(-e "ERA3_PHASES=r22")
+  # [DX-ERA2 sixth pass] the fifth review's cases and fuzzer (era3/attack5.clj, era3/REVIEW-5.md); the boundary is the
+  # database's own (moved through its route); database-wide runs Z7 only (the rest needs a database guarded per account)
+  [[ $name == era3e-* ]] && env+=(-e "ERA3_PHASES=${ERA3E_PHASES:-w1 w2 w3 w5 p1 p2 c1 z s t fuzz5}" -e "ERA3_N=${ERA3E_N:-400}"
+                                  -e "ERA3_BLOCK=${ERA3E_BLOCK:-200}" -e "ERA3_SEED=${ERA3E_SEED:-17}" -e "ERA3_RUN=gate5"
+                                  -e TRIPLEX_ERASURE_SHRED_GRACE_MS=0)
+  [[ $name == era3e-off ]] && env+=(-e "ERA3_PHASES=z")
+  [[ $name == era3e-on ]] && env+=(-e ERA3_BOUNDARY=log)
+  [[ $name == era3e-subject ]] && env+=(-e ERA3_BOUNDARY=commit)
+  [[ $name == era3e-move ]] && env+=(-e ERA3_BOUNDARY=move -e "ERA3_PHASES=fuzz5")
   mkdir -p "$out/$name.out"
-  docker run --rm --pull never --name "tx2-dxera2-gate-$$-$name" --memory 3g --cpus 2 -v "$out/$name.out:/out" \
+  docker run --rm --pull never --label tx2.holder=DX-ERA2 --name "tx2-dxera2-gate-$$-$name" --memory 3g --cpus 2 -v "$out/$name.out:/out" \
     -v "$out/$source/src:/opt/gateway/src:ro" -v "$out/$source/codec-spec.json:/opt/spec/codec-spec.json:ro" \
     -v "$out/lab:/lab:ro" -v "$out/$name.clj:/opt/run.clj:ro" "${env[@]}" --entrypoint /bin/bash "$image" -c \
     'cd /opt/datomic && java -Xmx2g -Ddatomic.objectCacheMax=256m -Ddatomic.memoryIndexMax=256m -Dtriplex.codec.spec=/opt/spec/codec-spec.json -cp "$(DATOMIC_EXT_CLASSPATH=/opt/gateway/src bin/classpath)" clojure.main /opt/run.clj' \
@@ -71,9 +80,10 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
   grep -E "ERA2_|ERA3_SUMMARY|ERA3_VIOLATION|SUITES|FAIL|ERROR in|Exception" "$out/$name.log" | cut -c1-2000 | head -40
   # the review's attacks report violations in their summary line and exit 0
   # E9 (copies recorded before a removal) is a known unmet requirement owned by another builder: reported, not counted
-  if [[ $name == era3-* || $name == era3b-* || $name == era3c-* || $name == era3d-* ]] && ! grep -q 'ERA3_SUMMARY.*:violations 0,' "$out/$name.log"; then status=1; fi
+  if [[ $name == era3-* || $name == era3b-* || $name == era3c-* || $name == era3d-* || $name == era3e-* ]] && ! grep -q 'ERA3_SUMMARY.*:violations 0,' "$out/$name.log"; then status=1; fi
+  if [[ $name == lines-* ]] && ! grep -q '^B2_LINES_SUMMARY {:checks 10, :failed 0}' "$out/$name.log"; then status=1; fi
 }
-phases=${ERA2_GATE_PHASES:-paired gate era3 suites b2}
+phases=${ERA2_GATE_PHASES:-paired gate era3 suites b2 lines b2r}
 paired='(load-file "/lab/regression.clj") (load-file "/lab/paired.clj") (era2-paired/main)'
 if [[ $phases == *paired* ]]; then
   run paired-base base off "$paired"; run paired-base2 base off "$paired"
@@ -97,6 +107,21 @@ if [[ $phases == *era3* ]]; then
   attack4='(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (era3-attack4/main)'
   run era3d-off this off "$attack4"; run era3d-on this on "$attack4"; run era3d-subject this subject "$attack4"
   run era3d-q910-on this on "$attack4"
+  # [DX-ERA2 sixth pass] the fifth review (attack5.clj): every case on both boundaries in each per-account mode, fuzz5
+  # on the log's boundary (on), the commit boundary (subject) and across the move (on); Z7 on database-wide
+  attack5='(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (era3-attack5/main)'
+  run era3e-off this off "$attack5"; run era3e-on this on "$attack5"; run era3e-subject this subject "$attack5"
+  run era3e-move this on "$attack5"
+fi
+# [DX-ERA2 sixth pass] the failure lines (the standalone branch's lines.clj: F5 and F9 on failures.clj itself)
+if [[ $phases == *lines* ]]; then run lines-this this off '(load-file "/lab/lines.clj") (b2-lines/main)'; fi
+# [DX-ERA2 sixth pass] the B2 review's scenarios (b2r/scenarios.clj: S1, S2a, S2b, S3; S3 fails on key bytes, a
+# protected value, a subject ID or a scope word in any failure line) on the file and the PostgreSQL authority
+if [[ $phases == *b2r* ]]; then
+  for authority in file pg; do
+    bash "$x/b2r/run.sh" "$out/b2r-$authority" worktree "$authority" scenarios.clj '(b2r-scenarios/main)' > "$out/b2r-$authority.log" 2>&1 || status=1
+    grep -hE "^B2R_SCEN_SUMMARY|^B2R_SCEN FAIL" "$out/b2r-$authority/run.log" 2>/dev/null | cut -c1-300 | head -8
+  done
 fi
 suites="triplex.gateway.selftest triplex.gateway.group-test triplex.gateway.ids-test triplex.gateway.feed-test triplex.gateway.pinned-test triplex.gateway.recent-test triplex.gateway.cache-key-test triplex.gateway.commit-order-test triplex.gateway.sweep-gates-test triplex.gateway.trace-test"
 # [DX-ERA2 fifth pass] the suites gate on matching the base's counts (the base has one known error, http-route), not on
@@ -138,9 +163,10 @@ def r22(r): return int(dict(re.findall(r':([a-z0-9-]+) ("[^"]*"|[0-9]+|true|fals
 keys = {arm: [key(r) for r in v] for arm, v in by.items()}
 same2 = len(keys.get("base", [])) == 2 and all(keys.get(a) == keys["base"] for a in ["base2", "off", "on", "commit"])
 counts = {arm: [r22(r) for r in v] for arm, v in by.items()}
-expect = all(counts.get(a) == [0, 0] for a in ["base", "base2"]) and all(counts.get(a) == [11, 11] for a in ["off", "on", "commit"])
+# [DX-ERA2 sixth pass, V4] a declined save that says nothing about when it was framed writes nothing: 0 on every arm
+expect = all(counts.get(a) == [0, 0] for a in ["base", "base2", "off", "on", "commit"])
 print("ERA2_PAIRED_LOGS_WITHOUT_R22", "identical" if same2 else "DIFFERENT", "r22 datoms", counts, "as expected" if expect else "UNEXPECTED")
-sys.exit(0 if (same2 and expect) else 1)
+sys.exit(0 if (same and same2 and expect) else 1)
 PY
 for arm in base base2 off on commit; do grep -h "^ERA2_PAIRED_REPLIES" "$out/paired-$arm.log" | md5 | sed "s/^/replies $arm /"; done
 fi

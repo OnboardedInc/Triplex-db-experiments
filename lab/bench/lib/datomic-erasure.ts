@@ -20,15 +20,15 @@ export async function readErasure(source: Partial<ErasureSource>, account?: stri
   const client = new DatomicClient(source.backend.url);
   try {
     const db = "s2-" + Buffer.from(scope).toString("base64url");
-    // [DX-ERA4, second review N6] stampOnly: the gateway leaves the removed set out (?stamp=1)
+    // [DX-ERA4, second review N6] stampOnly: the gateway leaves the removed set out (?stampOnly=1, DX-ERA2 sixth pass V3)
     const cut = account === undefined
       ? stampOnly
-        ? await client.request<Awaited<ReturnType<DatomicClient["erasureFrontier"]>>>("GET", `/v2/db/${db}/erasure-frontier?stamp=1`)
+        ? await client.request<Awaited<ReturnType<DatomicClient["erasureFrontier"]>>>("GET", `/v2/db/${db}/erasure-frontier?stampOnly=1`)
         : await client.erasureFrontier(db)
       : await client.request<Awaited<ReturnType<DatomicClient["erasureFrontier"]>> & {
           perAccount?: boolean; accountSeq?: number; unscopedSeq?: number;
         }>("GET", `/v2/db/${db}/erasure-frontier?account=${encodeURIComponent(account)}` +
-          (since === undefined ? "" : "&since=" + String(since)) + (stampOnly ? "&stamp=1" : ""));
+          (since === undefined ? "" : "&since=" + String(since)) + (stampOnly ? "&stampOnly=1" : ""));
     if (cut.protected) return cut;
   } finally {
     client.close();

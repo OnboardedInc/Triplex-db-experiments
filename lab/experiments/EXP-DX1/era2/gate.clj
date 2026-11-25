@@ -11,7 +11,8 @@
             [triplex.gateway.removal-scope :as rs] [triplex.gateway.storage :as storage]
             [triplex.gateway.subject-save :as subject] [triplex.gateway.group :as group]
             [triplex.gateway.write-policy :as policy] [triplex.gateway.selftest :as selftest]
-            [triplex.gateway.main :as main] [triplex.gateway.removal-commit :as rc] [wfix1-regression :as offers])
+            [triplex.gateway.main :as main] [triplex.gateway.removal-commit :as rc] [triplex.gateway.envelope :as envelope]
+            [wfix1-regression :as offers])
   (:import [java.util UUID]))
 
 (def per-account? rs/enabled)
@@ -1237,7 +1238,8 @@
                                [@m r]))
               again (with-redefs [rc/may-turn-on true] (turn))
               back (offers/route name "v2" "removal-per-account" {"back" true})
-              resent (offers/send name (frame "bt-held-2" b1 (secret b1 "held2") (:id (seeds b1)) (head conn)))
+              ;; [DX-ERA2 sixth pass] the held save was stored (V9), so the next save of b1 retires its value
+              resent (offers/send name (frame "bt-held-2" b1 (secret b1 "held2") (if (= 200 (:status late)) "bt-held" (:id (seeds b1))) (head conn)))
               read-a1 (offers/route name "v1" "read" {"entityIds" [a1]})]
           (expect (str label ": a process without permission") refused-without [403 "RemovalBoundaryNotPermitted"])
           (check! label (not= 200 (:status stopped)) "the removal stopped after its commit" (offers/outcome stopped))
@@ -1246,7 +1248,8 @@
           (check! label (nil? (privacy/pending name)) "the pending removal was completed before the move" (privacy/pending name))
           (check! label (= 1 (seq-now name conn)) "published as sequence 1" (seq-now name conn))
           (check! label (rc/commit-boundary? (d/db conn)) "the database now removes at the commit" nil)
-          (expect (str label ": a save planned before the move, committed after it") late [409 "CasConflict"])
+          ;; [DX-ERA2 sixth pass, V9] the gateway plans it once more (was 409 CasConflict, replayed by the client)
+          (expect (str label ": a save planned before the move, committed after it") late [200 nil])
           (check! label (= [200 false] [(:status again) (get-in again [:body "changed"])]) "moving again changes nothing" (:body again))
           (expect (str label ": moving back") back [409 "RemovalBoundaryOneWay"])
           (expect (str label ": the save sent again") resent [200 nil])
@@ -1521,6 +1524,553 @@
             (expect (str label ": no source, the late frame (Z7)") late-y [409 "ErasureReplayDeclined"])
             (expect (str label ": no source, removalSeen after the removal (case 3, allowed)") fresh-y [200 nil])))))))
 
+;; ==== [DX-ERA2 sixth pass] the fifth review (era3/REVIEW-5.md) and the B2 review's base faults ====================
+(defn- raw-route
+  "A request through the gateway's own handler, with its headers."
+  [name version action input]
+  (let [{:keys [status body headers]}
+        (main/route-handler {:request-method (if (nil? input) :get :post) :uri (str "/" version "/db/" name "/" action)
+                             :body (when input (java.io.ByteArrayInputStream. (.getBytes ^String (json/write-str input) "UTF-8")))})
+        t (if (string? body) body (String. ^bytes body "UTF-8"))]
+    {:status status :headers headers :body (try (json/read-str t) (catch Exception _ t))}))
+(defn- stamp-header [r] (some-> (get-in r [:headers "x-triplex-removal-stamp"]) Long/parseLong))
+(defn- head-json [name] (some-> (privacy/record-text name "head.json") json/read-str))
+(defn- log-dir [name] (.getParent (privacy/path name "head.json")))
+(defn- tmp-dir [tag] (java.nio.file.Paths/get "/tmp" (into-array String [(str "era2-6-" tag "-" (UUID/randomUUID))])))
+(defn- delete-log! [name]
+  (with-open [st (java.nio.file.Files/list (log-dir name))]
+    (doseq [p (iterator-seq (.iterator st))
+            :when (not (str/ends-with? (str (.getFileName ^java.nio.file.Path p)) ".key"))]
+      (java.nio.file.Files/delete p)))
+  (reset! privacy/cache {}))
+(defn- stop-after [step f]
+  (case step
+    :intent (with-redefs-fn {#'rc/declare! (fn [& _] (throw (stop-ex :intent)))} f)
+    :declared (let [declare rc/declare!] (with-redefs-fn {#'rc/declare! (fn [& args] (apply declare args) (throw (stop-ex :declared)))} f))
+    :committed (let [commit rc/commit!] (with-redefs-fn {#'rc/commit! (fn [& args] (apply commit args) (throw (stop-ex :committed)))} f))))
+(defn- read-text [name owner & [history?]]
+  (text (:body (offers/route name "v1" "read" (cond-> {"entityIds" [owner]} history? (assoc "history" true))))))
+(defn- failures-of [where] ((requiring-resolve 'triplex.gateway.failures/count-of) where))
+
+(defn policy-sixth
+  "[V1, V2 of the fifth review] The policy stored in Datomic is the only policy; the log's head carries a copy derived
+  from it. (1) The protection route compared with the stored policy: the same list 200 and nothing written; a list
+  that drops an attribute, or another seal, 409 and nothing written. (2) Adding an attribute with the log present,
+  missing and behind: 200, the stored policy grows, the log's copy follows; a value of the attribute stored before the
+  addition is read as stored and a removal masks it; a new value is sealed when the database is sealed. (3) V1 as the
+  review ran it: the log lost, then the protection route with a narrower list: 409, and the database is not stuck. (4)
+  Another gateway that verified the log before the addition: its next read and its key pass take the rewritten copy.
+  (5) A data restore from before an addition: the restore route takes the addition back from the verified log. (6) V2:
+  a database without a stored policy, another database's head put back: the rebuild route refuses it before storing
+  anything; its own head back: adopted. (7) Two adoptions from different heads: one wins (compare-and-set), the other
+  is refused. (8) Moving a sealed database whose policy grew back to the database-wide rule: refused."
+  [sealed?]
+  (when per-account?
+    (fresh-scope sealed?
+      (fn [name conn]
+        (let [label (str "policy-sixth/" mode (if sealed? "/sealed" ""))
+              protect (fn [attrs & [s?]] (offers/route name "v2" "protection" {"attributes" attrs "sealed" (if (some? s?) s? sealed?)}))
+              stored (fn [] (rc/stored-policy (d/db conn)))
+              copy (fn [] (select-keys (head-json name) ["attributes" "sealed"]))
+              seeds (seed! name [a1 b1 "acct/c/one" "acct/d/one"])
+              ;; a value of :q stored before :q is protected (in clear, also in a sealed database)
+              q0 (secret a1 "q-before") _ (expect label (offers/send name (save-frame "ps-q0" a1 ":q" q0 nil nil)) [200 nil])
+              p0 (stored) t0 (d/basis-t (d/db conn))
+              ;; (1) compared with the stored policy
+              same (protect [":v"]) t1 (d/basis-t (d/db conn))
+              other-seal (protect [":v"] (not sealed?))
+              dropped (protect [":w"])
+              ;; (4) another gateway's view, verified before the addition
+              prior (get @privacy/cache name)
+              ;; (2) add :q with the log present
+              added (protect [":v" ":q"])
+              p1 (stored) c1 (copy)
+              read-q0 (offers/route name "v1" "read" {"entityIds" [a1]})
+              _ (swap! privacy/cache assoc name prior)
+              other-read (offers/route name "v1" "read" {"entityIds" [b1]})
+              _ (swap! privacy/cache assoc name prior)
+              shred-before (failures-of "shred")
+              _ (@#'envelope/shred-published!) _ (@#'envelope/shred-published!)
+              shred-after (failures-of "shred")
+              q1 (secret a1 "q-after") _ (expect label (offers/send name (save-frame "ps-q1" a1 ":q" q1 "ps-q0" (head conn))) [200 nil])
+              q1-native (raw-occurrences conn q1)
+              rm-q (offers/route name "v2" "erase" {"commandId" "ps-rm-q" "selectors" [{"entityId" a1 "attribute" ":q"}]})
+              q-after (str (read-text name a1) (read-text name a1 true))
+              ;; (2) add :r with the log missing
+              _ (delete-log! name)
+              added-missing (protect [":v" ":q" ":r"])
+              c2 (copy) seq2 (get (head-json name) "seq")
+              ;; (2) add :s with the log behind by one removal
+              tmp (tmp-dir "behind") _ (copy-dir! (log-dir name) tmp)
+              rm-b (remove! name "ps-rm-b" b1)
+              _ (copy-dir! tmp (log-dir name)) _ (reset! privacy/cache {})
+              added-behind (protect [":v" ":q" ":r" ":s"])
+              c3 (copy) seq3 (get (head-json name) "seq") natives (count (:entries (rc/native-entries name (d/db conn))))
+              ;; (3) V1: the log lost, the protection route with a narrower list first
+              _ (delete-log! name)
+              narrower (protect [":v"])
+              after-narrower (stored)
+              read-after (offers/route name "v1" "read" {"entityIds" [b1]})
+              rm-c (offers/route name "v2" "erase" {"commandId" "ps-rm-c" "selectors" [{"entityId" "acct/c/one" "attribute" ":q"}]})
+              r1 (secret "acct/d/one" "r") _ (expect label (offers/send name (save-frame "ps-r1" "acct/d/one" ":r" r1 nil (head conn))) [200 nil])
+              r1-native (raw-occurrences conn r1)
+              ;; (5) a data restore from before the addition of :s (the stored policy as it was), then the restore route
+              p-before-s (assoc p1 "attributes" [":v" ":q" ":r"] "added" [":q" ":r"])
+              _ @(d/transact conn [[:db/add (triplex.gateway.scope/entity (d/db conn)) :triplex.scope/protection-policy (json/write-str p-before-s)]])
+              restored (offers/route name "v2" "restore-erasure" {})
+              p5 (stored)
+              ;; (8) back to the database-wide rule
+              back (offers/route name "v2" "removal-per-account" {"back" true})]
+          (println "ERA2_POLICY6" mode sealed? (pr-str {:same (offers/outcome same) :other-seal (offers/outcome other-seal) :dropped (offers/outcome dropped)
+                                                         :added (offers/outcome added) :stored p1 :copy c1 :other-read (offers/outcome other-read)
+                                                         :shred-failures [shred-before shred-after] :q1-native q1-native :rm-q (offers/outcome rm-q)
+                                                         :added-missing (offers/outcome added-missing) :copy-2 c2 :added-behind (offers/outcome added-behind)
+                                                         :copy-3 c3 :seq3 seq3 :natives natives :narrower (offers/outcome narrower)
+                                                         :read-after (offers/outcome read-after) :rm-c (offers/outcome rm-c) :r1-native r1-native
+                                                         :restored (offers/outcome restored) :p5 p5 :back (offers/outcome back)}))
+          (expect (str label ": the same list") same [200 nil])
+          (check! label (= t0 t1) "the same list writes nothing" [t0 t1])
+          (expect (str label ": another seal") other-seal [409 "ProtectionPolicyMismatch"])
+          (expect (str label ": a list that drops an attribute") dropped [409 "ProtectionPolicyMismatch"])
+          (check! label (= p0 (rc/stored-policy (d/as-of (d/db conn) t1))) "nothing changed the stored policy before the addition" p0)
+          (expect (str label ": adding :q, the log present") added [200 nil])
+          (check! label (= [":q"] (get-in added [:body "added"])) "the answer names what was added" (:body added))
+          (check! label (= {"attributes" [":v" ":q"] "sealed" sealed? "added" [":q"]} p1) "the stored policy grew by :q" p1)
+          (check! label (= {"attributes" [":v" ":q"] "sealed" sealed?} c1) "the log's copy follows the stored policy" c1)
+          (expect (str label ": a read of a value of :q stored before the addition") read-q0 [200 nil])
+          (check! label (str/includes? (text (:body read-q0)) q0) "the value stored before the addition is read as stored" nil)
+          (expect (str label ": another gateway that verified the log before the addition reads") other-read [200 nil])
+          (check! label (<= (- shred-after shred-before) 1) "that gateway's key pass takes the rewritten copy (at most one failure, then none)" [shred-before shred-after])
+          (when sealed? (check! label (empty? q1-native) "a new value of :q is sealed (no native copy in clear)" q1-native))
+          (expect (str label ": a removal of a1's :q") rm-q [200 nil])
+          (check! label (not (or (str/includes? q-after q0) (str/includes? q-after q1))) "neither :q value is answered after its removal (current and history)" nil)
+          (expect (str label ": adding :r with the log missing") added-missing [200 nil])
+          (check! label (= [":v" ":q" ":r"] (get c2 "attributes")) "the log rebuilt from the data, its copy from the stored policy" c2)
+          (expect (str label ": the removal while the log is current") rm-b [200 nil])
+          (expect (str label ": adding :s with the log behind by one removal") added-behind [200 nil])
+          (check! label (and (= seq3 natives) (= [":v" ":q" ":r" ":s"] (get c3 "attributes"))) "the log caught up, then its copy rewritten" {:seq seq3 :natives natives :copy c3})
+          (expect (str label ": V1, the log lost, then a narrower list") narrower [409 "ProtectionPolicyMismatch"])
+          (check! label (= [":v" ":q" ":r" ":s"] (get after-narrower "attributes")) "the narrower list changed nothing" after-narrower)
+          (expect (str label ": a read after it") read-after [200 nil])
+          (expect (str label ": a removal after it") rm-c [200 nil])
+          (when sealed? (check! label (empty? r1-native) "a new value of an added attribute is sealed" r1-native))
+          (expect (str label ": the restore route on data from before the addition of :s") restored [200 nil])
+          (check! label (= [":v" ":q" ":r" ":s"] (get p5 "attributes")) "the restore route takes the addition back from the verified log" p5)
+          (expect (str label ": moving back to the database-wide rule") back (if (or sealed? commit?) [409 "RemovalBoundaryOneWay"] [200 nil]))
+          (check! label (not (str/includes? (read-text name b1 true) (:value (seeds b1)))) "b1's removed value not answered" nil))))))
+
+(defn policy-adoption
+  "[V2 of the fifth review] A database moved per account by an earlier build (no stored policy), its log lost: another
+  database's head put back is refused by the rebuild route BEFORE anything is stored, and so is a read; its own head
+  back, the rebuild route adopts it, and every protected attribute can be removed on request. [owed] Two adoptions
+  from different heads of the same database: one compare-and-set wins, the other is refused."
+  []
+  (when per-account?
+    (fresh-scope false
+      (fn [other oconn]
+        (fresh-scope false
+          (fn [name conn]
+            (let [label (str "policy-adoption/" mode)
+                  seeds (seed! name [a1 b1]) _ (seed! other [a1])
+                  pa (fn [] (rc/stored-policy (d/db conn)))
+                  sc (fn [] (triplex.gateway.scope/entity (d/db conn)))
+                  retract! (fn [] @(d/transact conn [[:db/retract (sc) :triplex.scope/protection-policy
+                                                       (triplex.gateway.scope/value (d/db conn) (sc) :triplex.scope/protection-policy)]]))
+                  _ (retract!)
+                  own (privacy/record-text name "head.json")
+                  _ (delete-log! name)
+                  foreign (privacy/record-text other "head.json")
+                  _ (privacy/replace! (privacy/path name "head.json") foreign) _ (reset! privacy/cache {})
+                  read-foreign (offers/route name "v1" "read" {"entityIds" [a1]})
+                  rebuild-foreign (offers/route name "v2" "removal-log-rebuild" {})
+                  stored-after-foreign (pa)
+                  _ (privacy/replace! (privacy/path name "head.json") own) _ (reset! privacy/cache {})
+                  rebuild-own (offers/route name "v2" "removal-log-rebuild" {})
+                  stored-own (pa)
+                  rm (remove! name "pa-rm" a1)
+                  ;; two adoptions from different heads: the first adopts; a second one planned on the database value
+                  ;; from before it (another gateway), from a head with another list, is refused by the compare-and-set
+                  _ (retract!)
+                  before (d/db conn)
+                  first-adopt (rc/adopt-policy! name conn (d/db conn))
+                  h (json/read-str (privacy/record-text name "head.json"))
+                  _ (privacy/replace! (privacy/path name "head.json") (json/write-str (assoc h "attributes" [":v" ":x"]))) _ (reset! privacy/cache {})
+                  second-adopt (try (rc/adopt-policy! name conn before) :adopted (catch clojure.lang.ExceptionInfo e (:status (ex-data e))))
+                  stored-two (pa)]
+              (println "ERA2_POLICY_ADOPTION" mode (pr-str {:read-foreign (offers/outcome read-foreign) :rebuild-foreign (offers/outcome rebuild-foreign)
+                                                            :stored-after-foreign stored-after-foreign :rebuild-own (offers/outcome rebuild-own)
+                                                            :stored-own stored-own :removal (offers/outcome rm) :second-adopt second-adopt :stored-two stored-two}))
+              (check! label (not= 200 (:status read-foreign)) "a read with another database's head is refused" (offers/outcome read-foreign))
+              (check! label (= 503 (:status rebuild-foreign)) "the rebuild route refuses another database's head (503)" (offers/outcome rebuild-foreign))
+              (check! label (nil? stored-after-foreign) "nothing stored from another database's head" stored-after-foreign)
+              (expect (str label ": its own head back") rebuild-own [200 nil])
+              (check! label (= {"attributes" [":v"] "sealed" false} stored-own) "its own policy adopted" stored-own)
+              (expect (str label ": a removal after it") rm [200 nil])
+              (check! label (= 503 second-adopt) "a second adoption from another head is refused by the compare-and-set" second-adopt)
+              (check! label (= {"attributes" [":v"] "sealed" false} stored-two) "the first adoption stands" stored-two))))))))
+
+(defn decline-stamp
+  "[V3, V4 of the fifth review] A save that says nothing about when it was framed (no frame source, no removalSeen), of
+  a removed subject's value: 409 ErasureReplayDeclined carrying the current removal stamp, and NOTHING written (50 of
+  them: no transaction); the same save sent again with removalSeen set to that stamp is stored (case 3), under the
+  same command too. A save framed before the removal (an old frame source): its command recorded once (case 2: a
+  resend under it with a fresh source is refused), and a further refusal of that command writes nothing."
+  []
+  (fresh-scope false
+    (fn [name conn]
+      (let [label (str "decline-stamp/" mode)
+            seeds (seed! name [a1 b1]) pin (head conn)
+            _ (expect label (remove! name "ds-rm" a1) [200 nil])
+            sourceless (fn [cmd v] (raw-route name "v1" "transact" (frame cmd a1 v nil nil)))
+            first-decline (sourceless "ds-1" (secret a1 "n1"))
+            stamp (stamp-header first-decline)
+            frontier (get (:body (raw-route name "v2" "erasure-frontier" nil)) "removalStamp")
+            t0 (d/basis-t (erase/sync! conn))
+            many (frequencies (for [k (range 50)] (let [r (sourceless (str "ds-m-" k) (secret a1 (str "m" k)))] [(:status r) (get-in r [:body "code"])])))
+            t1 (d/basis-t (erase/sync! conn))
+            retry (raw-route name "v1" "transact" (assoc (frame "ds-1" a1 (secret a1 "n1-again") nil nil) "removalSeen" stamp))
+            records (fn [] (let [db (d/db conn)] (if (d/entid db :triplex.removal/declined-command) (count (seq (d/datoms db :aevt :triplex.removal/declined-command))) 0)))
+            r0 (records)
+            late (raw-route name "v1" "transact" (frame "ds-late" a1 (secret a1 "late") nil pin))
+            r1 (records)
+            late-again (raw-route name "v1" "transact" (frame "ds-late" a1 (secret a1 "late2") nil (head conn)))
+            t2 (d/basis-t (erase/sync! conn))
+            late-third (raw-route name "v1" "transact" (frame "ds-late" a1 (secret a1 "late3") nil pin))
+            t3 (d/basis-t (erase/sync! conn))]
+        (println "ERA2_DECLINE_STAMP" mode (pr-str {:first [(:status first-decline) (get-in first-decline [:body "code"])] :stamp stamp :frontier frontier
+                                                    :fifty many :transactions (- t1 t0) :retry [(:status retry) (get-in retry [:body "code"])]
+                                                    :records [r0 r1] :late (:status late) :late-again (:status late-again) :third-writes (- t3 t2)}))
+        (check! label (= [409 "ErasureReplayDeclined"] [(:status first-decline) (get-in first-decline [:body "code"])]) "a source-less save of the removed value is declined" (:body first-decline))
+        (check! label (and (integer? stamp) (= stamp frontier)) "the refusal carries the current removal stamp" [stamp frontier])
+        (check! label (= {[409 "ErasureReplayDeclined"] 50} many) "50 more are declined" many)
+        (check! label (= t0 t1) "and write nothing (V4: no transaction for a save that says nothing)" [t0 t1])
+        (check! label (= 0 r0) "no command recorded for them" r0)
+        (check! label (= 200 (:status retry)) "the same save again with removalSeen = that stamp is stored (case 3), under the same command" (:body retry))
+        (check! label (some? (stamp-header retry)) "a stored save carries the stamp too" (:headers retry))
+        (check! label (= [409 "ErasureReplayDeclined"] [(:status late) (get-in late [:body "code"])]) "a save framed before the removal is declined" (:body late))
+        (check! label (= 1 r1) "its command recorded once (case 2)" r1)
+        (check! label (= 409 (:status late-again)) "a resend under that command with a fresh source is refused (case 2)" (:body late-again))
+        (check! label (= t2 t3) "a further refusal of a recorded command writes nothing" [t2 t3])))))
+
+(defn worker-retire
+  "[V5 of the fifth review] A database deleted while one of its removals is pending: its removal log and keys leave
+  the authority with it (the option on), and no worker pass fails on it. A log left by a database deleted earlier
+  (here written by hand, as an earlier build left them): the worker retires it at its next pass instead of failing."
+  []
+  (when per-account?
+    (let [scope (json/write-str ["triplex-scope-v1" "test" "era2-retire" (str (UUID/randomUUID)) 0])
+          label (str "worker-retire/" mode)]
+      (with-redefs [main/uri-template (or (System/getenv "WFIX1_URI") "datomic:mem://{db}")]
+        (let [name (:db (main/create-scope! nil scope "lean" true true))
+              _ (expect label (offers/route name "v2" "protection" {"attributes" [":v"] "sealed" true}) [200 nil])
+              _ (expect label (offers/route name "v2" "removal-per-account" {}) [200 nil])
+              _ (seed! name [a1 b1])
+              _ (stop-after :declared #(remove! name "wr-rm" a1))
+              pending (some? (privacy/pending name))
+              keys-before (count (filter #(str/ends-with? (str %) ".key") (with-open [s (java.nio.file.Files/list (log-dir name))] (vec (iterator-seq (.iterator s))))))
+              _ (main/delete-scope! nil scope)
+              log-left (privacy/exists? (log-dir name))
+              listed (boolean (some #{name} (@#'envelope/authority-scopes)))
+              ;; a log an earlier build left behind: a database that no longer exists, a removal pending in it
+              ghost (str "s2-era2-ghost-" (UUID/randomUUID))
+              _ (java.nio.file.Files/createDirectories (log-dir ghost) (make-array java.nio.file.attribute.FileAttribute 0))
+              _ (privacy/replace! (privacy/path ghost "head.json") (json/write-str {"database" ghost "seq" 0 "seal" privacy/zeros "attributes" [":v"] "sealed" false}))
+              _ (privacy/replace! (privacy/path ghost "pending.json") (json/write-str {"database" ghost "seq" 1 "commandId" "g" "selectors" [] "erasedAt" 1}))
+              f0 (failures-of "worker-completion")
+              _ (alter-var-root #'rc/worker-complete-ms (constantly 1))
+              _ (try (dotimes [_ 3] (rc/complete-stale!)) (finally (alter-var-root #'rc/worker-complete-ms (constantly 30000))))
+              f1 (failures-of "worker-completion")
+              ghost-left (privacy/exists? (log-dir ghost))
+              ;; a delete whose retirement the authority refuses (a non-empty directory in the log's folder), then the
+              ;; same delete sent again once the authority accepts: the log is retired then
+              scope2 (json/write-str ["triplex-scope-v1" "test" "era2-retire" (str (UUID/randomUUID)) 0])
+              name2 (:db (main/create-scope! nil scope2 "lean" true true))
+              _ (expect label (offers/route name2 "v2" "protection" {"attributes" [":v"] "sealed" true}) [200 nil])
+              _ (expect label (offers/route name2 "v2" "removal-per-account" {}) [200 nil])
+              _ (seed! name2 [a1])
+              _ (expect label (remove! name2 "wr-2" a1) [200 nil])
+              blocker (.resolve ^java.nio.file.Path (log-dir name2) "zz-blocker")
+              _ (java.nio.file.Files/createDirectories (.resolve blocker "inner") (make-array java.nio.file.attribute.FileAttribute 0))
+              first-delete (try (main/delete-scope! nil scope2) :answered (catch Exception e (str (class e))))
+              _ (java.nio.file.Files/deleteIfExists (.resolve blocker "inner")) _ (java.nio.file.Files/deleteIfExists blocker)
+              second-delete (try (main/delete-scope! nil scope2) (catch Exception e (str (class e))))
+              log2-left (privacy/exists? (log-dir name2))]
+          (println "ERA2_WORKER_RETIRE" mode (pr-str {:pending pending :keys-before keys-before :log-left log-left :listed listed
+                                                      :failures [f0 f1] :ghost-left ghost-left :first-delete first-delete
+                                                      :second-delete second-delete :log2-left log2-left}))
+          (check! label (not= :answered first-delete) "set-up: the retirement refused by the authority fails the delete" first-delete)
+          (check! label (map? second-delete) "the delete sent again is answered" second-delete)
+          (check! label (not log2-left) "and retires the log then" log2-left)
+          (check! label (and pending (pos? keys-before)) "set-up: a removal pending, sealed keys present" [pending keys-before])
+          (check! label (not log-left) "the deleted database's log and keys left the authority" log-left)
+          (check! label (not listed) "no pass lists it" listed)
+          (check! label (= f0 f1) "the worker did not fail on the earlier build's leftover log" [f0 f1])
+          (check! label (not ghost-left) "the worker retired that log" ghost-left))))))
+
+(defn log-repair
+  "[V6 of the fifth review] Storage damage the review found with no way out: (a) an unreadable intent, nothing
+  committed past the head; (b) an unreadable intent whose removal is committed in the data; (c) a published log entry
+  altered; (d) an altered entry the data cannot prove (the head's seal changed too). Every request of the database
+  503 meanwhile; the rebuild route (an operator's call, body {}) repairs (a) to (c) from the data, without touching the
+  policy or dropping a published removal, and refuses (d)."
+  []
+  (when per-account?
+    (doseq [variant [:intent-uncommitted :intent-committed :entry-altered :unprovable]]
+      (fresh-scope true
+        (fn [name conn]
+          (let [label (str "log-repair/" mode "/" (clojure.core/name variant))
+                seeds (seed! name [a1 b1 "acct/c/one"]) va (:value (seeds a1)) vb (:value (seeds b1))
+                _ (expect label (remove! name "lr-1" b1) [200 nil])
+                _ (case variant
+                    :intent-uncommitted (stop-after :intent #(remove! name "lr-2" a1))
+                    :intent-committed (stop-after :committed #(remove! name "lr-2" a1))
+                    (:entry-altered :unprovable) (expect label (remove! name "lr-2" a1) [200 nil]))
+                _ (case variant
+                    (:intent-uncommitted :intent-committed) (privacy/replace! (privacy/path name "pending.json") "{\"seq\": 2, \"commandId\": \"lr-2\"")
+                    :entry-altered (let [e (json/read-str (privacy/record-text name "erase-1.json"))]
+                                     (privacy/replace! (privacy/path name "erase-1.json") (json/write-str (assoc e "erasedAt" (inc (long (get e "erasedAt")))))))
+                    :unprovable (let [h (head-json name)]
+                                  (privacy/replace! (privacy/path name "head.json") (json/write-str (assoc h "seal" (apply str (repeat 64 "a")))))))
+                _ (reset! privacy/cache {})
+                before (offers/route name "v1" "read" {"entityIds" [b1]})
+                p0 (rc/stored-policy (d/db conn))
+                repaired (offers/route name "v2" "removal-log-rebuild" {})
+                after (offers/route name "v1" "read" {"entityIds" [a1 b1] "history" true})
+                resend (when (= variant :intent-uncommitted) (remove! name "lr-2" a1))
+                seq-after (try (seq-now name conn) (catch Exception _ :refused))]
+            (println "ERA2_LOG_REPAIR" mode (pr-str {:variant variant :before (offers/outcome before) :repaired (offers/outcome repaired)
+                                                     :after (offers/outcome after) :resend (some-> resend offers/outcome) :seq seq-after}))
+            (check! label (= 503 (:status before)) "storage damage: the database's requests are refused meanwhile" (offers/outcome before))
+            (check! label (= p0 (rc/stored-policy (d/db conn))) "the repair does not touch the policy" nil)
+            (if (= variant :unprovable)
+              (expect (str label ": the rebuild route when the data cannot prove the log") repaired [503 "RemovalLogConflict"])
+              (do (expect (str label ": the rebuild route repairs it") repaired [200 nil])
+                  (expect (str label ": reads after it") after [200 nil])
+                  (check! label (not (str/includes? (text (:body after)) vb)) "the published removal stays (b1 not answered)" nil)
+                  (case variant
+                    :intent-uncommitted (do (expect (str label ": the client's resend starts it again") resend [200 nil])
+                                            (check! label (= 2 seq-after) "published as 2" seq-after))
+                    (:intent-committed :entry-altered)
+                    (do (check! label (= 2 seq-after) "the committed removal published from the data" seq-after)
+                        (check! label (not (str/includes? (text (:body after)) va)) "a1 not answered" nil)))
+                  (check! label (nil? (privacy/pending name)) "nothing pending" nil)))))))))
+
+(defn completion-sixth
+  "[V7, V8 of the fifth review] (V8) The same command resent with other selectors while it is pending: a terminal 409
+  EraseCommandConflict naming the pending removal (not a retryable 503); the worker completes it as first sent. (V7) A
+  removal the worker cannot complete (its intent's sequence out of step): every failed completion is counted."
+  []
+  (when per-account?
+    (fresh-scope false
+      (fn [name conn]
+        (let [label (str "completion-sixth/" mode)
+              seeds (seed! name [a1 b1]) va (:value (seeds a1)) vb (:value (seeds b1))
+              _ (stop-after :declared #(remove! name "cs-1" a1))
+              other (offers/route name "v2" "erase" {"commandId" "cs-1" "selectors" [{"entityId" b1 "attribute" ":v"}]})
+              _ (alter-var-root #'rc/worker-complete-ms (constantly 1))
+              _ (try (Thread/sleep 5) (rc/complete-stale!) (finally (alter-var-root #'rc/worker-complete-ms (constantly 30000))))
+              masked-a (not (str/includes? (read-text name a1) va)) kept-b (str/includes? (read-text name b1) vb)
+              ;; V7: an intent whose sequence is out of step
+              _ (stop-after :intent #(remove! name "cs-2" b1))
+              pj (json/read-str (privacy/record-text name "pending.json"))
+              _ (privacy/replace! (privacy/path name "pending.json") (json/write-str (assoc pj "seq" (+ 5 (long (get pj "seq"))))))
+              _ (reset! privacy/cache {})
+              f0 (failures-of "completion")
+              _ (rc/complete-pending! name conn) _ (rc/complete-pending! name conn)
+              f1 (failures-of "completion")]
+          (println "ERA2_COMPLETION6" mode (pr-str {:other (offers/outcome other) :message (get-in other [:body "message"]) :a-masked masked-a
+                                                    :b-kept kept-b :failures [f0 f1]}))
+          (expect (str label ": the same command with other selectors while pending") other [409 "EraseCommandConflict"])
+          (check! label (str/includes? (str (get-in other [:body "message"])) "sequence 1") "the answer names the pending removal" (get-in other [:body "message"]))
+          (check! label (and masked-a kept-b) "the worker completed the removal as first sent" [masked-a kept-b])
+          (check! label (= 2 (- f1 f0)) "each failed completion counted" [f0 f1]))))))
+
+(defn move-replay
+  "[V9 of the fifth review] A save and a frame planned on the log's boundary and committed after their database moved
+  to the commit boundary: the gateway plans each once more, and both are stored (were 409 ErasureFrontierChanged,
+  which the SDK does not replay)."
+  []
+  (when (and per-account? (not commit?))
+    (doseq [kind [:save :frame]]
+      (fresh-scope false
+        (fn [name conn]
+          (let [label (str "move-replay/" mode "/" (clojure.core/name kind))
+                seeds (seed! name [a1 b1])
+                fired (atom false) inner (atom nil) orig storage/submit!
+                op (str "mr-" (clojure.core/name kind))
+                input (case kind :save (frame op b1 (secret b1 "x") (:id (seeds b1)) (head conn)) :frame (frame-acct name conn op "b"))
+                reply (with-redefs [storage/submit! (fn [c data request timeline & more]
+                                                      (when (and (= op (get request "operationId")) (compare-and-set! fired false true))
+                                                        (reset! inner (deref (future (alter-var-root #'rc/may-turn-on (constantly true))
+                                                                                     (try (offers/route name "v2" "removal-commit-boundary" {})
+                                                                                          (finally (alter-var-root #'rc/may-turn-on (constantly false)))))
+                                                                             10000 :waiting)))
+                                                      (apply orig c data request timeline more))]
+                        (offers/send name (assoc input "operationId" op)))]
+            (println "ERA2_MOVE_REPLAY" mode (pr-str {:kind kind :move (some-> @inner offers/outcome) :reply (offers/outcome reply)}))
+            (check! label (= [200 nil] (some-> @inner offers/outcome)) "the database moved while the write was planned" (some-> @inner offers/outcome))
+            (check! label (rc/commit-boundary? (d/db conn)) "it is on the commit boundary" nil)
+            (expect (str label ": the write planned before the move") reply [200 nil])))))))
+
+(defn key-pass-behind
+  "[F1 of the B2 review] A gateway that verified a newer log than a copy then put back: its key pass no longer refuses
+  for good. A removal published before the copy was taken, whose grace ends after the copy is back, has its key
+  deleted by the next pass; requests on that gateway keep refusing the older copy as before (no removed value)."
+  []
+  (fresh-scope true
+    (fn [name conn]
+      (let [label (str "key-pass-behind/" mode)
+            seeds (seed! name [a1 b1 "acct/c/one"]) va (:value (seeds a1))
+            grace envelope/grace-ms]
+        (alter-var-root #'envelope/grace-ms (constantly 1500))
+        (try
+          (let [r1 (remove! name "kb-1" a1)
+                ids (mapv #(get % "assertionId") (get-in (privacy/cut name nil) [:commands "kb-1" "identities"]))
+                tmp (tmp-dir "kb") _ (copy-dir! (log-dir name) tmp)
+                r2 (remove! name "kb-2" b1)
+                _ (@#'envelope/shred-published!)
+                ;; the older copy back (its records only; the keys stay as they are)
+                _ (doseq [f ["head.json" "erase-1.json"]] (java.nio.file.Files/copy (.resolve tmp ^String f) (privacy/path name f) (into-array java.nio.file.CopyOption [java.nio.file.StandardCopyOption/REPLACE_EXISTING])))
+                _ (java.nio.file.Files/deleteIfExists (privacy/path name "erase-2.json"))
+                alive-before (count (filter #(envelope/key-present? name % nil) ids))
+                _ (Thread/sleep 1700)
+                _ (@#'envelope/shred-published!) _ (@#'envelope/shred-published!)
+                alive-after (count (filter #(envelope/key-present? name % nil) ids))
+                read (offers/route name "v1" "read" {"entityIds" [a1 b1]})]
+            (println "ERA2_KEY_PASS_BEHIND" mode (pr-str {:r1 (offers/outcome r1) :r2 (offers/outcome r2) :alive [alive-before alive-after] :read (offers/outcome read)}))
+            (check! label (pos? alive-before) "set-up: the key is alive when the older copy is back" alive-before)
+            (check! label (zero? alive-after) "the next pass deletes it (it refused for good before)" alive-after)
+            (check! label (not (str/includes? (text (:body read)) va)) "no removed value answered" (offers/outcome read)))
+          (finally (alter-var-root #'envelope/grace-ms (constantly grace))))))))
+
+(defn shred-isolation
+  "[DX-ERA2 sixth pass, found by the B2 review's S3 in the standing gate on a3082aba0] One database's key deletion fails
+  (its key file replaced by a non-empty directory): the key pass counts it and goes on; it never throws, and another
+  database's due keys are deleted in the same pass. Before the fix, F1's second reading retried the failed deletion
+  outside any catch, so the pass threw and stopped there."
+  []
+  (fresh-scope true
+    (fn [name-a _]
+      (fresh-scope true
+        (fn [name-b _]
+          (let [label (str "shred-isolation/" mode)
+                _ (seed! name-a [a1 b1]) _ (seed! name-b [a1 b1])
+                grace envelope/grace-ms
+                _ (expect label (remove! name-a "si-a" a1) [200 nil])
+                _ (expect label (remove! name-b "si-b" a1) [200 nil])
+                ids (fn [nm c] (mapv #(get % "assertionId") (get-in (privacy/cut nm nil) [:commands c "identities"])))
+                kf (envelope/key-file name-a (first (ids name-a "si-a")))
+                before ((requiring-resolve 'triplex.gateway.failures/count-of) "shred")]
+            (java.nio.file.Files/deleteIfExists kf)
+            (java.nio.file.Files/createDirectories (.resolve kf "inner") (make-array java.nio.file.attribute.FileAttribute 0))
+            (alter-var-root #'envelope/grace-ms (constantly 0))
+            (try
+              (let [thrown (try (@#'envelope/shred-published!) nil (catch Throwable t (str (class t))))
+                    alive-b (count (filter #(envelope/key-present? name-b % nil) (ids name-b "si-b")))
+                    counted (- ((requiring-resolve 'triplex.gateway.failures/count-of) "shred") before)]
+                (println "ERA2_SHRED_ISOLATION" mode (pr-str {:thrown thrown :alive-b alive-b :counted counted}))
+                (check! label (nil? thrown) "the key pass does not throw when one database's key deletion fails" thrown)
+                (check! label (zero? alive-b) "the other database's due key is deleted in the same pass" alive-b)
+                (check! label (pos? counted) "the failed deletion is counted" counted))
+              (finally
+                (alter-var-root #'envelope/grace-ms (constantly grace))
+                (java.nio.file.Files/deleteIfExists (.resolve kf "inner"))
+                (java.nio.file.Files/deleteIfExists kf)))))))))
+
+(defn file-publish-compare
+  "[F3 of the B2 review] A writer whose view is stale (its lock did not hold) publishes, on the file authority, an entry
+  that is already in the log while the head has moved past it: refused, and the head on disk is not moved back."
+  []
+  (fresh-scope false
+    (fn [name conn]
+      (let [label (str "file-publish-compare/" mode)
+            _ (seed! name [a1 b1 "acct/c/one"])
+            _ (expect label (remove! name "fp-1" a1) [200 nil])
+            stale (privacy/cut name (d/db conn) true)
+            _ (expect label (remove! name "fp-2" b1) [200 nil])
+            _ (expect label (remove! name "fp-3" "acct/c/one") [200 nil])
+            entry (get-in (privacy/cut name (d/db conn) true) [:commands "fp-2"])
+            head-before (privacy/record-text name "head.json")
+            _ (privacy/prepare! name entry)
+            r (try (privacy/publish! name stale entry) :written (catch clojure.lang.ExceptionInfo e (or (:code (ex-data e)) (.getMessage e))))
+            head-after (privacy/record-text name "head.json")]
+        (java.nio.file.Files/deleteIfExists (privacy/path name "pending.json"))
+        (reset! privacy/cache {})
+        (println "ERA2_FILE_PUBLISH" mode (pr-str {:answer r :head-unchanged (= head-before head-after)
+                                                   :head-seq (get (json/read-str head-after) "seq")}))
+        (check! label (= "ErasureFrontierUnavailable" r) "a stale publication is refused" r)
+        (check! label (= head-before head-after) "the head is not moved back" (get (json/read-str head-after) "seq"))))))
+
+(defn restore-with-pending
+  "[F4 of the B2 review] The data restored to a copy older than a pending removal's predecessor (both removals after
+  the backup; the later one pending): the restore route replays the published one (it no longer refuses while a
+  removal is pending), then the pending removal completes by its resend; nothing stays pending; no removed value is
+  answered. Two in-memory databases under one name stand for the data before and after the restore."
+  []
+  (let [scope (json/write-str ["triplex-scope-v1" "test" "era2-f4" (str (UUID/randomUUID)) 0])
+        label (str "restore-with-pending/" mode)
+        newer "datomic:mem://{db}" older "datomic:mem://{db}-older"
+        x "acct/a/one" z "acct/c/one" b "acct/b/one"]
+    (try
+      (let [setup (fn [] (let [name (:db (main/create-scope! nil scope "lean" true true))]
+                           (check! label (= 200 (:status (offers/route name "v2" "protection" {"attributes" [":v"] "sealed" false}))) "protection")
+                           name))
+            name (with-redefs [main/uri-template newer] (setup))
+            _ (with-redefs [main/uri-template older] (setup))
+            frames (for [[o v] [[x (secret x "x")] [z (secret z "z")] [b (secret b "b")]]] [o v (frame (str "f4-" (UUID/randomUUID)) o v nil nil)])]
+        (doseq [[_ _ f] frames] (with-redefs [main/uri-template newer] (offers/send name f)) (with-redefs [main/uri-template older] (offers/send name f)))
+        (when per-account?
+          (with-redefs [main/uri-template newer] (offers/route name "v2" "removal-per-account" {}))
+          (with-redefs [main/uri-template older] (offers/route name "v2" "removal-per-account" {})))
+        (let [vx (second (first frames)) vz (second (second frames))
+              r1 (with-redefs [main/uri-template newer] (remove! name "f4-r1" x))
+              _ (with-redefs [main/uri-template newer]
+                  (with-redefs [privacy/publish! (fn [& _] (throw (ex-info "stopped at publication" {})))] (remove! name "f4-r2" z)))
+              pending (some? (privacy/pending name))
+              _ (reset! privacy/cache {})
+              [restore resend restore-2 rx rz]
+              (with-redefs [main/uri-template older]
+                [(offers/route name "v2" "restore-erasure" {}) (remove! name "f4-r2" z) (offers/route name "v2" "restore-erasure" {})
+                 (offers/route name "v1" "read" {"entityIds" [x] "history" true}) (offers/route name "v1" "read" {"entityIds" [z] "history" true})])]
+          (println "ERA2_RESTORE_PENDING" mode (pr-str {:r1 (offers/outcome r1) :pending pending :restore (offers/outcome restore) :resend (offers/outcome resend)
+                                                        :restore-2 (offers/outcome restore-2) :pending-after (some? (privacy/pending name))}))
+          (check! label pending "set-up: r2 pending" nil)
+          (expect (str label ": the restore route while r2 is pending") restore [200 nil])
+          (expect (str label ": r2's resend on the restored data") resend [200 nil])
+          (expect (str label ": the restore route again") restore-2 [200 nil])
+          (check! label (nil? (privacy/pending name)) "nothing pending" nil)
+          (check! label (not (or (str/includes? (text (:body rx)) vx) (str/includes? (text (:body rz)) vz))) "no removed value answered" nil)))
+      (finally
+        (doseq [u [newer older]] (with-redefs [main/uri-template u] (try (main/delete-scope! nil scope) (catch Exception _ nil))))))))
+
+
+(defn peer-behind-move
+  "[owed by the fifth review] A gateway whose Datomic peer has not yet seen its database's move to the commit boundary
+  (its first database value is from before the move): a save planned there carries the old fence value and is refused
+  at the serial point; the gateway plans it once more on the database as it is now and it is stored (V9). A read on
+  that gateway is served (as a read a moment earlier would be) and answers no removed value."
+  []
+  (when (and per-account? (not commit?))
+    (fresh-scope false
+      (fn [name conn]
+        (let [label (str "peer-behind-move/" mode)
+              seeds (seed! name [a1 b1]) va (:value (seeds a1))
+              _ (expect label (remove! name "pb-1" a1) [200 nil])
+              stale (d/db conn)
+              _ (alter-var-root #'rc/may-turn-on (constantly true))
+              moved (try (offers/route name "v2" "removal-commit-boundary" {}) (finally (alter-var-root #'rc/may-turn-on (constantly false))))
+              behind (fn [f] (let [orig d/db armed (atom true)]
+                               (with-redefs [d/db (fn [c] (if (and (identical? c conn) (compare-and-set! armed true false)) stale (orig c)))]
+                                 (f))))
+              save (behind #(offers/send name (frame "pb-save" b1 (secret b1 "x") (:id (seeds b1)) (head conn))))
+              read (behind #(offers/route name "v1" "read" {"entityIds" [a1 b1] "history" true}))]
+          (println "ERA2_PEER_BEHIND" mode (pr-str {:move (offers/outcome moved) :save (offers/outcome save) :read (offers/outcome read)}))
+          (expect (str label ": the move") moved [200 nil])
+          (check! label (= -1 (triplex.gateway.scope/value stale (triplex.gateway.scope/entity stale) :triplex.scope/erasure-seq)) "the stale value is from before the move" nil)
+          (expect (str label ": a save planned on the stale value") save [200 nil])
+          (check! label (not= 400 (:status read)) "a read on the stale value is not a 400" (offers/outcome read))
+          (check! label (not (str/includes? (text (:body read)) va)) "no removed value answered" nil))))))
+
 ;; ERA2_ONLY (space-separated label prefixes) runs only those scenarios: a diagnostic run, never a gate
 (def only (some-> (System/getenv "ERA2_ONLY") str/trim not-empty (str/split #"\s+")))
 (defn- scenario [label f]
@@ -1566,6 +2116,19 @@
   (scenario "cache-stamps" cache-stamps)
   (scenario "pending-tag-walk" pending-tag-walk)
   (scenario "creation-race" creation-race)
+  ;; [DX-ERA2 sixth pass]
+  (doseq [sealed? [false true]] (scenario (str "policy-sixth " sealed?) #(policy-sixth sealed?)))
+  (scenario "policy-adoption" policy-adoption)
+  (scenario "decline-stamp" decline-stamp)
+  (scenario "worker-retire" worker-retire)
+  (scenario "log-repair" log-repair)
+  (scenario "completion-sixth" completion-sixth)
+  (scenario "move-replay" move-replay)
+  (scenario "key-pass-behind" key-pass-behind)
+  (scenario "shred-isolation" shred-isolation)
+  (scenario "file-publish-compare" file-publish-compare)
+  (scenario "restore-with-pending" restore-with-pending)
+  (scenario "peer-behind-move" peer-behind-move)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode
              (pr-str {:checks (count @results) :failed (count failed)}))

@@ -701,7 +701,10 @@ export const makeDatomicStorageAdapter = (
             }>(() =>
               client.observeRequests(observation, () =>
                 optimistic
-                  ? Promise.resolve({
+                  ? // [DX-ERA2 sixth pass, V3] an optimistic commit always says when it was framed: a client that
+                    // holds no removal stamp for this database (it never read it, so it cached nothing from it)
+                    // reads the stamp once first, and the commit carries it as removalSeen
+                    client.ensureRemovalStamp(db).then(() => ({
                       handle: "",
                       position: lastSeenPosition,
                       prefetch: {
@@ -709,7 +712,7 @@ export const makeDatomicStorageAdapter = (
                         claim: null,
                         rows: new Map(predecessors!.map(([id, row]) => [id, row!])),
                       },
-                    })
+                    }))
                   : transactionOptions?.hint === undefined
                     ? client.begin(db)
                     : client.beginCommand(db, transactionOptions.hint),
