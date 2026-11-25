@@ -4,7 +4,7 @@
 #   DOCKER_HOST=<lab VM socket> node lab/bin/heavy.mjs --label DX-S5R3-clj -- bash lab/experiments/EXP-DX1/s5/clj-run3.sh OUT MODE SETTINGS
 # MODE: attack3 (s5/attack3_gate.clj on the head), attack2 (the second review's tests as the builder updated them), era (s5/attack3_era.clj on the removal branch's tree), fuzz (s5/fuzz.clj;
 # S5_FAULTS, S5_ACCOUNTS, S5_TRANSITION, S5_PROTECTED, S5_REMOVALS), idents (s3/idents.clj on the tree S5_BUILD names:
-# head, s6a, base, era2), logdigest (s5/logdigest.clj on the tree S5_BUILD names). Development only, never counted: S5_DEV_TESTS=1 mounts the working tree's test files.
+# head, s6a, base, era2, era6), logdigest (s5/logdigest.clj on the tree S5_BUILD names). Development only, never counted: S5_DEV_TESTS=1 mounts the working tree's test files.
 set -uo pipefail
 : "${DOCKER_HOST:?set DOCKER_HOST to the lab VM socket}"
 out=${1:?new output directory}
@@ -41,6 +41,11 @@ settings=(
   "accounts-on-nopred:$base TX2_ACCOUNT_CLAIMS=1 TX2_PREDECESSOR_LOOKUP=0"
   "accounts-on-general-nopred:TX2_SUBJECT_SAVE=0 TX2_ACCOUNT_CLAIMS=1 TX2_PREDECESSOR_LOOKUP=0"
   "accounts-on-import:$base TX2_ACCOUNT_CLAIMS=1 TX2_IMPORT_PIPELINE=1"
+  # [S5 fourth review] The reconciled removal branch (S5_BUILD=era6): its replay rule off (its default) and on.
+  "era6-rule-off:$base TX2_PROTECTION_UNSEALED_FOR_TESTS=1"
+  "era6-rule-on:$base TX2_PROTECTION_UNSEALED_FOR_TESTS=1 TX2_REMOVAL_REPLAY_RULE=1"
+  "era6-rule-off-general:TX2_SUBJECT_SAVE=0 TX2_PROTECTION_UNSEALED_FOR_TESTS=1"
+  "era6-rule-on-general:TX2_SUBJECT_SAVE=0 TX2_PROTECTION_UNSEALED_FOR_TESTS=1 TX2_REMOVAL_REPLAY_RULE=1"
   "group-accounts:$base TX2_ACCOUNT_CLAIMS=1 TX2_GROUP_COMMIT=1"
   "era-server:TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_WIDE=1"
   "era-per-account:TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_WIDE=1 TX2_REMOVAL_PER_ACCOUNT=1"
@@ -55,6 +60,7 @@ pre="-i /exp/wfix1/regression.clj -i /exp/w2/wide_gate.clj"
 case $mode in
   fuzz) files="$pre -i /exp/s5/fuzz.clj"; expr="(s5-fuzz/main)" ;;
   attack3) files="$pre -i /exp/s5/fuzz.clj -i /exp/s5/attack3_gate.clj"; expr="(s5-attack3/main)" ;;
+  attack4) files="$pre -i /exp/s5/fuzz.clj -i /exp/s5/attack3_gate.clj -i /exp/s5/attack4_gate.clj"; expr="(s5-attack4/main)" ;;
   attack2) files="$pre -i /exp/s5/fuzz.clj -i /exp/s5/attack_gate.clj -i /exp/s5/attack2_gate.clj"; expr="(s5-attack2/main)" ;;
   era) files="$pre -i /exp/s5/attack3_era.clj"; expr="(s5-attack3-era/main)" ;;
   idents) files=""; expr="" ;;
@@ -78,9 +84,9 @@ for entry in $wanted; do
     -e TX2_GROUP_COMMIT=0 -e TX2_LIVE_PRIORITY=0 -e TX2_PREDECESSOR_LOOKUP=1 -e TX2_LEAN_NATIVE_QUERY=1 -e TX2_LEAN_NATIVE_LOG=1 \
     -e TRIPLEX_TRACE_LEVEL=off -e TRIPLEX_ERASURE_DIRECTORY=/tmp/erasure -e PREP1_ATTEMPT=dx-s5r3-clj "${envs[@]}" \
     -e S5_SEEDS -e S5_STEPS -e S5_ROUNDS -e S5_THREADS -e S5_PER_THREAD -e S5_FAULTS -e S5_ACCOUNTS -e S5_ONLY -e S5_TRANSITION \
-    -e S5_PROTECTED -e S5_REMOVALS \
+    -e S5_PROTECTED -e S5_REMOVALS -e S5_OLD_REOPEN \
     ${dev[@]+"${dev[@]}"} --entrypoint /bin/bash "$image_id" -c "$cmd" > "$out/$mode-$entry.log" 2>&1 || status=1
-  echo "$entry: $(grep -E '^DX-S5(R2|R3)?_RESULT |^DX-S3_IDENTS |^DX-S5R3_LOG ' "$out/$mode-$entry.log" | cut -c1-400 || echo 'no summary')"
+  echo "$entry: $(grep -E '^DX-S5(R2|R3|R4)?_RESULT |^DX-S3_IDENTS |^DX-S5R3_LOG ' "$out/$mode-$entry.log" | cut -c1-400 || echo 'no summary')"
 done
 echo "DX-S5R3_CLJ_EXIT $status"
 exit "$status"

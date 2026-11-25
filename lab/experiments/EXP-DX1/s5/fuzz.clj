@@ -702,6 +702,20 @@
   (with-redefs-fn {(account-var "permitted?") true}
     #(do ((account-var "turn-on!") c-conn) ((account-var "turn-on!") k-conn))))
 
+;; [S5 fourth review] S5_OLD_REOPEN=1: after the transition, an old build whose general writer differs opens the
+;; database (it writes its body under :triplex/commit and its hash, as its commit/install! does without the wrap); then
+;; a save of this build on both scopes (the next routed save restores the refusal) and a stale planner's save, which
+;; must be refused again.
+(def old-reopens? (= "1" (System/getenv "S5_OLD_REOPEN")))
+(def ^:private old-body
+  (delay (let [commit-var (fn [s] (requiring-resolve (symbol "triplex.gateway.commit" s)))
+               code (with-redefs-fn {(commit-var "owner-root-guard?") true}
+                      #((commit-var "observe-load") ((commit-var "instrument-code") ((commit-var "expand-code") @(commit-var "observe-range")))))]
+           (d/function {:lang :clojure :params '[db payload] :requires '[[datomic.api :as d] [clojure.data.json :as json]] :code code}))))
+(defn- old-open! [conn]
+  (let [scope (:e (first (d/datoms (d/db conn) :aevt :triplex.scope/key)))]
+    @(d/transact conn [{:db/ident :triplex/commit :db/fn @old-body} [:db/add scope :triplex.scope/commit-fn-hash "an-old-build"]])))
+
 (defn extra-step!
   "One step of the third review's dimensions, after the main step, on both scopes: the transition (once), a save
   planned by a process that has not read the setting (after it), a removal on request, a save racing a removal and the
@@ -716,6 +730,30 @@
       (do (swap! transitioned conj (:seed g))
           (turn-on-both! c-conn k-conn)
           {:mode :transition :c (setting c-conn) :k (setting k-conn) :equal (= 1 (setting c-conn) (setting k-conn))})
+
+      (and transition? old-reopens? (@transitioned (:seed g)) (chance rng 0.02))
+      (let [_ (old-open! c-conn) _ (old-open! k-conn)
+            exists @(:exists g) head (storage/head-position (d/db c-conn))
+            spec (gen-save g rng model exists head)
+            [command input] (input-of g spec)
+            c (general #(reference/send c-name input))
+            k (reference/send k-name input)
+            _ (when (= 200 (:status c))
+                (swap! (:model g) record-commit spec input)
+                (swap! (:exists g) into (concat (:owners spec) (keep :frame-owner (:retires spec))))
+                (swap! (:commands g) conj command) (swap! (:operations g) conj (get input "operationId"))
+                (swap! (:blocks g) conj (:block spec)))
+            ;; and a stale planner after it
+            spec2 (gen-save g rng @(:model g) @(:exists g) (storage/head-position (d/db c-conn)))
+            [_ input2] (input-of g spec2)
+            op2 (get input2 "operationId")
+            stale (fn [f] (with-redefs-fn {(account-var "on?") (constantly false) (account-var "permitted?") false} f))
+            c2 (stale #(general (fn [] (reference/send c-name input2))))
+            k2 (stale #(reference/send k-name input2))
+            stored (fn [name] (= "committed" (get (op-lookup name op2 nil) "status")))]
+        {:mode :old-reopen :c [(outcome c) (outcome c2)] :k [(outcome k) (outcome k2)]
+         :equal (and (= (outcome c) (outcome k)) (= (receipt c) (receipt k)) (not= 200 (:status c2)) (not= 200 (:status k2))
+                     (not (stored c-name)) (not (stored k-name)))})
 
       (and transition? (@transitioned (:seed g)) (chance rng 0.03))
       ;; A planner that has not read the setting (a stale view, or a build that does not know it): every save it
