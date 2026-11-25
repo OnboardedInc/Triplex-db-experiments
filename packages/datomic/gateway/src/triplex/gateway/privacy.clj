@@ -136,7 +136,11 @@
   ([name db] (cut name db false))
   ([name db allow-pending?]
    (try
-     (let [frontier (when sql/url (sql/read-frontier name))
+     ;; [DX-ERA2 seventh pass, E4 of DX-ERA4] the head this gateway verified is read BEFORE the log: read after it, a
+     ;; head another request verified meanwhile (a removal published between the two reads) looked like a log behind
+     ;; this gateway's, and refused a request of any account (503) that no removal touched
+     (let [seen (get @cache name)
+           frontier (when sql/url (sql/read-frontier name))
            pending (if sql/url (get frontier "pending.json")
                      (when (and root (exists? (path name "pending.json"))) true))
            wire (if sql/url (get frontier "head.json")
@@ -155,7 +159,7 @@
        (let [result
        (when (or wire (enabled? db))
          (when (or (nil? wire) (and (not allow-pending?) pending)) (unavailable!))
-         (let [prior (get @cache name)]
+         (let [prior seen]
          (if (= wire (:wire prior))
            prior
            (let [h (json/read-str wire)

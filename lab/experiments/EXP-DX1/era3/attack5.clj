@@ -304,9 +304,12 @@
           ;; [DX-ERA2 sixth pass, adapted: adding an attribute is now a normal operation, one-way, from the database's policy
           ;; (the coordinator's V1 fix); dropping one is still refused] the narrower list must be refused; the wider list
           ;; must be an addition to the stored policy, with the log's copy following it
+          ;; [DX-ERA2 seventh pass, adapted oracle: X6, any list answers 200 and only adds] the narrower list answers 200
+          ;; and drops nothing: the stored policy and the log's copy keep every attribute
           (when (< (count attrs-after) 2)
-            (oracle! lbl (not= 200 (first protect))
-                     "with the log lost, the protection route cannot set a policy other than the stored one" detail))
+            (oracle! lbl (and (= 200 (first protect)) (= #{":v" ":p"} (set (get (rc/stored-policy (d/db conn)) "attributes")))
+                              (= #{":v" ":p"} (set (get head-now "attributes"))))
+                     "with the log lost, a narrower list drops nothing from the stored policy or the log's copy" detail))
           (when (> (count attrs-after) 2)
             (oracle! lbl (and (= 200 (first protect)) (= (set attrs-after) (set (get (rc/stored-policy (d/db conn)) "attributes")))
                               (= (set attrs-after) (set (get head-now "attributes"))))

@@ -2209,6 +2209,65 @@
           (check! label (not= 400 (:status read)) "a read on the stale value is not a 400" (offers/outcome read))
           (check! label (not (str/includes? (text (:body read)) va)) "no removed value answered" nil))))))
 
+;; ---- [DX-ERA2 seventh pass, E4 of DX-ERA4's gate (e)] another account's request and a stale view of the log -------
+(defn cut-read-race
+  "DX-ERA4's gate (e), seed 915, schedule 552 (commit boundary): a ticketed write of account b, sent right after a
+  removal of account a committed natively, answered 503 ErasureFrontierUnavailable. Forced here, with no seed: the
+  removal of a1 is held just before its publication; a request of account b starts, and its k-th read of the log's
+  head (k = 1 to 4) is held right after the file is read; the removal then publishes, a read of b1 moves this gateway's
+  cache to the published head, and the request goes on with the head it read. Every request of b answers 200. File
+  authority; per account only (database-wide, a ticketed write of b waits on the database's lock by design)."
+  []
+  (when per-account?
+    (doseq [variant [:frame-naming-b :save-b1 :read-b1] k [1 2 3 4]]
+      (fresh-scope false
+        (fn [name conn]
+          (let [label (str "cut-read-race/" mode "/" (clojure.core/name variant) "/read-" k)
+                seeds (seed! name [a1 b1]) va (:value (seeds a1))
+                ticket (served-seq name conn)
+                publish privacy/publish! record-text privacy/record-text
+                at-publish (promise) go (promise) held (promise) resume (promise)
+                target (atom nil) reads (atom 0)
+                rm (future (with-redefs-fn {#'privacy/publish! (fn [n c i]
+                                                                 (when (= n name) (deliver at-publish true) (deref go 30000 nil))
+                                                                 (publish n c i))}
+                             #(remove! name "crr-1" a1)))
+                _ (check! label (deref at-publish 30000 false) "set-up: the removal is held before its publication" nil)
+                send (fn [] (case variant
+                              :frame-naming-b (offers/send name (assoc (save-frame "crr-nb" "notice:v1:crr-nb" ":notice/body" "n" nil nil)
+                                                                       "erasureSeq" ticket "erasureAccounts" ["b"]))
+                              :save-b1 (offers/send name (frame "crr-b1" b1 (secret b1 "s") (:id (seeds b1)) (head conn)))
+                              :read-b1 (offers/route name "v1" "read" {"entityIds" [b1]})))
+                obs (with-redefs [privacy/record-text
+                                  (fn [n rec]
+                                    (let [t (record-text n rec)]
+                                      (when (and (= n name) (= rec "head.json") (identical? (Thread/currentThread) @target)
+                                                 (= k (swap! reads inc)))
+                                        (deliver held true) (deref resume 30000 nil))
+                                      t))]
+                      (let [w (future (reset! target (Thread/currentThread)) (send))
+                            started (System/currentTimeMillis)]
+                        ;; until the request holds its k-th read of the head, or ends with fewer reads, or waits
+                        ;; (on the log's boundary a read waits for a committed removal's publication, by design, M1:
+                        ;; 1.5 s, under the read's own 5 s wait)
+                        (loop [] (when-not (or (realized? held) (realized? w) (> (- (System/currentTimeMillis) started) 1500))
+                                   (Thread/sleep 2) (recur)))
+                        (let [was-held (realized? held)
+                              _ (deliver go true)
+                              removal (deref rm 30000 {:status 0})
+                              refresh (offers/route name "v1" "read" {"entityIds" [b1]})
+                              _ (deliver resume true)
+                              answer (deref w 30000 {:status 0 :body {"code" "timeout"}})]
+                          {:held-at-read k :held was-held :head-reads @reads :removal (offers/outcome removal)
+                           :refresh (offers/outcome refresh) :answer (offers/outcome answer)
+                           :message (get-in answer [:body "message"])})))]
+            (println "ERA2_CUT_READ_RACE" mode (pr-str [variant obs]))
+            (check! label (= [200 nil] (:removal obs)) "the removal completes" obs)
+            (check! label (= [200 nil] (:answer obs))
+                    "a request of another account is answered 200 whatever head it read while the removal published" obs)
+            (check! label (not (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [a1]}))) va))
+                    "a1 not answered" nil)))))))
+
 ;; ERA2_ONLY (space-separated label prefixes) runs only those scenarios: a diagnostic run, never a gate
 (def only (some-> (System/getenv "ERA2_ONLY") str/trim not-empty (str/split #"\s+")))
 (defn- scenario [label f]
@@ -2271,6 +2330,8 @@
   (scenario "file-publish-compare" file-publish-compare)
   (scenario "restore-with-pending" restore-with-pending)
   (scenario "peer-behind-move" peer-behind-move)
+  ;; [DX-ERA2 seventh pass, E4 of DX-ERA4]
+  (scenario "cut-read-race" cut-read-race)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode
              (pr-str {:checks (count @results) :failed (count failed)}))

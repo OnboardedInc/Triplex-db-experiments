@@ -937,7 +937,10 @@
   [name db input]
   (let [later? (frame-tests input)
         ;; [DX-ERA2 sixth pass] the database's own policy (an attribute added later counts from its addition)
-        cut (with-policy (privacy/cut name db true) db) attrs (or (:attrs cut) #{})]
+        ;; [DX-ERA2 seventh pass, E4 of DX-ERA4] read from the database when it holds one: the rule reads only the data's
+        ;; removal records, so it needs no read of the log (this read, unlike the request's own, was not retried)
+        stored (stored-policy db)
+        attrs (if stored (set (get stored "attributes")) (or (:attrs (with-policy (privacy/cut name db true) db)) #{}))]
     (when (seq attrs)
       (let [w (written-protected db input attrs)]
         (when (seq w)

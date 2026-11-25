@@ -65,6 +65,12 @@ whenever any removal ever named its family. With removalSeen it would be stored 
   `InvalidValue`, `account-claims/check-ids!`). A removal can no longer take an account's scoped command ID first.
   The check is in `main.clj`'s removal route, not in `erase!`, so a pending removal from before this build still
   completes.
+- **E4 of DX-ERA4's gate (e), from the removal branch (`383db77d1`, its page section 20.8).** Another account's write
+  was refused 503 `ErasureFrontierUnavailable` while a removal published: the replay rule read the log without a
+  retry, and `privacy/cut` compared the head it read with a newer head this gateway had verified meanwhile. The merge
+  takes both fixes (the cache read before the log; the rule's attributes from the stored policy) and the forced test
+  `cut-read-race`. The save line's own cut read (`storage/removal-race-declined?`) runs on databases guarded
+  database-wide only (`d224cb7d7`), where every request already waits for a pending removal.
 - **A text for the race decline.** `reply/commit-message` gives the save line's mapping of a creation racing a removal
   (`ErasureReplayDeclined`) a fixed text instead of the generic one.
 
