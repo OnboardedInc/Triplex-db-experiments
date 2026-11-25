@@ -419,7 +419,10 @@
         ;; every record is written into a real derived document: sealed ones accepted, clear ones refused
         _ (doseq [rec records :when (not (:slow rec))]
             (let [unit (if (:clear rec) ["k" (:content rec)] ["" (:wire rec)])
-                  o (doc! src (str "fzw-" tag "-" (:k rec)) (str "answer:" i ":f" (:k rec)) (page [unit]))]
+                  ;; [DX-ERA4, second review N4] the page entry is the record's own subject (the setting binds each
+                  ;; unit to its document's subject; a record of one subject in another's entry is refused)
+                  o (doc! src (str "fzw-" tag "-" (:k rec)) (str "answer:" i ":f" (:k rec))
+                          (page [unit] {"subject" (ds/place-subject (:place rec))}))]
               (bump! :write (:mode rec) o)
               (if (:clear rec)
                 (x/oracle! (str "F6 " i) (= [409 "DerivedRecordUnsealed"] o) "the setting refuses the clear content a writer stores after its seal call failed or was refused" {:mode (:mode rec)})
@@ -451,7 +454,8 @@
                   _ (when slow (bump! :slow-answer (cond (:not-held slow) :not-held (get slow-answer "sealed") :sealed
                                                          (contains? slow-answer "removed") :removed :else :other)))
                   _ (when (and slow slow-wire)
-                      (let [o (doc! src (str "fzw-slow-" tag) (str "answer:" i ":fs") (page [["" slow-wire]]))]
+                      (let [o (doc! src (str "fzw-slow-" tag) (str "answer:" i ":fs")
+                                    (page [["" slow-wire]] {"subject" (ds/place-subject (:place slow-rec))}))]
                         (x/oracle! (str "F6 " i) (= [200 nil] o) "the setting accepts the slow seal's record" {:o o})))
                   ok (= 200 (:status (:final rm)))
                   label (str "F6 " (pr-str {:i i :round round :stop stop :kill kill? :restore restore?}))
