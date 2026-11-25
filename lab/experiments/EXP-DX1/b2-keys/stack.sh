@@ -95,6 +95,6 @@ docker exec "$prefix-gw-w" sh -c "rm -rf '$dir/erase-2.json'"
 post "$W/v2/db/$D/erase" "$(remove b2s-c acct/c/one)" removal-c1-resent
 step "c1's intent pending after the resend: $(docker exec "$prefix-gw-w" sh -c "test -f '$dir/pending.json' && echo yes || echo no")"
 sleep 3
-step "after the resend: a1's key file $(present "$ka"); c1's $(present "$kc") (its grace runs from now)"
+step "after the resend: a1's key file $(present "$ka"); c1's $(present "$kc") (its grace counts from its first attempt's erasedAt)"
 step "removal failures counted on the write gateway: $(curl -sS -m 10 "$W/v2/admin/scan-stats" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.stringify(JSON.parse(s).removalFailures??{}))}catch{console.log("?")}})')"
 step done
