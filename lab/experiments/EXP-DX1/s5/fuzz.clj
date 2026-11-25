@@ -220,11 +220,23 @@
                spec)]
     spec))
 
+(def accounts?
+  "[S5 second review] S5_ACCOUNTS=1: a save whose written owners are all of the generator's account names it
+  (`account`, as the SDK's claimAccount does), and a second account's saves reuse the first's command and operation IDs."
+  (= "1" (System/getenv "S5_ACCOUNTS")))
+(defn account-of-spec [g spec]
+  (when accounts?
+    (let [prefix (str (:acct g) "/")
+          written (distinct (concat (map :owner (:facts spec)) (map :owner (:retires spec)) (keep :frame-owner (:retires spec))))]
+      (when (and (seq written) (every? #(str/starts-with? % prefix) written)) (subs (:acct g) 5)))))
+
 (defn input-of [g spec]
-  (let [command (or (:command spec) (str "fz" (:seed g) "-" (swap! (:counter g) inc)))]
-    [command (frame {:command command :operation (:operation spec) :block (:block spec) :facts (:facts spec)
-                     :retires (:retires spec) :source (:source spec) :entities (:entities spec)
-                     :scope-wide (contains? (:faults spec) :scope-wide) :no-command (:no-command spec)})]))
+  (let [command (or (:command spec) (str "fz" (:seed g) "-" (swap! (:counter g) inc)))
+        account (or (:account spec) (account-of-spec g spec))]
+    [command (cond-> (frame {:command command :operation (:operation spec) :block (:block spec) :facts (:facts spec)
+                             :retires (:retires spec) :source (:source spec) :entities (:entities spec)
+                             :scope-wide (contains? (:faults spec) :scope-wide) :no-command (:no-command spec)})
+               account (assoc "account" account))]))
 
 ;; ---------------------------------------------------------------- model upkeep
 
@@ -405,6 +417,7 @@
 
 (defn- outcome [reply] (reference/outcome reply))
 
+(declare op-lookup)
 (defn serial-step!
   "One generated save (with an optional race, kill or resend) on both scopes. Returns a result map."
   [g ^Random rng {:keys [c-name c-conn k-name k-conn]}]
@@ -461,7 +474,7 @@
               :kill-after (let [lost (killing :after #(send-k input)) again (send-k input)]
                             (swap! result assoc :k-lost (outcome lost) :k-again (outcome again))
                             ;; After a kill the client resolves by operation: the original receipt or nothing.
-                            (let [op (reference/operation k-name operation)]
+                            (let [op (op-lookup k-name operation (get input "account"))]
                               (if (= "committed" (get op "status")) {:status 200 :body (assoc op "datoms" (get-in c [:body "datoms"])) :resolved true} again)))
               :kill-before (let [lost (killing :before #(send-k input)) again (send-k input)]
                              (swap! result assoc :k-lost (outcome lost)) again)
@@ -496,6 +509,129 @@
               (swap! (:blocks g) conj (:block spec)))
           (when (#{:narrow :wide} (:kind (:block spec))) (reset! (:refused-block g) (:block spec))))
         (assoc r :equal (and same-outcome same-receipt))))))
+
+;; ---------------------------------------------------------------- [S5 second review] unknown outcomes and a second account
+
+(defonce last-unknown (atom nil))
+(defonce ^:private unknown-hooked
+  ;; Remembers the cause chain of the last failure the gateway classified unknown (the 503 body does not name it).
+  (let [v (requiring-resolve 'triplex.gateway.outcome/unknown)]
+    (alter-var-root v (fn [f] (fn [e] (reset! last-unknown (vec (for [x (take-while some? (iterate #(.getCause ^Throwable %) e))]
+                                                                   (str (.getName (class x)) ": " (.getMessage ^Throwable x)))))
+                                (f e))))))
+(def faults? "S5_FAULTS=1: one serial save in seven has an unknown outcome, resolved as the SDK resolves it." (= "1" (System/getenv "S5_FAULTS")))
+(def ^:private unknown-failures
+  [#(ex-info "Transactor not available" {:cognitect.anomalies/category :cognitect.anomalies/unavailable :cognitect.anomalies/message "Transactor not available"})
+   #(ex-info "Interrupted" {:cognitect.anomalies/category :cognitect.anomalies/interrupted})
+   #(ex-info ":db.error/transactor-unavailable Transactor not available" {:db/error :db.error/transactor-unavailable})
+   #(java.util.concurrent.ExecutionException. (java.net.SocketException. "Connection reset"))
+   #(java.util.concurrent.ExecutionException. (java.util.concurrent.TimeoutException. "timed out"))
+   #(RuntimeException. "a failure the gateway has never seen")
+   (constantly nil)])                                    ; nil: the gateway's 5 s deref times out
+(defn- failing [e]
+  (reify clojure.lang.IDeref (deref [_] (throw e))
+    clojure.lang.IBlockingDeref (deref [_ _ _] (throw e))
+    clojure.lang.IPending (isRealized [_] true)))
+(defn- hanging []
+  (reify clojure.lang.IDeref (deref [_] (throw (IllegalStateException. "unbounded deref")))
+    clojure.lang.IBlockingDeref (deref [_ _ timeout] (Thread/sleep 20) timeout)
+    clojure.lang.IPending (isRealized [_] false)))
+(defn- with-transact-fault
+  "The first d/transact-async of f: :applied (the transactor applies it; the gateway then sees e, or its deref times
+  out), :unapplied (never sent), :late (held, and sent by the caller after the fence). Returns [result held]."
+  [kind e f]
+  (let [orig d/transact-async fired (atom false) held (atom nil)]
+    (with-redefs [d/transact-async (fn [conn tx & opts]
+                                     (if (compare-and-set! fired false true)
+                                       (case kind
+                                         :late (do (reset! held #(apply orig conn tx opts)) (hanging))
+                                         :applied (let [fut (apply orig conn tx opts)]
+                                                    (try (deref fut 10000 nil) (catch Throwable _ nil))
+                                                    (if e (failing e) (hanging)))
+                                         :unapplied (if e (failing e) (hanging)))
+                                       (apply orig conn tx opts)))]
+      [(f) @held])))
+(defn op-lookup [name id account]
+  (let [{:keys [body]} (main/route-handler {:request-method :get :uri (str "/v1/db/" name "/operation/" (java.net.URLEncoder/encode ^String id "UTF-8"))
+                                            :query-string (when account (str "account=" account))})]
+    (json/read-str (if (string? body) body (String. ^bytes body "UTF-8")))))
+(defn- fence-op [name id account] (:body (reference/route name "v1" "fence" (cond-> {"operationId" id} account (assoc "account" account)))))
+(defn- resolve-op [name id account]
+  (let [op (op-lookup name id account)]
+    (if (or (= "committed" (get op "status")) (get op "fenced")) op (fence-op name id account))))
+
+(defn fault-step!
+  "One generated save with an unknown outcome on both scopes (the same fault on each), resolved as the SDK resolves it
+  (lookup, then fence), then replayed under a new operation ID when fenced. Checks the truth on each side and that
+  both sides agree."
+  [g ^Random rng {:keys [c-name c-conn k-name k-conn]}]
+  (let [model @(:model g) exists @(:exists g)
+        head (storage/head-position (d/db c-conn))
+        spec (apply-faults (assoc g :exists-now exists) rng (gen-save g rng model exists head) model)
+        kind (pick rng [:applied :unapplied :late])
+        make (nth unknown-failures (.nextInt rng (count unknown-failures)))
+        [command input] (input-of g spec)
+        op (get input "operationId") account (get input "account")
+        replay-input (assoc input "operationId" (str op "/replay"))
+        side (fn [name wrap]
+               (let [[reply held] (wrap #(with-transact-fault kind (make) (fn [] (reference/send name input))))
+                     unknown? (= 503 (:status reply))
+                     resolved (when unknown? (resolve-op name op account))
+                     late (when held (try @(held) "committed" (catch Exception _ "refused")))
+                     after (when unknown? (op-lookup name op account))
+                     replay (when (get resolved "fenced") (wrap #(reference/send name replay-input)))
+                     _ (when (= 503 (:status replay))
+                         (println "DX-S5R2_UNKNOWN" (json/write-str {:where "replay after a fence" :side name :faults (:faults spec)
+                                                                     :owners (:owners spec) :chain @last-unknown})))]
+                 {:answer (outcome reply) :resolved (get resolved "status") :fenced (boolean (get resolved "fenced"))
+                  :late late :after (get after "status") :replay (some-> replay outcome)
+                  :position (or (get resolved "position") (get-in replay [:body "position"]) (get-in reply [:body "position"]))}))
+        c (side c-name general)
+        k (side k-name (fn [f] (f)))
+        truth (fn [s] (and (or (not= 503 (first (:answer s)))
+                               (and (#{"committed" "absent"} (:resolved s)) (= (:resolved s) (:after s))))
+                           (not= "committed" (:late s))
+                           (or (not= kind :unapplied) (not= "committed" (:resolved s)))))
+        r {:mode (keyword (str "fault-" (name kind))) :command command :operation op :c (:answer c) :k (:answer k)
+           :c-side c :k-side k :writer (writer-kind k-conn op nil)
+           :equal (and (= (dissoc c :position) (dissoc k :position)) (= (:position c) (:position k)) (truth c) (truth k))}]
+    (let [stored (cond (= "committed" (:resolved c)) input
+                       (= [200 nil] (:replay c)) replay-input
+                       (= [200 nil] (:answer c)) input)]
+      (if stored
+        (do (swap! (:retired g) into (for [x (concat (filter :pred (:facts spec)) (:retires spec)) :when (:pred x)]
+                                       [(:owner x) (:field x) (get-in x [:pred :id])]))
+            (swap! (:model g) record-commit spec stored)
+            (swap! (:exists g) into (concat (:owners spec) (keep :frame-owner (:retires spec))))
+            (swap! (:commands g) conj command) (swap! (:operations g) conj (get stored "operationId"))
+            (swap! (:blocks g) conj (:block spec)))
+        (when (#{:narrow :wide} (:kind (:block spec))) (reset! (:refused-block g) (:block spec)))))
+    r))
+
+(defn shadow-step!
+  "A second account's save that reuses the first account's latest command and operation IDs (every client-chosen key
+  shared), on both scopes. With TX2_ACCOUNT_CLAIMS=1 it must commit, and each account's lookups must find its own
+  transaction only."
+  [g ^Random rng {:keys [c-name k-name]}]
+  (when-let [command (peek @(:commands g))]
+    (let [op (peek @(:operations g))
+          b-acct (str "fb" (:seed g)) b-owner (str "acct/" b-acct "/s" (swap! (:counter g) inc))
+          spec {:owners [b-owner] :new #{b-owner} :command command :operation op :account b-acct :retires [] :faults #{}
+                :facts (vec (for [i (range (between rng 1 4))] {:owner b-owner :field (str ":fz/b" i) :type :string :value (str "b|" i) :pred nil}))
+                :source (storage/head-position (d/db (main/connection (main/db-uri c-name)))) :block (block-of g rng 12)}
+          [_ input] (input-of g spec)
+          b-tx (get-in input ["claims" 0 "txId"])
+          c (general #(reference/send c-name input))
+          k (reference/send k-name input)
+          on (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS"))
+          lookups (fn [name]
+                    {:claim (get (:body (reference/route name "v1" "claim" {"commandId" command "account" b-acct})) "txId")
+                     :op (get (op-lookup name op b-acct) "txId")
+                     :a-op (get (op-lookup name op (subs (:acct g) 5)) "txId")})
+          lc (lookups c-name) lk (lookups k-name)
+          cross (if on (count (filter #(and (some? %) (not= b-tx %)) [(:claim lk) (:op lk)])) 0)]
+      {:mode :shadow :c (outcome c) :k (outcome k) :cross cross :committedWithOption (when on (= 200 (:status k)))
+       :equal (and (= (outcome c) (outcome k)) (= lc lk) (zero? cross) (or (not on) (= 200 (:status k))))})))
 
 ;; ---------------------------------------------------------------- the concurrent phase
 
@@ -579,10 +715,10 @@
 (defn fuzz-run!
   "One fuzz run: a fresh control and candidate scope, `steps` serial saves, then `rounds` concurrent rounds."
   [seed steps rounds threads per-thread]
-  (let [g (gen-state seed (str "acct/fz" seed))
+  (let [g (gen-state seed (str (if accounts? "acct/fa" "acct/fz") seed))
         rng (Random. seed)
         out (atom {:seed seed :serial 0 :modes {} :writers {} :outcomes {} :differences [] :deep 0 :deep-differences []
-                   :races {} :declined {} :concurrent []})
+                   :races {} :declined {} :concurrent [] :faults {} :shadows {}})
         started (System/nanoTime)]
     (reference/in-scope
       (fn [c-name c-conn]
@@ -608,18 +744,29 @@
               (seed-owners! g c-name k-name 8)
               (loop [i 0]
                 (when (< i steps)
-                  (let [r (try (serial-step! g rng ctx)
-                               (catch Throwable e {:equal false :error (str e) :mode :error}))]
-                    (swap! out (fn [o] (-> o (update :serial inc) (update-in [:modes (:mode r)] (fnil inc 0))
-                                           (update-in [:writers (or (:writer r) :none)] (fnil inc 0))
-                                           (update-in [:outcomes (str (:k r))] (fnil inc 0))
-                                           (cond-> (:declined r) (update-in [:declined (:declined r)] (fnil inc 0)))
-                                           (cond-> (:kc r) (update-in [:races (str [(:kc-writer r) (:kc r) (:writer r) (:k r)])] (fnil inc 0))))))
-                    (if-not (:equal r)
-                      (do (swap! out update :differences conj (dissoc r :spec))
-                          (println "DX-S5_DIFFER" (pr-str (update r :spec #(select-keys % [:owners :new :faults :source])))))
-                      (when (and (pos? i) (zero? (mod i 400))) (deep! i)))
-                    (when (:equal r) (recur (inc i))))))
+                  (let [record! (fn [r]
+                                  (swap! out (fn [o] (-> o (update :serial inc) (update-in [:modes (:mode r)] (fnil inc 0))
+                                                         (update-in [:writers (or (:writer r) :none)] (fnil inc 0))
+                                                         (update-in [:outcomes (str (:k r))] (fnil inc 0))
+                                                         (cond-> (:declined r) (update-in [:declined (:declined r)] (fnil inc 0)))
+                                                         (cond-> (:c-side r) (update-in [:faults (str [(:mode r) (:k r) (get-in r [:k-side :resolved]) (get-in r [:k-side :late]) (get-in r [:k-side :replay])])] (fnil inc 0)))
+                                                         (cond-> (= :shadow (:mode r)) (update-in [:shadows (str [(:k r) (:committedWithOption r)])] (fnil inc 0)))
+                                                         (cond-> (:kc r) (update-in [:races (str [(:kc-writer r) (:kc r) (:writer r) (:k r)])] (fnil inc 0))))))
+                                  (when-not (:equal r)
+                                    (swap! out update :differences conj (dissoc r :spec))
+                                    (println "DX-S5_DIFFER" (pr-str (update r :spec #(select-keys % [:owners :new :faults :source]))))))
+                        r (try (if (and faults? (chance rng (/ 1.0 7))) (fault-step! g rng ctx) (serial-step! g rng ctx))
+                               (catch Throwable e {:equal false :error (str e) :mode :error}))
+                        _ (when (and (= 503 (first (:k r))) (not (:c-side r)))
+                            (println "DX-S5R2_UNKNOWN" (json/write-str {:where "serial save" :mode (:mode r) :faults (get-in r [:spec :faults])
+                                                                        :owners (get-in r [:spec :owners]) :chain @last-unknown})))
+                        _ (record! r)
+                        s (when (and (:equal r) accounts? (chance rng 0.25))
+                            (try (shadow-step! g rng ctx) (catch Throwable e {:equal false :error (str e) :mode :shadow-error})))
+                        _ (when s (record! s))
+                        ok (and (:equal r) (or (nil? s) (:equal s)))]
+                    (when (and ok (pos? i) (zero? (mod i 400))) (deep! i))
+                    (when ok (recur (inc i))))))
               (when (empty? (:differences @out)) (deep! "serial-end"))
               (when (empty? (:differences @out))
                 (doseq [round (range rounds)]
@@ -646,6 +793,8 @@
                                              :serial (reduce + (map :serial runs))
                                              :concurrent (reduce + (map (fn [r] (reduce + (map :saves (:concurrent r)))) runs))
                                              :unjustifiedRefusals (reduce + (map (fn [r] (reduce + (map :unjustified-count (:concurrent r)))) runs))
+                                             :faultSteps (reduce + (for [r runs [m n] (:modes r) :when (str/starts-with? (name m) "fault-")] n))
+                                             :shadowSaves (reduce + (for [r runs] (get-in r [:modes :shadow] 0)))
                                              :settings (into (sorted-map) (filter (fn [[k]] (str/starts-with? k "TX2_")) (System/getenv)))}))
     (shutdown-agents)
     (System/exit (if (empty? bad) 0 1))))

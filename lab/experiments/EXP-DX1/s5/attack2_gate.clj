@@ -263,23 +263,31 @@
               before-db (d/db conn)
               t0 (System/nanoTime)
               answers (frequencies (for [i (range n)]
-                                     (let [r (fence name (str (format "%0256d" i)) acct)] [(:status r) (get-in r [:body "fenced"])])))
+                                     (let [r (fence name (format "%0200d" i) acct)] [(:status r) (get-in r [:body "fenced"])])))
               fence-ms (/ (- (System/nanoTime) t0) 1e6)
               too-long (reference/outcome (fence name (apply str (repeat 257 "x")) acct))
+              ;; An operation ID the save path accepts: is it one the fence accepts? (With the option, the fence
+              ;; checks the stored, scoped form, which is longer than the client's ID.)
+              long-op (apply str "L" (repeat 249 "x"))
+              long-save (reference/outcome (reference/send name (with-account (increment conn name "acct/f1/subject/long" long-op) acct)))
+              long-fence (reference/outcome (fence name long-op acct))
+              long-unknown-fence (reference/outcome (fence name (apply str "U" (repeat 249 "y")) acct))
               saves (vec (for [i (range 20)] (reference/outcome (reference/send name (with-account (increment conn name M (str "after-" i)) acct)))))
               db (d/db conn)
               feed (reference/feed name 0 100)
               log-txs (count (seq (d/tx-range (d/log conn) nil nil)))
               r {:case "fences are permanent transactions with no position" :fences n :answers (str answers)
                  :msPerFence (/ fence-ms n) :overlong too-long :savesAfter (frequencies saves)
+                 :saveWith250CharOperation long-save :fenceOfThatCommittedOperation long-fence :fenceOfAnUnknown250CharOperation long-unknown-fence
                  :head (head conn) :feedTransactions (count feed) :logTransactions log-txs
                  :datomsGrowth (- (count (seq (d/datoms db :eavt))) (count (seq (d/datoms before-db :eavt))))
                  :counter (:value (count-of name M))}]
           (line r)
           (is (= {[200 true] n} answers))
           (is (= {[200 nil] 20} (frequencies saves)))
-          (is (= 20 (count feed)) "the feed lists the saves and skips the fences")
-          (is (= "20" (:counter r))))))))
+          (is (= 21 (count feed)) "the feed lists the saves and skips the fences")
+          (is (= "20" (:counter r)))
+          (is (= 200 (first long-unknown-fence)) "an operation ID the save path accepts can be fenced"))))))
 
 ;; ---------------------------------------------------------------- 7. F3 and F4: the removal race and the SDK's replay
 
@@ -310,8 +318,8 @@
                 stale (reference/send name (assoc racing "operationId" (str "stale-" (swap! counter inc))))
                 ;; (c) the SDK's replay of (a): the same caller values, a fresh source, a new operation ID.
                 replay ((if fast? (fn [f] (f)) fz/general)
-                        #(reference/send name (assoc (with-account (save conn {:facts [{:owner X :field ":a/f" :type :string :value "x" :pred nil}
-                                                                                       {:owner X :field ":p/secret" :type :string :value "x value framed before the removal" :pred nil}]}) acct))))
+                        #(reference/send name (with-account (save conn {:facts [{:owner X :field ":a/f" :type :string :value "x" :pred nil}
+                                                                                {:owner X :field ":p/secret" :type :string :value "x value framed before the removal" :pred nil}]}) acct)))
                 stored (get-in (fz/read-owner name X {"validAt" 5.0}) [":p/secret" :value])
                 r {:case "a creation racing a removal that named its entity" :writer (if fast? "creation writer" "general writer")
                    :removal (:status @removed) :racingAnswer (reference/outcome reply)
@@ -351,6 +359,57 @@
           (doseq [[k v] results]
             (when (= 503 (first (:answer v)))
               (is (not= 503 (first (:replay v))) [k "a deterministic refusal answered unknown is replayed forever"]))))))))
+
+;; ---------------------------------------------------------------- 9. F2: shapes the S6 bound gate did not send
+
+(deftest import-and-live-shapes-against-the-estimate
+  ;; Setting bound (TX2_IMPORT_WHOLE_SUBJECT=1, TX2_READ_SET_BOUND=1). Admitted shapes the S6 gate did not send: an
+  ;; import frame of one subject with thousands of large values; a re-import that retires a whole live subject; a live
+  ;; save at both caps (4,096 existing entities and 4,096 read-only live IDs). Each on the general writer and on the
+  ;; per-subject writers (which take import frames of new subjects, F10). Memory-toy times, diagnostic.
+  (if-not (and (= "1" (System/getenv "TX2_IMPORT_WHOLE_SUBJECT")) (= "1" (System/getenv "TX2_READ_SET_BOUND")) (run? "f2"))
+    (println "DX-S5R2_SKIP needs TX2_IMPORT_WHOLE_SUBJECT=1 and TX2_READ_SET_BOUND=1")
+    (reference/in-scope
+      (fn [name conn]
+        (let [est (requiring-resolve 'triplex.gateway.import-bound/estimate-us)
+              limit @(requiring-resolve 'triplex.gateway.write-policy/import-commit-us)
+              estimate (fn [input] (let [data (storage/tx-data (d/db conn) input)] (est (second (first data)) input)))
+              measure (fn [label wrap input]
+                        (let [e (estimate input) reply (wrap #(reference/send name input))
+                              t (get-in reply [:body "transactMicros"])
+                              r {:frame label :writer (or (get-in reply [:body "subjectSave"]) "general") :outcome (reference/outcome reply)
+                                 :estimateUs e :transactMicros t :ratio (when (and t (pos? e)) (/ (double t) e)) :importBoundUs limit}]
+                          (line (assoc r :case "F2 shape against the estimate")) r))
+              big (fn [n bytes] (apply str (repeat bytes (char (+ 97 (mod n 26))))))
+              results (atom [])
+              S "acct/b5/subject/replaced"]
+          ;; Seed: one subject with 3,000 live facts; 4,096 existing subjects of one fact each.
+          (doseq [k (range 6)]
+            (is (= [200 nil] (reference/outcome (fz/general #(reference/send name (save conn {:facts (vec (for [i (range 500)] {:owner S :field (str ":r/f" k "-" i) :type :string :value (str "v" i) :pred nil}))})))))))
+          (doseq [k (range 8)]
+            (is (= [200 nil] (reference/outcome (fz/general #(reference/send name (save conn {:facts (vec (for [i (range 512)] {:owner (str "acct/b5/subject/e" k "-" i) :field ":e/f" :type :string :value "e" :pred nil}))})))))))
+          (doseq [[label wrap] [["general" fz/general] ["fast" (fn [f] (f))]]]
+            (let [tag (str label "-" (swap! counter inc))
+                  ;; (a) one new subject, 2,000 facts of 400-byte values, as an import frame
+                  a (assoc (save conn {:facts (vec (for [i (range 2000)] {:owner (str "acct/b5/subject/big-" tag) :field (str ":b/f" i) :type :string :value (big i 400) :pred nil}))})
+                           "writeClass" "import")
+                  _ (swap! results conj (measure (str label ": import, one new subject, 2,000 values of 400 bytes") wrap a))
+                  ;; (b) a re-import of S: every live fact retired and written again (live = retired, the read set is S)
+                  live (into {} (fz/read-owner name S {"validAt" 5.0}))
+                  b (assoc (save conn {:facts (vec (for [[f p] (take 1500 live)] {:owner S :field f :type :string :value (str "re-" tag) :pred p}))})
+                           "writeClass" "import")
+                  _ (swap! results conj (measure (str label ": import, a subject re-imported, 1,500 retirements and 1,500 values") wrap b))
+                  ;; (c) a live save at both caps: 4,096 existing entities read, 4,096 read-only live IDs, one fact
+                  entities (vec (for [k (range 8) i (range 512)] (str "acct/b5/subject/e" k "-" i)))
+                  live-ids (vec (take 4096 (concat (map (comp :id val) (fz/read-owner name S {"validAt" 5.0}))
+                                                   (for [e entities] (:id (get (fz/read-owner name e {"validAt" 5.0}) ":e/f"))))))
+                  c (-> (save conn {:facts [{:owner (str "acct/b5/subject/c-" tag) :field ":c/f" :type :string :value "c" :pred nil}]})
+                        (assoc "entities" (vec (cons (str "acct/b5/subject/c-" tag) (take 4095 entities))) "live" live-ids))
+                  _ (swap! results conj (measure (str label ": live, one fact, 4,095 existing entities and 4,096 read-only live IDs") wrap c))]))
+          (let [over (filter #(and (= 200 (first (:outcome %))) (:ratio %) (> (:ratio %) 1.0)) @results)]
+            (line {:case "F2 summary" :admittedOverEstimate (count over) :worst (when (seq @results) (select-keys (apply max-key #(or (:ratio %) 0) @results) [:frame :writer :ratio :transactMicros :estimateUs]))})
+            (doseq [r @results :when (and (= 200 (first (:outcome r))) (re-find #"import" (:frame r)))]
+              (is (<= (:ratio r) 1.0) [r "an admitted import frame costs no more than its estimate"]))))))))
 
 (defn main []
   (let [r (clojure.test/run-tests 's5-attack2)]
