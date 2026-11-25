@@ -209,7 +209,8 @@
                 (erase-keys! name (mapcat #(get % "identities") due))
                 (swap! shredded assoc name (get (last due) "seq"))))))
         ;; [DX-ERA2 fifth pass] counted and logged, no longer dropped (B2 was hidden here)
-        (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "shred" name e))))))
+        ;; [DX-ERA2 sixth pass, F1 of the B2 review] then, for this pass only, the log read again without the cache
+        (catch Exception e ((requiring-resolve 'triplex.gateway.removal-repair/shred-after-failure!) name cutoff e))))))
 
 (defn- maintain-keys! []
   (shred-published!)
