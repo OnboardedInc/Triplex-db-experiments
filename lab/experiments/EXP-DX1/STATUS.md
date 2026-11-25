@@ -6115,3 +6115,18 @@ Source: independent reviewer, branch `exp/DX-S5-save-line-review` `316d13d22`, `
 Recommendation: merge with named fixes. Not tested by the review: the SDK end to end; JSON, boolean, datetime and blob values; protected and sealed values in the fuzzer; a transactor killed with SIGKILL.
 
 **Actions:** the real-mix builder resumed on a new branch `exp/DX-S6-save-line-fixes` to fix F1 (classify every commit-path exception as decided or unknown, unknown by default; the SDK resolves by lookup), F2 (price every lookup; apply the same test to live saves), F3 and the rest, and to cover the SDK end to end. The evening merge told to list F1 at the top of the readiness page's faults.
+
+## 2026-11-24 22:07 EST: Publish: the review's seven findings fixed on its branch; second review started
+
+Source: Publish builder, branch `exp/DX-ACT8-publish-beside-saves` `bf377c57f` (not merged), page section 0. All fixes behind new default-off options; with them off the reviewer's tests still show each fault (kept as controls). Every container started by image ID.
+
+- Rule: no lookup by a key the client or the content chooses crosses accounts.
+- F1 and F2 (`TX2_ACCOUNT_KEYS=1`): the joined command ID carries the account and the intent names it; old un-prefixed records still read, accepted only if they wrote this account's own documents; the definitions command ID hashes in the account's prefix. Two accounts with the same command ID now get their own positions (11 and 12; on a stack 28 and 29, one release each). By-reference fuzzer 500 schedules, 0 violating (232 with the option off).
+- F3 (`TX2_LEDGER_CAP_AT_PUBLISH=1`): a release over the parts cap is refused at Publish before any write, with the count, the limit and what to do.
+- F4 and F5 (`TX2_SETTLE_FRAME_GUARDS=1`): each frame reads the control row at its own read position and is guarded on it; value frames also guarded on the notice tail. Pause bound: 0 frames after an acknowledged pause, under either precondition. F6: the enrolment walk accepts its own command (0 of 300 races refused; was 111).
+- Gates with fixes on: the reviewer's tests 27 of 27; its mixed fuzzer 20,000 schedules, 0 violating (44,284 Publishes, 1,990,145 notices checked); a new cross-account isolation fuzzer 10,000 schedules, 0 differing (679 of 1,000 differ with options off); ledgers in parts 430 schedules; toy stack gates pass with fixes on and with options off; held windows 8 of 8 landed, 0 of 7,632 saves refused; a transactor restart at three points, exact.
+- Keys without the account, searched: fixed two; **not fixed: client-chosen SAVE command IDs are database-wide (one account can block another's ID, 409)** and removal command IDs likewise; the rest already carry the account or are random.
+- Composes with the account-ticket branch in a scratch merge (22 removals, 0 refusals in the other 9 accounts, 10 of 10 exact).
+- Open: a write-gateway restart not tested; a Publish sharing a group commit with saves never run (do not combine the two options); an enrolment stops when a removal lands inside its walk; one unexplained one-try refusal of a small Publish at 39.4 own saves per second (the retry landed; every check passed; the page's "a save never causes a retry" is withdrawn); the ledger cap reads the ledger mode from the publishing process, so publisher and settlers must agree.
+
+**Actions:** the same independent reviewer started a second review of the fixed head (old-record compatibility, ambiguous separators in names, the keys not fixed, mixed option fleets, the unexplained refusal, group commit). The save-line fix builder was given the save command ID finding.
