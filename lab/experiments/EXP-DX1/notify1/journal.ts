@@ -25,10 +25,16 @@ export interface Inputs {
   ranges?: Pick<CommittedRanges, "suggest">;
   ownedCommand?(event: Event, owner: string): Promise<boolean>;
   releaseCopy?: Pick<ReleaseCopy, "suggest" | "results">;
+  /** [DX-ACT6] The compiled release a stored reference names (TX2_RELEASE_DOCS=ref), checked against its hash. */
+  release?(ref: DocumentRef, at: number): Promise<W0.CompiledRelease>;
 }
+/** [DX-ACT6] An activation's definitions by reference: the release hash, the stored root and the document's bytes. */
+export type DocumentRef = { release: string; root: string; bytes: number };
 export type Selection = { kind: "census" } | { kind: "subjects"; ids: string[] };
 export interface Request {
   document?: W0.ReleaseDoc;
+  /** [DX-ACT6] Set: the event carries this reference and `document: null` (the document stays in memory here). */
+  documentRef?: DocumentRef;
   id: string;
   kind: "activation" | "reconcile" | "erase";
   release: Release;
@@ -62,6 +68,7 @@ export interface Recipe {
   oldHash: string | null;
   nextHash: string;
   document: W0.ReleaseDoc | null;
+  documentRef?: DocumentRef;
   from: string;
   validTime: string;
   request: string;
@@ -135,8 +142,10 @@ export class Notices {
           ? Number.isSafeInteger(r.definition) && r.definition > 0 && r.definition <= n
           : r.nextHash === releaseIdentity(r.next)) &&
         (r.kind === "activation"
-          ? r.document && r.document.name === r.next && "sha256:" + hash(r.document) === r.nextHash
-          : r.document === null) &&
+          ? r.documentRef
+            ? r.document === null && r.documentRef.release === r.nextHash
+            : r.document && r.document.name === r.next && "sha256:" + hash(r.document) === r.nextHash
+          : r.document === null && r.documentRef === undefined) &&
         (r.old
           ? typeof r.oldHash === "string" && /^sha256:[a-f0-9]{64}$/.test(r.oldHash)
           : r.oldHash === null) &&
@@ -202,7 +211,10 @@ export class Notices {
       oldHash: priorHash,
       nextHash: custom?.hash ?? releaseIdentity(req.release),
       ...(custom ? { definition: custom.definition } : {}),
-      document: req.kind === "activation" ? policy.doc : null,
+      document: req.kind === "activation" && !req.documentRef ? policy.doc : null,
+      ...(req.kind === "activation" && req.documentRef
+        ? (assert.equal(req.documentRef.release, policy.hash), { documentRef: req.documentRef })
+        : {}),
       from: req.from,
       validTime: req.validTime,
       request: req.id,
@@ -329,14 +341,18 @@ export class Notices {
     let policy = W0.RELEASES_BY_HASH.get(e.value.nextHash);
     if (!policy) {
       assert(e.value.definition, "Unregistered release");
-      const origin = e.value.document ? e : await this.event(e.value.definition, e.at);
+      const origin =
+        e.value.document || e.value.documentRef ? e : await this.event(e.value.definition, e.at);
       assert(
         origin.value.kind === "activation" &&
           origin.value.epoch === e.value.epoch &&
           origin.value.nextHash === e.value.nextHash &&
-          origin.value.document,
+          (origin.value.document || origin.value.documentRef),
       );
-      policy = W0.compileRelease(origin.value.document);
+      if (origin.value.documentRef) {
+        assert(this.inputs.release, "A release by reference needs its definitions reader");
+        policy = await this.inputs.release(origin.value.documentRef, origin.at);
+      } else policy = W0.compileRelease(origin.value.document!);
       assert.equal(policy.hash, e.value.nextHash);
     }
     const by = new Map<string, Work>();
