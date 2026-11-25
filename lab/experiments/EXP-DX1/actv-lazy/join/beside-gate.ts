@@ -111,7 +111,7 @@ class Gate {
   /** Set once the adversarial part has changed subjects' base facts: from then on a form-adding release's event may
    * also carry base-rule notices (a lowered pay rate's "pay below minimum"), so the independent form rule compares only
    * the added policies' changes and form notices and leaves the rest to the oracle, which checks everything. */
-  perturbed = false;
+  perturbed = new Set<number>();
   /** A second client of the publishing account's data for the adversarial writes (its own counters and runtime). */
   private adversaryStore?: Store;
   async adversary() {
@@ -282,13 +282,14 @@ class Gate {
         const t = { owing: 0, changes: 0, notices: 0 };
         for (const [i, s] of this.roster.entries()) {
           const e = expectForms(this.world(r.position)(i), r.doc, validTime);
+          // [DX-ACT8, review F7] Narrowed only for the subjects the adversary changed; every other subject strictly.
           const g = checkForms(e, s, (by.get(s) ?? []) as never, deliveries.filter((d: any) => d.subject === s) as never,
-            this.perturbed);
+            this.perturbed.has(i));
           if (e.changes.size) t.owing++;
           t.changes += g.changes;
           t.notices += g.notices;
         }
-        independent = { ...t, onlyAdded: this.perturbed };
+        independent = { ...t, onlyAddedSubjects: [...this.perturbed].sort((x, y) => x - y) };
       }
       return { ms, changes: stored.frontier.changes, subjectsChanged: got.length, notices: deliveries.length, independent,
         frames: { values: w.archive.contest.summary(), notices: w.recorder.archive.contest.summary() } };
@@ -563,7 +564,12 @@ const KINDS: Kind[] = [
   { name: "documentExpiry", pick: (r) => r.attribute === ":file/expiresOn", change: (v) => (String(v.value) < "2026-06-01" ? "2027-09-30" : "2026-02-01") },
   { name: "answerValue", pick: (r) => r.attribute === ":task/field-0", change: (v) => "act8-" + sha256(String(v.value)).slice(0, 12) },
   { name: "revision", pick: (r, i, p) => r.entityId === p + ids.placement(i) && r.attribute === ":placement/stamp", change: (v) => num(v, 1) },
+  // [DX-ACT8, review F7] Other entities than the subject's own facts: a child entity added by reference, a reference
+  // removed (adversaryWrite builds both writes).
+  { name: "childFile", pick: (r, i, p) => r.entityId === p + ids.worker(i) && r.attribute === ":person/custom-start", change: (v) => v.value },
+  { name: "unlinkFile", pick: (r, i, p) => r.entityId === p + ids.worker(i) && r.attribute === ":person/file", change: (v) => v.value },
 ];
+let fileSerial = 0;
 /** A hook that runs once however many tries the Publish takes (a retry plans again and would call it again). */
 const once = (f: () => Promise<void>) => {
   let fired = false;
@@ -591,19 +597,34 @@ async function adversaryWrite(g: Gate, kind: Kind, i: number, tag: string) {
       if (target) i = j;
     }
     assert(target, "no subject has a " + kind.name + " fact");
-    const v = { ...target.value, value: kind.change(target.value) };
     const marker = "act8/adversary/" + sha256(c.attempt + tag).slice(0, 16);
-    const ops = [
-      { op: "retract", id: target.id },
-      { op: "assert", entityId: target.entityId, attribute: target.attribute, value: v, validFrom: target.validFrom,
-        ...(target.validTo == null ? {} : { validTo: target.validTo }) },
-      fact(marker, "act8/adversary", { kind: kind.name, subject: i }),
-    ];
+    // [DX-ACT8, review F7] Two kinds write other entities than the picked fact: a new child entity by reference (a
+    // document file with an expired date, linked from the worker) and a reference removed (a file unlinked).
+    let ops: any[], facts: { e: string; a: string; v: { type: string; value: unknown }; remove?: boolean }[];
+    if (kind.name === "childFile") {
+      const file = prefix + ids.document(i, 9, ++fileSerial);
+      const link = { type: "ref", value: file };
+      ops = [{ op: "assert", entityId: target.entityId, attribute: ":person/file", value: link, validFrom: target.validFrom },
+        { op: "assert", entityId: file, attribute: ":file/expiresOn", value: { type: "string", value: "2026-02-01" }, validFrom: target.validFrom }];
+      facts = [{ e: target.entityId.slice(prefix.length), a: ":person/file", v: { type: "ref", value: file.slice(prefix.length) } },
+        { e: file.slice(prefix.length), a: ":file/expiresOn", v: { type: "string", value: "2026-02-01" } }];
+    } else if (kind.name === "unlinkFile") {
+      ops = [{ op: "retract", id: target.id }];
+      facts = [{ e: target.entityId.slice(prefix.length), a: target.attribute,
+        v: { type: "ref", value: String(target.value.value).slice(prefix.length) }, remove: true }];
+    } else {
+      const v = { ...target.value, value: kind.change(target.value) };
+      ops = [{ op: "retract", id: target.id },
+        { op: "assert", entityId: target.entityId, attribute: target.attribute, value: v, validFrom: target.validFrom,
+          ...(target.validTo == null ? {} : { validTo: target.validTo }) }];
+      facts = [{ e: target.entityId.slice(prefix.length), a: target.attribute, v }];
+    }
+    ops.push(fact(marker, "act8/adversary", { kind: kind.name, subject: i }));
     try {
       const r = await a.commit("act8-adversary:" + sha256(c.attempt + tag + attempt).slice(0, 24), "act8/adversary", ops, head,
         { kind: kind.name }, undefined, undefined, [{ entityId: marker, tripleIds: [] }]);
-      insertEdit(c.history, i, { position: r.position, version: "act8", width: 0,
-        facts: [{ e: target.entityId.slice(prefix.length), a: target.attribute, v }] } as Edit);
+      insertEdit(c.history, i, { position: r.position, version: "act8", width: 0, facts } as Edit);
+      g.perturbed.add(i);
       return { position: r.position, subject: i, entity: target.entityId.slice(prefix.length), attribute: target.attribute };
     } catch (e) {
       if (attempt >= 4) throw e;
@@ -612,18 +633,22 @@ async function adversaryWrite(g: Gate, kind: Kind, i: number, tag: string) {
 }
 async function adversarialPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
   const c = g.c;
-  g.perturbed = true;
   set("TX2_PUBLISH_BESIDE", "1");
   const out: Record<string, unknown>[] = [];
   const windows = ["afterRead", "inside"] as const;
-  // Saves in the nine other accounts throughout (the publishing account's subjects are written only by the adversary,
-  // so its writes never meet the save sender's cached predecessors).
-  await g.window("adversarial", 0, true, Number(process.env.DX_ACT8_ADV_SECONDS ?? 150), async () => {
+  // Saves in the nine other accounts throughout. (Before the review: the publishing account's subjects were written only
+  // by the adversary, so its writes never met the save sender's cached predecessors.)
+  // [DX-ACT8, review F7] The publishing account's own save tape runs in this window too (DX_ACT8_ADV_OWN, default 23.5
+  // saves per second; 0 as before). The tape writes task fields 0 to 2, so with it on the adversary leaves `answerValue`
+  // (task field 0) to the tape and writes every other kind.
+  const own = Number(process.env.DX_ACT8_ADV_OWN ?? 23.5) as 0 | 3.5 | 23.5 | 39.4;
+  assert([0, 3.5, 23.5, 39.4].includes(own));
+  await g.window("adversarial", own, true, Number(process.env.DX_ACT8_ADV_SECONDS ?? 150), async () => {
     let k = 0;
     // DX_ACT8_KINDS limits the kinds (the negative control runs startDate alone with DX_ACT8_INJECT=read-cut);
     // DX_ACT8_ADV_EXTRAS=0 skips the second-Publish and enrolment steps.
     const only = process.env.DX_ACT8_KINDS?.split(",");
-    for (const kind of KINDS.filter((x) => !only || only.includes(x.name)))
+    for (const kind of KINDS.filter((x) => (!only || only.includes(x.name)) && !(own > 0 && x.name === "answerValue")))
       for (const where of windows) {
         const i = (k++ * 3 + 1) % c.people;
         const doc = nextLarge(g.current.doc, base());

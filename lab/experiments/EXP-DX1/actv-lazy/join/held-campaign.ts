@@ -189,7 +189,7 @@ type PairSample = {
 // [DX-ACT8] `facts`: a write of any of the subject's own facts (entity without the account prefix, attribute, value), as
 // the adversarial schedule commits; absent, a task-field save as before.
 type History = Map<number, { position: number; version: string; width: number; slots?: number[];
-  facts?: { e: string; a: string; v: { type: string; value: unknown } }[] }[]>;
+  facts?: { e: string; a: string; v: { type: string; value: unknown }; remove?: boolean }[] }[]>;
 // [DX-INT1] Why: SCALE1 packs consecutive people into one loader frame, and the pooled loader keeps two frames in
 // flight, so a later frame can commit first. Positions then fall in member order only within each frame. What the
 // positions must show is that each person's original facts came from one loader frame and each frame holds one

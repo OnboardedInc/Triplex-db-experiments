@@ -17,12 +17,15 @@ export function authoredSeed(person: number, position: number): WorldRow[] {
 const key = (e: string, a: string) => canonical([e, a]);
 export function authoredWrite(
   before: readonly WorldRow[],
-  fields: readonly Fact[],
+  all: readonly (Fact & { remove?: boolean })[],
   position: number,
   at: number,
 ) {
+  // [DX-ACT8, review F7] A field with `remove` retracts that one value (a reference unlinked); absent, as before.
+  const gone = all.filter((f) => f.remove), fields = all.filter((f) => !f.remove);
   const removed = new Set(fields.filter((f) => f.v.type !== "ref").map((f) => key(f.e, f.a)));
-  const next = before.filter((r) => !removed.has(key(r.entityId, r.attribute)));
+  const next = before.filter((r) => !removed.has(key(r.entityId, r.attribute)) &&
+    !gone.some((f) => f.e === r.entityId && f.a === r.attribute && canonical(f.v) === canonical(r.value)));
   next.push(
     ...fields.map(
       (f, i): WorldRow => ({
