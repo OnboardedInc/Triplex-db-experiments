@@ -101,6 +101,11 @@ in a loop, with 0, 2, 0 and 2 sweeps of a fourth account running continuously:
   permit** (separate pools, by construction and by count).
 - **The bound, in counts: a page waits behind at most one page of each other account that is listing** (one place per
   account in the pool's FIFO queue): with three listing accounts, at most 2 pages ahead, in every arm, sweeps or not.
+  **[DX-XQ10] Restated:** the queue order holds, but the count measured (`queue.ahead`, every admission between a page's
+  arrival and its own) also counts time the page's thread was not running before it joined the queue. On a loaded lab
+  VM, 30 repeats of the four arms (1,732,814 list pages) had 11 pages over 2, up to 6 ahead with waits up to 5.5 ms
+  (10 of 120 arms); an earlier 30 repeats under heavier load had 18 of 120 arms over. So the bound is stated and gated
+  for 99.9% of an arm's pages (`xq10/QUESTIONS-CONNECTED.md`, the fairness loop).
 - **The bound, in time:** wait ≤ ⌈(listing accounts − 1) ÷ list permits⌉ × (the page's time bound + one storage read).
   With the default 100 ms page bound, 10 deep accounts listing at once and 2 permits: ⌈9 ÷ 2⌉ × about 103 ms ≈ 0.5 s at
   worst; a sweep adds nothing to it (its pages hold sweep permits only). CPU is the only shared thing: the sizing rule

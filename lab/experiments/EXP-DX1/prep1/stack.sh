@@ -23,6 +23,10 @@ if [[ -f /config/general-prefetch ]]; then export TX2_GENERAL_PREFETCH=$(cat /co
 # [DX-W4] Present only for the DX-W4 production gate: the per-subject writer's hints (0 or 1), with Datomic prefetch
 # on in both arms, as the server launch has it.
 if [[ -f /config/subject-hints ]]; then export TX2_SUBJECT_HINTS=$(cat /config/subject-hints); fi
+# [DX-XQ4] Present only for the DX-XQ4 production gate: the commit-time index on, and the declaration the driver posts.
+if [[ -f /config/cross-index ]]; then
+  export TX2_CROSS_INDEX=$(cat /config/cross-index) DX_XQ4_DECLARATION=/config/cross-index-declaration.json
+fi
 if [[ -f /config/tail-sql ]]; then export PREP1_TAIL_SQL=$(cat /config/tail-sql); fi
 # [DX-S2] Present only for the DX-S2 production gate: every save through the product's path, orderedSaves 0 or 1.
 if [[ -f /config/s2-product ]]; then export DX_S2_PRODUCT=$(cat /config/s2-product); fi

@@ -79,6 +79,7 @@
 (def empty-counts {:records 0 :log-records 0 :transactions 0})
 
 (defn commit-series! [{:keys [conn]} pop view state size depth stop soft-ms]
+  (native/refuse-indexed! view)
   (let [ids (attr-map view)
         owner-id (memoize #(d/entid view [:triplex.entity/id %]))
         records (fn [from through] (mapv #(tape/command pop %) (range from through)))

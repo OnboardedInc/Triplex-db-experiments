@@ -225,6 +225,13 @@
   (str prefix (format "%016d" position)
        (format "%016x" (Double/doubleToRawLongBits (double clock))) journal))
 
+;; [DX-XQ4, moved by DX-XQ10] Which operations the per-subject writer takes: the prepared path's small operations, and
+;; with TX2_CROSS_INDEX=1 also index entries (cross_index.clj replaces this var, and wraps render-ops to send a
+;; subject's entries to its numeric owner). Why here as a plain var: code added to this namespace shifts the generated
+;; names of every stored function compiled after it (owner head, general hints), so their identities moved with the
+;; option off; a def of a var and a call through it add none (xq10/idents.sh). Rejected: the index branch's inline
+;; delay and cond clause (they moved two functions' identities).
+(def small-op prepared/small-op?)
 (defn render-ops [ops owner subject prior prior-rows new-ids marker]
   (let [temp-owner (str "e:" subject)
         rewrite #(commit/rewrite-change %1 %2 new-ids prior-rows)]
@@ -292,7 +299,7 @@
                ;; narrow rule here (the option stays default-off and leaves today's plans byte for byte).
                (not (and wide? (:import-predecessor p)))
                (<= (count ops) (if wide? wide-ops 256))
-               (every? #(or (prepared/small-op? %) (and (some? expected-erasure) (envelope-op? %))) ops))
+               (every? #(or (small-op %) (and (some? expected-erasure) (envelope-op? %))) ops))
       (let [[fn-tx flags owner revision]
             (trace/span "subject.plan-witnesses" "gateway"
               (let [fn-tx (installed db) flags (when fn-tx (scope-witness db scope))

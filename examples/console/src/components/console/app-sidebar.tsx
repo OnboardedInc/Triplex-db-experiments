@@ -208,6 +208,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarMenu>
             <Item to="/query">Query</Item>
+            <Item to="/questions">Ask across subjects</Item>
             <Item to="/journal">Journal</Item>
             <Item to="/configuration">Configuration</Item>
             <Item to="/assistant">Ask your assistant</Item>

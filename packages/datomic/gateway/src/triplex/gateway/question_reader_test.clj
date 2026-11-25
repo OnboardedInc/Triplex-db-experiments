@@ -63,8 +63,8 @@
 
 (deftest the-id-list-queue-takes-accounts-in-turn
   (with-redefs [ids/list-queue-ms 300 ids/list-per-account 1 ids/permits (Semaphore. 1 true)
-                ids/account-gates (ConcurrentHashMap.) ids/admitted (AtomicLong.)]
-    (let [admit (fn [account] (#'ids/queued-admit! account 300))
+                ids/account-gates (ConcurrentHashMap.) ids/admitted-count (AtomicLong.)]
+    (let [admit (fn [account] (#'ids/queued-admit! account 300 [:idLists :busy] ids/permits))
           first-a (admit "a")
           pool (Executors/newFixedThreadPool 4)
           order (atom [])

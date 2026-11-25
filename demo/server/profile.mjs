@@ -48,6 +48,19 @@ const env = {
   // them off and 1.37 ms with them on, with zero wrong values. Rejected: leaving them to the stack's default (off).
   DX_PINNED_SHORTCUT: "1",
   DX_PINNED_CUT_LOOKUP: "1",
+  // [DX-XQ8] The two question routes (exp/DX-XQ6-exact-sweep): the ID list (TX2_ID_LISTS) and the slow exact route
+  // (TX2_SWEEP), which the console's "Ask across subjects" page and its agent tools call. Each only adds a route and its
+  // own permit pool; every other route answers as before (XQ3 and XQ6 gate 2k). Rejected: leaving them off by default
+  // (the page and tools would answer RouteOff on every demo stack).
+  DX_ID_LISTS: "1",
+  DX_SWEEP: "1",
+  // [DX-XQ9] The sweep's added question shapes (questions over related entities, "is not", "any of these groups", top
+  // N, "contains", sums), all on for the console; each only accepts requests the sweep refused before (xq9 gate 9k).
+  DX_SWEEP_SHAPES: "all",
+  // [DX-XQ10] The commit-time index (TX2_CROSS_INDEX) for the console's fast answer, only with DEMO_CROSS_INDEX=1 (unset:
+  // the output is as before). demo/toy/up.sh then declares and backfills demo/console/index-declaration.json.
+  // Rejected: on by default (it adds index entries to every save of the owner's toy and needs a backfill).
+  ...(process.env["DEMO_CROSS_INDEX"] === "1" ? { DX_CROSS_INDEX: "1" } : {}),
   ...(question ? { DX_QUESTION_READER: "1", DX_QUESTION_CPUS: "10,11", DX_QUESTION_MEMORY: "6144m", DX_QUESTION_JAVA_OPTS: questionFlags.join(" ") } : {}),
 };
 const args = [
@@ -68,6 +81,7 @@ if (process.argv[3] === "--summary") {
     postgres: { containerMiB: policy.pg.memoryMiB, sharedBuffers: policy.pg.settings.shared_buffers ?? "128MB (default)" },
     memoryIndex: policy.index,
     pinnedReads: { shortcut: env.DX_PINNED_SHORTCUT === "1", cutLookup: env.DX_PINNED_CUT_LOOKUP === "1" },
+    questionRoutes: { idLists: env.DX_ID_LISTS === "1", sweep: env.DX_SWEEP === "1", sweepShapes: env.DX_SWEEP_SHAPES ?? "" },
   }));
   process.exit(0);
 }

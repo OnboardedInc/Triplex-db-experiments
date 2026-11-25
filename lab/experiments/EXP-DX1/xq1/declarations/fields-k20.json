@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "attributes": [
+    {
+      "attribute": ":task/field-0",
+      "code": "f0",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-1",
+      "code": "f1",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-2",
+      "code": "f2",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-3",
+      "code": "f3",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-4",
+      "code": "f4",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-5",
+      "code": "f5",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-6",
+      "code": "f6",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-7",
+      "code": "f7",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-8",
+      "code": "f8",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-9",
+      "code": "f9",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-10",
+      "code": "f10",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-11",
+      "code": "f11",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-12",
+      "code": "f12",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-13",
+      "code": "f13",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-14",
+      "code": "f14",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-15",
+      "code": "f15",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-16",
+      "code": "f16",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-17",
+      "code": "f17",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-18",
+      "code": "f18",
+      "family": "string"
+    },
+    {
+      "attribute": ":task/field-19",
+      "code": "f19",
+      "family": "string"
+    }
+  ],
+  "types": []
+}

@@ -25,16 +25,45 @@ export type SweepCondition =
       readonly toExclusive?: SweepValue;
     }
   | { readonly attribute: string; readonly op: "prefix"; readonly value: { readonly type: "string"; readonly value: string } }
-  | { readonly attribute: string; readonly op: "exists" | "missing" };
+  | { readonly attribute: string; readonly op: "exists" | "missing" }
+  /** [DX-XQ9] TX2_SWEEP_SHAPES ne: no visible value equals `value`; a subject with no value matches. */
+  | { readonly attribute: string; readonly op: "ne"; readonly value: SweepValue }
+  /** [DX-XQ9] TX2_SWEEP_SHAPES contains: a visible text value contains the needle (1..256 characters). */
+  | {
+      readonly attribute: string;
+      readonly op: "contains";
+      readonly value: { readonly type: "string"; readonly value: string };
+      readonly caseInsensitive?: boolean;
+    }
+  | SweepHasCondition;
+
+/**
+ * [DX-XQ9] TX2_SWEEP_SHAPES related: one level of "has related entities of kind K where conditions". `link "key"`
+ * (default): the IDs of kind `prefix` whose key (the text after the kind's colon, up to the next colon) is the swept
+ * entity's key. `link {ref}`: the swept entity's visible values of that reference attribute, inside the account and of
+ * the kind. A related entity counts when it has a visible fact at the question's position and valid time and every
+ * condition of `where` holds on it. Quantifier: some (default), none, or a count comparison.
+ */
+export interface SweepHasCondition {
+  readonly op: "has";
+  readonly related: { readonly prefix: string; readonly shape?: string; readonly link?: "key" | { readonly ref: string } };
+  readonly where?: readonly SweepPlainCondition[];
+  readonly quantifier?: "some" | "none" | { readonly op: "gte" | "gt" | "lte" | "lt" | "eq"; readonly value: number };
+}
+export type SweepPlainCondition = Exclude<SweepCondition, SweepHasCondition>;
 
 export interface SweepRequest {
   readonly account: string;
   /** The kind: an ID prefix after `acct/<account>/` and an optional shape (the ID list route's grammar). */
   readonly from?: { readonly prefix?: string; readonly shape?: string };
   readonly where?: readonly SweepCondition[];
-  readonly result?: "ids" | "count" | "countByValue";
-  /** The attribute countByValue groups by. */
+  /** [DX-XQ9] TX2_SWEEP_SHAPES or: 1..4 groups; a subject matches when every `where` condition and one group hold. */
+  readonly anyOf?: readonly (readonly SweepCondition[])[];
+  readonly result?: "ids" | "count" | "countByValue" | "top" | "sum";
+  /** The attribute countByValue groups by, or sum adds (integer values). */
   readonly of?: string;
+  /** [DX-XQ9] TX2_SWEEP_SHAPES top: the order of result top (N = limit, at most 1,000). */
+  readonly order?: { readonly by: string; readonly type: "string" | "integer" | "number" | "datetime"; readonly direction?: "asc" | "desc" };
   /** Up to eight attributes whose visible values come back with each matching ID (result ids). */
   readonly project?: readonly string[];
   /** Matching IDs per page (result ids), 1..1000, default 100. */
@@ -58,7 +87,7 @@ export interface SweepPage {
   readonly validAt: number;
   /** "stored": values a release has not yet written are not seen (see EXACT-SWEEP.md, settlement). */
   readonly facts: "stored";
-  readonly result: "ids" | "count" | "countByValue";
+  readonly result: "ids" | "count" | "countByValue" | "top" | "sum";
   readonly complete: boolean;
   readonly stopped: "end" | "limit" | "subjects" | "time";
   readonly examined: number;
@@ -76,6 +105,21 @@ export interface SweepPage {
   readonly count?: number;
   readonly groups?: readonly { readonly value: { type: string; value: unknown } | null; readonly count: number }[];
   readonly countComplete?: boolean;
+  /** [DX-XQ9] Questions with a has condition: related entities read (with a visible fact), IDs listed for them, rows. */
+  readonly related?: number;
+  readonly relatedListed?: number;
+  readonly relatedRows?: number;
+  readonly relatedMicros?: number;
+  /** [DX-XQ9] result top: the order, how many entities are kept so far, and on the complete page `ids` and `values`. */
+  readonly order?: { readonly by: string; readonly type: string; readonly direction: "asc" | "desc" };
+  readonly kept?: number;
+  readonly values?: readonly ({ type: string; value: unknown } | null)[];
+  /** [DX-XQ9] result sum: running sum (decimal text), values added, subjects with a value, values of other families. */
+  readonly sum?: string;
+  readonly valuesAdded?: number;
+  readonly subjectsWithValue?: number;
+  readonly skipped?: number;
+  readonly average?: { readonly numerator: string; readonly denominator: string; readonly decimal: string; readonly rounding: string } | null;
   readonly next: string | null;
 }
 

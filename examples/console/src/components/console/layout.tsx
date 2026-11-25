@@ -52,6 +52,7 @@ function useCrumbs(): Crumb[] {
     ];
   const screens: Record<string, string> = {
     "/query": "Query",
+    "/questions": "Ask across subjects",
     "/journal": "Journal",
     "/configuration": "Configuration",
     "/assistant": "Ask your assistant",

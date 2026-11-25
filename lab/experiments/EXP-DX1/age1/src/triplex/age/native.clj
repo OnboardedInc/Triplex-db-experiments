@@ -12,6 +12,13 @@
 (defn check! [condition message data]
   (when-not condition (throw (ex-info message data))))
 
+;; [DX-XQ4] Why: the aging loader writes rows directly and no index entries, so on a database that declares the
+;; commit-time index it would leave the index silently wrong. Rejected: building the index afterwards (an aged copy is
+;; indexed by the offline backfill of the sealed copy instead: lab/experiments/EXP-DX1/xq1/server.ts backfill).
+(defn refuse-indexed! [db]
+  (check! (not (and (d/entid db :triplex.ix/entry) (d/entid db [:triplex.entity/id "_triplex/index/declaration"])))
+          "This database declares the cross-subject index; the aging loader writes no index entries" {}))
+
 (defn open! [label]
   (let [attempt (System/getenv "AGE_ATTEMPT")
         _ (check! (and attempt (re-matches #"[a-z0-9-]+" attempt)) "Missing attempt" {})
@@ -27,6 +34,7 @@
 (defn seed!
   ([db pop] (seed! db pop (fn [owners] [owners []])))
   ([{:keys [conn]} pop transform]
+  (refuse-indexed! (d/db conn))
   (let [initial (d/db conn)
         attributes (into {} (map (fn [a] [(d/entid initial a) a])
                                   [:db/txInstant :triplex.entity/id :triplex.entity/rev :triplex.entity/row
@@ -163,6 +171,7 @@
 
 (defn grouped-age! [{:keys [conn]} pop from to size]
   (let [db (d/db conn) start (System/nanoTime)]
+    (refuse-indexed! db)
     (check! (<= 2 size (:active pop)) "Group owners must be distinct" {:size size})
     (check! (= (+ (tape/seed-head pop) from) (storage/head-position db)) "Group start differs" {:from from})
     (let [[t total]
@@ -207,6 +216,7 @@
   (let [start (System/nanoTime) db (d/db conn) head (storage/head-position db)
         id-attr (into {} (map (fn [a] [(d/entid db a) a]) attrs))
         stage (long-array 5)]
+    (refuse-indexed! db)
     (check! (= head (+ (tape/seed-head pop) from)) "Database head differs from tape start" {:head head :from from})
     (let [add-stage! (fn [i a b] (aset-long stage i (+ (aget stage i) (- b a))))
           send! (fn [n]

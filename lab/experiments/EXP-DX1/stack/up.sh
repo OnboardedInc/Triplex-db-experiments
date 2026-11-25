@@ -241,6 +241,12 @@ gw_r_java=$(peer_java "${DX_GW_READ_HEAP:-}" "${DX_GW_READ_JAVA_OPTS:-}")
 question_reader=${DX_QUESTION_READER:-0} question_cpus='' question_port='' question_url=''
 [[ $question_reader =~ ^[01]$ ]] || { echo "up.sh: DX_QUESTION_READER must be 0 or 1" >&2; exit 2; }
 if [[ $question_reader == 1 ]]; then
+  # [DX-XQ10] Every process that answers questions signs cursors with the same keys: a cursor survives a question
+  # reader restart and continues on any gateway of the stack. With the question reader on and a key not given, the
+  # stack makes one (random, 24 bytes) and passes it to every gateway role; it is never written to the repository.
+  # Unset question reader: nothing changes (each key only when given).
+  if [[ -z ${DX_SWEEP_CURSOR_SECRET:-} ]]; then DX_SWEEP_CURSOR_SECRET=$(od -An -N24 -tx1 /dev/urandom | tr -d ' \n'); fi
+  if [[ -z ${DX_INDEX_CURSOR_SECRET:-} ]]; then DX_INDEX_CURSOR_SECRET=$(od -An -N24 -tx1 /dev/urandom | tr -d ' \n'); fi
   question_cpus=${DX_QUESTION_CPUS:?DX_QUESTION_CPUS must name the question reader cores}
   question_port=${DX_QUESTION_PORT:-$((port_r + 10))}
   [[ ${DX_QUESTION_MAIN_REFUSES:-1} =~ ^[01]$ ]] || { echo "up.sh: DX_QUESTION_MAIN_REFUSES must be 0 or 1" >&2; exit 2; }
@@ -1162,6 +1168,11 @@ for role in "${gateway_roles[@]}"; do
     [[ $id_lists =~ ^[01]$ ]] || { echo "up.sh: DX_ID_LISTS must be 0 or 1" >&2; exit 2; }
     field_policy+=(-e "TX2_ID_LISTS=$id_lists")
   fi
+  # [DX-XQ4] The commit-time index for questions across subjects (default off: the variable is not passed).
+  if [[ -n ${DX_CROSS_INDEX:-} ]]; then
+    [[ $DX_CROSS_INDEX =~ ^[01]$ ]] || { echo "up.sh: DX_CROSS_INDEX must be 0 or 1" >&2; exit 2; }
+    field_policy+=(-e "TX2_CROSS_INDEX=$DX_CROSS_INDEX")
+  fi
   if [[ -n $index_permits ]]; then
     [[ $index_permits =~ ^([1-9]|[1-5][0-9]|6[0-4])$ ]] || { echo "up.sh: DX_INDEX_QUERY_PERMITS must be 1..64" >&2; exit 2; }
     field_policy+=(-e "TX2_INDEX_QUERY_PERMITS=$index_permits")
@@ -1200,6 +1211,24 @@ for role in "${gateway_roles[@]}"; do
   if [[ -n ${DX_SWEEP_CURSOR_SECRET:-} ]]; then
     [[ $DX_SWEEP_CURSOR_SECRET =~ ^[A-Za-z0-9]{16,128}$ ]] || { echo "up.sh: DX_SWEEP_CURSOR_SECRET must be 16..128 letters or digits" >&2; exit 2; }
     field_policy+=(-e "TX2_SWEEP_CURSOR_SECRET=$DX_SWEEP_CURSOR_SECRET")
+  fi
+  # [DX-XQ10] The index route's cursor key (TX2_INDEX_CURSOR_SECRET), the same on every gateway, as the sweep's.
+  if [[ -n ${DX_INDEX_CURSOR_SECRET:-} ]]; then
+    [[ $DX_INDEX_CURSOR_SECRET =~ ^[A-Za-z0-9]{16,128}$ ]] || { echo "up.sh: DX_INDEX_CURSOR_SECRET must be 16..128 letters or digits" >&2; exit 2; }
+    field_policy+=(-e "TX2_INDEX_CURSOR_SECRET=$DX_INDEX_CURSOR_SECRET")
+  fi
+  # [DX-XQ10] find's own permit pool (TX2_FIND_PERMITS); the question reader takes DX_QUESTION_FIND_PERMITS first.
+  find_permits=${DX_FIND_PERMITS:-}
+  if [[ $role == q ]]; then find_permits=${DX_QUESTION_FIND_PERMITS:-$find_permits}; fi
+  if [[ -n $find_permits ]]; then
+    [[ $find_permits =~ ^[1-9][0-9]?$ ]] || { echo "up.sh: DX_FIND_PERMITS must be 1..64" >&2; exit 2; }
+    field_policy+=(-e "TX2_FIND_PERMITS=$find_permits")
+  fi
+  # [DX-XQ9] Why: the sweep's added question shapes (related, ne, or, top, contains, sum, or all), each named; unset
+  # leaves both gateways' environment exactly as before.
+  if [[ -n ${DX_SWEEP_SHAPES:-} ]]; then
+    [[ $DX_SWEEP_SHAPES =~ ^(all|(related|ne|or|top|contains|sum)(,(related|ne|or|top|contains|sum))*)$ ]] || { echo "up.sh: DX_SWEEP_SHAPES must be all or a comma list of related,ne,or,top,contains,sum" >&2; exit 2; }
+    field_policy+=(-e "TX2_SWEEP_SHAPES=$DX_SWEEP_SHAPES")
   fi
   if [[ $question_reader == 1 ]]; then
     if [[ $role == q ]]; then

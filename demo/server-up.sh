@@ -163,6 +163,8 @@ fi
 # 5. Start PostgreSQL, the transactor and both gateways on the working copy.
 step start-stack
 prefix=tx2-dxdemo1-$kind-$(od -An -N4 -tx1 /dev/urandom | tr -d ' \n')
+# [DX-XQ8] One cursor key for both gateways of this bring-up, so a question's cursor survives a gateway restart.
+export DX_SWEEP_CURSOR_SECRET=${DX_SWEEP_CURSOR_SECRET:-$(od -An -N24 -tx1 /dev/urandom | tr -d ' \n')}
 printf '%s\n' "$prefix" > "$root/stack.prefix"
 profile=()
 while IFS= read -r line; do profile+=("$line"); done < <(node "$here/server/profile.mjs" "$([[ $toy == 1 ]] && echo toy || echo server)")
@@ -234,11 +236,17 @@ pinned=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$p
   node -e 'const e = require("fs").readFileSync(0, "utf8").split("\n"); const on = (k) => e.includes(k + "=1");
     console.log(JSON.stringify({ shortcut: on("TX2_PINNED_SHORTCUT"), cutLookup: on("TX2_PINNED_CUT_LOOKUP") }))')
 [[ $pinned == '{"shortcut":true,"cutLookup":true}' ]] || { echo "The read gateway's pinned-read options are not both on: $pinned" >&2; exit 1; }
+# [DX-XQ8] The same for the two question routes (ID list and slow exact route).
+questions=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$prefix-gw-r" |
+  node -e 'const e = require("fs").readFileSync(0, "utf8").split("\n"); const on = (k) => e.includes(k + "=1");
+    const shapes = (e.find((x) => x.startsWith("TX2_SWEEP_SHAPES=")) ?? "").slice("TX2_SWEEP_SHAPES=".length);
+    console.log(JSON.stringify({ idLists: on("TX2_ID_LISTS"), sweep: on("TX2_SWEEP"), sweepShapes: shapes, ...(on("TX2_CROSS_INDEX") ? { crossIndex: true } : {}) }))')
+[[ $questions == '{"idLists":true,"sweep":true,'* ]] || { echo "The read gateway's question routes are not both on: $questions" >&2; exit 1; }
 
 # 7. The ready file the Mac's connect.sh reads over SSH. No address, credential or personal detail is in it.
 node -e '
   const fs = require("fs");
-  const [file, handoff, kind, prefix, database, head, t, records, scorecard, fresh, timings, pw, pr, identity, memory, copy, pinned] = process.argv.slice(1);
+  const [file, handoff, kind, prefix, database, head, t, records, scorecard, fresh, timings, pw, pr, identity, memory, copy, pinned, questions] = process.argv.slice(1);
   const b = JSON.parse(fs.readFileSync(handoff, "utf8"));
   const ready = { version: "triplex-demo-ready/1", kind, prefix, database, scope: b.scope,
     writePort: Number(pw), readPort: Number(pr), workingCopy: true,
@@ -246,11 +254,11 @@ node -e '
     sealed: { head: b.logicalHead, physicalT: b.physicalT, records: b.records },
     roster: b.roster, clocks: b.clocks ?? null, lastRecordedAt: JSON.parse(identity).lastRecordedAt,
     loaderPositionRows: kind === "1b" || b.loaderPositionRows === true,
-    memory: JSON.parse(memory), pinnedReads: JSON.parse(pinned), workingCopyMadeAt: copy ? JSON.parse(copy).madeAt : null, freshCopy: fresh === "1", scorecardCheck: scorecard === "skipped" || scorecard === "toy-handoff" ? scorecard : JSON.parse(scorecard),
+    memory: JSON.parse(memory), pinnedReads: JSON.parse(pinned), questionRoutes: JSON.parse(questions), workingCopyMadeAt: copy ? JSON.parse(copy).madeAt : null, freshCopy: fresh === "1", scorecardCheck: scorecard === "skipped" || scorecard === "toy-handoff" ? scorecard : JSON.parse(scorecard),
     startedAt: new Date().toISOString(),
     stepSeconds: Object.fromEntries(timings.trim().split(" ").filter(Boolean).map((x) => { const [k, v] = x.split("="); return [k, Number(v)]; })) };
   fs.writeFileSync(file, JSON.stringify(ready, null, 2) + "\n", { mode: 0o644 });' \
   "$root/ready.json" "$handoff" "$kind" "$prefix" "$database" "$head" "$physical_t" "$records" "$scorecard" "$fresh" "$timings" "$port_w" "$port_r" "$identity" \
-  "$(node "$here/server/profile.mjs" "$([[ $toy == 1 ]] && echo toy || echo server)" --summary)" "$(cat "$root/work-copy.json" 2>/dev/null || true)" "$pinned"
+  "$(node "$here/server/profile.mjs" "$([[ $toy == 1 ]] && echo toy || echo server)" --summary)" "$(cat "$root/work-copy.json" 2>/dev/null || true)" "$pinned" "$questions"
 printf 'DEMO READY head=%s records=%s t=%s database-prefix=%s write=127.0.0.1:%s read=127.0.0.1:%s total=%ds\n' \
   "$head" "$records" "$physical_t" "${database:0:12}" "$port_w" "$port_r" "$((SECONDS - t0))"
