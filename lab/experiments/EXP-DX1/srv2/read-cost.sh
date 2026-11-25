@@ -2,7 +2,7 @@
 # [DX-SRV2] Mac toy for the two pinned read options at a pin far behind the head (read-cost.ts), in the shortcut gate's
 # container (rd1/shortcut-gate/container.sh, unchanged), under one ordinary heavy token:
 #   node lab/bin/heavy.mjs --label DX-SRV2-read-cost -- bash lab/experiments/EXP-DX1/srv2/read-cost.sh NEW_ABSOLUTE_OUT
-# Environment: SRV2_COST_SAVE_SECONDS (240), SRV2_COST_SAVE_SEATS (2), SRV2_COST_PROBE_READS (300), SRV2_COST_LOAD_SECONDS (20).
+# Environment: SRV2_COST_SAVE_SECONDS (240), SRV2_COST_SAVE_SEATS (16), SRV2_COST_PROBE_READS (300), SRV2_COST_LOAD_SECONDS (20).
 # Timings are Mac diagnostics. Container tx2-dxsrv2-read-cost, ports 18695..18698 on 127.0.0.1.
 set -uo pipefail
 out=${1:?absolute new output directory}

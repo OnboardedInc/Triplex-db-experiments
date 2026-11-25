@@ -21,7 +21,7 @@ import { sha } from "../w1/field/schedule.ts";
 import { scaleAccount, scaleOwner } from "../prep1/ceiling-seed.ts";
 
 const [out, url, readerOff, readerOn, readerLookup, readerTuned] = process.argv.slice(2);
-const saveSeconds = Number(process.env.SRV2_COST_SAVE_SECONDS ?? "240"), seats = Number(process.env.SRV2_COST_SAVE_SEATS ?? "2");
+const saveSeconds = Number(process.env.SRV2_COST_SAVE_SECONDS ?? "240"), seats = Number(process.env.SRV2_COST_SAVE_SEATS ?? "16");
 const probeReads = Number(process.env.SRV2_COST_PROBE_READS ?? "300"), loadSeconds = Number(process.env.SRV2_COST_LOAD_SECONDS ?? "20");
 assert(saveSeconds >= 10 && saveSeconds <= 900 && seats >= 1 && seats <= 16 && probeReads >= 20 && loadSeconds >= 5);
 const waitFor = async (file: string, seconds: number) => {
@@ -64,6 +64,7 @@ await waitFor("aged.json", 900);
 const aged = JSON.parse(readFileSync(join(out!, "aged.json"), "utf8"));
 assert.equal(aged.seedHead, seedCut);
 const tasks = Array.from({ length: 10 }, (_, a) => Array.from({ length: people }, (_, i) => ({ a, i, e: scaleOwner(a, i) }))).flat();
+const unchanged = tasks.filter((t) => t.a < 5), changed = tasks.filter((t) => t.a >= 5);
 
 // Grouped saves for saveSeconds: each seat owns its own subjects, one save per group commit when seats = 1.
 writeFileSync(join(out!, "phase-0.env"), ["TX2_GROUP_COMMIT=1", "TX2_GROUP_STAGE_CLOCK=1", "TX2_GROUP_FAST_REPLY=1", "TX2_GROUP_REUSE_PREPARED=1",
@@ -76,7 +77,9 @@ const startHead = await headOf();
 let saves = 0, head = startHead;
 const savesEnd = Date.now() + saveSeconds * 1000;
 await Promise.all(Array.from({ length: seats }, async (_, seat) => {
-  const mine = tasks.filter((_, k) => k % seats === seat);
+  // Saves touch accounts 5 to 9 only, so accounts 0 to 4 stay unchanged since the pin (the short-cut's case, 98% of the
+  // reads at 1 billion) and accounts 5 to 9 are changed after it (the as-of case).
+  const mine = changed.filter((_, k) => k % seats === seat);
   for (let n = 0; Date.now() < savesEnd; n++) {
     const t = mine[n % mine.length]!, attribute = ":task/field-1";
     const old = ((await client.rows(db, { entityIds: [t.e], basis: { recordedPosition: head, validAt: SEED_VALID_FROM + 1 } })) as any[])
@@ -130,24 +133,26 @@ for (const p of pins) {
 
 // Cost: one seat, probeReads single-subject field reads at the seed cut (each value checked against the seed's), then
 // the same near the head (checked against the off reader), then loadSeconds at 16 seats at the seed cut.
-const pick = (n: number) => tasks[(7919 * (n + 1)) % tasks.length]!;
-async function probe(name: keyof typeof readers, position: "seed" | "head") {
+const pickFrom = (set: typeof tasks, n: number) => set[(7919 * (n + 1)) % set.length]!;
+const pick = (n: number) => pickFrom(tasks, n);
+async function probe(name: keyof typeof readers, position: "seed" | "head", subjects: "unchanged" | "changed") {
+  const set = subjects === "unchanged" ? unchanged : changed;
   const c = clients[name], h = new Histogram(), at = position === "seed" ? seedCut : endHead - 1;
   let wrong = 0;
   const before = await stats(c);
   for (let n = 0; n < probeReads; n++) {
-    const t = pick(n), started = performance.now();
+    const t = pickFrom(set, n), started = performance.now();
     const rows = await field(c, t.e, at);
     h.recordMs(performance.now() - started);
     const want = position === "seed" ? fieldValue(t.i, 0, 0, 0).value : (await field(clients.off, t.e, at))[0]?.value_string;
     if (rows.length !== 1 || rows[0].value_string !== want) wrong++;
   }
   const after = await stats(c);
-  return { reader: name, pin: position, position: at, behindHead: endHead - at, reads: h.count, wrong, latency: h.summary(),
+  return { reader: name, pin: position, subjects, position: at, behindHead: endHead - at, reads: h.count, wrong, latency: h.summary(),
     currentAnswers: after.currentAnswers - before.currentAnswers, asOfAnswers: after.asOfAnswers - before.asOfAnswers };
 }
 async function load(name: keyof typeof readers) {
-  const c = clients[name], h = new Histogram(), end = performance.now() + loadSeconds * 1000;
+  const c = clients[name], h = new Histogram(), end = performance.now() + loadSeconds * 1000, pick = (n: number) => pickFrom(unchanged, n);
   let wrong = 0, errors = 0;
   await Promise.all(Array.from({ length: 16 }, async (_, seat) => {
     for (let n = seat; performance.now() < end; n += 16) {
@@ -164,14 +169,15 @@ async function load(name: keyof typeof readers) {
 // Warm each reader's cache with one pass, so the probes measure the lookup, not first loads.
 for (const name of Object.keys(readers) as (keyof typeof readers)[]) for (let n = 0; n < tasks.length; n++) await field(clients[name], pick(n).e, seedCut);
 const probes = [];
-for (const position of ["seed", "head"] as const) for (const name of ["off", "lookup", "on", "tuned"] as const) probes.push(await probe(name, position));
+for (const subjects of ["unchanged", "changed"] as const) for (const position of ["seed", "head"] as const)
+  for (const name of ["off", "lookup", "on", "tuned"] as const) probes.push(await probe(name, position, subjects));
 const loads = [];
 for (const name of ["off", "lookup", "on", "tuned"] as const) loads.push(await load(name));
 const result = { toy: "srv2-read-cost", seedCut, agedHead: aged.head ?? null, startHead, endHead, groupedSaves: saves, saveSeats: seats,
   positionsAfterPin: endHead - seedCut, pins, compared, differenceCount: differences.length, differences: differences.slice(0, 20), probes, loads,
   stats: Object.fromEntries(await Promise.all(Object.entries(clients).map(async ([k, c]) => [k, await stats(c)]))) };
 writeFileSync(join(out!, "result.json"), JSON.stringify(result, null, 2) + "\n");
-console.log(JSON.stringify({ ...result, probes: probes.map((p) => [p.reader, p.pin, p.latency.p50Ms, p.latency.p99Ms, p.wrong, p.currentAnswers]),
+console.log(JSON.stringify({ ...result, probes: probes.map((p) => [p.reader, p.pin, p.subjects, p.latency.p50Ms, p.latency.p99Ms, p.wrong, p.currentAnswers]),
   loads: loads.map((l) => [l.reader, l.readsPerSecond, l.latency.p99Ms, l.wrong, l.errors]) }));
 for (const c of Object.values(clients)) c.close();
 writeFileSync(join(out!, "finished"), "ok\n");
