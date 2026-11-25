@@ -15,7 +15,7 @@ import type { Site, Stack } from "../ha1/stack.ts";
 import { pgImage } from "../v01/source.ts";
 import { catchUp } from "./catch-up.ts";
 import { SyncPair } from "./pair.ts";
-import { seedFiles } from "./sunday-seed.ts";
+import { coldMount, seedFiles } from "./sunday-seed.ts";
 import { wait } from "./supervisor.ts";
 
 assert(process.platform === "darwin" && process.env["DOCKER_HOST"]?.includes("triplex2"), "Run on the Mac lab VM");
@@ -232,6 +232,52 @@ try {
   await load;
   assert.match(failure, /^gate lagging standby: .* The standby is [\d.]+ MB behind after \d+ s \(it started [\d.]+ MB behind\); it applied [\d.]+ MB\/s while the primary wrote [\d.]+ MB\/s$/);
   result["laggingStandby"] = { message: failure };
+
+  // 6. [DX-HA2] The copy in use (serial by default, pipelined with TX2_HA2_COLD_PIPELINE=1) refuses a damaged seed byte
+  // before PostgreSQL starts, and passes on the same seed undamaged. Cores and placement marks are recorded beside it.
+  const copyOnce = () =>
+    run(
+      [
+        "run", "--rm", "--network", "none", "--label", label, "--cpus", "2", "--memory", "1g",
+        ...coldMount(cold), "--entrypoint", "sh", pgImage, "-ceu", pair.coldScript,
+      ],
+      600000,
+    ).then(
+      (out) => ({ ok: true, verified: out.split("\n").includes("verified-cold-copy " + sha256), out: out.slice(-400) }),
+      (error: { stdout?: string; stderr?: string }) => ({
+        ok: false,
+        verified: String(error.stdout ?? "").split("\n").includes("verified-cold-copy " + sha256),
+        out: String(error.stderr ?? "").slice(-400),
+      }),
+    );
+  const clean = await copyOnce();
+  assert(clean.ok && clean.verified, "Undamaged seed must copy and verify: " + clean.out);
+  const victim = raw
+    .trimEnd()
+    .split("\n")
+    .map((line) => line.slice(66))
+    .filter((f) => f.startsWith("./base/"))
+    .map((f) => ({ f, size: fs.statSync(path.join(seedDir, "PGDATA", f)).size }))
+    .sort((x, y) => y.size - x.size)[0]!;
+  const victimPath = path.join(seedDir, "PGDATA", victim.f);
+  const at = Math.floor(victim.size / 2);
+  const fd = fs.openSync(victimPath, "r+");
+  const byte = Buffer.alloc(1);
+  fs.readSync(fd, byte, 0, 1, at);
+  fs.writeSync(fd, Buffer.from([byte[0]! ^ 0xff]), 0, 1, at);
+  fs.closeSync(fd);
+  const damaged = await copyOnce();
+  assert(!damaged.ok && !damaged.verified, "A damaged seed byte must stop the copy before PostgreSQL starts");
+  result["damagedCopy"] = {
+    script: pair.recovery.coldPipeline ? "pipelined" : "serial",
+    file: victim.f,
+    bytes: victim.size,
+    offset: at,
+    clean,
+    damaged,
+  };
+  result["recovery"] = pair.recovery;
+  result["coldCopies"] = events.filter((x) => ["cold-copy", "cold-cores", "cold-cores-restored"].includes((x as { type: string }).type));
   result["passed"] = true;
 } catch (error) {
   result["passed"] = false;

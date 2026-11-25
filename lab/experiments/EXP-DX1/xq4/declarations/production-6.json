@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "attributes": [
+    { "attribute": ":task/field-0", "code": "p0", "family": "string" },
+    { "attribute": ":task/field-1", "code": "p1", "family": "string" },
+    { "attribute": ":task/field-2", "code": "p2", "family": "string" },
+    { "attribute": ":task/field-3", "code": "p3", "family": "string" },
+    { "attribute": ":task/field-7", "code": "p7", "family": "string" },
+    { "attribute": ":task/field-12", "code": "p12", "family": "string" }
+  ]
+}

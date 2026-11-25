@@ -30,6 +30,12 @@ export const fact = (entityId: string, attribute: string, data: unknown) => ({
 });
 export const value = (row: WorldRow) => JSON.parse(row.value.value);
 export class Conflict extends Error {}
+/** [DX-ACT5] An account's metadata names (the defaults unless the held account is namespaced); test doubles of a
+ * store without `names` get the defaults. */
+export const defaultNames = { RELEASE, ORIGIN, CLOCK, MASK, CURSOR, documents: "" };
+export const namesOf = (s: { names?: typeof defaultNames }) => s.names ?? defaultNames;
+/** [DX-ACT5] An entity whose complete live fact set must still be `tripleIds` when a commit lands. */
+export type EntityGuard = { entityId: string; tripleIds: readonly string[] };
 
 // [DX-ACT1] Why: a typed write-policy refusal proves this frame was rejected even if another writer advanced the source. Rejected: flattening the adapter's cause into a message or mistaking the other writer for a retryable conflict.
 export async function rejectUnrecordedWrite(
@@ -53,7 +59,7 @@ export async function rejectUnrecordedWrite(
       (native.status === 429 && native.code === "WriteQueueFull"))
   )
     throw native;
-  if ((await head()) !== expected) throw new Conflict("Source changed at admission");
+  if ((await head()) !== expected) throw new Conflict("Source changed at admission", { cause: failure });
   throw new Error(
     "Native write had no receipt: " + (failure instanceof Error ? failure.message : exit._tag),
     { cause: failure },
@@ -62,6 +68,10 @@ export async function rejectUnrecordedWrite(
 
 export type EventKind = "activation" | "source" | "due" | "erase" | "baseline";
 export type HeldSource = {
+  // [DX-ACT5] Several publishing accounts in one held database: each account's metadata (releases, clock, origin,
+  // removal marks, cursor) and its notice and settlement documents get the account's own names. Unset, the names are
+  // as before (one publishing account per database).
+  namespace?: boolean;
   account: string;
   prefix: string;
   people: number;
@@ -107,6 +117,17 @@ export async function openStore(
   } finally {
     client.close();
   }
+  const ns = held?.namespace ? "/" + held.account : "";
+  assert(!held?.namespace || /^[a-zA-Z0-9_.-]{1,60}$/.test(held.account));
+  const names = {
+    RELEASE: RELEASE + ns,
+    ORIGIN: ORIGIN + ns,
+    CLOCK: CLOCK + ns,
+    MASK: MASK + ns,
+    CURSOR: CURSOR + ns,
+    /** Suffix of this account's document namespaces (notices, settlement, control). */
+    documents: held?.namespace ? "-" + held.account : "",
+  };
   const h = access === "write" ? await openTriples("datomic", scope) : undefined,
     comp = await openComposition("reach", "datomic", scope,
       options.readAtLeast === undefined ? undefined : { readAtLeast: options.readAtLeast });
@@ -153,8 +174,10 @@ export async function openStore(
     context: unknown = null,
     afterFence?: () => Promise<void>,
     onAck?: (t: number) => void,
+    guards?: readonly EntityGuard[],
   ) {
     assert(h, "A demand reader has no publication authority");
+    assert(!guards || (guards.length > 0 && !afterFence), "Entity guards replace the source-position fence");
     assert(id.length && Number.isSafeInteger(expected) && expected >= 0);
     const correlationId = canonical({ context, hash: sha256(wireBytes([scope, id, actor, ops])) });
     const check = (r: any) => {
@@ -195,15 +218,23 @@ export async function openStore(
     const exit = await h.runExit(
       h.storage.withTransaction(
         Effect.gen(function* () {
-          yield* requireDatomicSourcePosition(key, expected);
+          // [DX-ACT5] With entity guards (settlement frames under TX2_SETTLE_PRECONDITION=progress) the commit is
+          // refused only when a guarded entity's live facts differ from those observed at `expected`: each guard is read
+          // inside the transaction (its entity then joins the transactor's revision check), so a change before the
+          // transaction began fails here and one after it fails at the serial cut. Without guards, unchanged: the whole
+          // database's head must still be `expected`.
+          if (!guards) yield* requireDatomicSourcePosition(key, expected);
           if (afterFence) yield* Effect.promise(afterFence);
           return yield* h.triples.transact(ops, {
             commandId: id,
             actor,
             correlationId,
-            preconditions: ops
-              .filter((o) => o.op === "retract")
-              .map((o) => ({ _tag: "TripleLive", id: o.id })),
+            preconditions: [
+              ...ops
+                .filter((o) => o.op === "retract")
+                .map((o) => ({ _tag: "TripleLive", id: o.id })),
+              ...(guards ?? []).map((g) => ({ _tag: "EntityState", entityId: g.entityId, tripleIds: [...g.tripleIds] })),
+            ],
           });
         }),
       ),
@@ -232,27 +263,27 @@ export async function openStore(
   }
   async function controls(p: number, inputOnly = false) {
     const all = await rows(
-      inputOnly ? [RELEASE, CLOCK, ORIGIN] : [RELEASE, CLOCK, MASK, CURSOR, ORIGIN],
+      inputOnly ? [names.RELEASE, names.CLOCK, names.ORIGIN] : [names.RELEASE, names.CLOCK, names.MASK, names.CURSOR, names.ORIGIN],
       p,
     );
     const birth = held
-      ? all.find((r) => r.entityId === ORIGIN && r.position > held.cut)
-      : all.find((r) => r.position === 1 && (r.entityId === ORIGIN || r.entityId === RELEASE));
+      ? all.find((r) => r.entityId === names.ORIGIN && r.position > held.cut)
+      : all.find((r) => r.position === 1 && (r.entityId === names.ORIGIN || r.entityId === names.RELEASE));
     if (held && p > held.cut && birth)
       assert.deepEqual(value(birth), { profile, held: held.seal });
     if (p && !held)
       assert(birth && value(birth).profile === profile, "Foreign source profile or generation");
     const releases = all
-      .filter((r) => r.entityId === RELEASE)
+      .filter((r) => r.entityId === names.RELEASE)
       .map((r) => ({ ...value(r), tx: r.position, id: r.id }));
-    const clocks = all.filter((r) => r.entityId === CLOCK);
+    const clocks = all.filter((r) => r.entityId === names.CLOCK);
     assert(clocks.length <= 1);
     const at = [epoch, ...releases.map((r) => r.at), ...clocks.map((r) => value(r).at)]
       .sort()
       .at(-1)!;
-    const cursors = all.filter((r) => r.entityId === CURSOR);
+    const cursors = all.filter((r) => r.entityId === names.CURSOR);
     assert(cursors.length <= 1);
-    const masks = all.filter((r) => r.entityId === MASK);
+    const masks = all.filter((r) => r.entityId === names.MASK);
     const input = Math.max(
       0,
       ...releases.map((r) => r.tx),
@@ -416,6 +447,7 @@ export async function openStore(
     scope,
     profile,
     held,
+    names,
     counters,
     effectsClear,
     cursorReceipt,

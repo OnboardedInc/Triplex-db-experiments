@@ -35,6 +35,8 @@ import { BulkQueue } from "./bulk.ts";
 import { firstOffer } from "../../ha1/first-offer.ts";
 import { largeRelease, parseShape, shapeName } from "./large-release.ts";
 import { checkForms, expectForms } from "./form-expect.ts";
+import { docsMode } from "./definitions.ts";
+import { agedBase, checkAgedLive, type AgedBase, type AgedSeal } from "../act7/aged.ts";
 
 const validTime = W0.POPULATION_VALID_TIME;
 export const rates = [3.5, 23.5, 39.4] as const;
@@ -172,7 +174,9 @@ type PairSample = {
   readMissing: number;
   savesOnly?: number | null;
 };
-type History = Map<number, { position: number; version: string; width: number }[]>;
+// [DX-ACT7] `slots`: a production-shaped save's written field numbers (v01/production-card.ts); absent, fields 0 to
+// width - 1 as before.
+type History = Map<number, { position: number; version: string; width: number; slots?: number[] }[]>;
 // [DX-INT1] Why: SCALE1 packs consecutive people into one loader frame, and the pooled loader keeps two frames in
 // flight, so a later frame can commit first. Positions then fall in member order only within each frame. What the
 // positions must show is that each person's original facts came from one loader frame and each frame holds one
@@ -191,7 +195,7 @@ export function checkSeedFrames(detected: number[], cut: number) {
   return { people: detected.length, frames: new Set(detected).size,
     reordered: detected.filter((p, i) => i > 0 && p < detected[i - 1]!).length };
 }
-export async function seedPositions(client: DatomicClient, seed: AdoptedSeed) {
+export async function seedPositions(client: DatomicClient, seed: AdoptedSeed, account = 0) {
   const detected: number[] = [];
   const width = 128;
   for (let start = 0; start < seed.image.people; start += 4 * width) {
@@ -200,7 +204,7 @@ export async function seedPositions(client: DatomicClient, seed: AdoptedSeed) {
         const first = start + lane * width;
         const count = Math.min(width, seed.image.people - first);
         if (count <= 0) return [];
-        const ids = Array.from({ length: count }, (_, i) => root(0, first + i));
+        const ids = Array.from({ length: count }, (_, i) => root(account, first + i));
         const rows = await client.rows(seed.scope.db, {
           entityIds: ids,
           pattern: { attribute: ":subject/member" },
@@ -228,18 +232,24 @@ export async function seedPositions(client: DatomicClient, seed: AdoptedSeed) {
   return detected;
 }
 
-function expected(i: number, at: number, edits: History, positions: number[]) {
+export function expected(i: number, at: number, edits: History, positions: number[], aged?: AgedBase) {
   // [DX-ACT1] Why: SCALE1 packs one person's original facts atomically. Trace provenance uses their witnessed loader position.
   // Rejected: giving every authored fact position one, which produces the right tasks but different durable notice versions.
   let rows = authoredSeed(i, positions[i]!);
+  const owner = task(0, i).split("/").at(-1)!;
+  // [DX-ACT7] On an aged database: the subject's task fields as AGE1's tape left them (each at its own position),
+  // regenerated from the handoff's replay inputs (act7/aged.ts). Unset, as before.
+  for (const f of aged?.(i) ?? [])
+    rows = authoredWrite(rows, [{ e: owner, a: f.attribute, v: { type: "string", value: f.value } }], f.position, 0);
   for (const e of edits.get(i) ?? []) {
     if (e.position > at) break;
+    const slots = e.slots ?? Array.from({ length: e.width }, (_, n) => n);
     rows = authoredWrite(
       rows,
-      Array.from({ length: e.width }, (_, n) => ({
-        e: task(0, i).split("/").at(-1)!,
+      slots.map((n) => ({
+        e: owner,
         a: field(n),
-        v: { type: "string", value: sha([e.version, n]).slice(0, 57) },
+        v: { type: "string" as const, value: sha([e.version, n]).slice(0, 57) },
       })),
       e.position,
       0,
@@ -354,8 +364,21 @@ export async function runHeld(
   let connected: Awaited<ReturnType<typeof readerPeer>> | undefined;
   let worker: Settlement | undefined;
   try {
-    const verified = await checkAdoptedPeer(reader, seed, seed.scope.cut);
-    assert.deepEqual(verified, await checkAdoptedPeer(writer, seed, seed.scope.cut));
+    // [DX-ACT7] Why: on an aged copy (the sealed 1 billion database, or the miniature) the live head is the aged head,
+    // not the SCALE1 cut: the held runner adopts it as the scorecard does, then checks AGE1's last save and every aged
+    // subject's task fields against the handoff's replay tape before anything is written. Unset, as before.
+    // Rejected: running on the aged copy with the fresh cut (refused at the head check: "Restored logical head differs").
+    const aged = (seed as AdoptedSeed & { aged?: AgedSeal }).aged;
+    const head = aged?.head ?? seed.scope.cut;
+    const verified = await checkAdoptedPeer(reader, seed, head);
+    assert.deepEqual(verified, await checkAdoptedPeer(writer, seed, head));
+    const agedLive = aged ? await checkAgedLive(reader, seed.scope.db, aged) : null;
+    if (agedLive) jsonFile(path.join(out, "held-aged-live.json"), { source, attempt: peer.attempt, ...agedLive });
+    // [DX-ACT7] Diagnostic only: the oracle without the aged history (the miniature shows it then fails).
+    assert(process.env.DX_ACT7_PLAIN_ORACLE === undefined || (diagnostic && process.env.DX_ACT7_PLAIN_ORACLE === "1"));
+    const agedOf = (account: number) =>
+      aged && process.env.DX_ACT7_PLAIN_ORACLE !== "1" ? agedBase(aged, account) : undefined;
+    const aged0 = agedOf(0);
     const options = await writer.request<{
       attempt: string;
       database: string;
@@ -373,7 +396,7 @@ export async function runHeld(
     }>("GET", "/v1/db/" + seed.scope.db + "/write-options");
     assert.deepEqual(
       [options.database, options.position, options.gatewaySourceHash],
-      [seed.scope.db, seed.scope.cut, peer.gatewaySource],
+      [seed.scope.db, head, peer.gatewaySource],
     );
     assert(
       options.commitFunctionInstalled && options.strictRecordClocks && options.rowsVersion === 3,
@@ -385,7 +408,8 @@ export async function runHeld(
       assert(ordered && !options.options.groupCommit && !options.subjectPrefetch);
       assert.match(options.subjectFunction, /^:triplex\.subject\/v-[a-f0-9]{24}$/);
     }
-    const { cut, name, db } = seed.scope,
+    const { name, db } = seed.scope,
+      cut = head,
       people = seed.image.people;
     const positions = await seedPositions(reader, seed);
     const account = keyFor(0);
@@ -533,7 +557,7 @@ export async function runHeld(
           document: r.doc,
           old: null,
           basis: b,
-          worlds: [expected(i, b.tx, history, positions)],
+          worlds: [expected(i, b.tx, history, positions, aged0)],
           fold: false,
         });
         values.exact = probe.result.json === JSON.parse(text)[0].json;
@@ -612,24 +636,52 @@ export async function runHeld(
       initialRead,
     });
     settlement = await worker.settle(initial.seq, initialAt - performance.timeOrigin);
-    const [stored, packets] = await Promise.all([
-      worker.archive.stored(initial.seq),
-      worker.recorder.packets(settlement.notices.position),
-    ]);
+    // [DX-ACT6] DX_ACT6_STREAM_CHECK=1 (byte frames only): the stored changes and the packets are compared with the
+    // oracle as they are read, page by page, instead of loaded whole (60 million changes at 200 owed forms for 100,000
+    // subjects would not fit the runner's heap). The same comparisons, in the same order.
+    const streamed = process.env.DX_ACT6_STREAM_CHECK === "1";
+    assert([undefined, "", "1"].includes(process.env.DX_ACT6_STREAM_CHECK));
+    const [stored, packets] = streamed
+      ? [{ frontier: (await worker.archive.values(initial.seq))!.value, output: [] as { subject: string; changes: [string, string | null][] }[], frames: "bytes" as const }, []]
+      : await Promise.all([
+          worker.archive.stored(initial.seq),
+          worker.recorder.packets(settlement.notices.position),
+        ]);
     assert.equal(stored.frontier.status, "stored");
     // [DX-ACT4] Byte-framed pages hold each subject's changes without its full answer.
     const bytes = stored.frames === "bytes";
     const independent = { subjects: 0, owing: 0, changes: 0, notices: 0 };
     const archive = new Map(stored.output.map((x) => [x.subject, x]));
     assert.equal(stored.output.length, archive.size, "Duplicate settled subject");
-    const notices = packets.flatMap((p) => p.deliveries.map(toWire));
+    let notices = packets.flatMap((p) => p.deliveries.map(toWire));
+    const valueStream = streamed ? worker.archive.storedStream(initial.seq) : undefined;
+    const packetStream = streamed ? worker.recorder.streamPackets(settlement.notices.position) : undefined;
+    let noticeBase = 0;
+    // Streamed: keep the packets' deliveries from `entries` on (`noticeBase` is the index of notices[0]).
+    const needNotices = async (upTo: number) => {
+      if (!packetStream) return;
+      if (entries > noticeBase) {
+        notices = notices.slice(entries - noticeBase);
+        noticeBase = entries;
+      }
+      while (noticeBase + notices.length < upTo) {
+        const next = await packetStream.next();
+        assert(!next.done, "Fewer recorded notices than the oracle's");
+        notices.push(...next.value.deliveries.map(toWire));
+      }
+    };
+    const nextStored = async (subject: string) => {
+      const next = await valueStream!.next();
+      assert(!next.done && next.value.subject === subject, "Stored changes out of census order at " + subject);
+      return next.value;
+    };
     for (let i = 0; i < people; i += 32 * oracles.children.length) {
       await Promise.all(
         oracles.children.map(async (oracle, workerIndex) => {
           const first = i + workerIndex * 32;
           if (first >= people) return;
           const worlds = Array.from({ length: Math.min(32, people - first) }, (_, j) =>
-            expected(first + j, initial.position, history, positions),
+            expected(first + j, initial.position, history, positions, aged0),
           );
           const b = { tx: initial.position, validTime };
           const text = await oracle.call("check", {
@@ -647,8 +699,13 @@ export async function runHeld(
           }[];
         }),
       ).then((parts) => {
+        return parts;
+      }).then(async (parts) => {
         for (const p of parts)
           for (const row of p ?? []) {
+            if (streamed && row.rows.length) archive.set(row.subject, await nextStored(row.subject));
+            await needNotices(entries + row.deliveries.length);
+            const at0 = entries - noticeBase;
             const saved = archive.get(row.subject);
             if (row.rows.length) {
               assert.deepEqual(saved, {
@@ -660,14 +717,14 @@ export async function runHeld(
             } else assert(!saved);
             changes += row.rows.length;
             assert.deepEqual(
-              notices.slice(entries, entries + row.deliveries.length),
+              notices.slice(at0, at0 + row.deliveries.length),
               row.deliveries,
             );
             if (initialLarge) {
               const i = Number(row.subject.slice(4)),
-                e = expectForms(expected(i, initial.position, history, positions), initialDoc, validTime);
+                e = expectForms(expected(i, initial.position, history, positions, aged0), initialDoc, validTime);
               const got = checkForms(e, row.subject, saved?.changes ?? [],
-                notices.slice(entries, entries + row.deliveries.length) as never, true);
+                notices.slice(at0, at0 + row.deliveries.length) as never, true);
               independent.subjects++;
               if (e.changes.size) independent.owing++;
               independent.changes += got.changes;
@@ -677,9 +734,14 @@ export async function runHeld(
           }
       });
     }
+    if (streamed) {
+      assert((await valueStream!.next()).done, "More stored subjects than the oracle's");
+      await needNotices(entries);
+      assert(notices.length === entries - noticeBase && (await packetStream!.next()).done, "More recorded notices than the oracle's");
+    }
     assert.deepEqual(
       [archive.size, changes, entries],
-      [0, settlement!.values.state.changes, notices.length],
+      [0, settlement!.values.state.changes, noticeBase + notices.length],
     );
     const archived = await worker.archive
       .reader()
@@ -720,7 +782,26 @@ export async function runHeld(
         preparedMs: prepared - start, installed, meta, initial, coldFirstMs: initialRead.ended - initialAt,
         settlement: "skipped: DX_ACT3_RELEASE set without DX_ACT3_SETTLE=1",
       });
+    // [DX-ACT5] Settlement beside live saves (diagnostic toy only): DX_ACT5_LIVE runs its cases instead of the windows.
+    if (process.env.DX_ACT5_LIVE) {
+      assert(diagnostic || process.env.DX_ACT5_SERVER === "1", "DX_ACT5_LIVE is a toy diagnostic unless DX_ACT5_SERVER=1");
+      const { livePhase } = await import("./settle-live.ts");
+      await livePhase({
+        out, s, a, offer, verifyRead: verifyRead as never, demand: demand as never, writer, seed, people, history, positions,
+        ledger: activeLedger, releases, descriptor, db, ordered: Boolean(ordered), attempt: peer.attempt, reader,
+        aged: aged ? agedOf : undefined, agedSeal: aged,
+      });
+      return;
+    }
     const windows: PairSample[] = [];
+    // [DX-ACT6] By reference, the definitions the windows publish are written once here, before any window (unfenced,
+    // idempotent), so each Publish writes none ahead and the save pause around it covers only its record, as in the
+    // product, where a release's definitions are prepared before it is published.
+    const definitionsAhead = docsMode() === "ref"
+      ? { started: now(), refs: [await a.writeDefinitions(W0.R2.doc), await a.writeDefinitions(large ?? W0.R3.doc)], ms: 0 }
+      : undefined;
+    if (definitionsAhead) definitionsAhead.ms = now() - definitionsAhead.started;
+    if (definitionsAhead) jsonFile(path.join(out, "held-definitions.json"), definitionsAhead);
     for (const rate of diagnostic ? ([3.5, 23.5] as const) : rates) {
       const seconds = diagnostic ? 8 : 100;
       const tape = heldTape(people as Density, rate, seconds);

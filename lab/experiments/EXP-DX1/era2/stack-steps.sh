@@ -1,0 +1,522 @@
+#!/usr/bin/env bash
+# [DX-ERA2 third pass] Stack runs for the second review's findings (Mac, toy, one ordinary heavy token):
+#   DOCKER_HOST=unix://<lab VM socket> node lab/bin/heavy.mjs --label DX-ERA2-steps -- \
+#     bash lab/experiments/EXP-DX1/era2/stack-steps.sh NEW_ABSOLUTE_DIR BODIES_DIR SCENARIO
+# BODIES_DIR: written by `ERA3_MAIN=2 era3/run.sh OUT subject bodies2`. Per account, PostgreSQL removal authority shared
+# by a write and a read gateway, every container on the image the stack pinned by ID. SCENARIO:
+#   step-intent, step-declared, step-committed, step-prepared, step-published
+#                the write gateway's removal pauses at that step (TX2_REMOVAL_TEST_PAUSE_AT) and the gateway is killed
+#                there; nobody resends; everything else goes to the read gateway
+#   wait         the write gateway's removal waits 1 ms for each native step (503, the step lands later); no resend
+#   lockloss-intent, lockloss-declared, and [fifth pass] lockloss-committed, lockloss-prepared, lockloss-published (the
+#   session killed at each step: the paused removal must be answered a typed 503, never 400; LOCKLOSS_ANSWER line)
+#                the write gateway's removal pauses 20 s at that step and its PostgreSQL sessions are killed (its lock
+#                is lost); meanwhile the read gateway runs another removal; then the paused removal goes on
+#   restore      a backup of the data taken while a removal is declared (paused 12 s); the removal completes; the data
+#                is restored from that backup (transactor and gateways stopped); then the restore route
+#   mixed        OLD_REF on the read gateway, this version on the write gateway, one database: removals and derived
+#                writes of each version in both orders, a removal of each version pending while the other writes
+#   fleet-oldcommit, fleet-oldlog  [DX-ERA2 fifth pass] OLD_REF (a build with the per-process boundary switch) on the
+#                read gateway with its switch on (commit) or off (log), on its own source; this version on the write
+#                gateway, allowed to move the database to the commit boundary. The earlier build moves the database
+#                per account (log's boundary in the database); its removal pauses 8 s after its commit while both
+#                gateways read and write; then this version moves the database to the commit boundary; then both again
+#   sdkcache     [DX-ERA2 fifth pass] the SDK's Reach cache across a removal paused 8 s after its commit (commit boundary)
+#   readwait, readwait-commit  [DX-ERA2 fifth pass] removals at 1 and at 10 per second on the write gateway while
+#                readers read on both gateways (era2/readwait.mjs); the log's boundary (or the commit boundary)
+#   sdk-e2e, sdk-e2e-commit  [DX-ERA2 sixth pass] the SDK end to end (era2/sdk-e2e.ts with tsx from SDK_WT): values
+#                written and read only through the Triplex runtime; its Reach cache across a removal (on the commit
+#                variant paused 8 s after its commit); a decline as the application sees it; the stamp it learns
+#   rollout      [DX-ERA2 sixth pass] the rollout procedure of page 19: both gateways on OLD_REF (no move anywhere), a
+#                database left with its log behind; the read gateway rolled to this build, then the write gateway (the
+#                one controlled process allowed to move); the start check names the database behind; the move refused
+#                without permission and while behind; the log rebuilt; every database moved; removals, reads and saves
+#   worker-lockloss  [DX-ERA2 sixth pass] a removal left pending (its gateway killed after its declaration); the read
+#                gateway's worker completes it and pauses 15 s after the commit; its PostgreSQL sessions are killed
+#                there (its lock is lost); the failed completion is counted and the next pass completes it
+# Predictions (written 2026-11-24, 20:50 EST, before the first run):
+#   step-*: after the kill the removal is pending (published only for step-published); a frame naming another account
+#   and a plain save of another account 200; the first frame naming no account 503, after which the removal is
+#   published (sequence 1) by the read gateway; the next frame naming no account and one naming the removed account
+#   200; the resend 200 with sequence 1; a1 never answers its value; no derived copy. Shown wrong by any frame
+#   naming no account refused after the completion, a 409 CasConflict for a fresh ticket, or the value readable.
+#   wait: the same after the 503 (the read gateway's waits are 5 s).
+#   lockloss-*: the read gateway's removal completes the paused one first (sequence 1) and then its own (sequence 2);
+#   the paused removal, going on without its lock, writes nothing (its next authority write fails, or its declaration
+#   or commit is refused at the serial point); its resend answers sequence 1; both values gone, frames 200.
+#   restore: after the data restore every request answers 503 RemovalDataBehind (a1's value not answered); the restore
+#   route 200; then a1 and b1 marked, frames 200, a removal 200 with the next sequence.
+#   mixed: this version's frames 200 after an earlier version's removal (N3); an earlier version's pending removal is
+#   completed by this version's first refused frame; earlier-version frames during this version's declared removal
+#   are recorded (the upgrade order forbids that window: no check of theirs sees a declaration).
+set -euo pipefail
+out=${1:?new absolute output directory}; bodies=${2:?bodies directory}; scenario=${3:?scenario}
+[[ $out == /* && ! -e $out ]] || { echo "give a new absolute output directory" >&2; exit 2; }
+[[ -s $bodies/values.json ]] || { echo "missing $bodies/values.json" >&2; exit 2; }
+: "${DOCKER_HOST:?set DOCKER_HOST to the lab VM docker socket}"
+export DOCKER_HOST
+here=$(cd "$(dirname "$0")" && pwd)
+repo=$(cd "$here/../../../.." && pwd)
+cd "$repo"
+mkdir -p "$out/evidence" "$out/replies" "$out/tmp" "$out/gw" "$out/gwtmp"
+git rev-parse HEAD > "$out/source"
+prefix=tx2-dxera2s-$(od -An -N4 -tx1 /dev/urandom | tr -d ' \n')
+echo "$prefix" > "$out/prefix"
+port_w=${DX_ERA2_PORT_WRITE:-19031} port_r=${DX_ERA2_PORT_READ:-19035}
+for p in "$port_w" "$port_r"; do
+  if lsof -nP -iTCP:"$p" -sTCP:LISTEN >/dev/null 2>&1; then echo "port $p is in use" >&2; exit 2; fi
+done
+bg_pids=()
+cleanup() {
+  for p in ${bg_pids[@]+"${bg_pids[@]}"}; do kill "$p" 2>/dev/null || true; done
+  for role in gw-r gw-w tx; do docker logs "$prefix-$role" > "$out/evidence/$role.log" 2>&1 || true; done
+  docker rm -f "$prefix-restore" >/dev/null 2>&1 || true
+  bash lab/experiments/EXP-DX1/stack/down.sh "$prefix" --volumes >/dev/null 2>&1 || true
+  rm -rf "$out/gw" "$out/gwtmp" "$out/backup" "$out/gw-old" "$out/gw-r"
+}
+trap cleanup EXIT
+place_source() { # REF ("" for this checkout's HEAD)
+  rm -rf "$out/gw"/* "$out/gwtmp"/*
+  git archive "${1:-HEAD}" packages/datomic/gateway packages/datomic/src/codec-spec.json | tar -x -C "$out/gwtmp"
+  cp -R "$out/gwtmp/packages/datomic/gateway/." "$out/gw/"
+  cp "$out/gwtmp/packages/datomic/src/codec-spec.json" "$out/gw/codec-spec.json"
+  echo "${1:-$(git rev-parse HEAD)}" >> "$out/sources-placed"
+}
+place_source ""
+profile=()
+while IFS= read -r line; do profile+=("$line"); done < <(node demo/server/profile.mjs toy)
+envs=() args=() sep=0
+for line in "${profile[@]}"; do
+  if [[ $line == -- ]]; then sep=1; elif [[ $sep == 0 ]]; then envs+=("$line"); else args+=("$line"); fi
+done
+gateway=(TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 DX_W1_EXTRA=1 DX_W1_PREDECESSOR=1
+  DX_W1_FAST_REPLY=1 DX_W1_JOURNAL_QUERY=1 DX_GROUP_COMMIT=0 DX_PINNED_SHORTCUT=0 DX_PINNED_CUT_LOOKUP=0
+  DX_ERASURE_SQL=1 DX_INT1_NATIVE_WRITE_READBACK=1 DX_REMOVAL_PER_ACCOUNT=1 DX_REMOVAL_SUBJECT_CHECK=1)
+case $scenario in
+  step-*) gateway+=(DX_REMOVAL_TEST_PAUSE_AT=${scenario#step-}) ;;
+  wait) gateway+=(DX_REMOVAL_WAIT_MS_WRITE=1) ;;
+  lockloss-*) gateway+=(DX_REMOVAL_TEST_PAUSE_AT=${scenario#lockloss-} DX_REMOVAL_TEST_PAUSE_MS=20000) ;;
+  restore) gateway+=(DX_REMOVAL_TEST_PAUSE_AT=declared DX_REMOVAL_TEST_PAUSE_MS=12000) ;;
+  mixed) [[ -n ${OLD_REF:-} ]] || { echo "mixed needs OLD_REF" >&2; exit 2; }; gateway+=(DX_REMOVAL_TEST_PAUSE_AT=declared DX_REMOVAL_TEST_PAUSE_MS=15000) ;;
+  fleet-oldcommit|fleet-oldlog)
+    [[ -n ${OLD_REF:-} ]] || { echo "$scenario needs OLD_REF" >&2; exit 2; }
+    mkdir -p "$out/gw-old" "$out/gwtmp-old"
+    git archive "$OLD_REF" packages/datomic/gateway packages/datomic/src/codec-spec.json | tar -x -C "$out/gwtmp-old"
+    cp -R "$out/gwtmp-old/packages/datomic/gateway/." "$out/gw-old/"; cp "$out/gwtmp-old/packages/datomic/src/codec-spec.json" "$out/gw-old/codec-spec.json"
+    rm -rf "$out/gwtmp-old"; echo "read gateway: $OLD_REF" >> "$out/sources-placed"
+    old_switch=1; [[ $scenario == fleet-oldlog ]] && old_switch=0
+    gateway+=(DX_REMOVAL_COMMIT_BOUNDARY=1 "DX_GATEWAY_SRC_READ=$out/gw-old"
+              "DX_GATEWAY_ENV_READ=TX2_REMOVAL_COMMIT_BOUNDARY=$old_switch TX2_REMOVAL_TEST_PAUSE_AT=committed TX2_REMOVAL_TEST_PAUSE_MS=8000") ;;
+  readwait) ;;
+  fleet-one)
+    # [DX-ERA2 seventh pass, the sixth review's not-tested 2] rollout step 1: the merged line's build (OLD_REF, the one
+    # branch) on the read gateway beside this build on the write gateway (the per-account option on, no move permission),
+    # one sealed database that stays database-wide
+    [[ -n ${OLD_REF:-} ]] || { echo "fleet-one needs OLD_REF" >&2; exit 2; }
+    mkdir -p "$out/gw-old" "$out/gwtmp-old"
+    git archive "$OLD_REF" packages/datomic/gateway packages/datomic/src/codec-spec.json | tar -x -C "$out/gwtmp-old"
+    cp -R "$out/gwtmp-old/packages/datomic/gateway/." "$out/gw-old/"; cp "$out/gwtmp-old/packages/datomic/src/codec-spec.json" "$out/gw-old/codec-spec.json"
+    rm -rf "$out/gwtmp-old"; echo "read gateway: $OLD_REF" >> "$out/sources-placed"
+    gateway+=("DX_GATEWAY_SRC_READ=$out/gw-old") ;;
+  sdkcache) gateway+=(DX_REMOVAL_COMMIT_BOUNDARY=1 "DX_GATEWAY_ENV_WRITE=TX2_REMOVAL_TEST_PAUSE_AT=committed TX2_REMOVAL_TEST_PAUSE_MS=8000") ;;
+  readwait-commit) gateway+=(DX_REMOVAL_COMMIT_BOUNDARY=1) ;;
+  sdk-e2e) gateway+=(DX_REMOVAL_COMMIT_BOUNDARY=1 "DX_GATEWAY_ENV_READ=TX2_REMOVAL_COMMIT_BOUNDARY=0") ;;
+  sdk-e2e-commit) gateway+=(DX_REMOVAL_COMMIT_BOUNDARY=1 "DX_GATEWAY_ENV_READ=TX2_REMOVAL_COMMIT_BOUNDARY=0"
+                            "DX_GATEWAY_ENV_WRITE=TX2_REMOVAL_TEST_PAUSE_AT=committed TX2_REMOVAL_TEST_PAUSE_MS=8000") ;;
+  rollout)
+    # both gateways start on OLD_REF; the read gateway runs its own source directory so each can be rolled alone; only
+    # the write gateway holds the move permission (on OLD_REF it is not used: no removal and no move is sent there
+    # before every gateway runs this build)
+    [[ -n ${OLD_REF:-} ]] || { echo "rollout needs OLD_REF" >&2; exit 2; }
+    place_source "$OLD_REF"
+    mkdir -p "$out/gw-r"; cp -R "$out/gw/." "$out/gw-r/"
+    gateway+=(DX_REMOVAL_COMMIT_BOUNDARY=1 "DX_GATEWAY_SRC_READ=$out/gw-r" "DX_GATEWAY_ENV_READ=TX2_REMOVAL_COMMIT_BOUNDARY=0") ;;
+  worker-lockloss)
+    gateway+=("DX_GATEWAY_ENV_WRITE=TX2_REMOVAL_TEST_PAUSE_AT=declared"
+              "DX_GATEWAY_ENV_READ=TX2_REMOVAL_TEST_PAUSE_AT=committed TX2_REMOVAL_TEST_PAUSE_MS=15000 TX2_REMOVAL_WORKER_COMPLETE_MS=3000") ;;
+  *) echo "unknown scenario $scenario" >&2; exit 2 ;;
+esac
+env "${envs[@]}" "${gateway[@]}" DX_STACK_EVIDENCE="$out/evidence" DX_STACK_WAIT_FOR_TRANSACTOR=1 DX_QUIET_LOGS=1 \
+  TRIPLEX_TRACE_LEVEL=off bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --port-write "$port_w" --port-read "$port_r" \
+  --gateway-src "$out/gw" "${args[@]}" > "$out/up.log" 2>&1 || { echo "stack did not start; see $out/up.log" >&2; exit 1; }
+pinned=$(cut -d'|' -f1 "$out/evidence/$prefix/config/java-image.txt")
+pg_pinned=$(docker image inspect --format '{{.Id}}' postgres:17-alpine)
+check_images() {
+  for role in tx gw-w gw-r pg; do
+    ran=$(docker inspect --format '{{.Image}}' "$prefix-$role")
+    echo "$1 $prefix-$role $ran" >> "$out/images-ran"
+    want=$pinned; [[ $role == pg ]] && want=$pg_pinned
+    [[ $ran == "$want" ]] || { echo "container $prefix-$role runs $ran, not the pinned $want" >&2; exit 1; }
+  done
+}
+check_images start
+echo "pinned $pinned pg $pg_pinned" >> "$out/images-ran"
+W=http://127.0.0.1:$port_w R=http://127.0.0.1:$port_r
+step() { echo "$(date +%H:%M:%S) $*" | tee -a "$out/steps.log"; }
+n=0
+post() { # URL BODY NAME [TICKET]
+  local url=$1 body=$2 name=$3 ticket=${4:-} data
+  n=$((n + 1)); name="$(printf '%03d' $n)-$name"
+  if [[ -f $body ]]; then
+    if [[ -n $ticket ]]; then
+      node -e 'const f=require("fs");const b=JSON.parse(f.readFileSync(process.argv[1]));b.erasureSeq=Number(process.argv[2]);f.writeFileSync(process.argv[3],JSON.stringify(b))' "$body" "$ticket" "$out/tmp/body.json"
+      data=@$out/tmp/body.json
+    else data=@$body; fi
+  else data=$body; fi
+  curl -sS -m 90 -o "$out/replies/$name.json" -w '%{http_code}' -H 'Content-Type: application/json' -X POST "$url" --data-binary "$data" \
+    > "$out/replies/$name.status" || echo 000 > "$out/replies/$name.status"
+  local code; code=$(grep -o '"code":"[^"]*"' "$out/replies/$name.json" 2>/dev/null | head -1 || true)
+  local seqf; seqf=$(grep -o '"seq":[0-9-]*' "$out/replies/$name.json" 2>/dev/null | head -1 || true)
+  step "$name -> $(cat "$out/replies/$name.status") $code $seqf"
+}
+psql_auth() { docker exec -i "$prefix-pg" psql -XtA -v ON_ERROR_STOP=1 -U postgres -d removal_authority "$@"; }
+seq_of() { curl -sS -m 30 "$1/v2/db/$2/erasure-frontier" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).seq)}catch{console.log("x")}})'; }
+pending_of() { psql_auth -c "SELECT count(*) FROM triplex_removal.records WHERE scope='$1' AND record='pending.json'"; }
+value() { node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1]))[process.argv[2]])' "$bodies/values.json" "$1"; }
+new_db() { # URL NAME
+  local scope; scope=$(node -e 'console.log(JSON.stringify(JSON.stringify(["triplex-scope-v1","test","era2-steps",require("crypto").randomUUID(),0])))')
+  post "$1/v1/db/create" "{\"scope\":$scope,\"layout\":\"lean\",\"strictRecordClocks\":true}" "create-$2"
+  db=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1])).db)' "$out/replies/$(printf '%03d' $n)-create-$2.json")
+  echo "$2 $db" >> "$out/dbs"
+  post "$1/v2/db/$db/protection" '{"attributes":[":v"],"sealed":false}' "protection-$2"
+  post "$1/v2/db/$db/removal-per-account" '{}' "move-$2"
+}
+wait_up() { for i in $(seq 1 120); do curl -sS -m 5 -o /dev/null "$1/health" && return 0; sleep 1; done; return 1; }
+wait_log() { # CONTAINER TEXT: until the container's log has TEXT (60 s)
+  for i in $(seq 1 300); do docker logs "$1" 2>&1 | grep -q "$2" && return 0; sleep 0.2; done; return 1
+}
+remove() { echo "{\"commandId\":\"$1\",\"selectors\":[{\"entityId\":\"$2\",\"attribute\":\":v\"}]}"; }
+# a removed value must not be answered by its subject, nor by the document of a derived write whose ticket predates
+# the removal (DOCS: a JSON list of such documents; later frames copy the value again under a fresh ticket, as new data)
+leak_check() { # URL DB NAME DOCS VALUE...
+  local url=$1 d=$2 name=$3 docs=$4; shift 4
+  post "$url/v1/db/$d/read" "{\"entityIds\":[\"acct/a/one\",\"acct/b/one\"]}" "$name-subjects"
+  local f1="$out/replies/$(printf '%03d' $n)-$name-subjects.json" f2=/dev/null
+  if [[ $docs != '[]' ]]; then
+    post "$url/v1/db/$d/read" "{\"entityIds\":$docs}" "$name-old-ticket-documents"
+    f2="$out/replies/$(printf '%03d' $n)-$name-old-ticket-documents.json"
+  fi
+  local leaks=0
+  for v in "$@"; do for f in "$f1" "$f2"; do if grep -q "$v" "$f"; then leaks=$((leaks + 1)); fi; done; done
+  step "$name: removed values answered by their subjects or by documents of writes with older tickets: $leaks"
+  echo "$name $leaks" >> "$out/leaks"
+}
+va=$(value a1) vb=$(value b1)
+
+case $scenario in
+step-*|wait)
+  stop=${scenario#step-}
+  new_db "$W" d; D=$db
+  for s in a1 a2 b1 c1; do post "$W/v1/db/$D/transact" "$bodies/seed-$s.json" "seed-$s"; done
+  if [[ $scenario == wait ]]; then
+    post "$W/v2/db/$D/erase" "$(remove era2-steps acct/a/one)" removal-on-write-gateway
+    step "the client does not resend"; sleep 3
+  else
+    ( post "$W/v2/db/$D/erase" "$(remove era2-steps acct/a/one)" removal-on-write-gateway ) & rm_pid=$!; bg_pids+=("$rm_pid")
+    wait_log "$prefix-gw-w" "TRIPLEX_REMOVAL_PAUSED $stop" && step "the write gateway paused at $stop" || { echo "never paused at $stop" >&2; exit 1; }
+    step "kill the write gateway at $stop"; docker kill "$prefix-gw-w" > /dev/null; wait "$rm_pid" || true
+  fi
+  step "intents pending: $(pending_of "$D")"
+  t=$(seq_of "$R" "$D"); step "published sequence on the read gateway: $t"
+  # [DX-ERA2 fourth pass, M1] on the log's boundary a read that finds the removal committed publishes it first, so the
+  # ticket the first frame naming no account carries is then already after the removal: its copy of the value is a
+  # new write after the removal, not a write with an older ticket
+  old_docs='["notice:v1:st2-any-0"]'; [[ $t -ge 1 ]] && { old_docs='[]'; step "the first frames carry a ticket after the removal ($t)"; }
+  post "$R/v1/db/$D/transact" "$bodies/frame-b-0.json" frame-naming-b "$t"
+  post "$R/v1/db/$D/transact" "$bodies/save-b1-0.json" save-b1
+  post "$R/v1/db/$D/transact" "$bodies/frame-any-0.json" first-frame-no-accounts "$t"
+  step "intents pending after it: $(pending_of "$D")"
+  t=$(seq_of "$R" "$D"); step "published sequence after it: $t"
+  post "$R/v1/db/$D/transact" "$bodies/frame-any-1.json" next-frame-no-accounts "$t"
+  post "$R/v1/db/$D/transact" "$bodies/frame-a-0.json" frame-naming-a "$t"
+  post "$R/v2/db/$D/erase" "$(remove era2-steps acct/a/one)" removal-resent-on-read-gateway
+  post "$R/v2/db/$D/erase" "$(remove era2-other acct/c/one)" another-removal
+  t=$(seq_of "$R" "$D")
+  post "$R/v1/db/$D/transact" "$bodies/frame-any-2.json" frame-no-accounts-after-another-removal "$t"
+  leak_check "$R" "$D" after "$old_docs" "$va"
+  if [[ $scenario == wait ]]; then docker restart "$prefix-gw-w" > /dev/null; else docker start "$prefix-gw-w" > /dev/null; fi
+  wait_up "$W"; check_images restarted
+  t=$(seq_of "$W" "$D")
+  post "$W/v1/db/$D/transact" "$bodies/frame-any-3.json" write-gateway-restarted-frame-no-accounts "$t"
+  step "start check lines on the restarted write gateway: $(docker logs "$prefix-gw-w" 2>&1 | grep -c removal-start-check || true)"
+  ;;
+lockloss-*)
+  stop=${scenario#lockloss-}
+  new_db "$W" d; D=$db
+  for s in a1 b1 c1; do post "$W/v1/db/$D/transact" "$bodies/seed-$s.json" "seed-$s"; done
+  ( post "$W/v2/db/$D/erase" "$(remove era2-lock-a acct/a/one)" paused-removal-a1 ) & rm_pid=$!; bg_pids+=("$rm_pid")
+  wait_log "$prefix-gw-w" "TRIPLEX_REMOVAL_PAUSED $stop" && step "the write gateway paused at $stop" || { echo "never paused" >&2; exit 1; }
+  step "advisory locks held: $(psql_auth -c "SELECT count(*) FROM pg_locks WHERE locktype='advisory'")"
+  step "kill the write gateway's PostgreSQL sessions (its lock is lost): $(psql_auth -c "SELECT count(pg_terminate_backend(pid)) FROM pg_stat_activity WHERE datname='removal_authority' AND pid <> pg_backend_pid() AND client_addr = (SELECT client_addr FROM pg_stat_activity WHERE pid IN (SELECT pid FROM pg_locks WHERE locktype='advisory') LIMIT 1)")"
+  step "advisory locks held after: $(psql_auth -c "SELECT count(*) FROM pg_locks WHERE locktype='advisory'")"
+  post "$R/v2/db/$D/erase" "$(remove era2-lock-b acct/b/one)" removal-b1-on-read-gateway
+  t=$(seq_of "$R" "$D"); step "published sequence: $t"
+  post "$R/v1/db/$D/transact" "$bodies/frame-any-0.json" frame-no-accounts "$t"
+  step "wait for the paused removal to go on without its lock"; wait "$rm_pid" || true
+  # [DX-ERA2 fifth pass] its session lost mid-way: a typed 503 (ErasureFrontierUnavailable), never 400 GatewayError
+  answer_file=$(ls "$out"/replies/*-paused-removal-a1.status | head -1)
+  answer="$(cat "$answer_file") $(grep -o '"code":"[^"]*"' "${answer_file%.status}.json" 2>/dev/null | head -1 || true)"
+  step "LOCKLOSS_ANSWER $stop $answer"
+  [[ $(cat "$answer_file") != 400 ]] || lockloss_bad=1
+  sleep 2
+  step "intents pending: $(pending_of "$D")"; t=$(seq_of "$R" "$D"); step "published sequence: $t"
+  post "$R/v2/db/$D/erase" "$(remove era2-lock-a acct/a/one)" paused-removal-resent
+  post "$R/v2/db/$D/erase" "$(remove era2-lock-b acct/b/one)" removal-b1-resent
+  t=$(seq_of "$R" "$D")
+  post "$R/v1/db/$D/transact" "$bodies/frame-any-1.json" frame-no-accounts-after "$t"
+  post "$R/v1/db/$D/transact" "$bodies/frame-a-0.json" frame-naming-a-after "$t"
+  post "$R/v1/db/$D/transact" "$bodies/frame-b-0.json" frame-naming-b-after "$t"
+  leak_check "$R" "$D" after '[]' "$va" "$vb"
+  ;;
+restore)
+  new_db "$W" d; D=$db
+  for s in a1 b1 c1; do post "$W/v1/db/$D/transact" "$bodies/seed-$s.json" "seed-$s"; done
+  uri=$(docker exec "$prefix-gw-r" sh -c 'printf %s "$DATOMIC_URI_TEMPLATE"' | sed "s/{db}/$D/")
+  ( post "$W/v2/db/$D/erase" "$(remove era2-rs-b acct/b/one)" removal-b1 ) & rm_pid=$!; bg_pids+=("$rm_pid")
+  wait_log "$prefix-gw-w" "TRIPLEX_REMOVAL_PAUSED declared" && step "removal of b1 declared (paused)" || { echo "never paused" >&2; exit 1; }
+  step "back up the data while the removal is declared"
+  docker exec "$prefix-gw-r" sh -ceu "cd /opt/datomic 2>/dev/null || true; exec bin/datomic -Xms64m -Xmx256m backup-db '$uri' file:/tmp/era2-backup" > "$out/backup.log" 2>&1
+  docker cp "$prefix-gw-r:/tmp/era2-backup" "$out/backup" > /dev/null
+  wait "$rm_pid" || true
+  post "$W/v2/db/$D/erase" "$(remove era2-rs-a acct/a/one)" removal-a1
+  t=$(seq_of "$W" "$D"); step "published sequence before the data restore: $t"
+  step "stop the gateways and the transactor; restore the data from the backup"
+  for role in gw-w gw-r tx; do docker stop --time 12 "$prefix-$role" > /dev/null; done
+  net=$(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' "$prefix-pg" | awk '{print $1}')
+  docker create --name "$prefix-restore" --network "$net" --entrypoint /bin/sh "$pinned" -ceu \
+    "cd /opt/datomic; exec bin/datomic -Xms96m -Xmx800m restore-db file:/tmp/era2-backup '$uri'" > /dev/null
+  docker cp "$out/backup" "$prefix-restore:/tmp/era2-backup" > /dev/null
+  docker start -a "$prefix-restore" > "$out/restore.log" 2>&1; step "restore-db exit $(docker inspect -f '{{.State.ExitCode}}' "$prefix-restore")"
+  echo "restore $prefix-restore $(docker inspect --format '{{.Image}}' "$prefix-restore")" >> "$out/images-ran"
+  docker rm -f "$prefix-restore" > /dev/null
+  docker start "$prefix-tx" > /dev/null; sleep 5; docker start "$prefix-gw-w" "$prefix-gw-r" > /dev/null
+  wait_up "$W"; wait_up "$R"; check_images restored
+  step "start check on the write gateway: $(docker logs "$prefix-gw-w" 2>&1 | grep removal-start-check | tail -1)"
+  post "$R/v1/db/$D/read" '{"entityIds":["acct/a/one"]}' read-a1-data-behind
+  t=$(seq_of "$R" "$D")
+  post "$R/v1/db/$D/transact" "$bodies/frame-any-0.json" frame-no-accounts-data-behind "$t"
+  post "$R/v2/db/$D/erase" "$(remove era2-rs-c acct/c/one)" removal-data-behind
+  post "$W/v2/db/$D/restore-erasure" '{}' restore-route
+  t=$(seq_of "$R" "$D"); step "published sequence after the restore route: $t"
+  post "$R/v1/db/$D/transact" "$bodies/frame-any-1.json" frame-no-accounts-after "$t"
+  post "$R/v1/db/$D/transact" "$bodies/frame-a-0.json" frame-naming-a-after "$t"
+  post "$R/v1/db/$D/transact" "$bodies/frame-b-0.json" frame-naming-b-after "$t"
+  post "$R/v2/db/$D/erase" "$(remove era2-rs-c acct/c/one)" removal-after
+  leak_check "$R" "$D" after '["notice:v1:st2-any-0"]' "$va" "$vb"
+  ;;
+mixed)
+  new_db "$W" d; D=$db
+  for s in a1 a2 b1 c1; do post "$W/v1/db/$D/transact" "$bodies/seed-$s.json" "seed-$s"; done
+  for k in $(seq 0 3); do post "$W/v1/db/$D/transact" "$bodies/seed-r$k.json" "seed-r$k"; done
+  step "the read gateway runs $OLD_REF (a mixed fleet); the write gateway this version"
+  place_source "$OLD_REF"; docker restart "$prefix-gw-r" > /dev/null; wait_up "$R"; check_images mixed
+  step "--- 1. an earlier version's removal, then this version's derived writes"
+  post "$R/v2/db/$D/erase" "$(remove era2-mx-old1 acct/r/s0)" old-removal
+  t=$(seq_of "$W" "$D")
+  post "$W/v1/db/$D/transact" "$bodies/frame-any-0.json" new-frame-no-accounts "$t"
+  post "$W/v1/db/$D/transact" "$bodies/frame-a-0.json" new-frame-naming-a "$t"
+  step "--- 2. this version's removal, then an earlier version's derived writes"
+  post "$W/v2/db/$D/erase" "$(remove era2-mx-new1 acct/r/s1)" new-removal
+  t=$(seq_of "$R" "$D")
+  post "$R/v1/db/$D/transact" "$bodies/frame-any-1.json" old-frame-no-accounts "$t"
+  post "$R/v1/db/$D/transact" "$bodies/frame-a-1.json" old-frame-naming-a "$t"
+  step "--- 3. this version's removal declared (paused 15 s) while the earlier version takes derived writes"
+  t=$(seq_of "$R" "$D")
+  ( post "$W/v2/db/$D/erase" "$(remove era2-mx-new2 acct/a/one)" new-removal-a1 ) & rm_pid=$!; bg_pids+=("$rm_pid")
+  wait_log "$prefix-gw-w" "TRIPLEX_REMOVAL_PAUSED declared" || true; step "this version's removal of a1 is declared"
+  post "$R/v1/db/$D/transact" "$bodies/frame-any-2.json" old-frame-no-accounts-during-declared "$t"
+  post "$R/v1/db/$D/transact" "$bodies/frame-a-2.json" old-frame-naming-a-during-declared "$t"
+  post "$R/v1/db/$D/transact" "$bodies/save-b1-0.json" old-save-b1-during-declared
+  wait "$rm_pid" || true
+  t=$(seq_of "$R" "$D")
+  post "$R/v1/db/$D/transact" "$bodies/frame-any-3.json" old-frame-no-accounts-after "$t"
+  step "--- 4. an earlier version's removal stopped inside its publication; this version writes"
+  psql_auth -c "BEGIN; SELECT 1 FROM triplex_removal.records WHERE scope='$D' AND record='head.json' FOR UPDATE; SELECT pg_sleep(120); ROLLBACK;" >> "$out/lock.log" 2>&1 &
+  bg_pids+=("$!"); sleep 2
+  t=$(seq_of "$W" "$D")
+  ( post "$R/v2/db/$D/erase" "$(remove era2-mx-old2 acct/b/one)" old-removal-b1 ) & p1=$!; bg_pids+=("$p1")
+  sleep 5; step "kill the earlier version's gateway inside its publication"; docker kill "$prefix-gw-r" > /dev/null; wait "$p1" || true
+  psql_auth -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE query LIKE '%pg_sleep(120)%' AND pid <> pg_backend_pid()" >> "$out/lock.log" 2>&1 || true
+  sleep 2; step "intents pending: $(pending_of "$D")"
+  post "$W/v1/db/$D/transact" "$bodies/frame-b-1.json" new-frame-naming-b-while-old-pending "$t"
+  post "$W/v1/db/$D/transact" "$bodies/frame-any-4.json" new-frame-no-accounts-while-old-pending "$t"
+  step "intents pending after it: $(pending_of "$D")"
+  t=$(seq_of "$W" "$D"); step "published sequence: $t"
+  post "$W/v1/db/$D/transact" "$bodies/frame-any-5.json" new-frame-no-accounts-after "$t"
+  post "$W/v1/db/$D/transact" "$bodies/frame-b-2.json" new-frame-naming-b-after "$t"
+  step "--- 5. the earlier version's gateway back: its resend, and its derived writes"
+  docker start "$prefix-gw-r" > /dev/null; wait_up "$R"; check_images old-back
+  post "$R/v2/db/$D/erase" "$(remove era2-mx-old2 acct/b/one)" old-removal-b1-resent
+  t=$(seq_of "$R" "$D")
+  post "$R/v1/db/$D/transact" "$bodies/frame-any-6.json" old-frame-no-accounts-end "$t"
+  post "$R/v1/db/$D/transact" "$bodies/frame-b-3.json" old-frame-naming-b-end "$t"
+  t=$(seq_of "$W" "$D")
+  post "$W/v1/db/$D/transact" "$bodies/frame-any-7.json" new-frame-no-accounts-end "$t"
+  leak_check "$W" "$D" end '["notice:v1:st2-any-4"]' "$va" "$vb"
+  # the window the upgrade order forbids: an earlier version's derived writes while this version's removal is declared
+  post "$W/v1/db/$D/read" '{"entityIds":["notice:v1:st2-any-2","notice:v1:st2-a-2"]}' mixed-window-documents
+  step "copies of a1 from the earlier version's writes during the declared removal: $(grep -c "$va" "$out/replies/$(printf '%03d' $n)-mixed-window-documents.json" || true)"
+  ;;
+fleet-oldcommit|fleet-oldlog)
+  reply() { echo "$out/replies/$(printf '%03d' $n)-$1.json"; }
+  new_db "$R" d; D=$db
+  step "the earlier build ($OLD_REF, its switch $old_switch) moved the database per account: the database is on the log's boundary"
+  for s in a1 b1 c1; do post "$W/v1/db/$D/transact" "$bodies/seed-$s.json" "seed-$s"; done
+  step "--- 1. a mixed fleet: the earlier build's removal of a1 pauses 8 s after its commit"
+  ( post "$R/v2/db/$D/erase" "$(remove era2-fl-a1 acct/a/one)" earlier-removal-a1 ) & rm_pid=$!; bg_pids+=("$rm_pid")
+  wait_log "$prefix-gw-r" "TRIPLEX_REMOVAL_PAUSED committed" && step "committed and paused" || step "never paused"
+  post "$R/v1/db/$D/read" '{"entityIds":["acct/a/one"]}' earlier-read-a1
+  step "a1 answered by the earlier build while committed: $(grep -c "$va" "$(reply earlier-read-a1)" || true)"
+  ms() { python3 -c 'import time;print(int(time.time()*1000))'; }
+  t0=$(ms)
+  post "$W/v1/db/$D/read" '{"entityIds":["acct/a/one"]}' this-read-a1
+  step "a1 answered by this build while committed: $(grep -c "$va" "$(reply this-read-a1)" || true) (the read took $(( $(ms) - t0 )) ms)"
+  t=$(seq_of "$W" "$D"); step "sequence this build reads: $t"
+  post "$W/v1/db/$D/transact" "$bodies/frame-any-0.json" this-frame-no-accounts "$t"
+  post "$R/v1/db/$D/transact" "$bodies/save-b1-0.json" earlier-save-b1
+  wait "$rm_pid" || true
+  t=$(seq_of "$W" "$D"); step "sequence after the earlier build's removal: $t"
+  step "--- 2. this build moves the database to the commit boundary"
+  post "$W/v2/db/$D/removal-commit-boundary" '{}' move-to-commit
+  post "$W/v2/db/$D/removal-commit-boundary" '{}' move-again
+  step "--- 3. after the move"
+  post "$R/v1/db/$D/read" '{"entityIds":["acct/a/one","acct/b/one"]}' earlier-read-after
+  step "a1 answered by the earlier build after the move: $(grep -c "$va" "$(reply earlier-read-after)" || true)"
+  post "$R/v1/db/$D/transact" "$bodies/save-b1-1.json" earlier-save-b1-after
+  post "$R/v2/db/$D/erase" "$(remove era2-fl-b1 acct/b/one)" earlier-removal-after
+  post "$W/v2/db/$D/erase" "$(remove era2-fl-c1 acct/c/one)" this-removal-after
+  t=$(seq_of "$W" "$D"); step "sequence this build reads: $t"
+  post "$W/v1/db/$D/transact" "$bodies/frame-any-1.json" this-frame-no-accounts-after "$t"
+  post "$W/v1/db/$D/transact" "$bodies/save-b1-2.json" this-save-b1-after
+  curl -sS -m 30 "$W/v2/db/$D/erasure-frontier" > "$out/replies/frontier-end.json"
+  step "frontier at the end: $(node -e 'const f=JSON.parse(require("fs").readFileSync(process.argv[1]));console.log(JSON.stringify({seq:f.seq,stamp:f.removalStamp}))' "$out/replies/frontier-end.json")"
+  leak_check "$W" "$D" end '[]' "$va"
+  ;;
+sdkcache)
+  # [DX-ERA2 fifth pass, B5] the SDK's Reach cache (era2/sdkcache.ts, run with tsx from SDK_WT, a checkout with
+  # node_modules holding the same packages/datomic/src as this one)
+  new_db "$W" d; D=$db
+  for s in a1 b1; do post "$W/v1/db/$D/transact" "$bodies/seed-$s.json" "seed-$s"; done
+  step "the SDK's source: $(git -C "${SDK_WT:?a checkout with node_modules}" rev-parse HEAD) (this checkout $(git rev-parse HEAD))"
+  "$SDK_WT/node_modules/.bin/tsx" "$SDK_WT/lab/experiments/EXP-DX1/era2/sdkcache.ts" "$W" "$R" "$D" "$va" "$out/sdkcache.json" | tee -a "$out/steps.log"
+  ;;
+sdk-e2e|sdk-e2e-commit)
+  v=log; [[ $scenario == sdk-e2e-commit ]] && v=commit
+  step "the SDK's source: $(git -C "${SDK_WT:?a checkout with node_modules}" rev-parse HEAD) (this checkout $(git rev-parse HEAD))"
+  "$SDK_WT/node_modules/.bin/tsx" "$SDK_WT/lab/experiments/EXP-DX1/era2/sdk-e2e.ts" "$W" "$R" "$v" "$out/sdk-e2e.json" > "$out/sdk-e2e.log" 2>&1 || sdk_bad=1
+  grep -E "ERA2_SDK_E2E" "$out/sdk-e2e.log" | tee -a "$out/steps.log" | cut -c1-400
+  docker logs "$prefix-gw-r" 2>&1 | grep -F '"triplex.removal-declined-save.v1"' > "$out/declines.jsonl" || true
+  step "declines logged by the read gateway: $(wc -l < "$out/declines.jsonl" | tr -d ' ') (each names the removalSeen it carried)"
+  ;;
+rollout)
+  reply() { echo "$out/replies/$(printf '%03d' $n)-$1.json"; }
+  step "--- 0. both gateways on $OLD_REF; databases moved per account through the read gateway (no move permission there)"
+  new_db "$R" d1; D1=$db; new_db "$R" d2; D2=$db
+  for d in "$D1" "$D2"; do for s in a1 b1 c1; do post "$W/v1/db/$d/transact" "$bodies/seed-$s.json" "seed-$s"; done; done
+  post "$R/v2/db/$D1/erase" "$(remove era2-ro-1 acct/a/one)" old-removal-d1-a1
+  post "$R/v2/db/$D2/erase" "$(remove era2-ro-2 acct/a/one)" old-removal-d2-a1
+  # d2's removal log put back one removal behind (a log restored from an older copy): state 7 of the page
+  psql_auth -c "CREATE TABLE IF NOT EXISTS public.era2_snap AS SELECT * FROM triplex_removal.records WHERE scope='$D2'" > /dev/null
+  post "$R/v2/db/$D2/erase" "$(remove era2-ro-3 acct/b/one)" old-removal-d2-b1
+  psql_auth -c "BEGIN; DELETE FROM triplex_removal.records WHERE scope='$D2'; INSERT INTO triplex_removal.records SELECT * FROM public.era2_snap; COMMIT;" > /dev/null
+  step "d2's log now: $(psql_auth -c "SELECT payload FROM triplex_removal.records WHERE scope='$D2' AND record='head.json'" | grep -o '"seq":[0-9]*')"
+  post "$W/v1/db/$D1/read" '{"entityIds":["acct/a/one"]}' old-fleet-read-d1
+  step "--- 1. the read gateway rolled to this build (the write gateway still on $OLD_REF)"
+  rm -rf "$out/gwtmp"/* "$out/gw-r"/*
+  git archive HEAD packages/datomic/gateway packages/datomic/src/codec-spec.json | tar -x -C "$out/gwtmp"
+  cp -R "$out/gwtmp/packages/datomic/gateway/." "$out/gw-r/"; cp "$out/gwtmp/packages/datomic/src/codec-spec.json" "$out/gw-r/codec-spec.json"
+  echo "read gateway rolled: $(git rev-parse HEAD)" >> "$out/sources-placed"
+  docker restart "$prefix-gw-r" > /dev/null; wait_up "$R"; check_images rolled-read
+  step "start check on the rolled read gateway: $(docker logs "$prefix-gw-r" 2>&1 | grep -F 'removal-start-check' | tail -3 | tr '\n' ' ')"
+  post "$R/v1/db/$D1/read" '{"entityIds":["acct/a/one","acct/b/one"]}' mixed-read-d1-new
+  post "$W/v1/db/$D1/read" '{"entityIds":["acct/a/one","acct/b/one"]}' mixed-read-d1-old
+  post "$R/v1/db/$D1/transact" "$bodies/save-b1-0.json" mixed-save-d1-new
+  post "$R/v2/db/$D1/removal-commit-boundary" '{}' move-without-permission
+  step "--- 2. the write gateway rolled to this build: every gateway runs it; the write gateway is the controlled process"
+  rm -rf "$out/gw"/*; cp -R "$out/gw-r/." "$out/gw/"; echo "rolled: $(git rev-parse HEAD)" >> "$out/sources-placed"
+  docker restart "$prefix-gw-w" > /dev/null; wait_up "$W"; check_images rolled-write
+  step "start check on the write gateway: $(docker logs "$prefix-gw-w" 2>&1 | grep -F 'removal-start-check' | grep -c "$D2" || true) line(s) naming d2"
+  post "$W/v2/db/$D2/removal-commit-boundary" '{}' move-d2-while-behind
+  post "$W/v2/db/$D2/removal-log-rebuild" '{}' rebuild-d2
+  post "$W/v2/db/$D1/removal-commit-boundary" '{}' move-d1
+  post "$W/v2/db/$D2/removal-commit-boundary" '{}' move-d2
+  for d in "$D1" "$D2"; do
+    curl -sS -m 30 "$W/v2/db/$d/erasure-frontier" > "$out/replies/frontier-$d.json"
+    step "frontier $(node -e 'const f=JSON.parse(require("fs").readFileSync(process.argv[1]));console.log(JSON.stringify({seq:f.seq,stamp:f.removalStamp,boundary:f.boundary}))' "$out/replies/frontier-$d.json")"
+  done
+  step "--- 3. after the moves: removals, reads and saves on both gateways"
+  post "$R/v2/db/$D1/erase" "$(remove era2-ro-4 acct/b/one)" removal-d1-b1-read-gateway
+  post "$W/v2/db/$D2/erase" "$(remove era2-ro-5 acct/c/one)" removal-d2-c1-write-gateway
+  post "$R/v1/db/$D2/transact" "$bodies/save-b1-1.json" save-d2-after
+  leak_check "$R" "$D1" end-d1 '[]' "$va" "$vb"
+  leak_check "$W" "$D2" end-d2 '[]' "$va" "$vb"
+  ;;
+fleet-one)
+  scope=$(node -e 'console.log(JSON.stringify(JSON.stringify(["triplex-scope-v1","test","era2-fleet-one",require("crypto").randomUUID(),0])))')
+  post "$R/v1/db/create" "{\"scope\":$scope,\"layout\":\"lean\",\"strictRecordClocks\":true}" "create-on-the-merged-line"
+  D=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1])).db)' "$out/replies/$(printf '%03d' $n)-create-on-the-merged-line.json")
+  echo "d $D" >> "$out/dbs"
+  post "$R/v2/db/$D/protection" '{"attributes":[":v"],"sealed":true}' "protection-on-the-merged-line"
+  post "$W/v2/db/$D/protection" '{"attributes":[":v"],"sealed":true}' "protection-on-this-build"
+  for s in a1 b1; do post "$W/v1/db/$D/transact" "$bodies/seed-$s.json" "seed-$s-on-this-build"; done
+  post "$R/v1/db/$D/transact" "$bodies/seed-c1.json" "seed-c1-on-the-merged-line"
+  post "$R/v1/db/$D/read" '{"entityIds":["acct/a/one","acct/b/one","acct/c/one"]}' "read-all-on-the-merged-line"
+  step "--- a removal on this build, read on both"
+  post "$W/v2/db/$D/erase" "$(remove era2-f1-a1 acct/a/one)" "removal-a1-on-this-build"
+  leak_check "$R" "$D" "after-a1-merged-line" '[]' "$va"
+  leak_check "$W" "$D" "after-a1-this-build" '[]' "$va"
+  step "--- a removal on the merged line, read on both"
+  post "$R/v2/db/$D/erase" "$(remove era2-f1-b1 acct/b/one)" "removal-b1-on-the-merged-line"
+  leak_check "$W" "$D" "after-b1-this-build" '[]' "$va" "$vb"
+  leak_check "$R" "$D" "after-b1-merged-line" '[]' "$va" "$vb"
+  step "--- saves on both, the frontier on both"
+  post "$W/v1/db/$D/transact" "$bodies/save-b1-0.json" "save-on-this-build"
+  for k in 0 1; do post "$R/v1/db/$D/transact" "$bodies/seed-r$k.json" "save-r$k-on-the-merged-line"; done
+  step "frontier on the merged line: $(curl -sS -m 30 "$R/v2/db/$D/erasure-frontier" | head -c 160)"
+  step "frontier on this build: $(curl -sS -m 30 "$W/v2/db/$D/erasure-frontier" | head -c 160)"
+  sleep 3
+  step "key rows of the database left: $(psql_auth -c "SELECT count(*) FROM triplex_removal.keys WHERE scope='$D'")"
+  leak_check "$W" "$D" "end-this-build" '[]' "$va" "$vb"
+  leak_check "$R" "$D" "end-merged-line" '[]' "$va" "$vb"
+  ;;
+worker-lockloss)
+  reply() { echo "$out/replies/$(printf '%03d' $n)-$1.json"; }
+  new_db "$R" d; D=$db
+  for s in a1 b1 c1; do post "$R/v1/db/$D/transact" "$bodies/seed-$s.json" "seed-$s"; done
+  ( post "$W/v2/db/$D/erase" "$(remove era2-wl-a acct/a/one)" removal-a1-write-gateway ) & rm_pid=$!; bg_pids+=("$rm_pid")
+  wait_log "$prefix-gw-w" "TRIPLEX_REMOVAL_PAUSED declared" && step "the write gateway paused after its declaration" || { echo "never paused" >&2; exit 1; }
+  docker kill "$prefix-gw-w" > /dev/null; wait "$rm_pid" || true
+  step "the write gateway killed there; intents pending: $(pending_of "$D")"
+  for i in $(seq 1 150); do docker logs "$prefix-gw-r" 2>&1 | grep -q "TRIPLEX_REMOVAL_PAUSED committed" && break; sleep 0.2; done
+  step "the read gateway's worker is completing it, paused after its commit: $(docker logs "$prefix-gw-r" 2>&1 | grep -c 'TRIPLEX_REMOVAL_PAUSED committed' || true)"
+  step "kill the read gateway's PostgreSQL sessions (its lock is lost): $(psql_auth -c "SELECT count(pg_terminate_backend(pid)) FROM pg_stat_activity WHERE datname='removal_authority' AND pid <> pg_backend_pid()")"
+  for i in $(seq 1 200); do [[ $(pending_of "$D") == 0 ]] && break; sleep 0.25; done
+  step "intents pending after the pause and the next passes: $(pending_of "$D")"
+  curl -sS -m 30 "$R/v2/admin/scan-stats" > "$out/replies/scan-stats.json"
+  step "failures counted on the read gateway: $(node -e 'const s=JSON.parse(require("fs").readFileSync(process.argv[1]));console.log(JSON.stringify(s.removalFailures||{}))' "$out/replies/scan-stats.json")"
+  docker logs "$prefix-gw-r" 2>&1 | grep -E 'removal-failure|removal-completion|removal-worker-completion' > "$out/worker-lines.txt" || true
+  step "published sequence: $(seq_of "$R" "$D")"
+  t=$(seq_of "$R" "$D")
+  post "$R/v1/db/$D/transact" "$bodies/frame-any-0.json" frame-no-accounts-after "$t"
+  post "$R/v1/db/$D/transact" "$bodies/save-b1-0.json" save-b1-after
+  leak_check "$R" "$D" end '[]' "$va"
+  ;;
+readwait|readwait-commit)
+  new_db "$W" d; D=$db
+  post "$W/v1/db/$D/transact" "$bodies/seed-a1.json" seed-a1
+  step "boundary: $(curl -sS -m 30 "$W/v2/db/$D/erasure-frontier" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const f=JSON.parse(s);console.log("seq",f.seq,"stamp",f.removalStamp)})')"
+  for rate in 1 10; do
+    secs=60; [[ $rate == 10 ]] && secs=30
+    step "--- removals at $rate per second for $secs s; 4 readers (2 on each gateway)"
+    since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    node "$here/readwait.mjs" "$W" "$R" "$D" "$rate" "$secs" 4 "$out/readwait-$rate.json" | tee -a "$out/steps.log"
+    for role in w r; do
+      docker logs --since "$since" "$prefix-gw-$role" 2>&1 | grep -F '"triplex.removal-read-wait.v1"' > "$out/waits-$rate-$role.jsonl" || true
+      step "gateway $role: $(wc -l < "$out/waits-$rate-$role.jsonl" | tr -d ' ') reads waited; $(node -e 'const xs=require("fs").readFileSync(process.argv[1],"utf8").trim().split("\n").filter(Boolean).map(l=>JSON.parse(l.slice(l.indexOf("{"))).ms).sort((a,b)=>a-b);const q=p=>xs.length?Math.round(xs[Math.min(xs.length-1,Math.floor(p*xs.length))]*10)/10:null;console.log(JSON.stringify({n:xs.length,p50:q(.5),p90:q(.9),p99:q(.99),max:q(1)}))' "$out/waits-$rate-$role.jsonl")"
+    done
+  done
+  ;;
+esac
+step "done"
+[[ -z ${lockloss_bad:-} ]] || { echo "the removal whose session was lost answered 400" >&2; exit 1; }
+[[ -z ${sdk_bad:-} ]] || { echo "the SDK end-to-end checks failed (see sdk-e2e.log)" >&2; exit 1; }

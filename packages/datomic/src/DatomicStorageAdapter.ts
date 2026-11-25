@@ -39,6 +39,15 @@ import {
   atLeastBody,
 } from "./DatomicClient.js";
 import { orderedSaveIdentity, wideOrderedSaveIdentity } from "./orderedSaveIdentity.js";
+import {
+  boundedMatch,
+  DatomicMatchNeedsPaging,
+  entityPage as idListEntityPage,
+  type IdListOptions,
+  type ReadEntities,
+  validateIdListOptions,
+} from "./idLists.js";
+import { isPatternVariable } from "@triplex-build/triplex";
 import { matchesPattern, packValue, packValueOnce, createPackedRow, visibleAt } from "./rows.js";
 import { fastPathEnabled } from "./fastPaths.js";
 import { stagedInput } from "./protocol.js";
@@ -204,6 +213,8 @@ export const makeDatomicStorageAdapter = (
     readonly serverRecordTime?: boolean;
     readonly indexedJournalReads?: boolean;
     readonly recordedJournalReads?: boolean;
+    // [DX-XQ3] Reads by entity type through the gateway's ID list route (default off; see idLists.ts).
+    readonly idLists?: IdListOptions;
     /**
      * [DX-JRN1] Ask the gateway for bounded journal pages (`bounded: true`) and follow each page's cursor until the
      * caller's limit or the end of the cut, so no single request walks the position index without a bound. The answers
@@ -246,6 +257,7 @@ export const makeDatomicStorageAdapter = (
     readonly creationSaves?: boolean;
   } = {},
 ): StorageAdapterService => {
+  if (options.idLists) validateIdListOptions(options.idLists);
   // [DX-T1] Why: Effect scopes include staging/validation and always close on typed failure or interruption.
   // Rejected: only timing successful HTTP transacts (loses replay, admission and preflight work).
   const traced = <A, E, R>(name: string, effect: Effect.Effect<A, E, R>): Effect.Effect<A, E, R> =>
@@ -438,6 +450,56 @@ export const makeDatomicStorageAdapter = (
         );
     });
 
+  // [DX-XQ3] The rows of a batch of entities at a basis, read and ordered exactly as getByEntities reads them outside
+  // a transaction (queryRows with entityIds), for the ID list paths below.
+  const readEntities: ReadEntities = async (ids, basis) => {
+    const rows = (
+      await client.rows(db, {
+        pattern: {},
+        history: false,
+        entityIds: [...new Set(ids)],
+        ...(basis === undefined ? {} : { basis }),
+      })
+    ).slice();
+    for (const row of rows) remember(row);
+    rows.sort((left, right) => left.recorded_at - right.recorded_at || left.id.localeCompare(right.id));
+    const grouped = new Map<string, TripleRow[]>(ids.map((id) => [id, []]));
+    for (const row of rows) grouped.get(row.entity_id)?.push(row);
+    return grouped;
+  };
+  const listedType = (pattern: QueryPattern) =>
+    options.idLists !== undefined &&
+    (pattern.entityId === undefined || isPatternVariable(pattern.entityId)) &&
+    pattern.entityType !== undefined &&
+    options.idLists.types[pattern.entityType] !== undefined;
+  const boundedQuery = (
+    pattern: QueryPattern,
+    basis?: ResolvedTemporalBasis,
+  ): Effect.Effect<readonly TripleRow[], ReadError> =>
+    Effect.gen(function* () {
+      const lists = options.idLists;
+      if (lists === undefined || (yield* current) !== undefined) return yield* queryRows(pattern, basis);
+      if (listedType(pattern)) {
+        const position = basis?.recordedPosition ?? (yield* committedPosition());
+        return yield* read(() =>
+          boundedMatch(client, db, lists, readEntities, pattern.entityType!, basis!, position, (row) =>
+            matchesPattern(row, pattern),
+          ),
+        );
+      }
+      if (
+        lists.refuseScans === true &&
+        (pattern.entityId === undefined || isPatternVariable(pattern.entityId)) &&
+        pattern.entityType !== "_Transaction"
+      )
+        return yield* Effect.fail(
+          new DatomicMatchNeedsPaging({
+            message: `A read by ${JSON.stringify(pattern)} names no entity and no listed type; it would scan every entity`,
+          }),
+        );
+      return yield* queryRows(pattern, basis);
+    });
+
   // [DX-B3-M3] Why: only an ACK bound to this operation or its resolved receipt can publish cached positions.
   // Rejected: caching provisional rows before the transactor has acknowledged them.
   const settle = (state: TransactionState, position: number, instant?: number) => {
@@ -555,14 +617,11 @@ export const makeDatomicStorageAdapter = (
                 state.importInstant === undefined &&
                 [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
               sourceK: state.optimistic && !state.orderedSave ? null : state.sourceK,
-              // [DX-S6b] A replay names its first attempt's frame: a removal after it declines the replay (R2-2). An
-              // optimistic attempt sends no source, so it states its frame here: the newest position this client had
-              // seen (S5 R3-6: a value saved after a removal the client had seen is never declined for that removal).
-              ...(state.frameSourceK !== undefined
-                ? { frameSourceK: state.frameSourceK }
-                : state.optimistic && !state.orderedSave
-                  ? { frameSourceK: state.sourceK }
-                  : {}),
+              // [DX-S6b] A replay names its first attempt's source: a removal after it declines the replay (R2-2).
+              ...(state.frameSourceK === undefined ? {} : { frameSourceK: state.frameSourceK }),
+              // [DX-ERA2 fifth pass, Z7; DX-ERA6] the removal stamp this client held when the save was framed (on a replay,
+              // the first attempt's): removals after it that name a subject it writes decline it, also without a source
+              ...(state.removalSeen === undefined ? {} : { removalSeen: state.removalSeen }),
               // [DX-S4] A block save declares its identity bounds (one history probe on the general writer).
               ...(creationSaves && state.orderedSave ? { declareIdentityBounds: true } : {}),
               position: state.position,
@@ -700,6 +759,8 @@ export const makeDatomicStorageAdapter = (
             // save must be framed after it. An optimistic save's source is the last position this client saw, which
             // can precede the removal and would decline every later creation of the family; read the head once.
             // Rejected: replaying here (the caller's values were chosen before the removal).
+            // [DX-ERA2 seventh pass, X5; DX-ERA6] final for this commit: the SDK never sends it again (under a newer stamp
+            // or otherwise); the gateway records the declined command, so a resend under it is declined too.
             if (error.code === "ErasureReplayDeclined") {
               try {
                 const seen = Number((await client.basis(db)).position.v);
@@ -790,6 +851,9 @@ export const makeDatomicStorageAdapter = (
       let operationId = randomUUID();
       // [DX-S6b] The source the first attempt sent; every replay carries it (S5 R2-2).
       let frameSource: number | null | undefined;
+      // [DX-ERA6] The removal stamp the first attempt held; every replay carries it (the merged rule: a save is framed at
+      // the earliest of its first attempt's source, its own source and this stamp).
+      let frameRemovalSeen: number | undefined;
       const diagnostic: import("./DatomicClient.js").DatomicCommitSample | undefined =
         client.onCommit
           ? {
@@ -908,7 +972,10 @@ export const makeDatomicStorageAdapter = (
             }>(() =>
               client.observeRequests(observation, () =>
                 optimistic
-                  ? Promise.resolve({
+                  ? // [DX-ERA2 sixth pass, V3] an optimistic commit always says when it was framed: a client that
+                    // holds no removal stamp for this database (it never read it, so it cached nothing from it)
+                    // reads the stamp once first, and the commit carries it as removalSeen
+                    client.ensureRemovalStamp(db).then(() => ({
                       handle: "",
                       position: lastSeenPosition,
                       prefetch: {
@@ -916,7 +983,7 @@ export const makeDatomicStorageAdapter = (
                         claim: null,
                         rows: new Map(predecessors!.map(([id, row]) => [id, row!])),
                       },
-                    })
+                    }))
                   : transactionOptions?.hint === undefined
                     ? client.begin(db)
                     : client.beginCommand(db, transactionOptions.hint),
@@ -936,6 +1003,11 @@ export const makeDatomicStorageAdapter = (
             replaySafe: transactionOptions?.replaySafe === true,
             serverRecordTime: strictRecordClocks && options.serverRecordTime !== false,
             optimistic,
+            ...(frameRemovalSeen !== undefined
+              ? { removalSeen: frameRemovalSeen }
+              : client.removalStamps.has(db)
+                ? { removalSeen: client.removalStamps.get(db)! }
+                : {}),
             restart: { needed: false },
             sourceK,
             handle: snapshot.handle,
@@ -992,7 +1064,8 @@ export const makeDatomicStorageAdapter = (
                       ),
                       Effect.suspend(() => {
                         client.commitDiagnostics.replays++;
-                        frameSource ??= state.sourceK;
+                        frameSource ??= state.optimistic && !state.orderedSave ? null : state.sourceK;
+                        frameRemovalSeen ??= state.removalSeen;
                         if (error instanceof DatomicOperationNotApplied) operationId = randomUUID();
                         for (const id of hint?.tripleIds ?? []) {
                           cache.delete(id);
@@ -1508,7 +1581,24 @@ export const makeDatomicStorageAdapter = (
             ),
           ),
       ),
-    query: (pattern, basis) => queryRows(pattern, basis),
+    query: (pattern, basis) =>
+      options.idLists === undefined ? queryRows(pattern, basis) : boundedQuery(pattern, basis),
+    // [DX-XQ3] Triples.entityPage by ID list for the listed types, outside a transaction (inside one, staged rows
+    // must stay visible, so the scan answers). Absent without idLists.
+    ...(options.idLists === undefined
+      ? {}
+      : {
+          getEntityPage: (request: Parameters<NonNullable<StorageAdapterService["getEntityPage"]>>[0]) =>
+            Effect.gen(function* () {
+              const lists = options.idLists!;
+              if (lists.types[request.entityType] === undefined || (yield* current) !== undefined)
+                return undefined;
+              const position = request.basis.recordedPosition ?? (yield* committedPosition());
+              return yield* read(() =>
+                idListEntityPage(client, db, lists, readEntities, request, position),
+              );
+            }),
+        }),
     history: (entityId) => queryRows({ entityId }, undefined, true),
     dependencyState: (attributes, basis) =>
       Effect.gen(function* () {

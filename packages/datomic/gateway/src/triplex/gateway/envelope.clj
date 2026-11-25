@@ -104,7 +104,9 @@
   (when (contains? (:erased privacy/*cut*) id) (privacy/stale!))
   (if sql/url
     (let [^ConcurrentLinkedQueue keys (pool name)]
-      (or (.poll keys) (privacy/failure! 503 "EnvelopeKeyPoolEmpty" "Retry the protected save after replenishment")))
+      ;; [DX-ERA2 sixth pass] an empty pool (this gateway did not serve the database's protection, or restarted) is
+      ;; refilled once before the save is refused (removal-repair/take-key-refilled!)
+      (or (.poll keys) ((requiring-resolve 'triplex.gateway.removal-repair/take-key-refilled!) name)))
     [nil (issue! name id)]))
 
 (defn body-key-handle [wire]
@@ -160,7 +162,8 @@
                  (if encoded? (json/read-str value) value))
                (finally (Arrays/fill ^bytes clear (byte 0)))))
         (finally (Arrays/fill ^bytes key (byte 0)))))
-    (catch Exception _ (privacy/unavailable!))))
+    ;; [DX-ERA2 fifth pass] still 503 to the caller, now counted and logged (a missing key, a refused tag)
+    (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "decode" name e) (privacy/unavailable!))))
 
 (defn erase-keys! [name identities]
   ;; [DX-ERASE1] Why: revoke independent keys before submitting optional native cleanup.
@@ -185,19 +188,28 @@
     (let [root (Paths/get privacy/root (make-array String 0))]
       (when (privacy/exists? root)
         (with-open [scopes (Files/list root)]
+          ;; [DX-ERA2 seventh pass, X4] each database's head read inside its own try: one unreadable head is skipped
+          ;; and counted (`listing`), and the pass goes on for every other database
           (into [] (keep (fn [dir]
-                          (let [head (.resolve ^Path dir "head.json")]
-                            (when (privacy/exists? head)
-                              (let [name (get (json/read-str (Files/readString head)) "database")]
-                                (when (= head (privacy/path name "head.json")) name))))))
+                          (try
+                            (let [head (.resolve ^Path dir "head.json")]
+                              (when (privacy/exists? head)
+                                (let [name (get (json/read-str (Files/readString head)) "database")]
+                                  (when (= head (privacy/path name "head.json")) name))))
+                            (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "listing" nil e) nil))))
                 (.toArray scopes)))))))
 
 (defn- shred-published! []
   (let [cutoff (- (System/currentTimeMillis) grace-ms)]
     (doseq [name (authority-scopes)]
       (try
-        (let [cut (privacy/cut name nil)]
-          (when (:sealed cut)
+        ;; [DX-ERA2 fifth pass, B2] the published prefix, a pending removal allowed: one removal left pending must not
+        ;; hold back the keys of removals already published (and acknowledged)
+        ;; [DX-ERA2 seventh pass, X3] every database counts as sealed for deletion: the log's copy of `sealed` is
+        ;; derived and unchecked, so it never holds a key back (in an unsealed database a removal's identities have no
+        ;; key; deleting a key that does not exist is harmless)
+        (let [cut (privacy/cut name nil true)]
+          (when (some? cut)
             (let [from (long (get @shredded name 0))
                   due (->> (:commands cut) vals (sort-by #(get % "seq"))
                            (drop-while #(<= (get % "seq") from))
@@ -205,13 +217,20 @@
               (when (seq due)
                 (erase-keys! name (mapcat #(get % "identities") due))
                 (swap! shredded assoc name (get (last due) "seq"))))))
-        (catch Exception _ nil)))))
+        ;; [DX-ERA2 fifth pass] counted and logged, no longer dropped (B2 was hidden here)
+        ;; [DX-ERA2 sixth pass, F1 of the B2 review] then, for this pass only, the log read again without the cache
+        (catch Exception e ((requiring-resolve 'triplex.gateway.removal-repair/shred-after-failure!) name cutoff e))))))
 
 (defn- maintain-keys! []
   (shred-published!)
+  ;; [DX-ERA2 fifth pass] complete removals left pending too long (removal-commit/worker-complete-ms: on per account)
+  ;; [DX-ERA6 eighth pass, the owner's decision (ii)] once per pass, whatever turned it on (per account,
+  ;; TX2_REMOVAL_WORKER_COMPLETE_MS, or the database-wide switch and its default line); it returns at once when
+  ;; worker-complete-ms is unset. Until now two lines called it, twice per pass with both variables set.
+  ((requiring-resolve 'triplex.gateway.removal-commit/complete-stale!))
   (when sql/url
     (doseq [name (.keySet batches)]
-      (try (refill! name) (catch Exception _ nil)))))
+      (try (refill! name) (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "key-pool-refill" name e))))))
 
 ;; [DX-ERASE1] Why: the durable published prefix survives a restart and schedules key removal before any native indexing.
 ;; Rejected: making native cleanup the only caller that revokes a key.
@@ -220,7 +239,7 @@
     (doto (Thread. ^Runnable
             (fn []
               (loop []
-                (try (maintain-keys!) (catch Exception _ nil))
+                (try (maintain-keys!) (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "shred-worker" nil e)))
                 (let [continue? (try (Thread/sleep 500) true (catch InterruptedException _ false))]
                   (when continue? (recur)))))
             "triplex-envelope-shred")

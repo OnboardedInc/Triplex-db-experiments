@@ -164,9 +164,11 @@ const ascending = (xs: readonly string[]): boolean => xs.every((x, k) => k === 0
 function compileExtension(d: Record<string, unknown>): CompiledRelease["policies"] {
   const forms = d["forms"],
     policies = d["policies"];
-  if (!Array.isArray(forms) || !Array.isArray(policies) || forms.length < 1 || forms.length > 512)
+  // [DX-ACT6] Up to 8,192 forms and policies (was 512): subjects owing 1,000 forms, and definition sets near the 1.3 MiB
+  // request ceiling. Every release accepted before is accepted and evaluated the same.
+  if (!Array.isArray(forms) || !Array.isArray(policies) || forms.length < 1 || forms.length > 8192)
     throw new ReleaseError("release forms");
-  if (policies.length > 512) throw new ReleaseError("release policies");
+  if (policies.length > 8192) throw new ReleaseError("release policies");
   const byId = new Map<string, FormDoc>();
   for (const f of forms) {
     if (

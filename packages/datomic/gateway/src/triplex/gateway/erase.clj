@@ -54,7 +54,14 @@
   ;; [DX-ERASE2] Why: trusted staging uses the same serial cut check with its stopped-copy position.
   ;; Rejected: letting the public request claim an occupied scope has no plaintext history.
   ([name conn db input staged-position]
-  (let [attrs (get input "attributes") sealed? (true? (get input "sealed"))]
+  (let [attrs (get input "attributes") sealed? (true? (get input "sealed"))
+        ;; [DX-ERA6 eighth pass, the owner's decision (iii)] with protection-sealed-only, an unsealed declaration is
+        ;; refused outside tests unless the database already protects exactly these attributes unsealed (kept, warned)
+        warning (when @(requiring-resolve 'triplex.gateway.removal-commit/protection-sealed-only)
+                  ((requiring-resolve 'triplex.gateway.removal-commit/unsealed-declare!) name attrs sealed?))]
+    ;; [DX-ERA2 sixth pass, V1] a database guarded per account is declared through removal-commit/protect! (its policy
+    ;; is in the database); a gateway without the option must not write its log's policy
+    (when (contains? #{-1 -2} (scope/value db (scope/entity db) :triplex.scope/erasure-seq)) (privacy/unavailable!))
     (when-not (and (lean/enabled? db) (or (privacy/enabled? db) (= (or staged-position 0) (scope/head-position db (scope/entity db)))))
       (privacy/failure! 409 "ProtectedScopeNeedsMigration" "Declare protection before saving into the scope"))
     (privacy/register! name attrs sealed?
@@ -75,7 +82,8 @@
                   (privacy/failure! 409 "ProtectedScopeNeedsMigration" "Declare protection before saving into the scope")
                   (throw e))))))))
     (envelope/provision! name sealed?)
-    {:database name :attributes attrs :sealed sealed? :erasure {:seq (:seq (privacy/cut name (sync! conn)))}})))
+    (merge {:database name :attributes attrs :sealed sealed? :erasure {:seq (:seq (privacy/cut name (sync! conn)))}}
+           (when warning {:warning warning})))))
 
 (defn identity [row]
   (cond-> {"assertionId" (:id row) "entity" (:entity_id row) "attribute" (:attribute row)
@@ -106,7 +114,8 @@
       (when-not row (privacy/failure! 404 "UnknownAssertion" "No assertion matches this identity"))
       (when-not ((:attrs policy) (:attribute row))
         (privacy/failure! 400 "EraseNotProtected" "The assertion attribute is outside the protected policy"))
-      (when (and (:sealed policy) (nil? private-id)) (privacy/unavailable!))
+      ;; [DX-ERA2 sixth pass] a value of an attribute added to the policy later may be stored in clear
+      (when (and (:sealed policy) (nil? private-id)) (when-not (contains? (:added policy) (:attribute row)) (privacy/unavailable!)))
       [row])
     (let [attribute (get selector "attribute") owner (get selector "entityId")]
       (when (and attribute (not ((:attrs policy) attribute)))
@@ -114,7 +123,11 @@
       ;; [DX-ERASE1] Why: erase seeks the detached protected history for this owner.
       ;; Rejected: decoding the owner's ordinary rows and traversing their retired value history.
       (let [rows (if (:sealed policy)
-                   (map #(envelope/assertion-identity db (:e %)) (d/datoms db :avet :triplex.private/entity owner))
+                   ;; [DX-ERA2 sixth pass] and, guarded per account, the values of attributes added to the policy later
+                   ;; that are stored in clear (removal-commit/clear-rows): masked by identity like every removed value
+                   (concat (map #(envelope/assertion-identity db (:e %)) (d/datoms db :avet :triplex.private/entity owner))
+                           (when (seq (:added policy))
+                             ((requiring-resolve 'triplex.gateway.removal-commit/clear-rows) db owner policy attribute)))
                    (when-let [e (d/entid db [:triplex.entity/id owner])] (lean/history-entity db e)))]
         (filter #(and ((:attrs policy) (:attribute %)) (or (nil? attribute) (= attribute (:attribute %)))) rows)))))
 
@@ -164,7 +177,11 @@
 (defn apply-native! [conn current entry]
   (let [current (install-cut-guard! conn current)
         eid (d/entid current [:triplex.tx/operation-id (operation-id entry)])
-        raw (json/write-str entry)
+        ;; [DX-ERA2 fifth pass, Z1] the removal's record as published, when a restore's replay carries it (metadata
+        ;; :published): the replay lands at the next free position (its journal and transaction say so) but keeps the
+        ;; published record, so the data's records and the log stay one chain and the commit boundary sees the same
+        ;; removal. One arity, so a caller that wraps this function keeps working.
+        raw (get (meta entry) :published (json/write-str entry))
         position (get entry "position")
         tx (get entry "txId")
         stamp (double (get entry "erasedAt"))
@@ -183,8 +200,18 @@
                     {:db/id "privacy-journal" :triplex.entity/id tx :triplex.journal/position position
                      :triplex.entity/rev position :triplex.entity/row (journal-rows entry)}
                     {:db/id "privacy-claim" :triplex.claim/command-id (get entry "commandId") :triplex.claim/tx "datomic.tx"
-                     :triplex.claim/tx-id tx}
-                    [:db/cas head :triplex.scope/erasure-seq (dec (get entry "seq")) (get entry "seq")]]
+                     :triplex.claim/tx-id tx}]
+                    ;; [DX-ERA2] Guarded per account: the global removal sequence moves on its own attribute (the
+                    ;; database-wide one keeps the sentinel every write fences on), and each account that lost a value
+                    ;; takes this removal's sequence. Rejected: moving the database-wide sequence (it refuses every save).
+                    ((requiring-resolve 'triplex.gateway.removal-scope/per-account?) current)
+                    ;; [DX-ERA2 fifth pass] on the value this removal's view read (-1, or -2 with the commit boundary)
+                    (into (cons [:db/cas head :triplex.scope/erasure-seq (scope/value current head :triplex.scope/erasure-seq)
+                                 (scope/value current head :triplex.scope/erasure-seq)]
+                                (cons [:db/cas head :triplex.scope/removal-seq (dec (get entry "seq")) (get entry "seq")]
+                                      ((requiring-resolve 'triplex.gateway.removal-scope/entry-ops) entry))))
+                    (not ((requiring-resolve 'triplex.gateway.removal-scope/per-account?) current))
+                    (conj [:db/cas head :triplex.scope/erasure-seq (dec (get entry "seq")) (get entry "seq")])
                     (not (scope/head-v2? current head))
                     (conj [:db/cas head :triplex.scope/position (dec position) position]))
               report (deref (d/transact conn ops) 5000 ::timeout)]
@@ -199,28 +226,47 @@
     {:seq (get entry "seq") :erasedAt (get entry "erasedAt") :txId (get entry "txId")
      :t (str (d/tx->t native)) :position (get entry "position") :identities (mapv #(dissoc % "keyHandle") (get entry "identities"))}))
 
+;; [DX-ERA2 seventh pass, identities] the per-account helpers this file used (selector-buckets, the account locks, the
+;; tries line, request-cut, per-account!) live in removal_scope.clj, which loads after every installed function's code
+;; is read; this file calls them through requiring-resolve and keeps the base's generated names.
 (defn erase! [name conn input]
+  ;; Nested if, not `and`: `and` generates a name, which would renumber the installed functions loaded after this file.
+  (if ((requiring-resolve 'triplex.gateway.removal-scope/per-account?) (d/db conn))
+    ((requiring-resolve 'triplex.gateway.removal-commit/erase!) name conn input)
   (let [selectors (selectors! input)
-        command (get input "commandId")]
-    (when-not (privacy/cut name (d/db conn) true)
+        started (System/nanoTime)
+        command (get input "commandId")
+        db (d/db conn)
+        ;; [DX-ERA2] Per account, a removal also holds the locks of the accounts it can touch, which is what a derived
+        ;; write naming those accounts holds instead of the database's lock.
+        buckets (when ((requiring-resolve 'triplex.gateway.removal-scope/per-account?) db) ((requiring-resolve 'triplex.gateway.removal-scope/selector-buckets) db selectors))]
+    (when-not (privacy/cut name db true)
       (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
     (privacy/guard name
-      (fn []
+      ((requiring-resolve 'triplex.gateway.removal-scope/bucket-guarded) name buckets (fn []
         (let [db (sync! conn)
               current (privacy/cut name db true)]
           (when-not current (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
+          ;; [DX-ERA3 F3] A database guarded per account that this gateway cannot treat as such (it runs without the
+          ;; option): refuse before anything is written, so no intent is left for the fleet to trip over.
+          (when (contains? #{-1 -2} (scope/value db (scope/entity db) :triplex.scope/erasure-seq)) (privacy/unavailable!))
           (privacy/clear-completed! name current)
           (if-let [before (get-in current [:commands command])]
             (do (when-not (= selectors (get before "selectors"))
                   (privacy/failure! 409 "EraseCommandConflict" "The command already used different selectors"))
+                ;; [DX-ERA6 eighth pass, R5] resolved at call time (this namespace loads before the stored functions)
+                ((requiring-resolve 'triplex.gateway.removal-ack/acknowledged!) name before)
                 (response db before))
             (let [pending (privacy/pending name)
                   _ (when (and pending (not= [command selectors] (mapv #(get pending %) ["commandId" "selectors"])))
                       (privacy/unavailable!))
                   _ (when (and (not pending) (d/entid db [:triplex.claim/command-id command]))
                       (privacy/failure! 409 "EraseCommandConflict" "The command identity is already claimed"))]
-              (loop [view db prepared pending]
+              (loop [view db prepared pending tries 1]
                 (let [entry (or prepared (make-entry name view current command selectors))
+                      ;; [DX-ERA2] The selection cannot reach an account whose lock this removal does not hold.
+                      _ (when buckets (when-not (every? buckets ((requiring-resolve 'triplex.gateway.removal-scope/entry-buckets) entry))
+                                        (privacy/unavailable!)))
                       _ (when-not prepared (privacy/prepare! name entry))
                       moved (try (apply-native! conn view entry) false
                                   (catch Exception error
@@ -230,17 +276,21 @@
                   (if moved
                     (let [next (sync! conn)
                           committed (d/entid next [:triplex.tx/operation-id (operation-id entry)])]
-                      (recur next (when committed entry)))
+                      (recur next (when committed entry) (inc tries)))
                     (do (privacy/publish! name current entry)
-                        (response (d/db conn) entry))))))))))))
+                        ((requiring-resolve 'triplex.gateway.removal-scope/log-tries!) entry tries buckets started)
+                        ((requiring-resolve 'triplex.gateway.removal-ack/acknowledged!) name entry)
+                        (response (d/db conn) entry))))))))))))))
 
 (defn replay-after-restore! [name conn]
   ;; [DX-ERASE1] Why: data rollback must replay the external prefix before any route becomes eligible.
   ;; Rejected: restoring the old authority alongside the old data (it would make the removed bytes available again).
   (privacy/guard name
     (fn []
+      ;; [DX-ERA2 sixth pass, F4 of the B2 review] a removal left pending does not stop the replay of the published log
+      ;; (its intent is not a published removal); it is completed afterwards by its resend or the gateway
       (let [db (sync! conn)
-            state (privacy/cut name db)
+            state (privacy/cut name db true)
             entries (sort-by #(get % "seq") (vals (:commands state)))]
         (when-not state (privacy/unavailable!))
         (doseq [entry entries]
@@ -248,9 +298,16 @@
                 eid (d/entid data [:triplex.tx/operation-id (operation-id entry)])]
             (if eid
               (let [native (json/read-str (scope/value data eid :triplex.tx/erasure-record))]
-                (when-not (and (= (dissoc entry "position") (dissoc native "position"))
-                               (= (get native "position") (scope/value data eid :triplex.tx/position)))
-                  (privacy/unavailable!)))
-              (apply-native! conn data (assoc entry "position" (inc (scope/head-position data (scope/entity data))))))))
+                ;; [DX-ERA2 fifth pass, Z1] the published record itself (a replay by this build), or one an earlier
+                ;; build replayed with its new position written into the record
+                (if (= entry native) nil
+                  (when-not (and (= (dissoc entry "position") (dissoc native "position"))
+                                 (= (get native "position") (scope/value data eid :triplex.tx/position)))
+                    (privacy/unavailable!))))
+              (apply-native! conn data (with-meta (assoc entry "position" (inc (scope/head-position data (scope/entity data))))
+                                         {:published (json/write-str entry)})))))
+        ;; [DX-ERA3] A restored copy guarded per account: counters, declaration and held accounts from the log.
+        (when ((requiring-resolve 'triplex.gateway.removal-scope/per-account?) (sync! conn))
+          ((requiring-resolve 'triplex.gateway.removal-commit/rebuild!) conn (sync! conn) state))
         (privacy/verify-data! state (sync! conn))
         {:database name :erasure {:seq (:seq state)}}))))

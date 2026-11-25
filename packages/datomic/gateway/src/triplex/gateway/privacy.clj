@@ -12,6 +12,12 @@
 (def ^:dynamic *database* nil)
 (def ^:dynamic *data* nil)
 (def ^:dynamic *unseal* nil)
+;; [DX-RPT1] Why: a reporting copy must never receive a protected value, sealed, unsealed or removed, so that no
+;; removal can leave one in its tables, write-ahead log or backups. A request that sends "omitProtected": true gets
+;; every protected row with its value columns empty and type "protected", and every change record of a protected
+;; attribute with the value {"type":"protected"}. Rejected: filtering in the copy (the value would already have left the
+;; gateway); a gateway-wide switch (every other reader must keep byte-identical answers).
+(def ^:dynamic *omit-protected* false)
 (def cache (atom {}))
 (def local-guards (atom {}))
 (def zeros (apply str (repeat 64 "0")))
@@ -55,6 +61,11 @@
   ;; Rejected: an in-memory mutex alone (an independent gateway would not join it).
   (let [m (get (swap! local-guards #(if (contains? % name) % (assoc % name (Object.)))) name)
         p (path name "writer.lock")]
+    ;; [DX-ERA2] An account's lock (name#removal/<account>) has no directory until its first use; a no-op otherwise.
+    ;; [DX-ERA2 seventh pass, identities] removal-scope is resolved when called, never required by this file: it loads
+    ;; after every installed function's code is read, so this file's generated names stay the base's
+    (when @(requiring-resolve 'triplex.gateway.removal-scope/enabled)
+      (Files/createDirectories (.getParent p) (make-array java.nio.file.attribute.FileAttribute 0)))
     (let [started (when trace/*request* (trace/clock))]
       (locking m
         (with-open [c (FileChannel/open p (into-array StandardOpenOption [StandardOpenOption/CREATE StandardOpenOption/WRITE]))
@@ -67,7 +78,9 @@
 
 (defn record-text [name record]
   (if sql/url (sql/read-record name record)
-    (let [p (path name record)] (when (exists? p) (Files/readString p)))))
+    ;; [DX-ERA2 fifth pass] read once: a record can be deleted between the check and the read (a removal's publication
+    ;; deletes its intent), so a missing file at the read is absence, never an error (a 400 to another account's request)
+    (let [p (path name record)] (when (exists? p) (try (Files/readString p) (catch java.nio.file.NoSuchFileException _ nil))))))
 
 (defn- save-record! [name record wire]
   (if sql/url (sql/put! name record wire) (replace! (path name record) wire)))
@@ -121,20 +134,44 @@
                                 before (get entry "identities"))))
       ;; [DX-IMP2] An entry may also name the families a removal asked for before any row existed (import bound on).
       (update :families into (concat (map (juxt #(get % "entity") #(get % "attribute")) (get entry "identities"))
-                                     (get entry "families")))))
+                                     (get entry "families")))
+      ;; [DX-ERA2] Each account's removal sequence, derived from the one ordered log (only with the option on).
+      ((requiring-resolve 'triplex.gateway.removal-scope/add-entry-on) entry)))
 
+;; [DX-API1, in DX-INT5's late form] Filled by removal_drops.clj (loaded after commit.clj): called as
+;; (drop-hook name db nil nil) at every cut, and (drop-hook name db base next) when a newer frontier is accepted, so that
+;; parsed entities named by new removals are dropped from the entity cache. Here, before commit.clj, it is only a var and
+;; two calls: API1's inline code moved every stored function's identity with every option off (READINESS.md, step 0).
+(def drop-hook nil)
 (defn cut
   ([name db] (cut name db false))
   ([name db allow-pending?]
    (try
-     (let [frontier (when sql/url (sql/read-frontier name))
+     (when drop-hook (drop-hook name db nil nil))
+     ;; [DX-ERA2 seventh pass, E4 of DX-ERA4] the head this gateway verified is read BEFORE the log: read after it, a
+     ;; head another request verified meanwhile (a removal published between the two reads) looked like a log behind
+     ;; this gateway's, and refused a request of any account (503) that no removal touched
+     (let [seen (get @cache name)
+           frontier (when sql/url (sql/read-frontier name))
            pending (if sql/url (get frontier "pending.json")
                      (when (and root (exists? (path name "pending.json"))) true))
            wire (if sql/url (get frontier "head.json")
-                  (when root (record-text name "head.json")))]
+                  (when root (record-text name "head.json")))
+           ;; [DX-ERA2] The prepared removal's sequence, so a request guarded per account can tell a native commit of
+           ;; that removal (not yet published) from a native database the log does not describe.
+           ;; [DX-ERA3 F1b] and the prepared removal itself (its accounts), so a ticketed write can wait for it.
+           ;; [DX-ERA2 fifth pass] the intent read once; gone since the check (its publication finished) is no intent
+           ;; nested `when`, not `and` (an `and` adds generated names; see the note in `guard`)
+           pending-entry (when @(requiring-resolve 'triplex.gateway.removal-scope/enabled)
+                           (when allow-pending?
+                             (when pending
+                               (let [text (if (string? pending) pending (record-text name "pending.json"))]
+                                 (when text (json/read-str text))))))
+           pending-seq (get pending-entry "seq")]
+       (let [result
        (when (or wire (enabled? db))
          (when (or (nil? wire) (and (not allow-pending?) pending)) (unavailable!))
-         (let [prior (get @cache name)]
+         (let [prior seen]
          (if (= wire (:wire prior))
            prior
            (let [h (json/read-str wire)
@@ -159,10 +196,13 @@
                               (= (:attrs next) (set attrs)) (= (:sealed next) sealed?))
                  (unavailable!))
                (let [new (assoc next :wire wire)]
+                 (when drop-hook (drop-hook name db base next))
                  (swap! cache update name #(if (and % (> (:seq %) n)) % new))
-                 new)))))))
+                 new))))))]
+         (if (if result (integer? pending-seq) false) (assoc result :pending-seq pending-seq :pending pending-entry) result)))
      (catch clojure.lang.ExceptionInfo e (throw e))
-     (catch Exception _ (unavailable!)))))
+     ;; [DX-ERA2 fifth pass] still 503, now counted and logged (an unreadable record, a storage error)
+     (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "cut" name e) (unavailable!)))))
 
 (defn pending [name]
   (some-> (record-text name "pending.json") json/read-str))
@@ -181,6 +221,9 @@
     (if sql/url
       (sql/publish! name record payload (:wire current) head)
       (do
+        ;; [DX-ERA2 sixth pass, F3 of the B2 review] the head on disk must still be the one this publication read (the
+        ;; PostgreSQL branch compares in its statement): a writer whose lock did not hold cannot move it back
+        (when-not (= (:wire current) (record-text name "head.json")) (unavailable!))
         (when-not previous (save-record! name record payload))
         (save-record! name "head.json" head)
         (remove-record! name "pending.json")))))
@@ -198,10 +241,15 @@
               :created_by :entity_type :schema_version :tx_id])
 (def payload-cols [:value_string :value_number :value_boolean :value_datetime :value_json])
 
+;; [DX-RPT1, moved by DX-INT5] The omitting function lives in omit_protected.clj, which main.clj loads last and which
+;; fills this hook: a function defined here compiles before commit.clj and moved the stored functions' identities.
+(def omit-hook nil)
+
 (defn masked [row]
   (if-not *cut* row
     (let [sealed? (:sealed *cut*) attrs (:attrs *cut*)]
       (cond
+        *omit-protected* (omit-hook row attrs)
         (= ":_tx/change" (:attribute row))
         (let [change (json/read-str (:value_json row)) id (get change "tripleId")
               attr (get change "attribute") marker (get-in *cut* [:erased id])
@@ -244,7 +292,8 @@
   (zipmap columns (json/read-str (subs text (packed-tail text)))))
 
 (defn text [^String bytes]
-  (if (and *cut* (or (:sealed *cut*) (seq (:erased *cut*))))
+  ;; [DX-INT5] `if` inside the first clause keeps this `or` at two clauses (one more moved the stored identities).
+  (if (and *cut* (or (if *omit-protected* true (:sealed *cut*)) (seq (:erased *cut*))))
     (let [end (packed-tail bytes)
           values (json/read-str (subs bytes end))
           row (zipmap columns values)
@@ -256,7 +305,8 @@
 (defn validate-write! [state input rows]
   (when state
     (when (and (contains? input "erasureSeq") (not (contains? input "erasureSourceDatabase")))
-      (ensure-seq! state (get input "erasureSeq")))
+      ;; [DX-ERA2] a derived write's ticket; per account, against the accounts it names (removal-scope/ensure-ticket!)
+      ((requiring-resolve 'triplex.gateway.removal-scope/ensure-ticket!) state input))
     (let [new-ids (set (get input "newIds"))
           importing (or (true? (get input "erasureReplay"))
                         (some #(and (= ":_tx/actor" (:attribute %)) (= "bulk-import" (:value_string %))) rows))]
@@ -276,5 +326,8 @@
           (failure! 409 "ErasureReplayDeclined" "A removed field cannot be created across its removal"))))))
 
 (defn verify-data! [state db]
-  (when (and state (not= (:seq state) (scope/value db (scope/entity db) :triplex.scope/erasure-seq)))
-    (unavailable!)))
+  (if ((requiring-resolve 'triplex.gateway.removal-scope/per-account?) db)
+    ;; [DX-ERA2] Guarded per account: the native removal sequence (the database-wide one holds the sentinel).
+    ((requiring-resolve 'triplex.gateway.removal-scope/verify-data!) state db)
+    (when (and state (not= (:seq state) (scope/value db (scope/entity db) :triplex.scope/erasure-seq)))
+      (unavailable!))))

@@ -6,17 +6,37 @@ const sequence = new AsyncLocalStorage<{
   readonly sequence: number;
   readonly replay: boolean;
   readonly sourceDatabase?: string;
+  readonly accounts?: readonly string[];
 }>();
 
+// [DX-ERA2] Why: a derived write may name the accounts its protected inputs were read from; a database guarded per
+// account then refuses it only for a removal in one of those accounts. Without `accounts` the ticket and its wire
+// bytes are exactly as before (the database-wide check). Rejected: inferring the source accounts from the written
+// entities (settlement documents live outside the account's prefix).
 export function withDatomicErasureSequence<A>(
   seq: number,
   work: () => A,
   replay = false,
   sourceDatabase?: string,
+  accounts?: readonly string[],
 ): A {
   if (!Number.isSafeInteger(seq) || seq < 0) throw new TypeError("Invalid erasure sequence");
+  if (
+    accounts !== undefined &&
+    (!Array.isArray(accounts) ||
+      accounts.length < 1 ||
+      accounts.length > 64 ||
+      !accounts.every((a) => typeof a === "string" && /^[^/\s]{1,128}$/.test(a)) ||
+      new Set(accounts).size !== accounts.length)
+  )
+    throw new TypeError("Invalid erasure ticket accounts");
   return sequence.run(
-    { sequence: seq, replay, ...(sourceDatabase === undefined ? {} : { sourceDatabase }) },
+    {
+      sequence: seq,
+      replay,
+      ...(sourceDatabase === undefined ? {} : { sourceDatabase }),
+      ...(accounts === undefined ? {} : { accounts: [...accounts] }),
+    },
     work,
   );
 }

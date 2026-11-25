@@ -5,11 +5,13 @@
             [triplex.gateway.subject-save :as subject] [clojure.data.json :as json]
             [triplex.gateway.owner-layout :as owner-layout] [triplex.gateway.owner-root :as owner-root]
             [triplex.gateway.pinned :as pinned] [triplex.gateway.general-prefetch :as general-prefetch]
-            [triplex.gateway.subject-hints :as subject-hints]
+            [triplex.gateway.subject-hints :as subject-hints] [triplex.gateway.cross-index :as cross]
             ;; [DX-S3] Last, so that it loads after every namespace whose stored code it must not move.
             [triplex.gateway.subject-owners :as owners]
             ;; [DX-S4] After subject-owners, for the same reason.
-            [triplex.gateway.subject-create :as create])
+            [triplex.gateway.subject-create :as create]
+            ;; [DX-ERA2 seventh pass, identities; DX-ERA6] after every installed function's code, the save line's too
+            [triplex.gateway.removal-scope :as removal-scope])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -202,25 +204,6 @@
         (reset! removal-index-cache [[(:seq state) (:seal state) (count (:commands state))] idx])
         idx))))
 
-(defn- frame-check!
-  "[DX-S6b] S5 R2-2 and R3-3, R3-6. A save that writes a protected value of an (entity, attribute) family a removal
-  named after the save was framed (frame-of: a removal at a later position than its earliest stated position, or with a
-  later sequence than the `removalSeen` it read) is refused ErasureReplayDeclined; so is one that states no frame at
-  all, against any removal of the family. Every writer, the replan retry, a new or an existing entity. The removal's
-  position is the one its published record states, whichever rule assigned it (its entry's position today, its
-  Datomic commit under DX-ERA2's option); a removal not yet published refuses every write it can reach (503).
-  The SDK states a frame on every attempt (an optimistic attempt: the newest position the client had seen), so a value
-  saved after a removal the client had seen is never declined for having no source (R3-6, bounded)."
-  [state input rows new-ids]
-  (when (and state (seq (:commands state)))
-    (let [{:keys [position seen stated]} (frame-of input)
-          idx (removal-index state)]
-      (doseq [r rows :when (new-ids (:id r)) :when ((:attrs state) (:attribute r))]
-        (when-let [[p q] (idx [(:entity_id r) (:attribute r)])]
-          (when (or (not stated) (and position (> p position)) (and seen (> q seen)))
-            (throw (ex-info "A save framed before a removal of a value it writes is declined"
-                            {:status 409 :code "ErasureReplayDeclined" :framed stated}))))))))
-
 (defn- framed-input
   "The request as the creation rule (subject_create.clj removed-creation?, read through privacy validate-write!) is to
   judge it: its source is its earliest stated frame (none when it states none)."
@@ -235,35 +218,6 @@
     :db/unique :db.unique/identity}
    {:db/ident :triplex.removal/declined-by :db/valueType :db.type/string :db/cardinality :db.cardinality/one}])
 
-(defn- declined-keys
-  "The stored forms of a save's command IDs (scoped under the setting when it names its account)."
-  [db input]
-  (let [form (requiring-resolve 'triplex.gateway.account-claims/stored-command)]
-    (vec (distinct (for [c (keep #(get % "commandId") (get input "claims")) :when (string? c)]
-                     (form db (get input "account") c))))))
-
-(defn- declined-check!
-  "A save under a command a removal declined is declined again, whatever frame it states: a new command is a new save."
-  [db input]
-  (when (d/entid db :triplex.removal/declined-command)
-    (when-let [by (some (fn [c] (when-let [e (d/entid db [:triplex.removal/declined-command c])]
-                                  (:v (first (d/datoms db :eavt e :triplex.removal/declined-by)))))
-                        (declined-keys db input))]
-      (throw (ex-info (str "This save's command was declined across a removal (" by "); a new command is a new save")
-                      {:status 409 :code "ErasureReplayDeclined" :write-policy true})))))
-
-(defn- record-declined!
-  "After a decline of a save that stated its frame: its commands are recorded, each once. A save that states no frame is
-  declined again on every resend that still states none, so nothing is recorded for it."
-  [conn input]
-  (when (:stated (frame-of input))
-    (let [db (d/db conn)
-          fresh (remove #(and (d/entid db :triplex.removal/declined-command) (d/entid db [:triplex.removal/declined-command %]))
-                        (declined-keys db input))]
-      (when (seq fresh)
-        (when-not (d/entid db :triplex.removal/declined-command) @(d/transact conn declined-schema))
-        @(d/transact conn (vec (for [c fresh] {:triplex.removal/declined-command c :triplex.removal/declined-by "a removal after the save's frame"})))))))
-
 (defn tx-data
   ([db input] (tx-data db input (:e (first (d/datoms db :aevt :triplex.scope/key)))))
   ([db input scope]
@@ -271,7 +225,6 @@
          input (ordered-row-texts (expand-fresh input lean))
          new-ids (set (get input "newIds")) rows (timed-input-rows input lean new-ids)
          _ (trace/span "privacy/validate-rows" "gateway" (privacy/validate-write! privacy/*cut* (framed-input input) rows))
-         _ (frame-check! privacy/*cut* input rows new-ids)
          protected (trace/span "privacy/prepare-envelopes" "gateway"
                      (envelope/protect privacy/*database* privacy/*cut* input rows))
          input (:input protected) rows (:rows protected)
@@ -308,7 +261,16 @@
                ;; [DX-ERASE1] Why: a late native write is fenced even if its peer request timed out.
                ;; Rejected: releasing the gateway lock and trusting the delayed transactor outcome.
                (when-let [seq (:seq privacy/*cut*)]
-                 [[:db/cas scope :triplex.scope/erasure-seq seq seq]])
+                 (if (:per-account privacy/*cut*)
+                   ;; [DX-ERA2] Guarded per account: the installed writers' fence on its fixed value, and the removal
+                   ;; sequences of the accounts this write touches (and those its ticket names).
+                   ;; [DX-ERA3 F1] and, for a ticket naming no account, the global declared removal sequence.
+                   ;; [DX-ERA2 fifth pass] on the value read at the request's position (-1, or -2 with the commit boundary)
+                   (into [[:db/cas scope :triplex.scope/erasure-seq (get privacy/*cut* :erasure-sentinel removal-scope/sentinel)
+                           (get privacy/*cut* :erasure-sentinel removal-scope/sentinel)]
+                          (removal-scope/fence-op privacy/*cut* rows (removal-scope/ticket-accounts input))]
+                         ((requiring-resolve 'triplex.gateway.removal-commit/ticket-intent-ops) scope input db))
+                   [[:db/cas scope :triplex.scope/erasure-seq seq seq]]))
                ;; [DX-B4-T1] Why: one physical commit can contain several logical journals.
                ;; Rejected: using only tx/id (drops nested transacts at interior cursors).
                (mapcat (fn [[entity rs]]
@@ -400,6 +362,15 @@
                (map (fn [claim] {:db/id (str "c:" (get claim "commandId"))
                                 :triplex.claim/command-id (get claim "commandId") :triplex.claim/tx "datomic.tx"
                                 :triplex.claim/tx-id (get claim "txId")}) claims))))
+         ;; [DX-XQ4] Why: index entries ride in the same prepared transaction as the rows they key, behind the fence.
+         ;; Rejected: changing the stored commit functions, or computing entries on the transactor.
+         index (when (and cross/enabled lean) (cross/declaration db))
+         ops (if index (into ops (cross/tx-ops db index (or (:attrs privacy/*cut*) #{}) fresh old (get input ::index-lenient))) ops)
+         release (when index (cross/release-ops db index fresh input))
+         ops (if release
+               (into (mapv #(if (and (vector? %) (= :db/cas (first %)) (= :triplex.ix/seq (nth % 2 nil))) (:fence release) %) ops)
+                     (:ops release))
+               ops)
          journals (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))
          [claim] claims
          command (get claim "commandId")
@@ -617,9 +588,11 @@
           (or (owner-layout/prepare db data input expected)
               (subject/plan db data input expected)))))))
 (defn- frontier-moved?
-  "[DX-S6] After a refusal, whether the scope's removal sequence moved past the frontier this request was checked at."
+  "[DX-S6] After a refusal, whether the scope's removal sequence moved past the frontier this request was checked at.
+  [DX-ERA6] Database-wide only: a database guarded per account holds the sentinel in that sequence (its removals move
+  their own sequences, and its writes are fenced per account), so the comparison does not apply there."
   [conn]
-  (when privacy/*cut*
+  (when (and privacy/*cut* (not (:per-account privacy/*cut*)))
     (let [db (deref (d/sync conn) 1000 nil)]
       (when db (not= (:seq privacy/*cut*) (value db (scope/entity db) :triplex.scope/erasure-seq))))))
 (defn- removal-race-declined?
@@ -629,7 +602,10 @@
   ErasureReplayDeclined, never a replayable conflict. Holds for a removal taking effect at its entry's position (today)
   and at its Datomic commit (DX-ERA2's option): both are positions the source is compared with."
   [name conn input]
-  (when privacy/*cut*
+  ;; [DX-ERA6] database-wide only, as frontier-moved?: guarded per account the database-wide sequence holds the
+  ;; sentinel, and reading the cut without the pending allowance there turned a refused save into 503 while a removal
+  ;; was pending; the merged replay rule (removal-commit/after-refusal) judges the race on those databases
+  (when (and privacy/*cut* (not (:per-account privacy/*cut*)))
     (when-let [db (deref (d/sync conn) 1000 nil)]
       (when (not= (:seq privacy/*cut*) (value db (scope/entity db) :triplex.scope/erasure-seq))
         (when-let [state (privacy/cut name db)]
@@ -646,8 +622,12 @@
                         (when-let [at (removed-at state [(:entity_id r) (:attribute r)])]
                           (or (not (integer? source)) (< source at)))))
                     (timed-input-rows prepared lean new-ids)))))))))
-(defn- commit-inner! [name conn db input]
+(defn commit! [name conn db input]
   (when trace/tx-jfr-enabled (trace/attribute! :databaseHash (schema/sha256 name)))
+  ;; [DX-XQ4] Why: the covering owner head moves rows onto version entities the index does not follow.
+  (when (and cross/enabled owner-layout/enabled (cross/declaration-eid db))
+    (throw (ex-info "The cross-subject index does not support the covering owner head (TX2_SUBJECT_OWNER_HEAD)"
+                    {:status 409 :code "OwnerLayoutUnsupported"})))
   (when (and (not owner-layout/enabled) (owner-root/installed? db))
     (throw (ex-info "This database stores covering owner roots; start the writer with TX2_SUBJECT_OWNER_HEAD=1"
                     {:status 409 :code "OwnerLayoutRequired"})))
@@ -663,9 +643,21 @@
   (let [submitted (volatile! false)]
   (try
     (let [parsed (System/nanoTime)
+          ;; [DX-XQ4] With the index option on, the declaration fence exists before the first declaration.
+          db (if cross/enabled (cross/ensure-installed! conn db) db)
           load-timing (when commit/load-profile (volatile! 0))
-          data (try (binding [*load-timing* load-timing] (trace/span "commit.prepare-and-validate" "gateway" (tx-data db input (scope/entity db))))
-                    (catch Exception e (reject-ordered! conn input e)))
+          ;; [DX-XQ4] Why: an index retraction needs the retired fact's stored text; a peer that does not hold it yet
+          ;; catches up once (d/sync) and prepares again. Rejected: trusting the client's copy of the retired row.
+          [db data] (try (binding [*load-timing* load-timing]
+                           (trace/span "commit.prepare-and-validate" "gateway"
+                             (try [db (tx-data db input (scope/entity db))]
+                                  (catch Exception e
+                                    (if-not (cross/peer-behind? e) (throw e)
+                                      (let [synced (deref (d/sync conn) 2000 ::timeout)]
+                                        (when (= ::timeout synced) (throw e))
+                                        ;; After the catch-up a fact still absent never existed: the commit refuses it.
+                                        [synced (tx-data synced (assoc input ::index-lenient true) (scope/entity synced))]))))))
+                         (catch Exception e (reject-ordered! conn input e)))
           validated (when (= "1" (System/getenv "TX2_SUBJECT_RETIREMENT_TRACE")) (System/nanoTime))
           frame-size (group/frame-measurement (second (first data)) input)
           _ (try (group/bound-frame! frame-size) (catch Exception e (reject-ordered! conn input e)))
@@ -682,6 +674,8 @@
           _ (when policy/import-whole?
               (try ((requiring-resolve 'triplex.gateway.import-bound/bound!) (second (first data)) input)
                    (catch Exception e (reject-ordered! conn input e))))
+          ;; [DX-XQ4] With the index on, a bulk frame's index entries count beside its rows (review D3).
+          _ (when cross/enabled (try (cross/bound-frame! (second (first data)) input policy/bulk-rows) (catch Exception e (reject-ordered! conn input e))))
           ;; [DX-S6] TX2_READ_SET_BOUND=1: every class's read set is capped (no repeats, at most 4,096 names).
           _ (when (= "1" (System/getenv "TX2_READ_SET_BOUND"))
               (try ((requiring-resolve 'triplex.gateway.import-bound/read-set!) (second (first data)) input)
@@ -692,7 +686,9 @@
                                   (or (not (:sealed privacy/*cut*)) (envelope/shared?))
                                   (not (or policy/priority? policy/field-only? policy/budget-us replay-capture/enabled)))
                          (trace/span "subject.prepare" "gateway"
-                           (subject-prepare conn db data input (when privacy/*cut* (:seq privacy/*cut*)))))
+                           (subject-prepare conn db data input (removal-scope/fence-seq privacy/*cut*))))
+          ;; [DX-ERA6] The three planners fence on the value fence-seq gives (the request's sequence, or the per-account
+          ;; sentinel), so a database guarded per account fences them as it fences the one-owner writer.
           ;; [DX-S3] Why: a save of two to four owners that the one-owner writer declined may take the several-owners
           ;; function (TX2_SUBJECT_SEVERAL_OWNERS=1); a save it refuses keeps the general writer and its typed reason.
           ;; Rejected: trying it before the one-owner plan (every one-owner save keeps today's path byte for byte).
@@ -700,7 +696,7 @@
                              (or (not (:sealed privacy/*cut*)) (envelope/shared?))
                              (not (or policy/priority? policy/field-only? policy/budget-us replay-capture/enabled)))
                     (trace/span "owners.prepare" "gateway"
-                      (owners/plan db data input (when privacy/*cut* (:seq privacy/*cut*)))))
+                      (owners/plan db data input (removal-scope/fence-seq privacy/*cut*))))
           ;; [DX-S4] Why: a save that creates an owner or writes a reference, which the writers above declined or did not
           ;; plan, may take the creation function (TX2_SUBJECT_CREATE=1); its typed reason replaces theirs when it is asked.
           ;; Rejected: asking it before them (every save they take keeps today's path byte for byte).
@@ -708,7 +704,7 @@
                               (or (not (:sealed privacy/*cut*)) (envelope/shared?))
                               (not (or policy/priority? policy/field-only? policy/budget-us replay-capture/enabled)))
                      (trace/span "create.prepare" "gateway"
-                       (create/plan db data input (when privacy/*cut* (:seq privacy/*cut*)))))
+                       (create/plan db data input (removal-scope/fence-seq privacy/*cut*))))
           ;; A reason is reported only for a save no per-subject function took.
           declined (or (:declined creation) (when-not creation (:declined several)))
           subject-plan (or subject-plan (when-not (:declined several) several) (when-not (:declined creation) creation))
@@ -786,13 +782,13 @@
       (let [text (str e)]
         ;; [DX-THIN1] Why: preserve explicitly typed policy errors and the established transaction rejection for malformed row ordering.
         ;; Rejected: treating every codec InvalidValue as a policy error before checking the transaction result.
-        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasedAssertionIdentity" "ProtectedTypeUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
+        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasureFrontierUnavailable" "ErasedAssertionIdentity" "ProtectedTypeUnsupported" "EnvelopeKeyPoolEmpty" "ReleaseWritesDeclaredAttribute" "OwnerLayoutUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         ;; [DX-S6] After submit, unrecognised means unknown: 503 OutcomeUnknown, and the caller looks the operation up.
         (when @submitted
           (when-not ((requiring-resolve 'triplex.gateway.outcome/decided?) e)
             (throw ((requiring-resolve 'triplex.gateway.outcome/unknown) e))))
-        (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
-                       {:status (if (re-find #"TRIPLEX_ACCOUNT_IDS_ON|TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_ERASURE_FRONTIER|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
+        ;; [DX-N1, N3] the reply's message is the gateway's own (reply/commit-message), never Datomic's or a driver's text
+        (throw (let [data {:status (if (re-find #"TRIPLEX_ACCOUNT_IDS_ON|TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_ERASURE_FRONTIER|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
                         ;; [DX-S6] F3: a save racing a removal on request (or a protection declaration) gets one code
                         ;; on every writer: CasConflict (the contract's "changed after the source"; the SDK re-reads and
@@ -813,16 +809,8 @@
                                     (re-find #"TRIPLEX_CONFLICT|TRIPLEX_ACCOUNT_IDS_ON|cas-failed|triplex.tx/position" text) "CasConflict"
                                     (re-find #"triplex.claim/command-id" text) "CommandConflict"
                                     (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
-                                    (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e)))))))
-(defn commit!
-  "[DX-S6b] A save: refused at once under a command a removal declined (S5 R3-3); its commands recorded when it is
-  declined across a removal."
-  [name conn db input]
-  (declined-check! db input)
-  (try (commit-inner! name conn db input)
-       (catch clojure.lang.ExceptionInfo e
-         (when (= "ErasureReplayDeclined" (:code (ex-data e))) (record-declined! conn input))
-         (throw e))))
+                                    (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")}]
+                 (ex-info ((requiring-resolve 'triplex.gateway.reply/commit-message) e data) data e))))))))
 (defn operation [db id]
   (if-let [{:keys [position t clock]} (group/receipt db id)]
     ;; [DX-S6] An operation ID stored without a position is a fence: the original save can never commit.
@@ -1010,6 +998,8 @@
             _ (assert-subject-route! db basis (if (= route "live") :f/live :f/subject))
             _ (when (and (= route "live") history) (unavailable! "Position-retired route cannot enumerate history"))
             _ (trace/read-span "read.confirm-position" "peer-call" (await-position db (get basis "recordedPosition") (get input "basisWaitMs") (fn [_] db)))]
+        ;; [DX-RPT1] "omitProtected": true reads protected rows without their values (privacy/*omit-protected*).
+        (binding [privacy/*omit-protected* (true? (get input "omitProtected"))]
         (admission/execute-for input admission/reads (fn []
         (let [paged (fn [rows] (if page (history-page rows page) {:rows rows}))
               {rows :rows more :next} (paged
@@ -1031,7 +1021,8 @@
                               (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source") :basis basis
                  :subjectAttribute (str (if (= route "live") :f/live :f/subject))
                  :rows (mapv #(wire-row (privacy/masked (mask-retirement % basis))) rows)}
-          page (assoc :historyNext more)))))))))
+          page (assoc :historyNext more)
+          privacy/*omit-protected* (assoc :omittedProtected true))))))))))
 
 ;; [EXP-DX1] Why: snapshot, claim and known by-id rows share one immutable prefetch cut.
 ;; Rejected: separate claim/read HTTP calls (R51's six-round-trip commit).

@@ -51,6 +51,12 @@ lean_feed.clj claims-a (d/entid cut :triplex.claim/command-id)
 main.clj :receipt (storage/operation cut (storage/value cut tx :triplex.tx/operation-id))))))]
 main.clj [(d/entid cut [:triplex.claim/command-id id])])
 outcome.clj (let [report (try (deref (d/transact conn [{:db/id "datomic.tx" :triplex.tx/operation-id id}]) 5000 ::timeout)
+removal_commit.clj (vec (distinct (for [c (keep #(get % "commandId") (get input "claims"))] (if encode (encode account c) c))))))
+removal_commit.clj (when-let [eid (d/entid db [:triplex.tx/operation-id (@#'erase/operation-id pending)])]
+removal_commit.clj _ (when (and (not pending) (d/entid db [:triplex.claim/command-id command]))
+removal_commit.clj encode (when (string? account) (requiring-resolve 'triplex.gateway.account-claims/encode))]
+removal_commit.clj ops [{:db/id "datomic.tx" :triplex.tx/position position :triplex.tx/operation-id operation :triplex.tx/id txid
+removal_commit.clj {:db/id "privacy-claim" :triplex.claim/command-id (get entry "commandId") :triplex.claim/tx "datomic.tx"
 save_ledger.clj (assoc :triplex.entity/id journal :triplex.claim/command-id command))
 save_ledger.clj (when (and (value db e :triplex.entity/id) (value db e :triplex.tx/operation-id)
 schema.clj (attr :triplex.claim/command-id :db.type/string :db.unique/value) (attr :triplex.claim/tx :db.type/ref)
@@ -61,7 +67,6 @@ storage.clj :triplex.claim/command-id (get claim "commandId") :triplex.claim/tx 
 storage.clj :triplex.tx/operation-id (get input "operationId") :triplex.tx/id (or (:id metadata) "")
 storage.clj :txId (ledger/tx-id db (d/entid db [:triplex.tx/operation-id id]))})
 storage.clj [(d/entid db [:triplex.claim/command-id command])]))
-storage.clj data (if ids ((requiring-resolve 'triplex.gateway.account-claims/apply-ids) data ids) data)
 storage.clj data (if ids ((requiring-resolve 'triplex.gateway.account-claims/apply-ids) data ids) data)
 subject_create.clj (string? (:triplex.tx/operation-id op-header))
 subject_create.clj :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
@@ -75,3 +80,4 @@ subject_save.clj (when-not (and (= operation (scope/value db tx :triplex.tx/oper
 subject_save.clj :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
 subject_save.clj cmd (d/entid db [:triplex.claim/command-id command])
 transaction_shape.clj (let [tx (d/entid db [:triplex.tx/operation-id operationId])
+removal_commit.clj (or (when (string? op) (d/entid db [:triplex.tx/operation-id op]))

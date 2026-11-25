@@ -54,6 +54,9 @@ export class DatomicHttpError extends Error {
     readonly maximum?: number,
     readonly route?: string,
     readonly retryAfterMs?: number,
+    // [DX-XQ4] On a refusal of `find`: "sweep" when the exact sweep (XQ6, TX2_SWEEP=1) answers the same question
+    // unchanged, "none" when it does not. Absent on every other route.
+    readonly fallback?: "sweep" | "none",
   ) {
     super(message);
   }
@@ -61,7 +64,10 @@ export class DatomicHttpError extends Error {
 // [DX-W3] Why: a gateway started with TX2_READ_WAIT_LIMIT answers a read beyond its permit queue with 503 "ReadBusy"
 // at once instead of holding a web thread. Reads are idempotent, so the client waits the suggested delay and asks
 // again within the same deadline. Rejected: retrying writes (a write's outcome must stay single) and retrying any 503.
-const busyRetryRoute = /\/(?:reach|reach-many|read|q)$/;
+// [DX-API1] The batched read (one read permit, refusable like a pinned read) retries ReadBusy as the single reads do.
+const busyRetryRoute = /\/(?:reach|reach-many|read|q|batch)$/;
+/** [DX-XQ7] Questions across subjects, served by the question reader when the client names one. */
+export const questionRoute = /^\/v2\/db\/[^/]+\/(?:ids|sweep|find)$/;
 const sleepMs = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 export class DatomicRequestTooLarge extends DatomicHttpError {
   // [DX-S2] Why: the save-size rule names the refused body's size; the code and message stay as before.
@@ -122,6 +128,93 @@ export class DatomicTransportError extends Error {
     super(message, options);
   }
 }
+// [DX-XQ4] Questions across subjects (commit-time index, gateway option TX2_CROSS_INDEX=1). The shapes mirror
+// lab/experiments/EXP-DX1/xq4/COMMIT-INDEX.md; answers are returned unchanged from the gateway.
+export type CrossIndexFamily = "string" | "integer" | "number" | "datetime" | "boolean" | "ref";
+export interface CrossIndexDeclaration {
+  readonly version: 1;
+  readonly attributes: readonly { readonly attribute: string; readonly code: string; readonly family: CrossIndexFamily }[];
+  readonly types?: readonly (
+    | { readonly entityType: string; readonly list: "entries" }
+    | { readonly entityType: string; readonly list: "idPattern"; readonly idPattern: string }
+  )[];
+}
+export interface CrossIndexEpoch { readonly position: number; readonly t: number }
+export interface CrossIndexDeclarationState {
+  readonly database: string;
+  readonly seq: number;
+  readonly declaration: CrossIndexDeclaration | null;
+  readonly epochs: Readonly<Record<string, CrossIndexEpoch>>;
+  readonly changed?: boolean;
+}
+export interface CrossIndexBackfill {
+  readonly database: string;
+  readonly sealed: boolean;
+  readonly dryRun: boolean;
+  readonly head: number;
+  readonly entities: number;
+  readonly added: number;
+  readonly retracted: number;
+  readonly typeEntries: number;
+  readonly batches: number;
+  readonly epochs?: Readonly<Record<string, CrossIndexEpoch>>;
+}
+export interface CrossIndexValue { readonly type: CrossIndexFamily; readonly value: string | number | boolean }
+export type CrossIndexCondition =
+  | { readonly attribute: string; readonly op: "eq"; readonly value: CrossIndexValue }
+  | { readonly attribute: string; readonly op: "in"; readonly values: readonly CrossIndexValue[] }
+  | {
+      readonly attribute: string;
+      readonly op: "range";
+      readonly from?: CrossIndexValue;
+      readonly fromExclusive?: CrossIndexValue;
+      readonly to?: CrossIndexValue;
+      readonly toExclusive?: CrossIndexValue;
+    }
+  | { readonly attribute: string; readonly op: "prefix"; readonly value: string | { readonly type: "string"; readonly value: string } }
+  | { readonly attribute: string; readonly op: "exists" | "missing" };
+export interface CrossIndexFindRequest {
+  readonly account: string;
+  readonly basis?: { readonly recordedPosition?: number; readonly recordedAt?: number; readonly validAt?: number };
+  readonly atLeastPosition?: number;
+  readonly basisWaitMs?: number;
+  readonly from?: { readonly type: string } | { readonly prefix: string; readonly shape?: string };
+  readonly where?: readonly CrossIndexCondition[];
+  readonly project?: readonly string[];
+  readonly result?: "ids" | "count" | "countByValue" | "countDistinct";
+  readonly of?: string;
+  readonly order?: { readonly by: string; readonly direction?: "asc" | "desc" };
+  readonly limit?: number;
+  readonly cursor?: string | null;
+  readonly bounds?: { readonly entries?: number; readonly ms?: number; readonly segments?: number };
+}
+export interface CrossIndexAnswer {
+  readonly database: string;
+  readonly account: string;
+  readonly position: number;
+  readonly t: string;
+  readonly validAt: number;
+  readonly head: number;
+  readonly indexEpoch: number;
+  readonly trailingBy: 0;
+  readonly result: "ids" | "count" | "countByValue" | "countDistinct";
+  readonly order: { readonly by: string; readonly direction: "asc" | "desc" };
+  readonly ids?: readonly string[];
+  readonly projected?: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>>;
+  readonly count?: number;
+  readonly countExact?: boolean;
+  readonly counts?: readonly { readonly value: { readonly type: string; readonly value?: unknown }; readonly count: number }[];
+  readonly matched?: number;
+  readonly examined: number;
+  readonly segmentsLoaded: number;
+  readonly entityReads?: number;
+  readonly indexOnly?: boolean;
+  readonly queryMicros?: number;
+  readonly queryCpuMicros?: number;
+  readonly queueMicros?: number;
+  readonly stopped: "end" | "limit" | "entries" | "time" | "segments";
+  readonly next: string | null;
+}
 export interface DatomicHealth {
   datomicVersion: string;
   gatewaySourceHash: string;
@@ -134,6 +227,45 @@ export interface DatomicDatabase {
   strictRecordClocks?: boolean;
   orderedRowTexts?: boolean;
   journalCuts?: boolean;
+}
+/** `POST /v2/db/{db}/ids` (DX-XQ3, design 2026-11-24 section 7.5). */
+export interface DatomicIdListRequest {
+  readonly account: string;
+  readonly prefix?: string;
+  readonly shape?: string;
+  readonly basis?: {
+    readonly recordedPosition?: number;
+    readonly recordedAt?: number;
+    readonly validAt?: number;
+  };
+  readonly atLeastPosition?: number;
+  readonly basisWaitMs?: number;
+  readonly result?: "ids" | "count";
+  readonly limit?: number;
+  readonly order?: "asc" | "desc";
+  readonly cursor?: string;
+  /** Exclusive keyset start: a full entity ID inside the account's prefix. */
+  readonly after?: string;
+  readonly bounds?: { readonly entries?: number; readonly ms?: number; readonly segments?: number };
+}
+export interface DatomicIdListPage {
+  readonly database: string;
+  readonly account: string;
+  readonly position: number;
+  readonly t: string;
+  readonly head: number;
+  readonly validAt: number | null;
+  readonly trailingBy: 0;
+  readonly result: "ids" | "count";
+  readonly ids?: readonly string[];
+  readonly count?: number;
+  readonly countExact?: boolean;
+  readonly examined: number;
+  readonly segmentsLoaded: number;
+  readonly ioReads?: Record<string, unknown>;
+  readonly scanMicros: number;
+  readonly stopped: "end" | "limit" | "entries" | "time" | "segments";
+  readonly next: string | null;
 }
 export interface DatomicBasis {
   t: TaggedValue;
@@ -226,12 +358,15 @@ export const checkAtLeastAnswer = (atLeast: ReadAtLeastRequest, echo: unknown, p
     throw new TypeError(`The gateway answered at position ${position}, before the at-least position ${atLeast.position}`);
 };
 
+/** [DX-SCALE2] The process-wide agent used by clients made with TRIPLEX_DATOMIC_SHARED_AGENT=1. */
+let processAgent: http.Agent | undefined;
 export class DatomicClient {
   // [DX-B2-N3] Why: opt-in transport observations measure real calls without a second HTTP request.
   // Rejected: inferring gateway CPU or transact time from client wall latency.
   onRequest?: (sample: DatomicRequestSample) => void;
   onCommit?: (sample: DatomicCommitSample) => void;
   readonly agent: http.Agent;
+  private readonly sharedAgent: boolean;
   // [DX-RD1] Why: each explicitly sampled logical read owns its exchanges across awaits and any repair.
   // Rejected: assigning concurrent response callbacks to the last caller or allocating samples for the whole ladder.
   private readProfile?: AsyncLocalStorage<(sample: ReadWireSample) => void>;
@@ -270,6 +405,8 @@ export class DatomicClient {
   reachSession = randomUUID();
   readonly reachCache: ByteCache<CachedEntity>;
   private readonly reachReplySequence = new WeakMap<object, number | null>();
+  /** [DX-ERA2 fifth pass, Z7] The newest removal stamp seen per database, from any response that carries one. */
+  readonly removalStamps = new Map<string, number>();
   // [DX-RD4] The gateway's echo of an at-least read whose body is not a map (reach), keyed by the parsed reply.
   private readonly atLeastEcho = new WeakMap<object, number>();
   private readonly reachSequence = new Map<string, number>();
@@ -352,6 +489,14 @@ export class DatomicClient {
     return key;
   }
   private readonly endpoint: URL;
+  // [DX-XQ7] Why: a sweep or an ID list reads many subjects once each; sent to a separate read gateway they leave the
+  // main reader's object cache to pinned and current reads. One option, and the routing stays inside the client.
+  // Rejected: the main gateway forwarding them (a hop and a held web thread per page; question_reader.clj).
+  private readonly questionEndpoint: URL | undefined;
+  /** The gateway a call goes to: the question reader for question routes when one is configured. */
+  endpointFor(path: string): URL {
+    return this.questionEndpoint !== undefined && questionRoute.test(path) ? this.questionEndpoint : this.endpoint;
+  }
   constructor(
     endpoint: string,
     readonly timeoutMs = 5000,
@@ -373,6 +518,11 @@ export class DatomicClient {
       readonly receiptPredecessorAttributes?: readonly string[];
       readonly reachKeyBytes?: number;
       readonly historicalRevisionReuse?: boolean;
+      /**
+       * [DX-XQ7] The question reader's URL: questions across subjects (`POST /v2/db/{db}/ids`, `sweep`, `find`) go
+       * there, every other call to `endpoint` as before. Unset (the default): every call goes to `endpoint`.
+       */
+      readonly questionReaderUrl?: string;
     } = {},
   ) {
     this.reachKeyBudget = cacheOptions.reachKeyBytes ?? 4 * 1024 ** 2;
@@ -401,7 +551,21 @@ export class DatomicClient {
     this.endpoint = new URL(endpoint);
     if (this.endpoint.protocol !== "http:" || this.endpoint.username || this.endpoint.password)
       throw new TypeError("Expected HTTP gateway URL without credentials");
-    this.agent = new http.Agent({ keepAlive: true, maxSockets: 512, maxTotalSockets: 512 });
+    if (cacheOptions.questionReaderUrl !== undefined) {
+      this.questionEndpoint = new URL(cacheOptions.questionReaderUrl);
+      if (this.questionEndpoint.protocol !== "http:" || this.questionEndpoint.username || this.questionEndpoint.password)
+        throw new TypeError("Expected HTTP question reader URL without credentials");
+    }
+    // [DX-SCALE2] Why: every client opened its own keep-alive agent, so a process holding one store per account (the
+    // settlement runner opens three per publishing account, each with several clients) kept sockets to the gateways in
+    // proportion to the number of accounts (7 per enrolled account on the toy). With TRIPLEX_DATOMIC_SHARED_AGENT=1
+    // (default off: one agent per client, as before) every client of the process shares one agent with the same
+    // limits, so sockets follow concurrent requests, not accounts. Transport only: requests, replies and caches are
+    // unchanged. Rejected: sharing whole clients (their caches and row observers belong to one runtime).
+    this.sharedAgent = process.env["TRIPLEX_DATOMIC_SHARED_AGENT"] === "1";
+    this.agent = this.sharedAgent
+      ? (processAgent ??= new http.Agent({ keepAlive: true, maxSockets: 512, maxTotalSockets: 512 }))
+      : new http.Agent({ keepAlive: true, maxSockets: 512, maxTotalSockets: 512 });
     // [DX-T1-12] Why: report real cache occupancy and budgets off the request path, including every writer/reader isolate.
     // Rejected: assume a configured budget is resident, or add a cache walk to every commit.
     if (traceLevel !== "off")
@@ -426,7 +590,7 @@ export class DatomicClient {
     this.orderedRowTexts.clear();
     this.journalCuts.clear();
     this.rowObservers.clear();
-    this.agent.destroy();
+    if (!this.sharedAgent) this.agent.destroy();
   }
   async request<T>(
     method: "GET" | "POST",
@@ -561,7 +725,7 @@ export class DatomicClient {
       });
       const socketStarted = performance.now();
       const req = http.request(
-        new URL(path, this.endpoint),
+        new URL(path, this.endpointFor(path)),
         {
           method,
           agent: this.agent,
@@ -624,17 +788,25 @@ export class DatomicClient {
               const atLeastHeader = res.headers["x-tx2-at-least"];
               if (typeof atLeastHeader === "string" && data && typeof data === "object")
                 this.atLeastEcho.set(data, Number(atLeastHeader));
+              // [DX-ERA2 fifth pass, B5] the removal stamp when the gateway sends one: it changes at a removal's commit
+              // under the commit boundary, while the erasure sequence waits for the publication.
               const erasureHead = res.headers["x-triplex-erasure-seq"];
+              const stampHead = res.headers["x-triplex-removal-stamp"] ?? erasureHead;
+              if (typeof stampHead === "string" && /^\d+$/.test(stampHead)) {
+                const stampDb = /^\/v\d+\/db\/([^/]+)\//.exec(path)?.[1];
+                if (stampDb !== undefined)
+                  this.removalStamps.set(stampDb, Math.max(this.removalStamps.get(stampDb) ?? 0, Number(stampHead)));
+              }
               if (
-                erasureHead !== undefined &&
+                stampHead !== undefined &&
                 (path.endsWith("/reach") || path.endsWith("/reach-many"))
               ) {
-                const sequence = Number(erasureHead);
+                const sequence = Number(stampHead);
                 this.reachReplySequence.set(
                   data,
                   Number.isSafeInteger(sequence) &&
                     sequence >= 0 &&
-                    String(sequence) === erasureHead
+                    String(sequence) === stampHead
                     ? sequence
                     : null,
                 );
@@ -677,6 +849,7 @@ export class DatomicClient {
                     typeof data["maximum"] === "number" ? data["maximum"] : undefined,
                     typeof data["route"] === "string" ? data["route"] : undefined,
                     typeof data["retryAfterMs"] === "number" ? data["retryAfterMs"] : undefined,
+                    data["fallback"] === "sweep" || data["fallback"] === "none" ? data["fallback"] : undefined,
                   ),
                 );
               else {
@@ -1092,9 +1265,38 @@ export class DatomicClient {
             this.reachDiagnostics.decodedTextBytes += Buffer.byteLength(value);
     }
   }
+  // [DX-XQ4] Why: the declaration, its offline backfill and the bounded find route of the commit-time index.
+  // Rejected: an adapter-level scan fallback (a question too large for the bounds pages with a cursor instead).
+  declareIndexes(db: string, declaration: CrossIndexDeclaration) {
+    return this.request<CrossIndexDeclarationState>("POST", `/v2/db/${db}/index-declaration`, declaration);
+  }
+  indexDeclaration(db: string) {
+    return this.request<CrossIndexDeclarationState>("GET", `/v2/db/${db}/index-declaration`);
+  }
+  backfillIndex(db: string, options: { batchDatoms?: number; dryRun?: boolean; expectHead?: number } = {}) {
+    return this.request<CrossIndexBackfill>("POST", `/v2/db/${db}/index-backfill`, options, 600_000);
+  }
+  find(db: string, request: CrossIndexFindRequest) {
+    return this.request<CrossIndexAnswer>("POST", `/v2/db/${db}/find`, request);
+  }
   // [DX-S6] A declaration is idempotent (declaring the same attributes again answers the same state): resend on unknown.
   declareProtection(db: string, attributes: readonly string[], sealed = false) {
     return this.resend(() => this.request("POST", `/v2/db/${db}/protection`, { attributes, sealed }));
+  }
+  /**
+   * [DX-ERA2 sixth pass, V3] The database's removal stamp, read once when this client holds none (one small request:
+   * `?stampOnly=1` leaves out the removed identities). An unprotected database answers 0. A gateway that does not know
+   * the parameter answers the whole frontier, which carries the same fields.
+   */
+  async ensureRemovalStamp(db: string): Promise<void> {
+    if (this.removalStamps.has(db)) return;
+    const result = await this.request<{ protected?: boolean; seq?: number; removalStamp?: number }>(
+      "GET",
+      `/v2/db/${db}/erasure-frontier?stampOnly=1`,
+    );
+    const stamp = Number(result.removalStamp ?? result.seq ?? 0);
+    if (Number.isSafeInteger(stamp) && stamp >= 0)
+      this.removalStamps.set(db, Math.max(this.removalStamps.get(db) ?? 0, stamp));
   }
   async erasureFrontier(db: string): Promise<ErasureFrontier> {
     const result = await this.request<ErasureFrontier>("GET", `/v2/db/${db}/erasure-frontier`);
@@ -1439,6 +1641,7 @@ export class DatomicClient {
               : {
                   erasureSourceDatabase: ticket.sourceDatabase,
                 }),
+            ...(ticket.accounts === undefined ? {} : { erasureAccounts: ticket.accounts }),
           }
         : {}),
       ...(this.cacheOptions.writeClass ? { writeClass: this.cacheOptions.writeClass } : {}),
@@ -1783,6 +1986,25 @@ export class DatomicClient {
     }
     if (page.nextT !== (page.rows.length ? String(prior + 1n) : fromT))
       throw new TypeError("Datomic log response checkpoint mismatch");
+    return page;
+  }
+  // [DX-XQ3] Why: questions across subjects, step 0: the IDs of one kind in one account, from the gateway's ID list
+  // route (TX2_ID_LISTS=1 on the gateway), one bounded page per call; the answer is returned unchanged.
+  // Rejected: following the cursor here (the caller decides how many pages its own bound allows).
+  async listIds(db: string, request: DatomicIdListRequest): Promise<DatomicIdListPage> {
+    if (!/^(?:s-[a-f0-9]{32}|s2-[A-Za-z0-9_-]+)$/.test(db))
+      throw new TypeError("Invalid Datomic database name");
+    const page = await this.request<DatomicIdListPage>("POST", `/v2/db/${db}/ids`, request);
+    if (
+      typeof page !== "object" ||
+      page === null ||
+      !Number.isSafeInteger(page.position) ||
+      page.trailingBy !== 0 ||
+      page.account !== request.account ||
+      !["end", "limit", "entries", "time", "segments"].includes(page.stopped) ||
+      (page.stopped === "end") !== (page.next === null || page.next === undefined)
+    )
+      throw new DatomicTransportError("Invalid ID list answer");
     return page;
   }
   // [DX-RD4] Why: `atLeast` makes the head answered at least a receipt's position; the gateway waits on its peer.

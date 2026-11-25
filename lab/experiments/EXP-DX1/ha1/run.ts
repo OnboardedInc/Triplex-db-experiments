@@ -157,6 +157,9 @@ export async function drill(
           e.mode === "hasync-cost-group",
           sync ? { blockSize: 512 } : {},
         );
+      } else if (e.mode === "hasync-second") {
+        const { secondFailureDrill } = await import("../hasync1/second-failure.ts");
+        result = await secondFailureDrill(pair, profile.people);
       } else if (e.mode === "hasync-move") {
         const { moveDrill } = await import("../hasync1/move.ts");
         result = await moveDrill(pair, profile.people, {

@@ -163,8 +163,17 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // [DX-ACT4] Why: the settlement-frames builder runs its toy gate (and the held Publish campaign) on the same stack.
   const settleFrames = holder === "DX-ACT4" && diagnostic && mode === "load-fair" && combined === undefined &&
     (process.env.DX_ACT4_GATE === "1" || process.env.DX_ACT3_HELD === "1");
+  // [DX-ACT5] Why: the settlement-beside-saves builder runs the held runner (its live phase, or the default campaign as a
+  // regression check) on the same stack.
+  const settleLive = holder === "DX-ACT5" && diagnostic && mode === "load-fair" && combined === undefined &&
+    process.env.DX_ACT3_HELD === "1";
+  // [DX-HA2] Why: the recovery-time builder runs its second-failure drill in its own diagnostic slot.
+  const secondFailure = holder === "DX-HA2" && diagnostic && mode === "hasync-second" && combined === undefined;
+  // [DX-ACT6] Why: the release-limits builder runs its toy gate (ledger in parts, definitions by reference) here.
+  const releaseLimits = holder === "DX-ACT6" && diagnostic && mode === "load-fair" && combined === undefined &&
+    (process.env.DX_ACT6_GATE === "1" || process.env.DX_ACT3_HELD === "1");
   assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours || snapshotWhole ||
-    heldPublish || settleFrames);
+    heldPublish || settleFrames || settleLive || secondFailure || releaseLimits);
   assert(combined === undefined || ownedCombination);
   if (mode === "load-fair") {
     const { cleanSource } = await import("../v01/source.ts");
@@ -423,38 +432,43 @@ export async function localDrill(opts: any, config: any, manager: any) {
     if (diagnostic || mode.startsWith("load-") || mode.startsWith("hasync-")) {
       try {
         // [DX-LOAD1] Why: the shared VM rotates built images; bind the immutable digest to the engine's build event and image label. Rejected: running a mutable tag or changing the shared config for another builder.
+        // [DX-INT4] Why: the newest build event was any builder's; choose only an image built from this checkout's
+        // sources (ha1/image-choice.ts), or the private build named by DX_HA1_DATOMIC_RECEIPT. Rejected: "newest".
         const builds = fs
           .readFileSync(path.join(LOCKS, "events.jsonl"), "utf8")
           .trim()
           .split("\n")
           .map((l) => JSON.parse(l))
-          .filter((x) => x.event === "datomic-build")
-          .reverse();
-        let chosen;
-        for (const b of builds) {
-          assert(
-            /^sha256:[0-9a-f]{64}$/.test(b.imageId) && /^[0-9a-f]{64}$/.test(b.buildInputsSha256),
-          );
-          const exists = await site
-            .docker([
-              "image",
-              "inspect",
-              b.imageId,
-              "--format",
-              '{{.Id}} {{index .Config.Labels "tx2.build-inputs-sha256"}}',
-            ])
+          .filter((x) => x.event === "datomic-build");
+        for (const b of builds)
+          assert(/^sha256:[0-9a-f]{64}$/.test(b.imageId) && /^[0-9a-f]{64}$/.test(b.buildInputsSha256));
+        const labels = new Map<string, string | undefined>();
+        for (const id of new Set([...builds.map((b) => b.imageId), ...(process.env.DX_HA1_DATOMIC_RECEIPT ? [JSON.parse(fs.readFileSync(process.env.DX_HA1_DATOMIC_RECEIPT, "utf8")).imageId] : [])])) {
+          const out = await site
+            .docker(["image", "inspect", id, "--format", '{{.Id}} {{index .Config.Labels "tx2.build-inputs-sha256"}}'])
             .catch(() => undefined);
-          if (exists === undefined) continue;
-          assert.equal(exists, b.imageId + " " + b.buildInputsSha256);
-          chosen = b;
-          break;
+          labels.set(id, out && out.split(" ")[0] === id ? out.split(" ")[1] : undefined);
         }
-        assert(chosen, "No locally present engine-built Datomic distribution");
+        const { checkoutInputs, chooseDatomicImage } = await import("./image-choice.ts");
+        const { verifiedTree } = await import("../../../bin/datomic-context.mjs");
+        const { sha256File } = await import("../../../bin/lib.mjs");
+        const expected = checkoutInputs(root, path.join(os.homedir(), "Claude/Projects/triplex-db-2/downloads/datomic-pro-1.0.7745/extracted/datomic-pro-1.0.7745"),
+          verifiedTree, sha256File);
+        let receipt;
+        if (process.env.DX_HA1_DATOMIC_RECEIPT) {
+          const { readVariantReceipt } = await import("../../../config/datomic/runtime.mjs");
+          receipt = readVariantReceipt(process.env.DX_HA1_DATOMIC_RECEIPT);
+        }
+        const chosen = chooseDatomicImage(builds, (id) => labels.get(id), expected, receipt);
         site.datomicId = chosen.imageId;
         e!.write("image", {
           nonce: e!.nonce,
           image: chosen.imageId,
           buildInputs: chosen.buildInputsSha256,
+          chosenBy: chosen.how,
+          checkoutBuildInputs: expected.buildInputs,
+          checkoutSources: expected.sources,
+          ...(receipt ? { receipt: process.env.DX_HA1_DATOMIC_RECEIPT, tag: receipt.tag } : {}),
         });
       } catch (error) {
         clean = true;

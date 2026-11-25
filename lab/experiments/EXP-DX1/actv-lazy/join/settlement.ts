@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { Archive } from "./archive.ts";
+import { SettlementControl } from "./settlement-control.ts";
 import { RecordedNotices } from "./recorded.ts";
 import type { JoinedAccount } from "./account.ts";
 import type { BulkQueue } from "./bulk.ts";
-import { frameMode, type FrameMode } from "./frames.ts";
+import { frameMode, preconditionMode, type FrameMode, type Precondition } from "./frames.ts";
 
 export class Settlement {
   readonly archive: Archive;
@@ -21,10 +22,15 @@ export class Settlement {
     queue: BulkQueue,
     automatic = false,
     frames: FrameMode = frameMode(),
+    precondition: Precondition = preconditionMode(),
   ) {
-    const values = await Archive.open(a, queue, "values", frames);
+    const values = await Archive.open(a, queue, "values", frames, precondition);
     try {
-      const worker = new Settlement(values, await Archive.open(a, queue, "notices", frames));
+      const worker = new Settlement(values, await Archive.open(a, queue, "notices", frames, precondition));
+      // [DX-ACT5] TX2_SETTLE_CONTROL=1: both writers wait while the account's settlement is paused and keep its pace.
+      assert([undefined, "", "1"].includes(process.env.TX2_SETTLE_CONTROL), "TX2_SETTLE_CONTROL is unset or 1");
+      if (process.env.TX2_SETTLE_CONTROL === "1")
+        values.control = worker.recorder.archive.control = new SettlementControl(values.store, queue, values.turnKey());
       if (automatic) {
         worker.unsubscribe = a.onNotice(() => worker.wake());
         worker.wake();

@@ -93,7 +93,12 @@
    (boolean (and enabled state ((:attrs state) (:attribute row))
                  privacy/*data* (nil? (d/entid privacy/*data* [:triplex.entity/id (:entity_id row)]))
                  (let [source (get input "sourceK") removed (family-removed-at state [(:entity_id row) (:attribute row)])]
-                   (and (some? removed) (not (and (integer? source) (>= source removed)))))))))
+                   ;; [DX-ERA6 eighth pass, M1-c] with the replay rule on, the merged rule's frame (the earliest of
+                   ;; frameSourceK, sourceK and removalSeen), as for every other save; with it off, the source alone
+                   (if @(requiring-resolve 'triplex.gateway.removal-commit/replay-rule)
+                     (some? ((requiring-resolve 'triplex.gateway.removal-commit/creation-removal)
+                             state [(:entity_id row) (:attribute row)] input))
+                     (and (some? removed) (not (and (integer? source) (>= source removed))))))))))
 
 (defn installed [db]
   (when-let [eid (d/entid db ident)]

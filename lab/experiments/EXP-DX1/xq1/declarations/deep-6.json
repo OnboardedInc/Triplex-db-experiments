@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "attributes": [
+    { "attribute": ":person/custom-background", "code": "a1", "family": "string" },
+    { "attribute": ":person/custom-start", "code": "a2", "family": "string" },
+    { "attribute": ":task/status", "code": "a3", "family": "string" },
+    { "attribute": ":task/progress", "code": "a4", "family": "integer" },
+    { "attribute": ":person/profile", "code": "a5", "family": "ref" },
+    { "attribute": ":placement/task", "code": "a6", "family": "ref" }
+  ],
+  "types": [
+    { "entityType": "Review", "list": "entries" },
+    { "entityType": "Subject", "list": "idPattern", "idPattern": "pl:{8 digits}" }
+  ]
+}

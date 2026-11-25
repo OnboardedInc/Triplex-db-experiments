@@ -38,28 +38,58 @@ export class HeldLedger {
   }
 
   joined(row: Joined & { position: number }) {
+    // [DX-ACT5] A frame already adopted from the journal (its receipt arrived after the walk) is the same write.
+    if (this.adopted.get(row.position) === row.commandId) return;
     this.add(row.position, { txId: row.txId, commandId: row.commandId });
   }
+  private readonly adopted = new Map<number, string>();
+  /** [DX-ACT7] Bounded journal pages requested, and those that held no journal and were followed by their cursor. */
+  boundedPages = 0;
+  boundedSkips = 0;
 
   pending() {
     return this.highest;
   }
 
+  /** [DX-ACT5] Every native position up to this one is matched to a known writer (reads pinned here are checkable). */
+  verified() {
+    return this.cursor;
+  }
+
   // [DX-ACT1] Why: rank the matched save and metadata frames against one contiguous native journal.
   // Rejected: accepting a policy cut solely because its global transaction number advanced.
-  verifyThrough(position: number, mayAwaitAck = false) {
+  // [DX-ACT5] `adopt`: a transaction this process did not write but whose only command id matches (a settlement frame a
+  // killed child committed) is accepted as a joined write. Unset, as before.
+  verifyThrough(position: number, mayAwaitAck = false, adopt?: RegExp) {
     const next = this.serial.then(async () => {
       const deadline = now() + 500;
+      // [DX-ACT7] With TRIPLEX_DATOMIC_BOUNDED_JOURNAL=1 (the SDK's option for JRN1's bounded journal pages) every page
+      // is a bounded request: a page that stopped on its entry or time bound with no journal is followed by its `next`
+      // cursor (the positions it examined held no journal), never taken as the end. Unset, the request is as before.
+      // Rejected: a separate option name (the runner and the SDK would then disagree about which pages are bounded).
+      const bounded = process.env.TRIPLEX_DATOMIC_BOUNDED_JOURNAL === "1";
+      // A smaller entry bound per page (toy gate only: it makes every page follow its cursor).
+      const examine = process.env.DX_ACT7_LEDGER_EXAMINE ? Number(process.env.DX_ACT7_LEDGER_EXAMINE) : undefined;
+      assert(examine === undefined || (bounded && Number.isSafeInteger(examine) && examine >= 1));
+      let scan = this.cursor;
       while (this.cursor < position) {
         const available = Math.min(100, position - this.cursor),
-          after = this.cursor;
-        const { transactions } = await this.reader.request<{ transactions: Wire[] }>(
+          after = Math.max(scan, this.cursor);
+        const page = await this.reader.request<{ transactions: Wire[]; stopped?: string; next?: number }>(
           "POST",
           "/v2/db/" + this.database + "/transactions",
-          { after, limit: available },
+          bounded ? { after, limit: available, bounded: true, ...(examine ? { examineEntries: examine } : {}) } : { after, limit: available },
         );
+        const { transactions } = page;
         assert(transactions.length <= available);
+        if (bounded) this.boundedPages++;
         if (!transactions.length) {
+          if (bounded && (page.stopped === "entries" || page.stopped === "time")) {
+            assert(typeof page.next === "number" && page.next > after, "A bounded journal page did not advance");
+            scan = page.next;
+            this.boundedSkips++;
+            continue;
+          }
           if (mayAwaitAck) return;
           assert(now() < deadline, "Missing native journal suffix");
           await sleep(5);
@@ -68,7 +98,14 @@ export class HeldLedger {
         for (const frame of transactions) {
           const [tx, p, encoded] = frame;
           assert.equal(p, this.cursor + 1);
-          const want = this.expected.get(p);
+          let want = this.expected.get(p);
+          if (!want && adopt) {
+            const ids = encoded.map(decodeRowText).filter((row) => row.attribute === ":_tx/command-id");
+            if (ids.length === 1 && adopt.test(String(ids[0]!.value_string))) {
+              want = { txId: tx, commandId: String(ids[0]!.value_string) };
+              this.adopted.set(p, want.commandId);
+            }
+          }
           if (!want && mayAwaitAck) return;
           assert(want, "Unknown writer in held database at position " + p);
           if ("status" in want) {
@@ -90,6 +127,7 @@ export class HeldLedger {
           }
           this.expected.delete(p);
           this.cursor = p;
+          scan = p;
         }
       }
     });

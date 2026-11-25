@@ -1,0 +1,321 @@
+#!/usr/bin/env bash
+# [DX-ERA2] The in-process gates (in-memory Datomic, a file removal authority, the gateway's own route handler), one
+# ordinary heavy token, no stack:
+#   DOCKER_HOST=unix://<lab VM socket> node lab/bin/heavy.mjs --label DX-ERA2-gate -- \
+#     bash lab/experiments/EXP-DX1/era2/gate.sh NEW_ABSOLUTE_DIR [BASE_COMMIT]
+# 1. paired log: era2/paired.clj on the one branch's head (ONE_COMMIT; BASE_COMMIT is now the suites' base only), on this gateway with
+#    TX2_REMOVAL_PER_ACCOUNT unset, and with it on but the database never moved: one SHA-256 of the native log each;
+# 2. interleavings: era2/gate.clj with the option unset (database-wide), on (database moved per account), and on with
+#    TX2_REMOVAL_SUBJECT_CHECK=1 (the removal checks its selection per subject and takes its position at commit);
+# 3. the gateway's Clojure suites with the options unset and on.
+# Every container runs the pinned runtime image by ID (DX_ERA2_IMAGE_ID); the ID is recorded in OUT/image.
+set -uo pipefail
+out=${1:?absolute new output directory}; base=${2:-272a1bd66}
+[[ $out == /* && ! -e $out ]] || { echo "gate.sh: give a new absolute output directory" >&2; exit 2; }
+: "${DOCKER_HOST:?set DOCKER_HOST to the lab VM docker socket}"
+repo=$(cd "$(dirname "$0")/../../../.." && pwd)
+x=$repo/lab/experiments/EXP-DX1
+mkdir -p "$out/this" "$out/base" "$out/lab"
+git -C "$repo" rev-parse HEAD > "$out/source"
+git -C "$repo" status --porcelain -- packages/datomic/gateway lab/experiments/EXP-DX1/era2 > "$out/dirty"
+# Private copies, so later edits in the worktree cannot reach a running gate.
+cp -R "$repo/packages/datomic/gateway/src" "$out/this/src"
+cp "$repo/packages/datomic/src/codec-spec.json" "$out/this/codec-spec.json"
+git -C "$repo" archive "$base" packages/datomic/gateway/src packages/datomic/src/codec-spec.json | tar -x -C "$out/base"
+mv "$out/base/packages/datomic/gateway/src" "$out/base/src"; cp "$out/base/packages/datomic/src/codec-spec.json" "$out/base/codec-spec.json"
+rm -rf "$out/base/packages"; echo "$base" > "$out/base/commit"
+cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era2/paired.clj" "$x/era3/attack.clj" "$x/era3/attack2.clj" "$x/era3/attack3.clj" "$x/era3/attack4.clj" "$x/era3/attack5.clj" "$x/era3/attack6.clj" "$x/era2/lines.clj" "$x/era2/replies.clj" "$out/lab/"
+# [DX-ERA2 seventh pass] the merged line's head too (ONE_COMMIT), for the paired run of a save that says nothing about
+# its frame (the sixth review's fact 1): with every option off this gateway must answer it as the merged line does
+one=${ONE_COMMIT:-8a362ac38}
+mkdir -p "$out/one"
+git -C "$repo" archive "$one" packages/datomic/gateway/src packages/datomic/src/codec-spec.json | tar -x -C "$out/one"
+mv "$out/one/packages/datomic/gateway/src" "$out/one/src"; cp "$out/one/packages/datomic/src/codec-spec.json" "$out/one/codec-spec.json"
+rm -rf "$out/one/packages"; echo "$one" > "$out/one/commit"
+image=${DX_ERA2_IMAGE_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
+[[ $image =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "gate.sh: DX_ERA2_IMAGE_ID must be an image ID" >&2; exit 2; }
+[[ $(docker image inspect --format '{{.Id}}' "$image") == "$image" ]] || { echo "gate.sh: image $image not present" >&2; exit 2; }
+echo "$image" > "$out/image"
+status=0
+run() { # NAME SOURCE OPTION CLOJURE-FORM
+  local name=$1 source=$2 option=$3 form=$4
+  printf '%s\n' "$form" > "$out/$name.clj"
+  env=(-e TX2_SUBJECT_SAVE=1 -e TX2_SUBJECT_NUMERIC_OWNER=1 -e TX2_SUBJECT_ORDERED_IDS=1
+       -e TRIPLEX_ERASURE_DIRECTORY=/tmp/era2-authority -e DATOMIC_URI_TEMPLATE='datomic:mem://{db}'
+       -e DF01_RECORDED_PAGE=/tmp/recorded-page.json)
+  [[ $option == on || $option == subject || $option == commit ]] && env+=(-e TX2_REMOVAL_PER_ACCOUNT=1)
+  # [DX-ERA2 seventh pass, (a)] `off` is every option off (the rule for a save framed before a removal off too);
+  # `offrule` is the database-wide rule with that rule on (its own option), which the earlier reviews' database-wide
+  # cases test; `plain` is every option off running only the case that proves the rule is off
+  [[ $option == offrule ]] && env+=(-e TX2_REMOVAL_REPLAY_RULE=1)
+  [[ $option == plain ]] && env+=(-e "ERA2_ONLY=replay-rule-off merged-rule")
+  for kv in ${RUN_ENV:-}; do env+=(-e "$kv"); done
+  [[ $option == subject || $option == commit ]] && env+=(-e TX2_REMOVAL_SUBJECT_CHECK=1 -e TX2_REMOVAL_TRIES_LOG=1 -e "ERA2_RACES=${ERA2_RACES:-1000}")
+  # [DX-ERA2 fourth pass] the commit as the boundary (section 16 of the page)
+  [[ $option == commit ]] && env+=(-e TX2_REMOVAL_COMMIT_BOUNDARY=1)
+  # a diagnostic run of named gate scenarios only (never a gate result)
+  [[ -n ${ERA2_ONLY:-} ]] && env+=(-e "ERA2_ONLY=$ERA2_ONLY")
+  [[ $name == era3-* ]] && env+=(-e "ERA3_PHASES=${ERA3_PHASES:-d1 d1t d2 d3 d5 d6 fuzz}" -e "ERA3_N=${ERA3_N:-400}"
+                                 -e "ERA3_BLOCK=${ERA3_BLOCK:-100}" -e "ERA3_SEED=${ERA3_SEED:-7}" -e "ERA3_RUN=gate")
+  # [DX-ERA2 third pass] the second review's cases and fuzzer (era3/attack2.clj, era3/REVIEW-2.md)
+  [[ $name == era3b-* ]] && env+=(-e "ERA3_PHASES=${ERA3B_PHASES:-e1 e2 e3 e4 e5 e6 e7 e7b e8 fuzz2}" -e "ERA3_N=${ERA3B_N:-400}"
+                                  -e "ERA3_BLOCK=${ERA3_BLOCK:-100}" -e "ERA3_SEED=${ERA3B_SEED:-9}" -e "ERA3_RUN=gate2")
+  [[ $name == era3e9-* ]] && env+=(-e "ERA3_PHASES=e9")
+  # [DX-ERA2 fourth pass] the third review's cases and fuzzer with a second active gateway (era3/attack3.clj)
+  [[ $name == era3c-* ]] && env+=(-e "ERA3_PHASES=${ERA3C_PHASES:-k2 k3 k4 k5 k6 k7 k8 k9 k10 fuzz3}" -e "ERA3_N=${ERA3C_N:-400}"
+                                  -e "ERA3_BLOCK=${ERA3_BLOCK:-100}" -e "ERA3_SEED=${ERA3C_SEED:-11}" -e "ERA3_RUN=gate3")
+  # [DX-ERA2 fifth pass] the fourth review's cases and fuzzer (era3/attack4.clj, era3/REVIEW-4.md); each case runs on
+  # both boundaries inside one process (its own switch), so the arms are the modes; Q9 and Q10 need the sweep options
+  [[ $name == era3d-* ]] && env+=(-e "ERA3_PHASES=${ERA3D_PHASES:-q1 q2 q3 q4 q5 q7 q8 q11 r22 fuzz4}" -e "ERA3_N=${ERA3D_N:-400}"
+                                  -e "ERA3_BLOCK=${ERA3_BLOCK:-100}" -e "ERA3_SEED=${ERA3D_SEED:-13}" -e "ERA3_RUN=gate4")
+  [[ $name == era3d-q910-* ]] && env+=(-e "ERA3_PHASES=q9 q10" -e TRIPLEX_ERASURE_SHRED_GRACE_MS=0 -e TX2_ID_LISTS=1 -e TX2_SWEEP=1)
+  # database-wide: the Q cases are per-account only and fuzz4 drives per-account completion (the reviewer ran it on the
+  # per-account modes only), so this arm is R2-2
+  [[ $name == era3d-off ]] && env+=(-e "ERA3_PHASES=r22")
+  # [DX-ERA2 sixth pass] the fifth review's cases and fuzzer (era3/attack5.clj, era3/REVIEW-5.md); the boundary is the
+  # database's own (moved through its route); database-wide runs Z7 only (the rest needs a database guarded per account)
+  # [DX-ERA2 seventh pass] the sixth review's cases; database-wide only those that apply there
+  [[ $name == era3f-on || $name == era3f-subject ]] && env+=(-e "ERA3_PHASES=${ERA3F_PHASES:-a1 a2 a2b a3 b1 b2 c d g1 g2 f h}" -e "ERA3_D_NS=${ERA3_D_NS:-0 300 1200}")
+  [[ $name == era3f-off ]] && env+=(-e "ERA3_PHASES=g1 d" -e "ERA3_D_NS=${ERA3_D_NS:-0 300}")
+  [[ $name == era3e-* ]] && env+=(-e "ERA3_PHASES=${ERA3E_PHASES:-w1 w2 w3 w5 p1 p2 c1 z s t fuzz5}" -e "ERA3_N=${ERA3E_N:-400}"
+                                  -e "ERA3_BLOCK=${ERA3E_BLOCK:-200}" -e "ERA3_SEED=${ERA3E_SEED:-17}" -e "ERA3_RUN=gate5"
+                                  -e TRIPLEX_ERASURE_SHRED_GRACE_MS=0)
+  [[ $name == era3e-off ]] && env+=(-e "ERA3_PHASES=z")
+  [[ $name == era3e-on ]] && env+=(-e ERA3_BOUNDARY=log)
+  [[ $name == era3e-subject ]] && env+=(-e ERA3_BOUNDARY=commit)
+  [[ $name == era3e-move ]] && env+=(-e ERA3_BOUNDARY=move -e "ERA3_PHASES=fuzz5")
+  mkdir -p "$out/$name.out"
+  docker run --rm --pull never --label tx2.holder=DX-ERA2 --name "tx2-dxera2-gate-$$-$name" --memory 3g --cpus 2 -v "$out/$name.out:/out" \
+    -v "$out/$source/src:/opt/gateway/src:ro" -v "$out/$source/codec-spec.json:/opt/spec/codec-spec.json:ro" \
+    -v "$out/lab:/lab:ro" -v "$out/$name.clj:/opt/run.clj:ro" "${env[@]}" --entrypoint /bin/bash "$image" -c \
+    'cd /opt/datomic && java -Xmx2g -Ddatomic.objectCacheMax=256m -Ddatomic.memoryIndexMax=256m -Dtriplex.codec.spec=/opt/spec/codec-spec.json -cp "$(DATOMIC_EXT_CLASSPATH=/opt/gateway/src bin/classpath)" clojure.main /opt/run.clj' \
+    > "$out/$name.log" 2>&1 || status=1
+  echo "$name $image" >> "$out/images-ran"
+  grep -E "ERA2_|ERA3_SUMMARY|ERA3_VIOLATION|SUITES|FAIL|ERROR in|Exception" "$out/$name.log" | cut -c1-2000 | head -40
+  # the review's attacks report violations in their summary line and exit 0
+  # E9 (copies recorded before a removal) is a known unmet requirement owned by another builder: reported, not counted
+  if [[ $name == era3-* || $name == era3b-* || $name == era3c-* || $name == era3d-* || $name == era3e-* || $name == era3f-* ]] && ! grep -q 'ERA3_SUMMARY.*:violations 0,' "$out/$name.log"; then status=1; fi
+  if [[ $name == lines-* ]] && ! grep -q '^B2_LINES_SUMMARY {:checks 10, :failed 0}' "$out/$name.log"; then status=1; fi
+}
+phases=${ERA2_GATE_PHASES:-paired gate era3 suites b2 lines b2r switches}
+# [DX-ERA6 eighth pass] the owner's decisions of 2026-11-25 (era6/REMOVAL-ON-SAVE-LINE.md section 7): a private copy of
+# this source with one switch's default line changed, the one line that turns it on
+flip() { # NAME FILE FROM-LINE TO-LINE
+  rm -rf "$out/$1"; mkdir -p "$out/$1"; cp -R "$out/this/src" "$out/$1/src"; cp "$out/this/codec-spec.json" "$out/$1/codec-spec.json"
+  local f="$out/$1/src/triplex/gateway/$2"
+  grep -qxF "$3" "$f" || { echo "gate.sh: '$3' is not a line of $2"; status=1; return 1; }
+  FROM="$3" TO="$4" perl -pi -e 's/^\Q$ENV{FROM}\E$/$ENV{TO}/' "$f"
+  grep -qxF "$4" "$f" && ! grep -qxF "$3" "$f" || { echo "gate.sh: '$4' not written in $2"; status=1; return 1; }
+  echo "$1: $2 '$3' -> '$4'" >> "$out/flips"
+}
+paired='(load-file "/lab/regression.clj") (load-file "/lab/paired.clj") (era2-paired/main)'
+if [[ $phases == *paired* ]]; then
+  # [DX-ERA2 seventh pass, identities] the reference is the one branch's head (ONE_COMMIT): with every option off this
+  # gateway installs the one branch's writer functions and writes its native log, datom for datom (until 710f27d12 the
+  # reference was 272a1bd66, this branch's own earlier head, which shared the moved generated names)
+  run paired-base one off "$paired"; run paired-base2 one off "$paired"
+  run paired-off this off "$paired"; run paired-on this subject "$paired"; run paired-commit this commit "$paired"
+  # [DX-ERA2 seventh pass, (a)] the same workload plus a save that says nothing about its frame and writes a removed
+  # subject's protected value: every option off here, the base, and the merged line's head
+  RUN_ENV=PAIRED_SOURCELESS=1 run paired-sl-base base off "$paired"
+  RUN_ENV=PAIRED_SOURCELESS=1 run paired-sl-one one off "$paired"
+  RUN_ENV=PAIRED_SOURCELESS=1 run paired-sl-off this off "$paired"
+fi
+gate='(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (era2-gate/main)'
+if [[ $phases == *gate* ]]; then
+  [[ $phases == *gate-subject-only* ]] || { run gate-off this offrule "$gate"; run gate-on this on "$gate"; run gate-plain this plain "$gate"; }
+  run gate-subject this subject "$gate"
+  run gate-commit this commit "$gate"
+  # [DX-ERA6 eighth pass, R5] the acknowledgement journal: every option off with a journal, per account, commit boundary
+  for arm in off on commit; do
+    ERA2_ONLY=ack-journal RUN_ENV="TX2_REMOVAL_ACK_JOURNAL=/tmp/era2-acks/acks.jsonl" run "gate-journal-$arm" this "$arm" "$gate"
+  done
+fi
+# [DX-ERA6 eighth pass] the owner's switches, each with its default flipped in a private copy (`flip`), every other
+# option as the arm says; owner-switches checks the switch read what the arm expects
+if [[ $phases == *switches* ]]; then
+  sw="owner-switches replay-rule-off merged-rule"
+  # (i) the replay rule on by default: unset is on, =0 is off; this branch as it is: unset is off
+  if flip flip-i removal_commit.clj "(def replay-rule-default false)" "(def replay-rule-default true)"; then
+    ERA2_ONLY="$sw" RUN_ENV="ERA2_EXPECT_REPLAY_RULE=true" run switch-i-on flip-i off "$gate"
+    ERA2_ONLY="$sw" RUN_ENV="TX2_REMOVAL_REPLAY_RULE=0 ERA2_EXPECT_REPLAY_RULE=false" run switch-i-optout flip-i off "$gate"
+    ERA2_ONLY="$sw" RUN_ENV="ERA2_EXPECT_REPLAY_RULE=false" run switch-i-default this off "$gate"
+    ERA2_ONLY="$sw" RUN_ENV="TX2_REMOVAL_REPLAY_RULE=0 ERA2_EXPECT_REPLAY_RULE=true" run switch-i-per-account flip-i on "$gate"
+    [[ -f $out/paired-base.log ]] || run paired-base one off "$paired"
+    run paired-flip-i flip-i off "$paired"
+    # the paired log with the default flipped: the one branch's, plus the recorded decline of the workload's import
+    # replay with no frame source (11 datoms per run), as per account
+    python3 - "$out" <<'PYI' || status=1
+import sys, re
+out = sys.argv[1]
+def rows(arm): return [l.split(" ", 1)[1] for l in open(f"{out}/paired-{arm}.log").read().splitlines() if l.startswith("ERA2_PAIRED ")]
+def key(r):
+    d = dict(re.findall(r':([a-z0-9-]+) ("[^"]*"|[0-9]+|true|false)', r))
+    return (d.get("sealed"), d.get("sha256-without-r22"), d.get("reads"), int(d.get("datoms", 0)) - int(d.get("r22-datoms", 0)))
+def r22(r): return int(dict(re.findall(r':([a-z0-9-]+) ("[^"]*"|[0-9]+|true|false)', r)).get("r22-datoms", "-1"))
+b, f = rows("base"), rows("flip-i")
+same = len(b) == 2 and [key(r) for r in f] == [key(r) for r in b]
+counts = [r22(r) for r in f]
+print("ERA2_PAIRED_FLIP_I every datom but the decline record:", "identical" if same else "DIFFERENT", "| decline datoms", counts)
+sys.exit(0 if (same and counts == [11, 11]) else 1)
+PYI
+  fi
+  # (ii) the completion worker under the database-wide rule: the default flipped, 30 s; =0 off; this branch unset off,
+  # =1 on. B2 database-wide (every option off otherwise): the worker completes the removal left pending, at 30 s
+  if flip flip-ii removal_commit.clj "(def worker-database-wide-default false)" "(def worker-database-wide-default true)"; then
+    ERA2_ONLY=owner-switches RUN_ENV="ERA2_EXPECT_WORKER_MS=30000" run switch-ii-on flip-ii off "$gate"
+    ERA2_ONLY=owner-switches RUN_ENV="TX2_REMOVAL_WORKER_DATABASE_WIDE=0 ERA2_EXPECT_WORKER_MS=nil" run switch-ii-optout flip-ii off "$gate"
+    ERA2_ONLY=owner-switches RUN_ENV="ERA2_EXPECT_WORKER_MS=nil" run switch-ii-default this off "$gate"
+    ERA2_ONLY=owner-switches RUN_ENV="TX2_REMOVAL_WORKER_DATABASE_WIDE=1 ERA2_EXPECT_WORKER_MS=30000" run switch-ii-env this off "$gate"
+    bash "$x/era2/b2.sh" "$out/b2-flip-ii" "dir:$out/flip-ii" "off" > "$out/b2-flip-ii.log" 2>&1 || status=1
+    ERA2_B2_ENV=TX2_REMOVAL_WORKER_DATABASE_WIDE=0 bash "$x/era2/b2.sh" "$out/b2-flip-ii-optout" "dir:$out/flip-ii" "off" > "$out/b2-flip-ii-optout.log" 2>&1 || status=1
+    grep -h "ERA2_B2_SUMMARY" "$out"/b2-flip-ii/b2-*.log "$out"/b2-flip-ii-optout/b2-*.log
+    grep -q ":worker-completes true" "$out"/b2-flip-ii/b2-off.log || { echo "B2 flip-ii: the worker's completion was not checked"; status=1; }
+    ! grep -q ":worker-completes true" "$out"/b2-flip-ii-optout/b2-off.log || { echo "B2 flip-ii =0: the worker ran"; status=1; }
+  fi
+  # (iii) protected attributes on an unsealed database refused outside tests: the default flipped (database-wide and
+  # per account), =0 off, the test-only override, this branch unset off; and the whole per-account gate on the flipped
+  # copy with the override (every harness declares unsealed databases): as today
+  if flip flip-iii removal_commit.clj "(def protection-sealed-only-default false)" "(def protection-sealed-only-default true)"; then
+    so="owner-switches sealed-only"
+    ERA2_ONLY="$so" RUN_ENV="ERA2_EXPECT_SEALED_ONLY=true ERA2_EXPECT_UNSEALED_FOR_TESTS=false" run switch-iii-on flip-iii off "$gate"
+    ERA2_ONLY="$so" RUN_ENV="ERA2_EXPECT_SEALED_ONLY=true ERA2_EXPECT_UNSEALED_FOR_TESTS=false" run switch-iii-on-pa flip-iii on "$gate"
+    ERA2_ONLY="$so" RUN_ENV="TX2_PROTECTION_SEALED_ONLY=0 ERA2_EXPECT_SEALED_ONLY=false" run switch-iii-optout flip-iii off "$gate"
+    ERA2_ONLY="$so" RUN_ENV="TX2_PROTECTION_UNSEALED_FOR_TESTS=1 ERA2_EXPECT_SEALED_ONLY=true ERA2_EXPECT_UNSEALED_FOR_TESTS=true" run switch-iii-override flip-iii off "$gate"
+    ERA2_ONLY="$so" RUN_ENV="ERA2_EXPECT_SEALED_ONLY=false" run switch-iii-default this off "$gate"
+    RUN_ENV="TX2_PROTECTION_UNSEALED_FOR_TESTS=1 ERA2_EXPECT_SEALED_ONLY=true" run switch-iii-override-gate flip-iii on "$gate"
+  fi
+  grep -h "ERA2_SWITCH\|ERA2_GATE" "$out"/switch-*.log | sort | uniq -c
+fi
+# [DX-ERA2 fix pass] the independent review's attacks and fuzzer (era3/attack.clj, era3/REVIEW.md) on both settings
+attack='(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (era3-attack/main)'
+if [[ $phases == *era3* ]]; then run era3-on this on "$attack"; run era3-subject this subject "$attack"; fi
+attack2='(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (era3-attack2/main)'
+if [[ $phases == *era3* ]]; then
+  run era3b-on this on "$attack2"; run era3b-subject this subject "$attack2"; run era3e9-on this on "$attack2"
+  run era3-commit this commit "$attack"; run era3b-commit this commit "$attack2"
+  attack3='(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (era3-attack3/main)'
+  run era3c-on this on "$attack3"; run era3c-subject this subject "$attack3"; run era3c-commit this commit "$attack3"
+  attack4='(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (era3-attack4/main)'
+  run era3d-off this offrule "$attack4"; run era3d-on this on "$attack4"; run era3d-subject this subject "$attack4"
+  run era3d-q910-on this on "$attack4"
+  # [DX-ERA2 sixth pass] the fifth review (attack5.clj): every case on both boundaries in each per-account mode, fuzz5
+  # on the log's boundary (on), the commit boundary (subject) and across the move (on); Z7 on database-wide
+  attack5='(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (era3-attack5/main)'
+  run era3e-off this offrule "$attack5"; run era3e-on this on "$attack5"; run era3e-subject this subject "$attack5"
+  run era3e-move this on "$attack5"
+  # [DX-ERA2 seventh pass] the sixth review's cases (era3/attack6.clj, era3/REVIEW-6.md; two oracles adapted, marked
+  # in the file): per account and subject check, and database-wide (G1, D1, D2) with every option off
+  attack6='(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (load-file "/lab/attack6.clj") (era3-attack6/main)'
+  run era3f-on this on "$attack6"; run era3f-subject this subject "$attack6"; run era3f-off this off "$attack6"
+fi
+# [DX-ERA2 sixth pass] the failure lines (the standalone branch's lines.clj: F5 and F9 on failures.clj itself)
+if [[ $phases == *lines* ]]; then
+  run lines-this this off '(load-file "/lab/lines.clj") (b2-lines/main)'
+  # [DX-N1, N3] nothing an exception carries reaches a caller (era2/replies.clj): every route with an injected exception
+  # on the file authority (every option off and per account), and the declaration's refused key batch on PostgreSQL
+  run replies-this-off this off '(load-file "/lab/regression.clj") (load-file "/lab/replies.clj") (n1-replies/main)'
+  run replies-this-on this on '(load-file "/lab/regression.clj") (load-file "/lab/replies.clj") (n1-replies/main)'
+  bash "$x/era2/inproc-pg.sh" "$out/replies-pg" replies.clj '(load-file "/lab/regression.clj") (load-file "/lab/replies.clj") (n1-replies/main)' > "$out/replies-pg.log" 2>&1 || status=1
+  grep -hE "^N1_REPLY_SUMMARY|^N1_REPLY FAIL" "$out"/replies-this-*.log "$out/replies-pg/run.log" 2>/dev/null | cut -c1-300
+  grep -q "^N1_REPLY_SUMMARY.*:failed 0" "$out/replies-this-off.log" && grep -q "^N1_REPLY_SUMMARY.*:failed 0" "$out/replies-this-on.log" || status=1
+fi
+# [DX-ERA2 sixth pass] the B2 review's scenarios (b2r/scenarios.clj: S1, S2a, S2b, S3; S3 fails on key bytes, a
+# protected value, a subject ID or a scope word in any failure line) on the file and the PostgreSQL authority
+if [[ $phases == *b2r* ]]; then
+  for authority in file pg; do
+    bash "$x/b2r/run.sh" "$out/b2r-$authority" worktree "$authority" scenarios.clj '(b2r-scenarios/main)' > "$out/b2r-$authority.log" 2>&1 || status=1
+    grep -hE "^B2R_SCEN_SUMMARY|^B2R_SCEN FAIL" "$out/b2r-$authority/run.log" 2>/dev/null | cut -c1-300 | head -8
+  done
+fi
+suites="triplex.gateway.selftest triplex.gateway.group-test triplex.gateway.ids-test triplex.gateway.feed-test triplex.gateway.pinned-test triplex.gateway.recent-test triplex.gateway.cache-key-test triplex.gateway.commit-order-test triplex.gateway.sweep-gates-test triplex.gateway.trace-test"
+# [DX-ERA2 fifth pass] the suites gate on matching the base's counts (the base has one known error, http-route), not on
+# their exit code (which failed every run, the base's included)
+kept_status=$status
+for arm in base:off this:off this:subject this:commit; do
+  [[ $phases == *suites* ]] || continue
+  source=${arm%%:*} option=${arm##*:}
+  run "suites-$source-$option" "$source" "$option" "(require 'clojure.test) (def nss (quote [$suites])) (apply require nss)
+(let [r (apply clojure.test/run-tests nss)] (println \"ERA2_SUITES $option\" (pr-str (select-keys r [:test :pass :fail :error])))
+  (shutdown-agents) (System/exit (if (zero? (+ (:fail r) (:error r))) 0 1)))"
+done
+if [[ $phases == *suites* ]]; then
+  status=$kept_status
+  want=$(grep -h "^ERA2_SUITES" "$out/suites-base-off.log" | sed 's/^ERA2_SUITES [a-z]* //')
+  for arm in off subject commit; do
+    got=$(grep -h "^ERA2_SUITES" "$out/suites-this-$arm.log" | sed 's/^ERA2_SUITES [a-z]* //')
+    [[ -n $got && $got == "$want" ]] || { echo "ERA2_SUITES this:$arm $got differs from the base's $want"; status=1; }
+  done
+fi
+if [[ $phases == *paired* ]]; then
+for arm in base base2 off on commit; do grep -h "^ERA2_PAIRED " "$out/paired-$arm.log" | sed "s/^/$arm /"; done > "$out/paired.txt"
+python3 - "$out/paired.txt" <<'PY' || status=1
+import sys, re
+rows = [l.split(" ", 2) for l in open(sys.argv[1]).read().splitlines()]
+by = {}
+for arm, _, rest in rows: by.setdefault(arm, []).append(rest)
+same = len(by.get("base", [])) == 2 and by.get("base") == by.get("base2") == by.get("off") == by.get("on") == by.get("commit")
+print("ERA2_PAIRED_LOGS_EVERY_DATOM", "identical" if same else "different (see the next line)", {k: len(v) for k, v in by.items()})
+for arm, v in by.items(): print(arm, *v, sep="\n  ")
+# [DX-ERA2 fifth pass] R2-2 is fixed on every mode (the coordinator's ask), so the import replay the workload sends
+# with no frame source is declined AND its command recorded, on this gateway with the option off too: 11 datoms (two
+# attributes, one record). The gate: every arm identical once exactly those datoms are left out, none on the base,
+# and the same 11 on every arm of this gateway.
+def key(r):
+    d = dict(re.findall(r':([a-z0-9-]+) ("[^"]*"|[0-9]+|true|false)', r))
+    return (d.get("sealed"), d.get("sha256-without-r22"), d.get("reads"), int(d.get("datoms", 0)) - int(d.get("r22-datoms", 0)))
+def r22(r): return int(dict(re.findall(r':([a-z0-9-]+) ("[^"]*"|[0-9]+|true|false)', r)).get("r22-datoms", "-1"))
+keys = {arm: [key(r) for r in v] for arm, v in by.items()}
+same2 = len(keys.get("base", [])) == 2 and all(keys.get(a) == keys["base"] for a in ["base2", "off", "on", "commit"])
+counts = {arm: [r22(r) for r in v] for arm, v in by.items()}
+# [DX-ERA2 sixth pass, V4] a declined save that says nothing about when it was framed writes nothing: 0 on every arm
+expect = all(counts.get(a) == [0, 0] for a in ["base", "base2", "off", "on", "commit"])
+# [DX-ERA6] the merged rule records a declined command whatever the save stated (era6/REMOVAL-ON-SAVE-LINE.md section 1,
+# item 4): with the per-account option on, the workload's import replay with no frame source is declined and its
+# command recorded, 11 datoms per run (the record's two attributes and the record); every option off, nothing
+expect = (all(counts.get(a) == [0, 0] for a in ["base", "base2", "off"])
+          and all(counts.get(a) == [11, 11] for a in ["on", "commit"]))
+print("ERA2_PAIRED_LOGS_WITHOUT_R22", "identical" if same2 else "DIFFERENT", "r22 datoms", counts, "as expected" if expect else "UNEXPECTED")
+# [DX-ERA6] every datom identical holds only with those datoms left out (`same2`); `same` is printed, not required
+sys.exit(0 if (same2 and expect) else 1)
+PY
+for arm in base base2 off on commit; do grep -h "^ERA2_PAIRED_REPLIES" "$out/paired-$arm.log" | md5 | sed "s/^/replies $arm /"; done
+# [DX-ERA2 seventh pass, (a)] with a save that says nothing about its frame of a removed subject's protected value:
+# every option off here equals the base datom for datom and reply for reply; the merged line's head answers it the same
+python3 - "$out" <<'PY2' || status=1
+import sys, re
+out = sys.argv[1]
+def get(arm):
+    text = open(f"{out}/paired-sl-{arm}.log").read()
+    logs = [l for l in text.splitlines() if l.startswith("ERA2_PAIRED ")]
+    reps = [l for l in text.splitlines() if l.startswith("ERA2_PAIRED_REPLIES")]
+    f = lambda l, k: (re.search(r':' + k + r' ("[^"]*"|[0-9]+|true|false)', l) or [None, None])[1]
+    return [(f(l, "sealed"), f(l, "datoms"), f(l, "sha256"), f(l, "reads")) for l in logs], reps
+b, o, one = get("base"), get("off"), get("one")
+# the one branch's head is the reference (seventh pass, identities); the old base is printed for comparison only
+case = lambda reps: [re.search(r'\["sourceless-removed" ([0-9]+) ([^\]]*)\]', r).groups() if re.search(r'\["sourceless-removed" ([0-9]+) ([^\]]*)\]', r) else None for r in reps]
+native = len(b[0]) == 2 and b[0] == o[0]
+replies = b[1] == o[1]
+# [DX-ERA2 seventh pass, identities] and against the one branch's head (ONE_COMMIT), datom for datom: with every option
+# off this build installs the same writer functions (s3/idents.clj) and writes the same native log
+native_one = len(one[0]) == 2 and one[0] == o[0]
+print("ERA2_PAIRED_SOURCELESS every datom (off vs base):", "identical" if native else "DIFFERENT", "| replies:", "identical" if replies else "DIFFERENT")
+print("ERA2_PAIRED_SOURCELESS every datom (off vs the one branch):", "identical" if native_one else "DIFFERENT")
+print("ERA2_PAIRED_SOURCELESS the case's answer: base", case(b[1]), "| off", case(o[1]), "| merged line", case(one[1]))
+for arm, r in [("base", b), ("off", o), ("one", one)]:
+    for x in r[0]: print("  ", arm, x)
+replies_one = one[1] == o[1]
+print("ERA2_PAIRED_SOURCELESS replies (off vs the one branch):", "identical" if replies_one else "DIFFERENT")
+sys.exit(0 if (native_one and replies_one and case(o[1]) == case(one[1])) else 1)
+PY2
+fi
+# [DX-ERA2 fifth pass] B2: a published removal's key must be deleted within its grace whatever else is pending
+# (era2/b2.clj in every mode, and with the shred worker's completion), on this checkout's gateway source
+if [[ $phases == *b2* ]]; then
+  bash "$x/era2/b2.sh" "$out/b2" worktree "off on subject commit off-worker subject-worker" || status=1
+  # [DX-ERA2 fifth pass] and on the PostgreSQL authority (a postgres container of its own per mode)
+  ERA2_B2_AUTHORITY=pg bash "$x/era2/b2.sh" "$out/b2-pg" worktree "off on commit" || status=1
+  grep -h "ERA2_B2_SUMMARY" "$out/b2"/b2-*.log "$out/b2-pg"/b2-*.log
+fi
+rm -rf "$out/this/src" "$out/base/src" "$out"/flip-*/src
+exit "$status"

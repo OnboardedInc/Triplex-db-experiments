@@ -8,14 +8,24 @@ import { W0, canonical } from "../../../../bench/lib/w0-world.ts";
 import { memberPage, width } from "../../notify1/census.ts";
 import { Documents, hash, pack, unpack, type Op, type Row } from "../../notify1/store.ts";
 import type { Store } from "../store.ts";
-import { Conflict, openStore } from "../store.ts";
+import { Conflict, namesOf, openStore, type EntityGuard } from "../store.ts";
 import { worldsAt, winner } from "../decision.ts";
 import { LazyReader } from "../read.ts";
 import { JoinedAccount, type Marker } from "./account.ts";
 import { address } from "./index.ts";
 import { evaluateRows } from "./material.ts";
-import { BulkQueue, bulkClaim, type BulkClass } from "./bulk.ts";
-import { fillFrame, frameEstimate, frameMode, windowOf, type Candidate, type FrameMode, type Piece } from "./frames.ts";
+import { BulkQueue, bulkClaim, frameCountersOn, frameEstimates, type BulkClass } from "./bulk.ts";
+import {
+  fillFrame,
+  frameEstimate,
+  frameMode,
+  preconditionMode,
+  windowOf,
+  type Candidate,
+  type FrameMode,
+  type Piece,
+  type Precondition,
+} from "./frames.ts";
 
 const step = 16;
 assert(width % step === 0);
@@ -130,24 +140,36 @@ export class Archive {
   /** The frames this process admitted: count and largest rows, wire estimate and estimated service, and the sum of
    * estimated service (bounded evidence, not one entry per frame). */
   readonly admitted = { frames: 0, rowsMax: 0, wireMax: 0, usMax: 0, usSum: 0 };
+  /** [DX-ACT5] What each frame's commit needs to hold (TX2_SETTLE_PRECONDITION). */
+  readonly precondition: Precondition;
+  /** [DX-ACT5] Frames sent to the writer, refused at commit (the precondition failed), and committed; with the turns'
+   * client-side intervals (bounded) for the live-side reading. */
+  readonly contest = new Contest();
+  /** [DX-ACT5] The account's pause and pace, read before each frame (TX2_SETTLE_CONTROL=1; unset, none). */
+  control?: { gate: () => Promise<void> };
+  /** [DX-ACT5] Diagnostic: no frame is sent after this `performance.now()` time (SettlementStopped). */
+  stopAt?: number;
   private constructor(
     source: JoinedAccount,
     store: Store,
     queue: BulkQueue,
     channel: string,
     frames: FrameMode,
+    precondition: Precondition,
   ) {
     this.source = source;
     this.store = store;
     this.queue = queue;
     this.frames = frames;
-    this.db = new Documents(store.comp, source.s.held ? "settlement-" + channel : "settlement");
+    this.precondition = precondition;
+    this.db = new Documents(store.comp, source.s.held ? "settlement-" + channel + namesOf(source.s).documents : "settlement");
   }
   static async open(
     source: JoinedAccount,
     queue: BulkQueue,
     channel: "values" | "notices" = "values",
     frames: FrameMode = frameMode(),
+    precondition: Precondition = preconditionMode(),
   ) {
     const s = source.s;
     // [DX-ACT1] Why: the held scorecard includes archive writes and indexes in the same physical database.
@@ -155,7 +177,7 @@ export class Archive {
     const store = s.held
       ? await openStore(s.scope, s.profile, "write", s.held)
       : await openStore("lazy-settlement-" + hash([s.scope, channel]).slice(0, 40));
-    return new Archive(source, store, queue, channel, frames);
+    return new Archive(source, store, queue, channel, frames, precondition);
   }
   close() {
     return this.store.close();
@@ -167,10 +189,13 @@ export class Archive {
     at: number,
     context: unknown,
     authority: Awaited<ReturnType<typeof readErasure>>,
+    progress?: { key: string; prior: Row<unknown> | undefined },
   ) {
     // [DX-ACT1] Why: constrain native preparation and durable turns independently of page count. Rejected: a multi-megabyte atomic frame or assuming a timeout can preempt a durable native transaction.
     const estimate = frameEstimate(ops);
     assert(estimate.fits, "Bulk batch exceeds W1 service estimate");
+    // [DX-ACT7] The frame counters (DX_ACT7_FRAME_COUNTERS=1) pair each frame's estimate with its reply.
+    if (frameCountersOn) frameEstimates.set(id, { us: estimate.us, wire: estimate.wire, ops: estimate.rows });
     const n = this.admitted;
     if (n) {
       n.frames++;
@@ -182,15 +207,42 @@ export class Archive {
     if (authority) verifySameErasureAuthority(this.source.s.comp, this.store.comp);
     // [DX-ERASE1] Why: admission can wait after a page was derived, so the same ticket belongs on the destination commit.
     // Rejected: a source read immediately before enqueueing (removal can publish while the batch waits).
-    return this.queue.submit(this.source.s.scope, () =>
-      bulkClaim(
-        this.store.scope,
-        id,
-        kind,
-        () => this.store.commit(id, "lazy/settlement", ops, at, context),
-        authority,
-      ),
-    );
+    // [DX-ACT5] With TX2_SETTLE_PRECONDITION=progress the frame is refused only if its writer's progress row moved.
+    const guards: EntityGuard[] | undefined =
+      this.precondition === "progress" && progress
+        ? [{ entityId: this.db.prefix + progress.key, tripleIds: progress.prior ? [progress.prior.id] : [] }]
+        : undefined;
+    assert(this.precondition === "head" || guards, "A settlement frame names its progress row");
+    await this.control?.gate();
+    if (this.stopAt !== undefined && performance.now() > this.stopAt) throw new SettlementStopped();
+    const c = this.contest;
+    c.offered++;
+    try {
+      const r = await this.queue.submit(this.turnKey(), async () => {
+        const begun = performance.now();
+        try {
+          return await bulkClaim(
+            this.store.scope,
+            id,
+            kind,
+            () => this.store.commit(id, "lazy/settlement", ops, at, context, undefined, undefined, guards),
+            authority,
+          );
+        } finally {
+          c.turn(begun, performance.now());
+        }
+      });
+      c.done(true);
+      return r;
+    } catch (e) {
+      if (e instanceof Conflict) c.done(false);
+      throw e;
+    }
+  }
+  /** [DX-ACT5] The key the bulk queue rotates on: the account (held accounts share one database scope). */
+  turnKey() {
+    const s = this.source.s;
+    return s.held ? s.scope + "/" + s.held.account : s.scope;
   }
 
   async values(sequence: number) {
@@ -239,6 +291,7 @@ export class Archive {
         at,
         next,
         authority,
+        { key, prior },
       );
       return next;
     };
@@ -338,6 +391,7 @@ export class Archive {
       at,
       next,
       authority,
+      { key: progressKey(sequence), prior },
     );
     return next;
   }
@@ -394,14 +448,24 @@ export class Archive {
     await recheckErasure(this.source.s.comp, marker.erasureSeq);
     return { frontier, output: output as (Answer | Changes)[], frames: "count" as FrameMode };
   }
-  // [DX-ACT4] Reads every frame page of a byte-framed release in order and joins split subjects: each page must start
-  // where the previous one ended, chain to its hash, and a piece with `part` must continue the same subject at exactly
-  // the number of changes already joined. Returns each changed subject once, with its changes only.
-  private async storedFrames(sequence: number, frontier: Progress, identity: string, at: number) {
+  /**
+   * [DX-ACT7] The same pages and checks as `stored()` for a byte-framed release, yielded one joined subject at a time
+   * in census order, so the check of an account of 100,000 subjects holds one page of 32 frames at a time instead of
+   * every changed value (about 5.9 million at 20 owed forms). The final checks (chain hash, frontier, change count) run
+   * after the last subject. Rejected: changing `stored()` (its callers compare whole arrays).
+   */
+  async *storedStream(sequence: number) {
+    const { marker, event, census } = await this.source.receipt(sequence);
+    const identity = identityOf(this.source.s.scope, marker, event.at),
+      at = await this.store.head();
+    const frontier = (await this.db.get<Progress>(progressKey(sequence), at)).value;
+    assert(frontier.identity === identity && frontier.through <= census.count && frontier.frames === "bytes");
+    assert(frontier.status !== "stored" || frontier.through === census.count);
     let previous = identity,
       through = 0,
-      tail = 0;
-    const output: Changes[] = [];
+      tail = 0,
+      changes = 0;
+    let open: Changes | undefined;
     for (let first = 1; first <= frontier.frame!; first += 32) {
       const keys = Array.from({ length: Math.min(32, frontier.frame! - first + 1) }, (_, i) =>
         framePageKey(sequence, first + i),
@@ -420,13 +484,14 @@ export class Archive {
         );
         for (const piece of unpack<Changes[]>(p.bytes)) {
           assert(piece.changes.length > 0);
-          const last = output.at(-1);
+          changes += piece.changes.length;
           if (piece.part) {
-            assert(last?.subject === piece.subject && last.changes.length === piece.part, "Split subject out of order");
-            last.changes.push(...piece.changes);
+            assert(open?.subject === piece.subject && open.changes.length === piece.part, "Split subject out of order");
+            open.changes.push(...piece.changes);
           } else {
-            assert(last?.subject !== piece.subject, "Duplicate settled subject");
-            output.push({ subject: piece.subject, changes: [...piece.changes] });
+            assert(open?.subject !== piece.subject, "Duplicate settled subject");
+            if (open) yield open;
+            open = { subject: piece.subject, changes: [...piece.changes] };
           }
         }
         previous = hash(p);
@@ -434,13 +499,65 @@ export class Archive {
         tail = p.tail;
       }
     }
+    if (open) yield open;
+    assert(previous === frontier.hash && through === frontier.through && tail === frontier.part && frontier.changes === changes);
+    await recheckErasure(this.source.s.comp, marker.erasureSeq);
+    return frontier;
+  }
+  // [DX-ACT4] Reads every frame page of a byte-framed release in order and joins split subjects: each page must start
+  // where the previous one ended, chain to its hash, and a piece with `part` must continue the same subject at exactly
+  // the number of changes already joined. Returns each changed subject once, with its changes only.
+  private async storedFrames(sequence: number, frontier: Progress, identity: string, at: number) {
+    const output: Changes[] = [];
+    for await (const row of this.framesStream(sequence, frontier, identity, at)) output.push(row);
+    return output;
+  }
+  private async *framesStream(sequence: number, frontier: Progress, identity: string, at: number) {
+    let previous = identity,
+      through = 0,
+      tail = 0,
+      changes = 0;
+    let last: Changes | undefined;
+    for (let first = 1; first <= frontier.frame!; first += 32) {
+      const keys = Array.from({ length: Math.min(32, frontier.frame! - first + 1) }, (_, i) =>
+        framePageKey(sequence, first + i),
+      );
+      const rows = await this.db.rows<FramePage>(keys, at);
+      for (const [i, k] of keys.entries()) {
+        const p = rows.get(k)?.value;
+        assert(
+          p?.identity === identity &&
+            p.frame === first + i &&
+            p.start === through &&
+            p.part === tail &&
+            p.previous === previous &&
+            (p.through > p.start || p.tail > p.part),
+          "Frame page out of order",
+        );
+        for (const piece of unpack<Changes[]>(p.bytes)) {
+          assert(piece.changes.length > 0);
+          changes += piece.changes.length;
+          if (piece.part) {
+            assert(last?.subject === piece.subject && last.changes.length === piece.part, "Split subject out of order");
+            last.changes.push(...piece.changes);
+          } else {
+            assert(last?.subject !== piece.subject, "Duplicate settled subject");
+            if (last) yield last;
+            last = { subject: piece.subject, changes: [...piece.changes] };
+          }
+        }
+        previous = hash(p);
+        through = p.through;
+        tail = p.tail;
+      }
+    }
+    if (last) yield last;
     assert(
       previous === frontier.hash &&
         through === frontier.through &&
         tail === frontier.part &&
-        frontier.changes === output.reduce((n, row) => n + row.changes.length, 0),
+        frontier.changes === changes,
     );
-    return output;
   }
   reader() {
     const source = this.source,
@@ -488,5 +605,43 @@ export class Archive {
         }
       },
     );
+  }
+}
+
+export class SettlementStopped extends Error {}
+/** [DX-ACT5] Exact counts of one writer's frames, per-second commit and refusal counts from `origin`, and the turns'
+ * client-side intervals (the first 250,000). */
+export class Contest {
+  offered = 0;
+  refused = 0;
+  committed = 0;
+  origin = performance.now();
+  readonly seconds = new Map<number, { committed: number; refused: number }>();
+  readonly turns: [number, number][] = [];
+  turn(begun: number, ended: number) {
+    if (this.turns.length < 250_000) this.turns.push([begun, ended]);
+  }
+  done(ok: boolean) {
+    if (ok) this.committed++;
+    else this.refused++;
+    const k = Math.floor((performance.now() - this.origin) / 1000),
+      b = this.seconds.get(k) ?? { committed: 0, refused: 0 };
+    if (ok) b.committed++;
+    else b.refused++;
+    this.seconds.set(k, b);
+  }
+  reset(origin = performance.now()) {
+    this.offered = this.refused = this.committed = 0;
+    this.origin = origin;
+    this.seconds.clear();
+    this.turns.length = 0;
+  }
+  summary() {
+    return {
+      offered: this.offered,
+      refused: this.refused,
+      committed: this.committed,
+      perSecond: [...this.seconds].sort((a, b) => a[0] - b[0]).map(([s, v]) => ({ s, ...v })),
+    };
   }
 }

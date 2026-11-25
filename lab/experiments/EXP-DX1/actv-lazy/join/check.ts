@@ -10,7 +10,7 @@ import { width } from "../../notify1/census.ts";
 export const toWire = (d: any) => ({ ...d, seq: Number(d.seq), payload: JSON.parse(d.payload) });
 export class Reference {
   readonly oracle: DomainOracle;
-  private readonly workers: DomainOraclePool;
+  readonly workers: DomainOraclePool;
   private foldedRoster?: string;
   constructor(workers = 1) {
     this.workers = new DomainOraclePool(new URL("./oracle.py", import.meta.url).pathname, workers);
