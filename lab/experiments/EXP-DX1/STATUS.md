@@ -6271,3 +6271,9 @@ Source: independent reviewer, branch `exp/DX-ERA5-derived-copies-review` `a8213b
 **Action:** the derived-copies builder told every finding (queued behind its rerun): sealing must be required by a one-way setting in the database and enforced by the gateway's write route, never degrade to clear; padding and binding; one subject's removal must not stop an account; the cache key; the cost. The removal builder resumed for a fifth pass: B2 and a list of every swallowed refusal, whether B2 exists on the one branch with options off, what every cache keys on under each boundary, the two refusals for the creation-versus-removal replay, the boundary choice moved into the database, the read wait measured. The fourth removal review told B2 and B5. A second review of derived copies follows.
 
 **Consequence for the open question to Sam:** the commit boundary must not become the rule until every cache is keyed on something that changes at the commit (B5).
+
+## 2026-11-25 03:06 EST: leaked test stack of the finished Publish builder removed
+
+- Found at 03:05: five idle containers `tx2-ha1-acacb1ce-*` (0% CPU, about 1 GiB of VM memory), created 00:55 by the Publish builder's restart run, holder label DX-ACT8, holding stack slot `datomic-s2` under a process that no longer exists. The builder's final message said none of its containers were left.
+- Removed by exact name (five containers and their network; no volumes existed). The slot lock and pool rows name a dead process; the engine reclaims those on the next admission. Nothing else touched; the console toy is up.
+- Other builders were queueing for the shared stack slots during those two hours. Rule for briefs: a builder's final housekeeping line must come from a container listing by its holder label, not from memory.
