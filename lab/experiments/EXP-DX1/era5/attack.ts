@@ -18,7 +18,7 @@ import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import { inflateRawSync } from "node:zlib";
+import { deflateRawSync, inflateRawSync } from "node:zlib";
 import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { W0, triplexValue } from "../../../bench/lib/w0-world.ts";
@@ -307,20 +307,29 @@ for (const [place, [xs, ys]] of Object.entries(await places(C))) {
   // fix of B3): before the fix the class was the clear length itself, so the test is the same attack either way
   const placeOfWire = (w: string) => sealedHeader(w).p;
   const xOpened = await open(url, xs, xs.map(placeOfWire));
-  const yClear = (await open(url, ys, ys.map(placeOfWire))) as string[];
-  const exactTag = ys.every((w, i) => clearLength(w) === Buffer.byteLength(yClear[i]!));
+  // [DX-ERA5, third review] a ledger chunk opens as {bytes} (compressed canonical JSON of its items): its length under
+  // another document type is that of the same JSON recompressed with the type replaced
+  const yOpened = (await open(url, ys, ys.map(placeOfWire))) as (string | { bytes: Buffer })[];
+  const textOf = (v: string | { bytes: Buffer }) => (typeof v === "string" ? v : inflateRawSync(v.bytes).toString("utf8"));
+  const yClear = yOpened.map(textOf);
+  const lenOf = (v: string | { bytes: Buffer }) => (typeof v === "string" ? Buffer.byteLength(v) : v.bytes.length);
+  const exactTag = ys.every((w, i) => clearLength(w) === lenOf(yOpened[i]!));
   const typeIn = (s: string) => (s.match(/docType\\*"\s*:\s*\\*"(passport|ead|visa)/g) ?? []).length;
-  const stored = (n: number) => (exactTag ? n : n + 4 <= 4096 ? 2 ** Math.max(6, Math.ceil(Math.log2(n + 4))) : 4096 * Math.ceil((n + 4) / 4096));
+  const stored = (n: number) => (exactTag ? n : n + 4 <= 4096 ? 2 ** Math.max(6, Math.ceil(Math.log2(n + 4))) : 512 * Math.ceil((n + 4) / 512));
   const lx = xs.map(clearLength).sort((a, b) => a - b);
+  const asType = (v: string | { bytes: Buffer }, t: string) =>
+    typeof v === "string"
+      ? Buffer.byteLength(v) + typeIn(v) * (t.length - "ead".length)
+      : deflateRawSync(textOf(v).replace(/(docType\\*"\s*:\s*\\*")ead/g, "$1" + t), { level: 9 }).length;
   const fits = TYPES.filter((t) => {
-    const predicted = yClear.map((s) => stored(Buffer.byteLength(s) + typeIn(s) * (t.length - "ead".length))).sort((a, b) => a - b);
+    const predicted = yOpened.map((v) => stored(asType(v, t))).sort((a, b) => a - b);
     return predicted.length === lx.length && predicted.every((v, i) => v === lx[i]);
   });
   L[place] = {
     xRecords: xs.length,
     xOpenAsRemoved: xOpened.filter((v) => typeof v === "object").length,
     xClearLengths: lx,
-    yClearLengths: yClear.map((s) => Buffer.byteLength(s)).sort((a, b) => a - b),
+    yClearLengths: yOpened.map(lenOf).sort((a, b) => a - b),
     yRecordsNamingTheType: yClear.filter((s) => typeIn(s) > 0).length,
     typesThatFit: fits,
   };

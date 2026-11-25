@@ -10,17 +10,20 @@
 set -uo pipefail
 out=${1:?absolute new output directory}; phase=${2:?cases, pending or fuzz}
 [[ $out == /* && ! -e $out ]] || { echo "inproc.sh: give a new absolute output directory" >&2; exit 2; }
-[[ $phase == cases || $phase == pending || $phase == fuzz || $phase == cases6 || $phase == fuzz6 || $phase == z4 || $phase == n3deep ]] || exit 2
+[[ $phase == cases || $phase == pending || $phase == fuzz || $phase == cases6 || $phase == fuzz6 || $phase == z4 || $phase == n3deep || $phase == cases7 || $phase == cost7 || $phase == resweep7 || $phase == fuzz7 || $phase == e4race7 ]] || exit 2
 : "${DOCKER_HOST:?set DOCKER_HOST to the lab VM docker socket}"
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 x=$repo/lab/experiments/EXP-DX1
 mkdir -p "$out/src" "$out/lab" "$out/run.out"
-git -C "$repo" rev-parse HEAD > "$out/source"
-git -C "$repo" status --porcelain -- packages/datomic/gateway lab/experiments/EXP-DX1/era5 > "$out/dirty"
-cp -R "$repo/packages/datomic/gateway/src/." "$out/src/"
+# [DX-ERA5, third review] ERA5_GATEWAY_TREE: another checkout whose gateway source runs (the tests stay this one's)
+gw=${ERA5_GATEWAY_TREE:-$repo}
+git -C "$gw" rev-parse HEAD > "$out/source"
+git -C "$gw" status --porcelain -- packages/datomic/gateway > "$out/dirty"
+git -C "$repo" status --porcelain -- lab/experiments/EXP-DX1/era5 >> "$out/dirty"
+cp -R "$gw/packages/datomic/gateway/src/." "$out/src/"
 (cd "$out/src" && find . -type f -name '*.clj' | LC_ALL=C sort | xargs shasum -a 256 | shasum -a 256 | cut -c1-64) > "$out/gateway-source-sha"
-cp "$repo/packages/datomic/src/codec-spec.json" "$out/codec-spec.json"
-cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era3/attack.clj" "$x/act9/tickets.clj" "$x/era4/races.clj" "$x/era5/attack5.clj" "$x/era5/attack6.clj" "$out/lab/"
+cp "$gw/packages/datomic/src/codec-spec.json" "$out/codec-spec.json"
+cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era3/attack.clj" "$x/act9/tickets.clj" "$x/era4/races.clj" "$x/era5/attack5.clj" "$x/era5/attack6.clj" "$x/era5/attack7.clj" "$out/lab/"
 image=${DX_ERA5_RUNTIME_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
 [[ $image =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "inproc.sh: DX_ERA5_RUNTIME_ID must be an image ID" >&2; exit 2; }
 [[ $(docker image inspect --format '{{.Id}}' "$image") == "$image" ]] || { echo "inproc.sh: image $image not present" >&2; exit 2; }
@@ -35,6 +38,7 @@ env=(-e TX2_SUBJECT_SAVE=1 -e TX2_SUBJECT_NUMERIC_OWNER=1 -e TX2_SUBJECT_ORDERED
 for kv in ${ERA5_EXTRA_ENV:-}; do env+=(-e "$kv"); done
 main=era5-attack/main; extra=""
 [[ $phase == *6 || $phase == z4 || $phase == n3deep ]] && { main=era5-attack6/main; extra='(load-file "/lab/attack6.clj")'; }
+[[ $phase == *7 ]] && { main=era5-attack7/main; extra='(load-file "/lab/attack6.clj") (load-file "/lab/attack7.clj")'; }
 printf '%s\n' "(load-file \"/lab/regression.clj\") (load-file \"/lab/gate.clj\") (load-file \"/lab/attack.clj\") (load-file \"/lab/tickets.clj\") (load-file \"/lab/races.clj\") (load-file \"/lab/attack5.clj\") $extra ($main)" > "$out/run.clj"
 name="tx2-dxera5-inproc-$$-$phase"
 started=$(date +%s)
@@ -48,6 +52,6 @@ docker logs "$name" > "$out/run.log" 2>&1
 docker rm "$name" > /dev/null
 echo "$(( $(date +%s) - started ))" > "$out/seconds"
 [[ $(cat "$out/image-ran") == "$image" ]] || { echo "inproc.sh: the container ran $(cat "$out/image-ran"), not $image" >&2; status=3; }
-grep -E "^ERA[56]_(SUMMARY|TALLY|PROGRESS|VIOLATIONS|VIOLATION|CASE|FINDING|FINDINGS|BOUNDARY)|ERA3_VIOLATION|Exception in|CompilerException|Syntax error" "$out/run.log" | cut -c1-2500 | tail -60
+grep -E "^ERA[567]_(SUMMARY|TALLY|PROGRESS|VIOLATIONS|VIOLATION|CASE|FINDING|FINDINGS|BOUNDARY)|ERA3_VIOLATION|Exception in|CompilerException|Syntax error" "$out/run.log" | cut -c1-2500 | tail -60
 rm -rf "$out/src"
 exit "$status"
