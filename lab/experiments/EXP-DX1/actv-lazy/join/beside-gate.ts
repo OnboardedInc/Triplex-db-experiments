@@ -792,10 +792,14 @@ async function restartPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
   const restart = async (role: "active" | "write") => {
     const begun = now();
     await docker(["restart", "-t", "5", name(role)]);
-    // Back when the write path answers a head read again (the transactor's return is seen by the next commit, which is
-    // retried below while it reports a transport failure).
+    // Back when the write path answers a head read and a command lookup again (a lookup syncs with the transactor, so
+    // it fails until the peer reaches the restarted transactor); the commit itself is retried below.
     for (let k = 0; ; k++) {
-      try { await c.s.head(); break; } catch (e) { if (k > 120) throw e; await sleep(1000); }
+      try { await c.s.head(); await c.s.lookup("act8-restart-probe"); break; } catch (e) { if (k > 120) throw e; await sleep(1000); }
+    }
+    // And the read gateway's peer, which reaches the restarted transactor on its own (the checks read through it).
+    for (let k = 0; ; k++) {
+      try { await c.demand.read(W0.placementId(0), { validTime }); break; } catch (e) { if (k > 120) throw e; await sleep(1000); }
     }
     return Math.round(now() - begun);
   };
@@ -812,8 +816,10 @@ async function restartPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
     }
     throw new Error("the Publish was never acknowledged after the restart: " + failures.join(" | "));
   };
+  let stage = "";
   for (const role of ["active", "write"] as const)
-    for (const where of ["afterRead", "inside", "frame"] as const) {
+    for (const where of ["afterRead", "inside", "frame"] as const) try {
+      stage = "publish";
       const doc = nextLarge(g.current.doc, base());
       const id = c.attempt + ":act8:restart:" + role + ":" + where + ":" + g.n++;
       const old = g.current.doc;
@@ -827,6 +833,7 @@ async function restartPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
         where === "afterRead" ? { afterRead: hook } : where === "inside" ? { inside: hook } : undefined);
       if (pending) restartMs = await pending;
       assert(where === "frame" || restartMs !== undefined, "the restart did not run inside the Publish");
+      stage = "record checks";
       const seq = await sequenceAt(c.a, p.position);
       const receipt = await c.a.receipt(seq, p.position);
       assert.deepEqual([receipt.event.at, receipt.event.value.request], [p.position, id]);
@@ -840,6 +847,7 @@ async function restartPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
       await g.fold(r, old);
       g.published.push(r);
       let frame: Record<string, unknown> | null = null;
+      stage = "settlement";
       if (where === "frame") {
         // Settle with a restart before the second values frame's commit; that frame's commit fails, the worker stops,
         // and the release is then settled from its durable progress and checked.
@@ -861,8 +869,12 @@ async function restartPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
         assert(restartMs !== undefined, "the restart did not run inside the settlement");
       }
       const settled = await g.settle(r, old);
+      stage = "pinned reads";
       await g.checkBetween(r);
       out.push({ role, where, restartMs, failures, position: r.position, read: r.read, seq: r.seq, frame, settled });
+    } catch (e) {
+      jsonFile(path.join(c.out, "act8-restart-partial.json"), out);
+      throw new Error("restart " + role + " " + where + " at " + stage + ": " + String((e as Error)?.message), { cause: e });
     }
   console.log("[act8] restart " + JSON.stringify(out.map((x) => [x.role, x.where, x.restartMs, (x.failures as string[]).length, x.position])));
   return out;
