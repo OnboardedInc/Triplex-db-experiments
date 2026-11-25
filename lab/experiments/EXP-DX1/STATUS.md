@@ -6699,3 +6699,17 @@ Source: session-plan analyst; branch `exp/DX-SRV1-session-plan` `702a5b44a`, `la
 - **Blockers before renting:** the machine type of every earlier run is not in stock at the storage bucket's site (3 at another site); three merges must land (the ID fix is required for the product save path); the read classification on the scorecard and the dry runs must be built.
 
 **Action:** a preparation builder started (task file `OPUS-SRV2-session-prep`): the classification, the two read options with a proposal on defaults, a script with a dry run for every step, the spending guards.
+
+## 2026-11-25 18:10 EST: third review of the derived seal: holds where built to hold; one subject can still stop an account; fourth round sent
+
+Source: independent reviewer, branch `exp/DX-ERA5-derived-copies-review` `d018e725c`, `REVIEW-3.md`. Reviewed: `exp/DX-ERA4-derived-copies` `e75f61f40`.
+
+- **Held:** with today's writers placing records at a subject's real root no removed value came back: deep-layout fuzzer 21,000 schedules, 627,253 checks, 0 violations; 10,266 of 10,266 under-named records at a real root removed with their subject's value; after a failed or refused seal the clear write was refused every time. Earlier findings stay closed except two.
+- **T1, high:** one removal in the deep format stops the account: after one subject's document date is removed the account's next settlement and notice recorder fail every time (in process and on a stack).
+- **T2, high:** a notice ledger only grows (retired items are kept), so the limit of about 1,790 items counts everything a subject was ever owed; one subject over it stops the account's notices for good. Not created by the seal (in clear the limit is 1,680).
+- **T3, high:** the new root check accepts a root that is not the subject's (a second entity with the root's rows, the same number's root in another account, or none); such records are sealed under the wrong keys or none and still open after the removal.
+- T4, medium: the reference walk reaches other subjects and shared entities, misses references into the subject, and its cost grows with what it reaches (1,063 ms per record when one shared entity reaches 200 subjects). T5, medium: the key re-sweep holds every removal in memory and sorts them every pass (182 MB and about 300 ms per pass at 300,000 removals). T6: the refused-write bug reproduces when forced until the removal line's fix is merged. T7: content-free fields can carry a protected value (no writer does).
+- Reviewer's judgement: the gateway choosing the keys is right; a declared subject boundary can be checked, graph reachability cannot.
+- Merge default off: the content is fit, the branch is not (it sits on an old removal head; 8 files conflict with the one branch): the removal line lands first.
+
+**Action:** fourth round sent to the builder (two test slots, behind the merges and the server preparation): T1 to T7; "one subject never stops an account" as a tested property in both formats; a declared subject boundary; the re-sweep rebuilt; and Sam's decision of 2026-11-25 that the expired-document notice is KEPT when a document value is removed (the earlier fix, which withdrew it, is reversed).
