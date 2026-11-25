@@ -759,8 +759,8 @@ is unchanged by this fix and is an open decision for the owner.
 | Console and XQ10's questions proof, second toy | questions proof 2,599 of 2,599; console proof 37 of 37; every console gate | `7ba83d89` (recorded while the toy was up) |
 | **API1's gate** (`api1/gate.sh gate,straddle`, at `ee9d5da5a`) | **167,357 comparisons of the batch and the loader against single reads, 0 differences**; refusals as designed (history, row ID lookups, scans, held handles: `BatchUnsupported`); straddle: the product's unpinned path inconsistent in 87 of 334 calls (what API1 measures), pinned, loader and batch 0 of 369, 1,133 and 1,527. **The first run found a fault of this merge** (every batch 400 "Boolean cannot be cast to IFn": step 0 had made `admission/*own-pool*` a function and API1's `batch.clj` still bound it to `true`); fixed in `ee9d5da5a` | API1's runtime image `21a67288…` by ID (it needs node), the head's gateway source mounted |
 | API1's parsed-entity cache gate (`cache`, `TX2_ENTITY_CACHE_VERIFY=1`) | 6,208 probes, 0 removed values served, 0 missing; 64 refused, the designed 503s while a removal is pending (32 each, sealed and unsealed) (= API1's page) | `21a67288…`, source mounted (run at `4b3f0bc32`; the cache gate does not use the batch route) |
-| XQ10's stacks | XQ10_STACKS_ROW | `7ba83d89` |
-| RPT1 gate | RPT1_ROW | `7ba83d89` |
+| XQ10's stacks (xq3, xq6, xq9 off and shapes, xq7, the question reader, refusals) | every step passed; reader 5,783 checks, 36 refused byte-equal on both readers, 36 the index refused and the sweep answered, 0 failed; refusals 9. **xq3's first run stopped once** on 503 `ErasureFrontierUnavailable` right after its scope was created (no gateway exception logged; its write gateway had restarted once at start, unable to read the transactor's location); **rerun alone: 1,654 checks, pass**. Cause not found; open | `7ba83d89` |
+| RPT1 gate with its file scan | 606 checks, 0 failures, 8,226 facts compared (the first run did not start: the worktree's install predated `packages/reporting`) | `7ba83d89`, PostgreSQL `526f86d9` |
 
 ## Next server session (one driver, in this order; none has run)
 
