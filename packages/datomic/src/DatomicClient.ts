@@ -267,6 +267,8 @@ export class DatomicClient {
   reachSession = randomUUID();
   readonly reachCache: ByteCache<CachedEntity>;
   private readonly reachReplySequence = new WeakMap<object, number | null>();
+  /** [DX-ERA2 fifth pass, Z7] The newest removal stamp seen per database, from any response that carries one. */
+  readonly removalStamps = new Map<string, number>();
   // [DX-RD4] The gateway's echo of an at-least read whose body is not a map (reach), keyed by the parsed reply.
   private readonly atLeastEcho = new WeakMap<object, number>();
   private readonly reachSequence = new Map<string, number>();
@@ -626,6 +628,11 @@ export class DatomicClient {
               // under the commit boundary, while the erasure sequence waits for the publication.
               const erasureHead = res.headers["x-triplex-erasure-seq"];
               const stampHead = res.headers["x-triplex-removal-stamp"] ?? erasureHead;
+              if (typeof stampHead === "string" && /^\d+$/.test(stampHead)) {
+                const stampDb = /^\/v\d+\/db\/([^/]+)\//.exec(path)?.[1];
+                if (stampDb !== undefined)
+                  this.removalStamps.set(stampDb, Math.max(this.removalStamps.get(stampDb) ?? 0, Number(stampHead)));
+              }
               if (
                 stampHead !== undefined &&
                 (path.endsWith("/reach") || path.endsWith("/reach-many"))

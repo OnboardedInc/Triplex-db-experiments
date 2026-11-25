@@ -164,7 +164,11 @@
 (defn apply-native! [conn current entry]
   (let [current (install-cut-guard! conn current)
         eid (d/entid current [:triplex.tx/operation-id (operation-id entry)])
-        raw (json/write-str entry)
+        ;; [DX-ERA2 fifth pass, Z1] the removal's record as published, when a restore's replay carries it (metadata
+        ;; :published): the replay lands at the next free position (its journal and transaction say so) but keeps the
+        ;; published record, so the data's records and the log stay one chain and the commit boundary sees the same
+        ;; removal. One arity, so a caller that wraps this function keeps working.
+        raw (get (meta entry) :published (json/write-str entry))
         position (get entry "position")
         tx (get entry "txId")
         stamp (double (get entry "erasedAt"))
@@ -270,10 +274,14 @@
                 eid (d/entid data [:triplex.tx/operation-id (operation-id entry)])]
             (if eid
               (let [native (json/read-str (scope/value data eid :triplex.tx/erasure-record))]
-                (when-not (and (= (dissoc entry "position") (dissoc native "position"))
-                               (= (get native "position") (scope/value data eid :triplex.tx/position)))
-                  (privacy/unavailable!)))
-              (apply-native! conn data (assoc entry "position" (inc (scope/head-position data (scope/entity data))))))))
+                ;; [DX-ERA2 fifth pass, Z1] the published record itself (a replay by this build), or one an earlier
+                ;; build replayed with its new position written into the record
+                (if (= entry native) nil
+                  (when-not (and (= (dissoc entry "position") (dissoc native "position"))
+                                 (= (get native "position") (scope/value data eid :triplex.tx/position)))
+                    (privacy/unavailable!))))
+              (apply-native! conn data (with-meta (assoc entry "position" (inc (scope/head-position data (scope/entity data))))
+                                         {:published (json/write-str entry)})))))
         ;; [DX-ERA3] A restored copy guarded per account: counters, declaration and held accounts from the log.
         ;; [DX-ACT9] Through privacy's hooks (see apply-native!).
         (when (if privacy/removal-enabled ((:per-account? privacy/removal-hooks) (sync! conn)) false)

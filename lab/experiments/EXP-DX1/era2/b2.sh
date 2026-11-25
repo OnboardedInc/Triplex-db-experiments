@@ -5,6 +5,8 @@
 # REF: a commit whose gateway source is tested (default: this worktree's files). MODES: any of off (every option off:
 # no TX2_ variable at all), on (per account), subject (per account, subject check), commit (and the commit boundary).
 # Every container runs the pinned runtime image by ID; the shred grace is ERA2_B2_GRACE_MS (default 2000).
+# ERA2_B2_AUTHORITY=pg: the PostgreSQL removal authority, a postgres container (image by ID) on a network of its own per
+# mode, a throwaway password and wrapping key made here and never written to disk (era5/cost.sh's pattern).
 set -uo pipefail
 out=${1:?absolute new output directory}; ref=${2:-worktree}; modes=${3:-off on subject commit}
 [[ $out == /* && ! -e $out ]] || { echo "b2.sh: give a new absolute output directory" >&2; exit 2; }
@@ -25,6 +27,18 @@ cp "$x/wfix1/regression.clj" "$x/era2/b2.clj" "$out/lab/"
 image=${DX_ERA2_IMAGE_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
 [[ $(docker image inspect --format '{{.Id}}' "$image") == "$image" ]] || { echo "b2.sh: image $image not present" >&2; exit 2; }
 echo "$image" > "$out/image"
+pgimage=${DX_ERA2_PG_ID:-sha256:526f86d93c6ea08fd3f1fe5605650cacc781b2c6013169a0ad8f42c7d3d84f32}
+authority=${ERA2_B2_AUTHORITY:-file}
+if [[ $authority == pg ]]; then
+  [[ $(docker image inspect --format '{{.Id}}' "$pgimage") == "$pgimage" ]] || { echo "b2.sh: image $pgimage not present" >&2; exit 2; }
+fi
+pgs=(); nets=()
+cleanup() {
+  for c in ${pgs[@]+"${pgs[@]}"}; do docker rm -f "$c" > /dev/null 2>&1 || true; done
+  for n in ${nets[@]+"${nets[@]}"}; do docker network rm "$n" > /dev/null 2>&1 || true; done
+  rm -rf "$out/src"
+}
+trap cleanup EXIT
 status=0
 for mode in $modes; do
   env=(-e TRIPLEX_ERASURE_DIRECTORY=/tmp/era2-authority -e DATOMIC_URI_TEMPLATE='datomic:mem://{db}'
@@ -36,14 +50,27 @@ for mode in $modes; do
   # off-worker, subject-worker: the shred worker completes a removal left pending 3 s (TX2_REMOVAL_WORKER_COMPLETE_MS)
   [[ $mode == subject-worker ]] && env+=(-e TX2_SUBJECT_SAVE=1 -e TX2_SUBJECT_NUMERIC_OWNER=1 -e TX2_SUBJECT_ORDERED_IDS=1 -e TX2_REMOVAL_PER_ACCOUNT=1 -e TX2_REMOVAL_SUBJECT_CHECK=1)
   [[ $mode == *-worker ]] && env+=(-e TX2_REMOVAL_WORKER_COMPLETE_MS=3000)
+  netargs=()
+  if [[ $authority == pg ]]; then
+    net="tx2-dxera2-b2net-$$-$mode"; pg="tx2-dxera2-b2pg-$$-$mode"; password=$(openssl rand -hex 16)
+    docker network create "$net" > /dev/null || exit 1; nets+=("$net")
+    docker run -d --pull never --name "$pg" --network "$net" -e "POSTGRES_PASSWORD=$password" --memory 1g "$pgimage" > /dev/null || exit 1
+    pgs+=("$pg")
+    docker inspect --format '{{.Image}}' "$pg" > "$out/pg-image-ran-$mode"
+    for i in $(seq 1 60); do docker exec "$pg" pg_isready -U postgres > /dev/null 2>&1 && break; sleep 1; done
+    sleep 2
+    env+=(-e "TRIPLEX_ERASURE_JDBC=jdbc:postgresql://$pg:5432/postgres?user=postgres&password=$password"
+          -e "TRIPLEX_ERASURE_WRAPPING_KEY=$(openssl rand -base64 32)")
+    netargs=(--network "$net")
+  fi
   printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/b2.clj") (era2-b2/main)' > "$out/run.clj"
-  docker run --rm --pull never --name "tx2-dxera2-b2-$$-$mode" --memory 3g --cpus 2 \
+  docker run --rm --pull never --name "tx2-dxera2-b2-$$-$mode" ${netargs[@]+"${netargs[@]}"} --memory 3g --cpus 2 \
     -v "$out/src:/opt/gateway/src:ro" -v "$out/codec-spec.json:/opt/spec/codec-spec.json:ro" \
     -v "$out/lab:/lab:ro" -v "$out/run.clj:/opt/run.clj:ro" "${env[@]}" --entrypoint /bin/bash "$image" -c \
     'cd /opt/datomic && java -Xmx2g -Ddatomic.objectCacheMax=256m -Ddatomic.memoryIndexMax=256m -Dtriplex.codec.spec=/opt/spec/codec-spec.json -cp "$(DATOMIC_EXT_CLASSPATH=/opt/gateway/src bin/classpath)" clojure.main /opt/run.clj' \
     > "$out/b2-$mode.log" 2>&1 || status=1
-  echo "$mode $image" >> "$out/images-ran"
+  echo "$mode $image $authority" >> "$out/images-ran"
+  [[ $authority == pg ]] && { docker rm -f "$pg" > /dev/null 2>&1; docker network rm "$net" > /dev/null 2>&1; }
   grep -E "ERA2_B2|^FAIL|Exception" "$out/b2-$mode.log" | cut -c1-1500 | head -20
 done
-rm -rf "$out/src"
 exit $status

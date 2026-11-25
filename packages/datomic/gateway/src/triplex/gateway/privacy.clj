@@ -89,7 +89,9 @@
 
 (defn record-text [name record]
   (if sql/url (sql/read-record name record)
-    (let [p (path name record)] (when (exists? p) (Files/readString p)))))
+    ;; [DX-ERA2 fifth pass] read once: a record can be deleted between the check and the read (a removal's publication
+    ;; deletes its intent), so a missing file at the read is absence, never an error (a 400 to another account's request)
+    (let [p (path name record)] (when (exists? p) (try (Files/readString p) (catch java.nio.file.NoSuchFileException _ nil))))))
 
 (defn- save-record! [name record wire]
   (if sql/url (sql/put! name record wire) (replace! (path name record) wire)))
@@ -161,8 +163,10 @@
            ;; that removal (not yet published) from a native database the log does not describe.
            ;; [DX-ERA3 F1b] and the prepared removal itself (its accounts), so a ticketed write can wait for it.
            ;; [DX-ACT9] Nested `when`, not `and` (it generates a name; see removal-hooks).
+           ;; [DX-ERA2 fifth pass, merged] the intent read once; gone since the check (its publication finished) is no intent
            pending-entry (when removal-enabled (when allow-pending? (when pending
-                           (json/read-str (if (string? pending) pending (record-text name "pending.json"))))))
+                           (let [text (if (string? pending) pending (record-text name "pending.json"))]
+                             (when text (json/read-str text))))))
            pending-seq (get pending-entry "seq")]
        (let [result
        (when (or wire (enabled? db))

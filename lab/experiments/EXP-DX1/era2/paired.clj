@@ -54,7 +54,11 @@
 (defn log-digest [name conn]
   (let [db (d/db conn) ident #(d/ident db %) md (java.security.MessageDigest/getInstance "SHA-256")
         skip #{(d/entid db :db/txInstant)} key-attr (d/entid db :triplex.scope/key)
-        body (d/entid db :triplex.private/body) n (volatile! 0)]
+        body (d/entid db :triplex.private/body) n (volatile! 0)
+        ;; [DX-ERA2 fifth pass] the R2-2 record of a declined command (schema and one entity per command) is the one
+        ;; thing the fix adds on every mode, the option off included: a second digest leaves exactly those datoms out
+        r22 (set (keep #(d/entid db %) [:triplex.removal/declined-command :triplex.removal/declined-by]))
+        install (d/entid db :db.install/attribute) md2 (java.security.MessageDigest/getInstance "SHA-256") n22 (volatile! 0)]
     (with-open [w (if (.exists (java.io.File. "/out")) (clojure.java.io/writer (str "/out/log-" (System/nanoTime) ".txt"))
                     (java.io.StringWriter.))]
       (doseq [{:keys [t data]} (d/tx-range (d/log conn) nil nil) datom data :when (not (skip (:a datom)))]
@@ -64,8 +68,12 @@
                                   :else (normalize name (:v datom)))
                             (:added datom)])]
           (.write w (str line "\n"))
-          (.update md (.getBytes line "UTF-8")))))
-    {:datoms @n :sha256 (format "%064x" (java.math.BigInteger. 1 (.digest md)))}))
+          (.update md (.getBytes line "UTF-8"))
+          (if (or (r22 (:e datom)) (r22 (:a datom)) (and (= install (:a datom)) (r22 (:v datom))))
+            (vswap! n22 inc)
+            (.update md2 (.getBytes line "UTF-8"))))))
+    {:datoms @n :sha256 (format "%064x" (java.math.BigInteger. 1 (.digest md)))
+     :r22-datoms @n22 :sha256-without-r22 (format "%064x" (java.math.BigInteger. 1 (.digest md2)))}))
 
 (defn run [sealed?]
   (offers/in-scope
