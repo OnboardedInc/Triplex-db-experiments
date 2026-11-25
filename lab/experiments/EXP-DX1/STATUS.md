@@ -6557,3 +6557,16 @@ Source: merge agent message; checked against `origin`: the questions line `f0783
 - Gates passed (some after reruns for the merge agent's own harness faults, four of them, listed on the readiness page): the questions line's suites and stacks; agreement of index and sweep on 4,626 questions, 0 differences; the console on a second toy with the questions proof 2,599 of 2,599 and the console proof 37 of 37; the reporting copy paired with find, 90 three-way comparisons equal; the real-mix tape with the index on, exact 360 of 360; the standing key-deletion gate.
 - **One finding on the page:** with the commit-time index on, every save of the real-mix tape took the general writer, not the per-subject or creation writer. So the index and the fast save path do not yet work together.
 - Next, merged locally and in gates: API-call reads (identities restored with the late-loading form), then the save-line fixes with the account setting left off.
+
+## 2026-11-25 12:24 EST: review of the standalone ID fix: merge; the collision is in the product save path on the one branch when ordered saves are on
+
+Source: Publish reviewer, part 1; branch `exp/DX-ACT10-publish-review` `9acd291fc` (`act10/U1-REVIEW.md`); a reference merge onto the one branch's `8a362ac38` pushed as `exp/DX-ACT10-u1-on-int1` `9997f4b18`.
+
+- **Verdict: merge `a439e9b9e`.** No break in the fix: within a process no ID issued before or after a reserved block starts with it, whatever the clock does. On the merge: 1,500 schedules, 600,000 operations, the clock stepped back 23,612 times (up to a day): 0 IDs inside a block, 0 not increasing; two allocators in one process 0 of 202,001 pairs sharing a token; four worker threads 0 inside. Suites: core 863 pass, datomic 473 pass. Stored-function identities identical (8 settings, 66 identities).
+- **V1, high without the fix:** at the one branch's current head the SDK's own save path reserves blocks whenever ordered saves are on (default off; on in the production and aged gates and in the console's tools under that variable). The collision's refusal is not retried there and reaches the caller as a failed write. The builder's page said only lab processes reserve blocks; that was true of the commit it tested, not of the current head.
+- Production gate with the real-mix tape on the merge, every save through the product path: pass (tape M 360 of 360, all on the per-subject writer; 0 refused). One run cannot prove the merge agent's one rejected save is gone; the in-process tests show the mechanism is closed.
+- Nothing is reordered: the feed, cursors, pinned reads, the sweep and settlement use positions, not these IDs.
+- V2: the merge conflicts in one lab file with the product mode; the reviewer's resolution is in its reference merge. V3, low: the reservation accepts prefix lengths that are never used and where a carry reaches the time characters; accept only the two used lengths.
+- Not tested: reproducing the rejected save on a stack without the fix; collisions across processes (argued, not run).
+
+**Action:** the Publish builder asked for V3 and the page correction on the fix branch; it then goes to the merge with the reviewer's resolution. The reviewer has started the fourth review of the Publish line.
