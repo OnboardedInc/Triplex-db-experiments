@@ -6010,3 +6010,19 @@ Source: API-call builder, second pass, branch `exp/DX-API1-api-call-reads` `b538
 - Against the product's own database for the same page (from handler code, not timed): 15 to 20 queries returning 150 to 300 rows; the store at the floor makes 1 request returning about 49 entities and 180 rows.
 - Proposed scorecard line now has a rate: at least 300 subject pages per second per reader core for subjects in memory and at least 90 random.
 - Not verified, and the builder was resumed on the first three: the parsed-entity cache under removal on request, a second reader and settlement (gated only under saves and release changes); the definitions cache relies on a rule the store does not enforce (a definition changes only in the commit that changes the release pointer); world size when many subjects reference one shared entity; anything on a server.
+
+## 2026-11-24 19:01 EST: connected questions: the four unexplained numbers explained, two real fixes
+
+Source: connection builder, branch `exp/DX-XQ10-questions-connected` `f078320a2` (gateway code from `231f1ae6d`), page section 8b. Every stack run matched its image ID and passed the source-hash check.
+
+1. The exactness gate asked 2,718 questions against the index branch's 2,448 because of a run setting (25 random questions per cell against 20), not code. With 20 it reproduces the index branch in every count (2,448 questions, 151,250 pages, 4,384,573 matches, 0 entity reads on 684 index-only first pages, 0 differences).
+2. The index-against-sweep comparison had fallen from 77 to 64 because one merged change DID drop a question class (a value-family check accepted only the typed prefix form). Fixed: 77 questions, 0 differences.
+3. The 28 entity reads on index-only first pages came from one question: a text range covering two values of 231 and 215 characters. Index keys hold values up to 200 characters, so a longer candidate is confirmed against its row. Stated cost: one entity read per candidate over 200 characters, nothing otherwise. The review's finding on index-only answers is not undone.
+4. The question reader's fairness bound: reproduced (18 of 120 arms over, under a heavily loaded lab VM). Split by new counters: 9 of 11 over-bound pages had 0 admissions ahead inside the pool queue (the extra ones happened before the page joined it, with its thread paused); 2 are not separable. The bound is restated: at most one page of each other listing account goes ahead for 99.9% of an arm's pages (met in every arm). Not caused by the merge.
+5. Why the hint fix hurt: it touched index segments (EAVT, AVET) the apply never reads for entries, which evicted useful ones. Corrected to touch only the AEVT neighbourhood. Reads inside apply per first-touch save, index on minus off: 32 MB cache +0.193 without, +0.131 with the corrected fix (5 to 7 runs of 900 saves, standard error 0.015 to 0.020); 256 MB cache +0.100 without, +0.037 with. Under the design's 0.2 line.
+6. Agreement gate rerun on the final head: 4,626 questions, 0 differences. The "off means 404" probe now shows what it claims.
+- Still unexplained: 2 of 11 over-bound fairness pages; +0.08 AEVT loads per save remaining with the corrected fix on 32 MB. The page time limit still fails on the Mac under throttling (by 0.17 ms). Console proofs were not rerun after the last gateway change.
+
+The evening merge was told this line is ready for its second batch.
+
+**Started** (thinker effort): an adversarial review of the save line (product path, several owners, whole-subject import, creation saves on the per-subject writer), task file `OPUS-S5-adversarial-review-save-line.md`.
