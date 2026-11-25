@@ -35,6 +35,7 @@ allowed=" SESSION MACHINE COMMIT BUILD OUT_ROOT SCRATCH WAL_ROOT PRICE_PER_HOUR 
   AGE_HANDOFF_JSON AGE_HANDOFF_SHA256 SCALE1_IMAGE SCALE1_IMAGE_SHA256 SCALE1_TRANSFER_SHA256 AGE_JAVA AGE_DATOMIC_HOME
   FRESH_PGDATA_SOURCE STORAGE_ENV READ_AHEAD_OFF DX_REMOTE_READER_HOST SECOND_READER_LISTEN SECOND_READER_URL
   MACHINE1_PRIVATE DRY_ROOT DRY_IMAGE DRY_CHECKOUT EVIDENCE_HOST_DIR "
+allowed=" $(echo $allowed) "
 settings_sha256=$( (command -v sha256sum >/dev/null && sha256sum "$settings" || shasum -a 256 "$settings") | cut -d' ' -f1)
 while IFS= read -r line || [[ -n $line ]]; do
   [[ -z $line || $line == \#* ]] && continue
@@ -84,7 +85,7 @@ watcher() {  # stops the step at DELETE_AT; runs beside it
     if awk -v s="$spent" -v d="$DELETE_AT" 'BEGIN{exit !(s>=d)}'; then
       mkdir -p "$(root "$OUT_ROOT")"; date -u +%FT%TZ > "$(root "$OUT_ROOT")/STOP-DELETE-NOW"
       echo "[srv2] spend USD $spent reached $DELETE_AT: stopping step $step; copy evidence and delete" >&2
-      kill -TERM -- "-$target" 2>/dev/null || kill -TERM "$target" 2>/dev/null || true
+      kill -TERM -- "-$target" 2>/dev/null || { pkill -TERM -P "$target" 2>/dev/null; kill -TERM "$target" 2>/dev/null; } || true
       return
     fi
   done
@@ -118,7 +119,9 @@ run_step() {  # runs "$@" in its own process group with the spend watcher beside
   guard "$step"
   record start 0 "${opts[@]}"
   set +e
-  ( set -m; "$@" ) & local pid=$!
+  # Its own process group where the command is a program (setsid on the server), so the watcher stops all of it.
+  if [[ $(type -t "$1") != function ]] && command -v setsid >/dev/null; then setsid "$@" & else ( "$@" ) & fi
+  local pid=$!
   watcher "$pid" & local w=$!
   wait "$pid"; code=$?
   kill "$w" 2>/dev/null; wait "$w" 2>/dev/null

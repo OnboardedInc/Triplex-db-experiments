@@ -431,7 +431,8 @@ export function writeAdoptedCard(run: Card) {
   // stage against its cap (the caps of server-32 with the tuned reader were set from the 2026-11-23 peaks).
   function tunedReaderSection() {
     const out = ["## Tuned reader", "", readerTitle(run.reader).trim(), "", ...(run.toy ? ["Mac toy: the compact stack's reader runs both pinned options, the early filter and the permits; the random line has " +
-      `${randomLine.toySeats} seats; the toy reader writes no trace, so its storage loads and cache share are not recorded.`, ""] : [])];
+      `${randomLine.toySeats} seats; ` + (split ? "with per-read classification on, the toy reader writes the read profile of every sampled exchange (no Datomic metrics minutes, so its StorageGet count is not recorded)." :
+      "the toy reader writes no trace, so its storage loads and cache share are not recorded."), ""] : [])];
     const stagesDirs = [["zero", "P1 zero readers"], ["loaded", "P1 readers, P6, P7, P8"], [barrierRoot + "loaded", "barrier6 control"]] as const;
     const caps = { tx: policy.tx.memoryMiB, "gw-w": policy["gw-w"].memoryMiB, "gw-r": policy["gw-r"].memoryMiB, pg: policy.pg.memoryMiB } as Record<string, number>;
     const gib = (bytes: number) => (bytes / 2 ** 30).toFixed(2);
