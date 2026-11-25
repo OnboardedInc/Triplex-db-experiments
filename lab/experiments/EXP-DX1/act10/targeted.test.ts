@@ -265,6 +265,10 @@ test("Q1: one account with 2,000 frames queued and forty small accounts: no smal
 // ---------------------------------------------------------------------------------------------- C1: the ledger cap
 test("C1 (TX2_NOTICE_LEDGER=parts): a release whose ledger exceeds the part cap is acknowledged, then stops the account's notices", async () => {
   process.env.TX2_PUBLISH_BESIDE = "1";
+  // [DX-ACT8] The control: the Publish-time refusal off, whatever the caller's environment (the gate phase also runs
+  // these tests with every option on).
+  const cap = process.env.TX2_LEDGER_CAP_AT_PUBLISH;
+  delete process.env.TX2_LEDGER_CAP_AT_PUBLISH;
   const db = fresh(31);
   const A = await account(db, "acct-cap");
   await A.a.installHeld(validTime);
@@ -285,6 +289,7 @@ test("C1 (TX2_NOTICE_LEDGER=parts): a release whose ledger exceeds the part cap 
   assert(tries.every((t) => /FrameTooLarge/.test(t)));
   assert(cursor === undefined || cursor.event <= 2, "the later release's notices were recorded");
   delete process.env.TX2_PUBLISH_BESIDE;
+  if (cap !== undefined) process.env.TX2_LEDGER_CAP_AT_PUBLISH = cap;
 });
 
 // [DX-ACT8, review F3] C1 with TX2_LEDGER_CAP_AT_PUBLISH=1: the same release is refused at Publish, with the limit and

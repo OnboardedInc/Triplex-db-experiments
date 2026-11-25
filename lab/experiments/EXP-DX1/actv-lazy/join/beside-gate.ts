@@ -823,7 +823,20 @@ async function livePart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
       assert.equal(stored.frontier.status, "superseded");
       const got = stored.output.map((x) => ({ subject: x.subject, changes: x.changes }));
       const want = await g.oracleChanges(first.doc, g.oldOf.get(first.seq)!, first.position);
-      assert.deepEqual(got, want.filter((x) => got.some((y) => y.subject === x.subject)), "superseded release's pages");
+      const wanted = want.filter((x) => got.some((y) => y.subject === x.subject));
+      // [DX-ACT8, review F5] Under TX2_SETTLE_FRAME_GUARDS (as under the head precondition) a frame in flight when the
+      // later release lands is refused and the next one marks the release superseded, so a superseded release can stop
+      // inside a split subject (`part` > 0): that last subject's stored changes are then the oracle's first ones, in
+      // frame order, and every earlier subject's are all of its. No reader consults a superseded release's pages.
+      const split = (stored.frontier.part ?? 0) > 0 ? got.length - 1 : -1;
+      assert.equal(got.length, wanted.length, "superseded release's subjects");
+      for (const [i, x] of got.entries()) {
+        const w = wanted[i]!;
+        assert.equal(x.subject, w.subject, "superseded release's subjects");
+        if (i === split) assert(x.changes.length < w.changes.length, "a split subject's stored part is a part");
+        assert.deepEqual(x.changes, i === split ? w.changes.slice(0, x.changes.length) : w.changes, "superseded release's pages");
+      }
+      out.splitAtSupersession = split >= 0 ? { subject: got[split]!.subject, stored: got[split]!.changes.length, of: wanted[split]!.changes.length } : null;
       const settled = await g.settle(second.r, huge, w);
       out.second = { first: { ...res.record, status: state.status, through: state.through, subjectsWritten: got.length },
         second: { ...second.record, settled } };
