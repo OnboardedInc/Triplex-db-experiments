@@ -174,6 +174,8 @@
          input (ordered-row-texts (expand-fresh input lean))
          new-ids (set (get input "newIds")) rows (timed-input-rows input lean new-ids)
          _ (trace/span "privacy/validate-rows" "gateway" (privacy/validate-write! privacy/*cut* input rows))
+         ;; [DX-ERA4, after DX-ERA5] a database that requires sealed derived documents refuses one that is not
+         _ (if privacy/derived-check (privacy/derived-check db rows new-ids) nil)
          protected (trace/span "privacy/prepare-envelopes" "gateway"
                      (envelope/protect privacy/*database* privacy/*cut* input rows))
          input (:input protected) rows (:rows protected)

@@ -22,7 +22,7 @@ import { inflateRawSync } from "node:zlib";
 import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { W0, triplexValue } from "../../../bench/lib/w0-world.ts";
-import { counters, derivedSealOn, isSealed, open } from "../../../bench/lib/derived-seal.ts";
+import { counters, derivedSealOn, isSealed, open, sealedHeader } from "../../../bench/lib/derived-seal.ts";
 import { Documents, hash, unpack } from "../notify1/store.ts";
 import { openStore, fact, type Store } from "../actv-lazy/store.ts";
 import { JoinedAccount } from "../actv-lazy/join/account.ts";
@@ -299,13 +299,18 @@ async function places(acc: Account) {
 }
 const L: Record<string, unknown> = {};
 for (const [place, [xs, ys]] of Object.entries(await places(C))) {
-  const xOpened = await open(url, xs);
-  const yClear = (await open(url, ys)) as string[];
-  assert(ys.every((w, i) => clearLength(w) === Buffer.byteLength(yClear[i]!)), "the clear length is the stored length less the 16-byte tag");
+  // [DX-ERA4] records are opened for the place their header names (a reader states its place since the L1 fix); the
+  // prediction is of the STORED length, which with padding is the size class of the clear length and 4 (DX-ERA4's
+  // fix of B3): before the fix the class was the clear length itself, so the test is the same attack either way
+  const placeOfWire = (w: string) => sealedHeader(w).p;
+  const xOpened = await open(url, xs, xs.map(placeOfWire));
+  const yClear = (await open(url, ys, ys.map(placeOfWire))) as string[];
+  const exactTag = ys.every((w, i) => clearLength(w) === Buffer.byteLength(yClear[i]!));
   const typeIn = (s: string) => (s.match(/docType\\*"\s*:\s*\\*"(passport|ead|visa)/g) ?? []).length;
+  const stored = (n: number) => (exactTag ? n : n + 4 <= 4096 ? 2 ** Math.max(6, Math.ceil(Math.log2(n + 4))) : 4096 * Math.ceil((n + 4) / 4096));
   const lx = xs.map(clearLength).sort((a, b) => a - b);
   const fits = TYPES.filter((t) => {
-    const predicted = yClear.map((s) => Buffer.byteLength(s) + typeIn(s) * (t.length - "ead".length)).sort((a, b) => a - b);
+    const predicted = yClear.map((s) => stored(Buffer.byteLength(s) + typeIn(s) * (t.length - "ead".length))).sort((a, b) => a - b);
     return predicted.length === lx.length && predicted.every((v, i) => v === lx[i]);
   });
   L[place] = {

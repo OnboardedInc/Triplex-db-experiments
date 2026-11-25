@@ -35,6 +35,12 @@
 (defn open1 [src wire]
   (let [r (offers/route src "v2" "derived-open" {"items" [wire]})]
     {:status (:status r) :code (get-in r [:body "code"]) :item (first (items r))}))
+;; [DX-ERA4, merging this test into its standing gate] since the L1 fix a writer seals for a place and a reader opens
+;; for the place it expects
+(defn seal-placed [src ids value place] (first (items (seal-many src [{"ids" (vec ids) "value" value "place" place}]))))
+(defn open-placed [src wire place]
+  (let [r (offers/route src "v2" "derived-open" {"items" [{"record" wire "place" place}]})]
+    {:status (:status r) :code (get-in r [:body "code"]) :item (first (items r))}))
 (defn opened [o] (get-in o [:item "value"]))
 (defn removed? [o] (contains? (:item o) "removed"))
 (defn shape [o] (cond (removed? o) :removed (opened o) :value :else [(:status o) (:code o)]))
@@ -46,6 +52,14 @@
   (let [v (g/secret owner tag) rep (offers/send src (g/frame cmd owner v nil nil))]
     (x/oracle! "seed" (= 200 (:status rep)) "the seed save" (offers/outcome rep))
     [v cmd]))
+
+(defn plain-row!
+  "[DX-ERA4, after M1] An unprotected row of `owner` saved on its own (attribute :plain); its ID (the command) is a name a
+  derived record may give: the seal route refuses a name that is not a row of the database."
+  [src cmd owner]
+  (let [rep (offers/send src (g/save-frame cmd owner ":plain" "x" nil nil))]
+    (x/oracle! "seed" (= 200 (:status rep)) "a plain row" (offers/outcome rep))
+    cmd))
 
 (defn derived-write!
   "A derived document holding `content` (a sealed record), written as the option's writers write theirs: an ordinary
@@ -157,9 +171,17 @@
           (when rest-wire (x/oracle! lbl (= "derived:rest" (opened rest-after)) "a record of the other n-1 still opens" row))))))
   (g/fresh-scope true
     (fn [src _]
-      (let [r (seal-many src [{"ids" (mapv #(str "row-" %) (range 513)) "value" "a world of 513 string rows"}])]
-        (report :c1-limit {:ids 513 :outcome (offers/outcome r) :message (get-in r [:body "message"])})
-        (bump! :c1-limit-513 (offers/outcome r))))))
+      ;; [DX-ERA4] after M1 the 513 invented names are refused as unknown; L2 is checked with 601 real rows
+      (let [r (seal-many src [{"ids" (mapv #(str "row-" %) (range 513)) "value" "a world of 513 string rows"}])
+            [_ vid] (seed! src "c1-limit-x" "acct/a/pl:00000001/v" "c1l")
+            rows (vec (for [k (range 600)] (plain-row! src (str "c1l-row-" k) "acct/a/pl:00000001/p")))
+            big (seal-many src [{"ids" (conj rows vid) "value" "a world of 601 string rows" "place" "c1|a|acct/a/pl:00000001"}])
+            sealed? (string? (get-in big [:body "items" 0 "sealed"]))]
+        (report :c1-limit {:ids 513 :outcome (offers/outcome r) :message (get-in r [:body "message"])
+                           :real-ids 601 :real-outcome (offers/outcome big) :real-sealed sealed?})
+        (bump! :c1-limit-513 (offers/outcome r))
+        (x/oracle! "c1 limit" (not= 200 (:status r)) "M1: 513 names that are not rows are refused" (offers/outcome r))
+        (x/oracle! "c1 limit" sealed? "L2: a record naming 601 real rows seals (the limit is 65,536)" (offers/outcome big))))))
 
 ;; ---- c2: length and equality -------------------------------------------------------------------------------------
 (defn- delivery
@@ -208,7 +230,7 @@
 
 ;; ---- c3: tampering and place -------------------------------------------------------------------------------------
 (defn- rewire [wire f]
-  (let [[header nonce body] (str/split (subs wire 5) #"\." 3)] (str "tdx1." (str/join "." (f [header nonce body])))))
+  (let [[header nonce body] (str/split (subs wire 5) #"\." 3)] (str (subs wire 0 5) (str/join "." (f [header nonce body])))))
 (defn- header-of [d k] (.encodeToString (.withoutPadding (Base64/getUrlEncoder)) (utf8 (json/write-str {"d" d "k" k}))))
 (defn- flip [^String b64]
   (let [b (unb64u b64)] (aset-byte b 0 (unchecked-byte (bit-xor (aget b 0) 1)))
@@ -226,7 +248,9 @@
             [vx ix] (seed! src "c3-x" "acct/a/pl:00000001/v" "c3")
             [vy iy] (seed! src "c3-y" "acct/a/pl:00000001/w" "c3")
             both (vec (sort [ix iy]))
-            w (get (seal1 src both (str "derived:" vx vy)) "sealed")
+            ;; [DX-ERA4] sealed as the writers seal: for its place (account a, the subject)
+            place-a "a|pl:00000001" place-b "b|pl:00000001"
+            w (get (seal-placed src both (str "derived:" vx vy) place-a) "sealed")
             {:keys [d]} (wire-parts w)
             fewer (rewire w (fn [[_ n b]] [(header-of d [ix]) n b]))
             unsorted (rewire w (fn [[_ n b]] [(header-of d (vec (reverse both))) n b]))
@@ -234,16 +258,23 @@
             nonce (rewire w (fn [[h n b]] [h (flip n) b]))
             body (rewire w (fn [[h n b]] [h n (flip b)]))
             outcomes (into {} (for [[k v] {:fewer fewer :unsorted unsorted :other-db other-db :nonce nonce :body body}]
-                                [k (let [o (open1 src v)] [(:status o) (:code o) (shape o)])]))
+                                [k (let [o (open-placed src v place-a)] [(:status o) (:code o) (shape o)])]))
             moved (derived-write! src conn "c3-moved" "settlement-values-b:answer:1" w "b")
             read-b (x/read-text src "settlement-values-b:answer:1")
-            in-b (first (re-seq #"tdx1\.[A-Za-z0-9_.-]+" read-b))
-            opened-in-b (when in-b (opened (open1 src in-b)))
+            in-b (first (re-seq #"tdx[12]\.[A-Za-z0-9_.-]+" read-b))
+            ;; account b's reader opens what its document holds for its own place
+            opened-in-b (when in-b (opened (open-placed src in-b place-b)))
+            opened-in-a (opened (open-placed src w place-a))
             row {:tampered outcomes :moved-write (offers/outcome moved)
+                 :found-in-b (some? in-b) :opens-in-its-own-place (= (str "derived:" vx vy) opened-in-a)
                  :account-b-document-opens-to-account-a-value (= (str "derived:" vx vy) opened-in-b)}]
         (report :c3 row)
         (doseq [[k [_ _ s]] outcomes] (x/oracle! lbl (not= :value s) (str "a tampered record (" (name k) ") does not open") row))
-        (bump! :c3-moved-opens (boolean (:account-b-document-opens-to-account-a-value row)))))))
+        (bump! :c3-moved-opens (boolean (:account-b-document-opens-to-account-a-value row)))
+        ;; [DX-ERA4] L1 as gates: the moved copy is found in b's document and does not open there; in its place it does
+        (x/oracle! lbl (:found-in-b row) "the moved copy is in account b's document (the case is real)" row)
+        (x/oracle! lbl (not (:account-b-document-opens-to-account-a-value row)) "L1: a copy moved into another account's document does not open there" row)
+        (x/oracle! lbl (:opens-in-its-own-place row) "the record opens in the place it was sealed for" row)))))
 
 ;; ---- c4: a key restored from an older copy of the authority ------------------------------------------------------
 (defn restored-key
@@ -278,7 +309,9 @@
         (x/oracle! lbl (nil? offline-gone) "after the deletion no key the authority holds decodes the copy" row)
         (x/oracle! lbl (removed? route) "with the key restored the routes answer removed" row)
         (bump! :c4-restored-key-decodes-copy (boolean (:offline-with-restored-key row)))
-        (bump! :c4-restored-key-kept-until-restart still)))))
+        (bump! :c4-restored-key-kept-until-restart still)
+        ;; [DX-ERA4, M2] the restored key is deleted again without a restart (the re-sweep, every second)
+        (x/oracle! lbl (key-gone? src [ix]) "M2: a restored key is deleted again without a restart" row)))))
 
 ;; ---- c5: an unsealed protected database --------------------------------------------------------------------------
 (defn unsealed
@@ -312,7 +345,11 @@
             out (into {} (for [[k ids] cases] [k (let [i (seal1 src ids (str "derived:" vx))]
                                                      (cond (contains? i "sealed") :sealed (contains? i "clear") :CLEAR :else i))]))]
         (report :c6 out)
-        (doseq [[k v] out :when (= v :CLEAR)] (bump! :c6-clear k))))))
+        (doseq [[k v] out :when (= v :CLEAR)] (bump! :c6-clear k))
+        ;; [DX-ERA4, M1] a name the gateway does not know is refused; only an empty list states "no protected input"
+        (doseq [k [:entity-id :other-database :upper-case]]
+          (x/oracle! "c6 unknown names" (not= :CLEAR (get out k)) "M1: an unknown name is refused, never answered clear" out))
+        (x/oracle! "c6 unknown names" (= :sealed (get out :the-assertion)) "the assertion's own name seals" out)))))
 
 ;; ---- c7: two removals of one record's sources; a removal no copy used; another subject untouched ------------------
 (defn two-removals
@@ -377,7 +414,9 @@
         (report :c8 row)
         (x/oracle! lbl (removed? route) "after the restore the routes answer removed" row)
         (bump! :c8-restored-files-decode-copy (boolean (:offline-with-restored-files row)))
-        (bump! :c8-key-kept-after-restart still-after-restart)))))
+        (bump! :c8-key-kept-after-restart still-after-restart)
+        ;; [DX-ERA4, M2] with the log put back holding the removal pending too: the data's committed removal decides
+        (x/oracle! lbl (key-gone? src [ix]) "M2: a key restored with a pending-state log is deleted again without a restart" row)))))
 
 ;; ---- pending: a removal left pending stops every key deletion of the database ------------------------------------
 (defn pending-blocks-shred
@@ -442,6 +481,7 @@
                       (let [[v aid] (seed! src (str "fz-" tag "-" si "-" j) (str subj "/f" j) tag)]
                         {:si si :owner (str subj "/f" j) :value v :id aid})))
         n (count values)
+        plains (vec (for [k (range 3)] (plain-row! src (str "pr-" tag "-" k) (str (first subjects) "/p"))))
         records (loop [k 0 acc [] want (+ 4 (.nextInt r 5))]
                   (if (= k want) acc
                     (let [base (when (and (seq acc) (zero? (.nextInt r 3))) (pick acc))
@@ -450,7 +490,7 @@
                           content (str "derived-" tag "-" k ":" (str/join "|" (map #(:value (values %)) srcs)))
                           named (cond-> (mapv #(:id (values %)) srcs)
                                   (.nextBoolean r) rseq
-                                  true (into (repeatedly (.nextInt r 3) #(str "plain-row-" (.nextInt r 100000)))))
+                                  true (into (repeatedly (.nextInt r 3) #(pick plains))))
                           w (get (seal1 src (vec named) content) "sealed")]
                       (recur (inc k) (conj acc {:srcs srcs :content content :wire w}) want))))
         _ (doseq [[k rec] (map-indexed vector records) :when (.nextBoolean r)]

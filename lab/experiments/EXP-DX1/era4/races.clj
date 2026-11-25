@@ -121,7 +121,7 @@
         (let [rep (offers/route src "v1" "read" {"entityIds" [(:doc w)] "basis" {"recordedPosition" (max p-before (:p w)) "validAt" 1.0e12}})
               txt (g/text (:body rep))]
           (x/oracle! label (not (str/includes? txt vx)) "a pinned read holds no clear copy of the removed value" {:doc (:doc w)})
-          (doseq [wire (re-seq #"tdx1\.[A-Za-z0-9_.-]+" txt)]
+          (doseq [wire (re-seq #"tdx[12]\.[A-Za-z0-9_.-]+" txt)]
             (x/oracle! label (contains? (second (open! src wire)) "removed") "what a pinned reader read cannot be opened" {:doc (:doc w)}))))
       ;; (5) the key is deleted; a key restored from a copy taken before the removal is deleted again. [DX-ERA4, after
       ;; DX-ERA2's fourth pass] Only a schedule that restores the key waits for the shred worker here; every other
@@ -340,7 +340,7 @@
                            (try @(d/transact-async rconn @captured) :committed (catch Exception e (.getMessage e)))
                            :nothing-captured)
                   txt (g/text (:body (offers/route rcp "v1" "read" {"entityIds" ["notice:v1:dw-late"]})))
-                  wire (first (re-seq #"tdx1\.[A-Za-z0-9_.-]+" txt))
+                  wire (first (re-seq #"tdx[12]\.[A-Za-z0-9_.-]+" txt))
                   detail {:sealed-copy sealed-copy? :source-removal (offers/outcome removed) :key-gone gone
                           :late-recipient-transaction landed
                           :copy-readable-in-recipient-after-ack (str/includes? txt vx)
@@ -552,13 +552,81 @@
         (x/oracle! lbl (= 200 (:status rebuild-missing)) "the rebuild route writes a missing log from the policy" states)
         (x/oracle! lbl (= [200 :removed] (:open-x after-missing)) "after a missing log is rebuilt the copy opens as removed" states)))))
 
+(defn- packed [v]
+  ;; notify1/store.ts `pack`: deflate (raw) of the canonical JSON, in base64
+  (let [d (java.util.zip.Deflater. 9 true) in (.getBytes (json/write-str v) "UTF-8") out (java.io.ByteArrayOutputStream.) buf (byte-array 65536)]
+    (.setInput d in) (.finish d)
+    (loop [] (let [n (.deflate d buf)] (when (pos? n) (.write out buf 0 n)) (when-not (.finished d) (recur))))
+    (.end d)
+    (.encodeToString (java.util.Base64/getEncoder) (.toByteArray out))))
+(defn- doc-write [src cmd key value]
+  ;; one derived document written as Documents.put writes it: attribute notice/value, its canonical JSON as a string
+  (offers/send src (g/save-frame cmd (str "notice:v1:" (apply str (repeat 64 "a")) ":" key) "notice/value" (json/write-str value) nil nil)))
+
+(defn setting
+  "[DX-ERA4, after DX-ERA5's B1 and M3] The one-way database setting `derived-seal-required` and the write route's check:
+  with it a derived document whose content is not sealed is refused whatever the client sends, a sealed one is
+  accepted, and a gateway of this build without the option refuses the database."
+  []
+  (g/fresh-scope true
+    (fn [src conn]
+      (let [lbl "setting"
+            [vx ids-x] (seed-x! src "set-x" g/a1 "set")
+            place "a|pl:00000001"
+            sealed (first (get-in (offers/route src "v2" "derived-seal" {"items" [{"ids" ids-x "value" (str "derived:" vx) "place" place}]}) [:body "items"]))
+            wire (get sealed "sealed")
+            frame (fn [unit] {"identity" "i" "frame" 1 "start" 0 "part" 0 "through" 1 "tail" 0 "previous" "p"
+                              "bytes" (packed [{"subject" "pl:00000001" "changes" [unit]}])})
+            before-clear (offers/outcome (doc-write src "set-w0" "answer:1:f1" (frame ["k" (str "derived:" vx)])))
+            required (offers/route src "v2" "derived-seal-required" {})
+            again (offers/outcome (offers/route src "v2" "derived-seal-required" {}))
+            clear-unit (offers/outcome (doc-write src "set-w1" "answer:1:f2" (frame ["k" (str "derived:" vx)])))
+            fake-unit (offers/outcome (doc-write src "set-w2" "answer:1:f3" (frame ["" (str "tdx2.not-a-record")])))
+            sealed-unit (offers/outcome (doc-write src "set-w3" "answer:1:f4" (frame ["" wire])))
+            removed-unit (offers/outcome (doc-write src "set-w4" "answer:1:f5" (frame ["" nil])))
+            packet-clear (offers/outcome (doc-write src "set-w5" "recorded-notices:1"
+                                                    (packed {"deliveries" [{"subject" "pl:00000001" "generation" 0 "sealed" (str "derived:" vx)}]})))
+            packet-sealed (offers/outcome (doc-write src "set-w6" "recorded-notices:2"
+                                                     (packed {"deliveries" [{"subject" "pl:00000001" "generation" 0 "sealed" wire}]})))
+            ledger-clear (offers/outcome (doc-write src "set-w7" "recorded-ledger:pl:00000001" (packed [{"id" "x" "payload" vx}])))
+            state-sealed (offers/outcome (doc-write src "set-w8" "receiver:o:pl:00000001" (packed {"g" 0 "e" [wire]})))
+            other-doc (offers/outcome (doc-write src "set-w9" "census" {"count" 1}))
+            ;; an entry that carries the clear answer beside sealed changes, the unframed page (its entries' `json`), and a
+            ;; packet with a field the recorder never writes
+            json-entry (offers/outcome (doc-write src "set-w10" "answer:1:f6"
+                                                  (assoc (frame ["" wire]) "bytes"
+                                                         (packed [{"subject" "pl:00000001" "changes" [["" wire]] "json" (str "{\"e\":\"" vx "\"}")}]))))
+            unframed (offers/outcome (doc-write src "set-w11" "answer:1:0"
+                                                {"identity" "i" "start" 0 "through" 1 "previous" "p"
+                                                 "bytes" (packed [{"subject" "pl:00000001" "changes" [] "json" (str "{\"e\":\"" vx "\"}")}])}))
+            packet-extra (offers/outcome (doc-write src "set-w12" "recorded-notices:3"
+                                                    (packed {"note" vx "deliveries" [{"subject" "pl:00000001" "generation" 0 "sealed" wire}]})))
+            off-gateway (with-redefs [main/derived-seal-on false]
+                          (offers/outcome (offers/route src "v1" "read" {"entityIds" [g/a1]})))
+            row {:clear-before-the-setting before-clear :required [(:status required) (:body required)] :again again
+                 :clear-unit clear-unit :fake-unit fake-unit :sealed-unit sealed-unit :removed-unit removed-unit
+                 :packet-clear packet-clear :packet-sealed packet-sealed :ledger-clear ledger-clear :state-sealed state-sealed
+                 :content-free-document other-doc :gateway-without-the-option off-gateway
+                 :json-entry json-entry :unframed-page unframed :packet-extra-field packet-extra}]
+        (println "ERA4_SETTING" (pr-str row))
+        (x/oracle! lbl (= [200 nil] before-clear) "before the setting a clear unit is accepted (today's behaviour)" row)
+        (x/oracle! lbl (= 200 (:status required)) "the setting is recorded" row)
+        (x/oracle! lbl (= [200 nil] again) "recording it again is harmless" row)
+        (doseq [[k o] {:clear-unit clear-unit :fake-unit fake-unit :packet-clear packet-clear :ledger-clear ledger-clear
+                       :json-entry json-entry :unframed-page unframed :packet-extra-field packet-extra}]
+          (x/oracle! lbl (= [409 "DerivedRecordUnsealed"] o) (str "with the setting an unsealed derived document is refused: " (name k)) row))
+        (doseq [[k o] {:sealed-unit sealed-unit :removed-unit removed-unit :packet-sealed packet-sealed :state-sealed state-sealed
+                       :content-free-document other-doc}]
+          (x/oracle! lbl (= [200 nil] o) (str "with the setting a sealed or content-free document is accepted: " (name k)) row))
+        (x/oracle! lbl (= [503 "DerivedSealRequired"] off-gateway) "a gateway without the option refuses the database" row)))))
+
 (defn main []
   (x/install-hooks!)
   (install-declare-hooks!)
   (envelope/start!)
   (case (System/getenv "ERA4_PHASE")
     "cost" (cost)
-    "checks" (do (e9s) (e6s) (window) (stop-checks) (m1) (log-states))
+    "checks" (do (e9s) (e6s) (window) (stop-checks) (m1) (log-states) (setting))
     (fuzz (or (System/getenv "ERA4_RUN") "e0") (Long/parseLong (or (System/getenv "ERA4_N") "200"))
           (Long/parseLong (or (System/getenv "ERA4_BLOCK") "50")) (Long/parseLong (or (System/getenv "ERA4_SEED") "1"))))
   (println "ERA4_TALLY" arm (pr-str (into (sorted-map) (map (fn [[kk v]] [(pr-str kk) v])) @tally)))

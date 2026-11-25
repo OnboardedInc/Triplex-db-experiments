@@ -29,7 +29,9 @@ env=(-e 'DATOMIC_URI_TEMPLATE=datomic:mem://{db}' -e TRIPLEX_ERASURE_DIRECTORY=/
      -e TRIPLEX_ERASURE_SHRED_GRACE_MS=0)
 client=(DATOMIC_URL="http://127.0.0.1:$port" TRIPLEX_DATOMIC_LAYOUT=lean TX2_SETTLE_FRAMES=bytes
         TX2_SETTLE_PRECONDITION=progress)
-if [[ $arm == on ]]; then env+=(-e TX2_DERIVED_SEAL=1); client+=(TX2_DERIVED_SEAL=1); fi
+# ERA4_CLIENT_OFF=1 (with ARM on): the gateway has the option, the client does not (derived.ts ERA4_MIXED=1).
+if [[ $arm == on ]]; then env+=(-e TX2_DERIVED_SEAL=1); [[ ${ERA4_CLIENT_OFF:-0} == 1 ]] || client+=(TX2_DERIVED_SEAL=1); fi
+[[ ${ERA4_CLIENT_OFF:-0} == 1 ]] && client+=(ERA4_MIXED=1)
 for kv in ${ERA4_EXTRA_ENV:-}; do env+=(-e "$kv"); client+=("$kv"); done
 name="tx2-dxera4-t1-$$-$arm"
 cleanup() {
@@ -62,5 +64,5 @@ env "${client[@]}" ERA4_ARM="$arm" ERA4_SEALED="${ERA4_SEALED:-1}" ERA4_CONTAINE
   --experimental-transform-types lab/experiments/EXP-DX1/era4/"${ERA4_SCRIPT:-derived.ts}" "$out" "$out/run.out" > "$out/derived.log" 2>&1
 status=$?
 echo "$(( $(date +%s) - started ))" > "$out/seconds"
-grep -E '^\{"kind":"(scan|verdict|stream|chain|cost|error|held)' "$out/derived.log" | cut -c1-1200 | tail -60
+grep -E '^\{"kind":"(scan|verdict|stream|chain|cost|error|held|faults|mixed)' "$out/derived.log" | cut -c1-1200 | tail -60
 exit "$status"

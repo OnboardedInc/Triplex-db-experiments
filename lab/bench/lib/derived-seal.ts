@@ -7,9 +7,11 @@ import { runtimeApi } from "./triplex.ts";
 
 export const derivedSealOn = () => process.env["TX2_DERIVED_SEAL"] === "1";
 
-/** A sealed record as stored: `tdx1.<header>.<nonce>.<ciphertext>`; the header names the database and the assertions. */
-export const isSealed = (v: unknown): v is string => typeof v === "string" && v.startsWith("tdx1.");
-export function sealedHeader(wire: string): { d: string; k: string[] } {
+/** A sealed record as stored: `tdx2.<header>.<nonce>.<ciphertext>` (padded, placed; `tdx1.` before DX-ERA5's review);
+ * the header names the database, the assertions and the record's place. */
+export const isSealed = (v: unknown): v is string =>
+  typeof v === "string" && (v.startsWith("tdx2.") || v.startsWith("tdx1."));
+export function sealedHeader(wire: string): { d: string; k: string[]; p?: string } {
   assert(isSealed(wire), "Not a sealed derived record");
   const h = JSON.parse(Buffer.from(wire.split(".")[1]!, "base64url").toString("utf8"));
   assert(typeof h.d === "string" && Array.isArray(h.k) && h.k.length > 0);
@@ -51,12 +53,28 @@ export { union as inputUnion };
 // ---- the routes ----
 
 type Source = { backend?: { name: string; url: string }; scopeName?: string };
+/** [DX-ERA4, after DX-ERA5's L1] A record's place: its account (the source's scope, and the held account when one
+ * database holds several) and its subject. A record sealed for one place opens only where a reader expects that place. */
+export const placeOf = (source: Source & { held?: { account: string } }, subject: string, account?: string) =>
+  `${source.scopeName}|${account ?? source.held?.account ?? ""}|${subject}`;
 export const databaseOf = (source: Source) => {
   assert(source.backend?.name === "datomic" && source.scopeName, "Derived sealing needs a Datomic scope");
   return "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(source.scopeName))).toString("base64url");
 };
 const CHUNK = 512;
+/** [DX-ERA4, after DX-ERA5's B1] A test seam (era4/derived.ts, ERA4_FAULTS): the next seal or open call fails as a
+ * network error, as the client's own 5 s timeout after a stalled gateway, or as a gateway without the option (404).
+ * Unset in every other use. */
+export const faults: { next?: "fail" | "slow" | "refused"; action?: "derived-seal" | "derived-open"; fired: Record<string, number> } = { fired: {} };
 async function call<T>(url: string, db: string, action: "derived-seal" | "derived-open", items: unknown[]) {
+  if (faults.next && (faults.action === undefined || faults.action === action)) {
+    const kind = faults.next;
+    faults.next = undefined;
+    faults.fired[action + ":" + kind] = (faults.fired[action + ":" + kind] ?? 0) + 1;
+    if (kind === "slow") await new Promise((resolve) => setTimeout(resolve, 5_100));
+    throw Object.assign(new Error(kind === "fail" ? "fetch failed (injected)" : kind === "slow" ? "Gateway deadline exceeded (injected stall)" : "Not found (injected: a gateway without the option)"),
+      kind === "refused" ? { status: 404 } : {});
+  }
   const out: T[] = [];
   const client = new DatomicClient(url);
   try {
@@ -86,7 +104,7 @@ export const counters = { sealCalls: 0, sealed: 0, clear: 0, openCalls: 0, opene
 /** Seals each value under the protected assertions among `inputs` of `source`'s database. A value computed from no
  * protected assertion comes back unchanged (it held none); one whose assertion is already removed comes back as the
  * removed marker (it is never stored in clear). */
-export async function seal(source: Source, items: { inputs: readonly string[]; value: string }[]) {
+export async function seal(source: Source, items: { inputs: readonly string[]; value: string; place?: string }[]) {
   if (!items.length) return [] as (string | Removed)[];
   const db = databaseOf(source);
   counters.sealCalls++;
@@ -94,19 +112,21 @@ export async function seal(source: Source, items: { inputs: readonly string[]; v
     source.backend!.url,
     db,
     "derived-seal",
-    items.map((x) => ({ ids: [...x.inputs], value: x.value })),
+    items.map((x) => (x.place === undefined ? { ids: [...x.inputs], value: x.value } : { ids: [...x.inputs], value: x.value, place: x.place })),
   );
+  // [DX-ERA4, after DX-ERA5's B1] every answer is sealed, removed, or clear because the gateway found no protected
+  // input; anything else fails the caller, whose frame then writes nothing
   return r.map((x, i): string | Removed => {
-    if (x.sealed !== undefined) return counters.sealed++, x.sealed;
-    if (x.clear) return counters.clear++, items[i]!.value;
-    assert(Array.isArray(x.removed));
+    if (typeof x.sealed === "string" && isSealed(x.sealed)) return counters.sealed++, x.sealed;
+    if (x.clear === true) return counters.clear++, items[i]!.value;
+    assert(Array.isArray(x.removed), "The seal route answered neither sealed, removed nor clear");
     return { removed: x.removed, ...(x.seq ? { seq: x.seq } : {}) };
   });
 }
 
 /** Opens sealed records (any database of the same gateway, named in each header). Values that are not sealed are
  * returned as they are. */
-export async function open(url: string, values: readonly unknown[]) {
+export async function open(url: string, values: readonly unknown[], places?: readonly (string | undefined)[]) {
   const out: (unknown | Removed)[] = [...values];
   const by = new Map<string, number[]>();
   values.forEach((v, i) => {
@@ -116,7 +136,8 @@ export async function open(url: string, values: readonly unknown[]) {
   });
   for (const [db, idx] of by) {
     counters.openCalls++;
-    const r = await call<{ value?: string; removed?: string[]; seq?: number }>(url, db, "derived-open", idx.map((i) => values[i]));
+    const r = await call<{ value?: string; removed?: string[]; seq?: number }>(url, db, "derived-open",
+      idx.map((i) => (places?.[i] === undefined ? values[i] : { record: values[i], place: places[i] })));
     r.forEach((x, j) => {
       if (x.value !== undefined) (counters.opened++, (out[idx[j]!] = x.value));
       else (counters.removed++, (out[idx[j]!] = { removed: x.removed!, ...(x.seq ? { seq: x.seq } : {}) }));

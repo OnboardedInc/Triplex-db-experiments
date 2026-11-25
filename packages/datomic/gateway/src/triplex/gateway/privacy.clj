@@ -22,6 +22,9 @@
 ;; (`_tx/` and 26 base-32 characters) instead of `_tx/erase-<uuid>`, which the SDK's TransactionId refuses (so every feed
 ;; read crossing a removal, and every save of a lazy account after one, fails); nil otherwise.
 (def derived-tx-id nil)
+;; [DX-ERA4, after DX-ERA5's B1 and M3] TX2_DERIVED_SEAL=1: the check of a write's rows against the database's one-way
+;; setting that its derived documents are sealed (derived_seal.clj `check-rows!`); nil unless the option is on.
+(def derived-check nil)
 
 (def root (System/getenv "TRIPLEX_ERASURE_DIRECTORY"))
 (def ^:dynamic *cut* nil)

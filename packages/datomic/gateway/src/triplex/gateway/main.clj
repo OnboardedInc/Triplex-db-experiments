@@ -482,11 +482,21 @@
 (defn- derived-seal! [name conn db per-account action input]
   (let [cut (if per-account (first (removal-erase/request-cut name conn db)) (privacy/cut name db))]
     (if per-account nil (privacy/verify-data! cut db))
+    ;; [DX-ERA4, after DX-ERA5's M2] the key re-sweep starts with the first derived call on this gateway
+    ((requiring-resolve 'triplex.gateway.derived-seal/start-resweep!))
     ((requiring-resolve 'triplex.gateway.derived-seal/handle!) name db cut action input)))
 
 (defn- derived-preview-ok? [input] ((requiring-resolve 'triplex.gateway.derived-seal/preview-ok?) input))
 (if derived-seal-on (alter-var-root #'privacy/derived-preview (constantly derived-preview-ok?)) nil)
 (defn- removal-tx-id [] ((requiring-resolve 'triplex.gateway.derived-seal/removal-tx-id)))
+;; [DX-ERA4, after DX-ERA5's B1 and M3] the database's one-way setting that its derived documents are sealed: a gateway
+;; with the option checks every write against it; a gateway of this build without the option refuses the database.
+(defn- derived-check-rows [db rows new-ids] ((requiring-resolve 'triplex.gateway.derived-seal/check-rows!) db rows new-ids))
+(if derived-seal-on (alter-var-root #'privacy/derived-check (constantly derived-check-rows)) nil)
+(defn- derived-required? [db]
+  (if (d/entid db :triplex.scope/derived-sealed)
+    (true? (:v (first (d/datoms db :eavt (:e (first (d/datoms db :aevt :triplex.scope/key))) :triplex.scope/derived-sealed))))
+    false))
 (if derived-seal-on (alter-var-root #'privacy/derived-tx-id (constantly removal-tx-id)) nil)
 
 (defn route-handler [{:keys [uri request-method body query-string] :as request}]
@@ -498,6 +508,11 @@
             ;; the published cut while another removal is prepared, and writes are fenced on their own accounts.
             per-account (removal-scope/per-account? db)]
         (cond
+          (if derived-seal-on false (derived-required? db))
+          (response 503 {:code "DerivedSealRequired"
+                         :message "This database requires sealed derived documents: this gateway runs without TX2_DERIVED_SEAL"})
+          (if (= :post request-method) (if derived-seal-on (= action "derived-seal-required") false) false)
+          (response 200 ((requiring-resolve 'triplex.gateway.derived-seal/require!) name conn))
           (and (= :post request-method) (= action "protection"))
           (response 200 (erase/declare! name conn db (request-json body)))
           (and (= :post request-method) (= action "erase"))

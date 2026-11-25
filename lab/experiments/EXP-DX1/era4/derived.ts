@@ -17,7 +17,7 @@ import { inspect } from "node:util";
 import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { W0, canonical, triplexValue } from "../../../bench/lib/w0-world.ts";
-import { counters, derivedSealOn, isRemoved, isSealed, open } from "../../../bench/lib/derived-seal.ts";
+import { counters, derivedSealOn, faults, isRemoved, isSealed, open, sealedHeader } from "../../../bench/lib/derived-seal.ts";
 import { Documents, hash, parse, unpack } from "../notify1/store.ts";
 import type { Packet } from "../notify1/dispatcher.ts";
 import { openStore, fact, type Store } from "../actv-lazy/store.ts";
@@ -47,6 +47,14 @@ const log = (kind: string, data: object = {}) => {
 };
 const dbOf = (s: Pick<Store, "scope">) =>
   "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(s.scope))).toString("base64url");
+// [DX-ERA4, after DX-ERA5's B1 and M3] with the option, every database that holds derived documents records the one-way
+// setting that they must be sealed, before its first derived write (ERA4_REQUIRE=0 leaves it out).
+// ERA4_MIXED=1: the gateway has the option and the client does not (run.sh ERA4_CLIENT_OFF=1); the setting is declared.
+const MIXED = process.env.ERA4_MIXED === "1";
+const requireSealed = async (s: Pick<Store, "scope">) => {
+  if ((sealOn || MIXED) && process.env.ERA4_REQUIRE !== "0")
+    await peer.request("POST", `/v2/db/${dbOf(s)}/derived-seal-required`, {});
+};
 
 // ---- the values: removed (X), kept (Y, Z, W), and an unprotected control ----
 // Expiry dates: X, Y and W expired at the valid time (2026-11-04), Z not (so Z has no notice).
@@ -75,7 +83,7 @@ function subjectFacts(s: string, expires: string) {
     seed(docOf(s), "expiresOn", expires),
   ];
 }
-async function account(scope: string, people: { id: string; expires: string }[]) {
+async function account(scope: string, people: { id: string; expires: string }[], inject?: (step: string) => void) {
   const store = await openStore(scope);
   const db = dbOf(store);
   await peer.declareProtection(db, PROTECTED, SEALED);
@@ -96,14 +104,34 @@ async function account(scope: string, people: { id: string; expires: string }[])
   await a.install(ids, valid);
   await a.publish("era4-one", W0.R1.doc, valid, "owed", undefined, { sources: "census" });
   const first = (await a.notices.observe()).value.sequence;
+  await requireSealed(store);
   const values = await Archive.open(a, new BulkQueue(1));
   const noticeArchive = await Archive.open(a, new BulkQueue(1), "notices");
-  await values.runValues(first);
+  await requireSealed(values.store);
+  await requireSealed(noticeArchive.store);
+  // [DX-ERA4] ERA4_FAULTS: a fault injected into one call of a writer; the writer's first turn fails and its retry must
+  // seal again (never write what it computed in clear)
+  const turn = async (name: string, f: () => Promise<unknown>) => {
+    inject?.(name);
+    let first = "ok";
+    try {
+      await f();
+    } catch (e) {
+      first = String((e as Error).message).slice(0, 120);
+    }
+    // a fault the writer never reached is disarmed, so it does not fire in the next writer
+    const armed = faults.next !== undefined;
+    faults.next = undefined;
+    faultLog.push({ scope, name, first: armed && first === "ok" ? "not-reached" : first });
+    if (first !== "ok") await f();
+  };
+  await turn("values", () => values.runValues(first));
   const notices = new RecordedNotices(noticeArchive);
-  await notices.record(first);
+  await turn("notices", () => notices.record(first));
   return { store, db, a, ids, first, values, noticeArchive, notices };
 }
 type Account = Awaited<ReturnType<typeof account>>;
+const faultLog: { scope: string; name: string; first: string }[] = [];
 const packetsOf = async (acc: Account) => {
   const at = await acc.noticeArchive.store.head();
   return sealOn ? acc.notices.openedPackets(at) : acc.notices.packets(at);
@@ -143,8 +171,9 @@ function place(name: string, v: unknown) {
 }
 async function openAllSealed(name: string) {
   // The store's remaining keys: every sealed derived record found in a place, opened through its database.
-  const found = [...new Set((places.get(name) ?? []).flatMap((s) => s.match(/tdx1\.[A-Za-z0-9_.-]+/g) ?? []))];
-  const opened = found.length ? await open(url, found) : [];
+  const found = [...new Set((places.get(name) ?? []).flatMap((s) => s.match(/tdx[12]\.[A-Za-z0-9_.-]+/g) ?? []))];
+  // the scan opens each record for the place its header names (the readers of the store state their own)
+  const opened = found.length ? await open(url, found, found.map((w) => sealedHeader(w).p)) : [];
   place(name + "+opened", opened.filter((v) => !isRemoved(v)));
   return { sealed: found.length, opened: opened.filter((v) => !isRemoved(v)).length };
 }
@@ -258,6 +287,33 @@ function compare(acc: Account, n: number, expected: Map<string, W0.Delivery[]>, 
 
 // ---- the run ----
 const t0 = performance.now();
+// ---- [DX-ERA4, after DX-ERA5's B1 and M3] ERA4_MIXED=1: the gateway with the option, the client without it, every
+// derived database declared sealed-only. The client's first derived write is in clear and must be refused (409
+// DerivedRecordUnsealed); afterwards no database but the source holds X's or Y's document values. ----
+if (MIXED) {
+  assert(!sealOn, "ERA4_MIXED runs the client without TX2_DERIVED_SEAL");
+  const scope = "lazy-era4-mixed-" + RUN;
+  let error = "none";
+  try {
+    await account(scope, [{ id: X, expires: X_EXP }, { id: Y, expires: Y_EXP }]);
+  } catch (e) {
+    error = (String((e as Error).message ?? e) + " " + String((e as { cause?: unknown }).cause ?? "")).slice(0, 400);
+  }
+  const source = dbOf(await openStore(scope));
+  await dump(0);
+  const clear: Record<string, number> = {};
+  for (const [name, list] of places) {
+    if (!name.startsWith("native:") || name === "native:" + source) continue;
+    const n = list.filter((v) => v.includes(X_EXP) || v.includes(Y_EXP)).length;
+    if (n) clear[name] = n;
+  }
+  const pass = /DerivedRecordUnsealed|requires sealed derived/.test(error) && Object.keys(clear).length === 0;
+  log("mixed", { error, sourceDb: source, clearOutsideSource: clear, pass });
+  log("verdict", { arm: "mixed", sealed: SEALED, pass });
+  peer.close();
+  process.exit(pass ? 0 : 1);
+}
+
 const A = await account("lazy-era4-a-" + RUN, [
   { id: X, expires: X_EXP },
   { id: Y, expires: Y_EXP },
@@ -265,10 +321,12 @@ const A = await account("lazy-era4-a-" + RUN, [
 ]);
 const B = await account("lazy-era4-b-" + RUN, [{ id: W0.placementId(5), expires: W_EXP }]);
 const sink = await openStore("lazy-era4-sink-" + RUN);
+await requireSealed(sink);
 const sinkDocs = new Documents(sink.comp, "sink");
 // A second recipient that receives nothing until after the removal: packets recorded before it, delivered after it
 // (section 3.5), then the stream after it.
 const late = await openStore("lazy-era4-late-" + RUN);
+await requireSealed(late);
 const lateDocs = new Documents(late.comp, "sink");
 const deliveredFirst = await A.notices.deliver(sinkDocs, await A.noticeArchive.store.head());
 const oracleA1 = await oracleStep(A, A.first, new Set(), 0);
@@ -426,7 +484,7 @@ try {
     const r = await docs.row<string>("receiver:" + origin + ":" + s, await docs.head());
     if (!r) return null;
     const v = unpack<{ g: number; e: unknown[] }>(r.value);
-    return { g: v.g, e: (await open(url, v.e)).map((x) => (typeof x === "string" ? x : canonical(x))) };
+    return { g: v.g, e: (await open(url, v.e, v.e.map((w) => (isSealed(w) ? sealedHeader(w).p : undefined)))).map((x) => (typeof x === "string" ? x : canonical(x))) };
   };
   const recipients: Record<string, unknown> = {};
   for (const s of A.ids) {
@@ -452,6 +510,64 @@ try {
     stack: String((e as Error).stack ?? "").split("\n").filter((l) => l.includes("EXP-DX1") || l.includes("bench/lib")).slice(0, 12).join(" | ") };
 }
 log("stream", { phase: "after", ...stream });
+
+// ---- [DX-ERA4, after DX-ERA5's B1] ERA4_FAULTS=N: N more accounts, each with one seal or open call of one writer
+// (settlement, notice recorder, receiver) failing as a network error, as the client's 5 s timeout after a stalled
+// gateway, or as a gateway without the option (404). Each writer's retry must seal again: after all of them, no
+// derived database holds any of those subjects' document values in clear (each account has its own dates), and every
+// sealed record opens to its value. ----
+let faultResult: Record<string, unknown> | undefined;
+if (sealOn && Number(process.env.ERA4_FAULTS ?? "0") > 0) {
+  const n = Number(process.env.ERA4_FAULTS);
+  const kinds = ["fail", "slow", "refused"] as const, actions = ["derived-seal", "derived-open"] as const;
+  const writers = ["values", "notices", "deliver"] as const;
+  const dates: string[] = [];
+  const fdbs: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const kind = kinds[i % 3]!, action = actions[Math.floor(i / 3) % 2]!, writer = writers[Math.floor(i / 6) % 3]!;
+    const ds = [0, 1, 2].map((k) => `2025-0${1 + (i % 9)}-${String(10 + (k * 7) + (Math.floor(i / 9) % 7)).padStart(2, "0")}`);
+    const inject = (name: string) => { if (name === writer) (faults.next = kind), (faults.action = action); };
+    const F = await account("lazy-era4-fault-" + i + "-" + RUN, [
+      { id: X, expires: ds[0]! }, { id: Y, expires: ds[1]! }, { id: Z, expires: ds[2]! },
+    ], inject);
+    const fsink = await openStore("lazy-era4-fsink-" + i + "-" + RUN);
+    await requireSealed(fsink);
+    const fdocs = new Documents(fsink.comp, "sink");
+    inject("deliver");
+    let first = "ok";
+    try {
+      await F.notices.deliver(fdocs, await F.noticeArchive.store.head());
+    } catch (e) {
+      first = String((e as Error).message).slice(0, 120);
+    }
+    const armed = faults.next !== undefined;
+    faults.next = undefined;
+    faultLog.push({ scope: "fault-" + i, name: "deliver", first: armed && first === "ok" ? "not-reached" : first });
+    if (first !== "ok") await F.notices.deliver(fdocs, await F.noticeArchive.store.head());
+    dates.push(...ds);
+    fdbs.push(dbOf(F.store), dbOf(F.values.store), dbOf(F.noticeArchive.store), dbOf(fsink));
+  }
+  places.clear();
+  await dump(1);
+  let clear = 0, sealedSeen = 0;
+  const clearWhere: Record<string, number> = {};
+  for (const [name, list] of places) {
+    if (!name.startsWith("native:") || !fdbs.some((d) => name === "native:" + d)) continue;
+    for (const v of list) {
+      if (/tdx[12]\./.test(v)) sealedSeen++;
+      for (const d of dates) if (v.includes(d)) (clear++, (clearWhere[name.slice(0, 40)] = (clearWhere[name.slice(0, 40)] ?? 0) + 1));
+    }
+  }
+  const firstTurns = faultLog.filter((f) => f.scope.startsWith("lazy-era4-fault-") || f.scope.startsWith("fault-"));
+  faultResult = {
+    accounts: n, fired: { ...faults.fired },
+    firstTurnsFailed: firstTurns.filter((f) => f.first !== "ok" && f.first !== "not-reached").length,
+    faultNotReached: firstTurns.filter((f) => f.first === "not-reached").length,
+    firstTurns: firstTurns.length, clearDateOccurrences: clear, clearWhere, sealedStringsSeen: sealedSeen,
+    pass: clear === 0 && sealedSeen > 0,
+  };
+  log("faults", faultResult);
+}
 log("cost", {
   sealCounters: counters,
   packetBytes: before.A.length ? canonical(before.A).length : 0,
@@ -464,7 +580,8 @@ const pass =
   Object.keys(table["Y expiry date (kept)"] ?? {}).some((k) => k.includes("+opened") || k.startsWith("native-opened")) &&
   chain.aVerifies && chain.yUnchanged && chain.bUnchanged &&
   stream.recorded === true && (stream.oracle as { differ: number }).differ === 0 && stream.deliveredAgain === 0 &&
-  Object.values(((stream.late as { recipients?: Record<string, { same: boolean }> })?.recipients) ?? { none: { same: false } }).every((r) => r.same);
+  Object.values(((stream.late as { recipients?: Record<string, { same: boolean }> })?.recipients) ?? { none: { same: false } }).every((r) => r.same) &&
+  (faultResult === undefined || faultResult.pass === true);
 log("verdict", { arm: sealOn ? "on" : "off", sealed: SEALED, xFound, pass, seconds: Math.round((performance.now() - t0) / 100) / 10 });
 peer.close();
 for (const s of [A.store, B.store, sink, late, A.values.store, A.noticeArchive.store, B.values.store, B.noticeArchive.store])

@@ -1,4 +1,4 @@
-import { derivedSealOn, inputUnion, isRemoved, isSealed, namedInputs, open, seal } from "../../../bench/lib/derived-seal.ts";
+import { derivedSealOn, inputUnion, isRemoved, isSealed, namedInputs, open, placeOf, seal } from "../../../bench/lib/derived-seal.ts";
 import { ErasureChanged, withErasure } from "../../../bench/lib/datomic-erasure.ts";
 import type { ErasureFrontier } from "../../../../packages/datomic/dist/index.js";
 import assert from "node:assert/strict";
@@ -124,7 +124,13 @@ async function sealedReceive(
       held = prior ? unpack<SealedState>(prior.value) : { g: 0, e: [] };
     assert(generation >= held.g, "A packet of an earlier generation");
     const entries = generation > held.g ? [] : held.e;
-    const [openedEntries, openedDeliveries] = [await open(url, entries), await open(url, ds.map((d) => d.sealed))];
+    // [DX-ERA4, after DX-ERA5's L1] the subject's records are opened for its place: deliveries were sealed by the
+    // recorder for this source and subject, the state by this receiver for the same
+    const place = placeOf(source, subject);
+    const [openedEntries, openedDeliveries] = [
+      await open(url, entries, entries.map(() => place)),
+      await open(url, ds.map((d) => d.sealed), ds.map(() => place)),
+    ];
     const kept: unknown[] = [];
     const named = new Map<string, string[]>();
     const effects: W0.EffectState[] = [],
@@ -150,7 +156,7 @@ async function sealedReceive(
     for (const e of next.state.effects) byId.set(e.id, { ...byId.get(e.id), effect: e });
     for (const p of next.state.projection) byId.set(p.id, { ...byId.get(p.id), projection: p });
     const ids = [...byId.keys()].sort();
-    const sealed = await seal(source, ids.map((id) => ({ inputs: named.get(id) ?? [], value: canonical(byId.get(id)) })));
+    const sealed = await seal(source, ids.map((id) => ({ inputs: named.get(id) ?? [], value: canonical(byId.get(id)), place })));
     const e = [...kept, ...sealed.map((v) => (typeof v === "string" && !isSealed(v) ? parse<unknown>(v) : v))];
     ops.push(...db.change(k, prior as never, pack({ g: generation, e })));
   }

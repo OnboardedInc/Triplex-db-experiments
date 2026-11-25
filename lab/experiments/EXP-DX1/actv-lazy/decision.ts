@@ -1,4 +1,13 @@
-import { noteWorld } from "../../../bench/lib/derived-seal.ts";
+import { derivedSealOn, noteWorld } from "../../../bench/lib/derived-seal.ts";
+
+/** [DX-ERA4, after DX-ERA5's B4] TX2_DERIVED_SEAL=1: a removed value is absent from the world it was part of. W0 accepts a
+ * removed value only for `ssn` (w0/src/schema.ts, its one erasable attribute) and refuses the whole world otherwise
+ * (`W0.E_VALUE`), which stopped the account's next frame for every subject after one subject's document value was
+ * removed. The subject is evaluated from what remains (its notices restart in a new generation, 3.4); everyone else
+ * proceeds. The world's rows as noted for sealing are unchanged (a removed row holds no string). */
+const ERASABLE = new Set(["ssn"]);
+export const withoutRemoved = <R extends { attribute: string; value: { type?: string } }>(rows: readonly R[]) =>
+  derivedSealOn() ? rows.filter((r) => r.value.type !== "erased" || ERASABLE.has(r.attribute)) : (rows as R[]);
 import type { Dispatcher } from "./dispatch.ts";
 import assert from "node:assert/strict";
 import {
@@ -56,7 +65,7 @@ export function heldWorlds(rows: readonly WorldRow[], prefix: string, account: s
     assert.deepEqual(root.filter((r) => r.attribute === ":subject/account").map((r) => r.value.value), [account]);
     assert.deepEqual(root.filter((r) => r.attribute === ":subject/member").map((r) => r.value.value), [String(i)]);
     // [DX-ERA4] TX2_DERIVED_SEAL=1: the rows this world was built from (a derived record names them).
-    return noteWorld(policyWorld(i, body, basis), body);
+    return noteWorld(policyWorld(i, withoutRemoved(body), basis), body);
   });
 }
 export async function worldsAt(store: Store, format: Format, subjects: string[], b: Point) {
@@ -92,7 +101,7 @@ export async function worldsAt(store: Store, format: Format, subjects: string[],
   }
   return subjects.map((s) => {
     const used = reachableRows([s], rows, by);
-    return noteWorld(worldOf(s, used), used);
+    return noteWorld(worldOf(s, withoutRemoved(used)), used);
   });
 }
 export function render(

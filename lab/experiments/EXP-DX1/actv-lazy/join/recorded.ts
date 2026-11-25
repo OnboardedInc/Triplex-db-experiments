@@ -24,6 +24,7 @@ import {
   namedInputs,
   open,
   outputInputs,
+  placeOf,
   seal,
   type Removed,
 } from "../../../../bench/lib/derived-seal.ts";
@@ -48,11 +49,12 @@ const generationKey = (subject: string) => "recorded-generation:" + subject;
 export type SealedDelivery = { subject: string; generation: number; sealed: string | Removed };
 /** [DX-ERA4] Every subject's ledger opened: its readable items, what each names, and, when an item opens as removed,
  * the generation the subject takes (the removal's sequence). */
-async function openLedgers(url: string, previous: Map<string, Ledger>, fallback: number) {
+async function openLedgers(source: { backend?: { name: string; url: string }; scopeName?: string }, previous: Map<string, Ledger>, fallback: number) {
+  const url = source.backend!.url;
   const flat: unknown[] = [],
     where: string[] = [];
   for (const [s, l] of previous) for (const it of l.items) (flat.push(it), where.push(s));
-  const values = await open(url, flat);
+  const values = await open(url, flat, where.map((s) => placeOf(source, s)));
   const out = new Map<string, { items: W0.ItemState[]; named: Map<string, string[]>; forget?: number }>();
   for (const s of previous.keys()) out.set(s, { items: [], named: new Map() });
   values.forEach((v, j) => {
@@ -426,7 +428,7 @@ export class RecordedNotices {
     const db = this.archive.db,
       source = this.archive.source.s.comp;
     const generations = await db.rows<number>(ids.map(generationKey), at);
-    const opened = await openLedgers(source.backend!.url, previous, authority?.seq ?? 0);
+    const opened = await openLedgers(source, previous, authority?.seq ?? 0);
     const plans = ids.map((subject, i) => {
       const o = opened.get(subject)!;
       const before = generations.get(generationKey(subject));
@@ -437,10 +439,11 @@ export class RecordedNotices {
       const named = (id: string) => inputUnion(inputs, o.forget === undefined ? (o.named.get(id) ?? []) : []);
       return { subject, generation, before, result, named, forget: o.forget !== undefined };
     });
-    const queue: { inputs: readonly string[]; value: string }[] = [];
+    const queue: { inputs: readonly string[]; value: string; place: string }[] = [];
     for (const p of plans) {
-      for (const d of p.result.deliveries) queue.push({ inputs: p.named(d.id), value: canonical(d) });
-      for (const it of p.result.state.items) queue.push({ inputs: p.named(it.id), value: canonical(it) });
+      const place = placeOf(source, p.subject);
+      for (const d of p.result.deliveries) queue.push({ inputs: p.named(d.id), value: canonical(d), place });
+      for (const it of p.result.state.items) queue.push({ inputs: p.named(it.id), value: canonical(it), place });
     }
     const sealed = await seal(source, queue);
     let k = 0;
@@ -464,10 +467,12 @@ export class RecordedNotices {
   }
   /** [DX-ERA4] The recorded packets with every sealed delivery opened (a removed one reads `{subject, removed}`). */
   async openedPackets(at: number) {
-    const url = this.archive.source.s.comp.backend!.url;
+    const comp = this.archive.source.s.comp,
+      url = comp.backend!.url;
     const out: Packet[] = [];
     for await (const p of this.orderedPackets(at)) {
-      const values = await open(url, p.deliveries.map((d) => (d as unknown as SealedDelivery).sealed ?? d));
+      const values = await open(url, p.deliveries.map((d) => (d as unknown as SealedDelivery).sealed ?? d),
+        p.deliveries.map((d) => placeOf(comp, (d as unknown as SealedDelivery).subject)));
       out.push({
         ...p,
         deliveries: p.deliveries.map((d, i) => {

@@ -19,6 +19,7 @@ import {
   isRemoved,
   isSealed,
   open as openDerived,
+  placeOf,
   seal,
   worldInputs,
 } from "../../../../bench/lib/derived-seal.ts";
@@ -404,16 +405,19 @@ export class Archive {
         W0.compileRelease(m.document),
         false,
       );
-      for (const id of missing) known.set(id, []);
-      for (const row of values.rows) known.set(row.subject, row.rows.map(([k, , value]) => [k, value]));
+      // [DX-ERA4, after DX-ERA5's B1] the frame's changes are computed into a local map and enter the frame cache only
+      // once they are what is stored: with the option, sealed. A seal call that fails throws here and caches nothing,
+      // so the next turn computes and seals again; a clear unit is never cached under the option.
+      const fresh = new Map<string, [string, string | null][]>(missing.map((id) => [id, []]));
+      for (const row of values.rows) fresh.set(row.subject, row.rows.map(([k, , value]) => [k, value]));
       // [DX-ERA4] TX2_DERIVED_SEAL=1: each change is stored as ["", sealed [field, value]] under the protected
-      // assertions of its subject's world (a change computed from none stays as it was; one whose input was already
-      // removed is stored as ["", null], the removed marker). Sealing is deterministic, so a frame retried writes the
-      // same bytes. era4/DERIVED-COPIES.md 3.1.
+      // assertions of its subject's world, placed for its subject (a change computed from none stays as it was; one
+      // whose input was already removed is stored as ["", null], the removed marker). era4/DERIVED-COPIES.md 3.1.
       if (derivedSealOn()) {
-        const queue: { inputs: readonly string[]; value: string; subject: string }[] = [];
+        const queue: { inputs: readonly string[]; value: string; subject: string; place: string }[] = [];
         for (const [i, id] of missing.entries())
-          for (const unit of known.get(id)!) queue.push({ inputs: worldInputs(worlds[i]!), value: canonical(unit), subject: id });
+          for (const unit of fresh.get(id)!)
+            queue.push({ inputs: worldInputs(worlds[i]!), value: canonical(unit), subject: id, place: placeOf(s.comp, id) });
         const sealed = await seal(s.comp, queue);
         const next = new Map<string, [string, string | null][]>(missing.map((id) => [id, []]));
         sealed.forEach((v, j) => {
@@ -421,7 +425,7 @@ export class Archive {
           next.get(q.subject)!.push(isSealed(v) ? ["", v] : isRemoved(v) ? ["", null] : (JSON.parse(q.value) as [string, string | null]));
         });
         for (const [id, units] of next) known.set(id, units);
-      }
+      } else for (const [id, units] of fresh) known.set(id, units);
     }
     const candidates = ids.map((subject) => ({ subject, units: known.get(subject)!, closing: false }));
     const { next, ops } = valuesFrame(this.db, progressKey(sequence), prior, current,
@@ -713,10 +717,11 @@ export class Contest {
 
 /** [DX-ERA4] Settled changes with their sealed units opened. A subject any of whose units opens as removed reads
  * `{subject, changes: [], removed}` (all of a subject's units name the same world, so they are removed together). */
-export async function openChanges(source: { backend?: { name: string; url: string } }, list: Changes[]) {
+export async function openChanges(source: { backend?: { name: string; url: string }; scopeName?: string }, list: Changes[]) {
   if (!derivedSealOn()) return list;
   const flat = list.flatMap((c) => c.changes.map((u) => (u[0] === "" ? u[1] : null)));
-  const values = await openDerived(source.backend!.url, flat.map((v) => v ?? undefined));
+  const places = list.flatMap((c) => c.changes.map(() => placeOf(source, c.subject)));
+  const values = await openDerived(source.backend!.url, flat.map((v) => v ?? undefined), places);
   let j = 0;
   return list.map((c): Changes & { removed?: string[] } => {
     const units: [string, string | null][] = [];

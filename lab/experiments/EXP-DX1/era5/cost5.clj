@@ -11,15 +11,23 @@
             [wfix1-regression :as offers] [era2-gate :as g] [era3-attack :as x] [era5-attack :as a5]))
 
 (def sql-reads (atom 0))
+;; [DX-ERA4] also the SQL queries on the key table (one batched read per call since the per-call key cache)
+(def key-queries (atom 0))
 (defn install-counter! []
-  (let [f sql/key-by-id] (alter-var-root #'sql/key-by-id (fn [_] (fn [s i] (swap! sql-reads inc) (f s i))))))
+  (let [f sql/key-by-id] (alter-var-root #'sql/key-by-id (fn [_] (fn [s i] (swap! sql-reads inc) (f s i)))))
+  (let [f @#'sql/select!]
+    (alter-var-root #'sql/select! (fn [_] (fn [c text params g]
+                                            (when (str/includes? (str text) "triplex_removal.keys") (swap! key-queries inc))
+                                            (f c text params g))))))
 (defn- ms [f] (let [t (System/nanoTime) r (f)] [(/ (- (System/nanoTime) t) 1e6) r]))
 (defn- median [xs] (nth (vec (sort xs)) (quot (count xs) 2)))
 (defn- timed
   "Median wall time of 5 runs of f, and the PostgreSQL key reads of one run."
   [f]
-  (let [runs (vec (for [_ (range 5)] (do (reset! sql-reads 0) (let [[t r] (ms f)] [t @sql-reads r]))))]
-    {:ms (Math/round (double (median (map first runs)))) :key-reads (second (first runs)) :outcome (nth (first runs) 2)}))
+  (let [runs (vec (for [_ (range 5)] (do (reset! sql-reads 0) (reset! key-queries 0)
+                                         (let [[t r] (ms f)] [t @sql-reads r @key-queries]))))]
+    {:ms (Math/round (double (median (map first runs)))) :key-reads (second (first runs)) :outcome (nth (first runs) 2)
+     :key-queries (nth (first runs) 3)}))
 
 (defn- seed-retry!
   "A protected value saved; the PostgreSQL authority's key pool answers 503 while it refills (every 500 ms): retried."
@@ -44,7 +52,11 @@
               ids (vec (for [[si subj] (map-indexed vector subjects)]
                          (vec (for [j (range p)] (seed-retry! src (str "k-" p "-" si "-" j) (str subj "/f" j))))))
               unit (apply str (repeat 217 "u"))
-              item (fn [si u] {"ids" (into (ids si) ["plain-row-1" "plain-row-2" "plain-row-3"]) "value" (str unit si "-" u)})
+              ;; [DX-ERA4, after M1] the unprotected names are real rows (the route refuses unknown names); each record
+              ;; carries its place, as the option's writers send it
+              plains (vec (for [k (range 3)] (a5/plain-row! src (str "plain-" p "-" k) "acct/a/pl:99999999/p")))
+              item (fn [si u] {"ids" (into (ids si) plains) "value" (str unit si "-" u)
+                               "place" (str "cost|a|" (subjects si))})
               frame6 (vec (for [si (range 64) u (range 6)] (item si u)))
               frame20 (vec (for [si (range 64) u (range 20)] (item si u)))
               owes200 (vec (for [u (range 400)] (item 0 u)))
