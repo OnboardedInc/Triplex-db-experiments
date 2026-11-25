@@ -69,5 +69,5 @@
               (let [options {:readers {} :default (fn [& _] (codec/invalid "Tagged EDN is not allowed")) :eof ::eof}
                     q (edn/read options reader)]
                 (when (or (= q ::eof) (not= ::eof (edn/read options reader))) (codec/invalid "Expected exactly one query")) q))
-            (catch Exception e (codec/invalid (str "Invalid query EDN: " (.getMessage e)))))]
+            (catch Exception e (codec/invalid (str "Invalid query EDN: " (if (:code (ex-data e)) (.getMessage e) "the reader refused it")))))]
     (normalize q)))

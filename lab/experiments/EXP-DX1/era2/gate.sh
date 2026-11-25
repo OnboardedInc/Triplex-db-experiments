@@ -24,7 +24,7 @@ cp "$repo/packages/datomic/src/codec-spec.json" "$out/this/codec-spec.json"
 git -C "$repo" archive "$base" packages/datomic/gateway/src packages/datomic/src/codec-spec.json | tar -x -C "$out/base"
 mv "$out/base/packages/datomic/gateway/src" "$out/base/src"; cp "$out/base/packages/datomic/src/codec-spec.json" "$out/base/codec-spec.json"
 rm -rf "$out/base/packages"; echo "$base" > "$out/base/commit"
-cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era2/paired.clj" "$x/era3/attack.clj" "$x/era3/attack2.clj" "$x/era3/attack3.clj" "$x/era3/attack4.clj" "$x/era3/attack5.clj" "$x/era2/lines.clj" "$out/lab/"
+cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era2/paired.clj" "$x/era3/attack.clj" "$x/era3/attack2.clj" "$x/era3/attack3.clj" "$x/era3/attack4.clj" "$x/era3/attack5.clj" "$x/era2/lines.clj" "$x/era2/replies.clj" "$out/lab/"
 image=${DX_ERA2_IMAGE_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
 [[ $image =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "gate.sh: DX_ERA2_IMAGE_ID must be an image ID" >&2; exit 2; }
 [[ $(docker image inspect --format '{{.Id}}' "$image") == "$image" ]] || { echo "gate.sh: image $image not present" >&2; exit 2; }
@@ -112,7 +112,16 @@ if [[ $phases == *era3* ]]; then
   run era3e-move this on "$attack5"
 fi
 # [DX-ERA2 sixth pass] the failure lines (the standalone branch's lines.clj: F5 and F9 on failures.clj itself)
-if [[ $phases == *lines* ]]; then run lines-this this off '(load-file "/lab/lines.clj") (b2-lines/main)'; fi
+if [[ $phases == *lines* ]]; then
+  run lines-this this off '(load-file "/lab/lines.clj") (b2-lines/main)'
+  # [DX-N1, N3] nothing an exception carries reaches a caller (era2/replies.clj): every route with an injected exception
+  # on the file authority (every option off and per account), and the declaration's refused key batch on PostgreSQL
+  run replies-this-off this off '(load-file "/lab/regression.clj") (load-file "/lab/replies.clj") (n1-replies/main)'
+  run replies-this-on this on '(load-file "/lab/regression.clj") (load-file "/lab/replies.clj") (n1-replies/main)'
+  bash "$x/era2/inproc-pg.sh" "$out/replies-pg" replies.clj '(load-file "/lab/regression.clj") (load-file "/lab/replies.clj") (n1-replies/main)' > "$out/replies-pg.log" 2>&1 || status=1
+  grep -hE "^N1_REPLY_SUMMARY|^N1_REPLY FAIL" "$out"/replies-this-*.log "$out/replies-pg/run.log" 2>/dev/null | cut -c1-300
+  grep -q "^N1_REPLY_SUMMARY.*:failed 0" "$out/replies-this-off.log" && grep -q "^N1_REPLY_SUMMARY.*:failed 0" "$out/replies-this-on.log" || status=1
+fi
 # [DX-ERA2 sixth pass] the B2 review's scenarios (b2r/scenarios.clj: S1, S2a, S2b, S3; S3 fails on key bytes, a
 # protected value, a subject ID or a scope word in any failure line) on the file and the PostgreSQL authority
 if [[ $phases == *b2r* ]]; then

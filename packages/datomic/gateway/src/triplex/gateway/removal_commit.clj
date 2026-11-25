@@ -951,7 +951,7 @@
                (catch clojure.lang.ExceptionInfo e
                  ;; [DX-ERA2 sixth pass, V3] the current stamp, not the one the refused plan read
                  {:status 409 :headers (merge (:headers answer) (:headers (ex-data e)))
-                  :body (json/write-str {:code "ErasureReplayDeclined" :message (.getMessage e)})}))
+                  :body (json/write-str {:code "ErasureReplayDeclined" :message ((requiring-resolve 'triplex.gateway.reply/message) e name)})}))
           answer))
       answer)))
 

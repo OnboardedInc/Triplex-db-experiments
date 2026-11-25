@@ -402,7 +402,7 @@
              (catch clojure.lang.ExceptionInfo e
                (let [{:keys [status code maximum retryAfterMs]} (ex-data e)]
                  (if (and status code)
-                   (timed start (response status (cond-> {:code code :message (.getMessage e) :route "ids"}
+                   (timed start (response status (cond-> {:code code :message ((requiring-resolve 'triplex.gateway.reply/message) e name) :route "ids"}
                                                    (some? maximum) (assoc :maximum maximum)
                                                    (some? retryAfterMs) (assoc :retryAfterMs retryAfterMs))))
                    (throw e))))))
@@ -414,7 +414,7 @@
              (catch clojure.lang.ExceptionInfo e
                (let [{:keys [status code maximum retryAfterMs]} (ex-data e)]
                  (if (and status code)
-                   (timed start (response status (cond-> {:code code :message (.getMessage e) :route "sweep"}
+                   (timed start (response status (cond-> {:code code :message ((requiring-resolve 'triplex.gateway.reply/message) e name) :route "sweep"}
                                                    (some? maximum) (assoc :maximum maximum)
                                                    (some? retryAfterMs) (assoc :retryAfterMs retryAfterMs))))
                    (throw e))))))
@@ -434,9 +434,10 @@
       (when (:removal-log-missing (ex-data e)) (throw e))
       ;; [DX-ERA2 fifth pass] an exception that is not a typed refusal is a fault: counted and logged (the commit
       ;; boundary's restore defect was answered 400 GatewayError with no message and no log line)
-      (when-not (instance? clojure.lang.ExceptionInfo e) ((requiring-resolve 'triplex.gateway.failures/note!) "gateway-error" uri e))
+      ;; [DX-N1, N3] a typed refusal keeps its own message; any other exception answers a fixed text and is logged
+      ;; here, scrubbed (reply/message; it was logged for a non-ExceptionInfo only, and its message went to the caller)
       (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
-                                (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
+                                (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message ((requiring-resolve 'triplex.gateway.reply/message) e nil "gateway-error") :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
                                   (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e)))
                                   (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e)))))))))
 (defn- with-privacy-guards [scopes work]
@@ -638,11 +639,18 @@
             (try ((requiring-resolve 'triplex.gateway.removal-commit/rebuild-log!) name (connection (db-uri name)) {})
                  (catch Exception x ((requiring-resolve 'triplex.gateway.failures/note!) "log-rebuild" name x))))
           ;; [DX-ERA2 sixth pass, V3] a refusal that carries headers (a declined save carries the current removal stamp)
-          (update (response (or (:status info) 400) {:code (or (:code info) "GatewayError") :message (.getMessage e)})
+          ;; [DX-N1, N3] a typed refusal keeps its own message; any other exception answers a fixed text
+          (update (response (or (:status info) 400) {:code (or (:code info) "GatewayError") :message ((requiring-resolve 'triplex.gateway.reply/message) e name)})
                   :headers merge (:headers info))))))
     (route-handler-base request)))
 
-(defn handler [request] (trace/handler route-handler request))
+;; [DX-N1, N3] Why: nothing an exception carries reaches a caller, also from outside the routes' own catches (the
+;; question reader's guard, an Error): a last answer with a fixed text, the detail logged (reply/message).
+;; Rejected: Jetty's error page (it prints the exception's message).
+(defn- route-handler-guarded [request]
+  (try (route-handler request)
+       (catch Throwable t (response 500 {:code "GatewayError" :message ((requiring-resolve 'triplex.gateway.reply/message) t nil)}))))
+(defn handler [request] (trace/handler route-handler-guarded request))
 (defn serve! [serve-handler port]
   (envelope/start!)
   (d/create-database (db-uri "tx2-health"))

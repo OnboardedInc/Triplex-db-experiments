@@ -597,8 +597,8 @@
         ;; [DX-THIN1] Why: preserve explicitly typed policy errors and the established transaction rejection for malformed row ordering.
         ;; Rejected: treating every codec InvalidValue as a policy error before checking the transaction result.
         (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasureFrontierUnavailable" "ErasedAssertionIdentity" "ProtectedTypeUnsupported" "EnvelopeKeyPoolEmpty"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
-        (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
-                       {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_ERASURE_FRONTIER|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
+        ;; [DX-N1, N3] the reply's message is the gateway's own (reply/commit-message), never Datomic's or a driver's text
+        (throw (let [data {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_ERASURE_FRONTIER|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
                         :code (cond (re-find #"TRIPLEX_ERASURE_FRONTIER" text) "ErasureFrontierChanged"
                                     (re-find #"TRIPLEX_OPERATION_DUPLICATE" text) "OperationDuplicate"
@@ -609,7 +609,8 @@
                                     (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"
                                     (re-find #"triplex.claim/command-id" text) "CommandConflict"
                                     (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
-                                    (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e))))))
+                                    (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")}]
+                 (ex-info ((requiring-resolve 'triplex.gateway.reply/commit-message) e data) data e)))))))
 (defn operation [db id]
   (if-let [{:keys [position t clock]} (group/receipt db id)]
     (if (nil? position) {:status "absent"} {:status "committed" :operationId id :position (codec/encode-value "long" position)
