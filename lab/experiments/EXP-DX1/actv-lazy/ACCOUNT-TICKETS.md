@@ -1,7 +1,7 @@
 # A removal in one account stops nothing in another: Publish, settlement, recorded notices and delivery carry their account (`TX2_ACCOUNT_TICKETS`)
 
 Builder DX-ACT9, 2026-11-24, branch `exp/DX-ACT9-account-tickets`: `exp/DX-ACT8-publish-beside-saves` (`2e7ae66c4`) with
-`exp/DX-ERA2-removal-per-account` (`6bc2484f0`, then its fix heads `a9da13f89` and `5114a74b0`) and
+`exp/DX-ERA2-removal-per-account` (`6bc2484f0`, then its fix heads `a9da13f89`, `5114a74b0` and `27733d980`) and
 `exp/DX-IMP2-import-whole-subject` (`d4411c77b`) merged. All accounts
 stay in one Datomic database. Mac work is correctness at toy size; every Mac time is diagnostic. Datomic is not modified.
 Every option is default off; with `TX2_REMOVAL_PER_ACCOUNT` absent or off nothing here changes a byte.
@@ -289,6 +289,7 @@ removals moves by more than the quiet bar (1.25x or 50 ms) between the arms.
 | `exp/DX-IMP2-import-whole-subject` `d4411c77b` (`26420c297`) | `ha1/local.ts`: the holder rules of ACT5, ACT6, ACT8 and IMP2's `snapshotWhole`, all in the one assert; `main.clj`: the frontier keeps ERA2's per-account fields and adds IMP2's removed families (each under its own option); `privacy.clj` `apply-entry`: IMP2's families, then ERA2's per-account counters |
 | ERA2's fix head `a9da13f89` (`ddeb986d3`) | `up.sh`: both blocks; `erase.clj`: the fix's F3 refusal goes into the base removal here and into `removal_erase.clj` (where ERA2's removal code lives on this branch), its restore rebuild through privacy's hooks; `privacy.clj`: the prepared removal's entry kept in the cut, written with nested `when`/`if`; `ensure-ticket!` (with the fix's wait) lives in `removal_scope.clj`; `removal_scope.clj`, `storage.clj`, `removal_commit.clj` as they came, `removal_commit.clj`'s references pointed at `removal_erase.clj` |
 | ERA2's head `5114a74b0` (`adcbc8253`) | `privacy.clj`: ERA2 changed `ensure-ticket!` there; on this branch it lives in `removal_scope.clj`, which takes the change (`pending-touches?` resolved from `removal_commit.clj` on a database guarded per account); `main.clj`'s cross-database check resolves it the same way |
+| ERA2's head `27733d980` (`18bf0bf7a`) | none (its page only; no code change since `5114a74b0`) |
 
 **Identities (`act9/idents.sh`, the several-owners builder's method: every stored function's identity under seven writer
 settings, on one pinned runtime image by ID, compared with the base `2e7ae66c4`).** At the start, after the first two
