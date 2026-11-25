@@ -20,7 +20,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { Documents, hash, type Op } from "../../notify1/store.ts";
-import { readErasure } from "../../../../bench/lib/datomic-erasure.ts";
+import { readErasure, withErasure } from "../../../../bench/lib/datomic-erasure.ts";
 import { Conflict, fact, namesOf, originSettings, value, type AccountSettings, type Store } from "../store.ts";
 
 export type LedgerSetting = "whole" | "parts";
@@ -87,16 +87,19 @@ export async function ensureSettings(s: Store) {
     if (holds(c.settings, w)) return c.settings;
     const next = merge(c.settings, w);
     const origin = namesOf(s).ORIGIN;
+    // The removal sequence the fences were read under: the commit carries it as its ticket (as a settlement frame does),
+    // so a removal on request that lands between this read and the commit refuses the transition, which reads again.
+    const authority = await readErasure(s.comp);
     try {
       // A random command ID: no other account can compute it and claim it first, and the transition needs no recovery
       // by ID (it is read back from the origin itself).
-      await s.commit("account-settings:" + randomUUID(), "lazy/settings",
-        [{ op: "retract", id: c.origin.id }, fact(origin, "lazy/generation", { ...value(c.origin), settings: next }),
-          // DX_ACT8_INJECT=no-fence (diagnostic only, a negative control) leaves what was planned before unfenced.
-          ...(injected("no-fence") ? [] : await fences(s, p, c.releases))],
-        p, { settings: next }, undefined, undefined, [{ entityId: origin, tripleIds: [c.origin.id] }]);
+      const ops = [{ op: "retract" as const, id: c.origin.id }, fact(origin, "lazy/generation", { ...value(c.origin), settings: next }),
+        // DX_ACT8_INJECT=no-fence (diagnostic only, a negative control) leaves what was planned before unfenced.
+        ...(injected("no-fence") ? [] : await fences(s, p, c.releases, authority?.seq))];
+      await withErasure(authority?.seq, () => s.commit("account-settings:" + randomUUID(), "lazy/settings", ops,
+        p, { settings: next }, undefined, undefined, [{ entityId: origin, tripleIds: [c.origin!.id] }]));
     } catch (e) {
-      if (!(e instanceof Conflict) && !isConflict(e)) throw e;
+      if (!(e instanceof Conflict) && !isConflict(e) && !/erasure|frontier/i.test(String((e as Error)?.name) + String((e as Error)?.message))) throw e;
     }
   }
   const c = await s.controls(await s.head());
@@ -114,7 +117,7 @@ const isConflict = (e: unknown) => /conflict|changed|live triple/i.test(String((
  * row yet, the row a first frame would start from (`valuesProgress`, the fresh cursor), so a first frame planned before
  * is refused too. Every value is the one a reader already reads, so nothing a reader sees changes.
  */
-async function fences(s: Store, p: number, releases: readonly { storage?: string; seq?: number }[]): Promise<Op[]> {
+async function fences(s: Store, p: number, releases: readonly { storage?: string; seq?: number }[], erasureSeq: number | undefined): Promise<Op[]> {
   const [{ JoinedAccount }, { identityOf, valuesProgress, progressKey }] = await Promise.all([
     import("./account.ts"), import("./archive.ts")]);
   const docs = namesOf(s).documents;
@@ -139,11 +142,11 @@ async function fences(s: Store, p: number, releases: readonly { storage?: string
   else {
     const tail = (await a.notices.observe()).value.sequence;
     if (tail >= 1) {
-      const t = (await a.notices.event(tail, p)).value, authority = await readErasure(s.comp);
+      const t = (await a.notices.event(tail, p)).value;
       ops.push(notices.put("notice-progress", {
         epoch: t.epoch, event: 1, start: 0, batch: 0, entries: 0,
         parent: hash([a.db.prefix, t.epoch, t.census]), previous: hash([a.db.prefix, t.epoch, "receiver-genesis"]),
-        ...(authority ? { erasureSeq: authority.seq } : {}),
+        ...(erasureSeq !== undefined ? { erasureSeq } : {}),
       }));
     }
   }
