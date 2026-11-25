@@ -975,6 +975,86 @@
             (check! label (not (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [a1 b1]}))) va)) "a1 not answered after")
             (native-counters-agree! label name conn)))))))
 
+(defn policy-and-reconcile
+  "[DX-ERA2 fifth pass, Z1 and Z2 of the fourth review] (a) A database whose policy is only in its log (an earlier
+  build's move: the stored policy retracted here) loses its log: requests are refused 503 RemovalLogMissing, the
+  rebuild route 409 ProtectionPolicyUnknown; any copy of the log's head put back (here the one from before the first
+  removal) and the rebuild route writes the rest from the data and adopts the policy. (b) A stored policy that differs
+  from the log's is refused (409 ProtectionPolicyMismatch). (c) A removal record an earlier build replayed with its new
+  position written into it: on the commit boundary writes are refused 503 RemovalLogConflict; the reconcile route
+  (body {} only) rewrites it as published and writes are served again. No removed value is answered throughout."
+  []
+  (when per-account?
+    (fresh-scope false
+      (fn [name conn]
+        (let [label (str "policy-and-reconcile/" mode)
+              seeds (seed! name [a1 b1 "acct/c/one" "acct/d/one"]) va (:value (seeds a1)) vb (:value (seeds b1))
+              dir (.getParent (privacy/path name "head.json"))
+              tmp (java.nio.file.Paths/get "/tmp" (into-array String [(str "era2-pr-" (UUID/randomUUID))]))
+              _ (copy-dir! dir tmp)
+              policy-attr :triplex.scope/protection-policy
+              stored (fn [] (rc/stored-policy (d/db conn)))
+              head-e (fn [] (triplex.gateway.scope/entity (d/db conn)))
+              _ (check! label (= {"attributes" [":v"] "sealed" false} (stored)) "the move stored the policy in the database" (stored))
+              _ (expect label (remove! name "pr-1" a1) [200 nil])
+              ;; (a) the policy only in the log, then the log lost
+              _ @(d/transact conn [[:db/retract (head-e) policy-attr (triplex.gateway.scope/value (d/db conn) (head-e) policy-attr)]])
+              _ (with-open [st (java.nio.file.Files/list dir)] (doseq [x (iterator-seq (.iterator st))] (java.nio.file.Files/delete x)))
+              _ (reset! privacy/cache {})
+              first-read (offers/route name "v1" "read" {"entityIds" [a1 b1]})
+              second-read (offers/route name "v1" "read" {"entityIds" [a1 b1]})
+              unknown (offers/route name "v2" "removal-log-rebuild" {})
+              _ (copy-dir! tmp dir)
+              _ (reset! privacy/cache {})
+              rebuilt (offers/route name "v2" "removal-log-rebuild" {})
+              adopted (stored)
+              after-rebuild (offers/route name "v1" "read" {"entityIds" [a1 b1]})
+              ;; (b) a stored policy that differs from the log's
+              _ @(d/transact conn [[:db/add (head-e) policy-attr (json/write-str {"attributes" [":w"] "sealed" false})]])
+              mismatch (offers/route name "v2" "removal-log-rebuild" {})
+              _ @(d/transact conn [[:db/add (head-e) policy-attr (json/write-str adopted)]])
+              ;; (c) an earlier build's replay wrote its new position into the record
+              _ (expect label (remove! name "pr-2" b1) [200 nil])
+              native (last (:entries (rc/native-entries name (d/db conn))))
+              shifted (assoc (:entry native) "position" (inc (long (get-in native [:entry "position"]))))
+              _ @(d/transact conn [[:db/add (:e native) :triplex.tx/erasure-record (json/write-str shifted)]])
+              _ (swap! @#'rc/natives dissoc name)
+              _ (reset! privacy/cache {})
+              conflict-save (offers/send name (frame "pr-sc" "acct/c/one" (secret "acct/c/one" "s") (:id (seeds "acct/c/one")) (head conn)))
+              with-body (offers/route name "v2" "removal-log-reconcile" {"attributes" [":v"]})
+              reconciled (offers/route name "v2" "removal-log-reconcile" {})
+              after-save (offers/send name (frame "pr-sd" "acct/d/one" (secret "acct/d/one" "s") (:id (seeds "acct/d/one")) (head conn)))
+              after-removal (remove! name "pr-3" "acct/c/one")
+              history (offers/route name "v1" "read" {"entityIds" [a1 b1] "history" true})
+              leaks (into {} (for [[k r] {:first-read first-read :second-read second-read :after-rebuild after-rebuild :history-at-the-end history}
+                                   ;; b1 is removed only in part (c): its value is checked in the read after it
+                                   :let [t (text (:body r)) b? (and (= k :history-at-the-end) (str/includes? t vb))]
+                                   :when (or (str/includes? t va) b?)]
+                               [k {:a1 (str/includes? t va) :b1 b? :body (subs t 0 (min 1500 (count t)))}]))]
+          (println "ERA2_POLICY_RECONCILE" mode
+                   (pr-str {:first-read (offers/outcome first-read) :second-read (offers/outcome second-read)
+                            :rebuild-without-a-stored-policy (offers/outcome unknown) :rebuild-after-the-head-put-back (offers/outcome rebuilt)
+                            :adopted adopted :mismatch (offers/outcome mismatch) :save-with-a-shifted-record (offers/outcome conflict-save)
+                            :reconcile-with-a-body (offers/outcome with-body) :reconcile (offers/outcome reconciled) :rewritten (get-in reconciled [:body "rewritten"])
+                            :save-after (offers/outcome after-save) :removal-after (offers/outcome after-removal)}))
+          (check! label (empty? leaks) "no removed value answered" leaks)
+          (expect (str label ": the first request with the log missing") first-read [503 "RemovalLogMissing"])
+          (expect (str label ": the next request, no stored policy") second-read [503 "RemovalLogMissing"])
+          (expect (str label ": the rebuild route, no stored policy") unknown [409 "ProtectionPolicyUnknown"])
+          (expect (str label ": the rebuild route after a copy of the head is put back") rebuilt [200 nil])
+          (check! label (= 1 (get-in rebuilt [:body "seq"])) "the log rebuilt to the data" (:body rebuilt))
+          (check! label (= {"attributes" [":v"] "sealed" false} adopted) "the policy adopted again from the log's head" adopted)
+          (expect (str label ": a read after it") after-rebuild [200 nil])
+          (expect (str label ": a stored policy that differs from the log's") mismatch [409 "ProtectionPolicyMismatch"])
+          (when commit? (expect (str label ": a save with a record shifted by an earlier build's replay") conflict-save [503 "RemovalLogConflict"]))
+          (expect (str label ": the reconcile route with a body") with-body [400 "InvalidValue"])
+          (expect (str label ": the reconcile route") reconciled [200 nil])
+          (check! label (= 1 (get-in reconciled [:body "rewritten"])) "the shifted record rewritten as published" (:body reconciled))
+          (check! label (= (get (:commands (privacy/cut name (d/db conn) true)) "pr-2") (some #(when (= "pr-2" (get (:entry %) "commandId")) (:entry %)) (:entries (rc/native-entries name (d/db conn))))) "the data's record equals the published entry")
+          (expect (str label ": a save after it") after-save [200 nil])
+          (expect (str label ": a removal after it") after-removal [200 nil])
+          (native-counters-agree! label name conn))))))
+
 (defn catch-up
   "[DX-ERA2 fourth pass, commit boundary] The log put back two removals behind; the next removal appends both from the
   data before its own; the log then equals the data."
@@ -1344,6 +1424,7 @@
   (scenario "commit-visibility" commit-visibility)
   (scenario "log-states" log-states)
   (scenario "catch-up" catch-up)
+  (scenario "policy-and-reconcile" policy-and-reconcile)
   (scenario "data-behind" data-behind)
   (scenario "boundary-transition" boundary-transition)
   (scenario "cache-stamps" cache-stamps)

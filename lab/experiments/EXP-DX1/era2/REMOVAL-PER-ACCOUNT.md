@@ -29,6 +29,13 @@ reader-generated names, section 9).
    boundaries: the external log against Datomic, or one database against another. The fourth pass (sections 16 and 17)
    fixes M1 to M5. It also builds, behind its own default-off option, the commit in Datomic as the boundary, which
    makes the first boundary's faults impossible by construction; the owner is asked to confirm that boundary.
+6. **The fifth pass and the fourth review (section 18, 2026-11-25).** The derived-copies review found B2: one removal
+   left pending stops the deletion of every published removal's key. **It is in what is merged today** (`exp/DX-INT1`
+   at `1ed2650bd`, every option off): the key outlived its grace by 30,147 ms in a 30 s test, and would for as long
+   as the other removal stays pending. The fourth review (`era3/REVIEW-4.md`) found that every stuck state waited for
+   a particular client request (Z1, B2 with Z3, Z5), that the rebuild route took a policy from its caller (Z2), and
+   that R2-2's fix missed saves without a frame source (Z7). Now every stuck state has a way out that waits for no
+   client, the policy and the boundary are stored in the database, and a restore replays each removal as published.
 
 **Known unmet requirement (E9, not this branch's work).** A derived copy recorded BEFORE a removal (a settlement frame,
 notice or Publish that copied the value while it was still current) stays readable after the removal, in its document
