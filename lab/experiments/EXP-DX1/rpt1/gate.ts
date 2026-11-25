@@ -709,6 +709,10 @@ const normalise = (journals: any[]) => journals.map((j) => ({
 }));
 const writeRoutes = async () => Object.fromEntries(Object.entries((await writer.request("GET", "/v2/admin/scan-stats")).routes ?? {})
   .filter(([k]) => !k.includes("/v2/admin/")));
+// [DX-INT5] The replays below end where the clean copy ends: with DX_INT5_PAIR_FIND=1 the backfill and the pair's whole-
+// subject imports come after P_H, so a replay stopped at P_H would lack them. Unset: P_R is P_H, as before.
+const P_R = process.env["DX_INT5_PAIR_FIND"] === "1" ? await headOf(A.db) : P_H;
+if (P_R !== P_H) await waitWatermark(clean, P_R, 120_000);
 const writeStatsBefore = await writeRoutes();
 const jA = normalise(await journalOf(A.db)), jB = normalise(await journalOf(B.db));
 const firstDiff = jA.findIndex((x, i) => JSON.stringify(x) !== JSON.stringify(jB[i]));
@@ -728,17 +732,17 @@ const kills: Record<string, number> = {};
 let killRuns = 0;
 for (let seed = 0; ; seed++) {
   const w = await new reporting.Projector({ sql: pg["rpt_kill"], source: new reporting.StoreSource(readUrl, A.db) }).watermark().catch(() => null);
-  if (w && w.after >= P_H) break;
+  if (w && w.after >= P_R) break;
   assert(seed < 2000, "kill run did not finish");
   const r = await runCli({ RPT_PG_URL: pgUrl("rpt_kill"), RPT_DIE: "random", RPT_DIE_PAGE: "1", RPT_DIE_SEED: String(seed) },
-    ["follow", "--reader", readUrl, "--database", A.db, "--page-limit", "3", "--wait-ms", "0", "--until-position", String(P_H)]);
+    ["follow", "--reader", readUrl, "--database", A.db, "--page-limit", "3", "--wait-ms", "0", "--until-position", String(P_R)]);
   killRuns++;
   const died = r.lines.find((l) => l.kind === "die");
   if (died) kills[died.point] = (kills[died.point] ?? 0) + 1;
   else if (r.code !== 0) { log("kill-run-error", { lines: r.lines.slice(-5) }); throw new Error("kill run failed"); }
 }
 // One more start without a fault, as after any crash: it regenerates views whose columns a killed run recorded.
-const settle = await runCli({ RPT_PG_URL: pgUrl("rpt_kill") }, ["follow", "--reader", readUrl, "--database", A.db, "--wait-ms", "0", "--until-position", String(P_H)]);
+const settle = await runCli({ RPT_PG_URL: pgUrl("rpt_kill") }, ["follow", "--reader", readUrl, "--database", A.db, "--wait-ms", "0", "--until-position", String(P_R)]);
 check(settle.code === 0, "c: the projector starts again cleanly after the last kill", { lines: settle.lines.slice(-3) });
 const tableDump = async (sql: any) => ({
   facts: (await sql`SELECT * FROM rpt.facts ORDER BY account, assertion_id`).map((r: any) => factKey(r) + `|${r.removed_position}`),
@@ -762,7 +766,7 @@ let lost = 0, applied = 0;
 await Promise.all(two.map(async (pj: any) => {
   for (;;) {
     const w = await pj.watermark();
-    if (w.after >= P_H) return;
+    if (w.after >= P_R) return;
     const s = await pj.step();
     if (s === null) lost++; else applied++;
   }
