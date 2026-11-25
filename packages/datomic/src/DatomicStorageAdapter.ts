@@ -690,6 +690,18 @@ export const makeDatomicStorageAdapter = (
             }
             if (error.code.startsWith("CommitOrder"))
               throw new DatomicCommitOrderError({ message: error.message, cause: error });
+            // [DX-S6b] Declined across a removal: this client has now learned of the removal, so the caller's next
+            // save must be framed after it. An optimistic save's source is the last position this client saw, which
+            // can precede the removal and would decline every later creation of the family; read the head once.
+            // Rejected: replaying here (the caller's values were chosen before the removal).
+            if (error.code === "ErasureReplayDeclined") {
+              try {
+                const seen = Number((await client.basis(db)).position.v);
+                if (Number.isSafeInteger(seen) && seen >= 0) lastSeenPosition = Math.max(lastSeenPosition, seen);
+              } catch {
+                // The caller's next save then begins from a fresh read instead.
+              }
+            }
             throw new WriteError({ message: "Datomic transaction was rejected", cause: error });
           }
           submitError = error;

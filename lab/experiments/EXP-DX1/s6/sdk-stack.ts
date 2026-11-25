@@ -294,13 +294,23 @@ const replay: Record<string, unknown> = {};
   const client = R.client;
   const original = client.transact.bind(client);
   let inject: { entity: string; command: string } | null = null;
+  // Every attempt of the fresh save after the removal, and its answer (diagnostic).
+  let watch: string | null = null;
+  const fresh: any[] = [];
+  let removal: any = null;
   client.transact = async (dbName: string, input: any, ...more: any[]) => {
     if (inject && input.rows?.some((r: any) => r.entity_id === inject!.entity)) {
       sent.push({ sourceK: input.sourceK, frameSourceK: input.frameSourceK ?? "absent" });
       if (sent.length === 1) {
-        await direct.erase(R.db, inject.command, [{ entityId: inject.entity, attribute: ":p/secret" }]);
+        removal = await direct.erase(R.db, inject.command, [{ entityId: inject.entity, attribute: ":p/secret" }]);
         throw new datomic.DatomicHttpError(409, "CasConflict", "injected: a removal landed between plan and commit");
       }
+    }
+    if (watch && input.rows?.some((r: any) => r.entity_id === watch)) {
+      const attempt: any = { sourceK: input.sourceK, frameSourceK: input.frameSourceK ?? "absent", position: input.position };
+      fresh.push(attempt);
+      try { return await original(dbName, input, ...more); }
+      catch (e: any) { attempt.answer = [e?.status, e?.code, String(e?.message ?? "").slice(0, 160)]; throw e; }
     }
     return original(dbName, input, ...more);
   };
@@ -313,9 +323,12 @@ const replay: Record<string, unknown> = {};
     const r = await save(R, 103, "replay", [{ op: "assert", entityId: X, attribute: ":p/secret", value: { type: "string", value: "framed before the removal" }, entityType: "subject", validFrom: 0 }]);
     inject = null;
     const rows = await direct.rows(R.db, { entityIds: [X] });
+    fresh.length = 0; watch = X;
     const after = await save(R, 103, "fresh-after-removal", [{ op: "assert", entityId: X, attribute: ":p/secret", value: { type: "string", value: "saved after the removal" }, entityType: "subject", validFrom: 0 }]);
+    watch = null;
     const rowsAfter = await direct.rows(R.db, { entityIds: [X] });
-    replay[kind] = { outcome: r.outcome, error: r.error, attempts: [...sent],
+    replay[kind] = { outcome: r.outcome, error: r.error, attempts: [...sent], removal: removal && { position: removal.position, seq: removal.seq },
+      freshAttempts: [...fresh],
       storedBeforeTheFreshSave: rows.filter((x: any) => x.attribute === ":p/secret").length,
       freshSave: after.outcome, freshError: after.error ?? null,
       secretValuesAfter: rowsAfter.filter((x: any) => x.attribute === ":p/secret" && x.retracted_at === null).map((x: any) => x.value_string ?? x.value) };
