@@ -18,6 +18,11 @@
 #   lines   [review F5, F9] b2-keys/lines.clj on this worktree: a persistent failure prints one line, then one a minute
 #           with the number not printed; a refused PostgreSQL batch prints its SQL state and the server's text, never
 #           the driver's message (the statement with a wrapped key); other exceptions print their class only.
+#   n1      [DX-N1] n1-keys/pool.clj (R0 to R3: the key pool after a restart, a save of more protected values than the
+#           pool holds, a burst) on this worktree and on the base, file and PostgreSQL authority: this worktree must pass
+#           every check (the base's result is printed as the reference); and b2-keys/paired.clj on the PostgreSQL
+#           authority, base and this worktree, with removals and with every removal left out, unsealed and sealed,
+#           compared as in the paired phase (which runs on the file authority).
 # The paired native logs are compared after paired.clj's normalisation, not as raw bytes: :db/txInstant datoms are
 # left out; every clock value (a number from 1e12 to 1e14, a 13-digit number, a float clock, a hex double clock)
 # becomes CLOCK or HEXCLOCK; the database name becomes DB; the random removal transaction IDs, every UUID and every
@@ -29,7 +34,7 @@ out=${1:?absolute new output directory}; base=${2:-1ed2650bd}
 : "${DOCKER_HOST:?set DOCKER_HOST to the lab VM docker socket}"
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 x=$repo/lab/experiments/EXP-DX1
-phases=${B2_GATE_PHASES:-b2 paired suites scenarios lines}
+phases=${B2_GATE_PHASES:-b2 paired suites scenarios lines n1}
 mkdir -p "$out/this" "$out/base" "$out/lab"
 git -C "$repo" rev-parse HEAD > "$out/source"
 git -C "$repo" status --porcelain -- packages/datomic/gateway lab/experiments/EXP-DX1/b2-keys > "$out/dirty"
@@ -124,6 +129,39 @@ if [[ $phases == *lines* ]]; then
   run lines-this this '(load-file "/lab/lines.clj") (b2-lines/main)'
   grep -hE "^B2_LINES" "$out/lines-this.log" | cut -c1-300
   grep -q "^B2_LINES_SUMMARY {:checks 10, :failed 0}" "$out/lines-this.log" || status=1
+fi
+if [[ $phases == *n1* ]]; then
+  for authority in file pg; do
+    bash "$x/n1-keys/run.sh" "$out/n1-this-$authority" worktree "$authority" n1-keys/pool.clj '(n1-pool/main)' > /dev/null || status=1
+    bash "$x/n1-keys/run.sh" "$out/n1-base-$authority" "$base" "$authority" n1-keys/pool.clj '(n1-pool/main)' > /dev/null
+    grep -h "^N1_SUMMARY" "$out/n1-this-$authority/run.log" "$out/n1-base-$authority/run.log" | sed "s/^/$authority /"
+  done
+  for source in base this; do
+    for variant in removals none; do
+      ref=$base; [[ $source == this ]] && ref=worktree
+      extra=(TRIPLEX_ERASURE_SHRED_GRACE_MS=0); [[ $variant == none ]] && extra+=(PAIRED_NO_REMOVALS=1)
+      bash "$x/n1-keys/run.sh" "$out/n1-paired-pg-$source-$variant" "$ref" pg b2-keys/paired.clj '(b2-paired/main)' "${extra[@]}" > /dev/null
+    done
+  done
+  python3 - "$out" <<'PY2' || status=1
+import sys, re, hashlib
+out = sys.argv[1]
+def rows(name):
+    text = open(f"{out}/{name}/run.log").read()
+    logs = [l for l in text.splitlines() if l.startswith("B2_PAIRED ")]
+    replies = [l for l in text.splitlines() if l.startswith("B2_PAIRED_REPLIES")]
+    field = lambda l, k: (re.search(r':' + k + r' ("[^"]*"|[0-9]+|true|false)', l) or [None, None])[1]
+    return [{k: field(l, k) for k in ["sealed", "datoms", "sha256", "reads"]} for l in logs], hashlib.md5("\n".join(replies).encode()).hexdigest()
+ok = True
+for variant in ["removals", "none"]:
+    b, t = rows(f"n1-paired-pg-base-{variant}"), rows(f"n1-paired-pg-this-{variant}")
+    native = b[0] == t[0] and len(b[0]) == 2
+    print("N1_PAIRED_PG", variant, "native log", "identical" if native else "DIFFERENT", "| replies", "identical" if b[1] == t[1] else "DIFFERENT")
+    for side, r in [("base", b), ("this", t)]:
+        for x in r[0]: print("  ", side, x)
+    ok = ok and native and b[1] == t[1]
+sys.exit(0 if ok else 1)
+PY2
 fi
 rm -rf "$out/this/src" "$out/base/src"
 exit "$status"
