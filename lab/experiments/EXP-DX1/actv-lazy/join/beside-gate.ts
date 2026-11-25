@@ -13,7 +13,7 @@ import { keyFor } from "../../scale1/decision/plan.ts";
 import { creditModeSelection } from "../../prep1/rolling-credits.ts";
 import { jsonFile } from "../../v01/adopted.ts";
 import { fact, openStore, type Store } from "../store.ts";
-import { JoinedAccount, joinedCommandId, publishBeside, type PublishOptions } from "./account.ts";
+import { JoinedAccount, joinedCommandIdAt, publishBeside, type PublishOptions } from "./account.ts";
 import { BulkQueue } from "./bulk.ts";
 import { Reference, toWire } from "./check.ts";
 import { checkForms, expectForms } from "./form-expect.ts";
@@ -68,7 +68,7 @@ const shape1000 = parseShape("forms=1000,policies=1000,permille=1000");
 const shape150 = parseShape("forms=150,policies=150,permille=1000");
 /** Writers the runner adopts from the journal by command ID: settlement frames, notice documents written through the
  * composition (enrolments of other accounts), and Publishes whose writing process was killed. */
-const ADOPT = /^(settled-(values|notice):|notice:v1:|joined:.*:act8:(kill|restart):)/;
+const ADOPT = /^(settled-(values|notice):|notice:v1:|joined:.*:act8:(kill|restart):|account-settings:)/;
 /** Commit samples of every Datomic client in this process (the reply's datoms, the gateway's transact time, request
  * bytes, HTTP calls), as `w0-http.ts` collects them; bounded. */
 const commitSamples: { transactionIds: string[]; httpCalls: number; requests: any[] }[] = [];
@@ -399,7 +399,7 @@ class Gate {
         kinds[k] = (kinds[k] ?? 0) + 1;
         if (t.position === r.position) {
           assert.equal(t.actor, "lazy/join");
-          if (id) assert.equal(t.commandId, joinedCommandId(c.s, id));
+          if (id) assert.equal(t.commandId, await joinedCommandIdAt(c.s, id, t.position));
         }
       }
     }
@@ -754,7 +754,7 @@ async function killPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
       await g.fold(r, old);
       g.published.push(r);
       // Exactly one record for the command ID, at the position the receipt names.
-      const found = await c.s.lookup(joinedCommandId(c.s, id));
+      const found = await c.s.lookup(await joinedCommandIdAt(c.s, id, r.position));
       assert.equal(found.position, r.position);
       const settled = await g.settle(r, old);
       await g.checkBetween(r);
@@ -861,7 +861,7 @@ async function restartPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
       assert.deepEqual([receipt.event.at, receipt.event.value.request], [p.position, id]);
       assert.equal(receipt.marker.seq, (c.releases.at(-1)?.seq ?? 0) + 1, "the next notice sequence");
       // Exactly one record for the command ID, at the position the receipt names.
-      const found = await steady("lookup", () => c.s.lookup(joinedCommandId(c.s, id)), retried);
+      const found = await steady("lookup", async () => c.s.lookup(await joinedCommandIdAt(c.s, id, p.position)), retried);
       assert.equal(found.position, p.position);
       const r: Release = { position: p.position, seq, doc, durableAt: now(), offer: offered, received: now(),
         read: receipt.marker.read ?? receipt.marker.cut, tries: 1 };

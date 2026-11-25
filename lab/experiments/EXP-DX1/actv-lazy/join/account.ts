@@ -95,6 +95,12 @@ export type PublishOptions = {
 export const joinedCommandId = (s: Pick<Store, "held">, id: string, keys = false) =>
   keys && s.held ? scopedJoinedId(s.held.account, id) : "joined:" + id;
 export const scopedJoinedId = (account: string, id: string) => "joined:v2/" + account.length + "/" + account + "/" + id;
+/** [DX-ACT8, second review] The form a joined record at `position` carries: the account's `accountKeys` setting there.
+ * A guarded record's origin guard (a whole-head record's fence) makes the setting at its plan the setting at its own
+ * position. For the harness's checks. */
+export async function joinedCommandIdAt(s: Store, id: string, position: number) {
+  return joinedCommandId(s, id, Boolean(s.held) && (await s.controls(position)).settings?.accountKeys === true);
+}
 export const publishBeside = () => process.env.TX2_PUBLISH_BESIDE === "1";
 /** [DX-ACT6] A Publish whose record exceeds the 4 MiB request limit (full documents only), refused before any write. */
 export class ReleaseTooLarge extends Error {}

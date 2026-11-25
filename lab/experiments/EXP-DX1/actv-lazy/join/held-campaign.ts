@@ -26,7 +26,7 @@ import { checkAdoptedPeer, type AdoptedSeed } from "../../v01/adopt.ts";
 import { jsonFile, preload, type Peer } from "../../v01/adopted.ts";
 import { openStore, type HeldSource } from "../store.ts";
 import type { Pin } from "../read.ts";
-import { JoinedAccount, joinedCommandId, publishBeside, type PublishOptions } from "./account.ts";
+import { JoinedAccount, joinedCommandIdAt, publishBeside, type PublishOptions } from "./account.ts";
 import { toWire } from "./check.ts";
 import { authoredSeed, authoredWrite, expectedPolicy } from "./deep-reference.ts";
 import { HeldLedger } from "./held-ledger.ts";
@@ -168,7 +168,8 @@ type Release = {
 export const unpausedMode = () => process.env.DX_ACT8_UNPAUSED === "1";
 /** [DX-ACT8] Writers the runner adopts from the journal by command ID when saves run beside a Publish: settlement frames,
  * notice documents written through the composition (other accounts' enrolments), Publishes of a killed process. */
-export const ACT8_ADOPT = /^(settled-(values|notice):|notice:v1:|joined:.*:act8:kill:)/;
+// [DX-ACT8, second review] Also a settings transition (`account-settings:<random>`) written by another process of the run.
+export const ACT8_ADOPT = /^(settled-(values|notice):|notice:v1:|joined:.*:act8:kill:|account-settings:)/;
 type PairSample = {
   mode: Mode;
   rate: Rate;
@@ -517,12 +518,13 @@ export async function runHeld(
       const received = now(),
         ack = s.counters.lastReceipt,
         record = s.counters.lastOps;
-      assert.equal(record.id, joinedCommandId(s, id));
+      const form = await joinedCommandIdAt(s, id, published.position);
+      assert.equal(record.id, form);
       assert(
         ack &&
           ack.position === published.position &&
           ack.txId === published.txId &&
-          ack.commandId === joinedCommandId(s, id),
+          ack.commandId === form,
       );
       const durableAt = performance.timeOrigin + ack.time;
       assert(offered <= durableAt && durableAt <= received);
