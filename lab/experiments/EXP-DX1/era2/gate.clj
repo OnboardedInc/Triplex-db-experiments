@@ -2288,7 +2288,7 @@
               _ (copy-dir! dir tmp)
               r1 (remove! name "aj-1" a1)
               r1-again (remove! name "aj-1" a1)
-              r2 (when per-account? (stop-after :committed #(remove! name "aj-2" b1)))
+              r2 (when per-account? (let [commit rc/commit!] (with-redefs [rc/commit! (fn [& args] (let [r (apply commit args)] (throw (stop-ex :committed)) r))] (remove! name "aj-2" b1))))
               rebuild (when per-account? (offers/route name "v2" "removal-log-rebuild" {}))
               r2-again (when per-account? (remove! name "aj-2" b1))
               counts {:aj-1 (count-of "aj-1") :aj-2 (count-of "aj-2")}
