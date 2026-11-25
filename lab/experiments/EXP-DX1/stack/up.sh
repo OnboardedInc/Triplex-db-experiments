@@ -324,10 +324,12 @@ subject_wide=${TX2_SUBJECT_WIDE:-0}
   { echo "up.sh: DX_SWEEP_QUEUE_MS must be 1..5000" >&2; exit 2; }
 [[ -z ${DX_SWEEP_CURSOR_SECRET:-} || $DX_SWEEP_CURSOR_SECRET =~ ^[A-Za-z0-9]{16,128}$ ]] ||
   { echo "up.sh: DX_SWEEP_CURSOR_SECRET must be 16..128 letters or digits" >&2; exit 2; }
+# [DX-INT5] SCALE2's sweep-gate eviction, refused here for the same reason (it was checked only in the gateway loop).
+[[ -z ${DX_SWEEP_GATE_EVICT:-} || $DX_SWEEP_GATE_EVICT =~ ^[01]$ ]] || { echo "up.sh: DX_SWEEP_GATE_EVICT must be 0 or 1" >&2; exit 2; }
 # [DX-S3] Why: default-off several-owners saves on the per-subject writer (needs the wide writer), from the card's
 # DX_S3_OWNERS. Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
 subject_several=${DX_S3_OWNERS:-0}
-[[ $subject_several =~ ^[01]$ ]] || exit 2
+[[ $subject_several =~ ^[01]$ ]] || { echo "up.sh: DX_S3_OWNERS must be 0 or 1" >&2; exit 2; }
 # [DX-S4] Why: default-off creation saves on the per-subject writer (needs the several-owners option), from the card's
 # DX_S4_CREATE. Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
 subject_create=${DX_S4_CREATE:-0}
@@ -337,8 +339,9 @@ subject_create=${DX_S4_CREATE:-0}
 # Rejected: passing it when unset (every default stack stays byte-identical in its container environment).
 import_whole=${TX2_IMPORT_WHOLE_SUBJECT:-0}
 import_commit_us=${TX2_IMPORT_COMMIT_US:-}
-[[ $import_whole =~ ^[01]$ ]] || exit 2
-[[ -z $import_commit_us || ( $import_whole == 1 && $import_commit_us =~ ^[1-9][0-9]{0,5}$ ) ]] || exit 2
+[[ $import_whole =~ ^[01]$ ]] || { echo "up.sh: TX2_IMPORT_WHOLE_SUBJECT must be 0 or 1" >&2; exit 2; }
+[[ -z $import_commit_us || ( $import_whole == 1 && $import_commit_us =~ ^[1-9][0-9]{0,5}$ ) ]] ||
+  { echo "up.sh: TX2_IMPORT_COMMIT_US is 1..999999 and needs TX2_IMPORT_WHOLE_SUBJECT=1" >&2; exit 2; }
 [[ $lookup_every =~ ^(0|[1-9][0-9]{0,3})$ ]] && (( lookup_every <= 4096 )) || exit 2
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prepw =~ ^(1|2|4)$ ]]
