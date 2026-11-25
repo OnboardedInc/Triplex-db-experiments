@@ -57,22 +57,29 @@ const readerEnv = ["TX2_PINNED_SHORTCUT=1", "TX2_PINNED_CUT_LOOKUP=1", "TX2_READ
   "TRIPLEX_TRACE_DIR=/out/reader-trace", "TRIPLEX_TRACE_PROCESS=gw-r"];
 const trace = join(out!, "reader-trace", "gw-r.jsonl");
 let phase = 0;
-async function restart() {  // a new gateway process: its object cache is empty
+async function restart(open = true) {  // a new gateway process: its object cache is empty
   client?.close();
   writeFileSync(join(out!, `phase-${phase}.env`), readerEnv.join("\n") + "\n");
   await waitFor(`phase-${phase}.ready`, 300);
   phase++;
   client = new DatomicClient(url!, 35_000);
-  assert(!(await client.create(scope, "lean", true, 35_000)).created);
+  // The forced cold read goes first, before anything else touches the new peer's cache.
+  if (open) assert(!(await client.create(scope, "lean", true, 35_000)).created);
 }
 const fieldAt = (e: string, position: number) => () => client.rows(db, { entityIds: [e], pattern: { attribute: ":task/field-0" },
   basis: { recordedPosition: position, validAt: SEED_VALID_FROM } }) as Promise<any[]>;
-const flushed = async () => { await sleep(2500); assert(existsSync(trace), "the reader wrote no trace"); };
+const flushed = async () => { await sleep(5000); assert(existsSync(trace), "the reader wrote no trace"); };
+
+// The toy's data would otherwise stay in the transactor's memory index, which a new peer receives with the log, so no
+// read would ever fetch a segment from storage. An indexing job first puts every datom into stored segments.
+await restart();
+const indexed: any = await client.request<any>("POST", "/v2/db/" + db + "/request-index", { waitMs: 120_000 });
+assert(indexed.completed, "the indexing job did not complete");
 
 // 1. Forced cases, three times: restart, one read (cold), the same read again (warm), classified from the trace.
 const forced: { cold: number; warm: number; coldStorage: number; warmStorage: number }[] = [];
 for (let k = 0; k < 3; k++) {
-  await restart();
+  await restart(false);
   const t = tasks[(7919 * (k + 1)) % tasks.length]!, reads: [string, number][] = [];
   for (const which of ["cold", "warm"]) {
     const started = performance.now(), rows = await profiledExchange(client, fieldAt(t.e, seedCut));
@@ -100,7 +107,8 @@ for (const label of ["first", "repeat"]) {
   await flushed();
   const { found } = traceExchanges(trace, offset, new Set(sampledReads.map(([id]) => id)));
   const c = classifyReads(sampledReads, found, step.read.count, 1);
-  windows.push({ label, reads: step.read.count, wrong: step.wrong, errors: step.errors, exchanges: step.exchanges, sampled: c.sampledReads,
+  const missing = sampledReads.filter(([id]) => !found.has(id)).map(([id]) => id);
+  windows.push({ label, missing: [...new Set(missing)], reads: step.read.count, wrong: step.wrong, errors: step.errors, exchanges: step.exchanges, sampled: c.sampledReads,
     unmatched: c.unmatched, inMemory: { reads: c.inMemory.reads, p99Ms: c.inMemory.read.p99Ms, storagePerSubject: c.inMemory.storageReadsPerSubject },
     notInMemory: { reads: c.notInMemory.reads, p99Ms: c.notInMemory.read.p99Ms, storagePerSubject: c.notInMemory.storageReadsPerSubject } });
 }
@@ -115,7 +123,7 @@ for (const p of [seedCut, Math.floor((seedCut + before.head) / 2), before.head])
   }
 const after = { head: await headOf(), history: await historyDigest() };
 client.close();
-const result = { gate: "srv2-classify", seedCut, forced, windows, paired, pairedDifferences, store: { before, after, unchanged: before.head === after.head && before.history === after.history } };
+const result = { gate: "srv2-classify", seedCut, indexed, forced, windows, paired, pairedDifferences, store: { before, after, unchanged: before.head === after.head && before.history === after.history } };
 writeFileSync(join(out!, "result.json"), JSON.stringify(result, null, 2) + "\n");
 console.log(JSON.stringify(result));
 writeFileSync(join(out!, "compare"), "owner-head=0\n");
