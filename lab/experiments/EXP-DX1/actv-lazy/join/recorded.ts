@@ -225,6 +225,9 @@ export type { Cursor };
 export class RecordedNotices {
   private activation?: { id: string; subjects: string[] };
   private window?: { key: string; work: Map<string, Awaited<ReturnType<JoinedAccount["notices"]["work"]>>[number]> };
+  /** [DX-ERA4, second review N1] Deliveries sealed for the page of subjects in progress (in memory only), so the later
+   * frames of a page do not seal its deliveries again: by place, names and content. */
+  private sealedDeliveries?: { page: string; map: Map<string, string | Removed> };
   readonly archive: Archive;
   /** [DX-ACT6] How new events write ledgers (an event already started keeps its own, named in the cursor). */
   ledger: LedgerMode;
@@ -540,17 +543,25 @@ export class RecordedNotices {
         place: placeOf(source, p.subject),
       }));
     };
+    // kept for the current page of subjects of this event only (at most 64 subjects' deliveries)
+    const page = [current.epoch, event, Math.floor(current.start / width)].join("|");
+    if (this.sealedDeliveries?.page !== page) this.sealedDeliveries = { page, map: new Map() };
+    const cache = this.sealedDeliveries.map;
+    const keyOf = (q: Queued) => hash([q.place, q.inputs, q.value]);
     const queue: Queued[] = [];
     for (const p of plans) {
       const place = placeOf(source, p.subject);
       for (const d of p.result.deliveries) queue.push({ inputs: p.named(d.id), value: canonical(d), place });
     }
+    const fresh = queue.filter((q) => !cache.has(keyOf(q)));
     const budgets = plans.map(() => ledgerChunkBytes);
     const chunks = plans.map((_, i) => chunkOf(i, budgets[i]!));
-    const sealed = await seal(source, [...queue, ...chunks.flat()]);
+    const out = await seal(source, [...fresh, ...chunks.flat()]);
+    fresh.forEach((q, j) => cache.set(keyOf(q), out[j]!));
+    const sealed = queue.map((q) => cache.get(keyOf(q))!);
     const units: (string | Removed)[][] = [];
-    let k = queue.length;
-    for (const c of chunks) units.push(sealed.slice(k, (k += c.length)));
+    let k = fresh.length;
+    for (const c of chunks) units.push(out.slice(k, (k += c.length)));
     const partMax = mode === "parts" ? ledgerPartValueMax() : Infinity;
     const over = (u: readonly (string | Removed)[]) =>
       pack(u).length > ledgerPartChars ? Math.max(0, ...u.map((x) => pack([x]).length - partMax)) : 0;
