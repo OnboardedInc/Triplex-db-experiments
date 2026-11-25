@@ -100,7 +100,8 @@ async function formsCase(F: number, a: number) {
         return n + (Buffer.isBuffer(b) ? (JSON.parse(inflateRawSync(b).toString()) as { items: unknown[] }).items.length : isRemoved(v) ? 0 : 1);
       }, 0);
       row.ledgerLargestPartChars = led.parts.length ? Math.max(...led.parts.map((r) => r.value.length)) : null;
-      // every unit is sealed under the subject's protected document dates (the gateway's choice from the root)
+      // the protected names each unit is sealed under (the subject's document dates; with a root in the place the writer
+      // names its world's rows too, so this shows the seal, not which side chose the keys: that is attack6.clj n3deep)
       row.ledgerHeaderNames = [...new Set((led.items as unknown[]).map((u) => (typeof u === "string" ? JSON.parse(Buffer.from(u.split(".")[1]!, "base64url").toString()).k.length : -1)))];
     }
     row.packets = (await notices.packets(at)).length;

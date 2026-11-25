@@ -1137,3 +1137,291 @@ header and nonce; prediction +60 to +150%, shown wrong above +250%.
 3. Re-sealing records written in `tdx1` before this pass (they are still opened; nothing rewrites them).
 4. Fault injection at the real writers ran in T1 with 18 accounts (54 writer turns, 12 failed first turns, 6 faults not
    reached because a fresh account's writer opens nothing); gate (e)'s degraded writer is simulated in process.
+
+## 14. After the second review (DX-ERA5 `REVIEW-2.md`, `1c02a37df`) and the removal builder's sixth pass (`03bb49cd3`)
+
+The second review found no way to get a removed value back, and found that the setting `derived-seal-required` could
+not be declared on a v0.1 database: with it the notice recorder stopped above 30 owed forms (N1). The fixes are
+`7cccd77d6`, `8be58c90b` and `70eee5660`. The removal builder's head is merged at `03bb49cd3` (its gateway code
+`b047b22a0`) as `af35c42ac`, with two repairs of that merge on this branch (`f7409aaeb`, `5239d34bd`: on this branch
+`erase.clj` does not load `removal-scope`, and the ticket check lives in `removal-scope`). The reproduction of N1 to
+N10 before any fix is `evidence/DX-ERA4/v6/repro/SUMMARY.txt` (07:38 to 07:40 EST).
+
+### 14.1 Each finding, its fix, and the test that passes
+
+| # | Finding | Fix | Test |
+| --- | --- | --- | --- |
+| N1 | With the setting, the recorder stopped above 30 owed forms: a sealed item packs to about 400 characters, and ledgers in parts were refused (a part was a slice of one packed string) | (1) A ledger is sealed in chunks of items, one record of bytes per chunk (`{start, items}` as compressed canonical JSON, about 180 items, the 8,192-byte size class; size classes above 4 KiB are now multiples of 512). (2) In parts, each part is a packed list of one such record and the head says `form: "units"`, so the check reads each part alone. (3) A part an earlier frame wrote is kept as stored and the items are chunked on from where it ends, so every part a head names comes from one sealing (each frame recomputes its candidates; before this the head hashed one sealing and the parts held another). (4) A page's deliveries are sealed once per event, not once per frame | `forms.ts` P with the setting, ledgers in parts, at 200, 1,000 and 1,700 owed forms: in process and on a stack (14.2) |
+| N2 | The rebuild of a missing removal log could drop a protected attribute nobody had removed (Z2), and later copies of it were sealed under no key | the removal builder's: the policy stored in Datomic is the only policy; the rebuild takes nothing from the request (merged, `03bb49cd3`). The held reader's cache keys on `removalStamp` (since `e46dda740`; with this pass it reads the stamp without the removed set, N6) | `attack6.clj` `z2` under each boundary: the rebuild dropping `:p` is refused (400 `InvalidValue`), 0 clear datoms; `row19.ts` under each boundary |
+| N3 | The writer chose a record's keys; a writer naming too few rows got a record sealed under the key of no assertion | the gateway takes, for a placed record, every live protected assertion of the subject its place names (the subject's entity and every entity under `<subject>/`, current and superseded, not removed), plus whatever the writer names. Cost and two-subject records in 14.3 | `attack6.clj` e1, new case: a record for `acct/a/one` naming only an unprotected row is sealed under the subject's value, opens as removed after that value's removal, and does not decode without the key; fuzz6 by cause (14.3): 0 of 554 records placed at their subject still open after a removal of one of the subject's values; in the held deep layout (`f7239b066`: the place carries the subject's root, checked and followed by references) n3deep: 0 of 24 on each boundary, against 24 of 24 before; two causes no writer of this option produces stay open (14.3) |
+| N4 | The check looked at document shapes only: 17 of 18 hand-made documents holding a protected value passed | exact shapes per kind: the entity exactly `notice:v1:<64 lowercase hex>:<kind>`, attribute `notice/value`; a settled page's fields typed (64-hex identity and previous, counters natural numbers); a packet's optional fields typed; a delivery exactly `{subject, generation, sealed}`; a removed marker exactly `{removed, seq?}`; a sealed record of exact form (canonical base64url, header keys within `{d, k, p, b}`, sorted names, a place naming a subject, a 12-byte nonce, a body that is a size class plus the tag); every unit's place names the document's own subject; a kind not on the list refused; content-free kinds (20 patterns, the review's census plus the ledger's own) accepted without decoding. What stays outside any check: 14.4 | `attack6.clj` e1: all 18 hand-made documents but one refused (409 `DerivedRecordUnsealed`); the one accepted is a record for one subject computed from another subject's value naming neither, a residual (14.4); another attribute and capital hex refused |
+| N5 | The key re-sweep re-read every removal every second on every gateway and dropped its failures | committed records read incrementally (only transactions since the last pass); each pass checks at most 512 identities per database: the 256 newest removals' and 256 more from a cursor that rotates over the older ones. Every failure is counted (`:removalFailures` `resweep`, `resweep-scopes`, `resweep-loop`) and logged as a `triplex.removal-failure.v1` line | `attack6.clj` m2: at 10, 100, 400 and 1,000 removals the failed delete is counted (1 each); the restored key is deleted within the pass bound (at 1,000 removals on the 3rd good pass, bound 5); a pass at 1,000 removals 12 to 19 ms (was 28 to 41 ms) |
+| N6 | The reader's cache keyed on the whole removed set | the reader keys on `${base}|${removalStamp}` and reads the frontier with `?stampOnly=1` (the removal builder's V3 parameter; this branch's own `?stamp=1` was dropped at the merge) | `row19.ts` and `held.ts` under each boundary |
+| N7 | A derived write checked before the setting's declaration could commit after it | the setting's attribute and the value false are installed when a gateway with the option opens a database; every derived write carries a compare-and-set of the setting on the value its check read, so a declaration in between fails it at the serial point (409 `CasConflict`) | `attack6.clj` e2: the held write is refused, the stored document holds no clear copy |
+| N8 | A journal change record carrying different clear text was accepted and served | under the setting a change record of a derived document must name a row of the same write with the same entity, attribute and value | `attack6.clj` e3: refused, 0 native datoms with the clear copy |
+| N9 | At the deep shape the seal request was 786,767 bytes and 119 ms against a 7 ms clear write | names travel once per place per call, and without the rows of the record's own subject (the gateway takes those itself, N3); per-call caches of keys, names, subjects' protected rows and derived keys. Sealing in the write route was not needed (14.5) | `cost5.clj` deep (14.5) |
+| N10 | The ledger-part refusal reached the writer as "Datomic read failed" | a refusal whose code starts with `Derived` reaches the writer as `Refused by the database's derived-seal-required setting (<code>): <message>` | `actv-lazy/store.ts` `rejectUnrecordedWrite` |
+| B4 | (note for the owner, not changed) | | `b4.ts`: kernel and oracle agree |
+
+### 14.2 Ledgers in parts with the setting (N1), and the forms figures
+
+`forms.ts` P (the reviewer's test, extended): three subjects who each owe F forms (every subject owes every form), the
+setting declared on every database, settlement and the recorder, then the ledger read back and opened. Ledgers whole
+unless "parts".
+
+| Owed forms per subject | Ledger | In process (`v7/gates/forms`, `1b02d1d22`) | On a stack (`v7/stack-forms-3`, `5239d34bd`) |
+| --- | --- | --- | --- |
+| 5 | whole | recorded: 6 items, one record, ledger 1,096 characters, 3 packets, 3.3 s | |
+| 30 | whole | recorded: 31 items, 3,152 characters (was 12,456 sealed per item), 6 packets, 3.5 s | |
+| 100 | whole | recorded: 101 items, 7,284 characters, 21 packets, 17.6 s | |
+| 200 | whole | stopped: "its closing piece alone exceeds the writer's bound" (as in clear at about 200) | |
+| 200 | parts | recorded: 2 parts, 201 items opened back, largest part 11,408 characters, 39 packets, 15.0 s | recorded: 2 parts, 201 items, largest 11,412, 39 packets, 15.9 s |
+| 1,000 | parts | recorded: 6 parts, 1,001 items, largest 11,424, 189 packets, 152.3 s | recorded: 6 parts, 1,001 items, largest 11,420, 189 packets, 107.8 s |
+| 1,700 | parts | recorded: 10 parts, 1,701 items, largest 11,420, 321 packets, 367.1 s | recorded: 10 parts, 1,701 items, largest 11,424, 321 packets, 271.8 s |
+| 200 | parts, setting not declared | recorded: 2 parts, 201 items, 39 packets, 14.0 s | |
+
+Test K in the same run: 0 clear copies of the kept expiry dates in 333 + 74 + 82 + 89 datoms of the four databases
+(source, settlement archive, notice archive, recipient), 22 kinds of derived document.
+
+The stack: a transactor, PostgreSQL storage and removal authority, a write and a read gateway, every container on the
+image the stack pins by ID (checked at start and end); `TX2_DERIVED_SEAL`, per account, subject check; the setting
+declared on all four databases. The later head changes only the setting's list of content-free kinds (14.4), which this
+path does not touch. Before the fixes (`v6/repro`, 07:38 EST) the same test stopped at 32 forms whole and at 200 in
+parts ("Datomic read failed"). Seconds are Mac figures, diagnostic: the recorder writes 321 frames for three subjects
+owing 1,700 forms; sealing each page's deliveries once (`70eee5660`) cut the seals from 1,683,497 to 24,518 for the
+same runs, and the time is now in the frames themselves.
+
+**Which format these ran in.** The stack and in-process figures above are `forms.ts`'s subjects: the W0 format
+(a subject's values on entities named under it, `pl:sN/doc:a`) on the lean layout. They did not run in the deep
+format version 0.1 is built on. `era4/deep-forms.ts` (`6b6243ead`) repeats the test there: a fresh SCALE1-named
+database per case, three subjects of SCALE1's `person` (root `acct/<account>/pl:N` with references to `wk:N`,
+`doc:N:0:f`, tasks; 366 facts for the three) committed whole, their documents' expiry dates protected and sealed, the account
+opened held and namespaced (`act2-deep`, so its places carry the subject's root), the setting declared on the source and
+both archives, `TX2_NOTICE_LEDGER=parts`; then the release published owed, settled, recorded, and subject 0's ledger
+read back and opened.
+
+| Owed forms per subject | Ledger | In process, trial (`v7/deep-forms-mem1`, 13:28 EST) | In process (`v7/gates-final/deep-forms`) | On a stack (`v7/stack-deep-forms-1`, 14:06 to 14:15 EST) |
+| --- | --- | --- | --- | --- |
+DEEP_ROWS
+
+All at `6b6243ead`. The stack is the one above (transactor, PostgreSQL, write and read gateway; `TX2_DERIVED_SEAL`, per
+account, subject check), every container on the pinned image by ID at start and end; 398 seal calls sealed 29,350
+records and wrote 0 in clear. Every place of the account carried its subject's root
+(`<scope>|account-002|@acct/account-002/pl:00000000|pl:s00000000`), which the gateway checked against the root's
+`:subject/member` and `:subject/account` rows before sealing (a wrong root is refused, n3deep). Each ledger unit's
+header names 1 protected value, subject 0's document date. With a root in the place the writer names its world's rows
+too, so this run shows the deep format works with the setting at these sizes; which side chose the keys is shown by
+n3deep (14.3).
+
+**Capacity.** A part holds one sealed chunk of at most 8,188 compressed bytes (with its 4-byte length, the 8,192-byte
+class), about 180 items; a ledger is kept to `ledgerPartsMax()` parts (10 by the default estimate, unchanged), so a
+sealed ledger in parts holds about 1,790 items, more than the clear one (1,680), because the clear one cut 10,240
+characters of base64 per part and a sealed part carries 8,188 bytes. At 1,700 owed forms the ledger is 1,701 items in
+10 parts: at the limit. A subject owing more than about 1,780 forms stops the recorder (`FrameTooLarge`, named), as in
+clear above 1,680. A part's header grows with its subject's protected history (14.3); a part that would not fit with
+the cursor is resealed with a smaller chunk.
+
+**Whole ledgers** with the setting record 100 owed forms and stop at 200 (the closing piece exceeds the writer's
+bound, as it does in clear at about 200; was 32 before this pass): a database whose subjects owe more uses
+`TX2_NOTICE_LEDGER=parts`, as it would without the setting.
+
+### 14.3 The gateway chooses the keys (N3): cost, and a record computed from two subjects
+
+**What the gateway reads.** For each distinct subject in a seal call: one index lookup of the private rows whose
+entity is the subject and one index range over `<subject>/`, from the request's database value (no key store access),
+cached for the call. Then the keys of every protected assertion the call's records are sealed under, in one SQL query
+per call with the PostgreSQL authority (one file read per distinct key with the file authority). Measured at the
+deep shape (64 subjects, 8 protected values each, 6 records each): **one key query per seal call and per open call**,
+every one of the 384 records sealed under its subject's 8 values, with the writer naming none of them.
+
+**What a record now costs to open.** Every record of a subject is sealed under all of that subject's live protected
+values, so opening needs all of their keys (one query per call) and a removal of any one of them makes every derived
+record of the subject unreadable. That was already so (the writers name the subject's whole world), so the recorder's
+"forget and start a new generation" path (3.4, 13.4) is unchanged. The header's name list grows with the subject's
+protected history (superseded values count until removed); a ledger part whose header leaves too little room is
+resealed with a smaller chunk, which costs capacity (14.2).
+
+**Is N3 closed for every record the setting accepts?** `attack6.clj` fuzz6 at `1b02d1d22` (1,000 schedules per
+boundary, runs `gates/fuzz6d-log` and `fuzz6d-commit`, 12:01 to 12:31 EST): every "mislabelled" record (its writer names
+only unprotected rows) computed from a value that a later removal removed, by where its removed sources are, and
+whether it still opens to its content after the removal. Each record is sealed twice: where the reviewer places it (at
+the entity of its first source's value, `acct/a/pl:N/fJ`) and, as a twin, at that value's subject (`acct/a/pl:N`), where
+this option's writers place every record (`placeOf(source, subject)`; the setting binds each unit to its document's
+subject). All of them are accepted by the setting when written. (This fuzzer's subjects are in the W0 layout, their
+values on entities named under the subject.)
+
+| Placement | Removed sources | Log: records | Log: still open | Commit: records | Commit: still open |
+| --- | --- | --- | --- | --- | --- |
+| at a value's entity | on that entity (the gateway names them) | 228 | **0** | 240 | **0** |
+| at a value's entity | on another entity of the same subject only | 40 | 40 | 34 | 34 |
+| at a value's entity | of another subject, and on another entity of the same subject | 8 | 8 | 4 | 4 |
+| at a value's entity | of another subject only | 235 | 235 | 195 | 195 |
+| at the subject | at least one of the subject's own | 276 | **0** | 278 | **0** |
+| at the subject | of another subject only | 235 | 227 | 195 | 185 |
+
+(The 8 and 10 records "of another subject only" that open as removed at the subject do so because another value of
+their own subject was removed in the same schedule: the gateway seals under every value of the subject.) Two oracles
+hold on both boundaries: a record whose removed source is on its place's entity opens as removed, and a record placed
+at its subject opens as removed after a removal of any of that subject's values. The causes:
+
+1. **Placed at an entity other than its subject** (48 log, 38 commit): the gateway covers the place's entity and the
+   entities named under it, not its siblings. This option's writers never place a record there. The setting accepts it
+   because nothing in the store says which entity is a subject and which is one of its entities. Not closed.
+2. **Computed from another subject's value that its writer did not name** (227 log, 185 commit, placed at the subject):
+   the gateway cannot know which other subject a record read. This option's writers do not produce it: they name every
+   row of every world they read, and a world that reaches another subject's entity through a reference names that
+   entity's rows. Sealing every record under every protected value of its account would close it at the cost of a key
+   per protected value of the account in every record (millions in a deep account) and of every removal making every
+   derived record of the account unreadable. Not closed.
+3. **Held accounts in the deep format** (`decision.ts` `act2-deep`, SCALE1's `person`: the layout version 0.1 is built
+   on, ten deep accounts at the target). A record there names its subject by its W0 ID (`pl:s00000012`), while the
+   subject's facts sit on the account's sibling entities `acct/<account>/pl:00000012`, `.../wk:00000012`,
+   `.../doc:00000012:0:f`, `.../tk:...`, linked from the placement by references (`:person/profile`, `:person/file`,
+   `:person/placement`, ...). Before `f7239b066` the gateway's rule found none of them: the seal rested on the writer's
+   names alone. **Fixed** (`f7239b066`), with no new state: for a held store in the deep format the place carries the
+   subject's root, `<scope>|<account>|@acct/<account>/pl:00000012|pl:s00000012` (`placeOf`, from `openStore`); the gateway
+   checks the root against its stored rows (its `:subject/member` is the subject's number and its `:subject/account` the
+   place's account, or the seal is refused 400) and takes every protected value on every entity reached from the root
+   through reference rows, as the writers' worlds and the sweep reader reach them (at most 65,536 entities). Options
+   weighed: (a) the layout's own subject key: the siblings share no prefix with the subject (the kind comes first,
+   `wk:`, `doc:`), and the subject's number is recoverable from `pl:sN` only by the lab's naming, so a gateway rule on
+   names would be the lab's convention, not the store's; (b) the explicit root in the place, checked against the stored
+   rows and followed by references: chosen, the references are the account's own rows; (c) a per-subject list of its
+   protected-value entities kept by the writers: a new state every writer must maintain. `attack6.clj` n3deep (runs
+   `v7/n3deep/log` and `commit` at `f7239b066`, 13:22 to 13:23 EST): 24 subjects in this layout, protected values on `wk:N` and `doc:N:0:0`, 48
+   records whose writer names only an unprotected row, one value of each subject removed:
+
+   | Place | Header names | Records from a removed value | Still open after the removal (log) | (commit) |
+   | --- | --- | --- | --- | --- |
+   | as written before this fix: account and the subject's W0 ID (`pl:sN`) | 0 | 24 | **24** | **24** |
+   | with the subject's root as well (`@acct/a/pl:N`) | 2 (the subject's two values) | 24 | **0** | **0** |
+
+   A place naming another subject's root, or another account, is refused (400) on both boundaries; the new place's
+   record is accepted under the setting in its subject's page. Not covered: deep-format stores that are not held
+   (`openStore(scope, "act2-deep")` without a held source: the price and interference benches), whose roots carry no
+   `:subject/member` row; their places carry no root and the gateway's rule there is the W0 one.
+
+So N3 is closed for every record placed at its subject as this option's writers place records, in the W0 format (0 of
+554 still open) and in the held deep format (0 of 24 on each boundary). It is not closed for a record placed at an
+entity other than its subject (no writer of this option does that) or computed from another subject's value its
+writer did not name (no writer of this option does that either: they name every row of every world they read).
+
+**A record computed from two subjects.** It is placed at one subject (the one whose document holds it). The gateway
+adds that subject's protected values; the other subject's protected rows are included only when the writer names
+them. The writers name every string row of every world they read (`noteWorld`), and now send only the names outside
+the record's own subject, so a world that reached the other subject's rows names them and the record is sealed under
+both subjects' values: a removal of either makes it unreadable. A writer that reads another subject's value and does
+not name it gets a record that survives that value's removal: `attack6.clj` e1 `under-named-record` (a record for
+`pl:00000001` computed from `acct/a/one`'s value, naming only an unprotected row) is accepted and still opens after the
+removal. This is the residual of N3; closing it needs the gateway to know every subject a record was computed from,
+which only the writer knows (or one key per account, which a removal of one subject's value would have to destroy for
+every subject of the account).
+
+### 14.4 What the setting's check accepts, and what stays outside any check
+
+The check (write route, every write path) refuses, on a database with the setting, any `notice:v1` row or journal
+change record that is not one of the derived documents' exact forms (14.1 N4). It cannot look inside a record, so these
+stay outside any check:
+
+1. **A caller writing a protected value into an ordinary attribute of its own** (E9): no check of this option applies to
+   rows that are not derived documents.
+2. **A record built by hand in the exact format**: a caller can make a header naming nothing and a body padded to a
+   size class that holds clear bytes; only the key tells it from a sealed one. A record naming no assertion is
+   computable by anyone anyway. This needs a caller that builds the format deliberately, the same class as (1).
+3. **Identifiers.** Fields that hold identifiers (a delivery's subject, a packet's account and epoch, a removed
+   marker's names, a header's names) accept any string of up to 256 characters of `[A-Za-z0-9_:./|-]`: a protected value
+   that looks like an identifier could ride there.
+4. **Content-free kinds** (claims, censuses, members, cursors, release documents, the join index and the rest: 23
+   patterns) are accepted without decoding. They hold no value of the current protection policy (document types and
+   expiry dates: T1's and `forms.ts` K's scans of every datom find none). The join index (`join-index-base:N`,
+   `join-index:N`) holds postings of the indexed rules' inputs (pay, location, status): a policy that protects one of
+   those makes the index a clear derived copy that this list lets through. A new kind of derived document is refused
+   until it is added to the list, so a new writer fails loudly rather than storing in clear (T1 found one this way:
+   `join-index:0`, which the review's census had not seen); the commit-time index for questions across subjects and the
+   reporting copy (the review's page 11, rows 15 and 16) will each need an entry.
+5. **A record for one subject computed from another subject's value that the writer did not name** (14.3).
+6. **Values of an attribute added to the policy later** (the removal builder's sixth pass, V1): values saved before the
+   addition are stored in clear, have no key, and a derived record of one is sealed without it. Their removal masks
+   them by identity; a derived copy is not reached.
+
+### 14.5 Cost at the deep shape (N9)
+
+`cost5.clj` deep (the reviewer's shape: 64 subjects, 160 names per record of which 8 protected, 6 records per subject;
+PostgreSQL key store; medians of 5; Mac, diagnostic). The request bytes are exact; the times moved with the lab's load
+(two runs shown: `v7/smoke1/cost-deep` at `7cccd77d6`, 07:47 EST, and `v7/gates/era5-cost-deep` at `244b3a254`, 11:31 to
+11:42 EST, while four builders shared the lab).
+
+| Settlement frame, 64 subjects x 6 records | Request | Seal call (smoke1) | Seal call (gates) | Key queries |
+| --- | --- | --- | --- | --- |
+| The review's wire (each record carries its 160 names) | 786,767 bytes | 86 ms | 245 ms | 1 |
+| Names once per place per call | 219,673 bytes | 68 ms | 104 ms | 1 |
+| **The writers' wire now** (names outside the record's own subject only: here none; the gateway takes the subject's) | **104,410 bytes** | **26 ms** | **44 ms** | 1 |
+| The same frame's document written in clear | | 4 ms | 8 ms | 0 |
+| Opening one subject's page of 6 records (against a plain read) | | 1 ms (0) | 4 ms (1) | 1 |
+
+Every one of the 384 records is sealed under its subject's 8 protected values in all three wires. Against the review's
+786,767 bytes and 119 ms: the request is 7.5 times smaller, about 1.6 times the writer's 64 KiB frame bound (the
+records' own content, 384 values of 217 characters, is most of it); the seal call is 3 to 6 times faster than the
+review's wire in the same run, and 5 to 7 times the clear write. Sealing in the write route was not needed for this
+and would not remove the content's bytes. The other shapes (`v7/gates/era5-cost-pg`, 64 subjects, 1 to 20 protected
+values, 3 names each): settlement frame 64 x 6 seal 19 to 49 ms against 7 to 16 ms clear, one key query per call;
+64 x 20 three calls, 47 to 121 ms; a subject owing 200 forms (400 items) 11 to 22 ms.
+
+### 14.6 Gates on the final head
+
+GATES_TABLE
+
+### 14.7 Not tested, and not promised
+
+**Not promised** (13.10's list, updated):
+
+1. A gateway of a build from before this option ignores the setting (unchanged, 13.10 item 1).
+2. Documents written before the setting is declared are not checked or converted (13.10 item 2). A write checked
+   before the declaration no longer commits after it (N7).
+3. Ledgers in parts now work with the setting (13.10 item 4 no longer holds; 14.2). A subject owing more than about
+   1,780 forms stops the recorder, named (`FrameTooLarge`), as one does in clear above 1,680.
+4. What stays outside the setting's check: 14.4 (E9, a hand-built record, identifier fields, the content-free kinds
+   and the join index under a wider policy, a two-subject record the writer under-names, values of an attribute added
+   to the policy later).
+5. A sealed record shows its size class (now to within 512 bytes above 4 KiB: for a ledger part, its item count to
+   within about ten), the assertion IDs it is sealed under (now every protected value of its subject) and its place.
+6. Deleted key bytes stay in PostgreSQL's WAL until overwritten (unchanged).
+
+**Not tested:**
+
+1. A record computed from two subjects by a real writer: no writer computes one today; the residual is shown with a
+   hand-made record (`attack6.clj` e1 `under-named-record`).
+2. A subject whose protected history makes a ledger part's header too large for the 8,192-byte class: the reseal with
+   a smaller chunk is exercised only by construction (the forms subjects hold 2 protected values; the deep shape's 8
+   names were measured on settlement records, not ledger parts).
+3. The key re-sweep beyond 1,000 removals per database: each pass checks at most 512 identities, but it still holds
+   every committed removal record of the database in memory and sorts them each pass (O(removals) memory and time per
+   pass, without database reads); the owner's 1 billion is not reached by this design.
+4. The setting with an attribute added to the policy later (the removal builder's V1) and this option together.
+5. Two gateways sharing a database with the setting (the stack run has two gateways, the forms driver writes through
+   one).
+6. The recorder's memory for a page's sealed deliveries (bounded to one page of 64 subjects, not measured).
+7. The W0-format stack run of the forms is at `5239d34bd` (the final head differs there only in the setting's list of
+   content-free kinds and the deep-layout rule, which a W0 place does not reach); the deep-format stack run (200 and
+   1,700) is at `6b6243ead`. 1,000 owed forms in the deep format ran in process only.
+8. Deep-format stores that are not held (`openStore(scope, "act2-deep")` with no held source: the price and
+   interference benches). Their roots carry no `:subject/member` row, so their places carry no root and the gateway
+   applies the W0 rule: the subject's sibling entities are covered only by the writer's names (14.3, cause 3).
+9. A deep layout whose references reach entities shared between subjects, or another subject (SCALE1's `person`
+   references only the subject's own entities). The gateway follows every live reference from the root, as the
+   writers' worlds do, so such a record would be sealed under the other subject's values as well (a removal of either
+   makes it unreadable), and a world of more than 65,536 entities is refused. Entities reached only through a
+   reference retracted before the seal are not followed.
+10. Removal in the deep format through the forms path: `deep-forms.ts` records and opens the ledger but removes
+    nothing; removal in that layout is n3deep's (48 records, one value of each of 24 subjects removed).
+
+### 14.8 Merging with the one branch (`origin/exp/DX-INT1` at `8a362ac38`)
+
+This head (`6b6243ead`, `git merge-tree`, not merged) does not merge cleanly with it: 7 files conflict (`envelope.clj`,
+`failures.clj`, `main.clj`, `storage.clj`, `DatomicStorageAdapter.ts`, `ha1/local.ts`, and the removal builder's lab
+document `b2r/REVIEW.md`, added on both sides). The removal builder's head alone conflicts with it in the same gateway
+files and `privacy.clj`; the base this branch started from (`c2aa3d416`) alone conflicts in `main.clj`, `storage.clj` and
+`ha1/local.ts`. The one branch has since moved to `f633233f6` (committed 12:22 EST, seen 13:36): against it an eighth file conflicts,
+`subject_save.clj`, which this branch's own commits do not touch (the base and the removal head each conflict there). This branch's own lines sit in two of `main.clj`'s three conflict hunks (the open path's install line
+beside DX-S3's and DX-S4's install lines, and the derived-routes block beside lines the one branch changed); both are
+additions next to additions.
