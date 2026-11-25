@@ -168,3 +168,84 @@ The seventh review (`era3/REVIEW-7.md`, on `exp/DX-ERA3-removal-review` `7da3ca3
 | `a-subject` | the subject check, file, `r1` to `r6` | 50 | the same 1 (withdrawn) |
 | `a-pg-on` | per account, PostgreSQL, `r1 r4 r5 r6` | 34 | 0 |
 | `b-rule`, `b-on`, `b-commit` | the rule on database-wide, per account, the commit boundary; `m1 m3 m4` | 22 each | 2 each, all M3 (by design) |
+
+## 7. The owner's decisions of 2026-11-25: three switches, none turned on
+
+Each decision is one commit behind its own switch. Each switch's default is one line in `removal_commit.clj`, `false`
+in this pass. Turning a decision on means changing that line to `true` (the owner approved this once reviewed). Its
+environment variable reads `1` (on) or `0` (off) whatever the line says. `era2/gate.sh` phase `switches` tests each flip on a
+private copy of the source with only that line changed (`flip`, the changed line recorded in `flips`), and
+`gate.clj` `owner-switches` fails an arm whose switch did not read what the arm expects.
+
+| Decision | Commit | Default line | Variable | Tested by (`switches`, on `d500015e7`, all passed) |
+| --- | --- | --- | --- | --- |
+| (i) the replay rule on by default | `24677b8e6` | `(def replay-rule-default false)` | `TX2_REMOVAL_REPLAY_RULE` (now also `0`) | flip: unset on (database-wide 19 checks), `=0` off (20), per account with `=0` still on (23); this branch unset off (20); the paired native log with the flip |
+| (ii) the 30-second completion worker under the database-wide rule | `113d7660f` | `(def worker-database-wide-default false)` | `TX2_REMOVAL_WORKER_DATABASE_WIDE` | flip: the age 30000, `=0` nil; this branch unset nil, `=1` 30000; B2 database-wide on the flip (20 checks: the worker completes the pending removal) and with `=0` (16: it does not) |
+| (iii) protected attributes on an unsealed database refused outside tests | `d500015e7` | `(def protection-sealed-only-default false)` | `TX2_PROTECTION_SEALED_ONLY`; test-only `TX2_PROTECTION_UNSEALED_FOR_TESTS=1` | `gate.clj` `sealed-only` on the flip, database-wide (15) and per account (16); `=0` (12); the override (13); this branch unset (12); the whole per-account gate on the flip with the override (2,485 checks, 0 failed) |
+
+### 7.1 What turning (i) on changes
+
+On every protected database guarded database-wide (per account the rule already runs):
+1. **A save framed before a removal of its subject is declined.** That is a save that writes a protected value of a
+   subject a removal named, framed before that removal: by the earliest of `frameSourceK`, `sourceK` and
+   `removalSeen`, or by stating none of them. It is answered 409 `ErasureReplayDeclined` (section 1); today it is
+   stored and answered 200 (`replay-rule-off` on the flip: 409, the value not answered).
+2. **Its command is recorded.** The record's schema is written once per database (9 datoms, 10 with the
+   transaction's instant). Each newly declined command adds 3 datoms. On the paired workload: every datom equals the one
+   branch's except 11 per run (`ERA2_PAIRED_FLIP_I`: identical, `[11, 11]`).
+3. **Every answer on a protected database carries `x-triplex-removal-stamp`,** and the erasure frontier carries
+   `removalStamp`. Today neither is sent.
+4. **The writers see requests without `frameSourceK`.** The save line's own replay check (first source only) no longer
+   judges; the merged rule does. Creations and import frames follow the merged rule.
+5. **The SDK** reads the head once on `ErasureReplayDeclined` and throws `WriteError`; it never resends the declined
+   save. A save already stored is answered 409 `OperationDuplicate`, as today.
+6. **What the gates compare changes.** With the line flipped, "every option off" no longer equals the one branch:
+   `era2/gate.sh`'s paired condition for `off` becomes `[11, 11]`, and the replies gain the stamp header. The flip
+   commit must change those expectations in the same commit. Stored-function identities do not change: no
+   installed function changes, and the record's schema is installed on the first decline.
+7. **Opt-out:** `TX2_REMOVAL_REPLAY_RULE=0` (database-wide only).
+
+### 7.2 What turning (ii) on changes
+
+Under the database-wide rule:
+1. **A removal left pending is completed by the key-shred worker 30 s after its intent.** That is a removal whose
+   client went away after its intent, or a gateway that stopped mid-way. The worker completes it as the client's
+   resend would. It prints `triplex.removal-worker-completion.v1`. The removal's key goes after its grace.
+2. **What it replaces.** Today such a removal stays pending until its client sends it again or another removal
+   completes it. Until then every read and every save of that database is answered 503
+   `ErasureFrontierUnavailable`: B2 on the flip with `=0` shows the removal still pending after the wait, and both
+   contacts are refused. With the flip, the worker completed it (B2 at-publish and before-native: the removal's key
+   deleted by the worker, `:worker-ms 30000`).
+3. **Unchanged:**
+   - `TX2_REMOVAL_WORKER_COMPLETE_MS` still sets the age (`0` turns the completion off);
+   - a database missing from Datomic's catalog is skipped and counted, never retired.
+4. **Already true on this branch, whatever the line says:** `envelope/maintain-keys!` calls the completion pass once
+   per pass. Every gateway now loads `removal-commit` at the worker's first pass; it returns at once when the age is
+   unset. Before, it was called twice per pass with both variables set.
+5. **Opt-out:** `TX2_REMOVAL_WORKER_DATABASE_WIDE=0`.
+
+### 7.3 What turning (iii) on changes
+
+1. **A new database cannot protect attributes unsealed.** Its declaration with `"sealed": false` (or none) is
+   answered 409 `ProtectionNeedsSeal`, and nothing is written. A sealed declaration is answered as today.
+2. **An existing database that already protects attributes unsealed keeps working.** The service declares its
+   policy at every start, so:
+   - **the same declaration again:** 200, as today, plus a `warning` field (`code` `UnsealedProtection`, and a message
+     saying its values are stored in clear and a removal masks them with no key to delete) and one
+     `triplex.protection-unsealed.v1` line;
+   - **saves, reads and removals:** unchanged (the `sealed-only` case: a save 200, a removal 200, the removed value
+     not answered);
+   - **adding an attribute:** refused, 409 `ProtectionNeedsSeal`, nothing added (database-wide the policy was already
+     immutable);
+   - **at gateway start:** the start check prints one `triplex.protection-unsealed.v1` line (`atStart`) per such
+     database. With this switch on, `main` runs the start check even with every other option off.
+   Nothing breaks, and nothing converts the database: sealing an existing unsealed database is not built (its values
+   would need re-encryption).
+3. **Every caller that declares unsealed must change.**
+   - The SDK's `declareProtection(db, attributes, sealed = false)` defaults to unsealed, so a caller using the default
+     gets 409. The flip commit should change that default to `true`.
+   - Every test harness that declares unsealed databases must set `TX2_PROTECTION_UNSEALED_FOR_TESTS=1`: the era2 and
+     era3 gates, b2, b2r, the replies suites, the stacks, and the lab gates that pass `false`.
+   - With the override, every declaration is answered as today. One line per declaration is marked
+     `"override": true`. The whole per-account gate passed that way.
+4. **Opt-out:** `TX2_PROTECTION_SEALED_ONLY=0`. The override must never be set in a deployment.
