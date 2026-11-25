@@ -6425,3 +6425,11 @@ Source: merge agent message; checked against `origin` (the fix commit `46a8f746a
 - The fix's gate on the merged tree, image built from `212853708` and started by ID: 16 checks, 0 failed on the file and PostgreSQL authorities (2 failed on each for `1ed2650bd`); paired native log, replies and key store identical with and without removals; suites as on the base (78 tests, 71,220 assertions, 1 known error); scenarios 43 checks, 0 failed on each authority; fuzzer 20,000 schedules per authority, 0 violations; log-line checks 10 of 10. It is now a standing gate of the one branch.
 - Unchanged and open for Sam: under today's rule a pending removal makes every request answer 503 until its client resends.
 - The merge agent reports that its step 0 (restoring stored-function identities to those of `23b7df344`) is not on this head yet and arrives with the first batch (release limits, many accounts, the save line, the reporting copy), whose gates are running.
+
+## 2026-11-25 08:36 EST: first batch merged: the one branch `exp/DX-INT1` is at `8a362ac38`
+
+Source: merge agent message; checked against `origin`: release limits `b0529e87d`, many accounts `3e3e652b9`, the save line `2d78680f7` (product save path, several owners, whole-subject import, creation saves, the real-mix tape), the SQL reporting copy `f084d5adb` and the key-deletion fix are ancestors of the head; none of the branches under review (save-line fixes, Publish beside saves, account tickets, per-account removal, derived copies) is.
+
+- All options default off. Stored-function identities on the new head: 58 of 58 equal to `23b7df344` in all 8 writer settings (the restoration the merge's first step was for); the key-deletion fix moved nothing (66 of 66).
+- Gates passed on the head's own images, with one exception: the real-mix tape with creation saves off rejected one save in 4 runs; cause not yet established; recorded as an open fault. The merge agent has been asked to check that run's transactor log for the known ID collision (third Publish review, U1), which fits it.
+- Second batch (questions across subjects: ID lists, sweep, index and find, question reader, console and agent tools) is merged locally with identities 58 of 58 and 4 new keys; its gates are running on its own image, including the console on a second toy. Then the readiness page and the final push.
