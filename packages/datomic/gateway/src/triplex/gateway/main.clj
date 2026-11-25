@@ -248,6 +248,16 @@
                        (recur)))
                    "tx2-thread-sampler")
       (.setDaemon true) (.start))))
+;; [DX-ERA2 fifth pass] A failure of the PostgreSQL removal authority itself (its session killed or closed mid-way, the
+;; server unreachable), anywhere in an exception's causes. It is the authority's state, not the request's fault: the
+;; answer is a typed 503, and on a database guarded per account the gateway completes any removal the failure left
+;; pending (with a fresh session) once the request has released its locks.
+(defn- authority-fault? [^Throwable e]
+  (boolean (some #(instance? java.sql.SQLException %) (take 8 (take-while some? (iterate #(.getCause ^Throwable %) e))))))
+(defn- authority-refusal [^Throwable e]
+  (ex-info "The removal authority failed mid-way (its session was lost); this gateway completes what it left pending. Send the request again."
+           {:status 503 :code "ErasureFrontierUnavailable" :removal-pending true :authority-fault true} e))
+
 (defn route-handler-base [{:keys [request-method uri body query-string privacy-input]}]
   (stats/bump! [:routes (str (name request-method) " " (clojure.string/replace uri #"/s2?-[^/]+/" "/{db}/"))] 1)
   (try
@@ -404,7 +414,15 @@
                                                    (some? retryAfterMs) (assoc :retryAfterMs retryAfterMs))))
                    (throw e))))))
       :else (response 404 {:code "NotFound"}))
-    (catch Exception e
+    (catch Exception e0
+      ;; [DX-ERA2 fifth pass] the PostgreSQL authority's session lost mid-way: a typed 503, never a 400; on a database
+      ;; route with the completion tag, so route-handler completes what it left pending
+      (let [db-route? (boolean (re-matches #"/v[12]/db/s2-[A-Za-z0-9_-]+/.+" uri))
+            e (if (authority-fault? e0)
+                (do ((requiring-resolve 'triplex.gateway.failures/note!) "authority" uri e0)
+                    (if db-route? (authority-refusal e0)
+                      (ex-info "The removal authority is unavailable" {:status 503 :code "ErasureFrontierUnavailable"} e0)))
+                e0)]
       ;; [DX-ERA2 fifth pass, Z3] a refusal that starts a completion (a pending removal, a missing log) leaves with its
       ;; tag: route-handler completes it once the request's locks are released
       (when (:removal-pending (ex-data e)) (throw e))
@@ -415,7 +433,7 @@
       (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
                                   (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e)))
-                                  (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e))))))))
+                                  (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e)))))))))
 (defn- with-privacy-guards [scopes work]
   (if-let [[scope & more] (seq scopes)]
     (privacy/guard scope #(with-privacy-guards more work))
@@ -423,6 +441,8 @@
 
 (defn route-handler [{:keys [uri request-method body query-string] :as request}]
   (if-let [[_ name action] (re-matches #"/v[12]/db/(s2-[A-Za-z0-9_-]+)/(.+)" uri)]
+    ;; [DX-ERA2 fifth pass] a delivery's source database, kept for the refusal handler below
+    (let [delivery-source (volatile! nil)]
     (try
       (let [[conn db] (trace/span "privacy/current-data" "gateway"
                         (let [conn (connection (db-uri name))] [conn (d/db conn)]))
@@ -460,6 +480,7 @@
                 source (get input "erasureSourceDatabase")
                 _ (when (and source (not (and (string? source) (re-matches #"s2-[A-Za-z0-9_-]+" source))))
                     (codec/invalid "Invalid source scope for protected delivery"))
+                _ (vreset! delivery-source source)
                 ;; [DX-ERA2] Per account, a ticket naming its source accounts holds those accounts' locks only.
                 ticket-accounts (when (and per-account managed-write? (nil? source)) (removal-scope/ticket-accounts input))
                 [independent db] (if (and managed-write? (or subject/enabled per-account) (nil? source)
@@ -547,19 +568,36 @@
                                  read-cut)]
                 (when (contains? input "erasureSeq") (privacy/ensure-ticket! read-cut input))
                 (run read-cut)))))))
-      (catch Exception e
-        (let [info (ex-data e)]
+      (catch Exception e0
+        (let [;; [DX-ERA2 fifth pass] the PostgreSQL authority's session lost mid-way (the removal route, or anything
+              ;; else that reached the authority here): a typed 503 with the completion tag, never a 400
+              e (if (and (authority-fault? e0) (not (:authority-fault (ex-data e0))))
+                  (do ((requiring-resolve 'triplex.gateway.failures/note!) "authority" name e0) (authority-refusal e0))
+                  e0)
+              info (ex-data e)
+              per-account? (fn [db-name] (try (removal-scope/per-account? (d/db (connection (db-uri db-name))))
+                                              (catch Exception _ false)))
+              source @delivery-source]
           ;; [DX-ERA3 N1] a write refused by a pending removal: this gateway completes that removal (its locks released)
           ;; [DX-ERA3 M4] or the delivery's source database, when its pending removal refused the delivery
-          (when (:removal-pending info)
+          ;; [DX-ERA2 fifth pass] after an authority fault only on a database guarded per account (under today's
+          ;; database-wide rule completing a removal without its client is the owner's decision)
+          (when (and (:removal-pending info) (or (not (:authority-fault info)) (per-account? name)))
             (let [target (or (:removal-database info) name)]
               ((requiring-resolve 'triplex.gateway.removal-commit/complete-pending!) target (connection (db-uri target)))))
+          ;; [DX-ERA2 fifth pass] a delivery refused with an untagged 503 while its source database has a removal pending
+          ;; (a source check that does not carry the tag, as the account-ticket line's source-ticket! did): this gateway
+          ;; completes the source's removal as the tag would have, so the delivery's next try can pass
+          (when (and source (not (:removal-pending info)) (= 503 (:status info)) (= "ErasureFrontierUnavailable" (:code info))
+                     (per-account? source) (some? (privacy/pending source)))
+            (try ((requiring-resolve 'triplex.gateway.removal-commit/complete-pending!) source (connection (db-uri source)))
+                 (catch Exception x ((requiring-resolve 'triplex.gateway.failures/note!) "source-completion" source x))))
           ;; [DX-ERA2 fifth pass, Z2] a missing removal log is rebuilt from the data and the database's policy (locks
           ;; released); this request answers 503 and the next one is served
           (when (:removal-log-missing info)
             (try ((requiring-resolve 'triplex.gateway.removal-commit/rebuild-log!) name (connection (db-uri name)) {})
                  (catch Exception x ((requiring-resolve 'triplex.gateway.failures/note!) "log-rebuild" name x))))
-          (response (or (:status info) 400) {:code (or (:code info) "GatewayError") :message (.getMessage e)}))))
+          (response (or (:status info) 400) {:code (or (:code info) "GatewayError") :message (.getMessage e)})))))
     (route-handler-base request)))
 
 (defn handler [request] (trace/handler route-handler request))

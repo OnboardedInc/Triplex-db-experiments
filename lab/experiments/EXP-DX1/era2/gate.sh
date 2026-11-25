@@ -135,7 +135,9 @@ fi
 # (era2/b2.clj in every mode, and with the shred worker's completion), on this checkout's gateway source
 if [[ $phases == *b2* ]]; then
   bash "$x/era2/b2.sh" "$out/b2" worktree "off on subject commit off-worker subject-worker" || status=1
-  grep -h "ERA2_B2_SUMMARY" "$out/b2"/b2-*.log
+  # [DX-ERA2 fifth pass] and on the PostgreSQL authority (a postgres container of its own per mode)
+  ERA2_B2_AUTHORITY=pg bash "$x/era2/b2.sh" "$out/b2-pg" worktree "off on commit" || status=1
+  grep -h "ERA2_B2_SUMMARY" "$out/b2"/b2-*.log "$out/b2-pg"/b2-*.log
 fi
 rm -rf "$out/this/src" "$out/base/src"
 exit "$status"

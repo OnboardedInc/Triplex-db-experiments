@@ -1292,7 +1292,10 @@
   []
   (when per-account?
     (doseq [variant [:frame-no-account :frame-naming-a :frame-no-account-general :frame-naming-a-general
-                     :delivery-into :delivery-from]]
+                     :delivery-into :delivery-from
+                     ;; [DX-ERA2 fifth pass] a delivery naming its source's accounts (on the account-ticket line it goes
+                     ;; through source-ticket!), and a source check whose refusal carries no tag (source-ticket!'s did not)
+                     :delivery-from-naming-accounts :delivery-from-untagged]]
       (fresh-scope false
         (fn [name conn]
           (fresh-scope false
@@ -1314,12 +1317,133 @@
                         :frame-no-account-general (general #(offers/send name (frame-any name conn "tw-any-g")))
                         :frame-naming-a-general (general #(offers/send name (frame-acct name conn "tw-a-g" "a")))
                         :delivery-into (deliver name other (seq-now other oconn))
-                        :delivery-from (deliver other name (seq-now name conn)))]
+                        :delivery-from (deliver other name (seq-now name conn))
+                        :delivery-from-naming-accounts
+                        (offers/send other (assoc (save-frame (str "tw-d-" (UUID/randomUUID)) (str "notice:v1:tw-" (UUID/randomUUID))
+                                                              ":notice/body" "delivered" nil nil)
+                                                  "erasureSourceDatabase" name "erasureSeq" (seq-now name conn) "erasureAccounts" ["a"]))
+                        :delivery-from-untagged
+                        (with-redefs [rc/check-source! (fn [source _ _] (when (privacy/pending source) (privacy/unavailable!)))]
+                          (deliver other name (seq-now name conn))))]
                 (check! label (not= 200 (:status stopped)) "the removal stopped after its declaration" (offers/outcome stopped))
                 (check! label pending "it is pending" nil)
                 (expect (str label ": the refused write") r [503 "ErasureFrontierUnavailable"])
                 (check! label (nil? (privacy/pending name)) "the refusal completed the removal" (privacy/pending name))
                 (check! label (= 1 (seq-now name conn)) "published as sequence 1" (seq-now name conn))))))))))
+
+;; ---- [DX-ERA2 fifth pass] the authority's intent deleted between a check and a read (the derived-copies builder's
+;; finding: another account's delivery answered 400 GatewayError naming pending.json) ---------------------------------
+(defn pending-file-race
+  "A removal of a1 published up to its last step (head written, its intent file not yet deleted); then, for each kind
+  of request of ANOTHER account, the intent file is deleted exactly between the existence check and the read (every
+  check of pending.json deletes it first, as the publication's last step would at that moment). Every request must be
+  answered without a 400: 200, or a typed refusal. File authority (the PostgreSQL authority reads a row in one query)."
+  []
+  (doseq [variant [:read-b1 :save-b1 :frame-no-account :frame-naming-b :frontier :reach-b1 :removal-b1
+                   :delivery-from :delivery-into]]
+    (fresh-scope false
+      (fn [name conn]
+        (fresh-scope false
+          (fn [other oconn]
+            (let [label (str "pending-file-race/" mode "/" (clojure.core/name variant))
+                  seeds (seed! name [a1 b1]) _ (seed! other [b1]) va (:value (seeds a1))
+                  remove-record @#'privacy/remove-record!
+                  stopped (with-redefs-fn {#'privacy/remove-record!
+                                           (fn [n r] (if (and (= n name) (= r "pending.json"))
+                                                       (throw (ex-info "stopped before the intent file's deletion" {}))
+                                                       (remove-record n r)))}
+                            #(remove! name "pfr-1" a1))
+                  intent-file (privacy/path name "pending.json")
+                  lingering (privacy/exists? intent-file)
+                  published (get (json/read-str (privacy/record-text name "head.json")) "seq")
+                  deletions (atom 0)
+                  exists privacy/exists?
+                  ticket (served-seq name conn)
+                  deliver (fn [into from t]
+                            (offers/send into (assoc (save-frame (str "pfr-d-" (UUID/randomUUID)) (str "notice:v1:pfr-" (UUID/randomUUID))
+                                                                 ":notice/body" "delivered" nil nil)
+                                                     "erasureSourceDatabase" from "erasureSeq" t)))
+                  r (with-redefs [privacy/exists? (fn [^java.nio.file.Path p]
+                                                    (let [found (exists p)]
+                                                      ;; only the published removal's lingering intent (pfr-1): the
+                                                      ;; intent of a removal this request starts is its own
+                                                      (when (and found (= "pending.json" (str (.getFileName p)))
+                                                                 (str/includes? (java.nio.file.Files/readString p) "\"pfr-1\""))
+                                                        (java.nio.file.Files/deleteIfExists p) (swap! deletions inc))
+                                                      found))]
+                      (case variant
+                        :read-b1 (offers/route name "v1" "read" {"entityIds" [b1]})
+                        :save-b1 (offers/send name (frame "pfr-b1" b1 (secret b1 "s") (:id (seeds b1)) (head conn)))
+                        :frame-no-account (offers/send name (assoc (save-frame "pfr-n" "notice:v1:pfr-n" ":notice/body" "n" nil nil) "erasureSeq" ticket))
+                        :frame-naming-b (offers/send name (assoc (save-frame "pfr-nb" "notice:v1:pfr-nb" ":notice/body" "n" nil nil)
+                                                                 "erasureSeq" ticket "erasureAccounts" ["b"]))
+                        :frontier (offers/route name "v2" "erasure-frontier" nil)
+                        :reach-b1 (offers/route name "v2" "reach" {"root" b1 "basis" {"recordedPosition" (head conn) "validAt" 1.0e12}
+                                                                   "session" "pfr" "erasureRefs" true})
+                        :removal-b1 (remove! name "pfr-2" b1)
+                        :delivery-from (deliver other name ticket)
+                        :delivery-into (deliver name other (served-seq other oconn))))
+                  obs {:stopped (offers/outcome stopped) :intent-lingering lingering :published published
+                       :intent-deleted-between-check-and-read @deletions :answer (offers/outcome r)
+                       :message (get-in r [:body "message"])}]
+              (println "ERA2_PENDING_FILE_RACE" mode (pr-str [variant obs]))
+              (check! label (and lingering (= 1 published)) "set-up: the removal published, its intent file still there" obs)
+              (check! label (pos? @deletions) "the intent file was deleted between a check and a read" obs)
+              (check! label (not= 400 (:status r)) "another account's request is never answered 400 by someone else's removal" obs)
+              (check! label (or (= 200 (:status r)) (and (#{409 503} (:status r)) (string? (get-in r [:body "code"]))))
+                      "answered 200 or a typed refusal" obs)
+              (check! label (not (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [a1]}))) va))
+                      "a1 not answered" nil))))))))
+
+;; ---- [DX-ERA2 fifth pass] the PostgreSQL authority's session lost at each step of a removal -----------------------
+(defn authority-fault-steps
+  "The authority fails once with the error a killed PostgreSQL session gives (java.sql.SQLException) at each step of a
+  removal: its intent, its declaration, its native commit, its prepared publication, its publication. The removal is
+  answered a typed 503 ErasureFrontierUnavailable, never 400. Per account the gateway then completes it itself (the
+  completion tag; nothing pending, published as 1); under today's database-wide rule it stays pending and the client's
+  resend completes it (completion without the client is the owner's decision there)."
+  []
+  (doseq [step [:intent :declared :committed :prepared :published]]
+    (when (or per-account? (#{:intent :committed :published} step))
+      (fresh-scope false
+        (fn [name conn]
+          (let [label (str "authority-fault-steps/" mode "/" (clojure.core/name step))
+                seeds (seed! name [a1 b1]) va (:value (seeds a1))
+                fired (atom false)
+                fault (fn [f] (fn [& args]
+                                (if (compare-and-set! fired false true)
+                                  (throw (java.sql.SQLException. "This connection has been closed." "08003"))
+                                  (apply f args))))
+                after (fn [f] (fn [& args]
+                                (let [r (apply f args)]
+                                  (if (compare-and-set! fired false true)
+                                    (throw (java.sql.SQLException. "This connection has been closed." "08003"))
+                                    r))))
+                redefs (case step
+                         :intent {#'privacy/prepare! (fault privacy/prepare!)}
+                         :declared {#'rc/declare! (after rc/declare!)}
+                         :committed (if per-account? {#'rc/commit! (after rc/commit!)} {#'erase/apply-native! (after erase/apply-native!)})
+                         :prepared {#'rc/publish! (fault rc/publish!)}
+                         :published {#'privacy/publish! (fault privacy/publish!)})
+                answer (with-redefs-fn redefs #(remove! name "afs-1" a1))
+                pending-after (privacy/pending name)
+                ;; the client sends the removal again after its 503 (idempotent when the gateway completed it already)
+                resent (when-not (= 200 (:status answer)) (remove! name "afs-1" a1))
+                obs {:answer (offers/outcome answer) :message (get-in answer [:body "message"])
+                     :pending-after-the-answer (some? pending-after) :resent (when resent (offers/outcome resent))
+                     :published (seq-now name conn) :failures-counted ((requiring-resolve 'triplex.gateway.failures/count-of) "authority")}]
+            (println "ERA2_AUTHORITY_FAULT" mode (pr-str [step obs]))
+            (check! label @fired "the authority failed at that step" obs)
+            (expect (str label ": the removal's answer") answer [503 "ErasureFrontierUnavailable"])
+            ;; (a failure at the intent leaves nothing to complete: the removal starts again when the client resends)
+            (when (and per-account? (not= step :intent))
+              (check! label (nil? pending-after) "the gateway completed the removal itself (the completion tag)" obs))
+            (when resent (expect (str label ": the client's resend") resent [200 nil]))
+            (check! label (nil? (privacy/pending name)) "nothing pending in the end" obs)
+            (check! label (= 1 (seq-now name conn)) "published as sequence 1" obs)
+            (check! label (not (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [a1]}))) va)) "a1 not answered" nil)
+            (expect (str label ": a save of another account after it")
+                    (offers/send name (frame "afs-b1" b1 (secret b1 "s") (:id (seeds b1)) (head conn))) [200 nil])))))))
 
 ;; ---- [DX-S5 second review R2-2, adapted] a creation racing a removal of its subject, then the client's replay ----
 (defn creation-race
@@ -1425,6 +1549,8 @@
   (scenario "log-states" log-states)
   (scenario "catch-up" catch-up)
   (scenario "policy-and-reconcile" policy-and-reconcile)
+  (scenario "pending-file-race" pending-file-race)
+  (scenario "authority-fault-steps" authority-fault-steps)
   (scenario "data-behind" data-behind)
   (scenario "boundary-transition" boundary-transition)
   (scenario "cache-stamps" cache-stamps)

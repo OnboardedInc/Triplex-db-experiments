@@ -8,7 +8,8 @@
 #                the write gateway's removal pauses at that step (TX2_REMOVAL_TEST_PAUSE_AT) and the gateway is killed
 #                there; nobody resends; everything else goes to the read gateway
 #   wait         the write gateway's removal waits 1 ms for each native step (503, the step lands later); no resend
-#   lockloss-intent, lockloss-declared
+#   lockloss-intent, lockloss-declared, and [fifth pass] lockloss-committed, lockloss-prepared, lockloss-published (the
+#   session killed at each step: the paused removal must be answered a typed 503, never 400; LOCKLOSS_ANSWER line)
 #                the write gateway's removal pauses 20 s at that step and its PostgreSQL sessions are killed (its lock
 #                is lost); meanwhile the read gateway runs another removal; then the paused removal goes on
 #   restore      a backup of the data taken while a removal is declared (paused 12 s); the removal completes; the data
@@ -218,6 +219,11 @@ lockloss-*)
   t=$(seq_of "$R" "$D"); step "published sequence: $t"
   post "$R/v1/db/$D/transact" "$bodies/frame-any-0.json" frame-no-accounts "$t"
   step "wait for the paused removal to go on without its lock"; wait "$rm_pid" || true
+  # [DX-ERA2 fifth pass] its session lost mid-way: a typed 503 (ErasureFrontierUnavailable), never 400 GatewayError
+  answer_file=$(ls "$out"/replies/*-paused-removal-a1.status | head -1)
+  answer="$(cat "$answer_file") $(grep -o '"code":"[^"]*"' "${answer_file%.status}.json" 2>/dev/null | head -1 || true)"
+  step "LOCKLOSS_ANSWER $stop $answer"
+  [[ $(cat "$answer_file") != 400 ]] || lockloss_bad=1
   sleep 2
   step "intents pending: $(pending_of "$D")"; t=$(seq_of "$R" "$D"); step "published sequence: $t"
   post "$R/v2/db/$D/erase" "$(remove era2-lock-a acct/a/one)" paused-removal-resent
@@ -377,3 +383,4 @@ readwait|readwait-commit)
   ;;
 esac
 step "done"
+[[ -z ${lockloss_bad:-} ]] || { echo "the removal whose session was lost answered 400" >&2; exit 1; }
