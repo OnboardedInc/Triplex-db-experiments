@@ -6744,3 +6744,10 @@ Source: merge agent message; checked against `origin`: `09730f887` is an ancesto
 - Suites: 93 tests, 236,380 assertions, 0 failures, 13 errors, reported as the same as the base (earlier bases had 1 known error: the merge agent has been asked to list the 13 and say why each is on the base).
 - The readiness page carries the changed answer codes, the new read bar and a pointer to the server session plan.
 - Next: the ID fix (one adapter-level test of the merge agent's own being corrected), then the Publish line with options off.
+
+## 2026-11-25 18:56 EST: two stale stack-slot locks removed; an orchestrator error behind a day of queueing
+
+- **Found by the merge agent:** stack slots `datomic-s2` and `datomic-s3` were locked by processes that no longer exist (DX-ACT8 since 00:55 on 2026-11-25; DX-ACT6 since 2026-11-24). Only one of three stack slots was usable, so any stack run was refused whenever another builder held it. One merge gate was refused 24 times in a row.
+- **Orchestrator error:** both dead locks were seen at 04:49 and judged harmless on the reading that the engine reclaims locks of dead processes. It does not reclaim slot locks. The long waits for stack runs reported all day follow from this.
+- **Fixed at 18:56:** each owner process confirmed dead and each slot's container confirmed absent, then both locks removed; copies of the owner files kept in the private evidence folder; an event line written to the lock events file. Follow-up: the slot code must reclaim a lock whose owner is dead.
+- The 13 suite errors on the latest head: 1 known error plus 12 from one test that needs the sweep options, which the suites step ran without; a harness condition; the step now runs that test with its options.
