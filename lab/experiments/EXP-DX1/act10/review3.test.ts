@@ -282,3 +282,20 @@ test("T9: R3 for settlement frames: another account computes an account's next f
   console.log("[T9] " + JSON.stringify(out));
   assert((out.values as any).taken && (out.values as any).laterRuns.every((x: string) => x.startsWith("refused")));
 });
+
+test("T10: R3 for enrolment: another account saves first under an account's enrolment command ID", async () => {
+  const t = await setup(["acct-b"]);
+  const [B] = t.accounts as [any];
+  // Account A is seeded but not enrolled yet; its enrolment's command ID is join-held-enrolment:<account> (account.ts 317).
+  const cut = await seedAccount(t.db, "acct-a", 4);
+  const heldA = heldAccount("acct-a", 4, cut);
+  const bs = B.store(t.proc("b-saver", NONE));
+  const taken = await outcome(bs.commit("join-held-enrolment:acct-a", "save", [fact(B.held.prefix + "act10-probe", ":act10/probe", 1)], await bs.head()));
+  const tries = [];
+  for (let k = 0; k < 3; k++)
+    tries.push(await new JoinedAccount(memStore(t.proc("enrol-a-" + k, NONE), heldA) as any).installHeld(validTime)
+      .then(() => "enrolled", (e) => "refused: " + String(e?.message).split("\n")[0]!.slice(0, 90)));
+  const out = { taken: taken.ok, enrolments: tries };
+  console.log("[T10] " + JSON.stringify(out));
+  assert(out.taken && tries.every((x) => x.startsWith("refused")));
+});
