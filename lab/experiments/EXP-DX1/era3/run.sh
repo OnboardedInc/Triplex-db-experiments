@@ -9,6 +9,7 @@
 # ERA3_MAIN=3: the third review's cases (era3/attack3.clj): k2 k3 k4 k5 k6 k7 k8 k9 k10 k12 fuzz3.
 # ERA3_MAIN=4: the fourth review's cases (era3/attack4.clj): q1 q2 q3 q4 q5 q7 q8 q9 q10 q11 r22 fuzz4.
 # ERA3_MAIN=5: the fifth review's cases (era3/attack5.clj): w1 w2 w3 w4 p1 p2 c1 z s t fuzz5 (ERA3_BOUNDARY log, commit or move).
+# ERA3_MAIN=6: the sixth review's cases (era3/attack6.clj): a1 a2 a3 b1 b2 c d g1 g2 f bodies6.
 # Every container carries the label tx2.holder=DX-ERA3 (ERA3_HOLDER names another holder).
 # ERA3_SOURCE: a checkout whose gateway source runs (default this one), e.g. a local merge with another branch.
 # ERA3_SOURCE_REF: a commit whose gateway source runs instead, archived from this checkout (no second checkout).
@@ -39,7 +40,7 @@ fi
 # ERA3_PATCH=1: apply the review's proposed fix (era3/fix-proposal.py) to this private copy only.
 if [[ ${ERA3_PATCH:-0} == 1 ]]; then python3 "$x/era3/fix-proposal.py" "$out/src" > "$out/patch.log" || exit 2; fi
 echo "patch=${ERA3_PATCH:-0}" > "$out/patched"
-cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era3/attack.clj" "$x/era3/attack2.clj" "$x/era3/attack3.clj" "$x/era3/attack4.clj" "$x/era3/attack5.clj" "$out/lab/"
+cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era3/attack.clj" "$x/era3/attack2.clj" "$x/era3/attack3.clj" "$x/era3/attack4.clj" "$x/era3/attack5.clj" "$x/era3/attack6.clj" "$out/lab/"
 image=${DX_ERA3_IMAGE_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
 [[ $image =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "run.sh: DX_ERA3_IMAGE_ID must be an image ID" >&2; exit 2; }
 [[ $(docker image inspect --format '{{.Id}}' "$image") == "$image" ]] || { echo "run.sh: image $image not present" >&2; exit 2; }
@@ -51,7 +52,9 @@ env=(-e TX2_SUBJECT_SAVE=1 -e TX2_SUBJECT_NUMERIC_OWNER=1 -e TX2_SUBJECT_ORDERED
 [[ $mode == subject ]] && env+=(-e TX2_REMOVAL_SUBJECT_CHECK=1)
 [[ -n ${ERA3_EXTRA_ENV:-} ]] && for kv in $ERA3_EXTRA_ENV; do env+=(-e "$kv"); done
 # ERA3_MAIN=2: the second review's attacks (era3/attack2.clj), loaded after the first review's.
-if [[ ${ERA3_MAIN:-1} == 5 ]]; then
+if [[ ${ERA3_MAIN:-1} == 6 ]]; then
+  printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (load-file "/lab/attack6.clj") (era3-attack6/main)' > "$out/run.clj"
+elif [[ ${ERA3_MAIN:-1} == 5 ]]; then
   printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (era3-attack5/main)' > "$out/run.clj"
 elif [[ ${ERA3_MAIN:-1} == 4 ]]; then
   printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (era3-attack4/main)' > "$out/run.clj"
