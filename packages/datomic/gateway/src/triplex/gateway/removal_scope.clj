@@ -136,6 +136,10 @@
                 (not (d/entid db :triplex.removal/entity))
                 (conj (schema/attr :triplex.removal/entity :db.type/string :db.unique/identity))
                 (not (d/entid db :triplex.removal/seq)) (conj (schema/attr :triplex.removal/seq :db.type/long))
+                ;; [DX-ERA3 F1] The removal's declaration: the sequence of the latest removal that has declared itself
+                ;; natively (equal to removal-seq, or one ahead while it is in flight), and the accounts it holds.
+                (not (d/entid db :triplex.scope/removal-intent)) (conj (schema/attr :triplex.scope/removal-intent :db.type/long))
+                (not (d/entid db :triplex.scope/removal-held)) (conj (schema/attr :triplex.scope/removal-held :db.type/string))
                 (not (d/entid db fence-ident))
                 (conj {:db/ident fence-ident
                        :db/fn (d/function {:lang :clojure :params '[db version guards] :requires '[[datomic.api :as d]]

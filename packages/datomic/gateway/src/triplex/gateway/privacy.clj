@@ -138,8 +138,10 @@
                   (when root (record-text name "head.json")))
            ;; [DX-ERA2] The prepared removal's sequence, so a request guarded per account can tell a native commit of
            ;; that removal (not yet published) from a native database the log does not describe.
-           pending-seq (when (and removal-scope/enabled allow-pending? pending)
-                         (get (json/read-str (if (string? pending) pending (record-text name "pending.json"))) "seq"))]
+           ;; [DX-ERA3 F1b] and the prepared removal itself (its accounts), so a ticketed write can wait for it.
+           pending-entry (when (and removal-scope/enabled allow-pending? pending)
+                           (json/read-str (if (string? pending) pending (record-text name "pending.json"))))
+           pending-seq (get pending-entry "seq")]
        (let [result
        (when (or wire (enabled? db))
          (when (or (nil? wire) (and (not allow-pending?) pending)) (unavailable!))
@@ -170,7 +172,7 @@
                (let [new (assoc next :wire wire)]
                  (swap! cache update name #(if (and % (> (:seq %) n)) % new))
                  new))))))]
-         (if (and result (integer? pending-seq)) (assoc result :pending-seq pending-seq) result)))
+         (if (and result (integer? pending-seq)) (assoc result :pending-seq pending-seq :pending pending-entry) result)))
      (catch clojure.lang.ExceptionInfo e (throw e))
      (catch Exception _ (unavailable!)))))
 
@@ -207,6 +209,9 @@
 ;; stale only when a removal published after it touched one of them (or the unscoped sequence).
 ;; Rejected: a database-wide comparison for such tickets (any account's removal refused every account's frames).
 (defn ensure-ticket! [state input]
+  ;; [DX-ERA3 F1b] removal-commit is loaded only on a database guarded per account.
+  (when (:per-account state)
+    (when ((requiring-resolve 'triplex.gateway.removal-commit/pending-touches?) state input) (unavailable!)))
   (if (and (:per-account state) (contains? input "erasureAccounts"))
     (when-not (removal-scope/ticket-current? state (get input "erasureSeq") (removal-scope/ticket-accounts input))
       (stale!))

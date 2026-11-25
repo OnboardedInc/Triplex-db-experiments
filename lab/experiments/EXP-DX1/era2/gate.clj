@@ -557,6 +557,98 @@
             (check! "hammer" (str/includes? (text (:body r)) b) "another account's value is untouched"))
           (println "ERA2_HAMMER" (pr-str {:rounds rounds :tries (frequencies @tries) :guards @holds})))))))
 
+(defn frame-race
+  "[DX-ERA2 fix pass, DX-ERA3 F1/F1b] The commit-point check itself. Live, a derived write and a removal of its account
+  are ordered by their locks, so the case that matters is a derived write whose request gave up (the gateway's 5 s
+  wait expired, its lock released) while its transaction was still queued: here its transaction is held back until
+  the removal has declared itself, then submitted. It must fail at Datomic's serial point, and no copy may land."
+  [n]
+  (when per-account?
+    (fresh-scope false
+      (fn [name conn]
+        (let [counts (atom {}) bump (fn [k] (swap! counts update k (fnil inc 0)))
+              declare rc/declare! submit storage/submit!]
+          (doseq [i (range n)]
+            (let [x (str "acct/q/s" i) v0 (secret x "seed")
+                  _ (offers/send name (frame (str "q-" i) x v0 nil nil))
+                  ticket (seq-now name conn)
+                  accounts (when (odd? i) ["q"])
+                  doc (str "notice:v1:q" i) op (str "qf-" i)
+                  input (cond-> (assoc (save-frame op doc ":notice/body" (str "derived:" v0) nil nil) "erasureSeq" ticket)
+                          accounts (assoc "erasureAccounts" accounts))
+                  declared (promise) outcome (promise)
+                  [saved removed]
+                  (with-redefs [storage/submit! (fn [& args]
+                                                  (if (= op (get (nth args 2) "operationId"))
+                                                    (future (deref declared 30000 nil)
+                                                            (try (let [r @(apply submit args)] (deliver outcome :committed) r)
+                                                                 (catch Throwable e (deliver outcome (.getMessage e)) (throw e))))
+                                                    (apply submit args)))
+                                rc/declare! (fn [& args] (let [r (apply declare args)] (deliver declared true) r))]
+                    (let [saver (future (offers/send name input))]
+                      (Thread/sleep 50)
+                      (let [remover (future (remove! name (str "qr-" i) x))]
+                        [(deref saver 20000 {:status 0}) (deref remover 30000 {:status 0})])))
+                  landed (deref outcome 30000 :never-submitted)
+                  label (str "frame-race/" (if accounts "account" "no-account"))]
+              (check! label (= [200 nil] (offers/outcome removed)) "the removal answers" (offers/outcome removed))
+              (check! label (not= 200 (:status saved)) "the derived write's request gave up" (offers/outcome saved))
+              (check! label (and (string? landed) (re-find #"TRIPLEX_|cas-failed|Compare failed" landed)) "its late transaction failed at the serial point" landed)
+              (check! label (nil? (d/entid (d/db conn) [:triplex.claim/command-id op])) "it never committed")
+              (check! label (not (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [doc]}))) v0)) "no copy")
+              (bump [label (if (string? landed) (or (re-find #"TRIPLEX_[A-Z_]+[ a-z-]*|cas-failed" landed) landed) landed)])))
+          (println "ERA2_FRAME_RACE" (pr-str {:iterations n :outcomes @counts})))))))
+
+(defn native-counters-agree!
+  "Every native removal counter equals the one derived from the published log, and nothing is declared beyond it."
+  [label name conn]
+  (let [db (d/db conn) cut (privacy/cut name db true) scope (triplex.gateway.scope/entity db)
+        ents (:entities cut) bks (:buckets cut)
+        native-e (into {} (d/q '[:find ?k ?s :where [?e :triplex.removal/entity ?k] [?e :triplex.removal/seq ?s]] db))
+        native-b (into {} (d/q '[:find ?k ?s :where [?e :triplex.removal/account ?k] [?e :triplex.removal/seq ?s]] db))
+        bad (concat (for [k (into (set (keys ents)) (keys native-e)) :when (not= (get ents k 0) (get native-e k 0))] [:entity k])
+                    (for [k (into (set (keys bks)) (keys native-b)) :when (not= (get bks k 0) (get native-b k 0))] [:account k]))]
+    (check! label (empty? bad) "every native counter equals the log's" (take 5 bad))
+    (check! label (= (:seq cut) (triplex.gateway.scope/value db scope :triplex.scope/removal-intent)
+                     (triplex.gateway.scope/value db scope :triplex.scope/removal-seq))
+            "nothing declared beyond the log")))
+
+(defn orphan-and-rebuild
+  "A removal stopped between its declaration and its intent (an orphan declaration: accounts held, nothing pending), then
+  another removal; and a restore replay that rebuilds counters a copy holds out of step with the log."
+  []
+  (when per-account?
+    (fresh-scope false
+      (fn [name conn]
+        (let [seeds (seed! name [a1 b1]) prepare privacy/prepare!
+              ticket (seq-now name conn)
+              frame-a (fn [id] (assoc (save-frame id (str "notice:v1:" id) ":notice/body" (secret a1 id) nil nil)
+                                      "erasureSeq" (seq-now name conn) "erasureAccounts" ["a"]))
+              stopped (with-redefs [privacy/prepare! (fn [& _] (throw (ex-info "stop before the intent" {})))]
+                        (remove! name "orphan-1" a1))]
+          (check! "orphan" (not= 200 (:status stopped)) "stopped before its intent" (offers/outcome stopped))
+          (check! "orphan" (nil? (privacy/pending name)) "no intent recorded")
+          (expect "orphan: a frame of the held account fails at the commit point" (offers/send name (frame-a "orphan-f1")) [409 "CasConflict"])
+          (expect "orphan: another account's save" (offers/send name (frame "orphan-b" b1 (secret b1 "o") (:id (seeds b1)) (head conn))) [200 nil])
+          (expect "orphan: another removal replaces the declaration" (remove! name "orphan-2" b1) [200 nil])
+          (expect "orphan: the frame of account a, read again" (offers/send name (frame-a "orphan-f2")) [200 nil])
+          (expect "orphan: the stopped removal resent" (remove! name "orphan-1" a1) [200 nil])
+          (native-counters-agree! "orphan" name conn)
+          ;; a copy whose counters are out of step with the log (as a copy restored from mid-removal can be)
+          (let [db (d/db conn) scope (triplex.gateway.scope/entity db) n (triplex.gateway.scope/value db scope :triplex.scope/removal-seq)]
+            @(d/transact conn [[:db/add scope :triplex.scope/removal-intent (inc n)]
+                               [:db/add scope :triplex.scope/removal-held "[\"zz\",\"a\"]"]
+                               {:db/id "zz" :triplex.removal/account "zz" :triplex.removal/seq (- (inc n))}
+                               {:db/id "za" :triplex.removal/account "a" :triplex.removal/seq (- (inc n))}
+                               {:db/id "ze" :triplex.removal/entity "acct/zz/x" :triplex.removal/seq 7}]))
+          (let [r (erase/replay-after-restore! name conn)]
+            (check! "rebuild" (= (seq-now name conn) (get-in r [:erasure :seq])) "the restore replay answers" r))
+          (native-counters-agree! "rebuild" name conn)
+          (expect "rebuild: a frame of account a" (offers/send name (frame-a "rebuild-f")) [200 nil])
+          (expect "rebuild: a ticket naming no account"
+                  (offers/send name (assoc (save-frame "rebuild-any" "notice:v1:rebuild-any" ":notice/body" "x" nil nil) "erasureSeq" (seq-now name conn)))
+                  [200 nil]))))))
+
 (defn named-absent
   "A removal naming an entity that has no row yet: a creation save and an import frame of it prepared before the
   removal are refused after it (its counter moved); a creation sent after the removal is new data."
@@ -652,6 +744,8 @@
   (scenario "mid-import" #(subject-mid-import 40))
   (scenario "race-loop" #(race-loop (Long/parseLong (or (System/getenv "ERA2_RACES") "1000"))))
   (scenario "hammer" #(hammer 30))
+  (scenario "frame-race" #(frame-race (Long/parseLong (or (System/getenv "ERA2_FRAME_RACES") "40"))))
+  (scenario "orphan-and-rebuild" orphan-and-rebuild)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode
              (pr-str {:checks (count @results) :failed (count failed)}))

@@ -213,8 +213,10 @@
                  (if (:per-account privacy/*cut*)
                    ;; [DX-ERA2] Guarded per account: the installed writers' fence on its fixed value, and the removal
                    ;; sequences of the accounts this write touches (and those its ticket names).
-                   [[:db/cas scope :triplex.scope/erasure-seq removal-scope/sentinel removal-scope/sentinel]
-                    (removal-scope/fence-op privacy/*cut* rows (removal-scope/ticket-accounts input))]
+                   ;; [DX-ERA3 F1] and, for a ticket naming no account, the global declared removal sequence.
+                   (into [[:db/cas scope :triplex.scope/erasure-seq removal-scope/sentinel removal-scope/sentinel]
+                          (removal-scope/fence-op privacy/*cut* rows (removal-scope/ticket-accounts input))]
+                         ((requiring-resolve 'triplex.gateway.removal-commit/ticket-intent-ops) scope input))
                    [[:db/cas scope :triplex.scope/erasure-seq seq seq]]))
                ;; [DX-B4-T1] Why: one physical commit can contain several logical journals.
                ;; Rejected: using only tx/id (drops nested transacts at interior cursors).

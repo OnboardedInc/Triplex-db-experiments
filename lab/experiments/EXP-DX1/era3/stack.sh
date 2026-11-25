@@ -121,6 +121,20 @@ psql_auth -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE query
 wait "$lock_pid" 2>/dev/null || true; lock_pid=
 sleep 2
 step "pending intents: $(psql_auth -c "SELECT count(*) FROM triplex_removal.records WHERE scope='$db' AND record='pending.json'")"
+# [DX-ERA2 fix pass] ERA3_TX_RESTART=1: the transactor is restarted while the removal is pending, before the read
+# gateway's steps (a transactor restart during a pending removal).
+if [[ ${ERA3_TX_RESTART:-0} == 1 ]]; then
+  step "restart the transactor while the removal is pending"
+  docker restart "$prefix-tx" > /dev/null
+  # Reads are served from storage without the transactor, so the probe is a write: the subject's own save, which the
+  # transactor refuses at its serial point (409) once it is back, and the gateway answers 400 while it is away.
+  for i in $(seq 1 90); do
+    probe=$(curl -sS -m 30 -o "$out/replies/tx-probe.json" -w '%{http_code}' -H 'Content-Type: application/json' -X POST "$R/v1/db/$db/transact" --data-binary "@$bodies/own-save.json" 2>/dev/null || echo 000)
+    [[ $probe == 409 || $probe == 200 ]] && break
+    sleep 2
+  done
+  step "transactor back after $i probes: the subject's save answers $probe $(head -c 200 "$out/replies/tx-probe.json")"
+fi
 
 get "$R/v2/db/$db/erasure-frontier" frontier-while-pending
 post "$R/v1/db/$db/read" '{"entityIds":["acct/a/one"]}' read-a1-while-pending

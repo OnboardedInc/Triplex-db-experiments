@@ -180,10 +180,24 @@
             ticket (g/seq-now name conn)
             fired (atom false)
             _ (reset! plan {:hook (fn [p] (when (and (= p :after-intent) (compare-and-set! fired false true))
-                                            (d/transact-async conn [[:era3/sleep 6500]])
+                                            (d/transact-async conn [[:era3/sleep (if (resolve 'triplex.gateway.removal-commit/wait-ms) 1500 6500)]])
                                             (Thread/sleep 100)))})
             started (System/nanoTime)
-            first-reply (remove-attr! name "rm-t" g/a1)
+            ;; [DX-ERA2 fix pass] The in-memory connection runs a queued transaction in its caller's thread, so a slow
+            ;; transaction ahead of the commit cannot make the gateway's wait expire here. Where the removal's waits go
+            ;; through removal-commit/transact!, its commit is instead submitted 1.5 s late while the gateway waits
+            ;; 300 ms: it answers 503 and the commit lands afterwards, as a slow transactor's would.
+            first-reply (if-let [tx (resolve 'triplex.gateway.removal-commit/transact!)]
+                          (let [orig @tx]
+                            (reset! plan nil)
+                            (with-redefs-fn {tx (fn [c ops]
+                                                  (if (some (fn [op] (and (vector? op) (= :triplex.removal/commit-v1 (first op)))) ops)
+                                                    (let [f (future (Thread/sleep 1500) @(d/transact c ops))
+                                                          r (deref f 300 ::timeout)]
+                                                      (if (= r ::timeout) (privacy/unavailable!) r))
+                                                    (orig c ops)))}
+                              #(remove-attr! name "rm-t" g/a1)))
+                          (remove-attr! name "rm-t" g/a1))
             ms (/ (- (System/nanoTime) started) 1.0e6)
             _ (reset! plan nil)
             landed (wait-until 15000 #(native-committed? conn "rm-t"))
@@ -371,9 +385,12 @@
 (def tally (atom {}))
 (defn bump! [& ks] (swap! tally update (vec ks) (fnil inc 0)))
 
+;; [DX-ERA2 fix pass] ERA3_SEALED=1: sealed values. On the file key store a sealed save holds the database's lock for
+;; its whole request, so a racing save paused inside it would block the removal: sealed schedules send it first.
+(def sealed-fuzz? (= "1" (System/getenv "ERA3_SEALED")))
 (defn schedule [^Random r]
   (let [pick (fn [v] (v (.nextInt r (count v))))]
-    {:kind (pick kinds) :release (pick releases) :stop (pick stops) :during (pick durings)
+    {:kind (pick kinds) :release (if sealed-fuzz? (do (pick releases) :before) (pick releases)) :stop (pick stops) :during (pick durings)
      :resume (pick resumes) :resend (pick resends) :narrow (if (zero? (.nextInt r 3)) 1 2)}))
 
 (defn- committed-at [conn command] (position-of conn command))
@@ -578,7 +595,7 @@
 (defn fuzz [run n block seed]
   (let [r (Random. (long seed))]
     (doseq [b (range (quot (+ n block -1) block))]
-      (g/fresh-scope false
+      (g/fresh-scope sealed-fuzz?
         (fn [name conn]
           (let [results (vec (for [i (range (* b block) (min n (* (inc b) block)))]
                                (let [sch (schedule r)]
