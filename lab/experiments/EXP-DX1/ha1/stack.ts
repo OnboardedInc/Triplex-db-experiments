@@ -569,6 +569,12 @@ export class Stack {
     const frontier = this.e.mode.startsWith("load-frontier-") || (microLoad(this.e.mode) && !fair);
     const split = splitLoad(this.e.mode);
     const priority = this.e.mode === "load-live" || this.e.mode === "load-tail" || frontier;
+    // [DX-ACT10] Second review: DX_ACT10_GROUP=1 (holder DX-ACT10, diagnostic load-fair only) turns the write gateway's
+    // group commit on, so a Publish beside saves can share one physical transaction with them. Unset: unchanged.
+    const reviewGroup = process.env.DX_ACT10_GROUP === "1" && this.holder === "DX-ACT10" && fair && role === "write";
+    // DX_ACT10_GROUP_SAVES=general as well: the write gateway runs without TX2_SUBJECT_SAVE, so saves take the general
+    // commit path, the only one that enters the group lane (subject saves go straight to d/transact-async).
+    const reviewGeneral = reviewGroup && process.env.DX_ACT10_GROUP_SAVES === "general";
     const grouping = priority || (split && role === "write");
     await this.start(
       role,
@@ -585,7 +591,7 @@ export class Stack {
                     ? "summary"
                     : "off"),
               "-e",
-              "TX2_GROUP_COMMIT=" + Number(grouping),
+              "TX2_GROUP_COMMIT=" + Number(grouping || reviewGroup),
               "-e",
               "TX2_LOAD2_TIMING=" + Number(this.e.mode === "load-tail" || frontier),
               "-e",
@@ -616,7 +622,7 @@ export class Stack {
         // Rejected: checking mixed credits against the old grouped gateway or an unbound service.
         ...(fair ? [
           "TX2_PREDECESSOR_LOOKUP=1", "-e",
-          "TX2_SUBJECT_SAVE=1", "-e",
+          "TX2_SUBJECT_SAVE=" + (reviewGeneral ? "0" : "1"), "-e",
           "TX2_SUBJECT_NUMERIC_OWNER=1", "-e",
           "TX2_SUBJECT_ORDERED_IDS=1", "-e",
           "TX2_GROUP_FAST_REPLY=1", "-e",
