@@ -92,6 +92,9 @@ async function account(scope: string) {
   const store = await openStore(scope);
   const db = dbOf(store);
   await peer.declareProtection(db, PROTECTED, true);
+  // [DX-ERA5, second review] ERA5_MOVE=1: the database guarded per account (with TX2_REMOVAL_COMMIT_BOUNDARY=1 on the
+  // gateway the move turns the commit boundary on), so the attacks run under each removal boundary
+  if (process.env.ERA5_MOVE === "1") log("moved", { db, reply: await peer.request("POST", `/v2/db/${db}/removal-per-account`, {}) });
   const a = new JoinedAccount(store);
   const ids = [X, Y, Z];
   await store.input("era5-seed", { kind: "baseline", at: valid }, [
