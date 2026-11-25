@@ -6204,3 +6204,20 @@ Source: derived-copies builder final message; branch `exp/DX-ERA4-derived-copies
 - Not verified: no server run; the deep layout's writers with the option; a real backup and restore; the PostgreSQL key store with the option; stop point P3 never reached; derivations over several subjects or databases; rerun owed on the removal builder's new head under both boundaries.
 
 **Action:** an independent adversarial review of this work started (task file `OPUS-ERA5-adversarial-review-derived-copies`, branch `exp/DX-ERA5-derived-copies-review`). The derived seal stays off and off the one branch until a review comes back clean and the rerun on the removal builder's head is done.
+
+## 2026-11-25 01:51 EST: second review of the save line fixes: exact with the account option off; with it on, one save is stored twice
+
+Source: independent reviewer, second review, branch `exp/DX-S5-save-line-review` `9dc800e7b`, `lab/experiments/EXP-DX1/s5/REVIEW-2.md`. Reviewed: `exp/DX-S6-save-line-fixes` `a6d02225c`. Reviewer's own image, by ID.
+
+- **Account option off, or every gateway set the same way: no exactness break.** 118,071 fuzzed saves (11,972 with an unknown outcome injected and resolved as the SDK resolves it), 0 stored differences, 266 deep compares equal; 26 PostgreSQL stack cases with the real SDK (transactor paused 14, killed 12), every save stored exactly once. The first review's F1 (a stored save answered as refused when the transactor stops) is closed for this configuration.
+- **R2-1, high, with `TX2_ACCOUNT_CLAIMS` on:** the fence is stored under a different key from the save, so the late original still commits and the SDK's replay stores the save again (the SDK reports one save; the log holds 2 transactions and 2 facts). Two paths: a mixed fleet (one gateway with the option, one without), and, with the option on everywhere, a replan retry that loses its account scope. Saves carrying a command ID are stored once; saves without one twice.
+- R2-2, medium, a gap in the removal guarantee: a creation that races a removal of its entity is answered as a conflict, the SDK replays it, and the replay stores the value written before the removal (needs the per-subject writer on).
+- R2-3, medium, option on: lookups and the fence accept the reserved account prefix, so a caller naming no account can read another account's transaction, receipt and rows and can fence its saves.
+- R2-4, medium, option off: the command path settles on whichever transaction holds the command ID; the earlier fix covers only the operation path.
+- R2-5 to R2-11 low or information (among them: unmarked refusals inside the stored function now answer 503 and are replayed until replays run out, seen 984 times; fences are permanent and unbounded; the first creation-function import frame ran at 0.99 and 1.08 of its estimate).
+- Not tested: group commit with fences or the account option; removal with the original in flight; network delay, out-of-memory and interrupt cases on the stack; sealed scopes with faults.
+- **Recommendation:** one stored form per operation, chosen the same way by the save, the replan retry and the fence on every gateway, before the account option is turned on anywhere.
+
+**Action:** the save-line builder resumed: reproduce all findings; one stored form held as a one-way setting in the database (the same direction as the Publish builder, one shared mechanism for both lines); the replan retry fixed; the reserved prefix closed; the command path fixed with the option off; the creation-versus-removal replay closed under both removal boundaries. The Publish builder and the removal builder were told what touches them. A third review follows. The save-line fixes stay off the one branch.
+
+**The same class of fault in three reviews tonight** (removal log against the data; Publish settings per process; account claims per process): a rule held outside the data, or chosen per process, disagrees with the data at the seam. All three builders are moving the deciding fact into Datomic.
