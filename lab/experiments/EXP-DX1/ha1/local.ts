@@ -176,8 +176,12 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // [DX-ACT8] The Publish builder reruns the review's stack checks as a standing gate phase.
   const publishReview = (holder === "DX-ACT10" || holder === "DX-ACT8") && diagnostic && mode === "load-fair" && combined === undefined &&
     process.env.DX_ACT3_HELD === "1" && process.env.DX_ACT10_STACK === "1";
+  // [DX-ACT10, fourth review] DX_ACT10_RERUN=1: the reviewer reruns the Publish builder's own gates and regressions (the
+  // held runner, the release-limits gate) under its own holder, on the same conditions as the builder's. Unset: nothing.
+  const reviewRerun = holder === "DX-ACT10" && process.env.DX_ACT10_RERUN === "1" && diagnostic && mode === "load-fair" &&
+    combined === undefined && (process.env.DX_ACT6_GATE === "1" || process.env.DX_ACT3_HELD === "1");
   assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours ||
-    heldPublish || settleFrames || settleLive || releaseLimits || besideSaves || publishReview);
+    heldPublish || settleFrames || settleLive || releaseLimits || besideSaves || publishReview || reviewRerun);
   assert(combined === undefined || ownedCombination);
   if (mode === "load-fair") {
     const { cleanSource } = await import("../v01/source.ts");
