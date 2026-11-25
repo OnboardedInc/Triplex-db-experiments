@@ -22,6 +22,17 @@ import type { Rule as ConstraintRule, ViolationAt } from "../Constraint.js";
 export interface StorageAdapterService {
   // [DX-B6-5] Why: one issued instant must name a final cut. Rejected: tied wall-clock instants.
   readonly transactionInstant?: (now: number) => Effect.Effect<number, WriteError>;
+  /**
+   * [DX-S2] Optional identities for one save, asked once per transaction attempt before any identity is used: the
+   * journal ID and a source of assertion IDs. `undefined` (and an adapter without this member) keeps the runtime's
+   * IDs. Why: a backend's fast per-subject writer recognises a save by one ordered block of IDs, which only the
+   * backend knows how to shape. Rejected: rewriting IDs after staging (receipts, journal changes and returned triples
+   * already name them).
+   */
+  readonly saveIdentity?: (
+    operations: readonly TransactOp[],
+    meta: { readonly commandId?: string; readonly enforce?: unknown } | undefined,
+  ) => Effect.Effect<{ readonly txId: string; readonly tripleId: () => string } | undefined, WriteError>;
   // [DX-B4-T1] Why: indexed journal pages avoid a whole-store poll. Rejected: requiring every backend to implement it.
   readonly getTransactionsAfter?: (
     after: number,

@@ -57,6 +57,10 @@ export async function campaign(stack: Stack, cell: string) {
     PREP1_LOOKUP_EVERY: "64",
     // [Opus W2] Why: rerun the combined cases with wide saves on the per-subject writer when the launcher asks.
     ...(process.env.TX2_SUBJECT_WIDE === "1" ? { TX2_SUBJECT_WIDE: "1" } : {}),
+    // [DX-IMP2] Why: rerun the combined cases with the whole-subject import bound on when the launcher asks.
+    ...(process.env.TX2_IMPORT_WHOLE_SUBJECT === "1" ? { TX2_IMPORT_WHOLE_SUBJECT: "1" } : {}),
+    ...(process.env.TX2_IMPORT_WHOLE_SUBJECT === "1" && process.env.TX2_IMPORT_COMMIT_US
+      ? { TX2_IMPORT_COMMIT_US: process.env.TX2_IMPORT_COMMIT_US } : {}),
   };
   await stack.tool();
   await stack.postgres("pg", a);
@@ -190,6 +194,13 @@ export async function campaign(stack: Stack, cell: string) {
       ],
       [e.nonce, db, e.source.gateway, cut, true, true, true],
     );
+    // [DX-IMP2] Why: a case run with the whole-subject import bound must show it on the writer it ran against.
+    // Rejected: trusting the launcher's environment.
+    const importOptions =
+      (options as { options?: { importWholeSubject?: boolean; importCommitMicros?: number } }).options ?? {};
+    assert.equal(importOptions.importWholeSubject, process.env.TX2_IMPORT_WHOLE_SUBJECT === "1" ? true : undefined);
+    if (importOptions.importWholeSubject)
+      console.log("DX-IMP2 writer readback " + JSON.stringify(importOptions));
     const record = (id: string, ack: Awaited<ReturnType<DatomicClient["transactCommand"]>>) => {
       assert.equal(ack.operationId, id);
       receipts.push({ id, p: ack.position, clock: ack.recordedAt, t: ack.t, tx: ack.txId });

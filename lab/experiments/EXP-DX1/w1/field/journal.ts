@@ -13,6 +13,8 @@ export type JournalIntent = {
   command: string;
   clock: number;
   root: string;
+  /** [DX-S4] A save of several owners names each in one changed-entity row; `root` is then the first of them. */
+  roots?: readonly string[];
   changes: ReadonlyArray<Record<string, unknown>>;
 };
 
@@ -22,7 +24,7 @@ export function checkJournal(
 ) {
   assert.equal(tx, intent.tx);
   assert.equal(position, intent.position);
-  assert.equal(rows.length, 4 + intent.changes.length);
+  assert.equal(rows.length, 3 + (intent.roots?.length ?? 1) + intent.changes.length);
   const fields = (attr: string) => rows.filter((row) => row.attribute === ":_tx/" + attr);
   assert.deepEqual(
     fields("position").map((row) => row.value_number),
@@ -37,8 +39,8 @@ export function checkJournal(
     [intent.clock],
   );
   assert.deepEqual(
-    fields("changed-entity").map((row) => row.value_string),
-    [intent.root],
+    fields("changed-entity").map((row) => row.value_string).sort(),
+    [...(intent.roots ?? [intent.root])].sort(),
   );
   const key = (c: Record<string, unknown>) => `${c.op}/${c.tripleId}`;
   const ordered = (changes: readonly Record<string, unknown>[]) =>

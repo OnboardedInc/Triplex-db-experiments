@@ -17,6 +17,8 @@ class Connection extends Context.Service<Connection, DatomicClient>()(
 export function makeDatomicRuntime(options: {
   readonly url: string;
   readonly groupAccount?: string;
+  /** [DX-S6] The account this store saves for (see DatomicClient `claimAccount`). Default unset. */
+  readonly claimAccount?: string;
   readonly writeClass?: import("./DatomicClient.js").DatomicWriteClass;
   readonly layout?: "lean" | "legacy";
   readonly entityCacheBytes?: number;
@@ -33,6 +35,12 @@ export function makeDatomicRuntime(options: {
   readonly idLists?: import("./idLists.js").IdListOptions;
   /** [DX-RD4] A reader built from a receipt: every unpinned read answers at or after its position. */
   readonly readAtLeast?: import("./readAtLeast.js").ReadAtLeast;
+  /** [DX-S2] One ordered block of identities per subject's save (see the adapter option). Default off. */
+  readonly orderedSaves?: boolean;
+  /** [DX-S2] The save-size rule (see the adapter option). Default off. */
+  readonly saveSizeRule?: boolean;
+  /** [DX-S3] With orderedSaves, one ordered block for a save of two to four owners (see the adapter option). Default off. */
+  readonly severalOwners?: boolean;
 }): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> {
   const connection = Layer.effect(
     Connection,
@@ -70,6 +78,12 @@ export {
   makeDatomicStorageAdapter,
   DatomicSerializationConflict,
   DatomicCommitOrderError,
+  SaveTooLarge,
+  SaveRequestTooLarge,
+  SAVE_LIMIT_FACTS,
+  SUBJECT_SAVE_FACTS,
+  SUBJECT_SAVE_OWNERS,
+  orderedSaveShape,
 } from "./DatomicStorageAdapter.js";
 export { makeDatomicQueryExecutor } from "./DatomicQueryExecutor.js";
 

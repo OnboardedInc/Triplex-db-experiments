@@ -907,21 +907,35 @@
     (when-not (= result cached) (swap! entity-indexes assoc name result))
     by))
 
+(defn frame-tests
+  "[DX-ERA6, the merged rule of the save line's third review, section 2] When was this save framed, as the tests a
+  removal record must pass to be later than its frame. A save is framed at the EARLIEST of the points it states:
+  - its first attempt's source (`frameSourceK`, which every replay carries): removals at a later position;
+  - its own source (`sourceK`): removals at a later position;
+  - the removal stamp the client held when it framed the save (`removalSeen`, the first attempt's on a replay):
+    removals with a later sequence.
+  A removal is later than the frame when it is later than any point stated. A replay whose first attempt stated no
+  source (`frameSourceK` null) and that carries no stamp counts as framed before every removal, and so does a save that
+  states none of the three. Returns a predicate on a native record ({:position .. :entry ..})."
+  [input]
+  (let [frame (get input "frameSourceK") source (get input "sourceK") seen (get input "removalSeen")
+        tests (cond-> []
+                (integer? frame) (conj (fn [x] (> (long (:position x)) (long frame))))
+                (and (contains? input "frameSourceK") (not (integer? frame)) (not (integer? seen))) (conj (constantly true))
+                (integer? source) (conj (fn [x] (> (long (:position x)) (long source))))
+                (integer? seen) (conj (fn [x] (> (long (get-in x [:entry "seq"] 0)) (long seen)))))]
+    (if (seq tests) (fn [x] (boolean (some #(% x) tests))) (constantly true))))
+
 (defn removal-after-source
   "The newest removal committed in the data AFTER this save was framed that names a protected value the save writes
   (by its selectors, so a subject with no value yet counts), or nil. From the data's own records, so it is the same on
-  both boundaries and database-wide. When was the save framed:
-  - its own frame source (`sourceK`, the position the client framed it from): removals at a later position;
-  - else the removal sequence the client last saw (`removalSeen`, the frontier's sequence or stamp it read): removals
-    with a later sequence;
-  - else nothing tells, so the save counts as framed before every removal (the fourth review's Z7: the SDK's
-    optimistic commits send no source): any removal that names a value it writes declines it. A save sent again with a
-    fresh source or a fresh `removalSeen` is a new save after the removal (case 3) and is not declined."
+  both boundaries and database-wide. When the save was framed: `frame-tests` (the earliest of the first attempt's
+  source, its own source and the removal stamp it states; a save that states none counts as framed before every
+  removal, the fourth review's Z7). A save sent again under a new command with a fresh source and a fresh
+  `removalSeen` is a new save after the removal (case 3) and is not declined; under the same command it is (its
+  command was recorded when it was declined)."
   [name db input]
-  (let [source (get input "sourceK") seen (get input "removalSeen")
-        later? (cond (integer? source) (fn [x] (> (long (:position x)) (long source)))
-                     (integer? seen) (fn [x] (> (long (get-in x [:entry "seq"] 0)) (long seen)))
-                     :else (constantly true))
+  (let [later? (frame-tests input)
         ;; [DX-ERA2 sixth pass] the database's own policy (an attribute added later counts from its addition)
         cut (with-policy (privacy/cut name db true) db) attrs (or (:attrs cut) #{})]
     (when (seq attrs)
@@ -965,7 +979,7 @@
   nothing about its frame and writes a removed subject's protected value is stored, as there."
   (or removal-scope/enabled (= "1" (System/getenv "TX2_REMOVAL_REPLAY_RULE"))))
 
-(defn- framed? [input] (or (integer? (get input "sourceK")) (integer? (get input "removalSeen"))))
+(defn- framed? [input] (or (integer? (get input "sourceK")) (integer? (get input "removalSeen")) (contains? input "frameSourceK")))
 
 (def ^:private decline-lines (atom {}))
 
@@ -973,17 +987,16 @@
   "Refuse the save with the terminal answer, carrying the database's current removal stamp (V3: a client that learns
   its stamp from answers, as the SDK does, learns it from this one too, and a save it frames after this answer is a
   new save, case 3).
-  [DX-ERA2 sixth pass, V4] What it writes, bounded:
-  - a save that says when it was framed (a frame source, or removalSeen) and was framed before the removal: its
-    commands recorded as declined (case 2: a replay under the same command is refused whatever it then claims), each
-    command once; a command already recorded writes nothing;
-  - a save that says nothing: nothing. The rule declines it again on every resend that still says nothing (it reads
-    only the data's removal records), so a record adds nothing; a resend carrying this answer's stamp is case 3."
+  [DX-ERA6] What it writes, bounded: the save's commands recorded as declined (case 2: a later save under the same
+  command is refused whatever it then states), each command once; a command already recorded writes nothing. (The
+  sixth pass recorded only a save that stated a frame; the merged rule records every declined command.)"
   [name conn db input entry]
-  (let [fresh (when (framed? input)
-                (vec (remove (fn [c] (and (d/entid db :triplex.removal/declined-command)
-                                          (d/entid db [:triplex.removal/declined-command c])))
-                             (commands-of input))))]
+  ;; [DX-ERA6] the merged rule, point 3: a declined command is recorded whatever the save stated, so every later save
+  ;; under it is declined (the save line's R3-3: a resend of the declined command as a new save). Bounded as before:
+  ;; one record per command, never rewritten.
+  (let [fresh (vec (remove (fn [c] (and (d/entid db :triplex.removal/declined-command)
+                                        (d/entid db [:triplex.removal/declined-command c])))
+                           (commands-of input)))]
     (when (seq fresh)
       (when-not (d/entid db :triplex.removal/declined-command) @(d/transact conn declined-schema))
       @(d/transact conn (vec (for [c fresh] {:triplex.removal/declined-command c :triplex.removal/declined-by (get entry "txId")}))))
@@ -997,7 +1010,7 @@
       (when (or (nil? prior) (>= (- now (:at prior)) 60000))
         (println (json/write-str {"schema" "triplex.removal-declined-save.v1" "database" name "operationId" (get input "operationId")
                                   "commands" (commands-of input) "recorded" (count fresh) "removal" (get entry "seq")
-                                  "source" (get input "sourceK") "removalSeen" (get input "removalSeen")
+                                  "source" (get input "sourceK") "frameSource" (get input "frameSourceK") "removalSeen" (get input "removalSeen")
                                   "suppressedSinceLastLine" (:suppressed prior 0)}))))
     (throw (ex-info (if (framed? input)
                       (str "A removal of a subject this save writes committed after the save was framed (removal "
@@ -1029,7 +1042,9 @@
                (get (try (json/read-str (if (string? body) body (String. ^bytes body "UTF-8")))
                          (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "refusal-parse" name e) {}))
                     "code"))]
-    (if (and replay-rule (#{"CasConflict" "ErasureFrontierChanged"} code))
+    ;; [DX-ERA6] and a refusal the save line's writers already answered ErasureReplayDeclined (a creation racing a
+    ;; removal): its commands are recorded too when the merged rule finds the removal
+    (if (and replay-rule (#{"CasConflict" "ErasureFrontierChanged" "ErasureReplayDeclined"} code))
       (let [db (erase/sync! conn)]
         (if-let [entry (removal-after-source name db input)]
           (try (decline! name conn db input entry)

@@ -186,6 +186,7 @@ const makeTriplesServices = Effect.gen(function* () {
     timestamp: number,
     position: number,
     actor?: string,
+    mintTripleId: Effect.Effect<TripleId> = nextTripleId,
   ): Effect.Effect<Triple[], WriteError | InvalidTripleError> =>
     Effect.gen(function* () {
       if (assertOps.length === 0) return [];
@@ -208,7 +209,7 @@ const makeTriplesServices = Effect.gen(function* () {
           inputs[0]!,
           txId,
           timestamp,
-          yield* nextTripleId,
+          yield* mintTripleId,
           position,
         );
         return [rowToTriple(row)];
@@ -218,7 +219,7 @@ const makeTriplesServices = Effect.gen(function* () {
         inputs,
         txId,
         timestamp,
-        yield* Effect.all(inputs.map(() => nextTripleId)),
+        yield* Effect.all(inputs.map(() => mintTripleId)),
         position,
       );
       return rows.map(rowToTriple);
@@ -267,7 +268,14 @@ const makeTriplesServices = Effect.gen(function* () {
                 }),
               );
             }
-            const txId = yield* nextTxId;
+            // [DX-S2] Why: an adapter may give one save one ordered block of identities, asked afresh on every attempt
+            // (a replay after a refusal never reuses a block). Rejected: asking once per command (a refused attempt's
+            // block is unwritten, but a lost reply's is not, and only the attempt knows which it is).
+            const block = adapter.saveIdentity ? yield* adapter.saveIdentity(operations, meta) : undefined;
+            const txId = block ? unsafe.transactionId(block.txId) : yield* nextTxId;
+            const mintTripleId = block
+              ? Effect.sync(() => unsafe.tripleId(block.tripleId()))
+              : nextTripleId;
             const wallTime = yield* now;
             const timestamp = adapter.transactionInstant
               ? yield* adapter.transactionInstant(wallTime)
@@ -383,6 +391,7 @@ const makeTriplesServices = Effect.gen(function* () {
                   timestamp,
                   position,
                   actor,
+                  mintTripleId,
                 );
                 triples.push(...batch);
                 changes.push(
@@ -466,6 +475,7 @@ const makeTriplesServices = Effect.gen(function* () {
                 timestamp,
                 position,
                 actor,
+                mintTripleId,
               );
               triples.push(...batch);
               changes.push(
@@ -477,7 +487,7 @@ const makeTriplesServices = Effect.gen(function* () {
 
             if (!isJournalSuppressed(meta)) {
               for (const input of metadataInputs(txId, position, timestamp, meta, changes)) {
-                yield* adapter.insert(input, txId, timestamp, yield* nextTripleId, position);
+                yield* adapter.insert(input, txId, timestamp, yield* mintTripleId, position);
               }
             }
 

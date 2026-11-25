@@ -1703,11 +1703,13 @@
               (check! label (= {"attributes" [":v"] "sealed" false} stored-two) "the first adoption stands" stored-two))))))))
 
 (defn decline-stamp
-  "[V3, V4 of the fifth review] A save that says nothing about when it was framed (no frame source, no removalSeen), of
-  a removed subject's value: 409 ErasureReplayDeclined carrying the current removal stamp, and NOTHING written (50 of
-  them: no transaction); the same save sent again with removalSeen set to that stamp is stored (case 3), under the
-  same command too. A save framed before the removal (an old frame source): its command recorded once (case 2: a
-  resend under it with a fresh source is refused), and a further refusal of that command writes nothing."
+  "[V3, V4 of the fifth review; DX-ERA6, adapted to the merged rule] A save that says nothing about when it was framed
+  (no frame source, no removalSeen), of a removed subject's value: 409 ErasureReplayDeclined carrying the current
+  removal stamp. Under the merged rule (point 3) every declined command is recorded, whatever the save stated: each of
+  50 such saves writes one record (one transaction each), and the same save sent again under its command with
+  removalSeen = that stamp is refused; under a NEW command with that stamp it is stored (case 3). A save framed before
+  the removal (an old frame source): its command recorded once (a resend under it with a fresh source is refused), and
+  a further refusal of that command writes nothing."
   []
   (fresh-scope false
     (fn [name conn]
@@ -1721,9 +1723,11 @@
             t0 (d/basis-t (erase/sync! conn))
             many (frequencies (for [k (range 50)] (let [r (sourceless (str "ds-m-" k) (secret a1 (str "m" k)))] [(:status r) (get-in r [:body "code"])])))
             t1 (d/basis-t (erase/sync! conn))
-            retry (raw-route name "v1" "transact" (assoc (frame "ds-1" a1 (secret a1 "n1-again") nil nil) "removalSeen" stamp))
             records (fn [] (let [db (d/db conn)] (if (d/entid db :triplex.removal/declined-command) (count (seq (d/datoms db :aevt :triplex.removal/declined-command))) 0)))
             r0 (records)
+            retry (raw-route name "v1" "transact" (assoc (frame "ds-1" a1 (secret a1 "n1-again") nil nil) "removalSeen" stamp))
+            fresh (raw-route name "v1" "transact" (assoc (frame "ds-1-new" a1 (secret a1 "n1-new") nil nil) "removalSeen" stamp))
+            r0b (records)
             late (raw-route name "v1" "transact" (frame "ds-late" a1 (secret a1 "late") nil pin))
             r1 (records)
             late-again (raw-route name "v1" "transact" (frame "ds-late" a1 (secret a1 "late2") nil (head conn)))
@@ -1732,16 +1736,18 @@
             t3 (d/basis-t (erase/sync! conn))]
         (println "ERA2_DECLINE_STAMP" mode (pr-str {:first [(:status first-decline) (get-in first-decline [:body "code"])] :stamp stamp :frontier frontier
                                                     :fifty many :transactions (- t1 t0) :retry [(:status retry) (get-in retry [:body "code"])]
-                                                    :records [r0 r1] :late (:status late) :late-again (:status late-again) :third-writes (- t3 t2)}))
+                                                    :fresh (:status fresh) :records [r0 r0b r1] :late (:status late) :late-again (:status late-again) :third-writes (- t3 t2)}))
         (check! label (= [409 "ErasureReplayDeclined"] [(:status first-decline) (get-in first-decline [:body "code"])]) "a source-less save of the removed value is declined" (:body first-decline))
         (check! label (and (integer? stamp) (= stamp frontier)) "the refusal carries the current removal stamp" [stamp frontier])
         (check! label (= {[409 "ErasureReplayDeclined"] 50} many) "50 more are declined" many)
-        (check! label (= t0 t1) "and write nothing (V4: no transaction for a save that says nothing)" [t0 t1])
-        (check! label (= 0 r0) "no command recorded for them" r0)
-        (check! label (= 200 (:status retry)) "the same save again with removalSeen = that stamp is stored (case 3), under the same command" (:body retry))
-        (check! label (some? (stamp-header retry)) "a stored save carries the stamp too" (:headers retry))
+        (check! label (= 50 (- t1 t0)) "each writes one record (the merged rule records every declined command), one transaction each" [t0 t1])
+        (check! label (= 51 r0) "every declined command recorded once" r0)
+        (check! label (= [409 "ErasureReplayDeclined"] [(:status retry) (get-in retry [:body "code"])]) "the same save again under its declined command is refused, whatever it states" (:body retry))
+        (check! label (= 200 (:status fresh)) "a new command with removalSeen = that stamp is stored (case 3)" (:body fresh))
+        (check! label (some? (stamp-header fresh)) "a stored save carries the stamp too" (:headers fresh))
+        (check! label (= r0 r0b) "refusing a recorded command writes nothing" [r0 r0b])
         (check! label (= [409 "ErasureReplayDeclined"] [(:status late) (get-in late [:body "code"])]) "a save framed before the removal is declined" (:body late))
-        (check! label (= 1 r1) "its command recorded once (case 2)" r1)
+        (check! label (= (inc r0b) r1) "its command recorded once (case 2)" [r0b r1])
         (check! label (= 409 (:status late-again)) "a resend under that command with a fresh source is refused (case 2)" (:body late-again))
         (check! label (= t2 t3) "a further refusal of a recorded command writes nothing" [t2 t3])))))
 
@@ -1827,6 +1833,58 @@
               (check! label (str/includes? (text (:body read)) v) "and its value answered" nil)
               (check! label (nil? (stamp-header r)) "no answer carries the removal stamp" (:headers r))
               (check! label (not (contains? frontier "removalStamp")) "the frontier as on the merged line" frontier)))))))
+
+(defn- frontier-stamp
+  "The removal stamp a client reads from the frontier (the SDK's ensureRemovalStamp: removalStamp, else seq)."
+  [name]
+  (let [b (:body (raw-route name "v2" "erasure-frontier" nil))] (or (get b "removalStamp") (get b "seq"))))
+
+(defn merged-rule
+  "[DX-ERA6] The merged rule of the save line's third review (section 2), with the replay rule on: a save is framed at
+  the earliest of its first attempt's source (`frameSourceK`), its own source and the removal stamp it states
+  (`removalSeen`); a declined command is recorded and every later save under it is declined; a new command is a new
+  save. Each case is the review's table row, on the same values. With the rule off (every option off) the save line's
+  own rule answers: a replay is judged by its first source only, and the declined command is not recorded."
+  []
+  (fresh-scope false
+    (fn [name conn]
+      (let [label (str "merged-rule/" mode (if rc/replay-rule " (rule on)" " (rule off)"))
+            _ (seed! name [a1 b1 a2])
+            before (head conn)
+            seen-before (some-> (frontier-stamp name) long)
+            _ (expect label (remove! name "mr-rm" a1) [200 nil])
+            after (head conn)
+            seen-after (some-> (frontier-stamp name) long)
+            send (fn [cmd v m] (raw-route name "v1" "transact" (merge (frame cmd a1 v nil nil) m)))
+            out (fn [r] [(:status r) (get-in r [:body "code"])])
+            ;; 1. the SDK's replay after an unrelated refusal, across the removal: first source before it
+            replay (send "mr-replay" (secret a1 "replay") {"sourceK" after "frameSourceK" before})
+            ;; 2. the same command sent again as a new save (fresh source and stamp, no frame source)
+            resend (send "mr-replay" (secret a1 "resend") (cond-> {"sourceK" (head conn)} seen-after (assoc "removalSeen" seen-after)))
+            ;; 3. a new value long after the removal, its first attempt optimistic (no source) and its stamp after it
+            optimistic (send "mr-opt" (secret a1 "opt") (cond-> {"sourceK" (head conn) "frameSourceK" nil} seen-after (assoc "removalSeen" seen-after)))
+            ;; 3b. the same without a stamp: the first attempt stated nothing, so it counts as framed before the removal
+            optimistic-bare (send "mr-opt-bare" (secret a1 "opt-bare") {"sourceK" (head conn) "frameSourceK" nil})
+            ;; 4. the earliest point decides: its own source after the removal, its stamp before it
+            earliest (send "mr-earliest" (secret a1 "earliest") (cond-> {"sourceK" (head conn)} seen-before (assoc "removalSeen" seen-before)))
+            ;; 5. the same values under a new command after a decline: a new save
+            renewed (send "mr-new" (secret a1 "new") (cond-> {"sourceK" (head conn)} seen-after (assoc "removalSeen" seen-after)))
+            ;; 6. another subject's save is not touched by the removal
+            other (raw-route name "v1" "transact" (assoc (frame "mr-other" b1 (secret b1 "other") nil nil) "sourceK" before "frameSourceK" before))
+            got {:replay (out replay) :resend (out resend) :optimistic (out optimistic) :optimistic-bare (out optimistic-bare)
+                 :earliest (out earliest) :renewed (out renewed) :other (out other) :stamps [seen-before seen-after]}]
+        (println "ERA6_MERGED_RULE" mode (pr-str (assoc got :rule rc/replay-rule)))
+        (check! label (= [409 "ErasureReplayDeclined"] (:replay got)) "1. a replay framed (first source) before the removal is declined" got)
+        (check! label (= [200 nil] (:other got)) "6. another subject's replay is stored" got)
+        (check! label (= [200 nil] (:renewed got)) "5. a new command framed after the removal is stored" got)
+        (if rc/replay-rule
+          (do (check! label (= [409 "ErasureReplayDeclined"] (:resend got)) "2. the declined command sent again as a new save is declined (recorded)" got)
+              (check! label (= [200 nil] (:optimistic got)) "3. an optimistic first attempt with a stamp after the removal is stored (the save line's R3-6)" got)
+              (check! label (= [409 "ErasureReplayDeclined"] (:optimistic-bare got)) "3b. without a stamp it counts as framed before the removal" got)
+              (check! label (= [409 "ErasureReplayDeclined"] (:earliest got)) "4. a stamp before the removal declines it although its own source is after" got))
+          (do (check! label (= [200 nil] (:resend got)) "2. rule off: the save line's answer (a resend is a new save; not recorded)" got)
+              (check! label (= [409 "ErasureReplayDeclined"] (:optimistic got)) "3. rule off: the save line's answer (a null first source counts as before every removal)" got)
+              (check! label (= [200 nil] (:earliest got)) "4. rule off: the stamp is not read" got)))))))
 
 (defn restore-after-copy-rewrite
   "[DX-ERA2 seventh pass, X12] A gateway whose cache holds the log's copy from before another gateway rewrote it (an
@@ -2186,6 +2244,7 @@
   (scenario "decline-stamp" decline-stamp)
   (scenario "worker-retire" worker-retire)
   (scenario "replay-rule-off" replay-rule-off)
+  (scenario "merged-rule" merged-rule)
   (scenario "restore-after-copy-rewrite" restore-after-copy-rewrite)
   (scenario "rule-index" rule-index)
   (scenario "log-repair" log-repair)

@@ -48,7 +48,7 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
   # `offrule` is the database-wide rule with that rule on (its own option), which the earlier reviews' database-wide
   # cases test; `plain` is every option off running only the case that proves the rule is off
   [[ $option == offrule ]] && env+=(-e TX2_REMOVAL_REPLAY_RULE=1)
-  [[ $option == plain ]] && env+=(-e "ERA2_ONLY=replay-rule-off")
+  [[ $option == plain ]] && env+=(-e "ERA2_ONLY=replay-rule-off merged-rule")
   for kv in ${RUN_ENV:-}; do env+=(-e "$kv"); done
   [[ $option == subject || $option == commit ]] && env+=(-e TX2_REMOVAL_SUBJECT_CHECK=1 -e TX2_REMOVAL_TRIES_LOG=1 -e "ERA2_RACES=${ERA2_RACES:-1000}")
   # [DX-ERA2 fourth pass] the commit as the boundary (section 16 of the page)

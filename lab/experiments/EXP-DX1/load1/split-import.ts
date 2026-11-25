@@ -6,10 +6,13 @@ import { openComposition } from "../../../bench/lib/composition.ts";
 import { windowed } from "../../../bench/lib/load-window.ts";
 import { frames } from "./source.ts";
 import { Snapshot } from "./snapshot.ts";
+import { installSnapshotImportClass } from "./import-class.ts";
 
 export const sharedMono = () => Number(process.hrtime.bigint() / 1000n) / 1000;
 
 async function run() {
+  // [DX-IMP2] With the whole-subject import bound on, this importer's frames are import-class commits.
+  installSnapshotImportClass();
   const [scope, dir, arm, subjectsArg, widthArg] = process.argv.slice(2);
   assert(scope && dir && arm && process.send);
   const subjects = Number(subjectsArg),

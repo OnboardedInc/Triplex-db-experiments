@@ -207,6 +207,9 @@ function setup(compact: boolean) {
   const scorecardTape = writeOptionsAttempt ? (process.env.DX_V01_TAPE ?? "saturday") : undefined;
   // [DX-CARD2] The card's reader setting for its toy (v01/card-reader.ts); recorded for the guest as the tape is.
   const scorecardReader = writeOptionsAttempt ? parseReader(process.env.DX_V01_READER, process.env.DX_V01_READ_PERMITS) : undefined;
+  // [DX-S2] Every toy-card save through the product's path (0 or 1), recorded for the guest as the tape is.
+  const scorecardProduct = writeOptionsAttempt ? process.env.DX_S2_PRODUCT : undefined;
+  assert(scorecardProduct === undefined || scorecardProduct === "0" || scorecardProduct === "1");
   assert(scorecardTape === undefined || ["saturday", "production-R", "production-S", "production-R-noburst", "production-S-noburst"].includes(scorecardTape));
   for (const [n, slot] of slots.entries()) {
     const role = n === 0 ? "write" : "read";
@@ -241,6 +244,7 @@ function setup(compact: boolean) {
     nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, scorecardWriter, scorecardCreditMode, scorecardComparison, realisticScorecard,
     ...(scorecardTape && scorecardTape !== "saturday" ? { scorecardTape } : {}),
     ...(scorecardReader ? { scorecardReader } : {}),
+    ...(scorecardProduct ? { scorecardProduct } : {}),
     crossCheck: !!writeOptionsAttempt && process.env.DX_THIN1_CROSSCHECK === "1",
     gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
     memoryPoints, nativePools,
@@ -320,6 +324,7 @@ function bind() {
       realisticScorecard: attempt.realisticScorecard,
       ...(attempt.scorecardTape ? { scorecardTape: attempt.scorecardTape } : {}),
       ...(attempt.scorecardReader ? { scorecardReader: attempt.scorecardReader } : {}),
+      ...(attempt.scorecardProduct ? { scorecardProduct: attempt.scorecardProduct } : {}),
       crossCheck: attempt.crossCheck === true,
       compact: !!attempt.compact,
       census: attempt.census, cohort: attempt.cohort,
@@ -405,6 +410,7 @@ if (action === "--guest") {
     process.chdir(repo);
     const { parseCredits } = await import("../v01/server-workload.ts");
     if (stack.managed.scorecardTape) process.env.DX_V01_TAPE = stack.managed.scorecardTape;
+    if (stack.managed.scorecardProduct) process.env.DX_S2_PRODUCT = stack.managed.scorecardProduct;
     const { adoptedToy } = await import("../v01/adopted.ts");
     const { readResidentMappings } = await import("./heap-residency.ts");
     const readyBy = Date.now() + 45_000;
