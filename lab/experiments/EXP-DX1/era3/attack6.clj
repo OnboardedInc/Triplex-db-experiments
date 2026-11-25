@@ -36,6 +36,20 @@
 (defn qsave [cmd owner value position] (g/save-frame cmd owner ":q" value nil position))
 
 ;; ---- A1: a save planned before an attribute's addition, committed after it --------------------------------------
+(defn in-submit-wait
+  "Send `frame`; when its submit runs (planned, not committed), start `f` on another thread and wait for it at most 3 s
+  before the submit goes on. Returns [reply, f's result once it ends (at most 60 s), whether f ended before the submit
+  went on]. (attack5's in-submit leaves f running past its 3 s; a test that reads after it then races f.)"
+  [name op frame f]
+  (let [fired (atom false) job (atom nil) before (atom nil) orig storage/submit!
+        reply (with-redefs [storage/submit! (fn [c data request timeline & more]
+                                              (when (and (= op (get request "operationId")) (compare-and-set! fired false true))
+                                                (let [j (future (f))]
+                                                  (reset! job j)
+                                                  (reset! before (not= :waiting (deref j 3000 :waiting)))))
+                                              (apply orig c data request timeline more))]
+                (offers/send name frame))]
+    [reply (some-> @job (deref 60000 :timeout)) @before]))
 (defn a1-late-save [sealed? boundary between?]
   (when per-account?
     (f/scope5-with [":v"] sealed? boundary
@@ -45,7 +59,7 @@
               _ (g/seed! name [g/a1 g/b1])
               q0 (g/secret g/a1 "q-before") s0 (offers/outcome (offers/send name (qsave "a1-q0" g/a1 q0 nil)))
               ql (g/secret g/a1 "q-late")
-              [late inner] (f/in-submit name "a1-q-late" (qsave "a1-q-late" g/a1 ql (g/head conn))
+              [late inner interleaved?] (in-submit-wait name "a1-q-late" (qsave "a1-q-late" g/a1 ql (g/head conn))
                                         #(do [(offers/outcome (offers/route name "v2" "protection" {"attributes" [":v" ":q"] "sealed" sealed?}))
                                               (when between? (offers/outcome (a/erase! name "a1-rm-between" [{"entityId" g/a1}])))]))
               stored (rc/stored-policy (d/db conn))
@@ -56,12 +70,13 @@
               texts (all-texts name conn g/a1)
               must-go (if between? [q0 ql] [q0 ql qn])
               detail {:seed-q-before s0 :late-save (offers/outcome late) :addition-and-removal-while-it-was-held inner
+                      :they-ended-before-the-held-save-went-on interleaved?
                       :stored-policy stored :native-copies-in-clear-of-the-late-value clear-late
                       :save-after-the-addition sn :native-copies-in-clear-of-the-new-value clear-new
                       :removal-after rm :removed-values-answered (count (answered texts must-go))
                       :which-answered (mapv #(cond (= % q0) :q-before (= % ql) :q-late :else :q-new) (answered texts must-go))}]
           (observe! lbl :detail detail)
-          (bump! :a1 boundary sealed? between? :late (offers/outcome late) :answered (count (answered texts must-go)))
+          (bump! :a1 boundary sealed? between? :interleaved interleaved? :late (offers/outcome late) :answered (count (answered texts must-go)))
           (oracle! lbl (empty? (answered texts must-go)) "no read route answers a value its subject's acknowledged removal removed" detail)
           (when sealed? (oracle! lbl (zero? clear-new) "a value of :q saved after the addition is not stored in clear (sealed)" detail)))))))
 
@@ -347,6 +362,11 @@
               stopped (offers/outcome (f/stop-removal! name "f-rm" g/a1 stop))
               _ (privacy/replace! (privacy/path name "pending.json") "{\"seq\": 1, \"commandId\": \"f-rm\", \"sel")
               _ (reset! privacy/cache {})
+              probe (fn [r] [(:status r) (get-in r [:body "code"]) (some-> (get-in r [:body "message"]) str (subs 0 (min 160 (count (str (get-in r [:body "message"]))))))])
+              torn {:resend (probe (f/safe #(a/remove-attr! name "f-rm" g/a1)))
+                    :another-removal (probe (f/safe #(a/remove-attr! name "f-rm-other" "acct/d/one")))
+                    :read (probe (f/safe #(offers/route name "v1" "read" {"entityIds" [g/b1]})))
+                    :save (probe (f/safe #(offers/send name (g/frame "f-save" "acct/c/one" (g/secret "acct/c/one" "x") nil (g/head conn)))))}
               bodies (vec (for [b [{"commandId" "f-rm"} {"seq" 1} {"policy" {"attributes" [":v"]}}]] (offers/outcome (f/safe #(q/rebuild! name b)))))
               calls (atom {})
               hammer (fn [] (future (dotimes [_ 15] (let [r (offers/outcome (f/safe #(q/rebuild! name {})))] (swap! calls update r (fnil inc 0))))))
@@ -354,12 +374,13 @@
               resend (offers/outcome (a/remove-attr! name "f-rm" g/a1))
               _ (doseq [h hs] (deref h 60000 nil))
               resend2 (offers/outcome (a/remove-attr! name "f-rm" g/a1))
-              detail {:stopped stopped :non-empty-bodies bodies :route-calls @calls :resend resend :resend-again resend2
+              detail {:stopped stopped :while-the-intent-is-torn torn :non-empty-bodies bodies :route-calls @calls :resend resend :resend-again resend2
                       :native-commits-of-the-command (f/command-entries name conn "f-rm") :pending-after (some-> (privacy/pending name) (get "commandId"))
                       :a1-masked (f/masked? name g/a1 va) :b1-kept (not (f/masked? name g/b1 vb)) :seq (g/seq-now name conn)}]
           (observe! lbl :detail detail)
           (bump! :f boundary stop resend resend2)
           (oracle! lbl (every? #(= 400 (first %)) bodies) "the rebuild route takes nothing from its request" detail)
+          (oracle! lbl (every? #(not= 400 (first %)) (vals torn)) "storage damage is answered with the typed 503 of state 11, never 400" detail)
           (oracle! lbl (and (= 1 (:native-commits-of-the-command detail)) (nil? (:pending-after detail)) (:a1-masked detail) (:b1-kept detail))
                    "the removal is applied exactly once, as first asked, whoever calls the route" detail))))))
 
