@@ -14,8 +14,8 @@ pg=/opt/thin-pg/usr/local/bin
 pg_run() { setpriv --reuid=65534 --regid=65534 --clear-groups "$pg/$@"; }
 addr=127.0.0.1
 children=()
-finish() { local s=$?; trap - EXIT; touch "$work/stop"; kill -CONT "$tx" 2>/dev/null; for p in "${children[@]}"; do kill "$p" 2>/dev/null || true; done
-  for f in "$work"/gw-*.pid; do [[ -f $f ]] && kill "$(cat "$f")" 2>/dev/null; done; wait 2>/dev/null; exit "$s"; }
+finish() { local s=$?; trap - EXIT; touch "$work/stop"; kill -CONT "$tx" 2>/dev/null; kill "$tx" 2>/dev/null; for p in "${children[@]}"; do kill "$p" 2>/dev/null || true; done
+  for f in "$work"/gw-*.pid; do [[ -f $f ]] && kill "$(cat "$f")" 2>/dev/null; done; sleep 2; exit "$s"; }
 trap finish EXIT
 wait_tcp() { local pid=$1 port=$2 i; for ((i=0; i<240; i++)); do kill -0 "$pid" || return 1; if (exec 3<>/dev/tcp/$addr/$port) 2>/dev/null; then return; fi; sleep .5; done; return 1; }
 sql() { pg_run psql -XAtq -v ON_ERROR_STOP=1 -h "$data/socket" -U postgres "$@"; }
