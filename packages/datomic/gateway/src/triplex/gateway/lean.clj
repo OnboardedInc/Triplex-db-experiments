@@ -1,8 +1,7 @@
 (ns triplex.gateway.lean
   (:require [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.reach :as reach]
             [triplex.gateway.owner-root :as owner-root] [triplex.gateway.pinned :as pinned]
-            [triplex.gateway.save-ledger :as ledger] [triplex.gateway.trace :as trace]
-            [triplex.gateway.uncached :as uncached]))
+            [triplex.gateway.save-ledger :as ledger] [triplex.gateway.trace :as trace]))
 (set! *warn-on-reflection* false)
 ;; [DX-B5-L2] Why: only row text and native history contain lean facts; no reified fallback exists.
 ;; Rejected: empty answers from :f indexes, or decoding through d/entity/d/pull/d/q.
@@ -111,6 +110,8 @@
                      (subs text 0 (+ 5 (Integer/parseInt text 1 5 16)))))
          retired (set (map key-for (d/datoms db :eavt eid :triplex.entity/retired)))]
      (remove (comp retired key-for) (d/datoms db :eavt eid :triplex.entity/row)))))
+;; [DX-XQ10] Filled by uncached.clj with TX2_READ_PREFETCH=1 (the uncached-read branch's batch prefetch); nil otherwise.
+(def prefetch-hook nil)
 (defn rows
   ([name db input] (rows name db input nil))
   ([name db input visit-text!]
@@ -135,11 +136,11 @@
         ;; Rejected: substituting the current database for ID lookups or scans (their rows are not bound to one person).
         current (when (and pinned/enabled cut (not inner) (not history?)) pinned/*current*)
         position (second selection)
-        ;; [DX-RD5] Why: behind TX2_READ_PREFETCH, a named-subject read of several subjects loads their identity and
-        ;; EAVT rows side by side first (uncached/prefetch!); the read below is unchanged and finds them cached.
-        ;; Rejected: prefetching for ID lookups, interiors, history or scans (their rows are not one subject's range).
-        _ (when (and uncached/prefetch? entities cut (not inner) (not history?) (not id))
-            (uncached/prefetch! (or current source) (vec (distinct entities))))
+        ;; [DX-RD5, moved by DX-XQ10] Why: behind TX2_READ_PREFETCH, a named-subject read of several subjects loads their
+        ;; identity and EAVT rows side by side first (uncached.clj fills the hook when its option is on); the read below
+        ;; is unchanged and finds them cached. The hook keeps this file's compiled code as before the option existed:
+        ;; this namespace compiles before commit.clj, whose stored function's identity depends on it (xq10 idents).
+        _ (when prefetch-hook (prefetch-hook entities cut inner history? id current source))
         eids (cond id (when-let [datom (by-id view id)] [(owner-of (:e datom))])
                    entities (keep #(if-let [e (when current (pinned/current-eid current cut position %))]
                                      [current e]

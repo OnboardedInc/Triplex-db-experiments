@@ -248,7 +248,7 @@
   "The pinned read's own code (storage/read-rows), at the question's position and valid time, without a read permit
   (this request holds a sweep permit). Rows grouped by entity in the order asked."
   [name current batch basis]
-  (let [rows (:rows (binding [admission/*own-pool* :sweep]
+  (let [rows (:rows (binding [admission/*own-pool* (fn [f] (trace/span "gateway.admitted-work" "gateway" (f)))]
                       (storage/read-rows name current {"entityIds" (vec batch) "basis" basis})))
         by (HashMap.) wanted (set batch)]
     (doseq [row rows]

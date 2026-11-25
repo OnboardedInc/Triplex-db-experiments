@@ -1,5 +1,5 @@
 (ns triplex.gateway.main
-  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase] [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger] [triplex.gateway.pinned :as pinned] [triplex.gateway.uncached :as uncached] [triplex.gateway.group-cut :as group-cut]
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase] [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger] [triplex.gateway.pinned :as pinned] [triplex.gateway.group-cut :as group-cut]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
             [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed]
             [triplex.gateway.write-wire :as write-wire]
@@ -10,7 +10,10 @@
             [triplex.gateway.general-prefetch :as general-prefetch] [triplex.gateway.admission :as admission]
             [triplex.gateway.subject-hints :as subject-hints]
             [triplex.gateway.ids :as ids] [triplex.gateway.sweep :as sweep]
-            [triplex.gateway.question-reader :as qr])
+            [triplex.gateway.question-reader :as qr]
+            ;; [DX-INT5, the form of DX-XQ10] Last: it fills lean/prefetch-hook with TX2_READ_PREFETCH=1; loaded before
+            ;; commit.clj it moved the stored functions' identities with every option off (READINESS.md, step 0).
+            [triplex.gateway.uncached :as uncached])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
