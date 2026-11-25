@@ -228,6 +228,30 @@
           (is (= [200 nil] (:unprefixedNewSubjectWithout r)))
           (is (= [200 nil] (:unprefixedNewSubjectNamingAccount r)) "the page: a save of no one account keeps today's IDs"))))))
 
+;; ---------------------------------------------------------------- 4b. a plain claim nobody owns
+
+(deftest a-plain-claim-of-no-one-account-is-not-found-by-the-account
+  ;; S6 9.2: a plain claim is found for the account that wrote it when its transaction's business entities are all
+  ;; that account's. A command first committed by a save naming no account that wrote entities of two accounts (or a
+  ;; system entity) is owned by no account: the same command, named by one of them, commits again.
+  (if-not (and on? (run? "legacy"))
+    (println "DX-S5R2_SKIP needs TX2_ACCOUNT_CLAIMS=1")
+    (reference/in-scope
+      (fn [name conn]
+        (let [first-save (save conn {:command "joined:z" :operation "z-op-1"
+                                     :facts [{:owner "acct/z1/subject/s" :field ":a/f" :type :string :value "z1" :pred nil}
+                                             {:owner "acct/z2/subject/s" :field ":a/f" :type :string :value "z2" :pred nil}]})
+              a (reference/send name first-save)
+              again (reference/send name (with-account (save conn {:command "joined:z" :operation "z-op-2"
+                                                                   :facts [{:owner "acct/z1/subject/t" :field ":a/f" :type :string :value "again" :pred nil}]}) "z1"))
+              claim (:body (reference/route name "v1" "claim" {"commandId" "joined:z" "receipt" true "account" "z1"}))
+              r {:case "a plain claim of a save of two accounts, then the same command named by one of them"
+                 :first (reference/outcome a) :sameCommandNamingAccount (reference/outcome again) :claimLookupByAccount (get claim "txId")
+                 :firstTx (get-in first-save ["claims" 0 "txId"])}]
+          (line r)
+          (is (= [200 nil] (:first r)))
+          (is (= 409 (first (:sameCommandNamingAccount r))) "a command already committed must not commit again"))))))
+
 ;; ---------------------------------------------------------------- 5. two resolvers of one unknown outcome
 
 (deftest two-resolvers-of-one-operation

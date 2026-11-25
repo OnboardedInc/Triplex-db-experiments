@@ -620,8 +620,10 @@
   [g ^Random rng {:keys [c-name k-name]}]
   ;; Each first-account command is shadowed once: a second shadow of the same command would reuse the second account's
   ;; own IDs (its refusal is then the contract, not a cross-account effect).
-  (when-let [command (let [c (peek @(:commands g))] (when (and c (not= c (get @shadowed (:seed g)))) c))]
-    (swap! shadowed assoc (:seed g) command)
+  ;; A first-account command can come back as the latest (a save of the same command that names the account after a
+  ;; plain claim of it), so the set of shadowed commands is kept, not only the last.
+  (when-let [command (let [c (peek @(:commands g))] (when (and c (not (contains? (get @shadowed (:seed g)) c))) c))]
+    (swap! shadowed update (:seed g) (fnil conj #{}) command)
     (let [op (peek @(:operations g))
           b-acct (str "fb" (:seed g)) b-owner (str "acct/" b-acct "/s" (swap! (:counter g) inc))
           spec {:owners [b-owner] :new #{b-owner} :command command :operation op :account b-acct :retires [] :faults #{}
