@@ -45,23 +45,29 @@
   - behind it (a restored older copy): the cache is kept, so requests keep refusing; the scope's progress mark comes
     back to the copy's sequence, so the removals published after it are not skipped;
   and the copy's published removals whose grace has ended have their keys deleted (every removal in a published
-  prefix was published; deleting a key twice is harmless: a missing file, no row)."
+  prefix was published; deleting a key twice is harmless: a missing file, no row).
+  Only a typed refusal (the cut's) is read again: a key deletion that failed (a driver or file-system error) is left to
+  the next pass. Nothing here escapes: a failure of the second reading or of its deletion is counted and logged
+  (`shred-reread`), so one database's failure never stops the pass for the databases after it (the B2 review's S3
+  found this escape in the standing gate)."
   [name cutoff e]
   ((requiring-resolve 'triplex.gateway.failures/note!) "shred" name e)
-  (when-let [v (try (verify-log name)
-                    (catch Exception x ((requiring-resolve 'triplex.gateway.failures/note!) "shred-reread" name x) nil))]
-    (let [prior (get @privacy/cache name)]
-      (if (or (nil? prior) (and (>= (long (:seq v)) (long (:seq prior))) (= (:seal prior) (seal-at v (:seq prior)))))
-        (swap! privacy/cache update name (fn [c] (if (and c (> (long (:seq c)) (long (:seq v)))) c v)))
-        (swap! envelope/shredded update name (fn [m] (min (long (or m 0)) (long (:seq v))))))
-      (when (:sealed v)
-        (let [from (long (get @envelope/shredded name 0))
-              due (->> (:commands v) vals (sort-by #(get % "seq"))
-                       (drop-while #(<= (get % "seq") from))
-                       (take-while #(<= (get % "erasedAt") cutoff)))]
-          (when (seq due)
-            (envelope/erase-keys! name (mapcat #(get % "identities") due))
-            (swap! envelope/shredded assoc name (get (last due) "seq"))))))))
+  (when (:code (ex-data e))
+    (try
+      (when-let [v (verify-log name)]
+        (let [prior (get @privacy/cache name)]
+          (if (or (nil? prior) (and (>= (long (:seq v)) (long (:seq prior))) (= (:seal prior) (seal-at v (:seq prior)))))
+            (swap! privacy/cache update name (fn [c] (if (and c (> (long (:seq c)) (long (:seq v)))) c v)))
+            (swap! envelope/shredded update name (fn [m] (min (long (or m 0)) (long (:seq v))))))
+          (when (:sealed v)
+            (let [from (long (get @envelope/shredded name 0))
+                  due (->> (:commands v) vals (sort-by #(get % "seq"))
+                           (drop-while #(<= (get % "seq") from))
+                           (take-while #(<= (get % "erasedAt") cutoff)))]
+              (when (seq due)
+                (envelope/erase-keys! name (mapcat #(get % "identities") due))
+                (swap! envelope/shredded assoc name (get (last due) "seq")))))))
+      (catch Exception x ((requiring-resolve 'triplex.gateway.failures/note!) "shred-reread" name x) nil))))
 
 (defn take-key-refilled!
   "[DX-ERA2 sixth pass, found by the SDK end-to-end stack] The PostgreSQL authority's key pool of `name` is empty on this

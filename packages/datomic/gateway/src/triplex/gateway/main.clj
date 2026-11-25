@@ -98,12 +98,15 @@
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
       (lean/enabled? current) (assoc :layout "lean" :orderedRowTexts true :journalCuts true)))))
 (defn delete-scope! [base scope]
-  (let [name (scope-name scope) uri (db-uri name)]
-    (when (some #{name} (d/get-database-names (db-uri "*"))) (assert-scope (sync-db uri) scope))
+  (let [name (scope-name scope) uri (db-uri name)
+        existed (some #{name} (d/get-database-names (db-uri "*")))]
+    (when existed (assert-scope (sync-db uri) scope))
     ;; [EXP-DA00] Why: releasing the last mem peer may destroy it before delete. Rejected: release-first (selftest-3 returned false).
     (let [deleted (d/delete-database uri)]
-      ;; [DX-ERA2 sixth pass, V5] guarded per account (the option on): its removal log and keys leave the authority too
-      (when (and deleted removal-scope/enabled) ((requiring-resolve 'triplex.gateway.removal-repair/retire-log!) name))
+      ;; [DX-ERA2 sixth pass, V5] guarded per account (the option on): its removal log and keys leave the authority too.
+      ;; A delete whose retirement failed (the authority refused it) answers that failure; the delete sent again, the
+      ;; database already gone, retires the log then.
+      (when (and removal-scope/enabled (or deleted (not existed))) ((requiring-resolve 'triplex.gateway.removal-repair/retire-log!) name))
       (reach/forget! name)
       (when-let [view (@connections uri)] (let [conn (:conn view)] (feed/unsubscribe! conn) (d/release conn) (swap! connections dissoc uri)))
         {:db name :deleted deleted})))

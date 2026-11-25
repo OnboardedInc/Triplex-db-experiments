@@ -1770,9 +1770,27 @@
               _ (alter-var-root #'rc/worker-complete-ms (constantly 1))
               _ (try (dotimes [_ 3] (rc/complete-stale!)) (finally (alter-var-root #'rc/worker-complete-ms (constantly 30000))))
               f1 (failures-of "worker-completion")
-              ghost-left (privacy/exists? (log-dir ghost))]
+              ghost-left (privacy/exists? (log-dir ghost))
+              ;; a delete whose retirement the authority refuses (a non-empty directory in the log's folder), then the
+              ;; same delete sent again once the authority accepts: the log is retired then
+              scope2 (json/write-str ["triplex-scope-v1" "test" "era2-retire" (str (UUID/randomUUID)) 0])
+              name2 (:db (main/create-scope! nil scope2 "lean" true true))
+              _ (expect label (offers/route name2 "v2" "protection" {"attributes" [":v"] "sealed" true}) [200 nil])
+              _ (expect label (offers/route name2 "v2" "removal-per-account" {}) [200 nil])
+              _ (seed! name2 [a1])
+              _ (expect label (remove! name2 "wr-2" a1) [200 nil])
+              blocker (.resolve ^java.nio.file.Path (log-dir name2) "zz-blocker")
+              _ (java.nio.file.Files/createDirectories (.resolve blocker "inner") (make-array java.nio.file.attribute.FileAttribute 0))
+              first-delete (try (main/delete-scope! nil scope2) :answered (catch Exception e (str (class e))))
+              _ (java.nio.file.Files/deleteIfExists (.resolve blocker "inner")) _ (java.nio.file.Files/deleteIfExists blocker)
+              second-delete (try (main/delete-scope! nil scope2) (catch Exception e (str (class e))))
+              log2-left (privacy/exists? (log-dir name2))]
           (println "ERA2_WORKER_RETIRE" mode (pr-str {:pending pending :keys-before keys-before :log-left log-left :listed listed
-                                                      :failures [f0 f1] :ghost-left ghost-left}))
+                                                      :failures [f0 f1] :ghost-left ghost-left :first-delete first-delete
+                                                      :second-delete second-delete :log2-left log2-left}))
+          (check! label (not= :answered first-delete) "set-up: the retirement refused by the authority fails the delete" first-delete)
+          (check! label (map? second-delete) "the delete sent again is answered" second-delete)
+          (check! label (not log2-left) "and retires the log then" log2-left)
           (check! label (and pending (pos? keys-before)) "set-up: a removal pending, sealed keys present" [pending keys-before])
           (check! label (not log-left) "the deleted database's log and keys left the authority" log-left)
           (check! label (not listed) "no pass lists it" listed)
@@ -1914,6 +1932,40 @@
             (check! label (zero? alive-after) "the next pass deletes it (it refused for good before)" alive-after)
             (check! label (not (str/includes? (text (:body read)) va)) "no removed value answered" (offers/outcome read)))
           (finally (alter-var-root #'envelope/grace-ms (constantly grace))))))))
+
+(defn shred-isolation
+  "[DX-ERA2 sixth pass, found by the B2 review's S3 in the standing gate on a3082aba0] One database's key deletion fails
+  (its key file replaced by a non-empty directory): the key pass counts it and goes on; it never throws, and another
+  database's due keys are deleted in the same pass. Before the fix, F1's second reading retried the failed deletion
+  outside any catch, so the pass threw and stopped there."
+  []
+  (fresh-scope true
+    (fn [name-a _]
+      (fresh-scope true
+        (fn [name-b _]
+          (let [label (str "shred-isolation/" mode)
+                _ (seed! name-a [a1 b1]) _ (seed! name-b [a1 b1])
+                grace envelope/grace-ms
+                _ (expect label (remove! name-a "si-a" a1) [200 nil])
+                _ (expect label (remove! name-b "si-b" a1) [200 nil])
+                ids (fn [nm c] (mapv #(get % "assertionId") (get-in (privacy/cut nm nil) [:commands c "identities"])))
+                kf (envelope/key-file name-a (first (ids name-a "si-a")))
+                before ((requiring-resolve 'triplex.gateway.failures/count-of) "shred")]
+            (java.nio.file.Files/deleteIfExists kf)
+            (java.nio.file.Files/createDirectories (.resolve kf "inner") (make-array java.nio.file.attribute.FileAttribute 0))
+            (alter-var-root #'envelope/grace-ms (constantly 0))
+            (try
+              (let [thrown (try (@#'envelope/shred-published!) nil (catch Throwable t (str (class t))))
+                    alive-b (count (filter #(envelope/key-present? name-b % nil) (ids name-b "si-b")))
+                    counted (- ((requiring-resolve 'triplex.gateway.failures/count-of) "shred") before)]
+                (println "ERA2_SHRED_ISOLATION" mode (pr-str {:thrown thrown :alive-b alive-b :counted counted}))
+                (check! label (nil? thrown) "the key pass does not throw when one database's key deletion fails" thrown)
+                (check! label (zero? alive-b) "the other database's due key is deleted in the same pass" alive-b)
+                (check! label (pos? counted) "the failed deletion is counted" counted))
+              (finally
+                (alter-var-root #'envelope/grace-ms (constantly grace))
+                (java.nio.file.Files/deleteIfExists (.resolve kf "inner"))
+                (java.nio.file.Files/deleteIfExists kf)))))))))
 
 (defn file-publish-compare
   "[F3 of the B2 review] A writer whose view is stale (its lock did not hold) publishes, on the file authority, an entry
@@ -2063,6 +2115,7 @@
   (scenario "completion-sixth" completion-sixth)
   (scenario "move-replay" move-replay)
   (scenario "key-pass-behind" key-pass-behind)
+  (scenario "shred-isolation" shred-isolation)
   (scenario "file-publish-compare" file-publish-compare)
   (scenario "restore-with-pending" restore-with-pending)
   (scenario "peer-behind-move" peer-behind-move)
