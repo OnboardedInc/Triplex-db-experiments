@@ -29,7 +29,7 @@ esac
 envs=(); for kv in $line; do envs+=(-e "$kv"); done
 name=tx2-dxs6-stack-$$
 docker run --rm --name "$name" --label dx-s6=stack --pull never --memory 3500m --entrypoint /bin/bash "${envs[@]}" \
-  -e S6_SEED -e S6_SECONDS -e S6_SAVES -e S6_DROP -e S6_WORKERS \
+  -e S6_SEED -e S6_SECONDS -e S6_SAVES -e S6_DROP -e S6_WORKERS -e S6_FAULT_MIN -e S6_FAULT_SPREAD \
   -v "$here/stack-run.sh:/opt/s6/stack-run.sh:ro" -v "$out:/out" "$image_id" /opt/s6/stack-run.sh > "$out/stack.log" 2>&1
 status=$?
 grep -E '^DX-S6_(SQL|TX|GATEWAYS|QUIET|FAULTS|READY|FAULTED_PHASE|VERIFY|CONSTRAINTS|DONE|STACK)' "$out/stack.log" | cut -c1-4000

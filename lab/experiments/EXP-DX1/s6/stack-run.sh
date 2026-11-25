@@ -68,7 +68,7 @@ driver=$!; children+=($driver)
 for ((i=0; i<600; i++)); do [[ -f $work/faulting ]] && break; kill -0 $driver 2>/dev/null || break; sleep .5; done
 RANDOM=${S6_SEED:-31}
 while [[ ! -f $work/faults-done ]] && kill -0 $driver 2>/dev/null; do
-  sleep $((4 + RANDOM % 6))
+  sleep $((${S6_FAULT_MIN:-4} + RANDOM % ${S6_FAULT_SPREAD:-6}))
   [[ -f $work/faults-done ]] && break
   case $((RANDOM % 6)) in
     0|1) fault "transactor SIGTERM"; kill -TERM "$tx"; wait "$tx" 2>/dev/null; sleep 1; start_transactor ;;
