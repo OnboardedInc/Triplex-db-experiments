@@ -1061,3 +1061,19 @@ Verbatim: "/Users/sam/Downloads/Zino\'s\ triple\ store\ concerns\ vs\ Datomic.md
 ## 2026-11-25 (afternoon), Sam, verbatim
 
 > What are the six decisions? Also where are we right now overall in this project against my key priorities? Show me with tables, with metrics and data.
+
+## 2026-11-25 (late afternoon), Sam, verbatim
+
+> 1. Yes I want to go with your recommendation.
+> 2. Yes I agree with your recommendation.
+> 3. No we're going to refuse that. I agree with your recommendation.
+> 4. I think we should keep the expired document notice as opposed to withdrawing it.
+> 5. Yes you can delete those. I agree.
+> 6. Yes you can do it right now. You can switch that over.
+> I approve a server session of up to $50 more. We need to measure. Let's keep measuring at 1 billion for now and get that to work and then we can deal with 10 billion later.
+> I think: must the 100 ms bar hold subject? For "Hope this subject is not in memory," if we're trying at 1 billion records and we can't even get to 10 billion, how much memory are we going to need? I feel like we should work it. Maybe it doesn't have to be 100 ms but we really got to figure out how to get that down. Let's try to hold the 100 ms bar for reads not in memory but maybe we'll allow a 300 ms read bar for subjects not in memory and a 100 ms read bar for subjects that are in memory.
+> I don't understand where the question reader's memory comes from. You can keep that decision open and bring it up later. Migration is in scope. SQL reporting is not. I mean I guess SQL reporting is fine. I don't really care about these and I don't really get what migration means. I don't think we needed to do migration. I guess so. Yeah I don't care about migration and if SQL reporting is done and built, that's fine but I don't care about trying to maintain that.
+
+What the numbered answers refer to (the orchestrator's table of the same day): 1, turn on the rule that refuses a save prepared before a removal, after the seventh review of the removal rule; 2, run the 30-second completion worker under today's removal rule too, after that review; 3, protected fields on an unsealed database outside tests: refused; 4, when a subject's document value is removed, the expired-document notice is kept, not withdrawn; 5, delete the superseded image build contexts (about 6.7 GB); 6, switch the console on port 28580 to the new build now.
+
+The orchestrator's reading of the rest, for Sam to correct: a server session of up to 50 US dollars more is approved, to measure at 1 billion records (10 billion later); the pinned-read bar becomes p99 at most 100 ms for a subject in memory and at most 300 ms for a subject not in memory, with 100 ms still the aim for both; where the question reader's memory comes from stays open, to be raised again later with a plain explanation; migration is not needed and gets no work; the SQL reporting copy stays as built and is not maintained further.

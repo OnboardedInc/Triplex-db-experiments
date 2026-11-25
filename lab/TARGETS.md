@@ -112,6 +112,15 @@ reported with every activation result; it has no bar yet. Notifications must go 
 bar is set later. Meanwhile it never lets a late older result replace a newer decision (the per-subject or per-page guard is part of the
 measured work since 2026-11-19).
 
+### Read bar by where the subject is (Sam, 2026-11-25)
+
+The pinned-read bar of priority 1 is now two bars, judged at 1 billion records:
+
+- **A subject in memory:** read p99 at most 100 ms.
+- **A subject not in memory:** read p99 at most 300 ms. 100 ms remains the aim for these too ("Let's try to hold the 100 ms bar for reads not in memory but maybe we'll allow a 300 ms read bar for subjects not in memory and a 100 ms read bar for subjects that are in memory").
+
+The scorecard reports the two populations separately and says how each read was classified. Measurement stays at 1 billion records for now; 10 billion comes later. Other decisions of the same day: protected fields on an unsealed database are refused outside tests; when a subject's document value is removed the expired-document notice is kept; migration gets no work; the SQL reporting copy stays as built and is not maintained.
+
 ## 2. The fixed workload (from the paste)
 
 | Item | Value |
