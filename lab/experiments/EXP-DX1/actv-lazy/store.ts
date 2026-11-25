@@ -30,6 +30,29 @@ export const fact = (entityId: string, attribute: string, data: unknown) => ({
 });
 export const value = (row: WorldRow) => JSON.parse(row.value.value);
 export class Conflict extends Error {}
+/** [DX-ACT8, second review] One-way account settings, stored in the held account's origin fact (field `settings`), read
+ * by every process that publishes or settles the account. With none stored every path is as before. The environment
+ * variables TX2_ACCOUNT_KEYS, TX2_SETTLE_FRAME_GUARDS and TX2_LEDGER_CAP_AT_PUBLISH only allow a process to turn the
+ * matching setting on (`account-settings.ts`); what a request does depends on the stored settings alone. A build that
+ * does not know a field refuses the account: builds since 2026-11-21 compare the origin fact with
+ * `{ profile, held }` exactly (the check below, before this change), and this build refuses any version or field it
+ * does not know. PUBLISH-BESIDE-SAVES.md section 0.8. */
+// [DX-ACT8, third review] `archive`: the account's ledgers hold only the items in force; retired items are kept beside
+// them, one row each (ledger-parts.ts). A build that does not know the field refuses the account.
+export type AccountSettings = { v: 1; accountKeys?: true; frameGuards?: true; ledgerCap?: true; ledger?: "whole" | "parts"; archive?: true };
+const settingsFields = new Set(["v", "accountKeys", "frameGuards", "ledgerCap", "ledger", "archive"]);
+export function originSettings(origin: any, base: { profile: string; held: string }): AccountSettings | undefined {
+  const { settings, ...rest } = origin ?? {};
+  assert.deepEqual(rest, base);
+  if (settings === undefined) return undefined;
+  assert(
+    settings && settings.v === 1 && Object.keys(settings).every((k) => settingsFields.has(k)) &&
+      [settings.accountKeys, settings.frameGuards, settings.ledgerCap, settings.archive].every((b) => b === undefined || b === true) &&
+      (settings.ledger === undefined || settings.ledger === "whole" || settings.ledger === "parts"),
+    "This account's stored settings are not ones this build knows: it refuses to run against the account",
+  );
+  return settings as AccountSettings;
+}
 /** [DX-ACT5] An account's metadata names (the defaults unless the held account is namespaced); test doubles of a
  * store without `names` get the defaults. */
 export const defaultNames = { RELEASE, ORIGIN, CLOCK, MASK, CURSOR, documents: "" };
@@ -175,9 +198,13 @@ export async function openStore(
     afterFence?: () => Promise<void>,
     onAck?: (t: number) => void,
     guards?: readonly EntityGuard[],
+    // [DX-ACT8] Diagnostic gates only: runs inside the transaction after its snapshot is taken and before the guards
+    // are read and the operations staged (the adversarial schedule commits a rival write there). Unset: nothing.
+    inside?: () => Promise<void>,
   ) {
     assert(h, "A demand reader has no publication authority");
     assert(!guards || (guards.length > 0 && !afterFence), "Entity guards replace the source-position fence");
+    assert(!inside || guards, "An inside hook is for guarded commits");
     assert(id.length && Number.isSafeInteger(expected) && expected >= 0);
     const correlationId = canonical({ context, hash: sha256(wireBytes([scope, id, actor, ops])) });
     const check = (r: any) => {
@@ -225,6 +252,7 @@ export async function openStore(
           // database's head must still be `expected`.
           if (!guards) yield* requireDatomicSourcePosition(key, expected);
           if (afterFence) yield* Effect.promise(afterFence);
+          if (inside) yield* Effect.promise(inside);
           return yield* h.triples.transact(ops, {
             commandId: id,
             actor,
@@ -269,8 +297,8 @@ export async function openStore(
     const birth = held
       ? all.find((r) => r.entityId === names.ORIGIN && r.position > held.cut)
       : all.find((r) => r.position === 1 && (r.entityId === names.ORIGIN || r.entityId === names.RELEASE));
-    if (held && p > held.cut && birth)
-      assert.deepEqual(value(birth), { profile, held: held.seal });
+    // [DX-ACT8, second review] The origin may carry the account's one-way settings; everything else in it as before.
+    const settings = held && p > held.cut && birth ? originSettings(value(birth), { profile, held: held.seal }) : undefined;
     if (p && !held)
       assert(birth && value(birth).profile === profile, "Foreign source profile or generation");
     const releases = all
@@ -298,6 +326,9 @@ export async function openStore(
       cursor: cursors[0],
       masks,
       input,
+      // [DX-ACT8, second review] The account's stored settings and the origin row that holds them (held accounts).
+      settings,
+      origin: held && birth ? birth : undefined,
     };
   }
   async function input(

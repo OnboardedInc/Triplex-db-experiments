@@ -9,6 +9,11 @@ import { memberPage, width } from "../../notify1/census.ts";
 import { Documents, hash, pack, unpack, type Op, type Row } from "../../notify1/store.ts";
 import type { Store } from "../store.ts";
 import { Conflict, namesOf, openStore, type EntityGuard } from "../store.ts";
+import { randomUUID } from "node:crypto";
+import { ensureSettings, injected, needsTransition, originAt } from "./account-settings.ts";
+/** [DX-ACT8, review F4/F5] TX2_SETTLE_FRAME_GUARDS=1: the pause and a later release are part of each frame's guard. */
+/** [DX-ACT8, second review] Whether a held account's frames are guarded is its stored `frameGuards` setting, read at
+ * each frame's own read position (`account-settings.ts`); there is no per-process switch any more. */
 import { worldsAt, winner } from "../decision.ts";
 import { LazyReader } from "../read.ts";
 import { JoinedAccount, type Marker } from "./account.ts";
@@ -57,6 +62,10 @@ type FramePage = {
 /** A changed subject's values without its full answer; `part` is the offset of the first change when split. */
 export type Changes = { subject: string; changes: [string, string | null][]; part?: number };
 const framePageKey = (sequence: number, frame: number) => "answer:" + sequence + ":f" + frame;
+/** [DX-ACT8] Where settlement reads the subjects' worlds: the marker's effective cut. DX_ACT8_INJECT=read-cut (diagnostic
+ * gates only) reads them at the position an account-guarded Publish read its account's state instead: the wrong rule,
+ * which the gate must catch for a subject saved between that read and the record (PUBLISH-BESIDE-SAVES.md section 4). */
+export const worldCut = (m: Marker) => (process.env.DX_ACT8_INJECT === "read-cut" ? m.read ?? m.cut : m.cut);
 export const identityOf = (scope: string, marker: Marker, position: number) =>
   hash([
     scope,
@@ -146,7 +155,9 @@ export class Archive {
    * client-side intervals (bounded) for the live-side reading. */
   readonly contest = new Contest();
   /** [DX-ACT5] The account's pause and pace, read before each frame (TX2_SETTLE_CONTROL=1; unset, none). */
-  control?: { gate: () => Promise<void> };
+  control?: { gate: () => Promise<void>; gateAt?: (at: number) => Promise<EntityGuard> };
+  /** [DX-ACT8, review F5] The notice tail as this turn read it (TX2_SETTLE_FRAME_GUARDS, values frames only). */
+  private frameTail?: EntityGuard;
   /** [DX-ACT5] Diagnostic: no frame is sent after this `performance.now()` time (SettlementStopped). */
   stopAt?: number;
   private constructor(
@@ -172,6 +183,8 @@ export class Archive {
     precondition: Precondition = preconditionMode(),
   ) {
     const s = source.s;
+    // [DX-ACT8, second review] A settler allowed to turn a setting on does so (one way) before its first frame.
+    await ensureSettings(s);
     // [DX-ACT1] Why: the held scorecard includes archive writes and indexes in the same physical database.
     // Rejected: benchmarking background work in two empty databases.
     const store = s.held
@@ -191,6 +204,19 @@ export class Archive {
     authority: Awaited<ReturnType<typeof readErasure>>,
     progress?: { key: string; prior: Row<unknown> | undefined },
   ) {
+    // [DX-ACT8, third review U6] Whether this process must turn a setting on is read from the settings stored at this
+    // frame's read (no per-process cache); if so it does, and this frame, planned under the old settings, is then refused
+    // by its guards (the origin row, or the head) and planned again.
+    const origin = await originAt(this.source.s, at);
+    if (needsTransition(this.source.s, origin.settings)) await ensureSettings(this.source.s);
+    // [DX-ACT8, third review U3] Under any stored setting a frame's command ID carries a random part, so no other account
+    // can compute it and save under it first. Nothing is recovered by a frame's ID: a frame is guarded on its progress
+    // row (or the head), so a frame that landed refuses its own resend and the next run reads the row it wrote. (Under
+    // the settings a deterministic ID would also break: a transition rewrites a progress row with its own value, so a
+    // plan made before it and one made after share the ID with different retractions, and the later commit would find
+    // the earlier's record as "a receipt that differs": the mixed single-layout fuzz at afae099b1.) With no setting
+    // stored: the deterministic ID, as before.
+    if (origin.settings) id = id + ":" + randomUUID();
     // [DX-ACT1] Why: constrain native preparation and durable turns independently of page count. Rejected: a multi-megabyte atomic frame or assuming a timeout can preempt a durable native transaction.
     const estimate = frameEstimate(ops);
     assert(estimate.fits, "Bulk batch exceeds W1 service estimate");
@@ -208,12 +234,27 @@ export class Archive {
     // [DX-ERASE1] Why: admission can wait after a page was derived, so the same ticket belongs on the destination commit.
     // Rejected: a source read immediately before enqueueing (removal can publish while the batch waits).
     // [DX-ACT5] With TX2_SETTLE_PRECONDITION=progress the frame is refused only if its writer's progress row moved.
+    // [DX-ACT8, review F4/F5] TX2_SETTLE_FRAME_GUARDS=1 (default off): the account's settlement control is read at the
+    // frame's own read position (no cache), a pause there sends nothing, and under the progress precondition the frame
+    // is also guarded on that control row (a pause that lands after the read refuses the frame) and, for a values frame,
+    // on the notice tail its turn read (a Publish that lands after the read refuses it, so the next frame sees the
+    // release superseded). Under the head precondition the head fence already refuses both. Unset: as before.
+    // [DX-ACT8, second review] The `frameGuards` setting as stored at this frame's read position; under the progress
+    // precondition the frame is also guarded on the account's origin row (it changes only at enrolment and at a settings
+    // transition), so a frame planned under the old settings never commits after the transition. Under the head
+    // precondition the head fence already refuses it.
+    const fenced = origin.settings?.frameGuards === true;
+    const controlGuard = fenced && this.control?.gateAt ? await this.control.gateAt(at) : undefined;
     const guards: EntityGuard[] | undefined =
       this.precondition === "progress" && progress
-        ? [{ entityId: this.db.prefix + progress.key, tripleIds: progress.prior ? [progress.prior.id] : [] }]
+        ? [{ entityId: this.db.prefix + progress.key, tripleIds: progress.prior ? [progress.prior.id] : [] },
+          // DX_ACT8_INJECT=no-origin-guard (diagnostic only, the fuzzer's negative control) drops the origin guard.
+          ...(origin.row && !injected("no-origin-guard") ? [{ entityId: namesOf(this.source.s).ORIGIN, tripleIds: [origin.row.id] }] : []),
+          ...(controlGuard ? [controlGuard] : []),
+          ...(fenced && kind === "activation" && this.frameTail ? [this.frameTail] : [])]
         : undefined;
     assert(this.precondition === "head" || guards, "A settlement frame names its progress row");
-    await this.control?.gate();
+    if (!controlGuard) await this.control?.gate();
     if (this.stopAt !== undefined && performance.now() > this.stopAt) throw new SettlementStopped();
     const c = this.contest;
     c.offered++;
@@ -257,6 +298,10 @@ export class Archive {
       sourceAt = await s.head();
     const r = await a.receipt(sequence, sourceAt),
       { marker: m, event: e, census } = r;
+    if ((await originAt(s, sourceAt)).settings?.frameGuards) {
+      const tail = await a.db.row("tail", sourceAt);
+      this.frameTail = { entityId: a.db.prefix + "tail", tripleIds: tail ? [tail.id] : [] };
+    }
     assert.equal(m.storage, "owed");
     const authority = await recheckErasure(s.comp, m.erasureSeq);
     const identity = identityOf(s.scope, m, e.at),
@@ -307,7 +352,7 @@ export class Archive {
     );
     assert(ids.length === Math.min(step, census.count - start));
     const basis = { tx: e.at, validTime: m.at };
-    const worlds = await worldsAt(s, s.profile, ids, { tx: m.cut, validTime: m.at });
+    const worlds = await worldsAt(s, s.profile, ids, { tx: worldCut(m), validTime: m.at });
     assert.deepEqual(
       worlds.map((w) => w.subject),
       ids,
@@ -367,7 +412,7 @@ export class Archive {
       missing = ids.filter((id) => !known.has(id));
     if (missing.length) {
       const basis = { tx: e.at, validTime: m.at };
-      const worlds = await worldsAt(s, s.profile, missing, { tx: m.cut, validTime: m.at });
+      const worlds = await worldsAt(s, s.profile, missing, { tx: worldCut(m), validTime: m.at });
       assert.deepEqual(
         worlds.map((w) => w.subject),
         missing,

@@ -32,6 +32,7 @@ import {
   type Role,
 } from "./common.ts";
 import { drill } from "./run.ts";
+import { datomicRuntime, readVariantReceipt } from "../../../config/datomic/runtime.mjs";
 import { localCheckpoint } from "../hasync1/v2/local-checkpoint.ts";
 import { fleetCaps, fleetMode } from "../hasync1/v2/fleet-config.ts";
 import type { Site } from "./stack.ts";
@@ -172,8 +173,16 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // [DX-ACT6] Why: the release-limits builder runs its toy gate (ledger in parts, definitions by reference) here.
   const releaseLimits = holder === "DX-ACT6" && diagnostic && mode === "load-fair" && combined === undefined &&
     (process.env.DX_ACT6_GATE === "1" || process.env.DX_ACT3_HELD === "1");
+  // [DX-ACT8] Why: the Publish-beside-saves builder runs the held runner (its gate, the unpaused windows, the ACT5 live
+  // phase and the default campaign as regressions) and the release-limits gate here.
+  const besideSaves = holder === "DX-ACT8" && diagnostic && mode === "load-fair" && combined === undefined &&
+    (process.env.DX_ACT6_GATE === "1" || process.env.DX_ACT3_HELD === "1");
+  // [DX-ACT10] Why: the adversarial reviewer of the Publish and settlement guards runs its stack checks in the held runner.
+  // [DX-ACT8] The Publish builder reruns the review's stack checks as a standing gate phase.
+  const publishReview = (holder === "DX-ACT10" || holder === "DX-ACT8") && diagnostic && mode === "load-fair" && combined === undefined &&
+    process.env.DX_ACT3_HELD === "1" && process.env.DX_ACT10_STACK === "1";
   assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours || snapshotWhole ||
-    heldPublish || settleFrames || settleLive || secondFailure || releaseLimits);
+    heldPublish || settleFrames || settleLive || secondFailure || releaseLimits || besideSaves || publishReview);
   assert(combined === undefined || ownedCombination);
   if (mode === "load-fair") {
     const { cleanSource } = await import("../v01/source.ts");
