@@ -197,7 +197,9 @@ class Gate {
     if (w.status === "rejected") throw w.reason;
     if (s.status === "rejected") throw s.reason;
     await this.verified(await c.s.head());
-    assert.equal(w.value.unresolved.size, 0, "Uncertain save");
+    // [second review] The message names the first uncertain saves' errors (runs G4off and G4off2 stopped here without them).
+    assert.equal(w.value.unresolved.size, 0, "Uncertain save: " + [...w.value.unresolved.keys()].slice(0, 3)
+      .map((x) => String((x as { error?: string }).error).slice(0, 200) + " (" + Math.round(((x as { end?: number }).end ?? 0) - ((x as { due?: number }).due ?? 0)) + " ms after due)").join(" | "));
     return w.value.rows as Save[];
   }
   /**
