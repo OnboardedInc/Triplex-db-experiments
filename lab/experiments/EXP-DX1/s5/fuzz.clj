@@ -622,9 +622,12 @@
   ;; own IDs (its refusal is then the contract, not a cross-account effect).
   ;; A first-account command can come back as the latest (a save of the same command that names the account after a
   ;; plain claim of it), so the set of shadowed commands is kept, not only the last.
-  (when-let [command (let [c (peek @(:commands g))] (when (and c (not (contains? (get @shadowed (:seed g)) c))) c))]
-    (swap! shadowed update (:seed g) (fnil conj #{}) command)
-    (let [op (peek @(:operations g))
+  ;; The same holds for operation IDs (a save naming the account can reuse an operation ID stored plain), so both the
+  ;; command and the operation must be new to the second account.
+  (when-let [[command op] (let [c (peek @(:commands g)) o (peek @(:operations g)) seen (get @shadowed (:seed g) #{})]
+                            (when (and c o (not (seen c)) (not (seen o))) [c o]))]
+    (swap! shadowed update (:seed g) (fnil into #{}) [command op])
+    (let [
           b-acct (str "fb" (:seed g)) b-owner (str "acct/" b-acct "/s" (swap! (:counter g) inc))
           spec {:owners [b-owner] :new #{b-owner} :command command :operation op :account b-acct :retires [] :faults #{}
                 :facts (vec (for [i (range (between rng 1 4))] {:owner b-owner :field (str ":fz/b" i) :type :string :value (str "b|" i) :pred nil}))

@@ -245,12 +245,16 @@
               again (reference/send name (with-account (save conn {:command "joined:z" :operation "z-op-2"
                                                                    :facts [{:owner "acct/z1/subject/t" :field ":a/f" :type :string :value "again" :pred nil}]}) "z1"))
               claim (:body (reference/route name "v1" "claim" {"commandId" "joined:z" "receipt" true "account" "z1"}))
+              ;; The same for the operation ID: a save naming z1 under the first save's operation ID.
+              same-op (reference/send name (with-account (save conn {:command "joined:z-other" :operation "z-op-1"
+                                                                     :facts [{:owner "acct/z1/subject/u" :field ":a/f" :type :string :value "op" :pred nil}]}) "z1"))
               r {:case "a plain claim of a save of two accounts, then the same command named by one of them"
                  :first (reference/outcome a) :sameCommandNamingAccount (reference/outcome again) :claimLookupByAccount (get claim "txId")
-                 :firstTx (get-in first-save ["claims" 0 "txId"])}]
+                 :firstTx (get-in first-save ["claims" 0 "txId"]) :sameOperationNamingAccount (reference/outcome same-op)}]
           (line r)
           (is (= [200 nil] (:first r)))
-          (is (= 409 (first (:sameCommandNamingAccount r))) "a command already committed must not commit again"))))))
+          (is (= 409 (first (:sameCommandNamingAccount r))) "a command already committed must not commit again")
+          (is (= 409 (first (:sameOperationNamingAccount r))) "an operation already committed must not commit again"))))))
 
 ;; ---------------------------------------------------------------- 5. two resolvers of one unknown outcome
 
