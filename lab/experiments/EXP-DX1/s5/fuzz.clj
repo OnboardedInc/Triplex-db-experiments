@@ -12,7 +12,7 @@
   and must commit with the same receipt). Run by s5/clj-run.sh; reviewer's harness, not a gate of the code under review."
   (:require [clojure.data.json :as json] [clojure.string :as str] [clojure.set]
             [datomic.api :as d] [triplex.gateway.storage :as storage] [triplex.gateway.main :as main]
-            [triplex.gateway.selftest :as rows]
+            [triplex.gateway.selftest :as rows] [triplex.gateway.reach :as reach]
             [triplex.gateway.subject-save :as subject] [triplex.gateway.subject-owners :as owners]
             [triplex.gateway.subject-create :as create]
             [wide-gate :as wide] [wfix1-regression :as reference])
@@ -227,10 +227,9 @@
                   :triplex.tx/max-recorded-at :triplex.tx/journals :triplex.journal/position
                   :triplex.scope/feed-irregular :triplex.scope/irregular :triplex.scope/position-regular])
 
-(defn canon
-  "Every datom ever asserted or retracted of the attributes above, entities named by public ID (claims by command,
-  transactions by position), as a sorted vector."
-  [conn]
+(defn- canon-entries
+  "The canonical datoms (as strings) of the attributes above whose transaction position passes keep?."
+  [conn keep?]
   (let [db (d/db conn) h (d/history db)
         scope-e (:e (first (d/datoms db :aevt :triplex.scope/key)))
         named (fn [e]
@@ -239,42 +238,73 @@
                     (some-> (first (d/datoms db :eavt e :triplex.tx/position)) :v (->> (str "T@")))
                     (when (= e scope-e) "SCOPE")
                     (str "?" (d/ident db e) e)))
+        tx-pos (fn [tx] (:v (first (d/datoms db :eavt tx :triplex.tx/position))))
         ref? #{:triplex.claim/tx :triplex.tx/journals}]
-    (vec (sort (for [a canon-attrs :when (d/entid db a) dt (d/datoms h :aevt a)
-                     :let [tx (named (:tx dt))] :when (str/starts-with? tx "T@")]
-                 (pr-str [(named (:e dt)) a (if (ref? a) (named (:v dt)) (:v dt)) (:added dt) tx]))))))
+    (for [a canon-attrs :when (d/entid db a) dt (d/datoms h :aevt a)
+          :let [p (tx-pos (:tx dt))] :when (and p (keep? p))]
+      (pr-str [(named (:e dt)) a (if (ref? a) (named (:v dt)) (:v dt)) (:added dt) (str "T@" p)]))))
+
+(defn canon-digest
+  "Every datom ever asserted or retracted of the attributes above, entities named by public ID (claims by command,
+  transactions by position): count and two order-independent 64-bit sums of SHA-256 halves (streamed, not held)."
+  [conn]
+  (let [md (java.security.MessageDigest/getInstance "SHA-256")]
+    (reduce (fn [[n a b] ^String text]
+              (let [bb (java.nio.ByteBuffer/wrap (.digest md (.getBytes text "UTF-8")))]
+                [(inc n) (unchecked-add (long a) (.getLong bb 0)) (unchecked-add (long b) (.getLong bb 8))]))
+            [0 0 0] (canon-entries conn (constantly true)))))
+
+(defn canon
+  "The canonical datoms of transactions after position `after`, sorted (to name a difference)."
+  [conn after]
+  (vec (sort (canon-entries conn #(> % after)))))
 
 (defn- first-difference [a b]
   (let [sa (set a) sb (set b)]
     {:only-control (take 5 (remove sb a)) :only-candidate (take 5 (remove sa b))
      :control (count a) :candidate (count b)}))
 
+(defn- read-rows [name input]
+  (let [r (reference/route name "v1" "read" input)]
+    (when-not (= 200 (:status r)) (throw (ex-info "read failed" {:input input :reply r})))
+    (sort-by #(get-in % ["id" "v"]) (get-in r [:body "rows"]))))
+
+(defn- reach-of [name conn s basis]
+  (dissoc (json/read-str (reach/response name (d/db conn) {"roots" [s] "basis" basis "full" true})) "t" "basisT"))
+
 (defn deep-compare
-  "Compare stored datoms (unless markers differ by design) and every read route; returns nil or a difference."
+  "Compare stored datoms (unless markers differ by design) and every read route; returns nil or a difference.
+  Each answer is compared as it is read, so memory stays bounded at any head."
   [c-name c-conn k-name k-conn owners ^Random rng ids-sample]
   (let [head (storage/head-position (d/db c-conn))
         khead (storage/head-position (d/db k-conn))]
     (if (not= head khead)
       {:what "head" :control head :candidate khead}
-      (let [datoms? (not subject/append-retirement?)
-            cc (when datoms? (canon c-conn)) kc (when datoms? (canon k-conn))]
-        (if (and datoms? (not= cc kc))
-          {:what "datoms" :difference (first-difference cc kc)}
+      (let [datoms? (not subject/append-retirement?)]
+        (if (and datoms? (not= (canon-digest c-conn) (canon-digest k-conn)))
+          {:what "datoms" :difference (first-difference (canon c-conn (- head 60)) (canon k-conn (- head 60)))}
           (let [positions (vec (sort (distinct (concat (range (max 1 (- head 4)) (inc head))
                                                        (repeatedly 6 #(inc (.nextInt rng (max 1 head))))))))
-                os (vec (sort owners))
-                expected (wide/product-reads c-name c-conn os positions)
-                actual (wide/product-reads k-name k-conn os positions)
-                differing (vec (for [key (keys expected) :when (not= (get expected key) (get actual key))] key))]
-            (cond
-              (seq differing) {:what "routes" :routes differing
-                               :sample (let [key (first differing)
-                                             e (get expected key) a (get actual key)]
-                                         (if (map? e)
-                                           (first (for [[x v] e :when (not= v (get a x))] {:at x :control v :candidate (get a x)}))
-                                           {:control (take 3 e) :candidate (take 3 a)}))}
-              (not= (wide/by-id-reads c-name ids-sample) (wide/by-id-reads k-name ids-sample)) {:what "by-id"}
-              :else nil)))))))
+                checks (concat
+                         (for [s owners] [[:current s] #(read-rows % {"entityIds" [s] "basis" {"validAt" 5.0}})])
+                         (for [s owners] [[:history s] #(read-rows % {"entityIds" [s] "history" true})])
+                         (for [s owners p positions] [[:pinned s p] #(read-rows % {"entityIds" [s] "basis" {"validAt" 5.0 "recordedPosition" p}})])
+                         (for [s owners] [[:reach s] (fn [n] (reach-of n (if (= n c-name) c-conn k-conn) s {"validAt" 5.0}))])
+                         (for [s owners p (take-last 3 positions)]
+                           [[:reach-pinned s p] (fn [n] (reach-of n (if (= n c-name) c-conn k-conn) s {"validAt" 5.0 "recordedPosition" p}))])
+                         (for [id ids-sample] [[:by-id id] (fn [n] [(get-in (reference/route n "v1" "read" {"id" id "basis" {"validAt" 5.0}}) [:body "rows"])
+                                                                    (get-in (reference/route n "v1" "read" {"id" id "history" true}) [:body "rows"])])]))
+                route-diff (some (fn [[label f]] (let [e (f c-name) a (f k-name)] (when (not= e a) {:what "routes" :at label :control (take 2 e) :candidate (take 2 a)})))
+                                 checks)
+                feed-diff (when-not route-diff
+                            (loop [after 0 pages 0]
+                              (let [e (reference/feed c-name after 200) a (reference/feed k-name after 200)]
+                                (cond
+                                  (not= (map #(vec (take 2 %)) e) (map #(vec (take 2 %)) a)) {:what "feed" :after after}
+                                  (not= (map wide/feed-changes e) (map wide/feed-changes a)) {:what "feed-changes" :after after}
+                                  (empty? e) nil
+                                  :else (recur (second (peek e)) (inc pages))))))]
+            (or route-diff feed-diff)))))))
 
 ;; ---------------------------------------------------------------- one serial step
 
@@ -535,7 +565,7 @@
                     (if-not (:equal r)
                       (do (swap! out update :differences conj (dissoc r :spec))
                           (println "DX-S5_DIFFER" (pr-str (update r :spec #(select-keys % [:owners :new :faults :source])))))
-                      (when (and (pos? i) (zero? (mod i 250))) (deep! i)))
+                      (when (and (pos? i) (zero? (mod i 400))) (deep! i)))
                     (when (:equal r) (recur (inc i))))))
               (when (empty? (:differences @out)) (deep! "serial-end"))
               (when (empty? (:differences @out))
