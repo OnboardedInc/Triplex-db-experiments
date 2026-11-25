@@ -243,6 +243,33 @@ all6)
   post "$R/v1/db/$D5/read" '{"entityIds":["acct/b/one","acct/c/one"]}' "d5-read-back"
   step "RESULT D5 values read back: $(answered "$last" "$(value b1)" "$(value c1)") of 2"
   ;;
+restore-plain)
+  # [added after the first commit-boundary stack, where the restore route answered 503 for D1 and D6] the restore route
+  # after a real data restore, with no policy change: E1, a removal of b1 after the backup (the data behind the log,
+  # the route must replay it); E2, nothing after the backup, a removal of a1 after the restore (the route has nothing
+  # to replay)
+  va=$(value a1) vb=$(value b1)
+  new_db "$W" e1 "$sealed"; E1=$db
+  new_db "$W" e2 "$sealed"; E2=$db
+  uri_of_stopped() { cat "$out/tmp/uri-$1"; }
+  for d in $E1 $E2; do uri_of "$d" > "$out/tmp/uri-$d"; for s in a1 b1 c1; do post "$W/v1/db/$d/transact" "$bodies/seed-$s.json" "seed-$s"; done; done
+  backup "$E1" e1; backup "$E2" e2
+  post "$W/v2/db/$E1/erase" "$(erase_subject "rm-b1-$E1" acct/b/one)" "e1-removal-b1-after-the-backup"
+  restore_all e1:$E1 e2:$E2
+  for g in gw-w gw-r; do docker logs "$prefix-$g" 2>&1 | grep "removal-start-check" | sed "s/^/$g /" >> "$out/start-check.log" || true; done
+  post "$R/v1/db/$E1/read" '{"entityIds":["acct/b/one"]}' "e1-read-b1-before-the-route"
+  post "$W/v1/db/$E1/transact" "$bodies/save-b1-0.json" "e1-save-before-the-route"
+  post "$W/v2/db/$E1/restore-erasure" '{}' "e1-restore-route"
+  step "e1 restore route answer: $(head -c 300 "$last")"
+  post "$W/v2/db/$E1/restore-erasure" '{}' "e1-restore-route-again"
+  post "$W/v1/db/$E1/transact" "$bodies/save-b1-1.json" "e1-save-after-the-route"
+  reads "$R" "$E1" "e1-b1-after-the-route" "$vb"
+  post "$R/v2/db/$E2/erase" "$(erase_subject "rm-a1-$E2" acct/a/one)" "e2-removal-a1-after-the-restore"
+  post "$W/v2/db/$E2/restore-erasure" '{}' "e2-restore-route"
+  step "e2 restore route answer: $(head -c 300 "$last")"
+  post "$W/v1/db/$E2/transact" "$bodies/save-b1-2.json" "e2-save-after-the-route"
+  reads "$R" "$E2" "e2-a1-after-the-route" "$va"
+  ;;
 *) echo "unknown scenario $scenario" >&2; exit 2 ;;
 esac
 step "done"
