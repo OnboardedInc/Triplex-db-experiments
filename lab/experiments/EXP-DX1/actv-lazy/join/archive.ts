@@ -237,7 +237,8 @@ export class Archive {
     const guards: EntityGuard[] | undefined =
       this.precondition === "progress" && progress
         ? [{ entityId: this.db.prefix + progress.key, tripleIds: progress.prior ? [progress.prior.id] : [] },
-          ...(origin.row ? [{ entityId: namesOf(this.source.s).ORIGIN, tripleIds: [origin.row.id] }] : []),
+          // DX_ACT8_INJECT=no-origin-guard (diagnostic only, the fuzzer's negative control) drops the origin guard.
+          ...(origin.row && process.env.DX_ACT8_INJECT !== "no-origin-guard" ? [{ entityId: namesOf(this.source.s).ORIGIN, tripleIds: [origin.row.id] }] : []),
           ...(controlGuard ? [controlGuard] : []),
           ...(fenced && kind === "activation" && this.frameTail ? [this.frameTail] : [])]
         : undefined;

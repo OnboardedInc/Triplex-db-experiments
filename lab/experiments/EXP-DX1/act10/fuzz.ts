@@ -30,6 +30,7 @@ import { largeRelease, parseShape } from "../actv-lazy/join/large-release.ts";
 import { readLedgers } from "../actv-lazy/join/ledger-parts.ts";
 import { evaluateRows } from "../actv-lazy/join/material.ts";
 import { RecordedNotices } from "../actv-lazy/join/recorded.ts";
+import { ensureSettings, forgetSettled, originAt, SettingsConflict, type Permits } from "../actv-lazy/join/account-settings.ts";
 import { Settlement } from "../actv-lazy/join/settlement.ts";
 import { Conflict } from "../actv-lazy/store.ts";
 import { heldAccount, Killed, MemDb, memStore, Proc, rng, seedAccount, type Rng } from "./memstore.ts";
@@ -56,10 +57,26 @@ const SHARED = process.env.ACT10_SHARED === "1",
   MIXED = process.env.ACT10_MIXED === "1",
   SINGLE = process.env.ACT10_SINGLE === "1";
 const relName = (acct: string) => (SINGLE && acct === "acct-b" ? "lazy/account/releases" : "lazy/account/releases/" + acct);
-// [DX-ACT8, second review] "1": publishers allowed to turn the account's settings on; "0": publishers not allowed
-// (they follow what is stored); "o": a build from before the stored settings (Proc.oldBuild), which must refuse an
-// account whose settings are on and otherwise behaves as "0".
+// [DX-ACT8, second review] Under ACT10_MIXED every modelled process is one of a fleet's builds (`build`), drawn per
+// publisher per phase and per settling process at each restart: "1" this build allowed to turn some of the account's
+// settings on (each of the three allowed or not, at least one); "0" this build allowed none (it follows what is stored);
+// "o" a build from before the stored settings (Proc.oldBuild: it refuses an account whose settings are on, knows no
+// settings and guards nothing on the origin row). Each "1" or "0" process names its own ledger mode or not. Publishers
+// run in phases (below) and resend earlier commands; the environment's own permissions are unset.
 const PHASES = [["1", "0"], ["0", "1"], ["0", "1", "0"], ["1", "0", "1"], ["1"], ["0"], ["1", "o"], ["o", "1", "o"], ["0", "1", "o", "0"]];
+const NONE: Permits = { accountKeys: false, frameGuards: false, ledgerCap: false };
+type Build = { old: boolean; permits: Permits; tag: string };
+function build(r: Rng, kind: string): Build {
+  if (kind === "o") return { old: true, permits: NONE, tag: "o" };
+  const ledger = r.pick([undefined, undefined, "whole", "parts"] as const);
+  let p: Permits = { ...NONE, ...(ledger ? { ledger } : {}) };
+  if (kind === "1")
+    do p = { accountKeys: r.next() < 0.6, frameGuards: r.next() < 0.6, ledgerCap: r.next() < 0.6, ...(ledger ? { ledger } : {}) };
+    while (!p.accountKeys && !p.frameGuards && !p.ledgerCap);
+  return { old: false, permits: p, tag: kind + (p.accountKeys ? "K" : "") + (p.frameGuards ? "G" : "") + (p.ledgerCap ? "C" : "") + (ledger ? ledger[0] : "") };
+}
+if (MIXED) for (const k of ["TX2_ACCOUNT_KEYS", "TX2_SETTLE_FRAME_GUARDS", "TX2_LEDGER_CAP_AT_PUBLISH", "TX2_NOTICE_LEDGER"]) delete process.env[k];
+const logicalId = (commandId: string) => String(commandId).replace(/^joined:(?:v2\/\d+\/[^/]+\/)?/, "");
 const SNAP = SCOPE + "-snap";
 process.env.TX2_ENROL_BESIDE_SAVES = "1";
 const shape = (permille: number) => parseShape("forms=" + FORMS + ",policies=" + FORMS + ",permille=" + permille);
@@ -71,7 +88,7 @@ const DOCS: Record<string, W0.ReleaseDoc> = {
   L700b: largeRelease(W0.R2.doc, shape(700)),
 };
 
-type Snapshot = { byEntity: Map<string, any[]>; lastChange: Map<string, number>; correlation: Map<string, string>; cuts: number[] };
+type Snapshot = { byEntity: Map<string, any[]>; lastChange: Map<string, number>; correlation: Map<string, string>; cuts: number[]; head: number };
 let snapshot: Snapshot | undefined;
 
 /** Seeds A and B, enrols both, publishes R1 in each (the baseline every schedule starts from), then snapshots. */
@@ -81,6 +98,8 @@ async function prepare() {
   const db = new MemDb(SCOPE, 1);
   db.maxYield = 0;
   const proc = new Proc(db, "prepare");
+  // Under ACT10_MIXED the baseline holds no settings (a fleet's processes turn them on, or not, in the schedule).
+  if (MIXED) proc.permits = NONE;
   const cuts: number[] = [];
   if (SINGLE) cuts[1] = await seedAccount(db, B, PEOPLE);
   else cuts.push(await seedAccount(db, A, PEOPLE), await seedAccount(db, B, PEOPLE));
@@ -101,10 +120,13 @@ async function prepare() {
     lastChange: new Map(anyDb.lastChange),
     correlation: new Map(db.correlation),
     cuts,
+    head: await db.comp.currentPosition(),
   };
   forkMemoryScope(SCOPE, SNAP);
 }
 function restore(seed: number) {
+  // The database goes back to the snapshot: what this Node process remembers as turned on no longer holds.
+  forgetSettled();
   dropMemoryScope(SCOPE);
   forkMemoryScope(SNAP, SCOPE);
   const db = new MemDb(SCOPE, seed) as any;
@@ -220,6 +242,9 @@ async function schedule(seed: number): Promise<Outcome> {
   const count = (k: string, n = 1) => (counts[k] = (counts[k] ?? 0) + n);
   const env = { TX2_PUBLISH_BESIDE: cfg.beside ? "1" : "0", TX2_RELEASE_DOCS: cfg.docs === "ref" ? "ref" : "" };
   Object.assign(process.env, env);
+  // [second review] Every process of a schedule without ACT10_MIXED names the schedule's ledger mode (the settings
+  // store it at the first transition, or move it from whole to parts).
+  if (!MIXED) process.env.TX2_NOTICE_LEDGER = cfg.ledger;
   const hA = heldAccount(A, PEOPLE, snapshot!.cuts[0]!),
     hB = heldAccount(B, PEOPLE, snapshot!.cuts[1]!, !SINGLE);
   if (cfg.stall)
@@ -231,10 +256,16 @@ async function schedule(seed: number): Promise<Outcome> {
   const refused: { id: string; message: string }[] = [];
   let publishing = true;
   let killsLeft = cfg.kills;
-  let phaseTag = "", oldBuild = false;
+  let phaseTag = "", phaseKind = "1";
+  const builds: string[] = [];
   const publisher = async (account: string, held: typeof hA, docs: string[], race: boolean) => {
     const proc = new Proc(db, "publisher-" + account);
-    proc.oldBuild = oldBuild;
+    if (MIXED) {
+      const b = build(r, phaseKind);
+      proc.oldBuild = b.old;
+      proc.permits = b.permits;
+      builds.push("P" + account.slice(-1) + b.tag);
+    }
     if (cfg.killPublisher && account === A) {
       proc.killAfter = 5 + r.int(60);
       proc.lostReply = r.next() < 0.5;
@@ -245,16 +276,23 @@ async function schedule(seed: number): Promise<Outcome> {
       const hook = cfg.hookSave && account === A
         ? { [cfg.hookSave]: async () => { const p = await save(new Proc(db, "hook"), A, r.int(PEOPLE), r, "hook" + seed + k); if (p) count("hookSaves"); } }
         : {};
+      // [second review] Whether the account's `accountKeys` setting was on before this Publish began: before it, two
+      // accounts that share a Publish ID or a definitions document share the command ID, and the second is refused
+      // ("commit receipt differs from the request": a refusal, never a wrong acknowledgement or write; REVIEW.md F2).
+      const keysBefore = !MIXED || (await originAt(memStore(new Proc(db, "peek"), held) as never, await db.comp.currentPosition())).settings?.accountKeys === true;
       try {
         // Account B publishes with full documents unless ACT10_CROSS_DOCS=1: by reference, two accounts that share a
         // predecessor document collide on the definitions' command IDs (finding F2, cross-account.test.ts X3, X4).
         const docs = account === B && process.env.ACT10_CROSS_DOCS !== "1" && !SHARED ? { docs: "inline" } : {};
         const receipt = await a.publish(id, DOCS[name]!, validTime, "owed", undefined, { ...hook, ...docs } as never);
-        acknowledged.push({ account, id, position: receipt.position, txId: receipt.txId, doc: name, keys: process.env.TX2_ACCOUNT_KEYS === "1" ? "on" : "off" });
+        acknowledged.push({ account, id, position: receipt.position, txId: receipt.txId, doc: name, keys: (proc.permits?.accountKeys ?? process.env.TX2_ACCOUNT_KEYS === "1") ? "on" : "off" });
       } catch (e: any) {
         if (e instanceof Killed) return;
         // An old build meeting the account's stored settings refuses (its exact origin check): counted, not refused.
         if (proc.oldBuild && /deep|equal/i.test(String(e?.message))) return void count("oldBuildRefused");
+        // A process naming a ledger mode the stored settings forbid refuses: counted, not refused.
+        if (e instanceof SettingsConflict) return void count("settingsConflict");
+        if (!keysBefore && /commit receipt differs from the request/.test(String(e?.message))) return void count("crossAccountRefusedBeforeKeys");
         refused.push({ id, message: String(e?.message ?? e).slice(0, 200) });
         if (!(e instanceof Conflict)) violations.push("Publish " + id + " failed: " + String(e?.stack ?? e).slice(0, 400));
       }
@@ -275,6 +313,12 @@ async function schedule(seed: number): Promise<Outcome> {
     // publishers are done and nothing is left.
     for (;;) {
       const proc = new Proc(db, "settler-" + k + "-" + generation++);
+      if (MIXED) {
+        const b = build(r, r.pick(["1", "0", "o"]));
+        proc.oldBuild = b.old;
+        proc.permits = b.permits;
+        builds.push("S" + b.tag);
+      }
       if (killsLeft > 0 && r.next() < 0.6) {
         killsLeft--;
         proc.killAfter = 3 + r.int(120);
@@ -286,6 +330,16 @@ async function schedule(seed: number): Promise<Outcome> {
       } catch (e: any) {
         if (e instanceof Killed) {
           count("kills");
+          continue;
+        }
+        // A build from before the settings, or a process naming a ledger mode the stored settings forbid, refuses the
+        // account; another process (the next restart) takes over.
+        if (proc.oldBuild && /deep|equal/i.test(String(e?.message))) {
+          count("oldBuildRefused");
+          continue;
+        }
+        if (e instanceof SettingsConflict) {
+          count("settingsConflict");
           continue;
         }
         violations.push("settler " + k + ": " + String(e?.stack ?? e).slice(0, 500));
@@ -300,8 +354,7 @@ async function schedule(seed: number): Promise<Outcome> {
   (cfg as any).phases = phases.join("");
   const publishers = (async () => {
     for (const [n, phase] of phases.entries()) {
-      if (MIXED) phase === "1" ? (process.env.TX2_ACCOUNT_KEYS = "1") : delete process.env.TX2_ACCOUNT_KEYS;
-      oldBuild = MIXED && phase === "o";
+      phaseKind = phase;
       phaseTag = MIXED ? String(n) : "";
       // In later phases a client resends some of the earlier commands (the same ID and document).
       const again = n > 0 && r.next() < 0.6;
@@ -315,9 +368,11 @@ async function schedule(seed: number): Promise<Outcome> {
   })().finally(() => (publishing = false));
   await publishers;
   await Promise.all(settlers);
-  // A clean process finishes everything (no kills).
+  if (MIXED) (cfg as any).builds = builds.join(" ");
+  // A clean process finishes everything (no kills). Under ACT10_MIXED: this build, allowed nothing, naming no ledger mode.
   db.stall = undefined;
   const clean = new Proc(db, "clean");
+  if (MIXED) clean.permits = NONE;
   try {
     await settleAll(db, clean, hA, cfg, "clean");
   } catch (e: any) {
@@ -333,6 +388,8 @@ const queues = new Map<string, BulkQueue>();
 /** One settling process's pass: values of every owed release of A (in order) and the notices of every event. */
 async function settleAll(db: MemDb, proc: Proc, held: ReturnType<typeof heldAccount>, cfg: Cfg, label: string) {
   const s = memStore(proc, held) as any;
+  // As `Archive.open`: a process allowed to turn a setting on does so before it settles.
+  await ensureSettings(s);
   const a = new JoinedAccount(s);
   // The settlement stores: the same database, labelled per process (bulk.ts keeps one claim registry per Node process).
   const vs = memStore(proc, held, db.scope + "-" + label + "-v") as any,
@@ -340,7 +397,8 @@ async function settleAll(db: MemDb, proc: Proc, held: ReturnType<typeof heldAcco
   const queue = new BulkQueue(1);
   const values = new (Archive as any)(a, vs, queue, "values", "bytes", cfg.precondition) as Archive;
   const notices = new (Archive as any)(a, ns, queue, "notices", "bytes", cfg.precondition) as Archive;
-  const recorder = new RecordedNotices(notices, cfg.ledger);
+  // Under ACT10_MIXED a process names its own ledger mode or none (it then writes the stored one).
+  const recorder = new RecordedNotices(notices, MIXED ? proc.permits?.ledger : cfg.ledger);
   const head = await s.head();
   const c = await s.controls(head);
   const tail = (await a.notices.observe()).value.sequence;
@@ -383,20 +441,24 @@ async function check(
     const ja = new JoinedAccount(st);
     const landed = journal.filter((t) => t.actor === "lazy/join" && t.changes.some((c: any) => c.entityId === relName(acct) && c.op === "assert"));
     // [second review] One command lands at most once for one account, whatever form its ID took.
-    const logical = landed.map((t) => String(t.commandId).replace(/^joined:(?:v2\/\d+\/[^/]+\/)?/, ""));
+    const logical = landed.map((t) => logicalId(t.commandId));
     for (const id of new Set(logical)) if (logical.filter((x) => x === id).length > 1) v(acct + ": command " + id + " landed " + logical.filter((x) => x === id).length + " times");
     const rels = (await st.controls(head)).releases;
     const tail = (await ja.notices.observe()).value.sequence;
     if (rels.length !== landed.length || tail !== landed.length) v(acct + ": releases " + rels.length + ", tail " + tail + ", landed records " + landed.length);
     for (const t of landed) {
-      const id = String(t.commandId).replace(/^joined:(?:[a-zA-Z0-9_.-]+\/)?/, "");
+      const id = logicalId(t.commandId);
       if (id.includes(":base:")) continue;
       if (!acknowledged.some((x) => x.id === id) && !cfg.killPublisher) v(acct + ": Publish " + id + " landed but was not acknowledged and its process was not killed");
     }
   }
+  // [second review] A settings transition of the account (it rewrites the origin row every guarded Publish is guarded on)
+  // is a rival too: refusals in a schedule with one are counted, not broken.
+  const transitions = journal.filter((t) => t.actor === "lazy/settings" && t.position > snapshot!.head).length;
+  if (transitions) counts.transitions = transitions;
   if (cfg.beside)
     for (const x of refused)
-      if (!cfg.race && !cfg.killPublisher) v("Publish " + x.id + " refused under the account guard with no rival Publish: " + x.message);
+      if (!cfg.race && !cfg.killPublisher && !transitions) v("Publish " + x.id + " refused under the account guard with no rival Publish: " + x.message);
   counts.refused = refused.length;
   counts.acknowledged = acknowledged.length;
   // -- Values: every owed release of A, against the difference over every subject's world at q - 1.
@@ -404,11 +466,24 @@ async function check(
   const roster = Array.from({ length: PEOPLE }, (_, i) => W0.placementId(i));
   const docOf = new Map<number, W0.ReleaseDoc>();
   for (const rel of rels) {
-    const id = String(journal.find((t) => t.position === rel.tx)!.commandId).replace(/^joined:(?:[a-zA-Z0-9_.-]+\/)?/, "");
+    const id = logicalId(journal.find((t) => t.position === rel.tx)!.commandId);
     docOf.set(rel.tx, DOCS[id.split(":").at(-1)!]!);
   }
   const vstore = memStore(proc, hA, db.scope + "-check-v") as any;
   const values = new (Archive as any)(a, vstore, new BulkQueue(1), "values", "bytes", cfg.precondition) as Archive;
+  // [second review] A frame landing after a later release breaks the frame guards when the account's `frameGuards`
+  // setting was on at that release, unless a build from before the settings planned it before the transition (the
+  // window PUBLISH-BESIDE-SAVES.md section 0.8 states: one frame per such process; counted).
+  const breaks = async (position: number, later: number) => {
+    if (!(await originAt(s, later)).settings?.frameGuards) return false;
+    const t = journal.find((x) => x.position === position);
+    const sent = t && db.sent.get(t.commandId);
+    if (sent?.oldBuild && !(await originAt(s, sent.expected)).settings?.frameGuards) {
+      counts.oldBuildInFlightFrames = (counts.oldBuildInFlightFrames ?? 0) + 1;
+      return false;
+    }
+    return true;
+  };
   for (const [k, rel] of rels.entries()) {
     if (k === 0) continue; // the baseline R1 (settled or not by the schedule's settlers alike)
     const q = rel.tx,
@@ -437,8 +512,8 @@ async function check(
         const row = await vdb.row(progressKey, head);
         if (row && row.at > later.tx) {
           counts.storedAfterSuperseded = (counts.storedAfterSuperseded ?? 0) + 1;
-          // [DX-ACT8, review F5] With TX2_SETTLE_FRAME_GUARDS a values frame is guarded on the notice tail it read.
-          if (process.env.TX2_SETTLE_FRAME_GUARDS === "1") v("release " + rel.seq + " stored by a frame that landed after a later release");
+          // [DX-ACT8, review F5] Under the `frameGuards` setting a values frame is guarded on the notice tail it read.
+          if (await breaks(row.at, later.tx)) v("release " + rel.seq + " stored by a frame that landed after a later release");
         }
       }
     } else if (status === "superseded") {
@@ -451,17 +526,20 @@ async function check(
       const late = journal.filter((t) => t.position > rels[k + 1].tx && t.changes.some((c: any) => c.entityId === key && c.op === "assert")).length;
       if (late) counts.framesAfterSuperseded = (counts.framesAfterSuperseded ?? 0) + late;
       // the frame that marks a release superseded is one such frame; count the others (pages written for it)
-      const pages = journal.filter((t) => t.position > rels[k + 1].tx && t.changes.some((c: any) => c.entityId === key && c.op === "assert") &&
-        t.changes.some((c: any) => /answer:/.test(String(c.entityId)))).length;
+      const paged = journal.filter((t) => t.position > rels[k + 1].tx && t.changes.some((c: any) => c.entityId === key && c.op === "assert") &&
+        t.changes.some((c: any) => /answer:/.test(String(c.entityId))));
+      const pages = paged.length;
       if (pages) counts.pagesAfterSuperseded = (counts.pagesAfterSuperseded ?? 0) + pages;
-      if (pages && process.env.TX2_SETTLE_FRAME_GUARDS === "1") v("release " + rel.seq + ": " + pages + " value pages written after a later release");
+      let broken = 0;
+      for (const t of paged) if (await breaks(t.position, rels[k + 1].tx)) broken++;
+      if (broken) v("release " + rel.seq + ": " + broken + " value pages written after a later release");
     }
     if (status === "superseded") {
     } else if (status !== "stored") v("release " + rel.seq + " still " + status + " after the clean settlement");
   }
   // -- Notices: the recorded deliveries in order, and the ledgers, against a fold over every event.
   const ns = memStore(proc, hA, db.scope + "-check-n") as any;
-  const recorder = new RecordedNotices(new (Archive as any)(a, ns, new BulkQueue(1), "notices", "bytes", cfg.precondition), cfg.ledger);
+  const recorder = new RecordedNotices(new (Archive as any)(a, ns, new BulkQueue(1), "notices", "bytes", cfg.precondition), MIXED ? undefined : cfg.ledger);
   let packets;
   try {
     packets = await recorder.packets(head);

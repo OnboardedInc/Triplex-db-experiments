@@ -502,7 +502,9 @@ export class JoinedAccount {
       const key = joinedCommandId(this.s, id, true), found = await this.s.lookup(key);
       if (own(found)) return this.recorded(key, intents.scoped);
     }
-    const legacy = await this.s.lookup("joined:" + id);
+    // DX_ACT8_INJECT=no-legacy (diagnostic only, the fuzzer's negative control): a held account's lookup skips the
+    // unscoped form, the rule of a process that knows only one form (the second review's R2).
+    const legacy = process.env.DX_ACT8_INJECT === "no-legacy" && this.s.held ? null : await this.s.lookup("joined:" + id);
     return own(legacy) ? this.recorded("joined:" + id, intents.legacy) : null;
   }
   private recorded(key: string, intent: string) {

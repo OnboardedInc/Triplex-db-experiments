@@ -15,11 +15,21 @@ import { randomUUID } from "node:crypto";
 import { Conflict, fact, namesOf, originSettings, value, type AccountSettings, type Store } from "../store.ts";
 
 export type LedgerSetting = "whole" | "parts";
-const wanted = () => ({
-  accountKeys: process.env.TX2_ACCOUNT_KEYS === "1",
-  frameGuards: process.env.TX2_SETTLE_FRAME_GUARDS === "1",
-  ledgerCap: process.env.TX2_LEDGER_CAP_AT_PUBLISH === "1",
-});
+/** What a process may turn on, and the ledger mode it names itself (TX2_NOTICE_LEDGER, if set). */
+export type Permits = { accountKeys: boolean; frameGuards: boolean; ledgerCap: boolean; ledger?: LedgerSetting };
+/** A process's permits: its environment. A store may carry `permits` instead: the in-process fuzzer (act10/fuzz.ts)
+ * models several processes of a fleet, each with its own, in one Node process. */
+export function permitsOf(s: Pick<Store, "held">): Permits {
+  const own = (s as { permits?: Permits }).permits;
+  if (own) return own;
+  const ledger = process.env.TX2_NOTICE_LEDGER;
+  return {
+    accountKeys: process.env.TX2_ACCOUNT_KEYS === "1",
+    frameGuards: process.env.TX2_SETTLE_FRAME_GUARDS === "1",
+    ledgerCap: process.env.TX2_LEDGER_CAP_AT_PUBLISH === "1",
+    ...(ledger === "whole" || ledger === "parts" ? { ledger } : {}),
+  };
+}
 export class SettingsConflict extends Error {}
 
 /** The ledger mode a held account's settlement must write with: the stored one when the account has settings (a process
@@ -32,8 +42,8 @@ export function ledgerFor(settings: AccountSettings | undefined, own: LedgerSett
   return settings.ledger;
 }
 
-function merge(stored: AccountSettings | undefined) {
-  const w = wanted(), env = process.env.TX2_NOTICE_LEDGER;
+function merge(stored: AccountSettings | undefined, w: Permits) {
+  const env = w.ledger;
   const ledger: LedgerSetting = stored?.ledger === "parts" || env === "parts" ? "parts" : stored?.ledger ?? "whole";
   if (stored?.ledger === "parts" && env === "whole")
     throw new SettingsConflict("This account's stored ledger mode is parts; this process has TX2_NOTICE_LEDGER=whole");
@@ -50,17 +60,19 @@ function merge(stored: AccountSettings | undefined) {
 /** Turns on, one way, the settings this process is allowed to turn on that the account does not have yet. Nothing at all
  * (not even a read) for a process allowed none, or for a store that is not a held account. */
 const settled = new Set<string>();
+/** Forgets what this Node process has seen turned on (a test that restores a database to an earlier state). */
+export const forgetSettled = () => settled.clear();
 export async function ensureSettings(s: Store) {
-  const w = wanted();
+  const w = permitsOf(s);
   if (!s.held || !(w.accountKeys || w.frameGuards || w.ledgerCap)) return undefined;
   // Settings only turn on, so once this process has seen them hold everything it may turn on, it need not look again.
-  const key = JSON.stringify([s.scope, s.held.account, s.held.seal, w, process.env.TX2_NOTICE_LEDGER ?? null]);
+  const key = JSON.stringify([s.scope, s.held.account, s.held.seal, w]);
   if (settled.has(key)) return undefined;
   for (let attempt = 0; attempt < 8; attempt++) {
     const p = await s.head();
     const c = await s.controls(p);
     if (!c.origin) return undefined; // not enrolled yet: the first Publish after enrolment turns them on
-    const next = merge(c.settings);
+    const next = merge(c.settings, w);
     if (c.settings && JSON.stringify(sorted(c.settings)) === JSON.stringify(sorted(next))) {
       settled.add(key);
       return c.settings;

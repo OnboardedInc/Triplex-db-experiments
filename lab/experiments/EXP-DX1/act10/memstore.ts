@@ -18,6 +18,7 @@ import { bytes as wireBytes } from "../import1/source.ts";
 import { ids, SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { deepOwnFacts } from "../../../bench/lib/deep-world.ts";
 import { Conflict, defaultNames, fact, millis, originSettings, value, type EntityGuard, type HeldSource } from "../actv-lazy/store.ts";
+import type { Permits } from "../actv-lazy/join/account-settings.ts";
 
 export class Killed extends Error {}
 
@@ -52,6 +53,9 @@ export class MemDb {
   beforeCommit?: (commandId: string) => Promise<void>;
   /** Optional hook run inside the transactor before a commit's checks (a schedule may stall a commit here). */
   stall?: () => Promise<void>;
+  /** [DX-ACT8, second review] Who sent each command, and the position it read (`expected`): the fuzzer's checks tell a
+   * frame or Publish of a build from before the settings, planned before the transition, from the others. */
+  readonly sent = new Map<string, { proc: string; oldBuild: boolean; expected: number }>();
   maxYield = 3;
   constructor(scope: string, seed: number) {
     this.scope = scope;
@@ -140,9 +144,13 @@ export class Proc {
   killAfter?: number;
   /** When killed at a commit, whether the commit still applies (a lost reply). */
   lostReply = false;
-  /** [DX-ACT8, second review] Models a build from before the stored settings: its `controls` compares the origin fact
-   * exactly, so it refuses an account whose settings are on. */
+  /** [DX-ACT8, second review] Models a build from before the stored settings (every build since 2026-11-21 and before
+   * them): its `controls` compares the origin fact exactly, so a plan or a turn that reads the settings refuses; it knows
+   * no settings (its reads of the origin row do not show them) and guards nothing on the origin row, so a commit it
+   * planned before the transition can land after it. */
   oldBuild = false;
+  /** [DX-ACT8, second review] What this process may turn on (`account-settings.ts` `permitsOf`); unset: the environment. */
+  permits?: Permits;
   calls = 0;
   constructor(db: MemDb, name: string) {
     this.db = db;
@@ -223,6 +231,18 @@ export function memStore(proc: Proc, held: HeldSource, label = proc.db.scope) {
     const page = await comp.sweepPage(idsIn, basis);
     return page.rows;
   };
+  // An old build sees no settings on the origin row (the controls check below still reads the stored value).
+  const shown = async (idsIn: string[], position: number, validTime?: string) => {
+    const xs = await rows(idsIn, position, validTime);
+    return proc.oldBuild
+      ? xs.map((r: any) => {
+          if (r.entityId !== names.ORIGIN) return r;
+          const { settings, ...rest } = value(r);
+          void settings;
+          return { ...r, value: { ...r.value, value: JSON.stringify(rest) } };
+        })
+      : xs;
+  };
   const lookup = async (id: string) => (await comp.transactionByCommand(id)).value;
   async function commit(
     id: string,
@@ -237,6 +257,7 @@ export function memStore(proc: Proc, held: HeldSource, label = proc.db.scope) {
   ) {
     assert(!guards || (guards.length > 0 && !afterFence));
     assert(!inside || guards);
+    if (proc.oldBuild && guards) guards = guards.filter((g) => g.entityId !== names.ORIGIN);
     // The correlation is over the database scope (every held account of one database has the same `openStore` scope).
     const correlationId = canonical({ context, hash: sha256(wireBytes([db.scope, id, actor, ops])) });
     const check = (r: any) => {
@@ -281,6 +302,7 @@ export function memStore(proc: Proc, held: HeldSource, label = proc.db.scope) {
       rule = weak ? {} : { sourceK, entities: [...entities] };
     }
     await proc.gate();
+    if (!db.sent.has(id)) db.sent.set(id, { proc: proc.name, oldBuild: proc.oldBuild, expected });
     // A schedule may land another write here: after this commit's read and guards, before the transactor.
     await db.beforeCommit?.(id);
     const r = await db.transact(ops, { commandId: id, actor, preconditions, correlationId }, rule);
@@ -337,10 +359,11 @@ export function memStore(proc: Proc, held: HeldSource, label = proc.db.scope) {
     held,
     names,
     counters,
+    permits: proc.permits,
     effectsClear: async () => true,
     cursorReceipt: async () => true,
     comp,
-    rows,
+    rows: shown,
     lookup,
     commit,
     controls,
