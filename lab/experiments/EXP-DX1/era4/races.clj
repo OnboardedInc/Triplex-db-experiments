@@ -570,7 +570,8 @@
             _ (with-open [st (Files/list dir)] (doseq [q (iterator-seq (.iterator st))] (Files/delete q)))
             _ (reset! privacy/cache {})
             missing (probe)
-            rebuild-missing (offers/route src "v2" "removal-log-rebuild" {"attributes" [":v"] "sealed" true})
+            ;; [DX-ERA4, after the merge of 3e9bcaaf6] the rebuild takes the policy from the database (Z2's fix): {}
+            rebuild-missing (offers/route src "v2" "removal-log-rebuild" {})
             after-missing (probe)
             states {:acknowledged (offers/outcome done) :key-gone gone :key-back-with-the-copy key-back
                     :behind behind :rebuild-behind [(:status rebuild-behind) (:body rebuild-behind)] :after-rebuild-behind after-behind

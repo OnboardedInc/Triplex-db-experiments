@@ -558,8 +558,13 @@
 (def ^:private other-kinds
   #"(notice-progress|values:[0-9]+|claim:.+|census:.+|members:.+|join-meta|join-calendar|join-member:.+|join-index-base:[0-9]+|event:[0-9]+|tail|erasure|received:.+|effect-erasure:.+|recorded-generation:.+|recorded-cursor|cursor|settled-values:.+|settled-notice:.+)")
 
-(defn- check-document! [kind doc]
-  (let [[m tag] (some (fn [[re tag]] (when-let [m (re-matches re kind)] [m tag])) content-kinds)]
+(defn- check-document!
+  "One derived document of kind `kind` whose stored text is `text`: a content kind decoded and checked to its exact
+  shape; a content-free kind on the list accepted as it is (not decoded: a claim, for one, is a bare hash); any other
+  kind refused."
+  [kind text]
+  (let [[m tag] (some (fn [[re tag]] (when-let [m (re-matches re kind)] [m tag])) content-kinds)
+        doc (if tag (try (document text) (catch Exception _ (unsealed! (str kind " (undecodable)")))) nil)]
     (case tag
       :page
       ;; a settled page: exactly its frame fields; entries {subject, changes, part?}, each change ["", sealed | null]
@@ -630,9 +635,7 @@
       (doseq [r docs]
         (let [entity (str (:entity_id r)) m (re-matches document-entity entity)]
           (when-not (and m (= "notice/value" (:attribute r))) (unsealed! (str entity " (not a derived document's own form)")))
-          (let [kind (nth m 2)
-                doc (try (document (str (:value_string r))) (catch Exception _ (unsealed! (str kind " (undecodable)"))))]
-            (check-document! kind doc))))
+          (check-document! (nth m 2) (str (:value_string r)))))
       (doseq [c changes]
         (when (:bad c) (unsealed! "an unreadable journal change record"))
         (when (= "assert" (get c "op"))

@@ -102,7 +102,7 @@ async function formsCase(F: number, mode: "whole" | "parts", setting: boolean) {
       row.ledgerUnits = led.items.length;
       row.ledgerItemsOpened = opened.reduce<number>((n, v) => {
         const b = (v as { bytes?: Buffer } | null)?.bytes;
-        return n + (Buffer.isBuffer(b) ? (JSON.parse(inflateRawSync(b).toString()) as unknown[]).length : isRemoved(v) ? 0 : 1);
+        return n + (Buffer.isBuffer(b) ? (JSON.parse(inflateRawSync(b).toString()) as { items: unknown[] }).items.length : isRemoved(v) ? 0 : 1);
       }, 0);
       row.ledgerLargestPartChars = led.parts.length ? Math.max(...led.parts.map((r) => r.value.length)) : null;
     }
@@ -117,12 +117,17 @@ async function formsCase(F: number, mode: "whole" | "parts", setting: boolean) {
   log("P-forms", row);
   P.push(row);
 }
-const list = (process.env.ERA5_FORMS ?? "5,10,20,30,40,60,100,200").split(",").map(Number);
+const list = (process.env.ERA5_FORMS ?? "5,10,20,30,40,60,100,200").split(",").filter(Boolean).map(Number);
 for (const F of list) await formsCase(F, "whole", true);
 // [DX-ERA4, second review N1] ledgers in parts with the setting at the owner's sizes (ERA5_PARTS_FORMS), and without it
 for (const F of (process.env.ERA5_PARTS_FORMS ?? "200").split(",").filter(Boolean).map(Number)) await formsCase(F, "parts", true);
 for (const F of (process.env.ERA5_PARTS_OFF ?? "200").split(",").filter(Boolean).map(Number)) await formsCase(F, "parts", false);
 
+// [DX-ERA4, second review N1] ERA5_FORMS_ONLY=1 (era4/stack-forms.sh, a stack with no dump hook): P only
+if (process.env.ERA5_FORMS_ONLY === "1") {
+  log("verdict", { P: P.map((r) => [(r as { forms: number }).forms, (r as { ledger: string }).ledger, (r as { setting: boolean }).setting, (r as { recorder: string }).recorder]), sealCounters: counters, run: RUN });
+  process.exit(0);
+}
 // ---- K: every clear copy of a kept value, by attribute and kind ----
 let dumps = 0;
 async function native() {

@@ -155,13 +155,23 @@ export function noticeCandidate(
  * document is the packed list); otherwise (ledger in parts) each unit is a part of its own, a packed list of one unit
  * that the gateway's check reads alone, and the head names them with `form: "units"`. The head's frame retracts the old
  * ledger's parts as in clear, so the same limit applies: at most `ledgerPartsMax()` parts. */
-export function ledgerChangeUnits(db: Documents, subject: string, event: number, old: Ledger, units: readonly unknown[], mode: LedgerMode) {
+export function ledgerChangeUnits(
+  db: Documents,
+  subject: string,
+  event: number,
+  old: Ledger,
+  units: readonly unknown[],
+  mode: LedgerMode,
+  kept: readonly string[] = [],
+) {
   // `old.items` are the stored units (readLedgers does not open them): an empty ledger, or the same removed markers,
   // is no change; a sealed record is new on every seal
-  if (canonical(units) === canonical(old.items)) return { parts: [] as Op[], closing: [] as Op[] };
+  if (!kept.length && canonical(units) === canonical(old.items)) return { parts: [] as Op[], closing: [] as Op[] };
   const retire: Op[] = old.parts.map((r) => ({ op: "retract" as const, id: r.id }));
   const packed = pack(units);
-  if (mode === "whole" || packed.length <= ledgerPartChars) {
+  // `kept`: this event's parts an earlier frame already wrote (the units' first ones, as stored): the ledger stays in
+  // parts and those values are named by the head exactly as they are
+  if (!kept.length && (mode === "whole" || packed.length <= ledgerPartChars)) {
     assert(mode === "parts" || old.parts.length === 0, "A ledger in parts needs TX2_NOTICE_LEDGER=parts");
     return { parts: [] as Op[], closing: [...retire, ...db.change(ledgerKey(subject), old.head, packed)] };
   }
@@ -171,7 +181,8 @@ export function ledgerChangeUnits(db: Documents, subject: string, event: number,
       "Subject " + subject + ": its sealed notice ledger needs " + units.length + " parts; at most " + partsMax +
         " can be replaced within the writer's bound",
     );
-  const values = units.map((u) => pack([u]));
+  assert(mode === "parts" && kept.length <= units.length);
+  const values = units.map((u, i) => (i < kept.length ? kept[i]! : pack([u])));
   const parts = values.map((v, i) => db.put(ledgerPartKey(subject, event, i), v));
   const joined = values.join("");
   const head: LedgerHead = { parts: values.length, event, chars: joined.length, sha: sha256(joined), form: "units" };
@@ -186,8 +197,9 @@ export function noticeCandidateUnits(
   deliveries: W0.Delivery[],
   units: readonly unknown[],
   mode: LedgerMode,
+  kept: readonly string[] = [],
 ): NoticeCandidate {
-  const change = ledgerChangeUnits(db, subject, event, old, units, mode);
+  const change = ledgerChangeUnits(db, subject, event, old, units, mode, kept);
   return {
     subject,
     units: [...deliveries, ...change.parts],

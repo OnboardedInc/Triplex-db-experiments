@@ -19,6 +19,7 @@ import {
   ledgerChunkBytes,
   ledgerMode,
   ledgerPartChars,
+  ledgerPartKey,
   ledgerPartValueMax,
   noticeCandidate,
   noticeCandidateUnits,
@@ -75,12 +76,14 @@ async function openLedgers(source: { backend?: { name: string; url: string }; sc
       o.forget = Math.max(o.forget ?? 0, v.seq ?? fallback);
       return;
     }
-    // [DX-ERA4, second review N1] a record of bytes is a chunk of the ledger: its items, compressed canonical JSON; each
-    // item names what the chunk was sealed under
-    const items: W0.ItemState[] =
-      v !== null && typeof v === "object" && Buffer.isBuffer((v as { bytes?: Buffer }).bytes)
-        ? parse<W0.ItemState[]>(inflateRawSync((v as { bytes: Buffer }).bytes).toString())
-        : [typeof v === "string" ? parse<W0.ItemState>(v) : (v as W0.ItemState)];
+    // [DX-ERA4, second review N1] a record of bytes is a chunk of the ledger: `{start, items}`, compressed canonical
+    // JSON, the chunks of a subject contiguous in order (checked); each item names what its chunk was sealed under
+    let items: W0.ItemState[];
+    if (v !== null && typeof v === "object" && Buffer.isBuffer((v as { bytes?: Buffer }).bytes)) {
+      const c = ledgerChunkOf((v as { bytes: Buffer }).bytes);
+      assert(o.forget !== undefined || c.start === o.items.length, "A subject's ledger chunks are not contiguous: " + where[j]);
+      items = c.items;
+    } else items = [typeof v === "string" ? parse<W0.ItemState>(v) : (v as W0.ItemState)];
     for (const item of items) {
       o.items.push(item);
       o.named.set(item.id, namedInputs(flat[j]));
@@ -90,12 +93,19 @@ async function openLedgers(source: { backend?: { name: string; url: string }; sc
 }
 /** [DX-ERA4, second review N1] A subject's ledger items, in order, in chunks whose compressed canonical JSON is at most
  * `budget` bytes (an item larger than that alone is a chunk of its own). Searched by doubling, then halving. */
-export function ledgerChunks(items: readonly W0.ItemState[], budget: number) {
-  const out: W0.ItemState[][] = [];
-  const fits = (s: number, e: number) => deflateRawSync(canonical(items.slice(s, e)), { level: 9 }).length <= budget;
+export type LedgerChunk = { start: number; items: W0.ItemState[] };
+export const ledgerChunkData = (c: LedgerChunk) => deflateRawSync(canonical(c), { level: 9 });
+export const ledgerChunkOf = (b: Buffer) => {
+  const c = parse<LedgerChunk>(inflateRawSync(b).toString());
+  assert(Number.isSafeInteger(c.start) && c.start >= 0 && Array.isArray(c.items), "A ledger chunk is malformed");
+  return c;
+};
+export function ledgerChunks(items: readonly W0.ItemState[], budget: number, from = 0): LedgerChunk[] {
+  const out: LedgerChunk[] = [];
+  const fits = (s: number, e: number) => ledgerChunkData({ start: s, items: items.slice(s, e) }).length <= budget;
   const n = items.length;
   let guess = 64;
-  for (let s = 0; s < n; ) {
+  for (let s = from; s < n; ) {
     let good = s + 1,
       bad = n + 1,
       e = Math.min(n, s + guess);
@@ -105,7 +115,7 @@ export function ledgerChunks(items: readonly W0.ItemState[], budget: number) {
       if (bad - good <= 1) break;
       e = bad === n + 1 ? Math.min(n, s + 2 * (good - s)) : Math.floor((good + bad) / 2);
     }
-    out.push(items.slice(s, good));
+    out.push({ start: s, items: items.slice(s, good) });
     guess = good - s;
     s = good;
   }
@@ -426,7 +436,7 @@ export class RecordedNotices {
         },
       ]);
     const candidates = derivedSealOn()
-      ? await this.sealedCandidates(ids, items, previous, at, current.event, mode, authority, record)
+      ? await this.sealedCandidates(ids, items, previous, at, current, mode, authority, record)
       : ids.map((subject, i) => {
           const old = previous.get(subject)!;
           return noticeCandidate(db, subject, current.event, old, record(subject, i, old.items), mode);
@@ -462,13 +472,14 @@ export class RecordedNotices {
     items: Awaited<ReturnType<JoinedAccount["notices"]["work"]>>,
     previous: Map<string, Ledger>,
     at: number,
-    event: number,
+    current: Cursor,
     mode: LedgerMode,
     authority: Awaited<ReturnType<typeof readErasure>>,
     record: (subject: string, i: number, state: readonly W0.ItemState[]) => ReturnType<typeof W0.publish>,
   ) {
     const db = this.archive.db,
-      source = this.archive.source.s.comp;
+      source = this.archive.source.s.comp,
+      event = current.event;
     const generations = await db.rows<number>(ids.map(generationKey), at);
     const opened = await openLedgers(source, previous, authority?.seq ?? 0);
     const plans = ids.map((subject, i) => {
@@ -486,19 +497,56 @@ export class RecordedNotices {
     // ledger in parts is one record per part and the gateway's check reads each part alone. A chunk whose part would
     // not fit the writer's bound with the cursor is resealed smaller (its subject's chunks with a lower budget).
     type Queued = { inputs: readonly string[]; value?: string; bytes?: Buffer; place: string };
-    const chunkOf = (p: (typeof plans)[number], budget: number) =>
-      ledgerChunks(p.result.state.items, budget).map((chunk): Queued => ({
-        inputs: inputUnion(...chunk.map((it) => p.named(it.id))),
-        bytes: deflateRawSync(canonical(chunk), { level: 9 }),
+    // The subject at the cursor may have this event's first parts written by an earlier frame (or before a restart):
+    // they are kept exactly as stored, and its items are chunked on from where they end, so every part a head names
+    // comes from one sealing (a part is never sealed twice). A kept part that opens as removed ends the ledger there:
+    // the subject is forgotten at its next event.
+    const kept = new Map<number, { values: string[]; units: (string | Removed)[]; from: number }>();
+    const first = plans[0];
+    const partsWritten = first && mode === "parts" ? Math.max(0, (current.part ?? 0) - first.result.deliveries.length) : 0;
+    if (first && partsWritten > 0) {
+      const keys = Array.from({ length: partsWritten }, (_, i) => ledgerPartKey(first.subject, event, i));
+      const rows = await db.rows<string>(keys, at);
+      const values = keys.map((k) => {
+        const r = rows.get(k);
+        assert(r && typeof r.value === "string", "A ledger part the cursor counts is missing: " + k);
+        return r.value;
+      });
+      const units = values.map((v) => {
+        const u = unpack<(string | Removed)[]>(v);
+        assert(u.length === 1, "A ledger part holds one unit");
+        return u[0]!;
+      });
+      const opened = await open(source.backend!.url, units, units.map(() => placeOf(source, first.subject)));
+      let from = 0;
+      for (const v of opened) {
+        if (isRemoved(v)) {
+          from = -1;
+          break;
+        }
+        const c = ledgerChunkOf((v as { bytes: Buffer }).bytes);
+        assert(c.start === from, "A kept ledger part does not continue the one before it");
+        from += c.items.length;
+      }
+      kept.set(0, { values, units, from });
+    }
+    const chunkOf = (i: number, budget: number) => {
+      const p = plans[i]!,
+        k = kept.get(i);
+      if (k && k.from < 0) return [];
+      return ledgerChunks(p.result.state.items, budget, k?.from ?? 0).map((chunk): Queued => ({
+        inputs: inputUnion(...chunk.items.map((it) => p.named(it.id))),
+        bytes: ledgerChunkData(chunk),
         place: placeOf(source, p.subject),
       }));
+    };
     const queue: Queued[] = [];
     for (const p of plans) {
       const place = placeOf(source, p.subject);
       for (const d of p.result.deliveries) queue.push({ inputs: p.named(d.id), value: canonical(d), place });
     }
     const budgets = plans.map(() => ledgerChunkBytes);
-    const chunks = plans.map((p, i) => chunkOf(p, budgets[i]!));
+    const chunks = plans.map((_, i) => chunkOf(i, budgets[i]!));
     const sealed = await seal(source, [...queue, ...chunks.flat()]);
     const units: (string | Removed)[][] = [];
     let k = queue.length;
@@ -506,6 +554,7 @@ export class RecordedNotices {
     const partMax = mode === "parts" ? ledgerPartValueMax() : Infinity;
     const over = (u: readonly (string | Removed)[]) =>
       pack(u).length > ledgerPartChars ? Math.max(0, ...u.map((x) => pack([x]).length - partMax)) : 0;
+    const allUnits = (i: number) => [...(kept.get(i)?.units ?? []), ...units[i]!];
     for (let round = 0; ; round++) {
       const redo = plans.flatMap((_, i) => (over(units[i]!) > 0 ? [i] : []));
       if (!redo.length) break;
@@ -515,7 +564,7 @@ export class RecordedNotices {
         // one size class (512 bytes) or the overshoot in compressed bytes, whichever is more
         budgets[i] = budgets[i]! - Math.max(512, Math.ceil(over(units[i]!) * 0.8));
         assert(budgets[i]! >= 512, "A sealed ledger part's header leaves no room for its items");
-        return chunkOf(plans[i]!, budgets[i]!);
+        return chunkOf(i, budgets[i]!);
       });
       const resealed = await seal(source, again.flat());
       let j = 0;
@@ -527,7 +576,7 @@ export class RecordedNotices {
         () => ({ subject: p.subject, generation: p.generation, sealed: sealed[d++] }) as unknown as W0.Delivery,
       );
       const old = previous.get(p.subject)!;
-      const c = noticeCandidateUnits(db, p.subject, event, old, deliveries, units[i]!, mode);
+      const c = noticeCandidateUnits(db, p.subject, event, old, deliveries, allUnits(i), mode, kept.get(i)?.values ?? []);
       if (p.generation !== (p.before?.value ?? 0)) {
         // The new generation is written with the subject's ledger (its closing piece), or alone.
         c.ledger.push(...db.change(generationKey(p.subject), p.before, p.generation));
