@@ -253,7 +253,8 @@ async function schedule(seed: number): Promise<Outcome> {
     };
   // ---- actors ----
   const acknowledged: { account: string; id: string; position: number; txId: string; doc: string; keys?: string }[] = [];
-  const refused: { id: string; message: string }[] = [];
+  type Refusal = { id: string; account: string; message: string; from: number; to: number };
+  const refused: Refusal[] = [];
   let publishing = true;
   let killsLeft = cfg.kills;
   let phaseTag = "", phaseKind = "1";
@@ -279,7 +280,8 @@ async function schedule(seed: number): Promise<Outcome> {
       // [second review] Whether the account's `accountKeys` setting was on before this Publish began: before it, two
       // accounts that share a Publish ID or a definitions document share the command ID, and the second is refused
       // ("commit receipt differs from the request": a refusal, never a wrong acknowledgement or write; REVIEW.md F2).
-      const keysBefore = !MIXED || (await originAt(memStore(new Proc(db, "peek"), held) as never, await db.comp.currentPosition())).settings?.accountKeys === true;
+      const from = await db.comp.currentPosition();
+      const keysBefore = !MIXED || (await originAt(memStore(new Proc(db, "peek"), held) as never, from)).settings?.accountKeys === true;
       try {
         // Account B publishes with full documents unless ACT10_CROSS_DOCS=1: by reference, two accounts that share a
         // predecessor document collide on the definitions' command IDs (finding F2, cross-account.test.ts X3, X4).
@@ -293,7 +295,7 @@ async function schedule(seed: number): Promise<Outcome> {
         // A process naming a ledger mode the stored settings forbid refuses: counted, not refused.
         if (e instanceof SettingsConflict) return void count("settingsConflict");
         if (!keysBefore && /commit receipt differs from the request/.test(String(e?.message))) return void count("crossAccountRefusedBeforeKeys");
-        refused.push({ id, message: String(e?.message ?? e).slice(0, 200) });
+        refused.push({ id, account, message: String(e?.message ?? e).slice(0, 200), from, to: await db.comp.currentPosition() });
         if (!(e instanceof Conflict)) violations.push("Publish " + id + " failed: " + String(e?.stack ?? e).slice(0, 400));
       }
     };
@@ -420,7 +422,7 @@ async function settleAll(db: MemDb, proc: Proc, held: ReturnType<typeof heldAcco
 async function check(
   db: MemDb, cfg: Cfg, hA: ReturnType<typeof heldAccount>, hB: ReturnType<typeof heldAccount>,
   acknowledged: { account: string; id: string; position: number; txId: string; doc: string; keys?: string }[],
-  refused: { id: string; message: string }[], violations: string[], counts: Record<string, number>, r: Rng,
+  refused: { id: string; account: string; message: string; from: number; to: number }[], violations: string[], counts: Record<string, number>, r: Rng,
 ) {
   const v = (m: string) => violations.push(m);
   const proc = new Proc(db, "check");
@@ -452,13 +454,18 @@ async function check(
       if (!acknowledged.some((x) => x.id === id) && !cfg.killPublisher) v(acct + ": Publish " + id + " landed but was not acknowledged and its process was not killed");
     }
   }
-  // [second review] A settings transition of the account (it rewrites the origin row every guarded Publish is guarded on)
-  // is a rival too: refusals in a schedule with one are counted, not broken.
-  const transitions = journal.filter((t) => t.actor === "lazy/settings" && t.position > snapshot!.head).length;
-  if (transitions) counts.transitions = transitions;
+  // [second review] A settings transition of the Publish's own account (it rewrites the origin row every guarded Publish
+  // is guarded on) is a rival too: a refusal with one landing while the Publish ran is counted, not broken.
+  const transitions = journal.filter((t) => t.actor === "lazy/settings" && t.position > snapshot!.head);
+  if (transitions.length) counts.transitions = transitions.length;
+  const origins = { [A]: memStore(proc, hA).names.ORIGIN, [B]: memStore(proc, hB).names.ORIGIN };
   if (cfg.beside)
-    for (const x of refused)
-      if (!cfg.race && !cfg.killPublisher && !transitions) v("Publish " + x.id + " refused under the account guard with no rival Publish: " + x.message);
+    for (const x of refused) {
+      if (cfg.race || cfg.killPublisher) continue;
+      if (transitions.some((t) => t.position > x.from && t.position <= x.to && t.changes.some((c: any) => c.entityId === origins[x.account])))
+        counts.refusedAcrossTransition = (counts.refusedAcrossTransition ?? 0) + 1;
+      else v("Publish " + x.id + " refused under the account guard with no rival Publish: " + x.message);
+    }
   counts.refused = refused.length;
   counts.acknowledged = acknowledged.length;
   // -- Values: every owed release of A, against the difference over every subject's world at q - 1.
