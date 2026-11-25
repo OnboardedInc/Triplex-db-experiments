@@ -249,6 +249,8 @@
           (if-let [before (get-in current [:commands command])]
             (do (when-not (= selectors (get before "selectors"))
                   (privacy/failure! 409 "EraseCommandConflict" "The command already used different selectors"))
+                ;; [DX-ERA6 eighth pass, R5] resolved at call time (this namespace loads before the stored functions)
+                ((requiring-resolve 'triplex.gateway.removal-ack/acknowledged!) name before)
                 (response db before))
             (let [pending (privacy/pending name)
                   _ (when (and pending (not= [command selectors] (mapv #(get pending %) ["commandId" "selectors"])))
@@ -272,6 +274,7 @@
                       (recur next (when committed entry) (inc tries)))
                     (do (privacy/publish! name current entry)
                         ((requiring-resolve 'triplex.gateway.removal-scope/log-tries!) entry tries buckets started)
+                        ((requiring-resolve 'triplex.gateway.removal-ack/acknowledged!) name entry)
                         (response (d/db conn) entry))))))))))))))
 
 (defn replay-after-restore! [name conn]

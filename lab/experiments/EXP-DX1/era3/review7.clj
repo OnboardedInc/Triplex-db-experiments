@@ -119,13 +119,15 @@
               ;; the service's own list (it never named :zz) does not clear it
               real (offers/outcome (offers/route name "v2" "protection" {"attributes" [":v"] "sealed" sealed?}))
               save-after-real (offers/outcome (offers/send name (g/frame "r3-s9" g/b1 (g/secret g/b1 "y") nil (g/head conn))))
-              ;; the only ways out: the restore route, or a call naming :zz; both protect it for good
+              ;; [DX-ERA6 eighth pass, adapted: the way out that protects nothing new] the copy-drop route first; the
+              ;; restore route after it then has nothing to add
+              drop-route (offers/outcome (f/safe #(offers/route name "v2" "removal-policy-copy-drop" {"attributes" [":zz"]})))
               restore (offers/outcome (f/safe #(offers/route name "v2" "restore-erasure" {})))
               save-after-restore (offers/outcome (offers/send name (g/frame "r3-s10" g/b1 (g/secret g/b1 "z") nil (g/head conn))))
               rm2 (offers/outcome (f/safe #(a/remove-attr! name "r3-rm" g/a1)))
               detail {:saves-of-three-accounts saves :read read :removal rm
                       :start-check (vec (take 3 (lines-of start "removal-start-check"))) :service-list real
-                      :save-after-the-service-list save-after-real :restore-route restore :save-after-restore save-after-restore
+                      :save-after-the-service-list save-after-real :copy-drop-route drop-route :restore-route restore :save-after-restore save-after-restore
                       :removal-after-restore rm2 :stored-at-the-end (get (rc/stored-policy (d/db conn)) "attributes")}]
           (observe! lbl :detail detail)
           (bump! :r3 boundary sealed? :saves saves :after-real save-after-real :after-restore save-after-restore)

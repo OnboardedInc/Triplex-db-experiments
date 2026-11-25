@@ -545,6 +545,9 @@
           ;; [DX-ERA2 fourth pass] the removal log rebuilt from the data (behind, a pending copy, or missing)
           (and removal-scope/enabled (= :post request-method) (= action "removal-log-rebuild"))
           (response 200 ((requiring-resolve 'triplex.gateway.removal-commit/rebuild-log!) name conn (request-json body)))
+          ;; [DX-ERA6 eighth pass, R3] the way out of RemovalPolicyBehind that protects nothing new
+          (and removal-scope/enabled (= :post request-method) (= action "removal-policy-copy-drop"))
+          (response 200 ((requiring-resolve 'triplex.gateway.removal-commit/drop-copy-attributes!) name conn (request-json body)))
           :else
           (let [[protected-wire input] (when (and (= :post request-method) (= action "transact"))
                                         (write-wire/open name (request-json body)))
@@ -560,7 +563,8 @@
                                           (not (true? (get input "erasureReplay"))))
                                    (let [[cut db] (if per-account (removal-scope/request-cut name conn db) [(privacy/cut name db) db])]
                                      ;; [DX-ERA2 fourth pass] a write waits while the data is behind the log
-                                     (when per-account ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) cut))
+                                     ;; [DX-ERA6 eighth pass, R3] and a save of an attribute the stored policy lacks
+                                     (when per-account ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) cut db input))
                                      [(when (or (not (:sealed cut)) (envelope/shared?)) cut) db])
                                    [nil db])
                 ;; [DX-ERA6] with the replay rule on, the merged rule (removal-commit/decline-check!, before the save) judges
@@ -616,7 +620,7 @@
                      ;; boundary after it was planned: planned once more on the database as it is now
                      (if ((requiring-resolve 'triplex.gateway.removal-commit/boundary-moved?) conn independent answer)
                        (let [[again db-again] (removal-scope/request-cut name conn (erase/sync! conn))]
-                         ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) again)
+                         ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) again db-again input)
                          ((requiring-resolve 'triplex.gateway.removal-commit/decline-check!) name conn db-again input)
                          (run again))
                        answer))))
@@ -632,7 +636,7 @@
                                          (let [current (d/db conn)]
                                            (if (and per-account managed-write?)
                                              (let [[cut current] (removal-scope/request-cut name conn current)]
-                                               ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) cut)
+                                               ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) cut current input)
                                                [current cut])
                                              [current (privacy/cut name current)])))]
                     (when (and managed-write? (nil? next)) (privacy/unavailable!))
@@ -663,8 +667,8 @@
                              ;; more when the database moved to the commit boundary after the plan; its ticket is
                              ;; checked again
                              (if (and per-account ((requiring-resolve 'triplex.gateway.removal-commit/boundary-moved?) conn next answer))
-                               (let [[again _] (removal-scope/request-cut name conn (erase/sync! conn))]
-                                 ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) again)
+                               (let [[again db-again] (removal-scope/request-cut name conn (erase/sync! conn))]
+                                 ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) again db-again input)
                                  (when (and (nil? source) (contains? input "erasureSeq")) (removal-scope/ensure-ticket! again input))
                                  (run again))
                                answer))))
@@ -744,7 +748,8 @@
          (catch Exception e
            (when (some #{name} (d/get-database-names (db-uri "*"))) (throw e)))))
   ;; [DX-ERA3 N5] report every database guarded per account whose data and removal log disagree
-  (when removal-scope/enabled
+  ;; [DX-ERA6 eighth pass, R5] and, with an acknowledgement journal, every protected database's lost removals
+  (when (or removal-scope/enabled @(requiring-resolve 'triplex.gateway.removal-ack/journal))
     ((requiring-resolve 'triplex.gateway.removal-commit/start-check!) (d/get-database-names (db-uri "*"))
                                                                       (fn [name] (connection (db-uri name)))))
   (start-thread-sampler!)
