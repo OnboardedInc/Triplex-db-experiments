@@ -14,6 +14,15 @@ priority: the bar, the latest measured value at 1 billion records and on the
 fresh database (430 million records, ten deep accounts of 100,000 subjects), the settings it was measured with, the
 verdict and the next step. Mac clocks are never used here; every number below is from a rented bare-metal server
 (12 cores, 96 GB, two NVMe drives). Bars are from `lab/TARGETS.md` on `main`; the owner's rulings from `lab/V0.1.md`.
+
+**The read bar changed on 2026-11-25** (`lab/TARGETS.md` and `lab/V0.1.md` on `lane/d-native`, `1fd3a41ff`): read p99 at most
+**100 ms for a subject in memory** and at most **300 ms for a subject not in memory**, 100 ms still the aim for both
+(the owner: "Let's try to hold the 100 ms bar for reads not in memory but maybe we'll allow a 300 ms read bar for
+subjects not in memory and a 100 ms read bar for subjects that are in memory"). Every P1 number below was measured
+before the bar split and does not separate the two populations; the scorecard's read classification is being built
+on `exp/DX-SRV2-session-prep`. The server session that measures it (at most 50 US dollars, at 1 billion records) is
+planned in `lab/experiments/EXP-DX1/srv1/SESSION-PLAN.md` on `exp/DX-SRV1-session-plan`; the session list at the end
+of this page is the earlier one.
 The earlier merge-trial tables of this page are in its history (`git show 61a794c1d:lab/experiments/EXP-DX1/v01/READINESS.md`).
 
 **The 1 billion database:** AGE1's sealed cut, t 62,888,918, head 28,309,866, 1,000,251,169 records. Its 28.2 million
@@ -99,7 +108,7 @@ ID) and `int5/compare-idents.py`; evidence `DX-INT5/idents/`.
 | One pending removal stopped the deletion of every published removal's key (R3) | `exp/DX-B2-key-deletion` `46a8f746a` | `59e10e754` (pushed alone, `212853708`) | `b2-keys/gate.sh` (b2, scenarios, fuzz, lines; paired against the previous head), standing on every head |
 | A stored save answered as refused when the transactor stops after applying it (R1, save review F1), and the command path settling on another account's transaction | `exp/DX-S6-save-line-fixes` `cdfc70e02` | `dc0bd5696` | `s6/final.sh` gates (the outcome gate in five writer settings), the SDK's fault stack, the fuzzer with faults |
 | Every batched read refused (this merge's own: step 0 against API1's `batch.clj`) | this merge | `ee9d5da5a` | API1's `api1/gate.sh` gate phase |
-| With the PostgreSQL key store, sealed saves refused after a gateway restart and a save of more than 256 protected values refused for good; a refused protection declaration answering with the driver's statement, wrapped keys included | `exp/DX-N1-key-pool` `09730f887` | the next push | its key gate with the n1 and reply phases on both key stores (planned with that push) |
+| With the PostgreSQL key store, sealed saves refused after a gateway restart and a save of more than 256 protected values refused for good; a refused protection declaration answering with the driver's statement, wrapped keys included | `exp/DX-N1-key-pool` `09730f887` | `39d1087c0` (fifth push) | `b2-keys/gate.sh` phases b2, n1, lines (with `replies.clj` and the review's `replies2.clj`), paired and suites on both key stores: n1 5 of 5 on both (the save-line head fails 3 of 5 on PostgreSQL); see "The key-pool and reply fix" below |
 | Two assertion IDs collide in the product's save path with ordered saves on: a save's identity block and a later SDK ID in the same millisecond (U1, the third Publish review); one rejected save of tape M here was consistent with it | `exp/DX-U1-id-allocator` `cc5656aa2` | the push after | the review's A1 to A5, the builder's I1 to I4, an adapter-level block check, tape M four times (planned with that push) |
 
 The save review's F6 (the 5 differing stored-code values pinned to S2's `subject_save.clj` edit, none installed with
@@ -246,6 +255,7 @@ answer outside its own route. It is not a proposal to make it a default (that is
 | **Not an option, in force, replies change:** a save whose outcome is unknown (save-line fixes F1) | after the transaction is handed to Datomic, a failure is a refusal only when a stored function or Datomic decided it; anything else, including the transactor stopping between apply and acknowledgement, answers **`503 OutcomeUnknown`** with the failure's class (`cause`), where it answered `400 TransactionRejected` before; the SDK looks the operation up and, when it is not stored, fences it (new route), then answers the receipt or `DatomicOperationNotApplied` | R1 fixed: a stored save is no longer reported as failed |
 | **Not an option, in force, replies change:** a save racing a removal on request (F3) | `409 CasConflict` on every writer (the SDK re-reads and replays); `ErasureFrontierChanged` only when the request itself named the frontier (`erasureSeq`) | before, the general writer answered `ErasureFrontierChanged` and the per-subject writers `CasConflict` for the same race |
 | **Not an option, in force, replies change:** the command path across accounts (section 9 of the save-line page) | the SDK's command path no longer settles on another account's transaction: an operation committed first by another caller is not taken as this save's outcome | another account can still deny or learn a command ID with the account setting off (section 9.1 of its page) |
+| **Not an option, in force, replies change:** the key pool after a restart and the reply texts (N1, N3) | every change of answer code or status, copied from `n1-keys/N1-KEY-POOL.md`: the protection declaration whose key fill the PostgreSQL authority refuses, 400 `GatewayError` with the driver's statement → 503 `EnvelopeKeyPoolEmpty`, a fixed text; a sealed save that finds the pool empty and cannot fill it, 400 `TransactionRejected` → 503 `EnvelopeKeyPoolEmpty`; an `Error` thrown by a route (`AssertionError`, `StackOverflowError`, `OutOfMemoryError`), Jetty's HTML 500 page with the error's class and message → JSON 500 `GatewayError`, the fixed text; an exception raised by the trace wrapper itself, the same | every other code and status is unchanged; with every option off the **message text** of an untyped failure changes to the fixed text, so a client or gate that matches a message (item 7 of the contradictions list names five) sees new text |
 | **Not an option, in force:** a creation of a family a removal named before the entity existed (F4, F11) | a creation framed after the removal commits; a removal made on a gateway without the creation option counts too | — |
 | **Not an option, in force:** typed refusals at the real full-document limits (ACT6) | a marker or event value over the store's 1 MiB is refused before any write, naming the sizes | the store refused it anyway, later |
 
@@ -576,6 +586,9 @@ from this head (sources `83789d1f…`), by ID; the selftest-style runs on the sa
 | `exp/DX-S5-save-line-review` `c85a0d0b3` | `12937e7bc` | The third review of the save line and its tests (lab only) |
 | Production gate | `d144ab6d3` | The transactor's warnings, errors and Triplex refusals printed into the gate's log before the container goes (the one rejected save of tape M could not be traced) |
 | Batch fix and the API1 page into the save line | `93511c42d`, `ecbba0def` | — |
+| `exp/DX-N1-key-pool` `09730f887` (fifth push) | `39d1087c0` | N1: a sealed save that finds its database's key pool empty (a restarted gateway) fills it once, then refuses with a typed 503 `EnvelopeKeyPoolEmpty`; N3: fixed reply texts (`reply.clj`): a typed refusal keeps the gateway's own text, any other exception answers "The gateway could not complete the request" with its detail only in the scrubbed failure line; the last catch wraps the trace wrapper too (N1R F1); `n1-keys/` and the key gate's `n1` phase. No option |
+| `exp/DX-N1R-key-pool-review` `71e6c453d` | `43fb4f28e` | The review's tests only (`n1r/`, `n1-keys/replies2.clj`) |
+| Save-line head into the N1 line | `0fb8f8cda` | `efee27905` merged; no conflicts |
 
 **Conflicts and how each was resolved (both sides kept every time).** ACT6: `ha1/local.ts` (HA2's second-failure holder
 beside ACT6's release-limits holder). SCALE2: `stack/up.sh` (SCALE2's `DX_SWEEP_GATE_EVICT` beside XQ7's per-role sweep
@@ -798,6 +811,23 @@ is unchanged by this fix and is an open decision for the owner.
 | Production exactness, default (the gate now keeps the transactor's warnings, errors and refusals) | R 840 of 840, S 88 of 88, 0 expired, 2,836 fields | the gate's own native image (removed) |
 | XQ4's G8 paired stored log; reach; aged gate | `0569a8f8…` = `23b7df344`'s; 22 of 22 equal, `writeOptionsSame` true; 1,927 fields, tampered refused | native (removed); `f7992c56`; native |
 | Production, tape M, creation on and off | exact both: tape M 360 of 360, 0 expired, 290 created, readback 313 owners and 3,030 fields; writers per-subject 360 and general 0 (on), 23 and 337 (off); no Triplex refusal in the transactor's lines | the gate's own images (removed) |
+
+### The key-pool and reply fix (`39d1087c0`, the line's head `0fb8f8cda`; image `410d47e153a7…`, `tx2-dxthin-jre21:e1fb08d92779035b`, engine build from `7d7414a10`, receipt `DX-INT5/n1u1/`)
+
+The image was built from the ID-allocator merge on top of this line (`7d7414a10`): its gateway sources are this line's
+(the ID fix changes no gateway file), so the stack gates below ran this line's gateway. The SDK and core suites ran at
+`7d7414a10` (this line's TypeScript plus the ID fix; this line changes no TypeScript outside the gateway).
+
+| Gate | Result | Image |
+| --- | --- | --- |
+| Stored-function identities | **70 of 70 equal to the save-line head in each of the 8 writer settings** (58 of 58 against `23b7df344`, the 12 option keys as before): the new namespaces `key_pool.clj` and `reply.clj` moved nothing | `410d47e1` by ID |
+| `b2-keys/gate.sh` phase b2 | 16 checks, 0 failed, on the file and the PostgreSQL key stores, this head and the save-line head | `410d47e1` |
+| phase n1 (the key pool after a restart) | 5 checks, **0 failed on both key stores**; the save-line head: 0 failed on the file store, **3 of 5 failed on PostgreSQL** (the fault this fixes) | `410d47e1` |
+| phase lines, with `replies.clj` and `replies2.clj` | lines 10 checks, 0 failed; replies 9 (file) and 15 (PostgreSQL), 0 failed; the review's replies2 17 and 17, 0 failed | `410d47e1` |
+| phase paired, against the save-line head (`efee27905`) | native log, replies and key store after a shred pass **identical**, with removals and without; the n1 pairing on PostgreSQL: native log and replies identical | `410d47e1` |
+| phase suites | 93 tests, 236,380 assertions, 0 failures, 13 errors, the same as the base (the known suites error, item 6 (d)) | `410d47e1` |
+| The save line's `gates` step again | outcome gate 5 tests, 426 assertions, 0 failures in each of 3 writer settings (server, general, group); race 22; bound 127; attacks 49 and 151; 0 failures | `410d47e1` |
+| Selftest; SDK; core; guard | 29 / 54,160, 0 failures; 489 passed, 53 skipped; 863 of 863; 142 cases, 0 mismatches | `410d47e1` / — |
 
 ## Next server session (one driver, in this order; none has run)
 
