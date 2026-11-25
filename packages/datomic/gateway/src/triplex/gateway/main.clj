@@ -705,7 +705,7 @@
                              (if (and per-account ((requiring-resolve 'triplex.gateway.removal-commit/boundary-moved?) conn next answer))
                                (let [[again _] (removal-erase/request-cut name conn (erase/sync! conn))]
                                  ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) again)
-                                 (when (and (nil? source) (contains? input "erasureSeq")) (privacy/ensure-ticket! again input))
+                                 (when (and (nil? source) (contains? input "erasureSeq")) (removal-scope/ensure-ticket! again input))
                                  (run again))
                                answer))))
                       (run next)))))
