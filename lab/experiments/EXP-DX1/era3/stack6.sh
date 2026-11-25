@@ -256,6 +256,7 @@ restore-plain)
   backup "$E1" e1; backup "$E2" e2
   post "$W/v2/db/$E1/erase" "$(erase_subject "rm-b1-$E1" acct/b/one)" "e1-removal-b1-after-the-backup"
   restore_all e1:$E1 e2:$E2
+  start_all restored
   for g in gw-w gw-r; do docker logs "$prefix-$g" 2>&1 | grep "removal-start-check" | sed "s/^/$g /" >> "$out/start-check.log" || true; done
   post "$R/v1/db/$E1/read" '{"entityIds":["acct/b/one"]}' "e1-read-b1-before-the-route"
   post "$W/v1/db/$E1/transact" "$bodies/save-b1-0.json" "e1-save-before-the-route"
