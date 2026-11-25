@@ -7,7 +7,20 @@ are toy-size and diagnostic. Every option stays default off. Written 2026-11-24.
 repository.
 [The review](../s5/REVIEW.md) · [Creation saves](../s4/CREATION-SAVES.md) · [Save shape](../v01/SAVE-SHAPE.md)
 
-**In brief.**
+**In brief, after the second review (S6b, section 12).**
+
+- **One stored form per ID.** An operation ID is stored as sent everywhere, so a fence and its save can never
+  disagree (R2-1, both paths). A command ID's form is chosen once (`stored-ids`) and re-applied by the replan retry.
+- **The account setting is in the database and one-way.** Turning it on moves every save-writer function to a twin
+  ident and leaves a refusal under the old one, so a save prepared before the transition and every save of an older
+  build are refused, never stored under the plain key.
+- **One mechanism for both lines.** The Publish builder's join layer drops its own `joined:v2` form and uses this one
+  (section 12.4).
+- **R2-2:** a replay carries its first attempt's source; a replay framed before a removal of a family it writes is
+  declined.
+- **R2-3 to R2-11** are fixed or stated in section 12.3; R2-10 is measured.
+
+**In brief (S6).**
 
 - **F1 is fixed on every write route.** A failure after the transaction is handed to Datomic is a refusal only when
   a stored function or Datomic decided it. Anything else, including anything unrecognised, is answered

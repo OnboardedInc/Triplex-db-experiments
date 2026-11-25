@@ -286,17 +286,19 @@ const constraintsOk = u.exactlyOneCommitted === u.pairs && rt.dangling === 0 && 
 // saved fresh after the removal are a new save and are stored.
 const replay: Record<string, unknown> = {};
 {
-  const declared = await direct.declareProtection(db, [":p/secret"]);
+  // A scope of its own: protection is declared before its first save (a scope with saves needs a migration first).
+  const R = await openProduct(targets[0]!, `${scopeName}-replay`, options); // no proxy: no dropped requests here
+  const declared = await direct.declareProtection(R.db, [":p/secret"]);
   replay.declared = declared?.attributes ?? declared;
   const sent: any[] = [];
-  const client = A.client;
+  const client = R.client;
   const original = client.transact.bind(client);
   let inject: { entity: string; command: string } | null = null;
   client.transact = async (dbName: string, input: any, ...more: any[]) => {
     if (inject && input.rows?.some((r: any) => r.entity_id === inject!.entity)) {
       sent.push({ sourceK: input.sourceK, frameSourceK: input.frameSourceK ?? "absent" });
       if (sent.length === 1) {
-        await direct.erase(db, inject.command, [{ entityId: inject.entity, attribute: ":p/secret" }]);
+        await direct.erase(R.db, inject.command, [{ entityId: inject.entity, attribute: ":p/secret" }]);
         throw new datomic.DatomicHttpError(409, "CasConflict", "injected: a removal landed between plan and commit");
       }
     }
@@ -306,19 +308,20 @@ const replay: Record<string, unknown> = {};
     sent.length = 0;
     const X = `acct/s6/subject/replay-${kind.split(" ")[0]}-${randomUUID().slice(0, 6)}`;
     if (kind === "existing entity")
-      assert.equal((await save(A, 103, "replay-seed", [{ op: "assert", entityId: X, attribute: ":s/name", value: { type: "string", value: "x" }, entityType: "subject", validFrom: 0 }])).outcome, "ok");
+      assert.equal((await save(R, 103, "replay-seed", [{ op: "assert", entityId: X, attribute: ":s/name", value: { type: "string", value: "x" }, entityType: "subject", validFrom: 0 }])).outcome, "ok");
     inject = { entity: X, command: `remove-${randomUUID()}` };
-    const r = await save(A, 103, "replay", [{ op: "assert", entityId: X, attribute: ":p/secret", value: { type: "string", value: "framed before the removal" }, entityType: "subject", validFrom: 0 }]);
+    const r = await save(R, 103, "replay", [{ op: "assert", entityId: X, attribute: ":p/secret", value: { type: "string", value: "framed before the removal" }, entityType: "subject", validFrom: 0 }]);
     inject = null;
-    const rows = await direct.rows(db, { entityIds: [X] });
-    const after = await save(A, 103, "fresh-after-removal", [{ op: "assert", entityId: X, attribute: ":p/secret", value: { type: "string", value: "saved after the removal" }, entityType: "subject", validFrom: 0 }]);
-    const rowsAfter = await direct.rows(db, { entityIds: [X] });
+    const rows = await direct.rows(R.db, { entityIds: [X] });
+    const after = await save(R, 103, "fresh-after-removal", [{ op: "assert", entityId: X, attribute: ":p/secret", value: { type: "string", value: "saved after the removal" }, entityType: "subject", validFrom: 0 }]);
+    const rowsAfter = await direct.rows(R.db, { entityIds: [X] });
     replay[kind] = { outcome: r.outcome, error: r.error, attempts: [...sent],
       storedBeforeTheFreshSave: rows.filter((x: any) => x.attribute === ":p/secret").length,
       freshSave: after.outcome, freshError: after.error ?? null,
       secretValuesAfter: rowsAfter.filter((x: any) => x.attribute === ":p/secret" && x.retracted_at === null).map((x: any) => x.value_string ?? x.value) };
   }
   client.transact = original;
+  await R.close();
 }
 log("REPLAY_ACROSS_REMOVAL", replay);
 const replayOk = ["new entity", "existing entity"].every((k) => {

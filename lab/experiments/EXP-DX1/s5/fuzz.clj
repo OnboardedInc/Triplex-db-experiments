@@ -645,9 +645,27 @@
                      :op (get (op-lookup name b-op b-acct) "txId")
                      :a-op (get (op-lookup name op (subs (:acct g) 5)) "txId")})
           lc (lookups c-name) lk (lookups k-name)
-          cross (if on (count (filter #(and (some? %) (not= b-tx %)) [(:claim lk) (:op lk)])) 0)]
-      {:mode :shadow :c (outcome c) :k (outcome k) :cross cross :committedWithOption (when on (= 200 (:status k)))
-       :equal (and (= (outcome c) (outcome k)) (= lc lk) (zero? cross) (or (not on) (= 200 (:status k))))})))
+          cross (if on (count (filter #(and (some? %) (not= b-tx %)) [(:claim lk) (:op lk)])) 0)
+          fa (let [kc (main/connection (main/db-uri k-name)) db (d/db kc)
+                                ac (fn [s] (deref (requiring-resolve (symbol "triplex.gateway.account-claims" s))))
+                                plain (d/entid db [:triplex.claim/command-id command])]
+                            {:plain (some? plain)
+                             :plainAccounts (when plain (vec ((ac "claim-accounts") kc db plain)))
+                             :scopedForFirst (some? (d/entid db [:triplex.claim/command-id ((ac "encode") (subs (:acct g) 5) command)]))
+                             :message (get-in k [:body "message"])
+                             :txAttrs (when plain
+                                        (let [tx (or (:v (first (d/datoms db :eavt plain :triplex.claim/tx))) plain)
+                                              t (d/tx->t tx) data (:data (first (d/tx-range (d/log kc) t (inc t))))]
+                                          {:attrs (frequencies (map #(str (d/ident db (:a %)) (if (:added %) "+" "-")) data))
+                                           :ids (vec (take 6 (distinct (keep #(:v (first (d/datoms db :eavt (:e %) :triplex.entity/id))) data))))}))})]
+      {:mode (if (and on (:plain fa) (empty? (:plainAccounts fa))) :shadow-of-a-system-claim :shadow)
+       :c (outcome c) :k (outcome k) :cross cross :committedWithOption (when on (= 200 (:status k)))
+       :firstAccountClaim fa
+       ;; [DX-S6b] A plain claim of no account's entities (a save of system entities only) refuses every account's
+       ;; save of that ID (the rule both lines share, S6 12.2): the second account's refusal is then the contract.
+       :equal (and (= (outcome c) (outcome k)) (= lc lk) (zero? cross)
+                   (or (not on) (= 200 (:status k))
+                       (and (:plain fa) (empty? (:plainAccounts fa)) (= [409 "CommandConflict"] (outcome k)))))})))
 
 ;; ---------------------------------------------------------------- the concurrent phase
 
@@ -811,6 +829,7 @@
                                              :unjustifiedRefusals (reduce + (map (fn [r] (reduce + (map :unjustified-count (:concurrent r)))) runs))
                                              :faultSteps (reduce + (for [r runs [m n] (:modes r) :when (str/starts-with? (name m) "fault-")] n))
                                              :shadowSaves (reduce + (for [r runs] (get-in r [:modes :shadow] 0)))
+                                             :shadowsOfASystemClaim (reduce + (for [r runs] (get-in r [:modes :shadow-of-a-system-claim] 0)))
                                              :settings (into (sorted-map) (filter (fn [[k]] (str/starts-with? k "TX2_")) (System/getenv)))}))
     (shutdown-agents)
     (System/exit (if (empty? bad) 0 1))))

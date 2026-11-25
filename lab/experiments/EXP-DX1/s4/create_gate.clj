@@ -202,7 +202,9 @@
                               first-try (if option
                                           (race-before-submit name conn input
                                             #(reset! erased (reference/route name "v1" "erase" {"commandId" "remove-x" "selectors" [{"entityId" x}]}))
-                                            [409 "CasConflict"])
+                                            ;; [DX-S6b] S5 R2-2: a creation racing a removal that named its family is
+                                            ;; declined, never answered with the replayable CasConflict.
+                                            [409 "ErasureReplayDeclined"])
                                           ;; [DX-S6] Off: measured, not assumed. The general writer gets the same race at
                                           ;; the same point (after the plan, before the submit) and must give the same code.
                                           ;; Every plan declined but the per-subject switch on, so the request takes the
@@ -210,7 +212,7 @@
                                           (let [reply (with-redefs [subject/enabled true subject/plan (fn [& _] nil) owners/plan (fn [& _] nil)]
                                                         (race-at-submit name input
                                                           #(reset! erased (reference/route name "v1" "erase" {"commandId" "remove-x" "selectors" [{"entityId" x}]}))))]
-                                            (is (= [409 "CasConflict"] (reference/outcome reply)) (pr-str reply))
+                                            (is (= [409 "ErasureReplayDeclined"] (reference/outcome reply)) (pr-str reply))
                                             reply))
                               resend (reference/send name (assoc input "operationId" "create-x-again"))
                               without (when (not= 200 (:status resend))
