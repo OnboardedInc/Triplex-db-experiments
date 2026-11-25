@@ -169,6 +169,55 @@ The seventh review (`era3/REVIEW-7.md`, on `exp/DX-ERA3-removal-review` `7da3ca3
 | `a-pg-on` | per account, PostgreSQL, `r1 r4 r5 r6` | 34 | 0 |
 | `b-rule`, `b-on`, `b-commit` | the rule on database-wide, per account, the commit boundary; `m1 m3 m4` | 22 each | 2 each, all M3 (by design) |
 
+## 6. The merge of the one branch's head, and the gates on it
+
+**The merge commit is `e50615a10`.** It merges `origin/exp/DX-INT1` at `efee27905` into this branch (first parent
+`d500015e7`). At 18:24 EST none of the three merges still landing that day was on the one branch (`09730f887`,
+`cc5656aa2`, `a6f89a409`; `git merge-base --is-ancestor`: no for each), so this merges the head found.
+
+**What the merge carried:**
+- the index hints' namespace (`index_hints.clj`, its 4 stored identities);
+- everything else this branch lacked: the question reader, the cross index, `omit-protected`, `uncached`, the removal
+  drops, `reach-late`, `batch`.
+
+**The conflicts and how each was resolved:**
+
+| File | Resolution |
+| --- | --- |
+| `main.clj` | the one branch's late namespaces in its order, the removal scope last; `route-handler-routed` keeps `query-string`; the question reader's guard runs inside N1's last-answer guard; the protection route refuses a declared attribute (`cross-find`) before either rule's declaration |
+| `privacy.clj` | the one branch's drop hook first, then the E4 order (the verified head read before the log) |
+| `storage.clj` | the union of the codes passed through |
+| `subject_save.clj` | the one branch's `small-op` var; the removal fence left out of the check |
+| `envelope.clj`, `failures.clj` | this branch's (X3, F1 of the B2 review) |
+| `DatomicStorageAdapter.ts` | the same imports, in the one branch's order |
+| `ha1/local.ts` | the one branch's two new holders |
+| `b2r/REVIEW.md` | the one branch's section 7 |
+
+**One change beyond the conflicts:** `removal_repair.clj`. The key pass's re-read advances the verified-head cache
+outside `privacy/cut`, so it now calls the entity cache's drop hook, as `cut` does. Without this, a removal accepted
+there would leave the parsed entities it names in the one branch's entity cache.
+
+**Stored-function identities on `e50615a10`** (`era3/idents7.sh`, the tools from `efee27905`, 11 writer settings)
+against the one branch's head `efee27905`:
+- **70 of 70 equal in every setting:** 0 differ, 0 missing;
+- **2 new keys:** the removal fence's.
+
+The pre-merge head `d500015e7` (the switches included) has 66 of 70 equal in every setting, the index hints' 4
+missing, the same 2 new keys. The switches moved no identity.
+
+**The TypeScript** of `packages/datomic` type-checks on the merge (`tsc --noEmit`, no errors).
+
+**The paired native log on `e50615a10`** (`era3/paired7.sh`, the tools from `e50615a10`), against the one branch's
+`efee27905` run twice (stable):
+
+| Arm | Native log | Replies |
+| --- | --- | --- |
+| every option off (`e50615a10`, and `d500015e7` before the merge) | identical datom for datom (unsealed 653, sealed 698) | identical (md5 `3d94b2f60622`) |
+| per account with the subject check, and the commit boundary (both commits) | identical once the recorded decline is left out: 11 datoms per run (section 1, item 4) | identical |
+| a save that says nothing about its frame, of a removed subject's protected value, every option off | identical datom for datom (673, 723) | identical (md5 `e028e3b04884`); the case answered 200 on all three |
+
+**The gates on the merge commit:** 6.1 (filled in when the runs end).
+
 ## 7. The owner's decisions of 2026-11-25: three switches, none turned on
 
 Each decision is one commit behind its own switch. Each switch's default is one line in `removal_commit.clj`, `false`

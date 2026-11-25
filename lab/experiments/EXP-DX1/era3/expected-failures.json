@@ -1,0 +1,112 @@
+[
+  {
+    "id": "R4-third-oracle",
+    "kind": "withdrawn by the seventh review",
+    "main": "r7",
+    "phase": "r4",
+    "modes": [
+      "on",
+      "subject"
+    ],
+    "authority": "file",
+    "case": "R4 a read of a1 held at its read of the head, log-put-back meanwhile, log, file",
+    "message": "the next read is served (the cache was not left behind by the held read)",
+    "detail": [
+      [
+        ":held-read [503 \"RemovalLogBehind\"]",
+        ":meanwhile :put-back",
+        ":held-read-answered-a1s-value false",
+        ":a-read-after [503 \"RemovalLogBehind\"]"
+      ]
+    ],
+    "reference": "era3/REVIEW-7.md at 7da3ca3b3 (exp/DX-ERA3-removal-review), 'Notes on the table': \"R4's third oracle is withdrawn, not counted as a break. On the log's boundary a log really put back during the held read is refused (503 `RemovalLogBehind`) for that read and for the next one, until the rebuild route. That is 20.5 step 4; the oracle (\"the next read is served\") was too strict for that variant (2 of the 52 violations).\" The case is R4's log-put-back variant on the log's boundary (the commit boundary's and the other two variants' oracles pass); its detail shows both reads refused 503 RemovalLogBehind and the value not answered."
+  },
+  {
+    "id": "M3-fast",
+    "kind": "rated low, by design, by the seventh review",
+    "main": "r7b",
+    "phase": "m3",
+    "modes": [
+      "*"
+    ],
+    "authority": "*",
+    "case": "M3 what a declined save that states nothing writes, and a command taken by another caller, fast, {label}",
+    "message": "a caller's save of its own subject is not declined because another caller used its command first",
+    "detail": [
+      [
+        ":that-callers-own-save-of-another-subject [409 \"ErasureReplayDeclined\"]",
+        ":datoms-of-the-first 13",
+        ":datoms-of-the-twenty 60",
+        ":datoms-of-those 3"
+      ],
+      [
+        ":that-callers-own-save-of-another-subject [409 \"OperationDuplicate\"]"
+      ]
+    ],
+    "reference": "era3/REVIEW-7.md at 7da3ca3b3, Part B finding 3: \"M3, the V4 reversal (low, by design): every declined command is recorded. First decline 13 datoms (the schema and one record); 20 more declines under new commands 60 datoms in 20 transactions; 20 declines under one command 3 datoms (its first record only). A caller that sends a declined save under a command ID another caller will use makes that caller's save declined (409). With every option off the same pre-emption exists in another form: the first caller's save is stored and the second is answered 409 `OperationDuplicate`.\" With the replay rule on the detail must show the 409 ErasureReplayDeclined form and the 13, 60 and 3 datoms; with every option off the 409 OperationDuplicate form.",
+    "form_when_rule_on": 1,
+    "form_when_rule_off": 2
+  },
+  {
+    "id": "M3-general",
+    "kind": "rated low, by design, by the seventh review",
+    "main": "r7b",
+    "phase": "m3",
+    "modes": [
+      "*"
+    ],
+    "authority": "*",
+    "case": "M3 what a declined save that states nothing writes, and a command taken by another caller, general, {label}",
+    "message": "a caller's save of its own subject is not declined because another caller used its command first",
+    "detail": [
+      [
+        ":that-callers-own-save-of-another-subject [409 \"ErasureReplayDeclined\"]",
+        ":datoms-of-the-first 13",
+        ":datoms-of-the-twenty 60",
+        ":datoms-of-those 3"
+      ],
+      [
+        ":that-callers-own-save-of-another-subject [409 \"OperationDuplicate\"]"
+      ]
+    ],
+    "reference": "as M3-fast, on the general writer",
+    "form_when_rule_on": 1,
+    "form_when_rule_off": 2
+  },
+  {
+    "id": "E9-unsealed",
+    "kind": "OPEN FINDING, not by design: High against TARGETS 7.3, owned by the derived-copies work",
+    "main": "gate-e9",
+    "phase": "e9",
+    "modes": [
+      "*"
+    ],
+    "authority": "*",
+    "case": "E9 derived copy recorded before the removal unsealed",
+    "message": "TARGETS 7.3: erasure reaches every copy of a protected value or anything derived from it",
+    "detail": [
+      [
+        ":copy-readable-after-ack true"
+      ]
+    ],
+    "reference": "era3/REVIEW-2.md, findings table, E9: \"High against TARGETS 7.3, but older than this branch | a derived copy recorded BEFORE a removal stays readable after it, in its document and in its own journal, unsealed and sealed ... | a separate piece of work (section 2, item e)\". Listed so the gate is exact, not because it is accepted: it is an unmet requirement."
+  },
+  {
+    "id": "E9-sealed",
+    "kind": "OPEN FINDING, not by design: High against TARGETS 7.3, owned by the derived-copies work",
+    "main": "gate-e9",
+    "phase": "e9",
+    "modes": [
+      "*"
+    ],
+    "authority": "*",
+    "case": "E9 derived copy recorded before the removal sealed",
+    "message": "TARGETS 7.3: erasure reaches every copy of a protected value or anything derived from it",
+    "detail": [
+      [
+        ":copy-readable-after-ack true"
+      ]
+    ],
+    "reference": "as E9-unsealed, sealed"
+  }
+]

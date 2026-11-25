@@ -93,7 +93,11 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
   echo "$name $image" >> "$out/images-ran"
   grep -E "ERA2_|ERA3_SUMMARY|ERA3_VIOLATION|SUITES|FAIL|ERROR in|Exception" "$out/$name.log" | cut -c1-2000 | head -40
   # the review's attacks report violations in their summary line and exit 0
-  # E9 (copies recorded before a removal) is a known unmet requirement owned by another builder: reported, not counted
+  # E9 (copies recorded before a removal) is a known unmet requirement owned by another builder
+  # [DX-ERA6 eighth pass] no longer only reported: its arm passes only when exactly its two listed checks fail as
+  # REVIEW-2 describes and every other check passes (era3/expected-failures.json, E9-unsealed and E9-sealed: an OPEN
+  # finding, listed so the gate is exact, not accepted)
+  if [[ $name == era3e9-* ]] && ! python3 "$x/era3/expected.py" "$out/$name.log" gate-e9 "$option" e9 0 0; then status=1; fi
   if [[ $name == era3-* || $name == era3b-* || $name == era3c-* || $name == era3d-* || $name == era3e-* || $name == era3f-* ]] && ! grep -q 'ERA3_SUMMARY.*:violations 0,' "$out/$name.log"; then status=1; fi
   if [[ $name == lines-* ]] && ! grep -q '^B2_LINES_SUMMARY {:checks 10, :failed 0}' "$out/$name.log"; then status=1; fi
 }

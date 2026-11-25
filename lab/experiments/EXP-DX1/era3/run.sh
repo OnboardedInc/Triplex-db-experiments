@@ -118,5 +118,11 @@ docker rm "$name" > /dev/null
 echo "$(( $(date +%s) - started ))" > "$out/seconds"
 [[ $(cat "$out/image-ran") == "$image" ]] || { echo "run.sh: the container ran $(cat "$out/image-ran"), not $image" >&2; status=3; }
 grep -E "^ERA3_(SUMMARY|TALLY|PROGRESS)|ERA3_VIOLATION|Exception in|CompilerException|Syntax error" "$out/run.log" | cut -c1-1500 | tail -60
+# [DX-ERA6 eighth pass] the run passes only when exactly the checks listed in era3/expected-failures.json fail, each in
+# the form the review describes (its own words quoted there), and every other check passes (era3/expected.py)
+rule=0; [[ $mode == on || $mode == subject || $mode == commit || " ${ERA3_EXTRA_ENV:-} " == *" TX2_REMOVAL_REPLAY_RULE=1 "* ]] && rule=1
+python3 "$(cd "$(dirname "$0")" && pwd)/expected.py" "$out/run.log" "${ERA3_MAIN:-1}" "$mode" "$phases" "${ERA3_PG:-0}" "$rule" > "$out/expected.txt"
+expected_status=$?; cat "$out/expected.txt"
+[[ $expected_status == 0 || $status != 0 ]] || status=1
 rm -rf "$out/src"
 exit "$status"
