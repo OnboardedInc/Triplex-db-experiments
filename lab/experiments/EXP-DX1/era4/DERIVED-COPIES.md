@@ -33,6 +33,11 @@ test, the design). Results follow from section 6.
    the authority open with the one wrapping key; the reconcile index and the non-held paths are not sealed. The
    cross-database delivery window stays open for ordering but is harmless for content (section 11.3). Nothing ran on
    a server.
+6. **After the third removal review (M1):** a removal log put back to a copy taken while the removal was pending made a
+   sealed copy open to the removed value again (the copy brought its key file back). Since `d803df016` this option's
+   routes take a removal as effective at its native commit or its publication, whichever comes first, so no derived
+   copy reopens under either boundary the owner may choose (section 11.6). The plain read's own M1 is the removal
+   builder's; the gates to rerun on its head are listed in 11.8.
 
 ## 1. The inventory: every place a protected value or a derivative can be stored or served
 
@@ -742,7 +747,7 @@ Every container ran the pinned runtime image `sha256:21a67288007d...` by ID (rec
 | (b), (c), (d) T1 (`T1-on-v3`, `T1-off-unsealed-v3`, `T1-on-alloptions-v3`, source `a177f4893`) | off, unsealed: X's removed date **100** times in 21 places, its version 37 in 13, its item ID 92 in 20 (the same as before the merge); **on, sealed: 0, 0, 0**, and the same with every option on (per-account rule, subject check, account tickets, whole-subject import; the T1 database is not moved per account, so the per-account path itself is exercised by gate (e), not by T1). On: the chain verifies, Y and account B unchanged, X reads removed; stream after the removal 3 of 3 equal to the oracle, 0 differ; delivered again 0; the late recipient ends equal to the first (X generation 1 with 1 entry, Y generation 0 with 2) |
 | The caller, at run time (T1 on, section 11.2) | 186 sealed records found in 31 of the 56 scanned places (at most 17 in one), every one opened with the keys the store holds: 119 opened to a value, the rest answered removed, and none of the opened texts holds X's removed value or a derivative (0); seal calls 13 (39 records sealed, 4 left clear: computed from no protected value), open calls 52 |
 | (f) DX-ACT9's gate (`act9/inproc.sh after`, 1,000 schedules, every option on) | 8,355 oracles, **0 violations** |
-| (e) Gate (e) on the merged head (`series3`) | {{SERIES3}} |
+| (e) Gate (e) on the final head (`series3`, `d803df016`) | {{SERIES3}} |
 | (a) Stored-function identities (`act9/idents.sh`, seven writer settings), this head against the merge without this work (the merged tree with this branch's gateway changes reversed) | **60 of 60 equal in all seven settings**; that tree also equals `c2aa3d416` 60 of 60 (the third pass moved no identity) |
 | (a) Native log (`era2/gate.sh` phase `paired`, base `c2aa3d416` twice, this gateway options unset, the per-account option on and never moved) | **identical**: 653 and 698 datoms, `d4b11ca6...` and `5197942f...`, the same hashes as before the merge; every reply identical. With `TX2_DERIVED_SEAL=1` on the last arm: the same datom counts and replies; the log and read hashes differ (the removal's transaction ID, 5.1 item 2) |
 | (f) DX-ERA2's interleavings, every option on | database-wide 360 checks, per account 1,545, subject check 9,813: **0 failed**; frame race 40 per setting (20 `cas-failed`, 20 at the account fence); lock lost 20 of 20 (one 200, one 503) |
@@ -755,6 +760,15 @@ Every container ran the pinned runtime image `sha256:21a67288007d...` by ID (rec
 | `stop-checks`: this option at P1 to P7 | 7 rows (P3 not reached); every stop that fired was completed by the refused derived write; after each acknowledgement 9 checks each passed (11.1) |
 | Phase `checks` in all (`checks-v3-1` on the merge before it was committed, `checks-v3-2` on `1827b191e`) | 135 oracles, **0 violations**, each time |
 | (g) Cost phase (`races.clj` `cost`) | the removal wrote 1 identity, 1 position and 35 datoms with 0, 10, 100 and 1,000 sealed copies of its subject (time 39, 18, 19, 14 ms, diagnostic); opening every copy afterwards 0, 7, 11, 79 ms |
+
+**On the final head `d803df016` (after the M1 change of 11.6), rerun with the same image by ID:** phase `checks` 148
+oracles, **0 violations** (`m1` included); cost: 1 identity, 1 position, 35 datoms at 0, 10, 100 and 1,000 copies (25,
+16, 13, 24 ms; opening all copies 0, 3, 20, 71 ms); identities **60 of 60 in all seven settings** against the merge
+without this work; paired native log **identical** (the same hashes); DX-ERA2's interleavings 360, 1,545 and 9,813
+checks, 0 failed; the first review's attacks 1,979 and 1,988 oracles, the second review's 2,785 and 2,785, **0
+violations**; `e9` as written red (2, as above); DX-ACT9's gate 8,344 oracles, **0 violations**; T1 on 0, off 229
+(100, 37, 92), on with every option set 0, stream 3 of 3, delivered again 0; gate (e): the row above. The gateway
+suites were not rerun on this head: the change is inside the option's `with-key` only.
 
 ### 11.6 After the third review (REVIEW-3, `af62ce1dc`): which removal boundary each derived copy assumes
 
