@@ -1,43 +1,19 @@
-import { generateId } from "@triplex-build/triplex/internal";
+import { reserveIdPrefix } from "@triplex-build/triplex/internal";
 
 const saveToken = /^[0-7][0-9A-HJKMNP-TV-Z]{23}$/;
 const wideToken = /^[0-7][0-9A-HJKMNP-TV-Z]{22}$/;
-const alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-let lastToken = "";
 
-function advance(token: string): string {
-  const digits = token.split("");
-  for (let i = digits.length - 1; i >= 0; i--) {
-    const next = alphabet.indexOf(digits[i]!) + 1;
-    if (next < (i === 0 ? 8 : alphabet.length)) {
-      digits[i] = alphabet[next]!;
-      return digits.join("");
-    }
-    digits[i] = "0";
-  }
-  throw new RangeError("Ordered save identity space exhausted");
-}
-
+// [DX-ACT8, third review U1] A block is reserved from the same allocator as every other ID the SDK makes
+// (`reserveIdPrefix`, packages/core `utils/id.ts`): no ID the process issued before starts with the token and none it
+// issues after does, so no write of this process can take one of the block's assertion IDs. Before, the token was the
+// first 24 characters of an ID the ULID factory then continued in the same millisecond. Tokens are also increasing.
 function nextToken(): string {
-  const sampled = generateId().slice(0, 24);
-  if (sampled > lastToken) {
-    lastToken = sampled;
-    return lastToken;
-  }
-  // [DX-PREP1] Why: reserve the final two characters of the SDK's 26-character TripleId.
-  // Rejected: truncating adjacent ULIDs without advancing their block (they share a prefix).
-  lastToken = advance(lastToken);
-  return lastToken;
+  return reserveIdPrefix(24);
 }
 
 function nextWideToken(): string {
-  // [Opus W2] Why: a wide block owns every ID that starts with its 23 characters, so it must start above every token this
-  // process has issued, and later one-byte tokens must start above it. Rejected: sampling 23 characters without a floor.
-  const sampled = generateId().slice(0, 23);
-  const floor = lastToken.slice(0, 23);
-  const token = sampled > floor ? sampled : advance(floor.padEnd(23, "0"));
-  lastToken = token + "Z";
-  return token;
+  // [Opus W2] A wide block owns every ID that starts with its 23 characters (reserved the same way).
+  return reserveIdPrefix(23);
 }
 
 export interface OrderedSaveIdentity {
