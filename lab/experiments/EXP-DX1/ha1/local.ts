@@ -172,8 +172,11 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // phase and the default campaign as regressions) and the release-limits gate here.
   const besideSaves = holder === "DX-ACT8" && diagnostic && mode === "load-fair" && combined === undefined &&
     (process.env.DX_ACT6_GATE === "1" || process.env.DX_ACT3_HELD === "1");
+  // [DX-ACT10] Why: the adversarial reviewer of the Publish and settlement guards runs its stack checks in the held runner.
+  const publishReview = holder === "DX-ACT10" && diagnostic && mode === "load-fair" && combined === undefined &&
+    process.env.DX_ACT3_HELD === "1" && process.env.DX_ACT10_STACK === "1";
   assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours ||
-    heldPublish || settleFrames || settleLive || releaseLimits || besideSaves);
+    heldPublish || settleFrames || settleLive || releaseLimits || besideSaves || publishReview);
   assert(combined === undefined || ownedCombination);
   if (mode === "load-fair") {
     const { cleanSource } = await import("../v01/source.ts");
