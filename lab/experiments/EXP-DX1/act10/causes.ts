@@ -50,9 +50,13 @@ export function recordCauses(s: Store, out: string) {
       if (String(id).startsWith("joined:")) {
         const t = await tOf(String(id));
         const near = await between(Math.max(0, r.position - 7), r.position + 6);
-        const shared: [number, string][] = [];
-        for (const [p, c] of near as [number, string][]) if (p !== r.position && c && (await tOf(c)) === t) shared.push([p, c]);
-        line({ kind: "landed", id, position: r.position, expected, t, sharedT: shared, at: new Date().toISOString() });
+        // Every neighbour's t: neighbours sharing a t among themselves show that groups formed at all.
+        const ts: [number, string | null, string][] = [];
+        for (const [p, c] of near as [number, string][]) ts.push([p, c ? await tOf(c) : null, c.slice(0, 32)]);
+        const shared = ts.filter(([p, x]) => p !== r.position && x === t);
+        const distinct = new Set(ts.map(([, x]) => x)).size;
+        line({ kind: "landed", id, position: r.position, expected, t, sharedT: shared, neighbours: ts.length, distinctT: distinct,
+          near: ts, at: new Date().toISOString() });
       }
       return r;
     } catch (e) {
