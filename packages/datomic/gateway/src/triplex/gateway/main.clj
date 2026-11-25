@@ -439,7 +439,7 @@
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
                                   (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e)))
                                   (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e)))
-                                  (:estimatedMicros (ex-data e)) (assoc :estimatedMicros (:estimatedMicros (ex-data e))))))))
+                                  (:estimatedMicros (ex-data e)) (assoc :estimatedMicros (:estimatedMicros (ex-data e)))))))))
 ;; [DX-ACT9] TX2_ACCOUNT_TICKETS=1 (default off; effective only with TX2_REMOVAL_PER_ACCOUNT=1): a cross-database ticket
 ;; (a delivery into a recipient database) that names its source accounts is checked under the source's account locks
 ;; instead of the source database's lock; the removal frontier reports which entities of an account were touched after
