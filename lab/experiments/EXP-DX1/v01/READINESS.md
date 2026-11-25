@@ -228,6 +228,9 @@ answer outside its own route. It is not a proposal to make it a default (that is
 | **New:** `TX2_SUBJECT_CREATE` / `creationSaves` (S4; `DX_S4_CREATE`), tape M (`production-M`, `production-M-burst`) | creations on the fast writer; the real mix of saves | needs several owners |
 | **New:** `TX2_IMPORT_WHOLE_SUBJECT` (IMP2) | one import commit per subject | with `TX2_IMPORT_COMMIT_US`: **the bound holds for honest frames only until fixed** (R7) |
 | **New:** `"omitProtected": true` per request; `packages/reporting` (RPT1) | the reporting copy; protected values never leave the gateway for it | — |
+| **New:** `TX2_READ_BATCH` / `DX_READ_BATCH` (API1; read gateway only), the SDK's `CallReads` loader | one API call's reads in one request at one position, by-reference entries, one read permit | the route is absent when unset; the server run of API1 measures it |
+| **New:** `"stopAt"` per reach request (API1) | a world read stops at references by the named attributes | only when a request sends it (1 to 64 attribute names) |
+| **Not an option, in force:** the entity cache's drops at a removal (API1) | a parsed entry of an entity a newly published removal names is dropped when a reader first sees the removal | every reader with the parsed-entity cache |
 | **Not an option, in force:** the kernel's cap on forms and policies raised from 512 to 8,192 (ACT6, `packages/w0`) | releases of up to 8,192 forms and policies compile | applies to every release on this branch |
 | **Not an option, in force:** the B2 key-deletion fix (`46a8f746a`) | one pending removal no longer stops the deletion of the other published removals' keys (R3) | a pending removal still makes every request answer 503 until the client resends: unchanged, an open decision for the owner |
 | **Not an option, in force:** typed refusals at the real full-document limits (ACT6) | a marker or event value over the store's 1 MiB is refused before any write, naming the sizes | the store refused it anyway, later |
@@ -254,7 +257,6 @@ answer outside its own route. It is not a proposal to make it a default (that is
 | `exp/DX-ACT9-account-tickets` | in progress; depends on the removal fix |
 | `exp/DX-ACT8-publish-beside-saves` | in independent review |
 | `exp/DX-S6-save-line-fixes` | the save review's fixes (R1, R7, R8), in review |
-| `exp/DX-API1-api-call-reads` | in progress (the evening's later instruction; the first instruction of the morning listed it for the second batch, so this is a contradiction between two instructions, resolved by not merging) |
 | `exp/DX-XQ2-index-cost` | a measurement, not a build |
 | every review branch (`exp/DX-ACT10-publish-review`, `exp/DX-S5-save-line-review`, …) | reviews, not builds |
 
@@ -549,6 +551,10 @@ from this head (sources `83789d1f…`), by ID; the selftest-style runs on the sa
 | Launch | `631dd9d3c`, `221108d6b` | `DX_CROSS_INDEX`, `DX_ID_LIST_QUEUE_MS`, `DX_ID_LIST_PER_ACCOUNT`, `DX_SWEEP_SHAPES` refused before the first Docker change; 6 launch guard cases |
 | Batch 1 into batch 2 | `a2f1f4856` | `8a362ac38` merged into the XQ10 line; no conflicts |
 | RPT1 gate | `9f2a4c431` | With pair-find on, the kill and two-projector replays end where the clean copy ends (pair-find imports after `P_H`) |
+| Readiness page | `f633233f6` | This page (pushed with the second batch) |
+| `exp/DX-API1-api-call-reads` `2bba5e360` (third push) | `d3f66ca1d` | The batched read route `POST /v2/db/{db}/batch` (`TX2_READ_BATCH`), the SDK's `CallReads` loader with its memo, `stopAt`, the entity cache's drops at a removal, the definitions cache; `api1/API-CALL-READS.md`, `api1/cache-gate.ts`. Conflicts (both sides kept): `demo/server/profile.mjs`, gateway `main.clj` (`batch` required after `uncached`; `sweepGates` beside `readBatch`), `uncached.clj` (`touch-all!` beside XQ10's hook), `DatomicClient.ts` (the batch route among the busy-retry routes beside XQ7's question route). **As merged it moved all 17 stored identities with every option off** (its `privacy.clj`, `entity_cache.clj` and `reach.clj` changes compile before `commit.clj`); restored in the late-hook form in the same merge commit: `privacy/drop-hook`, `reach/ref-attr-hook` and `reach/stop-at-hook` are vars called through `when` and `if`, and API1's code moved unchanged to `removal_drops.clj` and `reach_late.clj`, loaded after `commit.clj` |
+| Launch | `dbade70c7` | Guard cases: `DX_READ_BATCH` admitted, its bad value refused before the first Docker change |
+| Second batch's page | `4b3f0bc32` | `f633233f6` merged into the API1 line |
 
 **Conflicts and how each was resolved (both sides kept every time).** ACT6: `ha1/local.ts` (HA2's second-failure holder
 beside ACT6's release-limits holder). SCALE2: `stack/up.sh` (SCALE2's `DX_SWEEP_GATE_EVICT` beside XQ7's per-role sweep
@@ -634,7 +640,10 @@ bound beside XQ4's index-entry frame bound).
 8. The miniature (`scale2/mini.ts`) sends its saves as raw wire commits, not through the SDK adapter, so the SDK's save
    options (`orderedSaves`, `severalOwners`, `creationSaves`) and tape M cannot be turned on in it (pair (d) below).
 9. **Between two instructions to this merge:** one listed `exp/DX-API1-api-call-reads` `2bba5e360` for the second
-   batch; the later ones say not to merge API1. Not merged.
+   batch; the later ones said not to merge API1 then. It was merged afterwards, on its own, as the third push.
+11. `api1/API-CALL-READS.md` says nothing changes with its options unset. True of the answers, but its inline code in
+    `privacy.clj`, `entity_cache.clj` and `reach.clj` moved all 17 stored identities with every option off (restored
+    here); its gates compared answers, not identities.
 10. `xq10/QUESTIONS-CONNECTED.md` says its console proofs were not rerun at its final head. On this branch they were
     rerun on a second toy at the final head (gates below).
 
@@ -734,6 +743,24 @@ is unchanged by this fix and is an open decision for the owner.
 | XQ4 world with XQ10's agreement gate (`XQ4_SWEEP_SHAPES=all`, rerun at `9f2a4c431`) | every phase exit 0 (g3, d3, b1, g6, the two worlds' seeds, declarations, groups and more saves, the index replay, g2, check, g4, g5, e1, sweep, edges, agree, table); **agreement: 4,626 questions (2,361 IDs, 2,023 counts, 242 counts per value) at 3 positions and 3 valid times, 0 differences, 0 refused**, 11,003 find pages and 14,134 sweep pages (= XQ10's page: 4,626, 0); the first run left the shapes off (fault 6b) | `15aa2789` (the native image, built by the production gate from the head, removed after) |
 | Console gates and XQ10's console proofs, second toy (index on, `DX_XQ3_ERASURE_DIRECTORY=1`; rerun at `9f2a4c431`) | **XQ10's questions proof 2,599 of 2,599** (54 questions on both routes and auto, 324 questions, 1,305 IDs compared, 8 questions whose answer changes across cuts; XQ10's page reported 2,603 at an earlier commit); the console's gates: g12, config 16, entities 19, query 24, journal 8, derive 4, catalogue 80 (with `ask_across_subjects` and `indexed_attributes`), proof 37. The first two runs left the erasure directory off (fault 6e) | `dccde0ba` (transactor and both gateways, recorded while the toy was up); PostgreSQL `526f86d9` |
 | Toy card, default | pass, 0 expired, quiet 28 of 28 and 42 of 42 (the toy's loaded quiet p99 7.3 times alone under other builders' load: diagnostic, never a verdict on the Mac) | managed, from the head (removed) |
+
+### API1 (`ee9d5da5a`; image `7ba83d89f36f…`, `tx2-dxthin-jre21:3bb08577e15b2180`, built from `dbade70c7`; the only gateway change since is `batch.clj`'s fix, used only by the batch route, which API1's own gates ran on the fixed source)
+
+| Gate | Result | Image |
+| --- | --- | --- |
+| Stored-function identities against `23b7df344` | **58 of 58 equal in all 8 writer settings** (as merged, before the late form: 17 moved) | `7ba83d89` by ID |
+| B2 paired phase against the second batch (`f633233f6`) | native log, replies and key store after a shred pass **identical**, with removals and without: API1 changes nothing with its options off | `7ba83d89` |
+| B2 standing gate | b2 16 checks, 0 failed on both authorities (base 2 failed each); scenarios 43, 0 failed, both; fuzz 20,000 schedules, 0 violations, both; lines 10, 0 failed | `7ba83d89` |
+| XQ4's G8 paired stored log | 33,609 datoms, head 620, `0569a8f8…` = `23b7df344`'s | the production gate's native image (removed) |
+| Plan output; reach | 6 of 6 identical, INDEX identical (the 2 refused differ only in the path); 22 of 22 equal, control differs 22 of 22, `writeOptionsSame` true | none; `7ba83d89` |
+| Unit; SDK; `tsc`; core; guard | 79 of 79; 482 passed, 53 skipped; clean; 863 of 863; 142 cases, 0 mismatches (2 new: `DX_READ_BATCH`) | — |
+| Selftest; ids; XQ10 and RPT1 suites | 29 / 54,160, 0 failures; 16,464, 0; XQ10 four arms 0 failures and the known error; RPT1 76 / 71,180, 0 failures and the known error | `7ba83d89` |
+| Production exactness, default; aged gate | R 840 of 840, S 88 of 88, 0 expired, 2,836 fields; aged pass | the gate's own native image (removed) |
+| Console and XQ10's questions proof, second toy | questions proof 2,599 of 2,599; console proof 37 of 37; every console gate | `7ba83d89` (recorded while the toy was up) |
+| **API1's gate** (`api1/gate.sh gate,straddle`, at `ee9d5da5a`) | **167,357 comparisons of the batch and the loader against single reads, 0 differences**; refusals as designed (history, row ID lookups, scans, held handles: `BatchUnsupported`); straddle: the product's unpinned path inconsistent in 87 of 334 calls (what API1 measures), pinned, loader and batch 0 of 369, 1,133 and 1,527. **The first run found a fault of this merge** (every batch 400 "Boolean cannot be cast to IFn": step 0 had made `admission/*own-pool*` a function and API1's `batch.clj` still bound it to `true`); fixed in `ee9d5da5a` | API1's runtime image `21a67288…` by ID (it needs node), the head's gateway source mounted |
+| API1's parsed-entity cache gate (`cache`, `TX2_ENTITY_CACHE_VERIFY=1`) | 6,208 probes, 0 removed values served, 0 missing; 64 refused, the designed 503s while a removal is pending (32 each, sealed and unsealed) (= API1's page) | `21a67288…`, source mounted (run at `4b3f0bc32`; the cache gate does not use the batch route) |
+| XQ10's stacks (xq3, xq6, xq9 off and shapes, xq7, the question reader, refusals) | every step passed; reader 5,783 checks, 36 refused byte-equal on both readers, 36 the index refused and the sweep answered, 0 failed; refusals 9. **xq3's first run stopped once** on 503 `ErasureFrontierUnavailable` right after its scope was created (no gateway exception logged; its write gateway had restarted once at start, unable to read the transactor's location); **rerun alone: 1,654 checks, pass**. Cause not found; open | `7ba83d89` |
+| RPT1 gate with its file scan | 606 checks, 0 failures, 8,226 facts compared (the first run did not start: the worktree's install predated `packages/reporting`) | `7ba83d89`, PostgreSQL `526f86d9` |
 
 ## Next server session (one driver, in this order; none has run)
 
