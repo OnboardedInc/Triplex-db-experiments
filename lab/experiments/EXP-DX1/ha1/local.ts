@@ -173,7 +173,8 @@ export async function localDrill(opts: any, config: any, manager: any) {
   const besideSaves = holder === "DX-ACT8" && diagnostic && mode === "load-fair" && combined === undefined &&
     (process.env.DX_ACT6_GATE === "1" || process.env.DX_ACT3_HELD === "1");
   // [DX-ACT10] Why: the adversarial reviewer of the Publish and settlement guards runs its stack checks in the held runner.
-  const publishReview = holder === "DX-ACT10" && diagnostic && mode === "load-fair" && combined === undefined &&
+  // [DX-ACT8] The Publish builder reruns the review's stack checks as a standing gate phase.
+  const publishReview = (holder === "DX-ACT10" || holder === "DX-ACT8") && diagnostic && mode === "load-fair" && combined === undefined &&
     process.env.DX_ACT3_HELD === "1" && process.env.DX_ACT10_STACK === "1";
   assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours ||
     heldPublish || settleFrames || settleLive || releaseLimits || besideSaves || publishReview);
