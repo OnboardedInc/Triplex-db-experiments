@@ -155,14 +155,14 @@
 (defn- operation-id [entry]
   (str "privacy-" (privacy/sha256 (get entry "commandId"))))
 
-(defn apply-native!
-  ([conn current entry] (apply-native! conn current entry (json/write-str entry)))
-  ;; [DX-ERA2 fifth pass, Z1] `raw`: the removal's record as published. A restore's replay lands at the next free
-  ;; position (its journal and transaction say so) but keeps the published record, so the data's records and the log
-  ;; stay one chain and the commit boundary sees the same removal.
-  ([conn current entry raw]
+(defn apply-native! [conn current entry]
   (let [current (install-cut-guard! conn current)
         eid (d/entid current [:triplex.tx/operation-id (operation-id entry)])
+        ;; [DX-ERA2 fifth pass, Z1] the removal's record as published, when a restore's replay carries it (metadata
+        ;; :published): the replay lands at the next free position (its journal and transaction say so) but keeps the
+        ;; published record, so the data's records and the log stay one chain and the commit boundary sees the same
+        ;; removal. One arity, so a caller that wraps this function keeps working.
+        raw (get (meta entry) :published (json/write-str entry))
         position (get entry "position")
         tx (get entry "txId")
         stamp (double (get entry "erasedAt"))
@@ -199,7 +199,7 @@
           (when (= ::timeout report) (privacy/unavailable!))
           (let [db (:db-after report) t (d/basis-t db)]
             (when-not (= raw (scope/value db (d/t->tx t) :triplex.tx/erasure-record)) (privacy/unavailable!))
-            t)))))))
+            t))))))
 
 (defn response [db entry]
   (let [native (d/entid db [:triplex.tx/operation-id (operation-id entry)])]
@@ -310,8 +310,8 @@
                   (when-not (and (= (dissoc entry "position") (dissoc native "position"))
                                  (= (get native "position") (scope/value data eid :triplex.tx/position)))
                     (privacy/unavailable!))))
-              (apply-native! conn data (assoc entry "position" (inc (scope/head-position data (scope/entity data))))
-                             (json/write-str entry)))))
+              (apply-native! conn data (with-meta (assoc entry "position" (inc (scope/head-position data (scope/entity data))))
+                                         {:published (json/write-str entry)})))))
         ;; [DX-ERA3] A restored copy guarded per account: counters, declaration and held accounts from the log.
         (when (removal-scope/per-account? (sync! conn))
           ((requiring-resolve 'triplex.gateway.removal-commit/rebuild!) conn (sync! conn) state))

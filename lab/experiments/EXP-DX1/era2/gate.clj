@@ -145,7 +145,9 @@
           (let [moved (offers/route name "v2" "removal-per-account" {})]
             (check! "setup" (and (= 200 (:status moved)) (get-in moved [:body "perAccount"])) "database moved per account" moved)
             ;; [DX-ERA2 fifth pass] the boundary is the database's: a process allowed to (commit mode) moved it on
-            (check! "setup" (= commit? (rc/commit-boundary? (d/db conn))) "the database's boundary is the mode's" (:body moved))))
+            ;; (the fourth review's cases choose each request's boundary with the test seam; then the seam is the mode)
+            (check! "setup" (= (if (some? rc/commit-boundary) rc/commit-boundary commit?) (rc/commit-boundary? (d/db conn)))
+                    "the database's boundary is the mode's" (:body moved))))
         (f name conn))))))
 
 (defn seed! [name owners]
