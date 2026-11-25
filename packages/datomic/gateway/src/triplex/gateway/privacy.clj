@@ -12,6 +12,12 @@
 (def ^:dynamic *database* nil)
 (def ^:dynamic *data* nil)
 (def ^:dynamic *unseal* nil)
+;; [DX-RPT1] Why: a reporting copy must never receive a protected value, sealed, unsealed or removed, so that no
+;; removal can leave one in its tables, write-ahead log or backups. A request that sends "omitProtected": true gets
+;; every protected row with its value columns empty and type "protected", and every change record of a protected
+;; attribute with the value {"type":"protected"}. Rejected: filtering in the copy (the value would already have left the
+;; gateway); a gateway-wide switch (every other reader must keep byte-identical answers).
+(def ^:dynamic *omit-protected* false)
 (def cache (atom {}))
 (def local-guards (atom {}))
 (def zeros (apply str (repeat 64 "0")))
@@ -198,10 +204,21 @@
               :created_by :entity_type :schema_version :tx_id])
 (def payload-cols [:value_string :value_number :value_boolean :value_datetime :value_json])
 
+(defn- omitted [row attrs]
+  (cond
+    (= ":_tx/change" (:attribute row))
+    (let [change (json/read-str (:value_json row))]
+      (if (and (contains? change "value") (attrs (get change "attribute")))
+        (assoc row :value_json (json/write-str (assoc change "value" {"type" "protected"})))
+        row))
+    (attrs (:attribute row)) (assoc (reduce #(assoc %1 %2 nil) row payload-cols) :value_type "protected")
+    :else row))
+
 (defn masked [row]
   (if-not *cut* row
     (let [sealed? (:sealed *cut*) attrs (:attrs *cut*)]
       (cond
+        *omit-protected* (omitted row attrs)
         (= ":_tx/change" (:attribute row))
         (let [change (json/read-str (:value_json row)) id (get change "tripleId")
               attr (get change "attribute") marker (get-in *cut* [:erased id])
@@ -244,7 +261,7 @@
   (zipmap columns (json/read-str (subs text (packed-tail text)))))
 
 (defn text [^String bytes]
-  (if (and *cut* (or (:sealed *cut*) (seq (:erased *cut*))))
+  (if (and *cut* (or *omit-protected* (:sealed *cut*) (seq (:erased *cut*))))
     (let [end (packed-tail bytes)
           values (json/read-str (subs bytes end))
           row (zipmap columns values)
