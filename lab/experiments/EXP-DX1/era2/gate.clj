@@ -1011,9 +1011,16 @@
               adopted (stored)
               after-rebuild (offers/route name "v1" "read" {"entityIds" [a1 b1]})
               ;; (b) a stored policy that differs from the log's
+              ;; [DX-ERA2 seventh pass, adapted to the union rule (X1)] the log's copy only grows: the rebuild route
+              ;; answers 200 and the copy becomes the union; the stored policy then lacks :v, so writes wait (503
+              ;; RemovalPolicyBehind); put back, it lacks :w, and the restore route adds it back
               _ @(d/transact conn [[:db/add (head-e) policy-attr (json/write-str {"attributes" [":w"] "sealed" false})]])
               mismatch (offers/route name "v2" "removal-log-rebuild" {})
+              copy-after (set (get (json/read-str (privacy/record-text name "head.json")) "attributes"))
+              behind-save (offers/send name (frame "pr-bs" "acct/d/one" (secret "acct/d/one" "b") (:id (seeds "acct/d/one")) (head conn)))
               _ @(d/transact conn [[:db/add (head-e) policy-attr (json/write-str adopted)]])
+              restore-route (offers/route name "v2" "restore-erasure" {})
+              stored-after (set (get (stored) "attributes"))
               ;; (c) an earlier build's replay wrote its new position into the record
               _ (expect label (remove! name "pr-2" b1) [200 nil])
               native (last (:entries (rc/native-entries name (d/db conn))))
@@ -1046,7 +1053,11 @@
           (check! label (= 1 (get-in rebuilt [:body "seq"])) "the log rebuilt to the data" (:body rebuilt))
           (check! label (= {"attributes" [":v"] "sealed" false} adopted) "the policy adopted again from the log's head" adopted)
           (expect (str label ": a read after it") after-rebuild [200 nil])
-          (expect (str label ": a stored policy that differs from the log's") mismatch [409 "ProtectionPolicyMismatch"])
+          (expect (str label ": a stored policy that differs from the log's: the rebuild route [seventh pass, union]") mismatch [200 nil])
+          (check! label (= #{":v" ":w"} copy-after) "[seventh pass] the log's copy is the union, never the stored list alone" copy-after)
+          (expect (str label ": a save while the stored policy lacks :v [seventh pass]") behind-save [503 "RemovalPolicyBehind"])
+          (expect (str label ": the restore route [seventh pass]") restore-route [200 nil])
+          (check! label (= #{":v" ":w"} stored-after) "[seventh pass] the restore route adds the copy's :w to the stored policy" stored-after)
           (when commit? (expect (str label ": a save with a record shifted by an earlier build's replay") conflict-save [503 "RemovalLogConflict"]))
           (expect (str label ": the reconcile route with a body") with-body [400 "InvalidValue"])
           (expect (str label ": the reconcile route") reconciled [200 nil])

@@ -234,7 +234,7 @@
     state))
 
 (defn served
-  "The state a request on a database guarded per account is served from (erase/request-cut).
+  "The state a request on a database guarded per account is served from (removal-scope/request-cut).
   [DX-ERA2 seventh pass, X1] A stored policy that lacks an attribute the log's copy lists (data restored from before
   an addition) refuses writes, on both boundaries, until the restore route adds it back; reads are served."
   [name db state]
@@ -288,7 +288,7 @@
                             (do ((requiring-resolve 'triplex.gateway.failures/note!) "read-publication" name c)
                                 (privacy/unavailable!))))))))
         state (when-not (= ::timeout done)
-                (try (first (erase/request-cut name conn (erase/sync! conn)))
+                (try (first (removal-scope/request-cut name conn (erase/sync! conn)))
                      (catch clojure.lang.ExceptionInfo e (throw e))
                      (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "read-publication" name e)
                        (privacy/unavailable!))))
@@ -301,7 +301,7 @@
     state))
 
 (defn consistent?
-  "Request time (erase/request-cut): the data and the log agree, declarations included. With the commit boundary,
+  "Request time (removal-scope/request-cut): the data and the log agree, declarations included. With the commit boundary,
   served as long as nothing refuses writes (a transient disagreement is retried on a synced database first)."
   [name db state]
   (if (commit-boundary? db)
@@ -763,12 +763,12 @@
     ;; [DX-ERA3 N1] A removal of another command left pending is completed first, exactly as its own resend would.
     (when-let [p (pending! name)]
       (when-not (= command (get p "commandId")) (complete-pending! name conn)))
-    (let [buckets (@#'erase/selector-buckets (d/db conn) selectors)]
+    (let [buckets (removal-scope/selector-buckets (d/db conn) selectors)]
       (when-not (log-cut name (d/db conn))
         (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
       (privacy/guard name
         (fn []
-          (@#'erase/with-bucket-guards name buckets
+          (removal-scope/with-bucket-guards name buckets
             (fn []
               (let [db (erase/sync! conn)
                     current (log-cut name db)
@@ -1395,7 +1395,7 @@
 
 (defn start-check!
   "[DX-ERA3 N5] At gateway start: every database guarded per account whose data is ahead of (or behind) its removal
-  log is reported. Every request (erase/request-cut) and every removal checks the same again and refuses."
+  log is reported. Every request (removal-scope/request-cut) and every removal checks the same again and refuses."
   [names connect]
   (doseq [name names]
     (try
