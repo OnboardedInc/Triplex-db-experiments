@@ -26,6 +26,8 @@ else
   cp -R "$out/tmp/packages/datomic/gateway/src/." "$out/src/"; cp "$out/tmp/packages/datomic/src/codec-spec.json" "$out/codec-spec.json"; rm -rf "$out/tmp"
 fi
 cp "$x/wfix1/regression.clj" "$x/$file" "$out/lab/"
+# [DX-N1R] replies2.clj (the review's reply attacks) loads replies.clj from beside it
+cp "$x/n1-keys/replies.clj" "$out/lab/"
 image=${DX_B2_IMAGE_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
 pgimage=${DX_B2_PG_ID:-sha256:526f86d93c6ea08fd3f1fe5605650cacc781b2c6013169a0ad8f42c7d3d84f32}
 [[ $(docker image inspect --format '{{.Id}}' "$image") == "$image" ]] || { echo "run.sh: image $image not present" >&2; exit 2; }

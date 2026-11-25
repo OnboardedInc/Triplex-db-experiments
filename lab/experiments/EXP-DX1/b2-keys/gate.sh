@@ -20,7 +20,9 @@
 #           the driver's message (the statement with a wrapped key); other exceptions print their class only.
 #           [DX-N1, N3] And n1-keys/replies.clj on the file and the PostgreSQL authority: the declaration's refused key
 #           batch answers a typed 503 with no hex run, SQL text or key handle; every route, with an exception injected
-#           where it reaches storage, a driver or Datomic, answers without the exception's message.
+#           where it reaches storage, a driver or Datomic, answers without the exception's message. [DX-N1R] And the
+#           review's n1-keys/replies2.clj on both authorities (Errors, the ID-list and sweep routes, the question
+#           reader's guard, a real Jetty: J1 an Error from a route, J2 an exception from the trace wrapper).
 #   n1      [DX-N1] n1-keys/pool.clj (R0 to R3: the key pool after a restart, a save of more protected values than the
 #           pool holds, a burst) on this worktree and on the base, file and PostgreSQL authority: this worktree must pass
 #           every check (the base's result is printed as the reference); and b2-keys/paired.clj on the PostgreSQL
@@ -137,6 +139,11 @@ if [[ $phases == *lines* ]]; then
   for authority in file pg; do
     bash "$x/n1-keys/run.sh" "$out/replies-this-$authority" worktree "$authority" n1-keys/replies.clj '(n1-replies/main)' > /dev/null || status=1
     grep -hE "^N1_REPLY_SUMMARY|^N1_REPLY FAIL" "$out/replies-this-$authority/run.log" | cut -c1-300 | head -8
+    # [DX-N1R] the review's reply attacks (n1-keys/replies2.clj, from n1r/): Errors (E1-E3), the ID-list and sweep
+    # routes (E4), the question reader's guard (E5), a real Jetty with an Error from a route (J1) and an exception from
+    # the trace wrapper itself (J2, the review's F1)
+    bash "$x/n1-keys/run.sh" "$out/replies2-this-$authority" worktree "$authority" n1-keys/replies2.clj '(n1r-replies2/main)' > /dev/null || status=1
+    grep -hE "^N1R_REPLIES2_SUMMARY|^N1R_J|^N1_REPLY FAIL" "$out/replies2-this-$authority/run.log" | cut -c1-300 | head -12
   done
 fi
 if [[ $phases == *n1* ]]; then

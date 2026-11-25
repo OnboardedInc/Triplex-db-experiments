@@ -528,7 +528,10 @@
 (defn- route-handler-guarded [request]
   (try (route-handler request)
        (catch Throwable t (response 500 {:code "GatewayError" :message ((requiring-resolve 'triplex.gateway.reply/message) t nil)}))))
-(defn handler [request] (trace/handler route-handler-guarded request))
+;; [DX-N1R F1] the last answer is around the trace wrapper too: an exception it raises answers the same fixed JSON
+(defn handler [request]
+  (try (trace/handler route-handler-guarded request)
+       (catch Throwable t (response 500 {:code "GatewayError" :message ((requiring-resolve 'triplex.gateway.reply/message) t nil)}))))
 (defn serve! [serve-handler port]
   (envelope/start!)
   (d/create-database (db-uri "tx2-health"))
