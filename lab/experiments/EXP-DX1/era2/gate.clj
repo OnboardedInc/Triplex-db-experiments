@@ -175,7 +175,8 @@
               before2 (raw-occurrences conn v2)
               r (with-held name (frame "same-subject" a1 (secret a1 "v3") "a1-v2" (head conn))
                   #(expect "held/same-subject" (remove! name "rm-2" a1) [200 nil]))]
-          (expect "held: the same subject's save across its removal" r [409 "CasConflict"])
+          ;; [DX-ERA2 fifth pass, R2-2] refused with the terminal answer: a removal of its subject landed after its frame
+          (expect "held: the same subject's save across its removal" r [409 "ErasureReplayDeclined"])
           (removed-everywhere! "held/same-subject" name conn a1 v2 before2 (head conn)))
         ;; 3. Another subject of the same account (a2) held while a3's value is removed: database-wide refused; guarded
         ;; per account a save is fenced on the subjects it writes, so it commits.
@@ -1144,6 +1145,47 @@
           (check! label (marked? name a1 pin) "a1 marked at the old position" nil)
           (native-counters-agree! label name conn))))))
 
+(defn cache-stamps
+  "[DX-ERA2 fifth pass, B5] Caches across a removal stopped after its commit in Datomic (before its publication). Reach
+  sessions remember a1 at a pin (the server then answers a remembered entity without its rows, and the client reuses
+  its own copy) and the erasure frontier is read; the removal of a1 commits and stops; then the same sessions read the
+  same pin. Each must send a1 again with its rows (masked), never `unchanged`, and no route may answer the value. With
+  the commit boundary the frontier's sequence stays (tickets wait for the publication) and its removalStamp moves at
+  the commit; on the log's boundary the first read publishes the removal, so both move. Also a fresh session and the
+  plain read routes."
+  []
+  (when per-account?
+    (fresh-scope false
+      (fn [name conn]
+        (let [label (str "cache-stamps/" mode)
+              seeds (seed! name [a1 b1]) value (:value (seeds a1)) pin (head conn)
+              frontier #(:body (offers/route name "v2" "erasure-frontier" nil))
+              reach-at (fn [session] (offers/route name "v2" "reach" {"root" a1 "basis" {"recordedPosition" pin "validAt" 1.0e12}
+                                                                       "session" session "erasureRefs" true}))
+              entity-of (fn [r] (some (fn [e] (when (= a1 (first e)) e)) (get (json/read-str (text (:body r))) "entities")))
+              w1 (reach-at "cs-pin-1") w2 (reach-at "cs-pin-2")
+              f0 (frontier)
+              stop (fn [f] (fn [& args] (let [r (apply f args)] (throw (ex-info "stopped after the commit" {})) r)))
+              stopped (with-redefs [rc/commit! (stop rc/commit!) erase/apply-native! (stop erase/apply-native!)]
+                        (remove! name "cs-1" a1))
+              r1 (reach-at "cs-pin-1") r2 (reach-at "cs-pin-2") r3 (reach-at "cs-pin-fresh")
+              f1 (frontier)
+              texts (route-texts name a1 pin)]
+          (check! label (str/includes? (text (:body w1)) value) "warm: the session at the pin holds the value" nil)
+          (check! label (= 3 (count (entity-of w2))) "warm: sent with its rows" (entity-of w2))
+          (check! label (not= 200 (:status stopped)) "the removal stopped after its commit" (offers/outcome stopped))
+          (doseq [[k r] {:remembered-1 r1 :remembered-2 r2 :fresh r3}]
+            (check! label (= 200 (:status r)) (str "reach " k " answers") (:status r))
+            (check! label (not (str/includes? (text (:body r)) value)) (str "reach " k " does not answer the value") nil)
+            (check! label (= 3 (count (entity-of r))) (str "reach " k " sends a1 again with its rows, not `unchanged`") (entity-of r)))
+          (doseq [[route reply] texts]
+            (check! label (not (str/includes? (text (:body reply)) value)) (str "route " route " does not answer the value") nil))
+          (if commit?
+            (do (check! label (= (get f0 "seq") (get f1 "seq")) "commit boundary: the sequence waits for the publication" [f0 f1])
+                (check! label (= (inc (get f0 "removalStamp")) (get f1 "removalStamp")) "commit boundary: the stamp moved at the commit" [(get f0 "removalStamp") (get f1 "removalStamp")]))
+            (check! label (= 1 (get f1 "seq") (get f1 "removalStamp")) "log boundary: the first read published it; sequence and stamp 1" f1))
+          (println "ERA2_CACHE_STAMPS" mode (pr-str {:before (select-keys f0 ["seq" "removalStamp"]) :after (select-keys f1 ["seq" "removalStamp"])})))))))
+
 ;; ---- [DX-S5 second review R2-2, adapted] a creation racing a removal of its subject, then the client's replay ----
 (defn creation-race
   "The save-line review's R2-2 (`s5/attack2_gate.clj` `a-creation-racing-a-removal-is-replayed-into-the-removed-family`,
@@ -1228,6 +1270,7 @@
   (scenario "catch-up" catch-up)
   (scenario "data-behind" data-behind)
   (scenario "boundary-transition" boundary-transition)
+  (scenario "cache-stamps" cache-stamps)
   (scenario "creation-race" creation-race)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode

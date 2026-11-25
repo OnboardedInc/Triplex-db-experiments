@@ -199,7 +199,14 @@
                (assoc :committed-pending true))))
          :per-account true
          ;; [DX-ERA2 fifth pass] the value every write of this request fences on (-1, or -2 with the commit boundary)
-         :erasure-sentinel (scope/value db (scope/entity db) :triplex.scope/erasure-seq)))
+         :erasure-sentinel (scope/value db (scope/entity db) :triplex.scope/erasure-seq)
+         ;; [DX-ERA2 fifth pass, B5] the one value a cache keys on: it changes exactly when what a read may answer
+         ;; changes. On the log's boundary the published sequence (a read publishes a committed removal first); with the
+         ;; commit boundary the number of removals committed in this database value (it moves at the commit, while the
+         ;; sequence and the tickets wait for the publication)
+         :stamp (if (commit-boundary? db)
+                  (max (long (:seq state)) (count (:entries (native-entries name db))))
+                  (:seq state))))
 
 (defn publish-for-read!
   "[DX-ERA3 M1, the log's boundary] A read found its database's pending removal already committed in the data: the

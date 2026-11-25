@@ -622,17 +622,20 @@ export class DatomicClient {
               const atLeastHeader = res.headers["x-tx2-at-least"];
               if (typeof atLeastHeader === "string" && data && typeof data === "object")
                 this.atLeastEcho.set(data, Number(atLeastHeader));
+              // [DX-ERA2 fifth pass, B5] the removal stamp when the gateway sends one: it changes at a removal's commit
+              // under the commit boundary, while the erasure sequence waits for the publication.
               const erasureHead = res.headers["x-triplex-erasure-seq"];
+              const stampHead = res.headers["x-triplex-removal-stamp"] ?? erasureHead;
               if (
-                erasureHead !== undefined &&
+                stampHead !== undefined &&
                 (path.endsWith("/reach") || path.endsWith("/reach-many"))
               ) {
-                const sequence = Number(erasureHead);
+                const sequence = Number(stampHead);
                 this.reachReplySequence.set(
                   data,
                   Number.isSafeInteger(sequence) &&
                     sequence >= 0 &&
-                    String(sequence) === erasureHead
+                    String(sequence) === stampHead
                     ? sequence
                     : null,
                 );

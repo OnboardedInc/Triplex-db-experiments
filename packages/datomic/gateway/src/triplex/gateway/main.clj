@@ -468,11 +468,16 @@
                                 privacy/*unseal* (fn [id e a value] (envelope/decode! name (d/db conn) id e a value))]
                         (let [answer (if (and (= :get request-method) (= action "erasure-frontier"))
                                        (response 200 (cond-> {:database name :protected (boolean cut)
-                                                              :seq (or (:seq cut) 0) :erased (or (:erased cut) {})}
+                                                              :seq (or (:seq cut) 0) :erased (or (:erased cut) {})
+                                                              ;; [DX-ERA2 fifth pass, B5] what a cache keys on
+                                                              :removalStamp (or (:stamp cut) (:seq cut) 0)}
                                                        (:per-account cut)
                                                        (merge (removal-scope/frontier-fields cut query-string))))
                                        (route-handler-base request))]
-                          (cond-> answer cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))))))]
+                          (cond-> answer
+                            cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))
+                            ;; [DX-ERA2 fifth pass, B5] the value that changes at the commit with the commit boundary
+                            cut (assoc-in [:headers "x-triplex-removal-stamp"] (str (or (:stamp cut) (:seq cut))))))))]
             (cond
               independent
               ;; [DX-ERA2] Per account the cut was checked by request-cut; the fence decides at the serial point.
