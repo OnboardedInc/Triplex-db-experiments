@@ -1,6 +1,7 @@
 # A removal on request reaches every copy derived from the removed value (`TX2_DERIVED_SEAL`)
 
-Builder DX-ERA4, 2026-11-24, branch `exp/DX-ERA4-derived-copies` from `exp/DX-ACT9-account-tickets` (`c2aa3d416`). All
+Builder DX-ERA4, 2026-11-24, branch `exp/DX-ERA4-derived-copies` from `exp/DX-ACT9-account-tickets` (`c2aa3d416`),
+with DX-ERA2's third removal pass (`3edb9f5d9`) merged at `1d01d02ab` (section 11). All
 accounts stay in one Datomic database. Mac work is correctness at toy size; every Mac time is diagnostic. Datomic is not
 modified. Every option is default off; with `TX2_DERIVED_SEAL` absent nothing here changes a byte.
 
@@ -11,7 +12,27 @@ lives must be reached by the removal, or the value must live there only under a 
 Sections 1 to 4 were written before any code of the option (the inventory from the code of `c2aa3d416`, the failing
 test, the design). Results follow from section 6.
 
-<!-- SUMMARY -->
+**Summary for the owner (2026-11-24, 23:10 EST).**
+
+1. **Before this work no removal reached any derived copy.** A notice, a ledger, a settled change or a recipient's
+   record computed from a protected value kept it in clear, and the journal, the native data and every backup kept it
+   too (T1 off: X's removed date 100 times in 21 places, its derivatives 129 times). On an UNSEALED protected database
+   a removal deletes nothing at all; it masks (section 1). An unsealed protected scope should not exist outside tests.
+2. **With `TX2_DERIVED_SEAL=1` on a sealed database every derived copy this option's writers make is sealed under a key
+   derived from the keys of the protected assertions it was computed from.** A removal already destroys those keys, so
+   every copy becomes unreadable wherever it went, and nothing has to find it (a missed copy cannot exist). T1 on: 0, 0,
+   0; the stream goes on (a subject whose notices read the removed value starts a new generation); the chain verifies.
+3. **Gates:** identities 60 of 60 in 7 settings and the native log identical with every option off, at the start and
+   on the merged head; gate (e) 20,000 schedules, 303,550 oracles, 0 violations before the merge, {{SERIES3_SHORT}} on the
+   merged head; DX-ERA2's, DX-ACT9's and both reviews' gate sets with every option on, 0 violations; the second
+   review's E9 green when the copy is sealed as this option writes it (`e9s`).
+4. **The removal's own work does not grow with copies** (35 datoms with 0 or 1,000 copies). Bytes grow 17 to 31%.
+5. **What it relies on and cannot promise:** the caller must seal, and name every row it read (a clear copy written by
+   hand, or a seal naming fewer assertions, survives: the second review's `e9` as written stays red); a notice's
+   existence stays readable; a delivered notice cannot be un-sent; the keys' dead copies in PostgreSQL and backups of
+   the authority open with the one wrapping key; the reconcile index and the non-held paths are not sealed. The
+   cross-database delivery window stays open for ordering but is harmless for content (section 11.3). Nothing ran on
+   a server.
 
 ## 1. The inventory: every place a protected value or a derivative can be stored or served
 
@@ -390,7 +411,34 @@ recorder stops for good" is gone under the option: nothing refuses the recorder.
 
 ### 6.4 Gate (e): races in process
 
-{{SERIES}}
+`era4/races.clj` (section 5) runs DX-ACT9's schedules on a **sealed** database with every option on (per-account rule,
+subject check, account tickets, `TX2_DERIVED_SEAL`), the file authority and grace 0, with oracles that allow **no**
+derived copy of a removed value anywhere, before or after the removal. Each schedule: subject X of account A and
+subject Y of account B seeded; their copies sealed (on) or in clear (off); eight derived writes (settlement frame, notice
+frame, Publish marker, delivery into a recipient database, for A and B) plus the second review's E6 write (a frame of
+B that read X and names only B), each fired at a random point of the removal; the removal stopped at a random step and
+resumed; one schedule in four a kill (caches and the shred worker's progress cleared); one in eight a restore of X's key
+from a copy taken before the removal. Every 100 schedules: the journal pages, the feed and an exact scan of every native
+datom (history included) of the source and the recipient.
+
+**Before the merge** (`series2`, 20 runs of 1,000 in two parallel series, seeds 101 to 120, block 100; source
+`11ffbc425`, the first runs `0092cbb7b` with the working-tree `races.clj` that `11ffbc425` committed unchanged; runtime
+image `sha256:21a67288007d...` in every run; 570 to 585 s per run, diagnostic, most of it each schedule's wait for the
+key's deletion):
+
+| Measure | On (sealed copies) | Off (copies in clear, 500 schedules, seed 201) |
+| --- | --- | --- |
+| Schedules | **20,000** | 500 |
+| Oracles | **303,550** | 3,045 |
+| Violations | **0** | **15**, as expected: in each of the 5 blocks, the journal pages answer a removed value (5) and native datoms hold it in clear in the source and in the recipient (10) |
+| Kills / key restores | 4,959 / 2,536 | 112 / (restores only on) |
+| Removed account's copies that landed (delivery, frame, notice, Publish) | 11,028 (2,689, 2,769, 2,825, 2,745) | 254 |
+| E6 frames (account B, read X) that landed | 20,000 | 500 |
+| Other account's derived writes that landed (never refused) | 80,000 | 2,000 |
+| Native datoms holding a removed value in clear (exact scan, 200 blocks per database) | **0** in the source, **0** in the recipient | 22 to 40 per block in the recipient, 262 to 282 in the source |
+| Removal stops (before the commit, after it, at the publication, after the guard, none) | 3,370; 3,338; 3,243; 3,243 asked, **0 fired** (no schedule took a subject guard); 6,806 | 83; 87; 78; 90 asked, 0 fired; 162 |
+
+**On the merged head** (`series3`, `1b9d0e227` and its page commit `a177f4893`, DX-ERA2's third pass): section 11.5.
 
 ### 6.5 Gate (a): every option off
 
@@ -411,7 +459,7 @@ Every option on together: `TX2_REMOVAL_PER_ACCOUNT`, `TX2_REMOVAL_SUBJECT_CHECK`
 | --- | --- |
 | DX-ERA2's gate (`era2/gate.sh`, phases gate, era3, suites; `ERA2_EXTRA_ENV` with the three later options) | interleavings database-wide 360 checks, per account 695, subject check 8,963: **0 failed**; frame race 40 per setting (20 `cas-failed`, 20 at the account fence, 0 committed); the first review's attacks and fuzzer (`era3/attack.clj`) 1,979 and 1,988 oracles: **0 violations**; gateway suites 76 tests, 71,170 assertions passing, 1 error: the known `feed-test` `http-route` error, the same on the base (it is what makes the script exit 1, as for DX-ERA2 and DX-ACT9) |
 | DX-ACT9's gate (`act9/inproc.sh after`, 1,000 schedules) | 8,267 oracles, **0 violations** |
-| The second review (`REVIEW-2.md`, `1c656316b`), its findings as gates | **E9** (a derived copy recorded before a removal stays readable, unsealed and sealed): closed for the copies this option seals (T1; gate (e), whose oracles allow no copy). **E6** (a ticket naming fewer accounts than its writer read lets the copy survive): closed for sealed copies, because the key follows the rows read, not the ticket (gate (e)'s cross-account write). **N5** (a log restored older than the data): not run; argued in section 9, item 9. **N1 to N4** (the removal protocol: an orphan declaration, deliveries into a recipient moved per account, mixed versions): not changed by this option and not closed here. Its `attack2.clj` was not run on this branch: its derived writes are written in clear, so with or without the option they show the copy E9 describes |
+| The second review (`REVIEW-2.md`, `1c656316b`), its findings as gates | **E9** (a derived copy recorded before a removal stays readable, unsealed and sealed): closed for the copies this option seals (T1; gate (e), whose oracles allow no copy). **E6** (a ticket naming fewer accounts than its writer read lets the copy survive): closed for sealed copies, because the key follows the rows read, not the ticket (gate (e)'s cross-account write). **N5** (a log restored older than the data): not run; argued in section 9, item 9. **N1 to N4** (the removal protocol: an orphan declaration, deliveries into a recipient moved per account, mixed versions): not changed by this option and not closed here. Its `attack2.clj` was not run on this branch before the merge. **After the merge (section 11): `attack2.clj` E1 to E8 and its fuzzer ran with every option on, 0 violations; `e9` as written stays red (a clear hand-made copy); `e9s`, the same case with the copy sealed as this option writes it, is green; E7 and E7b (a log restored behind the data, N5's family) ran with the option on, 0 violations** |
 
 ### 6.7 Gate (g): what it costs
 
@@ -530,9 +578,21 @@ not written yet (follow-up 4).
    preview (5.1 item 1); T1's later saves are of unprotected attributes.
 8. **The reconcile index** (row 23) and the non-held paths (row 22) are not sealed.
 9. **The second review's N5** (a removal log restored older than the data lets an old derived write land after the
-   removal) was not run with the option. Argued: its copy is sealed under the removed assertion's key, so it opens as
-   removed once the correct log is back, and as soon as the key is deleted it opens nowhere; the frame landing after the
-   removal is unchanged. N1 to N4 concern the removal protocol and are unchanged by this option.
+   removal) was not run with the option before the merge. After the merge: on a database guarded per account, DX-ERA2's
+   third pass refuses every request with `RemovalLogBehind` while the data is ahead of the log, this option's seal and
+   open routes included (they take their cut from `request-cut`); on the database-wide rule they check the data
+   against the log as every request does (`verify-data!`). The review's E7 and E7b ran with the option on, 0
+   violations (section 11.5). Argued as before: such a copy is sealed under the removed assertion's key, so it opens as
+   removed once the correct log is back, and opens nowhere once the key is deleted. N1 to N4 concern the removal
+   protocol; the third pass's fixes for them ran with the option on (section 11.5).
+11. **The subject guard's stop point (P3)** was never reached with the option: in phase `checks` and in all 20,000
+   schedules of gate (e) no removal took a guard (a quiet removal commits at its first attempt). Nothing of this option
+   runs between the declaration and the commit, so P3 is argued equal to P2; DX-ERA2's own gate stops there.
+12. **T1 on a database moved per account**: T1 ran with every option set but its database is not moved, so the
+   per-account removal path is exercised by gate (e) and DX-ERA2's gates, not by W0's real writers.
+13. **The caller gate covers the three writers this option seals with** (recorder, settlement archive, receiver) and
+   W0's rules in T1's scenario; any other writer (a new derived writer, the non-held paths, a caller of the save route)
+   is not gated (section 11.2).
 10. **Derived values computed from several subjects**: the design covers them (the union of their worlds' rows), but no
    rule here computes one, so none was run.
 
@@ -657,6 +717,10 @@ Every container ran the pinned runtime image `sha256:21a67288007d...` by ID (rec
 
 | Gate | Result |
 | --- | --- |
+| (b), (c), (d) T1 (`T1-on-v3`, `T1-off-unsealed-v3`, `T1-on-alloptions-v3`, source `a177f4893`) | off, unsealed: X's removed date **100** times in 21 places, its version 37 in 13, its item ID 92 in 20 (the same as before the merge); **on, sealed: 0, 0, 0**, and the same with every option on (per-account rule, subject check, account tickets, whole-subject import; the T1 database is not moved per account, so the per-account path itself is exercised by gate (e), not by T1). On: the chain verifies, Y and account B unchanged, X reads removed; stream after the removal 3 of 3 equal to the oracle, 0 differ; delivered again 0; the late recipient ends equal to the first (X generation 1 with 1 entry, Y generation 0 with 2) |
+| The caller, at run time (T1 on, section 11.2) | 186 sealed records found in 31 of the 56 scanned places (at most 17 in one), every one opened with the keys the store holds: 119 opened to a value, the rest answered removed, and none of the opened texts holds X's removed value or a derivative (0); seal calls 13 (39 records sealed, 4 left clear: computed from no protected value), open calls 52 |
+| (f) DX-ACT9's gate (`act9/inproc.sh after`, 1,000 schedules, every option on) | 8,355 oracles, **0 violations** |
+| (e) Gate (e) on the merged head (`series3`) | {{SERIES3}} |
 | (a) Stored-function identities (`act9/idents.sh`, seven writer settings), this head against the merge without this work (the merged tree with this branch's gateway changes reversed) | **60 of 60 equal in all seven settings**; that tree also equals `c2aa3d416` 60 of 60 (the third pass moved no identity) |
 | (a) Native log (`era2/gate.sh` phase `paired`, base `c2aa3d416` twice, this gateway options unset, the per-account option on and never moved) | **identical**: 653 and 698 datoms, `d4b11ca6...` and `5197942f...`, the same hashes as before the merge; every reply identical. With `TX2_DERIVED_SEAL=1` on the last arm: the same datom counts and replies; the log and read hashes differ (the removal's transaction ID, 5.1 item 2) |
 | (f) DX-ERA2's interleavings, every option on | database-wide 360 checks, per account 1,545, subject check 9,813: **0 failed**; frame race 40 per setting (20 `cas-failed`, 20 at the account fence); lock lost 20 of 20 (one 200, one 503) |
