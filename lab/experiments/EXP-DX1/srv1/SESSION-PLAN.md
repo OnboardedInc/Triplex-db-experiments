@@ -1,6 +1,6 @@
 # One server session of at most 50 US dollars at 1 billion records: the plan and its predictions (SRV1)
 
-Written 2026-11-25 from 17:28 to 18:30 EST by the session analyst, branch `exp/DX-SRV1-session-plan` from
+Written 2026-11-25 from 17:28 to 17:51 EST by the session analyst, branch `exp/DX-SRV1-session-plan` from
 `origin/lane/d-native` `47cc2c96f`. Nothing is rented, no stack was run, no product code was changed. Every number
 below marked "predicted" was written before any run of this session. Every measured number names its page; the pages
 are on `origin/exp/DX-INT1` (head `efee27905` when this was written) unless named otherwise.
