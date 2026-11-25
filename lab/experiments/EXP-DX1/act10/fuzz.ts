@@ -22,7 +22,7 @@ import { W0, canonical, sha256 } from "../../../bench/lib/w0-world.ts";
 import { ids } from "../../../bench/lib/world.ts";
 import { Documents, hash, unpack } from "../notify1/store.ts";
 import { worldsAt, winner } from "../actv-lazy/decision.ts";
-import { JoinedAccount, joinedCommandId } from "../actv-lazy/join/account.ts";
+import { JoinedAccount, joinedCommandId, scopedJoinedId } from "../actv-lazy/join/account.ts";
 import { Archive } from "../actv-lazy/join/archive.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
 import { toWire } from "../actv-lazy/join/check.ts";
@@ -56,7 +56,10 @@ const SHARED = process.env.ACT10_SHARED === "1",
   MIXED = process.env.ACT10_MIXED === "1",
   SINGLE = process.env.ACT10_SINGLE === "1";
 const relName = (acct: string) => (SINGLE && acct === "acct-b" ? "lazy/account/releases" : "lazy/account/releases/" + acct);
-const PHASES = [["1", "0"], ["0", "1"], ["0", "1", "0"], ["1", "0", "1"], ["1"], ["0"]];
+// [DX-ACT8, second review] "1": publishers allowed to turn the account's settings on; "0": publishers not allowed
+// (they follow what is stored); "o": a build from before the stored settings (Proc.oldBuild), which must refuse an
+// account whose settings are on and otherwise behaves as "0".
+const PHASES = [["1", "0"], ["0", "1"], ["0", "1", "0"], ["1", "0", "1"], ["1"], ["0"], ["1", "o"], ["o", "1", "o"], ["0", "1", "o", "0"]];
 const SNAP = SCOPE + "-snap";
 process.env.TX2_ENROL_BESIDE_SAVES = "1";
 const shape = (permille: number) => parseShape("forms=" + FORMS + ",policies=" + FORMS + ",permille=" + permille);
@@ -228,9 +231,10 @@ async function schedule(seed: number): Promise<Outcome> {
   const refused: { id: string; message: string }[] = [];
   let publishing = true;
   let killsLeft = cfg.kills;
-  let phaseTag = "";
+  let phaseTag = "", oldBuild = false;
   const publisher = async (account: string, held: typeof hA, docs: string[], race: boolean) => {
     const proc = new Proc(db, "publisher-" + account);
+    proc.oldBuild = oldBuild;
     if (cfg.killPublisher && account === A) {
       proc.killAfter = 5 + r.int(60);
       proc.lostReply = r.next() < 0.5;
@@ -249,6 +253,8 @@ async function schedule(seed: number): Promise<Outcome> {
         acknowledged.push({ account, id, position: receipt.position, txId: receipt.txId, doc: name, keys: process.env.TX2_ACCOUNT_KEYS === "1" ? "on" : "off" });
       } catch (e: any) {
         if (e instanceof Killed) return;
+        // An old build meeting the account's stored settings refuses (its exact origin check): counted, not refused.
+        if (proc.oldBuild && /deep|equal/i.test(String(e?.message))) return void count("oldBuildRefused");
         refused.push({ id, message: String(e?.message ?? e).slice(0, 200) });
         if (!(e instanceof Conflict)) violations.push("Publish " + id + " failed: " + String(e?.stack ?? e).slice(0, 400));
       }
@@ -295,6 +301,7 @@ async function schedule(seed: number): Promise<Outcome> {
   const publishers = (async () => {
     for (const [n, phase] of phases.entries()) {
       if (MIXED) phase === "1" ? (process.env.TX2_ACCOUNT_KEYS = "1") : delete process.env.TX2_ACCOUNT_KEYS;
+      oldBuild = MIXED && phase === "o";
       phaseTag = MIXED ? String(n) : "";
       // In later phases a client resends some of the earlier commands (the same ID and document).
       const again = n > 0 && r.next() < 0.6;
@@ -367,7 +374,7 @@ async function check(
   for (const x of acknowledged) {
     const tx = journal.find((t) => t.position === x.position);
     const rel = (x.account === A ? "lazy/account/releases/" + A : "lazy/account/releases/" + B);
-    const forms = ["joined:" + x.id, joinedCommandId({ held: x.account === A ? hA : hB } as never, x.id), "joined:" + x.account + "/" + x.id];
+    const forms = ["joined:" + x.id, joinedCommandId({ held: x.account === A ? hA : hB } as never, x.id), scopedJoinedId(x.account, x.id)];
     if (!tx || !forms.includes(tx.commandId) || !tx.changes.some((c: any) => c.entityId === relName(x.account) && c.op === "assert"))
       v("acknowledged Publish " + x.id + " is not its own account's record at " + x.position + " (TX2_ACCOUNT_KEYS " + (x.keys ?? "?") + ")");
   }
@@ -376,7 +383,7 @@ async function check(
     const ja = new JoinedAccount(st);
     const landed = journal.filter((t) => t.actor === "lazy/join" && t.changes.some((c: any) => c.entityId === relName(acct) && c.op === "assert"));
     // [second review] One command lands at most once for one account, whatever form its ID took.
-    const logical = landed.map((t) => String(t.commandId).replace(/^joined:(?:[a-zA-Z0-9_.-]+\/)?/, ""));
+    const logical = landed.map((t) => String(t.commandId).replace(/^joined:(?:v2\/\d+\/[^/]+\/)?/, ""));
     for (const id of new Set(logical)) if (logical.filter((x) => x === id).length > 1) v(acct + ": command " + id + " landed " + logical.filter((x) => x === id).length + " times");
     const rels = (await st.controls(head)).releases;
     const tail = (await ja.notices.observe()).value.sequence;

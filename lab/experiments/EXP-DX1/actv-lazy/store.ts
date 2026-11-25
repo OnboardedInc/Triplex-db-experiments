@@ -30,11 +30,27 @@ export const fact = (entityId: string, attribute: string, data: unknown) => ({
 });
 export const value = (row: WorldRow) => JSON.parse(row.value.value);
 export class Conflict extends Error {}
-/** [DX-ACT8, review F1/F2] TX2_ACCOUNT_KEYS=1 (default off): no lookup by a key the client or the content chooses crosses
- * accounts. Command IDs are unique in the whole database (`:triplex.claim/command-id`), so in the one database a
- * namespaced held account's joined commands and its definitions writes carry the account in their command IDs (and the
- * joined intent names the account). Unset: every command ID as before. PUBLISH-BESIDE-SAVES.md section 0. */
-export const accountKeys = () => process.env.TX2_ACCOUNT_KEYS === "1";
+/** [DX-ACT8, second review] One-way account settings, stored in the held account's origin fact (field `settings`), read
+ * by every process that publishes or settles the account. With none stored every path is as before. The environment
+ * variables TX2_ACCOUNT_KEYS, TX2_SETTLE_FRAME_GUARDS and TX2_LEDGER_CAP_AT_PUBLISH only allow a process to turn the
+ * matching setting on (`account-settings.ts`); what a request does depends on the stored settings alone. A build that
+ * does not know a field refuses the account: builds since 2026-11-21 compare the origin fact with
+ * `{ profile, held }` exactly (the check below, before this change), and this build refuses any version or field it
+ * does not know. PUBLISH-BESIDE-SAVES.md section 0.8. */
+export type AccountSettings = { v: 1; accountKeys?: true; frameGuards?: true; ledgerCap?: true; ledger?: "whole" | "parts" };
+const settingsFields = new Set(["v", "accountKeys", "frameGuards", "ledgerCap", "ledger"]);
+export function originSettings(origin: any, base: { profile: string; held: string }): AccountSettings | undefined {
+  const { settings, ...rest } = origin ?? {};
+  assert.deepEqual(rest, base);
+  if (settings === undefined) return undefined;
+  assert(
+    settings && settings.v === 1 && Object.keys(settings).every((k) => settingsFields.has(k)) &&
+      [settings.accountKeys, settings.frameGuards, settings.ledgerCap].every((b) => b === undefined || b === true) &&
+      (settings.ledger === undefined || settings.ledger === "whole" || settings.ledger === "parts"),
+    "This account's stored settings are not ones this build knows: it refuses to run against the account",
+  );
+  return settings as AccountSettings;
+}
 /** [DX-ACT5] An account's metadata names (the defaults unless the held account is namespaced); test doubles of a
  * store without `names` get the defaults. */
 export const defaultNames = { RELEASE, ORIGIN, CLOCK, MASK, CURSOR, documents: "" };
@@ -279,8 +295,8 @@ export async function openStore(
     const birth = held
       ? all.find((r) => r.entityId === names.ORIGIN && r.position > held.cut)
       : all.find((r) => r.position === 1 && (r.entityId === names.ORIGIN || r.entityId === names.RELEASE));
-    if (held && p > held.cut && birth)
-      assert.deepEqual(value(birth), { profile, held: held.seal });
+    // [DX-ACT8, second review] The origin may carry the account's one-way settings; everything else in it as before.
+    const settings = held && p > held.cut && birth ? originSettings(value(birth), { profile, held: held.seal }) : undefined;
     if (p && !held)
       assert(birth && value(birth).profile === profile, "Foreign source profile or generation");
     const releases = all
@@ -308,6 +324,9 @@ export async function openStore(
       cursor: cursors[0],
       masks,
       input,
+      // [DX-ACT8, second review] The account's stored settings and the origin row that holds them (held accounts).
+      settings,
+      origin: held && birth ? birth : undefined,
     };
   }
   async function input(

@@ -46,7 +46,9 @@ for (const beside of ["0", "1"])
     try {
       const { accounts: [A, B] } = await twoAccounts(1);
       const ra = await A!.a.publish("release-2026-11-24", W0.R1.doc, validTime, "owed");
-      const rb = await B!.a.publish("release-2026-11-24", W0.R1.doc, validTime, "owed");
+      // [DX-ACT8, second review] Without the setting B's Publish is refused (its key is A's), so it is caught here.
+      const rb: any = await B!.a.publish("release-2026-11-24", W0.R1.doc, validTime, "owed")
+        .catch((e) => ({ refused: String(e?.message).split("\n")[0] }));
       const out = {
         aPosition: ra.position,
         bPosition: rb.position,
@@ -59,7 +61,9 @@ for (const beside of ["0", "1"])
       console.log("[X1 beside=" + beside + " keys=" + keys + "] " + JSON.stringify(out));
       if (keys === "0") {
         // The break: B's Publish is acknowledged with A's receipt; B has no release and no notice event.
-        assert.equal(out.bReceiptIsAs, true, "B's Publish returned its own receipt");
+        // [DX-ACT8, second review] Without the setting B is no longer acknowledged with A's record (every recovered
+        // record must be the account's own); B is refused, the two keys being one, and nothing is written for it.
+        assert.equal(out.bReceiptIsAs, false, "B's Publish returned A's receipt");
         assert.equal(out.bReleases, 0);
         assert.equal(out.bTail, 0);
       } else {
@@ -82,7 +86,8 @@ test("X2 (TX2_ACCOUNT_KEYS=" + keys + "): two accounts publish with the same com
     console.log("[X2 keys=" + keys + "] " + JSON.stringify({ refused: e ? String(e.message).slice(0, 120) : null, bReleases: (await releasesOf(B!)).length }));
     if (keys === "0") {
       assert(e, "B's Publish under another account's command ID was accepted");
-      assert.match(String(e.message), /Reused command ID has different input/);
+      // [DX-ACT8, second review] Refused either way: A's record is not B's, and the key is taken.
+      assert.match(String(e.message), /Reused command ID has different input|commit receipt differs from the request/);
     } else {
       assert.equal(e, null, "B refused under its own command ID");
       assert.equal((await releasesOf(B!)).length, 1);

@@ -17,7 +17,7 @@ import { canonical, sha256, W0 } from "../../../bench/lib/w0-world.ts";
 import { bytes as wireBytes } from "../import1/source.ts";
 import { ids, SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { deepOwnFacts } from "../../../bench/lib/deep-world.ts";
-import { Conflict, defaultNames, fact, millis, value, type EntityGuard, type HeldSource } from "../actv-lazy/store.ts";
+import { Conflict, defaultNames, fact, millis, originSettings, value, type EntityGuard, type HeldSource } from "../actv-lazy/store.ts";
 
 export class Killed extends Error {}
 
@@ -140,6 +140,9 @@ export class Proc {
   killAfter?: number;
   /** When killed at a commit, whether the commit still applies (a lost reply). */
   lostReply = false;
+  /** [DX-ACT8, second review] Models a build from before the stored settings: its `controls` compares the origin fact
+   * exactly, so it refuses an account whose settings are on. */
+  oldBuild = false;
   calls = 0;
   constructor(db: MemDb, name: string) {
     this.db = db;
@@ -310,7 +313,14 @@ export function memStore(proc: Proc, held: HeldSource, label = proc.db.scope) {
       p,
     );
     const birth = all.find((r: any) => r.entityId === names.ORIGIN && r.position > held.cut);
-    if (p > held.cut && birth) assert.deepEqual(value(birth), { profile: "act2-deep", held: held.seal });
+    // [DX-ACT8, second review] As `openStore`: the origin may carry the account's settings. A process marked `oldBuild`
+    // (the fuzzer's model of a build from before the settings) keeps the exact comparison every such build makes
+    // (`store.ts` at bf377c57f, lines 279-281), so it refuses an account whose origin carries settings.
+    const settings = p > held.cut && birth
+      ? proc.oldBuild
+        ? (assert.deepEqual(value(birth), { profile: "act2-deep", held: held.seal }), undefined)
+        : originSettings(value(birth), { profile: "act2-deep", held: held.seal })
+      : undefined;
     const releases = all.filter((r: any) => r.entityId === names.RELEASE).map((r: any) => ({ ...value(r), tx: r.position, id: r.id }));
     const clocks = all.filter((r: any) => r.entityId === names.CLOCK);
     assert(clocks.length <= 1);
@@ -318,7 +328,8 @@ export function memStore(proc: Proc, held: HeldSource, label = proc.db.scope) {
     const cursors = all.filter((r: any) => r.entityId === names.CURSOR);
     const masks = all.filter((r: any) => r.entityId === names.MASK);
     const input = Math.max(0, ...releases.map((r: any) => r.tx), ...clocks.map((r: any) => r.position), ...masks.map((r: any) => r.position));
-    return { generation: birth ? held.seal : "uninitialized", releases, at, clock: clocks[0], cursor: cursors[0], masks, input };
+    return { generation: birth ? held.seal : "uninitialized", releases, at, clock: clocks[0], cursor: cursors[0], masks, input,
+      settings, origin: birth };
   }
   return {
     scope: label,

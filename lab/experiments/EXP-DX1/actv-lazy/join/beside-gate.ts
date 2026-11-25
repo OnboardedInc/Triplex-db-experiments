@@ -63,6 +63,8 @@ export type GateContext = Omit<LiveContext, "offer"> & {
 const validTime = W0.POPULATION_VALID_TIME;
 const shape20 = parseShape("forms=20,policies=20,permille=1000");
 const shape200 = parseShape("forms=200,policies=200,permille=1000");
+// [DX-ACT8, second review] 1,000 forms with ledgers in parts on the stack (a case for DX_ACT8_BESIDE_CASES only).
+const shape1000 = parseShape("forms=1000,policies=1000,permille=1000");
 const shape150 = parseShape("forms=150,policies=150,permille=1000");
 /** Writers the runner adopts from the journal by command ID: settlement frames, notice documents written through the
  * composition (enrolments of other accounts), and Publishes whose writing process was killed. */
@@ -492,7 +494,7 @@ async function besidePart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
   const c = g.c;
   const out: Record<string, unknown>[] = [];
   // name, rule, release kind, own rate, others, Publishes in the window, window seconds
-  const cases: [string, "head" | "account", "small" | "large" | "limits200" | "ref", 0 | 3.5 | 23.5 | 39.4, boolean, number, number][] =
+  const cases: [string, "head" | "account", "small" | "large" | "limits200" | "limits1000" | "ref", 0 | 3.5 | 23.5 | 39.4, boolean, number, number][] =
     (process.env.DX_ACT8_BESIDE_CASES?.split(",").map((x) => {
       const [n, rule, rel, own, oth, k, s] = x.split(":");
       return [n!, rule as never, rel as never, Number(own) as never, oth === "1", Number(k), Number(s)];
@@ -519,6 +521,7 @@ async function besidePart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
         const cur = g.current.doc;
         const doc = kind === "small" ? toggleSmall(cur)
           : kind === "limits200" ? (cur.forms?.length ? base() : largeRelease(base(), shape200))
+          : kind === "limits1000" ? (cur.forms?.length ? base() : largeRelease(base(), shape1000))
           : nextLarge(cur, base());
         const res = await g.publish(doc, name, { probe: true, settle: rule === "account" });
         if (res.refused) {

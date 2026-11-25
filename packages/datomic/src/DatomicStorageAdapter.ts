@@ -522,7 +522,9 @@ export const makeDatomicStorageAdapter = (
             }
             if (error.code.startsWith("CommitOrder"))
               throw new DatomicCommitOrderError({ message: error.message, cause: error });
-            throw new WriteError({ message: "Datomic transaction was rejected", cause: error });
+            // [DX-ACT8, second review R6] The gateway's refusal code and status stay in the message, so a refused try
+            // names what refused it (the cause keeps the whole error, as before).
+            throw new WriteError({ message: "Datomic transaction was rejected (" + error.code + ", " + error.status + ")", cause: error });
           }
           submitError = error;
         }

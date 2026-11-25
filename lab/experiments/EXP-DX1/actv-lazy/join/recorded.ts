@@ -16,6 +16,7 @@ import type { Archive } from "./archive.ts";
 import { fillFrame, frameEstimate, type Candidate, type Piece } from "./frames.ts";
 import type { JoinedAccount } from "./account.ts";
 import { ledgerMode, noticeCandidate, readLedgers, type LedgerMode } from "./ledger-parts.ts";
+import { ledgerFor, originAt } from "./account-settings.ts";
 
 const step = 4;
 assert(width % step === 0);
@@ -128,8 +129,13 @@ export class RecordedNotices {
   readonly archive: Archive;
   /** [DX-ACT6] How new events write ledgers (an event already started keeps its own, named in the cursor). */
   ledger: LedgerMode;
-  constructor(archive: Archive, ledger: LedgerMode = ledgerMode()) {
+  /** [DX-ACT8, second review] Whether this writer's mode was chosen explicitly (an argument or TX2_NOTICE_LEDGER): such
+   * a writer refuses an account whose stored ledger mode differs; otherwise it writes with the stored mode. */
+  private readonly explicit: boolean;
+  constructor(archive: Archive, ledger?: LedgerMode) {
     this.archive = archive;
+    this.explicit = ledger !== undefined || process.env.TX2_NOTICE_LEDGER !== undefined;
+    ledger ??= ledgerMode();
     this.ledger = ledger;
     assert(ledger === "whole" || archive.frames === "bytes", "TX2_NOTICE_LEDGER=parts needs TX2_SETTLE_FRAMES=bytes");
   }
@@ -278,7 +284,10 @@ export class RecordedNotices {
       missing = ids.filter((id) => !known.has(id));
     // [DX-ACT6] Ledgers are read whole (a ledger in parts is joined and checked against its head); the mode is the
     // cursor's for an event already started, else this writer's.
-    const mode: LedgerMode = (current.start === 0 && !current.part ? this.ledger === "parts" : current.ledger === "parts")
+    // [DX-ACT8, second review] A held account's stored ledger mode decides a new event's mode (`ledgerFor`).
+    const fresh0 = current.start === 0 && !current.part;
+    const own: LedgerMode = fresh0 ? ledgerFor((await originAt(a.s, sourceAt)).settings, this.ledger, this.explicit) : this.ledger;
+    const mode: LedgerMode = (fresh0 ? own === "parts" : current.ledger === "parts")
       ? "parts"
       : "whole";
     const [previous, fresh] = await Promise.all([

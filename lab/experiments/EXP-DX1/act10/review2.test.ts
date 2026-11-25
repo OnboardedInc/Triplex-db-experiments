@@ -1,4 +1,8 @@
 // [DX-ACT10, second review] Attacks on the fixes at bf377c57f, real code over memstore.ts (in process, diagnostic only).
+// [DX-ACT8] After the second review the options are one-way settings stored in the account's origin (a process with
+// the variable may turn the setting on; every process follows what is stored), and every recovered record must be the
+// account's own. Each test now asserts the fixed behaviour; the faults as the review found them are in its log
+// (`agents/DX-ACT8/act10/r2/repro-before.log`). Changed assertions are marked [DX-ACT8].
 // Run: node --experimental-strip-types --test lab/experiments/EXP-DX1/act10/review2.test.ts
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -77,9 +81,10 @@ test("A2: the single-account layout (un-prefixed IDs) and a namespaced account's
   const out = { bBeforeOption: b, singleLayoutWithOption: z, zGetsBsReceipt: (z as any).txId === (b as any).txId, ownershipCheckRefuses,
     zReleases: await releases(Z!), zTail: await tail(Z!), bReleases: await releases(B!) };
   console.log("[A2] " + JSON.stringify(out));
-  // The break if true: account 0's Publish is acknowledged with account B's receipt; nothing is written for account 0.
-  assert.equal(out.zGetsBsReceipt, true);
-  assert.equal(out.zReleases, 0);
+  // [DX-ACT8] Fixed (R1): B's record is not account 0's (the ownership check on every recovered record); account 0
+  // publishes its own.
+  assert.equal(out.zGetsBsReceipt, false);
+  assert.equal(out.zReleases, 1);
 });
 
 test("A2b: the single-account layout and a namespaced account, both with the option, same ID: separate", async () => {
@@ -101,9 +106,10 @@ test("D1m: one command sent by a publisher with the option, then resent by a pub
   const out = { first, resend, sameRecord: (first as any).txId === (resend as any).txId, releases: await releases(A!),
     tail: await tail(A!), records: await records(db, "r1") };
   console.log("[D1m] " + JSON.stringify(out));
-  // The break if false: one command landed twice (two releases, two notice events, both command ID forms).
-  assert.equal(out.sameRecord, false);
-  assert.equal(out.releases, 2);
+  // [DX-ACT8] Fixed (R2): the setting is the account's, so the process without the variable uses it too and recovers
+  // the record; one release.
+  assert.equal(out.sameRecord, true);
+  assert.equal(out.releases, 1);
 });
 
 test("D2m: one command sent without the option, resent with it (same account): the old record is recovered", async () => {
@@ -141,7 +147,7 @@ test("B1: joined command IDs and definitions prefixes are one-to-one over the al
   await withEnv(ON, async () => {
     for (const acc of words(3).filter((w) => account.test(w)))
       for (const i of words(3).filter((w) => id.test(w))) {
-        const k = joinedCommandId({ held: { namespace: true, account: acc } } as never, i);
+        const k = joinedCommandId({ held: { namespace: true, account: acc } } as never, i, true);
         const who = acc + "|" + i;
         if (keys.has(k) && keys.get(k) !== who) collisions++;
         keys.set(k, who);
@@ -149,7 +155,7 @@ test("B1: joined command IDs and definitions prefixes are one-to-one over the al
       }
     // The single-account layout's keys against the namespaced ones: un-prefixed IDs hold no "/" except a deadline's.
     for (const i of words(3).filter((w) => id.test(w))) {
-      const k = joinedCommandId({ held: { namespace: false, account: "x" } } as never, i);
+      const k = joinedCommandId({ held: { namespace: false, account: "x" } } as never, i, true);
       if (keys.has(k)) collisions++;
     }
   });
@@ -157,10 +163,12 @@ test("B1: joined command IDs and definitions prefixes are one-to-one over the al
   // account named "deadline" publishing the ID `<64 hex>`.
   const hex = "f".repeat(64);
   const crossed = await withEnv(ON, async () =>
-    joinedCommandId({ held: { namespace: false, account: "x" } } as never, "deadline/" + hex) ===
-      joinedCommandId({ held: { namespace: true, account: "deadline" } } as never, hex));
+    joinedCommandId({ held: { namespace: false, account: "x" } } as never, "deadline/" + hex, true) ===
+      joinedCommandId({ held: { namespace: true, account: "deadline" } } as never, hex, true));
   console.log("[B1] " + JSON.stringify({ pairs, collisions, deadlineCrossesAccountNamedDeadline: crossed }));
   assert.equal(collisions, 0);
+  // [DX-ACT8] Fixed (R8): under the setting every held account's key names it (length-prefixed), account 0's too.
+  assert.equal(crossed, false);
 });
 
 // ---------------------------------------------------------------------------------------------- (c) keys left database-wide
@@ -175,7 +183,7 @@ test("S1: what one account learns from another's command ID (the store's lookup 
   const [A, B] = await accounts(db, [{ name: "acct-a" }, { name: "acct-b" }]);
   await withEnv(ON, () => A!.a.publish("r1", W0.R1.doc, validTime, "owed"));
   // B's own store, asking for A's Publish by its command ID (the ID form is public: joined:<account>/<id>).
-  const seen = await withEnv(ON, () => B!.s.lookup(joinedCommandId(A!.s, "r1")));
+  const seen = await withEnv(ON, () => B!.s.lookup(joinedCommandId(A!.s, "r1", true)));
   const out = { found: Boolean(seen), position: seen?.position, changes: seen?.changes.length,
     aEntities: seen?.changes.filter((c: any) => String(c.entityId).startsWith("notice:v1:") || /\/acct-a$/.test(c.entityId)).length,
     sample: seen?.changes.slice(0, 2).map((c: any) => [c.entityId.slice(0, 40), c.attribute]) };
@@ -187,7 +195,7 @@ test("S2: one account's save takes another account's next Publish ID (and its de
   const [A, B] = await accounts(db, [{ name: "acct-a" }, { name: "acct-b" }]);
   await withEnv(ON, () => A!.a.publish("r1", W0.R1.doc, validTime, "owed"));
   // B guesses A's next ID; its save (its own subject) carries that ID as its client-chosen command ID.
-  const taken = await withEnv(ON, () => saveAs(B!, joinedCommandId(A!.s, "r2")));
+  const taken = await withEnv(ON, () => saveAs(B!, joinedCommandId(A!.s, "r2", true)));
   const publish = await withEnv(ON, () => outcome(A!.a.publish("r2", W0.R2.doc, validTime, "owed")));
   const again = await withEnv(ON, () => outcome(A!.a.publish("r2", W0.R2.doc, validTime, "owed")));
   // The definitions ID is content-chosen: B computes it from A's release document and the public definitions prefix.
@@ -205,7 +213,10 @@ test("S2: one account's save takes another account's next Publish ID (and its de
   const other = await withEnv(ON, () => outcome(A!.a.publish("r2-other", W0.R2.doc, validTime, "owed")));
   const out = { taken, publish, again, definitionsId: definitionsId.slice(0, 24), takenDefs, byRef, otherId: other, aReleases: await releases(A!) };
   console.log("[S2] " + JSON.stringify(out));
-  assert(taken.ok && !publish.ok && !again.ok && takenDefs.ok && !byRef.ok && other.ok);
+  // [DX-ACT8] The definitions ID is random under the setting, so the one B computed is not A's and A's by-reference
+  // Publish lands (R3 S2, definitions). A Publish ID is still a function of the client's ID: B can still take it
+  // first and A's Publish of that ID is refused, never acknowledged wrongly (0.9; the gateway's account claim closes it).
+  assert(taken.ok && !publish.ok && !again.ok && takenDefs.ok && byRef.ok && other.ok);
 });
 test("S3: a record another account writes under joined:<A>/<id> with A's intent: does A take it as its own Publish?", async () => {
   const db = fresh();
@@ -216,21 +227,22 @@ test("S3: a record another account writes under joined:<A>/<id> with A's intent:
   let context: any;
   const commit = A!.s.commit;
   A!.s.commit = async (...args: any[]) => {
-    if (String(args[0]) === joinedCommandId(A!.s, "r2") && !context) { context = args[4]; throw new Error("request lost"); }
+    if (String(args[0]) === joinedCommandId(A!.s, "r2", true) && !context) { context = args[4]; throw new Error("request lost"); }
     return commit(...args);
   };
   const lost = await withEnv(ON, () => outcome(A!.a.publish("r2", W0.R2.doc, validTime, "owed")));
   A!.s.commit = commit;
   // B writes, under A's command ID, a record of its own subject with A's actor and A's correlation context.
-  const forged = await withEnv(ON, () => saveAs(B!, joinedCommandId(A!.s, "r2"), "lazy/join", context));
+  const forged = await withEnv(ON, () => saveAs(B!, joinedCommandId(A!.s, "r2", true), "lazy/join", context));
   const resend = await withEnv(ON, () => outcome(A!.a.publish("r2", W0.R2.doc, validTime, "owed")));
-  const forgedRecord = await withEnv(ON, () => A!.s.lookup(joinedCommandId(A!.s, "r2")));
+  const forgedRecord = await withEnv(ON, () => A!.s.lookup(joinedCommandId(A!.s, "r2", true)));
   const ownershipCheckRefuses = !forgedRecord.changes.some((c: any) => c.entityId.startsWith((A!.a as any).db.prefix));
   const out = { lost, forged, resend, resendIsForged: resend.ok && (resend as any).txId === (forged as any).txId, ownershipCheckRefuses,
     aReleases: await releases(A!), aTail: await tail(A!) };
   console.log("[S3] " + JSON.stringify(out));
-  // The break if true: A's Publish is acknowledged with B's record; A's release and notice event were never written.
-  assert.equal(out.resendIsForged, true);
+  // [DX-ACT8] Fixed (R3 S3): the forged record is not A's (it wrote B's subject, not A's documents); A's resend is
+  // refused (its key is taken), never acknowledged with B's record.
+  assert.equal(out.resendIsForged, false);
   assert.equal(out.aReleases, 1);
 });
 
@@ -261,7 +273,11 @@ test("C2: the cap computed by a publisher with ledgers in parts, the account set
   const wholePub = await withEnv({ ...env, TX2_NOTICE_LEDGER: undefined }, () => outcome(A2!.a.publish("c-400", doc, validTime, "owed", undefined, { docs: "ref" })));
   const settled = await settleNotices(db, A!, "whole", 1);
   console.log("[C2] " + JSON.stringify({ publisherInParts: pub, settlerWhole: settled, publisherWhole: wholePub }));
-  assert(pub.ok && /FrameTooLarge/.test(settled) && !wholePub.ok);
+  // [DX-ACT8] Fixed (R4): the publisher's ledger mode is stored with the account; a settler writing whole ledgers
+  // refuses the account instead of failing every frame, and one that follows the stored mode records it.
+  const follows = await settleNotices(db, A!, undefined as never, 1);
+  console.log("[C2 after] " + JSON.stringify({ settlerFollowingTheStoredMode: follows }));
+  assert(pub.ok && /stored ledger mode is parts/.test(settled) && follows === "recorded" && !wholePub.ok);
 });
 
 test("C3: at, one under and one over the cap (ledgers in parts), and whether the cap's limit is the settlement's", async () => {
@@ -392,6 +408,9 @@ test("G2: a pause while a frame is in flight, from a settling process with the g
       await A!.a.publish("p:large", large(1000), validTime, "owed");
       const guarded = settlerOf(db, A!, "g2-guarded");
       const other = settlerOf(db, A!, "g2-other", legacy);
+      // [DX-ACT8] A settler without the guards is now a build from before the stored settings (every build since has
+      // them): it compares the origin exactly and so refuses the account once a setting is on.
+      other.proc.oldBuild = legacy;
       const op = memStore(new Proc(db, "operator"), A!.held, db.scope + "-op") as any;
       let pause: number | undefined;
       db.beforeCommit = async (id) => {
@@ -407,6 +426,8 @@ test("G2: a pause while a frame is in flight, from a settling process with the g
     }
     console.log("[G2] " + JSON.stringify(out));
     assert.equal((out.bothWithGuards as any).framesAfterPause, 0);
+    // [DX-ACT8] Fixed (R5): the settler without the guards writes nothing once the setting is on.
+    assert.equal((out.secondProcessWithoutGuards as any).framesAfterPause, 0);
   });
 });
 

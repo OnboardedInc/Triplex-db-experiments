@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
-import { accountKeys, fact, namesOf, type EntityGuard } from "../store.ts";
+import { randomUUID } from "node:crypto";
+import { fact, namesOf, type EntityGuard } from "../store.ts";
 import { frameEstimate } from "./frames.ts";
 
 // [DX-ACT6] Why: every Publish carried the whole definition set in force three times (the new document twice, in the
@@ -207,7 +208,7 @@ type Committer = Rows & {
  * is reachable until a Publish names the root. A write refused because another writer stored the same node first is
  * re-read and skipped.
  */
-export async function stageDocument(s: Committer, doc: W0.ReleaseDoc) {
+export async function stageDocument(s: Committer, doc: W0.ReleaseDoc, unclaimable = false) {
   const { ref, nodes, compiled } = splitDocument(doc);
   const stats = { writes: 0, rows: 0, bytes: 0, retries: 0 };
   if (await rootStored(s, ref, await s.head())) return { ref, compiled, ...stats };
@@ -234,9 +235,11 @@ export async function stageDocument(s: Committer, doc: W0.ReleaseDoc) {
       try {
         // Entity guards (no live fact yet) replace the head fence: unfenced beside every account's saves.
         const p = await s.head();
-        // [DX-ACT8, review F2] With TX2_ACCOUNT_KEYS the command ID names the account's definitions prefix: the rows are
-        // under the account's own names, so the same content in two accounts is two commands. Unset: as before.
-        const command = "definitions:" + sha256(canonical(accountKeys() ? [prefixOf(s), todo] : todo));
+        // [DX-ACT8, second review] Under the account's `accountKeys` setting the command ID is random: the write is
+        // content-addressed and guarded (each node created only if absent) and needs no recovery by ID (a lost reply is
+        // found by reading the nodes again), so no other account can compute the ID and claim it first (F2, R3's S2).
+        // Without the setting: as before.
+        const command = "definitions:" + (unclaimable ? randomUUID() : sha256(canonical(todo)));
         await s.commit(command, definitionsActor, ops, p, { nodes: todo.length }, undefined, undefined,
           todo.map((k) => ({ entityId: definitionEntity(s, k), tripleIds: [] })));
         stats.writes++;

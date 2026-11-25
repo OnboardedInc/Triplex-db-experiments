@@ -9,8 +9,10 @@ import { memberPage, width } from "../../notify1/census.ts";
 import { Documents, hash, pack, unpack, type Op, type Row } from "../../notify1/store.ts";
 import type { Store } from "../store.ts";
 import { Conflict, namesOf, openStore, type EntityGuard } from "../store.ts";
+import { ensureSettings, originAt } from "./account-settings.ts";
 /** [DX-ACT8, review F4/F5] TX2_SETTLE_FRAME_GUARDS=1: the pause and a later release are part of each frame's guard. */
-export const frameGuards = () => process.env.TX2_SETTLE_FRAME_GUARDS === "1";
+/** [DX-ACT8, second review] Whether a held account's frames are guarded is its stored `frameGuards` setting, read at
+ * each frame's own read position (`account-settings.ts`); there is no per-process switch any more. */
 import { worldsAt, winner } from "../decision.ts";
 import { LazyReader } from "../read.ts";
 import { JoinedAccount, type Marker } from "./account.ts";
@@ -180,6 +182,8 @@ export class Archive {
     precondition: Precondition = preconditionMode(),
   ) {
     const s = source.s;
+    // [DX-ACT8, second review] A settler allowed to turn a setting on does so (one way) before its first frame.
+    await ensureSettings(s);
     // [DX-ACT1] Why: the held scorecard includes archive writes and indexes in the same physical database.
     // Rejected: benchmarking background work in two empty databases.
     const store = s.held
@@ -221,11 +225,19 @@ export class Archive {
     // is also guarded on that control row (a pause that lands after the read refuses the frame) and, for a values frame,
     // on the notice tail its turn read (a Publish that lands after the read refuses it, so the next frame sees the
     // release superseded). Under the head precondition the head fence already refuses both. Unset: as before.
-    const fenced = frameGuards();
+    // [DX-ACT8, second review] The `frameGuards` setting as stored at this frame's read position; under the progress
+    // precondition the frame is also guarded on the account's origin row (it changes only at enrolment and at a settings
+    // transition), so a frame planned under the old settings never commits after the transition. Under the head
+    // precondition the head fence already refuses it.
+    // A settler allowed to turn a setting on does so before it reads (also when it was built without `Archive.open`).
+    await ensureSettings(this.source.s);
+    const origin = await originAt(this.source.s, at);
+    const fenced = origin.settings?.frameGuards === true;
     const controlGuard = fenced && this.control?.gateAt ? await this.control.gateAt(at) : undefined;
     const guards: EntityGuard[] | undefined =
       this.precondition === "progress" && progress
         ? [{ entityId: this.db.prefix + progress.key, tripleIds: progress.prior ? [progress.prior.id] : [] },
+          ...(origin.row ? [{ entityId: namesOf(this.source.s).ORIGIN, tripleIds: [origin.row.id] }] : []),
           ...(controlGuard ? [controlGuard] : []),
           ...(fenced && kind === "activation" && this.frameTail ? [this.frameTail] : [])]
         : undefined;
@@ -274,7 +286,7 @@ export class Archive {
       sourceAt = await s.head();
     const r = await a.receipt(sequence, sourceAt),
       { marker: m, event: e, census } = r;
-    if (frameGuards()) {
+    if ((await originAt(s, sourceAt)).settings?.frameGuards) {
       const tail = await a.db.row("tail", sourceAt);
       this.frameTail = { entityId: a.db.prefix + "tail", tripleIds: tail ? [tail.id] : [] };
     }

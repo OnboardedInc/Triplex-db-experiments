@@ -5,9 +5,40 @@ Builder DX-ACT8, 2026-11-24, branch `exp/DX-ACT8-publish-beside-saves` from `exp
 work is correctness at toy size; every Mac time is diagnostic, every count exact. Nothing here ran on a server. Every
 option is default off; with nothing set every existing path is unchanged.
 
-Section 0 is what an independent review found and what changed after it. Sections 1 to 6 are the design, written before any code. The results follow from section 7.
+Section 0 is what two independent reviews found and what changed after them. Sections 1 to 6 are the design, written before any code. The results follow from section 7.
 
-## 0. What the independent review found, and what changed after it (2026-11-24; the first commit after it at 19:56 local)
+## 0. What the two reviews found, and what changed after them
+
+### 0.0 The second review (2026-11-24, `REVIEW-2.md`, `5bbb3da09`), in plain words
+
+**What it found.** With every option on in every process and no records from before the options, 25,000 fuzzed
+schedules gave 0 violations, and the narrowed guards held again. But the fixes of the first review were switched on per
+process, and that broke two things:
+
+1. **R1 (high):** F1 was still open for the single-account layout (the held toy's account 0): its records kept the
+   unscoped key, and `original` took any record found under it, another account's included.
+2. **R2 (high):** a Publish sent by a process with `TX2_ACCOUNT_KEYS` and resent through one without it was published
+   twice (two releases).
+
+And: **R3** the account in a key was a name, not an authority (another account could read a Publish's record by its
+command ID, claim its ID or its definitions ID first so that it always failed, or with store-level write access write a
+record the Publish took as its own); **R4, R5** a publisher and a settler with different ledger modes, or a settler
+without the frame guards, broke F3 and F4 again; **R10** the ledger cap is a lifetime limit per account; **R8** account
+0's deadline key equalled the key of an account named `deadline`; **R7** section 0.4 was wrong for the toy (subject
+saves never enter the group lane); **R6** the one-try refusal was not reproduced and the adapter hid its code; **R9**
+the frame guards refuse frames on a pace change or a pause set and cleared (all end stored).
+
+**Where this page was wrong after the first review.** Section 0.1 presented `TX2_ACCOUNT_KEYS`, `TX2_SETTLE_FRAME_GUARDS`
+and `TX2_LEDGER_CAP_AT_PUBLISH` as fixes. As per-process switches they were not: a fleet in which one process lacked one
+of them published twice, took another account's record, wrote frames after a pause, or accepted a release it could not
+settle. Section 0.4 said a Publish could share a physical transaction with saves in the toy's configuration; it cannot
+there (R7, corrected in 0.4).
+
+**What changed.** The three switches are gone as behaviour. Each became a one-way setting stored in the account's own
+origin fact, which every process reads and which a build that does not know it refuses (0.8). Every record a Publish
+recovers by its command ID must have written that account's own documents (0.9). The rest in 0.9 to 0.12.
+
+### The first review (`REVIEW.md`), as written after it (2026-11-24; the first commit after it at 19:56 local)
 
 **What the review found.** An independent adversarial review (DX-ACT10, `lab/experiments/EXP-DX1/act10/REVIEW.md`,
 `a1163648e`) found that the two narrowed guards this page adds held: the account guard on a Publish and the progress
@@ -42,8 +73,10 @@ SETTLEMENT-LIVE 2 was false in F5's case. Each place is corrected below and mark
 
 ### 0.1 Each finding, its fix, and the test that now passes
 
-Every fix is behind an option that is off by default; with the options off every path is as before and the review's
-tests still show the faults (they are kept as the controls). In-process tests run the real `JoinedAccount`, `Archive`,
+**[superseded after the second review, 0.0 and 0.8]** The options named below are no longer what a request depends on:
+each became a one-way setting stored with the account, and the variable only allows a process to turn it on. The tests
+and counts below are as they were at `bf377c57f`. Every fix is behind an option that is off by default; with the
+options off every path is as before and the review's tests still show the faults (they are kept as the controls). In-process tests run the real `JoinedAccount`, `Archive`,
 `RecordedNotices` and `Settlement` code on the review's in-memory store (`act10/memstore.ts`); stack runs are on the
 held toy stack, each started by image ID from the image built from this branch (section 14).
 
@@ -147,8 +180,13 @@ here (follow-up 5).
 
 ### 0.4 Group commit
 
-**A Publish under the account guard can share one physical Datomic transaction with saves, when the write gateway runs
-with `TX2_GROUP_COMMIT=1`; from the code that is exact, but it has not been run.** The held runner starts its write
+**[corrected after the second review, R7]** In the toy's `load-fair` configuration a subject save never enters the
+group lane (the write gateway runs `TX2_SUBJECT_SAVE=1`, and a subject save goes straight to `d/transact-async`,
+`storage.clj` 419-447), so there a Publish can group only with other general commits; with group commit on, no group
+formed (the review's H1). With saves on the general path (`TX2_SUBJECT_SAVE=0`) every Publish grouped with saves and the
+gate held (H2). The rest of this section is what was written before; its premise holds only for saves on the general
+path. **A Publish under the account guard can share one physical Datomic transaction with saves, when the write gateway
+runs with `TX2_GROUP_COMMIT=1` and saves take the general path; from the code that is exact.** The held runner starts its write
 gateway with `TX2_GROUP_COMMIT=0` for every `load-fair` run (`ha1/stack.ts` 572-588), so no result here had a group.
 
 - **Eligible.** A Publish is a general commit; the group lane takes any commit that is lean, one span, with a
@@ -247,6 +285,156 @@ New options, all off by default: `TX2_ACCOUNT_KEYS`, `TX2_SETTLE_FRAME_GUARDS`, 
 `DX_ACT8_ADV_OWN`, `DX_ACT8_PARTS=restart`, `DX_ACT10_STACK`. Nothing in the Datomic sources changed (the private image
 was rebuilt only because the merge changed the harness's `runtime.mjs`, which is among the image's inputs).
 
+
+### 0.8 The settings in the database (design, written before the code)
+
+**Where a setting lives.** In the held account's origin fact (`lazy/account/origin/<account>`, attribute
+`lazy/generation`), the fact the enrolment writes once and that every Publish plan and every settlement turn already
+reads (`controls`). Its value gains a field: `settings: { v: 1, accountKeys?: true, frameGuards?: true, ledgerCap?: true,
+ledger: "whole" | "parts" }`. One account, one origin fact, so one setting per account, and every process that
+publishes or settles that account reads the same one. With no `settings` field every path is as before.
+
+**How a process learns it, and how stale its view may be.**
+
+- A Publish reads the settings in its plan, at its read position `p` (`controls(p)`). It decides there the form of its
+  command ID, whether the ledger cap applies and with which ledger mode. Its commit is guarded on the origin row as it
+  read it (an `EntityState` guard beside the calendar's), and a whole-head Publish is fenced on the whole head. So a
+  Publish planned under the old settings is refused if a transition lands before its commit, and plans again under
+  the new ones. **No Publish commits under settings older than those in force at its own position.**
+- A settlement frame reads the settings at its own read position, one row (`originAt`). It decides there whether it is
+  frame-guarded (control row, and for a values frame the notice tail). Under the progress precondition every frame is
+  also guarded on the origin row; under the head precondition the head fence covers it. **No frame commits under
+  settings older than those in force at its own position.** A recorder decides a new event's ledger mode the same way
+  (the event then keeps it in its cursor, as before).
+- A process's view is therefore never stale at a commit. It can be stale only between its read and a refused commit,
+  which then plans again.
+
+**The one-way transition.** Only a process allowed to turn a setting on writes it. The environment variables
+`TX2_ACCOUNT_KEYS`, `TX2_SETTLE_FRAME_GUARDS` and `TX2_LEDGER_CAP_AT_PUBLISH` now mean exactly that: "this process may
+turn the setting on". They are never what a request's behaviour depends on.
+
+- **When:** a publisher does it before its Publish, a settler when it opens.
+- **The write:** it rewrites the origin with the merged settings, guarded on the origin row it read, under a random
+  command ID (no other account can compute it and claim it first; no recovery by ID is needed, the result is read back
+  from the origin). Two processes racing to turn settings on: one lands, the other is refused, reads again and finds
+  them on.
+- **Only on:** settings only turn on (a merge is an OR).
+- **The ledger mode:** recorded at the first transition (`TX2_NOTICE_LEDGER` of that process, `whole` if unset). It may
+  then only go from `whole` to `parts`; the reader reads both forms. A process whose own explicit `TX2_NOTICE_LEDGER`
+  differs from the stored mode refuses to settle the account (`SettingsConflict`), and to upgrade it if it has no
+  permission.
+- **What a process without permission does:** it follows the stored settings, whatever its environment.
+
+**A Publish in flight across the transition.**
+
+- **Planned before it, committing after it:** refused by the origin guard (or by the head), then planned again under
+  the new settings.
+- **Landed before it:** its record carries the unscoped key. A resend after the transition looks up both forms (0.9),
+  finds it as this account's own, and returns its receipt. Nothing lands twice.
+
+**What an old build does when it meets a setting.** Every build since 2026-11-21 (`a50e5dbf1`) compares the held
+origin fact exactly with `{ profile, held }` in `controls` (`store.ts`, before this change lines 279-281). Every Publish
+plan and every settlement turn of such a build calls it. So once an account has any setting, an old build's Publish and
+settlement of that account fail with an assertion before they plan or write anything. It cannot publish twice, write an
+unguarded frame, or write a ledger in the wrong mode there. Before any setting exists an old build behaves as a new
+build with none stored; that includes the old F1 shape in old builds only. This build refuses a settings version or
+field it does not know (`originSettings`), so the same holds for the next change.
+
+**Records from before the setting, and who owns them afterwards.**
+
+- **A joined record under `joined:<id>`:** found by every later lookup of that command, under either form. It counts
+  only for the account whose notice documents it wrote (0.9).
+- **Definitions:** content-addressed and guarded, so whoever wrote them, the rows are the account's own (under its
+  definitions prefix).
+- **Frames, ledgers and cursors:** they do not change form. Ledgers in parts and whole ledgers are read alike.
+- **The `joined:<account>/<id>` form of `bf377c57f`:** not read. It existed only in test databases written with that
+  commit's per-process switch.
+
+**What it makes impossible** (each checked in 0.10):
+
+- **R2:** a command landing twice in a mixed fleet. Every process that can still act on the account uses one key form
+  at a position, and finds the other form.
+- **R5:** a frame after an acknowledged pause from a settler without the guards. No such settler can commit once the
+  setting is on.
+- **R4:** a release accepted under one ledger mode and settled under another.
+- **R8:** account 0's deadline key colliding with another account's key. Under the setting every held account's key is
+  `joined:v2/<n>/<account>/<id>`, `n` the account name's length, so no two (account, ID) pairs give one key, and none
+  equals an unscoped key (a Publish ID has no `/`; a deadline's is `deadline/<64 hex>`).
+
+**What it does not make impossible.**
+
+- A process from before 2026-11-21: no held account ran before then.
+- A process that writes the origin fact itself with other values.
+- R3's learn and deny for Publish IDs (0.9).
+
+**Cost.** One more row read and one more `EntityState` guard per guarded Publish and per settlement frame, whether or
+not the account has settings, and one controls read at the start of a held Publish. No stored byte changes while an
+account has no setting.
+
+### 0.9 Ownership of every recovered record, and the account as an authority (R1, R3)
+
+**Every record `original` recovers is checked, under both key forms.** A record found under this command's key is this
+account's command only if it wrote this account's own joined documents (`notice:v1:<hash of the database and this
+account's document name>:`; every joined command writes its notice documents there). This holds in every layout, the
+single-account one included, and with or without settings (`account.ts` `original`). Another account's record under
+the same key, or a forged one (R3's S3: it writes the forger's own subject), is not this command. The Publish then
+commits under its own key. If that key is the other's, the commit is refused (the claim is unique). It is never
+acknowledged with a record that is not its own.
+
+**R3, the account as an authority.** Three cases.
+
+- **The definitions ID (S2, definitions):** under the `accountKeys` setting the definitions write's command ID is
+  random. The write is content-addressed and guarded (created only if absent) and needs no recovery by ID: a lost
+  reply is found by reading the nodes again. So no other account can compute it and claim it first.
+- **The settings transition's ID:** random, for the same reason.
+- **A Publish's ID (S1, S2):** it must be recoverable by the client's resend, so it is a function of the client's ID
+  and cannot be random. The save line's mechanism, `TX2_ACCOUNT_CLAIMS` with the SDK's `claimAccount`
+  (`exp/DX-S6-save-line-fixes` `a6d02225c`, `account_claims.clj`), makes the account an authority. The gateway stores a
+  claim as `acct-id/v1/<n>/<account>/<id>`, with the account taken from the entities the write writes (the request must
+  name the same account). A lookup scoped by account finds only that account's claims, and its legacy plain claims by
+  the log.
+  - **What the join layer needs from it:** the gateway must count a held account's Publish entities as that account's.
+    The release entity `lazy/account/releases/<account>` matches a fixed pattern. The notice documents are named by a
+    hash of the database and the account's document name, which the gateway can recompute for the fixed names
+    (`joined-<account>`, `settlement-values-<account>`, `settlement-notices-<account>`, `settlement-control-<account>`).
+    A Publish would then name its account; its claim would be stored scoped by it; another account's save under the
+    same client ID would be stored scoped by that account. Neither could claim, find or deny the other's.
+  - **Not built here.** It needs the save line's branch, which is not merged into this one, and a gateway change with
+    its own image (follow-up 10). One mechanism: the join layer's `joined:v2/...` form names the account inside the
+    client's ID only so that two accounts do not collide by accident. The gateway's account claim is what stops one
+    account taking another's.
+  - **Until then:** reading another account's record by command ID (S1) and claiming its next Publish ID first (S2)
+    remain possible for a writer that can compute the ID. Both give a refusal or a read, never a wrong acknowledgement
+    and never a wrong write.
+
+### 0.10 R10: the ledger cap is a lifetime limit, stated exactly
+
+A subject's notice ledger keeps one item for every notice policy it was ever owed: retired items are never removed
+(`RELEASE-LIMITS.md`'s deferred removal is not built). So a bound on what one release adds would let the ledger grow
+past what the settlement can write. A bound on what the ledger holds is a bound over the account's lifetime. **The limit
+is real in this ledger shape**:
+
+- **What it is:** the distinct notice policies of all the account's releases together, plus up to twice the base rules'
+  items, must fit one subject's packed ledger. That is 10 parts of 10,240 characters with ledgers in parts, one value
+  per frame without; about 1,580 distinct notice policies in parts.
+- **What refuses:** a Publish that would take the account over it, before anything is written. The message now says
+  so: how many distinct notice policies the account's releases would hold, how many this release adds, that the limit
+  is for the account's lifetime, and that a release reusing the account's existing notice policy IDs, or adding none,
+  still publishes.
+- **What removes it:** removing retired ledger items once no reader needs them (RELEASE-LIMITS' deferred retraction of
+  old parts). Then the cap can bound the ledger as it is: the items in force plus what one release adds. Follow-up 11.
+
+### 0.11 R6, R7, R8, R9
+
+- **R6:** the adapter's refusal message now carries the gateway's code and status ("Datomic transaction was rejected
+  (TransactionRejected, 400)", `DatomicStorageAdapter.ts`), so the next one-try refusal names what refused it. The gate
+  keeps counting tries.
+- **R7:** section 0.4 corrected. In the toy's `load-fair` configuration a subject save never enters the group lane
+  (`TX2_SUBJECT_SAVE=1`), so a Publish groups only with other general commits. With saves on the general path the
+  review ran it (H2: 11 of 11 Publishes grouped with saves, the gate held).
+- **R8:** closed by the `joined:v2/<n>/<account>/<id>` form for every held account under the setting (0.8).
+- **R9:** no change. Refusing a frame on any change of the control row is what makes the pause bound exact; each
+  refused frame plans again and the release ends stored.
 
 ## 1. The problem in one paragraph
 

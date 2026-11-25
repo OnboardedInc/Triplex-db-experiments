@@ -36,8 +36,9 @@ import {
 import { Documents, type Op } from "../../notify1/store.ts";
 import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
-import { accountKeys, Conflict, fact, millis, namesOf, value, type EntityGuard, type Store } from "../store.ts";
-import { ledgerCapacity, ledgerMode, ledgerPartChars, noticeItems, worstLedgerChars } from "./ledger-parts.ts";
+import { Conflict, fact, millis, namesOf, value, type EntityGuard, type Store } from "../store.ts";
+import { ledgerCapacity, ledgerPartChars, noticeItems, worstLedgerChars, type LedgerMode } from "./ledger-parts.ts";
+import { ensureSettings } from "./account-settings.ts";
 import { calculate, worldsAt, type Proposal } from "../decision.ts";
 import { deepImpact, rawDeep, replaceDeep } from "./deep.ts";
 import { subjectOf, type Fact } from "../../../../bench/lib/world.ts";
@@ -87,10 +88,13 @@ export type PublishOptions = {
 /** [DX-ACT8] TX2_PUBLISH_BESIDE=1: a held account's (owed) Publish commits with the account guard (its notice tail, its
  * calendar, and the transactor's revision check on what the record writes) instead of the whole database's head.
  * PUBLISH-BESIDE-SAVES.md sections 3 and 4. Unset: the whole-head rule, as before. */
-/** [DX-ACT8, review F1] The command ID of joined command `id` in store `s`: with TX2_ACCOUNT_KEYS, a namespaced held
- * account's carries its account (`joined:<account>/<id>`); otherwise, and for the single-account layout, `joined:<id>`. */
-export const joinedCommandId = (s: Pick<Store, "held">, id: string) =>
-  accountKeys() && s.held?.namespace ? "joined:" + s.held.account + "/" + id : "joined:" + id;
+/** [DX-ACT8, second review] The command ID of joined command `id` in store `s`. With the account's stored setting
+ * `accountKeys` (any held account, the single-account layout too), `joined:v2/<n>/<account>/<id>`, `n` the account
+ * name's length, so no (account, ID) pair gives another's key and none equals a key without the setting (a Publish ID
+ * has no `/`, a deadline's `deadline/<64 hex>`). Otherwise `joined:<id>`, as before. */
+export const joinedCommandId = (s: Pick<Store, "held">, id: string, keys = false) =>
+  keys && s.held ? scopedJoinedId(s.held.account, id) : "joined:" + id;
+export const scopedJoinedId = (account: string, id: string) => "joined:v2/" + account.length + "/" + account + "/" + id;
 export const publishBeside = () => process.env.TX2_PUBLISH_BESIDE === "1";
 /** [DX-ACT6] A Publish whose record exceeds the 4 MiB request limit (full documents only), refused before any write. */
 export class ReleaseTooLarge extends Error {}
@@ -150,6 +154,8 @@ const dataKey = (seq: number, i: number) => "join-output:" + seq + ":" + i;
 type Plan = {
   ops: any[];
   context: object;
+  /** [DX-ACT8, second review] The account's `accountKeys` setting as the plan read it (undefined: read at the commit). */
+  keys?: boolean;
   expected?: number;
   guards?: EntityGuard[];
   inside?: () => Promise<void>;
@@ -202,7 +208,7 @@ export class JoinedAccount {
         if (
           tx?.position !== event.at ||
           tx.actor !== "lazy/join" ||
-          (tx.commandId !== joinedCommandId(s, event.value.request) && tx.commandId !== "joined:" + event.value.request) ||
+          (tx.commandId !== joinedCommandId(s, event.value.request, true) && tx.commandId !== "joined:" + event.value.request) ||
           event.value.sourceBefore !== event.at - 1
         )
           return false;
@@ -485,15 +491,19 @@ export class JoinedAccount {
     await this.suffix(c.input, p);
     return { meta, c, tail };
   }
-  private async original(id: string, intent: string, legacyIntent?: string) {
-    const key = joinedCommandId(this.s, id);
-    const found = await this.recorded(key, intent);
-    if (found || key === "joined:" + id || legacyIntent === undefined) return found;
-    // [DX-ACT8, review F1] A record written before TX2_ACCOUNT_KEYS carries the unscoped ID: it is this command only if
-    // it wrote this account's own joined documents; another account's record under the same ID is not this command.
+  /** [DX-ACT8, second review] The record of joined command `id`, under either form of its command ID, whatever the
+   * account's settings (a record written under one form before or after a transition is found under the other). A record
+   * is this account's only if it wrote this account's own joined documents (every joined command writes its notice
+   * documents); any other record under the same key, another account's or a forged one, is not this command. */
+  private async original(id: string, intents: { scoped: string; legacy: string }) {
+    const own = (r: { changes: { entityId: string }[] } | null) =>
+      Boolean(r?.changes.some((c) => c.entityId.startsWith(this.db.prefix)));
+    if (this.s.held) {
+      const key = joinedCommandId(this.s, id, true), found = await this.s.lookup(key);
+      if (own(found)) return this.recorded(key, intents.scoped);
+    }
     const legacy = await this.s.lookup("joined:" + id);
-    if (!legacy || !legacy.changes.some((c: { entityId: string }) => c.entityId.startsWith(this.db.prefix))) return null;
-    return this.recorded("joined:" + id, legacyIntent);
+    return own(legacy) ? this.recorded("joined:" + id, intents.legacy) : null;
   }
   private recorded(key: string, intent: string) {
     return this.s.lookup(key).then((r) => {
@@ -570,17 +580,19 @@ export class JoinedAccount {
     assert(
       /^[a-zA-Z0-9_.:-]{1,145}$/.test(id) || (!through && /^deadline\/[a-f0-9]{64}$/.test(id)),
     );
-    // [DX-ACT8, review F1] With TX2_ACCOUNT_KEYS the intent names the account too (the scope is the whole database's).
-    const scoped = joinedCommandId(this.s, id) !== "joined:" + id;
-    const intent = scoped ? h([this.s.scope, this.s.held!.account, id, args]) : h([this.s.scope, id, args]),
-      legacyIntent = scoped ? h([this.s.scope, id, args]) : undefined;
+    // [DX-ACT8, second review] Under the account's `accountKeys` setting the intent names the account too (the scope is
+    // the whole database's); the form a record carries is decided at its plan, by the settings it read.
+    const intents = {
+      scoped: this.s.held ? h([this.s.scope, this.s.held.account, id, args]) : h([this.s.scope, id, args]),
+      legacy: h([this.s.scope, id, args]),
+    };
     // [DX-ACT2] Why: only a different scope writer can beat an admitted turn. Bound that case and recover the original durable receipt by identity. Rejected: spinning against a moving source head.
     for (let retries = 0; retries < 3; ) {
       const attempt: WriteAttempt | undefined = observation
         ? { started: performance.now() }
         : undefined;
       if (attempt) observation!.attempts.push(attempt);
-      const old = await this.original(id, intent, legacyIntent);
+      const old = await this.original(id, intents);
       if (old) {
         if (attempt) {
           attempt.recovered = true;
@@ -604,12 +616,13 @@ export class JoinedAccount {
         if (attempt) attempt.prepared = performance.now();
         guarded = Boolean(body.guards);
         if (guarded) this.beside.tries++;
+        const keys = body.keys ?? (this.s.held ? (await this.s.controls(p)).settings?.accountKeys === true : false);
         const r = await this.s.commit(
-          joinedCommandId(this.s, id),
+          joinedCommandId(this.s, id, keys),
           "lazy/join",
           body.ops,
           body.expected ?? p,
-          { ...body.context, intent },
+          { ...body.context, intent: keys ? intents.scoped : intents.legacy },
           body.guards ? undefined : hook,
           (at) => {
             if (attempt) attempt.nativeAck = at;
@@ -627,7 +640,7 @@ export class JoinedAccount {
         } else assert.equal(r.position, (body.expected ?? p) + 1);
         return this.observed(r);
       } catch (e) {
-        const won = await this.original(id, intent, legacyIntent);
+        const won = await this.original(id, intents);
         if (attempt) attempt.finished = performance.now();
         if (won) {
           if (attempt) attempt.recovered = true;
@@ -648,21 +661,28 @@ export class JoinedAccount {
   }
   /** [DX-ACT8, review F3] Refuses a release when one subject could owe more notice items across this account's
    * releases (`releases`, plus `doc`) than its ledger can be written with (ledger-parts.ts). */
-  private async ledgerCap(doc: W0.ReleaseDoc, releases: readonly { documentRef?: DocRef; document?: W0.ReleaseDoc }[], p: number) {
+  private async ledgerCap(doc: W0.ReleaseDoc, releases: readonly { documentRef?: DocRef; document?: W0.ReleaseDoc }[], p: number,
+    mode: LedgerMode) {
     const docs = [doc];
     for (const r of releases) docs.push(r.documentRef ? (await loadRelease(this.s, r.documentRef, p)).doc : r.document!);
-    const mode = ledgerMode(), { items, policies, base } = noticeItems(docs);
+    const { items, policies, base } = noticeItems(docs);
     const need = worstLedgerChars(items), cap = ledgerCapacity(mode);
     if (need <= cap) return;
     let fit = 0;
     while (fit < items.length && worstLedgerChars(items.slice(0, fit + 64)) <= cap) fit += 64;
+    // [DX-ACT8, second review R10] A subject's ledger keeps one item for every notice policy it was ever owed (retired
+    // items are never removed), so this is a limit over the account's lifetime: the distinct notice policies of all its
+    // releases together. Releases that add no new notice policy keep publishing.
+    const known = noticeItems(docs.slice(1)).policies;
     throw new ReleaseTooLarge(
-      "Release refused: one subject could owe " + items.length + " notice items across this account's releases (" +
-        policies + " notice policies and up to " + base + " from the base rules); its packed notice ledger would be about " +
-        need + " characters, over the " + cap + " the settlement can write for one subject (" +
+      "Release refused: this account's releases would hold " + policies + " distinct notice policies (" +
+        (policies - known) + " new in this one); with up to " + base + " items from the base rules one subject could owe " +
+        items.length + " notice items, a packed ledger of about " + need + " characters, over the " + cap +
+        " the settlement can write for one subject (" +
         (mode === "parts" ? cap / ledgerPartChars + " parts of " + ledgerPartChars + " characters" :
-          "one value per frame; TX2_NOTICE_LEDGER=parts writes it in parts") + "). Publish a release with fewer notice " +
-        "policies (this account's releases can hold about " + Math.max(0, fit - base) + ").",
+          "one value per frame") + "). A ledger keeps every notice policy a subject was ever owed, so this account can " +
+        "use at most about " + Math.max(0, fit - base) + " distinct notice policies in its lifetime; publish one that " +
+        "reuses its existing notice policy IDs or adds none.",
     );
   }
   private async choose(
@@ -844,12 +864,13 @@ export class JoinedAccount {
     // [DX-ACT6] By reference: the definitions not stored yet are written first (content-addressed, unfenced, each write
     // within the writer's bound), and the predecessor's too if it was published with full documents.
     const byRef = (options.docs ?? docsMode()) === "ref";
+    // [DX-ACT8, second review] A process allowed to turn a setting on does so first (one way, `account-settings.ts`);
+    // then what this Publish does follows the account's stored settings only.
+    await ensureSettings(this.s);
+    const h0 = await this.s.head(), c0 = this.s.held ? await this.s.controls(h0) : undefined;
     // [DX-ACT8, review F3] Also before the definitions are written, so a refused release writes nothing.
-    if (process.env.TX2_LEDGER_CAP_AT_PUBLISH === "1" && storage === "owed") {
-      const h0 = await this.s.head();
-      await this.ledgerCap(doc, (await this.s.controls(h0)).releases, h0);
-    }
-    const ref = byRef ? await this.writeDefinitions(doc) : undefined;
+    if (c0?.settings?.ledgerCap && storage === "owed") await this.ledgerCap(doc, c0.releases, h0, c0.settings.ledger!);
+    const ref = byRef ? await this.writeDefinitions(doc, c0?.settings?.accountKeys === true) : undefined;
     // [DX-ACT8] The account guard applies to a held account's owed record only (its plan reads no subject data); every
     // other Publish keeps the whole-head rule.
     const beside = publishBeside() && Boolean(this.s.held) && storage === "owed";
@@ -873,8 +894,8 @@ export class JoinedAccount {
               ? await loadRelease(this.s, prev.documentRef, p)
               : W0.compileRelease(prev.document)
             : undefined;
-          // [DX-ACT8, review F3] TX2_LEDGER_CAP_AT_PUBLISH=1: checked again at the plan's own read position.
-          if (process.env.TX2_LEDGER_CAP_AT_PUBLISH === "1") await this.ledgerCap(doc, c.releases, p);
+          // [DX-ACT8, review F3] Under the account's `ledgerCap` setting: checked again at the plan's own read position.
+          if (c.settings?.ledgerCap) await this.ledgerCap(doc, c.releases, p, c.settings.ledger!);
           // [DX-ACT6] The record names stored definitions only: the root of this release and of its predecessor.
           const oldRef: DocRef | null = !byRef || !prev ? null : prev.documentRef ?? splitDocument(prev.document).ref;
           if (byRef) {
@@ -1036,11 +1057,15 @@ export class JoinedAccount {
           let guards: EntityGuard[] | undefined;
           if (beside) {
             const calendar = await this.db.row("join-calendar", p);
-            guards = [{ entityId: this.db.prefix + "join-calendar", tripleIds: calendar ? [calendar.id] : [] }];
+            guards = [{ entityId: this.db.prefix + "join-calendar", tripleIds: calendar ? [calendar.id] : [] },
+              // [DX-ACT8, second review] The origin row, which holds the account's settings and changes only at
+              // enrolment and at a settings transition: a Publish planned under the old settings never lands after it.
+              { entityId: namesOf(this.s).ORIGIN, tripleIds: c.origin ? [c.origin.id] : [] }];
             await options.afterRead?.(p);
           }
           return {
             ops: record,
+            keys: c.settings?.accountKeys === true,
             expected,
             context: {
               epoch: meta.epoch,
@@ -1082,11 +1107,11 @@ export class JoinedAccount {
   /** [DX-ACT6] Writes the definitions a Publish by reference will name (and its predecessor's, if published with full
    * documents), unfenced and idempotent. Publish calls it; a caller that pauses saves around a Publish calls it first,
    * so the pause covers only the record. */
-  async writeDefinitions(doc: W0.ReleaseDoc) {
-    const staged = await stageDocument(this.s, structuredClone(doc));
+  async writeDefinitions(doc: W0.ReleaseDoc, unclaimable = false) {
+    const staged = await stageDocument(this.s, structuredClone(doc), unclaimable);
     this.lastDefinitions = { writes: staged.writes, rows: staged.rows, bytes: staged.bytes, retries: staged.retries };
     const c0 = await this.s.controls(await this.s.head());
-    for (const r of c0.releases) if (r.joined && r.document && !r.documentRef) await stageDocument(this.s, r.document);
+    for (const r of c0.releases) if (r.joined && r.document && !r.documentRef) await stageDocument(this.s, r.document, unclaimable);
     return staged.ref;
   }
   async physical(seq: number) {

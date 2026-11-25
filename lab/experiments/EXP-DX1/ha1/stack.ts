@@ -106,7 +106,10 @@ export class Stack {
     const cross = this.a !== this.b;
     const server = process.platform === "linux";
     let published: string[] = [];
-    if (!cross && port === 8080 && this.e.mode.startsWith("load-")) {
+    // [DX-ACT8] DX_ACT8_FIXED_PORTS=1 (holder DX-ACT8, diagnostic only): a load mode's gateways get an explicit host port,
+    // as the HA drills', so a restarted gateway comes back where this run's clients reach it (the gate's restart part).
+    const fixedPorts = process.env.DX_ACT8_FIXED_PORTS === "1" && this.holder === "DX-ACT8";
+    if (!cross && port === 8080 && this.e.mode.startsWith("load-") && !fixedPorts) {
       // [DX-LOAD1] Why: the VM assigns a free port at container start. Rejected: probing the Mac's socket table for a port used by the VM.
       published = ["-p", loopback + "::" + port];
     } else if (port && (cross || port === 8080)) {
@@ -571,7 +574,8 @@ export class Stack {
     const priority = this.e.mode === "load-live" || this.e.mode === "load-tail" || frontier;
     // [DX-ACT10] Second review: DX_ACT10_GROUP=1 (holder DX-ACT10, diagnostic load-fair only) turns the write gateway's
     // group commit on, so a Publish beside saves can share one physical transaction with them. Unset: unchanged.
-    const reviewGroup = process.env.DX_ACT10_GROUP === "1" && this.holder === "DX-ACT10" && fair && role === "write";
+    // [DX-ACT8] The Publish builder runs the same diagnostic (holder DX-ACT8).
+    const reviewGroup = process.env.DX_ACT10_GROUP === "1" && (this.holder === "DX-ACT10" || this.holder === "DX-ACT8") && fair && role === "write";
     // DX_ACT10_GROUP_SAVES=general as well: the write gateway runs without TX2_SUBJECT_SAVE, so saves take the general
     // commit path, the only one that enters the group lane (subject saves go straight to d/transact-async).
     const reviewGeneral = reviewGroup && process.env.DX_ACT10_GROUP_SAVES === "general";
