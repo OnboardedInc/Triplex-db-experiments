@@ -15,6 +15,9 @@
 #           failure at every new failure line and fails if a line prints key bytes (a hex run of 64 or more, or \x),
 #           a protected value, a subject ID or a scope word.
 #   fuzz    [review] b2r/fuzz.clj, B2R_SCHEDULES (default 20000) schedules on each authority, seed B2R_SEED.
+#   lines   [review F5, F9] b2-keys/lines.clj on this worktree: a persistent failure prints one line, then one a minute
+#           with the number not printed; a refused PostgreSQL batch prints its SQL state and the server's text, never
+#           the driver's message (the statement with a wrapped key); other exceptions print their class only.
 # The paired native logs are compared after paired.clj's normalisation, not as raw bytes: :db/txInstant datoms are
 # left out; every clock value (a number from 1e12 to 1e14, a 13-digit number, a float clock, a hex double clock)
 # becomes CLOCK or HEXCLOCK; the database name becomes DB; the random removal transaction IDs, every UUID and every
@@ -26,7 +29,7 @@ out=${1:?absolute new output directory}; base=${2:-1ed2650bd}
 : "${DOCKER_HOST:?set DOCKER_HOST to the lab VM docker socket}"
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 x=$repo/lab/experiments/EXP-DX1
-phases=${B2_GATE_PHASES:-b2 paired suites scenarios}
+phases=${B2_GATE_PHASES:-b2 paired suites scenarios lines}
 mkdir -p "$out/this" "$out/base" "$out/lab"
 git -C "$repo" rev-parse HEAD > "$out/source"
 git -C "$repo" status --porcelain -- packages/datomic/gateway lab/experiments/EXP-DX1/b2-keys > "$out/dirty"
@@ -34,7 +37,7 @@ cp -R "$repo/packages/datomic/gateway/src" "$out/this/src"; cp "$repo/packages/d
 git -C "$repo" archive "$base" packages/datomic/gateway/src packages/datomic/src/codec-spec.json | tar -x -C "$out/base"
 mv "$out/base/packages/datomic/gateway/src" "$out/base/src"; cp "$out/base/packages/datomic/src/codec-spec.json" "$out/base/codec-spec.json"
 rm -rf "$out/base/packages"; echo "$base" > "$out/base/commit"
-cp "$x/wfix1/regression.clj" "$x/b2-keys/paired.clj" "$out/lab/"
+cp "$x/wfix1/regression.clj" "$x/b2-keys/paired.clj" "$x/b2-keys/lines.clj" "$out/lab/"
 image=${DX_B2_IMAGE_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
 [[ $(docker image inspect --format '{{.Id}}' "$image") == "$image" ]] || { echo "gate.sh: image $image not present" >&2; exit 2; }
 echo "$image" > "$out/image"
@@ -116,6 +119,11 @@ if [[ $phases == *fuzz* ]]; then
       "B2R_SCHEDULES=${B2R_SCHEDULES:-20000}" "B2R_SEED=${B2R_SEED:-1000000}" || status=1
     grep -hE "^B2R_FUZZ_SUMMARY|^B2R_FUZZ_VIOLATION" "$out/fuzz-$authority/run.log" 2>/dev/null | cut -c1-600 | tail -6
   done
+fi
+if [[ $phases == *lines* ]]; then
+  run lines-this this '(load-file "/lab/lines.clj") (b2-lines/main)'
+  grep -hE "^B2_LINES" "$out/lines-this.log" | cut -c1-300
+  grep -q "^B2_LINES_SUMMARY {:checks 10, :failed 0}" "$out/lines-this.log" || status=1
 fi
 rm -rf "$out/this/src" "$out/base/src"
 exit "$status"
