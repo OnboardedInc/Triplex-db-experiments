@@ -20,6 +20,7 @@
 #                gateway, allowed to move the database to the commit boundary. The earlier build moves the database
 #                per account (log's boundary in the database); its removal pauses 8 s after its commit while both
 #                gateways read and write; then this version moves the database to the commit boundary; then both again
+#   sdkcache     [DX-ERA2 fifth pass] the SDK's Reach cache across a removal paused 8 s after its commit (commit boundary)
 #   readwait, readwait-commit  [DX-ERA2 fifth pass] removals at 1 and at 10 per second on the write gateway while
 #                readers read on both gateways (era2/readwait.mjs); the log's boundary (or the commit boundary)
 # Predictions (written 2026-11-24, 20:50 EST, before the first run):
@@ -96,6 +97,7 @@ case $scenario in
     gateway+=(DX_REMOVAL_COMMIT_BOUNDARY=1 "DX_GATEWAY_SRC_READ=$out/gw-old"
               "DX_GATEWAY_ENV_READ=TX2_REMOVAL_COMMIT_BOUNDARY=$old_switch TX2_REMOVAL_TEST_PAUSE_AT=committed TX2_REMOVAL_TEST_PAUSE_MS=8000") ;;
   readwait) ;;
+  sdkcache) gateway+=(DX_REMOVAL_COMMIT_BOUNDARY=1 "DX_GATEWAY_ENV_WRITE=TX2_REMOVAL_TEST_PAUSE_AT=committed TX2_REMOVAL_TEST_PAUSE_MS=8000") ;;
   readwait-commit) gateway+=(DX_REMOVAL_COMMIT_BOUNDARY=1) ;;
   *) echo "unknown scenario $scenario" >&2; exit 2 ;;
 esac
@@ -349,6 +351,14 @@ fleet-oldcommit|fleet-oldlog)
   curl -sS -m 30 "$W/v2/db/$D/erasure-frontier" > "$out/replies/frontier-end.json"
   step "frontier at the end: $(node -e 'const f=JSON.parse(require("fs").readFileSync(process.argv[1]));console.log(JSON.stringify({seq:f.seq,stamp:f.removalStamp}))' "$out/replies/frontier-end.json")"
   leak_check "$W" "$D" end '[]' "$va"
+  ;;
+sdkcache)
+  # [DX-ERA2 fifth pass, B5] the SDK's Reach cache (era2/sdkcache.ts, run with tsx from SDK_WT, a checkout with
+  # node_modules holding the same packages/datomic/src as this one)
+  new_db "$W" d; D=$db
+  for s in a1 b1; do post "$W/v1/db/$D/transact" "$bodies/seed-$s.json" "seed-$s"; done
+  step "the SDK's source: $(git -C "${SDK_WT:?a checkout with node_modules}" rev-parse HEAD) (this checkout $(git rev-parse HEAD))"
+  "$SDK_WT/node_modules/.bin/tsx" "$SDK_WT/lab/experiments/EXP-DX1/era2/sdkcache.ts" "$W" "$R" "$D" "$va" "$out/sdkcache.json" | tee -a "$out/steps.log"
   ;;
 readwait|readwait-commit)
   new_db "$W" d; D=$db
