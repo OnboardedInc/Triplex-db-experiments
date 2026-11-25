@@ -6448,3 +6448,20 @@ Source: removal builder final message; branch `exp/DX-ERA2-removal-per-account` 
 - Not tested: a save planned before a field is added to the policy and committed after; data restored from before an addition; two gateways adding different fields at once; an old SDK without the stamp; scale.
 
 **Actions:** sixth independent review started, pinned to `03bb49cd3`, with a direct question: is per-account removal on the commit boundary fit to merge default off. The removal builder asked to establish whether N1 is reachable on the one branch without a hand-made state and, if so, to put its fix alone on a branch for its own review; and to show whether N2 exists on the one branch.
+
+## 2026-11-25 09:35 EST: save line, third pass: one stored form per operation, held as a one-way database setting; third review started. A second agent stall caught.
+
+**Stall.** The derived-copies builder's last action was at 07:53; it had no live runs; it was listed as running in two status tables without a liveness check (08:03, 08:37). Stopped and resumed at 09:31 with the removal builder's newer head (`03bb49cd3`) to merge.
+
+**Save line.** Source: save-line builder final message; branch `exp/DX-S6-save-line-fixes` `cdfc70e02` (gateway sources from `96b866c6d`); page sections 12, 10.1, 11. Image built from the head, by ID.
+
+- **R2-1 (a save stored twice under the account option) fixed:** an operation ID has one stored form, as sent, on every gateway and in every state of the setting; the replan retry re-applies what the first attempt stored. The reviewer's mixed-fleet tests and its PostgreSQL stack pass.
+- **The setting** is one value on the database's scope entity, one-way; the environment variable only permits turning it on. **The transition moves the writer functions:** in the transaction that sets the value every save-writer function moves to a twin with the same body and the old one refuses. Claimed impossible: a save prepared before the transition committing after it; any save by a build that does not know the setting committing once it is on. Limit: a build with different writer code is not stopped.
+- R2-2 (a creation racing a removal replayed after it): the SDK sends the source of the save's first attempt on every replay and the gateway declines a replay that writes a protected family a removal named after that source. **Not run with the removal branch's code: the two branches conflict in five files and implement this rule differently.**
+- R2-3 to R2-11 fixed or decided (the reserved prefix refused on every route; the command path fixed with the option off; unmarked refusals answered as decided; the 984 refusals were the fuzzer's own fault injection; fences left unbounded by choice).
+- The Publish review's four conditions for one shared account mechanism: done on the gateway side; settlement frames get an account only once the join layer moves its documents to a form that carries the account in clear.
+- Gates: the second review's tests in 6 settings; stored-form gate 109 of 109 in 4 settings; outcome gate 426 of 426 in 5 settings including group commit; two-account gate 10,000 schedules, 127,848 saves, 0 differences; fuzzer with faults 172,842 saves, 0 differences; SDK stack 12,000 saves under faults, 0 violations. Options off: stored-function identities equal the base in every writer setting.
+- The ID collision (U1) did not occur in three 12,000-save stack runs.
+- Not tested: the removal branch's code together with this; a real older build in the fleet; the transition under load on PostgreSQL; the join layer on this mechanism.
+
+**Actions:** third independent review of the save line started, pinned to `cdfc70e02` (the function move at the transition, a real older build, the replay rule against a real removal, account authority, the ID collision under load). The Publish builder told the six changes the join layer needs. **Owed after the reviews:** one reconciliation of the save-line fixes with the removal branch, with one replay-after-removal rule, not two.
