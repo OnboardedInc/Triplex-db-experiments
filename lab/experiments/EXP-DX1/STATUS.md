@@ -6534,3 +6534,17 @@ Source: Publish builder final message; branches `exp/DX-ACT8-publish-beside-save
 - Not tested: a removal inside a group; a group cut by a killed gateway; a real old build; a backup restore; the archive's cost at size.
 
 **Action:** the Publish reviewer resumed for two reviews in order: the standalone ID fix first (including whether it is right for the one branch's current head), then the fourth review of the Publish line with a direct question on merging default off.
+
+## 2026-11-25 12:09 EST: review of the key-pool and reply fix: no break in the key pool; merge after one one-line fix
+
+Source: independent reviewer, branch `exp/DX-N1R-key-pool-review` `71e6c453d`, `lab/experiments/EXP-DX1/n1r/REVIEW.md`. Reviewed: `exp/DX-N1-key-pool` `94c63ad6b`.
+
+- **The key pool holds:** fuzzer 20,000 schedules across 500 databases on the PostgreSQL key store (62,703 saves stored, including 255 to 600 protected values in one save; 5,929 restarts; 11,588 removals; key inserts and deletes refused; batches committed while the gateway saw an error): 1,341,561 sealed values, 3,424,429 pool keys and 365,854 published keys checked, 0 violations. Real stack with a real restart: no save refused; a value sealed with a key from the fill on demand was read on the other gateway, removed, and its key row deleted.
+- **No driver or Datomic text in any reply:** five kinds of injected exception at every storage and key-store call on every route; no reply carried the message, the SQL or key bytes.
+- **F1, low, the one named fix:** the new last catch sits inside the trace wrapper; if the wrapper itself throws, the web server's error page prints the message. Tracing is off by default and nothing leaks today.
+- F2, medium, already on the one branch: a save that may be stored can answer 400 and the SDK treats it as final (closed by the save-line fixes, queued for merge). F3: the SDK does not retry the typed 503 for an empty pool. F4: merging the save-line fixes after this branch conflicts in two files; the reviewer says how to resolve. F5: keys taken and never used are never deleted (not new).
+- Nothing in the SDK or the lab matches on reply message text in a way the fixed texts break; the save line's exact-message rule reads the cause chain, which is kept.
+- Builder's gate confirmed on the branch and the one branch; TypeScript suite 473 passed.
+- Not tested: a killed PostgreSQL session or transactor during a save on a stack; two gateway processes filling at the same moment.
+
+**Action:** the builder asked to make the one-line fix now, with the reviewer's check in the gate, and report the new head; it then goes to the merge.
