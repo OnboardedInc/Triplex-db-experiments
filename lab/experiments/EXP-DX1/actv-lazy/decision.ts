@@ -1,3 +1,4 @@
+import { noteWorld } from "../../../bench/lib/derived-seal.ts";
 import type { Dispatcher } from "./dispatch.ts";
 import assert from "node:assert/strict";
 import {
@@ -54,7 +55,8 @@ export function heldWorlds(rows: readonly WorldRow[], prefix: string, account: s
     const root = body.filter((r) => r.entityId === ids.placement(i));
     assert.deepEqual(root.filter((r) => r.attribute === ":subject/account").map((r) => r.value.value), [account]);
     assert.deepEqual(root.filter((r) => r.attribute === ":subject/member").map((r) => r.value.value), [String(i)]);
-    return policyWorld(i, body, basis);
+    // [DX-ERA4] TX2_DERIVED_SEAL=1: the rows this world was built from (a derived record names them).
+    return noteWorld(policyWorld(i, body, basis), body);
   });
 }
 export async function worldsAt(store: Store, format: Format, subjects: string[], b: Point) {
@@ -88,7 +90,10 @@ export async function worldsAt(store: Store, format: Format, subjects: string[],
     list.push(r);
     by.set(r.entityId, list);
   }
-  return subjects.map((s) => worldOf(s, reachableRows([s], rows, by)));
+  return subjects.map((s) => {
+    const used = reachableRows([s], rows, by);
+    return noteWorld(worldOf(s, used), used);
+  });
 }
 export function render(
   store: Store,

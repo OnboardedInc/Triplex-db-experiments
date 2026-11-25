@@ -1,5 +1,6 @@
 import { readErasure, recheckErasure, withErasure } from "../../../../bench/lib/datomic-erasure.ts";
 import { markerCurrent, ticketAccount, ticketAccounts } from "./account-tickets.ts";
+import { derivedSealOn } from "../../../../bench/lib/derived-seal.ts";
 import { bytes as transport } from "../../import1/source.ts";
 import assert from "node:assert/strict";
 import {
@@ -279,6 +280,9 @@ export class JoinedAccount {
           );
         assert(
           allowed ||
+            // [DX-ERA4] TX2_DERIVED_SEAL=1: a removal on request writes no content of the joined source (its changes are
+            // `erase` records only); the account goes on after it (era4/DERIVED-COPIES.md 3.4).
+            (derivedSealOn() && t.changes.length > 0 && t.changes.every((v: any) => v.op === "erase")) ||
             (setup && beside && foreign(t.changes)) ||
             (t.actor === stageActor && stageChanges(this.db.prefix, t.changes)) ||
             // [DX-ACT6] Content-addressed release definitions written ahead of a Publish (unreachable until it).

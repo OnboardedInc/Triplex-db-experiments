@@ -475,6 +475,20 @@
     (privacy/guard scope #(with-privacy-guards more work))
     (work)))
 
+;; [DX-ERA4] TX2_DERIVED_SEAL=1: the derived-record routes (derived_seal.clj, resolved at call time so that with the option
+;; off nothing new is loaded). Written with `if`, `let` and calls only, as the rest of this file's late additions.
+(def derived-seal-on (= "1" (System/getenv "TX2_DERIVED_SEAL")))
+(defn- derived-action? [action] (if (= action "derived-seal") true (= action "derived-open")))
+(defn- derived-seal! [name conn db per-account action input]
+  (let [cut (if per-account (first (removal-erase/request-cut name conn db)) (privacy/cut name db))]
+    (if per-account nil (privacy/verify-data! cut db))
+    ((requiring-resolve 'triplex.gateway.derived-seal/handle!) name db cut action input)))
+
+(defn- derived-preview-ok? [input] ((requiring-resolve 'triplex.gateway.derived-seal/preview-ok?) input))
+(if derived-seal-on (alter-var-root #'privacy/derived-preview (constantly derived-preview-ok?)) nil)
+(defn- removal-tx-id [] ((requiring-resolve 'triplex.gateway.derived-seal/removal-tx-id)))
+(if derived-seal-on (alter-var-root #'privacy/derived-tx-id (constantly removal-tx-id)) nil)
+
 (defn route-handler [{:keys [uri request-method body query-string] :as request}]
   (if-let [[_ name action] (re-matches #"/v[12]/db/(s2-[A-Za-z0-9_-]+)/(.+)" uri)]
     (try
@@ -492,6 +506,8 @@
           (response 200 (erase/replay-after-restore! name conn))
           (and removal-scope/enabled (= :post request-method) (= action "removal-per-account"))
           (response 200 (removal-erase/per-account! name conn (request-json body)))
+          (if (= :post request-method) (if derived-seal-on (derived-action? action) false) false)
+          (response 200 (derived-seal! name conn db per-account action (request-json body)))
           :else
           (let [[protected-wire input] (when (and (= :post request-method) (= action "transact"))
                                         (write-wire/open name (request-json body)))

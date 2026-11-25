@@ -16,6 +16,12 @@
 (def removal-late (if removal-enabled true (= "1" (System/getenv "TX2_REMOVAL_TRIES_LOG"))))
 (def removal-sentinel -1)
 (def removal-hooks {})
+;; [DX-ERA4] Set by main.clj only with TX2_DERIVED_SEAL=1 (derived_seal.clj `preview-ok?`); nil otherwise.
+(def derived-preview nil)
+;; [DX-ERA4] Set by main.clj only with TX2_DERIVED_SEAL=1: a removal's transaction takes a well-formed transaction ID
+;; (`_tx/` and 26 base-32 characters) instead of `_tx/erase-<uuid>`, which the SDK's TransactionId refuses (so every feed
+;; read crossing a removal, and every save of a lazy account after one, fails); nil otherwise.
+(def derived-tx-id nil)
 
 (def root (System/getenv "TRIPLEX_ERASURE_DIRECTORY"))
 (def ^:dynamic *cut* nil)

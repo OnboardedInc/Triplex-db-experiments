@@ -659,7 +659,9 @@
           (d/as-of db (d/tx->t tx)))))))
 (defn read-db [name current input]
   (when (and (:sealed privacy/*cut*) (contains? input "staged"))
-    (privacy/failure! 409 "ProtectedPreviewUnavailable" "A protected row preview requires a guarded save"))
+    ;; [DX-ERA4] TX2_DERIVED_SEAL=1 serves a preview whose staged rows hold no protected attribute (it seals nothing).
+    (if (if privacy/derived-preview (privacy/derived-preview input) false) nil
+      (privacy/failure! 409 "ProtectedPreviewUnavailable" "A protected row preview requires a guarded save")))
   (let [db (if-let [handle (get input "handle")]
              (let [held (held-db name handle)]
                (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(trace/span "d/with" "peer-call" (d/with held (tx-data held staged))))) held))
@@ -784,7 +786,9 @@
 ;; Rejected: interpreting interior logical positions as physical transaction cuts.
 (defn read-rows [name current input]
   (when (and (:sealed privacy/*cut*) (contains? input "staged"))
-    (privacy/failure! 409 "ProtectedPreviewUnavailable" "A protected row preview requires a guarded save"))
+    ;; [DX-ERA4] TX2_DERIVED_SEAL=1 serves a preview whose staged rows hold no protected attribute (it seals nothing).
+    (if (if privacy/derived-preview (privacy/derived-preview input) false) nil
+      (privacy/failure! 409 "ProtectedPreviewUnavailable" "A protected row preview requires a guarded save")))
   (let [db (if-let [handle (get input "handle")]
              (let [held (held-db name handle)]
                (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(trace/span "d/with" "peer-call" (d/with held (tx-data held staged))))) held)) current)]

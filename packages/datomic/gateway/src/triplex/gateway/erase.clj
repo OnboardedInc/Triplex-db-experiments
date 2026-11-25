@@ -131,7 +131,7 @@
         families (when @(requiring-resolve 'triplex.gateway.write-policy/import-whole?)
                    ((requiring-resolve 'triplex.gateway.import-bound/removal-families) state selectors))
         entry {"database" name "seq" (inc (:seq state)) "previous" (:seal state) "commandId" command
-               "selectors" selectors "txId" (str "_tx/erase-" (UUID/randomUUID)) "position" position
+               "selectors" selectors "txId" (if privacy/derived-tx-id (privacy/derived-tx-id) (str "_tx/erase-" (UUID/randomUUID))) "position" position
                "erasedAt" stamp "identities" ids}]
     (if (seq families) (assoc entry "families" families) entry)))
 

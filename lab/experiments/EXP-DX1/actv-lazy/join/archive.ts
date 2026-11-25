@@ -14,6 +14,14 @@ import { LazyReader } from "../read.ts";
 import { JoinedAccount, type Marker } from "./account.ts";
 import { address } from "./index.ts";
 import { copyCheck, fingerprint, settledCurrent, ticketAccount, ticketAccounts, type AccountFrontier } from "./account-tickets.ts";
+import {
+  derivedSealOn,
+  isRemoved,
+  isSealed,
+  open as openDerived,
+  seal,
+  worldInputs,
+} from "../../../../bench/lib/derived-seal.ts";
 import { evaluateRows } from "./material.ts";
 import { BulkQueue, bulkClaim, frameCountersOn, frameEstimates, type BulkClass } from "./bulk.ts";
 import {
@@ -269,7 +277,8 @@ export class Archive {
     // [DX-ACT9] With TX2_ACCOUNT_TICKETS=1 the check needs the progress (which subjects are already stored), so it
     // comes after it is read; still before any subject is read. Otherwise here, as before.
     const narrowed = ticketAccount(s) !== undefined;
-    let authority = narrowed ? undefined : await recheckErasure(s.comp, m.erasureSeq);
+    // [DX-ERA4] TX2_DERIVED_SEAL=1: settlement goes on after a removal (its changes are sealed); the current frontier.
+    let authority = narrowed ? undefined : derivedSealOn() ? await readErasure(s.comp) : await recheckErasure(s.comp, m.erasureSeq);
     const identity = identityOf(s.scope, m, e.at),
       key = progressKey(sequence),
       prior = await this.db.row<Progress>(key, at);
@@ -312,6 +321,7 @@ export class Archive {
     if (displaced) return finish({ ...current, status: "superseded" });
     if (current.through === census.count) return finish({ ...current, status: "stored" });
     if (current.frames === "bytes") return this.byteFrame(sequence, r, current, prior, at, authority);
+    assert(!derivedSealOn(), "TX2_DERIVED_SEAL needs TX2_SETTLE_FRAMES=bytes");
     assert(current.through % step === 0);
     const start = current.through,
       page = Math.floor(start / width) * width;
@@ -396,6 +406,22 @@ export class Archive {
       );
       for (const id of missing) known.set(id, []);
       for (const row of values.rows) known.set(row.subject, row.rows.map(([k, , value]) => [k, value]));
+      // [DX-ERA4] TX2_DERIVED_SEAL=1: each change is stored as ["", sealed [field, value]] under the protected
+      // assertions of its subject's world (a change computed from none stays as it was; one whose input was already
+      // removed is stored as ["", null], the removed marker). Sealing is deterministic, so a frame retried writes the
+      // same bytes. era4/DERIVED-COPIES.md 3.1.
+      if (derivedSealOn()) {
+        const queue: { inputs: readonly string[]; value: string; subject: string }[] = [];
+        for (const [i, id] of missing.entries())
+          for (const unit of known.get(id)!) queue.push({ inputs: worldInputs(worlds[i]!), value: canonical(unit), subject: id });
+        const sealed = await seal(s.comp, queue);
+        const next = new Map<string, [string, string | null][]>(missing.map((id) => [id, []]));
+        sealed.forEach((v, j) => {
+          const q = queue[j]!;
+          next.get(q.subject)!.push(isSealed(v) ? ["", v] : isRemoved(v) ? ["", null] : (JSON.parse(q.value) as [string, string | null]));
+        });
+        for (const [id, units] of next) known.set(id, units);
+      }
     }
     const candidates = ids.map((subject) => ({ subject, units: known.get(subject)!, closing: false }));
     const { next, ops } = valuesFrame(this.db, progressKey(sequence), prior, current,
@@ -430,7 +456,7 @@ export class Archive {
     assert(frontier.identity === identity && frontier.through <= census.count);
     assert(frontier.status !== "stored" || frontier.through === census.count);
     if (frontier.frames === "bytes") {
-      const output = await this.storedFrames(sequence, frontier, identity, at);
+      const output = await openChanges(this.source.s.comp, await this.storedFrames(sequence, frontier, identity, at));
       // [DX-ACT9] Served per subject: no removal after the release's stamp touched one of the stored subjects.
       const check = copyCheck(this.source.s);
       if (check) await check(marker.erasureSeq, output.map((x) => x.subject));
@@ -518,7 +544,7 @@ export class Archive {
             assert(open?.subject !== piece.subject, "Duplicate settled subject");
             if (open) {
               if (check) await check(marker.erasureSeq, [open.subject]);
-              yield open;
+              yield derivedSealOn() ? (await openChanges(this.source.s.comp, [open]))[0]! : open;
             }
             open = { subject: piece.subject, changes: [...piece.changes] };
           }
@@ -530,7 +556,7 @@ export class Archive {
     }
     if (open) {
       if (check) await check(marker.erasureSeq, [open.subject]);
-      yield open;
+      yield derivedSealOn() ? (await openChanges(this.source.s.comp, [open]))[0]! : open;
     }
     assert(previous === frontier.hash && through === frontier.through && tail === frontier.part && frontier.changes === changes);
     if (!check) await recheckErasure(this.source.s.comp, marker.erasureSeq);
@@ -683,4 +709,24 @@ export class Contest {
       perSecond: [...this.seconds].sort((a, b) => a[0] - b[0]).map(([s, v]) => ({ s, ...v })),
     };
   }
+}
+
+/** [DX-ERA4] Settled changes with their sealed units opened. A subject any of whose units opens as removed reads
+ * `{subject, changes: [], removed}` (all of a subject's units name the same world, so they are removed together). */
+export async function openChanges(source: { backend?: { name: string; url: string } }, list: Changes[]) {
+  if (!derivedSealOn()) return list;
+  const flat = list.flatMap((c) => c.changes.map((u) => (u[0] === "" ? u[1] : null)));
+  const values = await openDerived(source.backend!.url, flat.map((v) => v ?? undefined));
+  let j = 0;
+  return list.map((c): Changes & { removed?: string[] } => {
+    const units: [string, string | null][] = [];
+    let removed: string[] | undefined;
+    for (const u of c.changes) {
+      const v = values[j++];
+      if (u[0] !== "") units.push(u);
+      else if (u[1] === null || isRemoved(v)) removed = [...(removed ?? []), ...(isRemoved(v) ? v.removed : [])];
+      else units.push(JSON.parse(v as string) as [string, string | null]);
+    }
+    return removed ? { subject: c.subject, changes: [], removed } : { ...c, changes: units };
+  });
 }

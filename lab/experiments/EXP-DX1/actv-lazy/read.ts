@@ -1,3 +1,4 @@
+import { derivedSealOn } from "../../../bench/lib/derived-seal.ts";
 import {
   DatomicClient,
   Replica,
@@ -132,7 +133,9 @@ export class LazyReader {
     this.now = now;
     this.path = path;
     this.archive = archive;
-    this.protectedScope = protectedScope;
+    // [DX-ERA4] TX2_DERIVED_SEAL=1: every reader's answer cache keys on, and checks, the removal state (a subject's
+    // computed answers are a derived copy; era4/DERIVED-COPIES.md row 19).
+    this.protectedScope = protectedScope || derivedSealOn();
     this.store = store;
     this.format = format;
     this.limit = byteLimit;

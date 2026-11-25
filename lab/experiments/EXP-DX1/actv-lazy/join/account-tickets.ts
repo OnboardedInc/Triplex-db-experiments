@@ -9,6 +9,7 @@
 // Rejected: naming the account without the per-account removal rule (the counters do not exist; the database-wide
 // check is the only exact one there); naming several accounts (a held account reads one); a per-subject write ticket
 // (the gateway fences accounts; per subject is applied where the client decides: recorded notices).
+import { derivedSealOn } from "../../../../bench/lib/derived-seal.ts";
 import { ErasureChanged, readErasure, recheckErasure } from "../../../../bench/lib/datomic-erasure.ts";
 import { subjectOf } from "../../../../bench/lib/world.ts";
 import type { Store } from "../store.ts";
@@ -81,6 +82,9 @@ export const subjectNumber = (id: string) => (/^pl:s[0-9]{8}$/.test(id) ? Number
  * check's life unless `fresh` (a delivery checks right before its commit).
  */
 export function copyCheck(s: Pick<Store, "held" | "comp">) {
+  // [DX-ERA4] TX2_DERIVED_SEAL=1: a recorded copy computed from a protected value is sealed under that value's key, so
+  // it is served whatever removals came after it (a removed one opens as removed); the check returns the frontier.
+  if (derivedSealOn()) return async (_stamp?: number, _subjects?: Iterable<string>, _fresh = false) => frontierFor(s);
   if (ticketAccount(s) === undefined) return undefined;
   const seen = new Map<number, AccountFrontier | undefined>();
   return async (stamp: number | undefined, subjects: Iterable<string>, fresh = false) => {
@@ -121,6 +125,7 @@ export function verifyCopy(f: AccountFrontier | undefined, prefix: string, stamp
  * option off: `recheckErasure(stamp)`, as before.
  */
 export async function settledCurrent(s: Pick<Store, "held" | "comp">, stamp: number | undefined, settledBelow: number) {
+  if (derivedSealOn()) return frontierFor(s); // [DX-ERA4] the settled changes are sealed (copyCheck above)
   if (ticketAccount(s) === undefined || stamp === undefined) return recheckErasure(s.comp, stamp);
   const f = await frontierFor(s, stamp);
   const stale = () => {
@@ -136,6 +141,7 @@ export async function settledCurrent(s: Pick<Store, "held" | "comp">, stamp: num
 /** [DX-ACT9] A marker holds no subject value (an owed Publish reads none); under the option it is current while no
  * removal since its stamp touched the unscoped account, and every caller checks the subjects it derives from. */
 export async function markerCurrent(s: Pick<Store, "held" | "comp">, stamp: number | undefined) {
+  if (derivedSealOn()) return frontierFor(s); // [DX-ERA4] a marker holds no subject value; its readers seal what they derive
   if (ticketAccount(s) === undefined || stamp === undefined) return recheckErasure(s.comp, stamp);
   const f = await frontierFor(s);
   if (!f || (f.perAccount === true ? !(stamp <= f.seq && f.unscopedSeq! <= stamp) : f.seq !== stamp))

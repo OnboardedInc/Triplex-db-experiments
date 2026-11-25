@@ -1,3 +1,4 @@
+import { derivedSealOn, noteOutput } from "../../../bench/lib/derived-seal.ts";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { W0, sha256 } from "../../../bench/lib/w0-world.ts";
@@ -326,6 +327,8 @@ export class Notices {
       at,
     );
     const fresh = ids.filter((s) => !proofs.has(receiptsAt(s, e.value.sequence)));
+    // [DX-ERA4] An erase proof keeps a subject's work items in clear on purpose; under TX2_DERIVED_SEAL it is never served.
+    assert(!derivedSealOn() || proofs.size === 0, "TX2_DERIVED_SEAL refuses a subject with an erase proof");
     assert.equal(
       fresh.length + frozen.length,
       ids.length,
@@ -363,7 +366,8 @@ export class Notices {
         validTime: e.value.validTime,
       });
       if ("error" in result) throw Error(result.error + " for " + world.subject);
-      by.set(world.subject, result.workItems);
+      // [DX-ERA4] TX2_DERIVED_SEAL=1: the evaluation carries the rows of its world (DERIVED-COPIES.md 3.2).
+      by.set(world.subject, noteOutput(result.workItems, world));
     }
     this.budget?.mark("kernel", began, { evaluations: worlds.length });
     return ids.map((s) => {
