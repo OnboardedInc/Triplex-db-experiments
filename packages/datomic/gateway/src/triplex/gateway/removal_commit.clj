@@ -1004,12 +1004,27 @@
       {"x-triplex-erasure-seq" (str (:seq cut)) "x-triplex-removal-stamp" (str (or (:stamp cut) (:seq cut)))})
     (catch Exception _ nil)))
 
+;; ---- [DX-ERA6 eighth pass] the owner's decisions of 2026-11-25: each behind its own switch, every default off ------
+(defn switch
+  "An option read from the environment variable `env`: \"1\" on, \"0\" off, unset (or anything else) `default`."
+  [env default]
+  (let [v (some-> (System/getenv env) clojure.string/trim)]
+    (cond (= "1" v) true (= "0" v) false :else default)))
+
+;; [The owner's decision (i) of 2026-11-25: the replay rule on by default] What the database-wide rule does when
+;; TX2_REMOVAL_REPLAY_RULE is unset: false in this pass, true once reviewed (approved; turning it on is this one line,
+;; which era2/gate.sh's `flip-i` arms test by changing it in a private copy). TX2_REMOVAL_REPLAY_RULE=1 turns the rule
+;; on and =0 off whatever this says; the per-account rule always runs it. What turning it on changes:
+;; era6/REMOVAL-ON-SAVE-LINE.md section 7.
+(def replay-rule-default false)
+
 (def replay-rule
   "[DX-ERA2 seventh pass, the sixth review's fact 1] The rule for a save framed before a removal of its subject (R2-2,
-  Z7) and the removal stamp it hands out: on with TX2_REMOVAL_PER_ACCOUNT=1 or TX2_REMOVAL_REPLAY_RULE=1, off
-  otherwise. With every option off this gateway's replies and native log equal the merged line's: a save that says
-  nothing about its frame and writes a removed subject's protected value is stored, as there."
-  (or removal-scope/enabled (= "1" (System/getenv "TX2_REMOVAL_REPLAY_RULE"))))
+  Z7) and the removal stamp it hands out: on with TX2_REMOVAL_PER_ACCOUNT=1 or TX2_REMOVAL_REPLAY_RULE=1, off with
+  TX2_REMOVAL_REPLAY_RULE=0 or unset (`replay-rule-default`). With it off this gateway's replies and native log equal
+  the merged line's: a save that says nothing about its frame and writes a removed subject's protected value is
+  stored, as there."
+  (or removal-scope/enabled (switch "TX2_REMOVAL_REPLAY_RULE" replay-rule-default)))
 
 (defn- framed? [input] (or (integer? (get input "sourceK")) (integer? (get input "removalSeen")) (contains? input "frameSourceK")))
 

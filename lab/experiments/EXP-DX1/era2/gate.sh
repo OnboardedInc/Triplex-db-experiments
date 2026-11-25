@@ -97,7 +97,17 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
   if [[ $name == era3-* || $name == era3b-* || $name == era3c-* || $name == era3d-* || $name == era3e-* || $name == era3f-* ]] && ! grep -q 'ERA3_SUMMARY.*:violations 0,' "$out/$name.log"; then status=1; fi
   if [[ $name == lines-* ]] && ! grep -q '^B2_LINES_SUMMARY {:checks 10, :failed 0}' "$out/$name.log"; then status=1; fi
 }
-phases=${ERA2_GATE_PHASES:-paired gate era3 suites b2 lines b2r}
+phases=${ERA2_GATE_PHASES:-paired gate era3 suites b2 lines b2r switches}
+# [DX-ERA6 eighth pass] the owner's decisions of 2026-11-25 (era6/REMOVAL-ON-SAVE-LINE.md section 7): a private copy of
+# this source with one switch's default line changed, the one line that turns it on
+flip() { # NAME FILE FROM-LINE TO-LINE
+  rm -rf "$out/$1"; mkdir -p "$out/$1"; cp -R "$out/this/src" "$out/$1/src"; cp "$out/this/codec-spec.json" "$out/$1/codec-spec.json"
+  local f="$out/$1/src/triplex/gateway/$2"
+  grep -qxF "$3" "$f" || { echo "gate.sh: '$3' is not a line of $2"; status=1; return 1; }
+  FROM="$3" TO="$4" perl -pi -e 's/^\Q$ENV{FROM}\E$/$ENV{TO}/' "$f"
+  grep -qxF "$4" "$f" && ! grep -qxF "$3" "$f" || { echo "gate.sh: '$4' not written in $2"; status=1; return 1; }
+  echo "$1: $2 '$3' -> '$4'" >> "$out/flips"
+}
 paired='(load-file "/lab/regression.clj") (load-file "/lab/paired.clj") (era2-paired/main)'
 if [[ $phases == *paired* ]]; then
   # [DX-ERA2 seventh pass, identities] the reference is the one branch's head (ONE_COMMIT): with every option off this
@@ -120,6 +130,37 @@ if [[ $phases == *gate* ]]; then
   for arm in off on commit; do
     ERA2_ONLY=ack-journal RUN_ENV="TX2_REMOVAL_ACK_JOURNAL=/tmp/era2-acks/acks.jsonl" run "gate-journal-$arm" this "$arm" "$gate"
   done
+fi
+# [DX-ERA6 eighth pass] the owner's switches, each with its default flipped in a private copy (`flip`), every other
+# option as the arm says; owner-switches checks the switch read what the arm expects
+if [[ $phases == *switches* ]]; then
+  sw="owner-switches replay-rule-off merged-rule"
+  # (i) the replay rule on by default: unset is on, =0 is off; this branch as it is: unset is off
+  if flip flip-i removal_commit.clj "(def replay-rule-default false)" "(def replay-rule-default true)"; then
+    ERA2_ONLY="$sw" RUN_ENV="ERA2_EXPECT_REPLAY_RULE=true" run switch-i-on flip-i off "$gate"
+    ERA2_ONLY="$sw" RUN_ENV="TX2_REMOVAL_REPLAY_RULE=0 ERA2_EXPECT_REPLAY_RULE=false" run switch-i-optout flip-i off "$gate"
+    ERA2_ONLY="$sw" RUN_ENV="ERA2_EXPECT_REPLAY_RULE=false" run switch-i-default this off "$gate"
+    ERA2_ONLY="$sw" RUN_ENV="TX2_REMOVAL_REPLAY_RULE=0 ERA2_EXPECT_REPLAY_RULE=true" run switch-i-per-account flip-i on "$gate"
+    [[ -f $out/paired-base.log ]] || run paired-base one off "$paired"
+    run paired-flip-i flip-i off "$paired"
+    # the paired log with the default flipped: the one branch's, plus the recorded decline of the workload's import
+    # replay with no frame source (11 datoms per run), as per account
+    python3 - "$out" <<'PYI' || status=1
+import sys, re
+out = sys.argv[1]
+def rows(arm): return [l.split(" ", 1)[1] for l in open(f"{out}/paired-{arm}.log").read().splitlines() if l.startswith("ERA2_PAIRED ")]
+def key(r):
+    d = dict(re.findall(r':([a-z0-9-]+) ("[^"]*"|[0-9]+|true|false)', r))
+    return (d.get("sealed"), d.get("sha256-without-r22"), d.get("reads"), int(d.get("datoms", 0)) - int(d.get("r22-datoms", 0)))
+def r22(r): return int(dict(re.findall(r':([a-z0-9-]+) ("[^"]*"|[0-9]+|true|false)', r)).get("r22-datoms", "-1"))
+b, f = rows("base"), rows("flip-i")
+same = len(b) == 2 and [key(r) for r in f] == [key(r) for r in b]
+counts = [r22(r) for r in f]
+print("ERA2_PAIRED_FLIP_I every datom but the decline record:", "identical" if same else "DIFFERENT", "| decline datoms", counts)
+sys.exit(0 if (same and counts == [11, 11]) else 1)
+PYI
+  fi
+  grep -h "ERA2_SWITCH\|ERA2_GATE" "$out"/switch-*.log | sort | uniq -c
 fi
 # [DX-ERA2 fix pass] the independent review's attacks and fuzzer (era3/attack.clj, era3/REVIEW.md) on both settings
 attack='(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (era3-attack/main)'

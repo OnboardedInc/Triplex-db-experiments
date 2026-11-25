@@ -2330,6 +2330,16 @@
             (expect label re2 [200 nil])
             (check! label (= #{} after-re2) "both resent: nothing is reported lost" obs)))))))
 
+;; ---- [DX-ERA6 eighth pass] the owner's decisions of 2026-11-25: what each switch reads, against what the arm expects --
+(defn owner-switches
+  "Each switch's value in this process against the arm's ERA2_EXPECT_<NAME> (gate.sh's `switches` phase), so a flipped
+  default that did not take, or an opt-out that did not, fails before the arm's other checks are read."
+  []
+  (doseq [[env v] [["ERA2_EXPECT_REPLAY_RULE" (fn [] rc/replay-rule)]]]
+    (when-let [want (System/getenv env)]
+      (println "ERA2_SWITCH" env (pr-str (v)))
+      (check! (str "owner-switches/" mode) (= want (pr-str (v))) (str env " is " want) (v)))))
+
 ;; ERA2_ONLY (space-separated label prefixes) runs only those scenarios: a diagnostic run, never a gate
 (def only (some-> (System/getenv "ERA2_ONLY") str/trim not-empty (str/split #"\s+")))
 (defn- scenario [label f]
@@ -2396,6 +2406,8 @@
   (scenario "cut-read-race" cut-read-race)
   ;; [DX-ERA6 eighth pass]
   (scenario "ack-journal" ack-journal)
+  ;; [DX-ERA6 eighth pass] the owner's switches
+  (scenario "owner-switches" owner-switches)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode
              (pr-str {:checks (count @results) :failed (count failed)}))
