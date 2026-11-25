@@ -74,6 +74,16 @@ finish() {
       wait "${children[i]}" 2>/dev/null || true
     fi
   done
+  # [DX-INT5] Why: the container and its files go away with `docker run --rm`; the transactor's refusals (for example
+  # "TRIPLEX_IDENTITY f/id") are written only to its own log here, so a rejected save could not be traced to its cause.
+  # Its warnings, errors and Triplex refusals are printed into the gate's log, each line prefixed. Rejected: copying the
+  # whole log (it is large and mostly routine).
+  local f
+  for f in "$work"/*.log; do
+    [[ -f $f ]] || continue
+    echo "PREP1_TRANSACTOR_LOG $(basename "$f")"
+    grep -E 'WARN|ERROR|Exception|TRIPLEX|Caused by' "$f" | tail -n 300 | sed 's/^/PREP1_TX| /'
+  done
   exit "$status"
 }
 trap finish EXIT
