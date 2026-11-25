@@ -6636,3 +6636,13 @@ Source: derived-copies builder final message; branch `exp/DX-ERA4-derived-copies
 - Does not merge cleanly with the one branch (8 files at `f633233f6`).
 
 **Action:** third independent review started, limited to two test slots: the deep-layout reference walk (forged roots, shared entities, a value added after sealing), the patterns accepted without decoding, chunked ledgers under a removal and when they shrink, the re-sweep's limits with numbers, and a direct question on merging default off.
+
+## 2026-11-25 16:57 EST: save-line fixes merged, account setting off: the one branch `exp/DX-INT1` is at `efee27905`
+
+Source: merge agent message; checked against `origin`: `cdfc70e02` is an ancestor of the head; the key-pool fix, the ID fix, the Publish line, per-account removal and the save line's fourth-pass work are not.
+
+- The account setting is not turned on anywhere; the readiness page says it stays off and lists the reviewer's six conditions.
+- **Replies that change with every option off** (fixes of faults that were in the one branch): a save handed to Datomic whose outcome the gateway cannot determine now answers 503 `OutcomeUnknown` with a lookup and a fence, where it answered a 400 that clients treat as final; a save racing a removal answers a conflict; the command path no longer settles on another account's transaction.
+- Stored-function identities 58 of 58 equal to the reference in 8 writer settings. Gates on the head's own image: the standing key-deletion gate; the outcome gate 426 in each of 5 settings; the reviews' tests; the two-account gate; fuzzer with faults 27,629 saves, 0 differing; SDK 489; production gate exact; the real-mix tape exact with creation saves on and off, and no refusal in the transactor's lines, which the gate now keeps.
+- The readiness page carries the table of faults found in merged code on 2026-11-25.
+- Next: the key-pool and reply fix (`09730f887`, merged locally), then the ID fix (`cc5656aa2`), then the Publish line with options off.
