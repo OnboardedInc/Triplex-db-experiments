@@ -40,6 +40,8 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
   [[ $option == subject || $option == commit ]] && env+=(-e TX2_REMOVAL_SUBJECT_CHECK=1 -e TX2_REMOVAL_TRIES_LOG=1 -e "ERA2_RACES=${ERA2_RACES:-1000}")
   # [DX-ERA2 fourth pass] the commit as the boundary (section 16 of the page)
   [[ $option == commit ]] && env+=(-e TX2_REMOVAL_COMMIT_BOUNDARY=1)
+  # a diagnostic run of named gate scenarios only (never a gate result)
+  [[ -n ${ERA2_ONLY:-} ]] && env+=(-e "ERA2_ONLY=$ERA2_ONLY")
   [[ $name == era3-* ]] && env+=(-e "ERA3_PHASES=${ERA3_PHASES:-d1 d1t d2 d3 d5 d6 fuzz}" -e "ERA3_N=${ERA3_N:-400}"
                                  -e "ERA3_BLOCK=${ERA3_BLOCK:-100}" -e "ERA3_SEED=${ERA3_SEED:-7}" -e "ERA3_RUN=gate")
   # [DX-ERA2 third pass] the second review's cases and fuzzer (era3/attack2.clj, era3/REVIEW-2.md)

@@ -135,6 +135,12 @@
           result)))
     {:entries [] :dense true}))
 
+(def ^:private removal-keys ["database" "seq" "previous" "commandId" "selectors"])
+(defn- pending-of?
+  "This committed entry is the removal the log holds as pending."
+  [state entry]
+  (and (:pending state) (= (select-keys entry removal-keys) (select-keys (:pending state) removal-keys))))
+
 (defn- seal-at [state k]
   ;; the log's seal after its entry k (k <= head)
   (cond (zero? k) privacy/zeros
@@ -153,28 +159,42 @@
   [name db state]
   (let [{:keys [entries dense]} (native-entries name db)
         c (count entries) h (:seq state)
-        agree (fn [k] (or (zero? k) (= (privacy/sha256 (:raw (entries (dec k)))) (seal-at state k))))]
+        agree (fn [k] (or (zero? k) (= (privacy/sha256 (:raw (entries (dec k)))) (seal-at state k))))
+        beyond (when (>= c h) (subvec entries h))]
     (cond
       (not dense) (assoc (union-mask state entries) :writes-refused "RemovalLogConflict")
-      (and (>= c h) (agree h)) (reduce @#'privacy/apply-entry state (map :entry (subvec entries h)))
+      ;; the one removal in flight, committed but not yet published: masked for reads at its commit; its counters and
+      ;; sequence wait for its publication (writes it can reach wait for it as on the log's boundary)
+      (and (agree h) (= 1 (count beyond)) (pending-of? state (:entry (first beyond)))) (union-mask state beyond)
+      (and (>= c h) (agree h)) (reduce @#'privacy/apply-entry state (map :entry beyond))
       (and (< c h) (agree c)) (assoc state :writes-refused "RemovalDataBehind")
       :else (assoc (union-mask state entries) :writes-refused "RemovalLogConflict"))))
-
-(def ^:private removal-keys ["database" "seq" "previous" "commandId" "selectors"])
 
 (defn served
   "The state a request on a database guarded per account is served from (erase/request-cut)."
   [name db state]
   (assoc (if commit-boundary
            (effective name db state)
-           ;; [DX-ERA3 M1] the log's boundary: a pending removal already committed in the data takes effect for reads,
-           ;; so a log copy put back with that removal pending in it cannot answer its value again
-           (let [p (:pending-seq state) {:keys [entries]} (native-entries name db)
-                 native (when (and (integer? p) (= p (inc (:seq state))) (<= p (count entries))) (:entry (entries (dec p))))]
-             (if (and native (= (select-keys native removal-keys) (select-keys (:pending state) removal-keys)))
-               (@#'privacy/apply-entry state native)
-               state)))
+           ;; [DX-ERA3 M1] the log's boundary: a pending removal already committed in the data is flagged; a read then
+           ;; publishes it before it is served (main/route-handler, `publish-for-read!`), so a log copy put back with
+           ;; that removal pending in it cannot answer its value again, and the removal still takes effect at its
+           ;; publication
+           (let [p (:pending-seq state) {:keys [entries]} (native-entries name db)]
+             (cond-> state
+               (and (integer? p) (= p (inc (:seq state))) (<= p (count entries)) (pending-of? state (:entry (entries (dec p)))))
+               (assoc :committed-pending true))))
          :per-account true))
+
+(defn publish-for-read!
+  "[DX-ERA3 M1, the log's boundary] A read found its database's pending removal already committed in the data: the
+  removal is published first (its gateway takes the removal lock; only the log is written), then the read is served
+  from the published log. Each such read waits for the publication; none is served from the log before it."
+  [name conn]
+  (when-let [p (privacy/pending name)]
+    (erase/erase! name conn {"commandId" (get p "commandId") "selectors" (get p "selectors")}))
+  (let [state (first (erase/request-cut name conn (erase/sync! conn)))]
+    (when (:committed-pending state) (privacy/unavailable!))
+    state))
 
 (defn consistent?
   "Request time (erase/request-cut): the data and the log agree, declarations included. With the commit boundary,

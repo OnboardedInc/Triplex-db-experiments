@@ -323,17 +323,26 @@
             (expect (str scenario ": another account's save while stopped") other
                     (if per-account? [200 nil] [503 "ErasureFrontierUnavailable"]))
             (check! scenario (= (if per-account? 200 503) (:status read)) "another account's read while stopped" (:status read))
-            (expect (str scenario ": another subject of the account while stopped") same
-                    (if per-account? [200 nil] [503 "ErasureFrontierUnavailable"]))
-            ;; the removed subject: before the native commit the save lands first and the removal re-plans over it;
-            ;; after it, the save is refused until the removal is published
-            (expect (str scenario ": the removed subject while stopped") own
-                    (cond (not per-account?) [503 "ErasureFrontierUnavailable"]
-                          (= step :before-native) [200 nil]
-                          :else [409 "CasConflict"]))
-            (when (= 200 (:status own))
-              ;; the value saved before the resumed removal's serial point is removed with it
-              (swap! own-values assoc scenario v-own)))
+            ;; [DX-ERA3 M1] on the log's boundary a read that finds the pending removal committed in the data publishes
+            ;; it before it is served; with the commit boundary nothing is published by a read (the data masks it)
+            (let [published-by-read (and per-account? (not commit?) (#{:after-native :at-publish} step))]
+              (when per-account?
+                (check! scenario (= (if published-by-read 1 0) (seq-now name conn))
+                        (if published-by-read "the read published the committed removal first" "nothing published while stopped")
+                        (seq-now name conn)))
+              (expect (str scenario ": another subject of the account while stopped") same
+                      (if per-account? [200 nil] [503 "ErasureFrontierUnavailable"]))
+              ;; the removed subject: before the native commit the save lands first and the removal re-plans over it;
+              ;; after it, the save is refused until the removal is published; once a read has published it, the save is
+              ;; an ordinary save after the removal (answered, not removed by it)
+              (expect (str scenario ": the removed subject while stopped") own
+                      (cond (not per-account?) [503 "ErasureFrontierUnavailable"]
+                            (= step :before-native) [200 nil]
+                            published-by-read [200 nil]
+                            :else [409 "CasConflict"]))
+              (when (and (= 200 (:status own)) (not published-by-read))
+                ;; the value saved before the resumed removal's serial point is removed with it
+                (swap! own-values assoc scenario v-own))))
           ;; resumed with the same command: completes exactly once
           (let [done (remove! name "rm-s" a1)]
             (expect scenario done [200 nil])
@@ -858,9 +867,10 @@
                                                        :copy-readable-in-recipient-after-ack copy})))))))))
 
 (defn commit-visibility
-  "[DX-ERA2 fourth pass] A removal stopped after its commit in Datomic, before its publication: with the commit
-  boundary no read route answers its value; on the log's boundary a read may (TARGETS 7.1 allows it before the
-  publication). Then the first derived write that reaches it completes it."
+  "[DX-ERA2 fourth pass] A removal stopped after its commit in Datomic, before its publication: no read route answers
+  its value. With the commit boundary the reads are masked by the commit and the first derived write that reaches the
+  removal completes it; on the log's boundary the first read publishes it before it is served (M1), so the derived
+  write after it is an ordinary write."
   []
   (when per-account?
     (fresh-scope false
@@ -874,11 +884,10 @@
               answered (str/includes? texts value)
               first-any (offers/send name (frame-any name conn "cv-any"))]
           (check! label (not= 200 (:status stopped)) "stopped after its commit" (offers/outcome stopped))
-          (if commit?
-            (check! label (not answered) "with the commit boundary, no route answers the value once it is committed")
-            (println "ERA2_COMMIT_VISIBILITY log-boundary value-answered-before-publication" answered))
-          (expect (str label ": the first frame naming no account") first-any [503 "ErasureFrontierUnavailable"])
-          (check! label (= 1 (seq-now name conn)) "completed by that contact")
+          (check! label (not answered) "no route answers the value once it is committed")
+          (expect (str label ": the first frame naming no account") first-any
+                  (if commit? [503 "ErasureFrontierUnavailable"] [200 nil]))
+          (check! label (= 1 (seq-now name conn)) (if commit? "completed by that contact" "published by the first read"))
           (check! label (not (str/includes? (apply str (map (fn [[_ r]] (text (:body r))) (route-texts name a1 pin))) value)) "not answered after the completion"))))))
 
 (defn log-states
@@ -920,7 +929,8 @@
               (= behind 2) (expect (str label ": a read on the log's boundary") read-a [503 "RemovalLogBehind"])
               :else (expect (str label ": a read on the log's boundary, one behind (nothing pending in the copy)") read-a [503 "RemovalLogBehind"]))
             (expect (str label ": the rebuild route") rebuild [200 nil])
-            (check! label (= 2 (seq-now name conn) (get-in rebuild [:body "seq"])) "the log rebuilt up to the data" (:body rebuild))
+            (check! label (= 2 (get-in rebuild [:body "seq"])) "the log rebuilt up to the data (two removals)" (:body rebuild))
+            (check! label (= 3 (seq-now name conn) (get-in after-removal [:body "seq"])) "the removal after the rebuild is sequence 3" (:body after-removal))
             (expect (str label ": a frame naming no account after it") after-any [200 nil])
             (expect (str label ": a removal after it") after-removal [200 nil])
             (check! label (not (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [a1 b1]}))) va)) "a1 not answered after")
@@ -1049,8 +1059,11 @@
           (println "ERA2_MID_IMPORT" (pr-str (frequencies (map second @results))))
           (absent-from-routes! "mid-import" name [y] pin t0 (vals @values)))))))
 
+;; ERA2_ONLY (space-separated label prefixes) runs only those scenarios: a diagnostic run, never a gate
+(def only (some-> (System/getenv "ERA2_ONLY") str/trim not-empty (str/split #"\s+")))
 (defn- scenario [label f]
-  (try (f) (catch Throwable e (check! label false (str "scenario stopped: " (.getMessage e))))))
+  (when (or (nil? only) (some #(str/starts-with? label %) only))
+    (try (f) (catch Throwable e (check! label false (str "scenario stopped: " (.getMessage e)))))))
 (defn main []
   ;; The file authority publishes whatever it is given; the PostgreSQL authority publishes only an entry equal to the
   ;; stored intent. Every run here holds the file authority to that rule as well.

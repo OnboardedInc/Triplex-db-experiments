@@ -503,8 +503,13 @@
                                (trace/span "privacy/frontier" "gateway"
                                  (if per-account (first (erase/request-cut name conn db)) (privacy/cut name db))))]
                 (when (and read-cut (not per-account)) (trace/span "privacy/verify-data" "gateway" (privacy/verify-data! read-cut db)))
+                ;; [DX-ERA3 M1] on the log's boundary a read never serves a pending removal already committed in the data
+                ;; from the log before it: that removal is published first
+                (let [read-cut (if (:committed-pending read-cut)
+                                 ((requiring-resolve 'triplex.gateway.removal-commit/publish-for-read!) name conn)
+                                 read-cut)]
                 (when (contains? input "erasureSeq") (privacy/ensure-ticket! read-cut input))
-                (run read-cut))))))
+                (run read-cut)))))))
       (catch Exception e
         (let [info (ex-data e)]
           ;; [DX-ERA3 N1] a write refused by a pending removal: this gateway completes that removal (its locks released)
