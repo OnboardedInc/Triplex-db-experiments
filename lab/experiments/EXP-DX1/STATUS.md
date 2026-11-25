@@ -6392,3 +6392,14 @@ Source: independent reviewer, fifth review, branch `exp/DX-ERA3-removal-review` 
 - Not tested: the SDK end to end; a gateway that has not yet seen the move; two gateways adopting different logs; the worker's cost on PostgreSQL.
 
 **Action:** the findings sent to the removal builder as a sixth pass, after it finishes the standalone branch's log-line fix: the policy stored in Datomic becomes the only policy; adoption checked before anything is stored; the decline carries the stamp and writes nothing new for a command already declined; a written and stack-tested rollout procedure; the SDK end to end. A sixth review follows. Per-account removal and the commit boundary stay off and off the one branch.
+
+## 2026-11-25 07:30 EST: standalone key-deletion fix: the named fix is in; a short re-check started before it merges
+
+Source: removal builder message. Branch `exp/DX-B2-key-deletion` `46a8f746a` (gateway code as of `427ab755b`).
+
+- F9: failure lines carry only the place, the database name, the class, a code and a scrubbed description (a database error logs its SQL state and the server's own text, never the driver's message; long hex and base64 runs are replaced). The reviewer's scenario on PostgreSQL: 43 of 43 checks; the line that printed a wrapped key now prints the SQL state and the server's text.
+- F5: one line per kind of failure, then at most one a minute with a suppressed count; every failure counted. F7: the builder's test now resends the pending removal and checks it completes.
+- Reruns on the fixed code: the reviewer's fuzzer 20,000 schedules on each authority, 0 violations; scenarios 0 failed on both; suites as on the base; paired log identical after a stated normalisation (clock values, database name, transaction IDs, hashes, ciphertext; entity IDs, positions, attributes and all other values compared as they are). Options off, held 30 s: 0 failed on the branch against 2 failed on the one branch, on both authorities.
+- The same two fixes are on the removal branch (`6f174d6bf`).
+
+**Action:** the reviewer of the standalone branch resumed for a short re-check of the fix (can the server's own error text or a key file's name carry key material or identify a subject; can the rate limiter hide a first occurrence). The merge takes `46a8f746a` only on its word. The removal builder has started its sixth pass.
