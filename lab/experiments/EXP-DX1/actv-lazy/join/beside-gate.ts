@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { DatomicClient as Client, type DatomicClient } from "../../../../../packages/datomic/dist/index.js";
@@ -43,6 +43,11 @@ import type { Write } from "../../scale1/decision/plan.ts";
 //               frames mid-settlement.
 //   enrol       nine accounts enrolled beside saves (one first without the option: refused), each publishing beside
 //               saves, all settling at once through one queue, each checked against its own oracle.
+//   restart     (not in the default list; DX_ACT8_PARTS=restart) the transactor, then the write gateway, restarted
+//               (`docker restart`) after a Publish's reads, inside its transaction, and before a settlement frame's
+//               commit; the same command then offered again until acknowledged: one record for its command ID, the
+//               next notice sequence, settlement equal to the oracle. Saves stopped (the tape cannot resolve a save
+//               lost in a restart).
 // A removal on request in a Publish's window runs in the miniature (scale2/mini.ts, DX_SCALE2_REMOVAL=1): this toy
 // stack gives its two gateways no shared removal directory, so a protected database cannot be loaded here.
 // Clocks are diagnostic; counts are exact. Every check failing stops the run.
@@ -61,7 +66,7 @@ const shape200 = parseShape("forms=200,policies=200,permille=1000");
 const shape150 = parseShape("forms=150,policies=150,permille=1000");
 /** Writers the runner adopts from the journal by command ID: settlement frames, notice documents written through the
  * composition (enrolments of other accounts), and Publishes whose writing process was killed. */
-const ADOPT = /^(settled-(values|notice):|notice:v1:|joined:.*:act8:kill:)/;
+const ADOPT = /^(settled-(values|notice):|notice:v1:|joined:.*:act8:(kill|restart):)/;
 /** Commit samples of every Datomic client in this process (the reply's datoms, the gateway's transact time, request
  * bytes, HTTP calls), as `w0-http.ts` collects them; bounded. */
 const commitSamples: { transactionIds: string[]; httpCalls: number; requests: any[] }[] = [];
@@ -403,7 +408,7 @@ const toggleSmall = (doc: W0.ReleaseDoc) => (doc.name === "R1" ? W0.R2.doc : W0.
 
 export async function besideGate(c: GateContext) {
   const parts = (process.env.DX_ACT8_PARTS ?? "cost,beside,adversarial,kill,live,enrol").split(",");
-  assert(parts.every((p) => ["cost", "beside", "adversarial", "kill", "live", "enrol"].includes(p)));
+  assert(parts.every((p) => ["cost", "beside", "adversarial", "kill", "live", "enrol", "restart"].includes(p)));
   assert.equal(process.env.TX2_SETTLE_FRAMES, "bytes", "the gate settles with byte frames");
   assert([undefined, "read-cut"].includes(process.env.DX_ACT8_INJECT), "DX_ACT8_INJECT is unset or read-cut");
   captureCommits();
@@ -426,6 +431,7 @@ export async function besideGate(c: GateContext) {
     if (parts.includes("kill")) keep("kill", await killPart(g, base, set));
     if (parts.includes("live")) keep("live", await livePart(g, base, set));
     if (parts.includes("enrol")) keep("enrol", await enrolPart(g, set));
+    if (parts.includes("restart")) keep("restart", await restartPart(g, base, set));
     // Every notice of every release of the publishing account, in order, and every ledger, against the oracle.
     const w = await Settlement.open(c.a, new BulkQueue(1), false, "bytes", "progress");
     try {
@@ -764,6 +770,99 @@ async function publishChild(c: GateContext, id: string, doc: W0.ReleaseDoc, step
   const code = await new Promise<number | string>((resolve) => child.on("close", (k, signal) => resolve(signal ?? k ?? -1)));
   assert(code === "SIGKILL" || code === 0, "publish child: " + code + " " + stderr.slice(0, 600));
   return { step, ended: code };
+}
+
+// ------------------------------------------------------------------------------------------------ restart
+// [DX-ACT8, review "not tested"] A restart of the transactor (`-active`) or of the write gateway (`-write`) of this toy
+// stack: completed between a Publish's reads and its transaction (`afterRead`); begun inside its transaction, 30 ms
+// before its operations are sent, so the commit meets the stopping container (`inside`); begun 30 ms before the second
+// values frame of its settlement is sent (`frame`). Diagnostic toy only: the containers are this run's own
+// (`tx2-ha1-<attempt>-`).
+const docker = (args: string[]) => new Promise<string>((resolve, reject) =>
+  execFile("docker", args, { timeout: 180_000 }, (e, out, err) => (e ? reject(new Error(String(err || e))) : resolve(String(out)))));
+async function restartPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
+  const c = g.c;
+  set("TX2_PUBLISH_BESIDE", "1");
+  assert(process.env.DOCKER_HOST?.includes("triplex2"), "the restart part runs only against the lab VM");
+  const name = (role: string) => "tx2-ha1-" + c.attempt.slice(0, 8) + "-" + role;
+  const out: Record<string, unknown>[] = [];
+  const restart = async (role: "active" | "write") => {
+    const begun = now();
+    await docker(["restart", "-t", "5", name(role)]);
+    // Back when the write path answers a head read again (the transactor's return is seen by the next commit, which is
+    // retried below while it reports a transport failure).
+    for (let k = 0; ; k++) {
+      try { await c.s.head(); break; } catch (e) { if (k > 120) throw e; await sleep(1000); }
+    }
+    return Math.round(now() - begun);
+  };
+  // The same command offered until it is acknowledged; every failure recorded (a transport failure, an unknown outcome).
+  const offerUntil = async (id: string, doc: W0.ReleaseDoc, options?: PublishOptions) => {
+    const failures: string[] = [];
+    for (let k = 0; k < 60; k++) {
+      try {
+        return { p: await c.a.publish(id, doc, validTime, "owed", undefined, k === 0 ? options : undefined), failures };
+      } catch (e) {
+        failures.push(String((e as Error)?.constructor?.name) + ": " + String((e as Error)?.message).split("\n")[0]!.slice(0, 160));
+        await sleep(2000);
+      }
+    }
+    throw new Error("the Publish was never acknowledged after the restart: " + failures.join(" | "));
+  };
+  for (const role of ["active", "write"] as const)
+    for (const where of ["afterRead", "inside", "frame"] as const) {
+      const doc = nextLarge(g.current.doc, base());
+      const id = c.attempt + ":act8:restart:" + role + ":" + where + ":" + g.n++;
+      const old = g.current.doc;
+      let restartMs: number | undefined, pending: Promise<number> | undefined;
+      const hook = once(async () => {
+        if (where === "afterRead") restartMs = await restart(role);
+        else { pending = restart(role); await sleep(30); }
+      });
+      const offered = now();
+      const { p, failures } = await offerUntil(id, doc,
+        where === "afterRead" ? { afterRead: hook } : where === "inside" ? { inside: hook } : undefined);
+      if (pending) restartMs = await pending;
+      assert(where === "frame" || restartMs !== undefined, "the restart did not run inside the Publish");
+      const seq = await sequenceAt(c.a, p.position);
+      const receipt = await c.a.receipt(seq, p.position);
+      assert.deepEqual([receipt.event.at, receipt.event.value.request], [p.position, id]);
+      assert.equal(receipt.marker.seq, (c.releases.at(-1)?.seq ?? 0) + 1, "the next notice sequence");
+      // Exactly one record for the command ID, at the position the receipt names.
+      const found = await c.s.lookup(joinedCommandId(c.s, id));
+      assert.equal(found.position, p.position);
+      const r: Release = { position: p.position, seq, doc, durableAt: now(), offer: offered, received: now(),
+        read: receipt.marker.read ?? receipt.marker.cut, tries: 1 };
+      c.releases.push(r as never);
+      await g.fold(r, old);
+      g.published.push(r);
+      let frame: Record<string, unknown> | null = null;
+      if (where === "frame") {
+        // Settle with a restart before the second values frame's commit; that frame's commit fails, the worker stops,
+        // and the release is then settled from its durable progress and checked.
+        const w = await Settlement.open(c.a, new BulkQueue(1), false, "bytes", "progress");
+        const commit = w.archive.store.commit;
+        let frames = 0;
+        (w.archive.store as any).commit = async (...args: Parameters<Store["commit"]>) => {
+          if (String(args[0]).startsWith("settled-values:") && ++frames === 2 && !pending) {
+            pending = restart(role);
+            await sleep(30);
+          }
+          return commit(...args);
+        };
+        const first = await w.settle(r.seq).then(() => "finished", (e) => "stopped: " + String(e?.message).split("\n")[0]!.slice(0, 160));
+        (w.archive.store as any).commit = commit;
+        if (pending) restartMs = await pending;
+        await w.close().catch(() => undefined);
+        frame = { valueFramesBeforeRestart: frames - 1, firstRun: first };
+        assert(restartMs !== undefined, "the restart did not run inside the settlement");
+      }
+      const settled = await g.settle(r, old);
+      await g.checkBetween(r);
+      out.push({ role, where, restartMs, failures, position: r.position, read: r.read, seq: r.seq, frame, settled });
+    }
+  console.log("[act8] restart " + JSON.stringify(out.map((x) => [x.role, x.where, x.restartMs, (x.failures as string[]).length, x.position])));
+  return out;
 }
 
 // ------------------------------------------------------------------------------------------------ live
