@@ -22,7 +22,7 @@
   cannot tell it from a removal between its two steps; with the intent first there is no such state)."
   (:require [clojure.data.json :as json] [datomic.api :as d]
             [triplex.gateway.authority-sql :as sql]
-            [triplex.gateway.erase :as erase] [triplex.gateway.privacy :as privacy]
+            [triplex.gateway.erase :as erase] [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope]
             [triplex.gateway.removal-scope :as removal-scope] [triplex.gateway.scope :as scope]))
 
 (def commit-ident :triplex.removal/commit-v1)
@@ -43,6 +43,10 @@
   [conn ops]
   (let [report (try (deref (d/transact-async conn ops) wait-ms ::timeout)
                     (catch Exception e
+                      ;; [DX-ERA2 fifth pass] a refusal the removal expects (a guard, a lost compare-and-set) stays quiet;
+                      ;; anything else is a fault and is counted and logged before it is answered 503
+                      (when-not (re-find #"TRIPLEX_|cas-failed|unique-conflict|:db.error" (str e (.getCause e)))
+                        ((requiring-resolve 'triplex.gateway.failures/note!) "removal-step" nil e))
                       (throw (ex-info "A native step of the removal was refused; it stays pending"
                                       {:status 503 :code "ErasureFrontierUnavailable" :removal-step-refused true} e))))]
     (when (= ::timeout report) (privacy/unavailable!))
@@ -676,6 +680,28 @@
                                       "code" (:code (ex-data e))})))
           (finally (swap! completing disj name)))))
     nil))
+
+(def worker-complete-ms
+  "[DX-ERA2 fifth pass] TX2_REMOVAL_WORKER_COMPLETE_MS (default unset: off): the key-shred worker completes a removal
+  left pending longer than this many milliseconds since its intent, as its own resend would, so that neither its
+  effect nor its keys wait for a client that went away."
+  (some-> (System/getenv "TX2_REMOVAL_WORKER_COMPLETE_MS") Long/parseLong))
+
+(defn complete-stale!
+  "[DX-ERA2 fifth pass] Called by the key-shred worker on every pass (envelope/maintain-keys!). With
+  `worker-complete-ms` set, every database whose pending removal is older than it is completed (`complete-pending!`,
+  guarded at the serial point like any resend); a failure is counted and logged and the next pass tries again."
+  []
+  (when worker-complete-ms
+    (doseq [name (@#'envelope/authority-scopes)]
+      (try
+        (when-let [p (privacy/pending name)]
+          (when (> (- (System/currentTimeMillis) (long (get p "erasedAt" 0))) worker-complete-ms)
+            (println (json/write-str {"schema" "triplex.removal-worker-completion.v1" "database" name "seq" (get p "seq")
+                                      "ageMs" (- (System/currentTimeMillis) (long (get p "erasedAt" 0)))}))
+            (complete-pending! name ((requiring-resolve 'triplex.gateway.main/connection)
+                                     ((requiring-resolve 'triplex.gateway.main/db-uri) name)))))
+        (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "worker-completion" name e))))))
 
 (defn check-source!
   "[DX-ERA3 M4] A delivery's source database, checked under its lock (main/route-handler): a pending removal there

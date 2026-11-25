@@ -174,7 +174,8 @@
                  new))))))]
          (if (and result (integer? pending-seq)) (assoc result :pending-seq pending-seq :pending pending-entry) result)))
      (catch clojure.lang.ExceptionInfo e (throw e))
-     (catch Exception _ (unavailable!)))))
+     ;; [DX-ERA2 fifth pass] still 503, now counted and logged (an unreadable record, a storage error)
+     (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "cut" name e) (unavailable!)))))
 
 (defn pending [name]
   (some-> (record-text name "pending.json") json/read-str))

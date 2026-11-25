@@ -404,7 +404,11 @@
                                                    (some? retryAfterMs) (assoc :retryAfterMs retryAfterMs))))
                    (throw e))))))
       :else (response 404 {:code "NotFound"}))
-    (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
+    (catch Exception e
+      ;; [DX-ERA2 fifth pass] an exception that is not a typed refusal is a fault: counted and logged (the commit
+      ;; boundary's restore defect was answered 400 GatewayError with no message and no log line)
+      (when-not (instance? clojure.lang.ExceptionInfo e) ((requiring-resolve 'triplex.gateway.failures/note!) "gateway-error" uri e))
+      (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
                                   (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e)))
                                   (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e))))))))
