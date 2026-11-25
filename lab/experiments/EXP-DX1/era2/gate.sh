@@ -173,6 +173,18 @@ PYI
     grep -q ":worker-completes true" "$out"/b2-flip-ii/b2-off.log || { echo "B2 flip-ii: the worker's completion was not checked"; status=1; }
     ! grep -q ":worker-completes true" "$out"/b2-flip-ii-optout/b2-off.log || { echo "B2 flip-ii =0: the worker ran"; status=1; }
   fi
+  # (iii) protected attributes on an unsealed database refused outside tests: the default flipped (database-wide and
+  # per account), =0 off, the test-only override, this branch unset off; and the whole per-account gate on the flipped
+  # copy with the override (every harness declares unsealed databases): as today
+  if flip flip-iii removal_commit.clj "(def protection-sealed-only-default false)" "(def protection-sealed-only-default true)"; then
+    so="owner-switches sealed-only"
+    ERA2_ONLY="$so" RUN_ENV="ERA2_EXPECT_SEALED_ONLY=true ERA2_EXPECT_UNSEALED_FOR_TESTS=false" run switch-iii-on flip-iii off "$gate"
+    ERA2_ONLY="$so" RUN_ENV="ERA2_EXPECT_SEALED_ONLY=true ERA2_EXPECT_UNSEALED_FOR_TESTS=false" run switch-iii-on-pa flip-iii on "$gate"
+    ERA2_ONLY="$so" RUN_ENV="TX2_PROTECTION_SEALED_ONLY=0 ERA2_EXPECT_SEALED_ONLY=false" run switch-iii-optout flip-iii off "$gate"
+    ERA2_ONLY="$so" RUN_ENV="TX2_PROTECTION_UNSEALED_FOR_TESTS=1 ERA2_EXPECT_SEALED_ONLY=true ERA2_EXPECT_UNSEALED_FOR_TESTS=true" run switch-iii-override flip-iii off "$gate"
+    ERA2_ONLY="$so" RUN_ENV="ERA2_EXPECT_SEALED_ONLY=false" run switch-iii-default this off "$gate"
+    RUN_ENV="TX2_PROTECTION_UNSEALED_FOR_TESTS=1 ERA2_EXPECT_SEALED_ONLY=true" run switch-iii-override-gate flip-iii on "$gate"
+  fi
   grep -h "ERA2_SWITCH\|ERA2_GATE" "$out"/switch-*.log | sort | uniq -c
 fi
 # [DX-ERA2 fix pass] the independent review's attacks and fuzzer (era3/attack.clj, era3/REVIEW.md) on both settings

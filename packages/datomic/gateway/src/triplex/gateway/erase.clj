@@ -54,7 +54,11 @@
   ;; [DX-ERASE2] Why: trusted staging uses the same serial cut check with its stopped-copy position.
   ;; Rejected: letting the public request claim an occupied scope has no plaintext history.
   ([name conn db input staged-position]
-  (let [attrs (get input "attributes") sealed? (true? (get input "sealed"))]
+  (let [attrs (get input "attributes") sealed? (true? (get input "sealed"))
+        ;; [DX-ERA6 eighth pass, the owner's decision (iii)] with protection-sealed-only, an unsealed declaration is
+        ;; refused outside tests unless the database already protects exactly these attributes unsealed (kept, warned)
+        warning (when @(requiring-resolve 'triplex.gateway.removal-commit/protection-sealed-only)
+                  ((requiring-resolve 'triplex.gateway.removal-commit/unsealed-declare!) name attrs sealed?))]
     ;; [DX-ERA2 sixth pass, V1] a database guarded per account is declared through removal-commit/protect! (its policy
     ;; is in the database); a gateway without the option must not write its log's policy
     (when (contains? #{-1 -2} (scope/value db (scope/entity db) :triplex.scope/erasure-seq)) (privacy/unavailable!))
@@ -78,7 +82,8 @@
                   (privacy/failure! 409 "ProtectedScopeNeedsMigration" "Declare protection before saving into the scope")
                   (throw e))))))))
     (envelope/provision! name sealed?)
-    {:database name :attributes attrs :sealed sealed? :erasure {:seq (:seq (privacy/cut name (sync! conn)))}})))
+    (merge {:database name :attributes attrs :sealed sealed? :erasure {:seq (:seq (privacy/cut name (sync! conn)))}}
+           (when warning {:warning warning})))))
 
 (defn identity [row]
   (cond-> {"assertionId" (:id row) "entity" (:entity_id row) "attribute" (:attribute row)

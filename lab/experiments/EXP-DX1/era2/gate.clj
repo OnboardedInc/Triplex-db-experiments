@@ -2330,13 +2330,71 @@
             (expect label re2 [200 nil])
             (check! label (= #{} after-re2) "both resent: nothing is reported lost" obs)))))))
 
+;; ---- [DX-ERA6 eighth pass, the owner's decision (iii)] protected attributes on an unsealed database ------------------
+(defn sealed-only
+  "With protection-sealed-only on (gate.sh's flip-iii arms): a new database's unsealed declaration is refused (409
+  ProtectionNeedsSeal) and its sealed one accepted; a database that already protects attributes unsealed (made before
+  the switch: here with the override) keeps working (the same declaration 200 with the `warning` field, a save, a
+  removal, the removed value not answered) and says so (the start check's `triplex.protection-unsealed.v1` line), but
+  adds no attribute (409 ProtectionNeedsSeal). With the test-only override, or the switch off, every declaration is
+  answered as before and carries no warning."
+  []
+  (let [on? (and rc/protection-sealed-only (not rc/unsealed-for-tests))
+        label (str "sealed-only/" mode (cond on? " (on)" rc/protection-sealed-only " (override)" :else " (off)"))
+        unsealed-lines (fn [out] (filter #(str/includes? % "triplex.protection-unsealed.v1") (str/split-lines out)))]
+    (offers/in-scope
+      (fn [name conn]
+        (let [r (offers/route name "v2" "protection" {"attributes" [":v"] "sealed" false})
+              r-sealed (when on? (offers/route name "v2" "protection" {"attributes" [":v"] "sealed" true}))]
+          (println "ERA2_SEALED_ONLY" mode (pr-str {:case "new" :on on? :unsealed (offers/outcome r)
+                                                    :warning (get-in r [:body "warning"]) :sealed (some-> r-sealed offers/outcome)}))
+          (if on?
+            (do (expect (str label ": a new database, unsealed") r [409 "ProtectionNeedsSeal"])
+                (expect (str label ": a new database, sealed") r-sealed [200 nil]))
+            (do (expect (str label ": a new database, unsealed") r [200 nil])
+                (check! label (nil? (get-in r [:body "warning"])) "no warning field" (:body r)))))))
+    (offers/in-scope
+      (fn [name conn]
+        (let [made (with-redefs [rc/unsealed-for-tests true]
+                     (offers/route name "v2" "protection" {"attributes" [":v"] "sealed" false}))
+              moved (when per-account? (offers/route name "v2" "removal-per-account" {}))
+              seeds (seed! name [a1 b1])
+              again (offers/route name "v2" "protection" {"attributes" [":v"] "sealed" false})
+              wider (when on? (offers/route name "v2" "protection" {"attributes" [":v" ":w"] "sealed" false}))
+              save (offers/send name (frame "so-save" b1 (secret b1 "after") nil nil))
+              removal (remove! name "so-rm" a1)
+              read (offers/route name "v1" "read" {"entityIds" [a1]})
+              start (with-out-str (rc/start-check! [name] (fn [_] conn)))
+              lines (unsealed-lines start)
+              obs {:made (offers/outcome made) :moved (some-> moved offers/outcome) :again (offers/outcome again)
+                   :warning (get-in again [:body "warning" "code"]) :wider (some-> wider offers/outcome)
+                   :save (offers/outcome save) :removal (offers/outcome removal)
+                   :removed-answered (str/includes? (text (:body read)) (:value (seeds a1))) :start-lines (vec lines)}]
+          (println "ERA2_SEALED_ONLY" mode (pr-str (assoc obs :case "existing" :on on?)))
+          (expect (str label ": set-up, an unsealed database protected before the switch") made [200 nil])
+          (when per-account? (expect (str label ": set-up, moved per account") moved [200 nil]))
+          (expect (str label ": the same declaration again") again [200 nil])
+          (expect (str label ": a save") save [200 nil])
+          (expect (str label ": a removal") removal [200 nil])
+          (check! label (not (:removed-answered obs)) "the removed value is not answered" obs)
+          (if on?
+            (do (check! label (= "UnsealedProtection" (:warning obs)) "the declaration's answer warns" obs)
+                (expect (str label ": an attribute added") wider [409 "ProtectionNeedsSeal"])
+                (check! label (= 1 (count lines)) "the start check says so, once" obs)
+                (check! label (some #(str/includes? % "\"atStart\":true") lines) "a start line" obs))
+            (do (check! label (nil? (:warning obs)) "no warning field" obs)
+                (check! label (= (if rc/protection-sealed-only 1 0) (count lines))
+                        "the start check: one line with the override (marked), none with the switch off" obs))))))))
+
 ;; ---- [DX-ERA6 eighth pass] the owner's decisions of 2026-11-25: what each switch reads, against what the arm expects --
 (defn owner-switches
   "Each switch's value in this process against the arm's ERA2_EXPECT_<NAME> (gate.sh's `switches` phase), so a flipped
   default that did not take, or an opt-out that did not, fails before the arm's other checks are read."
   []
   (doseq [[env v] [["ERA2_EXPECT_REPLAY_RULE" (fn [] rc/replay-rule)]
-                   ["ERA2_EXPECT_WORKER_MS" (fn [] rc/worker-complete-ms)]]]
+                   ["ERA2_EXPECT_WORKER_MS" (fn [] rc/worker-complete-ms)]
+                   ["ERA2_EXPECT_SEALED_ONLY" (fn [] rc/protection-sealed-only)]
+                   ["ERA2_EXPECT_UNSEALED_FOR_TESTS" (fn [] rc/unsealed-for-tests)]]]
     (when-let [want (System/getenv env)]
       (println "ERA2_SWITCH" env (pr-str (v)))
       (check! (str "owner-switches/" mode) (= want (pr-str (v))) (str env " is " want) (v)))))
@@ -2409,6 +2467,7 @@
   (scenario "ack-journal" ack-journal)
   ;; [DX-ERA6 eighth pass] the owner's switches
   (scenario "owner-switches" owner-switches)
+  (scenario "sealed-only" sealed-only)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode
              (pr-str {:checks (count @results) :failed (count failed)}))

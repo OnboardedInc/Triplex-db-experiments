@@ -749,7 +749,10 @@
            (when (some #{name} (d/get-database-names (db-uri "*"))) (throw e)))))
   ;; [DX-ERA3 N5] report every database guarded per account whose data and removal log disagree
   ;; [DX-ERA6 eighth pass, R5] and, with an acknowledgement journal, every protected database's lost removals
-  (when (or removal-scope/enabled @(requiring-resolve 'triplex.gateway.removal-ack/journal))
+  ;; [DX-ERA6 eighth pass, the owner's decision (iii)] and, with protection-sealed-only, every database protecting
+  ;; attributes unsealed
+  (when (or removal-scope/enabled @(requiring-resolve 'triplex.gateway.removal-ack/journal)
+            @(requiring-resolve 'triplex.gateway.removal-commit/protection-sealed-only))
     ((requiring-resolve 'triplex.gateway.removal-commit/start-check!) (d/get-database-names (db-uri "*"))
                                                                       (fn [name] (connection (db-uri name)))))
   (start-thread-sampler!)

@@ -1450,6 +1450,77 @@
                   (lean/live-texts db eid nil)))
           eids)))
 
+;; [The owner's decision (iii) of 2026-11-25: protected attributes on an unsealed database are refused outside tests]
+;; false in this pass, true once reviewed (approved; this one line, tested by era2/gate.sh's `flip-iii` arms).
+;; TX2_PROTECTION_SEALED_ONLY=1 turns it on and =0 off whatever this says. What turning it on changes:
+;; era6/REMOVAL-ON-SAVE-LINE.md section 7.
+(def protection-sealed-only-default false)
+(def protection-sealed-only (switch "TX2_PROTECTION_SEALED_ONLY" protection-sealed-only-default))
+(def unsealed-for-tests
+  "TX2_PROTECTION_UNSEALED_FOR_TESTS=1: the test-only override of `protection-sealed-only` (unsealed protection
+  accepted as before, one `triplex.protection-unsealed.v1` line with \"override\": true per declaration). Never set
+  it in a deployment."
+  (= "1" (some-> (System/getenv "TX2_PROTECTION_UNSEALED_FOR_TESTS") clojure.string/trim)))
+
+(defn- unsealed-line [name attrs extra]
+  (println (json/write-str (merge {"schema" "triplex.protection-unsealed.v1" "database" name
+                                   "attributes" (vec (sort attrs))}
+                                  extra))))
+
+(def unsealed-warning
+  "The answer's field on a declaration that an existing unsealed database keeps."
+  {"code" "UnsealedProtection"
+   "message" (str "This database protects attributes without sealing them (their values are stored in clear and a "
+                  "removal masks them; it has no key to delete). It keeps working; protect new attributes in a sealed "
+                  "database.")})
+
+(defn unsealed-protection!
+  "[The owner's decision (iii)] Called by both protection routes before anything is written, with the database's
+  current policy (`existing`: {:attrs [...] :sealed bool}, nil when it protects nothing yet) and the request. With
+  `protection-sealed-only` and an unsealed request:
+  - the override (`unsealed-for-tests`): accepted as before; one line;
+  - nothing protected yet: 409 ProtectionNeedsSeal, nothing written;
+  - an existing unsealed policy, the request adding an attribute: 409 ProtectionNeedsSeal, nothing written;
+  - an existing unsealed policy, the request adding none: accepted (the database keeps working); one
+    `triplex.protection-unsealed.v1` line and the answer's `warning` field (`unsealed-warning`), which this returns.
+  A sealed request, a sealed existing policy (its own route refuses the seal's change), a malformed request (its own
+  route answers 400) or the switch off: nil, nothing printed."
+  [name existing attrs sealed?]
+  (when (and protection-sealed-only (not sealed?) (vector? attrs) (seq attrs) (every? string? attrs)
+             (not (true? (:sealed existing))))
+    (if unsealed-for-tests
+      (do (unsealed-line name attrs {"override" true}) nil)
+      (let [extra (vec (remove (set (:attrs existing)) attrs))]
+        (when (or (nil? existing) (seq extra))
+          (privacy/failure! 409 "ProtectionNeedsSeal"
+                            (if existing
+                              (str "This database is unsealed; it keeps the attributes it protects but adds none outside "
+                                   "tests. Protect new attributes in a sealed database")
+                              "Protected attributes need a sealed database outside tests: declare with \"sealed\": true")))
+        (unsealed-line name (:attrs existing) {"code" "UnsealedProtection" "declared" true})
+        unsealed-warning))))
+
+(defn unsealed-declare!
+  "erase/declare!'s call (the database-wide rule): the current policy is the log's head (immutable there)."
+  [name attrs sealed?]
+  (let [prior (some-> (privacy/record-text name "head.json") json/read-str)]
+    (unsealed-protection! name (when prior {:attrs (vec (get prior "attributes")) :sealed (true? (get prior "sealed"))})
+                          attrs sealed?)))
+
+(defn unsealed-at-start!
+  "At gateway start, with `protection-sealed-only`: one `triplex.protection-unsealed.v1` line for a database that
+  protects attributes unsealed (it keeps working; the line says so)."
+  [name db]
+  (when protection-sealed-only
+    (let [p (if (removal-scope/per-account? db)
+              (some-> (stored-policy db) (#(hash-map :attrs (get % "attributes") :sealed (true? (get % "sealed")))))
+              (when (privacy/enabled? db)
+                (some-> (privacy/record-text name "head.json") json/read-str
+                        (#(hash-map :attrs (get % "attributes") :sealed (true? (get % "sealed")))))))]
+      (when (and p (seq (:attrs p)) (not (:sealed p)))
+        (unsealed-line name (:attrs p) {"code" "UnsealedProtection" "atStart" true "override" unsealed-for-tests
+                                        "message" (get unsealed-warning "message")})))))
+
 (defn protect!
   "[DX-ERA2 sixth pass, V1] POST /v2/db/{db}/protection on a database guarded per account. The policy is the one stored
   in Datomic, and the request is compared with it, never with the log:
@@ -1486,6 +1557,9 @@
                 ;; them all (`notDeclared`). Two callers adding different attributes both succeed (each adds its own
                 ;; under the removal lock, one compare-and-set), and an older service whose list lacks an addition runs
                 (let [extra (vec (remove (set have) attrs))
+                      ;; [DX-ERA6 eighth pass, the owner's decision (iii)] an unsealed database protects nothing new
+                      ;; outside tests (refused before anything is added); one that already does keeps working, warned
+                      warning (unsealed-protection! name {:attrs have :sealed (true? (get p "sealed"))} attrs sealed?)
                       ;; [DX-ERA6 eighth pass, R2] an attribute that already holds a value the policy cannot protect
                       ;; (not a string) is refused here, to the one caller that asked, before anything is added
                       _ (doseq [a extra]
@@ -1495,9 +1569,10 @@
                                                    "can be protected. Nothing was added"))))
                       db (if (seq extra) (add-attributes! name conn db p extra) db)
                       p (stored-policy db)]
-                  {:database name :attributes (vec (get p "attributes")) :sealed (true? (get p "sealed"))
-                   :added extra :notDeclared (vec (remove (set attrs) (get p "attributes")))
-                   :erasure {:seq (:seq (privacy/cut name db true))}}))))]
+                  (cond-> {:database name :attributes (vec (get p "attributes")) :sealed (true? (get p "sealed"))
+                           :added extra :notDeclared (vec (remove (set attrs) (get p "attributes")))
+                           :erasure {:seq (:seq (privacy/cut name db true))}}
+                    warning (assoc :warning warning))))))]
       (envelope/provision! name sealed?)
       result)))
 
@@ -1619,7 +1694,9 @@
             (acknowledged-lost! name cut)))
         ;; [DX-ERA6 eighth pass, R5] with a journal, the database-wide rule's protected databases too
         (when (and removal-ack/journal (not (removal-scope/per-account? db)) (privacy/enabled? db))
-          (acknowledged-lost! name (privacy/cut name db true))))
+          (acknowledged-lost! name (privacy/cut name db true)))
+        ;; [DX-ERA6 eighth pass, the owner's decision (iii)] a database protecting attributes unsealed, said aloud
+        (unsealed-at-start! name db))
       (catch Exception e
         (println (json/write-str {"schema" "triplex.removal-start-check.v1" "database" name "agree" false
                                   "code" (or (:code (ex-data e)) "Unverified")}))))))
