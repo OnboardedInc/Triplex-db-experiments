@@ -384,6 +384,30 @@
           (oracle! lbl (and (= 1 (:native-commits-of-the-command detail)) (nil? (:pending-after detail)) (:a1-masked detail) (:b1-kept detail))
                    "the removal is applied exactly once, as first asked, whoever calls the route" detail))))))
 
+;; ---- H: the restore route on a database with published removals (no restore), both boundaries ----------------------
+(defn h-restore-route [boundary sealed? addition?]
+  (when per-account?
+    (f/scope5-with [":v"] sealed? boundary
+      (fn [name conn]
+        (let [lbl (str "H the restore route after one removal, no restore" (when addition? ", :q added first") ", " (bname boundary) (if sealed? ", sealed" ""))
+              seeds (g/seed! name [g/a1 g/b1]) va (:value (seeds g/a1))
+              add (when addition? (offers/outcome (offers/route name "v2" "protection" {"attributes" [":v" ":q"] "sealed" sealed?})))
+              rm (offers/outcome (a/remove-attr! name "h-ra" g/a1))
+              cut (privacy/cut name (d/db conn) true)
+              published (get-in cut [:commands "h-ra"])
+              native (some-> (rc/native-entries name (erase/sync! conn)) :entries first :entry)
+              x (some-> (rc/native-entries name (erase/sync! conn)) :entries first)
+              tx-position (when x (scope/value (d/db conn) (:e x) :triplex.tx/position))
+              route (f/safe #(offers/route name "v2" "restore-erasure" {}))
+              detail {:addition add :removal rm :restore-route (offers/outcome route) :message (get-in route [:body "message"])
+                      :published-equals-native (= published native)
+                      :keys-that-differ (vec (for [k (sort (into (set (keys published)) (keys native))) :when (not= (get published k) (get native k))] k))
+                      :native-position (get native "position") :tx-position tx-position :published-position (get published "position")
+                      :a1-masked (f/masked? name g/a1 va)}]
+          (observe! lbl :detail detail)
+          (bump! :h boundary sealed? addition? (offers/outcome route))
+          (oracle! lbl (= 200 (first (offers/outcome route))) "the restore route answers 200 when the data and the log agree" detail))))))
+
 ;; ---- request bodies for the stack (stack6.sh) ---------------------------------------------------------------------
 (defn bodies6 []
   (let [dir (java.io.File. "/out/bodies") _ (.mkdirs dir)
@@ -418,6 +442,7 @@
       (doseq [bd (if per-account? boundaries [:log]) o [:another-subject :another-account]] (guarded "D2" #(d-other bd o))))
     (when (phases "g1") (doseq [p [:cut-short :no-database :an-array]] (guarded "G1" #(g1-scopes p))))
     (when (phases "g2") (guarded "G2" g2-retire-live))
+    (when (phases "h") (doseq [bd boundaries s? [false true] ad? [false true]] (guarded "H" #(h-restore-route bd s? ad?))))
     (when (phases "f") (doseq [bd boundaries st [:after-declare :after-native]] (guarded "F" #(f-steer bd st)))))
   (let [failed (remove :ok @g/results)]
     (println "ERA3_TALLY6" mode (pr-str (into (sorted-map) (map (fn [[k v]] [(pr-str k) v])) @tally)))
