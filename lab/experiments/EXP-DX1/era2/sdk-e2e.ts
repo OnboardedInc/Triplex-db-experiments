@@ -17,8 +17,9 @@
 import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { Effect, ManagedRuntime } from "effect";
-import { Triples, EntityId, string } from "@triplex-build/triplex";
-import { Capabilities, DatabaseScope } from "@triplex-build/triplex/runtime";
+// the core package as the SDK resolves it (packages/datomic/node_modules/@triplex-build/triplex links to packages/core)
+import { Triples, EntityId, string } from "../../../../packages/core/dist/index.js";
+import { Capabilities, DatabaseScope } from "../../../../packages/core/dist/runtime/index.js";
 import { makeDatomicRuntime, DatomicClient } from "../../../../packages/datomic/src/index.ts";
 
 const [W, R, variant, out] = process.argv.slice(2) as [string, string, "log" | "commit", string];
