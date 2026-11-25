@@ -353,11 +353,12 @@
                          ;; is still read here and covered by the revision compare-and-set, and nothing below or in
                          ;; the native function is keyed by field. Rejected: W2's distinct-field count on each side,
                          ;; which sent every such product save to the general writer.
-                         ;; [DX-S6] F6: written as `if`, not `and`, so this namespace generates the base's number of
-                         ;; names and the stored functions loaded after it keep the base's identities (s4/idents.sh).
-                         (if (= (count live) (count prior))
-                           (not (contains? after nil))
-                           false)
+                         ;; [DX-S6] F6: three terms, as the base's condition had (the `true` changes nothing), so this
+                         ;; namespace generates the base's number of names and the stored functions loaded after it
+                         ;; (the covering writer, the general hint function) keep the base's identities (s4/idents.sh).
+                         (and (= (count live) (count prior))
+                              true
+                              (not (contains? after nil)))
                          (and (= (count live) (count prior) (count before) (count after)) (= before after)))
                        (not (contains? before nil))
                        ;; [DX-ERASE1] Why: encrypted bodies must belong to these same fresh owner rows.

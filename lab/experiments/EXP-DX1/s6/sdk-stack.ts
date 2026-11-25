@@ -262,19 +262,22 @@ const attacks: Record<string, unknown> = {};
   const out: Record<string, unknown> = {};
   for (const precondition of [true, false]) {
     assert.equal((await publish(1)).outcome, "ok");
-    const read = model.get(D)!.get(":def/rules")!; // the save reads the release in force: no unique rule yet
+    // The save reads the release in force (no unique rule yet) and names the definitions it read as a precondition:
+    // the complete live fact set of D (EntityState), which TriplesLive checks and puts in the save's conflict set.
+    const read = [...model.get(D)!.values()].map((l) => l.id);
     const code = { type: "string", value: `release-${precondition}-${randomUUID().slice(0, 6)}` };
     assert.equal((await save(A, 102, "unique-seed", [{ op: "assert", entityId: `acct/s6/badge/seed-${precondition}`, attribute: ":b/code", value: code, entityType: "badge", validFrom: 0 }])).outcome, "ok");
     assert.equal((await publish(2)).outcome, "ok"); // the release adds the unique rule before the save commits
     const r = await save(B, 102, "under-old-release", [{ op: "assert", entityId: `acct/s6/badge/late-${precondition}`, attribute: ":b/code", value: code, entityType: "badge", validFrom: 0 }],
-      precondition ? { preconditions: [{ _tag: "TripleLive", id: read.id }] } : {});
+      precondition ? { preconditions: [{ _tag: "EntityState", entityId: D, tripleIds: read }] } : {});
     out[precondition ? "withPrecondition" : "staleDefinitions"] = { outcome: r.outcome, error: r.error };
   }
   attacks.releaseBetweenReadAndCommit = out;
 }
 log("CONSTRAINTS", attacks);
 const u = attacks.unique as any, rt = attacks.referenceTarget as any, rel = attacks.releaseBetweenReadAndCommit as any;
-const constraintsOk = u.exactlyOneCommitted === u.pairs && rt.dangling === 0 && rel.withPrecondition.outcome === "failed";
+const constraintsOk = u.exactlyOneCommitted === u.pairs && rt.dangling === 0 && rel.withPrecondition.outcome === "failed"
+  && /TransactionConflict|SerializationConflict/.test(rel.withPrecondition.error ?? "");
 log("DONE", { faultOk, constraintsOk });
 for (const s of stores) await s.close();
 direct.close();
