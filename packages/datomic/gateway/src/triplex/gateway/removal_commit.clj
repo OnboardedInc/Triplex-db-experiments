@@ -955,7 +955,13 @@
     :db/unique :db.unique/identity}
    {:db/ident :triplex.removal/declined-by :db/valueType :db.type/string :db/cardinality :db.cardinality/one}])
 
-(defn- commands-of [input] (vec (distinct (keep #(get % "commandId") (get input "claims")))))
+(defn- commands-of
+  "[DX-ERA6] The save's command IDs as a declined command is recorded: in the account's scoped form when the request
+  names its account (the save line's account claims: one account's command ID is not another's), else as sent."
+  [input]
+  (let [account (get input "account")
+        encode (when (string? account) (requiring-resolve 'triplex.gateway.account-claims/encode))]
+    (vec (distinct (for [c (keep #(get % "commandId") (get input "claims"))] (if encode (encode account c) c))))))
 
 (defn- declined-by [db input]
   (when (d/entid db :triplex.removal/declined-command)

@@ -1882,14 +1882,18 @@
             renewed (send "mr-new" (secret a1 "new") (cond-> {"sourceK" (head conn)} seen-after (assoc "removalSeen" seen-after)))
             ;; 6. another subject's save is not touched by the removal
             other (raw-route name "v1" "transact" (assoc (frame "mr-other" b1 (secret b1 "other") nil nil) "sourceK" before "frameSourceK" before))
+            ;; 7. another account's save under a command of the same name (it names its account): its own command
+            other-account (raw-route name "v1" "transact" (assoc (frame "mr-replay" b1 (secret b1 "acct-b") nil nil) "account" "b" "sourceK" (head conn)))
             got {:replay (out replay) :resend (out resend) :optimistic (out optimistic) :optimistic-bare (out optimistic-bare)
-                 :earliest (out earliest) :renewed (out renewed) :other (out other) :stamps [seen-before seen-after]}]
+                 :earliest (out earliest) :renewed (out renewed) :other (out other) :other-account (out other-account)
+                 :stamps [seen-before seen-after]}]
         (println "ERA6_MERGED_RULE" mode (pr-str (assoc got :rule rc/replay-rule)))
         (check! label (= [409 "ErasureReplayDeclined"] (:replay got)) "1. a replay framed (first source) before the removal is declined" got)
         (check! label (= [200 nil] (:other got)) "6. another subject's replay is stored" got)
         (check! label (= [200 nil] (:renewed got)) "5. a new command framed after the removal is stored" got)
         (if rc/replay-rule
           (do (check! label (= [409 "ErasureReplayDeclined"] (:resend got)) "2. the declined command sent again as a new save is declined (recorded)" got)
+              (check! label (= [200 nil] (:other-account got)) "7. another account's save under a command of the same name is stored (records are per account)" got)
               (check! label (= [200 nil] (:optimistic got)) "3. an optimistic first attempt with a stamp after the removal is stored (the save line's R3-6)" got)
               (check! label (= [409 "ErasureReplayDeclined"] (:optimistic-bare got)) "3b. without a stamp it counts as framed before the removal" got)
               (check! label (= [409 "ErasureReplayDeclined"] (:earliest got)) "4. a stamp before the removal declines it although its own source is after" got))
