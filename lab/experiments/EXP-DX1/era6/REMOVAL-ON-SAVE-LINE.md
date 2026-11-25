@@ -122,4 +122,18 @@ The run's exit status was 1: the gate's paired condition was the removal branch'
 condition is now this branch's (`era2/gate.sh`, `[DX-ERA6]`: 0 datoms with every option off, exactly 11 per run per
 account, every other datom identical); applied to that run's own `paired.txt` it passes. The source is unchanged.
 
-(filled below: fuzz8, the identities)
+**The mixed fuzzer `fuzz8`** (`era3/attack8.clj`: saves of the save line's kinds, with and without a first source and
+a stamp, sent and sent again, against removals at random points; the merged rule on), 40,000 schedules per boundary,
+four chunks of 10,000 each (seeds differ; sealed and unsealed alternate), on the frozen worktree:
+
+| Boundary | Chunks (oracles, violations) | Total |
+| --- | --- | --- |
+| The log's (per account, seeds 8101 to 8104) | 79,915; 80,043; 79,943; 80,065; 0 violations each | 40,000 schedules, 319,966 oracles, 0 violations |
+| The commit (subject check, seeds 8201 to 8204) | 79,912; 80,088; 80,129; 79,943; 0 violations each | 40,000 schedules, 320,072 oracles, 0 violations |
+
+**Stored-function identities** (`s3/idents.clj`, every option off, 8 writer settings) against the one branch's
+`8a362ac38`: 66 of 66 shared identities equal in every setting; the two new keys are the removal fence's.
+
+**R3-2 route 2, for the save line's builder:** the removal route now refuses a command ID with the reserved account
+prefix (`main.clj`, `account-claims/check-ids!` on the erase route; section 2). It is on this branch, not on the save
+line's.
