@@ -796,7 +796,12 @@ async function restartPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
   const out: Record<string, unknown>[] = [];
   const restart = async (role: "active" | "write") => {
     const begun = now();
-    await docker(["restart", "-t", "5", name(role)]);
+    // [DX-ACT10] Third review: DX_ACT10_KILL=1 (diagnostic only) kills the container (SIGKILL, no shutdown) and starts it
+    // again, instead of a graceful restart: a commit in flight meets a gateway or transactor that is simply gone.
+    if (process.env.DX_ACT10_KILL === "1") {
+      await docker(["kill", name(role)]);
+      await docker(["start", name(role)]);
+    } else await docker(["restart", "-t", "5", name(role)]);
     // Back when the write path answers a head read and a command lookup again (a lookup syncs with the transactor, so
     // it fails until the peer reaches the restarted transactor); the commit itself is retried below.
     for (let k = 0; ; k++) {

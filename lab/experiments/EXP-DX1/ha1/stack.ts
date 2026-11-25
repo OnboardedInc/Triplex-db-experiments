@@ -108,7 +108,7 @@ export class Stack {
     let published: string[] = [];
     // [DX-ACT8] DX_ACT8_FIXED_PORTS=1 (holder DX-ACT8, diagnostic only): a load mode's gateways get an explicit host port,
     // as the HA drills', so a restarted gateway comes back where this run's clients reach it (the gate's restart part).
-    const fixedPorts = process.env.DX_ACT8_FIXED_PORTS === "1" && this.holder === "DX-ACT8";
+    const fixedPorts = process.env.DX_ACT8_FIXED_PORTS === "1" && (this.holder === "DX-ACT8" || this.holder === "DX-ACT10");
     if (!cross && port === 8080 && this.e.mode.startsWith("load-") && !fixedPorts) {
       // [DX-LOAD1] Why: the VM assigns a free port at container start. Rejected: probing the Mac's socket table for a port used by the VM.
       published = ["-p", loopback + "::" + port];
