@@ -792,7 +792,7 @@ refused while a removal is pending (`verify-data!`), as the review confirms for 
 | --- | --- | --- | --- |
 | 2 to 7, 9, 10, 14, 16, 17 (every sealed derived record: packets, ledgers, settled changes, the recipient's records, their journal and feed entries, native data, backups, the reporting copy, caches) | the open route: removed from the native commit or the publication, whichever first; and, without any log, the key's destruction after the publication and the grace | correct (stricter by P5 to P7) | correct |
 | 4 (ledgers, re-recording) | the generation a forgotten subject takes is the removal's sequence, from the published log or from the native record (the same number) | correct | correct |
-| 19 (the held reader's answer cache, client memory) | keyed on the erasure frontier's published sequence; the cache is cleared on any change, so a sequence that goes back (M1) resurrects nothing | correct | **correct only if the erasure frontier changes at the native commit**: otherwise an answer cached before the commit is served until the publication. The removal builder's `cd242e8c0` says the commit boundary keeps the cut at the log's sequence, so as written this row would be **wrong** under `TX2_REMOVAL_COMMIT_BOUNDARY=1` until the frontier reports the commit (read from its commit message, not run); gate to rerun on its head (11.8) |
+| 19 (the held reader's answer cache, client memory) | keyed on the erasure frontier's published sequence; the cache is cleared on any change, so a sequence that goes back (M1) resurrects nothing | correct | **correct only if the erasure frontier changes at the native commit**: otherwise an answer cached before the commit is served until the publication. The removal builder's `cd242e8c0` says the commit boundary keeps the cut at the log's sequence, so as written this row would be **wrong** under `TX2_REMOVAL_COMMIT_BOUNDARY=1` until the frontier reports the commit (read from its commit message, not run); gate to rerun on its head (11.8). **Corrected (12.2, 13.5): it was wrong** under the commit boundary (`era4/held.ts`: the pinned read was answered from the cache with X's removed expiry 52 ms after the commit); fixed in `e46dda740` |
 | 1 (the subject's own fact, plain reads) | the removal builder's (M1 is there) | — | — |
 | 11, 12, 13, 20 | hold no value or derivative (12, 13, 20) or are the keys themselves (11) | unchanged | unchanged |
 
@@ -803,7 +803,7 @@ refused while a removal is pending (`verify-data!`), as the review confirms for 
 | behind the data (restored from before the removal's intent) | per account: `RemovalLogBehind` (503) on every request, these routes included (their cut comes from `request-cut`); database-wide: refused by `verify-data!` | DX-ERA2's `log-behind`, the reviews' E7 and E7b with the option on, 0 violations (11.5) |
 | **restored to a copy taken while the removal was pending, after it was published (M1)** | **removed**: the native commit decides. Without the change the copy reopened to the removed value (the file authority keeps the key files beside the log, so the copy brought the key back) | `checks` case `m1`: before `d803df016` 2 violations (the copy opened to the value, the assertion sealed again); after it 0. The plain read answered the value after the restore in both (M1 as the review found it), until the next derived write was refused and completed the removal again |
 | missing (no log for a protected database) | the cut is nil: the routes refuse (409 `DerivedSealNeedsSealedScope`); with the file authority the keys are gone with the log, so nothing opens anywhere | read from code; not run |
-| keys restored with an older copy of the authority | the native commit or the publication decides, so no route opens a copy; **the restored key file is not deleted again until the gateway restarts** (the shred worker's progress `@shredded` is in memory and already past that removal), so its bytes are recoverable from the authority's storage meanwhile | `m1`: restored key not deleted again within 5 s; gate (e)'s restores reset the worker as a restart does |
+| keys restored with an older copy of the authority | the native commit or the publication decides, so no route opens a copy; **the restored key file is not deleted again until the gateway restarts** (the shred worker's progress `@shredded` is in memory and already past that removal), so its bytes are recoverable from the authority's storage meanwhile | `m1`: restored key not deleted again within 5 s; gate (e)'s restores reset the worker as a restart does. **Corrected (13.5):** with a log put back to a pending-state copy a restart did not delete it either (the review DX-ERA5's c8); since `c464373d6` a re-sweep deletes it again within about a second, without a restart, in both cases |
 
 So a derived copy is never the route by which a removed value comes back, under either boundary and under each log
 state above. The plain read's own M1 is the removal builder's to fix.
@@ -845,3 +845,237 @@ with `TX2_REMOVAL_COMMIT_BOUNDARY` both off and on:
 5. **(f)** DX-ERA2's gate set (its own new cases for M2 to M5 included), the reviews' attacks and DX-ACT9's gate, every
    option on;
 6. **(g)** the cost phase (a removal's work must still not grow with copies).
+
+## 12. After the merge of the removal builder's fourth pass (`d3cb5ea53`, its head `bd4ec0d1a`), 2026-11-25
+
+The removal builder's head settled at `bd4ec0d1a` (gateway code `f8725b97b`): the third review's M1 to M5, the
+removal-log rebuild route, typed `RemovalLogBehind` and `RemovalLogMissing` refusals, and the default-off option
+`TX2_REMOVAL_COMMIT_BOUNDARY=1` (a removal takes effect for every request at its commit in Datomic). Merged here as
+`d3cb5ea53`; the rerun's fixes are `e46dda740`. Every run below is on the pinned runtime image `sha256:21a67288007d…`,
+started by ID, and counted only when the container's image ID matched.
+
+### 12.1 Gates on `e46dda740`, under each removal boundary
+
+| Gate | Log boundary (today) | Commit boundary (`TX2_REMOVAL_COMMIT_BOUNDARY=1`) |
+| --- | --- | --- |
+| (a) stored-function identities, every option off and in six option sets | **not valid**: the base was to be this tree with this option's gateway changes reversed, but the reverse patch did not apply (`base-tree-apply.log`: `apply exit 1`, `main.clj` did not match after the merges), so the base still held this work and "60 of 60" compared it with itself. Replaced by 13.7, with the base built hunk by hand and checked to hold none of this work | — |
+| (a) the paired native log (DX-ERA2's `paired` phase), option off and `TX2_DERIVED_SEAL=1` | identical in every arm (`base`, `base2`, `off`, `on`, `commit`): reply digest `2caaf1e8…` in all five | identical (arm `commit`) |
+| phase `checks` (e9s, e6s, window, stop-checks with P3, m1, log-states) | 168 oracles, 0 violations | 168 oracles, 0 violations |
+| T1, the failing test, option off | 229 places hold X's removed date (database-wide and moved per account) | — |
+| T1 with the option: database-wide; every option set; moved per account | 0, 0, 0 (pass) | moved per account: 0 (pass) |
+| Row 19, the held reader across a removal paused after its commit (`era4/held.ts`) | pass before and after the fix below | **break before the fix** (the pinned read answered from the exact cache with X's removed expiry, 52 ms after the commit); pass after it |
+| (e) 1,000-schedule runs, every option on | 1 run (seed 511): 14,229 oracles, 0 violations | 7 runs (seeds 601 to 606, 611): 100,226 oracles, 1 violation (seed 605, 12.4) |
+| (f) DX-ERA2's gate, every option on | database-wide 364 checks, per account 1,618, subject check 9,888: 0 failed | 9,914 checks, 0 failed |
+| (f) the reviews' attacks (era3 phase), every option on | per account 3,640 oracles, subject check 3,640: 0 violations, 71 of 71 builder checks | 2,785 and 3,643 oracles, 0 violations |
+| (f) DX-ERA2's suites | 76 tests, 71,171 assertions, 1 error (`http-route` ClassCastException), the same error on the base `c2aa3d416` with every option off | the same |
+| (g) the cost phase | 12 oracles, 0 violations | 12 oracles, 0 violations |
+
+The identity base of 11.5 (`basev3-1d01d02ab-minus-era4`) was built the same way and its build log was not kept, so
+it cannot be checked now; 13.7 replaces it too.
+
+Gate (e) was stopped at 8,000 schedules (1,000 and 7,000) when the derived-copies review's fixes changed the gateway:
+the full 20,000 per boundary runs once, on the final head (13.7). DX-ACT9's gate (1,000 schedules, whole-subject imports
+and this option on): log boundary 8,335 oracles, commit boundary 8,338, 0 violations in each.
+
+### 12.2 Row 19: the break, and its fix
+
+The held reader (`actv-lazy/read.ts` `LazyReader`) keeps computed answers in client memory, keyed on the erasure
+frontier. With the commit boundary a removal takes effect for reads at its commit, while the frontier keeps the log's
+sequence until the publication. `era4/held.ts` caches X's answer (it copies X's protected document type and expiry) at a
+pinned position and at the head, sends the removal of X's two document values with the gateway paused after the
+commit (`TX2_REMOVAL_TEST_PAUSE_AT=committed`), and reads again during the pause and after the publication.
+
+- **Before the fix, commit boundary:** the pinned read was answered from the exact cache with X's removed expiry, 52 ms
+  after the commit. The plain read at the same moment was already masked. A break.
+- **Log boundary:** no break. A read that finds the removal committed publishes it first (DX-ERA3 M1's fix), so the
+  reads during the pause waited for the publication (about 4 s, the pause) and answered without the value.
+- **The fix (`e46dda740`, under `TX2_DERIVED_SEAL` only):** the cache key also holds the removed identities (their count
+  and a hash of the sorted list). The removed set grows at the commit under the commit boundary and at the publication
+  under the log boundary, so the key changes at the moment the removal takes effect for reads, under each boundary.
+  After the fix both runs pass. Since the removal builder's fifth pass the key also takes the gateway's
+  `removalStamp` (13.6).
+
+### 12.3 P3, and the log behind, missing, and rebuilt
+
+- **P3 (the subject guard taken, before the native commit) is reached** under each boundary. How it is forced: a removal
+  is first stopped at `:after-declare` (its declaration written, its guard not yet taken); it is then resumed, and since
+  the third pass's M3 a resumed removal takes its subject guard before its first commit attempt, so the resume stops at
+  `:after-guard`. At P3: the copy opens to the value, the plain read answers it, a derived write is refused 503 and that
+  refusal completes the removal; afterwards removed, no clear byte in the document, the journal or the native data.
+- **Stop table, P1 to P7** (both boundaries the same except at P5 and P6): up to P4 the copy opens and the plain read
+  answers (allowed: the removal has not taken effect); at P5 and P6 the copy opens as removed and the plain read no
+  longer answers, on the log boundary because the read publishes the committed removal first, on the commit boundary
+  because the commit decides; a derived write at P5 or P6 is refused (409 `ErasureFrontierChanged` on the log
+  boundary, 503 on the commit boundary, which completes the removal).
+- **Log states (case `log-states`):**
+
+| Log state | Log boundary | Commit boundary |
+| --- | --- | --- |
+| behind the data (restored from before the removal) | every request 503 `RemovalLogBehind`, these routes and the plain read included | served from the data: X's copy opens as removed, Y's opens, the plain read does not answer X |
+| after `removal-log-rebuild` (body `{}`) | X removed, Y opens, plain read masked | the same |
+| missing (no log for a protected database) | every request 503 `RemovalLogMissing` | the same |
+| after `removal-log-rebuild` with `{"attributes": [...], "sealed": true}` | X removed, Y opens | the same |
+| a key file put back with the old log copy | not deleted again by the rebuild (the shred worker's progress was already past it); deleted by this option's re-sweep since 13.1 (M2) | the same |
+
+### 12.4 Seed 605 on the commit boundary: a file-authority race (not this option's)
+
+One violation in 7,000 schedules: a delivery of another account at `:in-commit` was refused with 400 `GatewayError`,
+message naming `/tmp/era4-authority/<hash>/pending.json`. `privacy/record-text` checks that a file exists and then reads
+it; a removal deleting `pending.json` between the two raises `NoSuchFileException`, which surfaces as 400 instead of a
+retryable 503. File authority only; the code is the removal builder's (DX-ERASE1). Reported to them; not fixed here.
+
+### 12.5 A note on DX-ACT9's source-ticket path (M4 of the third review)
+
+A delivery that names its source's accounts (`TX2_ACCOUNT_TICKETS=1`) is checked by DX-ACT9's `source-ticket!`, not by
+DX-ERA3 M4's `check-source!`. A pending removal in the source refuses it with a plain 503, without the
+`:removal-pending` tag, so the recipient's gateway does not complete the source's removal from that refusal; the source's
+next write or removal completes it. Liveness only: the delivered copy is sealed under the source's keys either way.
+Reported to the removal builder and the account-ticket builder.
+
+## 13. After the derived-copies review (DX-ERA5, `a8213bc33`) and the removal builder's fifth pass (`3b3471592`)
+
+The review found five breaks (B1 to B5), four medium findings (M1 to M4), two low ones (L1, L2) and a cost finding
+(C1). The fixes are `c464373d6`; the removal builder's fifth pass (B2's fix, the removal stamp, the commit boundary as a
+setting in the database) is merged as `3932efec1`; B2 is taken from that merge, not fixed twice.
+
+### 13.1 Each finding, its fix, and the test that passes
+
+| # | Finding | Fix | Test (result in 13.7) |
+| --- | --- | --- | --- |
+| B1 | One failed seal call and settlement wrote the frame's units in clear; the store served them after the removal | (1) settlement computes a frame's changes into a local map and puts them in its cache only once sealed; a failed seal fails the frame and the retry seals again. (2) **By construction:** a one-way database setting, `derived-seal-required`, recorded in the database (`:triplex.scope/derived-sealed`, a compare-and-set from absent to true, no route removes it). With it the gateway's write route checks every new `notice/value` row of a content-bearing derived document (settled pages, recorded packets, ledgers, a recipient's state, delivered effects): each content unit must be a sealed, placed record or the removed marker, and the document's fields are a fixed set; anything else is refused 409 `DerivedRecordUnsealed`, whatever the client or its option says. (3) A placed item computed from no protected value is sealed too, so every unit has one format the route can check | the reviewer's `attack.ts` W and W2; `races.clj` case `setting` (clear unit, fake record, an entry carrying a clear `json` answer, the unframed page, a packet with an extra field, a ledger in clear: refused; sealed unit, removed marker, sealed packet, sealed state, content-free document: accepted); T1 with `ERA4_FAULTS=18` (a failed, slow or refused seal or open call at each writer); T1 `ERA4_MIXED` (gateway with the option, client without it) |
+| B2 | A pending removal anywhere in the database stopped all key deletion in it | the removal builder's (`2d05e00c0`, merged): the worker reads the published prefix with a pending removal allowed | the reviewer's `pending` (file) and `pending5.clj` p1 (PostgreSQL); `stack-shred.sh` PENDING |
+| B3 | A sealed copy's length identified the removed value; equal copies stayed equal | format `tdx2`: the clear bytes are padded to a size class (13.3) behind a 4-byte length; the nonce is random | `attack5.clj` c2 (lengths, equality); `attack.ts` L |
+| B4 | After a removal of a value other than the SSN the account's next Publish failed for every subject (`W0.E_VALUE`) | under the option the decision's worlds drop removed values of attributes outside W0's erasable set (`decision.ts` `withoutRemoved`) before evaluation, so a removed value counts as absent; the notice worlds still see every row | `attack.ts` S |
+| B5 | Row 19 under the commit boundary | 12.2 (`e46dda740`), and the removal builder's stamp in the key since the merge | `era5/row19.ts` and `era4/held.ts` under each boundary |
+| M1 | The seal route answered `clear` for names it did not know | a name must be a row of this database (current or retracted); any other name refuses the item, 400 `UnknownDerivedInput`. "Computed from no protected value" is stated by naming only unprotected rows | `attack5.clj` c6; c1-limit (513 invented names refused) |
+| M2 | A key restored from an older copy of the authority was not deleted until a restart, and not even then with the log at a pending-state copy | a re-sweep, every second, on every gateway with the option (started with the gateway): for every published removal (the cut read with a pending removal allowed) and every removal committed in the data, any of its keys present past the grace is deleted again. No progress counter | `attack5.clj` c4 and c8 (now: deleted again without a restart, also with the log at a pending-state copy) |
+| M3 | Nothing in the database recorded that derived copies must be sealed | B1's setting; a gateway of this build without `TX2_DERIVED_SEAL` refuses a database that holds it (503 `DerivedSealRequired`) | case `setting` (`gateway-without-the-option`); T1 `ERA4_MIXED` |
+| M4 | After a removal touching X every notice of X is delivered again, including notices not computed from the removed value | kept, and stated in the promise (13.4) | T1 stream checks (`deliveredAgain` counts) |
+| L1 | A record copied into another account's or subject's document opened there | the record's place (the account's document scope and the subject) is in its header and so in the associated data; it opens only for the place the reader states (409 `DerivedRecordMisplaced`) | `attack5.clj` c3 |
+| L2 | One record naming more than 512 rows failed the whole frame | limits 65,536 names and 16,000,000 characters per record; a refused call fails the frame, never writes it in clear (B1) | `attack5.clj` c1-limit: 601 real rows seal |
+| C1 | One key read per protected name per record, no cache | one read per distinct assertion per call (a per-call cache, wiped at the end), one batched SQL query per call with the PostgreSQL authority, one name lookup per distinct name per call | `cost5.clj` (13.8) |
+
+### 13.2 The shape: per-value naming kept, against one key per subject and generation sealed in the write route
+
+The reviewer proposed sealing in the gateway's write route under one key per subject and generation that any removal
+of the subject's values destroys. The two shapes compared, for the derived writes this option makes today:
+
+| | Per-value naming (kept) | One key per subject and generation, sealed in the write route |
+| --- | --- | --- |
+| New state | none: the keys are the assertions' own keys, which the removal already destroys | a key per subject and generation (10 deep accounts x 1,000,000 subjects is 10,000,000 more key rows), a subject-to-generation index, and a generation counter |
+| New step in a removal | none | find every subject the removed values belong to and destroy its current key, at the same boundary as the removal (its commit or its publication); a crash between the removal and that step leaves every derived copy of the subject readable, so it needs its own completion and re-sweep |
+| Who decides a record's inputs | the writer names the rows it read; unknown names refused (M1) | the gateway, from the document's subject; a writer cannot under-name, but the gateway must know each document's subject |
+| A missed copy | impossible on a database with the setting: the write route refuses an unsealed unit (B1); a sealed unit is under the keys of the assertions it names | impossible: the route seals |
+| Key reads, settlement frame 64 subjects x 6 changes, p protected values each | 64 x p distinct keys in one SQL query (was 384 x p reads) | 64 keys in one query |
+| Key reads, notice frame of one subject owing 200 forms (400 items) | p (was 400 x p) | 1 |
+| Key reads, opening one subject's page of 6 changes | p (was 6 x p) | 1 |
+| A record computed from two subjects (cross-subject questions, the owner's top gap since 2026-11-24) | sealed under every input's key; a removal of either subject's value removes it | needs a rule for which subject's key, or two keys |
+
+**What per-value naming buys that is used:** no new state and no new step in the removal, so the removal builder's
+gates cover key destruction for derived copies as they stand. **What it buys that is not used today:** precision. Every
+writer names every string row of the subject's world, so a removal of any one of the subject's protected values makes
+every derived record of that subject unreadable, which is what a per-subject key would do. It becomes used when a
+record is computed from two subjects (cross-subject answers), or when items name only their rule's inputs (13.4).
+**What the reviewer's shape would still add:** the writer could not under-name. With per-value naming a writer that
+omits a protected row it read seals under too few keys, and nothing checks completeness (13.9).
+
+### 13.3 Padding, and what a sealed record still shows
+
+The clear bytes and a 4-byte length are padded to the next size class: 64, 128, 256, 512, 1,024, 2,048 or 4,096 bytes,
+then the next multiple of 4,096. A stored record shows: its class (its length to within a factor of two below 4 KiB,
+to within 4 KiB above); its header in clear (the database, the assertion IDs it was computed from, and its place: the
+account's document scope and the subject); and nothing about equality (a random 12-byte nonce, so equal contents seal
+to different bytes). The reviewer's length attack (`["visa"]` told apart from other document types by length) fails
+when the candidate values fall in one class; a value whose class differs from the others' (a much longer free text) is
+still told apart by class.
+
+### 13.4 M4: why every notice of a touched subject is delivered again
+
+A ledger item names every string row of its subject's world, so after a removal of any of the subject's protected
+values no item of that subject opens. The recorder then cannot tell which of its notices were computed from the removed
+value; to tell, it would have to read items sealed under the destroyed key. So it forgets the subject's notice state and
+records the subject again under a new generation (the removal's sequence); the recipient replaces its state for that
+subject when the generation changes. Notices not computed from the removed value are delivered again under the new
+generation. To deliver again only what the removal touched, each item would name only the rows its rule read; W0's
+kernel does not report a rule's inputs today. Follow-up.
+
+### 13.5 Corrections to 11.6
+
+- Row 19: **wrong** under the commit boundary before `e46dda740` (12.2); correct under each boundary since.
+- "Keys restored with an older copy of the authority": the restored key **is deleted again within about a second**
+  (the re-sweep, 13.1 M2), also when the log is put back to a pending-state copy; before this pass it was kept until a
+  restart, and with a pending-state log copy not even after one (the reviewer's c8).
+
+### 13.6 The merge of the removal builder's fifth pass (`3932efec1`)
+
+Taken: B2 (the shred worker reads the published prefix with a pending removal allowed; dropped failures counted), the
+removal stamp (`x-triplex-removal-stamp`, `removalStamp`: moves at the commit with the commit boundary), the commit
+boundary as a one-way setting in the database (the database-wide erasure sequence holds -2; `TX2_REMOVAL_COMMIT_BOUNDARY=1`
+now only lets a process turn it on, which it does when it moves a database per account), the bounded read publication,
+and R2-2 (a save framed before a removal of its subject is declined). Conflicts were in this branch's layout (DX-ACT9
+keeps the per-account removal code in `removal_erase.clj` and `fence-seq` in `removal_scope.clj` so stored-function
+identities do not move); the fifth pass's edits were ported there.
+
+### 13.7 Gates on the final head
+
+PENDING
+
+### 13.8 Cost, before and after
+
+The reviewer's `cost5.clj` with the PostgreSQL authority (its own PostgreSQL container, image `sha256:526f86d93c6e…`;
+Mac and lab VM shared with other builders, so times are diagnostic; medians of 5). Before: the reviewer's table on
+`a8213bc33` (SQL key reads). After: `11afa3773` (SQL queries on the key table; each query fetches every distinct key
+of its call). Each record names its subject's p protected values and 3 unprotected rows.
+
+| p | Settlement frame 64 x 6: seal | Frame 64 x 20: seal (3 calls of at most 512 records) | One subject owing 200 forms (400 items): seal | Subject page, 6 changes: open | 400 items: open |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 86 ms, 384 reads → **29 ms, 1 query** | 217 ms, 1,280 → **71 ms, 3** | 68 ms, 400 → **20 ms, 1** | 2 ms → 1 ms, 1 | 49 ms → **22 ms, 1** |
+| 2 | 82 ms, 768 → **19 ms, 1** | 338 ms, 2,560 → **58 ms, 3** | 101 ms, 800 → **12 ms, 1** | 1 ms → 0 ms, 1 | 70 ms → **19 ms, 1** |
+| 5 | 156 ms, 1,920 → **23 ms, 1** | 601 ms, 6,400 → **66 ms, 3** | 167 ms, 2,000 → **16 ms, 1** | 3 ms → 1 ms, 1 | 154 ms → **20 ms, 1** |
+| 20 | 609 ms, 7,680 → **51 ms, 1** | 2,025 ms, 25,600 → **133 ms, 3** | 620 ms, 8,000 → **37 ms, 1** | 8 ms → 3 ms, 1 | 621 ms → **42 ms, 1** |
+
+The same frame written in clear (option off): 3 to 7 ms; a clear read: 2 to 4 ms. The file authority after: 27 to 94 ms
+for the 64 x 6 frame at 1 to 20 values (before: 56 to 380 ms). With PostgreSQL on another host (1 ms round trip) the
+reviewer predicted about 5 s for 5,120 sequential key reads in one call; the call now makes one query whatever the
+number of names (not run on another host). What sealing still costs per call: one HKDF and one AES-GCM per record, one
+Datomic index lookup per distinct name (M1's check), and one key read per distinct protected name.
+
+New costs added by this pass, not measured at scale: the setting's check decodes every content-bearing derived
+document a write carries (inflate and JSON parse, one header parse per unit) on databases that declare it; the key
+re-sweep, every second on every gateway with the option, reads each protected database's published removals and its
+committed erasure records and checks their keys (one query per database with PostgreSQL), so its work grows with the
+number of removals ever made.
+
+### 13.9 What is still not tested, and what is not promised
+
+**Not promised:**
+
+1. **A gateway of a build from before this option ignores the setting.** It does not know `:triplex.scope/derived-sealed`,
+   so it neither refuses the database nor checks its writes; a client behind it can still store a clear derived copy.
+   This build refuses the database when it runs without the option (503 `DerivedSealRequired`). The fleet must be on
+   this build before a database declares the setting, as 11.1 already required for the option. Making older builds
+   refuse needs a value they already check (the removal builder used the erasure sequence's -2 for the commit boundary)
+   or a check in the transactor; neither is done here.
+2. **Documents written before the setting is declared are not checked or converted.** Declare it before the first
+   derived write (T1 does). A write validated against a database value from before the declaration can still land
+   after it.
+3. **A writer that names too few rows.** A writer that omits a protected row it read seals under too few keys; nothing
+   checks that the names are complete (13.2).
+4. **Ledgers in parts** (`TX2_NOTICE_LEDGER=parts`, for subjects owing about 1,700 forms or more) are refused on a
+   database with the setting: a part is a slice of one packed string and cannot be checked alone. Such databases must
+   use whole ledgers until parts are cut at item boundaries.
+5. **A new kind of derived document is not checked** until it is added to the setting's list (settled pages, recorded
+   packets, ledgers, a recipient's state, delivered effects). The check cannot look for protected values themselves
+   (values are never looked up by value).
+6. A sealed record still shows its size class, the assertion IDs it was computed from, and its place (13.3).
+7. Deleted key bytes stay in PostgreSQL's WAL until overwritten (row 11, unchanged; `pending5.clj` p2 recovered them).
+
+**Not tested:**
+
+1. The setting with a real fleet of two gateways, and with the PostgreSQL authority under T1's real writers (T1 uses the
+   file authority; the PostgreSQL authority ran in `cost5.clj` and `pending5.clj`).
+2. The key re-sweep's cost with many removals, and the setting's check on large documents (a ledger of 1,000 owed
+   forms).
+3. Re-sealing records written in `tdx1` before this pass (they are still opened; nothing rewrites them).
+4. Fault injection at the real writers ran in T1 with 18 accounts (54 writer turns, 12 failed first turns, 6 faults not
+   reached because a fresh account's writer opens nothing); gate (e)'s degraded writer is simulated in process.
