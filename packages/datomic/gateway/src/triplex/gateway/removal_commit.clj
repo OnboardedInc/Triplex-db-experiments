@@ -159,7 +159,9 @@
   [name db state]
   (let [{:keys [entries dense]} (native-entries name db)
         c (count entries) h (:seq state)
-        agree (fn [k] (or (zero? k) (= (privacy/sha256 (:raw (entries (dec k)))) (seal-at state k))))
+        ;; [DX-ERA2 fourth pass] false past the data's last entry (the data behind the log): the stack's restore of
+        ;; older data found this indexing past the end (an IndexOutOfBounds answered 400 GatewayError)
+        agree (fn [k] (or (zero? k) (and (<= k c) (= (privacy/sha256 (:raw (entries (dec k)))) (seal-at state k)))))
         beyond (when (>= c h) (subvec entries h))]
     (cond
       (not dense) (assoc (union-mask state entries) :writes-refused "RemovalLogConflict")

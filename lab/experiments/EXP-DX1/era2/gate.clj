@@ -1079,6 +1079,62 @@
           (println "ERA2_MID_IMPORT" (pr-str (frequencies (map second @results))))
           (absent-from-routes! "mid-import" name [y] pin t0 (vals @values)))))))
 
+(defn data-behind
+  "[DX-ERA2 fourth pass, commit boundary] The data behind the log (older data restored): the state a request is
+  served from is the log's cut, which masks every removal the log holds, and writes are refused RemovalDataBehind.
+  Checked on a database value from before the log's last removal (the stack's restore of older data found `effective`
+  indexing past the data's last entry)."
+  []
+  (when commit?
+    (fresh-scope false
+      (fn [name conn]
+        (let [seeds (seed! name [a1 b1])
+              _ (expect "data-behind" (remove! name "db-1" a1) [200 nil])
+              older (d/db conn)
+              _ (expect "data-behind" (remove! name "db-2" b1) [200 nil])
+              state (privacy/cut name (d/db conn) true)
+              e (try (rc/effective name older state) (catch Throwable t {:threw (str t)}))]
+          (check! "data-behind" (= "RemovalDataBehind" (:writes-refused e)) "writes refused, typed" (select-keys e [:writes-refused :threw :seq]))
+          (check! "data-behind" (= 2 (:seq e)) "served from the log's cut (both removals masked)" (:seq e))
+          (check! "data-behind" (contains? (:erased e) (:id (seeds b1))) "b1's value, removed only in the log's newer entry, is masked" (keys (:erased e))))))))
+
+;; ---- [DX-S5 second review R2-2, adapted] a creation racing a removal of its subject, then the client's replay ----
+(defn creation-race
+  "The save-line review's R2-2 (`s5/attack2_gate.clj` `a-creation-racing-a-removal-is-replayed-into-the-removed-family`,
+  at 9dc800e7b), rebuilt on this branch's harness: that test needs the save line's own code (`subject-create`), which
+  this branch does not have. A creation of subject X (no prior value) is framed; a removal naming X lands between its
+  plan and its commit (run from inside the save's submit, on another thread, waited for 3 s); then the same frame is
+  sent after the removal under a new operation ID (its source still before the removal); then the client's replay: the
+  same caller-supplied value with a fresh source and a new operation ID, as the SDK replays a CasConflict. On the
+  subject writer and on the general writer. Asserted: the racing save is not stored when the removal landed in its
+  window. Observed and printed (ERA2_R22), not asserted: what the frame sent after and the replay answer."
+  []
+  (doseq [writer [:subject :general]]
+    (fresh-scope false
+      (fn [name conn]
+        (let [label (str "creation-race/" mode "/" (clojure.core/name writer))
+              X "acct/p3/subject/later" v (secret X "framed-before-the-removal") pin (head conn)
+              racing (frame "r22-race" X v nil pin)
+              removed (atom nil) fired (atom false) orig storage/submit!
+              general (fn [f] (if (= writer :general) (with-redefs [subject/plan (fn [& _] nil)] (f)) (f)))
+              reply (general
+                      #(with-redefs [storage/submit! (fn [c data request timeline & more]
+                                                       (when (and (= "r22-race" (get request "operationId")) (compare-and-set! fired false true))
+                                                         (let [f (future (offers/route name "v2" "erase" {"commandId" "r22-remove" "selectors" [{"entityId" X "attribute" ":v"}]}))]
+                                                           (reset! removed (deref f 3000 :waiting))))
+                                                       (apply orig c data request timeline more))]
+                         (offers/send name racing)))
+              removal (let [r @removed] (if (= :waiting r) [:waited-past-3s] (offers/outcome r)))
+              removal-seq (seq-now name conn)
+              stale (general #(offers/send name (frame "r22-stale" X v nil pin)))
+              replay (general #(offers/send name (frame "r22-replay" X v nil (head conn))))
+              stored? (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [X]}))) v)
+              obs {:writer writer :removal removal :removalSeq removal-seq :racing (offers/outcome reply)
+                   :sameFrameAfterTheRemoval (offers/outcome stale) :replay (offers/outcome replay) :valueStoredAfter stored?}]
+          (println "ERA2_R22" mode (pr-str obs))
+          (when (= [200 nil] removal)
+            (check! label (not= 200 (:status reply)) "the creation the removal landed inside is not stored" obs)))))))
+
 ;; ERA2_ONLY (space-separated label prefixes) runs only those scenarios: a diagnostic run, never a gate
 (def only (some-> (System/getenv "ERA2_ONLY") str/trim not-empty (str/split #"\s+")))
 (defn- scenario [label f]
@@ -1116,6 +1172,8 @@
   (scenario "commit-visibility" commit-visibility)
   (scenario "log-states" log-states)
   (scenario "catch-up" catch-up)
+  (scenario "data-behind" data-behind)
+  (scenario "creation-race" creation-race)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode
              (pr-str {:checks (count @results) :failed (count failed)}))
