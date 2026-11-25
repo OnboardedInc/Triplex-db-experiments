@@ -1057,3 +1057,7 @@ Verbatim: "/Users/sam/Downloads/Zino\'s\ triple\ store\ concerns\ vs\ Datomic.md
 - **The file:** a private document on Sam's Mac (not copied into this repository) listing twelve concerns an engineering lead raised about a triple store, each set against what Datomic offers, plus notes on size limits, deletion of personal data and migration.
 - **Action (orchestrator):** each concern checked against the code and today's results before answering (what "1 billion records" counts, how removal erases, whether Datomic partitions are used, which integrity rules exist); answer given to Sam in the session. One gap acted on at once: nobody has measured an API call's worth of reads (the "100+ queries per API call" concern); a builder was started on it (`OPUS-API1-api-call-shaped-reads.md`).
 - **Reading (orchestrator's):** a question, not a change of direction. The rule that all accounts live in one Datomic database stands; the answer states the size facts without recommending a split.
+
+## 2026-11-25 (afternoon), Sam, verbatim
+
+> What are the six decisions? Also where are we right now overall in this project against my key priorities? Show me with tables, with metrics and data.
