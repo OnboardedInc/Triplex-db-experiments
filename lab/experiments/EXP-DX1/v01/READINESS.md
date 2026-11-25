@@ -9,7 +9,7 @@ reads, XQ6 the exact sweep; Mac toy evidence only): their options in "Proposed d
 put on the branch" with every gate on the final head and the contradictions found, and "Next server session" rewritten
 in the owner's order of 2026-11-24 with costs; and again that evening after three more (XQ7 the question reader,
 ACT7 settlement at 1 billion, HA2 failover recovery time): their rows in the merge and defaults tables, their gates, and
-steps 2b, 8, 10a to 10c, 17 and 18 of the session list. One row per
+steps 2b, 8, 10a to 10c, 17 and 18 of the session list; and on 2026-11-25 (morning) after the evening merge (ACT6 release limits, SCALE2 many accounts, S4 with S2, S3 and IMP2, RPT1 the reporting copy; the B2 key-deletion fix, pushed alone first; then XQ10 questions connected): step 0 (the stored-function identities, below) first, the faults the independent reviews reported, the options table, the merges, their gates with the image each ran, and "Next server session" rewritten with four totals. One row per
 priority: the bar, the latest measured value at 1 billion records and on the
 fresh database (430 million records, ten deep accounts of 100,000 subjects), the settings it was measured with, the
 verdict and the next step. Mac clocks are never used here; every number below is from a rented bare-metal server
@@ -24,6 +24,80 @@ save) in two commit shapes: R, one commit per form row, and S, one commit per su
 **Profiles:** `server` = transactor 3 cores, 24 GiB heap, 16 GiB object cache; one read-gateway core with a 1.5 GiB
 cache. `server-32` = the same with a 48 GiB Java 25 ZGC heap and a 32 GiB object cache. **Credits:** "whole-turn" is
 barrier 6 (the default); "per-save" is rolling 6.
+
+## Step 0 of the 2026-11-25 merge: did the afternoon merge move stored functions? Yes; restored
+
+**Answer: yes.** With every option off, `1ed2650bd` (the afternoon merge) installed different code for 17 of the 58
+stored-function identities and code hashes that `23b7df344` installed, in every one of 8 writer settings (base,
+server, server with the wide writer, with both hint options, serial retirement, owner head, the question routes on,
+the read prefetch on). The 17 are the commit function (`:triplex/commit`, its code, stamp and operation code and
+source hash), the per-subject writer (`:triplex.subject/v-…`), the owner-head function, the general-writer hint
+function and the packed journal's encoder. The function bodies say the same thing; only generated names inside them
+differ (the counter behind `#(...)` parameters and auto-gensyms).
+
+**Why: two causes, each enough alone to move all 17.** Both compile before `commit.clj`, so every generated name in
+the stored code after them is numbered differently:
+
+1. RD5's `lean.clj` change (a `require` of `uncached` and an inline prefetch call) and `uncached` placed early in
+   `main.clj`'s requires. This is the hazard the connection builder named.
+2. **Not named by anyone before:** XQ6's `admission.clj` change (`execute-admitted` with its own trace spans, and an
+   `and` in `execute`). The connection builder's base (`2ef4cb3c4`) already carried it, so its "58 of 58 equal the
+   base" is against a base that had already moved; against `23b7df344` the XQ10 line also differs.
+
+Fixing only the first left all 17 moved (to other values); fixing only the second left all 17 moved; both fixed: 58
+of 58 equal.
+
+**What it meant for an existing database.** `commit/install-base!` compares the scope's stored `commit-fn-hash`
+with its own and, when they differ, transacts a new `:triplex/commit` at scope open; the per-subject writer's function
+is installed under its new ident when the subject option is on. So a gateway of `1ed2650bd` opening a database that a
+gateway of `23b7df344` wrote would have written new function versions at its first open (one commit per scope, moving
+the database's head), with every option off. Whether that would have happened to the sealed 1 billion database
+depends on which build's hash it stores (its loader ran on 2026-11-22; not checked on the Mac). A paired-log gate
+between `23b7df344` and `1ed2650bd` would not compare equal: XQ4's G8 log (33,609 datoms, head 620) differed in
+exactly 6 datoms, the function installs (commit function and hash, write variant ident and code, per-subject ident and
+code); every data datom was equal. No gate of the afternoon merge compared stored logs between heads, so none saw it.
+
+**Fix, in the connection builder's late-hook form** (`371d30c90`): `lean.clj` is `23b7df344`'s plus one hook var and
+one call through it (XQ10's form); `uncached.clj`, now loaded last by `main.clj`, fills the hook only with
+`TX2_READ_PREFETCH=1`; `admission.clj` keeps `23b7df344`'s `execute` body unchanged inside one `if` (no macro), and
+`*own-pool*` now holds a function that `sweep.clj` binds (the sweep's admitted-work span moved into `sweep.clj`).
+
+**The merges of this round moved them twice more, both restored the same way before any gate ran:**
+- The save line (S4, via S2's planner edit in `subject_save.clj`): one clause fewer in an `and` moved the owner-head
+  and general-hint functions (the 5 values the S4 builder reported; installed only with their options on). A neutral
+  `true` keeps three clauses (`8b44422f7`). The 8 new keys are S3's and S4's own functions, installed only with their
+  options on.
+- The reporting copy (RPT1): `privacy.clj` compiles before `commit.clj`; its new omitting function and a third clause
+  of an `or` moved all 17 again with every option off. The function moved to `omit_protected.clj`, loaded late, which
+  fills `privacy/omit-hook` (`04c1dc4d0`).
+
+**Proof on the head carrying this page:** on `9f2a4c431` (image `dccde0ba`) 58 of 58 identities equal `23b7df344`'s in
+all 8 writer settings, with every option off; the 12 new keys are S3's, S4's and XQ10's own functions, installed only with
+their options on. The key fix alone (`212853708`) moved nothing (58 of 58 equal to `1ed2650bd`); batch 1 with it
+(`8a362ac38`) 58 of 58. The paired stored log (G8) equals `23b7df344`'s; IMP2's option-off digest is identical to
+`23b7df344`'s and differs from `1ed2650bd`'s. Tools: `int5/idents.sh` (S3's and XQ10's method, by image
+ID) and `int5/compare-idents.py`; evidence `DX-INT5/idents/`.
+
+## Faults on the one branch (independent reviews, reported 2026-11-25; R3 fixed here, the rest open)
+
+| # | Fault | Severity | Where | Options | Being fixed on |
+| --- | --- | --- | --- | --- | --- |
+| R1 | **A save that is stored can be reported as failed.** If the transactor stops between applying a save and acknowledging it, the gateway answers `400 TransactionRejected`; the SDK treats 400 as final, so the caller is told the save failed while it is stored. This contradicts the store's lost-acknowledgement requirement (save review F1) | high | gateway `storage.clj` 627 to 645; SDK `DatomicStorageAdapter.ts` 658 to 684 | **every writer, every option off** | `exp/DX-S6-save-line-fixes` (later merge) |
+| R2 | **Two accounts publishing with the same command ID collide**: command IDs for joined commands are looked up across the whole database, so the second gets the first's receipt and nothing is written for it (Publish review F1). **More than one publishing account in one database is NOT safe until this is fixed, unless every command ID contains the account** (the lab's callers do: the miniature's `scale2:<run>:<account>:…`, ACT5's `<attempt>:act5:<account index>:…`; checked for every several-account gate below) | high | `actv-lazy/join/account.ts` near 562 | on today through the settlement-live merge's per-account names | the Publish builder's branch |
+| R3 | **One pending removal stopped the deletion of every published removal's key** (a key outlived its grace by 30 s; shown in process by `era2/b2.clj` on the removal branch). **Fixed on this branch** by `exp/DX-B2-key-deletion` `46a8f746a` (merged with its review's tests `801ef756a`; pushed alone first as `212853708`). Under today's rule a pending removal still makes every request answer 503 until the client resends; that is unchanged by this fix and is an open decision for the owner | was high | removal path (`envelope.clj`, `failures.clj`) | every option off | **fixed here**; standing gate `b2-keys/gate.sh` (below) |
+| R4 | With `TX2_RELEASE_DOCS=ref` the definitions command ID is the same in every account: a second account storing the same definitions is refused and can never publish by reference while its current release matches another account's (Publish review F2) | high | release-limits line | `TX2_RELEASE_DOCS=ref` only | the Publish builder's branch |
+| R5 | A release needing more than 10 ledger parts is acknowledged, and then its notices, and every later release's notices in that account, are never recorded (Publish review F3) | medium | release-limits line | `TX2_NOTICE_LEDGER=parts` only | the Publish builder's branch |
+| R6 | Under `TX2_SETTLE_PRECONDITION=progress` a frame can commit after a pause is durable (0 under the head rule, 1 to 5 under progress) (Publish review F4) | medium | settlement queue | `TX2_SETTLE_PRECONDITION=progress` | the Publish builder's branch |
+| R7 | The import commit bound can be passed by a frame built to estimate low and cost high (a 1-fact frame with a very large read set held the writer 85 to 174 ms on the toy) (save review F2) | medium | IMP2's bound | `TX2_IMPORT_COMMIT_US` | `exp/DX-S6-save-line-fixes` |
+| R8 | The card's identity check passes a wide-writer run in which no eligible save took the per-subject writer (save review F5): every session arm below that claims a share of saves on the per-subject writer reads it from the gateway's own counters (`saveRoutes`, the writer's route counts), never from the check passing | medium | `v01/adopted.ts` | card | `exp/DX-S6-save-line-fixes` |
+| R9 | Gate runs on the Publish review's branch stopped once on one save of the gate's own save tape with "assertion ID already in the database's history", every option off. **The third Publish review names the cause (U1, `act10/REVIEW-3.md` at `f596d1267`):** a save's ordered identity takes a block of 256 assertion IDs from the same monotonic ID factory as the SDK's other IDs; in the same millisecond an ID inside the block can equal one of the save's, the transactor refuses whichever commits second ("TRIPLEX_IDENTITY f/id"), nothing wrong is stored, and the refused save's resend keeps its IDs and is refused again (about 1 expected collision per gate run). **In this round:** one save of tape M with creation off was rejected once in 4 runs ("Datomic transaction was rejected", attempt `25775093-1020-4a21-97cf-e17a81563654`, image `c33d0c3fe083` built by the gate from `526ae9a6d`, removed; one deterministic tape, so no seed). **Consistent with U1, not confirmed:** the SDK gives that message for every refusal code except the conflicts it replays, the transactor's log file went with the gate's container, and the gate's log has no identity line. The gate now records the gateway's code (`356608926`); three reruns passed. Evidence `DX-INT5/gates/b-production-m0-t1/` | high (U1) | SDK ID allocation (`orderedSaveIdentity.ts`, `packages/core` ID factory) | every option off, more often with ordered saves | `exp/DX-U1-id-allocator` (the Publish builder; after its review) |
+
+The save review's F6 (the 5 differing stored-code values pinned to S2's `subject_save.clj` edit, none installed with
+options off) is the second item of step 0, restored here. Four independent reviews found that a rule chosen per
+process or held outside the data breaks at the seam: nothing merged here turns such an option on, and every option
+below is default off.
+
+**R1 in this round's gates.** The one gate here that stops the transactor under saves (RPT1's, on the head's image) saw 6 saves refused before commit ("Transactor not available") and resent, and no 400 on a stored save. That does not show R1 is absent: its window (after the apply, before the acknowledgement) is narrow and no gate here aims at it.
 
 ## The nine priorities
 
@@ -124,6 +198,65 @@ must confirm" names the step of the next server session that judges it.
 | The question reader (XQ7): `DEMO_QUESTION_READER=1`, `DX_QUESTION_*` pools | off (sweeps and ID lists on the main reader) | stay off until step 2b | Toy gates only (section "Gates"); no server number | Sweeps and lists move to their own gateway; the main reader's cache is no longer shared with them |
 | ACT7's runner options `DX_ACT7_*`, `TX2_SETTLE_COST` | off | `TX2_SETTLE_COST` only after step 10a accepts a calibration | Miniature at toy size; no server number | The settlement estimate per frame |
 | HA2's cold-copy options `TX2_HA2_COLD_CORES`, `TX2_HA2_COLD_PIPELINE` | off (every cold copy as at `b03e806fd`) | on for policy B after step 17 | Toy repair gate and the second-failure drill; no server number | The replacement's copy and check use all cores and check each file as it is copied |
+
+## Options on the one branch after the 2026-11-25 merge: which a server run may turn on
+
+Every option is default off; no default changed in this merge. "Safe to turn on in a server run" means: gated on the
+toy on this head, no open review finding against it, and turning it on for a measurement cannot change a stored
+answer outside its own route. It is not a proposal to make it a default (that is "Proposed defaults", above).
+
+**Safe to turn on in a server run**
+
+| Option | What it does | Limit |
+| --- | --- | --- |
+| `server-32` profile, per-save credits (`rolling6`), the tuned reader with read permits | earlier measurements (above) | as "Proposed defaults" |
+| `TX2_PINNED_CUT_LOOKUP`, `TX2_PINNED_SHORTCUT` | pinned read options | — |
+| `TX2_SUBJECT_WIDE`, `TX2_GENERAL_PREFETCH`, `TX2_SUBJECT_HINTS` | writers and hints | an arm claiming a per-subject share reads it from the gateway's counters (R8) |
+| `TX2_SETTLE_FRAMES=bytes` | settlement frames sized by bytes | — |
+| `"bounded": true` journal pages, `TRIPLEX_DATOMIC_BOUNDED_JOURNAL`, `historyPage` | bounded journal reads | `TX2_JOURNAL_PERMITS` has no launcher pass-through |
+| `atLeast` reads, `DX_ACT3_AT_LEAST` | reads at least a receipt's position | — |
+| `TX2_READ_WAIT_LIMIT`, `TX2_THREAD_COUNTERS` | waiting-read bound and counters | — |
+| `TX2_ID_LISTS` (+ permits), `TX2_SWEEP` (+ permits, queue, cursor secret), the question reader | questions across subjects | — |
+| `TX2_READ_PREFETCH`, `DX_READ_AHEAD_OFF`, `DX_REMOTE_READER_HOST` | uncached pinned reads | — |
+| HA2's `TX2_HA2_COLD_CORES`, `TX2_HA2_COLD_PIPELINE` | failover copy | — |
+| **New:** `TRIPLEX_DATOMIC_ID_LISTS_MANY_ACCOUNTS` (SCALE2) | the SDK's ID list range check sorted once | — |
+| **New:** `TRIPLEX_DATOMIC_SHARED_AGENT` (SCALE2) | one HTTP agent per process | transport only |
+| **New:** `TX2_SWEEP_GATE_EVICT` / `DX_SWEEP_GATE_EVICT` (SCALE2) | a sweep gate lives only while its account sweeps | — |
+| **New:** `TX2_ENROL_BESIDE_SAVES` (SCALE2) | enrolment's writer check accepts other accounts' commits | partial: enrolment still needs the database head (SCALE2 P8) |
+| **New:** `orderedSaves`, `saveSizeRule` (S2; `TRIPLEX_DATOMIC_ORDERED_SAVES`, `TRIPLEX_DATOMIC_SAVE_SIZE_RULE`; `DX_S2_PRODUCT` on the card) | the product's saves as one ordered block per subject's save | **a behaviour change by the save contract:** two saves of different fields of one subject sent at once now conflict and the second is replayed by the SDK |
+| **New:** `TX2_SUBJECT_SEVERAL_OWNERS` / `severalOwners` (S3; `DX_S3_OWNERS`) | a save of two to four owners on the per-subject writer | needs `TX2_SUBJECT_WIDE=1`, not with the owner head |
+| **New:** `TX2_SUBJECT_CREATE` / `creationSaves` (S4; `DX_S4_CREATE`), tape M (`production-M`, `production-M-burst`) | creations on the fast writer; the real mix of saves | needs several owners |
+| **New:** `TX2_IMPORT_WHOLE_SUBJECT` (IMP2) | one import commit per subject | with `TX2_IMPORT_COMMIT_US`: **the bound holds for honest frames only until fixed** (R7) |
+| **New:** `"omitProtected": true` per request; `packages/reporting` (RPT1) | the reporting copy; protected values never leave the gateway for it | — |
+| **Not an option, in force:** the kernel's cap on forms and policies raised from 512 to 8,192 (ACT6, `packages/w0`) | releases of up to 8,192 forms and policies compile | applies to every release on this branch |
+| **Not an option, in force:** the B2 key-deletion fix (`46a8f746a`) | one pending removal no longer stops the deletion of the other published removals' keys (R3) | a pending removal still makes every request answer 503 until the client resends: unchanged, an open decision for the owner |
+| **Not an option, in force:** typed refusals at the real full-document limits (ACT6) | a marker or event value over the store's 1 MiB is refused before any write, naming the sizes | the store refused it anyway, later |
+
+**Under independent review, or with an open finding: not to be turned on until it reports or is fixed**
+
+| Option | State |
+| --- | --- |
+| `TX2_NOTICE_LEDGER=parts` (ACT6, the ledger of a subject owing 200 forms or more, in parts) | Under the Publish and settlement review (reported, R5): **releases above the parts cap are not refused at Publish time yet.** A server run may use it only where every ledger stays within 10 parts (1,000 forms is 6 parts per subject) |
+| `TX2_RELEASE_DOCS=ref` (ACT6, definitions by reference, written ahead of the Publish) | Under the same review (reported, R4): **one publishing account only until fixed** |
+| `TX2_SETTLE_PRECONDITION=progress` (ACT5) | R6: **a pause is at most a few frames late under the progress precondition** |
+| `TX2_SETTLE_CONTROL`, `HeldSource.namespace` (several publishing accounts, ACT5) | R2: **not safe with more than one publishing account unless every command ID contains the account** |
+| `TX2_IMPORT_COMMIT_US` (IMP2) | R7: bounds honest frames only |
+| ACT7's `TX2_SETTLE_COST` | only after step 9 accepts a calibration |
+| `TX2_SUBJECT_OWNER_HEAD`, loader position rows | stay off (above) |
+| **XQ10 (second batch): the commit-time index and `find` (`TX2_CROSS_INDEX`, `TX2_SWEEP_SHAPES`, `TX2_INDEX_HINTS`, SDK `askPage`, `askAll`)** | **Exact on the toy against two independent paths** (the reporting copy's SQL and the sweep, compared with `find` at one watermark: pair-find below; XQ10's own suites and stacks); **cost at 1 billion not measured.** A server run turns it on only as the measurement of that cost (session list, the index runs). XQ10's G5 60 ms time clause is not verified on the Mac and is not loosened. The index on an existing database is a backfill; the dry-run backfill after the pair adds and retracts nothing. **On the toy with the index on, every tape M save left the per-subject and creation writers for the general writer** (declined "protected-values-or-frame"; per-subject 23 of 360 against 360 of 360 without the index): an index run must read the writer counts, not assume the fast writer |
+
+**Not merged, and why**
+
+| Branch | Why |
+| --- | --- |
+| `exp/DX-ERA2-removal-per-account` | an independent review found a break (a derived write keeps a removed value while a removal is committed but unpublished); being fixed |
+| `exp/DX-ERA4-derived-copies` | in independent review with open findings |
+| `exp/DX-ACT9-account-tickets` | in progress; depends on the removal fix |
+| `exp/DX-ACT8-publish-beside-saves` | in independent review |
+| `exp/DX-S6-save-line-fixes` | the save review's fixes (R1, R7, R8), in review |
+| `exp/DX-API1-api-call-reads` | in progress (the evening's later instruction; the first instruction of the morning listed it for the second batch, so this is a contradiction between two instructions, resolved by not merging) |
+| `exp/DX-XQ2-index-cost` | a measurement, not a build |
+| every review branch (`exp/DX-ACT10-publish-review`, `exp/DX-S5-save-line-review`, …) | reviews, not builds |
 
 ## What the night's merges put on the branch
 
@@ -394,267 +527,431 @@ from this head (sources `83789d1f…`), by ID; the selftest-style runs on the sa
 | HA2's PostgreSQL gate (`hasync1/repair-gate.ts`) with both options (`TX2_HA2_COLD_CORES=0-1`, `TX2_HA2_COLD_PIPELINE=1`), once | Pass: 43 of 43 acknowledged inserts present after the kill and promote; the replacement synchronous; the damaged byte refused by the pipelined copy (the clean copy verified, 8 workers); every cold copy recorded `cold-cores` and then `cold-cores-restored` |
 | Held Publish toy, strict, default; settlement-frames gate, strict (image `58970a61…` via receipt; `image.json` `chosenBy: receipt`) | Pass, both: the held default's eight windows inside their deadlines with 86 changes and 8 ledger entries equal to the oracle; ACT4's counts (4,272 changes, 1,440 notices). Both first refused a dirty checkout while `xq7/plan.sh` ran (fault 5) and were rerun after every other gate |
 
+## What the 2026-11-25 merges put on the branch
+
+| Merge | Commit | What it brings |
+| --- | --- | --- |
+| Step 0 | `371d30c90` | The 58 stored-function identities of `23b7df344` restored (RD5's `lean.clj` hook, XQ6's `admission.clj`); `int5/idents.sh`, `idents.clj`, `compare-idents.py` |
+| `exp/DX-ACT6-release-limits` `b0529e87d` | `0c1dde07e` | The ledger of a subject owing 200 forms or more in parts (`TX2_NOTICE_LEDGER=parts`), definitions by reference (`TX2_RELEASE_DOCS=ref`), the kernel's cap on forms and policies 512 → 8,192 (**not an option**: in force for every release), typed refusals at the real full-document limits (in force); `ledger-check.ts`, `definitions-check.ts`, `release-limits-gate.ts`, `read-cost.ts`; `actv-lazy/RELEASE-LIMITS.md` |
+| `exp/DX-SCALE2-wide-thin` `3e3e652b9` | `191c9b022` | `TRIPLEX_DATOMIC_ID_LISTS_MANY_ACCOUNTS`, `TRIPLEX_DATOMIC_SHARED_AGENT`, `TX2_SWEEP_GATE_EVICT` (`DX_SWEEP_GATE_EVICT`), `TX2_ENROL_BESIDE_SAVES`; the miniature (`scale2/mini.ts`, `mini.sh`), `scale2/server.sh`, `gates-test.sh`, `sweep_gates_test.clj`; `scale2/SCALE2.md` |
+| `exp/DX-S4-real-mix` `2d78680f7` | `c081516a1` | The product save path (`orderedSaves`, `saveSizeRule`; S2), several owners (`TX2_SUBJECT_SEVERAL_OWNERS`, `severalOwners`; S3), whole-subject import (`TX2_IMPORT_WHOLE_SUBJECT`, `TX2_IMPORT_COMMIT_US`; IMP2), creation saves (`TX2_SUBJECT_CREATE`, `creationSaves`; S4), tape M; the card's identity check fix for wide-writer arms (`v01/adopted.ts`); pages `s2/PRODUCT-SAVES.md`, `s3/SEVERAL-OWNERS.md`, `imp2/WHOLE-SUBJECT.md`, `s4/CREATION-SAVES.md` |
+| Identities | `8b44422f7` | The owner-head and general-hint functions restored after S2's planner edit |
+| `exp/DX-RPT1-sql-reporting` `f084d5adb` | `94d05e2f1` | The reporting copy (`packages/reporting`: projector, schema, views, CLI) and the gateway's opt-in `omitProtected`; `rpt1/SQL-REPORTING.md` |
+| Identities | `04c1dc4d0` | RPT1's omitting function moved to `omit_protected.clj` (late hook) |
+| Launch | `b43413000`, `1df7e4f7e` | `DX_SWEEP_GATE_EVICT` refused before the first Docker change; S3's and IMP2's early refusals name their setting; 12 launch guard cases |
+| Pair (a) | `526ae9a6d` | `DX_INT5_PAIR_A=1` in the RPT1 gate; the gate's expected Datomic image is the launcher's own (the receipt's when given) |
+| Production gate | `356608926` | A product-path save's failure reason names the gateway's status, code and message (the first tape M run's one rejected save had none recorded) |
+| `exp/DX-B2-key-deletion` `46a8f746a` | `59e10e754` | The fix of R3: one pending removal no longer stops the deletion of the other published removals' keys (`envelope.clj`, `failures.clj`); `b2-keys/` (the gate: `b2.sh`, `b2.clj`, `paired.clj`, `lines.clj`, `stack.sh`, `gate.sh`). **Merged alone onto `1ed2650bd` and pushed first** (`212853708`), as the coordinator asked |
+| `exp/DX-B2R-key-deletion-review` `801ef756a` | `212853708` | The review's tests only: `b2r/` (`REVIEW.md`, `scenarios.clj`, `fuzz.clj`, `lines2.clj`, `run.sh`, `stack.sh`) |
+| The key fix into this round | `8a362ac38` | `212853708` merged into the batch-1 head; no conflicts |
+| `exp/DX-XQ10-questions-connected` `f078320a2` (second batch) | `81488450d` | XQ10 with XQ9 (question shapes), XQ8 (console page and agent tools) and XQ4 (the commit-time index and `find`: `TX2_CROSS_INDEX`, `TX2_SWEEP_SHAPES`, `TX2_INDEX_HINTS`; SDK `askPage`, `askAll`); `xq10/QUESTIONS-CONNECTED.md` |
+| RPT1 gate: pair-find | `912813888` | `DX_INT5_PAIR_FIND=1` with `DX_CROSS_INDEX=1`: seven attributes declared on both stores and backfilled, six whole subjects imported, a dry-run backfill that must add and retract nothing, then the reporting copy's SQL, the sweep and `find` compared at one watermark (at least 30 comparisons) |
+| Launch | `631dd9d3c`, `221108d6b` | `DX_CROSS_INDEX`, `DX_ID_LIST_QUEUE_MS`, `DX_ID_LIST_PER_ACCOUNT`, `DX_SWEEP_SHAPES` refused before the first Docker change; 6 launch guard cases |
+| Batch 1 into batch 2 | `a2f1f4856` | `8a362ac38` merged into the XQ10 line; no conflicts |
+| RPT1 gate | `9f2a4c431` | With pair-find on, the kill and two-projector replays end where the clean copy ends (pair-find imports after `P_H`) |
+
+**Conflicts and how each was resolved (both sides kept every time).** ACT6: `ha1/local.ts` (HA2's second-failure holder
+beside ACT6's release-limits holder). SCALE2: `stack/up.sh` (SCALE2's `DX_SWEEP_GATE_EVICT` beside XQ7's per-role sweep
+queue), gateway `main.clj` (SCALE2's `sweepGates` beside RD5's `readPrefetch` and XQ7's question-reader entries in
+`scan-stats`), `DatomicClient.ts` (XQ7's question reader URL beside SCALE2's shared agent). S4: `ha1/local.ts` (IMP2's
+whole-subject snapshot holder beside ACT5, HA2 and ACT6's), `real2/aged-gate.sh` (INT4's read options beside S3's owners
+and S4's tape M; S4's private port), `stack/up.sh` (INT4's early refusals beside S3, S4 and IMP2's writer options),
+gateway `main.clj` (requires: S3's and S4's namespaces before `uncached`, which stays last for step 0; write options:
+RD5's entries beside IMP2's), `DatomicStorageAdapter.ts` (imports of both), `index.ts` (XQ7's `questionReaderUrl` beside
+S2's and S3's options). RPT1: none. The key fix: none, both times. XQ10 (five): `prep1/manage.py` (holders, staged files, image tags and the
+record of S2, S3, S4 beside XQ4's; `DX_XQ4_CROSS_INDEX` also admitted under the DX-S4 holder, for tape M with creation
+and the index on), `prep1/production-gate.ts` (XQ4's declare-and-backfill before the seed beside S2's product path;
+`crossIndex` in the `REAL2_GATE` line), `real2/aged-gate.sh` (S2's private name and port; INT4's read options, S3's
+owners and S4's tape M beside XQ4's index), gateway `main.clj` (requires: S3's, S4's and RPT1's namespaces, then XQ4's
+`cross-find` and XQ10's `index-hints`, then `uncached` last for step 0; scope open installs both; the error answer
+carries `estimatedMicros` and `fallback`), `storage.clj` (`cross-index` beside S3's and S4's late requires; IMP2's import
+bound beside XQ4's index-entry frame bound).
+
+**Faults found in this merge (all fixed on this branch, except as stated):**
+
+1. **The stored-function identities moved three times** (step 0, above): by the afternoon merge (RD5 and XQ6), by the
+   save line (S2's planner), and by the reporting copy (RPT1's `privacy.clj`). Each restored before any gate ran.
+   Lesson for every builder: any edit to a namespace that compiles before `commit.clj` (privacy, envelope, erase,
+   group, group-prepare, trace, save-ledger, pinned, group-cut, recent, entity-cache, lean, journal, stats, admission,
+   and everything they require) can move the stored functions; only a stored-log or identity comparison between heads
+   sees it.
+2. **`stack/up.sh` checked SCALE2's `DX_SWEEP_GATE_EVICT` only in the gateway loop**, after PostgreSQL and the
+   transactor had started (the same fault as the afternoon's fault 2); fixed (`b43413000`). S3's and IMP2's early
+   refusals exited without a message; each now names its setting.
+3. **This merge's own harness fault, found and not counted:** the first run of the production exactness gate
+   (`b-production-t1`) exported the head image's receipt to `engine.mjs`, whose Datomic selftest then took the receipt's
+   image and ran the plain gateway selftest (29 tests, 54,160 assertions) instead of the production gate (no
+   `REAL2_GATE` line). It exited 0 and is not counted; rerun with the receipt passed only to `stack/up.sh` gates.
+4. **This merge's harness faults, not counted as results:** (a) the w0 kernel's built copy (`packages/w0/dist`, not
+   tracked) still had the cap of 512 after the ACT6 merge, so ACT6's ledger at 1,000 forms stopped at "release forms";
+   rebuilt, the rerun passed. Any checkout of this branch must rebuild `packages/w0` before ACT6's checks. (b) ACT6's
+   harness leaves its `oracle.py` child running after an error, which keeps the engine (and a heavy slot) alive; killed
+   by hand. (c) Pair (a)'s first run set `TX2_IMPORT_COMMIT_US=8000`, below the gate's own multi-subject creation
+   commit (31,914 µs estimated; the bound covers commits without claims, as IMP2's page says); rerun at the default.
+   (d) Editing a running queue script broke one exit line (bash reads scripts as it runs); scripts are copied, never
+   edited, since. (e) The harness took "the newest receipt" as the head's image; a receipt for the key fix's image
+   landed in the same folder while queues ran. The running queues had fixed their image at start, so no case took it;
+   the final head's queues name their receipt.
+5. **Open: tape M with creation off rejected one save in 4 runs** of one deterministic tape ("Datomic transaction was
+   rejected"; the gateway's code was not recorded then; it is now, and three reruns passed). See R9.
+6. **Harness faults of the final head's gates, not counted:** (a) the final lanes' case script was not executable; every
+   case failed before starting and nothing ran; restarted. (b) The XQ4 world ran XQ10's agreement phase without
+   `XQ4_SWEEP_SHAPES=all` (XQ10 section 4 runs the sweep with every shape on), so the sweep refused and the phase
+   stopped; `xq4/gate.sh` still exited 0 (it does not carry a phase's exit), so read each `XQ4_EXIT` line. Rerun with
+   every shape on. (c) This merge's pair-find imported after the RPT1 gate's replays stopped (fixed, `9f2a4c431`).
+   (e) The second toy for the console ran without `DX_XQ3_ERASURE_DIRECTORY=1`, which XQ10's questions proof needs
+   (`demo/toy/README-FOR-CONSOLE.md`): with no erasure directory the gateway answers every protection declaration 503
+   `ErasureFrontierUnavailable` at once (`privacy/path`), on any head. Rerun with it.
+   (d) The B2 gate's suites phase loads every `*_test.clj` of the head with every option off, so on a head with XQ9's
+   `sweep_shapes_test` (which needs `TX2_SWEEP_SHAPES=all`) and a base without `cross_index_test` it cannot pass;
+   XQ10's suites cover those tests in their arms. The standing gate is run with `B2_GATE_PHASES="b2 paired scenarios
+   fuzz lines"` and the paired base set to the one branch's previous head.
+7. **Gates that decide on a reply's message text rather than its code** (asked for before the N1 key-pool fix, which
+   changes reply texts with every option off): `rpt1/gate.ts` 110 (retries while the message reads "Transactor not
+   available"), `s2/gate.ts` 271 (code `InvalidValue` and message "Request too large"), `scale2/mini.ts` 146
+   (`/DUPLICATE|AlreadyCommitted/` in code and message), `actv-lazy/join/account.ts` 918 (`/Request too large/`, the
+   Publish path's size fallback), and the console's `examples/demo-mcp/src/query.ts` 168 (`/deadline/` in the message
+   gives its "Deadline" answer).
+
+**Contradictions between pages and code** (the pages are left as their builders wrote them):
+
+1. `xq10/QUESTIONS-CONNECTED.md` section 3 says 58 of 58 identities equal the base after its fix. Its base
+   (`2ef4cb3c4`) already carried XQ6's `admission.clj` change, which moves all 17 against `23b7df344`; on the XQ10 line
+   alone they differ from the one branch's state before the afternoon merge. On this branch both causes are fixed.
+2. `s4/CREATION-SAVES.md` (builders' note) says the line differs from the one branch in 5 identities "of the owner-head
+   and general-writer hint functions" and asks for the cause: S2's planner edit in `subject_save.clj` (one `and` clause
+   fewer); the save review's F6 pins the same. Restored.
+3. `rpt1/SQL-REPORTING.md` says that with `omitProtected` unset every reader gets byte-identical answers. True of the
+   answers, but its `privacy.clj` edit moved all 17 stored identities with every option off; its suites compared
+   answers, not identities. Restored.
+4. `actv-lazy/RELEASE-LIMITS.md` lists the kernel's cap of 8,192 forms and policies among the limits without saying it
+   is not behind an option: on this branch it is in force for every release.
+5. `s2/PRODUCT-SAVES.md` section 8 and `s3`, `s4` refer to "step 2", "step 3" and "step 8" of the eleven-step list of
+   2026-11-24 morning; the session list here renumbers them (mapping in the session section).
+6. The old session list labelled HA2's failover steps "P4"; failover is P9.
+7. `scale2/SCALE2.md` and `rpt1/SQL-REPORTING.md` name their own branch heads as `COMMIT`; on the one branch every
+   command uses the one build.
+8. The miniature (`scale2/mini.ts`) sends its saves as raw wire commits, not through the SDK adapter, so the SDK's save
+   options (`orderedSaves`, `severalOwners`, `creationSaves`) and tape M cannot be turned on in it (pair (d) below).
+9. **Between two instructions to this merge:** one listed `exp/DX-API1-api-call-reads` `2bba5e360` for the second
+   batch; the later ones say not to merge API1. Not merged.
+10. `xq10/QUESTIONS-CONNECTED.md` says its console proofs were not rerun at its final head. On this branch they were
+    rerun on a second toy at the final head (gates below).
+
+## Gates of the 2026-11-25 merge, with the image each ran
+
+All on the Mac's lab VM at toy size; no measurement lease, ordinary heavy tokens, other builders' stacks running beside
+(no timing here is a result). A stack gate counts only where the image ID its containers ran is the one built from the
+head under test. Evidence: `DX-INT5/gates/` (one folder or `.out` per case, `queue.log` with each start, head and exit).
+
+**Images.** Batch 1 (`356608926`): `e12e228f3154…` (`tx2-dxthin-jre21:b641b932adff3404`, engine build, receipt
+`datomic-image-receipt-1df7e4f7e.json`; the gateway sources are the same through `356608926`), the native production
+image `fe26dbb9f91b…` (built by the production gate from the head's staged checkout), and images the production and
+card gates built for themselves (named per row, removed after). The key fix (`212853708`): `678f26751595…`
+(`tx2-dxthin-jre21:92d958a1f68719f7`, receipt in `DX-INT5/key/`), removed after. The final head: `dccde0babe20…` (`tx2-dxthin-jre21:089ca04f8ce8878a`, engine build from `a2f1f4856`, receipt `DX-INT5/final/`; the gateway sources of `9f2a4c431` are the same, that commit changes only the RPT1 gate), the native image `d00f228e68f6…` (built by the production gate from the head, removed after its users) and `15aa2789b26b…` (built again for the XQ4 world's rerun, removed after).
+
+### The key fix, alone (`212853708`, pushed first)
+
+| Gate | Result | Image |
+| --- | --- | --- |
+| Stored-function identities against `1ed2650bd` | **58 of 58 equal in all 8 writer settings, 0 new keys: the fix moves nothing** | `58970a61` by ID, the tree mounted |
+| `b2-keys/gate.sh`, phase b2 (`era2/b2.clj` on both authorities) | **16 checks, 0 failed on the file and the PostgreSQL authority**; the base `1ed2650bd` fails 2 on each (the fault) | `678f2675` |
+| phase paired (removals, and none) | native log, replies and the key store after a shred pass **identical** to the base's | `678f2675` |
+| phase suites | 78 tests, 71,220 assertions, 0 failures, the 1 known error: equal to the base | `678f2675` |
+| B2R scenarios | 43 checks, 0 failed, on file and on PostgreSQL | `678f2675`; PostgreSQL `526f86d9` |
+| B2R fuzz | 20,000 schedules from seed 1,000,000 on each authority: **0 violations** (file: 68,620 I1 and 166,548 I2 checks) | `678f2675` |
+| lines | 10 checks, 0 failed (one line per five failures, SQL state and server text only, no statement, parameters or key bytes) | `678f2675` |
+
+**Standing gate from now on**, on every head of the one branch: `bash lab/experiments/EXP-DX1/b2-keys/gate.sh OUT BASE`
+with `DX_B2_IMAGE_ID=<the head's image>`. Phases b2, scenarios, fuzz and lines with `BASE=1ed2650bd` (the b2 phase shows
+the fault on that base); phase paired with `BASE=<the one branch's previous head>` (from `1ed2650bd` the native log
+differs by step 0's restored functions alone). The suites phase is not used after XQ10 (fault 6d below). Under today's rule a pending removal still makes every request answer 503 until the client resends; that
+is unchanged by this fix and is an open decision for the owner.
+
+### Batch 1 (ACT6, SCALE2, S4 with S2, S3 and IMP2, RPT1) on `356608926`
+
+| Gate | Result | Image |
+| --- | --- | --- |
+| Stored-function identities against `23b7df344` | 58 of 58 equal in 8 settings (8 new keys: S3's and S4's functions, installed only with their options on); with the key fix (`8a362ac38`) the same, and 66 of 66 equal to the head without it | `58970a61` by ID, the tree mounted |
+| XQ4's G8 paired stored log | 33,609 datoms, head 620, hash `0569a8f8…` = `23b7df344`'s (`1ed2650bd`: `dc408264…`, 6 datoms differ) | `fe26dbb9` |
+| IMP2's option-off digest against `23b7df344` | **identical** (defaults and v01: 12 frames, 3,532 datoms); against `1ed2650bd` it differs in both, an independent confirmation of step 0 | `fe26dbb9` |
+| Plan output, options off | 6 of 6 running option sets byte-identical to `23b7df344`'s; the 2 refused sets differ only in a stack-trace path | none (planner) |
+| Reach (write options) | 22 of 22 equal, the control differs 22 of 22, `writeOptionsSame` true against `23b7df344` | `e12e228f` |
+| Permits | every phase 40 permits per copy, 0 refused; bursts total 24 | `e12e228f` |
+| Unit (v01, rd1, w1, ha1 hooks, jvm1, join) | 79 of 79; join with the new kernel 31 of 31; ids 5 of 5; ha1 27 of 27; IMP2 snapshot 6 of 6 | — |
+| SDK; `tsc`; core | 473 passed, 53 skipped; clean; 863 of 863 | — |
+| Gateway selftest; ids test | 29 tests, 54,160 assertions, 0 failures; 16,460 assertions, 0 failures | `e12e228f` |
+| XQ6, XQ7, RPT1, SCALE2 suites | 72 / 71,161, 0 failures, the known feed-test error; 78 / 71,220 as XQ7's page (the one designed queue failure); 76 / 71,176, 0 failures, the known error; 34 / 70,629, 0 failures, 0 errors | `e12e228f` |
+| XQ3, XQ6, XQ7 question routes | 1,654; 5,917; 6,876 checks, 0 failures | `e12e228f` |
+| Production exactness, default | 840 R + 88 S acknowledged, 0 expired, 2,836 fields | `9c9a97cc` (the gate's own, from the head; removed) |
+| Aged gate, default | 120 aged rows, tampered refused, 101 writes over aged, 1,927 fields | `fe26dbb9` |
+| Production, tape M, creation on | 2,836 fields; tape M 360 of 360, 0 expired, 290 created; writers from the gateway's counts: per-subject 360, general 0 | `b8f6862c` (the gate's own; removed) |
+| Production, tape M, creation off | **1 rejected save in the first of 4 runs** (open, R9 row); runs 2 to 4 pass: 360 of 360, writers per-subject 23, general 337 | the gate's own each (removed) |
+| Aged gate, product path, wide, owners, tape M, creation on | 128 aged rows, 2,254 fields; tape M 270 of 270, writers per-subject 270, general 0 | `fe26dbb9` |
+| ACT6 ledger at 200, 500, 1,000 forms | pass at all three (1,000: 16 subjects, 16 stops, 5 inside parts, 6 parts each, 16,000/8,000/24,016 notices; independent rule equal); the first run's 1,000 stop was the stale kernel copy (fault 4a) | `e12e228f` |
+| ACT6 definitions, four sizes | by reference 3.5 KB at 1,000 to 5,000 forms (4 changes); full documents refused typed above 1 MiB | `e12e228f` |
+| ACT6 ledger-check, definitions-check | pass: 72 subjects, 6 rows equal to ACT6's published `ledger-check-72.json` row for row (forms, mode, notices, frames, splits, checks between frames, parts, the whole-ledger refusals); definitions output equal to ACT6's `definitions-check.json` | — |
+| Frames check; large-release check | 11 of 11 release pairs identical to ACT4's; pass | — |
+| Settlement gate, strict | 4,272 changes, 1,440 notices; independent rule equal | `e12e228f` |
+| Held runs, `TX2_SWEEP_STRICT=1` | default, bytes/large/progress, at-least: pass | `e12e228f` |
+| ACT5 cases | ten of set 1 pass (progress 0 refused; head 158, 140, 123); set 2 pass (guard: 20 race pairs, one won each; rival and second 0 refused, exact 474 changes and 160 notices; three accounts: head 82 of 84 refused, progress 0 refused; delivered 1,848 once, 0 again) | `e12e228f` |
+| IMP2 gates | memory and PostgreSQL 6 tests, 272 assertions each; removal gate 1 test, 28 assertions | `fe26dbb9` |
+| S2, S3, S4 gate sets (with IMP2's) | S2 b, c, d and the size rule pass with the wide writer on and off (product-qualifying 6 and 2 of 11; gate (a), byte identity against the commit before S2, needs a build of that commit and is not rerun); S3 in-memory 255, 255, 269 assertions and both arms ok (owners 1 to 4: 20 of 25 per-subject each, off: 0 of 25 for 2 to 4); S4 in-memory 144, 144, 146 and arms before, SDK-only, after ok, 50 judged each, 0 unexpected, 9 containers all `e12e228f` | `e12e228f` |
+| RPT1 gate with its file scan | 606 checks, 0 failures; 2,362 files, 0 protected occurrences (the control finds 11) | `e12e228f` |
+| SCALE2 563-account miniature | options off: 560 accounts, 2,319 saves, 0 refused, 172,810 rows read; with SCALE2's three options: same counts, sweep gates 0 left after 63, sockets 4 to 69 | `e12e228f` |
+| Console gates, second toy | all pass (config 16, entities 19, query 24, journal 7, derive 4, catalogue 70, proof 37) | by receipt (ID not kept on this run) |
+| Toy cards | default: pass (managed `ab378e13`, removed); tuned reader (`production-S-noburst`, 12 read permits): pass, 0 expired, quiet 28 of 28 and 42 of 42 (managed `7e4ad8a2`, removed; five tries refused for room first) | managed, from the head |
+| Launch guard | 134 cases, 0 mismatches (12 new: each new option admitted, its bad value refused before any Docker change) | — |
+
+### The pairs
+
+| Pair | Result |
+| --- | --- |
+| (a) the reporting copy while whole-subject imports run | **pass**: 12 subjects × 24 facts imported whole while the projector followed; 150 polls, each one repeatable-read transaction, saw every subject at 0 or 24 facts only; 12 watermarks, the copy equal to the store's history at each (24,450 facts compared); 620 checks (`e12e228f`) |
+| (b) tape M with settlement beside it | **not built**: needs tape M and the product saver in ACT5's `play()` and oracle |
+| (c) the ledger in parts beside the reporting projector | **not built**: needs ACT6's ledger machinery beside RPT1's projector in one gate |
+| (d) the miniature with the save options | **partial pass**: 560 accounts with the write gateway's `TX2_SUBJECT_WIDE`, `TX2_SUBJECT_SEVERAL_OWNERS`, `TX2_SUBJECT_CREATE` on: 2,319 saves, 0 refused, every read exact; tape M and the SDK's save options cannot be turned on in the miniature (raw wire saves) |
+| XQ10's: the index against the reporting copy and the sweep (RPT1 gate, `DX_CROSS_INDEX=1 DX_INT5_PAIR_FIND=1`) | **pass** (rerun at `9f2a4c431`): seven attributes declared and backfilled on both stores, six whole subjects imported, the dry-run backfill added and retracted nothing, and 90 questions answered by SQL on the copy, the sweep and `find` at one watermark and three valid times, all equal; the rest of the RPT1 gate 699 checks, 0 failures (`dccde0ba`). The first run (`a2f1f4856`) failed two checks only because this merge's own addition imported after the gate's replays stopped (fixed in `9f2a4c431`) |
+| XQ10's: tape M with creation and the index on (production gate, `DX_XQ4_CROSS_INDEX=1`) | **pass, exact**: R 840 of 840, S 88 of 88, tape M 360 of 360, 0 expired, 290 created, readback 313 owners and 3,030 fields; six attributes declared, the dry-run backfill added and retracted nothing (508 entities), 738 questions over 738 pages. **Finding:** with the index on every tape M save declined the per-subject and creation writers ("protected-values-or-frame") and took the general writer (per-subject 23, general 337, as with creation off); without the index they took the per-subject writer (360, 0). Cost not measured (image `ef8c9bd4`, the gate's own, removed) |
+
+### The final head (`9f2a4c431`; gates at `a2f1f4856` and reruns at `9f2a4c431`, same gateway sources): batch 1, the key fix and XQ10
+
+| Gate | Result | Image |
+| --- | --- | --- |
+| Stored-function identities against `23b7df344` | **58 of 58 equal in all 8 writer settings**; 12 new keys (S3 4, S4 4, XQ10's index hints 4), installed only with their options on | `dccde0ba` by ID |
+| XQ4's G8 paired stored log | 33,609 datoms, head 620, `0569a8f8…` = `23b7df344`'s, the index code present and off | `d00f228e` |
+| Plan output, options off | 6 of 6 identical, INDEX identical; the 2 refused sets differ only in the path | none |
+| Reach (write options) | 22 of 22 equal, control differs 22 of 22, `writeOptionsSame` true against `23b7df344` | `dccde0ba` |
+| Unit; SDK; `tsc`; core | 79 of 79; 482 passed, 53 skipped; clean; 863 of 863 | — |
+| Launch guard | 140 cases, 0 mismatches (6 new for XQ10's settings) | — |
+| Gateway selftest; ids test | 29 tests, 54,160 assertions, 0 failures; 16,464, 0 failures | `dccde0ba` |
+| XQ10 suites (unset, index, routes, queue) | 84 / 236,356; 84 / 236,392; 85 / 236,445; 84 / 236,356: 0 failures, the known feed-test error each (= XQ10's page) | `dccde0ba` |
+| XQ6, XQ7, RPT1, SCALE2 suites | 72 / 71,165; 78 / 71,224 (all three arms; XQ7's designed queue failure no longer fires on this head); 76 / 71,180; 34 / 70,633: 0 failures, the known error where it was before | `dccde0ba` |
+| B2 key gate (standing) | b2 16 checks, 0 failed on both authorities (base `1ed2650bd` 2 failed each); scenarios 43, 0 failed, both; fuzz 20,000 schedules, 0 violations, both; lines 10, 0 failed. Paired against `8a362ac38`: native log, replies and key store **identical** with removals and without. Against `1ed2650bd` the native log differs (datom counts and replies equal): step 0's restored functions. Its suites phase is not a result on this head: `1ed2650bd` has no `cross_index_test`, and `sweep_shapes_test` needs `TX2_SWEEP_SHAPES=all` (XQ10's suites run it so) | `dccde0ba` |
+| Production exactness, default | R 840 of 840, S 88 of 88, 0 expired, 2,836 fields | `d00f228e` (the gate's own) |
+| Aged gate, default | 120 aged rows, tampered refused, 101 writes over aged, 1,927 fields, cut 1,289, 0 expired | `d00f228e` |
+| XQ10's stacks (xq3, xq6, xq9 off and shapes, xq7, the question reader, refusals) | every step passed; the reader: 5,783 checks, 36 refused byte-equal on both readers, 36 the index refused and the sweep answered, 0 failed; refusals 9; every container ran the pinned image and the gateway source hash of this tree | `dccde0ba` |
+| XQ4 world with XQ10's agreement gate (`XQ4_SWEEP_SHAPES=all`, rerun at `9f2a4c431`) | every phase exit 0 (g3, d3, b1, g6, the two worlds' seeds, declarations, groups and more saves, the index replay, g2, check, g4, g5, e1, sweep, edges, agree, table); **agreement: 4,626 questions (2,361 IDs, 2,023 counts, 242 counts per value) at 3 positions and 3 valid times, 0 differences, 0 refused**, 11,003 find pages and 14,134 sweep pages (= XQ10's page: 4,626, 0); the first run left the shapes off (fault 6b) | `15aa2789` (the native image, built by the production gate from the head, removed after) |
+| Console gates and XQ10's console proofs, second toy (index on, `DX_XQ3_ERASURE_DIRECTORY=1`; rerun at `9f2a4c431`) | **XQ10's questions proof 2,599 of 2,599** (54 questions on both routes and auto, 324 questions, 1,305 IDs compared, 8 questions whose answer changes across cuts; XQ10's page reported 2,603 at an earlier commit); the console's gates: g12, config 16, entities 19, query 24, journal 8, derive 4, catalogue 80 (with `ask_across_subjects` and `indexed_attributes`), proof 37. The first two runs left the erasure directory off (fault 6e) | `dccde0ba` (transactor and both gateways, recorded while the toy was up); PostgreSQL `526f86d9` |
+| Toy card, default | pass, 0 expired, quiet 28 of 28 and 42 of 42 (the toy's loaded quiet p99 7.3 times alone under other builders' load: diagnostic, never a verdict on the Mac) | managed, from the head (removed) |
+
 ## Next server session (one driver, in this order; none has run)
 
-Rewritten on 2026-11-24 (afternoon) after the ACT5, XQ3 and RD5 merges, in the order the owner ranked the work that
-morning: **A. questions across subjects and the save shape; B. scale** (settlement beside saves, a subject owing 200
-forms or more, a release near the 1.3 MB ceiling, 1 billion records); **C. the other priorities**, in priority order.
-Build the head of `exp/DX-INT1` that carries this page once; every command below uses that one build (`COMMIT` = that
-head; the merged pages name their own branch heads, which this build replaces). Environment, copies and the
-scorecard parts as `v01/AGED-SERVER-32.md` and `v01/PRODUCTION-CARD.md`; the held runs as `actv-lazy/PART9.md`. Each
-step's predictions and refuters are in its page (linked); the table after the commands gives the headline ones. Cost
-is at USD 1.09 per machine hour; every step needs one machine except steps 16, 17 and 18, which need two.
-Updated in the second push of 2026-11-24 for XQ7 (step 2b), ACT7 (steps 8 and 10a to 10c, which replace ACT5's
-run 1 and the placeholder at 1 billion) and HA2 (steps 17 and 18).
+Rewritten on 2026-11-25 after the evening merge (ACT6 release limits, SCALE2 many accounts, S4 with S2, S3 and IMP2,
+RPT1 the reporting copy; then XQ10 questions connected), in the owner's order of 2026-11-24: **A. questions across
+subjects and the save shape; B. scale** (settlement beside saves, a subject owing 200 forms or more, a release near the
+ceiling, many accounts, 1 billion records); **C. the other priorities**, in priority order. No server is rented; a
+rental needs the owner's approval in money terms (spend to date USD 247.62 against the USD 200 budget,
+`cloud/LEDGER.md`). Cost at **USD 1.09 per machine hour**; every step needs one machine except 26, 32 and 33.
 
-**Corrected on 2026-11-24 (S1's findings, merged):** W3's and W4's pages publish card commands that run `part 2` alone
-and pass the options as bare environment words. The sequential runner refuses a campaign that does not start with
-part 1, and before `9a7fd3682` (S1) and `4c34fd0f8` (this branch) `run.ts` dropped every option it did not name, so
-the "on" arms would have run with the option off. Below, every card arm is its own campaign with parts 1 and 2, and
-the options reach the arm (`TX2_SUBJECT_WIDE`, `TX2_GENERAL_PREFETCH`, `TX2_SUBJECT_HINTS`, `DX_READ_WAIT_LIMIT`,
-`DX_THREAD_COUNTERS`), are recorded in the campaign and, for the writer options, checked against the write gateway's
-readback. **The card's new-run default tape is now `production-S-noburst`**, so every command names its tape.
+Build the head of `exp/DX-INT1` that carries this page once (step 1); every command uses that one build (`COMMIT` = that
+head; the merged pages name their own branch heads, which this build replaces). Environment, copies and the scorecard
+parts as `v01/AGED-SERVER-32.md` and `v01/PRODUCTION-CARD.md`; the held runs as `actv-lazy/PART9.md`. Each step's
+full predictions and refuters are in its page; the table after the commands gives the headline ones.
 
-**Old step numbers** (the list of the morning, which the pages of ACT4, JRN1, CARD2, RD4, W3, W4 and S1 do not use, but
-earlier notes may): 1 → 1, 2 → 3, 3 → 4, 4 → 14, 5 → 15, 6 → 9, 7 → 2, 8 → 6, 9 → 12, 10 → 13, 11 → 5.
+**Two rules for every arm below.** (1) An arm that claims a share of saves on the per-subject writer reads that share
+from the gateway's own counters (the client's `saveRoutes`, the writer's route counts, the receipts'
+`subjectDeclined`), never from the card's identity check passing (R8). (2) A run in which more than one account
+publishes uses command IDs that contain the account (R2); the miniature's (`scale2:<run>:<account>:…`) and ACT5/ACT7's
+(`<attempt>:act5:<account index>:…`) do. `TX2_RELEASE_DOCS=ref` runs publish from one account only (R4); a ledger in
+parts stays within 10 parts per subject (R5; 200 forms is 2 parts, 1,000 forms 6).
+
+**What changed against the list of 2026-11-24 (evening).** The old steps 4 ("Wide": the wide writer measured with the
+lab producer) and 6 ("Hints") are **replaced** by the product-path arms (steps 10 to 12): the lab producer sends ordered
+blocks the product never sends, so it measured the writer on saves the product does not make (`s2/PRODUCT-SAVES.md`
+section 8); arm C carries the hints, so the old hints step folds into it. The index cost pair (old step 7, a
+placeholder) is replaced by XQ10's ordered runs (steps 4 to 7). New: the reporting copy (8), tape M with the creation
+option (13 to 15), the release-limit runs (20, 21), the many-accounts rungs (22), the import arm (31). The old HA2
+steps were labelled P4; failover is P9 (corrected). Old to new: 1 → 1, 2 → 2, 2b → 3, 3 → 9, 4 → 10, 5 → 16, 6 → 10,
+7 → 4 to 7, 8 → 17, 9 → 18, 10a → 19, 10b → 23, 10c → 24, 11 → 25, 12 → 27, 13 → 28, 14 → 29, 15 → 30, 16 → 26,
+17 → 32, 18 → 33.
 
 | Step | What | Page | Machines | Duration | Cost (USD) |
 | --- | --- | --- | --- | --- | --- |
 | **A** | **Questions across subjects and the save shape** | | | | |
-| 1 | Build (`v01/build.ts`) and the card's dry run (part 1 to its first offer) | `v01/CARD-READER.md` §7 | 1 | 5 + about 10 min | 0.27 |
-| 2 | **Questions across subjects at 1 billion, in one demo bring-up** of the 1 billion working copy with the ID list and sweep routes on: the journal probe first (it wants the read gateway to itself); the **ID lists** (every subject of one deep account, cold and warm, at the head and at 87,002; every ID of the account); the **exact sweep**, arm A (counts of 100,000 subjects at 1, 3 and 6 parts, two lists; reads only) then arm B (the same beside 256 pinned readers and saves at 23/s on account-005, which writes to the working copy, so it runs last); then down | `xq3/ID-LISTS.md` §5; `xq6/EXACT-SWEEP.md` §6; `jrn1/JOURNAL-BOUNDS.md` | 1 | 30 to 60 min (bring-up 3 to 12, journal probe about 3, ID lists 3 to 10, sweep A 10 to 20 and B 10 to 14, down about 1) | 0.55 to 1.09 |
-| 2b | **The question reader (XQ7) at 1 billion:** a new demo bring-up with the question reader on (small size: cores 10 and 11, 4 GiB heap, 1 GiB cache, sweep permits 2, list permits 1) beside the main reader; four 120 s control windows and four counts of account-003's 100,000 subjects (one and three parts, first on the main reader, then on the question reader), with 256 pinned readers and saves at 23/s throughout. Runs on the demo's profile, not `server-32`: the page's memory table (transactor 57 + writer 6 + reader 5 + PostgreSQL 5 + question reader 6 + host 10 = 89 GiB of 96) does not fit beside `server-32`'s transactor | `xq7/QUESTION-READER.md` §6 | 1 | 31 to 57 min (build 5 to 10 if not step 1's, bring-up 3 to 12, windows 21 to 33, down 2) | 0.56 to 1.04 |
-| 3 | **The full card at 1 billion with the tuned reader and 300 s cells** (no-burst shape S, `server-32`, 12 read permits, per-save credits). Its parts 1 and 2 are also S1's "Control" arm | `v01/CARD-READER.md` §7; `v01/SAVE-SHAPE.md` §6.1 | 1 | 2 h 05 min to 2 h 35 min | 2.27 to 2.82 |
-| 4 | S1's "Wide" arm: the card's settings with `TX2_SUBJECT_WIDE=1`, parts 1 and 2 | `v01/SAVE-SHAPE.md` §6.1 | 1 | 71 to 85 min | 1.29 to 1.54 |
-| 5 | S1's save-size ladder at 1 billion with 256 pinned readers (seven windows, 5 to 1,000 facts), wide writer off | `v01/SAVE-SHAPE.md` §6.2 | 1 | 33 to 36 min (deadline 40) | 0.60 to 0.65 |
-| 6 | S1's "Hints" arm (the card's settings with `TX2_GENERAL_PREFETCH=1`, parts 1 and 2), against step 3 as its control (it replaces W3's pair (c)) | `v01/SAVE-SHAPE.md` §6.1; `w3/GENERAL-WRITER-HINTS.md` §4 (c) | 1 | 71 to 85 min | 1.29 to 1.54 |
-| 7 | **Not yet runnable from this branch:** the index cost pair (an index by attribute and value, k = 0, 3 and 20 declared values per save, production-S at 394 on the fresh template). Its option `TX2_ATTRIBUTE_INDEX` is on `origin/exp/DX-XQ2-index-cost` (a measurement, not merged) and its launcher refuses any other `HEAD` | `xq2/INDEX-COST.md` (on that branch) | 1 | about 60 to 65 min | about 1.09 to 1.18 |
+| 1 | Provision, build at `COMMIT` (`v01/build.ts`: SDK, packages, image), fetch and unpack the sealed 1 billion cluster (145 GB compressed; never timed), the card's dry run (part 1 to its first offer) | `xq10/QUESTIONS-CONNECTED.md` §8 row 0; `v01/CARD-READER.md` §7 | 1 | 40 to 75 min | 0.73 to 1.36 |
+| 2 | **Bring-up 1** of the 1 billion working copy (`DX_ID_LISTS=1 DX_SWEEP=1 DX_SWEEP_SHAPES=all`, six sweep permits): the journal probe first, then the **ID lists** (A), then the **sweep arms** A, B and C (D; arm B writes, so last); then down | `xq3/ID-LISTS.md` §5; `xq6/EXACT-SWEEP.md` §6; `xq9/QUESTION-SHAPES.md` §6; `jrn1/JOURNAL-BOUNDS.md` | 1 | 50 to 96 min (bring-up 3 to 12, probe about 3, A 3 to 10, D 40 to 70, down 1) | 0.91 to 1.74 |
+| 3 | **Bring-up 2**: the question reader (XQ7; XQ10's E) | `xq7/QUESTION-READER.md` §6 | 1 | 31 to 57 min | 0.56 to 1.04 |
+| 4 | **The commit-time index: backfill of the 1 billion database** with exactness samples (XQ10's B) | `xq4/COMMIT-INDEX.md` S-1 | 1 (its own copy) | 90 to 240 min | 1.64 to 4.36 |
+| 5 | **The index: the save pair judged against the bars** (XQ10's C), two copies of the backfilled database; optional third arm `TX2_INDEX_HINTS=1` (57 min, USD 1.04) | `xq4/COMMIT-INDEX.md` S-2 | 1 | about 116 min | 2.11 |
+| 6 | **The index: question bench** (XQ10's F) | `xq4/COMMIT-INDEX.md` S-3 | 1 | 40 to 60 min | 0.73 to 1.09 |
+| 7 | **The agreement gate at 1 billion** (XQ10's G): bring-up 3 on the backfilled copy, index against the slow route on account-003 | `xq10/QUESTIONS-CONNECTED.md` §8 | 1 | 18 to 42 min | 0.33 to 0.76 |
+| 8 | **The reporting copy at 1 billion**: rebuild of account-003, then the card's four steps with the projector following and without (control) | `rpt1/SQL-REPORTING.md` §7.3 | 1 | 75 to 220 min | 1.36 to 4.00 |
+| 9 | The full card at 1 billion with the tuned reader and 300 s cells (no-burst shape S, `server-32`, 12 read permits, per-save credits, **the lab producer**): the comparison with 2026-11-23 | `v01/CARD-READER.md` §7 | 1 | 125 to 155 min | 2.27 to 2.82 |
+| 10 | **The product's save path, wide writer and both hints** (S2's arm C): every save sent as the product sends it; **replaces the old "Wide" and "Hints" steps** | `s2/PRODUCT-SAVES.md` §8 | 1 | 71 to 85 min | 1.29 to 1.54 |
+| 11 | The same plus several owners (S3's arm D, a no-regression arm: the production tape has no two-owner save) | `s3/SEVERAL-OWNERS.md` §8 | 1 | 71 to 85 min | 1.29 to 1.54 |
+| 12 | The product's save path, option on, no wide writer (S2's arm B); optional arm A (option off, 71 to 85 min) if 75 more minutes | `s2/PRODUCT-SAVES.md` §8 | 1 | 71 to 85 min | 1.29 to 1.54 |
+| 13 | **Tape M (the real mix, most saves creations), creation option off** (S4's arm E): the control | `s4/CREATION-SAVES.md` §6 | 1 | 71 to 85 min | 1.29 to 1.54 |
+| 14 | **Tape M, creation option on** (S4's arm F) | `s4/CREATION-SAVES.md` §6 | 1 | 71 to 85 min | 1.29 to 1.54 |
+| 15 | Tape M's creation burst, option on, 600 s cells (S4's arm G) | `s4/CREATION-SAVES.md` §6 | 1 | 130 to 155 min | 2.36 to 2.82 |
+| 16 | The save-size ladder at 1 billion with 256 pinned readers (seven windows, 5 to 1,000 facts), wide writer off | `v01/SAVE-SHAPE.md` §6.2 | 1 | 33 to 36 min | 0.60 to 0.65 |
 | **B** | **Scale** | | | | |
-| 8 | **ACT7 (a), settlement beside live saves, one account, 100,000 subjects, fresh database** (ACT5's run 1 with its fault fixed and the frame counters on; replaces ACT5's step): a 300 s control, the head arm 300 s, then the settle case under `progress` with a 90 min window, the exactness check, then `act7/calibrate.ts` on the counters | `actv-lazy/act7/RUN2.md` §6.2 | 1 | 2 h 15 min to 2 h 30 min | 2.45 to 2.73 |
-| 9 | Publish at 100,000 subjects with the large first release settled by bytes, then the four 39.4/s windows | `actv-lazy/SETTLEMENT-FRAMES.md` §9 | 1 | 55 to 85 min (runner limit 120) | 1.00 to 1.54 |
-| 10a | ACT7 (C), the calibration check: **only if step 8's `calibrate.ts` gives a model at or below 2,500 / 25 / 55**; one account, fresh database, `TX2_SETTLE_COST` from step 8, a 60 min window | `actv-lazy/act7/RUN2.md` §6.3 | 1 | 1 h 35 min to 1 h 50 min | 1.73 to 2.00 |
-| 10b | **ACT7 (b), three accounts at 1 billion**: aged adoption first, production-S at 394 in all ten accounts, three accounts settling the large release under `progress` with the admission lane, account 2 paused for 5 min and paced for 10 min once, streamed exactness check, bounded journal pages | `actv-lazy/act7/RUN2.md` §6.4 | 1 | 2 h 35 min to 3 h | 2.82 to 3.27 |
-| 10c | **ACT7 (c), ten accounts at 1 billion** (the same, ten accounts, a 240 min window; with step 10a's calibration accepted, a 150 min window and `TX2_SETTLE_COST`) | `actv-lazy/act7/RUN2.md` §6.5 | 1 | 6 h 20 min to 9 h 10 min with today's model; 4 h 50 min to 6 h 10 min calibrated | 6.90 to 9.99; 5.27 to 6.72 calibrated |
-| — | A subject owing 200 forms or more and a release near the 1.3 MB ceiling: no server command exists yet (`exp/DX-ACT6-release-limits` is being built) | | | | |
+| 17 | **Settlement beside live saves**, one account, 100,000 subjects, fresh database (ACT7's (a)), then `act7/calibrate.ts` | `actv-lazy/act7/RUN2.md` §6.2 | 1 | 2 h 15 min to 2 h 30 min | 2.45 to 2.73 |
+| 18 | Publish at 100,000 subjects with the large first release settled by bytes, then the four 39.4/s windows | `actv-lazy/SETTLEMENT-FRAMES.md` §9 | 1 | 55 to 85 min | 1.00 to 1.54 |
+| 19 | ACT7's (C), the calibration check: **only if step 17's model is at or below 2,500 / 25 / 55** | `actv-lazy/act7/RUN2.md` §6.3 | 1 | 95 to 110 min | 1.73 to 2.00 |
+| 20 | **A subject owing 200 forms, run A**: one subject in ten (10,000 subjects) owes 200 forms and policies, settled to the end with the ledger in parts, streamed exactness check, two live windows at 39.4/s; one publishing account; 2 ledger parts per subject. Run B (every subject owes; 5 to 8 h, USD 5.45 to 8.72) only if the owner wants the full figure | `actv-lazy/RELEASE-LIMITS.md` §6.1 | 1 | 45 to 85 min (this page's estimate from the page's figures: copy 4.4, enrol and publish about 5, settlement 25 to 50, streamed check 5 to 16, windows about 5) | 0.82 to 1.54 |
+| 21 | **A release near the ceiling**, 100,000 subjects, nine neighbours saving: arm 1 full documents at 1,800 forms (0.45 MiB), arm 2 by reference at 1,800, arm 3 by reference at 5,000 forms (1.25 MiB); one publishing account | `actv-lazy/RELEASE-LIMITS.md` §6.2 | 1 | about 75 min (three arms of about 25, each from its own copy) | 1.36 |
+| 22 | **Many accounts**: 1,000 and 10,000 thin accounts added to fresh copies of the sealed 1 billion database beside the ten deep accounts (`scale2/server.sh`, 200 and 500 publishing accounts with account-bearing command IDs); the 100,000 rung (79 to 257 min, USD 1.44 to 4.67) only if the first two say so | `scale2/SCALE2.md` §8 | 1 | 54 to 117 min | 0.98 to 2.13 |
+| 23 | ACT7's (b), three accounts settling at 1 billion | `actv-lazy/act7/RUN2.md` §6.4 | 1 | 2 h 35 min to 3 h | 2.82 to 3.27 |
+| 24 | ACT7's (c), ten accounts settling at 1 billion (with step 19's calibration accepted: 290 to 370 min, USD 5.27 to 6.72) | `actv-lazy/act7/RUN2.md` §6.5 | 1 | 6 h 20 min to 9 h 10 min | 6.90 to 9.99 |
+| — | **1 billion records**: every step above marked "at 1 billion" runs on the sealed database; the ceiling above 1 billion is the fourth total below (a proposal) | | | | |
 | **C** | **The other priorities, in priority order** | | | | |
-| 11 | P1: uncached pinned reads, command 1: the random arm with the read prefetch at 3 permits, then the same with Datomic's read-ahead off, then with a 1.5 GiB reader cache (one new copy per configuration) | `rd5/UNCACHED-READ.md` §7 | 1 | about 50 min (ceiling 60) | 0.91 to 1.09 |
-| 12 | P2: W4 (a), the worst-case (Saturday's) tape at 1 billion, `server-32`, 90 s, parts 1 and 2, per-subject hints off and on | `w4/SUBJECT-WRITER-HINTS.md` §4 (a) | 1 | about 2 × 50 min | 1.82 |
-| 13 | P2: W4 (b), restart at 1 billion with per-subject hints on, with and without the one-time start-up read (the off comparison is 2026-11-23's run) | `w4/SUBJECT-WRITER-HINTS.md` §4 (b) | 1 | about 2 × 25 min | 0.91 |
-| 14 | P3: the 1,024-reader step with the waiting-read bound: the production-S card (one-core reader, 90 s), parts 1 and 2, bound off and 128, thread counters on in both | `w3/GENERAL-WRITER-HINTS.md` §4 (b) | 1 | about 2 × 45 min | 1.64 |
-| 15 | P5: Publish at 100,000 subjects, all twelve windows, probe reading at least each receipt | `rd4/AT-LEAST.md` §4 | 1 | about 35 min | 0.64 |
-| 16 | P1: uncached pinned reads, command 2: a second read gateway on a second machine (prefetch on both readers, then prefetch and read-ahead off on both) | `rd5/UNCACHED-READ.md` §8 | **2** (machine 2: at least 4 cores and 12 GB free, same private network) | about 55 min with set-up (ceiling 60) | 2.00 to 2.18 (two machines; at least 2.18 if each machine is billed by the whole hour) |
-| 17 | P4: HA2 run 1, failover policy B with both cold-copy options (`TX2_HA2_COLD_CORES=0-11`, `TX2_HA2_COLD_PIPELINE=1`), the three required cases `b-235`, `a-235` (with the repaired second-failure read) and `move-235`; the pair set-up of `hasync1/PAIR-REPAIR.md`, launched A then B within four minutes | `hasync1/RECOVERY-TIME.md` "Server run" | **2** | 25 to 40 min (outer limit 150), plus the pair set-up | 0.91 to 1.45 (50 to 80 machine minutes) |
-| 18 | P4: HA2 run 2 (optional), cores only, `b-235` only, to split the gain between the two options | `hasync1/RECOVERY-TIME.md` "Server run" | **2** | 15 to 20 min | 0.55 to 0.73 (30 to 40 machine minutes) |
-| — | If time: S1's "Both" arm (wide and general hints, 71 to 85 min); the ladder's wide arm (about 35 min). Not recommended: W3 (a), the worst-case tape with general-writer hints (predicted no change; that tape takes the per-subject writer, which step 12 covers) | | | | |
+| 25 | P1: uncached pinned reads, command 1 (prefetch at 3 permits; read-ahead off; 1.5 GiB cache) | `rd5/UNCACHED-READ.md` §7 | 1 | about 50 min (ceiling 60) | 0.91 to 1.09 |
+| 26 | P1: a second read gateway on a second machine | `rd5/UNCACHED-READ.md` §8 | **2** | about 55 min | 2.00 to 2.18 |
+| 27 | P2: W4 (a), the worst-case (Saturday's) tape at 1 billion, per-subject hints off and on | `w4/SUBJECT-WRITER-HINTS.md` §4 (a) | 1 | about 2 × 50 min | 1.82 |
+| 28 | P2: W4 (b), restart with per-subject hints, with and without the start-up read | `w4/SUBJECT-WRITER-HINTS.md` §4 (b) | 1 | about 2 × 25 min | 0.91 |
+| 29 | P3: the 1,024-reader step with the waiting-read bound off and 128 | `w3/GENERAL-WRITER-HINTS.md` §4 (b) | 1 | about 2 × 45 min | 1.64 |
+| 30 | P5: Publish at 100,000 subjects, all twelve windows, probe reading at least each receipt | `rd4/AT-LEAST.md` §4 | 1 | about 35 min | 0.64 |
+| 31 | **P8: whole-subject import** (IMP2): 32-fact frames against 160-fact whole subjects, live-first, on the fresh scale image. The bound holds for honest frames only (R7) | `imp2/WHOLE-SUBJECT.md` §6 | 1 | about 45 min (about 75 with server preparation) | 0.82 to 1.36 |
+| 32 | P9: HA2 run 1, failover policy B with both cold-copy options, cases `b-235`, `a-235`, `move-235` (pair set-up not timed) | `hasync1/RECOVERY-TIME.md` | **2** | 25 to 40 min | 0.91 to 1.45 |
+| 33 | P9: HA2 run 2 (optional), cores only | `hasync1/RECOVERY-TIME.md` | **2** | 15 to 20 min | 0.55 to 0.73 |
+| — | **Not yet runnable from this branch:** Publish beside saves (page on `origin/exp/DX-ACT8-publish-beside-saves`, in independent review); removal per account (`origin/exp/DX-ERA2-removal-per-account`, a review found a break); an API call's reads (`origin/exp/DX-API1-api-call-reads`, in progress) | | | | |
 
-**Three totals** (runnable steps only; step 7 is not runnable from this branch; step 10a runs only if step 8's
-calibration qualifies, and step 10c's length depends on whether step 10a's calibration is accepted):
+**Four totals** (runnable steps only):
 
 | Session | Steps | Duration | Cost (USD) |
 | --- | --- | --- | --- |
-| **Shortest that settles the top-ranked questions** (ID lists, the exact sweep and the question reader at 1 billion; P2 judged on one commit per subject's save in steady state; the wide writer; cost by save size) | 1, 2, 2b, 3, 4, 5 | 5 h 05 min to 6 h 48 min (15 + 30 to 60 + 31 to 57 + 125 to 155 + 71 to 85 + 33 to 36 min) | 5.54 to 7.41 |
-| **Everything runnable on one machine** | 1 to 6 with 2b, 8, 9, 10a to 10c, 11 to 15 | 23 h 46 min to 31 h 43 min (group A 376 to 493 min; group B 725 to 1,075: shortest without 10a and with 10c at today's model 135 + 55 + 155 + 380, longest with 10a run and its calibration not accepted 150 + 85 + 110 + 180 + 550; group C 325 to 335) | 25.91 to 34.57 |
-| **Everything, with the second machine for steps 16 to 18** | all runnable steps | 25 h 21 min to 33 h 43 min of the first machine, plus 95 to 120 min of the second (1,616 to 2,143 machine minutes) | 29.36 to 38.93 |
+| **1. Shortest that settles the top-ranked questions**: is the index affordable and exact at 1 billion (backfill, the save pair against the bars, index against the slow route), and how the product's own saves (shape S with the wide writer and hints, and tape M with creation off and on) meet the P2 bars | 1, 4, 5, 7, 10, 13, 14 | 7 h 57 min to 12 h 08 min (40 to 75 + 90 to 240 + 116 + 18 to 42 + 71 to 85 + 71 to 85 + 71 to 85 min) | 8.67 to 13.23 |
+| **2. Everything runnable on one machine** | 1 to 18, 20 to 25, 27 to 31 (and 19 if step 17 qualifies) | 39 h 32 min to 57 h 19 min (group A 18 h 23 min to 27 h 57 min; group B 14 h 59 min to 20 h 42 min without step 19, up to 22 h 32 min with it; group C 6 h 10 min to 6 h 50 min) | 43.09 to 62.48 |
+| **3. Everything, with the second machine** for steps 26 and 32 | all runnable steps | 40 h 52 min to 58 h 59 min of the first machine, plus 80 to 100 min of the second (2,532 to 3,639 machine minutes) | 46.00 to 66.11 |
+| **4. The ceiling between 1 billion and 10 billion records (a proposal; nothing above 1 billion has been measured)** | see below | 2 billion rung: 35 h 40 min to 47 h; 3 billion rung: 41 to 57 h more; 10 billion directly: 277 to 375 h of aging alone | 2 billion: 38.90 to 51.20; 3 billion: 44.50 to 62.20 more; 10 billion: 302 to 409 for aging alone |
 
-With step 10a run and its calibration accepted, step 10c is 290 to 370 min and group B 730 to 895 min. ACT7's four
-runs alone (steps 8, 10a, 10b, 10c) are 11 h 15 min to 16 h 30 min (RUN2.md section 6.5), USD 12.26 to 17.99 at USD
-1.09 per hour. HA2's steps 17 and 18 exclude the pair set-up of `hasync1/PAIR-REPAIR.md` (direct path, firewall,
-guards, images), which its page does not time.
+Optional runs not in the totals (steps 5's hint arm, 12's arm A, 20's run B, 22's 100,000 rung, 33): 537 to 919
+machine minutes, USD 9.76 to 16.70.
 
-**Which steps share a database bring-up.** Step 2b cannot reuse step 2's: the question reader is chosen at bring-up (`DEMO_QUESTION_READER=1`) and step 2's sweep arm B writes to the working copy, so step 2b starts again from `demo/server-up.sh --reset` (3 to 12 min). Steps 8 and 10a each boot a new prepared copy of the fresh template; steps 10b and 10c each prepare a copy of the stopped 1 billion cluster (`act7/prepare-copy.sh`, 2 to 3 min) from the one fetched for the card steps (fetched once, 15 to 35 min, if no card step ran). Steps 17 and 18 use the two-machine pair set-up, not step 16's. Within step 2: the journal probe, the ID list runner and both sweep arms use
-one demo bring-up of the 1 billion working copy (`demo/server-up.sh --reset` with the ID list and sweep settings; the
-journal probe ignores the routes; sweep arm B writes, so it runs last). Each page publishes its own bring-up and build
-(`pnpm install` and package builds); with step 1's build neither is needed. Every card arm (steps 3, 4, 6, 12, 14) makes a new physical copy per part from the same 1 billion source and
-shares only the build; steps 4 and 6 reuse step 3's parts 1 and 2 as their control (a shared measurement, not a shared
-bring-up). Steps 8, 9 and 15 each boot a new prepared copy of the fresh template (about 4.4 minutes each; a settled
-release changes the copy, so they cannot share one). Step 11 makes one new copy per configuration (three); step 16
-reuses step 11's function and makes two more. Step 5 (the ladder) runs its own saves arm on a new copy. One build
-(step 1) serves every step.
+**The fourth total: what would settle whether the store's size ceiling holds between 1 and 10 billion records.**
+Nothing above 1 billion has been measured; the owner's rule of 2026-11-20 stops age tests at 1 billion, so this is a
+proposal for his decision, not a planned step.
+
+- **What exists.** The sealed database (1,000,251,169 records, t 62,888,918) was aged from 430 million by the aging
+  loader at 9,022.51 records/s with maintenance in its second window, falling to 8,187, 7,407 and 6,676 records/s in
+  its last three cycles; its PostgreSQL directory is 176 GB (176,382,197,760 bytes at 1,000,002,769 records); the
+  native backup 115 GB in about 14 min, the full verify about 23 min, the restore about 33 min. AGE1's growth model
+  predicts every index stays at three levels through 8 billion records (EAVT leaves 333,334 at 1 billion, 2,666,667 at
+  8 billion), point reads, feed pages and save lookups flat, backup, verify and restore linear.
+- **What would have to be aged.** 10 billion means 9 billion more records into the one database (the ten deep
+  accounts and the thin ones), at the loader's measured 6,676 to 9,022 records/s: **277 to 375 hours of one machine
+  (12 to 16 days), USD 302 to 409, before any measurement**, more if the rate keeps falling. Disk: about 1.8 TB of
+  PostgreSQL at 10 billion plus about 1.2 TB of backup; the machine type's disks must be checked first. Object storage
+  of the sealed copy: about 1.45 TB compressed (145 GB per billion today), about USD 22 a month.
+- **Proposed instead: two rungs that test the growth model where it would first break.** Age the sealed copy to
+  **2 billion** (+1 billion: 30.8 to 41.6 h at 6,676 to 9,022 records/s), seal, then the card's steps that depend on
+  size (P1 random-subject pinned reads with the tuned reader, P2 shape S second half, P4 current pulls at depths 1, 3
+  and 10, P7 cold first read) and the backup, verify and restore (about 140 min): **35 h 40 min to 47 h, USD 38.90 to
+  51.20.** A **3 billion** rung, the same again with the rate assumed down to 5,500 to 8,000 records/s: 41 to 57 h more,
+  USD 44.50 to 62.20. With three points (430 million, 1 billion, 2 billion; then 3 billion) the slopes extrapolate to
+  10 billion.
+- **Predictions (AGE1's model; written before any run) and what would show the ceiling failing before 10 billion.**
+  At 2 billion: EAVT still three levels; random-subject storage loads per pinned read 1.76 ± 0.2 (1.76 at 1 billion);
+  S commit p99 second half within 10% of 1 billion's; first-pull p99 under 100 ms; backup about 230 GB and 28 min,
+  verify about 46 min, restore about 66 min. Wrong if: a fourth index level before 8 billion (directory bytes, leaf
+  counts); loads per random read up by more than 0.3 per billion; S commit p99 up more than 10% per billion; the aging
+  rate below 5,000 records/s (then 10 billion cannot be built in under 21 days and the ceiling question needs a faster
+  loader first, which is not built).
+- **A faster loader would change the arithmetic.** AGE1's bulk ladder arms sustained 15,242 to 18,081 indexed
+  records/s at different settings (`age1/CONTINUATION.md`); at 18,000 records/s 9 billion is 139 h, about USD 151. It
+  changed the index geometry, so a database aged that way answers a different question unless its geometry is shown
+  equal.
+
+**Which steps share a bring-up.** Steps 2 and 3 use bring-ups 1 and 2 of the sealed working copy (`demo/server-up.sh
+--reset`); step 3 cannot reuse step 2's (the question reader is chosen at bring-up and sweep arm B writes). Step 4 makes
+its own copy and backfills it; steps 5 (two copies), 6 and 7 (bring-up 3) use the backfilled copy; whether
+`demo/server-up.sh` accepts it as `DEMO_ORIGINAL` is not checked (if it refuses, start step 7's stack with `stack/up.sh`
+as `xq1/server.ts verify` does). Step 8 brings up the sealed copy with the ID lists on and its own PostgreSQL for the
+copy. Every card arm (9 to 15, 27, 29) makes a new physical copy per part from the same 1 billion source and shares only
+the build; steps 10 to 12 and 13 to 15 compare among themselves and with step 9 (a shared measurement, not a shared
+bring-up). Steps 17, 18, 19, 20, 21 and 30 each boot a new prepared copy of the fresh template (about 4.4 min each; a
+settled release changes the copy). Steps 23 and 24 each prepare a copy of the stopped 1 billion cluster
+(`act7/prepare-copy.sh`, 2 to 3 min). Step 22 makes a fresh working copy per rung. Step 25 makes one copy per
+configuration; step 26 reuses step 25's function. Steps 32 and 33 use the two-machine pair set-up. One build (step 1)
+serves every step.
 
 ```bash
-# 1. Build once, from the commit that carries this page
+# 1. Build once, from the commit that carries this page; fetch the sealed cluster as XQ10 §8 row 0
 COMMIT=<head of exp/DX-INT1 carrying this page>
-BUILD=/var/tmp/triplex-v01-int4-build
+BUILD=/var/tmp/triplex-v01-int5-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
 cd "$BUILD/repository"
-
-# Card parts. $1 part, $2 new scratch copy, $3 campaign directory, $4 fresh|1B, $5 tape, $6 profile, $7 window seconds,
-# $8 reader (default|tuned); $EXTRA = options for this arm (may be empty). As v01/PRODUCTION-CARD.md "One part".
-part() {
-  local source aged=() reader=()
-  if [[ $4 == 1B ]]; then source=$AGED_PGDATA_SOURCE; aged=(--aged-bundle "$AGE_HANDOFF_JSON" --aged-bundle-sha256 "$AGE_HANDOFF_SHA256")
-  else source=$FRESH_PGDATA_SOURCE; fi
-  [[ $8 == tuned ]] && reader=(--reader tuned --read-permits 12)
-  sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" $EXTRA \
-    "AGE_JAVA=${AGE_JAVA:-}" "AGE_DATOMIC_HOME=${AGE_DATOMIC_HOME:-}" DX_W1_SERIAL_APPLY=0 PREP1_LOOKUP_EVERY=0 \
-    ${DX_DRY_RUN_FIRST_OFFER:+DX_DRY_RUN_FIRST_OFFER=1} \
-    "$BUILD/tools/bin/node" lab/bin/scorecard.mjs --commit "$COMMIT" --out "$3" --arm "$1" \
-    --age "$4" --tape "$5" --profile "$6" "${reader[@]}" --credit-mode rolling6 --window-seconds "$7" \
-    --jvm j21-g1 --write-jvm j21-g1 --tx-jvm j25-zgc --wal-directory "$SCORECARD_WAL_DIRECTORY" \
-    --seed "$SCALE1_IMAGE" --image-sha256 "$SCALE1_IMAGE_SHA256" --transfer-sha256 "$SCALE1_TRANSFER_SHA256" \
-    "${aged[@]}" --pgdata-source "$source" --pgdata "$2"
-}
-arm() {  # $1 campaign directory, then part's $4..$8; parts 1 and 2, one new copy each
-  local out=$1; shift
-  for n in 1 2; do make_copy "$COPY" || return 1; part "$n" "$COPY" "$out" "$@" || return 1; remove_copy "$COPY"; done
-}
+# part() and arm() exactly as in this page's history at 1ed2650bd (section "Next server session"); unchanged.
 CARD=(1B production-S-noburst server-32 300 tuned)
-EXTRA=; DX_DRY_RUN_FIRST_OFFER=1 part 1 "$DRY_COPY" /var/tmp/v01-int4-card-dry "${CARD[@]}"   # must print "DX-DRY-RUN first offer reached"
+EXTRA=; DX_DRY_RUN_FIRST_OFFER=1 part 1 "$DRY_COPY" /var/tmp/v01-int5-card-dry "${CARD[@]}"   # "DX-DRY-RUN first offer reached"
 
-# 2. Journal probe (JOURNAL-BOUNDS.md), ID lists (ID-LISTS.md section 5) and the exact sweep (EXACT-SWEEP.md section 6):
-#    one demo bring-up of the 1 billion working copy with both question routes on; the sweep's arm B writes, so it is last
-sudo env DX_ID_LISTS=1 DX_SWEEP=1 DX_SWEEP_PERMITS=6 DX_SWEEP_PER_ACCOUNT=6 DX_SWEEP_QUEUE_MS=5000 \
+# 2. Bring-up 1: journal probe, ID lists, sweep arms A, B and C (as at 1ed2650bd's step 2, with DX_SWEEP_SHAPES=all)
+sudo env DX_ID_LISTS=1 DX_SWEEP=1 DX_SWEEP_SHAPES=all DX_SWEEP_PERMITS=6 DX_SWEEP_PER_ACCOUNT=6 DX_SWEEP_QUEUE_MS=5000 \
   DEMO_ORIGINAL="$SEALED_CLUSTER" DEMO_HANDOFF="$AGE_HANDOFF_JSON" bash demo/server-up.sh --reset
-#    prints DEMO READY head=28309866 records=1000251169 t=62888918
-node --import tsx lab/experiments/EXP-DX1/jrn1/probe.ts http://127.0.0.1:18495 <db from /var/tmp/triplex-demo/ready.json> \
-  28309866 '<account-003 namespace>i9:00050000' '<account-003 namespace>i9:00000000' \
-  --attribute :task/field-0 --far 87002 --entity-pages 200 --feed-pages 5 > jrn1-probe-1b.jsonl
-sudo node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/xq3/server.ts \
-  /var/tmp/triplex-demo/ready.json "$OUT/xq3-1b" account-003
-sudo node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/xq6/server.ts \
-  /var/tmp/triplex-demo/ready.json "$OUT/xq6-1b" account-003
-sudo bash demo/server-down.sh
-
-# 2b. The question reader (QUESTION-READER.md section 6): a new bring-up, the question reader on, the demo's profile
-SECRET=$(od -An -N24 -tx1 /dev/urandom | tr -d ' \n')
-sudo env DEMO_QUESTION_READER=1 DX_QUESTION_MAIN_REFUSES=0 DX_READ_IO_COUNTERS=1 \
-  DX_SWEEP=1 DX_ID_LISTS=1 DX_SWEEP_PERMITS=3 DX_SWEEP_PER_ACCOUNT=3 DX_SWEEP_QUEUE_MS=5000 DX_SWEEP_CURSOR_SECRET="$SECRET" \
-  DX_QUESTION_SWEEP_PERMITS=2 DX_QUESTION_SWEEP_PER_ACCOUNT=3 DX_QUESTION_SWEEP_QUEUE_MS=5000 \
-  DX_QUESTION_INDEX_QUERY_PERMITS=1 DX_QUESTION_ID_LIST_QUEUE_MS=1000 \
-  DEMO_ORIGINAL="$SEALED_CLUSTER" DEMO_HANDOFF="$AGE_HANDOFF_JSON" bash demo/server-up.sh --reset
-#    the question reader answers on 127.0.0.1:18505
-sudo node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/xq7/server.ts /var/tmp/triplex-demo/ready.json "$OUT/xq7-1b"
-sudo bash demo/server-down.sh
-
-# 3. The full card: parts 1 to 3 and assembly
+#    then jrn1/probe.ts, xq3/server.ts, xq6/server.ts (arms A, B), the shapes arm C as xq9/QUESTION-SHAPES.md §6; down
+# 3. Bring-up 2: the question reader, exactly as at 1ed2650bd's step 2b (xq7/server.ts)
+# 4 to 7. XQ10 §8 rows B, C, F, G exactly as that page (xq1/server.ts backfill; scorecard.mjs --cross-index;
+#    xq1/server.ts bench; xq10/server.ts on bring-up 3 with DX_CROSS_INDEX=1 DX_SWEEP=1 DX_SWEEP_SHAPES=all ...)
+# 8. The reporting copy exactly as rpt1/SQL-REPORTING.md §7.3 (its own PostgreSQL container; follow, rebuild, card with
+#    and without the projector)
+# 9. The full card: parts 1 to 3 and assembly (as at 1ed2650bd's step 3)
 OUT=/var/tmp/v01-1b-prodSnb-s32-tuned
 for n in 1 2 3; do make_copy "$COPY"; part "$n" "$COPY" "$OUT" "${CARD[@]}"; remove_copy "$COPY"; done
 sudo env "PATH=$BUILD/tools/bin:$PATH" "$BUILD/tools/bin/node" lab/bin/scorecard.mjs --assemble --commit "$COMMIT" --out "$OUT"
-
-# 4. S1 "Wide" (its "Control" is step 3's parts 1 and 2)
-EXTRA=TX2_SUBJECT_WIDE=1 arm /var/tmp/s1-card-wide "${CARD[@]}"
-
-# 5. S1's save-size ladder: saves_arm exactly as v01/SAVE-SHAPE.md section 6.2, wide off
-
-# 6. S1 "Hints" = W3 (c) at the card's settings; off arm = step 3
-EXTRA=TX2_GENERAL_PREFETCH=1 arm /var/tmp/s1-card-hints "${CARD[@]}"
-
-# 7. Not yet runnable from this branch (xq2/INDEX-COST.md on origin/exp/DX-XQ2-index-cost)
-
-# 8, 10a, 10b, 10c: ACT7's four runs exactly as actv-lazy/act7/RUN2.md section 6 (its prepare, discard, held, AGED and
-#    LIVE definitions in section 6.1, with this session's $BUILD and $COMMIT); in order:
-#    8   = section 6.2 (a), then calibrate.ts on its counters
-#    10a = section 6.3 (C), only if (a)'s calibrate.ts model is at or below 2,500 / 25 / 55
-#    10b = section 6.4 (b), three accounts at 1 billion, with DX_ACT7_CONTROL=2:2400:300:200:600
-#    10c = section 6.5 (c), ten accounts at 1 billion (window 9000 and TX2_SETTLE_COST if (C) was accepted)
-
-# 9. Publish with the large first release settled by bytes (SETTLEMENT-FRAMES.md section 9); a new prepared copy
+# 10 to 12. The product's save path (s2/PRODUCT-SAVES.md §8, s3/SEVERAL-OWNERS.md §8)
+EXTRA="DX_S2_PRODUCT=1 TX2_SUBJECT_WIDE=1 TX2_SUBJECT_HINTS=1 TX2_GENERAL_PREFETCH=1"              arm /var/tmp/s2-card-product-wide   "${CARD[@]}"  # 10 (C)
+EXTRA="DX_S2_PRODUCT=1 TX2_SUBJECT_WIDE=1 TX2_SUBJECT_HINTS=1 TX2_GENERAL_PREFETCH=1 DX_S3_OWNERS=1" arm /var/tmp/s3-card-product-owners "${CARD[@]}"  # 11 (D)
+EXTRA="DX_S2_PRODUCT=1"                                                                            arm /var/tmp/s2-card-product-on     "${CARD[@]}"  # 12 (B)
+# 13 to 15. Tape M (s4/CREATION-SAVES.md §6)
+CARDM=(1B production-M server-32 300 tuned); CARDB=(1B production-M-burst server-32 600 tuned)
+BASE="DX_S2_PRODUCT=1 TX2_SUBJECT_WIDE=1 TX2_SUBJECT_HINTS=1 TX2_GENERAL_PREFETCH=1 DX_S3_OWNERS=1"
+EXTRA="$BASE"                arm /var/tmp/s4-card-m-before "${CARDM[@]}"   # 13 (E)
+EXTRA="$BASE DX_S4_CREATE=1" arm /var/tmp/s4-card-m-after  "${CARDM[@]}"   # 14 (F)
+EXTRA="$BASE DX_S4_CREATE=1" arm /var/tmp/s4-card-m-burst  "${CARDB[@]}"   # 15 (G)
+# 16. The save-size ladder: saves_arm exactly as v01/SAVE-SHAPE.md §6.2, wide off
+# 17, 19, 23, 24: ACT7's runs exactly as actv-lazy/act7/RUN2.md §6 (17 = §6.2 then calibrate.ts; 19 = §6.3 only if
+#    17's model is at or below 2,500 / 25 / 55; 23 = §6.4 with DX_ACT7_CONTROL=2:2400:300:200:600; 24 = §6.5)
+# 18. Publish with the large first release settled by bytes (as at 1ed2650bd's step 9)
+# 20. A subject owing 200 forms, run A (actv-lazy/RELEASE-LIMITS.md §6.1; one publishing account, 2 ledger parts each)
 sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
-  "TX2_SETTLE_FRAMES=bytes" "DX_ACT3_RELEASE=forms=20,policies=20,permille=1000" \
-  "DX_ACT3_SETTLE=1" "DX_ACT4_INITIAL=large" "DX_HELD_MINUTES=120" \
-  "DX_HELD_WINDOWS=barrier6/39.4/0,barrier6/39.4/1,rolling6/39.4/0,rolling6/39.4/1" \
+  "TX2_SETTLE_FRAMES=bytes" "TX2_NOTICE_LEDGER=parts" "TX2_SETTLE_PRECONDITION=progress" \
+  "DX_ACT3_RELEASE=forms=200,policies=200,permille=100" "DX_ACT3_SETTLE=1" "DX_ACT4_INITIAL=large" \
+  "DX_ACT6_STREAM_CHECK=1" "DX_HELD_MINUTES=150" "DX_HELD_WINDOWS=rolling6/39.4/0,rolling6/39.4/1" \
   bash lab/experiments/EXP-DX1/actv-lazy/join/held-server.sh \
   "$COMMIT" "$SCALE1_IMAGE" "$SCALE1_IMAGE_SHA256" "$SCALE1_TRANSFER_SHA256" \
   "$SCALE1_PGDATA" "$PREPARED_PGDATA" "$PREPARED_WAL" "$DX_LAZY_OUT"
-
-# 11. Uncached pinned reads, command 1 (UNCACHED-READ.md section 7): three configurations, one new copy each
-rd5_arm() {  # $1 new copy, $2 new campaign directory, $3 deadline ms, $4 permits, $5 prefetch, $6 read-ahead off, $7 cache MiB
-  sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
-    "AGE_JAVA=$AGE_JAVA" "AGE_DATOMIC_HOME=$AGE_DATOMIC_HOME" DX_RD3_PINNED_SAVES=1 DX_RD3_WINDOWS=random \
-    "DX_RD3_READ_PERMITS=$4" "DX_RD5_READ_PREFETCH=$5" "DX_RD5_READ_AHEAD_OFF=$6" "DX_RD5_READ_CACHE_MIB=$7" \
-    ${DX_REMOTE_READER_HOST:+DX_REMOTE_READER_HOST=$DX_REMOTE_READER_HOST} ${DX_RD5_SECOND_READER:+DX_RD5_SECOND_READER=$DX_RD5_SECOND_READER} \
-    DX_W1_SERIAL_APPLY=0 PREP1_LOOKUP_EVERY=0 \
-    "DX_RD1_PGDATA_SOURCE=$AGED_PGDATA_SOURCE" DX_RD1_LADDER=pinned-saves "DX_RD1_PGDATA=$1" \
-    ${DX_DRY_RUN_FIRST_OFFER:+DX_DRY_RUN_FIRST_OFFER=1} \
-    bash lab/experiments/EXP-DX1/v01/study-server.sh "$COMMIT" "$2" "$3" "$SCALE1_IMAGE" "$SCALE1_IMAGE_SHA256" \
-    "$SCALE1_TRANSFER_SHA256" 1B per-person-ordered j21-g1 "$AGE_HANDOFF_JSON" "$AGE_HANDOFF_SHA256" "" "" \
-    j25-zgc "$WAL_DIR" j21-g1 rolling6
-}
-OUT=/var/tmp/triplex-rd5-1b; mkdir "$OUT" "$OUT/pf3" "$OUT/pf3r" "$OUT/pf3c"   # one parent per configuration
-T0=$(date +%s%3N)   # make each copy just before its configuration and remove it after; skip one with under 18 min left
-rd5_arm "$COPY_1" "$OUT/pf3/campaign"  $(( T0 + 20 * 60 * 1000 )) 3 1 0 3072   # prefetch, 3 permits
-rd5_arm "$COPY_2" "$OUT/pf3r/campaign" $(( T0 + 40 * 60 * 1000 )) 3 1 1 3072   # the same, read-ahead off
-rd5_arm "$COPY_3" "$OUT/pf3c/campaign" $(( T0 + 60 * 60 * 1000 )) 3 1 0 1536   # the same as pf3, 1.5 GiB cache
-
-# 12. W4 (a): Saturday's tape, per-subject hints off and on
-EXTRA=                    arm /var/tmp/v01-1b-sat-w4-off 1B saturday server-32 90 default
-EXTRA=TX2_SUBJECT_HINTS=1 arm /var/tmp/v01-1b-sat-w4-on  1B saturday server-32 90 default
-
-# 13. W4 (b): restart with hints, with and without the one-time start-up read (jvm1/STARTUP-READ.md inputs)
-sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" TX2_SUBJECT_HINTS=1 \
-  bash lab/experiments/EXP-DX1/jvm1/startup-server.sh \
-  "$COMMIT" "$OUT_1B_W4" "$SEED_DIR" "$IMAGE_SHA256" "$TRANSFER_SHA256" \
-  "$AGED_PGDATA_SOURCE" "$(sudo sha256sum "$AGED_PGDATA_SOURCE/global/pg_control" | cut -d ' ' -f 1)" "$WAL_MOUNT" \
-  --credit-mode rolling6 --arms today-cache32,startup-read-cache32 \
-  --aged-bundle "$AGE_HANDOFF_JSON" --aged-sha256 "$AGE_HANDOFF_SHA256"
-
-# 14. W3 (b): the waiting-read bound at the 1,024-reader step, the one-core reader as on 2026-11-23
-for a in off on; do
-  limit=; [[ $a == on ]] && limit=DX_READ_WAIT_LIMIT=128
-  sudo bash lab/experiments/EXP-DX1/w3/threads-sampler.sh "/var/tmp/v01-1b-rq-$a-threads.jsonl" & sampler=$!
-  EXTRA="DX_THREAD_COUNTERS=1 $limit" arm "/var/tmp/v01-1b-rq-$a" 1B production-S server-32 90 default
-  wait "$sampler"
+# 21. A release near the ceiling, three arms, each from its own fresh prepared copy (RELEASE-LIMITS.md §6.2)
+W="rolling6/3.5/0,rolling6/3.5/1,rolling6/23.5/0,rolling6/23.5/1,rolling6/39.4/0,rolling6/39.4/1"
+for arm in "forms=1800,policies=1800,permille=100|" "forms=1800,policies=1800,permille=100|TX2_RELEASE_DOCS=ref" \
+           "forms=5000,policies=5000,permille=100|TX2_RELEASE_DOCS=ref"; do
+  sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" ${arm#*|} \
+    "DX_ACT3_RELEASE=${arm%|*}" "DX_ACT3_SETTLE=0" "DX_HELD_WINDOWS=$W" \
+    bash lab/experiments/EXP-DX1/actv-lazy/join/held-server.sh \
+    "$COMMIT" "$SCALE1_IMAGE" "$SCALE1_IMAGE_SHA256" "$SCALE1_TRANSFER_SHA256" \
+    "$SCALE1_PGDATA" "$PREPARED_PGDATA_NEW" "$PREPARED_WAL_NEW" "$DX_LAZY_OUT"   # a new prepared copy per arm
 done
-
-# 15. Publish, all twelve windows, probe from receipts (AT-LEAST.md section 4); fresh prepared copy as PART9.md
-sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
-  "DX_ACT3_SETTLE=0" "DX_ACT3_AT_LEAST=1" \
-  bash lab/experiments/EXP-DX1/actv-lazy/join/held-server.sh \
-  "$COMMIT" "$SCALE1_IMAGE" "$SCALE1_IMAGE_SHA256" "$SCALE1_TRANSFER_SHA256" \
-  "$SCALE1_PGDATA" "$PREPARED_PGDATA" "$PREPARED_WAL" "$DX_LAZY_OUT"
-
-# 16. Uncached pinned reads, command 2 (UNCACHED-READ.md section 8): a second reader on machine 2. Addresses stay in
-#     the driver's private notes. On machine 2 (as root), first; it waits up to 10 minutes for machine 1's ports:
-second() {  # $1 read-ahead off (0 or 1), $2 new output directory
-  RD5_MACHINE1=<machine 1 private IP> RD5_LISTEN=<machine 2 private IP> RD5_IMAGE="$SCALE1_IMAGE" RD5_REPO=<checkout at $COMMIT> \
-    RD5_CPUS=0-2 RD5_PERMITS=3 RD5_PREFETCH=1 "RD5_READ_AHEAD_OFF=$1" RD5_HEAP_MIB=6144 RD5_CACHE_MIB=3072 RD5_MEMORY_MIB=9216 \
-    "RD5_OUT=$2" bash lab/experiments/EXP-DX1/rd5/second-reader.sh start      # prints DX_RD5_SECOND_READER=...
-}
-second 0 /var/tmp/triplex-rd5-second/two-pf
-# On machine 1, at the same time (rd5_arm of step 11):
-OUT=/var/tmp/triplex-rd5-two; mkdir "$OUT" "$OUT/two-pf" "$OUT/two-pfr"
-export DX_REMOTE_READER_HOST=<machine 1 private IP> DX_RD5_SECOND_READER=http://<machine 2 private IP>:18492
-T0=$(date +%s%3N)
-rd5_arm "$COPY_1" "$OUT/two-pf/campaign" $(( T0 + 25 * 60 * 1000 )) 3 1 0 3072
-# On machine 2, after that arm has ended: stop, then start the second configuration
-RD5_OUT=/var/tmp/triplex-rd5-second/two-pf bash lab/experiments/EXP-DX1/rd5/second-reader.sh stop
-second 1 /var/tmp/triplex-rd5-second/two-pfr
-# On machine 1 (a new copy; skip if fewer than 20 minutes remain of the hour):
-rd5_arm "$COPY_2" "$OUT/two-pfr/campaign" $(( T0 + 60 * 60 * 1000 )) 3 1 1 3072
-unset DX_REMOTE_READER_HOST DX_RD5_SECOND_READER
-RD5_OUT=/var/tmp/triplex-rd5-second/two-pfr bash lab/experiments/EXP-DX1/rd5/second-reader.sh stop   # on machine 2
-
-# 17. HA2 run 1 (RECOVERY-TIME.md "Server run"), on the pair set up as hasync1/PAIR-REPAIR.md, a new tag; A first,
-#     then B within four minutes (B drives the cases)
-sudo env TX2_HA2_COLD_CORES=0-11 TX2_HA2_COLD_PIPELINE=1 taskset -c 0-11 sh -ceu 'exec 9>/var/tmp/triplex-bm1/dx-bm1-day.lock; flock -n 9; export HA1_SUNDAY_FLOCK=1; exec timeout --kill-after=30s 150m "$1" --import tsx lab/experiments/EXP-DX1/hasync1/sunday.ts a "$2"' run /var/tmp/triplex-p9-build/tools/bin/node /root/p9/config.json
-#     on server B, the same with role b
-# 18. HA2 run 2 (optional): the same two commands with `sudo env TX2_HA2_COLD_CORES=0-11 TX2_HA2_CASES=b-235` and a new tag
+# 22. Many accounts (scale2/SCALE2.md §8)
+sudo env DEMO_ORIGINAL="$SEALED_CLUSTER" DEMO_HANDOFF="$AGE_HANDOFF_JSON" \
+  bash lab/experiments/EXP-DX1/scale2/server.sh /var/tmp/scale2 1k 10k
+# 25 to 30, 32, 33: as at 1ed2650bd's steps 11 to 18 (unchanged commands; numbers per the table)
+# 31. Whole-subject import (imp2/WHOLE-SUBJECT.md §6), on a prepared server as load1/FAIR-SERVER.md
+TX2_IMPORT_WHOLE_SUBJECT=1 node lab/bin/heavy.mjs --label DX-IMP2-whole-160 -- \
+  bash lab/experiments/EXP-DX1/load1/fair-server.sh "$COMMIT" "$SCALE1_IMAGE" "$SCALE1_IMAGE_SHA256" \
+  "$SCALE1_TRANSFER_SHA256" "$TEMPLATE" "$OUT/imp2-whole" \
+  --pg-data "$COPY" --wal-dir "$WAL_COPY" --credit-mode rolling6 --frame-facts 32,160 --import-policy yield
 ```
 
-Headline predictions and what would show them wrong (all written before any run; full tables in the pages):
+Headline predictions and what would show them wrong (written before any run; the steps not listed keep the rows of
+this page at `1ed2650bd`, renumbered as above):
 
 | Step | Predicted | Wrong if |
 | --- | --- | --- |
-| 2 | **Sweep** (arm A): a count of account 3's 100,000 subjects exact and the same at 1, 3 and 6 parts, `examined` 100,000; 120 to 210 s at 1 part, 45 to 80 s at 3, 30 to 60 s at 6; 150,000 to 200,000 storage reads; a filtered list of the first 10,000 subjects cold 12 to 21 s, repeated 2 to 6 s. Arm B: re-read pinned readers down 30 to 80% (1 part) and 50 to 85% (3 parts) while a sweep runs, back within 10% after; saves' p99 within 1.25 times the control; 0 errors. **ID lists:** exactly 100,000 subjects of account 3, in order, 100 pages, at the head and at 87,002; 270,000 to 290,000 entries examined per walk; warm walk 0.1 to 0.35 s in all (0.4 to 1.2 µs per entry); cold 0.3 to 1.0 s (first page 5 to 30 ms); 87,002 at 1.0 to 2.5 times the head; every ID of the account 1 to 5 million (`pl:` 270,000 to 290,000, `i9:` 540,000 to 600,000), warm 1 to 6 s; 0 refusals. **Journal probe:** newest 20 by the old route 20 to 32 entries; pages from below the sealed head stop on `limit` with 1,000 journals; entity pages at most 4,096 entries and about 100 ms; field history warm 20 to 120 ms, cold 1.5 to 5 s | **Sweep:** counts differing between the arms or `examined` other than 100,000 (stop); one part above 300 s; 6 parts not 1.3 times faster than 3; readers within 10% of the control while a sweep runs, or not back within 10% after; save p99 above 1.25 times the control; any error. **ID lists:** any subject count other than 100,000 or an ID out of order (stop: nothing built on the route may ship); warm cost above 3 µs per entry or a cold subject walk above 3 s; 87,002 more than 10 times the head; a first cold page above 100 ms. **Journal probe:** pages stopping on `entries` / `time` with no journals; any page over 4,096 entries or 250 ms; warm history over 200 ms |
-| 2b | Main reader's storage reads per pinned read: control 0 to 0.05; with a count on the main reader 0.6 to 1.8 and reads/s down 40 to 80%; with the count on the question reader equal to the control (0 to 0.05) and reads/s within 10%; counts exact and identical in all four sweep windows; one-part count 250 to 500 s on the main reader, 150 to 260 s on the question reader, three parts 90 to 160 s; saves p99 within 1.25× the control | main-reader storage reads per pinned read more than 0.05 above the control in a question-reader window; reads/s more than 10% below the control there; main-reader windows within 10% of the control (a sweep does not displace the cache); gets per swept subject over 2.3 on the question reader; any count that differs or any error |
-| 3 | P1 re-read L256 8,000 to 11,000/s, p99 75 to 115 ms (even odds); P1 random 1,350 to 1,800/s, p99 250 to 340 ms (missed); P2 second-half p50 7 to 10 ms, p99 30 to 50 ms (met, about 55%); P3 lag at 256 readers 25 to 60 ms; P4 p99 12 to 25 ms after the drain; P6 judged (1,050 per side), loaded quiet p99 12 to 35 ms; P7 first pull 60 to 100 ms; P8 3,100 to 3,350 facts/s; transactor peak 50 to 55.5 of 57 GiB | re-read L256 under 7,000/s or p99 over 130 ms; random under 1,300/s or p99 over 350 ms; S second-half p50 over 10 ms at 394 with at most 0.9 reads per commit; random-line SQL time per storage read over 0.7 ms; transactor peak at or over 56 GiB or any limit event; any wrong value |
-| 4 | Wide: 95 to 100% of shape S commits on the per-subject writer; mean serial apply per commit 0.6 to 1.2 ms against Control's 1.5 to 2.5; commit p99 within 20% of Control; nothing lost or expired | under 95% on the per-subject writer; apply Control ÷ Wide under 1.5 for commits of 60 facts or more (then remove the option); more than one storage read per commit above Control; commit p99 over 20% above Control |
-| 5 | Commit p50 5.39 + 0.201 ms per fact (±30%): 8 to 12 ms at 17 facts, 185 to 260 ms at 1,000; p99 at 1,000 facts 280 to 450 ms; pinned read p99 near the head under 140 to 180 ms | p50 off the fit by more than 30% at 17 facts or more; p99 at 1,000 over 1 s or an expiry at 340 or 1,000; pinned read p99 over twice 112 ms; any lost save |
-| 6 | General reads inside apply down 40 to 55% in the first loaded cell; commit p50 within 2 ms of step 3; commit p99 at 620/s 10 to 30% below step 3 | reads inside apply down less than 25% or more than 70%; 50/s median up more than 4 ms; any exactness difference |
-| 7 | (not runnable here) k3 apply +0.6 to +1.0 ms per commit, k20 +3.4 to +5.6 ms; k3 commit p99 +1 to +4 ms (`xq2/INDEX-COST.md`) | k3 apply more than 1.5 ms or less than 0.3 ms over off; reads per commit more than 0.3 over off; k3 commit p99 more than 5 ms over off |
-| 8 | Head arm: at most 1% committed, at least 3,000 refused in 300 s. Settle: 0 refused; per account values 20,300 frames and notices 57,600 + 6,640 (about 64,000, ±5%); 5.94 million changes and 2.00 million notices (+ R1's 39,000 first); settles in 46 to 76 min (central 58) inside the 90 min window; serial apply p50 2 to 3.5 ms, p99 under 6 ms; `calibrate.ts` model at or below 2,500 / 25 / 55; no save refused or uncertain, account p99 within 1.3× the control outside stalls; exact | any refusal under `progress`; frames outside ±5%; changes or notices more than 2% off; settle over 90 or under 35 min; apply p50 over 5 ms or p99 over 8 ms; any save refused or uncertain, p99 over 1.5×; any exactness difference |
-| 9 | Settlement completes within the bound: 6.90 million changes, 2.04 million notices, 22,660 / 50,000 frames (±5%), values 20 to 40 min, notices 25 to 45 min, exact; live p99 per-save outside stalls 0.8 to 1.2 × control | any refusal or frame estimate over 8,000 µs; counts more than 2% off; values over 45 min or notices over 50 min; per-save outside-stall ratio over 1.5 |
-| 10a | Frames per subject 0.425 (±5%); settle 26 to 42 min; serial apply p99 under 8 ms; saves' p99 within 1.2× step 8's settle window | apply p99 over 8 ms, or saves' p99 over 1.2× step 8's |
-| 10b | Aged adoption: 20,020 subjects, about 2,000 aged per account, every aged row equal to the regenerated tape; 0 refused; per-account frames and changes as step 8; settle 65 to 100 min (central 80); each account within 10% of the others' committed frames every minute outside account 2's pause and pace; account 2: 0 frames while paused, no gap under 200 ms while paced, the others' rate rises while it is paused; stream check under 4 GiB heap, 10 to 18 min per account; exact | any aged row differs; any refusal; settle over 120 or under 50 min; an account below half of another's in a minute; a frame while paused or a gap under 195 ms; out of memory; over 30 min per account of check; any difference |
-| 10c | As 10b for ten accounts: settle 3.4 to 5.5 h (central 4.4; 1.6 to 2.5 h calibrated), the first 4 h beside saves | settle over 6.5 h or under 2.5 h; as 10b |
-| 11 | `pf3` 1,500 to 1,850 reads/s (central 1,680), p99 240 to 310 ms, loads per subject 1.5 to 1.9; `pf3r` 2,100 to 2,600 (p99 160 to 210 ms, loads 1.05 to 1.4) if read-ahead is the excess (about 60%), else as `pf3` ± 7%; `pf3c` 1,450 to 1,950; S stores 23.07 to 23.08 commits/s; 0 wrong values, errors and prefetch failures; the 100 ms bar not met in any configuration | `pf3` under 1,450 reads/s or under 2.5 reader cores; `pf3` loads under 1.3; `pf3c` loads above 2.3 or reads/s 10% under `pf3`, or 15% above; `pf3r` loads within 0.15 of `pf3`'s (read-ahead is not the excess); any wrong value, error or prefetch failure (then no option may merge) |
-| 12 | Off reproduces 2026-11-23 (394 stored, p99 5 to 12 s). On, 394 cell's first 40 s: reads inside apply per save 0.7 to 1.4 (40 to 65% below off), save p99 0.3 to 3 s; 620 cell stores 470 to 600/s | reads inside apply fall less than 25% with hints on 95% or more of per-subject saves; or fall 40% or more while p99 at 394 stays over 5 s; any receipt or read-back difference |
-| 13 | No start-up read: first-60-s save p99 0.5 to 3 s (7.26 s on 2026-11-23 without hints); with the read: 0.2 to 0.5 s; stop to admission unchanged within 5 s | no-read arm's p99 over 4 s with hints on 95% or more of saves; read arm's p99 over 0.6 s; admission moves more than 5 s |
-| 14 | Off: `busyPeak` 512 at the 1,024 step, lag p99 0.3 to 2 s. Bound 128: `busyPeak` under 200, lag p99 under 250 ms (expected 40 to 120), pinned goodput within 10% of off | off shows `busyPeak` under 512 with `queuedPeak` 0 while the poll gap is over 100 ms; on still over 250 ms with `busyPeak` under 200; on loses more than 20% of pinned goodput |
-| 15 | 0 early answers and 0 refusals in 120 Publishes; 20/20 inside one second per Publish window; first-correct p50 within +3 ms of 2026-11-23; waits on 0 to 10% of requests | any at-least defect or refusal; p50 more than 10 ms above 2026-11-23; waits on more than a quarter of requests |
-| 16 | `two-pf` 3,000 to 3,600 reads/s both readers (p99 110 to 160 ms); `two-pfr` 4,200 to 5,000 (p99 85 to 115 ms) if read-ahead is the excess; each reader 2.6 to 2.9 cores; PostgreSQL 0.65 to 0.95 cores; saves 23.07 to 23.08 commits/s; 0 wrong values on both readers | both readers together under 2,600 reads/s with each under 2.4 cores (a shared limit: PostgreSQL's one core first); machine 2's reader more than 15% slower than machine 1's; p99 under 100 ms at both pins (the sizing was pessimistic); any wrong value or error on either reader (stop) |
-| 17 | `b-235`: 0 acknowledged saves lost; first read within 0.35 s, no gap over 1 s; replacement copy and check 60 to 150 s (central 95); **first protected save 80 to 170 s after the fault (central 115 s; 603.4 s measured on 2026-11-23)**, 17 to 22 s after the replacement is ready; set-up cold copy 60 to 150 s per server (594 s on 2026-11-23); `a-235`: 0 lost, first one-copy save 18 to 25 s after the fault, second failure read through the repaired path with every save from before the fault present and every one-copy save absent; `move-235`: 0 lost, write pause 12 to 20 s | any loss or missed read; copy and check over 200 s (the disk bounds it); first protected save over 250 s with the cold-core marks present, or under 60 s; any copy without the restore mark; a save from before the fault absent after the second failure |
-| 18 | `b-235` cores only: copy 45 to 135 s, hash 55 to 75 s, first protected save 120 to 230 s (central 170) | hash over 150 s (the one-core explanation is wrong); first protected save over 300 s |
+| 4 | value entries 17.9 million ± 5%; 230 to 330 B per entry; backfill 25 to 75 min; 10,000 sampled subjects 0 mismatches; dry run 0 to add, 0 to retract | any sample mismatch or a non-zero dry run (stop); backfill over 4 h; entries outside 17.0 to 18.8 million |
+| 5 | index on minus off: datoms per save +1.5 to 2.5; log bytes +300 to 800 B; reads inside apply +0 to 0.05; commit p50 +0.05 to 0.4 ms, p99 +0 to 3 ms; stored rate unchanged | save median over 10 ms or p99 over 50 ms where the off arm is inside them; over 0.5 ms of writer time per save for 1 to 3 declared values; over 0.2 extra reads inside apply per first touch |
+| 6 | first pages 1 to 5 ms warm, 8 to 50 ms cold; a full count of a deep account 0.15 to 0.5 s warm | a first page over 20 ms warm or 100 ms cold at p99 |
+| 7 | 11 comparisons of 7 questions on account-003 at the head, now and 30 days ago: 0 differences; index counts 0.03 to 0.5 s warm; a sweep of 100,000 subjects 30 to 60 s on 10 parts | any difference (stop); an index count over 3 s |
+| 8 | rebuild of account-003 exact; 410 to 540 B per fact; lag p99 under 150 ms at 50 and 235 saves/s, 80 to 200 at 394, 100 to 300 at 620; pinned-read p99 and feed lag within 10% of the control | apply p99 over 200 ms per page at 394; lag growing through a 300 s step; pinned-read p99 more than 10% worse with the projector |
+| 10 | 95 to 100% of shape S commits on the per-subject writer **(from `saveRoutes`)**; mean serial apply 0.6 to 1.2 ms; commit p50 0.5 to 2 ms below arm A's forecast, p99 within 20% | under 95% on the per-subject writer; apply not 1.5 times below the general writer's for commits of 60 facts or more (then remove the wide option); any lost save |
+| 11 | the same as 10 within 1 point; 0 `owners:<n>`; p50 within 1 ms, p99 within 15% of 10 | any `owners:<n>` count; share 2 points off 10's |
+| 12 | 25 to 40% on the per-subject writer; p50 within 1 ms of arm A's forecast (8 to 12 ms at 50/s) | outside 20 to 45%; replays above 1% |
+| 13 | 8 to 12% on the per-subject writer (the form saves); commit p50 6 to 9 ms, p99 20 to 45 ms per step | over 15% on the per-subject writer; p99 over 50 ms |
+| 14 | 99 to 100% on the per-subject writer **(from `saveRoutes`)**; serial apply 0.3 to 0.6 ms; p50 0.2 to 1 ms below 13, p99 within 15% | under 99%; p50 above 13's by more than 1 ms or p99 more than 20% above (remove the option) |
+| 15 | 99 to 100% per-subject; p99 20 to 45 ms at the 394 cell; at most one index job in 600 s | p99 over 50 ms or more than one index job at 394 |
+| 20 | completes, every frame at or under 8,000 µs; 6.9 million changed values and 2.0 million notices (± 3%); 22,000 value and 46,000 notice frames (± 10%); 20,000 ledger parts; settlement 25 to 50 min; exact | any refusal or frame over 8,000 µs; over 90 min or under half the low end; any difference |
+| 21 | by reference: Publish record 3.5 to 3.6 KB and 4 changes; definitions written ahead before the first window; pause to durable p50 25 to 45 ms; neighbours' p99 0.8 to 1.3 times the control; 20 of 20 inside one second. Full documents at 0.45 MiB: about 1.11 MB added per Publish; first-correct p50 rising with every Publish; fails the second in later windows | by reference over 5 KB or more than 4 changes; a definitions write after the second Publish; arm 2/3 p50 above 60 ms or neighbours above 1.5; arm 1 flat across windows |
+| 22 | every read, feed entry, ID list, sweep count and settled change exact; small-account save p99 30 to 60 ms at 1k, within 1.2 times at 10k; quiet thin p99 at or under 50 ms; 200 / 500 Publishes p50 15 to 40 ms; settlement 0 refused; 0 sweep gates left; connections under 100 | any difference (stop); the 10k rung's p99 above 1.3 times the 1k rung's; any refused frame; connections growing with accounts |
+| 31 | 32-fact frames 3,000 to 3,700 facts/s; 160-fact whole subjects 3,500 to 6,000; quiet p99 32 to 48 ms; 0 `ImportCommitTooLarge` | arm 2's quiet p99 over 50 ms while arm 1's is under; frame apply p99 over 60 ms; arm 2's rate under arm 1's |
 
 ## Gates on the merged head (2026-11-24 morning, at `4c34fd0f8` and before)
 
