@@ -1,13 +1,15 @@
 import { derivedSealOn, noteWorld } from "../../../bench/lib/derived-seal.ts";
 
-/** [DX-ERA4, after DX-ERA5's B4] TX2_DERIVED_SEAL=1: a removed value is absent from the world it was part of. W0 accepts a
- * removed value only for `ssn` (w0/src/schema.ts, its one erasable attribute) and refuses the whole world otherwise
- * (`W0.E_VALUE`), which stopped the account's next frame for every subject after one subject's document value was
- * removed. The subject is evaluated from what remains (its notices restart in a new generation, 3.4); everyone else
- * proceeds. The world's rows as noted for sealing are unchanged (a removed row holds no string). */
+/** [DX-ERA4, after DX-ERA5's B4; superseded by the owner's ruling of 2026-11-25, third review T1] The first B4 fix: a
+ * removed value dropped from its world, so it counted as absent, which withdrew the expired-document notice and, in the
+ * deep format, stopped the account (the builder requires the row). Kept only for the review's `b4.ts` comparison; no
+ * writer uses it. The writers now keep the removed value's marker in the world and evaluate under W0-1.2's removable
+ * values (`evaluateOptions`, era4/W0-REMOVED-VALUES.md). */
 const ERASABLE = new Set(["ssn"]);
 export const withoutRemoved = <R extends { attribute: string; value: { type?: string } }>(rows: readonly R[]) =>
   derivedSealOn() ? rows.filter((r) => r.value.type !== "erased" || ERASABLE.has(r.attribute)) : (rows as R[]);
+export { evaluateOptions } from "../../../bench/lib/derived-seal.ts";
+import { evaluateOptions } from "../../../bench/lib/derived-seal.ts";
 import type { Dispatcher } from "./dispatch.ts";
 import assert from "node:assert/strict";
 import {
@@ -65,7 +67,7 @@ export function heldWorlds(rows: readonly WorldRow[], prefix: string, account: s
     assert.deepEqual(root.filter((r) => r.attribute === ":subject/account").map((r) => r.value.value), [account]);
     assert.deepEqual(root.filter((r) => r.attribute === ":subject/member").map((r) => r.value.value), [String(i)]);
     // [DX-ERA4] TX2_DERIVED_SEAL=1: the rows this world was built from (a derived record names them).
-    return noteWorld(policyWorld(i, withoutRemoved(body), basis), body);
+    return noteWorld(policyWorld(i, body, basis), body);
   });
 }
 export async function worldsAt(store: Store, format: Format, subjects: string[], b: Point) {
@@ -101,7 +103,7 @@ export async function worldsAt(store: Store, format: Format, subjects: string[],
   }
   return subjects.map((s) => {
     const used = reachableRows([s], rows, by);
-    return noteWorld(worldOf(s, withoutRemoved(used)), used);
+    return noteWorld(worldOf(s, used), used);
   });
 }
 export function render(
@@ -136,8 +138,8 @@ export function render(
     const custom = w.documentRef ? cachedRelease(w.release) : W0.compileRelease(w.document);
     assert(custom, "Release definitions were not loaded before evaluation");
     assert.equal(custom.hash, w.release, "Unbound release document");
-    output = W0.evaluateWorld(world, custom, b);
-  } else output = W0.reconcileWorld(world, activations, b);
+    output = W0.evaluateWorld(world, custom, b, evaluateOptions());
+  } else output = W0.reconcileWorld(world, activations, b, evaluateOptions());
   const json = W0.isFailure(output) ? canonical(output) : W0.outputJson(output);
   return { output, json, world };
 }

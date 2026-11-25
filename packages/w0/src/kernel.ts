@@ -31,6 +31,27 @@ export interface Fact {
   readonly tx: number;
 }
 
+/**
+ * SPEC 2.1 (W0-1.2, opt-in; RULINGS Q60): the attributes whose values may be removed on request, and the work items a
+ * subject held when a value it reads was removed. Without options every output is W0-1.1.2's byte for byte.
+ */
+export interface EvaluateOptions {
+  /** attribute names (only `docType`, `expiresOn`, `reverified`) on which an `erased` marker is a removed value */
+  readonly removable?: readonly string[];
+  /** work item ids (`wi:...`) the subject held, for the keys whose reads now hold a removed value (SPEC 7.0) */
+  readonly kept?: readonly string[];
+}
+/** SPEC 2.1: the attributes `removable` may name (the ones DOCEXP reads; every other rule reads none of them). */
+export const REMOVABLE_ATTRIBUTES: ReadonlySet<string> = new Set(["docType", "expiresOn", "reverified"]);
+/** SPEC 2.1: `removable` names only REMOVABLE_ATTRIBUTES and `kept` only work item ids, or the request is W0.E_VALUE. */
+export function checkOptions(o: EvaluateOptions | undefined): W0ErrorCode | null {
+  if (o === undefined) return null;
+  const r = o.removable ?? [], k = o.kept ?? [];
+  if (!Array.isArray(r) || !r.every((a) => typeof a === "string" && REMOVABLE_ATTRIBUTES.has(a))) return "W0.E_VALUE";
+  if (!Array.isArray(k) || !k.every((i) => typeof i === "string" && /^wi:[0-9a-f]{64}$/.test(i))) return "W0.E_VALUE";
+  return null;
+}
+
 /** SPEC 4.2 world: the store's answer at the basis for one subject. Fact order carries no meaning (SPEC 4.2 item 5). */
 export interface World {
   readonly subject: string;
@@ -152,7 +173,12 @@ function getMany(idx: WorldIndex, e: string, a: string): readonly IFact[] {
  *    duplicate (Q53 reading A03).
  * Each distinct entity id is classified once (SPEC 4.2 item 3) and its facts go to per-attribute slots.
  */
-export function indexWorld(world: World, basisTx: number): WorldIndex | W0ErrorCode {
+export function indexWorld(
+  world: World,
+  basisTx: number,
+  removable?: readonly string[],
+): WorldIndex | W0ErrorCode {
+  const removed = removable === undefined || removable.length === 0 ? null : new Set(removable);
   const S = world.subject;
   if (typeof S !== "string" || !isPlacementId(S)) return "W0.E_UNKNOWN";
   const entities = new Map<string, Entity>();
@@ -171,7 +197,7 @@ export function indexWorld(world: World, basisTx: number): WorldIndex | W0ErrorC
     const spec = ent.attrs.get(f.a);
     if (spec === undefined) return "W0.E_UNKNOWN";
     // An owned entity of an allowed id is owned by S (SPEC 4.2 item 3), so S is the owner every owned ref is checked against.
-    const v = checkValue(spec, f.v, S);
+    const v = checkValue(spec, f.v, S, removed !== null && removed.has(f.a));
     if (v === NOT_A_VALUE) return "W0.E_VALUE";
     if (!Number.isSafeInteger(f.tx) || f.tx < 1 || f.tx > basisTx) return "W0.E_BASIS";
     // A typed caller's fact is reused when its value needed no normalisation (bigint to number).
@@ -223,7 +249,13 @@ interface Decision {
 /**
  * SPEC 7: evaluates the eleven rules over a validated world and assembles the SPEC 8.1 output.
  */
-export function evaluateIndexed(idx: WorldIndex, rel: CompiledRelease, basis: Basis): Output {
+export function evaluateIndexed(
+  idx: WorldIndex,
+  rel: CompiledRelease,
+  basis: Basis,
+  kept?: readonly string[],
+): Output {
+  const keptIds: ReadonlySet<string> = new Set(kept ?? []);
   const S = idx.subject;
   const v = basis.validTime;
   const get = (e: string, a: string): IFact | undefined => getOne(idx, e, a);
@@ -343,6 +375,11 @@ export function evaluateIndexed(idx: WorldIndex, rel: CompiledRelease, basis: Ba
     });
   };
   /** SPEC 8.4: id over `{key, kind, rule, subject}`, version over `{inputs, payload, release}`, both canonical JSON. */
+  const workId = (rule: RuleId, kind: string, key: string): string =>
+    "wi:" +
+    sha256hex(
+      '{"key":' + quote(key) + ',"kind":' + quote(kind) + ',"rule":"' + rule + '","subject":' + quote(S) + "}",
+    );
   const addWork = (
     rule: RuleId,
     kind: string,
@@ -350,19 +387,7 @@ export function evaluateIndexed(idx: WorldIndex, rel: CompiledRelease, basis: Ba
     payload: string,
     inputs: readonly number[],
   ): void => {
-    const id =
-      "wi:" +
-      sha256hex(
-        '{"key":' +
-          quote(key) +
-          ',"kind":' +
-          quote(kind) +
-          ',"rule":"' +
-          rule +
-          '","subject":' +
-          quote(S) +
-          "}",
-      );
+    const id = workId(rule, kind, key);
     const version =
       "wv:" +
       sha256hex(
@@ -566,6 +591,18 @@ export function evaluateIndexed(idx: WorldIndex, rel: CompiledRelease, basis: Ba
       const dt = get(d, "docType");
       const ex = get(d, "expiresOn");
       const rv = get(d, "reverified");
+      // SPEC 7.0 (W0-1.2): a read that holds a removed value holds the item: row 0, no task or obligation, and the
+      // document's work item only when the subject held it (`kept`), with each removed value written as its marker.
+      if ((dt !== undefined && isErased(dt.v)) || (ex !== undefined && isErased(ex.v)) || (rv !== undefined && isErased(rv.v))) {
+        const inputs = addTrace("DOCEXP", d, 0, pushTx([df.tx], dt, ex, rv));
+        const kind = "notify.document-expired";
+        if (keptIds.has(workId("DOCEXP", kind, d))) {
+          const show = (f: IFact | undefined) =>
+            f === undefined ? "null" : isErased(f.v) ? '{"erasedAt":' + quote(f.v.erasedAt) + "}" : quote(f.v as string);
+          addWork("DOCEXP", kind, d, '{"docType":' + show(dt) + ',"expiresOn":' + show(ex) + "}", inputs);
+        }
+        continue;
+      }
       const type = dt === undefined ? null : (dt.v as string);
       let row: number;
       let expired = false;
@@ -829,12 +866,19 @@ export function evaluateIndexed(idx: WorldIndex, rel: CompiledRelease, basis: Ba
 }
 
 /** SPEC 1 `evaluate(world, release, basis)` over typed inputs: SPEC 4.4 steps 2 and 3, then the rules. */
-export function evaluateWorld(world: World, rel: CompiledRelease, basis: Basis): Output | Failure {
+export function evaluateWorld(
+  world: World,
+  rel: CompiledRelease,
+  basis: Basis,
+  options?: EvaluateOptions,
+): Output | Failure {
   const b = checkBasis(basis);
   if (b !== null) return { error: b };
-  const idx = indexWorld(world, basis.tx);
+  const o = checkOptions(options);
+  if (o !== null) return { error: o };
+  const idx = indexWorld(world, basis.tx, options?.removable);
   if (typeof idx === "string") return { error: idx };
-  return evaluateIndexed(idx, rel, basis);
+  return evaluateIndexed(idx, rel, basis, options?.kept);
 }
 
 /** SPEC 4.4 step 4 for one activation: `W0.E_VALUE`, then `W0.E_BASIS` (Q53 reading A05). */
@@ -857,10 +901,13 @@ export function reconcileWorld(
   world: World,
   activations: readonly Activation[],
   basis: Basis,
+  options?: EvaluateOptions,
 ): Output | Failure {
   const b = checkBasis(basis);
   if (b !== null) return { error: b };
-  const idx = indexWorld(world, basis.tx);
+  const o = checkOptions(options);
+  if (o !== null) return { error: o };
+  const idx = indexWorld(world, basis.tx, options?.removable);
   if (typeof idx === "string") return { error: idx };
   for (const a of activations) {
     const e = checkActivation(a, basis.tx);
@@ -868,7 +915,7 @@ export function reconcileWorld(
   }
   const rel = resolveRelease(activations, basis.validTime);
   if (typeof rel === "string") return { error: rel };
-  return evaluateIndexed(idx, rel, basis);
+  return evaluateIndexed(idx, rel, basis, options?.kept);
 }
 
 /** SPEC 9 canonical JSON of an `evaluate` or `reconcile` output, written field by field in sorted key order. */

@@ -4,8 +4,15 @@
 import assert from "node:assert/strict";
 import { DatomicClient } from "../../../packages/datomic/dist/index.js";
 import { runtimeApi } from "./triplex.ts";
+import * as W0 from "../../../packages/w0/dist/index.js";
 
 export const derivedSealOn = () => process.env["TX2_DERIVED_SEAL"] === "1";
+/** [DX-ERA4, third review T1, the owner's ruling of 2026-11-25] TX2_DERIVED_SEAL=1: every evaluation of a world read from
+ * the store names W0-1.2's removable attributes (a removed document value is a removed value, neither a value nor absent:
+ * DOCEXP holds that document) and, for the notice stream, the work items the subject held (`kept`;
+ * era4/W0-REMOVED-VALUES.md). Unset: undefined, which is W0-1.1.2 exactly. */
+export const evaluateOptions = (kept?: readonly string[]): W0.EvaluateOptions | undefined =>
+  derivedSealOn() ? { removable: [...W0.REMOVABLE_ATTRIBUTES], ...(kept && kept.length ? { kept } : {}) } : undefined;
 
 /** A sealed record as stored: `tdx2.<header>.<nonce>.<ciphertext>` (padded, placed; `tdx1.` before DX-ERA5's review);
  * the header names the database, the assertions and the record's place. */

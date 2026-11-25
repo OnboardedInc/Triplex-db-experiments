@@ -59,6 +59,13 @@ const packetKey = (n: number) => "recorded-notices:" + n;
 // delivery as recorded: its subject and generation in clear, the delivery itself sealed (a string), clear when computed
 // from no protected value (its canonical JSON), or the removed marker when its input was removed before it was sealed.
 const generationKey = (subject: string) => "recorded-generation:" + subject;
+// [DX-ERA4, third review T1, the owner's ruling of 2026-11-25] the work items a subject holds that read a removable value
+// (DOCEXP's expired-document notices), as their ids only, sorted: written with the subject's ledger when it changes, in
+// clear (an id is a hash of the subject, rule, kind and document key; it holds no value), so that after a removal of
+// such a value the notice the subject held is kept (W0-1.2 7.0) although every sealed record of the subject is removed.
+const keptKey = (subject: string) => "recorded-kept:" + subject;
+const keptOf = (work: readonly W0.WorkItem[]) =>
+  [...new Set(work.filter((w) => w.rule === "DOCEXP" && w.kind === "notify.document-expired").map((w) => w.id))].sort();
 export type SealedDelivery = { subject: string; generation: number; sealed: string | Removed };
 /** [DX-ERA4] Every subject's ledger opened: its readable items, what each names, and, when an item opens as removed,
  * the generation the subject takes (the removal's sequence). */
@@ -423,9 +430,12 @@ export class RecordedNotices {
     const mode: LedgerMode = (current.start === 0 && !current.part ? this.ledger === "parts" : current.ledger === "parts")
       ? "parts"
       : "whole";
+    // [DX-ERA4, third review T1] the kept sets, read before the evaluation that may keep them
+    const keptRows = derivedSealOn() ? await db.rows<string[]>(ids.map(keptKey), at) : new Map();
+    const keptIn = new Map(ids.map((id) => [id, (keptRows.get(keptKey(id))?.value ?? []) as string[]]));
     const [previous, fresh] = await Promise.all([
       readLedgers(db, ids, at),
-      missing.length ? a.notices.work(e, missing, sourceAt) : [],
+      missing.length ? a.notices.work(e, missing, sourceAt, keptIn) : [],
     ]);
     for (const [i, id] of missing.entries()) known.set(id, fresh[i]!);
     const items = ids.map((id) => known.get(id)!);
@@ -439,7 +449,7 @@ export class RecordedNotices {
         },
       ]);
     const candidates = derivedSealOn()
-      ? await this.sealedCandidates(ids, items, previous, at, current, mode, authority, record)
+      ? await this.sealedCandidates(ids, items, previous, at, current, mode, authority, record, keptRows)
       : ids.map((subject, i) => {
           const old = previous.get(subject)!;
           return noticeCandidate(db, subject, current.event, old, record(subject, i, old.items), mode);
@@ -479,6 +489,7 @@ export class RecordedNotices {
     mode: LedgerMode,
     authority: Awaited<ReturnType<typeof readErasure>>,
     record: (subject: string, i: number, state: readonly W0.ItemState[]) => ReturnType<typeof W0.publish>,
+    keptRows: Map<string, Awaited<ReturnType<Documents["row"]>>> = new Map(),
   ) {
     const db = this.archive.db,
       source = this.archive.source.s.comp,
@@ -591,6 +602,13 @@ export class RecordedNotices {
       if (p.generation !== (p.before?.value ?? 0)) {
         // The new generation is written with the subject's ledger (its closing piece), or alone.
         c.ledger.push(...db.change(generationKey(p.subject), p.before, p.generation));
+        c.closing = true;
+      }
+      // [DX-ERA4, third review T1] the subject's kept set, when it changes, with its ledger (its closing piece)
+      const keptBefore = keptRows.get(keptKey(p.subject));
+      const keptNow = keptOf(items[i]!);
+      if (canonical(keptNow) !== canonical(keptBefore?.value ?? [])) {
+        c.ledger.push(...(keptNow.length || keptBefore ? db.change(keptKey(p.subject), keptBefore, keptNow) : []));
         c.closing = true;
       }
       return c;

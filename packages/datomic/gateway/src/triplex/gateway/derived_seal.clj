@@ -609,7 +609,10 @@
    [#"recorded-ledger-part:(.+):([0-9]+):([0-9]+)" :ledger-part]
    [#"recorded-ledger:(.+)" :ledger]
    [#"receiver:([^:]+):(.+)" :receiver]
-   [#"effects:([^:]+):([0-9]+)" :effects]])
+   [#"effects:([^:]+):([0-9]+)" :effects]
+   ;; [DX-ERA4, third review T1] the work items a subject holds that read a removable value, kept in clear so the owner's
+   ;; rule (a removed value keeps its notice) survives the removal: ids only, of exact form, sorted and distinct
+   [#"recorded-kept:(.+)" :kept]])
 ;; [DX-ERA4, second review N4] the review's census (forms.ts K), plus what T1 writes after a removal (the join index's
 ;; leaves and its invalidation marker) and the settlement control document. These hold no value of the current
 ;; protection policy (document types and expiry dates); the join index's postings hold values of the indexed rules'
@@ -662,6 +665,11 @@
                            (nat? (get doc "chars")) (hex64? (get doc "sha")) (= "units" (get doc "form")))
               (unsealed! kind)))
         (units! kind (nth m 1) doc))
+      :kept
+      (when-not (and (vector? doc) (<= (count doc) max-items)
+                     (every? #(if (string? %) (some? (re-matches #"wi:[0-9a-f]{64}" %)) false) doc)
+                     (= doc (vec (sort (distinct doc)))))
+        (unsealed! kind))
       :receiver
       (do (exact-keys! kind doc ["g" "e"] [])
           (when-not (nat? (get doc "g")) (unsealed! kind))

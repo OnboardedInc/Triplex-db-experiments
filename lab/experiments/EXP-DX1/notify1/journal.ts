@@ -1,4 +1,4 @@
-import { derivedSealOn, noteOutput } from "../../../bench/lib/derived-seal.ts";
+import { derivedSealOn, evaluateOptions, noteOutput } from "../../../bench/lib/derived-seal.ts";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { W0, sha256 } from "../../../bench/lib/w0-world.ts";
@@ -313,7 +313,9 @@ export class Notices {
         : undefined,
     };
   }
-  async work(e: Event, ids: string[], at: number): Promise<Work[]> {
+  /** [DX-ERA4, third review T1] `kept`: per subject, the work items it held at its last recording that a removed value's
+   * read may keep (W0-1.2 7.0); only under TX2_DERIVED_SEAL. */
+  async work(e: Event, ids: string[], at: number, kept?: ReadonlyMap<string, readonly string[]>): Promise<Work[]> {
     await this.requireCoverage(e);
     const markers = await this.db.rows<Erased>(
       ids.map((s) => "erased:" + s),
@@ -361,10 +363,12 @@ export class Notices {
     const by = new Map<string, Work>();
     const began = this.budget ? performance.timeOrigin + performance.now() : 0;
     for (const world of worlds) {
-      const result = W0.evaluateWorld(world, policy, {
-        tx: e.at,
-        validTime: e.value.validTime,
-      });
+      const result = W0.evaluateWorld(
+        world,
+        policy,
+        { tx: e.at, validTime: e.value.validTime },
+        evaluateOptions(kept?.get(world.subject)),
+      );
       if ("error" in result) throw Error(result.error + " for " + world.subject);
       // [DX-ERA4] TX2_DERIVED_SEAL=1: the evaluation carries the rows of its world (DERIVED-COPIES.md 3.2).
       by.set(world.subject, noteOutput(result.workItems, world));

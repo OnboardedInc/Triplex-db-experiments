@@ -8,7 +8,7 @@ import { DomainOraclePool } from "./w0-gates.ts";
 import { publishChanged } from "./w0-replica.ts";
 import { pageAddress, pageRoots } from "./w0-page-outbox.ts";
 import { pageWireState } from "./w0-page-check.ts";
-import { W0, canonical, type WorldRow, type PositionBasis } from "./w0-world.ts";
+import { W0, canonical, factValue, type WorldRow, type PositionBasis } from "./w0-world.ts";
 import { ids, subjectOf } from "./world.ts";
 import { taskId } from "./deep-world.ts";
 import {
@@ -88,7 +88,9 @@ export function policyWorld(i: number, rows: readonly WorldRow[], basis: Positio
       expiry = read(r.value.value, ":file/expiresOn");
     put(subject, "documents", doc, r);
     put(doc, "docType", n === 0 ? "ead" : "visa", r);
-    put(doc, "expiresOn", expiry.value.value, expiry);
+    // [DX-ERA4, third review T1] a removed expiry date is one row still: its marker, a removed value (W0-1.2, SPEC 2.1),
+    // which DOCEXP holds (7.0); it is never read
+    put(doc, "expiresOn", expiry.value.type === "erased" ? factValue(expiry.value) : expiry.value.value, expiry);
   }
   for (const [n, r] of tasks.entries()) {
     const answer = `${subject}/ans:t${n}`,

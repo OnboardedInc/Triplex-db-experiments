@@ -7,7 +7,7 @@
 import { affectedSubjects } from "./affected.js";
 import type { JV } from "./json.js";
 import { JsonSyntaxError, canonicalJV, decodeUtf8Strict, quote, scan } from "./json.js";
-import type { Basis, Fact, World } from "./kernel.js";
+import type { Basis, EvaluateOptions, Fact, World } from "./kernel.js";
 import { evaluateWorld, reconcileWorld, resultJson } from "./kernel.js";
 import type {
   Delivery,
@@ -32,10 +32,18 @@ const shape = (): never => {
 };
 
 /** An object with exactly the listed keys (SPEC 4.4 step 1); returns its members. */
-function obj(x: JV | undefined, keys: readonly string[]): Map<string, JV> {
-  if (x === undefined || x.t !== "obj" || x.m.size !== keys.length) return shape();
+function obj(x: JV | undefined, keys: readonly string[], optional: readonly string[] = []): Map<string, JV> {
+  if (x === undefined || x.t !== "obj") return shape();
   for (const k of keys) if (!x.m.has(k)) shape();
+  for (const k of x.m.keys()) if (!keys.includes(k) && !optional.includes(k)) shape();
   return x.m;
+}
+/** SPEC 4.3 (W0-1.2): the optional `removable` and `kept` string arrays of `evaluate` and `reconcile` (SPEC 2.1, 7.0). */
+function optionsOf(m: Map<string, JV>): EvaluateOptions | undefined {
+  if (!m.has("removable") && !m.has("kept")) return undefined;
+  const list = (k: string) => (m.has(k) ? arr(member(m, k)).map(str) : undefined);
+  const removable = list("removable"), kept = list("kept");
+  return { ...(removable ? { removable } : {}), ...(kept ? { kept } : {}) };
 }
 const member = (m: Map<string, JV>, k: string): JV => m.get(k)!;
 const str = (x: JV): string => (x.t === "str" ? x.v : shape());
@@ -204,14 +212,14 @@ export function runOpJV(op: Op, input: JV): string {
     if (input.t !== "obj" || input.dup) return shape();
     switch (op) {
       case "evaluate": {
-        const m = obj(input, ["basis", "release", "world"]);
+        const m = obj(input, ["basis", "release", "world"], ["removable", "kept"]);
         const basis = basisOf(member(m, "basis"));
         const rel = releaseOf(member(m, "release"));
         const world = worldOf(member(m, "world"));
-        return resultJson(evaluateWorld(world, rel, basis));
+        return resultJson(evaluateWorld(world, rel, basis, optionsOf(m)));
       }
       case "reconcile": {
-        const m = obj(input, ["activations", "basis", "world"]);
+        const m = obj(input, ["activations", "basis", "world"], ["removable", "kept"]);
         const activations: Activation[] = arr(member(m, "activations")).map((a) => {
           const am = obj(a, ["from", "release", "tx"]);
           return {
@@ -222,7 +230,7 @@ export function runOpJV(op: Op, input: JV): string {
         });
         const basis = basisOf(member(m, "basis"));
         const world = worldOf(member(m, "world"));
-        return resultJson(reconcileWorld(world, activations, basis));
+        return resultJson(reconcileWorld(world, activations, basis, optionsOf(m)));
       }
       case "affected": {
         const m = obj(input, ["basis", "release", "worlds", "writes"]);

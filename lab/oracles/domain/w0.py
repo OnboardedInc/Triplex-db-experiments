@@ -198,11 +198,12 @@ def _ref_ok(v, refkind, ownership, e):
     return False
 
 
-def check_value(spec, v, e):
+def check_value(spec, v, e, removable=False):
     """SPEC 2 and 3: the normalized value of v for this attribute, or _BAD (W0.E_VALUE)."""
     typ, _card, pii, extra = spec
-    if pii and isinstance(v, dict):
-        # SPEC 2 erased: an object with exactly the one key erasedAt holding an instant; allowed only on PII.
+    if (pii or removable) and isinstance(v, dict):
+        # SPEC 2 erased: an object with exactly the one key erasedAt holding an instant; allowed only on PII, or (SPEC 2.1,
+        # W0-1.2) on an attribute the request names removable: a removed value.
         if len(v) == 1 and 'erasedAt' in v and is_instant(v['erasedAt']):
             return Erased(v['erasedAt'])
         return _BAD
@@ -231,8 +232,16 @@ def check_value(spec, v, e):
 # SPEC 4.4 step 1: shapes
 # ---------------------------------------------------------------------------------------------------------------
 
-def _is_obj(x, keys):
-    return isinstance(x, dict) and len(x) == len(keys) and all(k in x for k in keys)
+def _is_obj(x, keys, optional=()):
+    return isinstance(x, dict) and all(k in x for k in keys) and all(k in keys or k in optional for k in x)
+
+
+# SPEC 4.3 and 2.1 (W0-1.2, opt-in): evaluate and reconcile may carry `removable` and `kept`, arrays of strings.
+_OPTIONAL = ('removable', 'kept')
+
+
+def _shape_options(inp):
+    return all(isinstance(inp[k], list) and all(type(x) is str for x in inp[k]) for k in _OPTIONAL if k in inp)
 
 
 def _is_int_token(x):
@@ -269,13 +278,13 @@ RELEASE_NAMES = ('R1', 'R2', 'R3')
 def _shape_input(op, inp):
     """SPEC 4.3 and 4.4 step 1 for evaluate, reconcile and affected. Returns False on any E_SHAPE condition."""
     if op == 'evaluate':
-        if not _is_obj(inp, ('basis', 'release', 'world')):
+        if not _is_obj(inp, ('basis', 'release', 'world'), _OPTIONAL) or not _shape_options(inp):
             return False
         if type(inp['release']) is not str or inp['release'] not in RELEASE_NAMES:
             return False
         return _shape_basis(inp['basis']) and _shape_world(inp['world'])
     if op == 'reconcile':
-        if not _is_obj(inp, ('activations', 'basis', 'world')):
+        if not _is_obj(inp, ('activations', 'basis', 'world'), _OPTIONAL) or not _shape_options(inp):
             return False
         if not isinstance(inp['activations'], list) or not all(_shape_activation(a) for a in inp['activations']):
             return False
@@ -320,12 +329,12 @@ class IWorld:
         self.nfacts = 0
 
 
-def validate_world(w, basis_tx):
+def validate_world(w, basis_tx, removable=frozenset()):
     """SPEC 4.4 step 3 for one world (shape already checked in step 1). Returns an IWorld or raises W0Error."""
-    return validate_facts(w['subject'], ((f['e'], f['a'], f['v'], f['tx']) for f in w['facts']), basis_tx)
+    return validate_facts(w['subject'], ((f['e'], f['a'], f['v'], f['tx']) for f in w['facts']), basis_tx, removable)
 
 
-def validate_facts(subject, facts, basis_tx):
+def validate_facts(subject, facts, basis_tx, removable=frozenset()):
     """SPEC 4.4 step 3 over (e, a, v, tx) tuples in array order; tx is an integer token (JNum or int)."""
     if not is_placement_id(subject):           # 3.1
         raise W0Error(E_UNKNOWN)
@@ -340,7 +349,7 @@ def validate_facts(subject, facts, basis_tx):
         spec = ATTRS[kind].get(a) if kind is not None else None
         if spec is None:
             raise W0Error(E_UNKNOWN)
-        v = check_value(spec, raw, e)
+        v = check_value(spec, raw, e, a in removable)
         if v is _BAD:
             raise W0Error(E_VALUE)
         tx = ranged_int_token_value(txtok)
@@ -515,7 +524,7 @@ def _sha_hex(obj):
     return hashlib.sha256(canonical(obj).encode('utf-8')).hexdigest()
 
 
-def evaluate_indexed(w, rel, basis_tx, v):
+def evaluate_indexed(w, rel, basis_tx, v, kept=frozenset()):
     """SPEC 7 and 8: the output object of evaluate(world, release, basis) for a validated world."""
     S = w.subject
     one = w.one
@@ -724,6 +733,16 @@ def evaluate_indexed(w, rel, basis_tx, v):
                 ex_f = get((d, 'expiresOn'))
                 rv_f = get((d, 'reverified'))
                 txs = {dtx} | txs_of(ty_f, ex_f, rv_f)
+                if any(f is not None and isinstance(f[0], Erased) for f in (ty_f, ex_f, rv_f)):
+                    # SPEC 7.0 (W0-1.2): a read holding a removed value holds item d: row 0, no task or obligation; its
+                    # work item only when the subject held it (`kept`), each removed value written as its marker
+                    entry(rule, d, 0, txs)
+                    kind = 'notify.document-expired'
+                    if 'wi:' + _sha_hex({'key': d, 'kind': kind, 'rule': rule, 'subject': S}) in kept:
+                        def show(f):
+                            return None if f is None else ({'erasedAt': f[0].at} if isinstance(f[0], Erased) else f[0])
+                        pending_wis.append((rule, kind, d, {'docType': show(ty_f), 'expiresOn': show(ex_f)}))
+                    continue
                 ty = None if ty_f is None else ty_f[0]
                 if ty is None or ty not in lead_days:
                     entry(rule, d, 1, txs)
@@ -908,19 +927,33 @@ def dependencies_indexed(w, rel):
 # The operations on parsed inputs (SPEC 1, 4.3)
 # ---------------------------------------------------------------------------------------------------------------
 
+_WI_RE = re.compile(r'wi:[0-9a-f]{64}')
+
+
+def check_options(inp):
+    """SPEC 2.1 (W0-1.2): `removable` names only DOCEXP's document attributes and `kept` only work item ids, else
+    W0.E_VALUE; checked after the basis and before the world."""
+    removable, kept = inp.get('removable', []), inp.get('kept', [])
+    if not all(a in _DOC_ATTRS for a in removable) or not all(_WI_RE.fullmatch(k) for k in kept):
+        raise W0Error(E_VALUE)
+    return frozenset(removable), frozenset(kept)
+
+
 def op_evaluate(inp, releases):
     if has_duplicate_key(inp) or not _shape_input('evaluate', inp):   # step 1
         raise W0Error(E_SHAPE)
     basis_tx, v = check_basis(inp['basis'])                             # step 2
-    w = validate_world(inp['world'], basis_tx)                          # step 3
-    return evaluate_indexed(w, releases.by_name[inp['release']], basis_tx, v)
+    removable, kept = check_options(inp)                                # step 2.1 (W0-1.2)
+    w = validate_world(inp['world'], basis_tx, removable)               # step 3
+    return evaluate_indexed(w, releases.by_name[inp['release']], basis_tx, v, kept)
 
 
 def op_reconcile(inp, releases):
     if has_duplicate_key(inp) or not _shape_input('reconcile', inp):  # step 1
         raise W0Error(E_SHAPE)
     basis_tx, v = check_basis(inp['basis'])                             # step 2
-    w = validate_world(inp['world'], basis_tx)                          # step 3
+    removable, kept = check_options(inp)                                # step 2.1 (W0-1.2)
+    w = validate_world(inp['world'], basis_tx, removable)               # step 3
     acts = []
     for a in inp['activations']:                                        # step 4, in array order
         if type(a['release']) is not str or _HASH_RE.fullmatch(a['release']) is None or not is_instant(a['from']):
@@ -930,7 +963,7 @@ def op_reconcile(inp, releases):
             raise W0Error(E_BASIS)
         acts.append((a['from'], tx, a['release']))
     rel = resolve_release(acts, v, releases)                            # W0.E_NO_RELEASE
-    return evaluate_indexed(w, rel, basis_tx, v)
+    return evaluate_indexed(w, rel, basis_tx, v, kept)
 
 
 def op_affected(inp, releases):

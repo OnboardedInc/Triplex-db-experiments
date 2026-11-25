@@ -162,12 +162,18 @@ export function allowedKind(e: string, subject: string): Kind | null {
 }
 
 /** Validates `v` against an attribute's type and normalises integers to numbers; returns NOT_A_VALUE when invalid (SPEC 2). */
-export function checkValue(spec: AttrSpec, v: RawValue, owner: string): Value | typeof NOT_A_VALUE {
+export function checkValue(
+  spec: AttrSpec,
+  v: RawValue,
+  owner: string,
+  removable = false,
+): Value | typeof NOT_A_VALUE {
   if (v === NOT_A_VALUE || (v as unknown) === null || (v as unknown) === undefined)
     return NOT_A_VALUE;
   if (typeof v === "object") {
-    // SPEC 2 `erased`: exactly one key `erasedAt` holding an instant, and only on a PII attribute (case C64).
-    if (!spec.pii) return NOT_A_VALUE;
+    // SPEC 2 `erased`: exactly one key `erasedAt` holding an instant, and only on a PII attribute (case C64), or on an
+    // attribute the request names `removable` (SPEC 2.1, W0-1.2: a removed value).
+    if (!spec.pii && !removable) return NOT_A_VALUE;
     const keys = Object.keys(v);
     if (keys.length !== 1 || keys[0] !== "erasedAt") return NOT_A_VALUE;
     const at: unknown = v.erasedAt;
