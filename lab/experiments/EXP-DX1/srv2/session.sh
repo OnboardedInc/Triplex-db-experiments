@@ -103,11 +103,12 @@ record() {  # $1 phase (start|end), $2 exit code, then option assignments
   local phase=$1 code=$2; shift 2
   mkdir -p "$EVID"
   local spent running; read -r spent running < <(spend_now)
-  node -e '
+  SRV2_REPO=$repo node -e '
     const [file, phase, code, step, machine, commit, sha, dry, spent, running, images, ...opts] = process.argv.slice(1);
     const fs = require("fs"); const prev = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : {};
     const at = new Date().toISOString();
     const rec = { ...prev, step, machine, commit, settingsSha256: sha, mode: dry === "1" ? "mac-dry-run" : "server",
+      ...(dry === "1" ? { codeRan: require("child_process").execFileSync("git", ["-C", process.env.SRV2_REPO, "rev-parse", "HEAD"], { encoding: "utf8" }).trim() } : {}),
       images: JSON.parse(images), options: Object.fromEntries(opts.map((o) => [o.slice(0, o.indexOf("=")), o.slice(o.indexOf("=") + 1)])) };
     rec[phase] = { at, spendUsd: Number(spent), runningMachines: Number(running), ...(phase === "end" ? { exit: Number(code) } : {}) };
     fs.writeFileSync(file, JSON.stringify(rec, null, 2) + "\n");' \
