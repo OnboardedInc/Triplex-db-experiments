@@ -313,8 +313,18 @@
                                   []))
                               (catch Exception _ []))
                   entries (filter due? (concat (vals (:commands cut)) native))
-                  present (filterv (fn [i] (envelope/key-present? name (get i "assertionId") (get i "keyHandle")))
-                                   (distinct (mapcat #(get % "identities") entries)))]
+                  ids (distinct (mapcat #(get % "identities") entries))
+                  ;; with the PostgreSQL authority one query per database per pass, not one per identity
+                  present (if sql/url
+                            (let [by-handle (into {} (keep (fn [i] (when-let [h (get i "keyHandle")] [h i])) ids))
+                                  found (when (seq by-handle)
+                                          (#'sql/with-session
+                                            (fn [c] (#'sql/select! c "SELECT id FROM triplex_removal.keys WHERE scope=? AND id = ANY(?)"
+                                                                   [name (.createArrayOf ^java.sql.Connection c "text" (to-array (keys by-handle)))]
+                                                                   (fn [^java.sql.ResultSet rs]
+                                                                     (loop [out #{}] (if (.next rs) (recur (conj out (.getString rs 1))) out)))))))]
+                              (filterv #(contains? found (get % "keyHandle")) (vals by-handle)))
+                            (filterv (fn [i] (envelope/key-present? name (get i "assertionId") (get i "keyHandle"))) ids))]
               (when (seq present) (envelope/erase-keys! name present)))))
         (catch Exception _ nil)))))
 (defonce ^:private resweeper (atom nil))
