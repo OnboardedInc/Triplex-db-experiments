@@ -352,6 +352,31 @@
             (is (= 200 (:removal r)))
             (is (not= "chosen before" stored) [label "the value chosen before the removal is not stored"])))))))
 
+;; ---------------------------------------------------------------- 6b. the reserved prefix on the removal route
+
+(deftest a-removal-takes-an-accounts-scoped-command-id
+  ;; R2-3 (S6 12.3): no client-supplied ID may begin with the reserved prefix on any route. The removal route
+  ;; (erase.clj erase!) stores its command ID as a claim (:triplex.claim/command-id) and is not in the checked list.
+  ;; A caller that names no account sends a removal of its own value under account a20's scoped form of a command ID.
+  (when (and (System/getenv "TRIPLEX_ERASURE_DIRECTORY") (run? "authority"))
+    (reference/in-scope
+      (fn [name conn]
+        (protected! name)
+        (turn-on! conn)
+        (let [cmd (str "joined:alice-" (swap! counter inc))
+              B "acct/b20/subject/bob"
+              _ (reference/send name (save conn {:facts [{:owner B :field ":p/secret" :type :string :value "b" :pred nil}]}))
+              removal (erase! name (ac/encode "a20" cmd) [{"entityId" B "attribute" ":p/secret"}])
+              a (reference/send name (with-account (save conn {:command cmd :operation (str "op-" (swap! counter inc))
+                                                               :facts [{:owner "acct/a20/subject/alice" :field ":a/f" :type :string :value "a" :pred nil}]}) "a20"))
+              lookup (:body (reference/route name "v1" "claim" {"commandId" cmd "account" "a20" "receipt" true}))
+              r {:case "a removal sent under an account's scoped command ID, by a caller naming no account" :removal (:status removal)
+                 :removalTx (get-in removal [:body "txId"]) :accountsSave (reference/outcome a)
+                 :accountsLookup (select-keys lookup ["txId" "taken"])}]
+          (line r)
+          (is (not= 200 (:removal r)) "the reserved prefix is refused on the removal route (R2-3)")
+          (is (= [200 nil] (:accountsSave r)) "the account's own save of its command ID is stored"))))))
+
 ;; ---------------------------------------------------------------- 7. an ordered import chain across the transition
 
 (deftest an-import-chain-across-the-transition
