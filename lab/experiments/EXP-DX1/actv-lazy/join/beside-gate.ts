@@ -803,6 +803,19 @@ async function restartPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
     }
     return Math.round(now() - begun);
   };
+  // A step after a restart, again while it fails only because a peer has not reached the restarted transactor or the
+  // gateway is not back (settlement resumes from its durable progress, so running it again is the claim being tested).
+  const transport = /Error communicating with HOST|ECONNREFUSED|ECONNRESET|socket hang up|fetch failed|Native write had no receipt|Gateway deadline/;
+  const steady = async <T>(what: string, f: () => Promise<T>, retried: string[]) => {
+    for (let k = 0; ; k++) {
+      try { return await f(); } catch (e) {
+        const m = String((e as Error)?.message);
+        if (k >= 60 || !transport.test(m)) throw e;
+        retried.push(what + ": " + m.split("\n")[0]!.slice(0, 120));
+        await sleep(2000);
+      }
+    }
+  };
   // The same command offered until it is acknowledged; every failure recorded (a transport failure, an unknown outcome).
   const offerUntil = async (id: string, doc: W0.ReleaseDoc, options?: PublishOptions) => {
     const failures: string[] = [];
@@ -834,12 +847,13 @@ async function restartPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
       if (pending) restartMs = await pending;
       assert(where === "frame" || restartMs !== undefined, "the restart did not run inside the Publish");
       stage = "record checks";
-      const seq = await sequenceAt(c.a, p.position);
-      const receipt = await c.a.receipt(seq, p.position);
+      const retried: string[] = [];
+      const seq = await steady("sequence", () => sequenceAt(c.a, p.position), retried);
+      const receipt = await steady("receipt", () => c.a.receipt(seq, p.position), retried);
       assert.deepEqual([receipt.event.at, receipt.event.value.request], [p.position, id]);
       assert.equal(receipt.marker.seq, (c.releases.at(-1)?.seq ?? 0) + 1, "the next notice sequence");
       // Exactly one record for the command ID, at the position the receipt names.
-      const found = await c.s.lookup(joinedCommandId(c.s, id));
+      const found = await steady("lookup", () => c.s.lookup(joinedCommandId(c.s, id)), retried);
       assert.equal(found.position, p.position);
       const r: Release = { position: p.position, seq, doc, durableAt: now(), offer: offered, received: now(),
         read: receipt.marker.read ?? receipt.marker.cut, tries: 1 };
@@ -868,10 +882,10 @@ async function restartPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
         frame = { valueFramesBeforeRestart: frames - 1, firstRun: first };
         assert(restartMs !== undefined, "the restart did not run inside the settlement");
       }
-      const settled = await g.settle(r, old);
+      const settled = await steady("settle", () => g.settle(r, old), retried);
       stage = "pinned reads";
-      await g.checkBetween(r);
-      out.push({ role, where, restartMs, failures, position: r.position, read: r.read, seq: r.seq, frame, settled });
+      await steady("pinned reads", () => g.checkBetween(r), retried);
+      out.push({ role, where, restartMs, failures, retried, position: r.position, read: r.read, seq: r.seq, frame, settled });
     } catch (e) {
       jsonFile(path.join(c.out, "act8-restart-partial.json"), out);
       throw new Error("restart " + role + " " + where + " at " + stage + ": " + String((e as Error)?.message), { cause: e });
