@@ -101,6 +101,23 @@ export const databaseOf = (source: Source) => {
   assert(source.backend?.name === "datomic" && source.scopeName, "Derived sealing needs a Datomic scope");
   return "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(source.scopeName))).toString("base64url");
 };
+/** [DX-ERA4, third review T3 and T4] SCALE1's deep subject (bench/lib/world.ts `subjectOf`, under the account's namespace
+ * `acct/<account>/`) as a declared subject boundary: the subject ID derived records name, its one root, and the ID
+ * patterns of its own entities. */
+export const DEEP_BOUNDARY = {
+  v: 1, subject: "pl:s{n}", root: "acct/{account}/pl:{n}", rootRows: true,
+  own: ["pl", "wk", "i9", "sec", "ev", "doc", "evt"].flatMap((k) => [
+    ...(k === "pl" ? [] : [`acct/{account}/${k}:{n}`]), `acct/{account}/${k}:{n}:*`]),
+} as const;
+/** Declares the database's subject boundary (one-way; the same value again changes nothing). */
+export async function declareBoundary(source: Source, boundary: object = DEEP_BOUNDARY) {
+  const client = new DatomicClient(source.backend!.url);
+  try {
+    return await client.request<{ declared: boolean; changed: boolean }>("POST", `/v2/db/${databaseOf(source)}/subject-boundary`, boundary);
+  } finally {
+    client.close();
+  }
+}
 const CHUNK = 512;
 /** [DX-ERA4, after DX-ERA5's B1] A test seam (era4/derived.ts, ERA4_FAULTS): the next seal or open call fails as a
  * network error, as the client's own 5 s timeout after a stalled gateway, or as a gateway without the option (404).

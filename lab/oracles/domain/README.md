@@ -56,6 +56,16 @@ No input can hit a Python limit; every invalid input gets its SPEC error.
   MINWAGE under R1 at 7.810%; largest location 1,100, mean 49.54; three or more work items 1.567% (R1) and 2.459% (R2, R3); R3 reaches
   9,497 subjects and changes 418, none changed without being reached; OT under R3 fires for 16.538%.
 
+## W0-1.2, opt-in: removed values (the owner's ruling of 2026-11-25)
+
+`evaluate` and `reconcile` accept two optional input keys, `removable` (document attributes on which an `erased` marker is a
+removed value) and `kept` (the work item ids a subject held). Step 2.1, after the basis and before the world, is
+`W0.E_VALUE` when `removable` names anything but `docType`, `expiresOn` or `reverified`, or `kept` holds a string that is
+not `wi:` and 64 lowercase hex digits. A DOCEXP item whose input facts include a removed value is held: row 0 with its key,
+no task or obligation, and its `notify.document-expired` work item only when its id is in `kept`, each removed value written
+as its marker. The text, written for SPEC.md, is `lab/experiments/EXP-DX1/era4/W0-REMOVED-VALUES.md`; it was implemented here
+from that text alone. Without the two keys every output is W0-1.1.2's (the golden cases as before the change).
+
 ## SPEC-AMBIGUITY items (the reading O-DOMAIN implements)
 
 | Id | Place | Ambiguity | Reading chosen |

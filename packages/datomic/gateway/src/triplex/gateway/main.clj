@@ -571,7 +571,7 @@
 (defn- removal-tx-id [] ((requiring-resolve 'triplex.gateway.derived-seal/removal-tx-id)))
 ;; [DX-ERA4, after DX-ERA5's B1 and M3] the database's one-way setting that its derived documents are sealed: a gateway
 ;; with the option checks every write against it; a gateway of this build without the option refuses the database.
-(defn- derived-check-rows [db rows new-ids] ((requiring-resolve 'triplex.gateway.derived-seal/check-rows!) db rows new-ids))
+(defn- derived-check-rows [db rows new-ids input] ((requiring-resolve 'triplex.gateway.derived-seal/check-rows!) db rows new-ids input))
 (if derived-seal-on (alter-var-root #'privacy/derived-check (constantly derived-check-rows)) nil)
 (defn- derived-required? [db]
   ;; a database value this cannot read (a test's fake peer) is left to the request path, exactly as before the option
@@ -598,6 +598,9 @@
                          :message "This database requires sealed derived documents: this gateway runs without TX2_DERIVED_SEAL"})
           (if (= :post request-method) (if derived-seal-on (= action "derived-seal-required") false) false)
           (response 200 ((requiring-resolve 'triplex.gateway.derived-seal/require!) name conn))
+          ;; [DX-ERA4, third review T3 and T4] the database's subject boundary, declared once
+          (if (= :post request-method) (if derived-seal-on (= action "subject-boundary") false) false)
+          (response 200 ((requiring-resolve 'triplex.gateway.derived-seal/declare-boundary!) conn (request-json body)))
           (and (= :post request-method) (= action "protection"))
           ;; [DX-ERA2 sixth pass, V1] guarded per account: compared with the policy stored in the database, never the log
           (response 200 (if per-account

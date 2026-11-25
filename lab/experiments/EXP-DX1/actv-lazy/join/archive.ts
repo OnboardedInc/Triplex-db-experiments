@@ -244,6 +244,7 @@ export class Archive {
             kind,
             () => this.store.commit(id, "lazy/settlement", ops, at, context, undefined, undefined, guards),
             ticket,
+            derivedSealOn() ? this.source.s.held?.account : undefined,
           );
         } finally {
           c.turn(begun, performance.now());

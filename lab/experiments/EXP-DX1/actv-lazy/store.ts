@@ -8,6 +8,7 @@ import {
 } from "../../../../packages/datomic/dist/index.js";
 import { Effect, openTriples, runtimeApi } from "../../../bench/lib/triplex.ts";
 import { openComposition } from "../../../bench/lib/composition.ts";
+import { declareBoundary, derivedSealOn } from "../../../bench/lib/derived-seal.ts";
 import { ids } from "../../../bench/lib/world.ts";
 import { canonical, sha256, W0, type WorldRow } from "../../../bench/lib/w0-world.ts";
 
@@ -137,16 +138,13 @@ export async function openStore(
   const h = access === "write" ? await openTriples("datomic", scope) : undefined,
     comp = await openComposition("reach", "datomic", scope,
       options.readAtLeast === undefined ? undefined : { readAtLeast: options.readAtLeast });
-  // [DX-ERA4, after the second review's N3] A held account in the deep format keeps a subject's facts on sibling
-  // entities linked from its placement (`<prefix>pl:N`, bench/lib/world.ts): a derived record's place names that root,
-  // so the gateway seals it under every protected value of the subject's world (derived-seal.ts placeOf).
-  if (held && profile === "act2-deep")
-    Object.defineProperty(comp, "subjectRoot", {
-      value: {
-        account: held.account,
-        root: (subject: string) => (/^pl:s[0-9]{8}$/.test(subject) ? held.prefix + ids.placement(Number(subject.slice(4))) : undefined),
-      },
-    });
+  // [DX-ERA4, third review T3 and T4] A held account in the deep format keeps a subject's facts on its own entities
+  // `acct/<account>/pl:N`, `wk:N`, `i9:N...`, `sec:N:...`, `ev:N:...`, `doc:N:...`, `evt:N:...` (bench/lib/world.ts
+  // `subjectOf`). Under TX2_DERIVED_SEAL the database declares that as its subject boundary (once; the same value again
+  // changes nothing): the gateway then finds a place's subject's root itself and takes the protected values of exactly
+  // those entities, and refuses a protected value written anywhere else. The place no longer carries the root.
+  if (held && profile === "act2-deep" && derivedSealOn() && access === "write" && held.prefix === "acct/" + held.account + "/")
+    await declareBoundary(comp as never);
   const counters = {
     writes: 0,
     accountReads: 0,

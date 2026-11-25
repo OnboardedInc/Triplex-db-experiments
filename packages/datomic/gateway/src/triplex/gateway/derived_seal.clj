@@ -228,68 +228,147 @@
   (let [parts (str/split place #"\|" -1) n (count parts)]
     (if (place-root place) (if (>= n 4) (nth parts (- n 3)) "") (if (>= n 2) (nth parts (- n 2)) ""))))
 
-;; [DX-ERA4, after the second review's N3, the deep layout] A held account in the deep format (decision.ts act2-deep,
-;; bench/lib/world.ts) keeps a subject's facts on sibling entities `acct/<account>/pl:N`, `wk:N`, `i9:N`, `sec:N:s`,
-;; `ev:N:s:e`, `doc:N:s:e`, linked from the placement by references, while its derived records name the subject
-;; `pl:sN`. The place then carries the subject's root (`@acct/<account>/pl:N`); the gateway checks the root against
-;; its stored rows (`:subject/member` is the subject's number, `:subject/account` the place's account) and takes every
-;; protected value on every entity reached from the root through reference rows, as the writers' worlds and the sweep
-;; reader reach them. No new state: the references are the account's own rows.
-(def ^:private max-world 65536)
+;; ---- [DX-ERA4, third review T3 and T4] the declared subject boundary -------------------------------------------------
+;; A database declares, once, which entities are a subject's own: the form of the subject ID its derived records name,
+;; the subject's one root, and the ID patterns of the entities it owns (`POST /v2/db/<db>/subject-boundary`, one-way). The
+;; gateway then finds a place's subject's root itself (from the place's account and the subject's number), checks the
+;; root's own rows, and takes every protected value on the root and on every entity matching an own pattern (one index
+;; read per pattern), instead of walking references (the second review's rule, which reached other subjects and shared
+;; entities and missed entities that point at the subject). Every protected value written into a database with a
+;; boundary must be on an entity the boundary gives to exactly one subject, or the write is refused, so no protected
+;; value lies outside every subject's set. Without a declaration the W0 boundary applies: the subject's entity and the
+;; entities named under it, as before.
+(def ^:private boundary-attr :triplex.scope/subject-boundary)
+(def ^:private default-boundary {"v" 1 "subject" "pl:s{n}" "root" "pl:s{n}" "rootRows" false "own" ["pl:s{n}/*"]})
+(def ^:private literal #"[A-Za-z0-9_:./-]*")
+(defn- pattern-parts
+  "A pattern's literal pieces and its slots, in order: `{n}` the subject's 8-digit number, `{account}` the account, and a
+  trailing `*` (only at the end, after `/` or `:`) any further characters."
+  [^String p]
+  (let [star (str/ends-with? p "*") body (if star (subs p 0 (dec (count p))) p)
+        pieces (str/split body #"\{n\}|\{account\}" -1)
+        slots (mapv second (re-seq #"\{(n|account)\}" body))]
+    {:star star :pieces pieces :slots slots :body body}))
+(defn- pattern-ok? [^String p account?]
+  (if (if (string? p) (<= 1 (count p) 128) false)
+    (let [{:keys [star pieces slots body]} (pattern-parts p)]
+      (and (every? #(some? (re-matches literal %)) pieces)
+           (= 1 (count (filter #{"n"} slots)))
+           (= (if account? 1 0) (count (filter #{"account"} slots)))
+           (if star (contains? #{\/ \:} (last body)) true)))
+    false))
+(defn- pattern-re [^String p]
+  (let [{:keys [star pieces slots]} (pattern-parts p)
+        q (fn [x] (java.util.regex.Pattern/quote x))
+        groups {"n" "(?<n>[0-9]{8})" "account" "(?<account>[A-Za-z0-9_.-]{1,64})"}]
+    (re-pattern (str (apply str (interleave (map q pieces) (concat (map groups slots) [""])))
+                     (if star ".+" "")))))
+(defn- instantiate [^String p account n]
+  (-> (pattern-parts p) :body (str/replace "{n}" n) (str/replace "{account}" (or account ""))))
+(defn- valid-boundary? [b]
+  (if (map? b)
+    (let [account? (str/includes? (str (get b "root")) "{account}")]
+      (and (every? #{"v" "subject" "root" "rootRows" "own"} (keys b)) (= 1 (get b "v"))
+           (pattern-ok? (get b "subject") false) (not (str/ends-with? (str (get b "subject")) "*"))
+           (pattern-ok? (get b "root") account?) (not (str/ends-with? (str (get b "root")) "*"))
+           (boolean? (get b "rootRows"))
+           (vector? (get b "own")) (<= (count (get b "own")) 64) (every? #(pattern-ok? % account?) (get b "own"))))
+    false))
+(def ^:private compiled (atom {}))
+(defn- compile-boundary [b]
+  (or (get @compiled b)
+      (let [c {:b b :account? (str/includes? (get b "root") "{account}") :subject (pattern-re (get b "subject"))
+               :owners (mapv pattern-re (cons (get b "root") (get b "own")))}]
+        (swap! compiled assoc b c) c)))
+(defn declared-boundary
+  "The database's declared subject boundary, or nil."
+  [db]
+  (if (d/entid db boundary-attr)
+    (let [v (:v (first (d/datoms db :eavt (scope/entity db) boundary-attr)))]
+      (if (string? v) (json/read-str v) nil))
+    nil))
+(defn- boundary [db] (compile-boundary (or (declared-boundary db) default-boundary)))
+(defn- owner-of
+  "[account number] of the subject the boundary gives entity `e` to, or nil."
+  [c ^String e]
+  (some (fn [re] (when-let [m (re-matcher re e)]
+                   (when (.matches m) [(if (:account? c) (.group m "account") nil) (.group m "n")])))
+        (:owners c)))
+(defn declare-boundary!
+  "`POST /v2/db/<db>/subject-boundary`: declares the boundary once (the same value again answers as before; another is
+  refused 409). It must come before the subject's protected values are written: a value written earlier is not checked."
+  [conn input]
+  (when-not (valid-boundary? input)
+    (invalid! "Expected {v: 1, subject, root, rootRows, own: [...]}: patterns of [A-Za-z0-9_:./-], one {n} each, {account} in all or none, a trailing * after / or :"))
+  (let [db (d/db conn) text (json/write-str input) head (scope/entity db)
+        current (declared-boundary db)]
+    (cond
+      (= current input) {:declared true :changed false}
+      (some? current) (privacy/failure! 409 "SubjectBoundaryDeclared" "This database already declared another subject boundary")
+      :else
+      (do (when-not (d/entid db boundary-attr)
+            @(d/transact conn [{:db/ident boundary-attr :db/valueType :db.type/string :db/cardinality :db.cardinality/one}]))
+          (try @(d/transact conn [[:db/cas head boundary-attr nil text]])
+               (catch Exception _
+                 (when-not (= input (declared-boundary (d/db conn)))
+                   (privacy/failure! 409 "SubjectBoundaryDeclared" "This database already declared another subject boundary"))))
+          {:declared true :changed true}))))
+
 (defn- live-rows [db ^String entity]
   (if-let [eid (d/entid db [:triplex.entity/id entity])]
     (map #(lean/decode (:v %)) (lean/live-texts db eid))
     []))
-(defn- root! [db ^String root ^String subject ^String account]
-  (when-not (lean/enabled? db) (invalid! "A place with a subject root needs the lean layout"))
-  (let [rows (live-rows db root)
-        one (fn [a] (vec (distinct (keep #(when (= a (:attribute %)) (:value_string %)) rows))))
-        m (re-matches #"pl:s([0-9]{8})" (str subject))]
-    (when-not (and m (seq account)
-                   (= [(str (Long/parseLong (second m)))] (one ":subject/member"))
-                   (= [account] (one ":subject/account")))
-      (invalid! "The place's subject root is not that subject's (its :subject/member and :subject/account rows)"))))
-(defn- world-of [db ^String root]
-  (loop [order [root] seen #{root} i 0]
-    (if (< i (count order))
-      (let [targets (distinct (for [r (live-rows db (nth order i))
-                                    :when (= "ref" (:value_type r))
-                                    :let [t (:value_string r)]
-                                    :when (string? t)
-                                    :when (not (contains? seen t))]
-                                t))]
-        (when (> (+ (count seen) (count targets)) max-world)
-          (invalid! "A subject's world reaches more than 65,536 entities"))
-        (recur (into order targets) (into seen targets) (inc i)))
-      order)))
+(defn- subject-root!
+  "The place's subject's one root, found from the boundary (the place's @root, if it carries one, must be that root);
+  with `rootRows`, the root must exist and carry exactly the subject's number and the place's account."
+  [db c ^String subject ^String account ^String carried]
+  (let [m (re-matcher (:subject c) (str subject))
+        n (if (.matches m) (.group m "n") (invalid! "The place's subject is not of the declared subject form"))
+        b (:b c)
+        _ (when (if (:account? c) (not (re-matches #"[A-Za-z0-9_.-]{1,64}" (str account))) false)
+            (invalid! "The place names no account of the declared form"))
+        root (instantiate (get b "root") account n)]
+    (when (if (some? carried) (not= carried root) false)
+      (invalid! "The place's subject root is not the subject's root (the database's subject boundary names another)"))
+    (when (get b "rootRows")
+      (when-not (lean/enabled? db) (invalid! "A subject boundary with root rows needs the lean layout"))
+      (let [rows (live-rows db root)
+            one (fn [a] (vec (distinct (keep #(when (= a (:attribute %)) (:value_string %)) rows))))]
+        (when-not (and (= [(str (Long/parseLong n))] (one ":subject/member"))
+                       (= [account] (one ":subject/account")))
+          (invalid! "The place's subject has no root of its number and account (its :subject/member and :subject/account rows)"))))
+    [root n]))
 
-;; [DX-ERA4, second review N3] The gateway chooses the keys: every protected assertion of the subject the record's
-;; place names (its entity and the entities under `<subject>/`; with a subject root, every entity of its world),
-;; current or superseded, that is not removed; plus whatever else the writer names. A writer that names too few rows
-;; of its own subject can no longer get a record sealed under too few keys while that subject holds a protected value.
-;; One index scan per entity per call.
+;; [DX-ERA4, second review N3; third review T3 and T4] The gateway chooses the keys: every protected assertion on the
+;; place's subject's own entities by the boundary (its root and every entity of an own pattern), current or superseded,
+;; that is not removed; plus whatever else the writer names. One index read per pattern per subject per call.
 (def ^:dynamic ^:private *subjects* nil)
 (defn- subject-protected
   ([db cut subject] (subject-protected db cut subject nil nil))
-  ([db cut subject root account]
+  ([db cut subject carried account]
   (if (nil? subject)
     []
-    (let [look (fn []
+    (let [c (boundary db)
+          look (fn []
                  (let [native (native-erased db cut)
-                       lo (str subject "/") hi (str subject "/￿")
-                       world (if root (do (root! db root subject account) (world-of db root)) [])]
+                       [root n] (subject-root! db c subject account carried)
+                       b (:b c)
+                       datoms (mapcat (fn [p]
+                                        (let [x (instantiate p account n)]
+                                          (if (str/ends-with? p "*")
+                                            (d/index-range db :triplex.private/entity x (str x "￿"))
+                                            (d/datoms db :avet :triplex.private/entity x))))
+                                      (cons (get b "root") (get b "own")))]
                    (vec (sort (distinct
-                                (for [x (concat (d/datoms db :avet :triplex.private/entity subject)
-                                                (d/index-range db :triplex.private/entity lo hi)
-                                                (mapcat #(d/datoms db :avet :triplex.private/entity %) world))
+                                (for [x datoms
                                       :let [id (scope/value db (:e x) :triplex.private/id)]
                                       :when (string? id)
                                       :when (not (contains? (:erased cut) id))
                                       :when (not (contains? native id))]
                                   id))))))
-          k [subject root account]
-          c *subjects*]
-      (if c (or (get @c k) (let [r (look)] (swap! c assoc k r) r)) (look))))))
+          k [subject carried account]
+          cache *subjects*]
+      (if cache (or (get @cache k) (let [r (look)] (swap! cache assoc k r) r)) (look))))))
 
 (defn- plan-seal
   "Checks one seal item and computes the assertions it is sealed under. An item is {value | bytes, place?, ids?}:
@@ -581,14 +660,22 @@
     (and (every? #{"removed" "seq"} (keys x)) (vector? (get x "removed")) (every? id-like? (get x "removed"))
          (or (nil? (get x "seq")) (nat? (get x "seq"))))
     false))
+(def ^:dynamic ^:private *account*
+  "[DX-ERA4, third review T3] the account a derived write declares (`derivedAccount`) when the database's boundary has
+  accounts: every unit's place must name it; ::missing when the write names none."
+  nil)
 (defn- unit!
-  "A content unit: a sealed record for `subject` (its place names it) or the removed marker."
+  "A content unit: a sealed record for `subject` (its place names it, and the write's account) or the removed marker."
   [what subject x]
   (if (removed-marker? x)
     nil
     (let [h (sealed-header x)]
       (when-not h (unsealed! what))
-      (when-not (= subject (place-subject (get h "p"))) (unsealed! (str what " (a record of another subject)"))))))
+      (when-not (= subject (place-subject (get h "p"))) (unsealed! (str what " (a record of another subject)")))
+      (when (some? *account*)
+        (when (= ::missing *account*) (unsealed! (str what " (the write names no account: derivedAccount)")))
+        (when-not (= *account* (place-account (get h "p")))
+          (unsealed! (str what " (a record placed in another account than the document's)")))))))
 (defn- exact-keys! [what m required optional]
   (when-not (and (map? m) (every? #(contains? m %) required) (every? (into (set required) optional) (keys m)))
     (unsealed! what)))
@@ -687,8 +774,19 @@
   marker), and a change record equal to its row; anything else refused (409 DerivedRecordUnsealed). Returns the fence
   [DX-ERA4, second review N7]: a compare-and-set of the setting on the value read here, so a declaration between this
   check and the commit fails the write at the serial point."
-  [db rows new-ids]
+  [db rows new-ids input]
   (let [fresh (filterv #(contains? new-ids (:id %)) rows)
+        ;; [DX-ERA4, third review T4] with a declared boundary every protected value written is on an entity it gives to
+        ;; a subject: none lies outside every subject's set (a shared entity, or one that only refers to a subject)
+        attrs (:attrs privacy/*cut*)
+        protected-rows (if (seq attrs) (filterv #(contains? attrs (:attribute %)) fresh) [])
+        declared (if (seq protected-rows) (declared-boundary db) nil)
+        _ (when declared
+            (let [c (compile-boundary declared)]
+              (doseq [r protected-rows]
+                (when-not (owner-of c (str (:entity_id r)))
+                  (privacy/failure! 409 "ProtectedValueOutsideSubject"
+                                    (str "A protected value of " (:attribute r) " on an entity the database's subject boundary gives to no subject"))))))
         by-id (into {} (map (fn [r] [(:id r) r])) fresh)
         changes (keep (fn [r]
                         (when (= ":_tx/change" (:attribute r))
@@ -699,10 +797,15 @@
         touched (if (seq docs) true (boolean (seq changes)))
         value (if touched (setting-value db) nil)]
     (when (true? value)
-      (doseq [r docs]
-        (let [entity (str (:entity_id r)) m (re-matches document-entity entity)]
-          (when-not (and m (= "notice/value" (:attribute r))) (unsealed! (str entity " (not a derived document's own form)")))
-          (check-document! (nth m 2) (str (:value_string r)))))
+      (binding [*account* (let [b (declared-boundary db)]
+                            (if (if b (str/includes? (str (get b "root")) "{account}") false)
+                              (let [a (get input "derivedAccount")]
+                                (if (if (string? a) (some? (re-matches #"[A-Za-z0-9_.-]{1,64}" a)) false) a ::missing))
+                              nil))]
+        (doseq [r docs]
+          (let [entity (str (:entity_id r)) m (re-matches document-entity entity)]
+            (when-not (and m (= "notice/value" (:attribute r))) (unsealed! (str entity " (not a derived document's own form)")))
+            (check-document! (nth m 2) (str (:value_string r))))))
       (doseq [c changes]
         (when (:bad c) (unsealed! "an unreadable journal change record"))
         (when (= "assert" (get c "op"))

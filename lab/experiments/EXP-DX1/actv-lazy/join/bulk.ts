@@ -11,7 +11,7 @@ export type BulkClass = "activation" | "notice";
 // names the account the frame read instead of being sent as a cross-database ticket (which keeps the database-wide
 // check). Absent: exactly as before.
 type SourceTicket = Pick<ErasureFrontier, "seq" | "database"> & { accounts?: readonly string[] };
-const workByClaim = new Map<string, { kind: BulkClass; ticket?: SourceTicket }>();
+const workByClaim = new Map<string, { kind: BulkClass; ticket?: SourceTicket; derivedAccount?: string }>();
 let installed = false;
 export const bulkWireLimit = 64 * 1024;
 export const bulkUs = (rows: number, bytes: number) =>
@@ -49,6 +49,7 @@ export async function bulkClaim<T>(
   kind: BulkClass,
   send: () => Promise<T>,
   ticket?: SourceTicket,
+  derivedAccount?: string,
 ) {
   if (!installed) {
     installed = true;
@@ -58,7 +59,9 @@ export async function bulkClaim<T>(
       const work = claims.find((x) => x !== undefined);
       if (!work) return original.call(this, db, input, onSent);
       assert(claims.length === 1 && input.rows.length <= 96, "Invalid bulk claim frame");
-      const wire = { ...input, writeClass: work.kind };
+      // [DX-ERA4, third review T3] a held account's derived write names its account (`derivedAccount`): under a subject
+      // boundary with accounts, every sealed unit it stores must be placed in that account
+      const wire = { ...input, writeClass: work.kind, ...(work.derivedAccount ? { derivedAccount: work.derivedAccount } : {}) };
       // [DX-ERASE1] Why: a queued Effect can resume in another context, so bring the source cut with the destination's exact claim.
       // Rejected: relying on the enqueueing fiber's ambient removal sequence.
       const invoke = () => frameCountersOn
@@ -78,7 +81,7 @@ export async function bulkClaim<T>(
     "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scope))).toString("base64url");
   const key = db + "/" + claim;
   assert(!workByClaim.has(key), "Bulk claim already in flight in this process");
-  workByClaim.set(key, { kind, ...(ticket ? { ticket } : {}) });
+  workByClaim.set(key, { kind, ...(ticket ? { ticket } : {}), ...(derivedAccount ? { derivedAccount } : {}) });
   try {
     return await send();
   } finally {

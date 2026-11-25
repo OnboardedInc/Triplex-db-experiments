@@ -199,7 +199,7 @@
          _ (replay-frame-check! privacy/*cut* input rows new-ids)
          ;; [DX-ERA4, after DX-ERA5] a database that requires sealed derived documents refuses one that is not; the
          ;; answer is the fence on the setting's value read here (second review N7), nil without the option
-         derived-ops (if privacy/derived-check (privacy/derived-check db rows new-ids) nil)
+         derived-ops (if privacy/derived-check (privacy/derived-check db rows new-ids input) nil)
          protected (trace/span "privacy/prepare-envelopes" "gateway"
                      (envelope/protect privacy/*database* privacy/*cut* input rows))
          input (:input protected) rows (:rows protected)
