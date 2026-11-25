@@ -208,21 +208,33 @@
                   (max (long (:seq state)) (count (:entries (native-entries name db))))
                   (:seq state))))
 
+(def ^:private read-publications (atom {}))
 (defn publish-for-read!
   "[DX-ERA3 M1, the log's boundary] A read found its database's pending removal already committed in the data: the
   removal is published first (its gateway takes the removal lock; only the log is written), then the read is served
   from the published log. Each such read waits for the publication; none is served from the log before it."
   [name conn]
-  (let [started (System/nanoTime) p (privacy/pending name)]
-    (when p (erase/erase! name conn {"commandId" (get p "commandId") "selectors" (get p "selectors")}))
-    (let [state (first (erase/request-cut name conn (erase/sync! conn)))
-          ms (/ (- (System/nanoTime) started) 1.0e6)]
-      ;; [DX-ERA2 fifth pass] each such wait is counted and logged (its distribution is measured on the stack)
-      ((requiring-resolve 'triplex.gateway.stats/bump!) [:removalReadWaits] 1)
-      (println (json/write-str {"schema" "triplex.removal-read-wait.v1" "database" name "seq" (get p "seq") "ms" ms
-                                "published" (not (:committed-pending state))}))
-      (when (:committed-pending state) (privacy/unavailable!))
-      state)))
+  (let [started (System/nanoTime) p (privacy/pending name)
+        ;; [DX-ERA2 fifth pass] bounded: one publication per database runs at a time on this gateway (the readers that
+        ;; find it running wait on it), and a reader waits at most `wait-ms` (the removal lock may be held by a live
+        ;; but stalled removal on another gateway); then 503, and the publication goes on without it
+        done (when p
+               (let [job (get (swap! read-publications
+                                     (fn [m] (if (some-> (get m name) future-done? not) m
+                                               (assoc m name (future (erase/erase! name conn {"commandId" (get p "commandId")
+                                                                                             "selectors" (get p "selectors")}))))))
+                              name)]
+                 (try (deref job wait-ms ::timeout)
+                      ;; the publication's own refusal (typed) is the reader's answer
+                      (catch java.util.concurrent.ExecutionException e (throw (or (.getCause e) e))))))
+        state (when-not (= ::timeout done) (first (erase/request-cut name conn (erase/sync! conn))))
+        ms (/ (- (System/nanoTime) started) 1.0e6)]
+    ;; [DX-ERA2 fifth pass] each such wait is counted and logged (its distribution is measured on the stack)
+    ((requiring-resolve 'triplex.gateway.stats/bump!) [:removalReadWaits] 1)
+    (println (json/write-str {"schema" "triplex.removal-read-wait.v1" "database" name "seq" (get p "seq") "ms" ms
+                              "published" (boolean (and state (not (:committed-pending state)))) "timedOut" (= ::timeout done)}))
+    (when (or (nil? state) (:committed-pending state)) (privacy/unavailable!))
+    state))
 
 (defn consistent?
   "Request time (erase/request-cut): the data and the log agree, declarations included. With the commit boundary,
