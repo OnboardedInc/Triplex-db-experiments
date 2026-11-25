@@ -43,7 +43,7 @@
 (defn frame
   "One save as the SDK frames it. facts: {:owner :field :value :type :pred}; retires: {:owner :field :pred} where
   :frame-owner (default :owner) is the entity the retired row is framed on. :pred is the current {:id :value :type}."
-  [{:keys [command operation block facts retires source entities claim-tx]}]
+  [{:keys [command operation block facts retires source entities claim-tx scope-wide]}]
   (let [{:keys [tx id]} block
         n (volatile! -1) next-id #(id (vswap! n inc))
         business (mapv (fn [f] (typed-row (row (next-id) (:owner f) nil (:field f) tx) f)) facts)
@@ -70,7 +70,7 @@
                     (into (map (fn [c] (assoc (j ":_tx/change") :value_type "json" :value_json (json/write-str c))) changes)))
         fresh (into business journal)]
     (rows/row-input
-      {"sourceK" source "span" 1 "position" 1 "scopeWide" false "entities" (vec (or entities written))
+      {"sourceK" source "span" 1 "position" 1 "scopeWide" (boolean scope-wide) "entities" (vec (or entities written))
        "operationId" (or operation command) "rows" (mapv storage/wire-row (into fresh old)) "newIds" (mapv :id fresh)
        "claims" [{"commandId" command "txId" (or claim-tx tx) "timestamp" 1000.0}]})))
 
@@ -120,11 +120,13 @@
   [g ^Random rng exists]
   (let [existing (vec (sort exists))
         pending (vec (sort @(:pending g)))
+        ;; In the concurrent rounds most existing owners come from a small hot set, so writers collide.
+        hot (vec (filter exists @(:hot g)))
         k (let [r (.nextDouble rng)] (cond (< r 0.45) 1 (< r 0.65) 2 (< r 0.8) 3 (< r 0.93) 4 :else 5))
         creating (chance rng 0.35)
         owners (vec (distinct (repeatedly k #(if (or (empty? existing) (and creating (chance rng 0.5)))
                                                  (if (and (seq pending) (chance rng 0.7)) (pick rng pending) (fresh-name g rng))
-                                                 (pick rng existing)))))]
+                                                 (pick rng (if (and (seq hot) (chance rng 0.75)) hot existing))))))]
     [owners (into #{} (remove exists) owners)]))
 
 (defn gen-save
@@ -161,7 +163,8 @@
                  stale (conj :stale-source)
                  (chance rng 0.05) (conj :extra-read)
                  (chance rng 0.03) (conj :stale-predecessor)
-                 (chance rng 0.02) (conj :wrong-owner-retire))]
+                 (chance rng 0.02) (conj :wrong-owner-retire)
+                 (chance rng 0.04) (conj :scope-wide))]
     {:owners owners :new @news :facts facts :retires retires :faults faults
      :source (if stale (- head (between rng 1 4)) head)
      :block (block-of g rng total)}))
@@ -189,7 +192,8 @@
 (defn input-of [g spec]
   (let [command (or (:command spec) (str "fz" (:seed g) "-" (swap! (:counter g) inc)))]
     [command (frame {:command command :operation (:operation spec) :block (:block spec) :facts (:facts spec)
-                     :retires (:retires spec) :source (:source spec) :entities (:entities spec)})]))
+                     :retires (:retires spec) :source (:source spec) :entities (:entities spec)
+                     :scope-wide (contains? (:faults spec) :scope-wide)})]))
 
 ;; ---------------------------------------------------------------- model upkeep
 
@@ -441,6 +445,7 @@
   "threads clients saving at once on the candidate; then the committed saves replayed on the control in commit order."
   [g seed threads per-thread {:keys [c-name c-conn k-name k-conn]}]
   (reset! (:pending g) (set (repeatedly 6 #(str (:acct g) "/race" (swap! (:counter g) inc)))))
+  (reset! (:hot g) (vec (take 6 (shuffle-with (Random. seed) (sort @(:exists g))))))
   (let [start (storage/head-position (d/db k-conn))
         results (->> (range threads)
                      (mapv (fn [t] (future (let [rng (Random. (+ (* 1000003 seed) (* 7919 t) start))]
@@ -479,7 +484,7 @@
 (defn gen-state [seed acct]
   {:seed seed :acct acct :counter (atom (* seed 100000)) :model (atom {}) :exists (atom #{})
    :retired (atom []) :commands (atom []) :operations (atom []) :blocks (atom []) :refused-block (atom nil)
-   :pending (atom #{})})
+   :pending (atom #{}) :hot (atom [])})
 
 (defn- seed-owners! [g c-name k-name n]
   (doseq [i (range n)]
@@ -593,6 +598,7 @@
         log (jsonl-writer (str dir "/" label ".jsonl"))]
     (reset! (:exists g) (set exists))
     (reset! (:pending g) (set pending))
+    (reset! (:hot g) (vec (take 6 (sort exists))))
     (println "DX-S5_STACK_WRITER" label "ready")
     (->> (range threads)
          (mapv (fn [t] (future

@@ -179,9 +179,10 @@
                                                  reply (reference/send name (save conn {:command (str "s-" label "-" k)
                                                                                         :facts [{:owner s :field f :type :string :value (str label k) :pred (get model f)}]}))]
                                              (is (= [200 nil] (reference/outcome reply)) (pr-str (:body reply)))
-                                             (get-in reply [:body "nativeApplyMs"]))))]
-                          (attack {:case "removal scan" :removals label :writer-samples times
-                                   :median (nth (sort (remove nil? times)) (quot (count (remove nil? times)) 2) nil)})))]
+                                             [(get-in reply [:body "subjectSave"]) (get-in reply [:body "transactMicros"])])))
+                              micros (vec (sort (keep second times)))]
+                          (attack {:case "removal scan" :removals label :writers (frequencies (map first times))
+                                   :transactMicros micros :medianMicros (nth micros (quot (count micros) 2) nil)})))]
           (is (= [200 nil] (reference/outcome seed)))
           (samples 0)
           (doseq [i (range n)]
@@ -189,7 +190,7 @@
                   r (reference/send name (save conn {:command (str "seed-r" i) :facts [{:owner o :field ":p/secret" :type :string :value (str "secret " i) :pred nil}]}))]
               (is (= [200 nil] (reference/outcome r)))
               (is (= 200 (:status (reference/route name "v1" "erase" {"commandId" (str "rm-" i) "selectors" [{"entityId" o "attribute" ":p/secret"}]}))))))
-          (attack {:case "removal scan" :excisions (count (d/datoms (d/db conn) :aevt :db/excise))})
+          (attack {:case "removal scan" :excisions (count (seq (d/datoms (d/db conn) :aevt :db/excise)))})
           (samples n))))))
 
 (defn main []
