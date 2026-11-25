@@ -871,24 +871,30 @@ async function restartPart(g: Gate, base: () => W0.ReleaseDoc, set: Setter) {
       let frame: Record<string, unknown> | null = null;
       stage = "settlement";
       if (where === "frame") {
-        // Settle with a restart before the second values frame's commit; that frame's commit fails, the worker stops,
-        // and the release is then settled from its durable progress and checked.
+        // Settle with a restart before the second settlement frame's commit, values or notices ([second review] in run
+        // g4res at 73f1d98a6 the write gateway's case saw no second values frame, so its restart never began); that
+        // frame's commit fails, the worker stops, and the release is then settled from its durable progress and checked.
         const w = await Settlement.open(c.a, new BulkQueue(1), false, "bytes", "progress");
-        const commit = w.archive.store.commit;
-        let frames = 0;
-        (w.archive.store as any).commit = async (...args: Parameters<Store["commit"]>) => {
-          if (String(args[0]).startsWith("settled-values:") && ++frames === 2 && !pending) {
-            pending = restart(role);
-            await sleep(30);
-          }
-          return commit(...args);
-        };
+        const stores = [...new Set([w.archive.store, w.recorder.archive.store])];
+        const commits = stores.map((x) => x.commit);
+        let frames = 0, restartAt = "";
+        stores.forEach((x, i) => {
+          (x as any).commit = async (...args: Parameters<Store["commit"]>) => {
+            const id = String(args[0]);
+            if (/^settled-(values|notice):/.test(id) && ++frames === 2 && !pending) {
+              restartAt = id.split(":")[0]!;
+              pending = restart(role);
+              await sleep(30);
+            }
+            return commits[i]!(...args);
+          };
+        });
         const first = await w.settle(r.seq).then(() => "finished", (e) => "stopped: " + String(e?.message).split("\n")[0]!.slice(0, 160));
-        (w.archive.store as any).commit = commit;
+        stores.forEach((x, i) => ((x as any).commit = commits[i]));
         if (pending) restartMs = await pending;
         await w.close().catch(() => undefined);
-        frame = { valueFramesBeforeRestart: frames - 1, firstRun: first };
-        assert(restartMs !== undefined, "the restart did not run inside the settlement");
+        frame = { framesBeforeRestart: Math.min(frames, 2) - 1, restartAt, framesOffered: frames, firstRun: first };
+        assert(restartMs !== undefined, "the restart did not run inside the settlement (" + frames + " frames)");
       }
       const settled = await steady("settle", () => g.settle(r, old), retried);
       stage = "pinned reads";
