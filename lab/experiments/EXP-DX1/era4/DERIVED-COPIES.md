@@ -438,7 +438,10 @@ key's deletion):
 | Native datoms holding a removed value in clear (exact scan, 200 blocks per database) | **0** in the source, **0** in the recipient | 22 to 40 per block in the recipient, 262 to 282 in the source |
 | Removal stops (before the commit, after it, at the publication, after the guard, none) | 3,370; 3,338; 3,243; 3,243 asked, **0 fired** (no schedule took a subject guard); 6,806 | 83; 87; 78; 90 asked, 0 fired; 162 |
 
-**On the merged head** (`series3`, `1b9d0e227` and its page commit `a177f4893`, DX-ERA2's third pass): section 11.5.
+**On the merged head** (`series3`, `1827b191e`, DX-ERA2's third pass): section 11.5. A first series on the merged head
+(`a177f4893`) failed every schedule at its first step and was set aside (`series3-broken-stops-shadow`): the new
+phase's function was named `stops`, which replaced the schedules' vector of stop points of the same name; renamed
+`stop-checks` in `1827b191e`, then a 100-schedule trial (1,510 oracles, 0 violations) before the series.
 
 ### 6.5 Gate (a): every option off
 
@@ -635,7 +638,18 @@ the sealed copy, an ordinary ticketed write), **open** (the `derived-open` route
 transaction ID** in the SDK's form (inside the removal's commit, P4 and P5), the **key's destruction** (DX-ERASE1's shred
 worker, after the publication), and the client's **re-recording** of a subject whose records open as removed (its next
 frame after the publication). Only the last two act after a removal; none adds state to the removal, so nothing new has
-to be completed when a gateway dies. The table follows DX-ERA2 15.2 (s is the removal's sequence); "checks" is
+to be completed when a gateway dies.
+
+| This option's step | Where it runs among P0 to P7 | If its gateway dies there, who completes it |
+| --- | --- | --- |
+| Seal | at derivation time, at any stop point; from P7 on it answers removed | nothing to complete (a seal writes nothing); the client retries a 503 up to 50 times, 100 ms apart |
+| Record (the derived write of a sealed copy) | at any time; from P1 to P6 refused with 503 when the removal can reach its ticket | the caller resends it; its refusal makes that gateway complete the removal (DX-ERA2 15.3) |
+| The removal's transaction ID | inside the commit's native transaction (P4, P5) | whichever gateway completes the removal writes the same form, **provided every gateway runs the option**: a gateway without it writes `_tx/erase-<uuid>`, which stops every SDK feed read past it (5.1 item 2) |
+| Open | at any time; the value until P7, removed from P7 | nothing to complete (a read) |
+| The key's destruction | after P7 and the grace (row S) | every gateway's shred worker, from the published log; a restart starts from 0 |
+| Re-recording | the account's next frame after P7 | the account's next frame, in whichever process runs it: the generation comes from what its ledger opens to and from the published cut, not from memory |
+
+The table below follows DX-ERA2 15.2 (s is the removal's sequence); "checks" is
 `era4/races.clj` phase `checks`, in process on the merged head, sealed database, file authority, every option on.
 
 | # | Stopped after | Open a copy recorded before it | Seal the removed assertion again | The plain read of the value | A derived write of a copy it can reach | Who completes it, and what this option adds | Checks |
@@ -713,7 +727,8 @@ document's own name (existence, section 7).
 ### 11.5 Gates on the merged head
 
 Every container ran the pinned runtime image `sha256:21a67288007d...` by ID (recorded per run). Source: the merge
-`1d01d02ab` and the phase `checks` commit `1b9d0e227` (in-process runs copy the gateway source at their start).
+`1d01d02ab` and the commits after it (`1b9d0e227` the phase `checks`, `a177f4893` the page, `1827b191e` a rename in
+`races.clj`); the gateway source is the same in all of them, and each run records the commit it copied.
 
 | Gate | Result |
 | --- | --- |
@@ -730,6 +745,6 @@ Every container ran the pinned runtime image `sha256:21a67288007d...` by ID (rec
 | (f) The second review's `e9` as written, every option on | **red, as expected** (2 violations: unsealed and sealed, the copy readable and in the journal; 4 and 2 native copies): its copy is a hand-made clear save, which no option can reach (11.2) |
 | **`e9s`**: the review's `e9` with the copy sealed as this option writes it | **green**: copy not readable after the acknowledgement, not in the journal, 0 native copies, opens as removed, key gone; another subject's copy opens; on an unsealed scope the seal route answers 409 |
 | `window`: DX-ERA2 15.8's late cross-database delivery | clear copy: committed late, **readable** in the recipient, in its journal, 2 native copies; sealed copy: committed late, **not readable**, 0 native copies in either database, opens through the source as removed |
-| `stops`: this option at P1 to P7 | 7 rows (P3 not reached); every stop that fired was completed by the refused derived write; after each acknowledgement 9 checks each passed (11.1) |
-| Phase `checks` in all | 135 oracles, **0 violations** |
+| `stop-checks`: this option at P1 to P7 | 7 rows (P3 not reached); every stop that fired was completed by the refused derived write; after each acknowledgement 9 checks each passed (11.1) |
+| Phase `checks` in all (`checks-v3-1` on the merge before it was committed, `checks-v3-2` on `1827b191e`) | 135 oracles, **0 violations**, each time |
 | (g) Cost phase (`races.clj` `cost`) | the removal wrote 1 identity, 1 position and 35 datoms with 0, 10, 100 and 1,000 sealed copies of its subject (time 39, 18, 19, 14 ms, diagnostic); opening every copy afterwards 0, 7, 11, 79 ms |
