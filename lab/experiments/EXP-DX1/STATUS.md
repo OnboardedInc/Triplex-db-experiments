@@ -6570,3 +6570,12 @@ Source: Publish reviewer, part 1; branch `exp/DX-ACT10-publish-review` `9acd291f
 - Not tested: reproducing the rejected save on a stack without the fix; collisions across processes (argued, not run).
 
 **Action:** the Publish builder asked for V3 and the page correction on the fix branch; it then goes to the merge with the reviewer's resolution. The reviewer has started the fourth review of the Publish line.
+
+## 2026-11-25 12:26 EST: key-pool and reply fix has its one-line fix (`09730f887`) and is sent to the merge; the removal branch found to move stored-function identities with options off
+
+Source: removal builder message.
+
+- `exp/DX-N1-key-pool` `09730f887`: the last catch now wraps the trace wrapper too. The reviewer's own checks are in the gate and pass on both key stores (17 of 17 each, including the one that failed); replies 9 of 9 and 15 of 15; pool 5 of 5 on both; paired against the one branch's `8a362ac38`: native log and replies identical; suites as on the base. A page lists every change of answer code.
+- **Found by the builder during its seventh pass:** the removal branch's early-loaded code shifts stored-function names: 17 of 58 identities differ from the one branch with every option off, so a database created by that build installs writer functions that differ from the one branch's. Its earlier "identical with options off" comparisons were against its own base, not the one branch. It is moving that code behind call-time lookups and will re-measure. This is the known hazard (merges and early loads moving identities); it confirms per-account removal is not yet mergeable default off.
+
+**Action:** the merge agent told to merge `09730f887` after API-call reads and the save-line fixes, with the reviewer's resolution for the two files that conflict with the save-line fixes, and then the ID fix at the commit the Publish builder reports.
