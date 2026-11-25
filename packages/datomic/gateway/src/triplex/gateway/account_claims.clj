@@ -21,10 +21,10 @@
   every save of a build that does not know the setting, calls the old idents and is refused. So no save stores a plain
   command ID of an account-named save after the setting is on, and no older build stores anything at all.
 
-  Old claims. A plain claim is the account's own when its transaction wrote that account's entities (an account among
-  several included, S5 R2-11); a lookup naming an account finds its scoped claim, else such a plain claim, and answers
-  `taken` for any other plain claim. A plain claim of no account's entities is no account's: it refuses every
-  account's save of the ID (stored-ids) and is returned only to a lookup naming no account.
+  Old claims. A plain claim is an account's own when every business entity its transaction wrote is that account's; a
+  lookup naming an account finds its scoped claim, else such a plain claim, and answers `taken` for any other plain
+  claim. A plain claim of no one account (several accounts, an entity of no account, system entities only) refuses
+  every account's save of the ID (stored-ids) and is returned only to a lookup naming no account.
 
   The reserved prefix may not begin any client-supplied ID on any route (save, claim, begin, command, operation,
   fence), whatever the setting (S5 R2-3).
@@ -55,6 +55,13 @@
   [db id]
   (or (second (re-matches #"acct/([A-Za-z0-9_-]{1,64})/.+" id))
       (second (re-matches #"lazy/account/(?:releases|origin|clock|erasure|dispatcher|mask|cursor)/([A-Za-z0-9_.-]{1,64})" id))
+      ;; [DX-S6b] A document namespace that names its account in clear (`notice:v2:<n>/<account>/...`, n the account's
+      ;; length): the form the join layer moves its documents to so a settlement frame has an account (the Publish
+      ;; review's U3). `notice:v1:<hash>:` hides the account inside a hash and stays a journal.
+      (when-let [[_ n rest] (re-matches #"notice:v2:([0-9]{1,2})/(.+)" id)]
+        (let [n (Long/parseLong n)]
+          (when (and (<= 1 n 64) (< n (count rest)) (= \/ (.charAt ^String rest n)))
+            (let [a (subs rest 0 n)] (when (re-matches #"[A-Za-z0-9_.-]{1,64}" a) a)))))
       (when (and db (lean/enabled? db)) ((requiring-resolve 'triplex.gateway.group/persisted-account) db id))))
 
 (defn- journal-id?
@@ -167,7 +174,8 @@
     (throw (ex-info "IDs may not begin with the reserved account prefix" {:status 400 :code "InvalidValue" :write-policy true}))))
 
 (defn- tx-accounts
-  "The accounts of the business entities a transaction wrote (their revision changed in it), from the log."
+  "The accounts of the business entities a transaction wrote (their revision changed in it), from the log; nil among
+  them for a business entity of no account."
   [conn db tx]
   (let [t (d/tx->t tx) rev (d/entid db :triplex.entity/rev)
         data (:data (first (d/tx-range (d/log conn) t (inc t))))
@@ -175,17 +183,26 @@
     (set (map #(account-of-id db %) (remove journal-id? ids)))))
 
 (defn claim-accounts
-  "The accounts whose entities the plain claim's transaction wrote (empty: no account's)."
+  "The accounts of the business entities the plain claim's transaction wrote (nil among them for an entity of no
+  account; empty when it wrote journals and system entities only)."
   [conn db claim]
   (let [tx (or (:v (first (d/datoms db :eavt claim :triplex.claim/tx))) claim)]
-    (disj (tx-accounts conn db tx) nil)))
+    (tx-accounts conn db tx)))
+
+(defn owner
+  "The one account a plain claim belongs to: every business entity its transaction wrote is that account's (the
+  Publish review's condition: every change, not some change). nil when it wrote several accounts', an entity of no
+  account, or none."
+  [conn db claim]
+  (let [accounts (claim-accounts conn db claim)]
+    (when (and (= 1 (count accounts)) (some? (first accounts))) (first accounts))))
 
 (defn owned?
-  "Whether the plain claim entity `claim` is `account`'s: its transaction wrote that account's entities (alone, or with
-  other accounts' in a save across accounts, S5 R2-11). A claim of no account's entities is no account's: it is never
-  returned to an account and it refuses every account's save of that ID (it stays the database's, as before)."
+  "Whether the plain claim entity `claim` is `account`'s: every business entity its transaction wrote is that
+  account's. A claim of no one account (several accounts, an entity of no account, system entities only) is never
+  returned to an account and refuses every account's save of that ID: it stays the database's, as before."
   [conn db claim account]
-  (contains? (claim-accounts conn db claim) account))
+  (= account (owner conn db claim)))
 
 (defn find-claim
   "[claim-entity status] of command `id` for `account`: :scoped, :plain (an owned plain claim), :taken (a plain claim
@@ -225,8 +242,9 @@
         (when (and own on)
           (doseq [c (:command-ids p)]
             (when-let [e (d/entid db [:triplex.claim/command-id c])]
-              (let [accounts (claim-accounts conn db e)]
-                (when (or (empty? accounts) (contains? accounts account))
+              ;; Only a plain claim of exactly one other account leaves this account's ID free.
+              (let [o (owner conn db e)]
+                (when (or (nil? o) (= o account))
                   (refuse! 409 "CommandConflict" "This command ID is already committed (plain claim)"))))))
         {:account account :scoped? (boolean (and own on)) :on on}))))
 

@@ -590,16 +590,21 @@ several-owners, creation and general writers: `409 CasConflict`, no operation an
   ID of an account's save.
 
 **Ownership of plain claims (one rule for both lines).** A write's account is the account of the entities it writes:
-`acct/<account>/...`, the stored `:subject/account`, and the join layer's `lazy/account/<kind>/<account>` (kind
-`releases`, `origin`, `clock`, `erasure`, `dispatcher`; `mask` and `cursor` too). System entities (`_...`) and notice
-documents (`notice:v1:...`) are journals and never decide it.
+`acct/<account>/...`, the stored `:subject/account`, the join layer's metadata `lazy/account/<kind>/<account>` (kind
+`releases`, `origin`, `clock`, `erasure`, `dispatcher`; `mask` and `cursor` too), and a document namespace that names
+its account in clear, `notice:v2:<n>/<account>/...` (n the account's length). System entities (`_...`) and the join
+layer's present documents, `notice:v1:<hash>:...`, are journals and never decide it: their account is inside a hash.
 
-- A plain claim belongs to each account whose entities its transaction wrote, alone or with other accounts' (a save
-  across two accounts belongs to both, R2-11).
+- **Every change, not some change** (the Publish review's condition, `act10/REVIEW-3.md` U4): a write has an account
+  only when every business entity it writes is that account's, and a plain claim belongs to an account only when every
+  business entity its transaction wrote is that account's.
 - A lookup naming an account finds its scoped claim, or else a plain claim that is its own. Any other plain claim is
   answered `taken`, and its transaction is never returned.
-- A plain claim of no account's entities is no account's. It refuses every account's save of that ID
-  (`CommandConflict`) and is answered `taken` to every account's lookup, so it is never committed twice.
+- A plain claim of no one account (several accounts' entities, an entity of no account, or system entities only)
+  refuses every account's save of that ID (`CommandConflict`) and is answered `taken` to every account's lookup, so it
+  is never committed twice.
+- This changes R2-11's answer: a save across two accounts is no one account's. A resend of it naming one of them is
+  refused, never stored again, and its lookup answers `taken`, never the receipt.
 
 ### 12.3 The reserved prefix, the command path and the other findings
 
@@ -641,22 +646,35 @@ documents (`notice:v1:...`) are journals and never decide it.
 ### 12.4 What the join layer changes to use this mechanism
 
 1. Drop the `joined:v2/<n>/<account>/<id>` form and the `accountKeys` setting. A Publish's client ID is
-   `joined:<id>` again.
-2. Open the join store's client with the SDK's `claimAccount` set to the held account. Its commits and every lookup
-   (`claim`, `transactionByCommand`, `operation`, `fence`) then name the account; the gateway stores the Publish's
-   claim as `acct-id/v1/<n>/<account>/joined:<id>` once the database's setting is on.
-3. Turn the setting on from a process with `TX2_ACCOUNT_CLAIMS=1` (`POST /v1/db/<db>/settings {"accountIds": true}`),
-   after every gateway runs this build.
-4. Keep `original`'s ownership check as a second check of what the gateway returns. A plain `joined:<id>` claim from
-   before the setting is found for the account whose entities it wrote; another account's lookup is answered `taken`.
-5. Nothing else: the account is taken from the entities the Publish writes (`lazy/account/releases/<account>` and the
-   other metadata names), and its notice documents count as journals.
+   `joined:<id>` again, looked up in the plain form for records from before as well.
+2. Open each held account's client with the SDK's `claimAccount` set to that account. Its commits and every lookup
+   (`claim`, `transactionByCommand`, `operation`, `fence`) then name the account; the gateway stores the claim as
+   `acct-id/v1/<n>/<account>/<id>` once the database's setting is on.
+3. **Move the account's documents to a namespace that names the account in clear:** `notice:v2:<n>/<account>/<hash>:`
+   in place of `notice:v1:<hash>:` (n the account's length; the hash as now). This is what lets a settlement frame,
+   which writes only settlement documents, have an account. Without it a frame writes only journals, has no account,
+   stores a plain claim, and another account can still take its computable ID first (U3). Old `notice:v1:` documents
+   must still be read.
+4. Every write an account's processes make, frames and the enrolment (`join-held-enrolment:<account>`) included, names
+   the account and writes only that account's names. A write that also touches another account's names, or an entity
+   of no account, has no account, keeps the plain form, and stays open to U3 and U8.
+5. Turn the setting on from a process with `TX2_ACCOUNT_CLAIMS=1` (`POST /v1/db/<db>/settings {"accountIds": true}`),
+   after every gateway runs this build. It is the same one-way database setting for both lines; the join layer needs no
+   setting of its own for IDs. Its other settings (frame guards, the cap, the ledger mode) stay in the origin fact.
+6. Make `original`'s ownership check "every change in this account's names" (U4) and keep it as a second check of
+   what the gateway returns.
 
-What this closes on the Publish side: another account can neither read a Publish's record by its computed command ID
-(its lookup finds its own scoped claim or `taken`; a lookup naming no account finds no scoped claim) nor take a
-Publish's ID first (its own claim is stored under its own account). What stays: a write of no account's entities (only
-system entities) under that ID before the Publish refuses the Publish (`CommandConflict`), never a wrong
-acknowledgement.
+**What this closes, once 1 to 5 are done.**
+
+- U8: another account can neither read a Publish's record by its computed command ID (its lookup finds its own scoped
+  claim or `taken`; a lookup naming no account finds no scoped claim) nor take a Publish's ID first (its own claim is
+  stored under its own account).
+- U3: a frame's and the enrolment's claims are stored under their account, so another account's save under the same
+  ID is stored under its own and refuses nothing.
+
+**What stays.** A write of no one account's names (system entities only, or two accounts' names) under an ID before
+the account's own write refuses that write (`CommandConflict`), never a wrong acknowledgement. Whether an ordinary
+client may write system entities is the API's rule, not the store's.
 
 ## 10. The standing gate phase and the other gates
 

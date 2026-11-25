@@ -164,6 +164,46 @@
           (is (nil? (:lookupOther r)))
           (is (nil? (:lookupNone r))))))))
 
+(deftest frames-and-the-enrolment-are-their-accounts
+  ;; [DX-S6b] The Publish review's U3. A settlement frame writes only its account's documents; under the clear
+  ;; namespace `notice:v2:<n>/<account>/...` it has an account, so another account taking its computable ID first
+  ;; stores that under its own account and refuses nothing. The same for the enrolment's `join-held-enrolment:<a>`.
+  ;; Under `notice:v1:<hash>:` (the account inside a hash) a frame has no account and keeps the plain form, so
+  ;; another account taking its ID first refuses it: shown as the residual the join layer closes by moving to v2.
+  (with-redefs [ac/permitted? true]
+    (reference/in-scope
+      (fn [name conn]
+        (let [doc (fn [acct k] (str "notice:v2:" (count acct) "/" acct "/" k))
+              write (fn [acct cmd op owners] (assoc (save conn {:command cmd :operation op
+                                                                :facts (vec (for [o owners] {:owner o :field ":lazy/doc" :type :string :value op :pred nil}))})
+                                               "account" acct))
+              ;; B (pb) saves under A's (pa.1) next frame ID and enrolment ID first, each with its own names.
+              b-frame (reference/send name (write "pb" "frame:values:7" "b-frame" [(doc "pb" "x")]))
+              b-enrol (reference/send name (write "pb" "join-held-enrolment:pa.1" "b-enrol" ["lazy/account/origin/pb"]))
+              a-frame (reference/send name (write "pa.1" "frame:values:7" "a-frame" [(doc "pa.1" "values") (doc "pa.1" "values/2")]))
+              a-enrol (reference/send name (write "pa.1" "join-held-enrolment:pa.1" "a-enrol" ["lazy/account/origin/pa.1"]))
+              ;; Every change, not some: a frame touching A's and B's documents has no account; named A it keeps the
+              ;; plain form, and a later save of A under that ID is refused.
+              mixed (reference/send name (write "pa.1" "frame:mixed" "mixed" [(doc "pa.1" "m") (doc "pb" "m")]))
+              mixed-again (reference/send name (write "pa.1" "frame:mixed" "mixed-2" [(doc "pa.1" "m2")]))
+              ;; The residual: a v1 frame (journals only) keeps a plain claim another account's write took first.
+              b-v1 (reference/send name (save conn {:command "frame:v1" :operation "b-v1" :facts [{:owner "acct/pb/subject/s" :field ":a/f" :type :string :value "b" :pred nil}]}))
+              a-v1 (reference/send name (write "pa.1" "frame:v1" "a-v1" ["notice:v1:abc:values"]))
+              cmds (stored conn :triplex.claim/command-id)
+              r {:case "frames and the enrolment" :bFrame (reference/outcome b-frame) :bEnrol (reference/outcome b-enrol)
+                 :aFrame (reference/outcome a-frame) :aEnrol (reference/outcome a-enrol)
+                 :aFrameScoped (contains? cmds (@encode "pa.1" "frame:values:7")) :aEnrolScoped (contains? cmds (@encode "pa.1" "join-held-enrolment:pa.1"))
+                 :mixed (reference/outcome mixed) :mixedStoredPlain (contains? cmds "frame:mixed") :mixedAgain (reference/outcome mixed-again)
+                 :v1TakenFirst (reference/outcome b-v1) :v1Frame (reference/outcome a-v1)}]
+          (line r)
+          (is (= [200 nil] (:bFrame r))) (is (= [200 nil] (:bEnrol r)))
+          (is (= [200 nil] (:aFrame r)) (pr-str r)) (is (= [200 nil] (:aEnrol r)) (pr-str r))
+          (is (and (:aFrameScoped r) (:aEnrolScoped r)) (pr-str r))
+          (is (= [200 nil] (:mixed r))) (is (:mixedStoredPlain r))
+          (is (= [409 "CommandConflict"] (:mixedAgain r)) "a plain claim of two accounts' names is no one account's")
+          (is (= [200 nil] (:v1TakenFirst r)))
+          (is (= [409 "CommandConflict"] (:v1Frame r)) "the residual, stated: a v1 frame has no account, so B's plain claim taken first refuses it"))))))
+
 (defn main []
   (let [r (clojure.test/run-tests 's6-ids)]
     (println "DX-S6_RESULT" (json/write-str (assoc (select-keys r [:test :pass :fail :error])
