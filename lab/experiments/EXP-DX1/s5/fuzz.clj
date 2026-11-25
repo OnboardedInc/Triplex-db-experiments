@@ -54,7 +54,7 @@
 (defn frame
   "One save as the SDK frames it. facts: {:owner :field :value :type :pred}; retires: {:owner :field :pred} where
   :frame-owner (default :owner) is the entity the retired row is framed on. :pred is the current {:id :value :type}."
-  [{:keys [command operation block facts retires source entities claim-tx scope-wide]}]
+  [{:keys [command operation block facts retires source entities claim-tx scope-wide no-command]}]
   (let [{:keys [tx id]} block
         n (volatile! -1) next-id #(id (vswap! n inc))
         business (mapv (fn [f] (typed-row (row (next-id) (:owner f) nil (:field f) tx) f)) facts)
@@ -77,13 +77,15 @@
         journal (-> [(assoc (j ":_tx/position") :value_type "number" :value_number 1.0)
                      (assoc (j ":_tx/instant") :value_type "datetime" :value_datetime 1000.0)]
                     (into (map #(assoc (j ":_tx/changed-entity") :value_string %) written))
-                    (conj (assoc (j ":_tx/command-id") :value_string command))
+                    ;; [S5 second review] :no-command frames a save without a command (no claim), as a TriplesLive save
+                    ;; without meta.commandId is framed.
+                    (cond-> (not no-command) (conj (assoc (j ":_tx/command-id") :value_string command)))
                     (into (map (fn [c] (assoc (j ":_tx/change") :value_type "json" :value_json (json/write-str c))) changes)))
         fresh (into business journal)]
     (rows/row-input
       {"sourceK" source "span" 1 "position" 1 "scopeWide" (boolean scope-wide) "entities" (vec (or entities written))
        "operationId" (or operation command) "rows" (mapv storage/wire-row (into fresh old)) "newIds" (mapv :id fresh)
-       "claims" [{"commandId" command "txId" (or claim-tx tx) "timestamp" 1000.0}]})))
+       "claims" (if no-command [] [{"commandId" command "txId" (or claim-tx tx) "timestamp" 1000.0}])})))
 
 ;; ---------------------------------------------------------------- generator
 
@@ -222,7 +224,7 @@
   (let [command (or (:command spec) (str "fz" (:seed g) "-" (swap! (:counter g) inc)))]
     [command (frame {:command command :operation (:operation spec) :block (:block spec) :facts (:facts spec)
                      :retires (:retires spec) :source (:source spec) :entities (:entities spec)
-                     :scope-wide (contains? (:faults spec) :scope-wide)})]))
+                     :scope-wide (contains? (:faults spec) :scope-wide) :no-command (:no-command spec)})]))
 
 ;; ---------------------------------------------------------------- model upkeep
 
