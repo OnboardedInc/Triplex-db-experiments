@@ -6734,3 +6734,13 @@ Source: save-line builder final message; branch `exp/DX-S6-save-line-fixes` `9f2
 - **Why indexed saves left the fast writers** (read from code by the Publish builder): with the index on every save carries an index fence; the one-owner writer accepts it, but the creation and several-owners writers check through a direct call and decline every such save, so the general writer takes it (23 per-subject and 337 general on the real-mix tape). Fix sketched: both writers check through the replaceable hook; index entries rendered for existing and new owners; gates listed. Not built.
 - **Merge agent stalled a third time:** last recorded step 17:08; its gate queue ran on without it and looped on one gate refused for room 24 times; the one branch has not moved since 16:57. Stopped and resumed at 18:46: push each finished merge at once, find why the pool refuses that gate, poll the queue instead of waiting for a notification.
 - **Disk:** free space had fallen to 18 GiB. With Sam's approval of 2026-11-25 the orchestrator trimmed 49 build contexts older than six hours (Dockerfiles and receipts kept): 14.4 GB freed, 32 GiB free.
+
+## 2026-11-25 18:49 EST: key-pool and reply fix merged: the one branch `exp/DX-INT1` is at `21253c604`
+
+Source: merge agent message; checked against `origin`: `09730f887` is an ancestor of the head; the ID fix and the Publish line are not yet.
+
+- Stored-function identities: 70 of 70 equal to the previous head in each of 8 writer settings (58 of 58 against the reference).
+- Gates on the head's own image: the key-pool check 5 of 5 on both key stores (the previous head fails 3 of 5 on PostgreSQL); reply checks 9, 15, 17 and 17 with 0 failed; key-deletion gate 16 of 16 on both; paired against the previous head identical (native log, replies, key store) with and without removals; the save-line outcome gate 426 in 3 settings; SDK 489; core 863.
+- Suites: 93 tests, 236,380 assertions, 0 failures, 13 errors, reported as the same as the base (earlier bases had 1 known error: the merge agent has been asked to list the 13 and say why each is on the base).
+- The readiness page carries the changed answer codes, the new read bar and a pointer to the server session plan.
+- Next: the ID fix (one adapter-level test of the merge agent's own being corrected), then the Publish line with options off.
