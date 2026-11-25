@@ -1046,7 +1046,19 @@ re-sweep, every second on every gateway with the option, reads each protected da
 committed erasure records and checks their keys (one query per database with PostgreSQL), so its work grows with the
 number of removals ever made.
 
-### 13.9 What is still not tested, and what is not promised
+### 13.9 The server run (section 8), updated (written, not run)
+
+Two changes to section 8's plan and predictions, written 2026-11-25 before any server run: (1) the run declares
+`derived-seal-required` on every derived database before its first derived write, and adds an arm with the client
+option off and the gateway option on (prediction: every derived write refused 409 `DerivedRecordUnsealed`, 0 clear
+occurrences); (2) the frame-time prediction changes: one key query per seal or open call whatever the number of names
+(no longer one SQL read per name), so the seal call of a settlement frame of 64 subjects x 6 changes is predicted to
+add **10 to 60 ms** to the frame at 1 to 20 protected values per subject (on the Mac, diagnostic: 19 to 51 ms for the
+seal call, against 3 to 7 ms for writing the same frame in clear), shown wrong above 150 ms. Bytes
+per sealed unit rise to the next size class (13.3): a 217-byte delivery stores as 256 bytes of ciphertext plus tag,
+header and nonce; prediction +60 to +150%, shown wrong above +250%.
+
+### 13.10 What is still not tested, and what is not promised
 
 **Not promised:**
 
