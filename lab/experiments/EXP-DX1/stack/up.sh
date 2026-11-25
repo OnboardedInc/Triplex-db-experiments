@@ -1116,6 +1116,11 @@ for role in "${gateway_roles[@]}"; do
   if [[ -n ${DX_REMOVAL_WAIT_MS:-} ]]; then field_policy+=(-e "TX2_REMOVAL_WAIT_MS=$DX_REMOVAL_WAIT_MS"); fi
   # [DX-ERA2 fourth pass] A removal takes effect at its commit in Datomic (unset: at its publication, as today).
   if [[ ${DX_REMOVAL_COMMIT_BOUNDARY:-0} == 1 ]]; then field_policy+=(-e "TX2_REMOVAL_COMMIT_BOUNDARY=1"); fi
+  # [DX-ERA2 fifth pass] a fleet whose gateways differ: extra K=V settings for the read or the write gateway only
+  # (DX_GATEWAY_ENV_READ, DX_GATEWAY_ENV_WRITE; the later -e wins), and the read gateway's own source
+  # (DX_GATEWAY_SRC_READ, a directory like --gateway-src). Unset: unchanged.
+  if [[ $mode == r && -n ${DX_GATEWAY_ENV_READ:-} ]]; then for kv in $DX_GATEWAY_ENV_READ; do field_policy+=(-e "$kv"); done; fi
+  if [[ $mode == w && -n ${DX_GATEWAY_ENV_WRITE:-} ]]; then for kv in $DX_GATEWAY_ENV_WRITE; do field_policy+=(-e "$kv"); done; fi
   # [DX-ERA2 third pass] The write gateway only: its removal wait, and the test seam that pauses its removals at one
   # step (TX2_REMOVAL_TEST_PAUSE_AT, for TX2_REMOVAL_TEST_PAUSE_MS or until killed). Unset: nothing.
   if [[ $mode == w && -n ${DX_REMOVAL_WAIT_MS_WRITE:-} ]]; then field_policy+=(-e "TX2_REMOVAL_WAIT_MS=$DX_REMOVAL_WAIT_MS_WRITE"); fi
@@ -1219,7 +1224,7 @@ for role in "${gateway_roles[@]}"; do
     -e "TX2_ENTITY_CACHE_BYTES=$entity_cache_bytes" -e "TX2_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-2097152}" -e "TX2_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-536870912}" \
     -e "TX2_REACH_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-1000000}" \
     -e "TX2_PINNED_SHORTCUT=${DX_PINNED_SHORTCUT:-0}" -e "TX2_PINNED_CUT_LOOKUP=${DX_PINNED_CUT_LOOKUP:-0}" \
-    -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} \
+    -v "$([[ $mode == r && -n ${DX_GATEWAY_SRC_READ:-} ]] && echo "$DX_GATEWAY_SRC_READ" || echo "$src"):/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} \
     ${erase_env[@]+"${erase_env[@]}"} ${erase_mount[@]+"${erase_mount[@]}"} ${xq3_mount[@]+"${xq3_mount[@]}"} \
     --entrypoint /opt/datomic/bin/run "$image" ${gw_startup_read[@]+"${gw_startup_read[@]}"} -m "$gateway_main" ${pg_data:+gateway} >/dev/null
   ok=false

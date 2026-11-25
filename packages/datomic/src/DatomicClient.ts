@@ -267,6 +267,8 @@ export class DatomicClient {
   reachSession = randomUUID();
   readonly reachCache: ByteCache<CachedEntity>;
   private readonly reachReplySequence = new WeakMap<object, number | null>();
+  /** [DX-ERA2 fifth pass, Z7] The newest removal stamp seen per database, from any response that carries one. */
+  readonly removalStamps = new Map<string, number>();
   // [DX-RD4] The gateway's echo of an at-least read whose body is not a map (reach), keyed by the parsed reply.
   private readonly atLeastEcho = new WeakMap<object, number>();
   private readonly reachSequence = new Map<string, number>();
@@ -622,17 +624,25 @@ export class DatomicClient {
               const atLeastHeader = res.headers["x-tx2-at-least"];
               if (typeof atLeastHeader === "string" && data && typeof data === "object")
                 this.atLeastEcho.set(data, Number(atLeastHeader));
+              // [DX-ERA2 fifth pass, B5] the removal stamp when the gateway sends one: it changes at a removal's commit
+              // under the commit boundary, while the erasure sequence waits for the publication.
               const erasureHead = res.headers["x-triplex-erasure-seq"];
+              const stampHead = res.headers["x-triplex-removal-stamp"] ?? erasureHead;
+              if (typeof stampHead === "string" && /^\d+$/.test(stampHead)) {
+                const stampDb = /^\/v\d+\/db\/([^/]+)\//.exec(path)?.[1];
+                if (stampDb !== undefined)
+                  this.removalStamps.set(stampDb, Math.max(this.removalStamps.get(stampDb) ?? 0, Number(stampHead)));
+              }
               if (
-                erasureHead !== undefined &&
+                stampHead !== undefined &&
                 (path.endsWith("/reach") || path.endsWith("/reach-many"))
               ) {
-                const sequence = Number(erasureHead);
+                const sequence = Number(stampHead);
                 this.reachReplySequence.set(
                   data,
                   Number.isSafeInteger(sequence) &&
                     sequence >= 0 &&
-                    String(sequence) === erasureHead
+                    String(sequence) === stampHead
                     ? sequence
                     : null,
                 );

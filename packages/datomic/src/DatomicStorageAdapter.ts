@@ -447,6 +447,9 @@ export const makeDatomicStorageAdapter = (
                   state.importInstant === undefined &&
                   [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
                 sourceK: state.optimistic ? null : state.sourceK,
+                // [DX-ERA2 fifth pass, Z7] when the frame began: removals after it that name a subject it writes
+                // decline it, also when it carries no source
+                ...(state.removalSeen === undefined ? {} : { removalSeen: state.removalSeen }),
                 position: state.position,
                 span: state.position - state.sourceK,
                 entities: [...state.entities],
@@ -726,6 +729,7 @@ export const makeDatomicStorageAdapter = (
             replaySafe: transactionOptions?.replaySafe === true,
             serverRecordTime: strictRecordClocks && options.serverRecordTime !== false,
             optimistic,
+            ...(client.removalStamps.has(db) ? { removalSeen: client.removalStamps.get(db)! } : {}),
             restart: { needed: false },
             sourceK,
             handle: snapshot.handle,

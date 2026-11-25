@@ -27,6 +27,9 @@ export interface TransactionState {
     readonly rows: ReadonlyMap<string, TripleRow | null>;
   };
   readonly optimistic?: boolean;
+  /** [DX-ERA2 fifth pass, Z7] The removal stamp this client had seen for the database when the frame began; sent as
+   * `removalSeen`, so a save without a frame source is still dated against later removals of its subjects. */
+  readonly removalSeen?: number;
   readonly restart: { needed: boolean };
   entities: Set<string>;
   live: Set<string>;

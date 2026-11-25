@@ -24,7 +24,7 @@ cp "$repo/packages/datomic/src/codec-spec.json" "$out/this/codec-spec.json"
 git -C "$repo" archive "$base" packages/datomic/gateway/src packages/datomic/src/codec-spec.json | tar -x -C "$out/base"
 mv "$out/base/packages/datomic/gateway/src" "$out/base/src"; cp "$out/base/packages/datomic/src/codec-spec.json" "$out/base/codec-spec.json"
 rm -rf "$out/base/packages"; echo "$base" > "$out/base/commit"
-cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era2/paired.clj" "$x/era3/attack.clj" "$x/era3/attack2.clj" "$x/era3/attack3.clj" "$out/lab/"
+cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era2/paired.clj" "$x/era3/attack.clj" "$x/era3/attack2.clj" "$x/era3/attack3.clj" "$x/era3/attack4.clj" "$out/lab/"
 image=${DX_ERA2_IMAGE_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
 [[ $image =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "gate.sh: DX_ERA2_IMAGE_ID must be an image ID" >&2; exit 2; }
 [[ $(docker image inspect --format '{{.Id}}' "$image") == "$image" ]] || { echo "gate.sh: image $image not present" >&2; exit 2; }
@@ -51,6 +51,14 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
   # [DX-ERA2 fourth pass] the third review's cases and fuzzer with a second active gateway (era3/attack3.clj)
   [[ $name == era3c-* ]] && env+=(-e "ERA3_PHASES=${ERA3C_PHASES:-k2 k3 k4 k5 k6 k7 k8 k9 k10 fuzz3}" -e "ERA3_N=${ERA3C_N:-400}"
                                   -e "ERA3_BLOCK=${ERA3_BLOCK:-100}" -e "ERA3_SEED=${ERA3C_SEED:-11}" -e "ERA3_RUN=gate3")
+  # [DX-ERA2 fifth pass] the fourth review's cases and fuzzer (era3/attack4.clj, era3/REVIEW-4.md); each case runs on
+  # both boundaries inside one process (its own switch), so the arms are the modes; Q9 and Q10 need the sweep options
+  [[ $name == era3d-* ]] && env+=(-e "ERA3_PHASES=${ERA3D_PHASES:-q1 q2 q3 q4 q5 q7 q8 q11 r22 fuzz4}" -e "ERA3_N=${ERA3D_N:-400}"
+                                  -e "ERA3_BLOCK=${ERA3_BLOCK:-100}" -e "ERA3_SEED=${ERA3D_SEED:-13}" -e "ERA3_RUN=gate4")
+  [[ $name == era3d-q910-* ]] && env+=(-e "ERA3_PHASES=q9 q10" -e TRIPLEX_ERASURE_SHRED_GRACE_MS=0 -e TX2_ID_LISTS=1 -e TX2_SWEEP=1)
+  # database-wide: the Q cases are per-account only and fuzz4 drives per-account completion (the reviewer ran it on the
+  # per-account modes only), so this arm is R2-2
+  [[ $name == era3d-off ]] && env+=(-e "ERA3_PHASES=r22")
   mkdir -p "$out/$name.out"
   docker run --rm --pull never --name "tx2-dxera2-gate-$$-$name" --memory 3g --cpus 2 -v "$out/$name.out:/out" \
     -v "$out/$source/src:/opt/gateway/src:ro" -v "$out/$source/codec-spec.json:/opt/spec/codec-spec.json:ro" \
@@ -61,9 +69,9 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
   grep -E "ERA2_|ERA3_SUMMARY|ERA3_VIOLATION|SUITES|FAIL|ERROR in|Exception" "$out/$name.log" | cut -c1-2000 | head -40
   # the review's attacks report violations in their summary line and exit 0
   # E9 (copies recorded before a removal) is a known unmet requirement owned by another builder: reported, not counted
-  if [[ $name == era3-* || $name == era3b-* || $name == era3c-* ]] && ! grep -q 'ERA3_SUMMARY.*:violations 0,' "$out/$name.log"; then status=1; fi
+  if [[ $name == era3-* || $name == era3b-* || $name == era3c-* || $name == era3d-* ]] && ! grep -q 'ERA3_SUMMARY.*:violations 0,' "$out/$name.log"; then status=1; fi
 }
-phases=${ERA2_GATE_PHASES:-paired gate era3 suites}
+phases=${ERA2_GATE_PHASES:-paired gate era3 suites b2}
 paired='(load-file "/lab/regression.clj") (load-file "/lab/paired.clj") (era2-paired/main)'
 if [[ $phases == *paired* ]]; then
   run paired-base base off "$paired"; run paired-base2 base off "$paired"
@@ -84,6 +92,9 @@ if [[ $phases == *era3* ]]; then
   run era3-commit this commit "$attack"; run era3b-commit this commit "$attack2"
   attack3='(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (era3-attack3/main)'
   run era3c-on this on "$attack3"; run era3c-subject this subject "$attack3"; run era3c-commit this commit "$attack3"
+  attack4='(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (era3-attack4/main)'
+  run era3d-off this off "$attack4"; run era3d-on this on "$attack4"; run era3d-subject this subject "$attack4"
+  run era3d-q910-on this on "$attack4"
 fi
 suites="triplex.gateway.selftest triplex.gateway.group-test triplex.gateway.ids-test triplex.gateway.feed-test triplex.gateway.pinned-test triplex.gateway.recent-test triplex.gateway.cache-key-test triplex.gateway.commit-order-test triplex.gateway.sweep-gates-test triplex.gateway.trace-test"
 for arm in base:off this:off this:subject this:commit; do
@@ -101,11 +112,30 @@ rows = [l.split(" ", 2) for l in open(sys.argv[1]).read().splitlines()]
 by = {}
 for arm, _, rest in rows: by.setdefault(arm, []).append(rest)
 same = len(by.get("base", [])) == 2 and by.get("base") == by.get("base2") == by.get("off") == by.get("on") == by.get("commit")
-print("ERA2_PAIRED_LOGS", "identical" if same else "DIFFERENT", {k: len(v) for k, v in by.items()})
+print("ERA2_PAIRED_LOGS_EVERY_DATOM", "identical" if same else "different (see the next line)", {k: len(v) for k, v in by.items()})
 for arm, v in by.items(): print(arm, *v, sep="\n  ")
-sys.exit(0 if same else 1)
+# [DX-ERA2 fifth pass] R2-2 is fixed on every mode (the coordinator's ask), so the import replay the workload sends
+# with no frame source is declined AND its command recorded, on this gateway with the option off too: 11 datoms (two
+# attributes, one record). The gate: every arm identical once exactly those datoms are left out, none on the base,
+# and the same 11 on every arm of this gateway.
+def key(r):
+    d = dict(re.findall(r':([a-z0-9-]+) ("[^"]*"|[0-9]+|true|false)', r))
+    return (d.get("sealed"), d.get("sha256-without-r22"), d.get("reads"), int(d.get("datoms", 0)) - int(d.get("r22-datoms", 0)))
+def r22(r): return int(dict(re.findall(r':([a-z0-9-]+) ("[^"]*"|[0-9]+|true|false)', r)).get("r22-datoms", "-1"))
+keys = {arm: [key(r) for r in v] for arm, v in by.items()}
+same2 = len(keys.get("base", [])) == 2 and all(keys.get(a) == keys["base"] for a in ["base2", "off", "on", "commit"])
+counts = {arm: [r22(r) for r in v] for arm, v in by.items()}
+expect = all(counts.get(a) == [0, 0] for a in ["base", "base2"]) and all(counts.get(a) == [11, 11] for a in ["off", "on", "commit"])
+print("ERA2_PAIRED_LOGS_WITHOUT_R22", "identical" if same2 else "DIFFERENT", "r22 datoms", counts, "as expected" if expect else "UNEXPECTED")
+sys.exit(0 if (same2 and expect) else 1)
 PY
 for arm in base base2 off on commit; do grep -h "^ERA2_PAIRED_REPLIES" "$out/paired-$arm.log" | md5 | sed "s/^/replies $arm /"; done
+fi
+# [DX-ERA2 fifth pass] B2: a published removal's key must be deleted within its grace whatever else is pending
+# (era2/b2.clj in every mode, and with the shred worker's completion), on this checkout's gateway source
+if [[ $phases == *b2* ]]; then
+  bash "$x/era2/b2.sh" "$out/b2" worktree "off on subject commit off-worker subject-worker" || status=1
+  grep -h "ERA2_B2_SUMMARY" "$out/b2"/b2-*.log
 fi
 rm -rf "$out/this/src" "$out/base/src"
 exit "$status"

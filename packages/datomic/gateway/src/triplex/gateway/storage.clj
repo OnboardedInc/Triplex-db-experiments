@@ -214,7 +214,9 @@
                    ;; [DX-ERA2] Guarded per account: the installed writers' fence on its fixed value, and the removal
                    ;; sequences of the accounts this write touches (and those its ticket names).
                    ;; [DX-ERA3 F1] and, for a ticket naming no account, the global declared removal sequence.
-                   (into [[:db/cas scope :triplex.scope/erasure-seq removal-scope/sentinel removal-scope/sentinel]
+                   ;; [DX-ERA2 fifth pass] on the value read at the request's position (-1, or -2 with the commit boundary)
+                   (into [[:db/cas scope :triplex.scope/erasure-seq (get privacy/*cut* :erasure-sentinel removal-scope/sentinel)
+                           (get privacy/*cut* :erasure-sentinel removal-scope/sentinel)]
                           (removal-scope/fence-op privacy/*cut* rows (removal-scope/ticket-accounts input))]
                          ((requiring-resolve 'triplex.gateway.removal-commit/ticket-intent-ops) scope input db))
                    [[:db/cas scope :triplex.scope/erasure-seq seq seq]]))
@@ -594,7 +596,7 @@
       (let [text (str e)]
         ;; [DX-THIN1] Why: preserve explicitly typed policy errors and the established transaction rejection for malformed row ordering.
         ;; Rejected: treating every codec InvalidValue as a policy error before checking the transaction result.
-        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasedAssertionIdentity" "ProtectedTypeUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
+        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasureFrontierUnavailable" "ErasedAssertionIdentity" "ProtectedTypeUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
                        {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_ERASURE_FRONTIER|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))

@@ -22,8 +22,9 @@
   cannot tell it from a removal between its two steps; with the intent first there is no such state)."
   (:require [clojure.data.json :as json] [datomic.api :as d]
             [triplex.gateway.authority-sql :as sql]
-            [triplex.gateway.erase :as erase] [triplex.gateway.privacy :as privacy]
-            [triplex.gateway.removal-scope :as removal-scope] [triplex.gateway.scope :as scope]))
+            [triplex.gateway.erase :as erase] [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope]
+            [triplex.gateway.removal-scope :as removal-scope] [triplex.gateway.scope :as scope]
+            [triplex.gateway.storage :as storage]))
 
 (def commit-ident :triplex.removal/commit-v1)
 (def moved "TRIPLEX_REMOVAL_SUBJECT_MOVED")
@@ -43,6 +44,10 @@
   [conn ops]
   (let [report (try (deref (d/transact-async conn ops) wait-ms ::timeout)
                     (catch Exception e
+                      ;; [DX-ERA2 fifth pass] a refusal the removal expects (a guard, a lost compare-and-set) stays quiet;
+                      ;; anything else is a fault and is counted and logged before it is answered 503
+                      (when-not (re-find #"TRIPLEX_|cas-failed|unique-conflict|:db.error" (str e (.getCause e)))
+                        ((requiring-resolve 'triplex.gateway.failures/note!) "removal-step" nil e))
                       (throw (ex-info "A native step of the removal was refused; it stays pending"
                                       {:status 503 :code "ErasureFrontierUnavailable" :removal-step-refused true} e))))]
     (when (= ::timeout report) (privacy/unavailable!))
@@ -97,14 +102,26 @@
                        (when (some? pending) (str ", pending " pending)))
                   {:status 503 :code code})))
 
-(def commit-boundary
-  "[DX-ERA2 fourth pass] TX2_REMOVAL_COMMIT_BOUNDARY=1 (default off; only on a database guarded per account): a
-  removal takes effect for every request at its commit in Datomic, not at its publication in the removal log. Every
-  request is served from the log's cut with every removal committed in the data past the log's head applied
-  (`effective`); the log stays the acknowledged, ordered record and what a restore of older data replays. A log
-  behind the data then cannot undo a removal (N5, E7, M1): it is caught up from the data by the next removal or the
-  rebuild route. See era2/REMOVAL-PER-ACCOUNT.md section 16."
+(def may-turn-on
+  "[DX-ERA2 fifth pass] TX2_REMOVAL_COMMIT_BOUNDARY=1 now means only: this process may turn the commit boundary on for a
+  database guarded per account. What a request does depends on the database, never on this variable."
   (= "1" (System/getenv "TX2_REMOVAL_COMMIT_BOUNDARY")))
+
+(def commit-boundary
+  "Test seam only, nil in every gateway: the fourth review's in-process emulation of two gateways on different
+  boundaries (era3/attack4.clj) sets it to true or false; nil means the database's own setting decides."
+  nil)
+
+(defn commit-boundary?
+  "[DX-ERA2 fourth pass; fifth pass: a setting in the database] True when this database value removes at the commit:
+  its database-wide erasure sequence holds -2 instead of the per-account sentinel -1. A removal then takes effect for
+  every request at its commit in Datomic, not at its publication in the removal log: every request is served from the
+  log's cut with every removal committed in the data past the log's head applied (`effective`); the log stays the
+  acknowledged, ordered record and what a restore of older data replays. Read at each request's own position. The
+  value is the one every write and removal fences on at Datomic's serial point, so a plan made before the setting
+  changes is refused, and a build that does not know -2 refuses the database (see era2/REMOVAL-PER-ACCOUNT.md 18)."
+  [db]
+  (if (some? commit-boundary) commit-boundary (= -2 (scope/value db (scope/entity db) :triplex.scope/erasure-seq))))
 
 (def ^:private natives (atom {}))
 (defn native-entries
@@ -128,7 +145,12 @@
                                (let [entry (json/read-str (:v x)) entries (:entries acc) prior (peek entries)
                                      ok (and (= (get entry "seq") (inc (count entries)))
                                              (= (get entry "previous") (if prior (privacy/sha256 (:raw prior)) privacy/zeros)))]
-                                 {:entries (conj entries {:raw (:v x) :entry entry}) :dense (and (:dense acc) ok)
+                                 {:entries (conj entries {:raw (:v x) :entry entry :e (:e x)
+                                                          ;; the transaction's own position (after a restore the
+                                                          ;; replayed record keeps its published position)
+                                                          :position (or (scope/value db (:e x) :triplex.tx/position)
+                                                                        (get entry "position"))})
+                                  :dense (and (:dense acc) ok)
                                   :last-e (:e x) :last-raw (:v x)}))
                              base more)]
           (swap! natives assoc name result)
@@ -175,7 +197,7 @@
 (defn served
   "The state a request on a database guarded per account is served from (erase/request-cut)."
   [name db state]
-  (assoc (if commit-boundary
+  (assoc (if (commit-boundary? db)
            (effective name db state)
            ;; [DX-ERA3 M1] the log's boundary: a pending removal already committed in the data is flagged; a read then
            ;; publishes it before it is served (main/route-handler, `publish-for-read!`), so a log copy put back with
@@ -185,24 +207,59 @@
              (cond-> state
                (and (integer? p) (= p (inc (:seq state))) (<= p (count entries)) (pending-of? state (:entry (entries (dec p)))))
                (assoc :committed-pending true))))
-         :per-account true))
+         :per-account true
+         ;; [DX-ERA2 fifth pass] the value every write of this request fences on (-1, or -2 with the commit boundary)
+         :erasure-sentinel (scope/value db (scope/entity db) :triplex.scope/erasure-seq)
+         ;; [DX-ERA2 fifth pass, B5] the one value a cache keys on: it changes exactly when what a read may answer
+         ;; changes. On the log's boundary the published sequence (a read publishes a committed removal first); with the
+         ;; commit boundary the number of removals committed in this database value (it moves at the commit, while the
+         ;; sequence and the tickets wait for the publication)
+         :stamp (if (commit-boundary? db)
+                  (max (long (:seq state)) (count (:entries (native-entries name db))))
+                  (:seq state))))
 
+(def ^:private read-publications (atom {}))
 (defn publish-for-read!
   "[DX-ERA3 M1, the log's boundary] A read found its database's pending removal already committed in the data: the
   removal is published first (its gateway takes the removal lock; only the log is written), then the read is served
   from the published log. Each such read waits for the publication; none is served from the log before it."
   [name conn]
-  (when-let [p (privacy/pending name)]
-    (erase/erase! name conn {"commandId" (get p "commandId") "selectors" (get p "selectors")}))
-  (let [state (first (erase/request-cut name conn (erase/sync! conn)))]
-    (when (:committed-pending state) (privacy/unavailable!))
+  (let [started (System/nanoTime) p (privacy/pending name)
+        ;; [DX-ERA2 fifth pass] bounded: one publication per database runs at a time on this gateway (the readers that
+        ;; find it running wait on it), and a reader waits at most `wait-ms` (the removal lock may be held by a live
+        ;; but stalled removal on another gateway); then 503, and the publication goes on without it
+        done (when p
+               (let [job (get (swap! read-publications
+                                     (fn [m] (if (some-> (get m name) future-done? not) m
+                                               (assoc m name (future (erase/erase! name conn {"commandId" (get p "commandId")
+                                                                                             "selectors" (get p "selectors")}))))))
+                              name)]
+                 (try (deref job wait-ms ::timeout)
+                      ;; the publication's own refusal (typed) is the reader's answer; anything else (a gateway that
+                      ;; cannot write the log, Z5 of the fourth review) is counted and answered a typed 503, never 400
+                      (catch java.util.concurrent.ExecutionException e
+                        (let [c (or (.getCause e) e)]
+                          (if (instance? clojure.lang.ExceptionInfo c) (throw c)
+                            (do ((requiring-resolve 'triplex.gateway.failures/note!) "read-publication" name c)
+                                (privacy/unavailable!))))))))
+        state (when-not (= ::timeout done)
+                (try (first (erase/request-cut name conn (erase/sync! conn)))
+                     (catch clojure.lang.ExceptionInfo e (throw e))
+                     (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "read-publication" name e)
+                       (privacy/unavailable!))))
+        ms (/ (- (System/nanoTime) started) 1.0e6)]
+    ;; [DX-ERA2 fifth pass] each such wait is counted and logged (its distribution is measured on the stack)
+    ((requiring-resolve 'triplex.gateway.stats/bump!) [:removalReadWaits] 1)
+    (println (json/write-str {"schema" "triplex.removal-read-wait.v1" "database" name "seq" (get p "seq") "ms" ms
+                              "published" (boolean (and state (not (:committed-pending state)))) "timedOut" (= ::timeout done)}))
+    (when (or (nil? state) (:committed-pending state)) (privacy/unavailable!))
     state))
 
 (defn consistent?
   "Request time (erase/request-cut): the data and the log agree, declarations included. With the commit boundary,
   served as long as nothing refuses writes (a transient disagreement is retried on a synced database first)."
   [name db state]
-  (if commit-boundary
+  (if (commit-boundary? db)
     (nil? (:writes-refused (effective name db state)))
     (and (removal-scope/consistent? db (:seq state) (:pending-seq state)) (nil? (disagreement db state)))))
 
@@ -210,7 +267,7 @@
   "After request-cut's retries: with the commit boundary the request is served (reads; writes are refused by
   `check-writes!`), else the typed disagreement when there is one, else 503."
   [name db state]
-  (if commit-boundary
+  (if (commit-boundary? db)
     [(served name db state) db]
     (do (when-let [b (and state (disagreement db state))] (refuse! b))
         (privacy/unavailable!))))
@@ -239,7 +296,7 @@
   [name db]
   (try (privacy/cut name db true)
        (catch clojure.lang.ExceptionInfo e
-         (if (and commit-boundary (behind-cache? name db))
+         (if (and (commit-boundary? db) (behind-cache? name db))
            (do (swap! privacy/cache dissoc name) (privacy/cut name db true))
            (throw e)))))
 
@@ -247,8 +304,10 @@
   "The refusal request-cut throws after its retries: typed when the database is protected and its log is missing."
   [name db e]
   (if (and (privacy/enabled? db) (nil? (privacy/record-text name "head.json")))
-    (ex-info "The removal log is missing: rebuild it from the data (POST removal-log-rebuild with the policy)."
-             {:status 503 :code "RemovalLogMissing"})
+    ;; [DX-ERA2 fifth pass, Z2] tagged: the gateway rebuilds the log from the data and the database's own policy once
+    ;; this request has released its locks (main/route-handler), so a missing log refuses one request, not all
+    (ex-info "The removal log is missing; this gateway rebuilds it from the data. Send the request again."
+             {:status 503 :code "RemovalLogMissing" :removal-log-missing true})
     e))
 
 (defn- pending-refusal
@@ -444,7 +503,8 @@
         ops (-> [[commit-ident head payload]
                  {:db/id "privacy-claim" :triplex.claim/command-id (get entry "commandId") :triplex.claim/tx "datomic.tx"
                   :triplex.claim/tx-id (get entry "txId")}
-                 [:db/cas head :triplex.scope/erasure-seq removal-scope/sentinel removal-scope/sentinel]
+                 [:db/cas head :triplex.scope/erasure-seq (scope/value db head :triplex.scope/erasure-seq)
+                  (scope/value db head :triplex.scope/erasure-seq)]
                  [:db/cas head :triplex.scope/removal-seq (dec s) s]
                  ;; [DX-ERA3 second review] a commit lands only under its own declaration
                  [:db/cas head :triplex.scope/removal-intent s s]]
@@ -577,7 +637,39 @@
           db (release-orphan! conn db current)]
       [db current])))
 
-(declare complete-pending!)
+(declare complete-pending! adopt-policy!)
+
+(defn- turn-on-locked!
+  "Under the database's removal lock, with no removal pending and the data and the log in agreement (the log's
+  boundary rules): the one-way move to the commit boundary, one compare-and-set from -1 to -2. Every write and removal
+  planned before it carries -1 and is refused at the serial point. Returns the database after it, or nil when it is
+  not done now (already on, a removal pending, or the two disagreeing: the request then follows the log's boundary)."
+  [name conn db]
+  (let [head (scope/entity db) v (scope/value db head :triplex.scope/erasure-seq) cut (privacy/cut name db true)]
+    (when (and (= removal-scope/sentinel v) (removal-scope/per-account? db) cut (nil? (:pending cut))
+               (nil? (privacy/pending name)) (= (removal-scope/native-seq db) (:seq cut)) (nil? (disagreement db cut)))
+      (transact! conn [[:db/cas head :triplex.scope/erasure-seq removal-scope/sentinel -2]])
+      (println (json/write-str {"schema" "triplex.removal-boundary.v1" "database" name "boundary" "commit" "seq" (:seq cut)}))
+      (erase/sync! conn))))
+
+(defn turn-on!
+  "[DX-ERA2 fifth pass] POST /v2/db/{db}/removal-commit-boundary: a process allowed to (TX2_REMOVAL_COMMIT_BOUNDARY=1)
+  moves this database to the commit boundary, for good. A removal left pending is completed first; a removal in
+  flight on another gateway holds the removal lock, so this waits for it. Idempotent."
+  [name conn]
+  (when-not may-turn-on
+    (privacy/failure! 403 "RemovalBoundaryNotPermitted" "This process may not move a database to the commit boundary"))
+  (when-not (removal-scope/per-account? (erase/sync! conn))
+    (privacy/failure! 409 "NotGuardedPerAccount" "Move the database to removal per account first"))
+  (complete-pending! name conn)
+  (privacy/guard name
+    (fn []
+      (let [db (erase/sync! conn)]
+        (if (commit-boundary? db)
+          {:database name :boundary "commit" :changed false}
+          (if (turn-on-locked! name conn db)
+            {:database name :boundary "commit" :changed true}
+            (privacy/unavailable!)))))))
 
 (defn erase! [name conn input]
   (let [selectors (erase/selectors! input)
@@ -596,8 +688,13 @@
               (let [db (erase/sync! conn)
                     current (log-cut name db)
                     _ (when-not current (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
+                    ;; [DX-ERA2 fifth pass, Z2] the database's own policy (adopted from the log once)
+                    db (adopt-policy! name conn db)
+                    ;; [DX-ERA2 fifth pass] a process allowed to turns the commit boundary on before its removal
+                    db (or (when (and may-turn-on (not (commit-boundary? db))) (turn-on-locked! name conn db)) db)
+                    current (log-cut name db)
                     ;; [DX-ERA2 fourth pass] with the commit boundary the log is first brought up to the data
-                    [db current] (if commit-boundary (catch-up! name conn db current) [db current])]
+                    [db current] (if (commit-boundary? db) (catch-up! name conn db current) [db current])]
                 (privacy/clear-completed! name current)
                 (if-let [before (get-in current [:commands command])]
                   (do (when-not (= selectors (get before "selectors"))
@@ -613,7 +710,7 @@
                         _ (when (and pending (not= s (get pending "seq"))) (privacy/unavailable!))
                         ;; [DX-ERA3 N5] before anything is recorded, declared or released: the data is not ahead of the log
                         ;; (with the commit boundary the catch-up above has already made it so)
-                        _ (when-not commit-boundary (when-let [b (disagreement db current)] (refuse! b)))
+                        _ (when-not (commit-boundary? db) (when-let [b (disagreement db current)] (refuse! b)))
                         checked (check-entities selectors)]
                     (if-let [native (and pending (committed db pending))]
                       (publish! name conn current native wire 0 false started)
@@ -677,6 +774,125 @@
           (finally (swap! completing disj name)))))
     nil))
 
+;; ---- [DX-ERA2 fifth pass] R2-2 of the save line's second review: a save framed before a removal of its subject ----
+(defn- written-protected
+  "The [entity attribute] pairs of the protected values this save writes (its new rows on a protected attribute)."
+  [db input attrs]
+  (let [fresh (set (get input "newIds"))]
+    (into #{} (comp (filter #(fresh (:id %))) (filter #(attrs (:attribute %))) (map (juxt :entity_id :attribute)))
+          (storage/input-rows input (storage/lean? db) fresh))))
+
+(defn- names-value? [entry [e a]]
+  (or (some (fn [x] (and (= e (get x "entityId")) (or (nil? (get x "attribute")) (= a (get x "attribute"))))) (get entry "selectors"))
+      (some (fn [x] (and (= e (get x "entity")) (= a (get x "attribute")))) (get entry "identities"))))
+
+(defn removal-after-source
+  "The newest removal committed in the data AFTER this save was framed that names a protected value the save writes
+  (by its selectors, so a subject with no value yet counts), or nil. From the data's own records, so it is the same on
+  both boundaries and database-wide. When was the save framed:
+  - its own frame source (`sourceK`, the position the client framed it from): removals at a later position;
+  - else the removal sequence the client last saw (`removalSeen`, the frontier's sequence or stamp it read): removals
+    with a later sequence;
+  - else nothing tells, so the save counts as framed before every removal (the fourth review's Z7: the SDK's
+    optimistic commits send no source): any removal that names a value it writes declines it. A save sent again with a
+    fresh source or a fresh `removalSeen` is a new save after the removal (case 3) and is not declined."
+  [name db input]
+  (let [source (get input "sourceK") seen (get input "removalSeen")
+        later? (cond (integer? source) (fn [x] (> (long (:position x)) (long source)))
+                     (integer? seen) (fn [x] (> (long (get-in x [:entry "seq"] 0)) (long seen)))
+                     :else (constantly true))
+        cut (privacy/cut name db true) attrs (or (:attrs cut) #{})]
+    (when (seq attrs)
+      (let [after (take-while later? (rseq (:entries (native-entries name db))))]
+        (when (seq after)
+          (let [w (written-protected db input attrs)]
+            (when (seq w)
+              (some (fn [x] (when (some #(names-value? (:entry x) %) w) (:entry x))) after))))))))
+
+(def ^:private declined-schema
+  [{:db/ident :triplex.removal/declined-command :db/valueType :db.type/string :db/cardinality :db.cardinality/one
+    :db/unique :db.unique/identity}
+   {:db/ident :triplex.removal/declined-by :db/valueType :db.type/string :db/cardinality :db.cardinality/one}])
+
+(defn- commands-of [input] (vec (distinct (keep #(get % "commandId") (get input "claims")))))
+
+(defn- declined-by [db input]
+  (when (d/entid db :triplex.removal/declined-command)
+    (some (fn [c] (when-let [e (d/entid db [:triplex.removal/declined-command c])]
+                    (:v (first (d/datoms db :eavt e :triplex.removal/declined-by)))))
+          (commands-of input))))
+
+(defn- decline!
+  "Record the save's commands as declined by `entry` (so a replay under the same command is refused whatever source it
+  carries), then refuse it with the terminal answer."
+  [conn db input entry]
+  (when (seq (commands-of input))
+    (when-not (d/entid db :triplex.removal/declined-command) @(d/transact conn declined-schema))
+    @(d/transact conn (vec (for [c (commands-of input)]
+                             {:triplex.removal/declined-command c :triplex.removal/declined-by (get entry "txId")}))))
+  (println (json/write-str {"schema" "triplex.removal-declined-save.v1" "operationId" (get input "operationId")
+                            "commands" (commands-of input) "removal" (get entry "seq") "source" (get input "sourceK")}))
+  (throw (ex-info (str "A removal of a subject this save writes committed after the save was framed (removal "
+                       (get entry "seq") "); it is declined, and so is its command")
+                  {:status 409 :code "ErasureReplayDeclined"})))
+
+(defn decline-check!
+  "Before a save (both writers, every mode): refused 409 ErasureReplayDeclined when its command was declined by a
+  removal, or when a removal of a subject it writes committed after its own frame source (case 1: the late frame),
+  its commands then recorded as declined (case 2)."
+  [name conn db input]
+  (when-let [by (declined-by db input)]
+    (throw (ex-info (str "This save's command was declined by a removal (" by "); a new command is a new save")
+                    {:status 409 :code "ErasureReplayDeclined"})))
+  (when-let [entry (removal-after-source name db input)]
+    (decline! conn db input entry)))
+
+(defn after-refusal
+  "After a save was refused at the serial point (409 CasConflict or ErasureFrontierChanged): when the cause is a removal
+  of a subject it writes that committed after its frame source (case 1: the race), the same terminal answer as the
+  late frame, and its commands recorded as declined (case 2). Any other answer is returned unchanged."
+  [name conn input answer]
+  (let [body (:body answer)
+        code (when (= 409 (:status answer))
+               (get (try (json/read-str (if (string? body) body (String. ^bytes body "UTF-8")))
+                         (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "refusal-parse" name e) {}))
+                    "code"))]
+    (if (#{"CasConflict" "ErasureFrontierChanged"} code)
+      (let [db (erase/sync! conn)]
+        (if-let [entry (removal-after-source name db input)]
+          (try (decline! conn db input entry)
+               (catch clojure.lang.ExceptionInfo e
+                 {:status 409 :headers (:headers answer)
+                  :body (json/write-str {:code "ErasureReplayDeclined" :message (.getMessage e)})}))
+          answer))
+      answer)))
+
+(def worker-complete-ms
+  "[DX-ERA2 fifth pass] The key-shred worker completes a removal left pending longer than this many milliseconds
+  since its intent, as its own resend would, so that neither its effect nor its keys wait for a client that went
+  away. Part of the per-account rule: on with TX2_REMOVAL_PER_ACCOUNT=1 (30 s unless TX2_REMOVAL_WORKER_COMPLETE_MS
+  says otherwise; 0 turns it off). Under the database-wide rule only when TX2_REMOVAL_WORKER_COMPLETE_MS is set."
+  (let [v (some-> (System/getenv "TX2_REMOVAL_WORKER_COMPLETE_MS") Long/parseLong)]
+    (cond (some? v) (when (pos? v) v)
+          removal-scope/enabled 30000
+          :else nil)))
+
+(defn complete-stale!
+  "[DX-ERA2 fifth pass] Called by the key-shred worker on every pass (envelope/maintain-keys!). With
+  `worker-complete-ms` set, every database whose pending removal is older than it is completed (`complete-pending!`,
+  guarded at the serial point like any resend); a failure is counted and logged and the next pass tries again."
+  []
+  (when worker-complete-ms
+    (doseq [name (@#'envelope/authority-scopes)]
+      (try
+        (when-let [p (privacy/pending name)]
+          (when (> (- (System/currentTimeMillis) (long (get p "erasedAt" 0))) worker-complete-ms)
+            (println (json/write-str {"schema" "triplex.removal-worker-completion.v1" "database" name "seq" (get p "seq")
+                                      "ageMs" (- (System/currentTimeMillis) (long (get p "erasedAt" 0)))}))
+            (complete-pending! name ((requiring-resolve 'triplex.gateway.main/connection)
+                                     ((requiring-resolve 'triplex.gateway.main/db-uri) name)))))
+        (catch Exception e ((requiring-resolve 'triplex.gateway.failures/note!) "worker-completion" name e))))))
+
 (defn check-source!
   "[DX-ERA3 M4] A delivery's source database, checked under its lock (main/route-handler): a pending removal there
   refuses the delivery with the tagged 503 naming that database, so its gateway completes the source's removal; then
@@ -689,20 +905,51 @@
                       {:status 503 :code "ErasureFrontierUnavailable" :removal-pending true :removal-database source})))
     (let [state (if (and state (removal-scope/per-account? db)) (served source db state) state)]
       (if (and state (removal-scope/per-account? db))
-        (if commit-boundary (check-writes! state) (privacy/verify-data! state db))
+        (if (commit-boundary? db) (check-writes! state) (privacy/verify-data! state db))
         (privacy/verify-data! state db))
       (privacy/ensure-seq! state ticket))))
 
+;; ---- [DX-ERA2 fifth pass, Z2] the protection policy lives in the database ----------------------------------------
+(def ^:private policy-schema
+  [{:db/ident :triplex.scope/protection-policy :db/valueType :db.type/string :db/cardinality :db.cardinality/one}])
+
+(defn stored-policy
+  "The database's own protection policy ({\"attributes\" [...] \"sealed\" bool}), or nil (a database moved per account by
+  an earlier build: its policy is only in the log's head until the next move, removal or rebuild adopts it)."
+  [db]
+  (when (d/entid db :triplex.scope/protection-policy)
+    (some-> (scope/value db (scope/entity db) :triplex.scope/protection-policy) json/read-str)))
+
+(defn adopt-policy!
+  "Copy the log's policy into the database when the database has none (one transaction, once); refuse when both
+  exist and differ. The policy is immutable (the protection route refuses another), so it is written once and never
+  changed. Returns the database value after it."
+  [name conn db]
+  (let [wire (privacy/record-text name "head.json")
+        logged (when wire (let [h (json/read-str wire)] {"attributes" (vec (get h "attributes")) "sealed" (true? (get h "sealed"))}))
+        stored (stored-policy db)]
+    (cond
+      (and stored logged (not= (update stored "attributes" set) (update logged "attributes" set)))
+      (privacy/failure! 409 "ProtectionPolicyMismatch" "The database's protection policy and the removal log's differ")
+      (or stored (nil? logged)) db
+      :else (do (when-not (d/entid db :triplex.scope/protection-policy) @(d/transact conn policy-schema))
+                @(d/transact conn [[:db/add (scope/entity db) :triplex.scope/protection-policy (json/write-str logged)]])
+                (println (json/write-str {"schema" "triplex.protection-policy-adopted.v1" "database" name}))
+                (erase/sync! conn)))))
+
 (defn rebuild-log!
-  "[DX-ERA2 fourth pass] POST /v2/db/{db}/removal-log-rebuild: the removal log rebuilt from the data, under the
-  removal lock. Every removal committed in Datomic carries its entry exactly as published, chained by its previous
-  seal, so the log is the data's records in order. A log behind the data (any number of removals, or a copy with a
-  removal pending in it) is caught up; a missing log is written whole from the policy given in the body
-  ({\"attributes\": [...], \"sealed\": bool}), which must cover every removed value's attribute. Refused when the data is
-  behind the log (the restore route), or when they disagree. The way out of RemovalLogBehind on either boundary."
+  "[DX-ERA2 fourth pass; fifth pass: the policy from the database] POST /v2/db/{db}/removal-log-rebuild: the removal
+  log rebuilt from the data, under the removal lock. Every removal committed in Datomic carries its entry exactly as
+  published, chained by its previous seal, so the log is the data's records in order. A log behind the data (any
+  number of removals, or a copy with a removal pending in it) is caught up; a missing log is written whole from the
+  data and the database's own policy. It takes nothing from the request (Z2 of the fourth review: a policy from the
+  body could drop a protected attribute nobody had removed yet), so any caller can only make the log what the data
+  says. Refused when the data is behind the log (the restore route), when they disagree (the reconcile route), or,
+  for a missing log, when the database holds no policy (an earlier build's move; put back any copy of the log's head:
+  the policy never changes)."
   [name conn input]
-  (when-not (and (map? input) (every? #{"attributes" "sealed"} (keys input)))
-    (privacy/failure! 400 "InvalidValue" "Expected {} or {\"attributes\": [...], \"sealed\": bool}"))
+  (when-not (and (map? input) (empty? input))
+    (privacy/failure! 400 "InvalidValue" "Expected {}: the policy is the database's own"))
   (privacy/guard name
     (fn []
       (let [db (erase/sync! conn)
@@ -711,7 +958,8 @@
         (when-not (privacy/enabled? db) (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
         (when-not dense (privacy/failure! 503 "RemovalLogConflict" "The data's removal records are not a dense chain"))
         (if wire
-          (let [_ (swap! privacy/cache dissoc name)
+          (let [db (adopt-policy! name conn db)
+                _ (swap! privacy/cache dissoc name)
                 current (privacy/cut name db true)
                 e (effective name db current)
                 _ (check-writes! e)
@@ -719,11 +967,11 @@
                 after (if (> (count entries) h) (append-log! name db current (subvec entries h)) current)]
             (privacy/clear-completed! name after)
             {:database name :seq (:seq after) :appended (- (:seq after) h) :written false})
-          (let [attrs (get input "attributes") sealed? (get input "sealed")
+          (let [policy (or (stored-policy db)
+                           (privacy/failure! 409 "ProtectionPolicyUnknown"
+                                             "The database holds no protection policy: put back any copy of the removal log's head"))
+                attrs (vec (get policy "attributes")) sealed? (true? (get policy "sealed"))
                 removed (into #{} (mapcat (fn [x] (map #(get % "attribute") (get (:entry x) "identities")))) entries)]
-            (when-not (and (vector? attrs) (seq attrs) (every? string? attrs) (= (count attrs) (count (set attrs)))
-                           (instance? Boolean sealed?))
-              (privacy/failure! 400 "InvalidValue" "A missing log needs the policy: {\"attributes\": [...], \"sealed\": bool}"))
             (when-not (every? (set attrs) removed)
               (privacy/failure! 409 "ProtectionPolicyMismatch" "The policy does not cover every removed value's attribute"))
             (when (and (not sealed?) (d/entid db :triplex.private/id) (seq (d/datoms db :aevt :triplex.private/id)))
@@ -741,6 +989,35 @@
               (privacy/clear-completed! name after)
               (println (json/write-str {"schema" "triplex.removal-log-rebuilt.v1" "seq" (:seq after) "entries" (count entries)}))
               {:database name :seq (:seq after) :appended (count entries) :written true})))))))
+
+;; ---- [DX-ERA2 fifth pass] the operator's way out of RemovalLogConflict ---------------------------------------------
+(defn reconcile!
+  "POST /v2/db/{db}/removal-log-reconcile: the way out of RemovalLogConflict that can neither change the policy nor drop
+  a removal. Under the removal lock, every record in the data that differs from the log's entry of the same sequence
+  only in its position (a restore's replay by an earlier build, which wrote its new position into the record) is
+  rewritten as the published record; after that the data and the log must agree, else it is still refused with what
+  differs. Takes nothing from the request."
+  [name conn input]
+  (when-not (and (map? input) (empty? input)) (privacy/failure! 400 "InvalidValue" "Expected {}"))
+  (privacy/guard name
+    (fn []
+      (let [db (erase/sync! conn)
+            cut (or (privacy/cut name db true) (privacy/failure! 400 "EraseNotProtected" "Declare a protected scope first"))
+            by-seq (into {} (map (fn [e] [(get e "seq") e]) (vals (:commands cut))))
+            fixes (vec (for [x (:entries (native-entries name db))
+                             :let [published (by-seq (get-in x [:entry "seq"]))]
+                             :when (and published (not= (:entry x) published)
+                                        (= (dissoc (:entry x) "position") (dissoc published "position")))]
+                         [:db/add (:e x) :triplex.tx/erasure-record (json/write-str published)]))]
+        (when (seq fixes) (transact! conn fixes))
+        (swap! natives dissoc name)
+        (let [db (erase/sync! conn)
+              e (effective name db (privacy/cut name db true))]
+          (println (json/write-str {"schema" "triplex.removal-log-reconciled.v1" "database" name "rewritten" (count fixes)
+                                    "refused" (:writes-refused e)}))
+          (when (:writes-refused e)
+            (privacy/failure! 503 (:writes-refused e) "The data and the removal log still differ beyond positions: an operator must decide"))
+          {:database name :rewritten (count fixes) :seq (:seq e)})))))
 
 (defn start-check!
   "[DX-ERA3 N5] At gateway start: every database guarded per account whose data is ahead of (or behind) its removal
