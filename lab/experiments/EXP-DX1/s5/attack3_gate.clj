@@ -352,6 +352,37 @@
             (is (= 200 (:removal r)))
             (is (not= "chosen before" stored) [label "the value chosen before the removal is not stored"])))))))
 
+;; ---------------------------------------------------------------- 7. an ordered import chain across the transition
+
+(deftest an-import-chain-across-the-transition
+  ;; TX2_IMPORT_PIPELINE=1: frame n of a stream names frame n-1's command ID as its predecessor (storage.clj
+  ;; import-predecessor), and the writer refuses the frame unless that claim exists (TRIPLEX_IMPORT_PREDECESSOR).
+  ;; apply-ids rewrites the predecessor to the scoped form once the setting is on; frames committed before it are plain.
+  (when (and (run? "import") storage/import-pipeline?)
+    (reference/in-scope
+      (fn [name conn]
+        (let [a (str "i" (swap! counter inc))
+              stream (str "pipeline-" (apply str (repeat 64 "c")))
+              frame! (fn [cmd i account]
+                       (with-redefs [ac/permitted? false]
+                         (fz/general #(reference/send name (cond-> (assoc (save conn {:command cmd :operation (str cmd "/op" (swap! counter inc))
+                                                                                       :facts [{:owner (str "acct/" a "/subject/imp" i) :field ":a/f0" :type :string :value (str "i" i) :pred nil}]})
+                                                                          "writeClass" "import")
+                                                                   account (assoc "account" account))))))
+              manifest (frame! "load1/manifest/import" 0 a)
+              f0 (frame! (str "load1/" stream "/0") 1 a)
+              _ (turn-on! conn)
+              f1-naming (frame! (str "load1/" stream "/1") 2 a)
+              f1-again (frame! (str "load1/" stream "/1") 2 a)
+              f1-plain (frame! (str "load1/" stream "/1") 2 nil)
+              r {:case "an ordered import chain, its first frames before the transition and the next after it"
+                 :manifest (reference/outcome manifest) :frame0 (reference/outcome f0) :setting (ac/setting (d/db conn))
+                 :frame1NamingTheAccount (reference/outcome f1-naming) :frame1Again (reference/outcome f1-again)
+                 :frame1NamingNoAccount (reference/outcome f1-plain)}]
+          (line r)
+          (is (= [200 nil] (:frame0 r)))
+          (is (= [200 nil] (:frame1NamingTheAccount r)) "an import chain that names its account continues across the transition"))))))
+
 (defn main []
   (let [r (clojure.test/run-tests 's5-attack3)]
     (println "DX-S5R3_RESULT" (json/write-str (assoc (select-keys r [:test :pass :fail :error])

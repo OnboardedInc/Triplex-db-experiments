@@ -40,6 +40,7 @@ settings=(
   # The gateway's default (predecessor lookup off): the general writer is the fixed ident :triplex/commit.
   "accounts-on-nopred:$base TX2_ACCOUNT_CLAIMS=1 TX2_PREDECESSOR_LOOKUP=0"
   "accounts-on-general-nopred:TX2_SUBJECT_SAVE=0 TX2_ACCOUNT_CLAIMS=1 TX2_PREDECESSOR_LOOKUP=0"
+  "accounts-on-import:$base TX2_ACCOUNT_CLAIMS=1 TX2_IMPORT_PIPELINE=1"
   "group-accounts:$base TX2_ACCOUNT_CLAIMS=1 TX2_GROUP_COMMIT=1"
   "era-server:TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_WIDE=1"
   "era-per-account:TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_WIDE=1 TX2_REMOVAL_PER_ACCOUNT=1"

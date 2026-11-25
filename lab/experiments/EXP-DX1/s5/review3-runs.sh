@@ -16,7 +16,7 @@ clj() { heavy "$1" bash lab/experiments/EXP-DX1/s5/clj-run3.sh "$out/$1" "$2" "$
 for step in "${steps[@]}"; do
   echo "DX-S5R3_STEP $step $(date -u +%T)"
   case $step in
-    attack) clj attack attack3 "accounts-on accounts-on-nopred accounts-on-serial accounts-on-general accounts-on-general-nopred group-accounts"
+    attack) clj attack attack3 "accounts-on accounts-on-nopred accounts-on-serial accounts-on-general accounts-on-general-nopred group-accounts accounts-on-import"
             clj attack2 attack2 "server accounts-on accounts-on-general" ;;
     era) clj era era "era-server era-per-account" ;;
     log)
