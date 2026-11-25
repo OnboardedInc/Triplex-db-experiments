@@ -11,7 +11,7 @@ repo=$(git -C "$here" rev-parse --show-toplevel)
 cd "$repo"
 steps=("$@"); [[ ${#steps[@]} -gt 0 ]] || steps=(attack era log idents fuzz transition u1 mixed)
 mkdir -p "$out"
-heavy() { local label=$1; shift; node lab/bin/heavy.mjs --label "DX-S5R3-$label" -- "$@"; }
+heavy() { local label=$1; shift; node lab/bin/heavy.mjs --label "DX-S5R3-$label" --poll-ms 250 -- "$@"; }
 clj() { heavy "$1" bash lab/experiments/EXP-DX1/s5/clj-run3.sh "$out/$1" "$2" "$3"; }
 for step in "${steps[@]}"; do
   echo "DX-S5R3_STEP $step $(date -u +%T)"
