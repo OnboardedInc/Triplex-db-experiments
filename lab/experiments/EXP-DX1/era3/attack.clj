@@ -326,7 +326,10 @@
               wide-after-back (rs/per-account? (d/db conn))
               _ (remove-attr! name "d6-rm-2" "acct/n/one")
               forward (cross 2 {})
-              fresh (into {} (for [o owners] [o (offers/outcome (offers/send name (g/frame (str "d6-f-" o) o (g/secret o "f") nil nil)))]))
+              ;; [DX-ERA2 fifth pass] a fresh save carries its frame source (framed now): since Z7 of the fourth review a
+              ;; save with no source counts as framed before every removal, so a source-less save of a removed subject
+              ;; (m/one, n/one here) is declined by design; with its source it is a new save after the removal (case 3)
+              fresh (into {} (for [o owners] [o (offers/outcome (offers/send name (g/frame (str "d6-f-" o) o (g/secret o "f") nil (g/head conn))))]))
               detail {:back back :per-account-after-back wide-after-back :forward forward :fresh-saves fresh}]
           (observe! "D6" :detail detail)
           (oracle! "D6" (every? #(= [200 nil] %) (vals fresh)) "after both moves a fresh save of every subject commits" detail)

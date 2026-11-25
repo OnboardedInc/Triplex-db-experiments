@@ -56,6 +56,9 @@ run() { # NAME SOURCE OPTION CLOJURE-FORM
   [[ $name == era3d-* ]] && env+=(-e "ERA3_PHASES=${ERA3D_PHASES:-q1 q2 q3 q4 q5 q7 q8 q11 r22 fuzz4}" -e "ERA3_N=${ERA3D_N:-400}"
                                   -e "ERA3_BLOCK=${ERA3_BLOCK:-100}" -e "ERA3_SEED=${ERA3D_SEED:-13}" -e "ERA3_RUN=gate4")
   [[ $name == era3d-q910-* ]] && env+=(-e "ERA3_PHASES=q9 q10" -e TRIPLEX_ERASURE_SHRED_GRACE_MS=0 -e TX2_ID_LISTS=1 -e TX2_SWEEP=1)
+  # database-wide: the Q cases are per-account only and fuzz4 drives per-account completion (the reviewer ran it on the
+  # per-account modes only), so this arm is R2-2
+  [[ $name == era3d-off ]] && env+=(-e "ERA3_PHASES=r22")
   mkdir -p "$out/$name.out"
   docker run --rm --pull never --name "tx2-dxera2-gate-$$-$name" --memory 3g --cpus 2 -v "$out/$name.out:/out" \
     -v "$out/$source/src:/opt/gateway/src:ro" -v "$out/$source/codec-spec.json:/opt/spec/codec-spec.json:ro" \
