@@ -297,7 +297,13 @@ if (MIXED) {
   try {
     await account(scope, [{ id: X, expires: X_EXP }, { id: Y, expires: Y_EXP }]);
   } catch (e) {
-    error = (String((e as Error).message ?? e) + " " + String((e as { cause?: unknown }).cause ?? "")).slice(0, 400);
+    // the store wraps the gateway's typed answer (status and code) two causes down
+    const chain: string[] = [];
+    for (let c: unknown = e, i = 0; c && i < 6; c = (c as { cause?: unknown }).cause, i++) {
+      const x = c as { message?: string; status?: number; code?: string };
+      chain.push([x.status, x.code, String(x.message ?? c).slice(0, 160)].filter((v) => v !== undefined).join(" "));
+    }
+    error = chain.join(" <- ").slice(0, 800);
   }
   const source = dbOf(await openStore(scope));
   await dump(0);
