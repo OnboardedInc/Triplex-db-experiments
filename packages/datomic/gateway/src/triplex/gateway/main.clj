@@ -472,7 +472,7 @@
              (catch clojure.lang.ExceptionInfo e
                (let [{:keys [status code maximum retryAfterMs]} (ex-data e)]
                  (if (and status code)
-                   (timed start (response status (cond-> {:code code :message (.getMessage e) :route "ids"}
+                   (timed start (response status (cond-> {:code code :message ((requiring-resolve 'triplex.gateway.reply/message) e name) :route "ids"}
                                                    (some? maximum) (assoc :maximum maximum)
                                                    (some? retryAfterMs) (assoc :retryAfterMs retryAfterMs))))
                    (throw e))))))
@@ -490,14 +490,15 @@
              (catch clojure.lang.ExceptionInfo e
                (let [{:keys [status code maximum retryAfterMs]} (ex-data e)]
                  (if (and status code)
-                   (timed start (response status (cond-> {:code code :message (.getMessage e) :route "sweep"}
+                   (timed start (response status (cond-> {:code code :message ((requiring-resolve 'triplex.gateway.reply/message) e name) :route "sweep"}
                                                    (some? maximum) (assoc :maximum maximum)
                                                    (some? retryAfterMs) (assoc :retryAfterMs retryAfterMs))))
                    (throw e))))))
       :else (response 404 {:code "NotFound"}))
     ;; [DX-S6] A write route's failure without a status is a refusal only when decided; otherwise 503 OutcomeUnknown.
+    ;; [DX-N1, N3] a typed refusal keeps its own message; any other exception answers a fixed text (reply/message)
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 (write-status request-method uri e)))
-                                (cond-> {:code (or (:code (ex-data e)) (if (= 503 (write-status request-method uri e)) "OutcomeUnknown" "GatewayError")) :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
+                                (cond-> {:code (or (:code (ex-data e)) (if (= 503 (write-status request-method uri e)) "OutcomeUnknown" "GatewayError")) :message ((requiring-resolve 'triplex.gateway.reply/message) e nil) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
                                   (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e)))
                                   (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e)))
                                   (:estimatedMicros (ex-data e)) (assoc :estimatedMicros (:estimatedMicros (ex-data e)))
@@ -584,14 +585,24 @@
       (catch Exception e
         (let [info (ex-data e) status (or (:status info) (write-status request-method uri e))]
           ;; [DX-S6] An unknown outcome names the failure's class here too (S5 R2-8).
-          (response status (cond-> {:code (or (:code info) (if (= 503 status) "OutcomeUnknown" "GatewayError")) :message (.getMessage e)}
+          ;; [DX-N1, N3] a typed refusal keeps its own message; any other exception answers a fixed text
+          (response status (cond-> {:code (or (:code info) (if (= 503 status) "OutcomeUnknown" "GatewayError")) :message ((requiring-resolve 'triplex.gateway.reply/message) e name)}
                              (= 503 status) (assoc :cause (or (:cause info) ((requiring-resolve 'triplex.gateway.outcome/kind) e))))))))
     (route-handler-base request)))
 
 ;; [DX-XQ7] Why: a question reader serves only questions across subjects, and a gateway beside one refuses them, before
 ;; any privacy or database work (question_reader.clj). With both options unset `qr/guard` is nil for every request.
 (defn route-handler [request] (or (qr/guard request) (route-handler-routed request)))
-(defn handler [request] (trace/handler route-handler request))
+;; [DX-N1, N3] Why: nothing an exception carries reaches a caller, also from outside the routes' own catches (the
+;; question reader's guard, an Error): a last answer with a fixed text, the detail logged (reply/message).
+;; Rejected: Jetty's error page (it prints the exception's message).
+(defn- route-handler-guarded [request]
+  (try (route-handler request)
+       (catch Throwable t (response 500 {:code "GatewayError" :message ((requiring-resolve 'triplex.gateway.reply/message) t nil)}))))
+;; [DX-N1R F1] the last answer is around the trace wrapper too: an exception it raises answers the same fixed JSON
+(defn handler [request]
+  (try (trace/handler route-handler-guarded request)
+       (catch Throwable t (response 500 {:code "GatewayError" :message ((requiring-resolve 'triplex.gateway.reply/message) t nil)}))))
 (defn serve! [serve-handler port]
   (envelope/start!)
   (d/create-database (db-uri "tx2-health"))
