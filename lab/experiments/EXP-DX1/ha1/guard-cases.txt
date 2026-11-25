@@ -163,3 +163,5 @@ adopted-xq10-index-bad-int5x   631dd9d3c REFUSED  DX_CROSS_INDEX=2
 adopted-xq10-queue-bad-int5x   631dd9d3c REFUSED  DX_ID_LISTS=1;DX_ID_LIST_QUEUE_MS=5001
 adopted-xq10-peracct-bad-int5x 631dd9d3c REFUSED  DX_ID_LISTS=1;DX_ID_LIST_PER_ACCOUNT=17
 adopted-xq10-shapes-bad-int5x  631dd9d3c REFUSED  DX_SWEEP=1;DX_SWEEP_SHAPES=everything
+adopted-api1-batch-int5y       d3f66ca1d ADMITTED DX_READ_BATCH=1
+adopted-api1-batch-bad-int5y   d3f66ca1d REFUSED  DX_READ_BATCH=2
