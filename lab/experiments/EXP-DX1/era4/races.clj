@@ -407,10 +407,75 @@
           (x/oracle! lbl (:kept-opens after) "another subject's copy still opens" row)
           (x/oracle! lbl gone "the key is deleted" row)
           ;; while the removal is left at its stop it is not yet acknowledged: whatever opens then is a read that started
-          ;; before the publication (TARGETS 7.1); recorded in the table, checked only for agreement with the plain read
+          ;; before the publication (TARGETS 7.1); recorded in the table. After the third review (M1) a copy opens as
+          ;; removed from the removal's native commit, before the plain read stops answering at the publication: a
+          ;; copy never opens where the plain read no longer answers the value
           (when pending-at-stop
-            (x/oracle! lbl (= (= :value (second (:open-copy at-stop))) (:plain-read-has-value at-stop))
-                       "while pending, a copy opens exactly when the plain read still answers the value" row)))))))
+            (x/oracle! lbl (if (= :value (second (:open-copy at-stop))) (:plain-read-has-value at-stop) true)
+                       "while pending, a copy opens only while the plain read still answers the value" row)))))))
+
+(defn- copy-dir!
+  "era3/attack2.clj's: replace the files of `to` by those of `from` (one flat directory: the file authority's scope)."
+  [^java.nio.file.Path from ^java.nio.file.Path to]
+  (Files/createDirectories to (make-array java.nio.file.attribute.FileAttribute 0))
+  (with-open [st (Files/list to)] (doseq [p (iterator-seq (.iterator st))] (Files/delete p)))
+  (with-open [st (Files/list from)]
+    (doseq [p (iterator-seq (.iterator st))]
+      (Files/copy ^java.nio.file.Path p (.resolve to (.getFileName ^java.nio.file.Path p))
+                  (into-array java.nio.file.CopyOption [java.nio.file.StandardCopyOption/REPLACE_EXISTING])))))
+
+(defn m1
+  "The third review's M1 (era3/REVIEW-3.md, its `k6`), for this option's copies: the file authority's directory (the
+  removal log and the key files together) put back to a copy taken while the removal was pending, after the removal
+  was published, acknowledged and its key deleted. A sealed copy must still open as removed and its assertion seal
+  nothing, whatever the plain read answers then (k6: it answers the value on `3edb9f5d9`)."
+  []
+  (g/fresh-scope true
+    (fn [src conn]
+      (let [lbl "M1 a pending-state copy of the authority put back after the acknowledgement"
+            sel [{"entityId" g/a1 "attribute" ":v"}]
+            [vx ids-x] (seed-x! src "m1-x" g/a1 "m1") [vy ids-y] (seed-x! src "m1-y" g/b1 "m1")
+            cx (seal! src ids-x (str "derived:" vx)) cy (seal! src ids-y (str "derived:" vy))
+            t (g/seq-now src conn)
+            w0 (offers/send src (derived-copy src "m1-w0" "notice:v1:m1" cx t))
+            dir (.getParent (privacy/path src "head.json"))
+            snap (java.nio.file.Paths/get "/tmp" (into-array String [(str "era4-m1-" (java.util.UUID/randomUUID))]))
+            _ (reset! x/plan {:stop :after-declare :stops-left 1})
+            stopped (x/erase! src "m1-rm" sel)
+            _ (reset! x/plan nil)
+            pending-in-copy (some? (privacy/pending src))
+            _ (copy-dir! dir snap)
+            done (x/erase! src "m1-rm" sel)
+            gone (key-gone? src ids-x)
+            opened-after-ack (second (open! src cx))
+            _ (copy-dir! snap dir)
+            _ (reset! privacy/cache {})
+            key-back (boolean (some #(privacy/exists? (key-file src %)) ids-x))
+            plain (str/includes? (x/read-text src g/a1) vx)
+            opened (second (open! src cx))
+            again (first (get-in (offers/route src "v2" "derived-seal" {"items" [{"ids" ids-x "value" "probe"}]}) [:body "items"]))
+            kept (second (open! src cy))
+            w1 (offers/send src (derived-copy src "m1-w1" "notice:v1:m1b" cy t))
+            plain-after (str/includes? (x/read-text src g/a1) vx)
+            opened-after (second (open! src cx))
+            gone-again (key-gone? src ids-x)
+            detail {:stopped (offers/outcome stopped) :pending-in-copy pending-in-copy :acknowledged (offers/outcome done)
+                    :key-gone-after-ack gone :opened-after-ack opened-after-ack :key-back-with-the-copy key-back
+                    :plain-read-answers-value-after-restore plain :opened-after-restore opened :seal-after-restore again
+                    :kept-opens (get kept "value") :derived-write-after-restore (offers/outcome w1)
+                    :plain-read-after-that plain-after :opened-after-that opened-after :restored-key-deleted-again gone-again}]
+        (println "ERA4_M1" (pr-str (dissoc detail :kept-opens)))
+        (bump! :m1 :plain-read (if plain :value :masked))
+        (bump! :m1 :restored-key (if gone-again :deleted-again :kept))
+        (x/oracle! lbl (= [200 nil] (offers/outcome w0)) "the copy is recorded before the removal" detail)
+        (x/oracle! lbl pending-in-copy "the copy of the authority holds the removal pending" detail)
+        (x/oracle! lbl (= 200 (:status done)) "the removal is acknowledged" detail)
+        (x/oracle! lbl (contains? opened-after-ack "removed") "after the acknowledgement the copy opens as removed" detail)
+        (x/oracle! lbl key-back "the restore brought the key file back (the case is real)" detail)
+        (x/oracle! lbl (contains? opened "removed") "after the restore the copy still opens as removed (no reopening through a copy)" detail)
+        (x/oracle! lbl (contains? again "removed") "after the restore the assertion still seals nothing" detail)
+        (x/oracle! lbl (= (str "derived:" vy) (get kept "value")) "another subject's copy still opens" detail)
+        (x/oracle! lbl (contains? opened-after "removed") "after the next derived write the copy still opens as removed" detail)))))
 
 (defn main []
   (x/install-hooks!)
@@ -418,7 +483,7 @@
   (envelope/start!)
   (case (System/getenv "ERA4_PHASE")
     "cost" (cost)
-    "checks" (do (e9s) (e6s) (window) (stop-checks))
+    "checks" (do (e9s) (e6s) (window) (stop-checks) (m1))
     (fuzz (or (System/getenv "ERA4_RUN") "e0") (Long/parseLong (or (System/getenv "ERA4_N") "200"))
           (Long/parseLong (or (System/getenv "ERA4_BLOCK") "50")) (Long/parseLong (or (System/getenv "ERA4_SEED") "1"))))
   (println "ERA4_TALLY" arm (pr-str (into (sorted-map) (map (fn [[kk v]] [(pr-str kk) v])) @tally)))

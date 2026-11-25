@@ -6,7 +6,8 @@
   or route changes."
   (:require [clojure.data.json :as json] [clojure.string :as str] [datomic.api :as d]
             [triplex.gateway.authority-sql :as sql] [triplex.gateway.envelope :as envelope]
-            [triplex.gateway.privacy :as privacy] [triplex.gateway.scope :as scope])
+            [triplex.gateway.privacy :as privacy] [triplex.gateway.removal-scope :as removal-scope]
+            [triplex.gateway.scope :as scope])
   (:import [java.nio.charset StandardCharsets]
            [java.nio.file Files]
            [java.util Arrays Base64]
@@ -65,13 +66,31 @@
     (reduce max 0 (for [[_ e] (:commands cut) :when (some #(want (get % "assertionId")) (get e "identities"))]
                     (get e "seq")))))
 
+(defn- native-erased
+  "[DX-ERA4, after the third review's M1] On a database guarded per account, every assertion whose removal is committed
+  in Datomic past the published head, with that removal's sequence. For this option's routes a removal takes effect at
+  its native commit or its publication, whichever comes first, so a removal log that lags the data, or is put back to a
+  copy taken while the removal was pending (with the key files, which the file authority keeps beside the log), cannot
+  reopen a sealed copy. Empty unless the data is ahead of the published head (a pending removal committed natively), so
+  the usual cost is one read of the committed sequence."
+  [db cut]
+  (let [h (:seq cut) c (if (:per-account cut) (removal-scope/native-seq db) nil)]
+    (if (if (integer? c) (if (integer? h) (> c h) false) false)
+      (into {} (for [x (d/datoms db :aevt :triplex.tx/erasure-record)
+                     :let [e (json/read-str (:v x)) s (get e "seq")]
+                     :when (if (integer? s) (> s h) false)
+                     i (get e "identities") :let [a (get i "assertionId")] :when a]
+                 [a s]))
+      {})))
+
 (defn- with-key
   "Calls (f key) with the derived key of `ids`, or returns {\"removed\" ids...} when one of them is removed in the
-  published cut or its key is gone."
+  published cut or committed natively past it (`native-erased`), or its key is gone."
   [name db cut ids f]
-  (let [erased (filterv #(contains? (:erased cut) %) ids)]
+  (let [native (native-erased db cut)
+        erased (filterv #(if (contains? (:erased cut) %) true (contains? native %)) ids)]
     (if (seq erased)
-      {"removed" erased "seq" (removal-seq cut erased)}
+      {"removed" erased "seq" (reduce max (removal-seq cut erased) (keep native erased))}
       (let [keys (mapv (fn [id] (let [eid (protected-eid db id)] (when eid (assertion-key name db eid id)))) ids)]
         (if (some nil? keys)
           (do (doseq [k keys] (when k (Arrays/fill ^bytes k (byte 0))))
