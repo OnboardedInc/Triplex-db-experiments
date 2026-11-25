@@ -6615,3 +6615,24 @@ Source: removal builder final message. Branches: `exp/DX-ERA2-removal-per-accoun
 - Not tested: scale; the manual restore step; a save planned before a field is added and committed after it; PostgreSQL for three of the new cases.
 
 **Actions:** seventh independent review started on both branches, limited to two test slots, with a direct question on merging default off and on what must be true before any database moves. The save-line builder told which fix already exists on the reconciled branch.
+
+## 2026-11-25 16:54 EST: derived copies, third pass: the second review's findings answered; sealing with many owed forms proven in the deep layout; third review started
+
+Source: derived-copies builder final message; branch `exp/DX-ERA4-derived-copies` `e75f61f40` (code `6b6243ead`); page section 14.
+
+- **N1 fixed (the setting stopped notices above 30 owed forms):** a ledger is sealed in chunks of about 180 items. With the setting on, recorded and opened back:
+
+  | Owed forms | Lean layout, stack | Deep layout, stack |
+  |---|---|---|
+  | 200 | 2 parts, 201 items | 2 parts, 201 items |
+  | 1,000 | 6 parts, 1,001 items | not run (in process: 6 parts) |
+  | 1,700 | 10 parts, 1,701 items | 10 parts, 1,701 items |
+
+  0 records in clear in every run. Capacity about 1,790 items per ledger; beyond about 1,780 owed forms the recorder stops with a named error. The builder's earlier stack proofs had run on the lean layout only.
+- **N3 (a record sealed under too few keys):** the gateway now adds every live protected value of the record's subject. Placed at the subject as the writers place records: 0 of 276 and 0 of 278 still open after a removal. **Deep layout:** a record's place names the subject's root; the gateway checks it against stored rows and walks the references to every entity holding the subject's protected values: 24 of 24 open before, 0 of 24 after, both boundaries; no new stored state. Still open, produced by no writer of this option: a record placed at an entity that is not its subject; a record computed from another subject's value the writer did not name.
+- N2 closed by merging the removal branch (`03bb49cd3`). N4 (exact document shapes, unknown kinds refused; 17 of 18 hand-made documents refused), N5 (the key re-sweep reads only changes, at most 512 identities per pass, failures counted), N6 (the held reader keys on the removal stamp), N7, N8, N10 fixed. N9: the deep-shape seal request fell from 786,767 to 104,410 bytes and from 88 to 25 ms (8 ms in clear; Mac, diagnostic).
+- Gates: the reviewer's cases and fuzzers and the removal branch's gates, 0 violations; option off identical in 7 of 7 settings against a rebuilt base. One violation in the randomized gate under the commit boundary (seed 915): its cause is the write-refusal bug the removal builder has since fixed at `383db77d1`, not yet merged into this branch.
+- Not tested, in the builder's words: the key re-sweep beyond 1,000 removals (memory and time grow with the number of removals; 1 billion is out of reach with this design); a real writer computing a record from two subjects; two gateways with the setting; deep layouts whose references reach shared entities.
+- Does not merge cleanly with the one branch (8 files at `f633233f6`).
+
+**Action:** third independent review started, limited to two test slots: the deep-layout reference walk (forged roots, shared entities, a value added after sealing), the patterns accepted without decoding, chunked ledgers under a removal and when they shrink, the re-sweep's limits with numbers, and a direct question on merging default off.
