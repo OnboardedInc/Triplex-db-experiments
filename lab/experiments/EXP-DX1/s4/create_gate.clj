@@ -205,8 +205,11 @@
                                             [409 "CasConflict"])
                                           ;; [DX-S6] Off: measured, not assumed. The general writer gets the same race at
                                           ;; the same point (after the plan, before the submit) and must give the same code.
-                                          (let [reply (race-at-submit name input
-                                                        #(reset! erased (reference/route name "v1" "erase" {"commandId" "remove-x" "selectors" [{"entityId" x}]})))]
+                                          ;; Every plan declined but the per-subject switch on, so the request takes the
+                                          ;; unguarded path, where a removal can land between plan and commit.
+                                          (let [reply (with-redefs [subject/enabled true subject/plan (fn [& _] nil) owners/plan (fn [& _] nil)]
+                                                        (race-at-submit name input
+                                                          #(reset! erased (reference/route name "v1" "erase" {"commandId" "remove-x" "selectors" [{"entityId" x}]}))))]
                                             (is (= [409 "CasConflict"] (reference/outcome reply)) (pr-str reply))
                                             reply))
                               resend (reference/send name (assoc input "operationId" "create-x-again"))

@@ -16,7 +16,7 @@ case $step in
     bash "$r" "$out/bound" bound bound || status=1
     bash "$r" "$out/attack" attack "server import" || status=1 ;;
   older)
-    bash "$r" "$out/owners" owners "server serial" || status=1
+    bash "$r" "$out/owners" owners "s3 s3-serial" || status=1
     bash "$r" "$out/create" create "server serial hints" || status=1 ;;
   accounts)
     S6_ACCOUNT_SCHEDULES=1000 bash "$r" "$out/accounts-off" accounts accounts-off || status=1

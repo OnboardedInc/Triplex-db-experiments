@@ -98,7 +98,43 @@ are toy-size and diagnostic. Every option stays default off. Written 2026-11-24.
 
 ### 1.2 In process: every fault point, every writer (`s6/outcome_gate.clj`)
 
-RESULT_OUTCOME
+**The setup.** 4 writers (one-owner per-subject, several-owners, creation, and the general writer) times 12 faults,
+injected at `d/transact-async`. The faults:
+
+- the transactor unavailable before and after apply;
+- interrupted after apply;
+- `:db.error/transactor-unavailable` after apply;
+- a connection reset before and after apply;
+- a `TimeoutException` after apply;
+- an unrecognised exception before and after apply;
+- the 5 s deref timing out, with the save never applied, applied before the answer, or arriving after the fence.
+
+**The result: 48 cases per setting, 419 of 419 checks, in each of `server` (every per-subject writer on) and `general`
+(every one off).**
+
+- Every case was answered `503 OutcomeUnknown`.
+- Lookup plus fence gave the truth in all 48: 28 found committed with the original position, 20 fenced.
+- In the 4 "arrives after the fence" cases, the original was refused `TRIPLEX_OPERATION_DUPLICATE` by its own function.
+- A resend of the same operation was `409 OperationDuplicate`. The next save committed, and positions stayed
+  contiguous.
+
+**Decided refusals stay decided.** A stale predecessor is `409 CasConflict` on all 4 writers: not stored, not fenced.
+
+**The fence itself** (`fence-leaves-feeds-and-positions-alone`):
+
+- a second fence answers the same fenced state;
+- the fence of a committed save answers its receipt;
+- the feed lists 2 transactions for 2 saves around a fence.
+
+**Removal and declaration with the transactor failing after and before apply:** both are answered
+`503 OutcomeUnknown`, never 400. A resend answers 200, and exactly one removal is stored (sequence 1).
+
+**SDK unit tests:**
+
+- `packages/datomic/test/outcome-fence.test.ts`, 5 of 5: the original receipt after a lost connection or a 503;
+  fenced means decided; lookup failures are retried; a 409 stays final.
+- `command-recovery.test.ts` 6 of 6.
+- The whole SDK suite: 470 passed, 53 skipped (they need a gateway).
 
 ### 1.3 The SDK end to end on PostgreSQL, with faults (`s6/stack.sh`, `s6/sdk-stack.ts`)
 
@@ -106,7 +142,45 @@ RESULT_STACK
 
 ## 2. F2: the estimate against the writer
 
-RESULT_BOUND
+**The estimate now prices lookups.** `import_bound.clj` `estimate-us` adds 12 µs per entity in the read set, per live
+predecessor and per command ID.
+
+**The read set is capped:**
+
+- With `TX2_READ_SET_BOUND=1`, every class refuses a repeated name (`ReadSetDuplicate`) or more than 4,096 entities or
+  live predecessors (`ReadSetTooLarge`).
+- An import frame (under `TX2_IMPORT_WHOLE_SUBJECT=1`) reads only what it writes. Otherwise it is refused
+  `ImportReadSetNotWritten` or `ImportReadOnlyPredecessor`.
+
+`s6/bound_gate.clj` (127 of 127 checks) sends each of the 4 classes:
+
+- a warm-up frame;
+- 3 honest 100-fact frames;
+- the review's 3 adversarial frames (55,000 absent names, one existing subject named 18,000 times, 12,000 read-only
+  live IDs);
+- 3 frames at the cap.
+
+**Every adversarial frame of the review is now refused by type, in every class.** The review's own attack
+(`s5-attack/import-bound-estimate-against-apply`) now asserts that.
+
+**Worst time in the writer over its estimate, among admitted frames.** These are memory-toy figures and diagnostic.
+
+| Class | Worst admitted frame | transactMicros | Estimate (µs) | Ratio |
+| --- | --- | ---: | ---: | ---: |
+| live | 1 fact, 4,096 read-only live IDs (at the cap) | 50,638 | 61,857 | **0.82** |
+| import | warm-up 20 facts | 2,219 | 9,410 | **0.24** |
+| activation | 1 fact, 4,096 read-only live IDs (at the cap) | 52,015 | 61,864 | **0.84** |
+| notice | 1 fact, 4,096 read-only live IDs (at the cap) | 34,052 | 61,859 | **0.55** |
+
+Honest 100-fact frames ran at 0.07 to 0.17 of their estimate.
+
+**Read the ratios with care:**
+
+- A frame at the cap with 4,096 live predecessors is a legitimate shape: a 4,096-fact replacing save has that many.
+  It holds the toy's writer about 50 ms, and its estimate (62 ms) is above the import bound, so an import cannot send
+  it. A live save can; no live bound applies unless `TX2_WRITE_BUDGET_US` is set.
+- At 1 billion records each lookup can be a cold segment read. The price is a warm figure, which is why the cap, not
+  the price, is the bound.
 
 ## 3. F3: one refusal code for a save racing a removal
 
@@ -162,7 +236,12 @@ creation option therefore still refuses a creation framed before it.
   ran. This can only refuse more, never less.
 - Option-off behaviour is unchanged: the rule runs only with `TX2_SUBJECT_CREATE=1`.
 
-RESULT_RACE_F4
+**Test: `s6/race_gate.clj`, 22 of 22 checks.** With the removal handled with and without the creation option:
+
+- a creation framed before the removal: `[409 ErasureReplayDeclined]`;
+- a creation framed after it: `[200]`, on the creation function, and it stores the new value, never the old one.
+
+The review's `removed-family-after-removal` now shows `creationWithNewValueAfterRemoval [200]` with the option on.
 
 ## 5. F5: the card's identity check
 
@@ -185,7 +264,16 @@ RESULT_RACE_F4
 name fewer. `subject_save.clj` now takes back exactly that one name (`(gensym)` right after the plan), so the
 namespaces loaded after it embed the base's names again.
 
-RESULT_IDENTS
+**Identities (`s4/idents.sh`, 11 settings, head `959634af4`):**
+
+- **Against the base `23b7df344`:** 58 of 58 equal in all 9 shared settings, the 5 values included.
+- **Against the save line's head `2d78680f7`:** 61 of 66 equal in all 11 settings. The 5 that differ are exactly the
+  restored ones, now equal to the base. The several-owners and creation functions are unchanged.
+- **With every option off** (setting `base`), all values equal.
+
+**The cause, measured.** A probe printed the generated-name numbers inside the 3 affected quoted forms. Their
+normalized code was equal, and the names were offset. The S2 condition is written with three terms again (`true`
+added), which takes the base's count.
 
 **Rejected:**
 
@@ -230,10 +318,184 @@ rebuilt.
 **F10.** The IMP2 page (`imp2/WHOLE-SUBJECT.md` section 2) is corrected. With `TX2_SUBJECT_CREATE=1`, an import frame
 of one to four new subjects of one account, with one claim and a source, takes the creation function.
 
-## 9. The standing gate phase and the other gates
+## 9. Command and operation IDs across accounts (the Publish builder's finding)
 
-RESULT_GATES
+The Publish builder's search (`actv-lazy/PUBLISH-BESIDE-SAVES.md` section 0.2, `bf377c57f`) found that a save's
+command ID is unique in the whole database (`schema.clj` 63-64, `commit.clj` 183, `subject_save.clj` 105). Operation
+IDs and assertion IDs are unique the same way.
 
-## 10. What is still not tested
+### 9.1 Today (`TX2_ACCOUNT_CLAIMS` off): what one account gets back from another's IDs
 
-RESULT_UNTESTED
+Test: `s6/accounts_gate.clj`, setting `accounts-off`.
+
+| Account B does this with account A's ID | What B gets | What it gives away or denies |
+| --- | --- | --- |
+| Saves with A's command ID | `409 CommandConflict`. The SDK then replays, and its claim check answers `CommandAlreadyCommitted` naming A's transaction ID | Denies B the ID. B learns A's transaction ID. Worse: a B that claimed the ID first makes A's own save answer "already committed" with B's transaction, which A's resend logic takes as its original receipt |
+| `transactionByCommand` (the `command` route), the `claim` route, the `begin` prefetch | A's transaction ID (`bClaimTxId` = `bCommandTxId` = A's in the gate) | `TriplesLive.transactionByCommand` then reads that transaction: A's changes, with A's entity IDs, attributes and values. The `claim` route with `receipt` also gives A's position, record time and operation ID |
+| Saves with A's operation ID | `409 OperationDuplicate` | Denies the ID; the `operation` route gives A's receipt |
+| Commits first under the operation ID of A's save in flight (the F1 shape) | Commits | Before S6, A's SDK looked the operation up, found it committed and settled on B's position: an unstored save reported stored. In the gate A's lookup names B's transaction (`aLookup.txId` is not `aJournal`) |
+| Uses A's assertion IDs (an identity block) first | Commits | A's save is refused `IdentityConflict` (400). Assertion IDs are row identities, database-wide by design. The SDK draws them at random, so B must already know them |
+
+**What B can learn:** whether an ID is used; the transaction, position and record time that used it; through the
+transaction, the rows.
+
+**What B can deny:** any ID it learns or guesses first. The SDK's operation IDs and identity blocks are random UUIDs,
+so only command IDs are practical to deny. They are chosen by the client and are often meaningful (`joined:<id>`).
+
+### 9.2 The fix: `TX2_ACCOUNT_CLAIMS=1` (default off) and the SDK's `claimAccount`
+
+**Where the caller's account is known:**
+
+- **The gateway, at a save:** the account of the entities it writes, by `group/classify`'s rule (the prefix, or the
+  stored `:subject/account`). The request must name the same account, or it is refused `400 InvalidValue`.
+- **The SDK:** when the store is opened for one account (`claimAccount`, an option of `makeDatomicRuntime` and of
+  `DatomicClient`). Every save, and every `claim`, `command`, `begin`, `operation` and `fence` request, then names the
+  account.
+- **The product's API** (the entity handlers, the playground's tools): it knows the account of every request, so it
+  can open one store per account.
+
+**Where it is not known:**
+
+- A raw `DatomicClient` without `claimAccount`.
+- A save that writes several accounts, none, or only system entities.
+- Removal commands (`erase`), which keep database-wide command IDs. The removal branch's own follow-up covers them.
+- The group-commit scheduler (`TX2_GROUP_COMMIT=1`), whose in-memory keys use the plain operation ID. Not covered and
+  not tested.
+
+All of these keep today's IDs, for their saves and their lookups alike. A caller that names no account therefore
+always finds its own saves: its unknown outcomes are never fenced under the wrong key.
+
+**What it changes in the stored claim.** For a save that names its account, the stored values become
+`acct-id/v1/<n>/<account>/<id>`, `n` being the account's length:
+
+- `:triplex.claim/command-id` and `:triplex.tx/operation-id`;
+- an import frame's predecessor command, which follows.
+
+The journal's `:_tx/command-id` row keeps the client's ID, and both feeds decode the stored values back to the client's
+IDs. No stored function changes: they compare a longer string. Identities are in section 6.
+
+**Why this encoding.** The length prefix makes the boundary between account and ID exact, whatever either contains.
+
+- `joined:<account>/<id>` is ambiguous once an account may contain the separator: (`a/b`, `c`) and (`a`, `b/c`) give
+  the same string.
+- 20,000 random (account, ID) pairs over an alphabet with `/` and digits gave 17,945 distinct pairs, 17,945 distinct
+  stored values, and 17,945 round trips.
+- A client ID that begins with the prefix is refused `400 InvalidValue`, so no plain ID can equal a scoped one.
+
+**Old un-scoped claims.** A plain claim written before the option, or by a gateway without it, is still found for the
+account that wrote it: its transaction's business entities, read from the log, are all that account's.
+
+- That account cannot claim it again (`409 CommandConflict`).
+- Another account does not find it, and its own claim of the same ID commits.
+- A legacy plain operation ID of one account does not block another's.
+
+**The F1 shape, fixed for every caller.** The `operation` and `fence` answers now name the committed transaction
+(`txId`). The SDK settles only on its own journal's transaction. Any other means the operation ID is taken, so the
+save is decided not applied and replays under a new ID (`persist`, `transactResolved`).
+
+### 9.3 The gate (`s6/accounts_gate.clj`)
+
+**Two accounts in one database, sharing every command ID and every operation ID.** One schedule in ten also shares an
+ordered identity block. The writers covered: one-owner per-subject, several owners, creation, general, and import
+frames. Each schedule:
+
+1. runs account A's saves alone in one scope and account B's alone in another;
+2. runs the same saves interleaved at random in a third scope;
+3. compares each account's answers.
+
+**With `TX2_ACCOUNT_CLAIMS=1`: 10,000 schedules, 127,848 saves, 18 of 18 checks.**
+
+- 9,004 schedules gave each account exactly its answers alone.
+- The other 996 shared an identity block. In all of them the only difference was the later account's save refused
+  `IdentityConflict` (400), which is by design (assertion IDs are row identities).
+- 0 other differences.
+- Then 57,012 lookups (claim, command and operation, each by its account): **0 returned another account's
+  transaction.**
+
+**With it off: 1,000 schedules, 8 of 8 checks.** Every one differs from alone: the second account is refused
+`OperationDuplicate` or `CommandConflict`. B's claim, command and operation lookups of a shared ID return A's
+transaction (`_tx/…DW00` in the gate's line), and a lookup naming no account does too.
+
+**Also in the gate:**
+
+- **The F1 shape:** a lookup of an operation ID another account committed first names that account's transaction,
+  which the SDK now refuses to settle on.
+- **Legacy plain claims:** as described above.
+- **The encoding:** no collisions.
+
+**SDK:** `packages/datomic/test/claim-account.test.ts`, 2 of 2. With `claimAccount`, every lookup names the account;
+without it, the requests are exactly as before.
+
+## 10. The standing gate phase and the other gates
+
+**Every gate ran by image ID on `tx2-dxs6:959634af4f1c`, built from the head by `s6/image.sh`.**
+
+- Image `sha256:8afa5f298ef3…`.
+- Base: the pinned runtime `sha256:da58aea16b31…`.
+- No source mounts: only the test files are mounted.
+- The image's source label matched the head in every run.
+
+**Runner:** `s6/final.sh` (steps `gates`, `older`, `accounts`, `fuzz`) over `s6/clj-run.sh`.
+
+| Gate | Settings | Result |
+| --- | --- | --- |
+| `s6/outcome_gate.clj` (F1, every fault point) | server, general | 419 of 419 each |
+| `s6/race_gate.clj` (F4, F9, F11) | server | 22 of 22 |
+| `s6/bound_gate.clj` (F2) | bound | 127 of 127 |
+| `s5/attack_gate.clj` (the review's attacks) | server, import | 49 of 49; 151 of 151 |
+| `s6/accounts_gate.clj` | accounts-off; accounts-on | 8 of 8 (1,000 schedules); 18 of 18 (10,000 schedules) |
+| `s5/fuzz.clj` with JSON, boolean, datetime and blob values | server, serial, plainowner | 6 runs: 9,000 serial and 5,400 concurrent saves, 0 differences |
+| `s5/fuzz.clj` with protected values, unsealed | server | 1,500 serial and 900 concurrent, 0 differences |
+| `s5/fuzz.clj` with protected values, sealed | server | 1,500 serial and 900 concurrent, 0 differences; every sealed save took the general writer (no shared authority in process) |
+| `s3/owners_gate.clj` (with the new measured control) | s3, s3-serial | RESULT_OWNERS |
+| `s4/create_gate.clj` (the measured control in place of the constant) | server, serial, hints | RESULT_CREATE |
+| `v01/writer-split.test.ts`, `v01/production-card.test.ts` | Node | 10 of 10 |
+| SDK suite (`packages/datomic`) | vitest | 470 passed, 53 skipped |
+
+**Why the totals differ from the review's.** The review's own tests now pass where they had asserted the findings:
+
+- `transactor-unavailable-after-apply` is `[503 OutcomeUnknown]` on all 3 writers, and the operation is found
+  committed.
+- `save-racing-a-removal` is `[409 CasConflict]` on both writers for all 3 kinds.
+- `first-save-racing-protection` is `[409 CasConflict]` on both writers.
+
+**The fuzzer counts:**
+
+- Its kill modes now answer `503 OutcomeUnknown` for a kill before or after submit, on both scopes alike.
+- On the sealed scope, `ProtectedTypeUnsupported` appears when a replacement writes a non-string type onto a protected
+  field; it is the same on both scopes.
+
+## 11. What is still not tested
+
+**On the server**
+
+- **Nothing ran on a server.** Every figure is the Mac toy's and diagnostic.
+- **The lookup price** (12 µs) is a warm memory-toy figure. Cold reads at 1 billion records are not measured.
+- **The excision scan** (F7) was not measured on PostgreSQL with real excisions; no product path makes one.
+
+**Faults not run**
+
+- A real network partition between the peer and the transactor. The proxies drop client connections; the transactor
+  was stopped, killed and paused.
+- A fault during a removal on the PostgreSQL stack. Removal and declaration faults are tested in process only.
+- The group-commit scheduler (`TX2_GROUP_COMMIT=1`) under faults or with account claims: not run.
+
+**Paths not covered**
+
+- The covering writer (`TX2_SUBJECT_OWNER_HEAD=1`) and the general hint function: only their identities were checked.
+- Sealed values on a per-subject writer: the in-process fuzzer has no shared authority, so every sealed save took the
+  general writer.
+- Several gateways, some with `TX2_SUBJECT_CREATE` and some without, saving at once: F11 is tested only by handling the
+  removal without the option.
+- Account claims on removal commands, and an import frame whose predecessor command is a legacy plain claim: not
+  scoped.
+
+**Contract and API limits**
+
+- **The release-between-read-and-commit attack** uses a definitions entity read inside the save (EntityState
+  precondition). The product's real release path (Publish's definitions) was not driven.
+- **The "stale definitions" case commits by design.** A caller that does not read the definitions in the save cannot
+  be protected by the store.
+- **The 147 to 148 saves per stack run that ended `DatomicOperationNotApplied`** are correct (not stored, reported not
+  stored). A caller sees them as failures: the replay budget (12 attempts, 1 to 50 ms apart) runs out during a
+  transactor restart. A longer replay budget while the transactor is down is not built.
