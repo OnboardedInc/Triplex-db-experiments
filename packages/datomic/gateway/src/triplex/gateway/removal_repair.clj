@@ -63,6 +63,17 @@
             (envelope/erase-keys! name (mapcat #(get % "identities") due))
             (swap! envelope/shredded assoc name (get (last due) "seq"))))))))
 
+(defn take-key-refilled!
+  "[DX-ERA2 sixth pass, found by the SDK end-to-end stack] The PostgreSQL authority's key pool of `name` is empty on this
+  gateway: a gateway fills a database's pool when it serves that database's protection declaration, and its worker
+  refills only pools it already holds, so on every other gateway (and after a restart) the first sealed save of a
+  database found no key and was refused (and mapped to 400 TransactionRejected). The pool is filled once here, then
+  a key taken; refused only if that fails (503 EnvelopeKeyPoolEmpty, kept typed by storage/commit!)."
+  [name]
+  (@#'envelope/refill! name)
+  (or (.poll ^java.util.concurrent.ConcurrentLinkedQueue (@#'envelope/pool name))
+      (privacy/failure! 503 "EnvelopeKeyPoolEmpty" "Retry the protected save after replenishment")))
+
 (defn retire-log!
   "[V5 of the fifth review] The removal log and keys of a database that no longer exists leave the authority: no worker
   pass lists it again, and a database created later under the same name starts with no log. The data is gone, so the

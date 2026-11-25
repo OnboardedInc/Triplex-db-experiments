@@ -104,7 +104,9 @@
   (when (contains? (:erased privacy/*cut*) id) (privacy/stale!))
   (if sql/url
     (let [^ConcurrentLinkedQueue keys (pool name)]
-      (or (.poll keys) (privacy/failure! 503 "EnvelopeKeyPoolEmpty" "Retry the protected save after replenishment")))
+      ;; [DX-ERA2 sixth pass] an empty pool (this gateway did not serve the database's protection, or restarted) is
+      ;; refilled once before the save is refused (removal-repair/take-key-refilled!)
+      (or (.poll keys) ((requiring-resolve 'triplex.gateway.removal-repair/take-key-refilled!) name)))
     [nil (issue! name id)]))
 
 (defn body-key-handle [wire]
