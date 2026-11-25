@@ -1256,8 +1256,11 @@
       (let [body (:body answer)
             code (get (try (json/read-str (if (string? body) body (String. ^bytes body "UTF-8"))) (catch Exception _ {})) "code")]
         (when (#{"ErasureFrontierChanged" "CasConflict"} code)
+          ;; only the move to the commit boundary (-1 to -2); a move back to the database-wide rule keeps its 409, which
+          ;; the client replays on the database-wide rule
           (let [db (erase/sync! conn)]
-            (not= (:erasure-sentinel state) (scope/value db (scope/entity db) :triplex.scope/erasure-seq))))))))
+            (and (= removal-scope/sentinel (:erasure-sentinel state))
+                 (= -2 (scope/value db (scope/entity db) :triplex.scope/erasure-seq)))))))))
 
 ;; ---- [DX-ERA2 fifth pass] the operator's way out of RemovalLogConflict ---------------------------------------------
 (defn reconcile!

@@ -1228,7 +1228,8 @@
                                [@m r]))
               again (with-redefs [rc/may-turn-on true] (turn))
               back (offers/route name "v2" "removal-per-account" {"back" true})
-              resent (offers/send name (frame "bt-held-2" b1 (secret b1 "held2") (:id (seeds b1)) (head conn)))
+              ;; [DX-ERA2 sixth pass] the held save was stored (V9), so the next save of b1 retires its value
+              resent (offers/send name (frame "bt-held-2" b1 (secret b1 "held2") (if (= 200 (:status late)) "bt-held" (:id (seeds b1))) (head conn)))
               read-a1 (offers/route name "v1" "read" {"entityIds" [a1]})]
           (expect (str label ": a process without permission") refused-without [403 "RemovalBoundaryNotPermitted"])
           (check! label (not= 200 (:status stopped)) "the removal stopped after its commit" (offers/outcome stopped))
