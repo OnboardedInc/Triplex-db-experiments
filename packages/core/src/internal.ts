@@ -24,7 +24,7 @@ export {
   type WrappedQueryResult,
   type QueryMetrics as QueryExecutorMetrics,
 } from "./storage/QueryExecutor.js";
-export { generateId, generateTransactionId, TxAttributes, SystemPrefixes } from "./utils/id.js";
+export { generateId, generateTransactionId, reserveIdPrefix, TxAttributes, SystemPrefixes } from "./utils/id.js";
 
 export { TriplesLive } from "./store/TriplesLive.js";
 export {

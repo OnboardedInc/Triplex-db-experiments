@@ -66,6 +66,8 @@ export type Save = {
   neighboursAhead?: number;
   creditReleased?: number;
   removalRetries?: number;
+  /** [DX-ACT8, third review U1] Resends under a new ordered block after an identity collision. */
+  identityRetries?: number;
   status:
     | "offered"
     | "pending"
@@ -378,7 +380,9 @@ export async function play(
     // [Opus W2] Why: with wide saves on, the block numbers up to 4,096 assertions; its token rebuilds it on resend.
     if (orderedIds && !row.generalIdentity) row.orderedToken = (wide ? wideOrderedSaveIdentity() : orderedSaveIdentity()).token;
     assert(cached || sender.loadPredecessor, "Missing predecessor");
+    let drafted: Row[] | undefined;
     function draft(prior: Row[]) {
+      drafted = prior;
       const value = expectedSave(row, e, prior);
       if (orderedIds) value.input.sourceK = Math.max(sender.scope.cut, ...prior.map((field) => field.recorded_position));
       return value;
@@ -406,8 +410,25 @@ export async function play(
     };
     // [DX-JVM1] Why: a cold run fetches the exact predecessor only for an admitted save under its subject lock.
     // Rejected: a timed leg that starts after an all-subject cache fill.
-    const submit = (input: ReturnType<typeof expectedSave>["input"]) =>
-      waitForRemoval ? send(input) : sender.client.transact(row.db, input);
+    // [DX-ACT8, third review U1] A save refused because one of its assertion IDs is already in the database's history
+    // ("TRIPLEX_IDENTITY f/id") is sent again under a new block, once its operation is known not stored: a resend under
+    // the same block would be refused every time. Rejected: a new block without that lookup (the save's own earlier
+    // attempt may be what holds the IDs). Nothing else changes: every other answer is handled as before.
+    const submit = async (first: ReturnType<typeof expectedSave>["input"]) => {
+      for (let input = first; ;) {
+        try {
+          return await (waitForRemoval ? send(input) : sender.client.transact(row.db, input));
+        } catch (error) {
+          if (!(error instanceof DatomicHttpError && error.code === "IdentityConflict" && row.orderedToken !== undefined &&
+              drafted !== undefined && (row.identityRetries ?? 0) < 3 &&
+              (await sender.client.operation(row.db, row.id)).status === "absent")) throw error;
+          row.identityRetries = (row.identityRetries ?? 0) + 1;
+          row.orderedToken = (row.orderedToken.length === 23 ? wideOrderedSaveIdentity() : orderedSaveIdentity()).token;
+          candidate = draft(drafted);
+          input = candidate.input;
+        }
+      }
+    };
     const sent = candidate ? submit(candidate.input) : Promise.resolve().then(async () => {
       assert(sender.loadPredecessor, "Missing predecessor");
       const readStart = now();
