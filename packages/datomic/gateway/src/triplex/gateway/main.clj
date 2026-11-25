@@ -430,6 +430,9 @@
           (response 200 (erase/replay-after-restore! name conn))
           (and removal-scope/enabled (= :post request-method) (= action "removal-per-account"))
           (response 200 (erase/per-account! name conn (request-json body)))
+          ;; [DX-ERA2 fourth pass] the removal log rebuilt from the data (behind, a pending copy, or missing)
+          (and removal-scope/enabled (= :post request-method) (= action "removal-log-rebuild"))
+          (response 200 ((requiring-resolve 'triplex.gateway.removal-commit/rebuild-log!) name conn (request-json body)))
           :else
           (let [[protected-wire input] (when (and (= :post request-method) (= action "transact"))
                                         (write-wire/open name (request-json body)))
@@ -443,6 +446,8 @@
                                           (not (contains? input "erasureSeq"))
                                           (not (true? (get input "erasureReplay"))))
                                    (let [[cut db] (if per-account (erase/request-cut name conn db) [(privacy/cut name db) db])]
+                                     ;; [DX-ERA2 fourth pass] a write waits while the data is behind the log
+                                     (when per-account ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) cut))
                                      [(when (or (not (:sealed cut)) (envelope/shared?)) cut) db])
                                    [nil db])
                 request (cond-> request input (assoc :privacy-input input))
@@ -472,7 +477,9 @@
                   (let [[current next] (trace/span "privacy/write-frontier" "gateway"
                                          (let [current (d/db conn)]
                                            (if (and per-account managed-write?)
-                                             (let [[cut current] (erase/request-cut name conn current)] [current cut])
+                                             (let [[cut current] (erase/request-cut name conn current)]
+                                               ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) cut)
+                                               [current cut])
                                              [current (privacy/cut name current)])))]
                     (when (and managed-write? (nil? next)) (privacy/unavailable!))
                     (when (and (:sealed next) (write-wire/required?) (not protected-wire))
@@ -480,10 +487,13 @@
                     (when-not (:per-account next) (trace/span "privacy/verify-write" "gateway" (privacy/verify-data! next current)))
                     (when (or source (contains? input "erasureSeq"))
                       (if source
-                        (let [source-db (d/db (connection (db-uri source)))
-                              source-cut (privacy/cut source source-db)]
-                          (privacy/verify-data! source-cut source-db)
-                          (privacy/ensure-seq! source-cut (get input "erasureSeq")))
+                        (let [source-db (d/db (connection (db-uri source)))]
+                          (if removal-scope/enabled
+                            ;; [DX-ERA3 M4] a pending removal in the source refuses with the tagged 503 naming it
+                            ((requiring-resolve 'triplex.gateway.removal-commit/check-source!) source source-db (get input "erasureSeq"))
+                            (let [source-cut (privacy/cut source source-db)]
+                              (privacy/verify-data! source-cut source-db)
+                              (privacy/ensure-seq! source-cut (get input "erasureSeq")))))
                         (privacy/ensure-ticket! next input)))
                     (run next))))
               ;; [DX-ERASE1] Why: a guarded write only needs the cut verified inside the writer lock.
@@ -493,13 +503,20 @@
                                (trace/span "privacy/frontier" "gateway"
                                  (if per-account (first (erase/request-cut name conn db)) (privacy/cut name db))))]
                 (when (and read-cut (not per-account)) (trace/span "privacy/verify-data" "gateway" (privacy/verify-data! read-cut db)))
+                ;; [DX-ERA3 M1] on the log's boundary a read never serves a pending removal already committed in the data
+                ;; from the log before it: that removal is published first
+                (let [read-cut (if (:committed-pending read-cut)
+                                 ((requiring-resolve 'triplex.gateway.removal-commit/publish-for-read!) name conn)
+                                 read-cut)]
                 (when (contains? input "erasureSeq") (privacy/ensure-ticket! read-cut input))
-                (run read-cut))))))
+                (run read-cut)))))))
       (catch Exception e
         (let [info (ex-data e)]
           ;; [DX-ERA3 N1] a write refused by a pending removal: this gateway completes that removal (its locks released)
+          ;; [DX-ERA3 M4] or the delivery's source database, when its pending removal refused the delivery
           (when (:removal-pending info)
-            ((requiring-resolve 'triplex.gateway.removal-commit/complete-pending!) name (connection (db-uri name))))
+            (let [target (or (:removal-database info) name)]
+              ((requiring-resolve 'triplex.gateway.removal-commit/complete-pending!) target (connection (db-uri target)))))
           (response (or (:status info) 400) {:code (or (:code info) "GatewayError") :message (.getMessage e)}))))
     (route-handler-base request)))
 

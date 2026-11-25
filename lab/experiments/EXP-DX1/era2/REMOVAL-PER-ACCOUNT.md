@@ -23,6 +23,12 @@ reader-generated names, section 9).
 4. **The invariant now:** a ticketed write commits only if, at Datomic's serial point, no removal that can reach an
    account it read (any account, for a ticket naming none) has declared or committed itself after the published cut
    its ticket was checked against; and no removal declares, releases or commits while the data is ahead of the log.
+5. **The third review (`era3/REVIEW-3.md`, of `3edb9f5d9`) found one more break after an operator mistake (M1)** and
+   four smaller faults (M2 to M5). M1: the log put back to a copy taken while a removal was pending answered that
+   removal's value again, although it had been acknowledged. Every finding of rounds two and three sat at one of two
+   boundaries: the external log against Datomic, or one database against another. The fourth pass (sections 16 and 17)
+   fixes M1 to M5. It also builds, behind its own default-off option, the commit in Datomic as the boundary, which
+   makes the first boundary's faults impossible by construction; the owner is asked to confirm that boundary.
 
 **Known unmet requirement (E9, not this branch's work).** A derived copy recorded BEFORE a removal (a settlement frame,
 notice or Publish that copied the value while it was still current) stays readable after the removal, in its document
@@ -1180,3 +1186,354 @@ with an open claim) before it commits.
 10. **Whether every caller that names accounts names every account it read** (E6 depends on it): callers not reviewed.
 11. **The cross-database delivery window** (15.8): confirmed open, not closed.
 12. **E9, derived copies recorded before a removal:** a known unmet requirement, owned by `exp/DX-ERA4-derived-copies`.
+
+## 16. Commit as the boundary (`TX2_REMOVAL_COMMIT_BOUNDARY=1`, default off): the design (written 2026-11-24, 23:20 EST, before its gates ran)
+
+**What the owner is asked to confirm.** TARGETS 7.1 says a read that started before a removal's publication MAY
+return the old value, and every read that starts after it returns the removed marker. With this option a removal takes
+effect at its commit in Datomic, which is before its publication: stricter than 7.1 asks, which its wording permits, but
+it moves the moment a removal becomes visible. Nothing changes unless the option is set, and it applies only to a
+database guarded per account. The third review (`era3/REVIEW-3.md`) proposed it, because every fault of rounds two
+and three sat at the boundary between the external log and Datomic (N1, N5, E7, M1).
+
+### 16.1 What a reader needs in Datomic to mask without the log
+
+- **The removal's own record.** Every removal's commit carries its entry on its transaction
+  (`:triplex.tx/erasure-record`). The entry holds:
+  - its sequence and the previous entry's seal;
+  - the command and its selectors;
+  - every removed identity (assertion ID, value type, entity, attribute);
+  - its stamp and transaction ID.
+  It is the exact text its publication writes into the log (the publication publishes the native record). The marker
+  a reader answers is built from these fields by the same function as today (`privacy/apply-entry`).
+- **The reader's position.** The database value the gateway serves the request from (its current value, synced as
+  today), not a pinned basis. A pinned or history read masks every removal committed up to that value, as it masks
+  every published one today.
+- **What is not in Datomic: the policy** (the protected attributes, sealed or not). It is in the log's head and never
+  changes. So a missing log cannot be served, and the rebuild route asks for the policy (16.6).
+- **The cost.** One index lookup per request (the newest `erasure-record` datom), with the entries cached per database
+  and extended from the newest one seen; the effective state applies only the entries past the log's head (normally
+  none, or the one being published).
+
+**The state every request is served from (`removal_commit.clj` `effective`):** the log's cut, with every removal
+committed in the data past the log's head applied in order. The two are hash chains (each entry carries the previous
+seal), so one comparison at the log's head proves they agree on every earlier entry.
+
+**One exception, the removal in flight (corrected 2026-11-24, 23:37 EST, after the first gate run).** When exactly one removal is
+committed past the log's head and it is the log's pending intent, its values are masked but the cut keeps the log's
+sequence. So saves of its subjects keep the log boundary's rule (refused until it is published), and writes it can
+reach still get the tagged 503 and complete it. Applying it in full let a save of its subject land between the commit
+and the publication, against a sequence the log had not yet recorded (the first gate run found this:
+`stopped/after-native`, own save 200).
+
+### 16.2 Sealed scopes: when the key is destroyed
+
+- **Unchanged: after publication** (plus the grace period), by the shred worker, from the log.
+- **Between the commit and the key's destruction a reader masks by the commit**: it answers the marker and never
+  unseals the value. A write cannot reuse the identity: `issue!` and `take-key!` check the same erased set.
+- **Destroying the key at the commit** would also be exact (the commit is durable), but it is not needed. Keeping it at
+  publication keeps the key store following the acknowledged record, and a log put back behind the data cannot bring a
+  key back by itself (the key store's rows are deleted, and a restored key store would still meet the commit's mask).
+
+### 16.3 The 503s while a removal is pending
+
+- **Today's database-wide rule** (option off) answers 503 to every request while a removal is pending. Unchanged:
+  this option is for databases guarded per account only.
+- **Per account, on either boundary:** reads were already served while a removal is pending.
+- **With the commit boundary, reads are never refused because the log and the data disagree in time.** That covers
+  the log behind the data (any amount, a copy with a removal pending in it, or an orphan declaration) and the data
+  behind the log. Only a missing log refuses reads, because the policy is in the log.
+- **Writes the pending removal can reach** still get the tagged 503, and their gateway completes the removal, which
+  publishes it.
+- **Writes are refused (typed) only** while the data is behind the log (`RemovalDataBehind`, until the restore route)
+  or the two disagree on an entry (`RemovalLogConflict`).
+
+### 16.4 What acknowledgement means
+
+Unchanged: the removal's 200 is sent after its publication, so it still means "committed in Datomic and recorded in
+the acknowledged log". The value stops being answered at the commit, which is before the acknowledgement. So every read
+that starts after the acknowledgement returns the marker, as 7.1 requires, and so does every read that starts after the
+commit.
+
+### 16.5 The log ahead of, behind, or missing relative to the data
+
+| Relation | The log's boundary (today's per-account default, with this pass's fixes) | With the commit boundary |
+| --- | --- | --- |
+| The log and the data agree | served | served |
+| A removal in flight (intent; declared; committed but not published) | served; writes it can reach 503 and complete it; once it is committed, a read publishes it first | served; once it is committed, reads are masked by it; writes it can reach 503 and complete it |
+| The log one behind with that removal pending in its copy (M1) | a read publishes that removal first, then is served (the M1 fix below) | served; reads masked by its commit; the first write it can reach completes it |
+| The log behind the data, no intent for the missing removals, any number | every request 503 `RemovalLogBehind`; the rebuild route is the way out | served from the data; the next removal or the rebuild route appends the missing entries |
+| A declaration past every commit with no intent (an earlier build; a copy put back from before the intent) | every request 503 `RemovalLogBehind`; moving back and forward clears it | served; the next removal releases it |
+| The data behind the log (older data restored) | every request 503 `RemovalDataBehind` until the restore route | reads served, masked by the log; writes 503 `RemovalDataBehind` until the restore route |
+| The log and the data disagree on an entry | not told apart (each side checked against itself only) | reads masked by both; writes 503 `RemovalLogConflict` |
+| The log missing | every request 503, no way out before this pass | every request 503 `RemovalLogMissing`; the rebuild route with the policy writes it from the data |
+
+**On the log's boundary this pass also fixes M1, and keeps publication as the boundary (corrected 2026-11-24, 23:37 EST).**
+
+- **The rule:** a read that finds the log's pending removal already committed in the data publishes it first, then is
+  served from the published log (`served` flags it; `main.clj` calls `publish-for-read!`). This is the review's first
+  proposal. Only the log is written: the commit is already in the data.
+- **Why not mask by the commit here:** that is the commit boundary's rule. On the log's boundary the value must stop
+  being answered at publication, and with this rule it does: no read is served from the log while that removal is
+  committed and unpublished.
+- **The first draft was wrong.** It applied the committed pending removal in full for every request. That moved the
+  boundary on the log's side too, and let a save of the removed subject land before publication. The first gate run
+  found it (`stopped/after-native` and `stopped/at-publish`, own save 200, its value then counted as removed).
+- **The cost:** a read in the few milliseconds between a removal's commit and its publication waits for the
+  publication (it takes the removal lock; the removal's own gateway holds it until it has published, then the read's
+  publication finds the command published and returns).
+
+### 16.6 The rebuild route (both boundaries)
+
+`POST /v2/db/{db}/removal-log-rebuild`, under the removal lock:
+
+- **The data's records must be a dense chain:** sequences 1 to n, each previous seal right.
+- **When the log exists:** it must agree with them up to its head. The missing entries are then appended, each with
+  the text its publication would have written, and a pending intent of an appended removal is dropped.
+- **When the log is missing:** it is written whole from the data. The body gives the policy
+  (`{"attributes": [...], "sealed": bool}`), which must cover every removed value's attribute, and must say sealed if
+  the data holds sealed values.
+- **Refused** when the data is behind the log (the restore route does that) or when the two disagree.
+- **This is the way out the third review found missing** (its "not tested" item 7): a log two or more removals behind,
+  or lost.
+
+### 16.7 What becomes impossible by construction, and what can be deleted
+
+| Finding | With the commit boundary | Why |
+| --- | --- | --- |
+| N5 (a declaration released an account from a log behind the data) | impossible | a removal first appends the data's missing entries to the log (`catch-up!`), so the declaration's values are the data's; and requests are served from the data |
+| E7 (counters behind the log once the right log was back) | impossible | the same: nothing is released from a log behind the data |
+| M1 (a log copy with a pending removal answered the value again) | impossible | reads are masked by the commit; no copy of the log can unmask it, and no read has to publish anything |
+| N1 (a block no gateway could see) | already impossible by the order of the steps (intent first); unchanged | the intent is always in the log before the declaration |
+
+**Checks the option makes dead.** The log's boundary still needs them, and it stays the default until the owner
+confirms. Each would be deleted if the option became the rule:
+
+1. the `RemovalLogBehind` branch of `disagreement` and its three callers (the removal at `erase!`, `rebuild!`,
+   `start-check!`);
+2. `consistent?`'s comparison of the declared and committed sequences with the log;
+3. `refuse-inconsistent!`'s refusal (it serves instead);
+4. the M1 rule of the log's boundary: the flag in `served`, `publish-for-read!` and its call in `main.clj`;
+5. `typed-failure` for everything but a missing log;
+6. the restore route's refusal of a log behind the data.
+
+The declaration's own check (an earlier declaration at s is its own only if its intent was in the log) stays: it
+protects against a lost lock, not against a lagging log.
+
+### 16.8 The number of states
+
+**Log and data relations the code tells apart, and what each does:**
+
+| # | State | The log's boundary | The commit boundary |
+| --- | --- | --- | --- |
+| 1 | agree | serve | serve |
+| 2 | intent only | serve; reachable writes 503 + complete | the same |
+| 3 | intent and declaration | the same | the same |
+| 4 | intent and commit | a read publishes it first; reachable writes 503 + complete | serve, masked by the commit; reachable writes 503 + complete |
+| 5 | the log behind, a removal pending in its copy (M1) | the same as 4 (the code cannot tell them apart, and need not) | the same as 4 |
+| 6 | the log behind by an intent-less declaration | refuse all | serve; release it |
+| 7 | the log behind by one or more commits | refuse all | serve; catch up |
+| 8 | the data behind the log | refuse all | serve reads; refuse writes |
+| 9 | the log and the data disagree | not told apart | serve reads masked by both; refuse writes |
+| 10 | the log missing | refuse all (now: until the rebuild route) | refuse all until the rebuild route |
+
+**What the numbers say (recounted 2026-11-24, 23:37 EST, for the corrected M1 rule):**
+
+- **States that refuse every request:** 4 of these 10 on the log's boundary (6, 7, 8, 10); 1 on the commit boundary
+  (10). Two more refuse writes only on the commit boundary (8, 9).
+- **States 5, 6 and 7 stop being separate on the commit boundary.** 5 is 4 on both boundaries (M1 is state 4 reached
+  by putting a copy back). 6 and 7 become one state, "the log lags the data": served, and caught up by the next
+  removal or the rebuild route.
+- **Different behaviours the code has:**
+
+| The log's boundary (6) | The commit boundary (4) |
+| --- | --- |
+| serve | serve (states 1, 6, 7) |
+| serve; reachable writes 503 and complete (2, 3) | serve, masked from the commit; reachable writes 503 and complete (2 to 5) |
+| a read publishes first; reachable writes 503 and complete (4, 5) | serve reads, refuse writes (8, 9) |
+| refuse all, `RemovalLogBehind` (6, 7) | refuse all, `RemovalLogMissing` (10) |
+| refuse all, `RemovalDataBehind` (8) | |
+| refuse all, `RemovalLogMissing` (10) | |
+
+State 9 has no behaviour of its own on the log's boundary: each side is checked against itself only, so it is served
+or refused by whichever of the other rows it looks like.
+
+## 17. The third review (DX-ERA3, `era3/REVIEW-3.md`) and the fourth pass (2026-11-24)
+
+The review read `3edb9f5d9`. Its tests (`era3/attack3.clj` phases k2 to k10 and `fuzz3`, with a second gateway that
+runs removals and completions of its own; `era3/stack3.sh` with `stack3-ack.mjs`) are merged into the standing gate as
+the `era3c-*` arms of `era2/gate.sh` (`on`, `subject`, `commit`).
+
+### 17.1 Reproduced first, on `3edb9f5d9` (a clean copy of that commit)
+
+| Finding | Test | Result on `3edb9f5d9` |
+| --- | --- | --- |
+| M1 | `k6`, one behind, unsealed and sealed | violation: the value acknowledged as removed answered again after the log copy was put back |
+| M1 | `stack3.sh logpending` (PostgreSQL authority, write and read gateway) | 3 of 3 reads of a1 answered the value; a save of another account 200; the first frame naming no account (503) completed it again |
+| M2 | `k8` | the late transaction committed at position 4, after the removal at 3; its copy readable |
+| M3 | `k4` (wait 300 ms, commit 600 ms, the subject saved during each attempt) | 10 of 10 contacts 503, 10 late commits refused (subject moved), still pending |
+| M4 | `k7` | every delivery 503, the source's removal still pending |
+| M5 | `k2` | after the lost-lock removal recorded its intent, every later removal 503 |
+
+Per mode: 6 violations of 12 oracles, both `on` and `subject` (`Q1-on`, `Q1-subject`); 0 of the review's 63 checks of
+the builder's claims failed.
+
+### 17.2 Each finding, its fix, and the test that now passes
+
+| Finding | Fix (`removal_commit.clj` unless named) | Test now |
+| --- | --- | --- |
+| **M1** a log copy taken while a removal was pending, put back after its publication, answered the value again | **The log's boundary:** a read that finds the log's pending removal already committed in the data publishes it first, then is served (`served` flags it, `publish-for-read!`, called from `main.clj`'s read path). Publication stays the boundary. **The commit boundary:** reads are masked by the commit (`effective`); no read publishes | `k6` 1 and 2 behind, unsealed and sealed: log's boundary, one behind: the read 200 without the value, the removal published by it, unsealed and sealed; two behind: `RemovalLogBehind`, value not answered. Commit boundary, one and two behind: every read 200 without the value; the first frame naming no account 503 and completed (log at 1 and 2); `stack3.sh logpending`: on the log's boundary the first read after the copy was put back published the removal (log at 1, no intent left), 0 of 3 reads answered the value; on the commit boundary 0 of 3 answered (masked by the commit), the first frame naming no account 503 and completed it; gate `stopped/*`, `commit-visibility` |
+| **M2** a ticket naming another database got no check of its own database's removals | `ticket-intent-ops`: for such a ticket, this database's committed and declared sequences are compared and set at the sequence of this request's own cut (`privacy/*cut*`), as today's rule does with its one sequence. N4 does not come back: the source's number is never compared with the recipient's | `k8`: the late transaction refused at the fence (`cas-failed`), no copy readable; a delivery after the acknowledgement 200, both boundaries |
+| **M3** a resumed removal restarted its attempt count, so with a slow commit and the subject saved during each attempt it never took its guard | `erase!`: a resumed removal (an intent already in the log) with nothing held takes the subject guard before its first commit attempt | `k4`: with saves in flight: published at the third contact (two 503, then 200; one late commit refused, one committed); without saves: at the second; nothing left pending, both boundaries |
+| **M4** a delivery refused by its source's pending removal was a plain 503 and completed nothing | `check-source!` (called from `main.clj` for deliveries): the refusal carries `:removal-pending` and `:removal-database`; `main.clj`'s catch completes the removal of the database it names | `k7`: the first delivery 503, and that contact completed the source's removal; the next four 200; nothing pending, both boundaries |
+| **M5** a removal that lost its lock could record its intent at a sequence another removal had already published | `put-intent!`: the first intent is written only while the log's head is the one the removal read (PostgreSQL: one `INSERT ... SELECT ... WHERE EXISTS (head = the payload read) ON CONFLICT DO NOTHING`; the file authority compares the head under its lock) | `k2`: the lost-lock removal 503 with nothing of it in the log (no intent; published 1); the next removal, the lost one resent and a frame naming no account all 200, both boundaries |
+| M6, K9 | information; unchanged (M6: the fleet order of 15.5; K9: the cross-database window of 15.8) | `k10`, `k9`: as the review reported |
+| E9 | known unmet requirement, owned by `exp/DX-ERA4-derived-copies`; stated at the top of this page | not counted |
+
+**The first M1 fix was wrong, and the gate caught it.** It applied the committed pending removal in full for every
+request. Saves of the removed subject then passed between the commit and the publication, against a sequence the log
+had not recorded (gate `stopped/after-native` and `stopped/at-publish`, own save 200, on `65914fd9a`). Corrected at
+`cd242e8c0` (16.5).
+
+**The commit boundary's restore of older data was broken, and the stack caught it.** With the data behind the log,
+`effective` compared the log's head with a data entry that did not exist (an IndexOutOfBounds), so every request
+answered 400 `GatewayError` (`T-commit-restore`, on `6524bab92`). Agreement past the data's last entry is now false:
+the request is served from the log's cut and writes are refused `RemovalDataBehind`. Fixed at `f8725b97b`, with the
+gate case `data-behind`. No other path changed: for every state with the data at or past the log's head the function
+returns what it did.
+
+### 17.3 The commit as the boundary: what it makes impossible, what it lets us delete, the states
+
+Section 16 is the design. In short:
+
+- **Impossible by construction:** N5, E7 and M1. A log behind the data can only lag: it is served from the data and
+  caught up by the next removal, so no declaration is released from it, no counter is restored from it, and no copy
+  of it unmasks a committed removal. N1 was already impossible by the order of the steps.
+- **Code it lets us delete, if it became the rule:** the `RemovalLogBehind` branch of `disagreement` and its three
+  callers; `consistent?`'s comparison of the declared and committed sequences with the log; `refuse-inconsistent!`'s
+  refusal; the M1 rule of the log's boundary (`served`'s flag, `publish-for-read!` and its call); `typed-failure` for
+  everything but a missing log; the restore route's refusal of a log behind the data (16.7).
+- **States (16.8):** of 10 log and data relations, 4 refuse every request on the log's boundary and 1 on the commit
+  boundary; the code has 6 different behaviours on the log's boundary and 4 on the commit boundary.
+
+### 17.4 Gates (`cd242e8c0` to `f8725b97b`)
+
+Gateway code: `cd242e8c0`, `4533b50cc` and `6524bab92` hold the same gateway source; `f8725b97b` changes only
+`effective` when the data is behind the log. Evidence: `evidence/DX-ERA2/fourth-pass-f8725b97b.tar.gz` (outside the
+repository).
+
+| Gate | Log's boundary | Commit boundary |
+| --- | --- | --- |
+| Interleavings (`era2/gate.clj`), on `4533b50cc` | `on` 1,612 checks, `subject` 9,882, 0 failed; database-wide 360, 0 failed | 9,899 checks, 0 failed |
+| The same on `f8725b97b` | `on` 1,618 checks, `subject` 9,888, database-wide 364; 0 failed | 9,914 checks, 0 failed (with `data-behind`) |
+| The first two reviews' tests and fuzzers (`era3`, `era3b`, 400 schedules each), on `cd242e8c0` | 0 violations (`on`, `subject`) | 0 violations |
+| The third review's cases k2 to k10 and `fuzz3` (`era3c`, 400 schedules), on `cd242e8c0` | 0 violations (`on`, `subject`) | 0 violations |
+| `fuzz3` with the second active gateway, 10,000 schedules each | 40,000: `on`, `subject`, `on` sealed, `subject` sealed; 0 violations | 40,000, the same four; 0 violations |
+| The older fuzzers (`fuzz2`, `fuzz`) | 18,000 (8,000 sealed); 0 violations | 26,000 (10,000 sealed); 0 violations |
+| E9 (`era3e9`) | 2 of 2, as known (not this branch's) | not run |
+| Option off, byte for byte (paired native log, base `272a1bd66`), on `cd242e8c0` | identical on the base twice, off, on (not moved) and commit (not moved): unsealed `e6ea7dfc4eec` (653 datoms), sealed `033f30cd2767` (698); replies md5 `2caaf1e83af2` | the same |
+| The same on `f8725b97b` | identical, the same hashes and replies on all five arms | |
+| Gateway suites (`4533b50cc`) | 76 tests, 71,170 assertions, the one error the base has (`feed-test` `http-route`) on base, off, subject | the same, commit |
+
+**Stacks** (PostgreSQL authority, a write and a read gateway, pinned images; `T-<boundary>-<case>`):
+
+| Case | Log's boundary | Commit boundary |
+| --- | --- | --- |
+| The review's M1 case (`stack3.sh logpending`) | the first read published the removal; 0 of 3 reads answered the value | 0 of 3 answered; the first frame naming no account completed it |
+| A second read gateway with cached sessions (`ack3`) | 20 removals, 4,694 reads after acknowledgement, 0 answered the value | 20 removals, 5,335 reads after, 0 answered |
+| Current data, the log one behind (`logbehind`) | every request `RemovalLogBehind`; the current log back: normal | the removal while behind 200 (it appended the missing entry, then committed as 2); the restore route 200; reads served; frames with old tickets 409 `ErasureFrontierChanged`; 0 answered |
+| Current data, the log two behind (`logbehind2`) | `RemovalLogBehind`; the rebuild route to 2; normal after; 0 answered | reads and a save of another account served; rebuild to 2; 0 answered |
+| Current data, the log missing (`logmissing`) | `RemovalLogMissing`; rebuild with the policy to 2; 0 answered | the same |
+| A pending-copy log | the M1 case above | the M1 case above |
+| Older data restored, the current log (`restore`) | `RemovalDataBehind` until the restore route; 0 answered | on `6524bab92`: 400 `GatewayError` for every request (the defect above); on `f8725b97b`: the read 200 with a1 masked, writes and the removal 503 `RemovalDataBehind`, the restore route 200, then normal; 0 answered |
+| Removal stopped declared, committed; a client that never resends (`step-*`, `wait`) | 0 answered; at the committed stop the first read published it (the leak check now follows the frame's ticket, `6524bab92`) | 0 answered; the first frame naming no account completed it |
+| Lock lost while declared (`lockloss-declared`) | 0 answered | 0 answered |
+| The earlier build's gateway beside this one (`mixed`, `272a1bd66`) | 0 answered, 0 copies | 0 answered, 0 copies |
+| The first review's stacks (`era3/stack.sh` 1 and 2) | value never readable; no derived copy after the acknowledgement | the same |
+| A removal against a 5 s wait (`stack-timeout`) | answered 200 after 21 attempts | the same |
+
+
+### 17.5 What changed, exactly (for the fourth review)
+
+- `removal_commit.clj` (lazily loaded, so no generated name in an early-loaded file moved):
+  - M1: `served`, `publish-for-read!`, `pending-of?`;
+  - M2: `ticket-intent-ops`; M3: `erase!` (the guard on a resume); M4: `check-source!`; M5: `put-intent!` (the head);
+  - the commit boundary (`TX2_REMOVAL_COMMIT_BOUNDARY=1`, read once at load, default off, per account only):
+    `commit-boundary`, `native-entries`, `effective`, `union-mask`, `seal-at`, `check-writes!`, `catch-up!`,
+    `append-log!`, `release-orphan!`, and its branches in `consistent?`, `refuse-inconsistent!`, `log-cut`,
+    `typed-failure`, `erase!`;
+  - the rebuild route on both boundaries: `rebuild-log!`;
+  - `effective`'s agreement past the data's last entry (`f8725b97b`).
+- `erase.clj` `request-cut`: the log's cut, its typed failure, `consistent?` and `served` through `removal-commit`.
+- `main.clj`: the read path's M1 call; the catch completes the database the refusal names (M4); the source check of a
+  delivery through `check-source!`; `check-writes!` on both write paths; the `removal-log-rebuild` route.
+- The stack's `up.sh`: `DX_REMOVAL_COMMIT_BOUNDARY=1` sets `TX2_REMOVAL_COMMIT_BOUNDARY=1`.
+- Gate (`era2/gate.clj`): cases `commit-visibility`, `log-states` (1 and 2 behind, missing), `catch-up`,
+  `data-behind`, `creation-race` (17.6); the `stopped-removal` and `log-behind` expectations per boundary; frames take
+  the ticket a client reads (`served-seq`); `ERA2_ONLY` for diagnostic runs (never a gate). `era2/gate.sh`: the
+  `commit` option and the `gate-commit`, `era3-commit`, `era3b-commit`, `era3c-*`, `paired-commit`, `suites-this-commit`
+  arms. `era2/stack-steps.sh`: the leak check follows the ticket the first frames carried.
+  `era2/stack-logbehind.sh`: `logbehind2` and `logmissing`.
+
+### 17.6 The save line's R2-2 on this rule (asked 2026-11-25; measured 01:54 EST)
+
+**The question.** The save line's second review (`s5/REVIEW-2.md`, R2-2, at `9dc800e7b`) found that a creation racing
+a removal of its subject is answered `CasConflict`, the SDK replays it from a fresh read, and the replay stores the
+value framed before the removal. Does this rule refuse the replay, on either boundary?
+
+**The test.** The review's test needs the save line's own code (`subject-create`), which this branch does not have, so
+it is rebuilt on this branch's harness as the gate case `creation-race`: protection; a creation of subject X; a
+removal naming X run from inside the creation's submit (between its plan and its commit); the same frame sent after
+the removal under a new operation ID (its source still before it); then the client's replay (the same value, a fresh
+source, a new operation ID). Both writers, all four modes.
+
+**Measured (the same on every mode and both writers):**
+
+| Step | Database-wide | Per account, the log's boundary | Per account, the commit boundary |
+| --- | --- | --- | --- |
+| The creation the removal landed inside | 409 `ErasureFrontierChanged` (the erasure frontier) | 409 `CasConflict` (the removal fence on X's counter) | the same |
+| The same frame sent after the removal | 200, stored | 200, stored | 200, stored |
+| The client's replay | 200, stored | 200, stored | 200, stored |
+
+- **So this rule refuses only the race.** Neither boundary refuses the late frame or the replay. The commit boundary
+  changes nothing here: the race is decided at Datomic's serial point on both.
+- **The late frame is the save line's F4** (`ErasureReplayDeclined` for a creation framed before its subject's
+  removal), which this branch does not have.
+
+**Can the removal rule refuse it whatever the client does? In part.**
+
+1. **Yes, for everything the request itself dates.** At the serial point the rule can refuse any save whose own
+   frame source is older than the last removal of a subject it writes, with one terminal answer
+   (`ErasureReplayDeclined`), for the race and the late frame alike. That needs no help from the SDK's classification.
+   It needs each subject's last removal position beside its counter.
+2. **Yes, for a replay that keeps its command ID.** The refusal can record the command as declined by that removal, so
+   a resend under the same command is refused too.
+3. **No, for a resend with a new operation ID, no command ID and a fresh source.** Every field the store sees then
+   says "a new save after the removal". Refusing it would mean refusing every new protected value of a removed subject:
+   a permanent tombstone, which changes what removal on request means. That is the owner's decision.
+
+**Recommendation:** 1 and 2 in the removal rule, one place for both writers and both boundaries; the save line's SDK
+change stays as a second line; 3 goes to the owner. Not built in this pass.
+
+### 17.7 Still not tested
+
+1. **A fleet that mixes the two boundaries.** `TX2_REMOVAL_COMMIT_BOUNDARY` is a per-process switch, read at load.
+   A gateway on the log's boundary next to one on the commit boundary is not tested; the other branch's second review
+   (Publish and settlement) found two breaks from per-process switches of this kind. Before this option could become
+   the rule, the setting belongs in the database (as that builder is now doing for its settings), and every gateway
+   of a database follows it.
+2. **The cost of a read publishing first (the log's boundary).** A read in the window between a removal's commit and
+   its publication now waits for the publication. Mac runs are toy sizes; no latency was measured.
+3. **A gateway stopped part-way through a catch-up.** `append-log!` appends one entry per PostgreSQL transaction, so a
+   stop leaves the log a shorter way behind, which the next removal or the rebuild route resumes. Read from code; no
+   stop-point test stops it between two appended entries.
+4. **The rebuild route's policy check for a missing log.** It requires the given attributes to cover every removed
+   value's attribute and refuses `sealed: false` when the data holds sealed values. A policy listing extra attributes
+   is accepted: the data cannot show attributes that were protected but never removed. The owner's record of the
+   policy is the only check of that.
+5. **The commit option set on a database still guarded database-wide.** The option acts only per account. With it
+   set and the database not moved, the paired native log is identical (`paired-commit`); the database-wide
+   interleavings (`gate-off`) ran with it unset only.
+6. **Server scale, the 1 billion age and 100,000-subject loads.** Mac, correctness only.
+7. **E9** (copies recorded before a removal) and **K9** (the cross-database delivery window, 15.8): unchanged, as
+   the review reported.
