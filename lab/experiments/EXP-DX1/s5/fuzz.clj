@@ -571,6 +571,10 @@
         kind (pick rng [:applied :unapplied :late])
         make (nth unknown-failures (.nextInt rng (count unknown-failures)))
         [command input] (input-of g spec)
+        ;; One fault step in three is an import or settlement frame (the same save under another write class): every
+        ;; class goes through commit! and must resolve the same way.
+        klass (when (chance rng 0.33) (pick rng ["import" "activation" "notice"]))
+        input (cond-> input klass (assoc "writeClass" klass))
         op (get input "operationId") account (get input "account")
         replay-input (assoc input "operationId" (str op "/replay"))
         side (fn [name wrap]
@@ -592,7 +596,7 @@
                                (and (#{"committed" "absent"} (:resolved s)) (= (:resolved s) (:after s))))
                            (not= "committed" (:late s))
                            (or (not= kind :unapplied) (not= "committed" (:resolved s)))))
-        r {:mode (keyword (str "fault-" (name kind))) :command command :operation op :c (:answer c) :k (:answer k)
+        r {:mode (keyword (str "fault-" (name kind) (when klass (str "-" klass)))) :command command :operation op :c (:answer c) :k (:answer k)
            :c-side c :k-side k :writer (writer-kind k-conn op nil)
            :equal (and (= (dissoc c :position) (dissoc k :position)) (= (:position c) (:position k)) (truth c) (truth k))}]
     (let [stored (cond (= "committed" (:resolved c)) input
