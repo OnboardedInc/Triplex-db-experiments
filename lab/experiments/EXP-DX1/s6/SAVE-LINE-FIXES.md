@@ -2,7 +2,9 @@
 
 Branch `exp/DX-S6-save-line-fixes`, based on the save line's head `2d78680f7` with the review branch (`316d13d22`)
 merged. The review's tests are now a standing gate phase (`s6/clj-run.sh` modes `fuzz` and `attack`). Mac figures
-are toy-size and diagnostic. Every option stays default off. Written 2026-11-24.
+are toy-size and diagnostic. Every option stays default off. Written 2026-11-24. Evidence: the archive
+`DX-S6-save-line` (`final-959634af4.tar.gz` sha256 `75c4112f…`, `earlier-runs.tar.gz` `d319ca1f…`), kept outside the
+repository.
 [The review](../s5/REVIEW.md) · [Creation saves](../s4/CREATION-SAVES.md) · [Save shape](../v01/SAVE-SHAPE.md)
 
 **In brief.**
@@ -23,7 +25,16 @@ are toy-size and diagnostic. Every option stays default off. Written 2026-11-24.
 - **F5:** the card fails a run in which no eligible save took the per-subject writer.
 - **F6:** the 5 values are restored to the base's.
 - **F9:** the several-owners and creation writers use `group/classify`'s account rule.
-- **F7, F8 and F10** are stated (sections 7 and 10).
+- **F7, F8 and F10** are stated (sections 7 and 8).
+- **Command and operation IDs across accounts** (the Publish builder's finding), section 9.
+  - Today, one account can deny another's IDs and read back its transaction.
+  - With `TX2_ACCOUNT_CLAIMS=1` (default off) and the SDK's `claimAccount`, both IDs are the account's own. Over
+    10,000 two-account schedules, each account got exactly its answers alone, except the shared assertion IDs, which are
+    database-wide by design.
+- **The SDK end to end on PostgreSQL:** 12,000 saves under 27 faults, with no stored save reported failed, no unstored
+  save reported stored, and every receipt the stored one (section 1.3).
+- **Identities:** equal to the base in every setting with every option off. All gates ran on the image built from the
+  head (sections 6 and 10).
 
 ## 1. F1: decided or unknown
 
@@ -138,7 +149,54 @@ injected at `d/transact-async`. The faults:
 
 ### 1.3 The SDK end to end on PostgreSQL, with faults (`s6/stack.sh`, `s6/sdk-stack.ts`)
 
-RESULT_STACK
+**The stack.** In the lab VM, by image ID on the image built from the head:
+
+- PostgreSQL with `fsync`, `synchronous_commit` and `full_page_writes` on;
+- a real transactor;
+- two HTTP write gateways under a supervisor that restarts them;
+- the SDK: `TriplesLive` over the Datomic adapter with `orderedSaves`, `saveSizeRule`, `severalOwners`, `creationSaves`
+  and the replay loop. Four stores, two per gateway, eight workers.
+
+Each store reaches its gateway through a proxy that drops 2% of write connections: half before forwarding (a lost
+request), half after the gateway answered (a lost reply).
+
+**The faults, at random while the SDK saves:**
+
+- the transactor stopped (SIGTERM) or killed (SIGKILL) and restarted;
+- the transactor paused 6 s (SIGSTOP), which times out the gateway's 5 s deref;
+- either gateway killed (SIGKILL).
+
+Then the stack is quiet, and every reported outcome is checked against the log and a read-back of every subject.
+
+| Run (head, image) | Faults | Dropped requests / replies | Saves | Stored | Reported stored but absent | Reported failed but stored | Receipt not the stored one | Unknown at the bound | Positions contiguous | Subjects read back exactly |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| `959634af4`, `sha256:8afa5f298ef3…` | 27: 9 SIGTERM, 4 SIGKILL, 4 SIGSTOP of the transactor; 10 gateway SIGKILL | 442 / 462 | 12,000 | 11,844 | 0 | 0 | 0 | 0 | yes (11,844) | 1,862 of 1,862 |
+| `18962f332`, `sha256:1b6b073831df…` | 7: 2 SIGTERM, 2 SIGKILL, 1 SIGSTOP; 2 gateway SIGKILL | 274 / 285 | 12,000 | 11,852 | 0 | 0 | 0 | 0 | yes | 1,861 of 1,861 |
+| `ce8eb2d31`, `sha256:116b8cc74687…` | 7, the same mix | 264 / 274 | 12,000 | 11,856 | 0 | 0 | 0 | 0 | yes | 1,865 of 1,865 |
+
+**What the SDK reported for the saves it did not store** (156, 148 and 144):
+
+- one `Cannot acquire Datomic source cut` per run: a read before submit;
+- all the others `DatomicOperationNotApplied`: fenced, replayed, and out of replays while the transactor restarted.
+
+None was stored. No save ended `TransactionOutcomeUnknown`. Save latency (diagnostic, toy): p50 17 to 19 ms, p99 120
+to 143 ms, outages included.
+
+**The kinds of save in each run:** one owner 4,818, wide 1,800, two owners 2,396, creation 1,793, general 1,193.
+
+**Constraint attacks, quiet, after the faults** (the first run, `959634af4`):
+
+- **A unique rule on an attribute two creations write at once:** 20 pairs, each through the other gateway. Exactly
+  one committed in 20 of 20. The other answered `ConstraintViolation`.
+- **A reference-target rule whose target is retired while a creation refers to it:** 20 runs, 0 dangling references.
+  Exactly one of the two committed each time; the other answered `ConstraintViolation`.
+- **A release that adds a unique rule between the save's read of the definitions and its commit:**
+  - The save names the definitions it read (EntityState precondition) and is refused `TransactionConflict`.
+  - A save that read them outside the transaction ("stale definitions") commits under the old rules. The store cannot
+    know what a caller did not read.
+
+The earlier `ce8eb2d31` run's precondition case used a `TripleLive` precondition, which TriplesLive refuses without a
+matching retraction. Its result is not counted.
 
 ## 2. F2: the estimate against the writer
 
@@ -447,8 +505,8 @@ without it, the requests are exactly as before.
 | `s5/fuzz.clj` with JSON, boolean, datetime and blob values | server, serial, plainowner | 6 runs: 9,000 serial and 5,400 concurrent saves, 0 differences |
 | `s5/fuzz.clj` with protected values, unsealed | server | 1,500 serial and 900 concurrent, 0 differences |
 | `s5/fuzz.clj` with protected values, sealed | server | 1,500 serial and 900 concurrent, 0 differences; every sealed save took the general writer (no shared authority in process) |
-| `s3/owners_gate.clj` (with the new measured control) | s3, s3-serial | RESULT_OWNERS |
-| `s4/create_gate.clj` (the measured control in place of the constant) | server, serial, hints | RESULT_CREATE |
+| `s3/owners_gate.clj` (with the new measured control) | s3, s3-serial | 262 of 262 each (the control: `[409 CasConflict]`, refused whole); run on the head image after a test-only commit (`da257db5a`; gateway sources identical) |
+| `s4/create_gate.clj` (the measured control in place of the constant) | server, serial, hints | 145, 145 and 147 of each; the measured control `[409 CasConflict]`; same image and commit |
 | `v01/writer-split.test.ts`, `v01/production-card.test.ts` | Node | 10 of 10 |
 | SDK suite (`packages/datomic`) | vitest | 470 passed, 53 skipped |
 
