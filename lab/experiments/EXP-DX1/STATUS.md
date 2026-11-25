@@ -6158,3 +6158,16 @@ Source: save-line fix builder, branch `exp/DX-S6-save-line-fixes` `a6d02225c` (b
 - Not tested: anything on a server; a real network partition; group commit; a mixed fleet saving concurrently; the product's real Publish path.
 
 **Action:** the same independent reviewer started a second review of the fixed head, aimed at the new fence (a delayed original committing after its replay would be a double write), the classification in both directions, and the claims fix with the option off.
+
+## 2026-11-24 23:07 EST: third review of the removal rule: converging; one break after an operator mistake; a simpler mechanism proposed
+
+Source: independent reviewer, third review, branch `exp/DX-ERA3-removal-review` `af62ce1dc`, `lab/experiments/EXP-DX1/era3/REVIEW-3.md`. Reviewed: `exp/DX-ERA2-removal-per-account` `3edb9f5d9`. Pinned images.
+
+- **Judgement: the design is converging; do not rebuild.** N1, N4 and N5 are closed as reported. The counters and the serial-point checks inside one database have held: no copy landed after a removal in 198,000 fuzzer schedules since the first fix. Every later finding sits at one of two boundaries: between the external removal log and Datomic, or between databases.
+- New fuzzer with a second ACTIVE gateway: 40,000 schedules (20,000 sealed), 356,857 checks, 0 violations. In 31,904 schedules a delayed step from the first gateway landed while a second gateway completed the removal: every one that reached Datomic after the commit was refused; no removal removed less than it acknowledged, none was acknowledged twice with different contents, none was lost. Composed with the import branch: the known import resend committed 0 times. Around 20 removals: 3,898 reads started after an acknowledgement, none returned the value; another account's 1,543 reads and 376 saves all answered 200.
+- **M1, high, after an operator mistake, a regression:** putting back a copy of the removal log taken while a removal was pending, after that removal was published, makes every read route answer the removed value again until something completes the removal a second time (in process on both settings; on a stack 3 of 3 over 4 s). Today's rule answers 503 to every request.
+- M2 medium-high: the delivery exemption goes too far (a derived write naming another database as its source gets no check of its own database's removals). M3 medium: a removal can stay pending forever when its commit is slower than the wait and the subject keeps being saved. M4, M5 low.
+- **Proposed simpler mechanism:** let a removal take effect for reads at its commit in Datomic, not at its publication, so the external log can only lag the data and never undo it. This moves the boundary in the targets (section 7, item 1) and is Sam's call; the one-database goal removes the second boundary.
+- Recommendation: merge with named fixes, not as is.
+
+**Action:** the removal builder resumed a fourth time: fix M2 to M5; build the commit-as-boundary mechanism behind its own default-off option with the design in writing first (what it makes impossible, which checks can be deleted, the state count before and after), and a route that rebuilds the log from Datomic. A fourth review follows. Sam to be asked to confirm the boundary change.
