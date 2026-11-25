@@ -338,3 +338,70 @@ for (const frames of ["bytes", "count"] as const)
     console.log("[R1 " + frames + "] " + JSON.stringify({ publishes: 40, reads, routes }));
     delete process.env.TX2_PUBLISH_BESIDE;
   });
+
+// ---------------------------------------------------------------------------------------------- D1: stored records
+test("D1: the same history under the account guard and under the whole-head rule: which stored fields differ", async () => {
+  const { dropMemoryScope } = await import("../../../bench/lib/memory.ts");
+  const { unpack } = await import("../notify1/store.ts");
+  const scope = "act10-d1-history";
+  const run = async (guard: boolean) => {
+    dropMemoryScope(scope);
+    const db = new MemDb(scope, 7);
+    db.maxYield = 0;
+    const A = await account(db, "acct-d");
+    await A.a.installHeld(validTime);
+    process.env.TX2_PUBLISH_BESIDE = "1";
+    await A.a.publish("acct-d:R1", W0.R1.doc, validTime, "owed");
+    const w0 = settler(db, A, "d1-0", "progress");
+    await Promise.all([w0.values.runValues(1), w0.recorder.record(1)]);
+    // Two saves of subject 2's start date and subject 4's pay rate (the same values in both runs).
+    const saves = async () => {
+      const comp = new Proc(db, "saver").comp();
+      for (const [i, attr, v] of [[2, ":person/custom-start", "2026-11-09"], [4, ":person/custom-pay-cents", "2099"]] as const) {
+        const head = await comp.currentPosition();
+        const rows = (await comp.sweepPage(["acct/acct-d/pl:" + String(i).padStart(8, "0")], { position: head, validAt: Date.parse(validTime) })).rows as any[];
+        const t = rows.find((x) => x.attribute === attr)!;
+        const r = await comp.transact([{ op: "retract", id: t.id }, { op: "assert", entityId: t.entityId, attribute: attr, value: { ...t.value, value: v }, validFrom: t.validFrom }],
+          { commandId: "d1:" + i, actor: "act10/save", preconditions: [{ _tag: "TripleLive", id: t.id }] });
+        assert(r.ok);
+      }
+    };
+    if (guard) await A.a.publish("acct-d:large", large(1000), validTime, "owed", undefined, { afterRead: saves } as never);
+    else {
+      process.env.TX2_PUBLISH_BESIDE = "0";
+      await saves();
+      await A.a.publish("acct-d:large", large(1000), validTime, "owed");
+    }
+    const w = settler(db, A, "d1-1", "progress");
+    await Promise.all([w.values.runValues(2), w.recorder.record(2)]);
+    delete process.env.TX2_PUBLISH_BESIDE;
+    return (await db.comp.feedPage(0, 100000)).transactions as any[];
+  };
+  const g = await run(true), h = await run(false);
+  // Every stored value, by commit position and entity, parsed (packed values unpacked) and flattened to paths.
+  const flatten = (v: unknown, path: string, out: Map<string, string>) => {
+    if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) flatten(x, path + "." + k, out);
+    else out.set(path, typeof v === "bigint" ? v.toString() + "n" : JSON.stringify(v));
+  };
+  const parse = (s: string) => {
+    try { const v = JSON.parse(s); if (typeof v === "string" && /^[A-Za-z0-9+/=]{16,}$/.test(v)) { try { return unpack(v); } catch { return v; } } return v; } catch { return s; }
+  };
+  const fields = (txs: any[]) => {
+    const out = new Map<string, string>();
+    for (const t of txs) for (const [k, c] of t.changes.entries())
+      if (c.op === "assert") flatten(parse(c.value.value), t.position + ":" + k + ":" + c.attribute, out);
+    return out;
+  };
+  assert.deepEqual(g.map((t) => [t.position, t.actor, t.changes.length]), h.map((t) => [t.position, t.actor, t.changes.length]), "the two histories differ in shape");
+  const fg = fields(g), fh = fields(h);
+  const differ = new Map<string, number>();
+  for (const k of new Set([...fg.keys(), ...fh.keys()])) if (fg.get(k) !== fh.get(k)) {
+    const [pos, , ...rest] = k.split(":");
+    const t = g.find((x) => String(x.position) === pos);
+    const name = (t?.actor ?? "?") + " " + rest.join(":").replace(/\.\d+(?=\.|$)/g, "[]");
+    differ.set(name, (differ.get(name) ?? 0) + 1);
+  }
+  // Command IDs that differ (the frames' claims are hashes of their content).
+  const ids = g.filter((t, i) => t.commandId !== h[i]!.commandId).map((t) => t.actor);
+  console.log("[D1] " + JSON.stringify({ commits: g.length, fieldsCompared: fg.size, differingFields: Object.fromEntries(differ), commandIdsDiffer: ids }));
+});
