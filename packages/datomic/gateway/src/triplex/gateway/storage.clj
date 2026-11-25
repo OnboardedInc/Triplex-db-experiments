@@ -551,9 +551,11 @@
           (or (owner-layout/prepare db data input expected)
               (subject/plan db data input expected)))))))
 (defn- frontier-moved?
-  "[DX-S6] After a refusal, whether the scope's removal sequence moved past the frontier this request was checked at."
+  "[DX-S6] After a refusal, whether the scope's removal sequence moved past the frontier this request was checked at.
+  [DX-ERA6] Database-wide only: a database guarded per account holds the sentinel in that sequence (its removals move
+  their own sequences, and its writes are fenced per account), so the comparison does not apply there."
   [conn]
-  (when privacy/*cut*
+  (when (and privacy/*cut* (not (:per-account privacy/*cut*)))
     (let [db (deref (d/sync conn) 1000 nil)]
       (when db (not= (:seq privacy/*cut*) (value db (scope/entity db) :triplex.scope/erasure-seq))))))
 (defn- removal-race-declined?
@@ -563,7 +565,10 @@
   ErasureReplayDeclined, never a replayable conflict. Holds for a removal taking effect at its entry's position (today)
   and at its Datomic commit (DX-ERA2's option): both are positions the source is compared with."
   [name conn input]
-  (when privacy/*cut*
+  ;; [DX-ERA6] database-wide only, as frontier-moved?: guarded per account the database-wide sequence holds the
+  ;; sentinel, and reading the cut without the pending allowance there turned a refused save into 503 while a removal
+  ;; was pending; the merged replay rule (removal-commit/after-refusal) judges the race on those databases
+  (when (and privacy/*cut* (not (:per-account privacy/*cut*)))
     (when-let [db (deref (d/sync conn) 1000 nil)]
       (when (not= (:seq privacy/*cut*) (value db (scope/entity db) :triplex.scope/erasure-seq))
         (when-let [state (privacy/cut name db)]
