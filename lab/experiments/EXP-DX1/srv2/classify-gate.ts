@@ -17,7 +17,7 @@ import { ids, SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { command } from "../w1/group/workload.ts";
 import { sha } from "../w1/field/schedule.ts";
 import { scaleAccount, scaleOwner } from "../prep1/ceiling-seed.ts";
-import { classifyReads, traceExchanges } from "../v01/card-reader.ts";
+import { classifyReads, traceExchanges, traceMark, traceOffset } from "../v01/card-reader.ts";
 import { exchangeTags, profiledExchange } from "../v01/pinned-fields.ts";
 import { pinnedWindow } from "../rd1/pinned-ladder.ts";
 
@@ -101,11 +101,11 @@ const before = { head: await headOf(), history: await historyDigest() };
 const seed: any = { scope: { db, cut: seedCut }, image: { people } };
 const windows = [];
 for (const label of ["first", "repeat"]) {
-  const offset = existsSync(trace) ? readFileSync(trace).length : 0, sampledReads: [string, number][] = [];
+  const mark = traceMark(trace), sampledReads: [string, number][] = [];
   const step = await pinnedWindow(url!, seed, "random-seed-cut", { start: Date.now() + 200, seconds: 8, startHead: seedCut, candidates: [] },
     { seats: 4, batch: 8, profileEvery: 1, sampledReads });
   await flushed();
-  const { found } = traceExchanges(trace, offset, new Set(sampledReads.map(([id]) => id)));
+  const { found } = traceExchanges(trace, traceOffset(trace, mark), new Set(sampledReads.map(([id]) => id)));
   const c = classifyReads(sampledReads, found, step.read.count, 1);
   const missing = sampledReads.filter(([id]) => !found.has(id)).map(([id]) => id);
   windows.push({ label, missing: [...new Set(missing)], reads: step.read.count, wrong: step.wrong, errors: step.errors, exchanges: step.exchanges, sampled: c.sampledReads,

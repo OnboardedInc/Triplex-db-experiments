@@ -391,7 +391,7 @@ b7)  # the index question bench
         --questions q1,q2,q3,q4,q5 --accounts 3,4 --pins head,epoch --valid now,minus30d --cold-and-warm --quiet-account 7 --out $OUT_ROOT/b7/bench"; fi;;
 a5)  # Publish at 100,000 subjects on the aged database: ACT3's twelve windows, the probe reading at least each receipt
   if ((dry)); then run_step -- bash -c "set -e; mkdir -p '$EVID/phases'
-      printf 'DX_HELD_PROFILE=server-32\nDX_ACT3_SETTLE=0\nDX_ACT3_AT_LEAST=1\n' > '$EVID/phases/a5.env'
+      printf 'DX_ACT3_SETTLE=0\nDX_ACT3_AT_LEAST=1\n' > '$EVID/phases/a5.env'
       cd '$repo'; node lab/bin/heavy.mjs --label DX-SRV2-dry-a5 -- bash lab/experiments/EXP-DX1/actv-lazy/act7/miniature.sh '$EVID/miniature' a5"
   else server_env; run_step -- bash -c "set -e; $(declare -f act7_prepare act7_discard held)
       TEMPLATE=$AGED_PGDATA_SOURCE; act7_prepare \$TEMPLATE; export TEMPLATE DX_LAZY_OUT=$OUT_ROOT/a5/publish-1b

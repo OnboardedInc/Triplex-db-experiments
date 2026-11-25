@@ -25,7 +25,7 @@ import { collectCell, type physicalTelemetry } from "./cell-telemetry.ts";
 import { migratedReadRate, recentlyOffered, sampleMigratedReads } from "../w1/migrated-reads.ts";
 import { cardTapeReport, fullCellTape, isMix, isProduction, mixPredecessors, parseCardTape, productionCellMetrics, productionNeighbours, productionPredecessors,
   productionReadback, sortTape, tapeEdge, tapeMix, tapeShape, type AgedCut, type MixWrite, type ProductionWrite } from "./production-card.ts";
-import { classifyReads, gatewayTimes, randomLine, randomLineLoads, traceExchanges, type P1Reader, type ReaderRecords } from "./card-reader.ts";
+import { classifyReads, gatewayTimes, randomLine, randomLineLoads, traceExchanges, traceMark, traceOffset, type P1Reader, type ReaderRecords } from "./card-reader.ts";
 
 export type Residency = Record<string, { rssBytes: number; threads: number }>;
 export type Peer = { write: string; read: string; slot: string; attempt: string; gatewaySource: string; java: unknown;
@@ -228,7 +228,7 @@ async function readWindows(client: DatomicClient, seed: AdoptedSeed, start: numb
   const requested = { recordedPosition: seed.realistic?.proof.cut ?? seed.scope.cut, validAt: SEED_VALID_FROM };
   // [DX-SRV2] Per-read classification: the sampled reads of each step (exchange profile id, latency from the client).
   const classify = p1?.classify && !seed.realistic ? p1.classify : undefined;
-  const traceOffset = classify?.trace && fs.existsSync(classify.trace) ? fs.statSync(classify.trace).size : 0;
+  const mark = traceMark(classify?.trace);
   const sampledByStep: [string, number][][] = [];
   for (const [i, seats] of intervals.entries()) {
     await sleep(Math.max(0, start + i * duration * 1000 - now()));
@@ -304,7 +304,7 @@ async function readWindows(client: DatomicClient, seed: AdoptedSeed, start: numb
     let exchanges: ReturnType<typeof traceExchanges>["found"] | undefined, error: string | undefined;
     if (classify.trace && fs.existsSync(classify.trace)) {
       await sleep(3000);
-      try { exchanges = traceExchanges(classify.trace, traceOffset, new Set(sampledByStep.flat().map(([id]) => id))).found; }
+      try { exchanges = traceExchanges(classify.trace, traceOffset(classify.trace, mark), new Set(sampledByStep.flat().map(([id]) => id))).found; }
       catch (e) { error = String(e); }
     } else error = "no reader trace";
     for (const [i, phase] of phases.entries())
@@ -320,7 +320,7 @@ export type RandomLine = Awaited<ReturnType<typeof randomSubjects>>;
 async function randomSubjects(read: string, seed: AdoptedSeed, start: number, seconds: number, p1: P1Reader) {
   assert(p1.random && !seed.realistic, "The random-subject line reads the SCALE1 deep population");
   const { pinnedWindow, readerRecords } = await import("../rd1/pinned-ladder.ts");
-  const trace = p1.random.trace, offset = trace && fs.existsSync(trace) ? fs.statSync(trace).size : 0;
+  const trace = p1.random.trace, offset = trace && fs.existsSync(trace) ? fs.statSync(trace).size : 0, mark = traceMark(trace);
   const sampledReads: [string, number][] = [];
   const step = await pinnedWindow(read, seed, randomLine.pin, { start, seconds, startHead: seed.scope.cut, candidates: [] },
     { seats: p1.random.seats, batch: p1.batch, profileEvery: p1.random.profileEvery, ...(p1.classify ? { sampledReads } : {}) });
@@ -337,7 +337,7 @@ async function randomSubjects(read: string, seed: AdoptedSeed, start: number, se
   if (p1.classify) {
     if (trace && fs.existsSync(trace)) {
       try {
-        const { found, minutes } = traceExchanges(trace, offset, new Set(sampledReads.map(([id]) => id)), { start, end: start + seconds * 1000 });
+        const { found, minutes } = traceExchanges(trace, traceOffset(trace, mark), new Set(sampledReads.map(([id]) => id)), { start, end: start + seconds * 1000 });
         const c = classifyReads(sampledReads, found, step.read.count, p1.classify.every);
         const gets = minutes.every((m) => m.storageGets !== null) && minutes.length
           ? minutes.reduce((t, m) => t + m.storageGets! * Math.min(1, m.overlapSeconds / 60), 0) : null;

@@ -82,7 +82,43 @@ every value against the seed).**
 | `srv2/read-cost.sh` runs 1 and 2 (5 pins × 500 subjects, field and whole rows, each reader against off) | 1,020 + 1,020 comparisons, 0 differences; 0 wrong values in 4,800 probe reads and 0 in the 16-seat loads |
 | OTHER GATES | SEE BELOW |
 
-**Proposal (for the independent review; not applied).** PROPOSAL TEXT BELOW.
+**Proposal (for the independent review; nothing switched here).** Make both options the default on the one branch,
+as one small reviewed change after the three merges of E.1 land, on these conditions.
+
+- *What it changes.* Every pinned read (a read with a recorded position or a recorded time) on every read route of
+  every gateway: the cut lookup replaces one Datomic lookup on the past view by one AVET seek on the current database
+  plus a transaction check; the short-cut answers a subject unchanged since the pin from the current database (98% of
+  the card's old-pin reads at 1 billion on 2026-11-23). Reads at the head, history reads, interiors and scans are not
+  touched. No save, stored function or stored datom changes (both options are read-side; no stored-function identity
+  can move, since `group_cut.clj` and `pinned.clj` are already loaded with the options off).
+- *Why now.* With the options off a default reader repeats the flat 18 reads/s at any old pin (the plan's A.1); the
+  card's tuned reader and the console already run both on, so the default today is the configuration nobody measures.
+- *What could go wrong, in order of weight.*
+  1. **The short-cut's rule sees assertions only.** `unchanged-since?` accepts a subject whose revision is at or below
+     the pin and whose *current* datoms were all asserted at or before the pin. A writer that retracts a subject's datom
+     after the pin without asserting anything on that subject in the same transaction (no revision bump) leaves the
+     subject "unchanged" by this rule, and the short-cut would answer the pin without the retracted value. The shortcut
+     gate's ten writer phases give 0 differences, but the rule depends on an invariant of the writers, not on the data,
+     and this builder did not audit every retracting path. (Removal on request does not exercise it: `erase.clj` writes
+     a privacy journal entry and retracts none of the subject's datoms; the value is masked at read time on both paths.) **Condition:** the
+     review confirms it for every path that retracts on the final head (removal on request, retirement, settlement
+     frames, the key-pool and ID-allocator fixes, the Publish line), and for the removal-per-account line before it
+     merges. A cheap hardening, not built: also refuse the short-cut when the history index holds any datom of the
+     subject with a transaction after the pin (one history seek per pinned read; to be measured first).
+  2. **The cut lookup assumes grouped-save positions are unique and only ever asserted.** A writer that retracted or
+     reused a grouped position would make the current-database lookup disagree with the past view. No writer does today
+     (grouped saves only assert them); the shortcut gate's grouped phase and the cost toy's 42,900 grouped saves give 0
+     differences.
+  3. **Cost on changed subjects.** A subject changed after the pin pays the short-cut's check (its current datoms) and
+     then the past view. The toy shows changed subjects no slower with both on (2.40 ms against 5.79 off at the old
+     pin); at 1 billion 2% of old-pin reads took that path.
+- *Gates that cover it, to rerun on the final head's own image with the default flipped:* `rd1/shortcut-gate` (every
+  writer, every pinned route, every position, both time axes, owner head on and off), `srv2/read-cost.sh`, `rd5/gate.sh`
+  (its off/on reader comparison), `api1/gate.sh`, the card's toy (`v01/mac.ts --fixture`, default reader: it would then
+  run both on), the console proof (`demo/toy/gates.sh`), and on the server A1 (old pin, default reader) and A4.
+- *Recommendation:* **on by default for both**, conditional on point 1's confirmation; if the review cannot confirm the
+  retraction invariant, ship the cut lookup alone first (point 2's invariant is narrower: only the grouped writer
+  writes those positions) and keep the short-cut on the tuned reader only.
 
 ## 3. Run scripts with dry runs
 

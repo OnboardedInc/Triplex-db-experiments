@@ -166,3 +166,18 @@ test("per-read classification: option, trace exchanges, rule, rows", async () =>
   assert.match(splitReadRows(false, [step(clean)], line(clean))!.table.join("\n"), /\| L256 \| 3 \/ 3 \| 2, 1 \/ 2 \| 1, 50 \/ 50 \| 2 \| 0 \|/);
   fs.rmSync(dir, { recursive: true });
 });
+
+test("a trace mark survives the reader's restart (a new file is read from its start)", async () => {
+  const { traceMark, traceOffset } = await import("./card-reader.ts");
+  const fs = await import("node:fs"), os = await import("node:os"), path = await import("node:path");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "srv2-")), file = path.join(dir, "gw-r.jsonl");
+  assert.equal(traceMark(file), undefined);
+  fs.writeFileSync(file, "old process\n");
+  const mark = traceMark(file);
+  fs.appendFileSync(file, "more\n");
+  assert.equal(traceOffset(file, mark), 12);
+  fs.renameSync(file, path.join(dir, "gw-r.start-1-0.jsonl")); fs.writeFileSync(file, "new process\n");
+  assert.equal(traceOffset(file, mark), 0);
+  assert.equal(traceOffset(file, undefined), 0);
+  fs.rmSync(dir, { recursive: true });
+});

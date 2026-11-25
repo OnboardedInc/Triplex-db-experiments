@@ -122,6 +122,18 @@ export function exchangeOf(row: any): Exchange {
     waitMs: span("gateway.admission-wait"), workMs: span("gateway.admitted-work"),
     cpuMs: typeof row.attributes?.handlerCpuNs === "number" ? row.attributes.handlerCpuNs / 1e6 : null };
 }
+// [DX-SRV2] Where a step's records start in the reader's trace. A gateway that restarts sets its predecessor's file
+// aside and starts a new one at its first record (trace.clj `writer`), so a size taken from the old file would skip the
+// new file's first records (the toy gate lost a cold window's first exchanges this way). The mark keeps the file's
+// identity; a different file is read from its start.
+export type TraceMark = { ino: number; size: number } | undefined;
+export const traceMark = (file: string | undefined): TraceMark => {
+  if (!file || !fs.existsSync(file)) return undefined;
+  const st = fs.statSync(file);
+  return { ino: st.ino, size: st.size };
+};
+export const traceOffset = (file: string, mark: TraceMark) => mark && fs.statSync(file).ino === mark.ino ? mark.size : 0;
+
 /** The sampled exchanges named by `ids`, read from the reader's trace after `offset` line by line (a 256-seat card's
  * trace with every exchange sampled is hundreds of MB, over one string's limit), plus the reader's metrics minutes. */
 export function traceExchanges(file: string, offset: number, ids: ReadonlySet<string>, window?: { start: number; end: number }) {
