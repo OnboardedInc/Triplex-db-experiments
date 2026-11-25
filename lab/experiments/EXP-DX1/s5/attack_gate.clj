@@ -79,6 +79,49 @@
         (is (= "absent" (:operation general)) [kind "refused whole on the general writer"])
         (is (= (:outcome general) (:outcome fast)) [kind "the same refusal on both writers"])))))
 
+;; ---------------------------------------------------------------- 1c. the transactor becomes unavailable after it applied a save
+
+(defn- unavailable-after-apply
+  "The first transact-async of f: submit, wait until the transactor applied it, then fail as the peer does when the
+  transactor goes away before the acknowledgement arrives (seen on the PostgreSQL stack, s5/stack-run.sh)."
+  [f]
+  (let [orig d/transact-async fired (atom false)
+        e (ex-info "Transactor not available" {:cognitect.anomalies/category :cognitect.anomalies/unavailable
+                                               :cognitect.anomalies/message "Transactor not available"})]
+    (with-redefs [d/transact-async (fn [conn tx & opts]
+                                     (let [fut (apply orig conn tx opts)]
+                                       (if (compare-and-set! fired false true)
+                                         (do (try (deref fut 10000 nil) (catch Throwable _ nil))
+                                             (reify clojure.lang.IDeref (deref [_] (throw e))
+                                                    clojure.lang.IBlockingDeref (deref [_ _ _] (throw e))
+                                                    clojure.lang.IPending (isRealized [_] true)))
+                                         fut)))]
+      (f))))
+
+(deftest transactor-unavailable-after-apply
+  (let [S "acct/u1/subject/s"
+        run (fn [label fast? facts-fn]
+              (reference/in-scope
+                (fn [name conn]
+                  (is (= [200 nil] (reference/outcome (reference/send name (save conn {:command "seed" :facts (facts S "s" 3)})))))
+                  (let [m (fz/read-owner name S {"validAt" 5.0})
+                        input (save conn {:command (str "save-" label) :facts (facts-fn m)})
+                        reply ((if fast? (fn [f] (f)) fz/general) #(unavailable-after-apply (fn [] (reference/send name input))))
+                        op (reference/operation name (get input "operationId"))
+                        again (reference/send name input)]
+                    {:writer (fz/writer-kind conn (get input "operationId") reply) :answer (reference/outcome reply)
+                     :message (get-in reply [:body "message"]) :operation (get op "status")
+                     :resendSameOperation (reference/outcome again)}))))
+        cases [["one owner, per-subject writer" true (fn [m] [{:owner S :field ":a/f0" :type :string :value "x" :pred (get m ":a/f0")}])]
+               ["creation, creation writer" true (fn [_] [{:owner "acct/u1/enrolment/e" :field ":e/subject" :type :ref :value S :pred nil}])]
+               ["one owner, general writer" false (fn [m] [{:owner S :field ":a/f0" :type :string :value "x" :pred (get m ":a/f0")}])]]]
+    (doseq [[label fast? f] cases]
+      (let [r (run label fast? f)]
+        (attack (assoc r :case "the transactor becomes unavailable after applying the save" :kind label))
+        (is (= "committed" (:operation r)) label)
+        ;; The contract: a save whose outcome the gateway does not know is answered OutcomeUnknown (503), never a refusal.
+        (is (= [503 "OutcomeUnknown"] (:answer r)) [label "a committed save must not be answered with a refusal"])))))
+
 ;; ---------------------------------------------------------------- 2. a removal that named an entity before it existed
 
 (deftest removed-family-after-removal

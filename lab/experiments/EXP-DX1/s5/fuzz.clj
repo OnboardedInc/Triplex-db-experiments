@@ -641,6 +641,7 @@
                                  (let [reply (reference/send candidate input)]
                                    (log {"kind" "reply" "label" label "operation" op "status" (:status reply)
                                          "code" (get-in reply [:body "code"]) "position" (position-of reply)
+                                         "message" (when (not= 200 (:status reply)) (some-> (get-in reply [:body "message"]) str (subs 0 (min 300 (count (str (get-in reply [:body "message"])))))))
                                          "recordedAt" (get-in reply [:body "recordedAt"]) "datoms" (get-in reply [:body "datoms"])
                                          "writer" (name (writer-kind conn op reply))})))
                                (catch Throwable e (log {"kind" "error" "label" label "error" (str e)}))))))))
