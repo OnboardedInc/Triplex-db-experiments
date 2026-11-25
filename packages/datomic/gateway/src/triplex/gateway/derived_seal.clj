@@ -7,7 +7,7 @@
   (:require [clojure.data.json :as json] [clojure.string :as str] [datomic.api :as d]
             [triplex.gateway.authority-sql :as sql] [triplex.gateway.envelope :as envelope]
             [triplex.gateway.privacy :as privacy] [triplex.gateway.removal-scope :as removal-scope]
-            [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage])
+            [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.lean :as lean])
   (:import [java.nio ByteBuffer]
            [java.nio.charset StandardCharsets]
            [java.security SecureRandom]
@@ -214,27 +214,82 @@
       (if (>= j 0) (let [s (subs place (inc j))] (if (seq s) s nil)) nil))
     nil))
 
+(defn place-root
+  "[DX-ERA4, after the second review's N3, the deep layout] The subject's root entity a place carries:
+  `<scope>|<account>|@<root>|<subject>`, the segment before the subject when it starts with @; nil otherwise."
+  [^String place]
+  (if (string? place)
+    (let [parts (str/split place #"\|" -1) n (count parts)]
+      (if (>= n 3)
+        (let [r (nth parts (- n 2))] (if (str/starts-with? r "@") (let [x (subs r 1)] (if (seq x) x nil)) nil))
+        nil))
+    nil))
+(defn- place-account [^String place]
+  (let [parts (str/split place #"\|" -1) n (count parts)]
+    (if (place-root place) (if (>= n 4) (nth parts (- n 3)) "") (if (>= n 2) (nth parts (- n 2)) ""))))
+
+;; [DX-ERA4, after the second review's N3, the deep layout] A held account in the deep format (decision.ts act2-deep,
+;; bench/lib/world.ts) keeps a subject's facts on sibling entities `acct/<account>/pl:N`, `wk:N`, `i9:N`, `sec:N:s`,
+;; `ev:N:s:e`, `doc:N:s:e`, linked from the placement by references, while its derived records name the subject
+;; `pl:sN`. The place then carries the subject's root (`@acct/<account>/pl:N`); the gateway checks the root against
+;; its stored rows (`:subject/member` is the subject's number, `:subject/account` the place's account) and takes every
+;; protected value on every entity reached from the root through reference rows, as the writers' worlds and the sweep
+;; reader reach them. No new state: the references are the account's own rows.
+(def ^:private max-world 65536)
+(defn- live-rows [db ^String entity]
+  (if-let [eid (d/entid db [:triplex.entity/id entity])]
+    (map #(lean/decode (:v %)) (lean/live-texts db eid))
+    []))
+(defn- root! [db ^String root ^String subject ^String account]
+  (when-not (lean/enabled? db) (invalid! "A place with a subject root needs the lean layout"))
+  (let [rows (live-rows db root)
+        one (fn [a] (vec (distinct (keep #(when (= a (:attribute %)) (:value_string %)) rows))))
+        m (re-matches #"pl:s([0-9]{8})" (str subject))]
+    (when-not (and m (seq account)
+                   (= [(str (Long/parseLong (second m)))] (one ":subject/member"))
+                   (= [account] (one ":subject/account")))
+      (invalid! "The place's subject root is not that subject's (its :subject/member and :subject/account rows)"))))
+(defn- world-of [db ^String root]
+  (loop [order [root] seen #{root} i 0]
+    (if (< i (count order))
+      (let [targets (distinct (for [r (live-rows db (nth order i))
+                                    :when (= "ref" (:value_type r))
+                                    :let [t (:value_string r)]
+                                    :when (string? t)
+                                    :when (not (contains? seen t))]
+                                t))]
+        (when (> (+ (count seen) (count targets)) max-world)
+          (invalid! "A subject's world reaches more than 65,536 entities"))
+        (recur (into order targets) (into seen targets) (inc i)))
+      order)))
+
 ;; [DX-ERA4, second review N3] The gateway chooses the keys: every protected assertion of the subject the record's
-;; place names (its entity and the entities under `<subject>/`), current or superseded, that is not removed; plus
-;; whatever else the writer names. A writer that names too few rows of its own subject can no longer get a record
-;; sealed under the key of no assertion while that subject holds a protected value. One index scan per subject per call.
+;; place names (its entity and the entities under `<subject>/`; with a subject root, every entity of its world),
+;; current or superseded, that is not removed; plus whatever else the writer names. A writer that names too few rows
+;; of its own subject can no longer get a record sealed under too few keys while that subject holds a protected value.
+;; One index scan per entity per call.
 (def ^:dynamic ^:private *subjects* nil)
-(defn- subject-protected [db cut subject]
+(defn- subject-protected
+  ([db cut subject] (subject-protected db cut subject nil nil))
+  ([db cut subject root account]
   (if (nil? subject)
     []
     (let [look (fn []
                  (let [native (native-erased db cut)
-                       lo (str subject "/") hi (str subject "/￿")]
+                       lo (str subject "/") hi (str subject "/￿")
+                       world (if root (do (root! db root subject account) (world-of db root)) [])]
                    (vec (sort (distinct
                                 (for [x (concat (d/datoms db :avet :triplex.private/entity subject)
-                                                (d/index-range db :triplex.private/entity lo hi))
+                                                (d/index-range db :triplex.private/entity lo hi)
+                                                (mapcat #(d/datoms db :avet :triplex.private/entity %) world))
                                       :let [id (scope/value db (:e x) :triplex.private/id)]
                                       :when (string? id)
                                       :when (not (contains? (:erased cut) id))
                                       :when (not (contains? native id))]
                                   id))))))
+          k [subject root account]
           c *subjects*]
-      (if c (or (get @c subject) (let [r (look)] (swap! c assoc subject r) r)) (look)))))
+      (if c (or (get @c k) (let [r (look)] (swap! c assoc k r) r)) (look))))))
 
 (defn- plan-seal
   "Checks one seal item and computes the assertions it is sealed under. An item is {value | bytes, place?, ids?}:
@@ -259,7 +314,7 @@
           (privacy/failure! 400 "UnknownDerivedInput"
                             (str (count unknown) " of the names are not rows of this database; a derived record names the rows it read"))))
       {:protected (vec (sort (distinct (concat (filter #(first (name-of db %)) all)
-                                               (if place (subject-protected db cut (place-subject place)) [])))))
+                                               (if place (subject-protected db cut (place-subject place) (place-root place) (place-account place)) [])))))
        :place place
        :clear (if (some? bytes)
                 (try (.decode (Base64/getDecoder) ^String bytes) (catch Exception _ (invalid! "bytes is not base64")))

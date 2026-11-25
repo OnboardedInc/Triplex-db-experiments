@@ -256,6 +256,93 @@
                                                                              :removal-of-a1-p :old-record-after :new-record-after])))
         (x/oracle! lbl (not= [200 nil] rebuilt) "a rebuild cannot drop a protected attribute from the policy" row)))))
 
+;; ---- n3deep: [DX-ERA4, after the second review's N3] the deep layout ------------------------------------------------
+;; A held account in the deep format (decision.ts act2-deep, bench/lib/world.ts) keeps a subject's facts on sibling
+;; entities linked from its placement by references, while its derived records name the subject `pl:sN`. Here: per
+;; subject, the placement `acct/a/pl:N` (rows :subject/account, :subject/member, an unprotected :plain row, references
+;; to `wk:N` and `i9:N`), `i9:N` -> `sec:N:0` -> `ev:N:0:0` -> `doc:N:0:0`, with protected values on `wk:N` and
+;; `doc:N:0:0`. Records whose writer names only the :plain row ("mislabelled"), from one of those values, are sealed at
+;; the place the writers used before this pass (`deep|a|pl:sN`) and at the place they use now (`deep|a|@acct/a/pl:N|pl:sN`);
+;; then one value of each subject is removed. How many records from a removed value still open?
+(defn- ref-frame [command owner attr target]
+  (let [row* #'g/row* tx (str "_tx/" command)
+        fact (assoc (row* command owner attr target tx) :value_type "ref")
+        j (fn [suffix a] (row* (str command "/" suffix) tx a nil tx "_Transaction"))
+        change (json/write-str {"op" "assert" "tripleId" command "entityId" owner "attribute" attr
+                                "value" {"type" "ref" "value" target} "validFrom" 0.0 "recordedAt" 1000.0
+                                "assertionTxId" tx})
+        journal [(assoc (j "p" ":_tx/position") :value_type "number" :value_number 1.0)
+                 (assoc (j "t" ":_tx/instant") :value_type "datetime" :value_datetime 1000.0)
+                 (assoc (j "owner" ":_tx/changed-entity") :value_string owner)
+                 (assoc (j "cmd" ":_tx/command-id") :value_string command)
+                 (assoc (j "assert" ":_tx/change") :value_type "json" :value_json change)]
+        fresh (conj journal fact)]
+    (selftest/row-input {"span" 1 "position" 1 "scopeWide" false "entities" [owner] "operationId" command
+                         "rows" (mapv storage/wire-row fresh) "newIds" (mapv :id fresh) "live" []
+                         "claims" [{"commandId" command "txId" tx "timestamp" 1000.0}]})))
+(defn n3deep []
+  (g/fresh-scope true
+    (fn [src conn]
+      (let [lbl "n3deep"
+            k 24
+            ok! (fn [what rep] (x/oracle! lbl (= 200 (:status rep)) (str "setup: " what) (offers/outcome rep)))
+            subjects
+            (vec (for [i (range k)]
+                   (let [m (+ 500 i) n (format "%08d" m)
+                         root (str "acct/a/pl:" n) wk (str "acct/a/wk:" n) i9 (str "acct/a/i9:" n)
+                         sec (str "acct/a/sec:" n ":0") ev (str "acct/a/ev:" n ":0:0") doc (str "acct/a/doc:" n ":0:0")
+                         [vw iw] (a5/seed! src (str "n3d-w-" n) wk "wk")
+                         [vd id] (a5/seed! src (str "n3d-d-" n) doc "doc")
+                         _ (ok! "account" (offers/send src (g/save-frame (str "n3d-acc-" n) root ":subject/account" "a" nil nil)))
+                         _ (ok! "member" (offers/send src (g/save-frame (str "n3d-mem-" n) root ":subject/member" (str m) nil nil)))
+                         plain (a5/plain-row! src (str "n3d-p-" n) root)]
+                     (doseq [[c o a t] [["wkr" root ":placement/worker" wk] ["i9r" root ":placement/i9" i9]
+                                        ["secr" i9 ":i9/section" sec] ["evr" sec ":section/evidence" ev]
+                                        ["docr" ev ":evidence/document" doc]]]
+                       (ok! c (offers/send src (ref-frame (str "n3d-" c "-" n) o a t))))
+                     {:m m :subject (str "pl:s" n) :root root :plain plain
+                      :values {:wk [vw iw] :doc [vd id]}})))
+            req (offers/outcome (require! src))
+            old-place (fn [sj] (str "deep|a|" (:subject sj)))
+            new-place (fn [sj] (str "deep|a|@" (:root sj) "|" (:subject sj)))
+            records (vec (for [sj subjects [src-kind [v _]] (:values sj)]
+                           (let [content (str "derived-" (:subject sj) "-" (name src-kind) ":" v)
+                                 o (a5/seal-placed src [(:plain sj)] content (old-place sj))
+                                 n (a5/seal-placed src [(:plain sj)] content (new-place sj))]
+                             {:sj sj :kind src-kind :content content :old (get o "sealed") :new (get n "sealed")})))
+            names-new (frequencies (map #(count (:k (a5/wire-parts (:new %)))) records))
+            names-old (frequencies (map #(count (:k (a5/wire-parts (:old %)))) records))
+            ;; the root checked against the stored rows: another subject's root, and the wrong account, are refused
+            wrong-root (:status (a5/seal-many src [{"ids" [(:plain (first subjects))] "value" "x"
+                                                    "place" (str "deep|a|@" (:root (second subjects)) "|" (:subject (first subjects)))}]))
+            wrong-account (:status (a5/seal-many src [{"ids" [(:plain (first subjects))] "value" "x"
+                                                       "place" (str "deep|b|@" (:root (first subjects)) "|" (:subject (first subjects)))}]))
+            ;; the new place's record as a settled page of its subject, under the setting
+            stored (doc! src "n3d-page" "answer:1:f1" (page [["" (:new (first records))]] {"subject" (:subject (:sj (first records)))}))
+            ;; one value of each subject removed: the worker's for even subjects, the document's for odd ones
+            removed (set (for [[i sj] (map-indexed vector subjects)] [(:subject sj) (if (even? i) :wk :doc)]))
+            rm (a5/erase-until-done! src "n3d-rm" (vec (for [[i sj] (map-indexed vector subjects)]
+                                                          (second ((:values sj) (if (even? i) :wk :doc))))) nil nil)
+            outcome (fn [wire place rec] (let [o (a5/open-placed src wire place)]
+                                           (cond (a5/removed? o) :removed (= (:content rec) (a5/opened o)) :value :else (a5/shape o))))
+            rows (for [rec records :let [sj (:sj rec) from-removed (contains? removed [(:subject sj) (:kind rec)])]]
+                   {:from-removed from-removed :old (outcome (:old rec) (old-place sj) rec) :new (outcome (:new rec) (new-place sj) rec)})
+            tally (frequencies (map (juxt :from-removed :old :new) rows))
+            row {:subjects k :records (count records) :setting req :removal (:status (:final rm))
+                 :header-names-old-place names-old :header-names-new-place names-new
+                 :wrong-root wrong-root :wrong-account wrong-account :page-with-the-new-place stored
+                 :from-removed-still-open-old-place (count (filter #(and (:from-removed %) (= :value (:old %))) rows))
+                 :from-removed-still-open-new-place (count (filter #(and (:from-removed %) (= :value (:new %))) rows))
+                 :from-removed (count (filter :from-removed rows))
+                 :tally (into (sorted-map) (map (fn [[kk v]] [(pr-str kk) v])) tally)}]
+        (report :n3deep row)
+        (x/oracle! lbl (= 200 (:status (:final rm))) "the removal completes" row)
+        (x/oracle! lbl (= {2 (count records)} names-new) "at the new place every record is sealed under its subject's two values" row)
+        (x/oracle! lbl (= 400 wrong-root) "a place whose root is another subject's is refused" row)
+        (x/oracle! lbl (= 400 wrong-account) "a place whose account is not the root's is refused" row)
+        (x/oracle! lbl (= [200 nil] stored) "the setting accepts the new place's record in its subject's page" row)
+        (x/oracle! lbl (zero? (:from-removed-still-open-new-place row)) "N3, deep layout: no record from a removed value opens" row)))))
+
 ;; ---- m2: the key re-sweep's cost and its failures ------------------------------------------------------------------
 (defn- failures-total [] (reduce + 0 (vals (get @stats/counts :removalFailures {}))))
 (defn m2 []
@@ -555,7 +642,9 @@
   (envelope/start!)
   (println "ERA6_BOUNDARY" (pr-str {:commit-boundary-allowed rc/may-turn-on}))
   (case (System/getenv "ERA5_PHASE")
-    "cases6" (do (guarded "e1" e1) (guarded "e2" e2) (guarded "e3" e3) (guarded "z2" z2) (guarded "z4" z4) (guarded "m2" m2))
+    "cases6" (do (guarded "e1" e1) (guarded "e2" e2) (guarded "e3" e3) (guarded "z2" z2) (guarded "z4" z4) (guarded "m2" m2)
+                 (guarded "n3deep" n3deep))
+    "n3deep" (guarded "n3deep" n3deep)
     "z4" (do (guarded "z4" z4) (guarded "m3" m3))
     "fuzz6" (fuzz6 (or (System/getenv "ERA5_RUN") "g0") (Long/parseLong (or (System/getenv "ERA5_N") "200"))
                    (Long/parseLong (or (System/getenv "ERA5_BLOCK") "100")) (Long/parseLong (or (System/getenv "ERA5_SEED") "1"))))

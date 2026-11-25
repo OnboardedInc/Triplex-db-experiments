@@ -10,7 +10,7 @@
 set -uo pipefail
 out=${1:?absolute new output directory}; phase=${2:?cases, pending or fuzz}
 [[ $out == /* && ! -e $out ]] || { echo "inproc.sh: give a new absolute output directory" >&2; exit 2; }
-[[ $phase == cases || $phase == pending || $phase == fuzz || $phase == cases6 || $phase == fuzz6 || $phase == z4 ]] || exit 2
+[[ $phase == cases || $phase == pending || $phase == fuzz || $phase == cases6 || $phase == fuzz6 || $phase == z4 || $phase == n3deep ]] || exit 2
 : "${DOCKER_HOST:?set DOCKER_HOST to the lab VM docker socket}"
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 x=$repo/lab/experiments/EXP-DX1
@@ -34,7 +34,7 @@ env=(-e TX2_SUBJECT_SAVE=1 -e TX2_SUBJECT_NUMERIC_OWNER=1 -e TX2_SUBJECT_ORDERED
      -e "ERA5_RUN=${ERA5_RUN:-f0}")
 for kv in ${ERA5_EXTRA_ENV:-}; do env+=(-e "$kv"); done
 main=era5-attack/main; extra=""
-[[ $phase == *6 || $phase == z4 ]] && { main=era5-attack6/main; extra='(load-file "/lab/attack6.clj")'; }
+[[ $phase == *6 || $phase == z4 || $phase == n3deep ]] && { main=era5-attack6/main; extra='(load-file "/lab/attack6.clj")'; }
 printf '%s\n' "(load-file \"/lab/regression.clj\") (load-file \"/lab/gate.clj\") (load-file \"/lab/attack.clj\") (load-file \"/lab/tickets.clj\") (load-file \"/lab/races.clj\") (load-file \"/lab/attack5.clj\") $extra ($main)" > "$out/run.clj"
 name="tx2-dxera5-inproc-$$-$phase"
 started=$(date +%s)

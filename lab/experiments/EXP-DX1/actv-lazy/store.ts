@@ -8,6 +8,7 @@ import {
 } from "../../../../packages/datomic/dist/index.js";
 import { Effect, openTriples, runtimeApi } from "../../../bench/lib/triplex.ts";
 import { openComposition } from "../../../bench/lib/composition.ts";
+import { ids } from "../../../bench/lib/world.ts";
 import { canonical, sha256, W0, type WorldRow } from "../../../bench/lib/w0-world.ts";
 
 export const RELEASE = "lazy/account/releases",
@@ -136,6 +137,16 @@ export async function openStore(
   const h = access === "write" ? await openTriples("datomic", scope) : undefined,
     comp = await openComposition("reach", "datomic", scope,
       options.readAtLeast === undefined ? undefined : { readAtLeast: options.readAtLeast });
+  // [DX-ERA4, after the second review's N3] A held account in the deep format keeps a subject's facts on sibling
+  // entities linked from its placement (`<prefix>pl:N`, bench/lib/world.ts): a derived record's place names that root,
+  // so the gateway seals it under every protected value of the subject's world (derived-seal.ts placeOf).
+  if (held && profile === "act2-deep")
+    Object.defineProperty(comp, "subjectRoot", {
+      value: {
+        account: held.account,
+        root: (subject: string) => (/^pl:s[0-9]{8}$/.test(subject) ? held.prefix + ids.placement(Number(subject.slice(4))) : undefined),
+      },
+    });
   const counters = {
     writes: 0,
     accountReads: 0,
