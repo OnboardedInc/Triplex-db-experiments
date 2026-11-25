@@ -1,6 +1,6 @@
 # Second review of `TX2_DERIVED_SEAL`: the builder's answer at `73e0d6849`
 
-Reviewer DX-ERA5, 2026-11-25 (started 05:04 EST; this page written from 06:31 EST). Branch
+Reviewer DX-ERA5, 2026-11-25 (started 05:04 EST; this page written from 06:31 EST, completed 07:16 EST). Branch
 `exp/DX-ERA5-derived-copies-review`, fast-forwarded to `origin/exp/DX-ERA4-derived-copies` at `73e0d6849` (last code
 commit `802b7fd73`; the removal builder's heads `bd4ec0d1a` and `3b3471592` merged into it). Tests only: no line of the
 code under review was changed. Mac, toy sizes; every time on this page is diagnostic.
@@ -21,7 +21,7 @@ database setting that the B1 fix depends on, a subject owing more than 30 forms 
 good.** v0.1 cannot have both that setting and the 200 forms the owner requires (decisions 2026-11-24).
 
 **How sure.** Certain of each measured fact below: each reproduces on every run and has a control beside it. Confident,
-not certain, that there is no removal break: that rests on the counts in section 12 (the fuzzer: 10,000 schedules on the log boundary, 256,077 oracles, 0 violations; the commit boundary's 10,000 are in section 8), on toy sizes,
+not certain, that there is no removal break: that rests on the counts in section 12 (the fuzzer: 20,000 schedules, 10,000 on each boundary, 512,418 oracles, 0 violations), on toy sizes,
 on the Mac.
 
 **The three most serious findings.**
@@ -51,7 +51,7 @@ on the Mac.
    catch writer mistakes, is blind to the one that matters most.
    - Test: `attack6.clj` `e1` (same runs): header names `[]`, accepted under the setting, after the removal the route
      opens it to the removed value and the outside decoder decodes it with an empty key list; a control naming the
-     protected row opens as removed. The fuzzer's mislabelled mode: 5,320 of 5,320 mislabelled records from a removed value still opened to it after the removal (log runs)..
+     protected row opens as removed. The fuzzer's mislabelled mode: 10,591 of 10,591 mislabelled records from a removed value still opened to it after the removal (both boundaries)..
 
 **One recommendation.** Do not declare the setting on a v0.1 database until a subject's ledger can pass the writer's
 bound under it: cut ledger parts at item boundaries so the check can read each one (the builder's own proposal), or
@@ -309,7 +309,7 @@ ran once with the database guarded database-wide.
 | First review's finding | Test re-run | Log boundary | Commit boundary |
 | --- | --- | --- | --- |
 | B1 settlement frame kept clear after a failed seal | `attack.ts` W (injected failure) and W2 (gateway paused) | **fixed**: 17 of 17 units sealed after the failure and after the stall, 0 clear; after X's removal 0 copies of X's date served, in the archive's rows or in native data (also database-wide) | **fixed**, the same |
-| B1 a writer without the option writes clear | `e1` controls; the fuzzer's failed and refused seals | **fixed** for the shapes today's writers write: 409 (section 1 for the shapes it misses) | the same |
+| B1 a writer without the option writes clear | `e1` controls; the fuzzer's failed and refused seals | **fixed** for the shapes today's writers write: 409, 15,018 of 15,018 clear writes in the fuzzer (section 1 for the shapes it misses) | **fixed**, 15,129 of 15,129 |
 | B2 a pending removal stops every key deletion | `attack5.clj` `pending`; `stack-shred.sh` on a stack (05:34 to 05:35 EST) | **fixed**: on the stack, a1's key row is gone 25 s after its publication while c1's removal is still pending (the first review: still there at 45 s); prediction written before the run held | `pending` phase: fixed |
 | B3 the stored length names the value | `attack5.clj` c2; `attack.ts` L | **fixed** for these records: no candidate singled out (section 3) | the same |
 | B4 the notice stream stops after a document value's removal | `attack.ts` S; `b4.ts` against the oracle | **fixed**: the next release is stored and recorded after the removal; the answer agrees with the oracle (section 4) | the same |
@@ -342,19 +342,21 @@ refused clear write.
 | --- | --- | --- | --- | --- | --- |
 | `log-seed701` (ended 06:02:15 EST) | log | 5,000 | 128,077 | 0 | 519 s |
 | `log-seed702` (ended 06:12:04 EST) | log | 5,000 | 128,000 | 0 | 563 s |
-| `commit-seed703`, `commit-seed704` | commit | 10,000 | still queued for the lab's run slots when this page was first pushed (06:31 EST); see the next commit | | |
+| `commit-seed703` (ended 07:04:07 EST) | commit | 5,000 | 128,434 | 0 | 526 s |
+| `commit-seed704` (ended 07:14:57 EST) | commit | 5,000 | 127,907 | 0 | 650 s |
+| **all four** | both | **20,000** | **512,418** | **0** | |
 
-Totals over the log runs (10,000 schedules): seal calls by mode ok 32,016, failed 7,490, refused 7,528, slow 5,448,
-mislabelled 7,428; **every clear write after a failed or refused seal refused (15,018 of 15,018, 409)**; every sealed
-write accepted (32,016 ok and 7,428 mislabelled, 200); every slow seal answered sealed after the removal it overlapped
-ran (5,448), and its records from a removed value opened as removed (3,677 records); records checked after a removal:
-ok 22,508 from a removed value and 17,272 kept, slow 3,677 and 3,103; stops fired before the declaration 1,414, after
-it 1,366, before the native commit 1,454, after it 1,405, at the publication 1,373 (after the guard asked 1,349, fired
-0, as in the first review), none 4,096; kills 3,175; second removals 2,457; key restores 1,531; 100 block scans of
-every native datom and the journal: 0 copies. Counted apart, as admitted classes: 1,930 records decoded with a key
-restored after its deletion and before the next re-sweep (M2's window, under a second here), and **every mislabelled
-record from a removed value still opened to it after the removal: 5,320 of 5,320, each also decoded outside the
-gateway with no key** (N3).
+Totals over the four runs (20,000 schedules, seeds 701 to 704): seal calls by mode ok 63,720, failed 15,041,
+refused 15,106, slow 10,942, mislabelled 14,839; **every clear write after a failed or refused seal refused (30,147 of
+30,147, 409)**; every sealed write accepted (63,720 ok and 14,839 mislabelled, 200); every slow seal answered sealed
+after the removal it overlapped ran (10,942), and its records from a removed value opened as removed (7,533); records
+checked after a removal: ok 44,924 from a removed value and 34,561 kept, slow 7,533 and 6,116; stops fired before the
+declaration 2,788, after it 2,785, before the native commit 2,821, after it 2,775, at the publication 2,711 (after the
+guard asked 2,811, fired 0, as in the first review), none 8,295; kills 6,186; second removals 4,986; key restores
+3,070; 200 block scans of every native datom and the journal: 0 copies. Counted apart, as admitted classes: 3,851
+records decoded with a key restored after its deletion and before the next re-sweep (M2's window, under a second
+here), and **every mislabelled record from a removed value still opened to it after the removal: 10,591 of 10,591
+(5,320 log, 5,271 commit), each also decoded outside the gateway with no key** (N3).
 
 ## 9. Cost on the merged head, PostgreSQL key store (line of attack i)
 
@@ -425,7 +427,7 @@ of many items costs far less than many 512-byte ones), or both.
 | --- | --- | --- | --- | --- | --- |
 | N1 | High (the owner's 200 forms) | With the setting, a subject owing more than 30 forms stops its account's notices for good: sealed whole ledgers exceed the writer's bound at 31 to 32 items, ledger parts are refused | `derived_seal.clj` 416; `ledger-parts.ts` 9-33; `frames.ts` 72 | `forms.ts` P: 30 recorded, 32 to 200 stopped twice; parts with the setting stopped; parts without recorded (section 10) | yes, `73e0d6849` is the merged head |
 | N2 | High (composed; needs one operator call) | A rebuild of a missing removal log may drop a never-removed protected attribute (Z2); later values are clear, their derived records sealed under no key and accepted by the setting; their removal is refused | `removal_commit.clj` 908; `derived_seal.clj` 210 | `z2`: rebuild 200; 2 clear datoms; record `[]` accepted and decoded with no key; removal 400 (section 7) | yes, both boundaries |
-| N3 | Medium | A writer that names none of a value's protected rows gets a record sealed under the key of no assertion: public, permanent, accepted by the setting; nothing checks completeness | `derived_seal.clj` 206-218 | `e1`: header `[]`, opens to the removed value after its removal, decodes with no key; fuzzer: 5,320 of 5,320 from a removed value still opened to it (section 2) | yes, both |
+| N3 | Medium | A writer that names none of a value's protected rows gets a record sealed under the key of no assertion: public, permanent, accepted by the setting; nothing checks completeness | `derived_seal.clj` 206-218 | `e1`: header `[]`, opens to the removed value after its removal, decodes with no key; fuzzer: 10,591 of 10,591 from a removed value still opened to it (section 2) | yes, both |
 | N4 | Medium | The setting checks shapes only: 17 of 18 hand-made documents holding a protected value pass (side fields, the removed marker's extra keys, a forged record with a clear body, a kind one letter off the list, another attribute, capital hex) | `derived_seal.clj` 360-435 | `e1` table (section 1) | yes, both |
 | N5 | Medium | The key re-sweep re-reads every removal on every pass, every second, on every gateway (35 ms at 1,000 removals here, the whole second near 30,000), and its failures are silent: a refused delete leaves a restored key with nothing counted or logged | `derived_seal.clj` 303-335 | `m2`: 1, 4, 12, 35 ms; 0 failures counted in 4 of 4, key left; the shred worker counts the same fault (section 6) | yes, both |
 | N6 | Medium (cost) | Every held read fetches the whole removed set and sorts and hashes it, at least twice: 77 ms per key at 100,000 removed assertions (Mac), a 13 MB frontier | `read.ts` 119-131, 184-197 | micro-measure (section 5) | read, not run on a stack |
@@ -450,7 +452,7 @@ of many items costs far less than many 512-byte ones), or both.
 | A removed value treated as absent | `b4.ts` | 24 worlds | kernel = oracle |
 | The random nonce | reasoned | | no reuse path; 6 x 10^-12 at 10^9 records under one key |
 | A gateway of this build without the option | `m3` (2 runs) | 4 routes each | 503 after the setting |
-| The fuzzer with failed, slow, refused and mislabelled seals | `fuzz6` | 10,000 schedules (log), 256,077 oracles | 0 violations |
+| The fuzzer with failed, slow, refused and mislabelled seals | `fuzz6` | 20,000 schedules (10,000 per boundary), 512,418 oracles | 0 violations |
 
 ## 13. Not tested
 
@@ -485,4 +487,4 @@ checkout; add `ERA5_EXTRA_ENV="TX2_REMOVAL_COMMIT_BOUNDARY=1"` for the commit bo
 Runtime image for in-process runs, `run.sh` and the stack: `sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be`
 (Datomic and the JVM; the gateway's source is this checkout's, mounted, and its hash is recorded in each run's
 `gateway-source-sha`); PostgreSQL `sha256:526f86d93c6ea08fd3f1fe5605650cacc781b2c6013169a0ad8f42c7d3d84f32`. Evidence is
-kept outside the repository as compressed archives (`DX-ERA5/r2`).
+kept outside the repository as one compressed archive (`DX-ERA5/r2.tar.gz`, the lab evidence folder).
