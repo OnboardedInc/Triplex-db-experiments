@@ -166,7 +166,11 @@
             s @stats
             ;; The review's log audit on the PostgreSQL database itself (this JVM is a peer too).
             audit (try (let [conn ((requiring-resolve 'triplex.gateway.main/connection) ((requiring-resolve 'triplex.gateway.main/db-uri) name))]
-                         (dissoc ((requiring-resolve 'rd6-attacks/audit) conn) :otherRetracting))
+                         (assoc (dissoc ((requiring-resolve 'rd6-attacks/audit) conn) :otherRetracting)
+                                :rd7 (let [x ((requiring-resolve 'rd7-audit/audit) conn)]
+                                       (assoc (select-keys x [:revisionlessChanges :revisionlessFolds :removalTransactions :removalSubjectRetractions])
+                                              :rules ((requiring-resolve 'rd7-audit/failures) x)))
+                                :revisionRegressions ((requiring-resolve 'rd6-attacks/revision-regressions) conn)))
                        (catch Exception e {:error (str e)}))]
         (emit "DX-RD6_FLEET" (assoc s :head top :owners (count owners) :sweepComparisons (- (:compared s) before) :audit audit
                                     :shortcut scan :pass (and (zero? (:differences s)) (pos? (:compared s)))))
@@ -237,7 +241,11 @@
             (compare-one! name "read" "v1" {"entityIds" (vec part) "basis" {"validAt" 5.0 "recordedPosition" p}}))
           (doseq [p (take-nth 5 (sweep-positions top))]
             (compare-one! name "reach-many" "v2" {"roots" owners "basis" {"validAt" 5.0 "recordedPosition" p} "full" true}))
-          (let [audit (dissoc ((requiring-resolve 'rd6-attacks/audit) conn) :otherRetracting)
+          (let [audit (assoc (dissoc ((requiring-resolve 'rd6-attacks/audit) conn) :otherRetracting)
+                             :rd7 (let [x ((requiring-resolve 'rd7-audit/audit) conn)]
+                                    (assoc (select-keys x [:revisionlessChanges :revisionlessFolds :removalTransactions :removalSubjectRetractions])
+                                           :rules ((requiring-resolve 'rd7-audit/failures) x)))
+                             :revisionRegressions ((requiring-resolve 'rd6-attacks/revision-regressions) conn))
                 scan (into {} (for [[k base] readers] [k (get (:body (call base :get "/v2/admin/scan-stats" nil)) "pinnedShortcut")]))
                 s @stats]
             (emit "DX-RD6_FLEET" (assoc s :head top :groups @groups :interiorPositions interior :owners (count owners)

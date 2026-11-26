@@ -96,7 +96,7 @@ fi
 done) &
 pids+=($!)
 status=0
-load=(-i /exp/wfix1/regression.clj -i /exp/w2/wide_gate.clj -i /exp/s5/fuzz.clj -i /exp/rd6/attacks.clj -i /exp/rd6/fleet.clj)
+load=(-i /exp/wfix1/regression.clj -i /exp/w2/wide_gate.clj -i /exp/s5/fuzz.clj -i /exp/rd7/audit.clj -i /exp/rd6/attacks.clj -i /exp/rd6/fleet.clj)
 readers="off=http://$addr:8081,on=http://$addr:8082,tuned=http://$addr:8083"
 if [[ $driver == groups ]]; then
   # the writer is this JVM, in process on the same storage, with the group writer on

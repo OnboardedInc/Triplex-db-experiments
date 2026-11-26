@@ -16,7 +16,7 @@ git -C "$repo" status --porcelain -- packages/datomic > "$out/dirty"
 [[ -s $out/dirty ]] && { echo "fleet.sh: the gateway sources differ from HEAD" >&2; exit 2; }
 mkdir -p "$out/src" "$out/exp"
 cp -R "$repo/packages/datomic/gateway/src/." "$out/src/"; cp "$repo/packages/datomic/src/codec-spec.json" "$out/codec-spec.json"
-cp -R "$repo/lab/experiments/EXP-DX1/wfix1" "$repo/lab/experiments/EXP-DX1/w2" "$repo/lab/experiments/EXP-DX1/s5" "$repo/lab/experiments/EXP-DX1/rd6" "$out/exp/"
+cp -R "$repo/lab/experiments/EXP-DX1/wfix1" "$repo/lab/experiments/EXP-DX1/w2" "$repo/lab/experiments/EXP-DX1/s5" "$repo/lab/experiments/EXP-DX1/rd6" "$repo/lab/experiments/EXP-DX1/rd7" "$out/exp/"
 name=tx2-dxrd6-fleet-$$
 echo "$(date '+%F %T %Z') start $name" >> "$out/runs.log"
 docker run --name "$name" --label dx-rd6=fleet --pull never --memory 6g --cpus 4 \
