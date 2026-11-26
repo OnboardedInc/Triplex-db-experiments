@@ -37,9 +37,11 @@ import { valid } from "../actv-lazy/fixture.ts";
 import { rosterRoot, rosterSeal } from "../actv-lazy/read.ts";
 
 const [out] = process.argv.slice(2);
-// ONE_CLEAR=1: the same in clear (no derived seal, no setting) with TX2_SUBJECT_STOP=1: there S3 has no seal to be
-// refused, and S1's removed value fails its evaluation (W0-1.1.2: removed values are W0-1.2's, under the option only),
-// so S1 stops at the second release instead of keeping its notice
+// ONE_CLEAR=1: the same in clear (no derived seal, no setting) with TX2_SUBJECT_STOP=1, for the full ledger (S0) and
+// the evaluation error (S2); S3 has no seal to be refused. S1's value is not removed there: without the option a removal
+// makes every release published before it stale for the whole database (the removal line's database-wide rule; the
+// per-account options narrow it), so the second release could not be published over the first; that is the removal
+// rule's, not a subject's stop
 const CLEAR = process.env.ONE_CLEAR === "1";
 // TX2_NOTICE_LEDGER=whole (named: under the option unset is parts, ledger-parts.ts `ledgerMode`): the same with whole
 // ledgers, sealed or in clear: S0's ledger of 999 forms does not fit one frame, so S0 stops (LedgerFull) at the first
@@ -181,12 +183,12 @@ try {
   row.deliveries1 = await deliveries();
   row.stops1 = await stops(seq1);
   // S1's expiry date removed
-  const r = await removable();
-  row.removedAssertions = r.ids.length;
-  row.removal = (await peer.erase(r.db, "one-subject/" + RUN, r.ids.map((id) => ({ id })))).seq;
+  const r = CLEAR ? undefined : await removable();
+  row.removedAssertions = r?.ids.length ?? 0;
+  row.removal = r ? (await peer.erase(r.db, "one-subject/" + RUN, r.ids.map((id) => ({ id })))).seq : "not in clear";
   // the removal published before release 2 reads its inputs (without the option it publishes after its shred grace;
   // a publish that read the frontier before it is refused, "Discard the old protected input cut")
-  for (let k = 0; k < 120 && (await peer.erasureFrontier(r.db)).seq < (row.removal as number); k++) await new Promise((res) => setTimeout(res, 500));
+  for (let k = 0; r && k < 120 && (await peer.erasureFrontier(r.db)).seq < (row.removal as number); k++) await new Promise((res) => setTimeout(res, 500));
   await new Promise((res) => setTimeout(res, 3000));
   // release 2
   // in clear the packets hold the deliveries themselves (the open route is the option's)
@@ -217,11 +219,11 @@ try {
     recordedBoth: row.recorder1 === "recorded" && row.recorder2 === "recorded",
     othersGetTheirNotices: [S[1]!, S[3]!, S[4]!, S[5]!].every((s) => (d1[s] ?? 0) > 0),
     recorderStopsAreExactlyThese: only(s1.recorder, { ...(WHOLE ? { [S[0]!]: "LedgerFull" } : {}), [S[2]!]: "EvaluationFailed" }) &&
-      only(s2.recorder, { [S[0]!]: "LedgerFull", [S[1]!]: "EvaluationFailed", [S[2]!]: "EvaluationFailed" }),
+      only(s2.recorder, { [S[0]!]: "LedgerFull", [S[2]!]: "EvaluationFailed" }),
     ...fullLedger,
-    settlementStopsAreTheEvaluations: only(s1.settlement, { [S[2]!]: "EvaluationFailed" }) &&
-      only(s2.settlement, { [S[1]!]: "EvaluationFailed", [S[2]!]: "EvaluationFailed" }),
-    removedSubjectStopsAlone: by2[S[4]!]! >= d1[S[4]!]!,
+    settlementStopsAreTheEvaluation: only(s1.settlement, { [S[2]!]: "EvaluationFailed" }) &&
+      only(s2.settlement, { [S[2]!]: "EvaluationFailed" }),
+    othersServedAtTheSecondRelease: [S[1]!, S[3]!, S[4]!, S[5]!].every((s) => by2[s]! > d1[s]!),
   };
   else checks = {
     settledBoth: row.settlement1 === "stored" && row.settlement2 === "stored",
