@@ -80,7 +80,9 @@
                                          klass (assoc "writeClass" klass))
                                  reply (wrap #(reference/send name input))
                                  value-back (= removed-value (stored name S))
-                                 stated (remove #{:absent} c)
+                                 ;; [eighth review] ERA3_7B_RULE_OFF=1: the save line's rule (the replay rule off) judges by
+                                 ;; frameSourceK and sourceK only; removalSeen is not one of its points
+                                 stated (remove #{:absent} (if (= "1" (System/getenv "ERA3_7B_RULE_OFF")) [fk sk] c))
                                  expect-declined (or (empty? stated) (some #{:old} stated))]
                              {:combo c :answer (reference/outcome reply) :writer (fz/writer-kind conn (get input "operationId") reply)
                               :removed-value-stored value-back :expect (if expect-declined :declined :stored)
