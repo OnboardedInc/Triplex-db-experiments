@@ -58,7 +58,9 @@
 
 (defn writer-loop! [name t ^Random rng stop]
   (let [g (fz/gen-state (+ 100 t) (str "acct/fleet" t))
-        own (vec (for [i (range 6)] (str "acct/fleet" t "/subject/o" i)))
+        ;; One account for every writer thread (disjoint subjects): the grouped writer groups one account's queue,
+        ;; so concurrent saves of one account are what forms groups.
+        own (vec (for [i (range 6)] (str "acct/fleet/subject/w" t "-o" i)))
         pick #(nth % (.nextInt rng (count %)))
         f #(str ":fz/f" (.nextInt rng 5))]
     (doseq [o own] (save! name g {:set (vec (for [j (range 5)] [o (str ":fz/f" j) (str o "-seed-" j)]))}))
@@ -70,7 +72,7 @@
             (< x 0.30) (save! name g {:set [[o (f) (str "v" (swap! counter inc))]]})
             (< x 0.50) (save! name g {:retire [[o (f)]]})
             (< x 0.62) (save! name g {:set [[o (f) (str "v" (swap! counter inc))] [(pick own) (f) (str "w" (swap! counter inc))]]})
-            (< x 0.72) (save! name g {:set [[(str "acct/fleet" t "/form/n" (swap! counter inc)) ":form/of" (str "ref:" o)] [o (f) "with-form"]]})
+            (< x 0.72) (save! name g {:set [[(str "acct/fleet/form/w" t "-n" (swap! counter inc)) ":form/of" (str "ref:" o)] [o (f) "with-form"]]})
             (< x 0.80) (save! name g {:set [[o ":p/secret" (str "secret-" (swap! counter inc))]]})
             (< x 0.81) (let [r (call writer :post (str "/v1/db/" name "/erase") {"commandId" (str "rm-" (swap! counter inc))
                                                                                     "selectors" [{"entityId" o "attribute" ":p/secret"}]})]

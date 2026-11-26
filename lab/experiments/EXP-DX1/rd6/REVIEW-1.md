@@ -1,7 +1,7 @@
 # Adversarial review of the two pinned-read options (DX-RD6, first review)
 
 Reviewer's page, branch `exp/DX-RD6-pinned-read-review` from the one branch `origin/exp/DX-INT1` at `345f833e4`.
-Written __WRITTEN__ by the review agent. Every count below is a result; every time is a Mac diagnostic. Nothing here
+Written 2026-11-25 from 20:02 to 21:45 EST by the review agent. Every count below is a result; every time is a Mac diagnostic. Nothing here
 changes the code under review: the tests redefine the two option vars in one JVM, or start separate gateways with the
 options set.
 
@@ -20,8 +20,8 @@ Proposal reviewed: `srv2/PREP.md` section 2 on `origin/exp/DX-SRV2-session-prep`
 
 **Both on, on three conditions.** At `345f833e4` and `2ce636613` neither option changes a single answer: 0
 differences in every comparison below (targeted tests in 9 writer settings, 178,699 read shapes compared under
-four option sets in the fuzz (714,796 comparisons), 395,010 comparisons between three gateways on one PostgreSQL database while 20,559 saves
-and 226 removals ran). Both options rest on writer invariants that no product writer breaks today (code read for every
+four option sets in the fuzz (714,796 comparisons), 699,164 comparisons between three gateways on one PostgreSQL database in three runs while
+33,981 saves and 389 removals ran). Both options rest on writer invariants that no product writer breaks today (code read for every
 retracting path, and a log audit of every transaction of every test database: 0 violations). Each invariant can be
 broken by a hypothetical writer, and then each option answers wrong; both breaks are reproduced. Conditions:
 
@@ -44,7 +44,8 @@ broken by a hypothetical writer, and then each option answers wrong; both breaks
 | --- | --- | --- | --- |
 | `345f833e4` | reviewed | — | the list in section 1 |
 | `2ce636613` | the Publish line (`a6f89a409`), every option and setting off | identical (`git diff 345f833e4 2ce636613 -- packages/datomic/gateway` is empty; one message change in `DatomicStorageAdapter.ts`) | unchanged; the Publish line writes only through the SDK's transact route (`actv-lazy/store.ts` `commit`, `h.triples.transact`), so its settlement, ledgers and retired-item archive reach the same gateway writers as every other save |
-__LATER_HEADS__
+| `9f210018f` (the save line's fourth pass) | not on the one branch at 21:43 | its diff from its merge base (`c85a0d0b3`, 6 gateway files: `account_claims.clj`, `storage.clj`, `main.clj`, `group.clj`, `outcome.clj`, `subject_owners.clj`) adds no retraction of a subject datom and no write of a grouped position; the only new `:db/add` replaces a stored function's body | to re-check on landing: `git diff` on the gateway sources, then `clj-run.sh OUT attack "server grouped ownerhead serial general"` and the fuzz in `server serial` |
+| removal-per-account line (`origin/exp/DX-ERA2-removal-per-account`, `3257e3c6d`) | not merged | adds `[:db/retract head :triplex.scope/removal-seq n]` (the scope entity) and removal counters on their own entities (`removal_scope.clj` `counter-ops`); its read-time mask is computed once per request (`removal_commit.clj` `effective`), so both read paths still share it | to re-check before it merges: the same commands, with `S5_REMOVALS=1`, and the question of whether its "commit boundary" masks depend on the read's source database |
 
 ## 1. Every path that retracts
 
@@ -81,7 +82,13 @@ datom on that subject other than an index entry. The cut lookup is wrong exactly
 The log audit (`rd6/attacks.clj` `audit`) checks this list against the data: for every transaction in a database's
 log, every entity with a retraction and no assertion other than an index entry, split by subject and other entities,
 and every retraction or repeated assertion of a grouped-save position. It ran on every scope of every test and fuzz
-run below: __AUDIT_TOTAL__.
+run below: every scope of every targeted test in all nine settings, every one of the 92 fuzz points on both
+of its scopes (the whole log each time, up to 1,367 transactions per scope), and the PostgreSQL database of the fleet
+runs (7,060 transactions in fleet-3, audited by the driver as a peer): 0 transactions that retract a datom of a
+subject without asserting anything on it other than an index entry; 0 retractions and 0 repeats of a grouped-save
+position. One entry-only retraction was found, where it was planted: the index reconciliation of section 2. The
+retracting shapes seen on subjects are only these three: a row and the old revision retracted with a new revision
+(and new rows or markers) asserted.
 
 ## 2. Attacks on the short-cut
 
@@ -164,10 +171,14 @@ receives the past view from `storage/at-position`. The reach routes call `select
 | Attack (grouped setting) | Differences, cut lookup on | Hardened cut lookup |
 | --- | --- | --- |
 | Every interior and end position of three groups (product writers) | 0 of 390 | 0 |
+| Every position of forty groups (product writers) | 0 of 9,314 | 0 |
 | Retract an interior member's position (hypothetical writer) | 2 of 6 reads at that position (the read falls through to the group's end and sees a later member's save) | 0 |
 | Then assert the same position on a new entity | 2 of 6 | 0 |
 
-Audit over every grouped scope: __GP_AUDIT__.
+Audit over every grouped scope: the three-group test (9 positions) and the forty-group test (117 positions in 40 groups of two to six
+saves on sixteen subjects: replacements, retirements alone, mixed; 166 saves committed, none refused): 0 retractions,
+0 repeats; every position of the forty-group scope read for every subject under all five option sets, 9,314 read shapes,
+0 differences, 1,407 short-cut answers.
 
 
 ## 4. Mixed fleet
@@ -194,6 +205,19 @@ options-on reader (1,281,811 and 1,110,124 on the tuned one). 411 comparisons ha
 `503 ErasureFrontierUnavailable` (a reader whose peer had not caught up with a just-published removal); these are not
 counted as differences and fall evenly on both sides: options-on refused while options-off answered 98 times, the
 reverse 109; tuned 103 and 101. No answer differed when both readers answered.
+
+Two more fleet runs, each ending with the review's log audit of the PostgreSQL database itself (the driver JVM is a
+peer of the same database):
+
+| Run | Writer phases (60 s each) | Saves committed | Removals | Comparisons | Differences | Log audit |
+| --- | --- | --- | --- | --- | --- | --- |
+| fleet-3 | grouped, per-subject (each writer thread its own account) | 6,963 | 86 | 160,290 (41,966 in the sweep) | 0 | 7,060 transactions: 0 violations |
+| fleet-4 | grouped, append retirement (every writer thread in one account) | 6,459 | 77 | 143,864 (40,230 in the sweep) | 0 | 6,547 transactions: 0 violations |
+
+Across the three fleet runs: 33,981 saves and 389 removals, 699,164 comparisons, 0 differences. One gap: in none of
+them did the grouped writer form a group of two or more saves (0 grouped positions in either audited log; every save
+of a grouped phase went alone), so the mixed fleet did not exercise the cut lookup on grouped interiors. Those are
+covered only by the in-memory group tests of section 3 (126 interior and end positions in 43 groups).
 
 A first fleet run (fleet-1, stopped at 10 minutes in its full sweep) used four times the removal rate and counted
 those refusals as differences; its numbers are not used.
@@ -309,8 +333,8 @@ options-off readers (98 against 109) and come from a reader whose peer had not c
 - Grouped interiors keep the group-cut slice and never take the short-cut; every interior and end position equal.
 - The account-ID setting's transition, stale planners, unknown outcomes and their fence, resends, kills before and after
   submit, races, removal races and their replays, a second account (S5 dimensions in the fuzz): 0 differences.
-- One write gateway and three read gateways with different options on one PostgreSQL database while saves, grouped
-  saves, retirements and removals ran: 0 differences in 395,010 comparisons.
+- One write gateway and three read gateways with different options on one PostgreSQL database while saves,
+  retirements and removals ran: 0 differences in 699,164 comparisons (three runs).
 
 
 ## Not tested
@@ -320,7 +344,8 @@ options-off readers (98 against 109) and come from a reader whose peer had not c
 - Restore from backup (no backup on the in-memory runs), failover promotion, and the HA1 account move: by reading only.
 - Real older builds beside this one; the batch (`/v2/.../batch`) and sweep routes (they call the same
   `storage/read-rows`, so the same code path, but were not called).
-- The owner head and index entries inside the fuzz (targeted tests only); sealed protection in the fleet (in memory only).
+- The owner head and index entries inside the fuzz (targeted tests only); sealed protection in the fleet (in memory
+  only); grouped interiors under a mixed fleet (no group formed in the fleet runs; in-memory group tests only).
 - The Publish line's own toy stack (its writes go through the SDK's transact route, so through the writers above; no
   database of its gates was audited).
 - The save line's fourth pass and the removal-per-account line: not on the one branch at the time of writing (their
