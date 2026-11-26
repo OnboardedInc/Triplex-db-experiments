@@ -29,5 +29,19 @@
             :else (do (.increment fallbacks) (d/entid db [:triplex.group/position cut])))))
       (d/entid db [:triplex.group/position cut]))))
 
+;; [DX-RD6 reference: the default flip, a trial] Both pinned-read options on unless set to "0". Why here: pinned.clj and
+;; group_cut.clj load before commit.clj, so editing their definitions would renumber generated names inside the stored
+;; functions (the reason this guard and cross_index.clj's rule are installed late); this namespace loads last. Any value
+;; other than unset, "1" or "0" refuses to start, so "false" or "off" cannot silently mean on.
+;; Rejected: on whenever the variable is not "0" (a typo would run the option the operator meant to turn off).
+(defn setting [variable]
+  (let [v (System/getenv variable)]
+    (case v
+      (nil "1") true
+      "0" false
+      (throw (IllegalArgumentException. (str variable " must be unset (on), 1 (on) or 0 (off), not " (pr-str v)))))))
+(alter-var-root #'pinned/enabled (constantly (setting "TX2_PINNED_SHORTCUT")))
+(alter-var-root #'group-cut/current-lookup (constantly (setting "TX2_PINNED_CUT_LOOKUP")))
+
 (when group-cut/current-lookup
   (alter-var-root #'group-cut/member-at (constantly member-at)))

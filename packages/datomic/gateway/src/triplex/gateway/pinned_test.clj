@@ -32,7 +32,8 @@
         (testing "a revision above the pinned position falls back even with old datoms"
           (is (not (pinned/unchanged-since? current a pin 0))))
         (testing "current-eid is off unless the option is on, and needs a pinned view"
-          (is (nil? (pinned/current-eid current view 2 "a")))
+          ;; [DX-RD6 reference flip] the option's value is set at load (on by default once main.clj is loaded)
+          (with-redefs [pinned/enabled false] (is (nil? (pinned/current-eid current view 2 "a"))))
           (with-redefs [pinned/enabled true]
             (is (= a (pinned/current-eid current view 2 "a")))
             (is (nil? (pinned/current-eid current view 2 "b")))
