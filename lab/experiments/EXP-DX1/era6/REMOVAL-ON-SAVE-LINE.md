@@ -306,8 +306,26 @@ whose attributes are named `:p3001` and up. The recorded detail, in order:
 | the window's removal sent again | 200, its value masked (P4 held) |
 | after | stored policy and copy both `:v` and `:p3001` to `:p3006` (P1 and P2 held) |
 
-How `:p3006` came to be in the copy and not in the stored policy before schedule 318 is read from a traced rerun of
-the same 400 schedules (`f7-trace318`; filled in below when it has run).
+**How `:p3006` reached the log's copy and not the stored policy.** A traced rerun of the same first 400 schedules
+(`f7-trace318`, `ERA3_F7_TRACE=1`, seed 7501, sealed) reproduced schedule 318 exactly: `behind [":p3006"]` and the same
+four window answers. Each schedule's event uses `earlier`: the stored policy and the log as they were at the start of
+the previous schedule.
+
+| Schedule | Event | The stored policy | The log's copy |
+| --- | --- | --- | --- |
+| 316 | `:add` `:p3006`, 200 | `:v`, `:p3001` to `:p3006` | the same |
+| 317 | `:both`: the policy and the log set back to the start of 316 (before the addition), and the fuzzer's record of additions with them | `:p3006` gone | `:p3006` gone |
+| 318 | `:authority-restore`: the log alone put back to the start of 317, when it still listed `:p3006` | without `:p3006` | **with `:p3006`** |
+
+So at 318 the authority is restored to a later point than the data. Two things are true at once:
+- **The log's copy is ahead of the stored policy in attributes:** `:p3006`, the R3 state.
+- **The log is behind the data in removals:** the removals of schedules 317 and 318, which the restored log lacks.
+
+This is the case the restore procedure orders. Step 4 says to rebuild first: the restore route answers 503
+`RemovalLogBehind`, then the rebuild route answers 200. The restore route then adds the copy's `:p3006` back (200), as
+step 4 says for a name added through the protection route and lost with a data restore. Until the rebuild, every
+request waits with `RemovalLogBehind`, the save of `:p3006` included, which is what the corrected P3 accepts. The
+stricter form expected that save to carry the attribute's own code, `RemovalPolicyBehind`.
 
 **The rerun.** The 91 were all in chunk 1 of the log's boundary (all `:authority-restore`). That chunk was stopped
 and fuzz7 rerun in full with the corrected form: chunk 1 again (seed 7501), 164,663 oracles, 0 violations.
