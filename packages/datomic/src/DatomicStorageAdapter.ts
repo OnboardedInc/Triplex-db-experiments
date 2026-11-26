@@ -922,13 +922,22 @@ export const makeDatomicStorageAdapter = (
             stopped?: "limit" | "end" | "entries" | "time";
           };
           let result: Page;
+          // [DX-ACT8, fifth review Y6] The gateway refuses a page whose text passes its size bound (413
+          // JournalPageTooLarge, `maximum` the transactions that fitted, at least one); ask again for that many, so a
+          // reader pages to the bound. Rejected: failing the read; a fixed smaller page for every reader.
+          const transactionsPage = async (input: { limit: number } & Record<string, unknown>, timeoutMs: number) => {
+            for (;;)
+              try {
+                return await client.request<Page>("POST", `/v2/db/${db}/transactions`, input, timeoutMs);
+              } catch (error) {
+                if (!(error instanceof DatomicHttpError) || error.code !== "JournalPageTooLarge" ||
+                    !Number.isSafeInteger(error.maximum) || error.maximum! < 1 || error.maximum! >= input.limit)
+                  throw error;
+                input = { ...input, limit: error.maximum! };
+              }
+          };
           if (!boundedJournal)
-            result = await client.request<Page>(
-              "POST",
-              `/v2/db/${db}/transactions`,
-              { after, limit, waitMs },
-              Math.max(30_000, waitMs + 5000),
-            );
+            result = await transactionsPage({ after, limit, waitMs }, Math.max(30_000, waitMs + 5000));
           else {
             // [DX-JRN1] Why: each bounded page holds the journal permit for at most its examine bound; the cursor
             // resumes exactly after the last position the gateway considered. Only the first page may wait.
@@ -936,9 +945,7 @@ export const makeDatomicStorageAdapter = (
             const transactions: Page["transactions"] = [];
             let cursor = after;
             for (let first = true; ; first = false) {
-              const page = await client.request<Page>(
-                "POST",
-                `/v2/db/${db}/transactions`,
+              const page = await transactionsPage(
                 { after: cursor, limit: limit - transactions.length, waitMs: first ? waitMs : 0, bounded: true },
                 Math.max(30_000, (first ? waitMs : 0) + 5000),
               );

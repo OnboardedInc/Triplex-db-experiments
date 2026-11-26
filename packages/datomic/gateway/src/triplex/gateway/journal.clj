@@ -79,6 +79,18 @@
                          (into out (sort-by second (for [[e p] (ledger/journals db (:e tx)) :when (< after p (inc cut-head))]
                                                      [e p (if (and group? (d/entid db [:triplex.group/position p])) p (:v tx))])))
                          (long (:v tx)))))))))
+;; [DX-ACT8, fifth review Y6] Why: a page is built whole in memory before it is sent, and up to 1,000 transactions may be
+;; asked for; with large records (a 1,000-form release record is about 0.6 MB) one such page made the write gateway run
+;; out of memory and be killed (the fifth review's g4R5, its ID scan reading pages of 1,000). A page whose text passes
+;; this bound is refused, typed (413 JournalPageTooLarge), with `maximum` the number of transactions that fitted, so the
+;; caller asks for fewer; a page of one transaction is never refused, and every page under the bound is unchanged.
+;; Rejected: returning a shorter page (readers take a page shorter than their limit as the end of the feed).
+(def page-max-chars (or (some-> (System/getenv "TX2_JOURNAL_PAGE_MAX_CHARS") Long/parseLong) 16777216))
+(defn- page-bound! [^StringBuilder out i]
+  (when (and (pos? i) (> (.length out) (long page-max-chars)))
+    (throw (ex-info (str "Journal page too large: its first " (inc i) " transactions pass " page-max-chars
+                         " characters; ask for at most " i " transactions")
+                    {:status 413 :code "JournalPageTooLarge" :maximum i}))))
 (defn page [conn name input]
   (try
     (let [after (storage/safe-position (get input "after")) limit (get input "limit") wait-ms (get input "waitMs" 0)
@@ -135,7 +147,8 @@
                             "shallowRoots" (vec (remove new-refs changed)) "closureRoots" changed "replicaPage" true "rowPage" true "full" true})]
                             (str "{\"incremental\":true," (subs body 1))))]
             (.append out ",") (.append out payload)))
-        (.append out "]"))
+        (.append out "]")
+        (page-bound! out i))
       ;; [DX-R3-P8] Why: a clock cut closes at the physical commit's final position, even across feed pages.
       ;; Rejected: treating the last journal in a response as a transaction boundary.
       (.append out "],\"clockEnds\":[")

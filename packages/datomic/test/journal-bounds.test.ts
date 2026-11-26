@@ -22,6 +22,8 @@ const journalRow = (tx: string, p: number) =>
     recorded_at: p, recorded_position: p, valid_from: 0, valid_to: null, retracted_at: null, retracted_position: null,
     retract_tx_id: null, schema_version: 1, entity_type: "_Transaction", created_by: null, tx_id: tx } as never);
 let examineBound = 7;
+// [DX-ACT8, fifth review Y6] Transactions a page may hold before the fake refuses it as journal.clj does past its size bound.
+let pageMax = Infinity;
 
 const server = createServer((req, res) => {
   let body = "";
@@ -43,6 +45,11 @@ const server = createServer((req, res) => {
       }
       if (out.length >= limit && stopped === "end") stopped = "limit";
       const page = out.slice(0, limit);
+      if (page.length > pageMax) {
+        res.statusCode = 413;
+        res.end(JSON.stringify({ code: "JournalPageTooLarge", message: "Journal page too large", maximum: pageMax }));
+        return;
+      }
       const next = stopped === "limit" ? page.at(-1)![1] : scanned;
       res.end(JSON.stringify({ head: 400, transactions: page, clockEnds: page.map(([, p]) => [p, p]),
         ...(input["bounded"] ? { examined, next, stopped } : {}) }));
@@ -104,6 +111,25 @@ it("follows bounded feed cursors to the same transactions as one unbounded page"
       expect(requests.slice(1).every((r) => r["waitMs"] === 0)).toBe(true);
       if (bound === 1 && after === 91 && limit === 10) expect(requests.length).toBeGreaterThan(300);
     }
+});
+
+it("[DX-ACT8, fifth review Y6] pages down to the gateway's page-size bound: a refused page is asked again for the transactions that fitted", async () => {
+  examineBound = 1000;
+  const two = await feed(false, 0, 2);
+  try {
+    pageMax = 2;
+    for (const bounded of [false, true]) {
+      requests.length = 0;
+      expect(await feed(bounded, 0, 1000)).toEqual(two);
+      expect(requests.map((r) => r["limit"])).toEqual([1000, 2]);
+    }
+    // A page within the bound is asked once, as before.
+    requests.length = 0;
+    expect(await feed(false, 0, 2)).toEqual(two);
+    expect(requests.length).toBe(1);
+  } finally {
+    pageMax = Infinity;
+  }
 });
 
 it("follows bounded entity-journal cursors to the same positions as one unbounded request", async () => {
