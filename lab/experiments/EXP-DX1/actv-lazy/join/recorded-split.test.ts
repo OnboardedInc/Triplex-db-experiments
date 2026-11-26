@@ -73,9 +73,25 @@ test("with subject stops: the split check refuses only what cannot fit, within t
     return lo;
   };
   const passes = (f: () => unknown) => { try { f(); return true; } catch (e) { if (e instanceof FrameTooLarge) return false; throw e; } };
-  // the largest ledger whose closing piece fits a frame by itself (a subject with nothing else to write)
-  const fit = largest((n) => passes(() => noticeFrame(db, undefined, cursor, [candidate("pl:a", 0, n)], event)));
-  // the largest a split subject (30 units) may begin with under subject stops
-  const accepted = largest((n) => passes(() => noticeFrame(db, undefined, cursor, [candidate("pl:a", 30, n)], { ...event, stops: true })));
+  // the largest ledger whose closing piece fits a frame by itself (a subject with nothing else to write), with the
+  // cursor row a later frame retracts
+  const row = { key: "notice-progress", id: "A".repeat(26), at: 1, value: cursor } as never;
+  const fit = largest((n) => passes(() => noticeFrame(db, row, cursor, [candidate("pl:a", 0, n)], event)));
+  // the largest a split subject (30 units) may begin with under subject stops, at the same cursor row
+  const accepted = largest((n) => passes(() => noticeFrame(db, row, cursor, [candidate("pl:a", 30, n)], { ...event, stops: true })));
   assert.ok(accepted <= fit && fit - accepted <= 64, `fit ${fit}, accepted ${accepted}`);
+});
+test("with subject stops: a split that begins before any cursor row is priced as its end will be, with one", () => {
+  const largest = (ok: (n: number) => boolean) => {
+    let lo = 200, hi = 20_000;
+    while (lo < hi) { const m = Math.ceil((lo + hi) / 2); if (ok(m)) lo = m; else hi = m - 1; }
+    return lo;
+  };
+  const passes = (f: () => unknown) => { try { f(); return true; } catch (e) { if (e instanceof FrameTooLarge) return false; throw e; } };
+  // the split's last frame: the cursor row exists by then
+  const row = { key: "notice-progress", id: "A".repeat(26), at: 1, value: cursor } as never;
+  const fitAtTheEnd = largest((n) => passes(() => noticeFrame(db, row, cursor, [candidate("pl:a", 0, n)], event)));
+  // the split's first frame, the first of all: no cursor row yet
+  const accepted = largest((n) => passes(() => noticeFrame(db, undefined, cursor, [candidate("pl:a", 30, n)], { ...event, stops: true })));
+  assert.ok(accepted <= fitAtTheEnd && fitAtTheEnd - accepted <= 64, `fit at the end ${fitAtTheEnd}, accepted ${accepted}`);
 });

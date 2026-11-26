@@ -192,7 +192,7 @@ export function noticeFrame(
 ) {
   const part = current.part ?? 0;
   if (part) assert(part <= candidates[0]!.units.length, "A split subject's deliveries moved");
-  const build = (pieces: readonly Piece[], cur: Cursor = current) => {
+  const build = (pieces: readonly Piece[], cur: Cursor = current, last0: typeof prior = prior) => {
     const ops: Op[] = [],
       deliveries: W0.Delivery[] = [];
     for (const p of pieces) {
@@ -237,7 +237,7 @@ export function noticeFrame(
       part: tail,
       ...(event.ledger === "parts" ? { ledger: "parts" as const } : {}),
     };
-    ops.push(...db.change(stateKey, prior, next));
+    ops.push(...db.change(stateKey, last0, next));
     if (packet) ops.push(db.put(packetKey(packet.batch), pack(packet)));
     return { next, ops, packet };
   };
@@ -249,9 +249,10 @@ export function noticeFrame(
   // subject can be neither stopped (its deliveries would be written again) nor finished: the account stopped (a whole
   // ledger of 200 sealed forms). So when a split begins, under subject stops, the closing piece alone is priced first,
   // with the cursor's two growing counters at the most they can reach by then (a packet a frame, at most one frame a
-  // unit; every delivery of the subjects up to this one); if it does not fit, the subject is refused here, before
-  // anything of it is written, and the writer gives it its named stop (LedgerFull). The other fields of the cursor
-  // are the same then (hashes and positions of fixed length, the subject's own end).
+  // unit; every delivery of the subjects up to this one) and the retraction of a cursor row (there is always one by
+  // then, though not before the first frame of all); if it does not fit, the subject is refused here, before anything
+  // of it is written, and the writer gives it its named stop (LedgerFull). The other fields of the cursor are the same
+  // then (hashes and positions of fixed length, the subject's own end).
   if (event.stops && filled.split && (filled.advance > 0 || part === 0)) {
     const c = candidates[filled.advance]!;
     const most: Cursor = {
@@ -259,7 +260,8 @@ export function noticeFrame(
       batch: current.batch + c.units.length + 1,
       entries: current.entries + candidates.slice(0, filled.advance + 1).reduce((n, x) => n + x.deliveries, 0),
     };
-    const alone = build([{ index: filled.advance, from: c.units.length, to: c.units.length, close: true }], most).ops;
+    const row = prior ?? ({ key: stateKey, id: "f".repeat(40), at: 0, value: current } as unknown as NonNullable<typeof prior>);
+    const alone = build([{ index: filled.advance, from: c.units.length, to: c.units.length, close: true }], most, row).ops;
     if (!frameEstimate(alone).fits)
       throw Object.assign(new FrameTooLarge("Subject " + c.subject + ": its ledger needs a frame larger than the writer's bound"), {
         subject: c.subject,
