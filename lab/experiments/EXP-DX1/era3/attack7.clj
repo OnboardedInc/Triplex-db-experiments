@@ -100,9 +100,15 @@
     (oracle! label (every? stored @(:added state)) "P1 no attribute the protection route added is lost" detail)
     (oracle! label (every? copy stored) "P2 the log's copy holds every attribute of the stored policy" detail)
     ;; [DX-ERA6 eighth pass, R3, adapted oracle] only a save that writes an attribute the stored policy lacks waits; a save
-    ;; of another attribute is served (before this pass every save waited)
+    ;; of another attribute is served (before this pass every save waited). It waits with RemovalPolicyBehind, or, when
+    ;; the event put the log back behind the data, with RemovalLogBehind: every request waits then until the rebuild
+    ;; route (the restore procedure, step 4). The first adaptation asked for RemovalPolicyBehind only, which 91 of
+    ;; 10,000 log-put-back schedules answered with RemovalLogBehind (the oracle before this pass asked for any 503)
     (when behind
-      (oracle! label (and (= [503 "RemovalPolicyBehind"] behind-save) (= 503 (first window-rm)))
+      (oracle! label (and (= 503 (first behind-save))
+                          (contains? (if (#{:log-put-back :both-put-back} out) #{"RemovalPolicyBehind" "RemovalLogBehind"} #{"RemovalPolicyBehind"})
+                                     (second behind-save))
+                          (= 503 (first window-rm)) (some? (second window-rm)))
                "P3 while the policy is behind, a save of the missing attribute and the removal wait (typed 503)" detail))
     (oracle! label (not= [503 "RemovalPolicyBehind"] window-save)
              "P3 a save of an attribute the stored policy holds is not held by the missing one" detail)

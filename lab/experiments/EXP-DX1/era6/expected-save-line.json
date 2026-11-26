@@ -1,0 +1,126 @@
+[
+  {
+    "id": "R3-1-reopen-hash",
+    "kind": "OPEN FINDING of the save line (High), not by design; needs TX2_ACCOUNT_CLAIMS=1, default off",
+    "test": "a-reopen-with-another-commit-hash-restores-the-old-ident",
+    "rule": "*",
+    "settings": [
+      "attack3-accounts-on",
+      "attack3-accounts-on-nopred",
+      "attack3-accounts-on-serial",
+      "attack3-accounts-on-general",
+      "attack3-accounts-on-general-nopred",
+      "attack3-group-accounts",
+      "attack3-accounts-on-import"
+    ],
+    "reference": "s5/REVIEW-3.md, findings: \"R3-1 | High | After the transition, any scope open by a process whose general-writer code hash differs writes a working body under `:triplex/commit` again ... Permanent\"; and \"keep the setting off everywhere until R3-1, R3-2's removal route and R3-4 are fixed\""
+  },
+  {
+    "id": "R3-1-reopen-other-writer",
+    "kind": "OPEN FINDING of the save line (High), not by design; needs TX2_ACCOUNT_CLAIMS=1 and predecessor lookup off",
+    "test": "a-reopen-by-a-real-other-general-writer",
+    "rule": "*",
+    "settings": [
+      "attack3-accounts-on-nopred",
+      "attack3-accounts-on-general-nopred"
+    ],
+    "reference": "s5/REVIEW-3.md, R3-1's row: tests `a-reopen-with-another-commit-hash-restores-the-old-ident`, `a-reopen-by-a-real-other-general-writer` ... \"With predecessor lookup on: refused\""
+  },
+  {
+    "id": "R3-2-route-1",
+    "kind": "OPEN FINDING of the save line (High), not by design; needs TX2_ACCOUNT_CLAIMS=1 (route 2, the removal route, is fixed on this branch)",
+    "test": "one-account-against-anothers-command-ids-with-the-setting-on",
+    "rule": "*",
+    "settings": [
+      "attack3-accounts-on",
+      "attack3-accounts-on-nopred",
+      "attack3-accounts-on-serial",
+      "attack3-accounts-on-general",
+      "attack3-accounts-on-general-nopred",
+      "attack3-group-accounts",
+      "attack3-accounts-on-import"
+    ],
+    "reference": "s5/REVIEW-3.md, findings: \"R3-2 | High | Any caller can take an account's command ID first: by naming the account, or with no account through a removal sent under the reserved prefix ... `one-account-against-anothers-command-ids-with-the-setting-on` (`:names-the-account`) ... 7 of 7 settings each\""
+  },
+  {
+    "id": "R3-4-import-transition",
+    "kind": "OPEN FINDING of the save line (Medium), not by design; needs TX2_ACCOUNT_CLAIMS=1",
+    "test": "an-import-chain-across-the-transition",
+    "rule": "*",
+    "settings": [
+      "attack3-accounts-on-import"
+    ],
+    "reference": "s5/REVIEW-3.md, findings: \"R3-4 | Medium | An ordered import stream that names its account stops at the transition: the next frame is refused `ImportPredecessorMissing` (409) every time ... `an-import-chain-across-the-transition` (`accounts-on-import`) | 1 of 1\""
+  },
+  {
+    "id": "R3-6-optimistic-replay",
+    "kind": "rated low, by design (admitted cost; the merged rule's item 3)",
+    "test": "r2-2-an-optimistic-replay-against-an-old-removal",
+    "rule": "*",
+    "settings": [
+      "attack3-accounts-on",
+      "attack3-accounts-on-nopred",
+      "attack3-accounts-on-serial",
+      "attack3-accounts-on-general",
+      "attack3-accounts-on-general-nopred",
+      "attack3-group-accounts",
+      "attack3-accounts-on-import"
+    ],
+    "reference": "s5/REVIEW-3.md, findings: \"R3-6 | Low (admitted cost) | A replay whose first attempt was optimistic (`frameSourceK` null) is declined for a family any removal ever named ...\"; era3/REVIEW-7.md at 7da3ca3b3: \"the one failure is R3-6, the merged rule's item 3 by design\""
+  },
+  {
+    "id": "race-general-writer",
+    "kind": "test artefact the seventh review explains (the removal runs on the save's own thread); not a product break",
+    "test": "r2-2-race-on-each-writer",
+    "rule": "*",
+    "settings": [
+      "attack3-accounts-on-general",
+      "attack3-accounts-on-general-nopred"
+    ],
+    "reference": "era3/REVIEW-7.md at 7da3ca3b3: \"`r2-2-race-on-each-writer` on the general writer, why it fails. With `TX2_SUBJECT_SAVE=0` ... the gate's `at-submit` hook calls the removal on the save's own thread, inside the save's `privacy/guard` ... the removal fails with `OverlappingFileLockException` ... A removal from any other thread waits on the monitor and then removes the value.\""
+  },
+  {
+    "id": "R3-3-resend-rule-off",
+    "kind": "OPEN FINDING of the save line (Medium) with the replay rule off (as on the one branch); the merged rule fixes it when on (decision (i))",
+    "test": "r2-2-replays-across-a-removal",
+    "rule": "off",
+    "settings": [
+      "attack3-accounts-on",
+      "attack3-accounts-on-nopred",
+      "attack3-accounts-on-serial",
+      "attack3-accounts-on-general",
+      "attack3-accounts-on-general-nopred",
+      "attack3-group-accounts",
+      "attack3-accounts-on-import"
+    ],
+    "reference": "s5/REVIEW-3.md: \"R3-3 (Medium): R2-2 is closed for the SDK's replay, not for a resend. After `ErasureReplayDeclined`, the same command sent again as a new save is judged by its own later source and stores the value chosen before the removal ... (`r2-2-replays-across-a-removal`, 4 cases in each of 7 settings ...)\""
+  },
+  {
+    "id": "era-replay-without-frame-source",
+    "kind": "FINDING NOT COVERED BY A REVIEW: a replay without frameSourceK (an SDK older than the save line) across a removal stores the value chosen before",
+    "test": "r2-2-replays-across-a-removal",
+    "rule": "*",
+    "settings": [
+      "era-era-server",
+      "era-era-per-account"
+    ],
+    "must_contain": [
+      "\"sdkReplay\":[200,null],\"storedAfter\":\"value chosen before\""
+    ],
+    "reference": "No review rates this case. s5/REVIEW-3.md's comparison table, row 1 (\"The SDK's replay after an unrelated refusal, across a removal (a fresh source)\"), says the head is right because it judges the replay by the first attempt's source (`frameSourceK`); s5/attack3_era.clj sends the replay without `frameSourceK` (the removal branch's old protocol), so the gateway cannot tell it from a new save, and stores it, with the rule on. Recorded as a finding in era6/REMOVAL-ON-SAVE-LINE.md section 6.1."
+  },
+  {
+    "id": "era-optimistic-save-casconflict",
+    "kind": "behaviour the save line's third review describes and rates right (the writer's CasConflict, which the SDK replays, not chased); the test asks for 200",
+    "test": "r2-2-an-optimistic-save-against-an-old-removal",
+    "rule": "*",
+    "settings": [
+      "era-era-server",
+      "era-era-per-account"
+    ],
+    "must_contain": [
+      "\"noSourceNoStamp\":[409,\"ErasureReplayDeclined\"],\"withTheStamp\":[409,\"CasConflict\"]"
+    ],
+    "reference": "s5/REVIEW-3.md's comparison table, row 3 (\"A new value long after a removal, the first attempt optimistic (no source)\"), the removal branch's column, rated right: \"past the decline check when it carries the removal stamp the SDK read (`removalSeen`), declined without it; then refused `CasConflict` by the writer, which the SDK replays (not chased)\""
+  }
+]

@@ -72,6 +72,14 @@ for p in $phases; do
     ids) for s in accounts-on accounts-on-serial accounts-on-general group-accounts; do run ids "$s" "$rule" "$s5 -i /exp/s6/stored_ids_gate.clj" "(s6-ids/main)"; done ;;
   esac
 done
+# [DX-ERA6 eighth pass] the gates pass only when exactly the tests listed in era6/expected-save-line.json fail, each
+# with the review's words or marked as a finding (era6/expected_save_line.py); a docker or JVM failure still fails
+python3 "$(cd "$(dirname "$0")" && pwd)/expected_save_line.py" "$out" "${RULE:-0}" | tee "$out/expected.txt"
+expected_status=${PIPESTATUS[0]}
+if grep -q "SAVE_LINE_EXPECTED OK" "$out/expected.txt" && [[ $expected_status == 0 ]]; then
+  # every failing exit was a listed test failure: clojure.test exits 1 when any test fails
+  status=0
+else status=1; fi
 rm -rf "$out/tree" "$out/tests"
 echo "ERA6_SAVE_LINE_EXIT $status"
 exit "$status"
