@@ -66,3 +66,16 @@ test("the option selects ledgers in parts and byte frames by itself; whole can b
     else process.env.TX2_DERIVED_SEAL = before;
   }
 });
+test("with subject stops: the split check refuses only what cannot fit, within the counters' growth (not a row's margin)", () => {
+  const largest = (ok: (n: number) => boolean) => {
+    let lo = 200, hi = 20_000;
+    while (lo < hi) { const m = Math.ceil((lo + hi) / 2); if (ok(m)) lo = m; else hi = m - 1; }
+    return lo;
+  };
+  const passes = (f: () => unknown) => { try { f(); return true; } catch (e) { if (e instanceof FrameTooLarge) return false; throw e; } };
+  // the largest ledger whose closing piece fits a frame by itself (a subject with nothing else to write)
+  const fit = largest((n) => passes(() => noticeFrame(db, undefined, cursor, [candidate("pl:a", 0, n)], event)));
+  // the largest a split subject (30 units) may begin with under subject stops
+  const accepted = largest((n) => passes(() => noticeFrame(db, undefined, cursor, [candidate("pl:a", 30, n)], { ...event, stops: true })));
+  assert.ok(accepted <= fit && fit - accepted <= 64, `fit ${fit}, accepted ${accepted}`);
+});

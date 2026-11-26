@@ -192,7 +192,7 @@ export function noticeFrame(
 ) {
   const part = current.part ?? 0;
   if (part) assert(part <= candidates[0]!.units.length, "A split subject's deliveries moved");
-  const build = (pieces: readonly Piece[]) => {
+  const build = (pieces: readonly Piece[], cur: Cursor = current) => {
     const ops: Op[] = [],
       deliveries: W0.Delivery[] = [];
     for (const p of pieces) {
@@ -203,20 +203,20 @@ export function noticeFrame(
       if (p.close) ops.push(...c.ledger);
     }
     const last = pieces.at(-1);
-    const end = last ? current.start + last.index + Number(last.close) : current.start,
+    const end = last ? cur.start + last.index + Number(last.close) : cur.start,
       tail = last && !last.close ? last.to : 0;
     const done = end === event.size && !tail;
     const seq = event.erasureSeq === undefined ? {} : { erasureSeq: event.erasureSeq };
     const packet: FramePacket | undefined = deliveries.length
       ? {
           account: event.account,
-          epoch: current.epoch,
-          batch: current.batch + 1,
-          previous: current.previous,
-          event: current.event,
+          epoch: cur.epoch,
+          batch: cur.batch + 1,
+          previous: cur.previous,
+          event: cur.event,
           position: event.position,
           recipe: event.recipe,
-          start: current.start,
+          start: cur.start,
           through: end,
           ...(part ? { part } : {}),
           ...(tail ? { tail } : {}),
@@ -225,13 +225,13 @@ export function noticeFrame(
         }
       : undefined;
     const next: Cursor = {
-      epoch: current.epoch,
-      batch: packet?.batch ?? current.batch,
-      previous: packet ? hash(packet) : current.previous,
-      event: current.event + Number(done),
+      epoch: cur.epoch,
+      batch: packet?.batch ?? cur.batch,
+      previous: packet ? hash(packet) : cur.previous,
+      event: cur.event + Number(done),
       start: done ? 0 : end,
-      parent: done ? event.next : current.parent,
-      entries: current.entries + deliveries.length,
+      parent: done ? event.next : cur.parent,
+      entries: cur.entries + deliveries.length,
       ...seq,
       frames: "bytes",
       part: tail,
@@ -247,13 +247,20 @@ export function noticeFrame(
   // [DX-ERA4, fourth round T2] A subject split over frames writes its deliveries first and its ledger (the closing piece)
   // last. If the closing piece alone cannot fit a frame, the last frame fails after the deliveries are written, and the
   // subject can be neither stopped (its deliveries would be written again) nor finished: the account stopped (a whole
-  // ledger of 200 sealed forms). So when a split begins, under subject stops, the closing piece alone is checked first,
-  // with 64 characters to spare for the cursor's counters, which grow by the frames between; if it does not fit, the
-  // subject is refused here, before anything of its is written, and the writer gives it its named stop (LedgerFull).
+  // ledger of 200 sealed forms). So when a split begins, under subject stops, the closing piece alone is priced first,
+  // with the cursor's two growing counters at the most they can reach by then (a packet a frame, at most one frame a
+  // unit; every delivery of the subjects up to this one); if it does not fit, the subject is refused here, before
+  // anything of it is written, and the writer gives it its named stop (LedgerFull). The other fields of the cursor
+  // are the same then (hashes and positions of fixed length, the subject's own end).
   if (event.stops && filled.split && (filled.advance > 0 || part === 0)) {
     const c = candidates[filled.advance]!;
-    const alone = build([{ index: filled.advance, from: c.units.length, to: c.units.length, close: true }]).ops;
-    if (!frameEstimate([...alone, "-".repeat(64)]).fits)
+    const most: Cursor = {
+      ...current,
+      batch: current.batch + c.units.length + 1,
+      entries: current.entries + candidates.slice(0, filled.advance + 1).reduce((n, x) => n + x.deliveries, 0),
+    };
+    const alone = build([{ index: filled.advance, from: c.units.length, to: c.units.length, close: true }], most).ops;
+    if (!frameEstimate(alone).fits)
       throw Object.assign(new FrameTooLarge("Subject " + c.subject + ": its ledger needs a frame larger than the writer's bound"), {
         subject: c.subject,
       });
