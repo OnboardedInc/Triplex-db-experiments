@@ -7006,9 +7006,9 @@ Sources: both drivers. Session build `fea80dd73`. Every window below had 0 wrong
 
 **Other lines:** the fifth save line review closed at `871afe05b` (105,815 fuzzed saves, 0 differences, verdict unchanged). The removal merge's key-deletion gate passed on its own image. The removal builder's ninth pass started 00:46.
 
-## 2026-11-26 01:04 EST: server session: more read permits than reader cores doubles the tail for subjects not in memory; the scorecard is running
+## 2026-11-26 00:59 EST: server session: more read permits than reader cores doubles the tail for subjects not in memory; the scorecard is running
 
-Source: machine A's driver. Session spend USD 3.90 at 01:00.
+Source: machine A's driver. Session spend USD 3.90 by the driver's last line. The driver's stated clock ran about 5 minutes ahead of the Mac's `date` in its last three messages (it wrote 01:04 when the Mac showed 00:59); times in this entry taken from its messages are marked by that, and the driver has been told to read every time from the Mac's `date`.
 
 - **A2b, the scorecard's read configuration on the uncached windows (12 permits, prefetch, read-ahead on; 9.8 minutes; 0 wrong, 0 errors):** 1,719.5, 1,744.2 and 1,525.9 reads a second (within 4% of 3 permits: held); p50 137.2, 141.3 and 156.7 ms; **p99 565.2, 553.0 and 589.8 ms**. Every sampled exchange not in memory (0 of 3,513 in memory). The prediction of the same tail ratio as at 3 permits was wrong: the tail doubled (250 to 307 ms at 3 permits).
 - **Processor figures:** reader 2.86 to 2.87 cores at 12 permits against 2.68 to 2.80 at 3: the same three cores 3 to 7% busier, reads a second equal, p99 doubled. More permits than cores lengthens reads at the tail without adding throughput.
