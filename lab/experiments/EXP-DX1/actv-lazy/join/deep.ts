@@ -5,6 +5,7 @@ import { W0, type WorldRow } from "../../../../bench/lib/w0-world.ts";
 import { millis, type Store } from "../store.ts";
 import type { Point } from "../decision.ts";
 import type { Op } from "../../notify1/store.ts";
+import { derivedSealOn } from "../../../../bench/lib/derived-seal.ts";
 
 const custom = ":person/custom-";
 const notice = new Set([
@@ -59,7 +60,8 @@ export function deepImpact(
       if (op.attribute === ":file/expiresOn") {
         const day = W0.parseDate(op.value.value);
         assert(day >= 0);
-        dates.add(W0.endOfDay(day));
+        // [DX-ERA4, third review T7] under TX2_DERIVED_SEAL the calendar names no document date (account.ts nextEndOfDay)
+        if (!derivedSealOn()) dates.add(W0.endOfDay(day));
       }
       if (op.validTo !== undefined && op.validTo > millis(cut.validTime))
         dates.add(new Date(op.validTo).toISOString().replace("Z", "000Z"));

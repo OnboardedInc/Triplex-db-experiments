@@ -149,24 +149,31 @@
               at (- (System/currentTimeMillis) 86400000)
               loaded (loop [k 0] (when (< k n) @(d/transact conn (record-tx k (min n (+ k 10000)) at)) (recur (+ k 10000))))
               target (str "a-" (quot n 3))
-              checked (atom 0) found (atom 0)
+              checked (atom 0) found (atom 0) armed (atom false)
               pass! (fn []
-                      (with-redefs-fn {#'ds/present-keys (fn [_ ids] (swap! checked + (count ids)) (filterv #(= target (get % "assertionId")) ids))
+                      (with-redefs-fn {#'ds/present-keys (fn [_ ids] (swap! checked + (count ids))
+                                                           (if @armed (filterv #(= target (get % "assertionId")) ids) []))
                                        #'envelope/erase-keys! (fn [_ ids] (swap! found + (count ids)))}
                         (fn [] (let [t (System/nanoTime) r (ds/resweep-one! src (d/db conn))] [(/ (- (System/nanoTime) t) 1e6) r]))))
-              reset-state! (fn [] (swap! @#'ds/resweep-state dissoc src) (reset! found 0) (reset! checked 0))
+              reset-state! (fn [] (swap! @#'ds/resweep-state dissoc src) (reset! found 0) (reset! checked 0) (reset! armed false))
               _ (reset-state!)
               m0 (used)
               times (vec (for [_ (range 5)] (first (pass!))))
               m1 (used)
               held (pr-str (get @@#'ds/resweep-state src))
+              ;; a gateway that has run since the removals: first every record taken as new (catch-up passes), then the key
+              ;; restored a third of the way down; the rotation alone must reach it, while `arrive` new removals a pass come
               until (fn [arrive]
                       (reset-state!)
-                      (loop [k 1 next-k n]
-                        (when (pos? arrive) @(d/transact conn (record-tx next-k (+ next-k arrive) at)))
-                        (pass!)
-                        (if (or (pos? @found) (> k (+ 10 (quot n 4096)))) {:passes k :deleted (pos? @found)}
-                          (recur (inc k) (+ next-k arrive)))))
+                      (let [catch-up (loop [g 1] (let [[_ r] (pass!)] (if (and (pos? (:new r)) (< g (+ 10 (quot n 4096)))) (recur (inc g)) g)))
+                            _ (reset! armed true)
+                            at-rot (str (get-in @@#'ds/resweep-state [src :rot]))]
+                        (loop [k 1 next-k (+ n 100000000)]
+                          (when (pos? arrive) @(d/transact conn (record-tx next-k (+ next-k arrive) at)))
+                          (pass!)
+                          (if (or (pos? @found) (> k (+ 10 (quot n 4096))))
+                            {:catch-up-passes catch-up :rotation-at-restore at-rot :passes k :deleted (pos? @found)}
+                            (recur (inc k) (+ next-k arrive))))))
               plain (until 0)
               with-256 (until 256)
               with-4096 (until 4096)
@@ -180,6 +187,87 @@
           (x/oracle! "resweep8" (and (:deleted with-4096) (<= (:passes with-4096) (+ 2 bound))) "4,096 new removals a pass do not delay it" row)
           (x/oracle! "resweep8" (< (count held) 200) "the re-sweep holds two positions between passes" row))))))
 
+;; ---- kinds8: the content-free kinds and the identifier fields bounded (T7) -------------------------------------------
+(defn kinds8
+  "Each of the 22 content-free kinds written three ways: in its writers' own form (accepted), as the third review's b1
+  wrote it (a document holding a protected value: refused), and with one field of fixed form carrying the value (refused);
+  the three identifier fields with an SSN-shaped value (refused) and in their own form (accepted). With no boundary and
+  with SCALE1's declared boundary (the subject form pl:s{n})."
+  []
+  (doseq [declared? [false true]]
+    (g/fresh-scope true
+      (fn [src conn]
+        (let [lbl (str "kinds8" (if declared? " declared" ""))
+              _ (when declared? (ds/declare-boundary! conn deep-boundary))
+              [vx _] (a5/seed! src (str "k8-x-" declared?) (if declared? "acct/a/doc:00000001:0:0" g/a1) "k8")
+              _ (a6/require! src)
+              hx (apply str (repeat 64 "d")) hy (apply str (repeat 64 "e"))
+              prefix (str "notice:v1:" hx ":")
+              census {"id" hx "count" 3 "members" hy}
+              cursor {"epoch" hx "event" 1 "start" 0 "parent" hx "batch" 0 "previous" hy "entries" 0}
+              instant "2026-11-05T00:00:00.000000Z"
+              recipe {"version" 1 "account" prefix "epoch" hx "sequence" 1 "parent" hx "old" nil "next" "R1" "oldHash" nil
+                      "nextHash" (str "sha256:" hy) "document" {"name" "R1" "rules" []} "from" instant "validTime" instant
+                      "request" "era4-one" "kind" "activation" "census" census "selection" {"kind" "census"} "inputs" hx
+                      "evaluator" hy "sourceBefore" 3}
+              tail {"epoch" hx "census" census "sequence" 1 "parent" hx "release" "R1" "from" instant "validTime" instant
+                    "inputs" hx "evaluator" hy}
+              s1 "pl:s00000001"
+              ;; [kind, its writers' form, the same with one fixed-form field carrying the value]
+              kinds [["notice-progress" cursor (assoc cursor "epoch" vx)]
+                     ["values:1" {"identity" hx "through" 3 "status" "stored" "hash" hy "changes" 2} {"identity" hx "through" 3 "status" vx "hash" hy "changes" 2}]
+                     [(str "claim:" hx) hy vx]
+                     [(str "census:" hx) census (assoc census "members" vx)]
+                     [(str "members:" hx ":0") {"members" [s1] "ordinal" 0 "census" hx} {"members" [vx] "ordinal" 0 "census" hx}]
+                     ["join-meta" {"epoch" hx "census" census "valid" instant "source" 4 "compiler" hy "scheduled" false}
+                      {"epoch" hx "census" census "valid" vx "source" 4 "compiler" hy "scheduled" false}]
+                     ["join-calendar" [instant] [vx]]
+                     [(str "join-member:" s1) 0 vx]
+                     ["join-index-base:0" {"packed" (a6/packed {"entries" []}) "sum" hx} {"packed" (a6/packed {"entries" []}) "sum" vx}]
+                     ["join-index:0" {"base" 7 "digest" hx "patch" (a6/packed [])} {"base" 7 "digest" vx "patch" (a6/packed [])}]
+                     ["join-invalid" {"source" 5 "compiler" hx} {"source" vx "compiler" hx}]
+                     ["control" {"paused" false "paceMs" nil "by" "sdk" "version" 1} {"paused" false "paceMs" nil "by" "sdk" "version" 1 "note" vx}]
+                     ["event:1" recipe (assoc recipe "from" vx)]
+                     ["tail" tail (assoc tail "parent" vx)]
+                     ["erasure" 0 vx]
+                     [(str "received:" hx) {"batch" 1 "digest" hy} {"batch" 1 "digest" vx}]
+                     [(str "effect-erasure:" hx ":1") 2 vx]
+                     [(str "recorded-generation:" s1) 1 vx]
+                     ["recorded-cursor" cursor (assoc cursor "parent" vx)]
+                     ["cursor" {"event" 1 "start" 0 "parent" hx "batch" 0 "previous" hy "pending" nil} {"event" 1 "start" 0 "parent" hx "batch" 0 "previous" hy "pending" nil "payload" vx}]
+                     [(str "settled-values:" hx) "v" {"payload" vx}]
+                     [(str "settled-notice:" hx) "v" {"payload" vx}]]
+              ;; b1's own keys and document (third review): {"payload" <value>} under each pattern it used
+              b1-keys ["notice-progress" "values:1" "claim:abc" "census:abc" "members:abc:1" "join-meta" "join-calendar"
+                       "join-member:pl:s00000001" "join-index-base:1" "join-index:1" "join-invalid" "control" "event:1" "tail"
+                       "erasure" "received:abc" "effect-erasure:abc:1" "recorded-generation:pl:s00000001" "recorded-cursor"
+                       "cursor" "settled-values:abc" "settled-notice:abc"]
+              w (fn [cmd k v] (a6/doc! src cmd k v))
+              own (into (sorted-map) (for [[k good _] kinds] [k (w (str "k8-own-" declared? "-" k) k good)]))
+              field (into (sorted-map) (for [[k _ bad] kinds] [k (w (str "k8-field-" declared? "-" k) k bad)]))
+              b1 (into (sorted-map) (for [k b1-keys] [k (w (str "k8-b1-" declared? "-" k) k {"payload" vx})]))
+              ssn "123-45-6789"
+              ids {:removed-marker-names (w (str "k8-rm-" declared?) (str "recorded-ledger:" s1) (a6/packed [{"removed" [ssn]}]))
+                   :page-entry-subject (w (str "k8-pe-" declared?) "answer:8:f1" (assoc (a6/page [] {"subject" ssn}) "identity" a6/hex "previous" a6/hex))
+                   :packet-account (w (str "k8-pa-" declared?) "recorded-notices:8" (a6/packed {"account" ssn "deliveries" []}))}
+              ids-own {:removed-marker-names (w (str "k8-rm-own-" declared?) (str "recorded-ledger:" s1)
+                                                (a6/packed [{"removed" ["01ARZ3NDEKTSV4RRFFQ69G5FAV"] "seq" 1}]))
+                       :page-entry-subject (w (str "k8-pe-own-" declared?) "answer:8:f2" (assoc (a6/page [] {"subject" s1}) "identity" a6/hex "previous" a6/hex))
+                       :packet-account (w (str "k8-pa-own-" declared?) "recorded-notices:9" (a6/packed {"account" prefix "deliveries" []}))}
+              ok? #(= [200 nil] %)
+              row {:declared declared? :kinds (count kinds) :own-accepted (count (filter ok? (vals own)))
+                   :field-refused (count (remove ok? (vals field))) :b1-refused (count (remove ok? (vals b1)))
+                   :ids-refused (count (remove ok? (vals ids))) :ids-own-accepted (count (filter ok? (vals ids-own)))
+                   :own-refusals (into {} (remove (comp ok? val) own)) :field-accepted (vec (keys (filter (comp ok? val) field)))
+                   :b1-accepted (vec (keys (filter (comp ok? val) b1))) :ids ids :ids-own ids-own}]
+          (report :kinds8 row)
+          (x/oracle! lbl (= 22 (count kinds)) "the 22 content-free kinds" row)
+          (x/oracle! lbl (= 22 (:own-accepted row)) "each kind in its writers' own form is accepted" row)
+          (x/oracle! lbl (= 22 (:field-refused row)) "each kind with a fixed-form field carrying the value is refused" row)
+          (x/oracle! lbl (= 22 (:b1-refused row)) "each of b1's 22 documents is refused" row)
+          (x/oracle! lbl (= 3 (:ids-refused row)) "the three identifier fields refuse an SSN-shaped value" row)
+          (x/oracle! lbl (= 3 (:ids-own-accepted row)) "the three identifier fields take their own form" row))))))
+
 (defn main []
   (x/install-hooks!)
   (#'era4-races/install-declare-hooks!)
@@ -188,7 +276,8 @@
   (let [guarded (fn [lbl f] (try (f) (catch Throwable t (x/oracle! lbl false "the case runs to its end" (str t)))))]
     (case (System/getenv "ERA5_PHASE")
       "cases8" (guarded "boundary8" boundary8)
-      "resweep8" (guarded "resweep8" resweep8)))
+      "resweep8" (guarded "resweep8" resweep8)
+      "kinds8" (guarded "kinds8" kinds8)))
   (println "ERA5_VIOLATIONS" (pr-str (frequencies (map :message @x/violations))))
   (doseq [v (take 8 @x/violations)] (println "ERA5_VIOLATION" (pr-str v)))
   (println "ERA5_SUMMARY" (pr-str {:oracles @x/oracles :violations (count @x/violations)}))

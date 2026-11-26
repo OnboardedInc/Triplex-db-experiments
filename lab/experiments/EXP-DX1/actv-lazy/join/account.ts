@@ -142,6 +142,13 @@ const stamp = (t: number) =>
       (_, x) => x + String(Math.round((t - Math.floor(t)) * 1000)).padStart(3, "0") + "Z",
     );
 const dataKey = (seq: number, i: number) => "join-output:" + seq + ":" + i;
+// [DX-ERA4, third review T7] Under TX2_DERIVED_SEAL the account's calendar (`join-calendar`, a clear document) keeps no
+// day derived from a document's date: an expiry date is a protected value, and its day in clear would be a copy no
+// removal reaches. It holds instead the next end of day after the clock, renewed at each one, so the account still
+// passes every document-date boundary (each is an end of day, W0.endOfDay) without the calendar naming any. Unset: the
+// calendar is as before.
+export const nextEndOfDay = (at: string) => W0.endOfDay(W0.parseDate(at.slice(0, 10)));
+const endOfDayInstant = (d: string) => d.endsWith("T00:00:00.000000Z");
 /** A joined command's planned transaction. [DX-ACT8] `guards` replaces the whole-head fence (with `inside` and `onAck`
  * diagnostic hooks); absent, the commit requires the head it was planned at, as before. */
 type Plan = {
@@ -320,7 +327,7 @@ export class JoinedAccount {
       record = [
         fact(namesOf(this.s).ORIGIN, "lazy/generation", { profile: s.profile, held: source.seal }),
         this.db.put("join-meta", meta),
-        this.db.put("join-calendar", []),
+        this.db.put("join-calendar", derivedSealOn() ? [nextEndOfDay(at)] : []),
         fact(namesOf(this.s).CLOCK, "lazy/slot", { joined: source.seal, kind: "baseline", at }),
       ];
     // [DX-ACT8] TX2_ENROL_BESIDE_SAVES=1 (a namespaced account): the enrolment record commits only if its four entities
@@ -388,7 +395,7 @@ export class JoinedAccount {
             "Protected input requires a retention ruling",
           );
           if (row.op !== "assert") continue;
-          if (["expiresOn", ":file/expiresOn"].includes(row.attribute)) {
+          if (["expiresOn", ":file/expiresOn"].includes(row.attribute) && !derivedSealOn()) {
             const date = W0.parseDate(row.value.value);
             if (date >= 0) days.add(W0.endOfDay(date));
           }
@@ -464,7 +471,7 @@ export class JoinedAccount {
       "lazy/join",
       [
         this.db.put("join-meta", meta),
-        this.db.put("join-calendar", [...days].filter((d) => d > at).sort()),
+        this.db.put("join-calendar", [...days, ...(derivedSealOn() ? [nextEndOfDay(at)] : [])].filter((d, i, all) => d > at && all.indexOf(d) === i).sort()),
         ...(c.clock ? [{ op: "retract", id: c.clock.id }] : []),
         fact(namesOf(this.s).CLOCK, "lazy/slot", { joined: c.generation, kind: "baseline", at }),
       ],
@@ -1117,8 +1124,9 @@ export class JoinedAccount {
         const { meta, c, tail } = await this.state(k),
           cal = await this.db.get<string[]>("join-calendar", k);
         assert(cal.value[0] === due && c.at <= due);
+        const rest = derivedSealOn() && endOfDayInstant(due) ? [...new Set([...cal.value.slice(1), nextEndOfDay(due)])].sort() : cal.value.slice(1);
         const ops: any[] = [
-          ...this.db.change("join-calendar", cal, cal.value.slice(1)),
+          ...this.db.change("join-calendar", cal, rest),
           ...(c.clock ? [{ op: "retract", id: c.clock.id }] : []),
           fact(namesOf(this.s).CLOCK, "lazy/slot", { joined: meta.epoch, kind: "due", at: due }),
         ];
@@ -1383,7 +1391,7 @@ export class JoinedAccount {
             newDates = edit.values.map((v) => {
               assert(typeof v === "string" && W0.parseDate(v) >= 0);
               return W0.endOfDay(W0.parseDate(v));
-            });
+            }).filter(() => !derivedSealOn());
           const dates = [...new Set([...cal.value, ...newDates.filter((d) => d > at)])].sort();
           if (canonical(dates) !== canonical(cal.value))
             ops.push(...this.db.change("join-calendar", cal, dates));

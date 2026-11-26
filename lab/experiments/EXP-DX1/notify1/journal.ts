@@ -1,4 +1,4 @@
-import { derivedSealOn, evaluateOptions, failed, noteOutput, subjectStopsOn } from "../../../bench/lib/derived-seal.ts";
+import { derivedSealOn, evaluateOptions, failed, failEvaluation, noteOutput, subjectStopsOn } from "../../../bench/lib/derived-seal.ts";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { W0, sha256 } from "../../../bench/lib/w0-world.ts";
@@ -363,8 +363,10 @@ export class Notices {
     const by = new Map<string, Work>();
     const began = this.budget ? performance.timeOrigin + performance.now() : 0;
     for (const world of worlds) {
-      const unbuilt = (world as { buildFailed?: string }).buildFailed;
+      const unbuilt = (world as { buildFailed?: string }).buildFailed ??
+        (failEvaluation.subject === world.subject ? "W0.E_VALUE (injected for " + world.subject + ")" : undefined);
       if (unbuilt !== undefined) {
+        if (!subjectStopsOn()) throw Error(unbuilt);
         by.set(world.subject, failed("EvaluationFailed", unbuilt) as unknown as Work);
         continue;
       }

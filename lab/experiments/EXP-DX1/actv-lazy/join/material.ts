@@ -4,7 +4,7 @@ import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
 import { projection, type Difference } from "../../actv-delta/rules.ts";
 import { pack, unpack } from "../../notify1/store.ts";
 import type { Point } from "../decision.ts";
-import { evaluateOptions, failed, subjectStopsOn, type Failed } from "../../../../bench/lib/derived-seal.ts";
+import { evaluateOptions, failed, failEvaluation, subjectStopsOn, type Failed } from "../../../../bench/lib/derived-seal.ts";
 
 export type Stored = { subject: string; rows: Difference[]; json?: string; failed?: Failed };
 export type Work = {
@@ -26,7 +26,8 @@ export function evaluateRows(
   const stops = subjectStopsOn();
   for (const world of worlds) {
     // [DX-ERA4, third review T2] a subject whose world was not built or does not evaluate is a named failure of its own
-    const unbuilt = (world as { buildFailed?: string }).buildFailed;
+    const unbuilt = (world as { buildFailed?: string }).buildFailed ??
+      (failEvaluation.subject === world.subject ? "W0.E_VALUE (injected for " + world.subject + ")" : undefined);
     if (unbuilt !== undefined) {
       if (!stops) throw Error(unbuilt);
       rows.push({ subject: world.subject, rows: [], failed: failed("EvaluationFailed", unbuilt) });

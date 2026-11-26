@@ -673,9 +673,18 @@
             h nil))
         nil))
     nil))
+;; [DX-ERA4, third review T7] the fixed forms of the identifier fields, so a value cannot ride in one: a removed marker
+;; names assertions (the store's assertion IDs: 26 characters of Crockford base32, as `ulidx` makes them and the deep
+;; loader's hashes are), a packet's account is its journal's document prefix, an epoch a hash, an ID or "uninitialized",
+;; and a subject is of the database's declared subject form (with a boundary) or W0's placement form `pl:...`
+(def ^:private assertion-id #"[0-9A-HJKMNP-TV-Z]{26}")
+(defn- assertion-id? [x] (if (string? x) (some? (re-matches assertion-id x)) false))
+(def ^:dynamic ^:private *subject-form* #"pl:[A-Za-z0-9._-]{1,64}")
+(defn- subject-form? [x] (if (string? x) (if (<= (count x) 128) (.matches (re-matcher *subject-form* x)) false) false))
 (defn- removed-marker? [x]
   (if (map? x)
-    (and (every? #{"removed" "seq"} (keys x)) (vector? (get x "removed")) (every? id-like? (get x "removed"))
+    (and (every? #{"removed" "seq"} (keys x)) (vector? (get x "removed")) (<= (count (get x "removed")) max-items)
+         (every? assertion-id? (get x "removed"))
          (or (nil? (get x "seq")) (nat? (get x "seq"))))
     false))
 (def ^:dynamic ^:private *account*
@@ -700,6 +709,9 @@
 (defn- delivery! [what d]
   (exact-keys! what d ["subject" "generation" "sealed"] [])
   (when-not (and (id-like? (get d "subject")) (nat? (get d "generation"))) (unsealed! what))
+  ;; [T7] a sealed unit binds the subject (its place names it); a removed marker does not, so the subject is of the form
+  (when (removed-marker? (get d "sealed"))
+    (when-not (subject-form? (get d "subject")) (unsealed! (str what " (a subject not of the subject form)"))))
   (unit! what (get d "subject") (get d "sealed")))
 (defn- units! [what subject v]
   (when-not (vector? v) (unsealed! what))
@@ -707,38 +719,141 @@
 
 ;; Every kind of derived document the option's writers store (second review K: 19 kinds on the held path, plus the
 ;; ledger's parts and generations). Under the setting a kind not on this list is refused. Content kinds are checked to
-;; their exact shape; the others hold counters, hashes, IDs and release documents, and are not shape-checked.
+;; their exact shape. [DX-ERA4, third review T7] The others (content-free: counters, cursors, hashes, IDs, instants and
+;; release documents) are checked to their exact form too (`free-kinds`): the key's own parts (hashes, subjects,
+;; numbers) and the document's keys and the form of every field, so a value cannot ride in one; what stays unchecked is
+;; named there (a release document, a packed join index).
+(def ^:private subject-key "(pl:[A-Za-z0-9._-]{1,64})")
 (def ^:private content-kinds
   [[#"answer:([0-9]+):f([0-9]+)" :page]
    [#"recorded-notices:([0-9]+)" :packet]
-   [#"recorded-ledger-part:(.+):([0-9]+):([0-9]+)" :ledger-part]
-   [#"recorded-ledger:(.+)" :ledger]
-   [#"receiver:([^:]+):(.+)" :receiver]
-   [#"effects:([^:]+):([0-9]+)" :effects]
+   [(re-pattern (str "recorded-ledger-part:" subject-key ":([0-9]+):([0-9]+)")) :ledger-part]
+   [(re-pattern (str "recorded-ledger:" subject-key)) :ledger]
+   [(re-pattern (str "receiver:([0-9a-f]{64}):" subject-key)) :receiver]
+   [#"effects:([0-9a-f]{64}):([0-9]+)" :effects]
    ;; [DX-ERA4, third review T1] the work items a subject holds that read a removable value, kept in clear so the owner's
    ;; rule (a removed value keeps its notice) survives the removal: ids only, of exact form, sorted and distinct
-   [#"recorded-kept:(.+)" :kept]
+   [(re-pattern (str "recorded-kept:" subject-key)) :kept]
    ;; [DX-ERA4, third review T2] the Publish builder's retired-item archive (DX-ACT8, fourth review Z4): one row per retired
    ;; item, its ID, subject and sequence only, of exact form; and a subject's named stop (the recorder or the settlement
    ;; went past it): the event or release sequence and one code of a fixed list
-   [#"recorded-retired:(pl:[A-Za-z0-9]{1,32}):(wi:[0-9a-f]{64})" :retired]
-   [#"recorded-stopped:(pl:[A-Za-z0-9]{1,32})" :stopped]
-   [#"settled-stopped:([0-9]+):(pl:[A-Za-z0-9]{1,32})" :stopped]])
+   [(re-pattern (str "recorded-retired:" subject-key ":(wi:[0-9a-f]{64})")) :retired]
+   [(re-pattern (str "recorded-stopped:" subject-key)) :stopped]
+   [(re-pattern (str "settled-stopped:([0-9]+):" subject-key)) :stopped]])
 (def ^:private stop-codes #{"LedgerFull" "EvaluationFailed" "SealRefused" "FrameTooLarge"})
+
+;; ---- [DX-ERA4, third review T7] the content-free kinds' exact forms -------------------------------------------------
+(def ^:private instant-re #"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}Z")
+(def ^:private prefix-re #"notice:v1:[0-9a-f]{64}:")
+(def ^:private token-re #"[A-Za-z0-9_.:/|+=-]{1,128}")
+(defn- form?
+  "Whether `x` is of form `f`: :nat, :bool, :hex (64 lowercase hex), :instant (W0's microsecond instant), :subject,
+  :epoch (a hash, an assertion ID or \"uninitialized\"), :prefix (a journal's document prefix), :token (at most 128
+  characters of [A-Za-z0-9_.:/|+=-]), :name (a string of at most 256 characters: a release's name), :packed (base64 text
+  of a packed document, not decoded here), :opaque (not checked: named where used); or [:is v], [:one-of set],
+  [:nil-or f], [:or f...], [:vec f], [:map required optional] (exact keys, each to its form)."
+  [f x]
+  (cond
+    (= f :nat) (nat? x)
+    (= f :bool) (boolean? x)
+    (= f :hex) (hex64? x)
+    (= f :instant) (if (string? x) (some? (re-matches instant-re x)) false)
+    (= f :subject) (subject-form? x)
+    (= f :epoch) (if (string? x) (if (hex64? x) true (if (assertion-id? x) true (= "uninitialized" x))) false)
+    (= f :prefix) (if (string? x) (some? (re-matches prefix-re x)) false)
+    (= f :token) (if (string? x) (some? (re-matches token-re x)) false)
+    (= f :name) (if (string? x) (<= 1 (count x) 256) false)
+    (= f :packed) (if (string? x) (some? (re-matches #"[A-Za-z0-9_=+/-]*" x)) false)
+    (= f :opaque) true
+    (vector? f)
+    (let [[t a b] f]
+      (case t
+        :is (= a x)
+        :one-of (contains? a x)
+        :nil-or (if (nil? x) true (form? a x))
+        :or (boolean (some #(form? % x) (rest f)))
+        :vec (if (vector? x) (if (<= (count x) 100000) (every? #(form? a %) x) false) false)
+        :map (if (map? x)
+               (if (every? #(contains? x %) (keys a))
+                 (every? (fn [[k v]] (let [g (if (contains? a k) (get a k) (get b k ::none))]
+                                       (if (= ::none g) false (form? g v))))
+                         x)
+                 false)
+               false)))
+    :else false))
+(def ^:private census-form [:map {"id" :hex "count" :nat "members" :hex} {}])
+(def ^:private recorder-cursor
+  [:map {"epoch" :epoch "event" :nat "start" :nat "parent" :hex "batch" :nat "previous" :hex "entries" :nat}
+   {"erasureSeq" :nat "frames" [:is "bytes"] "part" :nat "ledger" [:is "parts"]}])
+(def ^:private selection-form
+  [:or [:map {"kind" [:is "census"]} {}] [:map {"kind" [:is "subjects"] "ids" [:vec :subject]} {}]])
+;; notify1/journal.ts Recipe: `document` is the release document (the business's rules, not a subject's value) or
+;; null, and `documentRef` names one; neither is walked
+(def ^:private recipe-form
+  [:map {"version" [:is 1] "account" :prefix "epoch" :epoch "sequence" :nat "parent" :hex "old" [:nil-or :name]
+         "next" :name "oldHash" [:nil-or :token] "nextHash" :token "document" :opaque "from" :instant "validTime" :instant
+         "request" :token "kind" :token "census" census-form "selection" selection-form "inputs" :token "evaluator" :token
+         "sourceBefore" :nat}
+   {"ownerProof" :token "definition" :nat "documentRef" :opaque}])
+(def ^:private tail-form
+  [:map {"epoch" :epoch "census" census-form "sequence" :nat "parent" :hex "release" [:nil-or :name] "from" :instant
+         "validTime" :instant "inputs" :token "evaluator" :token}
+   {"recipient" [:map {"sink" :token "identity" :token} {}] "custom" [:map {"hash" :token "definition" :nat} {}]}])
 ;; [DX-ERA4, second review N4] the review's census (forms.ts K), plus what T1 writes after a removal (the join index's
 ;; leaves and its invalidation marker) and the settlement control document. These hold no value of the current
 ;; protection policy (document types and expiry dates); the join index's postings hold values of the indexed rules'
-;; inputs (pay, location, status), so a policy that protects one of those makes this list wrong (14.4).
-(def ^:private other-kinds
-  #"(notice-progress|values:[0-9]+|claim:.+|census:.+|members:.+|join-meta|join-calendar|join-member:.+|join-index-base:[0-9]+|join-index:[0-9]+|join-invalid|control|event:[0-9]+|tail|erasure|received:.+|effect-erasure:.+|recorded-generation:.+|recorded-cursor|cursor|settled-values:.+|settled-notice:.+)")
+;; inputs (pay, location, status), so a policy that protects one of those makes this list wrong (14.4): the packed
+;; index is the one part not checked here.
+(def ^:private free-kinds
+  [[#"notice-progress" recorder-cursor]
+   [#"recorded-cursor" recorder-cursor]
+   [#"values:[0-9]+" [:map {"identity" :token "through" :nat "status" [:one-of #{"pending" "stored" "superseded"}]
+                            "hash" :token "changes" :nat}
+                      {"frames" [:is "bytes"] "frame" :nat "part" :nat}]]
+   [#"claim:[0-9a-f]{64}" :hex]
+   [#"census:[0-9a-f]{64}" census-form]
+   [#"members:[0-9a-f]{64}:[0-9]+" [:map {"members" [:vec :subject] "ordinal" :nat "census" :hex} {}]]
+   [#"join-meta" [:map {"epoch" :epoch "census" census-form "valid" :instant "source" :nat "compiler" :hex "scheduled" :bool}
+                  {"expanded" :bool}]]
+   ;; the account's due instants: release dates and fact validity ends only (under the option the writer keeps no day
+   ;; derived from a document's date here, actv-lazy/join/account.ts `calendarDays`)
+   [#"join-calendar" [:vec :instant]]
+   [(re-pattern (str "join-member:" subject-key)) :nat]
+   [#"join-index-base:[0-9]+" [:map {"packed" :packed "sum" :hex} {}]]
+   [#"join-index:[0-9]+" [:map {"base" :nat "digest" :hex "patch" :packed} {}]]
+   [#"join-invalid" [:map {"source" :nat "compiler" :hex} {}]]
+   [#"control" [:map {"paused" :bool "paceMs" [:nil-or :nat] "by" :token "version" :nat} {}]]
+   [#"event:[0-9]+" recipe-form]
+   [#"tail" tail-form]
+   [#"erasure" :nat]
+   [#"received:[0-9a-f]{64}" [:map {"batch" :nat "digest" :hex} {}]]
+   [#"effect-erasure:[0-9a-f]{64}:[0-9]+" :nat]
+   [(re-pattern (str "recorded-generation:" subject-key)) :nat]
+   [#"cursor" [:map {"event" :nat "start" :nat "parent" :hex "batch" :nat "previous" :hex} {"pending" [:nil-or :token]}]]
+   [#"settled-values:[0-9a-f]{64}" :token]
+   [#"settled-notice:[0-9a-f]{64}" :token]])
+(defn- check-free!
+  "A content-free kind: its key of exact form and its document of the kind's form; true when the kind is one."
+  [kind text]
+  (let [f (some (fn [[re f]] (when (re-matches re kind) f)) free-kinds)]
+    (if (some? f)
+      (let [doc (try (json/read-str text) (catch Exception _ ::bad))]
+        (when-not (if (= ::bad doc) false (form? f doc))
+          (unsealed! (str kind " (not of its kind's form)")))
+        true)
+      false)))
 
 (defn- check-document!
   "One derived document of kind `kind` whose stored text is `text`: a content kind decoded and checked to its exact
-  shape; a content-free kind on the list accepted as it is (not decoded: a claim, for one, is a bare hash); any other
-  kind refused."
+  shape; a content-free kind checked to its exact form (`free-kinds`, read as JSON: a claim, for one, is a bare hash);
+  any other kind refused."
   [kind text]
   (let [[m tag] (some (fn [[re tag]] (when-let [m (re-matches re kind)] [m tag])) content-kinds)
         doc (if tag (try (document text) (catch Exception _ (unsealed! (str kind " (undecodable)")))) nil)]
+    ;; [T7] a kind's key names its subject in the subject form (the declared one, with a boundary)
+    (when (if tag (not (#{:page :packet :effects} tag)) false)
+      (when-not (subject-form? (if (if (= :receiver tag) true (str/starts-with? kind "settled-stopped:")) (nth m 2) (nth m 1)))
+        (unsealed! (str kind " (a subject not of the subject form)"))))
     (case tag
       :page
       ;; a settled page: exactly its frame fields; entries {subject, changes, part?}, each change ["", sealed | null]
@@ -755,13 +870,18 @@
             (unsealed! kind))
           (doseq [u (get e "changes")]
             (when-not (and (vector? u) (= 2 (count u)) (= "" (first u))) (unsealed! kind))
-            (when (some? (second u)) (unit! kind (get e "subject") (second u))))))
+            (when (some? (second u)) (unit! kind (get e "subject") (second u))))
+          ;; [T7] a sealed unit binds the entry's subject (its place names it); an entry with none names it in the form
+          (when-not (some #(if (some? (second %)) (not (removed-marker? (second %))) false) (get e "changes"))
+            (when-not (subject-form? (get e "subject")) (unsealed! (str kind " (an entry's subject not of the subject form)"))))))
       :packet
       (do (exact-keys! kind doc ["deliveries"] ["account" "epoch" "batch" "previous" "event" "position" "recipe" "start"
                                                  "through" "part" "tail" "erasureSeq"])
           (when-not (and (every? #(or (nil? (get doc %)) (nat? (get doc %))) ["batch" "event" "position" "start" "through" "part" "tail" "erasureSeq"])
                          (every? #(or (nil? (get doc %)) (hex64? (get doc %))) ["previous" "recipe"])
-                         (every? #(or (nil? (get doc %)) (id-like? (get doc %))) ["account" "epoch"])
+                         ;; [T7] the journal's document prefix and its epoch, of fixed form
+                         (or (nil? (get doc "account")) (form? :prefix (get doc "account")))
+                         (or (nil? (get doc "epoch")) (form? :epoch (get doc "epoch")))
                          (vector? (get doc "deliveries")))
             (unsealed! kind))
           (doseq [d (get doc "deliveries")] (delivery! kind d)))
@@ -794,7 +914,7 @@
       (do (exact-keys! kind doc ["g" "e"] [])
           (when-not (nat? (get doc "g")) (unsealed! kind))
           (units! kind (nth m 2) (get doc "e")))
-      (when-not (re-matches other-kinds kind) (unsealed! (str kind " (a kind of derived document this gateway does not know)"))))))
+      (when-not (check-free! kind text) (unsealed! (str kind " (a kind of derived document this gateway does not know)"))))))
 
 (def ^:private document-entity #"notice:v1:([0-9a-f]{64}):(.+)")
 (defn- derived-entity? [x] (if (string? x) (str/starts-with? (str/lower-case x) "notice:v1:") false))
@@ -831,11 +951,16 @@
         touched (if (seq docs) true (boolean (seq changes)))
         value (if touched (setting-value db) nil)]
     (when (true? value)
+      ;; [DX-ERA4, fourth round] a staged preview (storage/read-db: a derived writer's transaction reading its own staged
+      ;; documents) stores nothing and carries no `derivedAccount`; its units are bound to the account when it commits.
+      ;; The mark is a keyword key, which no client's JSON input can carry.
       (binding [*account* (let [b (declared-boundary db)]
-                            (if (if b (str/includes? (str (get b "root")) "{account}") false)
+                            (if (if b (if (get input :triplex.gateway.storage/preview) false (str/includes? (str (get b "root")) "{account}")) false)
                               (let [a (get input "derivedAccount")]
                                 (if (if (string? a) (some? (re-matches #"[A-Za-z0-9_.-]{1,64}" a)) false) a ::missing))
-                              nil))]
+                              nil))
+                ;; [T7] with a declared boundary a subject is of its declared form (`pl:s{n}`), else W0's placement form
+                *subject-form* (let [b (declared-boundary db)] (if b (:subject (compile-boundary b)) *subject-form*))]
         (doseq [r docs]
           (let [entity (str (:entity_id r)) m (re-matches document-entity entity)]
             (when-not (and m (= "notice/value" (:attribute r))) (unsealed! (str entity " (not a derived document's own form)")))

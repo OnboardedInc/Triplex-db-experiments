@@ -63,6 +63,13 @@ if [[ ${ERA4_FORMS_DRIVER:-} == deep-forms.ts ]]; then
   env DATOMIC_URL="http://127.0.0.1:$port_w" TRIPLEX_DATOMIC_LAYOUT=lean TX2_SETTLE_FRAMES=bytes TX2_SETTLE_PRECONDITION=progress \
     TX2_DERIVED_SEAL=1 TX2_NOTICE_LEDGER=parts DEEP_FORMS="${DEEP_FORMS:-200,1700}" node --no-warnings --experimental-transform-types \
     lab/experiments/EXP-DX1/era4/deep-forms.ts "$out" > "$out/forms.log" 2>&1 || status=$?
+# [DX-ERA4, fourth round] ERA4_FORMS_DRIVER=<another era4 driver> (one-subject.ts, removed-kept.ts, calendar.ts): that
+# driver against this stack, with the same options (and the caller's, e.g. ONE_FORMAT)
+elif [[ -n ${ERA4_FORMS_DRIVER:-} ]]; then
+  [[ $ERA4_FORMS_DRIVER =~ ^[a-z0-9-]+\.ts$ && -f lab/experiments/EXP-DX1/era4/$ERA4_FORMS_DRIVER ]] || { echo "no driver era4/$ERA4_FORMS_DRIVER" >&2; exit 2; }
+  env DATOMIC_URL="http://127.0.0.1:$port_w" TRIPLEX_DATOMIC_LAYOUT=lean TX2_SETTLE_FRAMES=bytes TX2_SETTLE_PRECONDITION=progress \
+    TX2_DERIVED_SEAL=1 TX2_NOTICE_LEDGER=parts node --no-warnings --experimental-transform-types \
+    "lab/experiments/EXP-DX1/era4/$ERA4_FORMS_DRIVER" "$out" "$out/run.out" > "$out/forms.log" 2>&1 || status=$?
 else
 env DATOMIC_URL="http://127.0.0.1:$port_w" TRIPLEX_DATOMIC_LAYOUT=lean TX2_SETTLE_FRAMES=bytes TX2_SETTLE_PRECONDITION=progress \
   TX2_DERIVED_SEAL=1 ERA4_SEALED=1 ERA5_FORMS_ONLY=1 ERA5_FORMS= ERA5_PARTS_OFF= \

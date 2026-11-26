@@ -51,6 +51,10 @@ export async function sealBySubject<I extends { inputs: readonly string[]; value
 /** [DX-ERA4, third review T2] A test seam (era4/one-subject.ts): seal calls holding an item placed at this subject are
  * refused as the gateway refuses a request's content (400). Unset in every other use. */
 export const refuseSubject: { subject?: string } = {};
+/** [DX-ERA4, third review T2] A test seam (era4/one-subject.ts, W0's format): this subject's evaluation fails, in the
+ * settlement (join/material.ts) and the notice evaluation (notify1/journal.ts), as a world that does not evaluate does.
+ * Unset in every other use. */
+export const failEvaluation: { subject?: string } = {};
 
 /** [DX-ERA4, third review T1, the owner's ruling of 2026-11-25] TX2_DERIVED_SEAL=1: every evaluation of a world read from
  * the store names W0-1.2's removable attributes (a removed document value is a removed value, neither a value nor absent:
