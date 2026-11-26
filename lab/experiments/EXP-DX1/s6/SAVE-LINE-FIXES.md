@@ -954,8 +954,9 @@ build's next save, which `guard!` then refuses, and their plain claims are no ac
 ### 14.3 The gates of the fifth pass (2026-11-25, diagnostic sizes on the Mac)
 
 **Image.** `tx2-dxs5r3:80cdfd858934` (`sha256:da284034c683…`), built by `s5/image3.sh` from `80cdfd858` and started by
-image ID. The later commits change test files and the stored-ID list only (no gateway source); the in-memory runs
-mount the committed test files.
+image ID. The later commits change test files, the stored-ID list and this page only (no file under `packages/`
+differs from `80cdfd858`); the in-memory runs mount the committed test files. The mixed stack's rerun used
+`tx2-dxs5r3:f76454bc66a4` (`sha256:a75406481d75…`), built from `f76454bc6` for its driver's diagnostic.
 
 **Reproduced first.** The reviewer's seeds 733, 734 and 735 in `accounts-on-general-nopred` on the fourth pass's
 gateway (`c2ed38553`'s image, the review's updated fuzzer): 3 differences, all the review's case (`:old-reopen`, the
@@ -980,6 +981,12 @@ its difference (6,746 serial saves).
 | The owed stack cases (`s6/transition4.ts`) | A: two gateways turn it on at once with an old build's group commits in flight: 616 old saves, 304 committed, all before the transition (t 2234), 0 after, 312 refused; B: the transactor killed 0, 25 and 80 ms after the request (the kill landed before the commit at 0 and 80 ms, after it at 25 ms): never a mix, turning on again completed it; C covering-owner and D sealed saves under the setting: stored, scoped. All true |
 | The second review's tests and the one-stored-form gate (after the R4-5 test update) | `attack2` 24, 68, 68, 59, 44 and 22 in 6 settings; ids 109 of 109 in 4 |
 | The protected fuzzer | 7,200 saves sealed and 8,346 unsealed with accounts, 0 differences |
+| The SDK stack (`s6/stack.sh`) | fault, constraints and replay all exact (12,000 saves with dropped requests and replies, 0 violations) |
+| The mixed stack (`s5/mixed-fleet.ts`) | 10 of 11 exact on `80cdfd858`'s image, then 16 of 17 on `f76454bc6`'s (12 rounds). The one case each time is `uniform G_off kill`: the save reported stored with its transaction, but the log and rows read through the other gateway 1.5 s after the transactor's restart showed nothing. The rerun reads such a case again after 10 s (diagnostic added to the driver, verdict unchanged): one stored transaction, the reported one, and one live note through both gateways. So the reading gateway had not caught up after the restart; a harness limit (reads sent without a position), not a save reported stored and absent. The other two `G_off kill` cases of the rerun were exact |
+
+Evidence (outside the repository): `evidence/DX-S6-save-line/s6d-final7-80cdfd858.tar.gz` (every counted run of this
+pass, the mixed stack's rerun included) and `s6d-repro-and-dev.tar.gz` (the reproduction of the review's 3
+differences, the development runs), with `SHA256SUMS`.
 
 **The guard's cost** (`the-guard-costs-one-scan-per-save`, diagnostic, Mac, 2,000 calls each): setting absent
 0.35 to 0.85 µs and no transaction; setting on with nothing written since, 3.4 to 8.2 µs, one scan of 3 to 12
