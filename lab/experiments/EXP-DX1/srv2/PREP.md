@@ -1,8 +1,8 @@
 # Preparation for the rented-server session at 1 billion records (SRV2)
 
-Written 2026-11-25 from 17:53 EST by the session-preparation builder, branch `exp/DX-SRV2-session-prep` from the one
-branch `origin/exp/DX-INT1` at `efee27905` (the three merges of the plan's E.1 had not landed when this was finished;
-see section 7). The plan is `srv1/SESSION-PLAN.md` on `origin/exp/DX-SRV1-session-plan` (`702a5b44a`); its section E
+Written 2026-11-25 from 17:53 to 20:15 EST by the session-preparation builder, branch `exp/DX-SRV2-session-prep`
+from the one branch `origin/exp/DX-INT1` at `efee27905`, merged with its head `345f833e4` (the key-pool and
+ID-allocator fixes) at 19:22; the Publish line had not landed (section 8). The plan is `srv1/SESSION-PLAN.md` on `origin/exp/DX-SRV1-session-plan` (`702a5b44a`); its section E
 is the task list. Nothing was rented and nothing ran on a server. Every time below is a Mac diagnostic; counts
 (comparisons, differences, wrong values, refusals) are results. No default changed on the one branch.
 
@@ -10,14 +10,15 @@ is the task list. Nothing was rented and nothing ran on a server. Every time bel
 
 | # | Plan item (E.2 to E.4) | State on the Mac | Where |
 | --- | --- | --- | --- |
-| 1 | Per-read classification on the card: "P1 in memory" (100 ms) and "P1 not in memory" (300 ms) | SEE SECTION 1 | `v01/card-reader.ts`, `v01/adopted.ts`, `v01/adopted-card.ts`, `srv2/classify-gate.ts` |
-| 2 | The pinned pair's arm variants for A1 | built; server-only path (dry run to the first offer is the server's first A1 minute); option parsing tested | `rd1/pinned-ladder.ts` `pairVariant`, `v01/study-server.ts` |
-| 3 | The card accepting the read options and the product save path | built; the card dropped the read options before (fault, section 6) | `v01/run.ts`, `v01/adopted-server.ts` `checkReader` |
-| 4 | Publish windows on an aged copy | SEE SECTION 3 | `srv2/session.sh a5` |
-| 5 | Dry runs of the other runners | SEE SECTION 3 | `srv2/session.sh` |
+| 1 | Per-read classification on the card: "P1 in memory" (100 ms) and "P1 not in memory" (300 ms) | **green**: gate (forced cold and warm cases, paired reads, store unchanged) and the toy card at the merged head | `v01/card-reader.ts`, `v01/adopted.ts`, `v01/adopted-card.ts`, `srv2/classify-gate.ts` |
+| 2 | The pinned pair's arm variants for A1 | **green on the Mac as far as it goes**: built, parsing checked, the same three configurations measured on the cost toy; the variants' stack path runs only on a server | `rd1/pinned-ladder.ts` `pairVariant`, `v01/study-server.ts` |
+| 3 | The card accepting the read options and the product save path | **green on the toy card**; the server's reader check now asserts the read options (they were dropped before: section 6 item 1) | `v01/run.ts`, `v01/adopted-server.ts` `checkReader` |
+| 4 | Publish windows on an aged copy | **green**: the aged miniature's windows with the at-least probe pass; A5 stays | `srv2/session.sh a5` |
+| 5 | Dry runs of the other runners | **green** for stage, A1 (toy), A2, A4, A5, A6, B1, B2, B3, B4, finish; scripts only for A8, B5, B6, B7, B8; not possible on the Mac for A7's tape M and A9 | section 3 |
 | 6 | The second reader across machines | not possible on the Mac (never ran anywhere; accepted risk, costs only A9) | — |
-| E.3 | Inputs | section 5 | — |
-| E.4 | Guards | built and tested (section 4) | `srv2/session.sh`, `srv2/lib.sh`, `srv2/mac-alert.sh` |
+| E.3 | Inputs | **green** for what the Mac can check (Datomic size, Node digest, Java digests pinned, stamps); bucket listing and disks for the orchestrator | section 5 |
+| — | Compiler stamp of held accounts | **green**: the archive holds no enrolment; each run enrols with its own build; check built | section 5b |
+| E.4 | Guards | **green**: stop numbers, watcher, delete held by the driver, Mac alert, all tested on the Mac | `srv2/session.sh`, `srv2/lib.sh`, `srv2/mac-alert.sh` |
 
 ## 1. Per-read classification
 
@@ -68,10 +69,9 @@ on batches; unmatched reads; the rows' verdicts (toy PARTIAL; server MET, MISSED
 restart. The rest of `v01/*.test.ts` and `rd1/*.test.ts`: 51 of 53, the two failures (`owner-groups.test.ts`,
 `writer-split.test.ts`) fail the same way at the base `efee27905`.
 
-**Not yet run: the toy card with the classification** (`v01/mac.ts --fixture` with `DX_V01_SAMPLE_EVERY=1`, the
-re-read ladder's path in `adopted.ts`). Every exclusive Datomic slot of the lab engine was held all evening (s1 and s2
-by DX-ACT8, s3 by DX-ACT6; two of the three owner processes are not running), and the toy card takes one. The command
-is `session.sh a4 --dry-run` (section 3).
+**The toy card with the classification** (`session.sh a4 --dry-run`: `v01/mac.ts --fixture` at the merged head with
+A4's options, the re-read ladder's path in `adopted.ts`) passed: see section 3, row `a4`. It waited until 19:35 for a
+free exclusive slot of the lab engine (s1 and s2 had been held by DX-ACT8 and s3 by DX-ACT6 all evening).
 
 ## 2. The two read options and a proposal on defaults
 
@@ -105,9 +105,10 @@ every value against the seed).**
 
 | Gate | Result |
 | --- | --- |
+| `rd5/gate.sh` (A2's dry run: readers off and on, prefetch, read-ahead off) | 30,548 comparisons over 1,709,370 rows, 0 differences |
+| The toy card at the merged head (tuned reader: both options on), A4's dry run | 0 wrong in 19,097 checked P1 reads; the random line answered 9,276 of 9,373 from the current database |
 | `rd1/shortcut-gate` (aged toy, every writer: ordered, resend, valid-time, general, import, grouped, append retirement, owner head and its fold, removal on request; readers off / both on / cut lookup / tuned; every pinned route at every position, both time axes, history and worlds) | **92,880 comparisons over 14,901,208 rows, 0 differences**; owner head on; the ladder refused a reader with the wrong options; image `sha256:0515ccd092a4…` |
 | `srv2/read-cost.sh` runs 1 and 2 (5 pins × 500 subjects, field and whole rows, each reader against off) | 1,020 + 1,020 comparisons, 0 differences; 0 wrong values in 4,800 probe reads and 0 in the 16-seat loads |
-| OTHER GATES | SEE BELOW |
 
 **Proposal (for the independent review; nothing switched here).** Make both options the default on the one branch,
 as one small reviewed change after the three merges of E.1 land, on these conditions.
@@ -162,7 +163,27 @@ tree under `DRY_ROOT`. The Mac's dry runs use this builder's images: `tx2-dxthin
 (`sha256:0515ccd092a4…`, the toy card's image, also used for the single-container gates) and
 `tx2-dxthin-jre21:87be4fe3e64ddfd6` (`sha256:f29632f0bcdc…`, the engine's private build for `stack/up.sh` stacks).
 
-DRY-RUN TABLE BELOW.
+| Step | Server (as its page writes it) | Mac dry run (toy, one ordinary heavy token) | Dry-run result (`DRY_ROOT/var/tmp/srv2/<step>/run-record.json`) |
+| --- | --- | --- | --- |
+| `stage` (A0, B0) | `v01/build.ts`; `demo/server-up.sh --fetch` (fetch, digests, extract, tree check, bring-up) and down; the SCALE1 metadata and its digests; the Datomic home; on A the card's dry run to its first offer with A4's options | the page scripts present and parseable at COMMIT; `make_copy`/`remove_copy` and the spend guard in a Linux container on a toy PostgreSQL tree; the downloads check | **pass**: 12 of 12 copy and spend checks (keeps bytes, owner, modes and the internal `pg_wal`; refuses an existing copy, a copy outside `SCRATCH`, a running source, a cluster other than PostgreSQL 17, hard links, too little room; `remove_copy` refuses the source and a non-copy and removes only the copy; spend 27.25; the plan's ceilings); downloads as section 5. The copy check's container (one second, `--network none`) ran outside a heavy token |
+| `a1` | three off ladders of the pinned pair at the old pin, 1/16/256 seats, one copy each (`DX_RD2_PAIR_VARIANT` control, off-permits4, cut-only) | `srv2/read-cost.sh` (off, cut lookup alone, both on, tuned) | **pass** (section 2). The variants' own path (`study-server.ts` with `DX_RD2_PAIR_*`) needs a server stack; its first minute is its dry run. Parsing: control, off-permits4 and cut-only map to the stack switches and expected options; any of the three variables outside the pair's off ladder refuses |
+| `a2` | RD5 command 1: `pf3`, `pf3r`, `pf3c`, one copy each | `rd5/gate.sh` (readers off, both on, prefetch, read-ahead off) | **pass**: 30,548 comparisons over 1,709,370 rows, 0 differences; the prefetch ran 15,200 batches over 121,600 subjects with 0 failures, read-ahead pool 0; 0 refused reads |
+| `a2b` | `pf12` with A2's read-ahead choice | the same gate (the configuration differs only in permits and the choice) | covered by `a2` |
+| `a9` | two readers; machine B `--action start0`, `switch`, `stop` | — | **not possible on the Mac** (the cross-machine path never ran anywhere; accepted risk, plan E.2 item 6); scripts present |
+| `a4` | card parts 1 to 3 and assembly: tuned reader, 12 permits, `DX_S2_PRODUCT=1 TX2_SUBJECT_WIDE=1 TX2_SUBJECT_HINTS=1 TX2_GENERAL_PREFETCH=1 DX_READ_PREFETCH=1 [DX_READ_AHEAD_OFF=1] DX_V01_SAMPLE_EVERY=1`, 300 s cells | the toy card (`v01/mac.ts --fixture`, rolling 6 and the barrier 6 control) with the same options; `dry-check.ts card` checks the two rows, every step classified with none unmatched, every read sampled, 0 wrong, and the writer's options in its own readback | **pass** (at the merged head, image `tx2-dxthin-managed:bdc5884517804fb9`): the card shows **P1 in memory** (L4 re-read: 8,004 reads in memory, p99 10.75 ms; 4 not in memory, 0.25 storage reads per subject) and **P1 not in memory** (random L4: 8 reads in 2 exchanges, p99 12.32 ms; 9,532 in memory), both PARTIAL as a toy must be, and the per-step table; every read of every step sampled (1,549, 8,008 and 9,540 of the same), 0 unmatched, 0 wrong, 0 errors; the writer's readback shows `subjectWide`, `subjectHints` and `generalPrefetch`; every save through the product's path. Not shown by the toy: that the toy reader ran the prefetch (the switch is passed; the toy card records no reader options; the server's reader check asserts it) |
+| `b1` | bring-up 1; `jrn1/probe.ts`; `xq3/server.ts`; `xq6/server.ts` (arms A, B); down | `xq6/gate.sh … dryrun.ts` (every step of `xq6/server.ts` on a toy stack) | **pass**: counts, cold and warm lists, the five save windows beside sweeps of 1 and 3 parts; 0 read and 0 save errors. `jrn1/probe.ts` and `xq3/server.ts` have no Mac dry run (read-only HTTP runners; their own gates) |
+| `b2` | bring-up 2 with the question reader; `xq7/server.ts`; down | `xq7/gate.sh … dryrun.ts` | **pass**: 8 windows (controls, the sweep on the main reader and on the question reader, 1 and 3 parts), 0 read and 0 save errors |
+| `b3` | bring-up with the tuned reader and the batch route; `api1/server.ts` (today, batch1, floor × re-read, random × calls, list) | `api1/gate.sh … server` | **pass**: 12 windows and 60 single-call shapes; 0 errors, 0 timeouts; own writes missed only on `today` (1 of 938 and 1 of 948 calls), 0 on `batch1` and `floor`; one request per call on the batch ports |
+| `b4` | a copy of the 1 billion cluster; `xq1/server.ts backfill` with 1,000 sampled subjects per account | `real2/aged-gate.sh` with `DX_XQ4_CROSS_INDEX=1` and `DX_S2_PRODUCT=1` (AGE1's loader-aged toy, declare and backfill, the production tape, find questions) | **pass**: 3,000 entries over 1,022 entities, dry-run reconciliation 0 to add and 0 to retract, 414 of 414 owners found; 928 saves, all through the product's path on the ordered per-subject writer; 1,927 fields read back equal; a tampered aged row refused. `xq1/server.ts` itself is bare-metal only (`scaleHost.physical()`) |
+| `b5` | `xq1/server.ts verify`; card parts 1 and 2 with `--cross-index off` and `deep-6.json` on copies of the backfilled cluster, product path | scripts present | not dry-run on the Mac (the toy card has no cross-index setting); the card's `--cross-index` refuses a missing file before starting |
+| `b6` | bring-up 3 on the backfilled copy (`DEMO_ORIGINAL` override); `xq10/server.ts` | scripts present | not dry-run here (XQ10's own toy gates ran the agreement on toys); the `DEMO_ORIGINAL` acceptance is section 6 item 11 |
+| `b7` | `xq1/server.ts bench` | scripts present | bare-metal only |
+| `a5` | ACT7 `prepare` of the aged cluster, `held` with the aged bundle, `server-32`, no settlement, the probe reading at least each receipt, 120 minutes; `discard` | `actv-lazy/act7/miniature.sh` with a phase of `DX_ACT3_SETTLE=0 DX_ACT3_AT_LEAST=1` on ACT7's aged miniature | **pass**: the aged miniature (AGE1's code at its load pin, 50 adopted subjects, 150 rows, 96 aged rows) with no settlement and the at-least probe: the held runner's eight toy windows (barrier 6 and rolling 6 at 3.5 and 23.5 saves/s, each with its Publish), `ACT7 RUN PASS`; the stored compiler stamp equals the build's (section 5b). **The windows did not refuse, so A5 stays as planned** and the plan's fallback (ACT7 (b) with its own Publishes) is not needed |
+| `a6` | ACT7 (b) exactly as `RUN2.md` §6.4 | the miniature's pause-and-pace phase (`three-control`) | **pass**: three accounts settling beside live saves on the aged miniature, account 1 paused 2 s then paced 300 ms, `ACT7 RUN PASS` |
+| `a7` | card parts 1 and 2, tape M, product path with several owners and creation saves | the toy card with tape M and the same options | **not possible on the toy card**: the toy stack accepts the R and S tapes only (`thin1/managed.ts` refuses `production-M` before starting); tape M with creation saves is gated by S4's production gate (`prep1/production-gate.ts` with `DX_S4_MIX=1`), and `run.ts` accepts `production-M` with `DX_S2_PRODUCT=1` on a server |
+| `a8` | the 1,024-seat step with the waiting-read bound off and 128, the read options, 90 s cells, thread sampler | scripts present | not dry-run (the toy card's ladder stops at 4 seats; W3's own toy gates) |
+| `b8` | the card on the fresh template, as A4 | as `a4` | covered by `a4`'s dry run (same card path, other template) |
+| `finish` | one archive and SHA-256 per machine; `deletion-ready.json` | the same on the Mac's dry-run tree | **pass**: one archive, `SHA256SUMS` checked again on the Mac (`OK`), `deletion-ready.json` with the four remaining actions |
 
 ## 4. Guards
 
@@ -202,6 +223,33 @@ DRY-RUN TABLE BELOW.
 | `AGE_JAVA`, `AGE_DATOMIC_HOME` | the aged check's fresh peer runs in a container from the reader's image (`age1/scorecard.mjs` `peerCommand`), so `AGE_JAVA` is that image's `/opt/java/openjdk/bin/java` and `AGE_DATOMIC_HOME` the directory `demo/server-up.sh` copies out of the image (`$DEMO_ROOT/datomic-home`); `stage` checks the jar is there | — |
 | Disk per machine | `demo/server-up.sh --fetch` refuses under 520 GB free under `DEMO_ROOT` (archive 146, original 177, working copy 177, slack); `make_copy` refuses without the copy's size plus 20 GiB; `stage` refuses `SCRATCH` and `WAL_ROOT` on one device | the root NVMe of each machine (960 GB) holds the cluster, one working copy and the scratch copies one at a time; machine B also needs the backfilled copy (about 540 GB after the archive is deleted) |
 | Credentials, addresses, the SSH key name | none in the repository | private settings and storage files on each machine |
+
+## 5b. The held account's compiler stamp (asked by the coordinator at 19:43 EST)
+
+A held account can be published and settled only by a build whose compiler stamp equals the one stored at its
+enrolment: `actv-lazy/join/index.ts` computes `selector` as a hash over the source bytes of fourteen files (the
+classifier, the world mapping, the notice code), and `account.ts` asserts `m.compiler === selector` before Publish and
+settlement.
+
+1. **Which build enrolled the held accounts in the 1 billion archive: none.** The archive is AGE1's sealed cut; every
+   bring-up of it (the demo, the console proving run) shows head 28,309,866, the handoff's own head, so no write
+   followed the seal; AGE1's loader writes no enrolment. The held runner enrols its account at the start of each run
+   on that run's own prepared copy, with the build under test (`account.ts` held enrolment asserts it starts exactly at
+   the source cut), and its aged check refuses a copy whose head differs from the bundle's before it enrols. Stamps
+   computed on the Mac at 19:43 EST: `efee27905` and `exp/DX-INT1` `345f833e4` (the merged head of this branch too):
+   `02a6942ab679…`; `a6f89a409` (the Publish line as reviewed): `ef5124d35ead…`; `850517da9` (its later head):
+   `df82a8be1489…`. **The stamp will change when the Publish line merges**, so the session's stamp is the final
+   `COMMIT`'s; A5 and A6 are unaffected because they enrol with it.
+2. **Time and cost: unchanged.** A5 (50–80 min, USD 0.91–1.45) and A6 (155–180 min) already include their enrolment
+   (ACT7's estimate: "account 0 and R1 3 min", "enrolment of two accounts 4 to 6 min"). Only a step that reused an
+   enrolled copy across builds would need a fresh enrolment; no step does (every run prepares a new copy). The plan's
+   totals and the stop rules (no new step past USD 46, delete at USD 48) are unchanged.
+3. **The check.** `srv2/stamp.ts build` prints a checkout's stamp; `stamp.ts check HELD_SETUP_JSON` prints the stamp
+   stored at enrolment (`held-setup.json` `meta.compiler`) and the build's and exits 1 when they differ. `session.sh
+   a5` and `a6` print the build's stamp before the run and watch for `held-setup.json` (written at enrolment, before
+   the first Publish window): on a difference they stop the step's process group before any Publish (the held
+   runner's own assertion is a second stop). Dry run: the A5 miniature's `held-setup.json` holds `02a6942ab679…`,
+   equal to the build's (exit 0); the same file with `df82a8be1489…` in its place is refused ("STAMP DIFFERS", exit 1).
 
 ## 6. Set-up faults found while preparing (each would have cost server minutes or a wrong reading)
 
@@ -255,3 +303,31 @@ Predictions are the plan's D.1 unless stated.
 
 Machine B in the same hour: bootstrap, check, stage (no card dry run), then `b1`. Each step's records:
 `$OUT_ROOT/<step>/run-record.json`; `session.sh spend` at any time.
+
+## 8. Head, merges, images, and what the Mac could not prove
+
+**Merges.** The key-pool fix (`09730f887`) and the ID-allocator fix (`cc5656aa2`) landed on `origin/exp/DX-INT1` at
+`345f833e4` during this work and are merged into this branch (no conflict); the Publish line (`a6f89a409`) had not
+landed when this was written (checked at 19:58 EST). The toy cards (A4, A7) and the A5, A6 reruns ran on the merged
+code, so with the ID fix; the B4 gate (product path on) and the A2, B1, B2, B3 dry runs ran before the merge, on
+`efee27905`'s code.
+`COMMIT` for the session is the head of `exp/DX-INT1` after the Publish line, merged with this branch.
+
+**Images built by this builder** (lab VM, one ordinary heavy token each): `tx2-dxthin-managed:a9bbcc8dafd49f05`
+(`sha256:0515ccd092a4…`, removed), `tx2-dxthin-managed:bdc5884517804fb9` (`sha256:eec0adb2c060…`, the merged head's
+toy image), `tx2-dxthin-jre21:87be4fe3e64ddfd6` (`sha256:f29632f0bcdc…`, receipt in the private evidence folder).
+
+**Not proven on the Mac.**
+- Nothing ran on a server: every server command is checked only for presence, syntax, options and the toy path that
+  shares its code. The first minute of each server step (its stack start and checks, the "first offer" dry runs) is
+  its own last check; `session.sh` stops a step that fails before its first offer and the plan's retry rule applies.
+- `xq1/server.ts` (B4, B5's verify, B7) and the pinned pair's variants (A1) run only on bare metal.
+- The second reader across machines (A9), the 1,024-seat step (A8), the fresh card (B8), B5's card with the index,
+  B6's bring-up on the backfilled copy.
+- `demo/server-up.sh --fetch` with the bucket (no credentials here), the fetch time, the disk sizes on the machines.
+- The spend guard's numbers depend on the order and delete times the orchestrator writes into the settings files.
+- Mac times are diagnostic; only counts, refusals and exactness are results.
+- Type check (`tsc` over the eleven changed TypeScript files and what they import, against `efee27905` with the same
+  settings): no new error; the changed files keep exactly the errors they had (`adopted.ts` 3, `adopted-card.ts` 2,
+  `adopted-server.ts` 2, `run.ts` 1, `mac.ts` 1; the rest 0); the new `srv2/*.ts` files run under Node only.
+- That the toy reader ran the read prefetch (the switch reaches it; the toy card records no reader options).
