@@ -206,7 +206,10 @@
             (try
               (let [members (take (+ 2 (.nextInt rng 5)) (shuffle os))
                     specs (vec (for [o members]
-                                 (let [f (str ":fz/f" (.nextInt rng 6)) live (vec (keys (fz/read-owner name o {"validAt" 5.0})))]
+                                 ;; protected fields stay out of the group: they go through the removal guard, not the group
+                                 ;; lane, so a group member that retires one never reaches the barrier (attempt 2 timed out)
+                                 (let [f (str ":fz/f" (.nextInt rng 6))
+                                       live (vec (remove #(str/starts-with? (str %) ":p/") (keys (fz/read-owner name o {"validAt" 5.0}))))]
                                    (case (.nextInt rng 4)
                                      0 {:set [[o f (str "g" k)]]}
                                      1 (if (seq live) {:retire [[o (nth live (.nextInt rng (count live)))]]} {:set [[o f (str "g" k)]]})
