@@ -51,6 +51,7 @@ cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era3/attack.clj" "$x/era3/at
 if [[ -n ${ERA3_TESTS_REF:-} ]]; then
   git -C "$repo" archive "$ERA3_TESTS_REF" lab/experiments/EXP-DX1/s5 lab/experiments/EXP-DX1/w2 | tar -x -C "$out/lab"
   cp "$out/lab/lab/experiments/EXP-DX1/s5/fuzz.clj" "$out/lab/lab/experiments/EXP-DX1/w2/wide_gate.clj" "$out/lab/lab/experiments/EXP-DX1/s5/attack3_gate.clj" "$out/lab/"
+  [[ -f $out/lab/lab/experiments/EXP-DX1/s5/attack3_era.clj ]] && cp "$out/lab/lab/experiments/EXP-DX1/s5/attack3_era.clj" "$out/lab/"
   echo "$ERA3_TESTS_REF" > "$out/tests-ref"
 fi
 image=${DX_ERA3_IMAGE_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
@@ -88,6 +89,9 @@ elif [[ ${ERA3_MAIN:-1} == r8 ]]; then
   printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (load-file "/lab/attack6.clj") (load-file "/lab/review8.clj") (era3-review8/main)' > "$out/run.clj"
 elif [[ ${ERA3_MAIN:-1} == r7b ]]; then
   printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/wide_gate.clj") (load-file "/lab/fuzz.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (load-file "/lab/review7b.clj") (era3-review7b/main)' > "$out/run.clj"
+elif [[ ${ERA3_MAIN:-1} == s5era ]]; then
+  # [DX-ERA3 eighth review] s5/attack3_era.clj (the old-protocol replays, from ERA3_TESTS_REF), with whatever rule the env sets
+  printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/wide_gate.clj") (load-file "/lab/attack3_era.clj") (s5-attack3-era/main)' > "$out/run.clj"
 elif [[ ${ERA3_MAIN:-1} == s5a3 ]]; then
   printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/wide_gate.clj") (load-file "/lab/fuzz.clj") (load-file "/lab/attack3_gate.clj") (s5-attack3/main)' > "$out/run.clj"
 elif [[ ${ERA3_MAIN:-1} == 8 ]]; then
