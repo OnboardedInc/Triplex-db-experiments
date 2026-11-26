@@ -276,7 +276,9 @@
                      :positionHistories (frequencies (for [p (range 1 (inc top))] (position-history db p)))
                      :result r :answersAtBackupPositions {:equal kept :of (count ans-a)}
                      :pinsTheBackupLacked {:changedMeaning lost :of (count (filter (fn [[[p]]] (> p head-a)) ans-b))}
-                     :audit (select-keys aud [:violations :groupPositionRetractions :groupPositionDuplicates :groupPositionAssertions])
+                     :audit (select-keys aud [:violations :groupPositionRetractions :groupPositionDuplicates :groupPositionAssertions
+                                               :revisionlessChanges :revisionlessFolds])
+                     :revisionRegressions (a/revision-regressions conn)
                      :rules (audit/failures aud)})
               (shutdown-agents)
               (System/exit (if (and (empty? (:differences r)) (= kept (count ans-a)) (empty? (audit/failures aud))) 0 1))))
