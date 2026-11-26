@@ -6849,3 +6849,15 @@ Source: merge agent message (it named the head `1c4a96f6f`; the remote shows `65
 - **Today on the one branch:** `1ed2650bd` → key-deletion fix → batch 1 → questions line → API-call reads → save line fixes → key-pool and reply fix → ID allocator fix → Publish line (options off) → save line fourth pass (setting off).
 - Next: the session's build `exp/DX-SRV3-session` (this head with the prep branch `957a4f836`), its checks on the Mac including the toy scorecard on the product save path, then renting. Provider checked at 21:52: 3 machines of the plan's type in stock at the archive's site; SSH key, firewall and storage settings in place; no server on the account.
 - The removal builder re-merges onto this head the reviewer's corrected way; the eighth removal review follows.
+
+## 2026-11-25 22:01 EST: save line fifth pass reported at `1d9fdee6c` (builder's claims; the fifth review started)
+
+Source: builder's final report; head checked on `origin/exp/DX-S6-save-line-fixes`. These are the builder's claims until the review rules.
+
+- **R4-2:** a request naming account A that sets the account attribute to anything other than A is refused 400, setting on and off, on every writer; the review's planted case stored 0 of 10.
+- **R4-1:** two parts. A bar in the database: the transition puts a predicate on the general writer's hash attribute so an older build's open, which writes writer and hash in one transaction, is refused (a real older build's open refused twice on the stack; all 462 old-build opens in the fuzzer refused). A guard as the first step of every save, before any refusal, that checks every moved and new writer ident when any stored function was written since it last looked (the review's 3 fuzz differences reproduced, then 0 in 14,388 saves). Cost, Mac diagnostic: under 1 microsecond with the setting absent, 3.4 to 8.2 with it on.
+- **Admitted to remain with the setting on:** an older build's writer under an ident the database did not hold at the transition works until this build's next save of any kind; nothing bounds it if this build gets no saves. The operations rule stays.
+- **R4-4:** with the setting on and predecessor lookup off a gateway serves no save (409), with a test-only override. **R4-5, R4-7, R4-8** fixed; **R4-6** page corrected.
+- **Setting absent:** stored log identical to the base in 2 settings; 58 identities equal in 6 settings.
+- **Not clean:** the mixed stack gave 10 of 11 then 16 of 17, the same case both times; the builder counts it as a harness limit (a read 1.5 s after a transactor restart on the other gateway; found 10 s later). The builder edited five of the reviewer's files on its branch.
+- **Fifth review started 22:01** with seven questions, among them the soundness and one-way nature of the hash bar, any state-changing request that does not pass the guard, every change the builder made to the reviewer's files, and the mixed-stack case.
