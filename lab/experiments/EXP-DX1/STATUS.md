@@ -7029,7 +7029,7 @@ Source: builder's final report; head checked on `origin/exp/DX-RD7-pinned-read-h
 - **Noted for the merge queue:** two read steps passed an image without Node or PostgreSQL; the identity script names containers by holder now.
 - **Review started 01:04** by the reviewer of the two options, with the server's measurement of the review's third condition (both on beats the cut lookup alone by 51 to 70% at 16 seats at 1 billion). In scope: the hardening, the audit gate against breaks beyond the two plants, the report-only rule, and the default flip itself on a trial branch, with a verdict on whether the flip may go onto the one branch with the hardening and the gate.
 
-## 2026-11-26 01:42 EST: derived copies fourth round reported at `8ad6ede88` (builder's claims); a load race reported in the removal line; machine B's question reader and API-call reads
+## 2026-11-26 01:40 EST: derived copies fourth round reported at `8ad6ede88` (builder's claims); a load race reported in the removal line; machine B's question reader and API-call reads
 
 Sources: the derived-copies builder's final report (head checked on the remote); machine B's driver; the provider's tools.
 
@@ -7048,4 +7048,4 @@ Sources: the derived-copies builder's final report (head checked on the remote);
 - In-memory re-readers on the one-core main reader miss the 100 ms bar (p99 182 to 209 ms) by queueing for one permit, the same cause as on machine A.
 - **Both machines are attached to the private network** (A at 00:58, B at 01:39, each at a boundary); interfaces not brought up.
 
-**Started:** the save line builder's sixth pass (01:41).
+**Started:** the save line builder's sixth pass (01:40).
