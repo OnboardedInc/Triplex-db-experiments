@@ -25,7 +25,8 @@ const run = Math.random().toString(36).slice(2, 10);
 const store = await openProduct(url, `u1-adapter-${run}`, { orderedSaves: true, saveSizeRule: true });
 const str = (v: string) => ({ type: "string", value: v });
 const tokenOf = (txId: unknown) => {
-  const m = typeof txId === "string" ? /^_tx\/([0-9A-HJKMNP-TV-Z]{24})00$|^_tx\/([0-9A-HJKMNP-TV-Z]{23})W00$/.exec(txId) : null;
+  // The wide form first: "W" is in the alphabet, so a wide ID (<23>W00) also reads as a one-byte ID (<24>00).
+  const m = typeof txId === "string" ? /^_tx\/([0-9A-HJKMNP-TV-Z]{23})W00$|^_tx\/([0-9A-HJKMNP-TV-Z]{24})00$/.exec(txId) : null;
   return m ? (m[1] ?? m[2]) : undefined;
 };
 const idPattern = /\b[0-7][0-9A-HJKMNP-TV-Z]{25}\b/g;
@@ -35,12 +36,15 @@ const frozen = realNow.call(Date);
 Date.now = () => frozen;
 const blocks: { token: string; at: number; width: number }[] = [];
 const later: { id: string; after: number; kind: string }[] = [];
-let saves = 0;
+let saves = 0,
+  widthMismatch = 0;
 try {
   for (let i = 0; i < 120; i++) {
     const subject = `acct/u1/pl:${String(i).padStart(8, "0")}`;
-    // Even saves: a few facts (one-byte block); every fifth: more than 256 assertions (wide block).
-    const n = i % 5 === 4 ? 300 : 3 + (i % 4);
+    // Most saves: a few facts (one-byte block). Every fifth: 128 facts, the per-subject bound (SUBJECT_SAVE_FACTS), whose
+    // facts and journal rows (128 + 132) do not fit 256, so it takes a wide block. (A first version sent 300 facts: over
+    // the bound, so the adapter gave those saves no block at all and the check counted 96 blocks for 120 saves.)
+    const n = i % 5 === 4 ? 128 : 3 + (i % 4);
     const ops = Array.from({ length: n }, (_, k) => ({ op: "assert", entityId: subject, attribute: `:task/f${k}`, value: str(`v${i}.${k}`), entityType: "Task" }));
     const wireBefore = store.wire.length;
     await store.transact(ops, { commandId: `u1-adapter-${run}-${i}` });
@@ -48,9 +52,10 @@ try {
     for (const w of store.wire.slice(wireBefore)) {
       const text = JSON.stringify(w.input);
       // The block's transaction ID (_tx/<24>00 or _tx/<23>W00) appears in the request's claims and rows.
-      const token = tokenOf((/_tx\/(?:[0-9A-HJKMNP-TV-Z]{24}00|[0-9A-HJKMNP-TV-Z]{23}W00)/.exec(text) ?? [])[0]);
+      const token = tokenOf((/_tx\/(?:[0-9A-HJKMNP-TV-Z]{23}W00|[0-9A-HJKMNP-TV-Z]{24}00)/.exec(text) ?? [])[0]);
       const own = token ?? "\u0000";
       if (token) blocks.push({ token, at: blocks.length, width: token.length === 24 ? 256 : 4096 });
+      if (token && (token.length === 23) !== (n === 128)) widthMismatch++;
       for (const id of text.match(idPattern) ?? []) if (!id.startsWith(own)) later.push({ id, after: blocks.length, kind: "sdk-wire" });
     }
     for (let k = 0; k < 300; k++) {
@@ -73,12 +78,13 @@ const increasing = blocks.every((b, i) => i === 0 || b.token.slice(0, 23) > bloc
 const result = {
   saves, blocks: blocks.length, oneByte: blocks.filter((b) => b.width === 256).length, wide: blocks.filter((b) => b.width === 4096).length,
   laterIds: later.length, byKind: later.reduce((m: Record<string, number>, x) => ((m[x.kind] = (m[x.kind] ?? 0) + 1), m), {}),
-  insideAnEarlierBlock: inside, examples, tokensIncreasing: increasing, clockHeldAt: frozen,
+  insideAnEarlierBlock: inside, examples, tokensIncreasing: increasing, clockHeldAt: frozen, widthMismatch,
 };
 writeFileSync(outFile, JSON.stringify(result, null, 2));
 console.log("U1_ADAPTER " + JSON.stringify(result));
 assert(blocks.length === saves, `every ordered save carries a block (${blocks.length} of ${saves})`);
 assert(result.wide > 0 && result.oneByte > 0, "both block widths exercised");
+assert.equal(widthMismatch, 0, "each save's block width is the one its size calls for (128 facts wide, the rest one-byte)");
 assert.equal(inside, 0, "no later ID inside an earlier block");
 assert(increasing, "block tokens increase");
 console.log("U1_ADAPTER PASS");
