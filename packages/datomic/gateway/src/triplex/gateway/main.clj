@@ -25,7 +25,10 @@
             ;; [DX-API1, DX-INT5's late form] Fills reach's stopAt and reference-attribute hooks; after commit.clj.
             [triplex.gateway.reach-late :as reach-late]
             ;; [DX-API1] After uncached, which it requires; behind TX2_READ_BATCH=1.
-            [triplex.gateway.batch :as batch])
+            [triplex.gateway.batch :as batch]
+            ;; [DX-RD7] Last: with TX2_PINNED_CUT_LOOKUP=1 it replaces group-cut/member-at with the lookup that checks the
+            ;; position's history; after commit.clj, so no stored function's identity moves. Off, it replaces nothing.
+            [triplex.gateway.group-cut-guard])
   (:gen-class))
 
 (set! *warn-on-reflection* false)

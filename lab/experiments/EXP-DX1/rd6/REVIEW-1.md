@@ -1,0 +1,372 @@
+# Adversarial review of the two pinned-read options (DX-RD6, first review)
+
+Reviewer's page, branch `exp/DX-RD6-pinned-read-review` from the one branch `origin/exp/DX-INT1` at `345f833e4`.
+Written 2026-11-25 from 20:02 to 21:45 EST by the review agent. Every count below is a result; every time is a Mac diagnostic. Nothing here
+changes the code under review: the tests redefine the two option vars in one JVM, or start separate gateways with the
+options set.
+
+Options under review:
+
+- `TX2_PINNED_CUT_LOOKUP` (`group_cut.clj` `member-at`): finds a grouped-save position on the current database and
+  accepts it when its assertion is at or before the view's t, instead of the lookup on the past view.
+- `TX2_PINNED_SHORTCUT` (`pinned.clj` `current-eid` and `unchanged-since?`, the latter replaced at load by
+  `cross_index.clj` line 318 with the same rule plus "index entries do not count"): answers a named subject from the
+  current database when its revision is at or below the pin and every current datom of it was asserted at or before
+  the pin.
+
+Proposal reviewed: `srv2/PREP.md` section 2 on `origin/exp/DX-SRV2-session-prep` at `957a4f836`.
+
+## Verdict
+
+**Both on, on three conditions.** At `345f833e4` and `2ce636613` neither option changes a single answer: 0
+differences in every comparison below (targeted tests in 9 writer settings, 178,699 read shapes compared under
+four option sets in the fuzz (714,796 comparisons), 699,164 comparisons between three gateways on one PostgreSQL database in three runs while
+33,981 saves and 389 removals ran). Both options rest on writer invariants that no product writer breaks today (code read for every
+retracting path, and a log audit of every transaction of every test database: 0 violations). Each invariant can be
+broken by a hypothetical writer, and then each option answers wrong; both breaks are reproduced. Conditions:
+
+1. **A standing gate for the invariants**: the log audit (`rd6/attacks.clj` `audit`, or the same check in the stack
+   gates) runs on every merge that changes a writer or adds a write route, and fails on any transaction that retracts
+   a datom of a subject without asserting anything on it other than an index entry, and on any retraction or repeat
+   of a grouped-save position. First uses: the save line's fourth pass (`9f210018f`, landing tonight) and the
+   removal-per-account line before it merges.
+2. **The cut lookup's hardening** (one seek into the position's history; section 5) goes in with the flip, installed
+   from a namespace loaded after the stored functions are compiled (as `cross_index.clj` installs the short-cut's
+   rule today), so no stored function's identity moves.
+3. **A1 measures the cut lookup alone** (its planned `cut-only` arm) beside both on, at the old pin and near the head.
+   The short-cut's own gain at 1 billion has never been measured apart from the cut lookup's; on the Mac toy, adding
+   it to the cut lookup gained nothing. If it is small, the default becomes "cut lookup on, short-cut off", which keeps one invariant instead of two.
+
+
+## Heads
+
+| Head | What landed | Gateway sources against `345f833e4` | Retracting paths |
+| --- | --- | --- | --- |
+| `345f833e4` | reviewed | — | the list in section 1 |
+| `2ce636613` | the Publish line (`a6f89a409`), every option and setting off | identical (`git diff 345f833e4 2ce636613 -- packages/datomic/gateway` is empty; one message change in `DatomicStorageAdapter.ts`) | unchanged; the Publish line writes only through the SDK's transact route (`actv-lazy/store.ts` `commit`, `h.triples.transact`), so its settlement, ledgers and retired-item archive reach the same gateway writers as every other save |
+| `9f210018f` (the save line's fourth pass) | not on the one branch at 21:43 | its diff from its merge base (`c85a0d0b3`, 6 gateway files: `account_claims.clj`, `storage.clj`, `main.clj`, `group.clj`, `outcome.clj`, `subject_owners.clj`) adds no retraction of a subject datom and no write of a grouped position; the only new `:db/add` replaces a stored function's body | to re-check on landing: `git diff` on the gateway sources, then `clj-run.sh OUT attack "server grouped ownerhead serial general"` and the fuzz in `server serial` |
+| removal-per-account line (`origin/exp/DX-ERA2-removal-per-account`, `3257e3c6d`) | not merged | adds `[:db/retract head :triplex.scope/removal-seq n]` (the scope entity) and removal counters on their own entities (`removal_scope.clj` `counter-ops`); its read-time mask is computed once per request (`removal_commit.clj` `effective`), so both read paths still share it | to re-check before it merges: the same commands, with `S5_REMOVALS=1`, and the question of whether its "commit boundary" masks depend on the read's source database |
+
+## 1. Every path that retracts
+
+The short-cut is wrong at a pin exactly when, after the pin, a transaction retracts a datom of the subject that a read
+uses (`:triplex.entity/row`, `:triplex.entity/retired`, `:triplex.owner/root`, the legacy overflow flag) and asserts no
+datom on that subject other than an index entry. The cut lookup is wrong exactly when a grouped-save position
+(`:triplex.group/position`, unique value) is retracted, or asserted again on another entity after a retraction.
+
+| Path | Where (`345f833e4`) | What it retracts | Same transaction asserts on that subject |
+| --- | --- | --- | --- |
+| General writer: retirement, retirement alone, correction of a past value, valid-time save, import frame, several owners | `storage.clj` 303–316 (`:triplex/retract` per old row), expanded in `commit.clj` 278–297 (`[:db/retract e :triplex.entity/row text]`, `e` from the row's own subject ID) | the subject's row | yes: `storage.clj` 320 asserts `:triplex.entity/rev` at the save's position on every entity with a fresh or old row, resolved to the same entity; a timed or born-retired retirement also asserts a marker (294, 308) |
+| Per-subject writer (one owner) | `subject_save.clj` 258 (`render-ops`) | the owner's row | yes: `revision-update`, 151–152 (`[:db/cas owner :triplex.entity/rev revision final]`, or the narrow form) in the stored function's head; with append retirement (`marker`) no retraction at all, a marker assertion instead (249–256) |
+| Several owners | `subject_owners.clj` 96 | each retired row's owner (must be one of the plan's owners) | yes: 33–42, a revision compare-and-set for every owner of the plan |
+| Creation writer | `subject_create.clj` (the several-owners rendering), revisions 53–54 | existing owners' rows | yes: revision per existing owner; new owners are new entities |
+| Grouped saves | `group.clj` 162–206 `materialize` (net of the members' reports: line 201 emits `:db/retract` for a pre-group datom a member retired) | the subject's row; the old revision (cardinality one) | yes: the last member's revision survives the net, and 196–199 add a `:triplex.entity/retired` marker for every retracted row on the same entity |
+| Grouped saves, prepared path | `group_prepare.clj` 270–273 | the subject's row | yes: the marker in the same op pair (272–274) and the revision ops kept |
+| Covering owner head (a save) | `owner_layout.clj` 137–150 `version-ops` (owner retractions become markers on the version entity), 51–55 `update-code` | the owner's old root (cardinality one, implicit) | yes: the new root and `[:db/add owner :triplex.entity/rev final]` |
+| Owner head fold | `owner_layout.clj` 62–72 `fold-code` | the owner's root, its masked rows, each covered text from its version entity | yes: every covered text is asserted on the owner (71); a root always holds at least one text (`owner_root.clj` `decode` refuses a root with none, so "a fold without moves" in `rd1/PINNED-1B.md` cannot occur). The revision does not move, and the logical rows do not change |
+| Removal on request | `erase.clj` 164–197 `apply-native!` | nothing of the subject: a transaction journal entity, a claim, two compare-and-sets on the scope | — (checked: the subject's datoms are unchanged; values are masked at read time from the request's own erasure cut, identically on both paths) |
+| Key deletion (removal body cleanup) | `envelope.clj` `erase-keys!` (keys in the PostgreSQL authority or key files) | nothing in Datomic | — |
+| Key pool refill (N1) | `key_pool.clj` | nothing in Datomic | — |
+| Account-ID setting transition | `account_claims.clj` 108–132 `swap-ops`, `turn-on!` | stored functions' bodies (`[:db/add e :db/fn @refusal]` replaces a cardinality-one value) | not a subject |
+| Index entries (commit time) | `cross_index.clj` 300–308 `tx-ops` | `:triplex.ix/entry` of the retired fact's subject | yes: the save's revision; and index entries are never part of a row answer |
+| Index backfill and reconciliation | `cross_find.clj` 185–245 (`[:db/retract eid :triplex.ix/entry k]`, 223) | index entries only | no, by design: the builder's rule ignores entries, and no pinned route returns them (tested, section 2) |
+| Outcome fence after a 503 | `outcome.clj` 79 | nothing (asserts an operation ID on a transaction with no position) | — |
+| ID allocator, key-pool and reply fixes (U1, N1, N3) | merged at `345f833e4` | no new retraction (in the general writer's path) | — |
+| Rebuild and reconcile routes | `layout_replay.clj` (speculative `d/with` only), `cross_find` reconcile (above) | nothing stored by the replay | — |
+| Aging loader (AGE1, lab) | `age1/.../native.clj` 105–117, 121–152 | the subject's row; the prior revision | yes: the revision, markers |
+| Excision | only `feed_live.clj` (a feed test fixture) | — | not a product writer; it would remove datoms from every view alike |
+| Failover promotion (option B) | storage level (a synchronous standby promoted) | no transaction | — |
+| Restore from backup | `erase.clj` `replay-after-restore!` replays removals at new positions; the data is the backup's history | no retraction; positions after the backup's head are reused by later saves | — (section 3) |
+| Account move between databases (HA1, lab) | `ha_shared.clj` 133 (the copied body through `storage/tx-data`) | as the general writer | as the general writer |
+
+The log audit (`rd6/attacks.clj` `audit`) checks this list against the data: for every transaction in a database's
+log, every entity with a retraction and no assertion other than an index entry, split by subject and other entities,
+and every retraction or repeated assertion of a grouped-save position. It ran on every scope of every test and fuzz
+run below: every scope of every targeted test in all nine settings, every one of the 92 fuzz points on both
+of its scopes (the whole log each time, up to 1,367 transactions per scope), and the PostgreSQL database of the fleet
+runs (7,060 transactions in fleet-3, audited by the driver as a peer): 0 transactions that retract a datom of a
+subject without asserting anything on it other than an index entry; 0 retractions and 0 repeats of a grouped-save
+position. One entry-only retraction was found, where it was planted: the index reconciliation of section 2. The
+retracting shapes seen on subjects are only these three: a row and the old revision retracted with a new revision
+(and new rows or markers) asserted.
+
+## 2. Attacks on the short-cut
+
+Harness: `rd6/attacks.clj` (targeted tests, the fuzz hook, the audit, the cost toy) and `rd6/clj-run.sh` (one JVM per
+writer setting, in-memory Datomic, the gateway's own route handler, the S5 harness's save frames). Every read is
+answered five ways, the gateway's caches cleared before each answer: options off (the reference), both on, cut lookup
+alone, short-cut alone, and both on with the hardening of section 5. Read shapes at every position: one subject at
+three valid times, all subjects in one request, field 0 by pattern, record clocks (`recordedAt`), and worlds
+(`reach-many`).
+
+**Targeted tests** (`deftest`s in `attacks.clj`; every setting that enables them; fail 0 and error 0 in each
+final run):
+
+| Test | Settings it ran in | Reads compared (each under 4 option sets) | Differences from options off | Short-cut answers |
+| --- | --- | --- | --- | --- |
+| Every retirement shape through the product's writers at every position: a retirement alone on the per-subject and on the general writer, a replacement, an owned entity (a form the subject references) changed alone and then retired (the subject's revision does not move), two owners in one save, the reference retired, a new owner created with a reference beside an existing one, a mixed retirement on the general writer | all nine: server, grouped, owner head, serial (narrow revision, reused predecessor, append retirement), general, index, import (whole subject), hints (subject hints, general prefetch), accounts (`TX2_ACCOUNT_CLAIMS=1`) | 192 per setting | 0 | 21 per setting |
+| Removal on request before and after the pin, unsealed and sealed: U's value removed before later pins, T's value replaced and both its values removed, S's removed after; every position, every read shape | all nine | 117 per case, 2 cases per setting | 0; and 0 removed values visible at any position under any option set (all five) | 147 per case |
+| Index entries written and retracted after the pin: declaration, backfill (entries asserted on subjects with no other datom), a stale entry planted, a second backfill whose reconciliation retracts it (an entry-only retraction), a save | index (`TX2_CROSS_INDEX=1`) | 65 | 0 | 105 |
+| Covering owner head and its fold: three replacements per subject, an add-only save (the fold first), a retirement alone, a replacement after the fold | owner head | 234 | 0 (15 root datoms, 3 folds) | 315 |
+| Grouped saves: three groups on distinct subjects, with replacements, retirements alone, mixed, every interior and end position | grouped | 390 | 0 | 126 |
+
+**Hypothetical writers** (raw `d/transact`; no writer on the head does any of these, as the audit shows):
+
+| Attack | Differences, short-cut on | Differences, hardening on |
+| --- | --- | --- |
+| After the pin, retract one row of S, assert nothing on S | 2 of 2 reads (the row read and the world) | 0 |
+| Retract a row of S and re-assert the same text in a later transaction | 0 (the re-asserted datom carries a transaction after the pin, so the short-cut refuses) | 0 |
+| Move a row from U to T in one transaction (retract on U, assert on T) | 1 of 12 (U at the pin; T is refused correctly) | 0 |
+| The first attack, read on the options-off reach route: a pinned read cold, then a head read, then the same pinned read | the options-off answer itself changes: the head read stores S's parsed rows under (entity, revision), the revision did not move, and the pinned read then answers the head's rows | — |
+
+The last row matters for the decision: the parsed-entity cache of the reach route (`entity_cache.clj`, on by default,
+256 MiB) already assumes that an entity's rows never change without its revision moving, with every option off. A
+writer that broke the short-cut's invariant would already make options-off reach reads wrong. The short-cut extends
+that existing assumption to the `/v1/.../read` route, which has no such cache, and makes it slightly weaker: it also
+catches a change that asserts anything on the subject without moving the revision.
+
+**The fuzz** (`fuzz-main`): the S5 reviewer's differential fuzzer (`s5/fuzz.clj`) runs unchanged, and at every one of
+its deep comparison points (every 400 serial steps, at the end of the serial phase, after each concurrent round) the
+hook reads, on both of its scopes (fast writers and the general-writer control): the last 25 positions and 25 random
+ones, 12 random owners, every read shape, under all five option sets, then audits both logs.
+
+| Run | Writer setting | S5 dimensions | Serial / concurrent saves | Deep points (both scopes) | Read shapes compared | Differences | Short-cut answers | Audit violations |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| fuzz-1 | server (per-subject, several owners, creation, wide) | unsealed protection, removals and removal races, unknown outcomes (faults), races, kills, resends | 1,644 / 720 | 16 | 30,759 × 4 | 0 | 274,710 | 0 |
+| fuzz-1 | serial (+ narrow revision, reused predecessor, append retirement) | as above | 1,644 / 720 | 16 | 30,993 × 4 | 0 | 281,592 | 0 |
+| fuzz-3 | accounts-serial (+ `TX2_ACCOUNT_CLAIMS=1`) | as above, second account, the account-ID setting's transition and stale planners | 1,154 / 300 | 10 | 19,549 × 4 | 0 | 157,494 | 0 |
+| fuzz-3 | hints (+ subject hints, general prefetch) | as fuzz-3 | 1,169 / 300 | 10 | 19,590 × 4 | 0 | 173,100 | 0 |
+| fuzz-2 | grouped (`TX2_GROUP_COMMIT=1`, live priority; every save on the general writer) | sealed protection, removals, faults, races, kills, resends | 1,235 / 1,000 | 20 | 38,823 × 4 | 0 | 347,616 | 0 |
+| fuzz-2 | import (whole-subject import bound, removal readback) | as fuzz-2 grouped | 1,249 / 1,000 | 20 | 38,985 × 4 | 0 | 298,113 | 0 |
+| **all** | | | **8,095 / 4,040** | **92** | **178,699 × 4 = 714,796** | **0** | **1,532,625** | **0** |
+
+The grouped fuzz formed no group (its saves arrive one at a time in memory; 0 grouped positions in its logs), so
+grouped interiors are covered by the targeted grouped tests and the grouped fleet phase, not by the fuzz.
+
+Writers that took the serial saves (fuzz-1, server): creation 532, several owners 130, one owner 308, general 619. The
+S5 fuzzer's own comparison (control against candidate) found 0 differences in every run.
+
+
+
+## 3. Attacks on the cut lookup
+
+Writers of `:triplex.group/position`: `group.clj` 176–178 (`materialize`; the position goes to `metadata`, never into the
+net of added and retracted datoms, so it cannot be retracted), `group_prepare.clj` 256–258 (`render`), and AGE1's lab
+loader (`native.clj` 136–140). The attribute is `:db.unique/value` (`group.clj` 47), so two entities cannot hold one
+position at once; a repeat needs a retraction first. No code retracts it.
+
+| Route the task names | What it does to grouped positions | Tested |
+| --- | --- | --- |
+| Resend of a committed save | refused before staging (`OperationDuplicate`, `storage.clj` 594; inside a group `TRIPLEX_OPERATION_DUPLICATE`), nothing written | fuzz modes same-operation, same-command, lost-reply, kill-after (table above) |
+| Replay across a removal | refused (`ErasureReplayDeclined`) or committed as a new save at a new position | fuzz removal-race steps (S5_REMOVALS=1) |
+| 503 `OutcomeUnknown` lookup and fence | the fence asserts an operation ID on a transaction with no position (`outcome.clj` 79); a later commit of that operation then fails its unique check | fuzz fault steps (S5_FAULTS=1) |
+| Imports | general or ordered saves; grouped only through the group writer | import setting (fuzz and attacks) |
+| Restore from backup to an older position | the whole history is the backup's; positions above its head are assigned again to later saves | not run (no backup on the in-memory runs). Both read paths then read the same restored history, so the options cannot disagree; a client pin taken before the restore names different data afterwards with either option set |
+| A second gateway with different options | both options are read-side (they appear only in `pinned.clj`, `group_cut.clj` `member-at`, `lean.clj` 137, `reach.clj` 277, `reach_late.clj` 50); nothing a reader stores depends on them | section 4 |
+
+The cut lookup acts only on the `/v1/.../read` route (and the batch and sweep routes that call it): there `lean/rows`
+receives the past view from `storage/at-position`. The reach routes call `select-db` on the current database, where
+`member-at` always took the lookup ref and never paid the walk.
+
+| Attack (grouped setting) | Differences, cut lookup on | Hardened cut lookup |
+| --- | --- | --- |
+| Every interior and end position of three groups (product writers) | 0 of 390 | 0 |
+| Every position of forty groups (product writers) | 0 of 9,314 | 0 |
+| Retract an interior member's position (hypothetical writer) | 2 of 6 reads at that position (the read falls through to the group's end and sees a later member's save) | 0 |
+| Then assert the same position on a new entity | 2 of 6 | 0 |
+
+Audit over every grouped scope: the three-group test (9 positions) and the forty-group test (117 positions in 40 groups of two to six
+saves on sixteen subjects: replacements, retirements alone, mixed; 166 saves committed, none refused): 0 retractions,
+0 repeats; every position of the forty-group scope read for every subject under all five option sets, 9,314 read shapes,
+0 differences, 1,407 short-cut answers.
+
+
+## 4. Mixed fleet
+
+`rd6/fleet.sh` (one lab container: PostgreSQL 17 with synchronous commit, a transactor, one write gateway, three read
+gateways started with the options off, both on, and the tuned reader's set: both on, the early filter, the read
+profile, three read permits; their write options were checked at start). Four writer threads saved through the write
+gateway for 75 s in each of three writer phases (the write gateway restarted between them): per-subject writers,
+grouped saves (`TX2_GROUP_COMMIT=1`, live priority), append retirement. Each thread owned its subjects: replacements,
+retirements alone, two-subject saves, new forms referencing a subject, protected values, and one removal on request in
+a hundred steps. Four reader threads at once read a random committed position (or a record clock) for one to six
+random subjects from all three readers in parallel, by row, by field pattern, by clock and as worlds; after the writes,
+about 700 positions (the last 100 and 600 spread) for every subject.
+
+| Phase | Saves committed (total) | Removals (total) | Comparisons (total) | Differences |
+| --- | --- | --- | --- | --- |
+| per-subject | 7,731 | 93 | 88,640 | 0 |
+| grouped | 13,298 | 157 | 211,788 | 0 |
+| append retirement | 20,559 | 226 | 279,990 | 0 |
+| sweep after the writes (head 20,785, 2,151 subjects) | — | — | 115,020 more (395,010) | 0 |
+
+The short-cut answered 1,281,839 subjects from the current database and 1,110,144 through the past view on the
+options-on reader (1,281,811 and 1,110,124 on the tuned one). 411 comparisons had one side refused with
+`503 ErasureFrontierUnavailable` (a reader whose peer had not caught up with a just-published removal); these are not
+counted as differences and fall evenly on both sides: options-on refused while options-off answered 98 times, the
+reverse 109; tuned 103 and 101. No answer differed when both readers answered.
+
+Two more fleet runs, each ending with the review's log audit of the PostgreSQL database itself (the driver JVM is a
+peer of the same database):
+
+| Run | Writer phases (60 s each) | Saves committed | Removals | Comparisons | Differences | Log audit |
+| --- | --- | --- | --- | --- | --- | --- |
+| fleet-3 | grouped, per-subject (each writer thread its own account) | 6,963 | 86 | 160,290 (41,966 in the sweep) | 0 | 7,060 transactions: 0 violations |
+| fleet-4 | grouped, append retirement (every writer thread in one account) | 6,459 | 77 | 143,864 (40,230 in the sweep) | 0 | 6,547 transactions: 0 violations |
+
+Across the three fleet runs: 33,981 saves and 389 removals, 699,164 comparisons, 0 differences. One gap: in none of
+them did the grouped writer form a group of two or more saves (0 grouped positions in either audited log; every save
+of a grouped phase went alone), so the mixed fleet did not exercise the cut lookup on grouped interiors. Those are
+covered only by the in-memory group tests of section 3 (126 interior and end positions in 43 groups).
+
+A first fleet run (fleet-1, stopped at 10 minutes in its full sweep) used four times the removal rate and counted
+those refusals as differences; its numbers are not used.
+
+
+## 5. The cheap hardening
+
+**What was built (in the test harness only; `attacks.clj` `hardened-unchanged`, `hardened-member-at`):**
+
+- Short-cut: the builder's rule, and no datom of the subject in the history index (assertion or retraction) with a
+  transaction after the pin; index entries left aside, as the builder's rule leaves them.
+- Cut lookup: the current-database answer only when the position's history holds exactly one datom (its assertion);
+  otherwise the lookup on the past view.
+
+**Does it close what was found?** Yes, both: with the hardening on, 0 differences in every hypothetical case of
+sections 2 and 3 (a retraction alone: 0 of 2; a moved row: 0 of 12; a retracted grouped position: 0 of 6; the same
+position asserted again elsewhere: 0 of 6), and 0 differences in every product-writer test, fuzz point and the
+targeted tests (it is the fifth option set compared everywhere above).
+
+**Cost on the Mac toy (diagnostic; `cost-main`, grouped setting, in-memory Datomic).** 40 subjects of 8 fields, each
+edited 80 times before the pin (one unchanged subject: 10 current datoms, 330 in its history), then half of them
+edited again and 500 groups of 4 saves (1,500 grouped positions after the pin):
+
+| Check, one call | Microseconds |
+| --- | --- |
+| Builder's short-cut rule (`unchanged-since?`, cross_index form) | 43.6 |
+| Hardened short-cut rule | 61.8 (+18.2) |
+| For scale: the subject's datoms at the pin (what the as-of path reads) / now / its whole history | 22.5 / 14.4 / 10.6 |
+| Cut lookup on the past view (the walk; cheap in memory) | 0.51 |
+| Builder's cut lookup | 0.70 |
+| Hardened cut lookup | 1.57 (+0.87) |
+
+Whole pinned reads through the route on the same toy were 0.25 to 0.42 ms under every option set, with no ordering
+between them: the in-memory toy has no storage reads, so neither the walk nor the history segments cost what they do
+at 1 billion. What the toy does show is the shape of the cost: the hardened short-cut reads the subject's whole history
+(33 times its current datoms here), which is what the past view reads to answer the same subject, so on a storage
+database it adds about one as-of read of the subject to every answer the short-cut gives, and its saving would mostly
+go. The hardened cut lookup adds one seek into the position's history (a range no writer ever fills), a small fixed
+cost per pinned read. Neither was measured on storage; the server's A1 step is where to do it if the coordinator
+wants the numbers.
+
+
+## 6. Verdict on defaults
+
+| Default | When it is the right one | Conditions |
+| --- | --- | --- |
+| **Both on (recommended)** | the standing gate is adopted and A1 shows the short-cut worth having | the three conditions of the verdict; this review's harness (attack, fuzz, fleet) rerun on the head that flips the default |
+| Cut lookup on, short-cut off | the standing gate is not adopted; or A1 shows the short-cut adds little; or a planned writer must retract without asserting (a physical clean-up of retired rows, excision, a compaction or rebuild route) | the hardened cut lookup, or the audit's grouped-position half as a gate. The short-cut stays available for the tuned reader and the console |
+| Neither | a writer or route is planned that retracts or reuses grouped-save positions (a rebuild that renumbers positions, a restore that keeps a running peer) and the hardened lookup is not built | — |
+
+The short-cut's hardening (section 5) is not a condition: it closes the gap at about the cost of the read it avoids,
+and the options-off reach route already relies on the same invariant through its parsed-entity cache (finding R6-2),
+so a writer that broke it would have to be caught by the gate in any case.
+
+
+## Findings
+
+**R6-1 Medium (design; no defect on the head). The short-cut's exactness rests on a writer invariant nothing checks.**
+Heads `345f833e4`, `2ce636613`. The rule sees assertions only: a transaction that retracts a row of a subject after the
+pin and asserts nothing on it leaves the subject "unchanged", and the short-cut then answers the pin from the current
+database without the row. Reproduce: `clj-run.sh OUT attack server`, test `a-retraction-without-an-assertion` and
+`a-retraction-then-reassertion-and-a-moved-datom` (raw `d/transact` as the hypothetical writer). Numbers: 2 of 2 reads
+differ (the row read and the world); a row moved from U to T: 1 of 12 reads differs (U at the pin); a retraction then
+re-assertion of the same text: 0 (caught). Every product writer asserts the revision (and for grouped saves and
+append retirement a marker) on each subject it retracts from (section 1; audit 0 violations in every run). Smallest
+fix I would accept: condition 1 of the verdict (the standing gate). The hardening in the reader also closes it
+(0 differences) at about one as-of read per short-cut answer.
+
+**R6-2 Info. The options-off reach route already depends on the same invariant.** Heads as above. `entity_cache.clj`
+keys parsed entities by (entity, revision) on every route of `/v2/.../reach` and `reach-many`, pinned or not, with
+every option off. After the same hypothetical retraction, a pinned world read answers correctly cold, and answers the
+head's rows after a head read has cached the entity at its unchanged revision (`offReachColdEqualsWarm: false` in the
+same test). So the risk R6-1 names is not new; the short-cut extends it to `/v1/.../read`, which has no such cache.
+No fix needed for this review; the gate of condition 1 covers both.
+
+**R6-3 Low. The cut lookup's assumption is also a writer invariant.** Heads as above. Grouped-save positions are only
+ever asserted (`group.clj` `materialize` keeps them out of the net of added and retracted datoms) and are unique values;
+no code retracts one. A hypothetical retraction of an interior member's position makes the cut lookup miss the member,
+the read falls through to the group's end, and 2 of 6 reads at that position differ (on and cut lookup alone); the
+same number asserted again on a new entity: 2 of 6. Reproduce: `clj-run.sh OUT attack grouped`, test
+`grouped-saves-and-the-cut-lookup`. Smallest fix: condition 2 (the hardened lookup, 0 differences, one history seek,
++0.87 µs per lookup on the toy) or the grouped half of the gate.
+
+**R6-4 Low (documentation). `rd1/PINNED-1B.md`'s writer audit lists "a fold without moves" as a retraction-only
+transaction that the short-cut would answer from current.** A root always holds at least one text (`owner_root.clj`
+`decode` refuses a root with none), so every fold asserts at least one row on the owner and the short-cut refuses it.
+The table's conclusion (exact) stands; the case does not occur. Fix: one line on that page.
+
+**R6-5 Info (measurement gap). The short-cut's own gain at 1 billion is unmeasured.** The server pair (`rd1/PINNED-1B.md`)
+compared both off against both on. Near the head (1,000 positions behind, so little walk) both on gave 770.7 reads/s
+against 409.0 at one seat, which is the short-cut's; at the old pin the cut lookup's and the short-cut's shares are
+not separated. On the Mac toy, adding the short-cut to the cut lookup gained nothing (`srv2/PREP.md`: cut lookup alone 1.30 ms p50,
+both on 1.56; 4,669 against 4,463 reads/s at 16 seats). Condition 3.
+
+**Observation (not a finding of this review).** During removals, 411 of 395,010 fleet comparisons had one reader refuse
+with `503 ErasureFrontierUnavailable` while the other answered; the refusals fall evenly on the options-on and
+options-off readers (98 against 109) and come from a reader whose peer had not caught up with a just-published removal.
+
+
+## What held
+
+- Every product writer at both heads asserts on each subject it retracts from: general, per-subject (one owner, narrow
+  revision, reused predecessor, append retirement), several owners, creation, grouped (both paths), covering owner head
+  and its fold, index entries at commit time, imports, the aging loader. The only retraction with no other datom on a
+  subject is the index backfill's reconciliation of an index entry, which no row answer contains (tested: 0
+  differences, the short-cut answered it from current).
+- Removal on request retracts nothing of the subject, and the removed value is masked at every pin on every option set,
+  unsealed and sealed, before and after the pin (every position, every subject, all five option sets: 270 reads per
+  setting, 0 showed a removed value).
+- A subject whose only change after the pin is in an entity it references (a form changed, then retired): equal answers,
+  the subject answered from current and the form through the past view.
+- A retraction and re-assertion of the same value, and the receiving side of a moved row: caught by the rule.
+- Grouped interiors keep the group-cut slice and never take the short-cut; every interior and end position equal.
+- The account-ID setting's transition, stale planners, unknown outcomes and their fence, resends, kills before and after
+  submit, races, removal races and their replays, a second account (S5 dimensions in the fuzz): 0 differences.
+- One write gateway and three read gateways with different options on one PostgreSQL database while saves,
+  retirements and removals ran: 0 differences in 699,164 comparisons (three runs).
+
+
+## Not tested
+
+- Anything at scale or with storage timings: every run is a Mac toy (heads up to 20,785 positions), in memory except
+  the fleet. The hardening's cost on storage is not measured.
+- Restore from backup (no backup on the in-memory runs), failover promotion, and the HA1 account move: by reading only.
+- Real older builds beside this one; the batch (`/v2/.../batch`) and sweep routes (they call the same
+  `storage/read-rows`, so the same code path, but were not called).
+- The owner head and index entries inside the fuzz (targeted tests only); sealed protection in the fleet (in memory
+  only); grouped interiors under a mixed fleet (no group formed in the fleet runs; in-memory group tests only).
+- The Publish line's own toy stack (its writes go through the SDK's transact route, so through the writers above; no
+  database of its gates was audited).
+- The save line's fourth pass and the removal-per-account line: not on the one branch at the time of writing (their
+  gateway diffs from their merge bases add no retraction of a subject datom; the removal-per-account line retracts a
+  scope counter and writes removal counters on their own entities).
+- Excision (no product writer uses it).
+
+
+## Reproduce
+
+One ordinary heavy token per command, from a checkout of this branch (the scripts copy the gateway sources and refuse a
+checkout whose gateway sources differ from HEAD):
+
+```
+node lab/bin/heavy.mjs --label DX-RD6-attack -- bash lab/experiments/EXP-DX1/rd6/clj-run.sh OUT attack "server grouped ownerhead serial general index"
+S5_SEEDS=11,12 S5_STEPS=800 S5_ROUNDS=2 S5_THREADS=4 S5_PER_THREAD=60 S5_PROTECTED=unsealed S5_REMOVALS=1 S5_FAULTS=1 \
+  node lab/bin/heavy.mjs --label DX-RD6-fuzz -- bash lab/experiments/EXP-DX1/rd6/clj-run.sh OUT fuzz "server serial"
+RD6_SUBJECTS=40 RD6_EDITS=40 RD6_GROUPS=300 node lab/bin/heavy.mjs --label DX-RD6-cost -- bash lab/experiments/EXP-DX1/rd6/clj-run.sh OUT cost "grouped server"
+RD6_SECONDS=75 node lab/bin/heavy.mjs --label DX-RD6-fleet -- bash lab/experiments/EXP-DX1/rd6/fleet.sh OUT
+```
+
+`DOCKER_HOST` names the lab VM. The images are started by ID: the lab Datomic runtime `sha256:da58aea16b31…` for the
+in-memory runs and `sha256:21a67288007d…` for the PostgreSQL stack, with the head's gateway sources (a copy taken at
+start) first on the classpath.
