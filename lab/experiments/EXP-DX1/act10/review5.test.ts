@@ -389,3 +389,36 @@ test("V2c: an upgrade of a held account: enrolled, published and settled by the 
   out.newSettle = await step(new RecordedNotices(n, "parts").record((await a.notices.observe()).value.sequence));
   console.log("[V2c] " + JSON.stringify(out));
 });
+
+// ------------------------------------------------------------ (6) the calendar row with thousands of instants, V6
+// The calendar (`join-calendar`) holds the account's distinct future due instants: each `:file/expiresOn` day's end, and
+// each fact's end of validity (`validTo`) after the cut at its own millisecond (`deep.ts` 59-65). A deep save that adds
+// one rewrites the row whole (`account.ts` 1391-1397), as do the transition (`account-settings.ts` 144-147) and each
+// due instant's tick (1242-1243). The toy world holds no future due instant and its in-process store cannot take deep
+// saves, so this prices the whole rewrite by the writer's own estimate at the sizes a deep account reaches (one, five
+// and ten years of distinct days, the date range's end at day precision) and finds where the row meets the 1 MiB value.
+test("V6: the calendar row's whole rewrite priced at 1, 5 and 10 years of days, at the date range's end, and at the 1 MiB value with instants", async () => {
+  const t = await setup(["acct-a"], 4);
+  const peek = t.x.account(t.proc("v6-peek", NONE));
+  const head = await t.x.store(t.proc("v6-head", NONE)).head();
+  const cal = await peek.db.get<string[]>("join-calendar", head);
+  const dayMs = 86400000, first = Date.UTC(2026, 10, 26);
+  const days = (k: number) => Array.from({ length: k }, (_, i) => W0.endOfDay(W0.parseDate(new Date(first + i * dayMs).toISOString().slice(0, 10))));
+  // Instants at distinct milliseconds, as a fact's end of validity is stored (`toISOString` with "000Z").
+  const instants = (k: number) => Array.from({ length: k }, (_, i) => new Date(first + i * 60000 + 123).toISOString().replace("Z", "000Z"));
+  const price = (label: string, dates: string[]) => {
+    const e = frames.frameEstimate(peek.db.change("join-calendar", cal, dates));
+    return { label, instants: dates.length, valueBytes: Buffer.byteLength(canonical(dates)), us: e.us, timesBound: +(e.us / frames.frameBoundUs).toFixed(2) };
+  };
+  const lastDay = Math.round((Date.UTC(2099, 11, 31) - first) / dayMs) + 1;
+  let lo = 1, hi = 100000;
+  while (lo < hi) { const m = Math.ceil((lo + hi) / 2); if (Buffer.byteLength(canonical(instants(m))) <= 1048576) lo = m; else hi = m - 1; }
+  const out = {
+    toyCalendar: cal.value.length,
+    priced: [price("284 days (the page's 8 ms point)", days(284)), price("1 year of days", days(365)), price("5 years", days(5 * 365)),
+      price("10 years", days(10 * 365)), price("to 2099-12-31, one per day", days(lastDay)), price("instants at the 1 MiB value", instants(lo))],
+    instantsAtTheValueLimit: lo,
+  };
+  console.log("[V6] " + JSON.stringify(out));
+  assert(lo > lastDay, "day precision alone cannot reach the value limit");
+});
