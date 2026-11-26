@@ -15,7 +15,7 @@ import { Archive } from "../actv-lazy/join/archive.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
 import { toWire } from "../actv-lazy/join/check.ts";
 import { largeRelease, parseShape } from "../actv-lazy/join/large-release.ts";
-import { comparable, readFullLedgers, readLedgers } from "../actv-lazy/join/ledger-parts.ts";
+import { comparable, ledgerCapacity, noticeItems, readFullLedgers, readLedgers, worstLedgerChars } from "../actv-lazy/join/ledger-parts.ts";
 import { RecordedNotices } from "../actv-lazy/join/recorded.ts";
 import { fact, namesOf } from "../actv-lazy/store.ts";
 import { Documents } from "../notify1/store.ts";
@@ -79,6 +79,14 @@ const cursorOf = async (t: Setup) => {
   const d = new Documents(s.comp, "settlement-notices" + namesOf(s).documents);
   return (await d.row<any>("notice-progress", await s.head()))?.value;
 };
+/** [DX-ACT8, sixth round] The most notice policies one release may give a subject at the per-release cap (1,427 since the
+ * fifth review's Y1 sizing: 9 parts; 1,592 before, at 10). */
+function capFor(tag: string) {
+  const ok = (n: number) => worstLedgerChars(noticeItems([tagged(n, tag)]).items) <= ledgerCapacity("parts");
+  let lo = 1, hi = 4000;
+  while (lo < hi) { const m = (lo + hi + 1) >> 1; if (ok(m)) lo = m; else hi = m - 1; }
+  return lo;
+}
 /** A large release whose forms and notice policies carry `tag` in their IDs (distinct policies across tags). */
 function tagged(n: number, tag: string, base = W0.R1.doc) {
   const d = largeRelease(base, parseShape("forms=" + n + ",policies=" + n + ",permille=1000"));
@@ -338,7 +346,7 @@ test("W4: random retire, re-add, rename and payload changes over many releases, 
 test("W5: a subject at the per-release cap: two disjoint releases at the cap, then the first again; every event records exactly", async () => {
   const t = await setup(["acct-a"], 2);
   const publisher = t.proc("publisher", ALL);
-  const n = Number(process.env.W5_POLICIES ?? 1590);
+  const n = Number(process.env.W5_POLICIES ?? Math.min(capFor("a"), capFor("b")));
   const steps: Record<string, unknown>[] = [];
   for (const [id, doc] of [["a", tagged(n, "a")], ["b", tagged(n, "b")], ["a-again", tagged(n, "a")], ["over", tagged(n + 40, "o")]] as const) {
     const r = await publish(t, publisher, id, doc);
@@ -483,12 +491,13 @@ test("W9: an enrolment killed at every step (reply lost or not), then enrolled a
   assert.equal(bad.length, 0);
 });
 
-test("W8b: after a ledger of ten parts, small releases record: the closing piece is the retractions and a head (Z1 fixed)", async () => {
+test("W8b: after a ledger of the most parts (9 since the sixth round, at the cap), small releases record: the closing piece is the retractions and a head (Z1 fixed)", async () => {
   const results: Record<string, unknown>[] = [];
   for (const n of [20, 60, 100, 120, 140, 150, 166]) {
     const t = await setup(["acct-a"], 1);
     const publisher = t.proc("publisher", ALL);
-    await publish(t, publisher, "big", tagged(1590, "x" + n));
+    const big = await publish(t, publisher, "big", tagged(capFor("x" + n), "x" + n));
+    assert(big.ok, "the release at the cap publishes");
     const first = await recordNotices(t, "settler-big", NONE, undefined, await tailOf(t));
     await publish(t, publisher, "small", tagged(n, "y" + n));
     const second = await recordNotices(t, "settler-small", NONE, undefined, await tailOf(t));

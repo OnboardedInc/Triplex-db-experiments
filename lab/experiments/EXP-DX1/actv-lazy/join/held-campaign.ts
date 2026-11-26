@@ -864,6 +864,13 @@ export async function runHeld(
         await act8R3Stack({ out, s, descriptor, attempt: peer.attempt });
         return;
       }
+      // [DX-ACT8, sixth round] DX_ACT8_STAMP_STACK=1 (with OLD_ROOT): the compiler stamp across an upgrade and the
+      // re-stamp route (act10/stack-stamp6.ts) instead.
+      if (process.env.DX_ACT8_STAMP_STACK === "1") {
+        const { act8StampStack } = await import("../../act10/stack-stamp6.ts");
+        await act8StampStack({ out, s, descriptor, attempt: peer.attempt });
+        return;
+      }
       const { act10Stack } = await import("../../act10/stack-part.ts");
       await act10Stack({ out, s, descriptor, attempt: peer.attempt });
       return;

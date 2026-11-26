@@ -29,11 +29,14 @@ import {
   type Stage,
 } from "./staging.ts";
 import {
+  CompilerChanged,
+  interpreter,
   Notices,
   type Tail,
   type Request,
   type Event as NoticeEvent,
 } from "../../notify1/journal.ts";
+export { CompilerChanged };
 import { Documents, type Op } from "../../notify1/store.ts";
 import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
@@ -118,7 +121,27 @@ type Meta = {
   compiler: string;
   scheduled: boolean;
   expanded?: boolean;
+  /** [DX-ACT8, fifth review Y2] The account's earlier stamps, oldest first, each written by a re-stamp. */
+  stamps?: Stamp[];
 };
+/** [Y2] One earlier stamp: the compiler stamp and the notice tail's inputs and kernel identities the account carried,
+ * the last notice event written under them, and the position the re-stamp read the account at. */
+export type Stamp = { compiler: string; inputs: string; evaluator: string; sequence: number; position: number };
+/** [Y2] What an account owes that its stamp promised: owed releases whose values are not settled, notice events not
+ * recorded, scheduled releases not yet activated. Empty: it owes nothing. */
+export type Owed = { values: number[]; notices: { recordedThrough: number; tail: number } | null; scheduled: string[] };
+/** [Y2] A re-stamp refused because the account owes something under its stamp (finish it on the stamp's build). */
+export class RestampRefused extends Error {
+  readonly owes: Owed;
+  constructor(owes: Owed) {
+    super("Re-stamp refused: the account owes work under its stamp: " +
+      (owes.values.length ? "values of releases " + owes.values.join(", ") + "; " : "") +
+      (owes.notices ? "notices of events " + (owes.notices.recordedThrough + 1) + " to " + owes.notices.tail + "; " : "") +
+      (owes.scheduled.length ? "scheduled releases at " + owes.scheduled.join(", ") + "; " : "") +
+      "finish them on the build that holds the stamp, then re-stamp");
+    this.owes = owes;
+  }
+}
 export type Marker = {
   joined: string;
   seq: number;
@@ -210,6 +233,8 @@ export class JoinedAccount {
     this.admission = admission;
     this.notices = new Notices(s.comp, "joined" + namesOf(s).documents, {
       identity: selector,
+      // [DX-ACT8, fifth review Y2] Events written before a re-stamp, under the stamps it recorded.
+      earlier: async () => (await this.earlierStamps()).map((x) => ({ inputs: x.inputs, evaluator: x.evaluator, through: x.sequence })),
       roster: async (c) => this.roster((await this.meta(c.position)).census, c.position),
       worlds: async (ids, c) =>
         worldsAt(s, s.profile, ids, { tx: c.position, validTime: c.validTime }),
@@ -248,8 +273,25 @@ export class JoinedAccount {
   }
   private async meta(p: number) {
     const m = (await this.db.get<Meta>("join-meta", p)).value;
-    assert(m.compiler === selector && m.census && m.epoch && m.source > 0 && m.source < p);
+    // [DX-ACT8, fifth review Y2] A typed refusal naming both stamps when the account was enrolled or last re-stamped by
+    // another build; a read at a position before this build's re-stamp sees the earlier stamp the re-stamp recorded.
+    if (m.compiler !== selector && !(await this.earlierStamps()).some((x) => x.compiler === m.compiler))
+      throw new CompilerChanged(m.compiler, selector, "join-meta");
+    assert(m.census && m.epoch && m.source > 0 && m.source < p);
     return m;
+  }
+  /** [Y2] The account's stamps against this build's at `p`, typed (`join-meta` and the notice tail). */
+  private async stampCheck(p: number) {
+    const [m, tail] = await Promise.all([this.db.row<Meta>("join-meta", p), this.db.row<Tail>("tail", p)]);
+    if (m && m.value.compiler !== selector) throw new CompilerChanged(m.value.compiler, selector, "join-meta");
+    if (tail && tail.value.inputs !== selector) throw new CompilerChanged(tail.value.inputs, selector, "the notice tail");
+    if (tail && tail.value.evaluator !== interpreter) throw new CompilerChanged(tail.value.evaluator, interpreter, "the notice tail's kernel");
+  }
+  /** [Y2] The earlier stamps the account's current stamp accepts: those recorded by the re-stamp that made this build's
+   * stamp current (none when the current stamp is another build's). */
+  private async earlierStamps(): Promise<readonly Stamp[]> {
+    const m = (await this.db.row<Meta>("join-meta", await this.s.head()))?.value;
+    return m?.compiler === selector ? (m.stamps ?? []) : [];
   }
   collect(attempt: string) {
     return collectStage(this.s, this.db, attempt);
@@ -372,6 +414,80 @@ export class JoinedAccount {
     const origin = (await this.s.rows([namesOf(this.s).ORIGIN], p)).find((r: { position: number }) => r.position > this.s.held!.cut);
     const meta = await this.db.row<Meta>("join-meta", p);
     return Boolean(origin && value(origin).held === seal && meta && canonical(meta.value.census) === canonical(census));
+  }
+  /**
+   * [DX-ACT8, fifth review Y2] What the account owes under its stamp at `p`: every owed release whose values are not
+   * settled (`stored` or `superseded`), the notice events the recorder has not passed, and every scheduled release not
+   * yet activated. Read only: no stamp check (an operator runs it on any build).
+   */
+  async owes(p?: number): Promise<Owed> {
+    p ??= await this.s.head();
+    const docs = namesOf(this.s).documents;
+    const values = new Documents(this.s.comp, "settlement-values" + docs),
+      notices = new Documents(this.s.comp, "settlement-notices" + docs);
+    const [c, tail, cursor] = await Promise.all([this.s.controls(p), this.db.row<Tail>("tail", p), notices.row<{ event: number }>("notice-progress", p)]);
+    const owed = (c.releases as { storage?: string; seq?: number; from?: string }[]).filter((r) => r.storage === "owed");
+    const rows = await values.rows<{ status: string }>(owed.map((r) => "values:" + r.seq), p);
+    const recordedThrough = cursor ? cursor.value.event - 1 : 0, last = tail?.value.sequence ?? 0;
+    return {
+      values: owed.filter((r) => { const v = rows.get("values:" + r.seq)?.value.status; return v !== "stored" && v !== "superseded"; })
+        .map((r) => r.seq!).sort((a, b) => a - b),
+      notices: recordedThrough < last ? { recordedThrough, tail: last } : null,
+      scheduled: (c.releases as { storage?: string; from?: string }[]).filter((r) => r.storage === "scheduled" && r.from! > c.at)
+        .map((r) => r.from!).sort(),
+    };
+  }
+  /** [Y2] The stamp check an operator runs before and after an upgrade: the account's stamps against this build's, and
+   * what it owes. `ready` says whether `restamp()` would run now; `current` whether nothing needs doing. */
+  async stampStatus() {
+    const p = await this.s.head();
+    const [meta, tail, owes] = await Promise.all([this.db.row<Meta>("join-meta", p), this.db.row<Tail>("tail", p), this.owes(p)]);
+    const stored = meta?.value.compiler, current = stored === selector && tail?.value.inputs === selector && tail?.value.evaluator === interpreter;
+    const nothingOwed = !owes.values.length && !owes.notices && !owes.scheduled.length;
+    return { account: this.s.held?.account ?? null, enrolled: Boolean(meta), stored: stored ?? null, running: selector,
+      storedKernel: tail?.value.evaluator ?? null, runningKernel: interpreter, current, owes, nothingOwed,
+      ready: Boolean(meta) && !current && nothingOwed, earlierStamps: meta?.value.stamps?.length ?? 0 };
+  }
+  /**
+   * [DX-ACT8, fifth review Y2] Re-stamps a held account that owes nothing under its stamp, so this build can publish and
+   * settle it. Why: the stamp exists so that an unpaid release is never reopened under other code (index.ts); an account
+   * that owes nothing has no unpaid release, so moving it to this build reopens nothing. In one commit, guarded on the
+   * account's `join-meta`, its notice tail and its origin row as read: `join-meta` takes this build's stamp and records
+   * the old one (with the last event and the position written under it), and the tail takes this build's inputs and
+   * kernel identities. Events and release records written before it stay as they were and are read under the recorded
+   * stamp (`earlierStamps`); nothing settled is settled again. A Publish of the old build racing it loses on the guard
+   * (or, landing first, makes the account owe, and the re-stamp is refused). A held account has no enrolment index
+   * (its notice selection evaluates every subject), so nothing else carries the old build's code. Refused, typed: an
+   * account that owes something (`RestampRefused`, with what), one not enrolled, one that is not held.
+   */
+  async restamp(): Promise<{ restamped: boolean; position?: number; from: string; to: string; owes?: Owed }> {
+    const source = this.s.held;
+    if (!source) throw new Error("Re-stamp refused: only a held account can be re-stamped (an account enrolled by install() re-enrols)");
+    for (let attempt = 0; ; attempt++) {
+      const p = await this.s.head();
+      const [metaRow, tail, c] = await Promise.all([this.db.row<Meta>("join-meta", p), this.db.row<Tail>("tail", p), this.s.controls(p)]);
+      if (!metaRow || !tail || !c.origin) throw new Error("Re-stamp refused: the account is not enrolled");
+      const m = metaRow.value;
+      if (m.compiler === selector && tail.value.inputs === selector && tail.value.evaluator === interpreter)
+        return { restamped: false, from: m.compiler, to: selector };
+      const owes = await this.owes(p);
+      if (owes.values.length || owes.notices || owes.scheduled.length) throw new RestampRefused(owes);
+      const stamp: Stamp = { compiler: m.compiler, inputs: tail.value.inputs, evaluator: tail.value.evaluator, sequence: tail.value.sequence, position: p };
+      const next: Meta = { ...m, compiler: selector, stamps: [...(m.stamps ?? []), stamp] };
+      const ops = [...this.db.change("join-meta", metaRow, next), ...this.db.change("tail", tail, { ...tail.value, inputs: selector, evaluator: interpreter })];
+      const guards: EntityGuard[] = [
+        { entityId: this.db.prefix + "join-meta", tripleIds: [metaRow.id] },
+        { entityId: this.db.prefix + "tail", tripleIds: [tail.id] },
+        { entityId: namesOf(this.s).ORIGIN, tripleIds: [c.origin.id] },
+      ];
+      try {
+        const r = await this.s.commit("account-restamp:" + randomUUID(), "lazy/join", ops, p, { restamp: { from: m.compiler, to: selector } },
+          undefined, undefined, guards);
+        return { restamped: true, position: r.position, from: m.compiler, to: selector };
+      } catch (e) {
+        if (!(e instanceof Conflict) || attempt >= 7) throw e;
+      }
+    }
   }
   async install(ids: string[], at: string, expanded = false) {
     ids = [...ids];
@@ -506,6 +622,9 @@ export class JoinedAccount {
       this.s.controls(p),
       this.db.get<Tail>("tail", p),
     ]);
+    // [DX-ACT8, fifth review Y2] Typed: the tail carries another build's stamp.
+    if (tail.value.inputs !== selector) throw new CompilerChanged(tail.value.inputs, selector, "the notice tail");
+    if (tail.value.evaluator !== interpreter) throw new CompilerChanged(tail.value.evaluator, interpreter, "the notice tail's kernel");
     assert(
       c.generation === meta.epoch &&
         tail.value.epoch === meta.epoch &&
@@ -787,6 +906,10 @@ export class JoinedAccount {
       r = xs.find((x) => x.position === e.at);
     assert(r);
     const m = value(r) as Marker;
+    // [DX-ACT8, fifth review Y2] A release record of another build is read only under an earlier stamp of the account
+    // (it was settled before the re-stamp); otherwise a typed refusal.
+    if (m.compiler !== selector && !(await this.earlierStamps()).some((x) => x.compiler === m.compiler && e.value.sequence <= x.sequence))
+      throw new CompilerChanged(m.compiler, selector, "the release record of event " + e.value.sequence);
     await recheckErasure(this.s.comp, m.erasureSeq);
     // [DX-ACT8] A record written under the account guard stores where it read its account's state (`cut`, and the
     // event's `sourceBefore`); the guard proves that state unchanged up to the record's own position, so the record holds
@@ -804,7 +927,7 @@ export class JoinedAccount {
         m.seq === e.value.sequence &&
         (guarded || e.value.sourceBefore === e.at - 1) &&
         (m.stage ? m.cut < e.at - 1 : m.cut === e.at - 1) &&
-        m.compiler === selector &&
+        typeof m.compiler === "string" &&
         m.census === e.value.census.members &&
         m.joined === e.value.epoch &&
         m.release === e.value.nextHash,
@@ -923,6 +1046,9 @@ export class JoinedAccount {
     // then what this Publish does follows the account's stored settings only.
     // [U6] Whether a transition is needed is read from the stored settings at this plan (no per-process cache).
     let h0 = await this.s.head(), c0 = this.s.held ? await this.s.controls(h0) : undefined;
+    // [DX-ACT8, fifth review Y2] Before anything is written (definitions by reference, a settings transition): a typed
+    // refusal on an account another build stamped.
+    if (c0?.origin) await this.stampCheck(h0);
     // [DX-ACT8, fourth review Z2] A process holding a permission never plans as if the setting did not exist. If its
     // transition cannot land (each try refused by a frame writing a row it fences, or a backlog over the fence bound),
     // it waits and tries again (four rounds of eight tries, 25 to 75 ms apart); then its Publish is refused with a

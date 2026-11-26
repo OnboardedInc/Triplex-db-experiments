@@ -11,7 +11,7 @@ import { Archive } from "../actv-lazy/join/archive.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
 import { frameEstimate } from "../actv-lazy/join/frames.ts";
 import { largeRelease, parseShape } from "../actv-lazy/join/large-release.ts";
-import { ledgerCapacity, ledgerChange, ledgerKey, ledgerPartChars, ledgerPartKey, ledgerPartsMax, type Ledger } from "../actv-lazy/join/ledger-parts.ts";
+import { largestCursor, ledgerCapacity, ledgerChange, ledgerKey, ledgerPartChars, ledgerPartKey, ledgerPartsMax, longestSubject, type Ledger } from "../actv-lazy/join/ledger-parts.ts";
 import { RecordedNotices } from "../actv-lazy/join/recorded.ts";
 import { namesOf } from "../actv-lazy/store.ts";
 import { Documents, pack } from "../notify1/store.ts";
@@ -121,43 +121,58 @@ test("R5-2: under the archive a retired item's row holds its ID, subject and seq
   assert(comeBack > 0, "a re-added item is delivered at its sequence + 1");
 });
 
-test("R5-3: every closing piece of a ledger change, with the cursor change, fits the writer's bound, from any old ledger to any new one (by construction)", () => {
+test("R5-3: every closing piece of a ledger change, with the cursor change, fits the writer's bound, from any old ledger to any new one, at the largest cursor an account can write (by construction; fifth review Y1)", () => {
   const db = new Documents({ scopeName: "r5-3" } as never, "settlement-notices-" + "x".repeat(24));
-  const max = ledgerPartsMax(), subject = "pl:s99999999", sha = "0".repeat(64), id = "f".repeat(40);
-  const cursor = { epoch: "0".repeat(26), event: 999999, start: 999999, parent: sha, batch: 999999999, previous: sha,
-    entries: 999999999999, frames: "bytes", part: 999999, ledger: "parts", erasureSeq: 999999, archive: true };
-  // Items as the kernel writes them (hashed IDs, a due date and a form each), so the packed (compressed) length grows
-  // with the count as a real ledger's does.
-  const item = (k: number) => ({ id: "wi:" + sha256(subject + ":" + k), payload: canonical({ dueAt: "2026-11-" + String(1 + (k % 30)).padStart(2, "0") + "T23:59:59.999999Z", form: "form:f" + k }), retired: false, seq: 999999n, subject });
-  /** The most items whose packed ledger is at most `chars` characters (bisection over the count). */
-  const itemsOf = (chars: number) => {
-    const of = (n: number) => Array.from({ length: n }, (_, k) => item(k)).sort((x, y) => (x.id < y.id ? -1 : 1));
-    let lo = 1, hi = 1;
-    while (pack(of(hi)).length <= chars) hi *= 2;
-    while (lo < hi - 1) { const m = (lo + hi) >> 1; if (pack(of(m)).length <= chars) lo = m; else hi = m; }
-    return of(lo);
+  const max = ledgerPartsMax(), sha = "0".repeat(64), id = "f".repeat(40);
+  const real = "a".repeat(64);
+  // [DX-ACT8, sixth round] The cursors: the sizing one (the largest any account can write), and the review's V1 cursors
+  // with a real 64-character epoch: a million-subject account's counters, and the toy's.
+  const cursors: Record<string, object> = {
+    largest: largestCursor,
+    "a million-subject account": { epoch: real, event: 40, start: 999936, parent: sha, batch: 40000000, previous: sha,
+      entries: 64000000000, frames: "bytes", part: 3180, ledger: "parts", erasureSeq: 12, archive: true },
+    "the toy's counters": { epoch: real, event: 4, start: 7, parent: sha, batch: 900, previous: sha, entries: 16008,
+      frames: "bytes", part: 3180, ledger: "parts", archive: true },
   };
-  const olds: Ledger[] = [{ items: [{ ...item(-1) }] as any, head: { id, value: "x", at: 1 } as any, parts: [] }];
-  for (let k = 1; k <= max; k++)
-    olds.push({ items: [{ ...item(-2) }] as any, head: { id, value: { parts: k, event: 999999, chars: k * ledgerPartChars, sha }, at: 1 } as any,
-      parts: Array.from({ length: k }, () => ({ id, value: "", at: 1 } as any)) });
-  const rows: Record<string, unknown>[] = [];
-  let worst = 0;
-  for (const target of [100, ledgerPartChars - 500, ledgerPartChars, ledgerPartChars + 1, 3 * ledgerPartChars, (max - 1) * ledgerPartChars + 1, max * ledgerPartChars - 200]) {
-    const items = itemsOf(target);
-    for (const old of olds) {
-      const change = ledgerChange(db, subject, 999999, old, items);
-      const closing = [...change.closing, { op: "retract" as const, id }, db.put("notice-progress", cursor)];
-      const e = frameEstimate(closing);
-      worst = Math.max(worst, e.us);
-      for (const p of change.parts) assert(frameEstimate([p, { op: "retract" as const, id }, db.put("notice-progress", cursor)]).fits, "a part fits");
-      rows.push({ target, oldParts: old.parts.length, newParts: change.parts.length, closingUs: e.us, fits: e.fits });
+  const out: Record<string, unknown> = { partsMax: max, wholeCapacity: ledgerCapacity("whole"), partChars: ledgerPartChars };
+  for (const subject of [longestSubject, "pl:s00000000"]) {
+    // Items as the kernel writes them (hashed IDs, a due date and a form each), so the packed (compressed) length grows
+    // with the count as a real ledger's does.
+    const item = (k: number) => ({ id: "wi:" + sha256(subject + ":" + k), payload: canonical({ dueAt: "2026-11-" + String(1 + (k % 30)).padStart(2, "0") + "T23:59:59.999999Z", form: "form:f" + k }), retired: false, seq: 999999n, subject });
+    /** The most items whose packed ledger is at most `chars` characters (bisection over the count). */
+    const itemsOf = (chars: number) => {
+      const of = (n: number) => Array.from({ length: n }, (_, k) => item(k)).sort((x, y) => (x.id < y.id ? -1 : 1));
+      let lo = 1, hi = 1;
+      while (pack(of(hi)).length <= chars) hi *= 2;
+      while (lo < hi - 1) { const m = (lo + hi) >> 1; if (pack(of(m)).length <= chars) lo = m; else hi = m; }
+      return of(lo);
+    };
+    const oldOf = (k: number): Ledger => k === 0
+      ? { items: [{ ...item(-1) }] as any, head: { id, value: "x", at: 1 } as any, parts: [] }
+      : { items: [{ ...item(-2) }] as any, head: { id, value: { parts: k, event: Number.MAX_SAFE_INTEGER, chars: k * ledgerPartChars, sha }, at: 1 } as any,
+        parts: Array.from({ length: k }, () => ({ id, value: "", at: 1 } as any)) };
+    const olds = Array.from({ length: max + 1 }, (_, k) => oldOf(k));
+    const targets = [100, ledgerPartChars - 500, ledgerPartChars, ledgerPartChars + 1, 3 * ledgerPartChars, (max - 1) * ledgerPartChars + 1, max * ledgerPartChars - 200];
+    for (const [name, cursor] of Object.entries(cursors)) {
+      let worst = 0, cases = 0;
+      const failing: unknown[] = [];
+      for (const target of targets) {
+        const items = itemsOf(target);
+        for (const old of olds) {
+          const change = ledgerChange(db, subject, Number.MAX_SAFE_INTEGER, old, items);
+          const e = frameEstimate([...change.closing, { op: "retract" as const, id }, db.put("notice-progress", cursor)]);
+          worst = Math.max(worst, e.us);
+          cases++;
+          for (const p of change.parts) assert(frameEstimate([p, { op: "retract" as const, id }, db.put("notice-progress", cursor)]).fits, "a part fits");
+          if (!e.fits) failing.push({ target, oldParts: old.parts.length, newParts: change.parts.length, us: e.us });
+        }
+      }
+      out[subject.length + "-character subject, " + name] = { cursorBytes: canonical(cursor).length, worstUs: worst, cases, failing };
+      assert.equal(failing.length, 0, "every closing piece fits: " + name);
     }
   }
-  const whole = ledgerCapacity("whole");
-  console.log("[R5-3] " + JSON.stringify({ partsMax: max, wholeCapacity: whole, partChars: ledgerPartChars, worstClosingUs: worst, cases: rows.length, failing: rows.filter((r) => !r.fits) }));
-  assert(whole >= ledgerPartChars, "a whole ledger of one part's characters fits beside the cursor");
-  assert(rows.every((r) => r.fits), "every closing piece fits");
+  console.log("[R5-3] " + JSON.stringify(out));
+  assert((out.wholeCapacity as number) >= ledgerPartChars, "a whole ledger of one part's characters fits beside the cursor");
   void ledgerKey; void ledgerPartKey;
 });
 

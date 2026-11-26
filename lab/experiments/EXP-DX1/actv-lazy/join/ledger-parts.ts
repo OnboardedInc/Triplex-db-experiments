@@ -24,6 +24,18 @@ export function ledgerMode(value = process.env.TX2_NOTICE_LEDGER): LedgerMode {
 }
 /** Characters of the packed ledger per part: one part with the cursor change is about 7.2 ms of estimated service. */
 export const ledgerPartChars = 10240;
+// [DX-ACT8, fifth review Y1] The frames are sized with the largest cursor and head any account can write, not with a
+// sample: a 64-character epoch (the account's seal; `recorded.ts` refuses a longer one when it starts the cursor), every
+// counter at the largest safe integer (`recorded.ts` checks each is one), and the longest subject ID a placement may
+// have ("pl:" and 32 characters). So no counter an account reaches, however large or old, and no clock value can make
+// a closing piece that was admitted at Publish exceed the writer's bound later. (The Z1 sizing used a 26-character
+// epoch and six- to twelve-digit counters; a real 64-character seal at a large account's counters went 3 to 6 us over.)
+const safe = Number.MAX_SAFE_INTEGER;
+export const largestCursor = { epoch: "f".repeat(64), event: safe, start: safe, parent: "0".repeat(64), batch: safe,
+  previous: "0".repeat(64), entries: safe, frames: "bytes", part: safe, ledger: "parts", erasureSeq: safe, archive: true };
+export const longestSubject = "pl:" + "9".repeat(32);
+/** The longest epoch a cursor may carry (an account's seal, a SHA-256 in hex). */
+export const epochMax = 64;
 /** The head's frame also retracts the old ledger's parts, beside the cursor change. A ledger is kept to as many parts as
  * that frame can retract within the writer's bound by the estimate in force (both its service and its wire limit, so
  * also under a calibrated TX2_SETTLE_COST): 10 by the default estimate (7,985 us; 11 would be 8,224), about 1,680 owed
@@ -31,22 +43,21 @@ export const ledgerPartChars = 10240;
 export function ledgerPartsMax() {
   const db = new Documents({ scopeName: "ledger-parts-max" } as never, "settlement-notices-" + "x".repeat(24));
   const sha = "0".repeat(64);
-  // A cursor and head as large as they get: 64-hex hashes, large counters, the longest subject ids.
-  const cursor = { epoch: "0".repeat(26), event: 999999, start: 999999, parent: sha, batch: 999999999, previous: sha,
-    entries: 999999999999, frames: "bytes", part: 999999, ledger: "parts", erasureSeq: 999999, archive: true };
-  const head = (n: number): LedgerHead => ({ parts: n, event: 999999, chars: n * ledgerPartChars, sha });
+  // [Y1] The cursor and head as large as they can be (above); retracted IDs longer than the SDK's (26 characters).
+  const cursor = largestCursor;
+  const head = (n: number): LedgerHead => ({ parts: n, event: safe, chars: n * ledgerPartChars, sha });
   const id = "f".repeat(40);
   const frame = (k: number) => [
     ...Array.from({ length: k }, () => ({ op: "retract" as const, id })),
     { op: "retract" as const, id },
-    db.put(ledgerKey("pl:s99999999"), head(k + 1)),
+    db.put(ledgerKey(longestSubject), head(k + 1)),
     { op: "retract" as const, id },
     db.put("notice-progress", cursor),
   ];
   let k = 0;
   while (k < 4096 && frameEstimate(frame(k + 1)).fits) k++;
   // A part itself (with the cursor change) must fit too, or nothing can be written in parts.
-  const part = [db.put(ledgerPartKey("pl:s99999999", 999999, 99), "A".repeat(ledgerPartChars)), { op: "retract" as const, id }, db.put("notice-progress", cursor)];
+  const part = [db.put(ledgerPartKey(longestSubject, safe, safe), "A".repeat(ledgerPartChars)), { op: "retract" as const, id }, db.put("notice-progress", cursor)];
   assert(frameEstimate(part).fits, "One ledger part does not fit the writer's bound under this estimate");
   return Math.max(k, 1);
 }
@@ -258,8 +269,7 @@ export function noticeCandidate(
 // Otherwise the release is acknowledged and its first ledger write is refused (`FrameTooLarge`), and since the cursor
 // cannot pass it, every later release's notices in that account are never recorded. Unset: nothing here is used.
 const sample = { scopeName: "ledger-capacity" } as never;
-const longCursor = { epoch: "0".repeat(26), event: 999999, start: 999999, parent: "0".repeat(64), batch: 999999999,
-  previous: "0".repeat(64), entries: 999999999999, frames: "bytes", part: 999999, ledger: "parts", erasureSeq: 999999, archive: true };
+const longCursor = largestCursor;
 let wholeMax: number | undefined;
 /** The longest packed ledger one subject can have and still be written. */
 export function ledgerCapacity(mode: LedgerMode) {
@@ -267,7 +277,7 @@ export function ledgerCapacity(mode: LedgerMode) {
   if (wholeMax === undefined) {
     const db = new Documents(sample, "settlement-notices-" + "x".repeat(24)),
       id = "f".repeat(40);
-    const fits = (n: number) => frameEstimate([{ op: "retract" as const, id }, db.put(ledgerKey("pl:s99999999"), "A".repeat(n)),
+    const fits = (n: number) => frameEstimate([{ op: "retract" as const, id }, db.put(ledgerKey(longestSubject), "A".repeat(n)),
       { op: "retract" as const, id }, db.put("notice-progress", longCursor)]).fits;
     let lo = 0, hi = 4 << 20;
     while (lo < hi) {
@@ -285,7 +295,7 @@ export function ledgerCapacity(mode: LedgerMode) {
  * base allowance this is 15%, 6.5% and 5.9% above the real ledger at 200, 1,000 and 1,500 owed synthetic forms
  * (act10/ledger-probe.ts). */
 export function worstLedgerChars(items: readonly (readonly [string, string])[]) {
-  const subject = "pl:s99999999";
+  const subject = longestSubject;
   const states = items.map(([rule, key], k) => ({ id: "wi:" + sha256(canonical([subject, rule, key])),
     payload: canonical({ dueAt: "2026-11-" + String(1 + (k % 31) % 30).padStart(2, "0") + "T00:00:00.000000Z", form: key }),
     retired: false, seq: 999999n, subject })).sort((a, b) => (a.id < b.id ? -1 : 1));

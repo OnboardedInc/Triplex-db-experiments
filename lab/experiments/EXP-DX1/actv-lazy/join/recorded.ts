@@ -15,7 +15,7 @@ import { Conflict } from "../store.ts";
 import type { Archive } from "./archive.ts";
 import { fillFrame, frameEstimate, type Candidate, type Piece } from "./frames.ts";
 import type { JoinedAccount } from "./account.ts";
-import { foldInput, ledgerMode, noticeCandidate, readLedgers, readRetired, retiredWanted, type LedgerMode } from "./ledger-parts.ts";
+import { epochMax, foldInput, ledgerMode, noticeCandidate, readLedgers, readRetired, retiredWanted, type LedgerMode } from "./ledger-parts.ts";
 import { ledgerFor, originAt } from "./account-settings.ts";
 import type { AccountSettings } from "../store.ts";
 
@@ -122,6 +122,10 @@ export function noticeFrame(
       ...(event.ledger === "parts" ? { ledger: "parts" as const } : {}),
       ...(event.archive ? { archive: true as const } : {}),
     };
+    // [DX-ACT8, fifth review Y1] Within what the frames are sized for (`largestCursor`): an epoch of at most 64
+    // characters and counters that are safe integers. Refused here, at the account's first notice frame, never later.
+    assert(next.epoch.length <= epochMax && [next.event, next.start, next.batch, next.entries, next.part ?? 0, next.erasureSeq ?? 0]
+      .every((x) => Number.isSafeInteger(x) && x >= 0), "Notice cursor outside the sized bounds");
     ops.push(...db.change(stateKey, prior, next));
     if (packet) ops.push(db.put(packetKey(packet.batch), pack(packet)));
     return { next, ops, packet };

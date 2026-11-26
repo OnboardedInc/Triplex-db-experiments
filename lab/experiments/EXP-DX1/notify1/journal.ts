@@ -17,6 +17,27 @@ import {
 } from "./store.ts";
 
 export type Release = "R1" | "R2" | "R3";
+/**
+ * [DX-ACT8, fifth review Y2] The account's stamp (the hash of the code that compiles its notices, and the kernel's) is
+ * not this build's: the account was enrolled, or last re-stamped, by another build. Typed, with both stamps, so a caller
+ * can tell an upgrade from damage and a rollout can check it before it routes traffic. Nothing was written.
+ */
+export class CompilerChanged extends Error {
+  readonly stored: string;
+  readonly running: string;
+  readonly what: string;
+  constructor(stored: string, running: string, what: string) {
+    super("The account's stamp is not this build's (" + what + "): stored " + String(stored).slice(0, 12) + ", this build " +
+      running.slice(0, 12) + ". It was enrolled or last re-stamped by another build: finish what it owes on that build, " +
+      "then re-stamp it under this one (JoinedAccount.restamp); nothing was written");
+    this.stored = stored;
+    this.running = running;
+    this.what = what;
+  }
+}
+/** [Y2] An earlier stamp of the account: the inputs and kernel identities it carried, and the last notice event written
+ * under them (an account is re-stamped only when it owes nothing, so every event up to `through` was settled under it). */
+export type EarlierStamp = { inputs: string; evaluator: string; through: number };
 export type Cut = { position: number; validTime: string };
 export interface Inputs {
   identity: string;
@@ -27,6 +48,9 @@ export interface Inputs {
   releaseCopy?: Pick<ReleaseCopy, "suggest" | "results">;
   /** [DX-ACT6] The compiled release a stored reference names (TX2_RELEASE_DOCS=ref), checked against its hash. */
   release?(ref: DocumentRef, at: number): Promise<W0.CompiledRelease>;
+  /** [DX-ACT8, fifth review Y2] The account's earlier stamps, read when an event carries other identities than this
+   * build's: such an event is read only if one of them covers it. Unset: none. */
+  earlier?(): Promise<readonly EarlierStamp[]>;
 }
 /** [DX-ACT6] An activation's definitions by reference: the release hash, the stored root and the document's bytes. */
 export type DocumentRef = { release: string; root: string; bytes: number };
@@ -128,16 +152,27 @@ export class Notices {
     return this.db.get<Tail>("tail", await this.db.head());
   }
   async event(n: number, at: number) {
-    return this.checkedEvent(await this.db.get<Recipe>("event:" + n, at), n);
+    const e = await this.db.get<Recipe>("event:" + n, at);
+    // [DX-ACT8, fifth review Y2] An event written under an earlier stamp of the account (before its re-stamp, when it
+    // owed nothing) is read, never reopened; any other identity is a typed refusal.
+    if (e.value.inputs !== this.inputs.identity || e.value.evaluator !== interpreter) {
+      const covered = (await this.inputs.earlier?.())?.some((x) =>
+        x.inputs === e.value.inputs && x.evaluator === e.value.evaluator && n <= x.through);
+      if (!covered)
+        throw new CompilerChanged(e.value.inputs === this.inputs.identity ? e.value.evaluator : e.value.inputs,
+          e.value.inputs === this.inputs.identity ? interpreter : this.inputs.identity, "notice event " + n);
+      return this.checkedEvent(e, n, e.value.inputs, e.value.evaluator);
+    }
+    return this.checkedEvent(e, n);
   }
-  checkedEvent(e: Event, n: number) {
+  checkedEvent(e: Event, n: number, inputs = this.inputs.identity, evaluator = interpreter) {
     const r = e.value;
     assert(
       r.version === 1 &&
         r.sequence === n &&
         r.account === this.db.prefix &&
-        r.inputs === this.inputs.identity &&
-        r.evaluator === interpreter &&
+        r.inputs === inputs &&
+        r.evaluator === evaluator &&
         (r.definition !== undefined
           ? Number.isSafeInteger(r.definition) && r.definition > 0 && r.definition <= n
           : r.nextHash === releaseIdentity(r.next)) &&
@@ -156,6 +191,9 @@ export class Notices {
   // [DX-STG1] Why: both activation hosts append these operations in their own guarded transaction. The stored event's assertion position is A. Rejected: guessing A or enqueuing a second transaction after the release ACK.
   plan(tail: Row<Tail>, req: Request, owner?: string) {
     const old = tail.value;
+    // [DX-ACT8, fifth review Y2] A typed refusal when the account's tail carries another build's stamp.
+    if (old.inputs !== this.inputs.identity) throw new CompilerChanged(old.inputs, this.inputs.identity, "the notice tail");
+    if (old.evaluator !== interpreter) throw new CompilerChanged(old.evaluator, interpreter, "the notice tail's kernel");
     assert(
       tail.key === "tail" &&
         old.inputs === this.inputs.identity &&
