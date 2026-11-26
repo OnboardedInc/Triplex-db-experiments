@@ -89,7 +89,10 @@
                 fallbacks (when-let [v (resolve 'triplex.gateway.group-cut-guard/fallbacks)] (.sum ^java.util.concurrent.atomic.LongAdder @v))]
             (emit {:case "guard: gateways behind, positions never written, indexed and not" :storage storage? :indexed @indexed
                    :head top :positionHistories classes :behind behind :head-reads r :guardFallbacks fallbacks
-                   :cutLookup group-cut/current-lookup :shortcut pinned/enabled})
+                   :cutLookup group-cut/current-lookup :shortcut pinned/enabled
+                   ;; the product's grouped writer (save ledger on) against rules (d) and (e)
+                   :revisionless (let [x (audit/audit conn)] (select-keys x [:revisionlessChanges :revisionlessFolds :groupPositionAssertions]))
+                   :revisionRegressions (a/revision-regressions conn)})
             (is (zero? (:differences behind)))
             (is (zero? (:crossDifferences behind)) "a pin answers the same from a database behind and from the head")
             (is (empty? (:differences r)) (pr-str (:first r)))
