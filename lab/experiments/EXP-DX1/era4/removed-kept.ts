@@ -37,7 +37,7 @@ const validTime = process.env.KEPT_VALID ?? "2027-01-15T12:00:00.000000Z";
 assert(W0.isInstant(validTime));
 const writer = new DatomicClient(process.env.DATOMIC_URL!, 600_000);
 const log = (kind: string, data: object = {}) => {
-  const line = JSON.stringify({ kind, at: new Date().toISOString(), ...data });
+  const line = JSON.stringify({ kind, at: new Date().toISOString(), ...data }, (_k, v) => (typeof v === "bigint" ? v.toString() : v));
   console.log(line);
   fs.appendFileSync(path.join(out, "removed-kept.jsonl"), line + "\n");
 };

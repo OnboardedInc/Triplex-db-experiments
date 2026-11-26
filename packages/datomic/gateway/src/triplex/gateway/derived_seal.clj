@@ -512,62 +512,76 @@
     (let [s (.toUpperCase (.toString (BigInteger. 1 b) 32))]
       (str "_tx/" (apply str (repeat (- 26 (count s)) "0")) s))))
 
-;; [DX-ERA4, after DX-ERA5's M2 and B2; second review N5] The key re-sweep: every removal's keys deleted again, not from a
-;; progress counter, so a key restored from an older copy of the authority goes again without a restart; the removals
-;; are the published ones (the cut read allowing a pending removal) and those committed in the data (a log put back to a
-;; copy taken while one was pending holds it pending; the data does not). Bounded: a database's committed records are
-;; read incrementally (only transactions since the last pass), and each pass checks at most `resweep-batch` identities
-;; of that database, the newest removals first and then a window that rotates over the older ones, so a restored key is
-;; deleted within (identities / batch) passes and a pass costs the same at 1,000 removals as at 1,000,000. Every
-;; failure is counted and logged (failures/note!, `:removalFailures "resweep"`), never dropped.
+;; [DX-ERA4, after DX-ERA5's M2 and B2; second review N5; third review T5] The key re-sweep: every removal's keys
+;; deleted again, so a key restored from an older copy of the authority goes again without a restart. The removals are
+;; the ones committed in the data: each removal's record on its transaction (`:triplex.tx/erasure-record`), read in
+;; transaction order from the :aevt index. That is every removal, published or still pending: a removal commits in the
+;; data before it is published, in sequence order (its `:db/cas` moves the scope's removal sequence from seq - 1 to
+;; seq), so a log put back to an older copy, or a pending removal, is still in the data. Bounded in memory and time per
+;; pass, whatever the number of removals: per database the state is two positions in that index, `:due` (the first
+;; record not yet taken as new) and `:rot` (where the rotation stands); a pass reads at most `resweep-new` records from
+;; `:due` (the new ones, once due: older than the shred grace) and `resweep-rot` from `:rot` (wrapping once at the
+;; end), and checks their identities' keys, at most 512 per query. Nothing else is held between passes. A restored key
+;; is therefore deleted within ceil(removals / resweep-rot) + 1 passes, and new removals arriving at up to
+;; `resweep-new` per pass do not delay that (they have their own budget). Every failure is counted and logged
+;; (failures/note!, `:removalFailures "resweep"`), never dropped.
 (def ^:private resweep-ms 1000)
-(def ^:private resweep-batch 512)
+(def ^:private resweep-new 4096)
+(def ^:private resweep-rot 4096)
 (defonce ^:private resweep-state (atom {}))
 (defn- note! [where name e] ((requiring-resolve 'triplex.gateway.failures/note!) where name e))
-(defn- committed-records
-  "The database's committed erasure records, read incrementally: those of transactions after the last pass's basis."
-  [name db]
-  (let [{:keys [t records]} (get @resweep-state name)
-        t (long (or t 0))
-        fresh (if (d/entid db :triplex.tx/erasure-record)
-                (mapv (fn [x] (json/read-str (:v x))) (d/datoms (if (pos? t) (d/since db t) db) :aevt :triplex.tx/erasure-record))
-                [])
-        all (into (or records {}) (map (fn [e] [(get e "seq") e])) fresh)]
-    (swap! resweep-state update name assoc :t (d/basis-t db) :records all)
-    (vals all)))
+(defn- record-datoms
+  "Up to `n` erasure-record datoms of `db` from entity `from` (inclusive) in transaction order, lazily from the index."
+  [db from n]
+  (if-let [a (d/entid db :triplex.tx/erasure-record)]
+    (into [] (comp (take-while #(= (:a %) a)) (take n))
+          (d/seek-datoms db :aevt a (long (or from 0))))
+    []))
 (defn- present-keys [name identities]
   (if sql/url
     (let [by-handle (into {} (keep (fn [i] (when-let [h (get i "keyHandle")] [h i])) identities))
           found (when (seq by-handle)
-                  (#'sql/with-session
-                    (fn [c] (#'sql/select! c "SELECT id FROM triplex_removal.keys WHERE scope=? AND id = ANY(?)"
-                                           [name (.createArrayOf ^java.sql.Connection c "text" (to-array (keys by-handle)))]
-                                           (fn [^java.sql.ResultSet rs]
-                                             (loop [out #{}] (if (.next rs) (recur (conj out (.getString rs 1))) out)))))))]
+                  (reduce into #{}
+                          (for [part (partition-all 512 (keys by-handle))]
+                            (#'sql/with-session
+                              (fn [c] (#'sql/select! c "SELECT id FROM triplex_removal.keys WHERE scope=? AND id = ANY(?)"
+                                                     [name (.createArrayOf ^java.sql.Connection c "text" (to-array part))]
+                                                     (fn [^java.sql.ResultSet rs]
+                                                       (loop [out #{}] (if (.next rs) (recur (conj out (.getString rs 1))) out)))))))))]
       (filterv #(contains? found (get % "keyHandle")) (vals by-handle)))
     (filterv (fn [i] (envelope/key-present? name (get i "assertionId") (get i "keyHandle"))) identities)))
-(defn resweep-one! [name db]
+(defn resweep-one!
+  "One pass over database `name`: the new records once due and the next stretch of the rotation; their keys still
+  present are deleted. Returns the pass's counts."
+  [name db]
   (let [cutoff (- (System/currentTimeMillis) envelope/grace-ms)
         due? (fn [e] (let [at (get e "erasedAt")] (if (number? at) (<= at cutoff) false)))
         cut (privacy/cut name nil true)]
     (when (:sealed cut)
-      (let [native (committed-records name db)
-            entries (sort-by #(- (long (or (get % "seq") 0))) (filter due? (concat (vals (:commands cut)) native)))
-            ids (vec (distinct (mapcat #(get % "identities") entries)))
-            n (count ids)
-            newest (vec (take (quot resweep-batch 2) ids))
-            from (long (get-in @resweep-state [name :cursor] 0))
-            older (if (> n (count newest))
-                    (let [rest (subvec ids (count newest)) m (count rest) from (mod from m)]
-                      (swap! resweep-state assoc-in [name :cursor] (+ from (quot resweep-batch 2)))
-                      (take (quot resweep-batch 2) (concat (subvec rest from) (subvec rest 0 from))))
-                    [])
-            check (vec (distinct (concat newest older)))
+      (let [{:keys [due rot]} (get @resweep-state name)
+            rot (long (or rot 0))
+            parse (fn [x] (assoc (json/read-str (:v x)) ::e (:e x)))
+            ;; the new records, in order, while due (the first one not due ends them for this pass)
+            taken (into [] (take-while due?) (map parse (record-datoms db due resweep-new)))
+            due' (if (seq taken) (inc (long (::e (peek taken)))) due)
+            ;; the rotation: the next stretch from `rot`, then (when it reaches the end) from the start up to `rot`
+            tail (mapv parse (record-datoms db rot resweep-rot))
+            head (if (and (< (count tail) resweep-rot) (pos? rot))
+                   (into [] (comp (take-while #(< (long (:e %)) rot)) (map parse))
+                         (record-datoms db 0 (- resweep-rot (count tail))))
+                   [])
+            stretch (into tail head)
+            rot' (cond (seq head) (inc (long (::e (peek head))))
+                       (< (count tail) resweep-rot) 0
+                       :else (inc (long (::e (peek tail)))))
+            rotation (filterv due? stretch)
+            check (vec (distinct (mapcat #(get % "identities") (concat taken rotation))))
             present (present-keys name check)]
-        (swap! resweep-state update name assoc :identities n :checked (count check) :deleted (count present))
+        (swap! resweep-state assoc name {:due due' :rot rot'})
         (when (seq present)
           (envelope/erase-keys! name present)
-          ((requiring-resolve 'triplex.gateway.stats/bump!) [:derivedResweep :deleted] (count present)))))))
+          ((requiring-resolve 'triplex.gateway.stats/bump!) [:derivedResweep :deleted] (count present)))
+        {:new (count taken) :rotation (count stretch) :checked (count check) :deleted (count present)}))))
 (defn resweep! [conn-of]
   (doseq [name (try (#'envelope/authority-scopes) (catch Exception e (note! "resweep-scopes" nil e) []))]
     (try (resweep-one! name (d/db (conn-of name)))

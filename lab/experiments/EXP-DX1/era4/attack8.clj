@@ -129,6 +129,57 @@
         (x/oracle! lbl (= 200 (:status (:final rm))) "the removal completes" row)
         (x/oracle! lbl (= {:removed (count records)} after) "every record opens as removed after its subject's removal" row)))))
 
+;; ---- resweep8: the rebuilt key re-sweep at 10,000, 100,000 and 1,000,000 removals (T5) -----------------------------
+(defn- record-tx [k0 k1 at]
+  (vec (for [k (range k0 k1)]
+         {:db/id (str "r" k)
+          :triplex.tx/erasure-record (json/write-str {"seq" (inc k) "erasedAt" at
+                                                     "identities" [{"assertionId" (str "a-" k) "keyHandle" (str "h-" k)}]})})))
+(defn resweep8
+  "The re-sweep's real reader (the database's erasure-record index) over n synthetic removal records, one identity each,
+  due a day ago (records on entities of their own, 10,000 per transaction: the index reads them as it reads records on
+  transaction entities); the key store replaced by a counter that reports one restored key, a third of the way down.
+  Reported per n: the heap the re-sweep holds between passes, five passes' time, the passes until the restored key is
+  deleted, and the same while 256 and then 4,096 new due removals arrive before every pass."
+  []
+  (doseq [n [10000 100000 1000000]]
+    (g/fresh-scope true
+      (fn [src conn]
+        (let [rt (Runtime/getRuntime) used (fn [] (System/gc) (Thread/sleep 100) (- (.totalMemory rt) (.freeMemory rt)))
+              at (- (System/currentTimeMillis) 86400000)
+              loaded (loop [k 0] (when (< k n) @(d/transact conn (record-tx k (min n (+ k 10000)) at)) (recur (+ k 10000))))
+              target (str "a-" (quot n 3))
+              checked (atom 0) found (atom 0)
+              pass! (fn []
+                      (with-redefs-fn {#'ds/present-keys (fn [_ ids] (swap! checked + (count ids)) (filterv #(= target (get % "assertionId")) ids))
+                                       #'envelope/erase-keys! (fn [_ ids] (swap! found + (count ids)))}
+                        (fn [] (let [t (System/nanoTime) r (ds/resweep-one! src (d/db conn))] [(/ (- (System/nanoTime) t) 1e6) r]))))
+              reset-state! (fn [] (swap! @#'ds/resweep-state dissoc src) (reset! found 0) (reset! checked 0))
+              _ (reset-state!)
+              m0 (used)
+              times (vec (for [_ (range 5)] (first (pass!))))
+              m1 (used)
+              held (pr-str (get @@#'ds/resweep-state src))
+              until (fn [arrive]
+                      (reset-state!)
+                      (loop [k 1 next-k n]
+                        (when (pos? arrive) @(d/transact conn (record-tx next-k (+ next-k arrive) at)))
+                        (pass!)
+                        (if (or (pos? @found) (> k (+ 10 (quot n 4096)))) {:passes k :deleted (pos? @found)}
+                          (recur (inc k) (+ next-k arrive)))))
+              plain (until 0)
+              with-256 (until 256)
+              with-4096 (until 4096)
+              bound (inc (long (Math/ceil (/ n 4096.0))))
+              row {:removals n :state-held-between-passes held :heap-mb-delta-over-5-passes (Math/round (/ (- m1 m0) 1048576.0))
+                   :pass-ms (mapv #(Math/round (double %)) times) :bound-passes bound
+                   :restored-key-deleted-after plain :with-256-new-per-pass with-256 :with-4096-new-per-pass with-4096}]
+          (report :resweep8 row)
+          (x/oracle! "resweep8" (and (:deleted plain) (<= (:passes plain) bound)) "the restored key is deleted within the bound" row)
+          (x/oracle! "resweep8" (and (:deleted with-256) (<= (:passes with-256) (inc bound))) "256 new removals a pass do not delay it" row)
+          (x/oracle! "resweep8" (and (:deleted with-4096) (<= (:passes with-4096) (+ 2 bound))) "4,096 new removals a pass do not delay it" row)
+          (x/oracle! "resweep8" (< (count held) 200) "the re-sweep holds two positions between passes" row))))))
+
 (defn main []
   (x/install-hooks!)
   (#'era4-races/install-declare-hooks!)
@@ -136,7 +187,8 @@
   (println "ERA8_BOUNDARY" (pr-str {:commit-boundary-allowed @(requiring-resolve 'triplex.gateway.removal-commit/may-turn-on)}))
   (let [guarded (fn [lbl f] (try (f) (catch Throwable t (x/oracle! lbl false "the case runs to its end" (str t)))))]
     (case (System/getenv "ERA5_PHASE")
-      "cases8" (guarded "boundary8" boundary8)))
+      "cases8" (guarded "boundary8" boundary8)
+      "resweep8" (guarded "resweep8" resweep8)))
   (println "ERA5_VIOLATIONS" (pr-str (frequencies (map :message @x/violations))))
   (doseq [v (take 8 @x/violations)] (println "ERA5_VIOLATION" (pr-str v)))
   (println "ERA5_SUMMARY" (pr-str {:oracles @x/oracles :violations (count @x/violations)}))

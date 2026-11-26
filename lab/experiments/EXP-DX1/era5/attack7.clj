@@ -403,43 +403,11 @@
   {"seq" (inc i) "erasedAt" at "commandId" (str "cmd-" i) "txId" (format "_tx/%026d" i)
    "identities" [{"assertionId" (format "01M%023d" i) "entity" (format "acct/a/doc:%08d:0:0" i) "attribute" ":file/expiresOn"
                   "valueType" "string" "keyHandle" (format "h%031d" i) "interval" [0 nil]}]})
+;; [DX-ERA4, fourth round] r1 measured the re-sweep that held every removal in memory (`ds/committed-records`, now
+;; gone): the rebuilt re-sweep reads the database's index from two positions, and its measurement at 10,000, 100,000
+;; and 1,000,000 removals is era4/attack8.clj `resweep8` (phase resweep8). This phase now says so.
 (defn r1 []
-  (doseq [n [10000 100000 300000]]
-    (System/gc) (Thread/sleep 200)
-    (let [rt (Runtime/getRuntime) used #(- (.totalMemory rt) (.freeMemory rt))
-          m0 (used)
-          at (- (System/currentTimeMillis) 86400000)
-          records (vec (map #(entry % at) (range n)))
-          _ (System/gc) _ (Thread/sleep 200)
-          m1 (used)
-          target (get-in records [(quot n 3) "identities" 0 "assertionId"])
-          checked (atom 0) found (atom nil)
-          name (str "s2-synthetic-" n)
-          pass! (fn [recs]
-                  (with-redefs [ds/committed-records (fn [_ _] recs)
-                                privacy/cut (fn [& _] {:sealed true :commands {}})
-                                ds/present-keys (fn [_ ids] (swap! checked + (count ids)) (filterv #(= target (get % "assertionId")) ids))
-                                envelope/erase-keys! (fn [_ ids] (reset! found (count ids)))]
-                    (let [t (System/nanoTime)] (ds/resweep-one! name nil) (/ (- (System/nanoTime) t) 1e6))))
-          _ (swap! @#'ds/resweep-state dissoc name)
-          times (vec (for [k (range 5)] (pass! records)))
-          _ (swap! @#'ds/resweep-state dissoc name) _ (reset! found nil)
-          ;; passes until a restored key a third of the way down is checked (run up to 100,000 removals; above, the bound)
-          passes (if (<= n 100000) (loop [k 1] (pass! records) (if (or @found (> k 100000)) k (recur (inc k)))) :not-run)
-          ;; starvation (10,000 only): 256 new due identities arrive before every pass (a sustained 256 per second);
-          ;; without arrivals the key is reached within (n - 256) / 256 = 39 passes; run 400
-          _ (swap! @#'ds/resweep-state dissoc name) _ (reset! found nil)
-          starved (if (= n 10000)
-                    (loop [k 1 recs records]
-                      (let [more (into recs (map #(entry % at) (range (+ n (* 256 (dec k))) (+ n (* 256 k)))))]
-                        (pass! more)
-                        (if (or @found (>= k 400)) {:passes k :found (boolean @found)} (recur (inc k) more))))
-                    {:found :not-run})
-          row {:removals n :heap-mb-for-the-records (Math/round (/ (- m1 m0) 1048576.0)) :pass-ms (mapv #(Math/round (double %)) times)
-               :passes-until-a-restored-key-at-one-third-is-checked passes
-               :with-256-new-due-identities-before-each-pass starved}]
-      (report :r1 row)
-      (when (false? (:found starved)) (finding! :r1-restored-key-starved {:removals n :passes (:passes starved)})))))
+  (report :r1 {:superseded-by "era4/attack8.clj resweep8: the re-sweep reads the erasure records from the index (third review T5)"}))
 
 (defn- guarded [label f]
   (try (f) (catch Throwable e (reset! x/plan nil) (x/oracle! label false (str "case stopped: " (.getMessage e)) (pr-str e)))))
