@@ -1,6 +1,6 @@
 # Preparation for the rented-server session at 1 billion records (SRV2)
 
-Written 2026-11-25 from 17:53 to 20:15 EST by the session-preparation builder, branch `exp/DX-SRV2-session-prep`
+Written 2026-11-25 from 17:53 to 20:02 EST by the session-preparation builder, branch `exp/DX-SRV2-session-prep`
 from the one branch `origin/exp/DX-INT1` at `efee27905`, merged with its head `345f833e4` (the key-pool and
 ID-allocator fixes) at 19:22; the Publish line had not landed (section 8). The plan is `srv1/SESSION-PLAN.md` on `origin/exp/DX-SRV1-session-plan` (`702a5b44a`); its section E
 is the task list. Nothing was rented and nothing ran on a server. Every time below is a Mac diagnostic; counts
