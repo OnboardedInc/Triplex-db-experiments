@@ -451,7 +451,10 @@ const xFound = Object.entries(table)
   .filter(([k]) => k.startsWith("X ") && !k.includes("(kept"))
   .reduce((n, [, v]) => n + Object.values(v).reduce((a, b) => a + b, 0), 0);
 const keptIdPlaces = Object.keys(table["X document-expired item id (kept, the owner's ruling)"] ?? {});
-const keptIdOnlyInTheNoticeArchive = keptIdPlaces.every((p) => p.endsWith(":notices") || p.startsWith("native:"));
+// in account A's notice archive only (its routes, labelled `...:notices`, and its own native datoms), and there at all
+// (the kept outcome survives the removal)
+const keptIdOnlyInTheNoticeArchive = keptIdPlaces.length > 0 &&
+  keptIdPlaces.every((p) => p.endsWith(":notices") || p === "native:" + dbOf(A.noticeArchive.store));
 log("scan", { arm: sealOn ? "on" : "off", sealed: SEALED, table, refused, entities: entityCounts, dumpedStrings: dumped, sealedFound: openedSealed });
 
 // ---- the stream after the removal ----
