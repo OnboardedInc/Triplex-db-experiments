@@ -558,7 +558,8 @@ export class RecordedNotices {
       const result = stops.has(subject)
         ? { deliveries: [] as W0.Delivery[], state: { items: o.items } }
         : record(subject, i, o.forget === undefined ? o.items : []);
-      const inputs = outputInputs(items[i]!);
+      // a stopped subject's evaluation failed: no output, no world to name
+      const inputs = stops.has(subject) ? [] : outputInputs(items[i]!);
       const named = (id: string) => inputUnion(inputs, o.forget === undefined ? (o.named.get(id) ?? []) : []);
       return { subject, generation, before, result, named, forget: o.forget !== undefined };
     });

@@ -34,6 +34,7 @@ import {
   frameMode,
   preconditionMode,
   windowOf,
+  FrameTooLarge,
   type Candidate,
   type FrameMode,
   type Piece,
@@ -103,6 +104,9 @@ export function valuesFrame(
   pageKey: string,
   candidates: Candidate<[string, string | null]>[],
   count: number,
+  // [DX-ERA4, third review T2] the named stops of the subjects a frame ending at subject `through` goes past, written
+  // with it and counted in its bound
+  extra: (through: number) => Op[] = () => [],
 ) {
   const start = current.through,
     part = current.part!,
@@ -132,7 +136,7 @@ export function valuesFrame(
       frame,
       part: tail,
     };
-    return { next, ops: [...db.change(key, prior, next), db.put(pageKey, page)], entries };
+    return { next, ops: [...db.change(key, prior, next), db.put(pageKey, page), ...extra(through)], entries };
   };
   const filled = fillFrame(candidates, part, (pieces) => frameEstimate(build(pieces).ops).fits);
   return { ...build(filled.pieces), filled };
@@ -442,12 +446,27 @@ export class Archive {
         for (const [id, units] of next) known.set(id, units);
       } else for (const [id, units] of fresh) known.set(id, units);
     }
-    const candidates = ids.map((subject) => ({ subject, units: stops.has(subject) ? [] : known.get(subject)!, closing: false }));
-    const { next, ops } = valuesFrame(this.db, progressKey(sequence), prior, current,
-      framePageKey(sequence, current.frame! + 1), candidates, census.count);
-    // [DX-ERA4, third review T2] each stopped subject this frame went past: its named stop, with the frame
-    for (const subject of ids.slice(0, Math.max(0, next.through - start)))
-      if (stops.has(subject)) ops.push(this.db.put(settledStoppedKey(sequence, subject), { at: sequence, code: stops.get(subject)! }));
+    // [DX-ERA4, third review T2] each stopped subject the frame goes past: its named stop, with the frame and within its
+    // bound (written after the frame was sized, two stops pushed a full frame over it: one-subject.ts, fourth round)
+    const stopDocs = (through: number) =>
+      ids.slice(0, Math.max(0, through - start)).filter((subject) => stops.has(subject))
+        .map((subject) => this.db.put(settledStoppedKey(sequence, subject), { at: sequence, code: stops.get(subject)! }));
+    // a subject one change of which alone exceeds the writer's bound gets its named stop, and the frame is filled again
+    let framed: ReturnType<typeof valuesFrame>;
+    for (;;) {
+      const candidates = ids.map((subject) => ({ subject, units: stops.has(subject) ? [] : known.get(subject)!, closing: false }));
+      try {
+        framed = valuesFrame(this.db, progressKey(sequence), prior, current,
+          framePageKey(sequence, current.frame! + 1), candidates, census.count, stopDocs);
+        break;
+      } catch (e) {
+        const who = (e as { subject?: string }).subject;
+        if (!subjectStopsOn() || !(e instanceof FrameTooLarge) || who === undefined || stops.has(who) ||
+          (who === ids[0] && (current.part ?? 0) > 0)) throw e;
+        stops.set(who, "FrameTooLarge");
+      }
+    }
+    const { next, ops } = framed;
     await this.write(
       "activation",
       "settled-values:" + hash([identity, current.through, current.part, next]),
