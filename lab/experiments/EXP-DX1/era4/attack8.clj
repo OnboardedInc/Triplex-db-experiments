@@ -124,7 +124,8 @@
         (x/oracle! lbl (= [200 nil] (:own-entity writes)) "a protected value on an own entity is written" row)
         (doseq [k [:shared-site :entity-referring-to-the-root :the-second-root :w0-form-entity]]
           (x/oracle! lbl (= 409 (first (k writes))) (str "a protected value outside every subject is refused: " (name k)) row))
-        (x/oracle! lbl (= 2 reach) "a reference to another subject's root reaches nothing" row)
+        ;; three: its two values and the one written on its own entity above (the writes); none of the other subject's
+        (x/oracle! lbl (= 3 reach) "a reference to another subject's root reaches nothing" row)
         (x/oracle! lbl (= 200 (:status (:final rm))) "the removal completes" row)
         (x/oracle! lbl (= {:removed (count records)} after) "every record opens as removed after its subject's removal" row)))))
 

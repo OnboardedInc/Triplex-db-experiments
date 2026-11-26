@@ -7,6 +7,51 @@ import { runtimeApi } from "./triplex.ts";
 import * as W0 from "../../../packages/w0/dist/index.js";
 
 export const derivedSealOn = () => process.env["TX2_DERIVED_SEAL"] === "1";
+/** [DX-ERA4, third review T2] One subject never stops an account: under TX2_DERIVED_SEAL (or TX2_SUBJECT_STOP=1 in clear)
+ * a subject whose evaluation fails, whose seal is refused, or whose ledger or one unit cannot be written within the
+ * writer's bound gets a named stop (`recorded-stopped:<subject>`, `settled-stopped:<sequence>:<subject>`) and the
+ * recorder and the settlement go on past it. Unset (and the seal off): every such failure stops the frame, as before. */
+export const subjectStopsOn = () => derivedSealOn() || process.env["TX2_SUBJECT_STOP"] === "1";
+export type StopCode = "LedgerFull" | "EvaluationFailed" | "SealRefused" | "FrameTooLarge";
+/** An evaluation that failed, in place of a subject's work items or changes. */
+export type Failed = { failed: StopCode; detail: string };
+export const failed = (code: StopCode, detail: string): Failed => ({ failed: code, detail: detail.slice(0, 200) });
+export const isFailed = (x: unknown): x is Failed => typeof x === "object" && x !== null && typeof (x as Failed).failed === "string";
+/** A refusal of the gateway for the request's content (a 4xx answer): it concerns the subjects in the call, not the
+ * gateway's availability (5xx, a network error), which still fails the frame so it is tried again. */
+export const refusedForContent = (e: unknown) => {
+  const s = (e as { status?: number }).status;
+  return typeof s === "number" && s >= 400 && s < 500 && s !== 404 && s !== 409;
+};
+/** `seal` for items of several subjects: one call; when the gateway refuses it for its content, one call per subject,
+ * so only the subjects whose own items are refused fail (`refused` names them). */
+export async function sealBySubject<I extends { inputs: readonly string[]; value?: string; bytes?: Buffer; place?: string; subject: string }>(
+  source: Source, items: I[],
+): Promise<{ out: (string | Removed | undefined)[]; refused: Map<string, string> }> {
+  const refused = new Map<string, string>();
+  try {
+    return { out: await seal(source, items), refused };
+  } catch (e) {
+    if (!refusedForContent(e)) throw e;
+  }
+  const out: (string | Removed | undefined)[] = items.map(() => undefined);
+  const subjects = [...new Set(items.map((x) => x.subject))];
+  for (const s of subjects) {
+    const idx = items.flatMap((x, i) => (x.subject === s ? [i] : []));
+    try {
+      const r = await seal(source, idx.map((i) => items[i]!));
+      idx.forEach((i, j) => (out[i] = r[j]));
+    } catch (e) {
+      if (!refusedForContent(e)) throw e;
+      refused.set(s, String((e as Error).message ?? e).slice(0, 200));
+    }
+  }
+  return { out, refused };
+}
+/** [DX-ERA4, third review T2] A test seam (era4/one-subject.ts): seal calls holding an item placed at this subject are
+ * refused as the gateway refuses a request's content (400). Unset in every other use. */
+export const refuseSubject: { subject?: string } = {};
+
 /** [DX-ERA4, third review T1, the owner's ruling of 2026-11-25] TX2_DERIVED_SEAL=1: every evaluation of a world read from
  * the store names W0-1.2's removable attributes (a removed document value is a removed value, neither a value nor absent:
  * DOCEXP holds that document) and, for the notice stream, the work items the subject held (`kept`;
@@ -166,6 +211,8 @@ export async function seal(
   if (!items.length) return [] as (string | Removed)[];
   const db = databaseOf(source);
   counters.sealCalls++;
+  if (refuseSubject.subject !== undefined && items.some((x) => x.place !== undefined && x.place.endsWith("|" + refuseSubject.subject)))
+    throw Object.assign(new Error("Refused (injected): an item of " + refuseSubject.subject), { status: 400 });
   // [DX-ERA4, second review N9] a placed item's rows travel once per place per call (`names`), not once per record:
   // a frame's records repeat their subject's world; the gateway also takes the subject's own protected rows itself (N3)
   const wire = items.map((x) => {

@@ -4,9 +4,9 @@ import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
 import { projection, type Difference } from "../../actv-delta/rules.ts";
 import { pack, unpack } from "../../notify1/store.ts";
 import type { Point } from "../decision.ts";
-import { evaluateOptions } from "../../../../bench/lib/derived-seal.ts";
+import { evaluateOptions, failed, subjectStopsOn, type Failed } from "../../../../bench/lib/derived-seal.ts";
 
-export type Stored = { subject: string; rows: Difference[]; json?: string };
+export type Stored = { subject: string; rows: Difference[]; json?: string; failed?: Failed };
 export type Work = {
   worlds: W0.World[];
   basis: Point;
@@ -23,10 +23,22 @@ export function evaluateRows(
   // [DX-ERA4, third review T1] W0-1.2's removable values under TX2_DERIVED_SEAL (a removed document value is held by
   // DOCEXP on both sides of the comparison, so it changes nothing; no kept set is needed for a difference)
   const removable = evaluateOptions()?.removable;
+  const stops = subjectStopsOn();
   for (const world of worlds) {
+    // [DX-ERA4, third review T2] a subject whose world was not built or does not evaluate is a named failure of its own
+    const unbuilt = (world as { buildFailed?: string }).buildFailed;
+    if (unbuilt !== undefined) {
+      if (!stops) throw Error(unbuilt);
+      rows.push({ subject: world.subject, rows: [], failed: failed("EvaluationFailed", unbuilt) });
+      continue;
+    }
     // [DX-ACT1] Why: both documents use the same pinned dependency rows. Rejected: rebuilding the W0 world index for each side of the comparison.
     const index = W0.indexWorld(world, basis.tx, removable);
-    if (typeof index === "string") throw Error(index);
+    if (typeof index === "string") {
+      if (!stops) throw Error(index);
+      rows.push({ subject: world.subject, rows: [], failed: failed("EvaluationFailed", index) });
+      continue;
+    }
     const output = W0.evaluateIndexed(index, next, basis);
     const a = old ? projection(W0.evaluateIndexed(index, old, basis)) : new Map<string, string>();
     const b = projection(output);

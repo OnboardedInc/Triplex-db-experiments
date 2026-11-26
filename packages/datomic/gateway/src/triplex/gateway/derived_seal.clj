@@ -703,7 +703,14 @@
    [#"effects:([^:]+):([0-9]+)" :effects]
    ;; [DX-ERA4, third review T1] the work items a subject holds that read a removable value, kept in clear so the owner's
    ;; rule (a removed value keeps its notice) survives the removal: ids only, of exact form, sorted and distinct
-   [#"recorded-kept:(.+)" :kept]])
+   [#"recorded-kept:(.+)" :kept]
+   ;; [DX-ERA4, third review T2] the Publish builder's retired-item archive (DX-ACT8, fourth review Z4): one row per retired
+   ;; item, its ID, subject and sequence only, of exact form; and a subject's named stop (the recorder or the settlement
+   ;; went past it): the event or release sequence and one code of a fixed list
+   [#"recorded-retired:(pl:[A-Za-z0-9]{1,32}):(wi:[0-9a-f]{64})" :retired]
+   [#"recorded-stopped:(pl:[A-Za-z0-9]{1,32})" :stopped]
+   [#"settled-stopped:([0-9]+):(pl:[A-Za-z0-9]{1,32})" :stopped]])
+(def ^:private stop-codes #{"LedgerFull" "EvaluationFailed" "SealRefused" "FrameTooLarge"})
 ;; [DX-ERA4, second review N4] the review's census (forms.ts K), plus what T1 writes after a removal (the join index's
 ;; leaves and its invalidation marker) and the settlement control document. These hold no value of the current
 ;; protection policy (document types and expiry dates); the join index's postings hold values of the indexed rules'
@@ -761,6 +768,14 @@
                      (every? #(if (string? %) (some? (re-matches #"wi:[0-9a-f]{64}" %)) false) doc)
                      (= doc (vec (sort (distinct doc)))))
         (unsealed! kind))
+      :retired
+      (do (exact-keys! kind doc ["id" "retired" "seq" "subject"] [])
+          (when-not (and (= (nth m 2) (get doc "id")) (= (nth m 1) (get doc "subject")) (true? (get doc "retired"))
+                         (nat? (get doc "seq")) (>= (long (get doc "seq")) 1))
+            (unsealed! kind)))
+      :stopped
+      (do (exact-keys! kind doc ["at" "code"] [])
+          (when-not (and (nat? (get doc "at")) (contains? stop-codes (get doc "code"))) (unsealed! kind)))
       :receiver
       (do (exact-keys! kind doc ["g" "e"] [])
           (when-not (nat? (get doc "g")) (unsealed! kind))
@@ -789,8 +804,9 @@
             (let [c (compile-boundary declared)]
               (doseq [r protected-rows]
                 (when-not (owner-of c (str (:entity_id r)))
-                  (privacy/failure! 409 "ProtectedValueOutsideSubject"
-                                    (str "A protected value of " (:attribute r) " on an entity the database's subject boundary gives to no subject"))))))
+                  ;; :write-policy: passed through the write path as typed (as unsealed!)
+                  (throw (ex-info (str "A protected value of " (:attribute r) " on an entity the database's subject boundary gives to no subject")
+                                  {:status 409 :code "ProtectedValueOutsideSubject" :write-policy true}))))))
         by-id (into {} (map (fn [r] [(:id r) r])) fresh)
         changes (keep (fn [r]
                         (when (= ":_tx/change" (:attribute r))

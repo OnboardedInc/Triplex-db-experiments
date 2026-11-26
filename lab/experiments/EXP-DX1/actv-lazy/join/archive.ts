@@ -18,6 +18,9 @@ import {
   derivedSealOn,
   isRemoved,
   isSealed,
+  sealBySubject,
+  subjectStopsOn,
+  type StopCode,
   open as openDerived,
   placeOf,
   seal,
@@ -41,6 +44,8 @@ const step = 16;
 assert(width % step === 0);
 const progressKey = (sequence: number) => "values:" + sequence;
 const pageKey = (sequence: number, from: number) => "answer:" + sequence + ":" + from;
+/** [DX-ERA4, third review T2] a subject the settlement of release `sequence` went past without its changes */
+export const settledStoppedKey = (sequence: number, subject: string) => "settled-stopped:" + sequence + ":" + subject;
 type Answer = { subject: string; changes: [string, string | null][]; json: string };
 type Page = { identity: string; start: number; through: number; previous: string; bytes: string };
 export type Progress = {
@@ -370,7 +375,7 @@ export class Archive {
   // current census page, evaluated at the record's cut once per page (kept in `window` for the page's later frames);
   // it writes the subjects that fit, each as its changes only. A subject whose changes alone exceed the bound is split
   // by change: its first changes here, the rest in the next frames.
-  private window?: { key: string; changes: Map<string, [string, string | null][]> };
+  private window?: { key: string; changes: Map<string, [string, string | null][]>; stops?: Map<string, StopCode> };
   private async byteFrame(
     sequence: number,
     r: Awaited<ReturnType<JoinedAccount["receipt"]>>,
@@ -390,8 +395,9 @@ export class Archive {
     // [DX-ACT9] Under TX2_ACCOUNT_TICKETS=1 the page's evaluation stays valid while the account's removal state does
     // (removals elsewhere move only the global sequence); otherwise keyed by the global sequence, as before.
     const key = canonical([identity, (ticketAccount(s) === undefined ? authority?.seq : fingerprint(authority as AccountFrontier | undefined)) ?? null, begin]);
-    if (this.window?.key !== key) this.window = { key, changes: new Map() };
+    if (this.window?.key !== key) this.window = { key, changes: new Map(), stops: new Map() };
     const known = this.window.changes,
+      stops = (this.window.stops ??= new Map()),
       missing = ids.filter((id) => !known.has(id));
     if (missing.length) {
       const basis = { tx: e.at, validTime: m.at };
@@ -410,27 +416,38 @@ export class Archive {
       // once they are what is stored: with the option, sealed. A seal call that fails throws here and caches nothing,
       // so the next turn computes and seals again; a clear unit is never cached under the option.
       const fresh = new Map<string, [string, string | null][]>(missing.map((id) => [id, []]));
-      for (const row of values.rows) fresh.set(row.subject, row.rows.map(([k, , value]) => [k, value]));
+      for (const row of values.rows) {
+        // [DX-ERA4, third review T2] a subject that failed its evaluation: no changes, a named stop, the frame goes on
+        if (row.failed) stops.set(row.subject, row.failed.failed);
+        else fresh.set(row.subject, row.rows.map(([k, , value]) => [k, value]));
+      }
       // [DX-ERA4] TX2_DERIVED_SEAL=1: each change is stored as ["", sealed [field, value]] under the protected
       // assertions of its subject's world, placed for its subject (a change computed from none stays as it was; one
       // whose input was already removed is stored as ["", null], the removed marker). era4/DERIVED-COPIES.md 3.1.
       if (derivedSealOn()) {
         const queue: { inputs: readonly string[]; value: string; subject: string; place: string }[] = [];
         for (const [i, id] of missing.entries())
-          for (const unit of fresh.get(id)!)
-            queue.push({ inputs: worldInputs(worlds[i]!), value: canonical(unit), subject: id, place: placeOf(s.comp, id) });
-        const sealed = await seal(s.comp, queue);
+          if (!stops.has(id))
+            for (const unit of fresh.get(id)!)
+              queue.push({ inputs: worldInputs(worlds[i]!), value: canonical(unit), subject: id, place: placeOf(s.comp, id) });
+        // [DX-ERA4, third review T2] a subject whose own items the gateway refuses gets a named stop; the rest are sealed
+        const { out: sealed, refused } = subjectStopsOn() ? await sealBySubject(s.comp, queue) : { out: await seal(s.comp, queue), refused: new Map() };
+        for (const id of refused.keys()) stops.set(id, "SealRefused");
         const next = new Map<string, [string, string | null][]>(missing.map((id) => [id, []]));
         sealed.forEach((v, j) => {
           const q = queue[j]!;
+          if (refused.has(q.subject)) return;
           next.get(q.subject)!.push(isSealed(v) ? ["", v] : isRemoved(v) ? ["", null] : (JSON.parse(q.value) as [string, string | null]));
         });
         for (const [id, units] of next) known.set(id, units);
       } else for (const [id, units] of fresh) known.set(id, units);
     }
-    const candidates = ids.map((subject) => ({ subject, units: known.get(subject)!, closing: false }));
+    const candidates = ids.map((subject) => ({ subject, units: stops.has(subject) ? [] : known.get(subject)!, closing: false }));
     const { next, ops } = valuesFrame(this.db, progressKey(sequence), prior, current,
       framePageKey(sequence, current.frame! + 1), candidates, census.count);
+    // [DX-ERA4, third review T2] each stopped subject this frame went past: its named stop, with the frame
+    for (const subject of ids.slice(0, Math.max(0, next.through - start)))
+      if (stops.has(subject)) ops.push(this.db.put(settledStoppedKey(sequence, subject), { at: sequence, code: stops.get(subject)! }));
     await this.write(
       "activation",
       "settled-values:" + hash([identity, current.through, current.part, next]),

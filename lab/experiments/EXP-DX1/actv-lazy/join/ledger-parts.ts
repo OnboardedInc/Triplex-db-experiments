@@ -171,7 +171,10 @@ export function ledgerChangeUnits(
   const packed = pack(units);
   // `kept`: this event's parts an earlier frame already wrote (the units' first ones, as stored): the ledger stays in
   // parts and those values are named by the head exactly as they are
-  if (!kept.length && (mode === "whole" || packed.length <= ledgerPartChars)) {
+  // [DX-ERA4, third review T2, with DX-ACT8's Z1] a ledger already in parts stays in parts, even at one part: the closing
+  // piece is then the retraction of at most ledgerPartsMax() parts and a head, never a whole ledger beside them (a ledger
+  // shrinks once DX-ACT8's retired-item archive is merged)
+  if (!kept.length && (mode === "whole" || (packed.length <= ledgerPartChars && (old.parts.length === 0 || units.length === 0)))) {
     assert(mode === "parts" || old.parts.length === 0, "A ledger in parts needs TX2_NOTICE_LEDGER=parts");
     return { parts: [] as Op[], closing: [...retire, ...db.change(ledgerKey(subject), old.head, packed)] };
   }

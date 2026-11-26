@@ -10,7 +10,7 @@ import { width } from "../../notify1/census.ts";
 import type { Event } from "../../notify1/journal.ts";
 import type { Packet } from "../../notify1/dispatcher.ts";
 import { receiveOrdered } from "../../notify1/receiver.ts";
-import { Documents, hash, pack, parse, unpack, type Op } from "../../notify1/store.ts";
+import { Documents, hash, pack, parse, unpack, type Op, type Row } from "../../notify1/store.ts";
 import { Conflict } from "../store.ts";
 import type { Archive } from "./archive.ts";
 import { fillFrame, frameEstimate, type Candidate, type Piece } from "./frames.ts";
@@ -39,7 +39,11 @@ import {
   outputInputs,
   placeOf,
   seal,
+  sealBySubject,
+  subjectStopsOn,
+  isFailed,
   type Removed,
+  type StopCode,
 } from "../../../../bench/lib/derived-seal.ts";
 import {
   copyCheck,
@@ -64,6 +68,20 @@ const generationKey = (subject: string) => "recorded-generation:" + subject;
 // clear (an id is a hash of the subject, rule, kind and document key; it holds no value), so that after a removal of
 // such a value the notice the subject held is kept (W0-1.2 7.0) although every sealed record of the subject is removed.
 const keptKey = (subject: string) => "recorded-kept:" + subject;
+// [DX-ERA4, third review T2] one subject never stops an account: a subject the recorder cannot record in an event (its
+// evaluation failed, the gateway refused its seal, or its ledger or one of its units does not fit the writer's bound)
+// gets this named stop, written as its closing piece, and the frame goes on past it; the next event tries it again, and
+// a recording that succeeds retracts the stop. Under TX2_DERIVED_SEAL, or TX2_SUBJECT_STOP=1 in clear.
+export const stoppedKey = (subject: string) => "recorded-stopped:" + subject;
+type Stopped = Awaited<ReturnType<Documents["rows"]>>;
+const stoppedCandidate = (db: Documents, subject: string, event: number, prior: Row<unknown> | undefined, code: StopCode): NoticeCandidate => ({
+  subject, units: [], deliveries: 0, closing: true, ledger: db.change(stoppedKey(subject), prior as never, { at: event, code }),
+});
+/** A recorded subject's candidate, with its stop retracted when it had one. */
+const cleared = (c: NoticeCandidate, prior: Row<unknown> | undefined): NoticeCandidate =>
+  prior ? { ...c, closing: true, ledger: [...c.ledger, { op: "retract" as const, id: prior.id }] } : c;
+const codeOf = (e: unknown): StopCode | undefined =>
+  e instanceof FrameTooLarge ? (/ledger needs/.test(e.message) ? "LedgerFull" : "FrameTooLarge") : undefined;
 const keptOf = (work: readonly W0.WorkItem[]) =>
   [...new Set(work.filter((w) => w.rule === "DOCEXP" && w.kind === "notify.document-expired").map((w) => w.id))].sort();
 export type SealedDelivery = { subject: string; generation: number; sealed: string | Removed };
@@ -439,6 +457,9 @@ export class RecordedNotices {
     ]);
     for (const [i, id] of missing.entries()) known.set(id, fresh[i]!);
     const items = ids.map((id) => known.get(id)!);
+    const stopsOn = subjectStopsOn();
+    const stopRows: Stopped = stopsOn ? await db.rows(ids.map(stoppedKey), at) : new Map();
+    const stopPrior = (subject: string) => stopRows.get(stoppedKey(subject));
     const record = (subject: string, i: number, state: readonly W0.ItemState[]) =>
       W0.publish({ items: state, subjects: [], pending: [] }, [
         {
@@ -449,12 +470,21 @@ export class RecordedNotices {
         },
       ]);
     const candidates = derivedSealOn()
-      ? await this.sealedCandidates(ids, items, previous, at, current, mode, authority, record, keptRows)
+      ? await this.sealedCandidates(ids, items, previous, at, current, mode, authority, record, keptRows, stopRows)
       : ids.map((subject, i) => {
           const old = previous.get(subject)!;
-          return noticeCandidate(db, subject, current.event, old, record(subject, i, old.items), mode);
+          if (!stopsOn) return noticeCandidate(db, subject, current.event, old, record(subject, i, old.items), mode);
+          const w = items[i] as unknown;
+          if (isFailed(w)) return stoppedCandidate(db, subject, current.event, stopPrior(subject), w.failed);
+          try {
+            return cleared(noticeCandidate(db, subject, current.event, old, record(subject, i, old.items), mode), stopPrior(subject));
+          } catch (e) {
+            const code = codeOf(e);
+            if (!code) throw e;
+            return stoppedCandidate(db, subject, current.event, stopPrior(subject), code);
+          }
         });
-    const { next, ops } = noticeFrame(db, prior, current, candidates, {
+    const frameOf = () => noticeFrame(db, prior, current, candidates, {
       account: a.db.prefix,
       position: e.at,
       recipe: hash(e.value),
@@ -463,6 +493,22 @@ export class RecordedNotices {
       ...(authority ? { erasureSeq: authority.seq } : {}),
       ledger: mode,
     });
+    // [DX-ERA4, third review T2] a candidate one unit or closing piece of which alone exceeds the writer's bound: that
+    // subject's named stop takes its place (its first part, if any, is not kept), and the frame is filled again
+    let framed: ReturnType<typeof frameOf>;
+    for (;;) {
+      try {
+        framed = frameOf();
+        break;
+      } catch (e) {
+        const who = (e as { subject?: string }).subject;
+        const k = who === undefined ? -1 : candidates.findIndex((c) => c.subject === who);
+        if (!stopsOn || !(e instanceof FrameTooLarge) || k < 0 || candidates[k]!.units.length === 0) throw e;
+        if (k === 0 && (current.part ?? 0) > 0) throw e;
+        candidates[k] = stoppedCandidate(db, who!, current.event, stopPrior(who!), "FrameTooLarge");
+      }
+    }
+    const { next, ops } = framed;
     const ack = await b.write(
       "notice",
       "settled-notice:" + hash([a.s.scope, current, next]),
@@ -490,7 +536,15 @@ export class RecordedNotices {
     authority: Awaited<ReturnType<typeof readErasure>>,
     record: (subject: string, i: number, state: readonly W0.ItemState[]) => ReturnType<typeof W0.publish>,
     keptRows: Map<string, Awaited<ReturnType<Documents["row"]>>> = new Map(),
+    stopRows: Stopped = new Map(),
   ) {
+    const stopPrior = (subject: string) => stopRows.get(stoppedKey(subject));
+    // [DX-ERA4, third review T2] the subjects stopped in this event, and why
+    const stops = new Map<string, StopCode>();
+    ids.forEach((subject, i) => {
+      const w = items[i] as unknown;
+      if (isFailed(w)) stops.set(subject, w.failed);
+    });
     const db = this.archive.db,
       source = this.archive.source.s.comp,
       event = current.event;
@@ -501,7 +555,9 @@ export class RecordedNotices {
       const before = generations.get(generationKey(subject));
       const generation = o.forget === undefined ? (before?.value ?? 0) : o.forget;
       assert(generation >= (before?.value ?? 0), "A subject's notice generation went back");
-      const result = record(subject, i, o.forget === undefined ? o.items : []);
+      const result = stops.has(subject)
+        ? { deliveries: [] as W0.Delivery[], state: { items: o.items } }
+        : record(subject, i, o.forget === undefined ? o.items : []);
       const inputs = outputInputs(items[i]!);
       const named = (id: string) => inputUnion(inputs, o.forget === undefined ? (o.named.get(id) ?? []) : []);
       return { subject, generation, before, result, named, forget: o.forget !== undefined };
@@ -510,7 +566,7 @@ export class RecordedNotices {
     // bytes each (compressed canonical JSON), under what its items name and its subject's protected values (N3), so a
     // ledger in parts is one record per part and the gateway's check reads each part alone. A chunk whose part would
     // not fit the writer's bound with the cursor is resealed smaller (its subject's chunks with a lower budget).
-    type Queued = { inputs: readonly string[]; value?: string; bytes?: Buffer; place: string };
+    type Queued = { inputs: readonly string[]; value?: string; bytes?: Buffer; place: string; subject: string };
     // The subject at the cursor may have this event's first parts written by an earlier frame (or before a restart):
     // they are kept exactly as stored, and its items are chunked on from where they end, so every part a head names
     // comes from one sealing (a part is never sealed twice). A kept part that opens as removed ends the ledger there:
@@ -548,10 +604,12 @@ export class RecordedNotices {
       const p = plans[i]!,
         k = kept.get(i);
       if (k && k.from < 0) return [];
+      if (stops.has(p.subject)) return [];
       return ledgerChunks(p.result.state.items, budget, k?.from ?? 0).map((chunk): Queued => ({
         inputs: inputUnion(...chunk.items.map((it) => p.named(it.id))),
         bytes: ledgerChunkData(chunk),
         place: placeOf(source, p.subject),
+        subject: p.subject,
       }));
     };
     // kept for the current page of subjects of this event only (at most 64 subjects' deliveries)
@@ -561,13 +619,32 @@ export class RecordedNotices {
     const keyOf = (q: Queued) => hash([q.place, q.inputs, q.value]);
     const queue: Queued[] = [];
     for (const p of plans) {
+      if (stops.has(p.subject)) continue;
       const place = placeOf(source, p.subject);
-      for (const d of p.result.deliveries) queue.push({ inputs: p.named(d.id), value: canonical(d), place });
+      for (const d of p.result.deliveries) queue.push({ inputs: p.named(d.id), value: canonical(d), place, subject: p.subject });
     }
     const fresh = queue.filter((q) => !cache.has(keyOf(q)));
     const budgets = plans.map(() => ledgerChunkBytes);
     const chunks = plans.map((_, i) => chunkOf(i, budgets[i]!));
-    const out = await seal(source, [...fresh, ...chunks.flat()]);
+    // [DX-ERA4, third review T2] a subject whose own items the gateway refuses gets a named stop; the rest are sealed
+    let out: (string | Removed)[];
+    if (subjectStopsOn()) {
+      const all = [...fresh, ...chunks.flat()];
+      const r = await sealBySubject(source, all);
+      for (const sj of r.refused.keys()) stops.set(sj, "SealRefused");
+      out = r.out as (string | Removed)[];
+      if (r.refused.size) {
+        // drop the refused subjects' items everywhere (their deliveries and chunks), keeping each answer with its item
+        const keepFresh = fresh.map((q, j) => [q, out[j]!] as const).filter(([q]) => !r.refused.has(q.subject));
+        let k = fresh.length;
+        const chunkOut = chunks.map((c) => out.slice(k, (k += c.length)));
+        fresh.length = 0;
+        fresh.push(...keepFresh.map(([q]) => q));
+        out = [...keepFresh.map(([, v]) => v), ...chunks.flatMap((c, i) => (r.refused.has(plans[i]!.subject) ? [] : chunkOut[i]!))];
+        chunks.forEach((c, i) => { if (r.refused.has(plans[i]!.subject)) c.length = 0; });
+        for (let i = queue.length - 1; i >= 0; i--) if (r.refused.has(queue[i]!.subject)) queue.splice(i, 1);
+      }
+    } else out = await seal(source, [...fresh, ...chunks.flat()]);
     fresh.forEach((q, j) => cache.set(keyOf(q), out[j]!));
     const sealed = queue.map((q) => cache.get(keyOf(q))!);
     const units: (string | Removed)[][] = [];
@@ -580,8 +657,12 @@ export class RecordedNotices {
     for (let round = 0; ; round++) {
       const redo = plans.flatMap((_, i) => (over(units[i]!) > 0 ? [i] : []));
       if (!redo.length) break;
-      if (round >= 4)
-        throw new FrameTooLarge("Subject " + plans[redo[0]!]!.subject + ": a sealed ledger part does not fit the writer's bound");
+      if (round >= 4) {
+        if (!subjectStopsOn())
+          throw new FrameTooLarge("Subject " + plans[redo[0]!]!.subject + ": a sealed ledger part does not fit the writer's bound");
+        for (const i of redo) (stops.set(plans[i]!.subject, "FrameTooLarge"), (units[i] = []));
+        break;
+      }
       const again = redo.map((i) => {
         // one size class (512 bytes) or the overshoot in compressed bytes, whichever is more
         budgets[i] = budgets[i]! - Math.max(512, Math.ceil(over(units[i]!) * 0.8));
@@ -594,11 +675,19 @@ export class RecordedNotices {
     }
     let d = 0;
     return plans.map((p, i) => {
+      if (stops.has(p.subject)) return stoppedCandidate(db, p.subject, event, stopPrior(p.subject), stops.get(p.subject)!);
       const deliveries = p.result.deliveries.map(
         () => ({ subject: p.subject, generation: p.generation, sealed: sealed[d++] }) as unknown as W0.Delivery,
       );
       const old = previous.get(p.subject)!;
-      const c = noticeCandidateUnits(db, p.subject, event, old, deliveries, allUnits(i), mode, kept.get(i)?.values ?? []);
+      let c: NoticeCandidate;
+      try {
+        c = cleared(noticeCandidateUnits(db, p.subject, event, old, deliveries, allUnits(i), mode, kept.get(i)?.values ?? []), stopPrior(p.subject));
+      } catch (e) {
+        const code = codeOf(e);
+        if (!code || !subjectStopsOn()) throw e;
+        return stoppedCandidate(db, p.subject, event, stopPrior(p.subject), code);
+      }
       if (p.generation !== (p.before?.value ?? 0)) {
         // The new generation is written with the subject's ledger (its closing piece), or alone.
         c.ledger.push(...db.change(generationKey(p.subject), p.before, p.generation));

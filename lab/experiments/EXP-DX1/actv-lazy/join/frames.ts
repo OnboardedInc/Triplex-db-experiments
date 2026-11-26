@@ -120,8 +120,10 @@ export function fillFrame<U>(
     else top = t - 1;
   }
   if (m === 0)
-    throw new FrameTooLarge(
-      "Subject " + c.subject + (remaining ? ": one unit" : ": its closing piece") + " alone exceeds the writer's bound",
+    // [DX-ERA4, third review T2] named, so a writer under subject stops can stop that subject alone
+    throw Object.assign(
+      new FrameTooLarge("Subject " + c.subject + (remaining ? ": one unit" : ": its closing piece") + " alone exceeds the writer's bound"),
+      { subject: c.subject },
     );
   pieces.push({ index: lo, from, to: from + m, close: false });
   return { pieces, advance: lo, tail: from + m, split: true };

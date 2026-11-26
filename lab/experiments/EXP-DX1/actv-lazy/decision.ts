@@ -1,4 +1,8 @@
-import { derivedSealOn, noteWorld } from "../../../bench/lib/derived-seal.ts";
+import { derivedSealOn, noteWorld, subjectStopsOn } from "../../../bench/lib/derived-seal.ts";
+/** [DX-ERA4, third review T2] A world that could not be built, standing in for its subject: no facts, and the failure. */
+export const failedWorld = (subject: string, e: unknown): W0.World =>
+  Object.defineProperty({ subject, facts: [] }, "buildFailed", { value: String((e as Error).message ?? e).slice(0, 200) }) as W0.World;
+export const buildFailure = (w: W0.World): string | undefined => (w as { buildFailed?: string }).buildFailed;
 
 /** [DX-ERA4, after DX-ERA5's B4; superseded by the owner's ruling of 2026-11-25, third review T1] The first B4 fix: a
  * removed value dropped from its world, so it counted as absent, which withdrew the expired-document notice and, in the
@@ -67,7 +71,14 @@ export function heldWorlds(rows: readonly WorldRow[], prefix: string, account: s
     assert.deepEqual(root.filter((r) => r.attribute === ":subject/account").map((r) => r.value.value), [account]);
     assert.deepEqual(root.filter((r) => r.attribute === ":subject/member").map((r) => r.value.value), [String(i)]);
     // [DX-ERA4] TX2_DERIVED_SEAL=1: the rows this world was built from (a derived record names them).
-    return noteWorld(policyWorld(i, body, basis), body);
+    // [DX-ERA4, third review T2] a world that cannot be built (rows the deep builder refuses) is a named failure of that
+    // subject alone (`failedWorld`): its evaluation fails and the account goes on
+    try {
+      return noteWorld(policyWorld(i, body, basis), body);
+    } catch (e) {
+      if (!subjectStopsOn()) throw e;
+      return failedWorld(W0.placementId(i), e);
+    }
   });
 }
 export async function worldsAt(store: Store, format: Format, subjects: string[], b: Point) {
