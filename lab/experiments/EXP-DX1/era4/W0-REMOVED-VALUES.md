@@ -105,7 +105,7 @@ three byte-level cases failing as before the change: C91, C92, C128, whose case 
 | `packages/w0` vitest (golden cases and unit tests) after the change | 174 of 174 passed |
 | oracle `cli.py cases` before and after | 133 of 136 byte-identical both times, the same three failing |
 | `era4/removed-oracle.ts` (kernel against oracle, R1 and R2, 12 worlds each) | 24 of 24 byte-identical; see the table below |
-| `era4/removed-kept.ts` (deep format, in process and on a stack) | REMOVED_KEPT |
+| `era4/removed-kept.ts` (deep format, in process, `b3d45a0fd`, `evidence/DX-ERA4/v8/removed-kept-6`) | 7 of 7 checks: both settlements and both recordings complete; subject 0's expired-document notice delivered again in its new generation with `"expiresOn":{"erasedAt":...}` as the payload's date; subject 1 (not expired at the removal) gets none; subject 2 (untouched) keeps generation 0 and gets none again; no delivery of the second release names a removed date. On a stack: section 15 of `DERIVED-COPIES.md` |
 
 `removed-oracle.ts` worlds (one subject, document a expired at the valid time, document b not):
 
