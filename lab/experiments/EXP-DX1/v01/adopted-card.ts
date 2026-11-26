@@ -6,7 +6,7 @@ import { Histogram } from "../../../bench/lib/hist.ts";
 import { render as emptyCard } from "./render.ts";
 import type { MixedIds } from "./mixed-ids.ts";
 import type { adoptedArm } from "./adopted.ts";
-import { writerSplitText } from "./writer-split-text.ts";
+import { checkCardWriterSplits, writerSplitText, type WriterSplit } from "./writer-split-text.ts";
 import { defaultCreditMode, launchProfile, type ServerProfile } from "../jvm1/launch.mjs";
 import { barrierRoot, phaseSeconds, launchIntegration, selectedWriter, writeDiagnostics, serverStages, writerIntegration, type JvmProfile, type Age, type Writer } from "./profile.ts";
 import { cellPath, lastServerCell, ratedTape, serverCellSeconds, serverRates, writerAdmission, type CreditMode, type WindowSeconds } from "./server-workload.ts";
@@ -427,15 +427,23 @@ export function writeAdoptedCard(run: Card) {
 
   // [DX-INT5] The per-subject writer check of every cell (v01/adopted.ts checkWriterSplit): saves with a save key,
   // saves the active rule lets the per-subject writer take, and saves that took it; a cell with 0 eligible says so.
+  const splitsSeen: WriterSplit[] = [];
   function writerSplits() {
     if (!fs.existsSync(run.campaign)) return [];
     const rows: string[] = [];
+    splitsSeen.length = 0;
     for (const rel of fs.readdirSync(run.campaign, { recursive: true, encoding: "utf8" }).sort()) {
       if (path.basename(rel) !== "arm.json") continue;
       const x = JSON.parse(fs.readFileSync(path.join(run.campaign, rel), "utf8"));
       if (!x.writerSplit) continue;
       const w = x.writerSplit;
+      splitsSeen.push(w);
       rows.push(`| ${path.dirname(rel)} | ${w.keyed} | ${w.ran ? w.eligible : "—"} | ${w.ran ? w.taken : "—"} | ${writerSplitText(w)} |`);
+    }
+    if (splitsSeen.some((w) => w.ran)) {
+      const on = splitsSeen.filter((w) => w.ran), full = on.filter((w) => w.eligible > 0 && w.taken === w.eligible).length;
+      rows.push("", `**Per card:** ${on.length} arms with the per-subject option on; ${full} with eligible saves that all took it (` +
+        (full > 0 ? "pass" : "FAIL: the card did not exercise the per-subject writer") + ").");
     }
     return rows;
   }
@@ -711,4 +719,6 @@ export function writeAdoptedCard(run: Card) {
   };
   fs.writeFileSync(path.join(run.out, "SCORECARD-v0.1.md"),
     text.replace("```json\n{}\n```", "```json\n" + JSON.stringify(settings, null, 2) + "\n```"), { flag: "wx", mode: 0o600 });
+  // [DX-INT5] The per-card writer rule, after the card is written so the failing table is kept.
+  checkCardWriterSplits(splitsSeen);
 }
