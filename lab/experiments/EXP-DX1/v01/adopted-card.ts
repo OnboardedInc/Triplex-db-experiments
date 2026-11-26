@@ -6,6 +6,7 @@ import { Histogram } from "../../../bench/lib/hist.ts";
 import { render as emptyCard } from "./render.ts";
 import type { MixedIds } from "./mixed-ids.ts";
 import type { adoptedArm } from "./adopted.ts";
+import { writerSplitText } from "./writer-split-text.ts";
 import { defaultCreditMode, launchProfile, type ServerProfile } from "../jvm1/launch.mjs";
 import { barrierRoot, phaseSeconds, launchIntegration, selectedWriter, writeDiagnostics, serverStages, writerIntegration, type JvmProfile, type Age, type Writer } from "./profile.ts";
 import { cellPath, lastServerCell, ratedTape, serverCellSeconds, serverRates, writerAdmission, type CreditMode, type WindowSeconds } from "./server-workload.ts";
@@ -424,6 +425,21 @@ export function writeAdoptedCard(run: Card) {
       .map((list) => `- Stack \`${list[0]!.slot}\`: **${list[0]!.dir}** (first after the stack started)` + (list.length > 1 ? ", then " + list.slice(1).map((f) => f.dir).join(", ") : "") + ".");
   }
 
+  // [DX-INT5] The per-subject writer check of every cell (v01/adopted.ts checkWriterSplit): saves with a save key,
+  // saves the active rule lets the per-subject writer take, and saves that took it; a cell with 0 eligible says so.
+  function writerSplits() {
+    if (!fs.existsSync(run.campaign)) return [];
+    const rows: string[] = [];
+    for (const rel of fs.readdirSync(run.campaign, { recursive: true, encoding: "utf8" }).sort()) {
+      if (path.basename(rel) !== "arm.json") continue;
+      const x = JSON.parse(fs.readFileSync(path.join(run.campaign, rel), "utf8"));
+      if (!x.writerSplit) continue;
+      const w = x.writerSplit;
+      rows.push(`| ${path.dirname(rel)} | ${w.keyed} | ${w.ran ? w.eligible : "—"} | ${w.ran ? w.taken : "—"} | ${writerSplitText(w)} |`);
+    }
+    return rows;
+  }
+
   // [DX-CARD2] The tuned reader's settings, its checks before the first read, and each role's cgroup memory peak per
   // stage against its cap (the caps of server-32 with the tuned reader were set from the 2026-11-23 peaks).
   function tunedReaderSection() {
@@ -672,6 +688,9 @@ export function writeAdoptedCard(run: Card) {
       "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |", ...cellWindows, "",
       ...(edgeRows.length ? ["Rows are placed in a cell and a half by their scheduled tape offset. Rows scheduled within half a floating-point step of their cell's end have a due time equal to the end on the epoch clock; they are counted in the cell and the second half they were offered in. Such rows per scope: " + edgeRows.join(" · ") + ".", ""] : [])] : []),
     ...(cellTelemetry.length ? ["## Within-cell counters", "", ...cellTelemetry, ""] : []),
+    ...(() => { const rows = writerSplits(); return rows.length ? ["## The per-subject writer check, per cell", "",
+      "Saves with a save key; of those, the ones the active rule lets the per-subject writer take (with the wide writer off and no owners named, commits of one to three facts that each replace a current value); and the ones that took it. A cell with eligible saves fails unless at least one took it.", "",
+      "| Cell | Keyed saves | Eligible | Took the per-subject writer | Check |", "| --- | ---: | ---: | ---: | --- |", ...rows, ""] : []; })(),
     ...(() => { const order = startOrder(); return order.length ? ["## Order after each stack start", "",
       "The first window each stack measured after it started finds its subjects cold (the quiet account's 52 and 59 ms p99 of 2026-11-23 was such a window). P1's two sides each run first on their own stack, so their writer ratio compares two such windows.", "", ...order, ""] : []; })(),
     ...(run.reader ? tunedReaderSection() : []),
