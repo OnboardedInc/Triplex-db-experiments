@@ -43,6 +43,9 @@ for l in text:
     viol.append((m.group(2), m.group(3), m.group(4)))
 
 def applies(e):
+    # rule_state "on" or "off": the entry applies only when the run's replay rule is in that state (RULE)
+    if e.get("rule_state") in ("on", "off") and rule in ("0", "1") and e["rule_state"] != ("on" if rule == "1" else "off"):
+        return False
     return (e["main"] == main and e["phase"] in phases
             and ("*" in e["modes"] or mode in e["modes"])
             and (e["authority"] == "*" or (e["authority"] == "postgresql") == pg))

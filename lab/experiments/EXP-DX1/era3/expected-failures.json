@@ -38,14 +38,11 @@
         ":datoms-of-the-first 13",
         ":datoms-of-the-twenty 60",
         ":datoms-of-those 3"
-      ],
-      [
-        ":that-callers-own-save-of-another-subject [409 \"OperationDuplicate\"]"
       ]
     ],
-    "reference": "era3/REVIEW-7.md at 7da3ca3b3, Part B finding 3: \"M3, the V4 reversal (low, by design): every declined command is recorded. First decline 13 datoms (the schema and one record); 20 more declines under new commands 60 datoms in 20 transactions; 20 declines under one command 3 datoms (its first record only). A caller that sends a declined save under a command ID another caller will use makes that caller's save declined (409). With every option off the same pre-emption exists in another form: the first caller's save is stored and the second is answered 409 `OperationDuplicate`.\" With the replay rule on the detail must show the 409 ErasureReplayDeclined form and the 13, 60 and 3 datoms; with every option off the 409 OperationDuplicate form.",
+    "reference": "era3/REVIEW-7.md at 7da3ca3b3, Part B finding 3: \"M3, the V4 reversal (low, by design): every declined command is recorded. First decline 13 datoms (the schema and one record); 20 more declines under new commands 60 datoms in 20 transactions; 20 declines under one command 3 datoms (its first record only). A caller that sends a declined save under a command ID another caller will use makes that caller's save declined (409). With every option off the same pre-emption exists in another form: the first caller's save is stored and the second is answered 409 `OperationDuplicate`.\" With the replay rule on the detail must show the 409 ErasureReplayDeclined form and the 13, 60 and 3 datoms; with every option off the 409 OperationDuplicate form. Since the merge of the save line's fourth pass (1be3efbab), with every option off the case passes: that pass declines a save that states nothing without recording it (storage.clj record-declined!: 'A save that states no frame is declined again on every resend that still states none, so nothing is recorded for it'), so no other caller's command is taken; the every-option-off form (409 OperationDuplicate) is gone, and the entry applies with the replay rule on only.",
     "form_when_rule_on": 1,
-    "form_when_rule_off": 2
+    "rule_state": "on"
   },
   {
     "id": "M3-general",
@@ -64,14 +61,11 @@
         ":datoms-of-the-first 13",
         ":datoms-of-the-twenty 60",
         ":datoms-of-those 3"
-      ],
-      [
-        ":that-callers-own-save-of-another-subject [409 \"OperationDuplicate\"]"
       ]
     ],
     "reference": "as M3-fast, on the general writer",
     "form_when_rule_on": 1,
-    "form_when_rule_off": 2
+    "rule_state": "on"
   },
   {
     "id": "E9-unsealed",
