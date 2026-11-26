@@ -1,8 +1,9 @@
 // [DX-ERA4, third review T2] The property "one subject never stops an account", with the real settlement and notice
 // recorder. One account of six subjects, the setting declared on every database, TX2_NOTICE_LEDGER=parts; at once, one
 // subject each:
-//   S0  a full ledger: S0 alone owes ONE_FORMS forms (the policies' share is chosen from the subjects' buckets, below
-//       S0's and above every other's; only S0 has a start date in W0's format), more than a ledger can hold;
+//   S0  a full ledger: S0 alone owes the forms (the policies' share is chosen from the subjects' buckets, below S0's and
+//       above every other's; only S0 has a start date in W0's format), 999 and then 1,000 other forms: more than a
+//       ledger can hold over its life, so S0 stops at the second release;
 //   S1  a removal: its document's expiry date removed on request between the two releases (its expired-document notice
 //       kept, the owner's rule of 2026-11-25);
 //   S2  an evaluation error: in the deep format its pay is "abc" in the data (ONE_EVAL=data, the default there); in W0's
@@ -39,9 +40,11 @@ assert(out && derivedSealOn() && process.env.TX2_NOTICE_LEDGER === "parts", "one
 const FORMAT = process.env.ONE_FORMAT ?? "w0";
 assert(FORMAT === "w0" || FORMAT === "deep");
 const EVAL = process.env.ONE_EVAL ?? (FORMAT === "deep" ? "data" : "seam");
-// more than a ledger holds (about 1,790 items sealed), and two releases' documents within the store's 1 MiB per value
-// (a release marker holds the old and the new document: 2,000 and 2,001 forms are 1,054,370 bytes)
-const F = Number(process.env.ONE_FORMS ?? 1900);
+// S0's ledger over its lifetime limit (about 1,790 items sealed) at the second release: 999 forms and then 1,000 (the
+// synthetic release names its forms with three digits below 1,000 and four above, so these are 1,999 different items),
+// each release small enough for the store (a release marker holds the old and the new document within 1 MiB per value;
+// a Publish record about 1.2 x (2 x new + old) within 4 MiB: 1,900 and 1,901 forms exceeded it)
+const F = Number(process.env.ONE_FORMS ?? 999);
 const RUN = randomUUID().slice(0, 8);
 const peer = new DatomicClient(process.env.DATOMIC_URL!, 600_000);
 const log = (kind: string, data: object = {}) => {
@@ -191,8 +194,9 @@ try {
     settledBoth: row.settlement1 === "stored" && row.settlement2 === "stored",
     recordedBoth: row.recorder1 === "recorded" && row.recorder2 === "recorded",
     othersGetTheirNotices: [S[1]!, S[4]!, S[5]!].every((s) => (d1[s] ?? 0) > 0),
-    recorderStopsAreExactlyTheThree: only(s1.recorder, { [S[0]!]: "LedgerFull", [S[2]!]: "EvaluationFailed", [S[3]!]: "SealRefused" }) &&
+    recorderStopsAreExactlyTheThree: only(s1.recorder, { [S[2]!]: "EvaluationFailed", [S[3]!]: "SealRefused" }) &&
       only(s2.recorder, { [S[0]!]: "LedgerFull", [S[2]!]: "EvaluationFailed", [S[3]!]: "SealRefused" }),
+    fullLedgerSubjectRecordedFirst: (d1[S[0]!] ?? 0) > 0,
     settlementStopsAreTheEvaluationAndTheSeal: [s1.settlement, s2.settlement].every((m) => m[S[2]!] === "EvaluationFailed" && m[S[3]!] === "SealRefused" &&
       Object.keys(m).every((s) => [S[0], S[2], S[3]].includes(s))),
     removedSubjectKeepsItsNotice: kept.length > 0 && kept.every((d) => text(d.payload).includes('"expiresOn":{"erasedAt"')),
@@ -203,7 +207,7 @@ try {
 }
 row.seconds = Math.round((performance.now() - t) / 100) / 10;
 log("one-subject", row);
-const pass = Object.keys(checks).length === 6 && Object.values(checks).every(Boolean);
+const pass = Object.keys(checks).length === 7 && Object.values(checks).every(Boolean);
 log("verdict", { pass, checks, sealCounters: counters, run: RUN });
 peer.close();
 process.exit(pass ? 0 : 1);
