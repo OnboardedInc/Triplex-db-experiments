@@ -204,10 +204,10 @@ try {
   const d1 = row.deliveries1 as Record<string, number>, s1 = row.stops1 as { recorder: Record<string, string>; settlement: Record<string, string> },
     s2 = row.stops2 as typeof s1;
   const only = (m: Record<string, string>, want: Record<string, string>) => canonical(m) === canonical(want);
-  const d2 = row.deliveries2 as Record<string, number>;
+  const by2 = row.deliveries2 as Record<string, number>;
   // whole ledgers: S0 stops at the first release before any delivery; in parts it is served first and stops at the second
   const fullLedger = WHOLE
-    ? { fullLedgerSubjectStoppedBeforeAnyDelivery: d1[S[0]!] === 0 && d2[S[0]!] === 0 }
+    ? { fullLedgerSubjectStoppedBeforeAnyDelivery: d1[S[0]!] === 0 && by2[S[0]!] === 0 }
     : { fullLedgerSubjectRecordedFirst: (d1[S[0]!] ?? 0) > 0 };
   if (CLEAR) checks = {
     settledBoth: row.settlement1 === "stored" && row.settlement2 === "stored",
@@ -218,7 +218,7 @@ try {
     ...fullLedger,
     settlementStopsAreTheEvaluations: only(s1.settlement, { [S[2]!]: "EvaluationFailed" }) &&
       only(s2.settlement, { [S[1]!]: "EvaluationFailed", [S[2]!]: "EvaluationFailed" }),
-    removedSubjectStopsAlone: d2[S[4]!]! >= d1[S[4]!]!,
+    removedSubjectStopsAlone: by2[S[4]!]! >= d1[S[4]!]!,
   };
   else checks = {
     settledBoth: row.settlement1 === "stored" && row.settlement2 === "stored",
