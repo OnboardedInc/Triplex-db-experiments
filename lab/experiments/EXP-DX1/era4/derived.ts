@@ -438,15 +438,20 @@ for (const name of [...places.keys()]) if (!name.endsWith("+opened")) openedSeal
 const needles = {
   "X expiry date (removed)": X_EXP,
   "X document-expired version (derivative)": submit!.version,
-  "X document-expired item id (derivative)": submit!.id,
+  // [DX-ERA4, third review T1, the owner's ruling of 2026-11-25] the expired-document notice is kept: its item id stays,
+  // in clear, in the recorder's kept set (`recorded-kept:<subject>`, era4/W0-REMOVED-VALUES.md "What is revealed"), so
+  // it is no longer a derivative the removal must reach; it must stay in the notice archive and nowhere else in clear
+  "X document-expired item id (kept, the owner's ruling)": submit!.id,
   "Y expiry date (kept)": Y_EXP,
   "W expiry date (kept, account B)": W_EXP,
   "control (unprotected)": CONTROL,
 };
 const table = count(needles);
 const xFound = Object.entries(table)
-  .filter(([k]) => k.startsWith("X "))
+  .filter(([k]) => k.startsWith("X ") && !k.includes("(kept"))
   .reduce((n, [, v]) => n + Object.values(v).reduce((a, b) => a + b, 0), 0);
+const keptIdPlaces = Object.keys(table["X document-expired item id (kept, the owner's ruling)"] ?? {});
+const keptIdOnlyInTheNoticeArchive = keptIdPlaces.every((p) => p.endsWith(":notices") || p.startsWith("native:"));
 log("scan", { arm: sealOn ? "on" : "off", sealed: SEALED, table, refused, entities: entityCounts, dumpedStrings: dumped, sealedFound: openedSealed });
 
 // ---- the stream after the removal ----
@@ -581,14 +586,14 @@ log("cost", {
 });
 const pass =
   sealOn &&
-  xFound === 0 &&
+  xFound === 0 && keptIdOnlyInTheNoticeArchive &&
   (table["control (unprotected)"]?.["native:" + A.db] ?? 0) > 0 &&
   Object.keys(table["Y expiry date (kept)"] ?? {}).some((k) => k.includes("+opened") || k.startsWith("native-opened")) &&
   chain.aVerifies && chain.yUnchanged && chain.bUnchanged &&
   stream.recorded === true && (stream.oracle as { differ: number }).differ === 0 && stream.deliveredAgain === 0 &&
   Object.values(((stream.late as { recipients?: Record<string, { same: boolean }> })?.recipients) ?? { none: { same: false } }).every((r) => r.same) &&
   (faultResult === undefined || faultResult.pass === true);
-log("verdict", { arm: sealOn ? "on" : "off", sealed: SEALED, xFound, pass, seconds: Math.round((performance.now() - t0) / 100) / 10 });
+log("verdict", { arm: sealOn ? "on" : "off", sealed: SEALED, xFound, keptIdPlaces, keptIdOnlyInTheNoticeArchive, pass, seconds: Math.round((performance.now() - t0) / 100) / 10 });
 peer.close();
 for (const s of [A.store, B.store, sink, late, A.values.store, A.noticeArchive.store, B.values.store, B.noticeArchive.store])
   await s.close().catch(() => {});
