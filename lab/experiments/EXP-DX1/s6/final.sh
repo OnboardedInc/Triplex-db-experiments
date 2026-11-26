@@ -17,12 +17,15 @@ case $step in
     bash "$r" "$out/ids" ids "accounts-on accounts-on-serial accounts-on-general group-accounts" || status=1 ;;
   review3)
     # [DX-S6b fourth pass] The third review's tests in every setting it ran, and the install gate.
-    bash "$r" "$out/attack3" attack3 "accounts-off accounts-on accounts-on-serial accounts-on-general accounts-on-nopred accounts-on-general-nopred accounts-on-import group-accounts general" || status=1
+    # [DX-INT5] The third review's attacks pass when exactly the listed checks fail (s6/expected.sh), not on the runner's exit.
+    bash "$r" "$out/attack3" attack3 "accounts-off accounts-on accounts-on-serial accounts-on-general accounts-on-nopred accounts-on-general-nopred accounts-on-import group-accounts general"
+    bash "$here/expected.sh" "$out/attack3" || status=1
     bash "$r" "$out/installs" installs "accounts-on accounts-on-nopred accounts-on-general-nopred group-accounts" || status=1
     bash "$r" "$out/ids-nopred" ids "accounts-on-nopred accounts-on-general-nopred" || status=1 ;;
   review4)
     # [DX-INT5] The fourth review's attacks in the settings it ran (s5/review4-runs.sh lane a's first step).
-    bash "$r" "$out/attack4" attack4 "accounts-on-general-nopred accounts-on-nopred accounts-on accounts-on-general group-accounts" || status=1 ;;
+    bash "$r" "$out/attack4" attack4 "accounts-on-general-nopred accounts-on-nopred accounts-on accounts-on-general group-accounts"
+    bash "$here/expected.sh" "$out/attack4" || status=1 ;;
   gates)
     bash "$r" "$out/outcome" outcome "server general accounts-on group group-accounts" || status=1
     bash "$r" "$out/race" race server || status=1
