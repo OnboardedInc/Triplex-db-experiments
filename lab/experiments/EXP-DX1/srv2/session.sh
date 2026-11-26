@@ -234,6 +234,11 @@ dry_gate() {  # $1 name, $2 script (relative to the repository), then its argume
   mkdir -p "$EVID"
   (cd "$repo" && heavy "$name" bash "$script" "$EVID/$name" "$@")
 }
+dry_stack_gate() {  # $1 name, $2 script taking REPO OUT [SCRIPT] (xq6/xq7 gates), then its script argument
+  local name=$1 script=$2; shift 2
+  mkdir -p "$EVID"
+  (cd "$repo" && heavy "$name" bash "$script" "$repo" "$EVID/$name" "$@")
+}
 plan_dry() {  # the server commands of this step, with every page script checked present and parseable at COMMIT
   local f
   for f in "$@"; do
@@ -334,7 +339,7 @@ a4)  # the full card on the merged head: tuned reader, 12 permits, product save 
       EXTRA='$product_opts $(read_opts)' card_parts '$OUT_ROOT/a4/card' '1 2 3' 1B production-S-noburst server-32 300 tuned
       env PATH=$BUILD/tools/bin:\$PATH $BUILD/tools/bin/node lab/bin/scorecard.mjs --assemble --commit $COMMIT --out '$OUT_ROOT/a4/card'"; fi;;
 b1)  # bring-up 1: journal probe, ID lists, sweep arms A and B (B writes, last), shapes arm C
-  if ((dry)); then run_step -- dry_gate xq6 lab/experiments/EXP-DX1/xq6/gate.sh "$repo" dryrun.ts
+  if ((dry)); then run_step -- dry_stack_gate xq6 lab/experiments/EXP-DX1/xq6/gate.sh dryrun.ts
   else server_env; run_step -- bash -c "set -e; $(declare -f demo_up demo_down need)
       demo_up DX_ID_LISTS=1 DX_SWEEP=1 DX_SWEEP_SHAPES=all DX_SWEEP_PERMITS=6 DX_SWEEP_PER_ACCOUNT=6 DX_SWEEP_QUEUE_MS=5000
       ready=$DEMO_ROOT/ready.json; db=\$(node -p 'require(process.argv[1]).db' \$ready)
@@ -345,7 +350,7 @@ b1)  # bring-up 1: journal probe, ID lists, sweep arms A and B (B writes, last),
       $BUILD/tools/bin/node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/xq6/server.ts \$ready $OUT_ROOT/b1/xq6-1b account-003
       demo_down"; fi;;
 b2)  # bring-up 2: the question reader against sweeps on the main reader
-  if ((dry)); then run_step -- dry_gate xq7 lab/experiments/EXP-DX1/xq7/gate.sh "$repo" dryrun.ts
+  if ((dry)); then run_step -- dry_stack_gate xq7 lab/experiments/EXP-DX1/xq7/gate.sh dryrun.ts
   else server_env; secret=$(od -An -N24 -tx1 /dev/urandom | tr -d ' \n')
     run_step -- bash -c "set -e; $(declare -f demo_up demo_down need)
       demo_up DEMO_QUESTION_READER=1 DX_QUESTION_MAIN_REFUSES=0 DX_READ_IO_COUNTERS=1 DX_SWEEP=1 DX_ID_LISTS=1 DX_SWEEP_PERMITS=3 \

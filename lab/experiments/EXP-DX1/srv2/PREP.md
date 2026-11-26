@@ -44,7 +44,34 @@ count of storage reads. Each read takes its exchange's class.
 - Unset, nothing changes: no exchange is profiled on the ladder, the random line keeps one in sixteen, the card's
   files are as before (the existing card tests pass unchanged).
 
-GATE RESULTS: SEE BELOW (filled from the runs).
+**Gate: `srv2/classify-gate.sh`** (the shortcut gate's container; seed of 10 accounts × 50 subjects, aged by AGE1's
+code; an indexing job first, so the data is in stored segments; each phase restarts the reader on 8080 with the tuned
+reader's switches and the read profile written to the output). Run 3, image `sha256:0515ccd092a4…`, evidence
+`evidence/DX-SRV2/classify-3.tar.gz`:
+
+| Check | Result |
+| --- | --- |
+| Forced cold case: reader restarted, one read before anything else touches it | 3 of 3 classed **not in memory**, with 13, 13 and 10 storage reads |
+| Forced warm case: the same read again | 3 of 3 classed **in memory**, 0 storage reads |
+| The card's random-line read (`pinnedWindow`, random subjects at the seed cut, batches of 8, every exchange sampled) on a freshly restarted reader | 6,376 reads in 1,595 exchanges, all sampled, **0 unmatched**, 0 wrong, 0 errors; 4 reads (the first exchange) not in memory with 1 storage read per subject, 6,372 in memory |
+| The same window again (warm) | 6,896 reads, all sampled, 0 unmatched, 0 not in memory |
+| Paired: every task subject at three pins with and without the profile header | **1,500 of 1,500 identical** |
+| The store across the sampled reads | head 361 before and after; SHA-256 of every subject's full history equal (`462943fb…`) |
+
+Runs 1 and 2 failed and found two faults, both fixed before run 3: on the toy no read ever fetched a segment (the
+data was in the memory index; section 6 item 9), and a trace offset taken before a reader restart skipped the new
+file's first records (section 6 item 8), which had hidden exactly the cold exchanges.
+
+**Unit tests** (`v01/card-reader.test.ts`, 7 of 7): the option's values and refusals; the read options' parsing and
+the reader-container check; the trace reader (hit, miss, unrelated request, metrics minute, torn last line); the rule
+on batches; unmatched reads; the rows' verdicts (toy PARTIAL; server MET, MISSED, NOT JUDGED); the trace mark across a
+restart. The rest of `v01/*.test.ts` and `rd1/*.test.ts`: 51 of 53, the two failures (`owner-groups.test.ts`,
+`writer-split.test.ts`) fail the same way at the base `efee27905`.
+
+**Not yet run: the toy card with the classification** (`v01/mac.ts --fixture` with `DX_V01_SAMPLE_EVERY=1`, the
+re-read ladder's path in `adopted.ts`). Every exclusive Datomic slot of the lab engine was held all evening (s1 and s2
+by DX-ACT8, s3 by DX-ACT6; two of the three owner processes are not running), and the toy card takes one. The command
+is `session.sh a4 --dry-run` (section 3).
 
 ## 2. The two read options and a proposal on defaults
 
@@ -122,7 +149,20 @@ as one small reviewed change after the three merges of E.1 land, on these condit
 
 ## 3. Run scripts with dry runs
 
-FILLED BELOW.
+**One driver, `srv2/session.sh STEP --settings FILE [--dry-run]`**, with `srv2/lib.sh` (spend, copies),
+`srv2/bootstrap.sh` (a fresh machine's first command), `srv2/dry-check.ts` (the Mac checks), `srv2/mac-alert.sh`. On
+the server each step runs its page's commands exactly as written there (the plan's C.3, `v01/READINESS.md` "Next
+server session" and its history at `1ed2650bd`, `rd5/UNCACHED-READ.md` §7–8, `api1/API-CALL-READS.md` §7,
+`xq4/COMMIT-INDEX.md` S-1 to S-3, `xq10/QUESTIONS-CONNECTED.md` §8, `actv-lazy/act7/RUN2.md` §6), with `part()`,
+`card_parts()` (one new copy per part, removed after), `rd5_arm()`, `pinned_variant()`, `demo_up()` and the ACT7
+`prepare`/`held`/`discard` defined once. Every step writes `run-record.json` (step, machine, commit, the build's image
+IDs from `BUILD-v0.1.json` or, in a dry run, the toy image's ID and the code that ran, the options, the settings
+digest, spend at start and end, exit) into `$OUT_ROOT/<step>/`, where its evidence goes; a dry run writes the same
+tree under `DRY_ROOT`. The Mac's dry runs use this builder's images: `tx2-dxthin-managed:a9bbcc8dafd49f05`
+(`sha256:0515ccd092a4…`, the toy card's image, also used for the single-container gates) and
+`tx2-dxthin-jre21:87be4fe3e64ddfd6` (`sha256:f29632f0bcdc…`, the engine's private build for `stack/up.sh` stacks).
+
+DRY-RUN TABLE BELOW.
 
 ## 4. Guards
 
@@ -163,10 +203,55 @@ FILLED BELOW.
 | Disk per machine | `demo/server-up.sh --fetch` refuses under 520 GB free under `DEMO_ROOT` (archive 146, original 177, working copy 177, slack); `make_copy` refuses without the copy's size plus 20 GiB; `stage` refuses `SCRATCH` and `WAL_ROOT` on one device | the root NVMe of each machine (960 GB) holds the cluster, one working copy and the scratch copies one at a time; machine B also needs the backfilled copy (about 540 GB after the archive is deleted) |
 | Credentials, addresses, the SSH key name | none in the repository | private settings and storage files on each machine |
 
-## 6. Set-up faults found while preparing
+## 6. Set-up faults found while preparing (each would have cost server minutes or a wrong reading)
 
-FILLED BELOW.
+1. **The card dropped the read options.** `v01/run.ts` passes the arm an allowlist of variables; `DX_READ_PREFETCH`
+   and `DX_READ_AHEAD_OFF` were not on it, so the plan's A4 (`EXTRA` with the read options) would have run without
+   the prefetch and with read-ahead on, and nothing would have recorded it. Fixed: run.ts passes them and
+   `DX_V01_SAMPLE_EVERY`, refuses a bad value before anything starts, the campaign input records them, and the reader
+   check before the first offer asserts the reader's container carries `TX2_READ_PREFETCH=1` and
+   `-Ddatomic.readAheadPool=0` exactly when asked (`reader-check.json` records what it saw).
+2. **`make_copy` and `remove_copy` existed only as words.** Every page names them ("the copy steps the drivers already
+   use"); no script defined them. Now `srv2/lib.sh`, gated in a Linux container (section 3).
+3. **The SCALE1 metadata directory is not fetched by `demo/server-up.sh --fetch`** (it takes `aged-1b/` only), and every
+   card, study and held command needs `--seed` with `image.json` and `transfer.json`. `stage` fetches them from
+   `fresh-a/` and checks both digests.
+4. **A fresh machine has no Node, and `v01/build.ts` needs Node to start.** `srv2/bootstrap.sh` installs the pinned
+   Node 22.23.2 (digest checked) and checks out the commit.
+5. **The A9 second reader needed a person at a prompt.** The page's sequence (start, wait for the other machine,
+   stop, start again) is now three unattended actions: `session.sh a9 --action start0|switch|stop` on machine B.
+6. **The toy card's reader wrote no trace**, so the classification could not be checked on the toy card; with
+   `DX_V01_SAMPLE_EVERY` set the toy reader now writes the read profile under the card's output.
+7. **The toy stack did not take the product save path's writer options** (S2's toy note); `v01/mac.ts` and
+   `thin1/managed.ts` now pass `TX2_SUBJECT_WIDE`, `TX2_SUBJECT_HINTS`, `TX2_GENERAL_PREFETCH`, `DX_S3_OWNERS` and
+   `DX_S4_CREATE` to the toy's writer and driver as `stack/up.sh` does on a server.
+8. **A trace offset taken before a reader restart skips the new file's first records** (found by the classification
+   gate; trace.clj sets the old file aside at the new process's first record). Fixed for the classification
+   (`traceMark`). The same pattern exists, untouched, in the random line's `readerRecords` offset and P4's
+   `gatewayTimes`; on a server the reader starts once per stage, so it bites only if the reader restarts mid-stage.
+9. **On a toy nothing is ever "not in memory" unless an indexing job ran**: a new peer receives the memory index with
+   the log, so the toy's reads fetch no segment. The classification gate requests an index first.
+10. **Every Mac gate's default image is a shared tag that `gate-image.sh` refuses** (`tx2-datomic:1.0.7745-da00`);
+    the dry runs pass this builder's own images by environment.
+11. **Whether `demo/server-up.sh` accepts the backfilled copy (B6) is still not run**; from the code it checks only
+    the handoff's digest and `PG_VERSION` before starting, and skips the head equality when the head moved, so it
+    should accept it. The plan's fallback (start B6's stack with `stack/up.sh` as `xq1/server.ts verify` does) stands.
 
-## 7. Head, merges and what is not proven on the Mac
+## 7. The first hour on the server, command by command (machine A; machine B the same without the card's dry run)
 
-FILLED BELOW.
+Before it, the orchestrator: check stock (the plan's E.5), rent two machines, private network, firewall TCP 22 only;
+write each machine's order time into its settings file (`MACHINE_A_STARTED`, `MACHINE_B_STARTED`); start the Mac
+alert (`nohup bash lab/experiments/EXP-DX1/srv2/mac-alert.sh '<forecast end + 2 h>' <private hosts file> >> <log> 2>&1 &`).
+Predictions are the plan's D.1 unless stated.
+
+| Minute | Command (as root on machine A) | Predicted | Wrong if |
+| --- | --- | --- | --- |
+| 0–2 | copy `srv2/bootstrap.sh` and the two private files (settings, storage) to the machine; `bash bootstrap.sh $COMMIT /var/tmp/srv2-src` | "bootstrap done: node v22.23.2, checkout … at <COMMIT>" in 1–2 min | any digest refusal (then stop: the release or the repository changed) |
+| 2–3 | `cd /var/tmp/srv2-src && bash lab/experiments/EXP-DX1/srv2/session.sh check --settings /root/srv2.settings` | 17 page scripts present at COMMIT; spend about USD 0.05 | a missing script (the head is not the one the plan ran) |
+| 3–13 | `… session.sh stage --settings /root/srv2.settings` part 1: `v01/build.ts` at COMMIT into `$BUILD` (bootstrap of Docker, images, packages) | 5–10 min (15 if Docker installs first) | over 20 min |
+| 13–53 | `stage` part 2: `demo/server-up.sh --fetch` (download 145.4 GB, both digests, extract, tree check 1,642 files and 176,078,670,513 bytes, bring-up to DEMO READY head=28309866 records=1000251169), `server-down`, then the SCALE1 metadata and both digests | fetch 8–40 min, extract and tree 8–18 min, bring-up 3–12 min | the fetch over 60 min (then B copies to A over the private network, plan C.2 A0); any digest or tree difference (stop) |
+| 53–65 | `stage` part 3 (machine A only): the card's dry run, part 1 with A4's full options (`DX_S2_PRODUCT=1 TX2_SUBJECT_WIDE=1 TX2_SUBJECT_HINTS=1 TX2_GENERAL_PREFETCH=1 DX_READ_PREFETCH=1 DX_V01_SAMPLE_EVERY=1`, tuned reader, 12 permits, 300 s cells) on its own copy | copy 2–3 min; `DX-DRY-RUN first offer reached: scorecard arm 1 headline/zero`; `reader-check.json` shows prefetch true, read-ahead as A2 has not yet chosen (off = false), read profile true | any refusal before the first offer (read its line; fix; one retry on a new copy) |
+| 65– | `… session.sh a1 --settings …` (A1: control, off-permits4, cut-only, one copy each), then `a2`, `a2b` with `READ_AHEAD_OFF` set from A2's result | the plan's D.2 and D.3 | the plan's D.8 items 1 to 3 |
+
+Machine B in the same hour: bootstrap, check, stage (no card dry run), then `b1`. Each step's records:
+`$OUT_ROOT/<step>/run-record.json`; `session.sh spend` at any time.
