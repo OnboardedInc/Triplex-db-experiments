@@ -7049,3 +7049,32 @@ Sources: the derived-copies builder's final report (head checked on the remote);
 - **Both machines are attached to the private network** (A at 00:58, B at 01:39, each at a boundary); interfaces not brought up.
 
 **Started:** the save line builder's sixth pass (01:40).
+
+## 2026-11-26 01:43 EST: server session: the read bar for subjects in memory is met at 1 billion; the scorecard stopped at one of its own save checks; a load race confirmed on the one branch
+
+Sources: machine A's driver; the removal builder and the merge agent, by reading the code; the scorecard's check read by the orchestrator at the session head.
+
+**The scorecard's read ladder at 1 billion (machine A, session build `fea80dd73`, product save path, tuned reader with 12 permits; every read classified, 0 unmatched, 0 errors):**
+
+| Seats | Reads a second | p50 / p99 ms | In memory: reads (share), p99 ms | Not in memory: reads, p99 ms |
+| --- | --- | --- | --- | --- |
+| 1 | 624.7 | 1.2 / 9.4 | 1,203 (3.2%), 0.9 | 36,278, 9.5 |
+| 4 | 1,024.9 | 2.8 / 19.3 | 0 | 61,496, 19.3 |
+| 16 | 1,868.0 | 5.5 / 62.5 | 0 | 112,080, 62.5 |
+| 64 | 6,894.9 | 6.6 / 62.0 | 159,976 (38.7%), 57.3 | 253,720, 64.8 |
+| 256 | 12,350.5 | 16.6 / 76.3 | 588,000 (79.3%), 72.2 | 153,032, 95.2 |
+| 1,024 | 10,604.7 | 56.8 / 647.2 | 575,976 (90.5%), 201.7 | 60,304, 1,228.8 |
+| Random subjects, 256 | 1,483.9 | 158.7 / 634.9 | 0 | 89,032, 634.9 (1.79 storage reads a subject) |
+
+- **Against the owner's bars of 2026-11-25:** in memory at 256 seats p99 72.2 ms: **met** (100 ms). Not in memory on the random line p99 634.9 ms: **missed** (300 ms) at 12 permits; the prediction written before the run was 500 to 620 ms, wrong if under 350. The uncached step measured 250 to 307 ms for the same class at 3 permits.
+- For comparison, the scorecard of 2026-11-23 at the same size: p99 13,584 ms at 256 seats and about 18 reads a second.
+- **The scorecard stopped in its second part at 01:33:23 EST** (step exit 1), after the read ladder, in the quiet-account cell beside loaded saves at 50 rows a second: an assertion in its own check of a save's identity (`v01/adopted.ts`, the branch for saves that carry the general identity: no ordered token, a product save or over 256 assertions, and not taken by a per-subject writer). The cell wrote no operations file, so which clause failed is not known. Part 3 and the assembly did not run, so the scorecard's save rows on the product save path are not measured yet. Before the stop: the zero and loaded arms had 0 keyed tape saves and 1,470 of 1,470 own saves on the per-subject writer; the 95% prediction for tape commits is not tested.
+- **Decisions by the orchestrator:** the stopped part's evidence is copied to the Mac for diagnosis there; the scorecard is not rerun as it is; machine A runs the hardened-lookup measurement, then the scorecard's read part at 3 permits for its read rows (expected to stop at the same check), then Publish at 1 billion; the scorecard runs again from its first part if a corrected session build is ready in time, otherwise its save rows are reported as not measured, with the reason.
+
+**A load race, confirmed by reading as a fault on the one branch today** (seven catch handlers in `main.clj` at `65a851d1b`; the removal merge adds one more site):
+- Mechanism: the handlers look up two answer-path functions lazily at first use. While one thread loads the namespace, a second can find the function's name interned but not yet bound, skip the load and call it. Reachable with every option off, on every database route's failure path, when two requests fail at once in a fresh process.
+- What a caller sees: nothing is stored or lost (the request had already failed); the typed refusal (for example 409 `CasConflict`) becomes 503 `OutcomeUnknown` on a write route; if every lookup loses, the web server's own 500 page with an exception text that names a function, the kind of text the fixed replies exist to keep out.
+- Why it was lazy: an eager require in the early namespaces moves the stored functions' generated names (it happened twice on 2026-11-25).
+- Evidence: 4 failures in 657,579 oracles over 40 runs in the derived-copies builder's series, passing on rerun; 0 occurrences in the merge agent's 47 steps on the removal merge's image.
+- **Fix, as a standalone branch from the one branch with its own review and a standing gate:** one late hook that loads the answer-path namespaces after every namespace has loaded and before the server accepts a request, with a deterministic test. Assigned to the removal builder ahead of its ninth pass.
+- The hold on the removal merge is released: the merge does not bring the race.
