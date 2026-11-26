@@ -234,7 +234,7 @@ dry_card() {  # $1 name, then env assignments for the toy card (v01/mac.ts --fix
   local name=$1; shift
   (cd "$repo" && env DX_V01_TAPE=${TOY_TAPE:-production-S-noburst} DX_V01_READER=tuned DX_V01_READ_PERMITS=12 "$@" \
     node "$repo/lab/bin/heavy.mjs" --label "DX-SRV2-dry-$step-$name" -- \
-    node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/v01/mac.ts --fixture "$(git -C "$repo" rev-parse HEAD)" "$DRY_CHECKOUT" per-person-ordered rolling6)
+    node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/v01/mac.ts --fixture "$(git -C "$DRY_CHECKOUT/repository" rev-parse HEAD)" "$DRY_CHECKOUT" per-person-ordered rolling6)
   local f; f=$(ls -d "$DRY_CHECKOUT"/repository/runs/DX-V01/fixture-* | tail -1)
   mkdir -p "$EVID"; tar -czf "$EVID/$name.tar.gz" -C "$(dirname "$f")" "$(basename "$f")"
   cp "$f/SCORECARD-v0.1.md" "$EVID/$name-SCORECARD.md"
