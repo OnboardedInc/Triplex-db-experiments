@@ -271,6 +271,47 @@ restore-plain)
   post "$W/v1/db/$E2/transact" "$bodies/save-b1-2.json" "e2-save-after-the-route"
   reads "$R" "$E2" "e2-a1-after-the-route" "$va"
   ;;
+restore-journal)
+  # [DX-ERA3, eighth review] The acknowledged-removal journal (TX2_REMOVAL_ACK_JOURNAL, each gateway's own file at
+  # /tmp/ack/journal.jsonl inside its container, outside the data's and the authority's backups) across a restore of the
+  # data and the authority (records and keys) to one backup: a removal of a1 taken by the write gateway and one of b1
+  # taken by the read gateway after the backup; both restored; the gateways started again; each one's start check; reads;
+  # step 5 (each lost removal sent again under a new command); reads; both gateways restarted; the start check again.
+  # Needs DX_GATEWAY_ENV_WRITE and DX_GATEWAY_ENV_READ with TX2_REMOVAL_ACK_JOURNAL=/tmp/ack/journal.jsonl.
+  va=$(value a1) vb=$(value b1)
+  new_db "$W" j1 "$sealed"; J1=$db
+  uri_of "$J1" > "$out/tmp/uri-$J1"
+  uri_of_stopped() { cat "$out/tmp/uri-$1"; }
+  for s in a1 b1 c1; do post "$W/v1/db/$J1/transact" "$bodies/seed-$s.json" "seed-$s"; done
+  backup "$J1" j1
+  psql_auth -c "create table public.bk_r_j1 as select * from triplex_removal.records where scope='$J1'; create table public.bk_k_j1 as select * from triplex_removal.keys where scope='$J1';" > /dev/null
+  post "$W/v2/db/$J1/erase" "$(erase_subject "rm-a1-$J1" acct/a/one)" "removal-a1-on-the-write-gateway"
+  post "$R/v2/db/$J1/erase" "$(erase_subject "rm-b1-$J1" acct/b/one)" "removal-b1-on-the-read-gateway"
+  sleep 3
+  reads "$R" "$J1" "a1-before-the-restore" "$va"
+  for g in gw-w gw-r; do docker exec "$prefix-$g" sh -c 'cat /tmp/ack/journal.jsonl 2>/dev/null' | sed "s/^/$g /" >> "$out/journal-before.log" || true; done
+  step "journal lines before the restore: $(grep -c . "$out/journal-before.log" 2>/dev/null || echo 0)"
+  restore_all j1:$J1
+  psql_auth -c "delete from triplex_removal.records where scope='$J1'; insert into triplex_removal.records select * from public.bk_r_j1; delete from triplex_removal.keys where scope='$J1'; insert into triplex_removal.keys select * from public.bk_k_j1;" > /dev/null
+  since1=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  start_all restored
+  sleep 3
+  for g in gw-w gw-r; do docker logs --since "$since1" "$prefix-$g" 2>&1 | grep -E "removal-start-check|removal-start-state" | sed "s/^/$g /" >> "$out/start-check-1.log" || true; done
+  step "start check after the restore: $(grep -c RemovalAcknowledgedLost "$out/start-check-1.log" 2>/dev/null || echo 0) RemovalAcknowledgedLost lines"
+  reads "$R" "$J1" "a1-after-the-restore" "$va"
+  post "$R/v1/db/$J1/read" '{"entityIds":["acct/b/one"]}' "read-b1-after-the-restore"; step "RESULT b1 after the restore: $(answered "$last" "$vb")"
+  # step 5: each lost removal sent again under a new command, each on the gateway whose journal named it
+  post "$W/v2/db/$J1/erase" "$(erase_subject "rm-a1-again-$J1" acct/a/one)" "step5-removal-a1-again"
+  post "$R/v2/db/$J1/erase" "$(erase_subject "rm-b1-again-$J1" acct/b/one)" "step5-removal-b1-again"
+  sleep 3
+  reads "$R" "$J1" "a1-after-step-5" "$va"
+  post "$R/v1/db/$J1/read" '{"entityIds":["acct/b/one"]}' "read-b1-after-step-5"; step "RESULT b1 after step 5: $(answered "$last" "$vb")"
+  since2=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  docker restart --time 12 "$prefix-gw-w" "$prefix-gw-r" > /dev/null; wait_up "$W"; wait_up "$R"; sleep 3
+  for g in gw-w gw-r; do docker logs --since "$since2" "$prefix-$g" 2>&1 | grep -E "removal-start-check|removal-start-state" | sed "s/^/$g /" >> "$out/start-check-2.log" || true; done
+  step "start check after step 5 and a restart: $(grep -c RemovalAcknowledgedLost "$out/start-check-2.log" 2>/dev/null || echo 0) RemovalAcknowledgedLost lines"
+  for g in gw-w gw-r; do docker exec "$prefix-$g" sh -c 'cat /tmp/ack/journal.jsonl 2>/dev/null' | sed "s/^/$g /" >> "$out/journal-after.log" || true; done
+  ;;
 restore-live)
   # [DX-ERA3, seventh review] the data and the removal authority restored to the same backup while the gateways keep
   # running (only the transactor is stopped for the restore): the gateways keep the head they verified before. Then

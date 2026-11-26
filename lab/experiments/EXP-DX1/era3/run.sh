@@ -12,6 +12,7 @@
 # ERA3_MAIN=6: the sixth review's cases (era3/attack6.clj): a1 a2 a3 b1 b2 c d g1 g2 f bodies6.
 # ERA3_MAIN=7: [DX-ERA2 seventh pass] fuzz7, fuzz5 with a policy event after each schedule (era3/attack7.clj).
 # ERA3_MAIN=8: [DX-ERA6] fuzz8, saves, replays, resends and removals against the merged rule (era3/attack8.clj).
+# ERA3_MAIN=r8: the eighth review's cases (era3/review8.clj).
 # ERA3_MAIN=r7: the seventh review's cases on the removal branch (era3/review7.clj): r1 r2 r3 r4 r5 (ERA3_PG=1 for
 # the PostgreSQL authority). ERA3_MAIN=r7b: its cases on the reconciled branch (era3/review7b.clj, ERA3_TESTS_REF=the
 # commit whose s5/ and w2/ helpers it loads). ERA3_MAIN=s5a3: the save line's s5/attack3_gate.clj (S5_ONLY selects).
@@ -45,11 +46,12 @@ fi
 # ERA3_PATCH=1: apply the review's proposed fix (era3/fix-proposal.py) to this private copy only.
 if [[ ${ERA3_PATCH:-0} == 1 ]]; then python3 "$x/era3/fix-proposal.py" "$out/src" > "$out/patch.log" || exit 2; fi
 echo "patch=${ERA3_PATCH:-0}" > "$out/patched"
-cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era3/attack.clj" "$x/era3/attack2.clj" "$x/era3/attack3.clj" "$x/era3/attack4.clj" "$x/era3/attack5.clj" "$x/era3/attack6.clj" "$x/era3/attack7.clj" "$x/era3/attack8.clj" "$x/era3/review7.clj" "$x/era3/review7b.clj" "$out/lab/"
+cp "$x/wfix1/regression.clj" "$x/era2/gate.clj" "$x/era3/attack.clj" "$x/era3/attack2.clj" "$x/era3/attack3.clj" "$x/era3/attack4.clj" "$x/era3/attack5.clj" "$x/era3/attack6.clj" "$x/era3/attack7.clj" "$x/era3/attack8.clj" "$x/era3/review7.clj" "$x/era3/review7b.clj" "$x/era3/review8.clj" "$out/lab/"
 # ERA3_TESTS_REF: the save line's test helpers (s5/, w2/) archived from that commit, for review7b.clj (Part B)
 if [[ -n ${ERA3_TESTS_REF:-} ]]; then
   git -C "$repo" archive "$ERA3_TESTS_REF" lab/experiments/EXP-DX1/s5 lab/experiments/EXP-DX1/w2 | tar -x -C "$out/lab"
   cp "$out/lab/lab/experiments/EXP-DX1/s5/fuzz.clj" "$out/lab/lab/experiments/EXP-DX1/w2/wide_gate.clj" "$out/lab/lab/experiments/EXP-DX1/s5/attack3_gate.clj" "$out/lab/"
+  [[ -f $out/lab/lab/experiments/EXP-DX1/s5/attack3_era.clj ]] && cp "$out/lab/lab/experiments/EXP-DX1/s5/attack3_era.clj" "$out/lab/"
   echo "$ERA3_TESTS_REF" > "$out/tests-ref"
 fi
 image=${DX_ERA3_IMAGE_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
@@ -83,12 +85,21 @@ fi
 # ERA3_MAIN=2: the second review's attacks (era3/attack2.clj), loaded after the first review's.
 if [[ ${ERA3_MAIN:-1} == r7 ]]; then
   printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (load-file "/lab/attack6.clj") (load-file "/lab/review7.clj") (era3-review7/main)' > "$out/run.clj"
+elif [[ ${ERA3_MAIN:-1} == r8 ]]; then
+  printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (load-file "/lab/attack6.clj") (load-file "/lab/review8.clj") (era3-review8/main)' > "$out/run.clj"
 elif [[ ${ERA3_MAIN:-1} == r7b ]]; then
   printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/wide_gate.clj") (load-file "/lab/fuzz.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (load-file "/lab/review7b.clj") (era3-review7b/main)' > "$out/run.clj"
+elif [[ ${ERA3_MAIN:-1} == s5era ]]; then
+  # [DX-ERA3 eighth review] s5/attack3_era.clj (the old-protocol replays, from ERA3_TESTS_REF), with whatever rule the env sets
+  printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/wide_gate.clj") (load-file "/lab/attack3_era.clj") (s5-attack3-era/main)' > "$out/run.clj"
 elif [[ ${ERA3_MAIN:-1} == s5a3 ]]; then
   printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/wide_gate.clj") (load-file "/lab/fuzz.clj") (load-file "/lab/attack3_gate.clj") (s5-attack3/main)' > "$out/run.clj"
 elif [[ ${ERA3_MAIN:-1} == 8 ]]; then
   printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (load-file "/lab/attack8.clj") (era3-attack8/main)' > "$out/run.clj"
+elif [[ ${ERA3_MAIN:-1} == 7plant ]]; then
+  # [DX-ERA3 eighth review] fuzz7 with a planted fault: check-writes! no longer holds a save of an attribute the stored
+  # policy lacks (the save is stored while the policy is behind); P3 must fail
+  printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (load-file "/lab/attack6.clj") (load-file "/lab/attack7.clj") (let [orig triplex.gateway.removal-commit/check-writes!] (alter-var-root (var triplex.gateway.removal-commit/check-writes!) (fn [_] (fn ([s] (orig s)) ([s db input] (orig s))))) (println "ERA3_PLANTED check-writes! without the policy-behind hold")) (era3-attack7/main)' > "$out/run.clj"
 elif [[ ${ERA3_MAIN:-1} == 7 ]]; then
   printf '%s\n' '(load-file "/lab/regression.clj") (load-file "/lab/gate.clj") (load-file "/lab/attack.clj") (load-file "/lab/attack2.clj") (load-file "/lab/attack3.clj") (load-file "/lab/attack4.clj") (load-file "/lab/attack5.clj") (load-file "/lab/attack6.clj") (load-file "/lab/attack7.clj") (era3-attack7/main)' > "$out/run.clj"
 elif [[ ${ERA3_MAIN:-1} == 6 ]]; then
