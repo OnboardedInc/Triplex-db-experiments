@@ -25,7 +25,9 @@ for log in "$dir"/*.log; do
   got=$(grep -oE '^(FAIL|ERROR) in \([a-z0-9-]+\)' "$log" | sed -E 's/^(FAIL|ERROR) in \(([a-z0-9-]+)\)/\2/' | sort -u | paste -sd, -)
   want=$(expected "$mode" "$setting" | sort -u | paste -sd, -)
   summary=$(grep -cE '_RESULT ' "$log")
-  if [[ $got == "$want" && $summary -ge 1 ]]; then verdict=pass; else verdict=differs; status=1; fi
-  echo "DX-S6_EXPECTED $verdict mode=$mode setting=$setting failed=[${got}] expected=[${want}]"
+  # The fuzzer prints no test names: any differing run or unjustified refusal fails it.
+  differing=$(grep -hoE '"(differing|unjustifiedRefusals)":[0-9]+' "$log" | grep -vE ':0$' | paste -sd, -)
+  if [[ $got == "$want" && $summary -ge 1 && -z $differing ]]; then verdict=pass; else verdict=differs; status=1; fi
+  echo "DX-S6_EXPECTED $verdict mode=$mode setting=$setting failed=[${got}] expected=[${want}]${differing:+ $differing}"
 done
 exit $status
