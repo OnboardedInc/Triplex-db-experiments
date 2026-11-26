@@ -117,6 +117,42 @@ of dead processes (`datomic-s2`, DX-ACT8; `datomic-s3`, DX-ACT6) left one of the
 about a day, and this merge's Publish-line regressions were refused 24 times in a row for that reason; the coordinator
 removed both by hand after checking each owner was dead and its container absent.
 
+**The default card is a standing gate from 2026-11-25** (the coordinator): it runs on every merge onto the one branch,
+on an image built from the head under test. **No card ran on `efee27905` (the save line), `21253c604` (N1) or
+`345f833e4` (U1)**: this merge's gate lanes did not queue one after the second batch. Run afterwards on `345f833e4`, it
+failed (below), as it would have on all three.
+
+**The card's writer check was wrong, and was changed to pass (lab only; `76bc1ea85`, `f8065afd1`, `9901ac40a`).** The
+save line's F5 check (`v01/adopted.ts` `checkWriterSplit`) counted every acknowledged save with a save key as eligible
+for the per-subject writer; with the wide writer off and no owners named, the narrow rule takes only commits of 1 to 3
+facts with facts and retired equal (the gateway's `subject_save.clj` `plan-with-erasure`), and the card's quiet-account
+cell at 235 commits per second sends 14 tape saves of 4 to 15 facts, all general by that rule, so every default card
+failed with "no eligible save took the per-subject writer (14 eligible)". Now, as the save line's reviewer and the
+coordinator ruled: a keyed save counts only if the rule in force lets that writer take it (with the gateway's lower
+bound, 1 fact); each arm with the per-subject option on prints two populations on separate lines, never summed
+("per-subject writer: N eligible by the narrow rule of K keyed[, M taken]" and "own saves: J, T taken", the card's own
+unkeyed saves, each already asserted by `checkSavedIdentity`); per card, with the wide writer off, one arm needs N > 0
+and M = N in either population, and when only own saves meet it the card prints "no tape save was eligible for the
+per-subject writer in this card (wide writer off)"; with the wide writer on or owners named (the product save path, as
+the server session's card runs), own saves do not count and one arm needs keyed N > 0 and M > 0, F5's rule, with "K
+keyed saves went to the general writer" per arm. `v01/writer-split.test.ts` covers both branches (17 of 17 with the
+card's other tests). **The default card has no arm with a keyed save eligible by the narrow rule** (its keyed saves are
+the production tape's, shape S, 4 to 15 facts); its per-subject writer is exercised by the card's own saves.
+
+**Open (lab, owner unassigned):**
+
+1. State the share the tape predicts on the product save path and assert it (with the wide writer on, the card asserts
+   only keyed N > 0 and M > 0).
+2. `decidedByRule` and `checkSavedIdentity` read `TX2_SUBJECT_WIDE` from the card's own environment, not from what the
+   gateway reports it runs with.
+
+**Open (product):** Held accounts enrolled by an earlier build cannot be published or settled by this one (compiler
+stamp over source bytes). No route to carry them over is known yet. Found by the fifth Publish review, 2026-11-25; fix
+unassigned. (`actv-lazy/join/index.ts` hashes the source bytes of a list of files into the compiler stamp stored at
+enrolment, and `actv-lazy/join/account.ts` refuses a build whose stamp differs; `account.ts` differs by 261 / 31 lines
+between `345f833e4` and `a6f89a409`, so accounts enrolled on the one branch before the Publish line merge are refused
+after it, as after every earlier merge that edited a listed file.)
+
 The save review's F6 (the 5 differing stored-code values pinned to S2's `subject_save.clj` edit, none installed with
 options off) is the second item of step 0, restored here. Four independent reviews found that a rule chosen per
 process or held outside the data breaks at the seam: nothing merged here turns such an option on, and every option
@@ -603,6 +639,7 @@ from this head (sources `83789d1f…`), by ID; the selftest-style runs on the sa
 | `exp/DX-ACT8-publish-beside-saves` `a6f89a409` (seventh push), every option and setting off | `ee8ba6b11` | A Publish and an enrolment beside every account's saves (`TX2_PUBLISH_BESIDE`, `TX2_ENROL_BESIDE_SAVES`), the account settings in the database with their permissions (`TX2_ACCOUNT_KEYS`, `TX2_SETTLE_FRAME_GUARDS`, `TX2_LEDGER_CAP_AT_PUBLISH`), the archive of retired ledger items, the gate parts (`actv-lazy/join/beside-gate.ts`), the review's harness (`act10/`); page `actv-lazy/PUBLISH-BESIDE-SAVES.md`. Four conflicts: `utils/id.ts` (U1's rule kept: lengths 23 and 24), `DatomicStorageAdapter.ts` (the save line's position update on `ErasureReplayDeclined` beside the line's message naming code and status), `ha1/local.ts` (the receipt image choice kept; the line's holder cases added), `scale1/decision/writes.ts` (the U1 resolution kept). No gateway file; `lab/config/datomic/runtime.mjs` (two receipt holders) is a Datomic source, so the line has its own image |
 | `exp/DX-ACT10-publish-review` `5079fa7cc` | `81a2d4035` | The fourth review's tests only (`act10/review4.test.ts`); its pages, its copy of `u1-review.test.ts` and its rerun holder stay out |
 | U1 head into the Publish line | `f5b7f2446` | `345f833e4` merged; no conflicts |
+| The card's writer check | `76bc1ea85`, `f8065afd1`, `9901ac40a` | Counts only keyed saves the rule in force lets the per-subject writer take; prints both populations per arm; the per-card rule by the writer rule in force (above) |
 
 **Conflicts and how each was resolved (both sides kept every time).** ACT6: `ha1/local.ts` (HA2's second-failure holder
 beside ACT6's release-limits holder). SCALE2: `stack/up.sh` (SCALE2's `DX_SWEEP_GATE_EVICT` beside XQ7's per-role sweep
@@ -874,6 +911,7 @@ holder DX-THIN1, as the builder's own lines (`chain8.sh`), each on this image by
 | The held campaign: default, strict | 86 changed values, 8 notices; 8 of 8 Publishes at one try; 0 of 7,632 saves refused; 0 read failures | `0c834aaa` |
 | The held campaign: the large release (20 forms, 20 policies) settled by bytes, progress precondition, strict | 560 changed values, 168 notices; 8 of 8 Publishes at one try; 0 of 7,632 saves refused; 0 read failures | `0c834aaa` |
 | B2 standing gate (b2, scenarios, fuzz, lines with the N1 reply phases) | b2 16 checks, 0 failed on both key stores (base `1ed2650bd` 2 failed each); scenarios 43, 0 failed, both; fuzz 20,000 schedules, 0 violations, both; lines 10, 0 failed; replies 9 and 15, replies2 17 and 17, 0 failed | `0c834aaa` |
+| **The default card** (the Mac fixture card, rolling 6 with the barrier 6 control; standing from now), at `9901ac40a` | **pass** (`DX-INT5/gates/p-card-default5-t1-SCORECARD.md`); the per-subject writer check in all 7 arms: 0 keyed saves eligible by the narrow rule (0 keyed, or 14 keyed of 4 to 15 facts in the 235-per-second quiet cell), own saves 28 of 28 taken; per card pass, "no tape save was eligible for the per-subject writer in this card (wide writer off)". Earlier tries, not counted: `04a242d29` stopped at its own clean-checkout check (my page edit was not committed); `04a242d29` and `345f833e4` failed the old writer check (14 eligible) | the card's own managed image, built from the head (removed) |
 
 **Before this queue (not counted):** the first queue on this line ran on the U1 image and its stack runs were refused:
 `r1` and `r2` by the image check ("built from other sources": the line's `runtime.mjs` is a Datomic source), `r3c` 24
