@@ -1,0 +1,48 @@
+# [DX-SRV2] The one settings file of srv2/session.sh, one per machine. Copy it to a private place on the machine
+# (never into the repository), fill the <...> values, and pass it with --settings. Plain values only: no spaces, no $,
+# no quotes. Object storage credentials are NOT here: STORAGE_ENV names a private file with AWS_ACCESS_KEY_ID,
+# AWS_SECRET_ACCESS_KEY, S3_ENDPOINT and S3_BUCKET, read only by the stage step and passed only through the environment.
+SESSION=srv2
+MACHINE=A
+COMMIT=<40-hex head of exp/DX-INT1 after the three merges, the same on both machines>
+BUILD=/var/tmp/triplex-srv2-build
+OUT_ROOT=/var/tmp/srv2
+# Scratch copies on the root NVMe; WAL on the second NVMe (a different device: stage refuses one device).
+SCRATCH=/var/tmp/srv2-copies
+WAL_ROOT=<a directory on the second NVMe>
+# Spend guards (srv1/SESSION-PLAN.md C.1). SPEND_BEFORE is this session's spend before these machines (0).
+PRICE_PER_HOUR=1.09
+SPEND_BEFORE=0
+STOP_NEW_STEP=46
+DELETE_AT=48
+CLEANUP_MINUTES=30
+# Epoch seconds of each machine's order and deletion, from the provider; the orchestrator fills and updates them.
+MACHINE_A_STARTED=<epoch seconds>
+MACHINE_B_STARTED=<epoch seconds>
+# MACHINE_A_ENDED=
+# MACHINE_B_ENDED=
+# The demo's fetch puts the sealed cluster and its handoff here; the Datomic home is made by the same bring-up.
+DEMO_ROOT=/var/tmp/triplex-demo
+AGED_PGDATA_SOURCE=/var/tmp/triplex-demo/original/cluster
+AGE_HANDOFF_JSON=/var/tmp/triplex-demo/original/aged-scorecard.json
+AGE_HANDOFF_SHA256=faab1bc5bca8e6303285101003e5a42fc82c8e99fe2eadacaf125259b575bbf2
+SCALE1_IMAGE=/var/tmp/srv2-scale1-meta
+SCALE1_IMAGE_SHA256=77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b
+SCALE1_TRANSFER_SHA256=1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154
+# The fresh peer runs in a container from the reader's image (age1/scorecard.mjs): AGE_JAVA is that image's java.
+AGE_JAVA=/opt/java/openjdk/bin/java
+AGE_DATOMIC_HOME=/var/tmp/triplex-demo/datomic-home
+STORAGE_ENV=/root/srv2-storage.env
+# A2's decision for A2b, A4 and A8: 1 only if pf3r beat pf3 by 15% or more in reads per second.
+READ_AHEAD_OFF=0
+# A9 only (private addresses on the private network; this file is private).
+# DX_REMOTE_READER_HOST=<machine A private IPv4>
+# SECOND_READER_URL=http://<machine B private IPv4>:18492
+# SECOND_READER_LISTEN=<machine B private IPv4>
+# MACHINE1_PRIVATE=<machine A private IPv4>
+# B8 only: the fresh 430 million template.
+# FRESH_PGDATA_SOURCE=<stopped fresh cluster>
+# Mac dry runs only.
+# DRY_ROOT=<an absolute new directory on the Mac>
+# DRY_IMAGE=<the toy image tag built by v01/mac.ts --image>
+# DRY_CHECKOUT=<the v01/mac.ts --packages checkout>

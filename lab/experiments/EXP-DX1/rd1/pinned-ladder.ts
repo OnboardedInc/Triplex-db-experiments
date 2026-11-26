@@ -8,7 +8,7 @@ import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { now } from "../scale1/decision/observer.ts";
 import { accounts, field, task } from "../scale1/decision/plan.ts";
 import type { AdoptedSeed } from "../v01/adopt.ts";
-import { pinnedFields } from "../v01/pinned-fields.ts";
+import { exchangeTags, pinnedFields, profiledExchange } from "../v01/pinned-fields.ts";
 import { isProduction } from "../v01/production-card.ts";
 import type { Write } from "../scale1/decision/plan.ts";
 import type { Sender } from "../scale1/decision/writes.ts";
@@ -27,17 +27,43 @@ export const recentDistance = 1000;
 export const tunedSeats = [64, 256, 1024] as const;
 export const tunedBatch = 8;
 
+// [DX-SRV2] The A1 check of srv1/SESSION-PLAN.md (the flat 18 reads/s on the merged head): three "off" ladders of the
+// pinned pair, each its own campaign on its own copy, at the old pin only: the control (both options off, the reader's
+// default one permit per core), both options off with 4 read permits on the one core, and the cut lookup alone.
+// Rejected: a three-armed prepared ladder (rd1/prepared.ts admits a first and a second arm; each variant is a first).
+export const pairVariants = {
+  control: { stack: {}, expect: [false, false] },
+  "off-permits4": { stack: { DX_READ_PERMITS: "4" }, expect: [false, false] },
+  "cut-only": { stack: { DX_PINNED_CUT_LOOKUP: "1" }, expect: [false, true] },
+} as const;
+export type PairVariant = keyof typeof pairVariants;
+export function pairVariant(env: NodeJS.ProcessEnv, pinnedPair: boolean, ladder: string | undefined) {
+  const v = env.DX_RD2_PAIR_VARIANT, pins = env.DX_RD2_PAIR_PINS, seats = env.DX_RD2_PAIR_SEATS;
+  if (v === undefined && pins === undefined && seats === undefined) return undefined;
+  assert(pinnedPair && ladder === "off", "DX_RD2_PAIR_VARIANT, _PINS and _SEATS apply to the pinned pair's off ladder only");
+  assert(v !== undefined && Object.hasOwn(pairVariants, v), "DX_RD2_PAIR_VARIANT is control, off-permits4 or cut-only");
+  assert(pins === undefined || pins === "old" || pins === "both", "DX_RD2_PAIR_PINS is old or both");
+  assert(seats === undefined || /^[1-9][0-9]{0,3}(,[1-9][0-9]{0,3})*$/.test(seats), "DX_RD2_PAIR_SEATS is a comma list of seat counts");
+  const variant = v as PairVariant;
+  return { variant, stack: pairVariants[variant].stack as Record<string, string>, expect: pairVariants[variant].expect,
+    pins: (pins ?? "old") as "old" | "both", seats: seats ? seats.split(",").map(Number) : [1, 16, 256] };
+}
+
 export async function pinnedLadder(out: string, read: string, seed: AdoptedSeed, head: number, shortcut: boolean, toy = false,
-  shape: { seats?: readonly number[]; batch?: number; name?: string } = {}) {
+  shape: { seats?: readonly number[]; batch?: number; name?: string;
+    /** [DX-SRV2] The A1 arm variants: the options the reader must report ([short-cut, cut lookup]; default both equal
+     * to `shortcut`) and the pins to read ("old" = the seed cut only). */
+    expect?: readonly [boolean, boolean]; pins?: "both" | "old" } = {}) {
   const seconds = toy ? 3 : pinnedStepSeconds, seats = shape.seats ?? (toy ? [1, 4] : [...pinnedSeats]);
   const batch = shape.batch ?? 1;
   const client = new DatomicClient(read, 35_000);
   const options = await client.request<any>("GET", "/v1/db/" + seed.scope.db + "/write-options");
   // [DX-RD2] "on" runs both pinned options: the cut lookup (TX2_PINNED_CUT_LOOKUP) and the short-cut (TX2_PINNED_SHORTCUT).
-  assert.deepEqual([options.options.pinnedShortcut, options.options.pinnedCutLookup], [shortcut, shortcut],
+  assert.deepEqual([options.options.pinnedShortcut, options.options.pinnedCutLookup], shape.expect ? [...shape.expect] : [shortcut, shortcut],
     "the read gateway does not run the requested options");
   const stats = async () => (await client.request<any>("GET", "/v2/admin/scan-stats")).pinnedShortcut;
-  const pins = [{ name: "seed-cut", position: seed.scope.cut }, { name: "near-head", position: Math.max(seed.scope.cut, head - (toy ? 5 : recentDistance)) }];
+  const pins = [{ name: "seed-cut", position: seed.scope.cut }, { name: "near-head", position: Math.max(seed.scope.cut, head - (toy ? 5 : recentDistance)) }]
+    .slice(0, shape.pins === "old" ? 1 : 2);
   const steps = [];
   try {
     for (const pin of pins) {
@@ -80,7 +106,7 @@ export async function pinnedLadder(out: string, read: string, seed: AdoptedSeed,
   } finally {
     client.close();
   }
-  const result = { shortcut, head, pins, steps, batch, seats };
+  const result = { shortcut, head, pins, steps, batch, seats, ...(shape.expect ? { expected: shape.expect } : {}) };
   fs.writeFileSync(path.join(out, shape.name ?? "pinned-ladder.json"), JSON.stringify(result, null, 2) + "\n", { flag: "wx", mode: 0o600 });
   return result;
 }
@@ -110,7 +136,9 @@ export async function pinnedWindow(read: string, seed: AdoptedSeed, kind: PinKin
   profileEvery?: number;
   /** [DX-RD5] A second read gateway (its own machine): odd seats send their batched reads there. Tape pins stay on
    * the first. Not a load balancer: the seat decides, and each reader keeps its own batches. */
-  secondRead?: string } = {}) {
+  secondRead?: string;
+  /** [DX-SRV2] Each read answered by a profiled exchange, as [profile id, latency ms], for the card's classification. */
+  sampledReads?: [string, number][] } = {}) {
   const seats = opts.seats ?? savesSeats, batch = kind === "tape" ? 1 : (opts.batch ?? tunedBatch);
   const client = new DatomicClient(read, 35_000);
   const second = opts.secondRead && kind !== "tape" ? new DatomicClient(opts.secondRead, 35_000) : undefined;
@@ -137,6 +165,8 @@ export async function pinnedWindow(read: string, seed: AdoptedSeed, kind: PinKin
   const profiles: ReadProfileSample[] = [];
   const fetch = basis && pinnedFields(client, seed.scope.db, field(0), basis, batch, (send, size) => {
     exchanges++; batched += size;
+    if (opts.profileEvery && exchanges % opts.profileEvery === 0 && opts.sampledReads)
+      return profiledExchange(client, send, (sample) => profiles.push(sample as unknown as ReadProfileSample));
     return opts.profileEvery && exchanges % opts.profileEvery === 0
       ? client.withReadProfile((sample) => profiles.push(sample as unknown as ReadProfileSample), send) : send();
   });
@@ -173,7 +203,12 @@ export async function pinnedWindow(read: string, seed: AdoptedSeed, kind: PinKin
           assert(rows[0]!.recorded_position <= position!);
           const value = opts.plant ? opts.plant([...rows])[0]!.value_string : rows[0]!.value_string;
           if (seedPin && value !== fieldValue(subject, 0, 0, 0).value) wrong++;
-          if (now() <= end) delay.recordMs(now() - issued);
+          const answered = now();
+          if (answered <= end) {
+            delay.recordMs(answered - issued);
+            const id = opts.sampledReads && exchangeTags.get(rows);
+            if (id) opts.sampledReads!.push([id, answered - issued]);
+          }
         } catch (error) {
           errors++;
           const key = error instanceof Error ? (error as any).code ?? error.name : "unknown";

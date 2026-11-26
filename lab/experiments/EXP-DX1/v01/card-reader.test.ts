@@ -110,3 +110,74 @@ test("the -noburst tapes drop the end-of-cell burst, keep every row, and leave t
   assert(a.cells.every((c, i) => c.tapeSha256 !== b.cells[i]!.tapeSha256));
   assert.equal(cardTapeReport(fullCellTape("S", { rate: 394, loaded: true }, 90), 90).tapeSha256, a.cells[2]!.tapeSha256);
 });
+
+// [DX-SRV2] Per-read classification: the option, the trace reader, the rule and the card's rows.
+test("per-read classification: option, trace exchanges, rule, rows", async () => {
+  const { parseSampleEvery, cardReadOptionsSet, readOptionsExpected, traceExchanges, classifyReads, splitReadRows, readerOptionsSummary } = await import("./card-reader.ts");
+  const fs = await import("node:fs"), os = await import("node:os"), path = await import("node:path");
+  const tuned = { reader: "tuned" } as const;
+  assert.equal(parseSampleEvery(undefined, undefined), undefined);
+  assert.equal(parseSampleEvery("1", tuned), 1);
+  assert.throws(() => parseSampleEvery("1", undefined), /needs --reader tuned/);
+  for (const bad of ["0", "3", "32", "x", "1.0"]) assert.throws(() => parseSampleEvery(bad, tuned), /1, 2, 4, 8 or 16/);
+  assert.deepEqual(cardReadOptionsSet({}, undefined), {});
+  assert.deepEqual(cardReadOptionsSet({ DX_READ_PREFETCH: "0" }, undefined), {});
+  assert.deepEqual(cardReadOptionsSet({ DX_READ_PREFETCH: "1", DX_READ_AHEAD_OFF: "1", DX_V01_SAMPLE_EVERY: "1" }, tuned),
+    { DX_READ_PREFETCH: "1", DX_READ_AHEAD_OFF: "1", DX_V01_SAMPLE_EVERY: "1" });
+  assert.throws(() => cardReadOptionsSet({ DX_READ_PREFETCH: "1" }, undefined), /need --reader tuned/);
+  assert.throws(() => cardReadOptionsSet({ DX_READ_AHEAD_OFF: "yes" }, tuned), /0 or 1/);
+  assert.deepEqual(readOptionsExpected({ DX_READ_PREFETCH: "1", DX_READ_AHEAD_OFF: "1" }), { env: ["TX2_READ_PREFETCH=1"], java: ["-Ddatomic.readAheadPool=0"] });
+  assert.deepEqual(readerOptionsSummary(["TX2_READ_PREFETCH=1", "DATOMIC_JAVA_OPTS=-Xmx1g -Ddatomic.readAheadPool=0", "TX2_READ_PROFILE=1"]),
+    { prefetch: true, readAheadOff: true, readProfile: true });
+  assert.deepEqual(readerOptionsSummary(["DATOMIC_JAVA_OPTS=-Ddatomic.readAheadPool=08"]), { prefetch: false, readAheadOff: false, readProfile: false });
+  assert.deepEqual(p1Reader(tuned, false, "/t/gw-r.jsonl", 1), { batch: 8, random: { seats: 256, profileEvery: 1, trace: "/t/gw-r.jsonl" }, classify: { every: 1, trace: "/t/gw-r.jsonl" } });
+  // A trace with a hit, a miss (two storage reads), an unrelated request, a metrics minute and a torn last line.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "srv2-")), file = path.join(dir, "gw-r.jsonl");
+  const rec = (id: string, sql: number, wait: number, work: number) => JSON.stringify({ type: "request", readProfileId: id, process: "gw-r",
+    attributes: { handlerCpuNs: 2e6, peerIoStats: { reads: { ocache: 5, sql, "sql-ms": sql * 0.5 } } },
+    spans: [{ name: "gateway.admission-wait", start: 0, end: wait }, { name: "gateway.admitted-work", start: wait, end: wait + work }] });
+  fs.writeFileSync(file, "noise\n" + rec("a".repeat(32), 0, 1, 2) + "\n" + rec("b".repeat(32), 2, 3, 4) + "\n" +
+    JSON.stringify({ type: "request", readProfileId: "c".repeat(32), attributes: {} }) + "\n" +
+    JSON.stringify({ type: "metrics", process: "gw-r", at: 60_000, metrics: { StorageGetMsec: { count: 10 } } }) + "\n{\"torn");
+  const { found, minutes } = traceExchanges(file, 0, new Set(["a".repeat(32), "b".repeat(32), "d".repeat(32)]), { start: 0, end: 60_000 });
+  assert.deepEqual([...found.keys()].sort(), ["a".repeat(32), "b".repeat(32)]);
+  assert.deepEqual(found.get("b".repeat(32)), { storage: 2, sql: 2, sqlMs: 1, waitMs: 3, workMs: 4, cpuMs: 2 });
+  assert.deepEqual(minutes, [{ at: 60_000, overlapSeconds: 60, storageGets: 10 }]);
+  // Reads of a batch share their exchange's class; an id missing from the trace is counted, not classed.
+  const reads = [["a".repeat(32), 1], ["a".repeat(32), 2], ["b".repeat(32), 50], ["d".repeat(32), 9]] as const;
+  const c = classifyReads(reads, found, 4, 1);
+  assert.deepEqual([c.sampledReads, c.unmatched, c.inMemory.reads, c.inMemory.exchanges, c.notInMemory.reads, c.storageReadsSampled], [4, 1, 2, 1, 1, 2]);
+  assert.equal(c.inMemory.share, 0.6667);
+  assert.deepEqual([c.notInMemory.storageReadsPerSubject, c.notInMemory.sqlMsPerRead, c.notInMemory.admissionWait.p99Ms, c.inMemory.storageReadsPerSubject], [2, 1, 3, 0]);
+  assert.equal(c.notInMemory.read.count, 1);
+  // Rows: the toy is PARTIAL; on a server an unmatched read leaves the row NOT JUDGED, a clean one is MET or MISSED.
+  const step = (classified: any) => ({ seats: 256, errors: 0, read: { count: 4 }, classified });
+  assert.equal(splitReadRows(false, [{ seats: 1, errors: 0, read: { count: 1 } }], undefined), undefined);
+  assert.equal(splitReadRows(true, [step(c)], { seats: 4, wrong: 0, errors: 0, read: { count: 4 }, classified: c })!.inMemory![1], "PARTIAL");
+  assert.equal(splitReadRows(false, [step(c)], undefined)!.inMemory![1], "NOT JUDGED");
+  const clean = classifyReads(reads.slice(0, 3), found, 3, 1);
+  assert.equal(splitReadRows(false, [step(clean)], undefined)!.inMemory![1], "MET");
+  const line = (x: any, wrong = 0) => ({ seats: 256, wrong, errors: 0, read: { count: 3 }, classified: x });
+  assert.equal(splitReadRows(false, [], line(clean))!.notInMemory![1], "MET");
+  assert.equal(splitReadRows(false, [], line(clean, 1))!.notInMemory![1], "MISSED");
+  const slow = classifyReads([["b".repeat(32), 301]], found, 1, 1);
+  assert.equal(splitReadRows(false, [], line(slow))!.notInMemory![1], "MISSED");
+  assert.equal(splitReadRows(false, [step({ error: "no reader trace" })], undefined)!.inMemory![1], "NOT JUDGED");
+  assert.match(splitReadRows(false, [step(clean)], line(clean))!.table.join("\n"), /\| L256 \| 3 \/ 3 \| 2, 1 \/ 2 \| 1, 50 \/ 50 \| 2 \| 0 \|/);
+  fs.rmSync(dir, { recursive: true });
+});
+
+test("a trace mark survives the reader's restart (a new file is read from its start)", async () => {
+  const { traceMark, traceOffset } = await import("./card-reader.ts");
+  const fs = await import("node:fs"), os = await import("node:os"), path = await import("node:path");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "srv2-")), file = path.join(dir, "gw-r.jsonl");
+  assert.equal(traceMark(file), undefined);
+  fs.writeFileSync(file, "old process\n");
+  const mark = traceMark(file);
+  fs.appendFileSync(file, "more\n");
+  assert.equal(traceOffset(file, mark), 12);
+  fs.renameSync(file, path.join(dir, "gw-r.start-1-0.jsonl")); fs.writeFileSync(file, "new process\n");
+  assert.equal(traceOffset(file, mark), 0);
+  assert.equal(traceOffset(file, undefined), 0);
+  fs.rmSync(dir, { recursive: true });
+});

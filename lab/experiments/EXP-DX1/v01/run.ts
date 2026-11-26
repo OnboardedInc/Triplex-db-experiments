@@ -12,7 +12,7 @@ import { parseCredits, parseWindow, serverRates, writerAdmission } from "./serve
 import { assembleSequential, completeSequentialArm, existingSequence, sequenceProgress } from "./sequential.ts";
 import { newRunTape, readQueueOptionNames, readQueueOptionsSet, tapeShape, tapeTitle, writerOptionNames } from "./production-card.ts";
 import { rendererDiff } from "./renderer.ts";
-import { parseReader, randomLineMinutes, readerEnvironment, readerLaunch, readerTitle } from "./card-reader.ts";
+import { cardReadOptionNames, cardReadOptionsSet, parseReader, randomLineMinutes, readerEnvironment, readerLaunch, readerTitle } from "./card-reader.ts";
 
 const { values } = parseArgs({
   options: {
@@ -78,6 +78,8 @@ readQueueOptionsSet(process.env);
 assert(cardTape === "saturday" || values.age !== "realistic", "The realistic card keeps its own tape");
 const reader = parseReader(values.reader, values["read-permits"]);
 assert(!reader || values.age !== "realistic", "The tuned reader's random-subject line reads the SCALE1 deep population");
+// [DX-SRV2] Refuse a bad or misplaced read option before anything starts (prefetch, read-ahead off, classification).
+const readOptions = cardReadOptionsSet(process.env, reader);
 const headline = launchProfile(profile, { jvm, txJvm, writeJvm, creditMode, ...readerLaunch(reader) });
 // [DX-XQ4] Why: the save pair S-2 runs the same card with the gateways' TX2_CROSS_INDEX off and on; "on" names the
 // declaration the backfilled copy holds, and xq1/server.ts verify checks the copy against it before the arm.
@@ -96,7 +98,7 @@ const mix = values.age === "realistic" ? " Busy mix 80% deep, 15% thin, 5% small
 const plan = `Headline zero/readers use ${creditMode}. Barrier6 repeats P2 and P6 on the identical stack. The P1–P4 pair uses ${pairSeconds / 60 + randomLineMinutes(reader)} minutes of matched offers.`;
 const storage = values.age === "realistic" ? "One sealed and hashed prepared copy per arm." : pgdata.length ? "Starts from prepared PGDATA copies. File-level preparation, build and AGE1 provisioning are separate."
   : "Without prepared PGDATA, this command uses logical dumps. Build and AGE1 provisioning are separate.";
-const forecast = `Budget ${minutes} minutes including cleanup, up to USD ${(minutes / 60 * price).toFixed(2)} per age. ${plan} ${profile === "server" ? "Server profile" : `Profile ${profile} (transactor ${headline.tx.memoryMiB / 1024} GiB cap, ${headline.tx.cacheMiB! / 1024} GiB object cache; role caps ${roleMemoryMiB(headline) / 1024} GiB)`} with read gateway JVM ${jvm}, write gateway JVM ${writeJvm}, headline transactor ${txJvm}, and ${wal ? "separate WAL" : "WAL on PGDATA"}. P2 and P6 offered rates ${serverRates.join(", ")} ${tapeShape(cardTape) === "S" ? "rows/s (offered as one commit per subject's save)" : tapeShape(cardTape) === "R" ? "rows/s (one commit per row)" : "saves/s"} for ${windowSeconds} seconds per cell. Save tape: ${tapeTitle(cardTape)}. Credit selection ${creditMode}. ${storage}${mix}${readerTitle(reader)}${crossIndex === "off" ? "" : ` Cross-subject index on (declaration sha256 ${crossIndexSha256}).`}`;
+const forecast = `Budget ${minutes} minutes including cleanup, up to USD ${(minutes / 60 * price).toFixed(2)} per age. ${plan} ${profile === "server" ? "Server profile" : `Profile ${profile} (transactor ${headline.tx.memoryMiB / 1024} GiB cap, ${headline.tx.cacheMiB! / 1024} GiB object cache; role caps ${roleMemoryMiB(headline) / 1024} GiB)`} with read gateway JVM ${jvm}, write gateway JVM ${writeJvm}, headline transactor ${txJvm}, and ${wal ? "separate WAL" : "WAL on PGDATA"}. P2 and P6 offered rates ${serverRates.join(", ")} ${tapeShape(cardTape) === "S" ? "rows/s (offered as one commit per subject's save)" : tapeShape(cardTape) === "R" ? "rows/s (one commit per row)" : "saves/s"} for ${windowSeconds} seconds per cell. Save tape: ${tapeTitle(cardTape)}. Credit selection ${creditMode}. ${storage}${mix}${readerTitle(reader)}${Object.keys(readOptions).length ? ` Read options: ${Object.entries(readOptions).map(([k, v]) => k + "=" + v).join(", ")}.` : ""}${crossIndex === "off" ? "" : ` Cross-subject index on (declaration sha256 ${crossIndexSha256}).`}`;
 if (values.plan) {
   console.log(forecast);
   console.log("Writer admission and diagnostics " + JSON.stringify({ admission: writerAdmission(creditMode), diagnostics }));
@@ -148,7 +150,9 @@ const child = spawn("timeout", ["--kill-after=" + budget.cleanup + "m", String(a
     // launched with them set ran without them. The card records them and checks the writers' readback.
     ...writerOptionNames,
     // [DX-INT3] The read gateway's waiting-read bound and thread counters (W3), recorded by the arm like the writer options.
-    ...readQueueOptionNames]
+    ...readQueueOptionNames,
+    // [DX-SRV2] The card's read options (prefetch, read-ahead off, per-read classification); dropped here before.
+    ...cardReadOptionNames]
     .flatMap((name) => process.env[name] ? [[name, process.env[name]]] : []), ["DX_V01_PROFILE", profile], ["DX_V01_TAPE", cardTape],
     ...readerEnvironment(reader),
     ...(crossIndex === "off" ? [] : [["DX_CROSS_INDEX", "1"], ["DX_CROSS_INDEX_DECLARATION_SHA256", crossIndexSha256]])]),

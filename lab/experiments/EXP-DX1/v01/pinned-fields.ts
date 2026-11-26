@@ -4,6 +4,18 @@ import type { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 type Row = Awaited<ReturnType<DatomicClient["rows"]>>[number];
 type Pending = { entity: string; resolve: (rows: readonly Row[]) => void; reject: (error: unknown) => void };
 
+// [DX-SRV2] The read-profile id of the exchange that answered a read, set by an exchange hook on the rows it returns and
+// carried to each read of a batch, so a read can be classed by its exchange's io-stats. Reads are not changed.
+export const exchangeTags = new WeakMap<object, string>();
+/** Sends one exchange with a read-profile header and tags its rows with the profile id. */
+export function profiledExchange<A>(client: DatomicClient, send: () => Promise<A>, observe?: (sample: { id: string }) => void): Promise<A> {
+  let id: string | undefined;
+  return client.withReadProfile((sample) => { id = sample.id; observe?.(sample); }, send).then((rows) => {
+    if (id && rows && typeof rows === "object") exchangeTags.set(rows as object, id);
+    return rows;
+  });
+}
+
 // [DX-RD1] Why: a cohort shares a scope, attribute and immutable basis. Batch only calls already queued in this turn.
 // Rejected: a timer to fill batches, mixing snapshots, or replacing a logical read with a sampled check.
 export function pinnedFields(client: DatomicClient, db: string, attribute: string,
@@ -26,9 +38,11 @@ export function pinnedFields(client: DatomicClient, db: string, attribute: strin
           assert(entities.has(row.entity_id) && row.attribute === attribute && !byEntity.has(row.entity_id));
           byEntity.set(row.entity_id, row);
         }
+        const tag = exchangeTags.get(rows);
         for (const item of group) {
-          const row = byEntity.get(item.entity);
-          item.resolve(row ? [row] : []);
+          const row = byEntity.get(item.entity), answer = row ? [row] : [];
+          if (tag) exchangeTags.set(answer, tag);
+          item.resolve(answer);
         }
       }).catch((error: unknown) => { for (const item of group) item.reject(error); });
     }

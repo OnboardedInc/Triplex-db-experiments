@@ -7,7 +7,8 @@ import { parseCredits } from "./server-workload.ts";
 import { barrierRoot, isWriter } from "./profile.ts";
 import { cleanSource, packageBytes } from "./source.ts";
 import { newRunTape, parseCardTape } from "./production-card.ts";
-import { readerFromEnvironment } from "./card-reader.ts";
+import { cardReadOptionNames, readerFromEnvironment } from "./card-reader.ts";
+import { writerOptionNames } from "./production-card.ts";
 
 const [action, commit, argument, writerArg, creditArg, ageArg] = process.argv.slice(2);
 assert(process.platform === "darwin" && commit && argument && path.isAbsolute(argument));
@@ -53,6 +54,10 @@ const env = {
     ? { DX_V01_TAPE: action === "--fixture" ? newRunTape(process.env.DX_V01_TAPE, age) : process.env.DX_V01_TAPE! } : {}),
   // [DX-CARD2] The tuned reader setting (v01/card-reader.ts), passed to the toy stack and the toy card.
   ...Object.fromEntries((["DX_V01_READER", "DX_V01_READ_PERMITS"] as const).flatMap((name) => process.env[name] ? [[name, process.env[name]]] : [])),
+  // [DX-SRV2] The card's read options (prefetch, read-ahead off, per-read classification), passed to the toy stack.
+  ...Object.fromEntries(cardReadOptionNames.flatMap((name) => process.env[name] ? [[name, process.env[name]]] : [])),
+  // [DX-SRV2] The product's save-path writer options (S2's arm C), passed to the toy stack as a server card takes them.
+  ...Object.fromEntries(writerOptionNames.filter((n) => n !== "DX_S2_PRODUCT").flatMap((name) => process.env[name] ? [[name, process.env[name]]] : [])),
   // [DX-S2] Every toy-card save through the product's path (0 or 1: the SDK's orderedSaves off or on).
   ...(process.env.DX_S2_PRODUCT ? { DX_S2_PRODUCT: process.env.DX_S2_PRODUCT } : {}),
 };

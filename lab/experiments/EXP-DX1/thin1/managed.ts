@@ -8,7 +8,8 @@ import { fileURLToPath } from "node:url";
 import { memoryPlan } from "../int1/memory-plan.ts";
 import { nodeImage, pgImage } from "../v01/source.ts";
 import { isWriter } from "../v01/profile.ts";
-import { parseReader } from "../v01/card-reader.ts";
+import { cardReadOptionsSet, parseReader } from "../v01/card-reader.ts";
+import { writerOptionsSet } from "../v01/production-card.ts";
 
 const [action, supplied, mode, rung, out, guestNode] = process.argv.slice(2);
 const scorecard = process.env.DX_V01_MAC_FIXTURE === "1";
@@ -207,6 +208,13 @@ function setup(compact: boolean) {
   const scorecardTape = writeOptionsAttempt ? (process.env.DX_V01_TAPE ?? "saturday") : undefined;
   // [DX-CARD2] The card's reader setting for its toy (v01/card-reader.ts); recorded for the guest as the tape is.
   const scorecardReader = writeOptionsAttempt ? parseReader(process.env.DX_V01_READER, process.env.DX_V01_READ_PERMITS) : undefined;
+  // [DX-SRV2] The card's read options on the toy (prefetch, read-ahead off, per-read classification), recorded for the
+  // guest as the reader is; the classification's reader trace goes under the card's output directory.
+  const scorecardReadOptions = writeOptionsAttempt ? cardReadOptionsSet(process.env, scorecardReader) : undefined;
+  const readerTrace = scorecardReadOptions?.DX_V01_SAMPLE_EVERY && compact && out ? path.join(out, "reader-trace") : undefined;
+  // [DX-SRV2] The product's save-path writer options (S1 wide, W4 hints, W3 general prefetch, S3 several owners, S4
+  // creation) on the toy's writer, as stack/up.sh forwards them to a server's writer; DX_S2_PRODUCT keeps its own field.
+  const scorecardWriterOptions = writeOptionsAttempt ? Object.fromEntries(Object.entries(writerOptionsSet(process.env)).filter(([n]) => n !== "DX_S2_PRODUCT")) : undefined;
   // [DX-S2] Every toy-card save through the product's path (0 or 1), recorded for the guest as the tape is.
   const scorecardProduct = writeOptionsAttempt ? process.env.DX_S2_PRODUCT : undefined;
   assert(scorecardProduct === undefined || scorecardProduct === "0" || scorecardProduct === "1");
@@ -226,6 +234,10 @@ function setup(compact: boolean) {
       (readStudy ? " -Ddxthin.readStudy=yes" : "") +
       // [DX-CARD2] The card's tuned reader on the toy: both pinned options, the early filter and the read permits.
       (scorecardReader ? " -Ddxthin.cardReader=tuned" + (scorecardReader.readPermits ? " -Ddxthin.readPermits=" + scorecardReader.readPermits : "") : "") +
+      (scorecardReadOptions?.DX_READ_PREFETCH === "1" ? " -Ddxthin.readPrefetch=yes" : "") +
+      (scorecardReadOptions?.DX_READ_AHEAD_OFF === "1" ? " -Ddxthin.readAheadOff=yes" : "") +
+      (readerTrace ? " -Ddxthin.readerTrace=" + readerTrace : "") +
+      (scorecardWriterOptions && Object.keys(scorecardWriterOptions).length ? " -Ddxthin.writerOptions=" + Object.keys(scorecardWriterOptions).join(",") : "") +
       (nativePools ? " -Ddxthin.nativePools=yes -XX:NativeMemoryTracking=summary" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
       nonce +
       " -Ddxthin.secret=" +
@@ -244,6 +256,9 @@ function setup(compact: boolean) {
     nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, scorecardWriter, scorecardCreditMode, scorecardComparison, realisticScorecard,
     ...(scorecardTape && scorecardTape !== "saturday" ? { scorecardTape } : {}),
     ...(scorecardReader ? { scorecardReader } : {}),
+    ...(scorecardReadOptions && Object.keys(scorecardReadOptions).length ? { scorecardReadOptions } : {}),
+    ...(readerTrace ? { readerTrace } : {}),
+    ...(scorecardWriterOptions && Object.keys(scorecardWriterOptions).length ? { scorecardWriterOptions } : {}),
     ...(scorecardProduct ? { scorecardProduct } : {}),
     crossCheck: !!writeOptionsAttempt && process.env.DX_THIN1_CROSSCHECK === "1",
     gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
@@ -324,6 +339,9 @@ function bind() {
       realisticScorecard: attempt.realisticScorecard,
       ...(attempt.scorecardTape ? { scorecardTape: attempt.scorecardTape } : {}),
       ...(attempt.scorecardReader ? { scorecardReader: attempt.scorecardReader } : {}),
+      ...(attempt.scorecardReadOptions ? { scorecardReadOptions: attempt.scorecardReadOptions } : {}),
+      ...(attempt.readerTrace ? { readerTrace: attempt.readerTrace } : {}),
+      ...(attempt.scorecardWriterOptions ? { scorecardWriterOptions: attempt.scorecardWriterOptions } : {}),
       ...(attempt.scorecardProduct ? { scorecardProduct: attempt.scorecardProduct } : {}),
       crossCheck: attempt.crossCheck === true,
       compact: !!attempt.compact,
@@ -411,6 +429,8 @@ if (action === "--guest") {
     const { parseCredits } = await import("../v01/server-workload.ts");
     if (stack.managed.scorecardTape) process.env.DX_V01_TAPE = stack.managed.scorecardTape;
     if (stack.managed.scorecardProduct) process.env.DX_S2_PRODUCT = stack.managed.scorecardProduct;
+    // [DX-SRV2] The writer options reach the toy driver as they reach a server card's (scale1/decision/writes.ts).
+    for (const [name, value] of Object.entries(stack.managed.scorecardWriterOptions ?? {})) process.env[name] = value as string;
     const { adoptedToy } = await import("../v01/adopted.ts");
     const { readResidentMappings } = await import("./heap-residency.ts");
     const readyBy = Date.now() + 45_000;
@@ -480,7 +500,8 @@ if (action === "--guest") {
       slot: stack.prefix, attempt: stack.managed.writeOptionsAttempt, gatewaySource: stack.gatewaySourceSha256,
       java: { placement: "owned Mac compact stack", commands }, residency,
       creditMode: parseCredits(stack.managed.scorecardCreditMode),
-      p1: cardReader.p1Reader(stack.managed.scorecardReader, true),
+      p1: cardReader.p1Reader(stack.managed.scorecardReader, true, stack.managed.readerTrace && path.join(stack.managed.readerTrace, "gw-r.jsonl"),
+        cardReader.parseSampleEvery(stack.managed.scorecardReadOptions?.DX_V01_SAMPLE_EVERY, stack.managed.scorecardReader)),
       realisticToySlot: stack.managed.realisticScorecard ? stack.containers[0].name : undefined }, stack.managed.scorecardWriter,
       stack.managed.scorecardComparison, readStudy);
     if (stack.managed.crossCheck) {

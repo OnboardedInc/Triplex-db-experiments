@@ -20,7 +20,7 @@ import { checkAdmission } from "./credit-evidence.ts";
 import { p99Miss, quietVerdict } from "./card-verdict.ts";
 import { windowStats, type WindowWrite } from "./windows.ts";
 import { fullCellTape, parseCardTape, tapeEdge, tapeShape, tapeTitle, type CardTape } from "./production-card.ts";
-import { randomLine, readerLaunch, readerTitle, type CardReader } from "./card-reader.ts";
+import { randomLine, readerLaunch, readerTitle, splitBars, splitReadRows, type CardReader } from "./card-reader.ts";
 
 type Card = { source: string; age: Age; writer: Writer; jvm?: JvmProfile; toy: boolean; campaign: string; out: string; forecast: string;
   realistic?: RealisticBinding;
@@ -168,6 +168,7 @@ export function writeAdoptedCard(run: Card) {
   };
   const rows = new Map<string, string[]>();
   let rowsRandom: string[] | undefined;
+  let split: ReturnType<typeof splitReadRows>;
   const cellWindows: string[] = [], cellTelemetry: string[] = [], edgeRows: string[] = [];
   const regenerated: { cell: string; ms: number; gap: number; maxMs: number; maxGap: number }[] = [];
   const partial = "PARTIAL";
@@ -206,6 +207,8 @@ export function writeAdoptedCard(run: Card) {
           run.toy ? partial : line.wrong || line.errors || randomMiss ? "MISSED" : "MET", String(line.read.count), evidence("loaded")];
       }
     }
+    // [DX-SRV2] The split read bar: the two rows and the per-step table, only when the campaign classified its reads.
+    if (run.reader) split = splitReadRows(run.toy, loaded.p1 as any, loaded.p1Random as any);
     const steps = feedSteps(loaded), at256 = steps.find((x) => x.label === "L256");
     const lagRule = at256?.lag.count ? `Lag judged at P1's 256 readers, as the bar says: p99 ${tag(at256.lag.p99Ms)} ms (${at256.lag.p99Ms !== null && at256.lag.p99Ms <= 250 ? "lag clause met" : "lag clause missed"}). By ladder step: ${steps.map((x) => `${x.label} p99 ${tag(x.lag.p99Ms)} ms (n=${x.lag.count})`).join("; ")}. Whole tape as before: ` : "";
     if (loaded.p3.entries) rows.set("P3", [`${loaded.p3.entries} ordered exact changes${loaded.seed.realistic ? ` (busy deep/thin/small ${armMix(loaded.writes).join("/")})` : ""}; ${lagRule}dispatch-to-observation p99 ${tag(loaded.dispatchToFeed.p99Ms)} ms across ${loaded.dispatchToFeed.count} observations. Durable effects and crash resume are open.`, partial,
@@ -453,7 +456,8 @@ export function writeAdoptedCard(run: Card) {
   // stage against its cap (the caps of server-32 with the tuned reader were set from the 2026-11-23 peaks).
   function tunedReaderSection() {
     const out = ["## Tuned reader", "", readerTitle(run.reader).trim(), "", ...(run.toy ? ["Mac toy: the compact stack's reader runs both pinned options, the early filter and the permits; the random line has " +
-      `${randomLine.toySeats} seats; the toy reader writes no trace, so its storage loads and cache share are not recorded.`, ""] : [])];
+      `${randomLine.toySeats} seats; ` + (split ? "with per-read classification on, the toy reader writes the read profile of every sampled exchange (no Datomic metrics minutes, so its StorageGet count is not recorded)." :
+      "the toy reader writes no trace, so its storage loads and cache share are not recorded."), ""] : [])];
     const stagesDirs = [["zero", "P1 zero readers"], ["loaded", "P1 readers, P6, P7, P8"], [barrierRoot + "loaded", "barrier6 control"]] as const;
     const caps = { tx: policy.tx.memoryMiB, "gw-w": policy["gw-w"].memoryMiB, "gw-r": policy["gw-r"].memoryMiB, pg: policy.pg.memoryMiB } as Record<string, number>;
     const gib = (bytes: number) => (bytes / 2 ** 30).toFixed(2);
@@ -686,7 +690,9 @@ export function writeAdoptedCard(run: Card) {
       ? "Quiet loaded commit p99 ≤ 50 ms or ≤ 1.25× alone, zero wrong quiet reads or expired quiet commands."
       : match[3]!.trim();
     const randomRow = key === "P1" && rowsRandom ? `\n| P1 random subjects | ${randomBar} | ${rowsRandom.join(" | ")} |` : "";
-    return values ? `| ${match[1]!.trim()} | ${bar} | ${values.join(" | ")} |${randomRow}` : line.replace("| NOT MEASURED |", "| NOT RUN |");
+    const splitRows = key === "P1" && split ? [["P1 in memory", splitBars.inMemory, split.inMemory], ["P1 not in memory", splitBars.notInMemory, split.notInMemory]]
+      .flatMap(([name, bar, cells]) => cells ? [`\n| ${name} | ${bar} | ${(cells as string[]).join(" | ")} | ${evidence("loaded")} |`] : []).join("") : "";
+    return values ? `| ${match[1]!.trim()} | ${bar} | ${values.join(" | ")} |${randomRow}${splitRows}` : line.replace("| NOT MEASURED |", "| NOT RUN |");
   }).concat([
     "| Mixed assertion identities | Retired old-format and ordered IDs are refused and four pinned reads match their expected values. | " +
     (rows.get("Mixed assertion identities") ?? ["The mixed-ID witness is unavailable in this attempt.", "NOT RUN", "0", "—"]).join(" | ") + " |",
@@ -703,6 +709,7 @@ export function writeAdoptedCard(run: Card) {
     ...(() => { const order = startOrder(); return order.length ? ["## Order after each stack start", "",
       "The first window each stack measured after it started finds its subjects cold (the quiet account's 52 and 59 ms p99 of 2026-11-23 was such a window). P1's two sides each run first on their own stack, so their writer ratio compares two such windows.", "", ...order, ""] : []; })(),
     ...(run.reader ? tunedReaderSection() : []),
+    ...(split ? split.table : []),
     ...(productionRows.length ? ["## Production-shaped neighbour saves", "",
       `Neighbour accounts only (the quiet account is P6). Latencies are p50 / p99 ms from the scheduled offer to the durable acknowledgement; save completion runs from a save's first row offered to its last row acknowledged. Storage reads are SQL reads per commit from each acknowledgement, in the first 60 s / from 150 s. The per-subject ordered writer takes only commits of one to three facts that each replace a value; every other commit takes the general writer. Commits over 256 assertions carry the general identity. Every field of every production subject was read back at the cell's terminal cut and matched the acknowledged writes.`, "",
       "| Cell | Offered | Stored in window | Commit p50 / p99 ms | Save completion p50 / p99 ms | Reads per commit, first minute / late | Per-subject writer | General writer | General-identity commits | Exactness | Evidence |",
