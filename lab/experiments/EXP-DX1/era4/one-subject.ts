@@ -36,7 +36,12 @@ import { valid } from "../actv-lazy/fixture.ts";
 import { rosterRoot, rosterSeal } from "../actv-lazy/read.ts";
 
 const [out] = process.argv.slice(2);
-assert(out && derivedSealOn() && process.env.TX2_NOTICE_LEDGER === "parts", "one-subject.ts runs with TX2_DERIVED_SEAL=1 and TX2_NOTICE_LEDGER=parts");
+// ONE_CLEAR=1: the same in clear (no derived seal, no setting) with TX2_SUBJECT_STOP=1: there S3 has no seal to be
+// refused, and S1's removed value fails its evaluation (W0-1.1.2: removed values are W0-1.2's, under the option only),
+// so S1 stops at the second release instead of keeping its notice
+const CLEAR = process.env.ONE_CLEAR === "1";
+assert(out && process.env.TX2_NOTICE_LEDGER === "parts" && (CLEAR ? !derivedSealOn() && process.env.TX2_SUBJECT_STOP === "1" : derivedSealOn()),
+  "one-subject.ts runs with TX2_NOTICE_LEDGER=parts and TX2_DERIVED_SEAL=1, or ONE_CLEAR=1 with TX2_SUBJECT_STOP=1");
 const FORMAT = process.env.ONE_FORMAT ?? "w0";
 assert(FORMAT === "w0" || FORMAT === "deep");
 const EVAL = process.env.ONE_EVAL ?? (FORMAT === "deep" ? "data" : "seam");
@@ -53,7 +58,7 @@ const log = (kind: string, data: object = {}) => {
   fs.appendFileSync(path.join(out, "one-subject.jsonl"), line + "\n");
 };
 const dbOf = (scope: string) => "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scope))).toString("base64url");
-const requireSealed = (s: Pick<Store, "scope">) => peer.request("POST", `/v2/db/${dbOf(s.scope)}/derived-seal-required`, {});
+const requireSealed = async (s: Pick<Store, "scope">) => { if (!CLEAR) await peer.request("POST", `/v2/db/${dbOf(s.scope)}/derived-seal-required`, {}); };
 const short = (e: unknown) => String((e as Error).message ?? e).replace(/\s+/g, " ").slice(0, 300);
 const S = Array.from({ length: 6 }, (_, i) => W0.placementId(i));
 const bucket = (s: string) => parseInt(createHash("sha256").update(s).digest("hex").slice(0, 8), 16) % 1000;
@@ -116,7 +121,7 @@ async function deepSetup(): Promise<Setup> {
     await peer.transact(db, { ...command("one-subject/load/" + RUN + "/" + i, facts as never, [], false), groupAccount: key } as never);
   }
   await peer.request("POST", `/v2/db/${db}/request-index`, { waitMs: 600_000 });
-  await peer.request("POST", `/v2/db/${db}/derived-seal-required`, {});
+  if (!CLEAR) await peer.request("POST", `/v2/db/${db}/derived-seal-required`, {});
   const begin = await peer.begin(db);
   await peer.release(db, begin.handle);
   const descriptor = { account: key, prefix: "acct/" + key + "/", people: S.length, cut: begin.position,
@@ -134,7 +139,7 @@ async function deepSetup(): Promise<Setup> {
   };
 }
 
-const row: Record<string, unknown> = { format: FORMAT, evaluationError: EVAL, forms: F, permille, buckets: Object.fromEntries(S.map((s) => [s, bucket(s)])) };
+const row: Record<string, unknown> = { format: FORMAT, sealed: !CLEAR, evaluationError: EVAL, forms: F, permille, buckets: Object.fromEntries(S.map((s) => [s, bucket(s)])) };
 const t = performance.now();
 let checks: Record<string, boolean> = {};
 try {
@@ -175,14 +180,17 @@ try {
   row.removal = (await peer.erase(r.db, "one-subject/" + RUN, r.ids.map((id) => ({ id })))).seq;
   await new Promise((res) => setTimeout(res, 3000));
   // release 2
-  const before = (await notices.openedPackets(await noticeArchive.store.head())).flatMap((p) => p.deliveries as unknown as Record<string, unknown>[]).length;
+  // in clear the packets hold the deliveries themselves (the open route is the option's)
+  const allDeliveries = async () => (await (CLEAR ? notices.packets(await noticeArchive.store.head()) : notices.openedPackets(await noticeArchive.store.head())))
+    .flatMap((p) => p.deliveries as unknown as Record<string, unknown>[]);
+  const before = (await allDeliveries()).length;
   await (a.publish as (...x: unknown[]) => Promise<unknown>).call(a, "one-2:" + RUN, release(W0.R2.doc, F + 1), validTime, "owed", ...extra);
   const seq2 = (await a.notices.observe()).value.sequence;
   row.settlement2 = await values.runValues(seq2).then((p: any) => p.status, (e: unknown) => "FAILED: " + short(e));
   row.recorder2 = await notices.record(seq2).then(() => "recorded", (e: unknown) => "FAILED: " + short(e));
   row.deliveries2 = await deliveries();
   row.stops2 = await stops(seq2);
-  const d2 = (await notices.openedPackets(await noticeArchive.store.head())).flatMap((p) => p.deliveries as unknown as Record<string, unknown>[]).slice(before);
+  const d2 = (await allDeliveries()).slice(before);
   const kept = d2.filter((d) => d.subject === S[1] && d.kind === "notify.document-expired");
   // a delivery's payload is the work item's payload text (a JSON string)
   const text = (x: unknown) => (typeof x === "string" ? x : canonical(x ?? null));
@@ -190,7 +198,18 @@ try {
   const d1 = row.deliveries1 as Record<string, number>, s1 = row.stops1 as { recorder: Record<string, string>; settlement: Record<string, string> },
     s2 = row.stops2 as typeof s1;
   const only = (m: Record<string, string>, want: Record<string, string>) => canonical(m) === canonical(want);
-  checks = {
+  if (CLEAR) checks = {
+    settledBoth: row.settlement1 === "stored" && row.settlement2 === "stored",
+    recordedBoth: row.recorder1 === "recorded" && row.recorder2 === "recorded",
+    othersGetTheirNotices: [S[1]!, S[3]!, S[4]!, S[5]!].every((s) => (d1[s] ?? 0) > 0),
+    recorderStopsAreExactlyThese: only(s1.recorder, { [S[2]!]: "EvaluationFailed" }) &&
+      only(s2.recorder, { [S[0]!]: "LedgerFull", [S[1]!]: "EvaluationFailed", [S[2]!]: "EvaluationFailed" }),
+    fullLedgerSubjectRecordedFirst: (d1[S[0]!] ?? 0) > 0,
+    settlementStopsAreTheEvaluations: only(s1.settlement, { [S[2]!]: "EvaluationFailed" }) &&
+      only(s2.settlement, { [S[1]!]: "EvaluationFailed", [S[2]!]: "EvaluationFailed" }),
+    removedSubjectStopsAlone: (row.deliveries2 as Record<string, number>)[S[4]!]! >= d1[S[4]!]!,
+  };
+  else checks = {
     settledBoth: row.settlement1 === "stored" && row.settlement2 === "stored",
     recordedBoth: row.recorder1 === "recorded" && row.recorder2 === "recorded",
     othersGetTheirNotices: [S[1]!, S[4]!, S[5]!].every((s) => (d1[s] ?? 0) > 0),

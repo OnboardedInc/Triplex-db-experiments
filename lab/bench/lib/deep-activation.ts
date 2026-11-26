@@ -11,6 +11,7 @@ import { pageWireState } from "./w0-page-check.ts";
 import { W0, canonical, factValue, type WorldRow, type PositionBasis } from "./w0-world.ts";
 import { ids, subjectOf } from "./world.ts";
 import { taskId } from "./deep-world.ts";
+import { subjectStopsOn } from "./derived-seal.ts";
 import {
   tenantRows,
   tenantRowsId,
@@ -89,8 +90,8 @@ export function policyWorld(i: number, rows: readonly WorldRow[], basis: Positio
     put(subject, "documents", doc, r);
     put(doc, "docType", n === 0 ? "ead" : "visa", r);
     // [DX-ERA4, third review T1] a removed expiry date is one row still: its marker, a removed value (W0-1.2, SPEC 2.1),
-    // which DOCEXP holds (7.0); it is never read
-    put(doc, "expiresOn", expiry.value.type === "erased" ? factValue(expiry.value) : expiry.value.value, expiry);
+    // which DOCEXP holds (7.0); it is never read. Under the option or TX2_SUBJECT_STOP only: with both unset, as before.
+    put(doc, "expiresOn", expiry.value.type === "erased" && subjectStopsOn() ? factValue(expiry.value) : expiry.value.value, expiry);
   }
   for (const [n, r] of tasks.entries()) {
     const answer = `${subject}/ans:t${n}`,
