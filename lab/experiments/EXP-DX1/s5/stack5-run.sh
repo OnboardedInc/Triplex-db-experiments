@@ -56,7 +56,7 @@ gateway() { local port=$1 src=$2 spec=$3; shift 3
 b=/opt/builds
 gateway 18081 /opt/gateway/src /opt/gateway/codec-spec.json TX2_ACCOUNT_CLAIMS=1
 gateway 18082 /opt/gateway/src /opt/gateway/codec-spec.json
-gateway 18083 $b/s6a/packages/datomic/gateway/src $b/s6a/packages/datomic/src/codec-spec.json TX2_SUBJECT_SAVE=0 TX2_LOAD1_PROFILE=1
+gateway 18083 $b/s6a/packages/datomic/gateway/src $b/s6a/packages/datomic/src/codec-spec.json TX2_SUBJECT_SAVE=0 TX2_SUBJECT_WIDE=0 TX2_SUBJECT_SEVERAL_OWNERS=0 TX2_SUBJECT_CREATE=0 TX2_LOAD1_PROFILE=1
 gateway 18084 $b/s6a/packages/datomic/gateway/src $b/s6a/packages/datomic/src/codec-spec.json TX2_SUBJECT_NARROW_REVISION=1 TX2_SUBJECT_REUSE_PREDECESSOR=1 TX2_SUBJECT_APPEND_RETIREMENT=1
 gateway 18085 $b/base/packages/datomic/gateway/src $b/base/packages/datomic/src/codec-spec.json
 healthy() { for port in 18081 18082 18083 18084 18085; do node -e "fetch('http://127.0.0.1:$port/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))" || return 1; done; }

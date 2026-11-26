@@ -28,10 +28,12 @@ case $lane in
       S5_BUILD=$b clj idents-$b idents "idents-base idents-server idents-server-wide idents-serial-retire idents-owner-head idents-load-profile"
     done
     step stacks
-    heavy stack-window bash lab/experiments/EXP-DX1/s5/stack3.sh "$out/stack-window" stack5-run.sh
-    S5_STACK_EXTRA="TX2_PREDECESSOR_LOOKUP=0" heavy stack-window-nopred bash lab/experiments/EXP-DX1/s5/stack3.sh "$out/stack-window-nopred" stack5-run.sh
     heavy stack-transition bash lab/experiments/EXP-DX1/s5/stack3.sh "$out/stack-transition" stack3-run.sh
     S5_STACK_EXTRA="TX2_PREDECESSOR_LOOKUP=0" heavy stack-transition-nopred bash lab/experiments/EXP-DX1/s5/stack3.sh "$out/stack-transition-nopred" stack3-run.sh ;;
+  w)
+    # The window stacks (the second image: its first runner started the profile build with options it refuses).
+    heavy stack-window bash lab/experiments/EXP-DX1/s5/stack3.sh "$out/stack-window" stack5-run.sh
+    S5_STACK_EXTRA="TX2_PREDECESSOR_LOOKUP=0" heavy stack-window-nopred bash lab/experiments/EXP-DX1/s5/stack3.sh "$out/stack-window-nopred" stack5-run.sh ;;
   b)
     # One fuzz setting per call (the two calls ran one after another beside lane a, so never more than two at once):
     # faults, a second account, the transition at one third of the steps, stale planners, an old build reopening
