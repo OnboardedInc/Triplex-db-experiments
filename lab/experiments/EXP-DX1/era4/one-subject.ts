@@ -77,7 +77,7 @@ type Setup = { store: Store; a: JoinedAccount; validTime: string; removable: () 
 
 async function w0Setup(): Promise<Setup> {
   const store = await openStore("lazy-era4-one-w0-" + RUN);
-  await peer.declareProtection(dbOf(store.scope), ["docType", "expiresOn"], true);
+  await peer.declareProtection(dbOf(store.scope), ["docType", "expiresOn"], !CLEAR); // in clear: protection without seals (a gateway without the option)
   await requireSealed(store);
   const a = new JoinedAccount(store);
   const docOf = (s: string) => s + "/doc:a";
@@ -119,7 +119,7 @@ async function deepSetup(): Promise<Setup> {
   const created = await peer.create(String(runtimeApi.DatabaseScope.test(name)), "lean", true, 35_000);
   assert(created.created && created.strictRecordClocks);
   const db = created.db;
-  await peer.declareProtection(db, [":file/expiresOn"], true);
+  await peer.declareProtection(db, [":file/expiresOn"], !CLEAR);
   const key = keyFor(acct);
   for (let i = 0; i < S.length; i++) {
     // S2's pay is "abc" in the data (ONE_EVAL=data): its world does not evaluate
