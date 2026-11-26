@@ -146,6 +146,13 @@ the production tape's, shape S, 4 to 15 facts); its per-subject writer is exerci
 2. `decidedByRule` and `checkSavedIdentity` read `TX2_SUBJECT_WIDE` from the card's own environment, not from what the
    gateway reports it runs with.
 
+**Open (product):** Held accounts enrolled by an earlier build cannot be published or settled by this one (compiler
+stamp over source bytes). No route to carry them over is known yet. Found by the fifth Publish review, 2026-11-25; fix
+unassigned. (`actv-lazy/join/index.ts` hashes the source bytes of a list of files into the compiler stamp stored at
+enrolment, and `actv-lazy/join/account.ts` refuses a build whose stamp differs; `account.ts` differs by 261 / 31 lines
+between `345f833e4` and `a6f89a409`, so accounts enrolled on the one branch before the Publish line merge are refused
+after it, as after every earlier merge that edited a listed file.)
+
 The save review's F6 (the 5 differing stored-code values pinned to S2's `subject_save.clj` edit, none installed with
 options off) is the second item of step 0, restored here. Four independent reviews found that a rule chosen per
 process or held outside the data breaks at the seam: nothing merged here turns such an option on, and every option
