@@ -15,6 +15,7 @@ import { ids, type Fact } from "../../../bench/lib/world.ts";
 import { FairTurns } from "./fair-turns.ts";
 import { admission, type CreditScheduler } from "./rolling-credits.ts";
 import { DeadlineOrder } from "./deadline-order.ts";
+import { blockToken } from "../v01/block-token.ts";
 import {
   productionSeedFields,
   scaleAccount,
@@ -75,16 +76,10 @@ export type ProductSave = (
 ) => Promise<{ input: Input; ack: Ack }>;
 /** [DX-S2] The ordered block token of a request the SDK built, if its journal and IDs form one. */
 export function orderedToken(input: Input): string | undefined {
-  const tx = input.claims[0]?.txId ?? "";
-  const one = /^_tx\/([0-7][0-9A-HJKMNP-TV-Z]{23})00$/.exec(tx)?.[1];
-  const wide = /^_tx\/([0-7][0-9A-HJKMNP-TV-Z]{22})W00$/.exec(tx)?.[1];
-  const token = one ?? wide;
   // Exactly the block's first ordinals, as the gateway's ordered-bounds requires: a runtime ID run that happens to start
-  // at a journal ID ending in "00" shares the prefix but not the ordinals.
-  const digits = one ? 2 : 3;
-  const ids = [...input.newIds].sort();
-  return token && ids.length > 0 && ids.every((id, i) => id === token + i.toString(16).toUpperCase().padStart(digits, "0"))
-    ? token : undefined;
+  // at a journal ID ending in "00" shares the prefix but not the ordinals. [DX-SRV3-fix1] One-byte, then wide, each
+  // against the IDs (v01/block-token.ts: a wide journal ID also matches the one-byte pattern).
+  return blockToken(input.claims[0]?.txId, input.newIds)?.token;
 }
 type Row = Input["rows"][number];
 type Ack = {

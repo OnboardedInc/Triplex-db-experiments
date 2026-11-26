@@ -6,12 +6,15 @@ import assert from "node:assert/strict";
 export type WriterSplit = {
   keyed: number; eligible: number; taken: number; ran: boolean; rule?: "off" | "narrow" | "wide-or-owners";
   own?: number; ownTaken?: number; keyedGeneral?: number;
+  /** [DX-SRV3-fix1] Keyed saves that carried a wide ordered block (more than 256 assertions with the wide writer). */
+  wideBlocks?: number;
 };
 export function writerSplitLines(x: WriterSplit): string[] {
   if (!x.ran) return [`per-subject writer: option off in this arm (${x.keyed} keyed saves)`];
   if (x.rule === "wide-or-owners")
     return [`per-subject writer (wide writer or owners named): ${x.eligible} eligible of ${x.keyed} keyed, ${x.taken} taken; ` +
-      `${x.keyedGeneral ?? x.keyed - x.taken} keyed saves went to the general writer`, `own saves: ${x.own ?? 0}, ${x.ownTaken ?? 0} taken`];
+      `${x.keyedGeneral ?? x.keyed - x.taken} keyed saves went to the general writer` +
+      (x.wideBlocks ? `; ${x.wideBlocks} keyed saves carried a wide block` : ""), `own saves: ${x.own ?? 0}, ${x.ownTaken ?? 0} taken`];
   return [x.eligible === 0 ? `per-subject writer: 0 eligible by the narrow rule of ${x.keyed} keyed`
     : `per-subject writer: ${x.eligible} eligible by the narrow rule of ${x.keyed} keyed, ${x.taken} taken`,
     `own saves: ${x.own ?? 0}, ${x.ownTaken ?? 0} taken`];

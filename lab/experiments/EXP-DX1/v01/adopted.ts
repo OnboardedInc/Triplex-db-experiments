@@ -105,8 +105,10 @@ export function checkWriterSplit(saves: readonly Save[], writer: Writer,
   const ownRows = saves.filter((r) => r.status === "acked" && r.saveKey === undefined && !r.generalIdentity);
   const own = ownRows.length, ownTaken = ownRows.filter((r) => typeof r.stage?.subjectSave === "string").length;
   const keyedGeneral = keyedRows.filter((r) => typeof r.stage?.subjectSave !== "string").length;
+  // [DX-SRV3-fix1] Counted apart: a wide block's save is checked like any ordered save (checkSavedIdentity).
+  const wideBlocks = keyedRows.filter((r) => r.orderedBlock === "wide").length;
   if (options.subjectSave !== true || writer === "grouped")
-    return { keyed, eligible: 0, taken: 0, own, ownTaken, keyedGeneral, ran: false, rule: "off" as const };
+    return { keyed, eligible: 0, taken: 0, own, ownTaken, keyedGeneral, wideBlocks, ran: false, rule: "off" as const };
   // [DX-INT5] Eligible means the active rule lets the per-subject writer take it. With the wide writer off and no
   // owners named, the narrow rule takes only commits of one to three facts that each replace a current value; every
   // other production save goes to the general writer by design (checkSavedIdentity asserts each save's path exactly).
@@ -129,7 +131,7 @@ export function checkWriterSplit(saves: readonly Save[], writer: Writer,
     assert.equal(unexplained.length, 0, `${unexplained.length} tape M saves went to the general writer without a reason`);
   }
   const rule = decidedByRule && !keyedRows.some((r) => r.owners !== undefined) ? "narrow" as const : "wide-or-owners" as const;
-  return { keyed, eligible: eligible.length, taken: taken.length, own, ownTaken, keyedGeneral, ran: true, rule };
+  return { keyed, eligible: eligible.length, taken: taken.length, own, ownTaken, keyedGeneral, wideBlocks, ran: true, rule };
 }
 
 

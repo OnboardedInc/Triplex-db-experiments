@@ -23,6 +23,7 @@ import {
 import { journalHash, now, type Scope } from "./observer.ts";
 import { commitAssertions, isMix, isProduction, orderedBlockLimit, wideOrderedBlockLimit, type MixWrite } from "../../v01/production-card.ts";
 import { slotAttribute } from "../../w1/field/production.ts";
+import { blockToken } from "../../v01/block-token.ts";
 
 type Input = Parameters<DatomicClient["transact"]>[1];
 export type Row = Input["rows"][number];
@@ -98,6 +99,8 @@ export type Save = {
   retired?: number;
   assertions?: number;
   generalIdentity?: boolean;
+  /** [DX-SRV3-fix1] The kind of ordered block a product save carried (one-byte or wide). */
+  orderedBlock?: "one-byte" | "wide";
   // [DX-S2] Sent through the product's path (DX_S2_PRODUCT): the SDK chose the operation ID and the identity block.
   product?: boolean;
   operationId?: string;
@@ -514,11 +517,11 @@ export async function play(
     const adopt = (sent: ReturnType<typeof expectedSave>["input"]) => {
       candidate = { ...candidate!, input: sent };
       row.operationId = sent.operationId;
-      const tx = sent.claims[0]?.txId ?? "";
-      const token = /^_tx\/([0-7][0-9A-HJKMNP-TV-Z]{23})00$/.exec(tx)?.[1] ?? /^_tx\/([0-7][0-9A-HJKMNP-TV-Z]{22})W00$/.exec(tx)?.[1];
       // Exactly the block's first ordinals (a runtime ID run can share a prefix with a journal ID ending in "00").
-      const ids = [...sent.newIds].sort(), digits = token?.length === 24 ? 2 : 3;
-      if (token && ids.every((id, i) => id === token + i.toString(16).toUpperCase().padStart(digits, "0"))) row.orderedToken = token;
+      // [DX-SRV3-fix1] One-byte, then wide, each against the IDs (v01/block-token.ts: a wide journal ID also matches
+      // the one-byte pattern, and taking that match marked every wide ordered save as the general identity).
+      const block = blockToken(sent.claims[0]?.txId, sent.newIds);
+      if (block) { row.orderedToken = block.token; row.orderedBlock = block.kind; }
       else row.generalIdentity = true;
     };
     const sent = candidate ? submit(candidate.input) : Promise.resolve().then(async () => {
