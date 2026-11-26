@@ -4,6 +4,8 @@
 // transaction whose transaction ID or assertion ID starts with such a token was given an ID inside that save's block
 // (an "intrusion"); if its ordinal is one the save used, the two would have been the same ID, and whichever committed
 // second was refused ("TRIPLEX_IDENTITY f/id"). Writes <out>/act10-idscan.json. Nothing here asserts.
+// [DX-ACT10, fifth review] Pages of 100 transactions, not 1,000: at the full gate a 1,000-transaction page of the feed
+// (records of up to about 0.6 MB each) made the write gateway exceed its memory and be killed (run g4R5, exit 137, OOM).
 import { writeFileSync } from "node:fs";
 import path from "node:path";
 import type { Store } from "../actv-lazy/store.ts";
@@ -20,7 +22,7 @@ export async function idScan(s: Store, out: string, from: number, note: Record<s
   const duplicates: [string, number, number][] = [];
   let transactions = 0, after = from;
   while (after < head) {
-    const page = await s.comp.feedPage(after, 1000);
+    const page = await s.comp.feedPage(after, 100);
     const txs = page.transactions as Tx[];
     if (!txs.length) break;
     for (const t of txs) {
@@ -43,7 +45,7 @@ export async function idScan(s: Store, out: string, from: number, note: Record<s
         for (const id of [String(t.txId).replace(/^_tx\//, ""), ...asserted])
           general.push({ position: t.position, id, command: String(t.commandId ?? "").slice(0, 80), actor: String(t.actor ?? "") });
     }
-    if (txs.length < 1000) break;
+    if (txs.length < 100) break;
   }
   const intrusions: Record<string, unknown>[] = [];
   for (const g of general)
