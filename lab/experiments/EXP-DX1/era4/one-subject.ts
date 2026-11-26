@@ -184,6 +184,9 @@ try {
   const r = await removable();
   row.removedAssertions = r.ids.length;
   row.removal = (await peer.erase(r.db, "one-subject/" + RUN, r.ids.map((id) => ({ id })))).seq;
+  // the removal published before release 2 reads its inputs (without the option it publishes after its shred grace;
+  // a publish that read the frontier before it is refused, "Discard the old protected input cut")
+  for (let k = 0; k < 120 && (await peer.erasureFrontier(r.db)).seq < (row.removal as number); k++) await new Promise((res) => setTimeout(res, 500));
   await new Promise((res) => setTimeout(res, 3000));
   // release 2
   // in clear the packets hold the deliveries themselves (the open route is the option's)
