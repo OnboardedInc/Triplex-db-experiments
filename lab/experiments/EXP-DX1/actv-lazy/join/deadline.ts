@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { W0 } from "../../../../bench/lib/w0-world.ts";
 import { millis } from "../store.ts";
 import type { JoinedAccount } from "./account.ts";
+import { calendarMin } from "./calendar.ts";
 
 type Alarm = (waitMs: number, wake: () => void) => () => void;
 const setAlarm: Alarm = (ms, fn) => {
@@ -33,7 +34,7 @@ export function deadlines(
           const instant = now();
           assert(W0.isInstant(instant));
           await a.advance(instant);
-          const due = (await a.db.get<string[]>("join-calendar", await a.s.head())).value[0];
+          const due = await calendarMin(a.db, await a.s.head());
           if (due && !closed) {
             const remaining = millis(due) - millis(now());
             if (remaining <= 0) dirty = true;

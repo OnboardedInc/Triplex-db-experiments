@@ -42,6 +42,7 @@ import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
 import { Conflict, fact, millis, namesOf, value, type EntityGuard, type Store } from "../store.ts";
 import { ledgerCapacity, ledgerPartChars, noticeItems, worstLedgerChars, type LedgerMode } from "./ledger-parts.ts";
+import { CalendarWork, calendarMin, calendarPuts } from "./calendar.ts";
 import { ensureSettings, injected, needsTransition, transitionFencesMax } from "./account-settings.ts";
 import { calculate, worldsAt, type Proposal } from "../decision.ts";
 import { deepImpact, rawDeep, replaceDeep } from "./deep.ts";
@@ -607,7 +608,8 @@ export class JoinedAccount {
       "lazy/join",
       [
         this.db.put("join-meta", meta),
-        this.db.put("join-calendar", [...days].filter((d) => d > at).sort()),
+        // [DX-ACT8, fifth review Y9] The calendar in bounded rows (calendar.ts): one list as before while it fits a leaf.
+        ...calendarPuts(this.db, [...days].filter((d) => d > at).sort()),
         ...(c.clock ? [{ op: "retract", id: c.clock.id }] : []),
         fact(namesOf(this.s).CLOCK, "lazy/slot", { joined: c.generation, kind: "baseline", at }),
       ],
@@ -766,7 +768,7 @@ export class JoinedAccount {
       const p = await this.s.head();
       if (attempt) attempt.cut = p;
       if (through) {
-        const due = (await this.db.get<string[]>("join-calendar", p)).value[0];
+        const due = await calendarMin(this.db, p);
         if (due && due <= through) {
           await this.advanceWithinTurn(through);
           if (attempt) attempt.finished = performance.now();
@@ -996,8 +998,10 @@ export class JoinedAccount {
       async (p) => {
         const { meta, c } = await this.state(p);
         assert(c.at <= offered);
-        const calendar = await this.db.get<string[]>("join-calendar", p);
-        const dates = [...new Set([...calendar.value, effective])].sort();
+        // [DX-ACT8, fifth review Y9] The root is rewritten as before even when the instant is already there.
+        const calendar = new CalendarWork(this.db, p);
+        await calendar.touchRoot();
+        await calendar.insert(effective);
         const ops = [
           fact(namesOf(this.s).RELEASE, "lazy/activation", {
             joined: meta.epoch,
@@ -1013,7 +1017,7 @@ export class JoinedAccount {
           }),
         ];
         return {
-          ops: [...ops, ...this.db.change("join-calendar", calendar, dates)],
+          ops: [...ops, ...calendar.ops()],
           context: { release, offered, effective },
         };
       },
@@ -1357,16 +1361,16 @@ export class JoinedAccount {
     assert(W0.isInstant(at));
     for (;;) {
       const p = await this.s.head(),
-        calendar = await this.db.get<string[]>("join-calendar", p),
-        due = calendar.value[0];
+        due = await calendarMin(this.db, p);
       if (!due || due > at) return;
       const id = "deadline/" + sha256(due);
       await this.execute(id, ["deadline", due], async (k) => {
         const { meta, c, tail } = await this.state(k),
-          cal = await this.db.get<string[]>("join-calendar", k);
-        assert(cal.value[0] === due && c.at <= due);
+          cal = new CalendarWork(this.db, k);
+        assert((await cal.min()) === due && c.at <= due);
+        assert.equal(await cal.removeMin(), due);
         const ops: any[] = [
-          ...this.db.change("join-calendar", cal, cal.value.slice(1)),
+          ...cal.ops(),
           ...(c.clock ? [{ op: "retract", id: c.clock.id }] : []),
           fact(namesOf(this.s).CLOCK, "lazy/slot", { joined: meta.epoch, kind: "due", at: due }),
         ];
@@ -1515,12 +1519,10 @@ export class JoinedAccount {
           );
         }
         if (impact.dates.length) {
-          const calendar = await this.db.get<string[]>("join-calendar", p);
-          const remainder = [
-            ...new Set([...calendar.value, ...impact.dates.filter((d) => d > at)]),
-          ].sort();
-          if (canonical(remainder) !== canonical(calendar.value))
-            ops.push(...this.db.change("join-calendar", calendar, remainder));
+          // [DX-ACT8, fifth review Y9] Each new instant into its bounded row (calendar.ts); the same one list while small.
+          const calendar = new CalendarWork(this.db, p);
+          for (const d of impact.dates) if (d > at) await calendar.insert(d);
+          ops.push(...calendar.ops());
         }
         if (impact.notice && tail.value.release)
           ops.push(
@@ -1627,14 +1629,13 @@ export class JoinedAccount {
           }
         }
         if (edit.a === "expiresOn") {
-          const cal = await this.db.get<string[]>("join-calendar", p),
+          const cal = new CalendarWork(this.db, p),
             newDates = edit.values.map((v) => {
               assert(typeof v === "string" && W0.parseDate(v) >= 0);
               return W0.endOfDay(W0.parseDate(v));
             });
-          const dates = [...new Set([...cal.value, ...newDates.filter((d) => d > at)])].sort();
-          if (canonical(dates) !== canonical(cal.value))
-            ops.push(...this.db.change("join-calendar", cal, dates));
+          for (const d of newDates) if (d > at) await cal.insert(d);
+          ops.push(...cal.ops());
         }
         if (tail.value.release && noticeInputs.has(edit.a)) {
           const plan = this.notices.plan(

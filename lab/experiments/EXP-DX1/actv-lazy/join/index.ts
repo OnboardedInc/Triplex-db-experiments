@@ -34,6 +34,7 @@ export const outputInputs = new Set(
 const code = [
   "./index.ts",
   "./account.ts",
+  "./calendar.ts",
   "./deep.ts",
   "../../../../bench/lib/deep-activation.ts",
   "./material.ts",
