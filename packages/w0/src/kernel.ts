@@ -32,8 +32,9 @@ export interface Fact {
 }
 
 /**
- * SPEC 2.1 (W0-1.2, opt-in; RULINGS Q60): the attributes whose values may be removed on request, and the work items a
- * subject held when a value it reads was removed. Without options every output is W0-1.1.2's byte for byte.
+ * SPEC 2.1 (W0-1.2, opt-in; the owner's ruling of 2026-11-25, lab/experiments/EXP-DX1/era4/W0-REMOVED-VALUES.md):
+ * the attributes whose values may be removed on request, and the work items a subject held when a value it reads was
+ * removed. Without options every output is W0-1.1.2's byte for byte.
  */
 export interface EvaluateOptions {
   /** attribute names (only `docType`, `expiresOn`, `reverified`) on which an `erased` marker is a removed value */
