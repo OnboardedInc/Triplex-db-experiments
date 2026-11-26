@@ -50,8 +50,11 @@
                       fold? (and fold-a (some #(= fold-a (.a ^datomic.Datom %)) data))
                       acc (reduce
                             (fn [acc [e ds]]
+                              ;; an entity whose ID is asserted in this transaction is born here: no parse of it
+                              ;; can exist from before, so it is left out
                               (if (and (some #(contains? parsed-as (.a ^datomic.Datom %)) ds)
                                        (not (some #(and (= rev-a (.a ^datomic.Datom %)) (.added ^datomic.Datom %)) ds))
+                                       (not (some #(and (= id-a (.a ^datomic.Datom %)) (.added ^datomic.Datom %)) ds))
                                        (subject? e))
                                 (update-in acc [(if fold? :revisionlessFolds :revisionlessChanges)
                                                 (str (vec (sort (distinct (map #(str (if (.added ^datomic.Datom %) "+" "-") (ident (.a ^datomic.Datom %))) ds)))))]
@@ -139,6 +142,7 @@
     (case kind
       :row (let [row-a (d/entid db :triplex.entity/row)
                  id-a (d/entid db :triplex.entity/id)
+                 _ (assert (and row-a id-a) "no subject row to retract")
                  subjects (->> (d/datoms db :aevt row-a) (map :e) frequencies
                                (filter (fn [[e _]] (first (d/datoms db :eavt e id-a)))))
                  [e n] (first (sort-by (comp - second) subjects))
@@ -173,7 +177,9 @@
         plant (some-> (System/getenv "RD7_PLANT") not-empty keyword)
         t (reduce (fn [t n]
                     (let [conn (d/connect (str/replace template "{db}" n))
-                          planted (when plant (plant! conn plant))
+                          ;; a database with nothing to plant into (the stack's health database holds no subject)
+                          ;; is audited unplanted, and says so
+                          planted (when plant (try (plant! conn plant) (catch Throwable e {:plant (name plant) :skipped (str (.getMessage e))})))
                           a (audit conn)]
                       (println "DX-RD7_AUDIT_DB" (json/write-str (assoc (brief a) :database n :planted planted :rules (failures a))))
                       (d/release conn)
