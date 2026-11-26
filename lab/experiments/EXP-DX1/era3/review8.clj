@@ -171,20 +171,21 @@
                      (if account? ", the request names its account (the database's account setting off)" ", no account named") ", " mode)
             seeds (g/seed! name [g/a1 g/b1]) prior (:id (seeds g/a1)) pin (g/head conn)
             cmd (str "s1-" (System/nanoTime)) chosen (g/secret g/a1 "chosen-before")
-            with-acct (fn [x] (if account? (assoc x "account" "acct/a") x))
+            ;; the account's name as the save line's rule reads it from the subject ID acct/a/one
+            with-acct (fn [x] (if account? (assoc x "account" "a") x))
             first-save (with-acct (g/frame cmd g/a1 chosen prior pin))
             rm (offers/outcome (a/remove-attr! name "s1-rm" g/a1))
             a1-before (with-rule first-rule #(offers/outcome (offers/send name first-save)))
             db (d/db conn)
-            records (when (d/entid db :triplex.removal/declined-command)
-                      (vec (for [k [cmd (str "acct/a" "|" cmd)] :when (d/entid db [:triplex.removal/declined-command k])] k)))
             all-records (when (d/entid db :triplex.removal/declined-command)
                           (vec (map first (d/q '[:find ?c :where [_ :triplex.removal/declined-command ?c]] db))))
             ;; the same command sent again as a new save (every point fresh), to a gateway on the other side of the seam
             again (with-acct (assoc (g/frame cmd g/a1 chosen prior (g/head conn)) "removalSeen" (or (:seq (privacy/cut name (d/db conn) true)) 0)))
             a1-after (with-rule (not first-rule) #(offers/outcome (offers/send name again)))
             stored (str/includes? (a/read-text name g/a1) chosen)
-            detail {:removal rm :first-answer a1-before :records all-records :sent-again a1-after :chosen-value-stored stored}]
+            setting (try ((requiring-resolve 'triplex.gateway.account-claims/setting) (d/db conn)) (catch Exception _ :unknown))
+            detail {:removal rm :first-answer a1-before :records all-records :sent-again a1-after :chosen-value-stored stored
+                    :account-setting setting :process-may-turn-it-on (= "1" (System/getenv "TX2_ACCOUNT_CLAIMS"))}]
         (observe! lbl :detail detail)
         (bump! :s1 first-rule account? a1-before a1-after stored)
         (oracle! lbl (= [409 "ErasureReplayDeclined"] a1-before) "the save framed before the removal is declined" detail)
@@ -277,6 +278,8 @@
 
 (defn- guarded [label f] (try (f) (catch Throwable e (reset! a/plan nil) (oracle! label false (str "case stopped: " (.getMessage e)) (pr-str e)))))
 (defn main []
+  ;; the removal's stop points and hooks (era3/attack.clj); the first P runs lacked them, so their stop did not stop
+  ((requiring-resolve 'era3-attack3/install-hooks3!))
   (let [phases (set (str/split (or (System/getenv "ERA3_PHASES") "c") #" "))]
     (when (phases "c")
       (doseq [bd boundaries sealed? [false true] trigger (if per-account? [:pending :copy] [:pending]) fix? [:in-place :drop-out]
