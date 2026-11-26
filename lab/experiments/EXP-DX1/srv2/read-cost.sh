@@ -16,7 +16,7 @@ image=$(gate_image "${SRV2_GATE_IMAGE:-tx2-datomic:1.0.7745-da00}" "$out/image.j
 git -C "$repo" archive 5cda4ab204b9736e32960843bee8cbc47d5ca74d -- packages/datomic/gateway/src packages/datomic/src/codec-spec.json \
   lab/experiments/EXP-DX1/age1/src | tar -x -C "$out/age1src"
 git -C "$repo" rev-parse HEAD > "$out/source"
-name=tx2-dxsrv2-read-cost base=18695
+name=${SRV2_COST_NAME:-tx2-dxsrv2-read-cost} base=${SRV2_COST_PORT:-18695}  # [DX-RD7] name and ports can be moved
 docker rm -f "$name" >/dev/null 2>&1
 docker run -d --name "$name" --label tx2.holder=DX-SRV2 --memory 6g -p 127.0.0.1:$base:8080 -p 127.0.0.1:$((base+1)):8081 -p 127.0.0.1:$((base+2)):8082 -p 127.0.0.1:$((base+3)):8083 --entrypoint /bin/bash \
   -v "$repo/packages/datomic/gateway/src:/opt/gateway/src:ro" -v "$out/age1src:/age:ro" \

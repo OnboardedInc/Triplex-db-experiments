@@ -184,6 +184,16 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
         if (subject, numeric_owner, prefetch, ordered) != ("1", "1", "0", "1"):
             raise SystemExit("The production gate runs the server writer: subject, numeric owner and ordered IDs")
         shutil.copyfile(EXPERIMENT.parent / "real2/production-shape.json", config / "production-shape.json")
+        # [DX-RD7] Why: the writers' audit (rd7/audit.clj, the pinned-read review's condition 1) runs after the driver on
+        # the gate's own PostgreSQL database and fails the gate on a break. DX_RD7_PLANT=row|position plants the review's
+        # break first, to prove the gate fails (never set in a gate run). Rejected: a separate stack for the audit (the
+        # gate's database goes with its container).
+        shutil.copyfile(EXPERIMENT.parent / "rd7/audit.clj", config / "rd7-audit.clj")
+        rd7_plant = os.environ.get("DX_RD7_PLANT")
+        if rd7_plant is not None:
+            if rd7_plant not in ("row", "position"):
+                raise SystemExit("DX_RD7_PLANT is row or position (proof only)")
+            (config / "rd7-plant").write_text(rd7_plant + "\n")
     if mode == "live":
         if not 1 <= int(seconds) <= 60:
             raise SystemExit("Live window must be 1 to 60 seconds")
@@ -252,6 +262,8 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
                                             else f"tx2-datomic:dx-prep1-{tag_mode}")
     slots.write_text(json.dumps(profile, indent=2) + "\n")
     source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
+    if mode == "production":
+        source_paths.append(EXPERIMENT.parent / "rd7/audit.clj")
     if clojure_inputs:
         source_paths.extend(clojure_inputs)
     elif mode != "subject-native-suite":
@@ -282,6 +294,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "mixTape": mix_tape,
         "creation": creation,
         "crossIndex": cross_index,
+        "rd7Plant": os.environ.get("DX_RD7_PLANT") if mode == "production" else None,
         "ownerHead": owner_head == "1",
         "wideSaves": os.environ.get("DX_W2_WIDE", "0") == "1",
         "freshFirst": fresh_first,
