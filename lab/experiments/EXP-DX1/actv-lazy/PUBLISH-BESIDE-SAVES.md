@@ -5,10 +5,146 @@ Builder DX-ACT8, 2026-11-24, branch `exp/DX-ACT8-publish-beside-saves` from `exp
 work is correctness at toy size; every Mac time is diagnostic, every count exact. Nothing here ran on a server. Every
 option is default off; with nothing set every existing path is unchanged.
 
-Section 0 is what four independent reviews found and what changed after them (0.C is the fourth, the newest; 0.A the
-third). Sections 1 to 6 are the design, written before any code. The results follow from section 7.
+Section 0 is what five independent reviews found and what changed after them (0.D is the fifth, the newest; 0.C the
+fourth; 0.A the third). Sections 1 to 6 are the design, written before any code. The results follow from section 7.
 
-## 0. What the four reviews found, and what changed after them
+## 0. What the five reviews found, and what changed after them
+
+### 0.D The fifth review (2026-11-25, `act10/REVIEW-5.md` on `exp/DX-ACT10-publish-review`, `6c0498258`): what changed after it
+
+**The review's verdict.** `850517da9` fit to merge with every option off (merged into the one branch as `a6f89a409`,
+`origin/exp/DX-INT1` at `2ce636613`). Two High findings: a held account stops working when the build changes (Y2, every
+option off too), and a ledger of 10 parts cannot be closed at a real account's cursor (Y1, settings on, permanent).
+The code of this round is `51a4130ee` (Y2, Y1), `db7ebfa8e` (Y6), `cfd9f9807` (Y9) and `7cb36246d` (the upgrade check).
+
+| # | Finding, in one line | The fix | The test that now passes |
+| --- | --- | --- | --- |
+| Y2 | The compiler stamp hashes the source bytes of 14 files; a build that changes one byte (a comment) refuses, with a bare assertion, to publish or settle any account an earlier build enrolled, and nothing brings the account back | (a) Every method that reads the stamp refuses with `CompilerChanged`, naming the stored and the running stamp: `meta()`, `state()`, the release record check, the notice journal (each event's inputs, the tail at plan), and a Publish checks the stamp before it writes anything (definitions by reference, a transition). (b) `JoinedAccount.restamp()` (held accounts): refused with `RestampRefused` (what is owed, by kind) while any owed release's values are not stored or superseded, any notice event is not recorded, or a scheduled release is not past; otherwise one commit guarded on `join-meta`, the tail and the origin row moves the stamp to this build and records the old one (`stamps`), under which earlier events and release records are read. (c) `upgradeCheck(accounts)` prints each account (current, ready to re-stamp, or what it owes) and the accounts that owe | `round6` R6-1 with two real builds (`act10/stamp-trees.sh`: one byte outside behaviour, and a range boundary changed in a declaration table), R6-2 (the re-stamp racing the old build's Publish, 24 seeds, both orders: exactly one lands), R6-3 (after the re-stamp the account's enrolment state equals a fresh enrolment's), R6-4, R6-5; on a stack: `act10/stack-stamp6.ts` (below) |
+| Y1 | `ledgerPartsMax` priced the closing piece with a 26-character epoch; a real 64-character epoch at real counters puts every change of a 10-part ledger over the writer's bound, and the account's notices stop for good | The parts and the whole-ledger limit are sized with the largest cursor an account can write: a 64-character epoch, every counter at the largest safe integer, the longest placement ID (`largestCursor`, `longestSubject`). 9 parts; the per-release cap is about 1,427 notice policies (was 1,592). The recorder refuses, at its first frame, a cursor outside those bounds | `review5` V1 flipped (0 failing for every cursor it tries); `round5` R5-3 (the 77 closing pieces at three cursors, among them the largest, and two subject lengths: all within the bound, the worst 7,784 us of 8,000) |
+| Y3 | A permitted Publish is refused while more than 32 owed releases wait for their values | **Not built: the owner's decision.** The options are below | — |
+| Y6 | Nothing on the write gateway bounds a journal page; the reviewer's ID scan (pages of 1,000) killed it (exit 137) | The route is `POST /v2/db/<db>/transactions` (`journal/page`), read through the SDK's `getTransactionsAfter` (the lab's `comp.feedPage`); a product caller reaches it through the tenant protocol's `Transactions` operation (limit up to 1,000). The page is now refused past 16 MiB of text (`TX2_JOURNAL_PAGE_MAX_CHARS`) with 413 `JournalPageTooLarge` and `maximum`, the transactions that fitted (at least 1); the SDK asks again for that many, so a reader pages to the bound. Under the bound nothing changes | `journal_page_test.clj` (in-memory Datomic, in the image); `journal-bounds.test.ts` (fails with a `DatomicHttpError` 413 on the adapter before this change); the gate's ID scan reads pages of 1,000 again (below) |
+| Y9 | The calendar row counts instants; at 34,952 it reaches the 1 MiB value and every later save that adds an instant is refused, whatever its subject | The calendar in bounded rows (`actv-lazy/join/calendar.ts`), byte for byte as before while it holds 256 instants or fewer; priced below | `calendar` Y9-1 to Y9-4 |
+| Y4, Y5, Y7 | Held; information; moot by Y2 | Y5: a reader that needs a retired item's payload takes it from the last delivery that carried it | — |
+| Y8 | Z5 unchanged | The table below | `review4` W2 still states it |
+
+**Y2: what an operator does when the build changes.** Run the new build's `upgradeCheck` over the database's accounts
+before it takes their traffic. An account listed as owing (an owed release's values, notice events not recorded, a
+scheduled release not yet past) is finished on the build that holds its stamp: keep that build's settlers running for
+it until the check no longer lists it. Every account listed as ready is re-stamped by the new build (`restamp`, one
+commit each). Meanwhile the new build refuses that account's Publish and settlement with `CompilerChanged` and writes
+nothing; its saves and reads go on. A re-stamp racing the old build's Publish: exactly one lands (R6-2); if the Publish
+lands first the account owes it and the re-stamp is refused. What it does not do: reopen an unpaid release under other
+code (the reason the stamp exists), or bring an account back that owes and whose old build is gone (that build must be
+run again; nothing else can finish its release exactly).
+
+**Y9: the calendar in bounded rows.** While the calendar holds at most 256 instants its root row is today's sorted list
+and every write is what it was (Y9-2 compares the operations byte for byte for the enrolment, a deep save, an
+`expiresOn` edit, `schedule` and the tick). Past that the root holds the first instant, a counter and at most 256
+children; leaves hold at most 64 instants (1.9 KB) and inner nodes at most 256 children. A node is named by the node
+that adds it (its tag and counter), so no two live rows share a key (a key taken from an instant was not unique: the
+random test found a new first instant below the first child's low moving that low into a new right half). The root
+changes whenever the first instant does, so the Publish's `EntityState` guard on it and the settings transition's
+fence keep their meaning (R5 of section 3); `schedule` still rewrites the root every time (R2). No row can reach the
+value limit, and no save is refused because of another subject's instants.
+
+| Priced (the writer's estimate; Mac, diagnostic) | Instants | Rows | Depth | Reads per save that adds one | Bytes written per such save (median, mean, max) | Its estimate above an empty commit's 4,501 us (median, p99, max) | A tick: bytes (median), estimate share (median, max) |
+| --- | ---: | ---: | ---: | ---: | --- | --- | --- |
+| Y9-4, a million subjects each adding its own instant, in no order | 999,767 | 22,564 | 2 | 3 | 1,381; 1,601; 18,390 | 789; 3,548; 6,047 us | 5,858 B; 2,290, 4,056 us |
+| Y9-4, the same in ascending order (half-full rows) | 1,000,000 | 30,535 | 2 | 3 | 1,471; 1,725; 22,539 | 809; 3,738; 6,864 us | 9,948 B; 3,213, 4,486 us |
+| Y9-3, the in-process store with real commits | 36,001 | 1,097 | 2 | 3 | one more save: 4 operations, its largest value 1,561 B | 1,428 us | 5 due instants taken off in order by the account's tick |
+| Before: the one row (V6) | 365 days; 34,952 | 1 | — | 1 | the whole row | 2.9 ms; 229 ms; refused past 34,952 | the whole row |
+
+At the design target, an account of 1,000,000 subjects with 160 facts each, if every fact had its own end of validity
+(160 million instants): about 3.6 million leaves, 20,000 inner nodes on one level and 116 on the next, the root at
+level 3, so 4 reads per save that adds an instant (one more than at a million) and one leaf rewritten; about 4.8 GB of
+live calendar values in that account. A save that adds no instant reads and writes nothing of the calendar, as before.
+
+**Y9: what still stands.** The tick is one commit per distinct due instant, and each appends a census-wide reconcile
+event (`advanceWithinTurn`, unchanged here). With instants at their own microsecond that is one census-wide event per
+distinct instant: at a million distinct instants a million census-wide events. The rows no longer bound the account;
+that tick does. A tick that names the subjects whose instant it is (the calendar holding each instant's subjects) is
+a design change for the owner, not made here.
+
+**Y3: the options (the owner decides; nothing built).** Today a process that holds a permission tries the settings
+transition four rounds of eight tries, then its Publish is refused with `SettingsPending` and writes nothing, every
+time, while more than 32 owed releases wait for their values; a process allowed nothing keeps publishing meanwhile.
+
+1. **The permitted Publish waits.** The four rounds become a deadline (the caller's, or a default such as ten minutes),
+   tried every 25 to 75 ms as now. The caller sees a slow Publish that lands when the backlog drains, or after the
+   deadline the same refusal as now. Cost: a few lines; each try reads the owed releases' progress rows again. What
+   could go wrong: under a pause the wait does not end and the caller's own request times out first; many waiting
+   Publishes each poll the account; the backlog keeps growing from processes allowed nothing.
+2. **The permitted Publish goes ahead under the stored settings, after its own cap check (the review's proposal).** When
+   the transition fails only because of the backlog (not a frame conflict), the Publish lands as a process allowed
+   nothing would, after the cap check the new settings would apply, so it never publishes a release the cap would
+   refuse. The settings turn on at the first Publish after the backlog falls to 32 or fewer. The caller sees its
+   Publish land at once; the account's status shows the settings pending, with the backlog. Cost: about 30 lines and a
+   test like `review4` W7 for the cap. What could go wrong: on an account nobody settles the settings may never turn
+   on; each Publish meanwhile adds to the backlog the transition must fence; the cap check must equal the new
+   settings' cap exactly, or the Z2 fault returns (an over-cap release lands). A variant fences in batches of 32 across
+   several commits instead: it removes the backlog limit but makes the transition a durable state with partly fenced
+   releases between batches, which every frame writer must respect; much more code and a new exactness argument.
+3. **The refusal says how long.** `SettingsPending` carries the owed releases waiting, the bound, whether a values
+   settler serves the account (paused or not) and the releases settled in the last minute, so the caller can wait the
+   right time or tell an operator the account is paused. Cost: small (the counts the transition already reads, plus a
+   rate). What could go wrong: nothing new for exactness, but the refusal is still not bounded in time during a pause,
+   which is the review's point.
+
+**Y8 (Z5), U8 and Z4: what closes each, and who owns it.**
+
+| # | What stands | What closes it | Who owns it |
+| --- | --- | --- | --- |
+| Y8 = Z5 | (a) With `TX2_ENROL_BESIDE_SAVES` unset the enrolment's ID is computable and another writer can take it; (b) with it set, one fact on one of its four entities blocks it | The gateway rule of 0.B (with `account-ids` on, a write that touches an account's names without naming that account is refused), with the save line's third-review condition 3 (the account a request names comes from the authenticated caller) and its R3-5 | The gateway account mechanism's builder (`exp/DX-S6-save-line-fixes`), merged by the integration line; nothing on this line |
+| U8 | Another account can read a Publish's record by its computed ID, or save under the next one first (never a wrong acknowledgement or write) | The gateway's account claims (0.B, condition 1): the command ID's account checked against the caller's | The same owner |
+| Z4 | The archive rows (`recorded-retired:...`) are a document kind the removal line's sealing check does not know; ledger parts are clear-text slices | The removal line accepting the archive row as a content-free kind checked to its exact shape, sealing ledger parts through its `ledgerChangeUnits` with Z1's rule, and bounding the sealed per-release cap (0.C, items 1 to 4); until then this line's settings and that line's sealing setting are never both on in one database | The removal line's builder (`exp/DX-ERA4-derived-copies`), at its merge with the integration line |
+
+**The gates at this head.** Code at `7cb36246d`. In process: 125 tests in 24 files pass (`calendar` 4, `review5` 5,
+`review4` 12, `round5` 4, `round6` 2 plus R6-1 to R6-3 with the two builds of `stamp-trees.sh`, 6 of 6 then; every other
+file as before), the SDK's `journal-bounds.test.ts` 3 of 3, and the gateway's suites in the image (`journal-page-test`,
+`group-test`, `feed-test`: 18 tests, 370 assertions, 0 failures and 1 error, `feed-test`'s `http-route`, which errors
+the same way on `850517da9`'s gateway: it reads the handler's byte body as a string). Stored-function identities
+(`xq10/idents.sh` of `exp/DX-INT1`, ten writer settings): `850517da9` against this head, 58 of 58 equal in every
+setting, none new. On the toy stack, every run on the private image `1ab9bddfec4b` built from this head (receipt
+`image-7cb36246d.json`, the run checkout's sources equal to the image's) and started by its ID:
+
+| Run | What | Attempt | Result |
+| --- | --- | --- | --- |
+| `stamp6b` | Y2 across an upgrade (`act10/stack-stamp6.ts`): the one branch (`2ce636613`) enrols, publishes R1, settles, publishes R2; this head then | `ffc0f25f` | **pass**, 15 of 15 checks: this head's Publish and settlement refused with `CompilerChanged` naming `ef5124d35ead` and `e10eb47907b7`, the tail still 2; a save and a read go on; the upgrade check lists the account as owing "values of releases 2; notices of events 2 to 2" and the re-stamp is refused with the same; the old build settles R2; the re-stamp lands (position 24); the old build's Publish is then refused (its own bare assertion: a build from before this round); this head publishes R3 and settles; events 1 and 2 read under the old stamp, 3 under this one; the check lists no account after |
+| `a10stamp6` | the fifth review's own stack run (`act10/stack-stamp.ts`), the same enrolling build | `c94416f2` | **as expected**: exactly the two checks the review's sentence names fail ("Publish and settle fail ... and write nothing"), now typed: `newPublishR2` and `newSettle` refused with `CompilerChanged`, the notice tail still 1; the save, the read and the read of the save work |
+| `g4-6` | every gate part, every permission on; then the ID scan in pages of 1,000 (the size that killed the write gateway in `g4R5`) | `af63f13a` | **pass**: 49 Publishes, 521 positions and 4,168 pinned reads between read and record, 111 racing saves checked, 6,764 notices in order and every ledger equal to the oracle; the scan: 49,892 transactions, 47,862 ordered saves, 12,408 other IDs, **0** inside a save block, 0 duplicates, 26 s. It does not show the bound refusing a page (no page here reaches 16 MiB; that is `journal_page_test.clj`) |
+| `g4off6-1`, `g4off6-2` | options off: every gate part, every option and permission off, the ID scan | `f6cec226`, `68884884` | **pass**, the published counts: 49 Publishes, 538 and 527 positions, 4,304 and 4,216 pinned reads, 6,764 notices in order; 47,862 ordered saves, 4,538 and 4,537 other IDs, **0** inside a save block, 0 duplicates |
+| `r1-6` | options off: the default campaign | `31c09d0d` | **pass**, the earlier counts: 86 changed values and 8 notices checked, 8 of 8 Publishes at one try, 0 read failures |
+| `r2-6` | options off: ACT5's live cases | `72343b88` | **pass**, the earlier counts: 474 changes and 160 notices (8 subjects owing) in each of the six single cases; second-p superseded at 1 subject (420, 1,200); 2,328 notices delivered once, 0 twice |
+| `r3c6` | ACT6's gate at 200 forms | `d43ca070` | **pass**, the earlier counts: 72 subjects, 4 stops (1 inside a ledger's parts), notices 14,400 / 7,200 / 21,672 delivered, 0 twice; 2 parts per ledger; independent rule 72 / 42,720 / 14,400; 76 value and 510 notice frames; the definitions table as before. One diagnostic number moved: the largest notice frame is 7,993 us (8,000 before), because Y1 sizes ledger parts for the largest cursor; the frames and every count are the same |
+| `s4-6` | the review's stack checks (`act10/stack-part.ts`), permissions on | `e748f68f` | **as fixed**, as `s4R5`: X1 its own record; X2 refused ("Reused command ID has different input"); X3, X4 land; P1 under head and progress, 0 value frames after the pause; S2 under both, superseded, not stored after the later release |
+| `g4grp6` | adversarial, kill, live and enrol with the group lane on | `1fbaa277` | **pass**: 33 Publishes, 343 positions, 2,744 pinned reads, 3,786 notices in order |
+| `g4res6` | the transactor and the write gateway restarted around a Publish and a frame | `6672fdcf` | **pass**: 6 Publishes, 23 positions, 184 pinned reads, 488 notices in order |
+| `g4k6` | the 1,000-form release, every permission | `3f7c4ffc` | **pass**: 2 Publishes at one try, 18 positions and 144 pinned reads between read and record, 8,008 notices in order |
+| `w4R6` | the held runner's unpaused windows, every permission | `d28cea56` | **pass**: 8 Publishes in 4 windows, each at one try, 0 refused, 0 missed deadlines, 0 read failures, 0 writes refused |
+| `r3stack6` | `stack-r3.ts` | `38269673` | **pass**, as `r3stack5`: the transition at 38 with a values frame in flight (not landed; 35 of 35 frames after with a random part); TP refused once; TF superseded; TN's planned frame did not land; RS on again at 144; the oracle 342, 175, 175 notices, 0, 160, 160 archived |
+| `r3kill6` | the same and KG, the write gateway killed inside three Publishes | `1e12d21f` | **pass**: all three inside; back in 5.4 s; each resend acknowledged at its first try, one record each (164, 165, 166); the oracle 342, 322, 322 notices, 0, 20, 20 archived |
+
+**The fuzz and W4 at this head** (in process, seeds new to this round, the reviewer's `ACT10_TRANSITIONS=1`):
+5,000 schedules with every permission in every process and shared keys (`--from 800000`): **0 violating** (490,102
+notices, 1,948 kills, 76,119 archived items); 2,500 schedules of a mixed fleet (`--from 810000`): **0 violating**
+(12,145 refusals of the old build); the isolation fuzzer, 1,000 schedules: **0 violating** (2,201 accounts, 4,798
+Publishes, 0 refused in a shared database); the negative control without the origin guard and the fence (the same
+seeds as the fifth round's): **9 violating**, so it still catches. `review4` W4 at 200 histories of 14 releases
+(4 × 50 seeds): seeds 0 to 49 and 50 to 99 pass, 0 failures and 0 stops (176,196 and 172,104 notices; the first
+batch's totals equal the fifth round's); seeds 100 to 199 were queued for a heavy slot when this page was written,
+and their totals follow in one line.
+
+**What is not tested in this round.**
+
+- **Y9 on a stack.** The toy holds no due instant and the held runner takes no deep save, so the calendar in parts ran
+  in process only (Y9-1 to Y9-4, with real commits in Y9-3). Every stack run's calendar is the empty list, byte for byte.
+- **The page bound refusing on a stack.** Shown in the image's in-memory Datomic and in the SDK against a fake gateway;
+  no stack page here reaches 16 MiB.
+- **Y2 for an account enrolled by `install()`** (not held): it re-enrols; `restamp` refuses it.
+- **An upgrade across more than one build change**, and a rollback after a re-stamp (the old build then refuses the
+  account, typed only from this round on).
+- **Y3**: nothing built.
+- **The removal line beside the archive (Z4)**, as before.
 
 ### 0.C The fourth review (2026-11-25, `act10/REVIEW-4.md` on `exp/DX-ACT10-publish-review`, `5079fa7cc`): what changed after it
 
