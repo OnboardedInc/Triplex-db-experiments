@@ -47,7 +47,7 @@ async function look(db: string, S: string, value: string, position: number, txId
   return { atLeast, atLeastMs, plain, log: inLog };
 }
 
-const delays = [0, 500, 1000, 1500, 2000, 3000, 5000, 10000, 20000];
+const delays = [0, 250, 500, 1000, 1500, 2000, 3000, 5000, 10000, 20000];
 let violations = 0, storedCases = 0;
 for (let i = 0; i < cases; i++) {
   const store = await openProduct(aUrl, `s5r5-restart-${i}-${randomUUID().slice(0, 8)}`,
@@ -57,14 +57,26 @@ for (let i = 0; i < cases; i++) {
   const seed = await transact([{ op: "assert", entityId: S, attribute: ":m/seed", value: { type: "string", value: "seed" }, entityType: "subject", validFrom: 0 }], {});
   assert.equal(seed._tag, "Success", "seed save");
   const value = `one note ${i} ${randomUUID().slice(0, 6)}`;
-  await ask("stop");
-  const pending = transact([{ op: "assert", entityId: S, attribute: ":m/note", value: { type: "string", value }, entityType: "subject", validFrom: 0 }],
+  // Even cases: the save is in flight while the transactor is killed and restarted (the mixed stack's case). Odd
+  // cases: the transactor is killed and restarted while both gateways are idle, then the save goes through A at once,
+  // so B's peer has had no request since the restart when it is read.
+  const inFlight = i % 2 === 0;
+  const note = () => transact([{ op: "assert", entityId: S, attribute: ":m/note", value: { type: "string", value }, entityType: "subject", validFrom: 0 }],
     { commandId: `note-${i}-${randomUUID()}` });
-  await sleep(300 + 100 * i);
-  await ask("kill");
-  const exit = await pending;
+  let exit;
+  if (inFlight) {
+    await ask("stop");
+    const pending = note();
+    await sleep(300 + 100 * i);
+    await ask("kill");
+    exit = await pending;
+  } else {
+    await ask("stop");
+    await ask("kill");
+    exit = await note();
+  }
   const answeredAt = performance.now();
-  if (exit._tag !== "Success") { log("CASE", { case: i, reported: code(exit.cause) }); await store.close(); continue; }
+  if (exit._tag !== "Success") { log("CASE", { case: i, inFlight, reported: code(exit.cause) }); await store.close(); continue; }
   storedCases++;
   const position = Number((exit.value as any).position);
   const txId = String((exit.value as any).txId);
@@ -77,7 +89,7 @@ for (let i = 0; i < cases; i++) {
     if (r.atLeast === "ANSWERED WITHOUT THE SAVE") violations++;
   }
   const first = (k: string, v: string) => reads.find((r) => r[k] === v)?.afterMs ?? null;
-  log("CASE", { case: i, reported: "stored", position, txId, firstAtLeastHas: first("atLeast", "has the save"), firstPlainHas: first("plain", "has"),
+  log("CASE", { case: i, inFlight, reported: "stored", position, txId, firstAtLeastHas: first("atLeast", "has the save"), firstPlainHas: first("plain", "has"),
     firstLogHas: first("log", "has"), reads });
   await store.close();
 }
