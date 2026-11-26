@@ -46,10 +46,10 @@ settings=(
   "group:$base TX2_GROUP_COMMIT=1"
   "group-accounts:$base TX2_GROUP_COMMIT=1 TX2_ACCOUNT_CLAIMS=1"
   # [DX-S6b fourth pass] the third review's settings: predecessor lookup off (the gateway's default), the import pipeline
-  "accounts-on-nopred:$base TX2_ACCOUNT_CLAIMS=1 TX2_PREDECESSOR_LOOKUP=0"
-  "accounts-on-general-nopred:TX2_SUBJECT_SAVE=0 TX2_ACCOUNT_CLAIMS=1 TX2_PREDECESSOR_LOOKUP=0"
+  "accounts-on-nopred:$base TX2_ACCOUNT_CLAIMS=1 TX2_PREDECESSOR_LOOKUP=0 TX2_ACCOUNT_IDS_NOPRED_FOR_TESTS=1"
+  "accounts-on-general-nopred:TX2_SUBJECT_SAVE=0 TX2_ACCOUNT_CLAIMS=1 TX2_PREDECESSOR_LOOKUP=0 TX2_ACCOUNT_IDS_NOPRED_FOR_TESTS=1"
   "accounts-on-import:$base TX2_ACCOUNT_CLAIMS=1 TX2_IMPORT_PIPELINE=1"
-  "general-nopred:TX2_SUBJECT_SAVE=0 TX2_PREDECESSOR_LOOKUP=0"
+  "general-nopred:TX2_SUBJECT_SAVE=0 TX2_PREDECESSOR_LOOKUP=0 TX2_ACCOUNT_IDS_NOPRED_FOR_TESTS=1"
 )
 s5="-i /exp/s5/fuzz.clj"
 case $mode in
@@ -62,6 +62,9 @@ case $mode in
   attack2) files="$s5 -i /exp/s5/attack_gate.clj -i /exp/s5/attack2_gate.clj"; expr="(s5-attack2/main)" ;;
   attack3) files="$s5 -i /exp/s5/attack3_gate.clj"; expr="(s5-attack3/main)" ;;
   installs) files="$s5 -i /exp/s6/installs_gate.clj"; expr="(s6-installs/main)" ;;
+  # [DX-S6c fifth pass] the fourth review's findings, and the reviewer's attack4 itself
+  window) files="$s5 -i /exp/s5/attack3_gate.clj -i /exp/s5/attack4_gate.clj -i /exp/s6/window_gate.clj"; expr="(s6-window/main)" ;;
+  attack4) files="$s5 -i /exp/s5/attack3_gate.clj -i /exp/s5/attack4_gate.clj"; expr="(s5-attack4/main)" ;;
   ids) files="$s5 -i /exp/s6/stored_ids_gate.clj"; expr="(s6-ids/main)" ;;
   owners) files="-i /exp/s3/owners_gate.clj -i /exp/s6/gates_main.clj"; expr="(s6-gates/run (quote owners-gate))" ;;
   create) files="-i /exp/s3/owners_gate.clj -i /exp/s4/create_gate.clj -i /exp/s6/gates_main.clj"; expr="(s6-gates/run (quote create-gate))" ;;
@@ -80,12 +83,12 @@ for entry in $wanted; do
   docker run --rm --name "$name" --label dx-s6=clj --pull never --memory 3g ${key[@]+"${key[@]}"} \
     -e TX2_GROUP_COMMIT=${group:-0} -e TX2_LIVE_PRIORITY=0 -e TX2_PREDECESSOR_LOOKUP=1 -e TX2_LEAN_NATIVE_QUERY=1 -e TX2_LEAN_NATIVE_LOG=1 "${envs[@]}" \
     -e TRIPLEX_TRACE_LEVEL=off -e TRIPLEX_ERASURE_DIRECTORY=/tmp/erasure -e PREP1_ATTEMPT=dx-s6-clj \
-    -e S5_SEEDS -e S5_STEPS -e S5_ROUNDS -e S5_THREADS -e S5_PER_THREAD -e S5_REMOVALS -e S5_VALUE_TYPES -e S5_PROTECTED -e S6_ACCOUNT_SCHEDULES -e S5_FAULTS -e S5_ACCOUNTS -e S5_ONLY \
+    -e S5_SEEDS -e S5_STEPS -e S5_ROUNDS -e S5_THREADS -e S5_PER_THREAD -e S5_REMOVALS -e S5_VALUE_TYPES -e S5_PROTECTED -e S6_ACCOUNT_SCHEDULES -e S5_FAULTS -e S5_ACCOUNTS -e S5_ONLY -e S5_TRANSITION -e S5_OLD_REOPEN \
     ${dev[@]+"${dev[@]}"} -v "$repo/lab/experiments/EXP-DX1:/exp:ro" --entrypoint /bin/bash "$image_id" -c "
       mkdir -p /tmp/erasure && cd /opt/datomic && java -Xmx2g -XX:+UseSerialGC -Dtriplex.codec.spec=/opt/gateway/codec-spec.json \
         -cp \"/opt/gateway/src:\$(bin/classpath)\" clojure.main -i /exp/wfix1/regression.clj -i /exp/w2/wide_gate.clj $files \
         -e '$expr'" > "$out/$mode-$entry.log" 2>&1 || status=1
-  echo "$entry: $(grep -E '^DX-S[56]_RESULT ' "$out/$mode-$entry.log" || echo 'no summary')"
+  echo "$entry: $(grep -E '^DX-S[56](R[34])?_RESULT ' "$out/$mode-$entry.log" || echo 'no summary')"
 done
 echo "DX-S6_CLJ_EXIT $status"
 exit "$status"

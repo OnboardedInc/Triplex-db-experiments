@@ -38,8 +38,8 @@ settings=(
   "accounts-on-serial:$base TX2_ACCOUNT_CLAIMS=1 TX2_SUBJECT_NARROW_REVISION=1 TX2_SUBJECT_REUSE_PREDECESSOR=1 TX2_SUBJECT_APPEND_RETIREMENT=1"
   "accounts-on-general:TX2_SUBJECT_SAVE=0 TX2_ACCOUNT_CLAIMS=1"
   # The gateway's default (predecessor lookup off): the general writer is the fixed ident :triplex/commit.
-  "accounts-on-nopred:$base TX2_ACCOUNT_CLAIMS=1 TX2_PREDECESSOR_LOOKUP=0"
-  "accounts-on-general-nopred:TX2_SUBJECT_SAVE=0 TX2_ACCOUNT_CLAIMS=1 TX2_PREDECESSOR_LOOKUP=0"
+  "accounts-on-nopred:$base TX2_ACCOUNT_CLAIMS=1 TX2_PREDECESSOR_LOOKUP=0 TX2_ACCOUNT_IDS_NOPRED_FOR_TESTS=1"
+  "accounts-on-general-nopred:TX2_SUBJECT_SAVE=0 TX2_ACCOUNT_CLAIMS=1 TX2_PREDECESSOR_LOOKUP=0 TX2_ACCOUNT_IDS_NOPRED_FOR_TESTS=1"
   "accounts-on-import:$base TX2_ACCOUNT_CLAIMS=1 TX2_IMPORT_PIPELINE=1"
   # [S5 fourth review] The reconciled removal branch (S5_BUILD=era6): its replay rule off (its default) and on.
   "era6-rule-off:$base TX2_PROTECTION_UNSEALED_FOR_TESTS=1"

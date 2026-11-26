@@ -818,6 +818,10 @@
   "[DX-S6b] A save: refused at once under a command a removal declined (S5 R3-3); its commands recorded when it is
   declined across a removal."
   [name conn db input]
+  ;; [DX-S6c] S5 R4-1 and R4-4: under the account-ID setting, before any check that can refuse this save, every moved
+  ;; writer an older build wrote again is refused again, and a gateway with predecessor lookup off serves no save.
+  ;; With the setting absent: one datom read.
+  ((requiring-resolve 'triplex.gateway.account-claims/guard!) conn)
   (declined-check! db input)
   (try (commit-inner! name conn db input)
        (catch clojure.lang.ExceptionInfo e

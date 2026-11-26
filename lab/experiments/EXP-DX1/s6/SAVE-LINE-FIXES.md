@@ -794,38 +794,32 @@ be reached by the system only.
 | R3-4 (an import stream stopped at the transition) | the predecessor keeps its stored form | `an-import-chain-across-the-transition` (accounts-on-import) |
 | R3-5 (a write of no one account's names blocks an ID) | under the setting every save naming A is A's; only a request naming no account (the system's, 13.2) can still write a plain claim | `one-account-against-anothers-command-ids-with-the-setting-on` (measured); `stored_ids_gate` frames |
 | R3-6 (an optimistic replay declined for any removal) | the SDK states its frame on an optimistic attempt | `r2-2-an-optimistic-replay-against-an-old-removal`; SDK suite |
-| R3-7 (an old build's refusal named nothing) | the refusal's text names the setting; this build answers it `409 CasConflict`, a build that does not know the marker answers it with that text | `the-refusal-names-the-setting` |
+| R3-7 (an old build's refusal named nothing) | the refusal's text names the setting; this build answers it `409 CasConflict`. **Corrected after the fourth review (R4-6):** a build that does not know the setting never shows that text: on the stack `a6d02225c` answers the refusal `503 OutcomeUnknown` (after a fence of about 400 ms a save) and `23b7df344` `400 TransactionRejected`; neither names the setting. The text is in the transactor's refusal and in the gateway's log only | `the-refusal-names-the-setting` |
 | R3-8 (account names differ by form) | one rule, `[A-Za-z0-9_.-]{1,64}`, in `account_claims.clj`, `group.clj` and `subject_owners.clj`, and for a request's `account` | `a-request-naming-one-account-cannot-write-another` (`dottedAccount`) |
 
-### 13.5 Expected conflicts with the removal branch
+### 13.5 The merge with the removal branch (replaced after the fourth review)
 
-Against `origin/exp/DX-ERA2-removal-per-account` at `0c380f341`, which does not contain `cdfc70e02` yet (`git merge-tree`):
-`storage.clj` 4 hunks, `main.clj` 6, `privacy.clj` 1, `DatomicStorageAdapter.ts` 2, `ha1/local.ts` 1. The review's
-trial merge of `cdfc70e02` saw 3, 5, 1, 2 and 1; this pass adds one hunk in `storage.clj` (`frame-check!`, the
-declined commands and `commit!` beside the branch's `decline-check!`) and one in `main.clj` (the removal and declaration
-routes' prefix check beside the branch's removal route). Where the halves meet: the declined commands use the branch's
-own attributes (`:triplex.removal/declined-command`, `:triplex.removal/declined-by`), `removalSeen` is read when sent,
-and one decline check should stay (the branch's `decline-check!` or this `frame-check!`, not both).
+**The removal builder writes that merge, not this branch.** The resolution this section proposed in the fourth pass
+(take the removal branch's side for the replay rule and drop this branch's `frame-check!`, `declined-check!` and
+`record-declined!`) was wrong: the fourth review (R4-3) found that, at the removal branch's default (its replay rule
+off), the merged build then has no decline check at all, because dropping them also drops the third pass's
+`replay-frame-check!`, which the branch never touched; R2-2 came back in full (the SDK's replay across a removal stored
+the removed value 4 of 4, the caller's resend 4 of 4, a save racing a removal 3 of 5 writers).
 
-**Against the reconciliation branch** (`origin/exp/DX-ERA6-removal-on-save-line`: tested code `ae82b8984`, which
-contains `cdfc70e02`; also its newest head `d500015e7`, the same result), `git merge-tree` of this head `80b12a669`:
+**The reviewer's corrected resolution** (trial merge `9fe2e5f02`, 23 of 23 R2-2 cases declined with the rule off):
 
-| File | Conflicting hunks | What meets |
-| --- | --- | --- |
-| `storage.clj` | 2 | the catch tail (this branch adds `TRIPLEX_ACCOUNT_IDS_ON` to the 409 list) beside the branch's `reply/commit-message`; this branch's `commit!` wrapper (`declined-check!`, `record-declined!`) beside the branch's own declined-command code |
-| `DatomicStorageAdapter.ts` | 2 | this branch's optimistic `frameSourceK` beside the branch's `removalSeen` / `frameRemovalSeen` in `wire()` |
-| `s5/attack3_gate.clj` | add/add | both branches carry an edited copy of the review's test |
+- the conflicts are as listed before: `storage.clj` 2 hunks, `DatomicStorageAdapter.ts` 2, `s5/attack3_gate.clj`
+  add/add;
+- take the branch's side in the SDK (`wire()`, `removalSeen`) and keep `TRIPLEX_ACCOUNT_IDS_ON` in the catch tail;
+- **keep** this branch's `frame-check!`, `declined-check!` and `record-declined!`, each run only on the branch's
+  replay-rule-off path (`(when (not replay-rule) ...)` around each, about 60 lines in `storage.clj`); with the rule on,
+  the branch's `decline-check!` decides;
+- or, instead, flip the branch's `replay-rule-default` to true in that same merge;
+- either way the branch's `already-stored?` and its declined-command records stay; they use the same attributes as
+  this branch's (`:triplex.removal/declined-command`, `:triplex.removal/declined-by`).
 
-Everything else applies cleanly on `ae82b8984`: `account_claims.clj` (R3-1 installs and repair, R3-2 route 1's
-refusal, R3-4, R3-5, R3-7, R3-8), `main.clj` (the install wrap, the settings route's `t`, the removal route's identical
-prefix check), `outcome.clj`, `group.clj`, `subject_owners.clj`, `TransactionContext.ts`, the new tests and runners.
-**Resolution:** take the branch's side for the merged replay rule (its `decline-check!`, its declined-command records,
-its `removalSeen` in `wire()`) and drop this branch's `frame-check!`, `declined-check!` and `record-declined!`; keep
-this branch's `TRIPLEX_ACCOUNT_IDS_ON` mapping in the catch tail and the routing after `subject-plan`; in the SDK keep
-the branch's `wire()` and add this branch's optimistic `frameSourceK` line only if the branch does not already state a
-frame on an optimistic attempt (R3-6). Per the branch's note, of the review's tests only R3-1, R3-2 route 1, R3-4, R3-6
-and the general writer's r2-2 race still fail there; this branch's fixes for the first four are in the files that apply
-cleanly (R3-6's half is the SDK line above).
+The fifth pass adds `guard!` at the top of `storage.clj` `commit!` (one line) and changes `account_claims.clj` only;
+neither touches the removal branch's hunks.
 
 ### 13.6 The gates of the fourth pass (2026-11-25, diagnostic sizes on the Mac)
 
@@ -892,6 +886,70 @@ the project folder, with `SHA256SUMS`.
   twice after); each run checks the state it left, it does not prove every instant was hit.
 - **Who the caller is:** the gateway cannot tell; that is the front layer's (13.2).
 - **Times:** every time on this page is diagnostic (Mac, toy sizes); none is a latency verdict.
+
+## 14. After the fourth review: the fifth pass (design and predictions written before the counted runs, 2026-11-25 20:40 EST)
+
+The fourth review ([REVIEW-4](../s5/REVIEW-4.md), `9c0d7ea26`, fuzz totals `84d470328`) found `9f210018f` fit to merge
+with the setting off, and two High findings with it on: an older build still writes after the transition (R4-1), and a
+request naming one account can make an entity another account's (R4-2, setting on and off). R4-3 (the merge with the
+removal branch) is the removal builder's: 13.5 now gives the reviewer's corrected resolution.
+
+### 14.1 The changes
+
+| Finding | Change | Where |
+| --- | --- | --- |
+| R4-2 (High) | A request naming A that asserts `:subject/account` with any value but the string A is refused `400 InvalidValue`, setting on and off, on every writer (checked in `stored-ids`, before any writer is chosen). Only the rows whose text names the field are decoded. A save that gives an entity its own account's value is stored, and the entity is then that account's (another account is refused writing it) | `account_claims.clj` `other-account-values`, `request-rows` |
+| R4-1 (High), the general writer | The transition's own transaction also puts an attribute predicate on the scope's recorded general-writer hash (`:db.attr/preds clojure.core/nil?`, Datomic's own mechanism; that function is on every transactor's classpath and is false for any hash). An older build writes its general writer under `:triplex/commit` only when the recorded hash is not its own, and always with its hash in the same transaction, so the database refuses that transaction whole: the older build's open fails and its body is never written. This build never writes the hash under the setting | `account_claims.clj` `hash-bar`, `turn-on!` |
+| R4-1, everything else, and the fuzz case | `guard!`, the first step of every save of this build (before any check that can refuse it): when any stored function was written since this process last looked (the newest `:db/fn` transaction moved), every moved ident and any new writer ident is checked and each working body is replaced by the refusal (a new ident is moved to its twin). So the window an older build opens under a new ident, or a body written without a hash (R4-7), closes at this build's next save of any kind, including a save refused before routing | `account_claims.clj` `guard!`; `storage.clj` `commit!` |
+| R4-5 (Medium) | A plain claim committed after the setting's transaction is no account's: an account's lookup does not return it, and it never refuses an account's save of that command (stored under the scoped form) | `account_claims.clj` `after-setting?`, `find-claim`, `stored-ids` |
+| R4-8 (Low) | Every scope open of this build (`installing`) and every `turn-on!` installs the setting guard when the attribute exists without it, and the hash bar when the setting is on without it | `account_claims.clj` `ensure-setting-schema!` |
+| R4-7 (Low) | An install that read the database before the transition and writes a new hash after it is refused by the hash bar and retried on the new view (`changed?`); one that writes no hash is closed by `guard!` at the next save | as above |
+| R4-4 (Medium) | Predecessor lookup on, on every gateway, is a condition for the setting. A process with it off neither turns the setting on nor serves a save under it: `409 AccountIdsNeedPredecessorLookup` (after `guard!`'s repair, so it still closes a window). `TX2_ACCOUNT_IDS_NOPRED_FOR_TESTS=1` (test only) lets the gates keep exercising that path | `account_claims.clj` `pred-lookup-required!` |
+| R4-6 (Low) | 13.4 corrected: older builds never show the refusal's text | page |
+
+**What the window is now.**
+
+```
+older build opens after the transition
+ ├─ its general writer differs (hash not its own) ──► install refused by the database (hash bar): no window
+ ├─ its writer has an ident the database did not hold ─┐
+ └─ a body written without a hash (stale install) ─────┴─► working until THIS build's next save of any kind
+                                                            (guard!: one scan of the :db/fn datoms per save)
+```
+
+The remaining window has no bound in time when this build receives no save. The reviewer's lever was tried for it
+too: Datomic refuses an attribute predicate on its system attributes (`s6/system_preds.clj`: `:db.error/attr-pred-on-
+system-attr :db.attr/preds cannot be added to system attribute :db/fn`, the same for `:db/ident`), and an older build's
+new writer writes nothing else this build could put a predicate on. So the operations rule stays for that case: after
+the transition only builds of this pass or later open the database; breaking it costs saves of that build until this
+build's next save, which `guard!` then refuses, and their plain claims are no account's (R4-5).
+
+### 14.2 Predictions (written before the counted runs)
+
+- **In process.** The reviewer's `a-request-naming-one-account`: the planted case refused, 0 of 10 stored (5 settings,
+  setting on and off). `the-admitted-window-after-an-old-build-opens` errors at its first step in every setting: its
+  `old-open!` transaction is refused by the hash bar (`:db.error/attr-pred … clojure.core/nil?`); this is the expected
+  result and is listed as such. `an-install-read-before-the-transition-commits-after-it` passes (its install is refused
+  by the bar; `oldIdentWorksAfterTheCrash` false). The other attack4 and attack3 tests pass, apart from the third
+  review's general-writer harness arm (10 assertions in each setting that sends every save through the general
+  writer).
+- **The fuzzer, the reviewer's seeds 733 to 735 in `accounts-on-general-nopred`** (3 differences on the old head,
+  reproduced here first): 0 differences; every old-build open is refused by the bar (`oldOpensBarred` equal to the
+  old-reopen steps), and the body then written without a hash is closed by the step's next save of this build.
+- **The guard's cost (Mac, diagnostic):** setting absent, one datom read and no transaction; setting on, one scan of
+  the `:db/fn` datoms per save (11 to about 140 datoms here), under 10 µs.
+- **Setting absent:** the native log identical datom for datom to the base; the 58 stored-function identities equal in
+  6 settings (no stored function changed).
+- **The window stack (`s5/window.ts`, predecessor lookup on):** P1, `a6d02225c` with the serial options: 10 of 10
+  stored after its open (its new ident; this build has not saved since), then 0 of 10 after this build's first save
+  (the review saw 10 of 10 after three routed saves), 0 while alone, 0 after a head open. P2, `a6d02225c` under the load
+  profile: its open refused (logged `OPEN_REFUSED`), so no save of it at all; `23b7df344` refused after it. P3: the
+  account's own client saving the command an older build stored in P1's window: stored (the review saw
+  `CommandAlreadyCommittedError`). With predecessor lookup off (and the test override on the head's gateways), the
+  same.
+- **What would show this wrong:** any older-build save stored after a save of this build; any older-build open that
+  writes a body with a hash; a plain claim returned to an account after the setting; any difference with the setting
+  absent.
 
 ## 10. The standing gate phase and the other gates
 

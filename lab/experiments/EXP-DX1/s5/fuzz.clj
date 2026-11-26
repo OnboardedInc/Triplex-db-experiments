@@ -712,9 +712,20 @@
                code (with-redefs-fn {(commit-var "owner-root-guard?") true}
                       #((commit-var "observe-load") ((commit-var "instrument-code") ((commit-var "expand-code") @(commit-var "observe-range")))))]
            (d/function {:lang :clojure :params '[db payload] :requires '[[datomic.api :as d] [clojure.data.json :as json]] :code code}))))
+(def old-opens-barred
+  "[DX-S6c] Old-build opens the database refused as a whole (the hash bar), counted."
+  (atom 0))
 (defn- old-open! [conn]
   (let [scope (:e (first (d/datoms (d/db conn) :aevt :triplex.scope/key)))]
-    @(d/transact conn [{:db/ident :triplex/commit :db/fn @old-body} [:db/add scope :triplex.scope/commit-fn-hash "an-old-build"]])))
+    (try @(d/transact conn [{:db/ident :triplex/commit :db/fn @old-body} [:db/add scope :triplex.scope/commit-fn-hash "an-old-build"]])
+         (catch Exception e
+           ;; [DX-S6c] From the fifth pass the database refuses that transaction whole once the setting is on (the hash
+           ;; bar), so the old build's open fails and its body is never written. To keep exercising the repair, the same
+           ;; working body is then written alone, without the hash: the shape of an install that read the database
+           ;; before the transition (R4-7) or of a writer the bar does not stop.
+           (when-not (re-find #"clojure\.core/nil\?" (str e (.getCause e))) (throw e))
+           (swap! old-opens-barred inc)
+           @(d/transact conn [{:db/ident :triplex/commit :db/fn @old-body}])))))
 
 (defn extra-step!
   "One step of the third review's dimensions, after the main step, on both scopes: the transition (once), a save
@@ -973,6 +984,8 @@
                                              :faultSteps (reduce + (for [r runs [m n] (:modes r) :when (str/starts-with? (name m) "fault-")] n))
                                              :shadowSaves (reduce + (for [r runs] (get-in r [:modes :shadow] 0)))
                                              :shadowsOfANoOneAccountClaim (reduce + (for [r runs] (get-in r [:modes :shadow-of-a-no-one-account-claim] 0)))
+                                             :oldReopens (reduce + (for [r runs] (get-in r [:modes :old-reopen] 0)))
+                                             :oldOpensBarred @old-opens-barred
                                              :settings (into (sorted-map) (filter (fn [[k]] (str/starts-with? k "TX2_")) (System/getenv)))}))
     (shutdown-agents)
     (System/exit (if (empty? bad) 0 1))))

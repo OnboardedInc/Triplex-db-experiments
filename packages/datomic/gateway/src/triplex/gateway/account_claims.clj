@@ -29,6 +29,12 @@
   The reserved prefix may not begin any client-supplied ID on any route (save, claim, begin, command, operation,
   fence), whatever the setting (S5 R2-3).
 
+  [DX-S6c] Older builds after the transition (S5 R4-1, R4-4, R4-5). The transition also puts an attribute predicate on
+  the scope's recorded general-writer hash (`hash-bar`), so an older build whose general writer differs cannot open
+  the database at all (its install is refused whole). Any other working body an older build writes under a moved ident
+  or a new writer ident is replaced at this build's next save of any kind (`guard!`, the first step of every save).
+  A plain claim committed after the setting's transaction is no account's. The setting requires predecessor lookup on.
+
   Loaded through requiring-resolve, after every stored function is defined; no stored function changes."
   (:require [clojure.string :as str] [datomic.api :as d] [triplex.gateway.lean :as lean]))
 
@@ -137,6 +143,21 @@
                       [{:db/ident (twin i) :db/fn f} [:db/add e :db/fn @refusal]])))
           es))
 
+(def hash-bar
+  "[DX-S6c] S5 R4-1: the attribute predicate the transition puts on the scope's recorded general-writer hash. A build
+  that does not know the setting writes its general writer under `:triplex/commit` and its hash in one transaction
+  (its `install-base!`), and only when the recorded hash is not its own; under the setting that transaction is refused
+  as a whole by the database (Datomic's own attribute predicates, `:db.attr/preds`; `clojure.core/nil?` is on every
+  transactor's classpath and is false for any hash), so that build's open fails and its general writer is never
+  written. This build never writes the hash under the setting (`rewrite-install`)."
+  'clojure.core/nil?)
+(def ^:private hash-attr :triplex.scope/commit-fn-hash)
+(defn hash-barred?
+  "Whether the database refuses a new recorded hash (the setting's predicate is on the hash attribute)."
+  [db]
+  (boolean (when-let [a (d/entid db hash-attr)] (some #(= hash-bar (:v %)) (d/datoms db :eavt a :db.attr/preds)))))
+(defn- hash-bar-op [] [:db/add hash-attr :db.attr/preds hash-bar])
+
 (defn- writer-functions [db]
   (map first (d/q '[:find ?e :where [?e :db/fn] [?e :db/ident ?i]] db)))
 
@@ -206,13 +227,23 @@
         (fn [orig] (fn [conn tx & more] (if *installing* (install-transact orig conn tx more) (apply orig conn tx more)))))
       true))
 
-(defn- changed? [^Throwable e]
-  (loop [x e] (cond (nil? x) false (re-find #"TRIPLEX_ACCOUNT_IDS_CHANGED" (str (.getMessage x))) true :else (recur (.getCause x)))))
+(defn- changed?
+  "The install read the database before the setting changed: the setting guard refused it, or (an install that read
+  the database before the transition and wrote a new recorded hash after it) the hash bar did."
+  [^Throwable e]
+  (loop [x e] (cond (nil? x) false
+                    (re-find #"TRIPLEX_ACCOUNT_IDS_CHANGED|commit-fn-hash.*clojure\.core/nil\?|clojure\.core/nil\?.*commit-fn-hash" (str (.getMessage x))) true
+                    :else (recur (.getCause x)))))
+
+(declare ensure-setting-schema!)
 
 (defn installing
   "Runs a scope open's installs under the setting's rules (above), again if the setting changed under them, then
   repairs any moved ident another build rewrote. Returns what `f` returns (the database)."
   [conn f]
+  ;; [DX-S6c] S5 R4-8: a database turned on by a build with the setting but without the guard (cdfc70e02) gets the
+  ;; guard, and the hash bar, before this build's installs run, so they take the guarded path.
+  (ensure-setting-schema! conn)
   (loop [n 0]
     (let [r (try (binding [*installing* true] (f))
                  (catch Exception e (if (and (changed? e) (< n 3)) ::again (throw e))))]
@@ -233,6 +264,20 @@
     (alter-var-root (requiring-resolve sym)
       (fn [orig] (fn [conn & args] (if *installing* (apply orig conn args) (installing conn #(apply orig conn args))))))))
 
+(def nopred-for-tests
+  "[DX-S6c] Test only: lets a process with predecessor lookup off serve saves under the setting, so the gates can keep
+  exercising that path. Never set outside tests."
+  (= "1" (System/getenv "TX2_ACCOUNT_IDS_NOPRED_FOR_TESTS")))
+
+(defn pred-lookup-required!
+  "[DX-S6c] S5 R4-4: the setting requires predecessor lookup on, on every gateway (with it off, builds with different
+  general writers re-open each other's window through the fixed ident). A process with it off neither turns the
+  setting on nor serves a save under it."
+  []
+  (when-not (or @(requiring-resolve 'triplex.gateway.predecessor/enabled) nopred-for-tests)
+    (throw (ex-info "This database's account-ID setting is on (or being turned on) and this gateway runs with predecessor lookup off (TX2_PREDECESSOR_LOOKUP=1 is required)"
+                    {:status 409 :code "AccountIdsNeedPredecessorLookup" :write-policy true}))))
+
 (defn turn-on!
   "Turns the setting on (one way), in the transaction that moves every save-writer function to its twin. Only a
   process with TX2_ACCOUNT_CLAIMS=1 may."
@@ -246,8 +291,27 @@
                                               :code setting-guard-code})}]))
     (let [db (d/db conn)]
       (when-not (= 1 (setting db))
-        @(d/transact conn (vec (concat [[:db/add (scope-eid db) setting-attr 1]] (swap-ops db (writer-functions db))))))
+        (pred-lookup-required!)
+        ;; [DX-S6c] The hash bar is set in the transition's own transaction: never one without the other.
+        @(d/transact conn (vec (concat [[:db/add (scope-eid db) setting-attr 1] (hash-bar-op)] (swap-ops db (writer-functions db))))))
+      ;; A database turned on before this pass gets the hash bar here too (R4-8: posting the setting again).
+      (ensure-setting-schema! conn)
       (d/db conn))))
+
+(defn ensure-setting-schema!
+  "[DX-S6c] S5 R4-8: with the setting attribute present, the setting guard exists; with the setting on, the hash bar
+  is on the hash attribute (a database turned on before this pass). Nothing is written while the attribute is absent.
+  Returns nil."
+  [conn]
+  (let [db (d/db conn)]
+    (when (d/entid db setting-attr)
+      (when-not (d/entid db setting-guard)
+        @(d/transact conn [{:db/ident setting-guard
+                            :db/fn (d/function {:lang :clojure :params '[db scope expected] :requires '[[datomic.api :as d]]
+                                                :code setting-guard-code})}]))
+      (when (and (= 1 (setting db)) (not (hash-barred? db)))
+        @(d/transact conn [(hash-bar-op)]))
+      nil)))
 
 (defn- ensure-twin!
   "The twin of `ident` in a database whose setting is on, and its body's transaction. A function first installed after
@@ -267,6 +331,30 @@
     (when-not (contains? #{nil 1} v)
       (throw (ex-info "This database has an account-ID setting this build does not know" {:status 409 :code "SettingUnknown" :write-policy true})))
     (= 1 v)))
+
+(def ^:private marks "conn -> the newest transaction of any stored function, when this process last checked." (atom {}))
+(defn- fn-mark
+  "The newest transaction that wrote any stored function body (one scan of the :db/fn datoms, about 140 here)."
+  [db]
+  (reduce (fn [m x] (max m (long (:tx x)))) 0 (d/datoms db :aevt :db/fn)))
+
+(defn guard!
+  "[DX-S6c] S5 R4-1 and R4-4: the first step of every save of this build, before any check that can refuse it.
+  Setting absent: one datom read, nothing else. Setting on: when any stored function was written since this process
+  last looked (the newest :db/fn transaction moved), every moved ident is checked, the old ones and any new one
+  another build installed, and each working body is replaced by the refusal (a new one moved to its twin) before this
+  save goes on; then the save is refused when predecessor lookup is off (R4-4). So a window an older build opens closes at
+  this build's next save, whatever that save's answer (the review's fuzz case: a save refused before routing)."
+  [conn]
+  (let [db (d/db conn)]
+    (when (on? db)
+      ;; The repair first: a gateway that refuses the save below still closes the window.
+      (let [m (fn-mark db)]
+        (when-not (= m (get @marks conn))
+          (let [after (repair! conn db)]
+            (swap! marks assoc conn (fn-mark after)))))
+      (pred-lookup-required!))
+    nil))
 
 (defn- repair-routed!
   "The old ident a save is routed away from, and the general writer's fixed ident `:triplex/commit` (the one a build
@@ -333,6 +421,15 @@
   [conn db claim account]
   (= account (owner conn db claim)))
 
+(defn- after-setting?
+  "[DX-S6c] S5 R4-5: whether plain claim `e` was committed after the setting's transaction. Under the setting a save
+  naming an account is stored scoped, so such a plain claim is a request naming no account (the system's) or a save
+  of a build that does not know the setting (R4-1's window): no account's, never returned to an account, never
+  refusing an account's save."
+  [db e]
+  (when-let [st (setting-t db)]
+    (when-let [x (first (d/datoms db :eavt e :triplex.claim/command-id))] (> (d/tx->t (:tx x)) st))))
+
 (defn find-claim
   "[claim-entity status] of command `id` for `account`: :scoped, :plain (an owned plain claim), :taken (a plain claim
   that is not this account's, not returned) or nil. Without an account: today's database-wide lookup of the plain form."
@@ -342,7 +439,9 @@
     (if-let [e (d/entid db [:triplex.claim/command-id (encode account id)])]
       [e :scoped]
       (when-let [e (d/entid db [:triplex.claim/command-id id])]
-        (if (owned? conn db e account) [e :plain] [nil :taken])))))
+        (cond (after-setting? db e) nil
+              (owned? conn db e account) [e :plain]
+              :else [nil :taken])))))
 
 (defn account-for
   "The account a lookup is made for: the one it names, or else the one account of the entities it names (`entities`,
@@ -362,6 +461,26 @@
         business (remove #(or (journals %) (journal-id? %)) (filter string? (:owners p)))]
     (disj (set (keep #(account-of-id db %) business)) account)))
 
+(def ^:private account-field ":subject/account")
+(defn- request-rows
+  "The rows of a save request that name `:subject/account`, decoded, in every wire mode (rows, rowTexts as a map or an
+  ordered frame, freshTexts). Only a row whose text contains the field's name is decoded."
+  [input]
+  (let [decode-row @(requiring-resolve 'triplex.gateway.storage/decode-row)
+        t (get input "rowTexts")
+        texts (concat (cond (map? t) (vals t) (sequential? t) t) (let [f (get input "freshTexts")] (when (sequential? f) f)))]
+    (concat (map decode-row (filter #(and (map? %) (str/includes? (str (get % "attribute")) account-field)) (get input "rows")))
+            (keep #(when (and (string? %) (str/includes? % account-field)) (try (lean/decode %) (catch Exception _ nil))) texts))))
+
+(defn- other-account-values
+  "[DX-S6c] S5 R4-2: whether the save asserts `:subject/account` with anything but `account` (a string equal to the
+  account named). An entity whose ID carries no account takes its account from that fact, so such a save would make
+  the entity another account's."
+  [input account]
+  (some (fn [r] (and (= account-field (:attribute r)) (nil? (:retracted_at r))
+                     (not (and (= "string" (:value_type r)) (= account (:value_string r))))))
+        (request-rows input)))
+
 (defn stored-ids
   "The one place a save's stored command IDs are chosen. nil for a request that names no account (stored as sent).
   Otherwise {:account :scoped? :on :predecessor}.
@@ -376,13 +495,16 @@
     (let [others (other-accounts db p account)]
       (when (seq others)
         (refuse! 400 "InvalidValue" "The request names one account and writes another account's entities"))
+      ;; [DX-S6c] S5 R4-2: the accounts after the save, not only before it: no entity may become another account's.
+      (when (other-account-values input account)
+        (refuse! 400 "InvalidValue" "The request names one account and gives an entity another account (:subject/account)"))
       (let [db (if (and (nil? (setting db)) permitted?) (turn-on! conn) db)
             on (on? db)]
         ;; A plain claim of this account (from before the setting), or of no account's entities, refuses the save:
         ;; the same operation is never committed under both forms.
         (when on
           (doseq [c (:command-ids p)]
-            (when-let [e (d/entid db [:triplex.claim/command-id c])]
+            (when-let [e (let [e (d/entid db [:triplex.claim/command-id c])] (when (and e (not (after-setting? db e))) e))]
               ;; Only a plain claim of exactly one other account leaves this account's ID free.
               (let [o (owner conn db e)]
                 (when (or (nil? o) (= o account))
@@ -392,7 +514,7 @@
          ;; transition is plain); a plain one is accepted only when it is this account's.
          :predecessor (when-let [pred (and on (:import-predecessor p))]
                         (cond (d/entid db [:triplex.claim/command-id (encode account pred)]) (encode account pred)
-                              (when-let [e (d/entid db [:triplex.claim/command-id pred])] (owned? conn db e account)) pred
+                              (when-let [e (d/entid db [:triplex.claim/command-id pred])] (and (not (after-setting? db e)) (owned? conn db e account))) pred
                               :else (encode account pred)))}))))
 
 (defn stored-command

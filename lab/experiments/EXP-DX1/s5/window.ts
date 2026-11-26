@@ -79,6 +79,10 @@ const headSaves = async (step: string) => { for (const kind of ["one-owner", "ge
 // P1: an old build whose one-owner writer differs. Its open installs that writer under a new ident.
 const serial = await open("serial", serialUrl);
 await many("serial", serial, "one-owner", "serial: after its open", 10);
+// [DX-S6c] A save of that old build in its window, under a command of account m1 (P3 uses it; from the fifth pass the
+// general-writer window of P2 cannot open, the database refuses that build's open).
+const serialWindowCommand = `m1-window-${randomUUID().slice(0, 8)}`;
+const serialWindowSave = await save("serial", serial, "one-owner", "serial: a save under m1's command, in the window", serialWindowCommand);
 await headSaves("P1 head saves");
 await many("serial", serial, "one-owner", "serial: after the head's routed saves", 10);
 // Alone: no save and no open of this build for a while.
@@ -91,19 +95,23 @@ const headReopen1 = await open("head", headUrl, "m1");
 await many("serial", serial, "one-owner", "serial: after a head open", 10);
 
 // P2: an old build whose general writer differs. Its open rewrites :triplex/commit (and installs its variant).
-const prof = await open("prof", profUrl);
-await many("prof", prof, "general", "prof: after its open", 10);
+// [DX-S6c] An open that the database refuses (the hash bar) is logged, and the steps that need that store are skipped.
+const tryOpen = async (label: string, url: string) => {
+  try { return await open(label, url); } catch (e) { log("OPEN_REFUSED", { build: label, url, error: classify(e) }); return undefined; }
+};
+const prof = await tryOpen("prof", profUrl);
+if (prof) await many("prof", prof, "general", "prof: after its open", 10);
 const base = await open("base", baseUrl);
 await many("base", base, "general", "base: after the prof open", 5);
 // A save of the old build in the window, under a command of account m1.
-const windowCommand = `m1-window-${randomUUID().slice(0, 8)}`;
-const windowSave = await save("prof", prof, "general", "prof: a save under m1's command, in the window", windowCommand);
+const windowCommand = prof ? `m1-window-${randomUUID().slice(0, 8)}` : serialWindowCommand;
+const windowSave = prof ? await save("prof", prof, "general", "prof: a save under m1's command, in the window", windowCommand) : serialWindowSave;
 await headSaves("P2 head saves");
-await many("prof", prof, "general", "prof: after the head's routed saves", 10);
-const prof2 = await open("prof", profUrl);
-await many("prof", prof2, "general", "prof: after it opens again", 10);
+if (prof) await many("prof", prof, "general", "prof: after the head's routed saves", 10);
+const prof2 = await tryOpen("prof", profUrl);
+if (prof2) await many("prof", prof2, "general", "prof: after it opens again", 10);
 await headSaves("P2 head saves again");
-await many("prof", prof2, "general", "prof: after the head's routed saves again", 5);
+if (prof2) await many("prof", prof2, "general", "prof: after the head's routed saves again", 5);
 
 // P3: what the window's save does to the account's own client.
 const own = await head.exit(Effect.flatMap(core.Triples, (s: any) => s.transact(opsOf("head", "one-owner", "own"), { commandId: windowCommand })));

@@ -103,23 +103,26 @@
               scope (:e (first (d/datoms (d/db conn) :aevt :triplex.scope/key)))
               _ (reference/send name (save conn {:facts [{:owner (str "acct/" a "/subject/s") :field ":a/f0" :type :string :value "s" :pred nil}]}))
               _ (turn-on! conn)
-              ;; The old build's own install-base! (it does not know *installing*): a working body under the old ident.
-              _ @(d/transact conn [{:db/ident :triplex/commit
-                                    :db/fn (d/function {:lang :clojure :params '[db payload] :requires '[[datomic.api :as d] [clojure.data.json :as json]] :code commit/code})}
-                                   [:db/add scope :triplex.scope/commit-fn-hash "an-older-build"]])
+              body (d/function {:lang :clojure :params '[db payload] :requires '[[datomic.api :as d] [clojure.data.json :as json]] :code commit/code})
+              ;; The old build's own install-base! (it does not know *installing*): its body and its hash in one
+              ;; transaction. [DX-S6c] S5 R4-1: the hash bar refuses it whole.
+              barred (try @(d/transact conn [{:db/ident :triplex/commit :db/fn body} [:db/add scope :triplex.scope/commit-fn-hash "an-older-build"]]) "committed"
+                          (catch Exception e (if (re-find #"clojure\.core/nil\?" (str e (.getCause e))) "refused by the hash bar" (str e))))
+              ;; What the bar does not stop: the same body written without a hash (an install that read the database
+              ;; before the transition, R4-7).
+              _ @(d/transact conn [{:db/ident :triplex/commit :db/fn body}])
               in-window (old-build-save name conn a :general)
               own (own-save name conn a writer)
               db (d/db conn)
               after (old-build-save name conn a :general)
-              r {:case "an old build rewrites the old ident" :writer writer :oldBuildBeforeThisBuildSaves in-window
+              r {:case "an old build rewrites the old ident" :writer writer :oldBuildsOpen barred :oldBuildBeforeThisBuildSaves in-window
                  :ownSave own :workingBodiesAfter (violations db) :oldBuildAfter after}]
           (line r)
+          (is (= "refused by the hash bar" (:oldBuildsOpen r)) (pr-str r))
           (is (= [200 nil] (:ownSave r)) (pr-str r))
-          (if (= writer :general)
-            (do (is (empty? (:workingBodiesAfter r)) (pr-str r))
-                (is (not= [200 nil] (:oldBuildAfter r)) (pr-str r)))
-            ;; A per-subject save routes away from its own ident, not :triplex/commit: it repairs what it reads.
-            (is true)))))))
+          ;; [DX-S6c] Every save of this build checks every moved ident first (guard!), whatever writer it takes.
+          (is (empty? (:workingBodiesAfter r)) (pr-str r))
+          (is (not= [200 nil] (:oldBuildAfter r)) (pr-str r)))))))
 
 (deftest the-refusal-names-the-setting
   ;; S5 R3-7: a build that does not know the setting gets a refusal that names it (this build answers it CasConflict).
