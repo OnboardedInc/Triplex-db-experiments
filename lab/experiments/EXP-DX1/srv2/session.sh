@@ -404,9 +404,17 @@ a5)  # Publish at 100,000 subjects on the aged database: ACT3's twelve windows, 
       held DX_ACT7_AGED_BUNDLE=$AGE_HANDOFF_JSON DX_ACT7_AGED_PIN=$AGE_HANDOFF_SHA256 DX_HELD_PROFILE=server-32 DX_ACT3_SETTLE=0 DX_ACT3_AT_LEAST=1 DX_HELD_MINUTES=120
       act7_discard"; fi;;
 a6)  # optional: settlement beside saves, three accounts at 1 billion (ACT7 (b))
-  if ((dry)); then run_step -- plan_dry lab/experiments/EXP-DX1/actv-lazy/act7/miniature.sh lab/experiments/EXP-DX1/actv-lazy/join/held-server.sh
+  if ((dry)); then run_step -- bash -c "set -e; mkdir -p '$EVID/phases'
+      printf 'DX_ACT5_LIVE=1\nTX2_SETTLE_FRAMES=bytes\nDX_ACT7_TAPE=production-S:394\nTRIPLEX_DATOMIC_BOUNDED_JOURNAL=1\nDX_ACT7_LEDGER_EXAMINE=3\nDX_ACT7_FRAME_COUNTERS=1\nDX_ACT7_STREAM_CHECK=1\nTX2_SETTLE_CONTROL=1\nDX_ACT7_CONTROL=1:0.5:2:300:3\nDX_ACT5_ACCOUNTS=3\nDX_ACT5_CASES=control:progress:bytes:none:23.5:1:::8,many:progress:bytes:large:23.5:1:multi:admission:12\n' > '$EVID/phases/a6.env'
+      cd '$repo'; node lab/bin/heavy.mjs --label DX-SRV2-dry-a6 -- bash lab/experiments/EXP-DX1/actv-lazy/act7/miniature.sh '$EVID/miniature' a6"
   else server_env; run_step -- bash -c "set -e; $(declare -f act7_prepare act7_discard held)
-      echo 'A6: run actv-lazy/act7/RUN2.md section 6.4 exactly as written, with DX_ACT7_CONTROL=2:2400:300:200:600, using held() of this script'; exit 3"; fi;;
+      TEMPLATE=$AGED_PGDATA_SOURCE; act7_prepare \$TEMPLATE; export TEMPLATE DX_LAZY_OUT=$OUT_ROOT/a6/act7-run2-3
+      held TX2_SETTLE_FRAMES=bytes DX_ACT3_SETTLE=0 DX_ACT5_LIVE=1 DX_ACT5_SERVER=1 DX_ACT7_FRAME_COUNTERS=1 \
+        DX_ACT7_AGED_BUNDLE=$AGE_HANDOFF_JSON DX_ACT7_AGED_PIN=$AGE_HANDOFF_SHA256 DX_HELD_PROFILE=server-32 \
+        DX_HELD_MINUTES=240 DX_ACT5_ACCOUNTS=3 DX_ACT7_STREAM_CHECK=1 DX_ACT7_TAPE=production-S:394 TRIPLEX_DATOMIC_BOUNDED_JOURNAL=1 \
+        DX_ACT7_MULTI_KILL=1 TX2_SETTLE_CONTROL=1 DX_ACT7_CONTROL=2:2400:300:200:600 \
+        DX_ACT5_CASES=control:progress:bytes:none:23.5:1:::300,many:progress:bytes:large:23.5:1:multi:admission:6000
+      act7_discard"; fi;;
 a7)  # optional: tape M with the creation option (S4's arm F)
   if ((dry)); then TOY_TAPE=production-M run_step "EXTRA=$product_opts DX_S3_OWNERS=1 DX_S4_CREATE=1" -- dry_card a7 $product_opts DX_S3_OWNERS=1 DX_S4_CREATE=1
   else server_env; run_step "EXTRA=$product_opts DX_S3_OWNERS=1 DX_S4_CREATE=1" -- bash -c "$(declare -f make_copy remove_copy part card_parts need); set -e
