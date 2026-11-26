@@ -1,10 +1,11 @@
 account_claims.clj (cond (d/entid db [:triplex.claim/command-id (encode account pred)]) (encode account pred)
 account_claims.clj (if (and account (on? db)) (encode account c) c))
 account_claims.clj (if-let [e (d/entid db [:triplex.claim/command-id (encode account id)])]
-account_claims.clj (when-let [e (d/entid db [:triplex.claim/command-id c])]
 account_claims.clj (when-let [e (d/entid db [:triplex.claim/command-id id])]
 account_claims.clj (when-let [e (d/entid db [:triplex.claim/command-id id])] [e :plain])
-account_claims.clj (when-let [e (d/entid db [:triplex.claim/command-id pred])] (owned? conn db e account)) pred
+account_claims.clj (when-let [e (d/entid db [:triplex.claim/command-id pred])] (and (not (after-setting? db e)) (owned? conn db e account))) pred
+account_claims.clj (when-let [e (let [e (d/entid db [:triplex.claim/command-id c])] (when (and e (not (after-setting? db e))) e))]
+account_claims.clj (when-let [x (first (d/datoms db :eavt e :triplex.claim/command-id))] (> (d/tx->t (:tx x)) st))))
 account_claims.clj :else (encode account pred)))}))))
 account_claims.clj op (fn [x] (if (and (map? x) (:triplex.claim/command-id x)) (update x :triplex.claim/command-id cmd) x))
 commit.clj (when (and (value e :triplex.tx/operation-id) (not (value e :triplex.tx/id)))
