@@ -4,8 +4,8 @@
 // path), where no removal reaches it. Under the option it now holds no day derived from a document's date, only the next
 // end of day after the clock, renewed at each (account.ts `nextEndOfDay`). This driver checks, in W0's format:
 //   - with the option off (as before): the calendar names the future expiry dates' days (the copy the option removes);
-//   - with the option on: after enrolment, after a save of a new future expiry date, and after the clock advances,
-//     the calendar holds exactly the next end of day and names no document's day;
+//   - with the option on: after enrolment and after the clock advances, the calendar holds exactly the next end of day
+//     and names no document's day; a deep save of a future expiry date adds no day (off: its end of day);
 //   - the expired-document notices are the same with the option on and off once the clock passes a document's expiry
 //     (the daily wake passes every boundary the expiry days did).
 // Driven by era5/run.sh (ERA5_DRIVER=../era4/calendar.ts) with TX2_DERIVED_SEAL=1; the off run sets the option off for
@@ -20,6 +20,7 @@ import { W0, canonical, triplexValue } from "../../../bench/lib/w0-world.ts";
 import { counters, derivedSealOn } from "../../../bench/lib/derived-seal.ts";
 import { openStore, fact, type Store } from "../actv-lazy/store.ts";
 import { JoinedAccount, nextEndOfDay } from "../actv-lazy/join/account.ts";
+import { deepImpact } from "../actv-lazy/join/deep.ts";
 import { Archive } from "../actv-lazy/join/archive.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
 import { RecordedNotices } from "../actv-lazy/join/recorded.ts";
@@ -77,8 +78,6 @@ async function scenario(on: boolean) {
     const first = (await a.notices.observe()).value.sequence;
     row.settlement = await values.runValues(first).then((p: any) => p.status, (e: unknown) => "FAILED: " + short(e));
     row.recorder1 = await notices.record(first).then(() => "recorded", (e: unknown) => "FAILED: " + short(e));
-    await a.save("calendar-save:" + RUN, { e: docOf(X), a: "expiresOn", values: [SAVED] }, valid);
-    row.afterSave = await calendar();
     await a.advance(LATER);
     row.afterAdvance = await calendar();
     const last = (await a.notices.observe()).value.sequence;
@@ -88,8 +87,7 @@ async function scenario(on: boolean) {
     const ds = packets.flatMap((p) => p.deliveries as unknown as Record<string, unknown>[]);
     row.expired = ds.filter((d) => d.kind === "notify.document-expired").map((d) => [d.subject, d.key, canonical(d.payload ?? null).includes("erasedAt")]).map((x) => canonical(x)).sort();
     row.deliveries = ds.length;
-    row.calendarNamesADay = { afterEnrolment: namesADay(row.afterEnrolment as string[]), afterSave: namesADay(row.afterSave as string[]),
-      afterAdvance: namesADay(row.afterAdvance as string[]) };
+    row.calendarNamesADay = { afterEnrolment: namesADay(row.afterEnrolment as string[]), afterAdvance: namesADay(row.afterAdvance as string[]) };
     for (const s of [store, values.store, noticeArchive.store]) await (s as any).close().catch(() => {});
   } catch (e) {
     row.setup = "FAILED: " + short(e);
@@ -101,6 +99,24 @@ async function scenario(on: boolean) {
   return row;
 }
 
+// The save paths. A W0 save of a protected attribute through JoinedAccount.save stages the row, and a staged preview of
+// a protected row is refused on a sealed scope (409 ProtectedPreviewUnavailable, with the option off as on), so the W0
+// edit path is read, not run (account.ts: its new dates are filtered out under the option). The deep save path's dates
+// come from deepImpact, a pure function: run here with the option off and on for a save of a future expiry date.
+const deepDates = (on: boolean) => {
+  const before = process.env.TX2_DERIVED_SEAL;
+  if (on) process.env.TX2_DERIVED_SEAL = "1";
+  else delete process.env.TX2_DERIVED_SEAL;
+  try {
+    return deepImpact(0, [], [{ op: "assert", entityId: "doc:00000000:0:0", attribute: ":file/expiresOn",
+      value: { type: "string", value: SAVED }, validFrom: 0 } as never], { tx: 1, validTime: valid } as never).dates;
+  } finally {
+    if (before === undefined) delete process.env.TX2_DERIVED_SEAL;
+    else process.env.TX2_DERIVED_SEAL = before;
+  }
+};
+const deep = { off: deepDates(false), on: deepDates(true) };
+log("deep-save", deep);
 const off = await scenario(false);
 const on = await scenario(true);
 const names = (r: Record<string, unknown>, k: string) => ((r.calendarNamesADay as Record<string, string[]> | undefined)?.[k] ?? ["(no reading)"]);
@@ -110,12 +126,13 @@ const checks = {
   // before the fix (and with the option off) the calendar names the future expiry days: the copy the option removes
   // (an end of day is the next day's midnight: W0.endOfDay("2027-08-15") is 2027-08-16T00:00, which is why the forms
   // dump search for the date itself did not see it)
-  offNamesTheDays: names(off, "afterSave").length > 0,
-  onEnrolmentIsTheNextEndOfDay: canonical(on.afterEnrolment) === canonical([nextEndOfDay(valid)]),
-  onSaveNamesNoDay: names(on, "afterSave").length === 0,
-  onAdvanceIsTheNextEndOfDay: canonical(on.afterAdvance) === canonical([nextEndOfDay(LATER)]),
-  onNamesNoDayAnywhere: [...names(on, "afterEnrolment"), ...names(on, "afterSave"), ...names(on, "afterAdvance")].length === 0,
-  sameExpiredNotices: Array.isArray(on.expired) && canonical(on.expired) === canonical(off.expired),
+  offNamesTheDays: names(off, "afterEnrolment").length > 0,
+  onEnrolmentIsTheNextEndOfDay: canonical(on.afterEnrolment ?? null) === canonical([nextEndOfDay(valid)]),
+  onAdvanceIsTheNextEndOfDay: canonical(on.afterAdvance ?? null) === canonical([nextEndOfDay(LATER)]),
+  onNamesNoDayAnywhere: [...names(on, "afterEnrolment"), ...names(on, "afterAdvance")].length === 0,
+  deepSaveOffNamesTheDay: canonical(deep.off) === canonical([W0.endOfDay(W0.parseDate(SAVED))]),
+  deepSaveOnNamesNone: deep.on.length === 0,
+  sameExpiredNotices: Array.isArray(on.expired) && Array.isArray(off.expired) && canonical(on.expired) === canonical(off.expired),
   yExpiredAfterTheAdvance: Array.isArray(on.expired) && (on.expired as string[]).some((x) => x.includes(Y)),
 };
 log("verdict", { pass: Object.values(checks).every(Boolean), checks, sealCounters: counters, run: RUN });
