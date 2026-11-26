@@ -21,7 +21,7 @@ name=tx2-dxrd6-fleet-$$
 echo "$(date '+%F %T %Z') start $name" >> "$out/runs.log"
 docker run --name "$name" --label dx-rd6=fleet --pull never --memory 6g --cpus 4 \
   -e RD6_PHASES="${RD6_PHASES:-per-subject,grouped,append}" -e RD6_SECONDS="${RD6_SECONDS:-90}" \
-  -e RD6_DRIVER="${RD6_DRIVER:-http}" -e RD6_READER_MODE="${RD6_READER_MODE:-explicit}" \
+  -e RD6_DRIVER="${RD6_DRIVER:-http}" -e RD6_READER_MODE="${RD6_READER_MODE:-explicit}" -e RD6_GROUPS_PROTECTION="${RD6_GROUPS_PROTECTION:-1}" \
   -v "$out/src:/opt/gateway/src:ro" -v "$out/codec-spec.json:/opt/gateway/codec-spec.json:ro" -v "$out/exp:/exp:ro" \
   -v "$out/out:/out" --entrypoint /bin/bash "$image" /exp/rd6/fleet-container.sh
 status=$?

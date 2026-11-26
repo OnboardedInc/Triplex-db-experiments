@@ -187,7 +187,11 @@
   []
   (reference/in-scope
     (fn [name conn]
-      (let [declared (reference/route name "v1" "protection" {"attributes" [":p/secret"] "sealed" false})
+      ;; RD6_GROUPS_PROTECTION=0: no protected attribute, no protected saves and no removals. Attempts 2 and 3 timed out
+      ;; at the barrier on every group (0 committed) with protection declared, so the scope's saves are taken to stay off
+      ;; the group lane while a protected attribute is declared; this mode tests that and forms the groups.
+      (let [protect? (not= "0" (System/getenv "RD6_GROUPS_PROTECTION"))
+            declared (if protect? (reference/route name "v1" "protection" {"attributes" [":p/secret"] "sealed" false}) {:status :none})
             rng (Random. 17)
             os (vec (for [i (range 24)] (str "acct/fleet/subject/g" i)))
             _ (doseq [o os] ((requiring-resolve 'rd6-attacks/save!) name conn {:set (vec (for [j (range 4)] [o (str ":fz/f" j) (str o "-" j)]))}))
@@ -222,11 +226,11 @@
                   (if (= 200 st) (do (swap! stats update :committed inc) (when p (.add positions p)))
                     (swap! stats update-in [:refused (str st)] (fnil inc 0)))))
               ;; protected values go through the removal guard, not the group lane: written alone
-              (when (zero? (mod k 5))
+              (when (and protect? (zero? (mod k 5)))
                 (let [o (nth os (.nextInt rng (count os)))]
                   ((requiring-resolve 'rd6-attacks/save!) name conn {:set [[o ":p/secret" (str "secret-" k)]]})
                   (swap! stats update :committed inc) (.add positions (storage/head-position (d/db conn)))))
-              (when (zero? (mod k 25))
+              (when (and protect? (zero? (mod k 25)))
                 (let [o (nth os (.nextInt rng (count os)))
                       r (reference/route name "v1" "erase" {"commandId" (str "rm-g" k) "selectors" [{"entityId" o "attribute" ":p/secret"}]})]
                   (if (= 200 (:status r)) (swap! stats update :removals inc)
