@@ -219,6 +219,61 @@
                :guardInstalled (= @#'group-cut/member-at (some-> (resolve 'triplex.gateway.group-cut-guard/member-at) deref))})
         (is (= [pinned/enabled group-cut/current-lookup] [(get o "pinnedShortcut") (get o "pinnedCutLookup")]))))))
 
+;; ---------------------------------------------------------------- 1b. restore to an older position (rd6/restore-container.sh)
+
+(def restore-scope (json/write-str ["triplex-scope-v1" "test" "rd6-restore" "one" 0]))
+(defn- open-restore-scope []
+  (with-redefs [main/uri-template (System/getenv "WFIX1_URI")]
+    (let [name (:db (main/create-scope! nil restore-scope "lean" true true))]
+      [name (main/connection (main/db-uri name))])))
+(def restore-os (vec (for [i (range 8)] (str "acct/rd6/subject/r" i))))
+(defn- answers [name conn]
+  (into {} (for [p (range 1 (inc (a/head conn))) o restore-os]
+             [[p o] (a/with-mode :off #(a/lean-read name {"entityIds" [o] "basis" {"validAt" 5.0 "recordedPosition" p}}))])))
+
+(defn restore-phase
+  "a: the scope, seeded, six groups (then the container backs it up); b: six more groups and solo saves, answers kept
+  (the backup lacks them); c (after the restore, fresh JVMs and transactor): six groups that take the lost positions
+  again, then every position under every option set, the answers at the positions the backup kept compared with phase
+  a's, and the audit."
+  [phase]
+  (with-redefs [main/uri-template (System/getenv "WFIX1_URI")]
+    (let [[name conn] (open-restore-scope) rng (Random. (case phase "a" 1 "b" 2 3))
+          spit-edn (fn [f x] (spit (str "/out/" f) (pr-str x)))
+          batches! (fn [n tag] (dotimes [k n] (batch! name conn rng restore-os (str tag k))
+                                 (a/save! name conn {:set [[(nth restore-os (.nextInt rng 8)) ":fz/f9" (str tag "solo" k)]]})))]
+      (case phase
+        "a" (do (doseq [o restore-os] (a/save! name conn {:set (vec (for [j (range 3)] [o (str ":fz/f" j) (str o "-" j)]))}))
+                (batches! 6 "a")
+                (spit "/out/restore-name" name)
+                (spit-edn "answers-a.edn" (answers name conn))
+                (emit {:case "restore: phase a" :head (a/head conn)}))
+        "b" (do (batches! 6 "b")
+                (spit-edn "answers-b.edn" (answers name conn))
+                (emit {:case "restore: phase b (after the backup)" :head (a/head conn)}))
+        "c" (let [before (a/head conn)
+                  _ (batches! 6 "c")
+                  top (a/head conn)
+                  r (a/compare-reads (a/pinned-reads name conn restore-os (range 1 (inc top)) {:clocks 20}))
+                  ans-a (read-string (slurp "/out/answers-a.edn")) ans-b (read-string (slurp "/out/answers-b.edn"))
+                  now (answers name conn)
+                  kept (count (filter (fn [[k v]] (= v (get now k))) ans-a))
+                  head-a (apply max (map ffirst ans-a))
+                  ;; pins the backup lacked: they now name the saves written after the restore (the same on every option set)
+                  lost (count (for [[[p o :as k] v] ans-b :when (> p head-a) :when (not= v (get now k))] k))
+                  aud (audit/audit conn)
+                  db (d/db conn)]
+              (emit {:case "restore to an older position: the lost positions taken again" :headAfterRestore before :head top
+                     :positionHistories (frequencies (for [p (range 1 (inc top))] (position-history db p)))
+                     :result r :answersAtBackupPositions {:equal kept :of (count ans-a)}
+                     :pinsTheBackupLacked {:changedMeaning lost :of (count (filter (fn [[[p]]] (> p head-a)) ans-b))}
+                     :audit (select-keys aud [:violations :groupPositionRetractions :groupPositionDuplicates :groupPositionAssertions])
+                     :rules (audit/failures aud)})
+              (shutdown-agents)
+              (System/exit (if (and (empty? (:differences r)) (= kept (count ans-a)) (empty? (audit/failures aud))) 0 1))))
+      (shutdown-agents)
+      (System/exit 0))))
+
 (defn main []
   (let [r (clojure.test/run-tests 'rd6-review2)]
     (println "DX-RD6R2_RESULT" (json/write-str (merge (select-keys r [:test :pass :fail :error])
