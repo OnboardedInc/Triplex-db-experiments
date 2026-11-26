@@ -206,7 +206,7 @@
                                    (case (.nextInt rng 4)
                                      0 {:set [[o f (str "g" k)]]}
                                      1 (if (seq live) {:retire [[o (nth live (.nextInt rng (count live)))]]} {:set [[o f (str "g" k)]]})
-                                     2 {:set [[o ":p/secret" (str "secret-" k)]]}
+                                     2 {:set [[o f (str "h" k)]]}
                                      {:set [[o f (str "g" k)]] :retire (if (seq live) [[o (nth live (.nextInt rng (count live)))]] [])}))))
                     replies (batch! name conn specs)]
                 (swap! groups inc)
@@ -214,12 +214,17 @@
                   (swap! stats update :saves inc)
                   (if (= 200 st) (do (swap! stats update :committed inc) (when p (.add positions p)))
                     (swap! stats update-in [:refused (str st)] (fnil inc 0)))))
+              ;; protected values go through the removal guard, not the group lane: written alone
+              (when (zero? (mod k 5))
+                (let [o (nth os (.nextInt rng (count os)))]
+                  ((requiring-resolve 'rd6-attacks/save!) name conn {:set [[o ":p/secret" (str "secret-" k)]]})
+                  (swap! stats update :committed inc) (.add positions (storage/head-position (d/db conn)))))
               (when (zero? (mod k 25))
                 (let [o (nth os (.nextInt rng (count os)))
                       r (reference/route name "v1" "erase" {"commandId" (str "rm-g" k) "selectors" [{"entityId" o "attribute" ":p/secret"}]})]
                   (if (= 200 (:status r)) (swap! stats update :removals inc)
                     (swap! stats update-in [:refused (str "erase " (:status r) " " (get-in r [:body "code"]))] (fnil inc 0)))))
-              (catch Exception e (swap! stats update-in [:errors (str "write " (.getSimpleName (class e)))] (fnil inc 0))))
+              (catch Throwable e (swap! stats update-in [:errors (str "write " (.getSimpleName (class e)) " " (first (str/split-lines (str (.getMessage e)))))] (fnil inc 0))))
             (recur (inc k))))
         (reset! stop true) (run! deref readers-f)
         (let [db (d/db conn) top (storage/head-position db)
