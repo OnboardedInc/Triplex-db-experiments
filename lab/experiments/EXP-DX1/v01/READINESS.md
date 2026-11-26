@@ -109,7 +109,13 @@ ID) and `int5/compare-idents.py`; evidence `DX-INT5/idents/`.
 | A stored save answered as refused when the transactor stops after applying it (R1, save review F1), and the command path settling on another account's transaction | `exp/DX-S6-save-line-fixes` `cdfc70e02` | `dc0bd5696` | `s6/final.sh` gates (the outcome gate in five writer settings), the SDK's fault stack, the fuzzer with faults |
 | Every batched read refused (this merge's own: step 0 against API1's `batch.clj`) | this merge | `ee9d5da5a` | API1's `api1/gate.sh` gate phase |
 | With the PostgreSQL key store, sealed saves refused after a gateway restart and a save of more than 256 protected values refused for good; a refused protection declaration answering with the driver's statement, wrapped keys included | `exp/DX-N1-key-pool` `09730f887` | `39d1087c0` (fifth push) | `b2-keys/gate.sh` phases b2, n1, lines (with `replies.clj` and the review's `replies2.clj`), paired and suites on both key stores: n1 5 of 5 on both (the save-line head fails 3 of 5 on PostgreSQL); see "The key-pool and reply fix" below |
-| Two assertion IDs collide in the product's save path with ordered saves on: a save's identity block and a later SDK ID in the same millisecond (U1, the third Publish review); one rejected save of tape M here was consistent with it | `exp/DX-U1-id-allocator` `cc5656aa2` | the push after | the review's A1 to A5, the builder's I1 to I4, an adapter-level block check, tape M four times (planned with that push) |
+| Two assertion IDs collide in the product's save path with ordered saves on: a save's identity block and a later SDK ID in the same millisecond (U1, the third Publish review); one rejected save of tape M here was consistent with it | `exp/DX-U1-id-allocator` `cc5656aa2` | `63d9885b8` (sixth push) | the review's A1 to A5 and the builder's I1 to I4 (9 of 9); the adapter-level block check (`u1/adapter-blocks.ts`: 120 ordered saves through the SDK adapter, 96 one-byte and 24 wide blocks, the clock held in one millisecond, 0 of 72,000 later IDs inside an earlier block); tape M with creation off four times, 360 of 360 each and no Triplex refusal in the transactor's lines; see "The ID allocator" below |
+
+**Follow-up (lab, not product): the slot code must reclaim a lock whose owner process is dead.** It does not today
+(`engine.mjs` `acquireSlot` refuses any other holder's lock, whether or not its process lives): on 2026-11-25 two locks
+of dead processes (`datomic-s2`, DX-ACT8; `datomic-s3`, DX-ACT6) left one of the three stack slots to every builder for
+about a day, and this merge's Publish-line regressions were refused 24 times in a row for that reason; the coordinator
+removed both by hand after checking each owner was dead and its container absent.
 
 The save review's F6 (the 5 differing stored-code values pinned to S2's `subject_save.clj` edit, none installed with
 options off) is the second item of step 0, restored here. Four independent reviews found that a rule chosen per
@@ -589,6 +595,9 @@ from this head (sources `83789d1f…`), by ID; the selftest-style runs on the sa
 | `exp/DX-N1-key-pool` `09730f887` (fifth push) | `39d1087c0` | N1: a sealed save that finds its database's key pool empty (a restarted gateway) fills it once, then refuses with a typed 503 `EnvelopeKeyPoolEmpty`; N3: fixed reply texts (`reply.clj`): a typed refusal keeps the gateway's own text, any other exception answers "The gateway could not complete the request" with its detail only in the scrubbed failure line; the last catch wraps the trace wrapper too (N1R F1); `n1-keys/` and the key gate's `n1` phase. No option |
 | `exp/DX-N1R-key-pool-review` `71e6c453d` | `43fb4f28e` | The review's tests only (`n1r/`, `n1-keys/replies2.clj`) |
 | Save-line head into the N1 line | `0fb8f8cda` | `efee27905` merged; no conflicts |
+| `exp/DX-U1-id-allocator` `cc5656aa2` (sixth push) | `63d9885b8` | One ID allocator: a save's identity block is reserved from the same allocator as every other SDK ID (`packages/core` `utils/id.ts` `reserveIdPrefix`, prefix lengths 23 and 24 only), so no later ID of the process falls inside a block; `writes.ts` resolved as the reviewer's `ff0413925` (the resend on the lab path only); the review's `act10/u1-review.test.ts` (A4 over 23 and 24, A5 refuses 11 with `RangeError`), the builder's `u1/identity.test.ts`, the new adapter-level `u1/adapter-blocks.ts`. No option; both `packages/core` and `packages/datomic` dists rebuilt |
+| N1 line into the U1 line | `7d7414a10`, `632b4eae5` | no conflicts |
+| Key gate's suites phase | `9d515be3c` | XQ9's `sweep-shapes-test` runs in its own JVM with `TX2_SWEEP=1 TX2_SWEEP_SHAPES=all` (it errored 12 times with every option off on every head since the second batch); the standing count is the one known error again |
 
 **Conflicts and how each was resolved (both sides kept every time).** ACT6: `ha1/local.ts` (HA2's second-failure holder
 beside ACT6's release-limits holder). SCALE2: `stack/up.sh` (SCALE2's `DX_SWEEP_GATE_EVICT` beside XQ7's per-role sweep
@@ -645,7 +654,10 @@ bound beside XQ4's index-entry frame bound).
    (d) The B2 gate's suites phase loads every `*_test.clj` of the head with every option off, so on a head with XQ9's
    `sweep_shapes_test` (which needs `TX2_SWEEP_SHAPES=all`) and a base without `cross_index_test` it cannot pass;
    XQ10's suites cover those tests in their arms. The standing gate is run with `B2_GATE_PHASES="b2 paired scenarios
-   fuzz lines"` and the paired base set to the one branch's previous head.
+   fuzz lines"` and the paired base set to the one branch's previous head. **Fixed at `9d515be3c`:** the suites phase
+   runs `sweep-shapes-test` in its own JVM with `TX2_SWEEP=1 TX2_SWEEP_SHAPES=all`; with every other suite option
+   off it counts the one known error (feed-test `http-route`), so a new error shows (before, 13: that one and 12 from
+   `sweep-shapes-test` without its options).
 7. **Gates that decide on a reply's message text rather than its code** (asked for before the N1 key-pool fix, which
    changes reply texts with every option off): `rpt1/gate.ts` 110 (retries while the message reads "Transactor not
    available"), `s2/gate.ts` 271 (code `InvalidValue` and message "Request too large"), `scale2/mini.ts` 146
@@ -828,6 +840,17 @@ The image was built from the ID-allocator merge on top of this line (`7d7414a10`
 | phase suites | 93 tests, 236,380 assertions, 0 failures, 13 errors, the same as the base (the known suites error, item 6 (d)) | `410d47e1` |
 | The save line's `gates` step again | outcome gate 5 tests, 426 assertions, 0 failures in each of 3 writer settings (server, general, group); race 22; bound 127; attacks 49 and 151; 0 failures | `410d47e1` |
 | Selftest; SDK; core; guard | 29 / 54,160, 0 failures; 489 passed, 53 skipped; 863 of 863; 142 cases, 0 mismatches | `410d47e1` / — |
+
+### The ID allocator (`63d9885b8`, the line's head with this page; image `410d47e153a7…` as above, the ID fix changes no gateway file)
+
+| Gate | Result | Image |
+| --- | --- | --- |
+| The review's A1 to A5 and the builder's I1 to I4 (`act10/u1-review.test.ts`, `u1/identity.test.ts`) | 9 of 9 pass (A4 over lengths 23 and 24 only; A5: length 11 refused with `RangeError`, IDs still increasing) | — |
+| Adapter level (`u1/adapter-blocks.ts`, S2's in-memory gateway with the wide per-subject writer) | 120 ordered saves, 120 blocks (96 one-byte, 24 wide, each the width its size calls for), the clock held in one millisecond, 300 `generateId` and 300 `generateTransactionId` after each save from the allocator instance the adapter uses: **0 of 72,000 later IDs inside an earlier block**, tokens increasing. Two harness faults of this check before it passed, not counted: its wide saves first sent 300 facts (over the 128-fact subject bound, so they took no block), then its parser read a wide ID (`<23>W00`) as a one-byte one (`W` is in the alphabet) | `410d47e1` |
+| Core; SDK | 863 of 863; 489 passed, 53 skipped | — |
+| Stored-function identities | 70 of 70 equal to the save-line head in each of the 8 writer settings (the ID fix moves nothing) | `410d47e1` |
+| Key gate's suites phase, against the save-line head (`efee27905`) | the main run 92 tests, 236,380 assertions, 0 failures, **1 error** (feed-test `http-route`, the known one); `sweep-shapes-test` with its options 1 test, 89 assertions, 0 failures, 0 errors; the same on both sides | `410d47e1` |
+| Production gate, tape M with creation off, four runs (the gate keeps the transactor's lines) | each run: R 840 of 840, S 88 of 88, wide 2 of 2, 0 expired, 2,836 fields; **tape M 360 of 360**, 0 expired, 313 owners, 3,030 fields, per-subject writer 23 and general 337; **no Triplex refusal in the transactor's lines in any run** (R9's one rejected save of 4 runs did not recur) | the gate's own native images (removed) |
 
 ## Next server session (one driver, in this order; none has run)
 
