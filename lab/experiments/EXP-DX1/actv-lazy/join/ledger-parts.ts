@@ -3,6 +3,7 @@ import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
 import { Documents, pack, unpack, type Op, type Row } from "../../notify1/store.ts";
 import type { NoticeCandidate } from "./recorded.ts";
 import { FrameTooLarge, frameEstimate } from "./frames.ts";
+import { derivedSealOn } from "../../../../bench/lib/derived-seal.ts";
 
 // [DX-ACT6] Why: a subject's notice ledger (the state of each of its notice work items) is one packed value, written
 // whole with the subject's last deliveries. At about 200 owed forms that value alone exceeds the writer's bound (8 ms of
@@ -18,9 +19,14 @@ import { FrameTooLarge, frameEstimate } from "./frames.ts";
 // time per subject at 1,000 owed forms, against about 75 ms in parts), and splitting the ledger by item across several
 // commits (a reader would see a ledger half old and half new).
 export type LedgerMode = "whole" | "parts";
+// [DX-ERA4, fourth round] Under TX2_DERIVED_SEAL a whole ledger is sealed in one record that must fit one frame, so a
+// subject owing 200 forms (era5/forms.ts) could only be stopped (LedgerFull), never served: the option therefore writes
+// ledgers in parts by itself (with byte frames, frames.ts `frameMode`). `whole` can still be named, for the tests that
+// show what it refuses. Without the option, unset is whole, exactly as before.
 export function ledgerMode(value = process.env.TX2_NOTICE_LEDGER): LedgerMode {
-  assert(value === undefined || value === "" || value === "parts", "TX2_NOTICE_LEDGER is unset or parts");
-  return value === "parts" ? "parts" : "whole";
+  assert(value === undefined || value === "" || value === "parts" || value === "whole", "TX2_NOTICE_LEDGER is unset, parts or whole");
+  if (value === "parts" || value === "whole") return value;
+  return derivedSealOn() ? "parts" : "whole";
 }
 /** Characters of the packed ledger per part: one part with the cursor change is about 7.2 ms of estimated service. */
 export const ledgerPartChars = 10240;

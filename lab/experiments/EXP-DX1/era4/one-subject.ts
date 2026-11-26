@@ -31,6 +31,7 @@ import { JoinedAccount } from "../actv-lazy/join/account.ts";
 import { Archive } from "../actv-lazy/join/archive.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
 import { RecordedNotices } from "../actv-lazy/join/recorded.ts";
+import { ledgerMode } from "../actv-lazy/join/ledger-parts.ts";
 import { largeRelease, parseShape } from "../actv-lazy/join/large-release.ts";
 import { valid } from "../actv-lazy/fixture.ts";
 import { rosterRoot, rosterSeal } from "../actv-lazy/read.ts";
@@ -40,8 +41,13 @@ const [out] = process.argv.slice(2);
 // refused, and S1's removed value fails its evaluation (W0-1.1.2: removed values are W0-1.2's, under the option only),
 // so S1 stops at the second release instead of keeping its notice
 const CLEAR = process.env.ONE_CLEAR === "1";
-assert(out && process.env.TX2_NOTICE_LEDGER === "parts" && (CLEAR ? !derivedSealOn() && process.env.TX2_SUBJECT_STOP === "1" : derivedSealOn()),
-  "one-subject.ts runs with TX2_NOTICE_LEDGER=parts and TX2_DERIVED_SEAL=1, or ONE_CLEAR=1 with TX2_SUBJECT_STOP=1");
+// TX2_NOTICE_LEDGER=whole (named: under the option unset is parts, ledger-parts.ts `ledgerMode`): the same with whole
+// ledgers, sealed or in clear: S0's ledger of 999 forms does not fit one frame, so S0 stops (LedgerFull) at the first
+// release, before any of its deliveries is written, and the others go on (before the fourth round's split check the
+// account's recorder stopped)
+const WHOLE = ledgerMode() === "whole";
+assert(out && (CLEAR ? !derivedSealOn() && process.env.TX2_SUBJECT_STOP === "1" : derivedSealOn()),
+  "one-subject.ts runs with TX2_DERIVED_SEAL=1, or ONE_CLEAR=1 with TX2_SUBJECT_STOP=1");
 const FORMAT = process.env.ONE_FORMAT ?? "w0";
 assert(FORMAT === "w0" || FORMAT === "deep");
 const EVAL = process.env.ONE_EVAL ?? (FORMAT === "deep" ? "data" : "seam");
@@ -139,7 +145,7 @@ async function deepSetup(): Promise<Setup> {
   };
 }
 
-const row: Record<string, unknown> = { format: FORMAT, sealed: !CLEAR, evaluationError: EVAL, forms: F, permille, buckets: Object.fromEntries(S.map((s) => [s, bucket(s)])) };
+const row: Record<string, unknown> = { format: FORMAT, sealed: !CLEAR, ledger: WHOLE ? "whole" : "parts", evaluationError: EVAL, forms: F, permille, buckets: Object.fromEntries(S.map((s) => [s, bucket(s)])) };
 const t = performance.now();
 let checks: Record<string, boolean> = {};
 try {
@@ -198,24 +204,29 @@ try {
   const d1 = row.deliveries1 as Record<string, number>, s1 = row.stops1 as { recorder: Record<string, string>; settlement: Record<string, string> },
     s2 = row.stops2 as typeof s1;
   const only = (m: Record<string, string>, want: Record<string, string>) => canonical(m) === canonical(want);
+  const d2 = row.deliveries2 as Record<string, number>;
+  // whole ledgers: S0 stops at the first release before any delivery; in parts it is served first and stops at the second
+  const fullLedger = WHOLE
+    ? { fullLedgerSubjectStoppedBeforeAnyDelivery: d1[S[0]!] === 0 && d2[S[0]!] === 0 }
+    : { fullLedgerSubjectRecordedFirst: (d1[S[0]!] ?? 0) > 0 };
   if (CLEAR) checks = {
     settledBoth: row.settlement1 === "stored" && row.settlement2 === "stored",
     recordedBoth: row.recorder1 === "recorded" && row.recorder2 === "recorded",
     othersGetTheirNotices: [S[1]!, S[3]!, S[4]!, S[5]!].every((s) => (d1[s] ?? 0) > 0),
-    recorderStopsAreExactlyThese: only(s1.recorder, { [S[2]!]: "EvaluationFailed" }) &&
+    recorderStopsAreExactlyThese: only(s1.recorder, { ...(WHOLE ? { [S[0]!]: "LedgerFull" } : {}), [S[2]!]: "EvaluationFailed" }) &&
       only(s2.recorder, { [S[0]!]: "LedgerFull", [S[1]!]: "EvaluationFailed", [S[2]!]: "EvaluationFailed" }),
-    fullLedgerSubjectRecordedFirst: (d1[S[0]!] ?? 0) > 0,
+    ...fullLedger,
     settlementStopsAreTheEvaluations: only(s1.settlement, { [S[2]!]: "EvaluationFailed" }) &&
       only(s2.settlement, { [S[1]!]: "EvaluationFailed", [S[2]!]: "EvaluationFailed" }),
-    removedSubjectStopsAlone: (row.deliveries2 as Record<string, number>)[S[4]!]! >= d1[S[4]!]!,
+    removedSubjectStopsAlone: d2[S[4]!]! >= d1[S[4]!]!,
   };
   else checks = {
     settledBoth: row.settlement1 === "stored" && row.settlement2 === "stored",
     recordedBoth: row.recorder1 === "recorded" && row.recorder2 === "recorded",
     othersGetTheirNotices: [S[1]!, S[4]!, S[5]!].every((s) => (d1[s] ?? 0) > 0),
-    recorderStopsAreExactlyTheThree: only(s1.recorder, { [S[2]!]: "EvaluationFailed", [S[3]!]: "SealRefused" }) &&
+    recorderStopsAreExactlyTheThree: only(s1.recorder, { ...(WHOLE ? { [S[0]!]: "LedgerFull" } : {}), [S[2]!]: "EvaluationFailed", [S[3]!]: "SealRefused" }) &&
       only(s2.recorder, { [S[0]!]: "LedgerFull", [S[2]!]: "EvaluationFailed", [S[3]!]: "SealRefused" }),
-    fullLedgerSubjectRecordedFirst: (d1[S[0]!] ?? 0) > 0,
+    ...fullLedger,
     settlementStopsAreTheEvaluationAndTheSeal: [s1.settlement, s2.settlement].every((m) => m[S[2]!] === "EvaluationFailed" && m[S[3]!] === "SealRefused" &&
       Object.keys(m).every((s) => [S[0], S[2], S[3]].includes(s))),
     removedSubjectKeepsItsNotice: kept.length > 0 && kept.every((d) => text(d.payload).includes('"expiresOn":{"erasedAt"')),

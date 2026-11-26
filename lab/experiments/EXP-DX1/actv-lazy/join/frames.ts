@@ -11,7 +11,9 @@ import { bulkUs, bulkWireLimit } from "./bulk.ts";
 export type FrameMode = "count" | "bytes";
 export function frameMode(value = process.env.TX2_SETTLE_FRAMES): FrameMode {
   assert(value === undefined || value === "" || value === "bytes", "TX2_SETTLE_FRAMES is unset or bytes");
-  return value === "bytes" ? "bytes" : "count";
+  // [DX-ERA4, fourth round] under TX2_DERIVED_SEAL frames are byte-sized by themselves (ledgers in parts need them:
+  // ledger-parts.ts `ledgerMode`); without the option, unset is count, exactly as before
+  return value === "bytes" || process.env["TX2_DERIVED_SEAL"] === "1" ? "bytes" : "count";
 }
 
 /** The writer's own bound, as `Archive.write` checks it before a frame is queued. */

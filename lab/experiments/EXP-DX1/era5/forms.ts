@@ -77,7 +77,8 @@ const closeAll = async (...stores: { close(): Promise<unknown> }[]) => { for (co
 const P: unknown[] = [];
 async function formsCase(F: number, mode: "whole" | "parts", setting: boolean) {
   const before = process.env.TX2_NOTICE_LEDGER;
-  if (mode === "parts") process.env.TX2_NOTICE_LEDGER = "parts"; else delete process.env.TX2_NOTICE_LEDGER;
+  // [DX-ERA4, fourth round] named either way: under the option an unset ledger form is parts (ledger-parts.ts `ledgerMode`)
+  process.env.TX2_NOTICE_LEDGER = mode;
   const t = performance.now();
   const row: Record<string, unknown> = { forms: F, ledger: mode, setting };
   try {
@@ -106,7 +107,12 @@ async function formsCase(F: number, mode: "whole" | "parts", setting: boolean) {
       }, 0);
       row.ledgerLargestPartChars = led.parts.length ? Math.max(...led.parts.map((r) => r.value.length)) : null;
     }
-    row.packets = (await acc.notices.packets(at)).length;
+    const packets = await acc.notices.packets(at);
+    row.packets = packets.length;
+    // [DX-ERA4, fourth round T2] each subject's named stop, if any, and its deliveries (a stopped subject has none)
+    const stops = await acc.noticeArchive.db.rows<{ code: string }>([X, Y, Z].map((s) => "recorded-stopped:" + s), at);
+    row.stops = Object.fromEntries([X, Y, Z].map((s) => [s, stops.get("recorded-stopped:" + s)?.value.code ?? null]));
+    row.deliveriesBySubject = Object.fromEntries([X, Y, Z].map((s) => [s, packets.flatMap((p) => p.deliveries as unknown as { subject: string }[]).filter((d) => d.subject === s).length]));
     await closeAll(acc.store, acc.values.store, acc.noticeArchive.store);
   } catch (e) {
     row.setup = "FAILED: " + short(e);
@@ -125,7 +131,8 @@ for (const F of (process.env.ERA5_PARTS_OFF ?? "200").split(",").filter(Boolean)
 
 // [DX-ERA4, second review N1] ERA5_FORMS_ONLY=1 (era4/stack-forms.sh, a stack with no dump hook): P only
 if (process.env.ERA5_FORMS_ONLY === "1") {
-  log("verdict", { P: P.map((r) => [(r as { forms: number }).forms, (r as { ledger: string }).ledger, (r as { setting: boolean }).setting, (r as { recorder: string }).recorder]), sealCounters: counters, run: RUN });
+  log("verdict", { P: P.map((r) => [(r as { forms: number }).forms, (r as { ledger: string }).ledger, (r as { setting: boolean }).setting, (r as { recorder: string }).recorder,
+    (r as { stops?: Record<string, string | null> }).stops?.[X] ?? null]), sealCounters: counters, run: RUN });
   process.exit(0);
 }
 // ---- K: every clear copy of a kept value, by attribute and kind ----
@@ -189,7 +196,8 @@ for (const [label, db] of Object.entries(dbs)) {
     }
 }
 log("K-kinds", { settlement: kSettle, recorder: kRecord, delivery: kDeliver, databases: byDb, kinds });
-log("verdict", { P: P.map((r) => [(r as { forms: number }).forms, (r as { ledger: string }).ledger, (r as { setting: boolean }).setting, (r as { recorder?: string }).recorder ?? (r as { setup?: string }).setup]), sealCounters: counters, run: RUN });
+log("verdict", { P: P.map((r) => [(r as { forms: number }).forms, (r as { ledger: string }).ledger, (r as { setting: boolean }).setting, (r as { recorder?: string }).recorder ?? (r as { setup?: string }).setup,
+  (r as { stops?: Record<string, string | null> }).stops?.[X] ?? null]), sealCounters: counters, run: RUN });
 peer.close();
 await closeAll(K.store, K.values.store, K.noticeArchive.store, sink);
 process.exit(0);

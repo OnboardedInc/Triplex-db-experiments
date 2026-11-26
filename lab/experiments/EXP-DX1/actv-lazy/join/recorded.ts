@@ -186,6 +186,8 @@ export function noticeFrame(
     size: number;
     erasureSeq?: number;
     ledger?: LedgerMode;
+    /** [DX-ERA4, fourth round T2] the writer stops one subject at a time (subjectStopsOn): see the split check below */
+    stops?: boolean;
   },
 ) {
   const part = current.part ?? 0;
@@ -242,6 +244,20 @@ export function noticeFrame(
   const filled = candidates.length
     ? fillFrame(candidates, part, (p) => frameEstimate(build(p).ops).fits)
     : { pieces: [], advance: 0, tail: 0, split: false };
+  // [DX-ERA4, fourth round T2] A subject split over frames writes its deliveries first and its ledger (the closing piece)
+  // last. If the closing piece alone cannot fit a frame, the last frame fails after the deliveries are written, and the
+  // subject can be neither stopped (its deliveries would be written again) nor finished: the account stopped (a whole
+  // ledger of 200 sealed forms). So when a split begins, under subject stops, the closing piece alone is checked first,
+  // with 64 characters to spare for the cursor's counters, which grow by the frames between; if it does not fit, the
+  // subject is refused here, before anything of its is written, and the writer gives it its named stop (LedgerFull).
+  if (event.stops && filled.split && (filled.advance > 0 || part === 0)) {
+    const c = candidates[filled.advance]!;
+    const alone = build([{ index: filled.advance, from: c.units.length, to: c.units.length, close: true }]).ops;
+    if (!frameEstimate([...alone, "-".repeat(64)]).fits)
+      throw Object.assign(new FrameTooLarge("Subject " + c.subject + ": its ledger needs a frame larger than the writer's bound"), {
+        subject: c.subject,
+      });
+  }
   return { ...build(filled.pieces), filled };
 }
 export type { Cursor };
@@ -492,10 +508,14 @@ export class RecordedNotices {
       size,
       ...(authority ? { erasureSeq: authority.seq } : {}),
       ledger: mode,
+      stops: stopsOn,
     });
     // [DX-ERA4, third review T2] a candidate one unit or closing piece of which alone exceeds the writer's bound: that
-    // subject's named stop takes its place (its first part, if any, is not kept), and the frame is filled again
+    // subject's named stop takes its place, and the frame is filled again. Not once part of it is written (a split
+    // subject past its first frame): its deliveries would be written again; the split check in noticeFrame refuses a
+    // closing piece that cannot fit before that. A stop itself refused is not retried.
     let framed: ReturnType<typeof frameOf>;
+    const retried = new Set<string>();
     for (;;) {
       try {
         framed = frameOf();
@@ -503,9 +523,10 @@ export class RecordedNotices {
       } catch (e) {
         const who = (e as { subject?: string }).subject;
         const k = who === undefined ? -1 : candidates.findIndex((c) => c.subject === who);
-        if (!stopsOn || !(e instanceof FrameTooLarge) || k < 0 || candidates[k]!.units.length === 0) throw e;
+        if (!stopsOn || !(e instanceof FrameTooLarge) || k < 0 || retried.has(who!)) throw e;
         if (k === 0 && (current.part ?? 0) > 0) throw e;
-        candidates[k] = stoppedCandidate(db, who!, current.event, stopPrior(who!), "FrameTooLarge");
+        retried.add(who!);
+        candidates[k] = stoppedCandidate(db, who!, current.event, stopPrior(who!), codeOf(e)!);
       }
     }
     const { next, ops } = framed;
