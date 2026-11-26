@@ -120,7 +120,9 @@
     {:rules (audit/failures aud) :violations (:violations aud) :groupRetractions (:groupPositionRetractions aud)
      :groupRepeats (:groupPositionDuplicates aud) :revisionless (:revisionlessChanges aud)
      :shortcutDifferences (get-in r [:differences :on] 0) :hardDifferences (get-in r [:differences :hard] 0)
-     :reads (:reads r) :reachCacheStale (count reach-stale)}))
+     :reads (:reads r) :reachCacheStale (count reach-stale)
+     ;; the rule this review proposes (e): a subject's revision never asserted at or below the value it replaces
+     :revisionRegressions (a/revision-regressions conn)}))
 
 (defmacro ^:private break [label & body]
   `(reference/in-scope
@@ -195,16 +197,23 @@
                   m (d/resolve-tempid (:db-after r1) (:tempids r1) "m")
                   _ @(d/transact conn [[:db/retract m :triplex.group/position 777001]])
                   alone (audit/failures (audit/audit conn))
+                  ;; the same number again on a new entity after the retraction (Datomic allows it once the value is free)
+                  _ @(d/transact conn [{:db/id "p" :triplex.group/position 777001}])
+                  reused (audit/failures (audit/audit conn))
                   conflict (try @(d/transact conn [{:db/id "n" :triplex.group/position 777002}])
                                 @(d/transact conn [{:db/id "o" :triplex.group/position 777002}]) :stored
                                 (catch Exception e (str "refused: " (first (str/split-lines (str (.getMessage e)))))))]
-              {:retractedNotReused alone :sameNumberOnTwoLiveEntities conflict})))]
+              {:retractedNotReused alone :reusedAfterRetraction reused :sameNumberOnTwoLiveEntities conflict})))]
     (emit {:case "audit: a position retracted and never reused; the same number on two live entities" :result position})
     (is (seq (:retractedNotReused position)))
+    (is (= 2 (count (:reusedAfterRetraction position))) "a reused position fails both halves of (b)")
     (doseq [[label r] results]
       (testing label
         ;; Every break that makes the short-cut answer wrong must fail the gate.
         (when (pos? (:shortcutDifferences r)) (is (seq (:rules r)) (str label ": the short-cut answered wrong and the gate passed")))
+        ;; every break that makes the reach cache answer wrong is seen by (a) to (c), by (d) or by (e)
+        (when (pos? (:reachCacheStale r))
+          (is (or (seq (:rules r)) (seq (:revisionless r)) (pos? (:revisionRegressions r))) (str label ": the reach cache answered wrong and no rule saw it")))
         (is (zero? (:hardDifferences r)))))))
 
 ;; ---------------------------------------------------------------- 3. the default flip as an operator sees it
