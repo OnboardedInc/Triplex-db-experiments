@@ -10,6 +10,8 @@
 #   outcome  s6/outcome_gate.clj in server, general, accounts-on
 #   ids      s6/stored_ids_gate.clj (one stored form per ID) in accounts-on, accounts-on-serial, accounts-on-general,
 #            group-accounts
+#   r22      s5/attack3_gate.clj's R2-2 group (S5_ONLY=r22) in era6-rule-off and era6-rule-on (the fourth save line
+#            review's settings for this branch, REVIEW-4 R4-3)
 # The source and the test files are archived from the commit (nothing mounted from the working tree); every container
 # runs the runtime image by ID with the label tx2.holder=DX-ERA2.
 set -uo pipefail
@@ -41,6 +43,10 @@ setting() {
     group-accounts) echo "$base TX2_ACCOUNT_CLAIMS=1 TX2_GROUP_COMMIT=1" ;;
     era-server) echo "TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_WIDE=1 TX2_REMOVAL_REPLAY_RULE=1" ;;
     era-per-account) echo "TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 TX2_SUBJECT_WIDE=1 TX2_REMOVAL_PER_ACCOUNT=1" ;;
+    # [DX-ERA6 eighth pass] the fourth save line review's settings for this branch (s5/clj-run3.sh, REVIEW-4 R4-3): its
+    # replay rule off (the default) and on
+    era6-rule-off) echo "$base TX2_PROTECTION_UNSEALED_FOR_TESTS=1" ;;
+    era6-rule-on) echo "$base TX2_PROTECTION_UNSEALED_FOR_TESTS=1 TX2_REMOVAL_REPLAY_RULE=1" ;;
     *) return 1 ;;
   esac
 }
@@ -59,7 +65,7 @@ run() { # MODE SETTING EXTRA-ENV FILES EXPR
     > "$out/$mode-$s.log" 2>&1 || status=1
   echo "$mode $s: $(grep -E '^DX-S[56](R2|R3)?_RESULT ' "$out/$mode-$s.log" | tail -1 | cut -c1-300 || echo 'no summary')"
 }
-phases=${ERA6_PHASES:-attack3 attack2 era outcome ids}
+phases=${ERA6_PHASES:-attack3 attack2 era outcome ids r22}
 s5="-i /exp/s5/fuzz.clj"
 rule=; [[ ${RULE:-0} == 1 ]] && rule="TX2_REMOVAL_REPLAY_RULE=1"
 for p in $phases; do
@@ -70,6 +76,9 @@ for p in $phases; do
     era) for s in era-server era-per-account; do run era "$s" "" "-i /exp/s5/attack3_era.clj" "(s5-attack3-era/main)"; done ;;
     outcome) for s in server general accounts-on; do run outcome "$s" "$rule" "$s5 -i /exp/s6/outcome_gate.clj" "(s6-outcome/main)"; done ;;
     ids) for s in accounts-on accounts-on-serial accounts-on-general group-accounts; do run ids "$s" "$rule" "$s5 -i /exp/s6/stored_ids_gate.clj" "(s6-ids/main)"; done ;;
+    # [DX-ERA6 eighth pass] the fourth save line review's R2-2 group (s5/attack3_gate.clj, S5_ONLY=r22) in its two
+    # settings for this branch: R2-2 closed with the replay rule off and on (REVIEW-4 R4-3)
+    r22) for s in era6-rule-off era6-rule-on; do run r22 "$s" "S5_ONLY=r22" "$s5 -i /exp/s5/attack3_gate.clj" "(s5-attack3/main)"; done ;;
   esac
 done
 # [DX-ERA6 eighth pass] the gates pass only when exactly the tests listed in era6/expected-save-line.json fail, each

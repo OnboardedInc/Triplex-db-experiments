@@ -122,5 +122,15 @@
       "\"noSourceNoStamp\":[409,\"ErasureReplayDeclined\"],\"withTheStamp\":[409,\"CasConflict\"]"
     ],
     "reference": "s5/REVIEW-3.md's comparison table, row 3 (\"A new value long after a removal, the first attempt optimistic (no source)\"), the removal branch's column, rated right: \"past the decline check when it carries the removal stamp the SDK read (`removalSeen`), declined without it; then refused `CasConflict` by the writer, which the SDK replays (not chased)\""
+  },
+  {
+    "id": "R4-9-optimistic-replay-rule-on",
+    "kind": "rated Low by the fourth save line review (R4-9): the decline on the exact side; documented, not fixed",
+    "test": "r2-2-an-optimistic-replay-against-an-old-removal",
+    "rule": "*",
+    "settings": [
+      "r22-era6-rule-on"
+    ],
+    "reference": "s5/REVIEW-4.md at 9c0d7ea26 (exp/DX-S5-save-line-review), findings: \"R4-9 | Low | On the removal branch's own build (its rule off or on) and on both trial merges with the rule on, an optimistic replay of a new value long after a removal, stating neither `frameSourceK` nor `removalSeen`, is declined `409 ErasureReplayDeclined`; this head stores it. The branch's SDK states `removalSeen` on every attempt, so only a caller that states no frame meets it, and the decline is on the exact side\""
   }
 ]

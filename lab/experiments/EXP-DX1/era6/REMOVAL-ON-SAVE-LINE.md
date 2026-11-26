@@ -216,7 +216,105 @@ missing, the same 2 new keys. The switches moved no identity.
 | per account with the subject check, and the commit boundary (both commits) | identical once the recorded decline is left out: 11 datoms per run (section 1, item 4) | identical |
 | a save that says nothing about its frame, of a removed subject's protected value, every option off | identical datom for datom (673, 723) | identical (md5 `e028e3b04884`); the case answered 200 on all three |
 
-**The gates on the merge commit:** 6.1 (filled in when the runs end).
+### 6.1 Every check that fails, by name, and why
+
+**A finding no review covers (reported first).** `s5/attack3_era.clj`'s `r2-2-replays-across-a-removal` fails on
+this branch with the replay rule on (`era-server`, `era-per-account`).
+- **The case:** a save refused for another reason (CasConflict), then a removal of its subject, then the replay. The
+  replay carries the same command, a fresh source and no `frameSourceK`, which is the protocol of an SDK older than
+  the save line.
+- **What happens:** the replay is stored with the value chosen before the removal (`sdkReplay [200 nil]`,
+  `storedAfter "value chosen before"`).
+- **Why the rule cannot catch it:** the merged rule judges a replay by its first attempt's source only when the
+  request carries it. A replay without it cannot be told from a new save after the removal.
+- **Who is exposed:** the SDK on this branch always sends `frameSourceK` on a replay (`attack3_gate`'s
+  `r2-2-replays-across-a-removal`, with it, passes with the rule on). With every option off, the one branch stores
+  the same replay.
+- **What would close it:** the gateway would have to refuse a replay that states no frame from a client that should
+  send one, which needs a protocol version on the request. Not built.
+
+**How a step now passes.** A step passes only when exactly the listed checks fail, each in the form its review
+describes, and every other check passes. A different failure, or a listed check passing, fails the step.
+- **The review cases and fuzzers** (`era3/run.sh`): `era3/expected-failures.json`, checked by `era3/expected.py`.
+- **The save line's gates** (`era6/save-line-gates.sh`): `era6/expected-save-line.json`, checked by
+  `era6/expected_save_line.py`.
+- **The removal gate's E9 arm** (`era2/gate.sh`): `era3/expected-failures.json` too.
+
+| Check (test name) | Where it fails | Kind | The review's words |
+| --- | --- | --- | --- |
+| R4 "the next read is served", case `R4 ... log-put-back meanwhile, log, file` | `r7` per account and subject check, file authority | withdrawn by the seventh review | REVIEW-7, notes on the table: "R4's third oracle is withdrawn, not counted as a break. On the log's boundary a log really put back during the held read is refused (503 `RemovalLogBehind`) for that read and for the next one, until the rebuild route." The detail shows both reads 503 `RemovalLogBehind` |
+| M3 "a caller's save of its own subject is not declined because another caller used its command first", fast and general writers | `r7b`, every mode | by design (low) | REVIEW-7 Part B, 3: "M3, the V4 reversal (low, by design) ... A caller that sends a declined save under a command ID another caller will use makes that caller's save declined (409). With every option off the same pre-emption exists in another form ... 409 `OperationDuplicate`." Checked in the form for the rule's state: 409 `ErasureReplayDeclined` with the 13, 60 and 3 datoms when on, 409 `OperationDuplicate` when off |
+| E9 "derived copy recorded before the removal", unsealed and sealed | `era3e9-on` | **open finding** (High against TARGETS 7.3), owned by the derived-copies work | REVIEW-2, E9 |
+| `a-reopen-with-another-commit-hash-restores-the-old-ident` (7 settings), `a-reopen-by-a-real-other-general-writer` (2) | `attack3`, the account setting on | **open finding** R3-1 (High) | REVIEW-3, R3-1; "keep the setting off everywhere until R3-1, R3-2's removal route and R3-4 are fixed" |
+| `one-account-against-anothers-command-ids-with-the-setting-on` (7) | `attack3`, the account setting on | **open finding** R3-2 route 1 (High); route 2 is fixed here | REVIEW-3, R3-2 |
+| `an-import-chain-across-the-transition` (1) | `attack3-accounts-on-import` | **open finding** R3-4 (Medium) | REVIEW-3, R3-4 |
+| `r2-2-replays-across-a-removal` (7) | `attack3` with the replay rule off only (passes with it on) | **open finding** R3-3 (Medium) with the rule off, as on the one branch; decision (i) closes it | REVIEW-3, R3-3 |
+| `r2-2-an-optimistic-replay-against-an-old-removal` (7) | `attack3`, both rule settings | by design (low, admitted cost) | REVIEW-3, R3-6; REVIEW-7: "the one failure is R3-6, the merged rule's item 3 by design" |
+| `r2-2-race-on-each-writer` (2, the general writer) | `attack3-accounts-on-general`, `-nopred` | test artefact the review explains | REVIEW-7: "the gate's `at-submit` hook calls the removal on the save's own thread ... A removal from any other thread waits on the monitor and then removes the value" |
+| `attack3_era`'s `r2-2-an-optimistic-save-against-an-old-removal` (2) | `era` | behaviour the review rates right (the test asks for 200) | REVIEW-3, comparison row 3, the removal branch's column, rated right: "... then refused `CasConflict` by the writer, which the SDK replays (not chased)". The detail must show `withTheStamp [409 "CasConflict"]` |
+| `attack3_era`'s `r2-2-replays-across-a-removal` (2) | `era` | **finding no review covers** (above) | none |
+
+**One oracle corrected in this pass (the builder's own): fuzz7's P3, `fa71ac485`.** The eighth review is asked to
+rule on it.
+
+- **What P3 is for.** In each fuzz7 schedule a policy event can leave the stored policy without an attribute the
+  log's copy lists. In that window a save of the missing attribute must wait: a typed 503, never stored, never a
+  400.
+- **The form before this pass** (`71b70ac26`):
+  `(and (= 503 (first window-save)) (= 503 (first window-rm)))`. Any 503 for the window's save and removal. Then
+  every save of the database waited (R3).
+- **The stricter form** (this pass's first adaptation for R3, `827edd4e4` to `6bc0ca5d8`):
+  `(and (= [503 "RemovalPolicyBehind"] behind-save) (= 503 (first window-rm)))`.
+  - **It asserted:** a save that writes the missing attribute is answered exactly 503 `RemovalPolicyBehind`.
+  - **Beside it, unchanged:** a save of another attribute is not held by the missing one (`(not= [503
+    "RemovalPolicyBehind"] window-save)`).
+- **The corrected form** (`fa71ac485`):
+  - **The save:** 503, and its code is `RemovalPolicyBehind`. When the event put the log back behind the data
+    (`:log-put-back`, `:both-put-back`), the code may also be `RemovalLogBehind`.
+  - **The removal:** a typed 503.
+- **Why the stricter form was wrong.**
+  - **Two states at once.** `:authority-restore` puts the removal log back to the copy an earlier schedule saw, so
+    the log is behind the data. In that state the gateway refuses every request on the database 503
+    `RemovalLogBehind` until the rebuild route: the restore procedure's step 1 and step 4.
+  - **Which check runs first.** That refusal comes from the request's cut, before the write path's per-attribute
+    policy check. So the save of the missing attribute waits with `RemovalLogBehind`. The window's read and its other
+    save get the same code. The removal route checks the policy first and answers `RemovalPolicyBehind`.
+  - **Why it only showed now.** Since R3, `served` no longer marks every write of the database refused. The only
+    thing that changed is which typed 503 the save gets. It still waits, nothing is stored, and the value is not
+    answered.
+  - **The rule.** The oracle has to accept the refusal the restore procedure prescribes for the state the event
+    created.
+- **Not weakened elsewhere.**
+  - A `:data-restore` or `:add` event, which leaves the log as it is, must still answer exactly `RemovalPolicyBehind`.
+  - P1, P2 and P4 are unchanged.
+  - A 200 or an untyped answer still fails P3.
+
+**Schedule 318, worked through.** It is the first of the 91: chunk 1 of the log's boundary, seed 7501, sealed, block 3,
+whose attributes are named `:p3001` and up. The recorded detail, in order:
+
+| Step | What happened |
+| --- | --- |
+| before the event | the block had added `:p3001` to `:p3005` (each answered 200); `:p3006` was in the log's copy and not in the stored policy |
+| the event | `:authority-restore`: the log put back to the copy the previous schedule saw (`:log-put-back`); `behind` = `[":p3006"]` |
+| the window's save of another attribute | 503 `RemovalLogBehind` (the log is behind the data) |
+| the window's save of `:p3006` | 503 `RemovalLogBehind`. The stricter form wanted `RemovalPolicyBehind` here: **the violation** |
+| the window's removal of a fresh subject | 503 `RemovalPolicyBehind` |
+| the window's read | 503 `RemovalLogBehind` |
+| the restore route | 503 `RemovalLogBehind` (step 4: rebuild first) |
+| the rebuild route | 200 |
+| the restore route again | 200; it adds `:p3006` to the stored policy from the copy |
+| the window's removal sent again | 200, its value masked (P4 held) |
+| after | stored policy and copy both `:v` and `:p3001` to `:p3006` (P1 and P2 held) |
+
+How `:p3006` came to be in the copy and not in the stored policy before schedule 318 is read from a traced rerun of
+the same 400 schedules (`f7-trace318`; filled in below when it has run).
+
+**The rerun.** The 91 were all in chunk 1 of the log's boundary (all `:authority-restore`). That chunk was stopped
+and fuzz7 rerun in full with the corrected form: chunk 1 again (seed 7501), 164,663 oracles, 0 violations.
+
+### 6.2 The gates on the merge commit
+
+(Filled in when the runs end.)
 
 ## 7. The owner's decisions of 2026-11-25: three switches, none turned on
 
