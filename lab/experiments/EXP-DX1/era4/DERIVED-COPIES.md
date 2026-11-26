@@ -1468,3 +1468,481 @@ line beside DX-S3's and DX-S4's install lines, and the derived-routes block besi
 are additions next to additions. The one branch has since moved to `f633233f6` (committed 12:22 EST, seen 13:36):
 against it an eighth file conflicts, `subject_save.clj`, which this branch's own commits do not touch (the base and the
 removal head each conflict there).
+
+## 15. After the third review (DX-ERA5 `REVIEW-3.md`, `d018e725c`) and the removal line's merge (`eba14e02d`), 2026-11-25
+
+The third review (`origin/exp/DX-ERA5-derived-copies-review` `d018e725c`, fast-forwarded here) found that one removal
+in the deep format stopped the account (T1), that one subject's full ledger stopped it too (T2), that the root check and
+the reference walk sealed under the wrong subject's values (T3, T4), that the re-sweep held every removal (T5), and that
+the content-free kinds took anything (T7). The owner ruled on 2026-11-25: "I think we should keep the expired document
+notice as opposed to withdrawing it." The removal line is merged first (T6); the one branch's conflicts wait (T8).
+Code head `843d96ecb`; the commits after it change only this page. The gateway is gated at `05e035a4d` and is
+byte-identical from there to the head; the TypeScript writers changed after it (the whole-ledger finding of 15.5, the
+drivers' fixes and the two changed checks of 15.9), and their gates ran again at the commits 15.6 names. The gates
+ran under the coordinator's hold at one heavy slot (from 20:40 EST until the one branch moved at 22:00 EST), then at
+two.
+
+### 15.1 Each finding, its fix, and the test that passes
+
+| # | Finding | Fix | Test |
+| --- | --- | --- | --- |
+| T1 | One removal in the deep format stopped the account (the world builder refused a world without the removed row); and the owner's ruling of 2026-11-25 reverses B4 ("keep the expired document notice") | W0-1.2, opt-in (`era4/W0-REMOVED-VALUES.md`): a removed value is a state of its own; a rule reading one is held (DOCEXP row 0): no task or obligation, the expired-document notice exactly when it was recorded before the removal (`kept`), the removed value as its marker. Worlds keep the marker (W0 and deep); every evaluation under the option names `removable`; the recorder keeps each subject's held notice IDs in clear (`recorded-kept:<subject>`); the settlement needs none (a held document is row 0 on both sides). The oracle implements the same text | `removed-oracle.ts` 24 of 24 byte-identical (R1, R2); vitest 174 of 174; oracle cases 133 of 136 as before; `removed-kept.ts` 7 of 7 (subject 0's notice delivered again with the marker, subject 1 none, subject 2 untouched, no removed date in any delivery; in process `v8/gates-b/removed-kept`, on a stack `v8/gates-b/stack-removed-kept`, 7 of 7 each); the review's `deep-remove.ts` (deep format, 200 forms) in process and on a stack (`v8/gates-b/deep-remove`, `stack-deep-remove`): the same in both: after the removal subject 0's 2 sealed parts open as removed; at the second release subject 0 starts a new generation (202 items opened) and subject 1 keeps generation 0 (202 items); both settlements and recordings complete |
+| T2 | A full ledger, an evaluation error or a seal refusal for one subject stopped the account | per-subject named stops under the option (or `TX2_SUBJECT_STOP=1` in clear): `recorded-stopped:<subject>` and `settled-stopped:<seq>:<subject>`, `{at, code}`, code one of LedgerFull, EvaluationFailed, SealRefused, FrameTooLarge; the recorder and the settlement go on past the subject; the next event tries it again. Found by this round's gates: with whole ledgers a subject owing 200 sealed forms still stopped the account; fixed by the split check, and the option now writes ledgers in parts by itself (15.5) | `one-subject.ts` (15.5): 7 of 7 in each format, in process with ledgers in parts and whole, on a stack in parts; `recorded-split.test.ts` 8 of 8; in clear with `TX2_SUBJECT_STOP=1` (no removal there: without the option a removal makes every earlier release stale database-wide, the removal rule's and not a subject's stop), parts in both formats and whole in W0, 7 of 7 each (`v8/gates-b/one-clear-*`, `9f38a4e8f`); the review's `ledgers.ts` (`v8/gates-b/ledgers-a`, `ledgers-b2`, `ledgers-c2`, at `d56973a14` and `9f38a4e8f`): one subject owing 1,780 forms recorded in 10 parts (1,781 items), owing 1,800 stopped alone and the recorder goes on; `lone:1800`: only that subject stopped, the other two served; the shrink cases as at `05e035a4d` (a 10-part ledger changed to 1,721 items); `remove:400`: the removed subject's 3 parts open as removed, the others open, the second release recorded |
+| T3 | The root check accepted a root that was not the subject's | the declared boundary (15.2): the gateway computes the root, a carried root must equal it, the root's rows must be the subject's number and the place's account; a stored unit's place must name the write's `derivedAccount`, and a held writer's seal call names its account too (a place in another account refused, 400) | `attack8.clj` boundary8 (cases8): 266 oracles, 0 violations under each boundary (`v8/gates/cases8-log`, `cases8-commit`); `attack7.clj` d1 (15.7 item 2) and fuzz7: 1,500 schedules under each boundary (seeds 801, 901), 43,084 and 43,355 oracles, 0 violations; it counts apart the residual of 15.7 item 10 (records computed from a removed value but placed at another subject: 863 and 858 still open after the removal) |
+| T4 | The walk reached other subjects and shared entities and missed entities pointing at the subject | the declared boundary replaces the walk (15.2); protected values outside every subject refused at write | boundary8; `attack7.clj` d2 (rewritten for the boundary: both protected writes outside every subject refused 409), cost7 (15.2) |
+| T5 | The re-sweep held every removal record in memory and sorted them every second | three positions per database in the erasure-record index (new, rotation, the rotation cycle's end); 4,096 new and 4,096 rotation records a pass; a cycle of fixed end (15.3) | `attack8.clj` resweep8 at 10,000, 100,000 and 1,000,000 removals (15.3) |
+| T6 | The removal line not merged (and with it `383db77d1`'s fix for seed 915) | merged `origin/exp/DX-ERA6-removal-on-save-line` at `eba14e02d` as `898ce90e7` (15.8) | every gate below runs on the merged code; `attack7.clj` e4race7: 48 oracles, 0 violations under each boundary (`v8/gates/e4race7-log`, `e4race7-commit`) |
+| T7 | 22 content-free kinds and 3 ID fields accepted a protected value | exact forms per kind and fixed-form ID fields (15.4); found on the way: the account calendar held every future expiry date's end of day in clear (15.4) | `attack8.clj` kinds8, without and with a declared boundary: each of the 22 kinds in its writers' form accepted, with a fixed-form field carrying a protected value refused, b1's 22 documents refused; the 3 identifier fields refuse an SSN-shaped value and take their own form (`v8/kinds8-a`, `accc8053b`); `attack7.clj` b1: 0 of 22 and 0 of 3 accepted, against 22 and 3 before (`v8/cases7-c`); `calendar.ts` 10 of 10 (15.4) |
+| T8 | Conflicts with the one branch | not resolved (the removal line lands first) | |
+
+### 15.2 The declared subject boundary (T3, T4): the design, its states and its cost against the walk
+
+**The walk (second review's rule, removed).** A place named a subject and, in the deep layout, carried the subject's root
+(`deep|<account>|@<root>|<subject>`). The gateway checked that the carried entity had `:subject/member` and
+`:subject/account` rows, then followed every reference out of it (breadth first, live rows) and sealed under every
+protected value it reached. Its states, per entity and per place, and three of the four were wrong:
+
+| State of an entity E for subject S | Walk | What it should be |
+| --- | --- | --- |
+| E is S's own and reachable from S's root | sealed under E's values | the same |
+| E is S's own but only points at S (a note, a reverse reference) | not reached: a record of S survives the removal of E's value | sealed under E's values |
+| E is another subject's or shared (a manager reference, a site) | reached: S's records sealed under that subject's values, and stop opening when that subject removes a value | not S's |
+| the carried root is not S's (another entity with the two rows; the same number in another account) | accepted: S's records sealed under the wrong subject's values | refused |
+
+**The boundary (this round).** A database declares once (`POST /v2/db/<db>/subject-boundary`, one-way, stored in the
+database) what a subject's own entities are: the subject ID's form (`pl:s{n}`), the one root (`acct/{account}/pl:{n}`),
+whether the root must carry its rows, and the ID patterns of the entities the subject owns (SCALE1: `wk`, `i9`, `sec`,
+`ev`, `doc`, `evt`, each `acct/{account}/<kind>:{n}` and `...:{n}:*`, plus `acct/{account}/pl:{n}:*`). Then:
+
+1. the gateway computes the root from the place's account and the subject's number; a place that carries a root must
+   carry that one; with `rootRows` the root's `:subject/member` and `:subject/account` must be exactly the number and the
+   account (400 otherwise);
+2. a record is sealed under every protected value on the root and on every entity matching an own pattern, current or
+   superseded, not removed: one index read per pattern;
+3. a protected value written on an entity no pattern gives to a subject is refused at write (409
+   `ProtectedValueOutsideSubject`), so no protected value can lie outside every subject;
+4. under the setting a stored unit's place must name the write's account (`derivedAccount`; 409 otherwise), and a held
+   writer's seal call names its account too (a place in another account refused, 400);
+5. without a declaration the W0 rule applies exactly as before.
+
+States under the boundary, per entity E: (a) a protected value on E, E matches S's pattern: E's values seal S's records;
+(b) a protected value on E, E matches no pattern: impossible (refused at write); (c) E matches another subject's
+pattern: never S's; (d) E holds no protected value: irrelevant to sealing. Per place: (e) the root computed and its rows
+right: sealed; (f) a carried root that is not the computed one, or a root without its rows: refused. Six states, none of
+them a wrong seal; the walk's three wrong states (an entity missed, another subject reached, a wrong root accepted)
+cannot occur.
+
+What the boundary does not decide: whether an entity's pattern describes what the business means by "the subject's
+own". A writer that names a shared fact under a subject's pattern makes it that subject's; that is the declaration's
+meaning, not a check.
+
+**Cost.** Walk: one read of the root's rows plus one live-row read per entity reached, breadth first, unbounded by
+construction (a reference chain into a shared entity reaches every entity that one reaches). Boundary: one read of the
+root's rows plus one index read per pattern, 14 for SCALE1's boundary, whatever the references. Measured with the
+review's own case (`attack7.clj` d4, phase `cost7`: one frame of 64 subjects x 6 records, each subject 6 entities and 2
+protected values; at `05e035a4d`, `v8/gates/cost7-log` and `cost7-commit`; Mac, diagnostic; the walk's figures are the
+review's, medians of 5):
+
+| Places | Walk: seal call (ms) | Walk: names per record | Boundary, log: seal call (ms) | Boundary, commit (ms) | Boundary: names per record |
+| --- | --- | --- | --- | --- | --- |
+| W0 places (no root) | 16 | 0 | 37 | 34 | |
+| root places | 47 | 2 | 58 | 41 | 2 |
+| every root also refers to a team entity that refers to 50 other subjects' roots | 307 | 102 | 22 | 33 | 2 |
+| ... to 200 other subjects' roots | 1,063 | 402 | 24 | 23 | 2 |
+
+Under the boundary a record names its own subject's 2 values whatever it refers to, and the time no longer grows
+with the subjects reached. The times are this Mac's under other builders' load (the W0 row, which neither design
+changes, was 16 ms for the review and 34 to 37 ms here).
+
+### 15.3 The re-sweep for many removals (T5)
+
+The removals are read from the data, not held: each removal's record on its transaction (`:triplex.tx/erasure-record`)
+in transaction order from the `:aevt` index (`d/seek-datoms`). The data holds every removal, published or pending: a
+removal commits in sequence order (its `:db/cas` moves the scope's removal sequence from seq - 1 to seq) before it is
+published. The cut's command map is no longer read. Per database the state is three index positions: `:due` (the first
+record not yet taken as new), `:rot` (where the rotation stands) and `:end` (where the rotation's cycle ends: the `:due`
+of the pass that began it). A pass takes at most 4,096 new records (while due: older than the shred grace) and 4,096
+rotation records below `:end`, and checks their keys 512 per query; reaching `:end` begins the next cycle from the start.
+A key restored for a record at position p is deleted within the current cycle's remaining passes plus ceil(p / 4,096) +
+1: at most two cycles, whatever the arrival rate. At one pass a second per database, a cycle at 1,000,000 removals is
+245 passes, about 4 minutes. The first version of this round let the cycle's end move with the
+arrivals; resweep8 found the rotation never wrapping at 10,000 records with 4,096 arrivals a pass, and the cycle now has
+a fixed end.
+
+`attack8.clj` resweep8 (`evidence/DX-ERA4/v8/resweep8-c`, at `b3d45a0fd`; in process, synthetic records one identity each, due a day
+ago, the key store replaced by a counter reporting one restored key a third of the way down; Mac, diagnostic):
+
+| Removals | Held between passes | Heap change over 5 passes | One pass (ms, 5 passes) | Catch-up passes (all taken as new) | Passes until the restored key is deleted (bound: two cycles) | ... with 256 new removals a pass | ... with 4,096 new removals a pass |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 10,000 | 3 positions | 0 MB | 49, 48, 10, 17, 29 | 4 | 3 (8) | 3 | 3 |
+| 100,000 | 3 positions | 0 MB | 18, 25, 8, 21, 22 | 26 | 14 (52) | 14 | 13 |
+| 1,000,000 | 3 positions | 0 MB | 11, 11, 6, 11, 11 | 246 | 91 (492) | 91 | 86 |
+
+The gate run at `05e035a4d` (`v8/gates/resweep8`) gave the same pass counts in every column; its passes took 7 to 49 ms
+and the heap did not grow.
+
+Before the cycle had a fixed end (resweep8-b, `accc8053b`): the same except 10,000 removals with 4,096 arrivals a
+pass, where the key was not deleted within 13 passes (the rotation ran along the growing end). The previous re-sweep
+(the second review's N5) held every committed record in memory; its passes at 1,000 removals were 12 to 19 ms.
+
+### 15.4 The content-free kinds and the identifier fields (T7), and the calendar
+
+Each of the 22 content-free kinds is checked to an exact form (`free-kinds` in `derived_seal.clj`): the key's parts
+(64-hex hashes, subjects, numbers) and the document's keys and the form of every field: naturals, 64-hex hashes, W0
+instants (`YYYY-MM-DDTHH:MM:SS.ffffffZ`), subjects, a journal's document prefix (`notice:v1:<64 hex>:`), an epoch (a
+hash, an assertion ID or `uninitialized`), and tokens of at most 128 characters of `[A-Za-z0-9_.:/|+=-]` where the
+writers put names (release names, request IDs, the control's `by`). Two fields stay unchecked, named: a notice event's
+release document (`event:N` `document`, the business's rules, or null) and the join index's packed postings
+(`join-index-base:N` `packed`, `join-index:N` `patch`: the indexed rules' inputs, pay, minutes, location and E-Verify
+status dates, none a protected attribute of today's policies). The identifier fields: a removed marker names assertion
+IDs (26 characters of Crockford base32, the store's IDs and the deep loader's), a packet's account is its journal's
+document prefix, and a subject that no sealed unit binds (an entry or delivery with only null changes or a marker) and
+the subject in a content kind's key (ledger, ledger part, receiver, kept, retired, stopped) must be of the subject form:
+the declared one (`pl:s` and 8 digits) with a boundary, W0's `pl:...` otherwise; the generation and join-member keys'
+subjects are of W0's form. A sealed unit already binds its subject (its place names it).
+
+What a form cannot do: an instant is a value's shape for a date-protected policy, and a subject number is any 8 digits.
+These fields hold what the writers put there; the check bounds their form, not their meaning.
+
+**Found on the way: the account calendar named every future expiry date.** `join-calendar` (a clear derived document in
+the source database) held `W0.endOfDay(expiresOn)` for each document expiring after the clock, added at enrolment (the
+scan of the account's inputs) and at a save (`deepImpact` for `:file/expiresOn`, the W0 edit path for `expiresOn`). The
+end of day of a date is the next day's midnight (`2027-08-15` gives `2027-08-16T00:00:00.000000Z`), which is why the
+second review's dump search for the dates themselves found no copy. A removal reached none of it. Under the option the
+calendar now holds no day derived from a document's date; it holds the next end of day after the clock, renewed at each
+(`account.ts` `nextEndOfDay`), so the account still passes every expiry boundary (each is an end of day) and the
+calendar names none. Cost: one deadline step a day per account (an account of a million subjects already had an
+expiry day nearly every day).
+
+`era4/calendar.ts` (W0 format, three subjects whose documents expire on 2027-08-15, 2026-11-06 and 2025-12-29, the
+clock at 2026-11-04T12:00 and then advanced to 2026-11-08T12:00; `evidence/DX-ERA4/v8/calendar-c`, at `82e2f281b`, and
+the gate run in 15.6), 10 of 10 checks:
+
+| | Option off (as before) | Option on |
+| --- | --- | --- |
+| calendar after enrolment | `2026-11-07T00:00:00.000000Z`, `2027-08-16T00:00:00.000000Z`: the two future expiry days | `2026-11-05T00:00:00.000000Z` only |
+| calendar after the advance | `2027-08-16T00:00:00.000000Z` | `2026-11-09T00:00:00.000000Z` only |
+| notice events (release and deadlines) | 2 | 5 (one a day) |
+| expired-document notices after the advance | the 2026-11-06 document's and the 2025-12-29 one's | the same two |
+| a deep save of a 2027-03-01 expiry date adds (`deepImpact`) | `2027-03-02T00:00:00.000000Z` | nothing |
+
+### 15.5 One subject never stops an account (T2), and the Publish builder's archive rows
+
+Under the option (or `TX2_SUBJECT_STOP=1` in clear) a subject the recorder or the settlement cannot write gets a named
+stop and the frame goes on past it: `recorded-stopped:<subject>` (notice archive) and `settled-stopped:<sequence>:<subject>`
+(settlement archive), each `{at, code}` with code one of `LedgerFull` (its ledger needs more parts than one frame can
+replace), `EvaluationFailed` (its world does not build or evaluate), `SealRefused` (the gateway refuses its own items:
+4xx other than 404 and 409) and `FrameTooLarge` (one unit or closing piece alone exceeds the writer's bound). The next
+event tries the subject again; a recorded stop is cleared when the subject is written. The setting's check accepts the
+two kinds only in that exact form. The fourth round's property test (`one-subject.ts`) found two more ways one subject
+still stopped an account, both fixed (`b3d45a0fd`): the settlement wrote its stops after sizing the frame (two stops
+pushed a full frame over the bound), and the recorder asked a failed evaluation for its world.
+
+`era4/one-subject.ts`: one account of six subjects, the setting on every database, ledgers in parts, two releases
+(R1's rules with 999 synthetic forms, then R2's with 1,000 others), each settled and recorded; at once S0 owes every
+form (its ledger passes its lifetime limit at the second release), S1's document date is removed between them, S2's
+evaluation fails (deep: its pay is "abc" in the data; W0, whose enrolment validates every world: the seam
+`failEvaluation`), and S3's seal calls are refused (the seam `refuseSubject`). In process (`v8/gates/one-deep`,
+`v8/gates/one-w0`, at `05e035a4d`), 7 of 7 checks in each format:
+
+| | Deep format | W0 format |
+| --- | --- | --- |
+| settlements, recordings | stored, recorded (both releases) | the same |
+| recorder stops after release 1 | S2 EvaluationFailed, S3 SealRefused | the same |
+| recorder stops after release 2 | S0 LedgerFull, S2 EvaluationFailed, S3 SealRefused | the same |
+| settlement stops (both releases) | S2 EvaluationFailed, S3 SealRefused | the same |
+| deliveries in all after release 1 (S0, S1, S4, S5) | 1,001, 2, 3, 2 | 999, 1, 1, 1 |
+| deliveries in all after release 2 | 1,001, 4, 4, 3 | 999, 3, 2, 2 |
+| S1's expired-document notice after its removal | delivered again, `"expiresOn":{"erasedAt":...}` | the same |
+
+On a stack (`era4/stack-forms.sh`: a transactor, a write gateway and a read gateway, `v8/gates-b/stack-one-w0`,
+`stack-one-deep`, at `9f38a4e8f`): 7 of 7 in each format, with the same stops and the same delivery counts as in
+process. In process again at `f234f1196` (`v8/gates-b/one-w0`, `one-deep`): the same.
+
+**Found in the gates: whole ledgers under the option still stopped the account.** The forms gate at `05e035a4d`
+(`v8/gates/forms`, the same as the third round's) recorded "FAILED: Subject pl:s00000000: its closing piece alone exceeds
+the writer's bound" for 200 forms with whole ledgers (TX2_NOTICE_LEDGER unset, then the default) and the option on.
+A subject whose deliveries do not fit one frame is split: its deliveries go first, its ledger (the closing piece) last.
+Sealed whole, a ledger of 200 items does not fit a frame by itself, so the last frame failed after the deliveries were
+written, where the subject can be neither stopped (its deliveries would be written again on the next try) nor
+finished; the recorder threw, and the account stopped. The property test above runs with ledgers in parts, so it did
+not see this. Fixed (`d26f0da66`, corrected in `002b6ae4d` and `843d96ecb`):
+
+1. **The split check** (`recorded.ts` `noticeFrame`): under subject stops, when a subject's split begins, its closing
+   piece alone is priced first, with the cursor's two growing counters at the most they can reach by its last frame
+   (a packet a frame and at most one frame a unit; every delivery of the subjects up to it) and with the retraction
+   of a cursor row, which the last frame always has (the first frame of all has none); if it cannot fit, the subject
+   is refused there, before anything of it is written, and the recorder gives it `LedgerFull`. The retry loop takes
+   the code from the error and tries a subject once. Two first versions were wrong, both found by the gates: `d26f0da66`
+   priced one more op of 64 characters, which the estimate counts as 5 rows (225 us), and stopped a 10-part ledger
+   change that recorded at `05e035a4d` (`ledgers.ts` `shrink:1700:20`; fixed in `002b6ae4d`); `002b6ae4d` did not price
+   the cursor row's retraction when the split began at the first frame of all, so for a subject owing 179 to 186 whole
+   sealed forms its deliveries were written and its last frame did not fit, and the account's recorder stopped
+   (`v8/gates-b/limit-whole2`; fixed in `843d96ecb`). `recorded-split.test.ts` (8 tests) has one test for each: the
+   largest ledger a split subject may begin with is within 64 characters of the largest whose closing piece fits a
+   frame by itself at the same cursor row, and also when the split begins before any cursor row (that test fails on
+   `002b6ae4d`).
+2. **The option selects the ledger's form** (`ledger-parts.ts` `ledgerMode`, `frames.ts` `frameMode`): with
+   TX2_DERIVED_SEAL on, an unset TX2_NOTICE_LEDGER is `parts` and an unset TX2_SETTLE_FRAMES is `bytes`. Whole ledgers
+   can still be named (`TX2_NOTICE_LEDGER=whole`), for the tests that show what they refuse. Without the option, unset
+   is exactly as before. Refusing the combination at start-up was the other choice; it was not taken because the option
+   is turned on for running accounts, and a start-up refusal would stop all of them for a setting with one right value.
+   An explicit `whole` under the option is still accepted; refusing it too is one assertion in `ledgerMode`, and the
+   sealed whole-form property test below would then run in clear only.
+
+**What one subject can owe, sealed, in each form** (the synthetic release, `largeRelease(R1, forms=F, policies=F)`; one
+item per owed form plus the expired-document notice):
+
+| Ledger form | Served up to | First refused | What the caller sees above it |
+| --- | --- | --- | --- |
+| parts (the option's own) | 1,795 forms (1,796 items in 10 parts; `ledgers.ts` edge cases 1,781 to 1,799, one subject, `v8/gates-b/limit-parts`; at the test's counters: at a real account 9 parts, about 1,600 to 1,625, below) | 1,796 (to 1,799: no ledger written, no deliveries, the recorder goes on) | the subject's `recorded-stopped:<subject>` = `{at, code: "LedgerFull"}` in the notice archive; its new release's deliveries are not written; every other subject is recorded; the next event tries it again |
+| whole (named) | 178, 177 and 198 forms for `forms.ts`'s three subjects (179, 178 and 198 items: the subjects differ in their notices and payloads, so in their sealed sizes; `v8/gates-b/limit-whole3`, 150 to 210 forms, at `843d96ecb`, the recorder recorded in all 61 cases) | 179, 178 and 199 | the same stop, at the first release that passes the limit, before any of its deliveries |
+
+Parts: a sealed ledger is at most `ledgerPartsMax()` = 10 parts (what the head's frame can retract within the
+writer's bound), each a sealed chunk of at most 8,188 compressed bytes (`ledgerChunkBytes`). Whole: the sealed ledger
+and the cursor change in one frame within the bound (8 ms of estimated service). Sealed, the ledger is a list of
+chunks of at most 8,188 compressed bytes each (the same chunks as in parts), and a whole ledger fits one frame only
+while it is one chunk: the largest served was about 11,400 characters (subject 0 at 178 forms); with a second chunk it does
+not fit. So the whole form holds one chunk and the parts form ten (nine at a real account, below), about 180 items
+each. Both counts depend on the items' sizes, so they hold for this release's form names and payloads, not for every release.
+
+The property test in both forms (`one-subject.ts`, `TX2_NOTICE_LEDGER=whole`, at `f234f1196`, `v8/gates-b/one-whole-w0`, `one-whole-deep`): 7 of 7 checks in each format. In both, S0 has `LedgerFull` at both
+releases and no delivery; S2 `EvaluationFailed` and S3 `SealRefused` as in parts; S1, S4 and S5 get their notices (W0:
+1, 1, 1 then 3, 2, 2 in all; deep: 2, 3, 2 then 4, 4, 3); S1's kept notice is delivered again with the marker. The run
+with the ledger form unset under the option (`one-default-w0`) wrote parts and passes the parts checks, 7 of 7.
+
+**The cap in the parts form, against the owner's 200 forms (reading and arithmetic; nothing built).**
+
+1. *The constants that set it.* A sealed ledger in parts is written as parts (each one sealed chunk of the items) and
+   then a head; the head's frame retracts every old part beside the head change and the cursor change, in one commit, so
+   a reader sees the ledger switch whole. That frame must fit the writer's bound, and so the number of parts is capped:
+   - `frameBoundUs` = 8,000 us (`frames.ts`), priced by `bulkUs` (`bulk.ts`): 3,500 us a transaction, 45 us a row (5
+     rows an op, plus 16), 70 us a KiB of wire (4,096 bytes plus 3 bytes per byte of the canonical ops), and the wire
+     limit of 64 KiB;
+   - `ledgerPartsMax()` (`ledger-parts.ts`): the largest k for which k part retractions, the head's retraction and put
+     and the cursor's retraction and put fit that bound, priced with a sizing cursor (a 26-character epoch, large
+     counters): 10 (7,985 us; 11 would be 8,224);
+   - `ledgerChunkBytes` = 8,188 compressed bytes of items per sealed chunk, one chunk per part (with the record's
+     4-byte length it fills the 8,192-byte size class, about 11,400 characters sealed; `ledgerPartValueMax()` bounds a
+     part with the cursor change at 12,918 characters);
+   - the items' own compressed size: about 180 notice items per chunk on the synthetic forms (1,796 items fill 10
+     parts, 1,797 do not), so the cap is 10 chunks: 1,795 forms on this release.
+   No other constant enters: the deliveries are units of their own and are split over as many frames as they need.
+2. *The fifth Publish review's Y1 lowers it under this option, to 9 parts.* The sizing cursor's epoch has 26
+   characters; a real cursor's epoch is the account's seal, 64 (and T7's check accepts exactly that form). The 38
+   characters cost about 8 us, more than the sizing left (the review's largest closing piece was 7,998 us of 8,000):
+   it measured 8,006 us for a 10-part change with a real epoch at the sizing counters and 8,003 us at a
+   million-subject account's counters.
+   This option's head is larger still: it carries `"form":"units"` (15 characters, about 3 us), which the sizing
+   leaves out. So at a real account a ledger of 10 parts can never be changed again. With this round's split check
+   that subject gets `LedgerFull` at every later event and the account goes on (before it, the account stopped);
+   but the subject is stuck even if its ledger later shrinks, since any change retracts the 10 parts in one frame. One
+   retraction costs about 237 us (5 rows and about 180 bytes of wire), so 9 parts fit with about 230 us to spare at
+   the worst counters: the true cap under this option is 9 parts, about 9 x 179.6 = 1,616 items, so about 1,600 to 1,625
+   forms for one subject (the exact count needs the items' chunking at 9 parts; not computed). The fix is the
+   review's: size `ledgerPartsMax()` with a 64-character epoch, the units head, and the largest counters a supported
+   account reaches. Not built this round. The owner's requirement is 200 forms: the cap is about 1,400 forms above it (about 8 times), 1,595 above it at the toy counters.
+3. *Lifting it to at least 4,000 forms, or removing it.* The cost is per notice turn that changes the subject's ledger
+   (today every such turn reseals and rewrites every part); a part's frame is about 7.6 ms of estimated service (3,500 + 31 rows x 45 + about 40,000 bytes of wire x 70 / 1,024 us)
+   (a sealed part of about 11,400 characters with the cursor change); 4,001 items are 23 parts.
+
+   | Design | Cap | Writer cost per turn at 4,000 forms | What it gives up |
+   | --- | --- | --- | --- |
+   | More parts in the head's frame | none: 9 is what one frame can retract | | |
+   | Deferred retraction: the head names the new parts; the old ones are retracted in the frames after (they are unreachable once the head moves; a removal already makes them unreadable) | none from the frame (the head's frame is constant); the reader reads P parts | 23 part frames (about 175 ms) + 1 head frame + 23 retractions (about 5.5 ms of rows and wire, in one or two frames) | old parts live until the next frames retract them; the cursor must carry what is left to retract |
+   | A second level (head, index parts, leaf parts) | about 9 x 110 x 180 items | as deferred retraction, plus index parts | the leaf parts still cannot all be retracted in the head's frame, so it needs deferred retraction anyway: strictly more work |
+   | A ledger per form group (G groups, each its own head) | G x the cap | only the groups a release changes are rewritten (cheaper when a release touches few groups) | one switch per group: when one release changes several groups, a reader can see some groups new and some old, the half-old ledger the parts design rejected; or all group heads in one frame, which hits the same bound at G of 2 or more |
+   | Incremental chunks (stable chunks, the head lists them; only changed chunks resealed) | as deferred retraction | proportional to the changed items, not the ledger (one chunk for a small release) | the head grows with P (about 23 entries); chunk boundaries must stay stable across releases |
+
+   The smallest change that removes the cap is deferred retraction; incremental chunks on top of it make the per-turn
+   cost follow the release rather than the ledger.
+
+**The Publish builder's archive rows** (read at `origin/exp/DX-ACT8-publish-beside-saves` `850517da9`, its page 0.C and
+Z4; not merged). Agreed by reading:
+
+1. Its retired-item archive rows `recorded-retired:<subject>:wi:<64 hex>`, keys exactly `id`, `retired` (true),
+   `seq` (a natural, at least 1), `subject`, with `id` and `subject` equal to the key's: this check accepts exactly that
+   (content kind `:retired`) and nothing else under that name. No payload: the fold needs only IDs and sequences, and a
+   removed marker keeps both.
+2. Item alignment: under the seal its ledger parts must not be character slices of one packed string (the check refuses
+   clear content in a part whatever its cut). They go through this line's `ledgerChangeUnits`: each part one sealed
+   record of whole items, the head `form: "units"`. The merged recorder feeds the archive's ledger (the items in force)
+   into that path.
+3. Its Z1 shape: a sealed ledger already in parts stays in parts (`ledgerChangeUnits`' whole-form condition), so a
+   shrinking ledger never writes a whole form beside the retraction of its old parts.
+4. Its other derived writes are kinds this check already knows, in their forms: its settings transition writes a
+   settlement progress (`values:N`, `valuesProgress`) and a recorder cursor (`notice-progress`); the settings
+   themselves are a fact on the account's origin, not a derived document. No other new kind.
+5. Not done: the per-release cap under the seal is computed in clear characters. A sealed part's header grows with its
+   subject's protected history, so a subject with a long history can need more parts than the cap admits; that subject
+   now gets `LedgerFull` and the account goes on (T2), but the cap is not computed from the sealed capacity.
+
+### 15.6 Gates on the final head
+
+The gateway is gated at `05e035a4d` and is byte-identical from there to the head (`git diff 05e035a4d HEAD --
+packages/datomic/gateway packages/datomic/src` is empty); the later commits change the TypeScript writers and drivers,
+whose gates ran again at the commits named (`v8/gates-b`, the coordinator's hold at one heavy slot until the one
+branch moved at 22:00 EST, then two). In process unless "stack"; log = the published-log boundary, commit =
+`TX2_REMOVAL_COMMIT_BOUNDARY`. Mac, correctness only.
+
+| Gate | Where, at | Log boundary | Commit boundary |
+| --- | --- | --- | --- |
+| Option off, byte for byte: the stored-function identities of 7 settings, head against the base rebuilt without this work (`basetry.sh`) | `gates/idents`, `05e035a4d` | 7 of 7 identical | |
+| Option off in the TypeScript writers: `ledgerMode` and `frameMode` unset are whole and count, as before; the split check runs only under subject stops; the deep world builder's line reduces to the base's | `recorded-split.test.ts`, read | 7 of 7 unit tests | |
+| Paired runs, option off (base, base again, off, removal options on, commit boundary) | `gates/paired-off`, `05e035a4d` | the same datoms (653 and 698, the same hashes) and replies in base, base again and off; on and commit hold the removal line's 11 recorded-decline datoms, the same without them | |
+| Paired runs, option on | `gates/paired-derived-on` | the same replies in all 5; on and commit hold 670 and 715 datoms (the removal line's 11, and the setting's 6 installed at open) | |
+| `one-subject.ts`, sealed, ledgers in parts, deep and W0 | `gates-b/one-deep`, `one-w0`, `f234f1196` | 7 of 7 each | |
+| `one-subject.ts`, sealed, whole ledgers, deep and W0 | `gates-b/one-whole-deep`, `one-whole-w0`, `f234f1196` | 7 of 7 each | |
+| `one-subject.ts`, the ledger form unset under the option (parts by itself) | `gates-b/one-default-w0`, `f234f1196` | 7 of 7, parts | |
+| `one-subject.ts` in clear (`TX2_SUBJECT_STOP=1`; no removal, 15.5), parts deep and W0, whole W0 | `gates-b/one-clear-*`, `9f38a4e8f` | 7 of 7 each | |
+| `one-subject.ts` on a stack, deep and W0 | `gates-b/stack-one-*`, `9f38a4e8f` | 7 of 7 each, the same stops and counts as in process | |
+| `removed-kept.ts` in process and on a stack | `gates-b/removed-kept` (`d56973a14`), `stack-removed-kept` (`9f38a4e8f`) | 7 of 7 each | |
+| `calendar.ts` | `gates-b/calendar` | 10 of 10 | |
+| T1 (`derived.ts`), 10 arms | `gates-b/t1b-*`, `a1f4b8ef1` | on arms (wide, all options, moved under each boundary, faults under each): `xFound` 0, the kept notice ID only in A's notice archive (7 places), pass; off arms (control): `xFound` 137; mixed arms refused `DerivedRecordUnsealed`, nothing in clear outside the source | |
+| `held.ts` and `row19.ts` | `gates/held-*`, `row19-*`, `05e035a4d` | held pass; row19: no cached answer with the removed value after the commit | held pass; row19 the same, and the plain read masked at the commit |
+| `era5/run.sh` attack (W2, W, L, S) | `gates-b/era5-attack`, `d56973a14` | no break | |
+| `forms.ts` P and K | `gates-b/forms` (`d56973a14`), `forms2` (`843d96ecb`, the same) | whole 5, 30, 100 recorded; whole 200: all three subjects `LedgerFull`, the recorder goes on (at `05e035a4d`: FAILED); parts 200, 1,000, 1,700: 201, 1,001, 1,701 deliveries each, 2, 6, 10 parts, every item opened; K: 0 clear copies | |
+| `deep-forms.ts` in process and on a stack | `gates-b/deep-forms`, `stack-deep-forms` | 30, 200, 1,000: 0, 2, 6 parts, 31, 201, 1,001 items; stack 200, 1,700: 2 and 10 parts, 201 and 1,701 items | |
+| `ledgers.ts` (the review's L3) | `gates-b/ledgers-a` (`d56973a14`), `ledgers-b2`, `ledgers-c2` (`9f38a4e8f`) | edge 1,780 served (10 parts, 1,781 items), 1,800 stopped alone; shrink cases as at `05e035a4d`; `lone:1800` only that subject stopped; `remove:400` the removed subject's parts removed, the others open | |
+| `deep-remove.ts` in process and on a stack | `gates-b/deep-remove`, `stack-deep-remove`, `002b6ae4d` | subject 0's parts removed, a new generation at the second release, subject 1 untouched; the same on the stack | |
+| Per-subject limits | `gates-b/limit-whole3` (`843d96ecb`), `limit-parts` (`f234f1196`) | whole, 150 to 210 forms: 178, 177, 198 served by subject, 179, 178, 199 refused (`LedgerFull`), the recorder recorded in all 61 cases; parts: 1,795 served (10 parts), 1,796 to 1,799 refused, the recorder recorded | |
+| `attack8.clj` cases8 (boundary8, the seal call's account) | `gates/cases8-*` | 266, 0 | 266, 0 |
+| `attack8.clj` kinds8 | `gates/kinds8-*` | 14, 0 (22, 22, 22, 3, 3 in each mode) | 14, 0 |
+| `attack8.clj` resweep8 | `gates/resweep8` | 15.3's figures | |
+| `attack7.clj` cases7 (d1, d2, d3, b1) | `gates/cases7-*` | 95, 0; b1: 0 of 22 and 0 of 3 accepted | 95, 0 |
+| `attack7.clj` cost7 | `gates/cost7-*` | 3,194, 0 (15.2's table) | 3,194, 0 |
+| `attack7.clj` e4race7 | `gates/e4race7-*` | 48, 0 | 48, 0 |
+| `attack7.clj` fuzz7 (1,500 schedules, seeds 801, 901) | `gates/fuzz7-*` | 43,084, 0 | 43,355, 0 |
+| `attack6.clj` cases6, fuzz6 (1,000, seeds 611, 612) | `gates/cases6-*`, `fuzz6-*` | 1,803, 0; 26,794, 0 | 1,805, 0; 26,447, 0 |
+| `attack5.clj` era5 cases, fuzz (1,000, seeds 701, 702), pending | `gates/era5-*` | 1,523, 0; 29,664, 0; pending 8, 0 | 1,523, 0; 29,753, 0 |
+| era4 checks (after `b0651e2eb`) | `gates-b/checks2-*`, `a1f4b8ef1` | 185, 0 | 185, 0 |
+| era4 cost | `gates/cost-*` | 12, 0 | 12, 0 |
+| DX-ACT9 after (1,000, every option) | `gates/f-act9-*` | 8,342, 0 | 8,344, 0 |
+| DX-ERA2 gate, era3, suites (every option) | `gates-b/f-era2-*` | gate: interleavings database-wide 19 and 11 checks, per account 17, commit 17, 0 failed; frame race 40 (20 `cas-failed`, 20 at the account fence); era3 (the earlier reviews' attacks): 0 violations in every phase but `era3e9-on`, the second review's E9 as written, 2 of 2 red as on every pass (14.4 item 1); suites: 76 tests, 71,170 assertions, 0 failed, 1 error in each arm (off, subject, commit), the `http-route` error the base `c2aa3d416` has | |
+| stack shred | `gates-b/stack-shred` | with c1's removal pending, a1's key row is gone 25 s and 45 s after a1's publication; a1's copy opens as removed; after the resend no intent pending | |
+| era5 cost (file, pg, deep), pending pg | `gates-b/era5-cost-*`, `era5-pending-pg` | file 12, 0; PostgreSQL 12, 0; deep 9,728, 0; pending (PostgreSQL) 23, 0 | |
+| Series (gate e): 20 runs x 1,000 schedules, seeds 821.. and 921.. | `gates-b/series`, `843d96ecb` | 20 runs, 328,686 oracles, 2 violations: seeds 830 and 837, each a schedule stopped by an unbound function (15.7 item 17); each seed run twice more: 0 | 20 runs, 328,893 oracles, 3 violations: seeds 931 and 939 the same load race; seed 940 a delivery of another account answered 409 `OperationDuplicate` (15.7 item 18); seed 940 run twice more: 0 |
+| `b4.ts` (the second review's observation of the old B4 rule) | `gates/b4` | 24 cases, kernel and oracle the same answer in every one (4 differ only in the field naming the failure, both `W0.E_VALUE`) | |
+| Mac unit tests | `mac/join-unit-tests-2.out`, `w0-vitest.out` | join and notify 19 files pass (`relay.test.ts` not run); W0 174 of 174; oracle 133 of 136 as before; `removed-oracle.ts` 24 of 24 | |
+
+### 15.7 Not tested, and what stays open
+
+1. **The rented servers.** Every figure here is the Mac's (correctness; times diagnostic). The re-sweep at 1,000,000 removals
+   ran on synthetic records in an in-memory database, not on a server's storage.
+2. **A seal call that names no account still seals at any account's place** (`attack7.clj` d1's remaining finding,
+   which calls the route without `derivedAccount`): the gateway seals a record for the place it is given, under that
+   place's subject, so content of subject a7 placed at b7's place gets a record under b7's values. The option's own
+   writers now name their account on every seal call (`derivedAccount`), and the route refuses them a place in
+   another account (400, `attack8.clj` boundary8); and the setting refuses to store such a unit for any writer (409:
+   the unit's account is not the write's). A record a writer seals without naming its account and keeps only in its
+   own memory is outside the store.
+3. **Release documents and the packed join index** are not walked by the check (15.4).
+4. **The per-release cap under the seal** is not computed from the sealed capacity (15.5 item 5).
+5. **The live read path** (`decision.ts`) evaluates with `removable` but without the kept set, so a live read of a held
+   document shows no work item; the notice stream keeps it (`W0-REMOVED-VALUES.md`, "Not covered").
+6. **A notice owed but not yet recorded at the removal** is not created afterwards: the outcome kept is the one last
+   recorded.
+7. **The removal line's newer head** `fa71ac485` (commit time 19:13 EST) is not merged: it carries the merge of the one
+   branch (`efee27905`) and three switches; T8 says the one branch's conflicts wait until the removal line lands.
+8. **The boundary is declared before a subject's protected values are written**: a value written before the
+   declaration is not checked (the declaration is one-way and meant at creation).
+9. **The calendar's W0 save path** is read, not run: a W0 save of a protected attribute through the account's save
+   stages the row, and a staged preview of a protected row is refused on a sealed scope (with the option off as on),
+   so that save does not run on a sealed database at all. The deep save path's dates are checked (`calendar.ts`, with
+   `deepImpact` itself), and the enrolment and the daily wake in process (15.4).
+10. **A record computed from another subject's value** and placed at this subject is sealed under this subject's values
+    only (the second review's admitted residual, 14.4; the third review's fuzz7 counts it apart): the place decides
+    the subject, and the gateway cannot know what a writer computed a record from beyond the rows it names.
+11. **Mac unit tests**: the join and notify unit tests that need no gateway pass (`v8/mac/join-unit-tests-3.out`, at
+    `843d96ecb`) except `notify1/relay.test.ts`, which was not run (it imports `packages/sqlite/dist`, not built in
+    this checkout).
+12. **Y1 under this option is not fixed** (15.5): the parts' sizing still prices a 26-character epoch, so at a real
+    account a ledger of 10 parts cannot be changed and that subject stays at `LedgerFull`; the true cap is 9 parts,
+    about 1,600 to 1,625 forms, computed, not measured.
+13. **The split check's bound** prices the two growing counters at the most they can reach and a 40-character cursor
+    row ID; it is not checked against a server's counters (a million-subject account's), only against the unit
+    tests and the Mac's gates.
+14. **In clear, a removal** makes every release published before it stale for the whole database (the removal line's
+    rule without the option; the per-account options narrow it): the property test in clear has no removal. The
+    whole-ledger property test in clear ran in W0's format only, and none of the whole-ledger runs ran on a stack.
+15. **An explicit `TX2_NOTICE_LEDGER=whole` under the option** is still accepted (it serves a subject only up to one
+    sealed chunk, 177 to 198 forms for the subjects measured).
+16. **The cap above 1,795 forms** (or 9 parts) is not lifted: 15.5 prices the designs; none is built.
+17. **A load race in the removal line's gateway code, found by the series, not fixed here.** Two of the 20 runs under
+    the log boundary had one violation each, a schedule stopped by an unbound function: seed 830 (case "E4 on 2",
+    `triplex.gateway.outcome/kind`) and seed 837 (case "E4 on 0", `triplex.gateway.reply/message`). `main.clj` lines
+    834 and 835 (the removal line's `30b4f097d`, unchanged here) resolve both lazily (`requiring-resolve`) when they
+    answer a failure; a second thread can resolve the var while the first is still loading its namespace, and call it
+    unbound. Each seed run twice more passed (830: 16,423 and 16,425 oracles; 837: 16,518 and 16,534; 0 violations;
+    `v8/gates-b/series/rerun`). Requiring both namespaces when `main.clj` loads removes it; that is the removal
+    line's file (`main.clj` has 65 lines with `requiring-resolve`).
+18. **One delivery answered `OperationDuplicate`, not explained.** Seed 940 (commit boundary), case "E4 on {:i 407,
+    :stop :before-native}": a delivery of the other account, sent once at `:after-hold`, was answered 409
+    `OperationDuplicate` ("Operation already committed"); the oracle "a derived write of another account is never
+    refused by this removal" accepts only 200. The gateway gives that answer only for an operation already stored
+    (`storage.clj`, `removal_commit.clj` `already-stored?`; the SDK resolves it by reading the receipt), so the write
+    most likely landed and was answered as a duplicate on an internal retry; the test does not record whether it
+    landed, so this is not shown. The same seed run twice more passed (16,467 and 16,479 oracles, 0 violations). The
+    oracle is not changed this round.
+
+### 15.8 Merges
+
+- **T6.** The removal line merged at `origin/exp/DX-ERA6-removal-on-save-line` `eba14e02d` (with `383db77d1`'s fix for
+  E4), as `898ce90e7`. After it, this branch's gateway differs from `eba14e02d`'s in five files, all this work's
+  (`derived_seal.clj`, `erase.clj`, `privacy.clj`, `storage.clj`) or this work's plus DX-ACT9's account tickets
+  (`main.clj`); the option-off base is built that way (`evidence/DX-ERA4/v8/basetry.sh`). The removal line has since
+  moved to `fa71ac485` (commit time 19:13 EST) and `c8a950160` (19:53 EST, lab only since `fa71ac485`): it adds three
+  switches (replay rule, completion worker, protection sealed-only) and merges the one branch's `efee27905`. Not merged
+  here: taking it would resolve the one branch's conflicts, which T8 defers.
+- **T8.** Against the one branch's head `origin/exp/DX-INT1` `345f833e4` (`git merge-tree`, not merged), this head
+  conflicts in 10 files: `b2r/REVIEW.md`, `ha1/local.ts`, `envelope.clj`, `failures.clj`, `main.clj`, `privacy.clj`,
+  `reply.clj`, `storage.clj`, `subject_save.clj`, `DatomicStorageAdapter.ts`. The merged removal head `eba14e02d` alone
+  conflicts in the same 10, so this work adds no conflicting file. The removal line's `fa71ac485` conflicts in 4
+  (`envelope.clj`, `main.clj`, `reply.clj`, `storage.clj`). Not resolved.
+
+### 15.9 Two of this round's own checks changed (for the fourth review to rule on)
+
+**1. `races.clj` `setting` (phase `checks`), `b0651e2eb`.**
+
+- *Before.* With `derived-seal-required` set, two hand-made documents had to be accepted (200): a receiver state
+  `receiver:o:pl:00000001` holding a sealed record (`state-sealed`), and `notice-progress` with the value `{"count": 1}`
+  (`content-free-document`). Oracle text: "with the setting a sealed or content-free document is accepted".
+- *What changed under it.* T7 (`accc8053b`) checks each content-free kind to its exact form, and a receiver key's origin
+  as a 64-hex hash. At `05e035a4d` both documents were refused 409 `DerivedRecordUnsealed`: 2 violations of 185 oracles,
+  under each boundary (`v8/gates/checks-log`, `checks-commit`).
+- *Now.* The same oracle (accepted, 200) on the same two kinds, written as their writers write them: the key
+  `receiver:<64 hex>:pl:00000001`, and `notice-progress` as the recorder's cursor (`epoch`, `parent` and `previous`
+  64-hex hashes; `event`, `start`, `batch`, `entries` naturals).
+- *Why.* The oracle's purpose is that the setting accepts what its own writers write. Neither old document is any
+  writer's: no receiver names its origin `o`, and no recorder writes `count`. Refusing such free content is T7's
+  purpose; that refusal is asserted by `attack8.clj` kinds8 (each of the 22 kinds with a fixed-form field carrying a
+  value is refused), not by this case.
+- *Worked case.* `notice-progress` = `{"count": 1}`: before T7 accepted (the kind was known, its content not read), so
+  the old oracle held; after T7 refused (409, `count` is not a cursor field), so the old oracle failed; the cursor
+  `{"epoch": "a...a", "event": 1, "start": 0, "parent": "b...b", "batch": 0, "previous": "c...c", "entries": 0}` is
+  accepted: the rerun at `a1f4b8ef1` has 185 oracles and 0 violations under each boundary (`v8/gates-b/checks2-log`,
+  `checks2-commit`).
+
+**2. `derived.ts` (the T1 gate, its on arms), `b41d85714` and `2576e6591`.**
+
+- *Before.* After X's expiry date is removed, three needles are searched in every place the run can read (every route
+  of every database, the gateway's dump of native datoms, the client's memory): X's expiry date, the version of X's
+  expired-document notice, and that notice's item ID. The on arm passed only with none of the three anywhere in clear
+  (`xFound` 0).
+- *What changed under it.* The owner's ruling of 2026-11-25 keeps the expired-document notice, so the recorder keeps
+  each subject's held notice IDs in clear (`recorded-kept:<subject>`), the set the next evaluation passes as `kept`. At
+  `05e035a4d` every on arm had `xFound` 19, all 19 the item ID, all in account A's notice archive (its journal 4, feed
+  1, the four row routes 2 each, its native datoms 6); the date and the version 0.
+- *Now.* The item ID is reported apart and no longer counts in `xFound`; the date and the version must still appear
+  nowhere. A new condition: the ID appears in account A's notice archive (routes labelled `notices` and that
+  database's native datoms) and nowhere else, and it appears there (the kept outcome survives the removal).
+  `b41d85714` let it appear in any database's native datoms; `2576e6591` names A's notice archive exactly and requires
+  the ID to be present.
+- *Why.* The old condition required the removal to reach the kept notice's ID, the opposite of the ruling. What the ID
+  reveals: it is a hash of the subject, the rule, the kind and the document's key, so anyone who knows the subject's ID
+  and the document's key can confirm that the document had an expired-document notice owed; it holds no date.
+- *Worked case.* `t1-on-wide` at `05e035a4d`: date 0 places, version 0, item ID 7 places with 19 occurrences, every
+  place A's notice archive. Old condition: `xFound` 19, fail. New: `xFound` 0, the ID only in A's notice archive and
+  present, pass if the rest holds. The rerun at `a1f4b8ef1` (`v8/gates-b/t1b-*`): every on arm (wide, all options, moved
+  under each boundary, faults) `xFound` 0, the ID in 7 places, all A's notice archive, pass; the off arms (the
+  control) `xFound` 137.
