@@ -1714,11 +1714,13 @@
               (check! label (= {"attributes" [":v"] "sealed" false} stored-two) "the first adoption stands" stored-two))))))))
 
 (defn decline-stamp
-  "[V3, V4 of the fifth review] A save that says nothing about when it was framed (no frame source, no removalSeen), of
-  a removed subject's value: 409 ErasureReplayDeclined carrying the current removal stamp, and NOTHING written (50 of
-  them: no transaction); the same save sent again with removalSeen set to that stamp is stored (case 3), under the
-  same command too. A save framed before the removal (an old frame source): its command recorded once (case 2: a
-  resend under it with a fresh source is refused), and a further refusal of that command writes nothing."
+  "[V3, V4 of the fifth review; DX-ERA6, adapted to the merged rule] A save that says nothing about when it was framed
+  (no frame source, no removalSeen), of a removed subject's value: 409 ErasureReplayDeclined carrying the current
+  removal stamp. Under the merged rule (point 3) every declined command is recorded, whatever the save stated: each of
+  50 such saves writes one record (one transaction each), and the same save sent again under its command with
+  removalSeen = that stamp is refused; under a NEW command with that stamp it is stored (case 3). A save framed before
+  the removal (an old frame source): its command recorded once (a resend under it with a fresh source is refused), and
+  a further refusal of that command writes nothing."
   []
   (fresh-scope false
     (fn [name conn]
@@ -1732,9 +1734,11 @@
             t0 (d/basis-t (erase/sync! conn))
             many (frequencies (for [k (range 50)] (let [r (sourceless (str "ds-m-" k) (secret a1 (str "m" k)))] [(:status r) (get-in r [:body "code"])])))
             t1 (d/basis-t (erase/sync! conn))
-            retry (raw-route name "v1" "transact" (assoc (frame "ds-1" a1 (secret a1 "n1-again") nil nil) "removalSeen" stamp))
             records (fn [] (let [db (d/db conn)] (if (d/entid db :triplex.removal/declined-command) (count (seq (d/datoms db :aevt :triplex.removal/declined-command))) 0)))
             r0 (records)
+            retry (raw-route name "v1" "transact" (assoc (frame "ds-1" a1 (secret a1 "n1-again") nil nil) "removalSeen" stamp))
+            fresh (raw-route name "v1" "transact" (assoc (frame "ds-1-new" a1 (secret a1 "n1-new") nil nil) "removalSeen" stamp))
+            r0b (records)
             late (raw-route name "v1" "transact" (frame "ds-late" a1 (secret a1 "late") nil pin))
             r1 (records)
             late-again (raw-route name "v1" "transact" (frame "ds-late" a1 (secret a1 "late2") nil (head conn)))
@@ -1743,16 +1747,19 @@
             t3 (d/basis-t (erase/sync! conn))]
         (println "ERA2_DECLINE_STAMP" mode (pr-str {:first [(:status first-decline) (get-in first-decline [:body "code"])] :stamp stamp :frontier frontier
                                                     :fifty many :transactions (- t1 t0) :retry [(:status retry) (get-in retry [:body "code"])]
-                                                    :records [r0 r1] :late (:status late) :late-again (:status late-again) :third-writes (- t3 t2)}))
+                                                    :fresh (:status fresh) :records [r0 r0b r1] :late (:status late) :late-again (:status late-again) :third-writes (- t3 t2)}))
         (check! label (= [409 "ErasureReplayDeclined"] [(:status first-decline) (get-in first-decline [:body "code"])]) "a source-less save of the removed value is declined" (:body first-decline))
         (check! label (and (integer? stamp) (= stamp frontier)) "the refusal carries the current removal stamp" [stamp frontier])
         (check! label (= {[409 "ErasureReplayDeclined"] 50} many) "50 more are declined" many)
-        (check! label (= t0 t1) "and write nothing (V4: no transaction for a save that says nothing)" [t0 t1])
-        (check! label (= 0 r0) "no command recorded for them" r0)
-        (check! label (= 200 (:status retry)) "the same save again with removalSeen = that stamp is stored (case 3), under the same command" (:body retry))
-        (check! label (some? (stamp-header retry)) "a stored save carries the stamp too" (:headers retry))
+        ;; one transaction each, which creates one record entity: two t values each (Datomic's t counts both)
+        (check! label (= 100 (- t1 t0)) "each writes one record (the merged rule records every declined command), one transaction each" [t0 t1])
+        (check! label (= 51 r0) "every declined command recorded once" r0)
+        (check! label (= [409 "ErasureReplayDeclined"] [(:status retry) (get-in retry [:body "code"])]) "the same save again under its declined command is refused, whatever it states" (:body retry))
+        (check! label (= 200 (:status fresh)) "a new command with removalSeen = that stamp is stored (case 3)" (:body fresh))
+        (check! label (some? (stamp-header fresh)) "a stored save carries the stamp too" (:headers fresh))
+        (check! label (= r0 r0b) "refusing a recorded command writes nothing" [r0 r0b])
         (check! label (= [409 "ErasureReplayDeclined"] [(:status late) (get-in late [:body "code"])]) "a save framed before the removal is declined" (:body late))
-        (check! label (= 1 r1) "its command recorded once (case 2)" r1)
+        (check! label (= (inc r0b) r1) "its command recorded once (case 2)" [r0b r1])
         (check! label (= 409 (:status late-again)) "a resend under that command with a fresh source is refused (case 2)" (:body late-again))
         (check! label (= t2 t3) "a further refusal of a recorded command writes nothing" [t2 t3])))))
 
@@ -1816,9 +1823,10 @@
 
 (defn replay-rule-off
   "[DX-ERA2 seventh pass, the sixth review's fact 1] The rule for a save framed before a removal runs only with the
-  per-account option or TX2_REMOVAL_REPLAY_RULE=1. Without them (every option off) a save that says nothing about its
-  frame and writes a removed subject's protected value is stored and answered, as on the merged line, and no answer
-  carries the removal stamp; with the rule on it is declined."
+  per-account option or TX2_REMOVAL_REPLAY_RULE=1. Without them (every option off) the save line's own rule answers,
+  as on the one branch: since its fourth pass a save that says nothing about its frame and writes a removed subject's
+  protected value is declined (until 1be3efbab it was stored), and no answer carries the removal stamp; with the rule
+  on it is declined too."
   []
   (fresh-scope false
     (fn [name conn]
@@ -1834,10 +1842,74 @@
                                                   :frontier-has-stamp (contains? frontier "removalStamp")}))
         (if rc/replay-rule
           (check! label (= 409 (:status r)) "with the rule on, the save is declined" (:body r))
-          (do (check! label (= 200 (:status r)) "with every option off, the save is stored as on the merged line" (:body r))
-              (check! label (str/includes? (text (:body read)) v) "and its value answered" nil)
+          ;; [DX-ERA6 eighth pass] with every option off the save line's fourth pass (on the one branch since 65a851d1b)
+          ;; declines a save that states no frame, against any removal of the family; until 1be3efbab it was stored
+          (do (check! label (= [409 "ErasureReplayDeclined"] [(:status r) (get-in r [:body "code"])]) "with every option off, the save is declined as on the one branch (the save line's frame-check!)" (:body r))
+              (check! label (not (str/includes? (text (:body read)) v)) "and its value not answered" nil)
               (check! label (nil? (stamp-header r)) "no answer carries the removal stamp" (:headers r))
-              (check! label (not (contains? frontier "removalStamp")) "the frontier as on the merged line" frontier)))))))
+              (check! label (not (contains? frontier "removalStamp")) "the frontier as on the one branch" frontier)))))))
+
+(defn- frontier-stamp
+  "The removal stamp a client reads from the frontier (the SDK's ensureRemovalStamp: removalStamp, else seq)."
+  [name]
+  (let [b (:body (raw-route name "v2" "erasure-frontier" nil))] (or (get b "removalStamp") (get b "seq"))))
+
+(defn merged-rule
+  "[DX-ERA6] The merged rule of the save line's third review (section 2), with the replay rule on: a save is framed at
+  the earliest of its first attempt's source (`frameSourceK`), its own source and the removal stamp it states
+  (`removalSeen`); a declined command is recorded and every later save under it is declined; a new command is a new
+  save. Each case is the review's table row, on the same values. With the rule off (every option off) the save line's
+  own rule answers: a replay is judged by its first source only, and the declined command is not recorded."
+  []
+  (fresh-scope false
+    (fn [name conn]
+      (let [label (str "merged-rule/" mode (if rc/replay-rule " (rule on)" " (rule off)"))
+            _ (seed! name [a1 b1 a2])
+            before (head conn)
+            seen-before (some-> (frontier-stamp name) long)
+            _ (expect label (remove! name "mr-rm" a1) [200 nil])
+            after (head conn)
+            seen-after (some-> (frontier-stamp name) long)
+            send (fn [cmd v m] (raw-route name "v1" "transact" (merge (frame cmd a1 v nil nil) m)))
+            out (fn [r] [(:status r) (get-in r [:body "code"])])
+            ;; 1. the SDK's replay after an unrelated refusal, across the removal: first source before it
+            replay (send "mr-replay" (secret a1 "replay") {"sourceK" after "frameSourceK" before})
+            ;; 2. the same command sent again as a new save (fresh source and stamp, no frame source)
+            resend (send "mr-replay" (secret a1 "resend") (cond-> {"sourceK" (head conn)} seen-after (assoc "removalSeen" seen-after)))
+            ;; 3. a new value long after the removal, its first attempt optimistic (no source) and its stamp after it
+            optimistic (send "mr-opt" (secret a1 "opt") (cond-> {"sourceK" (head conn) "frameSourceK" nil} seen-after (assoc "removalSeen" seen-after)))
+            ;; 3b. the same without a stamp: the first attempt stated nothing, so it counts as framed before the removal
+            optimistic-bare (send "mr-opt-bare" (secret a1 "opt-bare") {"sourceK" (head conn) "frameSourceK" nil})
+            ;; 4. the earliest point decides: its own source after the removal, its stamp before it
+            earliest (send "mr-earliest" (secret a1 "earliest") (cond-> {"sourceK" (head conn)} seen-before (assoc "removalSeen" seen-before)))
+            ;; 5. the same values under a new command after a decline: a new save
+            renewed (send "mr-new" (secret a1 "new") (cond-> {"sourceK" (head conn)} seen-after (assoc "removalSeen" seen-after)))
+            ;; 6. another subject's save is not touched by the removal
+            other (raw-route name "v1" "transact" (assoc (frame "mr-other" b1 (secret b1 "other") nil nil) "sourceK" before "frameSourceK" before))
+            ;; 7. another account's save under a command of the same name (it names its account): its own command
+            other-account (raw-route name "v1" "transact" (assoc (frame "mr-replay" b1 (secret b1 "acct-b") nil nil) "account" "b" "sourceK" (head conn)))
+            got {:replay (out replay) :resend (out resend) :optimistic (out optimistic) :optimistic-bare (out optimistic-bare)
+                 :earliest (out earliest) :renewed (out renewed) :other (out other) :other-account (out other-account)
+                 :stamps [seen-before seen-after]}]
+        (println "ERA6_MERGED_RULE" mode (pr-str (assoc got :rule rc/replay-rule)))
+        (check! label (= [409 "ErasureReplayDeclined"] (:replay got)) "1. a replay framed (first source) before the removal is declined" got)
+        (check! label (= [200 nil] (:other got)) "6. another subject's replay is stored" got)
+        (check! label (= [200 nil] (:renewed got)) "5. a new command framed after the removal is stored" got)
+        (if rc/replay-rule
+          (do (check! label (= [409 "ErasureReplayDeclined"] (:resend got)) "2. the declined command sent again as a new save is declined (recorded)" got)
+              (check! label (= [200 nil] (:other-account got)) "7. another account's save under a command of the same name is stored (records are per account)" got)
+              (check! label (= [200 nil] (:optimistic got)) "3. an optimistic first attempt with a stamp after the removal is stored (the save line's R3-6)" got)
+              (check! label (= [409 "ErasureReplayDeclined"] (:optimistic-bare got)) "3b. without a stamp it counts as framed before the removal" got)
+              (check! label (= [409 "ErasureReplayDeclined"] (:earliest got)) "4. a stamp before the removal declines it although its own source is after" got))
+          ;; [DX-ERA6 eighth pass] rule off: the save line's rule as of its fourth pass (9f210018f, merged through the one
+          ;; branch's 65a851d1b; s5/REVIEW-4.md's table, "this head": the SDK's replay and the caller's resend declined,
+          ;; an optimistic replay stating its frame stored). Until 1be3efbab these checks held the third pass's answers
+          ;; (a resend stored, a null first source before every removal, the stamp not read).
+          (do (check! label (= [409 "ErasureReplayDeclined"] (:resend got)) "2. rule off: the declined command sent again is declined (the save line records it, R3-3)" got)
+              (check! label (= [200 nil] (:optimistic got)) "3. rule off: an optimistic first attempt with a stamp after the removal is stored (R3-6)" got)
+              (check! label (= [200 nil] (:optimistic-bare got)) "3b. rule off: a null first source with a fresh own source is judged by its own source (R4-9's other side)" got)
+              (check! label (= [409 "ErasureReplayDeclined"] (:earliest got)) "4. rule off: a stamp before the removal declines it (the save line reads removalSeen)" got)
+              (check! label (= [409 "ErasureReplayDeclined"] (:other-account got)) "7. rule off: another account's save under the declined command's name is declined (command IDs are database-wide with the account setting off)" got)))))))
 
 (defn restore-after-copy-rewrite
   "[DX-ERA2 seventh pass, X12] A gateway whose cache holds the log's copy from before another gateway rewrote it (an
@@ -2205,6 +2277,137 @@
             (check! label (not (str/includes? (text (:body (offers/route name "v1" "read" {"entityIds" [a1]}))) va))
                     "a1 not answered" nil)))))))
 
+;; ---- [DX-ERA6 eighth pass, R5 of the seventh review] the acknowledgement journal and step 5 of the restore procedure ---
+(defn ack-journal
+  "With TX2_REMOVAL_ACK_JOURNAL set (the gate's journal arms): every removal answered 200 is in the journal exactly
+  once, whichever step published it (its own request, its client's resend, and per account the rebuild route after a
+  stop past the native commit); the log put back to a copy from before them (what a restore of the data and the
+  authority to one backup leaves) makes the start check name exactly those removals, by command, as
+  RemovalAcknowledgedLost; each sent again under a new command is no longer reported lost (removal-ack/lost)."
+  []
+  (when @(requiring-resolve 'triplex.gateway.removal-ack/journal)
+    (fresh-scope false
+      (fn [name conn]
+        (let [label (str "ack-journal/" mode)
+              records-of (fn [] (filter #(= name (get % "database")) ((requiring-resolve 'triplex.gateway.removal-ack/records))))
+              count-of (fn [cmd] (count (filter #(= cmd (get % "commandId")) (records-of))))
+              _ (seed! name [a1 b1 a2])
+              dir (.getParent (privacy/path name "head.json"))
+              tmp (java.nio.file.Paths/get "/tmp" (into-array String [(str "era2-aj-" (UUID/randomUUID))]))
+              _ (copy-dir! dir tmp)
+              r1 (remove! name "aj-1" a1)
+              r1-again (remove! name "aj-1" a1)
+              r2 (when per-account? (let [commit rc/commit!] (with-redefs [rc/commit! (fn [& args] (let [r (apply commit args)] (throw (stop-ex :committed)) r))] (remove! name "aj-2" b1))))
+              rebuild (when per-account? (offers/route name "v2" "removal-log-rebuild" {}))
+              r2-again (when per-account? (remove! name "aj-2" b1))
+              counts {:aj-1 (count-of "aj-1") :aj-2 (count-of "aj-2")}
+              ;; the log put back to the copy from before both removals, the gateway restarted (no cache)
+              current (java.nio.file.Paths/get "/tmp" (into-array String [(str "era2-aj-cur-" (UUID/randomUUID))]))
+              _ (copy-dir! dir current) _ (copy-dir! tmp dir) _ (reset! privacy/cache {})
+              start (with-out-str (rc/start-check! [name] (fn [_] conn)))
+              lost-line (first (filter #(str/includes? % "RemovalAcknowledgedLost") (str/split-lines start)))
+              lost (some-> lost-line json/read-str (get "lost"))
+              _ (copy-dir! current dir) _ (reset! privacy/cache {})
+              ;; sent again under new commands (step 5): those are acknowledged too, and resolve the lost ones. The
+              ;; restored log is the current one without aj-1 and aj-2 (an in-memory database cannot be restored, so
+              ;; the restored cut is built from the log as it is now)
+              lost-cmds (fn [] (let [cut (privacy/cut name (d/db conn) true)
+                                     restored (assoc cut :commands (into {} (remove (fn [[_ e]] (#{"aj-1" "aj-2"} (get e "commandId")))) (:commands cut)))]
+                                 (set (map #(get % "commandId") ((requiring-resolve 'triplex.gateway.removal-ack/lost) name restored)))))
+              before-resend (lost-cmds)
+              re1 (remove! name "aj-1-again" a1)
+              after-re1 (lost-cmds)
+              re2 (when per-account? (remove! name "aj-2-again" b1))
+              after-re2 (lost-cmds)
+              obs {:r1 (offers/outcome r1) :r1-again (offers/outcome r1-again) :r2-stopped (some-> r2 offers/outcome)
+                   :rebuild (some-> rebuild offers/outcome) :r2-again (some-> r2-again offers/outcome) :records counts
+                   :lost (mapv #(get % "commandId") lost) :resent (offers/outcome re1) :resent2 (some-> re2 offers/outcome)
+                   :lost-before-resend before-resend :lost-after-re1 after-re1 :lost-after-re2 after-re2}]
+          (println "ERA2_ACK_JOURNAL" mode (pr-str obs))
+          (expect label r1 [200 nil])
+          (expect label r1-again [200 nil])
+          (check! label (= 1 (:aj-1 counts)) "a removal and its resend: one journal record" obs)
+          (when per-account?
+            (expect label r2-again [200 nil])
+            (check! label (= 1 (:aj-2 counts)) "a removal published by the rebuild route, then its resend: one journal record" obs))
+          (check! label (= (set (if per-account? ["aj-1" "aj-2"] ["aj-1"])) (set (:lost obs)))
+                  "the log put back from before them: the start check names exactly those removals as lost" obs)
+          (expect label re1 [200 nil])
+          (check! label (= (set (if per-account? ["aj-1" "aj-2"] ["aj-1"])) before-resend) "before the resend both are lost" obs)
+          (check! label (= (if per-account? #{"aj-2"} #{}) after-re1) "the resend of aj-1 under a new command resolves aj-1 only" obs)
+          (when per-account?
+            (expect label re2 [200 nil])
+            (check! label (= #{} after-re2) "both resent: nothing is reported lost" obs)))))))
+
+;; ---- [DX-ERA6 eighth pass, the owner's decision (iii)] protected attributes on an unsealed database ------------------
+(defn sealed-only
+  "With protection-sealed-only on (gate.sh's flip-iii arms): a new database's unsealed declaration is refused (409
+  ProtectionNeedsSeal) and its sealed one accepted; a database that already protects attributes unsealed (made before
+  the switch: here with the override) keeps working (the same declaration 200 with the `warning` field, a save, a
+  removal, the removed value not answered) and says so (the start check's `triplex.protection-unsealed.v1` line), but
+  adds no attribute (409 ProtectionNeedsSeal). With the test-only override, or the switch off, every declaration is
+  answered as before and carries no warning."
+  []
+  (let [on? (and rc/protection-sealed-only (not rc/unsealed-for-tests))
+        label (str "sealed-only/" mode (cond on? " (on)" rc/protection-sealed-only " (override)" :else " (off)"))
+        unsealed-lines (fn [out] (filter #(str/includes? % "triplex.protection-unsealed.v1") (str/split-lines out)))]
+    (offers/in-scope
+      (fn [name conn]
+        (let [r (offers/route name "v2" "protection" {"attributes" [":v"] "sealed" false})
+              r-sealed (when on? (offers/route name "v2" "protection" {"attributes" [":v"] "sealed" true}))]
+          (println "ERA2_SEALED_ONLY" mode (pr-str {:case "new" :on on? :unsealed (offers/outcome r)
+                                                    :warning (get-in r [:body "warning"]) :sealed (some-> r-sealed offers/outcome)}))
+          (if on?
+            (do (expect (str label ": a new database, unsealed") r [409 "ProtectionNeedsSeal"])
+                (expect (str label ": a new database, sealed") r-sealed [200 nil]))
+            (do (expect (str label ": a new database, unsealed") r [200 nil])
+                (check! label (nil? (get-in r [:body "warning"])) "no warning field" (:body r)))))))
+    (offers/in-scope
+      (fn [name conn]
+        (let [made (with-redefs [rc/unsealed-for-tests true]
+                     (offers/route name "v2" "protection" {"attributes" [":v"] "sealed" false}))
+              moved (when per-account? (offers/route name "v2" "removal-per-account" {}))
+              seeds (seed! name [a1 b1])
+              again (offers/route name "v2" "protection" {"attributes" [":v"] "sealed" false})
+              wider (when on? (offers/route name "v2" "protection" {"attributes" [":v" ":w"] "sealed" false}))
+              save (offers/send name (frame "so-save" b1 (secret b1 "after") nil nil))
+              removal (remove! name "so-rm" a1)
+              read (offers/route name "v1" "read" {"entityIds" [a1]})
+              start (with-out-str (rc/start-check! [name] (fn [_] conn)))
+              lines (unsealed-lines start)
+              obs {:made (offers/outcome made) :moved (some-> moved offers/outcome) :again (offers/outcome again)
+                   :warning (get-in again [:body "warning" "code"]) :wider (some-> wider offers/outcome)
+                   :save (offers/outcome save) :removal (offers/outcome removal)
+                   :removed-answered (str/includes? (text (:body read)) (:value (seeds a1))) :start-lines (vec lines)}]
+          (println "ERA2_SEALED_ONLY" mode (pr-str (assoc obs :case "existing" :on on?)))
+          (expect (str label ": set-up, an unsealed database protected before the switch") made [200 nil])
+          (when per-account? (expect (str label ": set-up, moved per account") moved [200 nil]))
+          (expect (str label ": the same declaration again") again [200 nil])
+          (expect (str label ": a save") save [200 nil])
+          (expect (str label ": a removal") removal [200 nil])
+          (check! label (not (:removed-answered obs)) "the removed value is not answered" obs)
+          (if on?
+            (do (check! label (= "UnsealedProtection" (:warning obs)) "the declaration's answer warns" obs)
+                (expect (str label ": an attribute added") wider [409 "ProtectionNeedsSeal"])
+                (check! label (= 1 (count lines)) "the start check says so, once" obs)
+                (check! label (some #(str/includes? % "\"atStart\":true") lines) "a start line" obs))
+            (do (check! label (nil? (:warning obs)) "no warning field" obs)
+                (check! label (= (if rc/protection-sealed-only 1 0) (count lines))
+                        "the start check: one line with the override (marked), none with the switch off" obs))))))))
+
+;; ---- [DX-ERA6 eighth pass] the owner's decisions of 2026-11-25: what each switch reads, against what the arm expects --
+(defn owner-switches
+  "Each switch's value in this process against the arm's ERA2_EXPECT_<NAME> (gate.sh's `switches` phase), so a flipped
+  default that did not take, or an opt-out that did not, fails before the arm's other checks are read."
+  []
+  (doseq [[env v] [["ERA2_EXPECT_REPLAY_RULE" (fn [] rc/replay-rule)]
+                   ["ERA2_EXPECT_WORKER_MS" (fn [] rc/worker-complete-ms)]
+                   ["ERA2_EXPECT_SEALED_ONLY" (fn [] rc/protection-sealed-only)]
+                   ["ERA2_EXPECT_UNSEALED_FOR_TESTS" (fn [] rc/unsealed-for-tests)]]]
+    (when-let [want (System/getenv env)]
+      (println "ERA2_SWITCH" env (pr-str (v)))
+      (check! (str "owner-switches/" mode) (= want (pr-str (v))) (str env " is " want) (v)))))
+
 ;; ERA2_ONLY (space-separated label prefixes) runs only those scenarios: a diagnostic run, never a gate
 (def only (some-> (System/getenv "ERA2_ONLY") str/trim not-empty (str/split #"\s+")))
 (defn- scenario [label f]
@@ -2256,6 +2459,7 @@
   (scenario "decline-stamp" decline-stamp)
   (scenario "worker-retire" worker-retire)
   (scenario "replay-rule-off" replay-rule-off)
+  (scenario "merged-rule" merged-rule)
   (scenario "restore-after-copy-rewrite" restore-after-copy-rewrite)
   (scenario "rule-index" rule-index)
   (scenario "log-repair" log-repair)
@@ -2268,6 +2472,11 @@
   (scenario "peer-behind-move" peer-behind-move)
   ;; [DX-ERA2 seventh pass, E4 of DX-ERA4]
   (scenario "cut-read-race" cut-read-race)
+  ;; [DX-ERA6 eighth pass]
+  (scenario "ack-journal" ack-journal)
+  ;; [DX-ERA6 eighth pass] the owner's switches
+  (scenario "owner-switches" owner-switches)
+  (scenario "sealed-only" sealed-only)
   (let [failed (remove :ok @results)]
     (println "ERA2_GATE" mode
              (pr-str {:checks (count @results) :failed (count failed)}))

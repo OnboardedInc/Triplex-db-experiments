@@ -225,6 +225,13 @@
   (str prefix (format "%016d" position)
        (format "%016x" (Double/doubleToRawLongBits (double clock))) journal))
 
+;; [DX-XQ4, moved by DX-XQ10] Which operations the per-subject writer takes: the prepared path's small operations, and
+;; with TX2_CROSS_INDEX=1 also index entries (cross_index.clj replaces this var, and wraps render-ops to send a
+;; subject's entries to its numeric owner). Why here as a plain var: code added to this namespace shifts the generated
+;; names of every stored function compiled after it (owner head, general hints), so their identities moved with the
+;; option off; a def of a var and a call through it add none (xq10/idents.sh). Rejected: the index branch's inline
+;; delay and cond clause (they moved two functions' identities).
+(def small-op prepared/small-op?)
 (defn render-ops [ops owner subject prior prior-rows new-ids marker]
   (let [temp-owner (str "e:" subject)
         rewrite #(commit/rewrite-change %1 %2 new-ids prior-rows)]
@@ -295,7 +302,7 @@
                ;; [DX-ERA2] The per-account removal fence rides in the returned data; Datomic applies it on the same serial
                ;; db-before (removal-scope/without-fence-ops leaves it out of this check). Rejected: the general writer
                ;; for every guarded save; an `and` here (it adds generated names before the stored code is read).
-               (every? #(or (prepared/small-op? %) (and (some? expected-erasure) (envelope-op? %)))
+               (every? #(or (small-op %) (and (some? expected-erasure) (envelope-op? %)))
                        ((requiring-resolve 'triplex.gateway.removal-scope/without-fence-ops) ops expected-erasure)))
       (let [[fn-tx flags owner revision]
             (trace/span "subject.plan-witnesses" "gateway"
@@ -350,9 +357,18 @@
                          (into #{} (map (comp field lean/decode)) (vals prior)))
                 after (into #{} (map (comp field lean/decode second #(nth % 3))) business)]
             (when (and (if wide?
-                         ;; [Opus W2] Why: distinct plain fields on each side; a field may be replaced, first written
-                         ;; or retired. Rejected: references and system attributes (they widen the read set).
-                         (and (= (count live) (count prior) (count before)) (= (count business) (count after))
+                         ;; [Opus W2] Why: plain fields on each side; a field may be replaced, first written or retired.
+                         ;; Rejected: references and system attributes (they widen the read set).
+                         ;; [DX-S2] Why: a save "from now on" keeps the old value true until now as a bounded row, so it
+                         ;; asserts two rows of one field (the bounded old value and the new one); every predecessor
+                         ;; is still read here and covered by the revision compare-and-set, and nothing below or in
+                         ;; the native function is keyed by field. Rejected: W2's distinct-field count on each side,
+                         ;; which sent every such product save to the general writer.
+                         ;; [DX-S6] F6: three terms, as the base's condition had (the `true` changes nothing), so this
+                         ;; namespace generates the base's number of names and the stored functions loaded after it
+                         ;; (the covering writer, the general hint function) keep the base's identities (s4/idents.sh).
+                         (and (= (count live) (count prior))
+                              true
                               (not (contains? after nil)))
                          (and (= (count live) (count prior) (count before) (count after)) (= before after)))
                        (not (contains? before nil))

@@ -14,7 +14,10 @@ out=${1:?absolute new output directory}; ref=${2:-worktree}; modes=${3:-off on s
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 x=$repo/lab/experiments/EXP-DX1
 mkdir -p "$out/src" "$out/lab"
-if [[ $ref == worktree ]]; then
+if [[ $ref == dir:* ]]; then
+  # [DX-ERA6 eighth pass] a prepared source directory (gate.sh's `flip` copies: one switch's default line changed)
+  echo "$ref" > "$out/source"; cp -R "${ref#dir:}/src/." "$out/src/"; cp "${ref#dir:}/codec-spec.json" "$out/codec-spec.json"
+elif [[ $ref == worktree ]]; then
   git -C "$repo" rev-parse HEAD > "$out/source"
   git -C "$repo" status --porcelain -- packages/datomic/gateway lab/experiments/EXP-DX1/era2 > "$out/dirty"
   cp -R "$repo/packages/datomic/gateway/src/." "$out/src/"; cp "$repo/packages/datomic/src/codec-spec.json" "$out/codec-spec.json"
@@ -50,6 +53,8 @@ for mode in $modes; do
   # off-worker, subject-worker: the shred worker completes a removal left pending 3 s (TX2_REMOVAL_WORKER_COMPLETE_MS)
   [[ $mode == subject-worker ]] && env+=(-e TX2_SUBJECT_SAVE=1 -e TX2_SUBJECT_NUMERIC_OWNER=1 -e TX2_SUBJECT_ORDERED_IDS=1 -e TX2_REMOVAL_PER_ACCOUNT=1 -e TX2_REMOVAL_SUBJECT_CHECK=1)
   [[ $mode == *-worker ]] && env+=(-e TX2_REMOVAL_WORKER_COMPLETE_MS=3000)
+  # [DX-ERA6 eighth pass] ERA2_B2_ENV: further variables for every mode (the owner's switches)
+  for kv in ${ERA2_B2_ENV:-}; do env+=(-e "$kv"); done
   netargs=()
   if [[ $authority == pg ]]; then
     net="tx2-dxera2-b2net-$$-$mode"; pg="tx2-dxera2-b2pg-$$-$mode"; password=$(openssl rand -hex 16)

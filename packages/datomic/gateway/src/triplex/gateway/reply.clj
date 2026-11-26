@@ -32,7 +32,9 @@
    "ImportPredecessorMissing" "The import's predecessor is not in the scope"
    "ClockExhausted" "The scope's record clock is exhausted"
    "CasConflict" "The save conflicts with a concurrent change; retry against the current state"
-   "IdentityConflict" "An identity in the save is already held"})
+   "IdentityConflict" "An identity in the save is already held"
+   ;; [DX-ERA6] the save line's mapping of a creation that raced a removal of its family (storage/commit!)
+   "ErasureReplayDeclined" "A removal of a field this save writes came after the save was framed; it is not replayed"})
 
 (defn commit-message
   "The message of a native transaction refused in storage/commit! (`data` is the refusal's status, code and maximum).

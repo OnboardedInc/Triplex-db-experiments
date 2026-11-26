@@ -11,6 +11,24 @@
             [triplex.gateway.general-prefetch :as general-prefetch] [triplex.gateway.admission :as admission]
             [triplex.gateway.subject-hints :as subject-hints]
             [triplex.gateway.ids :as ids] [triplex.gateway.sweep :as sweep]
+            [triplex.gateway.question-reader :as qr]
+            ;; [DX-ERA6] the save line's two namespaces stay after the removal branch's, the removal scope last of all
+            ;; (every installed function's generated names depend on what loads before them)
+            [triplex.gateway.subject-owners :as subject-owners]
+            [triplex.gateway.subject-create :as subject-create]
+            [triplex.gateway.omit-protected :as omit-protected]
+            [triplex.gateway.cross-find :as cross-find]
+            ;; [DX-XQ10] Last, so its option (TX2_INDEX_HINTS) can extend the two lookup functions; off, it changes nothing.
+            [triplex.gateway.index-hints :as index-hints]
+            ;; [DX-INT5, the form of DX-XQ10] Last: it fills lean/prefetch-hook with TX2_READ_PREFETCH=1; loaded before
+            ;; commit.clj it moved the stored functions' identities with every option off (READINESS.md, step 0).
+            [triplex.gateway.uncached :as uncached]
+            ;; [DX-API1, DX-INT5's late form] Fills privacy/drop-hook (the entity cache's drops at a removal); after commit.clj.
+            [triplex.gateway.removal-drops :as removal-drops]
+            ;; [DX-API1, DX-INT5's late form] Fills reach's stopAt and reference-attribute hooks; after commit.clj.
+            [triplex.gateway.reach-late :as reach-late]
+            ;; [DX-API1] After uncached, which it requires; behind TX2_READ_BATCH=1.
+            [triplex.gateway.batch :as batch]
             ;; [DX-ERA2 seventh pass, identities] last: it loads after every installed function's code has been read
             [triplex.gateway.removal-scope :as removal-scope])
   (:gen-class))
@@ -90,12 +108,23 @@
                        (do
                          (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema))
                          (:db-after (trace/span "d/transact" "peer-wait" @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}])))))
-        current (subject/install! conn (group/install! conn (commit/install! conn scope schema-ready)))
-        current (owner-layout/install! conn current)
-        ;; [DX-W3] Why: the lookup-only hint function is installed only when its option is on (default off).
-        current (general-prefetch/install! conn current)
-        ;; [DX-W4] Why: the per-subject writer's lookup-only hint function, installed only when its option is on.
-        current (subject-hints/install! conn current)]
+        ;; [DX-S6b] S5 R3-1: every stored function this open writes respects the account-ID setting (account_claims.clj
+        ;; `installing`): under it, a moved writer's body goes to its twin and never back under the old ident.
+        current ((requiring-resolve 'triplex.gateway.account-claims/installing) conn
+                 (fn []
+                   (let [current (subject/install! conn (group/install! conn (commit/install! conn scope schema-ready)))
+                         current (owner-layout/install! conn current)
+                         ;; [DX-W3] Why: the lookup-only hint function is installed only when its option is on (default off).
+                         current (general-prefetch/install! conn current)
+                         ;; [DX-W4] Why: the per-subject writer's lookup-only hint function, installed only when its option is on.
+                         current (subject-hints/install! conn current)
+                         ;; [DX-S3] Why: the several-owners function is installed only when its option is on (default off).
+                         current (subject-owners/install! conn current)]
+                     ;; [DX-S4] Why: the creation function is installed only when its option is on (default off).
+                     (subject-create/install! conn current))))
+        ;; [DX-XQ4] The index fence (sequence 0) from the moment a scope is opened with the option on.
+        current (if (and cross-find/enabled (lean/enabled? current)) (cross-find/ensure-installed! conn current) current)]
+
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
       (lean/enabled? current) (assoc :layout "lean" :orderedRowTexts true :journalCuts true)))))
@@ -161,6 +190,15 @@
       general-prefetch/enabled (assoc-in [:options :generalPrefetch] (general-prefetch/installed? db))
       ;; [DX-W4] Why: report the option only when it is on, so default readbacks stay byte-identical.
       subject-hints/enabled (assoc-in [:options :subjectHints] (subject-hints/installed? db))
+      ;; [DX-XQ10] The index hint fix (TX2_INDEX_HINTS), reported only when on.
+      index-hints/enabled (assoc-in [:options :indexHints] {:subject (str index-hints/subject-ident) :general (str index-hints/general-ident)})
+      ;; [DX-RD5] Why: the uncached-read options, reported only when on, as the two above.
+      uncached/prefetch? (assoc-in [:options :readPrefetch] true)
+      ;; [DX-API1] Why: the batched read route, reported only when on, as the two above.
+      batch/enabled (assoc-in [:options :readBatch] true)
+      (System/getProperty "datomic.readAheadPool") (assoc-in [:options :readAheadPool] (System/getProperty "datomic.readAheadPool"))
+      ;; [DX-IMP2] Why: report the option only when it is on, so default readbacks stay byte-identical.
+      policy/import-whole? (update :options assoc :importWholeSubject true :importCommitMicros policy/import-commit-us)
       subject/enabled (assoc :subjectSave true :subjectFunction (when subject-t (str subject/ident))
                              :subjectNumericOwner subject/numeric-owner?
                              :subjectOrderedIds subject/ordered-ids?
@@ -173,7 +211,15 @@
                              :subjectPrefetch (boolean (and subject/prefetch? (d/entid db subject/prefetch-ident)))
                              :subjectFunctionTx (some-> subject-t str))
       ;; [Opus W2] Why: launchers read back the actual wide-save switch; the reply is unchanged with the option off.
-      subject/wide? (assoc :subjectWide true :subjectWideFacts subject/wide-facts))))
+      subject/wide? (assoc :subjectWide true :subjectWideFacts subject/wide-facts)
+      ;; [DX-S3] Why: launchers read the switch back; the reply is unchanged with the option off.
+      subject-owners/enabled (assoc :subjectSeveralOwners subject-owners/max-owners
+                                    :subjectSeveralOwnersFunction (when (subject-owners/installed db)
+                                                                    (str subject-owners/ident)))
+      ;; [DX-S4] Why: launchers read the switch back; the reply is unchanged with the option off.
+      subject-create/enabled (assoc :subjectCreate subject-create/max-owners
+                                    :subjectCreateFunction (when (subject-create/installed db)
+                                                             (str subject-create/ident))))))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"}
                              :body (trace/read-span "gateway.json-encode" "gateway" (json/write-str data))})
 ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.
@@ -265,6 +311,14 @@
   (ex-info "The removal authority failed mid-way (its session was lost); this gateway completes what it left pending. Send the request again."
            {:status 503 :code "ErasureFrontierUnavailable" :removal-pending true :authority-fault true} e))
 
+(defn write-status
+  "[DX-S6] 400 for a decided failure of a write route (or any failure of another route), 503 for an unknown one."
+  [request-method uri e]
+  (if (= :post request-method)
+    (if (re-find #"/(?:transact|fence|settings|erase|protection|restore-erasure|create|delete)$" uri)
+      ((requiring-resolve 'triplex.gateway.outcome/route-status) e)
+      400)
+    400))
 (defn route-handler-base [{:keys [request-method uri body query-string privacy-input]}]
   (stats/bump! [:routes (str (name request-method) " " (clojure.string/replace uri #"/s2?-[^/]+/" "/{db}/"))] 1)
   (try
@@ -275,10 +329,15 @@
       ;; [DX-W3] Why: say whether reads, the web thread pool or the permit queue hold a request back.
       (and (= :get request-method) (= uri "/v2/admin/threads")) (response 200 (thread-stats))
       (and (= :post request-method) (= uri "/v2/admin/threads/reset")) (do (reset-thread-peaks!) (response 200 (thread-stats)))
-      (= uri "/v2/admin/scan-stats") (response 200 (cond-> (assoc @stats/counts :idMemo (reach/id-memo-stats) :pinnedShortcut (pinned/stats) :entityCache (let [base (entity-cache/stats) extra (recent/stats)] (assoc (merge base extra) :bytes (+ (:bytes base) (:recentBytes extra)))))
+      (= uri "/v2/admin/scan-stats") (response 200 (cond-> (assoc @stats/counts :idMemo (reach/id-memo-stats) :pinnedShortcut (pinned/stats) :readPrefetch (uncached/stats) :entityCache (let [base (entity-cache/stats) extra (recent/stats)] (assoc (merge base extra) :bytes (+ (:bytes base) (:recentBytes extra)))))
+                                                     ;; [DX-XQ7] Present only with their options on (default off: the answer is as before).
+                                                     qr/enabled (assoc :questionReader (qr/stats))
+                                                     qr/read-io-enabled (assoc :readIo @qr/read-io)
                                                      ;; [DX-SCALE2] Accounts holding a sweep gate (only when the sweep is on).
-                                                     sweep/enabled (assoc :sweepGates (sweep/gate-count))))
-      (and (= :post request-method) (= uri "/v2/admin/scan-stats/reset")) (do (reset! stats/counts {}) (response 200 {}))
+                                                     sweep/enabled (assoc :sweepGates (sweep/gate-count))
+                                                     ;; [DX-API1] The batched read's counts, only with its option on.
+                                                     batch/enabled (assoc :readBatch (batch/stats-now))))
+      (and (= :post request-method) (= uri "/v2/admin/scan-stats/reset")) (do (reset! stats/counts {}) (when qr/read-io-enabled (qr/reset-read-io!)) (response 200 {}))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(transactions|command|journal|entity-transactions)" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
             conn (connection (db-uri name))]
@@ -291,7 +350,7 @@
                              "entity-transactions"
                              (trace/span "journal/entity-positions" "gateway" (journal/entity-positions (d/db conn) name input))
                              "command"
-                             (trace/span "journal/command" "gateway" (journal/command (trace/span "d/db" "peer-call" (d/db conn)) name input)))}))
+                             (trace/span "journal/command" "gateway" (journal/command (trace/span "d/db" "peer-call" (d/db conn)) name (vary-meta input assoc :conn conn))))}))
       (and (= :get request-method) (= "/health" uri))
       (do (trace/span "d/db" "peer-call" (d/db (connection (db-uri "tx2-health"))))
           (response 200 (cond-> {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")}
@@ -327,12 +386,24 @@
       (let [name (nth (clojure.string/split uri #"/") 3) input (or privacy-input (request-json body)) start (System/nanoTime) db-uri (db-uri name)]
         (try (timed start (response 200 (trace/span "storage/commit!" "gateway" (storage/commit! name (connection db-uri) (trace/span "d/db" "peer-call" (d/db (connection db-uri))) input))))
              (finally (when (get input "release") (storage/release! name (get input "handle"))))))
+      ;; [DX-XQ4] Questions across subjects: the declaration, the offline backfill and the find route (TX2_CROSS_INDEX=1).
+      (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(find|index-declaration|index-backfill)" uri)
+      (let [name (nth (clojure.string/split uri #"/") 3) action (last (clojure.string/split uri #"/"))
+            start (System/nanoTime) conn (connection (db-uri name)) protected (or (:attrs privacy/*cut*) #{})]
+        (timed start
+          (response 200
+            (case [request-method action]
+              [:post "find"] (trace/span "cross/find" "gateway" (cross-find/find! name conn protected (request-json body)))
+              [:post "index-declaration"] (cross-find/declare! name conn protected (request-json body))
+              [:get "index-declaration"] (cross-find/declaration-view name conn)
+              [:post "index-backfill"] (cross-find/backfill! name conn protected (when body (let [b (request-json body)] b)))
+              (throw (ex-info "Unknown method" {:status 404 :code "NotFound"}))))))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/request-index" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body)]
         (response 200 (request-index! name (connection (db-uri name)) input)))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/begin" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)]
-        (timed start (response 200 (trace/span "storage/begin-command!" "gateway" (storage/begin-command! name (trace/span "d/db" "peer-call" (d/db (connection (db-uri name)))) input)))))
+        (timed start (response 200 (trace/span "storage/begin-command!" "gateway" (storage/begin-command! name (trace/span "d/db" "peer-call" (d/db (connection (db-uri name)))) (vary-meta input assoc :conn (connection (db-uri name))))))))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(reach|reach-many)" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (trace/read-span "gateway.request-decode" "gateway" (request-json body)) start (System/nanoTime)
             view (connection-view (db-uri name)) conn (:conn view)
@@ -350,7 +421,7 @@
         (timed start {:status 200 :headers (cond-> {"Content-Type" "application/json; charset=utf-8" "x-tx2-waited" (str (boolean waited))}
                                              wanted (assoc "x-tx2-at-least" (str (:position wanted)) "x-tx2-at-least-wait-micros" (str at-least-micros)))
          :body (trace/span "reach/response" "gateway" (reach/response name db (if (.endsWith ^String uri "reach-many") input (assoc input "roots" [(get input "root")])) (:generation view) (:recent view)))}))
-      (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
+      (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|fence|settings|operation/[^/]+)" uri)
       (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (db-uri name) start (System/nanoTime)
             input (when (= request-method :post) (trace/read-span "gateway.request-decode" "gateway" (request-json body)))
             conn (when (and (not= action "release") (or (= action "transact") (not (get input "handle")))) (connection db-uri))
@@ -377,7 +448,11 @@
             "release" (storage/release! name (get input "handle"))
             "transact" (try (trace/span "storage/commit!" "gateway" (storage/commit! name conn db input))
                          (finally (when (get input "release") (storage/release! name (get input "handle")))))
-            "read" (trace/span "storage/read-rows" "gateway" (storage/read-rows name db input))
+            "read" (trace/span "storage/read-rows" "gateway"
+                     ;; [DX-XQ7] With TX2_READ_IO_COUNTERS=1 each read's io-stats are summed (question_reader.clj).
+                     (if (and qr/read-io-enabled (not (trace/read-sample?)))
+                       (qr/count-read-io #(storage/read-rows name db input))
+                       (storage/read-rows name db input)))
             "q" (trace/span "query/run" "gateway"
                   (do (when (and privacy/*cut* (not (lean/enabled? (or db (storage/held-db name (get input "handle"))))))
                         (throw (ex-info "Lean queries need current erasure-aware value semantics"
@@ -385,14 +460,33 @@
                       (when (and (nil? privacy/*cut*) lean-query/enabled (lean/enabled? (or db (storage/held-db name (get input "handle")))))
                         (lean-query/assert-unprotected! (or db (d/db (connection db-uri)))))
                       (query/run name db input)))
-            "operation" (storage/operation db id)
+            ;; [DX-S6] An operation ID has one stored form, the client's own, on every gateway (S5 R2-1).
+            "operation" (do ((requiring-resolve 'triplex.gateway.account-claims/check-ids!) [(java.net.URLDecoder/decode ^String id "UTF-8")])
+                            (storage/operation db id))
+            ;; [DX-S6] Why: a caller with an unknown outcome makes it decided: committed, or fenced and never committed.
+            ;; Rejected: waiting a fixed time for the original (a stopped gateway's save can still be in the transactor).
+            "fence" ((requiring-resolve 'triplex.gateway.outcome/fence!) conn (get input "operationId") storage/operation)
+            ;; [DX-S6] Turns the database's account-ID setting on (one way); only a process with TX2_ACCOUNT_CLAIMS=1 may.
+            "settings" (do (when-not (true? (get input "accountIds")) (codec/invalid "Only {\"accountIds\": true} is accepted"))
+                           ;; [DX-S6b] The answer names the transaction that turned it on (its Datomic t), so a
+                           ;; caller can tell saves committed before it from saves after it.
+                           (let [db ((requiring-resolve 'triplex.gateway.account-claims/turn-on!) conn)]
+                             {:accountIds true :t ((requiring-resolve 'triplex.gateway.account-claims/setting-t) db)}))
             "claim" (let [cut (storage/at-position db (get input "position"))
-                          id (get input "commandId") claim (d/entid cut [:triplex.claim/command-id id])
+                          id (get input "commandId")
+                          _ ((requiring-resolve 'triplex.gateway.account-claims/check-ids!) [id])
+                          ;; [DX-S6] A caller naming its account finds its own claim only; a plain claim of other accounts
+                          ;; is answered taken, never returned (S5 R2-4).
+                          account ((requiring-resolve 'triplex.gateway.account-claims/account-for) cut input)
+                          [claim status] (if account
+                                           ((requiring-resolve 'triplex.gateway.account-claims/find-claim) conn cut id account)
+                                           [(d/entid cut [:triplex.claim/command-id id])])
                           tx (when claim (ledger/claim-tx cut claim))
                           pos (when (and tx (d/entid cut :triplex.group/position)) (storage/value cut tx :triplex.group/position))
                           visible (and claim (or (nil? pos) (nil? (get input "position")) (<= pos (get input "position"))))
                           tx-id (when visible (ledger/claim-tx-id cut claim))]
                       (cond-> {:txId tx-id}
+                        (= status :taken) (assoc :taken true)
                         (and visible (true? (get input "receipt"))) (assoc :commandId id
                           :receipt (storage/operation cut (storage/value cut tx :triplex.tx/operation-id))))))]
           (cond-> (response 200 (cond-> result (and wanted (map? result)) (assoc :atLeast (:position wanted))))
@@ -408,6 +502,12 @@
                                                    (some? maximum) (assoc :maximum maximum)
                                                    (some? retryAfterMs) (assoc :retryAfterMs retryAfterMs))))
                    (throw e))))))
+      ;; [DX-API1] One API call's reads at one position in one request (batch.clj); absent unless TX2_READ_BATCH=1.
+      (and batch/enabled (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/batch" uri))
+      (let [name (nth (clojure.string/split uri #"/") 3) input (trace/read-span "gateway.request-decode" "gateway" (request-json body))
+            start (System/nanoTime) view (connection-view (db-uri name))]
+        (timed start {:status 200 :headers {"Content-Type" "application/json; charset=utf-8"}
+                      :body (trace/span "batch/run" "gateway" (batch/run name view input))}))
       ;; [DX-XQ6] The exact sweep (questions across subjects, read subject by subject); absent unless TX2_SWEEP=1.
       (and sweep/enabled (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/sweep" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
@@ -434,20 +534,24 @@
       ;; tag: route-handler completes it once the request's locks are released
       (when (:removal-pending (ex-data e)) (throw e))
       (when (:removal-log-missing (ex-data e)) (throw e))
-      ;; [DX-ERA2 fifth pass] an exception that is not a typed refusal is a fault: counted and logged (the commit
-      ;; boundary's restore defect was answered 400 GatewayError with no message and no log line)
+      ;; [DX-S6] A write route's failure without a status is a refusal only when decided; otherwise 503 OutcomeUnknown.
       ;; [DX-N1, N3] a typed refusal keeps its own message; any other exception answers a fixed text and is logged
-      ;; here, scrubbed (reply/message; it was logged for a non-ExceptionInfo only, and its message went to the caller)
-      (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
-                                (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message ((requiring-resolve 'triplex.gateway.reply/message) e nil "gateway-error") :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
+      ;; here, scrubbed (reply/message)
+      (response (or (:status (ex-data e)) (if (= uri "/health") 503 (write-status request-method uri e)))
+                                (cond-> {:code (or (:code (ex-data e)) (if (= 503 (write-status request-method uri e)) "OutcomeUnknown" "GatewayError")) :message ((requiring-resolve 'triplex.gateway.reply/message) e nil "gateway-error") :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
                                   (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e)))
-                                  (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e)))))))))
+                                  (:retryAfterMs (ex-data e)) (assoc :retryAfterMs (:retryAfterMs (ex-data e)))
+                                  (:estimatedMicros (ex-data e)) (assoc :estimatedMicros (:estimatedMicros (ex-data e)))
+                                  ;; [DX-XQ4] find's refusals say whether the exact sweep answers the same question.
+                                  (:fallback (ex-data e)) (assoc :fallback (:fallback (ex-data e)))
+                                  ;; [DX-S6] An unknown outcome names the failure's class (S5 R2-8).
+                                  (string? (:cause (ex-data e))) (assoc :cause (:cause (ex-data e)))))))))
 (defn- with-privacy-guards [scopes work]
   (if-let [[scope & more] (seq scopes)]
     (privacy/guard scope #(with-privacy-guards more work))
     (work)))
 
-(defn route-handler [{:keys [uri request-method body query-string] :as request}]
+(defn route-handler-routed [{:keys [uri request-method body query-string] :as request}]
   (if-let [[_ name action] (re-matches #"/v[12]/db/(s2-[A-Za-z0-9_-]+)/(.+)" uri)]
     ;; [DX-ERA2 fifth pass] a delivery's source database, kept for the refusal handler below
     (let [delivery-source (volatile! nil)]
@@ -459,12 +563,20 @@
             per-account (removal-scope/per-account? db)]
         (cond
           (and (= :post request-method) (= action "protection"))
-          ;; [DX-ERA2 sixth pass, V1] guarded per account: compared with the policy stored in the database, never the log
-          (response 200 (if per-account
-                          ((requiring-resolve 'triplex.gateway.removal-commit/protect!) name conn (request-json body))
-                          (erase/declare! name conn db (request-json body))))
+          (let [input (request-json body)]
+            ;; [DX-XQ4] A declared attribute is keyed by value; protecting it would make the index a lookup by protected value.
+            (cross-find/refuse-protecting-declared! db input)
+            ;; [DX-ERA2 sixth pass, V1] guarded per account: compared with the policy stored in the database, never the log
+            (response 200 (if per-account
+                            ((requiring-resolve 'triplex.gateway.removal-commit/protect!) name conn input)
+                            (erase/declare! name conn db input))))
           (and (= :post request-method) (= action "erase"))
-          (response 200 (erase/erase! name conn (request-json body)))
+          ;; [DX-ERA6, the save line's third review R3-2, route 2] a removal's command ID is stored as a claim: it may not
+          ;; begin with the reserved account prefix (400 InvalidValue, as on every other route), so a removal can never
+          ;; take an account's scoped command ID first
+          (let [input (request-json body)]
+            (when (map? input) ((requiring-resolve 'triplex.gateway.account-claims/check-ids!) [(get input "commandId")]))
+            (response 200 (erase/erase! name conn input)))
           (and (= :post request-method) (= action "restore-erasure"))
           (do
             ;; [DX-ERA2 seventh pass, X12] guarded per account: this gateway's cut is first refreshed through log-cut,
@@ -495,6 +607,9 @@
           ;; [DX-ERA2 fourth pass] the removal log rebuilt from the data (behind, a pending copy, or missing)
           (and removal-scope/enabled (= :post request-method) (= action "removal-log-rebuild"))
           (response 200 ((requiring-resolve 'triplex.gateway.removal-commit/rebuild-log!) name conn (request-json body)))
+          ;; [DX-ERA6 eighth pass, R3] the way out of RemovalPolicyBehind that protects nothing new
+          (and removal-scope/enabled (= :post request-method) (= action "removal-policy-copy-drop"))
+          (response 200 ((requiring-resolve 'triplex.gateway.removal-commit/drop-copy-attributes!) name conn (request-json body)))
           :else
           (let [[protected-wire input] (when (and (= :post request-method) (= action "transact"))
                                         (write-wire/open name (request-json body)))
@@ -510,10 +625,18 @@
                                           (not (true? (get input "erasureReplay"))))
                                    (let [[cut db] (if per-account (removal-scope/request-cut name conn db) [(privacy/cut name db) db])]
                                      ;; [DX-ERA2 fourth pass] a write waits while the data is behind the log
-                                     (when per-account ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) cut))
+                                     ;; [DX-ERA6 eighth pass, R3] and a save of an attribute the stored policy lacks
+                                     (when per-account ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) cut db input))
                                      [(when (or (not (:sealed cut)) (envelope/shared?)) cut) db])
                                    [nil db])
-                request (cond-> request input (assoc :privacy-input input))
+                ;; [DX-ERA6] with the replay rule on, the merged rule (removal-commit/decline-check!, before the save) judges
+                ;; the frame from all three points it states; the writers then see the request without `frameSourceK`, so
+                ;; the save line's own check (first source only, a null first source counting as before every removal)
+                ;; does not decline a replay the merged rule lets through (its R3-6). With the rule off nothing changes.
+                request (cond-> request input (assoc :privacy-input (if (and (map? input) (contains? input "frameSourceK")
+                                                                              @(requiring-resolve 'triplex.gateway.removal-commit/replay-rule))
+                                                                       (dissoc input "frameSourceK")
+                                                                       input)))
                 run (fn [cut]
                       (trace/attribute! :erasureGuarded (boolean cut))
                       (binding [privacy/*cut* cut privacy/*database* name privacy/*data* db
@@ -536,8 +659,12 @@
                                                        ;; [DX-ERA2 sixth pass, V3] the stamp alone (the SDK reads it once
                                                        ;; before an optimistic commit that holds none)
                                                        (and query-string (re-find #"(^|&)stampOnly=1(&|$)" query-string))
-                                                       (dissoc :erased)))
-                                       (route-handler-base request))]
+                                                       (dissoc :erased)
+                                                       ;; [DX-IMP2] The removed families an importer must leave out.
+                                                       policy/import-whole? (assoc :families (vec (sort (:families cut))))))
+                                       ;; [DX-ERA6 eighth pass] the input as sent, for the creation rule (M1-c)
+                                       (with-bindings {(requiring-resolve 'triplex.gateway.removal-commit/*frame-input*) input}
+                                         (route-handler-base request)))]
                           (cond-> answer
                             cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))
                             ;; [DX-ERA2 fifth pass, B5] the value that changes at the commit with the commit boundary
@@ -555,7 +682,7 @@
                      ;; boundary after it was planned: planned once more on the database as it is now
                      (if ((requiring-resolve 'triplex.gateway.removal-commit/boundary-moved?) conn independent answer)
                        (let [[again db-again] (removal-scope/request-cut name conn (erase/sync! conn))]
-                         ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) again)
+                         ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) again db-again input)
                          ((requiring-resolve 'triplex.gateway.removal-commit/decline-check!) name conn db-again input)
                          (run again))
                        answer))))
@@ -571,7 +698,7 @@
                                          (let [current (d/db conn)]
                                            (if (and per-account managed-write?)
                                              (let [[cut current] (removal-scope/request-cut name conn current)]
-                                               ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) cut)
+                                               ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) cut current input)
                                                [current cut])
                                              [current (privacy/cut name current)])))]
                     (when (and managed-write? (nil? next)) (privacy/unavailable!))
@@ -602,8 +729,8 @@
                              ;; more when the database moved to the commit boundary after the plan; its ticket is
                              ;; checked again
                              (if (and per-account ((requiring-resolve 'triplex.gateway.removal-commit/boundary-moved?) conn next answer))
-                               (let [[again _] (removal-scope/request-cut name conn (erase/sync! conn))]
-                                 ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) again)
+                               (let [[again db-again] (removal-scope/request-cut name conn (erase/sync! conn))]
+                                 ((requiring-resolve 'triplex.gateway.removal-commit/check-writes!) again db-again input)
                                  (when (and (nil? source) (contains? input "erasureSeq")) (removal-scope/ensure-ticket! again input))
                                  (run again))
                                answer))))
@@ -653,10 +780,17 @@
                  (catch Exception x ((requiring-resolve 'triplex.gateway.failures/note!) "log-rebuild" name x))))
           ;; [DX-ERA2 sixth pass, V3] a refusal that carries headers (a declined save carries the current removal stamp)
           ;; [DX-N1, N3] a typed refusal keeps its own message; any other exception answers a fixed text
-          (update (response (or (:status info) 400) {:code (or (:code info) "GatewayError") :message ((requiring-resolve 'triplex.gateway.reply/message) e name)})
-                  :headers merge (:headers info))))))
+          ;; [DX-S6] a failure without a status is a refusal only when decided; otherwise 503 OutcomeUnknown, which names
+          ;; the failure's class (S5 R2-8)
+          (let [status (or (:status info) (write-status request-method uri e))]
+            (update (response status (cond-> {:code (or (:code info) (if (= 503 status) "OutcomeUnknown" "GatewayError")) :message ((requiring-resolve 'triplex.gateway.reply/message) e name)}
+                                       (= 503 status) (assoc :cause (or (:cause info) ((requiring-resolve 'triplex.gateway.outcome/kind) e)))))
+                    :headers merge (:headers info)))))))
     (route-handler-base request)))
 
+;; [DX-XQ7] Why: a question reader serves only questions across subjects, and a gateway beside one refuses them, before
+;; any privacy or database work (question_reader.clj). With both options unset `qr/guard` is nil for every request.
+(defn route-handler [request] (or (qr/guard request) (route-handler-routed request)))
 ;; [DX-N1, N3] Why: nothing an exception carries reaches a caller, also from outside the routes' own catches (the
 ;; question reader's guard, an Error): a last answer with a fixed text, the detail logged (reply/message).
 ;; Rejected: Jetty's error page (it prints the exception's message).
@@ -679,7 +813,11 @@
          (catch Exception e
            (when (some #{name} (d/get-database-names (db-uri "*"))) (throw e)))))
   ;; [DX-ERA3 N5] report every database guarded per account whose data and removal log disagree
-  (when removal-scope/enabled
+  ;; [DX-ERA6 eighth pass, R5] and, with an acknowledgement journal, every protected database's lost removals
+  ;; [DX-ERA6 eighth pass, the owner's decision (iii)] and, with protection-sealed-only, every database protecting
+  ;; attributes unsealed
+  (when (or removal-scope/enabled @(requiring-resolve 'triplex.gateway.removal-ack/journal)
+            @(requiring-resolve 'triplex.gateway.removal-commit/protection-sealed-only))
     ((requiring-resolve 'triplex.gateway.removal-commit/start-check!) (d/get-database-names (db-uri "*"))
                                                                       (fn [name] (connection (db-uri name)))))
   (start-thread-sampler!)

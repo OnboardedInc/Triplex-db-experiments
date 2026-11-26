@@ -81,6 +81,8 @@
                                               (if (= "assert" (:op c)) (:f/tx-id f) (:f/retract-tx-id f)))) changes))
                        (remove nil?) distinct sort vec)
             commands (sort (trace/span "d/q" "peer-call" (d/q '[:find [?id ...] :in $ ?tx :where [?c :triplex.claim/tx ?tx] [?c :triplex.claim/command-id ?id]] cut (d/t->tx t))))
+            ;; [DX-S6] The feed names the caller's IDs, not their stored account-scoped values (unchanged for plain IDs).
+            commands (sort (map (requiring-resolve 'triplex.gateway.account-claims/plain) commands))
             clock (required (:triplex.tx/recorded-at tx))]
         ;; [EXP-DF01] Why: DA01 fractional legacy record times cannot satisfy FD01's natural stamp.
         ;; Rejected: rounding the annotation or borrowing :db/txInstant (changes the decided record time).

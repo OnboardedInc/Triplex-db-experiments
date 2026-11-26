@@ -1,6 +1,7 @@
 import { readErasure, recheckErasure, withErasure } from "../../../../bench/lib/datomic-erasure.ts";
 import { bytes as transport } from "../../import1/source.ts";
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import {
   W0,
   canonical,
@@ -36,12 +37,26 @@ import {
 import { Documents, type Op } from "../../notify1/store.ts";
 import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
-import { Conflict, fact, millis, namesOf, value, type Store } from "../store.ts";
+import { Conflict, fact, millis, namesOf, value, type EntityGuard, type Store } from "../store.ts";
+import { ledgerCapacity, ledgerPartChars, noticeItems, worstLedgerChars, type LedgerMode } from "./ledger-parts.ts";
+import { ensureSettings, injected, needsTransition } from "./account-settings.ts";
 import { calculate, worldsAt, type Proposal } from "../decision.ts";
 import { deepImpact, rawDeep, replaceDeep } from "./deep.ts";
 import { subjectOf, type Fact } from "../../../../bench/lib/world.ts";
 import { AccountAdmission, type PublishObservation, type WriteAttempt } from "./admission.ts";
 import { LazyReader, rosterRoot, rosterSeal } from "../read.ts";
+import {
+  definitionsActor,
+  definitionsOnly,
+  docsMode,
+  documentOf,
+  loadRelease,
+  rootStored,
+  splitDocument,
+  stageDocument,
+  type DocRef,
+  type DocsMode,
+} from "./definitions.ts";
 import {
   entry,
   hits,
@@ -63,7 +78,35 @@ export type PublishOptions = {
   codec?: "legacy" | "compact";
   afterChunk?: (attempt: string) => Promise<void>;
   observation?: PublishObservation;
+  /** [DX-ACT6] How the release document travels (default TX2_RELEASE_DOCS: unset = inline, as before). */
+  docs?: DocsMode;
+  /** [DX-ACT8] Diagnostic gates only, with TX2_PUBLISH_BESIDE=1: after the plan's last read (before the transaction);
+   * inside the transaction (after its snapshot, before the guards are read); after the native acknowledgement. */
+  afterRead?: (read: number) => Promise<void>;
+  inside?: () => Promise<void>;
+  onAck?: () => void;
 };
+/** [DX-ACT8] TX2_PUBLISH_BESIDE=1: a held account's (owed) Publish commits with the account guard (its notice tail, its
+ * calendar, and the transactor's revision check on what the record writes) instead of the whole database's head.
+ * PUBLISH-BESIDE-SAVES.md sections 3 and 4. Unset: the whole-head rule, as before. */
+/** [DX-ACT8, second review] The command ID of joined command `id` in store `s`. With the account's stored setting
+ * `accountKeys` (any held account, the single-account layout too), `joined:v2/<n>/<account>/<id>`, `n` the account
+ * name's length, so no (account, ID) pair gives another's key and none equals a key without the setting (a Publish ID
+ * has no `/`, a deadline's `deadline/<64 hex>`). Otherwise `joined:<id>`, as before. */
+export const joinedCommandId = (s: Pick<Store, "held">, id: string, keys = false) =>
+  keys && s.held ? scopedJoinedId(s.held.account, id) : "joined:" + id;
+export const scopedJoinedId = (account: string, id: string) => "joined:v2/" + account.length + "/" + account + "/" + id;
+/** [DX-ACT8, second review] The form a joined record at `position` carries: the account's `accountKeys` setting there.
+ * A guarded record's origin guard (a whole-head record's fence) makes the setting at its plan the setting at its own
+ * position. For the harness's checks. */
+export async function joinedCommandIdAt(s: Store, id: string, position: number) {
+  return joinedCommandId(s, id, Boolean(s.held) && (await s.controls(position)).settings?.accountKeys === true);
+}
+export const publishBeside = () => process.env.TX2_PUBLISH_BESIDE === "1";
+/** [DX-ACT6] A Publish whose record exceeds the 4 MiB request limit (full documents only), refused before any write. */
+export class ReleaseTooLarge extends Error {}
+/** [DX-ACT6] The store's limit on one fact value (`ValueDomains.datomic.string.maxUtf8Bytes`). */
+const valueLimit = 1048576;
 export type Edit = { e: string; a: string; values: W0.Fact["v"][]; from?: string };
 type Meta = {
   epoch: string;
@@ -79,8 +122,19 @@ export type Marker = {
   seq: number;
   old: W0.ReleaseDoc | null;
   document: W0.ReleaseDoc;
+  // [DX-ACT6] With TX2_RELEASE_DOCS=ref the stored marker carries these instead of `old` and `document`; marker()
+  // fills `old` and `document` from the stored definitions (checked against the release hashes) for its callers.
+  documentRef?: DocRef;
+  oldRef?: DocRef | null;
   release: string;
+  /** The position the record holds at, minus one. [DX-ACT8] For a record with `precondition: "account"` the stored
+   * value is where the Publish read its account's state; `marker()` returns that as `read` and the effective cut
+   * (the record's own position minus one) as `cut`. */
   cut: number;
+  /** [DX-ACT8] Set by `marker()` for a record written under the account guard. */
+  read?: number;
+  /** [DX-ACT8] Stored on a record written under the account guard (TX2_PUBLISH_BESIDE=1). */
+  precondition?: "account";
   at: string;
   from: string;
   kind: "activation";
@@ -102,6 +156,20 @@ const stamp = (t: number) =>
       (_, x) => x + String(Math.round((t - Math.floor(t)) * 1000)).padStart(3, "0") + "Z",
     );
 const dataKey = (seq: number, i: number) => "join-output:" + seq + ":" + i;
+/** A joined command's planned transaction. [DX-ACT8] `guards` replaces the whole-head fence (with `inside` and `onAck`
+ * diagnostic hooks); absent, the commit requires the head it was planned at, as before. */
+type Plan = {
+  ops: any[];
+  context: object;
+  /** [DX-ACT8, second review] The account's `accountKeys` setting as the plan read it (undefined: read at the commit). */
+  keys?: boolean;
+  expected?: number;
+  guards?: EntityGuard[];
+  inside?: () => Promise<void>;
+  onAck?: () => void;
+};
+/** [U3] The four entities a held account's enrolment record writes (each created only if absent under the beside rule). */
+const enrolmentEntities = (s: Store, prefix: string) => [namesOf(s).ORIGIN, namesOf(s).CLOCK, prefix + "join-meta", prefix + "join-calendar"];
 export class JoinedAccount {
   readonly s: Store;
   lastMaterial = emptyMaterial();
@@ -123,6 +191,17 @@ export class JoinedAccount {
     noticeIndexBytes: 0,
     addressBytes: 0,
   };
+  /** [DX-ACT8] Guarded commits (Publish under TX2_PUBLISH_BESIDE, enrolment under TX2_ENROL_BESIDE_SAVES): tries sent,
+   * tries refused (with the refusal's cause), tries recovered by command ID, and the last Publish's read and landing. */
+  readonly beside = {
+    publishes: 0,
+    tries: 0,
+    refused: 0,
+    recovered: 0,
+    enrolTries: 0,
+    causes: [] as string[],
+    last: undefined as { read: number; landed: number; tries: number } | undefined,
+  };
   private readonly admission?: AccountAdmission;
   constructor(s: Store, admission?: AccountAdmission) {
     this.s = s;
@@ -132,12 +211,13 @@ export class JoinedAccount {
       roster: async (c) => this.roster((await this.meta(c.position)).census, c.position),
       worlds: async (ids, c) =>
         worldsAt(s, s.profile, ids, { tx: c.position, validTime: c.validTime }),
+      release: (ref, at) => loadRelease(s, ref, at),
       ownedCommand: async (event, owner) => {
         const tx = (await s.comp.feedPage(event.at - 1, 1)).transactions[0];
         if (
           tx?.position !== event.at ||
           tx.actor !== "lazy/join" ||
-          tx.commandId !== "joined:" + event.value.request ||
+          (tx.commandId !== joinedCommandId(s, event.value.request, true) && tx.commandId !== "joined:" + event.value.request) ||
           event.value.sourceBefore !== event.at - 1
         )
           return false;
@@ -190,8 +270,11 @@ export class JoinedAccount {
     // account's enrolment documents must still stop it).
     const beside = process.env.TX2_ENROL_BESIDE_SAVES === "1" && Boolean(this.s.held?.namespace);
     const own = beside ? new Set<string>(Object.values(namesOf(this.s)).filter((v): v is string => typeof v === "string" && v.length > 0)) : undefined;
+    // [DX-ACT8] The account's own subject saves (`acct/<account>/`) are accepted too: a held enrolment reads no subject
+    // data (its census is the held source's subject IDs), so a save during it is a save before its first Publish.
+    // A commit that writes the account's documents or metadata names still stops it. PUBLISH-BESIDE-SAVES.md section 6.
     const foreign = (changes: any[]) => Boolean(own) && changes.length > 0 && changes.every((v: any) =>
-      !v.entityId.startsWith(this.db.prefix) && !v.entityId.startsWith("acct/" + this.s.held!.account + "/") && !own!.has(v.entityId));
+      !v.entityId.startsWith(this.db.prefix) && !own!.has(v.entityId));
     while (after < p) {
       const f = await this.s.comp.feedPage(after, 32);
       assert(f.transactions.length);
@@ -211,7 +294,16 @@ export class JoinedAccount {
         assert(
           allowed ||
             (setup && beside && foreign(t.changes)) ||
+            // [DX-ACT8, review F6] A rival enrolment of this same account whose record lands inside this walk: its
+            // command ID is this account's enrolment command, so this enrolment then recovers it (one record, not two).
+            (setup && beside && t.actor === "lazy/join" && t.commandId === "join-held-enrolment:" + this.s.held!.account) ||
+            // [U3] The same rival enrolment under the random form: recognized by what it writes, the four entities of
+            // this account's enrolment record and nothing else.
+            (setup && beside && t.actor === "lazy/join" && String(t.commandId).startsWith("join-held-enrolment:" + this.s.held!.account + ":") &&
+              t.changes.length > 0 && t.changes.every((v: any) => enrolmentEntities(this.s, this.db.prefix).includes(v.entityId))) ||
             (t.actor === stageActor && stageChanges(this.db.prefix, t.changes)) ||
+            // [DX-ACT6] Content-addressed release definitions written ahead of a Publish (unreachable until it).
+            (t.actor === definitionsActor && definitionsOnly(this.s, t.changes)) ||
             (setup &&
               t.actor === "lazy/join-index" &&
               t.changes.every((v: any) => v.entityId.startsWith(this.db.prefix + "join-"))),
@@ -241,14 +333,43 @@ export class JoinedAccount {
     await this.suffix(source.namespace ? before : source.cut, now, true);
     const meta: Meta = { epoch: source.seal, census, valid: at, source: source.cut,
       compiler: selector, scheduled: false };
-    await s.commit("join-held-enrolment" + (source.namespace ? ":" + source.account : ""), "lazy/join", [
-      fact(namesOf(this.s).ORIGIN, "lazy/generation", { profile: s.profile, held: source.seal }),
-      this.db.put("join-meta", meta),
-      this.db.put("join-calendar", []),
-      fact(namesOf(this.s).CLOCK, "lazy/slot", { joined: source.seal, kind: "baseline", at }),
-    ], now, { intent: h([source.seal, census, at]) });
+    const enrolment = "join-held-enrolment" + (source.namespace ? ":" + source.account : ""),
+      record = [
+        fact(namesOf(this.s).ORIGIN, "lazy/generation", { profile: s.profile, held: source.seal }),
+        this.db.put("join-meta", meta),
+        this.db.put("join-calendar", []),
+        fact(namesOf(this.s).CLOCK, "lazy/slot", { joined: source.seal, kind: "baseline", at }),
+      ];
+    // [DX-ACT8] TX2_ENROL_BESIDE_SAVES=1 (a namespaced account): the enrolment record commits only if its four entities
+    // still have no fact (only a rival enrolment of this account writes them, and its command ID is recovered), instead
+    // of requiring the whole database's head. Up to three tries, each looking the command up first. Unset: as before.
+    if (process.env.TX2_ENROL_BESIDE_SAVES === "1" && source.namespace) {
+      const guards = enrolmentEntities(this.s, this.db.prefix).map((entityId) => ({ entityId, tripleIds: [] as string[] }));
+      // [DX-ACT8, third review U3] The command ID carries a random part, so no other account can compute it and take it
+      // first (`join-held-enrolment:<account>` could be taken by any save, and the account could then never enrol). The
+      // write needs no recovery by its ID: its four entities are created only if absent, so a lost reply, or a rival
+      // enrolment of this account that landed first, is found by reading them (`enrolledWith`).
+      for (let attempt = 0; ; attempt++) {
+        this.beside.enrolTries++;
+        try {
+          await s.commit(enrolment + ":" + randomUUID(), "lazy/join", record, now, { intent: h([source.seal, census, at]) },
+            undefined, undefined, guards);
+          break;
+        } catch (e) {
+          if (await this.enrolledWith(source.seal, census)) break;
+          if (!(e instanceof Conflict) || attempt >= 2) throw e;
+        }
+      }
+    } else await s.commit(enrolment, "lazy/join", record, now, { intent: h([source.seal, census, at]) });
     assert.deepEqual(await this.roster(census, now), ids);
     return meta;
+  }
+  /** [U3] Whether this account's enrolment record (its origin with this seal and its census) is already stored. */
+  private async enrolledWith(seal: string, census: unknown) {
+    const p = await this.s.head();
+    const origin = (await this.s.rows([namesOf(this.s).ORIGIN], p)).find((r: { position: number }) => r.position > this.s.held!.cut);
+    const meta = await this.db.row<Meta>("join-meta", p);
+    return Boolean(origin && value(origin).held === seal && meta && canonical(meta.value.census) === canonical(census));
   }
   async install(ids: string[], at: string, expanded = false) {
     ids = [...ids];
@@ -394,11 +515,40 @@ export class JoinedAccount {
     await this.suffix(c.input, p);
     return { meta, c, tail };
   }
-  private original(id: string, intent: string) {
-    return this.s.lookup("joined:" + id).then((r) => {
+  /** [DX-ACT8, second review] The record of joined command `id`, under either form of its command ID, whatever the
+   * account's settings (a record written under one form before or after a transition is found under the other). A record
+   * is this account's only if it wrote this account's own joined documents (every joined command writes its notice
+   * documents); any other record under the same key, another account's or a forged one, is not this command. */
+  private async original(id: string, intents: { scoped: string; legacy: string }) {
+    // [DX-ACT8, third review U4] Every change of the record, not some, must be in this account's names: its joined
+    // documents and its metadata names (the transaction's own journal aside). A record that also writes another
+    // account's documents is no account's Publish.
+    const names = new Set(Object.values(namesOf(this.s)).filter((v): v is string => typeof v === "string" && v.length > 0));
+    const own = (r: { changes: { entityId: string }[] } | null) =>
+      Boolean(r && r.changes.length > 0 && r.changes.some((c) => c.entityId.startsWith(this.db.prefix)) &&
+        r.changes.every((c) => c.entityId.startsWith(this.db.prefix) || names.has(c.entityId) || c.entityId.startsWith("_tx/")));
+    if (this.s.held) {
+      const key = joinedCommandId(this.s, id, true), found = await this.s.lookup(key);
+      if (own(found)) return this.recorded(key, intents.scoped);
+      // [U7] The `joined:<account>/<id>` form a per-process switch wrote at `bf377c57f` (test databases): found too,
+      // under the same ownership rule. With its switch on that build's intent named the account (as the scoped form's
+      // does); a record under the form with the account-free intent is accepted too, since the key and the ownership
+      // rule already tie it to this account.
+      if (this.s.held.namespace) {
+        const old = "joined:" + this.s.held.account + "/" + id, earlier = await this.s.lookup(old);
+        if (own(earlier)) return this.recorded(old, intents.scoped, intents.legacy);
+      }
+    }
+    // DX_ACT8_INJECT=no-legacy (diagnostic only, the fuzzer's negative control): a held account's lookup skips the
+    // unscoped form, the rule of a process that knows only one form (the second review's R2).
+    const legacy = injected("no-legacy") && this.s.held ? null : await this.s.lookup("joined:" + id);
+    return own(legacy) ? this.recorded("joined:" + id, intents.legacy) : null;
+  }
+  private recorded(key: string, intent: string, alternative?: string) {
+    return this.s.lookup(key).then((r) => {
       if (!r) return null;
       assert(
-        r.commandId === "joined:" + id &&
+        r.commandId === key &&
           r.txId &&
           Number.isSafeInteger(r.position) &&
           r.position > 0,
@@ -420,8 +570,9 @@ export class JoinedAccount {
         JSON.parse(r.correlationId).hash,
         sha256(transport([this.s.scope, r.commandId, r.actor, ops])),
       );
+      const stored = JSON.parse(r.correlationId).context.intent;
       assert.equal(
-        JSON.parse(r.correlationId).context.intent,
+        alternative !== undefined && stored === alternative ? intent : stored,
         intent,
         "Reused command ID has different input",
       );
@@ -445,7 +596,7 @@ export class JoinedAccount {
   private command(
     id: string,
     args: unknown,
-    plan: (p: number) => Promise<{ ops: any[]; context: object; expected?: number }>,
+    plan: (p: number) => Promise<Plan>,
     hook?: () => Promise<void>,
     through?: string,
     priority = false,
@@ -461,7 +612,7 @@ export class JoinedAccount {
   private async execute(
     id: string,
     args: unknown,
-    plan: (p: number) => Promise<{ ops: any[]; context: object; expected?: number }>,
+    plan: (p: number) => Promise<Plan>,
     hook?: () => Promise<void>,
     through?: string,
     observation?: PublishObservation,
@@ -469,14 +620,19 @@ export class JoinedAccount {
     assert(
       /^[a-zA-Z0-9_.:-]{1,145}$/.test(id) || (!through && /^deadline\/[a-f0-9]{64}$/.test(id)),
     );
-    const intent = h([this.s.scope, id, args]);
+    // [DX-ACT8, second review] Under the account's `accountKeys` setting the intent names the account too (the scope is
+    // the whole database's); the form a record carries is decided at its plan, by the settings it read.
+    const intents = {
+      scoped: this.s.held ? h([this.s.scope, this.s.held.account, id, args]) : h([this.s.scope, id, args]),
+      legacy: h([this.s.scope, id, args]),
+    };
     // [DX-ACT2] Why: only a different scope writer can beat an admitted turn. Bound that case and recover the original durable receipt by identity. Rejected: spinning against a moving source head.
     for (let retries = 0; retries < 3; ) {
       const attempt: WriteAttempt | undefined = observation
         ? { started: performance.now() }
         : undefined;
       if (attempt) observation!.attempts.push(attempt);
-      const old = await this.original(id, intent);
+      const old = await this.original(id, intents);
       if (old) {
         if (attempt) {
           attempt.recovered = true;
@@ -494,37 +650,91 @@ export class JoinedAccount {
           continue;
         }
       }
+      let guarded = false;
       try {
         const body = await plan(p);
         if (attempt) attempt.prepared = performance.now();
+        guarded = Boolean(body.guards);
+        if (guarded) this.beside.tries++;
+        const keys = body.keys ?? (this.s.held ? (await this.s.controls(p)).settings?.accountKeys === true : false);
         const r = await this.s.commit(
-          "joined:" + id,
+          joinedCommandId(this.s, id, keys),
           "lazy/join",
           body.ops,
           body.expected ?? p,
-          { ...body.context, intent },
-          hook,
-          attempt &&
-            ((at) => {
-              attempt.nativeAck = at;
-            }),
+          { ...body.context, intent: keys ? intents.scoped : intents.legacy },
+          body.guards ? undefined : hook,
+          (at) => {
+            if (attempt) attempt.nativeAck = at;
+            body.onAck?.();
+          },
+          body.guards,
+          body.inside,
         );
         if (attempt) attempt.finished = performance.now();
-        assert.equal(r.position, (body.expected ?? p) + 1);
+        // [DX-ACT8] Under the account guard the record lands at or after the next position; other accounts' commits
+        // (and this account's saves) may come between its read and its landing.
+        if (body.guards) {
+          assert(r.position > (body.expected ?? p), "A guarded record lands after its read");
+          this.beside.last = { read: body.expected ?? p, landed: r.position, tries: retries + 1 };
+        } else assert.equal(r.position, (body.expected ?? p) + 1);
         return this.observed(r);
       } catch (e) {
-        const won = await this.original(id, intent);
+        const won = await this.original(id, intents);
         if (attempt) attempt.finished = performance.now();
         if (won) {
           if (attempt) attempt.recovered = true;
+          if (guarded) this.beside.recovered++;
           return this.observed(won);
         }
         if (!(e instanceof Conflict)) throw e;
         if (attempt) attempt.conflict = true;
+        if (guarded) {
+          this.beside.refused++;
+          const cause = (e as { cause?: { _tag?: string; message?: string } }).cause;
+          this.beside.causes.push(String(cause?._tag ?? "") + " " + String(cause?.message ?? e.message).slice(0, 160));
+        }
         retries++;
       }
     }
     throw new Conflict("Joined command exhausted three serial predecessor attempts");
+  }
+  /** [DX-ACT8, review F3] Refuses a release when one subject could owe more notice items across this account's
+   * releases (`releases`, plus `doc`) than its ledger can be written with (ledger-parts.ts). */
+  /** [DX-ACT8, third review U2, U9] Under the account's `ledgerCap` setting, refuses a release one subject's ledger could
+   * not hold. The account's ledgers hold only the items in force (retired items are kept beside them, `archive`), and
+   * after a release's event a subject's items in force are that release's work items for it: at most each notice policy
+   * of the release once, and the base rules' items. So the bound is on one release, not on the account's lifetime. A
+   * release that adds no notice policy the account has not published before is never refused (whatever the ledgers
+   * hold, it adds nothing to them). The ledger mode is not an input: every account with a setting writes in parts. */
+  private async ledgerCap(doc: W0.ReleaseDoc, releases: readonly { documentRef?: DocRef; document?: W0.ReleaseDoc }[], p: number,
+    _mode?: LedgerMode) {
+    const { items, policies, base } = noticeItems([doc]);
+    const need = worstLedgerChars(items), cap = ledgerCapacity("parts");
+    if (need <= cap) return;
+    // A release whose notice policies one earlier release already held all at once is never refused: a subject's ledger
+    // after it is no longer than after that release (so a release adding no notice policy, or one that lands over the
+    // cap by any route, never locks the account's later releases).
+    const key = ([rule, k]: readonly [string, string]) => rule + " " + k;
+    const own = items.filter(([rule]) => !rule.startsWith("base:")).map(key);
+    const known = new Set<string>();
+    for (const r of releases) {
+      const d = r.documentRef ? (await loadRelease(this.s, r.documentRef, p)).doc : r.document!;
+      const held = new Set(noticeItems([d]).items.map(key));
+      if (own.every((x) => held.has(x))) return;
+      for (const x of held) known.add(x);
+    }
+    const added = own.filter((x) => !known.has(x)).length;
+    let fit = 0;
+    while (fit < items.length && worstLedgerChars(items.slice(0, fit + 64)) <= cap) fit += 64;
+    throw new ReleaseTooLarge(
+      "Release refused: one subject could owe " + items.length + " notice items from this release (" + policies +
+        " notice policies, " + added + " not published before, and up to " + base + " from the base rules), a packed " +
+        "ledger of about " + need + " characters, over the " + cap + " the settlement can write for one subject (" +
+        cap / ledgerPartChars + " parts of " + ledgerPartChars + " characters). A ledger holds the items in force only, " +
+        "so this bounds one release, not the account's history: a release can carry about " + Math.max(0, fit - base) +
+        " notice policies, and one whose notice policies an earlier release held all at once always publishes.",
+    );
   }
   private async choose(
     meta: Meta,
@@ -574,10 +784,21 @@ export class JoinedAccount {
     assert(r);
     const m = value(r) as Marker;
     await recheckErasure(this.s.comp, m.erasureSeq);
+    // [DX-ACT8] A record written under the account guard stores where it read its account's state (`cut`, and the
+    // event's `sourceBefore`); the guard proves that state unchanged up to the record's own position, so the record holds
+    // at its own position like every other: its effective cut is that position minus one, which every reader of a marker
+    // (settlement, the receipt, the notice selection) takes from here. PUBLISH-BESIDE-SAVES.md section 4.
+    const guarded = m.precondition === "account";
+    assert(!guarded || (m.cut < e.at && e.value.sourceBefore === m.cut && !m.stage && m.read === undefined),
+      "Invalid account-guarded release record");
+    if (guarded) {
+      m.read = m.cut;
+      m.cut = e.at - 1;
+    }
     assert(
       m.notice === h(e.value) &&
         m.seq === e.value.sequence &&
-        e.value.sourceBefore === e.at - 1 &&
+        (guarded || e.value.sourceBefore === e.at - 1) &&
         (m.stage ? m.cut < e.at - 1 : m.cut === e.at - 1) &&
         m.compiler === selector &&
         m.census === e.value.census.members &&
@@ -596,6 +817,12 @@ export class JoinedAccount {
           m.stage.command === e.value.request,
       );
       await checkStage(this.db, m.stage, e.at);
+    }
+    // [DX-ACT6] A marker by reference: its documents from the stored definitions, each checked against its hash.
+    if (m.documentRef) {
+      assert(m.documentRef.release === m.release && m.document === undefined && m.old === undefined);
+      m.document = (await loadRelease(this.s, m.documentRef, e.at)).doc;
+      m.old = m.oldRef ? (await loadRelease(this.s, m.oldRef, e.at)).doc : null;
     }
     return m;
   }
@@ -685,10 +912,31 @@ export class JoinedAccount {
     const priceStart = performance.now();
     const sequence = (await readErasure(this.s.comp))?.seq;
     this.lastMaterial = emptyMaterial();
-    return withErasure(sequence, () =>
+    // [DX-ACT6] By reference: the definitions not stored yet are written first (content-addressed, unfenced, each write
+    // within the writer's bound), and the predecessor's too if it was published with full documents.
+    const byRef = (options.docs ?? docsMode()) === "ref";
+    // [DX-ACT8, second review] A process allowed to turn a setting on does so first (one way, `account-settings.ts`);
+    // then what this Publish does follows the account's stored settings only.
+    // [U6] Whether a transition is needed is read from the stored settings at this plan (no per-process cache).
+    let h0 = await this.s.head(), c0 = this.s.held ? await this.s.controls(h0) : undefined;
+    if (c0 && needsTransition(this.s, c0.settings)) {
+      await ensureSettings(this.s);
+      h0 = await this.s.head();
+      c0 = await this.s.controls(h0);
+    }
+    // [DX-ACT8, review F3] Also before the definitions are written, so a refused release writes nothing.
+    if (c0?.settings?.ledgerCap && storage === "owed") await this.ledgerCap(doc, c0.releases, h0, c0.settings.ledger!);
+    const ref = byRef ? await this.writeDefinitions(doc, c0?.settings?.accountKeys === true) : undefined;
+    // [DX-ACT8] The account guard applies to a held account's owed record only (its plan reads no subject data); every
+    // other Publish keeps the whole-head rule.
+    const beside = publishBeside() && Boolean(this.s.held) && storage === "owed";
+    assert(!beside || !hook, "A Publish beside saves takes no fence hook");
+    assert(beside || (!options.afterRead && !options.inside && !options.onAck), "Publish hooks need TX2_PUBLISH_BESIDE=1");
+    if (beside) this.beside.publishes++;
+    const run = () => withErasure(sequence, () =>
       this.command(
         id,
-        ["publish", doc, at, storage, options.sources ?? "native", workers, small],
+        ["publish", doc, at, storage, options.sources ?? "native", workers, small, ...(byRef ? ["ref"] : [])],
         async (p) => {
           const { meta, c, tail } = await this.state(p);
           assert(this.s.held ? at === meta.valid : at >= c.at);
@@ -697,10 +945,23 @@ export class JoinedAccount {
           const prev = c.releases
             .filter((r) => r.storage !== "scheduled" && r.from <= at)
             .sort((a, b) => b.from.localeCompare(a.from) || b.tx - a.tx)[0];
-          const old = prev ? W0.compileRelease(prev.document) : undefined;
+          const old = prev
+            ? prev.documentRef
+              ? await loadRelease(this.s, prev.documentRef, p)
+              : W0.compileRelease(prev.document)
+            : undefined;
+          // [DX-ACT8, review F3] Under the account's `ledgerCap` setting: checked again at the plan's own read position.
+          if (c.settings?.ledgerCap) await this.ledgerCap(doc, c.releases, p, c.settings.ledger!);
+          // [DX-ACT6] The record names stored definitions only: the root of this release and of its predecessor.
+          const oldRef: DocRef | null = !byRef || !prev ? null : prev.documentRef ?? splitDocument(prev.document).ref;
+          if (byRef) {
+            assert(await rootStored(this.s, ref!, p), "Release definitions are not stored at the Publish's cut");
+            assert(!oldRef || (await rootStored(this.s, oldRef, p)), "Predecessor definitions are not stored");
+          }
           const req: Request = {
             id,
             document: doc,
+            ...(byRef ? { documentRef: ref } : {}),
             kind: "activation",
             release: doc.name,
             validTime: at,
@@ -815,8 +1076,7 @@ export class JoinedAccount {
             joined: meta.epoch,
             ...(sequence === undefined ? {} : { erasureSeq: sequence }),
             seq: np.recipe.sequence,
-            old: old?.doc ?? null,
-            document: doc,
+            ...((byRef ? { documentRef: ref, oldRef } : { old: old?.doc ?? null, document: doc }) as Pick<Marker, "old" | "document">),
             release: next.hash,
             cut: p,
             at,
@@ -829,10 +1089,39 @@ export class JoinedAccount {
             notice: h(np.recipe),
             census: meta.census.members,
             compiler: selector,
+            ...(beside ? { precondition: "account" as const } : {}),
           };
           if (sequence !== undefined) await recheckErasure(this.s.comp, sequence);
+          const record = [fact(namesOf(this.s).RELEASE, "lazy/activation", m), ...np.operations, ...ops];
+          // [DX-ACT6] The store takes one fact value of at most 1 MiB (the Datomic value domain, 1,048,576 UTF-8 bytes):
+          // with full documents the marker holds the new and the old document in one value and the notice event the new
+          // one. Refused here, before any write, with the sizes, instead of the store's "outside the exact storage
+          // domain". Unchanged for every release that fits.
+          for (const o of record)
+            if (o.op === "assert" && Buffer.byteLength(o.value.value) > valueLimit)
+              throw new ReleaseTooLarge(
+                "Release refused: its " + (o.attribute === "lazy/activation" ? "release marker" : "notice event") +
+                  " is one fact value of " + Buffer.byteLength(o.value.value) + " bytes, over the store's limit of " +
+                  valueLimit + " bytes per value. With full documents the marker holds the new document (" +
+                  Buffer.byteLength(canonical(doc)) + " bytes) and the old one (" +
+                  (old ? Buffer.byteLength(canonical(old.doc)) : 0) + " bytes). TX2_RELEASE_DOCS=ref stores the " +
+                  "definitions by reference.",
+              );
+          // [DX-ACT8] The account guard (PUBLISH-BESIDE-SAVES.md section 3): the tail's retraction already carries its
+          // `TripleLive` check; the calendar gets an `EntityState` check (its one row as read here, or none); the release
+          // entity, the tail and the event join the transactor's revision check because the record writes them.
+          let guards: EntityGuard[] | undefined;
+          if (beside) {
+            const calendar = await this.db.row("join-calendar", p);
+            guards = [{ entityId: this.db.prefix + "join-calendar", tripleIds: calendar ? [calendar.id] : [] },
+              // [DX-ACT8, second review] The origin row, which holds the account's settings and changes only at
+              // enrolment and at a settings transition: a Publish planned under the old settings never lands after it.
+              { entityId: namesOf(this.s).ORIGIN, tripleIds: c.origin ? [c.origin.id] : [] }];
+            await options.afterRead?.(p);
+          }
           return {
-            ops: [fact(namesOf(this.s).RELEASE, "lazy/activation", m), ...np.operations, ...ops],
+            ops: record,
+            keys: c.settings?.accountKeys === true,
             expected,
             context: {
               epoch: meta.epoch,
@@ -840,6 +1129,7 @@ export class JoinedAccount {
               output: m.output,
               stage: header?.attempt ?? null,
             },
+            ...(guards ? { guards, inside: options.inside, onAck: options.onAck } : {}),
           };
         },
         hook,
@@ -850,6 +1140,35 @@ export class JoinedAccount {
         options.observation,
       ),
     );
+    try {
+      return await run();
+    } catch (e) {
+      // [DX-ACT6] The 4 MiB request limit, stated with the sizes that reached it (the client refuses before sending).
+      for (let x: unknown = e; x instanceof Error; x = x.cause)
+        if (/Request too large/.test(x.message))
+          throw new ReleaseTooLarge(
+            "Release refused: its Publish record (" +
+              this.s.counters.lastOps.bytes +
+              " bytes of operations) exceeds the 4 MiB request limit (4,194,304 bytes after encoding). With full " +
+              "documents the record is about 3.0 KB + 1.2 x (2 x new + old document); this release's document is " +
+              Buffer.byteLength(canonical(doc)) +
+              " bytes. TX2_RELEASE_DOCS=ref carries the definitions by reference.",
+            { cause: e },
+          );
+      throw e;
+    }
+  }
+  /** [DX-ACT6] What the last Publish by reference wrote ahead of its record. */
+  lastDefinitions = { writes: 0, rows: 0, bytes: 0, retries: 0 };
+  /** [DX-ACT6] Writes the definitions a Publish by reference will name (and its predecessor's, if published with full
+   * documents), unfenced and idempotent. Publish calls it; a caller that pauses saves around a Publish calls it first,
+   * so the pause covers only the record. */
+  async writeDefinitions(doc: W0.ReleaseDoc, unclaimable = false) {
+    const staged = await stageDocument(this.s, structuredClone(doc), unclaimable);
+    this.lastDefinitions = { writes: staged.writes, rows: staged.rows, bytes: staged.bytes, retries: staged.retries };
+    const c0 = await this.s.controls(await this.s.head());
+    for (const r of c0.releases) if (r.joined && r.document && !r.documentRef) await stageDocument(this.s, r.document, unclaimable);
+    return staged.ref;
   }
   async physical(seq: number) {
     const p = await this.s.head(),
@@ -920,7 +1239,7 @@ export class JoinedAccount {
           const doc = W0.compileRelease(scheduled.document);
           assert(scheduled.joined === meta.epoch && doc.hash === scheduled.release);
           const prior = tail.value.custom
-            ? (await this.notices.event(tail.value.custom.definition, k)).value.document
+            ? await documentOf(this.s, (await this.notices.event(tail.value.custom.definition, k)).value, k)
             : tail.value.release
               ? W0[tail.value.release].doc
               : null;

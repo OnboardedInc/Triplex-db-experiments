@@ -32,6 +32,7 @@ import {
   type Role,
 } from "./common.ts";
 import { drill } from "./run.ts";
+import { datomicRuntime, readVariantReceipt } from "../../../config/datomic/runtime.mjs";
 import { localCheckpoint } from "../hasync1/v2/local-checkpoint.ts";
 import { fleetCaps, fleetMode } from "../hasync1/v2/fleet-config.ts";
 import type { Site } from "./stack.ts";
@@ -147,12 +148,15 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // Rejected: borrowing another builder's live reservation.
   const combined = opts.combined;
   const cells = mode === "load-fair" ? ["fair", "read", "cold", "real-fair"] : ["failover"];
-  const ownedCombination = ["DX-CHK1", "DX-THIN1"].includes(holder) && diagnostic && cells.includes(combined) &&
+  // [DX-IMP2] The whole-subject import builder reruns the combined cases with its option on, in its own slot.
+  const ownedCombination = ["DX-CHK1", "DX-THIN1", "DX-IMP2"].includes(holder) && diagnostic && cells.includes(combined) &&
     (mode === "load-fair" || mode === "hasync-ack");
   const scorecard = holder === "DX-V01" && opts.diagnostic === true && pooled &&
     ["hasync-ack", "hasync-move"].includes(mode) && opts.people === "10";
   // [DX-LOAD2] Why: the import-neighbours builder gates its importer change on its own diagnostic slot.
   const importNeighbours = holder === "DX-LOAD2" && diagnostic && mode === "load-fair" && combined === undefined;
+  // [DX-IMP2] Why: the whole-subject builder runs load1's snapshot proof with the import bound on, in its own slot.
+  const snapshotWhole = holder === "DX-IMP2" && diagnostic && mode === "load-proof" && combined === undefined;
   // [DX-ACT3] Why: the large-release builder runs the held Publish campaign on the same toy stack, in its own slot.
   // [DX-RD4] The at-least reads builder runs the same held campaign (DX_ACT3_AT_LEAST) in its own slot.
   const heldPublish = ["DX-ACT3", "DX-RD4"].includes(holder) && diagnostic && mode === "load-fair" && combined === undefined &&
@@ -164,8 +168,21 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // regression check) on the same stack.
   const settleLive = holder === "DX-ACT5" && diagnostic && mode === "load-fair" && combined === undefined &&
     process.env.DX_ACT3_HELD === "1";
-  assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours ||
-    heldPublish || settleFrames || settleLive);
+  // [DX-HA2] Why: the recovery-time builder runs its second-failure drill in its own diagnostic slot.
+  const secondFailure = holder === "DX-HA2" && diagnostic && mode === "hasync-second" && combined === undefined;
+  // [DX-ACT6] Why: the release-limits builder runs its toy gate (ledger in parts, definitions by reference) here.
+  const releaseLimits = holder === "DX-ACT6" && diagnostic && mode === "load-fair" && combined === undefined &&
+    (process.env.DX_ACT6_GATE === "1" || process.env.DX_ACT3_HELD === "1");
+  // [DX-ACT8] Why: the Publish-beside-saves builder runs the held runner (its gate, the unpaused windows, the ACT5 live
+  // phase and the default campaign as regressions) and the release-limits gate here.
+  const besideSaves = holder === "DX-ACT8" && diagnostic && mode === "load-fair" && combined === undefined &&
+    (process.env.DX_ACT6_GATE === "1" || process.env.DX_ACT3_HELD === "1");
+  // [DX-ACT10] Why: the adversarial reviewer of the Publish and settlement guards runs its stack checks in the held runner.
+  // [DX-ACT8] The Publish builder reruns the review's stack checks as a standing gate phase.
+  const publishReview = (holder === "DX-ACT10" || holder === "DX-ACT8") && diagnostic && mode === "load-fair" && combined === undefined &&
+    process.env.DX_ACT3_HELD === "1" && process.env.DX_ACT10_STACK === "1";
+  assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination || scorecard || importNeighbours || snapshotWhole ||
+    heldPublish || settleFrames || settleLive || secondFailure || releaseLimits || besideSaves || publishReview);
   assert(combined === undefined || ownedCombination);
   if (mode === "load-fair") {
     const { cleanSource } = await import("../v01/source.ts");
@@ -424,38 +441,43 @@ export async function localDrill(opts: any, config: any, manager: any) {
     if (diagnostic || mode.startsWith("load-") || mode.startsWith("hasync-")) {
       try {
         // [DX-LOAD1] Why: the shared VM rotates built images; bind the immutable digest to the engine's build event and image label. Rejected: running a mutable tag or changing the shared config for another builder.
+        // [DX-INT4] Why: the newest build event was any builder's; choose only an image built from this checkout's
+        // sources (ha1/image-choice.ts), or the private build named by DX_HA1_DATOMIC_RECEIPT. Rejected: "newest".
         const builds = fs
           .readFileSync(path.join(LOCKS, "events.jsonl"), "utf8")
           .trim()
           .split("\n")
           .map((l) => JSON.parse(l))
-          .filter((x) => x.event === "datomic-build")
-          .reverse();
-        let chosen;
-        for (const b of builds) {
-          assert(
-            /^sha256:[0-9a-f]{64}$/.test(b.imageId) && /^[0-9a-f]{64}$/.test(b.buildInputsSha256),
-          );
-          const exists = await site
-            .docker([
-              "image",
-              "inspect",
-              b.imageId,
-              "--format",
-              '{{.Id}} {{index .Config.Labels "tx2.build-inputs-sha256"}}',
-            ])
+          .filter((x) => x.event === "datomic-build");
+        for (const b of builds)
+          assert(/^sha256:[0-9a-f]{64}$/.test(b.imageId) && /^[0-9a-f]{64}$/.test(b.buildInputsSha256));
+        const labels = new Map<string, string | undefined>();
+        for (const id of new Set([...builds.map((b) => b.imageId), ...(process.env.DX_HA1_DATOMIC_RECEIPT ? [JSON.parse(fs.readFileSync(process.env.DX_HA1_DATOMIC_RECEIPT, "utf8")).imageId] : [])])) {
+          const out = await site
+            .docker(["image", "inspect", id, "--format", '{{.Id}} {{index .Config.Labels "tx2.build-inputs-sha256"}}'])
             .catch(() => undefined);
-          if (exists === undefined) continue;
-          assert.equal(exists, b.imageId + " " + b.buildInputsSha256);
-          chosen = b;
-          break;
+          labels.set(id, out && out.split(" ")[0] === id ? out.split(" ")[1] : undefined);
         }
-        assert(chosen, "No locally present engine-built Datomic distribution");
+        const { checkoutInputs, chooseDatomicImage } = await import("./image-choice.ts");
+        const { verifiedTree } = await import("../../../bin/datomic-context.mjs");
+        const { sha256File } = await import("../../../bin/lib.mjs");
+        const expected = checkoutInputs(root, path.join(os.homedir(), "Claude/Projects/triplex-db-2/downloads/datomic-pro-1.0.7745/extracted/datomic-pro-1.0.7745"),
+          verifiedTree, sha256File);
+        let receipt;
+        if (process.env.DX_HA1_DATOMIC_RECEIPT) {
+          const { readVariantReceipt } = await import("../../../config/datomic/runtime.mjs");
+          receipt = readVariantReceipt(process.env.DX_HA1_DATOMIC_RECEIPT);
+        }
+        const chosen = chooseDatomicImage(builds, (id) => labels.get(id), expected, receipt);
         site.datomicId = chosen.imageId;
         e!.write("image", {
           nonce: e!.nonce,
           image: chosen.imageId,
           buildInputs: chosen.buildInputsSha256,
+          chosenBy: chosen.how,
+          checkoutBuildInputs: expected.buildInputs,
+          checkoutSources: expected.sources,
+          ...(receipt ? { receipt: process.env.DX_HA1_DATOMIC_RECEIPT, tag: receipt.tag } : {}),
         });
       } catch (error) {
         clean = true;

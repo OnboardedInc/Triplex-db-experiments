@@ -11,6 +11,8 @@ if [[ $prefix == tx2-dxprep1-* && ${DX_BARE_METAL:-0} == 1 ]]; then roles=(gw-r 
 # [DX-T1] Why: interrupted startup may leave one of the runner's short-lived helpers behind.
 # Rejected: releasing a measurement lease while an owned client or writable volume survives.
 if [[ $prefix == tx2-dxt1-* ]]; then roles+=(driver health cgroups extract selftest trace-check idle-sentinel seed-copy core-cache); fi
+# [DX-XQ7] The question reader (role q of up.sh with DX_QUESTION_READER=1), removed first when the stack has one.
+if docker container inspect "$prefix-gw-q" >/dev/null 2>&1; then roles=(gw-q "${roles[@]}"); fi
 for role in "${roles[@]}"; do
   docker rm -f "$prefix-$role" >/dev/null 2>&1 || true
 done

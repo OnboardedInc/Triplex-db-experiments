@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.checkjs.json",
+  "compilerOptions": { "noEmit": true, "allowJs": true, "checkJs": false },
+  "files": ["../lab/experiments/EXP-DX1/xq1/server.ts", "../lab/experiments/EXP-DX1/v01/run.ts"]
+}

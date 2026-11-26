@@ -97,6 +97,8 @@
           ;; [DX-R2] Why: a scope can become unsupported while a long poll waits, even without a new public journal.
           ;; Rejected: trusting only the eligibility proof from before the wait.
           _ (when (true? (get input "replicaRows")) (replica-supported! current name))]
+      ;; [DX-RPT1] "omitProtected": true sends no protected value (privacy/*omit-protected*) and says so in the answer.
+      (binding [privacy/*omit-protected* (true? (get input "omitProtected"))]
       (admission/execute admission/journals (fn []
         (let [;; [DX-B6-5] Why: an explicit basis selects a cut after freshness, rather than exposing later journals.
           ;; Rejected: waiting for R and then enumerating the current head unconditionally.
@@ -113,7 +115,9 @@
           bounded (when bounds (bounded-journals db after cut-head limit bounds))
           selected (if bounded (:journals bounded) (take limit (journals)))
           out (StringBuilder.)]
-      (.append out "{\"availableAt\":") (.append out (System/currentTimeMillis)) (.append out ",\"head\":") (.append out (str cut-head)) (.append out ",\"transactions\":[")
+      (.append out "{\"availableAt\":") (.append out (System/currentTimeMillis))
+      (when privacy/*omit-protected* (.append out ",\"omittedProtected\":true"))
+      (.append out ",\"head\":") (.append out (str cut-head)) (.append out ",\"transactions\":[")
       (doseq [[i [e p]] (map-indexed vector selected)]
         (when (value db e :triplex.entity/row-overflow) (reach/decline! "row-overflow"))
         (when (pos? i) (.append out ","))
@@ -147,14 +151,19 @@
         (do (note-examined! "transactions-bounded" (:examined bounded))
             (.append out (str ",\"examined\":" (:examined bounded) ",\"next\":" (:next bounded) ",\"stopped\":\"" (:stopped bounded) "\"")))
         (note-examined! "transactions" (aget examined 0)))
-      (.append out "}") (str out)))))
+      (.append out "}") (str out))))))
     (catch Exception e (declined e))))
 ;; [DX-B4-T3] Why: command identity and current receipt bodies do not depend on record-time monotonicity.
 ;; Rejected: sharing the feed's timestamp guard (causes whole-store retry scans after parallel commits).
 (defn build-command [db name input]
   (try
     (supported! db name false)
-    (let [claim (d/entid db [:triplex.claim/command-id (get input "commandId")])
+    ;; [DX-S6] A caller naming its account finds its own claim only (account_claims.clj); the reserved prefix is refused.
+    (let [_ ((requiring-resolve 'triplex.gateway.account-claims/check-ids!) [(get input "commandId")])
+          account ((requiring-resolve 'triplex.gateway.account-claims/account-for) db input)
+          claim (if account
+                  (first ((requiring-resolve 'triplex.gateway.account-claims/find-claim) (:conn (meta input)) db (get input "commandId") account))
+                  (d/entid db [:triplex.claim/command-id (get input "commandId")]))
           id (when claim (ledger/claim-tx-id db claim)) out (StringBuilder.)]
       (.append out "{\"txId\":")
       (if id (reach/append-string! out id) (.append out "null"))

@@ -12,6 +12,12 @@
 (def ^:dynamic *database* nil)
 (def ^:dynamic *data* nil)
 (def ^:dynamic *unseal* nil)
+;; [DX-RPT1] Why: a reporting copy must never receive a protected value, sealed, unsealed or removed, so that no
+;; removal can leave one in its tables, write-ahead log or backups. A request that sends "omitProtected": true gets
+;; every protected row with its value columns empty and type "protected", and every change record of a protected
+;; attribute with the value {"type":"protected"}. Rejected: filtering in the copy (the value would already have left the
+;; gateway); a gateway-wide switch (every other reader must keep byte-identical answers).
+(def ^:dynamic *omit-protected* false)
 (def cache (atom {}))
 (def local-guards (atom {}))
 (def zeros (apply str (repeat 64 "0")))
@@ -126,14 +132,22 @@
                                       (assoc m id {"type" "erased" "valueType" (get identity "valueType")
                                                    "erasedAt" (get entry "erasedAt") "erasureTxId" (get entry "txId")}))))
                                 before (get entry "identities"))))
-      (update :families into (map (juxt #(get % "entity") #(get % "attribute")) (get entry "identities")))
+      ;; [DX-IMP2] An entry may also name the families a removal asked for before any row existed (import bound on).
+      (update :families into (concat (map (juxt #(get % "entity") #(get % "attribute")) (get entry "identities"))
+                                     (get entry "families")))
       ;; [DX-ERA2] Each account's removal sequence, derived from the one ordered log (only with the option on).
       ((requiring-resolve 'triplex.gateway.removal-scope/add-entry-on) entry)))
 
+;; [DX-API1, in DX-INT5's late form] Filled by removal_drops.clj (loaded after commit.clj): called as
+;; (drop-hook name db nil nil) at every cut, and (drop-hook name db base next) when a newer frontier is accepted, so that
+;; parsed entities named by new removals are dropped from the entity cache. Here, before commit.clj, it is only a var and
+;; two calls: API1's inline code moved every stored function's identity with every option off (READINESS.md, step 0).
+(def drop-hook nil)
 (defn cut
   ([name db] (cut name db false))
   ([name db allow-pending?]
    (try
+     (when drop-hook (drop-hook name db nil nil))
      ;; [DX-ERA2 seventh pass, E4 of DX-ERA4] the head this gateway verified is read BEFORE the log: read after it, a
      ;; head another request verified meanwhile (a removal published between the two reads) looked like a log behind
      ;; this gateway's, and refused a request of any account (503) that no removal touched
@@ -182,6 +196,7 @@
                               (= (:attrs next) (set attrs)) (= (:sealed next) sealed?))
                  (unavailable!))
                (let [new (assoc next :wire wire)]
+                 (when drop-hook (drop-hook name db base next))
                  (swap! cache update name #(if (and % (> (:seq %) n)) % new))
                  new))))))]
          (if (if result (integer? pending-seq) false) (assoc result :pending-seq pending-seq :pending pending-entry) result)))
@@ -226,10 +241,15 @@
               :created_by :entity_type :schema_version :tx_id])
 (def payload-cols [:value_string :value_number :value_boolean :value_datetime :value_json])
 
+;; [DX-RPT1, moved by DX-INT5] The omitting function lives in omit_protected.clj, which main.clj loads last and which
+;; fills this hook: a function defined here compiles before commit.clj and moved the stored functions' identities.
+(def omit-hook nil)
+
 (defn masked [row]
   (if-not *cut* row
     (let [sealed? (:sealed *cut*) attrs (:attrs *cut*)]
       (cond
+        *omit-protected* (omit-hook row attrs)
         (= ":_tx/change" (:attribute row))
         (let [change (json/read-str (:value_json row)) id (get change "tripleId")
               attr (get change "attribute") marker (get-in *cut* [:erased id])
@@ -272,7 +292,8 @@
   (zipmap columns (json/read-str (subs text (packed-tail text)))))
 
 (defn text [^String bytes]
-  (if (and *cut* (or (:sealed *cut*) (seq (:erased *cut*))))
+  ;; [DX-INT5] `if` inside the first clause keeps this `or` at two clauses (one more moved the stored identities).
+  (if (and *cut* (or (if *omit-protected* true (:sealed *cut*)) (seq (:erased *cut*))))
     (let [end (packed-tail bytes)
           values (json/read-str (subs bytes end))
           row (zipmap columns values)
@@ -297,7 +318,12 @@
         (when-not (= "string" (:value_type r))
           (failure! 400 "ProtectedTypeUnsupported" "This protected scope accepts string assertions"))
         (when (and importing ((:families state) [(:entity_id r) (:attribute r)]))
-          (failure! 409 "ErasureReplayDeclined" "An archived field cannot be replayed across its erasure"))))))
+          (failure! 409 "ErasureReplayDeclined" "An archived field cannot be replayed across its erasure"))
+        ;; [DX-S4] With TX2_SUBJECT_CREATE=1, a live creation of a removed family (a removal that named the entity before
+        ;; it existed) is refused whole the same way. Resolved at call time: this namespace loads before the stored
+        ;; functions, so a new form here must not add generated names (s3/idents.sh checks it).
+        (when ((requiring-resolve 'triplex.gateway.subject-create/removed-creation?) state r input)
+          (failure! 409 "ErasureReplayDeclined" "A removed field cannot be created across its removal"))))))
 
 (defn verify-data! [state db]
   (if ((requiring-resolve 'triplex.gateway.removal-scope/per-account?) db)

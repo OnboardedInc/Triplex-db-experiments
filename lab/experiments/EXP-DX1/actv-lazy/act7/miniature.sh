@@ -52,7 +52,10 @@ env "${client_env[@]}" node --no-warnings --experimental-transform-types lab/exp
 db=$(node -p 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).db' "$out/seed.json")
 seed_head=$(node -p 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).seedCut' "$out/seed.json")
 people=$(node -p 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).people' "$out/seed.json")
-image=$(DX_JAVA=21 node lab/config/datomic/runtime.mjs image)
+# [DX-INT4] The aging containers start from one image ID (DX_DATOMIC_IMAGE_RECEIPT names it), never the fixed shared
+# runtime tag another builder can retag (lab/bin/gate-image.sh refuses it).
+. lab/bin/gate-image.sh
+image=$(gate_image "$(DX_JAVA=21 node lab/config/datomic/runtime.mjs image)" "$out/evidence/aging-image.json") || exit 2
 if [[ ${DX_ACT7_SKIP_AGING:-0} == 1 ]]; then
   # Regression only: the fresh toy, never aged (run its phases with DX_ACT7_ADOPT=0).
   status=0

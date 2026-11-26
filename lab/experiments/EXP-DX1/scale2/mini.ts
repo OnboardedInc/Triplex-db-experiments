@@ -169,6 +169,17 @@ async function transactSure(input: any): Promise<number> {
 }
 const head = async (c = writer) => (await c.begin(db).then(async (b) => { await c.release(db, b.handle); return b.position; }));
 log("scope", { name, db });
+// [DX-ACT8] DX_SCALE2_REMOVAL=1 (default off; the stack needs its shared erasure directory, DX_XQ3_ERASURE_DIRECTORY=1):
+// the fresh database is declared protected for one attribute before its first save; after the window (section 3b) two
+// publishing accounts each publish a further release while a removal on request of a protected value lands between the
+// Publish's read and its commit, one value under the publishing account's own names and one under a thin account's.
+const REMOVAL = process.env.DX_SCALE2_REMOVAL === "1";
+const PROTECTED = ":person/note";
+if (REMOVAL) {
+  assert(!ready, "the removal step needs a fresh database");
+  await writer.declareProtection(db, [PROTECTED], false);
+  assert((await writer.erasureFrontier(db)).protected);
+}
 
 // Positions of every subject's seed commit, per account (the held oracle wants them for the publishing accounts).
 const seedPos = new Map<string, number[]>();
@@ -458,7 +469,7 @@ async function play(tape: Save[], until: () => boolean = () => false) {
 // Readers: pinned (a recent receipt position, any subject) and current (a subject with no save in flight, at least its
 // last receipt). Every answer is compared with the oracle; any difference stops the run.
 let reading = false;
-const readStats = { pinned: 0, current: 0, rows: 0, pinnedMs: [] as number[], currentMs: [] as number[] };
+const readStats = { pinned: 0, current: 0, rows: 0, pinnedMs: [] as number[], currentMs: [] as number[], basisWaits: 0 };
 async function readerLoop(n: number) {
   let st = 0x9e3779b9 ^ (n * 7919);
   const rnd = () => { st ^= st << 13; st ^= st >>> 17; st ^= st << 5; st >>>= 0; return st / 4294967296; };
@@ -469,7 +480,18 @@ async function readerLoop(n: number) {
     if (rnd() < 0.5 && receipts.length) {
       const P = receipts[Math.max(0, receipts.length - 1 - Math.floor(rnd() * 200))]!;
       const t0 = now();
-      const rows = await reader.rows(db, { entityIds: ents, basis: { recordedPosition: P, validAt: VALID_AT } });
+      let rows: readonly any[];
+      // [DX-ACT8] Under DX_SCALE2_REMOVAL only: a pinned read at a receipt the read gateway has not reached yet (the
+      // gateway answers "beyond the available snapshot" at once; seen once on the loaded Mac, run M3-first) asks again
+      // every 100 ms, up to 50 times, and counts the waits. Otherwise as before.
+      for (let k = 0; ; k++) {
+        try { rows = await reader.rows(db, { entityIds: ents, basis: { recordedPosition: P, validAt: VALID_AT } }); break; }
+        catch (e) {
+          if (!REMOVAL || k >= 50 || !/beyond the available snapshot/.test(String((e as Error).message))) throw e;
+          readStats.basisWaits++;
+          await sleep(100);
+        }
+      }
       readStats.pinnedMs.push(now() - t0);
       const got = rows.map(rowKey).sort(), want = ents.flatMap((e) => oracleAt(e, P)).sort();
       assert.deepEqual(got, want, "pinned read differs: " + ents[0] + " at " + P);
@@ -547,19 +569,33 @@ const settling = doPublish ? (async () => {
   return workers;
 })() : Promise.resolve([] as any[]);
 // Late enrolment beside the saves (DX_SCALE2_LATE).
-const late: { account: string; ok: boolean; error?: string; pub?: Pub }[] = [];
+const late: { account: string; ok: boolean; error?: string; pub?: Pub; transportRetry?: string }[] = [];
+// [DX-ACT8] A late enrolment that fails on transport (an HTTP request past the client's deadline, a reset socket: the
+// loaded Mac) is run once more (enrolment and Publish are idempotent by command ID); the first error is recorded.
+// A refusal is never retried. Without TX2_ENROL_BESIDE_SAVES: as before.
+const transport = (m: string) => /deadline exceeded|ECONNRESET|socket hang up|EPIPE/i.test(m);
 const lateTask = doPublish && LATE ? (async () => {
   await sleep(2000);
   for (const a of allPublishers.filter((x) => lateAccounts.has(x.key))) {
     try { late.push({ account: a.key, ok: true, pub: await enrolAccount(a) }); }
-    catch (e) { late.push({ account: a.key, ok: false, error: String((e as Error).message).slice(0, 300) }); }
+    catch (e) {
+      const message = String((e as Error).message).slice(0, 300);
+      if (process.env.TX2_ENROL_BESIDE_SAVES === "1" && transport(message))
+        try { late.push({ account: a.key, ok: true, pub: await enrolAccount(a), transportRetry: message }); continue; }
+        catch (e2) { late.push({ account: a.key, ok: false, error: String((e2 as Error).message).slice(0, 300), transportRetry: message }); continue; }
+      late.push({ account: a.key, ok: false, error: message });
+    }
   }
 })() : Promise.resolve();
 // Publish beside the saves (DX_SCALE2_LIVE_PUBLISH): each attempt and its outcome.
-const livePublish: { account: string; ok: boolean; ms: number; error?: string }[] = [];
+const livePublish: { account: string; ok: boolean; ms: number; error?: string; read?: number; position?: number;
+  tries?: number; refused?: number }[] = [];
+// [DX-ACT8] DX_SCALE2_LIVE_AT_ONCE=1: the live Publishes are offered all at once (each account's own command), not one
+// after another. With TX2_PUBLISH_BESIDE=1 each records where it read its account's state, where it landed and its tries.
+const liveAtOnce = process.env.DX_SCALE2_LIVE_AT_ONCE === "1";
 const livePublishTask = doPublish && LIVE_PUBLISH ? (async () => {
   await sleep(3000);
-  for (const x of pubs.filter((p) => livePublishers.has(p.a.key))) {
+  const one = async (x: Pub) => {
     const started = now();
     try {
       const doc = largeRelease(W0.R1.doc, parseShape("forms=20,policies=20,permille=1000"));
@@ -567,18 +603,30 @@ const livePublishTask = doPublish && LIVE_PUBLISH ? (async () => {
       const seq = await sequenceAt(x.joined, p.position);
       x.releases.push({ seq, position: p.position, doc, old: W0.R1.doc });
       x.target = seq;
-      livePublish.push({ account: x.a.key, ok: true, ms: Math.round(now() - started) });
+      const last = x.joined.beside?.last;
+      livePublish.push({ account: x.a.key, ok: true, ms: Math.round(now() - started), position: p.position,
+        ...(last && last.landed === p.position ? { read: last.read, tries: last.tries } : {}), refused: x.joined.beside?.refused ?? 0 });
     } catch (e) {
-      livePublish.push({ account: x.a.key, ok: false, ms: Math.round(now() - started), error: String((e as Error).message).slice(0, 200) });
+      livePublish.push({ account: x.a.key, ok: false, ms: Math.round(now() - started), error: String((e as Error).message).slice(0, 200),
+        refused: x.joined.beside?.refused ?? 0 });
     }
-  }
+  };
+  const live = pubs.filter((p) => livePublishers.has(p.a.key));
+  if (liveAtOnce) await Promise.all(live.map(one));
+  else for (const x of live) await one(x);
 })() : Promise.resolve();
 await play(tape);
 await lateTask;
 await livePublishTask;
 log("live-publish", { accounts: livePublish });
-log("late-enrolment", { option: process.env.TX2_ENROL_BESIDE_SAVES === "1", accounts: late.map(({ account, ok, error, pub }) =>
-  ({ account, ok, error, enrolCommits: pub?.enrolCommits, enrolMs: pub ? Math.round(pub.enrolMs) : undefined })) });
+log("late-enrolment", { option: process.env.TX2_ENROL_BESIDE_SAVES === "1", accounts: late.map(({ account, ok, error, pub, transportRetry }) =>
+  ({ account, ok, error, transportRetry, enrolCommits: pub?.enrolCommits, enrolMs: pub ? Math.round(pub.enrolMs) : undefined })) });
+// [DX-ACT8] Under the account guard no live Publish may be refused, and under the finished enrolment option no late
+// enrolment; the counts are logged above either way (the old rules' refusals are the control).
+if (process.env.TX2_PUBLISH_BESIDE === "1")
+  assert(livePublish.every((x) => x.ok && !x.refused), "a live Publish was refused under the account guard");
+if (process.env.TX2_ENROL_BESIDE_SAVES === "1" && process.env.TX2_PUBLISH_BESIDE === "1")
+  assert(late.every((x) => x.ok), "a late enrolment was refused under TX2_ENROL_BESIDE_SAVES");
 const workers = await settling;
 reading = false;
 await Promise.all(readers);
@@ -598,6 +646,63 @@ for (const x of pubs.filter((p) => livePublishers.has(p.a.key) && p.target !== u
   const w = await settleModule.Settlement.open(x.joined, new BulkQueueCls(1), false, "bytes", "progress");
   await w.settle(x.target);
   liveWorkers.push({ x, w });
+}
+// 4e. [DX-ACT8] DX_SCALE2_REMOVAL=1: a removal on request between a Publish's read and its commit (after every check of
+// 4a to 4d has passed, so no frame is in flight; every frame and Publish of this run carried the removal ticket all the
+// same). Each step: a protected value is saved (under the publishing account's own names, then
+// under a thin account's), the account publishes a further release (21 forms) with the removal of that value in its
+// `afterRead` hook (once); that Publish must be refused, and the same command offered again must land. Then the account's
+// settlement is asked to settle that release and its outcome recorded (with the database-wide removal sequence the
+// notice recorder refuses an account whose cursor predates any removal: PUBLISH-BESIDE-SAVES.md section 3). The release
+// is not checked against the oracle; afterwards an uninvolved account's recorded notices are read once more and the
+// outcome recorded (with the database-wide sequence a removal anywhere discards every account's recorded notices).
+const removalSteps: Record<string, unknown>[] = [];
+const removalAfter: Record<string, unknown> = {};
+async function removalStep() {
+  const thin = accounts.find((a) => a.kind === "thin" && !livePublishers.has(a.key))!;
+  const live = liveWorkers.slice(0, 2);
+  assert.equal(live.length, 2, "the removal step needs two live publishers");
+  for (const [k, { x, w }] of live.entries()) {
+    const owner = k === 0 ? x.a.key : thin.key;
+    const entityId = "acct/" + owner + "/act8-note-" + k;
+    const noted = await transactSure({ ...command("scale2/note/" + RUN + "/" + k,
+      [{ e: entityId, a: PROTECTED, v: { type: "string", value: "note-" + k } }] as never, [], false), groupAccount: owner });
+    const seqBefore = (await writer.erasureFrontier(db)).seq;
+    const doc = largeRelease(W0.R1.doc, parseShape("forms=21,policies=21,permille=1000"));
+    const id = "scale2:" + RUN + ":" + x.a.key + ":removal";
+    let erased: any, fired = false, first = "";
+    const tries0 = x.joined.beside.tries;
+    try {
+      await x.joined.publish(id, doc, W0.POPULATION_VALID_TIME, "owed", undefined, { afterRead: async () => {
+        if (fired) return;
+        fired = true;
+        erased = await writer.erase(db, "scale2-erase-" + RUN + "-" + k, [{ entityId, attribute: PROTECTED }]);
+      } });
+    } catch (e) {
+      const err = e as { name?: string; code?: string; message?: string };
+      first = [err.name, err.code, String(err.message).slice(0, 160)].filter(Boolean).join(": ");
+    }
+    const triesFirst = x.joined.beside.tries - tries0;
+    const p = await x.joined.publish(id, doc, W0.POPULATION_VALID_TIME, "owed");
+    const seq = await sequenceAt(x.joined, p.position);
+    const last = x.joined.beside.last;
+    let settled = "settled";
+    try { await w.settle(seq); }
+    catch (e) { settled = [(e as Error).name, String((e as Error).message).slice(0, 160)].join(": "); }
+    removalSteps.push({ where: k === 0 ? "own account" : "another account", account: x.a.key, notedAt: noted,
+      erasedAt: erased?.position, erasureSeq: { before: seqBefore, removal: erased?.seq, after: (await writer.erasureFrontier(db)).seq },
+      firstRefused: first, triesFirst, landed: p.position, read: last?.landed === p.position ? last.read : undefined,
+      triesSecond: x.joined.beside.tries - tries0 - triesFirst, settlementAfter: settled });
+  }
+  const other = liveWorkers[2]!;
+  try {
+    const packets = await other.w.recorder.packets(await other.w.recorder.archive.store.head());
+    removalAfter.uninvolved = { account: other.x.a.key, packets: packets.length };
+  } catch (e) {
+    removalAfter.uninvolved = { account: other.x.a.key, refused: [(e as Error).name, String((e as Error).message).slice(0, 160)].join(": ") };
+  }
+  log("removal", { attribute: PROTECTED, steps: removalSteps, after: removalAfter });
+  assert(removalSteps.every((s) => s.firstRefused && s.erasedAt !== undefined), "a Publish whose removal ticket changed in its window was not refused");
 }
 // ---- 4. Checks, one account at a time -------------------------------------------------------------------------------
 // 4a. Every subject's root and form at the final head (pinned), against the oracle.
@@ -711,7 +816,6 @@ if (doPublish) {
       turns: queue?.turnsByKey.get(w.archive.turnKey()) ?? null, live: livePublishers.has(x.a.key), checked: { ...checked, noticesByRelease: undefined },
       enrolCommits: x.enrolCommits, publishBytes: x.publishBytes, publishMs: Math.round(x.publishMs), enrolMs: Math.round(x.enrolMs) });
   }
-  for (const { w } of checkList) await w.close();
   for (const l of late) {
     if (!l.pub) continue;
     const x = l.pub;
@@ -723,6 +827,9 @@ if (doPublish) {
         enrolCommits: x.enrolCommits, enrolMs: Math.round(x.enrolMs) });
     } finally { await w.close(); }
   }
+  // The live accounts' workers stay open through the late accounts' checks for the removal step (4e), which runs last.
+  if (REMOVAL) await removalStep();
+  for (const { w } of checkList) await w.close();
   log("settlement", { accounts: settlement.length, late: settlement.filter((s: any) => s.late).map((s: any) => ({ account: s.account,
     changes: s.checked.changes, notices: s.checked.notices })), perAccount: settlement.filter((s: any) => !s.late).map((s: any) => ({ account: s.account, people: s.people,
     valueFrames: s.values.committed, noticeFrames: s.notices.committed, refused: s.values.refused + s.notices.refused,
@@ -743,11 +850,13 @@ const result = {
     quietAloneMs: { n: quietAlone.length, p50: q(quietAlone, 0.5), p99: q(quietAlone, 0.99) },
     quietLoadedMs: { n: quietLoaded.length, p50: q(quietLoaded, 0.5), p99: q(quietLoaded, 0.99) } },
   reads: { pinned: readStats.pinned, current: readStats.current, rowsCompared: readStats.rows,
+    ...(REMOVAL ? { basisWaits: readStats.basisWaits } : {}),
     pinnedMs: { p50: q(readStats.pinnedMs, 0.5), p99: q(readStats.pinnedMs, 0.99) },
     currentMs: { p50: q(readStats.currentMs, 0.5), p99: q(readStats.currentMs, 0.99) } },
   feed: { checked: feedChecked, lagMs: { p50: q(lags, 0.5), p99: q(lags, 0.99) } },
   ids: idRows, sweeps: sweepRows, settlement,
   livePublish,
+  ...(REMOVAL ? { removal: { attribute: PROTECTED, steps: removalSteps, after: removalAfter } } : {}),
   late: late.map(({ account, ok, error, pub }) => ({ account, ok, error, enrolCommits: pub?.enrolCommits })),
   sweepGates: { beforeSweeps, afterSweeps, sweptAccounts: sweepRows.length },
   routes: { write: await scanStats(writeUrl), read: await scanStats(readUrl) }, feedPages,

@@ -62,6 +62,7 @@ export const modes = [
   "hasync-suite",
   "hasync-scale",
   "hasync-p9",
+  "hasync-second",
 ] as const;
 export type Mode = (typeof modes)[number];
 export const roles = {

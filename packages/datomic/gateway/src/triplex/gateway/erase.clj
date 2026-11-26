@@ -54,7 +54,11 @@
   ;; [DX-ERASE2] Why: trusted staging uses the same serial cut check with its stopped-copy position.
   ;; Rejected: letting the public request claim an occupied scope has no plaintext history.
   ([name conn db input staged-position]
-  (let [attrs (get input "attributes") sealed? (true? (get input "sealed"))]
+  (let [attrs (get input "attributes") sealed? (true? (get input "sealed"))
+        ;; [DX-ERA6 eighth pass, the owner's decision (iii)] with protection-sealed-only, an unsealed declaration is
+        ;; refused outside tests unless the database already protects exactly these attributes unsealed (kept, warned)
+        warning (when @(requiring-resolve 'triplex.gateway.removal-commit/protection-sealed-only)
+                  ((requiring-resolve 'triplex.gateway.removal-commit/unsealed-declare!) name attrs sealed?))]
     ;; [DX-ERA2 sixth pass, V1] a database guarded per account is declared through removal-commit/protect! (its policy
     ;; is in the database); a gateway without the option must not write its log's policy
     (when (contains? #{-1 -2} (scope/value db (scope/entity db) :triplex.scope/erasure-seq)) (privacy/unavailable!))
@@ -78,7 +82,8 @@
                   (privacy/failure! 409 "ProtectedScopeNeedsMigration" "Declare protection before saving into the scope")
                   (throw e))))))))
     (envelope/provision! name sealed?)
-    {:database name :attributes attrs :sealed sealed? :erasure {:seq (:seq (privacy/cut name (sync! conn)))}})))
+    (merge {:database name :attributes attrs :sealed sealed? :erasure {:seq (:seq (privacy/cut name (sync! conn)))}}
+           (when warning {:warning warning})))))
 
 (defn identity [row]
   (cond-> {"assertionId" (:id row) "entity" (:entity_id row) "attribute" (:attribute row)
@@ -132,10 +137,16 @@
         ids (->> selectors (mapcat #(matches db state %)) (map identity)
                  (remove #(contains? (:erased state) (get % "assertionId")))
                  (reduce (fn [m r] (assoc m (get r "assertionId") r)) (sorted-map))
-                 vals vec)]
-    {"database" name "seq" (inc (:seq state)) "previous" (:seal state) "commandId" command
-     "selectors" selectors "txId" (str "_tx/erase-" (UUID/randomUUID)) "position" position
-     "erasedAt" stamp "identities" ids}))
+                 vals vec)
+        ;; [DX-IMP2] Why: a removal that names a subject whose import has not committed yet matches no row; with the
+        ;; whole-subject import bound on it records the families it names, so the import cannot bring them back.
+        ;; Rejected: requiring import-bound at load (renumbers the native functions' generated names; see storage.clj).
+        families (when ((requiring-resolve 'triplex.gateway.subject-create/record-families?))
+                   ((requiring-resolve 'triplex.gateway.import-bound/removal-families) state selectors))
+        entry {"database" name "seq" (inc (:seq state)) "previous" (:seal state) "commandId" command
+               "selectors" selectors "txId" (str "_tx/erase-" (UUID/randomUUID)) "position" position
+               "erasedAt" stamp "identities" ids}]
+    (if (seq families) (assoc entry "families" families) entry)))
 
 (defn- journal-rows [entry]
   (let [tx (get entry "txId") ids (get entry "identities") stamp (get entry "erasedAt")
@@ -243,6 +254,8 @@
           (if-let [before (get-in current [:commands command])]
             (do (when-not (= selectors (get before "selectors"))
                   (privacy/failure! 409 "EraseCommandConflict" "The command already used different selectors"))
+                ;; [DX-ERA6 eighth pass, R5] resolved at call time (this namespace loads before the stored functions)
+                ((requiring-resolve 'triplex.gateway.removal-ack/acknowledged!) name before)
                 (response db before))
             (let [pending (privacy/pending name)
                   _ (when (and pending (not= [command selectors] (mapv #(get pending %) ["commandId" "selectors"])))
@@ -266,6 +279,7 @@
                       (recur next (when committed entry) (inc tries)))
                     (do (privacy/publish! name current entry)
                         ((requiring-resolve 'triplex.gateway.removal-scope/log-tries!) entry tries buckets started)
+                        ((requiring-resolve 'triplex.gateway.removal-ack/acknowledged!) name entry)
                         (response (d/db conn) entry))))))))))))))
 
 (defn replay-after-restore! [name conn]

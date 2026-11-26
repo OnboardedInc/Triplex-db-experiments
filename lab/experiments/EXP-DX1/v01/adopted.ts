@@ -15,6 +15,7 @@ import { play, resolveUncertain, type Row, type Save, type Sender } from "../sca
 import { checkAdoptedPeer, hex, openScaleSeal, type AdoptedSeed } from "./adopt.ts";
 import { ladder, phaseSeconds, selectedWriter, type Writer } from "./profile.ts";
 import { pinnedFields } from "./pinned-fields.ts";
+import { writerSplitText } from "./writer-split-text.ts";
 import { cellPath, writerAdmission, ratedTape, serverCells, serverCellSeconds, type CreditMode, type ServerCell, type WindowSeconds } from "./server-workload.ts";
 
 import { checkRealisticField, ownerFields, thinSweep, toyRealSeed, withOwners } from "./realistic.ts";
@@ -23,8 +24,8 @@ import { subject as realSubject } from "../real1/population.ts";
 import { defaultCreditMode } from "../jvm1/launch.mjs";
 import { collectCell, type physicalTelemetry } from "./cell-telemetry.ts";
 import { migratedReadRate, recentlyOffered, sampleMigratedReads } from "../w1/migrated-reads.ts";
-import { cardTapeReport, fullCellTape, isProduction, parseCardTape, productionCellMetrics, productionNeighbours, productionPredecessors,
-  productionReadback, sortTape, tapeEdge, tapeShape, type AgedCut, type ProductionWrite } from "./production-card.ts";
+import { cardTapeReport, fullCellTape, isMix, isProduction, mixPredecessors, parseCardTape, productionCellMetrics, productionNeighbours, productionPredecessors,
+  productionReadback, sortTape, tapeEdge, tapeMix, tapeShape, type AgedCut, type MixWrite, type ProductionWrite } from "./production-card.ts";
 import { gatewayTimes, randomLine, randomLineLoads, type P1Reader, type ReaderRecords } from "./card-reader.ts";
 
 export type Residency = Record<string, { rssBytes: number; threads: number }>;
@@ -91,7 +92,48 @@ export const feeder = async (client: DatomicClient, db: string, from: number, de
 };
 
 const ownerHeadPair = process.env.DX_W1_PAIR_OPTION === "owner-head";
-export function checkSavedIdentity(save: Save, row: Feed, writer: Writer, subjectFunction?: string) {
+// [DX-S6] F5: checkSavedIdentity accepts a general-writer commit whenever a save names no per-subject function, so a
+// run in which no eligible save took the per-subject writer would pass. Assert the split: with the per-subject writer
+// on, at least one eligible save takes it, and with several owners or creations on, every tape M save (it names its
+// owners) either takes a per-subject function or carries the gateway's typed reason.
+// Rejected: asserting a share from the configured flags alone (the flags say nothing about what ran).
+export function checkWriterSplit(saves: readonly Save[], writer: Writer,
+  options: { subjectSave?: boolean; subjectSeveralOwnersFunction?: string; subjectCreateFunction?: string }) {
+  const keyedRows = saves.filter((r) => r.status === "acked" && r.saveKey !== undefined), keyed = keyedRows.length;
+  // The card's own saves (no save key, not sent with the general identity): checkSavedIdentity asserts each one took
+  // the per-subject function with ordered IDs; counted apart from the tape's keyed saves, never summed with them.
+  const ownRows = saves.filter((r) => r.status === "acked" && r.saveKey === undefined && !r.generalIdentity);
+  const own = ownRows.length, ownTaken = ownRows.filter((r) => typeof r.stage?.subjectSave === "string").length;
+  const keyedGeneral = keyedRows.filter((r) => typeof r.stage?.subjectSave !== "string").length;
+  if (options.subjectSave !== true || writer === "grouped")
+    return { keyed, eligible: 0, taken: 0, own, ownTaken, keyedGeneral, ran: false, rule: "off" as const };
+  // [DX-INT5] Eligible means the active rule lets the per-subject writer take it. With the wide writer off and no
+  // owners named, the narrow rule takes only commits of one to three facts that each replace a current value; every
+  // other production save goes to the general writer by design (checkSavedIdentity asserts each save's path exactly).
+  // The bounds are the gateway's own (subject_save.clj plan-with-erasure: 1 <= facts <= 3, facts and retired equal; the
+  // gateway also needs the live count equal, which the card cannot see before the save).
+  // Found on 2026-11-25: the card's quiet-account cell at 235 commits per second sends 14 tape saves of 4 to 15 facts,
+  // all general by that rule, and this check failed every card run on the one branch since the save line.
+  const narrowRuleTakes = (r: Save) => {
+    const facts = r.facts ?? r.width, retired = r.retired ?? r.width;
+    return facts !== undefined && facts >= 1 && facts <= 3 && retired === facts;
+  };
+  const decidedByRule = process.env.TX2_SUBJECT_WIDE !== "1";
+  const eligible = saves.filter((r) => r.status === "acked" && r.saveKey !== undefined && !r.generalIdentity
+    && (r.owners !== undefined || !decidedByRule || narrowRuleTakes(r)));
+  const taken = eligible.filter((r) => typeof r.stage?.subjectSave === "string");
+  if (eligible.length > 0) assert(taken.length > 0, `no eligible save took the per-subject writer (${eligible.length} eligible)`);
+  if (options.subjectSeveralOwnersFunction || options.subjectCreateFunction) {
+    const unexplained = eligible.filter((r) => r.owners !== undefined && typeof r.stage?.subjectSave !== "string"
+      && typeof (r.stage as Record<string, unknown> | undefined)?.["subjectDeclined"] !== "string");
+    assert.equal(unexplained.length, 0, `${unexplained.length} tape M saves went to the general writer without a reason`);
+  }
+  const rule = decidedByRule && !keyedRows.some((r) => r.owners !== undefined) ? "narrow" as const : "wide-or-owners" as const;
+  return { keyed, eligible: eligible.length, taken: taken.length, own, ownTaken, keyedGeneral, ran: true, rule };
+}
+
+
+export function checkSavedIdentity(save: Save, row: Feed, writer: Writer, subjectFunction?: string, otherFunctions: readonly string[] = []) {
   const receipt = save.receipt;
   assert(receipt && (save.status === "acked" || save.status === "recovered"));
   assert.equal(row.db, save.db);
@@ -103,8 +145,10 @@ export function checkSavedIdentity(save: Save, row: Feed, writer: Writer, subjec
   }
   // [DX-INT1] Why: a production commit over 256 assertions carries the general identity and goes to the general writer.
   // Rejected: skipping the identity check for it (its journal row must still match its receipt, checked above).
+  // [DX-S2] A product save without a block (orderedSaves off, or a save the SDK's rule keeps on the runtime's IDs) goes
+  // to the general writer whatever its size.
   if (save.generalIdentity) {
-    assert(save.orderedToken === undefined && save.assertions! > 256 && !save.stage?.subjectSave && !save.stage?.subjectOrderedIds);
+    assert(save.orderedToken === undefined && (save.product || save.assertions! > 256) && !save.stage?.subjectSave && !save.stage?.subjectOrderedIds);
     return;
   }
   assert(save.orderedToken);
@@ -115,7 +159,16 @@ export function checkSavedIdentity(save: Save, row: Feed, writer: Writer, subjec
   const facts = save.facts ?? save.width, retired = save.retired ?? save.width;
   assert.equal(row.tx, block.transactionId);
   assert.deepEqual(row.journalIds,
-    Array.from({ length: 4 + facts + retired }, (_, i) => block.assertionId(facts + i)));
+    Array.from({ length: 3 + (save.owners ?? 1) + facts + retired }, (_, i) => block.assertionId(facts + i)));
+  // [DX-S4] With the wide writer, several owners or creations on, the narrow rule below does not decide the writer: a
+  // per-subject save must name one of the writer's installed functions (its readback checked them), and the receipts
+  // and journal above are exact whichever writer took it. Found while adding tape M: before this, a wide card arm's first
+  // per-subject commit of more than three facts failed this check.
+  if (save.saveKey !== undefined && (process.env.TX2_SUBJECT_WIDE === "1" || save.owners !== undefined)) {
+    if (save.status === "acked" && save.stage?.subjectSave)
+      assert([subjectFunction, ...otherFunctions].includes(save.stage.subjectSave as string), `${save.id}: unknown per-subject function`);
+    return;
+  }
   if (save.saveKey !== undefined) {
     // The per-subject writer takes only commits of one to three facts that each replace a current value; every other
     // production commit takes the general writer with its ordered identity, and both must be exact.
@@ -369,6 +422,10 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     // [DX-S1] The default-off writer options the arm was given are the ones its writer runs (run.ts passes them).
     assert.deepEqual([Boolean(options.subjectWide), Boolean(options.options?.generalPrefetch), Boolean(options.options?.subjectHints)],
       [process.env.TX2_SUBJECT_WIDE === "1", process.env.TX2_GENERAL_PREFETCH === "1", process.env.TX2_SUBJECT_HINTS === "1"]);
+    // [DX-S3] The several-owners option the arm was given is the one its writer runs, with its function installed.
+    assert.equal(Boolean(options.subjectSeveralOwners && options.subjectSeveralOwnersFunction), process.env.DX_S3_OWNERS === "1");
+    // [DX-S4] The creation option the arm was given is the one its writer runs, with its function installed.
+    assert.equal(Boolean(options.subjectCreate && options.subjectCreateFunction), process.env.DX_S4_CREATE === "1");
     assert.deepEqual([Boolean(options.subjectNarrowRevision), Boolean(options.subjectReusePredecessor)],
       [Boolean(peer.serialApply), Boolean(peer.serialApply)]);
     if (retirement) {
@@ -397,13 +454,13 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const seconds = retirement?.seconds ?? (toy ? 8 + randomStep : study ? 30 * ladder.length : rated ? windowSeconds
       : quietCell === undefined ? phaseSeconds * ladder.length + randomStep : cellSeconds("alone"));
     // [DX-INT1] The production-shaped tape replaces the neighbour saves of the loaded cells (DX_V01_TAPE).
-    const cardTape = parseCardTape(process.env.DX_V01_TAPE), shape = tapeShape(cardTape), edge = tapeEdge(cardTape);
+    const cardTape = parseCardTape(process.env.DX_V01_TAPE), shape = tapeShape(cardTape), edge = tapeEdge(cardTape), mix = tapeMix(cardTape);
     const productionCell = shape !== undefined && !retirement && !study && !comparison &&
       ((rated !== undefined && rated.loaded) || (toy && quietCell === 235));
     // [DX-RD3] A window repeated on one stack takes a label, so its saves write new values instead of the same ones.
     const relabel = <T extends Write>(t: T[]): T[] => alongside?.label ? t.map((e) => ({ ...e, version: alongside.label + "/" + e.version })) : t;
     const production = productionCell ? relabel((() => {
-      if (rated) return fullCellTape(shape!, rated, windowSeconds, edge);
+      if (rated) return fullCellTape(shape!, rated, windowSeconds, edge, mix);
       const quiet = quietTape(seed.image.people, 235, true).filter((e) => e.account === 0);
       // The toy folds each tape subject onto one of its few people per account, in order of first appearance.
       const folded = new Map<string, number>(), perAccount = new Map<number, number>();
@@ -416,7 +473,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         }
         return folded.get(key)!;
       } : undefined;
-      const neighbours = productionNeighbours(shape!, 235, Array(9).fill(12), seconds, "p6-235", fold, edge);
+      const neighbours = productionNeighbours(shape!, 235, Array(9).fill(12), seconds, "p6-235", fold, edge, mix);
       return sortTape([...quiet, ...neighbours]);
     })()) : undefined;
     const tape = production ? production : relabel(retirement ? serialApplyTape(seed.image.people as Density, retirement.rate, seconds)
@@ -432,10 +489,14 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const senders = await preloadFrom(writerClient, rated ? reader : writerClient, seed, startHead,
       production ? tape.filter((e) => !isProduction(e)) : tape);
     // [DX-INT1] Production subjects: every task-0 field, checked as production-card.ts productionPredecessors says.
-    const predecessors = production ? await productionPredecessors(rated ? reader : writerClient, seed.scope.db, startHead,
+    // [DX-S4] Tape M: every task and subject root it writes, and every entity it creates proved absent (mixPredecessors).
+    const predecessors = production ? mix
+      ? await mixPredecessors(rated ? reader : writerClient, seed.scope.db, startHead, seed.scope.cut, production.filter(isMix) as MixWrite[], peer.aged)
+      : await productionPredecessors(rated ? reader : writerClient, seed.scope.db, startHead,
       seed.scope.cut, (production.filter(isProduction) as ProductionWrite[]).map((e) => ({ account: e.account, person: e.person })),
       peer.aged) : undefined;
-    const accountOf = new Map((production ?? []).filter(isProduction).map((e) => [e.owner, e.account]));
+    const accountOf = predecessors && "accountOf" in predecessors ? predecessors.accountOf
+      : new Map((production ?? []).filter(isProduction).map((e) => [e.owner, e.account]));
     if (predecessors) for (const [entity, rows] of predecessors.fields) senders[accountOf.get(entity)!]!.rows.set(entity, rows);
     const tapeReport = production ? cardTapeReport(production, seconds) : undefined;
     if (tapeReport) jsonFile(path.join(out, "tape-report.json"), tapeReport);
@@ -503,24 +564,29 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     for (const row of saves) {
       const r = row.receipt!, actual = byPosition.get(r.p);
       assert(actual);
-      checkSavedIdentity(row, actual, writer, options.subjectOwnerHeadFunction ?? options.subjectFunction);
+      checkSavedIdentity(row, actual, writer, options.subjectOwnerHeadFunction ?? options.subjectFunction,
+        [options.subjectSeveralOwnersFunction, options.subjectCreateFunction].filter((f): f is string => typeof f === "string"));
       if (retirement && row.status === "acked")
         assert.equal(Boolean(ownerHeadPair ? row.stage?.subjectOwnerHeadBytes : row.stage?.subjectAppendRetirement), retirement.append);
 
       saveHistogram.recordMs(row.end! - row.due);
     }
+    const writerSplit = checkWriterSplit(saves, writer, options);
+    console.log(`[card] writer split ${path.relative(process.cwd(), out)}: ${writerSplitText(writerSplit)}`);
     for (const row of saves.filter((_, i) => i === 0 || i === saves.length - 1 || i % 100 === 0)) {
-      const op = await writerClient.operation(seed.scope.db, row.id), r = row.receipt!;
+      const op = await writerClient.operation(seed.scope.db, row.operationId ?? row.id), r = row.receipt!;
       assert.deepEqual([op.status, op.operationId, Number(op.position?.v), op.t?.v, op.recordedAt?.v],
-        ["committed", row.id, r.p, r.t, r.clock]);
+        ["committed", row.operationId ?? row.id, r.p, r.t, r.clock]);
       assert.equal(await writerClient.claim(seed.scope.db, row.id, r.p), r.tx);
     }
     // [DX-INT1] Every field of every production subject, read back at the terminal cut, equals the acknowledged writes.
     const productionResult = production && predecessors && tapeReport ? {
       tape: process.env.DX_V01_TAPE, shape, tapeReportSha256: hex(fs.readFileSync(path.join(out, "tape-report.json"))),
       predecessors: predecessors.counts,
-      readback: await productionReadback(reader, seed.scope.db, terminal!, new Map([...predecessors.fields.keys()].map((e) =>
-        [e, senders[accountOf.get(e)!]!.rows.get(e)!]))),
+      // [DX-S4] Tape M reads back every owner it wrote, the entities it created included.
+      readback: await productionReadback(reader, seed.scope.db, terminal!, new Map(
+        [...new Set([...predecessors.fields.keys(), ...(mix ? [...accountOf.keys()] : [])])]
+          .flatMap((e) => { const rows = senders[accountOf.get(e)!]!.rows.get(e); return rows ? [[e, rows] as const] : []; }))),
       metrics: productionCellMetrics(writes.rows, start, seconds),
     } : undefined;
     const pullArm = !retirement && loaded && !comparison && writer !== "grouped" && quietCell === undefined;
@@ -566,7 +632,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const p1Random = line.random === undefined ? {} : { p1Random: line.random };
     jsonFile(evidence, { writes: writes.rows, journal: feed, tape, fairCredits: credits, selection, p1: phases, ...p1Random, p4: pulls, ...p4Extra, p6, p7, thin,
       ...(tapeGroups ? { ownerGroups: tapeGroups } : {}) });
-    const result = { source, writer, telemetrySha256, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
+    const result = { source, writer, writerSplit, telemetrySha256, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
       loaded, retirement, migratedReads, serialAnchor, ownerGroupPeople: tapeGroups && Object.fromEntries(
         (["loader", "earlier-window", "seed"] as const).map((g) => [g, Object.values(tapeGroups).filter((x) => x === g).length])), firstCut: startHead, terminal, seed: { ...adopted, realistic: seed.realisticBinding }, tapeSha256: hex(JSON.stringify(tape)),
       observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java, creditMode: mode, selection, fairCredits: credits,

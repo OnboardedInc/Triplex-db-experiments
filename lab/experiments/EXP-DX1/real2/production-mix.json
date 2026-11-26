@@ -1,0 +1,20 @@
+{
+  "version": "triplex-s4-production-mix/1",
+  "note": "Shares rounded to the nearest 5% from a private study of the product's saves (2026-11-24); sizes above the study's p99 use the store's own bounds (128 facts per per-subject save, 1,680 owed items per subject), never a production maximum.",
+  "kinds": { "enrolment": 0.55, "newSubject": 0.2, "attributes": 0.1, "form": 0.1, "owedForm": 0.05 },
+  "burstKinds": { "newSubject": 0.75, "enrolment": 0.25 },
+  "enrolmentOfNewSubject": 0.35,
+  "newSubjectWindowSeconds": 60,
+  "attributesWindowSeconds": 10,
+  "twoOwnerFormShare": 0.05,
+  "formValues": [[1, 0.3], [2, 0.5], [3, 0.63], [11, 0.9], [40, 0.99], [128, 1]],
+  "pageRecords": [[1, 0.35], [2, 0.5], [30, 0.9], [80, 0.99], [128, 1]],
+  "enrolmentsPerSubject": [[1, 0.5], [30, 0.99], [1000, 0.9999], [1680, 1]],
+  "formFixedFacts": 5,
+  "profileFacts": 12,
+  "enrolmentFacts": 6,
+  "attributeFacts": 3,
+  "owedFormFacts": 5,
+  "bandPeople": 30000,
+  "seed": 2026112404
+}

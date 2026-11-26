@@ -19,6 +19,7 @@ import { Reference, toWire } from "./check.ts";
 import { checkForms, expectForms } from "./form-expect.ts";
 import type { FrameMode, Precondition } from "./frames.ts";
 import { expected as worldAt, heldTape } from "./held-campaign.ts";
+import { root } from "../../scale1/decision/plan.ts";
 import type { HeldLedger } from "./held-ledger.ts";
 import { largeRelease, parseShape } from "./large-release.ts";
 import { Settlement } from "./settlement.ts";
@@ -59,15 +60,17 @@ export type LiveContext = {
   db: string;
   ordered: boolean;
   attempt: string;
+  /** [DX-INT4] The read gateway's client (ID list pages with DX_ACT5_ID_LISTS=1). */
+  reader?: DatomicClient;
   /** [DX-ACT7] On an aged copy: each account's aged history for the oracle, and the seal (production predecessors). */
   aged?: (account: number) => AgedBase | undefined;
   agedSeal?: AgedSeal;
 };
 // [DX-ACT7] The edit a committed save adds to its subject's history (a production save names its slots).
-const editOf = (position: number, e: Write) => ({ position, width: e.width, version: e.version,
+export const editOf = (position: number, e: Write) => ({ position, width: e.width, version: e.version,
   ...(isProduction(e) ? { slots: [...e.slots] } : {}) });
 /** [DX-ACT7] A case's saves: the held tape (default) or the production-S tape (DX_ACT7_TAPE), and their senders. */
-async function caseTape(c: LiveContext, own: number, others: boolean, seconds: number, label: string) {
+export async function caseTape(c: LiveContext, own: number, others: boolean, seconds: number, label: string) {
   const kind = heldTapeKind();
   const from = await c.s.head();
   if (kind.kind === "held") {
@@ -124,7 +127,7 @@ const pct = (xs: number[], p: number) =>
   xs.length ? xs.toSorted((a, b) => a - b)[Math.max(0, Math.ceil(xs.length * p) - 1)]! : null;
 
 /** Saves of one side: statuses, latency from due (diagnostic), and how many frame turns each one's life overlapped. */
-function saveSide(rows: Save[], turns: [number, number][]) {
+export function saveSide(rows: Save[], turns: [number, number][]) {
   const statuses: Record<string, number> = {};
   for (const r of rows) statuses[r.status] = (statuses[r.status] ?? 0) + 1;
   const done = rows.filter((r) => r.status === "acked");
@@ -394,12 +397,102 @@ export async function livePhase(c: LiveContext) {
           await pinnedRead(i++ % c.people, "act5-during:" + k.name);
         }
       })();
+      // [DX-INT4] Pair (a) of the afternoon merge: with DX_ACT5_ID_LISTS=1 (and the route on the read gateway,
+      // DX_ID_LISTS=1), every ID of the settling account is listed in pages while the saves and the settlement run,
+      // alternately at the head and pinned at the case's Publish position; each answer is checked after the case
+      // against the store's own history read at the answer's position. Unset, nothing is read.
+      const lists: { kind: "head" | "pinned"; position: number; ids: string[]; pages: number }[] = [];
+      // One whole-scope history read per checked position, shared by both checks (the toy's read gateway has a small heap).
+      const histories = new Map<number, readonly any[]>();
+      const historyAt = async (position: number) => {
+        if (!histories.has(position))
+          histories.set(position, await c.reader!.rows(c.db, { pattern: {}, history: true, basis: { recordedPosition: position, validAt: 0 } } as never));
+        return histories.get(position)!;
+      };
+      const listing = (async () => {
+        if (process.env.DX_ACT5_ID_LISTS !== "1" || !published) return;
+        assert(c.reader, "DX_ACT5_ID_LISTS needs the read gateway's client");
+        const account = c.descriptor.prefix.slice("acct/".length, -1);
+        let j = 0;
+        while (now() < ends) {
+          const kind = j++ % 2 ? "pinned" : "head";
+          const first = { account, prefix: "", limit: 7, ...(kind === "pinned" ? { basis: { recordedPosition: published.r.position } } : {}) };
+          const ids: string[] = [];
+          let page: any = await c.reader.listIds(c.db, first as never), pages = 1;
+          const position = page.position as number;
+          ids.push(...page.ids);
+          while (page.next) {
+            page = await c.reader.listIds(c.db, { account, prefix: "", limit: 7, cursor: page.next } as never);
+            assert.equal(page.position, position, "an ID list page moved off its first page's position");
+            ids.push(...page.ids);
+            pages++;
+          }
+          lists.push({ kind, position, ids, pages });
+          await sleep(150);
+        }
+      })();
+      // [DX-INT4] Pair (d) of the afternoon merge: with DX_ACT5_SWEEP=1 (and the route on the read gateway, DX_SWEEP=1),
+      // the settling account is swept while the saves and the settlement run: every ID with a visible fact, and a count
+      // of the IDs holding one attribute, in small pages, each question read at its first page's position and valid
+      // time; each answer is checked after the case against the store's own history read at that position (the brute
+      // force of xq6/gate.ts). Unset, nothing is read.
+      type Sweep = { q: string; position: number; validAt: number; ids: string[]; count: number | null; pages: number; attribute?: string };
+      const sweeps: Sweep[] = [];
+      let sweepBusy = 0;
+      const sweepPage = async (body: object): Promise<any> => {
+        for (let i = 0; ; i++) {
+          try { return await c.reader!.request<any>("POST", `/v2/db/${c.db}/sweep`, body); }
+          catch (e: any) {
+            if (e?.code !== "SweepBusy" || i > 200) throw e;
+            sweepBusy++;
+            await sleep(Math.max(5, Number(e.retryAfterMs ?? 25)));
+          }
+        }
+      };
+      const sweeping = (async () => {
+        if (process.env.DX_ACT5_SWEEP !== "1" || !published) return;
+        assert(c.reader, "DX_ACT5_SWEEP needs the read gateway's client");
+        const account = c.descriptor.prefix.slice("acct/".length, -1);
+        // The counted attribute: the first of the subject's own attributes the sweep accepts (a protected one is refused).
+        // (The held seed's subject roots are SCALE1's `pl:` IDs: scale1/decision/plan.ts `root`.)
+        const first: readonly any[] = await c.reader.rows(c.db, { entityIds: [root(0, 0)] } as never);
+        const attributes = [...new Set(first.map((r) => String(r.attribute)))].sort();
+        assert(attributes.length, "the first subject root has no fact to count by: " + root(0, 0));
+        let attribute: string | undefined;
+        for (let j = 0; now() < ends; j++) {
+          const counting = j % 2 === 1;
+          const question: any = counting
+            ? { account, result: "count", where: [{ attribute: attribute ?? attributes[0], op: "exists" }], bounds: { subjects: 16 } }
+            : { account, result: "ids", limit: 50, bounds: { subjects: 16 } };
+          let page: any;
+          try { page = await sweepPage(question); }
+          catch (e: any) {
+            if (counting && e?.code === "ProtectedValueLookup" && attributes.length > 1) { attributes.shift(); continue; }
+            throw e;
+          }
+          if (counting) attribute = question.where[0].attribute;
+          const one: Sweep = { q: counting ? "count-exists" : "ids", position: page.position, validAt: page.validAt, ids: [...(page.ids ?? [])],
+            count: null, pages: 1, ...(counting ? { attribute } : {}) };
+          while (page.next) {
+            page = await sweepPage({ ...question, cursor: page.next });
+            assert.equal(page.position, one.position, "a sweep page moved off its question's position");
+            assert.equal(page.validAt, one.validAt, "a sweep page moved off its question's valid time");
+            one.ids.push(...(page.ids ?? []));
+            one.pages++;
+          }
+          if (counting) { assert.equal(page.countComplete, true); one.count = page.count; }
+          sweeps.push(one);
+          await sleep(100);
+        }
+      })();
       // The lane hands frames back to the queue's own turns once the save window is over.
       const saved = writes.finally(() => lane?.close());
-      const [w, s, p] = await Promise.allSettled([saved, settling, probing]);
+      const [w, s, p, l, sw] = await Promise.allSettled([saved, settling, probing, listing, sweeping]);
+      if (sw.status === "rejected") throw sw.reason;
       if (w.status === "rejected") throw w.reason;
       if (s.status === "rejected") throw s.reason;
       if (p.status === "rejected") throw p.reason;
+      if (l.status === "rejected") throw l.reason;
       await c.ledger.verifyThrough(await c.s.head(), false, ADOPT);
       const rows = (w.value as { rows: Save[]; unresolved: Map<unknown, unknown> }).rows;
       assert.equal((w.value as { unresolved: Map<unknown, unknown> }).unresolved.size, 0, "Uncertain save");
@@ -474,6 +567,60 @@ export async function livePhase(c: LiveContext) {
         exact.noticesInOrder = all.length;
         exact.ledgers = roster.length;
       }
+      // [DX-INT4] Every recorded ID list against the owners of every row the store's history read returns at its
+      // position (the brute force of xq3/gate.ts), at every pinned answer's position and at up to twelve head positions.
+      let idLists: unknown = null;
+      if (lists.length) {
+        const prefix = c.descriptor.prefix;
+        const heads = [...new Set(lists.filter((x) => x.kind === "head").map((x) => x.position))];
+        const sample = new Set([...new Set(lists.filter((x) => x.kind === "pinned").map((x) => x.position)),
+          ...heads.filter((_, i) => i % Math.max(1, Math.ceil(heads.length / 12)) === 0)]);
+        let checked = 0, ids = 0;
+        for (const position of sample) {
+          const rows: readonly any[] = await historyAt(position);
+          const want = [...new Set(rows.filter((r) => r.entity_type !== "_Transaction" && String(r.entity_id).startsWith(prefix))
+            .map((r) => String(r.entity_id)))].sort();
+          for (const x of lists.filter((y) => y.position === position)) {
+            assert.deepEqual(x.ids, want, `ID list (${x.kind}) at ${position} differs from the history read: ${k.name}`);
+            checked++;
+            ids += x.ids.length;
+          }
+        }
+        idLists = { answers: lists.length, head: lists.filter((x) => x.kind === "head").length,
+          pinned: lists.filter((x) => x.kind === "pinned").length, pages: lists.reduce((n, x) => n + x.pages, 0),
+          headPositions: heads.length, positionsChecked: sample.size, answersChecked: checked, idsChecked: ids,
+          pinnedAt: published?.r.position ?? null, idsAtPin: lists.find((x) => x.kind === "pinned")?.ids.length ?? null,
+          idsAtLastHead: lists.findLast((x) => x.kind === "head")?.ids.length ?? null };
+      }
+      // [DX-INT4] Every recorded sweep against the brute force at its own position and valid time.
+      let sweepCheck: unknown = null;
+      if (sweeps.length) {
+        const prefix = c.descriptor.prefix;
+        const visible = (r: any, p: number, v: number) =>
+          r.recorded_position <= p && !(r.retracted_position != null && r.retracted_position <= p) &&
+          r.valid_from <= v && (r.valid_to == null || r.valid_to > v);
+        // Every sweep at a position the ID list check already read, plus up to eight more spread over the window.
+        const own = [...new Set(sweeps.map((x) => x.position))].filter((p) => !histories.has(p));
+        const extra = new Set(own.filter((_, i) => i % Math.max(1, Math.ceil(own.length / 8)) === 0));
+        const chosen = sweeps.filter((x) => histories.has(x.position) || extra.has(x.position));
+        let checked = 0, idsChecked = 0;
+        for (const x of chosen) {
+          const seen = new Map<string, Set<string>>();
+          for (const r of await historyAt(x.position))
+            if (String(r.entity_id).startsWith(prefix) && visible(r, x.position, x.validAt))
+              seen.set(r.entity_id, (seen.get(r.entity_id) ?? new Set()).add(String(r.attribute)));
+          if (x.q === "ids") {
+            assert.deepEqual(x.ids, [...seen.keys()].sort(), `sweep (ids) at ${x.position} differs from the history read: ${k.name}`);
+            idsChecked += x.ids.length;
+          } else
+            assert.equal(x.count, [...seen.values()].filter((a) => a.has(x.attribute!)).length, `sweep (count) at ${x.position} differs: ${k.name}`);
+          checked++;
+        }
+        sweepCheck = { sweeps: sweeps.length, checked, positionsChecked: new Set(chosen.map((x) => x.position)).size, idsChecked, pages: sweeps.reduce((n, x) => n + x.pages, 0),
+          positions: new Set(sweeps.map((x) => x.position)).size, attribute: sweeps.find((x) => x.attribute)?.attribute ?? null,
+          lastCount: sweeps.findLast((x) => x.q !== "ids")?.count ?? null, lastIds: sweeps.findLast((x) => x.q === "ids")?.ids.length ?? null,
+          sweepBusy };
+      }
       // Reads at the release's position and at the head after the case.
       for (const i of [0, c.people - 1]) await pinnedRead(i, "act5-after:" + k.name);
       const result = {
@@ -492,6 +639,8 @@ export async function livePhase(c: LiveContext) {
         superseded: superseded ?? null,
         lane: lane ? lane.stats() : null,
         rival: rival ? { child: rival.result } : null,
+        idLists,
+        sweepCheck,
         saves: {
           account: saveSide(rows.filter((r) => r.account === 0), turns),
           neighbours: saveSide(rows.filter((r) => r.account > 0), turns),
@@ -938,7 +1087,7 @@ async function multiCase(
 /** The notice sequence a Publish at `position` wrote, checked against the tail at that position (an earlier version of
  * this phase reused a Publish command id between cases, got the earlier case's receipt back, and settled the wrong
  * release; that was the "stored changes differ" seen in two toy runs). An unpinned read can also trail the write. */
-async function sequenceAt(a: JoinedAccount, position: number) {
+export async function sequenceAt(a: JoinedAccount, position: number) {
   for (let i = 0; i < 2000; i++) {
     const t = await a.notices.observe();
     if (t.at >= position) {

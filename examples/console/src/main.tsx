@@ -13,6 +13,7 @@ import { HomePage } from "@/pages/home";
 import { NotFoundPage } from "@/pages/pending";
 import { ConfigurationPage } from "@/pages/configuration";
 import { QueryPage } from "@/pages/query";
+import { QuestionsPage } from "@/pages/questions";
 import { AssistantPage } from "@/pages/assistant";
 import { JournalPage } from "@/pages/journal";
 import { TypePage, TypesPage } from "@/pages/types/type-page";
@@ -31,6 +32,7 @@ const router = createBrowserRouter([
       { path: "/types", element: <TypesPage /> },
       { path: "/types/:name", element: <TypePage /> },
       { path: "/query", element: <QueryPage /> },
+      { path: "/questions", element: <QuestionsPage /> },
       { path: "/journal", element: <JournalPage /> },
       { path: "/configuration", element: <ConfigurationPage /> },
       { path: "/assistant", element: <AssistantPage /> },

@@ -1,0 +1,75 @@
+[
+  {
+    "id": "_note",
+    "kind": "not a check",
+    "test": "",
+    "rule": "never",
+    "settings": [],
+    "reference": "Since the merge of the save line's fourth pass (1be3efbab, the one branch's 65a851d1b), R3-1, R3-2 route 1, R3-3, R3-4 and R3-6 are fixed (s5/REVIEW-4.md, 'The third review's tests on this head: 116 of 116 assertions in 4 settings, 118 of 118 with imports; the 2 general settings 106 of 116 (the harness arm)'), so they are no longer listed: their tests must pass."
+  },
+  {
+    "id": "race-general-writer",
+    "kind": "test artefact the seventh review explains (the removal runs on the save's own thread); not a product break",
+    "test": "r2-2-race-on-each-writer",
+    "rule": "*",
+    "settings": [
+      "attack3-accounts-on-general",
+      "attack3-accounts-on-general-nopred"
+    ],
+    "reference": "era3/REVIEW-7.md at 7da3ca3b3: \"`r2-2-race-on-each-writer` on the general writer, why it fails. With `TX2_SUBJECT_SAVE=0` ... the gate's `at-submit` hook calls the removal on the save's own thread, inside the save's `privacy/guard` ... the removal fails with `OverlappingFileLockException` ... A removal from any other thread waits on the monitor and then removes the value.\"; s5/REVIEW-4.md at 9c0d7ea26, as the one branch's s6/expected.sh quotes it: \"it is a harness limit, not a finding\""
+  },
+  {
+    "id": "era-replay-without-frame-source",
+    "kind": "FINDING NOT COVERED BY A REVIEW: a replay without frameSourceK (an SDK older than the save line) across a removal stores the value chosen before",
+    "test": "r2-2-replays-across-a-removal",
+    "rule": "*",
+    "settings": [
+      "era-era-server",
+      "era-era-per-account"
+    ],
+    "must_contain": [
+      "\"sdkReplay\":[200,null],\"storedAfter\":\"value chosen before\""
+    ],
+    "reference": "No review rates this case. s5/REVIEW-3.md's comparison table, row 1 (\"The SDK's replay after an unrelated refusal, across a removal (a fresh source)\"), says the head is right because it judges the replay by the first attempt's source (`frameSourceK`); s5/attack3_era.clj sends the replay without `frameSourceK` (the removal branch's old protocol), so the gateway cannot tell it from a new save, and stores it, with the rule on. Recorded as a finding in era6/REMOVAL-ON-SAVE-LINE.md section 6.1."
+  },
+  {
+    "id": "era-optimistic-save-casconflict",
+    "kind": "behaviour the save line's third review describes and rates right (the writer's CasConflict, which the SDK replays, not chased); the test asks for 200",
+    "test": "r2-2-an-optimistic-save-against-an-old-removal",
+    "rule": "*",
+    "settings": [
+      "era-era-server",
+      "era-era-per-account"
+    ],
+    "must_contain": [
+      "\"noSourceNoStamp\":[409,\"ErasureReplayDeclined\"],\"withTheStamp\":[409,\"CasConflict\"]"
+    ],
+    "reference": "s5/REVIEW-3.md's comparison table, row 3 (\"A new value long after a removal, the first attempt optimistic (no source)\"), the removal branch's column, rated right: \"past the decline check when it carries the removal stamp the SDK read (`removalSeen`), declined without it; then refused `CasConflict` by the writer, which the SDK replays (not chased)\""
+  },
+  {
+    "id": "R4-9-optimistic-replay-rule-on",
+    "kind": "rated Low by the fourth save line review (R4-9): the decline on the exact side; documented, not fixed",
+    "test": "r2-2-an-optimistic-replay-against-an-old-removal",
+    "rule": "*",
+    "settings": [
+      "r22-era6-rule-on"
+    ],
+    "reference": "s5/REVIEW-4.md at 9c0d7ea26 (exp/DX-S5-save-line-review), findings: \"R4-9 | Low | On the removal branch's own build (its rule off or on) and on both trial merges with the rule on, an optimistic replay of a new value long after a removal, stating neither `frameSourceK` nor `removalSeen`, is declined `409 ErasureReplayDeclined`; this head stores it. The branch's SDK states `removalSeen` on every attempt, so only a caller that states no frame meets it, and the decline is on the exact side\""
+  },
+  {
+    "id": "R4-9-optimistic-replay-rule-on-attack3",
+    "kind": "rated Low by the fourth save line review (R4-9): the decline on the exact side; documented, not fixed",
+    "test": "r2-2-an-optimistic-replay-against-an-old-removal",
+    "rule": "on",
+    "settings": [
+      "attack3-accounts-on",
+      "attack3-accounts-on-nopred",
+      "attack3-accounts-on-serial",
+      "attack3-accounts-on-general",
+      "attack3-accounts-on-general-nopred",
+      "attack3-group-accounts",
+      "attack3-accounts-on-import"
+    ],
+    "reference": "s5/REVIEW-4.md at 9c0d7ea26 (exp/DX-S5-save-line-review), findings: \"R4-9 | Low | On the removal branch's own build (its rule off or on) and on both trial merges with the rule on, an optimistic replay of a new value long after a removal, stating neither `frameSourceK` nor `removalSeen`, is declined `409 ErasureReplayDeclined`; this head stores it. The branch's SDK states `removalSeen` on every attempt, so only a caller that states no frame meets it, and the decline is on the exact side\""
+  }
+]

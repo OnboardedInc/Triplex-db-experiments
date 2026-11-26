@@ -10,6 +10,7 @@ import { offers, sha } from "../w1/field/schedule.ts";
 import { loadParams, productionOffers, slotAttribute, tapeReport, type Shape } from "../w1/field/production.ts";
 import { admission } from "../prep1/rolling-credits.ts";
 import { productionSeedFields, scaleAccount, scaleOwner, scalePredecessors } from "../prep1/ceiling-seed.ts";
+import { checkIndex, declareAndBackfill } from "../xq4/production-index.ts";
 
 // [DX-REAL2] Mac live gate for the production tape on an aged cut. PREP1's aged-live container seeds nothing itself:
 // this driver seeds a SCALE1-shaped toy (every task-0 field of each person) through this branch's gateway, AGE1's own
@@ -73,6 +74,8 @@ assert(!opened.created && opened.db === db);
 const options = await client.request<any>("GET", "/v1/db/" + db + "/write-options");
 assert.equal(options.position, head);
 assert(options.subjectSave && options.subjectOrderedIds && options.subjectNumericOwner);
+// [DX-XQ4] With DX_XQ4_DECLARATION set (the gateway runs TX2_CROSS_INDEX=1): declare and backfill over the aged rows.
+const xq4 = await declareAndBackfill(client, db);
 // [DX-S1] The gateway runs the wide-save switch the driver was given (default off).
 assert.equal(Boolean(options.subjectWide), process.env.TX2_SUBJECT_WIDE === "1");
 
@@ -92,14 +95,30 @@ function toyCell(shape: Shape, band: number, window: number, rows: number) {
   return { label: `${shape}-aged-toy-loaded`, rate: 0, tape, duration: window, tapeSha: sha(tape), credits: 6 };
 }
 const cellsToRun = [toyCell("R", 0, 30, 90), toyCell("S", 1, 30, 90)];
+// [DX-S4] DX_S4_MIX=1: a cell of tape M (the real mix; most saves create an entity) after R and S, on the same aged toy,
+// its existing subjects folded onto the toy's people as R and S fold theirs. DX_S4_CREATE (0 or 1): creationSaves.
+const mixTape = process.env.DX_S4_MIX === "1";
+const mixModule = mixTape ? await import("../s4/mix-cell.ts") : undefined;
+const mixCell = mixModule ? (() => {
+  const { cell, report, paramsSha256 } = mixModule.toyMixCell(wideChoose(offers(1, 30, [0]), 2), 2, 30, 30, "M-aged-toy-loaded");
+  const fold = new Map<string, number>();
+  const f = (a: number, p: number) => {
+    const key = a + "/" + p;
+    if (!fold.has(key)) fold.set(key, order[[...fold.keys()].filter((k) => k.startsWith(a + "/")).length % people]!);
+    return fold.get(key)!;
+  };
+  return { cell: { ...cell, tape: mixModule.foldMix(cell.tape, f) }, report, paramsSha256 };
+})() : undefined;
+const mixNames = mixModule?.mixNames((a) => "acct/" + scaleAccount(a) + "/", scaleOwner, (a, p) => "acct/" + scaleAccount(a) + "/s4/profile/" + p, "aged");
 
 // The arm's aged admission, with every seeded field of every person the tape touches.
 const agedCut = { bundleSha256: "0".repeat(64), seedCut, physicalT: 1, records: 1, nativeId: "toy", active: aged.active,
   people, tapeSaves: aged.saves, lastOperation: aged.lastOperation, lastTransaction: aged.lastTransaction,
   lastRecordedAt: aged.lastRecordedAt };
 const seed = { db, scope, head, loaderSeal, storage: "pg-data" as const, aged: agedCut } as any;
-const targets = [...new Map(cellsToRun.flatMap((c) => c.tape).map((o) => [o.account + "/" + o.person,
-  { account: o.account, person: o.person }])).values()];
+const targets = [...new Map([...cellsToRun.flatMap((c) => c.tape), ...(mixCell?.cell.tape ?? []).filter((o: any) => !o.owners || o.owners.some((w: any) => w.role === "task"))]
+  .map((o: any) => o.owners ? (o.owners as any[]).filter((w) => w.role === "task").map((w) => ({ account: o.account, person: w.person })) : [{ account: o.account, person: o.person }])
+  .flat().map((t) => [t.account + "/" + t.person, t])).values()];
 const { fields, proof } = await scalePredecessors(reader, seed, targets, productionSeedFields);
 const agedRows = [...fields.values()].flat().filter((r) => r.recorded_position > seedCut);
 assert(agedRows.length > 0 && proof.aged!.rows === agedRows.length && proof.members === 40);
@@ -114,13 +133,26 @@ const tampered = new Proxy(reader, { get: (t, k) => {
 await assert.rejects(scalePredecessors(tampered as DatomicClient, seed, targets, productionSeedFields));
 
 const initial = new Map([...fields].map(([e, rows]) => [e, new Map(rows.map((r) => [r.attribute, r.value_string!]))]));
+// [DX-S2] With DX_S2_PRODUCT set, every tape save goes through the product's path (TriplesLive and the Datomic adapter),
+// orderedSaves off ("0") or on ("1"). The seed and the aging stay the loader's (they are the aged world, not saves).
+const productMode = process.env.DX_S2_PRODUCT;
+assert(productMode === undefined || productMode === "0" || productMode === "1", "DX_S2_PRODUCT is 0 or 1");
+const { productSaver } = await import("../s2/product.ts");
+// [DX-S3] DX_S3_OWNERS (0 or 1, only with DX_S2_PRODUCT=1): the SDK's severalOwners option beside orderedSaves.
+const severalOwners = process.env.DX_S3_OWNERS;
+assert(severalOwners === undefined || ((severalOwners === "0" || severalOwners === "1") && productMode === "1"), "DX_S3_OWNERS is 0 or 1, with DX_S2_PRODUCT=1");
+const product = productMode === undefined ? undefined
+  : await productSaver([url!], scope, productMode === "1"
+    ? { orderedSaves: true, saveSizeRule: true, ...(severalOwners === undefined ? {} : { severalOwners: severalOwners === "1" }),
+        ...(process.env.DX_S4_CREATE === "1" ? { creationSaves: true } : {}) } : {});
+assert(!mixTape || productMode === "1", "Tape M is sent only through the product's path (DX_S2_PRODUCT=1)");
 const legacyIds = new Set([...fields.values()].flatMap((rows) => rows.map((r) => r.id)));
 const results = [];
 let cut = head;
 for (const cell of cellsToRun) {
   const started = Date.now();
   const result = await phase([client], reader, db, cut, fields as Map<string, Row[]>, new Set(), cell, true,
-    admission(10, { mode: "rolling", credits: 6 }), legacyIds);
+    admission(10, { mode: "rolling", credits: 6 }), legacyIds, undefined, false, product?.save);
   assert(result.rows.every((row) => !row.reason || row.reason === "expired"), "a save failed");
   results.push({ cell, result, wallMs: Date.now() - started });
   cut = result.after;
@@ -158,10 +190,13 @@ for (let i = 0; i < owners.length; i += 50) {
     }
   }
 }
+// [DX-XQ4] The index against the rows (dry-run reconciliation) and find against the expected values.
+const crossIndex = xq4 ? { ...xq4, ...(await checkIndex(reader, db, cut, SEED_VALID_FROM, expected, xq4.attributes)) } : null;
 const result = {
-  gate: "real2-aged-live", paramsSha256: sha256, seedCut, head, agingSaves: aged.saves, active: aged.active,
+  gate: "real2-aged-live", crossIndex, paramsSha256: sha256, seedCut, head, agingSaves: aged.saves, active: aged.active,
   owners: owners.length, agedRowsAdmitted: agedRows.length, tamperedAgedRowRefused: true, writesOverAgedRows: overAged,
   fieldsChecked, finalCut: cut, timings: "diagnostic", wideSaves: process.env.TX2_SUBJECT_WIDE === "1",
+  productPath: productMode ?? null, saveRoutes: product?.routes() ?? null, ...(severalOwners === undefined ? {} : { severalOwners }),
   cells: results.map(({ cell, result, wallMs }) => {
     const report = tapeReport(cell.tape, cell.duration, params);
     return { label: cell.label, offers: cell.tape.length, acked: result.rows.filter((r) => r.receipt).length,
@@ -184,9 +219,52 @@ console.log("REAL2_AGED_GATE " + JSON.stringify(result));
 for (const c of result.cells) {
   assert(c.acked + c.expired === c.offers, `${c.label}: an offer neither acknowledged nor expired`);
   assert(c.acked >= 0.9 * c.offers, `${c.label}: ${c.acked} of ${c.offers} acknowledged`);
-  assert.equal(c.orderedAcks, c.subjectPathAcks, `${c.label}: ordered acknowledgements differ from per-person-writer ones`);
-  assert(c.subjectPathAcks > 0, `${c.label}: no save took the per-person writer`);
+  // [DX-S2] On the product path with orderedSaves off, no save reaches the per-subject writer (that is the finding).
+  if (productMode === "0") assert.equal(c.subjectPathAcks, 0, `${c.label}: a product save without ordered IDs took the per-subject writer`);
+  else {
+    assert.equal(c.orderedAcks, c.subjectPathAcks, `${c.label}: ordered acknowledgements differ from per-person-writer ones`);
+    assert(c.subjectPathAcks > 0, `${c.label}: no save took the per-person writer`);
+  }
 }
+// [DX-S4] Tape M on the aged toy: profiles seeded through the product's path, every entity the cell creates proved
+// absent, the producer's phase(), then every field of every owner read back against the tape and the receipts.
+if (mixCell && mixModule && mixNames && product) {
+  const m = mixModule;
+  const { existing, created } = m.mixOwners(mixCell.cell.tape, mixNames);
+  const seedList = [...existing].filter(([e, w]) => w.role === "profile" && !fields.has(e));
+  for (let i = 0; i < seedList.length; i += 20) {
+    const batch = seedList.slice(i, i + 20);
+    const sent = await product.seed(batch.flatMap(([e]) => Array.from({ length: 12 }, (_, f) =>
+      ({ e, a: slotAttribute(f), v: str(sha(["profile", e, f]).slice(0, 57)) }))), `${nonce}-mix-seed-${i}`, SEED_VALID_FROM);
+    const ack = sent.ack as { position: { v: string }; recordedAt: { v: number } };
+    cut = Number(ack.position.v);
+    for (const [e] of batch) fields.set(e, (sent.input.rows as Row[]).filter((r) => r.entity_id === e && sent.input.newIds.includes(r.id))
+      .map((r) => ({ ...r, recorded_position: cut, recorded_at: ack.recordedAt.v })) as any);
+  }
+  const initial = new Map([...existing].map(([e]) => [e, new Map(((fields.get(e) ?? []) as Row[])
+    .filter((r) => r.attribute.startsWith(":task/field-")).map((r) => [r.attribute, r.value_string!]))]));
+  const absent = await m.assertAbsent(reader, db, cut, created);
+  const result = await phase([client], reader, db, cut, fields as Map<string, Row[]>, new Set(), { ...mixCell.cell, tapeSha: sha(mixCell.cell.tape) } as any,
+    true, admission(10, { mode: "rolling", credits: 6 }), legacyIds, undefined, false, product.save, mixNames);
+  assert(result.rows.every((row) => !row.reason || row.reason === "expired"), "a tape M save failed");
+  cut = result.after;
+  const neighbours = result.rows.filter((r) => (mixCell.cell.tape[r.ordinal] as any).owners);
+  const acked = neighbours.filter((r) => r.receipt).map((r) => ({ ordinal: r.ordinal, id: r.id, p: r.receipt!.p }));
+  const { expected: want, facts } = m.mixExpected(mixCell.cell.tape, acked, mixNames, initial);
+  const readback = await m.mixReadback(reader, db, cut, want);
+  const overAgedRows = acked.filter((a) => ((mixCell.cell.tape[a.ordinal] as any).owners as any[]).some((w) =>
+    w.role === "task" && agedRows.some((row) => row.entity_id === mixNames.entity((mixCell.cell.tape[a.ordinal] as any).account, w)))).length;
+  const mix = { label: mixCell.cell.label, paramsSha256: mixCell.paramsSha256, report: mixCell.report, offers: neighbours.length,
+    acked: acked.length, expired: neighbours.filter((r) => r.reason === "expired").length, createdOwners: absent, factsWritten: facts,
+    savesOverAgedSubjects: overAgedRows, readback,
+    writers: { perSubject: neighbours.filter((r) => r.receipt && (r as any).ack?.subjectSave).length,
+      general: neighbours.filter((r) => r.receipt && !(r as any).ack?.subjectSave).length },
+    byKind: m.mixByKind(mixCell.cell.tape, result.rows as any), creation: process.env.DX_S4_CREATE ?? null };
+  writeFileSync(join(out!, "result-mix.json"), JSON.stringify(mix, null, 2) + "\n");
+  console.log("DX-S4_AGED_MIX " + JSON.stringify(mix));
+  assert(mix.acked >= 0.9 * mix.offers, "too few tape M saves acknowledged");
+}
+await product?.close();
 client.close();
 reader.close();
 writeFileSync(join(out!, "finished"), "ok\n");

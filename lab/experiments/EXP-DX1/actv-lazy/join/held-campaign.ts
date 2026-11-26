@@ -26,7 +26,7 @@ import { checkAdoptedPeer, type AdoptedSeed } from "../../v01/adopt.ts";
 import { jsonFile, preload, type Peer } from "../../v01/adopted.ts";
 import { openStore, type HeldSource } from "../store.ts";
 import type { Pin } from "../read.ts";
-import { JoinedAccount } from "./account.ts";
+import { JoinedAccount, joinedCommandIdAt, publishBeside, type PublishOptions } from "./account.ts";
 import { toWire } from "./check.ts";
 import { authoredSeed, authoredWrite, expectedPolicy } from "./deep-reference.ts";
 import { HeldLedger } from "./held-ledger.ts";
@@ -35,6 +35,7 @@ import { BulkQueue } from "./bulk.ts";
 import { firstOffer } from "../../ha1/first-offer.ts";
 import { largeRelease, parseShape, shapeName } from "./large-release.ts";
 import { checkForms, expectForms } from "./form-expect.ts";
+import { docsMode } from "./definitions.ts";
 import { agedBase, checkAgedLive, type AgedBase, type AgedSeal } from "../act7/aged.ts";
 
 const validTime = W0.POPULATION_VALID_TIME;
@@ -154,10 +155,21 @@ type Release = {
   durableAt: number;
   durabilityClock: "native-ack" | "readback";
   position: number;
+  /** [DX-ACT8] Where the Publish read its account's state (`position - 1` under the whole-head rule). */
+  read: number;
+  /** [DX-ACT8] Tries the Publish sent (1 unless refused by its own account's events). */
+  tries: number;
   seq: number;
   tx: string;
   doc: W0.ReleaseDoc;
 };
+// [DX-ACT8] DX_ACT8_UNPAUSED=1: the windows publish while every account's saves keep running (no pause, no drain).
+// Unset: the runner pauses and drains the save sender around each Publish, as every earlier result was measured.
+export const unpausedMode = () => process.env.DX_ACT8_UNPAUSED === "1";
+/** [DX-ACT8] Writers the runner adopts from the journal by command ID when saves run beside a Publish: settlement frames,
+ * notice documents written through the composition (other accounts' enrolments), Publishes of a killed process. */
+// [DX-ACT8, second review] Also a settings transition (`account-settings:<random>`) written by another process of the run.
+export const ACT8_ADOPT = /^(settled-(values|notice):|notice:v1:|joined:.*:act8:kill:|account-settings:)/;
 type PairSample = {
   mode: Mode;
   rate: Rate;
@@ -175,7 +187,10 @@ type PairSample = {
 };
 // [DX-ACT7] `slots`: a production-shaped save's written field numbers (v01/production-card.ts); absent, fields 0 to
 // width - 1 as before.
-type History = Map<number, { position: number; version: string; width: number; slots?: number[] }[]>;
+// [DX-ACT8] `facts`: a write of any of the subject's own facts (entity without the account prefix, attribute, value), as
+// the adversarial schedule commits; absent, a task-field save as before.
+type History = Map<number, { position: number; version: string; width: number; slots?: number[];
+  facts?: { e: string; a: string; v: { type: string; value: unknown }; remove?: boolean }[] }[]>;
 // [DX-INT1] Why: SCALE1 packs consecutive people into one loader frame, and the pooled loader keeps two frames in
 // flight, so a later frame can commit first. Positions then fall in member order only within each frame. What the
 // positions must show is that each person's original facts came from one loader frame and each frame holds one
@@ -242,6 +257,10 @@ export function expected(i: number, at: number, edits: History, positions: numbe
     rows = authoredWrite(rows, [{ e: owner, a: f.attribute, v: { type: "string", value: f.value } }], f.position, 0);
   for (const e of edits.get(i) ?? []) {
     if (e.position > at) break;
+    if (e.facts) {
+      rows = authoredWrite(rows, e.facts as never, e.position, 0);
+      continue;
+    }
     const slots = e.slots ?? Array.from({ length: e.width }, (_, n) => n);
     rows = authoredWrite(
       rows,
@@ -344,6 +363,8 @@ export async function runHeld(
   const probeAtLeast = process.env.DX_ACT3_AT_LEAST === "1";
   assert([undefined, "0", "1"].includes(process.env.DX_ACT3_AT_LEAST), "DX_ACT3_AT_LEAST is 0 or 1");
   const atLeastDefects: unknown[] = [];
+  // [DX-ACT8] Publishes refused in an unpaused window (the whole-head rule beside saves): recorded, never hidden.
+  const refusedPublishes: unknown[] = [];
   class ReadCheckFailed extends Error {}
   // [DX-ACT3] Diagnostic gate only: "stale" makes the first probe of the first Publish window read at the previous
   // release (an earlier basis, as on bench 4); "mismatch" checks one deadline read against the wrong subject.
@@ -453,11 +474,15 @@ export async function runHeld(
     });
     // Enrolment's census transactions are checked by JoinedAccount before setting this frontier.
     let ledger: HeldLedger | undefined;
+    // [DX-ACT8] With saves running beside a Publish (unpaused windows, or this builder's gate) a save can be committed
+    // before the Publish's read without its receipt being back yet, so the Publish checks only the positions whose
+    // writers are already known; every position is still checked at the end of each window and case. Unset: as before.
+    const partialVerify = unpausedMode() || process.env.DX_ACT8_GATE === "1";
     store = await openStore(name, "act2-deep", "write", {
       ...descriptor,
       verifyThrough: (p) => {
         assert(ledger);
-        return ledger.verifyThrough(p);
+        return ledger.verifyThrough(p, partialVerify);
       },
       committed: (r) => ledger?.joined(r),
     });
@@ -488,17 +513,18 @@ export async function runHeld(
     };
     // [DX-ACT1] Why: keep early ACK clocks and pinned bytes from the connected SDK reader, then check them independently.
     // Rejected: timing a process launch or selecting a favourable probe after observing its response.
-    const offer = async (doc: W0.ReleaseDoc, id: string, offered: number) => {
-      const published = await a.publish(id, doc, validTime, "owed");
+    const offer = async (doc: W0.ReleaseDoc, id: string, offered: number, options?: PublishOptions) => {
+      const published = await a.publish(id, doc, validTime, "owed", undefined, options);
       const received = now(),
         ack = s.counters.lastReceipt,
         record = s.counters.lastOps;
-      assert.equal(record.id, "joined:" + id);
+      const form = await joinedCommandIdAt(s, id, published.position);
+      assert.equal(record.id, form);
       assert(
         ack &&
           ack.position === published.position &&
           ack.txId === published.txId &&
-          ack.commandId === "joined:" + id,
+          ack.commandId === form,
       );
       const durableAt = performance.timeOrigin + ack.time;
       assert(offered <= durableAt && durableAt <= received);
@@ -520,6 +546,8 @@ export async function runHeld(
         durableAt,
         durabilityClock: ack.clock,
         position: published.position,
+        read: marker.marker.read ?? marker.marker.cut,
+        tries: ((last) => (last && last.landed === published.position ? last.tries : 1))(a.beside.last),
         tx: published.txId,
         seq: marker.marker.seq,
         doc,
@@ -529,6 +557,16 @@ export async function runHeld(
     };
     async function verifyRead(probe: Read, r: Release, i: number, where = "read") {
       const b = probe.result.basis;
+      // [DX-ACT8] With saves running beside the Publish a read's basis can include a save whose receipt has not reached
+      // the oracle's history yet: wait until every position up to the basis is matched to its writer (after the read's
+      // clock stopped, so no time changes). Unset: as before (the pause made the history complete).
+      if (partialVerify)
+        for (const until = now() + 60_000; ; ) {
+          await activeLedger.verifyThrough(b.tx, true, ACT8_ADOPT);
+          if (activeLedger.verified() >= b.tx) break;
+          assert(now() < until, "Receipts below a read's basis never arrived");
+          await sleep(5);
+        }
       const effective = releases.findLast((x) => x.position <= b.tx);
       const values = {
         where,
@@ -635,17 +673,45 @@ export async function runHeld(
       initialRead,
     });
     settlement = await worker.settle(initial.seq, initialAt - performance.timeOrigin);
-    const [stored, packets] = await Promise.all([
-      worker.archive.stored(initial.seq),
-      worker.recorder.packets(settlement.notices.position),
-    ]);
+    // [DX-ACT6] DX_ACT6_STREAM_CHECK=1 (byte frames only): the stored changes and the packets are compared with the
+    // oracle as they are read, page by page, instead of loaded whole (60 million changes at 200 owed forms for 100,000
+    // subjects would not fit the runner's heap). The same comparisons, in the same order.
+    const streamed = process.env.DX_ACT6_STREAM_CHECK === "1";
+    assert([undefined, "", "1"].includes(process.env.DX_ACT6_STREAM_CHECK));
+    const [stored, packets] = streamed
+      ? [{ frontier: (await worker.archive.values(initial.seq))!.value, output: [] as { subject: string; changes: [string, string | null][] }[], frames: "bytes" as const }, []]
+      : await Promise.all([
+          worker.archive.stored(initial.seq),
+          worker.recorder.packets(settlement.notices.position),
+        ]);
     assert.equal(stored.frontier.status, "stored");
     // [DX-ACT4] Byte-framed pages hold each subject's changes without its full answer.
     const bytes = stored.frames === "bytes";
     const independent = { subjects: 0, owing: 0, changes: 0, notices: 0 };
     const archive = new Map(stored.output.map((x) => [x.subject, x]));
     assert.equal(stored.output.length, archive.size, "Duplicate settled subject");
-    const notices = packets.flatMap((p) => p.deliveries.map(toWire));
+    let notices = packets.flatMap((p) => p.deliveries.map(toWire));
+    const valueStream = streamed ? worker.archive.storedStream(initial.seq) : undefined;
+    const packetStream = streamed ? worker.recorder.streamPackets(settlement.notices.position) : undefined;
+    let noticeBase = 0;
+    // Streamed: keep the packets' deliveries from `entries` on (`noticeBase` is the index of notices[0]).
+    const needNotices = async (upTo: number) => {
+      if (!packetStream) return;
+      if (entries > noticeBase) {
+        notices = notices.slice(entries - noticeBase);
+        noticeBase = entries;
+      }
+      while (noticeBase + notices.length < upTo) {
+        const next = await packetStream.next();
+        assert(!next.done, "Fewer recorded notices than the oracle's");
+        notices.push(...next.value.deliveries.map(toWire));
+      }
+    };
+    const nextStored = async (subject: string) => {
+      const next = await valueStream!.next();
+      assert(!next.done && next.value.subject === subject, "Stored changes out of census order at " + subject);
+      return next.value;
+    };
     for (let i = 0; i < people; i += 32 * oracles.children.length) {
       await Promise.all(
         oracles.children.map(async (oracle, workerIndex) => {
@@ -670,8 +736,13 @@ export async function runHeld(
           }[];
         }),
       ).then((parts) => {
+        return parts;
+      }).then(async (parts) => {
         for (const p of parts)
           for (const row of p ?? []) {
+            if (streamed && row.rows.length) archive.set(row.subject, await nextStored(row.subject));
+            await needNotices(entries + row.deliveries.length);
+            const at0 = entries - noticeBase;
             const saved = archive.get(row.subject);
             if (row.rows.length) {
               assert.deepEqual(saved, {
@@ -683,14 +754,14 @@ export async function runHeld(
             } else assert(!saved);
             changes += row.rows.length;
             assert.deepEqual(
-              notices.slice(entries, entries + row.deliveries.length),
+              notices.slice(at0, at0 + row.deliveries.length),
               row.deliveries,
             );
             if (initialLarge) {
               const i = Number(row.subject.slice(4)),
                 e = expectForms(expected(i, initial.position, history, positions, aged0), initialDoc, validTime);
               const got = checkForms(e, row.subject, saved?.changes ?? [],
-                notices.slice(entries, entries + row.deliveries.length) as never, true);
+                notices.slice(at0, at0 + row.deliveries.length) as never, true);
               independent.subjects++;
               if (e.changes.size) independent.owing++;
               independent.changes += got.changes;
@@ -700,9 +771,14 @@ export async function runHeld(
           }
       });
     }
+    if (streamed) {
+      assert((await valueStream!.next()).done, "More stored subjects than the oracle's");
+      await needNotices(entries);
+      assert(notices.length === entries - noticeBase && (await packetStream!.next()).done, "More recorded notices than the oracle's");
+    }
     assert.deepEqual(
       [archive.size, changes, entries],
-      [0, settlement!.values.state.changes, notices.length],
+      [0, settlement!.values.state.changes, noticeBase + notices.length],
     );
     const archived = await worker.archive
       .reader()
@@ -749,12 +825,58 @@ export async function runHeld(
       const { livePhase } = await import("./settle-live.ts");
       await livePhase({
         out, s, a, offer, verifyRead: verifyRead as never, demand: demand as never, writer, seed, people, history, positions,
-        ledger: activeLedger, releases, descriptor, db, ordered: Boolean(ordered), attempt: peer.attempt,
+        ledger: activeLedger, releases, descriptor, db, ordered: Boolean(ordered), attempt: peer.attempt, reader,
         aged: aged ? agedOf : undefined, agedSeal: aged,
       });
       return;
     }
+    // [DX-ACT10] Second review (diagnostic toy only): the held account's commits record each refusal's cause chain and
+    // each Publish's Datomic t (act10/causes.ts), for the gate parts below. Unset: nothing is wrapped.
+    if (process.env.DX_ACT10_CAUSES === "1") {
+      assert(diagnostic, "DX_ACT10_CAUSES is a toy diagnostic");
+      (await import("../../act10/causes.ts")).recordCauses(s, out);
+    }
+    // [DX-ACT8] A Publish and an enrolment beside every account's saves (diagnostic toy unless DX_ACT8_SERVER=1): this
+    // builder's gate parts (beside-gate.ts) instead of the windows.
+    if (process.env.DX_ACT8_GATE === "1") {
+      assert(diagnostic || process.env.DX_ACT8_SERVER === "1", "DX_ACT8_GATE is a toy diagnostic unless DX_ACT8_SERVER=1");
+      const { besideGate } = await import("./beside-gate.ts");
+      try {
+        await besideGate({
+          out, s, a, offer, verifyRead: verifyRead as never, demand: demand as never, writer, seed, people, history, positions,
+          ledger: activeLedger, releases, descriptor, db, ordered: Boolean(ordered), attempt: peer.attempt,
+          firstCorrect: firstCorrect as never, reader, peer,
+        });
+      } finally {
+        // [DX-ACT10] Third review (diagnostic toy only): every assertion ID of the run checked for the duplicate-identity
+        // shape, whether the gate passed or stopped (act10/idscan.ts). Unset: nothing.
+        if (process.env.DX_ACT10_IDSCAN === "1")
+          await (await import("../../act10/idscan.ts")).idScan(s, out, descriptor.cut).catch((e) => console.log("[act10-idscan] failed " + String(e?.message)));
+      }
+      return;
+    }
+    // [DX-ACT10] The adversarial review's stack checks (diagnostic toy only) instead of the windows.
+    if (process.env.DX_ACT10_STACK === "1") {
+      assert(diagnostic, "DX_ACT10_STACK is a toy diagnostic");
+      // [DX-ACT8, third review] DX_ACT8_R3_STACK=1: the third review's stack checks (act10/stack-r3.ts) instead.
+      if (process.env.DX_ACT8_R3_STACK === "1") {
+        const { act8R3Stack } = await import("../../act10/stack-r3.ts");
+        await act8R3Stack({ out, s, descriptor, attempt: peer.attempt });
+        return;
+      }
+      const { act10Stack } = await import("../../act10/stack-part.ts");
+      await act10Stack({ out, s, descriptor, attempt: peer.attempt });
+      return;
+    }
     const windows: PairSample[] = [];
+    // [DX-ACT6] By reference, the definitions the windows publish are written once here, before any window (unfenced,
+    // idempotent), so each Publish writes none ahead and the save pause around it covers only its record, as in the
+    // product, where a release's definitions are prepared before it is published.
+    const definitionsAhead = docsMode() === "ref"
+      ? { started: now(), refs: [await a.writeDefinitions(W0.R2.doc), await a.writeDefinitions(large ?? W0.R3.doc)], ms: 0 }
+      : undefined;
+    if (definitionsAhead) definitionsAhead.ms = now() - definitionsAhead.started;
+    if (definitionsAhead) jsonFile(path.join(out, "held-definitions.json"), definitionsAhead);
     for (const rate of diagnostic ? ([3.5, 23.5] as const) : rates) {
       const seconds = diagnostic ? 8 : 100;
       const tape = heldTape(people as Density, rate, seconds);
@@ -848,17 +970,34 @@ export async function runHeld(
                 return { attempted, reads };
               })();
               const waiting = gate.waiting!();
-              gate.paused = true;
-              const pausedAt = now();
               let r: Release;
-              try {
-                await gate.drain!();
-                const drained = now();
-                r = await offer(doc, peer.attempt + ":" + mode + ":" + rate + ":" + j, offered);
-                native.push({ r, ingress, waiting, pausedAt, drained });
-              } finally {
-                gate.paused = false;
-                gate.resume!();
+              if (unpausedMode()) {
+                // [DX-ACT8] Nothing pauses or drains: the Publish is offered while every save keeps going. Under the
+                // whole-head rule it is refused ("exhausted three serial predecessor attempts"); that is recorded with
+                // the window and the window goes on, so the old rule's refusals are counted, not hidden.
+                const pausedAt = now();
+                try {
+                  r = await offer(doc, peer.attempt + ":" + mode + ":" + rate + ":" + j, offered);
+                } catch (e) {
+                  if (!/exhausted three serial predecessor attempts|Source changed at admission/.test(String((e as Error)?.message)))
+                    throw e;
+                  refusedPublishes.push({ mode, rate, j, offered, refusedAt: now(), message: String((e as Error).message) });
+                  await cutoff.catch(() => undefined);
+                  continue;
+                }
+                native.push({ r, ingress, waiting, pausedAt, drained: pausedAt });
+              } else {
+                gate.paused = true;
+                const pausedAt = now();
+                try {
+                  await gate.drain!();
+                  const drained = now();
+                  r = await offer(doc, peer.attempt + ":" + mode + ":" + rate + ":" + j, offered);
+                  native.push({ r, ingress, waiting, pausedAt, drained });
+                } finally {
+                  gate.paused = false;
+                  gate.resume!();
+                }
               }
               await handReceipt(r);
               // [DX-ACT3] The read gateway's basis after the write gateway's acknowledgement and before the probe
@@ -935,6 +1074,13 @@ export async function runHeld(
             ),
             durabilityP99Ms: p99(native.map((x) => x.r.durableAt - x.r.offer)),
             gateHoldP99Ms: p99(native.map((x) => x.r.received - x.pausedAt)),
+            // [DX-ACT8] The save pause (none when unpaused), the Publish rule, refusals, and for each Publish the
+            // commits that landed between its read and its record, and the tries it sent.
+            unpaused: unpausedMode(),
+            publishRule: publishBeside() ? "account" : "head",
+            publishesRefused: refusedPublishes.filter((x: any) => x.mode === mode && x.rate === rate).length,
+            commitsBetweenReadAndRecord: native.map((x) => x.r.position - x.r.read - 1),
+            publishTries: native.map((x) => x.r.tries),
             recordBytesMax: native.length ? Math.max(...native.map((x) => x.r.recordBytes)) : null,
             recordChangesMax: native.length ? Math.max(...native.map((x) => x.r.recordChanges)) : null,
             activeWaitP99Ms: p99(native.map((x) => x.drained - x.pausedAt)),
@@ -1025,8 +1171,13 @@ export async function runHeld(
       visibilityFailures,
       probeAtLeast,
       atLeastDefects,
+      unpaused: unpausedMode(),
+      publishRule: publishBeside() ? "account" : "head",
+      refusedPublishes,
       durationMs: now() - start,
     });
+    // [DX-ACT8] Under the account guard no Publish may be refused beside saves.
+    assert(!publishBeside() || refusedPublishes.length === 0, "Publishes refused under the account guard: " + JSON.stringify(refusedPublishes));
     // [DX-ACT3] A read check that failed in any window fails the run, after every window has recorded itself.
     assert.equal(readFailures.length, 0, "Held read checks failed: " + JSON.stringify(readFailures));
     assert.equal(atLeastDefects.length, 0,

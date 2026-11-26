@@ -101,12 +101,15 @@ export class Stack {
     cpuCount?: number,
   ) {
     assert(!this.members.has(role));
-    assert(cpuCount === undefined || (["DX-CHK1", "DX-THIN1"].includes(this.holder) && cpuCount === 3));
+    assert(cpuCount === undefined || (["DX-CHK1", "DX-THIN1", "DX-IMP2"].includes(this.holder) && cpuCount === 3));
     const image = postgresRole(role) ? this.pgIds.get(site)! : site.datomicId;
     const cross = this.a !== this.b;
     const server = process.platform === "linux";
     let published: string[] = [];
-    if (!cross && port === 8080 && this.e.mode.startsWith("load-")) {
+    // [DX-ACT8] DX_ACT8_FIXED_PORTS=1 (holder DX-ACT8, diagnostic only): a load mode's gateways get an explicit host port,
+    // as the HA drills', so a restarted gateway comes back where this run's clients reach it (the gate's restart part).
+    const fixedPorts = process.env.DX_ACT8_FIXED_PORTS === "1" && (this.holder === "DX-ACT8" || this.holder === "DX-ACT10");
+    if (!cross && port === 8080 && this.e.mode.startsWith("load-") && !fixedPorts) {
       // [DX-LOAD1] Why: the VM assigns a free port at container start. Rejected: probing the Mac's socket table for a port used by the VM.
       published = ["-p", loopback + "::" + port];
     } else if (port && (cross || port === 8080)) {
@@ -563,12 +566,19 @@ export class Stack {
   }
   async gateway(role: "write" | "read", site: Site, pg: "pg" | "target", store: string,
     combination?: { settings: Record<string, string>; java: string; cores: number }) {
-    assert(!combination || ["DX-CHK1", "DX-THIN1"].includes(this.holder));
+    assert(!combination || ["DX-CHK1", "DX-THIN1", "DX-IMP2"].includes(this.holder));
     const size = process.platform === "linux" ? "1600" : "320";
     const fair = this.e.mode === "load-fair";
     const frontier = this.e.mode.startsWith("load-frontier-") || (microLoad(this.e.mode) && !fair);
     const split = splitLoad(this.e.mode);
     const priority = this.e.mode === "load-live" || this.e.mode === "load-tail" || frontier;
+    // [DX-ACT10] Second review: DX_ACT10_GROUP=1 (holder DX-ACT10, diagnostic load-fair only) turns the write gateway's
+    // group commit on, so a Publish beside saves can share one physical transaction with them. Unset: unchanged.
+    // [DX-ACT8] The Publish builder runs the same diagnostic (holder DX-ACT8).
+    const reviewGroup = process.env.DX_ACT10_GROUP === "1" && (this.holder === "DX-ACT10" || this.holder === "DX-ACT8") && fair && role === "write";
+    // DX_ACT10_GROUP_SAVES=general as well: the write gateway runs without TX2_SUBJECT_SAVE, so saves take the general
+    // commit path, the only one that enters the group lane (subject saves go straight to d/transact-async).
+    const reviewGeneral = reviewGroup && process.env.DX_ACT10_GROUP_SAVES === "general";
     const grouping = priority || (split && role === "write");
     await this.start(
       role,
@@ -585,7 +595,7 @@ export class Stack {
                     ? "summary"
                     : "off"),
               "-e",
-              "TX2_GROUP_COMMIT=" + Number(grouping),
+              "TX2_GROUP_COMMIT=" + Number(grouping || reviewGroup),
               "-e",
               "TX2_LOAD2_TIMING=" + Number(this.e.mode === "load-tail" || frontier),
               "-e",
@@ -616,7 +626,7 @@ export class Stack {
         // Rejected: checking mixed credits against the old grouped gateway or an unbound service.
         ...(fair ? [
           "TX2_PREDECESSOR_LOOKUP=1", "-e",
-          "TX2_SUBJECT_SAVE=1", "-e",
+          "TX2_SUBJECT_SAVE=" + (reviewGeneral ? "0" : "1"), "-e",
           "TX2_SUBJECT_NUMERIC_OWNER=1", "-e",
           "TX2_SUBJECT_ORDERED_IDS=1", "-e",
           "TX2_GROUP_FAST_REPLY=1", "-e",
@@ -634,9 +644,16 @@ export class Stack {
             ]
           : []),
         ...(combination ? Object.entries(combination.settings).flatMap(([key, value]) => [key + "=" + value, "-e"]) : []),
+        // [DX-IMP2] Why: the whole-subject builder's snapshot proof runs its writer with the import bound on.
+        // Rejected: forwarding it for any other holder or mode (their launches stay byte-identical).
+        ...(this.holder === "DX-IMP2" && role === "write" && this.e.mode === "load-proof" &&
+          process.env.TX2_IMPORT_WHOLE_SUBJECT === "1" ? ["TX2_IMPORT_WHOLE_SUBJECT=1", "-e"] : []),
         // [DX-THIN1] Why: the combined check runs the pinned read options (RD1, default off) on both gateways.
         // Rejected: changing the argument list when neither option is asked for.
         ...pinnedReaderEnv().flatMap((x) => [x, "-e"]),
+        // [DX-INT4] Why: the pair of settlement beside saves with ID list reads needs the route on the toy's gateways.
+        // Rejected: changing the argument list when the option is not asked for.
+        ...idListEnv().flatMap((x) => [x, "-e"]),
         "DATOMIC_URI_TEMPLATE=" + this.uri(pg, store, "{db}", site),
         "-e",
         "GATEWAY_SOURCE_SHA256=" + this.e.source.gateway,
@@ -690,4 +707,16 @@ export function pinnedReaderEnv(env: NodeJS.ProcessEnv = process.env) {
   const on = (name: string) => { const v = env[name] ?? "0"; if (v !== "0" && v !== "1") throw new Error(name + " must be 0 or 1"); return v; };
   const shortcut = on("DX_PINNED_SHORTCUT"), lookup = on("DX_PINNED_CUT_LOOKUP");
   return shortcut === "0" && lookup === "0" ? [] : ["TX2_PINNED_SHORTCUT=" + shortcut, "TX2_PINNED_CUT_LOOKUP=" + lookup];
+}
+
+// [DX-INT4] TX2_ID_LISTS and TX2_INDEX_QUERY_PERMITS from DX_ID_LISTS and DX_INDEX_QUERY_PERMITS (stack/up.sh's names).
+export function idListEnv(env: NodeJS.ProcessEnv = process.env) {
+  const on = env.DX_ID_LISTS, permits = env.DX_INDEX_QUERY_PERMITS;
+  if (on !== undefined && on !== "0" && on !== "1") throw new Error("DX_ID_LISTS must be 0 or 1");
+  if (permits !== undefined && !/^([1-9]|[1-5][0-9]|6[0-4])$/.test(permits)) throw new Error("DX_INDEX_QUERY_PERMITS must be 1..64");
+  // [DX-INT4] XQ6's sweep route for the pair of a sweep beside settlement (DX_SWEEP, as stack/up.sh names it).
+  const sweep = env.DX_SWEEP;
+  if (sweep !== undefined && sweep !== "0" && sweep !== "1") throw new Error("DX_SWEEP must be 0 or 1");
+  return [...(on === undefined ? [] : ["TX2_ID_LISTS=" + on]), ...(permits === undefined ? [] : ["TX2_INDEX_QUERY_PERMITS=" + permits]),
+    ...(sweep === undefined ? [] : ["TX2_SWEEP=" + sweep])];
 }

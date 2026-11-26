@@ -71,8 +71,11 @@ type Imported = Parameters<FairImport["send"]>[0] & {
   holdMs: number;
 };
 
+// [DX-IMP2] Why: with the gateway's whole-subject import bound on, one frame carries one whole subject of up to
+// 1,000 facts (the gateway refuses it whole if it exceeds the bound). Rejected: raising the default (off: 8 to 64).
+export const importWholeSubject = () => process.env["TX2_IMPORT_WHOLE_SUBJECT"] === "1";
 export function importFrame(stream: string, width: number, index: number): ImportFrame {
-  assert(Number.isInteger(width) && width >= 8 && width <= 64);
+  assert(Number.isInteger(width) && width >= 8 && width <= (importWholeSubject() ? 1000 : 64));
   assert(Number.isInteger(index) && index >= 0 && (index + 1) * width <= deepFacts);
   // [DX-HA1] Why: independent immutable subjects let retry of any frame reproduce the same bytes.
   // Rejected: using the attempt clock or a mutable cursor as the fact identity.
@@ -311,8 +314,12 @@ async function arm(
       subjectSave: boolean;
       subjectOrderedIds: boolean;
       subjectFunction: string;
-      options: { groupCommit: boolean };
+      options: { groupCommit: boolean; importWholeSubject?: boolean; importCommitMicros?: number };
     }>("GET", "/v1/db/" + db + "/write-options");
+    // [DX-IMP2] Why: an import arm must run with the bound it names. Rejected: trusting the launcher's environment.
+    assert.equal(options.options.importWholeSubject, importWholeSubject() ? true : undefined);
+    if (importWholeSubject())
+      assert.equal(options.options.importCommitMicros, Number(process.env["TX2_IMPORT_COMMIT_US"] ?? 40000));
     assert.deepEqual(
       [
         options.attempt,

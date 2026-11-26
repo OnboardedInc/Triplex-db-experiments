@@ -9,6 +9,9 @@ out=${1:?absolute new output directory}
 : "${DOCKER_HOST:?set DOCKER_HOST to the lab VM docker socket}"
 repo=$(git rev-parse --show-toplevel)
 mkdir -p "$out"
+# [DX-INT4] Start from one image ID, never a fixed shared tag another builder can retag (lab/bin/gate-image.sh).
+. "$repo/lab/bin/gate-image.sh"
+image=$(gate_image "${XQ6_IMAGE:-tx2-datomic:dx-real2-production}" "$out/image.json") || exit 2
 cp -R "${XQ6_GATEWAY:-$repo/packages/datomic/gateway}" "$out/gateway"
 cp "$repo/packages/datomic/src/codec-spec.json" "$out/codec-spec.json"
 suites=${XQ6_SUITES:-"triplex.gateway.selftest triplex.gateway.commit-order-test triplex.gateway.cache-key-test triplex.gateway.group-test triplex.gateway.feed-test triplex.gateway.recent-test triplex.gateway.pinned-test triplex.gateway.trace-test triplex.gateway.ids-test"}
@@ -25,7 +28,7 @@ for arm in unset 1; do
 CLJ
   docker run --rm --pull never --name "tx2-dxxq6-suites-$$" --memory 3g --cpus 2 \
     -v "$out/gateway:/opt/gateway:ro" -v "$out/codec-spec.json:/opt/spec/codec-spec.json:ro" -v "$out/run-$arm.clj:/opt/run.clj:ro" \
-    ${env[@]+"${env[@]}"} -e DATOMIC_URI_TEMPLATE='datomic:mem://{db}' -e DF01_RECORDED_PAGE=/tmp/recorded-page.json --entrypoint /bin/bash tx2-datomic:dx-real2-production -c \
+    ${env[@]+"${env[@]}"} -e DATOMIC_URI_TEMPLATE='datomic:mem://{db}' -e DF01_RECORDED_PAGE=/tmp/recorded-page.json --entrypoint /bin/bash "$image" -c \
     'cd /opt/datomic && java -Xmx2g -Ddatomic.objectCacheMax=256m -Ddatomic.memoryIndexMax=256m -Dtriplex.codec.spec=/opt/spec/codec-spec.json -cp "$(DATOMIC_EXT_CLASSPATH=/opt/gateway/src bin/classpath)" clojure.main /opt/run.clj' \
     > "$out/suites-$arm.log" 2>&1 || status=1
   grep -E "XQ6_SUITES|XQ6_SWEEP_ROUTE|FAIL in|ERROR in" "$out/suites-$arm.log" | head -20

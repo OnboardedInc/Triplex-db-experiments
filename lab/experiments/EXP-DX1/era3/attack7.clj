@@ -74,6 +74,10 @@
         s (str "acct/p" (mod i 5) "/w" i) v (g/secret s "w")
         _ (offers/send name (g/frame (str "f7-seed-" i) s v nil nil))
         window-save (f/outcome (f/safe #(offers/send name (g/frame (str "f7-save-" i) (str s "-x") (g/secret s "x") nil (g/head conn)))))
+        ;; [DX-ERA6 eighth pass, R3] and a save of the attribute the stored policy lacks
+        behind-save (when behind
+                      (f/outcome (f/safe #(offers/send name (g/save-frame (str "f7-bsave-" i) (str s "-y") (first behind)
+                                                                          (g/secret s "y") nil (g/head conn))))))
         window-rm (f/outcome (f/safe #(a/remove-attr! name (str "f7-rm-" i) s)))
         window-read (f/outcome (f/safe #(offers/route name "v1" "read" {"entityIds" [s]})))
         ;; the operator's steps after a restore
@@ -87,7 +91,7 @@
         rm-again (f/outcome (f/safe #(a/remove-attr! name (str "f7-rm-" i) s)))
         masked (f/masked? name s v)
         stored (stored-attrs conn) copy (copy-attrs name)
-        detail {:event out :behind (vec behind) :window {:save window-save :removal window-rm :read window-read}
+        detail {:event out :behind (vec behind) :window {:save window-save :behind-save behind-save :removal window-rm :read window-read}
                 :restore-route route :rebuild rebuild :restore-route-again route2 :removal-again rm-again
                 :stored (vec stored) :copy (vec copy) :added (vec @(:added state))}]
     (bump! :f7 ev :behind (boolean behind) :window-save window-save :window-removal window-rm :again rm-again)
@@ -95,9 +99,20 @@
       (println "ERA3_F7_EVENT" mode (pr-str (assoc detail :i i :ev ev :stored-after (vec stored) :copy-after (vec copy)))))
     (oracle! label (every? stored @(:added state)) "P1 no attribute the protection route added is lost" detail)
     (oracle! label (every? copy stored) "P2 the log's copy holds every attribute of the stored policy" detail)
+    ;; [DX-ERA6 eighth pass, R3, adapted oracle] only a save that writes an attribute the stored policy lacks waits; a save
+    ;; of another attribute is served (before this pass every save waited). It waits with RemovalPolicyBehind, or, when
+    ;; the event put the log back behind the data, with RemovalLogBehind: every request waits then until the rebuild
+    ;; route (the restore procedure, step 4). The first adaptation asked for RemovalPolicyBehind only, which 91 of
+    ;; 10,000 log-put-back schedules answered with RemovalLogBehind (the oracle before this pass asked for any 503)
     (when behind
-      (oracle! label (and (= 503 (first window-save)) (= 503 (first window-rm))) "P3 while the policy is behind, the save and the removal wait (typed 503)" detail))
-    (oracle! label (not-any? #(= 400 (first %)) [window-save window-rm window-read]) "P3 no answer in the window is an untyped 400" detail)
+      (oracle! label (and (= 503 (first behind-save))
+                          (contains? (if (#{:log-put-back :both-put-back} out) #{"RemovalPolicyBehind" "RemovalLogBehind"} #{"RemovalPolicyBehind"})
+                                     (second behind-save))
+                          (= 503 (first window-rm)) (some? (second window-rm)))
+               "P3 while the policy is behind, a save of the missing attribute and the removal wait (typed 503)" detail))
+    (oracle! label (not= [503 "RemovalPolicyBehind"] window-save)
+             "P3 a save of an attribute the stored policy holds is not held by the missing one" detail)
+    (oracle! label (not-any? #(= 400 (first %)) (remove nil? [window-save behind-save window-rm window-read])) "P3 no answer in the window is an untyped 400" detail)
     (oracle! label (and (= 200 (first rm-again)) masked) "P4 the window's removal, sent again after the restore route, is acknowledged and masks its value" detail)
     (when q/sealed-fuzz?
       (f/with-worker-ms 1 #(f/safe (fn [] (f/worker-pass!) {:status 200})))

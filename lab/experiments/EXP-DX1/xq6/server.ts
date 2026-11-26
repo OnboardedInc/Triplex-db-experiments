@@ -9,6 +9,11 @@
 // Arm B, beside load: 256 pinned readers re-reading 5,000 subjects of the other accounts at position 87,002, a save loop
 //   (one commit per subject's save, 17 facts, 23 saves/s, on account-005) for 120 s alone, then the same with a
 //   one-part count of the account running, then with a three-part count.
+// [DX-XQ9] Arm C, alone, only when the read gateway has TX2_SWEEP_SHAPES (exp/DX-XQ9-question-shapes, predictions in
+//   xq9/QUESTION-SHAPES.md section 6): a question over each subject's tasks (has by key, i9:, at least 3 not complete)
+//   for 1, 3 and 6 parts, cold; the top 100 profiles (wk:) by pay, descending, for 1, 3 and 6 parts (each part keeps its
+//   own top 100 in its cursor; the parts' tops are merged here, which is exact because the top 100 of a union is in the
+//   union of the parts' top 100s), cold; and the same top 100 by one part again, warm. Set DX_XQ9_SKIP_B=1 to stop after it.
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -97,6 +102,58 @@ for (const width of [1, 3, 6]) {
 await restartReader();
 log("A-list-cold", await listFirst());
 log("A-list-warm", await listFirst());
+
+// ---- Arm C (DX-XQ9) ----
+const shapesOn = typeof ready.questionRoutes?.sweepShapes === "string" && ready.questionRoutes.sweepShapes.length > 0;
+if (shapesOn) {
+  const runParts = async (width: number, base: (prefix: string) => object, validAt: number) => {
+    const queue = [...parts], t0 = performance.now();
+    const out: any[] = [];
+    let pages = 0, examined = 0, related = 0, relatedRows = 0, rows = 0, cpu = 0, gw = 0, maxCursor = 0;
+    await Promise.all(Array.from({ length: width }, async () => {
+      for (let prefix = queue.shift(); prefix; prefix = queue.shift()) {
+        let next: string | null = null;
+        do {
+          const r = { account, ...base(prefix), bounds: { subjects: 2000, ms: 2000 } };
+          const page: any = await datomic.sweepPageWaiting(reader, db, next ? { ...r, cursor: next } : { ...r, basis: { recordedPosition: head, validAt } });
+          pages++; examined += page.examined; related += page.related ?? 0; relatedRows += page.relatedRows ?? 0; rows += page.rows;
+          cpu += page.cpuMicros; gw += page.micros.total; next = page.next; maxCursor = Math.max(maxCursor, next?.length ?? 0);
+          if (!next) out.push(page);
+        } while (next);
+      }
+    }));
+    return { width, pages, examined, rows, related, relatedRows, cpuSeconds: cpu / 1e6, gatewaySeconds: gw / 1e6, maxCursorBytes: maxCursor, seconds: (performance.now() - t0) / 1000, finals: out };
+  };
+  const child = (prefix: string) => ({ from: { ...kind, prefix }, result: "count",
+    where: [{ op: "has", related: { prefix: "i9:", link: "key" }, quantifier: { op: "gte", value: 3 }, where: [{ attribute: ":task/status", op: "ne", value: { type: "string", value: "complete" } }] }] });
+  const top = (prefix: string) => ({ from: { prefix: prefix.replace(/^pl:/, "wk:") }, result: "top", limit: 100, order: { by: ":person/custom-pay-cents", type: "integer", direction: "desc" } });
+  const merge = (finals: any[]) => {
+    const all = finals.flatMap((p) => p.ids.map((id: string, i: number) => [id, p.values[i] === null ? null : BigInt(p.values[i].value)] as [string, bigint | null]));
+    return all.sort(([ia, va], [ib, vb]) => (va === null && vb === null ? (ia < ib ? -1 : 1) : va === null ? 1 : vb === null ? -1 : va === vb ? (ia < ib ? -1 : 1) : va > vb ? -1 : 1)).slice(0, 100);
+  };
+  const validAt = Date.now();
+  const tops: string[] = [];
+  for (const width of [1, 3, 6]) {
+    await restartReader();
+    const r = await runParts(width, child, validAt);
+    const count = r.finals.reduce((n, p) => n + p.count, 0);
+    const { finals: _f, ...rest } = r;
+    log("C-child", { ...rest, count, msPerSubject: (r.seconds * 1000) / r.examined, relatedPerSubject: r.related / r.examined, examinedIsAll: r.examined === SUBJECTS });
+  }
+  for (const width of [1, 3, 6]) {
+    await restartReader();
+    const r = await runParts(width, top, validAt);
+    const merged = merge(r.finals);
+    tops.push(JSON.stringify(merged.map(([id, v]) => [id, String(v)])));
+    const { finals: _f, ...rest } = r;
+    log("C-top", { ...rest, first: merged.slice(0, 3).map(([id, v]) => [id, String(v)]), msPerProfile: (r.seconds * 1000) / r.examined });
+  }
+  const warm = await runParts(1, top, validAt);
+  tops.push(JSON.stringify(merge(warm.finals).map(([id, v]) => [id, String(v)])));
+  const { finals: _w, ...warmRest } = warm;
+  log("C-top-warm", { ...warmRest, msPerProfile: (warm.seconds * 1000) / warm.examined, sameTopInEveryArm: new Set(tops).size === 1 });
+}
+if (process.env["DX_XQ9_SKIP_B"] === "1") { reader.close(); log("done"); process.exit(0); }
 
 // ---- Arm B ----
 // The scope from the database name itself (s2- then base64url of ["triplex-scope-v1", env, tenant, database, generation]).

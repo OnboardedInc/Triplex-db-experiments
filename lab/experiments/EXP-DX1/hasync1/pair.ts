@@ -7,7 +7,8 @@ import { DatomicClient } from "../../../../packages/datomic/test/ha1-account.ts"
 import { ingress } from "./ingress.ts";
 import type { Checkpoint } from "./seed.ts";
 import type { PowerFence } from "./power-fence.ts";
-import { coldCopy, coldMount, coldPhases, type ColdSeed } from "./sunday-seed.ts";
+import { coldCopy, coldCopyPipelined, coldMount, coldPhases, type ColdSeed } from "./sunday-seed.ts";
+import { cpuCount, recoveryOptions, recoveryOptionsOn } from "./recovery-options.ts";
 import { catchUp, type CatchUp } from "./catch-up.ts";
 import { checkProfileFlags, launchProfile, startupFlags } from "../jvm1/launch.mjs";
 import { selectedWriter } from "../v01/profile.ts";
@@ -64,6 +65,9 @@ export class SyncPair {
   initialFlush = "";
   initialStandby?: { copyMs: number; received: Awaited<ReturnType<SyncPair["candidate"]>>; attach: unknown };
   readonly walSamples: { label: string; at: number; lsn: string }[] = [];
+  // [DX-HA2] Default off; see recovery-options.ts and RECOVERY-TIME.md.
+  readonly recovery = recoveryOptions();
+  readonly #coldPlacement = new Map<SqlRole, { cpuset: string; nanoCpus: number }>();
   constructor(
     readonly s: Stack,
     readonly base?: { path: string; checkpoint?: Checkpoint; ownerUid?: number; ownerGid?: number },
@@ -77,6 +81,44 @@ export class SyncPair {
   }
   get storage() {
     return this.sunday ? "datomic" : "moving";
+  }
+  get coldScript() {
+    return this.recovery.coldPipeline ? coldCopyPipelined : coldCopy;
+  }
+  // [DX-HA2] Why: the cold copy runs inside the PostgreSQL container, whose server placement is one core ("1"); on November
+  // 23 the eight SHA-256 workers shared that core (126 GB in 452 s, 279 MB/s). With TX2_HA2_COLD_CORES the copy and its
+  // check get the named cores, and the container returns to its own placement once PostgreSQL accepts connections.
+  // Rejected: a separate copier container (a second volume hand-off for the same bytes) and leaving PostgreSQL unpinned.
+  async #coldCores(role: SqlRole) {
+    const cores = this.recovery.coldCores;
+    if (!this.sunday || !cores) return;
+    const m = this.s.members.get(role)!;
+    const v = await this.s.view(role, timeouts.control);
+    const original = { cpuset: String(v.HostConfig.CpusetCpus ?? ""), nanoCpus: Number(v.HostConfig.NanoCpus ?? 0) };
+    this.#coldPlacement.set(role, original);
+    await m.site.docker(
+      ["update", ...(original.cpuset ? ["--cpuset-cpus", cores] : ["--cpus", String(cpuCount(cores))]), m.id],
+      { timeout: timeouts.control },
+    );
+    this.mark("cold-cores", { role, id: m.id, cores, original });
+  }
+  async #restoreCores(role: SqlRole) {
+    const original = this.#coldPlacement.get(role);
+    if (!original) return;
+    this.#coldPlacement.delete(role);
+    const m = this.s.members.get(role)!;
+    await m.site.docker(
+      [
+        "update",
+        ...(original.cpuset ? ["--cpuset-cpus", original.cpuset] : ["--cpus", String(original.nanoCpus / 1e9)]),
+        m.id,
+      ],
+      { timeout: timeouts.control },
+    );
+    const v = await this.s.view(role, timeouts.control);
+    assert.equal(String(v.HostConfig.CpusetCpus ?? ""), original.cpuset, "Cold copy cores not restored");
+    assert.equal(Number(v.HostConfig.NanoCpus ?? 0), original.nanoCpus, "Cold copy CPU quota not restored");
+    this.mark("cold-cores-restored", { role, id: m.id, ...original });
   }
   get postgresArgs() {
     return this.sunday
@@ -207,7 +249,7 @@ export class SyncPair {
       [
         "-ceu",
         guard +
-          (this.sunday ? coldCopy : "") +
+          (this.sunday ? this.coldScript : "") +
           (cp
             ? 'actual=$(sha256sum "/base/$BASE_LAYOUT/backup_manifest"); test "${actual%% *}" = "$BASE_MANIFEST"; pg_verifybackup "/base/$BASE_LAYOUT"; cp -a "/base/$BASE_LAYOUT/." "$PGDATA/"; '
             : "") +
@@ -217,8 +259,10 @@ export class SyncPair {
       ],
       s.a === s.b ? undefined : 5432,
     );
+    await this.#coldCores("pg");
     let standbyStart = 0;
     if (this.sunday) {
+      if (recoveryOptionsOn(this.recovery)) s.e.log("recovery-options", this.recovery);
       // [DX-HASYNC2] Why: each server copies and checks only its own disks, so both copies run at once, and the standby is
       // attached before any Datomic process starts. Rejected: the serial order that left the standby 21 GB behind.
       standbyStart = performance.now();
@@ -227,6 +271,8 @@ export class SyncPair {
         this.pgReady("pg", false, coldBudgetMs),
         this.pgReady("target", true, coldBudgetMs),
       ]);
+      await this.#restoreCores("pg");
+      await this.#restoreCores("target");
     } else await this.pgReady("pg", false, cp ? 360000 : timeouts.setup);
     if (this.sunday) {
       assert.match(s.secret, /^[a-f0-9]{36}$/);
@@ -336,9 +382,10 @@ export class SyncPair {
       s.b,
       [...coldMount(this.sunday.standby, "FIRST 1 (sync_a)", conn), ...this.replicationPublish(s.b)],
       "/bin/sh",
-      ["-ceu", coldCopy + 'exec docker-entrypoint.sh postgres "$@"', "standby", ...this.postgresArgs],
+      ["-ceu", this.coldScript + 'exec docker-entrypoint.sh postgres "$@"', "standby", ...this.postgresArgs],
       5432,
     );
+    await this.#coldCores("target");
   }
   // [DX-HASYNC2] Why: reach synchronous acknowledgement only after a measured catch-up to zero lag, and record it.
   // Rejected: switching to synchronous mode while the standby is still behind and timing out on a fixed budget.
@@ -990,7 +1037,7 @@ export class SyncPair {
       [
         "-ceu",
         (this.sunday
-          ? coldCopy
+          ? this.coldScript
           : drop +
             'chown postgres:postgres "$PGDATA"; chmod 700 "$PGDATA"; ' +
             '"$drop" postgres pg_basebackup -D "$PGDATA" -d "$REPLACEMENT" --checkpoint=fast -X stream -R --manifest-checksums=SHA256; ' +
@@ -1002,11 +1049,13 @@ export class SyncPair {
       ],
       s.a === s.b ? undefined : 5432,
     );
+    await this.#coldCores("pg");
     await this.pgReady(
       "pg",
       true,
       this.sunday ? coldBudgetMs : this.base?.checkpoint ? 360000 : timeouts.setup,
     );
+    await this.#restoreCores("pg");
     const copiedMs = performance.now() - start;
     this.mark("replacement-ready", { copiedMs });
     assert.equal(
@@ -1057,8 +1106,14 @@ export class SyncPair {
       ...(phases ? { phases, transfer } : {}),
     };
   }
+  // [DX-HA2] Why: the November 23 check opened the old disk in recovery and pointed a Datomic peer at it. A peer finds its
+  // transactor through storage, and that disk still named A's transactor, which the first fault had killed (port 4334), so
+  // the read failed. The old disk is now opened the way an operator would recover from it after losing both machines:
+  // PostgreSQL finishes crash recovery and opens it on its own timeline with synchronous replication off (its standby is
+  // gone), a fresh transactor serves it under the standby role on A (that role has no startup latch), and the peer reads
+  // through that transactor. No route sends saves to it; the case ends after the read. Rejected: reading Datomic's
+  // segments from PostgreSQL without a transactor (it would mean decoding Datomic's storage format).
   async inspectFirstDisk() {
-    assert(this.sunday);
     const s = this.s;
     assert(!(await s.view("active")).State.Running && !(await s.view("standby")).State.Running);
     assert(!(await s.view("target")).State.Running && !(await s.view("pg")).State.Running);
@@ -1066,9 +1121,10 @@ export class SyncPair {
       await s.exec("tool", "cat", "/ha-fence/closed"),
       `fenced:${s.e.nonce}:${this.cluster}`,
     );
-    // [DX-HASYNC1] Why: read the first disk after the last writer is stopped, with PostgreSQL in forced recovery. Rejected: destroying the second disk or restarting the fenced primary as a writer.
+    const firstTimeline = this.timeline;
     await s.remove("write");
     await s.remove("pg");
+    await s.remove("standby");
     await s.start(
       "pg",
       s.a,
@@ -1076,24 +1132,35 @@ export class SyncPair {
       "/bin/sh",
       [
         "-ceu",
-        'printf "\\nprimary_conninfo = \'\'\\nrestore_command = \'\'\\n" >> "$PGDATA/postgresql.auto.conf"; touch "$PGDATA/standby.signal"; exec docker-entrypoint.sh postgres "$@"',
+        'test ! -e "$PGDATA/standby.signal"; test ! -e "$PGDATA/recovery.signal"; exec docker-entrypoint.sh postgres "$@"',
         "first-disk-readback",
         ...this.postgresArgs,
+        "-c",
+        "synchronous_standby_names=",
       ],
       5432,
     );
-    await this.pgReady("pg", true, 240000);
+    await this.pgReady("pg", false, 240000);
     assert.equal(
       await this.sql("pg", "select system_identifier from pg_control_system()"),
       this.cluster,
     );
-    assert.equal(await this.sql("pg", "select count(*) from pg_stat_wal_receiver"), "0");
+    const timeline = parseInt(
+      await this.sql("pg", "select left(pg_walfile_name(pg_current_wal_insert_lsn()),8)"),
+      16,
+    );
+    assert.equal(timeline, firstTimeline, "The old disk must reopen on its own timeline");
+    const end = await this.sql("pg", "select pg_current_wal_flush_lsn()");
+    await this.tx("standby", s.a);
+    await this.waitBroker("standby", 120000);
     const url = await this.gateway("write", s.a, "pg");
     return {
       url,
       id: s.members.get("pg")!.id,
+      transactor: s.members.get("standby")!.id,
       cluster: this.cluster,
-      replay: await this.sql("pg", "select pg_last_wal_replay_lsn()"),
+      timeline,
+      end,
     };
   }
   async verifyReplacement(copy: Awaited<ReturnType<SyncPair["startReplacement"]>>,

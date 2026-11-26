@@ -57,7 +57,11 @@
       (when-let [v (verify-log name)]
         (let [prior (get @privacy/cache name)]
           (if (or (nil? prior) (and (>= (long (:seq v)) (long (:seq prior))) (= (:seal prior) (seal-at v (:seq prior)))))
-            (swap! privacy/cache update name (fn [c] (if (and c (> (long (:seq c)) (long (:seq v)))) c v)))
+            (do (swap! privacy/cache update name (fn [c] (if (and c (> (long (:seq c)) (long (:seq v)))) c v)))
+                ;; [DX-ERA6 eighth pass, the merge of the one branch] the cache advanced here, not through privacy/cut:
+                ;; the entity cache's drop hook (removal_drops) is told of the removals it accepted, as cut would
+                (when privacy/drop-hook
+                  (privacy/drop-hook name nil (or prior {:seq 0 :commands {}}) v)))
             (swap! envelope/shredded update name (fn [m] (min (long (or m 0)) (long (:seq v))))))
           ;; [DX-ERA2 seventh pass, X3] as the pass itself: whatever the copy says about `sealed`
           (when (some? v)
@@ -70,16 +74,8 @@
                 (swap! envelope/shredded assoc name (get (last due) "seq")))))))
       (catch Exception x ((requiring-resolve 'triplex.gateway.failures/note!) "shred-reread" name x) nil))))
 
-(defn take-key-refilled!
-  "[DX-ERA2 sixth pass, found by the SDK end-to-end stack] The PostgreSQL authority's key pool of `name` is empty on this
-  gateway: a gateway fills a database's pool when it serves that database's protection declaration, and its worker
-  refills only pools it already holds, so on every other gateway (and after a restart) the first sealed save of a
-  database found no key and was refused (and mapped to 400 TransactionRejected). The pool is filled once here, then
-  a key taken; refused only if that fails (503 EnvelopeKeyPoolEmpty, kept typed by storage/commit!)."
-  [name]
-  (@#'envelope/refill! name)
-  (or (.poll ^java.util.concurrent.ConcurrentLinkedQueue (@#'envelope/pool name))
-      (privacy/failure! 503 "EnvelopeKeyPoolEmpty" "Retry the protected save after replenishment")))
+;; [DX-ERA6 eighth pass, the merge of the one branch's 2ce636613] take-key-refilled! moved to key_pool.clj (N1, the same
+;; fill on demand, now with its failed fill counted and logged); envelope/take-key! calls it there.
 
 (defn retire-log!
   "[V5 of the fifth review] The removal log and keys of a database that no longer exists leave the authority: no worker

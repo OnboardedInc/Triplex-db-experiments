@@ -44,6 +44,8 @@
             journals (ledger/journals cut tx)
             claims-a (d/entid cut :triplex.claim/command-id)
             commands (sort (distinct (for [x data :when (and (= claims-a (:a x)) (:added x))] (:v x))))
+            ;; [DX-S6] The caller's IDs, not their stored account-scoped values (unchanged for plain IDs).
+            commands (sort (map (requiring-resolve 'triplex.gateway.account-claims/plain) commands))
             txids (sort (distinct (remove nil? (concat [(ledger/tx-id cut tx)]
                     (map #(ledger/value cut (first %) :triplex.entity/id) journals)
                     (map (comp :tx_id second) (filter (fn [[x r]] (and (:added x) (not= "_Transaction" (:entity_type r)))) row-data))
