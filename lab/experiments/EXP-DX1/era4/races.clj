@@ -634,9 +634,14 @@
             packet-sealed (offers/outcome (doc-write src "set-w6" "recorded-notices:2"
                                                      (packed {"deliveries" [{"subject" "pl:00000001" "generation" 0 "sealed" wire}]})))
             ledger-clear (offers/outcome (doc-write src "set-w7" "recorded-ledger:pl:00000001" (packed [{"id" "x" "payload" vx}])))
-            state-sealed (offers/outcome (doc-write src "set-w8" "receiver:o:pl:00000001" (packed {"g" 0 "e" [wire]})))
-            ;; [DX-ERA4, second review N4] a kind the held path writes (the setting refuses a kind it does not know)
-            other-doc (offers/outcome (doc-write src "set-w9" "notice-progress" {"count" 1}))
+            ;; [DX-ERA4, third review T7] a receiver's key names its origin's 64-hex hash, as the receiver writes it
+            state-sealed (offers/outcome (doc-write src "set-w8" (str "receiver:" (apply str (repeat 64 "e")) ":pl:00000001")
+                                                    (packed {"g" 0 "e" [wire]})))
+            ;; [DX-ERA4, second review N4] a kind the held path writes (the setting refuses a kind it does not know); since
+            ;; the third review's T7 in its writer's form (the recorder's cursor), as every content-free kind is checked
+            other-doc (offers/outcome (doc-write src "set-w9" "notice-progress"
+                                                 {"epoch" (apply str (repeat 64 "a")) "event" 1 "start" 0 "parent" (apply str (repeat 64 "b"))
+                                                  "batch" 0 "previous" (apply str (repeat 64 "c")) "entries" 0}))
             ;; an entry that carries the clear answer beside sealed changes, the unframed page (its entries' `json`), and a
             ;; packet with a field the recorder never writes
             json-entry (offers/outcome (doc-write src "set-w10" "answer:1:f6"
