@@ -2,7 +2,7 @@
 
 Reviewer's branch `exp/DX-S5-save-line-review`. It holds the head under review, `1d9fdee6c` (a fast-forward; the
 builder's branch already contained the fourth review), plus the reviewer's tests; nothing under `packages/` differs
-from `1d9fdee6c`. Started 2026-11-25 22:01 EST, written 22:58 EST (the fuzzer still running then; its totals follow in a later commit). Mac figures are toy-size and diagnostic. At most
+from `1d9fdee6c`. Started 2026-11-25 22:01 EST, written 22:56 EST; the fuzz totals added 00:50 EST on 2026-11-26. Mac figures are toy-size and diagnostic. At most
 two heavy jobs ran at a time.
 [Fourth review](REVIEW-4.md) · [The fixes](../s6/SAVE-LINE-FIXES.md) (section 14)
 
@@ -229,7 +229,9 @@ Diffs are against the fourth review's versions (`84d470328`); the edits are in t
 
 **My own seeds.** The fuzzer ran the fourth review's seeds 731 to 741, 3,000 steps each, unchanged, in both settings
 (`accounts-on`, `accounts-on-general-nopred`), with the builder's `old-open!` (mine cannot run on this head: the bar
-refuses its first transaction). Totals: section 4 (running when this was written).
+refuses its first transaction): 105,815 saves, 0 differences (section 4). The three differences the fourth review
+found in `accounts-on-general-nopred` seeds 733 to 735 (a save refused before routing left an older body working)
+are gone: `guard!` closes that window at such a save.
 
 
 ## 4. What held
@@ -250,7 +252,7 @@ refuses its first transaction). Totals: section 4 (running when this was written
 | Another account's `acct/` entities | attack4 | 3 writers x 2 states x 5 settings | refused 400, 30 of 30 |
 | The older build's window, its close | `window5.ts`, real `a6d02225c` (serial options), lookup on and off | 2 stacks | closed at this build's first save, refused or stored (0 of 10 after each, both stacks) |
 | Reads after a transactor restart | `restart-read.ts`, 2 stacks, the save in flight across a kill and restart (7) or right after an idle restart (7) | 14 cases x 10 reads, 0 to 20 s | the at-least read had the save 140 of 140 (at most 146 ms); no read answered without it |
-| The fuzzer | `s5/fuzz.clj`: faults, a second account, the transition at one third of the steps, stale planners, older-build reopens, removals alone and racing a save, protected values unsealed | seeds 731 to 741 x 3,000 steps in `accounts-on` and `accounts-on-general-nopred`: running when this was written; `accounts-on` 8 of 11 seeds done at 22:55, 38,444 saves (31,244 serial, 7,200 concurrent in 16 rounds of 2 and 4 writers), 292 older-build reopens, 8 transitions, 445 stale-planner saves, 479 removals, 212 removal races | so far 0 differences, 80 deep compares equal, 0 unjustified refusals; totals follow in a later commit |
+| The fuzzer | `s5/fuzz.clj`: faults, a second account, the transition at one third of the steps, stale planners, older-build reopens, removals alone and racing a save, protected values unsealed | the fourth review's seeds 731 to 741 x 3,000 steps in `accounts-on` and `accounts-on-general-nopred`: 105,815 saves (86,015 serial, 19,800 concurrent in 44 rounds of 2 and 4 writers; 52,860 and 52,955); 14,096 with a fault injected (unknown outcome, kill before or after, lost reply); 845 older-build reopen steps, all 1,690 opens (two scopes) refused by the bar; 22 transitions; 1,333 stale-planner saves; 1,279 removals and 607 removal races | 0 differences, 220 deep compares equal, 0 unjustified refusals, 0 replay differences |
 
 
 ## 5. Not tested
@@ -269,12 +271,11 @@ refuses its first transaction). Totals: section 4 (running when this was written
 
 ## 6. Cleanup
 
-- Images, by ID: `tx2-dxs5r3:2fb818b86ed2` removed after its runs; `tx2-dxs5r3:726458e2c7e1` is removed when the fuzzer
-  ends (it runs on it). The dev image `tx2-dxs5r3:68351d5e68dd` was removed when the first counted one was built.
+- Images, by ID: `tx2-dxs5r3:2fb818b86ed2` removed after its runs; `tx2-dxs5r3:726458e2c7e1` removed when the fuzzer
+  ended. The dev image `tx2-dxs5r3:68351d5e68dd` was removed when the first counted one was built.
   `tx2-dxs5r3:f76454bc66a4` is the builder's and was left alone.
 - No container of this review is left (listing by label `dx-s5r3` and name prefix `tx2-dxs5r3-`); stacks remove their
   own.
 - The scratch worktree of the trial merge was removed; `7114512b8` stays a local commit, never pushed. Its diff
   against the one branch under `packages/` is in the evidence.
-- Evidence: `DX-S5-review/r5-archives` (one archive per run, `SHA256SUMS`), written when the fuzzer ends; the raw
-  folders are removed after.
+- Evidence: `DX-S5-review/r5-archives` (one archive per run, `SHA256SUMS` checked); the raw folders were removed.
