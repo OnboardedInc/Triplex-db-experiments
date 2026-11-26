@@ -334,6 +334,38 @@ and fuzz7 rerun in full with the corrected form: chunk 1 again (seed 7501), 164,
 
 (Filled in when the runs end.)
 
+### 6.3 The second and third merges: the one branch's 2ce636613 and 65a851d1b
+
+The three merges still landing on 2026-11-25 (`09730f887` N1, `cc5656aa2` the ID allocator, `a6f89a409` the Publish
+line), then the save line's fourth pass (`9f210018f`, the account setting off), reached `origin/exp/DX-INT1` after
+`e50615a10`. They are merged in two commits:
+
+- **`e98bd5bd8`, the one branch's `2ce636613`** (the three merges).
+  - **The Publish line's merge conflicted with nothing here.** Its `writes.ts`, `ha1/local.ts` and join layer were
+    already resolved on the one branch.
+  - **The conflicts were N1's:**
+    - `envelope.clj`: the one branch's `key-pool/take-key-refilled!` (the same fill on demand, a failed fill counted
+      and logged); this branch's copy in `removal_repair.clj` removed;
+    - `reply.clj`: this branch's version (N1's message with a `where` argument, and the decline text);
+    - `main.clj`: this branch's two catch handlers (N1's fixed texts, the removal paths in front);
+    - `storage.clj`: this branch's set of codes passed through, which holds the one branch's.
+- **`1be3efbab`, the one branch's `65a851d1b`** (the save line's fourth pass merged there).
+  - **The save line's three checks are kept on the replay rule's off path.** The fourth pass replaced
+    `replay-frame-check!` with `frame-check!`, `declined-check!` and `record-declined!`. As the fourth save line review
+    tested (REVIEW-4 R4-3, its corrected trial merge `9fe2e5f02`, compared here and not merged), all three run on the
+    off path, each behind `(when (not replay-rule) …)`.
+  - **With the rule on,** the merged rule's `decline-check!`, `after-refusal` and `decline!` judge and record, using
+    the same attributes.
+  - **Compared with `9fe2e5f02`:** `storage.clj`, `subject_create.clj` and `privacy.clj` are equal but for comments.
+  - **The one conflict, `DatomicStorageAdapter.ts`:** this branch's lines, as `9fe2e5f02` takes them. A replay states
+    its first attempt's `frameSourceK`, and every attempt states the removal stamp it held (`removalSeen`; an
+    optimistic attempt reads it first).
+  - **What is not taken:** the save line's `frameSourceK` for an optimistic first attempt. `removalSeen` already
+    states that frame, and a position seen before the stamp was read could decline a save for a removal the stamp
+    already covered.
+
+Results on `1be3efbab`: 6.4.
+
 ## 7. The owner's decisions of 2026-11-25: three switches, none turned on
 
 Each decision is one commit behind its own switch. Each switch's default is one line in `removal_commit.clj`, `false`
@@ -414,3 +446,83 @@ Under the database-wide rule:
    - With the override, every declaration is answered as today. One line per declaration is marked
      `"override": true`. The whole per-account gate passed that way.
 4. **Opt-out:** `TX2_PROTECTION_SEALED_ONLY=0`. The override must never be set in a deployment.
+
+## 8. The fourth save line review on this branch (s5/REVIEW-4.md, 9c0d7ea26)
+
+**R4-3, the merge with the save line's fourth pass.**
+- **What the review found:** the save line builder's proposed resolution (its page, section 13.5) dropped the save
+  line's `frame-check!`, `declined-check!` and `record-declined!`, and with them the earlier `replay-frame-check!`. With
+  this branch's replay rule off (the default), a save replayed across a removal was then stored.
+- **This merge keeps all three on the rule's off path,** as the review's tested correction `9fe2e5f02` does (each
+  behind `(when (not replay-rule) …)`). With the rule on, the merged rule judges instead, as before.
+- **Tested:** the review's own R2-2 group, `s5/attack3_gate.clj` with `S5_ONLY=r22`, in its two settings for this
+  branch (`era6-rule-off`, `era6-rule-on`). It is now the save-line gate's phase `r22`.
+
+**R4-9 (Low), documented here.**
+- **The case:** an optimistic replay of a new value long after a removal, stating neither `frameSourceK` nor
+  `removalSeen`.
+- **With the rule on** it is declined 409 `ErasureReplayDeclined`: a save that states no point counts as framed before
+  every removal (section 1, item 3). **With the rule off** the save line's rule stores it.
+- **Who meets it:** this branch's SDK states `removalSeen` on every attempt, and since the save line's fourth pass an
+  optimistic attempt also states `frameSourceK`. Only a caller that states no frame at all meets it.
+- **Which side it errs on:** the decline is on the exact side, so no value removed before the save is stored by
+  mistake.
+- **The gate lists it** as the one expected failure of `r22` with the rule on.
+
+**R4-10 (Info): two stored functions outside `install-sites`.** This branch adds two:
+- `:triplex.removal/commit-v1` (`removal_commit.clj`, `commit-ident`, installed by `install!`);
+- `:triplex.removal/fence-v1` (`removal_scope.clj`, the removal fence).
+
+Neither is a save writer the account setting's transition moves (`swappable?` does not match them), so neither opens
+the admitted window today. A later pass that moves either must add it to `install-sites`.
+
+**How this branch's finding (section 6.1) and R4-9 relate.** They are two sides of one case. A request that does not
+state its first attempt's frame cannot be told from a new save.
+- **When it states a fresh `sourceK` and no first frame,** the gateway takes it as a new save after the removal and
+  stores it. That is section 6.1's finding: an SDK older than the save line, replaying across a removal, stores the
+  value chosen before it.
+- **When it states nothing at all,** the merged rule takes it as framed before every removal and declines it. That is
+  R4-9: a caller with no frame, saving a new value long after a removal, is refused.
+
+The gateway errs one way or the other depending on what the request states. The cure for both is the same: the client
+states its first attempt's frame (`frameSourceK`, or `removalSeen`) on every attempt. This branch's SDK does. What
+remains is a protocol version, so that the gateway could refuse a request from a client that should state a frame and
+does not. It is not built.
+
+### 8.1 Before the replay rule is turned on: (a) or (b)?
+
+**(a) must be true: every caller that writes a protected database runs an SDK that states its first attempt's frame
+on a replay.**
+- **Which SDKs qualify:** this branch's SDK, and the one branch's SDK from the save line on (`frameSourceK` on every
+  replay).
+- **Why it matters:** an SDK without it replays a save across a removal and the value chosen before the removal is
+  stored (section 6.1). That happens with the rule off as well as on.
+- **What the flip does to the gap:** turning the rule on neither opens nor closes it.
+- **How it is enforced today:** only by deployment. Every service is upgraded before the rule is turned on, and the
+  rollout checks it. The gateway cannot tell an old SDK's replay from a new save.
+
+**(b) is not needed for the rule itself. It is the only way the gateway could enforce (a), and it is stricter.**
+- **The rule (b) would add:** with the rule on, a save that writes a protected value and carries no `removalStamp`
+  (`removalSeen`) is refused.
+- **Who it would turn away:** every SDK that sends no stamp, including the one branch's SDK before this merge, which
+  states `frameSourceK` and so satisfies (a).
+- **When it could be turned on:** only after every service runs this branch's SDK.
+- **The SDK side is already in place:** with the rule on, every answer on a protected database carries
+  `x-triplex-removal-stamp`. The SDK keeps the newest stamp per database and sends it as `removalSeen` on every save
+  after its first request; an optimistic commit reads the stamp first (`ensureRemovalStamp`).
+
+**(b) is a small change. Sketched here, not built in this pass:**
+1. **The check:** in `removal-commit/decline-check!` (a late namespace, so no early file gains a name), with
+   `replay-rule` on, after `already-stored?`. When `(seq (written-protected db input attrs))` and `removalSeen` is
+   not an integer, refuse: `(privacy/failure! 409 "RemovalStampRequired" "A save of a protected value must state the
+   removal stamp it read; read the erasure frontier and send it again")`.
+2. **The same check on the creation rule** (`creation-removal`).
+3. **Exempt** the writes that carry their accounts' tickets instead: settlement frames, deliveries, the import
+   pipeline's server-side frames. They are fenced on the accounts they read (removal-scope), not on a client's frame.
+   Which of these must be exempt is the one decision the sketch leaves open.
+4. **Its own switch,** default off, flipped only after the SDK rollout.
+5. **Tests:** a save without the stamp refused, with it stored; an old SDK's replay across a removal refused (the
+   finding's case); R4-9's save that states nothing refused `RemovalStampRequired` instead of `ErasureReplayDeclined`;
+   every exempt writer unchanged.
+
+About 15 lines and one switch. The cost is the rollout order, not the code.
