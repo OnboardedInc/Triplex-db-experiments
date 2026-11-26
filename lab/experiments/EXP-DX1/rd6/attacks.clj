@@ -385,6 +385,40 @@
               (is (zero? (get-in retracted [:differences :hard] 0)))
               (is (zero? (get-in duplicated [:differences :hard] 0))))))))))
 
+(deftest many-groups-every-position
+  ;; Forty groups of two to six saves on distinct subjects (replacements, retirements alone, mixed, new fields), every
+  ;; position read for every subject.
+  (if-not group/enabled
+    (emit "DX-RD6_SKIP" {:case "many groups" :why "needs TX2_GROUP_COMMIT=1"})
+    (reference/in-scope
+      (fn [name conn]
+        (let [rng (Random. 66) os (vec (for [i (range 16)] (str "acct/rd6/subject/m" i)))
+              pick (fn [xs] (nth xs (.nextInt rng (count xs))))]
+          (doseq [o os] (save! name conn {:set (vec (for [j (range 4)] [o (str ":fz/f" j) (str o "-" j)]))}))
+          (let [replies (vec (for [k (range 40)]
+                               (let [members (take (+ 2 (.nextInt rng 5)) (shuffle os))
+                                     specs (for [o members]
+                                             (let [f (str ":fz/f" (.nextInt rng 6)) live (keys (fz/read-owner name o {"validAt" 5.0}))]
+                                               (case (.nextInt rng 3)
+                                                 0 {:set [[o f (str "g" k)]]}
+                                                 1 (if (seq live) {:retire [[o (pick (vec live))]]} {:set [[o f (str "g" k)]]})
+                                                 {:set [[o f (str "g" k)]] :retire (if (seq live) [[o (pick (vec live))]] [])})))]
+                                 (try (grouped-batch! name conn specs) (catch Exception e [[:error (str e)]])))))
+                top (head conn)
+                db (d/db conn) gp (d/entid db :triplex.group/position)
+                members (if gp (icount (d/datoms db :aevt gp)) 0)
+                r (compare-reads (pinned-reads name conn os (range 1 (inc top)) {:clocks 30}))
+                a (audit conn)]
+            (emit "DX-RD6_ATTACK" {:case "forty groups on sixteen subjects: every position, every subject" :head top
+                                   :groupPositions members :committed (count (filter #(= 200 (first %)) (apply concat replies)))
+                                   :refused (frequencies (map first (remove #(= 200 (first %)) (apply concat replies))))
+                                   :result r :audit (dissoc a :otherRetracting)})
+            (is (empty? (:differences r)) (pr-str (:first r)))
+            (is (> members 40) "the batches must form groups")
+            (is (zero? (:violations a)))
+            (is (zero? (:groupPositionRetractions a)))
+            (is (zero? (:groupPositionDuplicates a)))))))))
+
 ;; ---------------------------------------------------------------- 6. owner head and the fold
 
 (deftest owner-head-and-fold

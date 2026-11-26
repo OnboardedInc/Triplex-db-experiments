@@ -18,7 +18,25 @@ Proposal reviewed: `srv2/PREP.md` section 2 on `origin/exp/DX-SRV2-session-prep`
 
 ## Verdict
 
-__VERDICT__
+**Both on, on three conditions.** At `345f833e4` and `2ce636613` neither option changes a single answer: 0
+differences in every comparison below (targeted tests in 9 writer settings, 178,699 read shapes compared under
+four option sets in the fuzz (714,796 comparisons), 395,010 comparisons between three gateways on one PostgreSQL database while 20,559 saves
+and 226 removals ran). Both options rest on writer invariants that no product writer breaks today (code read for every
+retracting path, and a log audit of every transaction of every test database: 0 violations). Each invariant can be
+broken by a hypothetical writer, and then each option answers wrong; both breaks are reproduced. Conditions:
+
+1. **A standing gate for the invariants**: the log audit (`rd6/attacks.clj` `audit`, or the same check in the stack
+   gates) runs on every merge that changes a writer or adds a write route, and fails on any transaction that retracts
+   a datom of a subject without asserting anything on it other than an index entry, and on any retraction or repeat
+   of a grouped-save position. First uses: the save line's fourth pass (`9f210018f`, landing tonight) and the
+   removal-per-account line before it merges.
+2. **The cut lookup's hardening** (one seek into the position's history; section 5) goes in with the flip, installed
+   from a namespace loaded after the stored functions are compiled (as `cross_index.clj` installs the short-cut's
+   rule today), so no stored function's identity moves.
+3. **A1 measures the cut lookup alone** (its planned `cut-only` arm) beside both on, at the old pin and near the head.
+   The short-cut's own gain at 1 billion has never been measured apart from the cut lookup's; on the Mac toy, adding
+   it to the cut lookup gained nothing. If it is small, the default becomes "cut lookup on, short-cut off", which keeps one invariant instead of two.
+
 
 ## Heads
 
@@ -79,8 +97,8 @@ final run):
 
 | Test | Settings it ran in | Reads compared (each under 4 option sets) | Differences from options off | Short-cut answers |
 | --- | --- | --- | --- | --- |
-| Every retirement shape through the product's writers at every position: a retirement alone on the per-subject and on the general writer, a replacement, an owned entity (a form the subject references) changed alone and then retired (the subject's revision does not move), two owners in one save, the reference retired, a new owner created with a reference beside an existing one, a mixed retirement on the general writer | server, grouped, owner head, serial (narrow revision, reused predecessor, append retirement), general, index | 192 per setting | 0 | 21 per setting |
-| Removal on request before and after the pin, unsealed and sealed: U's value removed before later pins, T's value replaced and both its values removed, S's removed after; every position, every read shape | the same six | 117 per case, 2 cases per setting | 0; and 0 removed values visible at any position under any option set (all five) | 147 per case |
+| Every retirement shape through the product's writers at every position: a retirement alone on the per-subject and on the general writer, a replacement, an owned entity (a form the subject references) changed alone and then retired (the subject's revision does not move), two owners in one save, the reference retired, a new owner created with a reference beside an existing one, a mixed retirement on the general writer | all nine: server, grouped, owner head, serial (narrow revision, reused predecessor, append retirement), general, index, import (whole subject), hints (subject hints, general prefetch), accounts (`TX2_ACCOUNT_CLAIMS=1`) | 192 per setting | 0 | 21 per setting |
+| Removal on request before and after the pin, unsealed and sealed: U's value removed before later pins, T's value replaced and both its values removed, S's removed after; every position, every read shape | all nine | 117 per case, 2 cases per setting | 0; and 0 removed values visible at any position under any option set (all five) | 147 per case |
 | Index entries written and retracted after the pin: declaration, backfill (entries asserted on subjects with no other datom), a stale entry planted, a second backfill whose reconciliation retracts it (an entry-only retraction), a save | index (`TX2_CROSS_INDEX=1`) | 65 | 0 | 105 |
 | Covering owner head and its fold: three replacements per subject, an add-only save (the fold first), a retirement alone, a replacement after the fold | owner head | 234 | 0 (15 root datoms, 3 folds) | 315 |
 | Grouped saves: three groups on distinct subjects, with replacements, retirements alone, mixed, every interior and end position | grouped | 390 | 0 | 126 |
@@ -111,7 +129,12 @@ ones, 12 random owners, every read shape, under all five option sets, then audit
 | fuzz-1 | serial (+ narrow revision, reused predecessor, append retirement) | as above | 1,644 / 720 | 16 | 30,993 × 4 | 0 | 281,592 | 0 |
 | fuzz-3 | accounts-serial (+ `TX2_ACCOUNT_CLAIMS=1`) | as above, second account, the account-ID setting's transition and stale planners | 1,154 / 300 | 10 | 19,549 × 4 | 0 | 157,494 | 0 |
 | fuzz-3 | hints (+ subject hints, general prefetch) | as fuzz-3 | 1,169 / 300 | 10 | 19,590 × 4 | 0 | 173,100 | 0 |
-__FUZZ2_ROWS__
+| fuzz-2 | grouped (`TX2_GROUP_COMMIT=1`, live priority; every save on the general writer) | sealed protection, removals, faults, races, kills, resends | 1,235 / 1,000 | 20 | 38,823 × 4 | 0 | 347,616 | 0 |
+| fuzz-2 | import (whole-subject import bound, removal readback) | as fuzz-2 grouped | 1,249 / 1,000 | 20 | 38,985 × 4 | 0 | 298,113 | 0 |
+| **all** | | | **8,095 / 4,040** | **92** | **178,699 × 4 = 714,796** | **0** | **1,532,625** | **0** |
+
+The grouped fuzz formed no group (its saves arrive one at a time in memory; 0 grouped positions in its logs), so
+grouped interiors are covered by the targeted grouped tests and the grouped fleet phase, not by the fuzz.
 
 Writers that took the serial saves (fuzz-1, server): creation 532, several owners 130, one owner 308, general 619. The
 S5 fuzzer's own comparison (control against candidate) found 0 differences in every run.
@@ -215,19 +238,96 @@ wants the numbers.
 
 ## 6. Verdict on defaults
 
-__DEFAULTS__
+| Default | When it is the right one | Conditions |
+| --- | --- | --- |
+| **Both on (recommended)** | the standing gate is adopted and A1 shows the short-cut worth having | the three conditions of the verdict; this review's harness (attack, fuzz, fleet) rerun on the head that flips the default |
+| Cut lookup on, short-cut off | the standing gate is not adopted; or A1 shows the short-cut adds little; or a planned writer must retract without asserting (a physical clean-up of retired rows, excision, a compaction or rebuild route) | the hardened cut lookup, or the audit's grouped-position half as a gate. The short-cut stays available for the tuned reader and the console |
+| Neither | a writer or route is planned that retracts or reuses grouped-save positions (a rebuild that renumbers positions, a restore that keeps a running peer) and the hardened lookup is not built | — |
+
+The short-cut's hardening (section 5) is not a condition: it closes the gap at about the cost of the read it avoids,
+and the options-off reach route already relies on the same invariant through its parsed-entity cache (finding R6-2),
+so a writer that broke it would have to be caught by the gate in any case.
+
 
 ## Findings
 
-__FINDINGS__
+**R6-1 Medium (design; no defect on the head). The short-cut's exactness rests on a writer invariant nothing checks.**
+Heads `345f833e4`, `2ce636613`. The rule sees assertions only: a transaction that retracts a row of a subject after the
+pin and asserts nothing on it leaves the subject "unchanged", and the short-cut then answers the pin from the current
+database without the row. Reproduce: `clj-run.sh OUT attack server`, test `a-retraction-without-an-assertion` and
+`a-retraction-then-reassertion-and-a-moved-datom` (raw `d/transact` as the hypothetical writer). Numbers: 2 of 2 reads
+differ (the row read and the world); a row moved from U to T: 1 of 12 reads differs (U at the pin); a retraction then
+re-assertion of the same text: 0 (caught). Every product writer asserts the revision (and for grouped saves and
+append retirement a marker) on each subject it retracts from (section 1; audit 0 violations in every run). Smallest
+fix I would accept: condition 1 of the verdict (the standing gate). The hardening in the reader also closes it
+(0 differences) at about one as-of read per short-cut answer.
+
+**R6-2 Info. The options-off reach route already depends on the same invariant.** Heads as above. `entity_cache.clj`
+keys parsed entities by (entity, revision) on every route of `/v2/.../reach` and `reach-many`, pinned or not, with
+every option off. After the same hypothetical retraction, a pinned world read answers correctly cold, and answers the
+head's rows after a head read has cached the entity at its unchanged revision (`offReachColdEqualsWarm: false` in the
+same test). So the risk R6-1 names is not new; the short-cut extends it to `/v1/.../read`, which has no such cache.
+No fix needed for this review; the gate of condition 1 covers both.
+
+**R6-3 Low. The cut lookup's assumption is also a writer invariant.** Heads as above. Grouped-save positions are only
+ever asserted (`group.clj` `materialize` keeps them out of the net of added and retracted datoms) and are unique values;
+no code retracts one. A hypothetical retraction of an interior member's position makes the cut lookup miss the member,
+the read falls through to the group's end, and 2 of 6 reads at that position differ (on and cut lookup alone); the
+same number asserted again on a new entity: 2 of 6. Reproduce: `clj-run.sh OUT attack grouped`, test
+`grouped-saves-and-the-cut-lookup`. Smallest fix: condition 2 (the hardened lookup, 0 differences, one history seek,
++0.87 µs per lookup on the toy) or the grouped half of the gate.
+
+**R6-4 Low (documentation). `rd1/PINNED-1B.md`'s writer audit lists "a fold without moves" as a retraction-only
+transaction that the short-cut would answer from current.** A root always holds at least one text (`owner_root.clj`
+`decode` refuses a root with none), so every fold asserts at least one row on the owner and the short-cut refuses it.
+The table's conclusion (exact) stands; the case does not occur. Fix: one line on that page.
+
+**R6-5 Info (measurement gap). The short-cut's own gain at 1 billion is unmeasured.** The server pair (`rd1/PINNED-1B.md`)
+compared both off against both on. Near the head (1,000 positions behind, so little walk) both on gave 770.7 reads/s
+against 409.0 at one seat, which is the short-cut's; at the old pin the cut lookup's and the short-cut's shares are
+not separated. On the Mac toy, adding the short-cut to the cut lookup gained nothing (`srv2/PREP.md`: cut lookup alone 1.30 ms p50,
+both on 1.56; 4,669 against 4,463 reads/s at 16 seats). Condition 3.
+
+**Observation (not a finding of this review).** During removals, 411 of 395,010 fleet comparisons had one reader refuse
+with `503 ErasureFrontierUnavailable` while the other answered; the refusals fall evenly on the options-on and
+options-off readers (98 against 109) and come from a reader whose peer had not caught up with a just-published removal.
+
 
 ## What held
 
-__HELD__
+- Every product writer at both heads asserts on each subject it retracts from: general, per-subject (one owner, narrow
+  revision, reused predecessor, append retirement), several owners, creation, grouped (both paths), covering owner head
+  and its fold, index entries at commit time, imports, the aging loader. The only retraction with no other datom on a
+  subject is the index backfill's reconciliation of an index entry, which no row answer contains (tested: 0
+  differences, the short-cut answered it from current).
+- Removal on request retracts nothing of the subject, and the removed value is masked at every pin on every option set,
+  unsealed and sealed, before and after the pin (every position, every subject, all five option sets: 270 reads per
+  setting, 0 showed a removed value).
+- A subject whose only change after the pin is in an entity it references (a form changed, then retired): equal answers,
+  the subject answered from current and the form through the past view.
+- A retraction and re-assertion of the same value, and the receiving side of a moved row: caught by the rule.
+- Grouped interiors keep the group-cut slice and never take the short-cut; every interior and end position equal.
+- The account-ID setting's transition, stale planners, unknown outcomes and their fence, resends, kills before and after
+  submit, races, removal races and their replays, a second account (S5 dimensions in the fuzz): 0 differences.
+- One write gateway and three read gateways with different options on one PostgreSQL database while saves, grouped
+  saves, retirements and removals ran: 0 differences in 395,010 comparisons.
+
 
 ## Not tested
 
-__NOT_TESTED__
+- Anything at scale or with storage timings: every run is a Mac toy (heads up to 20,785 positions), in memory except
+  the fleet. The hardening's cost on storage is not measured.
+- Restore from backup (no backup on the in-memory runs), failover promotion, and the HA1 account move: by reading only.
+- Real older builds beside this one; the batch (`/v2/.../batch`) and sweep routes (they call the same
+  `storage/read-rows`, so the same code path, but were not called).
+- The owner head and index entries inside the fuzz (targeted tests only); sealed protection in the fleet (in memory only).
+- The Publish line's own toy stack (its writes go through the SDK's transact route, so through the writers above; no
+  database of its gates was audited).
+- The save line's fourth pass and the removal-per-account line: not on the one branch at the time of writing (their
+  gateway diffs from their merge bases add no retraction of a subject datom; the removal-per-account line retracts a
+  scope counter and writes removal counters on their own entities).
+- Excision (no product writer uses it).
+
 
 ## Reproduce
 

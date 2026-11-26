@@ -148,7 +148,10 @@
     (doseq [[i label] (map-indexed vector (str/split (System/getenv "RD6_PHASES") #","))]
       (when (pos? i)
         (spit (str out "/phase-" i ".request") label)
-        (wait-file (str out "/phase-" i ".ready")))
+        (wait-file (str out "/phase-" i ".ready"))
+        ;; Open the scope on the restarted writer (as the shortcut gate does), so a writer with a new option installs
+        ;; what it needs (the grouped writer's function).
+        (call writer :post "/v1/db/create" {"scope" scope "layout" "lean" "strictRecordClocks" true}))
       (phase! name label (Long/parseLong (or (System/getenv "RD6_SECONDS") "90")) 4))
     ;; Every position, every owner, every reader, after the writes.
     (let [top (head name) owners (vec (sort (keys all-owners))) before (:compared @stats)]
@@ -158,8 +161,12 @@
       (doseq [p (take-nth 5 (sweep-positions top)) part (partition-all 16 owners)]
         (compare-one! name "reach-many" "v2" {"roots" (vec part) "basis" {"validAt" 5.0 "recordedPosition" p} "full" true}))
       (let [scan (into {} (for [[k base] readers] [k (get (:body (call base :get "/v2/admin/scan-stats" nil)) "pinnedShortcut")]))
-            s @stats]
-        (emit "DX-RD6_FLEET" (assoc s :head top :owners (count owners) :sweepComparisons (- (:compared s) before)
+            s @stats
+            ;; The review's log audit on the PostgreSQL database itself (this JVM is a peer too).
+            audit (try (let [conn ((requiring-resolve 'triplex.gateway.main/connection) ((requiring-resolve 'triplex.gateway.main/db-uri) name))]
+                         (dissoc ((requiring-resolve 'rd6-attacks/audit) conn) :otherRetracting))
+                       (catch Exception e {:error (str e)}))]
+        (emit "DX-RD6_FLEET" (assoc s :head top :owners (count owners) :sweepComparisons (- (:compared s) before) :audit audit
                                     :shortcut scan :pass (and (zero? (:differences s)) (pos? (:compared s)))))
         (spit (str out "/finished") "ok")
         (shutdown-agents)

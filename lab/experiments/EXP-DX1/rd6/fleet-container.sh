@@ -87,6 +87,6 @@ pids+=($!)
 status=0
 RD6_OUT=/out RD6_WRITER=http://$addr:8080 RD6_READERS="off=http://$addr:8081,on=http://$addr:8082,tuned=http://$addr:8083" \
   java -Xmx1g -XX:+UseSerialGC -Dtriplex.codec.spec=/opt/gateway/codec-spec.json -cp "/opt/gateway/src:$cp" clojure.main \
-  -i /exp/wfix1/regression.clj -i /exp/w2/wide_gate.clj -i /exp/s5/fuzz.clj -i /exp/rd6/fleet.clj -e '(rd6-fleet/main)' > /out/driver.log 2>&1 || status=$?
+  -i /exp/wfix1/regression.clj -i /exp/w2/wide_gate.clj -i /exp/s5/fuzz.clj -i /exp/rd6/attacks.clj -i /exp/rd6/fleet.clj -e '(rd6-fleet/main)' > /out/driver.log 2>&1 || status=$?
 echo "driver exit $status" >> /out/phases.log
 exit $status
