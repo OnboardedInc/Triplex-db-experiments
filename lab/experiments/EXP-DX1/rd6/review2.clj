@@ -250,6 +250,9 @@
   a's, and the audit."
   [phase]
   (with-redefs [main/uri-template (System/getenv "WFIX1_URI")]
+    ;; each phase is a new JVM: command and block IDs start apart so no phase reuses another's (attempt 1: phase b's
+    ;; first save reused phase a's command ID and was refused)
+    (reset! a/counter (case phase "a" 6000000 "b" 6500000 7000000))
     (let [[name conn] (open-restore-scope) rng (Random. (case phase "a" 1 "b" 2 3))
           spit-edn (fn [f x] (spit (str "/out/" f) (pr-str x)))
           batches! (fn [n tag] (dotimes [k n] (batch! name conn rng restore-os (str tag k))
