@@ -24,7 +24,7 @@ trap 'rm -rf "$ctx"; docker rmi "$pin" >/dev/null 2>&1' EXIT
 git -C "$repo" archive "$head" packages/datomic/gateway/src packages/datomic/src/codec-spec.json \
   lab/experiments/EXP-DX1/wfix1 lab/experiments/EXP-DX1/w2 lab/experiments/EXP-DX1/s3 lab/experiments/EXP-DX1/s4 \
   lab/experiments/EXP-DX1/s5 lab/experiments/EXP-DX1/s6 | tar -x -C "$ctx"
-for b in s6a:a6d02225c base:23b7df344 era2:03bb49cd3 era6:a8fc0276b merged:f17410ed5; do
+for b in s6a:a6d02225c base:23b7df344 era2:03bb49cd3 era6:a8fc0276b merged:f17410ed5 merged2:9fe2e5f02; do
   name=${b%%:*} commit=${b#*:}
   mkdir -p "$ctx/builds/$name"
   git -C "$repo" archive "$commit" packages/datomic/gateway/src packages/datomic/src/codec-spec.json | tar -x -C "$ctx/builds/$name"

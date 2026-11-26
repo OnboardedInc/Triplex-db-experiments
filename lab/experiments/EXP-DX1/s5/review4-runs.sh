@@ -30,6 +30,9 @@ case $lane in
     step stacks
     heavy stack-transition bash lab/experiments/EXP-DX1/s5/stack3.sh "$out/stack-transition" stack3-run.sh
     S5_STACK_EXTRA="TX2_PREDECESSOR_LOOKUP=0" heavy stack-transition-nopred bash lab/experiments/EXP-DX1/s5/stack3.sh "$out/stack-transition-nopred" stack3-run.sh ;;
+  m)
+    # The second trial merge (9fe2e5f02, the second image): this head's decline checks kept on the replay rule's off path.
+    step merged2; S5_ONLY=r22 S5_BUILD=merged2 clj merged2-r22 attack3 "era6-rule-off era6-rule-on era6-rule-off-general era6-rule-on-general" ;;
   w)
     # The window stacks (the second image: its first runner started the profile build with options it refuses).
     heavy stack-window bash lab/experiments/EXP-DX1/s5/stack3.sh "$out/stack-window" stack5-run.sh
