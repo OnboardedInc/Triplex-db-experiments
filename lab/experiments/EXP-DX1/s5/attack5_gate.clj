@@ -119,7 +119,11 @@
   (when (run? "guard")
     (reference/in-scope
       (fn [name conn]
-        (let [a (str "g" (swap! counter inc)) _ (seed! name conn a) _ (protected! name) _ (turn-on! conn)
+        (let [a (str "g" (swap! counter inc)) _ (protected! name) _ (seed! name conn a)
+              S (str "acct/" a "/subject/s")
+              ;; A protected value the removal below removes.
+              _ (reference/send name (save conn {:operation (op) :facts [{:owner S :field ":p/secret" :type :string :value "secret" :pred nil}]}))
+              _ (turn-on! conn)
               n (atom 0)
               step (fn [label send!]
                      (let [ident (keyword "triplex.write" (str "v-older" (swap! n inc)))
@@ -127,13 +131,12 @@
                            before (boolean (working? (d/db conn) ident))
                            answer (try (send!) (catch Exception e (str "threw " (.getMessage e))))]
                        {:request label :answer answer :workingBefore before :workingAfter (boolean (working? (d/db conn) ident))}))
-              S (str "acct/" a "/subject/s")
               rows [(step "a claim lookup" #(:status (reference/route name "v1" "claim" {"commandId" "nothing" "account" a})))
                     (step "a row read" #(:status (reference/route name "v1" "read" {"entityIds" [S]})))
                     (step "a snapshot" #(:status (reference/route name "v1" "snapshot" {})))
                     (step "a fence" #(:status (reference/route name "v1" "fence" {"operationId" (op)})))
-                    (step "a protection declaration" #(:status (reference/route name "v1" "protection" {"attributes" [":p/other"] "sealed" false})))
-                    (step "a removal on request" #(:status (erase! name (str "rm5-" (swap! counter inc)) [{"entityId" S "attribute" ":p/secret"}])))
+                    (step "a protection declaration" #(let [r (reference/route name "v1" "protection" {"attributes" [":p/secret" ":p/other"] "sealed" false})] [(:status r) (get-in r [:body "code"]) (get-in r [:body "message"])]))
+                    (step "a removal on request" #(let [r (erase! name (str "rm5-" (swap! counter inc)) [{"entityId" S "attribute" ":p/secret"}])] [(:status r) (get-in r [:body "code"]) (get-in r [:body "message"])]))
                     (step "the settings route" #(with-redefs [ac/permitted? true] (:status (reference/route name "v1" "settings" {"accountIds" true}))))
                     (step "a transact request that is not JSON" #(raw-route name "transact" "this is not json"))
                     (step "a save refused by the account check" #(reference/outcome (reference/send name (with-account (save conn {:operation (op) :facts [{:owner "acct/zz/subject/x" :field ":a/f0" :type :string :value "x" :pred nil}]}) a))))
