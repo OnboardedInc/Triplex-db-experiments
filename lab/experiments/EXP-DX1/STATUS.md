@@ -6916,3 +6916,23 @@ Source: builder's report; head checked on `origin/exp/DX-ERA6-removal-on-save-li
 - **Eighth review started 23:38** with the brief `OPUS-ERA3-eighth-review-brief.md`: options off against the one branch; the corrected merge by its own tests; each named expected failure; a ruling on each of the three check changes with a planted fault; whether deployment-only enforcement is acceptable for the replay rule; each switch for a rule held outside the database; the cache change by test on every read route.
 - **Server session, machine A (23:23, spend USD 0.86):** stage done in 34 minutes against 50 to 85 predicted; the scorecard dry run reached its first offer; the first read step started 23:22:52.
 - **Mac disk:** 21 GiB at 23:31; build contexts older than 6 hours trimmed (1.4 GiB) and ten finished evidence folders untouched for a day archived to the Drive archive with verification.
+
+## 2026-11-25 23:48 EST: server session: the flat-goodput check is done on machine A; machine B rented
+
+Sources: machine A's driver; the provider's tools; the orchestrator's own login check on machine B.
+
+- **A1, the flat-goodput check at 1 billion (machine A, session build `fea80dd73`, one reader core, the old pin 87,002, 60 s steps, 0 wrong values and 0 errors in all 9 steps, 24.3 minutes against 30 to 39 predicted):**
+
+  | Arm | 1 seat | 16 seats | 256 seats |
+  | --- | --- | --- | --- |
+  | Both options off, 1 permit | 17.63/s, p50 45.8 ms, p99 112.6 ms | 17.37/s, 889 ms, 1,196 ms | 18.18/s, 14,090 ms, 14,680 ms |
+  | Off, 4 permits | 19.40/s, 41.0, 111.1 | 21.50/s, 754, 963 | 22.00/s, 11,534, 12,714 |
+  | Cut lookup alone | 397.38/s, 1.58, 14.85 | 298.87/s, 43.8, 128.5 | 304.48/s, 811, 1,163 |
+
+- **Against the predictions written before the run:** both off 17 to 22 a second at every seat count: held. Four permits must not reach 40 a second: held (they add 10 to 21%, so the limit is processor time on one core, not the permit). Cut lookup alone 300 to 650 a second and not under 150: held on its "wrong if" at 16 times the control; 16 and 256 seats sit 9 to 10% under the predicted range. The step records no in-memory split.
+- **This reproduces the 2026-11-23 finding on tonight's build:** the flat 18 reads a second came from the pinned-position lookup, and the cut lookup alone removes it.
+- **Next on machine A:** the cut lookup alone at both pins (started 23:47), then the unchanged pair command for both off and both on at both pins, then uncached reads.
+- **Machine B rented 23:47:47 EST** at the archive's site, same type and price; the orchestrator logged in from the Mac before starting its driver (24 threads, two drives). SSH-only firewall attached; its own deadline alert on the Mac is armed for 2026-11-26 18:50. Queue: stage, questions across subjects (ID lists, the exact sweep, the question reader), API-call reads, the commit-time index's backfill and save pair.
+- **A private network for the two-reader step** exists at the provider and is assigned to neither machine: each is assigned at a step boundary on its driver's word, so no switch change lands under a running measurement.
+- **Spend at 23:47:** machine A USD 1.31. Two machines are billing from 23:47:47.
+- **Publish builder finished** (all 200 histories of its last test pass). New open item it names: each due instant's tick writes an event for the whole census, so an account with a million distinct instants gets a million such events; that tick, not the record size, now limits a large account.
