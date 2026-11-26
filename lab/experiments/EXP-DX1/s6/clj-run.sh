@@ -62,6 +62,8 @@ case $mode in
   attack2) files="$s5 -i /exp/s5/attack_gate.clj -i /exp/s5/attack2_gate.clj"; expr="(s5-attack2/main)" ;;
   attack3) files="$s5 -i /exp/s5/attack3_gate.clj"; expr="(s5-attack3/main)" ;;
   installs) files="$s5 -i /exp/s6/installs_gate.clj"; expr="(s6-installs/main)" ;;
+  # [DX-INT5] The fourth review's attacks (s5/attack4_gate.clj uses s5/attack3_gate.clj's helpers), as s5/clj-run3.sh.
+  attack4) files="$s5 -i /exp/s5/attack3_gate.clj -i /exp/s5/attack4_gate.clj"; expr="(s5-attack4/main)" ;;
   ids) files="$s5 -i /exp/s6/stored_ids_gate.clj"; expr="(s6-ids/main)" ;;
   owners) files="-i /exp/s3/owners_gate.clj -i /exp/s6/gates_main.clj"; expr="(s6-gates/run (quote owners-gate))" ;;
   create) files="-i /exp/s3/owners_gate.clj -i /exp/s4/create_gate.clj -i /exp/s6/gates_main.clj"; expr="(s6-gates/run (quote create-gate))" ;;
@@ -85,7 +87,7 @@ for entry in $wanted; do
       mkdir -p /tmp/erasure && cd /opt/datomic && java -Xmx2g -XX:+UseSerialGC -Dtriplex.codec.spec=/opt/gateway/codec-spec.json \
         -cp \"/opt/gateway/src:\$(bin/classpath)\" clojure.main -i /exp/wfix1/regression.clj -i /exp/w2/wide_gate.clj $files \
         -e '$expr'" > "$out/$mode-$entry.log" 2>&1 || status=1
-  echo "$entry: $(grep -E '^DX-S[56]_RESULT ' "$out/$mode-$entry.log" || echo 'no summary')"
+  echo "$entry: $(grep -E '^DX-S([56]|5R4)_RESULT ' "$out/$mode-$entry.log" || echo 'no summary')"
 done
 echo "DX-S6_CLJ_EXIT $status"
 exit "$status"
