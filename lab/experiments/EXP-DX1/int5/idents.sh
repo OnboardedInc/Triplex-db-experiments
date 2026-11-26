@@ -7,7 +7,10 @@ root=$(cd "${1:?tree}" && pwd); out=${2:?out}
 image=${3:-sha256:58970a61d426654f5011613e885675c35089d3c8282d713e8a4578775a739a15}
 image=$(docker image inspect --format '{{.Id}}' "$image")
 here=$(cd "$(dirname "$0")" && pwd)
-name=tx2-dxint5-idents-$$
+# [DX-RD7] INT5_IDENTS_PREFIX names this caller's containers (default as before), so one agent's cleanup by prefix
+# never matches another's.
+name=${INT5_IDENTS_PREFIX:-tx2-dxint5-idents}-$$
+[[ $name =~ ^tx2-dx[a-z0-9-]+$ ]] || { echo "idents.sh: bad INT5_IDENTS_PREFIX" >&2; exit 2; }
 : > "$out"
 server="TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1"
 settings=(
