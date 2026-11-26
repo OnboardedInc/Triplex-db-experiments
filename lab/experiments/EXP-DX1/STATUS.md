@@ -6956,7 +6956,7 @@ Source: machine A's driver. Session build `fea80dd73`, one reader core, 60 s ste
 - **Eighth removal review (interim, 00:04):** no removed value answered from the entity cache on any read route, on the gateway that took the removal or on one that learned of it on the repair path (0 violations; a sensitivity arm with the mask planted out sees the value); the corrected merge confirmed (the merge as first proposed stores 20 of 20, this head 0).
 - **Read hardening (interim, 00:16):** identities 70 of 70 in 13 settings; both planted breaks fail the audit gate and a clean production gate passes (942 transactions, 0 violations); audits of the one branch, the save line's fourth pass and the removal line show 0 violations.
 
-## 2026-11-26 00:26 EST: eighth removal review of `99359fa93`: fit to merge with every option off; the merge started
+## 2026-11-26 00:23 EST: eighth removal review of `99359fa93`: fit to merge with every option off; the merge started
 
 Source: reviewer's final report; page `era3/REVIEW-8.md` on `origin/exp/DX-ERA3-removal-review` at `0734e8f65`, checked on the remote.
 
@@ -6970,4 +6970,4 @@ Source: reviewer's final report; page `era3/REVIEW-8.md` on `origin/exp/DX-ERA3-
 - **Rulings:** the relaxed fuzzer check is right (a planted fault fails it 226 times in 2,000 schedules, 0 without the fault); the five updated rule-off checks expect the one branch's own answers; M3 is closed with options off. The readiness page lists the mechanism of tonight's answer changes but not the answers a caller sees.
 - **Older SDKs:** deployment alone is acceptable for turning the replay rule on (the flip neither opens nor closes the gap) but not as the only guard: a counting check ships with the flip; a refusing check, as a one-way value in the database, before callers outside this SDK write a protected database.
 - **The owner's three decisions of 2026-11-25:** (1) refuse a save prepared before a removal: not ready until S1's keys agree; (2) the 30-second completion worker: ready; (3) refuse protected fields on an unsealed database outside tests: ready only with the SDK's default changed to sealed and harness overrides.
-- **Started 00:26:** a merge agent (task file `OPUS-INT6-merge-removal-options-off.md`) brings `99359fa93` onto the one branch with every option off under the standing gates, then turns on switch (ii) as its own gated commit. The removal builder's ninth pass (task file `OPUS-ERA6-ninth-pass-review8-findings.md`) starts when an agent place frees.
+- **Started 00:22:** a merge agent (task file `OPUS-INT6-merge-removal-options-off.md`) brings `99359fa93` onto the one branch with every option off under the standing gates, then turns on switch (ii) as its own gated commit. The removal builder's ninth pass (task file `OPUS-ERA6-ninth-pass-review8-findings.md`) starts when an agent place frees.
