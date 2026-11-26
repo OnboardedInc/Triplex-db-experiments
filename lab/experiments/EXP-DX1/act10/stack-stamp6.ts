@@ -12,7 +12,7 @@ import { W0, canonical, sha256 } from "../../../bench/lib/w0-world.ts";
 import { keyFor } from "../scale1/decision/plan.ts";
 import { fact, openStore, type HeldSource, type Store } from "../actv-lazy/store.ts";
 import { worldsAt } from "../actv-lazy/decision.ts";
-import { JoinedAccount } from "../actv-lazy/join/account.ts";
+import { JoinedAccount, upgradeCheck } from "../actv-lazy/join/account.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
 import { Settlement } from "../actv-lazy/join/settlement.ts";
 
@@ -88,6 +88,7 @@ export async function act8StampStack(c: Ctx) {
     return { subject: w?.subject, facts: w?.facts.length };
   });
   await step("statusOwed", () => a.stampStatus());
+  await step("upgradeCheckOwed", async () => (await upgradeCheck([a], (l) => console.log(l))).owing);
   await step("restampOwed", () => a.restamp());
   // 3. The old build finishes R2; this build re-stamps.
   await step("oldSettle2", oldSettle);
@@ -103,6 +104,7 @@ export async function act8StampStack(c: Ctx) {
     return out;
   });
   await step("statusAfter", () => a.stampStatus());
+  await step("upgradeCheckAfter", async () => (await upgradeCheck([a], (l) => console.log(l))).owing);
   const r = results;
   const typed = (x: any) => x?.ok === false && x.error === "CompilerChanged" && x.stored === old.selector && x.running === selector;
   r.checks = {
@@ -119,6 +121,8 @@ export async function act8StampStack(c: Ctx) {
     newPublishes: r.newPublishR3?.ok && r.newSettle3?.ok,
     eventsReadable: r.newEvents?.ok && r.newEvents.value.length === 3,
     current: r.statusAfter?.ok && r.statusAfter.value.current,
+    upgradeCheckListsOwing: r.upgradeCheckOwed?.ok && canonical(r.upgradeCheckOwed.value) === canonical([account]),
+    upgradeCheckClearAfter: r.upgradeCheckAfter?.ok && canonical(r.upgradeCheckAfter.value) === canonical([]),
   };
   r.headBefore = headBefore;
   r.pass = r.selectorsDiffer && Object.values(r.checks).every(Boolean);

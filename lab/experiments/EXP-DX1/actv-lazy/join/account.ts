@@ -132,16 +132,38 @@ export type Stamp = { compiler: string; inputs: string; evaluator: string; seque
  * recorded, scheduled releases not yet activated. Empty: it owes nothing. */
 export type Owed = { values: number[]; notices: { recordedThrough: number; tail: number } | null; scheduled: string[] };
 /** [Y2] A re-stamp refused because the account owes something under its stamp (finish it on the stamp's build). */
+/** [Y2] What an account owes under its stamp, in words ("" when nothing). */
+export const describeOwed = (owes: Owed) =>
+  [owes.values.length ? "values of releases " + owes.values.join(", ") : "",
+    owes.notices ? "notices of events " + (owes.notices.recordedThrough + 1) + " to " + owes.notices.tail : "",
+    owes.scheduled.length ? "scheduled releases at " + owes.scheduled.join(", ") : ""].filter(Boolean).join("; ");
 export class RestampRefused extends Error {
   readonly owes: Owed;
   constructor(owes: Owed) {
-    super("Re-stamp refused: the account owes work under its stamp: " +
-      (owes.values.length ? "values of releases " + owes.values.join(", ") + "; " : "") +
-      (owes.notices ? "notices of events " + (owes.notices.recordedThrough + 1) + " to " + owes.notices.tail + "; " : "") +
-      (owes.scheduled.length ? "scheduled releases at " + owes.scheduled.join(", ") + "; " : "") +
-      "finish them on the build that holds the stamp, then re-stamp");
+    super("Re-stamp refused: the account owes work under its stamp: " + describeOwed(owes) +
+      "; finish them on the build that holds the stamp, then re-stamp");
     this.owes = owes;
   }
+}
+/**
+ * [DX-ACT8, fifth review Y2] The upgrade check, run by the new build before it takes an account's traffic: one line per
+ * account (current; ready to re-stamp; or what it owes), then the accounts that owe. An account that owes is finished
+ * on the build that holds its stamp (its values settled, its notices recorded, its scheduled releases past), then
+ * re-stamped (`restamp`); until then the new build refuses its Publish and settlement with `CompilerChanged`, and its
+ * saves and reads go on.
+ */
+export async function upgradeCheck(accounts: readonly JoinedAccount[], log: (line: string) => void = console.log) {
+  const rows: (Awaited<ReturnType<JoinedAccount["stampStatus"]>> & { verdict: string })[] = [];
+  for (const a of accounts) {
+    const s = await a.stampStatus();
+    const verdict = !s.enrolled ? "not enrolled" : s.current ? "current" : s.nothingOwed ? "ready to re-stamp" : "owes " + describeOwed(s.owes);
+    rows.push({ ...s, verdict });
+    log("[upgrade-check] " + s.account + ": stamped " + (s.stored ?? "-").slice(0, 12) + ", running " + s.running.slice(0, 12) + ": " + verdict);
+  }
+  const owing = rows.filter((r) => r.enrolled && !r.nothingOwed && !r.current).map((r) => r.account);
+  log("[upgrade-check] " + rows.length + " accounts; " + owing.length + " owe work under another build's stamp" +
+    (owing.length ? " (finish them on that build first): " + owing.join(", ") : ""));
+  return { rows, owing };
 }
 export type Marker = {
   joined: string;

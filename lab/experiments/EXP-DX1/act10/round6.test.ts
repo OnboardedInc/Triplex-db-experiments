@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { W0, canonical } from "../../../bench/lib/w0-world.ts";
 import { worldsAt } from "../actv-lazy/decision.ts";
-import { JoinedAccount } from "../actv-lazy/join/account.ts";
+import { JoinedAccount, upgradeCheck } from "../actv-lazy/join/account.ts";
 import type { Permits } from "../actv-lazy/join/account-settings.ts";
 import { Archive } from "../actv-lazy/join/archive.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
@@ -136,6 +136,8 @@ async function upgrade(A: Build) {
   out.save = (await outcome(store.commit("r6-save-" + serial, "save", [fact(w.held.prefix + "r6-probe", ":r6/probe", "after-upgrade")], await store.head()))).ok;
   out.read = (await worldsAt(store, store.profile, [W0.placementId(0)], { tx: await store.head(), validTime }))[0]!.facts.length;
   out.statusOwed = await w.account(here, "b-status-1").stampStatus();
+  const lines: string[] = [];
+  out.checkOwed = { ...(await upgradeCheck([w.account(here, "b-check-1")], (l) => lines.push(l))), rows: undefined, lines };
   out.restampOwed = await outcome(w.account(here, "b-restamp-1").restamp());
   out.bSettleOwed = await settle(w, here, "b-settle-owed");
   // A finishes what the account owes; then the re-stamp.
@@ -152,6 +154,7 @@ async function upgrade(A: Build) {
   out.values = await valuesStatus(w);
   out.oracle = await oracle(w);
   out.statusAfter = await w.account(here, "b-status-3").stampStatus();
+  out.checkAfter = (await upgradeCheck([w.account(here, "b-check-2")], () => {})).owing;
   return { w, out };
 }
 
@@ -159,7 +162,7 @@ const STAMP_A = process.env.STAMP_A, STAMP_B = process.env.STAMP_B;
 for (const [variant, root] of [["one byte outside behaviour (a comment in account.ts)", STAMP_A], ["a behaviour change (a range boundary in a declaration table)", STAMP_B]] as const)
   test("R6-1: an upgrade from a build with " + variant + ": typed refusal, re-stamp refused while owed, re-stamp, both builds' notices exact", { skip: !root }, async () => {
     const A = await build(variant, root!);
-    const { out } = await upgrade(A);
+    const { w, out } = await upgrade(A);
     console.log("[R6-1 " + variant + "] " + JSON.stringify(out, (_k, v) => (typeof v === "bigint" ? String(v) : v)));
     const typed = (x: any) => x.ok === false && x.error === "CompilerChanged" && x.stored === A.selector && x.running === selector;
     assert(out.selectorsDiffer, "the two builds have different stamps");
@@ -171,6 +174,9 @@ for (const [variant, root] of [["one byte outside behaviour (a comment in accoun
     const owed = out.statusOwed as any;
     assert(!owed.current && !owed.ready && owed.stored === A.selector && canonical(owed.owes.values) === canonical([2]) && owed.owes.notices?.tail === 2);
     assert((out.restampOwed as any).error === "RestampRefused" && canonical((out.restampOwed as any).owes.values) === canonical([2]), "the re-stamp refuses while R2 is owed");
+    const check = out.checkOwed as any;
+    assert(canonical(check.owing) === canonical([w.held.account]) && /owes values of releases 2; notices of events 2 to 2/.test(check.lines[0]), "the upgrade check prints the account that owes, and what");
+    assert.equal(canonical(out.checkAfter), canonical([]), "after the re-stamp the upgrade check lists no account that owes");
     assert((out.bSettleOwed as string[]).every((x) => /CompilerChanged/.test(x)), "this build's settler refuses the owed release");
     assert((out.aSettle2 as string[]).every((x) => /stored|superseded|recorded/.test(x)), "the stamp's build finishes it");
     assert((out.statusReady as any).ready, "the account owes nothing: ready to re-stamp");

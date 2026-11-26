@@ -871,6 +871,13 @@ export async function runHeld(
         await act8StampStack({ out, s, descriptor, attempt: peer.attempt });
         return;
       }
+      // [DX-ACT8, sixth round] DX_ACT10_STAMP=1 (with OLD_ROOT): the fifth review's own stack run (act10/stack-stamp.ts,
+      // the reviewer's file as committed at 6c0498258) instead.
+      if (process.env.DX_ACT10_STAMP === "1") {
+        const { act10Stamp } = await import("../../act10/stack-stamp.ts");
+        await act10Stamp({ out, s, descriptor, attempt: peer.attempt });
+        return;
+      }
       const { act10Stack } = await import("../../act10/stack-part.ts");
       await act10Stack({ out, s, descriptor, attempt: peer.attempt });
       return;
