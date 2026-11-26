@@ -614,7 +614,32 @@
 (defn handler [request]
   (try (trace/handler route-handler-guarded request)
        (catch Throwable t (response 500 {:code "GatewayError" :message ((requiring-resolve 'triplex.gateway.reply/message) t nil)}))))
+;; [DX-LR1] The namespaces a request or a worker resolves lazily (requiring-resolve) on a path that can run in two
+;; threads at once, loaded once by serve! before the gateway starts a thread of its own or accepts a request.
+;; Why: requiring-resolve resolves first and requires only when that fails, and the compiler interns a defn's var
+;; before it compiles the body and binds it. So at a namespace's first use a second thread can get the var while the
+;; first is still loading the namespace, and call it unbound: an IllegalStateException in the answer path itself
+;; (reply/message, outcome/kind), which turns a typed refusal into 503 OutcomeUnknown, 500, or, when every lookup loses,
+;; Jetty's own error page with the exception's text (the derived-copies builder's series: 4 of 657,579 oracles).
+;; Loaded here, after every namespace main requires: a stored function's code is built when its own namespace loads,
+;; before this point, so no stored-function identity moves (lr1/gate: identities against the one branch).
+;; Rejected: requiring them from an early namespace (it moves the stored functions' generated names, as on 2026-11-25);
+;; a lock around every lookup (every answer would pay it); catching the unbound call (the catch is the path that fails).
+(def answer-path-namespaces
+  "Every gateway namespace resolved lazily at request or worker time that main does not load: the reply texts, the
+  outcome rule, the failure lines, the account IDs (its install hooks are the ones a scope's open loads first; with
+  the account setting absent they transact exactly what they are given), the PostgreSQL key pool, the import bound."
+  '[triplex.gateway.reply triplex.gateway.outcome triplex.gateway.failures triplex.gateway.account-claims
+    triplex.gateway.key-pool triplex.gateway.import-bound])
+
+(defn load-answer-path!
+  "[DX-LR1] Loads `answer-path-namespaces`; idempotent. serve! calls it first."
+  []
+  (doseq [n answer-path-namespaces] (require n)))
+
 (defn serve! [serve-handler port]
+  ;; [DX-LR1] before the key-shred worker starts and before Jetty accepts a request
+  (load-answer-path!)
   (envelope/start!)
   (d/create-database (db-uri "tx2-health"))
   ;; [EXP-DX1] Why: synchronize existing databases before accepting HTTP, not from their first read.

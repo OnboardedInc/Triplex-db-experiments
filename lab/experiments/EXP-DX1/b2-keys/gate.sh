@@ -28,6 +28,14 @@
 #           every check (the base's result is printed as the reference); and b2-keys/paired.clj on the PostgreSQL
 #           authority, base and this worktree, with removals and with every removal left out, unsealed and sealed,
 #           compared as in the paired phase (which runs on the file authority).
+#   lr1     [DX-LR1] the answer path's load race (lr1/race.clj), each case in a fresh JVM: on the base the lost race's
+#           states must break the answer (lost-once: the typed 409 answered otherwise; lost-always: the exception leaves
+#           the handler and a real Jetty answers its HTML page with the exception's text); on this worktree, with
+#           main/load-answer-path! run first as serve! does, both must answer the typed 409, a battery of failing
+#           requests must load no gateway namespace, and the two-thread first-use loop must answer only the typed 409.
+#           And the stored-function identities taken after the answer-path namespaces load (lr1/idents-hook.clj), base
+#           against this worktree, in every writer setting of era3/idents7.sh, and account-claims loaded first against
+#           loaded in the hook's order.
 # The paired native logs are compared after paired.clj's normalisation, not as raw bytes: :db/txInstant datoms are
 # left out; every clock value (a number from 1e12 to 1e14, a 13-digit number, a float clock, a hex double clock)
 # becomes CLOCK or HEXCLOCK; the database name becomes DB; the random removal transaction IDs, every UUID and every
@@ -39,7 +47,7 @@ out=${1:?absolute new output directory}; base=${2:-1ed2650bd}
 : "${DOCKER_HOST:?set DOCKER_HOST to the lab VM docker socket}"
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 x=$repo/lab/experiments/EXP-DX1
-phases=${B2_GATE_PHASES:-b2 paired suites scenarios lines n1}
+phases=${B2_GATE_PHASES:-b2 paired suites scenarios lines n1 lr1}
 mkdir -p "$out/this" "$out/base" "$out/lab"
 git -C "$repo" rev-parse HEAD > "$out/source"
 git -C "$repo" status --porcelain -- packages/datomic/gateway lab/experiments/EXP-DX1/b2-keys > "$out/dirty"
@@ -47,7 +55,7 @@ cp -R "$repo/packages/datomic/gateway/src" "$out/this/src"; cp "$repo/packages/d
 git -C "$repo" archive "$base" packages/datomic/gateway/src packages/datomic/src/codec-spec.json | tar -x -C "$out/base"
 mv "$out/base/packages/datomic/gateway/src" "$out/base/src"; cp "$out/base/packages/datomic/src/codec-spec.json" "$out/base/codec-spec.json"
 rm -rf "$out/base/packages"; echo "$base" > "$out/base/commit"
-cp "$x/wfix1/regression.clj" "$x/b2-keys/paired.clj" "$x/b2-keys/lines.clj" "$out/lab/"
+cp "$x/wfix1/regression.clj" "$x/b2-keys/paired.clj" "$x/b2-keys/lines.clj" "$x/lr1/race.clj" "$x/lr1/idents-hook.clj" "$out/lab/"
 image=${DX_B2_IMAGE_ID:-sha256:21a67288007d1647ad12136acef23ff23c733a911b54695835a36440bc7a08be}
 [[ $(docker image inspect --format '{{.Id}}' "$image") == "$image" ]] || { echo "gate.sh: image $image not present" >&2; exit 2; }
 echo "$image" > "$out/image"
@@ -196,6 +204,59 @@ for variant in ["removals", "none"]:
     ok = ok and native and b[1] == t[1]
 sys.exit(0 if ok else 1)
 PY2
+fi
+if [[ $phases == *lr1* ]]; then
+  race='(load-file "/lab/race.clj") (lr1-race/main)'
+  for c in inventory lost-once lost-always hooked; do
+    run "lr1-base-$c" base "$race" -e "LR1_CASE=$c" -e LR1_EXPECT=broken
+    run "lr1-this-$c" this "$race" -e "LR1_CASE=$c" -e LR1_EXPECT=fixed
+  done
+  run lr1-base-loop base "$race" -e LR1_CASE=loop -e LR1_EXPECT=broken -e "LR1_ROUNDS=${LR1_ROUNDS:-200}"
+  run lr1-this-loop this "$race" -e LR1_CASE=loop -e LR1_EXPECT=fixed -e LR1_HOOK=1 -e "LR1_ROUNDS=${LR1_ROUNDS:-200}"
+  grep -h "^LR1" "$out"/lr1-*.log | cut -c1-400
+  for c in inventory lost-once lost-always hooked loop; do
+    for source in base this; do grep -q '^LR1_SUMMARY.*:ok true' "$out/lr1-$source-$c.log" || { echo "LR1 $source $c did not hold"; status=1; }; done
+  done
+  server="TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1"
+  settings=("base:TX2_SUBJECT_SAVE=0" "server:$server" "server-wide:$server TX2_SUBJECT_WIDE=1"
+    "server-wide-hints:$server TX2_SUBJECT_WIDE=1 TX2_SUBJECT_HINTS=1 TX2_GENERAL_PREFETCH=1"
+    "serial-retire:$server TX2_SUBJECT_NARROW_REVISION=1 TX2_SUBJECT_REUSE_PREDECESSOR=1 TX2_SUBJECT_APPEND_RETIREMENT=1"
+    "owner-head:$server TX2_SUBJECT_OWNER_HEAD=1" "several:$server TX2_SUBJECT_WIDE=1 TX2_SUBJECT_SEVERAL_OWNERS=1"
+    "create:$server TX2_SUBJECT_WIDE=1 TX2_SUBJECT_SEVERAL_OWNERS=1 TX2_SUBJECT_CREATE=1"
+    "questions:$server TX2_ID_LISTS=1 TX2_SWEEP=1" "index:$server TX2_CROSS_INDEX=1"
+    "accounts:$server TX2_SUBJECT_WIDE=1 TX2_ACCOUNT_CLAIMS=1")
+  idents='(load-file "/lab/idents-hook.clj")'
+  for entry in "${settings[@]}"; do
+    sname=${entry%%:*} envs=()
+    for kv in ${entry#*:}; do envs+=(-e "$kv"); done
+    run "lr1-idents-base-$sname" base "$idents" "${envs[@]}" > /dev/null
+    run "lr1-idents-this-$sname" this "$idents" "${envs[@]}" > /dev/null
+  done
+  run lr1-idents-base-claims-first base "$idents" -e LR1_ORDER=claims-first -e TX2_SUBJECT_SAVE=1 -e TX2_SUBJECT_NUMERIC_OWNER=1 -e TX2_SUBJECT_ORDERED_IDS=1 > /dev/null
+  python3 - "$out" <<'PYL' || status=1
+import sys, json, glob, os
+out = sys.argv[1]
+def dump(name):
+    for l in open(f"{out}/{name}.log", errors="replace"):
+        if l.startswith("DX-S3_IDENTS "): return json.loads(l.split(" ", 1)[1])
+    return None
+ok = True
+for f in sorted(glob.glob(f"{out}/lr1-idents-base-*.log")):
+    s = os.path.basename(f)[len("lr1-idents-base-"):-4]
+    if s == "claims-first": continue
+    b, t = dump(f"lr1-idents-base-{s}"), dump(f"lr1-idents-this-{s}")
+    if b is None or t is None: ok = False; print("LR1_IDENTS", s, "missing dump"); continue
+    differ = [k for k in b if k in t and b[k] != t[k]]; missing = [k for k in b if k not in t]; new = [k for k in t if k not in b]
+    print("LR1_IDENTS", s, f"{len(b)} before, {len(t)} after; equal {len(b) - len(differ) - len(missing)}; differ {len(differ)}; missing {len(missing)}; new keys {len(new)}", differ[:3], missing[:3])
+    ok = ok and not differ and not missing
+cf, hs = dump("lr1-idents-base-claims-first"), dump("lr1-idents-this-server")
+claims = sorted(k for k in cf if k.startswith("triplex.gateway.account-claims/"))
+same = cf is not None and hs is not None and all(cf.get(k) == hs.get(k) for k in claims)
+print("LR1_IDENTS account-claims loaded first (base) against loaded by the hook (this):", "equal" if same else "DIFFERENT", f"({len(claims)} keys)")
+ok = ok and same and len(claims) > 0
+print("LR1_IDENTS", "OK" if ok else "MISMATCH")
+sys.exit(0 if ok else 1)
+PYL
 fi
 rm -rf "$out/this/src" "$out/base/src"
 exit "$status"
