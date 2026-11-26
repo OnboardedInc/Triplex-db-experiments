@@ -208,10 +208,21 @@ act7_prepare() { PREPARED_PGDATA=$SCRATCH/act7-prepared-$$ PREPARED_WAL=$WAL_ROO
   bash lab/experiments/EXP-DX1/actv-lazy/act7/prepare-copy.sh "$1" "$PREPARED_PGDATA" "$PREPARED_WAL"; }
 act7_discard() { rm -rf --one-file-system "$PREPARED_PGDATA" "$PREPARED_WAL"; }
 held() {  # the rest of the environment comes from the caller; $TEMPLATE and $DX_LAZY_OUT set
-  env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" "$@" \
+  # [DX-SRV2] The held account's compiler stamp (srv2/stamp.ts): printed before the run; when the runner writes
+  # held-setup.json (at enrolment, before the first Publish window) the stored stamp is compared with this build's and
+  # a difference stops the runner before any Publish (the runner's own assertion in account.ts is the second stop).
+  "$BUILD/tools/bin/node" --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/srv2/stamp.ts build
+  setsid env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" "$@" \
     bash lab/experiments/EXP-DX1/actv-lazy/join/held-server.sh \
     "$COMMIT" "$SCALE1_IMAGE" "$SCALE1_IMAGE_SHA256" "$SCALE1_TRANSFER_SHA256" \
-    "$TEMPLATE" "$PREPARED_PGDATA" "$PREPARED_WAL" "$DX_LAZY_OUT"
+    "$TEMPLATE" "$PREPARED_PGDATA" "$PREPARED_WAL" "$DX_LAZY_OUT" & local runner=$! setup=
+  while kill -0 "$runner" 2>/dev/null && [[ -z $setup ]]; do
+    setup=$(find "$DX_LAZY_OUT" -name held-setup.json -print -quit 2>/dev/null); sleep 2
+  done
+  if [[ -n $setup ]] && ! "$BUILD/tools/bin/node" --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/srv2/stamp.ts check "$setup"; then
+    kill -TERM -- "-$runner" 2>/dev/null; wait "$runner"; return 4
+  fi
+  wait "$runner"
 }
 # The product's save path on the fast writers (S2's arm C) and the card's read options; A2 decides READ_AHEAD_OFF.
 product_opts="DX_S2_PRODUCT=1 TX2_SUBJECT_WIDE=1 TX2_SUBJECT_HINTS=1 TX2_GENERAL_PREFETCH=1"
@@ -398,7 +409,8 @@ b7)  # the index question bench
 a5)  # Publish at 100,000 subjects on the aged database: ACT3's twelve windows, the probe reading at least each receipt
   if ((dry)); then run_step -- bash -c "set -e; mkdir -p '$EVID/phases'
       printf 'DX_ACT3_SETTLE=0\nDX_ACT3_AT_LEAST=1\n' > '$EVID/phases/a5.env'
-      cd '$repo'; node lab/bin/heavy.mjs --label DX-SRV2-dry-a5 -- bash lab/experiments/EXP-DX1/actv-lazy/act7/miniature.sh '$EVID/miniature' a5"
+      cd '$repo'; node lab/bin/heavy.mjs --label DX-SRV2-dry-a5 -- bash lab/experiments/EXP-DX1/actv-lazy/act7/miniature.sh '$EVID/miniature' a5
+      node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/srv2/stamp.ts check \$(find '$EVID/miniature' -name held-setup.json -print -quit)"
   else server_env; run_step -- bash -c "set -e; $(declare -f act7_prepare act7_discard held)
       TEMPLATE=$AGED_PGDATA_SOURCE; act7_prepare \$TEMPLATE; export TEMPLATE DX_LAZY_OUT=$OUT_ROOT/a5/publish-1b
       held DX_ACT7_AGED_BUNDLE=$AGE_HANDOFF_JSON DX_ACT7_AGED_PIN=$AGE_HANDOFF_SHA256 DX_HELD_PROFILE=server-32 DX_ACT3_SETTLE=0 DX_ACT3_AT_LEAST=1 DX_HELD_MINUTES=120
@@ -406,7 +418,8 @@ a5)  # Publish at 100,000 subjects on the aged database: ACT3's twelve windows, 
 a6)  # optional: settlement beside saves, three accounts at 1 billion (ACT7 (b))
   if ((dry)); then run_step -- bash -c "set -e; mkdir -p '$EVID/phases'
       printf 'DX_ACT5_LIVE=1\nTX2_SETTLE_FRAMES=bytes\nDX_ACT7_TAPE=production-S:394\nTRIPLEX_DATOMIC_BOUNDED_JOURNAL=1\nDX_ACT7_LEDGER_EXAMINE=3\nDX_ACT7_FRAME_COUNTERS=1\nDX_ACT7_STREAM_CHECK=1\nTX2_SETTLE_CONTROL=1\nDX_ACT7_CONTROL=1:0.5:2:300:3\nDX_ACT5_ACCOUNTS=3\nDX_ACT5_CASES=control:progress:bytes:none:23.5:1:::8,many:progress:bytes:large:23.5:1:multi:admission:12\n' > '$EVID/phases/a6.env'
-      cd '$repo'; node lab/bin/heavy.mjs --label DX-SRV2-dry-a6 -- bash lab/experiments/EXP-DX1/actv-lazy/act7/miniature.sh '$EVID/miniature' a6"
+      cd '$repo'; node lab/bin/heavy.mjs --label DX-SRV2-dry-a6 -- bash lab/experiments/EXP-DX1/actv-lazy/act7/miniature.sh '$EVID/miniature' a6
+      node --no-warnings --experimental-transform-types lab/experiments/EXP-DX1/srv2/stamp.ts check \$(find '$EVID/miniature' -name held-setup.json -print -quit)"
   else server_env; run_step -- bash -c "set -e; $(declare -f act7_prepare act7_discard held)
       TEMPLATE=$AGED_PGDATA_SOURCE; act7_prepare \$TEMPLATE; export TEMPLATE DX_LAZY_OUT=$OUT_ROOT/a6/act7-run2-3
       held TX2_SETTLE_FRAMES=bytes DX_ACT3_SETTLE=0 DX_ACT5_LIVE=1 DX_ACT5_SERVER=1 DX_ACT7_FRAME_COUNTERS=1 \
