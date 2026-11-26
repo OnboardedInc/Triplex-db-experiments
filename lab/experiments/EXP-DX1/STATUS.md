@@ -6971,3 +6971,37 @@ Source: reviewer's final report; page `era3/REVIEW-8.md` on `origin/exp/DX-ERA3-
 - **Older SDKs:** deployment alone is acceptable for turning the replay rule on (the flip neither opens nor closes the gap) but not as the only guard: a counting check ships with the flip; a refusing check, as a one-way value in the database, before callers outside this SDK write a protected database.
 - **The owner's three decisions of 2026-11-25:** (1) refuse a save prepared before a removal: not ready until S1's keys agree; (2) the 30-second completion worker: ready; (3) refuse protected fields on an unsealed database outside tests: ready only with the SDK's default changed to sealed and harness overrides.
 - **Started 00:22:** a merge agent (task file `OPUS-INT6-merge-removal-options-off.md`) brings `99359fa93` onto the one branch with every option off under the standing gates, then turns on switch (ii) as its own gated commit. The removal builder's ninth pass (task file `OPUS-ERA6-ninth-pass-review8-findings.md`) starts when an agent place frees.
+
+## 2026-11-26 00:54 EST: server session: reads of subjects not in memory against the 300 ms bar; the whole-account sweep at 1 billion on the corrected program
+
+Sources: both drivers. Session build `fea80dd73`. Every window below had 0 wrong values and 0 errors. Session spend about USD 3.7 at 00:53.
+
+**Machine A, uncached reads (random subjects, 256 seats, prefetch at 3 permits, 90 s windows; 29.2 minutes against 50 to 60 predicted).** Every sampled exchange was classed not in memory (0 in memory of 3,262, 3,510 and 3,193 sampled), with 13.3 to 13.5 storage reads an exchange.
+
+| Configuration | Near the head | Near the head with saves | The old pin |
+| --- | --- | --- | --- |
+| Prefetch, 3 permits | 1,626.1/s, p99 284.7 ms | 1,638.9/s, 264.2 ms | 1,367.6/s, 307.2 ms |
+| The same, read-ahead off | 1,776.4/s, 282.6 ms | 1,738.4/s, 249.9 ms | 1,469.9/s, 278.5 ms |
+| The same, 1.5 GiB cache | 1,623.9/s, 299.0 ms | 1,546.2/s, 288.8 ms | 1,364.9/s, 321.5 ms |
+
+- Against the owner's bar of 300 ms for subjects not in memory: met in 7 of 9 windows, missed by 7 ms and by 22 ms at the old pin. Reader 2.72 to 2.80 of its 3 cores; PostgreSQL 0.40 to 0.44; S commit p99 60.2 ms beside the reads (50 to 70 predicted: held).
+- **Predictions:** read-ahead as the cause of the excess at 1 billion: **refuted** (2,100 to 2,600 a second predicted with it off; loads a subject equal within 0.05). The old-pin window at least 1,450 a second: wrong, 9% under. The smaller cache within 6% in reads a second: held; its loads a subject 0.10 to 0.26 higher (0 to 0.15 predicted: wrong near the head).
+- **Decision by the plan's rule:** read-ahead stays on for the scorecard (off gains 6 to 9%, under the 15% rule and inside the 6 to 11% spread measured between two runs of one configuration).
+
+**Machine B, questions across subjects on account-003 (100,000 subjects), corrected program** (the count at width 1 is 100,000, examined all, equal to the ID list's count at the head):
+
+| Question | Width 1 | Width 3 | Width 6 |
+| --- | --- | --- | --- |
+| Count of subjects (100,000) | 51.0 s | 45.7 s | 45.4 s |
+| Count through a child record (26,800) | 217.9 s | 225.8 s | 235.5 s |
+| Top 100 | 49.7 s cold | 53.7 s | 51.6 s; 42.4 s warm |
+
+- Processor time is flat across widths (28.8 to 30.3 s for the count; 164 to 172 s through the child): on the one-core read gateway the parts queue, so splitting gives 1.12 times at best and nothing for the child question.
+- **Predictions:** count at width 1 wrong, faster (120 to 210 s predicted); at widths 3 and 6 held; child at width 1 held at the low edge, at width 6 wrong (235 s against 45 to 100); top 100 wrong, faster.
+- **On the run that reached 10,000 subjects (program fault):** readers beside a sweep fell from 846 a second to 471 with 1 part and 312 with 3, and recovered to 793 after (all held); save p99 10.8 to at most 12.3 ms (held).
+- **The same prefix fault is in the question reader's runner** (`xq7/server.ts` line 56). The driver stopped the next step during its bring-up copy, before any measurement, and restarted it through a copy of the session script whose only change is the runner's path to a corrected copy, with the same guards; the aborted start's record is kept.
+- **Open, for the session's script fixes:** the two prefix lines; the demo stack starts with tracing off, so the slow warm field-history page (1.46 to 1.57 s against 20 to 120 ms predicted) is known only as store time inside the read gateway.
+
+**Plan change:** machine A does not wait for the two-reader step. It is attached to the private network at its next boundary, starts the scorecard at once, and the two-reader step runs only if both machines are at a boundary within 15 minutes of each other.
+
+**Other lines:** the fifth save line review closed at `871afe05b` (105,815 fuzzed saves, 0 differences, verdict unchanged). The removal merge's key-deletion gate passed on its own image. The removal builder's ninth pass started 00:46.
