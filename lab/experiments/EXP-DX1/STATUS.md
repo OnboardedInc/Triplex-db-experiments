@@ -7005,3 +7005,15 @@ Sources: both drivers. Session build `fea80dd73`. Every window below had 0 wrong
 **Plan change:** machine A does not wait for the two-reader step. It is attached to the private network at its next boundary, starts the scorecard at once, and the two-reader step runs only if both machines are at a boundary within 15 minutes of each other.
 
 **Other lines:** the fifth save line review closed at `871afe05b` (105,815 fuzzed saves, 0 differences, verdict unchanged). The removal merge's key-deletion gate passed on its own image. The removal builder's ninth pass started 00:46.
+
+## 2026-11-26 01:04 EST: server session: more read permits than reader cores doubles the tail for subjects not in memory; the scorecard is running
+
+Source: machine A's driver. Session spend USD 3.90 at 01:00.
+
+- **A2b, the scorecard's read configuration on the uncached windows (12 permits, prefetch, read-ahead on; 9.8 minutes; 0 wrong, 0 errors):** 1,719.5, 1,744.2 and 1,525.9 reads a second (within 4% of 3 permits: held); p50 137.2, 141.3 and 156.7 ms; **p99 565.2, 553.0 and 589.8 ms**. Every sampled exchange not in memory (0 of 3,513 in memory). The prediction of the same tail ratio as at 3 permits was wrong: the tail doubled (250 to 307 ms at 3 permits).
+- **Processor figures:** reader 2.86 to 2.87 cores at 12 permits against 2.68 to 2.80 at 3: the same three cores 3 to 7% busier, reads a second equal, p99 doubled. More permits than cores lengthens reads at the tail without adding throughput.
+- **Against the 300 ms bar for subjects not in memory:** met at 3 permits (all three windows with read-ahead off), missed in every window at 12 permits.
+- **The scorecard (A4) started 00:57:51 as scripted**, with 12 permits, the product save path and per-read classification. Prediction written before it: the not-in-memory row misses at p99 500 to 620 ms because of the permit count; wrong if under 350.
+- **Added step after it (A4b), approved by the orchestrator with a 65-minute ceiling:** the scorecard's parts 1 and 2 at 3 permits, through a copy of the session script with exactly two changed lines (the permits value and the part list), the same guards, its own output folder; cancelled if the scripted scorecard shows both read rows meeting the bars. Predictions written: not in memory p99 250 to 310 ms; in memory within 15% in reads a second and a lower p99 at 256 seats than at 12 permits.
+- **Machine A is attached to the private network** (at the boundary before the scorecard, nothing measuring); SSH answers. The scorecard's parts run back to back, so its next boundary for the two-reader step is after it.
+- **Read hardening (interim, 00:58):** the audit command passes on 22 databases and 19,423 transactions with 0 violations; the two read gates with the options on give 0 differences in 92,880 and 30,548 comparisons.
