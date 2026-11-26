@@ -7111,3 +7111,20 @@ Sources: the save line builder (diagnosis and fix); the removal builder (two ans
 - **New standing gate:** every line's SDK end-to-end run is done twice, plain and with the version 0.1 profile's options.
 
 **Machine B, the index backfill (session spend USD 6.19 at 02:01):** three faults in the index program met on the machine and corrected in a private copy with the diffs and checksums recorded: the bare-metal check's Docker setting; the stack's name prefix, which the stack script refuses under the options the program itself passes; the HTTP client's 300-second header timeout on the one long backfill request. The fourth try started 02:01:56 on a fresh copy of the database.
+
+## 2026-11-26 02:05 EST: server session: the hardened cut lookup at 1 billion meets the review's bar; the removal merge's save-format differential allows the push
+
+Sources: machine A's driver; the merge agent.
+
+- **The hardened cut lookup at 1 billion (machine A, a build of the hardening head `681bd528a` on the session's scripts; one reader core; 0 wrong values, 0 errors; 22.1 minutes), both options on, reads a second with p50 / p99 in ms:**
+
+  | Seats | Old pin | Against unguarded | Near the head | Against unguarded |
+  | --- | --- | --- | --- | --- |
+  | 1 | 450.38 (1.38 / 14.9) | -1.5% | 650.28 (1.09 / 4.5) | -2.3% |
+  | 16 | 435.27 (28.5 / 103.9) | -3.3% | 522.30 (23.8 / 91.7) | -0.9% |
+  | 256 | 455.70 (545 / 864) | -4.6% | 470.45 (516 / 856) | -2.0% |
+
+- The review's bar (within 5% of the unguarded 450 and 527 at 16 seats): **met**. The reviewer's "under 2%" held near the head and not at the old pin. Every difference is inside the 6 to 11% spread between two runs of one configuration, so with one sample each the guard's cost cannot be told from noise. The guard was confirmed from the staged source's digest and the option's readback, not from a runtime counter.
+- With the options off on that build: 21.25, 21.32 and 22.45 a second at the old pin; 320.48 and 303.82 near the head at 16 and 256 seats.
+- **The save-format differential on the removal merge:** with every removal option off the base and the merge store every save in all five cells; the push proceeds. The finding is on the readiness page as "save-wire and removal on request".
+- Session spend USD 6.29 at 02:04.
