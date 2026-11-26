@@ -951,6 +951,67 @@ build's next save, which `guard!` then refuses, and their plain claims are no ac
   writes a body with a hash; a plain claim returned to an account after the setting; any difference with the setting
   absent.
 
+### 14.3 The gates of the fifth pass (2026-11-25, diagnostic sizes on the Mac)
+
+**Image.** `tx2-dxs5r3:80cdfd858934` (`sha256:da284034c683…`), built by `s5/image3.sh` from `80cdfd858` and started by
+image ID. The later commits change test files and the stored-ID list only (no gateway source); the in-memory runs
+mount the committed test files.
+
+**Reproduced first.** The reviewer's seeds 733, 734 and 735 in `accounts-on-general-nopred` on the fourth pass's
+gateway (`c2ed38553`'s image, the review's updated fuzzer): 3 differences, all the review's case (`:old-reopen`, the
+save of this build `400 ProtectedTypeUnsupported`, then the stale planner `200` on both scopes). Each seed stops at
+its difference (6,746 serial saves).
+
+| Gate | Result |
+| --- | --- |
+| `s6/window_gate.clj` (new) | 107 of 107 in 6 settings (accounts on, predecessor lookup off, serial, general, general with lookup off, group) |
+| The review's `attack4` | 21 passed, 0 failed, 1 error in each of its 5 settings; the error is the listed one (`the-admitted-window-after-an-old-build-opens`: its old build's open is refused by the hash bar). The planted case: 0 of 10 stored (10 refused `400`). The stale install: refused by the bar, `oldIdentWorksAfterTheCrash` false, every old save after it refused |
+| The review's `attack3` | 116 of 116 in accounts on, lookup off, serial and group; 118 of 118 with imports; in the 2 general settings 106 of 116, exactly the listed harness arm |
+| `s6/installs_gate.clj` | 123 of 123 in 4 settings |
+| `s6/stored_ids_gate.clj` | 109 of 109 in 4 settings (after the stored-ID list was reviewed for R4-5's three new lines) |
+| The fuzzer with the transition, old-build opens, stale planners, removals and faults | the review's seeds 733 to 735, `accounts-on-general-nopred`: 14,388 saves (11,688 serial, 2,700 concurrent), 0 differences, 118 old-build open steps, all 236 opens (two scopes) refused by the hash bar; seeds 731 to 733, `accounts-on`: 14,420 saves, 0 differences, 113 steps, 226 refused |
+| Setting absent: native log | identical datom for datom to the base `23b7df344` in 2 settings (7,598 and 7,600 datoms), apart from the scope's random key |
+| Setting absent: identities | the 58 stored-function identities equal to the base's in 6 settings (the head adds the same 8 as before) |
+| Datomic's own predicates on system attributes | refused (`s6/system_preds.clj`): `:db/fn` and `:db/ident` cannot take one |
+| Standing gates | outcome 426 of 426 in 5 settings; race 22; bound 127; the S5 attacks 49 and 151; creation 145, 145, 147; owners 262 each; account gate 10,000 schedules (127,848 saves), 1,000 off, 2,000 group, 0 differences |
+| The window stack (`s5/window.ts`, real `a6d02225c` and `23b7df344`), lookup on | P1 serial build: 10 of 10 stored after its open, **0 of 10 after this build's saves** (the review: 10 of 10), 0 of 172 alone for 60 s, 0 of 10 after a head open. P2: the profile build's open refused both times (`OPEN_REFUSED`, answered `503 OutcomeUnknown`; its gateway logs no cause; in the review's run of `9f210018f` the same open succeeded and stored 10 of 10, and in process the same transaction is refused by the hash bar), so none of its saves; `23b7df344` refused 5 of 5. P3: the account's own client saving the command the old build stored in P1's window: **stored** (the review: `CommandAlreadyCommittedError`), its claim not the old build's |
+| The same, lookup off (head with the test override) | the same: 10, 0, 0 of 165, 0; P2 refused twice; P3 stored |
+| The review's transition stacks (`s5/transition.ts`), lookup on and off | 45 saves each; `storedByABuildThatDoesNotKnowTheSetting: []`; every old-build save after the transition refused (26 of 26 with lookup on), after this build under the load profile opened and after a transactor restart; the 6 plain claims are the profile store's saves, which name no account (by design) |
+| The owed stack cases (`s6/transition4.ts`) | A: two gateways turn it on at once with an old build's group commits in flight: 616 old saves, 304 committed, all before the transition (t 2234), 0 after, 312 refused; B: the transactor killed 0, 25 and 80 ms after the request (the kill landed before the commit at 0 and 80 ms, after it at 25 ms): never a mix, turning on again completed it; C covering-owner and D sealed saves under the setting: stored, scoped. All true |
+| The second review's tests and the one-stored-form gate (after the R4-5 test update) | `attack2` 24, 68, 68, 59, 44 and 22 in 6 settings; ids 109 of 109 in 4 |
+| The protected fuzzer | 7,200 saves sealed and 8,346 unsealed with accounts, 0 differences |
+
+**The guard's cost** (`the-guard-costs-one-scan-per-save`, diagnostic, Mac, 2,000 calls each): setting absent
+0.35 to 0.85 µs and no transaction; setting on with nothing written since, 3.4 to 8.2 µs, one scan of 3 to 12
+`:db/fn` datoms (these toy databases), no transaction.
+
+### 14.4 Each finding of the fourth review, and what remains
+
+| Finding | Now | Shown by | What remains |
+| --- | --- | --- | --- |
+| R4-1 (High) | an older build whose general writer differs cannot open the database (hash bar); any other working body is replaced at this build's next save of any kind | `window_gate` (both cases, 3 kinds of next save each, in 6 settings); the window stack (P1 closed at the first head save; P2 open refused); the fuzzer (the review's 3 differences gone, 462 refused opens) | an older build's writer under a new ident works until this build's next save; nothing bounds that in time without traffic, and Datomic offers no predicate for it (`system_preds.clj`). Operations rule: after the transition only builds of this pass or later open the database |
+| R4-2 (High) | refused `400` setting on and off, on every writer | the review's planted case 0 of 10 stored; `a-save-cannot-give-an-entity-another-account` (3 writers, both states, 6 settings) | a request naming no account (the system's) may still set any `:subject/account`: the layer in front's point 3 (13.2) |
+| R4-3 (High, the merge) | not this branch's: the removal builder writes the merge the corrected way (13.5) | the review's trial merge `9fe2e5f02` | — |
+| R4-4 (Medium) | a gateway with predecessor lookup off neither turns the setting on nor serves a save under it (`409 AccountIdsNeedPredecessorLookup`), after repairing | `a-gateway-with-predecessor-lookup-off-serves-no-save-under-the-setting` | condition stated: predecessor lookup on, on every gateway, before the setting is turned on. A request may still carry `predecessorLookup` false when the read-attribution diagnostic is on (`TX2_READ_ATTRIBUTION=1`); that switch stays off in production |
+| R4-5 (Medium) | a plain claim after the setting is no account's; the account's own save of that command is stored | `a-plain-claim-after-the-setting-is-no-accounts` (a system request and a window save); the window stack's P3; the second review's claim test, updated | — |
+| R4-6 (Low) | 13.4 corrected | page | — |
+| R4-7 (Low) | an install that writes a hash is refused by the bar and retried; one that writes no hash is closed by `guard!` | the review's `an-install-read-before-the-transition-commits-after-it`; `window_gate` (`:old-ident-no-hash`) | — |
+| R4-8 (Low) | opens and turn-on install the guard and the bar when missing | `a-database-turned-on-without-the-setting-guard` | — |
+| R4-9, R4-10 | the removal builder's | — | — |
+
+### 14.5 What the fifth pass does not test
+
+- **A real build of the one branch from before this merge (`cdfc70e02` and descendants) opening a database turned on
+  by this pass:** by reading, that build has no install wrap (R3-1 itself): with another hash (an option that changes
+  the general body) its `install-base!` is refused by the bar and its open fails; with the recorded hash it writes
+  nothing under `:triplex/commit`; a new writer ident it installs is moved at this build's next save; not run.
+- **A database restored from a backup taken between the two transactions of `turn-on!`:** the setting attribute and
+  guard without the setting; by reading, it behaves as a database whose transition never ran (the review's kill case
+  2 shows the same state in process).
+- **The hash bar under failover promotion, restore and the HA lab:** by reading they write no hash; not run.
+- **Who the caller is:** the layer in front (13.2).
+- **Times:** every time here is diagnostic (Mac, toy sizes).
+
 ## 10. The standing gate phase and the other gates
 
 **Every gate ran by image ID on `tx2-dxs6:959634af4f1c`, built from the head by `s6/image.sh`.**
