@@ -22,7 +22,7 @@ line="TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1 T
 line="$line ${S5_STACK_EXTRA:-}"
 envs=(); for kv in $line; do envs+=(-e "$kv"); done
 docker run --rm --name "tx2-dxs5r3-stack-$$" --label dx-s5r3=stack --pull never --memory 4500m --entrypoint /bin/bash "${envs[@]}" \
-  -e S5_ROUNDS -e U1_PAIRS -e U1_ROWS -v "$out:/out" "$image_id" "/exp/s5/$runner" > "$out/stack.log" 2>&1
+  -e S5_ROUNDS -e U1_PAIRS -e U1_ROWS -e S5_ALONE_SECONDS -v "$out:/out" "$image_id" "/exp/s5/$runner" > "$out/stack.log" 2>&1
 status=$?
 grep -E '^DX-S5R(2|3)_' "$out/stack.log" | cut -c1-2000
 echo "DX-S5R3_STACK_EXIT $status"

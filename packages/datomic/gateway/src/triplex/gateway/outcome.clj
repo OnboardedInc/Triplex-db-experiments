@@ -19,7 +19,7 @@
   ;; TRIPLEX_ text (settings names are TRIPLEX_ too).
   (re-pattern (str "TRIPLEX_(?:CONFLICT|CLOCK_EXHAUSTED|CLOCK|ERASURE_FRONTIER|OPERATION_DUPLICATE|COMMAND_DUPLICATE"
                    "|IMPORT_PREDECESSOR|IDENTITY|SLIM_LAYOUT_MISMATCH|GROUP_STALE|SUBJECT_REPLAN|ERASE_HEAD_MOVED"
-                   "|PROTECTION_MIGRATION_REQUIRED)\\b"
+                   "|PROTECTION_MIGRATION_REQUIRED|ACCOUNT_IDS_ON|ACCOUNT_IDS_CHANGED)\\b"
                    ;; [DX-S6] The general writer's refusals that carry no marker (commit.clj 105, 214, 228, 296, 309;
                    ;; subject_save.clj 130): decided, so answered 400 and never replayed (S5 R2-6). Rejected: adding markers
                    ;; inside the stored functions (it changes their stored code and identities).

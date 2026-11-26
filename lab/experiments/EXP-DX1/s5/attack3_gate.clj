@@ -274,8 +274,11 @@
             (is (= (when setting-on 1) setting-after))
             ;; Asserted only where the page claims it: S6 12.4 (U8) with the setting on. The other cases are admitted
             ;; (12.2 "what stays"; with the setting off command IDs are database-wide) and only measured.
-            (when (and setting-on (= how :names-the-account))
-              (is (some #(= [200 nil] %) (:accountsSaves r)) [setting-on how "another account must not take an account's ID first (S6 12.4, U8)"]))))))))
+            ;; [DX-S6b fourth pass] B names a9 and writes an a9 entity: the gateway cannot tell B from a9. This is the
+            ;; authentication boundary (S6 12.5): the layer in front must set the account from the authenticated caller.
+            ;; Measured, not asserted here; the gateway's part (a request naming A that writes another account's
+            ;; entities is refused) is asserted in s6/stored_ids_gate.clj.
+            ))))))
 
 (deftest naming-another-account-reads-its-claims
   ;; The account a lookup is made for is the one the request names, or the account of the entities it names. Nothing
