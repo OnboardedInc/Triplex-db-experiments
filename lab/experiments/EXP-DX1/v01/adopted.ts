@@ -99,16 +99,24 @@ const ownerHeadPair = process.env.DX_W1_PAIR_OPTION === "owner-head";
 // Rejected: asserting a share from the configured flags alone (the flags say nothing about what ran).
 export function checkWriterSplit(saves: readonly Save[], writer: Writer,
   options: { subjectSave?: boolean; subjectSeveralOwnersFunction?: string; subjectCreateFunction?: string }) {
-  const keyed = saves.filter((r) => r.status === "acked" && r.saveKey !== undefined).length;
-  if (options.subjectSave !== true || writer === "grouped") return { keyed, eligible: 0, taken: 0, ran: false };
+  const keyedRows = saves.filter((r) => r.status === "acked" && r.saveKey !== undefined), keyed = keyedRows.length;
+  // The card's own saves (no save key, not sent with the general identity): checkSavedIdentity asserts each one took
+  // the per-subject function with ordered IDs; counted apart from the tape's keyed saves, never summed with them.
+  const ownRows = saves.filter((r) => r.status === "acked" && r.saveKey === undefined && !r.generalIdentity);
+  const own = ownRows.length, ownTaken = ownRows.filter((r) => typeof r.stage?.subjectSave === "string").length;
+  const keyedGeneral = keyedRows.filter((r) => typeof r.stage?.subjectSave !== "string").length;
+  if (options.subjectSave !== true || writer === "grouped")
+    return { keyed, eligible: 0, taken: 0, own, ownTaken, keyedGeneral, ran: false, rule: "off" as const };
   // [DX-INT5] Eligible means the active rule lets the per-subject writer take it. With the wide writer off and no
   // owners named, the narrow rule takes only commits of one to three facts that each replace a current value; every
   // other production save goes to the general writer by design (checkSavedIdentity asserts each save's path exactly).
+  // The bounds are the gateway's own (subject_save.clj plan-with-erasure: 1 <= facts <= 3, facts and retired equal; the
+  // gateway also needs the live count equal, which the card cannot see before the save).
   // Found on 2026-11-25: the card's quiet-account cell at 235 commits per second sends 14 tape saves of 4 to 15 facts,
   // all general by that rule, and this check failed every card run on the one branch since the save line.
   const narrowRuleTakes = (r: Save) => {
     const facts = r.facts ?? r.width, retired = r.retired ?? r.width;
-    return facts !== undefined && facts <= 3 && retired === facts;
+    return facts !== undefined && facts >= 1 && facts <= 3 && retired === facts;
   };
   const decidedByRule = process.env.TX2_SUBJECT_WIDE !== "1";
   const eligible = saves.filter((r) => r.status === "acked" && r.saveKey !== undefined && !r.generalIdentity
@@ -120,7 +128,8 @@ export function checkWriterSplit(saves: readonly Save[], writer: Writer,
       && typeof (r.stage as Record<string, unknown> | undefined)?.["subjectDeclined"] !== "string");
     assert.equal(unexplained.length, 0, `${unexplained.length} tape M saves went to the general writer without a reason`);
   }
-  return { keyed, eligible: eligible.length, taken: taken.length, ran: true };
+  const rule = decidedByRule && !keyedRows.some((r) => r.owners !== undefined) ? "narrow" as const : "wide-or-owners" as const;
+  return { keyed, eligible: eligible.length, taken: taken.length, own, ownTaken, keyedGeneral, ran: true, rule };
 }
 
 
