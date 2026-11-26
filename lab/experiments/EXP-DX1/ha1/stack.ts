@@ -706,7 +706,9 @@ export class Stack {
 export function pinnedReaderEnv(env: NodeJS.ProcessEnv = process.env) {
   const on = (name: string) => { const v = env[name] ?? "0"; if (v !== "0" && v !== "1") throw new Error(name + " must be 0 or 1"); return v; };
   const shortcut = on("DX_PINNED_SHORTCUT"), lookup = on("DX_PINNED_CUT_LOOKUP");
-  return shortcut === "0" && lookup === "0" ? [] : ["TX2_PINNED_SHORTCUT=" + shortcut, "TX2_PINNED_CUT_LOOKUP=" + lookup];
+  // [DX-RD6 reference: the default flip] Both always passed: the gateway's default is now on, so leaving them out
+  // would start an "off" reader with both options on.
+  return ["TX2_PINNED_SHORTCUT=" + shortcut, "TX2_PINNED_CUT_LOOKUP=" + lookup];
 }
 
 // [DX-INT4] TX2_ID_LISTS and TX2_INDEX_QUERY_PERMITS from DX_ID_LISTS and DX_INDEX_QUERY_PERMITS (stack/up.sh's names).

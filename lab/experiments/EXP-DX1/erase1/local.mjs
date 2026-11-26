@@ -502,9 +502,9 @@ export async function local(opts, config, manager) {
             ? ["-e", "TX2_SUBJECT_ORDERED_IDS=1", "-e", "TX2_SUBJECT_NUMERIC_OWNER=1"]
             : []),
           ...(ownerHead ? ["-e", "TX2_SUBJECT_OWNER_HEAD=1"] : []),
-          // [DX-THIN1] The pinned read options (RD1, default off), passed only when asked for.
-          ...(pinnedShortcut !== "0" || pinnedLookup !== "0"
-            ? ["-e", "TX2_PINNED_SHORTCUT=" + pinnedShortcut, "-e", "TX2_PINNED_CUT_LOOKUP=" + pinnedLookup] : []),
+          // [DX-THIN1] The pinned read options (RD1). [DX-RD6 reference: the default flip] Always passed: the gateway's
+          // default is now on, so leaving them out would start an "off" gateway with both options on.
+          "-e", "TX2_PINNED_SHORTCUT=" + pinnedShortcut, "-e", "TX2_PINNED_CUT_LOOKUP=" + pinnedLookup,
           ...(process.env.TX2_SUBJECT_WIDE === "1" ? ["-e", "TX2_SUBJECT_WIDE=1"] : []),
           ...(mode === "fast-authority-regression" ? ["-e", "TX2_REMOVAL_COST_READBACK=1"] : []),
           "-e",

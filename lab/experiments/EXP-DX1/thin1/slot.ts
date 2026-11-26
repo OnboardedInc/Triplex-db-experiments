@@ -293,7 +293,9 @@ const gateway = (label: "write" | "read", secondary = false) => {
       ...(label === "read" && property("readStudy") === "yes" ? { TX2_READ_FILTER_EARLY: "1" } : {}),
       // [DX-CARD2] The card's tuned reader: both pinned options on both gateways (stack/up.sh does the same), the early
       // filter and the read permits on the reader. The toy has no reader trace, so the read profile stays off here.
-      ...(property("cardReader") === "tuned" ? { TX2_PINNED_SHORTCUT: "1", TX2_PINNED_CUT_LOOKUP: "1" } : {}),
+      // [DX-RD6 reference: the default flip] "0" passed for every other reader: the gateway's default is now on.
+      ...(property("cardReader") === "tuned" ? { TX2_PINNED_SHORTCUT: "1", TX2_PINNED_CUT_LOOKUP: "1" }
+        : { TX2_PINNED_SHORTCUT: "0", TX2_PINNED_CUT_LOOKUP: "0" }),
       ...(label === "read" && property("cardReader") === "tuned" ? { TX2_READ_FILTER_EARLY: "1",
         ...(property("readPermits") ? { TX2_READ_PERMITS: property("readPermits")! } : {}) } : {}),
       ...(demand ? { TX2_ID_CACHE_BYTES: "1048576", TX2_ID_CACHE_ENTRIES: "4096",
