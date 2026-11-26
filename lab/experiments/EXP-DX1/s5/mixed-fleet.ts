@@ -109,6 +109,17 @@ async function runCase(c: Case, index: number) {
       : reportedTx ? storedTransactions === 1 && notes === 1 && reportedTx === after.txIds[after.txIds.length - 1]
       : storedTransactions === 0 && notes === 0 };
   log("CASE", r);
+  // [DX-S6c] Diagnostic only (the verdict above is unchanged): a case that is not exact is read again after 10 s, the
+  // log through G_on as above and the rows through the save's own gateway, to tell a reader that had not caught up
+  // after the transactor's restart from a save that is really absent.
+  if (!r.exact) {
+    await sleep(10_000);
+    const settled = await commits(store.db);
+    const own = new datomic.DatomicClient(c.restTo);
+    const ownRows = (await own.rows(store.db, { entityIds: [S] })).filter((x: any) => x.retracted_at === null && x.attribute === ":m/note").length;
+    log("SETTLED", { case: c.label, storedTx: settled.txIds.slice(before.commits), liveNotesThroughG_on: await liveFacts(store.db, S, ":m/note"),
+      liveNotesThroughTheSavesGateway: ownRows, reportedTxIsTheLast: reportedTx === settled.txIds[settled.txIds.length - 1] });
+  }
   await store.close();
   return r;
 }
