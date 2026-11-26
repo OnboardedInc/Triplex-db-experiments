@@ -24,7 +24,7 @@ trap 'rm -rf "$ctx"; docker rmi "$pin" >/dev/null 2>&1' EXIT
 git -C "$repo" archive "$head" packages/datomic/gateway/src packages/datomic/src/codec-spec.json \
   lab/experiments/EXP-DX1/wfix1 lab/experiments/EXP-DX1/w2 lab/experiments/EXP-DX1/s3 lab/experiments/EXP-DX1/s4 \
   lab/experiments/EXP-DX1/s5 lab/experiments/EXP-DX1/s6 | tar -x -C "$ctx"
-for b in s6a:a6d02225c base:23b7df344 era2:03bb49cd3; do
+for b in s6a:a6d02225c base:23b7df344 era2:03bb49cd3 era6:a8fc0276b merged:f17410ed5 merged2:9fe2e5f02; do
   name=${b%%:*} commit=${b#*:}
   mkdir -p "$ctx/builds/$name"
   git -C "$repo" archive "$commit" packages/datomic/gateway/src packages/datomic/src/codec-spec.json | tar -x -C "$ctx/builds/$name"
@@ -32,7 +32,7 @@ for b in s6a:a6d02225c base:23b7df344 era2:03bb49cd3; do
 done
 esbuild="$repo/node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/bin/esbuild"
 mkdir -p "$ctx/drivers"
-for d in mixed-fleet transition u1 ../s6/transition4; do
+for d in mixed-fleet transition u1 window ../s6/transition4; do
   [[ -f "$repo/lab/experiments/EXP-DX1/s5/$d.ts" ]] || continue
   (cd "$repo" && "$esbuild" "lab/experiments/EXP-DX1/s5/$d.ts" --bundle --platform=node --format=esm --log-level=warning \
     "--banner:js=import {createRequire} from 'node:module'; const require=createRequire(import.meta.url);" --outfile="$ctx/drivers/$(basename $d).mjs")
