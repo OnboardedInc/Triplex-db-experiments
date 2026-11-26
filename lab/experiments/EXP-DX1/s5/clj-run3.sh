@@ -61,6 +61,7 @@ case $mode in
   fuzz) files="$pre -i /exp/s5/fuzz.clj"; expr="(s5-fuzz/main)" ;;
   attack3) files="$pre -i /exp/s5/fuzz.clj -i /exp/s5/attack3_gate.clj"; expr="(s5-attack3/main)" ;;
   attack4) files="$pre -i /exp/s5/fuzz.clj -i /exp/s5/attack3_gate.clj -i /exp/s5/attack4_gate.clj"; expr="(s5-attack4/main)" ;;
+  attack5) files="$pre -i /exp/s5/fuzz.clj -i /exp/s5/attack3_gate.clj -i /exp/s5/attack4_gate.clj -i /exp/s5/attack5_gate.clj"; expr="(s5-attack5/main)" ;;
   attack2) files="$pre -i /exp/s5/fuzz.clj -i /exp/s5/attack_gate.clj -i /exp/s5/attack2_gate.clj"; expr="(s5-attack2/main)" ;;
   era) files="$pre -i /exp/s5/attack3_era.clj"; expr="(s5-attack3-era/main)" ;;
   idents) files=""; expr="" ;;
@@ -86,7 +87,7 @@ for entry in $wanted; do
     -e S5_SEEDS -e S5_STEPS -e S5_ROUNDS -e S5_THREADS -e S5_PER_THREAD -e S5_FAULTS -e S5_ACCOUNTS -e S5_ONLY -e S5_TRANSITION \
     -e S5_PROTECTED -e S5_REMOVALS -e S5_OLD_REOPEN \
     ${dev[@]+"${dev[@]}"} --entrypoint /bin/bash "$image_id" -c "$cmd" > "$out/$mode-$entry.log" 2>&1 || status=1
-  echo "$entry: $(grep -E '^DX-S5(R2|R3|R4)?_RESULT |^DX-S3_IDENTS |^DX-S5R3_LOG ' "$out/$mode-$entry.log" | cut -c1-400 || echo 'no summary')"
+  echo "$entry: $(grep -E '^DX-S5(R2|R3|R4|R5)?_RESULT |^DX-S3_IDENTS |^DX-S5R3_LOG ' "$out/$mode-$entry.log" | cut -c1-400 || echo 'no summary')"
 done
 echo "DX-S5R3_CLJ_EXIT $status"
 exit "$status"
