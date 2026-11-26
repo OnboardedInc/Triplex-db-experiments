@@ -8,8 +8,12 @@ expired-document notice was withdrawn; in the deep format the world builder refu
 the account (third review T1).
 
 **What it is now.** A removed value is a state of its own: present, unreadable, neither a value nor ⊥. A rule that reads
-one is *held* for that key: its outcome for the subject stays what it was at the removal, without the removed value being
-read, needed or revealed, and without stopping the frame or the account.
+one is *held* for that key: the expired-document notice the subject had at its last recording before the removal stays
+(delivered again in its new generation, the removed value as its marker), and nothing else is produced for that
+document: no task and no obligation, since their due times are computed from the removed date. The removed value is
+not read, needed or revealed, and neither the frame nor the account stops. So "its outcome stays what it was at the
+removal" holds for the notice, the outcome the owner named; the document's task (`doc.reverify`) is not kept, because
+keeping it would keep its due date, a value computed from the removed one.
 
 This page is the exact text for `lab/world/W0/SPEC.md` and for the independent oracle's specification
 (`lab/oracles/domain/README.md`). `SPEC.md` itself is not edited on this branch: it is pinned by checksum
