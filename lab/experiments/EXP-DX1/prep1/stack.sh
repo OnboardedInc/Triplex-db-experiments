@@ -475,7 +475,7 @@ case "$PREP1_MODE" in
     # [DX-RD7] The writers' audit on this gate's own database while its transactor still runs: one DX-RD7_AUDIT line,
     # and the gate fails when any database breaks a writer rule the pinned reads rest on (rd7/audit.clj).
     # /config/rd7-plant (DX_RD7_PLANT, proof only) plants the review's break first.
-    (RD7_PLANT=$(cat /config/rd7-plant 2>/dev/null || true) java_role -i /config/rd7-audit.clj \
+    (export RD7_PLANT=$(cat /config/rd7-plant 2>/dev/null || true); java_role -i /config/rd7-audit.clj \
       -e '(rd7-audit/uri-main (System/getenv "DATOMIC_URI_TEMPLATE") "production gate")')
     ;;
   subject-query)
