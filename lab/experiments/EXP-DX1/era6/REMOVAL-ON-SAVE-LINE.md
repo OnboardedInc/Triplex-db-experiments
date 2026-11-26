@@ -334,9 +334,22 @@ stricter form expected that save to carry the attribute's own code, `RemovalPoli
 **The rerun.** The 91 were all in chunk 1 of the log's boundary (all `:authority-restore`). That chunk was stopped
 and fuzz7 rerun in full with the corrected form: chunk 1 again (seed 7501), 164,663 oracles, 0 violations.
 
-### 6.2 The gates on the merge commit
+### 6.2 The gates on the first merge commit `e50615a10`
 
-(Filled in when the runs end.)
+Gateway source: that of `e50615a10`. Every run is from a frozen worktree (`e50615a10`, `6bc0ca5d8` or `fa71ac485`;
+the last two change lab files only). At most two heavy jobs ran at a time. Evidence: `DX-ERA6/eighth/`.
+
+| Gate | Result |
+| --- | --- |
+| Identities (`idents7.sh`, 11 settings) against `efee27905` | 70 of 70 equal in every setting, 2 new keys (the removal fence's) |
+| Paired native log (`paired7.sh`) against `efee27905` | every option off identical datom for datom, replies identical; per account and commit boundary identical but the 11 recorded-decline datoms per run; the source-less case 200 as on the one branch then |
+| `era2/gate.sh` (paired, interleavings, the six reviews' attacks, suites, lines, replies, B2, B2R, the journal arms, the switches) | exit 0. Interleavings 583, 2,484, 10,758 and 10,732 checks, 0 failed. Attack arms 46,165 oracles: the 2 E9 checks failed as listed (open), every other one passed. Suites 76 tests, 71,174 passed, 1 error on every arm and on the one branch (`http-route`). B2 and B2R 378 checks, 0 failed |
+| The seventh review's cases (`r7`, `r7b`, file and PostgreSQL) | exactly the listed checks failed (R4's third oracle, M3), every other one passed |
+| The save line's gates (rule off, rule on) | exactly the listed tests failed (the list of that commit) |
+| Restore stacks: `stack6` × 4, `restore-live` × 2 | exit 0 each; no removed value answered on any live-restore read |
+| SDK end to end, log and commit boundary | 13 of 13, 16 of 16 |
+| fuzz7, 40,000 schedules per boundary | log 644,413 oracles, commit 644,597, move 644,967: 0 violations (P3 corrected first, 6.1) |
+| fuzz8, 40,000 per boundary | log 320,046 oracles, commit 320,112: 0 violations |
 
 ### 6.3 The second and third merges: the one branch's 2ce636613 and 65a851d1b
 
@@ -369,6 +382,24 @@ line), then the save line's fourth pass (`9f210018f`, the account setting off), 
     already covered.
 
 Results on `1be3efbab`: 6.4.
+
+### 6.4 The gates on the second merge commit `1be3efbab`
+
+Gateway source: that of `1be3efbab`. Runs are from frozen worktrees at `4f553e63a` and `9d08319cd`, which change lab
+files and the page only.
+
+| Gate | Result |
+| --- | --- |
+| Identities (`idents7.sh`, 11 settings) against `65a851d1b` | 70 of 70 equal in every setting, 0 differ, 0 missing, 2 new keys |
+| Paired native log against `65a851d1b` | every option off identical datom for datom, replies identical; per account and commit boundary identical but the 11 recorded-decline datoms; the source-less case now 409 `ErasureReplayDeclined` on this branch and on the one branch alike |
+| The save line's gates, rule off (21 logs, the review's `r22` included) | exactly the 7 listed failures: the general writer's race (2), R4-9 in `r22-era6-rule-on` (1), `attack3_era` (4). `r22` in `era6-rule-off`: 23 of 23, as REVIEW-4 found on `9fe2e5f02` |
+| The save line's gates, rule on (13 logs) | exactly the 9 listed failures: R4-9 in the 7 `attack3` settings, the general writer's race (2) |
+| The seventh review's cases (9 runs) | exactly the listed checks failed. `b-off`'s step failed first because M3 now passes with every option off (the fourth pass records no declined save that states nothing). M3 is now listed with the rule on only (`8fb5f87c2`) |
+| `era2/gate.sh`, full | exit 1, on 5 checks only (`gate-plain`, `switch-i-default`, `switch-i-optout`); every other arm as on `e50615a10`. The 5 checks held the save line's third-pass answers for every option off. Rewritten to the fourth pass (`9d08319cd`) and run again with every switch arm (`gate-ruleoff-9d08319cd`): every arm 0 failed |
+| Restore stacks: `stack6` × 4, `restore-live` × 2 | exit 0 each |
+| SDK end to end (the SDK of `9d08319cd`, `packages/` equal to `1be3efbab`'s; the core package rebuilt) | 13 of 13, 16 of 16 |
+| fuzz7, one chunk (10,000 schedules, log boundary, seed 7801) | 164,920 oracles, 0 violations |
+| fuzz8, one chunk per boundary (10,000 schedules each) | log 80,144 oracles, commit 79,901: 0 violations |
 
 ## 7. The owner's decisions of 2026-11-25: three switches, none turned on
 
