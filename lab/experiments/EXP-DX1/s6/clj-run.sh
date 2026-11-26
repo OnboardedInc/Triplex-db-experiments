@@ -45,6 +45,11 @@ settings=(
   "accounts-on-general:TX2_SUBJECT_SAVE=0 TX2_ACCOUNT_CLAIMS=1"
   "group:$base TX2_GROUP_COMMIT=1"
   "group-accounts:$base TX2_GROUP_COMMIT=1 TX2_ACCOUNT_CLAIMS=1"
+  # [DX-S6b fourth pass] the third review's settings: predecessor lookup off (the gateway's default), the import pipeline
+  "accounts-on-nopred:$base TX2_ACCOUNT_CLAIMS=1 TX2_PREDECESSOR_LOOKUP=0"
+  "accounts-on-general-nopred:TX2_SUBJECT_SAVE=0 TX2_ACCOUNT_CLAIMS=1 TX2_PREDECESSOR_LOOKUP=0"
+  "accounts-on-import:$base TX2_ACCOUNT_CLAIMS=1 TX2_IMPORT_PIPELINE=1"
+  "general-nopred:TX2_SUBJECT_SAVE=0 TX2_PREDECESSOR_LOOKUP=0"
 )
 s5="-i /exp/s5/fuzz.clj"
 case $mode in
@@ -55,6 +60,8 @@ case $mode in
   race) files="$s5 -i /exp/s6/race_gate.clj"; expr="(s6-race/main)" ;;
   accounts) files="$s5 -i /exp/s6/accounts_gate.clj"; expr="(s6-accounts/main)" ;;
   attack2) files="$s5 -i /exp/s5/attack_gate.clj -i /exp/s5/attack2_gate.clj"; expr="(s5-attack2/main)" ;;
+  attack3) files="$s5 -i /exp/s5/attack3_gate.clj"; expr="(s5-attack3/main)" ;;
+  installs) files="$s5 -i /exp/s6/installs_gate.clj"; expr="(s6-installs/main)" ;;
   ids) files="$s5 -i /exp/s6/stored_ids_gate.clj"; expr="(s6-ids/main)" ;;
   owners) files="-i /exp/s3/owners_gate.clj -i /exp/s6/gates_main.clj"; expr="(s6-gates/run (quote owners-gate))" ;;
   create) files="-i /exp/s3/owners_gate.clj -i /exp/s4/create_gate.clj -i /exp/s6/gates_main.clj"; expr="(s6-gates/run (quote create-gate))" ;;
@@ -69,8 +76,9 @@ for entry in $wanted; do
   name=tx2-dxs6-clj-$$-$entry
   # Sealed values need a wrapping key: a random one per run, never written down.
   key=(); [[ ${S5_PROTECTED:-} == sealed ]] && key=(-e "TRIPLEX_ERASURE_WRAPPING_KEY=$(head -c 32 /dev/urandom | base64)")
-  docker run --rm --name "$name" --label dx-s6=clj --pull never --memory 3g "${envs[@]}" ${key[@]+"${key[@]}"} \
-    -e TX2_GROUP_COMMIT=${group:-0} -e TX2_LIVE_PRIORITY=0 -e TX2_PREDECESSOR_LOOKUP=1 -e TX2_LEAN_NATIVE_QUERY=1 -e TX2_LEAN_NATIVE_LOG=1 \
+  # The setting's own variables come after the defaults, so a setting can override one (predecessor lookup off).
+  docker run --rm --name "$name" --label dx-s6=clj --pull never --memory 3g ${key[@]+"${key[@]}"} \
+    -e TX2_GROUP_COMMIT=${group:-0} -e TX2_LIVE_PRIORITY=0 -e TX2_PREDECESSOR_LOOKUP=1 -e TX2_LEAN_NATIVE_QUERY=1 -e TX2_LEAN_NATIVE_LOG=1 "${envs[@]}" \
     -e TRIPLEX_TRACE_LEVEL=off -e TRIPLEX_ERASURE_DIRECTORY=/tmp/erasure -e PREP1_ATTEMPT=dx-s6-clj \
     -e S5_SEEDS -e S5_STEPS -e S5_ROUNDS -e S5_THREADS -e S5_PER_THREAD -e S5_REMOVALS -e S5_VALUE_TYPES -e S5_PROTECTED -e S6_ACCOUNT_SCHEDULES -e S5_FAULTS -e S5_ACCOUNTS -e S5_ONLY \
     ${dev[@]+"${dev[@]}"} -v "$repo/lab/experiments/EXP-DX1:/exp:ro" --entrypoint /bin/bash "$image_id" -c "

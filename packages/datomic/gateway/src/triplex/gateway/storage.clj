@@ -171,30 +171,107 @@
           (when-not (and stream (= 1 (count claims))) (codec/invalid "Invalid ordered import claim"))
           (let [n (Long/parseLong ordinal)]
             (if (zero? n) "load1/manifest/import" (str "load1/" stream "/" (dec n)))))))))
-(defn- replay-frame-check!
-  "[DX-S6b] S5 R2-2. A replay (the SDK's next attempt of one save after a refusal) carries `frameSourceK`, the source of
-  the save's first attempt (null when that attempt stated none). A replay that writes a protected value of an (entity,
-  attribute) family a removal named after that first source is refused ErasureReplayDeclined, never staged again: the
-  caller's values were chosen before the removal, whatever the replay's own source. The removal's position is the one
-  the published removal states, whichever rule assigned it (its entry's position today, its Datomic commit under
-  DX-ERA2's option); a removal not yet published refuses every write it can reach (503), so the replay waits for it.
-  Rejected: judging a replay by its own source (it is always after the removal, which is how R2-2 stored the value)."
+(defn frame-of
+  "[DX-S6b] S5 R3-3, the merged rule (REVIEW-3 section 2): when a save was framed. `:position` the earliest of the
+  positions it states (`frameSourceK`, its first attempt's frame, and its own `sourceK`); `:seen` the removal sequence
+  it read (`removalSeen`); `:stated` false when it states none. A null `frameSourceK` states nothing (an SDK from
+  before this change); this SDK states a frame on every attempt, an optimistic one included."
+  [input]
+  (let [ints (filter integer? [(get input "frameSourceK") (get input "sourceK")])
+        seen (let [x (get input "removalSeen")] (when (integer? x) x))
+        position (when (seq ints) (reduce min ints))]
+    {:position position :seen seen :stated (boolean (or position seen))}))
+
+(def ^:private removal-index-cache (atom nil))
+(defn- removal-index
+  "(entity, attribute) family -> [latest position, latest sequence] of the removals that named it, by their recorded
+  families, the rows they removed and their selectors (as subject_create.clj family-removed-at reads them). Kept for
+  one removal head at a time (its sequence and seal, which names the database), so a save pays a map lookup per protected value, not a scan of every removal."
+  [state]
+  (let [[k idx] @removal-index-cache]
+    (if (and idx (= k [(:seq state) (:seal state) (count (:commands state))]))
+      idx
+      (let [families (requiring-resolve 'triplex.gateway.import-bound/removal-families)
+            idx (reduce (fn [m entry]
+                          (let [p (get entry "position") q (get entry "seq")
+                                fs (concat (map vec (get entry "families"))
+                                           (map (fn [x] [(get x "entity") (get x "attribute")]) (get entry "identities"))
+                                           (families state (get entry "selectors")))]
+                            (reduce (fn [m f] (update m f (fn [[p0 q0]] [(max (or p0 0) (or p 0)) (max (or q0 0) (or q 0))]))) m fs)))
+                        {} (vals (:commands state)))]
+        (reset! removal-index-cache [[(:seq state) (:seal state) (count (:commands state))] idx])
+        idx))))
+
+(defn- frame-check!
+  "[DX-S6b] S5 R2-2 and R3-3, R3-6. A save that writes a protected value of an (entity, attribute) family a removal
+  named after the save was framed (frame-of: a removal at a later position than its earliest stated position, or with a
+  later sequence than the `removalSeen` it read) is refused ErasureReplayDeclined; so is one that states no frame at
+  all, against any removal of the family. Every writer, the replan retry, a new or an existing entity. The removal's
+  position is the one its published record states, whichever rule assigned it (its entry's position today, its
+  Datomic commit under DX-ERA2's option); a removal not yet published refuses every write it can reach (503).
+  The SDK states a frame on every attempt (an optimistic attempt: the newest position the client had seen), so a value
+  saved after a removal the client had seen is never declined for having no source (R3-6, bounded)."
   [state input rows new-ids]
-  (when (and state (contains? input "frameSourceK") (seq (:commands state)))
-    (let [source (get input "frameSourceK")
-          removed-at (requiring-resolve 'triplex.gateway.subject-create/family-removed-at)]
+  (when (and state (seq (:commands state)))
+    (let [{:keys [position seen stated]} (frame-of input)
+          idx (removal-index state)]
       (doseq [r rows :when (new-ids (:id r)) :when ((:attrs state) (:attribute r))]
-        (when-let [at (removed-at state [(:entity_id r) (:attribute r)])]
-          (when (or (not (integer? source)) (< source at))
-            (privacy/failure! 409 "ErasureReplayDeclined" "A save first framed before a removal of a field it writes is not replayed")))))))
+        (when-let [[p q] (idx [(:entity_id r) (:attribute r)])]
+          (when (or (not stated) (and position (> p position)) (and seen (> q seen)))
+            (throw (ex-info "A save framed before a removal of a value it writes is declined"
+                            {:status 409 :code "ErasureReplayDeclined" :framed stated}))))))))
+
+(defn- framed-input
+  "The request as the creation rule (subject_create.clj removed-creation?, read through privacy validate-write!) is to
+  judge it: its source is its earliest stated frame (none when it states none)."
+  [input]
+  (let [{:keys [position stated]} (frame-of input)]
+    (if (and stated position (= position (get input "sourceK"))) input (assoc input "sourceK" (when stated position)))))
+
+;; ---------------------------------------------------------------- declined commands (S5 R3-3, rule 3)
+;; The same attributes the removal branch records (DX-ERA2 removal_commit.clj), so the two halves meet when merged.
+(def ^:private declined-schema
+  [{:db/ident :triplex.removal/declined-command :db/valueType :db.type/string :db/cardinality :db.cardinality/one
+    :db/unique :db.unique/identity}
+   {:db/ident :triplex.removal/declined-by :db/valueType :db.type/string :db/cardinality :db.cardinality/one}])
+
+(defn- declined-keys
+  "The stored forms of a save's command IDs (scoped under the setting when it names its account)."
+  [db input]
+  (let [form (requiring-resolve 'triplex.gateway.account-claims/stored-command)]
+    (vec (distinct (for [c (keep #(get % "commandId") (get input "claims")) :when (string? c)]
+                     (form db (get input "account") c))))))
+
+(defn- declined-check!
+  "A save under a command a removal declined is declined again, whatever frame it states: a new command is a new save."
+  [db input]
+  (when (d/entid db :triplex.removal/declined-command)
+    (when-let [by (some (fn [c] (when-let [e (d/entid db [:triplex.removal/declined-command c])]
+                                  (:v (first (d/datoms db :eavt e :triplex.removal/declined-by)))))
+                        (declined-keys db input))]
+      (throw (ex-info (str "This save's command was declined across a removal (" by "); a new command is a new save")
+                      {:status 409 :code "ErasureReplayDeclined" :write-policy true})))))
+
+(defn- record-declined!
+  "After a decline of a save that stated its frame: its commands are recorded, each once. A save that states no frame is
+  declined again on every resend that still states none, so nothing is recorded for it."
+  [conn input]
+  (when (:stated (frame-of input))
+    (let [db (d/db conn)
+          fresh (remove #(and (d/entid db :triplex.removal/declined-command) (d/entid db [:triplex.removal/declined-command %]))
+                        (declined-keys db input))]
+      (when (seq fresh)
+        (when-not (d/entid db :triplex.removal/declined-command) @(d/transact conn declined-schema))
+        @(d/transact conn (vec (for [c fresh] {:triplex.removal/declined-command c :triplex.removal/declined-by "a removal after the save's frame"})))))))
+
 (defn tx-data
   ([db input] (tx-data db input (:e (first (d/datoms db :aevt :triplex.scope/key)))))
   ([db input scope]
    (let [lean (lean? db)
          input (ordered-row-texts (expand-fresh input lean))
          new-ids (set (get input "newIds")) rows (timed-input-rows input lean new-ids)
-         _ (trace/span "privacy/validate-rows" "gateway" (privacy/validate-write! privacy/*cut* input rows))
-         _ (replay-frame-check! privacy/*cut* input rows new-ids)
+         _ (trace/span "privacy/validate-rows" "gateway" (privacy/validate-write! privacy/*cut* (framed-input input) rows))
+         _ (frame-check! privacy/*cut* input rows new-ids)
          protected (trace/span "privacy/prepare-envelopes" "gateway"
                      (envelope/protect privacy/*database* privacy/*cut* input rows))
          input (:input protected) rows (:rows protected)
@@ -568,8 +645,8 @@
           (let [lean (lean? db)
                 prepared (ordered-row-texts (expand-fresh input lean))
                 new-ids (set (get prepared "newIds"))
-                ;; [DX-S6b] A replay is judged by its first attempt's source (replay-frame-check!).
-                source (if (contains? input "frameSourceK") (get input "frameSourceK") (get input "sourceK"))
+                ;; [DX-S6b] Judged by its earliest stated frame (frame-of).
+                source (:position (frame-of input))
                 removed-at (requiring-resolve 'triplex.gateway.subject-create/family-removed-at)]
             (boolean
               (some (fn [r]
@@ -578,7 +655,7 @@
                         (when-let [at (removed-at state [(:entity_id r) (:attribute r)])]
                           (or (not (integer? source)) (< source at)))))
                     (timed-input-rows prepared lean new-ids)))))))))
-(defn commit! [name conn db input]
+(defn- commit-inner! [name conn db input]
   (when trace/tx-jfr-enabled (trace/attribute! :databaseHash (schema/sha256 name)))
   ;; [DX-XQ4] Why: the covering owner head moves rows onto version entities the index does not follow.
   (when (and cross/enabled owner-layout/enabled (cross/declaration-eid db))
@@ -742,7 +819,7 @@
           (when-not ((requiring-resolve 'triplex.gateway.outcome/decided?) e)
             (throw ((requiring-resolve 'triplex.gateway.outcome/unknown) e))))
         ;; [DX-N1, N3] the reply's message is the gateway's own (reply/commit-message), never Datomic's or a driver's text
-        (throw (let [data {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_ERASURE_FRONTIER|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
+        (throw (let [data {:status (if (re-find #"TRIPLEX_ACCOUNT_IDS_ON|TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_ERASURE_FRONTIER|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
                         ;; [DX-S6] F3: a save racing a removal on request (or a protection declaration) gets one code
                         ;; on every writer: CasConflict (the contract's "changed after the source"; the SDK re-reads and
@@ -760,11 +837,20 @@
                                     (re-find #"TRIPLEX_IMPORT_PREDECESSOR" text) "ImportPredecessorMissing"
                                     (re-find #"TRIPLEX_CLOCK_EXHAUSTED" text) "ClockExhausted"
                                     (re-find #"TRIPLEX_CLOCK" text) "ClockConflict"
-                                    (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"
+                                    (re-find #"TRIPLEX_CONFLICT|TRIPLEX_ACCOUNT_IDS_ON|cas-failed|triplex.tx/position" text) "CasConflict"
                                     (re-find #"triplex.claim/command-id" text) "CommandConflict"
                                     (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
                                     (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")}]
                  (ex-info ((requiring-resolve 'triplex.gateway.reply/commit-message) e data) data e))))))))
+(defn commit!
+  "[DX-S6b] A save: refused at once under a command a removal declined (S5 R3-3); its commands recorded when it is
+  declined across a removal."
+  [name conn db input]
+  (declined-check! db input)
+  (try (commit-inner! name conn db input)
+       (catch clojure.lang.ExceptionInfo e
+         (when (= "ErasureReplayDeclined" (:code (ex-data e))) (record-declined! conn input))
+         (throw e))))
 (defn operation [db id]
   (if-let [{:keys [position t clock]} (group/receipt db id)]
     ;; [DX-S6] An operation ID stored without a position is a fence: the original save can never commit.

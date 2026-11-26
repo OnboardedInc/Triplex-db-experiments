@@ -168,8 +168,8 @@
   ;; [DX-S6b] The Publish review's U3. A settlement frame writes only its account's documents; under the clear
   ;; namespace `notice:v2:<n>/<account>/...` it has an account, so another account taking its computable ID first
   ;; stores that under its own account and refuses nothing. The same for the enrolment's `join-held-enrolment:<a>`.
-  ;; Under `notice:v1:<hash>:` (the account inside a hash) a frame has no account and keeps the plain form, so
-  ;; another account taking its ID first refuses it: shown as the residual the join layer closes by moving to v2.
+  ;; Under `notice:v1:<hash>:` (the account inside a hash) a frame naming its account is still that account's (the
+  ;; fourth pass: every save naming A is stored under A's form); `notice:v2:` lets the gateway check it too.
   (with-redefs [ac/permitted? true]
     (reference/in-scope
       (fn [name conn]
@@ -199,10 +199,13 @@
           (is (= [200 nil] (:bFrame r))) (is (= [200 nil] (:bEnrol r)))
           (is (= [200 nil] (:aFrame r)) (pr-str r)) (is (= [200 nil] (:aEnrol r)) (pr-str r))
           (is (and (:aFrameScoped r) (:aEnrolScoped r)) (pr-str r))
-          (is (= [200 nil] (:mixed r))) (is (:mixedStoredPlain r))
-          (is (= [409 "CommandConflict"] (:mixedAgain r)) "a plain claim of two accounts' names is no one account's")
+          ;; [DX-S6b fourth pass] S5 R3-2: a request naming A that writes another account's names is refused.
+          (is (= [400 "InvalidValue"] (:mixed r))) (is (not (:mixedStoredPlain r)))
+          (is (= [200 nil] (:mixedAgain r)) "nothing was stored under the ID, so A's own write of it is stored")
           (is (= [200 nil] (:v1TakenFirst r)))
-          (is (= [409 "CommandConflict"] (:v1Frame r)) "the residual, stated: a v1 frame has no account, so B's plain claim taken first refuses it"))))))
+          ;; S5 R3-5: under the setting a save naming A is A's, whatever else it writes: a v1 frame (journals only) is
+          ;; stored under A's scoped form beside B's plain claim.
+          (is (= [200 nil] (:v1Frame r)) "a frame naming its account is that account's, so B's plain claim does not refuse it"))))))
 
 (defn main []
   (let [r (clojure.test/run-tests 's6-ids)]
