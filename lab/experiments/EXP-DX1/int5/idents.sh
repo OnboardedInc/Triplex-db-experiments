@@ -27,7 +27,9 @@ settings=(
 for entry in "${settings[@]}"; do
   label=${entry%%:*} envs=()
   if [[ -n ${INT5_ONLY:-} && " $INT5_ONLY " != *" $label "* ]]; then continue; fi
-  for kv in ${entry#*:}; do envs+=(-e "$kv"); done
+  # [DX-RD6 second review] an extra setting of several assignments writes them joined by @ (INT5_EXTRA_SETTINGS is split
+  # on spaces)
+  for kv in $(printf '%s' "${entry#*:}" | tr '@' ' '); do envs+=(-e "$kv"); done
   line=$(docker run --name "$name" --pull never --memory 1500m "${envs[@]}" \
     -e TX2_PREDECESSOR_LOOKUP=1 -e TRIPLEX_TRACE_LEVEL=off \
     -v "$root/packages/datomic/gateway/src:/opt/gateway/src:ro" -v "$root/packages/datomic/src/codec-spec.json:/opt/gateway/codec-spec.json:ro" \

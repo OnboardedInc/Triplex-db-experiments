@@ -54,6 +54,9 @@ echo "$image" > "$out/image"
 status=0
 run() { # NAME SOURCE FORM [ENV...]
   local name=$1 source=$2 form=$3; shift 3
+  # [DX-RD6 second review] B2_THIS_ENV: more assignments for the runs of this worktree only (for example the pinned-read
+  # options set explicitly), so a default can be compared with the base both ways.
+  if [[ $source == this && -n ${B2_THIS_ENV:-} ]]; then for kv in $B2_THIS_ENV; do set -- "$@" -e "$kv"; done; fi
   printf '%s\n' "$form" > "$out/$name.clj"
   mkdir -p "$out/$name.out"
   docker run --rm --pull never --name "tx2-dxb2-gate-$$-$name" --memory 3g --cpus 2 -v "$out/$name.out:/out" \
