@@ -487,13 +487,30 @@
 (def fuzz-totals (atom {:points 0 :reads 0 :compared {} :differences {} :first [] :shortcutAnswers 0 :violations 0
                         :firstViolations [] :groupPositionRetractions 0 :groupPositionDuplicates 0 :shapes {}}))
 
+(defn revision-regressions
+  "[second review] Transactions that assert a subject's revision at or below the value it replaces (the cardinality-one
+  retraction in the same transaction names the old value). The reach route's parsed-entity cache keys a parse by
+  entity and revision, so a revision that moves back can name two different sets of rows."
+  [conn]
+  (let [db (d/db conn) rev-a (d/entid db :triplex.entity/rev)]
+    (if-not rev-a 0
+      (reduce (fn [n {:keys [data]}]
+                (+ n (count (for [[_ ds] (group-by #(.e ^datomic.Datom %) (filter #(= rev-a (.a ^datomic.Datom %)) data))
+                                  :let [new (some #(when (.added ^datomic.Datom %) (.v ^datomic.Datom %)) ds)
+                                        old (some #(when-not (.added ^datomic.Datom %) (.v ^datomic.Datom %)) ds)]
+                                  :when (and new old (<= (long new) (long old)))] 1))))
+              0 (d/tx-range (d/log conn) nil nil)))))
+
 (defn- record-pinned! [label name conn owners ^Random rng]
   (let [top (head conn)
         positions (vec (sort (distinct (concat (range (max 1 (- top 25)) (inc top))
                                                (repeatedly 25 #(inc (.nextInt rng (max 1 top))))))))
         owners (vec (take 12 (shuffle (vec owners))))
         r (compare-reads (pinned-reads name conn owners positions {:clocks 8}))
-        a (audit conn)]
+        a (audit conn)
+        ;; [second review] the builder's rule (d), report only, and revisions that move back
+        d-rule (when-let [f (resolve 'rd7-audit/audit)] (:revisionlessChanges (f conn)))
+        regressions (revision-regressions conn)]
     (swap! fuzz-totals
            (fn [t] (-> t (update :points inc) (update :reads + (:reads r))
                        (update :compared #(merge-with + % (:compared r))) (update :differences #(merge-with + % (:differences r)))
@@ -502,7 +519,9 @@
                        ;; the audit covers the whole log each time: keep the latest, which contains the earlier ones
                        (assoc-in [:audits label] (select-keys a [:transactions :violations :groupPositionRetractions :groupPositionDuplicates :groupPositionAssertions]))
                        (update :shapes #(merge-with max % (:subjectRetracting a)))
-                       (update :firstViolations #(vec (take 5 (concat % (:firstViolations a))))))))
+                       (update :firstViolations #(vec (take 5 (concat % (:firstViolations a)))))
+                       (update :revisionless #(merge-with max (or % {}) d-rule))
+                       (update :revisionRegressions (fnil max 0) regressions))))
     (emit "DX-RD6_POINT" {:label label :head top :reads (:reads r) :differences (:differences r) :shortcutAnswers (:shortcutAnswers r)
                           :violations (:violations a) :groupPositionRetractions (:groupPositionRetractions a)})))
 
