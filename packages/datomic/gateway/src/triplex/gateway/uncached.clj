@@ -55,7 +55,7 @@
   ([db ids] (touch-all! db ids false))
   ([db ids first-only?]
   (when (and db (seq ids))
-    (let [task (fn [id] (bound-fn* (fn [] (try (if first-only? (touch-first! db id) (touch! db id)) (catch Throwable t (.increment failures) (reset! last-failure (str t)) nil)))))
+    (let [task (fn [id] (bound-fn* (fn [] (try (if first-only? (touch-first! db id) (touch! db id)) (catch Throwable t (.increment failures) (reset! last-failure (.getName (class t))) nil)))))
           futures (mapv #(.submit ^ExecutorService @pool ^Callable (task %)) (rest ids))]
       ((task (first ids)))
       (doseq [^Future f futures]

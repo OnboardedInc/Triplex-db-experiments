@@ -736,13 +736,13 @@
       (let [text (str e)]
         ;; [DX-THIN1] Why: preserve explicitly typed policy errors and the established transaction rejection for malformed row ordering.
         ;; Rejected: treating every codec InvalidValue as a policy error before checking the transaction result.
-        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasedAssertionIdentity" "ProtectedTypeUnsupported" "ReleaseWritesDeclaredAttribute" "OwnerLayoutUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
+        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasedAssertionIdentity" "ProtectedTypeUnsupported" "ReleaseWritesDeclaredAttribute" "OwnerLayoutUnsupported" "EnvelopeKeyPoolEmpty"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         ;; [DX-S6] After submit, unrecognised means unknown: 503 OutcomeUnknown, and the caller looks the operation up.
         (when @submitted
           (when-not ((requiring-resolve 'triplex.gateway.outcome/decided?) e)
             (throw ((requiring-resolve 'triplex.gateway.outcome/unknown) e))))
-        (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
-                       {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_ERASURE_FRONTIER|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
+        ;; [DX-N1, N3] the reply's message is the gateway's own (reply/commit-message), never Datomic's or a driver's text
+        (throw (let [data {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_ERASURE_FRONTIER|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
                         ;; [DX-S6] F3: a save racing a removal on request (or a protection declaration) gets one code
                         ;; on every writer: CasConflict (the contract's "changed after the source"; the SDK re-reads and
@@ -763,7 +763,8 @@
                                     (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"
                                     (re-find #"triplex.claim/command-id" text) "CommandConflict"
                                     (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
-                                    (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e)))))))
+                                    (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")}]
+                 (ex-info ((requiring-resolve 'triplex.gateway.reply/commit-message) e data) data e))))))))
 (defn operation [db id]
   (if-let [{:keys [position t clock]} (group/receipt db id)]
     ;; [DX-S6] An operation ID stored without a position is a fence: the original save can never commit.
