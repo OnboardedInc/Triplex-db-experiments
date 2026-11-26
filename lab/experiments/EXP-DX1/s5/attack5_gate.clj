@@ -100,6 +100,29 @@
           (is barred-after-schema)
           (is (:barred after-open) "an open of this build restores the bar"))))))
 
+;; A database turned on before this pass (9f210018f: no bar) where, as that pass allowed, an older build under the load
+;; profile opened after the transition and wrote its hash; then this build opens it: the bar goes on with the older
+;; build's hash recorded, and this build's per-subject writers compare their own hash with it.
+(deftest a-database-turned-on-before-the-bar
+  (when (and (run? "frozen") per-subject?)
+    (reference/in-scope
+      (fn [name conn]
+        (let [a (str "f" (swap! counter inc)) _ (seed! name conn a) S (str "acct/" a "/subject/s")
+              _ (turn-on! conn)
+              ;; 9f210018f's state: the setting and its guard, no bar.
+              _ @(d/transact conn [[:db/retract :triplex.scope/commit-fn-hash :db.attr/preds ac/hash-bar]])
+              old (@#'a4/other-bodies :load-profile)
+              older-open (outcome-of #(d/transact conn [{:db/ident :triplex/commit :db/fn (fn-of (:code old))}
+                                                        [:db/add (scope-of conn) :triplex.scope/commit-fn-hash (:hash old)]]))
+              _ (main/create-scope! nil (scope-key conn) "lean" true true)
+              reply (reference/send name (with-account (save conn {:operation (op) :facts [{:owner S :field ":a/f0" :type :string :value "after" :pred (cur name S ":a/f0")}]}) a))
+              r {:case "a database turned on before the bar, an older build's open, then this build's open and save"
+                 :olderOpen older-open :recordedIsTheOlderBuilds (= (:hash old) (recorded-hash conn)) :barred (ac/hash-barred? (d/db conn))
+                 :oldIdentWorking (boolean (working? (d/db conn) :triplex/commit))
+                 :thisBuildsSave [(reference/outcome reply) (clojure.core/name (writer-of reply))]}]
+          (line r)
+          (is (= "one-owner" (second (:thisBuildsSave r))) "this build keeps its per-subject writer"))))))
+
 ;; ---------------------------------------------------------------- 2. what passes guard!, and what does not
 
 (defn- old-new-ident!
@@ -203,6 +226,25 @@
                    :save (reference/outcome reply) :storedAccount account :thenBWritesIt (reference/outcome b-writes)}]
             (line r)
             (is (not= B account) [setting-on mode form-label "a request naming A must not make an entity B's"])))))))
+
+;; R4-2 through the compact row modes in the frames the general writer takes: an import frame and a settlement frame.
+(deftest r4-2-in-import-and-settlement-frames
+  (when (run? "r42frames")
+    (doseq [klass ["import" "activation"] setting-on [true false]]
+      (reference/in-scope
+        (fn [name conn]
+          (when setting-on (turn-on! conn))
+          (let [A "a51" B "b51" kept (fn [f] (if setting-on (f) (with-redefs [ac/permitted? false] (f))))
+                planted (str "x/planted51-" (swap! counter inc))
+                input (-> (with-account (save conn {:operation (op) :facts [{:owner planted :field ":subject/account" :type :string :value B :pred nil}]}) A)
+                          (as-mode "freshTexts" #(json/write-str % :escape-slash true))
+                          (assoc "writeClass" klass))
+                reply (kept #(fz/general (fn [] (reference/send name input))))
+                account ((requiring-resolve 'triplex.gateway.group/persisted-account) (d/db conn) planted)
+                r {:case "a frame naming A gives an entity B's account (fresh texts, escaped slash)" :writeClass klass :settingOn setting-on
+                   :save (reference/outcome reply) :storedAccount account}]
+            (line r)
+            (is (not= B account) [klass setting-on "a frame naming A must not make an entity B's"])))))))
 
 ;; ---------------------------------------------------------------- 4. a command saved in the window, then through this build
 
