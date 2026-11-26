@@ -473,9 +473,20 @@
   (sealed-scope! cut)
   (let [items (get input "items") names (get input "names")]
     (when-not (and (map? input) (vector? items) (<= 1 (count items) max-items)
-                   (every? (if (= action "derived-seal") #{"items" "names"} #{"items"}) (keys input)))
+                   (every? (if (= action "derived-seal") #{"items" "names" "derivedAccount"} #{"items"}) (keys input)))
       (invalid! "Expected {items: [...]} with 1 to 1024 items"))
     (names! names)
+    ;; [DX-ERA4, fourth round] a seal call that names its account (`derivedAccount`, a held store's writer), on a
+    ;; database whose boundary has accounts: every item is placed in that account (the third review's d1 placed one
+    ;; subject's content at another account's subject of the same number; storing it was already refused)
+    (when (contains? input "derivedAccount")
+      (let [a (get input "derivedAccount") c (boundary db)]
+        (when-not (if (string? a) (some? (re-matches #"[A-Za-z0-9_.-]{1,64}" a)) false) (invalid! "derivedAccount is an account name"))
+        (when (if c (:account? c) false)
+          (doseq [it items]
+            (when (if (map? it) (string? (get it "place")) false)
+              (when-not (= a (place-account (get it "place")))
+                (invalid! "A place in another account than the seal call's (derivedAccount)")))))))
     (binding [*keys* (atom {}) *names* (atom {}) *subjects* (atom {}) *derived* (atom {})
               *native* (delay (native-erased* db cut))]
       (try

@@ -813,7 +813,7 @@
       (privacy/failure! 409 "ProtectedPreviewUnavailable" "A protected row preview requires a guarded save")))
   (let [db (if-let [handle (get input "handle")]
              (let [held (held-db name handle)]
-               (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(trace/span "d/with" "peer-call" (d/with held (tx-data held (assoc staged ::preview true)))))) held))
+               (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(trace/span "d/with" "peer-call" (d/with held (tx-data held (if privacy/derived-check (assoc staged ::preview true) staged)))))) held))
              current)
         p (get-in input ["basis" "recordedPosition"])]
     ;; [EXP-DA01] Why: a held value cannot advance even if another writer commits; refuse future requests against that exact pin. Rejected: replacing a held db with a newer one mid-query.
@@ -940,7 +940,7 @@
       (privacy/failure! 409 "ProtectedPreviewUnavailable" "A protected row preview requires a guarded save")))
   (let [db (if-let [handle (get input "handle")]
              (let [held (held-db name handle)]
-               (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(trace/span "d/with" "peer-call" (d/with held (tx-data held (assoc staged ::preview true)))))) held)) current)]
+               (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(trace/span "d/with" "peer-call" (d/with held (tx-data held (if privacy/derived-check (assoc staged ::preview true) staged)))))) held)) current)]
     (if-not (lean/enabled? db)
       (if (get input "historyPage") (lean/unsupported! "historyPage") (legacy-read-rows name current input))
       (let [page (history-page-input input)

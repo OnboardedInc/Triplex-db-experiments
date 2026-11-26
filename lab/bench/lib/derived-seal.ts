@@ -236,7 +236,11 @@ export async function seal(
           for (const id of foreignInputs(it.inputs, it.place)) set.add(id);
           names.set(it.place, set);
         }
-      return { names: Object.fromEntries([...names].map(([p, set]) => [p, [...set].sort()])) };
+      // [DX-ERA4, fourth round] a held store's seal call names its account: under a subject boundary of accounts the
+      // gateway refuses a place in another account (the third review's d1 placed one subject's content at another
+      // account's subject of the same number)
+      const account = (source as { derivedAccount?: string }).derivedAccount;
+      return { names: Object.fromEntries([...names].map(([p, set]) => [p, [...set].sort()])), ...(account ? { derivedAccount: account } : {}) };
     },
   );
   // [DX-ERA4, after DX-ERA5's B1] every answer is sealed, removed, or clear because the gateway found no protected

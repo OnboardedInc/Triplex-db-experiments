@@ -7,7 +7,8 @@
 //       kept, the owner's rule of 2026-11-25);
 //   S2  an evaluation error: in the deep format its pay is "abc" in the data (ONE_EVAL=data, the default there); in W0's
 //       format (whose enrolment validates every world) the evaluation fails by the seam `failEvaluation`;
-//   S3  a seal failure: every seal call holding an item placed at S3 is refused (400), by the seam `refuseSubject`;
+//   S3  a seal failure: every seal call holding an item placed at S3 is refused (400), by the seam `refuseSubject` (its
+//       document expired, so the recorder has a notice of S3's to seal as the settlement has its changes);
 //   S4, S5 ordinary (their documents expired at the valid time, so each is owed a notice).
 // Two releases (R1's rules, then R2's, each with the forms), each settled and recorded. Checked: both settlements and
 // both recordings complete; S1, S4 and S5 get their notices and are never stopped; S0, S2 and S3 each have their named
@@ -38,7 +39,9 @@ assert(out && derivedSealOn() && process.env.TX2_NOTICE_LEDGER === "parts", "one
 const FORMAT = process.env.ONE_FORMAT ?? "w0";
 assert(FORMAT === "w0" || FORMAT === "deep");
 const EVAL = process.env.ONE_EVAL ?? (FORMAT === "deep" ? "data" : "seam");
-const F = Number(process.env.ONE_FORMS ?? 2000);
+// more than a ledger holds (about 1,790 items sealed), and two releases' documents within the store's 1 MiB per value
+// (a release marker holds the old and the new document: 2,000 and 2,001 forms are 1,054,370 bytes)
+const F = Number(process.env.ONE_FORMS ?? 1900);
 const RUN = randomUUID().slice(0, 8);
 const peer = new DatomicClient(process.env.DATOMIC_URL!, 600_000);
 const log = (kind: string, data: object = {}) => {
@@ -74,7 +77,7 @@ async function w0Setup(): Promise<Setup> {
   await store.input("one-seed", { kind: "baseline", at: valid }, [
     fact(rosterRoot(0), "lazy/members", S), fact("members/seal", "lazy/roster-seal", rosterSeal(S)),
     seed("loc:one", "jurisdiction", "jur:one"), seed("loc:one", "localMinWageCents", 1700), seed("jur:one", "stateMinWageCents", 1650),
-    ...facts(S[0]!, true, future), ...facts(S[1]!, false, past), ...facts(S[2]!, false, future), ...facts(S[3]!, false, future),
+    ...facts(S[0]!, true, future), ...facts(S[1]!, false, past), ...facts(S[2]!, false, future), ...facts(S[3]!, false, past),
     ...facts(S[4]!, false, past), ...facts(S[5]!, false, past),
   ]);
   await a.install(S, valid);

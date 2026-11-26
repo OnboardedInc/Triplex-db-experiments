@@ -75,6 +75,10 @@
                     :same-number-in-another-account (str "deep|b|" (:subject a7))
                     :a-number-with-no-root (str "deep|a|pl:s00009999")}
             sealed (into {} (for [[k p] places] [k (seal! src a7 (content a7) p)]))
+            ;; a seal call that names its account (a held writer's): a place in another account refused, its own sealed
+            named-call (fn [p] (:status (offers/route src "v2" "derived-seal" {"items" [{"ids" [(:plain a7)] "value" (content a7) "place" p}]
+                                                                                 "derivedAccount" "a"})))
+            named {:own-account (named-call (:no-root places)) :another-account (named-call (:same-number-in-another-account places))}
             ;; every subject's record placed without a root, named only by its unprotected row
             records (vec (for [sj subjects] (let [p (str "deep|" (:acct sj) "|" (:subject sj))]
                                               {:sj sj :place p :wire (:wire (seal! src sj (content sj) p))})))
@@ -104,6 +108,7 @@
             s2-record (outcome src (:wire (:real-root sealed)) (:real-root places) (content a7))
             row {:declared declared :same-again again :another-refused other :malformed-refused bad :setting setting
                  :seal (into {} (for [[k s] sealed] [k (or (names-of (:wire s)) [(:status s) (:code s)])]))
+                 :seal-naming-account-a named
                  :records (count records) :header-names names :stored {:account-a stored-a :unit-of-b-in-a stored-b-in-a :no-account stored-none}
                  :writes writes :names-with-a-reference-to-another-subject reach :removal (:status (:final rm))
                  :after-removal after :real-root-record s2-record}]
@@ -118,6 +123,7 @@
           (x/oracle! lbl (= 400 (:status (k sealed))) (str "refused: " (name k)) row))
         (x/oracle! lbl (= 2 (names-of (:wire (:same-number-in-another-account sealed)))) "another account's place seals under that account's subject" row)
         (x/oracle! lbl (= {2 (count records)} names) "every record is sealed under its subject's two values" row)
+        (x/oracle! lbl (= {:own-account 200 :another-account 400} named) "a seal call naming its account refuses a place in another" row)
         (x/oracle! lbl (= [200 nil] stored-a) "a unit placed in the write's account is stored" row)
         (x/oracle! lbl (= 409 (first stored-b-in-a)) "a unit placed in another account than the write's is refused" row)
         (x/oracle! lbl (= 409 (first stored-none)) "a write that names no account is refused" row)
