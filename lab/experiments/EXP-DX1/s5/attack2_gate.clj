@@ -246,6 +246,8 @@
                                      :facts [{:owner "acct/z1/subject/s" :field ":a/f" :type :string :value "z1" :pred nil}
                                              {:owner "acct/z2/subject/s" :field ":a/f" :type :string :value "z2" :pred nil}]})
               a (reference/send name first-save)
+              ;; [DX-S6c] A system save before the setting (the account-naming save below turns it on).
+              sys-before (reference/send name (save conn {:command "joined:sys0" :operation "sys0-op-1" :facts [{:owner "_sys/z0" :field ":a/f" :type :string :value "s" :pred nil}]}))
               again (reference/send name (with-account (save conn {:command "joined:z" :operation "z-op-2"
                                                                    :facts [{:owner "acct/z1/subject/t" :field ":a/f" :type :string :value "again" :pred nil}]}) "z1"))
               claim (:body (reference/route name "v1" "claim" {"commandId" "joined:z" "receipt" true "account" "z1"}))
@@ -259,18 +261,32 @@
           (is (= [200 nil] (:first r)))
           (is (= 409 (first (:sameCommandNamingAccount r))) "a command already committed must not commit again")
           (is (= 409 (first (:sameOperationNamingAccount r))) "an operation already committed must not commit again")
-          ;; [DX-S6b] A plain claim of no account's entities (a system save): it refuses every account's save of the
-          ;; ID and is never returned to an account's lookup (the rule both lines share).
-          (let [sys (reference/send name (save conn {:command "joined:sys" :operation "sys-op-1" :facts [{:owner "_sys/z" :field ":a/f" :type :string :value "s" :pred nil}]}))
-                again (reference/send name (with-account (save conn {:command "joined:sys" :operation "sys-op-2" :facts [{:owner "acct/z1/subject/v" :field ":a/f" :type :string :value "v" :pred nil}]}) "z1"))
-                lookup (:body (reference/route name "v1" "claim" {"commandId" "joined:sys" "receipt" true "account" "z1"}))
-                r {:case "a plain claim of no account's entities, then an account's save of the same ID"
-                   :system (reference/outcome sys) :accountSave (reference/outcome again) :lookupTx (get lookup "txId") :lookupTaken (get lookup "taken")}]
+          ;; [DX-S6b] A plain claim of no account's entities (a system save) from before the setting: it refuses every
+          ;; account's save of the ID and is never returned to an account's lookup (the rule both lines share).
+          (let [again (reference/send name (with-account (save conn {:command "joined:sys0" :operation "sys0-op-2" :facts [{:owner "acct/z1/subject/v0" :field ":a/f" :type :string :value "v" :pred nil}]}) "z1"))
+                lookup (:body (reference/route name "v1" "claim" {"commandId" "joined:sys0" "receipt" true "account" "z1"}))
+                r {:case "a plain claim of no account's entities from before the setting, then an account's save of the same ID"
+                   :system (reference/outcome sys-before) :accountSave (reference/outcome again) :lookupTx (get lookup "txId") :lookupTaken (get lookup "taken")}]
             (line r)
             (is (= [200 nil] (:system r)))
             (is (= [409 "CommandConflict"] (:accountSave r)))
             (is (nil? (:lookupTx r)))
-            (is (true? (:lookupTaken r)))))))))
+            (is (true? (:lookupTaken r))))
+          ;; [DX-S6c] S5 R4-5: one committed after the setting's transaction is no account's: the account's lookup does
+          ;; not return it, and the account's own save of that ID is stored (scoped), its lookup then its own.
+          (let [sys (reference/send name (save conn {:command "joined:sys" :operation "sys-op-1" :facts [{:owner "_sys/z" :field ":a/f" :type :string :value "s" :pred nil}]}))
+                before (:body (reference/route name "v1" "claim" {"commandId" "joined:sys" "receipt" true "account" "z1"}))
+                again (reference/send name (with-account (save conn {:command "joined:sys" :operation "sys-op-2" :facts [{:owner "acct/z1/subject/v" :field ":a/f" :type :string :value "v" :pred nil}]}) "z1"))
+                lookup (:body (reference/route name "v1" "claim" {"commandId" "joined:sys" "receipt" true "account" "z1"}))
+                plain (:body (reference/route name "v1" "claim" {"commandId" "joined:sys" "receipt" true}))
+                r {:case "a plain claim of no account's entities after the setting, then an account's save of the same ID"
+                   :system (reference/outcome sys) :lookupBefore (get before "txId") :accountSave (reference/outcome again)
+                   :lookupTx (get lookup "txId") :plainTx (get plain "txId")}]
+            (line r)
+            (is (= [200 nil] (:system r)))
+            (is (nil? (:lookupBefore r)))
+            (is (= [200 nil] (:accountSave r)))
+            (is (and (some? (:lookupTx r)) (not= (:plainTx r) (:lookupTx r))))))))))
 
 ;; ---------------------------------------------------------------- 5. two resolvers of one unknown outcome
 
