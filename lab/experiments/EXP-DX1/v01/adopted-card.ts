@@ -6,7 +6,7 @@ import { Histogram } from "../../../bench/lib/hist.ts";
 import { render as emptyCard } from "./render.ts";
 import type { MixedIds } from "./mixed-ids.ts";
 import type { adoptedArm } from "./adopted.ts";
-import { checkCardWriterSplits, writerSplitText, type WriterSplit } from "./writer-split-text.ts";
+import { checkCardWriterSplits, writerSplitLines, type WriterSplit } from "./writer-split-text.ts";
 import { defaultCreditMode, launchProfile, type ServerProfile } from "../jvm1/launch.mjs";
 import { barrierRoot, phaseSeconds, launchIntegration, selectedWriter, writeDiagnostics, serverStages, writerIntegration, type JvmProfile, type Age, type Writer } from "./profile.ts";
 import { cellPath, lastServerCell, ratedTape, serverCellSeconds, serverRates, writerAdmission, type CreditMode, type WindowSeconds } from "./server-workload.ts";
@@ -438,12 +438,13 @@ export function writeAdoptedCard(run: Card) {
       if (!x.writerSplit) continue;
       const w = x.writerSplit;
       splitsSeen.push(w);
-      rows.push(`| ${path.dirname(rel)} | ${w.keyed} | ${w.ran ? w.eligible : "—"} | ${w.ran ? w.taken : "—"} | ${writerSplitText(w)} |`);
+      rows.push(`| ${path.dirname(rel)} | ${w.keyed} | ${w.ran ? w.eligible : "—"} | ${w.ran ? w.taken : "—"} | ${w.ran ? (w.own ?? 0) : "—"} | ${w.ran ? (w.ownTaken ?? 0) : "—"} | ${writerSplitLines(w).join("<br>")} |`);
     }
     if (splitsSeen.some((w) => w.ran)) {
-      const on = splitsSeen.filter((w) => w.ran), full = on.filter((w) => w.eligible > 0 && w.taken === w.eligible).length;
-      rows.push("", `**Per card:** ${on.length} arms with the per-subject option on; ${full} with eligible saves that all took it (` +
-        (full > 0 ? "pass" : "FAIL: the card did not exercise the per-subject writer") + ").");
+      let verdict: string[];
+      try { verdict = ["**Per card: pass.**", ...checkCardWriterSplits(splitsSeen).summary]; }
+      catch (e) { verdict = ["**Per card: FAIL.** " + String((e as Error).message)]; }
+      rows.push("", ...verdict);
     }
     return rows;
   }
@@ -698,7 +699,7 @@ export function writeAdoptedCard(run: Card) {
     ...(cellTelemetry.length ? ["## Within-cell counters", "", ...cellTelemetry, ""] : []),
     ...(() => { const rows = writerSplits(); return rows.length ? ["## The per-subject writer check, per cell", "",
       "Saves with a save key; of those, the ones the active rule lets the per-subject writer take (with the wide writer off and no owners named, commits of one to three facts that each replace a current value); and the ones that took it. A cell with eligible saves fails unless at least one took it.", "",
-      "| Cell | Keyed saves | Eligible | Took the per-subject writer | Check |", "| --- | ---: | ---: | ---: | --- |", ...rows, ""] : []; })(),
+      "| Cell | Keyed saves | Eligible (keyed) | Taken (keyed) | Own saves | Own taken | Check |", "| --- | ---: | ---: | ---: | ---: | ---: | --- |", ...rows, ""] : []; })(),
     ...(() => { const order = startOrder(); return order.length ? ["## Order after each stack start", "",
       "The first window each stack measured after it started finds its subjects cold (the quiet account's 52 and 59 ms p99 of 2026-11-23 was such a window). P1's two sides each run first on their own stack, so their writer ratio compares two such windows.", "", ...order, ""] : []; })(),
     ...(run.reader ? tunedReaderSection() : []),
