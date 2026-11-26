@@ -37,9 +37,13 @@ This follows the save line's third review (`s5/REVIEW-3.md`, section 2). Its com
    `ErasureReplayDeclined` for a creation racing a removal. Both use the rule above. The writers then see the request
    without `frameSourceK`, so the save line's own check (`storage/replay-frame-check!`, first source only) does not
    decline a replay the merged rule lets through. That was the save line's R3-6.
-6. **With the replay rule off (every option off),** the save line's own rule answers, unchanged: a replay is judged by
-   its first source, and a null first source counts as before every removal. No command is recorded, and no stamp
-   header or `removalStamp` is sent. This is the one branch's behaviour once it takes the save line.
+6. **With the replay rule off (every option off),** the save line's own rule answers, as on the one branch. No stamp
+   header or `removalStamp` is sent.
+   - **Since its fourth pass** (`9f210018f`, merged here in `1be3efbab`): `frame-check!`, `declined-check!` and
+     `record-declined!`. That is nearly the merged rule: the earliest stated position, or the stamp read, and a
+     declined command recorded when the save stated its frame.
+   - **Until then (the third pass):** a replay was judged by its first source only, a null first source counted as
+     before every removal, and no command was recorded.
 
 **The SDK** (`DatomicStorageAdapter.ts`):
 - `wire()` carries `removalSeen`;
@@ -383,10 +387,16 @@ private copy of the source with only that line changed (`flip`, the changed line
 ### 7.1 What turning (i) on changes
 
 On every protected database guarded database-wide (per account the rule already runs):
-1. **A save framed before a removal of its subject is declined.** That is a save that writes a protected value of a
-   subject a removal named, framed before that removal: by the earliest of `frameSourceK`, `sourceK` and
-   `removalSeen`, or by stating none of them. It is answered 409 `ErasureReplayDeclined` (section 1); today it is
-   stored and answered 200 (`replay-rule-off` on the flip: 409, the value not answered).
+1. **Which saves are declined changes little since the save line's fourth pass.** With the rule off, that pass's rule
+   already declines a save framed before a removal and records its command (section 1, item 6). What differs with the
+   rule on:
+   - **R4-9:** a replay whose first source is null and which carries no stamp is declined; with the rule off it is
+     judged by its own source.
+   - **Declined commands are recorded per account;** with the rule off, command IDs are database-wide unless the
+     account setting is on.
+   - **The judging moves** to `removal-commit`: `decline-check!`, `after-refusal`, `already-stored?` and the creation
+     rule.
+   (Before `1be3efbab` the rule off stored a save that stated nothing; see 6.3.)
 2. **Its command is recorded.** The record's schema is written once per database (9 datoms, 10 with the
    transaction's instant). Each newly declined command adds 3 datoms. On the paired workload: every datom equals the one
    branch's except 11 per run (`ERA2_PAIRED_FLIP_I`: identical, `[11, 11]`).

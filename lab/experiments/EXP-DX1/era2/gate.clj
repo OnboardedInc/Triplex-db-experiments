@@ -1823,9 +1823,10 @@
 
 (defn replay-rule-off
   "[DX-ERA2 seventh pass, the sixth review's fact 1] The rule for a save framed before a removal runs only with the
-  per-account option or TX2_REMOVAL_REPLAY_RULE=1. Without them (every option off) a save that says nothing about its
-  frame and writes a removed subject's protected value is stored and answered, as on the merged line, and no answer
-  carries the removal stamp; with the rule on it is declined."
+  per-account option or TX2_REMOVAL_REPLAY_RULE=1. Without them (every option off) the save line's own rule answers,
+  as on the one branch: since its fourth pass a save that says nothing about its frame and writes a removed subject's
+  protected value is declined (until 1be3efbab it was stored), and no answer carries the removal stamp; with the rule
+  on it is declined too."
   []
   (fresh-scope false
     (fn [name conn]
@@ -1841,10 +1842,12 @@
                                                   :frontier-has-stamp (contains? frontier "removalStamp")}))
         (if rc/replay-rule
           (check! label (= 409 (:status r)) "with the rule on, the save is declined" (:body r))
-          (do (check! label (= 200 (:status r)) "with every option off, the save is stored as on the merged line" (:body r))
-              (check! label (str/includes? (text (:body read)) v) "and its value answered" nil)
+          ;; [DX-ERA6 eighth pass] with every option off the save line's fourth pass (on the one branch since 65a851d1b)
+          ;; declines a save that states no frame, against any removal of the family; until 1be3efbab it was stored
+          (do (check! label (= [409 "ErasureReplayDeclined"] [(:status r) (get-in r [:body "code"])]) "with every option off, the save is declined as on the one branch (the save line's frame-check!)" (:body r))
+              (check! label (not (str/includes? (text (:body read)) v)) "and its value not answered" nil)
               (check! label (nil? (stamp-header r)) "no answer carries the removal stamp" (:headers r))
-              (check! label (not (contains? frontier "removalStamp")) "the frontier as on the merged line" frontier)))))))
+              (check! label (not (contains? frontier "removalStamp")) "the frontier as on the one branch" frontier)))))))
 
 (defn- frontier-stamp
   "The removal stamp a client reads from the frontier (the SDK's ensureRemovalStamp: removalStamp, else seq)."
@@ -1898,9 +1901,15 @@
               (check! label (= [200 nil] (:optimistic got)) "3. an optimistic first attempt with a stamp after the removal is stored (the save line's R3-6)" got)
               (check! label (= [409 "ErasureReplayDeclined"] (:optimistic-bare got)) "3b. without a stamp it counts as framed before the removal" got)
               (check! label (= [409 "ErasureReplayDeclined"] (:earliest got)) "4. a stamp before the removal declines it although its own source is after" got))
-          (do (check! label (= [200 nil] (:resend got)) "2. rule off: the save line's answer (a resend is a new save; not recorded)" got)
-              (check! label (= [409 "ErasureReplayDeclined"] (:optimistic got)) "3. rule off: the save line's answer (a null first source counts as before every removal)" got)
-              (check! label (= [200 nil] (:earliest got)) "4. rule off: the stamp is not read" got)))))))
+          ;; [DX-ERA6 eighth pass] rule off: the save line's rule as of its fourth pass (9f210018f, merged through the one
+          ;; branch's 65a851d1b; s5/REVIEW-4.md's table, "this head": the SDK's replay and the caller's resend declined,
+          ;; an optimistic replay stating its frame stored). Until 1be3efbab these checks held the third pass's answers
+          ;; (a resend stored, a null first source before every removal, the stamp not read).
+          (do (check! label (= [409 "ErasureReplayDeclined"] (:resend got)) "2. rule off: the declined command sent again is declined (the save line records it, R3-3)" got)
+              (check! label (= [200 nil] (:optimistic got)) "3. rule off: an optimistic first attempt with a stamp after the removal is stored (R3-6)" got)
+              (check! label (= [200 nil] (:optimistic-bare got)) "3b. rule off: a null first source with a fresh own source is judged by its own source (R4-9's other side)" got)
+              (check! label (= [409 "ErasureReplayDeclined"] (:earliest got)) "4. rule off: a stamp before the removal declines it (the save line reads removalSeen)" got)
+              (check! label (= [409 "ErasureReplayDeclined"] (:other-account got)) "7. rule off: another account's save under the declined command's name is declined (command IDs are database-wide with the account setting off)" got)))))))
 
 (defn restore-after-copy-rewrite
   "[DX-ERA2 seventh pass, X12] A gateway whose cache holds the log's copy from before another gateway rewrote it (an
