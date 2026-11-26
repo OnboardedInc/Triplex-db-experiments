@@ -59,7 +59,7 @@ const release = (base: W0.ReleaseDoc, forms: number) => largeRelease(base, parse
 type Setup = { store: Store; a: JoinedAccount; validTime: string; removable: () => Promise<{ db: string; ids: string[] }> };
 
 async function w0Setup(): Promise<Setup> {
-  const store = await openStore("era4-one-w0-" + RUN);
+  const store = await openStore("lazy-era4-one-w0-" + RUN);
   await peer.declareProtection(dbOf(store.scope), ["docType", "expiresOn"], true);
   await requireSealed(store);
   const a = new JoinedAccount(store);
@@ -178,7 +178,9 @@ try {
   row.stops2 = await stops(seq2);
   const d2 = (await notices.openedPackets(await noticeArchive.store.head())).flatMap((p) => p.deliveries as unknown as Record<string, unknown>[]).slice(before);
   const kept = d2.filter((d) => d.subject === S[1] && d.kind === "notify.document-expired");
-  row.s1KeptNotices = kept.map((d) => canonical(d.payload ?? null));
+  // a delivery's payload is the work item's payload text (a JSON string)
+  const text = (x: unknown) => (typeof x === "string" ? x : canonical(x ?? null));
+  row.s1KeptNotices = kept.map((d) => text(d.payload));
   const d1 = row.deliveries1 as Record<string, number>, s1 = row.stops1 as { recorder: Record<string, string>; settlement: Record<string, string> },
     s2 = row.stops2 as typeof s1;
   const only = (m: Record<string, string>, want: Record<string, string>) => canonical(m) === canonical(want);
@@ -190,7 +192,7 @@ try {
       only(s2.recorder, { [S[0]!]: "LedgerFull", [S[2]!]: "EvaluationFailed", [S[3]!]: "SealRefused" }),
     settlementStopsAreTheEvaluationAndTheSeal: [s1.settlement, s2.settlement].every((m) => m[S[2]!] === "EvaluationFailed" && m[S[3]!] === "SealRefused" &&
       Object.keys(m).every((s) => [S[0], S[2], S[3]].includes(s))),
-    removedSubjectKeepsItsNotice: kept.length > 0 && kept.every((d) => canonical(d.payload ?? null).includes('"expiresOn":{"erasedAt"')),
+    removedSubjectKeepsItsNotice: kept.length > 0 && kept.every((d) => text(d.payload).includes('"expiresOn":{"erasedAt"')),
   };
   for (const s of [store, values.store, noticeArchive.store]) await (s as any).close().catch(() => {});
 } catch (e) {

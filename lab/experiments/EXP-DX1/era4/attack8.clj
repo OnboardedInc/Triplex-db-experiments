@@ -140,7 +140,9 @@
   due a day ago (records on entities of their own, 10,000 per transaction: the index reads them as it reads records on
   transaction entities); the key store replaced by a counter that reports one restored key, a third of the way down.
   Reported per n: the heap the re-sweep holds between passes, five passes' time, the passes until the restored key is
-  deleted, and the same while 256 and then 4,096 new due removals arrive before every pass."
+  deleted once the gateway has caught up, and the same while 256 and then 4,096 new due removals arrive before every
+  pass (the fourth round's first rotation never wrapped at 10,000 with 4,096 arrivals a pass; the cycle now has a fixed
+  end)."
   []
   (doseq [n [10000 100000 1000000]]
     (g/fresh-scope true
@@ -171,21 +173,22 @@
                         (loop [k 1 next-k (+ n 100000000)]
                           (when (pos? arrive) @(d/transact conn (record-tx next-k (+ next-k arrive) at)))
                           (pass!)
-                          (if (or (pos? @found) (> k (+ 10 (quot n 4096))))
+                          (if (or (pos? @found) (> k (+ 10 (* 2 (quot n 4096)))))
                             {:catch-up-passes catch-up :rotation-at-restore at-rot :passes k :deleted (pos? @found)}
                             (recur (inc k) (+ next-k arrive))))))
               plain (until 0)
               with-256 (until 256)
               with-4096 (until 4096)
-              bound (inc (long (Math/ceil (/ n 4096.0))))
+              ;; two cycles of the rotation (the restored record may lie just behind where the cycle stands)
+              bound (+ 2 (* 2 (long (Math/ceil (/ n 4096.0)))))
               row {:removals n :state-held-between-passes held :heap-mb-delta-over-5-passes (Math/round (/ (- m1 m0) 1048576.0))
                    :pass-ms (mapv #(Math/round (double %)) times) :bound-passes bound
                    :restored-key-deleted-after plain :with-256-new-per-pass with-256 :with-4096-new-per-pass with-4096}]
           (report :resweep8 row)
           (x/oracle! "resweep8" (and (:deleted plain) (<= (:passes plain) bound)) "the restored key is deleted within the bound" row)
-          (x/oracle! "resweep8" (and (:deleted with-256) (<= (:passes with-256) (inc bound))) "256 new removals a pass do not delay it" row)
-          (x/oracle! "resweep8" (and (:deleted with-4096) (<= (:passes with-4096) (+ 2 bound))) "4,096 new removals a pass do not delay it" row)
-          (x/oracle! "resweep8" (< (count held) 200) "the re-sweep holds two positions between passes" row))))))
+          (x/oracle! "resweep8" (and (:deleted with-256) (<= (:passes with-256) bound)) "256 new removals a pass do not delay it past the bound" row)
+          (x/oracle! "resweep8" (and (:deleted with-4096) (<= (:passes with-4096) bound)) "4,096 new removals a pass do not delay it past the bound" row)
+          (x/oracle! "resweep8" (< (count held) 200) "the re-sweep holds three positions between passes" row))))))
 
 ;; ---- kinds8: the content-free kinds and the identifier fields bounded (T7) -------------------------------------------
 (defn kinds8

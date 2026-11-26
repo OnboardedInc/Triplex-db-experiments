@@ -121,7 +121,8 @@ try {
     recordedBoth: row.recorder1 === "recorded" && row.recorder2 === "recorded",
     settledBoth: row.settlement1 === "stored" && row.settlement2 === "stored",
     s0NoticeFirst: f0[S[0]!]!.expired.length > 0,
-    s0NoticeKeptWithMarker: s0.expired.length > 0 && s0.expired.every((d) => canonical(d.payload).includes('"expiresOn":{"erasedAt"')),
+    // a delivery's payload is the work item's payload text (a JSON string)
+    s0NoticeKeptWithMarker: s0.expired.length > 0 && s0.expired.every((d) => (typeof d.payload === "string" ? d.payload : canonical(d.payload)).includes('"expiresOn":{"erasedAt"')),
     s1NoNotice: f0[S[1]!]!.expired.length === 0 && s1.expired.length === 0,
     s2Untouched: f0[S[2]!]!.expired.length > 0 && s2.expired.length === 0 && s2.generation === f0[S[2]!]!.generation,
     noRemovedDate: row.secondNamesARemovedDate === false,

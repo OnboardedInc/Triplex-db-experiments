@@ -56,7 +56,7 @@ async function scenario(on: boolean) {
   if (!on) delete process.env.TX2_DERIVED_SEAL;
   const row: Record<string, unknown> = { option: on ? "on" : "off" };
   try {
-    const store = await openStore("era4-calendar-" + (on ? "on" : "off") + "-" + RUN);
+    const store = await openStore("lazy-era4-calendar-" + (on ? "on" : "off") + "-" + RUN);
     await peer.declareProtection(dbOf(store), ["docType", "expiresOn"], true);
     if (on) await peer.request("POST", `/v2/db/${dbOf(store)}/derived-seal-required`, {});
     const a = new JoinedAccount(store);
