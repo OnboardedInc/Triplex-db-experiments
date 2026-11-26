@@ -6751,3 +6751,14 @@ Source: merge agent message; checked against `origin`: `09730f887` is an ancesto
 - **Orchestrator error:** both dead locks were seen at 04:49 and judged harmless on the reading that the engine reclaims locks of dead processes. It does not reclaim slot locks. The long waits for stack runs reported all day follow from this.
 - **Fixed at 18:56:** each owner process confirmed dead and each slot's container confirmed absent, then both locks removed; copies of the owner files kept in the private evidence folder; an event line written to the lock events file. Follow-up: the slot code must reclaim a lock whose owner is dead.
 - The 13 suite errors on the latest head: 1 known error plus 12 from one test that needs the sweep options, which the suites step ran without; a harness condition; the step now runs that test with its options.
+
+## 2026-11-25 19:01 EST: ID allocator fix merged: the one branch `exp/DX-INT1` is at `345f833e4`
+
+Source: merge agent message; checked against `origin`: `cc5656aa2` is an ancestor of the head; the Publish line is not yet.
+
+- Stored-function identities 70 of 70 equal to the previous line in 8 writer settings; the fix moves nothing.
+- The review's and the builder's allocator tests 9 of 9. A new check at the SDK adapter level: 120 ordered saves (96 narrow blocks, 24 wide), the clock held in one millisecond, 0 of 72,000 later IDs inside an earlier block. Core 863 of 863; SDK 489 passed.
+- Suites: back to the one known error (92 tests, 236,380 assertions); the sweep-shapes test passes under its options (89 assertions).
+- Production gate with the real-mix tape, 4 runs: 360 of 360 each, 0 expired, and no refusal in the transactor's lines in any run (the gate keeps them now).
+- All six faults found in merged code on 2026-11-25 are now fixed on the one branch.
+- Next: the Publish line with every option off (it needs its own image; its stack gates run with refusals capped and quoted).
