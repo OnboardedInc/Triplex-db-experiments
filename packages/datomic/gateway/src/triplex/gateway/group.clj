@@ -110,7 +110,7 @@
         system? #(.startsWith ^String % "_triplex/")
         business (remove system? authored)
         hint (get input "groupAccount")
-        accounts (set (map #(or (second (re-matches #"acct/([A-Za-z0-9_-]{1,64})/.+" %))
+        accounts (set (map #(or (second (re-matches #"acct/([A-Za-z0-9_.-]{1,64})/.+" %))
                                 (when (:lean p) (persisted-account db %))) business))
         account (when (= 1 (count accounts)) (first accounts))]
     (when (and hint (seq business) (not= hint account))

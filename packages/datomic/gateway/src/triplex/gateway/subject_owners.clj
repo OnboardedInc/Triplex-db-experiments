@@ -58,7 +58,7 @@
 
 ;; [DX-S3] Why: an account is a subject's namespace (acct/<account>/...), as group/classify reads it; a save across
 ;; accounts is not one subject's save. Rejected: reading :subject/account here (a storage read per owner on the plan path).
-(defn- account [id] (second (re-matches #"acct/([A-Za-z0-9_-]{1,64})/.+" id)))
+(defn- account [id] (second (re-matches #"acct/([A-Za-z0-9_.-]{1,64})/.+" id)))
 ;; [DX-S6] F9: the same rule as group/classify: an owner's account is its prefix, or else its stored :subject/account
 ;; (on the lean layout), and every owner must have the same one (an owner with neither counts as no account, which
 ;; must then be every owner's). Before, owners without the prefix counted as one account whatever they stored.

@@ -108,16 +108,20 @@
                        (do
                          (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema))
                          (:db-after (trace/span "d/transact" "peer-wait" @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}])))))
-        current (subject/install! conn (group/install! conn (commit/install! conn scope schema-ready)))
-        current (owner-layout/install! conn current)
-        ;; [DX-W3] Why: the lookup-only hint function is installed only when its option is on (default off).
-        current (general-prefetch/install! conn current)
-        ;; [DX-W4] Why: the per-subject writer's lookup-only hint function, installed only when its option is on.
-        current (subject-hints/install! conn current)
-        ;; [DX-S3] Why: the several-owners function is installed only when its option is on (default off).
-        current (subject-owners/install! conn current)
-        ;; [DX-S4] Why: the creation function is installed only when its option is on (default off).
-        current (subject-create/install! conn current)
+        ;; [DX-S6b] S5 R3-1: every stored function this open writes respects the account-ID setting (account_claims.clj
+        ;; `installing`): under it, a moved writer's body goes to its twin and never back under the old ident.
+        current ((requiring-resolve 'triplex.gateway.account-claims/installing) conn
+                 (fn []
+                   (let [current (subject/install! conn (group/install! conn (commit/install! conn scope schema-ready)))
+                         current (owner-layout/install! conn current)
+                         ;; [DX-W3] Why: the lookup-only hint function is installed only when its option is on (default off).
+                         current (general-prefetch/install! conn current)
+                         ;; [DX-W4] Why: the per-subject writer's lookup-only hint function, installed only when its option is on.
+                         current (subject-hints/install! conn current)
+                         ;; [DX-S3] Why: the several-owners function is installed only when its option is on (default off).
+                         current (subject-owners/install! conn current)]
+                     ;; [DX-S4] Why: the creation function is installed only when its option is on (default off).
+                     (subject-create/install! conn current))))
         ;; [DX-XQ4] The index fence (sequence 0) from the moment a scope is opened with the option on.
         current (if (and cross-find/enabled (lean/enabled? current)) (cross-find/ensure-installed! conn current) current)]
 
@@ -464,8 +468,10 @@
             "fence" ((requiring-resolve 'triplex.gateway.outcome/fence!) conn (get input "operationId") storage/operation)
             ;; [DX-S6] Turns the database's account-ID setting on (one way); only a process with TX2_ACCOUNT_CLAIMS=1 may.
             "settings" (do (when-not (true? (get input "accountIds")) (codec/invalid "Only {\"accountIds\": true} is accepted"))
-                           ((requiring-resolve 'triplex.gateway.account-claims/turn-on!) conn)
-                           {:accountIds true})
+                           ;; [DX-S6b] The answer names the transaction that turned it on (its Datomic t), so a
+                           ;; caller can tell saves committed before it from saves after it.
+                           (let [db ((requiring-resolve 'triplex.gateway.account-claims/turn-on!) conn)]
+                             {:accountIds true :t ((requiring-resolve 'triplex.gateway.account-claims/setting-t) db)}))
             "claim" (let [cut (storage/at-position db (get input "position"))
                           id (get input "commandId")
                           _ ((requiring-resolve 'triplex.gateway.account-claims/check-ids!) [id])

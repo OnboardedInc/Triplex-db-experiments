@@ -230,8 +230,11 @@
                     (is (= (str create/ident) (:writer result)))
                     (is (= 12 rows) "the subject is whole, without the removed value")
                     (is (= {:routes false :log false} seen) "the removed value appears nowhere"))
-                (do (is (= [200 nil] (:resend result)) (pr-str result))
-                    (is (:routes seen) "off: the removed value comes back (the fault the option closes)")))
+                ;; [DX-S6b fourth pass] The frame rule runs on every save (storage.clj frame-check!), so with the
+                ;; creation option off too the resend framed before the removal is declined and the value never comes
+                ;; back (the fault this arm used to show).
+                (do (is (= [409 "ErasureReplayDeclined"] (:resend result)) (pr-str result))
+                    (is (= {:routes false :log false} seen) "off: the removed value appears nowhere either")))
               (println "DX-S4_REMOVAL" (json/write-str (assoc result :case "creation of the removed subject" :option option
                                                               :removedValueSeen seen :liveRows rows))))))))))
 
