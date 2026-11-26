@@ -25,13 +25,14 @@ Conditions:
 - Every container ran image `sha256:21a67288007d...` (PostgreSQL `sha256:526f86d93c6e...`) with the reviewed source
   mounted, recorded per run.
 - Every time here is a Mac diagnostic.
-- Written 2026-11-25 23:38 to 2026-11-26 PENDING EST.
+- Written 2026-11-25 23:38 to 2026-11-26 00:25 EST.
 
 ## Verdict
 
 **Fit to merge into the one branch with every option off: yes.** Removal on request on this head answered no removed
 value on any read route I tested. That holds on the gateway that took the removal and on one that learned of it late,
-under every read option set, at every pin. One new finding sits at the seam of the replay rule's switch.
+under every read option set, at every pin. The new findings sit at two seams: the replay rule's switch (S1) and the
+fleet's journals (J1).
 
 - **Options off equal the one branch at `65a851d1b`:**
   - **the paired native log:** identical datom for datom (unsealed 653, sealed 698), replies identical (md5
@@ -49,7 +50,7 @@ under every read option set, at every pin. One new finding sits at the seam of t
 - **7b, the entity cache:** no removed value was answered from a cache on any read route.
   - **Where tested:** per account, commit boundary, database-wide, file and PostgreSQL; on the gateway that took the
     removal and on one that learned of it only from the key pass (the repair path in 96 cases, the pass's own cut in
-    124); 1,204 oracles, 0 violations.
+    128); 224 cases, 1,297 oracles, 0 violations.
   - **What the builder's drop does:** it removes the parsed entry (1 to 0), so the value is no longer held in the
     reader's memory.
   - **What keeps the value out of answers is not the drop:** with the drop planted out of the repair path, the entry
@@ -67,6 +68,11 @@ under every read option set, at every pin. One new finding sits at the seam of t
     off, or the other way round. The value chosen before the removal is then stored after it.
   - **Count:** 4 of 4 when the request names its account, 0 of 4 when it does not.
   - **Cause:** the two rules key a declined command differently.
+- **New, Medium (J1, operations): the acknowledged journal is per gateway.** Each start check names only the
+  removals its own gateway took, so step 5 must read every gateway's journal.
+- **Also new:**
+  - G1, low: three of the save line's listed failures check no detail;
+  - L1, medium at scale, by code: R2's fix scans every live row while holding the database's removal lock.
 - **Older SDKs (question 5): deployment alone is acceptable for turning the replay rule on, because the flip neither
   opens nor closes that gap. It is not acceptable as the only guard against the gap itself.**
   - **Ship with the flip:** the counting half of the gateway check.
@@ -84,9 +90,9 @@ under every read option set, at every pin. One new finding sits at the seam of t
 | --- | --- | --- | --- | --- | --- | --- |
 | S1 | medium | `removal_commit.clj` `commands-of` 984 against `storage.clj` `declined-keys` 240 (`account-claims/stored-command` 398) | Across the replay rule's seam, a command declined by one rule is stored by the other when the request names its account: the value chosen before the removal is stored after it (R3-3 back) | `review8.clj` `s1` | 4 of 4 named-account cases stored (both directions, with and without `TX2_ACCOUNT_CLAIMS`); 0 of 4 without an account | One key function: `commands-of` calls `stored-command` with the database, or both checks look up both forms; S1 as a gate case |
 | J1 | medium (operations) | `removal_ack.clj` (one journal per process); `acknowledged-lost!` 1649 | Each gateway's start check compares only its own journal: after a restore of the data and the authority, the write gateway named the removal it took and the read gateway the one it took; neither named both | `stack6.sh restore-journal` | lost lines: write gateway 1 (a1's), read gateway 1 (b1's); a1 and b1 answered again until step 5; after step 5 and a restart, 0 | One journal shared by every gateway, outside both backups, or the start check reads every gateway's journal; step 5 says so |
-| F4 | high where it applies (callers not on a frame-stating SDK) | `storage.clj` `frame-of` 176; `removal-after-source` | A replay that states a fresh `sourceK` and nothing about its first attempt is stored, rule off or on: an SDK older than the save line replaying across a removal stores the value chosen before it (the builder's 6.1, listed as `era-replay-without-frame-source`, "a finding no review covers") | `s5/attack3_era.clj` (the builder's), this review's code read for the rule off | stored, `"sdkReplay":[200,null]`, `"storedAfter":"value chosen before"` (the builder's must_contain, `era-era-server`, `era-era-per-account`) | Question 5 below: the counting check with the flip; the refusing check, as a one-way value in the database, before callers outside this SDK write a protected database |
+| F4 | high where it applies (callers not on a frame-stating SDK) | `storage.clj` `frame-of` 176; `removal-after-source` | A replay that states a fresh `sourceK` and nothing about its first attempt is stored, rule off or on: an SDK older than the save line replaying across a removal stores the value chosen before it (the builder's 6.1, listed as `era-replay-without-frame-source`, "a finding no review covers") | `s5/attack3_era.clj` `r2-2-replays-across-a-removal` (the builder's test), run here with the rule off and on | stored, `"sdkReplay":[200,null]`, `"storedAfter":"value chosen before"`: rule off 2 of 2 writers (`era-off`), rule on 2 of 2 (`era-on`) | Question 5 below: the counting check with the flip; the refusing check, as a one-way value in the database, before callers outside this SDK write a protected database |
 | G1 | low (the gate's exactness) | `era6/expected-save-line.json`, `expected_save_line.py` | Three listed failures carry no `must_contain` (`race-general-writer`, both `R4-9` entries), and the checker compares failing test names, not assertions: a different failure of the same test in the same setting passes as the listed one | `r22-faulty` | the faulty merge fails `r2-2-race-on-each-writer` with a stored value (`"removal":200`, `"replay":[200,null]`, `"storedAfter":"chosen before"`); in a listed general setting that would pass | `must_contain` for each (`"removal":503` and the failure line; `"replayWithNullFrameSource":[409,"ErasureReplayDeclined"]`) and the assertion count per test and setting; better, run the race test's removal on its own thread (REVIEW-4: 15 of 15 pass) and drop the entry |
-| L1 | medium at scale (code read) | `removal_commit.clj` `non-string-value` 1444, called inside `protect!`'s `privacy/guard` 1547 | R2's fix reads every subject's live rows while holding the database's removal lock. At the ten deep accounts' size an addition holds the lock for the whole scan; removals and every save that takes the lock wait | code | not measured (Mac) | Scan before taking the lock, at a basis; under the lock check only what was written after that basis |
+| L1 | medium at scale (code read) | `removal_commit.clj` `non-string-value` 1437, called inside `protect!`'s `privacy/guard` 1546 | R2's fix reads every subject's live rows while holding the database's removal lock. At the ten deep accounts' size an addition holds the lock for the whole scan; removals and every save that takes the lock wait | code | not measured (Mac) | Scan before taking the lock, at a basis; under the lock check only what was written after that basis |
 | R2b | low | `protect!` | R2's residual: an attribute with no values yet can still be added; its later numeric saves are refused 400 for every account, for good. The page now limits the route to the owning service and an operator, enforced in front of the gateway | code | by code | That rule, written in the deployment; or record the attribute's type at the addition |
 | W1 | low (rule off, by the save line's design) | `storage.clj` `record-declined!` 257 (`:stated` only) | With the replay rule off, a declined save that stated nothing is not recorded, so its command sent again with fresh points is stored; with the rule on it is declined. A second face of the seam | `review7b.clj` `m1` (M2) rule off | resend stored on 6 of 6 writers (`q2-off`); declined on 6 of 6 with the rule on (`q2-on`, `q2-subject`) | Accept, and list it with S1 as a difference between the rules; it closes when the rule is on everywhere |
 
@@ -151,7 +157,7 @@ A run passes only on exactly the listed failures in both checkers, at the granul
   - **The fault planted:** `check-writes!` without its policy-behind hold, so a save of the attribute the stored
     policy lacks is stored while the policy is behind.
   - **With the fault:** 226 P3 violations in 2,000 schedules (seed 7801, log boundary, sealed). All 226 are on
-    policy-set-back events, the save answered 200 each time.
+    data-restore events (the stored policy set back), the save answered 200 each time.
   - **Without it, same seed and schedules:** 0 violations, 32,993 oracles.
   - **No planted store hid behind RemovalLogBehind:** the log-put-back events refused the save before the planted
     check could matter.
@@ -185,9 +191,10 @@ answers a caller sees, not only the mechanism:
 **Decision: deployment alone is acceptable for turning the replay rule on. It is not acceptable as the only guard
 against the gap. The gateway check goes in as two halves, neither of which blocks the flip.**
 
-- **Why the flip need not wait.** The gap (F4) is the same with the rule off and on. With the rule off, the save
-  line's `frame-of` judges a replay with no `frameSourceK` by its own fresh `sourceK` and stores it. The builder's
-  `attack3_era` stores it with the rule on. Refusing the flip until the check exists closes nothing.
+- **Why the flip need not wait.** The gap (F4) is the same with the rule off and on: the builder's
+  `r2-2-replays-across-a-removal` stored the value chosen before the removal on 2 of 2 writers in each (`era-off`,
+  `era-on`). With the rule off, the save line's `frame-of` judges a replay with no `frameSourceK` by its own fresh
+  `sourceK`; with it on, the merged rule does the same. Refusing the flip until the check exists closes nothing.
 - **Why deployment alone is not enough for the gap.** The failure is silent: a removal acknowledged, its value stored
   again, no refusal and no line. This line's recurring fault has been a rule held outside the database disagreeing with
   the data (S1 is one more). "Every caller runs a frame-stating SDK" is such a rule.
@@ -208,8 +215,8 @@ against the gap. The gateway check goes in as two halves, neither of which block
      - **Where it is held:** as a one-way value in the database (moved by an operator route when the count has been 0
        for a window), not a per-process switch, so a mixed fleet cannot disagree (S1's lesson).
 - **Which writers are exempt, and why:**
-  - **Exempt:** only writes the gateway fences with a ticket it checks against the current frontier. A settlement,
-    Publish or derived-copy frame carries `erasureSeq` (`privacy/ensure-seq!`), and a delivery's source is checked
+  - **Exempt:** only writes the gateway fences with a ticket it checks against the current frontier. A settlement
+    or derived-copy frame carries `erasureSeq` (`privacy/ensure-seq!`), and a delivery's source is checked
     (`check-source!`). A stale ticket is refused, so the ticket is the frame.
   - **Not exempt by a label the caller sends.** `writeClass "import"` is set by the request: an import frame carries
     no ticket and must state the stamp like any save, or be given a ticket.
@@ -250,14 +257,17 @@ per process disagreeing with the database's record (S1).
    - `batch` (reach and rows), `batch` pinned.
 2. The reading gateway's state is kept: its verified frontier and its cache entries for the database.
 3. a1's values are removed through the gateway that takes the removal, which then reads through every route.
-4. One of two triggers makes the key pass refuse its cut, so that it advances the frontier in a particular way:
-   - **another removal's intent recorded:** the pass's own cut (database nil);
-   - **the log's policy copy rewritten** by a protection call: `shred-after-failure!`, the repair path.
+4. One of two triggers decides how the reading gateway learns of the removal from its key pass:
+   - **another removal's intent recorded:** the pass's own cut advances the frontier (with no database, so the drops
+     wait for the next request's cut);
+   - **the log's policy copy rewritten** by a protection call: the pass's cut is refused, and `shred-after-failure!`
+     (the repair path, where the builder added the drop) advances it.
 5. The reading gateway's state is put back, and one key pass runs, as on a gateway that did not take the removal.
 6. Reads through every route at both pins, with the drop hook in place or planted out of the pass.
 
 **Results:**
-- **Removed values answered:** 0 on any route, on either gateway, in 208 cases. Modes and options:
+- **Removed values answered:** 0 on any route, on either gateway, in 224 cases (112 with the drop hook in place, 112
+  with it planted out). Modes and options:
   - per account (log and commit boundary), the subject check, database-wide;
   - file and PostgreSQL; unsealed and sealed;
   - the four combinations of the pinned short-cut and the cut lookup;
@@ -265,7 +275,8 @@ per process disagreeing with the database's record (S1).
 - **The paths under test ran:**
   - the frontier advanced in every case (0 to 1);
   - the repair path ran in the 96 copy-trigger cases (one `shred` failure counted, then the re-read);
-  - every route answered the value before the removal, and b1's value after it.
+  - every route answered the value before the removal, and b1's value after it (all but the session's second call,
+    which omits an entity the session holds).
 - **What the drop changes.**
   - **In place:** a1's parsed entry is gone at the first request after the pass (1 to 0, one drop counted).
   - **Planted out:** the entry stays (1), and the reads hit the cache (12 hits against 11 with the drop). Still no
@@ -294,13 +305,15 @@ per process disagreeing with the database's record (S1).
 3. **The audit:** the pinned-read review's log audit (`rd6/attacks.clj` `audit` at `968d60bf4`, the same rule) over
    every transaction.
 
-**Results** (log and commit boundary, unsealed and sealed, per account and the subject check):
+**Results** (log and commit boundary, unsealed and sealed; per account, the subject check, and database-wide on the
+log boundary):
 - **Reads:** 160 per case, 0 removed values answered, the new value answered at the head by every route.
 - **Audit:** 17 to 25 transactions per case, 0 subjects retracted without an assertion on them, 0 grouped-save
   positions retracted or repeated. Every retraction of a subject datom (`:triplex.entity/row`) came with an assertion
   on the same subject (`:triplex.entity/rev`).
-- **PENDING:** `p2-*`, the reruns with the stop points installed (the first runs lacked them; their stop did not
-  stop).
+- **With the stop points installed** (`p2-on`, `p2-subject`, `p2-off`; the first runs lacked them, so c1's stop did
+  not stop): c1's removal stopped after its native commit (503 `OutcomeUnknown`), the rebuild route 200 per account,
+  the resend 200; again 0 removed values at any pin, 0 audit violations (17 to 25 transactions).
 
 ## What held
 
@@ -311,11 +324,12 @@ per process disagreeing with the database's record (S1).
 | The merge with the save line, rule off, every writer | `q2-off`; control `q2-faulty` (`f17410ed5`) | 27 combinations on each of six writers: 0 removed values stored, 20 declined and 7 stored on the four non-creating writers as the merged rule says (the fourth pass reads `removalSeen` too); the faulty merge stored 27 of 27 on those writers, 20 of them removed values |
 | The same, rule on | `q2-on` (database-wide), `q2-subject` (per account) | 27 of 27 on all six writers; M2 resend declined and new command stored |
 | The save line's R2-2 group (REVIEW-4's tests at `84d470328`, `S5_ONLY=r22`) | `r22-off`, `r22-on`, `r22-gen-off`; control `r22-faulty` | 23 of 23 rule off; 22 of 23 rule on (R4-9); the general writer only: the race test's 10 harness assertions (503 `OverlappingFileLockException`, 5 of 5, the listed form); the faulty merge: `r2-2-replays-across-a-removal` stored the value chosen before 4 of 4 (REVIEW-4's R4-3) |
-| The entity cache (7b) | `c-on2`, `c-subject`, `c-pg`, `c-recent`, `c-all`, `c-off`, `c-pg-off` | 220 cases, 1,204 oracles, 0 violations |
-| The pinned-read rules (8) | `p-on`, `p-subject`, `p-off` | 10 cases, 30 oracles, 0 violations |
+| The entity cache (7b) | `c-on2`, `c-subject`, `c-pg`, `c-recent`, `c-all`, `c-off`, `c-pg-off`, `c-all-off` | 224 cases and 13 sensitivity cases, 1,297 oracles, 0 violations |
+| The pinned-read rules (8) | `p-on`, `p-subject`, `p-off`, and with the stop points `p2-on`, `p2-subject`, `p2-off` | 20 cases, 60 oracles, 0 violations |
 | The seventh review's cases on this head | `a7-on`, `a7-pg`, `b7-on`, `b7-off` | 50, 34, 22, 4 oracles: only the listed failures |
 | fuzz7 control (seed 7801, 2,000 schedules) | `f7-control` | 32,993 oracles, 0 violations |
-| The acknowledged journal across a restore, PostgreSQL | `st-journal` | as designed per gateway (J1); PENDING commit boundary |
+| R2 and R3 on PostgreSQL in process (the copy-drop route) | `a7-pg-r3` | 16 oracles, 0 violations |
+| The acknowledged journal across a restore, PostgreSQL | `st-journal` (log boundary), `st-journal-commit` | the same on both boundaries: 2 journal lines, 2 `RemovalAcknowledgedLost` lines (one per gateway, J1), the values answered again until step 5, then 0, and 0 lost lines after a restart |
 
 ## Not tested
 
@@ -325,11 +339,52 @@ per process disagreeing with the database's record (S1).
 3. **The SDK end to end:** no SDK build here; the gateway answers only.
 4. **Switches (ii) and (iii) flipped under the attack arms:** the builder's flip arms only; (i) was run on in every
    rule-on arm here (`q2-on`, the `r22-on` group, S1).
-5. **The copy-drop route on PostgreSQL:** run in process on the file authority only (`a7-on` R3).
-6. **A gateway replaced between the removal and the restore** (J1's fleet gap): read from the design, not run.
-7. **The old-SDK replay (F4) with the rule off on this head:** by code (`frame-of`) and the builder's rule-on test;
-   not run by me with the rule off.
+5. **A gateway replaced between the removal and the restore** (J1's fleet gap): read from the design, not run.
+6. **The stack with each switch flipped:** the restore stacks ran with every switch at its default.
 
 ## Tests, evidence, cleanup
 
-PENDING
+Every heavy step ran through `node lab/bin/heavy.mjs --label DX-ERA3-8-<step> -- <command>` with `DOCKER_HOST` set to
+the lab VM's socket, at most two at a time. `SRC` is `1be3efbab` (`ERA3_SOURCE_REF`).
+
+- **7b (C):** `ERA3_MAIN=r8 ERA3_SOURCE_REF=1be3efbab ERA3_EXTRA_ENV="TRIPLEX_ERASURE_SHRED_GRACE_MS=0 TX2_READ_BATCH=1
+  [TX2_RECENT_REVISIONS=1 TX2_READ_PREFETCH=1 ERA3_R8_ALL_READ_OPTIONS=1]" bash lab/experiments/EXP-DX1/era3/run.sh
+  <out> <on|subject|off> c` (`ERA3_PG=1` for PostgreSQL).
+- **S1:** the same with phase `s1`, mode `off`, with and without `TX2_ACCOUNT_CLAIMS=1` in `ERA3_EXTRA_ENV`.
+- **P:** phase `p`, modes `on`, `subject`, `off`.
+- **Question 2:** `ERA3_MAIN=r7b ERA3_TESTS_REF=99359fa93 ERA3_SOURCE_REF=<1be3efbab|f17410ed5>
+  ERA3_EXTRA_ENV="TX2_SUBJECT_PREFETCH=0 TX2_SUBJECT_WIDE=1 TX2_SUBJECT_SEVERAL_OWNERS=1 TX2_SUBJECT_CREATE=1
+  [TX2_REMOVAL_REPLAY_RULE=1]" run.sh <out> <off|subject> "m1 m3 m4"`; the save line's group with `ERA3_MAIN=s5a3
+  ERA3_TESTS_REF=84d470328 ... S5_ONLY=r22`.
+- **F4:** `ERA3_MAIN=s5era ERA3_TESTS_REF=99359fa93 ... run.sh <out> off -`, with and without
+  `TX2_REMOVAL_REPLAY_RULE=1`.
+- **Question 4:** `ERA3_MAIN=<7plant|7> ERA3_BOUNDARY=log ERA3_N=2000 ERA3_SEED=7801 ERA3_SEALED=1 run.sh <out> on
+  fuzz7`.
+- **Carried findings:** `ERA3_MAIN=r7 ... run.sh <out> on "r1 r2 r3 r4 r5 r6"` (`ERA3_PG=1`: "r1 r4 r5 r6", and
+  "r2 r3"); `ERA3_MAIN=r7b ... "m1 m3 m4"`.
+- **Question 1:** `bash era3/idents7.sh <out> 65a851d1b 1be3efbab`; `bash era3/paired7.sh <out> 65a851d1b 1be3efbab
+  9fe2e5f02 99359fa93`.
+- **J1:** `BOUNDARY=<log|commit> SEALED=1 SOURCE_REF=1be3efbab
+  DX_GATEWAY_ENV_WRITE=TX2_REMOVAL_ACK_JOURNAL=/tmp/ack/journal.jsonl
+  DX_GATEWAY_ENV_READ=TX2_REMOVAL_ACK_JOURNAL=/tmp/ack/journal.jsonl bash era3/stack6.sh <out> <bodies>
+  restore-journal`, the bodies from the seventh review's evidence.
+- **Run notes:**
+  - The first `c-on` run counted the reach session's second answer as a control (it omits an entity the session
+    holds) and used a stop point the r8 runs had not installed; it is kept and not counted, and `c-on2` replaces it.
+  - `p-*` ran without the stop points; `p2-*` with them.
+  - `ERA3_7B_RULE_OFF` (an oracle that ignored `removalSeen`) was dropped before any run used it: the fourth pass
+    reads `removalSeen` (`frame-of`), so the merged rule's oracle applies with the rule off too.
+  - The first `s1-off` run named the account `acct/a`, which the account rule refuses (400 `InvalidValue`); it is
+    kept and not counted, and `s1-plain` and `s1-claims` name it `a`.
+  - Each run's `tests` file names the commit its tests came from.
+- **Evidence:** the archive `DX-ERA3-8.tar.gz` in the lab's evidence folder for this reviewer (outside the
+  repository): every run's log with its image and source commit, the identity and paired outputs, the stacks' steps,
+  replies, start-check lines and journals.
+- **Cleanup, 00:19 EST:**
+  - `docker ps -a --filter label=tx2.holder=DX-ERA3`: 0 containers;
+  - by name (`tx2-dxera3*`, which covers the stacks' and PostgreSQL containers): 0;
+  - no `dxera3` network, no volumes;
+  - no image built, pulled or removed.
+
+Branch head: the commit that adds this page's final form, "DX-ERA3: eighth review ..." (`git log -1 --
+lab/experiments/EXP-DX1/era3/REVIEW-8.md`), on `exp/DX-ERA3-removal-review`.
