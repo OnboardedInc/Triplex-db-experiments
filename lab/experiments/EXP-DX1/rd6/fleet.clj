@@ -7,7 +7,7 @@
   writer (per-subject, grouped, append retirement). At the end every position is read for every owner on every reader.
   Run by rd6/fleet-container.sh; reviewer's test, not a gate of the code under review."
   (:require [clojure.data.json :as json] [clojure.string :as str] [s5-fuzz :as fz] [wfix1-regression :as reference]
-            [wide-gate :as wide])
+            [wide-gate :as wide] [datomic.api :as d] [triplex.gateway.storage :as storage])
   (:import [java.net URI] [java.net.http HttpClient HttpRequest HttpRequest$BodyPublishers HttpResponse$BodyHandlers]
            [java.time Duration] [java.util Random] [java.util.concurrent ConcurrentLinkedQueue] [java.util.concurrent.atomic AtomicLong]))
 
@@ -35,7 +35,7 @@
 (def all-owners (java.util.concurrent.ConcurrentHashMap.))
 
 ;; The S5 harness's read-owner and send go to the write gateway over HTTP (set once: with-redefs is not thread-safe).
-(alter-var-root #'reference/route (constantly (route-at writer)))
+(when writer (alter-var-root #'reference/route (constantly (route-at writer))))
 (defn head [name] (some-> (call writer :get (str "/v1/db/" name "/write-options") nil) :body (get "position") str Long/parseLong))
 
 (defn save! [name g {:keys [set retire]}]
@@ -173,3 +173,71 @@
         (spit (str out "/finished") "ok")
         (shutdown-agents)
         (System/exit (if (zero? (:differences s)) 0 1))))))
+
+;; ---------------------------------------------------------------- [second review] grouped saves under a mixed fleet
+
+(defn groups-main
+  "RD6_DRIVER=groups: this JVM is the writer (in process, on the same PostgreSQL database, the group writer on): it forms
+  groups of two to six saves with wfix1's barrier (the HTTP fleet never formed one), with removals among them, while
+  the reader threads read the same pins from every read gateway. Then every position for every subject, and the audit."
+  []
+  (reference/in-scope
+    (fn [name conn]
+      (let [declared (reference/route name "v1" "protection" {"attributes" [":p/secret"] "sealed" false})
+            rng (Random. 17)
+            os (vec (for [i (range 24)] (str "acct/fleet/subject/g" i)))
+            _ (doseq [o os] ((requiring-resolve 'rd6-attacks/save!) name conn {:set (vec (for [j (range 4)] [o (str ":fz/f" j) (str o "-" j)]))}))
+            _ (doseq [o os] (.put all-owners o true))
+            _ (reset! counter 9000000)
+            stop (atom false)
+            readers-f (doall (for [i (range 4)] (future (reader-loop! name (Random. (+ 500 i)) stop))))
+            batch! @(requiring-resolve 'rd6-attacks/grouped-batch!)
+            seconds (Long/parseLong (or (System/getenv "RD6_SECONDS") "90"))
+            deadline (+ (System/currentTimeMillis) (* 1000 seconds))
+            groups (atom 0)]
+        (emit "DX-RD6_FLEET_START" {:db name :protection (:status declared) :driver "groups"
+                                    :readers (into {} (for [[k base] readers] [k (select-keys (get (:body (call base :get (str "/v1/db/" name "/write-options") nil)) "options") ["pinnedShortcut" "pinnedCutLookup"])]))})
+        (loop [k 0]
+          (when (< (System/currentTimeMillis) deadline)
+            (try
+              (let [members (take (+ 2 (.nextInt rng 5)) (shuffle os))
+                    specs (vec (for [o members]
+                                 (let [f (str ":fz/f" (.nextInt rng 6)) live (vec (keys (fz/read-owner name o {"validAt" 5.0})))]
+                                   (case (.nextInt rng 4)
+                                     0 {:set [[o f (str "g" k)]]}
+                                     1 (if (seq live) {:retire [[o (nth live (.nextInt rng (count live)))]]} {:set [[o f (str "g" k)]]})
+                                     2 {:set [[o ":p/secret" (str "secret-" k)]]}
+                                     {:set [[o f (str "g" k)]] :retire (if (seq live) [[o (nth live (.nextInt rng (count live)))]] [])}))))
+                    replies (batch! name conn specs)]
+                (swap! groups inc)
+                (doseq [[st p] replies]
+                  (swap! stats update :saves inc)
+                  (if (= 200 st) (do (swap! stats update :committed inc) (when p (.add positions p)))
+                    (swap! stats update-in [:refused (str st)] (fnil inc 0)))))
+              (when (zero? (mod k 25))
+                (let [o (nth os (.nextInt rng (count os)))
+                      r (reference/route name "v1" "erase" {"commandId" (str "rm-g" k) "selectors" [{"entityId" o "attribute" ":p/secret"}]})]
+                  (if (= 200 (:status r)) (swap! stats update :removals inc)
+                    (swap! stats update-in [:refused (str "erase " (:status r) " " (get-in r [:body "code"]))] (fnil inc 0)))))
+              (catch Exception e (swap! stats update-in [:errors (str "write " (.getSimpleName (class e)))] (fnil inc 0))))
+            (recur (inc k))))
+        (reset! stop true) (run! deref readers-f)
+        (let [db (d/db conn) top (storage/head-position db)
+              gp (d/entid db :triplex.group/position)
+              interior (if gp (count (for [x (d/datoms db :aevt gp) :let [e (:e x)]
+                                           :when (not= e (:v (first (d/datoms db :eavt e :triplex.group/physical))))] x)) 0)
+              before (:compared @stats)
+              owners (vec (sort (keys all-owners)))]
+          (doseq [p (sweep-positions top) part (partition-all 24 owners)]
+            (compare-one! name "read" "v1" {"entityIds" (vec part) "basis" {"validAt" 5.0 "recordedPosition" p}}))
+          (doseq [p (take-nth 5 (sweep-positions top))]
+            (compare-one! name "reach-many" "v2" {"roots" owners "basis" {"validAt" 5.0 "recordedPosition" p} "full" true}))
+          (let [audit (dissoc ((requiring-resolve 'rd6-attacks/audit) conn) :otherRetracting)
+                scan (into {} (for [[k base] readers] [k (get (:body (call base :get "/v2/admin/scan-stats" nil)) "pinnedShortcut")]))
+                s @stats]
+            (emit "DX-RD6_FLEET" (assoc s :head top :groups @groups :interiorPositions interior :owners (count owners)
+                                        :sweepComparisons (- (:compared s) before) :audit audit :shortcut scan
+                                        :pass (and (zero? (:differences s)) (pos? (:compared s)))))
+            (spit (str out "/finished") "ok")
+            (shutdown-agents)
+            (System/exit (if (zero? (:differences s)) 0 1))))))))

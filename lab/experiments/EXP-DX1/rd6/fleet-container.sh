@@ -64,13 +64,24 @@ writer_env() {
     *) echo "unknown phase $1" >&2; return 1 ;;
   esac
 }
-IFS=, read -r -a phases <<< "$RD6_PHASES"
-# shellcheck disable=SC2046
-gateway 8080 $(writer_env "${phases[0]}"); writer_pid=$gw_pid
+IFS=, read -r -a phases <<< "${RD6_PHASES:-per-subject}"
+driver=${RD6_DRIVER:-http}
+if [[ $driver == http ]]; then
+  # shellcheck disable=SC2046
+  gateway 8080 $(writer_env "${phases[0]}"); writer_pid=$gw_pid
+fi
 reader=(TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1)
-gateway 8081 "${reader[@]}" TX2_PINNED_SHORTCUT=0 TX2_PINNED_CUT_LOOKUP=0
-gateway 8082 "${reader[@]}" TX2_PINNED_SHORTCUT=1 TX2_PINNED_CUT_LOOKUP=1
-gateway 8083 "${reader[@]}" TX2_PINNED_SHORTCUT=1 TX2_PINNED_CUT_LOOKUP=1 TX2_READ_FILTER_EARLY=1 TX2_READ_PROFILE=1 TX2_READ_PERMITS=3
+# [second review] RD6_READER_MODE=flip: the reference reader turns both options off explicitly and the other two run
+# the default (on under the trial flip), with no pinned-read setting at all.
+if [[ ${RD6_READER_MODE:-explicit} == flip ]]; then
+  gateway 8081 "${reader[@]}" TX2_PINNED_SHORTCUT=0 TX2_PINNED_CUT_LOOKUP=0
+  gateway 8082 "${reader[@]}"
+  gateway 8083 "${reader[@]}" TX2_READ_FILTER_EARLY=1 TX2_READ_PROFILE=1 TX2_READ_PERMITS=3
+else
+  gateway 8081 "${reader[@]}" TX2_PINNED_SHORTCUT=0 TX2_PINNED_CUT_LOOKUP=0
+  gateway 8082 "${reader[@]}" TX2_PINNED_SHORTCUT=1 TX2_PINNED_CUT_LOOKUP=1
+  gateway 8083 "${reader[@]}" TX2_PINNED_SHORTCUT=1 TX2_PINNED_CUT_LOOKUP=1 TX2_READ_FILTER_EARLY=1 TX2_READ_PROFILE=1 TX2_READ_PERMITS=3
+fi
 (while [[ ! -f /out/finished ]]; do
   for ((i=1; i<${#phases[@]}; i++)); do
     if [[ -f /out/phase-$i.request && ! -f /out/phase-$i.ready ]]; then
@@ -85,8 +96,19 @@ gateway 8083 "${reader[@]}" TX2_PINNED_SHORTCUT=1 TX2_PINNED_CUT_LOOKUP=1 TX2_RE
 done) &
 pids+=($!)
 status=0
-RD6_OUT=/out RD6_WRITER=http://$addr:8080 RD6_READERS="off=http://$addr:8081,on=http://$addr:8082,tuned=http://$addr:8083" \
-  java -Xmx1g -XX:+UseSerialGC -Dtriplex.codec.spec=/opt/gateway/codec-spec.json -cp "/opt/gateway/src:$cp" clojure.main \
-  -i /exp/wfix1/regression.clj -i /exp/w2/wide_gate.clj -i /exp/s5/fuzz.clj -i /exp/rd6/attacks.clj -i /exp/rd6/fleet.clj -e '(rd6-fleet/main)' > /out/driver.log 2>&1 || status=$?
+load=(-i /exp/wfix1/regression.clj -i /exp/w2/wide_gate.clj -i /exp/s5/fuzz.clj -i /exp/rd6/attacks.clj -i /exp/rd6/fleet.clj)
+readers="off=http://$addr:8081,on=http://$addr:8082,tuned=http://$addr:8083"
+if [[ $driver == groups ]]; then
+  # the writer is this JVM, in process on the same storage, with the group writer on
+  env RD6_OUT=/out RD6_READERS="$readers" WFIX1_URI="$DATOMIC_URI_TEMPLATE" TRIPLEX_ERASURE_DIRECTORY=/out/erasure TRIPLEX_TRACE_LEVEL=off \
+    TX2_SUBJECT_SAVE=0 TX2_GROUP_COMMIT=1 TX2_GROUP_STAGE_CLOCK=1 TX2_GROUP_FAST_REPLY=1 TX2_GROUP_REUSE_PREPARED=1 TX2_LIVE_PRIORITY=1 \
+    TX2_GROUP_MAX_MEMBERS=32 TX2_SMALL_ROWS=1 TX2_SAVE_LEDGER=1 TX2_PREDECESSOR_LOOKUP=1 \
+    java -Xmx1500m -XX:+UseSerialGC -Dtriplex.codec.spec=/opt/gateway/codec-spec.json -cp "/opt/gateway/src:$cp" clojure.main \
+    "${load[@]}" -e '(rd6-fleet/groups-main)' > /out/driver.log 2>&1 || status=$?
+else
+  RD6_OUT=/out RD6_WRITER=http://$addr:8080 RD6_READERS="$readers" \
+    java -Xmx1g -XX:+UseSerialGC -Dtriplex.codec.spec=/opt/gateway/codec-spec.json -cp "/opt/gateway/src:$cp" clojure.main \
+    "${load[@]}" -e '(rd6-fleet/main)' > /out/driver.log 2>&1 || status=$?
+fi
 echo "driver exit $status" >> /out/phases.log
 exit $status
