@@ -14,6 +14,15 @@ priority: the bar, the latest measured value at 1 billion records and on the
 fresh database (430 million records, ten deep accounts of 100,000 subjects), the settings it was measured with, the
 verdict and the next step. Mac clocks are never used here; every number below is from a rented bare-metal server
 (12 cores, 96 GB, two NVMe drives). Bars are from `lab/TARGETS.md` on `main`; the owner's rulings from `lab/V0.1.md`.
+
+**The read bar changed on 2026-11-25** (`lab/TARGETS.md` and `lab/V0.1.md` on `lane/d-native`, `1fd3a41ff`): read p99 at most
+**100 ms for a subject in memory** and at most **300 ms for a subject not in memory**, 100 ms still the aim for both
+(the owner: "Let's try to hold the 100 ms bar for reads not in memory but maybe we'll allow a 300 ms read bar for
+subjects not in memory and a 100 ms read bar for subjects that are in memory"). Every P1 number below was measured
+before the bar split and does not separate the two populations; the scorecard's read classification is being built
+on `exp/DX-SRV2-session-prep`. The server session that measures it (at most 50 US dollars, at 1 billion records) is
+planned in `lab/experiments/EXP-DX1/srv1/SESSION-PLAN.md` on `exp/DX-SRV1-session-plan`; the session list at the end
+of this page is the earlier one.
 The earlier merge-trial tables of this page are in its history (`git show 61a794c1d:lab/experiments/EXP-DX1/v01/READINESS.md`).
 
 **The 1 billion database:** AGE1's sealed cut, t 62,888,918, head 28,309,866, 1,000,251,169 records. Its 28.2 million
@@ -99,8 +108,50 @@ ID) and `int5/compare-idents.py`; evidence `DX-INT5/idents/`.
 | One pending removal stopped the deletion of every published removal's key (R3) | `exp/DX-B2-key-deletion` `46a8f746a` | `59e10e754` (pushed alone, `212853708`) | `b2-keys/gate.sh` (b2, scenarios, fuzz, lines; paired against the previous head), standing on every head |
 | A stored save answered as refused when the transactor stops after applying it (R1, save review F1), and the command path settling on another account's transaction | `exp/DX-S6-save-line-fixes` `cdfc70e02` | `dc0bd5696` | `s6/final.sh` gates (the outcome gate in five writer settings), the SDK's fault stack, the fuzzer with faults |
 | Every batched read refused (this merge's own: step 0 against API1's `batch.clj`) | this merge | `ee9d5da5a` | API1's `api1/gate.sh` gate phase |
-| With the PostgreSQL key store, sealed saves refused after a gateway restart and a save of more than 256 protected values refused for good; a refused protection declaration answering with the driver's statement, wrapped keys included | `exp/DX-N1-key-pool` `09730f887` | the next push | its key gate with the n1 and reply phases on both key stores (planned with that push) |
-| Two assertion IDs collide in the product's save path with ordered saves on: a save's identity block and a later SDK ID in the same millisecond (U1, the third Publish review); one rejected save of tape M here was consistent with it | `exp/DX-U1-id-allocator` `cc5656aa2` | the push after | the review's A1 to A5, the builder's I1 to I4, an adapter-level block check, tape M four times (planned with that push) |
+| With the PostgreSQL key store, sealed saves refused after a gateway restart and a save of more than 256 protected values refused for good; a refused protection declaration answering with the driver's statement, wrapped keys included | `exp/DX-N1-key-pool` `09730f887` | `39d1087c0` (fifth push) | `b2-keys/gate.sh` phases b2, n1, lines (with `replies.clj` and the review's `replies2.clj`), paired and suites on both key stores: n1 5 of 5 on both (the save-line head fails 3 of 5 on PostgreSQL); see "The key-pool and reply fix" below |
+| Two assertion IDs collide in the product's save path with ordered saves on: a save's identity block and a later SDK ID in the same millisecond (U1, the third Publish review); one rejected save of tape M here was consistent with it | `exp/DX-U1-id-allocator` `cc5656aa2` | `63d9885b8` (sixth push) | the review's A1 to A5 and the builder's I1 to I4 (9 of 9); the adapter-level block check (`u1/adapter-blocks.ts`: 120 ordered saves through the SDK adapter, 96 one-byte and 24 wide blocks, the clock held in one millisecond, 0 of 72,000 later IDs inside an earlier block); tape M with creation off four times, 360 of 360 each and no Triplex refusal in the transactor's lines; see "The ID allocator" below |
+
+**Follow-up (lab, not product): the slot code must reclaim a lock whose owner process is dead.** It does not today
+(`engine.mjs` `acquireSlot` refuses any other holder's lock, whether or not its process lives): on 2026-11-25 two locks
+of dead processes (`datomic-s2`, DX-ACT8; `datomic-s3`, DX-ACT6) left one of the three stack slots to every builder for
+about a day, and this merge's Publish-line regressions were refused 24 times in a row for that reason; the coordinator
+removed both by hand after checking each owner was dead and its container absent.
+
+**The default card is a standing gate from 2026-11-25** (the coordinator): it runs on every merge onto the one branch,
+on an image built from the head under test. **No card ran on `efee27905` (the save line), `21253c604` (N1) or
+`345f833e4` (U1)**: this merge's gate lanes did not queue one after the second batch. Run afterwards on `345f833e4`, it
+failed (below), as it would have on all three.
+
+**The card's writer check was wrong, and was changed to pass (lab only; `76bc1ea85`, `f8065afd1`, `9901ac40a`).** The
+save line's F5 check (`v01/adopted.ts` `checkWriterSplit`) counted every acknowledged save with a save key as eligible
+for the per-subject writer; with the wide writer off and no owners named, the narrow rule takes only commits of 1 to 3
+facts with facts and retired equal (the gateway's `subject_save.clj` `plan-with-erasure`), and the card's quiet-account
+cell at 235 commits per second sends 14 tape saves of 4 to 15 facts, all general by that rule, so every default card
+failed with "no eligible save took the per-subject writer (14 eligible)". Now, as the save line's reviewer and the
+coordinator ruled: a keyed save counts only if the rule in force lets that writer take it (with the gateway's lower
+bound, 1 fact); each arm with the per-subject option on prints two populations on separate lines, never summed
+("per-subject writer: N eligible by the narrow rule of K keyed[, M taken]" and "own saves: J, T taken", the card's own
+unkeyed saves, each already asserted by `checkSavedIdentity`); per card, with the wide writer off, one arm needs N > 0
+and M = N in either population, and when only own saves meet it the card prints "no tape save was eligible for the
+per-subject writer in this card (wide writer off)"; with the wide writer on or owners named (the product save path, as
+the server session's card runs), own saves do not count and one arm needs keyed N > 0 and M > 0, F5's rule, with "K
+keyed saves went to the general writer" per arm. `v01/writer-split.test.ts` covers both branches (17 of 17 with the
+card's other tests). **The default card has no arm with a keyed save eligible by the narrow rule** (its keyed saves are
+the production tape's, shape S, 4 to 15 facts); its per-subject writer is exercised by the card's own saves.
+
+**Open (lab, owner unassigned):**
+
+1. State the share the tape predicts on the product save path and assert it (with the wide writer on, the card asserts
+   only keyed N > 0 and M > 0).
+2. `decidedByRule` and `checkSavedIdentity` read `TX2_SUBJECT_WIDE` from the card's own environment, not from what the
+   gateway reports it runs with.
+
+**Open (product):** Held accounts enrolled by an earlier build cannot be published or settled by this one (compiler
+stamp over source bytes). No route to carry them over is known yet. Found by the fifth Publish review, 2026-11-25; fix
+unassigned. (`actv-lazy/join/index.ts` hashes the source bytes of a list of files into the compiler stamp stored at
+enrolment, and `actv-lazy/join/account.ts` refuses a build whose stamp differs; `account.ts` differs by 261 / 31 lines
+between `345f833e4` and `a6f89a409`, so accounts enrolled on the one branch before the Publish line merge are refused
+after it, as after every earlier merge that edited a listed file.)
 
 The save review's F6 (the 5 differing stored-code values pinned to S2's `subject_save.clj` edit, none installed with
 options off) is the second item of step 0, restored here. Four independent reviews found that a rule chosen per
@@ -246,6 +297,7 @@ answer outside its own route. It is not a proposal to make it a default (that is
 | **Not an option, in force, replies change:** a save whose outcome is unknown (save-line fixes F1) | after the transaction is handed to Datomic, a failure is a refusal only when a stored function or Datomic decided it; anything else, including the transactor stopping between apply and acknowledgement, answers **`503 OutcomeUnknown`** with the failure's class (`cause`), where it answered `400 TransactionRejected` before; the SDK looks the operation up and, when it is not stored, fences it (new route), then answers the receipt or `DatomicOperationNotApplied` | R1 fixed: a stored save is no longer reported as failed |
 | **Not an option, in force, replies change:** a save racing a removal on request (F3) | `409 CasConflict` on every writer (the SDK re-reads and replays); `ErasureFrontierChanged` only when the request itself named the frontier (`erasureSeq`) | before, the general writer answered `ErasureFrontierChanged` and the per-subject writers `CasConflict` for the same race |
 | **Not an option, in force, replies change:** the command path across accounts (section 9 of the save-line page) | the SDK's command path no longer settles on another account's transaction: an operation committed first by another caller is not taken as this save's outcome | another account can still deny or learn a command ID with the account setting off (section 9.1 of its page) |
+| **Not an option, in force, replies change:** the key pool after a restart and the reply texts (N1, N3) | every change of answer code or status, copied from `n1-keys/N1-KEY-POOL.md`: the protection declaration whose key fill the PostgreSQL authority refuses, 400 `GatewayError` with the driver's statement → 503 `EnvelopeKeyPoolEmpty`, a fixed text; a sealed save that finds the pool empty and cannot fill it, 400 `TransactionRejected` → 503 `EnvelopeKeyPoolEmpty`; an `Error` thrown by a route (`AssertionError`, `StackOverflowError`, `OutOfMemoryError`), Jetty's HTML 500 page with the error's class and message → JSON 500 `GatewayError`, the fixed text; an exception raised by the trace wrapper itself, the same | every other code and status is unchanged; with every option off the **message text** of an untyped failure changes to the fixed text, so a client or gate that matches a message (item 7 of the contradictions list names five) sees new text |
 | **Not an option, in force:** a creation of a family a removal named before the entity existed (F4, F11) | a creation framed after the removal commits; a removal made on a gateway without the creation option counts too | — |
 | **Not an option, in force:** typed refusals at the real full-document limits (ACT6) | a marker or event value over the store's 1 MiB is refused before any write, naming the sizes | the store refused it anyway, later |
 
@@ -255,6 +307,8 @@ answer outside its own route. It is not a proposal to make it a default (that is
 | --- | --- |
 | **`TX2_ACCOUNT_CLAIMS` / `:triplex.scope/account-ids` (the save-line fixes' account setting): stays OFF** | Its third review found two high breaks with it on: a reopen by a process with a different general-writer hash puts the old writer back (R3-1), and any caller can take an account's command ID first and make that account's SDK settle on its transaction (R3-2). Nothing merged here turns it on. **Before it is turned on anywhere:** (1) R3-1 fixed, or every gateway of the database runs with predecessor lookup on and no process with another general writer (another build, `TX2_LOAD1_PROFILE=1`, the covering-owner options) ever opens it; (2) the reserved prefix refused on the removal route, and no claim in the database already begins with it; (3) the account a request names comes from the authenticated caller, and a caller can write only its own account's entities; (4) R3-4 fixed (an ordered import stream that names its account stops at the transition); (5) every gateway runs this build or later, and a database restored from a backup taken before the transition is back to the setting absent; (6) if the per-account removal branch merges, the merged rule of the review's section 2 |
 | `TX2_READ_SET_BOUND` (save-line fixes, F2) | new, default off: caps every class's read set (no repeats, at most 4,096 names); not measured at 1 billion |
+| **The Publish line's settings (`exp/DX-ACT8-publish-beside-saves`): every one stays OFF** — `TX2_PUBLISH_BESIDE`, `TX2_ENROL_BESIDE_SAVES`, and the account settings and permissions `TX2_ACCOUNT_KEYS`, `TX2_SETTLE_FRAME_GUARDS`, `TX2_LEDGER_CAP_AT_PUBLISH` | unset: nothing stores an account setting or gives a permission, and with none stored the Publish, settlement and enrolment paths write what they wrote before (the options-off regressions below give the builder's counts exactly) | **Not to be turned on until** (the fourth review, `act10/REVIEW-4.md` at `5079fa7cc`): **Z1** fixed (under the archive a ledger that shrinks from parts to one part makes the closing frame too large and stops the account's notices for good, with no attacker; the most urgent); **Z2** fixed (a permitted publisher whose transition is starved publishes without the cap); **Z3** fixed (an event can start under the settings without the archive, in the settler's own mode); **Z4** settled with the removal line (the archive's retired-item rows are a derived document kind the removal line's sealing check does not know) before either line's setting is on in one database; another account reading or blocking IDs (U8, Z5) closed by the gateway rule that refuses a write to an account's names that does not name that account; and the rollout order of the Publish page's section 0.8 kept (for the last old-build frame) |
+| **Not an option, in force, replies change:** the SDK adapter's refusal message (the Publish line) | a Datomic refusal now reads "Datomic transaction was rejected (CODE, STATUS)" instead of "Datomic transaction was rejected"; codes and statuses unchanged | a client or gate that matches the old message exactly sees new text |
 | `TX2_NOTICE_LEDGER=parts` (ACT6, the ledger of a subject owing 200 forms or more, in parts) | Under the Publish and settlement review (reported, R5): **releases above the parts cap are not refused at Publish time yet.** A server run may use it only where every ledger stays within 10 parts (1,000 forms is 6 parts per subject) |
 | `TX2_RELEASE_DOCS=ref` (ACT6, definitions by reference, written ahead of the Publish) | Under the same review (reported, R4): **one publishing account only until fixed** |
 | `TX2_SETTLE_PRECONDITION=progress` (ACT5) | R6: **a pause is at most a few frames late under the progress precondition** |
@@ -576,6 +630,16 @@ from this head (sources `83789d1f…`), by ID; the selftest-style runs on the sa
 | `exp/DX-S5-save-line-review` `c85a0d0b3` | `12937e7bc` | The third review of the save line and its tests (lab only) |
 | Production gate | `d144ab6d3` | The transactor's warnings, errors and Triplex refusals printed into the gate's log before the container goes (the one rejected save of tape M could not be traced) |
 | Batch fix and the API1 page into the save line | `93511c42d`, `ecbba0def` | — |
+| `exp/DX-N1-key-pool` `09730f887` (fifth push) | `39d1087c0` | N1: a sealed save that finds its database's key pool empty (a restarted gateway) fills it once, then refuses with a typed 503 `EnvelopeKeyPoolEmpty`; N3: fixed reply texts (`reply.clj`): a typed refusal keeps the gateway's own text, any other exception answers "The gateway could not complete the request" with its detail only in the scrubbed failure line; the last catch wraps the trace wrapper too (N1R F1); `n1-keys/` and the key gate's `n1` phase. No option |
+| `exp/DX-N1R-key-pool-review` `71e6c453d` | `43fb4f28e` | The review's tests only (`n1r/`, `n1-keys/replies2.clj`) |
+| Save-line head into the N1 line | `0fb8f8cda` | `efee27905` merged; no conflicts |
+| `exp/DX-U1-id-allocator` `cc5656aa2` (sixth push) | `63d9885b8` | One ID allocator: a save's identity block is reserved from the same allocator as every other SDK ID (`packages/core` `utils/id.ts` `reserveIdPrefix`, prefix lengths 23 and 24 only), so no later ID of the process falls inside a block; `writes.ts` resolved as the reviewer's `ff0413925` (the resend on the lab path only); the review's `act10/u1-review.test.ts` (A4 over 23 and 24, A5 refuses 11 with `RangeError`), the builder's `u1/identity.test.ts`, the new adapter-level `u1/adapter-blocks.ts`. No option; both `packages/core` and `packages/datomic` dists rebuilt |
+| N1 line into the U1 line | `7d7414a10`, `632b4eae5` | no conflicts |
+| Key gate's suites phase | `9d515be3c` | XQ9's `sweep-shapes-test` runs in its own JVM with `TX2_SWEEP=1 TX2_SWEEP_SHAPES=all` (it errored 12 times with every option off on every head since the second batch); the standing count is the one known error again |
+| `exp/DX-ACT8-publish-beside-saves` `a6f89a409` (seventh push), every option and setting off | `ee8ba6b11` | A Publish and an enrolment beside every account's saves (`TX2_PUBLISH_BESIDE`, `TX2_ENROL_BESIDE_SAVES`), the account settings in the database with their permissions (`TX2_ACCOUNT_KEYS`, `TX2_SETTLE_FRAME_GUARDS`, `TX2_LEDGER_CAP_AT_PUBLISH`), the archive of retired ledger items, the gate parts (`actv-lazy/join/beside-gate.ts`), the review's harness (`act10/`); page `actv-lazy/PUBLISH-BESIDE-SAVES.md`. Four conflicts: `utils/id.ts` (U1's rule kept: lengths 23 and 24), `DatomicStorageAdapter.ts` (the save line's position update on `ErasureReplayDeclined` beside the line's message naming code and status), `ha1/local.ts` (the receipt image choice kept; the line's holder cases added), `scale1/decision/writes.ts` (the U1 resolution kept). No gateway file; `lab/config/datomic/runtime.mjs` (two receipt holders) is a Datomic source, so the line has its own image |
+| `exp/DX-ACT10-publish-review` `5079fa7cc` | `81a2d4035` | The fourth review's tests only (`act10/review4.test.ts`); its pages, its copy of `u1-review.test.ts` and its rerun holder stay out |
+| U1 head into the Publish line | `f5b7f2446` | `345f833e4` merged; no conflicts |
+| The card's writer check | `76bc1ea85`, `f8065afd1`, `9901ac40a` | Counts only keyed saves the rule in force lets the per-subject writer take; prints both populations per arm; the per-card rule by the writer rule in force (above) |
 
 **Conflicts and how each was resolved (both sides kept every time).** ACT6: `ha1/local.ts` (HA2's second-failure holder
 beside ACT6's release-limits holder). SCALE2: `stack/up.sh` (SCALE2's `DX_SWEEP_GATE_EVICT` beside XQ7's per-role sweep
@@ -632,7 +696,10 @@ bound beside XQ4's index-entry frame bound).
    (d) The B2 gate's suites phase loads every `*_test.clj` of the head with every option off, so on a head with XQ9's
    `sweep_shapes_test` (which needs `TX2_SWEEP_SHAPES=all`) and a base without `cross_index_test` it cannot pass;
    XQ10's suites cover those tests in their arms. The standing gate is run with `B2_GATE_PHASES="b2 paired scenarios
-   fuzz lines"` and the paired base set to the one branch's previous head.
+   fuzz lines"` and the paired base set to the one branch's previous head. **Fixed at `9d515be3c`:** the suites phase
+   runs `sweep-shapes-test` in its own JVM with `TX2_SWEEP=1 TX2_SWEEP_SHAPES=all`; with every other suite option
+   off it counts the one known error (feed-test `http-route`), so a new error shows (before, 13: that one and 12 from
+   `sweep-shapes-test` without its options).
 7. **Gates that decide on a reply's message text rather than its code** (asked for before the N1 key-pool fix, which
    changes reply texts with every option off): `rpt1/gate.ts` 110 (retries while the message reads "Transactor not
    available"), `s2/gate.ts` 271 (code `InvalidValue` and message "Request too large"), `scale2/mini.ts` 146
@@ -798,6 +865,57 @@ is unchanged by this fix and is an open decision for the owner.
 | Production exactness, default (the gate now keeps the transactor's warnings, errors and refusals) | R 840 of 840, S 88 of 88, 0 expired, 2,836 fields | the gate's own native image (removed) |
 | XQ4's G8 paired stored log; reach; aged gate | `0569a8f8…` = `23b7df344`'s; 22 of 22 equal, `writeOptionsSame` true; 1,927 fields, tampered refused | native (removed); `f7992c56`; native |
 | Production, tape M, creation on and off | exact both: tape M 360 of 360, 0 expired, 290 created, readback 313 owners and 3,030 fields; writers per-subject 360 and general 0 (on), 23 and 337 (off); no Triplex refusal in the transactor's lines | the gate's own images (removed) |
+
+### The key-pool and reply fix (`39d1087c0`, the line's head `0fb8f8cda`; image `410d47e153a7…`, `tx2-dxthin-jre21:e1fb08d92779035b`, engine build from `7d7414a10`, receipt `DX-INT5/n1u1/`)
+
+The image was built from the ID-allocator merge on top of this line (`7d7414a10`): its gateway sources are this line's
+(the ID fix changes no gateway file), so the stack gates below ran this line's gateway. The SDK and core suites ran at
+`7d7414a10` (this line's TypeScript plus the ID fix; this line changes no TypeScript outside the gateway).
+
+| Gate | Result | Image |
+| --- | --- | --- |
+| Stored-function identities | **70 of 70 equal to the save-line head in each of the 8 writer settings** (58 of 58 against `23b7df344`, the 12 option keys as before): the new namespaces `key_pool.clj` and `reply.clj` moved nothing | `410d47e1` by ID |
+| `b2-keys/gate.sh` phase b2 | 16 checks, 0 failed, on the file and the PostgreSQL key stores, this head and the save-line head | `410d47e1` |
+| phase n1 (the key pool after a restart) | 5 checks, **0 failed on both key stores**; the save-line head: 0 failed on the file store, **3 of 5 failed on PostgreSQL** (the fault this fixes) | `410d47e1` |
+| phase lines, with `replies.clj` and `replies2.clj` | lines 10 checks, 0 failed; replies 9 (file) and 15 (PostgreSQL), 0 failed; the review's replies2 17 and 17, 0 failed | `410d47e1` |
+| phase paired, against the save-line head (`efee27905`) | native log, replies and key store after a shred pass **identical**, with removals and without; the n1 pairing on PostgreSQL: native log and replies identical | `410d47e1` |
+| phase suites | 93 tests, 236,380 assertions, 0 failures, 13 errors, the same as the base (the known suites error, item 6 (d)) | `410d47e1` |
+| The save line's `gates` step again | outcome gate 5 tests, 426 assertions, 0 failures in each of 3 writer settings (server, general, group); race 22; bound 127; attacks 49 and 151; 0 failures | `410d47e1` |
+| Selftest; SDK; core; guard | 29 / 54,160, 0 failures; 489 passed, 53 skipped; 863 of 863; 142 cases, 0 mismatches | `410d47e1` / — |
+
+### The ID allocator (`63d9885b8`, the line's head with this page; image `410d47e153a7…` as above, the ID fix changes no gateway file)
+
+| Gate | Result | Image |
+| --- | --- | --- |
+| The review's A1 to A5 and the builder's I1 to I4 (`act10/u1-review.test.ts`, `u1/identity.test.ts`) | 9 of 9 pass (A4 over lengths 23 and 24 only; A5: length 11 refused with `RangeError`, IDs still increasing) | — |
+| Adapter level (`u1/adapter-blocks.ts`, S2's in-memory gateway with the wide per-subject writer) | 120 ordered saves, 120 blocks (96 one-byte, 24 wide, each the width its size calls for), the clock held in one millisecond, 300 `generateId` and 300 `generateTransactionId` after each save from the allocator instance the adapter uses: **0 of 72,000 later IDs inside an earlier block**, tokens increasing. Two harness faults of this check before it passed, not counted: its wide saves first sent 300 facts (over the 128-fact subject bound, so they took no block), then its parser read a wide ID (`<23>W00`) as a one-byte one (`W` is in the alphabet) | `410d47e1` |
+| Core; SDK | 863 of 863; 489 passed, 53 skipped | — |
+| Stored-function identities | 70 of 70 equal to the save-line head in each of the 8 writer settings (the ID fix moves nothing) | `410d47e1` |
+| Key gate's suites phase, against the save-line head (`efee27905`) | the main run 92 tests, 236,380 assertions, 0 failures, **1 error** (feed-test `http-route`, the known one); `sweep-shapes-test` with its options 1 test, 89 assertions, 0 failures, 0 errors; the same on both sides | `410d47e1` |
+| Production gate, tape M with creation off, four runs (the gate keeps the transactor's lines) | each run: R 840 of 840, S 88 of 88, wide 2 of 2, 0 expired, 2,836 fields; **tape M 360 of 360**, 0 expired, 313 owners, 3,030 fields, per-subject writer 23 and general 337; **no Triplex refusal in the transactor's lines in any run** (R9's one rejected save of 4 runs did not recur) | the gate's own native images (removed) |
+
+### The Publish line, every option and setting off (`ee8ba6b11`, the line's head `f5b7f2446`; image `0c834aaa4a54…`, `tx2-dxthin-jre21:d297b22fadbef6be`, engine build from `f5b7f2446`, receipt `DX-INT5/act8/`)
+
+None of `TX2_ACCOUNT_KEYS`, `TX2_SETTLE_FRAME_GUARDS`, `TX2_LEDGER_CAP_AT_PUBLISH`, `TX2_PUBLISH_BESIDE`,
+`TX2_ENROL_BESIDE_SAVES` was set in any run (the queue refused to start with one set). Runs on the held toy stack under
+holder DX-THIN1, as the builder's own lines (`chain8.sh`), each on this image by ID (each run's `image.json`).
+
+| Gate | Result | Image |
+| --- | --- | --- |
+| The builder's 98 tests (19 files: `review3` 10, `review2` 18, `targeted` 16, `cross-account` 11, `identity` 3, `lifetime` 2, `settings` 6, `stack-r3` 1, the 11 `join` files 31) and the fourth review's (`review4.test.ts`) | 98 of 98; the review's 12 of 12 (its two diagnostic probes, W8c and W8d, skip by design) | — |
+| Stored-function identities | 70 of 70 equal to the save-line head in each of the 8 writer settings | `0c834aaa` by ID |
+| Options-off regression `r1`: the held runner's default campaign | **as published**: 86 changed values and 8 notices equal to the oracle; 8 of 8 Publishes at one try with first answers; 0 read failures; 0 of 7,632 saves refused | `0c834aaa` |
+| `r2`: ACT5's live settlement cases | **as published**: 474 changes and 160 notices in each of the six single cases; `second-p` superseded at 420 changes and 1,200 notices, then 3,555; `multi-p` 474 / 160 in each of 3 accounts; 2,328 notices delivered once and 0 twice | `0c834aaa` |
+| `r3c`: ACT6's release-limits gate, 200 forms | **as published**: 72 subjects, 4 stops (1 inside a ledger's parts), notices 14,400 / 7,200 / 21,672 delivered once, 2 parts per ledger, the independent rule 72 / 42,720 / 14,400, 76 value and 510 notice frames at most 8,000 µs; definitions 619,097, 938,509 and 1,233,297 B, refused over the 1 MiB value, 3,532 to 3,547 B by reference | `0c834aaa` |
+| The Publish-beside-saves gate with every option off (every part: cost, beside, adversarial, kill, live, enrol; the review's ID scan) | **pass**: 49 Publishes, 534 positions and 4,272 pinned reads between read and record, 104 racing saves before and 9 after with 113 reads, 6,764 notices in order; the whole-head case refused 2 of 2 by design; ID scan 47,862 ordered saves and 4,537 other IDs, **0 inside a save's block**, 0 duplicates (the builder's eight options-off runs: 6,764 notices and 0 inside each) | `0c834aaa` |
+| The held campaign: default, strict | 86 changed values, 8 notices; 8 of 8 Publishes at one try; 0 of 7,632 saves refused; 0 read failures | `0c834aaa` |
+| The held campaign: the large release (20 forms, 20 policies) settled by bytes, progress precondition, strict | 560 changed values, 168 notices; 8 of 8 Publishes at one try; 0 of 7,632 saves refused; 0 read failures | `0c834aaa` |
+| B2 standing gate (b2, scenarios, fuzz, lines with the N1 reply phases) | b2 16 checks, 0 failed on both key stores (base `1ed2650bd` 2 failed each); scenarios 43, 0 failed, both; fuzz 20,000 schedules, 0 violations, both; lines 10, 0 failed; replies 9 and 15, replies2 17 and 17, 0 failed | `0c834aaa` |
+| **The default card** (the Mac fixture card, rolling 6 with the barrier 6 control; standing from now), at `9901ac40a` | **pass** (`DX-INT5/gates/p-card-default5-t1-SCORECARD.md`); the per-subject writer check in all 7 arms: 0 keyed saves eligible by the narrow rule (0 keyed, or 14 keyed of 4 to 15 facts in the 235-per-second quiet cell), own saves 28 of 28 taken; per card pass, "no tape save was eligible for the per-subject writer in this card (wide writer off)". Earlier tries, not counted: `04a242d29` stopped at its own clean-checkout check (my page edit was not committed); `04a242d29` and `345f833e4` failed the old writer check (14 eligible) | the card's own managed image, built from the head (removed) |
+
+**Before this queue (not counted):** the first queue on this line ran on the U1 image and its stack runs were refused:
+`r1` and `r2` by the image check ("built from other sources": the line's `runtime.mjs` is a Datomic source), `r3c` 24
+times for room (two stack-slot locks of dead processes; see the follow-up under the faults table).
 
 ## Next server session (one driver, in this order; none has run)
 

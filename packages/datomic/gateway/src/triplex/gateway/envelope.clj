@@ -98,15 +98,16 @@
 (defn shared? [] (some? sql/url))
 
 (defn provision! [name sealed?]
-  (when (and sql/url sealed?) (refill! name)))
+  ;; [DX-N1, N3] a refused fill answers a typed 503 with a fixed text, never the driver's message (key-pool/provision!)
+  (when (and sql/url sealed?) ((requiring-resolve 'triplex.gateway.key-pool/provision!) name)))
 
 (defn- take-key! [name id]
   (when (contains? (:erased privacy/*cut*) id) (privacy/stale!))
   (if sql/url
     (let [^ConcurrentLinkedQueue keys (pool name)]
-      ;; [DX-ERA2 sixth pass] an empty pool (this gateway did not serve the database's protection, or restarted) is
-      ;; refilled once before the save is refused (removal-repair/take-key-refilled!)
-      (or (.poll keys) ((requiring-resolve 'triplex.gateway.removal-repair/take-key-refilled!) name)))
+      ;; [DX-N1] an empty pool (this gateway restarted, or never served the database's declaration, or a save or a
+      ;; burst took more keys than the pool held) is filled once before the save is refused (key-pool/take-key-refilled!)
+      (or (.poll keys) ((requiring-resolve 'triplex.gateway.key-pool/take-key-refilled!) name)))
     [nil (issue! name id)]))
 
 (defn body-key-handle [wire]
